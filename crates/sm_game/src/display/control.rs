@@ -83,8 +83,10 @@ pub struct Layers {
 
 impl Layers {
     pub const NONE: Self = Self::of(false, false, false, false, false);
+    pub const BG1: Self = Self::of(true, false, false, false, false);
     pub const BG2: Self = Self::of(false, true, false, false, false);
     pub const BG3: Self = Self::of(false, false, true, false, false);
+    pub const SPRITES: Self = Self::of(false, false, false, false, true);
     pub const BG1_SPRITES: Self = Self::of(true, false, false, false, true);
     pub const BG2_SPRITES: Self = Self::of(false, true, false, false, true);
     pub const BG1_BG2_SPRITES: Self = Self::of(true, true, false, false, true);
@@ -233,8 +235,8 @@ impl Mode7Transform {
     }
 }
 
-/// A typed display value and the register it sets, for the register
-/// sequence's `show` and `show_mirror` kinds.
+/// A typed display value and the register it sets, for the compat
+/// register sequence's `show` and `show_mirror` kinds in `sm`.
 pub trait DisplayRegister {
     fn register(&self) -> u16;
     fn value(&self) -> u8;

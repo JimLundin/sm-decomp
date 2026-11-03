@@ -145,7 +145,10 @@ fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
 }
 
 /// The ordered CPU I/O and OAM reset.
-pub(crate) fn initialize_io_and_oam(brightness: Option<u8>, game: &mut Game) {
+pub(crate) fn initialize_io_and_oam(
+    brightness: Option<sm_game::display::control::Brightness>,
+    game: &mut Game,
+) {
     refresh::initialize_io_and_oam(brightness, game);
 }
 
@@ -217,9 +220,14 @@ pub(crate) unsafe fn start_room_dma(
 }
 
 impl sm_game::display::transfer::RoomDma for Game {
-    fn start_room_dma(&mut self, mask: u8, assets: Option<&super::room_entry::PreparedRoomAssets>) {
-        // SAFETY: immediate copies run from the frame loop with the backend installed.
-        unsafe { start_room_dma(mask, assets, self) }
+    fn copy_to_vram_now(
+        &mut self,
+        address: u16,
+        source: sm_game::display::transfer::Source,
+        bytes: u16,
+        assets: Option<&super::room_entry::PreparedRoomAssets>,
+    ) {
+        crate::game::display_commands::copy_to_vram_now(address, source, bytes, assets, self);
     }
 }
 

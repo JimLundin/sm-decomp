@@ -143,3 +143,60 @@ mirrors TS into the sub window byte and TM into the main window byte, as the ori
   presentation or native renderer as the authority), since the `Refresh` adapter is itself the
   encoder of `scene::commit::RefreshHost`.
 - display/sequence.rs goes with its last caller.
+
+## Typed display commands, round 2 (lane `cmds`, 2026-11-03)
+
+Every setup producer outside the NMI refresh now hands `Video::apply` a typed command, and the
+encoder in `sm/src/game/display_commands.rs` makes the same writes in the same order and widths.
+`register writes` fell from 77 to 27 sites (display_refresh 13, hdma_objects 4,
+display/sequence.rs 6, display/transfer.rs 4).
+
+| Producer | Commands |
+| --- | --- |
+| message_boxes.rs | `Control::HdmaChannels`, `Colors`, `FixedColor`, `ScrollAfterRead`, `ReadTilemapNow`, `TilemapNow`, `ScrollHdma` |
+| cinematic_display.rs | `apply_controls` over the new controls, `FixedColor`, `Mode7Word` |
+| cinematic_states.rs (logo) | `apply_controls`, `Scroll`, `Control::Mode7Latch`, `FixedColor` |
+| gameplay_frame.rs | `apply_mirrored(HdmaChannels)`, `StopDma`, `TilesNowBytePort` |
+| display/transfer.rs `copy_to_vram_now` | `RoomDma::copy_to_vram_now` (typed address, source, size; the encoder takes the prepared assets) |
+| liquid_effects.rs, room_state.rs, intro_sequence.rs | `HdmaScrollTarget`, `Control::BackgroundMode`, `Control::MainScreen` |
+| display_refresh.rs setup | `ClearCpuIo`, `ObjectBytes`, `ReadVramNow`, `VramPort`, `TilesThroughPort(Bytes)`, `WramPort`, `VramAddress`, `VramData` |
+
+`TilesNowBytePort` and `TilemapNow` bracket their writes with `producing`/`produced` as
+`TilesNow` does, so the nightly `SM_NATIVE_LINES` run checks them as typed producers
+("options tiles", "message box"). The other new commands are not uploads and are not bracketed.
+
+Original quirks kept, each in the encoder or at the call:
+
+- The message box reads the write-only BG3 scroll registers before clearing them ($85:8190,
+  `ScrollAfterRead`) and sets channel 1 with word writes, so the bank's word clears the count's
+  low byte first (`channel1_words`).
+- The message box's scroll HDMA starts the indirect address at the table address, interleaved
+  with the table bytes (`scroll_hdma`).
+- The options tile upload stores the VRAM address's low byte (0) into the colour math mirror
+  before the port (gameplay_frame.rs).
+- Unpause's `StopDma` is a 16-bit store of zero to MDMAEN that also clears HDMAEN.
+- The cinematic Mode 7 reset uses 16-bit stores (`Mode7Word`), each high byte reaching the
+  next register's latch; the logo writes one byte into each latch (`Mode7Latch`). Neither has
+  been checked against the bank logs here. If the hardware differs, it is a LEGACY row.
+- The title scenes store each tilemap byte one mirror field on (BG1SC into `Screens1`, BG4SC
+  into `Characters0`), and the gameplay setup clears W12SEL twice.
+- `HdmaScrollTarget` takes the HDMA object's channel as its slot byte over 16; the slot byte is
+  always the channel times 16 (`hdma_objects::channel`).
+- The pause map's area label is now looked up just before the label channel's first byte,
+  where before it came after the count. The lookup reads a ROM table and the room's area, and
+  no channel register can reach either.
+
+Still left:
+
+- display_refresh's NMI `Refresh` adapter (`upload_registers`, the affine and scroll latches,
+  `upload_palette_and_oam`, the HDMA enable), `ScanlineIrq::write_display`, hdma_objects, and
+  `setup_transfer`, which only the adapter and `GraphicsAsset::load` still call. These are still
+  blocked on retirement step 1.
+- `display_refresh::enable` (NMITIMEN). The room-entry leaf effects call it on the lease
+  `Runtime`, which has no `Video` impl. A `Video for Runtime` would need one foreign call per
+  command, and `foreign_calls` is strict.
+- The VRAM reads: `read_ppu_byte`'s prefetch and data reads still go through
+  `Registers::read_register_word`.
+- display/sequence.rs now keeps only the `Registers` trait and the macro's `byte`/`word` arms.
+  The `mirror`/`show`/`show_mirror` arms and `write_register_and_mirror` are gone. It goes when
+  the adapter does.

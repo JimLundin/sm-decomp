@@ -12,8 +12,12 @@ use crate::cinematic::{advance_cinematic_coordinate, advance_cinematic_fade, set
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::Cinematic;
+use crate::display::control::{Brightness, FixedColor, Layers};
 use crate::display::preparation::Field;
-use crate::display::registers as reg;
+use crate::display::video::{
+    Axis, Background, Command, Control, Mirror, Mode7Parameter, ScrollOffset, apply_controls,
+    apply_mirrored,
+};
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
 use crate::visual_state::CinematicFade;
@@ -125,6 +129,9 @@ pub fn draw_nintendo_logo<H: Host + ?Sized>(game: &mut H) {
     );
 }
 
+/// The producer name of the logo's display commands.
+const LOGO: &str = "nintendo logo";
+
 /// The Nintendo logo coroutine: set up the display, then fade the logo in,
 /// hold it and fade it out, yielding to the frame loop at each refresh.
 /// Was `InitializeIoDisplayLogo_Async`.
@@ -132,10 +139,10 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
     crate::probe::hit("coroutine.logo");
     let mut stage = game.screen_primary();
     if stage == 0 {
-        crate::display::sequence::write_register_and_mirror(
+        apply_mirrored(
             game,
-            reg::INIDISP as u16,
-            0x8f,
+            LOGO,
+            Control::Brightness(Brightness::BLANK_FULL),
             Field::Brightness,
             false,
         );
@@ -146,37 +153,128 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             session.presentation.clear_samus_requests();
         });
         crate::display_refresh::initialize_io_and_oam(None, game);
-        crate::display::sequence::register_writes! { game;
-            mirror(reg::BGMODE as u16, 1, Field::Mode, false); mirror(reg::MOSAIC as u16, 0, Field::Mosaic, false);
-            mirror(reg::BG1SC as u16, 0, Field::Screens0, false); mirror(reg::BG2SC as u16, 0, Field::Screens1, false);
-            mirror(reg::BG3SC as u16, 0, Field::Screens2, false); mirror(reg::BG4SC as u16, 0, Field::Screens3, false);
-            mirror(reg::BG12NBA as u16, 0, Field::Characters0, false); mirror(reg::BG34NBA as u16, 0, Field::Characters1, false);
-            byte(reg::BG1HOFS as u16, 0); byte(reg::BG1HOFS as u16, 0);
-            byte(reg::BG1VOFS as u16, 0); byte(reg::BG1VOFS as u16, 0);
-            byte(reg::BG2HOFS as u16, 0); byte(reg::BG2HOFS as u16, 0);
-            byte(reg::BG2VOFS as u16, 0); byte(reg::BG2VOFS as u16, 0);
-            byte(reg::BG3HOFS as u16, 0); byte(reg::BG3HOFS as u16, 0);
-            byte(reg::BG3VOFS as u16, 0); byte(reg::BG3VOFS as u16, 0);
-            byte(reg::BG4HOFS as u16, 0); byte(reg::BG4HOFS as u16, 0);
-            byte(reg::BG4VOFS as u16, 0); byte(reg::BG4VOFS as u16, 0);
-            byte(reg::VMAIN as u16, 0); mirror(reg::M7SEL as u16, 0, Field::AffineSelection, false);
-            byte(reg::M7A as u16, 0); byte(reg::M7B as u16, 0);
-            byte(reg::M7C as u16, 0); byte(reg::M7D as u16, 0);
-            byte(reg::M7X as u16, 0); byte(reg::M7Y as u16, 0);
-            mirror(reg::W12SEL as u16, 0, Field::WindowSelection0, false); mirror(reg::W34SEL as u16, 0, Field::WindowSelection1, false);
-            mirror(reg::WOBJSEL as u16, 0, Field::WindowSelection2, false); mirror(reg::WH0 as u16, 0, Field::WindowPositions0, false);
-            mirror(reg::WH1 as u16, 0, Field::WindowPositions1, false); mirror(reg::WH2 as u16, 0, Field::WindowPositions2, false);
-            mirror(reg::WH3 as u16, 0, Field::WindowPositions3, false); mirror(reg::WBGLOG as u16, 0, Field::WindowLogic0, false);
-            mirror(reg::WOBJLOG as u16, 0, Field::WindowLogic1, false); mirror(reg::TM as u16, 0x10, Field::MainLayers, false);
-            mirror(reg::TMW as u16, 0, Field::MainWindow, false); mirror(reg::TS as u16, 0, Field::SubLayers, false);
-            mirror(reg::TSW as u16, 0, Field::SubWindow, false); mirror(reg::CGWSEL as u16, 0, Field::NextColorSelection, false);
-            mirror(reg::CGADSUB as u16, 0, Field::NextColorMath, false); byte(reg::COLDATA as u16, 0xe0);
-        }
-        set_fixed_color([32, 64, 0x80], game);
-        crate::display::sequence::write_register_and_mirror(
+        apply_controls(
             game,
-            reg::SETINI as u16,
-            0,
+            LOGO,
+            &[
+                (Control::BackgroundMode(1), Mirror::After(Field::Mode)),
+                (Control::Mosaic(0), Mirror::After(Field::Mosaic)),
+                (
+                    Control::Tilemap(Background::Bg1, 0),
+                    Mirror::After(Field::Screens0),
+                ),
+                (
+                    Control::Tilemap(Background::Bg2, 0),
+                    Mirror::After(Field::Screens1),
+                ),
+                (
+                    Control::Tilemap(Background::Bg3, 0),
+                    Mirror::After(Field::Screens2),
+                ),
+                (
+                    Control::Tilemap(Background::Bg4, 0),
+                    Mirror::After(Field::Screens3),
+                ),
+                (
+                    Control::CharactersBg1Bg2(0),
+                    Mirror::After(Field::Characters0),
+                ),
+                (
+                    Control::CharactersBg3Bg4(0),
+                    Mirror::After(Field::Characters1),
+                ),
+            ],
+        );
+        for background in Background::ALL {
+            for axis in [Axis::Horizontal, Axis::Vertical] {
+                let scroll = ScrollOffset { background, axis };
+                game.apply(LOGO, Command::Scroll { scroll, offset: 0 });
+            }
+        }
+        apply_controls(
+            game,
+            LOGO,
+            &[
+                (Control::VramStep(0), Mirror::None),
+                (
+                    Control::Mode7Selection(0),
+                    Mirror::After(Field::AffineSelection),
+                ),
+            ],
+        );
+        // One byte into each Mode 7 latch, as the original wrote.
+        for parameter in Mode7Parameter::ALL {
+            game.apply(LOGO, Command::Control(Control::Mode7Latch(parameter, 0)));
+        }
+        apply_controls(
+            game,
+            LOGO,
+            &[
+                (
+                    Control::WindowsBg1Bg2(0),
+                    Mirror::After(Field::WindowSelection0),
+                ),
+                (
+                    Control::WindowsBg3Bg4(0),
+                    Mirror::After(Field::WindowSelection1),
+                ),
+                (
+                    Control::WindowsSpritesColor(0),
+                    Mirror::After(Field::WindowSelection2),
+                ),
+                (
+                    Control::Window1Left(0),
+                    Mirror::After(Field::WindowPositions0),
+                ),
+                (
+                    Control::Window1Right(0),
+                    Mirror::After(Field::WindowPositions1),
+                ),
+                (
+                    Control::Window2Left(0),
+                    Mirror::After(Field::WindowPositions2),
+                ),
+                (
+                    Control::Window2Right(0),
+                    Mirror::After(Field::WindowPositions3),
+                ),
+                (
+                    Control::WindowLogicBackgrounds(0),
+                    Mirror::After(Field::WindowLogic0),
+                ),
+                (
+                    Control::WindowLogicSpritesColor(0),
+                    Mirror::After(Field::WindowLogic1),
+                ),
+                (
+                    Control::MainScreen(Layers::SPRITES),
+                    Mirror::After(Field::MainLayers),
+                ),
+                (
+                    Control::MainWindowMask(Layers::NONE),
+                    Mirror::After(Field::MainWindow),
+                ),
+                (
+                    Control::SubScreen(Layers::NONE),
+                    Mirror::After(Field::SubLayers),
+                ),
+                (
+                    Control::SubWindowMask(Layers::NONE),
+                    Mirror::After(Field::SubWindow),
+                ),
+                (
+                    Control::ColorSelection(0),
+                    Mirror::After(Field::NextColorSelection),
+                ),
+                (Control::ColorMath(0), Mirror::After(Field::NextColorMath)),
+            ],
+        );
+        game.apply(LOGO, Command::FixedColor(FixedColor::all(0)));
+        set_fixed_color([32, 64, 0x80], game);
+        apply_mirrored(
+            game,
+            LOGO,
+            Control::ScreenSettings(0),
             Field::Geometry,
             false,
         );
@@ -214,10 +312,10 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
                     crate::screen_fade::store(game, 1, 1);
                 }
                 6 => {
-                    crate::display::sequence::write_register_and_mirror(
+                    apply_mirrored(
                         game,
-                        reg::INIDISP as u16,
-                        0x8f,
+                        LOGO,
+                        Control::Brightness(Brightness::BLANK_FULL),
                         Field::Brightness,
                         false,
                     );

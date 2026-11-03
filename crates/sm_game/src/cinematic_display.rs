@@ -3,22 +3,24 @@ use crate::cinematic::CinematicDestination;
 use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::cinematic_state::Cinematic;
-use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
+use crate::display::control::{Brightness, FixedColor, Layers};
 use crate::display::preparation::Field;
+use crate::display::video::{
+    Background, Command, Control, Mirror, Mode7Parameter, apply_controls, apply_mirrored,
+};
 use crate::menu_state::OptionsMenu;
 use crate::menus::prelude::display_scroll;
 use crate::presentation_workspace::{Point, Role};
 use crate::word_transfers::WordEndpoint;
+
+/// The producer name of the cinematic display setup's commands.
+const CINEMATIC: &str = "cinematic display";
 
 pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     display: crate::visual_state::CinematicDisplay,
     cine: &mut Cinematic,
     game: &mut H,
 ) {
-    use crate::display::registers::{
-        BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, M7SEL, OBSEL,
-        SETINI, TM, VMAIN,
-    };
     use crate::visual_state::CinematicDisplay::*;
     let title = display == Title;
     let intro = display == Intro;
@@ -39,62 +41,179 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     } else {
         0
     };
-    crate::display::sequence::register_writes! { game;
-        show_mirror(Brightness::BLANK_DARK, Field::Brightness, false); mirror(OBSEL as u16, sprites, Field::ObjectLayout, false);
-        mirror(BGMODE as u16, mode, Field::Mode, false); mirror(M7SEL as u16, selection, Field::AffineSelection, false);
-    }
+    apply_controls(
+        game,
+        CINEMATIC,
+        &[
+            (
+                Control::Brightness(Brightness::BLANK_DARK),
+                Mirror::After(Field::Brightness),
+            ),
+            (
+                Control::ObjectLayout(sprites),
+                Mirror::After(Field::ObjectLayout),
+            ),
+            (Control::BackgroundMode(mode), Mirror::After(Field::Mode)),
+            (
+                Control::Mode7Selection(selection),
+                Mirror::After(Field::AffineSelection),
+            ),
+        ],
+    );
     match display {
         Title | Station | Escape => {
             crate::frame_display_byte!(game, Field::Screens0 => 0);
-            crate::display::sequence::register_writes! { game;
-                mirror(BG1SC as u16, 0, Field::Screens1, false); mirror(BG2SC as u16, 0, Field::Screens2, false);
-                mirror(BG3SC as u16, 0, Field::Screens3, false); mirror(BG4SC as u16, 0, Field::Characters0, false);
-                mirror(BG12NBA as u16, 0, Field::Characters1, false); byte(BG34NBA as u16, 0);
-            }
+            // Each mirror is one field on from its control's, as the original stores them.
+            apply_controls(
+                game,
+                CINEMATIC,
+                &[
+                    (
+                        Control::Tilemap(Background::Bg1, 0),
+                        Mirror::After(Field::Screens1),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg2, 0),
+                        Mirror::After(Field::Screens2),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg3, 0),
+                        Mirror::After(Field::Screens3),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg4, 0),
+                        Mirror::After(Field::Characters0),
+                    ),
+                    (
+                        Control::CharactersBg1Bg2(0),
+                        Mirror::After(Field::Characters1),
+                    ),
+                    (Control::CharactersBg3Bg4(0), Mirror::None),
+                ],
+            );
         }
         Intro => {
-            crate::display::sequence::register_writes! { game;
-                mirror(BG1SC as u16, 0x50, Field::Screens0, true); mirror(BG2SC as u16, 0x48, Field::Screens1, true);
-                mirror(BG3SC as u16, 0x4c, Field::Screens2, true);
-            }
+            apply_controls(
+                game,
+                CINEMATIC,
+                &[
+                    (
+                        Control::Tilemap(Background::Bg1, 0x50),
+                        Mirror::Before(Field::Screens0),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg2, 0x48),
+                        Mirror::Before(Field::Screens1),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg3, 0x4c),
+                        Mirror::Before(Field::Screens2),
+                    ),
+                ],
+            );
             crate::frame_display_byte!(game, Field::Screens3 => 0);
-            crate::display::sequence::register_writes! { game;
-                mirror(BG4SC as u16, 0, Field::Characters0, false); byte(BG12NBA as u16, 0);
-                mirror(BG34NBA as u16, 4, Field::Characters1, true);
-            }
+            apply_controls(
+                game,
+                CINEMATIC,
+                &[
+                    (
+                        Control::Tilemap(Background::Bg4, 0),
+                        Mirror::After(Field::Characters0),
+                    ),
+                    (Control::CharactersBg1Bg2(0), Mirror::None),
+                    (
+                        Control::CharactersBg3Bg4(4),
+                        Mirror::Before(Field::Characters1),
+                    ),
+                ],
+            );
         }
         Landing => {
-            crate::display::sequence::write_register_and_mirror(
+            apply_mirrored(
                 game,
-                BG1SC as u16,
-                0x5c,
+                CINEMATIC,
+                Control::Tilemap(Background::Bg1, 0x5c),
                 Field::Screens0,
                 true,
             );
             crate::frame_display_byte!(game, Field::Screens1 => 0);
-            crate::display::sequence::register_writes! { game;
-                mirror(BG2SC as u16, 0, Field::Screens2, false); mirror(BG3SC as u16, 0, Field::Screens3, false);
-                byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, Field::Characters0, true);
-                mirror(BG34NBA as u16, 0, Field::Characters1, true);
-            }
+            apply_controls(
+                game,
+                CINEMATIC,
+                &[
+                    (
+                        Control::Tilemap(Background::Bg2, 0),
+                        Mirror::After(Field::Screens2),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg3, 0),
+                        Mirror::After(Field::Screens3),
+                    ),
+                    (Control::Tilemap(Background::Bg4, 0), Mirror::None),
+                    (
+                        Control::CharactersBg1Bg2(6),
+                        Mirror::Before(Field::Characters0),
+                    ),
+                    (
+                        Control::CharactersBg3Bg4(0),
+                        Mirror::Before(Field::Characters1),
+                    ),
+                ],
+            );
         }
         Credits => {
-            crate::display::sequence::register_writes! { game;
-                mirror(BG1SC as u16, 0x48, Field::Screens0, true); mirror(BG2SC as u16, 0x4c, Field::Screens1, true);
-                mirror(BG3SC as u16, 0x24, Field::Screens2, true); mirror(BG4SC as u16, 0, Field::Screens3, true);
-                mirror(BG12NBA as u16, 0x54, Field::Characters0, true); mirror(BG34NBA as u16, 2, Field::Characters1, true);
-            }
+            apply_controls(
+                game,
+                CINEMATIC,
+                &[
+                    (
+                        Control::Tilemap(Background::Bg1, 0x48),
+                        Mirror::Before(Field::Screens0),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg2, 0x4c),
+                        Mirror::Before(Field::Screens1),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg3, 0x24),
+                        Mirror::Before(Field::Screens2),
+                    ),
+                    (
+                        Control::Tilemap(Background::Bg4, 0),
+                        Mirror::Before(Field::Screens3),
+                    ),
+                    (
+                        Control::CharactersBg1Bg2(0x54),
+                        Mirror::Before(Field::Characters0),
+                    ),
+                    (
+                        Control::CharactersBg3Bg4(2),
+                        Mirror::Before(Field::Characters1),
+                    ),
+                ],
+            );
         }
     }
     let layers = match display {
-        Title => 0x10,
-        Intro => 4,
-        Credits => 1,
-        _ => 0x11,
+        Title => Layers::SPRITES,
+        Intro => Layers::BG3,
+        Credits => Layers::BG1,
+        _ => Layers::BG1_SPRITES,
     };
-    crate::display::sequence::register_writes! { game;
-        mirror(TM as u16, layers, Field::MainLayers, false); show_mirror(SubScreen(Layers::NONE), Field::SubLayers, false);
-    }
+    apply_controls(
+        game,
+        CINEMATIC,
+        &[
+            (
+                Control::MainScreen(layers),
+                Mirror::After(Field::MainLayers),
+            ),
+            (
+                Control::SubScreen(Layers::NONE),
+                Mirror::After(Field::SubLayers),
+            ),
+        ],
+    );
     if tiled {
         for field in [
             Field::WindowSelection0,
@@ -123,23 +242,33 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         }
         return;
     }
-    crate::display::sequence::register_writes! { game;
-        show_mirror(MainWindowMask(Layers::NONE), Field::MainWindow, false); byte(VMAIN as u16, 0);
-        mirror(CGWSEL as u16, 0, Field::NextColorSelection, false); mirror(CGADSUB as u16, 0, Field::NextColorMath, false);
-    }
+    apply_controls(
+        game,
+        CINEMATIC,
+        &[
+            (
+                Control::MainWindowMask(Layers::NONE),
+                Mirror::After(Field::MainWindow),
+            ),
+            (Control::VramStep(0), Mirror::None),
+            (
+                Control::ColorSelection(0),
+                Mirror::After(Field::NextColorSelection),
+            ),
+            (Control::ColorMath(0), Mirror::After(Field::NextColorMath)),
+        ],
+    );
     if escape {
         crate::frame_display_byte!(game, Field::ColorSelection => 0);
         crate::frame_display_byte!(game, Field::ColorMath => 0);
     }
-    // One COLDATA write, as the compat sink did.
-    crate::display::sequence::register_writes! { game;
-        show(crate::display::control::FixedColor::all(0));
-    }
+    // One fixed-colour write for all three channels, as the original did.
+    game.apply(CINEMATIC, Command::FixedColor(FixedColor::all(0)));
     if display != Station {
-        crate::display::sequence::write_register_and_mirror(
+        apply_mirrored(
             game,
-            SETINI as u16,
-            0,
+            CINEMATIC,
+            Control::ScreenSettings(0),
             Field::Geometry,
             false,
         );
@@ -243,15 +372,14 @@ pub fn reset_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
     set_mode7_transform(transform, game);
 }
 
-/// Each register write is followed by its RAM mirror word before the next
-/// register, as the original did.
+/// Each parameter's 16-bit store is followed by its RAM mirror word before the
+/// next parameter, as the original did. The store's high byte also reaches the
+/// next register up, as a word store does.
 fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
     transform: crate::display::control::Mode7Transform,
     game: &mut H,
 ) {
     use crate::display::preparation::Place;
-    use crate::display::registers::{M7A, M7B, M7C, M7D, M7X, M7Y};
-    let registers = [M7A, M7B, M7C, M7D, M7X, M7Y];
     let mirrors = [
         (Field::AffineWords0Low, Field::AffineWords0High),
         (Field::AffineWords1Low, Field::AffineWords1High),
@@ -260,10 +388,12 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
         (Field::AffineWords4Low, Field::AffineWords4High),
         (Field::AffineWords5Low, Field::AffineWords5High),
     ];
-    for ((register, (low, high)), value) in
-        registers.into_iter().zip(mirrors).zip(transform.words())
+    for ((parameter, (low, high)), value) in Mode7Parameter::ALL
+        .into_iter()
+        .zip(mirrors)
+        .zip(transform.words())
     {
-        game.write_register_word(register as u16, value);
+        game.apply(CINEMATIC, Command::Mode7Word(parameter, value));
         Place::Controls(low, high).write(game, value);
     }
 }

@@ -190,12 +190,17 @@ pub fn setup_transfer<H: crate::display::sequence::Registers + ?Sized>(
     game.write_register_word(DAS1L as u16, bytes);
 }
 
-/// Immediate DMA starts: register writes, and a start ($420B) that may read
-/// the room's prepared assets instead of the loaded image.
-pub trait RoomDma: crate::display::sequence::Registers {
-    fn start_room_dma(
+/// Immediate copies to VRAM, whose source may be the room's prepared assets
+/// instead of the loaded image.
+pub trait RoomDma {
+    /// Copy `bytes` from `source` to VRAM word `address` now, under forced
+    /// blank, then show the screen at full brightness. The host reads
+    /// `assets` in place of the loaded image when they are given.
+    fn copy_to_vram_now(
         &mut self,
-        mask: u8,
+        address: u16,
+        source: Source,
+        bytes: u16,
         assets: Option<&crate::room_entry::prepared_assets::PreparedRoomAssets>,
     );
 }
@@ -209,13 +214,10 @@ pub fn copy_to_vram_now<H: RoomDma + ?Sized>(
     assets: Option<&crate::room_entry::prepared_assets::PreparedRoomAssets>,
     game: &mut H,
 ) {
-    use crate::display::control::{Brightness, DisplayRegister as _};
-    use crate::display::registers::{INIDISP, VMADDL, VMAIN};
-    let blank = Brightness::BLANK_DARK;
-    game.write_register(blank.register(), blank.value());
-    game.write_register_word(VMADDL as u16, destination);
-    setup_transfer(0x1801, source, size, game);
-    game.write_register(VMAIN as u16, 0x80);
-    game.start_room_dma(2, assets);
-    game.write_register(INIDISP as u16, Brightness::FULL.byte());
+    let [address_low, address_high, bank, _] = source.to_le_bytes();
+    let source = Source {
+        address: u16::from_le_bytes([address_low, address_high]),
+        bank,
+    };
+    game.copy_to_vram_now(destination, source, size, assets);
 }

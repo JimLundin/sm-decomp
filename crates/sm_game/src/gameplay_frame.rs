@@ -9,8 +9,9 @@ use crate::constants::game_states::*;
 use crate::constants::loading_game_states::*;
 use crate::demo_rooms;
 use crate::display::preparation::Field as DisplayField;
-use crate::display::registers::{HDMAEN, MDMAEN, VMADDH, VMADDL, VMAIN};
-use crate::display::sequence::{register_writes, write_register_and_mirror};
+use crate::display::preparation::Store;
+use crate::display::transfer::Source;
+use crate::display::video::{Command, Control, apply_mirrored};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
@@ -601,7 +602,13 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
 /// Pause phase: enter the pause screen.
 fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     crate::hdma_objects::set_hdma_enabled(false, game);
-    write_register_and_mirror(game, HDMAEN as u16, 0, DisplayField::HdmaEnable, true);
+    apply_mirrored(
+        game,
+        "pause",
+        Control::HdmaChannels(0),
+        DisplayField::HdmaEnable,
+        true,
+    );
     animated_tiles::set_enabled(game.runtime().session_mut(), false);
     display_refresh::capture_pause_background(game);
     match pause_controls::hook_address(true, game) {
@@ -670,7 +677,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
         }
         display_refresh::pause_graphics(false, game);
         pause_controls::resume(game);
-        game.write_register_word(MDMAEN as u16, 0);
+        game.apply("unpause", Command::StopDma);
         crate::display_refresh::enable(false, game);
         game.disable_scanline_irq();
         crate::room_entry::installation::load_tiles_and_palette(&mut game.runtime());
@@ -890,12 +897,20 @@ fn prepare_player_projectiles<H: Host>(game: &mut H) {
 
 /// Upload the options screen tiles.
 fn upload_options_tiles<H: Host>(game: &mut H) {
-    register_writes! { game;
-        mirror(VMADDL as u16, 0, DisplayField::ColorMath, true); byte(VMADDH as u16, 0x58);
-        byte(VMAIN as u16, 0x80);
-    }
-    crate::display::transfer::setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x8edc00, 0x800, game);
-    game.write_register(MDMAEN as u16, 2);
+    // The original also stores the VRAM address's low byte (0) to the colour
+    // math mirror, before the port.
+    game.store_display_control_byte(DisplayField::ColorMath, 0, Store::Named);
+    game.apply(
+        "options tiles",
+        Command::TilesNowBytePort {
+            address: 0x5800,
+            source: Source {
+                address: 0xdc00,
+                bank: 0x8e,
+            },
+            bytes: 0x800,
+        },
+    );
 }
 
 /// Clear HDMA and the scanline IRQ, then reset the gameplay layers.
