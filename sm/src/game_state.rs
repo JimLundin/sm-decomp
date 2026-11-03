@@ -5551,6 +5551,13 @@ impl sm_game::menus::host::MapFacts for Game {
         let at = 0xd8f8usize.checked_add(offset).expect("station offset");
         u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
     }
+    fn used_station_byte(&self, offset: usize) -> u8 {
+        self.compatibility_byte(0xd8f8usize.checked_add(offset).expect("station offset"))
+    }
+    fn store_used_station_byte(&mut self, offset: usize, value: u8) {
+        let at = 0xd8f8usize.checked_add(offset).expect("station offset");
+        self.compatibility_write_byte(at, value);
+    }
 }
 
 #[forbid(unsafe_code)]

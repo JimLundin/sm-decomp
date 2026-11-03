@@ -3181,6 +3181,13 @@ impl sm_game::menus::host::MapFacts for Runtime<'_> {
         let at = 0xd8f8usize.checked_add(offset).expect("station offset");
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
     }
+    fn used_station_byte(&self, offset: usize) -> u8 {
+        self.byte(0xd8f8usize.checked_add(offset).expect("station offset"))
+    }
+    fn store_used_station_byte(&mut self, offset: usize, value: u8) {
+        let at = 0xd8f8usize.checked_add(offset).expect("station offset");
+        self.set_byte(at, value);
+    }
 }
 
 #[forbid(unsafe_code)]
