@@ -256,14 +256,36 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     false
 }
 
+/// Whether both bytes of the word at `at` project from one word field: `at`
+/// is even and neither byte is a control lane or a byte field.
+fn is_whole_word(s: &Session, at: usize) -> bool {
+    at.is_multiple_of(2)
+        && !(0x1778..0x1784).contains(&at)
+        && !(0x1778..0x1784).contains(&(at + 1))
+        && common_byte!(s, at, (&)).is_none()
+        && common_byte!(s, at + 1, (&)).is_none()
+}
+
 /// Imports only new common fields after a whole-span preflight. No partial
 /// Session mutation on short input, and no identity/lifetime reconstruction.
+/// A word whose bytes share one field is stored at once, as its two byte
+/// stores would leave it.
 pub fn import_common(s: &mut Session, bytes: &impl Fn(usize) -> u8, byte_len: usize) {
     assert!(byte_len >= COMMON_END, "short actor common import");
     for (start, end) in COMMON_RANGES {
-        for at in start..end {
+        let mut at = start;
+        while at < end {
+            if at + 1 < end
+                && is_whole_word(s, at)
+                && let Some(word) = common_word!(s, at, (&mut))
+            {
+                *word = u16::from_le_bytes([bytes(at), bytes(at + 1)]);
+                at += 2;
+                continue;
+            }
             let written = write_projected_byte(s, at, bytes(at));
             debug_assert!(written, "missing actor common byte {at:x}");
+            at += 1;
         }
     }
 }
@@ -272,9 +294,15 @@ pub fn import_common(s: &mut Session, bytes: &impl Fn(usize) -> u8, byte_len: us
 pub fn visit_common(s: &Session, mut visit: impl FnMut(usize, u16)) {
     for (start, end) in COMMON_RANGES {
         for at in (start..end).step_by(2) {
-            let low = projected_byte(s, at).expect("actor common low byte");
-            let high = projected_byte(s, at + 1).expect("actor common high byte");
-            visit(at, u16::from_le_bytes([low, high]));
+            let whole = is_whole_word(s, at)
+                .then(|| common_word!(s, at, (&)).copied())
+                .flatten();
+            let word = whole.unwrap_or_else(|| {
+                let low = projected_byte(s, at).expect("actor common low byte");
+                let high = projected_byte(s, at + 1).expect("actor common high byte");
+                u16::from_le_bytes([low, high])
+            });
+            visit(at, word);
         }
     }
 }
@@ -401,3 +429,39 @@ pub fn write_spawn_changes<H: ?Sized>(
 
 // The supplied audio component extends this codec's explicit LE field encoding.
 // It shares the existing bounded checkpoint cursor, with no machine/RAM access.
+
+#[cfg(test)]
+mod word_paths {
+    use super::*;
+    use crate::room_entry::world::WorldBinding;
+
+    fn pattern(at: usize) -> u8 {
+        (at.wrapping_mul(7) ^ (at >> 8)) as u8
+    }
+
+    /// The word paths of import_common and visit_common store and emit what
+    /// the byte-by-byte projection does.
+    #[test]
+    fn word_paths_match_the_byte_projection() {
+        let mut by_word = Session::with_world(WorldBinding::canonical_legacy());
+        import_common(&mut by_word, &pattern, COMMON_END);
+        let mut by_byte = Session::with_world(WorldBinding::canonical_legacy());
+        for (start, end) in COMMON_RANGES {
+            for at in start..end {
+                write_projected_byte(&mut by_byte, at, pattern(at));
+            }
+        }
+        assert!(by_word == by_byte, "import_common differs from byte stores");
+        let mut visited = Vec::new();
+        visit_common(&by_word, |at, word| visited.push((at, word)));
+        let mut expected = Vec::new();
+        for (start, end) in COMMON_RANGES {
+            for at in (start..end).step_by(2) {
+                let low = projected_byte(&by_word, at).unwrap();
+                let high = projected_byte(&by_word, at + 1).unwrap();
+                expected.push((at, u16::from_le_bytes([low, high])));
+            }
+        }
+        assert_eq!(visited, expected);
+    }
+}
