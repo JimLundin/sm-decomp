@@ -1,21 +1,38 @@
 //! Yapping Maw, the pincer worm that snaps Samus out of the air (bank
 //! $A8:9F4F-$A8:A8EE): reach, articulated body, grip and attachments.
 //! RAM words remain authoritative; operand writes run immediately through the caller.
-use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::{BossLease, steps};
 use crate::actors::host::{Shot, abs16};
 use crate::actors::layouts::EnemyLayout104;
 use crate::actors::slot_view::{SlotState, extended_var, slot_view};
 use crate::cartridge::rom_table_word;
+use crate::enemy_projectiles::attachments_spore_maw;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
 use crate::legacy_overflow;
 use crate::player_transitions::state::InputMode;
+use crate::sprite_effect_controllers;
+use crate::sprite_effect_state::LegacySpriteHandle;
 use core::mem::offset_of;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with Yapping Maw's effects.
-pub trait Lease: BossLease<Game: Host> + SlotState {}
-impl<T: BossLease<Game: Host> + SlotState + ?Sized> Lease for T {}
+pub trait Lease:
+    BossLease<Game: Host>
+    + SlotState
+    + crate::actors::effects::ActorHost
+    + crate::sprite_effect_host::Host
+    + crate::enemy_projectiles::host::Host
+{
+}
+impl<T> Lease for T where
+    T: BossLease<Game: Host>
+        + SlotState
+        + crate::actors::effects::ActorHost
+        + crate::sprite_effect_host::Host
+        + crate::enemy_projectiles::host::Host
+{
+}
 
 slot_view! {
     /// Yapping Maw's slot: its function, bend angle (whole and sub), angular
@@ -150,18 +167,9 @@ const SIGN: u16 = 0x8000;
 
 /// What Yapping Maw needs beyond the shared actor operations.
 pub trait Host: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess {
-    /// Create a sprite object of `kind` at (`x`, `y`); its handle.
-    fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;
-    fn maw_appearance(&mut self, handle: u16, appearance: u16, enemy: u16);
-    fn retire_sprite(&mut self, handle: u16);
-    /// (distance, direction) from `origin` to `target`.
-    fn distance_and_direction(&mut self, origin: Point, target: Point) -> (u16, u16);
     /// Run Samus command `command`.
     fn command_player(&mut self, command: u16);
     fn update_maw_visibility(&mut self, actor: i32);
-    fn update_maw_segment(&mut self, part: u8);
-    fn update_maw_palette(&mut self, handle: u16);
-    fn update_frozen_enemy(&mut self);
 }
 
 /// Initialisation AI - Yapping Maw ($A8:A148).
@@ -213,7 +221,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     let view = YappingMaw::of(game, maw);
     let x = view.actor().x.whole;
     let y = displacement.wrapping_add(view.actor().y.whole);
-    let sprite = game.foreign(|game| game.create_sprite(x, y, sprite_kind, appearance));
+    let sprite = steps::create_sprite_appearing(game, x, y, sprite_kind, appearance);
     *YappingMawEdit::of(game, sprite_owner).sprite_object() = sprite;
 }
 /// Yapping maw function - neutral ($A8:A235): wait for Samus in reach.
@@ -228,8 +236,9 @@ fn neutral<L: Lease>(game: &mut L) {
         x: game.player_x(),
         y: game.player_y(),
     };
-    let (pair_distance, pair_direction) =
-        game.foreign(|game| game.distance_and_direction(origin, target));
+    let pair = game
+        .owned_step(|game| crate::actors::queries::distance_and_direction(game, origin, target));
+    let (pair_distance, pair_direction) = (pair.distance, pair.direction);
     let distance = abs16(pair_distance);
     let proximity = YappingMaw::of(game, maw).proximity();
     let mut edit = YappingMawEdit::of(game, maw);
@@ -522,7 +531,7 @@ pub fn main_ai<L: Lease>(game: &mut L, mut write_operand: impl FnMut(u8, &mut L)
 }
 pub fn update_segments<L: Lease>(game: &mut L) {
     for part in (0..4).rev() {
-        game.foreign(|game| game.update_maw_segment(part));
+        game.owned_step(|game| attachments_spore_maw::update_maw_segment(part, game));
     }
 }
 /// Enemy touch - Yapping Maw ($A8:A799): grab Samus.
@@ -552,7 +561,14 @@ pub fn appearance<L: Lease>(game: &mut L) {
             legacy_overflow::slot_word(game, at(offset_of!(EnemyLayout104, var_46))),
         )
     };
-    game.foreign(|game| game.maw_appearance(handle, appearance, enemy));
+    game.owned_step(|game| {
+        sprite_effect_controllers::maw_appearance(
+            game,
+            LegacySpriteHandle(handle),
+            appearance,
+            enemy,
+        );
+    });
 }
 /// Enemy shot - Yapping Maw ($A8:A7BD).
 pub fn shot<L: Lease>(game: &mut L) {
@@ -569,7 +585,7 @@ pub fn shot<L: Lease>(game: &mut L) {
             game.foreign(|game| crate::enemy_projectiles::table::free(projectile, game));
         }
         let handle = YappingMaw::of(game, maw).sprite_object();
-        game.foreign(|game| game.retire_sprite(handle));
+        game.owned_step(|game| sprite_effect_controllers::retire(game, LegacySpriteHandle(handle)));
         release_input(game);
         let maw = game.current_enemy();
         *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
@@ -577,11 +593,11 @@ pub fn shot<L: Lease>(game: &mut L) {
 }
 /// Frozen AI - Yapping Maw ($A8:A835).
 pub fn frozen<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.update_frozen_enemy());
+    game.owned_step(crate::actors::scheduling::update_frozen_enemy);
     let maw = game.current_enemy();
     for part in 0..4 {
         let handle = YappingMaw::of(game, maw).segment_projectile(part);
-        game.foreign(|game| game.update_maw_palette(handle));
+        game.owned_step(|game| attachments_spore_maw::update_maw_palette(handle, game));
     }
     appearance(game);
 }
@@ -590,7 +606,7 @@ pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) ->
     use instruction::*;
     if address == QUEUE_SOUND_IF_ON_SCREEN {
         if YappingMaw::of(game, game.current_enemy()).off_screen() == 0 {
-            game.queue_sound(1, BITE_SOUND, 6);
+            crate::effects::SoundEffects::queue_sound(game, 1, BITE_SOUND, 6);
         }
     } else {
         let maw = game.current_enemy();
