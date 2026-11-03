@@ -373,6 +373,8 @@ pub struct Player {
     pub body_position: Point,
     pub pose: u16,
     pub previous_health_for_flash: u16,
+    /// $0A5E, a word no routine reads; Samus's initialisation stores -2764.
+    pub spare_0a5e: u16,
     pub top_sprite: u16,
     pub bottom_sprite: u16,
     pub scripted_movement_direction: u16,

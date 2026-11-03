@@ -1082,7 +1082,8 @@ checkpoint_fields!(checkpoint_demo, checkpoint_read_demo, crate::player_transiti
     pre_action: checkpoint_word/checkpoint_read_word, delay: checkpoint_word/checkpoint_read_word,
     program: checkpoint_word/checkpoint_read_word, held: checkpoint_word/checkpoint_read_word,
     pressed: checkpoint_word/checkpoint_read_word, enabled: checkpoint_word/checkpoint_read_word,
-    previous_held: checkpoint_word/checkpoint_read_word, previous_pressed: checkpoint_word/checkpoint_read_word);
+    previous_held: checkpoint_word/checkpoint_read_word, previous_pressed: checkpoint_word/checkpoint_read_word,
+    input_frames: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_pose_record, checkpoint_read_pose_record, collision::PoseRecord,
     pose: checkpoint_word/checkpoint_read_word, movement_and_facing: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_history, checkpoint_read_history, collision::PoseHistory,
@@ -1257,6 +1258,7 @@ checkpoint_fields!(checkpoint_player, checkpoint_read_player, Player,
     x: checkpoint_word/checkpoint_read_word, y: checkpoint_word/checkpoint_read_word,
     body_position: checkpoint_point/checkpoint_read_point,
     pose: checkpoint_word/checkpoint_read_word, previous_health_for_flash: checkpoint_word/checkpoint_read_word,
+    spare_0a5e: checkpoint_word/checkpoint_read_word,
     top_sprite: checkpoint_word/checkpoint_read_word, bottom_sprite: checkpoint_word/checkpoint_read_word,
     scripted_movement_direction: checkpoint_word/checkpoint_read_word,
     crouch_transition_work: checkpoint_word/checkpoint_read_word,
@@ -1297,7 +1299,7 @@ impl Player {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("player checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMPLAYER\x04".as_slice());
+        let mut bytes = Vec::from(b"SMPLAYER\x05".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1309,7 +1311,7 @@ impl Player {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMPLAYER\x04" {
+        if read.bytes(9)? != b"SMPLAYER\x05" {
             return Err("unsupported player checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
