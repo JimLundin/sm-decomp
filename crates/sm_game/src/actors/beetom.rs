@@ -5,9 +5,10 @@ use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::sidehopper::initial_hop_phase;
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::controller_state::Word as Input;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::player_projectiles::content::table;
-use crate::ram::words;
+use crate::session_access::SessionAccess as _;
 
 /// A lease on a game whose slots are the Session's typed storage.
 pub trait Lease: ActorLease + SlotState {}
@@ -111,9 +112,10 @@ pub fn initialize(runtime: &mut impl Lease) {
         *part.var_a() = 0;
         *part.button_counter() = BUTTON_PRESSES;
     }
-    let input = runtime.word(words::JOYPAD1_LASTKEYS);
+    let input = *Input::Joypad1Lastkeys.get(&runtime.session().control);
     *BeetomEdit::of(runtime, beetom).previous_input() = input;
-    runtime.write_slice_le(words::RANDOM_NUMBER, 0x17);
+    runtime.session_mut().timing.random_number = 0x17;
+    runtime.words_stored();
     for (hop, (height, step)) in HOPS.into_iter().enumerate() {
         let phase = initial_hop_phase(height, step, runtime.native_image());
         match hop {
@@ -225,12 +227,12 @@ fn hop(runtime: &mut impl Lease, beetom: u16, long: bool, lunge: bool, left: boo
 /// Beetom function - draining Samus - facing left ($A8:BCF8) or right ($A8:BD42).
 fn drain(runtime: &mut impl Lease, beetom: u16, push_left: bool) {
     if Beetom::of(runtime, beetom).button_counter() != 0 {
-        let x = runtime.word(words::SAMUS_X_POS);
+        let x = runtime.session().player.x;
         BeetomEdit::of(runtime, beetom).actor().x.whole = x;
-        let y = runtime.word(words::SAMUS_Y_POS).wrapping_sub(4);
+        let y = runtime.session().player.y.wrapping_sub(4);
         BeetomEdit::of(runtime, beetom).actor().y.whole = y;
         // Update beetom button counter ($A8:BD8C).
-        let input = runtime.word(words::JOYPAD1_LASTKEYS);
+        let input = *Input::Joypad1Lastkeys.get(&runtime.session().control);
         if input != Beetom::of(runtime, beetom).previous_input() {
             let count = Beetom::of(runtime, beetom).button_counter().wrapping_sub(1);
             let mut part = BeetomEdit::of(runtime, beetom);
@@ -263,7 +265,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         }
         DECIDE_ACTION_SAMUS_FAR => {
             runtime.next_random();
-            let random = runtime.word(words::RANDOM_NUMBER);
+            let random = runtime.session().timing.random_number;
             let next = table(runtime, FAR_FUNCTIONS, (random & 7) as isize);
             set_function(runtime, beetom, next);
             *BeetomEdit::of(runtime, beetom).direction() = random & 1;
@@ -368,15 +370,15 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         }
         BeetomEdit::of(runtime, beetom).actor().layer = 2;
         let x = Beetom::of(runtime, beetom).actor().x.whole;
-        let x = runtime.word(words::SAMUS_X_POS).wrapping_sub(x);
+        let x = runtime.session().player.x.wrapping_sub(x);
         *BeetomEdit::of(runtime, beetom).samus_x_offset() = x;
         let y = Beetom::of(runtime, beetom).actor().y.whole;
-        let y = runtime.word(words::SAMUS_Y_POS).wrapping_sub(y);
+        let y = runtime.session().player.y.wrapping_sub(y);
         *BeetomEdit::of(runtime, beetom).samus_y_offset() = y;
     }
-    let hurt = runtime.word(words::SAMUS_CONTACT_DAMAGE_INDEX) != 0 || {
-        if runtime.word(words::RANDOM_ENEMY_COUNTER) & 7 == 7
-            && runtime.word(words::SAMUS_HEALTH).wrapping_sub(30) & SIGN == 0
+    let hurt = runtime.session().player.contact.contact_attack != 0 || {
+        if runtime.session().actors.controls.phase_counter & 7 == 7
+            && runtime.session().inventory.health.current.wrapping_sub(30) & SIGN == 0
         {
             runtime.queue_sound(3, 6, 0x2d); // Health tick.
         }
@@ -384,8 +386,9 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
     };
     if hurt {
         combat::contact_reaction(runtime, DeathHandling::Finalize);
-        runtime.write_slice_le(words::SAMUS_INVINCIBILITY_TIMER, 0);
-        runtime.write_slice_le(words::SAMUS_KNOCKBACK_TIMER, 0);
+        let player = &mut runtime.session_mut().player;
+        player.invincibility = 0;
+        player.knockback_timer = 0;
     }
 }
 /// Enemy shot - beetom ($A8:BEAC): a frozen beetom drops off Samus.
