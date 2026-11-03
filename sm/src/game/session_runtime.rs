@@ -1108,26 +1108,48 @@ pub(crate) fn run_mechanisms(
     game: &mut Game,
     context: sm_game::room_mechanisms::host::CallerContext,
 ) -> u8 {
-    use sm_game::room_mechanisms::host::{CallerContext, Pass, RunResult};
-    let mut pass = match game.ram().read_byte(0x613) {
-        0 => Pass::Instructions,
-        1 => Pass::DisplayMessage,
-        other => Pass::Invalid(other),
-    };
+    let mut pass = mechanism_pass(game.ram().read_byte(0x613));
     let result = {
         let mut runtime = Runtime::new(game);
         sm_game::room_mechanisms::scheduler::advance(&mut runtime, &mut pass)
     };
+    let (resume, yielded) = mechanism_result(context, result);
+    game.compatibility_write_owned_byte(0x613, resume);
+    yielded
+}
+
+/// The gameplay pass's room mechanisms on the lease it holds: the pass byte
+/// ($7E:0613) is read and stored on the lease.
+pub(crate) fn run_mechanisms_in(
+    runtime: &mut Runtime<'_>,
+    context: sm_game::room_mechanisms::host::CallerContext,
+) -> u8 {
+    let mut pass = mechanism_pass(runtime.byte(0x613));
+    let result = sm_game::room_mechanisms::scheduler::advance(runtime, &mut pass);
+    let (resume, yielded) = mechanism_result(context, result);
+    runtime.set_byte(0x613, resume);
+    yielded
+}
+
+fn mechanism_pass(resume: u8) -> sm_game::room_mechanisms::host::Pass {
+    use sm_game::room_mechanisms::host::Pass;
+    match resume {
+        0 => Pass::Instructions,
+        1 => Pass::DisplayMessage,
+        other => Pass::Invalid(other),
+    }
+}
+
+/// The pass byte a run leaves and the value it yields.
+fn mechanism_result(
+    context: sm_game::room_mechanisms::host::CallerContext,
+    result: sm_game::room_mechanisms::host::RunResult,
+) -> (u8, u8) {
+    use sm_game::room_mechanisms::host::{CallerContext, RunResult};
     match context {
         CallerContext::Gameplay | CallerContext::DoorTransition => match result {
-            RunResult::Complete => {
-                game.compatibility_write_owned_byte(0x613, 0);
-                0
-            }
-            RunResult::Yield(value) => {
-                game.compatibility_write_owned_byte(0x613, 1);
-                value.get()
-            }
+            RunResult::Complete => (0, 0),
+            RunResult::Yield(value) => (1, value.get()),
         },
     }
 }

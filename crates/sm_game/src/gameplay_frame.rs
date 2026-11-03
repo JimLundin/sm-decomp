@@ -105,7 +105,6 @@ pub trait Host:
     fn advance_low_health_warning(&mut self);
 
     // Gameplay pass.
-    fn run_room_mechanisms(&mut self) -> u8;
     fn advance_room(&mut self);
 }
 
@@ -116,6 +115,8 @@ pub trait PassLease {
     fn player_projectiles_hit_samus(&mut self);
     /// Samus's frame: the frame handler's beta and gamma work.
     fn advance_player(&mut self);
+    /// The room mechanisms' pass; nonzero when a message box suspends it.
+    fn run_room_mechanisms(&mut self) -> u8;
 }
 
 #[derive(Clone, Copy)]
@@ -850,21 +851,21 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
             },
         );
     }
-    if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
-        // Samus's frame and the enemy projectiles run on one lease.
-        let mut lease = game.runtime();
-        lease.advance_player();
-        enemy_projectiles::lifecycle::advance(&mut lease);
-    }
     if resume != ResumePoint::Skip {
-        let yielded = game.run_room_mechanisms();
-        if yielded != 0 {
-            game.set_resume_point(ResumePoint::RoomObjects as u8);
-            return yielded;
-        }
         {
-            // The animated tiles, contacts, camera, scene, HUD and scrolls run on one lease.
+            // Samus's frame, the enemy projectiles, the room mechanisms, and the animated
+            // tiles, contacts, camera, scene, HUD and scrolls after them run on one lease.
             let mut lease = game.runtime();
+            if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
+                lease.advance_player();
+                enemy_projectiles::lifecycle::advance(&mut lease);
+            }
+            let yielded = lease.run_room_mechanisms();
+            if yielded != 0 {
+                drop(lease);
+                game.set_resume_point(ResumePoint::RoomObjects as u8);
+                return yielded;
+            }
             animated_tiles::advance(&mut lease);
             // This is a new read: earlier callbacks may change interaction policy.
             if lease.session().actors.diagnostics.sprite_contacts_disabled == 0 {

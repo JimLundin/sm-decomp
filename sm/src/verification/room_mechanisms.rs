@@ -206,7 +206,7 @@ unsafe fn execute(id: u32, g: &mut Game, bytes: &mut [u8], image: &RomImage) -> 
                     6 => g.ram().write_byte(0x613, 2),
                     _ => g.ram().write_byte(0x613, 255),
                 }
-                (3, u16::from(mechanisms::run(g)))
+                (3, u16::from(gameplay_mechanisms(g)))
             }
             66..=81 => {
                 let mode = id - 66;
@@ -629,7 +629,7 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &mut [u8], trace: &mut Vec<
                 );
                 poll.returned_byte()
             } else {
-                unsafe { mechanisms::run(g) }
+                gameplay_mechanisms(g)
             };
             if variant == 7 {
                 assert_eq!(
@@ -1031,4 +1031,13 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     }
     bytes.extend_from_slice(&trace);
     Some(bytes)
+}
+
+/// The gameplay pass's room mechanisms with their pass byte on the game, as the door
+/// transition runs them.
+fn gameplay_mechanisms(game: &mut crate::game_state::Game) -> u8 {
+    crate::game::session_runtime::run_mechanisms(
+        game,
+        sm_game::room_mechanisms::host::CallerContext::Gameplay,
+    )
 }

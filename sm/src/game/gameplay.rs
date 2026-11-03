@@ -17,6 +17,9 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn advance_player(&mut self) {
         crate::game::session_runtime::player_update_runtime::advance_frame(self);
     }
+    fn run_room_mechanisms(&mut self) -> u8 {
+        crate::game::room_mechanisms::run(self)
+    }
 }
 
 impl sm_game::gameplay_frame::Host for Game {
@@ -126,9 +129,6 @@ impl sm_game::gameplay_frame::Host for Game {
         crate::game::session_runtime::player_update_runtime::low_health(self);
     }
 
-    fn run_room_mechanisms(&mut self) -> u8 {
-        unsafe { crate::game::room_mechanisms::run(self) }
-    }
     fn advance_room(&mut self) {
         crate::game::room_state::advance_room(self)
     }
