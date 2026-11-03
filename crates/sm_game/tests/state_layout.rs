@@ -1651,6 +1651,37 @@ impl sm_game::sequence_state::Access for Projection {
     }
 }
 
+/// The gameplay flags own the unused bytes between the doors and the stations
+/// ($D8F0..$D8F7) byte by byte; each store reaches only its own byte.
+#[test]
+fn unused_flag_bytes_round_trip_every_byte() {
+    const UNUSED: std::ops::Range<usize> = 0xd8f0..0xd8f8;
+    let base = session();
+    for at in UNUSED {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        assert_eq!(s.gameplay_flags.unused[at - UNUSED.start], value);
+        for other in UNUSED {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [3, 0xd8f0_d8f7] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        assert_eq!(s.gameplay_flags.unused.as_slice(), &ram[UNUSED]);
+        let bytes = encoded(&s);
+        for at in UNUSED {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+        }
+    }
+}
+
 /// The Legacy object staging owns the object table, its high table and the
 /// cursor byte by byte; each store reaches only its own byte.
 #[test]

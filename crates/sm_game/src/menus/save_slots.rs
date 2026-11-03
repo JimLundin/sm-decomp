@@ -186,8 +186,8 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         {
             *flag = 0;
         }
+        flags.unused = [0; 8];
     });
-    crate::word_transfers!(game, ascending, 4; le(UNUSED_WORD_7ED8F0, 0) <- value(0));
     crate::word_transfers!(game, ascending, 896; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
 }
 

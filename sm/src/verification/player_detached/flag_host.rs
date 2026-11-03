@@ -5,7 +5,6 @@ use super::{
 };
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(super) struct ExternalBytes {
-    door_after: u8,
     event_far: u8,
     boss_far: u8,
 }
@@ -23,7 +22,6 @@ fn address(column: LegacyFlagColumn, index: isize) -> usize {
 impl Composed {
     pub(super) fn flag_byte_at(&self, at: usize) -> u8 {
         session_encoding::projected_byte(&self.world.player, at).unwrap_or_else(|| match at {
-            0xd8f0 => self.world.flag_external.door_after,
             0xf81f => self.world.flag_external.event_far,
             0x1d827 => self.world.flag_external.boss_far,
             _ => panic!("unprepared external flag byte {at:x}"),
@@ -34,7 +32,6 @@ impl Composed {
             return;
         }
         match at {
-            0xd8f0 => self.world.flag_external.door_after = value,
             0xf81f => self.world.flag_external.event_far = value,
             0x1d827 => self.world.flag_external.boss_far = value,
             _ => panic!("unprepared external flag byte {at:x}"),

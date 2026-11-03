@@ -6,6 +6,10 @@ pub struct GameplayFlags {
     pub used_room_objects: [u8; 64],
     pub collected_locations: [u8; 64],
     pub opened_doors: [u8; 64],
+    /// The unused bytes between the doors and the stations ($7E:D8F0..$7E:D8F7):
+    /// new games clear them, the demos set them, the save file carries them,
+    /// and the door rules read the first past the last door byte.
+    pub unused: [u8; 8],
     pub used_stations: [u8; 16],
     pub map_stations: [u8; 8],
 }
@@ -19,6 +23,7 @@ impl Default for GameplayFlags {
             used_room_objects: [0; 64],
             collected_locations: [0; 64],
             opened_doors: [0; 64],
+            unused: [0; 8],
             used_stations: [0; 16],
             map_stations: [0; 8],
         }

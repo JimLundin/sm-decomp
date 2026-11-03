@@ -1014,6 +1014,7 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
         (0xd830, s.gameplay_flags.used_room_objects.as_mut_slice()),
         (0xd870, s.gameplay_flags.collected_locations.as_mut_slice()),
         (0xd8b0, s.gameplay_flags.opened_doors.as_mut_slice()),
+        (0xd8f0, s.gameplay_flags.unused.as_mut_slice()),
         (0xd8f8, s.gameplay_flags.used_stations.as_mut_slice()),
         (0xd908, s.gameplay_flags.map_stations.as_mut_slice()),
     ] {
@@ -1240,6 +1241,7 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
         (0xd830, s.gameplay_flags.used_room_objects.as_slice()),
         (0xd870, s.gameplay_flags.collected_locations.as_slice()),
         (0xd8b0, s.gameplay_flags.opened_doors.as_slice()),
+        (0xd8f0, s.gameplay_flags.unused.as_slice()),
         (0xd8f8, s.gameplay_flags.used_stations.as_slice()),
         (0xd908, s.gameplay_flags.map_stations.as_slice()),
     ] {
@@ -1359,6 +1361,9 @@ fn owned_byte(s: &Session, at: usize) -> Option<u8> {
     }
     if (0x945..0x94c).contains(&at) {
         return Some(s.timing.countdown.byte(at - 0x945));
+    }
+    if (0xd8f0..0xd8f8).contains(&at) {
+        return Some(s.gameplay_flags.unused[at - 0xd8f0]);
     }
     if (0xd8f8..0xd908).contains(&at) {
         return Some(s.gameplay_flags.used_stations[at - 0xd8f8]);
@@ -1573,6 +1578,10 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
             6 => c.y = (c.y & 0xff) | (u16::from(value) << 8),
             _ => unreachable!(),
         }
+        return true;
+    }
+    if (0xd8f0..0xd8f8).contains(&at) {
+        s.gameplay_flags.unused[at - 0xd8f0] = value;
         return true;
     }
     if (0xd8f8..0xd908).contains(&at) {
