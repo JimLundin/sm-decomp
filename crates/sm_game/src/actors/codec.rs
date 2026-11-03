@@ -82,9 +82,10 @@ macro_rules! spawn_word {
 // extended RAM 7800..9000 is owned here except the five Botwoon death words
 // (801E, 8020, 803C, 8818, 883E), which keep their own cohort; the bosses'
 // RAM 9000..97DC is owned here too, and the angles 97DC..9800 stay with eproj.
+// The Work Robot's palette cycle D652..D658 is owned here.
 // Lighting 1778..1784 stays with the canonical FX control owner; actor alias
 // readers/writers below resolve that provider without importing/emitting twice.
-const COMMON_RANGES: [(usize, usize); 26] = [
+const COMMON_RANGES: [(usize, usize); 27] = [
     (0x0688, 0x071c),
     (0x2000, 0x3000),
     (0x0e12, 0x0e14),
@@ -109,6 +110,7 @@ const COMMON_RANGES: [(usize, usize); 26] = [
     (0x881a, 0x883e),
     (0x8840, 0x9000),
     (0x9000, 0x97dc),
+    (0xd652, 0xd658),
     (0xef5c, 0xef74),
     (0xef74, 0xef78),
 ];
@@ -127,6 +129,9 @@ macro_rules! common_word {
             at @ 0x2000..=0x2ffe => Some($($borrow)* $s.actors.extended.blocks[4 + (at - 0x2000) / 0x800]
                 [(at - 0x2000) % 0x800 / 2]),
             at @ 0x0688..=0x069a => Some($($borrow)* $s.actors.crocomire_melt.words[(at - 0x0688) / 2]),
+            0xd652 => Some($($borrow)* $s.actors.work_robot_palette.palette_index),
+            0xd654 => Some($($borrow)* $s.actors.work_robot_palette.timer),
+            0xd656 => Some($($borrow)* $s.actors.work_robot_palette.cursor),
             0x0e12 => Some($($borrow)* $s.actors.diagnostics.sprite_contacts_disabled),
             0x0e1c => Some($($borrow)* $s.actors.controls.shake_request),
             0x0e1e => Some($($borrow)* $s.actors.drawing.tilemap_pending),
