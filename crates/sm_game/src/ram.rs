@@ -848,50 +848,35 @@ ram_vars! {
     0x1FF00, uint16 Scalar => [BUG_FIX_COUNTER_BAD];
 }
 
-// Named SNES word reads, assignments and updates share one caller-side interface.
-// `word!(game.field)` reads; `word!(game.field = value)` writes. Arrays use
-// `field[index]`. Updates use an expression `(game.field, |old| value)`, with
-// an optional `reread`. Ordered stores
-// of one literal use `(game, value; field, other[index])`; different values use
-// `(game; field = value; other[index] = next;)`.
+// Named SNES word reads and stores for sm_game's remaining RAM callers; the
+// compatibility layer (sm/src/ram_words.rs) keeps the full interface.
+// `word!(game.field)` reads; `word!(game.field = value)` writes and arrays use
+// `field[index] = value`. `word!(game.field += value)` wraps at 16 bits.
+// Ordered stores of one literal use `(game, value; field, other[index])`;
+// different values use `(game; field = value; other[index] = next;)`.
 //
 // Checked byte places stay at the caller: borrowing the whole Game/RAM here
 // could invalidate retained raw enemy pointers. No reference escapes an access.
 // Odd addresses and signed array offsets outside a named table remain valid.
-// Reads evaluate the index once; assignments evaluate RHS before the
-// destination, retaining RHS temporaries through the store. Updates capture
-// the destination and read its old value before evaluating the RHS. `reread`
-// loads that destination after RHS temporaries are dropped. No value or index
-// is hoisted across ordered stores; update expressions create no closure.
+// Assignments evaluate RHS before the destination, retaining RHS temporaries
+// through the store. An update captures the destination and reads its old
+// value before evaluating the RHS. No value or index is hoisted across
+// ordered stores.
 #[macro_export]
 macro_rules! ram_word {
-    // Compound arithmetic wraps at 16 bits; `&=` keeps the ordinary u16 operation.
-    // Delegate destination capture, old load, RHS evaluation and store to the update arm.
-    ($game:ident.$field:ident$([$index:expr])? &= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old & $value $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old.wrapping_add($value) $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old.wrapping_sub($value) $(, $result)?)
-    };
-    // The promoted subtraction retains its original i32 RHS and final u16 cast,
-    // using ordinary Rust overflow rules before truncation.
-    (checked_i32, $game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) - $value) as u16 $(, $result)?)
-    };
-
-    ($game:ident.$field:ident[$index:expr]) => {
-        $crate::ram_word!(@read $game,
-            $crate::ram_word!(@offset $field[$index]))
-    };
+    ($game:ident.$field:ident += $value:expr $(,)?) => {{
+        let destination = $crate::ram::words::$field;
+        let old = $crate::ram_word!(@read $game, destination);
+        $crate::ram_word!(@write $game, destination, old.wrapping_add($value));
+    }};
     ($game:ident.$field:ident) => {
         $crate::ram_word!(@read $game, $crate::ram::words::$field)
     };
     ($game:ident.$field:ident[$index:expr] = $value:expr $(,)?) => {
         $crate::ram_word!(@write $game,
-            $crate::ram_word!(@offset $field[$index]), $value)
+            $crate::ram::word_arrays::$field
+                .checked_add_signed(($index as isize).checked_mul(2).expect("word index overflow"))
+                .expect("word address outside RAM"), $value)
     };
     ($game:ident.$field:ident = $value:expr $(,)?) => {
         $crate::ram_word!(@write $game, $crate::ram::words::$field, $value)
@@ -901,23 +886,6 @@ macro_rules! ram_word {
     };
     ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
         $($crate::ram_word!($game.$field$([$index])? = $value);)+
-    };
-    ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
-        let destination = $crate::ram_word!(@offset $field[$index]);
-        let $old = $crate::ram_word!(@read $game, destination);
-        $crate::ram_word!(@write $game, destination, $value);
-        $crate::ram_word!(@result $game, destination $(, $result)?)
-    }};
-    ($game:ident.$field:ident, |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
-        let destination = $crate::ram::words::$field;
-        let $old = $crate::ram_word!(@read $game, destination);
-        $crate::ram_word!(@write $game, destination, $value);
-        $crate::ram_word!(@result $game, destination $(, $result)?)
-    }};
-    (@offset $field:ident[$index:expr]) => {
-        $crate::ram::word_arrays::$field
-            .checked_add_signed(($index as isize).checked_mul(2).expect("word index overflow"))
-            .expect("word address outside RAM")
     };
     (@read $game:ident, $offset:expr) => {
         match $offset {
@@ -930,7 +898,7 @@ macro_rules! ram_word {
     };
     (@write $game:ident, $offset:expr, $value:expr) => {
         // Match keeps RHS/index temporaries alive through both stores, unlike
-        // a let-value statement. The caller's semicolon drops them before reread.
+        // a let-value statement.
         match ($value, $offset) {
             (value, offset) => {
                 assert!(offset < 131071, "word address outside RAM");
@@ -940,15 +908,11 @@ macro_rules! ram_word {
             }
         }
     };
-    (@result $game:ident, $destination:ident) => { () };
-    (@result $game:ident, $destination:ident, reread) => {
-        $crate::ram_word!(@read $game, $destination)
-    };
 }
 
 // Checked word access for migrated callers that retain offsets, not pointers.
 // Byte places avoid borrowing the whole RAM array. Assignments evaluate the
-// value before the address; updates capture the address and old value first.
+// value before the address.
 // This smaller interface retains its existing low-byte-first failure prefix.
 #[macro_export]
 macro_rules! ram_checked_word {
@@ -972,11 +936,6 @@ macro_rules! ram_checked_word {
             }
         }
     };
-    ($game:ident, $offset:expr; += $value:expr) => {{
-        let offset: usize = $offset;
-        let old = $crate::ram_checked_word!($game, offset;);
-        $crate::ram_checked_word!($game, offset; = old.wrapping_add($value));
-    }};
 }
 
 /// Named word access through any `CompatibilityRam`; the receiver must have
