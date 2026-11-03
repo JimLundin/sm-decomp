@@ -478,7 +478,23 @@ impl<'g> Runtime<'g> {
     }
     pub(crate) fn refresh_player_observations(&mut self) {
         assert!(self.persistent_is_current(), "Session lease is dirty");
-        self.inputs = encoding::inputs(&|at| self.byte(at));
+        self.inputs = self.observed_inputs();
+    }
+    /// The external observations as `byte` reads them, with the Session's projection of
+    /// every input byte taken at once.
+    fn observed_inputs(&self) -> ExternalInputs {
+        let projection = self
+            .persistent_is_current()
+            .then(|| encoding::InputProjection::new(self.session()));
+        encoding::inputs(&|at| {
+            if (0xb1..0xc1).contains(&at) && !self.display_owned() {
+                return self.game.scroll_byte(at);
+            }
+            projection
+                .as_ref()
+                .and_then(|projection| projection.byte(at))
+                .unwrap_or_else(|| self.game.ram().read_byte(at))
+        })
     }
     fn relinquish(&mut self) {
         if let Some(state) = self.state.take() {
@@ -1942,7 +1958,7 @@ impl sm_game::ram::CompatibilityRam for Runtime<'_> {
         Runtime::set_byte(self, at, value)
     }
     fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
-        crate::projection::observed_inputs(self)
+        Runtime::observed_inputs(self)
     }
 }
 // A register write may read or change RAM (DMA, the WRAM port), so each one

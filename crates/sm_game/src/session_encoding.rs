@@ -1335,6 +1335,10 @@ pub fn encode_spans(s: &Session, mut spans: impl Spans) {
     crate::fx_encoding::encode_sources(s, |at: usize, bytes: &[u8]| span.span(at, bytes));
 }
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    owned_byte(s, at).or_else(|| scalar_byte(s, at))
+}
+/// `projected_byte` before the scalar words.
+fn owned_byte(s: &Session, at: usize) -> Option<u8> {
     if crate::fx_encoding::control_lane(at).is_some() {
         return Some(crate::fx_encoding::control_byte(s, at));
     }
@@ -1455,6 +1459,10 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
         };
         return Some(((s.projectiles.launch.displacements[index] as u32) >> shift) as u8);
     }
+    None
+}
+/// The scalar word byte at `at`: the last word visited that covers it.
+fn scalar_byte(s: &Session, at: usize) -> Option<u8> {
     if !is_scalar_lane(at) {
         return None;
     }
@@ -1466,6 +1474,59 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     };
     scalar_words!(s,select,(&));
     result
+}
+/// The addresses `inputs` reads, sorted.
+fn input_lanes() -> &'static [usize] {
+    static LANES: std::sync::OnceLock<Box<[usize]>> = std::sync::OnceLock::new();
+    LANES.get_or_init(|| {
+        let lanes = std::cell::RefCell::new(Vec::new());
+        inputs(&|at| {
+            lanes.borrow_mut().push(at);
+            0
+        });
+        let mut lanes = lanes.into_inner();
+        lanes.sort_unstable();
+        lanes.dedup();
+        lanes.into_boxed_slice()
+    })
+}
+/// `projected_byte` at the bytes `inputs` reads, taken in one pass over the scalar words
+/// rather than one pass per byte.
+pub struct InputProjection<'s> {
+    session: &'s Session,
+    bytes: Box<[Option<u8>]>,
+}
+impl<'s> InputProjection<'s> {
+    pub fn new(s: &'s Session) -> Self {
+        let lanes = input_lanes();
+        let mut bytes: Box<[Option<u8>]> = lanes.iter().map(|&at| owned_byte(s, at)).collect();
+        let mut scalars = vec![None; lanes.len()];
+        let (first, last) = (lanes[0], lanes[lanes.len() - 1]);
+        let mut select = |base: usize, value: &u16| {
+            for (lane, &byte) in value.to_le_bytes().iter().enumerate() {
+                let at = base + lane;
+                if (first..=last).contains(&at)
+                    && let Ok(index) = lanes.binary_search(&at)
+                {
+                    scalars[index] = Some(byte);
+                }
+            }
+        };
+        scalar_words!(s,select,(&));
+        for ((byte, scalar), &at) in bytes.iter_mut().zip(scalars).zip(lanes) {
+            if byte.is_none() && is_scalar_lane(at) {
+                *byte = scalar;
+            }
+        }
+        Self { session: s, bytes }
+    }
+    /// `projected_byte(s, at)`.
+    pub fn byte(&self, at: usize) -> Option<u8> {
+        match input_lanes().binary_search(&at) {
+            Ok(index) => self.bytes[index],
+            Err(_) => projected_byte(self.session, at),
+        }
+    }
 }
 pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     if crate::fx_encoding::control_lane(at).is_some() {
@@ -1981,6 +2042,40 @@ mod player_lane_tests {
                 super::is_scalar_lane(at),
                 searched.contains(&at),
                 "address {at:#x}"
+            );
+        }
+    }
+
+    /// The input projection answers each byte as `projected_byte` does, including the
+    /// addresses two scalar words cover, where the last word visited holds the byte.
+    #[test]
+    fn the_input_projection_answers_as_projected_byte_does() {
+        let mut s = session();
+        let mut value = 0u16;
+        let mut set = |_: usize, word: &mut u16| {
+            value = value.wrapping_add(0x0103);
+            *word = value;
+        };
+        scalar_words!(s,set,(&mut));
+        for s in [session(), s] {
+            let projection = super::InputProjection::new(&s);
+            for &at in super::input_lanes() {
+                assert_eq!(
+                    projection.byte(at),
+                    projected_byte(&s, at),
+                    "address {at:#x}"
+                );
+            }
+            for at in [0x0, 0x60b] {
+                assert_eq!(
+                    projection.byte(at),
+                    projected_byte(&s, at),
+                    "address {at:#x}"
+                );
+            }
+            assert_eq!(
+                super::inputs(&|at| projection.byte(at).unwrap_or(0x5a)),
+                super::inputs(&|at| projected_byte(&s, at).unwrap_or(0x5a))
             );
         }
     }
