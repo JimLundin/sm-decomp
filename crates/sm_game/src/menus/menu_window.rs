@@ -1,5 +1,7 @@
 //! Map-menu window animation and its ordered indirect-HDMA projection.
 use super::prelude::*;
+use crate::display::transfer::Source;
+use crate::display::video::{Command, WindowEdge, WindowHdma};
 use crate::menu_window_state::Field;
 
 /// Work RAM ($7E) layout of the map-menu window.
@@ -17,13 +19,9 @@ pub(super) mod ram {
     pub const BANK: u8 = 0x7e;
 }
 
-/// HDMA channels 2 and 3, and the indirect transfer mode.
-const CHANNEL_2: u16 = 0x4320;
-const CHANNEL_3: u16 = 0x4330;
-const INDIRECT_ONE_REGISTER: u8 = 0x40;
-/// WH0 and WH1: the window 1 left and right position registers' B-bus ports.
-const WH0: u8 = 0x26;
-const WH1: u8 = 0x27;
+/// The window 1 edges' HDMA channels.
+const LEFT_EDGE_CHANNEL: u8 = 2;
+const RIGHT_EDGE_CHANNEL: u8 = 3;
 /// $81:AA34: each area's eight window velocity words.
 const AREA_WINDOW_VELOCITIES: u32 = 0x81_aa34;
 /// The last scanline the window reaches.
@@ -37,9 +35,21 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     game.publish_window(window, &[Field::RightMargin, Field::LeftMargin]);
     game.ram().write_byte(usize::from(ram::LEFT_EDGE), 127);
     game.ram().write_byte(usize::from(ram::RIGHT_EDGE), 129);
-    for (table, margin, middle, channel, window) in [
-        (ram::WINDOW_1_TABLE, 34, 50, CHANNEL_2, WH0),
-        (ram::WINDOW_2_TABLE, 32, 54, CHANNEL_3, WH1),
+    for (table, margin, middle, channel, edge) in [
+        (
+            ram::WINDOW_1_TABLE,
+            34,
+            50,
+            LEFT_EDGE_CHANNEL,
+            WindowEdge::Left,
+        ),
+        (
+            ram::WINDOW_2_TABLE,
+            32,
+            54,
+            RIGHT_EDGE_CHANNEL,
+            WindowEdge::Right,
+        ),
     ] {
         let page = ram::PAGE;
         game.ram().copy_in(
@@ -49,13 +59,18 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
             ],
         );
         // Each table is visible before its channel is configured.
-        crate::display::sequence::register_writes! { game;
-            byte(channel, INDIRECT_ONE_REGISTER); byte(channel + 1, window);
-            byte(channel + 2, table as u8); byte(channel + 3, ram::PAGE);
-            byte(channel + 4, ram::BANK); byte(channel + 7, ram::BANK);
-            byte(channel + 5, 0); byte(channel + 6, 0);
-            byte(channel + 8, 0); byte(channel + 9, 0); byte(channel + 10, 0);
-        }
+        game.apply(
+            "map window",
+            Command::WindowHdma(WindowHdma {
+                channel,
+                edge,
+                table: Source {
+                    address: u16::from_le_bytes([table.to_le_bytes()[0], ram::PAGE]),
+                    bank: ram::BANK,
+                },
+                indirect_bank: ram::BANK,
+            }),
+        );
     }
 }
 
