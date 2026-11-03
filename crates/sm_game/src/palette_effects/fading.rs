@@ -1,8 +1,16 @@
 //! Palette transitions over the Session-owned current and target colours and
 //! fade cursor (`Visuals::palette_fade`), read and stored through the projection.
 use crate::projection::{self, Field};
-use crate::ram::RamHost;
+use crate::ram::CompatibilityRam;
 use crate::visual_state::PaletteFade;
+
+/// A host the fades run on: the colours, targets and fade words through its
+/// projection, and a store for each faded colour.
+pub trait Host: CompatibilityRam {
+    /// Store a faded colour's `bytes` at `at`: the work RAM image on the
+    /// game, the Session's colours on a lease.
+    fn store_faded_colour(&mut self, at: usize, bytes: [u8; 2]);
+}
 
 /// The fade's step, duration and cursor words, after the current colours and
 /// the targets, as `session_encoding` lays them out.
@@ -23,7 +31,7 @@ impl projection::Layout for PaletteFade {
     }
 }
 
-fn read_fade<H: RamHost + ?Sized>(game: &H) -> PaletteFade {
+fn read_fade<H: Host + ?Sized>(game: &H) -> PaletteFade {
     let mut fade = PaletteFade::default();
     game.load_words(&mut fade);
     fade
@@ -31,7 +39,7 @@ fn read_fade<H: RamHost + ?Sized>(game: &H) -> PaletteFade {
 
 /// Store the fade's words; each fade stores its duration, so every word it
 /// leaves unchanged is stored with its own value.
-fn store_fade<H: RamHost + ?Sized>(mut fade: PaletteFade, game: &mut H) {
+fn store_fade<H: Host + ?Sized>(mut fade: PaletteFade, game: &mut H) {
     game.store_words(&mut fade, |_| true);
 }
 
@@ -72,7 +80,7 @@ fn transition(step: u16, from: u16, to: u16, duration: u16) -> u16 {
     })
 }
 
-fn blend<H: RamHost + ?Sized>(
+fn blend<H: Host + ?Sized>(
     fade: &PaletteFade,
     index: usize,
     step: u16,
@@ -89,12 +97,12 @@ fn blend<H: RamHost + ?Sized>(
         } else {
             color.to_le_bytes()
         };
-        projection::copy_into_image(game, Field::PaletteColor(index).address(), &bytes);
+        game.store_faded_colour(Field::PaletteColor(index).address(), bytes);
     }
 }
 
 /// Run `steps` over the fade read from the projection and store it back.
-fn fading<H: RamHost + ?Sized>(
+fn fading<H: Host + ?Sized>(
     game: &mut H,
     steps: impl FnOnce(&mut PaletteFade, &mut H) -> u8,
 ) -> u8 {
@@ -104,7 +112,7 @@ fn fading<H: RamHost + ?Sized>(
     done
 }
 
-pub fn all<H: RamHost + ?Sized>(duration: u16, game: &mut H) -> u8 {
+pub fn all<H: Host + ?Sized>(duration: u16, game: &mut H) -> u8 {
     fading(game, |fade, game| {
         if !begin(fade, duration) {
             return 1;
@@ -118,7 +126,7 @@ pub fn all<H: RamHost + ?Sized>(duration: u16, game: &mut H) -> u8 {
     })
 }
 
-pub fn background6<H: RamHost + ?Sized>(game: &mut H) -> u8 {
+pub fn background6<H: Host + ?Sized>(game: &mut H) -> u8 {
     fading(game, |fade, game| {
         if !begin(fade, 12) {
             return 1;
@@ -131,7 +139,7 @@ pub fn background6<H: RamHost + ?Sized>(game: &mut H) -> u8 {
     })
 }
 
-pub fn selected<H: RamHost + ?Sized>(mut mask: u16, game: &mut H) -> u8 {
+pub fn selected<H: Host + ?Sized>(mut mask: u16, game: &mut H) -> u8 {
     fading(game, |fade, game| {
         if !begin(fade, 12) {
             return 1;
@@ -156,7 +164,7 @@ pub fn selected<H: RamHost + ?Sized>(mut mask: u16, game: &mut H) -> u8 {
     })
 }
 
-pub fn file_select<H: RamHost + ?Sized>(game: &mut H) -> u8 {
+pub fn file_select<H: Host + ?Sized>(game: &mut H) -> u8 {
     fading(game, |fade, game| {
         fade.duration = 15;
         // This comparison is signed and wraps; unlike the other fades, step zero advances.

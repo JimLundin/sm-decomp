@@ -30,6 +30,7 @@ pub trait Lease:
     + crate::room_mechanisms::host::Host
     + crate::visual_host::Host
     + PaletteAccess
+    + crate::palette_effects::fading::Host
 {
 }
 impl<T> Lease for T where
@@ -41,6 +42,7 @@ impl<T> Lease for T where
         + crate::room_mechanisms::host::Host
         + crate::visual_host::Host
         + PaletteAccess
+        + crate::palette_effects::fading::Host
         + ?Sized
 {
 }
@@ -949,7 +951,7 @@ pub fn defeated<L: Lease>(k: u16, game: &mut L) {
 /// Instruction - advance gradual colour change ($AA:B271). Was
 /// `Torizo_Instr_6`.
 pub fn advance_colour_change<L: Lease>(game: &mut L) {
-    game.foreign(|game| crate::palette_effects::fading::selected(0x600, game));
+    game.owned_step(|game| crate::palette_effects::fading::selected(0x600, game));
 }
 
 /// Instruction - set up palette transition to normal torizo ($AA:B94D). Was
