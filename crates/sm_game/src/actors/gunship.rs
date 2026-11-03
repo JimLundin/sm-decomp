@@ -10,7 +10,6 @@ use crate::geometry::Position;
 use crate::item_pickups::Resource;
 use crate::player_position::PlayerWord;
 use crate::player_projectiles::content::{self, table};
-use crate::ram::words as W;
 
 /// A lease on a game whose slots are the Session's typed storage.
 pub trait Lease: ActorLease + SlotState {}
@@ -72,10 +71,6 @@ const BRAKES: u32 = 0xa2_a622;
 const HOVER: u32 = 0xa2_a7cf;
 const DUST_SOURCES: u32 = 0xa2_ac07;
 const DUST_DESTINATIONS: u32 = 0xa2_ac11;
-/// The save station flags word, read and written little-endian.
-const USED_SAVE_STATIONS: usize = 0xd8f8;
-/// Native presentation aliases cleared on liftoff: suit colour and crystal flash delay.
-const UNREAD: [usize; 2] = [0xdf0, 0xdf2];
 /// The gunship's top, bottom and entrance pad, from the current slot.
 const TOP: u16 = 0;
 const BOTTOM_PART: u16 = 64;
@@ -136,8 +131,8 @@ fn entrance(rt: &mut impl Lease, index: u16, opening: bool) {
 }
 fn save(rt: &mut impl Lease) {
     crate::probe::hit("gunship.save");
-    let flags = rt.word(USED_SAVE_STATIONS) | 1;
-    rt.write_slice_le(USED_SAVE_STATIONS, flags);
+    // The used save station flags ($7E:D8F8): the word's low byte gains bit 0.
+    rt.session_mut().gameplay_flags.used_stations[0] |= 1;
     rt.session_mut().menu_screens.save_selection.load_station = 0;
     let slot = rt.session().menu_screens.save_selection.selected_slot;
     rt.save_game(slot);
@@ -161,7 +156,7 @@ pub fn initialize_top(rt: &mut impl Lease) {
         actor.instruction = 0xa616;
         actor.palette = 3584;
     }
-    if rt.word(W::GAME_STATE) != 40 || rt.session().flow.demo_set != 0 {
+    if rt.session().game_loop.mode != 40 || rt.session().flow.demo_set != 0 {
         if rt.session().menu_screens.save_selection.loading_game_state == 34 {
             let y = rt.player_y().wrapping_sub(17);
             let mut gunship = GunshipEdit::of(rt, top);
@@ -215,7 +210,7 @@ pub fn initialize_bottom(rt: &mut impl Lease) {
         // The entrance pad sits below the top, two slots before it.
         let y = Gunship::of(rt, bottom.wrapping_sub(PAD)).actor().y.whole;
         GunshipEdit::of(rt, bottom).actor().y.whole = y.wrapping_sub(1);
-        if rt.word(W::GAME_STATE) == 40 && rt.session().flow.demo_set == 0 {
+        if rt.session().game_loop.mode == 40 && rt.session().flow.demo_set == 0 {
             set_instruction(rt, bottom, 0xa5be);
         }
     } else if rt.session().menu_screens.save_selection.loading_game_state == 34 {
@@ -323,7 +318,8 @@ fn brake(rt: &mut impl Lease, index: u16) {
 /// Idle - handle letting Samus enter ($A2:A9BD): Samus standing on the pad presses
 /// down.
 fn idle(rt: &mut impl Lease, index: u16) {
-    if rt.word(W::GAME_STATE) != 8 || rt.session().player.transitions.frame_alpha.to_raw() != 0xe695
+    if rt.session().game_loop.mode != 8
+        || rt.session().player.transitions.frame_alpha.to_raw() != 0xe695
     {
         return;
     }
@@ -388,11 +384,13 @@ fn refill(rt: &mut impl Lease, index: u16) {
             *bottom.function() = 0;
             *bottom.step() = 0;
         }
-        rt.write_slice_le(W::SUBSTATE, 0);
-        rt.write_slice_le(W::SUIT_PICKUP_LIGHT_BEAM_POS, 0);
-        for at in UNREAD {
-            rt.write_slice_native(at, 0);
-        }
+        let session = rt.session_mut();
+        session.shared_sequence.stage = 0;
+        session.shared_sequence.value = 0;
+        // The unread suit colour and crystal flash delay are cleared too.
+        let palette = session.presentation.palette_mut();
+        palette.suit_red_green = 0;
+        palette.crystal_flash_delay = 0;
         rt.foreign(|game| game.command_player(0xa));
         return;
     }
@@ -419,7 +417,7 @@ fn refill(rt: &mut impl Lease, index: u16) {
 
 /// Liftoff - load dust cloud tiles ($A2:ABC7), one transfer a frame.
 fn load_dust_clouds(rt: &mut impl Lease, index: u16) {
-    let row = usize::from(rt.word(W::SUBSTATE) >> 1).cast_signed();
+    let row = usize::from(rt.session().shared_sequence.stage >> 1).cast_signed();
     let address = table(rt, DUST_SOURCES, row);
     let vram_address = table(rt, DUST_DESTINATIONS, row);
     let source = Source {
@@ -433,11 +431,11 @@ fn load_dust_clouds(rt: &mut impl Lease, index: u16) {
         vram_address,
     };
     queue_tilemap(rt, upload);
-    let substate = rt.word(W::SUBSTATE).wrapping_add(2);
-    rt.write_slice_le(W::SUBSTATE, substate);
-    if rt.word(W::SUBSTATE).wrapping_sub(10) & 0x8000 == 0 {
+    let sequence = &mut rt.session_mut().shared_sequence;
+    sequence.stage = sequence.stage.wrapping_add(2);
+    if sequence.stage.wrapping_sub(10) & 0x8000 == 0 {
         *GunshipEdit::of(rt, part(index, TOP)).function() = FIRE_UP_ENGINES;
-        rt.write_slice_le(W::SUBSTATE, 0);
+        rt.session_mut().shared_sequence.stage = 0;
     }
 }
 
@@ -528,7 +526,7 @@ pub fn run(rt: &mut impl Lease, index: u16, function: u16) {
                     .loading_game_state = 5;
                 save(rt);
             } else if function == WAIT_TO_CLOSE_FOR_EXIT
-                && rt.word(W::GAME_STATE).wrapping_sub(40) & 0x8000 != 0
+                && rt.session().game_loop.mode.wrapping_sub(40) & 0x8000 != 0
             {
                 unlock_player(rt);
             }
@@ -563,7 +561,8 @@ pub fn run(rt: &mut impl Lease, index: u16, function: u16) {
             let rising = Gunship::of(rt, top).actor().y.whole.wrapping_sub(256) & 0x8000 != 0;
             if function == ACCELERATING_SET_GAME_STATE && rising {
                 *GunshipEdit::of(rt, top).function() = ACCELERATING;
-                rt.write_slice_le(W::GAME_STATE, 38);
+                rt.session_mut().game_loop.mode = 38;
+                rt.words_stored();
                 crate::screen_fade::store(rt, 0, 0);
             }
         }
