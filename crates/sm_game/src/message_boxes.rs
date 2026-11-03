@@ -1,20 +1,47 @@
 //! Message boxes, input confirmation, animation and saved-game feedback.
 pub use crate::constants::bank_60::*;
 use crate::display::preparation::{Field, Store};
+use crate::display::transfer::Source;
+use crate::display::video::{Axis, Background, Command, Control, ScrollOffset};
 pub use crate::menus::prelude::*;
 use crate::message_composition as composition;
 use composition::BoxSize;
 
 const MESSAGE_CONFIG_BASE: usize = sm_data::cartridge::lorom_offset(0x85869b) as usize;
+/// The producer name of the message boxes' display commands.
+const PRODUCER: &str = "message box";
+/// BG3 palette 6's colours 1 and 2, which the box's text uses.
+const TEXT_COLORS: u8 = 0x19;
+/// The box's BG3 tilemap rows, from VRAM $5880.
+const BOX_TILEMAP: u16 = ADDR_UNK_605880 as u16;
+/// The work RAM bank of the box's buffers.
+const WORK_RAM: u8 = 0x7e;
+/// The BG3 vertical scroll the box's HDMA channel writes each line.
+const BG3_VERTICAL: ScrollOffset = ScrollOffset {
+    background: Background::Bg3,
+    axis: Axis::Vertical,
+};
+/// HDMA channel 6's bit: the box's scroll channel.
+const SCROLL_CHANNEL: Control = Control::HdmaChannels(0x40);
+
+fn work_ram(address: u16) -> Source {
+    Source {
+        address,
+        bank: WORK_RAM,
+    }
+}
 
 /// The first half of "Initialise PPU for message boxes" ($85:8143), after its
 /// first lag frame: save and replace the BG3 and blending registers.
 fn prepare_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::display::sequence::register_writes! { game;
-        byte(HDMAEN as u16, 0); byte(CGADD as u16, 0x19);
-        byte(CGDATA as u16, 0xb1); byte(CGDATA as u16, 0x0b);
-        byte(CGDATA as u16, 0x1f); byte(CGDATA as u16, 0);
-    }
+    game.apply(PRODUCER, Command::Control(Control::HdmaChannels(0)));
+    game.apply(
+        PRODUCER,
+        Command::Colors {
+            index: TEXT_COLORS,
+            colors: [0x0bb1, 0x001f],
+        },
+    );
     game.screen_write_byte(
         Point::new(Role::MessageDescriptor, 0x6a),
         game.display_control_byte(Field::HdmaEnable),
@@ -28,40 +55,45 @@ fn prepare_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.store_display_control_byte(Field::PreviousColorSelection, 0, Store::Owned);
     game.store_display_control_byte(Field::PreviousColorMath, 0, Store::Owned);
     use crate::display::control::FixedColor;
-    // One COLDATA write per colour, in order, as the compat sink did.
-    crate::display::sequence::register_writes! { game;
-        show(FixedColor::red(0)); show(FixedColor::green(0)); show(FixedColor::blue(0));
+    // One fixed-colour write per channel, in order, as the original did.
+    for color in [
+        FixedColor::red(0),
+        FixedColor::green(0),
+        FixedColor::blue(0),
+    ] {
+        game.apply(PRODUCER, Command::FixedColor(color));
     }
-    game.read_register(BG3HOFS as u16);
-    crate::display::sequence::register_writes! { game;
-        byte(BG3HOFS as u16, 0); byte(BG3HOFS as u16, 0);
-    }
-    game.read_register(BG3VOFS as u16);
-    crate::display::sequence::register_writes! { game;
-        byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
+    // The original reads each write-only scroll register before clearing it.
+    for axis in [Axis::Horizontal, Axis::Vertical] {
+        let scroll = ScrollOffset {
+            background: Background::Bg3,
+            axis,
+        };
+        game.apply(PRODUCER, Command::ScrollAfterRead { scroll, offset: 0 });
     }
     game.screen_write_slice(Point::new(Role::Pause, 0), &[0; 0x82]);
 }
 /// Read the BG3 tilemap the box covers back to $7E:4100.
 fn save_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.write_register_word(VMADDL as u16, ADDR_UNK_605880 as u16);
-    game.read_register_word(RDVRAML as u16);
-    crate::display::sequence::register_writes! { game;
-        word(DMAP1 as u16, 0x3981); word(A1T1L as u16, 0x4100);
-        word(A1B1 as u16, 0x7e); word(DAS1L as u16, 0x700);
-        word(DAS10 as u16, 0); word(A2A1H as u16, 0);
-        byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
-    }
+    game.apply(
+        PRODUCER,
+        Command::ReadTilemapNow {
+            address: BOX_TILEMAP,
+            destination: work_ram(0x4100),
+            bytes: 0x700,
+        },
+    );
 }
 /// DMA the BG3 tilemap at `source` to VRAM $5880.
 fn upload_background<H: crate::menus::host::Host + ?Sized>(source: u16, game: &mut H) {
-    crate::display::sequence::register_writes! { game;
-        word(VMADDL as u16, ADDR_UNK_605880 as u16); word(DMAP1 as u16, 0x1801);
-        word(A1T1L as u16, source); word(A1B1 as u16, 0x7e);
-        word(DAS1L as u16, 0x700); word(DAS10 as u16, 0);
-        word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
-        byte(MDMAEN as u16, 2);
-    }
+    game.apply(
+        PRODUCER,
+        Command::TilemapNow {
+            address: BOX_TILEMAP,
+            source: work_ram(source),
+            bytes: 0x700,
+        },
+    );
 }
 fn message_tile<H: crate::menus::host::Host + ?Sized>(
     start: u16,
@@ -177,14 +209,14 @@ fn prepare_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         Point::new(Role::MessageDescriptor, 0),
         &composition::HDMA_DESCRIPTOR,
     );
-    crate::display::sequence::register_writes! { game;
-        byte(DMAP6 as u16, 0x42); byte(BBAD6 as u16, 0x12);
-        byte(A1T6L as u16, 0x80); byte(DAS6L as u16, 0x80);
-        byte(A1T6H as u16, 0x33); byte(DAS6H as u16, 0x33);
-        byte(A1B6 as u16, 0x7e); byte(DAS60 as u16, 0x7e);
-        byte(A2A6L as u16, 0); byte(A2A6H as u16, 0);
-        byte(NTRL6 as u16, 0);
-    }
+    game.apply(
+        PRODUCER,
+        Command::ScrollHdma {
+            channel: 6,
+            scroll: BG3_VERTICAL,
+            table: work_ram(0x3380),
+        },
+    );
 }
 fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let radius = game.dialogue_radius();
@@ -200,22 +232,25 @@ fn upload_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         return;
     };
     let destination = composition::map_offset(size).wrapping_add(0x5800);
-    crate::display::sequence::register_writes! { game;
-        word(VMADDL as u16, destination); word(DMAP1 as u16, 0x1801);
-        word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
-        word(DAS1L as u16, game.message_box_das0l_value()); word(DAS10 as u16, 0);
-        word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
-        byte(MDMAEN as u16, 2);
-    }
+    let bytes = game.message_box_das0l_value();
+    game.apply(
+        PRODUCER,
+        Command::TilemapNow {
+            address: destination,
+            source: work_ram(0x3200),
+            bytes,
+        },
+    );
 }
 fn upload_selection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::display::sequence::register_writes! { game;
-        word(VMADDL as u16, ADDR_UNK_6059A0 as u16); word(DMAP1 as u16, 0x1801);
-        word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
-        word(DAS1L as u16, 0x180); word(DAS10 as u16, 0);
-        word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
-        byte(MDMAEN as u16, 2);
-    }
+    game.apply(
+        PRODUCER,
+        Command::TilemapNow {
+            address: ADDR_UNK_6059A0 as u16,
+            source: work_ram(0x3200),
+            bytes: 0x180,
+        },
+    );
 }
 /// The second half of "Restore PPU" ($85:861A), after its second lag frame.
 fn restore_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -224,10 +259,8 @@ fn restore_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.screen_byte(Point::new(Role::MessageDescriptor, 0x6a)),
         Store::Owned,
     );
-    game.write_register(
-        HDMAEN as u16,
-        game.screen_byte(Point::new(Role::MessageDescriptor, 0x6a)),
-    );
+    let channels = game.screen_byte(Point::new(Role::MessageDescriptor, 0x6a));
+    game.apply(PRODUCER, Command::Control(Control::HdmaChannels(channels)));
     game.store_display_control_byte(
         Field::Background3Map,
         game.screen_byte(Point::new(Role::MessageDescriptor, 0x6b)),
@@ -248,11 +281,21 @@ fn restore_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.display_control_byte(Field::NextColorMath),
         Store::Owned,
     );
-    crate::display::sequence::register_writes! { game;
-        byte(CGADD as u16, 0x19); byte(CGDATA as u16, game.palette_byte(false, 0x32));
-        byte(CGDATA as u16, game.palette_byte(false, 0x33)); byte(CGDATA as u16, game.palette_byte(false, 0x34));
-        byte(CGDATA as u16, game.palette_byte(false, 0x35));
-    }
+    // The text colours' saved entries, read from the palette before the port.
+    let saved = |entry: usize, game: &H| {
+        u16::from_le_bytes([
+            game.palette_byte(false, entry),
+            game.palette_byte(false, entry + 1),
+        ])
+    };
+    let colors = [saved(0x32, game), saved(0x34, game)];
+    game.apply(
+        PRODUCER,
+        Command::Colors {
+            index: TEXT_COLORS,
+            colors,
+        },
+    );
 }
 
 // Each effect publishes control state before reaching the current presentation owner.
@@ -285,7 +328,7 @@ impl<H: crate::menus::host::Host + ?Sized> crate::dialogue::Context
             DrawTopBorder => draw_top_border(game),
             WriteMessage => write_message(game),
             PrepareScroll => prepare_scroll(game),
-            EnableScroll => game.write_register(HDMAEN as u16, 0x40),
+            EnableScroll => game.apply(PRODUCER, Command::Control(SCROLL_CHANNEL)),
             UploadMessage => upload_message(game),
             SaveSound => game.queue_sound(0, 0x2e, 6),
             AdvanceAudio => {
