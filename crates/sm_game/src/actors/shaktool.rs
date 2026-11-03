@@ -10,7 +10,6 @@ use crate::actors::state::Actor;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Position;
 use crate::projectile_geometry::SINE_COSINE;
-use crate::ram::word;
 
 /// What the Shaktool pieces need beyond a boss's state: the bank $AA
 /// functions they do not run themselves, and the angle between two actors.
@@ -51,30 +50,6 @@ const HALF_PIXEL: u16 = 0x8000;
 
 /// $AA:DEE9: each piece's neighbour angle delta when curling.
 const CURL_ANGLE_DELTAS: [u16; 7] = [0, 0x20, 0x60, 0xc0, 0x140, 0x1a0, 0x1e0];
-
-// The original reads the previous piece's position through the drawing queue
-// (`enemy_drawing_queue`, $7E:0E84): from piece `k`, these word indices past
-// `k / 2` reach the previous piece's x, x subpixel, y and y subpixel.
-const PREVIOUS_X_POS: usize = 91;
-const PREVIOUS_X_SUBPOS: usize = 92;
-const PREVIOUS_Y_POS: usize = 93;
-const PREVIOUS_Y_SUBPOS: usize = 94;
-const _: () = {
-    use crate::actors::layouts::EnemyLayout104 as Piece;
-    use crate::ram::word_arrays::ENEMY_DRAWING_QUEUE;
-    use core::mem::offset_of;
-    const fn previous(field: usize) -> usize {
-        (0x0f78 - PIECE) as usize + field
-    }
-    assert!(ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_X_POS == previous(offset_of!(Piece, base.x_pos)));
-    assert!(
-        ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_X_SUBPOS == previous(offset_of!(Piece, base.x_subpos))
-    );
-    assert!(ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_Y_POS == previous(offset_of!(Piece, base.y_pos)));
-    assert!(
-        ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_Y_SUBPOS == previous(offset_of!(Piece, base.y_subpos))
-    );
-};
 
 /// The seven piece slots, from the primary piece's slot `primary`.
 pub fn segments(primary: u16) -> impl Iterator<Item = u16> {
@@ -185,11 +160,13 @@ pub fn set_collision_angle_delta<L: Lease>(k: u16, game: &mut L) {
         4u16.wrapping_mul(delta.to_ne_bytes()[1] as u16);
 }
 
-/// The previous piece's whole and subpixel position words, high word first.
-fn previous_position<L: Lease>(queue: usize, high: usize, low: usize, game: &mut L) -> u32 {
-    let high = word!(game.ENEMY_DRAWING_QUEUE[queue + high]);
-    let low = word!(game.ENEMY_DRAWING_QUEUE[queue + low]);
-    (u32::from(high) << 16) | u32::from(low)
+/// The previous piece's 16.16 position on `axis`. The original reads it
+/// through the drawing queue ($7E:0E84), whose words past piece `k`'s half
+/// index reach the previous slot's record.
+fn previous_position<L: Lease>(k: u16, axis: fn(&Actor) -> &Position, game: &mut L) -> u32 {
+    let previous = Piece::of(game, k - PIECE);
+    let position = axis(previous.actor());
+    (u32::from(position.whole) << 16) | u32::from(position.fraction)
 }
 
 /// Position Shaktool piece relative to previous piece ($AA:DC2A): place piece
@@ -197,19 +174,11 @@ fn previous_position<L: Lease>(queue: usize, high: usize, low: usize, game: &mut
 pub fn position_relative_to_previous<L: Lease>(k: u16, game: &mut L) {
     let piece = k;
     let angle = isize::from(Piece::of(game, piece).neighbour_angle().to_le_bytes()[1]);
-    let queue = usize::from(k) >> 1;
-    let x =
-        (((crate::shaktool_tables::sine(game, angle) as i16 as i32) << 8i32) as u32).wrapping_add(
-            previous_position(queue, PREVIOUS_X_POS, PREVIOUS_X_SUBPOS, game),
-        );
+    let x = (((crate::shaktool_tables::sine(game, angle) as i16 as i32) << 8i32) as u32)
+        .wrapping_add(previous_position(k, |actor| &actor.x, game));
     set_position(game, piece, |actor| &mut actor.x, x);
     let y = (((crate::shaktool_tables::negative_cosine(game, angle) as i16 as i32) << 8i32) as u32)
-        .wrapping_add(previous_position(
-            queue,
-            PREVIOUS_Y_POS,
-            PREVIOUS_Y_SUBPOS,
-            game,
-        ));
+        .wrapping_add(previous_position(k, |actor| &actor.y, game));
     set_position(game, piece, |actor| &mut actor.y, y);
 }
 
