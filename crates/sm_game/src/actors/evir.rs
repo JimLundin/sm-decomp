@@ -3,8 +3,9 @@
 use crate::actors::access::{AccessMode::Native, ActorKey};
 use crate::actors::api::{self, Axis, DeathHandling::Finalize, ShotHandling};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::layouts::EnemyLayout40;
+use crate::actors::queries;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::legacy_overflow;
@@ -12,8 +13,14 @@ use core::mem::offset_of;
 use sm_data::enemy_speeds::SpeedTable::Linear;
 
 /// A lease on a game whose slots are the Session's typed storage.
-pub trait Lease: ActorLease + SlotState {}
-impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+pub trait Lease: ActorLease + SlotState + crate::actors::boss_lease::BossLease {}
+impl<T: ActorLease + SlotState + crate::actors::boss_lease::BossLease + ?Sized> Lease for T {}
+
+/// Run `action` on the lease where a `foreign` call ran it on the game,
+/// keeping that call's observation refresh on entry and return.
+fn owned_step<L: Lease, T>(runtime: &mut L, action: impl FnOnce(&mut L) -> T) -> T {
+    crate::actors::boss_lease::BossLease::owned_step(runtime, action)
+}
 
 slot_view! {
     /// An evir part's slot and extended RAM; a non-zero first parameter makes the arms.
@@ -197,13 +204,19 @@ fn shoot(runtime: &mut impl Lease, evir: u16) {
     }
     let angle = api::angle_to_player(runtime, combat::current(runtime)) as u8;
     let angle = u16::from(angle.wrapping_sub(QUARTER_TURN)).wrapping_neg();
-    let x = runtime.foreign(|game| game.actor_cosine_full(angle, PROJECTILE_SPEED));
+    let cosine = u16::from(angle.wrapping_add(64) as u8);
+    let x = owned_step(runtime, |runtime| {
+        queries::sine_product(runtime, PROJECTILE_SPEED, cosine)
+    });
     {
         let mut part = EvirEdit::of(runtime, evir);
         *part.x_subvelocity() = x as u16;
         *part.x_velocity() = (x >> 16) as u16;
     }
-    let y = runtime.foreign(|game| game.actor_sine_full(angle, PROJECTILE_SPEED));
+    let sine = u16::from(angle.wrapping_add(0x80) as u8);
+    let y = owned_step(runtime, |runtime| {
+        queries::sine_product(runtime, PROJECTILE_SPEED, sine)
+    });
     {
         let mut part = EvirEdit::of(runtime, evir);
         *part.y_subvelocity() = y as u16;
@@ -338,7 +351,9 @@ fn freeze(runtime: &mut impl Lease, part: u16, frozen: u16) {
 pub fn instruction(address: u32, script: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
     let evir = combat::current(runtime).byte_index();
     match address {
-        routine::QUEUE_SPIT_SOUND => runtime.queue_sound(2, 6, SPIT_SOUND),
+        routine::QUEUE_SPIT_SOUND => {
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, SPIT_SOUND)
+        }
         routine::SET_INITIAL_REGENERATION_X_OFFSET => {
             let offset = INITIAL_REGENERATION_X_OFFSETS[body_facing_right(runtime, evir)];
             *EvirEdit::of(runtime, evir).regeneration_x_offset() = offset;
