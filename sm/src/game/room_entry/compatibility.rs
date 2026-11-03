@@ -219,7 +219,9 @@ impl EntryEffects for Runtime<'_> {
         self.foreign(game::music::has_queued_music)
     }
     fn samus_command(&mut self, command: u16) {
-        self.foreign(|game| game::session_runtime::player_command(command, game));
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, command)
+        });
     }
     fn spawn_initial_hardcoded_object(&mut self) {
         room_mechanisms::creation::spawn(

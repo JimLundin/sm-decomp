@@ -42,7 +42,9 @@ pub(crate) use sm_game::room_state::{copy_level_planes, load_sprite_palettes};
 
 impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     fn command_player(&mut self, command: u16) {
-        self.foreign(|game| crate::game::session_runtime::player_command(command, game));
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, command)
+        });
     }
     fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep {
         self.foreign(|game| sm_game::ceres_elevator::step(game, word))

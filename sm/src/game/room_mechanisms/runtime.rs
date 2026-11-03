@@ -169,8 +169,8 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| sm_game::message_boxes::poll(request, game))
     }
     fn player_control(&mut self, operation: u16) {
-        self.foreign(|game| {
-            crate::game::session_runtime::player_command(operation, game);
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, operation)
         });
     }
     fn face_forward(&mut self) {

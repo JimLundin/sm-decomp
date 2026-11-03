@@ -121,7 +121,7 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.foreign(|game| crate::game::palette_effects::spawn(definition, game));
     }
     fn face_player_forward(&mut self) {
-        self.foreign(player_face_forward);
+        self.owned_player_call(crate::game::player_transitions::equipment::face_forward);
     }
     fn event_happened(&mut self, event: u16) -> bool {
         self.owned_call(|runtime| sm_game::progress::event_happened(runtime, event))
@@ -2015,9 +2015,8 @@ pub(crate) use player_movement_runtime::{
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
-    command as player_command, command_in as player_command_in, damage_player,
-    face_forward as player_face_forward, finish_player_frame, finish_xray,
-    initialize as initialize_player, mother_brain as player_mother_brain,
+    command as player_command, command_in as player_command_in, damage_player, finish_player_frame,
+    finish_xray, initialize as initialize_player, mother_brain as player_mother_brain,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;

@@ -427,8 +427,8 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
         self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game));
     }
     fn native_player_command(&mut self, command: u16) {
-        self.foreign(|game| {
-            crate::game::session_runtime::player_command(command, game);
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, command)
         });
     }
     fn native_upload(&mut self, request: sm_game::visual_state::Upload) {
