@@ -137,13 +137,6 @@ pub trait TilemapQueue {
     fn set_tilemap_queue_byte(&mut self, at: usize, value: u8);
 }
 
-/// The VRAM readback queue's tail ($7E:0360), the byte offset of its next
-/// 9-byte record at $7E:0340.
-pub trait ReadbackQueue {
-    fn readback_queue_tail(&self) -> u16;
-    fn set_readback_queue_tail(&mut self, tail: u16);
-}
-
 /// Append `upload` at the tilemap queue's tail and advance the tail past it. The
 /// destination word carries `column`, as the queue's records do.
 pub fn queue_tilemap(host: &mut (impl TilemapQueue + ?Sized), upload: TilemapUpload) {

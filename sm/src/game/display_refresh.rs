@@ -27,6 +27,12 @@ impl refresh::Host for Game {
     fn hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
         self.projected_hdma_objects()
     }
+    fn readback_queue_tail(&self) -> u16 {
+        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL)
+    }
+    fn set_readback_queue_tail(&mut self, tail: u16) {
+        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL = tail);
+    }
     fn start_graphics_dma(&mut self, source: u32) {
         let assets = if source == 0x9ab200 {
             self.world().prepared_room_assets()

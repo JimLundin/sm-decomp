@@ -349,15 +349,6 @@ impl sm_game::display::transfer::TilemapQueue for Game {
     }
 }
 
-impl sm_game::display::transfer::ReadbackQueue for Game {
-    fn readback_queue_tail(&self) -> u16 {
-        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL)
-    }
-    fn set_readback_queue_tail(&mut self, tail: u16) {
-        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL = tail);
-    }
-}
-
 impl sm_game::actors::fire_arc::Lease for crate::game::session_runtime::Runtime<'_> {
     fn advance_orbit(&mut self) {
         sm_game::enemy_projectiles::attachments_fire_arc_botwoon::advance_fire_arc_orbit(self);

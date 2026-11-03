@@ -46,7 +46,6 @@ pub trait Host:
     + DisplayOwner
     + crate::display::queued_tilemaps::Scrolling
     + crate::display::video::Video
-    + crate::display::transfer::ReadbackQueue
     + crate::hdma_objects::HdmaTable
 {
     /// The HDMA object table as the compatibility projection reads it.
@@ -58,6 +57,10 @@ pub trait Host:
     fn upload_animated_tiles(&mut self);
     fn process_mode7(&mut self);
     fn process_readbacks(&mut self);
+    /// The VRAM readback queue's tail ($7E:0360), the byte offset of its
+    /// next 9-byte record at $7E:0340.
+    fn readback_queue_tail(&self) -> u16;
+    fn set_readback_queue_tail(&mut self, tail: u16);
     fn flush_tilemaps(&mut self);
     /// Fill VRAM's low bytes with `fill` from address 0, resetting the
     /// address as one word or two bytes.
