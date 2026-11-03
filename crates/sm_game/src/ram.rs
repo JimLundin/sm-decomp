@@ -850,8 +850,8 @@ ram_vars! {
 
 // Named SNES word reads, assignments and updates share one caller-side interface.
 // `word!(game.field)` reads; `word!(game.field = value)` writes. Arrays use
-// `field[index]`. Updates use `(game.field, method(argument), reread)` or an
-// expression `(game.field, |old| value)`; `reread` is optional. Ordered stores
+// `field[index]`. Updates use an expression `(game.field, |old| value)`, with
+// an optional `reread`. Ordered stores
 // of one literal use `(game, value; field, other[index])`; different values use
 // `(game; field = value; other[index] = next;)`.
 //
@@ -901,9 +901,6 @@ macro_rules! ram_word {
     };
     ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
         $($crate::ram_word!($game.$field$([$index])? = $value);)+
-    };
-    ($game:ident.$field:ident$([$index:expr])?, $method:ident($argument:expr $(,)?) $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
     };
     ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
         let destination = $crate::ram_word!(@offset $field[$index]);
@@ -979,11 +976,6 @@ macro_rules! ram_checked_word {
         let offset: usize = $offset;
         let old = $crate::ram_checked_word!($game, offset;);
         $crate::ram_checked_word!($game, offset; = old.wrapping_add($value));
-    }};
-    ($game:ident, $offset:expr; ^= $value:expr) => {{
-        let offset: usize = $offset;
-        let old = $crate::ram_checked_word!($game, offset;);
-        $crate::ram_checked_word!($game, offset; = old ^ $value);
     }};
 }
 
