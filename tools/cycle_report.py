@@ -303,6 +303,7 @@ RAM_INVENTORY_RULES = {
     "ram_view": "Existing named RAM/view call patterns; may project owned fields at runtime",
     "cohort_copy": "session_cohort load/with/with_projected calls, including file-local import aliases",
     "address_api": "SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, and session_slot macro; may use typed storage, never added to raw calls",
+    "legacy_overflow": "calls into crate::legacy_overflow (path or imported alias): original-game reads and stores past their tables, tagged LEGACY(original-overflow); the module's own internals count as their kinds",
     "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer, or a ?-propagated (fallible) native_word content read; not RAM",
     "unresolved_method": "word/byte/read/write/copy method without explicit raw receiver or known address API spelling",
     "backend_reference": "Game/raw/interface/native/compat symbols and import aliases; references, not calls",
@@ -397,15 +398,20 @@ def inventory_sites(text):
     code = rust_inventory_code(text)
     imports = inventory_imports(code)
     modules, copies = {"session_cohort"}, set()
+    overflow_modules, overflow_functions = {"legacy_overflow"}, set()
     spellings = {name: name for name in ("word", "checked_word", "ram_word", "ram_checked_word", "slot", "word_transfers", "boss", "scroll", "inventory", "melt", "menu", "cinematic", "map_screen", "save_selection", "options_menu", "death_sequence", "power_bomb", "session_word", "session_slot", "register_writes", "SlotAccess")}
     ram_namespaces = set()
     dependencies = {"Game", "RawRam", "CompatibilityRam", "SessionRam", "SlotAccess", "WorkRamAccess", "ram_map", "g_ram"}
     raw_aliases = {"g_ram"}
     for _ in range(len(imports) + 1):
-        before = (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces))
+        before = (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces), len(overflow_modules), len(overflow_functions))
         for path, alias in imports:
             parts = path.split("::")
             leaf = parts[-1]
+            if leaf in overflow_modules or (leaf == "self" and len(parts) > 1 and parts[-2] in overflow_modules):
+                overflow_modules.add(alias if alias != "self" else parts[-2])
+            elif len(parts) > 1 and parts[-2] in overflow_modules:
+                overflow_functions.add(alias)
             if leaf in modules or (leaf == "self" and len(parts) > 1 and parts[-2] in modules):
                 modules.add(alias if alias != "self" else parts[-2])
             elif len(parts) > 1 and parts[-2] in modules and leaf in ("load", "with", "with_projected"):
@@ -422,7 +428,7 @@ def inventory_sites(text):
                 ram_namespaces.add(alias)
             if leaf == "g_ram":
                 raw_aliases.add(alias)
-        if before == (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces)):
+        if before == (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces), len(overflow_modules), len(overflow_functions)):
             break
     # Imports are dependency evidence, not executable call sites.
     calls = re.sub(r"\buse\s+[^;]+;", lambda m: " " * len(m.group()), code)
@@ -458,6 +464,8 @@ def inventory_sites(text):
         leaf = parts[-1]
         if (len(parts) > 1 and parts[-2] in modules and leaf in ("load", "with", "with_projected")) or (len(parts) == 1 and leaf in copies):
             add(match.start(), match.end(1), "cohort_copy", path)
+        elif (len(parts) > 1 and parts[-2] in overflow_modules) or (len(parts) == 1 and leaf in overflow_functions):
+            add(match.start(), match.end(1), "legacy_overflow", path)
         elif any(spellings.get(part) == "SlotAccess" for part in parts) and leaf in ("slot_word", "set_slot_word", "slot_byte", "set_slot_byte"):
             add(match.start(), match.end(1), "address_api", path)
     # Preserve the existing view taxonomy, but do not count type-only RawRam references as calls.
