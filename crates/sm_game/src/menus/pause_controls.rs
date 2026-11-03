@@ -3,14 +3,16 @@ use super::prelude::*;
 use super::{equipment_menu, map_menu, menu_tilemap};
 use crate::menu_state::MenuScreens;
 use crate::menu_state::MenuState;
-use crate::ram::RawRam as _;
+use crate::projection::Field;
 
 pub fn hook_address<H: crate::menus::host::Host + ?Sized>(pausing: bool, game: &H) -> u32 {
-    let offset = if pausing { 0x601 } else { 0x604 };
-    // Load24 reads four native bytes, including the following field, before masking.
-    let mut bytes = [0; 4];
-    game.ram().copy_out(offset, &mut bytes);
-    u32::from_ne_bytes(bytes) & 0xffffff
+    // The hooks' six bytes: the pause hook's long address, then the unpause
+    // hook's. Load24 also read the byte after the hook, which its mask drops.
+    let hooks: Vec<u8> = (0..3)
+        .flat_map(|index| game.view_word(Field::PauseHook(index)).to_le_bytes())
+        .collect();
+    let hook = if pausing { &hooks[..3] } else { &hooks[3..] };
+    u32::from_le_bytes([hook[0], hook[1], hook[2], 0])
 }
 
 pub fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
@@ -180,13 +182,13 @@ pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.player_command(0xc);
 }
 
-const GRAPHICS_MIRRORS: [usize; 17] = [
-    0x58, 0x59, 0x5a, 0x5d, 0x5e, 0x52, 0xb1, 0xb5, 0xb9, 0xb3, 0xb7, 0xbb, 0x55, 0x91b, 0x91c,
-    0x57, 0x71,
-];
+/// The saved graphics bytes, in order: the BG1..BG3 tilemap and BG1..BG4
+/// tile base mirrors, the object layout, the six scroll mirrors' low bytes,
+/// the BG mode, the layer-2 scroll bytes, the mosaic and the next colour math.
+const GRAPHICS_BYTES: usize = 17;
 
 pub fn save_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    for (index, source) in GRAPHICS_MIRRORS.into_iter().enumerate() {
+    for index in 0..GRAPHICS_BYTES {
         // The six scroll mirrors are read as LE words, then truncated to a byte.
         let value = if (6..12).contains(&index) {
             let word = [
@@ -204,8 +206,8 @@ pub fn save_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             let field = graphics_field(index);
             match field {
                 Some(field) => game.display_control_byte(field),
-                // Layer-2 scroll bytes stay with their current room control owner.
-                None => game.ram().read_byte(source),
+                // The layer-2 scroll bytes, each its field's low byte.
+                None => game.view_word(layer2_scroll(index)) as u8,
             }
         };
         super::state::with(game, |_, graphics: &mut crate::menu_state::MenuGraphics| {
@@ -234,7 +236,7 @@ pub fn restore_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
                     value,
                     crate::display::preparation::Store::Owned,
                 ),
-                None => game.ram().write_byte(GRAPHICS_MIRRORS[index], value),
+                None => game.set_view_low_byte(layer2_scroll(index), value),
             }
         }
     }
@@ -302,6 +304,15 @@ pub fn draw_shoulder<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState,
 fn draw_start<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if tick_highlight(menu) {
         crate::sprite_output::menu(0x2b, 0x90, 0xd0, 0, game);
+    }
+}
+
+/// The layer-2 scroll byte saved graphics byte `index` (13 or 14) holds.
+fn layer2_scroll(index: usize) -> Field {
+    if index == 13 {
+        Field::Layer2ScrollX
+    } else {
+        Field::Layer2ScrollY
     }
 }
 
