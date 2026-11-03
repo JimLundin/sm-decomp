@@ -6,7 +6,6 @@ use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::{BossLease, steps};
 use crate::actors::botwoon_death;
-use crate::actors::host::BossEffects as _;
 
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::actors::{combat, queries};
@@ -18,7 +17,7 @@ use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with Botwoon's effects.
 pub trait Lease:
-    BossLease<Game: Effects>
+    BossLease
     + ActorAccess
     + SlotState
     + crate::records::Records
@@ -29,7 +28,7 @@ pub trait Lease:
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: Effects>
+    T: BossLease
         + ActorAccess
         + SlotState
         + crate::records::Records
@@ -162,13 +161,6 @@ const SPIT_SPREAD: u8 = 16;
 const SPIT_SPEEDS: [u16; 3] = [2, 3, 4];
 /// Angles are measured from the top, clockwise; 40h less is the maths angle.
 const QUARTER_TURN: u8 = 0x40;
-
-/// The boss flag store behind the death music. Botwoon's actor state, tables,
-/// passage, drop and body history run on the lease.
-pub trait Effects: crate::actors::host::BossEffects {
-    /// Set boss bit `mask` for the current area.
-    fn set_boss_bit(&mut self, mask: u16);
-}
 
 /// Botwoon's state and reactions run on the scheduler's lease.
 pub trait RuntimeHost:
@@ -468,10 +460,8 @@ pub fn crumbling_wall<L: Lease>(k: u16, game: &mut L) {
         }
     } else {
         BotwoonEdit::of(game, e).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
-        game.foreign(|game| {
-            game.set_boss_bit(BOTWOON_DEAD);
-            game.queue_music_delayed(ELEVATOR_MUSIC);
-        });
+        game.owned_step(|game| crate::progress::mark_boss_defeated(game, BOTWOON_DEAD));
+        crate::enemy_projectiles::host::Effects::queue_music(game, ELEVATOR_MUSIC);
     }
 }
 fn mark_hit<R: RuntimeHost>(h: &mut R, actor: Key) {

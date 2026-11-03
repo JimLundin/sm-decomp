@@ -186,11 +186,7 @@ pub trait ActorLease:
     + crate::cartridge::LoadedImage
     + crate::actors::gunship::Host
 {
-    type Game: BossEffects
-        + LeaseActors
-        + crate::records::Records
-        + crate::actors::botwoon::Effects
-        + ?Sized;
+    type Game: BossEffects + LeaseActors + crate::records::Records + ?Sized;
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
