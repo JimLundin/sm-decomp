@@ -44,6 +44,10 @@ Verify (replays). Unused workflows go; the nightly desktop link and mutant runs 
 and Quality still checks the mutation anchors. Verify skips replays when a pull request changes
 no replay-relevant file. Python is typed and type-checked in Quality. Avoid adding Python unless
 it is necessary: this is a Rust project.
+Jim's performance direction (2026-11-03): a playable engine needs well above 60 ticks per second;
+headless it should reach hundreds. [PERFORMANCE](PERFORMANCE.md) holds the targets, the measured
+baseline and the ordered plan (Session authoritative for the whole tick, table-driven projection,
+no emulated PPU in headless runs, digest-lock gate).
 The production-line ratchet stays advisory until
 RAM migration finishes, then becomes enforced so the code shrinks toward the 100,000-line
 target. PR descriptions carry landing evidence; don't grow PROGRESS_REPORT for each landing.
