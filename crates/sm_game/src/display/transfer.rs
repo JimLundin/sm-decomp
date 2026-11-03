@@ -159,6 +159,33 @@ pub fn queue_tilemap(host: &mut (impl TilemapQueue + ?Sized), upload: TilemapUpl
     host.set_tilemap_queue_tail(tail.wrapping_add(7));
 }
 
+/// A tilemap queue record's size in bytes, as the cartridge tables hold them.
+pub const TILEMAP_RECORD: u16 = 7;
+
+/// Copy the cartridge's queue record `entry` to queue byte `tail` in the original
+/// store order: the size, the bank word at 3, the source address, then the destination.
+pub fn copy_tilemap_record(
+    host: &mut (impl TilemapQueue + ?Sized),
+    entry: &sm_data::cartridge::RomRecord,
+    tail: usize,
+) {
+    for field in [0, 3, 2, 5] {
+        let [first, second] = entry.word(field).to_ne_bytes();
+        host.set_tilemap_queue_byte(TILEMAP_QUEUE + tail + field, first);
+        host.set_tilemap_queue_byte(TILEMAP_QUEUE + tail + field + 1, second);
+    }
+}
+
+/// Append the cartridge's queue record `entry` at the tail and advance the tail past it.
+pub fn push_tilemap_record(
+    host: &mut (impl TilemapQueue + ?Sized),
+    entry: &sm_data::cartridge::RomRecord,
+) {
+    let tail = host.tilemap_queue_tail();
+    copy_tilemap_record(host, entry, usize::from(tail));
+    host.set_tilemap_queue_tail(tail.wrapping_add(TILEMAP_RECORD));
+}
+
 pub fn drain_tilemaps(host: &mut (impl TransferHost + ?Sized)) {
     struct Reader<'a, H: ?Sized>(&'a mut H);
     impl<H: TransferHost + ?Sized> super::queued_tilemaps::TilemapDrain for Reader<'_, H> {

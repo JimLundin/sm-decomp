@@ -300,18 +300,6 @@ impl sm_game::actors::ceres_ridley::Host for crate::game::session_runtime::Runti
     fn begin_ceres_push(&mut self) {
         sm_game::player_movement::forced::begin_ceres_push(self.session_mut());
     }
-
-    fn queue_escape_timer_tiles(&mut self) -> bool {
-        self.foreign(|game| crate::game::rom_vram_entries::queue_escape_timer_tiles(game) & 1 != 0)
-    }
-
-    fn queue_getaway_tiles(&mut self) {
-        self.foreign(crate::game::rom_vram_entries::queue_getaway_tiles);
-    }
-
-    fn queue_escape_tile_table(&mut self) {
-        self.foreign(crate::game::rom_vram_entries::queue_escape_tile_table);
-    }
 }
 
 impl sm_game::display::transfer::TilemapQueue for crate::game::session_runtime::Runtime<'_> {
