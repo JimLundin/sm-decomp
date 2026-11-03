@@ -4,7 +4,6 @@
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::ram::{word_arrays as A, words as W};
 
 slot_view! {
     /// Covern's extended words: its hover centre and velocity (whole over sub
@@ -89,7 +88,12 @@ const SAMUS_X_INDEXED: usize = 0xaf6;
 const SAMUS_Y_INDEXED: usize = 0xafa;
 
 fn selected(runtime: &impl Lease) -> Key {
-    Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX))
+    Key::from_legacy(runtime.session().actors.controls.selected)
+}
+/// Samus's Y (`vertical`) or X position.
+fn samus_position(runtime: &impl Lease, vertical: bool) -> u16 {
+    let player = &runtime.session().player;
+    if vertical { player.y } else { player.x }
 }
 fn palette_start(runtime: &impl Lease, key: Key) -> u16 {
     runtime
@@ -102,7 +106,7 @@ fn palette_start(runtime: &impl Lease, key: Key) -> u16 {
 fn set_target(runtime: &mut impl Lease, key: Key, colours: impl IntoIterator<Item = u16>) {
     let mut at = palette_start(runtime, key);
     for colour in colours {
-        runtime.write_slice_le(A::TARGET_PALETTES + usize::from(at), colour);
+        runtime.session_mut().presentation.visual_mut().targets[usize::from(at) / 2] = colour;
         at = at.wrapping_add(2);
     }
 }
@@ -154,26 +158,28 @@ fn process_palette_delay(runtime: &mut impl Lease, key: Key) {
 /// Advance Covern palette transition ($A8:9E88): step each colour channel one
 /// towards its target; the number of channels changed.
 fn advance_palette_transition(runtime: &mut impl Lease) -> u16 {
-    if runtime.word(W::DOOR_TRANSITION_FLAG_ENEMIES) != 0 {
+    if runtime.session().room.entry.enemy_interlock != 0 {
         return 0;
     }
     let mut at = palette_start(runtime, selected(runtime));
     let mut changed = 0u16;
     for _ in 0..COLOURS {
-        let source = A::PALETTE_BUFFER + usize::from(at);
-        let target = A::TARGET_PALETTES + usize::from(at);
-        if runtime.word(target) != runtime.word(source) {
+        let index = usize::from(at) / 2;
+        let visual = runtime.session_mut().presentation.visual_mut();
+        let target = visual.targets[index];
+        let colour = &mut visual.colors[index];
+        if target != *colour {
             for shift in [0, 5, 10] {
                 let mask = FULL << shift;
-                let goal = runtime.word(target) & mask;
-                let value = runtime.word(source) & mask;
+                let goal = target & mask;
+                let value = *colour & mask;
                 if value != goal {
                     let value = if (value as i16).wrapping_sub(goal as i16) >= 0 {
                         value.wrapping_sub(1 << shift)
                     } else {
                         value.wrapping_add(1 << shift)
                     };
-                    runtime.write_slice_le(source, value | (runtime.word(source) & !mask));
+                    *colour = value | (*colour & !mask);
                     changed = changed.wrapping_add(1);
                 }
             }
@@ -189,9 +195,10 @@ fn fade_to_white(runtime: &mut impl Lease, key: Key) {
     let mut at = palette_start(runtime, key);
     let mut complete = true;
     for _ in 0..COLOURS {
-        let source = A::PALETTE_BUFFER + usize::from(at);
-        if runtime.word(source) & FULL != FULL {
-            runtime.write_slice_le(source, runtime.word(source).wrapping_add(ONE_EACH));
+        let colour =
+            &mut runtime.session_mut().presentation.visual_mut().colors[usize::from(at) / 2];
+        if *colour & FULL != FULL {
+            *colour = colour.wrapping_add(ONE_EACH);
             complete = false;
         }
         at = at.wrapping_add(2);
@@ -241,8 +248,9 @@ fn fade_from_white(runtime: &mut impl Lease) {
         *edit.zone_right() = x;
         *edit.previous_y_direction() = Y_DIRECTION_STEP;
     }
-    let y =
-        runtime.lease_native_word(SAMUS_Y_INDEXED + usize::from(runtime.word(W::CUR_ENEMY_INDEX)));
+    let y = runtime.lease_native_word(
+        SAMUS_Y_INDEXED + usize::from(runtime.session().actors.controls.selected),
+    );
     let mut edit = CovernEdit::of(runtime, covern);
     *edit.previous_samus_y() = y;
     *edit.zone_top() = y;
@@ -315,9 +323,9 @@ fn ready_to_materialise(runtime: &mut impl Lease, key: Key) -> bool {
     // Only inspect vertical movement if the horizontal direction still matches.
     for vertical in [false, true] {
         let (position, step) = if vertical {
-            (W::SAMUS_Y_POS, Y_DIRECTION_STEP)
+            (samus_position(runtime, true), Y_DIRECTION_STEP)
         } else {
-            (W::SAMUS_X_POS, X_DIRECTION_STEP)
+            (samus_position(runtime, false), X_DIRECTION_STEP)
         };
         let view = Covern::of(runtime, covern);
         let previous = if vertical {
@@ -325,7 +333,7 @@ fn ready_to_materialise(runtime: &mut impl Lease, key: Key) -> bool {
         } else {
             view.previous_samus_x()
         };
-        let delta = (runtime.word(position) as i16).wrapping_sub(previous as i16);
+        let delta = (position as i16).wrapping_sub(previous as i16);
         let value = if delta < 0 {
             0
         } else if delta == 0 {
@@ -379,13 +387,8 @@ fn awake(runtime: &mut impl Lease, key: Key) {
         runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
     } else {
         for vertical in [false, true] {
-            let position = if vertical {
-                W::SAMUS_Y_POS
-            } else {
-                W::SAMUS_X_POS
-            };
-            let value = runtime.word(position);
-            let next = runtime.word(position).wrapping_add(1);
+            let value = samus_position(runtime, vertical);
+            let next = value.wrapping_add(1);
             let mut edit = CovernEdit::of(runtime, covern);
             if vertical {
                 *edit.previous_samus_y() = value;
