@@ -252,14 +252,18 @@ pub fn begin_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
     h.spawn_hdma_object(&HdmaObjectDefinition::new(0x41, 0x26, program));
 }
 /// Advance the suit pickup's window, then end it and release Samus.
-pub fn advance_pickup<H: SamusLease + crate::hdma_objects::HdmaTable>(h: &mut H, gravity: bool) {
-    use crate::{
-        player_transitions::xray,
-        ram::{word_arrays as arrays, words as ram},
-    };
+pub fn advance_pickup<
+    H: SamusLease + crate::hdma_objects::HdmaTable + crate::fx_domain::Controls,
+>(
+    h: &mut H,
+    gravity: bool,
+) {
+    use crate::{player_transitions::xray, ram::word_arrays as arrays};
     if advance(h, gravity, xray::set_window_word) {
         publish_colors(h);
-        h.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 18);
+        let mut fx = h.fx_controls();
+        fx.blending = 18;
+        h.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
         return;
     }
     if !gravity {

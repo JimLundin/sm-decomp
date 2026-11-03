@@ -193,23 +193,39 @@ pub fn blend_mask(h: &(impl SessionAccess + ?Sized)) -> u16 {
 }
 
 /// Set the beam's blend layer and, for BG1 (or BG3 in a dark haze), its colour.
-pub fn apply_blending(h: &mut (impl SessionRam + SessionAccess + ?Sized), phase: BlendPhase) {
+pub fn apply_blending(
+    h: &mut (
+             impl SessionAccess
+             + crate::fx_domain::Controls
+             + crate::display::preparation::Access
+             + ?Sized
+         ),
+    phase: BlendPhase,
+) {
+    use crate::display::preparation::Field::{FixedColor0, FixedColor1, FixedColor2, Geometry};
     let mask = blend_mask(h);
     let update_colors = match phase {
         BlendPhase::Restore => false,
         BlendPhase::Beam => mask == 0x4000,
-        BlendPhase::Setup => mask == 0x4000 || (mask == 0x1000 && (h.byte(0x74) & 0x1f) < 7),
+        BlendPhase::Setup => {
+            mask == 0x4000 || (mask == 0x1000 && (h.display_control_byte(FixedColor0) & 0x1f) < 7)
+        }
     };
     if update_colors {
         // Preserve the overlapping native words, including the final zero byte.
-        for (offset, value) in [(0x74, 0x27), (0x75, 0x47), (0x76, 0x87)] {
-            h.write_slice_native(offset, value);
+        for (fields, value) in [
+            ([FixedColor0, FixedColor1], 0x27u16),
+            ([FixedColor1, FixedColor2], 0x47),
+            ([FixedColor2, Geometry], 0x87),
+        ] {
+            for (field, byte) in fields.into_iter().zip(value.to_ne_bytes()) {
+                crate::frame_display_byte!(h, field => byte);
+            }
         }
     }
-    h.write_slice_le(
-        ram::FX_LAYER_BLENDING_CONFIG_C,
-        h.word(ram::FX_LAYER_BLENDING_CONFIG_C) | mask,
-    );
+    let mut fx = h.fx_controls();
+    fx.blending |= mask;
+    h.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
 }
 
 /// Turn the scope when the direction Samus faces away from is held.
@@ -285,7 +301,11 @@ pub fn draw_window<H: SamusLease>(h: &mut H) {
     h.draw_xray_window_table(window);
 }
 /// The X-ray background step: blend, then the beam's or the restore's stage.
-pub fn advance_background<H: SamusLease>(h: &mut H) {
+pub fn advance_background<
+    H: SamusLease + crate::fx_domain::Controls + crate::display::preparation::Access,
+>(
+    h: &mut H,
+) {
     use super::effects::XrayRestore;
     apply_blending(h, BlendPhase::Beam);
     let stages: [fn(&mut H); 6] = [
