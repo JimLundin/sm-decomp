@@ -84,4 +84,63 @@ macro_rules! projected_views {
 }
 
 projected_views!(Game);
-projected_views!(Runtime<'_>);
+
+/// The verify build's check that no access reaches a held copy's bytes,
+/// for the bytes `field`'s word access covers.
+#[cfg(sm_verify_dll)]
+fn check_field(field: Field, bytes: usize) {
+    let at = field.address();
+    for lane in at..at + bytes {
+        sm_game::session_cohort::check_not_held(lane);
+    }
+}
+
+/// While the lease is current the Runtime reads and stores the Session's
+/// fields directly; each store then refreshes the observations once, as the
+/// projected byte stores did after each byte. Otherwise, and for a word the
+/// Session has no field for, it takes the byte path as `Game` does.
+impl Views for Runtime<'_> {
+    fn view_word(&self, field: Field) -> u16 {
+        if self.persistent_is_current() {
+            if let Some(value) = field.session_word(self.session()) {
+                #[cfg(sm_verify_dll)]
+                check_field(field, 2);
+                return value;
+            }
+        }
+        word(self, field.address())
+    }
+    fn set_view_word(&mut self, field: Field, value: u16) {
+        if self.persistent_is_current() {
+            if let Some(word) = field.session_word_mut(self.session_mut()) {
+                #[cfg(sm_verify_dll)]
+                check_field(field, 2);
+                *word = value;
+                self.refresh_written_inputs();
+                return;
+            }
+        }
+        set_word(self, field.address(), value);
+    }
+    fn set_view_low_byte(&mut self, field: Field, value: u8) {
+        if self.persistent_is_current() {
+            if let Some(word) = field.session_word_mut(self.session_mut()) {
+                #[cfg(sm_verify_dll)]
+                check_field(field, 1);
+                *word = (*word & 0xff00) | u16::from(value);
+                self.refresh_written_inputs();
+                return;
+            }
+        }
+        set_byte(self, field.address(), value);
+    }
+    fn decode_view<T: Decode>(&self) -> T {
+        T::decode(&|at| byte(self, at))
+    }
+    fn load_words(&self, words: &mut impl Layout) {
+        words.visit(|at, value| *value = word(self, at));
+    }
+    fn store_words(&mut self, words: &mut impl Layout, select: impl FnMut(usize) -> bool) {
+        store_words(self, words, select);
+    }
+}

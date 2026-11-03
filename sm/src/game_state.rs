@@ -2343,7 +2343,7 @@ impl Game {
             |inventory| {
                 // The adapter owns addresses; the domain core owns ordinary fields.
                 let word = sm_game::inventory::Word::from_address(at & !1).expect("inventory word");
-                inventory.word(word).to_le_bytes()[at & 1]
+                inventory.get(word).to_le_bytes()[at & 1]
             },
         )
     }

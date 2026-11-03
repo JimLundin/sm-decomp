@@ -69,6 +69,26 @@ pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
 }
 
 impl Flow {
+    /// The value of the word `word` names.
+    pub fn get(&self, word: Word) -> u16 {
+        match word {
+            Word::CinematicFunction => self.cinematic_function,
+            Word::DemoTimer => self.demo_timer,
+            Word::DemoSet => self.demo_set,
+            Word::DemoScene => self.demo_scene,
+            Word::NumDemoSets => self.num_demo_sets,
+        }
+    }
+    /// The field `word` names.
+    pub fn get_mut(&mut self, word: Word) -> &mut u16 {
+        match word {
+            Word::CinematicFunction => &mut self.cinematic_function,
+            Word::DemoTimer => &mut self.demo_timer,
+            Word::DemoSet => &mut self.demo_set,
+            Word::DemoScene => &mut self.demo_scene,
+            Word::NumDemoSets => &mut self.num_demo_sets,
+        }
+    }
     pub fn changes(self, before: &Self) -> Vec<(usize, u16)> {
         let mut changed = Vec::new();
         if self.cinematic_function != before.cinematic_function {
