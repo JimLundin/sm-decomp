@@ -841,9 +841,15 @@ pub fn power_bomb<L: Lease + ?Sized>(game: &mut L) {
 /// `approach_wall`.
 pub fn not_started<L: Lease + ?Sized>(game: &mut L) {
     update_wall(game);
-    crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
+    game.session_mut()
+        .room
+        .set_scroll_pair(SCROLLS_4_5, 257u16.to_ne_bytes());
+    game.words_stored();
     if (game.player_x() as i32 - 1312i32) & 0x8000 == 0 {
-        crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(256));
+        game.session_mut()
+            .room
+            .set_scroll_pair(SCROLLS_4_5, 256u16.to_ne_bytes());
+        game.words_stored();
     }
     update_background(game.current_enemy(), game);
 }
@@ -1214,8 +1220,14 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     } & 2)
         != 0
     {
-        crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(257));
-        crate::word_transfers!(game, ascending, 1; native(SCROLLS_2_3) <- value(257));
+        game.session_mut()
+            .room
+            .set_scroll_pair(SCROLLS_0_1, 257u16.to_ne_bytes());
+        game.words_stored();
+        game.session_mut()
+            .room
+            .set_scroll_pair(SCROLLS_2_3, 257u16.to_ne_bytes());
+        game.words_stored();
         battle!(game.MeltEraseTarget = 0);
         let e: u16 = 0;
         {
@@ -1253,7 +1265,10 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             *crocomire.death_sequence_index() = 0;
             *crocomire.y_velocity() = 0;
         }
-        crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(0));
+        game.session_mut()
+            .room
+            .set_scroll_pair(SCROLLS_0_1, 0u16.to_ne_bytes());
+        game.words_stored();
         crate::word_transfers!(game, descending, 17;
             le(TARGET_PALETTES, 176) <- rom(PALETTE_TARGET_SPRITE_3, 16),
             le(TARGET_PALETTES, 224) <- rom(PALETTE_TARGET_SPRITE_6, 16),
@@ -1280,7 +1295,10 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| game.queue_music_delayed(6));
         *CrocomireEdit::of(game, e).death_sequence_index() = death::FLOWING_DOWN_THE_RIVER;
         CrocomireEdit::of(game, e).actor().instruction = ADDR_K_CROCOMIRE_ILIST_E1D2 as u16;
-        crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
+        game.session_mut()
+            .room
+            .set_scroll_pair(SCROLLS_4_5, 257u16.to_ne_bytes());
+        game.words_stored();
         battle!(game.MinimapDisabled = 0);
         CrocomireEdit::of(game, 0x40).actor().properties |= 0x200u16;
 
