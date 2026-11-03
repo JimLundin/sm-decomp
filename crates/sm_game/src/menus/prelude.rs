@@ -13,17 +13,8 @@ pub use crate::display::hdma_spawn::HdmaObjectDefinition;
 /// A bank-local address, as the original's `VoidP`.
 pub type VoidP = u16;
 
-/// Join two words as `(hi << 16) | lo`, optionally as `i32`.
+/// Join two words as `(hi << 16) | lo`.
 macro_rules! words {
-    (i32, $game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram::word!($game.$hi) as i32) << 16i32) | ($crate::ram::word!($game.$lo) as i32)
-    };
-    ($game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram::word!($game.$hi) as u32) << 16i32) | ($crate::ram::word!($game.$lo) as u32)
-    };
-    (i32, ($hi:expr, $lo:expr $(,)?) $(,)?) => {
-        (($hi as i32) << 16i32) | ($lo as i32)
-    };
     (($hi:expr, $lo:expr $(,)?) $(,)?) => {
         (($hi as u32) << 16i32) | ($lo as u32)
     };
@@ -87,14 +78,6 @@ macro_rules! display_scroll {
 }
 pub(crate) use display_scroll;
 
-/// A word pair addressed as an enemy-slot record, as the original's `PairU16`.
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct PairU16 {
-    pub k: u16,
-    pub j: u16,
-}
-
 /// Bytes in one VRAM write queue record: size, 24-bit source, destination.
 pub const VRAM_WRITE_ENTRY_BYTES: usize = 7;
 
@@ -122,7 +105,6 @@ pub mod enemy_data {
     /// The first enemy record, `enemy_data[0]`.
     pub const FIRST: usize = 0xf78;
     pub const X_POS: usize = 2;
-    pub const PALETTE_INDEX: usize = 30;
 }
 
 /// Run `body`, then stop once `guard` holds.
