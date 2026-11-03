@@ -412,6 +412,11 @@ impl HdmaLiveDescription {
         if self.window_control_lane(owner, offset)?.is_some() {
             return Err(DisplayError::Incomplete);
         }
+        self.read_unbound_buffer(owner, offset)
+    }
+    /// `read_buffer` of a coordinate whose `window_control_lane` is known to
+    /// be `Ok(None)`.
+    pub fn read_unbound_buffer(&self, owner: LiveOwner, offset: usize) -> Result<u8, DisplayError> {
         let HdmaRegionSource::Buffer {
             storage,
             offset: first,

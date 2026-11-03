@@ -1433,6 +1433,10 @@ impl<'s> ControlReader<'s> {
                 ControlOwner::Scalar(lane) => {
                     graph.map_or(ControlOwner::Scalar(lane), |graph| graph[lane])
                 }
+                // source_owner returns a Source only once its window lane is ruled out.
+                ControlOwner::Source(owner, offset) => {
+                    return live.read_unbound_buffer(owner, offset);
+                }
                 selected => selected,
             }
         };
