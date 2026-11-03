@@ -295,10 +295,13 @@ pub fn fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn set_up_text_page_1<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::intro_pages::clear_japanese_tiles(game);
     GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
-    crate::display::sequence::write_register_and_mirror(
+    // BG2, BG3 and the sprites.
+    crate::display::video::apply_mirrored(
         game,
-        crate::display::registers::TM as u16,
-        0x16,
+        "intro text page",
+        crate::display::video::Control::MainScreen(crate::display::control::Layers::of(
+            false, true, true, false, true,
+        )),
         Field::MainLayers,
         false,
     );
