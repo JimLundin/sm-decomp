@@ -14,7 +14,7 @@ macro_rules! player_words {
         pub enum PlayerWord { $($word,)+ }
         impl PlayerWord {
             /// Every word, in RAM order.
-            pub const ALL: [Self; 10] = [$(Self::$word,)+];
+            pub const ALL: [Self; 12] = [$(Self::$word,)+];
             /// The RAM word this field projects to.
             pub const fn address(self) -> usize { match self { $(Self::$word => $at,)+ } }
             /// The owned `Session::player` field.
@@ -25,10 +25,12 @@ macro_rules! player_words {
     };
 }
 player_words! {
+    PeriodicDamage => 0xa50, periodic_damage;
     X => 0xaf6, x;
     XFraction => 0xaf8, x_fraction;
     Y => 0xafa, y;
     YFraction => 0xafc, y_fraction;
+    YRadius => 0xb00, contact.radius;
     PreviousX => 0xb10, previous_position.x.whole;
     PreviousXFraction => 0xb12, previous_position.x.fraction;
     PreviousY => 0xb14, previous_position.y.whole;
@@ -67,6 +69,10 @@ pub trait PlayerPosition {
     fn knockback_timer(&self) -> u16 {
         self.player_word(PlayerWord::Knockback)
     }
+    /// Samus's vertical radius ($0B00).
+    fn player_y_radius(&self) -> u16 {
+        self.player_word(PlayerWord::YRadius)
+    }
     fn set_player_x(&mut self, x: u16) {
         self.set_player_word(PlayerWord::X, x)
     }
@@ -93,6 +99,10 @@ pub trait PlayerPosition {
     }
     fn set_knockback_timer(&mut self, frames: u16) {
         self.set_player_word(PlayerWord::Knockback, frames)
+    }
+    /// Store the periodic (environmental) damage Samus takes this frame ($0A50).
+    fn set_periodic_damage(&mut self, damage: u16) {
+        self.set_player_word(PlayerWord::PeriodicDamage, damage)
     }
 }
 

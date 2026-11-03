@@ -37,7 +37,7 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
     game.store_source_word(LiveOwner::LiquidSurface, 0, native_order(), 31);
     game.store_source_word(LiveOwner::LiquidSurface, 1, native_order(), 0);
     let mut row = 3u16;
-    let mut y = crate::camera::current(game).layer1[1].wrapping_add(32);
+    let mut y = crate::sequence_word!(game.LAYER1_Y_POS).wrapping_add(32);
     let mut band = 0usize;
     let mut inset = y & if y.wrapping_sub(1248) & 0x8000 != 0 {
         15
@@ -95,7 +95,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     hdma_index: usize,
     game: &mut H,
 ) {
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = crate::sequence_word!(game.LAYER1_Y_POS);
     if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
         if (game.display_control_byte(DisplayField::NmiFrameByte) & 1) == 0 {
             {
@@ -166,7 +166,7 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     r22: u16,
     game: &mut H,
 ) -> u16 {
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = crate::sequence_word!(game.LAYER1_Y_POS);
     let visible = 1216u16.wrapping_sub(layer1_y);
     if (1216i16).wrapping_sub(layer1_y as i16) < 0 || layer1_y == 1216 {
         return r18;
@@ -242,10 +242,10 @@ pub fn initialize_ocean<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     );
 }
 fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if ((game.player_y()) as i16).wrapping_sub((word!(game.SAMUS_Y_RADIUS)) as i16) < 0
-        || (game.player_y() as i32 - word!(game.SAMUS_Y_RADIUS) as i32 - 17i32) & 0x8000 != 0
+    if (game.player_y() as i16).wrapping_sub(game.player_y_radius() as i16) < 0
+        || (game.player_y() as i32 - game.player_y_radius() as i32 - 17i32) & 0x8000 != 0
     {
-        word!(game.SAMUS_PERIODIC_DAMAGE = 8);
+        game.set_periodic_damage(8);
     }
 }
 fn write_sky_word<H: crate::fx_domain::Sources + ?Sized>(value: u16, offset: isize, game: &mut H) {
@@ -274,7 +274,7 @@ pub fn advance_parallax<
     game.store_source_word(LiveOwner::SkyBg2, 90, WordOrder::Little, 0);
     write_sky_word(31, 0, game);
     write_sky_word(1438, 1, game);
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = game.camera().layer1[1];
     let mut r18: u16 = layer1_y.wrapping_add(32);
     let r20: u16 = layer1_y.wrapping_add(224);
     let mut v6: u16 = 3;
@@ -335,13 +335,14 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         write_sky_word(0, 0, game);
     } else {
-        let layer1_y = crate::camera::current(game).layer1[1];
+        let layer1_y = crate::sequence_word!(game.LAYER1_Y_POS);
         crate::menus::prelude::display_scroll!(game.Bg2V = layer1_y);
-        let v0: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
-        let v1 = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
-        let stride = VRAM_WRITE_ENTRY_BYTES;
+        // Four queue entries: two rows above the screen, then two below it.
+        let tail = game.queue_tail();
+        let stride = u16::try_from(VRAM_WRITE_ENTRY_BYTES).expect("queue entry size");
+        let entry = |row: u16, field: u16| tail.wrapping_add(row * stride).wrapping_add(field);
         for row in 0..4 {
-            crate::word_transfers!(game, ascending, 1; native(v1 + row * stride) <- value(64));
+            game.queue_native_word(entry(row, 0), 64);
         }
         // Each row indexes the table by its own high byte ($88:AFC5/$AFE8), so near the top of
         // the room the upper row reads past the table and the lower row reads its entry 0.
@@ -349,23 +350,25 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
             src.table_word(base, isize::from(row.to_be_bytes()[0]))
                 .wrapping_add((row & 0xff) * 8)
         };
-        let v3: VoidP = source((layer1_y & 0x7f8).wrapping_sub(16));
-        crate::word_transfers!(game, ascending, 1; native(v1 + 2) <- value(v3));
-        crate::word_transfers!(game, ascending, 1; native(v1 + stride + 2) <- value(v3.wrapping_add(64)));
-        let v5: VoidP = source((layer1_y & 0x7f8) + 0xf0);
-        crate::word_transfers!(game, ascending, 1; native(v1 + 2 * stride + 2) <- value(v5));
-        crate::word_transfers!(game, ascending, 1; native(v1 + 3 * stride + 2) <- value(v5.wrapping_add(64)));
+        let upper: VoidP = source((layer1_y & 0x7f8).wrapping_sub(16));
+        game.queue_native_word(entry(0, 2), upper);
+        game.queue_native_word(entry(1, 2), upper.wrapping_add(64));
+        let lower: VoidP = source((layer1_y & 0x7f8) + 0xf0);
+        game.queue_native_word(entry(2, 2), lower);
+        game.queue_native_word(entry(3, 2), lower.wrapping_add(64));
+        let queue = 0xd0 + usize::from(tail);
         for row in 0..4 {
-            game.ram().write_byte(v1 + row * stride + 4, 0x8a);
+            game.ram()
+                .write_byte(queue + row * VRAM_WRITE_ENTRY_BYTES + 4, 0x8a);
         }
         let t: i32 = (game.display_control_byte(DisplayField::Screens1) as i32 & 0xfc) << 8;
-        let v6: u16 = (t + 4 * ((layer1_y as i32 - 16i32) & 0x1f8)) as u16;
-        crate::word_transfers!(game, ascending, 1; native(v1 + 5) <- value(v6));
-        crate::word_transfers!(game, ascending, 1; native(v1 + stride + 5) <- value(v6.wrapping_add(32)));
-        let v7: u16 = (t + 4 * ((layer1_y as i32 + 240) & 0x1f8)) as u16;
-        crate::word_transfers!(game, ascending, 1; native(v1 + 2 * stride + 5) <- value(v7));
-        crate::word_transfers!(game, ascending, 1; native(v1 + 3 * stride + 5) <- value(v7.wrapping_add(32)));
-        word!(game.VRAM_WRITE_QUEUE_TAIL = (v0).wrapping_add(28));
+        let upper_destination: u16 = (t + 4 * ((layer1_y as i32 - 16i32) & 0x1f8)) as u16;
+        game.queue_native_word(entry(0, 5), upper_destination);
+        game.queue_native_word(entry(1, 5), upper_destination.wrapping_add(32));
+        let lower_destination: u16 = (t + 4 * ((layer1_y as i32 + 240) & 0x1f8)) as u16;
+        game.queue_native_word(entry(2, 5), lower_destination);
+        game.queue_native_word(entry(3, 5), lower_destination.wrapping_add(32));
+        game.store_queue_tail(tail.wrapping_add(28));
     };
 }
 pub fn queue_land_rows<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
