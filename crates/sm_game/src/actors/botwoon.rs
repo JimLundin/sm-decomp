@@ -136,8 +136,7 @@ const MAX_OFFSET: u16 = 255;
 /// Hidden, the head is drawn behind the background (layer 7); shown, layer 2.
 const HIDDEN_LAYER: u16 = 7;
 const SHOWN_LAYER: u16 = 2;
-/// $7E:060B: the spit projectile angle; spits fan out 10h apart.
-const SPIT_PROJECTILE_ANGLE: usize = 0x60b;
+/// Spits fan out 10h apart in the spit projectile angle ($7E:060B).
 const SPIT_SPREAD: u8 = 16;
 /// $B3:9E77: the spit speeds by speed table index.
 const SPIT_SPEEDS: [u16; 3] = [2, 3, 4];
@@ -742,23 +741,14 @@ pub fn head_spit<L: Lease + ?Sized>(wide: bool, game: &mut L) {
     if wide && Botwoon::of(game, e).spitting() == 0 {
         return;
     }
-    game.set_slot_byte(
-        SPIT_PROJECTILE_ANGLE,
-        (Botwoon::of(game, e).spit_angle() as u8).wrapping_sub(if wide {
-            2 * SPIT_SPREAD
-        } else {
-            SPIT_SPREAD
-        }),
-    );
+    game.session_mut().enemy_projectiles.spawn.angle = (Botwoon::of(game, e).spit_angle() as u8)
+        .wrapping_sub(if wide { 2 * SPIT_SPREAD } else { SPIT_SPREAD });
     let speed = SPIT_SPEEDS[Botwoon::of(game, e).speed_table_index() as usize];
     for _ in 0..if wide { 5 } else { 3 } {
         let k = game.current_enemy();
         game.spawn_projectile(speed, k, ADDR_K_EPROJ_BOTWOONS_SPIT as u16);
-        game.set_slot_byte(
-            SPIT_PROJECTILE_ANGLE,
-            game.slot_byte(SPIT_PROJECTILE_ANGLE)
-                .wrapping_add(SPIT_SPREAD),
-        );
+        let spawn = &mut game.session_mut().enemy_projectiles.spawn;
+        spawn.angle = spawn.angle.wrapping_add(SPIT_SPREAD);
     }
     let target = if wide {
         *BotwoonEdit::of(game, e).spitting() = 0;
