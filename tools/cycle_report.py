@@ -303,7 +303,7 @@ RAM_INVENTORY_RULES = {
     "ram_view": "Existing named RAM/view call patterns; may project owned fields at runtime",
     "cohort_copy": "session_cohort load/with/with_projected calls, including file-local import aliases",
     "address_api": "SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, and session_slot macro; may use typed storage, never added to raw calls",
-    "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer; ROM content, not RAM",
+    "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer, or a ?-propagated (fallible) native_word content read; not RAM",
     "unresolved_method": "word/byte/read/write/copy method without explicit raw receiver or known address API spelling",
     "backend_reference": "Game/raw/interface/native/compat symbols and import aliases; references, not calls",
 }
@@ -486,6 +486,14 @@ def inventory_sites(text):
         raw = bool(raw or (receiver and receiver.group(1) in ram_receivers))
         rom = method in ("native_word", "word") and not raw and (
             (receiver and receiver.group(1) in rom_receivers) or rom_chain.search(prefix))
+        if method == "native_word" and not raw and not rom:
+            # RAM address APIs return a plain u16. A `?`-propagated read is a
+            # fallible content or display-staging read, not RAM.
+            depth, end = 1, match.end()
+            while end < len(calls) and depth:
+                depth += {"(": 1, ")": -1}.get(calls[end], 0)
+                end += 1
+            rom = calls[end:end + 1] == "?"
         if rom:
             kind = "rom_read"
         elif raw and method in raw_methods:
