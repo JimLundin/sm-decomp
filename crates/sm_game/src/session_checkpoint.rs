@@ -1492,7 +1492,7 @@ checkpoint_fields!(checkpoint_mechanisms, checkpoint_read_mechanisms, Mechanisms
 checkpoint_fields!(checkpoint_flags, checkpoint_read_flags, GameplayFlags,
     events: checkpoint_bytes/checkpoint_read_bytes, bosses_by_area: checkpoint_bytes/checkpoint_read_bytes,
     used_room_objects: checkpoint_bytes/checkpoint_read_bytes, collected_locations: checkpoint_bytes/checkpoint_read_bytes,
-    opened_doors: checkpoint_bytes/checkpoint_read_bytes,
+    opened_doors: checkpoint_bytes/checkpoint_read_bytes, unused: checkpoint_bytes/checkpoint_read_bytes,
     used_stations: checkpoint_bytes/checkpoint_read_bytes, map_stations: checkpoint_bytes/checkpoint_read_bytes);
 checkpoint_fields!(checkpoint_flag_compatibility, checkpoint_read_flag_compatibility, FlagCompatibility,
     bitmask: checkpoint_word/checkpoint_read_word);
@@ -1611,7 +1611,7 @@ macro_rules! checkpoint_auxiliary {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
                 if !self.menu_window.is_initialized() { return Err("unsupplied map-menu window checkpoint".into()); }
-                let mut bytes = Vec::from(b"SMAUXGS\x0e".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x0f".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1620,7 +1620,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x0e" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x0f" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -2142,6 +2142,7 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     slope_behavior: checkpoint_word/checkpoint_read_word, ceres_status: checkpoint_word/checkpoint_read_word,
     mode7_irq: checkpoint_word/checkpoint_read_word, ceres_hdma_table: checkpoint_word/checkpoint_read_word,
     background_size: checkpoint_word/checkpoint_read_word,
+    unpause_queue_tail: checkpoint_word/checkpoint_read_word,
     main_variables: checkpoint_words/audio_words, pause_hooks: checkpoint_words/audio_words,
     scrolls: checkpoint_words/audio_words,
     camera: checkpoint_camera/checkpoint_read_camera);
@@ -2193,7 +2194,7 @@ impl Room {
         }
         let topology = checkpoint_world_binding(binding)?;
         checkpoint_validate_room(self, binding)?;
-        let mut bytes = Vec::from(b"SMROOMS\x0b".as_slice());
+        let mut bytes = Vec::from(b"SMROOMS\x0c".as_slice());
         let source = observation_binding(metadata);
         checkpoint_count(&mut bytes, source.len());
         bytes.extend_from_slice(&source);
@@ -2208,7 +2209,7 @@ impl Room {
         expected: &world::WorldBinding,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMROOMS\x0b" {
+        if read.bytes(8)? != b"SMROOMS\x0c" {
             return Err("unsupported room checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)

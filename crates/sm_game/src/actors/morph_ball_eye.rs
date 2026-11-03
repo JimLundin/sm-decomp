@@ -54,8 +54,11 @@ const MOUNT_BIT: u16 = 0x8000;
 const MOUNT_FACING: u16 = 15;
 const MOUNT_X_OFFSETS: [i16; 4] = [-8, 8, 0, 0];
 const MOUNT_Y_OFFSETS: [i16; 4] = [0, 0, -8, 8];
-/// $7E:92FE: the beam's window 1 HDMA data table, cleared to FFh,00h.
-const BEAM_WINDOW_TABLE: usize = 0x92fe;
+/// The beam's window 1 HDMA data table ($7E:9100..$7E:92FF), cleared to
+/// FFh,00h: words 80h..17Fh of the bosses' shared RAM, the Session's fourth
+/// extended actor block, whose words hold the RAM's bytes little-endian.
+const SHARED_BLOCK: usize = 3;
+const BEAM_WINDOW_TABLE: core::ops::Range<usize> = 0x80..0x180;
 /// Samus is near within 80h px rows and 80h px columns ($A8:9050), and stays
 /// in view within B0h px columns.
 const NEAR_ROWS: u16 = 0x80;
@@ -117,7 +120,12 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
         *EyeEdit::of(game, eye).function() = function::MOUNT;
         let list = crate::enemy_lists::eye_instruction_list(game, index as isize);
         EyeEdit::of(game, eye).actor().instruction = list;
-        crate::word_transfers!(game, descending, 256; native(BEAM_WINDOW_TABLE) <- value(255));
+        // Cleared from its last word down, as the original's loop does.
+        let block = &mut game.session_mut().actors.extended.blocks[SHARED_BLOCK];
+        for word in block[BEAM_WINDOW_TABLE].iter_mut().rev() {
+            *word = crate::word_transfers::stored_native(0xff);
+        }
+        game.words_stored();
     } else {
         *EyeEdit::of(game, eye).function() = function::WAIT_FOR_SAMUS;
         face(

@@ -4,7 +4,6 @@ use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
 use crate::fx_domain::native_order;
 use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma};
 use crate::menus::prelude::HdmaObjectDefinition;
-use crate::ram::word;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::session_access::SessionAccess;
 use crate::visual_state::{TourianStatuePhase, Weather};
@@ -105,7 +104,7 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
         );
         {
             let fx_value = SOUNDS[usize::from(index >> 1) + 1]
-                .wrapping_add(word!(game.RANDOM_NUMBER) & 3)
+                .wrapping_add(game.view_word(crate::projection::Field::RandomNumber) & 3)
                 .wrapping_add(carry);
             let mut fx = game.fx_controls();
             fx.earthquake_sound_timer = fx_value;

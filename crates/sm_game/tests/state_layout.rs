@@ -664,7 +664,8 @@ fn message_box_round_trips_every_word() {
 }
 
 /// The room's FX blending configurations, the Ceres status, the mode 7
-/// interrupt flag, the Ceres haze's HDMA table word and the size of BG2.
+/// interrupt flag, the Ceres haze's HDMA table word, the size of BG2 and
+/// Kraid's sinking unpause queue tail.
 fn room_state_lanes() -> Vec<Lane> {
     vec![
         (0x1982, 0, |s, _| &mut s.room.fx_blending),
@@ -674,6 +675,7 @@ fn room_state_lanes() -> Vec<Lane> {
         (0x0783, 0, |s, _| &mut s.room.mode7_irq),
         (0x07eb, 0, |s, _| &mut s.room.ceres_hdma_table),
         (0x098e, 0, |s, _| &mut s.room.background_size),
+        (0x0780, 0, |s, _| &mut s.room.unpause_queue_tail),
     ]
 }
 
@@ -1646,6 +1648,37 @@ impl sm_game::sequence_state::Access for Projection {
         after: sm_game::session_words::SessionWords,
     ) {
         after.apply_changed(before, &mut self.0);
+    }
+}
+
+/// The gameplay flags own the unused bytes between the doors and the stations
+/// ($D8F0..$D8F7) byte by byte; each store reaches only its own byte.
+#[test]
+fn unused_flag_bytes_round_trip_every_byte() {
+    const UNUSED: std::ops::Range<usize> = 0xd8f0..0xd8f8;
+    let base = session();
+    for at in UNUSED {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        assert_eq!(s.gameplay_flags.unused[at - UNUSED.start], value);
+        for other in UNUSED {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [3, 0xd8f0_d8f7] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        assert_eq!(s.gameplay_flags.unused.as_slice(), &ram[UNUSED]);
+        let bytes = encoded(&s);
+        for at in UNUSED {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+        }
     }
 }
 

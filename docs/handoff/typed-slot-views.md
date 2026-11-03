@@ -138,3 +138,18 @@ cinematic frames' `Cinematic` copies, the fade planes ($2000..$2FFF), the palett
 ($C000..$C1FF) and Samus's shot words in the intro. They run on Game outside any lease, and no
 Game owner holds those words. They need the cinematic frame on a lease, or the Session kept
 authoritative for the whole tick (docs/PERFORMANCE.md step 2).
+
+## Owners lane (2026-11-03, `collab/rs-owners`)
+
+The ratchet now counts `use ... as` renames of the RAM macros (save_slots' `game_word!`;
+219 becomes 223), and reports the RAM-named Session word views (`sequence_word!`,
+`gameplay_word!`) as the advisory `session_word_view_sites`. New owners:
+`Room::unpause_queue_tail` ($0780, SMROOMS 12) and `GameplayFlags::unused` ($D8F0..$D8F7,
+SMAUXGS 15). New `projection::Field` keys: `MessageDelay`, `UnpauseQueueTail`, `ApuUploading`
+(the owned audio requests' `uploading`, else the byte path), `RandomNumber`, `Moonwalk`,
+`DebugFlag` and `Spare09E8`. Left: the save slots' $0A00/$D7C0 and $CD52 block copies and the
+demo's $CD52 clear (no owners; the save file and the map transfer reach them as raw RAM), the
+tile buffer fills in `initialize_gameplay` and `queue_fx_clear` (the workspace's role points
+don't cover a plain fill), the $07B4..$0997 clear in the gameplay frame, the options fade's
+$198D..$19BC clear (no typed keys), Crocomire's melt tile copies and $069C..$071D clear, and
+the cohort lane's `cinematic.rs` and `ending_screens.rs` transfers.

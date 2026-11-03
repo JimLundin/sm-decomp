@@ -253,8 +253,8 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         {
             *flag = 0;
         }
+        flags.unused = [0xff; 8];
     });
-    crate::word_transfers!(game, ascending, 4; le(UNUSED_WORD_7ED8F0, 0) <- value(u16::MAX));
     crate::word_transfers!(game, ascending, 768; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
     crate::gameplay_context::with_inventory(
         game,

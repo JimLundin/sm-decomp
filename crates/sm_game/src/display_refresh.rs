@@ -148,7 +148,11 @@ pub fn initialize_gameplay<H: Host + crate::sprite_drawing::ObjectAccess + ?Size
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2e00).load(game);
     GraphicsAsset::VramWords(0x7e4000, 0x5000, 0x1000).load(game);
     GraphicsAsset::VramWords(0x7e4000, 0x5800, 0x800).load(game);
-    word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0x9a8000, 0));
+    // The common palettes ($9A:8000) into the palette buffer, in order.
+    let colors: [u16; 256] = word_transfers::rom_words(game, 0x9a_8000);
+    for (index, color) in colors.into_iter().enumerate() {
+        game.set_view_word(crate::projection::Field::PaletteColor(index), color);
+    }
 }
 
 /// Read the room's BG2 tilemap back into RAM for the pause screen.

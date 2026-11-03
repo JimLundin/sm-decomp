@@ -46,6 +46,22 @@ pub enum Field {
     DoorTransition,
     /// The current room's header pointer.
     RoomHeader,
+    /// The message box's delay ($077E), which Kraid's sinking unpause hook
+    /// also counts its erased rows in.
+    MessageDelay,
+    /// Where Kraid's sinking unpause hook queues its row erasures ($0780).
+    UnpauseQueueTail,
+    /// Whether an APU upload is under way ($0617), as the owned audio
+    /// requests hold it; with legacy control the byte path answers.
+    ApuUploading,
+    /// The random number generator's last result ($05E5).
+    RandomNumber,
+    /// Samus's moonwalk setting ($09E4).
+    Moonwalk,
+    /// The debug flag ($09E6).
+    DebugFlag,
+    /// The spare word after the debug flag ($09E8).
+    Spare09E8,
 }
 
 impl Field {
@@ -67,6 +83,13 @@ impl Field {
             Self::CurrentCre => words::CRE_BITSET,
             Self::DoorTransition => words::DOOR_TRANSITION_FLAG,
             Self::RoomHeader => words::ROOM_PTR,
+            Self::MessageDelay => words::MY_COUNTER,
+            Self::UnpauseQueueTail => words::MY_COUNTER2,
+            Self::ApuUploading => words::IS_UPLOADING_APU,
+            Self::RandomNumber => words::RANDOM_NUMBER,
+            Self::Moonwalk => words::MOONWALK_FLAG,
+            Self::DebugFlag => words::DEBUG_FLAG,
+            Self::Spare09E8 => words::UNUSED_WORD_7E09E8,
         }
     }
 
@@ -107,13 +130,24 @@ impl Field {
             Self::CurrentCre => entry.cre,
             Self::DoorTransition => entry.completion,
             Self::RoomHeader => session.world.room_key(&entry.room),
+            Self::MessageDelay => session.messages.delay,
+            Self::UnpauseQueueTail => room.unpause_queue_tail,
+            Self::ApuUploading => match &session.control {
+                crate::session_owners::Control::Owned(control) => control.requests.uploading,
+                crate::session_owners::Control::Legacy(_) => return None,
+            },
+            Self::RandomNumber => session.timing.random_number,
+            Self::Moonwalk => session.player.moonwalk,
+            Self::DebugFlag => session.player.debug_flag,
+            Self::Spare09E8 => session.player.spare_09e8,
         })
     }
 
     /// The Session field that holds the word, for a store. `None` where the
     /// Session has no word there, and where it holds no plain word: the room
     /// header and the door exit, which the projection stores a byte at a
-    /// time through the world's keys, and the FX blending control lane.
+    /// time through the world's keys, the FX blending control lane, and the
+    /// APU upload flag, whose stores keep the audio owner's byte path.
     pub fn session_word_mut(self, session: &mut Session) -> Option<&mut u16> {
         Some(match self {
             Self::Flow(word) => session.flow.get_mut(word),
@@ -150,6 +184,13 @@ impl Field {
             Self::CurrentCre => &mut session.room.entry.cre,
             Self::DoorTransition => &mut session.room.entry.completion,
             Self::RoomHeader => return None,
+            Self::MessageDelay => &mut session.messages.delay,
+            Self::UnpauseQueueTail => &mut session.room.unpause_queue_tail,
+            Self::ApuUploading => return None,
+            Self::RandomNumber => &mut session.timing.random_number,
+            Self::Moonwalk => &mut session.player.moonwalk,
+            Self::DebugFlag => &mut session.player.debug_flag,
+            Self::Spare09E8 => &mut session.player.spare_09e8,
         })
     }
 }

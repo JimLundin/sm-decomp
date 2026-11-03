@@ -5,7 +5,6 @@ use crate::constants::buttons::{
     K_BUTTON_A, K_BUTTON_B, K_BUTTON_DOWN, K_BUTTON_L, K_BUTTON_LEFT, K_BUTTON_R, K_BUTTON_RIGHT,
     K_BUTTON_SELECT, K_BUTTON_START, K_BUTTON_UP, K_BUTTON_X, K_BUTTON_Y,
 };
-use crate::ram::word;
 
 fn repeat<H: Host + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
     use crate::{controller_state::Word as Input, gameplay_context::Word};
@@ -98,7 +97,9 @@ fn sample_word<H: Host + ?Sized>(first: u16, game: &mut H) {
 
 fn debug_controls<H: Host + ?Sized>(game: &mut H) {
     let reset = (K_BUTTON_SELECT | K_BUTTON_START | K_BUTTON_L | K_BUTTON_R) as u16;
-    if word!(game.IS_UPLOADING_APU) != 0 || game.observed_inputs().held != reset {
+    if game.view_word(crate::projection::Field::ApuUploading) != 0
+        || game.observed_inputs().held != reset
+    {
         if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 {
             crate::gameplay_word! { game, 0; JOYPAD_DBG_1, JOYPAD_DBG_2 }
             if (crate::gameplay_word!(game.JOYPAD_DBG_FLAGS) & 0x4000) == 0 {

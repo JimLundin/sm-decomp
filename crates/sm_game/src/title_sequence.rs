@@ -16,6 +16,8 @@ use crate::display::preparation::Field;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
 use crate::menus::prelude::display_scroll;
+use crate::scene::hdma_sources::LiveOwner;
+use crate::scene::state::WordOrder;
 use crate::visual_state::{CinematicDisplay, CinematicFade};
 
 /// Bank $8B cinematic functions, stored in `cinematic_function`.
@@ -257,7 +259,10 @@ fn finish<H: Host + ?Sized>(
     crate::palette_effects::execution::leased::set_enabled(false, game);
     crate::palette_effects::execution::leased::clear(game);
     cine.clear();
-    crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
+    // HDMA table 1's first 256 words ($7E:9800), last first.
+    for row in (0..256).rev() {
+        game.store_source_word(LiveOwner::HdmaTable1, 2 * row, WordOrder::Little, 0);
+    }
     crate::gameplay_word!(game.GAME_STATE = next);
     clear_index(game);
 }
