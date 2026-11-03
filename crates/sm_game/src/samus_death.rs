@@ -4,13 +4,12 @@ use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_L, K_BUTTON_R};
 use crate::menu_state::MenuScreens;
 use crate::menus::prelude::CoroutineRet;
 use crate::player_transitions as pt;
-use crate::ram::{RawRam, word};
 use crate::runtime_access::RuntimeAccess;
+use crate::runtime_access::with_session;
 use crate::scene::samus_body::Body;
 use crate::session_access::SessionAccess as _;
 use crate::sprite_output;
 use crate::visual_host::{Content, Record, Source};
-use crate::word_transfers;
 
 /// What the death sequence needs from the game.
 pub trait Host:
@@ -69,7 +68,7 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             crate::player_transitions::state::AnimationSkip::from_raw(0);
         player.animation_clock.frame = frame;
         drop(lease);
-        let layer1 = crate::camera::current(game).layer1;
+        let layer1 = game.runtime().session().room.camera.layer1;
         let x = game.player_x().wrapping_sub(layer1[0]);
         game.set_player_x(x);
         let y = game.player_y().wrapping_sub(layer1[1]);
@@ -136,7 +135,7 @@ fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
         .runtime()
         .legacy_native_record(0x9b, address)
         .bytes::<32>(0);
-    game.ram().copy_in(0xc180, &colors);
+    store_colors(game, 192, colors);
     // The second source is resolved only after the first complete palette copy.
     let address = match frame {
         Some(frame) => crate::gameplay_tables::death_frame_palette(game, (frame >> 1) as isize),
@@ -146,14 +145,24 @@ fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
         .runtime()
         .legacy_native_record(0x9b, address)
         .bytes::<32>(0);
-    game.ram().copy_in(0xc1e0, &colors);
+    store_colors(game, 240, colors);
+}
+
+/// Store a 16-colour palette's bytes from ROM at palette colour `first`.
+fn store_colors<H: Host + ?Sized>(game: &mut H, first: usize, bytes: [u8; 32]) {
+    with_session(game, |session| {
+        let colors = &mut session.presentation.visual_mut().colors[first..first + 16];
+        for (color, pair) in colors.iter_mut().zip(bytes.as_chunks::<2>().0) {
+            *color = u16::from_le_bytes(*pair);
+        }
+    });
 }
 
 fn queue_death_tiles<H: Host + ?Sized>(frame: u16, game: &mut H) {
     const SOURCES: [u16; 5] = [0x8400, 0x8800, 0x8c00, 0x9000, 0x8000];
     const DESTINATIONS: [u16; 5] = [0x6200, 0x6400, 0x6600, 0x6800, 0x6000];
     crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        game.queue_tail(),
         1024,
         |_| SOURCES[usize::from(frame >> 1)],
         0x9b,
@@ -169,8 +178,16 @@ fn whiten_death_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreen
             0x56b5, 0x5ad6, 0x5ef7, 0x6318, 0x6739, 0x6b5a, 0x6f7b, 0x739c, 0x77bd, 0x7bde, 0x7fff,
         ];
         let shade = SHADES[usize::from(screens.death.counter)];
-        word_transfers!(game, ascending, 192; native(0xc000) <- value(shade));
-        word_transfers!(game, ascending, 32; native(0xc1a0) <- value(shade));
+        // Every colour but Samus's palette ($C180..$C19F) and the last two
+        // sprite palettes ($C1E0..$C1FF).
+        let shade = crate::word_transfers::stored_native(shade);
+        with_session(game, |session| {
+            let (first, samus_and_sprites) =
+                session.presentation.visual_mut().colors.split_at_mut(192);
+            for color in first.iter_mut().chain(&mut samus_and_sprites[16..48]) {
+                *color = shade;
+            }
+        });
         if screens.death.counter.wrapping_sub(20) & 0x8000 != 0 {
             screens.death.counter = screens.death.counter.wrapping_add(1);
         }
