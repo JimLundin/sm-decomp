@@ -7,7 +7,7 @@ use crate::actors::draygon_host::{
     ARMS, BANK, BODY, Draygon, DraygonEdit, EYE, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
     instruction_list as list,
 };
-use crate::actors::host::{ActorLease, BossEffects as _};
+use crate::actors::host::ActorLease;
 
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
@@ -80,7 +80,7 @@ pub fn foam_at_mouth<L: Lease>(k: u16, frame_mask: u16, game: &mut L) {
         };
         let x = Draygon::of(game, BODY).actor().x.whole.wrapping_add(dx);
         let y = Draygon::of(game, BODY).actor().y.whole.wrapping_sub(FOAM_Y);
-        game.foreign(|game| game.create_sprite(x, y, FOAM, 0));
+        crate::actors::boss_lease::steps::create_sprite(game, x, y, FOAM);
     }
 }
 /// Handle firing wall turret ($A5:87AA): every 40h frames, a random turret of
@@ -122,7 +122,7 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
                         vram_address,
                     },
                 );
-                game.foreign(|game| game.draygon_spawn_trails());
+                game.owned_step(crate::sprite_effect_controllers::draygon_spawn_trails);
             }
         } else {
             game.foreign(|game| game.draygon_trajectory());
@@ -184,7 +184,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     *DraygonEdit::of(game, k).function() = function::FIGHT_INTRO_INITIAL_DELAY;
     install_layers(game);
     *DraygonEdit::of(game, BODY).turret_5_destroyed() = 1;
-    game.foreign(|game| game.disable_minimap_for_boss());
+    game.owned_step(crate::player_update::minimap::disable_for_boss);
 }
 /// Initialisation AI - Draygon tail ($A5:C599) or, with `arms`, arms ($A5:C5AD).
 /// Was `initialize_part`.
@@ -392,7 +392,7 @@ pub fn body_bubble<L: Lease>(turret: Option<u16>, game: &mut L) {
             .y
             .whole
             .wrapping_sub(BUBBLE_OFFSET);
-        game.foreign(|game| game.create_sprite(x, y, BUBBLE, 0));
+        crate::actors::boss_lease::steps::create_sprite(game, x, y, BUBBLE);
     }
 }
 /// Draygon body function - goop right ($A5:8B52) or left ($A5:8CD4) - move

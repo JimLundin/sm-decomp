@@ -58,10 +58,6 @@ const _: () = {
 };
 
 impl Host for Game {
-    fn draygon_spawn_trails(&mut self) {
-        sprites::draygon_spawn_trails(self);
-    }
-
     fn draygon_trajectory(&mut self) {
         sprites::draygon_trajectory(self);
     }
