@@ -415,6 +415,19 @@ A decision (D3).
   - Items: `item-*`.
   - Grapple: `samus-grapple-*`.
   - Death: `death`.
+- **Done in part (lane `tick-s6`, on `ea7b09e0b`).** Not yet landed.
+  - Samus's frame (`player_update_runtime::advance_frame`), its special movement handlers and
+    gamma actions, `player_projectiles_hit_samus`, the room mechanisms and the room's main
+    code run on the lease, through `gameplay_frame::PassLease`.
+  - Without a queued message box the whole gameplay pass runs on one lease; it opened about
+    15 on a plain frame. A message box, or a resumed mechanism yield, splits it in two.
+  - The intro's `advance_intro_player` runs on one lease; `initialize_player` already did.
+  - `Runtime::new` outside verification fell from 152 to 120; `foreign_calls` stayed at 183.
+  - Stage 0's counters landed with it: `lease counters:` lines on stderr in verify builds.
+  - Left: the low health warning (death phase) and Mother Brain's unpause each open one
+    lease with no neighbour to merge; `finish_health_and_time` and `finish_frame` run on Game
+    after the pass's lease (`gameplay_rules::Host`); `player_movement_runtime`'s
+    `ceres_movement` and the crystal flash's HDMA spawn keep a `foreign` call each.
 
 ### Stage 7: cinematics and menus on the lease
 
