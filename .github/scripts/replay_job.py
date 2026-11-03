@@ -11,7 +11,9 @@ from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / ".github/scripts"))
 import scenario  # noqa: E402
+import pack  # noqa: E402
 
 JOB: dict[str, Any] = json.loads(os.environ["JOB"])
 TEMP = pathlib.Path(os.environ["RUNNER_TEMP"])
@@ -70,19 +72,10 @@ def rom_import() -> int:
 
 
 def partition(ids: list[str]) -> list[list[str]]:
-    """Split rows into balanced worker groups, keeping prefix rows together."""
-    frames = {row["id"]: row for row in scenario.rows(ROOT)}
-    def cost(name: str) -> int:
-        count: int = frames[name].get("frames", 1)
-        return count
+    """Split rows into balanced worker groups by measured seconds, keeping prefix rows together.
 
-    prefixed = [name for name in ids if frames[name].get("start_frame", 0)]
-    groups: list[list[str]] = [[] for _ in range(max(1, min(WORKERS, len(ids))))]
-    if prefixed:
-        groups[0].extend(prefixed)
-    for name in sorted(set(ids) - set(prefixed), key=lambda name: (-cost(name), name)):
-        min(groups, key=lambda group: sum(cost(item) for item in group)).append(name)
-    return [group for group in groups if group]
+    The planner packed this job with the same split (pack.py)."""
+    return pack.partition(ids, {row["id"]: row for row in scenario.rows(ROOT)}, JOB["mode"], WORKERS)
 
 
 def console_line(line: str, state: dict[str, str], mode: str, audio: bool) -> str | None:
