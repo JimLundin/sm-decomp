@@ -367,7 +367,10 @@ pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         ] {
             crate::frame_display_byte!(game, field => value);
         }
-        game.write_register(crate::display::registers::COLDATA as u16, 0xe0);
+        game.apply(
+            "ending",
+            crate::display::video::Command::FixedColor(crate::display::control::FixedColor::all(0)),
+        );
         set_fixed_color([32, 64, 0x80], game);
         crate::frame_display_byte!(game, Field::Mosaic => 0);
         *cine.x_sub() = 0;
