@@ -102,9 +102,6 @@ pub trait BossEffects:
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;
     /// Where the next enemy projectile spawns.
     fn set_projectile_spawn_point(&mut self, x: u16, y: u16);
-    /// Store each (at, value) word natively, in order, through one session lease.
-    fn write_native_words(&mut self, writes: &[(usize, u16)]);
-    fn disable_minimap_for_boss(&mut self);
     /// The high word of `amplitude` times the cosine of `phase`.
     fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16;
     /// The high word of `amplitude` times the sine of `phase`.
@@ -125,8 +122,6 @@ pub trait BossEffects:
     fn legacy_native_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
     /// Run Samus command `command`; its result.
     fn command_player(&mut self, command: u16) -> u16;
-    /// Reset projectile data.
-    fn reset_player_projectiles(&mut self);
     fn correct_previous_position(&mut self);
     /// Contact damage `amount` after Samus's suit.
     fn suit_damage(&mut self, amount: u16) -> u16;

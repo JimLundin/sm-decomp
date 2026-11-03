@@ -76,17 +76,6 @@ impl BossEffects for Game {
         self.eproj_spawn_pt = Point16U { x, y };
     }
 
-    fn write_native_words(&mut self, writes: &[(usize, u16)]) {
-        let mut runtime = Runtime::new(self);
-        for &(at, value) in writes {
-            runtime.write_slice_native(at, value);
-        }
-    }
-
-    fn disable_minimap_for_boss(&mut self) {
-        sm_game::player_update::minimap::disable_for_boss(&mut Runtime::new(self));
-    }
-
     fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
         actor_cosine(phase, amplitude, self)
     }
@@ -125,10 +114,6 @@ impl BossEffects for Game {
 
     fn command_player(&mut self, command: u16) -> u16 {
         player_command(command, self)
-    }
-
-    fn reset_player_projectiles(&mut self) {
-        crate::game::player_projectiles::reset(self);
     }
 
     fn correct_previous_position(&mut self) {
