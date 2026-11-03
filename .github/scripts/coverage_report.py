@@ -8,7 +8,7 @@ sysroot = subprocess.check_output(["rustup", "run", toolchain, "rustc", "--print
 llvm = pathlib.Path(sysroot, "lib/rustlib/x86_64-unknown-linux-gnu/bin")
 
 
-def merge(paths, output):
+def merge(paths: list[pathlib.Path], output: str) -> None:
     listing = pathlib.Path(output + ".txt")
     listing.write_text("".join(f"{path}\n" for path in paths))
     subprocess.run([str(llvm / "llvm-profdata"), "merge", "-sparse", "-f", str(listing), "-o", output], check=True)
@@ -21,7 +21,7 @@ if not raw:
     raise SystemExit("No coverage profiles were produced")
 print(f"Merging {len(raw)} corpus and {len(route)} route profiles")
 merge(raw, "corpus.profdata")
-arguments = []
+arguments: list[str] = []
 if route:
     merge(route, "route.profdata")
     arguments.append("route.profdata")

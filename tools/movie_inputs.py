@@ -11,6 +11,8 @@ import struct
 import tomllib
 from itertools import islice, zip_longest
 from pathlib import Path
+from typing import Any, cast, overload
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 import zipfile
 
 BUTTON_BITS = dict(zip(
@@ -18,8 +20,15 @@ BUTTON_BITS = dict(zip(
     (0x8000, 0x4000, 0x2000, 0x1000, 0x0800, 0x0400, 0x0200, 0x0100, 0x0080, 0x0040, 0x0020, 0x0010),
 ))
 
+# A capture CSV row, and the same row with every field but `kind` as an integer.
+Row = dict[str, str]
+Event = dict[str, int]
+# Video rows are either whole CSV rows or the two retained counters (possibly absent).
+Video = Sequence[Mapping[str, Any]]
 
-def recorded_eof(movie, source, path, metadata, expected_sha256):
+
+def recorded_eof(movie: Path, source: list[int], path: Path, metadata: Path,
+                 expected_sha256: str | None) -> Any:
     """Authenticate an explicitly recorded lsnes read-only continuation."""
     data = metadata.read_bytes()
     if not expected_sha256 or hashlib.sha256(data).hexdigest() != expected_sha256:
@@ -52,7 +61,8 @@ def recorded_eof(movie, source, path, metadata, expected_sha256):
     return info
 
 
-def seeded_wait_slice(source, path, seed, count, continuation=None):
+def seeded_wait_slice(source: list[int], path: Path, seed: Path, count: int,
+                      continuation: dict[str, Any] | None = None) -> list[int]:
     """Locate the captured NMI's completed wait, then reuse strict input alignment."""
     if not seed.name.endswith('-wram.bin') or count <= 0:
         raise ValueError('seed requires a -wram.bin file and a positive frame count')
@@ -106,17 +116,26 @@ def seeded_wait_slice(source, path, seed, count, continuation=None):
     return aligned_wait_prefix(source, path, count, boundary + 1, continuation)
 
 
-def aligned_wait_prefix(source, path, count, after_event=0, continuation=None,
-                        map_output=None, provenance=None):
+@overload
+def aligned_wait_prefix(source: list[int], path: Path, count: int | None, after_event: int = 0,
+                        continuation: dict[str, Any] | None = None, map_output: None = None,
+                        provenance: dict[str, Path] | None = None) -> list[int]: ...
+@overload
+def aligned_wait_prefix(source: list[int], path: Path, count: int | None, after_event: int = 0,
+                        continuation: dict[str, Any] | None = None, *, map_output: Path,
+                        provenance: dict[str, Path] | None = None) -> int: ...
+def aligned_wait_prefix(source: list[int], path: Path, count: int | None, after_event: int = 0,
+                        continuation: dict[str, Any] | None = None, map_output: Path | None = None,
+                        provenance: dict[str, Path] | None = None) -> list[int] | int:
     """Replay observed wait-entry input; reject gaps instead of guessing lag removal."""
-    def rows(suffix):
+    def rows(suffix: str) -> Iterator[Row]:
         with Path(str(path) + suffix).open(newline='') as file:
             yield from csv.DictReader(file)
     if (Path(str(path) + '.error.txt').exists()
             or (count is None and map_output is None) or (count is not None and count <= 0)):
         raise ValueError('failed capture or invalid prefix length')
-    video = []
-    eof_polls = rows('.eof-polls.csv') if continuation else iter(())
+    video: list[dict[str, Any]] = []
+    eof_polls: Iterator[Row] = rows('.eof-polls.csv') if continuation else iter(())
     for index, (frame, poll) in enumerate(zip_longest(rows(''), rows('.polls.csv'))):
         if frame is None or poll is None or (index >= len(source) and not continuation):
             raise ValueError('incomplete video/input capture')
@@ -149,8 +168,8 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None,
     if continuation and (len(video) != continuation['last_movie_frame']
                          or next(eof_polls, None) is not None):
         raise ValueError('EOF capture window does not match its metadata')
-    def observed_events():
-        hardware = rows('.eof-hardware.csv') if continuation else iter(())
+    def observed_events() -> Iterator[Row]:
+        hardware: Iterator[Row] = rows('.eof-hardware.csv') if continuation else iter(())
         for event in rows('.events.csv'):
             if (continuation and event['kind'] == 'joypad_read'
                     and int(event['movie_frame']) > len(source)):
@@ -171,12 +190,15 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None,
         if not any(event['kind'] == 'joypad_begin' for event in rows('.events.csv')):
             raise ValueError('event map requires complete controller read boundaries')
         return write_work_event_map(video, events, path, map_output, provenance)
-    def complete(result):
+    # Checked above: a prefix without an event map has a count.
+    assert count is not None
+    def complete(result: list[int]) -> list[int]:
         # The previous eager read parsed the unused suffix too. Preserve its
         # CSV error detection without retaining a second whole capture.
         for _ in events:
             pass
         return result
+    previous: Event | None
     if after_event:
         # The seed normalizer has finished this wait. Start a fresh room-local
         # continuity chain instead of requiring all earlier rooms to align.
@@ -188,15 +210,17 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None,
         return complete(aligned_work_prefix(video, events, count, after_event, previous))
     if any(event['kind'] == 'joypad_begin' for event in rows('.events.csv')):
         return complete(aligned_work_prefix(video, events, count))
-    result, pending, previous = [], None, None
+    result: list[int] = []
+    pending: Event | None = None
+    previous = None
     last_frame = 0
-    for number, event in enumerate(events, 1):
-        kind = event['kind']
-        event = {key: int(value) for key, value in event.items() if key != 'kind'}
-        frame = event['movie_frame']
-        if event['event'] != number or not last_frame <= frame <= len(video):
+    for number, raw in enumerate(events, 1):
+        kind = raw['kind']
+        event = {key: int(value) for key, value in raw.items() if key != 'kind'}
+        movie_frame = event['movie_frame']
+        if event['event'] != number or not last_frame <= movie_frame <= len(video):
             raise ValueError('nonsequential boundary capture')
-        last_frame = frame
+        last_frame = movie_frame
         if kind == 'joypad_read':
             continue
         if kind == 'wait_enter' and pending is None:
@@ -207,7 +231,7 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None,
                 # The observed boot reset clears the counters between logo and title.
                 reset = (previous['state'] == 0 and event['state'] == 1 and event['nmi'] == 0
                          and any(int(row['nmi_after']) < int(row['nmi_before'])
-                                 for row in video[previous['movie_frame'] - 1:frame]))
+                                 for row in video[previous['movie_frame'] - 1:movie_frame]))
                 continuous |= reset
             if not continuous or not 0 <= event['joypad'] <= 0xffff:
                 raise ValueError(f'unobserved update before native step {len(result)}')
@@ -224,27 +248,31 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None,
     raise ValueError('capture ends before the requested aligned prefix')
 
 
-def mapped_work_events(video, events, after_event=0, previous=None, frame_start=1,
-                       native_read_start=0):
+def mapped_work_events(video: Video, events: Iterable[Row], after_event: int = 0,
+                       previous: Event | None = None, frame_start: int = 1,
+                       native_read_start: int = 0) -> Iterator[dict[str, Any]]:
     """Map contiguous original event ranges; unsupported cadence never makes a step.
 
     Event/video endpoints are inclusive. Native read endpoints are zero-based,
     half-open original ordinals. No captured events or input words are rewritten.
     """
     last_frame = 0
-    first = last = None
+    first: Event | None = None
+    last: Event | None = None
     reads = read_begin = native_read_start
     step = 0
     blocked = False
-    wait_word = None
+    wait_word: int | None = None
     gap_read = False
 
-    def span(boundary, word=None, incomplete=False):
+    def span(boundary: str, word: int | None = None, incomplete: bool = False) -> dict[str, Any]:
         nonlocal first, read_begin, step, blocked
+        # Every span follows at least one event, which set both.
+        assert first is not None and last is not None
         gap = boundary == 'requested_nmi_work' or incomplete
         blocked |= gap
         supported = word is not None and not gap
-        row = dict(event_begin=first['event'], event_end=last['event'],
+        row: dict[str, Any] = dict(event_begin=first['event'], event_end=last['event'],
                    video_begin=first['movie_frame'], video_end=last['movie_frame'],
                    native_read_begin=read_begin, native_read_end=reads,
                    boundary=boundary, status=('incomplete' if incomplete else
@@ -258,8 +286,12 @@ def mapped_work_events(video, events, after_event=0, previous=None, frame_start=
             step += 1
         first, read_begin = None, reads
         return row
-    read = wait = lag = vblank = irq = None
-    no_update = None
+    read: Event | None = None
+    wait: Event | None = None
+    lag: Event | None = None
+    vblank: Event | None = None
+    irq: Event | None = None
+    no_update: Event | None = None
     no_update_nmis = 0
     door = False
     for number, raw in enumerate(events, after_event + 1):
@@ -367,14 +399,17 @@ def mapped_work_events(video, events, after_event=0, previous=None, frame_start=
     if first is None and pending:
         # A terminal marker owns no events when EOF immediately follows a
         # supported suspension boundary; its range is explicitly empty.
+        # Something is pending only after an event, so `last` is set.
+        assert last is not None
         first = dict(last, event=last['event'] + 1)
     if first is not None:
         yield span('pending_eof' if pending else 'evidence', incomplete=pending)
 
 
-def aligned_work_prefix(video, events, count, after_event=0, previous=None, frame_start=1):
+def aligned_work_prefix(video: Video, events: Iterable[Row], count: int, after_event: int = 0,
+                        previous: Event | None = None, frame_start: int = 1) -> list[int]:
     """Publish only complete supported steps before the first native work gap."""
-    result = []
+    result: list[int] = []
     for row in mapped_work_events(video, events, after_event, previous, frame_start):
         if row['status'] in ('gap', 'blocked', 'incomplete'):
             raise ValueError(f"unsupported native cadence at events {row['event_begin']}.."
@@ -387,12 +422,13 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
     raise ValueError('capture ends before the requested complete work prefix')
 
 
-def file_sha256(path):
+def file_sha256(path: str | Path) -> str:
     with Path(path).open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def write_work_event_map(video, events, path, output, provenance):
+def write_work_event_map(video: Video, events: Iterable[Row], path: Path, output: Path,
+                         provenance: dict[str, Path]) -> int:
     """Write lossless identity ranges, with separate original and supported-prefix pins.
 
     This is an import artifact, not replay evidence. In particular, supported
@@ -407,12 +443,14 @@ def write_work_event_map(video, events, path, output, provenance):
     pins['importer_sha256'] = file_sha256(__file__)
     with zipfile.ZipFile(provenance['movie']) as archive:
         with archive.open('input') as stream:
-            pins['movie_input_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
+            # ZipFile.open returns a ZipExtFile, which typeshed widens to IO[bytes].
+            member = cast(zipfile.ZipExtFile, stream)
+            pins['movie_input_sha256'] = hashlib.file_digest(member, 'sha256').hexdigest()
     prefix = hashlib.sha256()
     pending_prefix = prefix.copy()
     pending_steps = 0
     steps = reads = event_end = 0
-    first_gap = None
+    first_gap: dict[str, Any] | None = None
     fields = ('event_begin', 'event_end', 'video_begin', 'video_end',
               'native_read_begin', 'native_read_end', 'boundary', 'status',
               'verifier_step', 'settled')
@@ -455,7 +493,8 @@ def write_work_event_map(video, events, path, output, provenance):
     return steps
 
 
-def check_work_event_map(metadata, expected_sha256, inputs, through):
+def check_work_event_map(metadata: Path, expected_sha256: str, inputs: Path,
+                         through: int) -> dict[str, Any]:
     """Registry guard: a boot input/checkpoint prefix cannot cross an import gap."""
     if file_sha256(metadata) != expected_sha256:
         raise ValueError('event map manifest SHA-256 mismatch')
@@ -477,7 +516,7 @@ def check_work_event_map(metadata, expected_sha256, inputs, through):
         raise ValueError('event map SHA-256 mismatch')
     event_end = reads = steps = qualified = 0
     blocked = False
-    first_gap = None
+    first_gap: Row | None = None
     with metadata.with_name(name).open(newline='') as stream:
         for row in csv.DictReader(stream):
             begin, end = int(row['event_begin']), int(row['event_end'])
@@ -524,7 +563,8 @@ def check_work_event_map(metadata, expected_sha256, inputs, through):
     return info
 
 
-def snes9x_capture_inputs(movie, rom, capture, expected_sha256, seed, count):
+def snes9x_capture_inputs(movie: Path, rom: Path, capture: Path, expected_sha256: str,
+                          seed: Path, count: int) -> list[int]:
     """Reuse the work-boundary aligner for the reviewed five-port SMV capture."""
     if count <= 0 or hashlib.sha256(capture.read_bytes()).hexdigest() != expected_sha256:
         raise ValueError('invalid Snes9x capture length or metadata SHA-256')
@@ -544,11 +584,11 @@ def snes9x_capture_inputs(movie, rom, capture, expected_sha256, seed, count):
         raise ValueError('unsupported five-port SMV layout')
     # Each declared record, including frame zero, retains all five ports.
     # Only the observed non-debug hardware read selects port 1 below.
-    def ports(frame):
+    def ports(frame: int) -> tuple[int, ...]:
         if not 0 <= frame <= last_frame:
             raise ValueError('capture exceeds declared SMV frames')
         return struct.unpack_from('<5H', data, inputs_at + frame * 10)
-    tables = {}
+    tables: dict[str, list[Row]] = {}
     for name in ('snes9x.frames.csv', 'snes9x.events.csv'):
         path = capture.with_name(name)
         pin = info['files'][name]
@@ -595,7 +635,7 @@ def snes9x_capture_inputs(movie, rom, capture, expected_sha256, seed, count):
     return result
 
 
-def load(path, rom):
+def load(path: Path, rom: Path) -> list[int]:
     with zipfile.ZipFile(path) as movie:
         names = movie.namelist()
         if 'input' in names:
@@ -619,9 +659,9 @@ def load(path, rom):
     return frames
 
 
-def parse_lsmv(text):
+def parse_lsmv(text: str) -> list[int]:
     buttons = 'BYsSudlrAXLR'
-    frames = []
+    frames: list[int] = []
     for number, line in enumerate(text.splitlines(), 1):
         header, pad = line.split('|', 1)
         if header not in ('F.', 'F. 0 0') or len(pad) != 12:
@@ -636,13 +676,13 @@ def parse_lsmv(text):
     return frames
 
 
-def parse_bk2(text):
+def parse_bk2(text: str) -> list[int]:
     key = next(line[len('LogKey:'):] for line in text.splitlines() if line.startswith('LogKey:'))
     groups = [[name for name in group.split('|') if name] for group in key.split('#') if group]
     allowed = {'Reset', 'Power'} | {f'P{port} {name}' for port in (1, 2) for name in BUTTON_BITS}
     if any(name not in allowed for group in groups for name in group):
         raise ValueError('unsupported BK2 control')
-    frames = []
+    frames: list[int] = []
     for line in text.splitlines():
         if not line.startswith('|'):
             continue
@@ -670,24 +710,24 @@ ROUTES = {
 }
 
 
-def _buttons(names):
+def _buttons(names: str) -> int:
     return sum(BUTTON_BITS[name] for name in names.split())
 
 
-def _hold(names, frames):
+def _hold(names: str, frames: int) -> list[int]:
     return [_buttons(names)] * frames
 
 
-def _holds(spec):
+def _holds(spec: str) -> list[int]:
     # Original authored holds: B+Right+A:25 None:15; None releases all buttons.
-    result = []
+    result: list[int] = []
     for hold in spec.split():
         names, count = hold.split(':')
         result.extend(_hold('' if names == 'None' else names.replace('+', ' '), int(count)))
     return result
 
 
-def _early_route(any_inputs):
+def _early_route(any_inputs: list[int]) -> list[int]:
     # Original session 01a14be2-7bfa-76f2-96e3-b9b914c73f46 ordinals 471/488/503/545/565.
     a = any_inputs[:11627] + (_hold('B Right A', 25) + _hold('B Right', 15))*80
     a = a[:12500] + _hold('B Left', 60) + _hold('B Right', 60) + _hold('B Left', 200) + _hold('B Right', 80) + _hold('B Left', 700)
@@ -726,7 +766,7 @@ def _early_route(any_inputs):
     return a
 
 
-def _missile_route(morph):
+def _missile_route(morph: list[int]) -> list[int]:
     a = morph + _hold('', 5) + _hold('B Right A', 65) + _hold('B Right', 40) + _hold('', 100) #1729 pedestal-right-0
     a = a[:28410] + _hold('', 8) + _hold('B Right A', 80) + _hold('Right', 300) + _hold('', 80) #1778 edge-jump
     a = a[:28700] + _hold('Down', 20) + _hold('Down X', 100) + _hold('', 5) + _hold('Down', 5) + _hold('Right', 500) + _hold('', 100) #1851 crouch-shot
@@ -743,7 +783,7 @@ def _missile_route(morph):
 
 
 
-def extend_missile(a):
+def extend_missile(a: list[int]) -> list[int]:
     # Authored append calls, session01a14c20-ee41-7072-98ad-153710b09812.
     a += _holds('Right+X:200 None:60')  #665 exit-right
     a += _holds('Down:8 None:8 Down:8 None:8 Right:30 None:8 Up:8 None:8 Up:8 None:15 Up+A:30 Left+A+X:25 X:40 None:15')  #700 roll-shaft
@@ -794,7 +834,7 @@ def extend_missile(a):
     return a
 
 
-def extend_parlor(a):
+def extend_parlor(a: list[int]) -> list[int]:
     # Authored reusable Parlor ascent, session01a14c25; suffix only.
     s = []
     s += _holds('Right+A:70 Left+A:4 X:65 None:20') #936 first-right
@@ -835,7 +875,7 @@ def extend_parlor(a):
     return a
 
 
-def extend_bombs(a):
+def extend_bombs(a: list[int]) -> list[int]:
     # Archived session01a14c95, original combat and traversal commands.
     a += _holds('Right:1 X:1200 None:120') #1201 fight-beam-inspect
     cycle = _hold('B Right A X', 65) + _hold('Left X', 1) + _hold('X', 230) + _hold('B Left A X', 65) + _hold('Right X', 1) + _hold('X', 230)
@@ -863,7 +903,7 @@ def extend_bombs(a):
     return a
 
 
-def extend_hill(a):
+def extend_hill(a: list[int]) -> list[int]:
     # Archived session01a14c95 original expressions and reusable suffixes.
     a += _hold('B Right X', 95) + _hold('', 100) + _hold('B Right X', 65) + _hold('', 120) #24726
     a += _hold('B Right X', 225) + _hold('', 90) + _hold('Down', 1) + _hold('', 600) #24790
@@ -894,7 +934,7 @@ def extend_hill(a):
     return a
 
 
-def extend_green(a):
+def extend_green(a: list[int]) -> list[int]:
     # Archived session01a14c95: alternate-lower-door29185, land39765, east-five40562.
     a += _holds('Right+X:20 None:60 Left+X:32 None:80 Right+X:32 None:80 Left+X:30 None:120')
     a = a[:67300] + _holds('Right+X:30 None:100') #39765
@@ -917,7 +957,7 @@ def extend_green(a):
     return a
 
 
-def extend_super(a):
+def extend_super(a: list[int]) -> list[int]:
     # Original archived session 01a15330-201d-7fc0-a594-a9c60b0a2a44.
     # 993 tank-left-drop.inputs
     a += _hold('Left A', 8) + _hold('A', 6) + _hold('', 60)
@@ -1122,7 +1162,7 @@ def extend_super(a):
     return a
 
 
-def extend_redtower(a):
+def extend_redtower(a: list[int]) -> list[int]:
     """Extend the supplied 86483 integer samples in place; return the same list.
 
     Original archived session 01a153bb-3fca-7c60-acb7-ef6509fc3f25.
@@ -1459,7 +1499,7 @@ def extend_redtower(a):
 
 
 
-def route_frames(source, name):
+def route_frames(source: list[int], name: str) -> list[int]:
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
     A jumps, X fires and B runs in these original coverage routes. Splices
@@ -1475,9 +1515,9 @@ def route_frames(source, name):
 
 
 # Source body inserted into existing tools/movie_inputs.py, not another runner.
-def check_native_phase_capture(receipt, receipt_sha256, movie, full_inputs, rom,
-                               native, native_source, phase_file, stdout, logger,
-                               predecessor):
+def check_native_phase_capture(receipt: Path, receipt_sha256: str, movie: Path, full_inputs: Path,
+                               rom: Path, native: Path, native_source: Path, phase_file: Path,
+                               stdout: Path, logger: Path, predecessor: Path) -> dict[str, Any]:
     """Authenticate native observations; never turn them into engine-step inputs.
 
     Root supplies the SHA-bound actual native job receipt after collecting exit0,
@@ -1514,18 +1554,20 @@ def check_native_phase_capture(receipt, receipt_sha256, movie, full_inputs, rom,
         words = sum(1 for _ in stream)
     if words != original[1] or info.get('full_input_words') != words:
         raise ValueError('native phase full original input identity/count differs')
-    declared, first, through, events = (info.get(name) for name in ('declared_frames', 'first', 'through', 'events'))
+    # Receipt values stay untyped until the int checks below.
+    scope: list[Any] = [info.get(name) for name in ('declared_frames', 'first', 'through', 'events')]
+    declared, first, through, events = scope
     if (any(type(value) is not int for value in (declared, first, through, events))
             or declared != words or not 1 <= first <= through or events <= 0):
         raise ValueError('native phase selected original scope is invalid')
     header = (f"# native_phase=1 parent={pins['movie']} native={pins['native']} "
               f"source={pins['native_source']} full_input={pins['full_inputs']} "
               f"declared={declared} first={first} through={through}\n")
-    observed = info.get('observed_native_frames')
+    observed: Any = info.get('observed_native_frames')
     if type(observed) is not int or observed < declared or through > observed:
         raise ValueError('native phase original EOF has not actually been observed')
     selected_end = through
-    last_index = info.get('last_frame_first_subframe_index')
+    last_index: Any = info.get('last_frame_first_subframe_index')
     if type(last_index) is not int or last_index < 0:
         raise ValueError('native phase lacks its observed original EOF input cursor')
     footer = (f'# native_collection_complete=true original_frames={declared} observed_native_frames={observed} selected_first={first} '
@@ -1533,33 +1575,33 @@ def check_native_phase_capture(receipt, receipt_sha256, movie, full_inputs, rom,
               'full_original_input_end=true physical_plan_admitted=false END_NATIVE_PHASE_COLLECTION\n')
     closed = (f"NATIVE_PHASE_WRITER_CLOSED parent={pins['movie']} native={pins['native']} "
               f"source={pins['native_source']} original_frames={declared} frames={observed} first={first} through={through} events={events}\n")
-    with stdout.open('r', encoding='utf8', newline='') as stream:
-        if sum(line in (closed, closed[:-1] + '\r\n') for line in stream) != 1:
+    with stdout.open('r', encoding='utf8', newline='') as text:
+        if sum(line in (closed, closed[:-1] + '\r\n') for line in text) != 1:
             raise ValueError('native phase writer has no exact successful flush/close receipt')
     count = 0
-    frames = set()
-    latch = None
+    frames: set[int] = set()
+    latch: tuple[int, list[int], tuple[str, str]] | None = None
     complete_latches = 0
     unknown_origins = 0
-    native_ports = set()
+    native_ports: set[tuple[str, str]] = set()
     expected_columns = ['sequence', 'kind', 'address', 'value', 'movie_frame', 'input_callback',
         'frame_first_subframe_index', 'port0_type', 'port1_type', 'port2_type', 'frame_start_serialized',
         'api', 'source_hash', 'native_port1_type', 'native_port2_type', 'origin', 'reset_generation',
         'completed_master_clocks', 'frame_boundaries', 'pbpc', 'hcounter', 'vcounter', 'field',
         'smp_relative_clock', 'ppu_relative_clock', 'port1_relative_clock', 'port2_relative_clock',
         'auto_counter', 'auto_active', 'auto_enabled', 'joy1', 'joy2', 'joy3', 'joy4']
-    def integer(row, key, low, high):
+    def integer(row: Row, key: str, low: int, high: int) -> int:
         value = row[key]
         if not value or str(int(value)) != value or not low <= int(value) <= high:
             raise ValueError('native phase integer identity/range differs: ' + key)
         return int(value)
-    with phase_file.open('r', encoding='ascii', newline='') as stream:
-        if stream.readline() != header or stream.readline() != ','.join(expected_columns) + '\n':
+    with phase_file.open('r', encoding='ascii', newline='') as text:
+        if text.readline() != header or text.readline() != ','.join(expected_columns) + '\n':
             raise ValueError('native phase exact original source/header differs')
         terminal = False
-        for line in stream:
+        for line in text:
             if line.startswith('#'):
-                if line != footer or stream.read(1):
+                if line != footer or text.read(1):
                     raise ValueError('native phase has no exact terminal record at EOF')
                 terminal = True
                 break

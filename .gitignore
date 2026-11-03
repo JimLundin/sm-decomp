@@ -1,6 +1,7 @@
 /target
 # Python tooling caches.
 __pycache__/
+.mypy_cache/
 # Never commit the ROM or anything derived from it.
 /rom/
 *.sfc

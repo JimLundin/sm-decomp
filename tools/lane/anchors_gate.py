@@ -1,19 +1,21 @@
 # Fast gate: every anchor the dispatch-only room mutation step reaches resolves exactly once.
 import importlib, pathlib, runpy, sys
+from collections.abc import Iterator
+from typing import Any
 root = pathlib.Path(sys.argv[1]).resolve(); V = root / "sm/src/verification"
 sys.path.insert(0, str(V))
-def resolve(rel):
+def resolve(rel: str) -> pathlib.Path | None:
     for c in (root / rel, root / "sm/src/game" / rel, root / "sm/src" / rel):
         if c.is_file(): return c
     hits = list((root / "sm/src").rglob(pathlib.Path(rel).name))
     return hits[0] if len(hits) == 1 else None
-bad = []
-def check(origin, rel, before):
+bad: list[str] = []
+def check(origin: str, rel: str, before: str) -> None:
     p = resolve(rel)
     if p is None: bad.append(f"{origin}: missing {rel}"); return
     c = p.read_bytes().decode().replace("\r\n", "\n").count(before.replace("\r\n", "\n"))
     if c != 1: bad.append(f"{origin}: {rel} x{c}: {before[:60]!r}")
-def walk(o):
+def walk(o: object) -> Iterator[dict[str, Any]]:
     if isinstance(o, dict):
         if "before" in o and "path" in o: yield o
         for v in o.values(): yield from walk(v)

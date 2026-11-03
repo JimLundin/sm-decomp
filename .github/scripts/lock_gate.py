@@ -15,21 +15,23 @@ Recording (faithful oracle; docs/SCENARIO_HARNESS.md, "Oracle digest lock"):
   python tools/scenario.py lock --record
 """
 import datetime, hashlib, json, os, pathlib, subprocess, sys, tempfile
+from collections.abc import Collection, Mapping
+from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import scenario  # noqa: E402
 
 
-def oracle_sample(rows, locked, slot, minimum=30):
+def oracle_sample(rows: list[dict[str, Any]], locked: Collection[str], slot: int, minimum: int = 30) -> list[str]:
     """Rotate equally through the corpus and each route every three-hour UTC slot."""
-    pools = {}
+    pools: dict[str, list[str]] = {}
     for row in rows:
         if row["id"] in locked:
             pools.setdefault(row.get("chain", "corpus"), []).append(row["id"])
     if sum(map(len, pools.values())) < minimum:
         raise ValueError(f"oracle sample needs at least {minimum} locked scenarios")
-    selected = []
+    selected: list[str] = []
     for index, (_, pool) in enumerate(sorted(pools.items())):
         pool.sort()
         quota = minimum // len(pools) + (index < minimum % len(pools))
@@ -44,13 +46,14 @@ def oracle_sample(rows, locked, slot, minimum=30):
     return selected
 
 
-def oracle_slot():
+def oracle_slot() -> int:
     return int(datetime.datetime.now(datetime.timezone.utc).timestamp()) // (3 * 60 * 60)
 
 
-def compare_oracle(locked, recorded, selected):
+def compare_oracle(locked: Mapping[str, dict[str, Any]], recorded: Mapping[str, dict[str, Any]],
+                   selected: list[str]) -> list[str]:
     """Exact entries include identity, format, ticks, every domain and every mark."""
-    failures = []
+    failures: list[str] = []
     if set(recorded) != set(selected):
         failures.append("recorded scenario ids differ from the selected ids")
     for name in selected:
@@ -70,7 +73,7 @@ def compare_oracle(locked, recorded, selected):
     return failures
 
 
-def record_oracle():
+def record_oracle() -> None:
     """Re-record into a private temporary lock; never write the committed lock."""
     selected = os.environ["SEGMENTS"].split()
     locked = scenario.check(ROOT)
@@ -104,7 +107,7 @@ def record_oracle():
               f"domains {', '.join(sorted(entry['digests']))}; hash {entry['combined']}", flush=True)
 
 
-def matrix(command, environment):
+def matrix(command: list[str], environment: dict[str, str]) -> list[dict[str, Any]]:
     """The job matrix one of the lockstep workflows' planners writes."""
     with tempfile.TemporaryDirectory() as work:
         output, summary = pathlib.Path(work, "output"), pathlib.Path(work, "summary")
@@ -112,10 +115,11 @@ def matrix(command, environment):
                        env=dict(os.environ, GITHUB_OUTPUT=str(output),
                                 GITHUB_STEP_SUMMARY=str(summary), **environment))
         line = next(line for line in output.read_text().splitlines() if line.startswith("matrix="))
-        return json.loads(line.removeprefix("matrix="))["include"]
+        include: list[dict[str, Any]] = json.loads(line.removeprefix("matrix="))["include"]
+        return include
 
 
-def jobs():
+def jobs() -> list[dict[str, Any]]:
     """The engine-only jobs: every locked room and corpus row."""
     locked = scenario.check(ROOT)
     corpus = sorted(locked & {row["id"] for row in scenario.rows(ROOT) if "chain" not in row})
@@ -127,7 +131,7 @@ def jobs():
              for job in matrix([".github/scripts/full_route.py", "plan"], {})]
     shards = matrix([".github/scripts/plan_corpus.py"], {"SELECTED": " ".join(corpus)})
     size = max(job["steps"] for job in rooms)
-    bins = [[] for _ in range(max(1, round(sum(shard["cost"] for shard in shards) / size)))]
+    bins: list[list[dict[str, Any]]] = [[] for _ in range(max(1, round(sum(shard["cost"] for shard in shards) / size)))]
     for shard in sorted(shards, key=lambda shard: -shard["cost"]):
         min(bins, key=lambda group: sum(shard["cost"] for shard in group)).append(shard)
     packed = rooms + [

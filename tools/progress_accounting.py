@@ -7,8 +7,14 @@ from pathlib import Path
 import subprocess
 import hashlib
 import sys
+from collections.abc import Callable
+from typing import Any
 
 sys.dont_write_bytecode = True
+
+# (kind, start, end) of one Rust code token.
+Token = tuple[str, int, int]
+Lexer = Callable[[str], list[Token]]
 
 TOKEN = re.compile(r"""
     (?P<ws>\s+)
@@ -23,11 +29,13 @@ TOKEN = re.compile(r"""
 """, re.X | re.S)
 
 
-def lex(s):
+def lex(s: str) -> list[Token]:
     """Return (kind, start, end) for Rust code tokens, skipping comments, strings and chars."""
-    i, n, out = 0, len(s), []
+    i, n = 0, len(s)
+    out: list[Token] = []
     while i < n:
         m = TOKEN.match(s, i)
+        assert m is not None  # the final alternative matches any character
         if m.group("raw") is not None:
             close = '"' + m.group("h")
             j = s.find(close, m.end())
@@ -55,10 +63,10 @@ def lex(s):
     return out
 
 
-def function(text, name, lexer):
+def function(text: str, name: str, lexer: Lexer) -> tuple[int, int, str] | None:
     tokens = lexer(text)
     words = [text[a:b] for _, a, b in tokens]
-    matches = []
+    matches: list[tuple[int, int, str]] = []
     for i in range(len(tokens) - 2):
         if words[i:i + 2] != ["fn", name]:
             continue
@@ -81,8 +89,11 @@ def function(text, name, lexer):
     return matches[0] if matches else None
 
 
-def discounts(kept, mapping, lexer):
-    covered, counted, results = set(), set(), []
+def discounts(kept: dict[str, str], mapping: dict[str, Any],
+              lexer: Lexer) -> tuple[int, int, int, list[dict[str, Any]]]:
+    covered: set[tuple[str, int]] = set()
+    counted: set[tuple[str, str]] = set()
+    results: list[dict[str, Any]] = []
     operations = signatures = 0
     for record in mapping["sections"]:
         for key in ("source_pin", "function", "replacement", "actual_callers", "proof", "retention_reason", "deletion_condition"):
@@ -110,7 +121,7 @@ def discounts(kept, mapping, lexer):
     return len(covered), operations, signatures, results
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ref", default="HEAD")
     parser.add_argument("--superseded", type=Path)
@@ -124,6 +135,7 @@ def main():
     kept, totals = {}, dict(production=0, verification=0, legacy=0, unsafe_containing=0)
     rows = subprocess.check_output(["git", "ls-tree", "-r", "-z", pin, "sm/src", "crates"], cwd=repo).split(b"\0")
     with subprocess.Popen(["git", "cat-file", "--batch"], cwd=repo, stdin=subprocess.PIPE, stdout=subprocess.PIPE) as batch:
+        assert batch.stdin is not None and batch.stdout is not None  # both are pipes
         for row in filter(None, rows):
             meta, name = row.split(b"\t", 1)
             rel = name.decode()

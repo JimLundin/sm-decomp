@@ -71,7 +71,7 @@ ATTRIBUTE = re.compile(r"^\s*#\[.*\]\s*$")
 NOT_CODE = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])\'|//.*')
 
 
-def test_lines(lines):
+def test_lines(lines: list[str]) -> int:
     """The lines of #[cfg(test)] items: from the attribute through the item's end."""
     count = 0
     index = 0
@@ -95,7 +95,7 @@ def test_lines(lines):
     return count
 
 
-def production_lines():
+def production_lines() -> int:
     total = 0
     for top in ["crates", os.path.join("sm", "src")]:
         for root, dirs, names in os.walk(top):
@@ -114,7 +114,7 @@ def production_lines():
     return total
 
 
-def harness_lines():
+def harness_lines() -> int:
     """Lines of the scenario harness, which count as verification."""
     total = 0
     for top in [os.path.join("crates", "sm_tools", "src"),
@@ -130,7 +130,7 @@ def harness_lines():
     return total
 
 
-def engine_inventory():
+def engine_inventory() -> dict[str, int]:
     """Address-shaped and raw RAM access the sm_game measure does not see.
 
     cycle_report's source inventory over the engine: the target packages
@@ -139,7 +139,7 @@ def engine_inventory():
     session_slot!, SlotAccess and native_word still name SNES RAM addresses even
     when typed Session storage answers them, so they count as RAM access.
     """
-    kinds = {"target": {}, "legacy_engine": {}}
+    kinds: dict[str, dict[str, int]] = {"target": {}, "legacy_engine": {}}
     for top in ("crates", os.path.join("sm", "src", "game")):
         for root, _, names in os.walk(top):
             for name in names:
@@ -166,7 +166,7 @@ def engine_inventory():
     }
 
 
-def measure():
+def measure() -> dict[str, int]:
     ram = cycle_report.sm_game_ram_couplings()
     return {
         "sm_game_ram_sites": sum(ram["sites"].values()),
@@ -176,7 +176,7 @@ def measure():
     }
 
 
-def main():
+def main() -> None:
     now = measure()
     over = []
     for name, base in BASELINE.items():

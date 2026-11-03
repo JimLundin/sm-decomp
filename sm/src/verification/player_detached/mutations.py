@@ -1,5 +1,6 @@
 """Bounded mutation check of actual detached-core assertions; GitHub CI only."""
 
+from collections.abc import Iterator, Sequence
 import os
 from pathlib import Path
 import re
@@ -7,7 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from actor_contract_mutations import check_actor_contracts, check_collision_contracts
+from actor_contract_mutations import Edit, SuiteMutation, check_actor_contracts, check_collision_contracts
 
 
 LEADING_EDGE = """        room.square_radius(raw, axis)
@@ -20,14 +21,14 @@ UPLOAD_SOURCE_CLEAR = """        host.session_mut()
             .slots[slot]
             .source = 0;"""
 UPLOAD_ACK = "        host.upload(request);\n" + UPLOAD_SOURCE_CLEAR
-MUTATIONS = (
+MUTATIONS: tuple[tuple[str, str, str, str], ...] = (
     ("ignore_positive_beam_radius", "crates/sm_game/src/player_projectiles/collision.rs", LEADING_EDGE, "        position"),
     ("skip_collision_retirement", "crates/sm_game/src/player_projectiles/collision.rs", "    super::lifecycle::retire(room.0, raw);", "    let _ = raw;"),
     ("ignore_plant_position", "crates/sm_game/src/room_mechanisms/rules/plants.rs", "c.session_mut().player.x = mechanism!(c, slot, work0);", "let _ = mechanism!(c, slot, work0);"),
     ("ignore_new_beam", "crates/sm_game/src/player_projectiles/weapons.rs", "let kind = h.session().inventory.beams.active | 0x8000;", "let kind = 0x8000;"),
 )
 # New mutants require their named assertion, not just any panic in a check file.
-NEW_MUTATIONS = (
+NEW_MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
     ("award_to_private_inventory_copy", "crates/sm_game/src/enemy_projectiles/drops.rs",
      "h.session_mut().inventory.restore(resource, amount);",
      "h.session().inventory.clone().restore(resource, amount);",
@@ -42,7 +43,7 @@ NEW_MUTATIONS = (
      "1050 captured old program"),
 )
 # Visual checks run independently so only their intended panic may kill a mutant.
-VISUAL_MUTATIONS = (
+VISUAL_MUTATIONS: tuple[SuiteMutation, ...] = (
     ("omit_fractional_heat", "heat",
      "visual.composition.heat_fraction_before_sound",
      (("crates/sm_game/src/palette_effects/execution.rs",
@@ -100,7 +101,7 @@ VISUAL_MUTATIONS = (
        "            return carry(grapple.wrapping_sub(0xc856) & 0x8000 == 0);"),)),
 )
 # Actual sprite faults use the same strict selected-case build and assertion rules.
-SPRITE_MUTATIONS = (
+SPRITE_MUTATIONS: tuple[SuiteMutation, ...] = (
     ('sprite_allocate_lowest_free', 'allocation',
      'sprite.mutation.allocation_captured_highest',
      (
@@ -204,7 +205,7 @@ SPRITE_MUTATIONS = (
      )),
 )
 # Actual gameplay flags faults; each uses a real composed producer/consumer selection.
-FLAGS_MUTATIONS = (
+FLAGS_MUTATIONS: tuple[SuiteMutation, ...] = (
     ('flags_event_write_discarded', 'plm_visual',
      'flags.plm.animation_event_alias',
      (
@@ -285,7 +286,8 @@ VISUAL_PANIC = re.compile(
 )
 
 
-def visual_stderr_matches(stderr, label=None, upload_failure=False, assertion_source="visual_checks.rs"):
+def visual_stderr_matches(stderr: str, label: str | None = None, upload_failure: bool = False,
+                          assertion_source: str = "visual_checks.rs") -> bool:
     text = stderr.replace("\r\n", "\n")
     expected = [("visual_host.rs", "Box<dyn Any>")] if upload_failure else []
     if label is not None:
@@ -322,16 +324,17 @@ ASSERTION = re.compile(
 
 
 # Built once from the unmutated crate; mutations only target files under sm/src.
-SM_GAME = []
+SM_GAME: list[str] = []
 
 
-def run(command, timeout, allow=(), externs=None):
+def run(command: list[str], timeout: int, allow: Sequence[str] = (),
+        externs: list[str] | None = None) -> subprocess.CompletedProcess[str]:
     if command[0] == "rustc":
-        flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
-        if flags is None:
+        encoded = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
+        if encoded is None:
             flags = os.environ.get("RUSTFLAGS", "").split()
         else:
-            flags = flags.split("\x1f") if flags else []
+            flags = encoded.split("\x1f") if encoded else []
         command = [*command, *(SM_GAME if externs is None else externs), *flags, "-D", "warnings", *allow]
     return subprocess.run(
         command, capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -339,9 +342,11 @@ def run(command, timeout, allow=(), externs=None):
     )
 
 
-def apply_edit(name, copied, crates, relative, before, after):
+def apply_edit(name: str, copied: Path, crates: Path | None, relative: str, before: str, after: str) -> None:
     # crates/... paths edit the copied target packages; others edit sm/src/game.
     if relative.startswith("crates/"):
+        # mutant_crates copies the packages whenever an edit reaches crates/.
+        assert crates is not None
         target = crates / relative.removeprefix("crates/")
     else:
         target = copied / "game" / relative
@@ -353,7 +358,7 @@ def apply_edit(name, copied, crates, relative, before, after):
     target.write_bytes(original.replace(before, after, 1).encode("utf-8"))
 
 
-def mutant_crates(source, work, name, edits):
+def mutant_crates(source: Path, work: Path, name: str, edits: tuple[Edit, ...]) -> Path | None:
     """A copy of the target packages when an edit reaches them, else None."""
     if not any(relative.startswith("crates/") for relative, _, _ in edits):
         return None
@@ -362,7 +367,7 @@ def mutant_crates(source, work, name, edits):
     return crates
 
 
-def build_packages(crates, work, name, edits):
+def build_packages(crates: Path, work: Path, name: str, edits: tuple[Edit, ...]) -> list[str]:
     """Rebuild the mutated packages (and every package above a mutated sm_data);
     link the untouched ones from the baseline libraries in `work`."""
     touched = {relative.split("/")[1] for relative, _, _ in edits if relative.startswith("crates/")}
@@ -381,11 +386,12 @@ def build_packages(crates, work, name, edits):
     return externs
 
 
-def check(source, work, name, mutation=None, expected_assertion=None):
+def check(source: Path, work: Path, name: str, mutation: Edit | None = None,
+          expected_assertion: str | None = None) -> Path | None:
     # Every build starts from the untouched source tree, never another mutant.
     copied = work / name / "src"
     shutil.copytree(source, copied)
-    edits = () if mutation is None else (mutation,)
+    edits: tuple[Edit, ...] = () if mutation is None else (mutation,)
     crates = mutant_crates(source, work, name, edits)
     for relative, before, after in edits:
         apply_edit(name, copied, crates, relative, before, after)
@@ -418,14 +424,16 @@ def check(source, work, name, mutation=None, expected_assertion=None):
     if expected_assertion is not None and expected_assertion not in result.stderr:
         raise RuntimeError(f"{name}: EXECUTION ERROR; wrong equality assertion, expected {expected_assertion}\n{result.stderr}")
     print(f"{name}: KILLED by gameplay assertion at line {assertion.group(1)} equality assertion", flush=True)
+    return None
 
 
-def check_visual(source, work, mutation, baseline_binary, family="visual"):
+def check_visual(source: Path, work: Path, mutation: SuiteMutation, baseline_binary: Path | None,
+                 family: str = "visual") -> None:
     name, case, label, edits = mutation
     environment = dict(os.environ, RUST_BACKTRACE="0")
     assertion_source = {"sprite": "sprite_checks.rs", "flags": "flag_checks.rs"}.get(family, "visual_checks.rs")
     upload_failure = family == "visual" and case == "upload_failure"
-    def execute(binary):
+    def execute(binary: Path | None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [str(binary), f"--{family}-mutation", case], capture_output=True,
             text=True, encoding="utf-8", errors="replace", timeout=30,
@@ -459,7 +467,7 @@ def check_visual(source, work, mutation, baseline_binary, family="visual"):
     print(f"{name}: KILLED by {label}", flush=True)
 
 
-def all_edits():
+def all_edits() -> Iterator[tuple[str, str, str]]:
     """Every suite's (mutation name, relative path, anchor) edits."""
     import actor_contract_mutations as contracts
     for name, relative, before, _after in (*MUTATIONS, *((n, r, b, a) for n, r, b, a, _ in NEW_MUTATIONS)):
@@ -471,9 +479,9 @@ def all_edits():
                 yield name, relative, before
 
 
-def check_anchors(source):
+def check_anchors(source: Path) -> None:
     """Fail when a mutation's file or anchor no longer exists exactly once."""
-    stale = []
+    stale: list[str] = []
     count = 0
     for name, relative, before in all_edits():
         count += 1
@@ -490,7 +498,7 @@ def check_anchors(source):
     print(f"mutation anchors: {count}/{count} present exactly once", flush=True)
 
 
-def main():
+def main() -> None:
     if "--check-anchors" in sys.argv[1:]:
         check_anchors(Path(__file__).resolve().parents[2])
         return

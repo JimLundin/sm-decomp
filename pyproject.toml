@@ -1,0 +1,11 @@
+# Tooling configuration only; this repository builds no Python package.
+
+[tool.mypy]
+python_version = "3.11"
+files = ["tools", ".github/scripts", "sm/src/verification"]
+# The scripts import each other by putting their directories on sys.path.
+mypy_path = ["tools", ".github/scripts", "sm/src/verification/player_detached"]
+strict = true
+warn_unreachable = true
+# Verify's skip decision is owned by the workflow restructuring; type it there.
+exclude = ['^\.github/scripts/replay_relevant\.py$']

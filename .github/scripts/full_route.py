@@ -34,15 +34,24 @@ Nothing ROM-derived is committed: the scenarios and the room-seed CSVs hold
 room ids, step counts, frame numbers and SHA-256 digests only.
 """
 import csv, hashlib, io, json, os, pathlib, re, subprocess, sys, tarfile
+from collections.abc import Callable
+from typing import Any, TypedDict
 
 ROUTE = os.environ.get("FULL_ROUTE", "100")
 REGIONS = ("wram", "sram", "vram", "cgram", "oam", "apuram")
+class Route(TypedDict):
+    capture: str
+    rooms: str
+    movie: str
+    frames: int
+
+
 # Per route: capture, committed room-seed index, movie and its length.
-ROUTES = {
-    "100": dict(capture="100-input-phase", rooms="movies/room-seeds-100-input-phase.csv",
-                movie="movies/super-metroid-100-4010.lsmv", frames=222788),
-    "any": dict(capture="any-boundary", rooms="movies/room-seeds-any-boundary.csv",
-                movie="movies/super-metroid-any-3653.lsmv", frames=129712),
+ROUTES: dict[str, Route] = {
+    "100": Route(capture="100-input-phase", rooms="movies/room-seeds-100-input-phase.csv",
+                 movie="movies/super-metroid-100-4010.lsmv", frames=222788),
+    "any": Route(capture="any-boundary", rooms="movies/room-seeds-any-boundary.csv",
+                 movie="movies/super-metroid-any-3653.lsmv", frames=129712),
 }
 _route = ROUTES[ROUTE]
 CAPTURE = _route["capture"]
@@ -59,12 +68,12 @@ sys.path.insert(0, str(ROOT / "tools"))
 import scenario  # noqa: E402
 
 
-def rooms():
+def rooms() -> list[dict[str, str]]:
     with ROOMS.open(newline="") as stream:
         return list(csv.DictReader(stream))
 
 
-def chain(route=ROUTE):
+def chain(route: str = ROUTE) -> list[dict[str, Any]]:
     """The route's rooms in order, from their scenarios and pins."""
     return [dict(id=row["id"], room_index=row["seed"].split(":")[1], room=row["id"].rsplit("-", 1)[1],
                  steps=row["frames"], input_sha256=row["input_sha256"], bundle=row.get("bundle"),
@@ -72,25 +81,26 @@ def chain(route=ROUTE):
             for row in scenario.rows(ROOT) if row.get("chain") == route]
 
 
-def published(route=ROUTE):
+def published(route: str = ROUTE) -> tuple[str | None, str | None]:
     """The route's ci-data asset and its pinned SHA-256; None until published."""
     names = {entry["bundle"] for entry in chain(route)}
     if len(names) != 1 or None in names:
         return None, None
     name = names.pop()
-    return name, scenario.read_lock(ROOT).bundles[name]
+    digest: str = scenario.read_lock(ROOT).bundles[name]
+    return name, digest
 
 
-def room_id(route, index, room):
+def room_id(route: str, index: int, room: str) -> str:
     """A route room's corpus and lock scenario id."""
     return f"chain-{index:04d}-{room}" if route == "100" else f"chain-{route}-{index:04d}-{room}"
 
 
-def input_name(index):
+def input_name(index: int) -> str:
     return f"movies/chain-{ROUTE}-{index:04d}.inputs"
 
 
-def inputs():
+def inputs() -> None:
     import movie_inputs
     source = movie_inputs.load(MOVIE, pathlib.Path("rom/sm.smc"))
     with (SEEDS / "rooms.csv").open(newline="") as stream:
@@ -98,7 +108,8 @@ def inputs():
     with (SEEDS / "lag.csv.events.csv").open(newline="") as stream:
         waits = sorted(int(event["movie_frame"]) for event in csv.DictReader(stream)
                        if event["kind"] == "no_update_enter")
-    entries, rows = [], rooms()
+    entries: list[dict[str, Any]] = []
+    rows = rooms()
     notes, lock = scenario.load(ROOT), scenario.read_lock(ROOT)
     for position, row in enumerate(rows):
         index = int(row["room_index"])
@@ -122,7 +133,7 @@ def inputs():
         pathlib.Path(input_name(index)).write_bytes(data)
         name = room_id(ROUTE, index, row["room"])
         # A room that runs into the next must reach it; one that stops at a wait only expects gameplay.
-        expect = f"room:{following['room']}" if ends == "next-room" else "state:8"
+        expect = f"room:{following['room']}" if ends == "next-room" and following else "state:8"
         entries.append({key: value for key, value in notes.get(name, {}).items()
                         if key in ("pending", "unlocked", "regression")}
                        | {"id": name, "start": f"seed:{row['observation_sha256']}", "ticks": len(words),
@@ -135,7 +146,7 @@ def inputs():
     scenario.write_lock(ROOT / scenario.LOCK, lock)
 
 
-def bundle_files():
+def bundle_files() -> list[str]:
     names = [f"{SEEDS.as_posix()}/rooms.csv"]
     for entry in chain():
         filename = f"{int(entry['room_index']):04d}-{entry['room']}-wram.bin"
@@ -144,7 +155,7 @@ def bundle_files():
     return names
 
 
-def cipher(decrypt, bundle):
+def cipher(decrypt: bool, bundle: str) -> tuple[list[str], dict[str, str]]:
     import argparse, shutil
     import ci_seed_data
     openssl = shutil.which("openssl") or str(pathlib.Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Git/mingw64/bin/openssl.exe")
@@ -152,11 +163,12 @@ def cipher(decrypt, bundle):
                                                   bundle=pathlib.Path(bundle)), decrypt=decrypt)
 
 
-def pack(bundle):
+def pack(bundle: str) -> None:
     names = bundle_files()
     command, env = cipher(False, bundle)
     with open(bundle, "xb") as output:
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=output, env=env)
+        assert process.stdin is not None  # stdin=PIPE
         with tarfile.open(fileobj=process.stdin, mode="w|gz") as archive:
             for name in names:
                 info = archive.gettarinfo(name, arcname=name)
@@ -178,7 +190,7 @@ def pack(bundle):
     print(f"Encrypted {len(names)} files; ciphertext SHA-256 {digest}; pinned in {scenario.LOCK}")
 
 
-def restore(bundle):
+def restore(bundle: str) -> None:
     import ci_seed_data
     pinned = published()[1]
     with open(bundle, "rb") as stream:
@@ -187,6 +199,7 @@ def restore(bundle):
     wanted = set(bundle_files())
     command, env = cipher(True, bundle)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, env=env)
+    assert process.stdout is not None  # stdout=PIPE
     restored = set()
     with tarfile.open(fileobj=process.stdout, mode="r|gz") as archive:
         for member in archive:
@@ -194,7 +207,9 @@ def restore(bundle):
                 raise SystemExit("unexpected chain bundle member")
             path = pathlib.Path(member.name)
             path.parent.mkdir(parents=True, exist_ok=True)
-            with archive.extractfile(member) as source, path.open("xb") as output:
+            member_file = archive.extractfile(member)
+            assert member_file is not None  # a regular file, checked above
+            with member_file as source, path.open("xb") as output:
                 output.write(source.read())
             restored.add(member.name)
     while process.stdout.read(1 << 20):
@@ -207,7 +222,7 @@ def restore(bundle):
     print(f"Restored {len(restored)} chain files")
 
 
-def jobs():
+def jobs() -> list[list[dict[str, Any]]]:
     """Pack this route's rooms into groups of similar step totals, heaviest group first.
 
     Every published route's groups target one of TARGET_JOBS equal shares
@@ -218,7 +233,7 @@ def jobs():
     entries = chain()
     total = sum(int(entry["steps"]) for route in ROUTES if published(route)[0] for entry in chain(route))
     target = total / TARGET_JOBS
-    groups = [[] for _ in range(max(1, round(sum(int(e["steps"]) for e in entries) / target)))]
+    groups: list[list[dict[str, Any]]] = [[] for _ in range(max(1, round(sum(int(e["steps"]) for e in entries) / target)))]
     for entry in sorted(entries, key=lambda entry: -int(entry["steps"])):
         min(groups, key=lambda group: sum(int(e["steps"]) for e in group)).append(entry)
     for group in groups:
@@ -226,9 +241,9 @@ def jobs():
     return sorted((group for group in groups if group), key=lambda group: -sum(int(e["steps"]) for e in group))
 
 
-def plan():
+def plan() -> None:
     """One matrix over every published route; each job names its route and asset."""
-    include = []
+    include: list[dict[str, Any]] = []
     for route in ROUTES:
         asset = published(route)[0]
         if asset is None:
@@ -247,24 +262,24 @@ def plan():
     print(f"{len(include)} jobs: " + ", ".join(job["name"] for job in include))
 
 
-def job_list():
+def job_list() -> None:
     print(json.dumps([{"index": i, "name": f"{ROUTE}-{i:02d}-{len(group)}-rooms",
                        "steps": sum(int(entry["steps"]) for entry in group),
                        "ids": [entry["id"] for entry in group]} for i, group in enumerate(jobs())]))
 
 
-def locked(extra):
+def locked(extra: tuple[str, ...]) -> set[str] | None:
     """The scenario ids an oracle digest lock passed as --lock F holds, if any."""
     if "--lock" not in extra:
         return None
     return set(scenario.read_lock(ROOT, pathlib.Path(extra[extra.index("--lock") + 1])).entries)
 
 
-def run(job, *extra):
+def run(job: str, *extra: str) -> None:
     group = jobs()[int(job)]
     # Checking a lock replays only the rooms it holds; recording one, every room.
     lock = locked(extra) if "check-lock" in extra else None
-    ids = []
+    ids: list[str] = []
     for entry in group:
         name = entry["id"]
         if entry["pending"]:
@@ -285,4 +300,6 @@ def run(job, *extra):
 
 
 if __name__ == "__main__":
-    {"inputs": inputs, "pack": pack, "plan": plan, "jobs": job_list, "restore": restore, "run": run}[sys.argv[1]](*sys.argv[2:])
+    commands: dict[str, Callable[..., None]] = {"inputs": inputs, "pack": pack, "plan": plan, "jobs": job_list,
+                                                "restore": restore, "run": run}
+    commands[sys.argv[1]](*sys.argv[2:])

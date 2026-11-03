@@ -15,6 +15,7 @@ import os
 import re
 import sys
 from collections import Counter, defaultdict
+from typing import Any
 
 SRC = "sm/src"
 REAL_UNSAFE = re.compile(r"\bunsafe\s*(fn|\{|impl|extern)")
@@ -70,16 +71,16 @@ RAM_COUPLINGS = {
 COHORT_LABEL = "RAM-backed cohort copies (session_cohort::load/with/with_projected)"
 
 
-def cohort_sites(text):
+def cohort_sites(text: str) -> int:
     """Count direct calls and imported module/function spellings once per site."""
     # Comments and literals cannot execute a copy. Preserve newlines for uses.
     text = re.sub(r'//[^\n]*|/\*.*?\*/|r(\#*)".*?"\1|"(?:\\.|[^"\\])*"',
                   " ", text, flags=re.S)
     modules = {"session_cohort"}
-    functions = set()
-    imports = []
+    functions: set[str] = set()
+    imports: list[tuple[str, str]] = []
 
-    def expand(tree, prefix=""):
+    def expand(tree: str, prefix: str = "") -> None:
         depth, start = 0, 0
         parts = []
         for index, char in enumerate(tree):
@@ -126,9 +127,10 @@ def cohort_sites(text):
     return len(re.findall(rf"(?:{paths})\s*(?=\(|::\s*<)", text))
 
 
-def sm_game_ram_couplings(source_root=os.path.join("crates", "sm_game", "src")):
-    counts, files = {}, {}
-    sources = {}
+def sm_game_ram_couplings(source_root: str = os.path.join("crates", "sm_game", "src")) -> dict[str, Any]:
+    counts: dict[str, int] = {}
+    files: dict[str, int] = {}
+    sources: dict[str, str] = {}
     for root, _, names in os.walk(source_root):
         for name in names:
             if name.endswith(".rs"):
@@ -145,13 +147,13 @@ def sm_game_ram_couplings(source_root=os.path.join("crates", "sm_game", "src")):
     return {"files": len(sources), "coupled_files": coupled, "sites": counts, "site_files": files}
 
 
-def verification(rel):
+def verification(rel: str) -> bool:
     return (rel.startswith(("verification/", "verify/", "bin/"))
             or re.search(r"(^|/)verify[^/]*\.rs$", rel) is not None)
 
 
-def load():
-    files = {}
+def load() -> dict[str, str]:
+    files: dict[str, str] = {}
     for root, _, names in os.walk(SRC):
         for name in names:
             if name.endswith(".rs"):
@@ -162,18 +164,19 @@ def load():
     return files
 
 
-def modpath(rel):
+def modpath(rel: str) -> tuple[str, ...]:
     parts = rel[:-3].split("/")
     return tuple(parts[:-1] if parts[-1] == "mod" else parts)
 
 
-def use_paths(tree):
+def use_paths(tree: str) -> list[list[str]]:
     """Expand a `use` tree such as a::{b, c::{d, e}} into paths."""
     tree = re.sub(r"\s+", "", tree)
-    out = []
+    out: list[list[str]] = []
 
-    def walk(prefix, text):
-        depth, cur, parts = 0, "", []
+    def walk(prefix: list[str], text: str) -> None:
+        depth, cur = 0, ""
+        parts: list[str] = []
         for ch in text:
             depth += (ch == "{") - (ch == "}")
             if ch == "," and depth == 0:
@@ -195,17 +198,17 @@ def use_paths(tree):
     return out
 
 
-def graph(files):
+def graph(files: dict[str, str]) -> defaultdict[str, set[str]]:
     by_mod = {modpath(r): r for r in files}
 
-    def resolve(path):
+    def resolve(path: list[str]) -> str | None:
         for i in range(len(path), 0, -1):
             hit = by_mod.get(tuple(path[:i]))
             if hit:
                 return hit
         return None
 
-    deps = defaultdict(set)
+    deps: defaultdict[str, set[str]] = defaultdict(set)
     for rel, src in files.items():
         me = list(modpath(rel))
         paths = [p for m in re.finditer(r"\buse\s+([^;]+);", src) for p in use_paths(m.group(1))]
@@ -233,7 +236,7 @@ def graph(files):
     return deps
 
 
-def main():
+def main() -> None:
     if "--ram-history" in sys.argv:
         ram_history_main(sys.argv[sys.argv.index("--ram-history") + 1:])
         return
@@ -252,11 +255,11 @@ def main():
     game = [r for r in files if r.startswith("game/")]
     free = sorted(r for r in game if r not in tainted)
     legacy = [r for r in game if re.fullmatch(r"game/sm_[0-9a-f]{2}\.rs", r)]
-    coupling = {}
+    coupling: dict[str, int] = {}
     for name, (pattern, unit) in COUPLINGS.items():
         hits = Counter({r: len(pattern.findall(files[r])) for r in game})
         coupling[name] = sum(1 for n in hits.values() if n) if unit == "files" else sum(hits.values())
-    package_lines = {}
+    package_lines: dict[str, int] = {}
     for crate in sorted(os.listdir("crates")) if os.path.isdir("crates") else []:
         total = 0
         for root, _, names in os.walk(os.path.join("crates", crate, "src")):
@@ -265,7 +268,7 @@ def main():
                     with open(os.path.join(root, name), encoding="utf-8", errors="replace") as f:
                         total += len(f.read().splitlines())
         package_lines[crate] = total
-    report = {
+    report: dict[str, Any] = {
         "target_package_lines": package_lines,
         "game_files": len(game),
         "game_lines": sum(lines[r] for r in game),
@@ -319,13 +322,13 @@ RAM_BLINDSPOTS = [
 ]
 
 
-def rust_inventory_code(text):
+def rust_inventory_code(text: str) -> str:
     """Mask non-code, #[cfg(test)] items and macro definitions without moving offsets."""
     # Nested Rust comments and raw/byte strings need more than a comment regex.
     token = re.compile(r'//[^\n]*|/\*|b?r(?P<h>\#*)"|b?"(?:\\.|[^"\\])*"|b?\'(?:\\.|[^\\\'])\'')
     chars, index = list(text), 0
 
-    def mask(start, end):
+    def mask(start: int, end: int) -> None:
         chars[start:end] = ["\n" if c == "\n" else " " for c in text[start:end]]
 
     while match := token.search(text, index):
@@ -365,12 +368,13 @@ def rust_inventory_code(text):
     return "".join(chars)
 
 
-def inventory_imports(code):
+def inventory_imports(code: str) -> list[tuple[str, str]]:
     """Expand aliases without losing bindings (use_paths serves a graph instead)."""
-    imports = []
+    imports: list[tuple[str, str]] = []
 
-    def expand(tree, prefix=""):
-        depth, start, parts = 0, 0, []
+    def expand(tree: str, prefix: str = "") -> None:
+        depth, start = 0, 0
+        parts: list[str] = []
         for index, char in enumerate(tree):
             depth += (char == "{") - (char == "}")
             if char == "," and depth == 0:
@@ -393,14 +397,16 @@ def inventory_imports(code):
     return imports
 
 
-def inventory_sites(text):
+def inventory_sites(text: str) -> list[tuple[int, int, str, str]]:
     """One record per source token offset. Kinds never share an offset."""
     code = rust_inventory_code(text)
     imports = inventory_imports(code)
-    modules, copies = {"session_cohort"}, set()
-    overflow_modules, overflow_functions = {"legacy_overflow"}, set()
+    modules = {"session_cohort"}
+    copies: set[str] = set()
+    overflow_modules = {"legacy_overflow"}
+    overflow_functions: set[str] = set()
     spellings = {name: name for name in ("word", "checked_word", "ram_word", "ram_checked_word", "slot", "word_transfers", "boss", "scroll", "inventory", "melt", "menu", "cinematic", "map_screen", "save_selection", "options_menu", "death_sequence", "power_bomb", "session_word", "session_slot", "register_writes", "SlotAccess")}
-    ram_namespaces = set()
+    ram_namespaces: set[str] = set()
     dependencies = {"Game", "RawRam", "CompatibilityRam", "SessionRam", "SlotAccess", "WorkRamAccess", "ram_map", "g_ram"}
     raw_aliases = {"g_ram"}
     for _ in range(len(imports) + 1):
@@ -432,20 +438,20 @@ def inventory_sites(text):
             break
     # Imports are dependency evidence, not executable call sites.
     calls = re.sub(r"\buse\s+[^;]+;", lambda m: " " * len(m.group()), code)
-    ram_receivers = set()
+    ram_receivers: set[str] = set()
     for _ in range(8):
-        before = (len(ram_receivers), len(raw_aliases))
+        aliases_before = (len(ram_receivers), len(raw_aliases))
         for match in re.finditer(r"\blet\s+(?:mut\s+)?(\w+)\s*=\s*([^;]+);", calls):
             name, value = match.groups()
             if re.fullmatch(r"\s*\w+\.ram\(\)\s*", value) or value.strip() in ram_receivers:
                 ram_receivers.add(name)
             if value.strip() in raw_aliases:
                 raw_aliases.add(name)
-        if before == (len(ram_receivers), len(raw_aliases)):
+        if aliases_before == (len(ram_receivers), len(raw_aliases)):
             break
-    records = {}
+    records: dict[int, tuple[int, int, str, str]] = {}
 
-    def add(start, end, kind, symbol):
+    def add(start: int, end: int, kind: str, symbol: str) -> None:
         # Specific call categories run first; dependency matches cannot double count.
         if start not in records:
             records[start] = (start, end, kind, symbol)
@@ -508,7 +514,7 @@ def inventory_sites(text):
             end += 1
         content_impls.append((match.end(), end))
 
-    def result_tail(end):
+    def result_tail(end: int) -> bool:
         # A call that is the tail of a function declared to return a Result
         # returns that Result itself; RAM address APIs return a plain u16.
         rest = calls[end:].lstrip()
@@ -525,9 +531,9 @@ def inventory_sites(text):
         if method not in raw_methods | address_methods | generic:
             continue
         prefix = calls[max(0, match.start() - 180):match.start()].rstrip()
-        raw = re.search(r"\.ram\s*\(\s*\)\s*$", prefix)
+        ram_call = re.search(r"\.ram\s*\(\s*\)\s*$", prefix)
         receiver = re.search(r"\b(\w+)\s*$", prefix)
-        raw = bool(raw or (receiver and receiver.group(1) in ram_receivers))
+        raw = bool(ram_call or (receiver and receiver.group(1) in ram_receivers))
         rom = method in ("native_word", "word") and not raw and (
             (receiver and receiver.group(1) in rom_receivers) or rom_chain.search(prefix)
             or (re.search(r"(?<![.\w])self\s*$", prefix) and any(a <= match.start() < b for a, b in content_impls)))
@@ -561,7 +567,7 @@ def inventory_sites(text):
     return sorted(records.values())
 
 
-def inventory_scope(path):
+def inventory_scope(path: str) -> tuple[str, str]:
     """Physical classification retained across the target-package migration."""
     parts = path.split("/")
     if "verification" in parts or "verify" in parts or parts[-1].startswith("verify") or "sm_tools" in parts:
@@ -573,7 +579,7 @@ def inventory_scope(path):
     return "compat_oracle", "/".join(parts[2:3])
 
 
-def ram_history_main(argv):
+def ram_history_main(argv: list[str]) -> None:
     """Cheap immutable-pin source measurements, extending this existing report."""
     import argparse
     import ast
@@ -606,17 +612,19 @@ def ram_history_main(argv):
     rules_digest = hashlib.sha256(json.dumps(RAM_INVENTORY_RULES, sort_keys=True).encode()).hexdigest()
     fixed_ratchet_digest = hashlib.sha256(repr([(k, p.pattern) for k, p in RAM_COUPLINGS.items()]).encode()).hexdigest()
 
-    def git(*arguments):
+    def git(*arguments: str) -> bytes:
         return subprocess.check_output(["git", *arguments], cwd=args.repo)
 
     # Cache totals by blob + scope with the tool fingerprint. Sites stream to CSV.
     cache_path = args.output / "blob-cache.csv.gz"
-    cache = {}
+    cache: dict[tuple[str, str], dict[str, str]] = {}
     if cache_path.exists():
         for cached in csv.DictReader(gzip.open(cache_path, "rt", encoding="utf-8", newline="")):
             if cached["tool_sha256"] == tool_digest:
                 cache[(cached["blob"], cached["path"])] = cached
-    history, domains, pin_reports = [], [], []
+    history: list[dict[str, Any]] = []
+    domains: list[dict[str, Any]] = []
+    pin_reports: list[str] = []
     site_file = args.output / "sites.csv.gz"
     with gzip.open(site_file, "wt", encoding="utf-8", newline="") as output:
         sites_writer = csv.writer(output, lineterminator="\n")
@@ -635,16 +643,18 @@ def ram_history_main(argv):
             native_hash = hashlib.sha256(native_source.encode()).hexdigest()
             # Execute only the original immutable measurement definitions, never main.
             wanted = {"RAM_COUPLINGS", "COHORT_LABEL"}
-            definitions = [node for node in ast.parse(native_source).body
+            definitions: list[ast.stmt] = [node for node in ast.parse(native_source).body
                            if (isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in wanted for t in node.targets))
                            or (isinstance(node, ast.FunctionDef) and node.name == "cohort_sites")]
-            namespace = {"re": re}
+            namespace: dict[str, Any] = {"re": re}
             exec(compile(ast.Module(body=definitions, type_ignores=[]), "<pinned-ratchet>", "exec"), namespace)
-            native_patterns = namespace.get("RAM_COUPLINGS", {})
-            totals, per_domain = Counter(), defaultdict(Counter)
+            native_patterns: dict[str, re.Pattern[str]] = namespace.get("RAM_COUPLINGS", {})
+            totals: Counter[tuple[str, str]] = Counter()
+            per_domain: defaultdict[tuple[str, str], Counter[str]] = defaultdict(Counter)
             fixed_sites = fixed_files = native_sites = native_files = copies = 0
             tree = git("ls-tree", "-r", "-z", pin, "sm/src", "crates").split(b"\0")
             with subprocess.Popen(["git", "cat-file", "--batch"], cwd=args.repo, stdin=subprocess.PIPE, stdout=subprocess.PIPE) as batch:
+                assert batch.stdin is not None and batch.stdout is not None  # both are PIPE
                 for entry in filter(None, tree):
                     meta, encoded_path = entry.split(b"\t", 1)
                     path = encoded_path.decode()
@@ -661,7 +671,7 @@ def ram_history_main(argv):
                     scope, domain = inventory_scope(path)
                     key = (blob, path)
                     if key not in cache:
-                        found = inventory_sites(text)
+                        found: list[Any] = inventory_sites(text)
                         counts = Counter(site[2] for site in found)
                         packed = json.dumps(found, separators=(",", ":"))
                         cache[key] = {"tool_sha256": tool_digest, "blob": blob, "path": path, "sites": packed}

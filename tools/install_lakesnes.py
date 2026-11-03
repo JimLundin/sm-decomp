@@ -5,9 +5,16 @@ import hashlib
 import os
 from pathlib import Path
 import subprocess
+from typing import TypedDict
 import urllib.request
 
-SOURCES = {
+class Source(TypedDict):
+    repository: str
+    revision: str
+    files: dict[str, str]
+
+
+SOURCES: dict[str, Source] = {
     "cpu": {
         "repository": "dinkc64",
         "revision": "048a0d72568668f74e0cdf371dcd9e8efd614965",
@@ -49,7 +56,7 @@ SOURCES = {
 }
 
 
-def default_prefix(component):
+def default_prefix(component: str) -> Path:
     if os.name == "nt":
         cache = Path(os.environ["LOCALAPPDATA"])
     else:
@@ -57,7 +64,7 @@ def default_prefix(component):
     return cache / "sm-decomp-tools" / f"lakesnes-{component}-{SOURCES[component]['revision'][:7]}"
 
 
-def install(component, zig, target, prefix, library):
+def install(component: str, zig: str, target: str, prefix: Path, library: Path) -> None:
     spec = SOURCES[component]
     source = prefix / "source"
     library.mkdir(parents=True, exist_ok=True)
@@ -102,7 +109,7 @@ def install(component, zig, target, prefix, library):
     print("Add the library directory to LIBRARY_PATH for the normal Cargo linker.")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("component", choices=SOURCES)
     parser.add_argument("--zig", required=True)

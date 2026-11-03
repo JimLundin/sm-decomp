@@ -12,18 +12,20 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+from collections.abc import Iterator
+from typing import Any
 
 # The scenario model beside this script, whichever directory Python starts in.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import scenario  # noqa: E402
 
 
-def digest(path):
+def digest(path: Path) -> str:
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def cipher(args, decrypt=False):
+def cipher(args: argparse.Namespace, decrypt: bool = False) -> tuple[list[str], dict[str, str]]:
     rom = args.rom.read_bytes()
     if hashlib.sha256(rom).hexdigest() != "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72":
         raise ValueError("wrong ROM")
@@ -36,7 +38,7 @@ def cipher(args, decrypt=False):
     return command, env
 
 
-def valid_name(name):
+def valid_name(name: str) -> bool:
     path = PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts or "\\" in name or ":" in name:
         return False
@@ -49,7 +51,7 @@ def valid_name(name):
         r"[0-9]{4}-[0-9A-F]{4}-registers\.csv)", name))
 
 
-def selected_rows(args):
+def selected_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
     # Route rooms have their own bundles (full_route.py); they pack only when selected.
     rows = [row for row in scenario.rows(args.root, validate_movie_maps=False)
             if "chain" not in row or row["id"] in args.segment]
@@ -69,7 +71,7 @@ def selected_rows(args):
     return selected
 
 
-def regular_path(root, name, required=True):
+def regular_path(root: Path, name: str, required: bool = True) -> Path:
     path = root / name
     if not path.resolve().is_relative_to(root):
         raise ValueError("corpus path escapes checkout")
@@ -80,8 +82,8 @@ def regular_path(root, name, required=True):
     return path
 
 
-def runtime_seed_indexes(rows):
-    indexes = {}
+def runtime_seed_indexes(rows: list[dict[str, Any]]) -> dict[str, set[int]]:
+    indexes: dict[str, set[int]] = {}
     for row in rows:
         if "seed" not in row:
             continue
@@ -92,12 +94,12 @@ def runtime_seed_indexes(rows):
     return indexes
 
 
-def movie_map_files(rows):
+def movie_map_files(rows: list[dict[str, Any]]) -> set[str]:
     return {"movies/" + name for row in rows if "movie_map" in row
             for name in (row["movie_map"], row["movie_map"].removesuffix(".toml"))}
 
 
-def check_movie_maps(root, rows):
+def check_movie_maps(root: Path, rows: list[dict[str, Any]]) -> None:
     from movie_inputs import check_work_event_map
     for row in rows:
         if "movie_map" not in row:
@@ -109,7 +111,7 @@ def check_movie_maps(root, rows):
                              row["start_frame"] + row["frames"])
 
 
-def runtime_seed_files(root, seed_indexes):
+def runtime_seed_files(root: Path, seed_indexes: dict[str, set[int]]) -> Iterator[set[str]]:
     for capture, indexes in seed_indexes.items():
         prefix = f"target/seeds/{capture}/"
         with (root / prefix / "rooms.csv").open(newline="") as stream:
@@ -127,10 +129,10 @@ def runtime_seed_files(root, seed_indexes):
                 "-oam.bin", "-apuram.bin", "-registers.csv")}
 
 
-def pack(args):
+def pack(args: argparse.Namespace) -> None:
     rows = selected_rows(args)
     check_movie_maps(args.root, rows)
-    files = {name: regular_path(args.root, name) for name in movie_map_files(rows)}
+    files: dict[str, Path | bytes] = {name: regular_path(args.root, name) for name in movie_map_files(rows)}
     runtime_only = getattr(args, "runtime_only", False)
     if runtime_only:
         seed_indexes = runtime_seed_indexes(rows)
@@ -147,6 +149,7 @@ def pack(args):
             prefix = f"target/seeds/{capture}/{int(index):04d}-"
             seed = next(path for name, path in files.items()
                         if name.startswith(prefix) and name.endswith("-wram.bin"))
+            assert isinstance(seed, Path)  # seed companions are always files here
             if scenario.seed_digest(seed) != row.get("seed_sha256"):
                 raise ValueError("seed payload hash mismatch: " + row["id"])
     else:
@@ -194,13 +197,15 @@ def pack(args):
     command, env = cipher(args)
     with args.bundle.open("xb") as output:
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=output, env=env)
+        assert process.stdin is not None  # stdin=PIPE
         try:
             with tarfile.open(fileobj=process.stdin, mode="w|gz") as archive:
                 for name, source in sorted(files.items()):
                     info = tarfile.TarInfo(name)
                     info.mode = 0o600
                     info.size = len(source) if isinstance(source, bytes) else source.stat().st_size
-                    stream = io.BytesIO(source) if isinstance(source, bytes) else source.open("rb")
+                    stream: io.BytesIO | io.BufferedReader = (
+                        io.BytesIO(source) if isinstance(source, bytes) else source.open("rb"))
                     with stream:
                         archive.addfile(info, stream)
             process.stdin.close()
@@ -213,7 +218,7 @@ def pack(args):
     print(f"Encrypted {len(files)} files; ciphertext SHA256 {digest(args.bundle)}")
 
 
-def restore(args):
+def restore(args: argparse.Namespace) -> None:
     if not args.sha256 or digest(args.bundle) != args.sha256:
         raise ValueError("encrypted seed bundle SHA256 mismatch")
     rows = selected_rows(args)
@@ -228,14 +233,16 @@ def restore(args):
         raise ValueError("invalid corpus input name")
     captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
     needed_indexes = {f"target/seeds/{capture}/rooms.csv" for capture in captures}
-    seed_indexes = runtime_seed_indexes(rows) if runtime_only else {}
+    seed_indexes: dict[str, set[int]] = runtime_seed_indexes(rows) if runtime_only else {}
     command, env = cipher(args, decrypt=True)
     staging = tempfile.TemporaryDirectory(prefix=".seed-restore-", dir=args.root)
     staged = Path(staging.name).resolve()
-    process = None
-    seen, restored = set(), set()
+    process: subprocess.Popen[bytes] | None = None
+    seen: set[str] = set()
+    restored: set[str] = set()
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, env=env)
+        assert process.stdout is not None  # stdout=PIPE
         with tarfile.open(fileobj=process.stdout, mode="r|gz") as archive:
             for member in archive:
                 name = member.name
@@ -257,7 +264,9 @@ def restore(args):
                 if not destination.is_relative_to(staged):
                     raise ValueError("seed extraction escapes checkout")
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                with archive.extractfile(member) as source:
+                member_file = archive.extractfile(member)
+                assert member_file is not None  # a regular file, checked above
+                with member_file as source:
                     with destination.open("xb") as output:
                         shutil.copyfileobj(source, output, 1024 * 1024)
                 restored.add(name)
@@ -296,7 +305,8 @@ def restore(args):
                 (staged / name).replace(destination)
     finally:
         if process is not None:
-            process.stdout.close()
+            if process.stdout is not None:  # always, as stdout=PIPE
+                process.stdout.close()
             if process.poll() is None:
                 process.kill()
                 process.wait()
@@ -304,7 +314,7 @@ def restore(args):
     print(f"Restored {len(restored)} private corpus files; replay retains recipe hash checks")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=("pack", "restore"))
     parser.add_argument("bundle", type=Path)

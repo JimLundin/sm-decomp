@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zig", required=True)
     parser.add_argument("--target", required=True,

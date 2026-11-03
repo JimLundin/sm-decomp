@@ -10,12 +10,16 @@ compile error or a failure in any other test is not a kill.
     python session_mutations.py                  run every mutant (GitHub CI only)
     python session_mutations.py --check-anchors  check every anchor exists, no build
 """
+from collections.abc import Iterable
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
+
+# name, file, anchor, replacement, the tests that must all fail
+Mutation = tuple[str, str, str, str, tuple[str, ...]]
 
 ENCODING = "crates/sm_game/src/session_encoding.rs"
 CODEC = "crates/sm_game/src/actors/codec.rs"
@@ -50,12 +54,11 @@ PLAYER_WORDS = "player_words.rs:every_player_word_reads_the_field_its_address_pr
 SCALAR_OWNERS = (LANES, CAMERA, FLOW, MENU, ROOM_ENTRY, INVENTORY, LIQUID, EPROJ, HDMA)
 
 
-def shift(name, relative, before, after, *tests):
+def shift(name: str, relative: str, before: str, after: str, *tests: str) -> Mutation:
     return (name, relative, before, after, tests)
 
 
-# name, file, anchor, replacement, the tests that must all fail
-MUTATIONS = (
+MUTATIONS: tuple[Mutation, ...] = (
     # Player lanes (session_encoding's own unit tests).
     shift("shift_swing_length_delta", ENCODING,
           "$f(0x0d00,$($borrow)* $s.player.swing.length_delta);",
@@ -224,11 +227,11 @@ MUTATIONS = (
 )
 
 
-def read(path):
+def read(path: Path) -> str:
     return path.read_bytes().decode("utf-8").replace("\r\n", "\n")
 
 
-def check_anchors(root):
+def check_anchors(root: Path) -> None:
     stale = [f"{name}: {relative}: anchor occurs {read(root / relative).count(before)} times"
              for name, relative, before, _after, _tests in MUTATIONS
              if not (root / relative).is_file() or read(root / relative).count(before) != 1]
@@ -237,23 +240,23 @@ def check_anchors(root):
     print(f"session mutation anchors: {len(MUTATIONS)}/{len(MUTATIONS)} present exactly once", flush=True)
 
 
-def run(command, timeout):
+def run(command: list[str], timeout: int) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, capture_output=True, text=True, encoding="utf-8",
                           errors="replace", timeout=timeout, check=False)
 
 
-def kind(test):
+def kind(test: str) -> str | None:
     """None for an sm_game unit test, else the integration test file."""
     if "::" in test:
         return None
     return test.split(":")[0] if ".rs:" in test else "state_layout.rs"
 
 
-def test_name(test):
+def test_name(test: str) -> str:
     return test.split(":", 1)[1] if ".rs:" in test else test
 
 
-def build(crates, work, name, sm_data, layout):
+def build(crates: Path, work: Path, name: str, sm_data: Path, layout: str | None) -> Path:
     """The sm_game unit-test binary, or the binary of integration test file
     `layout` over a mutated sm_game library."""
     folder = work / name
@@ -276,14 +279,14 @@ def build(crates, work, name, sm_data, layout):
     return binary
 
 
-def binaries(crates, work, name, sm_data, tests):
+def binaries(crates: Path, work: Path, name: str, sm_data: Path, tests: Iterable[str]) -> dict[str | None, Path]:
     """The unit and layout binaries this mutant's tests need, keyed by kind."""
     kinds = {kind(test) for test in tests}
     (work / name).mkdir(parents=True, exist_ok=True)
     return {layout: build(crates, work, name, sm_data, layout) for layout in kinds}
 
 
-def main():
+def main() -> None:
     root = Path(__file__).resolve().parents[3]
     check_anchors(root)
     if "--check-anchors" in sys.argv[1:]:

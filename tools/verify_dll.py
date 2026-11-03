@@ -12,10 +12,17 @@ import shutil
 import subprocess
 import sys
 import time
+from types import ModuleType
+from typing import Any, TypeVar
 
 # The scenario model beside this script, whichever directory Python starts in.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import scenario  # noqa: E402
+from scenario import Row  # noqa: E402
+
+# The verifier's compiled source inventory (load_host).
+Host = dict[str, Any]
+ErrorType = TypeVar("ErrorType", bound=BaseException)
 
 # Windows remains the pinned replay host.
 WINDOWS = os.name == "nt"
@@ -23,7 +30,7 @@ HOST_BINARY = "sm_verify.exe" if WINDOWS else "sm_verify"
 HOST_TRIPLE = "x86_64-pc-windows-gnu" if WINDOWS else "x86_64-unknown-linux-gnu"
 
 
-def source_hash(root):
+def source_hash(root: Path) -> str:
     """Bind cached replays to source contents, including added/deleted modules."""
     paths = set((root / "sm").rglob("*.rs"))
     paths.update((root / "crates").rglob("*.rs"))
@@ -46,15 +53,15 @@ def source_hash(root):
     return digest.hexdigest()
 
 
-def check_source(host, expected):
+def check_source(host: Host, expected: str) -> None:
     if host["source"] != expected:
         raise RuntimeError("cached verifier does not match current source; run without --no-build")
 
 
-def host_environment():
+def host_environment() -> dict[str, str]:
     environment = dict(os.environ)
     if WINDOWS:
-        directories = []
+        directories: list[str] = []
         for path in environment.get("LIBRARY_PATH", "").split(os.pathsep):
             if path:
                 for directory in (Path(path), Path(path).parent / "bin"):
@@ -64,7 +71,7 @@ def host_environment():
     return environment
 
 
-def load_host(binary, environment=None):
+def load_host(binary: str | os.PathLike[str], environment: dict[str, str] | None = None) -> Host:
     """Read the executable's compiled source inventory through its existing host."""
     binary = Path(binary).resolve()
     with tempfile.TemporaryDirectory(prefix="sm-host-info-") as directory:
@@ -72,14 +79,14 @@ def load_host(binary, environment=None):
         subprocess.run([str(binary), "--host-info", str(output)],
                        env=host_environment() if environment is None else environment, check=True)
         with output.open("rb") as stream:
-            def read(length):
+            def read(length: int) -> bytes:
                 data = stream.read(length)
                 if len(data) != length:
                     raise RuntimeError("truncated verifier source inventory; rebuild")
                 return data
             if read(10) != b"SMVERIFY1\n":
                 raise RuntimeError("unrecognized verifier source inventory; rebuild")
-            host = {"binary": binary, "source": read(64).decode("ascii"),
+            host: Host = {"binary": binary, "source": read(64).decode("ascii"),
                     "native": read(64).decode("ascii"), "utilities": read(1), "files": {}}
             if host["utilities"] not in (b"\0", b"\1"):
                 raise RuntimeError("invalid verifier utility source status; rebuild")
@@ -98,7 +105,7 @@ def load_host(binary, environment=None):
     return host
 
 
-def library_source_paths(root):
+def library_source_paths(root: Path) -> set[str]:
     paths = {path.relative_to(root).as_posix()
              for path in (root / "sm" / "src").rglob("*")
              if path.suffix in (".rs", ".c", ".h")}
@@ -115,7 +122,7 @@ def library_source_paths(root):
     return paths
 
 
-def check_source_inventory(root):
+def check_source_inventory(root: Path) -> list[str]:
     """The library's sources, sorted; each must be a readable file before a compiler starts."""
     paths = sorted(library_source_paths(root))
     for path in paths:
@@ -124,7 +131,7 @@ def check_source_inventory(root):
     return paths
 
 
-def write_source_inventory(root, output):
+def write_source_inventory(root: Path, output: Path) -> Path:
     """Write sm::verify_source::FILES, binding every library source with include_bytes!.
 
     The sm library includes this file when compiled with `--cfg sm_source_inventory`
@@ -142,7 +149,7 @@ def write_source_inventory(root, output):
     return inventory
 
 
-def check_library(host, root):
+def check_library(host: Host, root: Path) -> None:
     """Compare the library's compiled source bytes, not the host's environment."""
     expected = library_source_paths(root)
     for name, data in host["files"].items():
@@ -161,7 +168,8 @@ def check_library(host, root):
         raise RuntimeError("stale native utilities; rerun tools/install_native_config.py and rebuild")
 
 
-def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=True):
+def cargo_host(root: Path, rustc: str, output: Path, source: str, inventory: Path,
+               frontend: bool = False, retry: bool = True) -> Path:
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
     # Backdated files in another checkout can look fresh in a shared target
     # directory. Keep this game's and host's artifacts with their source.
@@ -198,8 +206,8 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
     environment["CARGO_ENCODED_RUSTFLAGS"] = (
         flags + ("\x1f" if flags else "") + "--cfg\x1fsm_verify_dll\x1f--cfg\x1fsm_source_inventory"
     )
-    binary = None
-    compiled = []
+    binary: Path | None = None
+    compiled: list[str] = []
     log_path = output / "build.log"
     with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
@@ -207,6 +215,7 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
             env=environment,
             text=True, encoding="utf-8", stdout=subprocess.PIPE, stderr=log,
         )
+        assert process.stdout is not None  # stdout=PIPE
         try:
             for line in process.stdout:
                 log.write(line)
@@ -263,7 +272,7 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
     return cached
 
 
-def build(root, rustc, use_cargo=None, frontend=False):
+def build(root: Path, rustc: str, use_cargo: bool | None = None, frontend: bool = False) -> Path:
     source = source_hash(root)
     output = root / "target" / "verify-host"
     output.mkdir(parents=True, exist_ok=True)
@@ -295,11 +304,11 @@ def build(root, rustc, use_cargo=None, frontend=False):
         return binary
     incremental = os.environ.get("CARGO_INCREMENTAL") != "0"
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
-    flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
-    if flags is None:
+    encoded_flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
+    if encoded_flags is None:
         flags = os.environ.get("RUSTFLAGS", "").split()
     else:
-        flags = flags.split("\x1f") if flags else []
+        flags = encoded_flags.split("\x1f") if encoded_flags else []
     common = [rustc, "--edition=2024", "-C", "opt-level=3",
               "-C", "codegen-units=16", *flags, "-D", "warnings"]
     common += [arg for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
@@ -319,7 +328,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     # that rebuilds them from pinned sources each time (CI) may name those
     # sources' identity in SM_NATIVE_IDENTITY instead.
     native_identity = os.environ.get("SM_NATIVE_IDENTITY")
-    def build_identity():
+    def build_identity() -> str:
         archives = ([(str(path), native_identity) for path in native] if native_identity else
                     [(str(path), hashlib.sha256(path.read_bytes()).hexdigest()) for path in native])
         return hashlib.sha256(json.dumps([
@@ -363,7 +372,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
                   "crates/sm_game/src/lib.rs", *data_flags, "-L", f"dependency={output}", "-o", str(game)],
         cwd=root, check=True,
     )
-    runtime_flags = []
+    runtime_flags: list[str] = []
     if runtime is not None:
         if data is None:
             raise RuntimeError("sm_runtime requires the sm_data library")
@@ -375,7 +384,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
         )
         runtime_flags = ["--extern", f"sm_runtime={runtime}"]
     # The verification tooling reads the verifier build's sm_game.
-    tools_flags = []
+    tools_flags: list[str] = []
     if tools is not None:
         subprocess.run(
             common + (["-C", f"incremental={output / 'incremental-sm-tools'}"] if incremental else [])
@@ -420,12 +429,14 @@ def build(root, rustc, use_cargo=None, frontend=False):
 
 
 
-def corpus_child(command, root):
+def corpus_child(command: list[str], root: Path) -> tuple[int, bool]:
     """Stream existing verifier output and recognize only pre-replay cache rejection."""
-    errors, replayed = [], False
+    errors: list[str] = []
+    replayed = False
     process = subprocess.Popen(command, cwd=root, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, text=True, encoding="utf-8",
                                errors="replace")
+    assert process.stdout is not None  # stdout=PIPE
     try:
         for line in process.stdout:
             print(line, end="", flush=True)
@@ -450,7 +461,7 @@ def corpus_child(command, root):
     return result, result == 2 and not replayed and len(errors) == 1 and errors[0] in rejected
 
 
-def compare_lock(locked, run):
+def compare_lock(locked: Row, run: Row) -> tuple[list[str], int | None]:
     """The streams whose running digest differs and the last mark both runs share."""
     if locked["format"] != run["format"]:
         return ["format"], None
@@ -481,9 +492,10 @@ LOCALIZED = re.compile(r"^(@[0-9]+: (?:(?:Free-run|Observation) divergence in [^
 LOCALIZE_LIMIT = 4
 
 
-def without_options(command, options):
+def without_options(command: list[str], options: tuple[str, ...]) -> list[str]:
     """The command without each of these options and its value."""
-    kept, parts = [], iter(command)
+    kept: list[str] = []
+    parts = iter(command)
     for part in parts:
         if part in options:
             next(parts)
@@ -492,7 +504,7 @@ def without_options(command, options):
     return kept
 
 
-def localize(root, segment, replay, mark, work):
+def localize(root: Path, segment: Row, replay: list[str], mark: int, work: Path) -> None:
     """Rerun the lock's first unmatched 1,000-Tick span live, in free run and lockstep.
 
     The faithful oracle records a trace to the span's end and the engine free
@@ -512,11 +524,11 @@ def localize(root, segment, replay, mark, work):
     if "seed" in segment:
         base += ["--seed", str(segment["_seed_path"])]
     environment = dict(os.environ, SM_ORACLE="faithful")
-    def quiet(command):
+    def quiet(command: list[str]) -> tuple[int, str]:
         result = subprocess.run(command, cwd=root, env=environment, capture_output=True,
                                 text=True, encoding="utf-8", errors="replace")
         return result.returncode, result.stdout + result.stderr
-    def report(label, start, code, output):
+    def report(label: str, start: int, code: int, output: str) -> None:
         names = [match.group(1) for match in map(LOCALIZED.match, output.splitlines()) if match]
         print(f"{name}: {label} over ticks {start}..{mark + frames}: "
               + (f"exit {code}" if code else "passes (the drift is masked here)"), flush=True)
@@ -545,7 +557,8 @@ def localize(root, segment, replay, mark, work):
     report("lockstep", mark, *quiet(span + ["--divergence-report", str(work / "span.toml")]))
 
 
-def run_single_side(root, args, segment, replay, report, tomllib):
+def run_single_side(root: Path, args: argparse.Namespace, segment: Row, replay: list[str],
+                    report: list[str], tomllib: ModuleType) -> int:
     """One seeded or boot row in a single-side mode (docs/SCENARIO_HARNESS.md):
     free run against a fresh oracle trace, determinism of the engine against
     its own trace, or the oracle digest lock (REVIEW lane S condition 8)."""
@@ -559,9 +572,9 @@ def run_single_side(root, args, segment, replay, report, tomllib):
         available = sum(1 for line in file if line.strip() and not line.strip().startswith("#"))
     replay[replay.index("--frames") + 1] = str(min(segment["frames"], available))
     oracle = without_options(replay, ("--require-hit",))
-    with tempfile.TemporaryDirectory(prefix="sm-single-") as work:
-        work = Path(work)
-        def child(extra):
+    with tempfile.TemporaryDirectory(prefix="sm-single-") as work_directory:
+        work = Path(work_directory)
+        def child(extra: list[str]) -> int:
             return corpus_child((oracle if "--oracle-only" in extra else replay) + extra, root)[0]
         if args.mode == "free-run":
             trace = work / "oracle.trace"
@@ -596,7 +609,7 @@ def run_single_side(root, args, segment, replay, report, tomllib):
         if code and (args.mode == "lock" or not entry.exists()):
             return code
         with entry.open("rb") as file:
-            run = tomllib.load(file)
+            run: Row = tomllib.load(file)
         key = {"id": name, "oracle": "faithful"} | scenario.lock_key(segment)
         if args.mode == "lock":
             args.lock_entries[name] = key | run
@@ -619,7 +632,7 @@ def run_single_side(root, args, segment, replay, report, tomllib):
         return code
 
 
-def run_corpus(root, args):
+def run_corpus(root: Path, args: argparse.Namespace) -> int:
     import re
     import tomllib
     import uuid
@@ -629,13 +642,13 @@ def run_corpus(root, args):
     checkout = args.corpus.resolve().parent
     required, rows = scenario.recipe(checkout)
 
-    def strings(value, field):
+    def strings(value: Any, field: str) -> list[str]:
         if (not isinstance(value, list) or any(not isinstance(x, str) or not x for x in value)
                 or len(set(value)) != len(value)):
             raise ValueError(f"corpus {field} must be a list of distinct nonempty strings")
         return value
 
-    def integer(value, field, minimum):
+    def integer(value: Any, field: str, minimum: int) -> int:
         if type(value) is not int or not minimum <= value <= 2**64 - 1:
             raise ValueError(f"corpus {field} must be an integer in {minimum}..u64::MAX")
         return value
@@ -643,7 +656,7 @@ def run_corpus(root, args):
     required = strings(required, "required")
     if not required:
         raise ValueError("corpus requires nonempty required IDs")
-    segments = {}
+    segments: dict[str, Row] = {}
     for segment in rows:
         allowed = {"id", "inputs", "input_sha256", "start_frame", "frames", "require_hit",
                    "after_hits", "expect", "after_expectations", "observe", "pending", "seed",
@@ -712,7 +725,7 @@ def run_corpus(root, args):
     partial = bool(args.segment) or not set(required).issubset(selected)
     print(f"Corpus {'PARTIAL selection' if partial else 'full required scope'}: "
           f"{len(selected)} selected, {len(required)} required; {args.corpus}", flush=True)
-    def input_matches(segment):
+    def input_matches(segment: Row) -> bool:
         if "checkpoint" in segment:
             checkpoint = checkout / "target/checkpoints" / segment["checkpoint"]
             if not checkpoint.resolve().is_relative_to(checkout):
@@ -736,10 +749,11 @@ def run_corpus(root, args):
             if scenario.seed_digest(seed) != segment["seed_sha256"]:
                 raise ValueError("seed payload SHA-256 does not match the recipe")
             segment["_seed_path"] = seed
-        return hashlib.sha256(segment["inputs"].read_bytes()).hexdigest() == segment["input_sha256"]
+        expected: str = segment["input_sha256"]
+        return hashlib.sha256(segment["inputs"].read_bytes()).hexdigest() == expected
 
-    failures = set()
-    runnable = []
+    failures: set[str] = set()
+    runnable: list[Row] = []
     for name in selected:
         segment = segments[name]
         if "pending" in segment:
@@ -774,22 +788,22 @@ def run_corpus(root, args):
         return result
     cache = root / "target" / "verify-corpus"
 
-    def cache_directory(segment):
+    def cache_directory(segment: Row) -> Path:
         # One digest retains the full identity without three long Windows path components.
         identity = "\0".join((source, rom_hash, segment["input_sha256"],
                               segment.get("seed_sha256", "")))
         return cache / hashlib.sha256(identity.encode("ascii")).hexdigest()
 
-    def checkpoint_frame(path):
+    def checkpoint_frame(path: Path) -> int | None:
         with path.open("rb") as file:
             header = file.read(56)
         return int.from_bytes(header[32:40], "little") if len(header) == 56 and header[:8] == b"SMVERIFY" else None
 
-    prefix_inputs = {}
+    prefix_inputs: dict[str, bytes] = {}
     donors = {(item["input_sha256"], item.get("seed_sha256")): item
               for item in segments.values() if "pending" not in item}
 
-    def shares_prefix(segment, donor, frame):
+    def shares_prefix(segment: Row, donor: Row, frame: int) -> bool:
         # Only the same initial state can share a verified input prefix.
         if segment.get("seed_sha256") != donor.get("seed_sha256"):
             return False
@@ -816,11 +830,11 @@ def run_corpus(root, args):
         end = frame * 4
         return end <= min(len(left), len(right)) and left[:end] == right[:end]
 
-    def prefix(segment, force_boot=False):
+    def prefix(segment: Row, force_boot: bool = False) -> Path | None:
         start = segment["start_frame"]
         directory = cache_directory(segment)
         directory.mkdir(parents=True, exist_ok=True)
-        candidates = []
+        candidates: list[tuple[int, Path]] = []
         if not force_boot and "checkpoint" in segment:
             # Never let a later cache donor skip this row's required checked setup gap.
             candidates.append((segment["_checkpoint_frame"], segment["_checkpoint_path"]))
@@ -832,6 +846,7 @@ def run_corpus(root, args):
                             and shares_prefix(segment, donor, frame)):
                         candidates.append((frame, path))
             candidates.sort(key=lambda pair: (pair[0], pair[1].stat().st_mtime_ns), reverse=True)
+        checkpoint: Path | None
         previous, checkpoint = candidates[0] if candidates else (0, None)
         if checkpoint:
             print(f"PREFIX {segment['id']}: skip previously verified input frames 0..{previous}; "
@@ -866,7 +881,7 @@ def run_corpus(root, args):
             regenerated = True
         return checkpoint
 
-    def with_audio_trace(replay, name):
+    def with_audio_trace(replay: list[str], name: str) -> list[str]:
         # Each row child is a direct --audio-trace replay: it binds its own ROM/input/
         # native/executable hashes and runs check_audio_trace on its file before passing.
         if args.audio_trace_directory is None:
@@ -876,7 +891,7 @@ def run_corpus(root, args):
         output = directory / f"{name}-{uuid.uuid4().hex}.audio-trace"
         return replay + ["--audio-trace", str(output)]
 
-    def report_option(name):
+    def report_option(name: str) -> list[str]:
         # One typed-observation divergence record per row, beside its console names.
         if args.divergence_report_directory is None:
             return []
@@ -884,13 +899,13 @@ def run_corpus(root, args):
         directory.mkdir(parents=True, exist_ok=True)
         return ["--divergence-report", str(directory / f"{name}.toml")]
 
-    def with_divergence_report(replay, name):
+    def with_divergence_report(replay: list[str], name: str) -> list[str]:
         return replay + report_option(name)
 
     args.lock_entries = scenario.read_lock(checkout, args.lock).entries if args.mode == "check-lock" else {}
 
     # Earlier windows can supply checked prefixes to later branches of the same inputs.
-    passed = set()
+    passed: set[str] = set()
     for segment in sorted(runnable, key=lambda item: (item["start_frame"], str(item["inputs"]))):
         name = segment["id"]
         # Associate diagnostics from prefix setup with this row as well as its replay.
@@ -986,7 +1001,7 @@ def run_corpus(root, args):
 
 
 
-def audio_file_hash(path):
+def audio_file_hash(path: str | os.PathLike[str]) -> str:
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
@@ -994,13 +1009,13 @@ def audio_file_hash(path):
     return digest.hexdigest()
 
 
-def diagnostic_error(stage, category, error):
+def diagnostic_error(stage: str, category: str, error: ErrorType) -> ErrorType:
     """Publish static metadata; preserve the existing exception and exit status."""
     print(f"DIAGNOSTIC stage={stage} category={category} tick=unknown", flush=True)
     return error
 
 
-def check_audio_trace(path, identity):
+def check_audio_trace(path: Path, identity: dict[str, str]) -> None:
     try:
         _check_audio_trace(path, identity)
     except OSError as error:
@@ -1010,13 +1025,13 @@ def check_audio_trace(path, identity):
         raise diagnostic_error("audio-trace-validation", "trace-format", error)
 
 
-def _check_audio_trace(path, identity):
-    def failure(category, message):
+def _check_audio_trace(path: Path, identity: dict[str, str]) -> None:
+    def failure(category: str, message: str) -> RuntimeError:
         return diagnostic_error("audio-trace-validation", category, RuntimeError(message))
 
     counts = {"InputBegin": 0, "InputComplete": 0, "CueBegin": 0,
               "CueComplete": 0, "Port": 0, "ExecutionBegin": 0}
-    footer = None
+    footer: dict[str, Any] | None = None
     with Path(path).open("r", encoding="utf-8") as stream:
         first = stream.readline()
         if not first:
@@ -1048,7 +1063,7 @@ def _check_audio_trace(path, identity):
             or counts["CueBegin"] != footer.get("cues") or counts["Port"] != footer.get("ports")):
         raise failure("output-counts", "audio trace visited-frame/request counts differ")
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("rom", type=Path, nargs="?")
     parser.add_argument("inputs", type=Path, nargs="?")
@@ -1165,12 +1180,12 @@ def main():
                 or args.room_pack_alternate or args.room_pack_changed):
             parser.error("original native phase admission takes only actual original/closed source handles")
         import movie_inputs
-        result = movie_inputs.check_native_phase_capture(args.original_native_receipt,
+        capture = movie_inputs.check_native_phase_capture(args.original_native_receipt,
             args.original_native_receipt_sha256, args.original_native_parent, args.inputs, args.rom,
             args.original_native_binary, args.original_native_source, args.original_native_phase,
             args.original_native_stdout, args.original_native_logger, args.original_native_predecessor)
-        print(f"Original native observation checked: {result['original_input_words']} full inputs; "
-              f"{result['complete_two_port_latches']} actual two-port latches; physical plan not admitted")
+        print(f"Original native observation checked: {capture['original_input_words']} full inputs; "
+              f"{capture['complete_two_port_latches']} actual two-port latches; physical plan not admitted")
         return 0
     if any(original_native):
         parser.error("original native phase options require --original-native-phase")
@@ -1292,7 +1307,9 @@ def main():
     # Paths are resolved before changing cwd so invocation works from anywhere.
     rom = args.rom.resolve() if args.rom else None
     inputs = args.inputs.resolve() if args.inputs else None
+    replay_args: list[str]
     if producer:
+        assert args.room_pack_export is not None  # producer is exactly this option
         replay_args = [str(rom), "--room-pack-export", str(args.room_pack_export.resolve())]
         if args.room_pack_alternate:
             replay_args.append("--room-pack-alternate")
@@ -1349,6 +1366,8 @@ def main():
     if args.build_only:
         return 0
     if args.audio_trace is not None:
+        # --audio-trace requires a direct replay, which requires both (checked above).
+        assert rom is not None and inputs is not None
         os.environ["SM_AUDIO_TRACE_NATIVE_SHA256"] = host["native"]
         os.environ["SM_AUDIO_TRACE_ROM_SHA256"] = audio_file_hash(rom)
         os.environ["SM_AUDIO_TRACE_INPUT_SHA256"] = audio_file_hash(inputs)
@@ -1374,6 +1393,7 @@ def main():
         raise diagnostic_error("post-replay-provenance", "source-changed",
                                RuntimeError("source changed during replay; result applies only to the printed source"))
     if args.audio_trace is not None:
+        assert rom is not None and inputs is not None  # as above
         try:
             unchanged_files = (audio_file_hash(rom) == audio_identity["rom"]
                                and audio_file_hash(inputs) == audio_identity["inputs"])
