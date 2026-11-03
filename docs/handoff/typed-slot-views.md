@@ -2,7 +2,7 @@
 
 Branch `collab/typed-all` (PR #155) converts the address-API layer to typed Session
 fields. Engine address APIs (`ram_ratchet.py`, ROM record reads excluded) fall from
-5805 on main `0115740f5` to 153.
+5805 on main `0115740f5` to 147.
 
 ## Pattern
 
@@ -49,7 +49,7 @@ Next step: a diagnostic CI run. Print Samus X and cell 4 around `not_started` fo
 frames 835-839, and add a verify-only check that RAM $CD20..$CD52 equals
 `room.scrolls` at each lease export.
 
-## Remaining 153 sites, by blocker
+## Remaining 147 sites, by blocker
 
 1. **New Session owners, plus all of their writers.**
    - Scroll cells (see above).
