@@ -2184,6 +2184,15 @@ impl sm_game::cartridge::NativeImage for Runtime<'_> {
         self.game.capture_native_rom()
     }
 }
+// Crocomire's imported tables are the game's; reading them touches no RAM.
+impl sm_game::actors::crocomire_reactions::Tables for Runtime<'_> {
+    fn crocomire_table_word(&self, address: u32, index: isize) -> u16 {
+        self.game.crocomire_table_word(address, index)
+    }
+    fn crocomire_melt_tilemap(&self, table: u32) -> Option<[u16; sm_data::crocomire::MELT_TILES]> {
+        self.game.crocomire_melt_tilemap(table)
+    }
+}
 impl sm_game::records::Records for Runtime<'_> {
     fn records(&self) -> &sm_game::records::RomRecords {
         &self.game.records

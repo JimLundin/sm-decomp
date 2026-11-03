@@ -77,7 +77,9 @@ pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
     }
 }
 
-impl Host for Game {
+impl Host for Game {}
+
+impl Tables for Game {
     fn crocomire_table_word(&self, address: u32, index: isize) -> u16 {
         let tables = &self.crocomire;
         match address {
