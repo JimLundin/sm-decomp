@@ -616,6 +616,10 @@ pub trait ContinuationAccess {
     fn screen_set_primary(&mut self, value: u8);
     fn demo_phase(&self) -> u8;
     fn demo_set_phase(&mut self, value: u8);
+    /// The secondary continuation ($0613): the resume point of a pause hook
+    /// or the room mechanisms' pass.
+    fn secondary_continuation(&self) -> u8;
+    fn set_secondary_continuation(&mut self, value: u8);
 }
 
 /// Successful slices publish before the next canvas operation or foreign effect.

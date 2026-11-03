@@ -5324,6 +5324,14 @@ impl sm_game::presentation_workspace::ContinuationAccess for Game {
     fn demo_set_phase(&mut self, value: u8) {
         self.compatibility_write_owned_byte(0x614, value);
     }
+    fn secondary_continuation(&self) -> u8 {
+        self.compatibility_byte(0x613)
+    }
+    // A plain RAM store, as the pause hooks' stores were: the retained
+    // Session re-adopts the byte at its next lease.
+    fn set_secondary_continuation(&mut self, value: u8) {
+        self.compatibility_write_byte(0x613, value);
+    }
 }
 
 #[forbid(unsafe_code)]
