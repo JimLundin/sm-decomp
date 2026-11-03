@@ -533,6 +533,11 @@ macro_rules! scalar_words {
         $f(0xb06,$($borrow)* $s.player.body_position.y);
         $f(0xa62,$($borrow)* $s.player.scripted_movement_direction);
         $f(ram::UNUSED_WORD_7E0A5E,$($borrow)* $s.player.spare_0a5e);
+        $f(ram::MOONWALK_FLAG,$($borrow)* $s.player.moonwalk);
+        $f(ram::DEBUG_FLAG,$($borrow)* $s.player.debug_flag);
+        $f(ram::UNUSED_WORD_7E09E8,$($borrow)* $s.player.spare_09e8);
+        $f(ram::UNUSED_WORD_7E0DF8,$($borrow)* $s.player.turn_request);
+        $f(ram::UNUSED_WORD_7E0DFC,$($borrow)* $s.player.spare_0dfc);
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);
         $f(0xa7e,$($borrow)* $s.player.demo.program);
@@ -1582,6 +1587,8 @@ pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> Externa
             0x93f..=0x940 => (0x93f, s.room.ceres_status),
             0xf434..=0xf435 => (0xf434, s.enemy_projectiles.drop_origin.x),
             0xf436..=0xf437 => (0xf436, s.enemy_projectiles.drop_origin.y),
+            0x9e4..=0x9e5 => (0x9e4, s.player.moonwalk),
+            0xdf8..=0xdf9 => (0xdf8, s.player.turn_request),
             0x78..=0x7d | 0x80..=0x83 | 0x5b5..=0x5b7 => {
                 let Ok(owner) = s.presentation.owner() else {
                     return bytes(at);

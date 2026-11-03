@@ -777,13 +777,18 @@ impl<'g> Runtime<'g> {
         self.refresh_written_inputs();
     }
     /// The scroll stores' refresh while the Session is current: the external
-    /// observations as RAM holds them, except the drop origin, which the
-    /// Session owns and RAM holds only once it is published.
+    /// observations as RAM holds them, except the drop origin, the moonwalk
+    /// setting and the turn request, which the Session owns and RAM holds only
+    /// once it is published.
     pub(crate) fn refresh_scroll_inputs(&mut self) {
         self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
-        let origin = self.session().enemy_projectiles.drop_origin;
+        let session = self.session();
+        let origin = session.enemy_projectiles.drop_origin;
+        let (moonwalk, turn_request) = (session.player.moonwalk, session.player.turn_request);
         self.inputs.drop_origin_x = origin.x;
         self.inputs.drop_origin_y = origin.y;
+        self.inputs.transitions.moonwalk_enabled = moonwalk;
+        self.inputs.transitions.turn_request = turn_request;
     }
     pub(crate) fn refresh_written_inputs(&mut self) {
         self.inputs =

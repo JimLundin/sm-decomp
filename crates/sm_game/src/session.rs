@@ -377,6 +377,16 @@ pub struct Player {
     pub previous_health_for_flash: u16,
     /// $0A5E, a word no routine reads; Samus's initialisation stores -2764.
     pub spare_0a5e: u16,
+    /// $09E4, the moonwalk setting, which Samus's turns observe.
+    pub moonwalk: u16,
+    /// $09E6, the debug flag that new games and the demos set; nothing reads it.
+    pub debug_flag: u16,
+    /// $09E8, a word that new games and the demos set to 1; nothing reads it.
+    pub spare_09e8: u16,
+    /// $0DF8, the turn request, which Samus's pose normalisation observes.
+    pub turn_request: u16,
+    /// $0DFC, a word that the demos clear; nothing reads it.
+    pub spare_0dfc: u16,
     pub top_sprite: u16,
     pub bottom_sprite: u16,
     pub scripted_movement_direction: u16,
