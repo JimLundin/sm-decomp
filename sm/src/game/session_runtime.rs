@@ -482,6 +482,17 @@ impl<'g> Runtime<'g> {
             result
         })
     }
+    /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
+    /// observations are refreshed on entry and on return, as the former foreign call left them.
+    pub(crate) fn next_random_number(&mut self) -> u16 {
+        self.owned_player_call(|runtime| {
+            let value = sm_game::random::next(runtime.session().timing.random_number);
+            runtime.session_mut().timing.random_number = value;
+            #[cfg(sm_verify_dll)]
+            crate::cpu_infra::player_transitions_composed::random_after_lease(runtime);
+            value
+        })
+    }
     fn refresh_actor_observations(&mut self) {
         self.inputs.enemy_zero_health = self.native_word(0xF8C);
         self.inputs.current_enemy = self.word(0xE54);

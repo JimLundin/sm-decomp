@@ -129,7 +129,7 @@ impl BossState for Runtime<'_> {
         sm_game::enemy_projectiles::lifecycle::spawn_from_enemy(self, parameter, k, definition)
     }
     fn roll_random(&mut self) -> u16 {
-        self.foreign(Game::next_random)
+        self.next_random_number()
     }
     fn decompress_into_ram(&mut self, source: u32, destination: usize) {
         self.foreign(|game| sm_game::decompression::decompress_to_ram(source, destination, game));

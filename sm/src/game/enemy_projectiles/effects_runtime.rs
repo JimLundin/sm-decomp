@@ -4,7 +4,7 @@ use super::host::Effects;
 use crate::game::session_runtime::Runtime;
 impl Effects for Runtime<'_> {
     fn next_random(&mut self) -> u16 {
-        self.foreign(crate::game_state::Game::next_random)
+        self.next_random_number()
     }
     fn grapple_pickup_query(&mut self) -> u16 {
         // The command's former foreign entry ran it on a fresh nested lease.

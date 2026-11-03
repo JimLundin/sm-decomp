@@ -1262,8 +1262,6 @@ impl Game {
         ]);
         let result = sm_game::random::next(seed);
         crate::ram_map::checked_word!(self.RANDOM_NUMBER = result);
-        #[cfg(sm_verify_dll)]
-        crate::cpu_infra::player_transitions_composed::random_after(self);
         result
     }
 

@@ -6,10 +6,11 @@ use crate::actors::api::{
     self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy,
 };
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors, Random as _};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::controller_state::Word as Input;
 use crate::effects::SoundEffects as _;
+use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
 use crate::player_projectiles::{access::shot, host::Host as _};
@@ -591,7 +592,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
         }
         _ => {
             let hiding = Yard::of(runtime, slot(key)).behaviour() == HIDING;
-            return if hiding || runtime.foreign(|game| game.next_random()) & 1 != 0 {
+            return if hiding || runtime.next_random() & 1 != 0 {
                 j.offset(-3)
             } else {
                 j

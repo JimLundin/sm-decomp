@@ -48,13 +48,13 @@ pub trait Lease:
 {
     /// Whether actor `k` is touching Samus from above.
     fn touches_player_from_above(&mut self, k: u16) -> bool;
+    /// A verifier observation point in the room-cleared fade, on the lease.
+    fn observe_kraid_flags(&mut self, step: u8);
 }
 
 /// What Kraid needs of the game beyond the shared boss effects and deaths.
-pub trait Host: crate::actors::host::BossEffects + crate::actors::deaths::Deaths {
-    /// A verifier observation point in the room-cleared fade.
-    fn observe_kraid_flags(&mut self, _step: u8) {}
-}
+pub trait Host: crate::actors::host::BossEffects + crate::actors::deaths::Deaths {}
+impl<T: crate::actors::host::BossEffects + crate::actors::deaths::Deaths + ?Sized> Host for T {}
 
 // Every part's extended words are Kraid's shared state at the body's offsets:
 // `next_function` (the foot's also counts down its walk), the thinking timer, the
@@ -1553,11 +1553,11 @@ fn fade_in_clear_bg2_top<L: Lease>(game: &mut L) {
 /// Fades the room back in, then sets the boss bit once. Was
 /// `Kraid_FadeInBg_FadeInBp6`.
 pub fn fade_in_bg6<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.observe_kraid_flags(0));
+    game.observe_kraid_flags(0);
     if game.foreign(background6) & 1 != 0 {
-        game.foreign(|game| game.observe_kraid_flags(1));
+        game.observe_kraid_flags(1);
         game.foreign(|game| game.queue_music_delayed(3));
-        game.foreign(|game| game.observe_kraid_flags(2));
+        game.observe_kraid_flags(2);
         let area = BossState::area(game);
         let bits: i16 = steps::boss_word(game, area, BossWordOrder::Native) as i16;
         if (bits as u16 & 1) != 0 {
@@ -1570,7 +1570,7 @@ pub fn fade_in_bg6<L: Lease>(game: &mut L) {
             *BodyEdit::of(game, BODY).function() = function::FADE_IN_DEAD_WAS_ALIVE;
         }
     }
-    game.foreign(|game| game.observe_kraid_flags(3));
+    game.observe_kraid_flags(3);
 }
 
 /// Kraid rises the rest of the way. Was `Kraid_Raise_Handler`.
