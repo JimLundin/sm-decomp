@@ -73,9 +73,6 @@ impl sm_game::gameplay_frame::Host for Game {
         // The main game loop's PLP restores the carry loading the save slots ($80:8261) set.
         crate::game::visual_runtime::update_hdma(true, self)
     }
-    fn advance_random(&mut self) {
-        self.next_random();
-    }
     fn advance_native_state(&mut self, state: NativeState) -> u8 {
         use sm_game::cinematic_states::{ending_and_credits, intro, title_sequence};
         match state {

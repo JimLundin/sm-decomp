@@ -81,7 +81,6 @@ pub trait Host:
     /// The original's warning when a pass leaves continuation bytes set.
     fn report_broken_coroutine(&mut self, state: [u8; 4]);
     fn update_hdma(&mut self);
-    fn advance_random(&mut self);
     fn advance_native_state(&mut self, state: NativeState) -> u8;
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
     fn debug_game_over_menu(&mut self);
@@ -208,7 +207,10 @@ enum ResumePoint {
 
 impl ResumePoint {
     fn read<H: Host>(game: &H) -> Self {
-        match game.resume_point() {
+        Self::of(game.resume_point())
+    }
+    fn of(byte: u8) -> Self {
+        match byte {
             0 => Self::Start,
             1 => Self::EnemyMessage,
             2 => Self::RoomObjects,
@@ -307,26 +309,28 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         if begin_frame {
             game.clear_pass_continuations();
             game.update_hdma();
-            game.advance_random();
-            sprite_drawing::clear_high_table(game);
-            sprite_drawing::reset_cursor(game);
-            with_session(game, |session| session.presentation.clear_samus_requests());
-            st = crate::gameplay_word!(game.GAME_STATE) as i32 + 10;
-            game.set_outer_continuation(st as u8);
-        }
-        // The main gameplay state's frame runs from its pass to the frame's end on one
-        // lease once the pass starts; every other state ends the frame on Game.
-        let index = usize::from((st - 10i32) as u16);
-        if begin_frame
-            && matches!(
-                GAME_STATE_ENTRIES.get(index),
+            let mut lease = game.runtime();
+            start_frame::<H>(&mut lease);
+            st = game_state(&lease) as i32 + 10;
+            lease.set_outer_continuation(st as u8);
+            // The main gameplay state's frame runs from here to the frame's end on this
+            // lease, unless an enemy's message box splits its pass. Every other state
+            // closes it and ends the frame on Game.
+            if matches!(
+                GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16)),
                 Some(Advance(Entry::Gameplay))
-            )
-            && ResumePoint::read(game) == ResumePoint::Start
-        {
-            break 'frame advance_gameplay(game, true);
+            ) && ResumePoint::of(lease.screen_primary()) == ResumePoint::Start
+            {
+                crate::probe::hit("coroutine.gameplay");
+                let completed = pass_from_start::<H>(&mut lease, true);
+                drop(lease);
+                break 'frame match completed {
+                    Some(yielded) => yielded,
+                    None => pass_after_message(ResumePoint::Start, true, game),
+                };
+            }
         }
-        let returned = match GAME_STATE_ENTRIES[index] {
+        let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
             Advance(entry) => advance(entry, game),
             Native(state) => game.advance_native_state(state),
             DemoReset => demo_rooms::reset(game),
@@ -389,6 +393,18 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     returned
 }
 
+/// The frame's start on its first lease: the random number steps, the sprite
+/// table's high table and cursor reset, and Samus's drawing requests clear.
+fn start_frame<'a, H: Host + 'a>(lease: &mut H::Runtime<'a>) {
+    let timing = &mut lease.session_mut().timing;
+    timing.random_number = crate::random::next(timing.random_number);
+    lease.words_stored();
+    sprite_drawing::clear_high_table(lease);
+    sprite_drawing::reset_cursor(lease);
+    lease.session_mut().presentation.clear_samus_requests();
+    lease.words_stored();
+}
+
 /// The frame's end, after a completed state, on the main gameplay pass's
 /// lease: the sound effects, the sprite table's finish, the joypad filter word
 /// and the continuation check.
@@ -412,6 +428,11 @@ fn filter_joypad<H: crate::gameplay_context::Access + ?Sized>(host: &mut H) {
     crate::gameplay_word!(
         host.JOYPAD1_INPUT_SAMUSFILTER = crate::gameplay_word!(host.JOYPAD1_LASTKEYS)
     );
+}
+
+/// The game state word ($0998).
+fn game_state<H: crate::gameplay_context::Access + ?Sized>(host: &H) -> u16 {
+    crate::gameplay_word!(host.GAME_STATE)
 }
 
 /// Whether a completed frame leaves any pass continuation byte set.
@@ -851,7 +872,7 @@ fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
         game.player_command(0x10);
     }
-    let yielded = advance_gameplay(game, false);
+    let yielded = advance_gameplay(game);
     if yielded != 0 {
         return yielded;
     }
@@ -859,9 +880,8 @@ fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     0
 }
 
-/// Frame phase: the resumable gameplay pass shared by playing states. With
-/// `end_frame`, a completed pass also ends the frame on the pass's last lease.
-fn advance_gameplay<H: Host>(game: &mut H, end_frame: bool) -> CoroutineRet {
+/// Frame phase: the resumable gameplay pass shared by playing states.
+fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("coroutine.gameplay");
     let resume = ResumePoint::read(game);
     if resume == ResumePoint::Skip {
@@ -869,11 +889,11 @@ fn advance_gameplay<H: Host>(game: &mut H, end_frame: bool) -> CoroutineRet {
         return 0;
     }
     if resume == ResumePoint::Start {
-        if let Some(yielded) = pass_from_start::<H>(&mut game.runtime(), end_frame) {
+        if let Some(yielded) = pass_from_start::<H>(&mut game.runtime(), false) {
             return yielded;
         }
     }
-    pass_after_message(resume, end_frame, game)
+    pass_after_message(resume, false, game)
 }
 
 /// The pass from its start on `lease`. Its result, or `None` when an enemy
