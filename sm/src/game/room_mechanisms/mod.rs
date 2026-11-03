@@ -12,7 +12,6 @@ use sm_game::room_mechanisms::setup;
 mod rules {
     pub(super) use sm_game::room_mechanisms::rules::crumbling_wall;
     pub(super) use sm_game::room_mechanisms::rules::mother_brain_glass;
-    pub(super) use sm_game::room_mechanisms::rules::torizo_statue;
     pub(super) use sm_game::room_mechanisms::rules::treadmill;
 }
 use crate::game::{
@@ -79,16 +78,6 @@ pub(crate) fn add_glass_hits(slot: usize, amount: u16, game: &mut Game) {
 }
 pub(crate) fn open_passage(game: &mut Game) {
     rules::crumbling_wall::open_passage(&mut Runtime::new(game));
-}
-pub(crate) fn wait_statue(index: u16, game: &mut Game) {
-    use host::Effects;
-    let mut h = Runtime::new(game);
-    h.statue_wait_actor(index, true);
-    if rules::torizo_statue::present(&h) {
-        return;
-    }
-    h.music(6);
-    h.statue_wait_actor(index, false);
 }
 
 /// Numeric identities retained only for the actual-old verification carrier.

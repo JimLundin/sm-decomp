@@ -26,6 +26,7 @@ pub trait Lease:
     + SlotState
     + crate::progress::FlagHost
     + crate::enemy_projectiles::host::Host
+    + crate::room_mechanisms::host::Host
 {
 }
 impl<T> Lease for T where
@@ -34,6 +35,7 @@ impl<T> Lease for T where
         + SlotState
         + crate::progress::FlagHost
         + crate::enemy_projectiles::host::Host
+        + crate::room_mechanisms::host::Host
         + ?Sized
 {
 }
@@ -232,8 +234,6 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
 pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
     /// Run the bank $AA movement function at `address` for the current Torizo.
     fn run_function(&mut self, address: u32);
-    /// Wake Torizo `k` once the Bomb Torizo's chozo statue finishes crumbling.
-    fn wake_when_statue_crumbles(&mut self, k: u16);
     fn set_boss_bit(&mut self, bit: u16);
     /// Load Torizo target palettes `palettes`.
     fn set_palette_targets(&mut self, palettes: Palettes);
@@ -403,9 +403,9 @@ pub fn run_torizo_function<L: Lease>(game: &mut L, function: u16, k: u16) {
     match function {
         function::NOTHING => {}
         function::SIMPLE_MOVEMENT | function::GOLDEN_SIMPLE_MOVEMENT => simple_movement(k, game),
-        function::WAKE_WHEN_STATUE_CRUMBLES => {
-            game.foreign(|game| game.wake_when_statue_crumbles(k))
-        }
+        function::WAKE_WHEN_STATUE_CRUMBLES => game.owned_step(|game| {
+            crate::room_mechanisms::rules::torizo_statue::wait_for_removal(game, k);
+        }),
         function::NORMAL_MOVEMENT => normal_movement(k, game),
         function::GOLDEN_WAKE_WHEN_SAMUS_BELOW_RIGHT => golden_wake(game),
         function::GOLDEN_NORMAL_MOVEMENT => golden_normal_movement(k, game),

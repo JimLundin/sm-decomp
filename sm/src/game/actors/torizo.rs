@@ -29,10 +29,6 @@ impl Ai for Game {
         crate::game::session_runtime::run_aa_function(address, self);
     }
 
-    fn wake_when_statue_crumbles(&mut self, k: u16) {
-        crate::game::room_mechanisms::wait_statue(k, self);
-    }
-
     fn set_boss_bit(&mut self, bit: u16) {
         crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(bit, self);
     }
