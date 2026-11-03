@@ -16,7 +16,6 @@ use crate::display::preparation::Field;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
-use crate::ram::word;
 use crate::visual_state::CinematicFade;
 
 /// The cinematic functions run in bank $8B.
@@ -143,9 +142,9 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
         crate::sprite_drawing::reset_cursor(game);
         crate::sprite_drawing::clear_high_table(game);
         crate::sprite_drawing::finish_frame(game);
-        word!(game.NMI_COPY_SAMUS_HALVES = 0);
-        word!(game.NMI_COPY_SAMUS_TOP_HALF_SRC = 0);
-        word!(game.NMI_COPY_SAMUS_BOTTOM_HALF_SRC = 0);
+        crate::runtime_access::with_session(game, |session| {
+            session.presentation.clear_samus_requests();
+        });
         crate::display_refresh::initialize_io_and_oam(None, game);
         crate::display::sequence::register_writes! { game;
             mirror(reg::BGMODE as u16, 1, Field::Mode, false); mirror(reg::MOSAIC as u16, 0, Field::Mosaic, false);
