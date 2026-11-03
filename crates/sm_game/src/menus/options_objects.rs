@@ -194,8 +194,7 @@ pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8
                 init::CONTROLLER_SETTING_MODE_BORDER => 132,
                 _ => 128,
             };
-            let at = Array::XPositions as usize + 2 * usize::from(slot);
-            game.ram().copy_in(at, &x.to_ne_bytes());
+            objects::set_at(game, Array::XPositions, slot, x);
             objects::set_at(game, Array::YPositions, slot, 16);
             objects::set_at(game, Array::Palettes, slot, OBJECT_PALETTE);
         }
