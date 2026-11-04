@@ -94,21 +94,6 @@ impl FxState {
     pub fn is_initialized(&self) -> bool {
         self.initialized
     }
-    pub fn supplied_words(self) -> [u16; 11] {
-        [
-            self.blending,
-            self.sky_wave_phase,
-            self.sky_screen_row,
-            self.sky_visible_height,
-            self.sky_compatibility_word,
-            self.earthquake_sound_index,
-            self.earthquake_sound_timer,
-            self.hud_scroll[0],
-            self.hud_scroll[1],
-            self.effect_scroll[0],
-            self.effect_scroll[1],
-        ]
-    }
 }
 
 /// Source/nonrepresentative byte selectors for the complete migrated family.
@@ -121,10 +106,6 @@ pub struct ControlOwnership {
 impl ControlOwnership {
     pub const LANES: usize = 248;
     pub const VALID: [u64; 4] = [u64::MAX, u64::MAX, u64::MAX, (1_u64 << 56) - 1];
-    pub fn source_owns(self, lane: usize) -> bool {
-        assert!(lane < Self::LANES);
-        (self.source_lanes[lane / 64] & (1_u64 << (lane % 64))) != 0
-    }
     pub fn select_source(&mut self, lane: usize) {
         assert!(lane < Self::LANES);
         self.source_lanes[lane / 64] |= 1_u64 << (lane % 64);

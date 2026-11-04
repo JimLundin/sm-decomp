@@ -549,23 +549,6 @@ impl HdmaLiveDescription {
             }
         })
     }
-    pub fn buffer_coordinate(
-        &self,
-        owner: LiveOwner,
-        offset: usize,
-    ) -> Result<Option<(LiveOwner, usize)>, DisplayError> {
-        let region = self.region(owner, offset)?;
-        Ok(match region.source {
-            HdmaRegionSource::Buffer {
-                storage,
-                offset: first,
-            } => Some((
-                storage,
-                first.checked_add(offset).ok_or(DisplayError::Source)?,
-            )),
-            HdmaRegionSource::ObjectVariable { .. } | HdmaRegionSource::Workspace { .. } => None,
-        })
-    }
     pub fn workspace_point(
         &self,
         owner: LiveOwner,
@@ -629,15 +612,6 @@ impl HdmaLiveDescription {
             }
         }
         Ok(aliases)
-    }
-    /// Resolve actual native allocation provenance; full bus windows remain supplied.
-    pub fn physical_coordinate(
-        &self,
-        state: &HdmaState,
-        bank: u8,
-        address: u16,
-    ) -> Result<Option<(LiveOwner, usize)>, DisplayError> {
-        self.physical_coordinate_inner(state, bank, address, None)
     }
     pub fn physical_coordinate_with_workspace(
         &self,
@@ -804,11 +778,6 @@ impl HdmaLiveDescription {
             }
         }
         Ok(())
-    }
-    /// Compare declared physical aliases without reading execution bytes.
-    /// Caller validates individual definitions/windows before this cross-binding check.
-    pub fn validate_canonical_aliases(&self, state: &HdmaState) -> Result<(), DisplayError> {
-        self.validate_canonical_aliases_inner(state, None)
     }
     pub fn validate_canonical_aliases_with_workspace(
         &self,

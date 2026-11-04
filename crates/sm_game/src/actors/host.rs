@@ -143,22 +143,6 @@ pub fn sign_extend8(value: u16) -> u16 {
     value | (0xff00 * (value >> 7 & 1))
 }
 
-/// What enemies that run on the host itself, without a lease, need of it.
-pub trait EnemyHost:
-    crate::legacy_overflow::SlotBytes
-    + BossEffects
-    + crate::records::Records
-    + crate::actors::species::SpeciesHost
-{
-    fn current_enemy(&self) -> u16;
-    fn set_current_enemy(&mut self, k: u16);
-    fn random_number(&self) -> u16;
-    fn area_boss_flags(&mut self) -> u8;
-    fn angle_to_player(&mut self, k: u16) -> u16;
-    /// The direction of the projectile the current enemy collided with.
-    fn collided_projectile_direction(&self) -> u16;
-}
-
 /// Whether `value` is below `limit` as the original compares them: bit 15 of
 /// the 16-bit difference, which a CMP or SBC leaves for a BMI.
 pub fn below(value: u16, limit: u16) -> bool {

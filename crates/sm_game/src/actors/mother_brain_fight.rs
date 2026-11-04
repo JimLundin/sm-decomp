@@ -2595,10 +2595,6 @@ pub fn body_phase1(game: &mut impl Lease) {
     }
     samus_collision_detection(game);
 }
-/// The falling tubes run in `crate::actors::mother_brain_tubes`.
-pub fn tubes_falling_main_ai(k: u16, game: &mut impl Host) {
-    crate::actors::mother_brain_tubes::main_ai(&mut game.lease(), k);
-}
 crate::dispatch::callback_dispatch! {
     pub fn dispatch_instruction(ea: u32, k: u16, game: &mut impl Lease) -> u16 => ea;
     call (k, game); default bank_unreachable(game) as u16;

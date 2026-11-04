@@ -1674,20 +1674,9 @@ impl Game {
         )
     }
 
-    /// sfx_readpos / sfx_writepos ($7E:0643/0646 in ram_map).
-    pub fn sfx_queue_is_empty(&self, channel: usize) -> bool {
-        self.compatibility_byte(0x646 + channel)
-            .wrapping_sub(self.compatibility_byte(0x643 + channel))
-            & 0xf
-            == 0
-    }
-
     /// coroutine_state_1 ($7E:0612 in ram_map).
     pub fn coroutine_state_1(&self) -> u8 {
         self.compatibility_byte(0x612)
-    }
-    pub fn set_coroutine_state_1(&mut self, value: u8) {
-        self.compatibility_write_owned_byte(0x612, value);
     }
 
     /// Compressed tileset graphics address ($7E:07C3 in ram_map).
@@ -1713,12 +1702,6 @@ impl Game {
     /// samus_movement_type ($7E:0A1F in ram_map).
     pub fn samus_movement_type(&self) -> u8 {
         self.compatibility_byte(0xa1f)
-    }
-
-    /// Write a word in the backing VRAM queue, including overlapping fields.
-    pub fn write_vram_queue_word(&mut self, cursor: u16, field: usize, value: u16) {
-        let offset = 0xd0 + usize::from(cursor) + field;
-        self.compatibility_copy_in(offset, &value.to_le_bytes());
     }
 
     /// Preserve the original zero initialization, including RM_BOTH (0).

@@ -212,10 +212,6 @@ impl SamusOwner {
     pub fn mutation_depth(&self) -> usize {
         self.mutation_depth
     }
-    /// The raw authority, without the live checks `authority` applies.
-    pub fn recorded_authority(&self) -> SamusAuthority {
-        self.authority
-    }
     /// Publish `prepared` as the available binding.
     pub fn install(&mut self, prepared: PreparedSamusBinding) {
         self.binding = Some(prepared.0);

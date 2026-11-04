@@ -463,26 +463,6 @@ where
     }
 }
 
-/// Readonly capture of the actual current common-table source values.
-pub fn read_table<H: HdmaTable + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
-    let mut objects = crate::hdma::HdmaObjects::default();
-    crate::hdma_program::table_words(&mut objects, |at, word| {
-        let key = match at {
-            0x18b0 => crate::hdma::Word::Enabled,
-            0x18b2 => crate::hdma::Word::Selected,
-            _ => {
-                let offset = at - 0x18b4;
-                crate::hdma::Word::Object {
-                    index: (offset % 12) / 2,
-                    field: crate::hdma::ObjectWord::ALL[offset / 12],
-                }
-            }
-        };
-        *word = game.hdma_word(key);
-    });
-    objects
-}
-
 /// Set one parameter byte of the HDMA channel `bank_slot` selects, as an
 /// HDMA program command does.
 pub(crate) fn write_channel_byte<H: Video + ?Sized>(

@@ -859,52 +859,6 @@ pub fn note_source_normalization(
     Ok(())
 }
 
-/// Select the current physical authority of one actual canonical source byte.
-/// None means no physical publication exists and its supplied owner stays live.
-pub fn suspended_source_address(
-    display: &crate::scene::state::DisplayState,
-    owner: LiveOwner,
-    offset: usize,
-    bytes: &impl Fn(usize) -> u8,
-    order: &impl Fn(usize) -> Option<u64>,
-) -> Result<Option<usize>, crate::scene::state::DisplayError> {
-    let graph = display_control_graph(display)?;
-    let selected = selected_source_owner(
-        &display.hdma_live,
-        &display.workspace,
-        &graph,
-        owner,
-        offset,
-    )?;
-    Ok(
-        display_owner_address(display, &graph, selected, bytes, order)?.or_else(|| {
-            if let ControlOwner::Scalar(lane) = selected {
-                Some(control_address(lane))
-            } else {
-                None
-            }
-        }),
-    )
-}
-pub fn suspended_source_byte(
-    display: &crate::scene::state::DisplayState,
-    window: &crate::menu_window_state::WindowState,
-    owner: LiveOwner,
-    offset: usize,
-    bytes: &impl Fn(usize) -> u8,
-    order: &impl Fn(usize) -> Option<u64>,
-) -> Result<u8, crate::scene::state::DisplayError> {
-    let graph = display_control_graph(display)?;
-    let selected = selected_source_owner(
-        &display.hdma_live,
-        &display.workspace,
-        &graph,
-        owner,
-        offset,
-    )?;
-    display_owner_byte(display, window, &graph, selected, bytes, order)
-}
-
 /// Compatibility identities for FX38, Window38 and common HDMA172 bytes.
 pub fn control_address(lane: usize) -> usize {
     assert!(lane < crate::fx_state::ControlOwnership::LANES);
@@ -1530,13 +1484,6 @@ pub fn session_lighting(
     let reader = ControlReader::new(session);
     decode_lighting(&|at| reader.control_byte(at))
 }
-pub fn session_room_blending(session: &crate::session::Session) -> crate::fx_domain::RoomBlending {
-    let reader = ControlReader::new(session);
-    crate::fx_domain::RoomBlending {
-        primary: reader.control_word(0x1982),
-        liquid: reader.control_word(0x1984),
-    }
-}
 pub fn session_window(session: &crate::session::Session) -> crate::menu_window_state::WindowState {
     let reader = ControlReader::new(session);
     crate::menu_window_encoding::decode(&|at| reader.control_byte(at))
@@ -1830,55 +1777,6 @@ fn display_owner_byte(
             Ok(bytes(at))
         }
     }
-}
-pub fn store_display_source(
-    display: &mut crate::scene::state::DisplayState,
-    owner: LiveOwner,
-    offset: usize,
-    byte: u8,
-) -> Result<(), crate::scene::state::DisplayError> {
-    let graph = display_control_graph(display)?;
-    let selected = selected_source_owner(
-        &display.hdma_live,
-        &display.workspace,
-        &graph,
-        owner,
-        offset,
-    )?;
-    match selected {
-        ControlOwner::Workspace(point) => display.workspace.write_source_point(point, byte)?,
-        ControlOwner::Source(owner, offset) => {
-            display.hdma_live.write_buffer(owner, offset, byte)?
-        }
-        ControlOwner::Scalar(lane) => {
-            let at = control_address(lane);
-            if (0x18b0..0x195c).contains(&at) {
-                let word = common_scalar_word_mut(&mut display.hdma.common, at & !1);
-                let mut bytes = word.to_le_bytes();
-                bytes[at % 2] = byte;
-                *word = u16::from_le_bytes(bytes);
-            } else if !write_lighting_byte(&mut display.visual.fireflea, at, byte) {
-                return Err(crate::scene::state::DisplayError::Incomplete);
-            }
-        }
-    }
-    let mut origins = Vec::new();
-    for &(owner, offset) in display.hdma_live.native_origins().keys() {
-        if selected_source_owner(
-            &display.hdma_live,
-            &display.workspace,
-            &graph,
-            owner,
-            offset,
-        )? == selected
-        {
-            origins.push((owner, offset));
-        }
-    }
-    for (owner, offset) in origins {
-        display.hdma_live.forget_native_origin(owner, offset)?;
-    }
-    Ok(())
 }
 /// A separately prepared Display retains the same inactive common lanes as its
 /// attached Session. No typed source value is copied into a second common slot.

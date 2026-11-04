@@ -129,15 +129,6 @@ pub fn finish_current(host: &mut (impl Access + ?Sized)) {
         ],
     );
 }
-pub fn advance_current<H>(host: &mut H, frozen: bool)
-where
-    H: Access + crate::fx_domain::Controls + crate::display::preparation::Access + ?Sized,
-{
-    let mut fx = host.fx_controls();
-    fx.blending = (fx.blending & 0xff00) | 0xc;
-    host.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
-    advance_after_blending(host, frozen);
-}
 pub fn advance_after_blending<H>(host: &mut H, frozen: bool)
 where
     H: Access + crate::display::preparation::Access + ?Sized,

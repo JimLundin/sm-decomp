@@ -586,15 +586,6 @@ mod player_ram {
     }
 }
 
-/// Copy the driver's variables into their SPC RAM addresses.
-pub fn save_variables(state: &NativePlayerState, ram: &ApuRam) {
-    player_ram::save(state, ram);
-}
-/// Read the driver's variables back from their SPC RAM addresses.
-pub fn load_variables(state: &mut NativePlayerState, ram: &ApuRam) {
-    player_ram::load(state, ram);
-}
-
 /// Copy the upload blocks that start at `source`, read byte by byte, into `write`.
 pub fn transfer(
     mut read: impl FnMut(usize) -> u8,

@@ -4,7 +4,6 @@
 //! their media lease and line history; presentation observes them without running
 //! gameplay, refresh, transfer or interrupt work.
 
-pub mod actor_presentation;
 pub mod atmosphere;
 pub mod atmosphere_protocol;
 pub mod checkpoint_codec;
@@ -35,4 +34,3 @@ pub mod samus_content;
 pub mod samus_native_content;
 
 pub mod player_echoes;
-pub mod prepared_samus;

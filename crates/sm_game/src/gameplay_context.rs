@@ -310,16 +310,3 @@ pub fn with_inventory<H: Access + ?Sized, T>(
     }
     result
 }
-
-pub fn with_grapple_animation<H: Access + ?Sized, T>(
-    host: &mut H,
-    action: impl FnOnce(&mut H, &mut GrappleAnimation) -> T,
-) -> T {
-    let before = host.grapple_animation();
-    let mut after = before;
-    let result = action(host, &mut after);
-    if before != after {
-        host.commit_grapple_animation(before, after);
-    }
-    result
-}

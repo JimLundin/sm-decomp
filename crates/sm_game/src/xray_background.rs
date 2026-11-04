@@ -467,9 +467,6 @@ pub fn upload_right<H: Host>(game: &mut H) {
     let angle = if game.facing() == 4 { 192 } else { 64 };
     stop_demo(angle, game);
 }
-pub fn setup_blending<H: Host>(_k: u16, game: &mut H) {
-    game.apply_xray_blending(BlendPhase::Setup);
-}
 pub fn set_backdrop<H: Host>(game: &mut H) {
     set_backdrop_color(0xc63, game);
 }

@@ -455,25 +455,6 @@ impl PreparedOwner {
             drawn_scroll: self.state.drawn_scroll,
         }
     }
-    /// Adopt the complete actual selected state after an external writer.
-    /// A rejected description revokes the previous executable state.
-    pub fn adopt_execution(
-        &mut self,
-        description: ExecutionDescription,
-        workspace: &Workspace,
-    ) -> Result<(), Fault> {
-        let valid = validate_execution(&self.start, &description, workspace);
-        if let Err(fault) = valid {
-            self.state = description.into();
-            self.fault = Some(fault);
-            return Err(fault);
-        }
-        self.state = description.into();
-        self.effects.clear();
-        self.sample = None;
-        self.fault = None;
-        Ok(())
-    }
     pub fn checkpoint(&self, workspace: &Workspace) -> Result<Checkpoint, Fault> {
         self.healthy()?;
         workspace

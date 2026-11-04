@@ -173,10 +173,4 @@ impl ApuQueue {
             .rev()
             .map(|remaining| self.entries[usize::from(self.position.wrapping_sub(remaining) & 15)])
     }
-
-    pub fn apply_queued(&self, ports: &mut [u8]) {
-        for writes in self.queued() {
-            Self::apply_ports(writes, ports);
-        }
-    }
 }

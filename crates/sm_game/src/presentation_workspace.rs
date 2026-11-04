@@ -370,29 +370,6 @@ impl Workspace {
             })? = value;
         Ok(())
     }
-    /// Supplied bus provenance is metadata, not a replacement for current bytes.
-    /// Multiple different physical coordinates require the native candidate path.
-    pub fn source_bus_address(
-        &self,
-        point: SourcePoint,
-    ) -> Result<Option<(u8, u16)>, DisplayError> {
-        if !self.initialized {
-            return Err(DisplayError::Incomplete);
-        }
-        let mut selected = None;
-        let mut ambiguous = false;
-        self.visit_source_bus_addresses(point, |bank, address| {
-            let candidate = (bank, address);
-            if selected.is_some_and(|prior| prior != candidate) {
-                ambiguous = true;
-            }
-            selected = Some(candidate);
-        })?;
-        if ambiguous {
-            return Err(DisplayError::Source);
-        }
-        Ok(selected)
-    }
     /// Visit candidates in supplied binding order. Native selection owns byte
     /// queries, equality and retained ordinal/origin decisions at this boundary.
     pub fn visit_source_bus_addresses(

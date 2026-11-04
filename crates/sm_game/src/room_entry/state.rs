@@ -53,12 +53,3 @@ pub struct RoomEntry {
     pub elevator_status: u16,      // 0E18; shared with retained actor/player calls.
     pub irq_policy: u16,           // 00A9; selected room policy, not IRQ scheduler state.
 }
-
-/// Aggregate Session compatibility state, outside RoomEntry.
-/// Callers capture local control views at the original read point. Import must
-/// retain all 256 values; publication after effects follows each caller's order.
-#[derive(Clone, Debug, PartialEq)]
-pub struct SharedContinuations {
-    pub primary: u8,   // 0612
-    pub secondary: u8, // 0613
-}

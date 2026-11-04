@@ -447,29 +447,6 @@ impl PersistentSession {
     pub fn refresh_display(&mut self) -> Result<(), DisplayError> {
         crate::scene::commit::refresh_session(&mut self.gameplay)
     }
-    /// Admit one supplied input boundary with the existing capture and policy.
-    pub fn begin_input_interval(
-        &mut self,
-        record: u64,
-        input: crate::scene::start::InputHistory,
-        fresh_entry: bool,
-    ) -> Result<(), DisplayError> {
-        let metadata = self.metadata();
-        if record != metadata.identity.next_input_record
-            || record != metadata.continuation.next_input_record
-            || input.capture != metadata.input_history.capture
-            || input.policy != metadata.input_history.policy
-        {
-            return Err(DisplayError::Identity);
-        }
-        let next = record.checked_add(1).ok_or(DisplayError::Identity)?;
-        self.begin_interval(fresh_entry)?;
-        let metadata = self.metadata_mut();
-        metadata.input_history = input;
-        metadata.identity.next_input_record = next;
-        metadata.continuation.next_input_record = next;
-        Ok(())
-    }
     /// One invocation of the existing suspended runner on the current workspace.
     pub fn resume_dialogue<Frame>(
         &mut self,

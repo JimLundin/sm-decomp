@@ -116,14 +116,6 @@ impl crate::session_cohort::Cohort for EnemyProjectiles {
     }
 }
 
-/// Run `action` on the projectile slots.
-pub fn with_slots<H, T>(game: &mut H, action: impl FnOnce(&mut [EnemyProjectile; SLOTS]) -> T) -> T
-where
-    H: Views + Lend + ?Sized,
-{
-    with_projectiles(game, |projectiles| action(&mut projectiles.slots))
-}
-
 /// Run `action` on the projectile table. Without a lease the table is loaded
 /// through the host's projection and, if it changed, stored back without the
 /// Mode 7 zoom ($198F), which the projectile host and the file select menu

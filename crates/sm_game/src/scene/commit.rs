@@ -266,14 +266,8 @@ impl<'a, 'b> SettlementContext<'a, 'b> {
     pub fn image(&self) -> &DisplayImage {
         self.image
     }
-    pub fn image_mut(&mut self) -> &mut DisplayImage {
-        self.image
-    }
     pub fn media(&self) -> Option<&Arc<SceneMedia>> {
         self.media.as_deref()
-    }
-    pub fn media_mut(&mut self) -> Option<&mut Arc<SceneMedia>> {
-        self.media.as_deref_mut()
     }
     pub fn read_source(
         &mut self,
@@ -321,61 +315,6 @@ impl<'a, 'b> SettlementContext<'a, 'b> {
             lighting: &mut self.state.visual.fireflea,
         }
         .write(&mut self.state.hdma, owner, offset, value)
-    }
-    pub fn read_hdma_word(&mut self, word: crate::hdma::Word) -> Result<u16, DisplayError> {
-        let at = word.address();
-        Ok(u16::from_le_bytes([
-            self.read_control_byte(at)?,
-            self.read_control_byte(at + 1)?,
-        ]))
-    }
-    pub fn write_hdma_word(
-        &mut self,
-        word: crate::hdma::Word,
-        value: u16,
-        order: super::state::WordOrder,
-    ) -> Result<(), DisplayError> {
-        let at = word.address();
-        let [first, second] = order.encode(value);
-        self.write_control_byte(at, first)?;
-        self.write_control_byte(at + 1, second)
-    }
-    pub fn read_fx_field(&mut self, field: crate::fx_state::Field) -> Result<u16, DisplayError> {
-        let at = crate::fx_encoding::address(field);
-        Ok(u16::from_le_bytes([
-            self.read_control_byte(at)?,
-            self.read_control_byte(at + 1)?,
-        ]))
-    }
-    pub fn write_fx_field(
-        &mut self,
-        field: crate::fx_state::Field,
-        value: u16,
-    ) -> Result<(), DisplayError> {
-        let at = crate::fx_encoding::address(field);
-        let [first, second] = value.to_le_bytes();
-        self.write_control_byte(at, first)?;
-        self.write_control_byte(at + 1, second)
-    }
-    pub fn read_window_field(
-        &mut self,
-        field: crate::menu_window_state::Field,
-    ) -> Result<u16, DisplayError> {
-        let at = crate::menu_window_encoding::address(field);
-        Ok(u16::from_le_bytes([
-            self.read_control_byte(at)?,
-            self.read_control_byte(at + 1)?,
-        ]))
-    }
-    pub fn write_window_field(
-        &mut self,
-        field: crate::menu_window_state::Field,
-        value: u16,
-    ) -> Result<(), DisplayError> {
-        let at = crate::menu_window_encoding::address(field);
-        let [first, second] = value.to_le_bytes();
-        self.write_control_byte(at, first)?;
-        self.write_control_byte(at + 1, second)
     }
     pub fn read_control_byte(&mut self, address: usize) -> Result<u8, DisplayError> {
         let lane = crate::fx_encoding::control_lane(address).ok_or(DisplayError::Source)?;
@@ -540,30 +479,6 @@ impl<'a, 'b> SettlementContext<'a, 'b> {
         *live.controls.ownership = ownership;
         Ok(())
     }
-    pub fn rebind_window_controls(
-        &mut self,
-        layout: crate::fx_sources::WindowControlLayout,
-    ) -> Result<(), DisplayError> {
-        if !self
-            .controls
-            .as_deref()
-            .is_some_and(|controls| controls.window.is_initialized())
-        {
-            return Err(DisplayError::Incomplete);
-        }
-        let origins = self.materialize_controls()?;
-        let controls = self
-            .controls
-            .as_deref_mut()
-            .ok_or(DisplayError::Incomplete)?;
-        let result = self
-            .state
-            .hdma_live
-            .bind_window_controls(layout, Some(controls.window));
-        crate::fx_encoding::reconcile_control_origins(self.state, &origins)?;
-        self.adopt_controls()?;
-        result
-    }
     pub fn replace_workspace_bindings(
         &mut self,
         bindings: crate::presentation_workspace::Bindings,
@@ -575,34 +490,6 @@ impl<'a, 'b> SettlementContext<'a, 'b> {
         let origins = self.materialize_controls()?;
         self.state.workspace.bindings = bindings;
         crate::fx_encoding::reconcile_control_origins(self.state, &origins)?;
-        self.adopt_controls()
-    }
-    pub fn rebind_hdma_source(
-        &mut self,
-        channel: usize,
-        source: super::hdma::HdmaSource,
-        binding: super::hdma_sources::SourceBinding,
-    ) -> Result<(), DisplayError> {
-        if self.state.hdma.channels.get(channel).is_none() {
-            return Err(DisplayError::Geometry);
-        }
-        let origins = self.materialize_controls()?;
-        match source {
-            super::hdma::HdmaSource::Table => self.state.hdma.channels[channel].table = binding,
-            super::hdma::HdmaSource::Indirect => self.state.hdma.channels[channel].source = binding,
-        }
-        crate::fx_encoding::reconcile_control_origins(self.state, &origins)?;
-        self.adopt_controls()
-    }
-    pub fn replace_hdma_sources(
-        &mut self,
-        sources: super::hdma_sources::HdmaLiveDescription,
-    ) -> Result<(), DisplayError> {
-        sources.validate_workspace(&self.state.workspace)?;
-        self.materialize_controls()?;
-        self.state.hdma_live = sources;
-        // New origins were explicitly supplied with this moved source owner.
-        crate::fx_encoding::reconcile_control_origins(self.state, &Default::default())?;
         self.adopt_controls()
     }
 }
@@ -840,25 +727,6 @@ impl OwnedDisplay {
                 effects,
                 producer_history: &mut self.producer_history,
                 window: None,
-                controls: None,
-            },
-        )
-    }
-    /// The current Session supplies its live window authority for aliased sources.
-    pub fn settle_with_window(
-        &mut self,
-        window: &mut crate::menu_window_state::WindowState,
-        effects: &mut impl SettlementEffects,
-    ) -> Result<(), DisplayError> {
-        delivery::settle_owned(
-            &mut self.state,
-            &mut DisplayEffects {
-                image: &mut self.image,
-                media: &mut self.media,
-                content: &self.hdma_content,
-                effects,
-                producer_history: &mut self.producer_history,
-                window: Some(window),
                 controls: None,
             },
         )

@@ -197,37 +197,6 @@ impl Session {
         }
     }
 
-    /// Bind aliases only after all actual window fields have been supplied.
-    pub fn bind_fx_window_sources(
-        &mut self,
-        layout: crate::fx_sources::WindowControlLayout,
-    ) -> Result<(), crate::scene::state::DisplayError> {
-        if !self.menu_window.is_initialized() {
-            return Err(crate::scene::state::DisplayError::Incomplete);
-        }
-        // Return every former selected value before changing canonical owners.
-        let origins = if self.fx_control_ownership.initialized {
-            let display = &self.presentation.owner()?.state;
-            let graph = crate::fx_encoding::display_control_graph(display)?;
-            let origins = crate::fx_encoding::capture_control_origins(display, &graph)?;
-            crate::fx_encoding::materialize_controls(self)?;
-            origins
-        } else {
-            Default::default()
-        };
-        let result = self
-            .presentation
-            .owner_mut()?
-            .state
-            .hdma_live
-            .bind_window_controls(layout, Some(&self.menu_window));
-        crate::fx_encoding::reconcile_control_origins(
-            &mut self.presentation.owner_mut()?.state,
-            &origins,
-        )?;
-        crate::fx_encoding::adopt_control_ownership(self)?;
-        result
-    }
     /// Prepared settlement borrows the same window used by menu transitions.
     pub fn settle_display(
         &mut self,

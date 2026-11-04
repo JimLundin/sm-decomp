@@ -1,6 +1,6 @@
 //! HDMA programs use current owner fields and captured object identities.
 use crate::enemy_script::{EnemyScript as Script, bank_base};
-use crate::hdma::{HdmaObjects, OBJECTS};
+use crate::hdma::OBJECTS;
 use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::HdmaEffect;
 use crate::hdma_objects::HdmaTable;
@@ -133,36 +133,6 @@ impl<L: HdmaLease> Interpreter for Leased<'_, L> {
     type Lease = L;
     fn on_lease<T>(&mut self, action: impl FnOnce(&mut L) -> T) -> T {
         crate::lease::Lease::owned_player_call(self.0, action)
-    }
-}
-
-/// The table's RAM words, in `session_encoding` order.
-pub(crate) fn table_words(objects: &mut HdmaObjects, mut each: impl FnMut(usize, &mut u16)) {
-    each(0x18b0, &mut objects.enabled);
-    each(0x18b2, &mut objects.selected);
-    for (index, object) in objects.objects.iter_mut().enumerate() {
-        let at = 0x18b4 + 2 * index;
-        for (field, word) in [
-            &mut object.channels,
-            &mut object.bank_slot,
-            &mut object.instruction_list,
-            &mut object.table,
-            &mut object.instruction_timer,
-            &mut object.pre_instruction,
-            &mut object.pre_instruction_bank,
-            &mut object.timer,
-            &mut object.a,
-            &mut object.b,
-            &mut object.c,
-            &mut object.d,
-            &mut object.e,
-            &mut object.f,
-        ]
-        .into_iter()
-        .enumerate()
-        {
-            each(at + 12 * field, word);
-        }
     }
 }
 
@@ -329,69 +299,4 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
         Command::RestartTitleGradient => it.on_lease(crate::hdma_objects::restart_title_gradient),
     }
     script
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ram::{word_arrays as arrays, words};
-
-    #[test]
-    fn table_words_follow_the_ram_names() {
-        let mut objects = HdmaObjects {
-            enabled: 1,
-            selected: 2,
-            ..HdmaObjects::default()
-        };
-        for (index, object) in objects.objects.iter_mut().enumerate() {
-            let code = |field: u16| 0x100 * (index as u16 + 1) + field;
-            *object = crate::hdma::HdmaObject {
-                channels: code(0),
-                bank_slot: code(1),
-                instruction_list: code(2),
-                table: code(3),
-                instruction_timer: code(4),
-                pre_instruction: code(5),
-                pre_instruction_bank: code(6),
-                timer: code(7),
-                a: code(8),
-                b: code(9),
-                c: code(10),
-                d: code(11),
-                e: code(12),
-                f: code(13),
-            };
-        }
-        let fields = [
-            arrays::HDMA_OBJECT_CHANNELS_BITMASK,
-            arrays::HDMA_OBJECT_BANK_SLOT,
-            arrays::HDMA_OBJECT_INSTRUCTION_LIST_POINTERS,
-            arrays::HDMA_OBJECT_TABLE_POINTERS,
-            arrays::HDMA_OBJECT_INSTRUCTION_TIMERS,
-            arrays::HDMA_OBJECT_PRE_INSTRUCTIONS,
-            arrays::HDMA_OBJECT_PRE_INSTRUCTION_BANK,
-            arrays::HDMA_OBJECT_TIMERS,
-            arrays::HDMA_OBJECT_A,
-            arrays::HDMA_OBJECT_B,
-            arrays::HDMA_OBJECT_C,
-            arrays::HDMA_OBJECT_D,
-            arrays::HDMA_OBJECT_E,
-            arrays::HDMA_OBJECT_F,
-        ];
-        let mut seen = Vec::new();
-        table_words(&mut objects, |at, word| {
-            let expected = match *word {
-                1 => words::HDMA_OBJECTS_ENABLE_FLAG,
-                2 => words::HDMA_OBJECT_INDEX,
-                code => {
-                    let index = usize::from(code >> 8) - 1;
-                    fields[usize::from(code & 0xff)] + 2 * index
-                }
-            };
-            assert_eq!(at, expected, "word {word:#06x}");
-            seen.push(at);
-        });
-        seen.sort();
-        assert_eq!(seen, (0x18b0..0x195c).step_by(2).collect::<Vec<_>>());
-    }
 }

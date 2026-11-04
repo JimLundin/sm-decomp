@@ -1230,15 +1230,6 @@ pub fn decompress_to_vram<H: Host + ?Sized>(src: u32, dst_addr: u16, game: &mut 
         },
     );
 }
-pub fn decompress_prepared_vram<H: Host + ?Sized>(stream: &[u8], destination: u16, game: &mut H) {
-    decompression::decode(
-        i32::from(destination),
-        &mut DecompressionVram {
-            game,
-            prepared: Some(stream.iter()),
-        },
-    );
-}
 
 pub(crate) fn mult8x8(a: u8, b: u8) -> u16 {
     u16::from(a) * u16::from(b)

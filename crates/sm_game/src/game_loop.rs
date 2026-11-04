@@ -47,31 +47,6 @@ impl GameLoop {
     pub fn is_initialized(&self) -> bool {
         self.initialized
     }
-    /// The original carry and saturation rule; arithmetic intentionally wraps.
-    pub fn advance_clock(&mut self) {
-        self.clock.frames = self.clock.frames.wrapping_add(1);
-        if (self.clock.frames.wrapping_sub(60) as i16) >= 0 {
-            self.clock.frames = 0;
-            self.clock.seconds = self.clock.seconds.wrapping_add(1);
-            if (self.clock.seconds.wrapping_sub(60) as i16) >= 0 {
-                self.clock.seconds = 0;
-                self.clock.minutes = self.clock.minutes.wrapping_add(1);
-                if (self.clock.minutes.wrapping_sub(60) as i16) >= 0 {
-                    self.clock.minutes = 0;
-                    self.clock.hours = self.clock.hours.wrapping_add(1);
-                }
-            }
-        }
-        // The original tests saturation even when none of the carries fired.
-        if (self.clock.hours.wrapping_sub(100) as i16) >= 0 {
-            self.clock = Clock {
-                frames: 59,
-                seconds: 59,
-                minutes: 59,
-                hours: 99,
-            };
-        }
-    }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Word {
