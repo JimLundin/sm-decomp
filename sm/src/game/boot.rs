@@ -12,7 +12,6 @@ use sm_game::display::control::{
     SubWindowMask,
 };
 use sm_game::display::preparation::Field as DisplayField;
-use sm_game::menus::save_slots;
 use sm_game::sprite_drawing::{clear_high_table, finish_frame};
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
@@ -109,11 +108,9 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             rtl_apu_write(APUI01, 0, game);
             rtl_apu_write(APUI02, 0, game);
             rtl_apu_write(APUI03, 0, game);
-            word!(game.RANDOM_NUMBER = 97);
-            crate::game::music::reset_delays(game);
-            word!(game.ENABLE_DEBUG = 0);
-            save_slots::verify_boot(game);
-            word! { game, 0; DEBUG_DISABLE_SOUNDS, SOUND_HANDLER_DOWNTIME }
+            // The rest of boot's work, from the random seed to boot's resume
+            // byte, is the frame lease's first step (`gameplay_frame::finish_boot`).
+            return 0;
         }
         game.ram().write_byte(0x611, 2);
         0

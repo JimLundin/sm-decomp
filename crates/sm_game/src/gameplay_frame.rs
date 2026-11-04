@@ -67,6 +67,9 @@ pub trait Host: crate::presentation_workspace::ContinuationAccess + RuntimeAcces
     fn resume_point(&self) -> u8;
 
     // Frame phase.
+    /// Boot's frames before the frame's lease: nonzero when boot yields with
+    /// that byte (the logo's frames), zero once boot's device work is done and
+    /// the rest of it (`finish_boot`) is left to the frame's lease.
     fn resume_boot(&mut self) -> u8;
     /// The original's failure on an unknown frame state byte.
     fn fail_frame_state(&mut self);
@@ -322,6 +325,8 @@ fn runs_pass(entry: Entry) -> bool {
 enum Start {
     /// Boot yielded with this byte: the logo's frames.
     Boot(u8),
+    /// Boot's device work is done: the frame begins on the rest of boot's work.
+    Booted,
     /// The frame begins: the HDMA handler, then the game state's frame.
     Begin,
     /// A state resumes after a yield.
@@ -337,7 +342,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     let st: i32 = game.outer_continuation() as i32;
     let start = if (1..=3).contains(&st) {
         match game.resume_boot() {
-            0 => Start::Begin,
+            0 => Start::Booted,
             returned => Start::Boot(returned),
         }
     } else if st < 10 {
@@ -348,14 +353,17 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     } else {
         Start::Resume(GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)])
     };
-    if matches!(start, Start::Begin) {
+    if matches!(start, Start::Begin | Start::Booted) {
         game.clear_pass_continuations();
     }
     let mut lease = game.runtime();
     let returned = match start {
         // A yielding boot frame's NMI follows the logo's lease on this one.
         Start::Boot(returned) => returned,
-        Start::Begin => {
+        Start::Begin | Start::Booted => {
+            if matches!(start, Start::Booted) {
+                finish_boot(&mut lease);
+            }
             // The HDMA object handler, with its music queue step, runs on the
             // frame's lease. The main game loop's PLP restores the carry
             // loading the save slots ($80:8261) set.
@@ -385,6 +393,21 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         Start::Resume(entry) => lease_frame::<H>(entry, &mut lease),
     };
     end_frame(returned, &mut lease)
+}
+
+/// Boot's work after its device work ($80:8482 on), as the frame lease's first
+/// step: the random seed, the music queue's delays, the debug mode, the save
+/// slots' check, the sound words and boot's resume byte. The pass
+/// continuations the frame clears before its lease are not among its stores.
+fn finish_boot<L: PassLease + crate::menus::host::Host + ?Sized>(lease: &mut L) {
+    use crate::projection::Field;
+    lease.set_view_word(Field::RandomNumber, 97);
+    crate::music_requests::reset_delays(lease).expect("audio delay reset");
+    crate::gameplay_word!(lease.ENABLE_DEBUG = 0);
+    save_slots::verify_boot(lease);
+    crate::sequence_word!(lease.DEBUG_DISABLE_SOUNDS = 0);
+    crate::music_requests::clear_downtime(lease);
+    lease.set_outer_continuation(2);
 }
 
 /// The frame's end after a state returned `returned`: a completed frame

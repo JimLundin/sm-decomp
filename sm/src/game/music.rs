@@ -39,11 +39,6 @@ pub unsafe fn handle_music_queue(game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-pub(crate) fn reset_delays(game: &mut Game) {
-    requests::reset_delays(game).expect("audio delay reset");
-}
-
-#[forbid(unsafe_code)]
 pub fn play_room_music_track_after_aframes(delay: u16, game: &mut Game) {
     if checked_word!(game.GAME_STATE) < 40 {
         queue_music_delayed_y(0, delay, game);

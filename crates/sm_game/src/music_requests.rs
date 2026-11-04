@@ -168,6 +168,11 @@ pub fn reset_delays(host: &mut (impl AudioHost + ?Sized)) -> Result<(), DisplayE
     complete(host)
 }
 
+/// Boot's clear of the sound handler's downtime ($0686), a word store.
+pub fn clear_downtime(host: &mut (impl AudioHost + ?Sized)) {
+    host.audio_store_word(0x686, 0);
+}
+
 pub fn clear_queue(host: &mut (impl AudioHost + ?Sized)) -> Result<(), DisplayError> {
     for slot in (0..8).rev() {
         host.audio_store_word(0x619 + 2 * slot, 0);
