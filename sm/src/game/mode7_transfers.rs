@@ -5,8 +5,6 @@ use crate::ram_map::checked_word as word;
 
 const QUEUE: usize = sm_game::display::transfer::MODE7_QUEUE;
 
-pub(super) use sm_game::display::transfer::enqueue_mode7_rom as enqueue_rom;
-
 pub(super) unsafe fn process(game: &mut Game) {
     if word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL) == 0 {
         return;

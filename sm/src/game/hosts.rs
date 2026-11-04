@@ -293,7 +293,11 @@ impl sm_game::actors::ceres_ridley::Host for crate::game::session_runtime::Runti
     }
 
     fn queue_mode7_transfer(&mut self, bank: u8, list: u16) {
-        self.foreign(|game| crate::game::mode7_transfers::enqueue_rom(bank, list, game));
+        // The queue's bytes and tail are the lease's: a Legacy lease stores them
+        // as raw RAM, as Game did, and the ROM reads are the same image's.
+        self.owned_player_call(|runtime| {
+            sm_game::display::transfer::enqueue_mode7_rom(bank, list, runtime)
+        });
     }
 
     fn begin_ceres_push(&mut self) {
@@ -352,7 +356,11 @@ impl sm_game::actors::ceres_doors::Lease for crate::game::session_runtime::Runti
     }
 
     fn queue_mode7_transfer(&mut self, bank: u8, list: u16) {
-        self.foreign(|game| crate::game::mode7_transfers::enqueue_rom(bank, list, game));
+        // The queue's bytes and tail are the lease's: a Legacy lease stores them
+        // as raw RAM, as Game did, and the ROM reads are the same image's.
+        self.owned_player_call(|runtime| {
+            sm_game::display::transfer::enqueue_mode7_rom(bank, list, runtime)
+        });
     }
 }
 
