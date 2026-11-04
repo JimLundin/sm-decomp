@@ -83,7 +83,6 @@ pub trait Host:
     fn initialize_player(&mut self);
 
     // Demo phase.
-    fn load_title_sequence_graphics(&mut self);
     fn disable_scanline_irq(&mut self);
     fn enable_scanline_irq(&mut self, immediate: bool);
 
@@ -136,6 +135,8 @@ pub trait PassLease:
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
     /// The reserve tanks state's low health warning.
     fn advance_low_health_warning(&mut self);
+    /// The demo phase's title sequence graphics.
+    fn load_title_sequence_graphics(&mut self);
 }
 
 #[derive(Clone, Copy)]
@@ -280,12 +281,12 @@ pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         Entry::Frame => frame(game),
         Entry::Initialize => initialize(game),
         Entry::DemoStop => stop_demo(game),
-        Entry::DemoNext => next_demo(game),
         Entry::PauseSetup => setup_pause(game),
         Entry::Paused => advance_pause(game),
         Entry::UnpauseSetup => setup_unpause(game),
         Entry::UnpauseFadeOut | Entry::GameOverFadeOut => fade_out(entry, game),
-        Entry::TimeUpExit => exit_time_up(game),
+        // The lease entries run from the frame's lease.
+        Entry::TimeUpExit | Entry::DemoNext => unreachable!("a lease state"),
         Entry::Gameplay
         | Entry::FadeIn
         | Entry::Unpause
@@ -376,11 +377,17 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
             // A pass state's frame ends on its pass's last lease.
             Advance(entry) if runs_pass(entry) => break 'frame advance(entry, game),
-            Advance(entry) => advance(entry, game),
             // A lease state resuming after a yield opens the frame's lease here.
-            entry @ (Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit) => {
+            entry @ (Native(_)
+            | Door(_)
+            | BeginDeath
+            | DeathPose
+            | FlashDeath
+            | ExplodeSuit
+            | Advance(Entry::TimeUpExit | Entry::DemoNext)) => {
                 advance_on_lease::<H>(entry, &mut game.runtime())
             }
+            Advance(entry) => advance(entry, game),
             DemoReset => demo_rooms::reset(game),
             FileMenu => file_menu::advance(game),
             MapMenu => map_menu::advance(game),
@@ -429,7 +436,13 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
 fn runs_on_lease(entry: StateEntry) -> bool {
     matches!(
         entry,
-        Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit
+        Native(_)
+            | Door(_)
+            | BeginDeath
+            | DeathPose
+            | FlashDeath
+            | ExplodeSuit
+            | Advance(Entry::TimeUpExit | Entry::DemoNext)
     )
 }
 
@@ -442,6 +455,8 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         DeathPose => samus_death::advance_death_pose(lease),
         FlashDeath => samus_death::flash_death(lease),
         ExplodeSuit => samus_death::explode_suit(lease),
+        Advance(Entry::TimeUpExit) => exit_time_up::<H>(lease),
+        Advance(Entry::DemoNext) => next_demo::<H>(lease),
         _ => unreachable!("not a lease state"),
     }
 }
@@ -726,7 +741,7 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
 }
 
 /// Demo phase: choose the next demo or title step.
-fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
+fn next_demo<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
     crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_1_OPENING_CINEMATIC as u16);
     let substate = crate::session_words::current(game).substate;
     if (substate & 0x8000) != 0 {
@@ -734,7 +749,7 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
     } else if substate != 0 {
         game.load_title_sequence_graphics();
         // The title reuses slot 4's X position as its skip-to-title index.
-        crate::enemy_projectiles::table::with_slots(game, |slots| slots[4].x.whole = 2);
+        game.session_mut().enemy_projectiles.slots[4].x.whole = 2;
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0x9a47
         });
@@ -909,7 +924,9 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
 }
 
 /// Death phase: leave the time-up whiteout.
-fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
+fn exit_time_up<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
+    use crate::display::preparation::Access as _;
+    use crate::effects::DisplayRefresh as _;
     game.fade(false);
     if game.display_control_byte(crate::display::preparation::Field::Brightness) == 0x80 {
         crate::display_refresh::enable(true, game);
@@ -923,12 +940,12 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
             },
         );
         cancel_sound_effects(game, 15);
-        if crate::progress::event_happened(&mut game.runtime(), 0xe) {
+        if crate::progress::event_happened(game, 0xe) {
             crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
                 options.screen_index = 0
             });
             crate::menus::state::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
-            crate::enemy_projectiles::table::with_slots(game, clear_projectile_motion);
+            clear_projectile_motion(&mut game.session_mut().enemy_projectiles.slots);
             crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
             crate::gameplay_word!(

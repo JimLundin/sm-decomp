@@ -43,6 +43,13 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn advance_low_health_warning(&mut self) {
         crate::game::session_runtime::player_update_runtime::low_health_on(self);
     }
+    /// The demo phase's title graphics run on the frame's lease, which takes
+    /// the place of the leases their palette effects and stores opened.
+    fn load_title_sequence_graphics(&mut self) {
+        sm_game::cinematic_state::Cinematic::lend(self, |lease, cine| {
+            sm_game::title_sequence::load_graphics(cine, lease)
+        });
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.
@@ -104,13 +111,6 @@ impl sm_game::gameplay_frame::Host for Game {
         crate::game::session_runtime::initialize_player(self);
     }
 
-    /// The demo phase's title graphics run on one lease, which takes the place
-    /// of the leases their palette effects and stores opened.
-    fn load_title_sequence_graphics(&mut self) {
-        sm_game::cinematic_state::Cinematic::lend(&mut Runtime::new(self), |lease, cine| {
-            sm_game::title_sequence::load_graphics(cine, lease)
-        });
-    }
     fn disable_scanline_irq(&mut self) {
         sm_game::display_refresh::disable_scanline_irq(self);
     }
