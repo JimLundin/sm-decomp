@@ -153,23 +153,23 @@ impl sm_game::sprite_output::SpriteWords for LeaseDrawing<'_, '_> {
     }
 }
 
-/// The lease's spritemap warnings are the game's; its objects are the lease's
+/// The lease's spritemap warnings are the game's diagnostics; its objects are the lease's
 /// `ObjectAccess`.
 impl sm_game::sprite_output::MapHost for Runtime<'_> {
     fn warn_invalid_rom(&mut self, address: u32) {
-        sm_game::sprite_output::MapHost::warn_invalid_rom(&mut *self.game, address);
+        self.game.warn_invalid_sprite_rom(address);
     }
     fn set_failure(&mut self) {
-        sm_game::sprite_output::MapHost::set_failure(&mut *self.game);
+        self.game.set_sprite_failure();
     }
 }
 
 impl sm_game::sprite_output::MapHost for LeaseDrawing<'_, '_> {
     fn warn_invalid_rom(&mut self, address: u32) {
-        sm_game::sprite_output::MapHost::warn_invalid_rom(&mut *self.0.game, address);
+        self.0.game.warn_invalid_sprite_rom(address);
     }
     fn set_failure(&mut self) {
-        sm_game::sprite_output::MapHost::set_failure(&mut *self.0.game);
+        self.0.game.set_sprite_failure();
     }
 }
 

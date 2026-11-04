@@ -25,8 +25,11 @@ pub(crate) fn projectile_sprite_address(slot: u16) -> usize {
     0xcb8 + 2 * usize::from(slot >> 1)
 }
 
-impl sm_game::sprite_output::MapHost for Game {
-    fn warn_invalid_rom(&mut self, address: u32) {
+/// The sprite output's diagnostics, which a lease's drawing reports on the
+/// game.
+impl Game {
+    /// The spritemap's invalid ROM access warning.
+    pub(crate) fn warn_invalid_sprite_rom(&mut self, address: u32) {
         // SAFETY: a C-string literal and one integer argument, as the format expects.
         unsafe {
             crate::c_library::printf(
@@ -37,8 +40,18 @@ impl sm_game::sprite_output::MapHost for Game {
             );
         }
     }
-    fn set_failure(&mut self) {
+    /// The spritemap's failure, which marks the game failed.
+    pub(crate) fn set_sprite_failure(&mut self) {
         self.g_fail = true;
+    }
+}
+
+impl sm_game::sprite_output::MapHost for Game {
+    fn warn_invalid_rom(&mut self, address: u32) {
+        self.warn_invalid_sprite_rom(address);
+    }
+    fn set_failure(&mut self) {
+        self.set_sprite_failure();
     }
 }
 
