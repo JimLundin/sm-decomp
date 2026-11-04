@@ -179,6 +179,24 @@ Strict ratchet measures for this phase:
 
 `sm_game_ram_sites` and `foreign_calls` stay strict as well.
 
+### After the decoupling: as few lines as possible (Jim, 2026-11-04)
+
+The plan is issue #231. Jim's ruling:
+
+- **Get the engine as small as it can go.** The aim is no bloat, not a fixed
+  number. No floor is accepted in advance: neither 100k nor 125k is the stopping
+  point.
+- **Architecture first.** Lines come off by better structure, not by hacks.
+  Joining lines, cramming expressions, or macros that turn code into an
+  unreadable generator don't count, and the Rust style rules in AGENTS.md still
+  apply.
+- **Data-driven structure is valid and preferred.** Moving behaviour into data
+  (tables, state machines described as data, importer-resolved hooks) is a valid
+  way to cut code, and that includes redesigning the bosses as data-driven state
+  machines. The data has to be typed and stored in `.rs` or `.py` modules, not
+  JSON. Moving import code into `sm_tools` counts only when it replaces engine
+  logic with data; moving code between packages unchanged doesn't count.
+
 ### Scenario harness, lane S (Jim, 2026-10-31)
 
 Jim approved the scenario harness in #6 on 2026-10-31; the design is
