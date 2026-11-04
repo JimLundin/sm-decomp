@@ -24,11 +24,7 @@ const _: () = {
     );
 };
 
-impl Ai for Game {
-    fn spawn_haze(&mut self) {
-        crate::game::visual_runtime::initialize_bomb_torizo_haze(self);
-    }
-}
+impl Ai for Game {}
 
 // The named functions, lists and projectiles are the decompilation's.
 const _: () = {

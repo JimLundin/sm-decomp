@@ -218,8 +218,10 @@ impl sm_game::actors::phantoon::Lease for crate::game::session_runtime::Runtime<
         sm_game::hdma_objects::spawn_hdma_owned(bank, args, self);
     }
     fn start_wave(&mut self, direction: u16, speed: u16) {
-        self.foreign(|game| {
-            crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, game)
+        // The motion and the wave object are the lease's; the observations are
+        // refreshed on entry and on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| {
+            crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, runtime)
         });
     }
     fn disable_minimap(&mut self) {

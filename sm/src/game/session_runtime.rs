@@ -128,10 +128,12 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
     }
 }
 
-/// The morph ball eye runs on the scheduler's lease; its beam starts on the game.
+/// The morph ball eye runs on the scheduler's lease, and its beam starts on
+/// it; the observations are refreshed on entry and on return, as the former
+/// foreign call left them.
 impl sm_game::actors::morph_ball_eye::Host for Runtime<'_> {
     fn start_beam(&mut self) {
-        self.foreign(crate::game::visual_runtime::initialize_morph_eye_beam);
+        self.owned_player_call(crate::game::visual_runtime::initialize_morph_eye_beam);
     }
 }
 

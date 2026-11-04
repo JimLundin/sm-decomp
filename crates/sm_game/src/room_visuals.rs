@@ -45,9 +45,9 @@ pub fn initialize_ceres_ridley<H: crate::hdma_objects::Allocator + ?Sized>(game:
     spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xd91d), game);
 }
 
-pub fn initialize_bomb_torizo_haze<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(2, 0x32, 0xdd4a));
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x32, 0xdd62));
+pub fn initialize_bomb_torizo_haze<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) {
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(2, 0x32, 0xdd4a), game);
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0, 0x32, 0xdd62), game);
 }
 
 pub fn initialize_room_haze<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
@@ -283,17 +283,20 @@ pub fn initialize_draygon_layer<H: crate::menus::host::Host + ?Sized>(game: &mut
     spawn_bg3_scroll(game);
 }
 
-pub fn initialize_morph_eye_beam<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma(0x88, &HdmaObjectDefinition::new(0x41, 0x26, 0xe8ec), game);
+pub fn initialize_morph_eye_beam<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) {
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x41, 0x26, 0xe8ec), game);
 }
 
-pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
-    direction: u16,
-    speed: u16,
-    game: &mut H,
-) {
-    crate::hdma_effects::apply_leased(HdmaEffect::SetPhantoonMotion { direction, speed }, 0, game);
-    spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0xf, 0xe4a8), game);
+/// Set Phantoon's wave motion on the lease, then spawn its wave object.
+pub fn initialize_phantoon_motion<H>(direction: u16, speed: u16, lease: &mut H)
+where
+    H: crate::hdma_objects::Allocator
+        + crate::hdma_effects::HdmaEffects
+        + crate::actors::mother_brain_rainbow::Host
+        + crate::player_transitions::effects::SamusLease,
+{
+    crate::hdma_effects::apply(HdmaEffect::SetPhantoonMotion { direction, speed }, 0, lease);
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x42, 0xf, 0xe4a8), lease);
 }
 
 pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
