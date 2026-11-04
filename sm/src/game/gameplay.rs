@@ -106,6 +106,12 @@ impl sm_game::gameplay_frame::Host for Game {
         // The emulated joypad register reads the controller state bit-reversed.
         self.input1_mut().currentState = buttons.reverse_bits();
     }
+    fn frame_state(&self) -> u8 {
+        Game::frame_state(self)
+    }
+    fn clear_pass_continuations(&mut self) {
+        Game::clear_pass_continuations(self);
+    }
     fn begin_session_interval(&mut self, fresh: bool) {
         Game::begin_session_interval(self, fresh).expect("Session interval entry");
     }

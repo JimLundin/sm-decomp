@@ -58,9 +58,15 @@ pub enum UnpauseHook {
 
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
-pub trait Host: crate::presentation_workspace::ContinuationAccess + RuntimeAccess {
+pub trait Host: RuntimeAccess {
     /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
     fn latch_controller(&mut self, buttons: u16);
+    /// The outer continuation ($7E:0611) as the frame begins, before its lease:
+    /// the frame state, or boot's resume point.
+    fn frame_state(&self) -> u8;
+    /// Clear the pass continuations ($0612..$0615), the last first, as a frame
+    /// begins, before its lease opens.
+    fn clear_pass_continuations(&mut self);
     /// Admit the owned Session for this frame; `fresh` when no pass is resuming.
     fn begin_session_interval(&mut self, fresh: bool);
     /// The gameplay pass resume byte ($7E:0612).
@@ -345,7 +351,7 @@ enum Start {
 /// beam's settlement run on the frame's lease too, inside the tick.
 fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     game.begin_session_interval(game.resume_point() == 0);
-    let st: i32 = game.outer_continuation() as i32;
+    let st: i32 = game.frame_state() as i32;
     let start = if (1..=3).contains(&st) {
         match game.resume_boot() {
             0 => Start::Booted,

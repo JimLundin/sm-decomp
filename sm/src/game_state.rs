@@ -4550,38 +4550,14 @@ impl Game {
     }
 }
 
-#[forbid(unsafe_code)]
-impl sm_game::presentation_workspace::ContinuationAccess for Game {
-    fn screen_primary(&self) -> u8 {
-        self.compatibility_byte(0x612)
-    }
-    fn screen_set_primary(&mut self, value: u8) {
-        self.compatibility_write_owned_byte(0x612, value);
-    }
-    fn demo_phase(&self) -> u8 {
-        self.compatibility_byte(0x614)
-    }
-    fn demo_set_phase(&mut self, value: u8) {
-        self.compatibility_write_owned_byte(0x614, value);
-    }
-    fn secondary_continuation(&self) -> u8 {
-        self.compatibility_byte(0x613)
-    }
-    // A plain RAM store, as the pause hooks' stores were: the retained
-    // Session re-adopts the byte at its next lease.
-    fn set_secondary_continuation(&mut self, value: u8) {
-        self.compatibility_write_byte(0x613, value);
-    }
-    fn outer_continuation(&self) -> u8 {
+impl Game {
+    /// The outer continuation ($0611) the frame begins on, before its lease.
+    pub(crate) fn frame_state(&self) -> u8 {
         self.compatibility_byte(0x611)
     }
-    fn set_outer_continuation(&mut self, value: u8) {
-        self.compatibility_write_byte(0x611, value);
-    }
-    fn message_continuation(&self) -> u8 {
-        self.compatibility_byte(0x615)
-    }
-    fn clear_pass_continuations(&mut self) {
+    /// The frame's clear of the pass continuations ($0612..$0615), the last
+    /// first, before its lease.
+    pub(crate) fn clear_pass_continuations(&self) {
         for at in (0x612..0x616).rev() {
             self.compatibility_write_byte(at, 0);
         }
