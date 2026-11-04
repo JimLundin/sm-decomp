@@ -2675,9 +2675,15 @@ impl sm_game::room_state::LevelData for Game {
     /// The Game holds the level data as RAM, where the decompressor writes it.
     fn clear_level_data(&mut self, mode: sm_game::room_entry::content::LoadMode) {
         use sm_game::room_entry::content::LoadMode;
+        // Each run is cleared from its top word down; the original names the
+        // first run by its bottom (LEVEL_DATA) and the other three by their top
+        // word ($7F:3200, $7F:4B00, $7F:6400), so those start 3199 words lower.
+        const DOOR_WORDS: usize = 3200;
+        let below = |top: usize| top - 2 * (DOOR_WORDS - 1);
+        let door_runs = [0x10002, below(0x13200), below(0x14b00), below(0x16400)];
         let (words, runs): (usize, &[usize]) = match mode {
             LoadMode::Initial => (12800, &[0x10002]),
-            LoadMode::Door => (3200, &[0x10002, 0x13200, 0x14b00, 0x16400]),
+            LoadMode::Door => (DOOR_WORDS, &door_runs),
         };
         let [low, high] = 0x8000u16.to_le_bytes();
         for word in (0..words).rev() {
