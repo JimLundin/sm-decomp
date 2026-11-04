@@ -1,4 +1,4 @@
-//! Compat endpoints for `sm_game::word_transfers!`.
+//! Compat endpoints for `sm_game::word_transfers`' ROM reads.
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
 

@@ -604,6 +604,11 @@ pub trait Access {
     fn screen_fill_native(&mut self, point: Point, words: usize, value: u16) {
         self.screen_write_slice(point, &value.to_ne_bytes().repeat(words));
     }
+    /// Fill `words` words from `point` with the little-endian `value`, as one
+    /// store of the screen bytes.
+    fn screen_fill(&mut self, point: Point, words: usize, value: u16) {
+        self.screen_write_slice(point, &value.to_le_bytes().repeat(words));
+    }
 }
 pub trait PaletteAccess {
     fn palette_byte(&self, target: bool, byte_offset: usize) -> u8;

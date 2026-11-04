@@ -406,13 +406,20 @@ Other changes:
   has its own macros in `ram_words.rs`.
 - `word_transfers!` lost its `rom`, `table` and stride arms, which nothing called.
 
-What is left in ram.rs, word_transfers.rs and projection.rs (17 sites), for D6:
+What is left in ram.rs and projection.rs (4 sites), for D6:
 
 | Item | Sites | Callers |
 | --- | ---: | --- |
-| `word_transfers!` (word_transfers.rs) | 13 | sm/ only, 8 transfers: `boot.rs:67`, `player_update_runtime.rs:277`, `room_backgrounds.rs:10,23,32`, `room_entry/compatibility.rs:269,273,287` |
 | `CompatibilityRam::compatibility_byte`/`compatibility_write_byte` (ram.rs) | 2 | sm/ only: 156 references, 109 of them in `game_state.rs`. In sm_game, only test hosts implement them. |
 | `SessionProjection`'s `CompatibilityRam` impl (projection.rs, a test host) | 2 | the trait's methods above, and `session_cohort::load` in cohort tests (stage 7) |
+
+`word_transfers!` is gone (lane `wt`, 2026-11-04). Its last eight transfers, all
+constant fills in sm/, store through owners: the boot and room-background tile
+buffer fills through the presentation workspace (`screen_fill_native` and the new
+little-endian `screen_fill`), the escape timer's white target palette through
+`Field::PaletteTarget`, the level clears through `LevelData::clear_level_data`, and
+the transition's $7E:9C00..$A000 clear through `Sources::store_buffer_word` on its
+three HDMA buffers.
 
 The ratchet does not count these, but only sm/ calls them: `RAM_VARS`, `RamVar`, `Shape`
 (`ram_map.rs`, `cpu_infra.rs:1258`, `verification/observation/oracle.rs`).
