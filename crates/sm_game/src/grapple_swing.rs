@@ -521,6 +521,9 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
     } else {
         distance
     };
+    // $94:AD29 / $94:AD38: the total swing angular velocity shares $0D9C with
+    // the ending's wavy Samus flag.
+    game.session_mut().wavy_samus.enabled = delta;
     let target = 2 * (game.session().player.grapple_angle.wrapping_add(delta) >> 8);
     let mut angle = 2 * game.grapple_angle() as u16;
     while angle != target {

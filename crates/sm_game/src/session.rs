@@ -783,7 +783,8 @@ impl PointerScratch {
 
 /// The ending's wavy Samus ($0D9C..$0DA1): whether the intro wave HDMA object
 /// waves its BG3 rows, the wave's amplitude, little-endian, and its phase
-/// speed.
+/// speed. The grapple swing keeps its total angular velocity in `enabled`'s
+/// word ($94:ACFE), as the original does.
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct WavySamus {
     pub enabled: u16,

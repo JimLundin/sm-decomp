@@ -437,7 +437,7 @@ pub(crate) enum Source {
 // LEGACY(verifier): RAM the comparison does not check, copied from one side to the other
 // before comparing. Each range, why it differs and what would retire it is in docs/LEGACY.md.
 // These ranges belong to disjoint snapshot RAM fields, not live RAM. Free run masks them.
-pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 29] = {
+pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 28] = {
     use Source::{Mine, Theirs};
     [
         (Theirs, 0x0000..0x0051),
@@ -453,7 +453,6 @@ pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 29] = {
         (Mine, 0x0933..0x093d),
         (Theirs, 0x0b24..0x0b28),
         (Mine, 0x0d82..0x0d8a),
-        (Mine, 0x0d9c..0x0d9e),
         (Mine, 0x0dd2..0x0dd8),
         (Mine, 0x0d8a..0x0d90),
         (Mine, 0x0e20..0x0e46),

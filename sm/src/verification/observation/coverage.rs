@@ -139,7 +139,7 @@ pub(super) enum Shared {
 /// The Session fields the normalized ranges cover, in address order, each
 /// with the field and its decision (docs/handoff/session-compare.md, "The
 /// 107 both bytes").
-pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 12] = [
+pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 11] = [
     // The direct-page long pointer scratch; the $0000-$0050 row.
     (0x0..0x4, "pointer_scratch", Shared::UntilRowRetires),
     // The enemy projectile spawn scratch; the $0000-$0050 row.
@@ -168,8 +168,6 @@ pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 12] = [
         "game_loop.saved_bindings",
         Shared::UntilRowRetires,
     ),
-    // The $0D9C-$0D9D row, which the grapple swing's angular velocity shares.
-    (0xd9c..0xd9e, "wavy_samus.enabled", Shared::UntilRowRetires),
     // The enemy temporary rows from here to $EF77.
     (
         0xe20..0xe46,

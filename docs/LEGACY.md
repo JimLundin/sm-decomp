@@ -91,7 +91,6 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 | $07B7-$07B8 | mine | room state condition pointer | 5 / 5 | as above, for the state selection | room entry |
 | $0933-$093C | mine | scrolling and tilemap update temporaries | 67 / 16689 | storing the temporaries the scroll update leaves | scrolling |
 | $0D82-$0D8F | mine | saved button configuration (and grapple temporaries at $0D82) | 5 / 382 | storing them where the demo and grapple code does | demo, grapple |
-| $0D9C-$0D9D | mine | total grapple swing angular velocity | 4 / 174 | as above | grapple |
 | $0DD2-$0DD7 | mine | collision temporaries (slope index, distance) | 67 / 16758 | storing the temporaries the block collision leaves | player collision |
 | $0E02-$0E03 | mine | Samus bottom boundary position | 66 / 16128 | as above | player collision |
 | $0E20-$0E45 | mine | enemy temporaries | 58 / 12992 | widening the actors' compatibility scratch ($0E20-$0E2A) to the whole range | actors |
