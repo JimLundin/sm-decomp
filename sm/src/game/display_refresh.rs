@@ -291,6 +291,9 @@ impl QueueAccess for Game {
         self.compatibility_write_byte(at, low);
         self.compatibility_write_byte(at + 1, high);
     }
+    fn queue_byte(&mut self, cursor: u16, value: u8) {
+        self.compatibility_write_byte(0xd0 + usize::from(cursor), value);
+    }
 }
 impl Scrolling for Game {
     fn mode7_enabled(&self, selection: Selection) -> bool {
@@ -365,6 +368,9 @@ impl QueueAccess for crate::game::session_runtime::Runtime<'_> {
         let [low, high] = value.to_ne_bytes();
         self.set_byte(at, low);
         self.set_byte(at + 1, high);
+    }
+    fn queue_byte(&mut self, cursor: u16, value: u8) {
+        self.set_byte(0xd0 + usize::from(cursor), value);
     }
 }
 impl Scrolling for crate::game::session_runtime::Runtime<'_> {

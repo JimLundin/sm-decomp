@@ -304,15 +304,11 @@ fn toggle<H: Host + ?Sized>(bytes: u16, menu: &mut MenuState, game: &mut H) {
     if address >= 0x2000 {
         game.legacy_assertion(true);
     }
-    let address = usize::from(address);
     let mask = list_entry(tables.bitmasks, item, game);
-    let value = u16::from_ne_bytes([
-        game.ram().read_byte(address),
-        game.ram().read_byte(address + 1),
-    ]);
+    let value = super::named_player_word(game, address);
     let enabled = value & mask != 0;
     let value = if enabled { value & !mask } else { value | mask };
-    game.ram().copy_in(address, &value.to_ne_bytes());
+    super::set_named_player_word(game, address, value);
     if enabled {
         menu_tilemap::recolor_native(target, 0xc00, usize::from(bytes >> 1), game);
     } else {

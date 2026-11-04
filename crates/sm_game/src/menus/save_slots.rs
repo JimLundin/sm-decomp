@@ -3,6 +3,8 @@ use super::prelude::*;
 use crate::imported::Imported;
 use crate::menu_state::SaveSelection;
 use crate::projection::Field;
+// The save transfer of $D7C0..$DE1C and the packed map copy are still raw RAM.
+use crate::ram::RawRam as _;
 use crate::save_file::{self, PlayerWord, SaveHost};
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
@@ -277,10 +279,8 @@ pub fn load_area_map<H: Host + ?Sized>(selection: &mut SaveSelection, game: &mut
             Field::ExploredMap(active),
         );
     }
-    selection.has_area_map = u16::from(game.ram().read_byte(
-        crate::ram::bytes::MAP_STATION_BYTE_ARRAY
-            + usize::from(crate::gameplay_context::navigation(game).area),
-    ));
+    let area = usize::from(crate::gameplay_context::navigation(game).area);
+    selection.has_area_map = u16::from(game.map_station_byte(area));
 }
 
 pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
@@ -316,9 +316,8 @@ pub fn mark_elevator<H: Host + ?Sized>(game: &mut H) {
     let image = game.native_image();
     let base = sm_data::cartridge::lorom_offset(0x800000 | u32::from(cursor)) as usize;
     for record in [0, 2] {
-        let destination = 0xd8f8 + usize::from(image.read(base + record));
-        let previous = game.ram().read_byte(destination);
-        game.ram()
-            .write_byte(destination, previous | image.read(base + record + 1));
+        let station = usize::from(image.read(base + record));
+        let previous = game.used_station_byte(station);
+        game.store_used_station_byte(station, previous | image.read(base + record + 1));
     }
 }

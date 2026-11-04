@@ -185,4 +185,7 @@ pub trait MapFacts {
     fn store_map_explored_byte(&mut self, offset: isize, value: u8);
     fn map_station_byte(&self, area: usize) -> u8;
     fn used_station_native_word(&self, byte_offset: usize) -> u16;
+    /// The used save station and elevator byte at `byte_offset` ($7E:D8F8..).
+    fn used_station_byte(&self, byte_offset: usize) -> u8;
+    fn store_used_station_byte(&mut self, byte_offset: usize, value: u8);
 }

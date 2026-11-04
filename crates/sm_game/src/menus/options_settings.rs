@@ -191,23 +191,19 @@ pub fn special<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     }
 }
 
-fn setting_address<H: Host + ?Sized>(option: u16, game: &mut H) -> usize {
+fn setting_address<H: Host + ?Sized>(option: u16, game: &mut H) -> u16 {
     let address = crate::menu_lists::option_setting_address(game, option as isize);
     if address >= 0x2000 {
         game.legacy_assertion(true);
     }
-    usize::from(address)
+    address
 }
 
 fn toggle_special<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     crate::probe::hit("options_settings.toggle_special");
     let address = setting_address(options.menu_option_index, game);
-    let value = u16::from_ne_bytes([
-        game.ram().read_byte(address),
-        game.ram().read_byte(address + 1),
-    ]);
-    game.ram()
-        .copy_in(address, &u16::from(value == 0).to_ne_bytes());
+    let value = super::named_player_word(game, address);
+    super::set_named_player_word(game, address, u16::from(value == 0));
     highlight_special(options.menu_option_index, game);
 }
 
@@ -216,10 +212,7 @@ pub fn highlight_special<H: Host + ?Sized>(option: u16, game: &mut H) {
     const OFF: [u16; 4] = [0x1ee, 0x22e, 0x36e, 0x3ae];
     let pair = usize::from(option.wrapping_mul(4) >> 1);
     let address = setting_address(option, game);
-    let enabled = u16::from_ne_bytes([
-        game.ram().read_byte(address),
-        game.ram().read_byte(address + 1),
-    ]) != 0;
+    let enabled = super::named_player_word(game, address) != 0;
     let palette = if enabled { 0 } else { 0x400 };
     let first = pair;
     menu_tilemap::recolor_native(0x3000 + usize::from(ON[first]), palette, 6, game);

@@ -40,6 +40,12 @@ RAM_COUPLINGS = {
     "word transfers (word_transfers!)": re.compile(r"\bword_transfers!"),
     "register writes (register_writes!/write_register)": re.compile(r"\bregister_writes!|\bwrite_register(?:_word)?\("),
     "raw RAM hosts (RawRam/compatibility_byte)": re.compile(r"\bRawRam\b|\bcompatibility_(?:write_)?byte\b"),
+    # Each raw work RAM method call (read_byte/write_byte/copy_in/copy_out/fill/
+    # copy_within) through a host's `.ram()`, chained or through a `let`
+    # binding of it, is one RAM access by address. coupling_sites counts the
+    # calls with the engine inventory's raw_ram_call resolution; the pattern is
+    # the lexical approximation the pinned-history replay execs.
+    "raw RAM calls (.ram() reads/writes/copies)": re.compile(r"\.ram\s*\(\s*\)"),
     # Each register write that also stores its WRAM display mirror ($51..$86) by
     # RAM offset rather than by display Field: one raw mirror store per call.
     # The mirror is the second-to-last argument, before the literal order flag.
@@ -77,6 +83,7 @@ RAM_COUPLINGS = {
         r"\bsession_cohort\s*::\s*(?:load|with|with_projected)\b\s*(?=\(|::\s*<)"),
 }
 COHORT_LABEL = "RAM-backed cohort copies (session_cohort::load/with/with_projected)"
+RAW_CALL_LABEL = "raw RAM calls (.ram() reads/writes/copies)"
 
 
 def use_bindings(text: str) -> list[tuple[str, str]]:
@@ -122,6 +129,8 @@ def coupling_sites(label: str, text: str) -> int:
     """Sites of one RAM coupling kind in text, counting renamed macro imports."""
     if label == COHORT_LABEL:
         return cohort_sites(text)
+    if label == RAW_CALL_LABEL:
+        return sum(1 for site in inventory_sites(text) if site[2] in ("raw_ram_call", "raw_base"))
     count = len(RAM_COUPLINGS[label].findall(text))
     names = MACRO_ALIASES.get(label, ())
     if names:
@@ -511,7 +520,7 @@ def inventory_sites(text: str) -> list[tuple[int, int, str, str]]:
             add(match.start(), match.end(1), "address_api", path)
     # Preserve the existing view taxonomy, but do not count type-only RawRam references as calls.
     for label, pattern in RAM_COUPLINGS.items():
-        if label == COHORT_LABEL or label.startswith("raw RAM hosts"):
+        if label in (COHORT_LABEL, RAW_CALL_LABEL) or label.startswith("raw RAM hosts"):
             continue
         for match in pattern.finditer(calls):
             add(match.start(), match.end(), "ram_view", match.group().split("(")[0].strip())

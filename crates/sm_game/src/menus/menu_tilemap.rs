@@ -130,7 +130,13 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
         load(base + 0x34, ADDR_K_MENU_TILEMAP_TIME as u16, game);
         load(base + 8, FILE_LABELS[usize::from(slot)], game);
     }
-    upload(MENU_TILEMAP_BYTES, MENU_TILEMAP_SOURCE, 0, true, game);
+    upload(
+        MENU_TILEMAP_BYTES,
+        MENU_TILEMAP_SOURCE,
+        crate::display::preparation::Field::Screens0,
+        true,
+        game,
+    );
 }
 
 /// Requires the native file-menu definitions for its text and tile reads.
@@ -180,7 +186,13 @@ fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
     }
     set_palette(0, game);
     load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
-    upload(MENU_TILEMAP_BYTES, MENU_TILEMAP_SOURCE, 0, true, game);
+    upload(
+        MENU_TILEMAP_BYTES,
+        MENU_TILEMAP_SOURCE,
+        crate::display::preparation::Field::Screens0,
+        true,
+        game,
+    );
     // The copy arrow's palette timer is outside the Session-owned table.
     game.file_arrow(ArrowAction::Reset(0));
     with_file_select(game, |menu| {
@@ -245,7 +257,7 @@ pub fn load_palette<H: Host + ?Sized>(game: &mut H) {
 pub fn upload<H: Host + ?Sized>(
     size: u16,
     source: u32,
-    screen: usize,
+    screen: crate::display::preparation::Field,
     bank_word: bool,
     game: &mut H,
 ) {
@@ -259,22 +271,8 @@ pub fn upload<H: Host + ?Sized>(
     } else {
         game.queue_byte_at(entry + 4, bytes[2]);
     }
-    let field = [
-        crate::display::preparation::Field::Screens0,
-        crate::display::preparation::Field::Screens1,
-        crate::display::preparation::Field::Screens2,
-        crate::display::preparation::Field::Background3Map,
-        crate::display::preparation::Field::Screens3,
-        crate::display::preparation::Field::Characters0,
-        crate::display::preparation::Field::Characters1,
-    ]
-    .get(screen)
-    .copied();
-    let screen = match field {
-        Some(field) => game.display_control_byte(field),
-        // Unknown screen identities retain the original linear physical spill.
-        None => game.ram().read_byte(crate::ram::mirror::BG1SC + screen),
-    };
+    // The screen register mirror (BGnSC) names the tilemap's VRAM base.
+    let screen = game.display_control_byte(screen);
     let destination = u16::from(screen & 0xfc) << 8;
     game.queue_native_slice_at(entry + 5, destination);
     game.store_queue_tail(tail.wrapping_add(7));

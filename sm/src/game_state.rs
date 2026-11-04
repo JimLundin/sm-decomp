@@ -4749,6 +4749,19 @@ impl sm_game::fx_domain::Sources for Game {
         let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
         self.ram().write_byte(at, byte);
     }
+    fn store_buffer_bytes(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: usize,
+        bytes: &[u8],
+    ) {
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
+        self.ram().copy_in(at, bytes);
+    }
+    fn buffer_byte(&self, owner: sm_game::scene::hdma_sources::LiveOwner, offset: usize) -> u8 {
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
+        self.ram().read_byte(at)
+    }
     fn add_parallax_source(&mut self, selector: u16, delta: u32) {
         let at = usize::from(selector);
         let low = u16::from_ne_bytes([self.parallax_byte(at), self.parallax_byte(at + 1)]);
@@ -5537,6 +5550,13 @@ impl sm_game::menus::host::MapFacts for Game {
     fn used_station_native_word(&self, offset: usize) -> u16 {
         let at = 0xd8f8usize.checked_add(offset).expect("station offset");
         u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn used_station_byte(&self, offset: usize) -> u8 {
+        self.compatibility_byte(0xd8f8usize.checked_add(offset).expect("station offset"))
+    }
+    fn store_used_station_byte(&mut self, offset: usize, value: u8) {
+        let at = 0xd8f8usize.checked_add(offset).expect("station offset");
+        self.compatibility_write_byte(at, value);
     }
 }
 

@@ -4,6 +4,7 @@ use crate::fx_domain::native_order;
 use crate::liquid_effects::WATER_WAVE;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::*;
+use crate::projection::Field;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
 
@@ -211,10 +212,11 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
 static LAND_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad76 as VoidP);
 static OCEAN_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad89 as VoidP);
 pub fn initialize_land<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.ram()
-        .write_byte(0x91b, game.ram().read_byte(0x91b) | 1);
-    game.ram()
-        .write_byte(0x91c, game.ram().read_byte(0x91c) | 1);
+    // Set bit 0 of both layer 2 scroll bytes ($091B, $091C).
+    for field in [Field::Layer2ScrollX, Field::Layer2ScrollY] {
+        let scroll = game.view_word(field).to_le_bytes()[0];
+        game.set_view_low_byte(field, scroll | 1);
+    }
     game.spawn_hdma(0x88, &LAND_SCROLL);
     let mut fx = game.fx_controls();
     fx.sky_visible_height = 224;
@@ -356,10 +358,8 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
         let lower: VoidP = source((layer1_y & 0x7f8) + 0xf0);
         game.queue_native_word(entry(2, 2), lower);
         game.queue_native_word(entry(3, 2), lower.wrapping_add(64));
-        let queue = 0xd0 + usize::from(tail);
         for row in 0..4 {
-            game.ram()
-                .write_byte(queue + row * VRAM_WRITE_ENTRY_BYTES + 4, 0x8a);
+            game.queue_byte(entry(row, 4), 0x8a);
         }
         let t: i32 = (game.display_control_byte(DisplayField::Screens1) as i32 & 0xfc) << 8;
         let upper_destination: u16 = (t + 4 * ((layer1_y as i32 - 16i32) & 0x1f8)) as u16;

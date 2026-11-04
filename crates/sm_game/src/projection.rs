@@ -67,6 +67,10 @@ pub enum Field {
     SpawnArgument,
     /// Samus's movement type and facing ($0A1E): the facing in the low byte.
     MovementAndFacing,
+    /// The file select map's start delay, which the original keeps in enemy
+    /// slot 0's X position ($0F7A) while no enemies run. The Session holds it
+    /// in the actor slot, so it takes the byte path.
+    FileMapStartDelay,
     /// Word `index` of the room's pause hooks ($0601 + 2 * index): the pause
     /// hook's long address, then the unpause hook's.
     PauseHook(usize),
@@ -142,6 +146,7 @@ impl Field {
             Self::Spare09E8 => words::UNUSED_WORD_7E09E8,
             Self::SpawnArgument => 0x16,
             Self::MovementAndFacing => crate::ram::bytes::SAMUS_POSE_X_DIR,
+            Self::FileMapStartDelay => 0xf7a,
             Self::PauseHook(index) => 0x601 + 2 * index,
             Self::Layer2ScrollX => 0x91b,
             Self::Layer2ScrollY => 0x91c,
@@ -208,6 +213,7 @@ impl Field {
             Self::Spare09E8 => session.player.spare_09e8,
             Self::SpawnArgument => session.spawn_scratch.argument,
             Self::MovementAndFacing => session.player.movement_and_facing,
+            Self::FileMapStartDelay => return None,
             Self::PauseHook(index) => *room.pause_hooks.get(index)?,
             Self::Layer2ScrollX => u16::from_le_bytes([entry.layer2_x, entry.layer2_y]),
             Self::Layer2ScrollY => return None,
@@ -283,6 +289,7 @@ impl Field {
             Self::Spare09E8 => &mut session.player.spare_09e8,
             Self::SpawnArgument => &mut session.spawn_scratch.argument,
             Self::MovementAndFacing => &mut session.player.movement_and_facing,
+            Self::FileMapStartDelay => return None,
             Self::PauseHook(index) => session.room.pause_hooks.get_mut(index)?,
             Self::Layer2ScrollX | Self::Layer2ScrollY => return None,
             Self::SuitRedGreen => &mut session.presentation.palette_mut().suit_red_green,
@@ -951,6 +958,7 @@ mod tests {
             Field::RoomHeader,
             Field::SpawnArgument,
             Field::MovementAndFacing,
+            Field::FileMapStartDelay,
             Field::Layer2ScrollX,
             Field::Layer2ScrollY,
             Field::SuitRedGreen,
