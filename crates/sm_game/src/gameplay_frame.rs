@@ -397,7 +397,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             PauseFadeIn => pause_controls::fade_in(game),
             GameOver => game_over::advance(game),
             Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit | DemoReset
-            | Demo => unreachable!("a lease state"),
+            | Demo | Options => unreachable!("a lease state"),
             Null => 0,
             Unused => {
                 game.rtl_unreachable();
@@ -407,9 +407,6 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 game.debug_game_over_menu();
                 0
             }
-            Options => options_settings::advance(game, upload_options_tiles, |game| {
-                crate::display_refresh::enable(true, game)
-            }),
         };
         if returned != 0 {
             break 'frame returned;
@@ -455,6 +452,7 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             )
             | DemoReset
             | Demo
+            | Options
     )
 }
 
@@ -484,6 +482,9 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         Advance(Entry::DemoNext) => next_demo::<H>(lease),
         DemoReset => demo_rooms::reset(lease),
         Demo => demo_rooms::play(lease, |lease| run_pass::<H>(lease, PassEnd::Pass)),
+        Options => options_settings::advance(lease, upload_options_tiles, |lease| {
+            crate::display_refresh::enable(true, lease)
+        }),
         _ => unreachable!("not a lease state"),
     }
 }
@@ -1189,7 +1190,10 @@ fn prepare_player_projectiles(lease: &mut impl crate::runtime_access::PlayerLeas
 }
 
 /// Upload the options screen tiles.
-fn upload_options_tiles<H: Host>(game: &mut H) {
+fn upload_options_tiles<H>(game: &mut H)
+where
+    H: crate::display::preparation::Access + crate::display::video::Video + ?Sized,
+{
     // The original also stores the VRAM address's low byte (0) to the colour
     // math mirror, before the port.
     game.store_display_control_byte(DisplayField::ColorMath, 0, Store::Named);

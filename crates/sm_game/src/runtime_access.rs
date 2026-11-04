@@ -108,6 +108,7 @@ pub trait RuntimeAccess: crate::screen_fade::Owner {
         + crate::shooting_star_motion::Lease
         + crate::gameplay_frame::PassLease
         + crate::hdma_objects::UpdateHost
+        + crate::menus::host::Host
     where
         Self: 'a;
     /// A fresh owned-Session view; publication happens when it is dropped.
