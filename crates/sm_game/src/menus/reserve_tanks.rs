@@ -109,7 +109,14 @@ pub fn transfer_manual<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     menu.pausemenu_equipment_category_item = 0;
 }
 
-pub fn refill_auto<H: Host + ?Sized>(game: &mut H) -> u8 {
+pub fn refill_auto<
+    H: crate::gameplay_context::Access
+        + crate::effects::SoundEffects
+        + crate::ram::CompatibilityRam
+        + ?Sized,
+>(
+    game: &mut H,
+) -> u8 {
     crate::gameplay_context::with_inventory(game, |game, inventory: &mut Inventory| {
         if inventory.reserve_health != 0 {
             if game.observed_inputs().frame & 7 == 0 {

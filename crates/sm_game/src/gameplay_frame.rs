@@ -118,6 +118,7 @@ pub trait PassLease:
     + crate::hdma_objects::HdmaTable
     + crate::hdma_objects::UpdateHost
     + crate::ram::CompatibilityRam
+    + crate::escape_timer::Host
 {
     /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
@@ -224,9 +225,6 @@ enum ResumePoint {
 }
 
 impl ResumePoint {
-    fn read<H: Host>(game: &H) -> Self {
-        Self::of(game.resume_point())
-    }
     fn of(byte: u8) -> Self {
         match byte {
             0 => Self::Start,
@@ -354,17 +352,14 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             start_frame::<H>(&mut lease);
             st = game_state(&lease) as i32 + 10;
             lease.set_outer_continuation(st as u8);
-            // The main gameplay state, and every pass state with no work before its
-            // pass, runs from here to the frame's end on this lease: the pass from
-            // its start, an enemy's message box, the state's finish and the frame's
-            // end.
+            // A pass state runs from here to the frame's end on this lease: its
+            // pre-pass work, the pass, an enemy's message box, the state's finish
+            // and the frame's end.
             let entry = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16));
             if let Some(&Advance(entry)) = entry
-                && (matches!(entry, Entry::Gameplay) || plain_pass(entry))
-                && ResumePoint::of(lease.screen_primary()) == ResumePoint::Start
+                && runs_pass(entry)
             {
-                crate::probe::hit("coroutine.gameplay");
-                let returned = pass_on::<H>(&mut lease, ResumePoint::Start, PassEnd::Frame(entry));
+                let returned = run_pass::<H>(&mut lease, PassEnd::Frame(entry));
                 drop(lease);
                 break 'frame returned;
             }
@@ -933,21 +928,6 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
     0
 }
 
-/// The pass states that do no work before their pass.
-fn plain_pass(entry: Entry) -> bool {
-    matches!(
-        entry,
-        Entry::FadeIn
-            | Entry::Unpause
-            | Entry::DemoStart
-            | Entry::PauseFadeOut
-            | Entry::ZebesEscape
-            | Entry::TimeUp
-            | Entry::PrepareDeath
-            | Entry::DeathBlackout
-    )
-}
-
 /// What a completed pass's lease runs after the pass's own bookkeeping.
 #[derive(Clone, Copy)]
 enum PassEnd {
@@ -957,31 +937,49 @@ enum PassEnd {
     Frame(Entry),
 }
 
-/// States that run the gameplay pass: their pre-pass work on Game, then the
-/// pass, their per-state finish and the frame's end on one lease.
+/// States that run the gameplay pass: their pre-pass work, the pass, their
+/// per-state finish and the frame's end, on one lease.
 fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
-    if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout)
-        && crate::session_words::current(game).timer_status != 0
-    {
-        escape_timer::draw(game);
-    }
-    if matches!(entry, Entry::ReserveTanks)
-        && game.screen_primary() == 0
-        && reserve_tanks::refill_auto(game) != 0
-    {
-        crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
-        crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
-        game.player_command(0x10);
-    }
     advance_gameplay(PassEnd::Frame(entry), game)
 }
 
 /// Frame phase: the resumable gameplay pass shared by playing states, on one
 /// lease.
 fn advance_gameplay<H: Host>(end: PassEnd, game: &mut H) -> CoroutineRet {
+    run_pass::<H>(&mut game.runtime(), end)
+}
+
+/// The gameplay pass on `lease`: a pass state's pre-pass work, then the pass
+/// from the resume point, then `end`.
+fn run_pass<'a, H: Host + 'a>(lease: &mut H::Runtime<'a>, end: PassEnd) -> CoroutineRet {
+    if let PassEnd::Frame(entry) = end {
+        prepare_pass::<H>(entry, lease);
+    }
     crate::probe::hit("coroutine.gameplay");
-    let resume = ResumePoint::read(game);
-    pass_on::<H>(&mut game.runtime(), resume, end)
+    let resume = ResumePoint::of(lease.screen_primary());
+    pass_on::<H>(lease, resume, end)
+}
+
+/// A pass state's work before its pass: the Ceres escape timer, and the
+/// reserve tanks' automatic refill.
+fn prepare_pass<'a, H: Host + 'a>(entry: Entry, lease: &mut H::Runtime<'a>) {
+    if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout)
+        && crate::session_words::current(lease).timer_status != 0
+    {
+        escape_timer::draw(lease);
+    }
+    if matches!(entry, Entry::ReserveTanks)
+        && lease.screen_primary() == 0
+        && reserve_tanks::refill_auto(lease) != 0
+    {
+        crate::sequence_word!(lease.TIME_IS_FROZEN_FLAG = 0);
+        crate::gameplay_word!(lease.GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
+        crate::player_transitions::command(
+            lease,
+            0x10,
+            crate::player_transitions::commands::finish_ceres_arrival,
+        );
+    }
 }
 
 /// The pass on `lease` from `resume`: from its start, after an enemy's message
