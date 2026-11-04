@@ -871,6 +871,9 @@ impl<'g> Runtime<'g> {
         &self.inputs
     }
     // Legacy aliases observe the raw result before Drop republishes Session.
+    // The Maw's main AI stores its off-screen word on its own lease; two
+    // verification cases still check this fresh-lease store (D7).
+    #[cfg(sm_verify_dll)]
     pub(crate) fn update_maw_visibility(&mut self, actor: i32) {
         assert!(self.persistent_is_current(), "Session lease is dirty");
         use sm_game::actors::layouts::EnemyLayout104 as Maw;
