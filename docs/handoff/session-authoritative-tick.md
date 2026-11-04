@@ -1059,6 +1059,75 @@ former `foreign` call left them. Writes are identical and in the same order.
     guard), save, map (`player_legacy_edges`) and grapple alias cases. The
     engine paths are unchanged, so the replays should match the base exactly;
     the three verification checks are the ones to watch.
+- **Seventh slice (lane `hosts-2`, on `39b853c05`, `collab/hosts-1`).** Not yet
+  replayed. Ratchet: `game_host_impls` 50 → 37, `legacy_engine_ram_sites`
+  387 → 381, `foreign_calls` 43, `session_entries` 5.
+  - **The logo on a lease (option (b)).** `boot::resume` runs `nintendo_logo` on
+    one `Runtime::new` per boot frame that draws the logo, in place of the leases
+    its Game hosts opened there (the stage-0 `with_session`, the screen fade's
+    `Runtime::new` on each fade frame). Those frames have no other lease: they
+    yield before the frame's own lease. The logo's last frame (stage 6) is the
+    one boot's own work and the frame's lease follow, so it opens no lease:
+    `end_nintendo_logo` resumes the NMI and blanks the screen on Game's frame
+    ports, as the loop's stage 6 did. `nintendo_logo` is generic over
+    `cinematic_host::Host`; `Scene` has no Game implementer now.
+    - **Lease counts to check.** On a power-on row, `lease counters:` should
+      show `nested=` unchanged at the same `ticks=`. Not measured here: the
+      hold frames (stages 2 and 3) may now open one lease where they opened
+      none, and the stage-0 and fade frames one in place of theirs.
+  - **Deleted for Game (13).** The ten logo-only impls (`TilemapQueue`,
+    `menus::host::Tables`, `Mode7Queue`, `fading::Host`, `BackgroundBlocks`,
+    `fx_lighting::Access`, the workspace `Access`/`PaletteAccess`/`QueueAccess`,
+    `dialogue_ram::Access`), plus:
+    - `fx_domain::Sources`, with Game's parallax helpers. Its only other caller
+      was itself.
+    - `PlayerPosition`, with `sm_a9`'s two Mother Brain wrappers. The push
+      checks (`player_collision_ownership`, cases 76..87) call
+      `mother_brain_fight`'s moves on `Runtime::new`, the lease the fight runs
+      them on, and assert physical RAM after it closes (D7).
+    - `LevelData`. The room load's plane split on the published image
+      (`Runtime::decompress_level`, and `room_state::decompress_level` for the
+      room copy check) is Game's own step, `Game::copy_level_planes` with the
+      same body. Game's `level_word`, `level_behavior` and `clear_level_data`
+      had no caller.
+  - **Boot's tile-buffer fill** ($7E:3000, $4000, $6000) stores its bytes on
+    Game in `boot.rs`, as the deleted workspace impl did.
+  - **Moved but kept.**
+    - `flags_save_candidate` saves on `Runtime::new`, as the engine does; its
+      observer takes each stage from the lease's projection.
+    - The lease's spritemap warnings call Game's diagnostics directly
+      (`warn_invalid_sprite_rom`, `set_sprite_failure`), not Game's `MapHost`.
+  - **Left of the 7, and why.**
+    - `ObjectAccess`: boot's `clear_high_table` and `finish_frame`, between
+      boot's Game work and before the frame's lease. On a lease they would be a
+      mid-frame lease. `MapHost` for Game also needs it.
+    - `sprite_output::MapHost`: the sprite effect observer's draw inside
+      `foreign` (cases 111..116). Its `draw` hook seeds RAM mid-draw and its
+      diagnostic hook swaps the loaded image, both on Game. Drawing on the lease
+      after a `foreign` seed would change what cases 111..113 capture.
+    - `SlotHost` and `menus::state::Access`: boot's `verify_boot`. On a Legacy
+      Session it opens no lease today (Game's menu commit leases only a current
+      persistent Session), so a lease for it would be mid-frame. These go when
+      boot's own work runs on the frame's lease.
+  - **Census: the 37 Game impls left** (`ram_ratchet.py`; the three `crate::`
+    traits `Wire`, `FlushHost` and `ProjectedBytes` are not counted).
+    - Boot (4): `ObjectAccess`, `MapHost` (and the sprite observer),
+      `SlotHost`, `menus::state::Access`.
+    - The Game frame (`gameplay_frame::Host` for Game), as the sixth slice lists
+      them. A deletion probe of `HudPlayer`, `PlayerFacts`, `Records`,
+      `fx_domain::Controls`, `NativeDiagnostics` and `display_scroll::Access`
+      fails first at `gameplay.rs` (`gameplay_frame::Host for Game`). These go
+      with stage 10.
+    - Broad, unchanged from the sixth slice: `RuntimeAccess`,
+      `CompatibilityRam`, `display::preparation::Access`,
+      `sequence_state::Access`, `gameplay_context::Access`,
+      `display_scroll::Access`, `AudioHost`, `LoadedImage`, `NativeImage`,
+      `NativeDiagnostics`, `DecompressionHost`, `SamusSources`.
+  - **Rows.** Every power-on and boot row (the logo), `demo-attract-setup`, the
+    title, file select and the save rows (`save-memory`, `save-death-reload`,
+    `file-copy-clear`), the chain rooms (room loads), and the verifier's room
+    world cases 76..87 (Mother Brain pushes), the room copy check, the flags save
+    cases and the sprite effect cases 111..116.
 
 ### Stage 10: NMI and settlement inside the tick
 
