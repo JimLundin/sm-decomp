@@ -132,7 +132,9 @@ impl BossState for Runtime<'_> {
         self.next_random_number()
     }
     fn decompress_into_ram(&mut self, source: u32, destination: usize) {
-        self.foreign(|game| sm_game::decompression::decompress_to_ram(source, destination, game));
+        self.owned_player_call(|runtime| {
+            sm_game::decompression::decompress_to_ram(source, destination, runtime)
+        });
     }
     fn player_direction(&mut self) -> api::PlayerDirection {
         api::direction_to_player(self)

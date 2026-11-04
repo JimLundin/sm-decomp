@@ -2400,6 +2400,22 @@ impl sm_game::hardware::Bus for Runtime<'_> {
         })
     }
 }
+// The decompressor on the lease: its output and back-references are the lease's
+// bytes, its source cursor the game's, and its source the loaded image.
+impl sm_game::decompression::DecompressionHost for Runtime<'_> {
+    fn decompress_source(&self) -> u32 {
+        self.game.decompress_src
+    }
+    fn set_decompress_source(&mut self, source: u32) {
+        self.game.decompress_src = source;
+    }
+    fn report_invalid_rom_address(&mut self, address: u32) {
+        crate::rtl::report_invalid_rom_address(address, self.game);
+    }
+    fn read_rom_byte(&self, address: u32, offset: usize) -> u8 {
+        self.game.read_rom_byte(address, offset)
+    }
+}
 // A device-only display command writes registers alone: the backend encodes it
 // in one device interval, with the observations refreshed on entry and on return
 // as the former foreign call left them. A command that starts a DMA or moves WRAM
