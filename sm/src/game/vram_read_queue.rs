@@ -8,9 +8,9 @@ const QUEUE: usize = 0x340;
 /// The queue's tail ($7E:0360).
 const TAIL: usize = crate::ram_map::words::VRAM_READ_QUEUE_TAIL;
 
-/// The readback queue's drain, as the NMI runs it: on Game, or on the frame's
-/// lease through its transfer port, whose DMA starts return the work RAM bytes
-/// they write to the Session.
+/// The readback queue's drain, on the frame's lease, through its transfer
+/// port, as the NMI runs it: its DMA starts return the work RAM bytes they
+/// write to the Session.
 pub(super) fn process(host: &mut impl DrainHost) {
     let tail = host.tail(TAIL) as u8;
     if tail != 0 {

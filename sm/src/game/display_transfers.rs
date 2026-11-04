@@ -83,8 +83,7 @@ fn upload_tilemap(upload: TilemapUpload, wire: &mut impl Wire) {
 }
 
 /// What the Mode 7 and readback drains read and store between their register
-/// writes: Game's work RAM and compatibility projection, or the lease's Session
-/// through its transfer port.
+/// writes: the frame lease's Session, through its transfer port (`Lease`).
 pub(crate) trait DrainHost: Wire {
     /// A queue record byte, as the drain reads it between transfers.
     fn queue_byte(&self, at: usize) -> u8;
@@ -92,23 +91,6 @@ pub(crate) trait DrainHost: Wire {
     /// A queue's tail word.
     fn tail(&self, at: usize) -> u16;
     fn set_tail(&mut self, at: usize, value: u16);
-}
-
-impl crate::game::display_transfers::DrainHost for Game {
-    fn queue_byte(&self, at: usize) -> u8 {
-        self.ram().read_byte(at)
-    }
-    fn store_queue_byte(&mut self, at: usize, value: u8) {
-        self.ram().write_byte(at, value);
-    }
-    fn tail(&self, at: usize) -> u16 {
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn set_tail(&mut self, at: usize, value: u16) {
-        let [low, high] = value.to_le_bytes();
-        self.compatibility_write_byte(at, low);
-        self.compatibility_write_byte(at + 1, high);
-    }
 }
 
 /// The lease's drains: the queues and their tails are the lease's bytes, each
@@ -152,8 +134,8 @@ impl<H: DrainHost> TransferHost for Queue<'_, H> {
     }
 }
 
-/// What the tilemap flush reads and stores between its register writes: Game's
-/// compatibility projection, or the lease's Session through its transfer port.
+/// What the tilemap flush reads and stores between its register writes: the
+/// lease's Session, through its transfer port (`Lease`).
 pub(crate) trait FlushHost: Wire {
     fn flush_byte(&self, at: usize) -> u8;
     fn flush_word(&self, at: usize) -> u16 {
@@ -165,24 +147,6 @@ pub(crate) trait FlushHost: Wire {
     fn store_sentinel(&mut self, tail: u16);
     /// Consume a scrolling request's enable byte.
     fn clear_enable(&mut self, at: usize);
-}
-
-impl crate::game::display_transfers::FlushHost for Game {
-    fn flush_byte(&self, at: usize) -> u8 {
-        self.compatibility_byte(at)
-    }
-    fn tilemap_tail(&self) -> u16 {
-        self.vram_write_queue_tail()
-    }
-    fn set_tilemap_tail(&mut self, tail: u16) {
-        self.set_vram_write_queue_tail(tail);
-    }
-    fn store_sentinel(&mut self, tail: u16) {
-        self.write_vram_queue_word(tail, 0, 0);
-    }
-    fn clear_enable(&mut self, at: usize) {
-        self.compatibility_write_owned_byte(at, 0);
-    }
 }
 
 /// The lease's flush: the queue, its tail and the requests are the lease's
@@ -444,23 +408,6 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
 /// Requires a live, exclusively accessed SNES backend.
 pub(crate) unsafe fn upload_samus(game: &mut Game) {
     sm_game::scene::samus_tile_upload::upload(&mut NativeSamusUpload(game)).unwrap();
-}
-
-/// Requires a live, exclusively accessed SNES backend: fill VRAM's low bytes
-/// with `fill` from address 0, resetting the address as one word or two bytes.
-pub(crate) unsafe fn fill_vram_low_bytes(fill: u8, word_reset: bool, game: &mut Game) {
-    unsafe {
-        write_reg(VMAIN as u16, 0, game);
-        if word_reset {
-            write_reg_word(VMADDL as u16, 0, game);
-        } else {
-            write_reg(VMADDL as u16, 0, game);
-            write_reg(VMADDH as u16, 0, game);
-        }
-        for _ in 0i16..0x4000i16 {
-            write_reg(VMDATAL as u16, fill, game);
-        }
-    }
 }
 
 /// Requires a live, exclusively accessed SNES backend.

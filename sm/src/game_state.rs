@@ -1984,19 +1984,6 @@ impl Game {
             _ => None,
         }
     }
-    /// The HDMA object table as `compatibility_byte` projects it: the
-    /// retained Session's while it is current, the RAM words otherwise.
-    pub(crate) fn projected_hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
-        if let persistent_session::AggregateSlot::Ready(state) = &self.persistent_session.aggregate
-        {
-            if self.persistent_ram_epoch == self.ram.write_epoch()
-                && self.preflight_samus_runtime().is_ok()
-            {
-                return state.gameplay.hdma_objects();
-            }
-        }
-        sm_game::hdma_objects::read_table(self)
-    }
     pub fn compatibility_byte(&self, at: usize) -> u8 {
         if menu_ranges().iter().any(|range| range.contains(&at)) {
             return self.menu_byte(at);

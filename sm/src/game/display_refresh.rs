@@ -35,50 +35,6 @@ impl refresh::ReadbackQueue for Game {
     }
 }
 
-impl refresh::Host for Game {
-    fn hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
-        self.projected_hdma_objects()
-    }
-    fn start_graphics_dma(&mut self, source: u32) {
-        let assets = if source == 0x9ab200 {
-            self.world().prepared_room_assets()
-        } else {
-            None
-        };
-        // SAFETY: refresh hosts run from the frame loop with the backend installed.
-        unsafe { start_room_dma(2, assets.as_deref(), self) }
-    }
-    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
-    }
-    fn read_vram_data(&mut self) -> u16 {
-        self.read_register_word(crate::rtl::RDVRAML as u16)
-    }
-}
-
-/// The NMI on Game, for the frames that hold no lease at their end: a yielding
-/// boot and a resumed pass.
-impl refresh::Nmi for Game {
-    fn upload_samus(&mut self) {
-        // SAFETY: the NMI runs from the frame loop with the backend installed.
-        unsafe { crate::game::display_transfers::upload_samus(self) }
-    }
-    fn upload_animated_tiles(&mut self) {
-        animated_tiles::upload_pending(self);
-    }
-    fn process_mode7(&mut self) {
-        mode7_transfers::process(self);
-    }
-    fn process_readbacks(&mut self) {
-        vram_read_queue::process(self);
-    }
-    fn flush_tilemaps(&mut self) {
-        // SAFETY: as for `upload_samus`.
-        unsafe { flush_tilemaps(self) }
-    }
-}
-
 /// The NMI on the frame's lease, inside the tick: each upload publishes the
 /// lease before its DMA reads work RAM, and goes through the lease's transfer
 /// port, so a readback's work RAM bytes return to the Session; the queue tails,
@@ -211,11 +167,6 @@ pub(crate) fn enable(enabled: bool, game: &mut Game) {
     refresh::enable(enabled, game);
 }
 
-/// Requires a live, exclusively accessed SNES backend throughout the queue drain.
-pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
-    crate::game::display_transfers::flush_tilemaps(game);
-}
-
 /// The tilemap flush on the lease: it publishes, then drains the queue and the
 /// scrolling requests through the lease's transfer port, so each DMA start reads
 /// the Session's bytes, and the queue's end word, its tail and the consumed
@@ -227,9 +178,11 @@ pub(crate) fn flush_tilemaps_on_lease(runtime: &mut crate::game::session_runtime
     ));
 }
 
-/// The ordered display refresh uploads.
+/// The ordered display refresh uploads, on a lease of their own: the NMI as
+/// the frame's lease runs it, for the verification routes that step frames by
+/// hand.
 pub(crate) fn run(game: &mut Game) {
-    refresh::run(game);
+    refresh::run(&mut crate::game::session_runtime::Runtime::new(game));
 }
 
 pub(crate) unsafe fn start_room_dma(
