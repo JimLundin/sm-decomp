@@ -2650,6 +2650,9 @@ impl sm_game::menus::controller_input::SampleHost for Runtime<'_> {
             Controller::Two => crate::rtl::JOY2L,
         } as u16)
     }
+    fn latched_controller_word(&mut self) -> u16 {
+        sm_game::menus::controller_input::SampleHost::latched_controller_word(self.game)
+    }
 }
 // A lease lends itself, with the observations refreshed as the fresh lease
 // the call opened left them.
@@ -2689,15 +2692,6 @@ impl sm_game::menus::host::Host for Runtime<'_> {
     }
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.game.area_select_palettes
-    }
-    fn nmi_controller_word(&mut self) -> u16 {
-        crate::oracle_mode::nmi_input()
-            .map(u16::reverse_bits)
-            .unwrap_or_else(|| self.game.read_register_word(crate::rtl::JOY1L as u16))
-    }
-    fn controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
-        use sm_game::menus::controller_input::SampleHost as _;
-        self.sampled_controller_word(controller)
     }
 }
 impl sm_game::menus::host::MenuRuntime for Runtime<'_> {

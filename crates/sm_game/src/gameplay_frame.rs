@@ -59,7 +59,11 @@ pub enum UnpauseHook {
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
 pub trait Host:
-    crate::menus::host::Host + crate::hud::HudHost + crate::display_refresh::Host + RuntimeAccess
+    crate::hud::HudHost
+    + crate::display_refresh::Host
+    + crate::presentation_workspace::ContinuationAccess
+    + crate::menus::controller_input::SampleHost
+    + RuntimeAccess
 {
     /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
     fn latch_controller(&mut self, buttons: u16);

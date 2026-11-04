@@ -21,11 +21,9 @@ pub trait SampleHost:
 {
     /// `controller`'s word as the auto-joypad read holds it now.
     fn sampled_controller_word(&mut self, controller: Controller) -> u16;
-}
-impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> SampleHost for T {
-    fn sampled_controller_word(&mut self, controller: Controller) -> u16 {
-        self.controller_word(controller)
-    }
+    /// Controller 1's word as auto-joypad read latches it at this vblank: the
+    /// live controller, or the next recorded frame's word during a replay.
+    fn latched_controller_word(&mut self) -> u16;
 }
 
 fn repeat<H: SampleHost + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
@@ -103,8 +101,8 @@ pub fn sample<H: SampleHost + ?Sized>(game: &mut H) {
 
 /// Sample the controller as a requested NMI does: from the word auto-read
 /// latched at this vblank, which the next frame's logic reads.
-pub fn sample_latched<H: Host + ?Sized>(game: &mut H) {
-    let first = game.nmi_controller_word();
+pub fn sample_latched<H: SampleHost + ?Sized>(game: &mut H) {
+    let first = game.latched_controller_word();
     sample_word(first, game);
 }
 

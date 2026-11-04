@@ -257,17 +257,21 @@ impl Host for Game {
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.area_select_palettes
     }
-    fn nmi_controller_word(&mut self) -> u16 {
-        crate::oracle_mode::nmi_input()
-            .map(u16::reverse_bits)
-            .unwrap_or_else(|| self.read_register_word(crate::rtl::JOY1L as u16))
-    }
-    fn controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
+}
+
+// The controllers read through their device registers, as the game reads them.
+impl sm_game::menus::controller_input::SampleHost for Game {
+    fn sampled_controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
         use sm_game::menus::host::Controller;
         self.read_register_word(match controller {
             Controller::One => crate::rtl::JOY1L,
             Controller::Two => crate::rtl::JOY2L,
         } as u16)
+    }
+    fn latched_controller_word(&mut self) -> u16 {
+        crate::oracle_mode::nmi_input()
+            .map(u16::reverse_bits)
+            .unwrap_or_else(|| self.read_register_word(crate::rtl::JOY1L as u16))
     }
 }
 
