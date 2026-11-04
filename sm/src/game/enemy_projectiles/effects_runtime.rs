@@ -24,7 +24,11 @@ impl Effects for Runtime<'_> {
         self.owned_call(|runtime| sm_game::samus_periodic_damage::contact(runtime, damage))
     }
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8 {
-        self.foreign(|game| super::legacy::ridley_offscreen(x, y, game))
+        // The former foreign entry read the game's level data; the lease reads
+        // its Session terrain in an owned call, keeping the observation refresh.
+        self.owned_player_call(|runtime| {
+            u8::from(sm_game::actors::ridley::solid_block_at(x, y, runtime))
+        })
     }
     fn queue_music(&mut self, track: u16) -> () {
         self.queue_music_request(track);

@@ -32,6 +32,30 @@ pub trait LevelData {
     fn clear_level_data(&mut self, mode: crate::room_entry::content::LoadMode);
 }
 
+/// The cells' level words as a reader on either side of the lease holds
+/// them: the game's level data, or the lease's Session terrain.
+pub trait LevelCells {
+    /// Cell `cell`'s level word ($7F:0002 + 2 * cell), little-endian.
+    fn cell_level_word(&self, cell: usize) -> u16;
+}
+impl<T: LevelData + ?Sized> LevelCells for T {
+    fn cell_level_word(&self, cell: usize) -> u16 {
+        self.level_word(cell)
+    }
+}
+
+/// Cell `cell`'s level word on an actor lease: the Session terrain's cell.
+pub fn lease_level_word<H: crate::actors::host::ActorLease + ?Sized>(h: &H, cell: usize) -> u16 {
+    match h.session().room.terrain.cells().get(cell) {
+        Some(cell) => cell.level,
+        // LEGACY(original-overflow): a cell past the 3200h level-data cells
+        // reads $7F:0002 + 2 * cell anyway.
+        None => {
+            crate::legacy_overflow::lease_word(h, crate::ram::word_arrays::LEVEL_DATA + 2 * cell)
+        }
+    }
+}
+
 /// Named work RAM, the loaded cartridge and its records, and the
 /// Samus pose command.
 pub trait Host:

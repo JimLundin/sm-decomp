@@ -53,6 +53,7 @@ pub trait Lease:
     + crate::player_update::effects::Host
     + crate::player_projectiles::host::Host
     + crate::room_mechanisms::host::Effects
+    + crate::room_state::LevelCells
 {
 }
 impl<T> Lease for T where
@@ -66,23 +67,20 @@ impl<T> Lease for T where
         + crate::player_update::effects::Host
         + crate::player_projectiles::host::Host
         + crate::room_mechanisms::host::Effects
+        + crate::room_state::LevelCells
 {
 }
 
 /// What Ridley's lease still reaches in the game: the shared boss effects,
-/// deaths and sprites, and the level data the tail's floor check reads.
+/// deaths and sprites.
 pub trait GameEffects:
-    crate::actors::host::BossEffects
-    + crate::actors::deaths::Deaths
-    + crate::sprite_output::SpriteHost
-    + crate::room_state::LevelData
+    crate::actors::host::BossEffects + crate::actors::deaths::Deaths + crate::sprite_output::SpriteHost
 {
 }
 impl<T> GameEffects for T where
     T: crate::actors::host::BossEffects
         + crate::actors::deaths::Deaths
         + crate::sprite_output::SpriteHost
-        + crate::room_state::LevelData
         + ?Sized
 {
 }
@@ -1128,7 +1126,7 @@ pub fn tail_hits_floor<L: Lease>(game: &mut L) -> bool {
         .any(|(segment, below)| {
             let x = bg2_staging::get(game, tail::x(segment));
             let y = bg2_staging::get(game, tail::y(segment)).wrapping_add(below);
-            game.foreign(|game| solid_block_at(x, y, game))
+            game.owned_step(|game| solid_block_at(x, y, game))
         })
 }
 
@@ -2835,14 +2833,14 @@ pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
 
 /// Check for collision with non-air block ($A6:D4F9): whether the level data
 /// block at (`x`, `y`) has a type. Was `ridley_offscreen`.
-pub fn solid_block_at<H>(x: u16, y: u16, game: &mut H) -> bool
+pub fn solid_block_at<H>(x: u16, y: u16, game: &H) -> bool
 where
-    H: crate::gameplay_context::Access + crate::room_state::LevelData + ?Sized,
+    H: crate::gameplay_context::Access + crate::room_state::LevelCells + ?Sized,
 {
     let width = game.gameplay_word(crate::gameplay_context::Word::Width);
     let row = mult8x8((y >> 4) as u8, width as u8);
     let cell = usize::from(row) + usize::from(x >> 4);
-    game.level_word(cell) & 0xf000 != 0
+    game.cell_level_word(cell) & 0xf000 != 0
 }
 
 /// Ridley acceleration ($A6:D523): enemy `k` homes in on (`x`, `y`) with
