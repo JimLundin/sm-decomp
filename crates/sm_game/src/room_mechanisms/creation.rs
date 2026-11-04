@@ -48,14 +48,6 @@ fn definition_word(
         Definition::Placed(record, _) => record.word(offset as isize),
     }
 }
-/// Spawn the hardcoded PLM `header` at block (`x`, `y`) on a fresh lease of
-/// `game` (SpawnHardcodedPlm).
-pub fn spawn_hardcoded<H>(x: u8, y: u8, header: u16, game: &mut H)
-where
-    H: crate::runtime_access::Lend + ?Sized,
-{
-    game.lend(|lease| spawn_hardcoded_in(lease, x, y, header));
-}
 /// Spawn the hardcoded PLM `header` at block (`x`, `y`) on the lease `c`
 /// already holds (SpawnHardcodedPlm).
 pub fn spawn_hardcoded_in(c: &mut impl Host, x: u8, y: u8, header: u16) {

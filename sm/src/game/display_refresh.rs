@@ -17,7 +17,7 @@ impl refresh::Nmi for crate::game::session_runtime::Runtime<'_> {
     }
     fn upload_animated_tiles(&mut self) {
         // The lease lends itself, as Game's fresh lease ran it.
-        animated_tiles::upload_pending(self);
+        self.owned_player_call(animated_tiles::execution::upload_pending);
     }
     fn process_mode7(&mut self) {
         self.owned_player_call(|runtime| {

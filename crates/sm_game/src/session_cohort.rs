@@ -1,22 +1,11 @@
-//! Session-owned word groups as typed copies, for code outside a lease.
+//! Session-owned word groups as typed copies.
 //!
-//! A function that runs on the compatibility host and owns a group's words
-//! for its call runs on a [`Cohort`] copy through [`with`]: the copy is loaded
-//! once from the host's projection (the retained Session's fields while it is
-//! current, the RAM bytes otherwise), the function reads and stores its fields
-//! directly, and the words it changed are stored back once. While a retained
-//! Session is current they are stored on one lease, which keeps it current;
-//! otherwise each changed word goes to the projection, low byte then high, as
-//! the named word stores did.
-//!
-//! The function must not reach the group's words by any other path while it
-//! holds the copy; code it calls takes the copy instead. The verify build
-//! checks that no projection access reaches a held copy's words. Code that
-//! reads them from raw RAM or on another lease (Samus's frame reads the
-//! cinematic table as enemy projectiles; the save file transfer reads the save
-//! selection) runs between copies, after the store.
+//! A [`Cohort`] is a group of Session words with their RAM encoding. [`load`]
+//! reads one through a host's projection. Code that holds a copy for its call
+//! (the cinematic table's [`crate::cinematic_state::Cinematic::lend`]) must
+//! not reach the group's words by any other path meanwhile; the verify build
+//! checks that no projection access reaches a held copy's words.
 use crate::projection::Views;
-use crate::runtime_access::RuntimeAccess;
 use crate::session::Session;
 
 /// A group of Session-owned words with their RAM encoding.
@@ -53,101 +42,7 @@ pub fn load<C: Cohort, H: Views + ?Sized>(game: &H) -> C {
     cohort
 }
 
-/// The words `after` changed from `before`: each one's index and value.
-fn changes<C: Cohort>(before: &C, mut after: C) -> Vec<(usize, u16)> {
-    let mut previous = Vec::new();
-    before.clone().words(|_, word| previous.push(*word));
-    let mut changes = Vec::new();
-    let mut index = 0;
-    after.words(|_, word| {
-        if previous[index] != *word {
-            changes.push((index, *word));
-        }
-        index += 1;
-    });
-    changes
-}
-
-/// Store the words of `after` that `changes` lists through the host's
-/// projection, low byte then high, as the named word stores did.
-fn store_projected<C, H>(game: &mut H, changes: &[(usize, u16)], mut after: C)
-where
-    C: Cohort,
-    H: Views + ?Sized,
-{
-    game.store_words(&mut after, |index| {
-        changes.iter().any(|change| change.0 == index)
-    });
-}
-
-/// Store the words `after` changed from `before`.
-pub fn store<C, H>(game: &mut H, before: &C, after: C)
-where
-    C: Cohort,
-    H: Views + RuntimeAccess + ?Sized,
-{
-    if after == *before {
-        return;
-    }
-    let changes = changes(before, after.clone());
-    if game.session_retained() {
-        use crate::session_access::SessionAccess as _;
-        let mut lease = game.runtime();
-        let mut index = 0;
-        C::session_words(lease.session_mut(), |_, word| {
-            if let Some(&(_, value)) = changes.iter().find(|change| change.0 == index) {
-                *word = value;
-            }
-            index += 1;
-        });
-        // Some cohort words are external observations; the lease publishes
-        // its observations with the Session.
-        lease.refresh_inputs();
-    } else {
-        store_projected(game, &changes, after);
-    }
-}
-
-/// Run `action` on a copy of the group loaded from the host, then store the
-/// words it changed.
-pub fn with<C, H, T>(game: &mut H, action: impl FnOnce(&mut H, &mut C) -> T) -> T
-where
-    C: Cohort,
-    H: Views + RuntimeAccess + ?Sized,
-{
-    let before = load::<C, H>(game);
-    let mut cohort = before.clone();
-    #[cfg(sm_verify_dll)]
-    let held = hold(&mut cohort);
-    let result = action(game, &mut cohort);
-    #[cfg(sm_verify_dll)]
-    release(held);
-    store(game, &before, cohort);
-    result
-}
-
-/// [`with`] for a host that cannot open a lease: the changed words go to the
-/// projection, low byte then high, as the named word stores did.
-pub fn with_projected<C, H, T>(game: &mut H, action: impl FnOnce(&mut H, &mut C) -> T) -> T
-where
-    C: Cohort,
-    H: Views + ?Sized,
-{
-    let before = load::<C, H>(game);
-    let mut cohort = before.clone();
-    #[cfg(sm_verify_dll)]
-    let held = hold(&mut cohort);
-    let result = action(game, &mut cohort);
-    #[cfg(sm_verify_dll)]
-    release(held);
-    if cohort != before {
-        let changes = changes(&before, cohort.clone());
-        store_projected(game, &changes, cohort);
-    }
-    result
-}
-
-/// The words of every copy `with` holds, and their bytes as a bit set.
+/// The words of every copy held, and their bytes as a bit set.
 #[cfg(sm_verify_dll)]
 #[derive(Default)]
 struct Held {

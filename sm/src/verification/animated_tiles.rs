@@ -1,4 +1,5 @@
 //! Synthetic actual-code observations; no cartridge-derived fixtures.
+use crate::game::{animated_tiles::execution, session_runtime::Runtime};
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::snes::cart::CartRom;
 use crate::{game_state::Game, rom::RomImage};
@@ -10,17 +11,18 @@ const COMMANDS: [u32; 24] = [
 ];
 pub(crate) const CASES: u32 = 438;
 // Entry selection only; frozen case inputs and observations remain unchanged.
+// Each entry runs on a fresh lease of the game, as the compatibility entries did.
 fn enabled(value: bool, g: &mut Game) {
-    crate::game::animated_tiles::set_enabled(value, g)
+    execution::set_enabled(Runtime::new(g).session_mut(), value)
 }
 fn clear(g: &mut Game) {
-    crate::game::animated_tiles::clear(g)
+    execution::clear(Runtime::new(g).session_mut())
 }
 fn spawn(def: u16, g: &mut Game) {
-    crate::game::animated_tiles::spawn(def, g)
+    execution::spawn(&mut Runtime::new(g), def)
 }
 fn advance(g: &mut Game) {
-    crate::game::animated_tiles::advance(g)
+    execution::advance(&mut Runtime::new(g))
 }
 fn process(g: &mut Game) {
     crate::game::animated_tiles::checks::process_one(g)
@@ -29,7 +31,7 @@ fn command(ea: u32, k: u16, j: u16, g: &mut Game) -> u16 {
     crate::game::animated_tiles::checks::command(ea, k, j, g)
 }
 fn upload(g: &mut Game) {
-    crate::game::animated_tiles::upload_pending(g)
+    execution::upload_pending(&mut Runtime::new(g))
 }
 fn put(g: &mut Game, at: usize, value: u16) {
     let _ = &[(); 0x20000][at..at + 2];

@@ -47,7 +47,7 @@ pub fn with_current_object<L: HdmaLease, T>(
 }
 
 /// A host that can lease its Session to the interpreter.
-pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
+pub trait LeaseHdma {
     type Lease<'a>: HdmaLease
     where
         Self: 'a;

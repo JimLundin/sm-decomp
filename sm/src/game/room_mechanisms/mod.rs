@@ -22,7 +22,9 @@ use host::{Contact, ContactIdentity, SpawnSource};
 pub(crate) use rules::treadmill::{Direction, carry};
 
 pub(crate) fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {
-    creation::spawn_hardcoded(args.block_x, args.block_y, args.header, game);
+    // On a fresh lease of the game (SpawnHardcodedPlm).
+    let mut lease = Runtime::new(game);
+    creation::spawn_hardcoded_in(&mut lease, args.block_x, args.block_y, args.header);
 }
 pub(crate) unsafe fn spawn_room(address: u16, game: &mut Game) {
     creation::spawn(

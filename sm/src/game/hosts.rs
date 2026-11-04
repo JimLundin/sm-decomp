@@ -1,20 +1,6 @@
 //! Game's implementations of the sm_game host traits whose modules moved.
 #![forbid(unsafe_code)]
-use crate::game_state::Game;
 use sm_game::player_position::{PlayerPosition, PlayerWord};
-
-impl sm_game::runtime_access::RuntimeAccess for Game {
-    type Runtime<'a> = crate::game::session_runtime::Runtime<'a>;
-    fn runtime(&mut self) -> Self::Runtime<'_> {
-        crate::game::session_runtime::Runtime::new(self)
-    }
-    fn runtime_admissible(&self) -> bool {
-        self.session_lease_admissible()
-    }
-    fn session_retained(&self) -> bool {
-        self.persistent_session_current()
-    }
-}
 
 impl sm_game::hdma_objects::HdmaTable for crate::game::session_runtime::Runtime<'_> {
     fn hdma_word(&self, word: sm_game::hdma::Word) -> u16 {

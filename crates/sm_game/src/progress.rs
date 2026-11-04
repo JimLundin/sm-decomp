@@ -180,21 +180,6 @@ pub fn set_boss_word_native(host: &mut (impl FlagHost + ?Sized), area: u16, valu
 pub mod leased {
     use crate::runtime_access::Lend;
 
-    pub fn set_boss_bits_for_current_area<H: Lend + ?Sized>(mask: u16, game: &mut H) {
-        game.lend(|lease| super::mark_boss_defeated(lease, mask));
-    }
-    pub fn check_boss_bit_for_cur_area<H: Lend + ?Sized>(mask: u16, game: &mut H) -> u8 {
-        u8::from(game.lend(|lease| super::boss_defeated(lease, mask)))
-    }
-    pub fn mark_event<H: Lend + ?Sized>(event: u16, game: &mut H) {
-        game.lend(|lease| super::set_event(lease, event));
-    }
-    pub fn clear_event_happened<H: Lend + ?Sized>(event: u16, game: &mut H) {
-        game.lend(|lease| super::clear_event(lease, event));
-    }
-    pub fn event_has_happened<H: Lend + ?Sized>(event: u16, game: &mut H) -> u16 {
-        u16::from(game.lend(|lease| super::event_happened(lease, event)))
-    }
     pub fn boss_byte_at<H: Lend + ?Sized>(area: u16, game: &mut H) -> u8 {
         game.lend(|lease| super::boss_byte_at(lease, area))
     }

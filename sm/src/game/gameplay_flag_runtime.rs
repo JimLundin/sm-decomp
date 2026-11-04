@@ -63,7 +63,26 @@ pub(crate) fn prepare_bit_access(bit: u16, game: &mut Game) -> u16 {
         bit,
     )
 }
-pub(crate) use flags::leased::{
-    check_boss_bit_for_cur_area, clear_event_happened, event_has_happened, mark_event,
-    set_boss_bits_for_current_area,
-};
+// The compatibility flag entries, each on a fresh lease of `game`, with the
+// original's return widths.
+pub(crate) fn set_boss_bits_for_current_area(mask: u16, game: &mut Game) {
+    sm_game::progress::mark_boss_defeated(&mut Runtime::new(game), mask);
+}
+pub(crate) fn check_boss_bit_for_cur_area(mask: u16, game: &mut Game) -> u8 {
+    u8::from(sm_game::progress::boss_defeated(
+        &mut Runtime::new(game),
+        mask,
+    ))
+}
+pub(crate) fn mark_event(event: u16, game: &mut Game) {
+    sm_game::progress::set_event(&mut Runtime::new(game), event);
+}
+pub(crate) fn clear_event_happened(event: u16, game: &mut Game) {
+    sm_game::progress::clear_event(&mut Runtime::new(game), event);
+}
+pub(crate) fn event_has_happened(event: u16, game: &mut Game) -> u16 {
+    u16::from(sm_game::progress::event_happened(
+        &mut Runtime::new(game),
+        event,
+    ))
+}

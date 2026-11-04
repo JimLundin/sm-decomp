@@ -13,11 +13,8 @@
 //! observation, so a lease refreshes it from this owner after each store.
 //!
 //! **Consumers.** The title, intro, ending, credits, options and demo code
-//! run on the compatibility host outside a lease. They read a [`Flow`] copy
-//! loaded through [`crate::session_cohort`] and store the words they change
-//! with `session_cohort::with`. [`current`] and [`set`] remain the projected
-//! view for the layout checks. A consumer that moves onto a lease uses
-//! `session().flow` directly.
+//! run on the frame's lease and use `session().flow` directly. [`current`]
+//! and [`set`] remain the projected view for the layout checks.
 use crate::ram::CompatibilityRam;
 
 /// The flow words; see the module documentation for the RAM layout.

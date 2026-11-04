@@ -15,7 +15,7 @@
 //!
 //! **Consumers.** The cinematic game states (the title sequence, the intro
 //! and Ceres, the ending and credits) each hold a [`Cinematic`] copy of the
-//! table for their frame through [`crate::session_cohort::with`]: their
+//! table for their frame through [`Cinematic::lend`]: their
 //! functions, objects and pre-instructions read and store its fields by the
 //! RAM names, and the words they changed are stored back once the frame's
 //! work returns. The other owners' words the view names are still reached
@@ -197,7 +197,7 @@ pub enum Array {
 
 /// The cinematic words as a copy of the Session's enemy projectile table, by
 /// their RAM names, for cinematic code that holds the table for its call
-/// through [`crate::session_cohort::with`].
+/// through [`Cinematic::lend`].
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Cinematic(pub crate::session::EnemyProjectiles);
 

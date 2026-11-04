@@ -49,7 +49,10 @@ pub fn spawn_with_enemy_gfx(parameter: u16, enemy: u16, definition: u16, game: &
         lifecycle::spawn_from_enemy(ctx, parameter, enemy, definition)
     })
 }
-pub use lifecycle::spawn_room_leased as spawn_with_room_gfx;
+/// Spawn `definition` with the room's graphics on a fresh lease of `game`.
+pub fn spawn_with_room_gfx(definition: u16, parameter: u16, game: &mut Game) -> u16 {
+    lifecycle::spawn_room(&mut Runtime::new(game), definition, parameter)
+}
 pub fn eproj_run_all(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::advance(ctx));
 }

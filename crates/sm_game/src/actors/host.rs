@@ -94,7 +94,6 @@ pub trait BossEffects:
     + ActorRuntime
     + crate::effects::SoundEffects
     + crate::word_transfers::LoadedRom
-    + crate::runtime_access::RuntimeAccess
 {
     /// Create a sprite object of `kind` at (`x`, `y`); its handle.
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;

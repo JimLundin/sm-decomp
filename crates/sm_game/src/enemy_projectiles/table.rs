@@ -1,8 +1,6 @@
 //! The enemy projectile slots as Session-owned fields, for code outside the
-//! projectile host: the owned Session's under one lease when one can open,
-//! otherwise a copy decoded from RAM and stored back if it changed.
+//! projectile host: the owned Session's, on the host's lease.
 
-use crate::projection::Views;
 use crate::runtime_access::Lend;
 use crate::session::{EnemyProjectile, EnemyProjectiles};
 
@@ -116,32 +114,16 @@ impl crate::session_cohort::Cohort for EnemyProjectiles {
     }
 }
 
-/// Run `action` on the projectile table. Without a lease the table is loaded
-/// through the host's projection and, if it changed, stored back without the
-/// Mode 7 zoom ($198F), which the projectile host and the file select menu
-/// do not share, so `action` must leave the zoom alone.
+/// Run `action` on the projectile table, on the host's lease.
 pub fn with_projectiles<H, T>(game: &mut H, action: impl FnOnce(&mut EnemyProjectiles) -> T) -> T
 where
-    H: Views + Lend + ?Sized,
+    H: Lend + ?Sized,
 {
     use crate::session_access::SessionAccess;
     #[cfg(sm_verify_dll)]
     crate::session_cohort::check_not_held(0x1997);
-    if game.lend_admissible() {
-        return game.lend(|lease| action(&mut lease.session_mut().enemy_projectiles));
-    }
-    let mut projectiles = EnemyProjectiles::default();
-    game.load_words(&mut projectiles);
-    let before = projectiles.clone();
-    let result = action(&mut projectiles);
-    if projectiles != before {
-        game.store_words(&mut projectiles, |index| index != ZOOM);
-    }
-    result
+    game.lend(|lease| action(&mut lease.session_mut().enemy_projectiles))
 }
-
-/// The Mode 7 zoom's index in the table's visit order: the flags, then the zoom.
-const ZOOM: usize = 1;
 
 /// The file select menu's reuse of the table (RAM map $198D..$19BC), by the
 /// RAM map's names. Helmet `n` is slot A, B or C's.
@@ -212,7 +194,7 @@ impl FileSelect<'_> {
 /// Run `action` on the file select menu's view of the table.
 pub fn with_file_select<H, T>(game: &mut H, action: impl FnOnce(&mut FileSelect<'_>) -> T) -> T
 where
-    H: Views + Lend + ?Sized,
+    H: Lend + ?Sized,
 {
     with_projectiles(game, |projectiles| action(&mut FileSelect(projectiles)))
 }

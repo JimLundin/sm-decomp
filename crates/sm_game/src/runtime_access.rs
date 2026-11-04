@@ -1,9 +1,5 @@
-//! Access to the owned-Session view of a compatibility host.
-//!
-//! Code that drives several sm_game cores from one host asks for its
-//! runtime view: a short-lived value that admits the owned Session for the
-//! call and publishes it back when dropped, exactly as constructing the
-//! compatibility Runtime does.
+//! The owned-Session view: the frame's lease, which the runtime opens once per
+//! tick, and the host traits it provides.
 
 /// The host traits the owned-Session view provides.
 pub trait SessionView:
@@ -100,36 +96,8 @@ impl<
 > PlayerLease for T
 {
 }
-pub trait RuntimeAccess {
-    type Runtime<'a>: PlayerLease
-        + crate::hdma_effects::HdmaEffects
-        + crate::actors::mother_brain_rainbow::Host
-        + crate::actors::boss_lease::BossState
-        + crate::shooting_star_motion::Lease
-        + crate::gameplay_frame::PassLease
-        + crate::hdma_objects::UpdateHost
-        + crate::menus::host::Host
-    where
-        Self: 'a;
-    /// A fresh owned-Session view; publication happens when it is dropped.
-    fn runtime(&mut self) -> Self::Runtime<'_>;
-    /// Whether `runtime` can open now. It cannot while a retained persistent
-    /// Session is out of date with RAM (opening would poison it) or while the
-    /// Samus runtime rejects import; callers then use the RAM bridge.
-    fn runtime_admissible(&self) -> bool {
-        true
-    }
-    /// Whether a retained persistent Session is current, so that stores made
-    /// on `runtime` keep it current. Without one a lease decodes the Session
-    /// from RAM, and code holding a typed copy stores to RAM instead.
-    fn session_retained(&self) -> bool {
-        false
-    }
-}
-
-/// A host that lends its owned-Session view for one call: a lease lends
-/// itself, and a compatibility host opens a fresh view, which publishes the
-/// Session when the call returns.
+/// A host that lends its owned-Session view for one call: the frame's lease
+/// lends itself.
 pub trait Lend {
     type View<'a>: PlayerLease
         + crate::hdma_effects::HdmaEffects
@@ -142,22 +110,6 @@ pub trait Lend {
         Self: 'a;
     /// Run `call` on the owned-Session view.
     fn lend<'a, T>(&'a mut self, call: impl FnOnce(&mut Self::View<'a>) -> T) -> T;
-    /// Whether the view can be lent now ([`RuntimeAccess::runtime_admissible`]).
-    fn lend_admissible(&self) -> bool {
-        true
-    }
-}
-impl<H: RuntimeAccess + ?Sized> Lend for H {
-    type View<'a>
-        = H::Runtime<'a>
-    where
-        Self: 'a;
-    fn lend<'a, T>(&'a mut self, call: impl FnOnce(&mut Self::View<'a>) -> T) -> T {
-        call(&mut self.runtime())
-    }
-    fn lend_admissible(&self) -> bool {
-        self.runtime_admissible()
-    }
 }
 
 /// Run `store` on the Session of the host's view, then refresh the view's

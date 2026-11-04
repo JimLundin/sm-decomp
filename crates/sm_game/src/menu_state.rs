@@ -11,12 +11,8 @@
 //! or visits the cohort as one part; the auxiliary gameplay checkpoint
 //! carries it.
 //!
-//! **Consumers.** The menus run on the compatibility host outside a lease and
-//! write these words every frame. Each menu frame (the pause screen, the file
-//! menu, the file select map and the game over menu) holds a [`MenuState`]
-//! copy through [`crate::session_cohort::with`] and its functions read and
-//! store the copy's fields; the words it changed are stored back once. A
-//! consumer that moves onto a lease uses `session().menu` directly.
+//! **Consumers.** The menus run on the frame's lease and write these words
+//! every frame, through [`crate::menus::state::with`].
 //!
 //! **Raw writes.** A raw store outside a lease advances the RAM write epoch,
 //! which suspends the projection, so later reads see RAM and the next lease
