@@ -274,7 +274,14 @@ fn escape_countdown(mode: FrameGammaMode, game: &mut Game) {
     if mode == FrameGammaMode::EscapeTimer {
         if escape_timer::advance(game) & 1 != 0 {
             legacy_word!(game.GAME_STATE = K_GAME_STATE_35_TIME_UP as u16);
-            word_transfers!(game, descending, 256; le(TARGET_PALETTES, 255) <- value(0x7fff));
+            // Every target colour white, from the last colour down.
+            for index in (0..256).rev() {
+                sm_game::projection::Views::set_view_word(
+                    game,
+                    sm_game::projection::Field::PaletteTarget(index),
+                    0x7fff,
+                );
+            }
             legacy_word!(game.FRAME_HANDLER_GAMMA = FrameGammaMode::DrawEscapeTimer.to_raw());
             palette_effects::set_enabled(false, game);
         }
