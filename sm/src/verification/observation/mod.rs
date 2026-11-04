@@ -6,6 +6,7 @@
 //! are `sm_tools`; this module decodes the oracle's RAM and hands both sides
 //! over, beside the unchanged RAM comparison.
 
+mod coverage;
 mod machine;
 pub(crate) mod oracle;
 mod session;
@@ -157,12 +158,12 @@ impl Observer {
                 if let Some(mut session) = self.session {
                     session.elapsed += self.leases.session_elapsed;
                     lines.extend(session.finish());
-                    // Slice 2: today the unowned table is the normalized ranges.
-                    let unowned: Vec<_> = crate::cpu_infra::NORMALIZED_RAM
-                        .into_iter()
-                        .map(|(_, range)| range)
-                        .collect();
-                    lines.extend(session.coverage.finish(&unowned));
+                    lines.extend(
+                        session
+                            .coverage
+                            .finish(&coverage::unowned(), &coverage::held()),
+                    );
+                    lines.push(coverage::unowned_summary());
                 }
                 Ok((lines, None))
             }

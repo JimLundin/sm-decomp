@@ -234,8 +234,9 @@ impl FieldTicks {
 
 /// Which Work RAM bytes the Session's encoder wrote over a replay: slice 2's
 /// byte-to-field coverage map. A byte is decoded (the encoder writes it for
-/// some Session field), unowned (a listed range the comparison does not
-/// own: today `NORMALIZED_RAM`), both, or neither.
+/// some Session field), unowned (a listed range the comparison does not own,
+/// with its reason), both, held (an engine owner outside the Session codec
+/// keeps it, so the Session compare does not see it yet), or neither.
 #[derive(Default)]
 pub struct Coverage {
     /// Per byte, whether a span covered it; empty until the first span.
@@ -256,25 +257,45 @@ impl Coverage {
         self.encoded[span].fill(true);
     }
 
-    /// Class every byte against the ranges the comparison does not own.
-    pub fn classes(&self, unowned: &[Range<usize>]) -> Classes {
+    /// Class every byte against the ranges the comparison does not own and
+    /// the ranges engine owners outside the Session hold.
+    pub fn classes(&self, unowned: &[Range<usize>], held: &[Held]) -> Classes {
         let mut listed = vec![false; Self::BYTES];
         for range in unowned {
             listed[range.clone()].fill(true);
         }
+        // Per byte, the index of its holder in `held_by_owner`, if any.
+        let mut holder = vec![None; Self::BYTES];
         let mut classes = Classes::default();
+        for entry in held {
+            let index = classes
+                .held_by_owner
+                .iter()
+                .position(|(owner, _)| *owner == entry.owner)
+                .unwrap_or_else(|| {
+                    classes.held_by_owner.push((entry.owner, 0));
+                    classes.held_by_owner.len() - 1
+                });
+            holder[entry.range.clone()].fill(Some(index));
+        }
         let unmarked = vec![false; Self::BYTES];
         let encoded = if self.encoded.is_empty() {
             &unmarked
         } else {
             &self.encoded
         };
-        for (at, (&encoded, &listed)) in encoded.iter().zip(&listed).enumerate() {
-            let (count, ranges) = match (encoded, listed) {
-                (true, false) => (&mut classes.decoded, None),
-                (false, true) => (&mut classes.unowned, None),
-                (true, true) => (&mut classes.both, Some(&mut classes.both_ranges)),
-                (false, false) => (&mut classes.neither, Some(&mut classes.neither_ranges)),
+        for (at, ((&encoded, &listed), &holder)) in
+            encoded.iter().zip(&listed).zip(&holder).enumerate()
+        {
+            let (count, ranges) = match (encoded, listed, holder) {
+                (true, false, _) => (&mut classes.decoded, None),
+                (false, true, _) => (&mut classes.unowned, None),
+                (true, true, _) => (&mut classes.both, Some(&mut classes.both_ranges)),
+                (false, false, Some(index)) => {
+                    classes.held_by_owner[index].1 += 1;
+                    (&mut classes.held, None)
+                }
+                (false, false, None) => (&mut classes.neither, Some(&mut classes.neither_ranges)),
             };
             *count += 1;
             if let Some(ranges) = ranges {
@@ -287,9 +308,10 @@ impl Coverage {
         classes
     }
 
-    /// The summary lines, given the ranges the comparison does not own.
-    pub fn finish(&self, unowned: &[Range<usize>]) -> Vec<String> {
-        let classes = self.classes(unowned);
+    /// The summary lines, given the ranges the comparison does not own and
+    /// the ranges engine owners outside the Session hold.
+    pub fn finish(&self, unowned: &[Range<usize>], held: &[Held]) -> Vec<String> {
+        let classes = self.classes(unowned, held);
         let named = |ranges: &[Range<usize>]| -> String {
             let mut text: Vec<String> = ranges
                 .iter()
@@ -305,14 +327,28 @@ impl Coverage {
                 text.join(", ")
             }
         };
+        let holders: Vec<String> = classes
+            .held_by_owner
+            .iter()
+            .map(|(owner, bytes)| format!("{owner} {bytes}"))
+            .collect();
         vec![
             format!(
-                "Session RAM coverage: {} bytes decoded, {} unowned, {} both, {} neither (in {} ranges)",
+                "Session RAM coverage: {} bytes decoded, {} unowned, {} both, {} held outside the Session, {} neither (in {} ranges)",
                 classes.decoded,
                 classes.unowned,
                 classes.both,
+                classes.held,
                 classes.neither,
                 classes.neither_ranges.len()
+            ),
+            format!(
+                "Session RAM held outside the Session: {}",
+                if holders.is_empty() {
+                    "none".to_owned()
+                } else {
+                    holders.join(", ")
+                }
             ),
             format!(
                 "Session RAM neither decoded nor unowned: {}",
@@ -326,6 +362,16 @@ impl Coverage {
     }
 }
 
+/// A Work RAM range that an engine owner outside the Session codec holds:
+/// state the engine keeps (so it is not unowned), which the Session compare
+/// does not see until the Session owns it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Held {
+    /// The owner's name, for the summary.
+    pub owner: &'static str,
+    pub range: Range<usize>,
+}
+
 /// Work RAM's bytes by coverage class: counts, and the ranges of the two
 /// classes slice 2 must resolve.
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -336,8 +382,12 @@ pub struct Classes {
     pub unowned: usize,
     /// Bytes the encoder writes inside the unowned ranges.
     pub both: usize,
-    /// Bytes neither written nor listed.
+    /// Bytes neither written nor listed that an owner outside the Session holds.
+    pub held: usize,
+    /// Bytes neither written, listed nor held.
     pub neither: usize,
+    /// The held bytes by owner, in the order the owners are first listed.
+    pub held_by_owner: Vec<(&'static str, usize)>,
     pub both_ranges: Vec<Range<usize>>,
     pub neither_ranges: Vec<Range<usize>>,
 }
@@ -563,15 +613,31 @@ mod tests {
         let mut coverage = Coverage::default();
         coverage.mark(0x10..0x20);
         coverage.mark(0x44..0x50);
+        let held = [
+            Held {
+                owner: "a",
+                range: 0x0c..0x14,
+            },
+            Held {
+                owner: "b",
+                range: 0x50..0x54,
+            },
+            Held {
+                owner: "a",
+                range: 0x2c..0x34,
+            },
+        ];
         assert_eq!(
-            coverage.classes(&[0x18..0x30, 0x40..0x48]),
+            coverage.classes(&[0x18..0x30, 0x40..0x48], &held),
             Classes {
                 decoded: 16,
                 unowned: 20,
                 both: 12,
-                neither: Coverage::BYTES - 48,
+                held: 12,
+                neither: Coverage::BYTES - 60,
+                held_by_owner: vec![("a", 8), ("b", 4)],
                 both_ranges: vec![0x18..0x20, 0x44..0x48],
-                neither_ranges: vec![0..0x10, 0x30..0x40, 0x50..Coverage::BYTES],
+                neither_ranges: vec![0..0x0c, 0x34..0x40, 0x54..Coverage::BYTES],
             }
         );
     }
