@@ -14,18 +14,6 @@ pub use crate::types::ConstsB7;
 
 /// Mother Brain's fight runs in `sm_game::actors::mother_brain_fight`.
 pub use sm_game::actors::mother_brain_fight::*;
-/// Kept unsafe for the player collision ownership checks, which wrap it in an unsafe block.
-pub unsafe fn mother_brain_move_samus_vertically_towards_ceiling_floor(
-    a: u16,
-    game: &mut Game,
-) -> u8 {
-    mother_brain_fight::move_samus_towards_ceiling_floor(a, game)
-}
-/// Kept unsafe for the player collision ownership checks, which wrap it in an unsafe block.
-pub unsafe fn mother_brain_move_samus_horiz_towards_wall(a: u16, game: &mut Game) -> u8 {
-    mother_brain_fight::move_samus_towards_wall(a, game)
-}
-
 /// Bank $A9's instructions the species table reaches here, on its lease: Mother Brain's
 /// body's.
 pub(crate) fn dispatch_enemy_instr(ea: u32, j: EnemyScript, runtime: &mut Runtime) -> EnemyScript {

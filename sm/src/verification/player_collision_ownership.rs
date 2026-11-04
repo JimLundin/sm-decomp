@@ -2,13 +2,11 @@
 //! Uses actual owned transition entries; retains the original expected RAM observations.
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::{
-    game::{
-        player_projectiles::access::Store, player_transitions as pt, session_runtime::Runtime,
-        sm_a9,
-    },
+    game::{player_projectiles::access::Store, player_transitions as pt, session_runtime::Runtime},
     game_state::Game,
     rom::{RomImage, lorom_offset},
 };
+use sm_game::actors::mother_brain_fight;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 /// The fixture's own unwind, told apart from any engine panic by its type.
@@ -182,8 +180,7 @@ unsafe fn vertical_carry(g: &mut Game, out: &mut Vec<u8>) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     record(out, 0, 0, g);
-    let result =
-        unsafe { sm_a9::mother_brain_move_samus_vertically_towards_ceiling_floor(0x0120, g) };
+    let result = mother_brain_fight::move_samus_towards_ceiling_floor(0x0120, &mut Runtime::new(g));
     assert_eq!(result, 0, "collision.owner.vertical.unclamped");
     put(&mut expected, 0xafa, 62);
     put(&mut expected, 0xb14, 62);
@@ -200,8 +197,7 @@ unsafe fn vertical_carry(g: &mut Game, out: &mut Vec<u8>) {
     expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
-    let result =
-        unsafe { sm_a9::mother_brain_move_samus_vertically_towards_ceiling_floor(0x0220, g) };
+    let result = mother_brain_fight::move_samus_towards_ceiling_floor(0x0220, &mut Runtime::new(g));
     assert_eq!(result, 1, "collision.owner.vertical.clamped");
     for at in [0xafa, 0xb14] {
         put(&mut expected, at, 192);
@@ -225,7 +221,7 @@ unsafe fn horizontal_carry(g: &mut Game, out: &mut Vec<u8>) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     record(out, 0, 0, g);
-    let result = unsafe { sm_a9::mother_brain_move_samus_horiz_towards_wall(0x0120, g) };
+    let result = mother_brain_fight::move_samus_towards_wall(0x0120, &mut Runtime::new(g));
     assert_eq!(result, 0, "collision.owner.horizontal.unclamped");
     for at in [0xaf6, 0xb10] {
         put(&mut expected, at, 102);
@@ -243,7 +239,7 @@ unsafe fn horizontal_carry(g: &mut Game, out: &mut Vec<u8>) {
     expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
-    let result = unsafe { sm_a9::mother_brain_move_samus_horiz_towards_wall(0x0120, g) };
+    let result = mother_brain_fight::move_samus_towards_wall(0x0120, &mut Runtime::new(g));
     assert_eq!(result, 1, "collision.owner.horizontal.clamped");
     for at in [0xaf6, 0xb10] {
         put(&mut expected, at, 235);
