@@ -476,3 +476,64 @@ Left, with what each needs:
   verify observers snapshot RAM and the backend; the room background diagnostic's too.
 - `reset_room_enemy_workspace` ($7E:7000..$97FF fill) needs a typed owner; the vertical
   slope behaviour read is a bus read that wraps from $7F:FFFF into bank $80.
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc7`, on `rs-fc6`)
+
+`foreign_calls` 103 to 90; `sm_game_ram_sites`, `game_host_impls` and
+`engine_ram_address_sites` unchanged. No lease is added mid-frame. Each retired call runs
+on the lease that called it, in an owned player call, which refreshes the observations
+on entry and return. No Session field or format changed.
+
+Retired:
+- Unreachable fallbacks. The lease's draw hook fallback and Phantoon's unknown $A7
+  function were only ever the table's unreachable arm; they call `Fatal::unreachable`.
+- Bank $AA. `species::EMPTY_AA_FUNCTIONS` holds the six empty functions, which are the
+  pre-instruction table's only $AA arms besides the Torizos'. The Torizo's movement
+  fallback and Shaktool's `run_function` run an empty function in an owned call and
+  fail on anything else. `torizo::Ai::run_function` is gone.
+- Contact and shot reactions. `lease_touch` and `lease_shot` now hold every arm the game
+  ran: the common reactions, Ridley's contact, the dud, and the pirates'
+  `*_on(PirateLease)`. `LeaseActors::Lease` and `LeaseScope::Scoped` require
+  `PirateLease`. The lease answers `EMPTY_TOUCHES`/`EMPTY_SHOTS` with an owned call and
+  fails on the rest.
+- Saves (gunship, save station). `save_slots::SlotHost` is a blanket over menu `Host`,
+  and the Runtime implements it. The flags-save observer takes the lease's projected
+  RAM (`observe_image`).
+- The $7E:7000..$97FF fill is `actors::codec::clear_room_workspace`. It clears the
+  saved records, extended blocks 0-3, the Botwoon death words and the projectile angles.
+- The X-ray window tables. `BeamHost` is `SessionRam` plus `gradient_word`.
+- The sky tile rows (`scrolling_sky::RowHost`) and the HDMA program's title gradient
+  restart (`hdma_objects::GradientHost`, required by `HdmaLease`).
+
+Corpus that exercises these: the species rows with pirates, Ridley, the A0/A5/A6/A8 common
+reactions and Torizo/Shaktool (Golden Torizo, Bomb Torizo, Shaktool's room). Also:
+- the gunship and save-station saves, and the flags-save verification case;
+- every room load (the workspace fill);
+- the X-ray scope rows;
+- the Wrecked Ship's land and ocean sky rooms;
+- the title (gradient restart).
+
+Left (18 calls outside D2/D7/D9), with what each needs:
+- `actor_ai_legacy`, `actor_instruction_legacy` and the gunship's other
+  pre-instruction (session_runtime): the AI, instruction and pre-instruction tables'
+  generic arms take `H: LeaseActors` (Game) and open `game.lease()`. Each species
+  (crawlers, bang, metroid, evir, beetom, geruta and about 30 more) needs a `LeaseScope`
+  (`with_lease`) form, and crawlers, yard and geruta re-enter `pre_instruction`. The
+  `native_ai` arms are bank $A9's and are already caught by `bank_a9_routine`.
+- The HDMA call/pre-action fallbacks (hdma_dispatch 251, 366), `with_current_object`,
+  `with_object`, `Leased::foreign` (hdma_program) and the X-ray restore right
+  (player_transitions): `xray_background::Host` and `explosion_window::Host` still need
+  narrowing, as `BeamHost` and `RowHost` were here.
+- The fx initializers (room_state): eleven arms on menu `Host`. Each needs a narrow
+  bound, as the sky rows got.
+- The message display (room_mechanisms) and `rom_record` (session_runtime `record` and
+  `actor_legacy_record`, room_entry/content `room_capture`): their verify observers
+  inject RAM and ROM writes (`put_parts`, `ram_word`), not only snapshots. On the lease
+  the injections would have to be stored back through the projection.
+- The room-entry leaf effects (compatibility 83): 14 arms. The call retires only when
+  music, enemy graphics, sprite palettes, the BG3 scroll HDMA and the area-map
+  save/load all have lease paths.
+- The grapple tiles (hosts): not proved, as fc6 found.
+- The slope behaviour read (player_collision): past $7F:FFFF it reads bank $80's low
+  half. That half is the WRAM mirror, the PPU/CPU registers (some of them, such as
+  $2180, read WRAM) and open bus, so the bus read can't be a projection.

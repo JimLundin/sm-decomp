@@ -47,22 +47,6 @@ pub struct Runtime<'g> {
     )>,
 }
 
-/// Runs the bank $AA function at `address` for the current enemy. Was in bank $AA.
-pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
-    unsafe { actor_species_pre_instruction(address, game) };
-}
-
-/// Runs the bank $A7 function at `address` for the current enemy. Was in bank $A7.
-pub(crate) fn run_a7_function(address: u32, game: &mut Game) {
-    unsafe { actor_species_pre_instruction(address, game) };
-}
-
-/// Every pre-instruction enters through the sm_game table, which reads the
-/// current enemy once and falls back to the compatibility arms.
-pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
-    sm_game::actors::species::pre_instruction(ea, game);
-}
-
 /// Magdollite's original diagnostic for an undefined lava height.
 pub(crate) fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
@@ -128,7 +112,9 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.owned_player_call(|runtime| sm_game::message_boxes::poll(kind, runtime))
     }
     fn save_game(&mut self, slot: u16) {
-        self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
+        // The save's words are the lease's; the observations are refreshed on
+        // entry and on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| sm_game::menus::save_slots::save(slot, runtime));
     }
     fn run_other_pre_instruction(&mut self, address: u32) {
         if sm_game::actors::species::is_torizo_pre_instruction(address) {
@@ -1993,7 +1979,7 @@ impl Runtime<'_> {
         } else if routine == 10795325 {
             self.owned_call(actors::crocomire_reactions::touch);
         } else if !self.bank_a9_routine(routine) && !species::lease_touch(routine, self) {
-            self.foreign(|game| species::touch(routine, game));
+            self.empty_or_unreachable(species::EMPTY_TOUCHES.contains(&routine));
         }
     }
     pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
@@ -2014,7 +2000,18 @@ impl Runtime<'_> {
         } else if routine == 10795525 {
             self.owned_call(actors::crocomire_reactions::hit);
         } else if !self.bank_a9_routine(routine) && !species::lease_shot(routine, self) {
-            self.foreign(|game| species::shot(routine, argument, game));
+            self.empty_or_unreachable(species::EMPTY_SHOTS.contains(&routine));
+        }
+    }
+    /// What the game's table did with a routine no lease arm runs: an empty one
+    /// returned at once, and that keeps the former foreign call's observation
+    /// refresh; any other was the original's unreachable failure, which reads
+    /// no game state.
+    fn empty_or_unreachable(&mut self, empty: bool) {
+        if empty {
+            self.owned_player_call(|_| ());
+        } else {
+            sm_game::diagnostics::Fatal::unreachable(self);
         }
     }
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
@@ -2029,7 +2026,9 @@ impl Runtime<'_> {
             // Nothing to draw; keep the former foreign call's observation refresh.
             self.owned_player_call(|_| ());
         } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {
-            self.foreign(|game| species::draw_hook(routine, game));
+            // No other draw hook exists: the table's fallback is the original's
+            // unreachable failure, which reads no game state.
+            sm_game::diagnostics::Fatal::unreachable(self);
         }
     }
     pub(crate) fn produce_player_scene(&mut self) {

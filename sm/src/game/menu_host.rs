@@ -1,7 +1,10 @@
 //! The compatibility runtime as the `sm_game::menus` host.
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::menu_state::SaveSelection;
 use sm_game::menus::host::{Host, MenuRuntime};
 use sm_game::save_file::SaveRam;
+use sm_game::session_access::SessionAccess as _;
 
 impl sm_game::sprite_output::SpriteHost for Game {}
 
@@ -170,6 +173,42 @@ impl MenuRuntime for Game {
 impl sm_game::menus::host::ResetRequest for Game {
     fn request_reset(&mut self) {
         Game::request_reset(self)
+    }
+}
+
+/// A save on the lease: the projected words and the save selection are its
+/// Session's, and SRAM and its slot offsets the game's, which the lease does
+/// not hold.
+impl sm_game::menus::save_slots::SlotHost for Runtime<'_> {
+    type SlotRam = SaveRam;
+    fn slot_ram(&self) -> &SaveRam {
+        &self.samus_game().g_sram
+    }
+    fn slot_offsets(&self) -> &Option<sm_game::menus::save_slots::ImportedSlots> {
+        &self.samus_game().save_slots
+    }
+    fn flush_slots(&mut self) {
+        // It reads only SRAM.
+        unsafe { crate::rtl::rtl_write_sram(self.samus_game()) }
+    }
+    fn save_selection(&self) -> SaveSelection {
+        self.session().menu_screens.save_selection
+    }
+    /// The store the game's persistent menu commit makes on its lease.
+    fn commit_save_selection(&mut self, _before: &SaveSelection, after: SaveSelection) {
+        self.session_mut().menu_screens.save_selection = after;
+        self.refresh_inputs();
+    }
+    fn observe_save(&mut self, _stage: u8) {
+        #[cfg(sm_verify_dll)]
+        {
+            let length = self.samus_game().ram().len();
+            crate::flags_save_observer::observe_image(
+                _stage,
+                || (0..length).map(|at| self.byte(at)).collect(),
+                &self.samus_game().g_sram,
+            );
+        }
     }
 }
 

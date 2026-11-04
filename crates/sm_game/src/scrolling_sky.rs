@@ -330,7 +330,7 @@ pub fn update_parallax<
         advance_parallax(game);
     }
 }
-fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mut H) {
+fn queue_tile_rows<H: RowHost + ?Sized>(address: u32, game: &mut H) {
     // Capture the original native source even when frozen; reads remain lazy.
     let src = game.native_image();
     let base = sm_data::cartridge::lorom_offset(address) as usize;
@@ -371,10 +371,34 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
         game.store_queue_tail(tail.wrapping_add(28));
     };
 }
-pub fn queue_land_rows<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// What the sky's tile rows reach: the sky's HDMA source, the frozen-time and
+/// layer 1 words, BG2's scroll, the VRAM write queue, the screen selection and
+/// the native row table. Every menu host is one; a Session lease is one too.
+pub trait RowHost:
+    crate::fx_domain::Sources
+    + crate::fx_domain::Controls
+    + crate::display::preparation::Access
+    + crate::presentation_workspace::QueueAccess
+    + crate::cartridge::NativeImage
+    + crate::sequence_state::Access
+    + crate::display_scroll::Access
+{
+}
+impl<T> RowHost for T where
+    T: crate::fx_domain::Sources
+        + crate::fx_domain::Controls
+        + crate::display::preparation::Access
+        + crate::presentation_workspace::QueueAccess
+        + crate::cartridge::NativeImage
+        + crate::sequence_state::Access
+        + crate::display_scroll::Access
+        + ?Sized
+{
+}
+pub fn queue_land_rows<H: RowHost + ?Sized>(game: &mut H) {
     queue_tile_rows(0x88ad9c, game);
 }
-pub fn queue_ocean_rows<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn queue_ocean_rows<H: RowHost + ?Sized>(game: &mut H) {
     queue_tile_rows(0x88ada6, game);
 }
 // HDMA entries overlap word stores at byte offsets; retain channel write order.

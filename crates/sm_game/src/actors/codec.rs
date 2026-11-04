@@ -238,6 +238,25 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
 }
 
 /// Returns false without mutation for every address owned elsewhere.
+/// Clear the room's enemy workspace, $7E:7000..$97FF, as the room load's fill
+/// of it does. Its owners are the saved spawn records ($7000..$77FF), the
+/// slots' extended RAM ($7800..$8FFF) with the five Botwoon death words in it,
+/// the bosses' RAM ($9000..$97DB) and the enemy projectiles' angles
+/// ($97DC..$97FF). The extended blocks clear whole: their words under the
+/// Botwoon death words and the angles are not projected.
+pub fn clear_room_workspace(s: &mut Session) {
+    for record in &mut s.actors.saved {
+        *record = SpawnRecord::default();
+    }
+    for block in &mut s.actors.extended.blocks[..4] {
+        block.fill(0);
+    }
+    s.botwoon_death = Default::default();
+    for slot in &mut s.enemy_projectiles.slots {
+        slot.angle = 0;
+    }
+}
+
 pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     if (0x1778..0x1784).contains(&at) {
         crate::fx_encoding::write_control_byte(s, at, value);

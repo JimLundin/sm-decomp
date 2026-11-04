@@ -201,7 +201,9 @@ impl Effects for Runtime<'_> {
         });
     }
     fn save(&mut self, slot: u16) {
-        self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
+        // The save's words are the lease's; the observations are refreshed on
+        // entry and on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| sm_game::menus::save_slots::save(slot, runtime));
     }
     fn enemy_projectile(&mut self, definition: u16, parameter: u16) {
         sm_game::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter);

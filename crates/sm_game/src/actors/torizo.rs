@@ -239,8 +239,6 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
 /// What the Torizos' AI needs beyond the movement and drool host: the shared
 /// boss effects, deaths and the compat dispatch.
 pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
-    /// Run the bank $AA movement function at `address` for the current Torizo.
-    fn run_function(&mut self, address: u32);
     /// Spawn the Bomb Torizo room's haze.
     fn spawn_haze(&mut self);
 }
@@ -489,7 +487,15 @@ fn run_movement<L: Lease>(game: &mut L, k: u16) {
         movement::GOLDEN_WALKING => golden_walking(k, game),
         movement::ATTACKING | movement::GOLDEN_ATTACKING => attacking(k, game),
         movement::NOTHING => {}
-        other => game.foreign(|game| game.run_function((BANK << 16) | u32::from(other))),
+        // The bank's pre-instruction table answers any other movement with one of
+        // its empty functions or its unreachable failure.
+        other
+            if crate::actors::species::EMPTY_AA_FUNCTIONS
+                .contains(&((BANK << 16) | u32::from(other))) =>
+        {
+            game.owned_step(|_| ())
+        }
+        _ => crate::diagnostics::Fatal::unreachable(game),
     }
 }
 

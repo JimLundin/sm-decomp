@@ -14,15 +14,23 @@ const TABLE_BYTES: u16 = 460;
 const CLOSED: u16 = 255;
 
 /// The beam window's host: tables through the RAM projection and the
-/// cartridge reads.
+/// cartridge's gradient words. Every menu host is one; a Session lease is one
+/// too.
 ///
 /// LEGACY(original-overflow): the table stores below go through
 /// `legacy_overflow` because the ROM's row offsets leave the 230-row table:
 /// it wraps the 16-bit index before adding the table base (row zero's anchor
 /// and reopened rows reach base + FFFEh, in the following WRAM bank), and the
 /// cleanup passes run on signed offsets past either end.
-pub trait BeamHost: Host + SessionRam {}
-impl<T: Host + SessionRam + ?Sized> BeamHost for T {}
+pub trait BeamHost: SessionRam {
+    /// The loaded image's little-endian word at LoROM `address` plus `offset`.
+    fn gradient_word(&self, address: u32, offset: usize) -> u16;
+}
+impl<T: Host + ?Sized> BeamHost for T {
+    fn gradient_word(&self, address: u32, offset: usize) -> u16 {
+        self.read_rom_word(address, offset)
+    }
+}
 
 /// Advance the two 8.8 fixed-point edges and pack one SNES window word.
 pub(crate) fn advance_window_edges(edges: &mut [u32; 2], steps: [u32; 2], saturated: bool) -> u16 {
@@ -365,8 +373,8 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(
     if upper_angle.wrapping_sub(257) & 0x8000 == 0 {
         upper_angle = upper_angle.wrapping_sub(256);
     }
-    let lower_gradient = game.read_rom_word(XRAY_GRADIENTS, gradient_index(lower_angle) * 2);
-    let upper_gradient = game.read_rom_word(XRAY_GRADIENTS, gradient_index(upper_angle) * 2);
+    let lower_gradient = game.gradient_word(XRAY_GRADIENTS, gradient_index(lower_angle) * 2);
+    let upper_gradient = game.gradient_word(XRAY_GRADIENTS, gradient_index(upper_angle) * 2);
     let direction = if width == 0 && (angle == 64 || angle == 192) {
         Horizontal
     } else if lower_angle.wrapping_sub(128) & 0x8000 != 0 {

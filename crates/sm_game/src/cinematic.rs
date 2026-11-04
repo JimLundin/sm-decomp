@@ -7,7 +7,7 @@ use crate::word_transfers::WordEndpoint;
 /// A bank-`BANK` cinematic record at `cursor`, after the low-half diagnostic.
 pub fn cinematic_native_record<const BANK: u8>(
     cursor: u16,
-    game: &mut (impl crate::menus::host::Host + ?Sized),
+    game: &mut (impl crate::cartridge::NativeDiagnostics + ?Sized),
 ) -> sm_data::cartridge::RomRecord {
     crate::menus::menu_tilemap::native_record((u32::from(BANK) << 16) | u32::from(cursor), game)
 }

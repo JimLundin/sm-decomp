@@ -1,5 +1,5 @@
 //! Shaktool's pieces run in `sm_game::actors::shaktool` on the scheduler's
-//! lease; the bank $AA functions they do not run themselves run on the game.
+//! lease, and so do the bank $AA functions they do not run themselves.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::Runtime;
 use sm_game::actors::access::ActorKey as Key;
@@ -12,8 +12,12 @@ impl Lease for Runtime<'_> {
                 let k = crate::game::session_runtime::Runtime::word(runtime, 0xe54);
                 sm_game::actors::species::torizo_pre_instruction(address, k, runtime);
             });
+        } else if sm_game::actors::species::EMPTY_AA_FUNCTIONS.contains(&address) {
+            // The empty function keeps the former foreign call's observation refresh.
+            self.owned_player_call(|_| ());
         } else {
-            self.foreign(|game| crate::game::session_runtime::run_aa_function(address, game));
+            // The bank's pre-instruction table has no other bank $AA arm.
+            sm_game::diagnostics::Fatal::unreachable(self);
         }
     }
 

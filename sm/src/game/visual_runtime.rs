@@ -170,6 +170,17 @@ impl visual_host::Host for Runtime<'_> {}
 
 impl sm_game::hdma_effects::Host for Runtime<'_> {
     fn calculate_xray_window(&mut self, window: sm_game::beam_windows::XrayWindow) -> Option<u16> {
-        self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game))
+        // The table is the lease's; the observations are refreshed on entry and
+        // on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| {
+            sm_game::beam_windows::calculate_xray_window(window, runtime)
+        })
+    }
+}
+
+/// The X-ray window on the lease: its tables are the Session's projection.
+impl sm_game::beam_windows::BeamHost for Runtime<'_> {
+    fn gradient_word(&self, address: u32, offset: usize) -> u16 {
+        self.rom_word(address, offset)
     }
 }

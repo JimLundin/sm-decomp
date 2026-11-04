@@ -25,10 +25,6 @@ const _: () = {
 };
 
 impl Ai for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_aa_function(address, self);
-    }
-
     fn spawn_haze(&mut self) {
         crate::game::visual_runtime::initialize_bomb_torizo_haze(self);
     }

@@ -9,6 +9,49 @@ use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
 
 pub type ImportedSlots = Imported<SaveSlots>;
 
+/// What a save reaches: the projected words, the current area, the area map
+/// records, the save selection, SRAM with its slot offsets, and the
+/// verification observer. Every menu host is one; a Session lease is one too.
+pub trait SlotHost:
+    crate::projection::Views
+    + crate::gameplay_context::Access
+    + crate::records::Records
+    + crate::cartridge::NativeDiagnostics
+{
+    type SlotRam: super::host::SaveRam + ?Sized;
+    fn slot_ram(&self) -> &Self::SlotRam;
+    fn slot_offsets(&self) -> &Option<ImportedSlots>;
+    /// Write SRAM through to the save file.
+    fn flush_slots(&mut self);
+    fn save_selection(&self) -> SaveSelection;
+    /// Commit the changed selection `after` over `before`.
+    fn commit_save_selection(&mut self, before: &SaveSelection, after: SaveSelection);
+    /// The save's verification observer.
+    fn observe_save(&mut self, stage: u8);
+}
+
+impl<H: Host + ?Sized> SlotHost for H {
+    type SlotRam = H::Sram;
+    fn slot_ram(&self) -> &H::Sram {
+        self.sram()
+    }
+    fn slot_offsets(&self) -> &Option<ImportedSlots> {
+        self.save_slot_offsets()
+    }
+    fn flush_slots(&mut self) {
+        self.flush_sram();
+    }
+    fn save_selection(&self) -> SaveSelection {
+        crate::menus::state::load(self)
+    }
+    fn commit_save_selection(&mut self, before: &SaveSelection, after: SaveSelection) {
+        self.commit_menu(before, after);
+    }
+    fn observe_save(&mut self, stage: u8) {
+        self.observe_flags_save(stage);
+    }
+}
+
 pub fn import(image: &RomImage) -> Option<ImportedSlots> {
     Imported::import(image, ADDRESS, BYTES, SaveSlots::import)
 }
@@ -16,11 +59,11 @@ pub fn import(image: &RomImage) -> Option<ImportedSlots> {
 /// Save file `slot`'s SRAM offset in the loaded image. The record serves the
 /// three slots of the imported allocation; anything else keeps the original
 /// indexed load with its failures.
-pub fn sram_offset<H: Host + ?Sized>(game: &H, slot: isize) -> u16 {
+pub fn sram_offset<H: SlotHost + ?Sized>(game: &H, slot: isize) -> u16 {
     let rom = game.loaded_image();
     usize::try_from(slot)
         .ok()
-        .and_then(|slot| Imported::from(game.save_slot_offsets(), rom)?.offset(slot))
+        .and_then(|slot| Imported::from(game.slot_offsets(), rom)?.offset(slot))
         .unwrap_or_else(|| rom.table_word(lorom_offset(ADDRESS) as usize, slot))
 }
 
@@ -28,7 +71,7 @@ pub fn sram_offset<H: Host + ?Sized>(game: &H, slot: isize) -> u16 {
 /// The file's words go as the CPU holds them, in native byte order.
 struct SaveFile<'a, H: ?Sized>(&'a mut H);
 
-impl<H: Host + ?Sized> SaveHost for SaveFile<'_, H> {
+impl<H: SlotHost + ?Sized> SaveHost for SaveFile<'_, H> {
     fn file_word(&self, word: FileWord) -> u16 {
         crate::word_transfers::stored_native(self.0.view_word(Field::SaveFile(word)))
     }
@@ -37,10 +80,10 @@ impl<H: Host + ?Sized> SaveHost for SaveFile<'_, H> {
         self.0.set_view_word(Field::SaveFile(word), value);
     }
     fn sram_word(&self, at: usize) -> u16 {
-        self.0.sram().word(at)
+        self.0.slot_ram().word(at)
     }
     fn set_sram_word(&mut self, at: usize, value: u16) {
-        self.0.sram().set_word(at, value);
+        self.0.slot_ram().set_word(at, value);
     }
     fn slot_offset(&self, slot: isize) -> u16 {
         sram_offset(self.0, slot)
@@ -58,8 +101,8 @@ enum Direction {
     Load,
 }
 
-pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
-    game.observe_flags_save(0);
+pub fn save<H: SlotHost + ?Sized>(slot: u16, game: &mut H) {
+    game.observe_save(0);
     // The player block into the save's copy, from its last word down.
     for word in PlayerWord::ALL.into_iter().rev() {
         copy_word(
@@ -68,7 +111,7 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
             Field::SaveFile(FileWord::Player(word)),
         );
     }
-    game.observe_flags_save(1);
+    game.observe_save(1);
     // The current area's explored map into its saved map, word by word.
     let first = usize::from(
         crate::gameplay_context::navigation(game)
@@ -83,19 +126,25 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
             Field::SavedMap(first + index),
         );
     }
-    game.observe_flags_save(2);
+    game.observe_save(2);
     transfer_map(Direction::Save, game);
-    game.observe_flags_save(3);
-    crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
-        selection.save_station = selection.load_station;
-        selection.save_area = crate::gameplay_context::navigation(game).area;
-    });
-    game.observe_flags_save(4);
+    game.observe_save(3);
+    // The selection as `menus::state::with` commits it: once, when it changed.
+    let before = game.save_selection();
+    let after = SaveSelection {
+        save_station: before.load_station,
+        save_area: crate::gameplay_context::navigation(game).area,
+        ..before
+    };
+    if after != before {
+        game.commit_save_selection(&before, after);
+    }
+    game.observe_save(4);
     let checksum = save_file::save(&mut SaveFile(game), slot);
-    game.observe_flags_save(5);
+    game.observe_save(5);
     save_file::write_checksum(&mut SaveFile(game), slot, checksum);
-    game.observe_flags_save(6);
-    game.flush_sram();
+    game.observe_save(6);
+    game.flush_slots();
 }
 
 pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
@@ -129,7 +178,7 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
     }
 }
 
-fn transfer_map<H: Host + ?Sized>(direction: Direction, game: &mut H) {
+fn transfer_map<H: SlotHost + ?Sized>(direction: Direction, game: &mut H) {
     if matches!(direction, Direction::Load) {
         // Words 896 down to 0: every area's map but the last, and its first word.
         clear_saved_maps(game, (0..=896).rev());

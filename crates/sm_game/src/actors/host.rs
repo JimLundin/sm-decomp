@@ -221,6 +221,7 @@ pub trait LeaseActors {
         + crate::actors::torizo::Lease
         + crate::actors::spore_spawn::Lease
         + crate::actors::draygon_host::Lease
+        + crate::actors::space_pirates::PirateLease
     where
         Self: 'a;
     fn lease(&mut self) -> Self::Lease<'_>;
@@ -234,6 +235,7 @@ pub trait LeaseScope {
         + crate::actors::torizo::Lease
         + crate::actors::spore_spawn::Lease
         + crate::actors::draygon_host::Lease
+        + crate::actors::space_pirates::PirateLease
     where
         Self: 'a;
     fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut Self::Scoped<'s>) -> R) -> R;

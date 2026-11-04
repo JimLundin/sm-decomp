@@ -23,6 +23,7 @@ pub trait HdmaLease:
     + crate::fx_domain::Sources
     + crate::sequence_state::Access
     + crate::effects::SoundEffects
+    + crate::hdma_objects::GradientHost
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -325,7 +326,7 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
         Command::InitializePhantoonWave => it.effect(HdmaEffect::InitializePhantoonWave, slot),
         Command::InitializeEyeBeam => it.effect(HdmaEffect::InitializeEyeBeam, slot),
         Command::ResetWave => it.effect(HdmaEffect::ResetWave, slot),
-        Command::RestartTitleGradient => it.foreign(crate::hdma_objects::restart_title_gradient),
+        Command::RestartTitleGradient => it.on_lease(crate::hdma_objects::restart_title_gradient),
     }
     script
 }
