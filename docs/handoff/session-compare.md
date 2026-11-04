@@ -197,6 +197,20 @@ Session directly. The `Session compare:` line also counts the engine
 Session's source (`retained`, `kept`, `imported`); `without an engine
 Session` is gone (a Tick with no lease is an import).
 
+**The NMI and the latch moved into the Tick (lane `tick-s10`, 2026-11-04;
+not yet replayed).** Every frame now opens one lease and runs its state, the
+NMI (`display_refresh::run`, with `flush_tilemaps`) and `sample_latched` on it
+(session-authoritative-tick.md, stage 10). The two writers above are inside the
+last lease, so the line should fall to `0 ticks` on every row whose only
+post-lease writers were they: the chain rooms, pause and unpause, the `item-*`
+boxes, `credits`, the SFX-loss rows and the power-on rows (the logo's frames
+now end on a lease too). Where it would still show: settlement, which stays
+after the lease. Its IRQ stores are frame display words, held outside the
+Session in Legacy, so they should not show as fields. The IRQ door resume's
+own `Runtime::new` opens after the tick and is that Tick's last lease (on
+`door-transition`, `elevator-up` and `door-loading-lag-nmi`). Any field on the
+line there names a settlement writer.
+
 No stale-slot normalization was added: `queue[7]` is the NMI's end word, not
 a stale slot, and the bytes past the tail are real RAM the engine reproduces
 (the RAM compare passes them). Whether a direct compare (slice 4) should
@@ -323,4 +337,5 @@ divergences, and the coverage line must print 120963 decoded, 3926 unowned,
    move the observers' `encode`/`decode` calls to verification:
    `engine_ram_export_lines` reaches 0. The "written after the last lease"
    line reaches 0 ticks when the NMI and controller latch run inside the
-   Tick, which is step 2's own check.
+   Tick, which is step 2's own check (moved in `tick-s10`; confirm on the
+   rows).
