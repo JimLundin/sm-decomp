@@ -530,7 +530,18 @@ scans), `$18A6-$18A7` (every projectile scan's index on exit) and
 `$0E56-$0E59` (spawn backup $A0:927C, data pointer $A0:9015). Each was
 checked against the bank logs, not replayed: the next gate run's evidence
 line confirms them, and a range that still differs is a lockstep failure
-on that row. Left, with their writers:
+on that row.
+
+The oracle digest lock's `wram` stream does not narrow with them: its
+committed digests were recorded with the 31-range mask, so
+`machine::result_digests` zeroes `cpu_infra::LOCK_WRAM_MASK` (that frozen
+set, a `LEGACY(verifier)` row) for the `wram` digest only, on every path
+that digests it (record, `record-oracle`, check-lock and free run all take
+it from `single_tick`), and restores the bytes after. Lockstep, the Session
+compare, the Session streams' decode and the nightly unowned report use
+`NORMALIZED_RAM`. The frozen mask goes when slice 6 drops `wram` from the
+lock; until then a retired row leaves `NORMALIZED_RAM` only. Left, with
+their writers:
 
 - `$0000-$0003`, `$0012-$0017`: direct-page scratch every routine shares
   (e.g. $A0:8D64 uses $12-$1E, $A0:996C $12, the solid collision $12-$16,

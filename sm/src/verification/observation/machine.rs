@@ -38,6 +38,24 @@ pub(super) fn result_digests(game: &mut Game) -> [u64; sm_tools::trace::MACHINE.
     {
         result.ram[range].fill(0);
     }
+    // LEGACY(verifier): the lock's `wram` stream zeroes the frozen `LOCK_WRAM_MASK`, a
+    // superset of `NORMALIZED_RAM`. Its ranges are zeroed for the digest and then
+    // restored, so the Session streams' decode keeps `NORMALIZED_RAM`'s mask.
+    let mask = crate::cpu_infra::LOCK_WRAM_MASK;
+    let saved: Vec<u8> = mask
+        .iter()
+        .flat_map(|range| result.ram[range.clone()].iter().copied())
+        .collect();
+    for range in mask.clone() {
+        result.ram[range].fill(0);
+    }
+    let wram = Digest::of(&result.ram);
+    let mut rest = saved.as_slice();
+    for range in mask {
+        let (bytes, tail) = rest.split_at(range.len());
+        result.ram[range].copy_from_slice(bytes);
+        rest = tail;
+    }
     let ppu = &result.ppu;
     let hash = |value: &dyn Fn(&mut Digest)| {
         let mut digest = Digest::default();
@@ -116,7 +134,7 @@ pub(super) fn result_digests(game: &mut Game) -> [u64; sm_tools::trace::MACHINE.
         Digest::of(core::slice::from_raw_parts(ppu.renderBuffer, 256 * 240 * 4))
     });
     [
-        Digest::of(&result.ram),
+        wram,
         Digest::of(&result.sram),
         hash(&|d| ppu.vram.hash(d)),
         hash(&|d| ppu.cgram.hash(d)),
@@ -125,4 +143,20 @@ pub(super) fn result_digests(game: &mut Game) -> [u64; sm_tools::trace::MACHINE.
         video.unwrap_or_default(),
         Digest::of(&pending),
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_lock_wram_mask_holds_every_normalized_range() {
+        let mask = crate::cpu_infra::LOCK_WRAM_MASK;
+        for (_, range) in crate::cpu_infra::NORMALIZED_RAM {
+            for address in range {
+                assert!(
+                    mask.iter().any(|frozen| frozen.contains(&address)),
+                    "{address:#x}"
+                );
+            }
+        }
+    }
 }

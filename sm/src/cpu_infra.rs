@@ -467,6 +467,46 @@ pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 25] = {
         (Mine, 0xf37a..0xf380),
     ]
 };
+// LEGACY(verifier): the RAM the oracle digest lock's `wram` stream zeroes, frozen at the
+// 31 ranges `NORMALIZED_RAM` held when the committed lock was recorded. `NORMALIZED_RAM`
+// narrows as its rows retire; the lock's `wram` digests would then need a full
+// faithful-oracle re-record. Frozen until slice 6 drops `wram` from the lock
+// (docs/LEGACY.md, docs/handoff/session-compare.md). Lockstep, the Session compare and the
+// Session streams' decode use `NORMALIZED_RAM`. Holds every `NORMALIZED_RAM` range.
+#[cfg(sm_verify_dll)]
+pub(crate) const LOCK_WRAM_MASK: [core::ops::Range<usize>; 31] = [
+    0x0000..0x0051,
+    0x1f5b..0x2000,
+    0x00ad..0x00b1,
+    0x05ed..0x05f5,
+    0x05bc..0x05c5,
+    0x060b..0x0611,
+    0x0611..0x0617,
+    0x077e..0x0783,
+    0x078f..0x0791,
+    0x07b7..0x07b9,
+    0x0933..0x093d,
+    0x0b24..0x0b28,
+    0x0d82..0x0d8a,
+    0x0d9c..0x0d9e,
+    0x0dd2..0x0dd8,
+    0x0d8a..0x0d90,
+    0x0e20..0x0e46,
+    0x0e54..0x0e56,
+    0x0e02..0x0e04,
+    0x0e4a..0x0e4c,
+    0x0e56..0x0e5a,
+    0x1784..0x178c,
+    0x17a8..0x17ac,
+    0x1834..0x183c,
+    0x184a..0x185c,
+    0x186e..0x1886,
+    0x18a6..0x18a8,
+    0x189a..0x18a6,
+    0x1966..0x196c,
+    0xef74..0xef78,
+    0xf37a..0xf380,
+];
 fn normalize_snapshot_ram(
     mine: &mut [u8; 0x20000],
     theirs: &mut [u8; 0x20000],
