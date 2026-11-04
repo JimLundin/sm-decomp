@@ -80,6 +80,11 @@ pub(crate) fn assert_gameplay_checkpoint(start: &Session, metadata: &DisplayStar
         + 1
         + queue.queue.len()
         + 2
+        + queue.requests.len()
+        + queue.mode7.len()
+        + 2
+        + queue.readbacks.len()
+        + 2
         + 2 * (queue.scrolling.len()
             + queue.source_block.len()
             + queue.destination_block.len()

@@ -1635,7 +1635,7 @@ macro_rules! checkpoint_auxiliary {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
                 if !self.menu_window.is_initialized() { return Err("unsupplied map-menu window checkpoint".into()); }
-                let mut bytes = Vec::from(b"SMAUXGS\x12".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x13".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1644,7 +1644,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x12" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x13" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -2487,6 +2487,11 @@ fn checkpoint_queued_tilemaps(
     ));
     checkpoint_bytes(bytes, &value.queue);
     checkpoint_word(bytes, &value.tail);
+    checkpoint_bytes(bytes, &value.requests);
+    checkpoint_bytes(bytes, &value.mode7);
+    checkpoint_word(bytes, &value.mode7_tail);
+    checkpoint_bytes(bytes, &value.readbacks);
+    checkpoint_word(bytes, &value.readback_tail);
     checkpoint_words(bytes, &value.scrolling);
     checkpoint_words(bytes, &value.source_block);
     checkpoint_words(bytes, &value.destination_block);
@@ -2503,13 +2508,26 @@ fn checkpoint_read_queued_tilemaps(
         _ => return Err("queue order".into()),
     };
     use crate::display::queued_tilemaps::{
-        BACKGROUND_BLOCKS, QUEUE_BYTES, QueuedTilemaps, SCROLL_WORDS,
+        BACKGROUND_BLOCKS, MODE7_BYTES, QUEUE_BYTES, QueuedTilemaps, READBACK_BYTES, REQUEST_BYTES,
+        SCROLL_WORDS,
     };
     // Bound this entire new fixed payload before allocating its background.
-    let mut fields =
-        CheckpointReader(read.bytes(QUEUE_BYTES + 10 + SCROLL_WORDS * 2 + BACKGROUND_BLOCKS * 2)?);
+    let mut fields = CheckpointReader(read.bytes(
+        QUEUE_BYTES
+            + REQUEST_BYTES
+            + MODE7_BYTES
+            + READBACK_BYTES
+            + 14
+            + SCROLL_WORDS * 2
+            + BACKGROUND_BLOCKS * 2,
+    )?);
     let queue = checkpoint_read_bytes(&mut fields)?;
     let tail = fields.word()?;
+    let requests = checkpoint_read_bytes(&mut fields)?;
+    let mode7 = checkpoint_read_bytes(&mut fields)?;
+    let mode7_tail = fields.word()?;
+    let readbacks = checkpoint_read_bytes(&mut fields)?;
+    let readback_tail = fields.word()?;
     let mut scrolling = [0; SCROLL_WORDS];
     for word in &mut scrolling {
         *word = fields.word()?;
@@ -2520,7 +2538,7 @@ fn checkpoint_read_queued_tilemaps(
     for _ in 0..BACKGROUND_BLOCKS {
         background.push(fields.word()?);
     }
-    QueuedTilemaps::from_owned(
+    let mut queued = QueuedTilemaps::from_owned(
         queue,
         tail,
         scrolling,
@@ -2529,7 +2547,13 @@ fn checkpoint_read_queued_tilemaps(
         destination_block,
         native_order,
     )
-    .ok_or_else(|| "queued tilemap checkpoint capacity".into())
+    .ok_or("queued tilemap checkpoint capacity")?;
+    queued.requests = requests;
+    queued.mode7 = mode7;
+    queued.mode7_tail = mode7_tail;
+    queued.readbacks = readbacks;
+    queued.readback_tail = readback_tail;
+    Ok(queued)
 }
 
 fn checkpoint_control_ownership(bytes: &mut Vec<u8>, value: &crate::fx_state::ControlOwnership) {
