@@ -29,6 +29,17 @@ pub trait DisplayOwner {
     fn write_owned_byte(&mut self, at: usize, value: u8);
 }
 
+/// The VRAM readback queue's records and the screen base mirrors they read.
+/// Every display refresh host is one; a Session lease is one too.
+pub trait ReadbackQueue: crate::display::preparation::Access {
+    /// The VRAM readback queue's tail ($7E:0360), the byte offset of its
+    /// next 9-byte record at $7E:0340.
+    fn readback_queue_tail(&self) -> u16;
+    fn set_readback_queue_tail(&mut self, tail: u16);
+    /// Store byte `offset` of the VRAM readback queue's records ($7E:0340).
+    fn store_readback_byte(&mut self, offset: usize, value: u8);
+}
+
 /// What the display refresh needs besides RAM, registers and the cartridge:
 /// owned display stores and the uploads the compatibility runtime still owns.
 pub trait Host:
@@ -44,6 +55,7 @@ pub trait Host:
     + crate::display::queued_tilemaps::Scrolling
     + crate::display::video::Video
     + crate::hdma_objects::HdmaTable
+    + ReadbackQueue
 {
     /// The HDMA object table as the compatibility projection reads it.
     fn hdma_objects(&self) -> crate::hdma::HdmaObjects;
@@ -54,12 +66,6 @@ pub trait Host:
     fn upload_animated_tiles(&mut self);
     fn process_mode7(&mut self);
     fn process_readbacks(&mut self);
-    /// The VRAM readback queue's tail ($7E:0360), the byte offset of its
-    /// next 9-byte record at $7E:0340.
-    fn readback_queue_tail(&self) -> u16;
-    fn set_readback_queue_tail(&mut self, tail: u16);
-    /// Store byte `offset` of the VRAM readback queue's records ($7E:0340).
-    fn store_readback_byte(&mut self, offset: usize, value: u8);
     fn flush_tilemaps(&mut self);
     /// Fill VRAM's low bytes with `fill` from address 0, resetting the
     /// address as one word or two bytes.
@@ -1029,7 +1035,7 @@ pub fn queue_fx_clear<
     game.set_tilemap_queue_tail(tail.wrapping_add(7));
 }
 
-fn write_readback_word<H: Host + ?Sized>(game: &mut H, offset: usize, value: u16) {
+fn write_readback_word<H: ReadbackQueue + ?Sized>(game: &mut H, offset: usize, value: u16) {
     let bytes = value.to_ne_bytes();
     game.store_readback_byte(offset, bytes[0]);
     game.store_readback_byte(offset + 1, bytes[1]);
@@ -1037,7 +1043,7 @@ fn write_readback_word<H: Host + ?Sized>(game: &mut H, offset: usize, value: u16
 
 /// Queue a VRAM readback of `size` bytes into WRAM at `destination`, from
 /// the screen base in the register mirror `register` plus `vram_offset`.
-pub fn enqueue_readback<H: Host + ?Sized>(
+pub fn enqueue_readback<H: ReadbackQueue + ?Sized>(
     register: crate::display::preparation::Field,
     vram_offset: u16,
     destination: u16,

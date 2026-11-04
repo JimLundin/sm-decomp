@@ -3,22 +3,23 @@ use crate::display::preparation::{Field, Store};
 use crate::display_refresh::enqueue_readback;
 use crate::player_transitions::xray::BlendPhase;
 use crate::presentation_workspace::{Point, Role};
-use crate::runtime_access::{RuntimeAccess, SessionView, with_session};
-use crate::session_access::SessionAccess;
+use crate::runtime_access::SessionView;
 use crate::visual_host::{Content, Record, Source};
 
-/// What X-ray needs besides the display host, sound and the native image:
-/// the blend mask and blending owned by the player view, and the original's
-/// failure reports.
+/// What X-ray runs on: the owned-Session view, the readback and VRAM write
+/// queues, the screen workspace, the HDMA objects and sound, plus the blend
+/// mask and blending owned by the player view and the original's failure
+/// reports. A Session lease is one.
 pub trait Host:
-    crate::display_refresh::Host
+    SessionView
+    + crate::display_refresh::ReadbackQueue
     + crate::player_position::PlayerFacts
     + crate::effects::SoundEffects
-    + crate::cartridge::NativeDiagnostics
-    + RuntimeAccess
     + crate::presentation_workspace::Access
     + crate::presentation_workspace::QueueAccess
     + crate::hdma_objects::HdmaTable
+    + crate::sequence_state::Access
+    + crate::fx_domain::Sources
 {
     fn xray_blend_mask(&mut self) -> u16;
     fn apply_xray_blending(&mut self, phase: BlendPhase);
@@ -30,14 +31,14 @@ pub trait Host:
 // The hidden-block reveal runs on the owned-Session view: room terrain,
 // tiles and geometry are Session fields; the overlay is work RAM.
 
-fn level<R: SessionView>(h: &R, block: usize) -> u16 {
+fn level<R: SessionView + ?Sized>(h: &R, block: usize) -> u16 {
     match h.session().room.terrain.cells().get(block) {
         Some(cell) => cell.level,
         None => h.word(0x10002 + 2 * block),
     }
 }
 
-fn behavior<R: SessionView>(h: &R, block: i32) -> u8 {
+fn behavior<R: SessionView + ?Sized>(h: &R, block: i32) -> u8 {
     let block = usize::try_from(block).expect("X-ray BTS outside RAM");
     match h.session().room.terrain.cells().get(block) {
         Some(cell) => cell.behavior,
@@ -45,14 +46,20 @@ fn behavior<R: SessionView>(h: &R, block: i32) -> u8 {
     }
 }
 
-fn camera<H: Host + ?Sized>(game: &mut H) -> crate::camera::Camera {
-    game.runtime().session().room.camera
+fn camera<H: Host>(game: &mut H) -> crate::camera::Camera {
+    game.session().room.camera
+}
+
+/// Store through the Session, then refresh the observations as the
+/// projected word stores did.
+fn store_session<H: Host>(game: &mut H, store: impl FnOnce(&mut crate::session::Session)) {
+    store(game.session_mut());
+    game.words_stored();
 }
 
 /// Stop demo playback's program and input and set the beam's angle.
-fn stop_demo<H: Host + ?Sized>(angle: u16, game: &mut H) {
-    let mut runtime = game.runtime();
-    let player = &mut runtime.session_mut().player;
+fn stop_demo<H: Host>(angle: u16, game: &mut H) {
+    let player = &mut game.session_mut().player;
     let demo = &mut player.demo;
     demo.pre_action = 0;
     demo.delay = 0;
@@ -61,11 +68,10 @@ fn stop_demo<H: Host + ?Sized>(angle: u16, game: &mut H) {
     demo.pressed = 0;
     player.transitions.xray_angle = angle;
 }
-fn set_backdrop_color<H: Host + ?Sized>(color: u16, game: &mut H) {
-    let mut runtime = game.runtime();
-    runtime.session_mut().presentation.visual_mut().colors[0] = color;
+fn set_backdrop_color<H: Host>(color: u16, game: &mut H) {
+    game.session_mut().presentation.visual_mut().colors[0] = color;
 }
-fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
+fn upload_screen<H: Host>(source: u16, screen: u16, game: &mut H) {
     let tail = game.queue_tail();
     let entry = usize::from(tail);
     for (offset, value) in [(0, 2048), (2, source), (4, 126)] {
@@ -78,7 +84,12 @@ fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
 }
 
 // Capture all four source tiles before the reverse-order writes, even when RAM aliases.
-fn write_block<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4], h: &mut R) {
+fn write_block<R: SessionView + ?Sized>(
+    destination: u16,
+    tile: u16,
+    offsets: [usize; 4],
+    h: &mut R,
+) {
     let tiles = h.session().room.terrain.tiles()[usize::from(tile)];
     for corner in (0..4).rev() {
         let offset = usize::from(destination) + 2 * offsets[corner];
@@ -86,7 +97,7 @@ fn write_block<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4],
     }
 }
 
-fn copy_background<H: Host + ?Sized>(game: &mut H) {
+fn copy_background<H: Host>(game: &mut H) {
     let camera = camera(game);
     let [x, y] = [0, 1].map(|axis| camera.layer1[axis] as u32 + camera.bg1_offset[axis] as u32);
     let mut origin = (4 * (y & 0xf0) + ((x & 0xf0) >> 3) + 4 * (x & 0x100)) as u16;
@@ -118,7 +129,7 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
 
 /// Back up BG2's scroll in A and B and the layer blending byte in C's low
 /// byte; `restore_left` puts them back.
-pub fn freeze_and_backup<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
+pub fn freeze_and_backup<H: Host>(hdma_index: usize, game: &mut H) {
     // Freeze time: a byte store, so the flag's high byte is kept.
     crate::sequence_word!(game.TIME_IS_FROZEN_FLAG, |frozen| (frozen & 0xff00) | 1);
     crate::hdma_word!(game, hdma_index, A => u16::from_le_bytes([
@@ -131,23 +142,23 @@ pub fn freeze_and_backup<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     ]));
     crate::hdma_byte!(game, hdma_index, C, false => game.display_control_byte(Field::Screens1));
 }
-pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
+pub fn capture_bg1_right<H: Host>(game: &mut H) {
     enqueue_readback(Field::Screens0, 1024, 0x6800, 2048, false, game);
 }
-pub fn capture_bg1_left<H: Host + ?Sized>(game: &mut H) {
+pub fn capture_bg1_left<H: Host>(game: &mut H) {
     enqueue_readback(Field::Screens0, 0, 0x6000, 2048, false, game);
 }
 /// Copy the visible BG1 into the overlay and reveal the hidden blocks of its
 /// 16 rows of 17 blocks, then the room's revealed items, and queue the BG2
 /// readback.
-pub fn build_overlay<H: Host + ?Sized>(game: &mut H) {
+pub fn build_overlay<H: Host>(game: &mut H) {
     copy_background(game);
     if (camera(game).layer1[1] >> 12) != 0 {
         game.overlay_origin_assertion();
     }
     {
         // Reveal the screen's 16 rows of 16 blocks and the block past the right edge.
-        let h = &mut game.runtime();
+        let h = &mut *game;
         let room = &h.session().room;
         let width = room.width;
         let [x, y] = room.camera.layer1.map(|position| position >> 4);
@@ -170,15 +181,22 @@ pub fn build_overlay<H: Host + ?Sized>(game: &mut H) {
     enqueue_readback(Field::Screens1, 0, 0x5000, 2048, false, game);
 }
 
-fn native_record<R: SessionView>(bank: u8, address: u16, h: &mut R) -> <R as Content>::Record {
+fn native_record<R: SessionView + ?Sized>(
+    bank: u8,
+    address: u16,
+    h: &mut R,
+) -> <R as Content>::Record {
     h.legacy_native_record(bank, address)
 }
 
-fn definition_word<R: SessionView>(index: usize, h: &R) -> u16 {
+fn definition_word<R: SessionView + ?Sized>(index: usize, h: &R) -> u16 {
     h.table(Source::Native, 0x91d2d6).native_word(2 * index)
 }
 
-fn block_definition<R: SessionView>(k: u16, game: &mut R) -> Option<<R as Content>::Record> {
+fn block_definition<R: SessionView + ?Sized>(
+    k: u16,
+    game: &mut R,
+) -> Option<<R as Content>::Record> {
     let bts = u16::from(behavior(game, i32::from(k)));
     let kind = level(game, usize::from(k)) & 0xf000;
     let mut index = 0i32;
@@ -206,7 +224,12 @@ fn block_definition<R: SessionView>(k: u16, game: &mut R) -> Option<<R as Conten
 }
 
 // Neighbor tiles read each corner immediately before its ascending store, including aliases.
-fn write_neighbor<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4], h: &mut R) {
+fn write_neighbor<R: SessionView + ?Sized>(
+    destination: u16,
+    tile: u16,
+    offsets: [usize; 4],
+    h: &mut R,
+) {
     for (corner, offset) in offsets.into_iter().enumerate() {
         let bytes = match h.session().room.terrain.tiles().get(usize::from(tile)) {
             Some(tile) => tile[corner].to_le_bytes(),
@@ -222,7 +245,11 @@ fn write_neighbor<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 
 
 /// Reveal the part of a two-wide block left of the screen that overhangs the
 /// first column at `destination`.
-pub fn reveal_left_neighbor<R: SessionView>(destination: u16, row_block: u16, game: &mut R) {
+pub fn reveal_left_neighbor<R: SessionView + ?Sized>(
+    destination: u16,
+    row_block: u16,
+    game: &mut R,
+) {
     if row_block == 0 {
         return;
     }
@@ -245,7 +272,12 @@ pub fn reveal_left_neighbor<R: SessionView>(destination: u16, row_block: u16, ga
 
 /// Follow an extension block's chain to the block it extends and reveal that
 /// block's tile at `destination`, starting vertically when `vertical`.
-fn follow_extension<R: SessionView>(destination: u16, block: u16, vertical: bool, game: &mut R) {
+fn follow_extension<R: SessionView + ?Sized>(
+    destination: u16,
+    block: u16,
+    vertical: bool,
+    game: &mut R,
+) {
     let width = game.session().room.width;
     let mut y = (block as i32 / width as i32) as u16;
     let mut x = (block as i32 % width as i32) as u16;
@@ -293,7 +325,7 @@ fn follow_extension<R: SessionView>(destination: u16, block: u16, vertical: bool
     }
 }
 
-fn dispatch_reveal<R: SessionView>(
+fn dispatch_reveal<R: SessionView + ?Sized>(
     ea: u32,
     descriptor: &<R as Content>::Record,
     columns_left: u16,
@@ -344,7 +376,12 @@ fn dispatch_reveal<R: SessionView>(
 
 /// Reveal hidden block `block` at `destination`, `columns_left` columns from
 /// the screen's right edge.
-pub fn reveal_block<R: SessionView>(columns_left: u16, destination: u16, block: u16, game: &mut R) {
+pub fn reveal_block<R: SessionView + ?Sized>(
+    columns_left: u16,
+    destination: u16,
+    block: u16,
+    game: &mut R,
+) {
     if let Some(descriptor) = block_definition(block, game) {
         dispatch_reveal(
             u32::from(descriptor.native_word(0)) | 0x910000,
@@ -358,7 +395,7 @@ pub fn reveal_block<R: SessionView>(columns_left: u16, destination: u16, block: 
 }
 
 /// Reveal room item block `tile` at room block (`x`, `y`) when it is on screen.
-pub fn reveal_room_block<R: SessionView>(tile: u16, x: u16, y: u16, game: &mut R) {
+pub fn reveal_room_block<R: SessionView + ?Sized>(tile: u16, x: u16, y: u16, game: &mut R) {
     let layer1 = game.session().room.camera.layer1;
     let screen_x = (x as i32 - (layer1[0] as i32 >> 4)) as u16;
     let screen_y = (y as i32 - (layer1[1] as i32 >> 4)) as u16;
@@ -368,7 +405,7 @@ pub fn reveal_room_block<R: SessionView>(tile: u16, x: u16, y: u16, game: &mut R
         write_block(destination, tile & 0x3ff, offsets, game);
     }
 }
-pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
+pub fn capture_bg2_right<H: Host>(game: &mut H) {
     if can_reveal_blocks(game) {
         if crate::gameplay_context::room_effects(game).earthquake_timer != 0 {
             let camera = camera(game);
@@ -391,15 +428,15 @@ pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
     }
     enqueue_readback(Field::Screens1, 1024, 0x5800, 2048, true, game);
 }
-pub fn can_reveal_blocks<H: Host + ?Sized>(game: &mut H) -> bool {
+pub fn can_reveal_blocks<H: Host>(game: &mut H) -> bool {
     game.xray_blend_mask() == 0x4000
 }
-pub fn upload_left<H: Host + ?Sized>(game: &mut H) {
+pub fn upload_left<H: Host>(game: &mut H) {
     if can_reveal_blocks(game) {
         upload_screen(0x4000, 0, game);
     }
 }
-pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
+pub fn upload_right<H: Host>(game: &mut H) {
     if can_reveal_blocks(game) {
         upload_screen(0x4800, 1, game);
     }
@@ -413,7 +450,7 @@ pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
         table[at + 2] = (value >> 16) as u8;
     }
     let word = |at: usize| u16::from_le_bytes([table[at], table[at + 1]]);
-    with_session(game, |session| {
+    store_session(game, |session| {
         let demo = &mut session.player.demo;
         demo.enabled = word(0);
         demo.input_frames = word(2);
@@ -430,15 +467,15 @@ pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
     let angle = if game.facing() == 4 { 192 } else { 64 };
     stop_demo(angle, game);
 }
-pub fn setup_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
+pub fn setup_blending<H: Host>(_k: u16, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Setup);
 }
-pub fn set_backdrop<H: Host + ?Sized>(game: &mut H) {
+pub fn set_backdrop<H: Host>(game: &mut H) {
     set_backdrop_color(0xc63, game);
 }
-pub fn restore_left<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
+pub fn restore_left<H: Host>(hdma_index: usize, game: &mut H) {
     restore_hdma_table(game);
-    crate::player_transitions::xray::set_window_word(&mut game.runtime(), 0, 255);
+    crate::player_transitions::xray::set_window_word(game, 0, 255);
     game.apply_xray_blending(BlendPhase::Restore);
     set_backdrop_color(0, game);
     crate::menus::prelude::display_scroll!(game.Bg2H = crate::hdma_word!(game, hdma_index, A));
@@ -451,15 +488,14 @@ pub fn restore_left<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     }
 }
 /// Step the x-ray background's restore stage, kept in the demo pre-action.
-fn advance_stage<H: Host + ?Sized>(game: &mut H) {
-    let mut runtime = game.runtime();
-    let demo = &mut runtime.session_mut().player.demo;
+fn advance_stage<H: Host>(game: &mut H) {
+    let demo = &mut game.session_mut().player.demo;
     demo.pre_action = demo.pre_action.wrapping_add(1);
 }
 /// Restore the indirect HDMA table's first entry over the demo's words and
 /// clear the demo's previous input and the controller backup after it.
-fn restore_hdma_table<H: Host + ?Sized>(game: &mut H) {
-    with_session(game, |session| {
+fn restore_hdma_table<H: Host>(game: &mut H) {
+    store_session(game, |session| {
         // $7E:0A88, the HDMA pointer's low word, is the demo's enable word;
         // the bank byte $98 at $7E:0A8A and the zero word after it are the
         // demo's input frame count and the previous held input's low byte,
@@ -471,14 +507,14 @@ fn restore_hdma_table<H: Host + ?Sized>(game: &mut H) {
         session.projectiles.preparation.demo_filtered_held = 0;
     });
 }
-pub fn restore_right<H: Host + ?Sized>(game: &mut H) {
+pub fn restore_right<H: Host>(game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
     if (game.queue_tail() as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5800, 1, game);
         advance_stage(game);
     }
 }
-pub fn finish_restore<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
+pub fn finish_restore<H: Host>(hdma_index: usize, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
@@ -486,15 +522,14 @@ pub fn finish_restore<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
         restore_hdma_table(game);
         game.finish_xray();
         crate::hdma_word!(game, hdma_index, Channels => 0);
-        game.queue_sound(0, 0xa, 6);
-        if (game.runtime().session().room.liquid.kind as u8) != 36 {
+        crate::effects::SoundEffects::queue_sound(game, 0, 0xa, 6);
+        if (game.session().room.liquid.kind as u8) != 36 {
             game.store_display_control_byte(Field::FixedColor2, 0x80, Store::Named);
             game.store_display_control_byte(Field::FixedColor1, 64, Store::Named);
             game.store_display_control_byte(Field::FixedColor0, 32, Store::Named);
         }
-        crate::player_transitions::xray::clear_window(&mut game.runtime());
-        let mut runtime = game.runtime();
-        let controls = &mut runtime.session_mut().projectiles.controls;
+        crate::player_transitions::xray::clear_window(game);
+        let controls = &mut game.session_mut().projectiles.controls;
         if controls.automatic_weapon != 0 {
             (controls.selected_weapon, controls.automatic_weapon) = (0, 0);
         }
@@ -525,7 +560,7 @@ const XRAY_ALIAS: usize = 0x4000;
 
 /// Known owned overlay bytes use the single screen allocation; full native
 /// identities spilling outside it retain the existing Session alias protocol.
-fn store_xray<R: SessionView>(host: &mut R, offset: usize, bytes: &[u8]) {
+fn store_xray<R: SessionView + ?Sized>(host: &mut R, offset: usize, bytes: &[u8]) {
     let point = Point::new(Role::Xray, offset);
     match host.session_mut().publish_workspace_slice(point, bytes) {
         Ok(()) => {}

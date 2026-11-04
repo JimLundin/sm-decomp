@@ -24,6 +24,7 @@ pub trait HdmaLease:
     + crate::sequence_state::Access
     + crate::effects::SoundEffects
     + crate::hdma_objects::GradientHost
+    + crate::xray_background::Host
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -33,14 +34,16 @@ pub trait HdmaLease:
     fn bg3_x_velocity(&self, index: isize) -> u16;
 }
 
-/// Capture the selected slot before publishing to the compatibility host.
-pub fn with_current_object<L: HdmaLease + ?Sized, T>(
+/// Run `action` for the selected object on the lease, where a foreign call
+/// ran it on the game: the slot is captured first, and the inputs are observed
+/// afresh on entry and again on return.
+pub fn with_current_object<L: HdmaLease, T>(
     lease: &mut L,
-    action: impl FnOnce(usize, &mut L::Game) -> T,
+    action: impl FnOnce(usize, &mut L) -> T,
 ) -> T {
     let index = usize::from(lease.hdma_word(crate::hdma::Word::Selected) >> 1);
     sm_data::table::check_index(index, OBJECTS);
-    lease.foreign(|game| action(index, game))
+    crate::lease::Lease::owned_player_call(lease, |lease| action(index, lease))
 }
 
 /// A host that can lease its Session to the interpreter.
@@ -82,6 +85,16 @@ pub(crate) trait Interpreter: HdmaTable {
     ) -> T {
         sm_data::table::check_index(index, OBJECTS);
         self.foreign(|game| action(index, game))
+    }
+    /// Run `action` for object `index` on the lease, as `with_object` ran it
+    /// on the game.
+    fn on_object<T>(
+        &mut self,
+        index: usize,
+        action: impl FnOnce(usize, &mut Self::Lease) -> T,
+    ) -> T {
+        sm_data::table::check_index(index, OBJECTS);
+        self.on_lease(|lease| action(index, lease))
     }
     fn set_word(&mut self, at: usize, value: u16) {
         let [low, high] = value.to_le_bytes();

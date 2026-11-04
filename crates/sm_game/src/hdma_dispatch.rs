@@ -180,38 +180,6 @@ pub const HDMA_PRE_ACTIONS: [(u32, HdmaPreAction); 59] = [
     (0x88_ecb6, HdmaPreAction::IntroWave),
 ];
 
-/// Run the indirect call at `address` on the compatibility host.
-fn hdma_call<H>(address: u32, game: &mut H)
-where
-    H: Host + explosion_window::Host + xray_background::Host + ?Sized,
-{
-    let Some(&(_, target)) = HDMA_CALLS.iter().find(|(at, _)| *at == address) else {
-        game.rtl_unreachable();
-        return;
-    };
-    use HdmaCall::*;
-    match target {
-        InitializeRainbowBeam
-        | BeginPreFlash
-        | BeginPrescaledPreFlash
-        | BeginExplosion
-        | BeginPrescaledExplosion
-        | BeginCrystalFlash
-        | FinishPowerBomb
-        | FinishCrystalFlash
-        | FreezeAndBackup
-        | InitializeSuitPickup => unreachable!("run_call runs {target:?}"),
-        Nothing => {}
-        CaptureBg1Right => xray_background::capture_bg1_right(game),
-        CaptureBg1Left => xray_background::capture_bg1_left(game),
-        BuildOverlay => xray_background::build_overlay(game),
-        CaptureBg2Right => xray_background::capture_bg2_right(game),
-        UploadLeft => xray_background::upload_left(game),
-        UploadRight => xray_background::upload_right(game),
-        SetBackdrop => xray_background::set_backdrop(game),
-    }
-}
-
 /// Run the HDMA call at `address` for object `index`, as `run_pre_action`.
 pub(crate) fn run_call<I>(address: u32, index: usize, it: &mut I)
 where
@@ -219,48 +187,48 @@ where
     I::Game: DispatchHost,
 {
     let slot = 2 * index as u16;
-    match HDMA_CALLS.iter().find(|(at, _)| *at == address) {
-        Some((_, HdmaCall::FreezeAndBackup)) => {
-            it.with_object(index, xray_background::freeze_and_backup)
-        }
-        Some((_, HdmaCall::FinishPowerBomb)) => it.with_object(index, |index, game| {
+    let Some(&(_, target)) = HDMA_CALLS.iter().find(|(at, _)| *at == address) else {
+        it.unreachable();
+        return;
+    };
+    match target {
+        // The X-ray background's capture, overlay and uploads run on the lease's
+        // Session and queues.
+        HdmaCall::Nothing => it.on_lease(|_| {}),
+        HdmaCall::CaptureBg1Right => it.on_lease(xray_background::capture_bg1_right),
+        HdmaCall::CaptureBg1Left => it.on_lease(xray_background::capture_bg1_left),
+        HdmaCall::BuildOverlay => it.on_lease(xray_background::build_overlay),
+        HdmaCall::CaptureBg2Right => it.on_lease(xray_background::capture_bg2_right),
+        HdmaCall::UploadLeft => it.on_lease(xray_background::upload_left),
+        HdmaCall::UploadRight => it.on_lease(xray_background::upload_right),
+        HdmaCall::SetBackdrop => it.on_lease(xray_background::set_backdrop),
+        HdmaCall::FreezeAndBackup => it.on_object(index, xray_background::freeze_and_backup),
+        HdmaCall::FinishPowerBomb => it.with_object(index, |index, game| {
             explosion_window::finish_power_bomb(index, slot, game)
         }),
-        Some((_, HdmaCall::FinishCrystalFlash)) => it.with_object(index, |index, game| {
+        HdmaCall::FinishCrystalFlash => it.with_object(index, |index, game| {
             explosion_window::finish_crystal_flash(index, slot, game)
         }),
-        Some((_, HdmaCall::InitializeRainbowBeam)) => {
-            it.effect(HdmaEffect::InitializeRainbowBeam, slot)
-        }
-        Some((_, HdmaCall::InitializeSuitPickup)) => {
-            it.effect(HdmaEffect::InitializeSuitPickup, slot)
-        }
+        HdmaCall::InitializeRainbowBeam => it.effect(HdmaEffect::InitializeRainbowBeam, slot),
+        HdmaCall::InitializeSuitPickup => it.effect(HdmaEffect::InitializeSuitPickup, slot),
         // The explosion starts store the explosion words and window sources the
         // lease owns.
-        Some((_, HdmaCall::BeginPreFlash)) => it.on_lease(explosion_window::begin_pre_flash),
-        Some((_, HdmaCall::BeginPrescaledPreFlash)) => {
+        HdmaCall::BeginPreFlash => it.on_lease(explosion_window::begin_pre_flash),
+        HdmaCall::BeginPrescaledPreFlash => {
             it.on_lease(explosion_window::begin_prescaled_pre_flash)
         }
-        Some((_, HdmaCall::BeginExplosion)) => it.on_lease(explosion_window::begin_explosion),
-        Some((_, HdmaCall::BeginPrescaledExplosion)) => {
+        HdmaCall::BeginExplosion => it.on_lease(explosion_window::begin_explosion),
+        HdmaCall::BeginPrescaledExplosion => {
             it.on_lease(explosion_window::begin_prescaled_explosion)
         }
-        Some((_, HdmaCall::BeginCrystalFlash)) => {
-            it.on_lease(explosion_window::begin_crystal_flash)
-        }
-        _ => it.foreign(|game| hdma_call(address, game)),
+        HdmaCall::BeginCrystalFlash => it.on_lease(explosion_window::begin_crystal_flash),
     }
 }
 
 /// The hosts every pre-instruction target runs on.
-pub trait DispatchHost:
-    Host + explosion_window::Host + xray_background::Host + room_visuals::StatueHost
-{
-}
-impl<T> DispatchHost for T where
-    T: Host + explosion_window::Host + xray_background::Host + room_visuals::StatueHost + ?Sized
-{
-}
+pub trait DispatchHost: Host + explosion_window::Host + room_visuals::StatueHost {}
+impl<T> DispatchHost for T where T: Host + explosion_window::Host + room_visuals::StatueHost + ?Sized
+{}
 
 /// Run the pre-instruction at `address` for HDMA object `index`. Targets
 /// that own their object's words run on it as typed fields; the rest run on
@@ -328,8 +296,9 @@ where
                 &[crate::fx_state::Field::Blending],
             );
         }),
-        RestoreLeft => it.with_object(index, xray_background::restore_left),
-        FinishRestore => it.with_object(index, xray_background::finish_restore),
+        RestoreLeft => it.on_object(index, xray_background::restore_left),
+        RestoreRight => it.on_lease(xray_background::restore_right),
+        FinishRestore => it.on_object(index, xray_background::finish_restore),
         SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
         PowerBombAfterglow => it.with_object(index, explosion_window::power_bomb_afterglow),
         CrystalFlashAfterglow => it.with_object(index, explosion_window::crystal_flash_afterglow),
@@ -400,6 +369,7 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, game: &mut H
     match target {
         Nothing
         | RestoreLeft
+        | RestoreRight
         | FinishRestore
         | LavaSurface
         | LavaBackground
@@ -450,7 +420,6 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, game: &mut H
         | StatueBlending
         | TitleGradient
         | IntroCrossfade => unreachable!("run_pre_action runs {target:?}"),
-        RestoreRight => xray_background::restore_right(game),
         SkyVerticalScroll => scrolling_sky::update_vertical_scroll(game),
         TitleGradientBackdrop => hdma_objects::advance_title_gradient_backdrop(game),
     }
