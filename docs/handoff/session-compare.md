@@ -518,6 +518,36 @@ normalization, replays, and the cause the row records.
 | $18A6-$18A7 | `room.collision_detection_index` | 31,798 | 63 | the index the projectile loops leave |
 | $EF74-$EF77 | `actors.graphics.compatibility` | 22 | 17 | the enemy graphics load, 1-3 Ticks per room load |
 
+**Retired (lane `collab/both-101`).** Seven entries' writers now store what
+the original's routines leave, and their ranges left `NORMALIZED_RAM`, the
+LEGACY rows and `SHARED_RAM` (until-row-retires 101 -> 73 bytes):
+`$0E4A` (spawn, $A0:9275/$92DB), `$1834-$183B` (solid enemy collision
+$A0:AB19/$AB65, cleared at $A0:915B), `$EF74-$EF77` (enemy set load,
+$A0:8D64), `$1874` (extended projectile/bomb scans $A0:9C6B/$9E06; the bang
+stored its direction there, the original uses $1872), `$0D9C-$0D9D` (grapple
+swing $94:AD29/$AD38), `$17A8-$17AB` (main enemy routine, solid and grapple
+scans), `$18A6-$18A7` (every projectile scan's index on exit) and
+`$0E56-$0E59` (spawn backup $A0:927C, data pointer $A0:9015). Each was
+checked against the bank logs, not replayed: the next gate run's evidence
+line confirms them, and a range that still differs is a lockstep failure
+on that row. Left, with their writers:
+
+- `$0000-$0003`, `$0012-$0017`: direct-page scratch every routine shares
+  (e.g. $A0:8D64 uses $12-$1E, $A0:996C $12, the solid collision $12-$16,
+  the power bomb scan $12/$14). Matching it means storing the scratch from
+  each writer; out of reach here.
+- `$060B`: the extended spritemap scans' entry counters ($A0:9C0D, $9DA8,
+  $9AD7) and the drop count.
+- `$0D82-$0D8F`: the grapple's temporaries ($94:A861-$AE36: block
+  collision, clearance check, length change, swing), the ending's wavy Samus
+  ($88:EC57) and the rotating Ceres elevator ($90:8C27, $BC46).
+- `$0E20-$0E45`: the enemy loop's temporaries ($0E20/$0E22/$0E26 in spawn,
+  $0E2E in the enemy set load, $0E32 in the solid collision, ...).
+- `$0E54`: the current enemy index; the power bomb scan now leaves FFC0h,
+  the draw, select and Kraid/Ki-Hunter writers are unchecked.
+- `$1784-$178B`: the AI pointer every dispatch jumps through ($1784/$1786
+  before each JML, the backups in spawn).
+
 Each differs where the engine does not leave the original's value: they are
 real divergences of fields the Session owns, not scratch a split can free.
 Each is a fix to the field's owner (the writers the original shares the
