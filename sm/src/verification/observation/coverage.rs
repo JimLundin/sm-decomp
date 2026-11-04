@@ -138,7 +138,7 @@ pub(super) enum Shared {
 
 /// The Session fields the normalized ranges cover, in address order, each
 /// with the field and its decision.
-pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 9] = [
+pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 7] = [
     // The direct-page long pointer scratch; the $0000-$0050 row.
     (0x0..0x4, "pointer_scratch", Shared::UntilRowRetires),
     // The enemy projectile spawn scratch; the $0000-$0050 row.
@@ -171,16 +171,6 @@ pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 9] = [
     (
         0xe20..0xe46,
         "compatibility_enemy_scratch, actors.compatibility",
-        Shared::UntilRowRetires,
-    ),
-    (
-        0xe54..0xe56,
-        "actors.controls.selected",
-        Shared::UntilRowRetires,
-    ),
-    (
-        0x1784..0x178c,
-        "actors.compatibility.pre_hook",
         Shared::UntilRowRetires,
     ),
 ];

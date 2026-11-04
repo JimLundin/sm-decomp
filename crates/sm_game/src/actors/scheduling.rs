@@ -167,6 +167,8 @@ pub fn advance_selected<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H) 
             h.session_mut().actors.controls.compatibility_data_pointer =
                 ENEMY_DATA.wrapping_add(index);
             let key = ActorKey::from_legacy(index);
+            // $A0:901B: every active enemy's bank word, whether its AI runs or not.
+            store_ai_bank(h, key);
             process_actor(h, key);
             let flash = h.resolve_actor(key, AccessMode::Native).flash;
             if flash != 0 && !frozen(h) {
@@ -224,6 +226,8 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
             let definition = actor.definition.wrapping_add(2 * handler);
             let capture = h.capture_actor_definition(ActorDefinitionKey(definition));
             let routine = h.definition_routine_offset(&capture, DefinitionRoutine::Main);
+            // $A0:908B, $A0:909C.
+            store_ai_dispatch(h, key, routine);
             h.actor_ai(ActorRoutine(u32::from(bank) << 16 | u32::from(routine)));
             h.probe("actors.advance.ai.completed");
             true
@@ -232,6 +236,8 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
             let capture = h.capture_actor_definition(ActorDefinitionKey(definition));
             let routine = h.definition_routine_offset(&capture, DefinitionRoutine::TimeFrozen);
             if routine != 0 {
+                // $A0:906B, $A0:909C.
+                store_ai_dispatch(h, key, routine);
                 let bank = h.resolve_actor(key, AccessMode::Native).bank;
                 h.actor_ai(ActorRoutine(u32::from(bank) << 16 | u32::from(routine)));
                 true
@@ -265,6 +271,26 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
     }
 }
 
+/// $7E:1786: the enemy's bank word, which the main enemy routine and the
+/// collision scans store on entry and each dispatch before its jump.
+pub fn store_ai_bank(h: &mut impl ActorAccess, key: ActorKey) {
+    let actor = h.resolve_actor(key, AccessMode::Native);
+    let bank = [actor.bank, actor.hurt_time];
+    h.session_mut().actors.compatibility.store_ai_bank(bank);
+}
+/// $7E:1784: the routine a dispatch jumps to.
+pub fn store_ai_pointer(h: &mut impl ActorAccess, routine: u16) {
+    h.session_mut()
+        .actors
+        .compatibility
+        .store_ai_pointer(routine);
+}
+/// $7E:1784..1787: a dispatch that stores both its routine and the enemy's
+/// bank word before its `JML [$1784]`.
+pub fn store_ai_dispatch(h: &mut impl ActorAccess, key: ActorKey, routine: u16) {
+    store_ai_pointer(h, routine);
+    store_ai_bank(h, key);
+}
 /// $7E:0F78, where the enemy slots begin; the enemy data pointer's base.
 const ENEMY_DATA: u16 = 0x0f78;
 /// The byte offset of list entry `index`, as the original's list indices

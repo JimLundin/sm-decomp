@@ -32,8 +32,14 @@ pub fn advance_animation<H: ActorHost + Host>(h: &mut H) {
         usize::try_from(base + isize::try_from(h.resolve_actor(key, LE).instruction).unwrap())
             .expect("enemy script outside ROM"),
     );
-    while pc.word(0) & 0x8000 != 0 {
-        let address = (u32::from(h.resolve_actor(key, LE).bank) << 16) | u32::from(pc.word(0));
+    loop {
+        let routine = pc.word(0);
+        if routine & 0x8000 == 0 {
+            break;
+        }
+        // $A0:C289: each instruction routine passes through $1784.
+        crate::actors::scheduling::store_ai_pointer(h, routine);
+        let address = (u32::from(h.resolve_actor(key, LE).bank) << 16) | u32::from(routine);
         let current = ActorKey::from_legacy(h.session().actors.controls.selected);
         #[cfg(sm_verify_dll)]
         h.actor_reference_opcode(15, address);

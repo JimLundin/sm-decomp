@@ -94,8 +94,7 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 | $0DD2-$0DD7 | mine | collision temporaries (slope index, distance) | 67 / 16758 | storing the temporaries the block collision leaves | player collision |
 | $0E02-$0E03 | mine | Samus bottom boundary position | 66 / 16128 | as above | player collision |
 | $0E20-$0E45 | mine | enemy temporaries | 58 / 12992 | widening the actors' compatibility scratch ($0E20-$0E2A) to the whole range | actors |
-| $0E54-$0E55 | mine | current enemy index | 4 / 211 | storing the index each enemy loop leaves (the power bomb scan leaves FFC0h, $A0:A398) | actors |
-| $1784-$178B | mine | enemy AI pointer and backup | 60 / 7731 | storing the species' AI pointer the dispatch would jump through | actors |
+
 | $184A-$185B | mine | colliding-solid-enemy positions and deltas | 13 / 251 | storing them in the solid enemy collision ($A0:AAC8, $AB22) | player collision |
 | $186E-$1873, $1876-$1885 | mine | enemy spritemap and border collision temporaries (the right border, $1874, is compared: the projectile and bomb scans store it) | 36 / 4260 | storing them in the enemy collision | actors |
 | $189A-$18A5 | mine | Samus target positions and radius mirrors | 58 / 13225 | storing them in the Samus/enemy collision | player collision |
