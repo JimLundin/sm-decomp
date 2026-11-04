@@ -2739,6 +2739,10 @@ impl sm_game::menus::host::MenuRuntime for Runtime<'_> {
         crate::rtl::unreachable()
     }
     #[cfg(sm_verify_dll)]
+    fn observe_map_write(&self, byte: usize, index: usize, stage: u8) {
+        player_legacy_edges::map_write(self, byte, index, stage)
+    }
+    #[cfg(sm_verify_dll)]
     fn observe_selected_continue(&mut self, load_result: u8) {
         crate::flags_save_observer::selected_continue(load_result)
     }

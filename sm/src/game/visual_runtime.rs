@@ -1,6 +1,6 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
 pub(crate) use sm_game::hdma_objects::{
-    clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, update_hdma,
+    clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled,
 };
 pub(crate) use sm_game::room_visuals::{
     initialize_ceres_elevator, initialize_ceres_ridley, initialize_fireflea_lighting,
@@ -8,7 +8,6 @@ pub(crate) use sm_game::room_visuals::{
     initialize_tourian_statue, initialize_weather,
 };
 
-pub(crate) use crate::game::hosts::update_beam_tiles_and_palette;
 pub(crate) use crate::game::visual_checks::{
     check_animation_guard, check_palette_guard, samus_observer,
 };

@@ -450,13 +450,6 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
     }
 }
 
-/// Queue the active beam's tiles and write its palette on a fresh lease.
-pub(crate) fn update_beam_tiles_and_palette(game: &mut Game) {
-    sm_game::player_drawing::update_beam_tiles_and_palette(
-        &mut crate::game::session_runtime::Runtime::new(game),
-    );
-}
-
 /// Draw Samus's frame on a fresh lease, inside the player driver's owned call.
 /// The HUD's values on the game: the inventory view over the projected bytes,
 /// and the named words for the HUD items and grapple, read the same way.

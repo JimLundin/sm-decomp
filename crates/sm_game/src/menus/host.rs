@@ -44,14 +44,6 @@ pub trait Tables {
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
     fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
 }
-impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> Tables for T {
-    fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette> {
-        Host::intro_palette(self)
-    }
-    fn visual_tables(&self) -> &crate::visual_tables::ImportedTables {
-        Host::visual_tables(self)
-    }
-}
 
 /// The runtime operations both the menus and the cinematic functions call.
 pub trait CommonRuntime {

@@ -82,11 +82,12 @@ pub(crate) fn run() -> bool {
 fn next_random(g: &mut Game) -> u16 {
     g.next_random()
 }
+// The new game and the load run on a lease, as the menus run them.
 fn new_save_file(g: &mut Game) {
-    sm_game::menus::save_slots::initialize(g)
+    sm_game::menus::save_slots::initialize(&mut Runtime::new(g))
 }
 fn load_from_sram(slot: u16, g: &mut Game) -> u8 {
-    sm_game::menus::save_slots::load(slot, g)
+    sm_game::menus::save_slots::load(slot, &mut Runtime::new(g))
 }
 /// The fixture's own unwind, told apart from any engine panic by its type.
 struct FixtureUnwind;

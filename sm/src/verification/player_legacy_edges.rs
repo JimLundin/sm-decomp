@@ -1,8 +1,11 @@
-//! Candidate-only contracts for retained callbacks and physical map writes.
-//! Runs on an initialized verification host; no predecessor unaligned u16 path.
+//! Candidate-only contracts for retained callbacks and the map's intermediate
+//! writes. Runs on an initialized verification host; no predecessor unaligned
+//! u16 path. The map renders on a lease, so its intermediate writes are read
+//! through the lease's projection, and its publication from physical RAM.
 use super::Runtime;
 use crate::{game_state::Game, rom::RomImage};
 use sm_game::menus::map_menu::{MapScreen, render_map};
+use sm_game::presentation_workspace::{Access as _, Point, Role};
 use std::cell::RefCell;
 pub(crate) const COUNT: usize = 1;
 
@@ -15,13 +18,6 @@ struct Observation {
 }
 thread_local! {
     static OBS: RefCell<Observation> = RefCell::new(Observation::default());
-}
-fn read(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes({
-        let mut bytes = [0; 2];
-        g.ram().copy_out(at, &mut bytes);
-        bytes
-    })
 }
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
@@ -36,16 +32,20 @@ fn explored(byte: usize) -> u8 {
 fn tile(index: usize) -> u16 {
     0x8400 | index as u16
 }
+/// The lease's projected tile word at `index` of the map's destination.
+fn projected_tile(r: &Runtime, index: usize) -> u16 {
+    r.screen_word(Point::new(Role::Xray, 2 * index))
+}
 // 0 = after shift; 1 = after carry reinsertion; 2 = after tile publication.
-pub(crate) fn map_write(g: &Game, byte: usize, index: usize, stage: u8) {
+pub(crate) fn map_write(r: &Runtime, byte: usize, index: usize, stage: u8) {
     OBS.with(|cell| {
         let mut o = cell.borrow_mut();
         if !o.map {
             return;
         }
         assert!(
-            !g.actor_identity_is_with_session(),
-            "retained writer owns physical RAM"
+            r.persistent_is_current(),
+            "the lease's projection serves the map's writes"
         );
         assert_eq!(byte, index / 8);
         let before = explored(byte).rotate_left((index % 8) as u32);
@@ -55,19 +55,19 @@ pub(crate) fn map_write(g: &Game, byte: usize, index: usize, stage: u8) {
             before.rotate_left(1)
         };
         assert_eq!(
-            g.ram().read_byte(0x7f7 + byte),
+            r.byte(0x7f7 + byte),
             expected,
             "map intermediate byte {index}, stage {stage}"
         );
         if stage != 2 {
             assert_eq!(
-                read(g, 0x4000 + index * 2),
+                projected_tile(r, index),
                 0xdead,
                 "exploration precedes tile publication"
             );
         } else {
             assert_eq!(
-                read(g, 0x4000 + index * 2),
+                projected_tile(r, index),
                 if before & 0x80 == 0 {
                     31
                 } else {
@@ -137,12 +137,30 @@ fn map(g: &mut Game) {
             ..Default::default()
         }
     });
-    // Retain the flag-zero rotations and every intermediate physical write.
-    render_map(MapScreen::Pause, g);
-    OBS.with(|cell| {
-        let o = cell.borrow();
-        assert_eq!((o.shifted, o.incremented, o.completed), (2048, 1024, 2048));
-    });
+    // Retain the flag-zero rotations and every intermediate write, on the
+    // lease; the lease's projection holds the rendered map before it closes.
+    {
+        let mut runtime = Runtime::new(g);
+        render_map(MapScreen::Pause, &mut runtime);
+        OBS.with(|cell| {
+            let o = cell.borrow();
+            assert_eq!((o.shifted, o.incremented, o.completed), (2048, 1024, 2048));
+        });
+        for byte in 0..256 {
+            assert_eq!(
+                runtime.byte(0x7f7 + byte),
+                expected[0x7f7 + byte],
+                "the lease holds the restored exploration byte {byte}"
+            );
+        }
+        for index in 0..2048 {
+            assert_eq!(
+                projected_tile(&runtime, index).to_le_bytes(),
+                [expected[0x4000 + 2 * index], expected[0x4001 + 2 * index]],
+                "the lease holds the rendered tile {index}"
+            );
+        }
+    }
     assert_eq!(
         &(0..g.ram().len())
             .map(|at| g.ram().read_byte(at))
