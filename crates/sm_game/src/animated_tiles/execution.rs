@@ -393,9 +393,9 @@ pub mod leased {
         game.lend(|lease| super::spawn(lease, definition));
     }
     pub fn advance<H: Lend + ?Sized>(game: &mut H) {
-        game.lend(|lease| super::advance(lease));
+        game.lend(super::advance);
     }
     pub fn upload_pending<H: Lend + ?Sized>(game: &mut H) {
-        game.lend(|lease| super::upload_pending(lease));
+        game.lend(super::upload_pending);
     }
 }

@@ -20,11 +20,11 @@ pub trait SaveRam {
 pub trait PlayerRuntime: crate::runtime_access::Lend {
     /// Draw the player projectiles.
     fn draw_projectiles(&mut self) {
-        self.lend(|lease| crate::player_projectiles::presentation::draw_projectiles(lease));
+        self.lend(crate::player_projectiles::presentation::draw_projectiles);
     }
     /// Restore Samus's movement sound after a message box.
     fn restore_movement_sound(&mut self) {
-        self.lend(|lease| crate::player_projectiles::feedback::restore_sound(lease));
+        self.lend(crate::player_projectiles::feedback::restore_sound);
     }
     /// Run Samus's pose command `command`; returns the original's result.
     fn player_command(&mut self, command: u16) -> u16 {
