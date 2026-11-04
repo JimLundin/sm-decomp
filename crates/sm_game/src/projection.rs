@@ -122,6 +122,10 @@ pub enum Field {
     /// The word at byte `offset` of the compressed maps ($D91C + offset),
     /// as [`Self::SavedMapAt`] for the saved maps.
     CompressedMapAt(usize),
+    /// Word `index` of the gameplay words a finished demo clears ($077C +
+    /// 2 * index), each byte from its owner ([`crate::demo_clear`]). Most
+    /// straddle two owners, so stores take the byte path.
+    DemoClear(usize),
 }
 
 impl Field {
@@ -172,6 +176,7 @@ impl Field {
             Self::SaveFile(word) => word.address(),
             Self::SavedMapAt(offset) => crate::save_file::SAVED_MAPS + offset,
             Self::CompressedMapAt(offset) => crate::save_file::COMPRESSED_MAPS + offset,
+            Self::DemoClear(index) => crate::demo_clear::FIRST + 2 * index,
         }
     }
 
@@ -252,6 +257,7 @@ impl Field {
                 let bytes = &session.compressed_maps.bytes;
                 u16::from_le_bytes([*bytes.get(offset)?, *bytes.get(offset + 1)?])
             }
+            Self::DemoClear(index) => return crate::demo_clear::session_word(session, index),
         })
     }
 
@@ -319,7 +325,7 @@ impl Field {
             Self::ExploredMap(_) | Self::SavedMap(_) | Self::MapStations(_) => return None,
             Self::Player(word) => return player_word_mut(session, word),
             Self::SaveFile(word) => return save_file_word_mut(session, word),
-            Self::SavedMapAt(_) | Self::CompressedMapAt(_) => return None,
+            Self::SavedMapAt(_) | Self::CompressedMapAt(_) | Self::DemoClear(_) => return None,
         })
     }
 }
@@ -1009,6 +1015,7 @@ mod tests {
         fields.extend((0..maps - 1).map(Field::SavedMapAt));
         let compressed = crate::save_file::CompressedMaps::BYTES;
         fields.extend((0..compressed - 1).map(Field::CompressedMapAt));
+        fields.extend((0..crate::demo_clear::WORDS).map(Field::DemoClear));
         fields
     }
 
