@@ -512,14 +512,16 @@ impl<'g> Runtime<'g> {
         }
     }
     /// Samus's NMI tile upload from the lease. It reads its descriptors
-    /// ($7E:071D..0722) and the cartridge, and writes registers and VRAM alone,
-    /// so it runs on Game's published RAM: the lease's descriptors.
+    /// ($7E:071D..0722) from the lease and the cartridge, and writes registers
+    /// and VRAM alone. The publish keeps RAM where the NMI's later uploads
+    /// found it.
     pub(crate) fn upload_samus_tiles(&mut self) {
         self.owned_player_call(|runtime| {
             runtime.publish();
+            let descriptors = std::array::from_fn(|lane| runtime.byte(0x71d + lane));
             // SAFETY: a lease runs with the backend installed, and `&mut Game`
             // excludes other access.
-            unsafe { crate::game::display_transfers::upload_samus(runtime.game) }
+            unsafe { crate::game::display_transfers::upload_samus(descriptors, runtime.game) }
         });
     }
     /// One device register write from the lease (`rtl::write_device`).

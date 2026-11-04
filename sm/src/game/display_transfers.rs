@@ -276,7 +276,10 @@ struct NativeSamusDescriptor {
     address: u32,
     vram: u16,
 }
-struct NativeSamusUpload<'a>(&'a mut Game);
+/// Samus's NMI upload over its descriptor bytes ($7E:071D..0722: the two
+/// enable flags, then the two descriptor pointers), as the lease holds them,
+/// with Game as the device and the cartridge.
+struct NativeSamusUpload<'a>(&'a mut Game, [u8; 6]);
 impl NativeSamusUpload<'_> {
     fn table(
         &self,
@@ -302,23 +305,20 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         Ok(())
     }
     fn enabled(&mut self, half: sm_game::scene::samus_body::Half) -> Result<u8, Self::Error> {
-        Ok(self.0.compatibility_byte(match half {
-            sm_game::scene::samus_body::Half::Top => 0x71d,
-            sm_game::scene::samus_body::Half::Bottom => 0x71e,
-        }))
+        Ok(self.1[match half {
+            sm_game::scene::samus_body::Half::Top => 0,
+            sm_game::scene::samus_body::Half::Bottom => 1,
+        }])
     }
     fn descriptor(
         &mut self,
         half: sm_game::scene::samus_body::Half,
     ) -> Result<Self::Descriptor, Self::Error> {
         let (pointer, vram) = match half {
-            sm_game::scene::samus_body::Half::Top => (0x71f, 0x6000),
-            sm_game::scene::samus_body::Half::Bottom => (0x721, 0x6080),
+            sm_game::scene::samus_body::Half::Top => (2, 0x6000),
+            sm_game::scene::samus_body::Half::Bottom => (4, 0x6080),
         };
-        let address = u16::from_le_bytes([
-            self.0.compatibility_byte(pointer),
-            self.0.compatibility_byte(pointer + 1),
-        ]);
+        let address = u16::from_le_bytes([self.1[pointer], self.1[pointer + 1]]);
         unsafe {
             let _ = crate::rtl::rom_bank_ptr::<0x92>(address, self.0);
         }
@@ -405,9 +405,11 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         Ok(())
     }
 }
+/// Samus's NMI tile upload over `descriptors`, the bytes $7E:071D..0722 as the
+/// lease holds them: it writes registers and VRAM, and reads the cartridge.
 /// Requires a live, exclusively accessed SNES backend.
-pub(crate) unsafe fn upload_samus(game: &mut Game) {
-    sm_game::scene::samus_tile_upload::upload(&mut NativeSamusUpload(game)).unwrap();
+pub(crate) unsafe fn upload_samus(descriptors: [u8; 6], game: &mut Game) {
+    sm_game::scene::samus_tile_upload::upload(&mut NativeSamusUpload(game, descriptors)).unwrap();
 }
 
 /// Requires a live, exclusively accessed SNES backend.
