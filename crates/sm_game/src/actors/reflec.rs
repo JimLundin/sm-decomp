@@ -69,6 +69,12 @@ pub fn cycle_palette(runtime: &mut impl ActorLease) {
         source = source.wrapping_add(2);
         destination = destination.wrapping_add(2);
     }
+    // $A3:DB2E/$DB3C: the colour count runs down to zero.
+    runtime
+        .session_mut()
+        .enemy_projectiles
+        .spawn
+        .store_shared_counter(0);
     let hook = &mut runtime.session_mut().actors.drawing.hook_work;
     hook[HOOK_COLOUR_SET] = (u16::from(hook[HOOK_COLOUR_SET].to_le_bytes()[0]) + 1) & COLOUR_SETS;
 }

@@ -84,6 +84,11 @@ pub fn update(h: &mut impl Host) {
         mapped[row] <<= shift;
     }
     let tile = column.wrapping_add(half.wrapping_add(y).swap_bytes() >> 3);
+    // $90:AA4F: the bit index of Samus's map position.
+    h.session_mut()
+        .enemy_projectiles
+        .spawn
+        .store_shared_counter(tile);
     let adjustment = if half != 0 && tile & 0x1f < 2 {
         1026
     } else {

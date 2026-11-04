@@ -164,7 +164,10 @@ fn touch_hitboxes<H: ActorHost>(h: &mut H) {
         h.session().player.contact.radius,
     );
     let pose = h.capture_actor_pose(key);
-    let mut remaining = i32::from(h.actor_pose_count(&pose, ActorCountWidth::Byte));
+    let count = h.actor_pose_count(&pose, ActorCountWidth::Byte);
+    // $A0:9AD7, $A0:9B70: the remaining entries, left where a hit dispatches.
+    store_entry_count(h, count);
+    let mut remaining = i32::from(count);
     let mut address = h
         .resolve_actor(key, AccessMode::Native)
         .spritemap
@@ -199,6 +202,8 @@ fn touch_hitboxes<H: ActorHost>(h: &mut H) {
         address = address.wrapping_add(8);
         ordinal = ordinal.wrapping_add(1);
         remaining = remaining.wrapping_sub(1);
+        let [low, high, ..] = remaining.to_le_bytes();
+        store_entry_count(h, u16::from_le_bytes([low, high]));
         if remaining == 0 {
             return;
         }
@@ -364,7 +369,9 @@ fn projectile_hitbox<H: ActorHost + EprojHost>(
             ActorCountWidth::Byte
         },
     );
-    for entry in 0..usize::from(count) {
+    // $A0:9C0D/$9CFD, $A0:9DA8/$9E71: the remaining entries, per projectile.
+    for (entry, remaining) in (0..usize::from(count)).zip((1..=count).rev()) {
+        store_entry_count(h, remaining);
         let part = h.capture_actor_part_at(&pose, entry, ActorPartTraversal::CapturedLinear);
         let x = h
             .actor_part_word(&part, ActorPartWord::X)
@@ -383,7 +390,16 @@ fn projectile_hitbox<H: ActorHost + EprojHost>(
             }
         }
     }
+    // The count runs down to zero, or past it from an empty spritemap.
+    store_entry_count(h, if count == 0 { 0xffff } else { 0 });
     None
+}
+/// $7E:060B: the extended spritemap scans' remaining entries.
+fn store_entry_count(h: &mut impl ActorAccess, remaining: u16) {
+    h.session_mut()
+        .enemy_projectiles
+        .spawn
+        .store_shared_counter(remaining);
 }
 pub fn grapple_contact<H: ActorHost + EprojHost + MechanismEffects>(
     h: &mut H,

@@ -141,6 +141,11 @@ pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
         source = source.wrapping_add(2);
         destination = destination.wrapping_add(2);
     }
+    // $A8:E890/$E89E: the colour count runs down to zero.
+    game.session_mut()
+        .enemy_projectiles
+        .spawn
+        .store_shared_counter(0);
     // The legacy phase increment reads physical byte zero, even on a big-endian host.
     let phase = game.session().actors.drawing.hook_work[HOOK_COLOUR_SET].to_le_bytes()[0];
     set_hook_word(game, HOOK_COLOUR_SET, (u16::from(phase) + 1) & COLOUR_SETS);

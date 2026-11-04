@@ -92,6 +92,12 @@ pub fn hurt_ai<L: Lease>(game: &mut L) {
         write_health_palette(false, game);
     }
     copy_hurt_palette(SPRITE_PALETTE_7, SPRITE_PALETTE_7_COLOUR, game);
+    // $A5:9564/$9572, $A5:95B3/$95C1: both copies count their colours down
+    // in $060B.
+    game.session_mut()
+        .enemy_projectiles
+        .spawn
+        .store_shared_counter(0);
     if battle!(game.SamusGrappleFlags) & GRAPPLE_FLAG != 0
         && Draygon::of(game, BODY).actor().frame & GRAPPLE_FRAMES == 0
     {

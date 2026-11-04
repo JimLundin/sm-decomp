@@ -229,6 +229,11 @@ fn draw_actor<H: ActorHost + EprojHost>(h: &mut H) {
             break;
         }
     }
+    // $A0:9577: the entry count runs down to zero.
+    h.session_mut()
+        .enemy_projectiles
+        .spawn
+        .store_shared_counter(0);
 }
 
 fn queue_size(h: &impl ActorCollections, index: usize) -> u16 {

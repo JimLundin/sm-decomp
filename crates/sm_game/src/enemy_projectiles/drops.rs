@@ -38,6 +38,12 @@ pub fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
         }
         spawn(definition, index, h);
     }
+    // $A0:B8F4..$BB6A: each death item drop routine counts its drops down in
+    // $060B.
+    h.session_mut()
+        .enemy_projectiles
+        .spawn
+        .store_shared_counter(0);
 }
 
 pub fn select(index: u16, h: &mut impl Host) -> u16 {
