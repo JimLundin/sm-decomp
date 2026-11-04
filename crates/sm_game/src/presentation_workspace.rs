@@ -16,9 +16,12 @@ pub enum Role {
     Equipment,
     SavedBackground,
     Xray,
+    /// Crocomire's melting tiles, which its death loads from ROM and melts
+    /// column by column ($7E:4000..).
+    MeltingTiles,
 }
 impl Role {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::Pause,
         Self::MessageText,
         Self::MessageDescriptor,
@@ -26,6 +29,7 @@ impl Role {
         Self::Equipment,
         Self::SavedBackground,
         Self::Xray,
+        Self::MeltingTiles,
     ];
     pub const fn compatibility_base(self) -> usize {
         match self {
@@ -36,6 +40,7 @@ impl Role {
             Self::Equipment => 0x3800,
             Self::SavedBackground => 0x4100,
             Self::Xray => 0x4000,
+            Self::MeltingTiles => 0x4000,
         }
     }
 }

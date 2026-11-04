@@ -702,7 +702,7 @@ variants!(h::SourceBinding, "source binding" {
 
 choices!(d::WordOrder { 0 => Little, 1 => Big });
 choices!(crate::presentation_workspace::Role { 0 => Pause, 1 => MessageText, 2 => MessageDescriptor,
-    3 => Menu, 4 => Equipment, 5 => SavedBackground, 6 => Xray });
+    3 => Menu, 4 => Equipment, 5 => SavedBackground, 6 => Xray, 7 => MeltingTiles });
 variants!(crate::presentation_workspace::Origin, "workspace origin" { 0 => Shared, 1 => Allocation(value) });
 record!(crate::presentation_workspace::Window {
     bank,
@@ -1299,7 +1299,7 @@ pub fn encode(
     required: &t::DisplayStartRequirements,
 ) -> Result<Vec<u8>, String> {
     let binding = binding(media, metadata, required)?;
-    let mut bytes = Vec::from(b"SMDISPL\x05".as_slice());
+    let mut bytes = Vec::from(b"SMDISPL\x06".as_slice());
     binding.put(&mut bytes);
     description.put(&mut bytes);
     resident.put(&mut bytes);
@@ -1316,7 +1316,7 @@ pub fn decode(
 ) -> Result<t::ValidatedDisplayStart, String> {
     let expected = binding(&media, metadata, required)?;
     let mut read = CheckpointReader(bytes);
-    if read.bytes(8)? != b"SMDISPL\x05" {
+    if read.bytes(8)? != b"SMDISPL\x06" {
         return Err("unsupported display checkpoint schema".into());
     }
     let binding_length = usize::get(&mut read)?;
