@@ -1,6 +1,5 @@
 //! Mother Brain's two slots: the body in slot 0 and the brain in slot $40.
 //!
-//! Was `Enemy_MotherBrain` (`EnemyLayout72`) in the original decompilation.
 //! Each view names its slot words after the Mother Brain notes in the bank
 //! logs. The body's extra words are the fight-wide state at $7E:7800 and
 //! $7E:8000; the brain's are at $7E:7840 and $7E:8040. Unnamed words keep

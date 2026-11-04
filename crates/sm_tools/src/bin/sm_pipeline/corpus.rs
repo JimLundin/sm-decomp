@@ -149,10 +149,9 @@ pub fn oracle_sample(
 }
 
 /// The locked ids whose entries lack the Session streams, once any entry
-/// carries them (docs/handoff/session-compare.md, slice 5); none before.
-/// The oracle sample records them all beside its rotation, so the scheduled
-/// run after the first streams are committed completes the rest, and slice
-/// 6 can drop `wram`.
+/// carries them; none before. The oracle sample records them all beside its
+/// rotation, so the scheduled run after the first streams are committed
+/// completes the rest, and the locks can then drop `wram`.
 pub fn lacking_session_streams(lock: &Lock, locked: &BTreeSet<String>) -> Vec<String> {
     let streams = |id: &str| {
         lock.entries

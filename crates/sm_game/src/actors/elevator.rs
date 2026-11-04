@@ -67,7 +67,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
     }
 }
 /// Main AI / grapple AI / frozen AI - elevator ($A3:952A): run the elevator
-/// AI for its status. Was `advance`.
+/// AI for its status.
 pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     let entry = &runtime.session().room.entry;
     if entry.elevator_interlock != 0 || (entry.elevator_status == 0 && entry.elevator_flags == 0) {

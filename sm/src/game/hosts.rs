@@ -117,7 +117,7 @@ impl sm_game::actors::phantoon::Lease for crate::game::session_runtime::Runtime<
     }
     fn start_wave(&mut self, direction: u16, speed: u16) {
         // The motion and the wave object are the lease's; the observations are
-        // refreshed on entry and on return, as the former foreign call left them.
+        // refreshed on entry and on return.
         self.owned_player_call(|runtime| {
             crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, runtime)
         });
@@ -135,7 +135,7 @@ impl sm_game::actors::kraid::Lease for crate::game::session_runtime::Runtime<'_>
         )
     }
     fn observe_kraid_flags(&mut self, step: u8) {
-        // The observation refreshes as the former foreign call did.
+        // The observation refreshes.
         self.owned_player_call(|runtime| {
             #[cfg(sm_verify_dll)]
             crate::kraid_flags_observer::observe_lease(step, runtime);
@@ -330,8 +330,7 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
     }
     fn native_upload(&mut self, request: sm_game::visual_state::Upload) {
         // The upload reads the cartridge through the lease's transfer port, with
-        // the observations refreshed on entry and on return as the former foreign
-        // call left them.
+        // the observations refreshed on entry and on return.
         self.owned_player_call(|runtime| {
             crate::game::display_commands::animated_tiles_on_lease(request, runtime);
         });
@@ -356,8 +355,7 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
     }
     fn update_grapple_tiles(&mut self) {
         // The queue stores and the tile words go through the lease's projection,
-        // the same per-byte write the former foreign call's return took them
-        // back with, so a full-u16 cursor that aliases the charge or the point
+        // per byte, so a full-u16 cursor that aliases the charge or the point
         // animation words stores them as it did (grapple_tile_alias_checks).
         self.owned_player_call(sm_game::grapple_swing::update_tiles);
     }

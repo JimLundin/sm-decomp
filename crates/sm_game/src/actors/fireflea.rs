@@ -109,8 +109,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
         *fireflea.max_y() = radius.wrapping_add(y);
     }
 }
-/// Main AI - fireflea ($A3:8DEE): circle, or fly up and down the line. Was
-/// `advance`.
+/// Main AI - fireflea ($A3:8DEE): circle, or fly up and down the line.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let flea = current(game);
     if Fireflea::of(game, flea).pattern() & CIRCLE != 0 {

@@ -54,7 +54,7 @@ const DRAYGON_DEAD: u16 = 1;
 const QUARTER_TURN: u8 = 0x40;
 
 /// Write the health-based colours: natively into palette RAM, or into the
-/// palette buffer. Was `damage_palette`.
+/// palette buffer.
 pub fn write_health_palette<L: Lease>(native: bool, game: &mut L) {
     let mut cursor = Draygon::of(game, BODY).health_palette().wrapping_mul(4);
     for index in HEALTH_COLOURS {
@@ -84,7 +84,7 @@ fn copy_hurt_palette<L: Lease>(default: u16, target: usize, game: &mut L) {
     }
 }
 /// Hurt AI - Draygon ($A5:954D): flash the palettes and, while grappled,
-/// drain health. Was `hurt`.
+/// drain health.
 pub fn hurt_ai<L: Lease>(game: &mut L) {
     copy_hurt_palette(BG_PALETTE_5, BG_PALETTE_5_COLOUR, game);
     let k = game.current_enemy();
@@ -146,8 +146,8 @@ pub fn power_bomb<L: Lease>(game: &mut L) {
     game.power_bomb_reaction(Death::LeavePending);
     reaction(game);
 }
-/// Draygon reaction ($A5:960D): update the health palette, or on death drop
-/// the grapple, let go of Samus and drift to the death spot. Was `after_damage`.
+/// Draygon reaction ($A5:960D): update the health palette, or on death drop the
+/// grapple, let go of Samus and drift to the death spot.
 pub fn reaction<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     if Draygon::of(game, k).actor().health != 0 {
@@ -188,7 +188,6 @@ pub fn reaction<L: Lease>(game: &mut L) {
     }
 }
 /// Draygon body function - death sequence - drift to death spot ($A5:9185).
-/// Was `approach`.
 pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     foam_at_mouth(k, FOAM_FRAMES, game);
@@ -290,8 +289,7 @@ pub fn spawn_goop<L: Lease + ActorLease>(
     game.spawn_actor_eproj(2, enemy, 0x8e50);
     script
 }
-/// Draygon body function - death sequence - wait for evirs ($A5:9294). Was
-/// `ring`.
+/// Draygon body function - death sequence - wait for evirs ($A5:9294).
 pub fn wait_for_evirs<L: Lease>(game: &mut L) {
     game.owned_step(dying_smoke);
     {
@@ -309,7 +307,6 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
 }
 /// Draygon body function - death sequence - buried by evirs ($A5:92AB): sink
 /// until buried, then delete Draygon, set its boss bit and drop its rewards.
-/// Was `sink`.
 pub fn buried_by_evirs<L: Lease>(game: &mut L) {
     game.owned_step(dying_smoke);
     let bias = game.session().actors.compatibility.scratch[1];

@@ -9,7 +9,7 @@ pub(crate) use requests::queue_delayed_8 as queue_music_delayed_8;
 /// exported game, over the lease's audio host. The Session's control owns the request bytes
 /// in Legacy too, so the stores reach its owner, in the same order as before, and RAM takes
 /// them when the lease exports, before any APU-side read. Each refreshes the observations on
-/// entry and on return, as the foreign call left them.
+/// entry and on return.
 impl crate::game::session_runtime::Runtime<'_> {
     fn audio_request<R>(&mut self, request: impl FnOnce(&mut Self) -> R) -> R {
         self.owned_player_call(|runtime| {

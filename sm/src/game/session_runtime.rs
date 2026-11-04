@@ -146,20 +146,19 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.owned_call(|runtime| sm_game::progress::event_happened(runtime, event))
     }
     fn restore(&mut self, resource: sm_game::item_pickups::Resource, amount: u16) {
-        // The former foreign entry restored on a nested lease; this one keeps
-        // its observation refresh.
+        // The owned call refreshes the observations.
         self.owned_player_call(|runtime| {
             crate::game::item_pickups_runtime::restore(resource, amount, runtime)
         });
     }
     fn message_box_response(&mut self, kind: u16) -> i32 {
-        // The dialogue words are the lease's; the former foreign entry's
-        // observation refresh is kept.
+        // The dialogue words are the lease's; the owned call refreshes the
+        // observations.
         self.owned_player_call(|runtime| sm_game::message_boxes::poll(kind, runtime))
     }
     fn save_game(&mut self, slot: u16) {
         // The save's words are the lease's; the observations are refreshed on
-        // entry and on return, as the former foreign call left them.
+        // entry and on return.
         self.owned_player_call(|runtime| sm_game::menus::save_slots::save(slot, runtime));
     }
     fn run_other_pre_instruction(&mut self, address: u32) {
@@ -172,8 +171,7 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
 }
 
 /// The morph ball eye runs on the scheduler's lease, and its beam starts on
-/// it; the observations are refreshed on entry and on return, as the former
-/// foreign call left them.
+/// it; the observations are refreshed on entry and on return.
 impl sm_game::actors::morph_ball_eye::Host for Runtime<'_> {
     fn start_beam(&mut self) {
         self.owned_player_call(crate::game::visual_runtime::initialize_morph_eye_beam);
@@ -416,8 +414,8 @@ impl<'g> Runtime<'g> {
         report_draw_diagnostics(drawing.diagnostics, self.game);
         drawn.expect("owned Samus publication");
     }
-    /// Compose an already-owned operation while retaining the former foreign
-    /// entry's preflight, unwind publication, and refreshed input observations.
+    /// Compose an already-owned operation with its preflight, unwind
+    /// publication, and refreshed input observations.
     pub(crate) fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
         assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
@@ -437,7 +435,7 @@ impl<'g> Runtime<'g> {
             runtime: self,
             completed: false,
         };
-        // The former foreign entry imported these fresh, so refresh them on entry too.
+        // Refresh these on entry too.
         call.runtime.refresh_actor_observations();
         let result = action(&mut *call.runtime);
         call.runtime.refresh_actor_observations();
@@ -647,8 +645,7 @@ impl<'g> Runtime<'g> {
     }
     /// The RomPtr invalid-window diagnostic on the lease. It prints and marks the
     /// game failed, reading and storing no RAM, so the Session stays current; the
-    /// observations are refreshed on entry and on return, as the former foreign
-    /// call left them.
+    /// observations are refreshed on entry and on return.
     pub(crate) fn report_invalid_window(&mut self, address: u32) {
         self.owned_player_call(|runtime| invalid_window(runtime.game, address));
     }
@@ -656,7 +653,7 @@ impl<'g> Runtime<'g> {
     /// game failed, as `report_invalid_window`, and the verifier's low-window
     /// observer snapshots the lease's projected RAM where it copied the RAM the
     /// former foreign call had exported. The observations are refreshed on entry
-    /// and on return, as the foreign call left them.
+    /// and on return.
     pub(crate) fn report_native_diagnostic(&mut self, address: u32) {
         self.owned_player_call(|runtime| {
             invalid_window(runtime.game, address);
@@ -684,8 +681,7 @@ impl<'g> Runtime<'g> {
     /// a detached image of the lease's projected RAM where they had the RAM the
     /// former foreign call exported, and the bytes they inject are stored back
     /// through the projection, where the foreign call's import took them. The
-    /// observations are refreshed on entry and on return, as the foreign call
-    /// left them.
+    /// observations are refreshed on entry and on return.
     pub(crate) fn low_window_record(&mut self, bank: u8, address: u16) -> RomRecord {
         let address = (u32::from(bank) << 16) | u32::from(address);
         self.owned_player_call(|runtime| {
@@ -734,7 +730,7 @@ impl<'g> Runtime<'g> {
     /// Run a verifier hook on the lease where it ran on Game: over a detached image
     /// of the lease's projected RAM and the Session's native spawn words, storing
     /// back each byte it changes. The observations are refreshed on entry and on
-    /// return, as the former foreign call left them.
+    /// return.
     #[cfg(sm_verify_dll)]
     pub(crate) fn observe_hook<R>(
         &mut self,
@@ -776,8 +772,7 @@ impl<'g> Runtime<'g> {
     /// The room background's initial-load RomPtr diagnostic on the lease: it prints
     /// and marks the game failed, then the verifier's room background observer runs
     /// over a detached image of the projected RAM, whose injected bytes are stored
-    /// back. The observations are refreshed on entry and on return, as the former
-    /// foreign call left them.
+    /// back. The observations are refreshed on entry and on return.
     pub(crate) fn room_background_diagnostic(&mut self, address: u32) {
         self.owned_player_call(|runtime| {
             invalid_window(runtime.game, address);
@@ -786,7 +781,7 @@ impl<'g> Runtime<'g> {
         });
     }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
-    /// observations are refreshed on entry and on return, as the former foreign call left them.
+    /// observations are refreshed on entry and on return.
     pub(crate) fn next_random_number(&mut self) -> u16 {
         self.owned_player_call(|runtime| {
             let value = sm_game::random::next(runtime.session().timing.random_number);
@@ -1353,7 +1348,7 @@ impl Host for Runtime<'_> {
             self.owned_call(|runtime| sm_game::grapple_swing::update(runtime));
             return;
         }
-        // Both former foreign steps keep its observation refresh.
+        // The owned call refreshes the observations.
         self.owned_player_call(|runtime| match step {
             PlayerStep::Radius => {
                 // SamusPoseParams has eight bytes, with y_radius at byte 6.
@@ -1397,7 +1392,7 @@ impl Host for Runtime<'_> {
     }
     fn spawn_power_bomb(&mut self) {
         // The explosion words and the HDMA objects are the lease's; the owned
-        // call keeps the former foreign entry's observation refresh.
+        // call refreshes the observations.
         self.owned_player_call(sm_game::explosion_window::spawn_power_bomb);
     }
     fn spawn_mechanism(&mut self, header: u16) {
@@ -2222,9 +2217,8 @@ impl Runtime<'_> {
         }
     }
     /// What the game's table did with a routine no lease arm runs: an empty one
-    /// returned at once, and that keeps the former foreign call's observation
-    /// refresh; any other was the original's unreachable failure, which reads
-    /// no game state.
+    /// returned at once, and that refreshes the observations; any other was the
+    /// original's unreachable failure, which reads no game state.
     fn empty_or_unreachable(&mut self, empty: bool) {
         if empty {
             self.owned_player_call(|_| ());
@@ -2241,7 +2235,7 @@ impl Runtime<'_> {
         } else if routine == 11069550 {
             self.owned_call(sm_game::actors::blue_brinstar_face_block::cycle_palette);
         } else if species::EMPTY_DRAW_HOOKS.contains(&routine) {
-            // Nothing to draw; keep the former foreign call's observation refresh.
+            // Nothing to draw; refreshes the observations.
             self.owned_player_call(|_| ());
         } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {
             // No other draw hook exists: the table's fallback is the original's
@@ -2469,8 +2463,8 @@ impl crate::projection::ProjectedBytes for Runtime<'_> {
     }
 }
 // The multipliers hold no WRAM, ROM or Samus state: each port call is one device
-// interval on the backend, with the observations refreshed on entry and on return
-// as the former foreign call left them.
+// interval on the backend, with the observations refreshed on entry and on
+// return.
 impl sm_game::hardware::Multiplier for Runtime<'_> {
     fn mode7_product(&mut self, multiplicand: u16, multiplier: u8) -> u16 {
         use crate::rtl::{M7A, M7B, MPYM, read_device, write_device};
@@ -2544,8 +2538,7 @@ impl sm_game::decompression::DecompressionHost for Runtime<'_> {
 // in one device interval. A command that starts a DMA or moves WRAM runs on the
 // lease's transfer port: the lease is published, so the DMA reads the Session's
 // bytes, and the bytes a readback writes return to the Session. Either way the
-// observations are refreshed on entry and on return, as the former foreign call
-// left them.
+// observations are refreshed on entry and on return.
 impl sm_game::display::video::Video for Runtime<'_> {
     fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
         use crate::game::display_commands::{apply_device, apply_on_lease, device_only};

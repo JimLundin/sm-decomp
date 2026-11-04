@@ -1,5 +1,5 @@
 //! Tatori, Maridia's sleeping turtle, which wakes to hover and carry Samus, and the
-//! mini-tatoris that crawl beside it (bank $A2:8B60-$A2:998C). Was `maridia_turtles`.
+//! mini-tatoris that crawl beside it (bank $A2:8B60-$A2:998C).
 use crate::actors::access::{
     AccessMode::{LittleEndian as Le, Native},
     ActorKey as Key,

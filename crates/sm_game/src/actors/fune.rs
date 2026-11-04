@@ -98,7 +98,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
         actor.variables[lane::COOLDOWN_TIMER] = 0;
     });
 }
-/// Main AI - fune / namihe ($A8:9730): run its function. Was `advance`.
+/// Main AI - fune / namihe ($A8:9730): run its function.
 pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     let key = selected(runtime);
     match runtime.resolve_actor(key, Native).variables[lane::FUNCTION] {

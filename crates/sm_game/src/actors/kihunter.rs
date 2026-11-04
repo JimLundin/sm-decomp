@@ -1,6 +1,6 @@
 //! Kihunter, the winged insect that swoops at Samus and, once shot down to its wingless
-//! form, hops and spits acid; its wings, in the next slot, flutter down
-//! (bank $A8:E99A-$A8:F9BD). Was `ki_hunter`.
+//! form, hops and spits acid; its wings, in the next slot, flutter down (bank
+//! $A8:E99A-$A8:F9BD).
 #![forbid(unsafe_code)]
 use crate::actors::api::Axis;
 use crate::actors::boss_lease::BossLease;

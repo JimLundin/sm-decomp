@@ -1,5 +1,5 @@
 //! Skultera, Maridia's bony fish, which swims a wave left and right and turns
-//! at walls (bank $A3:900A-$A3:94AA). Was `maridia_fish`.
+//! at walls (bank $A3:900A-$A3:94AA).
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Slopes;
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -154,7 +154,7 @@ fn finish_turn(fish: u16, right: bool, game: &mut (impl Host + ?Sized)) {
         set_instruction_list(fish, list, game);
     }
 }
-/// Main AI - Skultera ($A3:912B). Was `advance`.
+/// Main AI - Skultera ($A3:912B).
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let fish = current(game);
     match Skultera::of(game, fish).function() {

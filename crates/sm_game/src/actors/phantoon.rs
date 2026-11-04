@@ -1,11 +1,11 @@
 //! Phantoon, the Wrecked Ship's ghost: its fight as a state machine over the
 //! body's function word, the swoop, the palette fades and the death sequence.
 //!
-//! Was `Phantoon_*` in the original decompilation (bank $A7:CDF3-$A7:DD9B).
-//! Phantoon is four enemies: the body in slot 0, then the eye, the tentacles
-//! and the mouth. Canonical parts use Actor fields; exceptional identities
-//! retain the original queried alias. The figure-8 flight and flames stay in
-//! `phantoon_motion` and `phantoon_actions`.
+//! Bank $A7:CDF3-$A7:DD9B. Phantoon is four enemies: the body in slot 0,
+//! then the eye, the tentacles and the mouth. Canonical parts use Actor
+//! fields; exceptional identities retain the original queried alias. The
+//! figure-8 flight and flames stay in `phantoon_motion` and
+//! `phantoon_actions`.
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::host::{Death, Shot, below};
@@ -575,8 +575,7 @@ fn close_eye<S: State + ?Sized>(game: &mut S, eye_list: u16) {
         | (K_ENEMY_PROPS_TANGIBLE as u16));
 }
 
-/// Instruction: the materialisation sound, cycling through three. Was
-/// `Phantoon_Func_1`.
+/// Instruction: the materialisation sound, cycling through three.
 pub fn materialisation_sound<S: State + ?Sized>(game: &mut S) {
     let sound = crate::boss_lists::phantoon_materialisation_sound(
         game,
@@ -590,8 +589,7 @@ pub fn materialisation_sound<S: State + ?Sized>(game: &mut S) {
     game.session_mut().actors.extended.blocks[3][25] = next;
 }
 
-/// Instruction: opens the eye for the figure-8's vulnerable window. Was
-/// `Phantoon_StartTrackingSamusAndInitEyeTimer`.
+/// Instruction: opens the eye for the figure-8's vulnerable window.
 pub fn open_eye<S: State + ?Sized>(game: &mut S) {
     part!(game, Tentacles[TENTACLES].swooping = 0);
     part!(game, Body[BODY].base; instruction_timer = 1, current_instruction = animation::BODY_EYE_HITBOX);
@@ -610,7 +608,7 @@ pub fn open_eye<S: State + ?Sized>(game: &mut S) {
 }
 
 /// Instruction: picks the next figure-8 direction and whether flame rain
-/// comes first. Was `Phantoon_PickPatternForRound2`.
+/// comes first.
 pub fn pick_pattern<S: State + ?Sized>(game: &mut S) {
     crate::probe::hit("phantoon.pick_pattern");
     part!(game, Body[BODY].timer = 60);
@@ -651,7 +649,7 @@ pub fn pick_pattern<S: State + ?Sized>(game: &mut S) {
 }
 
 /// Swoops toward Samus: X oscillates across the room, Y follows Samus (or
-/// the floor once fatally shot). Was `Phantoon_MoveInSwoopingPattern`.
+/// the floor once fatally shot).
 fn swoop<S: State + ?Sized>(game: &mut S, k: u16) {
     let mut target_x: u16;
     let previous: i16 = part!(game, Tentacles[TENTACLES].swoop_target_x) as i16;
@@ -718,14 +716,13 @@ fn swoop<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Was `Phantoon_BeginSwoopingPattern`.
 fn begin_swoop<S: State + ?Sized>(game: &mut S, k: u16) {
     part!(game, Tentacles[TENTACLES]; swoop_x_speed = 1024, swoop_y_speed = 1024);
     part!(game, Tentacles[TENTACLES].swoop_target_x = 0);
     part!(game, Body[k as i32]; function = function::SWOOPING, timer = 360);
 }
 
-/// Points the eyeball at Samus. Was `Phantoon_ChangeEyeSpriteBasedOnSamusDist`.
+/// Points the eyeball at Samus.
 fn look_at_samus<S: State + ?Sized>(game: &mut S) {
     let direction: u16 = match game.player_direction() {
         PlayerDirection::Up => 0,
@@ -741,8 +738,7 @@ fn look_at_samus<S: State + ?Sized>(game: &mut S) {
     part!(game, Eye[EYE].base; instruction_timer = 1, current_instruction = crate::boss_lists::phantoon_instruction_list(game, (row >> 1) as isize));
 }
 
-/// Starts dying: finishing the swoop first if swooping. Was
-/// `Phantoon_StartDeathSequence`.
+/// Starts dying: finishing the swoop first if swooping.
 fn start_dying<S: State + ?Sized>(game: &mut S, k: u16) {
     let me = k as i32;
     if part!(game, Body[me].function) == function::SWOOPING
@@ -770,7 +766,7 @@ fn start_dying<S: State + ?Sized>(game: &mut S, k: u16) {
 }
 
 /// Fades the body palette one step toward black, every other frame, until
-/// `steps` steps. Was `Phantoon_FadeOut`.
+/// `steps` steps.
 fn fade_out<S: State + ?Sized>(game: &mut S, steps: u16) {
     if (frame(game) & 1) == 0 && part!(game, Eye[EYE].fade_complete) == 0 {
         part!(game, Eye[EYE].fade_steps = steps);
@@ -781,7 +777,7 @@ fn fade_out<S: State + ?Sized>(game: &mut S, steps: u16) {
 }
 
 /// Fades the body palette one step toward its health colours, every other
-/// frame, until `steps` steps. Was `Phantoon_FadeIn`.
+/// frame, until `steps` steps.
 fn fade_in<S: State + ?Sized>(game: &mut S, steps: u16) {
     if (frame(game) & 1) == 0 && part!(game, Eye[EYE].fade_complete) == 0 {
         part!(game, Eye[EYE].fade_steps = steps);
@@ -791,8 +787,7 @@ fn fade_in<S: State + ?Sized>(game: &mut S, steps: u16) {
     }
 }
 
-/// One step of palette 7 toward the fade-out target; 1 once done. Was
-/// `Phantoon_Func_8`.
+/// One step of palette 7 toward the fade-out target; 1 once done.
 fn fade_step_toward_target<S: State + ?Sized>(game: &mut S) -> u8 {
     if (part!(game, Eye[EYE].fade_steps)).wrapping_add(1) >= part!(game, Eye[EYE].fade_step) {
         for i in (0i32..32).step_by(2) {
@@ -815,8 +810,7 @@ fn fade_step_toward_target<S: State + ?Sized>(game: &mut S) -> u8 {
     }
 }
 
-/// One step of palette 7 toward the health palette; 1 once done. Was
-/// `Phantoon_SetColorBasedOnHp`.
+/// One step of palette 7 toward the health palette; 1 once done.
 fn fade_step_toward_health<S: State + ?Sized>(game: &mut S) -> u8 {
     if (part!(game, Eye[EYE].fade_steps)).wrapping_add(1) >= part!(game, Eye[EYE].fade_step) {
         for base in (0u16..32).step_by(2) {
@@ -834,7 +828,7 @@ fn fade_step_toward_health<S: State + ?Sized>(game: &mut S) -> u8 {
 }
 
 /// One step of BG palettes 0-6 toward the Wrecked Ship's powered-on colours;
-/// 1 once done. Was `Phantoon_Func_9`.
+/// 1 once done.
 fn fade_step_toward_powered_on<S: State + ?Sized>(game: &mut S) -> u8 {
     if (part!(game, Eye[EYE].fade_steps)).wrapping_add(1) >= part!(game, Eye[EYE].fade_step) {
         for i in (0i32..224).step_by(2) {
@@ -856,8 +850,7 @@ fn fade_step_toward_powered_on<S: State + ?Sized>(game: &mut S) -> u8 {
     }
 }
 
-/// Colour `step` of the fade from BGR555 `from` to `to`. Was
-/// `Phantoon_Func_10_CalculateNthTransitionColorFromXtoY`.
+/// Colour `step` of the fade from BGR555 `from` to `to`.
 fn transition_color<S: State + ?Sized>(step: u16, from: u16, to: u16, game: &S) -> u16 {
     (transition_component(step, from & 0x1f, to & 0x1f, game) as i32
         + ((transition_component(
@@ -876,8 +869,7 @@ fn transition_color<S: State + ?Sized>(step: u16, from: u16, to: u16, game: &S) 
             << 10)) as u16
 }
 
-/// One 5-bit component of [`transition_color`]. Was
-/// `Phantoon_CalculateNthTransitionColorComponentFromXtoY`.
+/// One 5-bit component of [`transition_color`].
 fn transition_component<S: State + ?Sized>(step: u16, from: u16, to: u16, game: &S) -> u16 {
     if step == 0 {
         return from;
@@ -910,7 +902,6 @@ fn divide(dividend: i32, divisor: u8) -> u16 {
 }
 
 /// Sets up the fight: blank BG2, the semi-transparency HDMA and the parts.
-/// Was `Phantoon_Init`.
 pub fn initialize<H: Lease + ?Sized>(game: &mut H) {
     for index in (0..=2047).rev() {
         game.session_mut().actors.extended.blocks[4 + index / 1024][index % 1024] = BLANK_BG2_TILE;
@@ -953,8 +944,7 @@ pub fn initialize<H: Lease + ?Sized>(game: &mut H) {
     initialize_part(game);
 }
 
-/// Sets up one part with the body's graphics and its instruction list. Was
-/// `Phantoon2_Init`.
+/// Sets up one part with the body's graphics and its instruction list.
 pub fn initialize_part<S: State + ?Sized>(game: &mut S) {
     let me = current(game);
     part!(
@@ -979,10 +969,8 @@ pub fn initialize_part<S: State + ?Sized>(game: &mut S) {
 }
 
 /// Runs the current function; the body carries the other parts and BG2.
-/// Was `Phantoon_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
-    // The bank $A7 function runs on the lease, the effects that need the
-    // game in grouped foreign calls. The main AI's debug toggle ($A7:CF0C)
+    // The bank $A7 function runs on the lease. The main AI's debug toggle ($A7:CF0C)
     // stores to ROM, which the cartridge ignores, so it has no effect.
     let me = current(game);
     let function = part!(game, Body[me].function);
@@ -1058,8 +1046,7 @@ fn run_function_at<L: Lease>(game: &mut L, function: u16, k: u16) {
     }
 }
 
-/// Flashes white when hurt, then restores the health palette. Was
-/// `Phantoon_Hurt`.
+/// Flashes white when hurt, then restores the health palette.
 pub fn hurt<S: State + ?Sized>(game: &mut S) {
     if part!(game, Body[BODY].base.flash_timer) != 8 {
         if (part!(game, Body[BODY].base.frame_counter) & 2) == 0 {
@@ -1092,13 +1079,13 @@ pub fn hurt<S: State + ?Sized>(game: &mut S) {
     );
 }
 
-/// Touched by Samus. Was `Phantoon_Touch`.
+/// Touched by Samus.
 pub fn touch<S: State + ?Sized>(game: &mut S) {
     game.react_to_contact(Death::LeavePending);
 }
 
 /// Hit by a shot: dies, or after enough damage flees into a swoop, a flame
-/// rain or (to a super missile) enrages. Was `Phantoon_Shot`.
+/// rain or (to a super missile) enrages.
 pub fn shot<S: State + ?Sized>(game: &mut S) {
     // Once dying, shots do nothing.
     if (part!(game, Body[BODY].function) as i32 + 0x26b8) & 0x8000 == 0 {
@@ -1182,8 +1169,7 @@ pub fn shot<S: State + ?Sized>(game: &mut S) {
     }
 }
 
-/// Fades in while the wave grows, then picks the first pattern. Was
-/// `Phantoon_WavyFadeIn`.
+/// Fades in while the wave grows, then picks the first pattern.
 pub fn wavy_fade_in<S: State + ?Sized>(game: &mut S, k: u16) {
     fade_in(game, FADE_STEPS);
     if phantoon_actions::grow_or_shrink_wave_amplitude(INTRO_WAVE, game) != 0 {
@@ -1205,7 +1191,6 @@ pub fn wavy_fade_in<S: State + ?Sized>(game: &mut S, k: u16) {
 }
 
 /// Flies the figure-8 with the eye shut, then opens it with a flame spiral.
-/// Was `Phantoon_MovePhantoonInFigure8ThenOpenEye`.
 pub fn figure_eight<S: State + ?Sized>(game: &mut S, k: u16) {
     phantoon_motion::fly_figure_eight(k, game);
     if eye_timer_expired(game) {
@@ -1217,8 +1202,7 @@ pub fn figure_eight<S: State + ?Sized>(game: &mut S, k: u16) {
 }
 
 /// The vulnerable window: the eye tracks Samus until the timer runs out, then
-/// Phantoon swoops if struck or closes its eye. Was
-/// `Phantoon_EyeFollowsSamusUntilTimerRunsOut`.
+/// Phantoon swoops if struck or closes its eye.
 pub fn eye_follows_samus<S: State + ?Sized>(game: &mut S, k: u16) {
     if timer_expired(game, k) {
         part!(game, Tentacles[k as i32 + TENTACLES].damage_taken = 0);
@@ -1249,7 +1233,7 @@ pub fn eye_follows_samus<S: State + ?Sized>(game: &mut S, k: u16) {
     look_at_samus(game);
 }
 
-/// Swoops until the timer runs out, then fades out. Was `Phantoon_IsSwooping`.
+/// Swoops until the timer runs out, then fades out.
 pub fn swooping<S: State + ?Sized>(game: &mut S, k: u16) {
     look_at_samus(game);
     swoop(game, k);
@@ -1265,7 +1249,6 @@ pub fn swooping<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Was `Phantoon_FadeoutWithSwoop`.
 pub fn fade_out_with_swoop<S: State + ?Sized>(game: &mut S, k: u16) {
     swoop(game, k);
     fade_out(game, FADE_STEPS);
@@ -1278,8 +1261,7 @@ pub fn fade_out_with_swoop<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Reappears on a random side for a new figure-8. Was
-/// `Phantoon_MoveLeftOrRightAndPickEyeOpenPatt`.
+/// Reappears on a random side for a new figure-8.
 pub fn reappear<S: State + ?Sized>(game: &mut S, k: u16) {
     if (game.phantoon_random() & 1) != 0 {
         part!(game, Body[BODY].movement_index = 136);
@@ -1300,7 +1282,6 @@ pub fn reappear<S: State + ?Sized>(game: &mut S, k: u16) {
     part!(game, Eye[EYE].fade_complete = 0);
 }
 
-/// Was `Phantoon_FadeInBeforeFigure8`.
 pub fn fade_in_before_figure_eight<S: State + ?Sized>(game: &mut S) {
     fade_in(game, FADE_STEPS);
     if part!(game, Eye[EYE].fade_complete) != 0 {
@@ -1308,7 +1289,6 @@ pub fn fade_in_before_figure_eight<S: State + ?Sized>(game: &mut S) {
     }
 }
 
-/// Was `Phantoon_BecomeSolidAfterRainingFireballs`.
 pub fn become_solid_after_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     part!(game, Eye[EYE].fade_complete = 0);
     game.session_mut().room.fx_layer_flags &= !HIDE_BG2;
@@ -1328,7 +1308,6 @@ pub fn become_solid_after_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     );
 }
 
-/// Was `Phantoon_FadeInDuringFireballRain`.
 pub fn fade_in_during_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     fade_in(game, 1);
     if part!(game, Eye[EYE].fade_complete) != 0 {
@@ -1343,7 +1322,6 @@ pub fn fade_in_during_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Was `Phantoon_FadeOutDuringFireballRain`.
 pub fn fade_out_during_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     fade_out(game, FADE_STEPS);
     if part!(game, Eye[EYE].fade_complete) != 0 {
@@ -1356,8 +1334,7 @@ pub fn fade_out_during_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Fades out on the figure-8, then rains flames on Samus's side. Was
-/// `Phantoon_FadeOutBeforeFirstFireballRain`.
+/// Fades out on the figure-8, then rains flames on Samus's side.
 pub fn fade_out_before_first_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     fade_out(game, FADE_STEPS);
     phantoon_motion::fly_figure_eight(k, game);
@@ -1375,7 +1352,6 @@ pub fn fade_out_before_first_flame_rain<S: State + ?Sized>(game: &mut S, k: u16)
     }
 }
 
-/// Was `Phantoon_FadeOutBeforeEnrage`.
 pub fn fade_out_before_enrage<S: State + ?Sized>(game: &mut S, k: u16) {
     fade_out(game, FADE_STEPS);
     if part!(game, Eye[EYE].fade_complete) != 0 {
@@ -1383,7 +1359,6 @@ pub fn fade_out_before_enrage<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Was `Phantoon_FadeInEnragedPhantoon`.
 pub fn fade_in_enraged<S: State + ?Sized>(game: &mut S, k: u16) {
     fade_in(game, FADE_STEPS);
     if part!(game, Eye[EYE].fade_complete) != 0 {
@@ -1393,7 +1368,7 @@ pub fn fade_in_enraged<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Fires eight volleys of flames, then closes its eye. Was `Phantoon_Enraged`.
+/// Fires eight volleys of flames, then closes its eye.
 pub fn enraged<S: State + ?Sized>(game: &mut S, k: u16) {
     if timer_expired(game, k) {
         if (part!(game, Eye[EYE].fade_complete) & 1) != 0 {
@@ -1421,7 +1396,6 @@ pub fn enraged<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Was `Phantoon_FadeoutAfterEnrage`.
 pub fn fade_out_after_enrage<S: State + ?Sized>(game: &mut S, k: u16) {
     fade_out(game, FADE_STEPS);
     if part!(game, Eye[EYE].fade_complete) != 0 {
@@ -1433,8 +1407,7 @@ pub fn fade_out_after_enrage<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Swoops to the middle of the room once fatally shot mid-swoop. Was
-/// `Phantoon_CompleteSwoopAfterFatalShot`.
+/// Swoops to the middle of the room once fatally shot mid-swoop.
 pub fn finish_swoop_after_fatal_shot<S: State + ?Sized>(game: &mut S, k: u16) {
     look_at_samus(game);
     swoop(game, k);
@@ -1444,8 +1417,7 @@ pub fn finish_swoop_after_fatal_shot<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Flickers in and out ten times, then starts the explosions. Was
-/// `Phantoon_DyingPhantoonFadeInOut`.
+/// Flickers in and out ten times, then starts the explosions.
 pub fn dying_fade_in_out<S: State + ?Sized>(game: &mut S, k: u16) {
     if (part!(game, Eye[EYE].movement_reversed) & 1) != 0 {
         fade_in(game, FADE_STEPS);
@@ -1468,7 +1440,7 @@ pub fn dying_fade_in_out<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Starts the dying wave and cry. Was `Phantoon_WavyDyingPhantoonAndCry`.
+/// Starts the dying wave and cry.
 pub fn wavy_dying_cry<L: Lease>(game: &mut L, k: u16) {
     game.start_wave(1, WAVE_PHASE_DELTA);
     part!(game, Mouth[MOUTH].wave_amplitude = 0);
@@ -1486,8 +1458,7 @@ pub fn wavy_dying_cry<L: Lease>(game: &mut L, k: u16) {
     crate::effects::SoundEffects::queue_sound(game, 1, DYING_CRY, 6);
 }
 
-/// Brightens the screen in steps while the wave grows, then fades out. Was
-/// `Phantoon_DyingFadeOut`.
+/// Brightens the screen in steps while the wave grows, then fades out.
 pub fn dying_fade_out<S: State + ?Sized>(game: &mut S, k: u16) {
     phantoon_actions::grow_or_shrink_wave_amplitude(DYING_WAVE, game);
     if part!(game, Eye[EYE].movement_reversed) == 0xffff {
@@ -1506,7 +1477,7 @@ pub fn dying_fade_out<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Clears BG2 and queues its blank tilemap. Was `Phantoon_AlmostDead`.
+/// Clears BG2 and queues its blank tilemap.
 pub fn almost_dead<S: State + ?Sized>(game: &mut S, k: u16) {
     set_mosaic(game, 0);
     part!(game, Eye[EYE].background_held = 0);
@@ -1535,7 +1506,7 @@ pub fn almost_dead<S: State + ?Sized>(game: &mut S, k: u16) {
 }
 
 /// Fades the room to its powered-on colours, then dies: the drop, the boss
-/// flag, the door PLM and the music. Was `Phantoon_Dead`.
+/// flag, the door PLM and the music.
 pub fn dead<L: Lease>(game: &mut L, k: u16) {
     let me = k as i32;
     if part!(game, Body[me].timer) != 0 {
@@ -1568,7 +1539,7 @@ pub fn dead<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Looks at Samus and starts the swoop. Was `Phantoon_BecomesSolidAndBodyVuln`.
+/// Looks at Samus and starts the swoop.
 pub fn become_solid_and_swoop<S: State + ?Sized>(game: &mut S, k: u16) {
     look_at_samus(game);
     game.session_mut().room.fx_layer_flags &= !HIDE_BG2;
@@ -1608,7 +1579,7 @@ pub fn countdown<L: Lease>(game: &mut L, k: u16, function: u16) {
     }
 }
 
-/// One of the eight opening flames. Was `Phantoon_Spawn8FireballsInCircleAtStart`.
+/// One of the eight opening flames.
 fn spawn_starting_flame<L: Lease>(game: &mut L, k: u16) {
     game.spawn_actor_eproj(part!(game, Body[BODY].movement_index), k, STARTING_FLAMES);
     crate::effects::SoundEffects::queue_sound(game, 2, STARTING_FLAME_SOUND, 6);
@@ -1627,8 +1598,7 @@ fn spawn_starting_flame<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// The opening flames fly off and the wavy fade-in starts the fight. Was
-/// `Phantoon_SpawnFireballsBeforeFight`.
+/// The opening flames fly off and the wavy fade-in starts the fight.
 fn start_fight<L: Lease>(game: &mut L, k: u16) {
     part!(game, Body[k as i32].speed_subpixel = 0);
     game.session_mut().room.fx_layer_flags |= HIDE_BG2;
@@ -1641,7 +1611,7 @@ fn start_fight<L: Lease>(game: &mut L, k: u16) {
     crate::enemy_projectiles::host::Effects::queue_music(game, 5);
 }
 
-/// Picks the first figure-8 direction. Was `Phantoon_PickPatternForRound1`.
+/// Picks the first figure-8 direction.
 fn pick_first_pattern<S: State + ?Sized>(game: &mut S, k: u16) {
     part!(game, Eye[EYE].background_held = 0);
     part!(game, Body[k as i32].function = function::FIGURE_EIGHT);
@@ -1666,7 +1636,6 @@ fn pick_first_pattern<S: State + ?Sized>(game: &mut S, k: u16) {
 }
 
 /// The flame rain's vulnerable window ends: a swoop if struck, else hide.
-/// Was `Phantoon_FollowSamusWithEyeDuringFireballRain`.
 fn end_flame_rain_window<S: State + ?Sized>(game: &mut S, k: u16) {
     part!(game, Tentacles[k as i32 + TENTACLES].damage_taken = 0);
     if part!(game, Tentacles[TENTACLES].swooping) != 0 {
@@ -1684,8 +1653,7 @@ fn end_flame_rain_window<S: State + ?Sized>(game: &mut S, k: u16) {
     }
 }
 
-/// Reappears at a random flame rain position and rains flames. Was
-/// `Phantoon_SpawnRainingFireballs`.
+/// Reappears at a random flame rain position and rains flames.
 fn spawn_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     let pattern: u16 = game.phantoon_random() & 7;
     let row: i32 = (8 * pattern as i32) >> 1;
@@ -1703,8 +1671,7 @@ fn spawn_flame_rain<S: State + ?Sized>(game: &mut S, k: u16) {
     phantoon_actions::spawn_flame_rain(k, pattern, game);
 }
 
-/// One death explosion; three rounds of the last eight, then the cry. Was
-/// `Phantoon_DyingPhantoonExplosions`.
+/// One death explosion; three rounds of the last eight, then the cry.
 fn death_explosion<S: State + ?Sized>(game: &mut S, k: u16) {
     let offset: u16 = 4u16.wrapping_mul(part!(game, Tentacles[TENTACLES].explosion));
     let explosion = |game: &mut S, at: u16| {

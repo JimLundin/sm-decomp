@@ -16,7 +16,7 @@ const PALETTE_BYTES: usize = 32;
 const PALETTE_RAM: usize = 0xc000;
 
 /// Load dachora palette ($A7:F535): copy the 32-byte palette at `source` into
-/// the enemy's sprite palette. Was `Dachora_Func_1`.
+/// the enemy's sprite palette.
 pub fn load_palette(
     source: u16,
     k: u16,

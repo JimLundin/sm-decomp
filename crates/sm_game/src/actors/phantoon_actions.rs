@@ -37,7 +37,7 @@ const SIGN: i32 = 0x8000;
 
 /// Grow/shrink Phantoon wave amplitude ($A7:CF27) by the delta in `amount`'s
 /// low word, growing up to the maximum in its high word; 1 once shrinking has
-/// taken it below zero. Was `approach_speed`.
+/// taken it below zero.
 pub fn grow_or_shrink_wave_amplitude(amount: i32, game: &mut (impl State + ?Sized)) -> u8 {
     let (delta, max) = (amount as u16, (amount >> 16) as u16);
     let amplitude = part!(game, Mouth[MOUTH].wave_amplitude);
@@ -60,13 +60,13 @@ pub fn grow_or_shrink_wave_amplitude(amount: i32, game: &mut (impl State + ?Size
     0
 }
 
-/// Spawn casual flame ($A7:CF5E). Was `spawn_fireball`.
+/// Spawn casual flame ($A7:CF5E).
 pub fn spawn_casual_flame(k: u16, game: &mut (impl State + ?Sized)) {
     game.spawn_actor_eproj(0, k, DESTROYABLE_FLAMES);
     game.queue_sound(2, FLAME_SOUND, 6);
 }
 
-/// Phantoon materialisation flame spiral ($A7:CF70). Was `spawn_fireball_circle`.
+/// Phantoon materialisation flame spiral ($A7:CF70).
 pub fn spawn_flame_spiral(k: u16, game: &mut (impl State + ?Sized)) {
     for i in (0..SPIRAL_FLAMES).rev() {
         game.spawn_actor_eproj(i | SPIRAL, k, DESTROYABLE_FLAMES);
@@ -76,7 +76,7 @@ pub fn spawn_flame_spiral(k: u16, game: &mut (impl State + ?Sized)) {
 
 /// Spawn flame rain enemy projectiles ($A7:CF8B): eight flames at consecutive
 /// positions of nine from the pattern's first, leaving one gap, each falling
-/// for longer. Was `spawn_fireball_pattern`.
+/// for longer.
 pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl State + ?Sized)) {
     let mut position =
         i16::from(native_record(BANK, RAIN_FIRST_POSITIONS, game).byte(usize::from(pattern)));
@@ -96,7 +96,6 @@ pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl State + ?Sized)) 
 
 /// Get Phantoon health-based palette colour ($A7:DC0F): the colour at `base`
 /// in the palette for the current part's health step; returns (base, colour).
-/// Was `Phantoon_SetColorBasedOnHp_FindEntry`.
 pub fn health_palette_colour(base: u16, game: &mut (impl State + ?Sized)) -> (u16, u16) {
     let (mut bound, mut step) = (HEALTH_STEP, 0u16);
     while (bound as i16)

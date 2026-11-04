@@ -1,11 +1,10 @@
 //! The baby Metroid's encounter in Tourian: it drains the sidehopper, latches onto
 //! Samus and drains her until she is nearly dead, then lets go and leaves.
 //!
-//! Was `BabyMetroid_*` in the original decompilation (bank $A9:EF37-$A9:F8A5).
-//! Slot words are named through `baby_metroid`'s view after the bank log's
-//! baby Metroid notes. The bank's dispatch ids are unchanged; the functions and
-//! their reads and writes keep the original order. Mother Brain's shared
-//! helpers come from `mother_brain_fight`.
+//! Bank $A9:EF37-$A9:F8A5. Slot words are named through `baby_metroid`'s view
+//! after the bank log's baby Metroid notes. The bank's dispatch ids are
+//! unchanged; the functions and their reads and writes keep the original order.
+//! Mother Brain's shared helpers come from `mother_brain_fight`.
 use crate::actors::baby_metroid::{BabyMetroid, BabyMetroidEdit};
 use crate::actors::corpses::DeadMonsterEdit;
 use crate::actors::host::abs16;
@@ -109,8 +108,8 @@ const _: () = {
 
 /// A Mother Brain lease with the baby Metroid's camera wait.
 pub trait Lease: FightLease {
-    /// Run the camera wait on the current Session, retaining the former
-    /// foreign entry's preflight and publication if an effect fails.
+    /// Run the camera wait on the current Session, with its preflight and
+    /// publication if an effect fails.
     fn wait_for_camera(&mut self);
 }
 

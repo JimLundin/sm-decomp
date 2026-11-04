@@ -276,8 +276,7 @@ fn health_palette<R: RuntimeHost>(game: &mut R) {
         }
     }
 }
-/// Botwoon function - initial ($B3:9878): wait, then go through a hole. Was
-/// `wait_entry`.
+/// Botwoon function - initial ($B3:9878): wait, then go through a hole.
 fn initial<R: RuntimeHost>(game: &mut R) {
     let e = game.current_enemy();
     let delay = Botwoon::of(game, e).initial_delay().wrapping_sub(1);
@@ -287,7 +286,7 @@ fn initial<R: RuntimeHost>(game: &mut R) {
     }
 }
 /// Botwoon function - go through hole ($B3:989D), leaving it: set up moving
-/// around ($B3:98EC) or spitting ($B3:9913). Was `select_attack`.
+/// around ($B3:98EC) or spitting ($B3:9913).
 pub fn leave_hole<L: Lease>(e: u16, game: &mut L) -> bool {
     if Botwoon::of(game, e).going_through_hole() == 0 {
         return false;
@@ -326,7 +325,6 @@ pub fn leave_hole<L: Lease>(e: u16, game: &mut L) -> bool {
     true
 }
 /// Botwoon function - moving around ($B3:99A4): once at a hole, go through it.
-/// Was `resume_chase`.
 pub fn moving_around<L: Lease>(e: u16, game: &mut L) -> bool {
     if Botwoon::of(game, e).going_through_hole() == 0 {
         return false;
@@ -343,7 +341,7 @@ pub fn moving_around<L: Lease>(e: u16, game: &mut L) -> bool {
     true
 }
 /// Botwoon function - spitting ($B3:99E4): until the spit timer runs out, then
-/// move around again. Was `await_spit`.
+/// move around again.
 fn spitting<R: RuntimeHost>(e: u16, runtime: &mut R) -> bool {
     if Botwoon::of(runtime, e).spit_timer() != 0 {
         *BotwoonEdit::of(runtime, e).unread_801c() = 0;
@@ -377,8 +375,7 @@ fn spitting<R: RuntimeHost>(e: u16, runtime: &mut R) -> bool {
     choose_movement_path(runtime.current_enemy(), runtime);
     false
 }
-/// Botwoon function - death sequence - pre-death delay ($B3:9A46). Was
-/// `wait_collapse`.
+/// Botwoon function - death sequence - pre-death delay ($B3:9A46).
 fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
     let e = game.current_enemy();
     let delay = Botwoon::of(game, e).pre_death_counter().wrapping_add(1);
@@ -387,7 +384,7 @@ fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
         *BotwoonEdit::of(game, e).function() = function::DEATH_FALLING_TO_GROUND;
     }
 }
-/// Botwoon function - death sequence - falling to ground ($B3:9A5E). Was `fall`.
+/// Botwoon function - death sequence - falling to ground ($B3:9A5E).
 pub fn fall_to_ground<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let index = ((8 * i32::from(Botwoon::of(game, e).falling_y_speed_index().to_le_bytes()[1]))
@@ -423,7 +420,7 @@ pub fn fall_to_ground<L: Lease>(game: &mut L) {
         BotwoonEdit::of(game, e).actor().properties |= LANDED_PROPERTIES;
     }
 }
-/// Botwoon function - death sequence - crumbling wall ($B3:9AF9). Was `rubble`.
+/// Botwoon function - death sequence - crumbling wall ($B3:9AF9).
 pub fn crumbling_wall<L: Lease>(k: u16, game: &mut L) {
     let e = k;
     if (i32::from(Botwoon::of(game, e).death_counter()) - CRUMBLE_END) & SIGN != 0 {
@@ -537,7 +534,7 @@ fn clamp_delta(value: u16) -> u16 {
     }
 }
 /// Botwoon movement function - move directly toward target hole ($B3:9BB7),
-/// from the offsets to it ($B3:9BF8). Was `seek_hole`.
+/// from the offsets to it ($B3:9BF8).
 pub fn move_toward_target_hole<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let index = (Botwoon::of(game, e).target_hole() >> 1) as isize;
@@ -574,7 +571,7 @@ fn move_by_angle<L: Lease>(game: &mut L) {
     game.step_along(phase, vector);
 }
 /// Botwoon movement function - start moving Botwoon according to movement data
-/// ($B3:E250). Was `load_path`.
+/// ($B3:E250).
 pub fn start_moving_by_movement_data<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     {
@@ -606,8 +603,7 @@ pub fn start_moving_by_movement_data<L: Lease>(game: &mut L) {
     move_by_movement_data(game);
 }
 /// Botwoon movement function - move Botwoon according to movement data
-/// ($B3:E28C), one step per pixel of speed, until the data ends. Was
-/// `advance_path`.
+/// ($B3:E28C), one step per pixel of speed, until the data ends.
 pub fn move_by_movement_data<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let mut delta = [0u16; 2];
@@ -671,8 +667,7 @@ fn set_instruction_list<L: Lease>(e: u16, instruction: u16, game: &mut L) {
     }
 }
 /// Botwoon head function - moving around ($B3:9DC0): hide or face along the
-/// head's motion over the last 4 frames, then shift the position history. Was
-/// `animate_motion`.
+/// head's motion over the last 4 frames, then shift the position history.
 pub fn head_moving_around<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let x = Botwoon::of(game, e)
@@ -711,7 +706,7 @@ pub fn head_moving_around<L: Lease>(game: &mut L) {
     *BotwoonEdit::of(game, e).y_1_frame_ago() = Botwoon::of(game, e).actor().y.whole;
 }
 /// Botwoon head function - spitting - set angle and show ($B3:9E7D): aim at
-/// Samus, then spit 5 or 3; returns that head function. Was `aim_spit`.
+/// Samus, then spit 5 or 3; returns that head function.
 pub fn head_set_spit_angle<L: Lease>(game: &mut L) -> u32 {
     let e = game.current_enemy();
     BotwoonEdit::of(game, e).actor().layer = SHOWN_LAYER;
@@ -733,7 +728,7 @@ pub fn head_set_spit_angle<L: Lease>(game: &mut L) -> u32 {
     BANK << 16 | u32::from(Botwoon::of(game, e).head_function())
 }
 /// Botwoon head function - spitting - spawn 5 ($B3:9EE0, `wide`, once the
-/// spitting flag is set) or 3 ($B3:9F34) spit projectiles. Was `spit`.
+/// spitting flag is set) or 3 ($B3:9F34) spit projectiles.
 pub fn head_spit<L: Lease>(wide: bool, game: &mut L) {
     let e = game.current_enemy();
     if wide && Botwoon::of(game, e).spitting() == 0 {
@@ -756,7 +751,7 @@ pub fn head_spit<L: Lease>(wide: bool, game: &mut L) {
     };
     *BotwoonEdit::of(game, target).head_function() = head_function::SPITTING_COOLDOWN;
 }
-/// Botwoon head function - spitting - cooldown ($B3:9F7A). Was `wait_spit`.
+/// Botwoon head function - spitting - cooldown ($B3:9F7A).
 pub fn head_cooldown<L: Lease>(k: u16, game: &mut L) {
     let e = k;
     let delay = (Botwoon::of(game, e).spit_timer() as i16).wrapping_sub(1);
@@ -770,7 +765,7 @@ pub fn head_cooldown<L: Lease>(k: u16, game: &mut L) {
     }
 }
 /// Botwoon / hole collision detection ($B3:9F93): entering a hole toggles the
-/// head between hidden and shown. Was `detect_portal`.
+/// head between hidden and shown.
 pub fn hole_collision<L: Lease>(k: u16, game: &mut L) {
     let e = game.current_enemy();
     if Botwoon::of(game, k).hole_collision_disabled() != 0 {
@@ -839,7 +834,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
         initialize_living(e, game);
     }
 }
-/// Main AI - Botwoon ($B3:9668): run its function, then its palette. Was `update`.
+/// Main AI - Botwoon ($B3:9668): run its function, then its palette.
 pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
     botwoon_death::arm(runtime);
     let actor = runtime.selected_actor();

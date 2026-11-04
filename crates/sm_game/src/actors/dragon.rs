@@ -1,5 +1,5 @@
-//! Dragon, lava seahorses with wings (bank $A2:E57B-$A2:E977). Was `lava_seahorse_pair`. Lane
-//! 3 is the timer; its extended words hold the list index, current list index and fire flag.
+//! Dragon, lava seahorses with wings (bank $A2:E57B-$A2:E977). Lane 3 is the timer; its
+//! extended words hold the list index, current list index and fire flag.
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api;
@@ -29,7 +29,7 @@ const SINKING: u16 = 0xe749;
 const LISTS: u32 = 0xa2_e5ef; // instruction list pointers
 
 /// Store `value` to the extended word `word` picks of dragon `k`, then refresh
-/// the lease's observations, as the slice store did after each byte.
+/// the lease's observations after each byte.
 fn store<H: Lease + ?Sized>(
     runtime: &mut H,
     k: u16,

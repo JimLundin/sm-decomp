@@ -1,9 +1,9 @@
 //! Magdollite, Norfair's lava creature: a head that surfaces from the lava, an
 //! arm that grows towards Samus and a hand that throws lava at her.
 //!
-//! Was `NorfairLavaMan` in the original decompilation (bank $A8:AC9C-$A8:B40C).
-//! The three parts occupy consecutive enemy slots, head first. Each part reads
-//! and writes its neighbours' slot fields; the view below names them.
+//! Bank $A8:AC9C-$A8:B40C. The three parts occupy consecutive enemy slots, head
+//! first. Each part reads and writes its neighbours' slot fields; the view
+//! below names them.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};

@@ -17,7 +17,7 @@ use crate::{
 fn native_record(runtime: &mut Runtime<'_>, address: u32) -> RomRecord {
     if address & 0x8000 == 0 {
         runtime.report_native_diagnostic(address);
-        // Acquire and release the actual binding, as the foreign call did.
+        // Acquire and release the actual binding.
         drop(runtime.samus_game().capture_native_rom_binding());
     }
     visual_host::Content::table(runtime, Source::Native, address)
@@ -83,7 +83,7 @@ impl Effects for Runtime<'_> {
     }
     fn run_gamma(&mut self, mode: FrameGammaMode) {
         // The gamma actions run on this lease. The observations are refreshed on entry and on
-        // return, as the former foreign call left them.
+        // return.
         self.owned_player_call(|runtime| advance_gamma(mode, runtime));
     }
 }
@@ -238,7 +238,7 @@ fn advance_gamma(mode: FrameGammaMode, runtime: &mut Runtime<'_>) {
                 legacy_word! {runtime; SAMUS_ANIM_FRAME_TIMER = 1; SAMUS_ANIM_FRAME = 18; }
             }
         }
-        // The owned call keeps the former foreign entry's observation refresh.
+        // The owned call refreshes the observations.
         EscapeTimer | DrawEscapeTimer => {
             runtime.owned_player_call(|runtime| escape_countdown(mode, runtime))
         }

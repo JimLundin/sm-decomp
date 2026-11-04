@@ -1,6 +1,6 @@
 //! Powamp, Maridia's balloon plant: its body inflates, rises with a wiggle and sinks, and
 //! bursts into spikes when killed; its balloon, the previous slot, is drawn above it
-//! (bank $A8:C143-$A8:C6B2). Was `maridia_floater`.
+//! (bank $A8:C143-$A8:C6B2).
 #![forbid(unsafe_code)]
 use crate::actors::api::DeathKind;
 use crate::actors::boss_lease::BossLease;

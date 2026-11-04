@@ -35,8 +35,7 @@ const THIRD_KIND: u16 = 0xe000;
 /// Mother Brain exploding: sound 13h, library 3, at most 3 queued.
 const EXPLODING_SOUND: u8 = 0x13;
 
-/// Write Mother Brain palette ($A9:BD1D) from `source` in bank $AD. Was
-/// `MotherBrain_WritePalette`.
+/// Write Mother Brain palette ($A9:BD1D) from `source` in bank $AD.
 pub fn write_palette(
     source: u16,
     game: &mut (impl crate::presentation_workspace::PaletteAccess + NativeDiagnostics + ?Sized),
@@ -54,8 +53,7 @@ pub fn write_palette(
 
 /// Handle Mother Brain body rainbow beam palette ($A9:BCFD): every other frame,
 /// follow the chain from the animation index to its next nonzero link, store
-/// the link plus 2 and write the palette it names. Was
-/// `MotherBrain_HandleRainbowBeamPalette`.
+/// the link plus 2 and write the palette it names.
 pub fn handle_rainbow_palette(game: &mut (impl State + ?Sized)) {
     if Body::of(game, BODY_INDEX).actor().frame & RAINBOW_FRAME_BIT == 0 {
         return;
@@ -83,7 +81,7 @@ pub fn handle_rainbow_palette(game: &mut (impl State + ?Sized)) {
 /// Generate explosions around Mother Brain body ($A9:B03E): count down the
 /// interval timer; when it expires, restart it at `interval` and spawn `count`
 /// explosions at the next row of offsets, each kind drawn from the three words
-/// at `kinds`. Was `MotherBrain_GenerateExplosions`.
+/// at `kinds`.
 pub fn generate_explosions(interval: u16, kinds: u16, count: u16, game: &mut impl Lease) {
     let timer = Brain::of(game, BRAIN_INDEX)
         .explosion_timer()

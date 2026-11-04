@@ -15,8 +15,7 @@ impl sm_game::room_scrolls::Host for crate::game::session_runtime::Runtime<'_> {
         });
     }
     fn flush_tilemaps(&mut self) {
-        // The observations are refreshed on entry and on return, as the former
-        // foreign call left them.
+        // The observations are refreshed on entry and on return.
         self.owned_player_call(crate::game::display_refresh::flush_tilemaps_on_lease);
     }
 }

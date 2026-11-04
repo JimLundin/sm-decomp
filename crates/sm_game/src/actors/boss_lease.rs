@@ -86,14 +86,12 @@ pub trait BossState:
 /// A lease on a boss's game. Its owned steps run the action on the lease itself,
 /// so steps written against a lease also run unleased.
 pub trait BossLease: BossState + crate::diagnostics::Fatal {
-    /// Run `action` on the lease itself where a `foreign` call ran it on the
-    /// game: the external observations are refreshed on entry, as the game's
-    /// RAM was current there, and on return, as `foreign` re-imported them.
+    /// Run `action` on the lease itself: the external observations are refreshed
+    /// on entry and on return.
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
 }
 
-/// The steps a boss's frame ran on a fresh lease of the game, each in one
-/// `foreign` call, run on the boss's own lease in [`BossLease::owned_step`].
+/// The steps a boss's frame runs on its own lease in [`BossLease::owned_step`].
 pub mod steps {
     use super::BossLease;
     use crate::gameplay_flag_host::BossWordOrder;

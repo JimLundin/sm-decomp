@@ -1,5 +1,5 @@
 //! Geruta and Holtz, Norfair's swooping flyers with a flames part each (bank $A2:C0D1-$A2:CA2A).
-//! Was `norfair_rio`. Their function is the pre-instruction word; tables pair Geruta, Holtz.
+//! Their function is the pre-instruction word; tables pair Geruta, Holtz.
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, Axis};
@@ -23,7 +23,7 @@ slot_view! {
 }
 
 /// Store `value` to extended word `var` of enemy `k`, then refresh the lease's
-/// observations, as the slice store did after each byte.
+/// observations after each byte.
 fn store(runtime: &mut impl Lease, k: u16, var: usize, value: u16) {
     *SlotMut::of(runtime, k).extended(var) = value;
     runtime.record_stored();

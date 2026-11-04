@@ -151,7 +151,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
 }
 /// Morph ball eye functions ($A8:90F1, $A8:912E, $A8:9160, $A8:91CE): true
 /// when the eye has opened and its beam should start, after its sound and
-/// before hardware startup and [`start_tracking`]. Was `prepare_update`.
+/// before hardware startup and [`start_tracking`].
 pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> bool {
     let eye = k;
     match function {
@@ -213,7 +213,7 @@ pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> b
     false
 }
 /// The end of activating, after the beam starts: the eye is active and aims at
-/// Samus. Was `finish_beam`.
+/// Samus.
 pub fn start_tracking(k: u16, game: &mut (impl Host + ?Sized)) {
     let eye = k;
     *EyeEdit::of(game, eye).function() = function::ACTIVE;

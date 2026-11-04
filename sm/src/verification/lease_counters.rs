@@ -1,4 +1,4 @@
-//! Verify-only lease counters (session-authoritative-tick.md, stage 0).
+//! Verify-only lease counters.
 //!
 //! They count frame ticks, Session leases (`Runtime::new`) and the leases that
 //! decoded the RAM image instead of taking up the kept or retained Session. The

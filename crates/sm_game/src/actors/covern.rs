@@ -1,6 +1,6 @@
 //! Covern, the Wrecked Ship ghost, which materialises near Samus once she has
 //! moved one way or stood still long enough, hovers, and fades away again
-//! (bank $A8:99AC-$A8:9F4F). Was `wrecked_ship_ghost`.
+//! (bank $A8:99AC-$A8:9F4F).
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -412,7 +412,7 @@ fn awake(runtime: &mut impl Lease, key: Key) {
         }
     }
 }
-/// Main AI - coven ($A8:9B3C): run its function. Was `advance`.
+/// Main AI - coven ($A8:9B3C): run its function.
 pub fn main_ai(runtime: &mut impl Lease) {
     crate::probe::hit("covern.main_ai");
     let key = selected(runtime);

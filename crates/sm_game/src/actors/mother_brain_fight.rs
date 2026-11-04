@@ -3,13 +3,11 @@
 //! rainbow beam, the baby Metroid cutscene, the third phase and the death and
 //! escape sequence, with the brain's instruction list and palettes.
 //!
-//! Was `MotherBrain*`, `MotherBrainBody*`, `MotherBrainsBody*` and `MotherBomb*`
-//! in the original decompilation (bank $A9). Slot words are the Session's
-//! typed slot state, named through `mother_brain`'s body and brain views. The
-//! bank's dispatch ids are unchanged; the functions and their reads and writes
-//! keep the original order. What still lives in the compatibility runtime is
-//! reached through [`Host`], with the original names kept on the forwarding
-//! helpers at the end of this module.
+//! Bank $A9. Slot words are the Session's typed slot state, named through
+//! `mother_brain`'s body and brain views. The bank's dispatch ids are unchanged;
+//! the functions and their reads and writes keep the original order. What still
+//! lives in the compatibility runtime is reached through [`Host`], with the
+//! original names kept on the forwarding helpers at the end of this module.
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::corpses;
 use crate::actors::host::abs16;
@@ -852,9 +850,8 @@ pub trait Lease:
     + crate::visual_host::Host
     + crate::hardware::Multiplier
 {
-    /// Run `action` on the lease itself where a `foreign` call ran it on the
-    /// game: the external observations are refreshed on entry and on return,
-    /// as `foreign` left them.
+    /// Run `action` on the lease itself: the external observations are refreshed
+    /// on entry and on return.
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
     /// QueueSound on `channel` on the lease, with the original's result.
     fn queue_sound_with_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16;
@@ -878,9 +875,8 @@ pub trait Host:
     fn lease(&mut self) -> Self::Lease<'_>;
 }
 
-// The calls the moved bodies made on the game through one `foreign` each,
-// now on the fight's lease: every step refreshes the observations on entry
-// and on return, as the foreign call left them.
+// The fight's steps on its lease: every step refreshes the observations on entry
+// and on return.
 /// The original's unreachable-state failure. It reads no game state.
 pub(crate) fn bank_unreachable(game: &mut impl Lease) -> bool {
     crate::diagnostics::Fatal::unreachable(game)
@@ -897,7 +893,7 @@ pub(crate) fn spawn_plm(block_x: u8, block_y: u8, header: u16, game: &mut impl L
         crate::room_mechanisms::creation::spawn_hardcoded_in(game, block_x, block_y, header);
     });
 }
-/// Queue music `track` after 8 frames. Was `QueueMusic_Delayed8`.
+/// Queue music `track` after 8 frames.
 pub(crate) fn queue_music(track: u16, game: &mut impl Lease) {
     game.owned_step(|game| crate::room_mechanisms::host::Effects::music(game, track));
 }
@@ -948,13 +944,12 @@ pub(crate) fn spawn_palette_effect(definition: u16, game: &mut impl Lease) {
     game.owned_step(|game| crate::palette_effects::execution::spawn(game, definition));
 }
 /// Move Samus right by `amount` (8.8 pixels) up to the wall at X = 235; 1
-/// when she reached it. Was `MotherBrain_MoveSamusHorizTowardsWall`.
+/// when she reached it.
 pub(crate) fn move_samus_horizontally_towards_wall(amount: u16, game: &mut impl Lease) -> u8 {
     game.owned_step(|game| move_samus_towards_wall(amount, game))
 }
 /// Move Samus down by `amount` (8.8 pixels), held between the ceiling at
-/// Y = 48 and the floor at Y = 192; 1 when she was held. Was
-/// `MotherBrain_MoveSamusVerticallyTowardsCeilingFloor`.
+/// Y = 48 and the floor at Y = 192; 1 when she was held.
 pub(crate) fn move_samus_vertically_towards_ceiling_floor(
     amount: u16,
     game: &mut impl Lease,
@@ -1034,7 +1029,7 @@ const SPRITE_TILE_ENTRY: u16 = 7;
 
 /// Process sprite tile transfers: queue one entry of the list in `bank` from
 /// the body's cursor, or from `start` when it is 0; 1 and a cleared cursor
-/// once the list ends. Was `ProcessSpriteTilesTransfers`.
+/// once the list ends.
 pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut impl Lease) -> u8 {
     let mut cursor = Body::of(game, BODY_INDEX).sprite_tile_transfer();
     if cursor == 0 {
@@ -2957,7 +2952,7 @@ pub(crate) fn collided_shot_kind(game: &impl State) -> u16 {
     game.owned(OwnedWord::ShotKind(shot))
 }
 /// Deal suit-adjusted enemy damage to Samus ($A6:D453), Ridley's routine:
-/// the current enemy's contact damage. Was `Ridley_Func_98`.
+/// the current enemy's contact damage.
 fn deal_contact_damage(game: &mut impl Lease) {
     let damage = crate::actors::ridley::contact_damage(game);
     game.owned_step(|game| {
@@ -3467,8 +3462,7 @@ pub fn write_room_palette(j: u16, game: &mut impl State) {
     );
 }
 /// The body's room palette instruction list pointer and timer ($7E:781C,
-/// $7E:781E). The original read and stored them through the RAM image, one
-/// foreign call each; each keeps that call's observation refresh.
+/// $7E:781E). Each access refreshes the observations.
 fn room_palette_list(game: &mut impl Lease) -> u16 {
     let list = Body::of(game, BODY_INDEX).room_palette_list();
     game.owned_step(|_| list)

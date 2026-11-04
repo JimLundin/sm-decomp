@@ -34,8 +34,7 @@ pub trait HdmaLease:
     fn bg3_x_velocity(&self, index: isize) -> u16;
 }
 
-/// Run `action` for the selected object on the lease, where a foreign call
-/// ran it on the game: the slot is captured first, and the inputs are observed
+/// Run `action` for the selected object on the lease: the slot is captured first, and the inputs are observed
 /// afresh on entry and again on return.
 pub fn with_current_object<L: HdmaLease, T>(
     lease: &mut L,
@@ -66,20 +65,18 @@ pub(crate) trait Interpreter: HdmaTable {
     type Lease: HdmaLease;
     /// The lease itself, for the compatibility effects it still leaves for.
     fn lease(&mut self) -> &mut Self::Lease;
-    /// Run `action` on the lease where a foreign call ran it on the game: the
-    /// foreign entry's preflight, with the inputs observed afresh on entry and
+    /// Run `action` on the lease, after a preflight, with the inputs observed afresh on entry and
     /// again on return.
     fn on_lease<T>(&mut self, action: impl FnOnce(&mut Self::Lease) -> T) -> T;
     /// Run HDMA effect `effect` for the object in byte slot `slot` on the
-    /// lease, where a nested lease inside a foreign call ran it.
+    /// lease.
     fn effect(&mut self, effect: HdmaEffect, slot: u16) {
         self.on_lease(|lease| crate::hdma_effects::apply(effect, slot, lease));
     }
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
-    /// Run `action` for object `index` on the lease, where a foreign call ran
-    /// it on the game, after checking the index.
+    /// Run `action` for object `index` on the lease, after checking the index.
     fn on_object<T>(
         &mut self,
         index: usize,

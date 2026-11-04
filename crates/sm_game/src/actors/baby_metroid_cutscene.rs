@@ -2,12 +2,10 @@
 //! heals Samus, takes the last rainbow beam for her and dies, and Samus's
 //! rainbow palette fades as the lights come back on.
 //!
-//! Was `BabyMetroidInCutscene_*` and `SamusRainbowPaletteFunc_*` in the original
-//! decompilation (bank $A9:C710-$A9:CF00). Its own slot words are named after
-//! the bank log's notes; slots 0 and $40 are Mother Brain's body and brain,
-//! through `mother_brain`'s typed views (`Body`, `Brain`). The bank's
-//! dispatch ids are unchanged; the functions and their reads and writes keep
-//! the original order.
+//! Bank $A9:C710-$A9:CF00. Its own slot words are named after the bank log's
+//! notes; slots 0 and $40 are Mother Brain's body and brain, through
+//! `mother_brain`'s typed views (`Body`, `Brain`). The bank's dispatch ids are
+//! unchanged; the functions and their reads and writes keep the original order.
 use crate::actors::baby_metroid_encounter::{
     accelerate_towards_point, gradually_accelerate_towards_point_10h,
     gradually_accelerate_towards_point_400h, run_acceleration_function, run_palette_function,

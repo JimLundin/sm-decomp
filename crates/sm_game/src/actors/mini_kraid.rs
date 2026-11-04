@@ -1,8 +1,8 @@
 //! Mini Kraid: the small Kraid that paces back and forth, fires belly spikes
 //! on three independent timers and spits twin rocks toward the way it faces.
 //!
-//! Was `FakeKraid` in the original decompilation (bank $A6:9A58-$A6:9C50). Its
-//! view names the slot words over the same RAM bytes as `EnemyLayout40`.
+//! Bank $A6:9A58-$A6:9C50. Its view names the slot words over the same RAM
+//! bytes as `EnemyLayout40`.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Death, Shot, Slopes};
 use crate::actors::layouts::EnemyLayout104;
@@ -101,7 +101,7 @@ fn face_samus<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Sets up Mini Kraid with random timers, facing Samus. Was `FakeKraid_Init`.
+/// Sets up Mini Kraid with random timers, facing Samus.
 pub fn initialize<L: Lease>(game: &mut L) {
     let mut steps: u16 = ((game.current_random() as i32 & 3) + 2) as u16;
     let k = game.current_enemy();
@@ -129,7 +129,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     MiniKraidEdit::of(game, k).actor().instruction = walk;
 }
 
-/// Checks the next belly spike timer. Was `FakeKraid_Main`.
+/// Checks the next belly spike timer.
 pub fn main_ai<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     let spike = MiniKraid::of(game, k).spike_cycle();
@@ -143,7 +143,6 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 
 /// Counts down belly spike timer `spike` (a byte offset) of Mini Kraid `k`;
 /// at zero it fires spikes the way Mini Kraid faces and rearms the timer.
-/// Was `FakeKraid_Func_1`.
 fn fire_spikes_when_ready<L: Lease>(game: &mut L, k: u16, spike: u16) {
     let left = MiniKraid::of(game, k).spike_timer_at(spike);
     if left != 0 {
@@ -165,8 +164,7 @@ fn fire_spikes_when_ready<L: Lease>(game: &mut L, k: u16, spike: u16) {
 }
 
 /// Spits two rocks: velocity pairs from row `row` (a byte offset into
-/// [`SPIT_VELOCITIES`]), `offset` pixels from the mouth. Was
-/// `FakeKraid_InstrHelper_45`.
+/// [`SPIT_VELOCITIES`]), `offset` pixels from the mouth.
 fn spit<L: Lease>(game: &mut L, row: u16, offset: u16) {
     let k: u16 = game.current_enemy();
     *MiniKraidEdit::of(game, k).spit_x_offset() = offset;
@@ -182,7 +180,7 @@ fn spit<L: Lease>(game: &mut L, row: u16, offset: u16) {
 }
 
 /// Instruction: one step. Turns around when the walk runs out or a wall
-/// blocks it, then faces Samus. Was `FakeKraid_Instr_2`.
+/// blocks it, then faces Samus.
 pub fn step<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     if MiniKraid::of(game, k).cycles_until_spit() != 0 {
@@ -208,8 +206,8 @@ pub fn step<L: Lease>(game: &mut L) {
     face_samus(game, k);
 }
 
-/// Instruction: the next walk animation for the way Mini Kraid faces and
-/// walks, or a spit once enough walk cycles have passed. Was `FakeKraid_Instr_1`.
+/// Instruction: the next walk animation for the way Mini Kraid faces and walks,
+/// or a spit once enough walk cycles have passed.
 pub fn choose_animation<L: Lease>(game: &mut L) -> EnemyScript {
     let k = game.current_enemy();
     if MiniKraid::of(game, k).cycles_until_spit() != 0 {
@@ -234,19 +232,19 @@ pub fn choose_animation<L: Lease>(game: &mut L) -> EnemyScript {
     }
 }
 
-/// Instruction: roar, when on screen. Was `FakeKraid_Instr_3`.
+/// Instruction: roar, when on screen.
 pub fn roar<L: Lease>(game: &mut L) {
     if u16::from(game.current_outside_screen()) == 0 {
         crate::effects::SoundEffects::queue_sound(game, 1, ROAR_SOUND, 6);
     }
 }
 
-/// Instruction: spit left. Was `FakeKraid_Instr_4`.
+/// Instruction: spit left.
 pub fn spit_left<L: Lease>(game: &mut L) {
     spit(game, 0, FACING_LEFT);
 }
 
-/// Instruction: spit right. Was `FakeKraid_Instr_5`.
+/// Instruction: spit right.
 pub fn spit_right<L: Lease>(game: &mut L) {
     spit(game, 8, FACING_RIGHT);
 }
@@ -262,21 +260,21 @@ fn mark_drop_origin<L: Lease>(game: &mut L) {
     game.words_stored();
 }
 
-/// Touched by Samus. Was `FakeKraid_Touch`.
+/// Touched by Samus.
 pub fn touch<L: Lease>(game: &mut L) {
     mark_drop_origin(game);
     game.contact_reaction(Death::LeavePending);
     die_when_out_of_health(game);
 }
 
-/// Hit by a shot. Was `FakeKraid_Shot`.
+/// Hit by a shot.
 pub fn shot<L: Lease>(game: &mut L) {
     mark_drop_origin(game);
     game.shot_reaction(Shot::ReactionOnly);
     die_when_out_of_health(game);
 }
 
-/// Dies with its drop once out of health. Was `FakeKraid_9C50`.
+/// Dies with its drop once out of health.
 fn die_when_out_of_health<L: Lease>(game: &mut L) {
     if MiniKraid::of(game, game.current_enemy()).actor().health == 0 {
         crate::actors::boss_lease::steps::normal_death(game, DEATH_ANIMATION);

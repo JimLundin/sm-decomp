@@ -1,6 +1,5 @@
 //! Alcoon, Norfair's lava seahorse, which leaps out of the lava near Samus,
 //! walks and spits fireballs, then dives back in (bank $A8:DBC7-$A8:DFA2).
-//! Was `lava_seahorse`.
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::actors::host::{ActorLease, abs16};
@@ -187,7 +186,7 @@ pub fn initialize(runtime: &mut impl Lease) {
     *AlcoonEdit::of(runtime, alcoon).landing_y() = y;
     runtime.edit_actor(key, Native, |actor| actor.y.whole = actor.pre_instruction);
 }
-/// Main AI - Alcoon ($A8:DD6B): run its function. Was `advance`.
+/// Main AI - Alcoon ($A8:DD6B): run its function.
 pub fn main_ai(runtime: &mut impl Lease) {
     let key = selected(runtime);
     let alcoon = key.byte_index();

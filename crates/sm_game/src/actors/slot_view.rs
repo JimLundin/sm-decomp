@@ -9,7 +9,7 @@
 //! typed fields, and its edit hands out `&mut u16`s to them. The common record
 //! fields are the [`Actor`]'s own (`health`, `instruction`, `x.whole`, ...).
 //!
-//! The view reaches the storage the retired `session_slot!` resolved to: the actor
+//! The actor
 //! record is the codec's projection of $7E:0F78 + slot (no other owner
 //! projects those bytes), and the extended words are the words of each block
 //! the slot index selects. Words are little-endian in the Session, as the

@@ -1,5 +1,5 @@
-//! Boyon, the bouncing blobs (bank $A2:8687-$A2:8911). Was `goofball`. Lanes: speed scale,
-//! speed, bounce height, distance risen, bounce phase; the rest is in its extended words.
+//! Boyon, the bouncing blobs (bank $A2:8687-$A2:8911). Lanes: speed scale, speed, bounce
+//! height, distance risen, bounce phase; the rest is in its extended words.
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::actors::api::{self, Axis};

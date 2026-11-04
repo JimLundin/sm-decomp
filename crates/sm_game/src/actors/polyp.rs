@@ -1,4 +1,4 @@
-//! Polyp, lava vents shooting rocks at Samus (bank $A2:B51A-$A2:B601). Was `lavaquake`.
+//! Polyp, lava vents shooting rocks at Samus (bank $A2:B51A-$A2:B601).
 #![forbid(unsafe_code)]
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis};

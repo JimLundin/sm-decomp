@@ -2,7 +2,7 @@
 //! stands alone or as a pair sharing health; the room counts how many have
 //! been destroyed in three event flags and places the next one from it.
 //!
-//! Was `Zebetites` in the original decompilation (bank $A6:FB72-$A6:FD54).
+//! Bank $A6:FB72-$A6:FD54.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -61,7 +61,7 @@ fn current<L: Lease>(game: &L) -> u16 {
     game.current_enemy()
 }
 
-/// Places the next zebetite from the destroyed count. Was `Zebetites_Init`.
+/// Places the next zebetite from the destroyed count.
 pub fn initialize<L: Lease>(game: &mut L) {
     let me = current(game);
     {
@@ -103,7 +103,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     }
 }
 
-/// Stills the earthquake shake and runs the current state. Was `Zebetites_Main`.
+/// Stills the earthquake shake and runs the current state.
 pub fn main_ai<L: Lease>(game: &mut L) {
     if game.session().feedback.earthquake_timer == 0 {
         let me = current(game);
@@ -119,7 +119,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
     }
 }
 
-/// A pair's first zebetite spawns the second and links them. Was `Zebetites_Func_1`.
+/// A pair's first zebetite spawns the second and links them.
 fn spawn_partner<L: Lease>(game: &mut L, k: u16) {
     if (Zebetite::of(game, k).pair() & 0x8000) != 0 {
         let partner = game.spawn_population(0xa6, PARTNER);
@@ -130,7 +130,7 @@ fn spawn_partner<L: Lease>(game: &mut L, k: u16) {
     wait_for_door(game, k);
 }
 
-/// Waits for the door transition to finish. Was `Zebetites_Func_2`.
+/// Waits for the door transition to finish.
 fn wait_for_door<L: Lease>(game: &mut L, k: u16) {
     if game.session().room.entry.elevator_interlock == 0 {
         *ZebetiteEdit::of(game, k).state() = state::ACTIVE;
@@ -139,7 +139,7 @@ fn wait_for_door<L: Lease>(game: &mut L, k: u16) {
 }
 
 /// Glows, shows its health stage and regrows; once destroyed, counts itself
-/// and makes way for the next zebetite. Was `Zebetites_Func_3`.
+/// and makes way for the next zebetite.
 fn run<L: Lease>(game: &mut L) {
     glow(game);
     show_health_stage(game);
@@ -166,8 +166,7 @@ fn die<L: Lease>(game: &mut L) {
     crate::actors::boss_lease::steps::normal_death(game, 0);
 }
 
-/// Adds this zebetite to the destroyed count in the event flags. Was
-/// `Zebetites_Func_6`/`Zebetites_Func_7`.
+/// Adds this zebetite to the destroyed count in the event flags.
 fn count_destroyed<L: Lease>(game: &mut L) {
     let me = current(game);
     let destroyed = {
@@ -186,7 +185,7 @@ fn count_destroyed<L: Lease>(game: &mut L) {
 }
 
 /// Shows the animation for the current health: five stages from full to
-/// almost destroyed. Was `Zebetites_Func_5`.
+/// almost destroyed.
 fn show_health_stage<L: Lease>(game: &mut L) {
     let mut stage: u16 = 0;
     let me = current(game);
@@ -211,7 +210,7 @@ fn show_health_stage<L: Lease>(game: &mut L) {
 }
 
 /// Advances the shared glow one frame, when no palette change is pending and
-/// this is a pair's first zebetite. Was `Zebetites_Func_4`.
+/// this is a pair's first zebetite.
 fn glow<L: Lease>(game: &mut L) {
     if crate::sequence_word!(game.PALETTE_CHANGE_NUM) == 0
         && Zebetite::of(game, current(game)).second_of_pair() == 0
@@ -233,12 +232,12 @@ fn glow<L: Lease>(game: &mut L) {
     }
 }
 
-/// Touched by Samus. Was `Zebetites_Touch`.
+/// Touched by Samus.
 pub fn touch<L: Lease>(game: &mut L) {
     game.react_to_contact(Death::LeavePending);
 }
 
-/// Hit by a shot: a pair shares its health and flash. Was `Zebetites_Shot`.
+/// Hit by a shot: a pair shares its health and flash.
 pub fn shot<L: Lease>(game: &mut L) {
     game.queue_sound(2, HIT_SOUND, 6);
     game.react_to_shot(Shot::ReactionOnly);

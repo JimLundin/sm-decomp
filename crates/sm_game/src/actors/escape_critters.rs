@@ -1,8 +1,8 @@
 //! The escape etecoons and escape dachora, the critters Samus can free during
 //! the escape (bank $B3:E525-$B3:EB19).
 //!
-//! Was `escape_animals`. Each critter waits or runs around the escape room
-//! until the critters-escaped event, then runs for the exit.
+//! Each critter waits or runs around the escape room until the
+//! critters-escaped event, then runs for the exit.
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Slopes;
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -142,7 +142,7 @@ pub fn instruction(
     }
 }
 
-/// Escape etecoon function - running for escape ($B3:E65C). Was `run_right`.
+/// Escape etecoon function - running for escape ($B3:E65C).
 pub fn run_for_escape(k: u16, game: &mut (impl Host + ?Sized)) {
     let e = k;
     CritterEdit::of(game, e)
@@ -152,7 +152,7 @@ pub fn run_for_escape(k: u16, game: &mut (impl Host + ?Sized)) {
 }
 
 /// Escape etecoon function - stationary ($B3:E670): wait to express gratitude
-/// once the critters have escaped. Was `await_rescue`.
+/// once the critters have escaped.
 pub fn wait_to_express_gratitude(k: u16, game: &mut (impl Host + ?Sized)) {
     if game.event_happened(CRITTERS_ESCAPED) {
         CritterEdit::of(game, k).actor().instruction =
@@ -161,8 +161,7 @@ pub fn wait_to_express_gratitude(k: u16, game: &mut (impl Host + ?Sized)) {
 }
 
 /// Escape etecoon function - running around aimlessly ($B3:E680): run, turn at
-/// walls, run for the escape once the critters have escaped, and fall. Was
-/// `walk`.
+/// walls, run for the escape once the critters have escaped, and fall.
 pub fn run_around_aimlessly(k: u16, game: &mut (impl Host + ?Sized)) {
     let e = k;
     let amount = i32::from(Critter::of(game, e).x_velocity() as i16) << 8;
@@ -187,7 +186,7 @@ pub fn run_around_aimlessly(k: u16, game: &mut (impl Host + ?Sized)) {
 }
 
 /// Instruction - go to [[Y]] if the tide is low ($B3:E545, $B3:EAA8), or, with
-/// `critters_escaped`, if the critters escaped ($B3:EAB8). Was `branch`.
+/// `critters_escaped`, if the critters escaped ($B3:EAB8).
 pub fn go_to_if(
     critters_escaped: bool,
     script: EnemyScript,
@@ -205,7 +204,7 @@ pub fn go_to_if(
     }
 }
 
-/// Instruction - enemy X position += [[Y]] ($B3:E610). Was `move_scripted`.
+/// Instruction - enemy X position += [[Y]] ($B3:E610).
 pub fn move_x(k: u16, script: EnemyScript, game: &mut (impl Host + ?Sized)) -> EnemyScript {
     let e = k;
     {
@@ -217,7 +216,7 @@ pub fn move_x(k: u16, script: EnemyScript, game: &mut (impl Host + ?Sized)) -> E
 }
 
 /// Instruction - enemy X position -= 6 or += 6 ($B3:EAC9, $B3:EAD7), as
-/// `amount`. Was `step_dachora`.
+/// `amount`.
 pub fn shift_dachora(
     amount: u16,
     script: EnemyScript,

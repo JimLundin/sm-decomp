@@ -45,7 +45,7 @@ const REFLECT_SOUND: u16 = 0x57;
 const SIGN: u16 = 0x8000;
 
 /// Enemy graphics drawn hook - reflec - periodically cycle between palettes
-/// ($A3:DB0C). Was `palette`.
+/// ($A3:DB0C).
 pub fn cycle_palette(runtime: &mut impl ActorLease) {
     if runtime.session().room.entry.enemy_interlock != 0 {
         return;
@@ -92,7 +92,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 /// Enemy shot - reflec ($A3:DC1C), its first half: reflect the shot by the
 /// reflection axis, or mark it to be absorbed and return the reflection
 /// target. A redirected target requires the retained native diagnostic
-/// before absorption. Was `prepare_shot`.
+/// before absorption.
 pub fn reflect_shot(runtime: &mut impl crate::actors::species::TableLease) -> Option<u16> {
     let raw = runtime
         .session()
@@ -127,7 +127,7 @@ pub fn reflect_shot(runtime: &mut impl crate::actors::species::TableLease) -> Op
     }
 }
 /// Enemy shot - reflec, its second half: the shot hurts it, and at zero
-/// health it shows its health reached zero instruction list. Was `absorb`.
+/// health it shows its health reached zero instruction list.
 pub fn absorb_shot(raw: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let target = Key::from_legacy(raw);
     if runtime.resolve_actor(target, Native).health != 0 {
@@ -140,7 +140,7 @@ pub fn absorb_shot(raw: u16, runtime: &mut impl crate::actors::species::TableLea
         }
     }
 }
-/// Instruction - enemy reflection axis = [[Y]] ($A3:DBC8). Was `set_parameter`.
+/// Instruction - enemy reflection axis = [[Y]] ($A3:DBC8).
 pub fn set_reflection_axis(
     raw: u16,
     script: EnemyScript,

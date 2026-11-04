@@ -1,5 +1,5 @@
 //! Bull, Maridia's gas bag, which waits, then speeds at Samus and slows when she slips
-//! off its heading; a shot knocks it away (bank $A8:D821-$A8:DBC6). Was `maridia_puffer`.
+//! off its heading; a shot knocks it away (bank $A8:D821-$A8:DBC6).
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Shot, abs16, sign_extend8};

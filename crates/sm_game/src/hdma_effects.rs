@@ -277,7 +277,7 @@ pub trait HdmaEffects: Host {
             phase = phase.wrapping_add(step) & 0x1ff;
             let value = self.scroll_word(scroll).wrapping_add(offset);
             if phantoon {
-                // Native byte order, as Phantoon's slice store wrote it.
+                // Native byte order, for Phantoon.
                 store_shared_bytes(self, WAVE_ROWS + 2 * usize::from(row), &value.to_ne_bytes());
             } else {
                 self.store_source_word(

@@ -53,7 +53,7 @@ pub fn initialize(runtime: &mut (impl ActorLease + SlotState)) {
     *KagoEdit::of(runtime, index).hit_counter() = hits;
 }
 /// Main AI - Kago ($A8:AB75): Kago function - nothing ($A8:AB7B) becomes an
-/// RTL. Was `advance`.
+/// RTL.
 pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     let key = Key::from_legacy(runtime.session().actors.controls.selected);
     match runtime.resolve_actor(key, Native).variables[0] {

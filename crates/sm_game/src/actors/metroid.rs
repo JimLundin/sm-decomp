@@ -32,8 +32,7 @@ impl<T> Lease for T where
 {
 }
 
-/// Run `action` on the lease where a `foreign` call ran it on the game,
-/// keeping that call's observation refresh on entry and return.
+/// Run `action` on the lease, refreshing the observations on entry and return.
 fn owned_step<L: Lease, T>(runtime: &mut L, action: impl FnOnce(&mut L) -> T) -> T {
     crate::actors::boss_lease::BossLease::owned_step(runtime, action)
 }

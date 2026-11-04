@@ -1,6 +1,6 @@
 //! Shutters and up/down movers (bank $A2:E978-$A2:F497): the growing shutter, the up/down
 //! movers (shootable and destroyable shutters, the up/down mover platform) and the horizontal
-//! shutter. Was `moving_platforms`. Each frame runs on one actor lease.
+//! shutter. Each frame runs on one actor lease.
 use crate::actors::api::{self, Axis, ShotHandling};
 use crate::actors::combat;
 use crate::actors::host::ActorLease;

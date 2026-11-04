@@ -218,7 +218,7 @@ pub trait RoomDma {
 }
 
 /// Copy `size` bytes from `source` to VRAM `destination` now, under forced
-/// blank, then show the screen at full brightness. Was `CopyToVramNow`.
+/// blank, then show the screen at full brightness.
 pub fn copy_to_vram_now<H: RoomDma + ?Sized>(
     destination: u16,
     source: u32,

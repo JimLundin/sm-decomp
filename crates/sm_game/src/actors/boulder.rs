@@ -1,8 +1,8 @@
 //! The boulder: it waits for Samus to pass below, drops, bounces twice and
 //! rolls until it hits a wall. The shattering kind breaks on its first landing.
 //!
-//! Was `Boulder` in the original decompilation (bank $A6:86F5-$A6:89FC). Its
-//! state words name the slot fields over the same RAM bytes as `EnemyLayout40`.
+//! Bank $A6:86F5-$A6:89FC. Its state words name the slot fields over the same
+//! RAM bytes as `EnemyLayout40`.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, Slopes};
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -74,7 +74,7 @@ const FALL_SPEED_CAP: u16 = 0x5000;
 const BOUNCE_ROLL_CAP: u16 = 0x5000;
 const ROLL_SPEED_CAP: u16 = 0x4000;
 
-/// Sets up a boulder from its parameters. Was `Boulder_Init`.
+/// Sets up a boulder from its parameters.
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     let k = game.current_enemy();
     *BoulderEdit::of(game, k).fall_speed() = 0;
@@ -111,7 +111,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 
-/// Runs the current state. Was `Boulder_Main`.
+/// Runs the current state.
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     crate::probe::hit("boulder.main_ai");
     let k = game.current_enemy();
@@ -135,7 +135,6 @@ fn release<L: Lease + ?Sized>(game: &mut L, k: u16) {
 }
 
 /// Waits for Samus to be below the boulder and close enough on its side.
-/// Was `Boulder_Func_1`.
 fn wait_for_samus<L: Lease + ?Sized>(game: &mut L) {
     let below: i16 = {
         let actor = game.current_enemy();
@@ -212,7 +211,7 @@ fn roll_step<L: Lease + ?Sized>(game: &mut L, k: u16) {
     accelerate(game, k, true, 32, BOUNCE_ROLL_CAP);
 }
 
-/// Falls to the ground, speeding up. Was `Boulder_Func_2`.
+/// Falls to the ground, speeding up.
 fn fall<L: Lease + ?Sized>(game: &mut L) {
     let k = game.current_enemy();
     move_y(game, row(game, k, false));
@@ -228,7 +227,7 @@ fn fall<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 
-/// Rises after a landing while rolling, slowing down. Was `Boulder_Func_3`.
+/// Rises after a landing while rolling, slowing down.
 fn bounce_rise<L: Lease + ?Sized>(game: &mut L) {
     crate::probe::hit("boulder.bounce_rise");
     let k = game.current_enemy();
@@ -247,7 +246,7 @@ fn bounce_rise<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Falls back from a bounce while rolling; landing bounces again, starts the
-/// final roll, or shatters. Was `Boulder_Func_4`.
+/// final roll, or shatters.
 fn bounce_fall<L: Lease + ?Sized>(game: &mut L) {
     let k = game.current_enemy();
     let row: i32 = (8 * Boulder::of(game, k).fall_speed().to_le_bytes()[1] as i32) >> 1;
@@ -282,7 +281,7 @@ fn bounce_fall<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 
-/// Rolls along the ground until a wall stops it. Was `Boulder_Func_5`.
+/// Rolls along the ground until a wall stops it.
 fn roll<L: Lease + ?Sized>(game: &mut L) {
     crate::probe::hit("boulder.roll");
     let k = game.current_enemy();
@@ -345,7 +344,7 @@ fn quadratic<L: Lease + ?Sized>(game: &L, row: u16) -> u32 {
 }
 
 /// Moves the boulder horizontally by the quadratic speed at `row`, without
-/// collision. Was `Boulder_Func_7`.
+/// collision.
 fn move_x<L: Lease + ?Sized>(game: &mut L, row: u16) {
     let k = game.current_enemy();
     {
@@ -359,7 +358,7 @@ fn move_x<L: Lease + ?Sized>(game: &mut L, row: u16) {
 }
 
 /// Moves the boulder vertically by the quadratic speed at `row`, without
-/// collision. Was `Boulder_Func_9`.
+/// collision.
 fn move_y<L: Lease + ?Sized>(game: &mut L, row: u16) {
     let k = game.current_enemy();
     {

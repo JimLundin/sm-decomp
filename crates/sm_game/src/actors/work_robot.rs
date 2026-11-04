@@ -1,5 +1,5 @@
 //! The Work Robot, which walks the Wrecked Ship shooting lasers once the power is back,
-//! and stands dormant before (bank $A8:C6B3-$A8:D820). Was `wrecked_ship_robots`.
+//! and stands dormant before (bank $A8:C6B3-$A8:D820).
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, ShotHandling, SlopePolicy};

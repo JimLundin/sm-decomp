@@ -1,6 +1,5 @@
 //! The tripper and the suspensor platform, the floating platforms that sink
-//! under Samus and rise again (bank $A3:9B7B-$A3:9F2F). Was
-//! `falling_platforms`.
+//! under Samus and rise again (bank $A3:9B7B-$A3:9F2F).
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult, ShotHandling, SlopePolicy};
 use crate::actors::combat;
@@ -220,7 +219,7 @@ fn move_y(runtime: &mut impl Lease, sinking: bool) {
 }
 /// Main AI - tripper / suspensor platform ($A3:9D16): sink while Samus stands
 /// on it, else rise, moving sideways; a change of direction restarts the
-/// speed. Was `advance`.
+/// speed.
 pub fn main_ai(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
     let platform = combat::current(runtime).byte_index();
@@ -255,7 +254,6 @@ pub fn shot(runtime: &mut impl Lease) {
     }
 }
 /// Instruction - set moving left or right X movement ($A3:9C6B-$A3:9C8C).
-/// Was `direction`.
 pub fn set_x_movement(right: bool, script: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
     let platform = combat::current(runtime).byte_index();
     *PlatformEdit::of(runtime, platform).x_movement_function() = u16::from(right);

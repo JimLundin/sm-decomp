@@ -431,7 +431,7 @@ fn asleep<A: Host>(_k: u16, jp: EnemyScript, h: &mut A) -> EnemyScript {
         jp
     })
 }
-/// Instruction - fight AI ($A4:86A6): run the fight function. Was `dispatch`.
+/// Instruction - fight AI ($A4:86A6): run the fight function.
 pub fn fight_ai<A: Host>(_k: u16, jp: EnemyScript, h: &mut A) -> EnemyScript {
     let key = Key::from_legacy(h.session().actors.controls.selected);
     let function = h.resolve_actor(key, AccessMode::Native).variables[FIGHT_FUNCTION];
@@ -460,7 +460,7 @@ pub fn fight_ai<A: Host>(_k: u16, jp: EnemyScript, h: &mut A) -> EnemyScript {
     ];
     functions[(function >> 1) as usize](function, jp, h)
 }
-/// Instruction - maybe start projectile attack ($A4:8752). Was `choose_spit`.
+/// Instruction - maybe start projectile attack ($A4:8752).
 pub fn maybe_start_projectile_attack<A: Host>(_k: u16, jp: EnemyScript, h: &mut A) -> EnemyScript {
     if h.inputs().random & PROJECTILE_DRAW < PROJECTILE_CHANCE {
         h.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {

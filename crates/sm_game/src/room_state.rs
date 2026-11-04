@@ -155,7 +155,7 @@ pub trait ScriptHost:
 }
 
 /// Execute room setup ASM ($8F:E88F): the room state's setup routine
-/// `script`. Was `RunRoomSetupCode`.
+/// `script`.
 pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
     use crate::constants::bank_87::*;
     use crate::scrolling_sky;
@@ -266,7 +266,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
 }
 
 /// Execute door ASM ($8F:E8A3): the door's routine `script`, or the scroll
-/// updates its pointer names. Was `RunDoorSetupCode`.
+/// updates its pointer names.
 pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
     use crate::constants::bank_87::*;
     match script {
@@ -376,7 +376,7 @@ pub trait MainCodeHost: SessionView + crate::display::preparation::Access {
 }
 
 /// Execute room main ASM ($8F:E8BD): the room's main ASM routine `script`
-/// for this frame. Was `RunRoomMainCode`.
+/// for this frame.
 pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
     use crate::constants::bank_86::{ADDR_STRU_869734, ADDR_STRU_869742};
     match script {

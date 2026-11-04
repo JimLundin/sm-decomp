@@ -1,9 +1,8 @@
 //! The fire arc (bank $A6:9470-$A6:998B): a chain of fireballs swinging along
 //! an arc around its spawn point, and the spike platform's bottom half.
 //!
-//! Was `NuclearWaffle_*` and `SpikeyPlatform2ndEnemy_Init` in the original
-//! decompilation. The arc's body is five enemy projectiles and three sprite
-//! objects; the active swing runs with them in the enemy projectile code.
+//! The arc's body is five enemy projectiles and three sprite objects; the
+//! active swing runs with them in the enemy projectile code.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::layouts::EnemyLayout104;
 use crate::actors::slot_view::{SlotState, extended_var, slot_view};
@@ -14,16 +13,16 @@ use sm_data::enemy_speeds::SpeedTable;
 /// A lease on a game with the fire arc's effects.
 pub trait Lease: BossLease + SlotState + crate::sprite_effect_host::Host {
     /// Fire arc function - active ($A6:9682): advance the orbit, whose
-    /// projectiles run in the host. Was `NuclearWaffle_Func_2`.
+    /// projectiles run in the host.
     fn advance_orbit(&mut self);
 }
 
 slot_view! {
-    /// The fire arc's slot. Was `Enemy_NuclearWaffle`. The eight words from
-    /// `var_08` hold the projectiles' explosions and the eight from `var_18`
-    /// the sprite objects'; `var_10` is the first body part's sprite object,
-    /// the others following at the body index's byte offset. The falling and
-    /// rising explosion angles are `var_2f` and `var_30`
+    /// The fire arc's slot. The eight words from `var_08` hold the
+    /// projectiles' explosions and the eight from `var_18` the sprite
+    /// objects'; `var_10` is the first body part's sprite object, the others
+    /// following at the body index's byte offset. The falling and rising
+    /// explosion angles are `var_2f` and `var_30`
     /// ([`set_explosion_angles`]).
     FireArc, FireArcEdit {
         record: [
@@ -103,8 +102,7 @@ const EXPLOSION_ANGLES: [u16; 4] = [0x180, 0x100, 0x100, 0x180];
 
 /// Initialisation AI - enemy $E0BF (fire arc) ($A6:94C4): the parameters'
 /// bytes are the speed, radius, direction and inactive time; the body's
-/// projectiles and sprite objects spawn at the arc's start. Was
-/// `NuclearWaffle_Init`.
+/// projectiles and sprite objects spawn at the arc's start.
 pub fn initialize<L: Lease>(game: &mut L) {
     crate::probe::hit("fire_arc.initialize");
     let k = game.current_enemy();
@@ -191,7 +189,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     }
 }
 
-/// Main AI - enemy $E0BF (fire arc) ($A6:960E). Was `NuclearWaffle_Main`.
+/// Main AI - enemy $E0BF (fire arc) ($A6:960E).
 pub fn main_ai<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     match FireArc::of(game, k).function() {
@@ -203,7 +201,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 
 /// Fire arc function - inactive ($A6:9615): when the inactive timer runs out,
 /// swing from the start angle with every explosion cleared, and keep running
-/// off-screen. Was `NuclearWaffle_Func_1`.
+/// off-screen.
 pub fn inactive<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     *FireArcEdit::of(game, k).inactive_timer() =
@@ -224,7 +222,7 @@ pub fn inactive<L: Lease>(game: &mut L) {
 }
 
 /// Initialisation AI - enemy $E03F (spike platform bottom) ($A6:8B85): 12px
-/// below the top half, the enemy before it. Was `SpikeyPlatform2ndEnemy_Init`.
+/// below the top half, the enemy before it.
 pub fn initialize_spike_platform_bottom<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     PlatformEdit::of(game, k).actor().x.whole = Platform::of(game, k - 0x40).actor().x.whole;

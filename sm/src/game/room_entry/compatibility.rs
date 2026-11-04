@@ -87,7 +87,7 @@ impl EntryEffects for Runtime<'_> {
             LeafEffect::UpdateMusicTrack => self.update_music_track_index(),
             LeafEffect::LoadChangedMusic => self.load_new_music_track_if_changed(),
             // The rest run on this lease, with the observations refreshed on
-            // entry and on return as the former foreign call left them.
+            // entry and on return.
             _ => self.owned_player_call(|runtime| match effect {
                 LeafEffect::ClearTransitionSounds => {
                     game::session_runtime::player_command_in(runtime, 0x1d);
@@ -189,9 +189,9 @@ impl EntryEffects for Runtime<'_> {
     }
     fn wait(&mut self, cause: EntryWait) -> u8 {
         // Each wait runs on the lease, with the observations refreshed on entry
-        // and on return as the former foreign call left them. An NMI wait is the
-        // frame display's acknowledgment and pending bytes; the door's room
-        // mechanisms run on this lease in place of one the game opened.
+        // and on return. An NMI wait is the frame display's acknowledgment and
+        // pending bytes; the door's room mechanisms run on this lease in place
+        // of one the game opened.
         self.owned_player_call(|runtime| match cause {
             EntryWait::Nmi => sm_game::display_refresh::wait(true, runtime),
             EntryWait::NoUpdate => sm_game::display_refresh::wait(false, runtime),
@@ -258,8 +258,8 @@ impl EntryEffects for Runtime<'_> {
     }
     fn clear_buffer(&mut self, operation: BufferClear) {
         // Each clear stores the lease's bytes, and each DMA starts on its
-        // transfer port, with the observations refreshed on entry and on return
-        // as the former foreign call left them.
+        // transfer port, with the observations refreshed on entry and on
+        // return.
         self.owned_player_call(|runtime| match operation {
             BufferClear::InitialLevel | BufferClear::DoorLevel => {
                 game::room_backgrounds::clear_level(runtime)
@@ -395,8 +395,7 @@ impl EntryEffects for Runtime<'_> {
         };
         // The decoder reads ROM and VRAM and writes VRAM through device registers
         // alone, so it runs on the lease in one device interval, with the
-        // observations refreshed on entry and on return as the former foreign call
-        // left them.
+        // observations refreshed on entry and on return.
         self.owned_player_call(|runtime| {
             if prepared.is_none() {
                 use sm_game::decompression::DecompressionHost as _;
@@ -426,8 +425,7 @@ impl EntryEffects for Runtime<'_> {
             bank,
         };
         // The DMA reads the published lease through its transfer port, with the
-        // observations refreshed on entry and on return as the former foreign call
-        // left them.
+        // observations refreshed on entry and on return.
         self.owned_player_call(|runtime| {
             crate::game::display_commands::copy_to_vram_on_lease(
                 destination,
@@ -453,7 +451,7 @@ impl EntryEffects for Runtime<'_> {
     fn setup(&mut self, action: SetupAction) {
         let (kind, code) = action.compatibility_code(&self.session().world);
         // The routine runs on this lease, with the observations refreshed on
-        // entry and on return as the former foreign call left them.
+        // entry and on return.
         self.owned_player_call(|runtime| match kind {
             SetupKind::Room => sm_game::room_state::execute_setup_code(code, runtime),
             SetupKind::Door => sm_game::room_state::execute_door_code(code, runtime),
@@ -493,8 +491,7 @@ impl EntryEffects for Runtime<'_> {
     }
 }
 
-/// One room-entry register write on the lease, in place of the former foreign
-/// call's `write_reg`. An MDMAEN start publishes the lease, then starts on its
+/// One room-entry register write on the lease. An MDMAEN start publishes the lease, then starts on its
 /// transfer port, so the DMA reads the Session's bytes; any other write is a
 /// device write. The room background observer snapshots RAM at these writes and
 /// may swap the loaded image there: while a case captures, a verify build runs

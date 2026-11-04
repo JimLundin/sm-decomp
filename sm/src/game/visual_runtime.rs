@@ -146,7 +146,7 @@ impl visual_host::Host for Runtime<'_> {}
 impl sm_game::hdma_effects::Host for Runtime<'_> {
     fn calculate_xray_window(&mut self, window: sm_game::beam_windows::XrayWindow) -> Option<u16> {
         // The table is the lease's; the observations are refreshed on entry and
-        // on return, as the former foreign call left them.
+        // on return.
         self.owned_player_call(|runtime| {
             sm_game::beam_windows::calculate_xray_window(window, runtime)
         })

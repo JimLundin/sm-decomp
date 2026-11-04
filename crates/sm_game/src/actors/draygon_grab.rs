@@ -101,7 +101,7 @@ fn hold_offset<S: Lease>(k: u16, game: &mut S) -> u16 {
     }
 }
 /// Draygon body function - chase Samus ($A5:8E19): fly at Samus and grab her,
-/// unless the grapple repels Draygon. Was `acquire`.
+/// unless the grapple repels Draygon.
 pub fn chase_samus<L: Lease>(game: &mut L) {
     fire_wall_turret(game);
     if battle!(game.SamusXSpeedDivisor) == 0 {
@@ -171,14 +171,14 @@ pub fn chase_samus<L: Lease>(game: &mut L) {
         pursue(dx, dy, game);
     }
 }
-/// Draygon body function - repelled by grapple ($A5:8F10). Was `cancel_grapple`.
+/// Draygon body function - repelled by grapple ($A5:8F10).
 pub fn repelled_by_grapple<S: Lease>(game: &mut S) {
     crate::probe::hit("draygon_grab.repelled_by_grapple");
     battle!(game.GrappleBeamFunction = GRAPPLE_DROPPED);
     *DraygonEdit::of(game, BODY).function() = function::FLAIL_TAIL_AND_FLY_STRAIGHT_UP;
 }
 /// Draygon body function - grabbed Samus - moving to target position
-/// ($A5:8F1E), then roar. Was `center`.
+/// ($A5:8F1E), then roar.
 pub fn move_to_target<S: Lease>(k: u16, game: &mut S) {
     if hurt_by_grapple(game) {
         return;
@@ -214,7 +214,7 @@ pub fn move_to_target<S: Lease>(k: u16, game: &mut S) {
 }
 /// Draygon body function - grabbed Samus - rising spiral movement ($A5:8FD6):
 /// widen and raise the spiral, now and then whipping the tail, until it is wide
-/// or high enough for the final tail whips. Was `orbit`.
+/// or high enough for the final tail whips.
 pub fn rising_spiral<L: Lease>(k: u16, game: &mut L) {
     if hurt_by_grapple(game) {
         return;
@@ -276,7 +276,7 @@ pub fn rising_spiral<L: Lease>(k: u16, game: &mut L) {
         move_samus_with_draygon(k, game);
     }
 }
-/// Draygon body function - grabbed Samus - tail whip ($A5:90D4). Was `pause`.
+/// Draygon body function - grabbed Samus - tail whip ($A5:90D4).
 pub fn tail_whip<S: Lease>(k: u16, game: &mut S) {
     move_samus_with_draygon(k, game);
     let remaining = Draygon::of(game, BODY).tail_whip_timer().wrapping_sub(1);
@@ -294,7 +294,6 @@ pub fn tail_whip<S: Lease>(k: u16, game: &mut S) {
     }
 }
 /// Draygon body function - grabbed Samus - final tail whips - start ($A5:9105).
-/// Was `start_release`.
 pub fn final_tail_whips<S: Lease>(k: u16, game: &mut S) {
     crate::probe::hit("draygon_grab.final_tail_whips");
     move_samus_with_draygon(k, game);
@@ -311,7 +310,6 @@ pub fn final_tail_whips<S: Lease>(k: u16, game: &mut S) {
 }
 /// Move Samus with Draygon ($A5:94A9), which is also the final tail whips'
 /// ongoing function ($A5:9124): hold her, and fly up once she is released.
-/// Was `attach`.
 pub fn move_samus_with_draygon<S: Lease>(k: u16, game: &mut S) {
     let dx = hold_offset(k, game);
     game.set_player_x(Draygon::of(game, BODY).actor().x.whole.wrapping_add(dx));
@@ -322,8 +320,7 @@ pub fn move_samus_with_draygon<S: Lease>(k: u16, game: &mut S) {
         *DraygonEdit::of(game, BODY).function() = function::FLY_STRAIGHT_UP;
     }
 }
-/// Draygon body function - flail tail and fly straight up ($A5:9128). Was
-/// `release`.
+/// Draygon body function - flail tail and fly straight up ($A5:9128).
 pub fn flail_tail_and_fly_straight_up<L: Lease>(game: &mut L) {
     crate::probe::hit("draygon_grab.flail_tail_and_fly_straight_up");
     game.owned_step(crate::player_movement::forced::release_from_draygon);
@@ -338,7 +335,6 @@ pub fn flail_tail_and_fly_straight_up<L: Lease>(game: &mut L) {
     );
 }
 /// Draygon body function - fly straight up ($A5:9154), then swoop right again.
-/// Was `depart`.
 pub fn fly_straight_up<S: Lease>(game: &mut S) {
     fire_wall_turret(game);
     let y = (Draygon::of(game, BODY).actor().y.whole as i16).wrapping_sub(RISE);
@@ -356,7 +352,7 @@ pub fn fly_straight_up<S: Lease>(game: &mut S) {
 }
 
 /// Instruction - Draygon tail whip hit ($A5:9B9A): hurt Samus, shake the
-/// screen and raise a dust cloud. Was `slam`.
+/// screen and raise a dust cloud.
 pub fn tail_whip_hit<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *DraygonEdit::of(game, BODY).swoop_y_acceleration() = INITIAL_SWOOP_Y_ACCELERATION;
     let definition = Draygon::of(game, BODY).actor().definition;

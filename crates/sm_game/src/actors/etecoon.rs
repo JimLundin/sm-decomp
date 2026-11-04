@@ -2,8 +2,8 @@
 //! wall-jump up the shaft and leap the morph tunnel at its top (bank
 //! $A7:E912-$A7:EEEA).
 //!
-//! Was `Etecoon_*` in the original decompilation. Each etecoon runs the bank
-//! $A7 function in its `function` word, whose ids are the original's.
+//! Each etecoon runs the bank $A7 function in its `function` word, whose ids
+//! are the original's.
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, Slopes, below};
@@ -122,8 +122,7 @@ fn set_run<L: Lease>(game: &mut L, k: u16, speed: u16) {
     *EtecoonEdit::of(game, k).x_subspeed() = 0;
 }
 
-/// Freezes the etecoon for 128 frames while a quake shakes the room. Was
-/// `Etecoon_Func_1`.
+/// Freezes the etecoon for 128 frames while a quake shakes the room.
 fn freeze_if_quake<L: Lease>(game: &mut L, k: u16) {
     if game.session().feedback.earthquake_timer != 0 {
         *EtecoonEdit::of(game, k).route() =
@@ -135,7 +134,7 @@ fn freeze_if_quake<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Moves by the X velocity; true when blocked. Was `Etecoon_Func_2`.
+/// Moves by the X velocity; true when blocked.
 fn move_horizontally<L: Lease>(game: &mut L, k: u16) -> bool {
     let amount = (((Etecoon::of(game, k).x_speed() as u32) << 16)
         | Etecoon::of(game, k).x_subspeed() as u32) as i32;
@@ -143,7 +142,7 @@ fn move_horizontally<L: Lease>(game: &mut L, k: u16) -> bool {
 }
 
 /// Moves by the Y velocity, then falls faster up to 5 px a frame; true when
-/// blocked. Was `Etecoon_Func_3`.
+/// blocked.
 fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
     let amount = (((Etecoon::of(game, k).y_speed() as u32) << 16)
         | Etecoon::of(game, k).y_subspeed() as u32) as i32;
@@ -161,7 +160,7 @@ fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
     game.move_vertical(k, amount)
 }
 
-/// Initialisation AI. Was `Etecoon_Init`.
+/// Initialisation AI.
 pub fn initialize<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     EtecoonEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
@@ -173,8 +172,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     *EtecoonEdit::of(game, k).timer() = 0xffff;
 }
 
-/// Main AI: count down a quake freeze, else run the function. Was
-/// `Etecoon_Main`.
+/// Main AI: count down a quake freeze, else run the function.
 pub fn main_ai<L: Lease>(game: &mut L) {
     crate::probe::hit("etecoon.main_ai");
     let k = game.current_enemy();
@@ -214,8 +212,7 @@ fn run_function<L: Lease>(game: &mut L, address: u16) {
     }
 }
 
-/// Waits, flexing when Samus comes near, then starts hopping. Was
-/// `Etecoon_Func_4`.
+/// Waits, flexing when Samus comes near, then starts hopping.
 pub fn initial<L: Lease>(game: &mut L, k: u16) {
     if game.session().room.entry.enemy_interlock == 0 {
         if (Etecoon::of(game, k).timer() & 0x8000) == 0 {
@@ -235,7 +232,7 @@ pub fn initial<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Starts a hop at the bottom of the room. Was `Etecoon_Func_5`.
+/// Starts a hop at the bottom of the room.
 pub fn start_hop_bottom<L: Lease>(game: &mut L, k: u16) {
     if !timer_expired(game, k) {
         return;
@@ -248,8 +245,7 @@ pub fn start_hop_bottom<L: Lease>(game: &mut L, k: u16) {
     sound_near_samus(game, HOP_SOUND);
 }
 
-/// Hops; on landing near Samus it looks at her, else it hops again. Was
-/// `Etecoon_Func_6`.
+/// Hops; on landing near Samus it looks at her, else it hops again.
 pub fn hopping_bottom<L: Lease>(game: &mut L, k: u16) {
     if move_vertically(game, k) {
         if (Etecoon::of(game, k).y_speed() & 0x8000) == 0 {
@@ -293,7 +289,7 @@ fn hit_ceiling<L: Lease>(game: &mut L, k: u16) {
     EtecoonEdit::of(game, k).actor().instruction = list::HIT_CEILING;
 }
 
-/// Looks at Samus, then runs away from her. Was `Etecoon_Func_7`.
+/// Looks at Samus, then runs away from her.
 pub fn look_at_samus<L: Lease>(game: &mut L, k: u16) {
     if !timer_expired(game, k) {
         return;
@@ -311,7 +307,7 @@ pub fn look_at_samus<L: Lease>(game: &mut L, k: u16) {
     set_hop(game, k);
 }
 
-/// Runs left until the wall, then turns right. Was `Etecoon_Func_8`.
+/// Runs left until the wall, then turns right.
 pub fn running_left<L: Lease>(game: &mut L, k: u16) {
     if move_horizontally(game, k) {
         set_run(game, k, RUN_RIGHT_SPEED);
@@ -322,7 +318,7 @@ pub fn running_left<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Runs right, jumping 32 px before the wall. Was `Etecoon_Func_9`.
+/// Runs right, jumping 32 px before the wall.
 pub fn running_right<L: Lease>(game: &mut L, k: u16) {
     if game.probe_horizontal(k, (32u32 << 16) as i32) {
         EtecoonEdit::of(game, k).actor().instruction_delay = 1;
@@ -333,8 +329,7 @@ pub fn running_right<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Jumps: against a wall it wall-jumps, on the floor it lands. Was
-/// `Etecoon_Func_10`.
+/// Jumps: against a wall it wall-jumps, on the floor it lands.
 pub fn jumping<L: Lease>(game: &mut L, k: u16) {
     crate::probe::hit("etecoon.jumping");
     freeze_if_quake(game, k);
@@ -364,7 +359,7 @@ pub fn jumping<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Clings to the wall, then jumps off it the other way. Was `Etecoon_Func_11`.
+/// Clings to the wall, then jumps off it the other way.
 pub fn wall_jump<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if timer_expired(game, k) {
@@ -381,8 +376,7 @@ pub fn wall_jump<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Landed at the top of the shaft: heads for its run-up point. Was
-/// `Etecoon_Func_12`.
+/// Landed at the top of the shaft: heads for its run-up point.
 pub fn landed_from_jump<L: Lease>(game: &mut L, k: u16) {
     if !timer_expired(game, k) {
         return;
@@ -397,21 +391,18 @@ pub fn landed_from_jump<L: Lease>(game: &mut L, k: u16) {
     EtecoonEdit::of(game, k).actor().instruction_delay = 1;
 }
 
-/// Was `Etecoon_Func_13`.
 fn run_to_left_run_up<L: Lease>(game: &mut L, k: u16) {
     *EtecoonEdit::of(game, k).function() = function::RUN_TO_LEFT_RUN_UP;
     EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_LEFT;
     set_run(game, k, RUN_LEFT_SPEED);
 }
 
-/// Was `Etecoon_Func_14`.
 fn run_to_right_run_up<L: Lease>(game: &mut L, k: u16) {
     *EtecoonEdit::of(game, k).function() = function::RUN_TO_RIGHT_RUN_UP;
     EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_RIGHT;
     set_run(game, k, RUN_RIGHT_SPEED);
 }
 
-/// Was `Etecoon_Func_15`.
 fn hop_at_centre_run_up<L: Lease>(game: &mut L, k: u16) {
     *EtecoonEdit::of(game, k).function() = function::HOPPING_TOP;
     EtecoonEdit::of(game, k).actor().instruction =
@@ -426,7 +417,6 @@ fn start_top_hops<L: Lease>(game: &mut L, k: u16) {
     EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
 }
 
-/// Was `Etecoon_Func_16`.
 pub fn run_to_left_run_up_point<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if below(Etecoon::of(game, k).actor().x.whole, LEFT_RUN_UP_X) {
@@ -434,7 +424,6 @@ pub fn run_to_left_run_up_point<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Was `Etecoon_Func_17`.
 pub fn run_to_right_run_up_point<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if !below(Etecoon::of(game, k).actor().x.whole, RIGHT_RUN_UP_X) {
@@ -442,8 +431,7 @@ pub fn run_to_right_run_up_point<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Runs for the morph tunnel and jumps high at the run-up point. Was
-/// `Etecoon_Func_18`.
+/// Runs for the morph tunnel and jumps high at the run-up point.
 pub fn running_for_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if !below(Etecoon::of(game, k).actor().x.whole, RIGHT_RUN_UP_X) {
@@ -455,7 +443,6 @@ pub fn running_for_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Was `Etecoon_Func_19`.
 pub fn tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     crate::probe::hit("etecoon.tunnel_jump");
     move_horizontally(game, k);
@@ -467,7 +454,6 @@ pub fn tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Was `Etecoon_Func_20`.
 pub fn running_through_tunnel<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if !below(Etecoon::of(game, k).actor().x.whole, TUNNEL_LEDGE_X) {
@@ -479,7 +465,6 @@ pub fn running_through_tunnel<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Was `Etecoon_Func_21`.
 pub fn falling_from_tunnel_ledge<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if move_vertically(game, k) {
@@ -491,7 +476,7 @@ pub fn falling_from_tunnel_ledge<L: Lease>(game: &mut L, k: u16) {
 }
 
 /// Hops at the top of the room; a waiting etecoon left of the tunnel waits
-/// for Samus. Was `Etecoon_Func_22`.
+/// for Samus.
 pub fn hopping_top<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if move_vertically(game, k) {
@@ -512,8 +497,7 @@ pub fn hopping_top<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Hops up to four times, then runs for the tunnel and fails the jump. Was
-/// `Etecoon_Func_23`.
+/// Hops up to four times, then runs for the tunnel and fails the jump.
 pub fn start_hop_top<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if timer_expired(game, k) {
@@ -538,8 +522,7 @@ pub fn start_hop_top<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Hops until Samus is near, then runs for the tunnel jump. Was
-/// `Etecoon_Func_24`.
+/// Hops until Samus is near, then runs for the tunnel jump.
 pub fn hop_until_samus_near<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if timer_expired(game, k) {
@@ -557,7 +540,6 @@ pub fn hop_until_samus_near<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Was `Etecoon_Func_25`.
 pub fn running_for_failed_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if !below(Etecoon::of(game, k).actor().x.whole, RIGHT_RUN_UP_X) {
@@ -567,7 +549,7 @@ pub fn running_for_failed_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Falls short of the tunnel and runs back left. Was `Etecoon_Func_26`.
+/// Falls short of the tunnel and runs back left.
 pub fn failed_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if move_vertically(game, k) {

@@ -1,4 +1,4 @@
-"""Mutation check of the Session's RAM mappings; the mutants run in GitHub CI.
+"""Mutation check of the Session's RAM mappings. No workflow runs the mutants now (#242).
 
 Each mutant perturbs one owner's or view's mapping between RAM and Session
 fields: it shifts a field's address by 2, swaps two fields, or drops one byte

@@ -276,7 +276,7 @@ fn project<L: Lease>(
     }
 }
 /// Yapping maw function - attack ($A8:A28C), calculating the origin
-/// ($A8:A310). Was `start_reach`.
+/// ($A8:A310).
 fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
     crate::probe::hit("yapping_maw.attack");
     let maw = game.current_enemy();
@@ -350,7 +350,7 @@ fn reorient_segment<L: Lease>(
     let scratch = *edit.scratch_y();
     *edit.segment_velocity(axis_word(part, true)) = y.wrapping_sub(scratch);
 }
-/// Move Samus with yapping maw pincers ($A8:A665). Was `carry_player`.
+/// Move Samus with yapping maw pincers ($A8:A665).
 fn move_samus_with_pincers<L: Lease>(game: &mut L) {
     crate::room_mechanisms::host::Effects::player_control(game, LOCK_SAMUS);
     let maw = game.current_enemy();
@@ -363,7 +363,7 @@ fn move_samus_with_pincers<L: Lease>(game: &mut L) {
     crate::player_position::correct_previous_position(game);
 }
 /// Yapping maw function - attacking ($A8:A445), updating the angular speed
-/// ($A8:A63E). Was `stretch`.
+/// ($A8:A63E).
 fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
     let maw = game.current_enemy();
     let step = YappingMaw::of(game, maw).angle() >> 2;
@@ -469,7 +469,7 @@ fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L)
         move_samus_with_pincers(game);
     }
 }
-/// Yapping maw function - cooldown ($A8:A68A). Was `release_player`.
+/// Yapping maw function - cooldown ($A8:A68A).
 fn cooldown<L: Lease>(game: &mut L) {
     let maw = game.current_enemy();
     if YappingMaw::of(game, maw).grabbing_samus() != 0 {
@@ -506,8 +506,7 @@ fn release_input<L: Lease>(game: &mut L) {
     }
 }
 /// Main AI - Yapping Maw ($A8:A211): run its function. False selects the
-/// existing runtime's unknown-address failure before attachments update. Was
-/// `advance`.
+/// existing runtime's unknown-address failure before attachments update.
 pub fn main_ai<L: Lease>(game: &mut L, mut write_operand: impl FnMut(u8, &mut L)) -> bool {
     crate::probe::hit("yapping_maw.main_ai");
     let maw = game.current_enemy();

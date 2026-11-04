@@ -34,8 +34,7 @@ pub trait PirateLease:
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;
     fn write_word_le(&mut self, value: u16, at: usize);
-    /// Run `action` on this lease where a `foreign` call ran it on the game:
-    /// the external observations are refreshed on entry and on return.
+    /// Run `action` on this lease: the external observations are refreshed on entry and on return.
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
     /// The actor content record at `bank:address`, as the original actor read.
     fn actor_legacy_record(&mut self, bank: u8, address: u16) -> RomRecord;
@@ -235,7 +234,7 @@ fn extra(runtime: &impl SlotState, index: u16, word: Extra) -> u16 {
     }
 }
 /// Store `value` to pirate `index`'s extended word `word`, then refresh the
-/// lease's observations, as the slice store did after each byte.
+/// lease's observations after each byte.
 fn set_extra(runtime: &mut impl SlotState, index: u16, word: Extra, value: u16) {
     let mut pirate = PirateEdit::of(runtime, index);
     *match word {

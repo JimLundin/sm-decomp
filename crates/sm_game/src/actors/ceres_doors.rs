@@ -3,7 +3,6 @@
 //! doors' functions, the escape's rumbling and explosions and the elevator
 //! animations.
 //!
-//! Was `CeresSteam_*` and `CeresDoor_*` in the original decompilation.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Death, abs16};
 use crate::actors::slot_view::{SlotState, slot_index, slot_view};
@@ -153,8 +152,7 @@ pub fn steam_touch<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Initialisation AI - enemy $E1FF (steam) ($A6:EFB1): its kind picks the
-/// instruction list and function; it waits 1 to 20h frames to start. Was
-/// `CeresSteam_Init`.
+/// instruction list and function; it waits 1 to 20h frames to start.
 pub fn initialize_steam<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     {
@@ -175,8 +173,7 @@ pub fn initialize_steam<L: Lease + ?Sized>(game: &mut L) {
     *steam.function() = kind.function;
 }
 
-/// Main AI - enemy $E1FF (steam) ($A6:F00D), at full health. Was
-/// `CeresSteam_Main`.
+/// Main AI - enemy $E1FF (steam) ($A6:F00D), at full health.
 pub fn steam_main<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     SteamEdit::of(game, e).actor().health = 0x7fff;
@@ -189,7 +186,7 @@ pub fn steam_main<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Steam function - calculate graphical offset in rotating elevator room
-/// ($A6:F019), into the enemy's spawn record. Was `CeresSteam_Func_1`.
+/// ($A6:F019), into the enemy's spawn record.
 pub fn steam_rotating_offset<L: Lease + ?Sized>(k: u16, game: &mut L) {
     let steam = Steam::of(game, k).actor();
     let point = crate::geometry::Point {
@@ -207,8 +204,7 @@ pub fn steam_rotating_offset<L: Lease + ?Sized>(k: u16, game: &mut L) {
 }
 
 /// Instruction - decrement activation timer and go to [[Y]] if non-zero,
-/// otherwise show enemy and go to [[Y] + 2] ($A6:F127). Was
-/// `CeresSteam_Instr_2`.
+/// otherwise show enemy and go to [[Y] + 2] ($A6:F127).
 pub fn steam_activate<L: Lease + ?Sized>(k: u16, script: EnemyScript, game: &mut L) -> EnemyScript {
     let timer = Steam::of(game, k).activation_timer();
     *SteamEdit::of(game, k).activation_timer() = timer.wrapping_sub(1);
@@ -226,7 +222,6 @@ pub const VANISH: u16 = 0x0400 | 0x0100;
 
 /// Initialisation AI - enemy $E23F (Ceres door) ($A6:F6C5): its kind picks
 /// the function and instruction list; the palette depends on the escape.
-/// Was `CeresDoor_Init`.
 pub fn initialize_door<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     {
@@ -263,7 +258,7 @@ pub fn initialize_door<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Load rotating elevator room pre-explosion door overlay tiles if needed
-/// ($A6:F739): queue $B0:C400..C7FF to VRAM $7000. Was `CeresDoor_Func_1`.
+/// ($A6:F739): queue $B0:C400..C7FF to VRAM $7000.
 pub fn load_overlay_tiles<L: Lease + ?Sized>(k: u16, game: &mut L) {
     if Door::of(game, k).kind() != ELEVATOR_DOOR_OVERLAY {
         return;
@@ -284,7 +279,7 @@ pub fn load_overlay_tiles<L: Lease + ?Sized>(k: u16, game: &mut L) {
     );
 }
 
-/// Main AI - enemy $E23F (Ceres door) ($A6:F765). Was `CeresDoor_Main`.
+/// Main AI - enemy $E23F (Ceres door) ($A6:F765).
 pub fn door_main<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     let k = game.current_enemy();
@@ -300,7 +295,7 @@ pub fn door_main<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Handle Ceres door earthquake during escape ($A6:F773): a rare stronger
-/// earthquake type replaces `earthquake`. Was `escape_rumble`.
+/// earthquake type replaces `earthquake`.
 pub fn escape_rumble<L: Lease + ?Sized>(earthquake: u16, game: &mut L) {
     if crate::sequence_word!(game.CERES_STATUS) >= ESCAPE_STARTED
         && game.session().feedback.earthquake_timer == 0
@@ -318,7 +313,7 @@ pub fn escape_rumble<L: Lease + ?Sized>(earthquake: u16, game: &mut L) {
 }
 
 /// Ceres door function - Ridley escape mode 7 wall ($A6:F7A5): visible only
-/// during the getaway cutscene. Was `CeresDoor_Func_4`.
+/// during the getaway cutscene.
 pub fn mode7_wall<L: Lease + ?Sized>(game: &mut L) {
     change_properties(
         game.current_enemy(),
@@ -339,8 +334,7 @@ pub fn mode7_wall<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Ceres door function - rotating elevator room - default ($A6:F7BD): the
-/// elevator animates; once the escape starts, 48 frames of rumbling. Was
-/// `CeresDoor_Func_5`.
+/// elevator animates; once the escape starts, 48 frames of rumbling.
 pub fn elevator_default<L: Lease + ?Sized>(k: u16, game: &mut L) {
     elevator_animations(game);
     if crate::sequence_word!(game.CERES_STATUS) >= ESCAPE_STARTED {
@@ -357,7 +351,7 @@ pub fn elevator_default<L: Lease + ?Sized>(k: u16, game: &mut L) {
 
 /// Ceres door function - rotating elevator room - rumbling and explosions
 /// ($A6:F7DC): an explosion or smoke at the next of four offsets every five
-/// frames, then the elevator room rotates. Was `CeresDoor_Func_6`.
+/// frames, then the elevator room rotates.
 pub fn rumbling_and_explosions<L: Lease + ?Sized>(k: u16, game: &mut L) {
     {
         let mut door = DoorEdit::of(game, k);
@@ -406,8 +400,7 @@ pub fn rumbling_and_explosions<L: Lease + ?Sized>(k: u16, game: &mut L) {
     game.queue_sound(1, BIG_EXPLOSION_SOUND, 6);
 }
 
-/// Set Ceres elevator room to rotate if Ridley has escaped ($A6:F67F). Was
-/// `finish_door_explosion`.
+/// Set Ceres elevator room to rotate if Ridley has escaped ($A6:F67F).
 pub fn start_elevator_rotation<L: Lease + ?Sized>(game: &mut L) {
     if crate::sequence_word!(game.CERES_STATUS) != 0 {
         crate::sequence_word!(game.CERES_STATUS = ELEVATOR_ROTATING);
@@ -416,7 +409,7 @@ pub fn start_elevator_rotation<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ceres door function - rotating elevator room - handle Ceres elevator
 /// animations ($A6:F850): the platform, and the beacon palette every eighth
-/// frame. Was `CeresDoor_Func_7`.
+/// frame.
 pub fn elevator_animations<L: Lease + ?Sized>(game: &mut L) {
     animate_elevator_platform(game);
     if crate::sequence_word!(game.PALETTE_CHANGE_NUM) == 0 {
@@ -426,7 +419,7 @@ pub fn elevator_animations<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Animate Ceres elevator platform ($A6:F8F1): light and dark frames, two
-/// frames each. Was `CeresDoor_Func_8`.
+/// frames each.
 pub fn animate_elevator_platform<L: Lease + ?Sized>(game: &mut L) {
     let frame = ((crate::frame_display_word!(game.NmiFrameWordPair) & 2) >> 1) as isize;
     let list = crate::ceres_door_data::platform_frame(game, frame);

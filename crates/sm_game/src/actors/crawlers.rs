@@ -2,7 +2,7 @@
 //! loose: the Sciser, Zero, Viola, Zeela, Sova and Geemer, and the Wrecked
 //! Ship's orange Geemer, which turns towards Samus (bank $A3:DFA2-$A3:E9AF).
 //! The bank log calls the family "creepy crawlies" and the Geemer "zoomer"
-//! (with a "stone zoomer" palette variant). Was `wall_crawlers`.
+//! (with a "stone zoomer" palette variant).
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat;
@@ -129,7 +129,7 @@ fn set_speed(runtime: &mut impl ActorLease, key: Key, common: bool) {
     });
 }
 /// Common crawler initialisation AI ($A3:E67A) for actor `raw`, as other
-/// initialisations call it. Was `prepare`.
+/// initialisations call it.
 pub fn common_initialisation(raw: u16, runtime: &mut impl ActorLease) {
     set_speed(runtime, Key::from_legacy(raw), true);
 }
@@ -170,13 +170,12 @@ pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
     };
     set_speed(runtime, key, kind != Kind::OrangeGeemer);
 }
-/// Main AI ($A3:E6C2, and the orange Geemer's $A3:E08B): the function. Was
-/// `state_address`.
+/// Main AI ($A3:E6C2, and the orange Geemer's $A3:E08B): the function.
 pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) -> u32 {
     let key = combat::current(&*runtime);
     u32::from(runtime.resolve_actor(key, Native).pre_instruction) | BANK << 16
 }
-/// Instruction - enemy function = [[Y]] ($A3:E660, $A3:DFC2). Was `set_state`.
+/// Instruction - enemy function = [[Y]] ($A3:E660, $A3:DFC2).
 pub fn set_function(
     raw: u16,
     script: EnemyScript,
@@ -292,8 +291,8 @@ fn slope_x_velocity(runtime: &mut impl ActorLease) -> i32 {
     }
 }
 /// Crawler function - crawling horizontally ($A3:E7F2) or vertically
-/// ($A3:E6C8), or the orange Geemer's ($A3:E168, $A3:E091): crawl
-/// along the surface, turning at corners and falling off edges. Was `crawl`.
+/// ($A3:E6C8), or the orange Geemer's ($A3:E168, $A3:E091): crawl along the
+/// surface, turning at corners and falling off edges.
 pub fn crawl(
     raw: u16,
     axis: Axis,
@@ -358,7 +357,7 @@ pub fn crawl(
     }
 }
 /// Crawler function - falling ($A3:E785): fall until landing, then
-/// return to crawling. Was `falling`.
+/// return to crawling.
 pub fn falling(raw: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let key = Key::from_legacy(raw);
     let crawler = Crawler::of(runtime, raw);

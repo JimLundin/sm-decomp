@@ -1,5 +1,5 @@
-//! Verify-only checks of the lease's transfer port (session-authoritative-tick.md,
-//! stage 4b): a DMA the lease starts reads the bytes its Session holds.
+//! Verify-only checks of the lease's transfer port: a DMA the lease starts reads
+//! the bytes its Session holds.
 use crate::game::session_encoding as encoding;
 use crate::game_state::Game;
 use sm_game::session::Session;

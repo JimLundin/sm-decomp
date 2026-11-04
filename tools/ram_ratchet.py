@@ -55,27 +55,6 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cycle_report  # noqa: E402
 
-# Lowered to the honest view-counting measure after batch 13t (2026-11-01;
-# 3663, then 2319 before). First measured on main 91d0bcce. The
-# production line baseline dropped by the 685 #[cfg(test)] lines it stopped
-# counting (2026-10-31).
-# Measurement-only rebaseline on main c7936fda9f8422358796cfdd62df096c88428545:
-# include 303 executable RAM-backed cohort copy calls in 35 files. Four other
-# session_cohort references are documentation links, not calls. The coupled
-# union adds two files: 1842/99 becomes 2145/101. This is not the lower queued
-# batch-13 count; lower it only after that landing. Production remains advisory.
-# Measurement-only rebaseline on 65ae1cb61 (2026-11-03): count the 119 register
-# writes in 6 files that store their WRAM display mirror ($51..$86) by RAM offset
-# through raw work RAM (313 becomes 432); the ratchet saw only one RawRam import.
-# Measurement-only rebaseline on 0c42fb292 (2026-11-04): count each raw work RAM
-# method call through `.ram()` (the engine inventory's raw_ram_call sites): 56
-# calls in 11 files (nine menu files, scrolling_sky, projection), which the
-# ratchet saw only as the menu prelude's RawRam import. 85/14 becomes 141/24.
-# Measurement-only rebaseline on fef6b74c1 (2026-11-04): count presentation
-# workspace points and bytes named by WRAM address (Point::physical,
-# shared_byte, write_shared_byte, bus_point, alias_address) as address API
-# sites. 25 target sites (19 Point::physical in 9 sm_game files): engine
-# address sites 11 becomes 36; the legacy engine adds 7 (452 becomes 459).
 BASELINE = {
     "sm_game_ram_sites": 0,
     "sm_game_coupled_files": 0,

@@ -2,9 +2,8 @@
 //! forth gaining speed and shine, charges at the room's right end and
 //! shinesparks upward trailing four echoes (bank $A7:F4DD-$A7:F9C1).
 //!
-//! Was `Dachora_*` in the original decompilation. The dachora and its echoes
-//! run the bank $A7 function in their `function` word, whose ids are the
-//! original's.
+//! The dachora and its echoes run the bank $A7 function in their `function`
+//! word, whose ids are the original's.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::dachora::load_palette;
 use crate::actors::host::{Axis, Slopes};
@@ -112,7 +111,7 @@ fn gravity<L: Lease>(game: &L) -> u32 {
     (u32::from(acceleration.whole) << 16) | u32::from(acceleration.fraction)
 }
 
-/// Initialisation AI: a dachora idles, an echo waits. Was `Dachora_Init`.
+/// Initialisation AI: a dachora idles, an echo waits.
 pub fn initialize<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     DachoraEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
@@ -137,7 +136,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     }
 }
 
-/// Main AI: the function. Was `Dachora_Main`.
+/// Main AI: the function.
 pub fn main_ai<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     match Dachora::of(game, k).function() {
@@ -153,7 +152,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
     }
 }
 
-/// Falls to the floor and blinks once Samus is near. Was `Dachora_Func_2`.
+/// Falls to the floor and blinks once Samus is near.
 pub fn wait_for_samus<L: Lease>(game: &mut L, k: u16) {
     game.move_vertical(k, (1u32 << 16) as i32);
     if game.player_within(k, Axis::Y, 0x40) && game.player_within(k, Axis::X, WAKE_DISTANCE) {
@@ -169,7 +168,7 @@ pub fn wait_for_samus<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Blinks, then runs the way it faces. Was `Dachora_Func_3`.
+/// Blinks, then runs the way it faces.
 pub fn start_running<L: Lease>(game: &mut L, k: u16) {
     let left = Dachora::of(game, k).speed();
     let copied = Dachora::of(game, k).speed().wrapping_sub(1);
@@ -187,8 +186,7 @@ pub fn start_running<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Runs left, turning at the wall or the room's left end. Was
-/// `Dachora_Func_4`.
+/// Runs left, turning at the wall or the room's left end.
 pub fn running_left<L: Lease>(game: &mut L, k: u16) {
     let amount: i32 = -accelerate(game, k);
     if game.move_horizontal(k, amount, Slopes::Ignore) || {
@@ -207,7 +205,7 @@ pub fn running_left<L: Lease>(game: &mut L, k: u16) {
 }
 
 /// Runs right, turning at a wall; at the room's right end it charges the
-/// shinespark. Was `Dachora_Func_5`.
+/// shinespark.
 pub fn running_right<L: Lease>(game: &mut L, k: u16) {
     let amount: i32 = accelerate(game, k);
     if game.move_horizontal(k, amount, Slopes::Ignore) {
@@ -235,8 +233,7 @@ pub fn running_right<L: Lease>(game: &mut L, k: u16) {
     DachoraEdit::of(game, k).actor().instruction_delay = 1;
 }
 
-/// Shines while it charges, then shinesparks with its echoes. Was
-/// `Dachora_Func_7`.
+/// Shines while it charges, then shinesparks with its echoes.
 pub fn activate_shinespark<L: Lease>(game: &mut L, k: u16) {
     load_shine_palette(game, k);
     let left = Dachora::of(game, k).speed();
@@ -272,8 +269,7 @@ pub fn activate_shinespark<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Shinesparks upward until it hits the ceiling, then falls. Was
-/// `Dachora_Func_8`.
+/// Shinesparks upward until it hits the ceiling, then falls.
 pub fn shinesparking<L: Lease>(game: &mut L, k: u16) {
     load_shine_palette(game, k);
     update_echoes(game, k);
@@ -317,7 +313,7 @@ pub fn shinesparking<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Falls to the floor, then runs the way it faces. Was `Dachora_Func_11`.
+/// Falls to the floor, then runs the way it faces.
 pub fn falling<L: Lease>(game: &mut L, k: u16) {
     let pull = gravity(game);
     {
@@ -346,8 +342,7 @@ pub fn falling<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// An echo shows on alternate frames while it lasts, then hides. Was
-/// `Dachora_Func_12`.
+/// An echo shows on alternate frames while it lasts, then hides.
 pub fn echo<L: Lease>(game: &mut L, k: u16) {
     let lifetime: u16 = Echo::of(game, k).lifetime();
     if lifetime != 0 {
@@ -370,7 +365,7 @@ pub fn echo<L: Lease>(game: &mut L, k: u16) {
 }
 
 /// Speeds the run up to the top speed, shining once there, while falling
-/// onto the floor; the horizontal step. Was `Dachora_Func_6`.
+/// onto the floor; the horizontal step.
 fn accelerate<L: Lease>(game: &mut L, k: u16) -> i32 {
     crate::probe::hit("dachora.accelerate");
     if !below(Dachora::of(game, k).speed(), TOP_SPEED) {
@@ -419,8 +414,7 @@ fn accelerate<L: Lease>(game: &mut L, k: u16) -> i32 {
     (((Dachora::of(game, k).speed() as u32) << 16) | Dachora::of(game, k).subspeed() as u32) as i32
 }
 
-/// Places the next free echo where the dachora is, one each interval. Was
-/// `Dachora_Func_9`.
+/// Places the next free echo where the dachora is, one each interval.
 fn update_echoes<L: Lease>(game: &mut L, k: u16) {
     let first = k + ECHOES[0];
     let timer: u16 = Echo::of(game, first).spawn_timer();
@@ -442,7 +436,7 @@ fn update_echoes<L: Lease>(game: &mut L, k: u16) {
     }
 }
 
-/// Steps the shinespark palette, cycling through four. Was `Dachora_Func_10`.
+/// Steps the shinespark palette, cycling through four.
 fn load_shine_palette<L: Lease>(game: &mut L, k: u16) {
     let palette = crate::boss_lists::dachora_palette(
         game,

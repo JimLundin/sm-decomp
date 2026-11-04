@@ -57,7 +57,7 @@ pub fn segments(primary: u16) -> impl Iterator<Item = u16> {
 }
 
 /// Move Shaktool piece 1px ($AA:D956): move piece `k` one pixel along angle
-/// `a`. Was `Shaktool_D956`.
+/// `a`.
 pub fn move_piece_one_pixel<L: Lease>(
     k: u16,
     jp: EnemyScript,
@@ -79,7 +79,7 @@ pub fn move_piece_one_pixel<L: Lease>(
     jp
 }
 
-/// Shaktool pieces movement options = `a` ($AA:DB0E). Was `Shaktool_DB0E`.
+/// Shaktool pieces movement options = `a` ($AA:DB0E).
 pub fn set_movement_options<L: Lease>(k: u16, a: u16, game: &mut L) {
     let primary = Piece::of(game, k).primary_piece();
     for piece in segments(primary) {
@@ -87,7 +87,7 @@ pub fn set_movement_options<L: Lease>(k: u16, a: u16, game: &mut L) {
     }
 }
 
-/// Shaktool pieces facing angle = `a` ($AA:DB27). Was `Shaktool_DB27`.
+/// Shaktool pieces facing angle = `a` ($AA:DB27).
 pub fn set_facing_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
     let primary = Piece::of(game, k).primary_piece();
     for piece in segments(primary) {
@@ -95,7 +95,7 @@ pub fn set_facing_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
     }
 }
 
-/// Shaktool pieces neighbour angle = `a` ($AA:DB40). Was `Shaktool_DB40`.
+/// Shaktool pieces neighbour angle = `a` ($AA:DB40).
 pub fn set_neighbour_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
     let primary = Piece::of(game, k).primary_piece();
     for piece in segments(primary) {
@@ -105,7 +105,7 @@ pub fn set_neighbour_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
 
 /// Flip Shaktool ($AA:DB59): flip the head, swap and reverse the neighbour
 /// angles of the pieces at mirrored places, swap the saw hands' positions and
-/// centre the arm pieces and head. Was `Shaktool_DB59`.
+/// centre the arm pieces and head.
 pub fn flip<L: Lease>(k: u16, game: &mut L) {
     crate::probe::hit("shaktool.flip");
     let primary: u16 = Piece::of(game, k).primary_piece();
@@ -144,7 +144,7 @@ pub fn flip<L: Lease>(k: u16, game: &mut L) {
 
 /// Set Shaktool piece neighbour angle delta due to block collision ($AA:DC07):
 /// a quarter of the whole-angle difference between the facing and neighbour
-/// angles, in the direction of travel. Was `Shaktool_DC07`.
+/// angles, in the direction of travel.
 pub fn set_collision_angle_delta<L: Lease>(k: u16, game: &mut L) {
     let piece = k;
     let delta: u16 = if Piece::of(game, piece).movement_options() & ANTICLOCKWISE != 0 {
@@ -170,7 +170,7 @@ fn previous_position<L: Lease>(k: u16, axis: fn(&Actor) -> &Position, game: &mut
 }
 
 /// Position Shaktool piece relative to previous piece ($AA:DC2A): place piece
-/// `k` at its neighbour angle from the previous piece. Was `Shaktool_DC2A`.
+/// `k` at its neighbour angle from the previous piece.
 pub fn position_relative_to_previous<L: Lease>(k: u16, game: &mut L) {
     let piece = k;
     let angle = isize::from(Piece::of(game, piece).neighbour_angle().to_le_bytes()[1]);
@@ -197,7 +197,7 @@ fn set_position<L: Lease>(
 
 /// Set Shaktool pieces neighbour angle and angle delta for curling ($AA:DC6F):
 /// every piece's neighbour angle becomes piece `k`'s facing angle, with the
-/// curling angle deltas. Was `Shaktool_DC6F`.
+/// curling angle deltas.
 pub fn set_curling_angles<L: Lease>(k: u16, game: &mut L) {
     let piece = k;
     set_neighbour_angles(k, Piece::of(game, piece).facing_angle(), game);
@@ -244,7 +244,7 @@ pub fn instruction<L: Lease>(address: u32, k: u16, jp: EnemyScript, game: &mut L
     }
 }
 
-/// Main AI and hurt AI ($AA:DCA3): the piece's function. Was `Shaktool_Hurt`.
+/// Main AI and hurt AI ($AA:DCA3): the piece's function.
 pub fn main_ai<L: Lease>(game: &mut L) {
     crate::probe::hit("shaktool.main_ai");
     let k = game.current_enemy();
@@ -258,7 +258,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 }
 
 /// Initialisation AI ($AA:DE43): piece `piece_index` from the piece table,
-/// placed from the previous piece. Was `Shaktool_Init`.
+/// placed from the previous piece.
 pub fn initialize<L: Lease>(game: &mut L) {
     let piece = game.current_enemy();
     let offset = {
@@ -296,13 +296,12 @@ pub fn initialize<L: Lease>(game: &mut L) {
     }
 }
 
-/// Enemy touch ($AA:DF2F). Was `Shaktool_Touch`.
+/// Enemy touch ($AA:DF2F).
 pub fn touch<L: Lease>(game: &mut L) {
     game.contact_reaction(crate::actors::host::Death::Finalize);
 }
 
-/// Enemy shot ($AA:DF34): shot dead, every piece is deleted. Was
-/// `Shaktool_Shot`.
+/// Enemy shot ($AA:DF34): shot dead, every piece is deleted.
 pub fn shot<L: Lease>(game: &mut L) {
     game.shot_reaction(crate::actors::host::Shot::Finalize);
     let piece = game.current_enemy();
@@ -314,7 +313,7 @@ pub fn shot<L: Lease>(game: &mut L) {
     }
 }
 
-/// Instruction - reset Shaktool functions ($AA:D9BA). Was `Shaktool_Instr_1`.
+/// Instruction - reset Shaktool functions ($AA:D9BA).
 pub fn reset_functions<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let primary: u16 = Piece::of(game, k).primary_piece();
     for (index, segment) in segments(primary).enumerate() {
@@ -340,33 +339,32 @@ fn facing_whole_angle<L: Lease>(k: u16, game: &mut L) -> u16 {
 }
 
 /// Unused. Instruction - lower enemy 1px away from enemy projectile
-/// ($AA:D931). Was `Shaktool_Instr_2`.
+/// ($AA:D931).
 pub fn lower_away_from_projectile<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let angle = head_direction(k, game) ^ 0x80;
     move_piece_one_pixel(k, jp, angle, game)
 }
 
 /// Unused. Instruction - raise enemy 1px towards enemy projectile ($AA:D93F).
-/// Was `Shaktool_Instr_3`.
 pub fn raise_towards_projectile<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let angle = head_direction(k, game);
     move_piece_one_pixel(k, jp, angle, game)
 }
 
-/// Instruction - lower enemy 1px ($AA:D94A). Was `Shaktool_Instr_4`.
+/// Instruction - lower enemy 1px ($AA:D94A).
 pub fn lower<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let angle = facing_whole_angle(k, game) ^ 0x80;
     move_piece_one_pixel(k, jp, angle, game)
 }
 
-/// Instruction - raise enemy 1px ($AA:D953). Was `Shaktool_Instr_5`.
+/// Instruction - raise enemy 1px ($AA:D953).
 pub fn raise<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let angle = facing_whole_angle(k, game);
     move_piece_one_pixel(k, jp, angle, game)
 }
 
 /// Shaktool function - arm piece ($AA:DCAC): follow the previous piece and
-/// turn the neighbour angle, by a whole step once curled. Was `Shaktool_DCAC`.
+/// turn the neighbour angle, by a whole step once curled.
 pub fn arm_piece<L: Lease>(k: u16, game: &mut L) {
     position_relative_to_previous(k, game);
     let piece = k;
@@ -389,7 +387,7 @@ pub fn arm_piece<L: Lease>(k: u16, game: &mut L) {
 }
 
 /// Shaktool function - head ($AA:DCD7): an arm piece that aims between its
-/// neighbours. Was `Shaktool_DCD7`.
+/// neighbours.
 pub fn head<L: Lease>(k: u16, game: &mut L) {
     arm_piece(k, game);
     let piece = k;
@@ -420,8 +418,7 @@ pub fn head<L: Lease>(k: u16, game: &mut L) {
 }
 
 /// Shaktool function - final piece ($AA:DD25): moves as an arm piece; on a
-/// block it flips once, then reverses, and head-bobs; else it curls. Was
-/// `Shaktool_DD25`.
+/// block it flips once, then reverses, and head-bobs; else it curls.
 pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
     let piece = k;
     let y: u16 = Piece::of(game, piece).actor().y.whole;

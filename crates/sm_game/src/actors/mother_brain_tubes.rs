@@ -3,9 +3,8 @@
 //! The tube falling with the brain also ends the screen flash and sets up the
 //! neck for the fake death's ascent.
 //!
-//! Was `MotherBrainsTubesFalling_*` in the original decompilation (bank
-//! $A9:8B35-$A9:8C69). Its state words are named fields of the Session's slot
-//! record, at `EnemyLayout8`'s words.
+//! Bank $A9:8B35-$A9:8C69. Its state words are named fields of the Session's
+//! slot record, at `EnemyLayout8`'s words.
 use crate::actors::mother_brain::{BODY_INDEX, BRAIN_INDEX};
 use crate::actors::mother_brain_fight::Lease;
 use crate::actors::slot_view::slot_view;
@@ -65,7 +64,7 @@ const STALE_SLOT: u16 = 0x100;
 /// The body's function once the brain has landed: the fake death's ascent.
 pub const BODY_ASCENT: u16 = 0x8c87;
 
-/// Sets up a tube from its kind. Was `MotherBrainsTubesFalling_Init`.
+/// Sets up a tube from its kind.
 pub fn initialize(game: &mut impl Lease) {
     let k = game.current_enemy();
     let kind = Tube::of(game, k).kind() as usize >> 1;
@@ -79,7 +78,7 @@ pub fn initialize(game: &mut impl Lease) {
         mother_brain_tables::falling_tube(game, kind as isize).function;
 }
 
-/// Runs the tube's current function. Was `MotherBrainsTubesFalling_Main`.
+/// Runs the tube's current function.
 pub fn main_ai(game: &mut impl Lease, k: u16) {
     match Tube::of(game, k).function() {
         function::FALL => fall(game, k),
@@ -90,7 +89,7 @@ pub fn main_ai(game: &mut impl Lease, k: u16) {
 }
 
 /// Adds `amount` (8.8 pixels) to the slot's Y position, carrying through the
-/// subpixel high byte. Was `Enemy_IncreaseYpos`.
+/// subpixel high byte.
 fn move_down(game: &mut impl Lease, k: u16, amount: u16) {
     let carry: i32 = Tube::of(game, k).actor().y.fraction.to_le_bytes()[1] as i32
         + amount.to_ne_bytes()[0] as i32;
@@ -102,7 +101,6 @@ fn move_down(game: &mut impl Lease, k: u16, amount: u16) {
 }
 
 /// Speeds up and falls, trailing smoke until the tube reaches its burst height.
-/// Was `MotherBrainsTubesFalling_Main_NonMain`.
 fn fall(game: &mut impl Lease, k: u16) {
     let speed = Tube::of(game, k).fall_speed().wrapping_add(GRAVITY);
     *TubeEdit::of(game, k).fall_speed() = speed;
@@ -116,7 +114,7 @@ fn fall(game: &mut impl Lease, k: u16) {
     }
 }
 
-/// Counts down to the next puff of smoke. Was `MotherBrainsTubesFalling_HandleSmoke`.
+/// Counts down to the next puff of smoke.
 fn trail_smoke(game: &mut impl Lease, k: u16) {
     *TubeEdit::of(game, k).smoke_timer() = Tube::of(game, k).smoke_timer().wrapping_sub(1);
     if Tube::of(game, k).smoke_timer() & 0x8000 != 0 {
@@ -124,7 +122,7 @@ fn trail_smoke(game: &mut impl Lease, k: u16) {
     }
 }
 
-/// Deletes the tube and bursts it into dust. Was `MotherBrainsTubesFalling_Explode`.
+/// Deletes the tube and bursts it into dust.
 fn burst(game: &mut impl Lease, k: u16) {
     TubeEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
     let x = Tube::of(game, k).actor().x.whole;
@@ -136,7 +134,7 @@ fn burst(game: &mut impl Lease, k: u16) {
     crate::effects::SoundEffects::queue_sound(game, 1, BURST_SOUND, 3);
 }
 
-/// Waits out the fall delay. Was `MotherBrainsTubesFalling_WaitToFall`.
+/// Waits out the fall delay.
 fn wait_to_fall(game: &mut impl Lease, k: u16) {
     *TubeEdit::of(game, k).fall_delay() = Tube::of(game, k).fall_delay().wrapping_sub(1);
     if Tube::of(game, k).fall_delay() & 0x8000 != 0 {
@@ -156,7 +154,7 @@ fn start_earthquake(game: &mut impl Lease, kind: u16) {
 
 /// Falls with the brain above it. When the brain lands it ends the flash,
 /// shakes the room, moves the body into place for the fake death's ascent and
-/// bursts. Was `MotherBrainsTubesFalling_Falling`.
+/// bursts.
 fn fall_with_brain(game: &mut impl Lease, k: u16) {
     let speed = Tube::of(game, k).fall_speed().wrapping_add(GRAVITY);
     *TubeEdit::of(game, k).fall_speed() = speed;
@@ -187,7 +185,6 @@ fn fall_with_brain(game: &mut impl Lease, k: u16) {
 }
 
 /// Puffs smoke below the tube, cycling its horizontal offset.
-/// Was `MotherBrainsTubesFalling_SpawnSmoke`.
 fn puff_smoke(game: &mut impl Lease, k: u16) {
     *TubeEdit::of(game, k).smoke_timer() = SMOKE_DELAY;
     let index = ((Tube::of(game, k).smoke_index() as i32 + 1) & 3) as u16;

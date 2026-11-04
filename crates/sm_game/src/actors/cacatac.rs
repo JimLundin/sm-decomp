@@ -1,5 +1,5 @@
 //! Cacatac, the spiked cactus that paces and fires spikes, and Owtch, the spiked shell that
-//! shares its patrol and burrows (bank $A2:9E6A-$A2:A59D). Was `ground_patrol`.
+//! shares its patrol and burrows (bank $A2:9E6A-$A2:A59D).
 use crate::actors::access::{AccessMode::Native, ActorKey};
 use crate::actors::api::ShotHandling;
 use crate::actors::combat;

@@ -1,5 +1,5 @@
 //! Lower Norfair's spike platform, which waits, falls, rests and rises again, carrying
-//! Samus while she stands on it (bank $A6:8B09-$A6:8CFA). Was `spikey_platforms`.
+//! Samus while she stands on it (bank $A6:8B09-$A6:8CFA).
 #![forbid(unsafe_code)]
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, abs16};

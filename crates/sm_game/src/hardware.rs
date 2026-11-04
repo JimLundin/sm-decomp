@@ -12,15 +12,13 @@ pub trait Multiplier {
     fn cpu_multiplicand(&mut self, operand: u8);
 }
 
-/// `length` times the sine of `angle`, through the PPU multiplier. Was
-/// `ComputeSinMult`.
+/// `length` times the sine of `angle`, through the PPU multiplier.
 pub fn sine_times(game: &mut (impl Multiplier + ?Sized), length: u16, angle: u16) -> u16 {
     let sine = crate::projectile_geometry::SINE_COSINE[usize::from(angle & 0xff) + 64];
     game.mode7_product(sine.cast_unsigned(), length.to_le_bytes()[0])
 }
 
-/// `length` times the cosine of `angle`, through the PPU multiplier. Was
-/// `ComputeCosMult`.
+/// `length` times the cosine of `angle`, through the PPU multiplier.
 pub fn cosine_times(game: &mut (impl Multiplier + ?Sized), length: u16, angle: u16) -> u16 {
     sine_times(game, length, angle.wrapping_add(64))
 }

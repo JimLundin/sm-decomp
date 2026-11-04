@@ -1,11 +1,8 @@
 //! Gameplay rules and state that the compiler keeps free of the emulator.
 //!
-//! Target package `sm_game` (docs/target-architecture). Modules move here when
-//! they compile without the `sm` crate, its RAM layout, ROM access or backend;
-//! `sm` re-exports them at their old paths while callers migrate.
+//! Target package `sm_game` (docs/target-architecture).
 #![forbid(unsafe_code)]
 
-// Paths the moved compat modules were written against.
 pub(crate) use progress as progress_flags;
 pub(crate) use sm_data::cartridge as rom;
 

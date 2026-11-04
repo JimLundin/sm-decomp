@@ -1,5 +1,5 @@
 //! Atomic, the Wrecked Ship's spinning orb, which drifts towards Samus (bank
-//! $A8:E230-$A8:E489). Was `wrecked_ship_orbs`.
+//! $A8:E230-$A8:E489).
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Axis;
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -91,7 +91,7 @@ fn move_atomic(horizontal: bool, function: u16, game: &mut (impl Host + ?Sized))
     }
 }
 /// Main AI - Atomic ($A8:E3C3): set the Y ($A8:E3D9) and X ($A8:E3EF)
-/// movement functions towards Samus, then run them. Was `advance`.
+/// movement functions towards Samus, then run them.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let atomic = current(game);
     *AtomicEdit::of(game, atomic).y_movement_function() = function::MOVE_UP;

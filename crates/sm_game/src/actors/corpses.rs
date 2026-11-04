@@ -2,12 +2,10 @@
 //! dead zoomers, rippers and skrees in Tourian, and the corpse rotting that
 //! crumbles them (and Mother Brain's brain) row by row.
 //!
-//! Was `DeadTorizo*`, `DeadSidehopper*`, `DeadZoomer*`, `DeadRipper*`,
-//! `DeadSkree*`, `DeadMonsters*` and `*CorpseRotting*` in the original
-//! decompilation (bank $A9:D2xx-$A9:ED00). Slot words are named after the
-//! bank log's corpse rotting notes. The bank's dispatch ids are unchanged; the
-//! functions and their reads and writes keep the original order. Mother
-//! Brain's shared helpers come from `mother_brain_fight`.
+//! Bank $A9:D2xx-$A9:ED00. Slot words are named after the bank log's corpse
+//! rotting notes. The bank's dispatch ids are unchanged; the functions and
+//! their reads and writes keep the original order. Mother Brain's shared
+//! helpers come from `mother_brain_fight`.
 use crate::actors::access::ActorKey;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::mother_brain_fight::OwnedWord;

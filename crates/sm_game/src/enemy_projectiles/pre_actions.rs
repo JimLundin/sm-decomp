@@ -692,7 +692,6 @@ pub fn tourian_statue_base_decoration_pre_instruction(k: u16, ctx: &mut impl Hos
 }
 
 /// Despawns the projectile once it leaves the camera view.
-/// Was `EprojPreInstr_NorfairLavaquakeRocks_Inner` (also `EprojPreInstr_DBF2_Func1`).
 pub fn despawn_off_screen(k: u16, ctx: &mut impl Host) {
     if outside_camera_view(k, ctx) != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
@@ -1445,7 +1444,7 @@ pub fn tourian_statue_soul_pre_instruction(k: u16, ctx: &mut impl Host) {
     enemy_add!(ctx, (v1) as isize, velocity_y, (-128i16) as u16);
 }
 
-/// A lavaquake rock rising and slowing. Was `Eproj_NorfairLavaquakeRocks_Func1`.
+/// A lavaquake rock rising and slowing.
 pub fn polyp_rock_rise(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: i16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 2i32) as i16;
@@ -1466,7 +1465,7 @@ pub fn polyp_rock_rise(k: u16, ctx: &mut impl Host) {
     };
 }
 
-/// A lavaquake rock falling, capped at speed 64. Was `Eproj_NorfairLavaquakeRocks_Func2`.
+/// A lavaquake rock falling, capped at speed 64.
 pub fn polyp_rock_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 + 2) as u16;
@@ -1481,7 +1480,7 @@ pub fn polyp_rock_fall(k: u16, ctx: &mut impl Host) {
     polyp_rock_move_x(k, ctx);
 }
 
-/// A lavaquake rock's horizontal move. Was `Eproj_NorfairLavaquakeRocks_Func3`.
+/// A lavaquake rock's horizontal move.
 pub use self::move_cacatac_spike_right as polyp_rock_move_x;
 
 pub fn shaktool_attack_back_circle_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
@@ -1613,7 +1612,6 @@ pub fn time_bomb_set_japanese_text_pre_instruction(k: u16, ctx: &mut impl Host) 
 }
 
 /// A falling tube bursting into dust, then falling.
-/// Was `MotherBrainTubeFallingFunc_GenerateExplosion`.
 pub fn falling_tube_burst(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     ctx.session_mut().enemy_projectiles.spawn.point = Point {
@@ -1626,7 +1624,6 @@ pub fn falling_tube_burst(k: u16, ctx: &mut impl Host) {
 }
 
 /// A falling tube's fall, ending in dust below the floor.
-/// Was `MotherBrainTubeFallingFunc_Falling`.
 pub fn falling_tube_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 6);
@@ -1670,7 +1667,7 @@ pub fn kihunter_acid_spit_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
     };
 }
 
-/// Counts down to the Kago bug's cry. Was `EprojPreInstr_KagosBugs_Func1`.
+/// Counts down to the Kago bug's cry.
 pub fn kago_bug_cry_countdown(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = enemy!(ctx, (v1 as usize) as isize, behavior_a);
@@ -1684,7 +1681,6 @@ pub fn kago_bug_cry_countdown(k: u16, ctx: &mut impl Host) {
 }
 
 /// Flags the Kago bug once it is 23 pixels or more from its Kago.
-/// Was `EprojPreInstr_KagosBugs_Func2`.
 pub fn kago_bug_flag_when_far(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let enemy_index = enemy!(ctx, (v1) as isize, behavior_b);
@@ -1797,7 +1793,7 @@ pub fn dust_cloud_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
     };
 }
 
-/// Moves along the projectile's angle on both axes. Was `Eproj_FuncE73E_MoveXY`.
+/// Moves along the projectile's angle on both axes.
 pub fn move_along_angle(k: u16, ctx: &mut impl Host) {
     let index = (k >> 1) as isize;
     integrate_angle_axis(

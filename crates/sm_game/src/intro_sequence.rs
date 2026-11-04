@@ -161,8 +161,7 @@ fn sprites<H: Host>(cine: &mut Cinematic, game: &mut H, definition: u16, paramet
 }
 
 /// Cinematic function - intro - initial ($8B:A395): Samus, the intro
-/// graphics, the background and the intro music. Was
-/// `CinematicFunction_Intro_Initial`.
+/// graphics, the background and the intro music.
 pub fn initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Intro, cine, game);
     crate::frame_display_word!(game.CurrentInterrupt = 0);
@@ -253,8 +252,7 @@ pub fn initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - intro - play "the last Metroid is in captivity"
-/// music for 200 frames ($8B:A5F8). Was
-/// `CinematicFunction_Intro_LastMetroidCaptivity`.
+/// music for 200 frames ($8B:A5F8).
 pub fn last_metroid_in_captivity<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -266,7 +264,7 @@ pub fn last_metroid_in_captivity<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - intro - queue "the galaxy is at peace" music
-/// ($8B:A613). Was `CinematicFunc_Intro_QueueGalaxyIsAtPeace`.
+/// ($8B:A613).
 pub fn galaxy_is_at_peace<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::music_requests::queue_delayed_8(NO_MUSIC, game);
@@ -278,8 +276,7 @@ pub fn galaxy_is_at_peace<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Cinematic function - intro - fade out ($8B:A64C). Was
-/// `CinematicFunc_Intro_FadeOut`.
+/// Cinematic function - intro - fade out ($8B:A64C).
 pub fn fade_out<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -291,7 +288,7 @@ pub fn fade_out<H: Host>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - intro - set up intro text page 1 ($8B:A66F): the
 /// text background, caret and next-page arrow, Samus blinking and the text
-/// music. Was `CinematicFunc_Intro_SetupTextPage2`.
+/// music.
 pub fn set_up_text_page_1<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::intro_pages::clear_japanese_tiles(game);
     GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
@@ -359,8 +356,7 @@ pub fn set_up_text_page_1<H: Host>(cine: &mut Cinematic, game: &mut H) {
     });
 }
 
-/// Cinematic function - fly to Ceres - initial ($8B:BCA0). Was
-/// `CinematicFunction_Intro_Func54`.
+/// Cinematic function - fly to Ceres - initial ($8B:BCA0).
 pub fn ceres_initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, cine, game);
     clear_cinematic_sprites(cine);
@@ -399,7 +395,7 @@ pub fn ceres_initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - fly to Ceres - wait for music queue and enable
-/// display ($8B:BDE4). Was `CinematicFunction_Intro_Func55`.
+/// display ($8B:BDE4).
 pub fn ceres_wait_for_music<H: Host>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::frame_display_byte!(game, Field::Brightness => 15);
@@ -410,7 +406,7 @@ pub fn ceres_wait_for_music<H: Host>(game: &mut H) {
 }
 
 /// Cinematic function - fly to Ceres - flying into camera ($8B:BDF9): zoom
-/// in, then show Ceres under attack. Was `CinematicFunction_Intro_Func56`.
+/// in, then show Ceres under attack.
 pub fn ceres_flying_into_camera<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if below(*cine.mode7_zoom(), 32) {
         crate::frame_display_byte!(game, Field::ColorSelection => 0);
@@ -437,8 +433,8 @@ pub fn ceres_flying_into_camera<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Cinematic function - fly to Ceres - flying into Ceres ($8B:BFDA): zoom
-/// in on Ceres, then show its background. Was `CinematicFunction_Intro_Func67`.
+/// Cinematic function - fly to Ceres - flying into Ceres ($8B:BFDA): zoom in on
+/// Ceres, then show its background.
 pub fn ceres_flying_into_ceres<H: Host>(cine: &mut Cinematic, game: &mut H) {
     fade_cinematic_fixed_color(game);
     cine.add_pair(Word::X, Word::XSub, -0x2000i32 as u32);
@@ -473,8 +469,7 @@ pub fn ceres_flying_into_ceres<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Cinematic function - fly to Ceres - start game at Ceres ($8B:C100). Was
-/// `CinematicFunction_Intro_Func73`.
+/// Cinematic function - fly to Ceres - start game at Ceres ($8B:C100).
 pub fn start_game_at_ceres<H: Host>(game: &mut H) {
     let slot = crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
         selection.loading_game_state = SET_UP_NEW_GAME;
@@ -486,8 +481,7 @@ pub fn start_game_at_ceres<H: Host>(game: &mut H) {
     crate::menus::save_slots::save(slot, game);
 }
 
-/// Cinematic function - Ceres goes boom - initial ($8B:C11B). Was
-/// `CinematicFunctionBlackoutFromCeres`.
+/// Cinematic function - Ceres goes boom - initial ($8B:C11B).
 pub fn boom_initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if crate::cinematic_states::wait_for_nmis(9, game) {
         return;
@@ -548,7 +542,6 @@ pub fn boom_initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - Ceres goes boom - wait for music queue ($8B:C2E4).
-/// Was `CinematicFunction_Intro_Func74`.
 pub fn boom_wait_for_music<H: Host>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -558,7 +551,7 @@ pub fn boom_wait_for_music<H: Host>(game: &mut H) {
 }
 
 /// Cinematic function - Ceres goes boom - small Ceres explosions - fading in
-/// ($8B:C2F1). Was `CinematicFunction_Intro_Func75`.
+/// ($8B:C2F1).
 pub fn boom_small_explosions<H: Host>(cine: &mut Cinematic, game: &mut H) {
     cine.add_pair(Word::Y, Word::YSub, 4096u32);
     cine.add_pair(Word::X, Word::XSub, -0x4000i32 as u32);
@@ -575,8 +568,7 @@ pub fn boom_small_explosions<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - Ceres goes boom - Ceres explosions ($8B:C345):
-/// zoom out, then the power bomb blast and the gunship. Was
-/// `CinematicFunction_Intro_Func76`.
+/// zoom out, then the power bomb blast and the gunship.
 pub fn boom_explosions<H: Host>(cine: &mut Cinematic, game: &mut H) {
     cine.add_pair(Word::Y, Word::YSub, 4096u32);
     cine.add_pair(Word::X, Word::XSub, -0x4000i32 as u32);
@@ -608,7 +600,6 @@ pub fn boom_explosions<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - Ceres goes boom - gunship flying away ($8B:C5CA).
-/// Was `CinematicFunction_Intro_Func77`.
 pub fn boom_gunship_flying_away<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::frame_display_byte!(game, Field::ColorSelection => 16);
     crate::frame_display_byte!(game, Field::ColorMath => 55);
@@ -624,8 +615,7 @@ pub fn boom_gunship_flying_away<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Cinematic function - Ceres goes boom - wait C0h frames ($8B:C610). Was
-/// `CinematicFunction_Intro_Func84`.
+/// Cinematic function - Ceres goes boom - wait C0h frames ($8B:C610).
 pub fn boom_wait<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::screen_fade::store(game, 1, 1);
@@ -636,8 +626,7 @@ pub fn boom_wait<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - Ceres goes boom - fade out ($8B:C627): with Samus
-/// aboard, game over; else the flight to Zebes. Was
-/// `CinematicFunction_Intro_Func85`.
+/// aboard, game over; else the flight to Zebes.
 pub fn boom_fade_out<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::display_refresh::fade(false, game);
     if game.display_control_byte(Field::Brightness) == 0x80 {
@@ -690,8 +679,7 @@ pub fn boom_fade_out<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Cinematic function - fly to Zebes - initial ($8B:C699). Was
-/// `CinematicFunction_Intro_Func86`.
+/// Cinematic function - fly to Zebes - initial ($8B:C699).
 pub fn zebes_initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Landing, cine, game);
     clear_cinematic_objects(cine);
@@ -719,7 +707,7 @@ pub fn zebes_initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - fly to Zebes - hold on scene for 40h frames
-/// ($8B:CAD0). Was `CinematicFunction_Intro_Func108`.
+/// ($8B:CAD0).
 pub fn zebes_hold<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -728,8 +716,7 @@ pub fn zebes_hold<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Cinematic function - fly to Zebes - load game data ($8B:CADF). Was
-/// `CinematicFunction_Intro_Func95`.
+/// Cinematic function - fly to Zebes - load game data ($8B:CADF).
 pub fn zebes_load_game_data<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::frame_display_byte!(game, Field::Brightness => 0x80);
     clear_cinematic_objects(cine);
@@ -740,7 +727,7 @@ pub fn zebes_load_game_data<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Pre-instruction - the confused baby metroid waits for its egg to hatch
-/// ($8B:BA5E). Was `CinematicFunction_Intro_Func50`.
+/// ($8B:BA5E).
 pub fn baby_waiting(k: u16, cine: &mut Cinematic) {
     let slot = (k as i32 >> 1) as usize;
     if !below(
@@ -754,8 +741,7 @@ pub fn baby_waiting(k: u16, cine: &mut Cinematic) {
 }
 
 /// Pre-instruction - confused baby metroid - hatched ($8B:BA73): the slime
-/// drops, then it chases Samus vertically until it slows. Was
-/// `CinematicFunction_Intro_Func51`.
+/// drops, then it chases Samus vertically until it slows.
 pub fn baby_hatched<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     if *cine.bg_arr8(slot) == 145 {
@@ -770,7 +756,6 @@ pub fn baby_hatched<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Pre-instruction - confused baby metroid - idling ($8B:BB0D): then dance.
-/// Was `CinematicFunction_Intro_Func52`.
 pub fn baby_idling(k: u16, cine: &mut Cinematic) {
     *cine.var14() = cine.var14().wrapping_sub(1);
     let expired = (*cine.var14() & 0x8000) != 0;
@@ -784,8 +769,7 @@ pub fn baby_idling(k: u16, cine: &mut Cinematic) {
 }
 
 /// Pre-instruction - Ceres explosion spawner - spawn Ceres explosion 2 every
-/// Ch frames ($8B:C489), until the gunship flies away. Was
-/// `CinematicSprPreInstr_C489`.
+/// Ch frames ($8B:C489), until the gunship flies away.
 pub fn explosion_spawner<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function
         == function::BOOM_GUNSHIP_FLYING_AWAY

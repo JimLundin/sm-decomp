@@ -2,10 +2,8 @@
 //! brain, five segments placed along them each frame, and the third phase's
 //! recoil from Samus's shots and the hyper beam.
 //!
-//! Was `MotherBrain_HandleNeck*`, `MotherBrain_SetupNeckForFakeAscent`,
-//! `MotherBrain_RetractHead` and `MotherBrain_Phase3_Neck_*` in the original
-//! decompilation (bank $A9). The body's and the brain's slot words are the
-//! fields of `mother_brain`'s typed slot views.
+//! Bank $A9. The body's and the brain's slot words are the fields of
+//! `mother_brain`'s typed slot views.
 use crate::actors::mother_brain_fight::Lease;
 use crate::hardware::{Multiplier, cosine_times, sine_times};
 
@@ -66,14 +64,13 @@ const HYPER_BEAM_FRAMES: u16 = 11;
 const HYPER_BEAM_FLASH: u16 = 50;
 const RETRACT_SPEED: u16 = 80;
 
-/// Starts a brain instruction list. Was `MotherBrain_SetBrainInstrs`.
+/// Starts a brain instruction list.
 fn set_brain_instructions(game: &mut impl Lease, list: u16) {
     *BodyEdit::of(game, BODY_INDEX).brain_instructions() = list;
     *BodyEdit::of(game, BODY_INDEX).brain_instruction_timer() = 1;
 }
 
 /// Moves both joints, then places the five segments along them.
-/// Was `MotherBrain_HandleNeck`.
 pub fn handle_neck(game: &mut impl Lease) {
     *BodyEdit::of(game, BODY_INDEX).neck_base_x() = Body::of(game, BODY_INDEX)
         .actor()
@@ -144,7 +141,7 @@ fn segment_offsets(game: &mut impl Multiplier, lengths: [u16; 5], angles: [u16; 
     offsets
 }
 
-/// Moves the lower joint by its motion. Was `MotherBrain_HandleNeckLower`.
+/// Moves the lower joint by its motion.
 fn move_lower_joint(game: &mut impl Lease) {
     match Brain::of(game, BRAIN_INDEX).lower_motion() {
         motion::STILL => {}
@@ -195,7 +192,7 @@ fn move_lower_joint(game: &mut impl Lease) {
 }
 
 /// Moves the upper joint by its motion; while bobbing it keeps the brain
-/// level with Samus. Was `MotherBrain_HandleNeckUpper`.
+/// level with Samus.
 fn move_upper_joint(game: &mut impl Lease) {
     match Brain::of(game, BRAIN_INDEX).upper_motion() {
         motion::STILL => {}
@@ -256,7 +253,6 @@ fn move_upper_joint(game: &mut impl Lease) {
 }
 
 /// Folds the neck down for the fake death's ascent.
-/// Was `MotherBrain_SetupNeckForFakeAscent`.
 pub fn setup_for_fake_ascent(game: &mut impl Lease) {
     let mut brain = BrainEdit::of(game, BRAIN_INDEX);
     *brain.segment_1_length() = 2;
@@ -270,7 +266,6 @@ pub fn setup_for_fake_ascent(game: &mut impl Lease) {
 }
 
 /// Pulls the head back: raises the lower joint and lowers the upper one.
-/// Was `MotherBrain_RetractHead`.
 pub fn retract_head(game: &mut impl Lease) {
     let mut brain = BrainEdit::of(game, BRAIN_INDEX);
     *brain.neck_speed() = RETRACT_SPEED;
@@ -279,7 +274,7 @@ pub fn retract_head(game: &mut impl Lease) {
     *brain.upper_motion() = motion::LOWER;
 }
 
-/// Runs the third phase's neck function. Was `MotherBrain_Phase3_NeckHandler`.
+/// Runs the third phase's neck function.
 pub fn run_phase3(game: &mut impl Lease) {
     match Brain::of(game, BRAIN_INDEX).neck_function() {
         function::NORMAL => phase3_normal(game),
@@ -303,7 +298,7 @@ fn phase3_normal(game: &mut impl Lease) {
     *brain.neck_function() = function::IDLE;
 }
 
-/// Lowers both joints fast after a hit. Was `MotherBrain_Phase3_Neck_SetupRecoilRecovery`.
+/// Lowers both joints fast after a hit.
 fn phase3_setup_recoil_recovery(game: &mut impl Lease) {
     {
         let mut brain = BrainEdit::of(game, BRAIN_INDEX);
@@ -317,7 +312,7 @@ fn phase3_setup_recoil_recovery(game: &mut impl Lease) {
     phase3_recoil_recovery(game);
 }
 
-/// Waits out the recoil, then recovers. Was `MotherBrain_Phase3_Neck_RecoilRecovery`.
+/// Waits out the recoil, then recovers.
 fn phase3_recoil_recovery(game: &mut impl Lease) {
     let frames: i16 = (Brain::of(game, BRAIN_INDEX).neck_timer() as i16).wrapping_sub(1);
     if frames < 0 {
@@ -328,7 +323,7 @@ fn phase3_recoil_recovery(game: &mut impl Lease) {
     }
 }
 
-/// Throws the head back from the hyper beam. Was `MotherBrain_Phase3_Neck_SetupHyperBeamRecoil`.
+/// Throws the head back from the hyper beam.
 fn phase3_setup_hyper_beam_recoil(game: &mut impl Lease) {
     *BrainEdit::of(game, BRAIN_INDEX).neck_moving() = 1;
     *BodyEdit::of(game, BODY_INDEX).attacks_disabled() = 1;
@@ -345,7 +340,7 @@ fn phase3_setup_hyper_beam_recoil(game: &mut impl Lease) {
     phase3_hyper_beam_recoil(game);
 }
 
-/// Waits out the hyper beam recoil, then recovers. Was `MotherBrain_Phase3_Neck_HyperBeamRecoil`.
+/// Waits out the hyper beam recoil, then recovers.
 fn phase3_hyper_beam_recoil(game: &mut impl Lease) {
     let frames: i16 = (Brain::of(game, BRAIN_INDEX).neck_timer() as i16).wrapping_sub(1);
     if frames < 0 {

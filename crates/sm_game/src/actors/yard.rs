@@ -1,5 +1,5 @@
-//! Yard, Maridia's shelled snail, which crawls around walls and ceilings, hides from
-//! Samus, and is kicked or shot into the air (bank $A3:C8A6-$A3:DA9B). Was `maridia_snail`.
+//! Yard, Maridia's shelled snail, which crawls around walls and ceilings, hides from Samus,
+//! and is kicked or shot into the air (bank $A3:C8A6-$A3:DA9B).
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{

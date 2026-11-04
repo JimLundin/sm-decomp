@@ -3,9 +3,6 @@
 //! his tiles and his top half's tilemap under forced blank, erasing the rows
 //! he has already sunk through.
 //!
-//! Was `UnpauseHook_Kraid_*`, `Kraid_UnpauseHook_IsSinking`,
-//! `Kraid_TransferTopHalfToVram` and `PauseHook_Kraid` in the original
-//! decompilation.
 use crate::actors::access::{AccessMode, ActorAccess, ActorKey};
 use crate::actors::kraid_sinking;
 use crate::display::preparation::Field as Display;
@@ -63,7 +60,7 @@ const KRAID_TILES: u32 = 0x7e_5000;
 const KRAID_TOP_HALF_TILEMAP: u32 = 0x7e_2000;
 
 /// Unpause hook - Kraid is dead ($A7:C1FB): the room background and the
-/// standard BG3 tiles, then his top half. Was `UnpauseHook_Kraid_IsDead`.
+/// standard BG3 tiles, then his top half.
 pub fn unpause_dead<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.unpause_dead");
     if hook_state(game) != 3 {
@@ -81,8 +78,7 @@ pub fn unpause_dead<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 }
 
 /// Unpause hook - Kraid is alive ($A7:C24E): his BG2 tiles, then his top half.
-/// The tile base isn't masked, which works because BG1's base is 0. Was
-/// `UnpauseHook_Kraid_IsAlive`.
+/// The tile base isn't masked, which works because BG1's base is 0.
 pub fn unpause_alive<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.unpause_alive");
     if hook_state(game) != 3 {
@@ -113,7 +109,7 @@ fn load_kraid_tiles<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Transfer Kraid top half tilemap to VRAM ($A7:C278), then clear forced
-/// blank and wait for NMI. Was `Kraid_TransferTopHalfToVram`.
+/// blank and wait for NMI.
 pub fn transfer_top_half<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.transfer_top_half");
     if hook_state(game) != 3 {
@@ -125,8 +121,7 @@ pub fn transfer_top_half<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 
 /// Unpause hook - Kraid is sinking ($A7:C2A0): his BG2 tiles, then one frame
 /// per row he has sunk through, erasing it. A coroutine: a nonzero result
-/// yields, and the next call resumes erasing. Was
-/// `Kraid_UnpauseHook_IsSinking`.
+/// yields, and the next call resumes erasing.
 pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.unpause_sinking");
     'done: {
@@ -187,8 +182,7 @@ fn kraid_y<H: Host + ?Sized>(game: &H) -> u16 {
         .whole
 }
 
-/// Pause hook - Kraid ($A7:C325): read his BG2 tiles back to $7E:5000. Was
-/// `PauseHook_Kraid`.
+/// Pause hook - Kraid ($A7:C325): read his BG2 tiles back to $7E:5000.
 pub fn pause<H: Host + ?Sized>(game: &mut H) {
     enqueue_readback(BG12_TILES_BASE, 15872, 0x5000, 1024, false, game);
 }

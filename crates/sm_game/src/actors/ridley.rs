@@ -3,10 +3,9 @@
 //! grabbing Samus, the tail, the baby metroid he carries out of Ceres, the
 //! death sequence and its explosions.
 //!
-//! Was `Ridley_*`, `BabyMetroid_*` and `RidleysExplosion_*` in the original
-//! decompilation. Ridley is enemy 0; the `Ridley` view names his slot and his
-//! three extra RAM blocks at $7E:7800, $7E:8000 and $7E:8800 over the same
-//! bytes as `EnemyLayout104`. The tail is seven segments of ten words in
+//! Ridley is enemy 0; the `Ridley` view names his slot and his three extra
+//! RAM blocks at $7E:7800, $7E:8000 and $7E:8800 over the same bytes as
+//! `EnemyLayout104`. The tail is seven segments of ten words in
 //! `tilemap_stuff` ($7E:2000), named in `tail`. Ceres Ridley's own functions
 //! and its escape sequence are in `ceres_ridley`, whose `run_function`
 //! dispatches both through the bank's function table.
@@ -579,7 +578,7 @@ fn chained_homing_velocity(
 }
 
 /// Move the current enemy by its X and Y velocities: subpixels in the low
-/// bytes, pixels in the signed high bytes. Was `MoveEnemyWithVelocity`.
+/// bytes, pixels in the signed high bytes.
 fn move_with_velocity<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     let x_velocity = Explosion::of(game, k).x_velocity();
@@ -605,8 +604,7 @@ fn move_with_velocity<L: Lease>(game: &mut L) {
 }
 
 /// Handle baby metroid ($A6:A2DC): run its function, then hook the Ceres
-/// door and baby metroid drawing once Ridley moves, or draw them now. Was
-/// `Ridley_A2DC`.
+/// door and baby metroid drawing once Ridley moves, or draw them now.
 pub fn handle_baby_metroid<L: Lease>(game: &mut L) {
     run_baby_metroid_function(game);
     if Ridley::of(game, RIDLEY).movement_enabled() != 0 {
@@ -619,7 +617,7 @@ pub fn handle_baby_metroid<L: Lease>(game: &mut L) {
 }
 
 /// Enemy graphics drawn hook - Ceres Ridley - draw baby metroid and door
-/// ($A6:A2F2). Was `Ridley_A2F2`.
+/// ($A6:A2F2).
 pub fn draw_baby_metroid_and_door<L: Lease>(game: &mut L) {
     /// Ceres Ridley door X offsets during earthquake ($A6:A321).
     const EARTHQUAKE_X_OFFSETS: [i16; 4] = [0, -1024, -4, -1];
@@ -638,7 +636,7 @@ pub fn draw_baby_metroid_and_door<L: Lease>(game: &mut L) {
     }
 }
 
-/// Main AI - enemy $E17F (Ridley) ($A6:B227). Was `Ridley_Main`.
+/// Main AI - enemy $E17F (Ridley) ($A6:B227).
 pub fn main<L: Lease>(lease: &mut L) {
     // The state steps, Ridley's function, the tail, drawing and ribs run on
     // the lease.
@@ -712,7 +710,7 @@ pub(crate) fn run_ridley_function<L: Lease>(game: &mut L, function: u16) -> bool
     true
 }
 
-/// Time is frozen AI - enemy $E17F (Ridley) ($A6:B28A). Was `Ridley_Func_2`.
+/// Time is frozen AI - enemy $E17F (Ridley) ($A6:B28A).
 pub fn time_frozen<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).grabbed_lag_timer() = 0;
     RidleyEdit::of(game, RIDLEY).actor().frame = 1;
@@ -721,7 +719,6 @@ pub fn time_frozen<L: Lease>(game: &mut L) {
 
 /// Hurt AI - enemy $E17F (Ridley) ($A6:B297): on even frames Ridley acts as in
 /// `main`; then the grabbed Samus lags until the timer reaches its limit.
-/// Was `Ridley_Hurt`.
 pub fn hurt<L: Lease>(game: &mut L) {
     let animate = if Ridley::of(game, RIDLEY).actor().frame & 1 != 0 {
         true
@@ -766,7 +763,7 @@ pub fn hurt<L: Lease>(game: &mut L) {
 /// Ridley grabbed Samus movement hurt AI lag time ($A6:B288).
 const GRABBED_HURT_LAG: u16 = 8;
 
-/// Ridley function - liftoff ($A6:B2F3). Was `Ridley_Func_3`.
+/// Ridley function - liftoff ($A6:B2F3).
 pub fn liftoff<L: Lease>(game: &mut L) {
     let rect = Rect {
         x: 64,
@@ -783,7 +780,7 @@ pub fn liftoff<L: Lease>(game: &mut L) {
 }
 
 /// Ridley function - decide action ($A6:B321): a random one of the eight
-/// choices. Was `Ridley_Func_3b`.
+/// choices.
 pub fn decide_action<L: Lease>(game: &mut L) {
     let choices = fight_action_choices(game);
     let choice = 2 * (game.roll_random() & 7) as usize;
@@ -792,7 +789,7 @@ pub fn decide_action<L: Lease>(game: &mut L) {
     crate::actors::ceres_ridley::run_function(game, next);
 }
 
-/// Get fight action choices ($A6:B335). Was `Ridley_Func_4`.
+/// Get fight action choices ($A6:B335).
 pub fn fight_action_choices<L: Lease>(game: &mut L) -> u16 {
     if samus_movement_type(game) == SPIN_JUMPING {
         return actions::HOVER;
@@ -815,15 +812,14 @@ pub fn fight_action_choices<L: Lease>(game: &mut L) -> u16 {
     }
 }
 
-/// Ridley function - lunge missed - setup ($A6:B3EC). Was `Ridley_Func_5`.
+/// Ridley function - lunge missed - setup ($A6:B3EC).
 pub fn lunge_missed<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function() = function::LUNGE_MISSED_MOVE_TO_POSITION;
     *RidleyEdit::of(game, RIDLEY).function_timer() = 128;
     lunge_missed_move_to_position(game);
 }
 
-/// Ridley function - lunge missed - move to position ($A6:B3F8). Was
-/// `Ridley_Func_6`.
+/// Ridley function - lunge missed - move to position ($A6:B3F8).
 pub fn lunge_missed_move_to_position<L: Lease>(game: &mut L) {
     if timer_expired(game) || {
         let x = if Ridley::of(game, RIDLEY).facing() != 0 {
@@ -845,13 +841,13 @@ pub fn lunge_missed_move_to_position<L: Lease>(game: &mut L) {
 }
 
 /// Y = [$B439 + [Ridley acceleration index] * 2] ($A6:B42E): the acceleration
-/// factor for lunge missed and dodging power bomb. Was `Ridley_Func_7`.
+/// factor for lunge missed and dodging power bomb.
 pub fn acceleration_factor<L: Lease>(game: &mut L) -> u16 {
     const FACTORS: [u16; 4] = [4, 8, 0xa, 0xc];
     FACTORS[Ridley::of(game, RIDLEY).acceleration_index() as usize]
 }
 
-/// Ridley action - swoop ($A6:B441). Was `Ridley_Func_8`.
+/// Ridley action - swoop ($A6:B441).
 pub fn swoop<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_MOVE_TO_POSITION;
     *RidleyEdit::of(game, RIDLEY).timer() = 10;
@@ -859,7 +855,7 @@ pub fn swoop<L: Lease>(game: &mut L) {
     swoop_move_to_position(game);
 }
 
-/// Ridley function - swoop - move to position ($A6:B455). Was `Ridley_B455`.
+/// Ridley function - swoop - move to position ($A6:B455).
 pub fn swoop_move_to_position<L: Lease>(game: &mut L) {
     let x = if Ridley::of(game, RIDLEY).facing() != 0 {
         64
@@ -907,8 +903,7 @@ fn swoop_stage<L: Lease>(
     }
 }
 
-/// Ridley function - swoop - descending - aiming down ($A6:B493). Was
-/// `Ridley_Func_9`.
+/// Ridley function - swoop - descending - aiming down ($A6:B493).
 pub fn swoop_aiming_down<L: Lease>(game: &mut L) {
     if swoop_stage(game, 32, 512, 1152) {
         *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_AIMING_HORIZONTAL;
@@ -916,8 +911,7 @@ pub fn swoop_aiming_down<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - swoop - descending - aiming horizontal ($A6:B4D1). Was
-/// `Ridley_Func_10`.
+/// Ridley function - swoop - descending - aiming horizontal ($A6:B4D1).
 pub fn swoop_aiming_horizontal<L: Lease>(game: &mut L) {
     if swoop_stage(game, 320, 0x4000, 1280) {
         *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_AIMING_UP;
@@ -926,8 +920,7 @@ pub fn swoop_aiming_horizontal<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - swoop - ascending - aiming up ($A6:B516). Was
-/// `Ridley_Func_11`.
+/// Ridley function - swoop - ascending - aiming up ($A6:B516).
 pub fn swoop_aiming_up<L: Lease>(game: &mut L) {
     if swoop_stage(game, 512, 30720, 768) {
         *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_AIMING_UP_FASTER;
@@ -935,8 +928,7 @@ pub fn swoop_aiming_up<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - swoop - ascending - aiming up faster ($A6:B554). Was
-/// `Ridley_Func_12`.
+/// Ridley function - swoop - ascending - aiming up faster ($A6:B554).
 pub fn swoop_aiming_up_faster<L: Lease>(game: &mut L) {
     if swoop_stage(game, 1024, 30720, 768) {
         *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_DECELERATE;
@@ -945,8 +937,7 @@ pub fn swoop_aiming_up_faster<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - swoop - ascending - decelerate ($A6:B594). Was
-/// `Ridley_Func_13`.
+/// Ridley function - swoop - ascending - decelerate ($A6:B594).
 pub fn swoop_decelerate<L: Lease>(game: &mut L) {
     calculate_swoop_velocities(0, 0x8000, 448, game);
     let timer = Ridley::of(game, RIDLEY).timer();
@@ -962,7 +953,7 @@ pub fn swoop_decelerate<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley action - hover ($A6:B5C4). Was `Ridley_Func_14`.
+/// Ridley action - hover ($A6:B5C4).
 pub fn hover<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::IDEAL_SEGMENT_ANGLE, 11);
     bg2_staging::set(game, tail::EXTENSION_SPEED, 384);
@@ -971,15 +962,13 @@ pub fn hover<L: Lease>(game: &mut L) {
     hover_to_wall_behind(game);
 }
 
-/// Ridley function - hover - move to wall behind Ridley ($A6:B5E5). Was
-/// `Ridley_Func_15`.
+/// Ridley function - hover - move to wall behind Ridley ($A6:B5E5).
 pub fn hover_to_wall_behind<L: Lease>(game: &mut L) {
     let x = ridley_data::hover_behind(game, Ridley::of(game, RIDLEY).facing() as isize);
     hover_movement(game, x, function::HOVER_TO_WALL_IN_FRONT);
 }
 
-/// Ridley function - hover - move to wall in front of Ridley ($A6:B613). Was
-/// `Ridley_Func_16`.
+/// Ridley function - hover - move to wall in front of Ridley ($A6:B613).
 pub fn hover_to_wall_in_front<L: Lease>(game: &mut L) {
     let x = ridley_data::hover_in_front(game, Ridley::of(game, RIDLEY).facing() as isize);
     hover_movement(game, x, function::HOVER_TO_WALL_BEHIND);
@@ -987,7 +976,7 @@ pub fn hover_to_wall_in_front<L: Lease>(game: &mut L) {
 
 /// Ridley hover movement ($A6:B641): hover towards `x`; pogo unless Samus
 /// spin jumps, and cross to the other wall (`timeout`) when the function
-/// timer runs out. Was `advance_ridley_instruction_with_timeout`.
+/// timer runs out.
 fn hover_movement<L: Lease>(game: &mut L, x: u16, timeout: u16) {
     if hover_towards(x, game) {
         set_up_pogo_from_hover(game);
@@ -1000,7 +989,7 @@ fn hover_movement<L: Lease>(game: &mut L, x: u16, timeout: u16) {
 
 /// Ridley hover movement ($A6:B641): the movement towards (`x`, Samus's Y, at
 /// most 352), with a tail whip and sometimes fireballs while Samus spin
-/// jumps; true when she does not, so the pogo starts. Was `Ridley_Func_17`.
+/// jumps; true when she does not, so the pogo starts.
 pub fn hover_towards<L: Lease>(x: u16, game: &mut L) -> bool {
     let mut y = game.player_y();
     if !below(game.player_y(), 352) {
@@ -1020,7 +1009,7 @@ pub fn hover_towards<L: Lease>(x: u16, game: &mut L) -> bool {
     false
 }
 
-/// Set up Ridley pogo from hover ($A6:B68B). Was `Ridley_Func_18`.
+/// Set up Ridley pogo from hover ($A6:B68B).
 pub fn set_up_pogo_from_hover<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::EXTENSION_SPEED, 240);
     bg2_staging::set(game, tail::IDEAL_SEGMENT_ANGLE, 16);
@@ -1028,8 +1017,7 @@ pub fn set_up_pogo_from_hover<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function() = function::POGO_FLY_TO_POSITION;
 }
 
-/// Ridley action / function - pogo - fly to position ($A6:B6A7). Was
-/// `Ridley_Func_19`.
+/// Ridley action / function - pogo - fly to position ($A6:B6A7).
 pub fn pogo_fly_to_position<L: Lease>(game: &mut L) {
     if below(Ridley::of(game, RIDLEY).actor().y.whole, 288) {
         face_room_middle(game);
@@ -1042,7 +1030,7 @@ pub fn pogo_fly_to_position<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - pogo - wait at position ($A6:B6DD). Was `Ridley_Func_20`.
+/// Ridley function - pogo - wait at position ($A6:B6DD).
 pub fn pogo_wait_at_position<L: Lease>(game: &mut L) {
     accelerate(0, 0, Ridley::of(game, RIDLEY).actor().x.whole, 288, game);
     if timer_expired(game) {
@@ -1054,8 +1042,7 @@ pub fn pogo_wait_at_position<L: Lease>(game: &mut L) {
 }
 
 /// Ridley function - pogo - descending ($A6:B70E): grab Samus, or bounce off
-/// the floor with a dust cloud, a quake and every other time fireballs. Was
-/// `Ridley_Func_21`.
+/// the floor with a dust cloud, a quake and every other time fireballs.
 pub fn pogo_descending<L: Lease>(game: &mut L) {
     if samus_grabbable(game) {
         set_neutral_tail(game);
@@ -1094,7 +1081,7 @@ pub fn pogo_descending<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - pogo - ascending ($A6:B7B9). Was `Ridley_Func_22`.
+/// Ridley function - pogo - ascending ($A6:B7B9).
 pub fn pogo_ascending<L: Lease>(game: &mut L) {
     if !samus_in_pogo_zone(game) || {
         let expired = (Ridley::of(game, RIDLEY).function_timer() as i16).wrapping_sub(1) < 0;
@@ -1119,7 +1106,7 @@ pub fn pogo_ascending<L: Lease>(game: &mut L) {
 }
 
 /// Check for tail collision with floor ($A6:B7E7): the tip, then segments 5
-/// down to 2, just below each. Was `Ridley_Func_23`.
+/// down to 2, just below each.
 pub fn tail_hits_floor<L: Lease>(game: &mut L) -> bool {
     [(6, 16), (5, 18), (4, 18), (3, 18), (2, 18)]
         .into_iter()
@@ -1130,19 +1117,19 @@ pub fn tail_hits_floor<L: Lease>(game: &mut L) -> bool {
         })
 }
 
-/// Set neutral Ridley tail ($A6:B84D). Was `Ridley_Func_24`.
+/// Set neutral Ridley tail ($A6:B84D).
 pub fn set_neutral_tail<S: State + ?Sized>(game: &mut S) {
     bg2_staging::set(game, tail::FUNCTION, 1);
     bg2_staging::set(game, tail::ANGLE_DELTA, 1);
 }
 
-/// Check if Samus is grabbable ($A6:B859). Was `Ridley_Func_25`.
+/// Check if Samus is grabbable ($A6:B859).
 pub fn samus_grabbable<L: Lease>(game: &mut L) -> bool {
     samus_not_spinning(game) && samus_touches_feet(4, 4, game)
 }
 
 /// Check for Samus collision with Ridley feet ($A6:B865), with feet radii
-/// `x_radius` and `y_radius`. Was `Ridley_Func_26`.
+/// `x_radius` and `y_radius`.
 pub fn samus_touches_feet<L: Lease>(x_radius: u16, y_radius: u16, game: &mut L) -> bool {
     let rect = Rect {
         x: Ridley::of(game, RIDLEY)
@@ -1168,7 +1155,7 @@ pub fn samus_touches_feet<L: Lease>(x_radius: u16, y_radius: u16, game: &mut L) 
 }
 
 /// Ridley grabs Samus from pogo ($A6:B889): Y velocity = -max(200h, |Y
-/// velocity|). Was `Ridley_Func_27`.
+/// velocity|).
 pub fn grab_samus_from_pogo<L: Lease>(game: &mut L) {
     let mut y_velocity = Ridley::of(game, RIDLEY).y_velocity() as i16;
     if y_velocity >= 0 {
@@ -1184,7 +1171,7 @@ pub fn grab_samus_from_pogo<L: Lease>(game: &mut L) {
 }
 
 /// Set Ridley pogo X movement direction ($A6:B8A9): towards the room inside
-/// at the bounds, otherwise mostly towards Samus. Was `Ridley_Func_28`.
+/// at the bounds, otherwise mostly towards Samus.
 pub fn set_pogo_x_direction<L: Lease>(game: &mut L) {
     if Ridley::of(game, RIDLEY).x_velocity() == 0 {
         let x_velocity = if Ridley::of(game, RIDLEY).actor().x.whole & 0x80 != 0 {
@@ -1215,7 +1202,7 @@ pub fn set_pogo_x_direction<L: Lease>(game: &mut L) {
 }
 
 /// Move Samus with Ridley's feet ($A6:B9E1): the grabbed offsets settle 4px
-/// a frame towards the feet. Was `Ridley_Func_30`.
+/// a frame towards the feet.
 pub fn move_samus_with_feet<L: Lease>(game: &mut L) {
     if let Some(offset) = settle_offset(Ridley::of(game, RIDLEY).grabbed_x_offset()) {
         *RidleyEdit::of(game, RIDLEY).grabbed_x_offset() = offset;
@@ -1232,8 +1219,7 @@ pub fn move_samus_with_feet<L: Lease>(game: &mut L) {
             as u16;);
 }
 
-/// A grabbed offset 4px closer to 0, or `None` when it is already 0. Was
-/// `reduce_ridley_axis_speed`.
+/// A grabbed offset 4px closer to 0, or `None` when it is already 0.
 fn settle_offset(offset: u16) -> Option<u16> {
     if offset == 0 {
         return None;
@@ -1248,7 +1234,7 @@ fn settle_offset(offset: u16) -> Option<u16> {
     })
 }
 
-/// Set grabbed Samus X/Y offset ($A6:BA54). Was `Ridley_Func_31`.
+/// Set grabbed Samus X/Y offset ($A6:BA54).
 pub fn set_grabbed_samus_offset<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).grabbed_x_offset() = (game.player_x() as i32
         - (Ridley::of(game, RIDLEY).actor().x.whole as i32
@@ -1263,7 +1249,7 @@ pub fn set_grabbed_samus_offset<L: Lease>(game: &mut L) {
 }
 
 /// Ridley lunge missed Samus ($A6:BA85): dodge a power bomb, retreat, or after
-/// ten lunges at no health, die. Was `Ridley_Func_32`.
+/// ten lunges at no health, die.
 pub fn lunge_missed_samus<L: Lease>(game: &mut L) {
     if below(Ridley::of(game, RIDLEY).death_lunges(), 10) {
         if battle!(game.PowerBombFlag) != 0 {
@@ -1281,8 +1267,7 @@ pub fn lunge_missed_samus<L: Lease>(game: &mut L) {
 }
 
 /// Ridley action / function - lunge ($A6:BAB7): while Samus is below and on
-/// the lunging side, home in on her and grab her when the feet touch. Was
-/// `Ridley_Func_33`.
+/// the lunging side, home in on her and grab her when the feet touch.
 pub fn lunge<L: Lease>(game: &mut L) {
     if !(samus_not_spinning(game)
         && Ridley::of(game, RIDLEY).hit_boundary() == 0
@@ -1351,7 +1336,7 @@ pub fn lunge<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - grabbed Samus - setup ($A6:BB8F). Was `Ridley_Func_33b`.
+/// Ridley function - grabbed Samus - setup ($A6:BB8F).
 pub fn grabbed_samus<L: Lease>(game: &mut L) {
     /// Ridley lunge target X position ($A6:BBEB), by facing direction.
     const TARGET_X: [u16; 3] = [0x40, 0, 0xd0];
@@ -1369,8 +1354,7 @@ pub fn grabbed_samus<L: Lease>(game: &mut L) {
     grabbed_samus_rising(game);
 }
 
-/// Ridley function - grabbed Samus - rising to up to 40h px ($A6:BBC4). Was
-/// `Ridley_Func_34`.
+/// Ridley function - grabbed Samus - rising to up to 40h px ($A6:BBC4).
 pub fn grabbed_samus_rising<L: Lease>(game: &mut L) {
     let x = Ridley::of(game, RIDLEY).target_x();
     let y = Ridley::of(game, RIDLEY).target_y();
@@ -1381,8 +1365,7 @@ pub fn grabbed_samus_rising<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - grabbed Samus - rising to room middle ($A6:BBF1). Was
-/// `Ridley_Func_35`.
+/// Ridley function - grabbed Samus - rising to room middle ($A6:BBF1).
 pub fn grabbed_samus_rising_to_middle<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         bg2_staging::set(game, tail::IDEAL_SEGMENT_ANGLE, 8);
@@ -1395,8 +1378,7 @@ pub fn grabbed_samus_rising_to_middle<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - grabbed Samus - release Samus ($A6:BC2E). Was
-/// `Ridley_Func_36`.
+/// Ridley function - grabbed Samus - release Samus ($A6:BC2E).
 pub fn grabbed_samus_release<L: Lease>(game: &mut L) {
     /// The X position Ridley flies to after releasing Samus ($A6:BC62), by
     /// facing direction.
@@ -1411,7 +1393,7 @@ pub fn grabbed_samus_release<L: Lease>(game: &mut L) {
     }
 }
 
-/// Grab Samus ($A6:BC68). Was `Ridley_Func_37`.
+/// Grab Samus ($A6:BC68).
 pub fn grab_samus<L: Lease>(game: &mut L) {
     set_grabbed_samus_offset(game);
     RidleyEdit::of(game, RIDLEY).actor().properties |= K_ENEMY_PROPS_TANGIBLE as u16;
@@ -1420,7 +1402,7 @@ pub fn grab_samus<L: Lease>(game: &mut L) {
     draw_feet(true, game);
 }
 
-/// Release Samus ($A6:BC84). Was `Ridley_Func_38`.
+/// Release Samus ($A6:BC84).
 pub fn release_samus<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::WHIP_REQUEST, 1);
     bg2_staging::set(game, tail::FUNCTION, 1);
@@ -1434,8 +1416,7 @@ pub fn release_samus<L: Lease>(game: &mut L) {
 }
 
 /// Set Ridley tangibility ($A6:BCB4): intangible off-screen while fighting,
-/// and tangible again when the intangibility timer runs out. Was
-/// `Ridley_Func_39`.
+/// and tangible again when the intangibility timer runs out.
 pub fn set_tangibility<S: State + ?Sized>(game: &mut S) {
     let mode = Ridley::of(game, RIDLEY).fight_mode() as i16;
     if mode < 0 {
@@ -1469,14 +1450,13 @@ fn set_tangible<S: State + ?Sized>(game: &mut S, tangible: bool) {
 }
 
 /// Check if Samus is morphed or spin jumping / damage boosting ($A6:BCF1):
-/// the carry, Samus is neither spin jumping nor damage boosting. Was
-/// `Ridley_Func_40_Carry`.
+/// the carry, Samus is neither spin jumping nor damage boosting.
 pub fn samus_not_spinning<L: Lease>(game: &mut L) -> bool {
     MOVEMENT_TYPE_FLAGS[samus_movement_type(game) as usize] & 0x80 != 0
 }
 
 /// Check if Samus is morphed or spin jumping / damage boosting ($A6:BCF1):
-/// the overflow, Samus is morphed. Was `Ridley_Func_40_Sign`.
+/// the overflow, Samus is morphed.
 pub fn samus_morphed<L: Lease>(game: &mut L) -> bool {
     MOVEMENT_TYPE_FLAGS[samus_movement_type(game) as usize] & 0x40 != 0
 }
@@ -1488,14 +1468,12 @@ const MOVEMENT_TYPE_FLAGS: [u8; 28] = [
     0xff, 0xff, 0xff, 0x80, 0x80, 0, 0x80, 0x80, 0, 0, 0x80,
 ];
 
-/// Check if Samus is in pogo zone ($A6:BD20): at or below Y 352. Was
-/// `Ridley_Func_41`.
+/// Check if Samus is in pogo zone ($A6:BD20): at or below Y 352.
 pub fn samus_in_pogo_zone<L: Lease>(game: &mut L) -> bool {
     ((game.player_y() as i32 - 352) & 0x8000) == 0
 }
 
-/// Lunge if power bomb active and not holding Samus ($A6:BD2C). Was
-/// `Ridley_Func_42`.
+/// Lunge if power bomb active and not holding Samus ($A6:BD2C).
 pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
     let mode = Ridley::of(game, RIDLEY).fight_mode() as i16;
     if mode > 0
@@ -1509,7 +1487,7 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
 }
 
 /// Ridley function - dodging power bomb ($A6:BD4E): to the corner away from
-/// the explosion, then back to the fight. Was `Ridley_Func_43`.
+/// the explosion, then back to the fight.
 pub fn dodge_power_bomb<L: Lease>(game: &mut L) {
     if battle!(game.PowerBombFlag) != 0 {
         *RidleyEdit::of(game, RIDLEY).fight_mode() = 2;
@@ -1535,8 +1513,7 @@ pub fn dodge_power_bomb<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - fake retreat - move to position ($A6:BD9A). Was
-/// `Ridley_Func_44`.
+/// Ridley function - fake retreat - move to position ($A6:BD9A).
 pub fn fake_retreat_move_to_position<L: Lease>(game: &mut L) {
     ceres_accelerate(0, 1, 192, 128, game);
     if !below(Ridley::of(game, RIDLEY).actor().x.whole, 192) {
@@ -1545,7 +1522,7 @@ pub fn fake_retreat_move_to_position<L: Lease>(game: &mut L) {
 }
 
 /// Ridley function - fake retreat - rising ($A6:BDBC): off the top of the
-/// screen, then drop the baby metroid. Was `Ridley_Func_45`.
+/// screen, then drop the baby metroid.
 pub fn fake_retreat_rising<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).min_y() = -192i32 as u16;
     ceres_accelerate(0, 1, 192, -128i32 as u16, game);
@@ -1557,8 +1534,7 @@ pub fn fake_retreat_rising<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - fake retreat - drop baby metroid ($A6:BDF2). Was
-/// `Ridley_Func_46`.
+/// Ridley function - fake retreat - drop baby metroid ($A6:BDF2).
 pub fn drop_baby_metroid<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         set_instruction_list(instruction_list::RETRIEVE_BABY_METROID, game);
@@ -1568,8 +1544,7 @@ pub fn drop_baby_metroid<L: Lease>(game: &mut L) {
 }
 
 /// Ridley function - fake retreat - retrieve baby metroid ($A6:BE03): swoop
-/// down and catch it in the feet, then retreat for real. Was
-/// `Ridley_Func_47`.
+/// down and catch it in the feet, then retreat for real.
 pub fn retrieve_baby_metroid<L: Lease>(game: &mut L) {
     let x = Ridley::of(game, RIDLEY).baby_metroid_x().wrapping_sub(10);
     let y = Ridley::of(game, RIDLEY).baby_metroid_y().wrapping_sub(56);
@@ -1590,7 +1565,7 @@ pub fn retrieve_baby_metroid<L: Lease>(game: &mut L) {
 }
 
 /// Check for baby metroid collision with rectangle ($A6:BE61); the baby
-/// metroid's radii are 4. Was `Ridley_Func_48`.
+/// metroid's radii are 4.
 pub fn baby_metroid_in_rect<L: Lease>(rect: Rect, game: &mut L) -> bool {
     let dx = abs16(
         Ridley::of(game, RIDLEY)
@@ -1653,7 +1628,7 @@ pub fn instruction<L: Lease>(
     })
 }
 
-/// Execute baby metroid function ($A6:BE93). Was `Ridley_Func_49`.
+/// Execute baby metroid function ($A6:BE93).
 pub fn run_baby_metroid_function<L: Lease>(game: &mut L) {
     match Ridley::of(game, RIDLEY).baby_metroid_function() {
         baby_metroid_function::HELD => baby_metroid_held(game),
@@ -1665,7 +1640,7 @@ pub fn run_baby_metroid_function<L: Lease>(game: &mut L) {
     }
 }
 
-/// Baby metroid function - held by Ridley ($A6:BE9C). Was `Ridley_Func_50`.
+/// Baby metroid function - held by Ridley ($A6:BE9C).
 pub fn baby_metroid_held<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).baby_metroid_x() =
         Ridley::of(game, RIDLEY).actor().x.whole.wrapping_sub(16);
@@ -1673,8 +1648,7 @@ pub fn baby_metroid_held<L: Lease>(game: &mut L) {
         Ridley::of(game, RIDLEY).actor().y.whole.wrapping_add(22);
 }
 
-/// Baby metroid function - held by Ridley's feet ($A6:BEB3). Was
-/// `Ridley_Func_51`.
+/// Baby metroid function - held by Ridley's feet ($A6:BEB3).
 pub fn baby_metroid_held_by_feet<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).baby_metroid_x() =
         Ridley::of(game, RIDLEY).actor().x.whole.wrapping_add(14);
@@ -1682,7 +1656,7 @@ pub fn baby_metroid_held_by_feet<L: Lease>(game: &mut L) {
         Ridley::of(game, RIDLEY).actor().y.whole.wrapping_add(66);
 }
 
-/// Baby metroid function - start falling ($A6:BECA). Was `Ridley_Func_52`.
+/// Baby metroid function - start falling ($A6:BECA).
 pub fn baby_metroid_start_falling<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).baby_metroid_unread() = 0;
     *RidleyEdit::of(game, RIDLEY).baby_metroid_y_velocity() = 0;
@@ -1691,7 +1665,7 @@ pub fn baby_metroid_start_falling<L: Lease>(game: &mut L) {
 }
 
 /// Baby metroid function - falling ($A6:BEDC): accelerate down to the floor
-/// at Y 192. Was `Ridley_Func_53`.
+/// at Y 192.
 pub fn baby_metroid_falling<L: Lease>(game: &mut L) {
     let velocity = Ridley::of(game, RIDLEY)
         .baby_metroid_y_velocity()
@@ -1715,7 +1689,7 @@ pub fn baby_metroid_falling<L: Lease>(game: &mut L) {
     }
 }
 
-/// Draw baby metroid ($A6:BF1A), in palette 0. Was `DrawBabyMetroid_0`.
+/// Draw baby metroid ($A6:BF1A), in palette 0.
 pub fn draw_baby_metroid<L: Lease>(game: &mut L) {
     let Some(spritemap) = baby_metroid_spritemap(game) else {
         return;
@@ -1726,7 +1700,7 @@ pub fn draw_baby_metroid<L: Lease>(game: &mut L) {
 }
 
 /// Baby metroid instruction - go to [[X]] with 50% chance if not moving
-/// ($A6:BFC9), else the flapping sound. Was `BabyMetroid_Instr_2`.
+/// ($A6:BFC9), else the flapping sound.
 pub fn baby_metroid_goto_if_still<L: Lease>(k: u16, game: &mut L) -> u16 {
     if Ridley::of(game, RIDLEY).baby_metroid_y_velocity() == 0 && (battle!(game.Random) & 1) != 0 {
         return baby_metroid_goto(k, game);
@@ -1735,16 +1709,14 @@ pub fn baby_metroid_goto_if_still<L: Lease>(k: u16, game: &mut L) -> u16 {
     k.wrapping_add(2)
 }
 
-/// Baby metroid instruction - load palette data [[X]] ($A6:BFE1). Was
-/// `BabyMetroid_Instr_3`.
+/// Baby metroid instruction - load palette data [[X]] ($A6:BFE1).
 pub fn baby_metroid_load_palette<L: Lease>(k: u16, game: &mut L) -> u16 {
     let colours = crate::cartridge::native_record(0xa6, k, game).word(0);
     copy_rom_colors_to_palette(0x162, 0xa6, colours, 0xf, game);
     k.wrapping_add(2)
 }
 
-/// Baby metroid instruction - go to [[X]] if moving ($A6:BFF2). Was
-/// `BabyMetroid_Instr_1`.
+/// Baby metroid instruction - go to [[X]] if moving ($A6:BFF2).
 pub fn baby_metroid_goto_if_moving<L: Lease>(k: u16, game: &mut L) -> u16 {
     if Ridley::of(game, RIDLEY).baby_metroid_y_velocity() != 0 {
         baby_metroid_goto(k, game)
@@ -1753,20 +1725,19 @@ pub fn baby_metroid_goto_if_moving<L: Lease>(k: u16, game: &mut L) -> u16 {
     }
 }
 
-/// Baby metroid instruction - go to [[X]] ($A6:BFF8). Was `BabyMetroid_Goto`.
+/// Baby metroid instruction - go to [[X]] ($A6:BFF8).
 pub fn baby_metroid_goto<L: Lease>(k: u16, game: &mut L) -> u16 {
     crate::cartridge::native_record(0xa6, k, game).word(0)
 }
 
-/// Ridley function - dying - grabbed Samus ($A6:C538). Was `Ridley_Func_63`.
+/// Ridley function - dying - grabbed Samus ($A6:C538).
 pub fn dying_grabbed_samus<L: Lease>(game: &mut L) {
     if move_to_death_spot(game) {
         death_roar(game);
     }
 }
 
-/// Ridley function - death sequence - death roar ($A6:C53E). Was
-/// `Ridley_C53E`.
+/// Ridley function - death sequence - death roar ($A6:C53E).
 pub fn death_roar<L: Lease>(game: &mut L) {
     set_instruction_list(instruction_list::DEATH_ROAR, game);
     *RidleyEdit::of(game, RIDLEY).function() = function::DEATH_MOVE_TO_DEATH_SPOT;
@@ -1774,7 +1745,7 @@ pub fn death_roar<L: Lease>(game: &mut L) {
 }
 
 /// Ridley function - death sequence - move to death spot ($A6:C551): then stop
-/// and lower the acid. Was `Ridley_C551`.
+/// and lower the acid.
 pub fn death_move_to_death_spot<L: Lease>(game: &mut L) {
     move_to_death_spot(game);
     if timer_expired(game) {
@@ -1790,7 +1761,7 @@ pub fn death_move_to_death_spot<L: Lease>(game: &mut L) {
 }
 
 /// Ridley function - death sequence - lowering acid and release Samus
-/// ($A6:C588). Was `Ridley_Func_64`.
+/// ($A6:C588).
 pub fn lower_acid_and_release_samus<L: Lease>(game: &mut L) {
     spawn_small_explosion(game);
     if timer_expired(game) {
@@ -1804,8 +1775,7 @@ pub fn lower_acid_and_release_samus<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley function - death sequence - start falling apart ($A6:C5A8). Was
-/// `Ridley_Func_65`.
+/// Ridley function - death sequence - start falling apart ($A6:C5A8).
 pub fn start_falling_apart<L: Lease>(game: &mut L) {
     spawn_small_explosion(game);
     *RidleyEdit::of(game, RIDLEY).movement_enabled() = 0;
@@ -1814,8 +1784,7 @@ pub fn start_falling_apart<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function_timer() = 32;
 }
 
-/// Ridley function - death sequence - falling apart ($A6:C5C8). Was
-/// `Ridley_Func_66`.
+/// Ridley function - death sequence - falling apart ($A6:C5C8).
 pub fn falling_apart<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         *RidleyEdit::of(game, RIDLEY).function() = function::STILL_FALLING_APART;
@@ -1824,8 +1793,7 @@ pub fn falling_apart<L: Lease>(game: &mut L) {
 }
 
 /// Ridley function - death sequence - still falling apart ($A6:C5DA): the boss
-/// is defeated, his drops scatter and the music returns. Was
-/// `Ridley_Func_67`.
+/// is defeated, his drops scatter and the music returns.
 pub fn still_falling_apart<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         // The drop routine keeps but never reads the X it is passed.
@@ -1837,8 +1805,7 @@ pub fn still_falling_apart<L: Lease>(game: &mut L) {
     }
 }
 
-/// Move Ridley to death spot ($A6:C601); true once he is there. Was
-/// `Ridley_Func_68`.
+/// Move Ridley to death spot ($A6:C601); true once he is there.
 pub fn move_to_death_spot<L: Lease>(game: &mut L) -> bool {
     let rect = Rect {
         x: 128,
@@ -1851,7 +1818,7 @@ pub fn move_to_death_spot<L: Lease>(game: &mut L) -> bool {
 }
 
 /// Spawn small explosion near Ridley ($A6:C623): a dust cloud every five
-/// frames, cycling through ten offsets. Was `Ridley_Func_69`.
+/// frames, cycling through ten offsets.
 pub fn spawn_small_explosion<L: Lease>(game: &mut L) {
     /// The explosion offsets ($A6:C66E): X and Y pairs.
     const OFFSETS: [i16; 20] = [
@@ -1887,8 +1854,7 @@ pub fn spawn_small_explosion<L: Lease>(game: &mut L) {
 }
 
 /// Initialisation AI - enemy $E1BF (Ridley explosion) ($A6:C696): the part
-/// picks the place and instruction list; a random X drift. Was
-/// `RidleysExplosion_Init`.
+/// picks the place and instruction list; a random X drift.
 pub fn explosion_init<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     ExplosionEdit::of(game, k).actor().instruction_delay = 1;
@@ -1940,7 +1906,7 @@ pub fn explosion_init<L: Lease>(game: &mut L) {
 
 /// Ridley explosion initialisation - index = Eh..16h ($A6:C7DA..C8A2): explosion
 /// `e` on Ridley's `part`, its X from the part's placement for his facing and
-/// its Y `y_offset` from his. Was `place_ridley_explosion_x`.
+/// its Y `y_offset` from his.
 fn place_explosion<L: Lease>(game: &mut L, k: u16, part: u32, y_offset: i16) {
     let side: isize = if Ridley::of(game, RIDLEY).facing() != 0 {
         1
@@ -1963,8 +1929,7 @@ fn place_explosion<L: Lease>(game: &mut L, k: u16, part: u32, y_offset: i16) {
 }
 
 /// Main AI - enemy $E1BF (Ridley explosion) ($A6:C8D4): flicker, slow the
-/// drift, fall, and die when the lifetime runs out. Was
-/// `RidleysExplosion_Main`.
+/// drift, fall, and die when the lifetime runs out.
 pub fn explosion_main<L: Lease>(game: &mut L) {
     explosion_flicker(game.current_enemy(), game);
     let k = game.current_enemy();
@@ -1987,7 +1952,6 @@ pub fn explosion_main<L: Lease>(game: &mut L) {
 }
 
 /// Handle flickering ($A6:C913): explosion `k` is invisible on odd frames.
-/// Was `RidleysExplosion_Func_1`.
 pub fn explosion_flicker<L: Lease>(k: u16, game: &mut L) {
     let odd = Explosion::of(game, k).actor().frame & 1;
     ExplosionEdit::of(game, k).actor().frame = odd;
@@ -2000,7 +1964,7 @@ pub fn explosion_flicker<L: Lease>(k: u16, game: &mut L) {
     ExplosionEdit::of(game, k).actor().properties = properties;
 }
 
-/// Spawn Ridley explosion enemies ($A6:C932). Was `RidleysExplosion_Func_2`.
+/// Spawn Ridley explosion enemies ($A6:C932).
 pub fn spawn_explosions<L: Lease>(game: &mut L) {
     /// The explosion enemy populations ($A6:C987..CA37), in spawn order.
     const POPULATIONS: [u16; 12] = [
@@ -2014,7 +1978,6 @@ pub fn spawn_explosions<L: Lease>(game: &mut L) {
 
 /// Ceres escape sequence "emergency" text glow ($A6:C19C): every fourth frame
 /// without a palette change or door transition, the next of 16 glow steps.
-/// Was `Ridley_Func_61`.
 pub fn emergency_text_glow<L: Lease>(game: &mut L) {
     if battle!(game.DoorTransitionEnemies) | battle!(game.PaletteChangeNum) == 0
         && (game.frame() & 3) == 0
@@ -2036,8 +1999,7 @@ pub fn emergency_text_glow<L: Lease>(game: &mut L) {
 }
 
 /// Handle Ridley tail ($A6:CAF5): the whip sound, the tail function, the
-/// segment positions and distances, and the tail hitting Samus. Was
-/// `Ridley_Func_70`.
+/// segment positions and distances, and the tail hitting Samus.
 pub fn handle_tail<L: Lease>(game: &mut L) {
     tail_whip_sound(game);
     // Ridley tail function pointers ($A6:CB21), by tail function index.
@@ -2064,27 +2026,23 @@ pub fn handle_tail<L: Lease>(game: &mut L) {
     }
 }
 
-/// Ridley tail function index 0: nothing ($A6:CB20, an RTS). Was
-/// `locret_A6CB20`.
+/// Ridley tail function index 0: nothing ($A6:CB20, an RTS).
 fn tail_inactive<L: Lease>(_game: &mut L) {}
 
-/// Set up Ridley pogo tail ($A6:CB33), tail function index 2. Was
-/// `Ridley_Func_71`.
+/// Set up Ridley pogo tail ($A6:CB33), tail function index 2.
 pub fn set_up_pogo_tail<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::ANGLE_DELTA, 8);
     pogo_tail_pointed_down(game);
     bg2_staging::set(game, tail::FUNCTION, 3);
 }
 
-/// Ridley tail function index 3 - pogo - point tail down ($A6:CB45). Was
-/// `Ridley_Func_72`.
+/// Ridley tail function index 3 - pogo - point tail down ($A6:CB45).
 pub fn point_tail_down<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::ANGLE_DELTA, 8);
     pogo_tail_pointed_down(game);
 }
 
-/// Ridley tail function index 6 - pogo - descending - stab ($A6:CB4E). Was
-/// `Ridley_Func_73`.
+/// Ridley tail function index 6 - pogo - descending - stab ($A6:CB4E).
 pub fn pogo_descending_stab<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::ANGLE_DELTA, 3);
     pogo_tail_pointed_down(game);
@@ -2092,7 +2050,6 @@ pub fn pogo_descending_stab<L: Lease>(game: &mut L) {
 }
 
 /// Ridley tail function index 7 - unused - pogo descending - stab ($A6:CB60).
-/// Was `Ridley_Func_74`.
 pub fn unused_pogo_descending_stab<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::ANGLE_DELTA, 2);
     pogo_tail_pointed_down(game);
@@ -2100,8 +2057,7 @@ pub fn unused_pogo_descending_stab<L: Lease>(game: &mut L) {
 }
 
 /// Ridley pogo tail movement with tail pointed down ($A6:CB72): whip towards
-/// straight down, then the normal pogo tail once no segment moves. Was
-/// `Ridley_Func_75`.
+/// straight down, then the normal pogo tail once no segment moves.
 pub fn pogo_tail_pointed_down<L: Lease>(game: &mut L) {
     if Ridley::of(game, RIDLEY).facing() != 0 {
         bg2_staging::set(game, tail::WHIP_TARGET_CLOCKWISE, 0x4000);
@@ -2117,42 +2073,40 @@ pub fn pogo_tail_pointed_down<L: Lease>(game: &mut L) {
 }
 
 /// Ridley tail function index 1 - neutral (natural tail movement + tail
-/// whips) ($A6:CBC0). Was `Ridley_CBC0`.
+/// whips) ($A6:CBC0).
 pub fn neutral_tail<L: Lease>(game: &mut L) {
     handle_tail_whip(game);
     update_tail_segment_angles(game);
 }
 
 /// Ridley pogo tail movement / Ridley tail function index 4 - pogo - normal
-/// ($A6:CBC7). Was `Ridley_CBC7`.
+/// ($A6:CBC7).
 pub fn pogo_tail<L: Lease>(game: &mut L) {
     handle_normal_pogo_tail(game);
     update_tail_segment_angles(game);
 }
 
 /// Ridley tail function index 5 - pogo - descending - stab setup ($A6:CBCE).
-/// Was `Ridley_CBCE`.
 pub fn pogo_stab_setup_tail<L: Lease>(game: &mut L) {
     handle_pogo_tail_stab(game);
     update_tail_segment_angles(game);
 }
 
 /// Ridley tail function index 8 - unused - neutral with spinny tail whips
-/// ($A6:CBD5). Was `Ridley_CBD5`.
+/// ($A6:CBD5).
 pub fn spinny_tail_whips<L: Lease>(game: &mut L) {
     handle_spinning_tail_whip(game);
     update_tail_segment_angles(game);
 }
 
-/// Update Ridley tail segment angles ($A6:CBDC). Was `Ridley_CBDC`.
+/// Update Ridley tail segment angles ($A6:CBDC).
 pub fn update_tail_segment_angles<L: Lease>(game: &mut L) {
     for segment in 0..7 {
         update_tail_segment_angle(segment, game);
     }
 }
 
-/// Set Ridley tail angle extrema ($A6:CBFE), by facing direction. Was
-/// `Ridley_Func_77`.
+/// Set Ridley tail angle extrema ($A6:CBFE), by facing direction.
 pub fn set_tail_angle_extrema<L: Lease>(game: &mut L) {
     let limits = ridley_data::tail_angles(game, Ridley::of(game, RIDLEY).facing() as isize);
     bg2_staging::set(game, tail::MIN_CLOCKWISE_ANGLE, limits.min_clockwise);
@@ -2163,8 +2117,7 @@ pub fn set_tail_angle_extrema<L: Lease>(game: &mut L) {
     );
 }
 
-/// Check if all Ridley tail segments are active ($A6:CC1E), tip first. Was
-/// `Ridley_Func_78`.
+/// Check if all Ridley tail segments are active ($A6:CC1E), tip first.
 pub fn all_tail_segments_active<L: Lease>(game: &mut L) -> bool {
     let mut flags = bg2_staging::get(game, tail::active(6));
     for segment in (0..6).rev() {
@@ -2182,7 +2135,7 @@ fn any_tail_segment_active<L: Lease>(game: &mut L) -> bool {
     flags != 0
 }
 
-/// Handle Ridley tail whip ($A6:CC39). Was `Ridley_Func_79`.
+/// Handle Ridley tail whip ($A6:CC39).
 pub fn handle_tail_whip<L: Lease>(game: &mut L) {
     set_tail_angle_extrema(game);
     if all_tail_segments_active(game) && configure_tail_whip(game) {
@@ -2192,8 +2145,7 @@ pub fn handle_tail_whip<L: Lease>(game: &mut L) {
 }
 
 /// The end of the tail whip handlers ($A6:CC39, CCBD): once every segment
-/// rests, swing again from the base, faster when Samus is right of 70h. Was
-/// `start_ridley_tile_effect_when_idle`.
+/// rests, swing again from the base, faster when Samus is right of 70h.
 fn swing_idle_tail<L: Lease>(game: &mut L) {
     if !any_tail_segment_active(game) {
         bg2_staging::set(game, tail::active(0), 0x8000);
@@ -2206,7 +2158,6 @@ fn swing_idle_tail<L: Lease>(game: &mut L) {
 
 /// Configure Ridley tail whip ($A6:CC7D): on a whip request, at random while
 /// idle whips are enabled, or when Samus is near; true when a whip started.
-/// Was `Ridley_Func_80_DoubleRet`.
 pub fn configure_tail_whip<L: Lease>(game: &mut L) -> bool {
     let attack = if bg2_staging::get(game, tail::WHIP_REQUEST) != 0
         && (bg2_staging::get(game, tail::WHIP_TARGET_CLOCKWISE)
@@ -2238,8 +2189,7 @@ pub fn configure_tail_whip<L: Lease>(game: &mut L) -> bool {
     started
 }
 
-/// Unused. Handle Ridley tail whip with extra spinning ($A6:CCBD). Was
-/// `Ridley_Func_81`.
+/// Unused. Handle Ridley tail whip with extra spinning ($A6:CCBD).
 pub fn handle_spinning_tail_whip<L: Lease>(game: &mut L) {
     set_tail_angle_extrema(game);
     if all_tail_segments_active(game) && configure_spinning_tail_whip(game) {
@@ -2249,7 +2199,7 @@ pub fn handle_spinning_tail_whip<L: Lease>(game: &mut L) {
 }
 
 /// Unused. Configure Ridley tail whip with extra spinning ($A6:CD0C); true
-/// when a whip started. Was `Ridley_Func_82_DoubleRet`.
+/// when a whip started.
 pub fn configure_spinning_tail_whip<L: Lease>(game: &mut L) -> bool {
     if bg2_staging::get(game, tail::WHIP_REQUEST) != 0
         && (bg2_staging::get(game, tail::WHIP_TARGET_CLOCKWISE)
@@ -2287,8 +2237,7 @@ fn pogo_tail_whips<L: Lease>(game: &mut L) -> bool {
 }
 
 /// Handle normal Ridley pogo tail ($A6:CD24): whip, or once the tail rests
-/// count down to its next swing; set up the stab while rising. Was
-/// `Ridley_Func_83`.
+/// count down to its next swing; set up the stab while rising.
 pub fn handle_normal_pogo_tail<L: Lease>(game: &mut L) {
     if pogo_tail_whips(game) || any_tail_segment_active(game) {
         return;
@@ -2313,8 +2262,7 @@ pub fn handle_normal_pogo_tail<L: Lease>(game: &mut L) {
 }
 
 /// Handle Ridley pogo tail stab ($A6:CDAA): as the normal pogo tail, but
-/// falling it points the tail straight down at full length. Was
-/// `Ridley_Func_84`.
+/// falling it points the tail straight down at full length.
 pub fn handle_pogo_tail_stab<L: Lease>(game: &mut L) {
     if pogo_tail_whips(game) || any_tail_segment_active(game) {
         return;
@@ -2344,8 +2292,7 @@ pub fn handle_pogo_tail_stab<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::ANGLE_DELTA, timer);
 }
 
-/// Set tail angle high bytes to 40h ($A6:CE65), through raw work RAM. Was
-/// `Ridley_Func_85`.
+/// Set tail angle high bytes to 40h ($A6:CE65), through raw work RAM.
 pub fn set_tail_angle_high_bytes<L: Lease>(game: &mut L) {
     for segment in 0..4 {
         let value = tail_low_byte(game, tail::angle(segment)) | 0x4000;
@@ -2362,7 +2309,7 @@ pub fn set_tail_angle_high_bytes<L: Lease>(game: &mut L) {
 
 /// Calculate Ridley tail segment positions ($A6:CEBA): each segment is the
 /// previous one plus its offset; facing forward the tail hangs straight
-/// down. Was `Ridley_Func_86`.
+/// down.
 pub fn calculate_tail_segment_positions<L: Lease>(game: &mut L) {
     /// The tail base X offsets ($A6:CF54), by facing direction.
     const BASE_X_OFFSETS: [i16; 3] = [0x20, 0, -0x20];
@@ -2413,8 +2360,7 @@ fn chain_tail_positions<L: Lease>(game: &mut L, first: usize) {
 }
 
 /// Update Ridley tail segment distances ($A6:CF5A): segments 1 to 6 extend
-/// towards their target distances or relax to their resting ones. Was
-/// `Ridley_Func_87`.
+/// towards their target distances or relax to their resting ones.
 pub fn update_tail_segment_distances<L: Lease>(game: &mut L) {
     const MAXIMA: [u16; 6] = [6144, 6144, 5632, 5632, 4608, 1280];
     const RESTING: [u16; 6] = [2048, 2048, 2048, 2048, 2048, 1280];
@@ -2453,7 +2399,7 @@ fn update_tail_segment_distance<L: Lease>(
 /// Update Ridley tail segment angle ($A6:D09F): an active segment staggers,
 /// then swings between the angle extrema or towards a whip target, and stops
 /// at a target once the segment before it has; every segment then takes its
-/// offset from its angle and distance. Was `Ridley_Func_88`.
+/// offset from its angle and distance.
 pub fn update_tail_segment_angle<L: Lease>(segment: usize, game: &mut L) {
     let angle = if (bg2_staging::get(game, tail::active(segment)) & 0x8000) != 0 {
         let stagger = bg2_staging::get(game, tail::stagger_angle(segment));
@@ -2578,8 +2524,7 @@ fn stops_at_whip_target<L: Lease>(game: &L, segment: usize) -> bool {
 }
 
 /// Set Ridley tail whip target ($A6:D19D): aim the whip at a missile near the
-/// tip, or else at Samus, within reach of the facing side. Was
-/// `Ridley_Func_89`.
+/// tip, or else at Samus, within reach of the facing side.
 pub fn set_tail_whip_target<L: Lease>(attack: u16, game: &mut L) {
     // The attack's low byte becomes the target angle's high byte.
     bg2_staging::set(game, tail::WHIP_ANGLE_OFFSET, u16::from(attack as u8) << 8);
@@ -2628,7 +2573,7 @@ pub fn set_tail_whip_target<L: Lease>(attack: u16, game: &mut L) {
 }
 
 /// Detect (super) missile near Ridley tail ($A6:D242): the first missile or
-/// super missile within 64px of the tip. Was `Ridley_Func_90`.
+/// super missile within 64px of the tip.
 pub fn missile_near_tail<L: Lease>(game: &mut L) -> Option<Point> {
     let rect = Rect {
         x: bg2_staging::get(game, tail::x(6)),
@@ -2683,7 +2628,7 @@ fn projectile_overlaps<L: Lease>(game: &L, n: usize, rect: Rect) -> bool {
 }
 
 /// Handle Ridley tail whip sound effect ($A6:D2AA): every 16 frames of a fast
-/// tail, unless roaring. Was `Ridley_Func_91`.
+/// tail, unless roaring.
 pub fn tail_whip_sound<L: Lease>(game: &mut L) {
     if !below(bg2_staging::get(game, tail::ANGLE_DELTA), 8) {
         let counter = Ridley::of(game, RIDLEY)
@@ -2700,7 +2645,7 @@ pub fn tail_whip_sound<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).whip_sound_counter() = 0;
 }
 
-/// Initialise Ridley tail RAM ($A6:D2D6). Was `Ridley_Func_92`.
+/// Initialise Ridley tail RAM ($A6:D2D6).
 pub fn initialise_tail<L: Lease>(game: &mut L) {
     bg2_staging::set(game, tail::ANGLE_DELTA, 1);
     bg2_staging::set(game, tail::MIN_CLOCKWISE_ANGLE, 16368);
@@ -2720,12 +2665,12 @@ pub fn initialise_tail<L: Lease>(game: &mut L) {
     set_tail_segment_flags(0, game);
 }
 
-/// Ridley tail segment active flags = 8000h ($A6:D3D9). Was `Ridley_Func_95`.
+/// Ridley tail segment active flags = 8000h ($A6:D3D9).
 pub fn activate_tail_segments<L: Lease>(game: &mut L) {
     set_tail_segment_flags(0x8000, game);
 }
 
-/// Ridley tail segment active flags = [A] ($A6:D3DC). Was `Ridley_Func_D3DC`.
+/// Ridley tail segment active flags = [A] ($A6:D3DC).
 pub fn set_tail_segment_flags<L: Lease>(flags: u16, game: &mut L) {
     for segment in 0..7 {
         bg2_staging::set(game, tail::active(segment), flags);
@@ -2733,7 +2678,7 @@ pub fn set_tail_segment_flags<L: Lease>(flags: u16, game: &mut L) {
 }
 
 /// Flip Ridley tail ($A6:D3F9): mirror every segment's angle and turn it
-/// anticlockwise. Was `Ridley_Func_96`.
+/// anticlockwise.
 pub fn flip_tail<L: Lease>(game: &mut L) {
     set_tail_segments_from_list(tail::distance(0), tail_data::DISTANCES, game);
     for segment in 0..7 {
@@ -2765,7 +2710,7 @@ pub fn contact_damage(game: &mut (impl BossState + SlotState + ?Sized)) -> u16 {
         .word(ENEMY_DEFINITION_DAMAGE)
 }
 
-/// Set Ridley instruction list ($A6:D467). Was `Ridley_Func_99`.
+/// Set Ridley instruction list ($A6:D467).
 pub fn set_instruction_list<L: Lease>(list: u16, game: &mut L) {
     let mut ridley = RidleyEdit::of(game, RIDLEY);
     let actor = ridley.actor();
@@ -2775,8 +2720,7 @@ pub fn set_instruction_list<L: Lease>(list: u16, game: &mut L) {
 }
 
 /// Norfair Ridley health-based palette handling ($A6:D474): below 9000, 5400
-/// and 1800 health Ridley accelerates harder and glows redder. Was
-/// `Ridley_Func_100`.
+/// and 1800 health Ridley accelerates harder and glows redder.
 pub fn health_palette<L: Lease>(game: &mut L) {
     let health = Ridley::of(game, RIDLEY).actor().health;
     let index: i16 = if health >= 0x2328 {
@@ -2795,7 +2739,7 @@ pub fn health_palette<L: Lease>(game: &mut L) {
 }
 
 /// Load Ridley health-based palette ($A6:D495) `index` into sprite palette 7
-/// unless a palette change is pending. Was `Ridley_D495`.
+/// unless a palette change is pending.
 pub fn load_health_palette<L: Lease>(index: u16, game: &mut L) {
     /// Ridley health-based palettes ($A6:E46A), 14 colours each.
     const HEALTH_PALETTES: u16 = 0xe46a;
@@ -2806,7 +2750,6 @@ pub fn load_health_palette<L: Lease>(index: u16, game: &mut L) {
 }
 
 /// Ceres Ridley health-based palette handling ($A6:D4B5): by the hit counter.
-/// Was `Ridley_Func_101`.
 pub fn ceres_health_palette<L: Lease>(game: &mut L) {
     if Ridley::of(game, RIDLEY).fight_mode() != 0 && Ridley::of(game, RIDLEY).hit_counter() >= 0x32
     {
@@ -2820,7 +2763,7 @@ pub fn ceres_health_palette<L: Lease>(game: &mut L) {
 }
 
 /// Ridley hurt flash handling ($A6:D4DA): the spritemap palette flashes to
-/// palette 0 while the flash timer runs. Was `Ridley_Func_102`.
+/// palette 0 while the flash timer runs.
 pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
     if Ridley::of(game, RIDLEY).actor().flash >= 2
@@ -2832,7 +2775,7 @@ pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
 }
 
 /// Check for collision with non-air block ($A6:D4F9): whether the level data
-/// block at (`x`, `y`) has a type. Was `ridley_offscreen`.
+/// block at (`x`, `y`) has a type.
 pub fn solid_block_at<H>(x: u16, y: u16, game: &H) -> bool
 where
     H: crate::gameplay_context::Access + crate::room_state::LevelCells + ?Sized,
@@ -2844,13 +2787,13 @@ where
 }
 
 /// Ridley acceleration ($A6:D523): enemy `k` homes in on (`x`, `y`) with
-/// inertia `inertia`. Was `Ridley_Func_104_0`.
+/// inertia `inertia`.
 pub fn accelerate<L: Lease>(k: u16, inertia: u16, x: u16, y: u16, game: &mut L) {
     accelerate_with_force(k, inertia, 0, x, y, game);
 }
 
 /// Ridley death spot acceleration ($A6:D526): as `accelerate`, with `force`
-/// extra when reversing. Was `Ridley_Func_104`.
+/// extra when reversing.
 pub fn accelerate_with_force<L: Lease>(
     k: u16,
     inertia: u16,
@@ -2880,7 +2823,7 @@ const INERTIA: [u8; 16] = [
     0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
 
-/// Ridley X acceleration ($A6:D5A9). Was `Ridley_Func_105`.
+/// Ridley X acceleration ($A6:D5A9).
 pub fn accelerate_x<L: Lease>(k: u16, x: u16, divisor: u16, force: u16, game: &mut L) {
     let position = Ridley::of(game, k).actor().x.whole;
     if position != x {
@@ -2895,8 +2838,7 @@ pub fn accelerate_x<L: Lease>(k: u16, x: u16, divisor: u16, force: u16, game: &m
     }
 }
 
-/// Ceres Ridley acceleration ($A6:D62F): reversing doubles the step. Was
-/// `Ridley_Func_106`.
+/// Ceres Ridley acceleration ($A6:D62F): reversing doubles the step.
 pub fn ceres_accelerate<L: Lease>(k: u16, inertia: u16, x: u16, y: u16, game: &mut L) {
     /// Ceres Ridley inertia table ($A6:D712).
     const CERES_INERTIA: [u8; 16] = [
@@ -2918,7 +2860,7 @@ pub fn ceres_accelerate<L: Lease>(k: u16, inertia: u16, x: u16, y: u16, game: &m
     }
 }
 
-/// Ceres Ridley X acceleration ($A6:D6A6). Was `Ridley_Func_107`.
+/// Ceres Ridley X acceleration ($A6:D6A6).
 pub fn ceres_accelerate_x<L: Lease>(k: u16, x: u16, divisor: u16, game: &mut L) {
     let position = Ridley::of(game, k).actor().x.whole;
     if position != x {
@@ -2935,7 +2877,7 @@ pub fn ceres_accelerate_x<L: Lease>(k: u16, x: u16, divisor: u16, game: &mut L) 
 
 /// Calculate swoop velocities ($A6:D800): bring the swoop speed 20h a frame
 /// towards `target_speed`, turn the swoop angle by `angle_step` up to
-/// `target_angle`, and split the speed along it. Was `Ridley_Func_111`.
+/// `target_angle`, and split the speed along it.
 pub fn calculate_swoop_velocities<L: Lease>(
     angle_step: u16,
     target_angle: u16,
@@ -2979,7 +2921,7 @@ pub fn calculate_swoop_velocities<L: Lease>(
 
 /// Move Ridley ($A6:D86B): the current enemy by its velocities, clamped to
 /// Ridley's bounds; `hit_boundary` records the side hit (1 left, 2 right, 4
-/// top, 8 bottom). Was `Ridley_Func_112`.
+/// top, 8 bottom).
 pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
     *RidleyEdit::of(game, RIDLEY).hit_boundary() = 0;
     let k = battle!(game.CurEnemyIndex);
@@ -3025,8 +2967,7 @@ pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
 }
 
 /// Trigger Ceres Ridley earthquake if moving fast enough ($A6:D914): enemy `k`
-/// hitting the left wall at 280h or more, outside Norfair. Was
-/// `Ridley_Func_113`.
+/// hitting the left wall at 280h or more, outside Norfair.
 pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
     if battle!(game.AreaIndex) != NORFAIR {
         let speed =
@@ -3042,8 +2983,7 @@ pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
     }
 }
 
-/// Turn Ridley around if not facing room middle ($A6:D955). Was
-/// `Ridley_Func_114`.
+/// Turn Ridley around if not facing room middle ($A6:D955).
 pub fn face_room_middle<L: Lease>(game: &mut L) {
     let list = match Ridley::of(game, RIDLEY).facing() {
         FACING_LEFT if !in_right_half(game) => instruction_list::TURN_TO_FACE_RIGHT,
@@ -3065,7 +3005,6 @@ fn in_right_half<L: Lease>(game: &L) -> bool {
 }
 
 /// Update Ridley wings animation ($A6:D97D): ten frames, faster at speed.
-/// Was `Ridley_Func_115`.
 pub fn update_wings<S: State + ?Sized>(game: &mut S) {
     wings_animation_timer(game);
     let timer = (Ridley::of(game, RIDLEY).wings_timer() as i16)
@@ -3082,7 +3021,7 @@ pub fn update_wings<S: State + ?Sized>(game: &mut S) {
 }
 
 /// Calculate Ridley wings animation timer ($A6:D9A8): the timer delta from
-/// the larger velocity, halved while rising. Was `Ridley_Func_116`.
+/// the larger velocity, halved while rising.
 pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
     /// The wings timer deltas ($A6:D9ED), by speed.
     const DELTAS: [u16; 8] = [0xc, 0xe, 0x10, 0x12, 0x1c, 0x20, 0x28, 0x30];
@@ -3104,15 +3043,14 @@ pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
     *RidleyEdit::of(game, RIDLEY).wings_timer_delta() = delta;
 }
 
-/// Initialise Ridley ribs animation ($A6:D9FD). Was `Ridley_Func_117`.
+/// Initialise Ridley ribs animation ($A6:D9FD).
 pub fn initialise_ribs<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).ribs_pointer() = RIBS_ANIMATION;
     *RidleyEdit::of(game, RIDLEY).ribs_timer() = 1;
 }
 
 /// Handle Ridley ribs animation ($A6:DA0C): when the timer runs out, follow
-/// the table to its next frame and queue the frame's two tile rows. Was
-/// `Ridley_Func_118`.
+/// the table to its next frame and queue the frame's two tile rows.
 pub fn handle_ribs<L: Lease>(game: &mut L) {
     let timer = Ridley::of(game, RIDLEY).ribs_timer().wrapping_sub(1);
     *RidleyEdit::of(game, RIDLEY).ribs_timer() = timer;
@@ -3134,8 +3072,7 @@ pub fn handle_ribs<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).ribs_pointer() = cursor.wrapping_add(6);
 }
 
-/// Draw Ridley's feet ($A6:DA8B): queue the clenched or unclenched tiles. Was
-/// `Ridley_Func_119`.
+/// Draw Ridley's feet ($A6:DA8B): queue the clenched or unclenched tiles.
 pub fn draw_feet<L: Lease>(clenched: bool, game: &mut L) {
     let tiles = if clenched {
         FEET_CLENCHED_TILES
@@ -3146,8 +3083,7 @@ pub fn draw_feet<L: Lease>(clenched: bool, game: &mut L) {
     queue_tile_pair(game, [tiles.word(0), tiles.word(2)], [31424, 31680], 128);
 }
 
-/// Draw Ridley wings ($A6:DAD8): none while facing forward. Was
-/// `Ridley_Func_120`.
+/// Draw Ridley wings ($A6:DAD8): none while facing forward.
 pub fn draw_wings<L: Lease>(game: &mut L) {
     let side = match Ridley::of(game, RIDLEY).facing() {
         FACING_LEFT => 0,
@@ -3163,7 +3099,7 @@ pub fn draw_wings<L: Lease>(game: &mut L) {
 }
 
 /// Draw Ridley tail ($A6:DB2A): the tip by its angle, then the segments
-/// towards the base. Was `sub_A6DB2A`.
+/// towards the base.
 pub fn draw_tail<L: Lease>(game: &mut L) {
     if (Ridley::of(game, RIDLEY).actor().properties & K_ENEMY_PROPS_INVISIBLE as u16) != 0 {
         return;
@@ -3193,8 +3129,7 @@ fn tail_tip_sector<L: Lease>(game: &L) -> isize {
         >> 4) as isize
 }
 
-/// Add Ridley spritemap to OAM ($A6:DBC2), in his spritemap palette. Was
-/// `sub_A6DBC2`.
+/// Add Ridley spritemap to OAM ($A6:DBC2), in his spritemap palette.
 pub fn add_ridley_spritemap<L: Lease>(spritemap: u16, x: u16, y: u16, game: &mut L) {
     let palette = Ridley::of(game, RIDLEY).palette();
     add_spritemap(spritemap, x, y, palette, game);
@@ -3202,8 +3137,7 @@ pub fn add_ridley_spritemap<L: Lease>(spritemap: u16, x: u16, y: u16, game: &mut
 
 /// Y = baby metroid spritemap pointer ($A6:DBCB): advance the baby metroid's
 /// instruction list, running its instructions; its spritemap, or `None` when
-/// the list is stopped and nothing is drawn. Was
-/// `BabyMetroid_DBCB_DoubleRetEx`.
+/// the list is stopped and nothing is drawn.
 pub fn baby_metroid_spritemap<L: Lease>(game: &mut L) -> Option<u16> {
     if (Ridley::of(game, RIDLEY).baby_metroid_instruction() & 0x8000) == 0 {
         return None;
@@ -3241,7 +3175,7 @@ pub fn baby_metroid_spritemap<L: Lease>(game: &mut L) -> Option<u16> {
 /// Add spritemap to OAM ($A6:DC13): the bank $A6 spritemap `spritemap` at
 /// (`x`, `y`) with palette bits `palette`; a count, then 5-byte entries of X
 /// word, Y byte and tile word, read natively. Entries off the screen's
-/// height are skipped. Was `sub_A6DC13`.
+/// height are skipped.
 pub fn add_spritemap<L: Lease>(spritemap: u16, x: u16, y: u16, palette: u16, game: &mut L) {
     let record = crate::cartridge::native_record(0xa6, spritemap, game);
     let map = crate::sprite_drawing::SpriteMap {
@@ -3255,7 +3189,7 @@ pub fn add_spritemap<L: Lease>(spritemap: u16, x: u16, y: u16, palette: u16, gam
 }
 
 /// Check if Ridley is on screen ($A6:DE7A): true when he is off it, with a
-/// 20h px margin. Was `Ridley_Func_121`.
+/// 20h px margin.
 pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
     let y = Ridley::of(game, RIDLEY).actor().y.whole as i16;
     if y >= 0 {
@@ -3276,7 +3210,7 @@ pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
 
 /// Check for projectile collision with rectangle ($A6:DEA6): the first of
 /// Samus's beams (types below 3) in `rect`, which moves to its centre and
-/// is marked deflected. Was `Ridley_Func_122`.
+/// is marked deflected.
 pub fn projectile_in_rect<L: Lease>(rect: Rect, game: &mut L) -> Option<usize> {
     if battle!(game.ProjectileCounter) == 0 {
         return None;
@@ -3298,7 +3232,7 @@ pub fn projectile_in_rect<L: Lease>(rect: Rect, game: &mut L) -> Option<usize> {
     Some(n)
 }
 
-/// Check for Samus collision with rectangle ($A6:DF29). Was `Ridley_Func_124`.
+/// Check for Samus collision with rectangle ($A6:DF29).
 pub fn samus_in_rect<L: Lease>(rect: Rect, game: &mut L) -> bool {
     let dx = abs16(game.player_x().wrapping_sub(rect.x));
     if dx < battle!(game.SamusXRadius) || dx.wrapping_sub(battle!(game.SamusXRadius)) < rect.w {
@@ -3310,13 +3244,13 @@ pub fn samus_in_rect<L: Lease>(rect: Rect, game: &mut L) -> bool {
     false
 }
 
-/// Enemy touch - Ridley ($A6:DF59). Was `sub_A6DF59`.
+/// Enemy touch - Ridley ($A6:DF59).
 pub fn touch<L: Lease>(game: &mut L) {
     game.contact_reaction(Death::LeavePending);
 }
 
 /// Enemy shot - enemy $E13F/$E17F (Ridley) ($A6:DF8A): Norfair Ridley reacts
-/// normally; Ceres Ridley flashes and counts the hit. Was `Ridley_Shot`.
+/// normally; Ceres Ridley flashes and counts the hit.
 pub fn shot<L: Lease>(game: &mut L) {
     if BossState::area(game) == NORFAIR {
         game.shot_reaction(Shot::ReactionOnly);
@@ -3333,14 +3267,12 @@ pub fn shot<L: Lease>(game: &mut L) {
         Ridley::of(game, RIDLEY).hit_counter().wrapping_add(1);
 }
 
-/// Power bomb reaction - enemy $E13F/$E17F (Ridley) ($A6:DFB2). Was
-/// `Ridley_Powerbomb`.
+/// Power bomb reaction - enemy $E13F/$E17F (Ridley) ($A6:DFB2).
 pub fn power_bomb<L: Lease>(game: &mut L) {
     game.power_bomb_reaction(Death::LeavePending);
 }
 
-/// Start Norfair Ridley death sequence ($A6:DFB7), once, at no health. Was
-/// `Ridley_Func_126`.
+/// Start Norfair Ridley death sequence ($A6:DFB7), once, at no health.
 pub fn start_death_sequence<L: Lease>(game: &mut L) {
     if Ridley::of(game, RIDLEY).actor().health == 0
         && (Ridley::of(game, RIDLEY).fight_mode() & 0x8000) == 0
@@ -3352,7 +3284,7 @@ pub fn start_death_sequence<L: Lease>(game: &mut L) {
 }
 
 /// Ridley tail / Samus collision handling ($A6:DFD9): the tip hurts and knocks
-/// Samus back. Was `Ridley_Func_127`.
+/// Samus back.
 pub fn tail_samus_collision<L: Lease>(game: &mut L) {
     let rect = Rect {
         x: bg2_staging::get(game, tail::x(6)),
@@ -3378,8 +3310,7 @@ pub fn tail_samus_collision<L: Lease>(game: &mut L) {
 }
 
 /// Ridley tail / projectile collision handling ($A6:E088): a beam on the tip
-/// or segment 5 deflects in a dust cloud, missiles with a clank. Was
-/// `Ridley_Func_129`.
+/// or segment 5 deflects in a dust cloud, missiles with a clank.
 pub fn tail_projectile_collision<L: Lease>(game: &mut L) {
     if (Ridley::of(game, RIDLEY).actor().properties & K_ENEMY_PROPS_TANGIBLE as u16) != 0 {
         return;
@@ -3412,21 +3343,21 @@ pub fn tail_projectile_collision<L: Lease>(game: &mut L) {
     game.spawn_room_projectile(DUST_CLOUD, kind);
 }
 
-/// Instruction - roar ($A6:E4BE). Was `Ridley_Instr_5`.
+/// Instruction - roar ($A6:E4BE).
 pub fn roar<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *RidleyEdit::of(game, RIDLEY).roaring() = 89;
     game.queue_sound(1, 0x59, 6);
     script
 }
 
-/// Instruction - clear roaring flag ($A6:E4CA). Was `Ridley_Instr_6`.
+/// Instruction - clear roaring flag ($A6:E4CA).
 pub fn stop_roaring<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *RidleyEdit::of(game, RIDLEY).roaring() = 0;
     script
 }
 
 /// Instruction - go to [[Y]] if not Norfair and Samus has low health
-/// ($A6:E4D2): below 30. Was `Ridley_Instr_10`.
+/// ($A6:E4D2): below 30.
 pub fn goto_if_samus_health_low<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     if BossState::area(game) == NORFAIR || !below(battle!(game.SamusHealth), 30) {
         return script.offset(1);
@@ -3436,7 +3367,7 @@ pub fn goto_if_samus_health_low<L: Lease>(script: EnemyScript, game: &mut L) -> 
 }
 
 /// Unused. Instruction - go to [[Y]] if holding Samus, else go to [[Y] + 2]
-/// ($A6:E4EE). Was `Ridley_Instr_4`.
+/// ($A6:E4EE).
 pub fn goto_by_holding_samus<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     if Ridley::of(game, RIDLEY).holding_samus() != 0 {
         EnemyScript::jump(script.word(0))
@@ -3445,8 +3376,7 @@ pub fn goto_by_holding_samus<L: Lease>(script: EnemyScript, game: &mut L) -> Ene
     }
 }
 
-/// Unused. Instruction - go to [[Y]] if not holding Samus ($A6:E4F8). Was
-/// `Ridley_Instr_3`.
+/// Unused. Instruction - go to [[Y]] if not holding Samus ($A6:E4F8).
 pub fn goto_if_not_holding_samus<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     if Ridley::of(game, RIDLEY).holding_samus() != 0 {
         script.offset(1)
@@ -3456,7 +3386,7 @@ pub fn goto_if_not_holding_samus<L: Lease>(script: EnemyScript, game: &mut L) ->
 }
 
 /// Instruction - Ridley feet distance index = [[Y]] ($A6:E501); Samus's
-/// previous position catches up. Was `Ridley_Instr_2`.
+/// previous position catches up.
 pub fn set_feet_distance<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     game.set_previous_player_x(battle!(game.SamusXPos));
     game.set_previous_player_y(battle!(game.SamusYPos));
@@ -3464,8 +3394,7 @@ pub fn set_feet_distance<L: Lease>(script: EnemyScript, game: &mut L) -> EnemySc
     script.offset(1)
 }
 
-/// Instruction - go to [[Y]] if not facing left ($A6:E517). Was
-/// `Ridley_Instr_1`.
+/// Instruction - go to [[Y]] if not facing left ($A6:E517).
 pub fn goto_if_not_facing_left<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     if Ridley::of(game, RIDLEY).facing() != FACING_LEFT {
         EnemyScript::jump(script.word(0))
@@ -3474,8 +3403,7 @@ pub fn goto_if_not_facing_left<L: Lease>(script: EnemyScript, game: &mut L) -> E
     }
 }
 
-/// Instruction - move Ridley ([[Y]], [[Y] + 2]) pixels ($A6:E51F). Was
-/// `Ridley_Instr_14`.
+/// Instruction - move Ridley ([[Y]], [[Y] + 2]) pixels ($A6:E51F).
 pub fn move_by<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     RidleyEdit::of(game, RIDLEY).actor().x.whole = Ridley::of(game, RIDLEY)
         .actor()
@@ -3490,20 +3418,20 @@ pub fn move_by<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     script.offset(2)
 }
 
-/// Instruction - flip Ridley left ($A6:E71C). Was `Ridley_Instr_9`.
+/// Instruction - flip Ridley left ($A6:E71C).
 pub fn flip_left<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *RidleyEdit::of(game, RIDLEY).facing() = FACING_LEFT;
     flip_tail(game);
     script
 }
 
-/// Instruction - face Ridley forward ($A6:E727). Was `Ridley_Instr_7`.
+/// Instruction - face Ridley forward ($A6:E727).
 pub fn face_forward<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *RidleyEdit::of(game, RIDLEY).facing() = FACING_FORWARD;
     script
 }
 
-/// Instruction - flip Ridley right ($A6:E72F). Was `Ridley_Instr_8`.
+/// Instruction - flip Ridley right ($A6:E72F).
 pub fn flip_right<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *RidleyEdit::of(game, RIDLEY).facing() = FACING_RIGHT;
     flip_tail(game);
@@ -3511,8 +3439,7 @@ pub fn flip_right<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
 }
 
 /// Instruction - calculate fireball X/Y velocities ($A6:E84D): 500h towards
-/// Samus from the mouth, within the facing side's cone. Was
-/// `Ridley_Instr_11`.
+/// Samus from the mouth, within the facing side's cone.
 pub fn calculate_fireball_velocities<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     let angle = if Ridley::of(game, RIDLEY).facing() != 0 {
         let dx = (game.player_x() as i32 - (Ridley::of(game, RIDLEY).actor().x.whole as i32 + 25))
@@ -3545,34 +3472,33 @@ pub fn calculate_fireball_velocities<L: Lease>(script: EnemyScript, game: &mut L
 }
 
 /// Instruction - spawn Ridley's fireball enemy projectile - with afterburn
-/// ($A6:E904). Was `Ridley_Instr_12`.
+/// ($A6:E904).
 pub fn fireball_with_afterburn<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     spawn_fireball(script, 0, game)
 }
 
 /// Instruction - spawn Ridley's fireball enemy projectile - without afterburn
-/// ($A6:E909). Was `Ridley_Instr_13`.
+/// ($A6:E909).
 pub fn fireball_without_afterburn<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     spawn_fireball(script, 0xe, game)
 }
 
 /// Spawn Ridley's fireball enemy projectile ($A6:E90C): `afterburn` 0 spawns
-/// the afterburn. Was `Ridley_E90C`.
+/// the afterburn.
 pub fn spawn_fireball<L: Lease>(script: EnemyScript, afterburn: u16, game: &mut L) -> EnemyScript {
     battle!(game.EprojInitParam2 = afterburn);
     game.spawn_room_projectile(FIREBALL, Ridley::of(game, RIDLEY).facing());
     script
 }
 
-/// Instruction - start liftoff - Ceres Ridley ($A6:E969). Was `Ridley_Instr_15`.
+/// Instruction - start liftoff - Ceres Ridley ($A6:E969).
 pub fn start_ceres_liftoff<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *RidleyEdit::of(game, RIDLEY).function() = function::CERES_LIFTOFF_ACCELERATING;
     *RidleyEdit::of(game, RIDLEY).y_velocity() = -352i32 as u16;
     script
 }
 
-/// Instruction - start liftoff - Norfair Ridley ($A6:E976). Was
-/// `Ridley_Instr_16`.
+/// Instruction - start liftoff - Norfair Ridley ($A6:E976).
 pub fn start_norfair_liftoff<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *RidleyEdit::of(game, RIDLEY).function() = function::LIFTOFF;
     *RidleyEdit::of(game, RIDLEY).y_velocity() = -352i32 as u16;

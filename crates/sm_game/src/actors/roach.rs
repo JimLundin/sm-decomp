@@ -226,7 +226,7 @@ pub fn initialize(runtime: &mut impl Lease) {
         actor.variables[lane::FUNCTION] = function::WAIT_FOR_SAMUS
     });
 }
-/// Main AI - roach ($A3:A2D0): run its function. Was `advance`.
+/// Main AI - roach ($A3:A2D0): run its function.
 pub fn main_ai(runtime: &mut impl Lease) {
     crate::probe::hit("roach.main_ai");
     let key = combat::current(runtime);

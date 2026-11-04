@@ -1,13 +1,13 @@
-//! The Session-space comparison's two Sessions (docs/handoff/session-compare.md).
+//! The Session-space comparison's two Sessions.
 //!
 //! Verification owns the translation of RAM into a Session (REVIEW, D6). The
 //! oracle's Session is decoded from its RAM with the engine's own codec,
 //! `session_encoding::decode`, which moves here once the engine no longer
-//! imports RAM. The engine's Session is compared directly (slice 4): no
-//! encode of it reaches the comparison. Two kinds of field are not compared,
-//! and the engine's Session takes the oracle's value of each: the fields RAM
-//! cannot carry (`sm_tools::session_compare::Uncarried`), and the fields whose
-//! bytes a `NORMALIZED_RAM` row still normalizes, until the row retires
+//! imports RAM. The engine's Session is compared directly: no encode of it
+//! reaches the comparison. Two kinds of field are not compared, and the
+//! engine's Session takes the oracle's value of each: the fields RAM cannot
+//! carry (`sm_tools::session_compare::Uncarried`), and the fields whose bytes
+//! a `NORMALIZED_RAM` row still normalizes, until the row retires
 //! (`coverage::SHARED_RAM`, `Shared::UntilRowRetires`).
 //!
 //! Both Sessions are taken at the frame's end. The oracle's RAM is the

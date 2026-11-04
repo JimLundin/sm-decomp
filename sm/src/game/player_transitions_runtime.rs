@@ -97,7 +97,7 @@ impl GameEffects for Runtime<'_> {
     }
     fn draw_xray_window_table(&mut self, window: sm_game::beam_windows::XrayWindow) -> Option<u16> {
         // The table is the lease's; the observations are refreshed on entry and
-        // on return, as the former foreign call left them.
+        // on return.
         self.owned_player_call(|runtime| {
             sm_game::beam_windows::calculate_xray_window(window, runtime)
         })
@@ -108,7 +108,7 @@ impl GameEffects for Runtime<'_> {
         match step {
             XrayRestore::Left => with_current_object(self, restore_left),
             // The restore runs on the lease; the observations are refreshed on
-            // entry and on return, as the former foreign call left them.
+            // entry and on return.
             XrayRestore::Right => self.owned_player_call(restore_right),
             XrayRestore::Finish => with_current_object(self, finish_restore),
         }

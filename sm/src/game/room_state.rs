@@ -80,7 +80,7 @@ impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     fn queue_sky_rows(&mut self, ocean: bool) {
         use sm_game::scrolling_sky::{queue_land_rows, queue_ocean_rows};
         // The rows' words, source and queue are the lease's; the observations are
-        // refreshed on entry and on return, as the former foreign call left them.
+        // refreshed on entry and on return.
         self.owned_player_call(|runtime| {
             if ocean {
                 queue_ocean_rows(runtime)
@@ -123,8 +123,7 @@ impl sm_game::room_state::fx::FxHost for Runtime<'_> {
             }
             _ => {}
         }
-        // The observations are refreshed on entry and on return, as the former
-        // foreign call left them.
+        // The observations are refreshed on entry and on return.
         self.owned_player_call(|runtime| match initializer {
             Initializer::Lava => liquid_effects::initialize_lava(runtime),
             Initializer::Acid => liquid_effects::initialize_acid(runtime),

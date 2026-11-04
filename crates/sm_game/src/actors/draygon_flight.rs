@@ -1,6 +1,5 @@
 //! Draygon's fight intro, wall turrets, setup, goop passes and the
 //! instructions its body scripts call (bank $A5:8687-$A5:9E0A).
-//! Extended motion words stay native compatibility state until the whole boss migrates.
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
@@ -69,8 +68,7 @@ pub fn facing_animation<S: Lease>(
         actor.instruction_delay = 1;
     }
 }
-/// On frames matching `frame_mask`, Draygon foams at the mouth. Was
-/// `shed_particle`.
+/// On frames matching `frame_mask`, Draygon foams at the mouth.
 pub fn foam_at_mouth<L: Lease>(k: u16, frame_mask: u16, game: &mut L) {
     if Draygon::of(game, k).actor().frame & frame_mask == 0 {
         let dx = if Draygon::of(game, BODY).facing_right() != 0 {
@@ -85,7 +83,7 @@ pub fn foam_at_mouth<L: Lease>(k: u16, frame_mask: u16, game: &mut L) {
 }
 /// Handle firing wall turret ($A5:87AA): every 40h frames, a random turret of
 /// the last four fires unless destroyed. Returns the turret index it then
-/// leaves in X, which the breath bubbles read after it. Was `turret`.
+/// leaves in X, which the breath bubbles read after it.
 pub fn fire_wall_turret<S: Lease>(game: &mut S) -> Option<u16> {
     if game.frame() & TURRET_FRAMES != 0 {
         return None;
@@ -101,7 +99,7 @@ pub fn fire_wall_turret<S: Lease>(game: &mut S) -> Option<u16> {
     Some(index)
 }
 /// Draygon body function - fight intro: the initial delay ($A5:871B, with
-/// `first`) or the dance ($A5:878B). Was `opening`.
+/// `first`) or the dance ($A5:878B).
 pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
     fire_wall_turret(game);
     let limit = if first { INTRO_DELAY } else { INTRO_DANCE };
@@ -191,7 +189,6 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     game.owned_step(crate::player_update::minimap::disable_for_boss);
 }
 /// Initialisation AI - Draygon tail ($A5:C599) or, with `arms`, arms ($A5:C5AD).
-/// Was `initialize_part`.
 pub fn initialize_tail_or_arms<S: Lease>(arms: bool, game: &mut S) {
     let k = game.current_enemy();
     let instruction = if arms {
@@ -210,9 +207,8 @@ pub fn initialize_tail_or_arms<S: Lease>(arms: bool, game: &mut S) {
     }
 }
 /// Main AI - Draygon body ($A5:86FC, with `body`) or eye ($A5:C486): run the
-/// part's function on the lease, the effects that need the game in foreign
-/// calls, then the body carries the other parts with it. `fallback` runs the
-/// bank's functions that are not Draygon's. Was `update`.
+/// part's function on the lease, then the body carries the other parts with it. `fallback` runs the
+/// bank's functions that are not Draygon's.
 pub fn main_ai<L: Lease + ActorLease>(
     body: bool,
     fallback: impl FnOnce(u32, u16, &mut L),
@@ -286,8 +282,7 @@ fn run_function_on<L: Lease + ActorLease>(
         _ => fallback(game),
     }
 }
-/// Enemy graphics drawn hook - Draygon - set BG2 X/Y scroll ($A5:9342). Was
-/// `scroll_layer`.
+/// Enemy graphics drawn hook - Draygon - set BG2 X/Y scroll ($A5:9342).
 pub fn set_bg2_scroll<S: Lease>(game: &mut S) {
     let x = i32::from(Draygon::of(game, BODY).graphics_x_displacement())
         + i32::from(game.camera().layer1[0])
@@ -313,7 +308,7 @@ fn goop_glide<S: Lease>(right: bool, game: &mut S) {
     }
     move_horizontally(right, game);
 }
-/// Move the body right, or left, by its X speed. Was `displace`.
+/// Move the body right, or left, by its X speed.
 pub fn move_horizontally<S: Lease>(right: bool, game: &mut S) {
     let high = Draygon::of(game, BODY).x_speed();
     let low = Draygon::of(game, BODY).x_subspeed();
@@ -336,7 +331,6 @@ fn beyond_right(x: u16) -> bool {
     x as i16 >= 0 && x.wrapping_sub(OFF_SCREEN_RIGHT) & SIGN == 0
 }
 /// Draygon body function - goop right ($A5:8B0A) or left ($A5:8C8E) - setup.
-/// Was `begin`.
 pub fn goop_setup<S: Lease>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
@@ -400,7 +394,7 @@ pub fn body_bubble<L: Lease>(turret: Option<u16>, game: &mut L) {
     }
 }
 /// Draygon body function - goop right ($A5:8B52) or left ($A5:8CD4) - move
-/// until Samus in range. Was `approach`.
+/// until Samus in range.
 pub fn goop_move_until_in_range<L: Lease>(right: bool, game: &mut L) {
     let turret = fire_wall_turret(game);
     body_bubble(turret, game);
@@ -426,7 +420,7 @@ pub fn goop_move_until_in_range<L: Lease>(right: bool, game: &mut L) {
     }
 }
 /// Draygon body function - goop right ($A5:8BAE) or left ($A5:8D30) - firing
-/// goops. Was `fire`.
+/// goops.
 pub fn goop_firing<S: Lease>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
@@ -481,7 +475,7 @@ pub fn goop_firing<S: Lease>(right: bool, game: &mut S) {
     *DraygonEdit::of(game, BODY).function() = function::CHASE_SAMUS;
 }
 /// Draygon body function - goop right ($A5:8C33) or left ($A5:8DB2) - move
-/// until off-screen. Was `exit`.
+/// until off-screen.
 pub fn goop_move_until_off_screen<L: Lease>(right: bool, game: &mut L) {
     body_bubble(None, game);
     if !right && battle!(game.SamusXSpeedDivisor) != 0 {
@@ -513,7 +507,7 @@ pub fn goop_move_until_off_screen<L: Lease>(right: bool, game: &mut L) {
 }
 
 /// Instruction - Draygon instructions lists = [[Y]], [[Y] + 2], [[Y] + 4],
-/// [[Y] + 6] ($A5:94DD). Was `pose`.
+/// [[Y] + 6] ($A5:94DD).
 pub fn set_instruction_lists<S: Lease>(script: EnemyScript, game: &mut S) -> EnemyScript {
     for (k, offset) in [(BODY, 0), (EYE, 2), (TAIL, 4), (ARMS, 6)] {
         DraygonEdit::of(game, k).actor().instruction = script.word(offset);
@@ -524,7 +518,7 @@ pub fn set_instruction_lists<S: Lease>(script: EnemyScript, game: &mut S) -> Ene
     script.offset(4)
 }
 /// Instruction - displace Draygon body graphics [[Y]] px left, [[Y] + 2] px
-/// down ($A5:9E0A). Was `layer_offsets`.
+/// down ($A5:9E0A).
 pub fn displace_graphics<S: Lease>(script: EnemyScript, game: &mut S) -> EnemyScript {
     {
         let mut draygon = DraygonEdit::of(game, BODY);
@@ -533,7 +527,7 @@ pub fn displace_graphics<S: Lease>(script: EnemyScript, game: &mut S) -> EnemySc
     }
     script.offset(2)
 }
-/// Instruction - paralyse Draygon tail and arms ($A5:98D3). Was `hide_parts`.
+/// Instruction - paralyse Draygon tail and arms ($A5:98D3).
 pub fn paralyse_tail_and_arms<S: Lease>(script: EnemyScript, game: &mut S) -> EnemyScript {
     for k in [TAIL, ARMS] {
         {
@@ -545,7 +539,7 @@ pub fn paralyse_tail_and_arms<S: Lease>(script: EnemyScript, game: &mut S) -> En
     }
     script
 }
-/// Instruction - set Draygon body as intangible ($A5:98EF). Was `tangible`.
+/// Instruction - set Draygon body as intangible ($A5:98EF).
 pub fn set_intangible<S: Lease>(script: EnemyScript, game: &mut S) -> EnemyScript {
     DraygonEdit::of(game, BODY).actor().properties |= INTANGIBLE;
     script

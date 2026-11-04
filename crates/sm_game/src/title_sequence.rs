@@ -3,10 +3,8 @@
 //! and the demos, and the transitions between title and demo loops (bank
 //! $8B:9B68-$8B:9FFF).
 //!
-//! Was `CinematicFunctionOpening`, `CinematicFunc_Func7`/`9`/`10`,
-//! `HandleCinematicsTransitions*` and `LoadTitleSequenceGraphics` in the
-//! original decompilation. The functions run from `cinematic_function`; the
-//! compat dispatch keeps their ids.
+//! The functions run from `cinematic_function`; the compat dispatch keeps
+//! their ids.
 use crate::cinematic::CinematicDestination;
 use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cinematic_backdrop};
 use crate::cinematic_host::Host;
@@ -76,8 +74,7 @@ fn run_transition<H: Host>(state: u16, cine: &mut Cinematic, game: &mut H) {
     transitions[state as usize].expect("non-null function pointer")(cine, game);
 }
 
-/// Steps the current transition between the title and the demos. Was
-/// `HandleCinematicsTransitions`.
+/// Steps the current transition between the title and the demos.
 pub fn handle_transitions<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if *cine.skip_to_title_index() != 0 {
         let state = *cine.skip_to_title_index();
@@ -85,7 +82,6 @@ pub fn handle_transitions<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Was `HandleCinematicsTransitions_1`.
 fn fade_out_to_demo<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
         *cine.skip_to_title_index() = 2;
@@ -96,7 +92,6 @@ fn fade_out_to_demo<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Was `HandleCinematicsTransitions_2`.
 fn start_demo_logo<H: Host>(cine: &mut Cinematic, game: &mut H) {
     clear_cinematic_sprites(cine);
     spawn(cine, game, CinematicObjects::Sprites, object::COPYRIGHT, 0);
@@ -141,7 +136,6 @@ fn start_demo_logo<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::room_visuals::initialize_title_gradient(game);
 }
 
-/// Was `HandleCinematicsTransitions_3`.
 fn fade_in_title<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
         *cine.skip_to_title_index() = 0;
@@ -154,7 +148,7 @@ fn fade_in_title<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Load title sequence graphics ($8B:9B87). Was `LoadTitleSequenceGraphics`.
+/// Load title sequence graphics ($8B:9B87).
 pub fn load_graphics<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Title, cine, game);
     crate::frame_display_word!(game.CurrentInterrupt = 0);
@@ -196,8 +190,7 @@ pub fn load_graphics<H: Host>(cine: &mut Cinematic, game: &mut H) {
     );
 }
 
-/// Cinematic function - title sequence - setup ($8B:9B68). Was
-/// `CinematicFunctionOpening`.
+/// Cinematic function - title sequence - setup ($8B:9B68).
 pub fn setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     load_graphics(cine, game);
     crate::music_requests::queue_delayed_8(TITLE_MUSIC_DATA, game);
@@ -215,8 +208,7 @@ pub fn setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Cinematic function - title sequence - scene 3 - zooming out ($8B:9E8B):
-/// every other frame, zoom out to full size, then show the title logo. Was
-/// `CinematicFunc_Func7`.
+/// every other frame, zoom out to full size, then show the title logo.
 pub fn zooming_out<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if (crate::frame_display_word!(game.NmiFrameWordPair) & 1) == 0 {
         if ((*cine.mode7_zoom()).wrapping_sub(256) as i16) < 0 {
@@ -268,7 +260,7 @@ fn finish<H: Host>(
 }
 
 /// Cinematic function - title sequence - transition to file select menu
-/// ($8B:9F52). Was `CinematicFunc_Func10`.
+/// ($8B:9F52).
 pub fn to_file_select<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(FILE_SELECT_MENUS, cine, game, |game| {
@@ -279,8 +271,7 @@ pub fn to_file_select<H: Host>(cine: &mut Cinematic, game: &mut H) {
     }
 }
 
-/// Cinematic function - title sequence - transition to demos ($8B:9FAE). Was
-/// `CinematicFunc_Func9`.
+/// Cinematic function - title sequence - transition to demos ($8B:9FAE).
 pub fn to_demos<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(TRANSITION_TO_DEMO, cine, game, |game| {
@@ -292,7 +283,7 @@ pub fn to_demos<H: Host>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Pre-instruction - cinematic sprite object $A0EF ('1994' scrolling text)
-/// ($8B:9CCF): full brightness, once. Was `sub_8B9CCF`.
+/// ($8B:9CCF): full brightness, once.
 pub fn scrolling_1994<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     crate::frame_display_byte!(game, Field::Brightness => 15);
     *cine.spr_pre_instruction(k >> 1) = NO_PRE_INSTRUCTION;

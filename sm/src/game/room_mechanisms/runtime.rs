@@ -151,7 +151,7 @@ impl Effects for Runtime<'_> {
     }
     fn display_message(&mut self, request: u16) -> u8 {
         // The box runs on this lease, with the observations refreshed on entry
-        // and on return as the former foreign call left them.
+        // and on return.
         self.owned_player_call(|runtime| {
             #[cfg(sm_verify_dll)]
             {
@@ -164,8 +164,8 @@ impl Effects for Runtime<'_> {
         })
     }
     fn poll_message(&mut self, request: u16) -> i32 {
-        // The dialogue words are the lease's; the former foreign entry's
-        // observation refresh is kept.
+        // The dialogue words are the lease's; the owned call refreshes the
+        // observations.
         self.owned_player_call(|runtime| sm_game::message_boxes::poll(request, runtime))
     }
     fn player_control(&mut self, operation: u16) {
@@ -202,7 +202,7 @@ impl Effects for Runtime<'_> {
     }
     fn save(&mut self, slot: u16) {
         // The save's words are the lease's; the observations are refreshed on
-        // entry and on return, as the former foreign call left them.
+        // entry and on return.
         self.owned_player_call(|runtime| sm_game::menus::save_slots::save(slot, runtime));
     }
     fn enemy_projectile(&mut self, definition: u16, parameter: u16) {
@@ -280,8 +280,8 @@ impl Effects for Runtime<'_> {
         }
     }
     fn diagnostic(&mut self, diagnostic: Diagnostic) -> u8 {
-        // The diagnostics read and store no game state; the former foreign
-        // entry's observation refresh is kept.
+        // The diagnostics read and store no game state; the owned call refreshes
+        // the observations.
         self.owned_player_call(|_| match diagnostic {
             Diagnostic::MissingScroll=>loop {},
             Diagnostic::MissingDisplacement=>unsafe{

@@ -56,7 +56,7 @@ const CRY: u8 = 0x72;
 const DRAINING: u8 = 0x78;
 
 /// Check for enemy collision with enemy ($A9:EED1): 1 when actor `k`'s and
-/// actor `j`'s hitboxes do not overlap. Was `BabyMetroid_Func_1`.
+/// actor `j`'s hitboxes do not overlap.
 pub fn separated_from_enemy(
     k: u16,
     j: u16,
@@ -88,8 +88,8 @@ pub fn separated_from_enemy(
 }
 
 /// Check for enemy collision with rectangle ($A9:EF06): 1 when actor `k`'s
-/// hitbox does not overlap `rect`. Was `BabyMetroid_Func_2`.
-/// `rect` is (x, y, half width, half height).
+/// hitbox does not overlap `rect`. `rect` is (x, y, half width, half
+/// height).
 pub fn separated_from_rect(
     k: u16,
     rect: (u16, u16, u16, u16),
@@ -107,7 +107,7 @@ pub fn separated_from_rect(
 
 /// Baby Metroid function - wait for camera ($A9:EFE6): once the camera is left of
 /// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
-/// let the sidehopper live and enable the cry. Was `BabyMetroid_Func_4`.
+/// let the sidehopper live and enable the cry.
 pub fn wait_for_camera(game: &mut impl crate::actors::mother_brain_fight::Lease) {
     if ((i32::from(game.camera().layer1[0]) - (i32::from(CAMERA_STOP_X) + 1)) & SIGN) != 0 {
         crate::camera::set_layer1(game, 0, CAMERA_STOP_X);
@@ -128,7 +128,7 @@ pub fn wait_for_camera(game: &mut impl crate::actors::mother_brain_fight::Lease)
 }
 
 /// Check if enemy is vaguely on screen ($A9:F57A): 0 while actor `k` is within
-/// the screen margins, 1 otherwise. Was `BabyMetroid_CheckIfOnScreen`.
+/// the screen margins, 1 otherwise.
 pub fn is_off_screen(k: u16, game: &mut (impl SlotState + CompatibilityRam + ?Sized)) -> u8 {
     let y_pos = BabyMetroid::of(game, k).actor().y.whole as i16;
     if y_pos >= 0 {
@@ -150,7 +150,6 @@ pub fn is_off_screen(k: u16, game: &mut (impl SlotState + CompatibilityRam + ?Si
 
 /// Accelerate baby Metroid towards Y position ($A9:F5B5): accelerate the Y
 /// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
-/// Was `BabyMetroid_AccelerateTowardsY`.
 pub fn accelerate_towards_y(
     k: u16,
     target: u16,
@@ -195,7 +194,6 @@ pub fn accelerate_towards_y(
 
 /// Accelerate baby Metroid towards X position ($A9:F615): accelerate the X
 /// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
-/// Was `BabyMetroid_AccelerateTowardsX`.
 pub fn accelerate_towards_x(
     k: u16,
     target: u16,
@@ -236,7 +234,7 @@ pub fn accelerate_towards_x(
 }
 
 /// Handle baby Metroid cry sound effect ($A9:F751): on palette frame 5, cry every
-/// fourth time while the cry is enabled. Was `BabyMetroid_HandleCrySoundEffect`.
+/// fourth time while the cry is enabled.
 pub fn handle_cry(
     k: u16,
     a: u16,

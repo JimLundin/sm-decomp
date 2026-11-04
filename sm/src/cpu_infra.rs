@@ -470,8 +470,8 @@ pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 25] = {
 // LEGACY(verifier): the RAM the oracle digest lock's `wram` stream zeroes, frozen at the
 // 31 ranges `NORMALIZED_RAM` held when the committed lock was recorded. `NORMALIZED_RAM`
 // narrows as its rows retire; the lock's `wram` digests would then need a full
-// faithful-oracle re-record. Frozen until slice 6 drops `wram` from the lock
-// (docs/LEGACY.md, docs/handoff/session-compare.md). Lockstep, the Session compare and the
+// faithful-oracle re-record. Frozen until the lock drops `wram`
+// (docs/LEGACY.md). Lockstep, the Session compare and the
 // Session streams' decode use `NORMALIZED_RAM`. Holds every `NORMALIZED_RAM` range.
 #[cfg(sm_verify_dll)]
 pub(crate) const LOCK_WRAM_MASK: [core::ops::Range<usize>; 31] = [

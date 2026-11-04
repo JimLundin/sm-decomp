@@ -113,7 +113,7 @@ pub fn initialize(runtime: &mut (impl ActorLease + SlotState)) {
     });
 }
 /// Main AI - Mochtroid ($A3:A790): run its function, then reset it to not
-/// touching Samus. Was `advance`.
+/// touching Samus.
 pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     let key = combat::current(runtime);
     let function = runtime

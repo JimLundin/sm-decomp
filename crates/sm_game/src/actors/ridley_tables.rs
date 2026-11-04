@@ -19,7 +19,7 @@ const SIGN: u16 = 0x8000;
 /// Set Ridley pogo speeds ($A6:B90F): a random row of velocities, the
 /// accelerations for Ridley's acceleration index, then the Y velocity from
 /// its row and the X velocity, keeping its sign, from the other, each through
-/// its own native fetch. Was `Ridley_Func_29`.
+/// its own native fetch.
 pub fn set_pogo_speeds(game: &mut (impl NativeDiagnostics + Records + SlotState + ?Sized)) {
     let pick = (game.session().timing.random_number & ROW_CHOICES) as isize;
     let x_row = crate::actor_tables::word(game, |t| &t.ridley_x_velocities, pick);
@@ -43,7 +43,7 @@ pub fn set_pogo_speeds(game: &mut (impl NativeDiagnostics + Records + SlotState 
 
 /// Set Ridley tail segments variable from list ($A6:D3B4): copy the seven
 /// words of the tail data list at `source` to the tail segments' variable,
-/// segment 0's at tail word `destination`. Was `Ridley_Func_93`.
+/// segment 0's at tail word `destination`.
 pub fn set_tail_segments_from_list(
     destination: usize,
     source: u16,

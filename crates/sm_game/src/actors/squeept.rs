@@ -1,4 +1,4 @@
-//! Squeept, Norfair's lava jumpers (bank $A2:BE1C-$A2:C0D0). Was `lava_jumper`.
+//! Squeept, Norfair's lava jumpers (bank $A2:BE1C-$A2:C0D0).
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::geruta::set_instruction_list;

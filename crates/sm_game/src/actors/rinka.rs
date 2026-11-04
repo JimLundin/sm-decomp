@@ -40,8 +40,8 @@ const SHARED: u16 = 0;
 fn finished(runtime: &impl Lease) -> bool {
     Rinkas::of(runtime, SHARED).finished() != 0
 }
-/// Store the rinka counter, then refresh the lease's observations, as the
-/// slice store did after each byte.
+/// Store the rinka counter, then refresh the lease's observations after
+/// each byte.
 fn set_counter(runtime: &mut impl Lease, count: u16) {
     *RinkasEdit::of(runtime, SHARED).counter() = count;
     runtime.record_stored();
@@ -73,7 +73,7 @@ fn occupied(runtime: &impl Lease, id: u16) -> bool {
     word & 1 != 0
 }
 /// Store the availability word for index `id`, then refresh the lease's
-/// observations, as the slice store did.
+/// observations after each byte.
 fn set_availability(runtime: &mut impl Lease, id: u16, value: u16) {
     match availability_var(id) {
         Some(var) => {

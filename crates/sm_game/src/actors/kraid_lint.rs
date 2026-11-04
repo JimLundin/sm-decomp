@@ -25,8 +25,8 @@ fn hitbox(field: usize, game: &mut (impl BossState + ?Sized)) -> i32 {
 }
 
 /// Push Samus out of the lint's box, clamp her extra displacement and make the
-/// lint tangible; sign tests are on the low 16 bits as in the original.
-/// Kraid lint / Samus collision handling ($A7:B96A). Was `Kraid_EnemyTouch_Lint`.
+/// lint tangible; sign tests are on the low 16 bits as in the original. Kraid
+/// lint / Samus collision handling ($A7:B96A).
 pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + SlotState + ?Sized)) {
     if Part::of(game, k).actor().properties as i32 & K_ENEMY_PROPS_TANGIBLE as i32 != 0
         || game.invincibility_timer() != 0

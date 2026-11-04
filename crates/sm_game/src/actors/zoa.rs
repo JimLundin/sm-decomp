@@ -1,6 +1,5 @@
 //! Zoa, Maridia's refill creatures, which rise towards Samus from the sand,
-//! shoot off sideways and return off screen (bank $A3:B3A1-$A3:B52F). Was
-//! `refill_candy`.
+//! shoot off sideways and return off screen (bank $A3:B3A1-$A3:B52F).
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis};
 use crate::actors::combat;
@@ -84,7 +83,7 @@ pub fn initialize(runtime: &mut (impl ActorLease + SlotState)) {
         actor.variables[lane::SPAWN_Y] = actor.y.whole;
     });
 }
-/// Main AI - Zoa ($A3:B47C): run its function. Was `advance`.
+/// Main AI - Zoa ($A3:B47C): run its function.
 pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     let key = combat::current(runtime);
     match runtime.resolve_actor(key, Native).parameters[0] {

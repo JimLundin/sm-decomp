@@ -1,6 +1,5 @@
 //! Spritemap drawing on the scheduler's lease. The object stores go straight
-//! to the presentation's object owner, which the former `foreign` drawing
-//! published through RAM and the next import read back.
+//! to the presentation's object owner.
 #![forbid(unsafe_code)]
 use super::Runtime;
 use sm_game::session_owners::OBJECTS;
@@ -175,7 +174,7 @@ impl sm_game::sprite_output::MapHost for LeaseDrawing<'_, '_> {
 
 impl Runtime<'_> {
     /// Run `draw` on the lease's object owner, refreshing the observations on
-    /// entry and return as the former `foreign` drawing did.
+    /// entry and return.
     pub(crate) fn draw_objects<R>(
         &mut self,
         draw: impl FnOnce(&mut LeaseDrawing<'_, '_>) -> R,

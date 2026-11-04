@@ -13,7 +13,7 @@ impl Lease for Runtime<'_> {
                 sm_game::actors::species::torizo_pre_instruction(address, k, runtime);
             });
         } else if sm_game::actors::species::EMPTY_AA_FUNCTIONS.contains(&address) {
-            // The empty function keeps the former foreign call's observation refresh.
+            // The empty function refreshes the observations.
             self.owned_player_call(|_| ());
         } else {
             // The bank's pre-instruction table has no other bank $AA arm.

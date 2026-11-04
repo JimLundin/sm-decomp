@@ -244,7 +244,7 @@ fn fire_charged_beam(runtime: &mut impl Lease, direction: u16) -> u16 {
     runtime.queue_sound(0, sound as u8, 6);
     0
 }
-/// Bang movement function - movement delay ($A3:BCA5). Was `wait`.
+/// Bang movement function - movement delay ($A3:BCA5).
 pub fn movement_delay(runtime: &mut impl crate::actors::species::TableLease) {
     delay(runtime);
 }
@@ -267,7 +267,7 @@ fn angle_to_samus(runtime: &impl Lease) -> u16 {
         (api::angle_to_player(runtime, combat::current(runtime)) as u8).wrapping_sub(QUARTER_TURN),
     )
 }
-/// Bang movement function - target Samus ($A3:BCC5). Was `aim`.
+/// Bang movement function - target Samus ($A3:BCC5).
 pub fn target_samus(runtime: &mut impl crate::actors::species::TableLease) {
     target(runtime);
 }
@@ -288,7 +288,7 @@ fn target(runtime: &mut impl Lease) {
 /// Bang movement function - accelerating ($A3:BD1C) or, with `decelerating`,
 /// decelerating ($A3:BD2C): move along the angle (bang X and Y movement,
 /// $A3:BDB9), then accelerate ($A3:BD4F) and trigger deceleration if too far
-/// off target ($A3:BCF1), or decelerate ($A3:BD89). Was `fly`.
+/// off target ($A3:BCF1), or decelerate ($A3:BD89).
 pub fn fly(decelerating: bool, runtime: &mut impl crate::actors::species::TableLease) {
     move_bang(decelerating, runtime);
 }
@@ -411,7 +411,7 @@ pub fn shot(runtime: &mut impl Lease) {
         }
     }
 }
-/// Instruction - enemy finished growing flag = 1 ($A3:BAA8). Was `arm`.
+/// Instruction - enemy finished growing flag = 1 ($A3:BAA8).
 pub fn set_finished_growing(cursor: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
     let bang = combat::current(runtime).byte_index();
     *BangEdit::of(runtime, bang).finished_growing() = 1;

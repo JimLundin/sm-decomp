@@ -30,7 +30,7 @@ pub fn initialize<L: Lease + ActorLease>(runtime: &mut L) {
 }
 /// Instruction - enemy function = [[Y]] ($A5:9736), for actor `k`; with `k`
 /// the body or the eye, Draygon body function = [[Y]] ($A5:9F57) or Draygon
-/// eye function = [[Y]] ($A5:C47B). Was `set_mode`.
+/// eye function = [[Y]] ($A5:C47B).
 pub fn set_function(k: u16, script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let function = script.word(0);
     runtime.edit_actor(Key::from_legacy(k), Native, |actor| {
@@ -39,7 +39,7 @@ pub fn set_function(k: u16, script: EnemyScript, runtime: &mut impl ActorLease) 
     script.offset(1)
 }
 /// Draygon eye function - facing left ($A5:C48D) or right ($A5:C513): puff
-/// breath bubbles and look towards Samus. Was `advance`.
+/// breath bubbles and look towards Samus.
 pub fn look_at_samus<L: Lease + ActorLease>(k: u16, right: bool, runtime: &mut L) {
     let x_offset = if right {
         BUBBLE_X

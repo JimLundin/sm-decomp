@@ -1,4 +1,4 @@
-//! The Session-space comparison (docs/handoff/session-compare.md).
+//! The Session-space comparison.
 //!
 //! Each paired frame, the verifier decodes the oracle's RAM into a Session
 //! and hands it over with the engine's own Session, compared directly, with
@@ -118,8 +118,8 @@ session_fields!(
     wavy_samus => Player,
 );
 
-/// The lock's Session streams (docs/handoff/session-compare.md, slice 5):
-/// the top-level Session fields in groups, one running digest each.
+/// The lock's Session streams: the top-level Session fields in groups,
+/// one running digest each.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Group {
     /// The game loop, timing, options, flow and control.
@@ -441,7 +441,7 @@ impl FieldTicks {
 }
 
 /// Which Work RAM bytes the Session's encoder writes (one Session per replay marks
-/// them; its spans do not depend on state): slice 2's
+/// them; its spans do not depend on state): the
 /// byte-to-field coverage map. A byte is decoded (the encoder writes it for
 /// some Session field), unowned (a listed range the comparison does not own,
 /// with its reason), both, held (an engine owner outside the Session codec
@@ -587,7 +587,7 @@ pub struct Held {
 }
 
 /// Work RAM's bytes by coverage class: counts, and the ranges of the two
-/// classes slice 2 must resolve.
+/// classes still to resolve.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Classes {
     /// Bytes the encoder writes, outside the unowned ranges.

@@ -73,7 +73,6 @@ fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
     game.words_stored();
 }
 /// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
-/// Was `begin`.
 pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {
     if right {
         fire_wall_turret(game);
@@ -118,8 +117,8 @@ pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {
         *DraygonEdit::of(game, BODY).function_timer() = copied;
     }
 }
-/// Draygon body function - swoop right ($A5:8922) or left ($A5:8A50) - apex:
-/// set the X speed that reaches the far side in the swoop's duration. Was `turn`.
+/// Draygon body function - swoop right ($A5:8922) or left ($A5:8A50) - apex: set
+/// the X speed that reaches the far side in the swoop's duration.
 pub fn swoop_apex<S: Lease>(right: bool, game: &mut S) {
     fire_wall_turret(game);
     let count = u32::from(Draygon::of(game, BODY).swoop_duration() >> 2);
@@ -152,7 +151,7 @@ pub fn swoop_apex<S: Lease>(right: bool, game: &mut S) {
 }
 /// Draygon body function - swoop right or left - descending ($A5:88B1,
 /// $A5:8A00) or, with `ascending`, ascending ($A5:8951, $A5:8A90): follow the
-/// swoop Y positions, then pick the next attack. Was `advance`.
+/// swoop Y positions, then pick the next attack.
 pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
     let turret = fire_wall_turret(game);
     if !right || !ascending {

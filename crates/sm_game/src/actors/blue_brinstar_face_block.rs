@@ -1,6 +1,6 @@
-//! The blue Brinstar face block, which turns to look at Samus once she has the
-//! morph ball, and glows (bank $A8:E7AC-$A8:E99A). Was `blue_face_block`.
-//! Native hook words, actor words and little-endian hook variables stay authoritative.
+//! The blue Brinstar face block, which turns to look at Samus once she has the morph
+//! ball, and glows (bank $A8:E7AC-$A8:E99A). Native hook words, actor words and
+//! little-endian hook variables stay authoritative.
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::{Axis, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -81,8 +81,8 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     let old = *edit.direction_to_not_turn();
     *edit.direction_to_not_turn() = (old & 1) << 15;
 }
-/// Main AI - blue Brinstar face block ($A8:E8AE): once Samus is in range,
-/// turn towards her, unless she is on the side it never turns to. Was `advance`.
+/// Main AI - blue Brinstar face block ($A8:E8AE): once Samus is in range, turn
+/// towards her, unless she is on the side it never turns to.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     if game.session().inventory.equipment.owned & MORPH_BALL == 0 {
         return;
@@ -121,7 +121,6 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
 }
 /// Enemy graphics drawn hook - blue Brinstar face block - periodically cycle
 /// between palettes ($A8:E86E): every 16 frames, show the next glow colours.
-/// Was `palette`.
 pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
     if game.session().room.entry.enemy_interlock != 0 {
         return;

@@ -1,5 +1,5 @@
 //! The fire pillar: the graphics part waits, erupts on its script, and the hitbox part in the
-//! next slot follows the column's height (bank $A6:8CFB-$A6:946F). Was `fire_geysers`.
+//! next slot follows the column's height (bank $A6:8CFB-$A6:946F).
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::host::ActorLease;

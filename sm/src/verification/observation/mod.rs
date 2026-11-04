@@ -403,8 +403,7 @@ pub fn single_tick(game: &mut Game, index: usize) -> Result<bool, String> {
         session: None,
     };
     // Both sides decode their frame result, with the normalized RAM masked as
-    // the wram stream masks it, until the engine's own Session is compared
-    // (docs/handoff/session-compare.md, slice 5).
+    // the wram stream masks it, until the engine's own Session is compared.
     let decoded = streams
         .then(|| session::oracle(&game.g_snapshot_mine.ram, game.world()))
         .flatten();

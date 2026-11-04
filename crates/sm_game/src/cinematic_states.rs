@@ -3,10 +3,6 @@
 //! objects, the cinematic sprite instructions and the metroid egg's particle
 //! pre-instructions (bank $8B:8000-$8B:A39F and $8B:D443-$8B:D47F).
 //!
-//! Was `InitializeIoDisplayLogo_Async`, `GameState_1_OpeningCinematic_`,
-//! `GameState_37_CeresGoesBoomWithSamus_`, `GameState_39_EndingAndCredits_`,
-//! `MaybeHandleCinematicBgObjects`, `CallCinematicSprInstr` and
-//! `SetSomeStuffForSpriteObject_7`/`9` in the original decompilation.
 use crate::cinematic::CinematicDestination;
 use crate::cinematic::{advance_cinematic_coordinate, advance_cinematic_fade, set_fixed_color};
 use crate::cinematic_host::Host;
@@ -117,7 +113,7 @@ fn count_frames(cine: &mut Cinematic) {
     *cine.frame_counter() = cine.frame_counter().wrapping_add(1);
 }
 
-/// Draws the Nintendo logo. Was `AddNintentoLogoToOam`.
+/// Draws the Nintendo logo.
 pub fn draw_nintendo_logo<H: crate::cinematic_host::Scene + ?Sized>(game: &mut H) {
     crate::sprite_output::paletted(
         0x8c,
@@ -175,7 +171,7 @@ pub fn end_nintendo_logo<
 
 /// The Nintendo logo coroutine on the boot frame's lease: set up the display,
 /// then fade the logo in, hold it and fade it out, yielding to the frame loop
-/// at each refresh. Was `InitializeIoDisplayLogo_Async`.
+/// at each refresh.
 pub fn nintendo_logo<H: Host>(game: &mut H) -> u8 {
     crate::probe::hit("coroutine.logo");
     let mut stage = game.screen_primary();
@@ -392,7 +388,7 @@ pub fn nintendo_logo<H: Host>(game: &mut H) -> u8 {
     0
 }
 
-/// Game state 1 - title sequence ($8B:9A22). Was `GameState_1_OpeningCinematic_`.
+/// Game state 1 - title sequence ($8B:9A22).
 pub fn title_sequence<H: Host>(game: &mut H) -> u8 {
     Cinematic::lend(game, |game, cine| {
         run_function(cine, game);
@@ -408,7 +404,7 @@ pub fn title_sequence<H: Host>(game: &mut H) -> u8 {
 }
 
 /// Runs Samus during the intro once she is shown (`intro_samus_display` is
-/// `display`), with her timers. Was `HandleSamusDuringIntro`.
+/// `display`), with her timers.
 pub fn handle_samus_during_intro<H: Host>(display: u16, game: &mut H) {
     if display != 0 {
         game.advance_intro_player();
@@ -422,8 +418,7 @@ pub fn handle_samus_during_intro<H: Host>(display: u16, game: &mut H) {
 }
 
 /// Game state 1Eh/22h/25h (intro / Ceres goes boom, Samus goes to Zebes /
-/// Ceres goes boom with Samus) ($8B:A35B). Was
-/// `GameState_37_CeresGoesBoomWithSamus_`.
+/// Ceres goes boom with Samus) ($8B:A35B).
 pub fn intro<H: Host>(game: &mut H) -> u8 {
     let display = Cinematic::lend(game, |game, cine| {
         run_function(cine, game);
@@ -451,8 +446,7 @@ pub fn intro<H: Host>(game: &mut H) -> u8 {
     })
 }
 
-/// Game state 27h (ending and credits) ($8B:D443). Was
-/// `GameState_39_EndingAndCredits_`.
+/// Game state 27h (ending and credits) ($8B:D443).
 pub fn ending_and_credits<H: Host>(game: &mut H) -> u8 {
     Cinematic::lend(game, |game, cine| {
         run_function(cine, game);
@@ -472,7 +466,7 @@ pub fn ending_and_credits<H: Host>(game: &mut H) -> u8 {
 }
 
 /// Handle final screen cinematic BG objects ($8B:D474): from the fade from
-/// white on. Was `MaybeHandleCinematicBgObjects`.
+/// white on.
 pub fn advance_final_screen_background<H: Host>(cine: &mut Cinematic, game: &mut H) {
     let function = crate::sequence_state::Access::sequence_flow(&*game).cinematic_function;
     if function.wrapping_sub(FINAL_SCREEN) < 0x8000 {
@@ -481,7 +475,7 @@ pub fn advance_final_screen_background<H: Host>(cine: &mut Cinematic, game: &mut
 }
 
 /// Runs cinematic sprite instruction `ea` for object `k` at cursor `j`;
-/// returns the next cursor. Was `CallCinematicSprInstr`.
+/// returns the next cursor.
 pub fn run_sprite_instruction<H: Host>(
     ea: u32,
     k: u16,
@@ -548,8 +542,7 @@ const PARTICLE_FUNCTION: &[u8] = b"void SetSomeStuffForSpriteObject_7(uint16)\0"
 const SLIME_FUNCTION: &[u8] = b"void SetSomeStuffForSpriteObject_9(uint16)\0";
 
 /// Pre-instruction - cinematic sprite object $CECD-$CEEB (metroid egg
-/// particle) ($8B:A994): fly until below the floor, then land. Was
-/// `SetSomeStuffForSpriteObject_7`.
+/// particle) ($8B:A994): fly until below the floor, then land.
 pub fn egg_particle<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     advance_particle_axis(
@@ -585,8 +578,7 @@ pub fn egg_particle<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Pre-instruction - cinematic sprite object $CEF1 (metroid egg slime drops)
-/// ($8B:AAB3): odd drops fall slower; below the floor they splash. Was
-/// `SetSomeStuffForSpriteObject_9`.
+/// ($8B:AAB3): odd drops fall slower; below the floor they splash.
 pub fn slime_drop<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     advance_particle_axis(

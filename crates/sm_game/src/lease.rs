@@ -5,8 +5,8 @@ use crate::session_owners::AudioHost;
 use crate::visual_state::Upload;
 
 pub trait Lease: SessionAccess + AudioHost {
-    /// Run `action` on this lease with the former foreign entry's preflight,
-    /// unwind publication and refreshed input observations.
+    /// Run `action` on this lease with its preflight, unwind publication and
+    /// refreshed input observations.
     fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R;
     /// Re-read the external observations from the lease's RAM view.
     fn refresh_player_observations(&mut self);

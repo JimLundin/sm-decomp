@@ -132,13 +132,12 @@ pub(super) enum Shared {
     UntilRowRetires,
     /// The engine keeps the field in RAM the original leaves to snesrev's
     /// bookkeeping or unused, so RAM cannot carry it: it goes on the direct
-    /// compare's declared list of fields RAM cannot carry (slice 4).
+    /// compare's declared list of fields RAM cannot carry.
     Permanent,
 }
 
 /// The Session fields the normalized ranges cover, in address order, each
-/// with the field and its decision (docs/handoff/session-compare.md, "The
-/// 107 both bytes").
+/// with the field and its decision.
 pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 9] = [
     // The direct-page long pointer scratch; the $0000-$0050 row.
     (0x0..0x4, "pointer_scratch", Shared::UntilRowRetires),
@@ -383,12 +382,11 @@ impl Reason {
     }
 }
 
-/// The nightly whole-RAM report (#246; docs/handoff/session-compare.md):
-/// per replay, the unowned bytes whose two results differ before
-/// normalization, by reason. It keeps watching the bytes the Session compare
-/// does not own after the locks drop `wram` (slice 6). A difference is worth
-/// a look, never a failure: the RAM and Session compares decide. The
-/// scheduled run turns it on (`SM_VERIFY_UNOWNED_REPORT=1`).
+/// The nightly whole-RAM report (#246): per replay, the unowned bytes whose
+/// two results differ before normalization, by reason. It keeps watching the
+/// bytes the Session compare does not own after the locks drop `wram`. A
+/// difference is worth a look, never a failure: the RAM and Session compares
+/// decide. The scheduled run turns it on (`SM_VERIFY_UNOWNED_REPORT=1`).
 pub(super) struct UnownedDifferences {
     ranges: Vec<(Reason, Differing)>,
     compared: u64,

@@ -109,7 +109,7 @@ pub(crate) fn native_read_traced() -> bool {
 /// The native read hook on the scheduler's lease, immediately before the real
 /// RomPtr: traced, it records the read and, on the second, registers the case's
 /// replacement image on the game; untraced, it does nothing. Either way the
-/// lease keeps the former foreign call's observation refresh.
+/// lease refreshes the observations.
 #[cfg(sm_verify_dll)]
 pub(crate) fn native_read_on_lease(
     runtime: &mut crate::game::session_runtime::Runtime<'_>,

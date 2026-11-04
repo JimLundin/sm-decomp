@@ -95,7 +95,6 @@ pub fn dispatch_botwoon_body_function(ea: u32, k: u16, ctx: &mut impl Host) {
 }
 
 /// Whether the projectile is outside the 256-pixel camera view.
-/// Was `EprojPreInstr_NorfairLavaquakeRocks_Inner2` (also `EprojPreInstrHelper_DBF2_Func2`).
 pub fn outside_camera_view(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     (((enemy!(ctx, (v1) as isize, x) as i32 - ctx.inputs().camera_x as i32) as i16) < 0
@@ -105,7 +104,7 @@ pub fn outside_camera_view(k: u16, ctx: &mut impl Host) -> u16 {
         as u16
 }
 
-/// Steps a turret bullet's direction. Was `Eproj_MotherBrainRoomTurretBullets_Func2`.
+/// Steps a turret bullet's direction.
 pub fn turret_bullet_step_direction(v0: u16, ctx: &mut impl Host) {
     let r20: u8 = ((enemy_byte!(ctx, v0 as isize + 1, y_fraction) as i32
         + enemy_byte!(ctx, v0 as isize, y_fraction) as i32)
@@ -354,7 +353,6 @@ pub fn is_off_screen(k: u16, ctx: &mut impl Host) -> u16 {
 }
 
 /// Whether the projectile is outside the room's top-left 512-pixel square.
-/// Was `Eproj_FuncE722`.
 pub fn outside_512_pixel_square(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     let v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;

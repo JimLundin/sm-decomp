@@ -193,7 +193,7 @@ fn handle_casual_flames(object: u16, game: &mut (impl State + ?Sized)) {
 }
 
 /// Adjust speed and move Phantoon in figure-8 ($A7:D0F1), then handle its
-/// casual flames. Was `advance_figure_eight`.
+/// casual flames.
 pub fn fly_figure_eight(object: u16, game: &mut (impl State + ?Sized)) {
     let reversed = part!(game, Eye[EYE].movement_reversed) != 0;
     update_speed(reversed, game);

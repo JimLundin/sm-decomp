@@ -1,6 +1,5 @@
 //! The skree and the metaree, the ceiling divers that drop on Samus and burst
 //! into particles on the ground (bank $A3:88F0-$A3:8B65, $A3:C63E-$A3:C82F).
-//! Was `diving_enemies`.
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, DeathKind, MovementResult, ShotHandling, VerticalProbeEdge};
 use crate::actors::combat;
@@ -133,8 +132,7 @@ fn burst(runtime: &mut impl ActorLease, profile: &Profile, mut parameter: u16, c
         parameter = if chain { result } else { 0 };
     }
 }
-/// Main AI - metaree ($A3:8979) or skree ($A3:C6C7): run its function. Was
-/// `advance`.
+/// Main AI - metaree ($A3:8979) or skree ($A3:C6C7): run its function.
 pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let profile = kind.profile();
@@ -242,7 +240,7 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
         runtime.unreachable();
     }
 }
-/// Instruction - set attack ready flag ($A3:8956, $A3:C6A4). Was `ready`.
+/// Instruction - set attack ready flag ($A3:8956, $A3:C6A4).
 pub fn set_attack_ready(script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.variables[lane::ATTACK_READY] = 1);

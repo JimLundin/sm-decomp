@@ -223,7 +223,7 @@ pub enum ScrollDefinition {
 }
 
 /// Only acquisition, diagnostics and current-session observations cross this seam.
-/// Pure retained-token reads and cursor arithmetic are inherent helpers (signature ledger).
+/// Pure retained-token reads and cursor arithmetic are inherent helpers.
 /// A prepared world answers from the Session; the required methods acquire the
 /// original's records and RAM for the canonical one.
 pub trait EntryContent: crate::session_access::SessionAccess {

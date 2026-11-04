@@ -7,7 +7,6 @@ impl Effects for Runtime<'_> {
         self.next_random_number()
     }
     fn grapple_pickup_query(&mut self) -> u16 {
-        // The command's former foreign entry ran it on a fresh nested lease.
         self.owned_player_call(|runtime| {
             crate::game::session_runtime::player_command_in(runtime, 0xd)
         })
@@ -24,8 +23,8 @@ impl Effects for Runtime<'_> {
         self.owned_call(|runtime| sm_game::samus_periodic_damage::contact(runtime, damage))
     }
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8 {
-        // The former foreign entry read the game's level data; the lease reads
-        // its Session terrain in an owned call, keeping the observation refresh.
+        // The lease reads its Session terrain in an owned call, which refreshes
+        // the observations.
         self.owned_player_call(|runtime| {
             u8::from(sm_game::actors::ridley::solid_block_at(x, y, runtime))
         })
@@ -72,7 +71,7 @@ impl Effects for Runtime<'_> {
     }
     fn reset_room_enemy_workspace(&mut self) {
         // The workspace's owners are the Session's; the observations are refreshed
-        // on entry and on return, as the former foreign fill left them.
+        // on entry and on return.
         self.owned_player_call(|runtime| {
             sm_game::actors::codec::clear_room_workspace(runtime.session_mut());
         });
