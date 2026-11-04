@@ -80,7 +80,6 @@ pub trait Host:
     /// The original's warning when a pass leaves continuation bytes set.
     fn report_broken_coroutine(&mut self, state: [u8; 4]);
     fn update_hdma(&mut self);
-    fn advance_native_state(&mut self, state: NativeState) -> u8;
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
     fn debug_game_over_menu(&mut self);
     /// Emit this frame's queued gameplay sound effects.
@@ -119,6 +118,9 @@ pub trait PassLease:
     fn advance_sound_effects(&mut self);
     /// The original's warning when a pass leaves continuation bytes set.
     fn report_broken_coroutine(&mut self, state: [u8; 4]);
+    /// A cinematic game state's frame: the title sequence, the intro or the
+    /// ending; nonzero when it yields to the next frame.
+    fn advance_native_state(&mut self, state: NativeState) -> u8;
 }
 
 #[derive(Clone, Copy)]
@@ -328,10 +330,21 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                     None => pass_after_message(ResumePoint::Start, true, game),
                 };
             }
+            // A cinematic state's frame runs on this lease too; the frame ends on
+            // Game once it returns.
+            if let Some(&Native(state)) = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16)) {
+                let returned = lease.advance_native_state(state);
+                drop(lease);
+                if returned != 0 {
+                    break 'frame returned;
+                }
+                break 'frame finish_state(game);
+            }
         }
         let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
             Advance(entry) => advance(entry, game),
-            Native(state) => game.advance_native_state(state),
+            // A cinematic state resuming after a yield opens the frame's lease here.
+            Native(state) => game.runtime().advance_native_state(state),
             DemoReset => demo_rooms::reset(game),
             FileMenu => file_menu::advance(game),
             MapMenu => map_menu::advance(game),
@@ -359,19 +372,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         if returned != 0 {
             break 'frame returned;
         }
-        game.advance_sound_effects();
-        sprite_drawing::finish_frame(game);
-        filter_joypad(game);
-        let state = [
-            game.resume_point(),
-            game.secondary_continuation(),
-            game.demo_phase(),
-            game.message_continuation(),
-        ];
-        if broken_coroutine(state) {
-            game.report_broken_coroutine(state);
-        }
-        0
+        finish_state(game)
     };
     if returned == 0 {
         game.store_display_control_byte(DisplayField::NmiPending, 1, Store::Named);
@@ -390,6 +391,24 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_outer_continuation(resume);
     }
     returned
+}
+
+/// The frame's end on Game, after a completed state: the sound effects, the
+/// sprite table's finish, the joypad filter word and the continuation check.
+fn finish_state<H: Host>(game: &mut H) -> CoroutineRet {
+    game.advance_sound_effects();
+    sprite_drawing::finish_frame(game);
+    filter_joypad(game);
+    let state = [
+        game.resume_point(),
+        game.secondary_continuation(),
+        game.demo_phase(),
+        game.message_continuation(),
+    ];
+    if broken_coroutine(state) {
+        game.report_broken_coroutine(state);
+    }
+    0
 }
 
 /// The frame's start on its first lease: the random number steps, the sprite

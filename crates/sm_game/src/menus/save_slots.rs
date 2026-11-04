@@ -301,9 +301,9 @@ fn copy_word<H: crate::projection::Views + ?Sized>(
     game.set_view_word(destination, value);
 }
 
-pub fn record_completion<H: Host + ?Sized>(game: &mut H) {
-    game.sram().write_bytes(0x1fe0, b"supermetroid");
-    game.flush_sram();
+pub fn record_completion<H: SlotHost + ?Sized>(game: &mut H) {
+    game.slot_ram().write_bytes(0x1fe0, b"supermetroid");
+    game.flush_slots();
 }
 pub fn verify_boot<H: Host + ?Sized>(game: &mut H) {
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {

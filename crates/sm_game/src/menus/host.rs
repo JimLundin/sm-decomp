@@ -60,19 +60,56 @@ pub trait ResetRequest {
     fn request_reset(&mut self);
 }
 
-/// The runtime operations the menus call.
-pub trait MenuRuntime:
-    crate::player_position::PlayerPosition
-    + crate::player_position::PlayerFacts
-    + PlayerRuntime
-    + crate::inventory_domain::InventoryAccess
-    + super::state::Access
-    + crate::menu_window_state::Access
-    + crate::menu_window_state::ArrowAccess
-    + MapFacts
-{
-    /// Upload `bytes` from `source` to VRAM word address `destination`.
-    fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
+/// The imported tables the cinematic functions read.
+pub trait Tables {
+    fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
+    fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
+}
+impl<T: Host + ?Sized> Tables for T {
+    fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette> {
+        Host::intro_palette(self)
+    }
+    fn visual_tables(&self) -> &crate::visual_tables::ImportedTables {
+        Host::visual_tables(self)
+    }
+}
+
+/// The runtime operations both the menus and the cinematic functions call.
+pub trait CommonRuntime {
+    /// Spawn an HDMA object from bank `bank`; returns its slot.
+    fn spawn_hdma(
+        &mut self,
+        bank: u8,
+        args: &crate::display::hdma_spawn::HdmaObjectDefinition,
+    ) -> u16;
+    /// The original's unreachable-state failure.
+    fn rtl_unreachable(&mut self) -> bool;
+    /// The original's `RomPtr_RAM` assertion on a RAM-table address.
+    fn assert_ram_pointer(&mut self, address: u16);
+    fn update_beam_tiles_and_palette(&mut self);
+}
+impl<T: MenuRuntime + ?Sized> CommonRuntime for T {
+    fn spawn_hdma(
+        &mut self,
+        bank: u8,
+        args: &crate::display::hdma_spawn::HdmaObjectDefinition,
+    ) -> u16 {
+        MenuRuntime::spawn_hdma(self, bank, args)
+    }
+    fn rtl_unreachable(&mut self) -> bool {
+        MenuRuntime::rtl_unreachable(self)
+    }
+    fn assert_ram_pointer(&mut self, address: u16) {
+        MenuRuntime::assert_ram_pointer(self, address)
+    }
+    fn update_beam_tiles_and_palette(&mut self) {
+        MenuRuntime::update_beam_tiles_and_palette(self)
+    }
+}
+
+/// The cinematic sprite objects' bank $8B routines, which run on the
+/// cinematic host.
+pub trait CinematicRuntime: CommonRuntime {
     /// Run bank $8B's cinematic sprite pre-instruction `pre` for `object`.
     fn cinematic_sprite_pre_instruction(
         &mut self,
@@ -88,6 +125,21 @@ pub trait MenuRuntime:
         operand: u16,
         cine: &mut crate::cinematic_state::Cinematic,
     ) -> u16;
+}
+
+/// The runtime operations the menus call.
+pub trait MenuRuntime:
+    crate::player_position::PlayerPosition
+    + crate::player_position::PlayerFacts
+    + PlayerRuntime
+    + crate::inventory_domain::InventoryAccess
+    + super::state::Access
+    + crate::menu_window_state::Access
+    + crate::menu_window_state::ArrowAccess
+    + MapFacts
+{
+    /// Upload `bytes` from `source` to VRAM word address `destination`.
+    fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
     /// Write a DMA channel register on the owned backend.
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.

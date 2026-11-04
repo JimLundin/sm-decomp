@@ -48,6 +48,10 @@ impl refresh::Host for Game {
         // SAFETY: refresh hosts run from the frame loop with the backend installed.
         unsafe { start_room_dma(2, assets.as_deref(), self) }
     }
+    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool) {
+        // SAFETY: as for `start_graphics_dma`.
+        unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
+    }
     fn upload_samus(&mut self) {
         // SAFETY: as for `start_graphics_dma`.
         unsafe { crate::game::display_transfers::upload_samus(self) }
@@ -66,10 +70,6 @@ impl refresh::Host for Game {
     fn flush_tilemaps(&mut self) {
         // SAFETY: as for `start_graphics_dma`.
         unsafe { flush_tilemaps(self) }
-    }
-    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
     }
     fn read_vram_data(&mut self) -> u16 {
         self.read_register_word(crate::rtl::RDVRAML as u16)

@@ -16,7 +16,7 @@ use crate::word_transfers::WordEndpoint;
 /// The producer name of the cinematic display setup's commands.
 const CINEMATIC: &str = "cinematic display";
 
-pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
+pub fn configure_cinematic_display<H: crate::cinematic_host::Host>(
     display: crate::visual_state::CinematicDisplay,
     cine: &mut Cinematic,
     game: &mut H,
@@ -363,11 +363,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn reset_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
-    x: u16,
-    y: u16,
-    game: &mut H,
-) {
+pub fn reset_cinematic_transform<H: crate::cinematic_host::Host>(x: u16, y: u16, game: &mut H) {
     let transform = crate::display::control::Mode7Transform::identity(x, y);
     set_mode7_transform(transform, game);
 }
@@ -375,7 +371,7 @@ pub fn reset_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
 /// Each parameter's 16-bit store is followed by its RAM mirror word before the
 /// next parameter, as the original did. The store's high byte also reaches the
 /// next register up, as a word store does.
-fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
+fn set_mode7_transform<H: crate::cinematic_host::Host>(
     transform: crate::display::control::Mode7Transform,
     game: &mut H,
 ) {
@@ -398,18 +394,15 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn draw_intro_sprites<H: crate::menus::host::Host + ?Sized>(
-    cine: &mut Cinematic,
-    game: &mut H,
-) {
+pub fn draw_intro_sprites<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     let samus = *cine.intro_samus_display();
     if samus & 0x8000 != 0 {
-        game.draw_player_frame();
-        game.draw_projectiles();
+        game.owned_player_call(crate::player_drawing::draw_player_frame);
+        crate::player_drawing::Host::draw_projectiles(game);
     }
     draw_cinematic_sprites(false, cine, game);
     if samus != 0 && samus & 0x8000 == 0 {
-        game.draw_player_frame();
-        game.draw_projectiles();
+        game.owned_player_call(crate::player_drawing::draw_player_frame);
+        crate::player_drawing::Host::draw_projectiles(game);
     }
 }

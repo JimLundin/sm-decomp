@@ -75,12 +75,12 @@ fn hdma_definition(args: &HdmaObjectDefinition) -> [u16; 2] {
 }
 
 /// Spawn an HDMA object through the host; returns its slot.
-pub fn spawn_hdma<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_hdma<H: crate::menus::host::CommonRuntime + ?Sized>(
     bank: u8,
     args: &HdmaObjectDefinition,
     game: &mut H,
 ) -> u16 {
-    crate::menus::host::MenuRuntime::spawn_hdma(game, bank, args)
+    crate::menus::host::CommonRuntime::spawn_hdma(game, bank, args)
 }
 
 /// The HDMA object allocator's host: the object table, and the DMA channel

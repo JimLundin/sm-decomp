@@ -1,7 +1,7 @@
 //! Ordered display refresh and the NMI request/completion handshake, plus the
 //! gameplay and pause display setup, graphics loads and tilemap queues.
 use crate::constants::bank_60::ADDR_UNK_605880;
-use crate::decompression::{self, decompress_to_ram};
+use crate::decompression;
 use crate::display::control::{BgMode, FixedColor, Layers, ScreenSettings};
 use crate::display::preparation::Field as DisplayField;
 use crate::display::transfer::{ScrollingLayout, Source, TilemapQueue};
@@ -55,17 +55,43 @@ pub trait Host:
     /// Start the channel-1 graphics DMA for a load from `source`, reading the
     /// prepared room image when it holds that source.
     fn start_graphics_dma(&mut self, source: u32);
+    /// Fill VRAM's low bytes with `fill` from address 0, resetting the
+    /// address as one word or two bytes.
+    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
     fn upload_samus(&mut self);
     fn upload_animated_tiles(&mut self);
     fn process_mode7(&mut self);
     fn process_readbacks(&mut self);
     fn flush_tilemaps(&mut self);
-    /// Fill VRAM's low bytes with `fill` from address 0, resetting the
-    /// address as one word or two bytes.
-    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
     /// Read the VRAM port's data word, stepping the port as the hardware
     /// does; the first read after setting the address is the prefetch.
     fn read_vram_data(&mut self) -> u16;
+}
+
+/// The graphics loads' hardware work: a decompression into work RAM, the
+/// channel-1 DMA that copies a load to VRAM or work RAM, and the VRAM fill
+/// the cinematic planes start from.
+pub trait GraphicsLoad: Video {
+    /// Start the channel-1 graphics DMA for a load from `source`, reading the
+    /// prepared room image when it holds that source.
+    fn start_graphics_dma(&mut self, source: u32);
+    /// Fill VRAM's low bytes with `fill` from address 0, resetting the
+    /// address as one word or two bytes.
+    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
+    /// Decompress the asset at `source` into work RAM at `destination`.
+    fn decompress_graphics(&mut self, source: u32, destination: usize);
+}
+/// A display refresh host loads graphics on its own RAM image.
+impl<T: Host + ?Sized> GraphicsLoad for T {
+    fn start_graphics_dma(&mut self, source: u32) {
+        Host::start_graphics_dma(self, source);
+    }
+    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool) {
+        Host::fill_vram_low_bytes(self, fill, word_reset);
+    }
+    fn decompress_graphics(&mut self, source: u32, destination: usize) {
+        decompression::decompress_to_ram(source, destination, self);
+    }
 }
 
 /// The producer name of the pause screen's display commands.
@@ -76,7 +102,7 @@ const INITIALISE: &str = "display initialisation";
 const GAMEPLAY_LAYERS: Layers = Layers::of(true, true, true, false, true);
 
 /// Set the forced-blank mirror bit for the next display refresh.
-pub fn set_blank<H: Host + ?Sized>(blank: bool, game: &mut H) {
+pub fn set_blank<H: crate::display::preparation::Access + ?Sized>(blank: bool, game: &mut H) {
     crate::frame_display_byte!(game, crate::display::preparation::Field::Brightness => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Brightness) & 0x7f | if blank { 0x80 } else { 0 });
 }
 
@@ -148,7 +174,7 @@ pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
 }
 
 /// The ordered CPU I/O and OAM reset.
-pub fn initialize_io_and_oam<H: Host + ?Sized>(
+pub fn initialize_io_and_oam<H: Video + crate::display::preparation::Access + ?Sized>(
     brightness: Option<crate::display::control::Brightness>,
     game: &mut H,
 ) {
@@ -463,7 +489,10 @@ pub fn reset_layer_mirrors<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-pub fn fade<H: Host + crate::screen_fade::Owner + ?Sized>(fade_in: bool, game: &mut H) {
+pub fn fade<H: crate::display::preparation::Access + crate::screen_fade::Owner + ?Sized>(
+    fade_in: bool,
+    game: &mut H,
+) {
     let due = game.tick_screen_fade();
     if !due {
         return;
@@ -884,14 +913,14 @@ pub enum GraphicsAsset {
 }
 
 impl GraphicsAsset {
-    pub fn load_planes<H: Host + ?Sized>(self, fill: u8, word_reset: bool, game: &mut H) {
+    pub fn load_planes<H: GraphicsLoad + ?Sized>(self, fill: u8, word_reset: bool, game: &mut H) {
         Self::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
         game.fill_vram_low_bytes(fill, word_reset);
         self.load(game);
         Self::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     }
 
-    pub fn load<H: Host + ?Sized>(self, game: &mut H) {
+    pub fn load<H: GraphicsLoad + ?Sized>(self, game: &mut H) {
         crate::probe::hit(match &self {
             Self::Decompress(..) => "graphics-load-decompress",
             Self::VramWords(..) => "graphics-load-vram-words",
@@ -901,7 +930,7 @@ impl GraphicsAsset {
         });
         let (transfer, source, size, vram) = match self {
             Self::Decompress(source, destination) => {
-                decompress_to_ram(source, destination, game);
+                game.decompress_graphics(source, destination);
                 return;
             }
             Self::VramWords(source, destination, size) => (

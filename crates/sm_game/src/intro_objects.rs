@@ -26,7 +26,7 @@ pub fn start_intro_rinka(object: u16, cursor: u16, cine: &mut Cinematic) -> u16 
     cursor
 }
 
-pub fn chase_intro_baby_y<H: crate::menus::host::Host + ?Sized>(
+pub fn chase_intro_baby_y<H: crate::cinematic_host::Host>(
     object: u16,
     y_offset: i32,
     cine: &mut Cinematic,
@@ -44,7 +44,7 @@ pub fn chase_intro_baby_y<H: crate::menus::host::Host + ?Sized>(
     advance_cinematic_coordinate(object, true, velocity, cine);
 }
 
-pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_intro_baby_pursuit<H: crate::cinematic_host::Host>(
     object: u16,
     cine: &mut Cinematic,
     game: &mut H,
@@ -59,7 +59,7 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(
         let timer = (*cine.spr_goto_timer(slot)).wrapping_add(1);
         *cine.spr_goto_timer(slot) = timer;
         if timer & 0x3f == 0 {
-            game.queue_sound(2, 0x23_u8, 6);
+            crate::effects::SoundEffects::queue_sound(game, 2, 0x23_u8, 6);
         }
     }
     if (game.player_x() as i16).wrapping_sub(*cine.bg_arr7(slot) as i16) < 0 {
@@ -79,7 +79,7 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(
     chase_intro_baby_y(object, 8, cine, game);
 }
 
-pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_intro_rinka<H: crate::cinematic_host::Host>(
     object: u16,
     misses_samus: bool,
     cine: &mut Cinematic,
@@ -136,7 +136,7 @@ pub fn initialize_intro_brain_particle(object: u16, big: bool, cine: &mut Cinema
     *cine.bg_arr9(slot) = 2560;
 }
 
-pub fn initialize_ceres_explosion<H: crate::menus::host::Host + ?Sized>(
+pub fn initialize_ceres_explosion<H: crate::cinematic_host::Host>(
     object: u16,
     pattern: CeresExplosion,
     cine: &mut Cinematic,
@@ -177,7 +177,7 @@ pub fn initialize_ceres_explosion<H: crate::menus::host::Host + ?Sized>(
     *cine.bg_arr9(slot) = 2560;
 }
 
-pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_intro_landing_mosaic<H: crate::cinematic_host::Host>(
     fading: bool,
     cine: &mut Cinematic,
     game: &mut H,
@@ -220,7 +220,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_ceres_station<H: crate::cinematic_host::Host>(
     object: u16,
     cine: &mut Cinematic,
     game: &mut H,
@@ -237,7 +237,7 @@ pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_zebes_flight<H: crate::cinematic_host::Host>(
     stage: u8,
     cine: &mut Cinematic,
     game: &mut H,
@@ -278,7 +278,7 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_zebes_destruction_zoom<H: crate::cinematic_host::Host>(
     speed: u16,
     next_scene: u16,
     fade_in: Option<u16>,
@@ -306,7 +306,7 @@ pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_zebes_stars<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_zebes_stars<H: crate::cinematic_host::Host>(
     object: u16,
     moving: bool,
     cine: &mut Cinematic,
@@ -332,7 +332,7 @@ pub fn advance_zebes_stars<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn wait_cinematic_scene<H: crate::menus::host::Host + ?Sized>(
+pub fn wait_cinematic_scene<H: crate::cinematic_host::Host>(
     object: u16,
     scene: u16,
     next_preinstruction: Option<u16>,
@@ -349,7 +349,7 @@ pub fn wait_cinematic_scene<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn launch_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
+pub fn launch_cinematic_sprite<H: crate::cinematic_host::Host>(
     object: u16,
     acceleration: u16,
     advance_scene: bool,
@@ -370,7 +370,7 @@ pub fn launch_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn update_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
+pub fn update_cinematic_transform<H: crate::cinematic_host::Host>(
     rotated: bool,
     cine: &mut Cinematic,
     game: &mut H,
@@ -409,7 +409,7 @@ pub fn update_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
     display_scroll!(game.Bg1V = *cine.y());
 }
 
-pub fn draw_cinematic_rectangle<H: crate::menus::host::Host + ?Sized>(
+pub fn draw_cinematic_rectangle<H: crate::cinematic_host::Host>(
     text: bool,
     mut definition: u16,
     position: u16,

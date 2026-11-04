@@ -66,7 +66,7 @@ const DEMO_DELAY: u16 = 900;
 type Transition<H> = fn(&mut Cinematic, &mut H);
 
 /// The cinematic transition states in `skip_to_title_index`.
-fn run_transition<H: Host + ?Sized>(state: u16, cine: &mut Cinematic, game: &mut H) {
+fn run_transition<H: Host>(state: u16, cine: &mut Cinematic, game: &mut H) {
     let transitions: [Option<Transition<H>>; 4] = [
         None,
         Some(fade_out_to_demo),
@@ -78,7 +78,7 @@ fn run_transition<H: Host + ?Sized>(state: u16, cine: &mut Cinematic, game: &mut
 
 /// Steps the current transition between the title and the demos. Was
 /// `HandleCinematicsTransitions`.
-pub fn handle_transitions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn handle_transitions<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if *cine.skip_to_title_index() != 0 {
         let state = *cine.skip_to_title_index();
         run_transition(state, cine, game);
@@ -86,7 +86,7 @@ pub fn handle_transitions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
 }
 
 /// Was `HandleCinematicsTransitions_1`.
-fn fade_out_to_demo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+fn fade_out_to_demo<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
         *cine.skip_to_title_index() = 2;
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -97,7 +97,7 @@ fn fade_out_to_demo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Was `HandleCinematicsTransitions_2`.
-fn start_demo_logo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+fn start_demo_logo<H: Host>(cine: &mut Cinematic, game: &mut H) {
     clear_cinematic_sprites(cine);
     spawn(cine, game, CinematicObjects::Sprites, object::COPYRIGHT, 0);
     // The palette the first sprite initializer leaves in A.
@@ -142,7 +142,7 @@ fn start_demo_logo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Was `HandleCinematicsTransitions_3`.
-fn fade_in_title<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+fn fade_in_title<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
         *cine.skip_to_title_index() = 0;
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -155,7 +155,7 @@ fn fade_in_title<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 }
 
 /// Load title sequence graphics ($8B:9B87). Was `LoadTitleSequenceGraphics`.
-pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn load_graphics<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Title, cine, game);
     crate::frame_display_word!(game.CurrentInterrupt = 0);
     crate::frame_display_word!(game.PendingInterrupt = 0);
@@ -198,7 +198,7 @@ pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - title sequence - setup ($8B:9B68). Was
 /// `CinematicFunctionOpening`.
-pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     load_graphics(cine, game);
     crate::music_requests::queue_delayed_8(TITLE_MUSIC_DATA, game);
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -217,7 +217,7 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Cinematic function - title sequence - scene 3 - zooming out ($8B:9E8B):
 /// every other frame, zoom out to full size, then show the title logo. Was
 /// `CinematicFunc_Func7`.
-pub fn zooming_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn zooming_out<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if (crate::frame_display_word!(game.NmiFrameWordPair) & 1) == 0 {
         if ((*cine.mode7_zoom()).wrapping_sub(256) as i16) < 0 {
             *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(1);
@@ -239,7 +239,7 @@ pub fn zooming_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Finishes the title sequence for game state `next`: the display back on,
 /// effects and cinematic objects cleared.
-fn finish<H: Host + ?Sized>(
+fn finish<H: Host>(
     next: u16,
     cine: &mut Cinematic,
     game: &mut H,
@@ -269,7 +269,7 @@ fn finish<H: Host + ?Sized>(
 
 /// Cinematic function - title sequence - transition to file select menu
 /// ($8B:9F52). Was `CinematicFunc_Func10`.
-pub fn to_file_select<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn to_file_select<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(FILE_SELECT_MENUS, cine, game, |game| {
             crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
@@ -281,7 +281,7 @@ pub fn to_file_select<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - title sequence - transition to demos ($8B:9FAE). Was
 /// `CinematicFunc_Func9`.
-pub fn to_demos<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn to_demos<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(TRANSITION_TO_DEMO, cine, game, |game| {
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -293,20 +293,20 @@ pub fn to_demos<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Pre-instruction - cinematic sprite object $A0EF ('1994' scrolling text)
 /// ($8B:9CCF): full brightness, once. Was `sub_8B9CCF`.
-pub fn scrolling_1994<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
+pub fn scrolling_1994<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     crate::frame_display_byte!(game, Field::Brightness => 15);
     *cine.spr_pre_instruction(k >> 1) = NO_PRE_INSTRUCTION;
 }
 
 /// Instruction - start the title's scene 3 pan ($8B:9E58), with its
 /// gradient; returns `cursor`.
-pub fn start_scene_3<H: Host + ?Sized>(cursor: u16, cine: &mut Cinematic, game: &mut H) -> u16 {
+pub fn start_scene_3<H: Host>(cursor: u16, cine: &mut Cinematic, game: &mut H) -> u16 {
     crate::title_screen::start_title_pan(3, cursor, cine, game);
     crate::room_visuals::initialize_title_gradient(game);
     cursor
 }
 
-fn spawn<H: Host + ?Sized>(
+fn spawn<H: Host>(
     cine: &mut Cinematic,
     game: &mut H,
     objects: CinematicObjects,

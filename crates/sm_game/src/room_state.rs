@@ -32,6 +32,28 @@ pub trait LevelData {
     fn clear_level_data(&mut self, mode: crate::room_entry::content::LoadMode);
 }
 
+/// The level data's reads, as a reader on either side of the lease holds
+/// them: the game's level data, or the lease's Session terrain.
+pub trait LevelReads {
+    /// The level data's size in bytes ($7F:0000), little-endian.
+    fn level_size_word(&self) -> u16;
+    /// Cell `cell`'s level word, little-endian.
+    fn cell_level(&self, cell: usize) -> u16;
+    /// Cell `cell`'s behaviour byte.
+    fn cell_behavior(&self, cell: usize) -> u8;
+}
+impl<T: LevelData + ?Sized> LevelReads for T {
+    fn level_size_word(&self) -> u16 {
+        self.level_data_size()
+    }
+    fn cell_level(&self, cell: usize) -> u16 {
+        self.level_word(cell)
+    }
+    fn cell_behavior(&self, cell: usize) -> u8 {
+        self.level_behavior(cell)
+    }
+}
+
 /// The cells' level words as a reader on either side of the lease holds
 /// them: the game's level data, or the lease's Session terrain.
 pub trait LevelCells {

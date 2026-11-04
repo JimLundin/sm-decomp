@@ -9,7 +9,7 @@ use crate::word_transfers::WordEndpoint;
 
 // The credits stream shares the background pre-instructions and text tilemap.
 // The cinematic table shares enemy-projectile state across callbacks and handoff.
-pub fn prepare_credit_roll<H: crate::menus::host::Host + ?Sized>(
+pub fn prepare_credit_roll<H: crate::cinematic_host::Host>(
     definition: u16,
     cine: &mut Cinematic,
     game: &mut H,
@@ -45,7 +45,7 @@ pub fn prepare_credit_roll<H: crate::menus::host::Host + ?Sized>(
 }
 
 // False leaves the legacy invalid-opcode report to the bank, before its upload.
-pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_credit_roll<H: crate::cinematic_host::Host>(
     cine: &mut Cinematic,
     game: &mut H,
 ) -> bool {
@@ -135,7 +135,7 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(
 }
 
 // Credits retain native pre-instruction and failure order before their tilemap.
-pub fn advance_credits<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn advance_credits<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     if *cine.credits_enabled() & 0x8000 != 0 {
         if *cine.credits_instruction_list() != 0 {
             let command = 0x8b0000 | u32::from(*cine.credits_pre_instruction());

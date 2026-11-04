@@ -1087,9 +1087,6 @@ mod tests {
         check_layout::<crate::menu_state::MenuScreens>();
         check_layout::<crate::session_words::SessionWords>();
         check_layout::<crate::cinematic_state::Cinematic>();
-        check_layout::<crate::cinematic::FadePlanes>();
-        check_layout::<crate::cinematic::PaletteBuffer>();
-        check_layout::<crate::cinematic::ShotWords>();
         check_layout::<crate::menu_window_state::WindowState>();
         check_layout::<(
             crate::menu_state::OptionsMenu,

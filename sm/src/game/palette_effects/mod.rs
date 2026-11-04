@@ -3,7 +3,20 @@ use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 pub(crate) use sm_game::palette_effects::execution;
 
-pub(crate) use execution::leased::{advance, clear, set_enabled, spawn};
+/// The palette effect entries on a fresh lease of `game`, for the checks that
+/// drive them from Game.
+pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
+    execution::set_enabled(Runtime::new(game).session_mut(), enabled);
+}
+pub(crate) fn clear(game: &mut Game) {
+    execution::clear(Runtime::new(game).session_mut());
+}
+pub(crate) fn spawn(definition: u16, game: &mut Game) {
+    execution::spawn(&mut Runtime::new(game), definition);
+}
+pub(crate) fn advance(game: &mut Game) {
+    execution::advance(&mut Runtime::new(game));
+}
 
 /// The game's fades store their colours in the work RAM image, outside the
 /// projection, as they always have.

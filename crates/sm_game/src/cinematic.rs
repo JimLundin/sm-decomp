@@ -12,174 +12,87 @@ pub fn cinematic_native_record<const BANK: u8>(
     crate::menus::menu_tilemap::native_record((u32::from(BANK) << 16) | u32::from(cursor), game)
 }
 
-pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_cinematic_fade<H: crate::cinematic_host::Scene + ?Sized>(
     fade: crate::visual_state::CinematicFade,
     game: &mut H,
 ) -> bool {
     game.cinematic_screen_fade(fade)
 }
 
-/// The cinematic palette fades' working planes: the BG2 tilemap buffer
-/// $7E:2000..$7E:2FFF (`actors.extended.blocks[4..6]`), by word. Word
-/// `index` of plane `n` (0..8) is word `256 * n + index`.
-#[derive(Clone, Debug, PartialEq)]
-pub struct FadePlanes(pub Box<[u16; 2048]>);
-
-impl Default for FadePlanes {
-    fn default() -> Self {
-        Self(Box::new([0; 2048]))
-    }
-}
-
-impl crate::session_cohort::Cohort for FadePlanes {
-    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
-        for (index, word) in self.0.iter_mut().enumerate() {
-            visit(0x2000 + 2 * index, word);
-        }
-    }
-    fn session_words(
-        session: &mut crate::session::Session,
-        mut visit: impl FnMut(usize, &mut u16),
-    ) {
-        let blocks = &mut session.actors.extended.blocks[4..6];
-        for (index, word) in blocks.iter_mut().flatten().enumerate() {
-            visit(0x2000 + 2 * index, word);
-        }
-    }
-    fn session_copy(session: &crate::session::Session) -> Self {
-        let mut planes = Self::default();
-        let blocks = &session.actors.extended.blocks[4..6];
-        for (plane, word) in planes.0.iter_mut().zip(blocks.iter().flatten()) {
-            *plane = *word;
-        }
-        planes
-    }
-}
-
-/// Samus's projectiles' X positions and kinds ($7E:0B64, $7E:0C18), which
-/// the intro's Mother Brain watches.
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct ShotWords {
-    pub x: [u16; 10],
-    pub kind: [u16; 10],
-}
-
-impl crate::session_cohort::Cohort for ShotWords {
-    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
-        for (index, x) in self.x.iter_mut().enumerate() {
-            visit(0xb64 + 2 * index, x);
-        }
-        for (index, kind) in self.kind.iter_mut().enumerate() {
-            visit(0xc18 + 2 * index, kind);
-        }
-    }
-    fn session_words(
-        session: &mut crate::session::Session,
-        mut visit: impl FnMut(usize, &mut u16),
-    ) {
-        let shots = &mut session.projectiles.shots;
-        for (index, shot) in shots.iter_mut().enumerate() {
-            visit(0xb64 + 2 * index, &mut shot.x);
-        }
-        for (index, shot) in shots.iter_mut().enumerate() {
-            visit(0xc18 + 2 * index, &mut shot.kind);
-        }
-    }
-    fn session_copy(session: &crate::session::Session) -> Self {
-        let shots = &session.projectiles.shots;
-        Self {
-            x: shots.map(|shot| shot.x),
-            kind: shots.map(|shot| shot.kind),
-        }
-    }
-}
-
-/// The palette buffer $7E:C000..$7E:C1FF, the presentation's colours.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PaletteBuffer(pub [u16; 256]);
-
-impl Default for PaletteBuffer {
-    fn default() -> Self {
-        Self([0; 256])
-    }
-}
-
-impl crate::session_cohort::Cohort for PaletteBuffer {
-    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
-        for (index, word) in self.0.iter_mut().enumerate() {
-            visit(0xc000 + 2 * index, word);
-        }
-    }
-    fn session_words(
-        session: &mut crate::session::Session,
-        mut visit: impl FnMut(usize, &mut u16),
-    ) {
-        let colors = &mut session.presentation.visual_mut().colors;
-        for (index, word) in colors.iter_mut().enumerate() {
-            visit(0xc000 + 2 * index, word);
-        }
-    }
-    fn session_copy(session: &crate::session::Session) -> Self {
-        Self(session.presentation.visual().colors)
+/// Run `change` on the lease's palette buffer colours ($7E:C000) and fade
+/// planes ($7E:2000), then refresh its observations if they changed, as the
+/// typed copies' stores did.
+fn change_palette<H: crate::cinematic_host::Host>(
+    game: &mut H,
+    change: impl FnOnce(&mut [u16; 256], &mut [u16]),
+) {
+    let session = game.session_mut();
+    let colors = &mut session.presentation.visual_mut().colors;
+    let before_colors = *colors;
+    let planes = session.actors.extended.blocks[4..6].as_flattened_mut();
+    let before_planes = planes.to_vec();
+    change(colors, planes);
+    let session = game.session_mut();
+    let changed = session.presentation.visual().colors != before_colors
+        || session.actors.extended.blocks[4..6].as_flattened() != before_planes.as_slice();
+    if changed {
+        game.refresh_inputs();
     }
 }
 
 /// Store `value` to palette buffer colours `indices`.
-pub fn set_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
+pub fn set_cinematic_colors<H: crate::cinematic_host::Host>(
     indices: &[usize],
     value: u16,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, palette: &mut PaletteBuffer| {
+    change_palette(game, |palette, _| {
         for &index in indices {
-            palette.0[index] = value;
+            palette[index] = value;
         }
     });
 }
 
-pub fn clear_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
+pub fn clear_cinematic_colors<H: crate::cinematic_host::Host>(
     offset: u16,
     count: u16,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    change_palette(game, |_, planes| {
         for index in cinematic_color_indices(offset, count) {
             for plane in [256, 512, 768, 1024] {
-                planes.0[index + plane] = 0;
+                planes[index + plane] = 0;
             }
         }
     });
 }
 
-pub fn compose_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(
-        game,
-        |_, (planes, palette): &mut (FadePlanes, PaletteBuffer)| {
-            for index in 0..256 {
-                // Red is the high byte of plane 2's word.
-                let red = u16::from(planes.0[index + 512].to_le_bytes()[1] & 31);
-                let green = (planes.0[index + 768] >> 3) & 0x3e0;
-                let blue = (planes.0[index + 1024] << 2) & 0x7c00;
-                let color = red | green | blue;
-                planes.0[index] = color;
-                palette.0[index] = color;
-            }
-        },
-    );
+pub fn compose_cinematic_palette<H: crate::cinematic_host::Host>(game: &mut H) {
+    change_palette(game, |palette, planes| {
+        for index in 0..256 {
+            // Red is the high byte of plane 2's word.
+            let red = u16::from(planes[index + 512].to_le_bytes()[1] & 31);
+            let green = (planes[index + 768] >> 3) & 0x3e0;
+            let blue = (planes[index + 1024] << 2) & 0x7c00;
+            let color = red | green | blue;
+            planes[index] = color;
+            palette[index] = color;
+        }
+    });
 }
 
-pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
+pub fn fade_cinematic_colors<H: crate::cinematic_host::Host>(
     offset: u16,
     count: u16,
     increasing: bool,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    change_palette(game, |_, planes| {
         for index in cinematic_color_indices(offset, count) {
             for plane in [512, 768, 1024] {
                 let current = index + plane;
-                let step = planes.0[current + 768];
-                let word = &mut planes.0[current];
+                let step = planes[current + 768];
+                let word = &mut planes[current];
                 *word = if increasing {
                     step.wrapping_add(*word) & 0x1fff
                 } else {
@@ -190,21 +103,21 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     });
 }
 
-pub fn prepare_cinematic_palette_fade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+pub fn prepare_cinematic_palette_fade<H: crate::cinematic_host::Host>(game: &mut H) {
+    change_palette(game, |_, planes| {
         for index in 0..256 {
-            let color = planes.0[index + 256];
+            let color = planes[index + 256];
             for channel in 0..3 {
                 let component = (color >> (5 * channel)) & 31;
                 let current = index + 512 + 256 * channel;
-                planes.0[current] = component << 8;
-                planes.0[current + 768] = component << 3;
+                planes[current] = component << 8;
+                planes[current + 768] = component << 3;
             }
         }
     });
 }
 
-pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
+pub fn queue_cinematic_tilemap<H: crate::cinematic_host::Host>(
     tiles: crate::visual_state::CinematicTilemap,
     cine: &mut Cinematic,
     game: &mut H,
@@ -236,7 +149,7 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
     );
 }
 
-pub fn set_cinematic_blend<H: crate::menus::host::Host + ?Sized>(
+pub fn set_cinematic_blend<H: crate::cinematic_host::Host>(
     main_screen: u8,
     sub_screen: u8,
     color_window: u8,
@@ -340,7 +253,7 @@ where
     }
 }
 
-pub fn set_cinematic_backdrop<H: crate::menus::host::Host + ?Sized>(lit: bool, game: &mut H) {
+pub fn set_cinematic_backdrop<H: crate::cinematic_host::Host>(lit: bool, game: &mut H) {
     crate::frame_display_byte!(game, Field::ColorSelection => 0);
     crate::frame_display_byte!(game, Field::ColorMath => if lit { 0x81 } else { 0 });
     let color = if lit { [56, 88, 0x80] } else { [32, 64, 0x80] };
@@ -377,7 +290,7 @@ pub fn drift_cinematic_sprite(
 
 /// Copy the palette buffer's colours into the fade planes' plane 1
 /// ($7E:2200..$7E:23FF), colour by colour, each stored in native byte order.
-pub fn capture_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn capture_cinematic_palette<H: crate::cinematic_host::Host>(game: &mut H) {
     use crate::cinematic_state::Array;
     use crate::projection::Field as View;
     for (color, plane) in (0..256).zip(256..) {
@@ -387,7 +300,7 @@ pub fn capture_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mu
     }
 }
 
-pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn fade_cinematic_fixed_color<H: crate::cinematic_host::Host>(game: &mut H) {
     for (field, black) in [
         (Field::FixedColor0, 0x20u8),
         (Field::FixedColor1, 0x40),
@@ -413,7 +326,7 @@ pub fn clear_cinematic_sprites(cine: &mut Cinematic) {
     }
 }
 
-pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(
+pub fn clear_cinematic_background<H: crate::cinematic_host::Host>(
     fill: u16,
     cine: &mut Cinematic,
     game: &mut H,
@@ -481,15 +394,18 @@ const BACKGROUND_END: usize = 0x1fa02;
 /// blocks ($7F:9602..$7F:FA01). The credits rows come from $7F:0000..$7F:1FFF,
 /// the intro's Japanese text tiles from $7F:8290 and its background from
 /// $7F:9000..$7F:97FF, across the behaviour bytes and the background blocks.
-pub(crate) fn decompressed_byte<H: crate::menus::host::Host + ?Sized>(game: &H, at: usize) -> u8 {
+pub(crate) fn decompressed_byte<H: crate::cinematic_host::Scene + ?Sized>(
+    game: &H,
+    at: usize,
+) -> u8 {
     let lane = |word: u16, offset: usize| word.to_le_bytes()[offset % 2];
     match at {
-        LEVEL_SIZE..LEVEL_WORDS => lane(game.level_data_size(), at - LEVEL_SIZE),
+        LEVEL_SIZE..LEVEL_WORDS => lane(game.level_size_word(), at - LEVEL_SIZE),
         LEVEL_WORDS..LEVEL_BEHAVIOR => {
             let offset = at - LEVEL_WORDS;
-            lane(game.level_word(offset / 2), offset)
+            lane(game.cell_level(offset / 2), offset)
         }
-        LEVEL_BEHAVIOR..BACKGROUND_BLOCKS => game.level_behavior(at - LEVEL_BEHAVIOR),
+        LEVEL_BEHAVIOR..BACKGROUND_BLOCKS => game.cell_behavior(at - LEVEL_BEHAVIOR),
         BACKGROUND_BLOCKS..BACKGROUND_END => {
             let offset = at - BACKGROUND_BLOCKS;
             lane(game.background_block(offset / 2), offset)
@@ -503,7 +419,7 @@ pub(crate) fn decompressed_byte<H: crate::menus::host::Host + ?Sized>(game: &H, 
 
 /// Copy captured lanes in their original traversal and publication order.
 /// Native room-payload sources remain a disclosed compatibility boundary.
-pub fn transfer_cinematic_words<H: crate::menus::host::Host + ?Sized>(
+pub fn transfer_cinematic_words<H: crate::cinematic_host::Scene + ?Sized>(
     count: usize,
     step: isize,
     lanes: &[(
@@ -581,31 +497,25 @@ pub fn project_cinematic_point_reads(
 }
 
 /// Clear the cinematic entrance's exit through the supplied world identity map.
-pub fn clear_cinematic_exit<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) {
-    use crate::session_access::SessionAccess as _;
-    let mut runtime = game.runtime();
-    runtime.session_mut().set_exit_key(0);
-    runtime.refresh_inputs();
+pub fn clear_cinematic_exit<H: crate::session_access::SessionAccess + ?Sized>(game: &mut H) {
+    game.session_mut().set_exit_key(0);
+    game.refresh_inputs();
 }
 
 /// Set the intro drawing dispatch on its existing player transition owner.
-pub fn set_cinematic_draw_mode<H: crate::runtime_access::RuntimeAccess + ?Sized>(
+pub fn set_cinematic_draw_mode<H: crate::session_access::SessionAccess + ?Sized>(
     mode: crate::player_transitions::state::DrawMode,
     game: &mut H,
 ) {
-    use crate::session_access::SessionAccess as _;
-    let mut runtime = game.runtime();
-    runtime.session_mut().player.transitions.draw_handler = mode;
-    runtime.refresh_inputs();
+    game.session_mut().player.transitions.draw_handler = mode;
+    game.refresh_inputs();
 }
 
 /// Set scene two's player frame dispatch in alpha-before-beta order.
-pub fn set_cinematic_frame_modes<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) {
+pub fn set_cinematic_frame_modes<H: crate::session_access::SessionAccess + ?Sized>(game: &mut H) {
     use crate::player_transitions::state::{FrameAlphaMode, FrameBetaMode};
-    use crate::session_access::SessionAccess as _;
-    let mut runtime = game.runtime();
-    let transitions = &mut runtime.session_mut().player.transitions;
+    let transitions = &mut game.session_mut().player.transitions;
     transitions.frame_alpha = FrameAlphaMode::from_raw(0xe6c9);
     transitions.frame_beta = FrameBetaMode::from_raw(0xe833);
-    runtime.refresh_inputs();
+    game.refresh_inputs();
 }

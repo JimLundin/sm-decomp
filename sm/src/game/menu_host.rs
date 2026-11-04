@@ -69,6 +69,17 @@ impl sm_game::sprite_output::MapHost for Game {
     }
 }
 
+/// The original's `RomPtr_RAM` assertion on a RAM-table address.
+pub(crate) fn assert_ram_pointer(address: u16) {
+    // SAFETY: the failure path reports through the C assertion binding and does not return.
+    unsafe {
+        crate::native_assertion! {
+            '_c2rust_label: address < 0x2000;
+            b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
+        };
+    }
+}
+
 // SAFETY (all `unsafe` calls below): the menus run from the frame loop with
 // the SNES backend installed, and `&mut self` excludes any other access.
 impl MenuRuntime for Game {
@@ -85,6 +96,10 @@ impl MenuRuntime for Game {
     fn rtl_unreachable(&mut self) -> bool {
         crate::rtl::report_unreachable(self)
     }
+    fn assert_ram_pointer(&mut self, address: u16) {
+        assert_ram_pointer(address);
+    }
+
     fn run_hdma_objects(&mut self) {
         // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
         crate::game::visual_runtime::update_hdma(false, self);
@@ -110,32 +125,6 @@ impl MenuRuntime for Game {
     }
     fn set_message_box_das0l_value(&mut self, value: u16) {
         self.message_box_das0l_value = value;
-    }
-    fn assert_ram_pointer(&mut self, address: u16) {
-        // SAFETY: the failure path reports through the C assertion binding and does not return.
-        unsafe {
-            crate::native_assertion! {
-                '_c2rust_label: address < 0x2000;
-                b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
-            };
-        }
-    }
-    fn cinematic_sprite_pre_instruction(
-        &mut self,
-        pre: u32,
-        object: u16,
-        cine: &mut sm_game::cinematic_state::Cinematic,
-    ) {
-        sm_game::cinematic_dispatch::run_sprite_pre_instruction(pre, object, cine, self)
-    }
-    fn cinematic_sprite_instruction(
-        &mut self,
-        command: u32,
-        object: u16,
-        operand: u16,
-        cine: &mut sm_game::cinematic_state::Cinematic,
-    ) -> u16 {
-        sm_game::cinematic_states::run_sprite_instruction(command, object, operand, cine, self)
     }
     fn write_dma_register(&mut self, register: u16, value: u8) {
         crate::rtl::write_dma_register(register, value, self)
@@ -286,40 +275,6 @@ const _: () = assert!(
     core::mem::offset_of!(crate::types::EnemyData, ai_preinstr)
         == core::mem::offset_of!(sm_game::menus::prelude::EnemyData, ai_preinstr)
 );
-
-impl sm_game::cinematic_host::Host for Game {
-    fn spawn_power_bomb(&mut self) {
-        sm_game::explosion_window::spawn_power_bomb(self);
-    }
-
-    fn initialize_player(&mut self) {
-        crate::game::session_runtime::initialize_player(self);
-    }
-
-    fn disable_scanline_irq(&mut self) {
-        sm_game::display_refresh::disable_scanline_irq(self);
-    }
-
-    fn advance_ending_tile_upload(&mut self, page: u16) {
-        crate::game::mode7_transfers::advance_ending_tile_upload(page, self);
-    }
-
-    fn advance_intro_player(&mut self) {
-        // Samus's projectiles and her frame run on one lease.
-        let mut runtime = crate::game::session_runtime::Runtime::new(self);
-        crate::game::player_projectiles::prepare(&mut runtime);
-        crate::game::session_runtime::player_update_runtime::advance_frame(&mut runtime);
-    }
-
-    fn native_assertion(
-        &mut self,
-        expression: &'static [u8],
-        line: u32,
-        function: &'static [u8],
-    ) -> ! {
-        crate::c_library::assertion_failed(expression, b"src/sm_8b.c\0", line, function)
-    }
-}
 
 // The menus address these enemy record fields by offset.
 const _: () = assert!(core::mem::offset_of!(crate::types::EnemyData, x_pos) == 2);

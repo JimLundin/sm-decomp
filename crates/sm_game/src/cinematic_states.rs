@@ -79,21 +79,21 @@ const SLIME_Y_FAST: [i16; 138] = [
     5, -0x4000, 5, -0x2000,
 ];
 
-fn run_function<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+fn run_function<H: Host>(cine: &mut Cinematic, game: &mut H) {
     let address = (BANK << 16)
         | u32::from(crate::sequence_state::Access::sequence_flow(&*game).cinematic_function);
     crate::cinematic_dispatch::run_function(address, cine, game);
 }
 
 /// Whether the cinematic function resumes after a wait for NMIs.
-pub fn resuming<H: Host + ?Sized>(game: &H) -> bool {
+pub fn resuming<H: Host>(game: &H) -> bool {
     game.screen_primary() != 0
 }
 
 /// Wait for `count` NMIs inside a cinematic function (`LDX #count-1;
 /// JSL $808338; DEX; BPL`): true while the function must return and the
 /// game state yield; the next frame's call of the same function resumes here.
-pub fn wait_for_nmis<H: Host + ?Sized>(count: u8, game: &mut H) -> bool {
+pub fn wait_for_nmis<H: Host>(count: u8, game: &mut H) -> bool {
     let mut left = game.screen_primary();
     if left == 0 {
         left = count;
@@ -118,7 +118,7 @@ fn count_frames(cine: &mut Cinematic) {
 }
 
 /// Draws the Nintendo logo. Was `AddNintentoLogoToOam`.
-pub fn draw_nintendo_logo<H: Host + ?Sized>(game: &mut H) {
+pub fn draw_nintendo_logo<H: crate::cinematic_host::Scene + ?Sized>(game: &mut H) {
     crate::sprite_output::paletted(
         0x8c,
         NINTENDO_LOGO,
@@ -135,7 +135,11 @@ const LOGO: &str = "nintendo logo";
 /// The Nintendo logo coroutine: set up the display, then fade the logo in,
 /// hold it and fade it out, yielding to the frame loop at each refresh.
 /// Was `InitializeIoDisplayLogo_Async`.
-pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
+pub fn nintendo_logo<
+    H: crate::cinematic_host::Scene + crate::runtime_access::RuntimeAccess + ?Sized,
+>(
+    game: &mut H,
+) -> u8 {
     crate::probe::hit("coroutine.logo");
     let mut stage = game.screen_primary();
     if stage == 0 {
@@ -360,8 +364,8 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
 }
 
 /// Game state 1 - title sequence ($8B:9A22). Was `GameState_1_OpeningCinematic_`.
-pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
-    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+pub fn title_sequence<H: Host>(game: &mut H) -> u8 {
+    Cinematic::lend(game, |game, cine| {
         run_function(cine, game);
         CinematicObjects::Sprites.advance(cine, game);
         CinematicObjects::Mode7.advance(cine, game);
@@ -376,7 +380,7 @@ pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
 
 /// Runs Samus during the intro once she is shown (`intro_samus_display` is
 /// `display`), with her timers. Was `HandleSamusDuringIntro`.
-pub fn handle_samus_during_intro<H: Host + ?Sized>(display: u16, game: &mut H) {
+pub fn handle_samus_during_intro<H: Host>(display: u16, game: &mut H) {
     if display != 0 {
         game.advance_intro_player();
         if game.invincibility_timer() != 0 {
@@ -391,8 +395,8 @@ pub fn handle_samus_during_intro<H: Host + ?Sized>(display: u16, game: &mut H) {
 /// Game state 1Eh/22h/25h (intro / Ceres goes boom, Samus goes to Zebes /
 /// Ceres goes boom with Samus) ($8B:A35B). Was
 /// `GameState_37_CeresGoesBoomWithSamus_`.
-pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
-    let display = crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+pub fn intro<H: Host>(game: &mut H) -> u8 {
+    let display = Cinematic::lend(game, |game, cine| {
         run_function(cine, game);
         if resuming(game) {
             return None;
@@ -404,9 +408,9 @@ pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
         return 1;
     };
     // Samus's frame reads the table as enemy projectiles, so it runs between
-    // two copies, on the table as the cinematic function left it.
+    // two loans, on the table as the cinematic function left it.
     handle_samus_during_intro(display, game);
-    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+    Cinematic::lend(game, |game, cine| {
         CinematicObjects::Sprites.advance(cine, game);
         CinematicObjects::Mode7.advance(cine, game);
         CinematicObjects::Background.advance(cine, game);
@@ -420,8 +424,8 @@ pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
 
 /// Game state 27h (ending and credits) ($8B:D443). Was
 /// `GameState_39_EndingAndCredits_`.
-pub fn ending_and_credits<H: Host + ?Sized>(game: &mut H) -> u8 {
-    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+pub fn ending_and_credits<H: Host>(game: &mut H) -> u8 {
+    Cinematic::lend(game, |game, cine| {
         run_function(cine, game);
         if resuming(game) {
             return 1;
@@ -440,7 +444,7 @@ pub fn ending_and_credits<H: Host + ?Sized>(game: &mut H) -> u8 {
 
 /// Handle final screen cinematic BG objects ($8B:D474): from the fade from
 /// white on. Was `MaybeHandleCinematicBgObjects`.
-pub fn advance_final_screen_background<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn advance_final_screen_background<H: Host>(cine: &mut Cinematic, game: &mut H) {
     let function = crate::sequence_state::Access::sequence_flow(&*game).cinematic_function;
     if function.wrapping_sub(FINAL_SCREEN) < 0x8000 {
         CinematicObjects::Background.advance(cine, game);
@@ -449,7 +453,7 @@ pub fn advance_final_screen_background<H: Host + ?Sized>(cine: &mut Cinematic, g
 
 /// Runs cinematic sprite instruction `ea` for object `k` at cursor `j`;
 /// returns the next cursor. Was `CallCinematicSprInstr`.
-pub fn run_sprite_instruction<H: Host + ?Sized>(
+pub fn run_sprite_instruction<H: Host>(
     ea: u32,
     k: u16,
     j: u16,
@@ -477,7 +481,7 @@ struct NativeCheck {
 
 /// Advances egg particle `k` on one axis by the velocity its index selects
 /// from `table`, a table of 16.16 pairs; the original asserted the index.
-fn advance_particle_axis<H: Host + ?Sized, W: Copy + Into<Word>>(
+fn advance_particle_axis<H: Host, W: Copy + Into<Word>>(
     cine: &mut Cinematic,
     game: &mut H,
     k: u16,
@@ -517,7 +521,7 @@ const SLIME_FUNCTION: &[u8] = b"void SetSomeStuffForSpriteObject_9(uint16)\0";
 /// Pre-instruction - cinematic sprite object $CECD-$CEEB (metroid egg
 /// particle) ($8B:A994): fly until below the floor, then land. Was
 /// `SetSomeStuffForSpriteObject_7`.
-pub fn egg_particle<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
+pub fn egg_particle<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     advance_particle_axis(
         cine,
@@ -554,7 +558,7 @@ pub fn egg_particle<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H
 /// Pre-instruction - cinematic sprite object $CEF1 (metroid egg slime drops)
 /// ($8B:AAB3): odd drops fall slower; below the floor they splash. Was
 /// `SetSomeStuffForSpriteObject_9`.
-pub fn slime_drop<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
+pub fn slime_drop<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     advance_particle_axis(
         cine,

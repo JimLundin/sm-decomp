@@ -192,6 +192,7 @@ pub mod game {
     pub(crate) mod actor_composed_route;
     pub(crate) mod actors;
 
+    pub(crate) mod cinematic_lease;
     pub use sm_game::constants;
     pub(crate) mod ending_screens;
     pub(crate) mod enemy_speeds;

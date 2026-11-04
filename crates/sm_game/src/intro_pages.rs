@@ -6,7 +6,7 @@ use crate::cinematic_state::{Array, Cinematic};
 use crate::display::preparation::Field;
 use crate::imported::Imported;
 use crate::presentation_workspace::{Point, Role};
-use crate::runtime_access::with_session;
+use crate::session_access::with_stores;
 use crate::word_transfers::{WordEndpoint, rom_words, stored_native};
 
 use crate::cinematic::{
@@ -34,7 +34,7 @@ pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE73: u32 = 0xce73;
 pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE79: u32 = 0xce79;
 pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCF27: u32 = 0xcf27;
 
-fn load_japanese_line<H: crate::menus::host::Host + ?Sized>(address: u16, game: &mut H) {
+fn load_japanese_line<H: crate::cinematic_host::Host>(address: u16, game: &mut H) {
     let record =
         crate::menus::menu_tilemap::native_record((0x8bu32 << 16) | u32::from(address), game);
     let mut destination = record.word(0);
@@ -57,7 +57,7 @@ fn load_japanese_line<H: crate::menus::host::Host + ?Sized>(address: u16, game: 
     }
 }
 
-pub fn advance_scene_sprite<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_scene_sprite<H: crate::cinematic_host::Host>(
     object: u16,
     scene: u8,
     cine: &mut Cinematic,
@@ -119,7 +119,7 @@ pub fn reset_caret(cine: &mut Cinematic) {
     *cine.spr_instruction_timer(15) = 1;
 }
 
-pub fn clear_english_text<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn clear_english_text<H: crate::cinematic_host::Host>(game: &mut H) {
     crate::cinematic::transfer_cinematic_words(
         640,
         2,
@@ -130,7 +130,7 @@ pub fn clear_english_text<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game,
     );
 }
-pub fn clear_japanese_tiles<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn clear_japanese_tiles<H: crate::cinematic_host::Host>(game: &mut H) {
     for start in (0..768).step_by(8) {
         crate::cinematic::transfer_cinematic_words(
             8,
@@ -149,7 +149,7 @@ pub fn clear_japanese_tiles<H: crate::menus::host::Host + ?Sized>(game: &mut H) 
 
 // Narrative callbacks retain their ROM addresses; these functions own the shared
 // page/scene lifecycle, including the Japanese continuation and input delay.
-pub fn create_japanese_text<H: crate::menus::host::Host + ?Sized>(
+pub fn create_japanese_text<H: crate::cinematic_host::Host>(
     object: u16,
     j: u16,
     cine: &mut Cinematic,
@@ -172,7 +172,7 @@ pub fn reset_text_marker(cine: &mut Cinematic) {
     *cine.spr_instruction_timer(15) = 1;
 }
 
-pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_marker<H: crate::cinematic_host::Host>(
     next: u16,
     continuation: Option<u16>,
     j: u16,
@@ -204,10 +204,7 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
     j
 }
 
-fn page_input_ready<H: crate::menus::host::Host + ?Sized>(
-    cine: &mut Cinematic,
-    game: &mut H,
-) -> bool {
+fn page_input_ready<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) -> bool {
     if *cine.intro_japanese_text_timer() != 0 {
         *cine.intro_japanese_text_timer() = cine.intro_japanese_text_timer().wrapping_sub(1);
         false
@@ -231,7 +228,7 @@ pub enum Palette {
 }
 
 impl Palette {
-    fn crossfade<H: crate::menus::host::Host + ?Sized>(self, to_page: bool, game: &mut H) {
+    fn crossfade<H: crate::cinematic_host::Host>(self, to_page: bool, game: &mut H) {
         fade_cinematic_colors(0, if to_page { 0x10 } else { 0x14 }, to_page, game);
         fade_cinematic_colors(0x60, 0x10, to_page, game);
         fade_cinematic_colors(0x1d2, 6, to_page, game);
@@ -249,7 +246,7 @@ impl Palette {
     }
 }
 
-pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
+pub fn wait_for_scene<H: crate::cinematic_host::Host>(
     scene: Scene,
     cine: &mut Cinematic,
     game: &mut H,
@@ -271,7 +268,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                     words.samus_pose = K_POSE_02_FACE_L_NORMAL as u16
                 },
             );
-            game.finish_pose_change();
+            crate::player_transitions::finish_pose_change(game);
             let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
             game.set_player_x(x);
             game.set_previous_player_x(x);
@@ -298,7 +295,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                 // The Mother Brain page's background over the level data: its
                 // level words from $8C:BEC3, the first 512 behaviour bytes cleared.
                 let level: [u16; 224] = rom_words(game, 0x8cbec3);
-                with_session(game, |session| {
+                with_stores(game, |session| {
                     let cells = session.room.terrain.cells_mut();
                     for (cell, level) in cells.iter_mut().zip(level) {
                         cell.level = level;
@@ -327,7 +324,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                 *cine.intro_frame_counter() = 0;
                 // The page's background level words from $8C:C083.
                 let level: [u16; 384] = rom_words(game, 0x8cc083);
-                with_session(game, |session| {
+                with_stores(game, |session| {
                     let cells = session.room.terrain.cells_mut();
                     for (cell, level) in cells.iter_mut().zip(level) {
                         cell.level = level;
@@ -339,14 +336,14 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                 );
             }
             crate::cinematic::set_cinematic_frame_modes(game);
-            game.demo_start();
+            crate::player_transitions::demo::start(game.session_mut());
             let input = if mother_brain {
                 ADDR_STRU_918784
             } else {
                 ADDR_STRU_91877E
             };
             // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
-            game.demo_load(0x8000, input as u16);
+            crate::player_transitions::demo::load(game, 0x8000, input as u16);
             *cine.intro_samus_display() = if mother_brain { u16::MAX } else { 1 };
             Palette::Gameplay
         }
@@ -382,7 +379,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
     compose_cinematic_palette(game);
 }
 
-pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(
+pub fn fade_to_scene<H: crate::cinematic_host::Host>(
     palette: Palette,
     cine: &mut Cinematic,
     game: &mut H,
@@ -418,7 +415,7 @@ pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(
+pub fn wait_for_music<H: crate::cinematic_host::Host>(
     next: u16,
     cine: &mut Cinematic,
     game: &mut H,
@@ -443,7 +440,7 @@ pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
+pub fn wait_for_fade<H: crate::cinematic_host::Host>(
     fade: CinematicFade,
     next: u16,
     cine: &mut Cinematic,
@@ -462,7 +459,7 @@ pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn start_page<H: crate::menus::host::Host + ?Sized>(
+pub fn start_page<H: crate::cinematic_host::Host>(
     next: u16,
     j: u16,
     cine: &mut Cinematic,
@@ -477,7 +474,7 @@ pub fn start_page<H: crate::menus::host::Host + ?Sized>(
     j
 }
 
-pub fn show_page<H: crate::menus::host::Host + ?Sized>(
+pub fn show_page<H: crate::cinematic_host::Host>(
     object: u16,
     next: u16,
     cine: &mut Cinematic,
@@ -490,7 +487,7 @@ pub fn show_page<H: crate::menus::host::Host + ?Sized>(
     setup_page_palettes(cine, game);
 }
 
-pub fn fade_to_page<H: crate::menus::host::Host + ?Sized>(
+pub fn fade_to_page<H: crate::cinematic_host::Host>(
     palette: Palette,
     cine: &mut Cinematic,
     game: &mut H,
@@ -542,8 +539,8 @@ pub fn import_intro_palette(image: &sm_data::cartridge::RomImage) -> Option<Impo
 /// Intro colour `index` in the loaded image. The record serves it while that
 /// image is the imported allocation; otherwise, and past the 256 colours, the
 /// original indexed load runs with its failures.
-fn intro_color<H: crate::menus::host::Host + ?Sized>(game: &H, index: usize) -> u16 {
-    let rom = game.loaded_image();
+fn intro_color<H: crate::cinematic_host::Host>(game: &H, index: usize) -> u16 {
+    let rom = crate::cartridge::LoadedImage::loaded_image(game);
     Imported::from(game.intro_palette(), rom)
         .and_then(|palette| palette.color(index))
         .unwrap_or_else(|| {
@@ -554,7 +551,7 @@ fn intro_color<H: crate::menus::host::Host + ?Sized>(game: &H, index: usize) -> 
         })
 }
 
-pub fn draw_japanese_text<H: crate::menus::host::Host + ?Sized>(
+pub fn draw_japanese_text<H: crate::cinematic_host::Host>(
     lines: &[u16],
     restore_palette: bool,
     j: u16,
@@ -564,7 +561,7 @@ pub fn draw_japanese_text<H: crate::menus::host::Host + ?Sized>(
     set_cinematic_tilemap_updates(false, cine);
     if restore_palette {
         let colors: [u16; 3] = std::array::from_fn(|index| intro_color(game, 17 + index));
-        with_session(game, |session| {
+        with_stores(game, |session| {
             session.presentation.visual_mut().colors[17..20].copy_from_slice(&colors);
         });
     }
@@ -576,7 +573,7 @@ pub fn draw_japanese_text<H: crate::menus::host::Host + ?Sized>(
     j
 }
 
-pub fn continue_japanese_text<H: crate::menus::host::Host + ?Sized>(
+pub fn continue_japanese_text<H: crate::cinematic_host::Host>(
     next: u16,
     lines: &[u16],
     k: u16,
@@ -593,7 +590,7 @@ pub fn continue_japanese_text<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn wait_after_japanese_text<H: crate::menus::host::Host + ?Sized>(
+pub fn wait_after_japanese_text<H: crate::cinematic_host::Host>(
     next: u16,
     j: u16,
     cine: &mut Cinematic,
@@ -606,7 +603,7 @@ pub fn wait_after_japanese_text<H: crate::menus::host::Host + ?Sized>(
     j
 }
 
-pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn show_final_page<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     set_cinematic_tilemap_updates(true, cine);
     clear_english_text(game);
     CinematicObjects::Background.spawn(
@@ -622,10 +619,7 @@ pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinemati
     crate::music_requests::queue_delayed_8(0, game);
 }
 
-pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(
-    cine: &mut Cinematic,
-    game: &mut H,
-) {
+pub fn wait_for_final_page<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     if page_input_ready(cine, game) {
         *cine.var13() = 127;
         if crate::session_words::current(game).japanese_text_flag != 0 {
@@ -643,9 +637,9 @@ pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(
 
 /// Load the intro pages' palette ($8C:E3E9) into the palette fade's colour
 /// plane ($7E:2200), as native-order words.
-fn load_page_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn load_page_palette<H: crate::cinematic_host::Host>(game: &mut H) {
     let colors: [u16; 256] = rom_words(game, 0x8ce3e9);
-    with_session(game, |session| {
+    with_stores(game, |session| {
         let plane = &mut session.actors.extended.blocks[4][256..512];
         for (word, color) in plane.iter_mut().zip(colors) {
             *word = stored_native(color);
@@ -653,7 +647,7 @@ fn load_page_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     });
 }
 
-fn setup_page_palettes<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+fn setup_page_palettes<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     set_cinematic_blend(6, 17, 2, 0, game);
     load_page_palette(game);
     prepare_cinematic_palette_fade(game);
@@ -671,7 +665,7 @@ pub fn enable_text(j: u16, cine: &mut Cinematic) -> u16 {
     j
 }
 
-pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
+pub fn fade_out_to_ceres<H: crate::cinematic_host::Host>(
     restore_samus: bool,
     cine: &mut Cinematic,
     game: &mut H,
@@ -698,7 +692,7 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) -> u16 {
+pub fn finish_pages<H: crate::cinematic_host::Host>(j: u16, game: &mut H) -> u16 {
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = 0xb72f
     });
@@ -726,7 +720,7 @@ pub fn spawn_text_glow(definition: u16, position: u16, cine: &mut Cinematic) {
     }
 }
 
-pub fn advance_text_glow<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn advance_text_glow<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     let mut object = 14i32;
     while object >= 0 {
         *cine.text_glow_object_index() = object as u16;
@@ -738,10 +732,7 @@ pub fn advance_text_glow<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinema
     }
 }
 
-fn advance_text_glow_object<H: crate::menus::host::Host + ?Sized>(
-    cine: &mut Cinematic,
-    game: &mut H,
-) {
+fn advance_text_glow_object<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     let object = usize::from(*cine.text_glow_object_index());
     let timer = *cine.offset(GLOW_TIMERS, object & !1);
     *cine.offset(GLOW_TIMERS, object & !1) = timer.wrapping_sub(1);
