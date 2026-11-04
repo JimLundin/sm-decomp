@@ -43,7 +43,7 @@ pub trait SpriteHost:
     + crate::records::Records
     + crate::cartridge::LoadedImage
     + crate::cartridge::NativeImage
-    + crate::runtime_access::RuntimeAccess
+    + crate::runtime_access::Lend
     + crate::sprite_drawing::ObjectAccess
     + crate::escape_countdown::Access
 {

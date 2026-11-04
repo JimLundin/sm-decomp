@@ -3,7 +3,7 @@
 //! otherwise a copy decoded from RAM and stored back if it changed.
 
 use crate::projection::Views;
-use crate::runtime_access::RuntimeAccess;
+use crate::runtime_access::Lend;
 use crate::session::{EnemyProjectile, EnemyProjectiles};
 
 /// Projectile slots the original runs at once.
@@ -119,7 +119,7 @@ impl crate::session_cohort::Cohort for EnemyProjectiles {
 /// Run `action` on the projectile slots.
 pub fn with_slots<H, T>(game: &mut H, action: impl FnOnce(&mut [EnemyProjectile; SLOTS]) -> T) -> T
 where
-    H: Views + RuntimeAccess + ?Sized,
+    H: Views + Lend + ?Sized,
 {
     with_projectiles(game, |projectiles| action(&mut projectiles.slots))
 }
@@ -130,13 +130,13 @@ where
 /// do not share, so `action` must leave the zoom alone.
 pub fn with_projectiles<H, T>(game: &mut H, action: impl FnOnce(&mut EnemyProjectiles) -> T) -> T
 where
-    H: Views + RuntimeAccess + ?Sized,
+    H: Views + Lend + ?Sized,
 {
     use crate::session_access::SessionAccess;
     #[cfg(sm_verify_dll)]
     crate::session_cohort::check_not_held(0x1997);
-    if game.runtime_admissible() {
-        return action(&mut game.runtime().session_mut().enemy_projectiles);
+    if game.lend_admissible() {
+        return game.lend(|lease| action(&mut lease.session_mut().enemy_projectiles));
     }
     let mut projectiles = EnemyProjectiles::default();
     game.load_words(&mut projectiles);
@@ -220,7 +220,7 @@ impl FileSelect<'_> {
 /// Run `action` on the file select menu's view of the table.
 pub fn with_file_select<H, T>(game: &mut H, action: impl FnOnce(&mut FileSelect<'_>) -> T) -> T
 where
-    H: Views + RuntimeAccess + ?Sized,
+    H: Views + Lend + ?Sized,
 {
     with_projectiles(game, |projectiles| action(&mut FileSelect(projectiles)))
 }

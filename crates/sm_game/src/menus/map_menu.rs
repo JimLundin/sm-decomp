@@ -633,12 +633,14 @@ fn initialize_room<H: Host + ?Sized>(
 ) {
     load_area_map(&mut screens.save_selection, game);
     draw_room_map(game);
-    crate::room_entry::selection::begin(
-        &mut game.runtime(),
-        crate::room_entry::api::ArrivalRequest::Start(
-            crate::room_entry::api::StartSite::CurrentLoadStation,
-        ),
-    );
+    game.lend(|lease| {
+        crate::room_entry::selection::begin(
+            lease,
+            crate::room_entry::api::ArrivalRequest::Start(
+                crate::room_entry::api::StartSite::CurrentLoadStation,
+            ),
+        )
+    });
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
     let header = game.view_word(crate::projection::Field::RoomHeader);

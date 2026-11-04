@@ -458,9 +458,9 @@ pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut 
     );
 }
 
-fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> u16 {
+fn room_area<H: crate::runtime_access::Lend + ?Sized>(game: &mut H) -> u16 {
     use crate::session_access::SessionAccess;
-    game.runtime().session().room.area
+    game.lend(|lease| lease.session().room.area)
 }
 
 pub fn reset_gameplay_layers<

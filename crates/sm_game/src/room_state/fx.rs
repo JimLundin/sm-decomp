@@ -91,11 +91,12 @@ impl<T: crate::menus::host::Host + ?Sized> SetupHost for T {
         crate::animated_tiles::execution::leased::spawn(definition, self);
     }
     fn store_session(&mut self, refresh: bool, store: impl FnOnce(&mut crate::session::Session)) {
-        let mut runtime = self.runtime();
-        store(runtime.session_mut());
-        if refresh {
-            runtime.words_stored();
-        }
+        self.lend(|runtime| {
+            store(runtime.session_mut());
+            if refresh {
+                runtime.words_stored();
+            }
+        });
     }
 }
 

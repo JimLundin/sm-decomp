@@ -380,22 +380,22 @@ pub fn upload_pending(host: &mut impl Host) {
 
 /// The compatibility entries: each runs on a fresh lease of `game`.
 pub mod leased {
-    use crate::runtime_access::RuntimeAccess;
+    use crate::runtime_access::Lend;
     use crate::session_access::SessionAccess;
 
-    pub fn set_enabled<H: RuntimeAccess + ?Sized>(enabled: bool, game: &mut H) {
-        super::set_enabled(game.runtime().session_mut(), enabled);
+    pub fn set_enabled<H: Lend + ?Sized>(enabled: bool, game: &mut H) {
+        game.lend(|lease| super::set_enabled(lease.session_mut(), enabled));
     }
-    pub fn clear<H: RuntimeAccess + ?Sized>(game: &mut H) {
-        super::clear(game.runtime().session_mut());
+    pub fn clear<H: Lend + ?Sized>(game: &mut H) {
+        game.lend(|lease| super::clear(lease.session_mut()));
     }
-    pub fn spawn<H: RuntimeAccess + ?Sized>(definition: u16, game: &mut H) {
-        super::spawn(&mut game.runtime(), definition);
+    pub fn spawn<H: Lend + ?Sized>(definition: u16, game: &mut H) {
+        game.lend(|lease| super::spawn(lease, definition));
     }
-    pub fn advance<H: RuntimeAccess + ?Sized>(game: &mut H) {
-        super::advance(&mut game.runtime());
+    pub fn advance<H: Lend + ?Sized>(game: &mut H) {
+        game.lend(|lease| super::advance(lease));
     }
-    pub fn upload_pending<H: RuntimeAccess + ?Sized>(game: &mut H) {
-        super::upload_pending(&mut game.runtime());
+    pub fn upload_pending<H: Lend + ?Sized>(game: &mut H) {
+        game.lend(|lease| super::upload_pending(lease));
     }
 }

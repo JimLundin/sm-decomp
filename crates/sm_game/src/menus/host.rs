@@ -17,22 +17,22 @@ pub trait SaveRam {
 }
 
 /// Samus's rules the menus and frame phases run, each on the game's own lease.
-pub trait PlayerRuntime: crate::runtime_access::RuntimeAccess {
+pub trait PlayerRuntime: crate::runtime_access::Lend {
     /// Draw the player projectiles.
     fn draw_projectiles(&mut self) {
-        crate::player_projectiles::presentation::draw_projectiles(&mut self.runtime());
+        self.lend(|lease| crate::player_projectiles::presentation::draw_projectiles(lease));
     }
     /// Restore Samus's movement sound after a message box.
     fn restore_movement_sound(&mut self) {
-        crate::player_projectiles::feedback::restore_sound(&mut self.runtime());
+        self.lend(|lease| crate::player_projectiles::feedback::restore_sound(lease));
     }
     /// Run Samus's pose command `command`; returns the original's result.
     fn player_command(&mut self, command: u16) -> u16 {
         use crate::player_transitions::commands::finish_ceres_arrival;
-        crate::player_transitions::command(&mut self.runtime(), command, finish_ceres_arrival)
+        self.lend(|lease| crate::player_transitions::command(lease, command, finish_ceres_arrival))
     }
 }
-impl<T: crate::runtime_access::RuntimeAccess + ?Sized> PlayerRuntime for T {}
+impl<T: crate::runtime_access::Lend + ?Sized> PlayerRuntime for T {}
 
 /// The frontend's soft-reset request, as the menus raise it.
 pub trait ResetRequest {
@@ -185,8 +185,8 @@ pub trait Host:
     + crate::records::Records
     + MenuRuntime
     + ResetRequest
-    + crate::runtime_access::RuntimeAccess
-    + crate::actors::access::ActorImage
+    + crate::runtime_access::Lend
+    + crate::screen_fade::Owner
 {
     type Sram: SaveRam + ?Sized;
     fn sram(&self) -> &Self::Sram;
