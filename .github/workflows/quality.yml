@@ -34,7 +34,16 @@ jobs:
         run: |
           sh tools/progress.sh
           python3 tools/cycle_report.py
-      - name: Hold the Phase 2 ratchets (RAM coupling and production lines)
+      # The pipeline tool (crates/sm_tools/src/bin/sm_pipeline) needs only the standard library.
+      - name: Build sm_pipeline
+        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs
+      - name: Code volume (advisory; docs/VERIFY_PIPELINE.md "Code volume")
+        run: |
+          "$RUNNER_TEMP/sm_pipeline" volume | tee "$RUNNER_TEMP/volume.txt"
+          { echo '```'; cat "$RUNNER_TEMP/volume.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Hold the Phase 2 ratchets (RAM coupling, production lines and code volume)
+        env:
+          SM_PIPELINE: ${{ runner.temp }}/sm_pipeline
         run: python3 tools/ram_ratchet.py
       - name: Keep the oracle patch policy in step with its inventory
         run: python3 tools/oracle_patch_policy.py --check
@@ -75,7 +84,6 @@ jobs:
         run: |
           if cargo test --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --no-fail-fast > test.log 2>&1; then status=0; else status=$?; fi
           cat test.log
-          rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs || status=1
           "$RUNNER_TEMP/sm_pipeline" test-summary test.log crates/sm_data crates/sm_game crates/sm_runtime crates/sm_tools || status=1
           exit $status
       - name: Run the full corpus after bank retirement
