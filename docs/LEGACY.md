@@ -84,16 +84,16 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 | $05ED-$05F4 | theirs | the multiplication product ($05F1-$05F4); the original never touches $05ED-$05F0 | 15 / 280 | `MultiplyScratch` covering the product, as it covers $05E9/$05EB | player collision |
 | $0B24-$0B27 | theirs | Samus tiles temporaries (top, bottom) | 67 / 9144 | storing the tiles definitions' halves where `$92:8000` does | Samus drawing |
 | $1966-$196B | theirs | current FX entry pointer and offset, palette FX bitset | 42 / 44 | loading the FX entry on the frame the original does (one frame per room load) | room FX |
-| $060B-$0610 | mine | drop count, enemy hitbox entry counters, projectile counter copy | 67 / 15449 | storing the counters the loops leave | actors, enemy drops |
+| $060B-$0610 | mine | drop count, enemy hitbox entry counters, projectile counter copy; $060B's low byte is the Session's (Botwoon's spit angle), which the mini-map, the extended spritemap draw and scans, the drops and the palette copies now store (both-73) | 67 / 15449 | the HUD initialisation's broken mini-map setup ($90:A8EF) storing $060B from the stale direct-page $22, which the Session does not hold; then the bytes past $060B | actors, enemy drops, HUD |
 | $0611-$0616 | mine | coroutine states (snesrev's bookkeeping in RAM the original never writes) | 66 / 280 | moving the coroutine state out of game RAM; permanent while it lives there | runtime |
 | $077E-$0782 | mine | `MY_COUNTER` (snesrev's counters in RAM the original never writes) | 66 / 384 | as above | runtime |
 | $078F-$0790 | mine | door BTS | 24 / 41 | storing the door BTS where the original does | room entry (doors) |
 | $07B7-$07B8 | mine | room state condition pointer | 5 / 5 | as above, for the state selection | room entry |
 | $0933-$093C | mine | scrolling and tilemap update temporaries | 67 / 16689 | storing the temporaries the scroll update leaves | scrolling |
-| $0D82-$0D8F | mine | saved button configuration, which the grapple ($94:A861-$AE36), the ending's wavy Samus ($88:EC57) and the rotating Ceres elevator ($90:8C27, $BC46) use as temporaries | 5 / 382 | storing them where the demo and those routines do | demo, grapple |
+| $0D82-$0D8F | mine | saved button configuration, which the grapple ($94:A861-$AE36), the ending's wavy Samus ($88:EC57) and the rotating Ceres elevator ($90:8C27, $BC46) use as temporaries; the grapple, the connecting grapple and the elevator now store them (`game_loop::Temporary`, both-73) | 5 / 382 | identifying the writer of the low bytes that differ on tick 0 of `elevator-up` and `space-jump-bubble-word-counter` | demo, grapple |
 | $0DD2-$0DD7 | mine | collision temporaries (slope index, distance) | 67 / 16758 | storing the temporaries the block collision leaves | player collision |
 | $0E02-$0E03 | mine | Samus bottom boundary position | 66 / 16128 | as above | player collision |
-| $0E20-$0E45 | mine | enemy temporaries | 58 / 12992 | widening the actors' compatibility scratch ($0E20-$0E2A) to the whole range | actors |
+| $0E20-$0E45 | mine | enemy temporaries; the draw now stores $0E20 and $0E22 (both-73) | 58 / 12992 | storing $0E22-$0E25, $0E28-$0E2B, $0E2E and $0E32-$0E3B where spawn ($A0:9275), the distance and angle ($A0:ACA8), the enemy projectile collision ($A0:9894), the enemy set load and the solid collision leave them; the PR corpus never saw $0E20, $0E26, $0E2C, $0E30 or $0E3C-$0E45 differ | actors |
 
 | $184A-$185B | mine | colliding-solid-enemy positions and deltas | 13 / 251 | storing them in the solid enemy collision ($A0:AAC8, $AB22) | player collision |
 | $186E-$1873, $1876-$1885 | mine | enemy spritemap and border collision temporaries (the right border, $1874, is compared: the projectile and bomb scans store it) | 36 / 4260 | storing them in the enemy collision | actors |
