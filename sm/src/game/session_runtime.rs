@@ -756,7 +756,10 @@ impl<'g> Runtime<'g> {
     /// where it had the RAM the former foreign call exported, and store back each
     /// byte it changed, in address order, where the foreign call's import took it.
     #[cfg(sm_verify_dll)]
-    fn observe_detached(&mut self, observe: impl FnOnce(&mut Game, &crate::game_state::WorkRam)) {
+    pub(crate) fn observe_detached(
+        &mut self,
+        observe: impl FnOnce(&mut Game, &crate::game_state::WorkRam),
+    ) {
         let before = (0..self.game.ram().len())
             .map(|at| self.byte(at))
             .collect::<Vec<u8>>();
