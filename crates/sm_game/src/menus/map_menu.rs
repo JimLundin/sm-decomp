@@ -159,12 +159,11 @@ fn load_foreground<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut
         true,
         game,
     );
-    set_native_word(
-        0x51,
-        ((game.display_control_byte(crate::display::preparation::Field::ObjectLayout) as i32) << 8
-            | 0xf) as u16,
-        game,
-    );
+    // Full brightness, keeping the object layout ($51, $52 as one word).
+    let layout = game.display_control_byte(DisplayField::ObjectLayout);
+    let [brightness, layout] = (u16::from(layout) << 8 | 0xf).to_ne_bytes();
+    game.store_physical_display_control_byte(DisplayField::Brightness, brightness);
+    game.store_physical_display_control_byte(DisplayField::ObjectLayout, layout);
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
 fn begin_background<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
@@ -401,10 +400,8 @@ fn select_area<H: Host + ?Sized>(screens: &mut MenuScreens, menu: &mut MenuState
         crate::room_view::Word::Area,
         AREAS[usize::from(screens.save_selection.map_area_index)],
     );
-    let mut bits = native_word(
-        USED_STATIONS + 2 * usize::from(crate::gameplay_context::navigation(game).area),
-        game,
-    );
+    let mut bits = game
+        .used_station_native_word(2 * usize::from(crate::gameplay_context::navigation(game).area));
     let mut station = 0u16;
     let coordinates = station_coordinates(crate::gameplay_context::navigation(game).area, game);
     let mut remaining = 16u16;
@@ -435,7 +432,7 @@ fn select_area<H: Host + ?Sized>(screens: &mut MenuScreens, menu: &mut MenuState
 }
 fn area_available<H: Host + ?Sized>(area: u16, game: &mut H) -> u16 {
     let station_word: i32 = 2 * AREAS[area as usize] as i32;
-    if native_word(USED_STATIONS + station_word as usize, game) != 0 {
+    if game.used_station_native_word(station_word as usize) != 0 {
         return 1;
     }
     let first_station = game
@@ -483,7 +480,7 @@ fn draw_area_labels<H: Host + ?Sized>(screens: &MenuScreens, game: &mut H) {
             512
         }) as u16;
         let station_word: u16 = (2u16).wrapping_mul(AREAS[i as usize]);
-        let mut unlocked: u16 = native_word(USED_STATIONS + station_word as usize, game);
+        let mut unlocked: u16 = game.used_station_native_word(station_word as usize);
         let mut station = station_coordinates(AREAS[i as usize], game);
         let mut remaining: i32 = 16;
         while station.word(0) != 0xffff {
@@ -677,9 +674,8 @@ fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &m
         && (crate::gameplay_word!(game.JOYPAD2_NEW_KEYS) as i32 & K_BUTTON_SELECT as i32) != 0
     {
         game.queue_sound(0, 0x38_u8, 6);
-        let mut unlocked: u16 = native_word(
-            USED_STATIONS + 2 * usize::from(crate::gameplay_context::navigation(game).area),
-            game,
+        let mut unlocked: u16 = game.used_station_native_word(
+            2 * usize::from(crate::gameplay_context::navigation(game).area),
         );
         let selection = &mut screens.save_selection;
         let mut remaining: i16 = selection.load_station as i16;
@@ -705,10 +701,8 @@ fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &m
                 ) as i16;
                 if terminator == -1i16 {
                     selection.load_station = 0;
-                    unlocked = native_word(
-                        USED_STATIONS
-                            + 2 * usize::from(crate::gameplay_context::navigation(game).area),
-                        game,
+                    unlocked = game.used_station_native_word(
+                        2 * usize::from(crate::gameplay_context::navigation(game).area),
                     );
                 } else if terminator != -2i16 {
                     break;
@@ -789,14 +783,14 @@ fn fade_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut
     game.fade(false);
     if (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) == 0 {
         menu.menu_index = menu.menu_index.wrapping_add(1);
-        set_native_word(enemy_data::FIRST + enemy_data::X_POS, 32, game);
+        game.set_view_word(crate::projection::Field::FileMapStartDelay, 32);
     }
 }
 fn start_game<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     if !super::resuming(game) {
-        let timer = enemy_data::FIRST + enemy_data::X_POS;
-        set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
-        if native_word(timer, game) != 0 {
+        let delay = crate::projection::Field::FileMapStartDelay;
+        game.set_view_word(delay, game.view_word(delay).wrapping_sub(1));
+        if game.view_word(delay) != 0 {
             return;
         }
     }
@@ -934,7 +928,10 @@ fn station_coordinates<H: Host + ?Sized>(area: u16, game: &mut H) -> sm_data::ca
     menu_tilemap::native_record(0x820000 | u32::from(pointer), game)
 }
 
-fn native_word<H: Host + ?Sized>(offset: usize, game: &H) -> u16 {
+/// The word at RAM address `offset` (below $2000) that a pause sprite
+/// animation table names outside the menu words: the explored map's, or
+/// whatever word lies there.
+fn animation_ram_word<H: Host + ?Sized>(offset: usize, game: &H) -> u16 {
     if (EXPLORED..EXPLORED + 258).contains(&offset) {
         let index = isize::try_from(offset - EXPLORED).unwrap();
         return u16::from_ne_bytes([
@@ -942,22 +939,15 @@ fn native_word<H: Host + ?Sized>(offset: usize, game: &H) -> u16 {
             game.map_explored_byte(index + 1),
         ]);
     }
-    if (0x3000..0x7000).contains(&offset) {
-        return game.screen_native_word(Point::physical(offset));
-    }
-    // Native address tables may select scalar/control storage outside this owner.
-    u16::from_ne_bytes([
-        game.ram().read_byte(offset),
-        game.ram().read_byte(offset + 1),
-    ])
+    // LEGACY(original-overflow): an animation table address outside the menu words.
+    crate::legacy_overflow::ram_native_word(game, offset)
 }
 
-fn set_native_word<H: Host + ?Sized>(offset: usize, value: u16, game: &mut H) {
-    if (0x3000..0x7000).contains(&offset) {
-        game.screen_write_slice(Point::physical(offset), &value.to_ne_bytes());
-    } else {
-        game.ram().copy_in(offset, &value.to_ne_bytes());
-    }
+/// Store `value` to the word at RAM address `offset` (below $2000) that a
+/// pause sprite animation table names outside the menu words.
+fn set_animation_ram_word<H: Host + ?Sized>(offset: usize, value: u16, game: &mut H) {
+    // LEGACY(original-overflow): an animation table address outside the menu words.
+    crate::legacy_overflow::ram_write_slice(game, offset, &value.to_ne_bytes());
 }
 
 fn area_selection<H: Host + ?Sized>(game: &H) -> Option<usize> {
@@ -1469,14 +1459,14 @@ fn animation_ram_address<H: Host + ?Sized>(table: u32, index: usize, game: &mut 
 fn animation_word<H: Host + ?Sized>(at: usize, menu: &mut MenuState, game: &H) -> u16 {
     match menu.word_at(at) {
         Some(word) => *word,
-        None => native_word(at, game),
+        None => animation_ram_word(at, game),
     }
 }
 
 fn set_animation_word<H: Host + ?Sized>(at: usize, value: u16, menu: &mut MenuState, game: &mut H) {
     match menu.word_at(at) {
         Some(word) => *word = value,
-        None => set_native_word(at, value, game),
+        None => set_animation_ram_word(at, value, game),
     }
 }
 
@@ -1513,7 +1503,8 @@ pub fn animate_pause_sprite<H: Host + ?Sized>(
         menu.word_at(variant - lane)
             .map_or(0, |word| word.to_le_bytes()[lane])
     } else {
-        game.ram().read_byte(variant)
+        // LEGACY(original-overflow): a variant address outside the menu words.
+        crate::legacy_overflow::ram_byte(game, variant)
     };
     let variant = 2 * u16::from(variant);
     let sprite = map_record(
