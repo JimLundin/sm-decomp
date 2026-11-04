@@ -550,10 +550,6 @@ impl<'g> Runtime<'g> {
     /// store back each byte they changed, in address order.
     #[cfg(sm_verify_dll)]
     fn observe_low_window(&mut self, address: u32) {
-        let before = (0..self.game.ram().len())
-            .map(|at| self.byte(at))
-            .collect::<Vec<u8>>();
-        let ram = crate::game_state::WorkRam::detached(&before);
         let spawn = &self.session().enemy_projectiles.spawn;
         let spawn = (
             crate::types::Rect16U {
@@ -569,13 +565,36 @@ impl<'g> Runtime<'g> {
             },
             spawn.drop_definition,
         );
-        self.game.observe_low_window(address, &ram, spawn);
+        self.observe_detached(|game, ram| game.observe_low_window(address, ram, spawn));
+    }
+    /// Run a verifier observer over a detached image of the lease's projected RAM,
+    /// where it had the RAM the former foreign call exported, and store back each
+    /// byte it changed, in address order, where the foreign call's import took it.
+    #[cfg(sm_verify_dll)]
+    fn observe_detached(&mut self, observe: impl FnOnce(&mut Game, &crate::game_state::WorkRam)) {
+        let before = (0..self.game.ram().len())
+            .map(|at| self.byte(at))
+            .collect::<Vec<u8>>();
+        let ram = crate::game_state::WorkRam::detached(&before);
+        observe(self.game, &ram);
         for (at, old) in before.into_iter().enumerate() {
             let new = ram.read_byte(at);
             if new != old {
                 self.set_byte(at, new);
             }
         }
+    }
+    /// The room background's initial-load RomPtr diagnostic on the lease: it prints
+    /// and marks the game failed, then the verifier's room background observer runs
+    /// over a detached image of the projected RAM, whose injected bytes are stored
+    /// back. The observations are refreshed on entry and on return, as the former
+    /// foreign call left them.
+    pub(crate) fn room_background_diagnostic(&mut self, address: u32) {
+        self.owned_player_call(|runtime| {
+            invalid_window(runtime.game, address);
+            #[cfg(sm_verify_dll)]
+            runtime.observe_detached(|game, ram| game.observe_room_background(address, ram));
+        });
     }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
     /// observations are refreshed on entry and on return, as the former foreign call left them.

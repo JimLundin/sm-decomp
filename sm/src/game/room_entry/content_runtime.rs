@@ -4,10 +4,7 @@ use super::{
     content::*,
     effects::{AssetRead, AssetSlot},
 };
-use crate::{
-    game::session_runtime::{Runtime, invalid_window},
-    rom::RomRecord,
-};
+use crate::{game::session_runtime::Runtime, rom::RomRecord};
 
 impl Runtime<'_> {
     fn room_pointer_diagnostic(&mut self, bank: u8, address: u16) {
@@ -93,11 +90,7 @@ impl EntryContent for Runtime<'_> {
         let absolute = 0x8f0000 | u32::from(address);
         if address & 0x8000 == 0 {
             match mode {
-                LoadMode::Initial => self.foreign(|game| {
-                    invalid_window(game, absolute);
-                    #[cfg(sm_verify_dll)]
-                    crate::room_background_observer::diagnostic(absolute, game);
-                }),
+                LoadMode::Initial => self.room_background_diagnostic(absolute),
                 LoadMode::Door => panic!("ROM address must select a LoROM window"),
             }
         }

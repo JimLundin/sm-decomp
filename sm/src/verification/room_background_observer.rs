@@ -1,10 +1,7 @@
 //! Records real completed byte writes; mutations occur only at source effects.
 #![forbid(unsafe_code)]
 use crate::{
-    game_state::{Game, WorkRam},
-    recording::RecordingBytes,
-    rom::RomImage,
-    room_background_fixture::*,
+    game_state::WorkRam, recording::RecordingBytes, rom::RomImage, room_background_fixture::*,
     room_background_support::*,
 };
 use std::cell::RefCell;
@@ -95,23 +92,6 @@ pub(crate) fn written_parts(
             );
         }
     });
-}
-pub(crate) fn diagnostic(address: u32, g: &mut Game) {
-    let (snes, cpu) = (g.g_snes, g.g_cpu);
-    let (backend, host) = g.execution_parts();
-    diagnostic_parts(
-        address,
-        host.ram,
-        host.loaded_rom,
-        host.g_fail,
-        host.decompress_src,
-        |machine| {
-            let backend = backend
-                .as_deref()
-                .expect("observation requires an owned backend");
-            backend.save_observation(snes, cpu, machine);
-        },
-    );
 }
 pub(crate) fn diagnostic_parts(
     address: u32,
