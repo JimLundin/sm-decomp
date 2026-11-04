@@ -236,6 +236,52 @@ pub(super) fn shared_summary(classes: &Classes) -> String {
     )
 }
 
+/// Per `SHARED_RAM` entry, the Ticks whose two results differ in its bytes
+/// before normalization copies one side over the other: the evidence that
+/// retires a `LEGACY(verifier)` row (an entry that never differs on the
+/// corpus can leave the normalized range) or names the Ticks to fix.
+#[derive(Default)]
+pub(super) struct SharedDifferences {
+    /// Per entry: the differing Ticks and the first of them.
+    ticks: [(u64, Option<i32>); SHARED_RAM.len()],
+    compared: u64,
+}
+
+impl SharedDifferences {
+    /// Count one paired frame's results.
+    pub(super) fn note(&mut self, tick: i32, mine: &[u8], theirs: &[u8]) {
+        self.compared += 1;
+        for ((range, _, _), (count, first)) in SHARED_RAM.iter().zip(&mut self.ticks) {
+            if mine[range.clone()] != theirs[range.clone()] {
+                *count += 1;
+                first.get_or_insert(tick);
+            }
+        }
+    }
+
+    /// The summary line: each entry waiting on its row, by differing Ticks.
+    pub(super) fn summary(&self) -> String {
+        let entries: Vec<String> = SHARED_RAM
+            .iter()
+            .zip(&self.ticks)
+            .filter(|((_, _, shared), _)| *shared == Shared::UntilRowRetires)
+            .map(|((range, field, _), (count, first))| {
+                let first = first.map_or_else(String::new, |tick| format!(" from @{tick}"));
+                format!(
+                    "${:04X}-${:04X} {field} {count}{first}",
+                    range.start,
+                    range.end - 1
+                )
+            })
+            .collect();
+        format!(
+            "Session RAM both bytes differing before normalization, of {} ticks: {}",
+            self.compared,
+            entries.join("; ")
+        )
+    }
+}
+
 /// The ranges an engine owner outside the Session holds: none since the
 /// Legacy presentation owns the frame display and the BG scroll words
 /// (`LegacyPresentation::frame`, `scroll`), which the host's typed domains

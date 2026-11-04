@@ -113,6 +113,8 @@ pub struct Observer {
     mode: Mode,
     /// The report-only Session-space comparison beside the lockstep's.
     session: Option<SessionCompare>,
+    /// Where the Session fields the normalized ranges cover differ, beside it.
+    shared: coverage::SharedDifferences,
     elapsed: Duration,
 }
 
@@ -132,6 +134,7 @@ impl Observer {
             leases,
             mode: Mode::Lockstep(Lockstep::new(report)),
             session,
+            shared: coverage::SharedDifferences::default(),
             elapsed: Duration::ZERO,
         }
     }
@@ -142,6 +145,7 @@ impl Observer {
             leases: Leases::default(),
             mode: Mode::Single(Box::new(single)),
             session: None,
+            shared: coverage::SharedDifferences::default(),
             elapsed: Duration::ZERO,
         }
     }
@@ -179,6 +183,7 @@ impl Observer {
                             .coverage
                             .classes(&coverage::unowned(), &coverage::held()),
                     ));
+                    lines.push(self.shared.summary());
                 }
                 Ok((lines, None))
             }
@@ -300,11 +305,12 @@ pub(crate) fn observe_session(game: &mut Game) {
         &mut coverage,
     ));
     let tick = game.snes_frame_counter;
-    let Some(compare) = game
-        .observation
-        .as_mut()
-        .and_then(|observer| observer.session.as_mut())
-    else {
+    let (mine, theirs) = (&game.g_snapshot_mine.ram, &game.g_snapshot_theirs.ram);
+    let Some(observer) = game.observation.as_mut() else {
+        return;
+    };
+    observer.shared.note(tick, mine, theirs);
+    let Some(compare) = observer.session.as_mut() else {
         return;
     };
     compare.coverage = coverage;
