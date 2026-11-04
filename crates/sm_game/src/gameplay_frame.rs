@@ -59,11 +59,7 @@ pub enum UnpauseHook {
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
 pub trait Host:
-    crate::menus::host::Host
-    + crate::hud::HudHost
-    + crate::display_refresh::Host
-    + crate::samus_death::Host
-    + RuntimeAccess
+    crate::menus::host::Host + crate::hud::HudHost + crate::display_refresh::Host + RuntimeAccess
 {
     /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
     fn latch_controller(&mut self, buttons: u16);
@@ -119,6 +115,7 @@ pub trait PassLease:
     + crate::hdma_objects::UpdateHost
     + crate::ram::CompatibilityRam
     + crate::escape_timer::Host
+    + crate::samus_death::Lease
 {
     /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
@@ -363,14 +360,12 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 drop(lease);
                 break 'frame returned;
             }
-            // A cinematic or door transition state's frame runs on this lease too;
-            // the frame ends on Game once it returns.
-            let native = match entry {
-                Some(&Native(state)) => Some(lease.advance_native_state(state)),
-                Some(&Door(signal)) => Some(lease.resume_room_entry(signal)),
-                _ => None,
-            };
-            if let Some(returned) = native {
+            // A cinematic, door transition or death state's frame runs on this
+            // lease too; the frame ends on Game once it returns.
+            if let Some(&entry) = entry
+                && runs_on_lease(entry)
+            {
+                let returned = advance_on_lease::<H>(entry, &mut lease);
                 drop(lease);
                 if returned != 0 {
                     break 'frame returned;
@@ -382,18 +377,15 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             // A pass state's frame ends on its pass's last lease.
             Advance(entry) if runs_pass(entry) => break 'frame advance(entry, game),
             Advance(entry) => advance(entry, game),
-            // A cinematic state resuming after a yield opens the frame's lease here.
-            Native(state) => game.runtime().advance_native_state(state),
+            // A lease state resuming after a yield opens the frame's lease here.
+            entry @ (Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit) => {
+                advance_on_lease::<H>(entry, &mut game.runtime())
+            }
             DemoReset => demo_rooms::reset(game),
             FileMenu => file_menu::advance(game),
             MapMenu => map_menu::advance(game),
             PauseFadeIn => pause_controls::fade_in(game),
             GameOver => game_over::advance(game),
-            BeginDeath => samus_death::begin_death(game),
-            DeathPose => samus_death::advance_death_pose(game),
-            FlashDeath => samus_death::flash_death(game),
-            ExplodeSuit => samus_death::explode_suit(game),
-            Door(signal) => game.resume_room_entry(signal),
             Demo => demo_rooms::play(game, |game| advance_gameplay(PassEnd::Pass, game)),
             Null => 0,
             Unused => {
@@ -430,6 +422,28 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_outer_continuation(resume);
     }
     returned
+}
+
+/// The states whose frame runs on the frame's first lease, up to the frame's
+/// end.
+fn runs_on_lease(entry: StateEntry) -> bool {
+    matches!(
+        entry,
+        Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit
+    )
+}
+
+/// Run a lease state's frame on `lease`; nonzero when it yields.
+fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<'a>) -> u8 {
+    match entry {
+        Native(state) => lease.advance_native_state(state),
+        Door(signal) => lease.resume_room_entry(signal),
+        BeginDeath => samus_death::begin_death(lease),
+        DeathPose => samus_death::advance_death_pose(lease),
+        FlashDeath => samus_death::flash_death(lease),
+        ExplodeSuit => samus_death::explode_suit(lease),
+        _ => unreachable!("not a lease state"),
+    }
 }
 
 /// The frame's end on Game, after a completed state: the sound effects, the
@@ -1236,7 +1250,11 @@ fn finish_pass<L: PassLease + SessionAccess + ?Sized>(entry: Entry, game: &mut L
         }
         Entry::PrepareDeath => {
             for index in (0..256).rev() {
-                let value = game.palette_word(false, index * 2);
+                let value = crate::presentation_workspace::PaletteAccess::palette_word(
+                    game,
+                    false,
+                    index * 2,
+                );
                 game.screen_write_word(Point::new(Role::Pause, (384 + index) * 2), value);
             }
             // Keep palette 6's sprite colours as the death sequence's targets.

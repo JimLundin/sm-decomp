@@ -4,39 +4,50 @@ use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_L, K_BUTTON_R};
 use crate::menu_state::MenuScreens;
 use crate::menus::prelude::CoroutineRet;
 use crate::player_transitions as pt;
-use crate::runtime_access::RuntimeAccess;
-use crate::runtime_access::with_session;
 use crate::scene::samus_body::Body;
-use crate::session_access::SessionAccess as _;
 use crate::sprite_output;
-use crate::visual_host::{Content, Record, Source};
+use crate::visual_host::{Record, Source};
 
-/// What the death sequence needs from the game.
-pub trait Host:
-    crate::menus::host::Host + crate::display_refresh::Host + crate::records::Records + RuntimeAccess
+/// The lease the death states run on: the frame's first lease, kept open
+/// through the state.
+pub trait Lease:
+    crate::runtime_access::PlayerLease
+    + crate::samus_drawing::Authority
+    + crate::menus::state::Access
+    + crate::gameplay_context::Access
+    + crate::sequence_state::Access
+    + crate::session_owners::AudioHost
+    + crate::effects::SoundEffects
+    + crate::player_position::PlayerFacts
+    + crate::records::Records
+    + crate::display_refresh::DisplayOwner
+    + crate::display::transfer::TilemapQueue
+    + crate::screen_fade::Owner
+    + crate::sprite_output::MapHost
 {
 }
 impl<
-    T: crate::menus::host::Host
-        + crate::display_refresh::Host
+    T: crate::runtime_access::PlayerLease
+        + crate::samus_drawing::Authority
+        + crate::menus::state::Access
+        + crate::gameplay_context::Access
+        + crate::sequence_state::Access
+        + crate::session_owners::AudioHost
+        + crate::effects::SoundEffects
+        + crate::player_position::PlayerFacts
         + crate::records::Records
-        + RuntimeAccess
+        + crate::display_refresh::DisplayOwner
+        + crate::display::transfer::TilemapQueue
+        + crate::screen_fade::Owner
+        + crate::sprite_output::MapHost
         + ?Sized,
-> Host for T
+> Lease for T
 {
 }
-/// Draw Samus's body on the game's lease, which chooses between the owned
-/// display and the native body tables.
-fn draw_samus<H: Host + ?Sized>(game: &mut H, body: Body) {
-    crate::samus_drawing::draw_body(&mut game.runtime(), body);
-}
 
-pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
-    // The death animation and the body drawn from it run on one lease.
-    let mut lease = game.runtime();
-    pt::animation::advance_animation(&mut lease, pt::state::AnimationStep::Death);
-    crate::samus_drawing::draw_body(&mut lease, Body::Death);
-    drop(lease);
+pub fn advance_death_pose<H: Lease>(game: &mut H) -> CoroutineRet {
+    pt::animation::advance_animation(game, pt::state::AnimationStep::Death);
+    crate::samus_drawing::draw_body(game, Body::Death);
     let expired = crate::menus::state::with(game, |_, screens: &mut MenuScreens| {
         let timer = &mut screens.death.flash_timer;
         *timer = timer.wrapping_sub(1);
@@ -49,41 +60,38 @@ pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 }
 
 // Death phases share palette selection and the native upload queue with live drawing.
-pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
-    draw_samus(game, Body::Frozen);
+pub fn begin_death<H: Lease>(game: &mut H) -> CoroutineRet {
+    crate::samus_drawing::draw_body(game, Body::Frozen);
     if crate::music_requests::has_queued_music(game) == 0 {
         const FRAMES: [u8; 28] = [
             5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
         ];
         let movement = game.movement_type();
         if game.movement_type() == 3 {
-            game.queue_sound(0, 0x32, 6);
+            crate::effects::SoundEffects::queue_sound(game, 0, 0x32, 6);
         }
         let frame = u16::from(FRAMES[usize::from(movement)]);
         let pose = if game.facing() == 4 { 0xd8 } else { 0xd7 };
         // The death pose, its animation start and Samus's screen position are
         // Session-owned player state: set them on the lease that finishes the
         // pose change.
-        use crate::player_position::PlayerPosition as _;
-        let mut lease = game.runtime();
-        lease.session_mut().player.pose = pose;
-        crate::player_transitions::pose::finish_pose_change(&mut lease);
-        let player = &mut lease.session_mut().player;
+        game.session_mut().player.pose = pose;
+        crate::player_transitions::pose::finish_pose_change(game);
+        let player = &mut game.session_mut().player;
         player.transitions.animation_skip =
             crate::player_transitions::state::AnimationSkip::from_raw(0);
         player.animation_clock.frame = frame;
-        let layer1 = lease.session().room.camera.layer1;
-        let x = lease.player_x().wrapping_sub(layer1[0]);
-        lease.set_player_x(x);
-        let y = lease.player_y().wrapping_sub(layer1[1]);
-        lease.set_player_y(y);
-        drop(lease);
+        let layer1 = game.session().room.camera.layer1;
+        let x = game.player_x().wrapping_sub(layer1[0]);
+        game.set_player_x(x);
+        let y = game.player_y().wrapping_sub(layer1[1]);
+        game.set_player_y(y);
         crate::gameplay_word!(game.GAME_STATE += 1);
     }
     0
 }
 
-pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
+pub fn flash_death<H: Lease>(game: &mut H) -> CoroutineRet {
     crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
         if screens.death.counter.wrapping_sub(4) & 0x8000 != 0 {
             queue_death_tiles(2u16.wrapping_mul(screens.death.counter), game);
@@ -102,11 +110,11 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 screens.options_menu.screen_index = delay;
                 death_palette(Some(index.wrapping_mul(2)), game);
             }
-            draw_samus(game, Body::Death);
+            crate::samus_drawing::draw_body(game, Body::Death);
         } else {
             death_palette(None, game);
             queue_death_tiles(8, game);
-            let delay = game.runtime().table(Source::Native, 0x9bb823).byte(0);
+            let delay = game.table(Source::Native, 0x9bb823).byte(0);
             screens.options_menu.screen_index = u16::from(delay);
             screens.death.index = 0;
             screens.death.counter = 0;
@@ -125,25 +133,23 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     })
 }
 
-fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
+fn death_palette<H: Lease>(frame: Option<u16>, game: &mut H) {
     let pointer = crate::gameplay_tables::death_palette(
         game,
         frame.is_some(),
         (crate::session_words::current(game).samus_suit_palette_index >> 1) as isize,
     )
     .wrapping_add(frame.unwrap_or(0));
-    // Both palettes' records and stores run on one lease.
-    let mut lease = game.runtime();
-    let address = lease.legacy_native_record(0x9b, pointer).native_word(0);
-    let colors = lease.legacy_native_record(0x9b, address).bytes::<32>(0);
-    store_colors(&mut lease, 192, colors);
+    let address = game.legacy_native_record(0x9b, pointer).native_word(0);
+    let colors = game.legacy_native_record(0x9b, address).bytes::<32>(0);
+    store_colors(game, 192, colors);
     // The second source is resolved only after the first complete palette copy.
     let address = match frame {
-        Some(frame) => crate::gameplay_tables::death_frame_palette(&lease, (frame >> 1) as isize),
+        Some(frame) => crate::gameplay_tables::death_frame_palette(game, (frame >> 1) as isize),
         None => 0xa120,
     };
-    let colors = lease.legacy_native_record(0x9b, address).bytes::<32>(0);
-    store_colors(&mut lease, 240, colors);
+    let colors = game.legacy_native_record(0x9b, address).bytes::<32>(0);
+    store_colors(game, 240, colors);
 }
 
 /// Store a 16-colour palette's bytes from ROM at palette colour `first`, then
@@ -160,7 +166,7 @@ fn store_colors(
     lease.words_stored();
 }
 
-fn queue_death_tiles<H: Host + ?Sized>(frame: u16, game: &mut H) {
+fn queue_death_tiles<H: Lease>(frame: u16, game: &mut H) {
     const SOURCES: [u16; 5] = [0x8400, 0x8800, 0x8c00, 0x9000, 0x8000];
     const DESTINATIONS: [u16; 5] = [0x6200, 0x6400, 0x6600, 0x6800, 0x6000];
     crate::display_refresh::queue_native_transfer(
@@ -173,7 +179,7 @@ fn queue_death_tiles<H: Host + ?Sized>(frame: u16, game: &mut H) {
     );
 }
 
-fn whiten_death_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn whiten_death_palette<H: Lease>(game: &mut H, screens: &mut MenuScreens) {
     if crate::session_words::current(game).substate == 0 && screens.death.index != 0 {
         const SHADES: [u16; 22] = [
             0x421, 0xc63, 0x14a5, 0x1ce7, 0x2529, 0x2d6b, 0x35ad, 0x4210, 0x4a52, 0x4e73, 0x5294,
@@ -183,20 +189,23 @@ fn whiten_death_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreen
         // Every colour but Samus's palette ($C180..$C19F) and the last two
         // sprite palettes ($C1E0..$C1FF).
         let shade = crate::word_transfers::stored_native(shade);
-        with_session(game, |session| {
-            let (first, samus_and_sprites) =
-                session.presentation.visual_mut().colors.split_at_mut(192);
-            for color in first.iter_mut().chain(&mut samus_and_sprites[16..48]) {
-                *color = shade;
-            }
-        });
+        let (first, samus_and_sprites) = game
+            .session_mut()
+            .presentation
+            .visual_mut()
+            .colors
+            .split_at_mut(192);
+        for color in first.iter_mut().chain(&mut samus_and_sprites[16..48]) {
+            *color = shade;
+        }
+        game.words_stored();
         if screens.death.counter.wrapping_sub(20) & 0x8000 != 0 {
             screens.death.counter = screens.death.counter.wrapping_add(1);
         }
     }
 }
 
-pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
+pub fn explode_suit<H: Lease>(game: &mut H) -> CoroutineRet {
     let exploded = crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
         whiten_death_palette(game, screens);
         advance_suit_explosion(game, screens)
@@ -208,7 +217,7 @@ pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     0
 }
 
-fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) -> bool {
+fn advance_suit_explosion<H: Lease>(game: &mut H, screens: &mut MenuScreens) -> bool {
     let timer = &mut screens.options_menu.screen_index;
     *timer = timer.wrapping_sub(1);
     if *timer == 0 || *timer & 0x8000 != 0 {
@@ -226,7 +235,7 @@ fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScre
             || screens.death.index.wrapping_sub(2) & 0x8000 != 0;
         let index = 2 * usize::from(screens.death.index);
         // The delay and frame bytes are one table record.
-        let record = game.runtime().table(Source::Native, 0x9bb823);
+        let record = game.table(Source::Native, 0x9bb823);
         screens.options_menu.screen_index = u16::from(record.byte(index));
         if recolor {
             let frame = record.byte(index + 1);
