@@ -2739,44 +2739,18 @@ impl Game {
     }
 }
 
-/// The level data through the compatibility projection.
-impl sm_game::room_state::LevelData for Game {
-    fn level_data_size(&self) -> u16 {
+/// The room load's level data steps on the RAM image.
+impl Game {
+    /// The level data's size in bytes ($7F:0000), little-endian.
+    pub(crate) fn level_data_size(&self) -> u16 {
         let at = sm_game::ram::words::RAM7_F_START;
         u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
     }
-    fn level_word(&self, cell: usize) -> u16 {
-        let at = sm_game::ram::word_arrays::LEVEL_DATA + 2 * cell;
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn level_behavior(&self, cell: usize) -> u8 {
-        self.compatibility_byte(sm_game::ram::bytes::BTS + cell)
-    }
-    /// The Game holds the level data as RAM, where the decompressor writes it.
-    fn clear_level_data(&mut self, mode: sm_game::room_entry::content::LoadMode) {
-        use sm_game::room_entry::content::LoadMode;
-        // Each run is cleared from its top word down; the original names the
-        // first run by its bottom (LEVEL_DATA) and the other three by their top
-        // word ($7F:3200, $7F:4B00, $7F:6400), so those start 3199 words lower.
-        const DOOR_WORDS: usize = 3200;
-        let below = |top: usize| top - 2 * (DOOR_WORDS - 1);
-        let door_runs = [0x10002, below(0x13200), below(0x14b00), below(0x16400)];
-        let (words, runs): (usize, &[usize]) = match mode {
-            LoadMode::Initial => (12800, &[0x10002]),
-            LoadMode::Door => (DOOR_WORDS, &door_runs),
-        };
-        let [low, high] = 0x8000u16.to_le_bytes();
-        for word in (0..words).rev() {
-            for &run in runs {
-                let at = run + 2 * word;
-                self.compatibility_write_byte(at, low);
-                self.compatibility_write_byte(at + 1, high);
-            }
-        }
-    }
-    /// The Game holds the level data as RAM, where the decompressor left it.
-    fn copy_level_planes(&mut self) {
-        let size = usize::from(sm_game::room_state::LevelData::level_data_size(self));
+    /// Split the level data the decompressor left in the RAM image into its
+    /// planes, as `LevelData::copy_level_planes` describes: the room load's
+    /// step on the published image, before the lease takes the bytes back.
+    pub(crate) fn copy_level_planes(&mut self) {
+        let size = usize::from(self.level_data_size());
         for (source, destination, count) in [
             (0x10002 + size + size / 2, 0x19602, size),
             (0x10002 + size, 0x16402, size / 2),
