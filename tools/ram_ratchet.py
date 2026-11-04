@@ -91,8 +91,8 @@ BASELINE = {
     # reach zero when the Session drives the tick. Foreign calls and Game hosts
     # may not rise; lease moves can add entries, so those are reported.
     "foreign_calls": 43,
-    "game_host_impls": 81,  # SpriteHost split into MapHost + SpriteWords (same coupling)
-    "session_entries": 70,
+    "game_host_impls": 78,  # SpriteHost split into MapHost + SpriteWords (same coupling)
+    "session_entries": 50,
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
     # gameplay_word! read and store typed Session-backed keys, not RAM, so
     # sm_game_ram_sites does not count them. They are still a word bag named
