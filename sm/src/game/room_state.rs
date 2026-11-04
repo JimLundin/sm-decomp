@@ -33,7 +33,7 @@ pub(crate) fn unpause_draygon(game: &mut Runtime<'_>) -> crate::types::Coroutine
 #[forbid(unsafe_code)]
 pub(crate) fn decompress_level(source: u32, game: &mut Game) {
     decompress_to_ram(source, 0x10000, game);
-    sm_game::room_state::LevelData::copy_level_planes(game);
+    game.copy_level_planes();
 }
 
 // The room's enemy tilesets load on the lease: each record is the loaded

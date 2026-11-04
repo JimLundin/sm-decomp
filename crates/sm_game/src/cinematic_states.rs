@@ -132,14 +132,51 @@ pub fn draw_nintendo_logo<H: crate::cinematic_host::Scene + ?Sized>(game: &mut H
 /// The producer name of the logo's display commands.
 const LOGO: &str = "nintendo logo";
 
-/// The Nintendo logo coroutine: set up the display, then fade the logo in,
-/// hold it and fade it out, yielding to the frame loop at each refresh.
-/// Was `InitializeIoDisplayLogo_Async`.
-pub fn nintendo_logo<
-    H: crate::cinematic_host::Scene + crate::runtime_access::RuntimeAccess + ?Sized,
+/// The logo's last stage, after its fade out: wait for the NMI, then blank
+/// the screen.
+const LOGO_END: u8 = 6;
+
+/// Whether the logo's next frame is its last, which only waits for the NMI
+/// and blanks the screen ([`end_nintendo_logo`]). Boot runs that frame
+/// without a lease, since its own work follows on the same frame.
+pub fn nintendo_logo_ending(
+    game: &(impl crate::presentation_workspace::ContinuationAccess + ?Sized),
+) -> bool {
+    game.screen_primary() == LOGO_END
+}
+
+/// The logo's last frame: resume a pending NMI, then blank the screen and end
+/// the logo; nonzero when it yields to wait again.
+pub fn end_nintendo_logo<
+    H: crate::display::video::Video
+        + crate::display::preparation::Access
+        + crate::ram::CompatibilityRam
+        + crate::display_refresh::DisplayOwner
+        + crate::presentation_workspace::ContinuationAccess
+        + ?Sized,
 >(
     game: &mut H,
 ) -> u8 {
+    let yielded: u8 = crate::display_refresh::wait(true, game);
+    if yielded != 0 {
+        game.screen_set_primary(LOGO_END);
+        return yielded;
+    }
+    apply_mirrored(
+        game,
+        LOGO,
+        Control::Brightness(Brightness::BLANK_FULL),
+        Field::Brightness,
+        false,
+    );
+    game.screen_set_primary(0);
+    0
+}
+
+/// The Nintendo logo coroutine on the boot frame's lease: set up the display,
+/// then fade the logo in, hold it and fade it out, yielding to the frame loop
+/// at each refresh. Was `InitializeIoDisplayLogo_Async`.
+pub fn nintendo_logo<H: Host>(game: &mut H) -> u8 {
     crate::probe::hit("coroutine.logo");
     let mut stage = game.screen_primary();
     if stage == 0 {
@@ -153,9 +190,8 @@ pub fn nintendo_logo<
         crate::sprite_drawing::reset_cursor(game);
         crate::sprite_drawing::clear_high_table(game);
         crate::sprite_drawing::finish_frame(game);
-        crate::runtime_access::with_session(game, |session| {
-            session.presentation.clear_samus_requests();
-        });
+        game.session_mut().presentation.clear_samus_requests();
+        game.words_stored();
         crate::display_refresh::initialize_io_and_oam(None, game);
         apply_controls(
             game,
@@ -300,8 +336,11 @@ pub fn nintendo_logo<
         crate::display_refresh::enable(true, game);
         crate::screen_fade::store(game, 1, 1);
     }
-    // Stages 1..=6 resume a pending NMI before drawing the next frame.
-    while stage <= 6 {
+    // Stages 1..=5 resume a pending NMI before drawing the next frame.
+    while stage <= LOGO_END {
+        if stage == LOGO_END {
+            return end_nintendo_logo(game);
+        }
         if stage != 0 {
             let yielded: u8 = crate::display_refresh::wait(true, game);
             if yielded != 0 {
@@ -314,16 +353,6 @@ pub fn nintendo_logo<
                 }),
                 4 => {
                     crate::screen_fade::store(game, 1, 1);
-                }
-                6 => {
-                    apply_mirrored(
-                        game,
-                        LOGO,
-                        Control::Brightness(Brightness::BLANK_FULL),
-                        Field::Brightness,
-                        false,
-                    );
-                    break;
                 }
                 _ => {}
             }
@@ -351,7 +380,7 @@ pub fn nintendo_logo<
             _ => {
                 crate::probe::hit("coroutine.logo.out");
                 if advance_cinematic_fade(CinematicFade::FastOut, game) {
-                    6
+                    LOGO_END
                 } else {
                     5
                 }

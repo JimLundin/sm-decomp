@@ -631,11 +631,10 @@ impl<'g> Runtime<'g> {
         produced
     }
     /// Decompress the room's level data from `source` to $7F:0000, then split its planes
-    /// (`LevelData::copy_level_planes`), on the published RAM image as
+    /// (`Game::copy_level_planes`), on the published RAM image as
     /// `decompress_to_ram` runs; the lease takes back the decoded bytes and the two plane
     /// copies' destinations.
     pub(crate) fn decompress_level(&mut self, source: Compressed<'_>) {
-        use sm_game::room_state::LevelData as _;
         const LEVEL: usize = 0x10000;
         let end = crate::game_state::WorkRam::LEN;
         self.publish();

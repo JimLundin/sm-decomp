@@ -7,7 +7,12 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             super::flags_save_oracle::guard(game, original)?;
             let slot = case::seed(id, game)?;
             observer::begin(id);
-            sm_game::menus::save_slots::save(slot, game);
+            // The save runs on a lease, as the engine's does; the observer
+            // takes each stage from the lease's projection.
+            sm_game::menus::save_slots::save(
+                slot,
+                &mut crate::game::session_runtime::Runtime::new(game),
+            );
             observer::take()
         });
         observer::clear();

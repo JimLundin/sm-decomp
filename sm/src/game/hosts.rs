@@ -104,17 +104,6 @@ impl sm_game::actors::zebetites::Lease for crate::game::session_runtime::Runtime
     }
 }
 
-/// The compat game reads and stores Samus's words as the named word accesses
-/// did: through the projected bytes, low then high.
-impl PlayerPosition for Game {
-    fn player_word(&self, word: PlayerWord) -> u16 {
-        crate::projection::word(self, word.address())
-    }
-    fn set_player_word(&mut self, word: PlayerWord, value: u16) {
-        crate::projection::set_word(self, word.address(), value)
-    }
-}
-
 /// A current lease reads Samus's words from `Session::player`, a dirty one the
 /// projected word; stores take the lease's byte path (refresh, epoch, alias).
 impl PlayerPosition for crate::game::session_runtime::Runtime<'_> {
@@ -297,18 +286,6 @@ impl sm_game::escape_typewriter::Host for crate::game::session_runtime::Runtime<
     }
     fn area_index(&self) -> u16 {
         self.session().room.area
-    }
-}
-
-impl sm_game::display::transfer::TilemapQueue for Game {
-    fn tilemap_queue_tail(&self) -> u16 {
-        crate::ram_map::word!(self.VRAM_WRITE_QUEUE_TAIL)
-    }
-    fn set_tilemap_queue_tail(&mut self, tail: u16) {
-        crate::ram_map::word!(self.VRAM_WRITE_QUEUE_TAIL = tail);
-    }
-    fn set_tilemap_queue_byte(&mut self, at: usize, value: u8) {
-        self.ram().write_byte(at, value);
     }
 }
 
