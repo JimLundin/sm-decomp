@@ -223,3 +223,37 @@ Left:
 - The menu prelude's `RawRam` re-export: about 45 `.ram()` calls across nine menu files
   (menu_window 15, map_menu 8, save_slots 7, options_settings 5, ...). Dropping the
   re-export only pays once all of them are typed; per-file imports would count instead.
+
+## Menus lane (2026-11-04, `collab/rs-menus`)
+
+The ratchet now counts each raw work RAM call through `.ram()` (cycle_report's
+`raw RAM calls` kind, the engine inventory's `raw_ram_call` sites): 56 calls the
+prelude's single `RawRam` import hid. 85/14 became 141/24, then fell to 95/14.
+
+New typed paths, each the same store or read on Game as the raw call it replaced:
+- `fx_domain::Sources::buffer_byte` and `store_buffer_bytes`, beside
+  `store_buffer_byte`: the map window's tables ($9E00, $9E10) and open edges
+  ($9E32, $9E36) by `LiveOwner` and offset.
+- `save_file::PlayerWord::named` decodes a menu ROM table's RAM address; the
+  equipment toggle, special settings and binding choices use `Field::Player`.
+- `QueueAccess::queue_byte` (the sky's bank bytes), `MapFacts::used_station_byte` and
+  `store_used_station_byte` (the elevator bits), `Field::FileMapStartDelay`
+  ($0F7A, byte path), and the physical display bytes for the MOSAIC and
+  brightness words.
+- `menu_tilemap::upload` takes its screen register as a display `Field`.
+- Out-of-range table addresses and the helmet timer past the slots go through
+  `legacy_overflow` (two LEGACY rows).
+
+Reads that took the raw image now take the compatibility bytes (`view_word`,
+`map_station_byte`, `used_station_native_word`), as the map facts already did.
+
+Left (10 raw calls):
+- `save_slots`: the save transfer of $D7C0..$DE1C (`SaveFile::ram_word`,
+  `set_ram_word`) and the packed map copy between the saved maps and $D91C.. (no
+  Session owner holds the compressed map). Both need typed owners for the whole
+  save block first.
+- `projection::image_word`, `set_image_word` and `copy_into_image`: the enemy
+  projectile table's raw copy on Game (`enemy_projectiles::table::with_projectiles`)
+  and the palette fade's colour store. The table copy needs a typed Game path before
+  the helpers can go.
+- The demo stop's $077C..$0997 clear and the Crocomire melt copies, as before.

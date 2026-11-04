@@ -54,8 +54,8 @@ import cycle_report  # noqa: E402
 # calls in 11 files (nine menu files, scrolling_sky, projection), which the
 # ratchet saw only as the menu prelude's RawRam import. 85/14 becomes 141/24.
 BASELINE = {
-    "sm_game_ram_sites": 141,
-    "sm_game_coupled_files": 24,
+    "sm_game_ram_sites": 95,
+    "sm_game_coupled_files": 14,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
@@ -63,7 +63,7 @@ BASELINE = {
     # decoding behind them slows every replay. The lexical unresolved-method and
     # legacy-engine measures are reported only.
     "engine_ram_address_sites": 11,
-    "engine_raw_ram_calls": 56,
+    "engine_raw_ram_calls": 10,
     "engine_unresolved_ram_methods": 981,
     "legacy_engine_ram_sites": 515,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
