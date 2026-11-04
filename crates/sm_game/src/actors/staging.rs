@@ -240,6 +240,11 @@ pub fn stage_tilesets<H: ActorHost + Host>(h: &mut H) {
         next_ram = next_ram.wrapping_add(h.definition_tile_size(&definition));
         entry += 1;
     }
+    // $A0:8D64 keeps the enemy GFX data stack pointer and the next enemy
+    // tiles index in $7E:EF74/EF76, which it leaves at the set's totals.
+    let graphics_state = &mut h.session_mut().actors.graphics;
+    graphics_state.compatibility_write_position = graphics;
+    graphics_state.compatibility_next_tile = tiles;
 }
 
 // These are fixed collection projections, not addresses or independent RAM owners.

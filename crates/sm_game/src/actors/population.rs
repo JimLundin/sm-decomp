@@ -353,7 +353,12 @@ fn spawn_from_cursor<H: ActorHost + crate::enemy_projectiles::host::Host>(
         match search.observe(occupied) {
             SearchResult::Continue => {}
             SearchResult::Found(index) => break index,
-            SearchResult::Full => return Ok(None),
+            SearchResult::Full(candidate) => {
+                // Spawn enemy ($A0:9275) leaves its last candidate as the new
+                // enemy index when no window fits.
+                h.session_mut().actors.controls.compatibility_new_index = candidate;
+                return Ok(None);
+            }
         }
     };
     let mut sequence = SpawnSequence::new(index, 0, parts);
@@ -426,6 +431,8 @@ fn spawn_from_cursor<H: ActorHost + crate::enemy_projectiles::host::Host>(
             other => next_cursor(other),
         };
     }
+    // $A0:92DB leaves the last part's slot as the new enemy index ($0E4A).
+    h.session_mut().actors.controls.compatibility_new_index = index;
     h.session_mut().actors.controls.selected = saved;
     Ok(Some((index, last_handle)))
 }

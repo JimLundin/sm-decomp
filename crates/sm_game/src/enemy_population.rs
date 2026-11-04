@@ -56,7 +56,9 @@ impl Creation {
 pub enum SearchResult {
     Continue,
     Found(u16),
-    Full,
+    /// No window fits; carries the candidate the search stopped at, which
+    /// the original leaves as the new enemy index ($0E4A).
+    Full(u16),
 }
 
 /// This is the original search state, including its accumulated empty probes
@@ -90,7 +92,7 @@ impl SpawnSearch {
             self.probe = self.probe.wrapping_add(64);
         }
         if self.probe >= 2048 {
-            SearchResult::Full
+            SearchResult::Full(self.candidate)
         } else {
             SearchResult::Continue
         }

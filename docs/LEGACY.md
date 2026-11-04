@@ -95,17 +95,14 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 | $0DD2-$0DD7 | mine | collision temporaries (slope index, distance) | 67 / 16758 | storing the temporaries the block collision leaves | player collision |
 | $0E02-$0E03 | mine | Samus bottom boundary position | 66 / 16128 | as above | player collision |
 | $0E20-$0E45 | mine | enemy temporaries | 58 / 12992 | widening the actors' compatibility scratch ($0E20-$0E2A) to the whole range | actors |
-| $0E4A-$0E4B | mine | new enemy index | 1 / 1 | storing it where enemy spawning does | actors |
 | $0E54-$0E55 | mine | current enemy index | 4 / 211 | as above, for the enemy loop | actors |
 | $0E56-$0E59 | mine | enemy index backup, enemy data pointer | 51 / 7763 | as above | actors |
 | $1784-$178B | mine | enemy AI pointer and backup | 60 / 7731 | storing the species' AI pointer the dispatch would jump through | actors |
 | $17A8-$17AB | mine | active and interactive enemy list indices | 60 / 15948 | storing the indices the list loops leave | actors |
-| $1834-$183B | mine | Samus-to-solid-enemy collision distances | 8 / 46 | storing them in the solid enemy collision | player collision |
 | $184A-$185B | mine | colliding-solid-enemy positions and deltas | 13 / 251 | as above | player collision |
 | $186E-$1885 | mine | enemy spritemap and border collision temporaries | 36 / 4260 | storing them in the enemy collision | actors |
 | $189A-$18A5 | mine | Samus target positions and radius mirrors | 58 / 13225 | storing them in the Samus/enemy collision | player collision |
 | $18A6-$18A7 | mine | collision detection (projectile) index | 65 / 11946 | storing the index the projectile loops leave | projectiles |
-| $EF74-$EF77 | mine | next enemy GFX tiles index and VRAM pointer | 42 / 43 | loading the enemy graphics on the frame the original does (one frame per room load) | actors (room load) |
 | $F37A-$F37F | mine | debug copies of an enemy's instruction list, index and ID (never read) | 55 / 9907 | storing them where the enemy processing does | actors |
 
 To retire a row: model the range so it stops differing on the chain and

@@ -176,6 +176,8 @@ pub fn advance_selected<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H) 
     h.session_mut().actors.controls.phase_counter =
         h.session().actors.controls.phase_counter.wrapping_add(1);
     h.session_mut().actors.schedule.colliding = [0xffff; 4];
+    // $A0:915B: the solid enemy collision distances clear with the indices.
+    h.session_mut().actors.schedule.compatibility_distances = [0; 4];
 }
 fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: ActorKey) {
     let run_ai = if h.resolve_actor(key, AccessMode::Native).properties & 0x400 == 0 {

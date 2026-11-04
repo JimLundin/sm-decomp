@@ -139,7 +139,7 @@ pub(super) enum Shared {
 /// The Session fields the normalized ranges cover, in address order, each
 /// with the field and its decision (docs/handoff/session-compare.md, "The
 /// 107 both bytes").
-pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 16] = [
+pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 13] = [
     // The direct-page long pointer scratch; the $0000-$0050 row.
     (0x0..0x4, "pointer_scratch", Shared::UntilRowRetires),
     // The enemy projectile spawn scratch; the $0000-$0050 row.
@@ -176,11 +176,6 @@ pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 16] = [
         "compatibility_enemy_scratch, actors.compatibility",
         Shared::UntilRowRetires,
     ),
-    (
-        0xe4a..0xe4c,
-        "actors.combat.last_power",
-        Shared::UntilRowRetires,
-    ),
     (0xe54..0xe5a, "actors.controls", Shared::UntilRowRetires),
     (
         0x1784..0x178c,
@@ -188,7 +183,6 @@ pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 16] = [
         Shared::UntilRowRetires,
     ),
     (0x17a8..0x17ac, "actors.schedule", Shared::UntilRowRetires),
-    (0x1834..0x183c, "actors.schedule", Shared::UntilRowRetires),
     (
         0x1874..0x1876,
         "actors.compatibility.right_border",
@@ -197,11 +191,6 @@ pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 16] = [
     (
         0x18a6..0x18a8,
         "room.collision_detection_index",
-        Shared::UntilRowRetires,
-    ),
-    (
-        0xef74..0xef78,
-        "actors.graphics.compatibility",
         Shared::UntilRowRetires,
     ),
 ];

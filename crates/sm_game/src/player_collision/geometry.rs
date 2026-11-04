@@ -214,7 +214,11 @@ pub fn solid_contact<H: Host>(h: &mut H, amount: i32) -> MotionResult {
             let index = h.session().room.collision_detection_index;
             let direction = h.session().player.contact.collision_direction;
             // The actual Game setter masks direction before its slice write.
-            h.session_mut().actors.schedule.colliding[usize::from(direction & 3)] = index;
+            let side = usize::from(direction & 3);
+            h.session_mut().actors.schedule.colliding[side] = index;
+            // $A0:AB19 / $A0:AB65: the distance to the collision, 0 when touching.
+            h.session_mut().actors.schedule.compatibility_distances[side] =
+                distance.cast_unsigned();
             return MotionResult {
                 displacement: if exact { 0 } else { i32::from(distance) << 16 },
                 obstruction: Obstruction::SolidActor(ActorKey::from_legacy(index)),
