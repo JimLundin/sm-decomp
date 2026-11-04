@@ -386,7 +386,9 @@ pub fn display<H: crate::menus::host::Host + ?Sized>(message: u16, game: &mut H)
         dialogue::Outcome::Suspended(code) => code.get(),
     }
 }
-pub fn poll<H: crate::menus::host::Host + ?Sized>(a: u16, game: &mut H) -> i32 {
+/// Poll message box `a`: the selection once it closed, or -1 after
+/// requesting it. It reads and stores only the dialogue words.
+pub fn poll<H: crate::dialogue_ram::Access + ?Sized>(a: u16, game: &mut H) -> i32 {
     if a == game.dialogue_active_index() {
         game.dialogue_clear_active();
         return i32::from(game.dialogue_selection());

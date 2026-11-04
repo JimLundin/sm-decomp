@@ -164,7 +164,9 @@ impl Effects for Runtime<'_> {
         })
     }
     fn poll_message(&mut self, request: u16) -> i32 {
-        self.foreign(|game| sm_game::message_boxes::poll(request, game))
+        // The dialogue words are the lease's; the former foreign entry's
+        // observation refresh is kept.
+        self.owned_player_call(|runtime| sm_game::message_boxes::poll(request, runtime))
     }
     fn player_control(&mut self, operation: u16) {
         self.owned_player_call(|runtime| {

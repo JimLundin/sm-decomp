@@ -119,7 +119,9 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.foreign(|game| crate::game::item_pickups_runtime::restore(resource, amount, game));
     }
     fn message_box_response(&mut self, kind: u16) -> i32 {
-        self.foreign(|game| sm_game::message_boxes::poll(kind, game))
+        // The dialogue words are the lease's; the former foreign entry's
+        // observation refresh is kept.
+        self.owned_player_call(|runtime| sm_game::message_boxes::poll(kind, runtime))
     }
     fn save_game(&mut self, slot: u16) {
         self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
