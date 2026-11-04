@@ -23,7 +23,7 @@ pub const VULNERABILITY_PLASMA_ICE_WAVE: usize = 11;
 
 /// One original `Runtime`: the actor, projectile and mechanism access a
 /// pirate routine edits through, the slots on the Session, the session-aware
-/// RAM words, and `foreign`.
+/// RAM words, and owned steps.
 pub trait PirateLease:
     crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
@@ -35,11 +35,9 @@ pub trait PirateLease:
     + crate::word_transfers::LoadedRom
     + SlotState
 {
-    type Game: Pirates + ?Sized;
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;
     fn write_word_le(&mut self, value: u16, at: usize);
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// Run `action` on this lease where a `foreign` call ran it on the game:
     /// the external observations are refreshed on entry and on return.
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
@@ -51,7 +49,7 @@ pub trait PirateLease:
 
 /// What the pirates need from the game outside a lease.
 pub trait Pirates: CompatibilityRam + crate::records::Records {
-    type Lease<'a>: PirateLease<Game = Self>
+    type Lease<'a>: PirateLease
     where
         Self: 'a;
     /// Open one lease, as one original `Runtime::new`.
@@ -341,11 +339,10 @@ fn initialize_wall<G: Pirates + ?Sized>(game: &mut G) {
     });
 }
 
-fn climb_wall<G: Pirates + ?Sized>(right: bool, game: &mut G) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
-    if api::player_within(&mut runtime, key, Axis::Y, 32) {
-        let key = current(&runtime);
+fn climb_wall<R: PirateLease>(right: bool, runtime: &mut R) {
+    let key = current(runtime);
+    if api::player_within(runtime, key, Axis::Y, 32) {
+        let key = current(runtime);
         runtime.edit_actor(key, Native, |actor| {
             actor.instruction = if right {
                 list::FIRE_LASER_AND_WALL_JUMP_RIGHT
@@ -357,8 +354,7 @@ fn climb_wall<G: Pirates + ?Sized>(right: bool, game: &mut G) {
     }
 }
 
-fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
-    let mut runtime = game.lease();
+fn wall_jump<R: PirateLease>(right: bool, runtime: &mut R) {
     let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     let actor = runtime.resolve_actor(key, Native);
@@ -381,7 +377,7 @@ fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
         .resolve_actor(key, Native)
         .pre_instruction
         .to_ne_bytes()[0];
-    let step = Pirate::of(&runtime, index).arc_angle_delta().to_le_bytes()[0];
+    let step = Pirate::of(runtime, index).arc_angle_delta().to_le_bytes()[0];
     let phase = u16::from(if right {
         phase.wrapping_sub(step)
     } else {
@@ -389,7 +385,7 @@ fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
     });
     runtime.edit_actor(key, Native, |actor| actor.pre_instruction = phase);
     let end = extra(
-        &runtime,
+        runtime,
         index,
         if right {
             Extra::ArcRightTarget
@@ -464,9 +460,8 @@ fn within(delta: u16, distance: i16) -> bool {
     (delta as i16).wrapping_abs().wrapping_sub(distance) < 0
 }
 
-fn ninja_close_attack<G: Pirates + ?Sized>(check_center: bool, game: &mut G) -> bool {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+fn ninja_close_attack<R: PirateLease>(check_center: bool, runtime: &mut R) -> bool {
+    let key = current(runtime);
     let actor = runtime.resolve_actor(key, Native);
     let player = &runtime.session().player;
     let instruction = if within(player.x.wrapping_sub(actor.x.whole), 40)
@@ -491,10 +486,6 @@ fn ninja_close_attack<G: Pirates + ?Sized>(check_center: bool, game: &mut G) -> 
         actor.instruction_delay = 1;
     });
     true
-}
-
-fn flinch_from_projectile<G: Pirates + ?Sized>(walking: bool, game: &mut G) -> bool {
-    flinch(walking, &mut game.lease())
 }
 
 /// Flinch from the last of Samus's first five shots within 32 pixels of the
@@ -567,10 +558,9 @@ fn landing_dust<R: PirateLease>(runtime: &mut R, key: Key) {
     }
 }
 
-fn spin_jump<G: Pirates + ?Sized>(index: u16, right: bool, descending: bool, game: &mut G) {
-    let mut runtime = game.lease();
+fn spin_jump<R: PirateLease>(index: u16, right: bool, descending: bool, runtime: &mut R) {
     let key = Key::from_legacy(index);
-    let speed = Pirate::of(&runtime, index).speed() >> 8;
+    let speed = Pirate::of(runtime, index).speed() >> 8;
     runtime.edit_actor(key, Native, |actor| {
         actor.x.whole = offset_x(actor.x.whole, speed, right);
     });
@@ -582,10 +572,10 @@ fn spin_jump<G: Pirates + ?Sized>(index: u16, right: bool, descending: bool, gam
                 .wrapping_add(if descending { 1 } else { u16::MAX });
         });
     }
-    let velocity = Pirate::of(&runtime, index)
+    let velocity = Pirate::of(runtime, index)
         .speed()
         .wrapping_add(if descending { 0xffe0 } else { 32 });
-    set_extra(&mut runtime, index, Extra::Speed, velocity);
+    set_extra(runtime, index, Extra::Speed, velocity);
     if descending {
         if velocity == 0 {
             runtime.edit_actor(key, Native, |actor| {
@@ -602,7 +592,7 @@ fn spin_jump<G: Pirates + ?Sized>(index: u16, right: bool, descending: bool, gam
                     actor.variables[LEFT_POST_X]
                 };
             });
-            landing_dust(&mut runtime, key);
+            landing_dust(runtime, key);
         }
     } else {
         runtime.edit_actor(key, Native, |actor| {
@@ -629,17 +619,16 @@ enum DivekickPhase {
     WalkToPost,
 }
 
-fn divekick<G: Pirates + ?Sized>(index: u16, right: bool, phase: DivekickPhase, game: &mut G) {
-    let mut runtime = game.lease();
+fn divekick<R: PirateLease>(index: u16, right: bool, phase: DivekickPhase, runtime: &mut R) {
     let key = Key::from_legacy(index);
     match phase {
         DivekickPhase::Jump => {
-            let speed = Pirate::of(&runtime, index).speed() >> 8;
+            let speed = Pirate::of(runtime, index).speed() >> 8;
             runtime.edit_actor(key, Native, |actor| {
                 actor.y.whole = actor.y.whole.wrapping_sub(speed)
             });
-            let velocity = (Pirate::of(&runtime, index).speed() as i16).wrapping_sub(64);
-            set_extra(&mut runtime, index, Extra::Speed, velocity as u16);
+            let velocity = (Pirate::of(runtime, index).speed() as i16).wrapping_sub(64);
+            set_extra(runtime, index, Extra::Speed, velocity as u16);
             if velocity < 0 {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[FUNCTION] = if right {
@@ -654,21 +643,20 @@ fn divekick<G: Pirates + ?Sized>(index: u16, right: bool, phase: DivekickPhase, 
                     };
                     actor.instruction_delay = 1;
                 });
-                set_extra(&mut runtime, index, Extra::Speed, 1536);
+                set_extra(runtime, index, Extra::Speed, 1536);
             }
         }
         DivekickPhase::Divekick => {
             runtime.edit_actor(key, Native, |actor| {
                 actor.x.whole = offset_x(actor.x.whole, 5, right);
             });
-            let [fraction, whole] = Pirate::of(&runtime, index).speed().to_le_bytes();
+            let [fraction, whole] = Pirate::of(runtime, index).speed().to_le_bytes();
             let amount = (i32::from(whole) << 16) | i32::from(fraction);
-            let finished = api::move_vertical(&mut runtime, key, amount) == MovementResult::Blocked
-                || {
-                    let velocity = (Pirate::of(&runtime, index).speed() as i16).wrapping_sub(64);
-                    set_extra(&mut runtime, index, Extra::Speed, velocity as u16);
-                    velocity < 0 || velocity as u16 & 0xff00 == 0
-                };
+            let finished = api::move_vertical(runtime, key, amount) == MovementResult::Blocked || {
+                let velocity = (Pirate::of(runtime, index).speed() as i16).wrapping_sub(64);
+                set_extra(runtime, index, Extra::Speed, velocity as u16);
+                velocity < 0 || velocity as u16 & 0xff00 == 0
+            };
             if finished {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[FUNCTION] = if right {
@@ -683,9 +671,9 @@ fn divekick<G: Pirates + ?Sized>(index: u16, right: bool, phase: DivekickPhase, 
                     };
                     actor.instruction_delay = 1;
                 });
-                let y = Pirate::of(&runtime, index).spawn_y();
+                let y = Pirate::of(runtime, index).spawn_y();
                 runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
-                landing_dust(&mut runtime, key);
+                landing_dust(runtime, key);
             }
         }
         DivekickPhase::WalkToPost => {
@@ -774,9 +762,8 @@ fn initialize_ninja<G: Pirates + ?Sized>(game: &mut G) {
     runtime.owned_step(load_ninja_palette);
 }
 
-fn ninja_initial<G: Pirates + ?Sized>(game: &mut G) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+fn ninja_initial<R: PirateLease>(runtime: &mut R) {
+    let key = current(runtime);
     let player_x = runtime.session().player.x;
     let x = runtime.resolve_actor(key, Native).x.whole;
     if within(x.wrapping_sub(player_x), 128) {
@@ -794,11 +781,10 @@ fn ninja_initial<G: Pirates + ?Sized>(game: &mut G) {
     }
 }
 
-fn ninja_active<G: Pirates + ?Sized>(index: u16, game: &mut G) {
-    if flinch_from_projectile(false, game) || ninja_close_attack(true, game) {
+fn ninja_active<R: PirateLease>(index: u16, runtime: &mut R) {
+    if flinch(false, runtime) || ninja_close_attack(true, runtime) {
         return;
     }
-    let mut runtime = game.lease();
     let key = Key::from_legacy(index);
     let actor = runtime.resolve_actor(key, Native);
     let left = actor.x.whole == actor.variables[LEFT_POST_X];
@@ -817,12 +803,11 @@ fn ninja_active<G: Pirates + ?Sized>(index: u16, game: &mut G) {
     });
 }
 
-fn ready_to_divekick<G: Pirates + ?Sized>(game: &mut G) {
-    if flinch_from_projectile(false, game) || ninja_close_attack(false, game) {
+fn ready_to_divekick<R: PirateLease>(runtime: &mut R) {
+    if flinch(false, runtime) || ninja_close_attack(false, runtime) {
         return;
     }
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+    let key = current(runtime);
     if !within(
         runtime.resolve_actor(key, Native).variables[POSTS_MIDPOINT_X]
             .wrapping_sub(runtime.session().player.x),
@@ -997,39 +982,38 @@ fn walking_instruction<R: PirateLease>(runtime: &R, key: Key, attack: bool) -> u
     }
 }
 
-fn walk<G: Pirates + ?Sized>(right: bool, game: &mut G) {
-    let mut runtime = game.lease();
+fn walk<R: PirateLease>(right: bool, runtime: &mut R) {
     let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
-    if api::player_within(&mut runtime, key, Axis::Y, 16) {
-        let instruction = walking_instruction(&runtime, key, true);
+    if api::player_within(runtime, key, Axis::Y, 16) {
+        let instruction = walking_instruction(runtime, key, true);
         runtime.edit_actor(key, Native, |actor| {
             actor.instruction = instruction;
             actor.instruction_delay = 1;
         });
         return;
     }
-    let mover = current(&runtime);
-    if api::move_vertical(&mut runtime, mover, 1 << 16) != MovementResult::Blocked {
+    let mover = current(runtime);
+    if api::move_vertical(runtime, mover, 1 << 16) != MovementResult::Blocked {
         return;
     }
     let x = runtime.resolve_actor(key, Native).x.whole;
-    set_extra(&mut runtime, index, Extra::Speed, x);
+    set_extra(runtime, index, Extra::Speed, x);
     runtime.edit_actor(key, Native, |actor| {
         actor.x.whole = offset_x(x, if right { 16 } else { 17 }, right)
     });
-    let mover = current(&runtime);
-    let floor = api::move_vertical(&mut runtime, mover, 1 << 16) == MovementResult::Blocked;
-    let x = Pirate::of(&runtime, index).speed();
+    let mover = current(runtime);
+    let floor = api::move_vertical(runtime, mover, 1 << 16) == MovementResult::Blocked;
+    let x = Pirate::of(runtime, index).speed();
     runtime.edit_actor(key, Native, |actor| actor.x.whole = x);
     let turn = !floor || {
         if !right {
-            let mover = current(&runtime);
-            api::probe_horizontal(&mut runtime, mover, -9 << 16);
+            let mover = current(runtime);
+            api::probe_horizontal(runtime, mover, -9 << 16);
         }
-        let mover = current(&runtime);
+        let mover = current(runtime);
         api::move_horizontal(
-            &mut runtime,
+            runtime,
             mover,
             if right { 14336 } else { -14337 },
             api::SlopePolicy::Ignore,
@@ -1061,7 +1045,7 @@ fn advance<G: Pirates + ?Sized>(walking: bool, game: &mut G) {
     let key = current(&runtime);
     let state = u32::from(runtime.resolve_actor(key, Native).variables[FUNCTION]) | 0xb20000;
     let index = runtime.session().actors.controls.selected;
-    runtime.foreign(|game| dispatch_state(state, index, game));
+    runtime.owned_step(|runtime| dispatch_state(state, index, runtime));
     if walking && runtime.resolve_actor(key, Native).parameters[0] & PARAMETER_ALTERNATE != 0 {
         runtime.owned_step(|runtime| flinch(true, runtime));
     }
@@ -1198,35 +1182,35 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
     }
 }
 
-fn dispatch_state<G: Pirates + ?Sized>(ea: u32, k: u16, game: &mut G) {
+fn dispatch_state<R: PirateLease>(ea: u32, k: u16, runtime: &mut R) {
     match ea {
-        state::NINJA_INITIAL => ninja_initial(game),
-        state::NINJA_ACTIVE => ninja_active(k, game),
-        state::NINJA_READY_TO_DIVEKICK => ready_to_divekick(game),
-        state::NINJA_SPIN_JUMP_LEFT_RISING => spin_jump(k, false, false, game),
-        state::NINJA_SPIN_JUMP_LEFT_FALLING => spin_jump(k, false, true, game),
-        state::NINJA_SPIN_JUMP_RIGHT_RISING => spin_jump(k, true, false, game),
-        state::NINJA_SPIN_JUMP_RIGHT_FALLING => spin_jump(k, true, true, game),
-        state::NINJA_DIVEKICK_LEFT_JUMP => divekick(k, false, DivekickPhase::Jump, game),
-        state::NINJA_DIVEKICK_LEFT => divekick(k, false, DivekickPhase::Divekick, game),
+        state::NINJA_INITIAL => ninja_initial(runtime),
+        state::NINJA_ACTIVE => ninja_active(k, runtime),
+        state::NINJA_READY_TO_DIVEKICK => ready_to_divekick(runtime),
+        state::NINJA_SPIN_JUMP_LEFT_RISING => spin_jump(k, false, false, runtime),
+        state::NINJA_SPIN_JUMP_LEFT_FALLING => spin_jump(k, false, true, runtime),
+        state::NINJA_SPIN_JUMP_RIGHT_RISING => spin_jump(k, true, false, runtime),
+        state::NINJA_SPIN_JUMP_RIGHT_FALLING => spin_jump(k, true, true, runtime),
+        state::NINJA_DIVEKICK_LEFT_JUMP => divekick(k, false, DivekickPhase::Jump, runtime),
+        state::NINJA_DIVEKICK_LEFT => divekick(k, false, DivekickPhase::Divekick, runtime),
         state::NINJA_DIVEKICK_LEFT_WALK_TO_POST => {
-            divekick(k, false, DivekickPhase::WalkToPost, game)
+            divekick(k, false, DivekickPhase::WalkToPost, runtime)
         }
-        state::NINJA_DIVEKICK_RIGHT_JUMP => divekick(k, true, DivekickPhase::Jump, game),
-        state::NINJA_DIVEKICK_RIGHT => divekick(k, true, DivekickPhase::Divekick, game),
+        state::NINJA_DIVEKICK_RIGHT_JUMP => divekick(k, true, DivekickPhase::Jump, runtime),
+        state::NINJA_DIVEKICK_RIGHT => divekick(k, true, DivekickPhase::Divekick, runtime),
         state::NINJA_DIVEKICK_RIGHT_WALK_TO_POST => {
-            divekick(k, true, DivekickPhase::WalkToPost, game)
+            divekick(k, true, DivekickPhase::WalkToPost, runtime)
         }
-        state::WALL_CLIMBING_LEFT => climb_wall(true, game),
-        state::WALL_JUMPING_RIGHT => wall_jump(true, game),
-        state::WALL_CLIMBING_RIGHT => climb_wall(false, game),
-        state::WALL_JUMPING_LEFT => wall_jump(false, game),
+        state::WALL_CLIMBING_LEFT => climb_wall(true, runtime),
+        state::WALL_JUMPING_RIGHT => wall_jump(true, runtime),
+        state::WALL_CLIMBING_RIGHT => climb_wall(false, runtime),
+        state::WALL_JUMPING_LEFT => wall_jump(false, runtime),
         state::FROZEN
         | state::WALL_LANDED_LEFT
         | state::WALL_LANDED_RIGHT
         | state::WALKING_IDLE => (),
-        state::WALKING_LEFT => walk(false, game),
-        state::WALKING_RIGHT => walk(true, game),
-        _ => game.lease().unreachable(),
+        state::WALKING_LEFT => walk(false, runtime),
+        state::WALKING_RIGHT => walk(true, runtime),
+        _ => runtime.unreachable(),
     }
 }
