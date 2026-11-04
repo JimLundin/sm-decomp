@@ -62,7 +62,7 @@ pub(crate) trait Wire {
 
 impl crate::game::display_commands::Wire for Game {
     fn byte(&mut self, register: u32, value: u8) {
-        // SAFETY: `apply` and `copy_to_vram_now` check the backend is installed,
+        // SAFETY: `apply` checks the backend is installed,
         // and `&mut Game` excludes other access.
         unsafe { write_reg(register as u16, value, self) }
     }
@@ -712,21 +712,9 @@ fn scroll_hdma(channel: u8, scroll: ScrollOffset, table: Source, game: &mut impl
     }
 }
 
-/// `CopyToVramNow`: forced blank, the VRAM address, channel 1, the VRAM step,
-/// the start (reading the room's prepared assets when given), then full
-/// brightness.
-pub(crate) fn copy_to_vram_now(
-    address: u16,
-    source: Source,
-    bytes: u16,
-    assets: Option<&PreparedRoomAssets>,
-    game: &mut Game,
-) {
-    assert!(!game.g_snes.is_null(), "SNES backend must be installed");
-    copy_to_vram(address, source, bytes, assets, game);
-}
-
-/// `CopyToVramNow` on the lease, published first, through its transfer port.
+/// `CopyToVramNow` on the lease, published first, through its transfer port:
+/// forced blank, the VRAM address, channel 1, the VRAM step, the start
+/// (reading the room's prepared assets when given), then full brightness.
 pub(crate) fn copy_to_vram_on_lease(
     address: u16,
     source: Source,
