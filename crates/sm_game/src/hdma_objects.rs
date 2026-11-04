@@ -89,7 +89,9 @@ pub trait Allocator: HdmaTable {
     /// Write the DMA control and target registers at `register`, control first.
     fn write_channel_control(&mut self, register: u16, control: u16);
 }
-impl<T: crate::menus::host::MenuRuntime + HdmaTable + ?Sized> Allocator for T {
+impl<T: crate::menus::host::MenuRuntime + HdmaTable + crate::runtime_access::RuntimeAccess + ?Sized>
+    Allocator for T
+{
     fn write_channel_control(&mut self, register: u16, control: u16) {
         let [low, high] = control.to_le_bytes();
         self.write_dma_register(register, low);

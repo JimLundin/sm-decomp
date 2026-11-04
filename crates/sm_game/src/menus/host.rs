@@ -165,7 +165,6 @@ pub trait Host:
     + crate::display::transfer::Mode7Queue
     + crate::display::transfer::TilemapQueue
     + crate::display::queued_tilemaps::BackgroundBlocks
-    + crate::room_state::LevelData
     + CompatibilityRam
     + crate::runtime_access::SessionRam
     + crate::player_position::PlayerPosition
