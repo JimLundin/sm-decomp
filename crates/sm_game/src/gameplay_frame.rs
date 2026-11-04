@@ -388,9 +388,10 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 break 'frame lease_frame::<H>(entry, &mut game.runtime());
             }
             Advance(entry) => advance(entry, game),
-            PauseFadeIn => pause_controls::fade_in(game),
             Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit | DemoReset
-            | Demo | Options | FileMenu | MapMenu | GameOver => unreachable!("a lease state"),
+            | Demo | Options | FileMenu | MapMenu | GameOver | PauseFadeIn => {
+                unreachable!("a lease state")
+            }
             Null => 0,
             Unused => {
                 game.rtl_unreachable();
@@ -446,6 +447,7 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             | DemoReset
             | Demo
             | Options
+            | PauseFadeIn
             | GameOver
             | MapMenu
             | FileMenu
@@ -484,6 +486,7 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         FileMenu => file_menu::advance(lease),
         MapMenu => map_menu::advance(lease),
         GameOver => game_over::advance(lease),
+        PauseFadeIn => pause_controls::fade_in(lease),
         _ => unreachable!("not a lease state"),
     }
 }
