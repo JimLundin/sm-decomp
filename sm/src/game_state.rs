@@ -5275,6 +5275,18 @@ impl sm_game::presentation_workspace::Access for Game {
             self.compatibility_write_byte(at + offset, byte);
         }
     }
+    /// As `screen_fill_native`, with the words little-endian.
+    fn screen_fill(
+        &mut self,
+        point: sm_game::presentation_workspace::Point,
+        words: usize,
+        value: u16,
+    ) {
+        let at = point.compatibility_address().expect("screen offset");
+        for (offset, byte) in value.to_le_bytes().repeat(words).into_iter().enumerate() {
+            self.compatibility_write_byte(at + offset, byte);
+        }
+    }
 }
 #[forbid(unsafe_code)]
 impl sm_game::presentation_workspace::PaletteAccess for Game {
