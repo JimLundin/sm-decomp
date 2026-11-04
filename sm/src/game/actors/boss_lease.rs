@@ -208,6 +208,6 @@ impl BossLease for Runtime<'_> {
 
 impl sm_game::cartridge::NativeDiagnostics for Runtime<'_> {
     fn native_rom_diagnostic(&mut self, address: u32) {
-        self.foreign(|game| crate::game::session_runtime::native_rom_diagnostic(address, game));
+        self.report_native_diagnostic(address);
     }
 }

@@ -97,7 +97,15 @@ crate::typed_constants! { Consts89;
     ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT = 41217, ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_LEFT = 38912,
 }
 
-pub fn spawn_power_bomb<H: Host + ?Sized>(game: &mut H) {
+/// Spawn the power bomb's explosion: its status, the sound, then the window's
+/// two HDMA objects on the host's object table.
+pub fn spawn_power_bomb<H>(game: &mut H)
+where
+    H: crate::sequence_state::Access
+        + crate::effects::SoundEffects
+        + crate::hdma_objects::Allocator
+        + ?Sized,
+{
     if crate::session_words::current(game).time_is_frozen_flag != 0 {
         with_explosion(game, |_, e: &mut Explosion| {
             e.bomb.explosion_status = 0x4000
@@ -109,8 +117,8 @@ pub fn spawn_power_bomb<H: Host + ?Sized>(game: &mut H) {
         });
         static UNK_888ABA: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x28, 0x8ace_u16);
         static UNK_888AC2: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x29, 0x8b80_u16);
-        game.spawn_hdma(0x88, &UNK_888ABA);
-        game.spawn_hdma(0x88, &UNK_888AC2);
+        crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_888ABA, game);
+        crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_888AC2, game);
     };
 }
 static POWER_BOMB_PRE_EXPLOSION_RADIUS_SPEED: u16 = 0x3000;
@@ -118,7 +126,9 @@ static POWER_BOMB_PRE_EXPLOSION_RADIUS_ACCEL: u16 = 0x80;
 static G_WORD_888B96: u16 = 3;
 static POWER_BOMB_EXPLOSION_RADIUS_SPEED: u16 = 0;
 static POWER_BOMB_EXPLOSION_RADIUS_ACCEL: u16 = 0x30;
-pub fn begin_pre_flash<H: Host + ?Sized>(game: &mut H) {
+pub fn begin_pre_flash<H: crate::fx_domain::Sources + crate::sequence_state::Access + ?Sized>(
+    game: &mut H,
+) {
     game.store_source_byte(LiveOwner::ExplosionOffscreen, 0, 255);
     game.store_source_byte(LiveOwner::ExplosionOffscreen, 1, 0);
     with_explosion(game, |_, e: &mut Explosion| {
@@ -126,18 +136,18 @@ pub fn begin_pre_flash<H: Host + ?Sized>(game: &mut H) {
         e.bomb.radius_speed = POWER_BOMB_PRE_EXPLOSION_RADIUS_SPEED;
     });
 }
-pub fn begin_prescaled_pre_flash<H: Host + ?Sized>(game: &mut H) {
+pub fn begin_prescaled_pre_flash<H: crate::sequence_state::Access + ?Sized>(game: &mut H) {
     with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.shape_definition = ADDR_BYTE_889F06 as u16;
     });
 }
-pub fn begin_explosion<H: Host + ?Sized>(game: &mut H) {
+pub fn begin_explosion<H: crate::sequence_state::Access + ?Sized>(game: &mut H) {
     with_explosion(game, |_, e: &mut Explosion| {
         e.radius = 1024;
         e.bomb.radius_speed = POWER_BOMB_EXPLOSION_RADIUS_SPEED;
     });
 }
-pub fn begin_prescaled_explosion<H: Host + ?Sized>(game: &mut H) {
+pub fn begin_prescaled_explosion<H: crate::sequence_state::Access + ?Sized>(game: &mut H) {
     with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.shape_definition = ADDR_POWER_BOMB_EXPLOSION_SHAPE_DEF0 as u16;
     });
@@ -465,16 +475,27 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
     }
 }
 
-pub fn spawn_crystal_flash<H: Host + ?Sized>(game: &mut H) {
+/// Spawn the crystal flash's explosion: its status, then the window's two
+/// HDMA objects on the host's object table.
+pub fn spawn_crystal_flash<H>(game: &mut H)
+where
+    H: crate::sequence_state::Access + crate::hdma_objects::Allocator + ?Sized,
+{
     with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.explosion_status = (0x888000i32) as u16;
     });
     static UNK_88A2B0: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x28, 0xa2bd_u16);
     static UNK_88A2B8: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x29, 0xa32a_u16);
-    game.spawn_hdma(0x88, &UNK_88A2B0);
-    game.spawn_hdma(0x88, &UNK_88A2B8);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A2B0, game);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A2B8, game);
 }
-pub fn begin_crystal_flash<H: Host + ?Sized>(game: &mut H) {
+pub fn begin_crystal_flash<H>(game: &mut H)
+where
+    H: crate::fx_domain::Sources
+        + crate::sequence_state::Access
+        + crate::effects::SoundEffects
+        + ?Sized,
+{
     begin_pre_flash(game);
     game.queue_sound(0, 1_u8, 6);
 }

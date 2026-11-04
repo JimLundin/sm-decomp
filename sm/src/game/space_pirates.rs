@@ -41,18 +41,12 @@ impl Pirates for Game {
 }
 
 impl PirateLease for Runtime<'_> {
-    type Game = Game;
-
     fn word(&self, at: usize) -> u16 {
         Runtime::word(self, at)
     }
 
     fn write_word_le(&mut self, value: u16, at: usize) {
         Runtime::write_word_le(self, value, at);
-    }
-
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        Runtime::foreign(self, action)
     }
 
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T {

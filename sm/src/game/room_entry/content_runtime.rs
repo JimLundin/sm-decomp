@@ -5,18 +5,16 @@ use super::{
     effects::{AssetRead, AssetSlot},
 };
 use crate::{
-    game::session_runtime::{Runtime, invalid_window, native_rom_diagnostic},
+    game::session_runtime::{Runtime, invalid_window},
     rom::RomRecord,
 };
 
 impl Runtime<'_> {
     fn room_pointer_diagnostic(&mut self, bank: u8, address: u16) {
         if address & 0x8000 == 0 {
-            self.foreign(|game| {
-                // Keep the actual RomPtr observer and native binding acquisition.
-                native_rom_diagnostic((u32::from(bank) << 16) | u32::from(address), game);
-                let _ = game.legacy_native_rom_ptr();
-            });
+            // Keep the actual RomPtr observer and native binding acquisition.
+            self.report_native_diagnostic((u32::from(bank) << 16) | u32::from(address));
+            let _ = self.samus_game().legacy_native_rom_ptr();
         }
     }
     fn contact_word(&self, bank: u8, address: u16) -> u16 {

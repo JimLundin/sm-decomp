@@ -116,10 +116,16 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.owned_call(|runtime| sm_game::progress::event_happened(runtime, event))
     }
     fn restore(&mut self, resource: sm_game::item_pickups::Resource, amount: u16) {
-        self.foreign(|game| crate::game::item_pickups_runtime::restore(resource, amount, game));
+        // The former foreign entry restored on a nested lease; this one keeps
+        // its observation refresh.
+        self.owned_player_call(|runtime| {
+            crate::game::item_pickups_runtime::restore(resource, amount, runtime)
+        });
     }
     fn message_box_response(&mut self, kind: u16) -> i32 {
-        self.foreign(|game| sm_game::message_boxes::poll(kind, game))
+        // The dialogue words are the lease's; the former foreign entry's
+        // observation refresh is kept.
+        self.owned_player_call(|runtime| sm_game::message_boxes::poll(kind, runtime))
     }
     fn save_game(&mut self, slot: u16) {
         self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
@@ -485,6 +491,31 @@ impl<'g> Runtime<'g> {
     /// call left them.
     pub(crate) fn report_invalid_window(&mut self, address: u32) {
         self.owned_player_call(|runtime| invalid_window(runtime.game, address));
+    }
+    /// The native-pointer RomPtr diagnostic on the lease: it prints and marks the
+    /// game failed, as `report_invalid_window`, and the verifier's low-window
+    /// observer snapshots the lease's projected RAM where it copied the RAM the
+    /// former foreign call had exported. The observations are refreshed on entry
+    /// and on return, as the foreign call left them.
+    pub(crate) fn report_native_diagnostic(&mut self, address: u32) {
+        self.owned_player_call(|runtime| {
+            invalid_window(runtime.game, address);
+            #[cfg(sm_verify_dll)]
+            {
+                // The case's injection replaces the loaded image, which the lease
+                // does not project: the image after it is the one before.
+                let ram = (0..runtime.game.ram().len())
+                    .map(|at| runtime.byte(at))
+                    .collect::<Vec<u8>>();
+                let game = &mut *runtime.game;
+                crate::room_contact_start_observer::diagnostic_image(
+                    address,
+                    || ram.clone(),
+                    &mut game.loaded_rom,
+                    &game.g_fail,
+                );
+            }
+        });
     }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
     /// observations are refreshed on entry and on return, as the former foreign call left them.
@@ -1067,7 +1098,9 @@ impl Host for Runtime<'_> {
         });
     }
     fn spawn_power_bomb(&mut self) {
-        self.foreign(|g| sm_game::explosion_window::spawn_power_bomb(g));
+        // The explosion words and the HDMA objects are the lease's; the owned
+        // call keeps the former foreign entry's observation refresh.
+        self.owned_player_call(sm_game::explosion_window::spawn_power_bomb);
     }
     fn spawn_mechanism(&mut self, header: u16) {
         let mut contact = sm_game::room_mechanisms::host::Contact::Absent;
@@ -1685,9 +1718,7 @@ impl Runtime<'_> {
     pub(crate) fn legacy_native_record(&mut self, bank: u8, address: u16) -> RomRecord {
         let address = (u32::from(bank) << 16) | u32::from(address);
         if address & 0x8000 == 0 {
-            self.foreign(|game| {
-                native_rom_diagnostic(address, game);
-            });
+            self.report_native_diagnostic(address);
         }
         content::captured(self.native_image(), address)
     }

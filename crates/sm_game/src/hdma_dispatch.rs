@@ -191,16 +191,16 @@ where
     };
     use HdmaCall::*;
     match target {
-        BeginPreFlash => explosion_window::begin_pre_flash(game),
-        BeginPrescaledPreFlash => explosion_window::begin_prescaled_pre_flash(game),
-        BeginExplosion => explosion_window::begin_explosion(game),
-        BeginPrescaledExplosion => explosion_window::begin_prescaled_explosion(game),
         InitializeRainbowBeam
+        | BeginPreFlash
+        | BeginPrescaledPreFlash
+        | BeginExplosion
+        | BeginPrescaledExplosion
+        | BeginCrystalFlash
         | FinishPowerBomb
         | FinishCrystalFlash
         | FreezeAndBackup
         | InitializeSuitPickup => unreachable!("run_call runs {target:?}"),
-        BeginCrystalFlash => explosion_window::begin_crystal_flash(game),
         Nothing => {}
         CaptureBg1Right => xray_background::capture_bg1_right(game),
         CaptureBg1Left => xray_background::capture_bg1_left(game),
@@ -234,6 +234,19 @@ where
         }
         Some((_, HdmaCall::InitializeSuitPickup)) => {
             it.effect(HdmaEffect::InitializeSuitPickup, slot)
+        }
+        // The explosion starts store the explosion words and window sources the
+        // lease owns.
+        Some((_, HdmaCall::BeginPreFlash)) => it.on_lease(explosion_window::begin_pre_flash),
+        Some((_, HdmaCall::BeginPrescaledPreFlash)) => {
+            it.on_lease(explosion_window::begin_prescaled_pre_flash)
+        }
+        Some((_, HdmaCall::BeginExplosion)) => it.on_lease(explosion_window::begin_explosion),
+        Some((_, HdmaCall::BeginPrescaledExplosion)) => {
+            it.on_lease(explosion_window::begin_prescaled_explosion)
+        }
+        Some((_, HdmaCall::BeginCrystalFlash)) => {
+            it.on_lease(explosion_window::begin_crystal_flash)
         }
         _ => it.foreign(|game| hdma_call(address, game)),
     }

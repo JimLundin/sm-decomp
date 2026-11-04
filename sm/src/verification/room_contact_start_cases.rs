@@ -28,7 +28,11 @@ pub(crate) fn snapshot(out: &mut Vec<u8>, g: &Game) {
     snapshot_parts(out, g.ram(), &g.g_fail);
 }
 pub(crate) fn snapshot_parts(out: &mut Vec<u8>, ram: &WorkRam, fail: &bool) {
-    out.extend_from_slice(&ram_bytes_parts(ram));
+    snapshot_image(out, &ram_bytes_parts(ram), fail);
+}
+/// The snapshot of a RAM image `ram` and the failure flag.
+pub(crate) fn snapshot_image(out: &mut Vec<u8>, ram: &[u8], fail: &bool) {
+    out.extend_from_slice(ram);
     out.push(u8::from(*fail));
 }
 #[derive(Clone, Copy)]

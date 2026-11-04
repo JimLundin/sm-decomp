@@ -22,14 +22,9 @@ impl Content for Runtime<'_> {
             SpeedRecord::GrappleLava => 0x9f49,
         };
         if cursor & 0x8000 == 0 {
-            self.foreign(|game| {
-                crate::game::session_runtime::native_rom_diagnostic(
-                    0x900000 | u32::from(cursor),
-                    game,
-                );
-                // Preserve the actual optional native-binding capture and release.
-                drop(game.capture_native_rom_binding());
-            });
+            self.report_native_diagnostic(0x900000 | u32::from(cursor));
+            // Preserve the actual optional native-binding capture and release.
+            drop(self.samus_game().capture_native_rom_binding());
         }
         visual_host::Content::table(self, Source::Native, 0x900000 | u32::from(cursor))
     }
@@ -88,13 +83,15 @@ impl Effects for Runtime<'_> {
     }
 }
 
-/// Samus's Ceres push on the lease, then the escape countdown, which still draws on the game.
+/// Samus's Ceres push on the lease, then the escape countdown: its owner, the
+/// timer status and the objects are the lease's. The owned call keeps the
+/// former foreign entry's observation refresh.
 pub(crate) fn ceres_movement(runtime: &mut Runtime<'_>, action: fn(&mut Runtime<'_>)) {
     action(runtime);
-    runtime.foreign(|game| {
-        sm_game::escape_timer::advance(game);
-        if crate::ram_map::word!(game.TIMER_STATUS) != 0 {
-            sm_game::escape_timer::draw(game);
+    runtime.owned_player_call(|runtime| {
+        sm_game::escape_timer::advance(runtime);
+        if sm_game::session_words::current(runtime).timer_status != 0 {
+            sm_game::escape_timer::draw(runtime);
         }
     });
 }
@@ -221,8 +218,9 @@ fn crystal_flash_start(runtime: &mut Runtime<'_>) {
         word!(runtime.POWER_BOMB_EXPLOSION_X_POS = word!(runtime.SAMUS_X_POS));
         word!(runtime.POWER_BOMB_EXPLOSION_Y_POS = word!(runtime.SAMUS_Y_POS));
         set_hdma_enabled(true, runtime);
-        // The HDMA objects still spawn on the game.
-        runtime.foreign(|game: &mut Game| spawn_crystal_flash(game));
+        // The explosion words and the HDMA objects are the lease's; the owned
+        // call keeps the former foreign entry's observation refresh.
+        runtime.owned_player_call(spawn_crystal_flash);
     }
 }
 

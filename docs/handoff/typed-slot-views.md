@@ -423,3 +423,56 @@ three HDMA buffers.
 
 The ratchet does not count these, but only sm/ calls them: `RAM_VARS`, `RamVar`, `Shape`
 (`ram_map.rs`, `cpu_infra.rs:1258`, `verification/observation/oracle.rs`).
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc6`, on `rs-fc5`)
+
+`foreign_calls` 121 to 103, `legacy_engine_ram_sites` 460 to 458; `sm_game_ram_sites` and
+`game_host_impls` unchanged (82, 91). No lease is added mid-frame: each retired call runs
+on the lease that called it, in an owned player call (`owned_step`, `owned_player_call`,
+`on_lease`, `draw_objects`), which refreshes the observations on entry and return.
+Moved to the lease:
+- The pirates' `dispatch_state`: every state handler takes the AI's `PirateLease`
+  (behaviour: lease merge); `PirateLease` loses `foreign` and its `Game` type.
+- Ridley's tail floor test and the projectiles' `ridley_offscreen`, through
+  `room_state::LevelCells` (a blanket over `LevelData`; the Runtime reads its Session
+  terrain, `lease_level_word`, LEGACY row "Level data past the cells").
+- The message box poll (`dialogue_ram::Access`) and the gunship's item restores; the
+  restore cases' observer reads the lease's projected words.
+- The native RomPtr diagnostics (`Runtime::report_native_diagnostic`): the Samus table
+  pointers, the boss lease's `NativeDiagnostics`, `legacy_native_record`, the room entry
+  pointers and the player update content. The low-window observer
+  (`room_contact_start_observer::diagnostic_image`) snapshots the lease's projected RAM.
+  The room contact start cases (6, 7, 10, 15, 19) decide that this image equals the
+  foreign export's; commit `47c2c4ad6` holds the sites they reach and can be dropped alone.
+- The room mechanisms' setup diagnostics (`rtl::unreachable` directly).
+- The Samus echoes (`draw_objects`), the escape countdown (`escape_timer::Host`; the
+  Runtime is a `MapHost`) for the Ceres push and the gamma actions, the power bomb and
+  crystal flash spawns (`spawn_hdma_owned`; the channel registers stay a D2 `foreign`
+  per object), and the HDMA explosion start calls (`HdmaLease` gains the window sources,
+  the sequence words and the sound queue).
+
+Left, with what each needs:
+- The X-ray HDMA arms and the explosion afterglow, scaled, prescaled and finish arms:
+  `with_object`, `with_current_object` and `run_call`'s fallback retire only together
+  with the X-ray background, the sky's horizontal scroll and the Tourian statue.
+  `xray_background::Host` needs `display_refresh::Host` and opens `game.runtime()` nine
+  times; `explosion_window::Host` needs `MenuRuntime` (the Runtime cannot take it: its
+  `Allocator` impl would conflict with the blanket), `WorkRamAccess` and the game's
+  `k_out` window row. Narrow both hosts to what they call, as `escape_timer::Host` does.
+- The pre-action fallback (X-ray restore right, sky vertical scroll, title gradient
+  backdrop), the title gradient restart, the sky rows and the room initializers: all take
+  `menus::host::Host`.
+- Species dispatcher fallbacks (`species::pre_instruction`/`ai`/`instruction`/`touch`/
+  `shot`/`draw_hook`, `run_a7`, `run_aa`, Torizo's `run_movement`): the fallbacks route any
+  address into the generic table on Game, so they retire only when that table runs on the
+  lease; no species is small enough to remove a site alone.
+- The grapple tiles: not proved. The queue's native transfer can store at $00D0 + any
+  cursor, over the tile fields; on the game the tile store goes to the sequence owner
+  (`publish_sequence_words`), on the lease to the projection. A replay of an aliasing
+  cursor has to show the two agree first.
+- The room entry leaf effects (transition sounds, Samus drawn, timer draw, spin jump
+  sound) can now move: `player_command_in` and `escape_timer::Host` exist on the lease.
+- `rom_record` (Runtime `Host::record`, `room_capture`, the room entry content): four
+  verify observers snapshot RAM and the backend; the room background diagnostic's too.
+- `reset_room_enemy_workspace` ($7E:7000..$97FF fill) needs a typed owner; the vertical
+  slope behaviour read is a bus read that wraps from $7F:FFFF into bank $80.

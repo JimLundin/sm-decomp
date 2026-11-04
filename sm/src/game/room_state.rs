@@ -40,6 +40,13 @@ impl sm_game::room_state::EnemyGraphicsHost for Game {
 
 pub(crate) use sm_game::room_state::load_sprite_palettes;
 
+// The lease reads the cells from its Session terrain.
+impl sm_game::room_state::LevelCells for Runtime<'_> {
+    fn cell_level_word(&self, cell: usize) -> u16 {
+        sm_game::room_state::lease_level_word(self, cell)
+    }
+}
+
 impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     fn command_player(&mut self, command: u16) {
         self.owned_player_call(|runtime| {
