@@ -1310,6 +1310,149 @@ former `foreign` call left them. Writes are identical and in the same order.
     The verifier's room world cases and the two composed routes should match
     exactly.
 
+- **Second slice (lane `tick-s10b`, on `2a5535115`, `collab/tick-s10`).** Not yet
+  replayed. Ratchet: `game_host_impls` 25 → 19, `session_entries` 3 (unchanged),
+  `legacy_engine_ram_sites` 342 → 336, `foreign_calls` 43.
+  - **Samus's NMI tile upload** reads its descriptors ($7E:071D..0722) from the
+    lease (`Runtime::upload_samus_tiles`), not from Game's RAM. The cartridge
+    and the device are still Game's (`NativeSamusUpload`). The publish before it
+    stays, so RAM is where the NMI's later uploads found it.
+  - **The oracle checkpoint resume** (`verify/checkpoint.rs`) latches the next
+    frame's controller through `OracleRam`, a verification host over the
+    oracle's work RAM (D6, D7). It decodes nothing and exports nothing, so there
+    is no round trip. Why it is exact:
+    - The checkpoint holds no Session (`require_legacy_binary`), and the
+      restore has just written every RAM byte, which moves every held
+      domain's epoch. So each byte Game's held images served is the RAM byte.
+    - Game's stores were byte stores to RAM (`compatibility_write_byte`). The
+      host makes the same stores, in the same order.
+    - The controllers and the soft reset stay Game's inherent methods
+      (`latched_controller_word`, `sampled_controller_word`, `request_reset`).
+    - Game's `SampleHost` and `ResetRequest` are deleted.
+  - **Boot.** Game's part of `boot::resume` now ends after the Samus copy words.
+    The rest is `gameplay_frame::finish_boot`, the frame lease's first step
+    (`Start::Booted`), in the original order: the NMI enable
+    (`display_refresh::enable`), the APU ports' clear (`clear_apu_ports`, a
+    device port that reads only the upload flags, checked as at a cue),
+    `RANDOM_NUMBER` (`Field::RandomNumber`), the music delays
+    (`music_requests::reset_delays`), `ENABLE_DEBUG`, `verify_boot` on the
+    lease's `LoadHost`, `DEBUG_DISABLE_SOUNDS`, the downtime
+    (`music_requests::clear_downtime`) and `$0611 = 2`.
+    - The logo's last frame (`end_nintendo_logo`) runs on its own lease, as
+      the other logo frames do. The leases follow each other and are never
+      nested.
+    - Why it is exact: the frame lease opens on the RAM Game left after its
+      device work, and the lease's typed stores are the projection of the old
+      raw stores. The frame's `clear_pass_continuations` ($0612..0615) now
+      comes before these stores; none of them touches those bytes.
+    - With nothing left to call them, Game's `SlotHost`, `Records`,
+      `menus::state::Access` and `DisplayOwner` are deleted, as is Game's NMI
+      enable. Game's menu state is now an inherent method that only its own
+      byte projection uses.
+    - **Lease counts.** The logo's last frame gains a lease. On boot's work
+      frame, `verify_boot`'s `Lend` calls borrow the frame lease instead of
+      opening fresh ones, so `leases=` falls by that many. `nested=` is
+      unchanged.
+  - **Boot, left on Game, and the lease form each step needs.** These come
+    after `clear_work_ram(0x10000)`, in order:
+    - NMITIMEN off and its mirror: `apply_mirrored` with
+      `Control::Interrupts`.
+    - The `$51` brightness mirror store: a frame display field store.
+    - `initialize_registers`. Today it is `register_writes!` on Game. On a
+      lease it would be `apply_mirrored` or `apply_controls` per register,
+      which needs a `Control` for every register written: BGnSC, BGnNBA, the
+      doubled scroll writes, VMAIN, M7A..M7Y, the window registers, TM/TS and
+      their window masks, CGWSEL/CGADSUB, COLDATA and SETINI.
+      `initialize_io_and_oam` is already generic. The raw `$64`, `$71` and
+      `$74..76` stores are frame display mirror fields.
+    - The tile buffers: a presentation workspace fill on the lease.
+    - The APU queue bytes ($0643.., $0656/66/76): the audio owner's
+      `audio_store_byte`.
+    - The OAM pointer words: a Views field.
+    - `clear_high_table` and `finish_frame`: the lease already has
+      `ObjectAccess`.
+    - The Samus copy words ($071D..0722): player Session fields.
+
+    Once those move, Game's `ObjectAccess` is left with one other user,
+    `sprite_output::MapHost` for Game. Only the sprite effect observer
+    (`sprite_effect_observer::draw_on_lease`, cases 111..116) uses that, inside
+    `foreign`, so both go when that observer draws on the lease.
+  - **Settlement, `ScanlineIrq` and the IRQ door resume (investigated; not
+    moved).** None of these is a byte-exact move yet. Each needs the
+    following:
+    1. *Publish equals the release export for the held lanes.* An IRQ handler
+       stores these lanes:
+       - `irq::Store`: the pending and current interrupt words ($A7, $AB) and
+         the enables ($84/$85).
+       - `irq::Output`: registers.
+       - The door resume: Session state.
+
+       On a Legacy lease the frame display ranges (`frame_display_ranges`) and
+       $B1..$C0 go to Game's held domains through the lease's byte path, so
+       those stores need no publish. With a display-owned Session they live in
+       the display state, and HDMA reads its tables from WRAM on the next line
+       (`advance_beam`).
+
+       The proof needed: a verify-build check that, after each handler that
+       stores, `encode_spans` of the lease writes the same bytes, for those
+       lanes, as today's Game path leaves in RAM. Run it on `door-transition`,
+       `elevator-up` and the nightly `SM_NATIVE_LINES` route.
+    2. *An IRQ resume that does not nest a lease.* Today `follow_transition`
+       opens a `Runtime::new` per poll after the frame lease has closed. These
+       leases come one after another, but they are extra leases. Settlement
+       would have to run inside the frame lease, after `end_frame`, as
+       `ScanlineIrq(lease)` with `room_entry::protocol::resume(lease,
+       ScrollIrq)`, and with a `publish` after each poll that stored, before
+       the next `advance_at`.
+
+       `draw_frame_to_ppu` holds `samus_mutation()` across the beam and then
+       runs `finish_current` and `reconcile_current`. The lease already holds
+       Samus authority, so those would fold into the lease's release instead
+       of wrapping it.
+    3. *Plan `table_check` from the Session.* `table_check::begin_frame` reads
+       the six interrupt controls and five mirrors through
+       `ScanlineIrq(Game)`. Planning at the end of `end_frame` on the lease,
+       through `ScanlineIrq(lease)` plus the device's `vTimer` and
+       `vIrqEnabled`, reads the same values. Between the lease's end and
+       `begin_frame` only the controller latch, the soft reset check and
+       `$0611` are written. It needs a verify-only hook from `end_frame`.
+  - **Census: the 19 Game impls left.** Found by deleting each impl in turn
+    and compiling sm in the verify cfg.
+
+    | Impl | Callers |
+    | --- | --- |
+    | `gameplay_frame::Host` | the tick entries in `cpu_infra.rs` |
+    | `RuntimeAccess` | `Host`'s supertrait, and `Lend` for Game: `room_mechanisms`, and the verification candidates (`flags_candidate`, `animated_tiles`, `enemy_projectiles_candidate`) |
+    | `screen_fade::Owner` | `RuntimeAccess`'s supertrait, and `screen_fade_runtime`'s Game entries |
+    | `ContinuationAccess` | `Host`'s supertrait alone (`outer_continuation` and `clear_pass_continuations` before the lease) |
+    | `Video` | settlement's `ScanlineIrq(Game)` (`scanline_irq.rs`), `display_refresh::initialize_io_and_oam` (boot), `room_world_cases` |
+    | `display::preparation::Access` | `ScanlineIrq(Game)`, `rtl::write_register_and_mirror` (boot), `initialize_io_and_oam`, `room_world_cases` |
+    | `CompatibilityRam` | `ScanlineIrq(Game)`, `ProjectedBytes` for Game, `room_world_cases` |
+    | `display_scroll::Access` | `CompatibilityRam`'s supertrait, `scroll_runtime`, Game's own scroll bytes |
+    | `sequence_state::Access` | `CompatibilityRam`'s supertrait, Game's `gameplay_context` grapple words |
+    | `gameplay_context::Access` | `CompatibilityRam`'s supertrait, and the lease's fallbacks to Game (`session_runtime.rs` `gameplay_context` for Runtime) |
+    | `ObjectAccess` | boot (`clear_high_table`, `finish_frame`), `MapHost`'s supertrait |
+    | `sprite_output::MapHost` | `sprite_effect_observer` (verification, inside `foreign`) |
+    | `LoadedImage` | `crocomire_reactions` and `magdollite` tables on Game, `MapHost`'s supertrait |
+    | `NativeImage`, `NativeDiagnostics` | `SamusSources`' supertraits, `samus_animation`, the Samus draws on the lease (`session_runtime.rs`), the persistent-session and Samus binding verification cases |
+    | `SamusSources` | the Samus upload's tables (`NativeSamusUpload::table`, `capture_table`), `samus_animation`, the lease's Samus draws |
+    | `DecompressionHost` | `room_state::decompress_level`, the lease's `decompress_to_ram` and `decompress_level` |
+    | `SessionRam` | `DecompressionHost`'s supertrait alone |
+    | `persistent_session::AudioHost` | `music.rs` (the music queue on Game), the audio checkpoint cases, the palette and animated runtime checks |
+  - **`session_entries` (3) is unchanged.** The three are the frame's lease
+    (`gameplay_frame::frame`), `Lend`'s blanket for a `RuntimeAccess` host
+    (`runtime_access.rs`) and `session_cohort.rs`'s lease. The second goes when
+    Game stops being `RuntimeAccess`.
+  - **Rows.** Every power-on and boot row (the logo's last frame, boot's
+    work on the lease); file select and the other save-slot rows
+    (`verify_boot`); the checkpoint and oracle-sample rows (`OracleRam`, which
+    every checkpoint resume runs under an oracle that reads the controller in
+    NMI); `door-transition`, `door-loading-lag-nmi` and `elevator-up` (Samus's
+    upload in every NMI, settlement unchanged); the chain rooms; and the
+    SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and
+    `music-fir-selector10` (the APU ports, music delays and downtime at boot).
+    RAM lockstep must stay at 0 failing frames.
+
 ### Stage 11: the rest
 
 - **Change.**
