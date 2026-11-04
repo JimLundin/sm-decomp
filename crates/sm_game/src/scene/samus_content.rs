@@ -198,21 +198,6 @@ impl ValidatedContent {
         }
         Ok(Self(supplied))
     }
-    /// Reject a changed declaration while an admitted immutable binding lives.
-    /// Compare requests completely; matching revisions alone do not admit changes.
-    pub fn matches_description(&self, selected: &ContentDescription) -> bool {
-        let sealed = &self.0;
-        sealed.gameplay == selected.gameplay
-            && sealed.revision == selected.revision
-            && sealed.allocations == selected.allocations
-            && sealed.roles == selected.roles
-            && sealed.requests.len() == selected.requests.len()
-            && sealed
-                .requests
-                .iter()
-                .zip(selected.requests.iter())
-                .all(|(a, b)| same_request(a, b))
-    }
     pub fn description(&self) -> &ContentDescription {
         &self.0
     }

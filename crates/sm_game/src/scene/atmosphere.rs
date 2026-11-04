@@ -574,32 +574,3 @@ impl super::objects::Geometry for SpriteGeometry<'_> {
             .ok_or(DisplayError::Source)
     }
 }
-
-/// Draw one captured atmospheric tile after the caller's lifecycle/timer work.
-/// Advancing the slot here would execute the same timer transition twice.
-pub fn draw_tile_owned(
-    state: &mut DisplayState,
-    media: &SceneMedia,
-    inputs: &mut impl Inputs,
-    slot: usize,
-    kind: u16,
-) -> Result<(), DisplayError> {
-    super::delivery::in_phase(state, super::state::DisplayPhase::Producing, |state| {
-        if slot >= state.atmospheric.slots.len() {
-            return Err(DisplayError::Geometry);
-        }
-        draw_tile(
-            &mut Owned {
-                state,
-                media,
-                inputs,
-                duration_kind: None,
-                tile_kind: None,
-                active_slot: slot,
-                pending: None,
-            },
-            slot,
-            kind,
-        )
-    })
-}

@@ -32,5 +32,3 @@ pub use commit::ResidentDisplayDescription;
 
 pub mod samus_content;
 pub mod samus_native_content;
-
-pub mod player_echoes;

@@ -23,12 +23,6 @@ use crate::combat_rules::LatchMode;
 use crate::enemy_script::EnemyScript;
 use crate::session_access::SessionAccess as _;
 
-/// The failure every table shares.
-pub trait SpeciesHost {
-    /// The original failure for an address no routine answers.
-    fn unknown_routine(&mut self);
-}
-
 /// The scheduler's lease, which the AI, pre-instruction and instruction tables run on: the
 /// actor lease, with the common reactions, the pirates' projectile spawns, and what the
 /// compatibility side still answers.
