@@ -106,14 +106,16 @@ fn load_entry(case: u32) {
     let native = [
         0x1021, 0x2132, 0x3243, 0x4354, 0x5465, 0x6576, 0x7687, 0x8798,
     ];
-    let mut after = Vec::new();
+    let after;
     {
         let mut h = Runtime::new(&mut game);
         h.session_mut().gameplay_flags.events.fill(0x17);
         h.session_mut().gameplay_flags.bosses_by_area.fill(0x28);
         h.session_mut().flag_compatibility.bitmask = 0xabcd;
         set_native_state(h.session_mut(), native);
-        h.foreign(|g| {
+        drop(h);
+        {
+            let g = &mut game;
             assert_eq!(
                 (0xd820..0xd828)
                     .map(|at| g.ram().read_byte(at))
@@ -160,7 +162,8 @@ fn load_entry(case: u32) {
             after = (0..g.ram().len())
                 .map(|at| g.ram().read_byte(at))
                 .collect::<Vec<_>>();
-        });
+        }
+        let h = Runtime::new(&mut game);
         projection(&h, &after);
         assert_eq!(
             h.session().gameplay_flags.events.as_slice(),
@@ -189,7 +192,7 @@ fn load_entry(case: u32) {
 fn reset_entry() {
     let mut game = Game::new();
     game.ram().fill(0..game.ram().len(), 0x69);
-    let mut after = Vec::new();
+    let after;
     {
         let mut h = Runtime::new(&mut game);
         h.session_mut().gameplay_flags.events.fill(0x91);
@@ -201,7 +204,9 @@ fn reset_entry() {
             .fill(0x64);
         h.session_mut().gameplay_flags.opened_doors.fill(0x55);
         h.session_mut().flag_compatibility.bitmask = 0xabcd;
-        h.foreign(|g| {
+        drop(h);
+        {
+            let g = &mut game;
             assert_eq!(
                 (0xd830..0xd870)
                     .map(|at| g.ram().read_byte(at))
@@ -245,7 +250,8 @@ fn reset_entry() {
             after = (0..g.ram().len())
                 .map(|at| g.ram().read_byte(at))
                 .collect::<Vec<_>>();
-        });
+        }
+        let h = Runtime::new(&mut game);
         projection(&h, &after);
         assert_eq!(h.session().gameplay_flags.opened_doors, [0; 64]);
     }
@@ -318,7 +324,9 @@ fn check() {
             "flags.guard.event-full-scratch"
         );
         projection(&h, &expected);
-        h.foreign(|g| {
+        drop(h);
+        {
+            let g = &mut game;
             assert_eq!(
                 (0..g.ram().len())
                     .map(|at| g.ram().read_byte(at))
@@ -359,7 +367,8 @@ fn check() {
             put(&mut expected, 0x5e7, 0x5634);
             g.ram().copy_in(0x5e5, &(0xab89u16).to_le_bytes());
             put(&mut expected, 0x5e5, 0xab89);
-        });
+        }
+        let h = Runtime::new(&mut game);
         projection(&h, &expected);
         assert_eq!(
             native_state(h.session()),
@@ -372,10 +381,12 @@ fn check() {
             "flags.guard.callback-scratch"
         );
         assert_eq!(h.inputs().random, 0xab89, "flags.guard.callback-random");
-        // Scratch must survive the actual NextRandom foreign trip.
+        // Scratch must survive the actual NextRandom on Game between leases.
         // Independent arithmetic: 89*5=02AD, AB*5(low)=57, high=5A,
         // then add17 =>5ABE (no carry beyond the high byte).
-        let random = h.foreign(next_random);
+        drop(h);
+        let random = next_random(&mut game);
+        let mut h = Runtime::new(&mut game);
         assert_eq!(random, 0x5abe, "flags.guard.real-rng-return");
         put(&mut expected, 0x5e5, 0x5abe);
         assert_eq!(h.inputs().random, 0x5abe, "flags.guard.real-rng-import");
@@ -400,35 +411,28 @@ fn check() {
             "flags.guard.scratch-le-word"
         );
         projection(&h, &expected);
+        drop(h);
         let error = catch_unwind(AssertUnwindSafe(|| {
-            h.foreign(|g| {
-                assert_eq!(
-                    (0..g.ram().len())
-                        .map(|at| g.ram().read_byte(at))
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    expected.as_slice()
-                );
-                for at in 0..g.ram().len() {
-                    let value = g.ram().read_byte(at) ^ 0xa5;
-                    g.ram().write_byte(at, value);
-                }
-                for b in &mut expected {
-                    *b ^= 0xa5;
-                }
-                set_native_game(g, final_native);
-                std::panic::panic_any(FixtureUnwind);
-            })
+            let g = &mut game;
+            assert_eq!(
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+                expected.as_slice()
+            );
+            for at in 0..g.ram().len() {
+                let value = g.ram().read_byte(at) ^ 0xa5;
+                g.ram().write_byte(at, value);
+            }
+            for b in &mut expected {
+                *b ^= 0xa5;
+            }
+            set_native_game(g, final_native);
+            std::panic::panic_any(FixtureUnwind);
         }))
-        .expect_err("foreign callback must panic");
+        .expect_err("callback on Game must panic");
         assert!(error.is::<FixtureUnwind>());
-        assert!(
-            catch_unwind(AssertUnwindSafe(|| {
-                let _ = h.session();
-            }))
-            .is_err(),
-            "flags.guard.owner-relinquished"
-        );
     }
     assert_eq!(
         (0..game.ram().len())

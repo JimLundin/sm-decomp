@@ -55,8 +55,8 @@ pub(crate) fn run_checked() {
     crate::game::actors::initializer_checks::run_checked();
     crate::game::actors::owner_checks::run_checked();
     occupied_game_export_rejected_before_effects();
-    mismatched_runtime_returns_original_identity_without_second_panic();
-    nested_foreign_unwind_keeps_both_committed_occurrences();
+    mismatched_runtime_drop_returns_original_identity();
+    unwind_after_handoff_keeps_both_committed_occurrences();
     crate::game::actors::media_checks::run_checked();
     crate::game::actors::contact_checks::run_checked();
     botwoon_maw_publication_preserves_owned_aliases_and_capture_epoch();
@@ -112,7 +112,7 @@ fn occupied_game_export_rejected_before_effects() {
     );
 }
 
-fn mismatched_runtime_returns_original_identity_without_second_panic() {
+fn mismatched_runtime_drop_returns_original_identity() {
     let mut game = Game::new();
     game.ram().fill(0..game.ram().len(), 0x39);
     {
@@ -124,23 +124,14 @@ fn mismatched_runtime_returns_original_identity_without_second_panic() {
         .collect::<Vec<_>>();
     let before_native = native(&game);
     let before_identity = game.actor_identity().clone();
-    let mut called = false;
     let scope = catch_unwind(AssertUnwindSafe(|| {
         let mut runtime = Runtime::new(&mut game);
         runtime.session_mut().room.entry.frame = 0xbeef;
         runtime.session_mut().enemy_projectiles.spawn.variant = 0xabcd;
         runtime.session_mut().world = WorldBinding::canonical_legacy();
-        assert!(
-            catch_unwind(AssertUnwindSafe(|| runtime.foreign(|_| called = true))).is_err(),
-            "actor.runtime.mismatch_rejected"
-        );
-        // Scope exit must not panic again or publish the rejected Session.
+        // Scope exit must not panic or publish the rejected Session.
     }));
-    assert!(
-        scope.is_ok(),
-        "actor.runtime.mismatch_drop_does_not_panic_again"
-    );
-    assert!(!called, "actor.runtime.mismatch_before_callback");
+    assert!(scope.is_ok(), "actor.runtime.mismatch_drop_does_not_panic");
     assert_eq!(
         (0..game.ram().len())
             .map(|at| game.ram().read_byte(at))
@@ -162,31 +153,32 @@ fn mismatched_runtime_returns_original_identity_without_second_panic() {
     );
 }
 
-fn nested_foreign_unwind_keeps_both_committed_occurrences() {
+/// A lease's drop hands the identity to Game and the next lease takes it up; an
+/// unwind inside that second lease still publishes both committed occurrences.
+fn unwind_after_handoff_keeps_both_committed_occurrences() {
     let mut game = Game::new();
-    let mut outer_handle = None;
+    let outer_handle = {
+        let mut outer = Runtime::new(&mut game);
+        Some(birth(&mut outer, 0, 20))
+    };
+    assert!(
+        !game.actor_identity_is_with_session(),
+        "actor.runtime.drop_returns_sole_identity"
+    );
     let mut nested_handle = None;
     let error = catch_unwind(AssertUnwindSafe(|| {
-        let mut outer = Runtime::new(&mut game);
-        outer_handle = Some(birth(&mut outer, 0, 20));
-        outer.foreign(|game| {
-            assert!(
-                !game.actor_identity_is_with_session(),
-                "actor.runtime.foreign_has_sole_identity"
-            );
-            let mut nested = Runtime::new(game);
-            nested_handle = Some(birth(&mut nested, 1, 21));
-            nested.foreign(|game| {
-                assert_eq!(
-                    game.actor_identity()
-                        .observe(1, true, Some(SpeciesId(7)))
-                        .appearance,
-                    Some(AppearanceId(21)),
-                    "actor.runtime.nested_published_before_callback"
-                );
-                std::panic::panic_any(FixtureUnwind);
-            });
-        });
+        let mut nested = Runtime::new(&mut game);
+        nested_handle = Some(birth(&mut nested, 1, 21));
+        assert_eq!(
+            nested
+                .session()
+                .actor_identity
+                .observe(1, true, Some(SpeciesId(7)))
+                .appearance,
+            Some(AppearanceId(21)),
+            "actor.runtime.nested_committed_before_unwind"
+        );
+        std::panic::panic_any(FixtureUnwind);
     }))
     .unwrap_err();
     assert!(

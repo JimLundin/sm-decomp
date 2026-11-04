@@ -360,9 +360,6 @@ pub(crate) use sm_game::scene::owned_samus::{bottom_visible, draw_body, draw_spr
 /// The aggregate's current behavior and admission rules remain unchanged.
 pub struct SessionSlot {
     pub(crate) aggregate: AggregateSlot,
-    /// Each foreign interval carries its actual owner. None marks a nested
-    /// Runtime borrowing that frame; its release returns the same owner.
-    pub(crate) foreign_presentations: Vec<Option<Presentation>>,
     pub(crate) menu: std::cell::RefCell<sm_game::menus::state::Domain>,
     pub(crate) fx: std::cell::RefCell<sm_game::fx_domain::Domain>,
     pub(crate) inventory: std::cell::RefCell<sm_game::inventory_domain::InventoryDomain>,
@@ -383,7 +380,6 @@ impl SessionSlot {
     pub(crate) fn new() -> Self {
         Self {
             aggregate: AggregateSlot::Legacy,
-            foreign_presentations: Vec::new(),
             menu: std::cell::RefCell::new(sm_game::menus::state::Domain::Unowned),
             fx: std::cell::RefCell::new(sm_game::fx_domain::Domain::Unowned),
             inventory: std::cell::RefCell::new(sm_game::inventory_domain::InventoryDomain::Unowned),

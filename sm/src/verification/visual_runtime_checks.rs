@@ -42,7 +42,10 @@ fn check() {
             0xabcd,
             "visual.guard.palette-target-alias"
         );
-        h.foreign(|g| {
+        // The lease's drop publishes, Game stores, and the next lease imports.
+        drop(h);
+        {
+            let g = &mut game;
             for (at, value) in [
                 (0xc00a, 0x1234),
                 (0xc20a, 0xabcd),
@@ -55,7 +58,8 @@ fn check() {
                 assert_eq!(read(g, at), value, "visual.guard.publish-all-{at:x}");
                 put(g, at, value ^ 0x1111);
             }
-        });
+        }
+        let h = Runtime::new(&mut game);
         assert_eq!(
             h.session().presentation.visual().colors[5],
             0x0325,
@@ -91,21 +95,15 @@ fn check() {
             0xb44b,
             "visual.guard.import-mechanism"
         );
-        assert!(
-            catch_unwind(AssertUnwindSafe(|| h.foreign(|g| {
-                for at in [0xc00a, 0xc20a, 0xdf2, 0x9c2, 0x1997, 0xb64, 0xc6c8] {
-                    put(g, at, 0xdead);
-                }
-                panic!("intentional visual aggregate foreign unwind");
-            })))
-            .is_err()
-        );
+        drop(h);
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
-                let _ = h.session();
+                for at in [0xc00a, 0xc20a, 0xdf2, 0x9c2, 0x1997, 0xb64, 0xc6c8] {
+                    put(&mut game, at, 0xdead);
+                }
+                panic!("intentional visual callback unwind on Game");
             }))
-            .is_err(),
-            "visual.guard.owner-relinquished"
+            .is_err()
         );
     }
     for at in [0xc00a, 0xc20a, 0xdf2, 0x9c2, 0x1997, 0xb64, 0xc6c8] {

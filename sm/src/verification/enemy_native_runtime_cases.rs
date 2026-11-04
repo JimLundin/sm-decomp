@@ -229,16 +229,17 @@ fn capture_checked(id: u32) -> Vec<u8> {
             final_values.native[5] = 0x4152;
             final_values.words[5] = 0x6172;
             let final_ram = expected_ram(&callback_ram, final_values);
-            let returned;
+            // The lease's drop publishes to Game, the callback acts on Game, and the
+            // next lease imports what it left.
             {
                 let mut runtime = Runtime::new(&mut game);
                 assert_session(runtime.session(), INITIAL, "native acquisition");
                 set_session(runtime.session_mut(), OWNED);
-                returned = runtime.foreign(|game| {
-                    callback(game, &published, &callback_ram, &mut trace);
-                    0x91u16
-                });
-                assert_eq!(returned, 0x91, "native callback return value");
+            }
+            callback(&mut game, &published, &callback_ram, &mut trace);
+            let returned = 0x91u16;
+            {
+                let mut runtime = Runtime::new(&mut game);
                 assert_session(runtime.session(), CALLBACK, "native return import");
                 assert_eq!(
                     runtime.inputs().camera_x,
@@ -266,35 +267,29 @@ fn capture_checked(id: u32) -> Vec<u8> {
             Some(usize::from(returned))
         }
         1 => {
+            // The lease's drop publishes to Game; a callback that unwinds on Game
+            // keeps what it stored, which no lease takes back.
             {
                 let mut runtime = Runtime::new(&mut game);
                 assert_session(runtime.session(), INITIAL, "native acquisition");
                 set_session(runtime.session_mut(), OWNED);
-                let unwind = catch_unwind(AssertUnwindSafe(|| {
-                    runtime.foreign(|game| {
-                        callback(game, &published, &callback_ram, &mut trace);
-                        std::panic::panic_any(FixtureUnwind);
-                    });
-                }));
-                intentional_unwind(unwind);
-                #[cfg(sm_verify_dll)]
-                assert_eq!(
-                    runtime.has_session_for_verification(),
-                    false,
-                    "native foreign panic relinquished owner"
-                );
             }
+            let unwind = catch_unwind(AssertUnwindSafe(|| {
+                callback(&mut game, &published, &callback_ram, &mut trace);
+                std::panic::panic_any(FixtureUnwind);
+            }));
+            intentional_unwind(unwind);
             assert_native(
                 native_game(&game),
                 CALLBACK.native,
-                "native foreign panic retained callback",
+                "native callback panic retained callback",
             );
             assert_eq!(
                 &(0..game.ram().len())
                     .map(|at| game.ram().read_byte(at))
                     .collect::<Vec<_>>(),
                 &callback_ram[..],
-                "native foreign panic whole RAM"
+                "native callback panic whole RAM"
             );
             None
         }

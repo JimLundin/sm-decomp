@@ -1,4 +1,4 @@
-//! Actual Actor/eproj angle ownership across Runtime foreign handoffs.
+//! Actual Actor/eproj angle ownership across the lease's export and import.
 //! New ownership invariant, not a simulated codec or predecessor capture.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::Runtime;
@@ -86,38 +86,37 @@ pub(crate) fn run_checked() {
             );
             put(&mut expected, ANGLES + 2 * slot, from_eproj);
         }
-
-        runtime.foreign(|game| {
-            // F5 must fail this exact angle assertion if actor export restores
-            // the import-time duplicate1000 over the current eproj value3200.
-            check_ram(game, &expected, "foreign_entry", 0x3200);
-            {
-                let mut nested = Runtime::new(game);
-                for slot in 0..COUNT {
-                    let from_eproj = 0x4300 + slot as u16;
-                    nested.session_mut().enemy_projectiles.slots[slot].angle = from_eproj;
-                    assert_eq!(
-                        nested
-                            .resolve_actor(key(slot), AccessMode::LittleEndian)
-                            .health,
-                        from_eproj,
-                        "actor.owner.angle_roundtrip.nested_eproj_to_actor.angle slot={slot}"
-                    );
-                    let from_actor = 0x5400 + slot as u16;
-                    nested.edit_actor(key(slot), AccessMode::LittleEndian, |actor| {
-                        actor.health = from_actor;
-                    });
-                    assert_eq!(
-                        nested.session().enemy_projectiles.slots[slot].angle,
-                        from_actor,
-                        "actor.owner.angle_roundtrip.nested_actor_to_eproj.angle slot={slot}"
-                    );
-                    put(&mut expected, ANGLES + 2 * slot, from_actor);
-                }
-            }
-            check_ram(game, &expected, "nested_export", 0x5400);
-        });
-
+    }
+    // F5 must fail this exact angle assertion if actor export restores
+    // the import-time duplicate1000 over the current eproj value3200.
+    check_ram(&game, &expected, "first_export", 0x3200);
+    {
+        let mut second = Runtime::new(&mut game);
+        for slot in 0..COUNT {
+            let from_eproj = 0x4300 + slot as u16;
+            second.session_mut().enemy_projectiles.slots[slot].angle = from_eproj;
+            assert_eq!(
+                second
+                    .resolve_actor(key(slot), AccessMode::LittleEndian)
+                    .health,
+                from_eproj,
+                "actor.owner.angle_roundtrip.second_eproj_to_actor.angle slot={slot}"
+            );
+            let from_actor = 0x5400 + slot as u16;
+            second.edit_actor(key(slot), AccessMode::LittleEndian, |actor| {
+                actor.health = from_actor;
+            });
+            assert_eq!(
+                second.session().enemy_projectiles.slots[slot].angle,
+                from_actor,
+                "actor.owner.angle_roundtrip.second_actor_to_eproj.angle slot={slot}"
+            );
+            put(&mut expected, ANGLES + 2 * slot, from_actor);
+        }
+    }
+    check_ram(&game, &expected, "second_export", 0x5400);
+    {
+        let mut runtime = Runtime::new(&mut game);
         for slot in 0..COUNT {
             assert_eq!(
                 runtime.session().enemy_projectiles.slots[slot].angle,
@@ -134,7 +133,6 @@ pub(crate) fn run_checked() {
             runtime.session_mut().enemy_projectiles.slots[slot].angle = 0x6500 + slot as u16;
             put(&mut expected, ANGLES + 2 * slot, 0x6500 + slot as u16);
         }
-        runtime.foreign(|game| check_ram(game, &expected, "second_foreign", 0x6500));
     }
     check_ram(&game, &expected, "final_drop", 0x6500);
 }

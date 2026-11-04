@@ -97,7 +97,9 @@ fn check() {
         );
         put(&mut expected, 0xf378, 0x4567);
         projection(&h, &expected);
-        h.foreign(|g| {
+        drop(h);
+        {
+            let g = &mut game;
             assert_eq!(
                 (0..g.ram().len())
                     .map(|at| g.ram().read_byte(at))
@@ -154,7 +156,8 @@ fn check() {
                 &(0x80u16).to_le_bytes(),
             );
             put(&mut expected, crate::ram_map::words::CUR_ENEMY_INDEX, 0x80);
-        });
+        }
+        let h = Runtime::new(&mut game);
         projection(&h, &expected);
         assert_eq!(
             h.session().enemy_projectiles.spawn.point.x,
@@ -180,35 +183,28 @@ fn check() {
             0x80,
             "sprite.guard.refresh-actor-index"
         );
+        drop(h);
         let error = catch_unwind(AssertUnwindSafe(|| {
-            h.foreign(|g| {
-                assert_eq!(
-                    (0..g.ram().len())
-                        .map(|at| g.ram().read_byte(at))
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    expected.as_slice()
-                );
-                for at in 0..g.ram().len() {
-                    let value = g.ram().read_byte(at) ^ 0xa5;
-                    g.ram().write_byte(at, value);
-                }
-                for byte in &mut expected {
-                    *byte ^= 0xa5;
-                }
-                g.eproj_spawn_pt.x = 0xdead;
-                std::panic::panic_any(FixtureUnwind);
-            })
+            let g = &mut game;
+            assert_eq!(
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+                expected.as_slice()
+            );
+            for at in 0..g.ram().len() {
+                let value = g.ram().read_byte(at) ^ 0xa5;
+                g.ram().write_byte(at, value);
+            }
+            for byte in &mut expected {
+                *byte ^= 0xa5;
+            }
+            g.eproj_spawn_pt.x = 0xdead;
+            std::panic::panic_any(FixtureUnwind);
         }))
-        .expect_err("foreign callback must panic");
+        .expect_err("callback on Game must panic");
         assert!(error.is::<FixtureUnwind>());
-        assert!(
-            catch_unwind(AssertUnwindSafe(|| {
-                let _ = h.session();
-            }))
-            .is_err(),
-            "sprite.guard.owner-relinquished"
-        );
     }
     assert_eq!(
         (0..game.ram().len())

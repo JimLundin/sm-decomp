@@ -88,23 +88,16 @@ pub(super) fn run(game: &mut Game) -> bool {
                 .visual_mut()
                 .animated_tiles
                 .selected = 10;
-            assert!(
-                catch_unwind(AssertUnwindSafe(|| {
-                    runtime.foreign(|game| {
-                        assert_eq!(word(&|at| game.ram().read_byte(at), 0x1ef3), 10);
-                        queue_music_delayed_8(0x3456, &mut crate::oracle_host::OracleHost(game));
-                        panic!("intentional animation callback unwind");
-                    });
-                }))
-                .is_err()
-            );
-            assert!(
-                catch_unwind(AssertUnwindSafe(|| {
-                    let _ = runtime.session();
-                }))
-                .is_err()
-            );
         }
+        // The lease's drop publishes; a callback that unwinds on Game keeps its stores.
+        assert!(
+            catch_unwind(AssertUnwindSafe(|| {
+                assert_eq!(word(&|at| game.ram().read_byte(at), 0x1ef3), 10);
+                queue_music_delayed_8(0x3456, &mut crate::oracle_host::OracleHost(&mut *game));
+                panic!("intentional animation callback unwind");
+            }))
+            .is_err()
+        );
         assert_eq!(
             (0..game.ram().len())
                 .map(|at| game.ram().read_byte(at))

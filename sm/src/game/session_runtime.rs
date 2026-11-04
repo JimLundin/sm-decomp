@@ -185,7 +185,7 @@ impl<'g> Runtime<'g> {
         #[cfg(sm_verify_dll)]
         player_normal_transfers::record(game, 0);
         #[cfg(sm_verify_dll)]
-        lease_counters::lease(game.foreign_presentation_active());
+        lease_counters::lease();
         if let Some(session) = game
             .lease_persistent_session()
             .expect("Session lease rejected")
@@ -416,67 +416,6 @@ impl<'g> Runtime<'g> {
         report_draw_diagnostics(drawing.diagnostics, self.game);
         drawn.expect("owned Samus publication");
     }
-    pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
-        #[cfg(sm_verify_dll)]
-        lease_counters::foreign();
-        assert!(self.persistent_is_current(), "Session lease is dirty");
-        preflight_export(self.session(), self.game);
-        let mut mutation = self.game.samus_mutation();
-        let state = self
-            .state
-            .take()
-            .expect("projectile state unavailable during external effect");
-        // Export was authorized before revocation; do not repeat ready preflight
-        // while the external interval is deliberately unavailable.
-        let spans = state
-            .presentation
-            .owner()
-            .map(|owner| sm_game::fx_encoding::physical_source_spans(&owner.state))
-            .unwrap_or_default();
-        // The exported Session stands for a decode of the RAM it leaves unless a Display
-        // owner travels with the call.
-        let mut exported = (!state.presentation.is_owned()).then(|| state.clone());
-        export_session_for_foreign(state, exported.as_ref(), mutation.game());
-        if exported.is_some() && !mutation.game().ram().start_write_log() {
-            exported = None;
-        }
-        let _source_interval = mutation.game().ram().begin_source_interval(&spans);
-        mutation.game().revoke_inventory_domain();
-        mutation.game().revoke_menu_domain();
-        mutation.game().revoke_fx_domain();
-        mutation.game().revoke_scroll_domain();
-        let result = action(mutation.game());
-        let written = exported
-            .is_some()
-            .then(|| mutation.game().ram().close_write_log())
-            .flatten();
-        let payload = mutation.game().capture_samus_snapshot();
-        let prepared = mutation
-            .game()
-            .prepare_samus_adoption(&payload)
-            .expect("Samus resumption rejected");
-        let mut state = resume_session(exported, written, mutation.game());
-        let presentation = mutation
-            .game()
-            .pop_foreign_presentation()
-            .expect("foreign presentation frame")
-            .expect("foreign presentation returned");
-        adopt_carried_presentation(&mut state, presentation, mutation.game());
-        // Retain the actual owner before a fallible source import. Runtime Drop
-        // quarantines this state without encoding over a completed native prefix.
-        self.state = Some(state);
-        let state = self.state.as_mut().expect("resumed Session owner");
-        if state.fx_sources.is_none() {
-            let ram = mutation.game().ram();
-            sm_game::fx_encoding::adopt_session_sources(state, &|at| ram.read_byte(at), &|at| {
-                ram.source_publication(at)
-            })
-            .expect("native source adoption rejected");
-        }
-        mutation.finish(prepared).expect("Samus adoption rejected");
-        self.inputs = encoding::inputs(&|at| self.game.ram().read_byte(at));
-        result
-    }
     /// Compose an already-owned operation while retaining the former foreign
     /// entry's preflight, unwind publication, and refreshed input observations.
     pub(crate) fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
@@ -518,9 +457,9 @@ impl<'g> Runtime<'g> {
     /// lease: the Session stays the authority, nothing is decoded, and RAM projects it. A
     /// port runs this before a DMA that reads work RAM, since the hardware reads the bytes
     /// there (`start_dma`). An export deferred by an earlier release is written first, as
-    /// any RAM write writes it; a write log open around this lease (a nested lease inside
-    /// `foreign`) logs the bytes, which the outer call takes back as it would this lease's
-    /// release. A persistent lease takes the new write epoch, as its release does.
+    /// any RAM write writes it; the kept frame Session's write log, when open, logs the
+    /// bytes, which the next lease takes up as it would this lease's release. A persistent
+    /// lease takes the new write epoch, as its release does.
     pub(crate) fn publish(&mut self) {
         assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
@@ -990,7 +929,7 @@ impl<'g> Runtime<'g> {
                 && self.game.actor_identity_is_with_session()
                 && self.game.preflight_samus_runtime().is_ok()
             {
-                if self.game.frame_session.active && !self.game.foreign_presentation_active() {
+                if self.game.frame_session.active {
                     let mut kept = state.clone();
                     kept.actor_identity =
                         crate::game::actors::identity::ActorIdentityState::empty();
@@ -1006,8 +945,8 @@ impl<'g> Runtime<'g> {
                     export_session_preflighted(state, self.game);
                 }
             } else if self.game.actor_identity_is_with_session() {
-                // A rejected foreign call retains this Runtime's identity owner;
-                // discard invalid byte/native publication rather than panic again.
+                // A rejected lease retains this Runtime's identity owner; discard
+                // invalid byte/native publication rather than panic again.
                 let window = state.menu_window;
                 self.game.return_actor_identity(state.actor_identity);
                 self.game.return_inventory_domain(state.inventory, false);
@@ -1025,12 +964,6 @@ impl<'g> Runtime<'g> {
                     },
                     false,
                 );
-                if state.presentation.is_owned() {
-                    if let Some(frame) = self.game.last_foreign_presentation_mut() {
-                        assert!(frame.is_none(), "failed nested display owner occupied");
-                        *frame = Some(state.presentation);
-                    }
-                }
                 self.game.revoke_samus_authority();
             } else {
                 self.game.revoke_inventory_domain();
@@ -1647,14 +1580,11 @@ pub(crate) fn with_frame_session<R>(game: &mut Game, tick: impl FnOnce(&mut Game
 
 /// The RAM the next lease takes up beside the kept frame Session, as `reuse_frame_session`
 /// reads it: the ranges written since its export (empty when nothing was written), or `None`
-/// when the next lease decodes RAM instead (no kept Session, a foreign presentation, or an
-/// overflowed log). For the verifier's Session-space comparison.
+/// when the next lease decodes RAM instead (no kept Session, or an overflowed log). For the
+/// verifier's Session-space comparison.
 #[cfg(sm_verify_dll)]
 pub(crate) fn kept_session_writes(game: &Game) -> Option<Vec<std::ops::Range<usize>>> {
     let kept = game.frame_session.kept.as_ref()?;
-    if game.foreign_presentation_active() {
-        return None;
-    }
     if kept.epoch == game.compatibility_write_epoch() {
         return Some(Vec::new());
     }
@@ -1676,9 +1606,6 @@ fn take_written_bytes(state: &mut Session, game: &Game, written: &[std::ops::Ran
 /// it takes the RAM written since its export, the native spawn fields and actor identity as an
 /// import would.
 fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
-    if game.foreign_presentation_active() {
-        return None;
-    }
     let KeptSession {
         state,
         mut inputs,
@@ -1738,23 +1665,18 @@ pub(crate) fn preview_lease_session(game: &Game, image: &[u8]) -> (Session, Leas
     if let Some(state) = game.peek_persistent_gameplay() {
         return (state, LeaseSource::Persistent);
     }
-    let kept = game
-        .frame_session
-        .kept
-        .as_ref()
-        .filter(|_| !game.foreign_presentation_active())
-        .and_then(|kept| {
-            let state = kept
-                .state
-                .clone()
-                .or_else(|| game.ram().peek_deferred_session())?;
-            let written = if kept.epoch == game.compatibility_write_epoch() {
-                Vec::new()
-            } else {
-                game.ram().logged_writes()?
-            };
-            same_world(&state, game).then_some((state, written))
-        });
+    let kept = game.frame_session.kept.as_ref().and_then(|kept| {
+        let state = kept
+            .state
+            .clone()
+            .or_else(|| game.ram().peek_deferred_session())?;
+        let written = if kept.epoch == game.compatibility_write_epoch() {
+            Vec::new()
+        } else {
+            game.ram().logged_writes()?
+        };
+        same_world(&state, game).then_some((state, written))
+    });
     if let Some((mut state, written)) = kept {
         for at in written.iter().flat_map(Clone::clone) {
             let value = image[at];
@@ -1768,32 +1690,6 @@ pub(crate) fn preview_lease_session(game: &Game, image: &[u8]) -> (Session, Leas
     let mut state = encoding::decode(&|at| image[at], 0x20000, game.world().clone());
     import_native_spawn(&mut state, game);
     (state, LeaseSource::Import)
-}
-/// The Session a foreign call resumes: the Session it exported with the RAM bytes it wrote,
-/// when the log holds them; a decode of the RAM otherwise.
-fn resume_session(
-    exported: Option<Session>,
-    written: Option<Vec<std::ops::Range<usize>>>,
-    game: &mut Game,
-) -> Session {
-    let (Some(mut state), Some(written)) = (exported, written) else {
-        return import_session_image(game);
-    };
-    if !same_world(&state, game) {
-        return import_session_image(game);
-    }
-    take_written_bytes(&mut state, game, &written);
-    state.actor_identity = crate::game::actors::identity::ActorIdentityState::empty();
-    #[cfg(sm_verify_dll)]
-    player_normal_transfers::record(game, 1);
-    import_native_spawn(&mut state, game);
-    // A Session whose export never reached RAM is the very Session the call exported.
-    #[cfg(sm_verify_dll)]
-    if !game.ram().export_deferred() {
-        assert_projects_ram(&state, game);
-    }
-    take_game_owners(&mut state, game);
-    state
 }
 fn same_world(state: &Session, game: &Game) -> bool {
     std::sync::Arc::ptr_eq(&state.world, game.world())
@@ -1833,57 +1729,7 @@ fn take_game_owners(state: &mut Session, game: &mut Game) {
 pub(crate) fn import_session(game: &mut Game) -> Session {
     game.preflight_samus_runtime()
         .expect("Samus import rejected");
-    import_session_preflighted(game)
-}
-fn import_session_preflighted(game: &mut Game) -> Session {
-    let mut state = import_session_image(game);
-    if let Some(presentation) = game.last_foreign_presentation_mut().and_then(|frame| {
-        if frame
-            .as_ref()
-            .is_some_and(sm_game::session_owners::Presentation::is_owned)
-        {
-            frame.take()
-        } else {
-            None
-        }
-    }) {
-        adopt_carried_presentation(&mut state, presentation, game);
-        let mut guard = ExportIdentity {
-            state: Some(state),
-            game,
-            carry_presentation: false,
-        };
-        let state = guard.state.as_mut().expect("nested import owner");
-        if state.fx_sources.is_none() {
-            sm_game::fx_encoding::adopt_session_sources(
-                state,
-                &|at| guard.game.ram().read_byte(at),
-                &|at| guard.game.ram().source_publication(at),
-            )
-            .expect("nested native source adoption rejected");
-        }
-        return guard.state.take().expect("nested imported Session");
-    }
-    state
-}
-fn adopt_carried_presentation(
-    state: &mut Session,
-    mut presentation: sm_game::session_owners::Presentation,
-    game: &Game,
-) {
-    if presentation.is_owned() {
-        presentation.adopt_projection(&|at| game.ram().read_byte(at));
-        *presentation.visual_mut() = state.presentation.visual().clone();
-        *presentation.palette_mut() = state.presentation.palette().clone();
-        *presentation.atmospheric_mut() = state.presentation.atmospheric().clone();
-        state.presentation = presentation;
-        state.fx_sources = None;
-        state.hdma = Default::default();
-        sm_game::fx_encoding::adopt_session_sources(state, &|at| game.ram().read_byte(at), &|at| {
-            game.ram().source_publication(at)
-        })
-        .expect("carried control ownership");
-    }
+    import_session_image(game)
 }
 fn import_session_image(game: &mut Game) -> Session {
     #[cfg(sm_verify_dll)]
@@ -1915,7 +1761,6 @@ fn preflight_export(state: &Session, game: &Game) {
 struct ExportIdentity<'g> {
     state: Option<Session>,
     game: &'g mut Game,
-    carry_presentation: bool,
 }
 impl Drop for ExportIdentity<'_> {
     fn drop(&mut self) {
@@ -1936,7 +1781,6 @@ impl Drop for ExportIdentity<'_> {
             } else {
                 state.fx
             };
-            let presentation = state.presentation;
             if self.game.actor_identity_is_with_session() {
                 self.game.return_actor_identity(state.actor_identity);
             }
@@ -1956,14 +1800,6 @@ impl Drop for ExportIdentity<'_> {
                 },
                 !std::thread::panicking(),
             );
-            if self.carry_presentation {
-                self.game.push_foreign_presentation(presentation);
-            } else if presentation.is_owned() {
-                if let Some(frame) = self.game.last_foreign_presentation_mut() {
-                    assert!(frame.is_none(), "nested display owner occupied");
-                    *frame = Some(presentation);
-                }
-            }
         }
     }
 }
@@ -1972,7 +1808,6 @@ pub(crate) fn export_session(state: Session, game: &mut Game) {
     let guard = ExportIdentity {
         state: Some(state),
         game,
-        carry_presentation: false,
     };
     preflight_export(
         guard.state.as_ref().expect("export owns Session"),
@@ -1984,7 +1819,6 @@ fn export_session_preflighted(state: Session, game: &mut Game) {
     encode_session(ExportIdentity {
         state: Some(state),
         game,
-        carry_presentation: false,
     });
 }
 /// What decides a Session export's span layout; everything else it writes has a fixed place.
@@ -2015,7 +1849,6 @@ fn export_frame_session(state: Session, exported: Session, game: &mut Game) -> O
     let guard = ExportIdentity {
         state: Some(state),
         game,
-        carry_presentation: false,
     };
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(guard.game, 2);
@@ -2043,48 +1876,6 @@ fn export_frame_session(state: Session, exported: Session, game: &mut Game) -> O
             .push((shape, std::rc::Rc::new(layout)));
     }
     Some(exported)
-}
-/// Export `state` for a foreign call. When the call resumes the copy `exported`, an export of
-/// a shape whose layout a frame export recorded is deferred as `export_frame_session` defers
-/// one.
-fn export_session_for_foreign(state: Session, exported: Option<&Session>, game: &mut Game) {
-    let layout = exported
-        .and_then(ExportShape::of)
-        .and_then(|shape| game.frame_session.layout(shape))
-        .filter(|_| !game.ram().write_log_open());
-    let guard = ExportIdentity {
-        state: Some(state),
-        game,
-        carry_presentation: true,
-    };
-    let (Some(layout), Some(exported)) = (layout, exported) else {
-        encode_session(guard);
-        return;
-    };
-    // A kept frame Session that is the deferred one takes its copy before this export
-    // replaces it.
-    if guard
-        .game
-        .frame_session
-        .kept
-        .as_ref()
-        .is_some_and(|kept| kept.state.is_none())
-    {
-        let state = guard.game.ram().take_deferred_session();
-        if let Some(kept) = guard.game.frame_session.kept.as_mut() {
-            kept.state = state;
-        }
-    }
-    #[cfg(sm_verify_dll)]
-    player_normal_transfers::record(guard.game, 2);
-    let mut deferred = exported.clone();
-    deferred.actor_identity = crate::game::actors::identity::ActorIdentityState::empty();
-    guard.game.ram().defer_export(deferred, &layout);
-    export_native_spawn(
-        guard.state.as_ref().expect("export owns Session"),
-        guard.game,
-    );
-    // Drop moves identity exactly once, after the byte/native publication.
 }
 fn encode_session(guard: ExportIdentity<'_>) {
     #[cfg(sm_verify_dll)]
@@ -2662,8 +2453,8 @@ pub(crate) fn legacy_assertion(drawing: bool) -> ! {
 }
 
 // The grapple runs as one owned-Session lease: its RAM words, Samus facts and
-// player rules read and write the lease, and only its game-side effects (sound,
-// unreachable failure, pose command) go out through foreign.
+// player rules read and write the lease, and its game-side effects (sound,
+// unreachable failure, pose command) go out through the lease's ports.
 impl sm_game::ram::CompatibilityRam for Runtime<'_> {
     fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
         Runtime::observed_inputs(self)

@@ -201,16 +201,12 @@ pub fn samus_game_reference_import_keeps_revoked_scope() {
     let (mut game, _, native) = installed(RetainedNative);
     let returned = game.with_reference_import(|game| {
         assert_eq!(game.samus_authority(), Revoked);
-        let mut runtime = crate::game::session_runtime::Runtime::new(game);
-        let result = runtime.foreign(|game| {
-            assert_eq!(game.samus_authority(), Revoked);
-            0x6au16
-        });
+        let runtime = crate::game::session_runtime::Runtime::new(game);
         assert!(runtime.has_session_for_verification());
         assert_eq!(runtime.samus_game().samus_authority(), Revoked);
         drop(runtime);
         assert_eq!(game.samus_authority(), Revoked);
-        result
+        0x6au16
     });
     assert_eq!(returned, 0x6a);
     assert_eq!(game.samus_authority(), Revoked);
@@ -218,14 +214,14 @@ pub fn samus_game_reference_import_keeps_revoked_scope() {
     assert!(game.capture_native_rom().same_allocation(&native));
 }
 
-// Movies cannot inject a panic after this callback's RAM prefix.
+// Movies cannot inject a panic after this owned call's RAM prefix.
 pub fn samus_game_panicking_callback_keeps_prefix() {
     let (mut game, _, _) = installed(RetainedNative);
     let mut runtime = crate::game::session_runtime::Runtime::new(&mut game);
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        runtime.foreign(|game| -> () {
-            game.ram().write_byte(0xaf6, 0xd1);
-            game.ram().write_byte(0xaf7, 0xe2);
+        runtime.owned_player_call(|runtime| -> () {
+            runtime.set_byte(0xaf6, 0xd1);
+            runtime.set_byte(0xaf7, 0xe2);
             panic!("Samus callback prefix");
         });
     }));
@@ -541,22 +537,20 @@ pub fn samus_game_body_projection_crossing_writes() {
     assert_player_body_neighbors(&game);
 }
 
-// The retained-native fixture exports, adopts normal return, and poisons an unwind.
+// The retained-native fixture's lease exports on drop, the next imports, and an
+// owned call's unwind poisons.
 pub fn samus_game_body_foreign_adoption_and_prefix() {
     let (mut game, _, _) = installed(RetainedNative);
     supply_player_body(&mut game);
     let mut runtime = crate::game::session_runtime::Runtime::new(&mut game);
     runtime.write_word_le(0x6655, 0xb04);
-    let returned = runtime.foreign(|game| {
-        assert_eq!(game.samus_authority(), Revoked);
-        assert_eq!(
-            player_body_bytes(game),
-            [0x9c, 0x55, 0x66, 0x33, 0x44, 0x8d]
-        );
-        game.ram().copy_in(0xb04, &[0x77, 0x88, 0x99, 0xaa]);
-        0x6au16
-    });
-    assert_eq!(returned, 0x6a);
+    drop(runtime);
+    assert_eq!(
+        player_body_bytes(&game),
+        [0x9c, 0x55, 0x66, 0x33, 0x44, 0x8d]
+    );
+    game.ram().copy_in(0xb04, &[0x77, 0x88, 0x99, 0xaa]);
+    let mut runtime = crate::game::session_runtime::Runtime::new(&mut game);
     assert!(runtime.has_session_for_verification());
     assert_eq!(runtime.samus_game().samus_authority(), Available);
     assert_eq!(runtime.session().player.body_position.x, 0x8877);
@@ -564,13 +558,13 @@ pub fn samus_game_body_foreign_adoption_and_prefix() {
     assert_eq!(runtime.word(0xb04), 0x8877);
     assert_eq!(runtime.word(0xb06), 0xaa99);
     let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        runtime.foreign(|game| -> () {
+        runtime.owned_player_call(|runtime| -> () {
             assert_eq!(
-                player_body_bytes(game),
+                std::array::from_fn::<u8, 6, _>(|lane| runtime.byte(0xb03 + lane)),
                 [0x9c, 0x77, 0x88, 0x99, 0xaa, 0x8d]
             );
-            game.ram().write_byte(0xb05, 0xd1);
-            game.ram().write_byte(0xb06, 0xe2);
+            runtime.set_byte(0xb05, 0xd1);
+            runtime.set_byte(0xb06, 0xe2);
             std::panic::panic_any(FixtureUnwind);
         });
     }))
@@ -711,35 +705,26 @@ pub fn samus_game_returning_die_load_witness(game: &mut Game, load: impl FnOnce(
     game.ram().write_byte(0x611, 0xa6);
     game.g_sram.fill(0..0x2000, 0x7b);
 
-    let mut runtime = Runtime::new(game);
+    let runtime = Runtime::new(game);
     assert!(runtime.has_session_for_verification());
     assert!(runtime.samus_game().actor_identity_is_with_session());
     assert_eq!(runtime.samus_game().samus_authority(), Available);
-    let mut load_returned = false;
-    let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        runtime.foreign(|game| {
-            assert_eq!(game.samus_authority(), Revoked);
-            load(game);
-            load_returned = true;
-            assert_returning_die_load_prefix(game);
-            assert_eq!(game.samus_authority(), Revoked);
-            assert!(!game.actor_identity_is_with_session());
-        });
-    }));
+    drop(runtime);
+    // The load runs on Game under the Samus mutation, which its returning Die
+    // must leave unadoptable.
+    let mut mutation = game.samus_mutation();
+    assert_eq!(mutation.game().samus_authority(), Revoked);
+    load(mutation.game());
+    assert_returning_die_load_prefix(mutation.game());
+    assert_eq!(mutation.game().samus_authority(), Revoked);
+    assert!(!mutation.game().actor_identity_is_with_session());
+    let payload = mutation.game().capture_samus_snapshot();
     // The rejection reason is the Poisoned preflight asserted below.
     assert!(
-        failure.is_err(),
+        mutation.game().prepare_samus_adoption(&payload).is_err(),
         "an incomplete returning-Die load must reject Samus resumption"
     );
-    assert!(
-        load_returned,
-        "the loader must complete its original reset continuation"
-    );
-    assert!(!runtime.has_session_for_verification());
-    assert!(!runtime.samus_game().actor_identity_is_with_session());
-    assert_eq!(runtime.samus_game().samus_authority(), Revoked);
-    assert_returning_die_load_prefix(runtime.samus_game());
-    drop(runtime);
+    drop(mutation);
     assert_eq!(game.samus_authority(), Revoked);
     assert_eq!(game.preflight_samus_runtime(), Err(DisplayError::Poisoned));
     assert_eq!(game.samus_execution(), Ok(Some(RetainedNative)));

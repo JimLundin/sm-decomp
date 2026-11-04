@@ -76,13 +76,14 @@ fn history(g: &mut Game, out: &mut Vec<u8>) {
     assert_ram(g, &expected, "collision.owner.history.first_rotation");
     record(out, 1, 0, g);
     expected[0xa24..0xa28].copy_from_slice(&[0x11, 0x22, 0x33, 0x44]);
+    // One lease's drop publishes the rotation; the next takes it up.
+    pt::record_pose_history(Runtime::new(g).session_mut());
     {
-        let mut rt = Runtime::new(g);
-        rt.foreign(|g| pt::record_pose_history(Runtime::new(g).session_mut()));
+        let rt = Runtime::new(g);
         assert_eq!(
             rt.word(0xa24),
             0x2211,
-            "collision.owner.history.foreign_reread"
+            "collision.owner.history.next_lease_reread"
         );
     }
     assert_ram(g, &expected, "collision.owner.history.second_rotation");
@@ -151,15 +152,13 @@ unsafe fn animation(g: &mut Game, out: &mut Vec<u8>) {
     put(&mut expected, 0xa94, 3);
     assert_ram(g, &expected, "collision.owner.animation.held_jump_timer");
     record(out, 1, 0, g);
+    pt::advance_animation(&mut Runtime::new(g), pt::state::AnimationStep::Gameplay);
     {
-        let mut rt = Runtime::new(g);
-        rt.foreign(|g| {
-            pt::advance_animation(&mut Runtime::new(g), pt::state::AnimationStep::Gameplay)
-        });
+        let rt = Runtime::new(g);
         assert_eq!(
             rt.word(0xa94),
             2,
-            "collision.owner.animation.foreign_reread"
+            "collision.owner.animation.next_lease_reread"
         );
         assert_eq!(
             rt.word(0xa96),
@@ -514,13 +513,13 @@ fn foreign_unwind(g: &mut Game, out: &mut Vec<u8>) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     record(out, 0, 0, g);
+    // A lease's drop returns the owners to Game; a callback that unwinds on Game
+    // keeps its stores, which the next lease imports.
     let error = catch_unwind(AssertUnwindSafe(|| {
-        let mut rt = Runtime::new(g);
-        rt.foreign(|g| {
-            multiply_with_scratch(g, 0x1234, 0x5678);
-            g.ram().write_byte(0xdc7, 0xe1);
-            std::panic::panic_any(FixtureUnwind);
-        });
+        drop(Runtime::new(g));
+        multiply_with_scratch(g, 0x1234, 0x5678);
+        g.ram().write_byte(0xdc7, 0xe1);
+        std::panic::panic_any(FixtureUnwind);
     }))
     .expect_err("collision.owner.foreign.expected_unwind");
     assert!(

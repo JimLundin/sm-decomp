@@ -48,13 +48,17 @@ pub(super) fn run(game: &mut Game) -> bool {
         {
             let mut execution = Runtime::new(game);
             execution.write_slice_le(0x1c37, 0xbeef);
-            let returned = execution.foreign(|game| {
+            // The lease's drop publishes, Game acts, and the next lease imports.
+            drop(execution);
+            let returned = {
+                let game = &mut *game;
                 assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0xef, 0xbe]);
                 game.ram().write_byte(0x1c38, 0x42);
                 game.ram().write_byte(0xc6c8, 0x73);
                 game.loaded_rom = Some(RomImage::from(vec![0x92, 0, 0]));
                 19
-            });
+            };
+            let execution = Runtime::new(game);
             assert_eq!(returned, 19);
             assert_eq!(execution.word(0x1c37), 0x42ef);
             assert_eq!(execution.byte(0xc6c8), 0x73);
@@ -66,16 +70,15 @@ pub(super) fn run(game: &mut Game) -> bool {
             assert_eq!(old_image.read(0), 0x31);
         }
 
-        // Drop the emptied Runtime during unwinding: it must not restore its
-        // pre-callback owner over the callback's newer bytes.
+        // A callback that unwinds on Game after the lease's drop keeps its newer
+        // bytes over the lease's published ones.
         let panic = catch_unwind(AssertUnwindSafe(|| {
             let mut execution = Runtime::new(game);
             execution.write_slice_le(0x1d27, 0x1234);
-            execution.foreign(|game| {
-                assert_eq!(&ram_span::<2>(&game, 0x1d27), &[0x34, 0x12]);
-                game.ram().copy_in(0x1d27, &[0xcd, 0xab]);
-                panic!("intentional mechanism callback unwind");
-            });
+            drop(execution);
+            assert_eq!(&ram_span::<2>(&game, 0x1d27), &[0x34, 0x12]);
+            game.ram().copy_in(0x1d27, &[0xcd, 0xab]);
+            panic!("intentional mechanism callback unwind");
         }));
         assert!(panic.is_err());
         assert_eq!(&ram_span::<2>(&game, 0x1d27), &[0xcd, 0xab]);
@@ -85,13 +88,16 @@ pub(super) fn run(game: &mut Game) -> bool {
         {
             let mut execution = Runtime::new(game);
             execution.write_slice_le(0x1c37, 0x4321);
-            execution.foreign(|game| {
+            drop(execution);
+            {
+                let game = &mut *game;
                 assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0x21, 0x43]);
                 crate::game::player_projectiles::clear(0, game);
                 assert_eq!(&ram_span::<2>(&game, 0xb64), &[0, 0]);
                 assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0x21, 0x43]);
                 game.ram().copy_in(0x1c37, &[0xef, 0xbe]);
-            });
+            }
+            let execution = Runtime::new(game);
             assert_eq!(execution.word(0x1c37), 0xbeef);
             assert_eq!(execution.word(0xb64), 0);
         }

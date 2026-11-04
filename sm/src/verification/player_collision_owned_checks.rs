@@ -290,7 +290,9 @@ pub(crate) fn foreign_sequence_then_move(game: &mut crate::game_state::Game) {
         s.player.contact.y_speed = Default::default();
         s.player.contact.external_y = Default::default();
     }
-    rt.foreign(|g| {
+    drop(rt);
+    {
+        let g = &mut *game;
         assert_eq!(
             &{
                 let mut bytes = [0; 2];
@@ -301,7 +303,8 @@ pub(crate) fn foreign_sequence_then_move(game: &mut crate::game_state::Game) {
             "collision.owned.foreign_published_sequence"
         );
         g.ram().write_byte(0xdef, 0x40);
-    });
+    }
+    let mut rt = Runtime::new(game);
     operations::shinespark(&mut rt, Axis::Y);
     let s = rt.session();
     assert_eq!(

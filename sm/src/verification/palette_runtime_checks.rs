@@ -124,25 +124,18 @@ pub(super) fn run(game: &mut Game) -> bool {
                 .palette_effects
                 .selected = 14;
             runtime.session_mut().presentation.visual_mut().colors[5] = 0x4567;
-            let failed = catch_unwind(AssertUnwindSafe(|| {
-                runtime.foreign(|game| {
-                    assert_eq!(
-                        word(&|at| game.ram().read_byte(at), ram::PALETTEFX_INDEX),
-                        14
-                    );
-                    assert_eq!(word(&|at| game.ram().read_byte(at), 0xc00a), 0x4567);
-                    queue_music_delayed_8(0x2345, &mut crate::oracle_host::OracleHost(game));
-                    panic!("intentional palette callback unwind");
-                });
-            }));
-            assert!(failed.is_err());
-            assert!(
-                catch_unwind(AssertUnwindSafe(|| {
-                    let _ = runtime.session();
-                }))
-                .is_err()
-            );
         }
+        // The lease's drop publishes; a callback that unwinds on Game keeps its stores.
+        let failed = catch_unwind(AssertUnwindSafe(|| {
+            assert_eq!(
+                word(&|at| game.ram().read_byte(at), ram::PALETTEFX_INDEX),
+                14
+            );
+            assert_eq!(word(&|at| game.ram().read_byte(at), 0xc00a), 0x4567);
+            queue_music_delayed_8(0x2345, &mut crate::oracle_host::OracleHost(&mut *game));
+            panic!("intentional palette callback unwind");
+        }));
+        assert!(failed.is_err());
         assert_eq!(
             (0..game.ram().len())
                 .map(|at| game.ram().read_byte(at))

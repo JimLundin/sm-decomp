@@ -475,15 +475,6 @@ impl WorkRam {
         log.bytes.set(0);
         log.ranges.borrow_mut().clear();
     }
-    /// Open the log unless it is already open, keeping an open log's ranges; whether this
-    /// call opened it.
-    pub(crate) fn start_write_log(&self) -> bool {
-        if self.9.open.get() {
-            return false;
-        }
-        self.open_write_log();
-        true
-    }
     /// Stop the log: the ranges written since it opened, or `None` when it overflowed or
     /// was not open.
     pub(crate) fn close_write_log(&self) -> Option<Vec<Range<usize>>> {
@@ -2113,7 +2104,6 @@ impl Game {
         self.samus.install(binding);
         self.actor_identity = None;
         self.persistent_ram_epoch = self.ram.write_epoch();
-        self.persistent_session.foreign_presentations.clear();
         self.persistent_session.aggregate = SessionSlot::Ready(Box::new(session));
         *self.persistent_session.inventory.get_mut() =
             sm_game::inventory_domain::InventoryDomain::InSession {
@@ -2146,27 +2136,6 @@ impl Game {
             self.persistent_session.aggregate,
             persistent_session::AggregateSlot::Ready(_)
         ) && self.session_lease_admissible()
-    }
-    pub(crate) fn foreign_presentation_active(&self) -> bool {
-        !self.persistent_session.foreign_presentations.is_empty()
-    }
-    pub(crate) fn pop_foreign_presentation(
-        &mut self,
-    ) -> Option<Option<sm_game::session_owners::Presentation>> {
-        self.persistent_session.foreign_presentations.pop()
-    }
-    pub(crate) fn last_foreign_presentation_mut(
-        &mut self,
-    ) -> Option<&mut Option<sm_game::session_owners::Presentation>> {
-        self.persistent_session.foreign_presentations.last_mut()
-    }
-    pub(crate) fn push_foreign_presentation(
-        &mut self,
-        presentation: sm_game::session_owners::Presentation,
-    ) {
-        self.persistent_session
-            .foreign_presentations
-            .push(Some(presentation));
     }
     /// A copy of the persistent Session a lease opened now would take, without taking it:
     /// `lease_persistent_session`'s admission, for the IRQ publish check.
@@ -2817,7 +2786,7 @@ impl Game {
         }
         let mut state = sm_game::menus::state::State {
             menu: decode(self),
-            window: sm_game::menu_window_encoding::decode(&|at| self.suspended_control_byte(at)),
+            window: sm_game::menu_window_encoding::decode(&|at| self.ram.read_byte(at)),
             screens: decode(self),
         };
         // The saved pause display is byte-owned and deliberately outside Cohort.
@@ -4055,7 +4024,6 @@ struct SourcePublications {
     tracked: TrackedAddresses,
     ordinal: u64,
     restore_depth: usize,
-    native_depth: usize,
 }
 /// One bit per WRAM byte.
 struct TrackedAddresses(Box<[u64]>);
@@ -4172,10 +4140,6 @@ mod tracked_addresses {
     }
 }
 impl SourcePublications {
-    fn track(&mut self, at: usize) {
-        self.last.entry(at).or_insert(None);
-        self.tracked.insert(at);
-    }
     fn retrack(&mut self) {
         self.tracked.clear();
         for &at in self.last.keys() {
@@ -4214,12 +4178,6 @@ impl crate::initial_state::InitialState for SourcePublicationSnapshot {
     };
 }
 pub(crate) struct SourceRestorePublications(Rc<std::cell::RefCell<SourcePublications>>);
-pub(crate) struct SourceNativePublications(Rc<std::cell::RefCell<SourcePublications>>);
-impl Drop for SourceNativePublications {
-    fn drop(&mut self) {
-        self.0.borrow_mut().native_depth -= 1;
-    }
-}
 impl Drop for SourceRestorePublications {
     fn drop(&mut self) {
         let mut publications = self.0.borrow_mut();
@@ -4227,29 +4185,6 @@ impl Drop for SourceRestorePublications {
     }
 }
 impl WorkRam {
-    pub(crate) fn begin_source_interval(&self, spans: &[Range<usize>]) -> SourceNativePublications {
-        if self.7.borrow().native_depth == 0 {
-            self.track_source_spans(spans);
-        } else {
-            let mut publications = self.7.borrow_mut();
-            for at in spans.iter().flat_map(|span| span.clone()) {
-                assert!(at < Self::LEN, "source publication outside WRAM");
-                publications.track(at);
-            }
-        }
-        self.7.borrow_mut().native_depth += 1;
-        SourceNativePublications(Rc::clone(&self.7))
-    }
-    pub(crate) fn track_source_spans(&self, spans: &[Range<usize>]) {
-        let mut publications = self.7.borrow_mut();
-        publications.last.clear();
-        publications.tracked.clear();
-        publications.ordinal = 0;
-        for at in spans.iter().flat_map(|span| span.clone()) {
-            assert!(at < Self::LEN, "source publication outside WRAM");
-            publications.track(at);
-        }
-    }
     /// Rank the writes to `range`, ascending or descending, as the latest
     /// publications of the tracked source bytes among them.
     fn note_source_publications(&self, range: Range<usize>, descending: bool) {
@@ -4267,9 +4202,6 @@ impl WorkRam {
         } else {
             range.for_each(&mut publish);
         }
-    }
-    pub(crate) fn source_publication(&self, at: usize) -> Option<u64> {
-        self.7.borrow().last.get(&at).copied().flatten()
     }
     pub(crate) fn capture_source_publications(&self) -> SourcePublicationSnapshot {
         let publications = self.7.borrow();
@@ -4294,41 +4226,9 @@ impl WorkRam {
 }
 
 impl Game {
-    fn suspended_display(&self) -> Option<&sm_game::scene::state::DisplayState> {
-        self.persistent_session
-            .foreign_presentations
-            .last()
-            .and_then(Option::as_ref)
-            .and_then(|presentation| presentation.owner().ok())
-            .map(|display| &display.state)
-    }
-}
-
-impl Game {
-    /// Native control consumers select the same actual canonical source and
-    /// current publication rank as suspended source producers/consumers.
+    /// The menu domain's write epoch, which native control consumers select.
     pub(crate) fn menu_owner_epoch(&self) -> u64 {
-        if self.suspended_display().is_some() {
-            self.ram.write_epoch()
-        } else {
-            self.ram.menu_epoch()
-        }
-    }
-    fn suspended_control_byte(&self, at: usize) -> u8 {
-        if let Some(display) = self.suspended_display() {
-            // Decode fallback Window bytes directly, avoiding recursion through
-            // menu_state while its domain is borrowed or being reconstructed.
-            let window = sm_game::menu_window_encoding::decode(&|at| self.ram.read_byte(at));
-            return sm_game::fx_encoding::suspended_domain_byte(
-                display,
-                &window,
-                at,
-                &|at| self.ram.read_byte(at),
-                &|at| self.ram.source_publication(at),
-            )
-            .expect("suspended control owner");
-        }
-        self.ram.read_byte(at)
+        self.ram.menu_epoch()
     }
     pub(crate) fn hdma_domain_word(&self, word: sm_game::hdma::Word) -> u16 {
         let at = word.address();
@@ -4340,10 +4240,7 @@ impl Game {
                 return state.gameplay.hdma_word(word);
             }
         }
-        u16::from_le_bytes([
-            self.suspended_control_byte(at),
-            self.suspended_control_byte(at + 1),
-        ])
+        u16::from_le_bytes([self.ram.read_byte(at), self.ram.read_byte(at + 1)])
     }
 }
 

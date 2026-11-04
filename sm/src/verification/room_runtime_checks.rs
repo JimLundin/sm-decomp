@@ -248,7 +248,10 @@ fn round_trip(world: Arc<WorldBinding>) {
             Identity::Known(fixture::ROOM_A),
             "room.guard.partial-key-known"
         );
-        h.foreign(|g| {
+        // The lease's drop publishes, Game acts, and the next lease imports.
+        drop(h);
+        {
+            let g = &mut game;
             assert!(Arc::ptr_eq(g.world(), &world));
             assert_eq!(
                 ram_bytes(&g).as_slice(),
@@ -277,35 +280,29 @@ fn round_trip(world: Arc<WorldBinding>) {
                 *b ^= 0x5a;
             }
             set_native(g, callback_native);
-        });
+        }
+        let h = Runtime::new(&mut game);
         projection(&h, &expected, &world);
         assert_eq!(
             state_native(h.session()),
             callback_native,
             "room.guard.native-import"
         );
+        drop(h);
         let error = catch_unwind(AssertUnwindSafe(|| {
-            h.foreign(|g| {
-                assert_eq!(ram_bytes(&g).as_slice(), expected.as_slice());
-                for at in 0..g.ram().len() {
-                    g.ram().write_byte(at, g.ram().read_byte(at) ^ 0xa5);
-                }
-                for b in &mut expected {
-                    *b ^= 0xa5;
-                }
-                set_native(g, original_native);
-                std::panic::panic_any(FixtureUnwind);
-            })
+            let g = &mut game;
+            assert_eq!(ram_bytes(&g).as_slice(), expected.as_slice());
+            for at in 0..g.ram().len() {
+                g.ram().write_byte(at, g.ram().read_byte(at) ^ 0xa5);
+            }
+            for b in &mut expected {
+                *b ^= 0xa5;
+            }
+            set_native(g, original_native);
+            std::panic::panic_any(FixtureUnwind);
         }))
-        .expect_err("foreign must panic");
+        .expect_err("callback on Game must panic");
         assert!(error.is::<FixtureUnwind>());
-        assert!(
-            catch_unwind(AssertUnwindSafe(|| {
-                let _ = h.session();
-            }))
-            .is_err(),
-            "room.guard.owner-relinquished"
-        );
     }
     assert_eq!(
         ram_bytes(&game).as_slice(),
@@ -333,19 +330,14 @@ fn mismatch() {
     game.ram().fill(0..game.ram().len(), 0x71);
     let before = ram_bytes(&game);
     let native_before = native(&game);
-    let mut called = false;
+    // A lease whose world no longer matches publishes nothing on its drop.
     {
         let mut h = Runtime::new(&mut game);
         h.session_mut().room.entry.frame = 0xbeef;
         h.session_mut().inventory.health.current = 0x1234;
         h.session_mut().enemy_projectiles.spawn.variant = 0xbeef;
         h.session_mut().world = other;
-        assert!(
-            catch_unwind(AssertUnwindSafe(|| h.foreign(|_| called = true))).is_err(),
-            "room.guard.mismatch-rejected"
-        );
     }
-    assert!(!called, "room.guard.mismatch-before-callback");
     assert_eq!(
         ram_bytes(&game).as_slice(),
         before.as_slice(),

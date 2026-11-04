@@ -448,7 +448,10 @@ fn lane_projection() {
         for lane in 0..2 {
             assert_eq!(owner.byte(a + lane), expected[a + lane]);
             let value = expected[a + lane] ^ 0xa5;
-            owner.foreign(|g| g.ram().write_byte(a + lane, value));
+            // The lease's drop publishes, Game stores, and the next lease imports.
+            drop(owner);
+            g.ram().write_byte(a + lane, value);
+            owner = Runtime::new(&mut g);
             expected[a + lane] = value;
         }
     }
@@ -537,7 +540,9 @@ fn publication() {
     put(&mut g, 0x1c37, 0x4321);
     let mut owner = Runtime::new(&mut g);
     owner.session_mut().projectiles.selected = 19;
-    let result = owner.foreign(|g| {
+    drop(owner);
+    let result = {
+        let g = &mut g;
         assert_eq!(
             &{
                 let mut bytes = [0; 2];
@@ -566,7 +571,8 @@ fn publication() {
         put(g, 0xdde, 31);
         put(g, 0xb64, 47);
         17
-    });
+    };
+    let owner = Runtime::new(&mut g);
     assert_eq!(result, 17);
     assert_eq!(owner.session().projectiles.selected, 31);
     assert_eq!(owner.session().projectiles.shots[0].x, 47);
@@ -578,21 +584,6 @@ fn publication() {
             bytes
         },
         &[0, 0]
-    );
-    let failed = catch_unwind(AssertUnwindSafe(|| {
-        Runtime::new(&mut g).foreign(|g| {
-            put(g, 0xdde, 55);
-            panic!("callback unwind")
-        });
-    }));
-    assert!(failed.is_err());
-    assert_eq!(
-        &{
-            let mut bytes = [0; 2];
-            g.ram().copy_out(0xdde, &mut bytes);
-            bytes
-        },
-        &[55, 0]
     );
     let failed = catch_unwind(AssertUnwindSafe(|| {
         let mut owner = Runtime::new(&mut g);
