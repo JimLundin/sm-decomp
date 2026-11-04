@@ -2,10 +2,8 @@
 //! Samus while she stands on it (bank $A6:8B09-$A6:8CFA). Was `spikey_platforms`.
 #![forbid(unsafe_code)]
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors, abs16};
+use crate::actors::host::{ActorLease, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::diagnostics::Fatal as _;
-use crate::enemy_projectiles::host::Effects as _;
 use sm_data::enemy_speeds::SpeedTable;
 
 slot_view! {
@@ -48,9 +46,8 @@ fn initial_speed(parameter_1: u16) -> u16 {
 }
 
 /// Initialisation AI - spike platform top ($A6:8B2F).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let rt = &mut lease;
+pub fn initialize(lease: &mut impl crate::actors::species::TableLease) {
+    let rt = lease;
     let k = combat::current(rt).byte_index();
     let speed = {
         let mut platform = SpikePlatformEdit::of(rt, k);
@@ -75,10 +72,9 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 
 /// Main AI - spike platform top ($A6:8BAD): its function.
-pub fn run<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn run(lease: &mut impl crate::actors::species::TableLease) {
     crate::probe::hit("spike_platform.run");
-    let mut lease = game.lease();
-    let rt = &mut lease;
+    let rt = lease;
     let k = combat::current(rt).byte_index();
     let platform = SpikePlatform::of(rt, k);
     let start = platform.actor().y.whole;
@@ -116,7 +112,7 @@ pub fn run<H: LeaseActors + ?Sized>(game: &mut H) {
                 landed
             };
             if landed {
-                rt.queue_sound(2, 6, 0x1b);
+                crate::enemy_projectiles::host::Effects::queue_sound(rt, 2, 6, 0x1b);
             }
             carry_samus(rt, k, start);
             let mut platform = SpikePlatformEdit::of(rt, k);
@@ -145,7 +141,7 @@ pub fn run<H: LeaseActors + ?Sized>(game: &mut H) {
             }
             carry_samus(rt, k, start);
         }
-        _ => rt.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(rt),
     }
 }
 

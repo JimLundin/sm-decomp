@@ -1,9 +1,9 @@
 //! The Gripper, Ripper II and Ripper, flying back and forth (bank $A2:E17B-$A2:E57A).
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::actors::combat::current;
-use crate::actors::host::{ActorLease, ActorRuntime, LeaseActors, Shot};
+use crate::actors::host::{ActorLease, Shot};
 use sm_data::enemy_speeds::SpeedTable;
 
 /// Which enemy: $D3FF, $D43F or $D47F.
@@ -90,12 +90,11 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
 }
 
 /// Enemy shot ($A2:E3A9): the normal reaction, then the frozen spritemap facing its way.
-pub fn shot<H: LeaseActors + ActorRuntime + ?Sized>(game: &mut H) {
-    game.shot_reaction(Shot::Finalize);
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+pub fn shot(runtime: &mut impl crate::actors::species::TableLease) {
+    crate::actors::host::ActorRuntime::shot_reaction(runtime, Shot::Finalize);
+    let key = current(&*runtime);
     if runtime.resolve_actor(key, Native).frozen != 0 {
-        let spritemap = [0xe44b, 0xe43f][usize::from(moving_left(&runtime, key))];
+        let spritemap = [0xe44b, 0xe43f][usize::from(moving_left(&*runtime, key))];
         runtime.edit_actor(key, Native, |actor| actor.spritemap = spritemap);
     }
 }

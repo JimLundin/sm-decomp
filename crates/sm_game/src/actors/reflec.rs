@@ -1,14 +1,13 @@
 //! Reflec, the mirror enemy that bounces Samus's beams off at an angle and
 //! glows (bank $A3:DA9C-$A3:DF1A).
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::ShotHandling;
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::enemy_projectiles::access::{set_shot_direction, shot_word};
 use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_script::EnemyScript;
-use crate::player_projectiles::{access::shot, content, host::Host as _, motion};
-use crate::session_access::SessionAccess as _;
+use crate::player_projectiles::{access::shot, content, motion};
 
 /// $A3:DABC: the palette cycle colours, 4 a frame of 8; $A3:DC0B: the initial
 /// instruction lists; $A3:DCAE: the reflected direction for each reflection
@@ -94,8 +93,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 /// reflection axis, or mark it to be absorbed and return the reflection
 /// target. A redirected target requires the retained native diagnostic
 /// before absorption. Was `prepare_shot`.
-pub fn reflect_shot<H: LeaseActors + ?Sized>(game: &mut H) -> Option<u16> {
-    let runtime = &mut game.lease();
+pub fn reflect_shot(runtime: &mut impl crate::actors::species::TableLease) -> Option<u16> {
     let raw = runtime
         .session()
         .room
@@ -124,14 +122,13 @@ pub fn reflect_shot<H: LeaseActors + ?Sized>(game: &mut H) -> Option<u16> {
         set_shot_direction(runtime, shot_index, direction);
         shot!(runtime, raw, kind = shot!(runtime, raw, kind) & !KIND_BIT; SliceLe);
         runtime.owned_lease_call(|runtime| motion::reflect(runtime, raw));
-        runtime.sound(2, 6, REFLECT_SOUND);
+        crate::player_projectiles::host::Host::sound(runtime, 2, 6, REFLECT_SOUND);
         None
     }
 }
 /// Enemy shot - reflec, its second half: the shot hurts it, and at zero
 /// health it shows its health reached zero instruction list. Was `absorb`.
-pub fn absorb_shot<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn absorb_shot(raw: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let target = Key::from_legacy(raw);
     if runtime.resolve_actor(target, Native).health != 0 {
         combat::shot_reaction(runtime, ShotHandling::ReactionOnly);
@@ -144,15 +141,14 @@ pub fn absorb_shot<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     }
 }
 /// Instruction - enemy reflection axis = [[Y]] ($A3:DBC8). Was `set_parameter`.
-pub fn set_reflection_axis<H: LeaseActors + ?Sized>(
+pub fn set_reflection_axis(
     raw: u16,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl crate::actors::species::TableLease,
 ) -> EnemyScript {
     let axis = script.word(0);
-    game.lease()
-        .edit_actor(Key::from_legacy(raw), Native, |actor| {
-            actor.parameters[1] = axis
-        });
+    runtime.edit_actor(Key::from_legacy(raw), Native, |actor| {
+        actor.parameters[1] = axis
+    });
     script.offset(1)
 }

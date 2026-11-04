@@ -1,9 +1,9 @@
 //! Rinka, the ring that drifts out of its spawn point at Samus, respawning off screen; in
 //! Mother Brain's room they share spawn points and a counter (bank $A2:B602-$A2:BA5A).
-use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{DeathHandling, DeathKind, ShotHandling, angle_from_delta};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::actors::{population, scheduling};
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
@@ -11,7 +11,6 @@ use crate::enemy_script::EnemyScript;
 use crate::geometry::Position;
 use crate::legacy_overflow;
 use crate::player_projectiles::content::table;
-use crate::session_access::SessionAccess as _;
 
 /// Rinka functions, in its first actor word; its second and third are its X and Y
 /// velocities, its fourth its spawn point availability index, and its pre-instruction
@@ -285,8 +284,7 @@ pub fn initialize(runtime: &mut impl Lease) {
     reset(runtime, combat::current(runtime));
 }
 /// Main AI - rinka ($A2:B7C4); false for an unknown function, as the source fails.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) -> bool {
     let key = combat::current(runtime);
     if mother_brains(runtime, key) && finished(runtime) {
         decrement_counter(runtime, key);

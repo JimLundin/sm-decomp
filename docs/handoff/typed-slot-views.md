@@ -592,3 +592,59 @@ Left (outside D2/D7/D9), with what each needs:
   raw RAM and projects only some lanes into the fresh lease, so running it on the
   calling lease could leave lanes that the publication would overwrite. It needs a typed
   store first. Mother Brain's neck offsets use the multiplier registers (D2).
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc9`, on `rs-fc8`)
+
+`foreign_calls` 80 to 75, `game_host_impls` 89 to 86, `legacy_engine_ram_sites` 452 to 450;
+`sm_game_ram_sites` and `engine_ram_address_sites` unchanged. No lease is added mid-frame:
+each retired call runs on the lease that called it, as an owned call, which refreshes the
+observations on entry and return. No Session field or format changed.
+
+Retired:
+- ROM records (3): `Runtime::low_window_record` takes the low-window `rom_record` of the
+  content `Host::record`, `actor_legacy_record` and `room_capture`. The four verifier
+  observers are `rtl::low_window_observers`, shared with `rom_record_parts`. On the lease
+  they get a detached image of the projected RAM (`WorkRam::detached`) and the Session's
+  enemy projectile spawn; each byte they inject is stored back through `set_byte`, where
+  the foreign import took it. The cases that decide this: sprite effects 111-115, room
+  references 32-33, room background 29, actor population 11, 17, 18 and 20.
+- Species fallbacks (3): `species::table_ai`, `table_pre_instruction` and
+  `table_instruction` run on `TableLease`, which the Runtime implements. Every species the
+  tables reached on Game takes the lease (behaviour: lease merge where a routine opened
+  several leases or called the game between them). Pirates: `PirateHost` replaces
+  `Pirates`. Mother Brain's body instructions run on the lease (the footstep earthquake
+  is the Session's feedback words). Game loses `PreInstructionHost`, `InstructionHost`
+  and `Pirates`; the `address_dispatch`/`callback_dispatch` macros lost their last users.
+- The $A2:804C RTL does nothing on the lease. The initializer and population cases check
+  that the game owns the payload inside that dispatch, so only when one is armed does
+  `dispatch_noop_on_lease` (verification, D7) export the lease to run their hook. The
+  count moves one call from the engine into D7.
+
+Corpus that exercises these: every species row (crawlers, geemers, zeelas, sovas, yards,
+gerutas, holtzes, squeepts, rios, wavers, multiviolas, metroids, beetoms, rippers,
+dragons, fire geysers, oums, the work robot, sidehoppers, the space pirates and ninja
+pirates, bang, tatori, cacatac and owtch, polyp, puyo, rinka, reflec, kago, fune, alcoon,
+evir), Mother Brain's fight (body steps, the falling tubes), Botwoon's and Gamet's
+pre-instructions, Phantoon, the gunship, and the actor population, sprite effect, room
+reference and room background verification cases.
+
+Left (outside D2/D7/D9):
+- The grapple tiles (hosts 460): not proved. `queue_native_transfer` stores at
+  $00D0 + a full u16 cursor, seven bytes per entry, so a tail of $0BFA or more reaches the
+  charge word ($0CD0), and higher tails the point animation timer and tiles ($0D3E..). On the lease the store and `tile_word` both go through the projection
+  (`set_byte`, `TileField::current`); inside the foreign call both go to RAM, which the
+  import re-reads. They agree only if the projection of those addresses is exactly the
+  import's decode. A replay would have to show a frame whose tilemap queue tail is at
+  least $0BFA when `update_tiles` runs (a corrupted tail during grapple), with the tile
+  timer, frame and charge words compared after the frame on both paths. No corpus row
+  reaches such a tail.
+- The message display (room_mechanisms runtime 155): not attempted. Its observer is only
+  half the problem: `message_boxes::display` takes the whole menu `Host`, which the
+  Runtime does not implement, so `PresentationDialogue`'s 21 effects need a narrow host
+  first (as `SetupHost` was for the FX), then the observer can use the detached-image
+  pattern above.
+- The room background diagnostic (room_entry content 96, `LoadMode::Initial`) is the same
+  shape as the ROM records and can take `low_window_record`'s observer pattern.
+- Unchanged from fc8: the room-entry leaf effects (compatibility 83), the level and buffer
+  operations and setup codes in compatibility, the Maw visibility store, `flush_tilemaps`,
+  the boss lease's decompression, the mode 7 queue and animated tile uploads.

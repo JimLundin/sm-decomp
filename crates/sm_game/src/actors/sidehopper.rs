@@ -3,10 +3,8 @@
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy::Ignore};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::diagnostics::Fatal as _;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
 use sm_data::{cartridge::RomImage, enemy_speeds::SpeedTable::Quadratic};
@@ -197,9 +195,8 @@ fn fall(runtime: &mut impl Lease, hopper: u16, upside_down: usize) {
     };
 }
 /// Main AI - sidehopper / desgeega / super variants ($A3:ABCF): run its function.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     use function::*;
-    let runtime = &mut game.lease();
     let hopper = combat::current(runtime).byte_index();
     let phase = Sidehopper::of(runtime, hopper).function();
     let next = match phase {
@@ -277,13 +274,16 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 HOP
             }
         },
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     };
     *SidehopperEdit::of(runtime, hopper).function() = next;
 }
 /// Instruction - queue sound [[Y]], sound library 2, max queued sounds allowed = 3 ($A3:AA68).
-pub fn queue_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    game.lease().queue_sound(2, 3, script.word(0));
+pub fn queue_sound(
+    script: EnemyScript,
+    runtime: &mut impl crate::actors::species::TableLease,
+) -> EnemyScript {
+    crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 3, script.word(0));
     script.offset(1)
 }
 /// Instruction - ready to hop ($A3:AAFE).

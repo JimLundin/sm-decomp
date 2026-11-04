@@ -3,7 +3,7 @@
 use crate::actors::access::{AccessMode::Native, ActorKey};
 use crate::actors::api::{self, Axis, DeathHandling::Finalize, ShotHandling};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::layouts::EnemyLayout40;
 use crate::actors::queries;
 use crate::actors::slot_view::{SlotState, slot_view};
@@ -295,11 +295,10 @@ fn run_function(runtime: &mut impl Lease, evir: u16) {
     }
 }
 /// Main AI - evir ($A8:891B).
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn main_ai(lease: &mut impl crate::actors::species::TableLease) {
     crate::probe::hit("evir.main_ai");
-    let mut lease = game.lease();
-    let evir = combat::current(&lease).byte_index();
-    run_function(&mut lease, evir);
+    let evir = combat::current(&*lease).byte_index();
+    run_function(lease, evir);
 }
 /// Main AI - evir projectile ($A8:899E): unless frozen, keep its moving or regrowing list,
 /// or shoot; then run its function.

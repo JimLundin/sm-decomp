@@ -35,3 +35,14 @@ pub(crate) fn dispatch_noop(g: &mut Game) {
         spawn(0xa1, 0x8040, g);
     }
 }
+/// The $A2:804C AI on the scheduler's lease. Only an armed initializer or population case
+/// observes it, and those check the payload the game owns inside the dispatch, so they
+/// run on the game exported from the lease, as the engine's former foreign fallback ran
+/// them; otherwise the RTL does nothing and the lease stays held.
+pub(crate) fn dispatch_noop_on_lease(runtime: &mut Runtime) {
+    if crate::game::actors::initializer_checks::armed()
+        || crate::actor_population_animation_observer::noop_armed()
+    {
+        runtime.foreign(dispatch_noop);
+    }
+}

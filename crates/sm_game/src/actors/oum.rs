@@ -5,9 +5,8 @@ use crate::actors::api::{
     self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy,
 };
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::actors::species::{PreInstructionHost, SpeciesHost, pre_instruction};
 use crate::controller_state::Word as Input;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
@@ -249,38 +248,39 @@ fn finish(runtime: &mut impl Lease, oum: u16) {
         part.actor().x.whole = x;
     }
 }
-/// Main AI - oum ($A2:CD13), each step one lease; the bounce function runs through the
-/// pre-instruction table between them.
-pub fn main_ai<H: LeaseActors + PreInstructionHost + SpeciesHost>(game: &mut H) {
+/// Main AI - oum ($A2:CD13) on the table lease; the bounce function runs through the
+/// pre-instruction table as its own owned call, where the game opened a fresh lease.
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     let (oum, function) = {
-        let mut lease = game.lease();
-        let oum = combat::current(&lease).byte_index();
-        (oum, prepare(&mut lease, oum))
+        let oum = combat::current(&*runtime).byte_index();
+        (oum, prepare(runtime, oum))
     };
     match function {
         IDLE | ROLLING => {
-            let bounce = begin_action(&mut game.lease(), oum, function == ROLLING);
+            let bounce = begin_action(runtime, oum, function == ROLLING);
             if let Some(bounce) = bounce {
-                pre_instruction(0xa2_0000 | u32::from(bounce), game);
+                runtime.owned_lease_call(|runtime| {
+                    crate::actors::species::table_pre_instruction(
+                        0xa2_0000 | u32::from(bounce),
+                        runtime,
+                    )
+                });
             }
             if function == ROLLING {
-                roll(&mut game.lease(), oum);
+                roll(runtime, oum);
             }
         }
         ATTACKING => {
-            let mut lease = game.lease();
-            let oum = combat::current(&lease).byte_index();
-            attack(&mut lease, oum);
+            let oum = combat::current(&*runtime).byte_index();
+            attack(runtime, oum);
         }
-        _ => game.unknown_routine(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
-    let mut lease = game.lease();
-    let oum = combat::current(&lease).byte_index();
-    finish(&mut lease, oum);
+    let oum = combat::current(&*runtime).byte_index();
+    finish(runtime, oum);
 }
 /// Oum bounce function - falling ($A2:CF66) or rising ($A2:CFA9), for enemy `k`.
-pub fn bounce<H: LeaseActors + ?Sized>(rising: bool, k: u16, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn bounce(rising: bool, k: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let oum = k;
     let step = if rising { 0xfe80 } else { 0x180 };
     let mut index = Oum::of(runtime, oum).y_speed_index().wrapping_add(step);
@@ -330,8 +330,11 @@ pub fn shot(lease: &mut impl Lease) {
 }
 /// Instructions - set animation finished flag ($A2:CCB3), and attack allowing rotation
 /// flag = 1 ($A2:CCBE) or 0 ($A2:CCC9).
-pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut H) -> EnemyScript {
-    let runtime = &mut game.lease();
+pub fn instruction(
+    ea: u32,
+    j: EnemyScript,
+    runtime: &mut impl crate::actors::species::TableLease,
+) -> EnemyScript {
     let oum = combat::current(runtime).byte_index();
     let rotates = u16::from(ea == 0xa2_ccbe);
     match ea {

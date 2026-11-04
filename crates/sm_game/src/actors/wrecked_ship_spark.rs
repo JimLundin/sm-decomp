@@ -66,10 +66,8 @@ pub fn initialize(game: &mut impl Lease) {
 }
 /// Enemy shot - Wrecked Ship spark ($A8:E70E), as the blue Brinstar face block's ($A8:E91D):
 /// the collided projectile is not deleted.
-pub fn pass_shot<H: crate::actors::host::LeaseActors + ?Sized>(game: &mut H) {
-    use crate::player_projectiles::{access::shot, host::Host as _};
-    use crate::session_access::SessionAccess as _;
-    let mut runtime = game.lease();
+pub fn pass_shot(runtime: &mut impl crate::actors::species::TableLease) {
+    use crate::player_projectiles::access::shot;
     let raw = runtime
         .session()
         .room

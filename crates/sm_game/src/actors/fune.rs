@@ -1,14 +1,11 @@
 //! Fune and namihe, the wall-mounted fire spitters (bank $A8:959D-$A8:97B3):
 //! a fune spits on a timer, a namihe when Samus comes into its vertical range.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{Axis, player_within};
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::diagnostics::Fatal as _;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_projectiles::lifecycle::spawn_from_enemy;
 use crate::enemy_script::EnemyScript;
-use crate::session_access::SessionAccess as _;
 
 /// The actor words fune and namihe use, by `variables` lane.
 mod lane {
@@ -151,20 +148,21 @@ pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     }
 }
 /// Run one of fune's and namihe's script instructions (one of [`instruction`]).
-pub fn instruction<H: LeaseActors + ?Sized>(
+pub fn instruction(
     address: u32,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl crate::actors::species::TableLease,
 ) -> EnemyScript {
     use instruction::*;
-    let mut runtime = game.lease();
     match address {
-        QUEUE_SPIT_SOUND => runtime.queue_sound(2, 9, SPIT_SOUND),
+        QUEUE_SPIT_SOUND => {
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 9, SPIT_SOUND)
+        }
         SPAWN_LEFTWARDS_NAMIHE_FIREBALL
         | SPAWN_RIGHTWARDS_NAMIHE_FIREBALL
         | SPAWN_LEFTWARDS_FUNE_FIREBALL
         | SPAWN_RIGHTWARDS_FUNE_FIREBALL => {
-            let key = selected(&runtime);
+            let key = selected(&*runtime);
             let parameter = runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes()[0];
             // Enemy projectile initialisation parameter 2 ($7E:1995), never read.
             runtime.session_mut().enemy_projectiles.spawn.secondary = u16::from(parameter);
@@ -183,7 +181,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             });
         }
         FINISH_ACTIVITY | FINISH_ACTIVITY_2 => {
-            let key = selected(&runtime);
+            let key = selected(&*runtime);
             runtime.edit_actor(key, Native, |actor| {
                 actor.variables[lane::LISTS] = actor.variables[lane::LISTS].wrapping_add(ACTIVE);
                 actor.variables[lane::FUNCTION] = function::WAIT_FOR_TIMER;
@@ -192,7 +190,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
                 }
             });
         }
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
     script
 }

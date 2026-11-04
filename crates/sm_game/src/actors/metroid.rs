@@ -1,15 +1,13 @@
 //! The metroid, with its electricity and shell sprite objects (bank $A3:E9AF-$A3:F310).
-use crate::actors::access::{AccessMode::Native, ActorAccess as _};
+use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, DeathHandling, DeathKind, ShotHandling, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::scheduling;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::drops::DropSource;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::player_projectiles::{access::shot, content::table, host::Host as _};
-use crate::session_access::SessionAccess as _;
+use crate::player_projectiles::{access::shot, content::table};
 use crate::sprite_effect_controllers as controllers;
 use crate::sprite_effect_state::{
     LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteProgram, SpriteSpawn,
@@ -154,8 +152,7 @@ fn bombed_off(runtime: &mut impl Lease) {
     }
 }
 /// Initialisation AI - metroid ($A3:EA4F): create its electricity and shell.
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl crate::actors::species::TableLease) {
     let key = combat::current(runtime);
     let metroid = combat::current(runtime).byte_index();
     runtime.edit_actor(key, Native, |actor| actor.instruction = LISTS[0]);
@@ -180,8 +177,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     runtime.probe("sprite.metroid.init");
 }
 /// Frozen AI - metroid ($A3:EAE6): flash while bombed off, and freeze its sprites.
-pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn frozen(runtime: &mut impl crate::actors::species::TableLease) {
     scheduling::update_frozen_enemy(runtime);
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
@@ -200,8 +196,7 @@ pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
     runtime.probe("sprite.metroid.frozen");
 }
 /// Hurt AI - metroid ($A3:EB33): flash its sprites with it.
-pub fn hurt<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn hurt(runtime: &mut impl crate::actors::species::TableLease) {
     let actor = runtime.resolve_actor(combat::current(runtime), Native);
     let appearance = [0, actor.palette][usize::from(actor.flash & 2 != 0)];
     for handle in sprites(runtime, combat::current(runtime).byte_index()) {
@@ -212,9 +207,8 @@ pub fn hurt<H: LeaseActors + ?Sized>(game: &mut H) {
     runtime.probe("sprite.metroid.hurt");
 }
 /// Main AI - metroid ($A3:EB98): run its function, and carry its sprites.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     crate::probe::hit("metroid.main_ai");
-    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let target_y = runtime.session().player.y.wrapping_sub(8);
     match runtime.resolve_actor(key, Native).pre_instruction {
@@ -286,8 +280,7 @@ fn drain(runtime: &mut impl Lease, metroid: u16) {
     }
 }
 /// Enemy touch - metroid ($A3:EDEB): knocked back, or drain Samus and latch on within 8 px.
-pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn touch(runtime: &mut impl crate::actors::species::TableLease) {
     let key = combat::current(runtime);
     let metroid = combat::current(runtime).byte_index();
     let target_y = runtime.session().player.y.wrapping_sub(8);
@@ -302,7 +295,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         if runtime.session().actors.controls.phase_counter & 7 == 7
             && runtime.session().inventory.health.current.wrapping_sub(30) & 0x8000 == 0
         {
-            runtime.queue_sound(3, 6, 0x2d); // Health tick.
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, 0x2d); // Health tick.
         }
         drain(runtime, metroid);
     }
@@ -331,8 +324,7 @@ fn retire_sprites(runtime: &mut impl Lease, metroid: u16) -> u16 {
     handles[1]
 }
 /// Power bomb reaction - metroid ($A3:F042).
-pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn power_bomb(runtime: &mut impl crate::actors::species::TableLease) {
     let key = combat::current(runtime);
     let metroid = combat::current(runtime).byte_index();
     combat::power_bomb_reaction(runtime, DeathHandling::Finalize);
@@ -342,8 +334,7 @@ pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Enemy shot - metroid ($A3:EF07): shattered, bombed off Samus, or recoil and freeze.
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn shot(runtime: &mut impl crate::actors::species::TableLease) {
     let projectile = runtime
         .session()
         .room
@@ -386,7 +377,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     } else {
         recoil(runtime, false, 0);
         if shot!(runtime, projectile, kind) & 2 != 0 {
-            runtime.queue_sound(3, 6, 0xa); // Ice beam: enemy frozen.
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, 0xa); // Ice beam: enemy frozen.
             let damage = shot!(runtime, projectile, damage);
             let threshold = Metroid::of(runtime, metroid).freeze_threshold();
             runtime.edit_actor(key, Native, |actor| actor.flash = 4);
@@ -400,12 +391,15 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
                 return;
             }
         }
-        runtime.queue_sound(2, 6, 0x5a); // Shot metroid.
+        crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, 0x5a); // Shot metroid.
     }
 }
 /// Instruction - play Metroid draining Samus ($A3:EAA5).
-pub fn draining_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    game.lease().queue_sound(2, 6, 0x50);
+pub fn draining_sound(
+    script: EnemyScript,
+    runtime: &mut impl crate::actors::species::TableLease,
+) -> EnemyScript {
+    crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, 0x50);
     script
 }
 /// Instruction - play random Metroid cry ($A3:EAB1).

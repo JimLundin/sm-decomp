@@ -1,10 +1,10 @@
 //! The flies: Mellow, Mella and Memu (bank $A2:AFF3-$A2:B2BB). The function is the
 //! pre-instruction word; lanes: cooldown, X and Y velocity, target Y, circle angle.
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, Axis};
 use crate::actors::combat::current;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::projectile_geometry::SINE_COSINE;
 
 const CLOCKWISE: u16 = 0xb14e;
@@ -46,9 +46,8 @@ fn attack(runtime: &mut impl ActorLease, key: Key) {
 }
 
 /// Initialisation AI - enemies $D0FF, $D13F and $D17F (flies) ($A2:B06B).
-pub fn initialize<H: LeaseActors>(game: &mut H) {
-    let mut runtime = game.lease();
-    runtime.edit_actor(current(&runtime), Native, |actor| {
+pub fn initialize(runtime: &mut impl crate::actors::species::TableLease) {
+    runtime.edit_actor(current(&*runtime), Native, |actor| {
         (actor.variables[4], actor.pre_instruction, actor.instruction) = (0, CLOCKWISE, 0xb013);
         (actor.spritemap, actor.instruction_delay) = (0x804d, 1);
     });
@@ -56,18 +55,17 @@ pub fn initialize<H: LeaseActors>(game: &mut H) {
 
 /// Fly function - idle movement - clockwise and anti-clockwise circle ($A2:B14E, $A2:B17C):
 /// after the cooldown, attack when Samus is within 70h pixel columns.
-pub fn circle<H: LeaseActors>(k: u16, anticlockwise: bool, game: &mut H) {
-    let mut runtime = game.lease();
+pub fn circle(k: u16, anticlockwise: bool, runtime: &mut impl crate::actors::species::TableLease) {
     let key = Key::from_legacy(k);
     let cooldown = runtime.resolve_actor(key, Native).variables[0];
     if cooldown != 0 {
         runtime.edit_actor(key, Native, |actor| {
             actor.variables[0] = cooldown.wrapping_sub(1)
         });
-    } else if ((api::player_delta(&runtime, key, Axis::X) as i16).wrapping_abs() as u16) < 0x70 {
-        return attack(&mut runtime, key);
+    } else if ((api::player_delta(&*runtime, key, Axis::X) as i16).wrapping_abs() as u16) < 0x70 {
+        return attack(runtime, key);
     }
-    move_fly(&mut runtime, key, true);
+    move_fly(runtime, key, true);
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[4] =
             actor.variables[4].wrapping_add(if anticlockwise { 0xffe0 } else { 32 }) & 0x1ff;
@@ -82,10 +80,9 @@ pub fn circle<H: LeaseActors>(k: u16, anticlockwise: bool, game: &mut H) {
 }
 
 /// Fly function - attack Samus and retreat ($A2:B1AA, $A2:B1D2): dive to Samus's Y, then back.
-pub fn dive<H: LeaseActors>(k: u16, retreating: bool, game: &mut H) {
-    let mut runtime = game.lease();
+pub fn dive(k: u16, retreating: bool, runtime: &mut impl crate::actors::species::TableLease) {
     let key = Key::from_legacy(k);
-    let y = move_fly(&mut runtime, key, false);
+    let y = move_fly(runtime, key, false);
     runtime.edit_actor(key, Native, |actor| {
         if retreating {
             actor.variables[0] = actor.variables[0].wrapping_sub(1);

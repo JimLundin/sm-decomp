@@ -7,10 +7,12 @@
 //! still run in the compatibility crate go to its host: a named native enum
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
-use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorAccess as _};
+use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native};
 use crate::actors::api::DeathHandling;
 use crate::actors::gunship::Host as _;
-use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, LeaseScope, Shot};
+use crate::actors::host::{
+    ActorHost, ActorLease, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
+};
 use crate::actors::{
     alcoon, bang, beetom, boyon, cacatac, choot, covern, crawlers, dragon, draygon_death,
     draygon_eye, draygon_flight, draygon_grab, elevator, evir, fire_pillar, flies, fune, geruta,
@@ -20,7 +22,6 @@ use crate::actors::{
     zoa,
 };
 use crate::combat_rules::LatchMode;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::session_access::SessionAccess as _;
 
@@ -28,6 +29,31 @@ use crate::session_access::SessionAccess as _;
 pub trait SpeciesHost {
     /// The original failure for an address no routine answers.
     fn unknown_routine(&mut self);
+}
+
+/// The scheduler's lease, which the AI, pre-instruction and instruction tables run on: the
+/// actor lease, with the common reactions, the pirates' projectile spawns, and what the
+/// compatibility side still answers.
+pub trait TableLease:
+    ActorLease
+    + crate::actors::boss_lease::BossLease<Game: AiHost + Sized>
+    + torizo::Lease
+    + spore_spawn::Lease
+    + crate::actors::draygon_host::Lease
+    + space_pirates::PirateHost
+    + ActorRuntime
+{
+    /// An AI routine whose arm is still in the compatibility table, or the original failure.
+    fn lease_native_ai(&mut self, ea: u32);
+    /// A pre-instruction whose arm is still in the compatibility table, for the current
+    /// enemy `k` read before dispatch.
+    fn lease_native_pre_instruction(&mut self, ea: u32, k: u16);
+    /// An instruction whose arm is still in the compatibility table.
+    fn lease_native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
+    /// Print the original's diagnostic when Reflec cannot tell which projectile hit it.
+    fn lease_warn_reflection(&mut self);
+    /// Run Phantoon's `callback` as an owned call.
+    fn lease_phantoon(&mut self, callback: phantoon::Callback);
 }
 
 /// What the bank $B3 routines need beyond their actors' own hosts.
@@ -54,7 +80,7 @@ impl<T> B3Host for T where
 
 /// What the contact reactions need beyond their actors' own hosts.
 pub trait TouchHost:
-    SpeciesHost + ActorRuntime + LeaseActors + space_pirates::Pirates + torizo::Ai + phantoon::Dispatch
+    SpeciesHost + ActorRuntime + LeaseActors + torizo::Ai + phantoon::Dispatch
 {
 }
 
@@ -79,7 +105,7 @@ pub const EMPTY_SHOTS: [u32; 6] = [10649676, 10846284, 10911820, 10977356, 10982
 
 /// What the shot reactions need beyond their actors' own hosts.
 pub trait ShotHost:
-    SpeciesHost + ActorRuntime + LeaseActors + space_pirates::Pirates + torizo::Ai + phantoon::Dispatch
+    SpeciesHost + ActorRuntime + LeaseActors + torizo::Ai + phantoon::Dispatch
 {
 }
 
@@ -110,34 +136,26 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
     game.unknown_routine();
 }
 
-/// A bank $B3 enemy pre-instruction, keyed by its address.
-pub fn b3_pre_instruction<H: PreInstructionHost>(ea: u32, k: u16, game: &mut H) {
+/// A bank $B3 enemy pre-instruction on the scheduler's lease, keyed by its address.
+pub fn b3_pre_instruction<L: TableLease>(ea: u32, k: u16, runtime: &mut L) {
     match ea {
         11763835 => (),
         11767039 | 11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
-            game.native_pre_instruction(ea, k);
+            runtime.lease_native_pre_instruction(ea, k);
         }
-        _ => {
-            game.unknown_routine();
-        }
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
 }
 
-/// What the AI table needs beyond its actors' own hosts.
+/// What a boss lease's game needs beyond its actors' own hosts.
 pub trait AiHost:
     B3Host
     + DrawHookHost
-    + space_pirates::Pirates
     + torizo::Ai
     + phantoon::Dispatch
-    + PreInstructionHost
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
 {
-    /// An AI routine whose arm is still in the compatibility table.
-    fn native_ai(&mut self, ea: u32);
-    /// Print the original's diagnostic when Reflec cannot tell which projectile hit it.
-    fn warn_reflection(&mut self);
     /// Write `operand` to the multiplicand register, for Yapping Maw.
     fn write_multiplicand(&mut self, operand: u8);
     /// Install Draygon's BG layers as its initialisation does.
@@ -621,34 +639,28 @@ pub fn lease_draw_hook<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
     true
 }
 
-/// An enemy species' AI routine, keyed by its address. Arms not here are in
-/// the compatibility table until their routines move.
-pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
-    if lease_ai(ea, game) {
-        return;
-    }
+/// An enemy species' AI routine on the scheduler's lease, keyed by its address, for the
+/// routines [`lease_ai`] does not run. A routine that continues through the pre-instruction
+/// table runs it as its own owned call, where the runtime had opened a second lease.
+pub fn table_ai<L: TableLease>(ea: u32, runtime: &mut L) {
     use crate::actors::combat::{die, latch, resume_ai, select_frozen_ai};
     match ea {
         // The common enemy AI ($A0:8000-$A0:8041) the enemy banks share: grapple AI - no
         // interaction, Samus latches on (with or without invincibility), kill enemy and
         // cancel grapple beam, and the normal enemy frozen AI.
-        10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => {
-            resume_ai(&mut LeaseActors::lease(game))
+        10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => resume_ai(runtime),
+        10649605 | 10780677 => latch(runtime, LatchMode::Passive),
+        11042836 => latch(runtime, LatchMode::Active),
+        10649610 | 10715146 | 11042826 | 11763722 => {
+            die(runtime, crate::actors::api::DeathKind::Grapple)
         }
-        10649605 | 10780677 => latch(&mut LeaseActors::lease(game), LatchMode::Passive),
-        11042836 => latch(&mut LeaseActors::lease(game), LatchMode::Active),
-        10649610 | 10715146 | 11042826 | 11763722 => die(
-            &mut LeaseActors::lease(game),
-            crate::actors::api::DeathKind::Grapple,
-        ),
         10649615 | 10715151 | 10846223 | 10911759 | 10977295 | 11042831 | 11042846 | 11173903
-        | 11763727 => select_frozen_ai(&mut LeaseActors::lease(game)),
+        | 11763727 => select_frozen_ai(runtime),
         10649665 | 10715201 | 10780737 | 10846273 | 10911809 | 10977345 | 11042881 | 11173953
-        | 11763777 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
+        | 11763777 => crate::actors::scheduling::update_frozen_enemy(runtime),
         // Initialisation AI - enemy $F153 (unused spinning turtle eye) ($B3:86FB).
         11765499 => {
-            let mut runtime = LeaseActors::lease(game);
-            let key = crate::actors::combat::current(&runtime);
+            let key = crate::actors::combat::current(&*runtime);
             runtime.edit_actor(key, Native, |actor| {
                 actor.properties |=
                     crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
@@ -657,30 +669,32 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         }
         // Main AI - mini-Crocomire ($A2:89F0) and cacatac ($A2:9FB3): their function.
         10652144 | 10657715 => {
-            let runtime = LeaseActors::lease(game);
             let mode = if ea == 10652144 { LittleEndian } else { Native };
-            let key = crate::actors::combat::current(&runtime);
+            let key = crate::actors::combat::current(&*runtime);
             let function = runtime.resolve_actor(key, mode).pre_instruction;
-            drop(runtime);
-            pre_instruction(0xa2_0000 | u32::from(function), game);
+            runtime.owned_lease_call(|runtime| {
+                table_pre_instruction(0xa2_0000 | u32::from(function), runtime)
+            });
         }
         10738716 => {
-            if let Some(target) = reflec::reflect_shot(game) {
-                game.warn_reflection();
-                reflec::absorb_shot(target, game);
+            if let Some(target) = reflec::reflect_shot(runtime) {
+                runtime.lease_warn_reflection();
+                reflec::absorb_shot(target, runtime);
             }
         }
         // Enemy shot - Wrecked Ship spark ($A8:E70E) and blue Brinstar face block ($A8:E91D).
-        11069198 | 11069725 => wrecked_ship_spark::pass_shot(game),
-        11763747 => game.contact_reaction(Death::Finalize),
-        11763757 => game.shot_reaction(Shot::Finalize),
+        11069198 | 11069725 => wrecked_ship_spark::pass_shot(runtime),
+        11763747 => ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        11763757 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
-        | 11108407 | 11173943 | 11698231 | 11763767 => game.power_bomb_reaction(Death::Finalize),
+        | 11108407 | 11173943 | 11698231 | 11763767 => {
+            ActorRuntime::power_bomb_reaction(runtime, Death::Finalize)
+        }
         10715212 => (),
-        10725800 => game.shot_reaction(Shot::Finalize),
+        10725800 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
         10723079 => (),
-        10715171 => game.contact_reaction(Death::Finalize),
-        10715181 => game.shot_reaction(Shot::Finalize),
+        10715171 => ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        10715181 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
         10738715 => (),
         10780748 => (),
         10795344 => (),
@@ -708,116 +722,111 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11763788 => (),
         11765518 => (),
         11791130 => (),
-        10649635 => game.contact_reaction(Death::Finalize),
-        10649645 => game.shot_reaction(Shot::Finalize),
-        10780707 => game.contact_reaction(Death::Finalize),
-        10780717 => game.shot_reaction(Shot::Finalize),
+        10649635 => ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        10649645 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
+        10780707 => ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        10780717 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
         // Bank $A6: the boulder, the fire arc and Mini-Kraid, with the bank's
         // common reactions.
-        10911779 => game.contact_reaction(Death::Finalize),
-        10911789 => game.shot_reaction(Shot::Finalize),
+        10911779 => ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        10911789 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
         // Bank $A7: Kraid, Phantoon, the etecoons and the dachora, with the
         // bank's common reactions.
-        10997235 => game.phantoon(phantoon::Callback::Initialize),
-        10997333 => game.phantoon(phantoon::Callback::InitializePart),
-        10997414 => game.phantoon(phantoon::Callback::Main),
-        11001151 => game.phantoon(phantoon::Callback::Hurt),
-        11001237 => game.phantoon(phantoon::Callback::Touch),
-        11001243 => game.phantoon(phantoon::Callback::Shot),
-        10977325 => game.shot_reaction(Shot::Finalize),
-        10977340 => game.power_bomb_reaction(Death::LeavePending),
+        10997235 => runtime.lease_phantoon(phantoon::Callback::Initialize),
+        10997333 => runtime.lease_phantoon(phantoon::Callback::InitializePart),
+        10997414 => runtime.lease_phantoon(phantoon::Callback::Main),
+        11001151 => runtime.lease_phantoon(phantoon::Callback::Hurt),
+        11001237 => runtime.lease_phantoon(phantoon::Callback::Touch),
+        11001243 => runtime.lease_phantoon(phantoon::Callback::Shot),
+        10977325 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
+        10977340 => ActorRuntime::power_bomb_reaction(runtime, Death::LeavePending),
         // Bank $A8: the common grapple, contact, shot and frozen reactions.
-        11042851 => game.contact_reaction(Death::Finalize),
-        11042861 => game.shot_reaction(Shot::Finalize),
+        11042851 => ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        11042861 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
         // Bank $AA: the Torizos, Shaktool and the statues.
-        0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
+        0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, runtime),
         // Bank $A5.
-        10846243 => game.contact_reaction(Death::Finalize),
-        10846253 => game.shot_reaction(Shot::Finalize),
+        10846243 => ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        10846253 => ActorRuntime::shot_reaction(runtime, Shot::Finalize),
         // Bank $A3: the crawlers, divers, platforms, bugs and fish.
-        10720554 => elevator::main_ai(game),
+        10720554 => elevator::main_ai(runtime),
         10739851 | 10741442 => {
-            let function = crawlers::main_ai(game);
-            pre_instruction(function, game);
+            let function = crawlers::main_ai(runtime);
+            runtime.owned_lease_call(|runtime| table_pre_instruction(function, runtime));
         }
-        10730277 => bang::main_ai(game),
+        10730277 => bang::main_ai(runtime),
         10656381 => {
-            if !puyo::main_ai(game) {
-                game.unknown_routine();
+            if !puyo::main_ai(runtime) {
+                crate::diagnostics::Fatal::unreachable(runtime);
             }
         }
         10653138 | 10653998 => {
-            if !tatori::main_ai(ea == 10653998, game) {
-                game.unknown_routine();
+            if !tatori::main_ai(ea == 10653998, runtime) {
+                crate::diagnostics::Fatal::unreachable(runtime);
             }
         }
-        11062135 => work_robot::initialize(game),
-        11062220 => work_robot::initialize_deactivated(game),
-        10914607 => spike_platform::initialize(game),
-        10914733 => spike_platform::run(game),
-        11063693 => work_robot::shot_deactivated(game),
-        11063698 => work_robot::shot(game),
+        11062135 => work_robot::initialize(runtime),
+        11062220 => work_robot::initialize_deactivated(runtime),
+        10914607 => spike_platform::initialize(runtime),
+        10914733 => spike_platform::run(runtime),
+        11063693 => work_robot::shot_deactivated(runtime),
+        11063698 => work_robot::shot(runtime),
         10735204 => {
-            let function = yard::prepare(game);
-            pre_instruction(function, game);
+            let function = yard::prepare(runtime);
+            runtime.owned_lease_call(|runtime| table_pre_instruction(function, runtime));
         }
         10663876 => {
-            if !rinka::main_ai(game) {
-                game.unknown_routine();
+            if !rinka::main_ai(runtime) {
+                crate::diagnostics::Fatal::unreachable(runtime);
             }
         }
-        10669331 => oum::main_ai(game),
-        10658809 => cacatac::owtch::initialize(game),
-        10658942 => cacatac::owtch::main_ai(game),
-        10659193 => cacatac::owtch::shot(game),
-        10742351 => metroid::initialize(game),
-        10742502 => metroid::frozen(game),
-        10742579 => metroid::hurt(game),
-        10742680 => metroid::main_ai(game),
-        10743275 => metroid::touch(game),
-        10743559 => metroid::shot(game),
-        10743874 => metroid::power_bomb(game),
-        10726351 => sidehopper::main_ai(game),
+        10669331 => oum::main_ai(runtime),
+        10658809 => cacatac::owtch::initialize(runtime),
+        10658942 => cacatac::owtch::main_ai(runtime),
+        10659193 => cacatac::owtch::shot(runtime),
+        10742351 => metroid::initialize(runtime),
+        10742502 => metroid::frozen(runtime),
+        10742579 => metroid::hurt(runtime),
+        10742680 => metroid::main_ai(runtime),
+        10743275 => metroid::touch(runtime),
+        10743559 => metroid::shot(runtime),
+        10743874 => metroid::power_bomb(runtime),
+        10726351 => sidehopper::main_ai(runtime),
         // Bank $A8.
-        11045147 => evir::main_ai(game),
-        11057165 => beetom::main_ai(game),
-        11058734 => beetom::touch(game),
-        11058860 => beetom::shot(game),
-        11053955 => kago::shot(game),
-        10662880 => multiviola::initialize(game),
-        10662927 => multiviola::main_ai(game),
-        10663311 => polyp::main_ai(game),
-        10675113 => rippers::shot(game),
-        10664931 => rio::main_ai(game),
-        10666562 => geruta::initialize(false, game),
-        10667763 => geruta::initialize(true, game),
-        10665625 => squeept::initialize(game),
+        11045147 => evir::main_ai(runtime),
+        11057165 => beetom::main_ai(runtime),
+        11058734 => beetom::touch(runtime),
+        11058860 => beetom::shot(runtime),
+        11053955 => kago::shot(runtime),
+        10662880 => multiviola::initialize(runtime),
+        10662927 => multiviola::main_ai(runtime),
+        10663311 => polyp::main_ai(runtime),
+        10675113 => rippers::shot(runtime),
+        10664931 => rio::main_ai(runtime),
+        10666562 => geruta::initialize(false, runtime),
+        10667763 => geruta::initialize(true, runtime),
+        10665625 => squeept::initialize(runtime),
         10662175 | 10665682 | 10666615 | 10667812 => {
-            game.next_random();
-            pre_instruction(geruta::function(game), game);
+            crate::enemy_projectiles::host::Effects::next_random(runtime);
+            let function = geruta::function(runtime);
+            runtime.owned_lease_call(|runtime| table_pre_instruction(function, runtime));
         }
-        10661995 => flies::initialize(game),
-        10652077 => mini_crocomire::initialize(game),
-        10716909 => waver::initialize(game),
-        10717004 => waver::main_ai(game),
-        10651420 => boyon::initialize(game),
-        10651548 => boyon::main_ai(game),
-        10675718 => dragon::initialize(game),
-        10675790 => pre_instruction(geruta::function(game), game),
-        10676168 | 10676174 | 10676180 => dragon::react(ea, game),
-        10915836 => fire_pillar::initialize(game),
-        10915875 => fire_pillar::main_ai(game),
-        _ => game.native_ai(ea),
+        10661995 => flies::initialize(runtime),
+        10652077 => mini_crocomire::initialize(runtime),
+        10716909 => waver::initialize(runtime),
+        10717004 => waver::main_ai(runtime),
+        10651420 => boyon::initialize(runtime),
+        10651548 => boyon::main_ai(runtime),
+        10675718 => dragon::initialize(runtime),
+        10675790 => {
+            let function = geruta::function(runtime);
+            runtime.owned_lease_call(|runtime| table_pre_instruction(function, runtime));
+        }
+        10676168 | 10676174 | 10676180 => dragon::react(ea, runtime),
+        10915836 => fire_pillar::initialize(runtime),
+        10915875 => fire_pillar::main_ai(runtime),
+        _ => runtime.lease_native_ai(ea),
     }
-}
-
-/// What the pre-instruction table needs beyond its actors' own hosts.
-pub trait PreInstructionHost:
-    B3Host + torizo::Ai + phantoon::Dispatch + crate::actors::host::EnemyHost
-{
-    /// A pre-instruction whose arm is still in the compatibility table, for
-    /// the current enemy `k` read before dispatch.
-    fn native_pre_instruction(&mut self, ea: u32, k: u16);
 }
 
 /// Gunship pre-instructions on the active actor lease; `index` is captured by
@@ -836,8 +845,6 @@ pub fn gunship_pre_instruction(ea: u32, index: u16, runtime: &mut impl gunship::
     true
 }
 
-/// An enemy species' pre-instruction, keyed by its address. The current
-/// enemy index is read once, before dispatch, as the original did.
 /// The Torizo pre-instructions selected before entering a physical callback.
 pub fn is_torizo_pre_instruction(ea: u32) -> bool {
     matches!(ea, 11192146 | 11192364 | 11195889 | 11192360 | 11195885)
@@ -861,10 +868,12 @@ pub fn torizo_pre_instruction<L: torizo::Lease>(ea: u32, k: u16, game: &mut L) {
     }
 }
 
-pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
-    let k = crate::actors::host::EnemyHost::current_enemy(game);
+/// An enemy species' pre-instruction on the scheduler's lease, keyed by its address. The
+/// current enemy index is read once, before dispatch, as the original did.
+pub fn table_pre_instruction<L: TableLease>(ea: u32, runtime: &mut L) {
+    let k = runtime.session().actors.controls.selected;
     if is_torizo_pre_instruction(ea) {
-        game.with_lease(|runtime| torizo_pre_instruction(ea, k, runtime));
+        torizo_pre_instruction(ea, k, runtime);
         return;
     }
     if matches!(
@@ -889,36 +898,34 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
             | 10661134
             | 10661165
     ) {
-        game.with_lease(|runtime| {
-            gunship_pre_instruction(ea, k, runtime);
-        });
+        gunship_pre_instruction(ea, k, runtime);
         return;
     }
     match ea {
-        10730661 => bang::movement_delay(game),
-        10730693 => bang::target_samus(game),
-        10730780 => bang::fly(false, game),
-        10730796 => bang::fly(true, game),
-        10739857 => crawlers::crawl(k, crate::actors::api::Axis::X, true, game),
-        10740072 => crawlers::crawl(k, crate::actors::api::Axis::Y, true, game),
-        10741448 => crawlers::crawl(k, crate::actors::api::Axis::X, false, game),
-        10741746 => crawlers::crawl(k, crate::actors::api::Axis::Y, false, game),
-        10741637 => crawlers::falling(k, game),
+        10730661 => bang::movement_delay(runtime),
+        10730693 => bang::target_samus(runtime),
+        10730780 => bang::fly(false, runtime),
+        10730796 => bang::fly(true, runtime),
+        10739857 => crawlers::crawl(k, crate::actors::api::Axis::X, true, runtime),
+        10740072 => crawlers::crawl(k, crate::actors::api::Axis::Y, true, runtime),
+        10741448 => crawlers::crawl(k, crate::actors::api::Axis::X, false, runtime),
+        10741746 => crawlers::crawl(k, crate::actors::api::Axis::Y, false, runtime),
+        10741637 => crawlers::falling(k, runtime),
         10518651 => (),
-        10669926 => oum::bounce(false, k, game),
-        10669993 => oum::bounce(true, k, game),
-        10657722 => cacatac::moving(false, game),
-        10735526 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cce2, game),
-        10735543 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3ccea, game),
-        10735549 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3ccf2, game),
-        10735566 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3ccfa, game),
-        10735572 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cd02, game),
-        10735589 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd0a, game),
-        10735595 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cd12, game),
-        10735612 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd1a, game),
-        10735456 => yard::hiding(k, game),
-        10736051 => yard::airborne(k, game),
-        10657772 => cacatac::moving(true, game),
+        10669926 => oum::bounce(false, k, runtime),
+        10669993 => oum::bounce(true, k, runtime),
+        10657722 => cacatac::moving(false, runtime),
+        10735526 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cce2, runtime),
+        10735543 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3ccea, runtime),
+        10735549 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3ccf2, runtime),
+        10735566 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3ccfa, runtime),
+        10735572 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cd02, runtime),
+        10735589 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd0a, runtime),
+        10735595 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cd12, runtime),
+        10735612 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd1a, runtime),
+        10735456 => yard::hiding(k, runtime),
+        10736051 => yard::airborne(k, runtime),
+        10657772 => cacatac::moving(true, runtime),
         10649723 => (),
         10652277 => (),
         10657819 => (),
@@ -931,86 +938,61 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10998952 => (),
         11047388 => (),
         ea if EMPTY_AA_FUNCTIONS.contains(&ea) => (),
-        0xb30000..=0xb3ffff => crate::actors::species::b3_pre_instruction(ea, k, game),
+        0xb30000..=0xb3ffff => b3_pre_instruction(ea, k, runtime),
         // Bank $A7: Phantoon, the etecoons and the dachora.
         10999114 | 10999271 | 10999309 | 10999416 | 10999481 | 10999522 | 10999597 | 10999615
         | 10999655 | 10999765 | 10999850 | 10999900 | 10999953 | 10999980 | 11000086 | 11000110
         | 11000136 | 11000401 | 11000454 | 11000535 | 11000637 | 10999388 | 10998953 | 10999022
-        | 10999048 | 10999190 | 10999508 | 10999688 | 10999799 | 10999924 | 11000203 => game
-            .phantoon(phantoon::Callback::PreInstruction {
+        | 10999048 | 10999190 | 10999508 | 10999688 | 10999799 | 10999924 | 11000203 => runtime
+            .lease_phantoon(phantoon::Callback::PreInstruction {
                 function: ea as u16,
                 actor: k,
             }),
         // Bank $AA: the Torizos, Shaktool and the statues.
-        10666625 => geruta::flames(k, false, game),
-        10666727 => geruta::idle(k, false, game),
-        10666815 => geruta::finish_animation(k, false, false, game),
-        10667014 => geruta::finish_animation(k, false, true, game),
-        10667822 => geruta::flames(k, true, game),
-        10667889 => geruta::idle(k, true, game),
-        10667963 => geruta::finish_animation(k, true, false, game),
-        10668168 => geruta::finish_animation(k, true, true, game),
-        10666849 => geruta::swoop(k, false, true, game),
-        10666929 => geruta::swoop(k, false, false, game),
-        10667990 => geruta::swoop(k, true, true, game),
-        10668077 => geruta::swoop(k, true, false, game),
-        10665692 => squeept::flame(k, game),
-        10665754 => squeept::jump(k, game),
-        10665790 => squeept::fly(k, squeept::Flight::Rising, game),
-        10665852 => squeept::fly(k, squeept::Flight::Flipping, game),
-        10665916 => squeept::fly(k, squeept::Flight::Falling, game),
-        10662222 => flies::circle(k, false, game),
-        10662268 => flies::circle(k, true, game),
-        10662314 => flies::dive(k, false, game),
-        10662354 => flies::dive(k, true, game),
-        10652227 => mini_crocomire::patrol(false, game),
-        10652252 => mini_crocomire::patrol(true, game),
-        10675796 | 10675885 | 10675953 | 10676020 | 10676041 => dragon::step(k, ea as u16, game),
-        _ => game.native_pre_instruction(ea, k),
+        10666625 => geruta::flames(k, false, runtime),
+        10666727 => geruta::idle(k, false, runtime),
+        10666815 => geruta::finish_animation(k, false, false, runtime),
+        10667014 => geruta::finish_animation(k, false, true, runtime),
+        10667822 => geruta::flames(k, true, runtime),
+        10667889 => geruta::idle(k, true, runtime),
+        10667963 => geruta::finish_animation(k, true, false, runtime),
+        10668168 => geruta::finish_animation(k, true, true, runtime),
+        10666849 => geruta::swoop(k, false, true, runtime),
+        10666929 => geruta::swoop(k, false, false, runtime),
+        10667990 => geruta::swoop(k, true, true, runtime),
+        10668077 => geruta::swoop(k, true, false, runtime),
+        10665692 => squeept::flame(k, runtime),
+        10665754 => squeept::jump(k, runtime),
+        10665790 => squeept::fly(k, squeept::Flight::Rising, runtime),
+        10665852 => squeept::fly(k, squeept::Flight::Flipping, runtime),
+        10665916 => squeept::fly(k, squeept::Flight::Falling, runtime),
+        10662222 => flies::circle(k, false, runtime),
+        10662268 => flies::circle(k, true, runtime),
+        10662314 => flies::dive(k, false, runtime),
+        10662354 => flies::dive(k, true, runtime),
+        10652227 => mini_crocomire::patrol(false, runtime),
+        10652252 => mini_crocomire::patrol(true, runtime),
+        10675796 | 10675885 | 10675953 | 10676020 | 10676041 => dragon::step(k, ea as u16, runtime),
+        _ => runtime.lease_native_pre_instruction(ea, k),
     }
 }
 
-/// What the instruction table needs beyond its actors' own hosts.
-pub trait InstructionHost:
-    SpeciesHost
-    + space_pirates::Pirates
-    + LeaseActors
-    + torizo::Ai
-    + phantoon::Dispatch
-    + crate::actors::host::EnemyHost
-    + crate::effects::SoundEffects
-{
-    /// An instruction whose arm is still in the compatibility table.
-    fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
-}
-
-/// The bank $A7 functions Phantoon's instruction lists call, keyed by address.
-fn call_a7_function<H: InstructionHost>(ea: u32, k: u16, game: &mut H) {
-    game.phantoon(phantoon::Callback::Instruction {
-        address: ea,
-        actor: k,
-    });
-}
-
-/// An enemy species' instruction, keyed by its address; `k` is the enemy and
-/// `j` the script position.
-pub fn instruction<H: InstructionHost>(
+/// An enemy species' instruction on the scheduler's lease, keyed by its address, for the
+/// instructions [`lease_instruction`] does not run; `k` is the enemy and `j` the script
+/// position.
+pub fn table_instruction<L: TableLease>(
     ea: u32,
     k: u16,
     j: EnemyScript,
-    game: &mut H,
+    runtime: &mut L,
 ) -> EnemyScript {
-    let j = match lease_instruction(ea, k, j, game) {
-        Ok(script) => return script,
-        Err(j) => j,
-    };
     match ea {
         // Instruction - enemy $0FB2 = [[Y]] ($AA:806B, $B3:806B) and = RTS ($AA:8074, $B3:8074).
         11173995 | 11174004 | 11763819 | 11763828 => {
             let given = ea & 0xffff == 0x806b;
             let value = if given { j.word(0) } else { 0x807b };
             let key = crate::actors::access::ActorKey::from_legacy(k);
-            LeaseActors::lease(game).edit_actor(key, Native, |actor| actor.pre_instruction = value);
+            runtime.edit_actor(key, Native, |actor| actor.pre_instruction = value);
             if given { j.offset(1) } else { j }
         }
         // Instruction - nothing ($A2:88C5, $A8:B75E).
@@ -1024,19 +1006,24 @@ pub fn instruction<H: InstructionHost>(
                 10657578 => 0x34,
                 _ => 0x7c,
             };
-            game.queue_sound(1, sound, 6);
+            crate::effects::SoundEffects::queue_sound(runtime, 1, sound, 6);
             j
         }
         // Instruction - queue sound [[Y]], sound library 2 or 3, max 6 ($A5:9F60, $A5:9F6E).
         10854240 | 10854254 => {
-            LeaseActors::lease(game).queue_sound(if ea == 10854240 { 2 } else { 3 }, 6, j.word(0));
+            crate::enemy_projectiles::host::Effects::queue_sound(
+                runtime,
+                if ea == 10854240 { 2 } else { 3 },
+                6,
+                j.word(0),
+            );
             j.offset(1)
         }
         // Instruction - spawn mini-Crocomire ($A2:897E) or cacatac spike ($A2:A0A7) projectile.
         10652030 | 10657959 => {
             let definition = if ea == 10652030 { 0xdbf2 } else { 0xdafe };
-            let enemy = crate::actors::host::EnemyHost::current_enemy(game);
-            game.spawn_projectile(j.word(0), enemy, definition);
+            let enemy = runtime.session().actors.controls.selected;
+            ActorRuntime::spawn_projectile(runtime, j.word(0), enemy, definition);
             j.offset(1)
         }
         // The baby Metroid's go to instructions ($A9:CFB4, $A9:CFCA, $A9:F920, $A9:F936, $A9:F990).
@@ -1047,76 +1034,79 @@ pub fn instruction<H: InstructionHost>(
         11139472 => crate::actors::baby_metroid_encounter::go_to_remorse(k, j),
         // Instruction - room loading interrupt command = Draygon's room - begin HUD drawing.
         10852501 | 10853514 => {
-            let mut lease = LeaseActors::lease(game);
-            lease.session_mut().room.entry.irq_policy = 12;
-            lease.words_stored();
+            runtime.session_mut().room.entry.irq_policy = 12;
+            runtime.words_stored();
             j
         }
         // Death quake sound timer = [[Y]] ($A5:E872) and queue sound [[Y]] ($A5:E895).
         10872946 => {
-            let mut lease = LeaseActors::lease(game);
             // $7E:9000, the bosses' RAM's first word.
-            lease.session_mut().actors.extended.blocks[3][0] = j.word(0);
-            lease.words_stored();
+            runtime.session_mut().actors.extended.blocks[3][0] = j.word(0);
+            runtime.words_stored();
             j.offset(1)
         }
         10872981 => {
-            LeaseActors::lease(game).queue_sound(2, 6, j.word(0));
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, j.word(0));
             j.offset(1)
         }
-        10725992 => sidehopper::queue_sound(j, game),
-        10657941 => cacatac::resume_moving(k, j, game),
-        10734646 | 10734655 | 10734664 | 10734687 | 10734712 => yard::instruction(ea, k, j, game),
+        10725992 => sidehopper::queue_sound(j, runtime),
+        10657941 => cacatac::resume_moving(k, j, runtime),
+        10734646 | 10734655 | 10734664 | 10734687 | 10734712 => {
+            yard::instruction(ea, k, j, runtime)
+        }
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216
         | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601
-        | 11063613 | 11063659 => work_robot::instruction(ea, k, j, game),
+        | 11063613 | 11063659 => work_robot::instruction(ea, k, j, runtime),
         10654593 | 10654738 | 10654791 | 10654801 | 10654827 | 10654853 | 10654881 | 10654919 => {
-            tatori::instruction(ea, j, game)
+            tatori::instruction(ea, j, runtime)
         }
-        10669235 | 10669246 | 10669257 => oum::instruction(ea, j, game),
-        10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),
-        10742437 => metroid::draining_sound(j, game),
+        10669235 | 10669246 | 10669257 => oum::instruction(ea, j, runtime),
+        10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, runtime),
+        10742437 => metroid::draining_sound(j, runtime),
         // Bang's queue acquired suit sound effect: 56h, library 2.
         10730104 => {
-            game.queue_sound(1, 0x56, 6);
+            crate::effects::SoundEffects::queue_sound(runtime, 1, 0x56, 6);
             j
         }
-        10738632 => reflec::set_reflection_axis(k, j, game),
-        10741344 | 10739650 => crawlers::set_function(k, j, game),
+        10738632 => reflec::set_reflection_axis(k, j, runtime),
+        10741344 | 10739650 => crawlers::set_function(k, j, runtime),
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => {
-            fune::instruction(ea, j, game)
+            fune::instruction(ea, j, runtime)
         }
         11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => {
-            alcoon::instruction(ea, j, game)
+            alcoon::instruction(ea, j, runtime)
         }
         // Bank $A7: Kraid's steps and the calls into Phantoon's functions; Kraid's
         // identity instruction returns the script unchanged.
         10977418 => {
-            call_a7_function(j.word(0) as u32 | 0xa70000, k, game);
+            runtime.lease_phantoon(phantoon::Callback::Instruction {
+                address: u32::from(j.word(0)) | 0xa70000,
+                actor: k,
+            });
             j.offset(1)
         }
         // Bank $AA: the Torizos, Shaktool and the statues; the two identity
         // instructions return the script unchanged.
         11190984 | 11196831 => j,
-        0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, game),
-        10915247 | 10915347..=10915793 => fire_pillar::instruction(ea, j, game),
+        0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, runtime),
+        10915247 | 10915347..=10915793 => fire_pillar::instruction(ea, j, runtime),
         10664899 => {
-            rio::set_animation_finished(game);
+            rio::set_animation_finished(runtime);
             j
         }
         10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507 | 10666518
         | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752 => {
-            geruta::instruction(ea, j, game)
+            geruta::instruction(ea, j, runtime)
         }
         10665614 => {
-            squeept::set_animation_finished(game);
+            squeept::set_animation_finished(runtime);
             j
         }
-        10652048 => mini_crocomire::set_moving(false, j, game),
-        10652061 => mini_crocomire::set_moving(true, j, game),
-        10716899 => waver::set_spin_finished(j, game),
-        10651846 => boyon::start_bounce(j, game),
-        10675707 => dragon::set_animation_finished(j, game),
-        _ => game.native_instruction(ea, k, j),
+        10652048 => mini_crocomire::set_moving(false, j, runtime),
+        10652061 => mini_crocomire::set_moving(true, j, runtime),
+        10716899 => waver::set_spin_finished(j, runtime),
+        10651846 => boyon::start_bounce(j, runtime),
+        10675707 => dragon::set_animation_finished(j, runtime),
+        _ => runtime.lease_native_instruction(ea, k, j),
     }
 }

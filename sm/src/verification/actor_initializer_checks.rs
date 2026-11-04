@@ -79,6 +79,11 @@ impl Drop for ActiveGuard {
     }
 }
 
+/// Whether an initializer case is capturing, so the $A2:804C hook must run on the game.
+pub(super) fn armed() -> bool {
+    ACTIVE.with(|cell| cell.borrow().is_some())
+}
+
 /// Called only inside the existing real A2804C dispatch hook. When dormant it
 /// checks one TLS cell and returns: no Runtime, foreign transition or APAN event.
 pub(super) fn dispatch_noop(game: &mut Game) {

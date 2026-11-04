@@ -2,11 +2,10 @@
 //! The body lives in actor slot 0; its phase and pose are its slot view's.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::Runtime;
-use crate::game_state::Game;
-use crate::ram_map::word;
 use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::actors::mother_brain::{BODY_INDEX, Body, BodyEdit};
 use sm_game::enemy_script::EnemyScript;
+use sm_game::session_access::SessionAccess as _;
 
 const BODY: Key = Key::from_legacy(BODY_INDEX);
 
@@ -77,19 +76,22 @@ fn pose(ea: u32) -> Option<Pose> {
     })
 }
 
-fn footstep(game: &mut Game) {
-    word! {game; EARTHQUAKE_TYPE = 1; EARTHQUAKE_TIMER = 4; }
-    if Body::of(&Runtime::new(game), BODY_INDEX).form() == 3 {
+fn footstep(runtime: &mut Runtime) {
+    let feedback = &mut runtime.session_mut().feedback;
+    feedback.earthquake_kind = 1;
+    feedback.earthquake_timer = 4;
+    runtime.words_stored();
+    if Body::of(&*runtime, BODY_INDEX).form() == 3 {
         // The original routine stores into ROM here; the port only reports it.
         print!("Write to rom!\n");
     }
 }
 
-fn move_body(step: Step, game: &mut Game) {
+fn move_body(step: Step, game: &mut Runtime) {
     if step.footstep {
         footstep(game);
     }
-    let x = Runtime::new(game).edit_actor(BODY, Native, |body| {
+    let x = game.edit_actor(BODY, Native, |body| {
         body.x.whole = body.x.whole.wrapping_add(step.dx);
         body.y.whole = body.y.whole.wrapping_add(step.dy);
         body.x.whole
@@ -114,12 +116,12 @@ fn move_body(step: Step, game: &mut Game) {
 pub(crate) fn dispatch_instruction(
     ea: u32,
     script: EnemyScript,
-    game: &mut Game,
+    game: &mut Runtime,
 ) -> Option<EnemyScript> {
     if let Some(step) = movement(ea) {
         move_body(step, game);
     } else if let Some(pose) = pose(ea) {
-        *BodyEdit::of(&mut Runtime::new(game), BODY_INDEX).pose() = pose as u16;
+        *BodyEdit::of(game, BODY_INDEX).pose() = pose as u16;
     } else {
         return None;
     }

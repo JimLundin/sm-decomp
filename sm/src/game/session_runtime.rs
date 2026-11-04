@@ -58,12 +58,6 @@ pub(crate) fn write_multiplicand(operand: u8, game: &mut Game) {
 }
 
 impl sm_game::actors::species::AiHost for Game {
-    fn native_ai(&mut self, ea: u32) {
-        unsafe { native_ai(ea, self) }
-    }
-    fn warn_reflection(&mut self) {
-        unsafe { crate::c_library::printf(c"Possible bug. What is X?\n".as_ptr()) };
-    }
     fn write_multiplicand(&mut self, operand: u8) {
         write_multiplicand(operand, self);
     }
@@ -72,18 +66,49 @@ impl sm_game::actors::species::AiHost for Game {
     }
 }
 
-impl sm_game::actors::species::PreInstructionHost for Game {
-    fn native_pre_instruction(&mut self, ea: u32, k: u16) {
+/// The generic species tables run on the scheduler's lease; these are the arms they
+/// still reach on this side, each on the lease.
+impl sm_game::actors::species::TableLease for Runtime<'_> {
+    fn lease_native_ai(&mut self, ea: u32) {
         match ea {
-            11767039 => Runtime::new(self).owned_call(sm_game::actors::gamet::settle),
-            11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
-                Runtime::new(self)
-                    .owned_call(|runtime| actors::botwoon::pre_instruction(ea, k, runtime));
+            // $A2:804C returns at once; the verifier's initializer and population cases hook it.
+            10649676 => {
+                #[cfg(sm_verify_dll)]
+                crate::game::actors::reference_population_animation::dispatch_noop_on_lease(self);
             }
-            _ => {
-                crate::rtl::report_unreachable(self);
+            // Main AI - Mother Brain's falling tubes ($A9:8B85).
+            11111301 => {
+                let k = self.session().actors.controls.selected;
+                sm_game::actors::mother_brain_tubes::main_ai(self, k);
             }
+            // Bank $A9's grapple reaction (cancel beam) and frozen AI.
+            11108367 => actors::combat::select_frozen_ai(self),
+            11108417 => actors::scheduling::update_frozen_enemy(self),
+            _ => crate::rtl::unreachable(),
         }
+    }
+    fn lease_native_pre_instruction(&mut self, ea: u32, k: u16) {
+        match ea {
+            11767039 => self.owned_call(sm_game::actors::gamet::settle),
+            11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
+                self.owned_call(|runtime| actors::botwoon::pre_instruction(ea, k, runtime));
+            }
+            _ => crate::rtl::unreachable(),
+        }
+    }
+    fn lease_native_instruction(&mut self, ea: u32, _actor: u16, j: EnemyScript) -> EnemyScript {
+        // Mother Brain's body's instructions, in bank $A9.
+        if ea >> 16 == 0xa9 {
+            self.owned_call(|runtime| sm_a9::dispatch_enemy_instr(ea, j, runtime))
+        } else {
+            crate::rtl::unreachable()
+        }
+    }
+    fn lease_warn_reflection(&mut self) {
+        unsafe { crate::c_library::printf(c"Possible bug. What is X?\n".as_ptr()) };
+    }
+    fn lease_phantoon(&mut self, callback: sm_game::actors::phantoon::Callback) {
+        self.owned_call(|runtime| sm_game::actors::phantoon::callback(runtime, callback));
     }
 }
 
@@ -117,14 +142,11 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.owned_player_call(|runtime| sm_game::menus::save_slots::save(slot, runtime));
     }
     fn run_other_pre_instruction(&mut self, address: u32) {
-        if sm_game::actors::species::is_torizo_pre_instruction(address) {
-            self.owned_call(|runtime| {
-                let k = Runtime::word(runtime, 0xe54);
-                sm_game::actors::species::torizo_pre_instruction(address, k, runtime);
-            });
-        } else {
-            self.foreign(|game| sm_game::actors::species::pre_instruction(address, game));
-        }
+        // The pre-instruction table runs on this lease, as one owned call where the
+        // game's had run in one foreign call.
+        self.owned_call(|runtime| {
+            sm_game::actors::species::table_pre_instruction(address, runtime);
+        });
     }
 }
 
@@ -134,12 +156,6 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
 impl sm_game::actors::morph_ball_eye::Host for Runtime<'_> {
     fn start_beam(&mut self) {
         self.owned_player_call(crate::game::visual_runtime::initialize_morph_eye_beam);
-    }
-}
-
-impl sm_game::actors::species::InstructionHost for Game {
-    fn native_instruction(&mut self, ea: u32, _actor: u16, j: EnemyScript) -> EnemyScript {
-        native_instruction(ea, j, self)
     }
 }
 
@@ -504,6 +520,63 @@ impl<'g> Runtime<'g> {
                 );
             }
         });
+    }
+    /// A RomRecord in a bank's low window ($xx:0000..$7FFF) on the lease, as
+    /// `rtl::rom_record` takes it: the RomPtr diagnostic prints and marks the game
+    /// failed, the verifier's low-window observers run, and the record is the
+    /// loaded image's at the address, captured after them. The observers snapshot
+    /// a detached image of the lease's projected RAM where they had the RAM the
+    /// former foreign call exported, and the bytes they inject are stored back
+    /// through the projection, where the foreign call's import took them. The
+    /// observations are refreshed on entry and on return, as the foreign call
+    /// left them.
+    pub(crate) fn low_window_record(&mut self, bank: u8, address: u16) -> RomRecord {
+        let address = (u32::from(bank) << 16) | u32::from(address);
+        self.owned_player_call(|runtime| {
+            invalid_window(runtime.game, address);
+            #[cfg(sm_verify_dll)]
+            runtime.observe_low_window(address);
+            RomRecord {
+                image: runtime
+                    .game
+                    .loaded_rom
+                    .as_ref()
+                    .expect("ROM must be loaded")
+                    .clone(),
+                base: crate::rtl::lorom_offset(address) as usize,
+            }
+        })
+    }
+    /// Run the verifier's low-window observers over the lease's projected RAM and
+    /// store back each byte they changed, in address order.
+    #[cfg(sm_verify_dll)]
+    fn observe_low_window(&mut self, address: u32) {
+        let before = (0..self.game.ram().len())
+            .map(|at| self.byte(at))
+            .collect::<Vec<u8>>();
+        let ram = crate::game_state::WorkRam::detached(&before);
+        let spawn = &self.session().enemy_projectiles.spawn;
+        let spawn = (
+            crate::types::Rect16U {
+                x: spawn.rectangle.origin.x,
+                y: spawn.rectangle.origin.y,
+                w: spawn.rectangle.extent.x,
+                h: spawn.rectangle.extent.y,
+            },
+            spawn.variant,
+            crate::types::Point16U {
+                x: spawn.point.x,
+                y: spawn.point.y,
+            },
+            spawn.drop_definition,
+        );
+        self.game.observe_low_window(address, &ram, spawn);
+        for (at, old) in before.into_iter().enumerate() {
+            let new = ram.read_byte(at);
+            if new != old {
+                self.set_byte(at, new);
+            }
+        }
     }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
     /// observations are refreshed on entry and on return, as the former foreign call left them.
@@ -975,7 +1048,7 @@ impl Host for Runtime<'_> {
     }
     fn record(&mut self, bank: u8, cursor: u16) -> RomRecord {
         if cursor & 0x8000 == 0 {
-            self.foreign(|g| unsafe { crate::rtl::rom_record(bank, cursor, g) })
+            self.low_window_record(bank, cursor)
         } else {
             content::captured(
                 content::image(self),
@@ -1714,7 +1787,7 @@ impl Runtime<'_> {
     /// Preserve the actor content diagnostic observer and allocation capture order.
     pub(crate) fn actor_legacy_record(&mut self, bank: u8, address: u16) -> RomRecord {
         if address & 0x8000 == 0 {
-            self.foreign(|game| unsafe { crate::rtl::rom_record(bank, address, game) })
+            self.low_window_record(bank, address)
         } else {
             content::captured(
                 content::image(self),
@@ -1728,29 +1801,6 @@ use crate::game::actors;
 use crate::game::sm_a9;
 use sm_game::enemy_script::EnemyScript;
 
-crate::game::callback_dispatch! {
-    unsafe fn native_ai(ea: u32, game: &mut Game) => ea;
-    call (game); default { crate::rtl::report_unreachable(game); };
-    @external {
-        10649676 => [{
-            #[cfg(sm_verify_dll)]
-            crate::game::actors::reference_population_animation::dispatch_noop(game);
-        }];
-        11111301 => [{
-                    sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
-                }];
-        0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_ai(ea, game)];
-    }
-}
-/// The instructions still in the compatibility crate: Mother Brain's body's, in bank $A9.
-fn native_instruction(ea: u32, j: EnemyScript, game: &mut Game) -> EnemyScript {
-    if ea >> 16 == 0xa9 {
-        sm_a9::dispatch_enemy_instr(ea, j, game)
-    } else {
-        crate::rtl::report_unreachable(game);
-        EnemyScript::Stop
-    }
-}
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
         if self.kraid_and_hosts_ai(routine) {
@@ -1850,7 +1900,9 @@ impl Runtime<'_> {
             11771903 | 11771969 => {
                 self.owned_call(|runtime| actors::botwoon::contact(routine == 11771969, runtime))
             }
-            _ => self.foreign(|game| sm_game::actors::species::ai(routine, game)),
+            // The generic table on this lease, as one owned call where the game's
+            // had run in one foreign call.
+            _ => self.owned_call(|runtime| sm_game::actors::species::table_ai(routine, runtime)),
         }
     }
     pub(crate) fn actor_instruction_legacy(
@@ -1965,7 +2017,9 @@ impl Runtime<'_> {
                 Err(unrun) => script = unrun,
             }
         }
-        self.foreign(|game| species::instruction(routine, actor, script, game))
+        // The generic table on this lease, as one owned call where the game's had run
+        // in one foreign call.
+        self.owned_call(|runtime| species::table_instruction(routine, actor, script, runtime))
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
         use sm_game::actors::species;

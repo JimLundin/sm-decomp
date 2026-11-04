@@ -1,9 +1,8 @@
 //! The fire pillar: the graphics part waits, erupts on its script, and the hitbox part in the
 //! next slot follows the column's height (bank $A6:8CFB-$A6:946F). Was `fire_geysers`.
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use crate::actors::host::{ActorLease, BossEffects, LeaseActors};
-use crate::diagnostics::Fatal as _;
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
+use crate::actors::host::ActorLease;
 use crate::enemy_script::EnemyScript;
 
 const INVISIBLE: u16 = 0x0100;
@@ -27,9 +26,8 @@ fn parts(runtime: &impl ActorLease) -> (Key, Key) {
 }
 
 /// Initialisation AI - enemy $E07F (fire pillar) ($A6:8FFC): parameter 2 zero for the graphics.
-pub fn initialize<H: LeaseActors>(game: &mut H) {
-    let mut runtime = game.lease();
-    let (graphics, _) = parts(&runtime);
+pub fn initialize(runtime: &mut impl crate::actors::species::TableLease) {
+    let (graphics, _) = parts(&*runtime);
     runtime.edit_actor(graphics, Native, |actor| {
         actor.instruction = HITBOX_PART;
         if actor.parameters[1] == 0 {
@@ -40,9 +38,8 @@ pub fn initialize<H: LeaseActors>(game: &mut H) {
 }
 
 /// Main AI - enemy $E07F (fire pillar) ($A6:9023): wait (parameter 1 frames), then erupt.
-pub fn main_ai<H: LeaseActors>(game: &mut H) {
-    let mut runtime = game.lease();
-    let (graphics, column) = parts(&runtime);
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
+    let (graphics, column) = parts(&*runtime);
     let actor = runtime.resolve_actor(graphics, Native);
     let (active, function) = (actor.parameters[1] == 0, actor.variables[0]);
     if !active {
@@ -71,34 +68,33 @@ pub fn main_ai<H: LeaseActors>(game: &mut H) {
                 actor.properties |= INVISIBLE;
             }
         }),
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
 }
 
 /// Fire pillar instructions: queue the sound ($A6:8DAF), activity frames 0-21 setting the
 /// column's height ($A6:8E13-$A6:8FBD) and the finish ($A6:8FD1).
-pub fn instruction<H: LeaseActors + BossEffects>(
+pub fn instruction(
     ea: u32,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl crate::actors::species::TableLease,
 ) -> EnemyScript {
     let frame = match ea {
         0xa68daf => {
-            game.queue_sound(1, 0x61, 6);
+            crate::effects::SoundEffects::queue_sound(runtime, 1, 0x61, 6);
             return script;
         }
         0xa68fd1 => {
-            finish(game);
+            finish(runtime);
             return script;
         }
         0xa68e13 => 0,
         0xa68e2d..=0xa68fbd if (ea - 0xa68e2d).is_multiple_of(20) => {
             (ea - 0xa68e2d) as usize / 20 + 1
         }
-        _ => game.lease().unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     };
-    let mut runtime = game.lease();
-    let (graphics, column) = parts(&runtime);
+    let (graphics, column) = parts(&*runtime);
     let base = runtime.resolve_actor(graphics, Native).variables[3];
     runtime.edit_actor(column, Native, |actor| {
         actor.y.whole = base.wrapping_sub(5 * (frame as u16 + 1));
@@ -111,9 +107,8 @@ pub fn instruction<H: LeaseActors + BossEffects>(
 }
 
 /// The eruption ends: the column collapses and both parts hide.
-fn finish<H: LeaseActors>(game: &mut H) {
-    let mut runtime = game.lease();
-    let (graphics, column) = parts(&runtime);
+fn finish(runtime: &mut impl crate::actors::species::TableLease) {
+    let (graphics, column) = parts(&*runtime);
     runtime.edit_actor(graphics, Native, |actor| actor.variables[2] = 1);
     runtime.edit_actor(column, Native, |actor| {
         (actor.radius.x, actor.radius.y) = (0, 0)

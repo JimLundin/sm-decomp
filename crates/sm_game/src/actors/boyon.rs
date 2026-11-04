@@ -1,12 +1,11 @@
 //! Boyon, the bouncing blobs (bank $A2:8687-$A2:8911). Was `goofball`. Lanes: speed scale,
 //! speed, bounce height, distance risen, bounce phase; the rest is in its extended words.
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::actors::api::{self, Axis};
 use crate::actors::combat::current;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{offset, table};
 
@@ -34,17 +33,16 @@ fn slot(runtime: &impl ActorLease) -> u16 {
 
 /// Initialisation AI - enemy $CEBF (boyon) ($A2:871C): speed scale and bounce height from the
 /// Boyon data ($A2:86DF, $A2:86EF) by the bytes of parameter 1.
-pub fn initialize<H: LeaseActors>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+pub fn initialize(runtime: &mut impl crate::actors::species::TableLease) {
+    let key = current(&*runtime);
     runtime.edit_actor(key, Le, |actor| actor.spritemap = 0x804d);
     runtime.edit_actor(key, Le, |actor| actor.restart_animation(IDLE));
-    let k = slot(&runtime);
-    *BoyonEdit::of(&mut runtime, k).direction() = 1;
+    let k = slot(&*runtime);
+    *BoyonEdit::of(runtime, k).direction() = 1;
     let [scale, height] = runtime.resolve_actor(key, Le).parameters[0].to_le_bytes();
-    let scale = table(&runtime, 0xa2_86df, isize::from(scale));
+    let scale = table(&*runtime, 0xa2_86df, isize::from(scale));
     runtime.edit_actor(key, Le, |actor| actor.variables[0] = scale);
-    let height = table(&runtime, 0xa2_86ef, isize::from(height));
+    let height = table(&*runtime, 0xa2_86ef, isize::from(height));
     runtime.edit_actor(key, Le, |actor| {
         (actor.variables[2], actor.variables[3], actor.variables[4]) = (height, 0, 0);
         actor.pre_instruction = 0;
@@ -87,38 +85,37 @@ fn initialize_bounce(runtime: &mut (impl ActorLease + SlotState)) {
 }
 
 /// Main AI - enemy $CEBF (boyon) ($A2:879C): bounce while Samus is in proximity.
-pub fn main_ai<H: LeaseActors>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
-    let k = slot(&runtime);
-    if Boyon::of(&runtime, k).initialized() == 0 {
-        initialize_bounce(&mut runtime);
-        *BoyonEdit::of(&mut runtime, k).initialized() = 1;
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
+    let key = current(&*runtime);
+    let k = slot(&*runtime);
+    if Boyon::of(&*runtime, k).initialized() == 0 {
+        initialize_bounce(runtime);
+        *BoyonEdit::of(runtime, k).initialized() = 1;
         return;
     }
     let scale = runtime.resolve_actor(key, Le).variables[0];
-    *BoyonEdit::of(&mut runtime, k).saved_scale() = scale;
-    let selected = current(&runtime);
+    *BoyonEdit::of(runtime, k).saved_scale() = scale;
+    let selected = current(&*runtime);
     let radius = runtime.resolve_actor(selected, Le).parameters[1];
-    if api::player_within(&mut runtime, selected, Axis::X, radius) {
-        *BoyonEdit::of(&mut runtime, k).resting() = 0;
-        *BoyonEdit::of(&mut runtime, k).rest_animation() = 0;
+    if api::player_within(runtime, selected, Axis::X, radius) {
+        *BoyonEdit::of(runtime, k).resting() = 0;
+        *BoyonEdit::of(runtime, k).rest_animation() = 0;
         if runtime.resolve_actor(key, Le).pre_instruction == 0 {
             runtime.edit_actor(key, Le, |actor| actor.pre_instruction = 1);
             runtime.edit_actor(key, Le, |actor| actor.restart_animation(BOUNCING));
         }
-    } else if Boyon::of(&runtime, k).resting() != 0 {
-        if Boyon::of(&runtime, k).rest_animation() == 0 {
-            *BoyonEdit::of(&mut runtime, k).rest_animation() = 1;
+    } else if Boyon::of(&*runtime, k).resting() != 0 {
+        if Boyon::of(&*runtime, k).rest_animation() == 0 {
+            *BoyonEdit::of(runtime, k).rest_animation() = 1;
             runtime.edit_actor(key, Le, |actor| actor.restart_animation(IDLE));
         }
         return;
     }
-    let scale = Boyon::of(&runtime, k).saved_scale();
+    let scale = Boyon::of(&*runtime, k).saved_scale();
     runtime.edit_actor(key, Le, |actor| actor.variables[0] = scale);
-    match Boyon::of(&runtime, k).direction() {
-        0 => bounce(&mut runtime, true),
-        1 => bounce(&mut runtime, false),
+    match Boyon::of(&*runtime, k).direction() {
+        0 => bounce(runtime, true),
+        1 => bounce(runtime, false),
         _ => panic!("invalid Goofball state"),
     }
 }
@@ -155,10 +152,12 @@ fn bounce(runtime: &mut (impl ActorLease + SlotState), falling: bool) {
 }
 
 /// Instruction - start bounce ($A2:88C6).
-pub fn start_bounce<H: LeaseActors>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    let mut runtime = game.lease();
-    let k = slot(&runtime);
-    *BoyonEdit::of(&mut runtime, k).resting() = 0;
-    runtime.queue_sound(2, 6, 0xe);
+pub fn start_bounce(
+    script: EnemyScript,
+    runtime: &mut impl crate::actors::species::TableLease,
+) -> EnemyScript {
+    let k = slot(&*runtime);
+    *BoyonEdit::of(runtime, k).resting() = 0;
+    crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, 0xe);
     script
 }

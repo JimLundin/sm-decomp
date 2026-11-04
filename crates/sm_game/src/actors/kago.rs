@@ -1,11 +1,10 @@
 //! Kago, the bug hive of Norfair, which shakes the screen and releases a bug
 //! each time it is shot (bank $A8:AB1E-$A8:ABCF).
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{DeathKind, ShotHandling};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::session_access::SessionAccess as _;
 
 slot_view! {
     /// Kago's slot: the hits left before it dies.
@@ -67,8 +66,7 @@ pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
 }
 /// Enemy shot - Kago ($A8:AB83): shake the screen, speed up, count the hit,
 /// die at the last, and release a bug.
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn shot(runtime: &mut impl crate::actors::species::TableLease) {
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let feedback = &mut runtime.session_mut().feedback;
     feedback.earthquake_kind = DIAGONAL_1PX;

@@ -337,6 +337,15 @@ impl WorkRam {
         )
     }
 
+    /// A standalone copy of `bytes`, for a verifier observer that snapshots and
+    /// injects into a lease's projected RAM rather than the game's.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn detached(bytes: &[u8]) -> Self {
+        let ram = Self::new();
+        ram.copy_in(0, bytes);
+        ram
+    }
+
     pub fn read_byte(&self, at: usize) -> u8 {
         if self.10.armed.get()
             && let Some(byte) = self.deferred_byte(at)
@@ -1245,6 +1254,42 @@ impl Game {
 
     pub(crate) fn render_native_audio(&mut self, samples: &mut [[i16; 2]]) {
         self.native_player_mut().render_samples(samples);
+    }
+
+    /// The verifier's low-window RomPtr observers over `ram`, a detached image of
+    /// a lease's projected RAM, with this game's loaded image, failure flag,
+    /// decompression source and backend. `spawn` is the lease's enemy projectile
+    /// spawn, which a foreign export would have stored into the game first.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn observe_low_window(
+        &mut self,
+        address: u32,
+        ram: &WorkRam,
+        spawn: (Rect16U, u16, Point16U, u16),
+    ) {
+        let views = (self.g_snes, self.g_cpu);
+        let Self {
+            backend,
+            loaded_rom,
+            g_fail,
+            decompress_src,
+            ..
+        } = self;
+        let (rect, r22, point, var_e24) = spawn;
+        crate::rtl::low_window_observers(
+            address,
+            ram,
+            loaded_rom,
+            g_fail,
+            decompress_src,
+            (&rect, &r22, &point, &var_e24),
+            &mut |output| {
+                backend
+                    .as_ref()
+                    .expect("observation requires an owned backend")
+                    .save_observation(views.0, views.1, output);
+            },
+        );
     }
 
     #[cfg(sm_verify_dll)]
