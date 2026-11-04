@@ -63,7 +63,7 @@ Invoke-WebRequest 'https://github.com/JimLundin/sm-decomp/releases/download/ci-d
 python tools/ci_seed_data.py restore target/reseeded.enc --rom rom/sm.smc --sha256 bf1451e13f4e26806b712234991c78d9d5ed187d0b14a1e9f3f3947be301590c --segment boss-crocomire
 ```
 
-Most rows start from original-emulator room seeds; eight start from verifier
+Most rows start from original-emulator room seeds; three start from verifier
 checkpoints. The current asset names, hashes and exact row-to-bundle mapping
 are the `bundles` and `pins` of [scenarios/lock.toml](../scenarios/lock.toml).
 Restore each bundle with only its matching `--segment` selections. Restoration
@@ -92,7 +92,8 @@ python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-sp
 Loaded item or boss flags do not satisfy fresh-event expectations. Checkpoint
 compatibility includes ROM, inputs and runtime state; a rejected checkpoint may
 regenerate from boot. A failed comparison or missing required event stays a failure.
-Both save rows retain the full Kago approach before their selected save windows.
+Both save rows start in the any% Norfair save room (B167), the death row from
+the one-energy-save scenario seed.
 
 ## Checks in CI
 

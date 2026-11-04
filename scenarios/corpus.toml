@@ -523,12 +523,16 @@ ticks = 840
 facts = ["elevator:97B5"]
 after_expectations = 120
 
+# The any% Norfair save room with one energy (scenario one-energy-save) and the
+# authored save-death-continue input: save at 223, die at the first hit
+# outside, continue and reload the file. Replaces a 69,400-frame boot prefix
+# whose realigned inputs no longer leave Ceres.
 [[scenario]]
 id = "save-death-reload"
-start = "boot"
-prefix = 69400
-ticks = 6664
+start = "seed:6cf89adb6faf6a25423a0ec45ff1cb36b50a03d4ca8b12c5cdd8ae5ff3d30611"
+ticks = 3021
 facts = ["save-death-continue", "probe:save.sram.committed", "probe:save.continue.restored"]
+unlocked = "a faithful-oracle known divergence"
 after_expectations = 120
 after_hits = 120
 tags = ["required"]
@@ -585,12 +589,15 @@ prefix = 32
 ticks = 166
 facts = ["state:8", "state:11", "probe:coroutine.door"]
 
-# Natural ADAD gate re-close: $84:BBE1 must pass its loaded definition as A/Y.
-# The predecessor writes 0000 instead of E64B to spawn.primary at step 153607.
+# ADAD gate re-close: $84:BBE1 must pass its loaded definition as A/Y. The 100%
+# movie's first 127 words in Double Chamber (seed 100-input-phase:103) open the
+# gate, and the authored gate-reclose shots close it: E64B spawns at step 286.
+# The window starts at 285 because a fune fireball spawns at 139. Replaces a
+# 153,606-frame boot prefix whose realigned inputs no longer leave Ceres.
 [[scenario]]
 id = "shot-gate-spawn-parameter"
-start = "boot"
-prefix = 153606
+start = "seed:e174100aa1ed0beb32d210cf460cad722cf17adb2fd36cb549531a8d4381d104"
+prefix = 285
 ticks = 10
 facts = ["room:ADAD", "probe:eproj.spawn.initialized"]
 

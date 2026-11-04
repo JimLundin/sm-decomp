@@ -174,6 +174,13 @@ SCENARIOS = {
         base="100-input-phase:44",
         edits={"x": 170, "y": 1691},
         note="Samus beside the dachora"),
+    # The any% movie's Norfair save room (B167) with one energy and no
+    # reserves: Samus saves there, and the first hit outside kills her, so
+    # the game over menu reloads the save.
+    "one-energy-save": Scenario(
+        base="any-boundary:110",
+        edits={"energy": 1, "reserve_energy": 0},
+        note="save, then death at the first hit"),
 }
 
 

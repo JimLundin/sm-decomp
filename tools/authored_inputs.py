@@ -358,6 +358,23 @@ RECIPES = {
     # Green Brinstar's main shaft entered beside the etecoons (seed 43): turn
     # right to face them and wait, so the one that lands beside her runs left.
     "etecoon-face-right": Recipe("Right 12; _ 500"),
+    # Norfair's save room B167 with one energy (scenario one-energy-save):
+    # walk to the station's step, back off, hop onto the station, step onto
+    # its centre and confirm the save, waiting at rest before each move so
+    # both oracles' landings line up. Then leave the pit for the Business
+    # Center, where the first hit kills her, and confirm the game over menu's
+    # continue and the file's load.
+    "save-death-continue": Recipe("""
+        _ 19; Left 30; _ 10; Right 10; _ 20; Left 6; Left+A 6; _ 40; Left 3; _ 60
+        A 2; _ 180; A 2; _ 160
+        Left 60; _ 10; Right 14; _ 10; Left 2; Left+A 30; Left 140; Left+A 40; _ 300
+        repeat 5 { Right+A 30; Left+A 30 }; _ 300; repeat 3 { A 2; _ 300 }; _ 360
+    """),
+    # Double Chamber ADAD after the 100% movie's 127 words (seed
+    # 100-input-phase:103, --prefix-frames 127), which open the shot gate:
+    # below its trigger, shoot straight up until a shot triggers it again and
+    # it closes.
+    "gate-reclose": Recipe("_ 80; repeat 4 { Up 10; Up+X 2; Up 20; _ 10 }; _ 60"),
 }
 
 SWEEPS = {
@@ -428,6 +445,8 @@ PINNED = {
     "kihunter-wings": "a12900693ec38b1f1eea8979e825b04b4744e5dfefdc7b9f758f9e148d0e9bfc",
     "lower-norfair-hand": "c20e8f655f662e35059ebf591e6969ec47947bba45b58b5a653197213e6d0dab",
     "etecoon-face-right": "6973e5e54d5e1b35c7bd6123b9516eabb8dc88b5adb3e5adf98f9f9ff68c6678",
+    "save-death-continue": "07002600f6a8d22a803c4c3c7bf715e0a30b9bdf326d9d2aa94437fb4104706f",
+    "gate-reclose": "8b753fa8a650f77de1b281f32cc9f846cf55afe634c49b04e668658c9b1648bd",
 }
 
 
