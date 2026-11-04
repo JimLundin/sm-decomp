@@ -807,3 +807,45 @@ Corpus that exercises these:
 - The `samus-grapple-*` rows.
 - The room background verification cases (4 and 5) and `grapple_tile_alias_checks`.
 - The SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`.
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc12`, on `rs-fc11`)
+
+`foreign_calls` 46 to 43, `game_host_impls` 82 to 81, `session_entries` 77 to 70;
+`sm_game_ram_sites` 0 and `engine_ram_address_sites` 19 unchanged; `legacy_engine_ram_sites`
+425 to 409. Outside `sm/src/verification` no `foreign` call is left (from 3): every remaining
+one is verification (D7). No lease is added mid-frame: each retired call runs on the lease that
+called it, in an owned player call, which refreshes the observations on entry and on return as
+the foreign call left them. No Session field or format changed.
+
+Retired:
+- The room-entry leaf effects (14 arms). The player commands, the frozen body (gated on the
+  Session's `room.entry.elevator_flags`), the escape timer, the beam tiles, the sprite palettes
+  (now over `LoadedRom` and the Session) and the BG3 scroll HDMA run on the lease.
+  `EnemyGraphicsHost` is `RoomDma` plus a ROM record; the Runtime's record is
+  `actor_legacy_record` (the `rtl::rom_record` boundary) and its copy is
+  `copy_to_vram_on_lease`. The music leaves are `music_requests` routines over the audio host
+  and the room entry's music fields. The map leaves are bound on `save_slots::MapHost` (a
+  `SlotHost` with the map facts and a gameplay flags store); the explored map loads into the
+  Session's save selection, committed when it changed, in place of the cohort copy.
+  `rtl::rom_record` is gone.
+- The room setup and door codes. `room_state::ScriptHost` is `fx::SetupHost` + `MainCodeHost`
+  + the gameplay context, menu state, video and `CommonRuntime`, plus an event mark and a
+  door's scroll updates. The fresh-lease stores are `store_session` (refreshing where
+  `with_session` did). The ocean sky spawns with `spawn_hdma_owned`.
+- The message display. `message_boxes::DialogueHost` names its 21 effects' needs, with a
+  blanket over the menu `Host`. `UpdateHdma` runs `update_hdma` on the current lease through
+  `hdma_objects::UpdateHost` (`hdma_program::run_objects_on`); no nested `hdma_lease()`.
+  `input` samples through `controller_input::SampleHost` (JOY1L/JOY2L through
+  `read_register_word`, the soft reset as the Session's game state). The verify observer
+  reads and stores $0613 on the lease.
+
+Corpus that exercises these:
+- Every room load and door: `door-transition`, `door-loading-lag-nmi`, the `area-*` routes and
+  `elevator-traversal` (leaf effects, music, enemy tilesets, setup and door codes, including
+  the elevatube, treadmill and Ceres elevator doors).
+- Map stations and area maps; the Ceres and Tourian escape timer rooms (`area-ceres`,
+  `tas-ceres-four-doors`).
+- The `item-*` message box rows and save-memory (message display, HDMA update, controller
+  sample, dialogue sounds).
+- The SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`.
+- The room mechanism callback-edge case (message display observer).
