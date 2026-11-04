@@ -18,6 +18,12 @@
 //!       print the per-binary table of a `cargo test` log (and append it to
 //!       GITHUB_STEP_SUMMARY when set), and exit 1 when a binary failed, gave
 //!       no result, or was expected from a package's sources and did not run.
+//!   sm_pipeline volume [--root DIR] [--baseline FILE] [--file PATH...]
+//!       print the code volume (volume.rs): logic and data tokens, comment
+//!       lines and structure counts per engine package and sm_game module, the
+//!       oracle and verification apart, then `tools/ram_ratchet.py`'s measures.
+//!       --baseline compares those measures with a file's `"name": value`
+//!       entries and exits 1 when one rose; --file measures the given files.
 //!
 //! It needs only the standard library, so CI builds it in seconds with
 //! `rustc --edition=2024 -O crates/sm_tools/src/bin/sm_pipeline/main.rs`.
@@ -32,6 +38,7 @@ mod route;
 mod scenario;
 mod test_summary;
 mod toml;
+mod volume;
 
 #[cfg(test)]
 mod lock_golden;
@@ -45,7 +52,8 @@ use std::process::ExitCode;
 const USAGE: &str = "usage: sm_pipeline plan [--root DIR]
        sm_pipeline lock-check [--root DIR]
        sm_pipeline relevant < LISTING
-       sm_pipeline test-summary LOG PACKAGE_DIR...";
+       sm_pipeline test-summary LOG PACKAGE_DIR...
+       sm_pipeline volume [--root DIR] [--baseline FILE] [--file PATH...]";
 
 /// An environment variable, empty when unset.
 fn variable(name: &str) -> String {
@@ -146,6 +154,39 @@ fn test_summary_command(arguments: &[String]) -> Result<ExitCode, String> {
     })
 }
 
+fn volume_command(arguments: &[String]) -> Result<ExitCode, String> {
+    let (mut root, mut baseline, mut files) = (PathBuf::from("."), None, Vec::new());
+    let mut arguments = arguments.iter();
+    while let Some(argument) = arguments.next() {
+        match argument.as_str() {
+            "--root" => root = arguments.next().ok_or(USAGE)?.into(),
+            "--baseline" => baseline = Some(arguments.next().ok_or(USAGE)?),
+            "--file" => files.extend(arguments.by_ref().cloned()),
+            _ => return Err(USAGE.into()),
+        }
+    }
+    if !files.is_empty() {
+        for file in &files {
+            let text = std::fs::read_to_string(file).map_err(|error| format!("{file}: {error}"))?;
+            println!("{file}: {:?}", volume::measure(&text));
+        }
+        return Ok(ExitCode::SUCCESS);
+    }
+    let rows = volume::survey(&root)?;
+    print!("{}", volume::report(&rows));
+    let Some(baseline) = baseline else {
+        return Ok(ExitCode::SUCCESS);
+    };
+    let text = std::fs::read_to_string(baseline).map_err(|error| format!("{baseline}: {error}"))?;
+    let (comparison, held) = volume::compare(&rows, &volume::baseline(&text));
+    print!("{comparison}");
+    Ok(if held {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    })
+}
+
 fn run() -> Result<ExitCode, String> {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = arguments.split_first().ok_or(USAGE)?;
@@ -157,6 +198,7 @@ fn run() -> Result<ExitCode, String> {
         }
         "relevant" if rest.is_empty() => relevant_command(),
         "test-summary" => test_summary_command(rest),
+        "volume" => volume_command(rest),
         _ => Err(USAGE.into()),
     }
 }

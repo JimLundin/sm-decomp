@@ -29,6 +29,9 @@ pub const IRRELEVANT: &[&str] = &[
     "crates/*/tests/*",
     "sm/src/verification/*mutations.py",
     "crates/sm_tools/src/bin/sm_pipeline/test_summary.rs",
+    // The code volume measures sources; no replay runs it.
+    "crates/sm_tools/src/bin/sm_pipeline/volume.rs",
+    "crates/sm_tools/src/bin/sm_pipeline/fixture/volume/*",
 ];
 
 /// Whether `text` matches the whole of `pattern`, case-sensitively, as
