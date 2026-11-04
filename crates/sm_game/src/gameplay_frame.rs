@@ -561,12 +561,15 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         });
         crate::screen_fade::store(game, 1, 1);
         crate::display_refresh::enable(true, game);
-        enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
-        set_mechanisms_enabled(game, true);
-        palette_effects::set_enabled(game.runtime().session_mut(), true);
-        crate::hdma_objects::set_hdma_enabled(true, game);
-        animated_tiles::set_enabled(game.runtime().session_mut(), true);
-        crate::player_movement::speed::set_liquid_physics(&mut game.runtime());
+        // The enables and the liquid physics run on one lease.
+        let mut lease = game.runtime();
+        enemy_projectiles::lifecycle::set_enabled(&mut lease, true);
+        set_mechanisms_enabled(&mut lease, true);
+        palette_effects::set_enabled(lease.session_mut(), true);
+        crate::hdma_objects::set_hdma_enabled(true, &mut lease);
+        animated_tiles::set_enabled(lease.session_mut(), true);
+        crate::player_movement::speed::set_liquid_physics(&mut lease);
+        drop(lease);
         stage = if u32::from(crate::gameplay_word!(game.GAME_STATE))
             == K_GAME_STATE_40_TRANSITION_TO_DEMO
         {
@@ -654,11 +657,13 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
         crate::frame_display_word!(game.CurrentInterrupt = 0);
         crate::frame_display_word!(game.PendingInterrupt = 0);
     }
-    palette_effects::set_enabled(game.runtime().session_mut(), false);
-    palette_effects::clear(game.runtime().session_mut());
-    with_session(game, |session| {
-        clear_projectile_table(&mut session.enemy_projectiles)
-    });
+    // The palette effects and the enemy projectile table clear on one lease.
+    let mut lease = game.runtime();
+    palette_effects::set_enabled(lease.session_mut(), false);
+    palette_effects::clear(lease.session_mut());
+    clear_projectile_table(&mut lease.session_mut().enemy_projectiles);
+    lease.words_stored();
+    drop(lease);
     // The original clears the block a word at a time, from the top down.
     for index in (0..crate::demo_clear::WORDS).rev() {
         game.set_view_word(crate::projection::Field::DemoClear(index), 0);
@@ -776,10 +781,14 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
         game.apply("unpause", Command::StopDma);
         crate::display_refresh::enable(false, game);
         game.disable_scanline_irq();
-        crate::room_entry::installation::load_tiles_and_palette(&mut game.runtime());
-        crate::room_entry::background::load(&mut game.runtime(), LoadMode::Initial);
-        fill_viewport(&mut game.runtime());
-        crate::room_mechanisms::graphics::reload_graphics(&mut game.runtime());
+        // The room's tiles, palette, background, viewport and mechanism
+        // graphics reload on one lease.
+        let mut lease = game.runtime();
+        crate::room_entry::installation::load_tiles_and_palette(&mut lease);
+        crate::room_entry::background::load(&mut lease, LoadMode::Initial);
+        fill_viewport(&mut lease);
+        crate::room_mechanisms::graphics::reload_graphics(&mut lease);
+        drop(lease);
         crate::display_refresh::enable(true, game);
         game.enable_scanline_irq(false);
         pause_controls::restore_graphics(game);
@@ -1070,10 +1079,9 @@ fn cancel_sound_effects<H: Host>(game: &mut H, max_queued: u8) {
     }
 }
 
-fn set_mechanisms_enabled<H: Host>(game: &mut H, enabled: bool) {
-    let mut h = game.runtime();
-    let flags = h.session().mechanisms.flags;
-    h.session_mut().mechanisms.flags = if enabled {
+fn set_mechanisms_enabled(lease: &mut impl SessionAccess, enabled: bool) {
+    let flags = lease.session().mechanisms.flags;
+    lease.session_mut().mechanisms.flags = if enabled {
         flags | 0x8000
     } else {
         flags & !0x8000
