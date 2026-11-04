@@ -4,7 +4,6 @@ use crate::hdma::{HdmaObjects, OBJECTS};
 use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::HdmaEffect;
 use crate::hdma_objects::HdmaTable;
-use crate::menus::host::Host;
 use sm_data::cartridge::RomImage;
 
 /// The owned-Session view the interpreter runs on.
@@ -25,6 +24,9 @@ pub trait HdmaLease:
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+    /// Word `index` of the BG3 X velocity table ($88:D992), from the imported
+    /// visual tables, or the loaded image for another one.
+    fn bg3_x_velocity(&self, index: isize) -> u16;
 }
 
 /// Capture the selected slot before publishing to the compatibility host.
@@ -295,14 +297,8 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
         Command::SelectCeresTable => it.set_word(crate::ram::words::HDMA_DATA_TABLE_IN_CERES, 9),
         Command::PickBg3Velocity => {
             let random = it.word(crate::ram::words::RANDOM_NUMBER);
-            let velocity = it.foreign(|game| {
-                crate::imported::word(
-                    &game.visual_tables().bg3_x_velocities,
-                    game,
-                    sm_data::hdma_objects::BG3_X_VELOCITY_ADDRESS,
-                    ((random >> 1 & 6) >> 1) as isize,
-                )
-            });
+            let row = isize::from((((random >> 1) & 6) >> 1).cast_signed());
+            let velocity = it.on_lease(|lease| lease.bg3_x_velocity(row));
             crate::hdma_word!(it, index, D => velocity);
         }
         Command::EventScroll => {

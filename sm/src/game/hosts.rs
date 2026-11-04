@@ -77,6 +77,14 @@ impl sm_game::hdma_program::HdmaLease for crate::game::session_runtime::Runtime<
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
         crate::game::session_runtime::Runtime::foreign(self, action)
     }
+    fn bg3_x_velocity(&self, index: isize) -> u16 {
+        sm_game::imported::word(
+            &self.visual_tables().bg3_x_velocities,
+            self,
+            sm_data::hdma_objects::BG3_X_VELOCITY_ADDRESS,
+            index,
+        )
+    }
 }
 
 impl sm_game::runtime_access::SessionRam for crate::game::session_runtime::Runtime<'_> {

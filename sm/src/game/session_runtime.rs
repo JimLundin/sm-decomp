@@ -488,6 +488,10 @@ impl<'g> Runtime<'g> {
             result
         })
     }
+    /// The game's imported visual tables.
+    pub(crate) fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
+        &self.game.visual_tables
+    }
     /// The RomPtr invalid-window diagnostic on the lease. It prints and marks the
     /// game failed, reading and storing no RAM, so the Session stays current; the
     /// observations are refreshed on entry and on return, as the former foreign
