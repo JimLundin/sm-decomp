@@ -40,6 +40,9 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8 {
         crate::game::room_entry::protocol::resume(self, signal).returned_byte()
     }
+    fn advance_low_health_warning(&mut self) {
+        crate::game::session_runtime::player_update_runtime::low_health_on(self);
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.
@@ -67,9 +70,6 @@ impl sm_game::gameplay_frame::Host for Game {
     fn resume_point(&self) -> u8 {
         self.coroutine_state_1()
     }
-    fn set_resume_point(&mut self, point: u8) {
-        self.set_coroutine_state_1(point);
-    }
 
     fn resume_boot(&mut self) -> u8 {
         unsafe { crate::game::boot::resume(self) }
@@ -79,10 +79,6 @@ impl sm_game::gameplay_frame::Host for Game {
     }
     fn report_broken_coroutine(&mut self, state: [u8; 4]) {
         report_broken_coroutine(state);
-    }
-    fn update_hdma(&mut self) {
-        // The main game loop's PLP restores the carry loading the save slots ($80:8261) set.
-        crate::game::visual_runtime::update_hdma(true, self)
     }
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8 {
         crate::game::room_entry::protocol::resume(&mut Runtime::new(self), signal).returned_byte()
@@ -139,9 +135,5 @@ impl sm_game::gameplay_frame::Host for Game {
                 crate::game::sm_a9::body_unpause_hook(&mut Runtime::new(self))
             }
         }
-    }
-
-    fn advance_low_health_warning(&mut self) {
-        crate::game::session_runtime::player_update_runtime::low_health(self);
     }
 }
