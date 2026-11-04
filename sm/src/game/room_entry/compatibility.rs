@@ -401,7 +401,7 @@ impl EntryEffects for Runtime<'_> {
         } else {
             None
         };
-        let target = match destination {
+        let target: u16 = match destination {
             VramDecodeTarget::MainTiles => 0,
             VramDecodeTarget::Cre => 0x5000,
         };

@@ -632,7 +632,8 @@ impl<'g> Runtime<'g> {
     pub(crate) fn decompress_to_ram(&mut self, source: Compressed<'_>, at: usize) -> usize {
         self.publish();
         let produced = source.decompress(at, self.game);
-        self.take_published_writes(&[at..(at + produced).min(crate::game_state::WorkRam::LEN)]);
+        let written = at..(at + produced).min(crate::game_state::WorkRam::LEN);
+        self.take_published_writes(std::slice::from_ref(&written));
         produced
     }
     /// Decompress the room's level data from `source` to $7F:0000, then split its planes
