@@ -70,7 +70,7 @@ BASELINE = {
     "engine_ram_address_sites": 19,
     "engine_raw_ram_calls": 0,
     "engine_unresolved_ram_methods": 981,
-    "legacy_engine_ram_sites": 455,
+    "legacy_engine_ram_sites": 453,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     # Advisory, rebaselined 2026-11-04: 61 -> 73. Every new site is an original-game
     # out-of-range access routed through legacy_overflow with a docs/LEGACY.md row
