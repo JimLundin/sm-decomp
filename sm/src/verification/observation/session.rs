@@ -7,10 +7,20 @@
 //! then decoded), so both sides carry exactly the fields the codec owns, and
 //! the comparison's ranges are the RAM comparison's: each normalized range
 //! takes the oracle's bytes on both sides.
+//!
+//! Both Sessions are taken at the frame's end. The oracle's RAM is the
+//! frame-end state; the engine's last lease ends before Game-side code
+//! finishes the frame (the NMI's tilemap flush and the controller latch,
+//! `gameplay_frame::frame`), so the engine's frame-end Session is the one its
+//! next lease takes up: the retained Session while it is current, the kept
+//! frame Session with the RAM written since its export, or a decode of its
+//! RAM.
 
 use crate::cpu_infra::NORMALIZED_RAM;
 use sm_game::room_entry::world::WorldBinding;
 use sm_game::session::Session;
+use sm_tools::session_compare::{Coverage, SessionSource};
+use std::ops::Range;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
@@ -36,23 +46,94 @@ pub(super) fn oracle(ram: &[u8; RAM_BYTES], world: &Arc<WorldBinding>) -> Option
     quietly(|| decode(ram, world))
 }
 
-/// The engine's Session as the codec carries it: encoded onto the engine's
-/// frame result (which supplies the bytes the Session does not own), with the
-/// normalized ranges taken from the oracle, then decoded.
+/// The Session the engine's next lease takes up, from which the frame-end
+/// Session is read.
+pub(super) enum Frame<'a> {
+    /// The retained Session, current with RAM.
+    Retained(&'a Session),
+    /// The Tick's last lease Session, kept for the next frame, and the RAM
+    /// ranges written since its export, which the next lease takes from RAM.
+    Kept(&'a Session, Vec<Range<usize>>),
+    /// The next lease decodes RAM: no Session is current with it. The Tick's
+    /// last lease Session, if it released one, is earlier than the frame end.
+    Imported(Option<&'a Session>),
+}
+
+impl Frame<'_> {
+    pub(super) fn source(&self) -> SessionSource {
+        match self {
+            Self::Retained(_) => SessionSource::Retained,
+            Self::Kept(..) => SessionSource::Kept,
+            Self::Imported(_) => SessionSource::Imported,
+        }
+    }
+}
+
+/// The engine's Sessions as the codec carries them.
+pub(super) struct Engine {
+    /// The frame-end Session.
+    pub(super) frame_end: Session,
+    /// The Tick's last lease Session, when RAM was written after it.
+    pub(super) last_lease: Option<Session>,
+}
+
+/// Copy the normalized ranges from the oracle's result, as the RAM comparison does.
+fn normalize(image: &mut [u8], theirs: &[u8; RAM_BYTES]) {
+    for (_, range) in NORMALIZED_RAM {
+        image[range.clone()].copy_from_slice(&theirs[range]);
+    }
+}
+
+/// The engine's Sessions, read through the codec: a lease Session encoded
+/// onto the engine's frame result (which supplies the bytes the Session does
+/// not own), the RAM written after it taken from that result, with the
+/// normalized ranges taken from the oracle, then decoded. `None` when the
+/// codec rejects an image. The encoder's spans are marked in `coverage`.
 pub(super) fn engine(
-    session: &Session,
+    frame: &Frame<'_>,
     mine: &[u8; RAM_BYTES],
     theirs: &[u8; RAM_BYTES],
     world: &Arc<WorldBinding>,
-) -> Option<Session> {
+    coverage: &mut Coverage,
+) -> Option<Engine> {
     quietly(|| {
-        let mut image = mine.to_vec();
-        sm_game::session_encoding::encode(session, |at, span| {
-            image[at..at + span.len()].copy_from_slice(span);
+        let lease = match frame {
+            Frame::Retained(session) | Frame::Kept(session, _) => Some(*session),
+            Frame::Imported(session) => *session,
+        };
+        // The lease Session over the engine's frame result.
+        let encoded = lease.map(|session| {
+            let mut image = mine.to_vec();
+            sm_game::session_encoding::encode(session, |at, span| {
+                image[at..at + span.len()].copy_from_slice(span);
+                coverage.mark(at..at + span.len());
+            });
+            image
         });
-        for (_, range) in NORMALIZED_RAM {
-            image[range.clone()].copy_from_slice(&theirs[range]);
+        let mut frame_end = match (frame, &encoded) {
+            (Frame::Retained(_), Some(image)) => image.clone(),
+            (Frame::Kept(_, written), Some(image)) => {
+                let mut image = image.clone();
+                for range in written {
+                    image[range.clone()].copy_from_slice(&mine[range.clone()]);
+                }
+                image
+            }
+            _ => mine.to_vec(),
+        };
+        normalize(&mut frame_end, theirs);
+        let written_after = match frame {
+            Frame::Retained(_) => false,
+            Frame::Kept(_, written) => !written.is_empty(),
+            Frame::Imported(_) => true,
+        };
+        let last_lease = encoded.filter(|_| written_after).map(|mut image| {
+            normalize(&mut image, theirs);
+            decode(&image, world)
+        });
+        Engine {
+            frame_end: decode(&frame_end, world),
+            last_lease,
         }
-        decode(&image, world)
     })
 }
