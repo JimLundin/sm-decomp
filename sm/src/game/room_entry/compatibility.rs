@@ -452,9 +452,11 @@ impl EntryEffects for Runtime<'_> {
     }
     fn setup(&mut self, action: SetupAction) {
         let (kind, code) = action.compatibility_code(&self.session().world);
-        self.foreign(|game| match kind {
-            SetupKind::Room => sm_game::room_state::execute_setup_code(code, game),
-            SetupKind::Door => sm_game::room_state::execute_door_code(code, game),
+        // The routine runs on this lease, with the observations refreshed on
+        // entry and on return as the former foreign call left them.
+        self.owned_player_call(|runtime| match kind {
+            SetupKind::Room => sm_game::room_state::execute_setup_code(code, runtime),
+            SetupKind::Door => sm_game::room_state::execute_door_code(code, runtime),
         });
     }
     fn spawn_room_object(&mut self, cursor: &ObjectCursor) {

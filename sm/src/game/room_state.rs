@@ -169,6 +169,17 @@ impl sm_game::room_state::fx::SetupHost for Runtime<'_> {
     }
 }
 
+/// Room setup and door ASM on the lease: the event mark and the door's scroll
+/// updates run on itself.
+impl sm_game::room_state::ScriptHost for Runtime<'_> {
+    fn mark_event(&mut self, event: u16) {
+        sm_game::progress::set_event(self, event);
+    }
+    fn apply_door_scrolls(&mut self, address: u32) -> bool {
+        sm_game::room_scrolls::apply(address, self)
+    }
+}
+
 /// The room's main code, on the gameplay pass's lease.
 pub(crate) fn advance_room(runtime: &mut Runtime<'_>) {
     use crate::projection::ProjectedBytes;

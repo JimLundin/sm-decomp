@@ -2,11 +2,9 @@
 pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::menu_state::SaveSelection;
-use crate::room_mechanisms::creation::spawn_hardcoded;
 use crate::room_view::EffectWord;
 use crate::runtime_access::SessionView;
 use crate::session::HookSlot;
-use crate::session_access::SessionAccess as _;
 
 /// The level data ($7F:0000..$7F:9601) as the host holds it: its size word,
 /// then the room terrain's cells (`Terrain::cells`), each cell's level word
@@ -136,9 +134,25 @@ fn start_earthquake<H: ScriptHost + ?Sized>(kind: u16, game: &mut H) {
     crate::gameplay_context::set_effect(game, EffectWord::EarthquakeTimer, u16::MAX);
 }
 
-/// What room setup and door ASM need: the menus' runtime and the owned Session.
-pub trait ScriptHost: crate::menus::host::Host {}
-impl<T: crate::menus::host::Host + ?Sized> ScriptHost for T {}
+/// What room setup and door ASM reach: the FX initializers' host, the room
+/// main code's player command and projectile spawn, the gameplay context and
+/// menu state, the video commands and the unreachable failure, plus an event
+/// mark and a door's scroll updates. A Session lease is one and runs them on
+/// itself.
+pub trait ScriptHost:
+    fx::SetupHost
+    + MainCodeHost
+    + crate::gameplay_context::Access
+    + crate::menus::state::Access
+    + crate::display::video::Video
+    + crate::menus::host::CommonRuntime
+{
+    /// Mark event `event` as happened.
+    fn mark_event(&mut self, event: u16);
+    /// Apply the scroll updates the door pointer `address` names; false when
+    /// it names none.
+    fn apply_door_scrolls(&mut self, address: u32) -> bool;
+}
 
 /// Execute room setup ASM ($8F:E88F): the room state's setup routine
 /// `script`. Was `RunRoomSetupCode`.
@@ -148,12 +162,12 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
     match script {
         // Clear Crateria mainstreet escape passage if critters escaped and shake screen.
         0x9194 => {
-            spawn_hardcoded(0x3d, 0xb, 0xbb30, game);
+            game.spawn_hardcoded_plm(0x3d, 0xb, 0xbb30);
             start_earthquake(24, game);
         }
         // Make old Tourian escape shaft fake wall explode; spawn critters escape block.
-        0x91a9 => spawn_hardcoded(0x10, 0x87, 0xb964, game),
-        0x91b2 => spawn_hardcoded(0xf, 0xa, 0xb9ed, game),
+        0x91a9 => game.spawn_hardcoded_plm(0x10, 0x87, 0xb964),
+        0x91b2 => game.spawn_hardcoded_plm(0xf, 0xa, 0xb9ed),
         // Scrolling sky land, shake screen; scrolling sky land; ocean.
         0x91bd => {
             start_earthquake(6, game);
@@ -169,29 +183,24 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 ADDR_K_ANIMTILES_TOURIAN_STATUE_DRAYGON,
                 ADDR_K_ANIMTILES_TOURIAN_STATUE_RIDLEY,
             ] {
-                crate::animated_tiles::execution::leased::spawn(animation as u16, game);
+                game.spawn_animated_tiles(animation as u16);
             }
         }
         // Spawn pre-Phantoon room enemy projectile.
         0xc8c8 => {
             use crate::constants::bank_86::ADDR_K_EPROJ_PRE_PHANTOM_ROOM;
-            crate::enemy_projectiles::lifecycle::spawn_room_leased(
-                ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16,
-                0xc8c8,
-                game,
-            );
+            game.spawn_room_projectile(ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16, 0xc8c8);
         }
         // Shaktool's room.
-        0xc8d3 => spawn_hardcoded(0, 0, 0xb8eb, game),
+        0xc8d3 => game.spawn_hardcoded_plm(0, 0, 0xb8eb),
         // Set pausing code for Draygon: native-order addresses, then the bank.
-        0xc8dd => {
-            let mut runtime = game.runtime();
-            let room = &mut runtime.session_mut().room;
+        0xc8dd => game.store_session(false, |session| {
+            let room = &mut session.room;
             for (hook, address) in [(HookSlot::Pause, 0xc8f6u16), (HookSlot::Unpause, 0xc8fc)] {
                 room.set_hook_address(hook, address.to_ne_bytes());
                 room.set_hook_bank(hook, 0x8f);
             }
-        }
+        }),
         // Set collected map.
         0xc90a => {
             let area = usize::from(crate::gameplay_context::navigation(game).area);
@@ -201,7 +210,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             ) | 1;
             // The area's map station byte; the word store's high byte keeps the
             // next area's.
-            crate::runtime_access::with_session(game, |session| {
+            game.store_session(true, |session| {
                 session.gameplay_flags.map_stations[area] = collected.to_ne_bytes()[0];
             });
             crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
@@ -210,24 +219,22 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         // Set Zebes timebomb event and set light horizontal room shaking.
         0xc91f => {
-            crate::progress::leased::mark_event(0xe, game);
+            game.mark_event(0xe);
             start_earthquake(18, game);
         }
         // Light horizontal shaking; rising acid and medium horizontal shaking.
         0xc933 | 0xc953 => {
             let kind = if script == 0xc953 {
-                spawn_hardcoded(0x10, 0x10, 0xb968, game);
+                game.spawn_hardcoded_plm(0x10, 0x10, 0xb968);
                 21
             } else {
                 18
             };
             crate::gameplay_context::set_effect(game, EffectWord::EarthquakeKind, kind);
-            {
-                let mut runtime = game.runtime();
-                let room = &mut runtime.session_mut().room;
-                room.set_main_native(1, kind);
-                room.set_main_native(0, 0);
-            }
+            game.store_session(false, |session| {
+                session.room.set_main_native(1, kind);
+                session.room.set_main_native(0, 0);
+            });
             crate::gameplay_context::set_effect(game, EffectWord::EarthquakeTimer, u16::MAX);
         }
         // Set medium horizontal room shaking.
@@ -236,7 +243,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         // Ceres door to solid blocks, Ceres haze, BG1/2 tiles base and haze.
         0xc96e => {
-            spawn_hardcoded(0xf, 0x26, 0xba48, game);
+            game.spawn_hardcoded_plm(0xf, 0x26, 0xba48);
             crate::room_visuals::initialize_room_haze(game);
         }
         0xc976 => crate::room_visuals::initialize_room_haze(game),
@@ -248,9 +255,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 crate::display::preparation::Store::Named,
             );
             crate::room_visuals::initialize_room_haze(game);
-            crate::runtime_access::with_session(game, |session| {
-                session.room.ceres_hdma_table = 9;
-            });
+            game.store_session(true, |session| session.room.ceres_hdma_table = 9);
         }
         0x91bb | 0x91bc | 0x91d3 | 0x91d4 | 0x91d5 | 0x91d6 | 0x91f4 | 0x91f5 | 0x91f6 | 0x91f7
         | 0xc8c7 | 0xc8d0 | 0xc8d1 | 0xc8d2 | 0xc8dc | 0xc91e => {}
@@ -272,14 +277,13 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             } else {
                 (ADDR_K_ANIMTILES_WRECKED_SHIP_TRADMILL_LEFT, 0xb64f)
             };
-            crate::animated_tiles::execution::leased::spawn(animation as u16, game);
-            spawn_hardcoded(4, 9, mechanism, game);
+            game.spawn_animated_tiles(animation as u16);
+            game.spawn_hardcoded_plm(4, 9, mechanism);
         }
         // Set up elevatube from south / north.
         0xe26c | 0xe291 => {
-            {
-                let mut runtime = game.runtime();
-                let room = &mut runtime.session_mut().room;
+            game.store_session(false, |session| {
+                let room = &mut session.room;
                 if script == 0xe26c {
                     room.set_main_native(2, (-256i16) as u16);
                     room.set_main_native(1, 2496);
@@ -290,21 +294,19 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                     room.main_variables[1] = 64;
                     room.main_variables[3] = 32;
                 }
-            }
-            game.player_command(0);
-            spawn_hardcoded(1, 0, 0xb8f9, game);
+            });
+            game.command_player(0);
+            game.spawn_hardcoded_plm(1, 0, 0xb8f9);
         }
         // Reset elevatube on north / south exit.
         0xe301 | 0xe309 => {
             if script == 0xe309 {
                 // Scroll cells 0 and 1, in native order.
-                let mut runtime = game.runtime();
-                runtime
-                    .session_mut()
-                    .room
-                    .set_scroll_pair(0, 514u16.to_ne_bytes());
+                game.store_session(false, |session| {
+                    session.room.set_scroll_pair(0, 514u16.to_ne_bytes());
+                });
             }
-            game.player_command(1);
+            game.command_player(1);
         }
         // To Ceres elevator shaft.
         0xe4e0 => {
@@ -332,11 +334,12 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 crate::frame_display_word!(game.AffineWords4Pair = 128);
                 crate::frame_display_word!(game.AffineWords5Pair = 1008);
             }
-            let mut runtime = game.runtime();
-            let room = &mut runtime.session_mut().room;
-            room.mode7_irq = 1;
-            room.main_variables[0] = 34;
-            room.main_variables[1] = 60;
+            game.store_session(false, |session| {
+                let room = &mut session.room;
+                room.mode7_irq = 1;
+                room.main_variables[0] = 34;
+                room.main_variables[1] = 60;
+            });
         }
         // From Ceres elevator shaft.
         0xe513 => {
@@ -346,10 +349,10 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 9,
                 crate::display::preparation::Store::Named,
             );
-            crate::runtime_access::with_session(game, |session| session.room.mode7_irq = 0);
+            game.store_session(true, |session| session.room.mode7_irq = 0);
         }
         _ => {
-            if !crate::room_scrolls::apply(0x8f0000 | u32::from(script), &mut game.runtime()) {
+            if !game.apply_door_scrolls(0x8f0000 | u32::from(script)) {
                 game.rtl_unreachable();
             }
         }
