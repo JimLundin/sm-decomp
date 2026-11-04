@@ -142,7 +142,7 @@ as kind `legacy_overflow` and `tools/ram_ratchet.py` reports them as
 typed owner and only the out-of-range branch goes through the module. Its
 `SlotBytes` trait is the slot paths' byte resolution (the actors' extended
 RAM from `Actors::extended` and every other byte through the projection on a
-lease, the RAM image on `Game`); it replaced the retired `SlotAccess`.
+lease); it replaced the retired `SlotAccess`.
 
 | Family | Sites | What the original does | What a hardware-faithful typed replacement needs |
 | --- | --- | --- | --- |

@@ -110,7 +110,3 @@ impl Runtime<'_> {
         Ok(self.owned_call(|runtime| instruction(actor, script, runtime)))
     }
 }
-
-// On the game the Session-owned words are their RAM words, read and stored
-// as word! does.
-impl sm_game::sprite_drawing::DisplayObjects for Game {}
