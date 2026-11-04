@@ -112,7 +112,7 @@ is relocated, not yet owned. `sh tools/progress.sh` counts transpiler residue
 (unsafe functions, C ABI exports, casts, legacy bank lines). CI prints both.
 
 For source-bound measurements, read the [progress report](docs/PROGRESS_REPORT.md#source-count-snapshot).
-Rerun the accounting tools for current numbers; #6 is the sole daily report.
+Rerun the accounting tools for current numbers; #177 holds the live dashboard.
 
 ## Documentation
 
