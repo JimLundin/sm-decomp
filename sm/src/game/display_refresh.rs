@@ -200,8 +200,6 @@ pub(crate) fn run(game: &mut Game) {
     refresh::run(game);
 }
 
-pub(crate) use sm_game::display_refresh::GraphicsAsset;
-
 pub(crate) unsafe fn start_room_dma(
     mask: u8,
     assets: Option<&super::room_entry::PreparedRoomAssets>,

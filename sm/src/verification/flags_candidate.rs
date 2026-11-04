@@ -40,14 +40,16 @@ fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
                 ));
             }
             Operation::PalettePre => crate::game::palette_effects::checks::pre(9301701, 0, g),
-            Operation::NewSave => sm_game::menus::save_slots::initialize(g),
+            // The new game and the load run on a lease, as the menus run them.
+            Operation::NewSave => sm_game::menus::save_slots::initialize(&mut Runtime::new(g)),
             // The demo room load and its hook run on a lease, as the frame runs them.
             Operation::Demo => sm_game::demo_rooms::load(&mut Runtime::new(g)),
             Operation::DemoBoss => {
                 sm_game::demo_rooms::run_room_hook(0x828932, &mut Runtime::new(g))
             }
             Operation::Load(slot) => {
-                return Returned::word(u16::from(sm_game::menus::save_slots::load(slot, g)));
+                let loaded = sm_game::menus::save_slots::load(slot, &mut Runtime::new(g));
+                return Returned::word(u16::from(loaded));
             }
             Operation::SporeDeath => {
                 crate::game::actors::spore_spawn::after_damage(&mut Runtime::new(g))

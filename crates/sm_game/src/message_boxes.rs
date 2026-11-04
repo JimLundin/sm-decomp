@@ -29,8 +29,7 @@ const SCROLL_CHANNEL: Control = Control::HdmaChannels(0x40);
 /// the sound queues, the unreachable failure, the NMI wait's words, the
 /// controller sample, and five rules: the box's DMA length, the music queue's
 /// and the dialogue sounds' steps, the HDMA object handler and the movement
-/// sound's restore. Every menu host is one; a Session lease is one and runs
-/// them on itself.
+/// sound's restore. A Session lease is one and runs them on itself.
 pub trait DialogueHost:
     crate::display::video::Video
     + crate::display::preparation::Access
@@ -56,28 +55,6 @@ pub trait DialogueHost:
     fn update_dialogue_hdma(&mut self);
     /// Restore Samus's movement sound after the box.
     fn resume_movement_sound(&mut self);
-}
-impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> DialogueHost
-    for T
-{
-    fn dialogue_dma_length(&self) -> u16 {
-        self.message_box_das0l_value()
-    }
-    fn set_dialogue_dma_length(&mut self, value: u16) {
-        self.set_message_box_das0l_value(value);
-    }
-    fn advance_dialogue_music(&mut self) {
-        self.handle_music_queue();
-    }
-    fn emit_dialogue_sounds(&mut self) {
-        self.advance_dialogue_sound_effects();
-    }
-    fn update_dialogue_hdma(&mut self) {
-        self.run_hdma_objects();
-    }
-    fn resume_movement_sound(&mut self) {
-        self.restore_movement_sound();
-    }
 }
 
 fn work_ram(address: u16) -> Source {

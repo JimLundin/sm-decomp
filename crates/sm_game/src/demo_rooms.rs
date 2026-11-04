@@ -26,14 +26,6 @@ pub trait Tables {
     fn demo_sets(&self) -> &Option<ImportedSets>;
     fn demo_scenes(&self) -> &Option<ImportedScenes>;
 }
-impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> Tables for T {
-    fn demo_sets(&self) -> &Option<ImportedSets> {
-        crate::menus::host::Host::demo_sets(self)
-    }
-    fn demo_scenes(&self) -> &Option<ImportedScenes> {
-        crate::menus::host::Host::demo_scenes(self)
-    }
-}
 
 /// What the demo tables' reads need: the tables and the loaded and native
 /// images.

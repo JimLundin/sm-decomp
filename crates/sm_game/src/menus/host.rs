@@ -44,14 +44,6 @@ pub trait Tables {
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
     fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
 }
-impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> Tables for T {
-    fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette> {
-        Host::intro_palette(self)
-    }
-    fn visual_tables(&self) -> &crate::visual_tables::ImportedTables {
-        Host::visual_tables(self)
-    }
-}
 
 /// The runtime operations both the menus and the cinematic functions call.
 pub trait CommonRuntime {
@@ -66,24 +58,6 @@ pub trait CommonRuntime {
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.
     fn assert_ram_pointer(&mut self, address: u16);
     fn update_beam_tiles_and_palette(&mut self);
-}
-impl<T: MenuRuntime + crate::runtime_access::RuntimeAccess + ?Sized> CommonRuntime for T {
-    fn spawn_hdma(
-        &mut self,
-        bank: u8,
-        args: &crate::display::hdma_spawn::HdmaObjectDefinition,
-    ) -> u16 {
-        MenuRuntime::spawn_hdma(self, bank, args)
-    }
-    fn rtl_unreachable(&mut self) -> bool {
-        MenuRuntime::rtl_unreachable(self)
-    }
-    fn assert_ram_pointer(&mut self, address: u16) {
-        MenuRuntime::assert_ram_pointer(self, address)
-    }
-    fn update_beam_tiles_and_palette(&mut self) {
-        MenuRuntime::update_beam_tiles_and_palette(self)
-    }
 }
 
 /// The cinematic sprite objects' bank $8B routines, which run on the

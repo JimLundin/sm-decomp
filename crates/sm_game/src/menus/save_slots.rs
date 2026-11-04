@@ -31,8 +31,8 @@ pub trait SlotHost:
 }
 
 /// What the area map leaves reach beyond a save host: the map station and
-/// used-station bytes, and the gameplay flags' store. Every menu host is one,
-/// storing through a fresh lease; a Session lease is one and stores on itself.
+/// used-station bytes, and the gameplay flags' store. A Session lease is one
+/// and stores on itself.
 pub trait MapHost: SlotHost + super::host::MapFacts {
     /// Store the gameplay flags through the Session, then refresh the
     /// observations as the projected word stores did.
@@ -42,13 +42,25 @@ pub trait MapHost: SlotHost + super::host::MapFacts {
     );
 }
 
-impl<H: Host + crate::runtime_access::RuntimeAccess + ?Sized> MapHost for H {
-    fn store_gameplay_flags(
-        &mut self,
-        store: impl FnOnce(&mut crate::gameplay_flag_state::GameplayFlags),
-    ) {
-        crate::runtime_access::with_session(self, |session| store(&mut session.gameplay_flags));
-    }
+/// What a load, a new game and the boot check reach beyond a save host: the
+/// menu and sequence state, the display history and the owned Session. A
+/// Session lease is one, and so is boot's host.
+pub trait LoadHost:
+    SlotHost
+    + super::state::Access
+    + crate::sequence_state::Access
+    + crate::display::preparation::Access
+    + crate::runtime_access::Lend
+{
+}
+impl<H> LoadHost for H where
+    H: SlotHost
+        + super::state::Access
+        + crate::sequence_state::Access
+        + crate::display::preparation::Access
+        + crate::runtime_access::Lend
+        + ?Sized
+{
 }
 
 pub fn import(image: &RomImage) -> Option<ImportedSlots> {
@@ -146,7 +158,7 @@ pub fn save<H: SlotHost + ?Sized>(slot: u16, game: &mut H) {
     game.flush_slots();
 }
 
-pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
+pub fn load<H: LoadHost + ?Sized>(slot: u16, game: &mut H) -> u8 {
     let checksum = save_file::load(&mut SaveFile(game), slot);
     if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
         // The save's copy back into the player block, from its last word down.
@@ -211,7 +223,7 @@ fn transfer_map<H: SlotHost + ?Sized>(direction: Direction, game: &mut H) {
     }
 }
 
-pub fn initialize<H: Host + ?Sized>(game: &mut H) {
+pub fn initialize<H: LoadHost + ?Sized>(game: &mut H) {
     // A new game's inventory: 99 health, no ammunition, items, beams or reserves.
     crate::gameplay_context::with_inventory(
         game,
@@ -304,7 +316,7 @@ pub fn record_completion<H: SlotHost + ?Sized>(game: &mut H) {
     game.slot_ram().write_bytes(0x1fe0, b"supermetroid");
     game.flush_slots();
 }
-pub fn verify_boot<H: Host + ?Sized>(game: &mut H) {
+pub fn verify_boot<H: LoadHost + ?Sized>(game: &mut H) {
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.num_demo_sets = 3
     });

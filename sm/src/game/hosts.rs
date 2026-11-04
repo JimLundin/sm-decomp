@@ -51,13 +51,6 @@ impl sm_game::hdma_objects::HdmaTable for crate::game::session_runtime::Runtime<
     }
 }
 
-impl sm_game::hdma_program::LeaseHdma for Game {
-    type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
-    fn hdma_lease(&mut self) -> Self::Lease<'_> {
-        crate::game::session_runtime::Runtime::new(self)
-    }
-}
-
 /// The title gradient refreshes from the game's imported gradient table.
 impl sm_game::hdma_objects::GradientHost for crate::game::session_runtime::Runtime<'_> {
     fn gradient_tables(&self) -> &sm_game::visual_tables::ImportedTables {
@@ -448,13 +441,6 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
     fn finish_player_frame(&mut self) {
         self.owned_call(crate::game::session_runtime::finish_player_frame);
     }
-}
-
-/// Queue the active beam's tiles and write its palette on a fresh lease.
-pub(crate) fn update_beam_tiles_and_palette(game: &mut Game) {
-    sm_game::player_drawing::update_beam_tiles_and_palette(
-        &mut crate::game::session_runtime::Runtime::new(game),
-    );
 }
 
 /// Draw Samus's frame on a fresh lease, inside the player driver's owned call.

@@ -79,22 +79,6 @@ crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     queue_sfx3_max1 => queue_sfx(2, sound as u8, 1, game);
     queue_sfx3_max6 => queue_sfx(2, sound as u8, 6, game);
 }
-pub(crate) fn advance_sound_effects(
-    game: &mut Game,
-    mut write: impl FnMut(
-        u8,
-        u8,
-        Option<&crate::game_state::persistent_session::QueuedSoundMeaning>,
-        &mut Game,
-    ),
-) {
-    requests::advance_sound_effects(game, |channel, value, meaning, game| {
-        write(channel, value, meaning, game);
-        Ok(())
-    })
-    .expect("audio sound advance");
-}
-
 pub fn clear_sound_queues(game: &mut Game) {
     requests::reset_sound_queues(game).expect("audio sound queue reset");
 }

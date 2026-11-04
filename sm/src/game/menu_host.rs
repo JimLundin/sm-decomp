@@ -2,11 +2,8 @@
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::menu_state::SaveSelection;
-use sm_game::menus::host::{Host, MenuRuntime};
 use sm_game::save_file::SaveRam;
 use sm_game::session_access::SessionAccess as _;
-
-impl sm_game::sprite_output::SpriteHost for Game {}
 
 /// The RAM address of a sprite output word.
 pub(crate) fn sprite_word_address(word: sm_game::sprite_output::SpriteWord) -> usize {
@@ -26,30 +23,6 @@ pub(crate) const SPRITE_CAMERA: [usize; 2] = [0x911, 0x915];
 /// The RAM address of shot `slot`'s spritemap pointer.
 pub(crate) fn projectile_sprite_address(slot: u16) -> usize {
     0xcb8 + 2 * usize::from(slot >> 1)
-}
-
-impl sm_game::sprite_output::SpriteWords for Game {
-    fn sprite_word(&self, word: sm_game::sprite_output::SpriteWord) -> u16 {
-        let at = sprite_word_address(word);
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn sprite_camera(&self) -> [u16; 2] {
-        SPRITE_CAMERA.map(|at| {
-            u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-        })
-    }
-    fn projectile_sprite_cursor(&self, slot: u16) -> u16 {
-        let at = projectile_sprite_address(slot);
-        u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn echo_frame(&self) -> u16 {
-        let game = self;
-        sm_game::frame_display_word!(game.NmiFrameWordPair)
-    }
-    fn samus_pose(&self) -> u16 {
-        let game = self;
-        sm_game::sequence_word!(game.SAMUS_POSE)
-    }
 }
 
 impl sm_game::sprite_output::MapHost for Game {
@@ -77,78 +50,6 @@ pub(crate) fn assert_ram_pointer(address: u16) {
             '_c2rust_label: address < 0x2000;
             b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
         };
-    }
-}
-
-// SAFETY (all `unsafe` calls below): the menus run from the frame loop with
-// the SNES backend installed, and `&mut self` excludes any other access.
-impl MenuRuntime for Game {
-    fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16) {
-        crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
-            .load(self)
-    }
-    fn update_beam_tiles_and_palette(&mut self) {
-        crate::game::visual_runtime::update_beam_tiles_and_palette(self)
-    }
-    fn spawn_hdma(&mut self, bank: u8, args: &crate::types::HdmaObjectDefinition) -> u16 {
-        sm_game::hdma_objects::spawn_hdma_owned(bank, args, self)
-    }
-    fn rtl_unreachable(&mut self) -> bool {
-        crate::rtl::report_unreachable(self)
-    }
-    fn assert_ram_pointer(&mut self, address: u16) {
-        assert_ram_pointer(address);
-    }
-
-    fn run_hdma_objects(&mut self) {
-        // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
-        crate::game::visual_runtime::update_hdma(false, self);
-    }
-    fn advance_dialogue_sound_effects(&mut self) {
-        crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| {
-            // SAFETY: the dialogue runs from the frame loop; the Cue sink writes the installed APU queue.
-            unsafe {
-                crate::native_audio::emit(
-                    crate::native_audio::sound_cue(
-                        channel,
-                        sm_data::OriginalSoundEffect(value),
-                        meaning,
-                    ),
-                    sm_data::CuePhase::DialogueSound,
-                    game,
-                )
-            }
-        });
-    }
-    fn message_box_das0l_value(&self) -> u16 {
-        self.message_box_das0l_value
-    }
-    fn set_message_box_das0l_value(&mut self, value: u16) {
-        self.message_box_das0l_value = value;
-    }
-    fn write_dma_register(&mut self, register: u16, value: u8) {
-        crate::rtl::write_dma_register(register, value, self)
-    }
-    fn handle_music_queue(&mut self) {
-        // SAFETY: HDMA updates run from the frame loop with the backend installed.
-        unsafe { crate::game::music::handle_music_queue(self) }
-    }
-    fn invalid_window(&mut self, address: u32) {
-        crate::game::session_runtime::invalid_window(self, address)
-    }
-    fn legacy_assertion(&self, drawing: bool) -> ! {
-        crate::game::session_runtime::legacy_assertion(drawing)
-    }
-    fn unreachable_native(&mut self) -> u16 {
-        crate::game::animated_tiles::native::unreachable(self)
-    }
-    #[cfg(sm_verify_dll)]
-    fn observe_map_write(&self, byte: usize, index: usize, stage: u8) {
-        crate::game::session_runtime::player_legacy_edges::map_write(self, byte, index, stage)
-    }
-    #[cfg(sm_verify_dll)]
-    fn observe_selected_continue(&mut self, load_result: u8) {
-        crate::flags_save_observer::selected_continue(load_result)
     }
 }
 
@@ -232,30 +133,13 @@ impl sm_game::menus::save_slots::SlotHost for Game {
     }
 }
 
-impl Host for Game {
-    fn pause_menu_tables(&self) -> &sm_game::menus::map_menu::ImportedTables {
-        &self.pause_menu
-    }
-    fn equipment_screen_tables(&self) -> &sm_game::menus::equipment_menu::ImportedTables {
-        &self.equipment_screen
-    }
-    fn demo_sets(&self) -> &Option<sm_game::demo_rooms::ImportedSets> {
-        &self.demo_sets
-    }
-    fn demo_scenes(&self) -> &Option<sm_game::demo_rooms::ImportedScenes> {
-        &self.demo_scenes
-    }
+/// The cinematic tables the boot logo's scene reads.
+impl sm_game::menus::host::Tables for Game {
     fn intro_palette(&self) -> &Option<sm_game::intro_pages::ImportedIntroPalette> {
         &self.intro_palette
     }
-    fn read_rom_word(&self, address: u32, offset: usize) -> u16 {
-        Game::read_rom_word(self, address, offset)
-    }
     fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
         &self.visual_tables
-    }
-    fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
-        &self.area_select_palettes
     }
 }
 
