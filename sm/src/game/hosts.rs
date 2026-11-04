@@ -275,6 +275,12 @@ impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_>
         self.owned_player_call(|runtime| sm_game::progress::mark_boss_defeated(runtime, mask));
     }
 
+    fn scatter_drops(&mut self, source: sm_game::enemy_projectiles::drops::DropSource, index: u16) {
+        self.owned_player_call(|runtime| {
+            sm_game::enemy_projectiles::drops::scatter(source, index, runtime)
+        });
+    }
+
     fn hardware_sine_cosine(&mut self, amplitude: u16, angle: u16) -> (u16, u16) {
         self.foreign(|game| {
             let sine = crate::game::sm_a9::sin_times(amplitude, angle, game);

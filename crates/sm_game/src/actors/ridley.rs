@@ -14,8 +14,6 @@ use crate::actors::api::angle_from_delta;
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::{BossLease, BossState, steps};
-use crate::actors::deaths::Deaths as _;
-use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
 use crate::actors::ridley_tables::{set_pogo_speeds, set_tail_segments_from_list};
 use crate::actors::slot_view::{SlotRef, SlotState, slot_view};
@@ -95,6 +93,8 @@ pub trait Host {
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16;
     /// Mark the current area's boss bits `mask` as defeated.
     fn set_boss_bit(&mut self, mask: u16);
+    /// Scatter the enemy drops of `source` from enemy `index`.
+    fn scatter_drops(&mut self, source: DropSource, index: u16);
     /// `amplitude` times the sine and the cosine of `angle`, in that order,
     /// through the PPU multiplier.
     fn hardware_sine_cosine(&mut self, amplitude: u16, angle: u16) -> (u16, u16);
@@ -1831,10 +1831,8 @@ pub fn still_falling_apart<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         // The drop routine keeps but never reads the X it is passed.
         game.set_boss_bit(1);
-        game.foreign(|game| {
-            game.scatter_enemy_drop(DropSource::Ridley, 0);
-            game.queue_music_delayed(3);
-        });
+        game.scatter_drops(DropSource::Ridley, 0);
+        crate::room_mechanisms::host::Effects::music(game, 3);
         RidleyEdit::of(game, RIDLEY).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
         *RidleyEdit::of(game, RIDLEY).function() = function::DEAD;
     }
