@@ -76,7 +76,7 @@ jobs:
     uses: ./.github/workflows/verify.yml
     with:
       scope: rows
-      segments: door-transition
+      segments: tas-ceres-four-doors area-crateria area-brinstar area-norfair
       oracle: ${{ inputs.oracle || 'patched' }}
       audio_trace: ${{ inputs.audio_trace == true }}
       oracle_sample: ${{ github.event_name == 'schedule' || inputs.oracle_sample == true }}
