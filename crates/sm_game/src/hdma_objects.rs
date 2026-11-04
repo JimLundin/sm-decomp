@@ -62,7 +62,7 @@ use crate::menus::prelude::HdmaObjectDefinition;
 use sm_data::title_screen::GRADIENT_ADDRESS;
 
 /// Spawn the BG3 scroll object in the last slot.
-pub fn spawn_bg3_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn spawn_bg3_scroll<H: Allocator + ?Sized>(game: &mut H) {
     let words = hdma_definition(&HdmaObjectDefinition::new(0x43, 0x11, 0xd8d0));
     place_hdma(Some(5), 0x88, |index| words[index], game);
 }

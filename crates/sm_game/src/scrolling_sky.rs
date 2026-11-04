@@ -8,16 +8,16 @@ use crate::projection::Field;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
 
-pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_banded_sky<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, 1248);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 6);
     static UNK_88A62E: HdmaObjectDefinition = HdmaObjectDefinition::new(0x2, 0x12, 0xad63 as VoidP);
     static UNK_88A636: HdmaObjectDefinition =
         HdmaObjectDefinition::new(0x42, 0x11, 0xad4e as VoidP);
     static UNK_88A63E: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xd, 0xad39 as VoidP);
-    game.spawn_hdma(0x88, &UNK_88A62E);
-    game.spawn_hdma(0x88, &UNK_88A636);
-    game.spawn_hdma(0x88, &UNK_88A63E);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A62E, game);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A636, game);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A63E, game);
     update_vertical_scroll(game);
 }
 fn sky_table_word<H: ScrollHost + ?Sized>(address: u32, index: isize, game: &H) -> u16 {
@@ -204,13 +204,13 @@ fn append_upper_band<H: ScrollHost + ?Sized>(
 }
 static LAND_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad76 as VoidP);
 static OCEAN_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad89 as VoidP);
-pub fn initialize_land<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_land<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     // Set bit 0 of both layer 2 scroll bytes ($091B, $091C).
     for field in [Field::Layer2ScrollX, Field::Layer2ScrollY] {
         let scroll = game.view_word(field).to_le_bytes()[0];
         game.set_view_low_byte(field, scroll | 1);
     }
-    game.spawn_hdma(0x88, &LAND_SCROLL);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &LAND_SCROLL, game);
     let mut fx = game.fx_controls();
     fx.sky_visible_height = 224;
     fx.sky_compatibility_word = 0;

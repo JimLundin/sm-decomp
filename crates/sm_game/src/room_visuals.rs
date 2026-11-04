@@ -2,10 +2,10 @@
 use crate::constants::bank_86::ADDR_K_EPROJ_TOURIAN_STATUE_DUST_CLOUDS;
 use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
 use crate::fx_domain::native_order;
-use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma};
+use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma, spawn_hdma_owned};
 use crate::menus::prelude::HdmaObjectDefinition;
 use crate::scene::hdma_sources::LiveOwner;
-use crate::session_access::SessionAccess;
+use crate::session_access::SessionAccess as _;
 use crate::visual_state::{TourianStatuePhase, Weather};
 
 /// What the Tourian statue's HDMA object runs on: the owned-Session view, the
@@ -40,9 +40,9 @@ fn finish_statue_animation(session: &mut crate::session::Session) {
     session.room.set_scroll_pair(0, 514u16.to_ne_bytes());
 }
 
-pub fn initialize_ceres_ridley<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd906));
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xd91d));
+pub fn initialize_ceres_ridley<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) {
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd906), game);
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xd91d), game);
 }
 
 pub fn initialize_bomb_torizo_haze<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -50,13 +50,13 @@ pub fn initialize_bomb_torizo_haze<H: crate::menus::host::Host + ?Sized>(game: &
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x32, 0xdd62));
 }
 
-pub fn initialize_room_haze<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let program = if crate::progress::leased::check_boss_bit_for_cur_area(1, game) & 1 != 0 {
+pub fn initialize_room_haze<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
+    let program = if game.boss_defeated(1) {
         0xdeeb
     } else {
         0xded3
     };
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x32, program));
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x40, 0x32, program), game);
 }
 
 pub fn initialize_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -64,9 +64,9 @@ pub fn initialize_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mu
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x31, 0xeb85));
 }
 
-pub fn initialize_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_fireflea_lighting<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     crate::fx_lighting::begin_current(game);
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xb0ac));
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xb0ac), game);
     game.store_source_word(LiveOwner::WindowLeft, 0, native_order(), 0);
     crate::fx_lighting::finish_current(game);
 }
@@ -161,26 +161,22 @@ pub fn shake_room_with_sound<H: ShakeHost + ?Sized>(kind: u16, handler_carry: bo
     );
 }
 
-pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if crate::progress::leased::event_has_happened(0xa, game) & 1 != 0 {
-        crate::room_mechanisms::creation::spawn_hardcoded(6, 12, 0xb777, game);
+pub fn initialize_tourian_statue<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
+    if game.event_happened(0xa) {
+        game.spawn_hardcoded_plm(6, 12, 0xb777);
         // Scroll cells 0 and 1, in native order.
-        let mut runtime = game.runtime();
-        runtime
-            .session_mut()
-            .room
-            .set_scroll_pair(0, 514u16.to_ne_bytes());
+        game.store_session(false, |session| {
+            session.room.set_scroll_pair(0, 514u16.to_ne_bytes());
+        });
     }
     game.store_display_control_byte(DisplayField::Screens1, 74, DisplayStore::Named);
-    {
-        let mut runtime = game.runtime();
-        let room = &mut runtime.session_mut().room;
+    game.store_session(true, |session| {
+        let room = &mut session.room;
         room.liquid.rising = 0xc428;
         room.liquid.surface.whole = room.liquid_height;
-        runtime.words_stored();
-    }
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856));
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa));
+    });
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856), game);
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa), game);
     spawn_bg3_scroll(game);
 }
 
@@ -251,7 +247,10 @@ fn advance_statue_program<H: crate::hdma_objects::HdmaTable + ?Sized>(
     crate::hdma_word!(game, hdma_index, InstructionList => crate::hdma_word!(game, hdma_index, InstructionList).wrapping_add(2));
 }
 
-pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather, game: &mut H) {
+pub fn initialize_weather<H: crate::room_state::fx::SetupHost + ?Sized>(
+    weather: Weather,
+    game: &mut H,
+) {
     use crate::constants::bank_87::{ADDR_K_ANIMTILES_RAIN, ADDR_K_ANIMTILES_SPORES};
     let (control, program, tiles) = match weather {
         Weather::Rain => (0x43, 0xd96c, Some(ADDR_K_ANIMTILES_RAIN)),
@@ -259,15 +258,19 @@ pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather
         Weather::Fog => (0x43, 0xdb19, None),
     };
     game.store_display_control_byte(DisplayField::Background3Map, 92, DisplayStore::Named);
-    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(control, 0x11, program));
+    spawn_hdma_owned(
+        0x88,
+        &HdmaObjectDefinition::new(control, 0x11, program),
+        game,
+    );
     if let Some(tiles) = tiles {
         spawn_bg3_scroll(game);
-        crate::animated_tiles::execution::leased::spawn(tiles as u16, game);
+        game.spawn_animated_tiles(tiles as u16);
     }
 }
 
-pub fn initialize_ceres_elevator<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd939), game);
+pub fn initialize_ceres_elevator<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) {
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd939), game);
 }
 
 pub fn initialize_draygon_layer<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

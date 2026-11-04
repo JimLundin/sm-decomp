@@ -52,6 +52,53 @@ pub trait FxHost: SessionAccess + Content<Record = RomRecord> + NativeDiagnostic
     fn spawn_fx_animated_tiles(&mut self, definition: u16);
 }
 
+/// What the FX initializers reach: the HDMA allocator, the display mirrors,
+/// the named views and RAM projection, the FX controls, sources and
+/// lighting, the sky's scroll host, and the leased rules they run. Every menu
+/// host is one, opening a fresh lease for each rule; a Session lease is one
+/// and runs them on itself.
+pub trait SetupHost:
+    crate::hdma_objects::Allocator
+    + crate::display::preparation::Access
+    + crate::projection::Views
+    + crate::ram::CompatibilityRam
+    + crate::fx_domain::Controls
+    + crate::fx_domain::Sources
+    + crate::fx_lighting::Access
+    + crate::scrolling_sky::ScrollHost
+{
+    /// Whether the current area's boss in `mask` is defeated.
+    fn boss_defeated(&mut self, mask: u16) -> bool;
+    fn event_happened(&mut self, event: u16) -> bool;
+    /// Spawn the hardcoded PLM `header` at block (`x`, `y`).
+    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, header: u16);
+    fn spawn_animated_tiles(&mut self, definition: u16);
+    /// Store through the Session; `refresh` then refreshes the observations
+    /// as the projected word stores did.
+    fn store_session(&mut self, refresh: bool, store: impl FnOnce(&mut crate::session::Session));
+}
+impl<T: crate::menus::host::Host + ?Sized> SetupHost for T {
+    fn boss_defeated(&mut self, mask: u16) -> bool {
+        crate::progress::leased::check_boss_bit_for_cur_area(mask, self) & 1 != 0
+    }
+    fn event_happened(&mut self, event: u16) -> bool {
+        crate::progress::leased::event_has_happened(event, self) & 1 != 0
+    }
+    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, header: u16) {
+        crate::room_mechanisms::creation::spawn_hardcoded(x, y, header, self);
+    }
+    fn spawn_animated_tiles(&mut self, definition: u16) {
+        crate::animated_tiles::execution::leased::spawn(definition, self);
+    }
+    fn store_session(&mut self, refresh: bool, store: impl FnOnce(&mut crate::session::Session)) {
+        let mut runtime = self.runtime();
+        store(runtime.session_mut());
+        if refresh {
+            runtime.words_stored();
+        }
+    }
+}
+
 /// An FX record: the loaded cartridge's, or a prepared world's copy of the same bytes.
 enum FxRecord {
     Legacy(RomRecord),
