@@ -24,6 +24,9 @@ pub trait HdmaLease:
     + crate::sequence_state::Access
     + crate::effects::SoundEffects
     + crate::hdma_objects::GradientHost
+    + crate::xray_background::Host
+    + crate::explosion_window::Host
+    + crate::room_visuals::StatueHost
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -33,14 +36,16 @@ pub trait HdmaLease:
     fn bg3_x_velocity(&self, index: isize) -> u16;
 }
 
-/// Capture the selected slot before publishing to the compatibility host.
-pub fn with_current_object<L: HdmaLease + ?Sized, T>(
+/// Run `action` for the selected object on the lease, where a foreign call
+/// ran it on the game: the slot is captured first, and the inputs are observed
+/// afresh on entry and again on return.
+pub fn with_current_object<L: HdmaLease, T>(
     lease: &mut L,
-    action: impl FnOnce(usize, &mut L::Game) -> T,
+    action: impl FnOnce(usize, &mut L) -> T,
 ) -> T {
     let index = usize::from(lease.hdma_word(crate::hdma::Word::Selected) >> 1);
     sm_data::table::check_index(index, OBJECTS);
-    lease.foreign(|game| action(index, game))
+    crate::lease::Lease::owned_player_call(lease, |lease| action(index, lease))
 }
 
 /// A host that can lease its Session to the interpreter.
@@ -54,15 +59,15 @@ pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
 
 /// What one interpreter frame needs from the lease.
 pub(crate) trait Interpreter: HdmaTable {
-    type Game: DispatchHost + ?Sized;
     /// Work RAM outside the object table.
     fn byte(&self, at: usize) -> u8;
     fn set_byte(&mut self, at: usize, value: u8);
     fn image(&self) -> RomImage;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// The original's unreachable-state failure, reported by the lease.
     fn unreachable(&mut self);
-    type Lease: HdmaLease<Game = Self::Game>;
+    type Lease: HdmaLease;
+    /// The lease itself, for the compatibility effects it still leaves for.
+    fn lease(&mut self) -> &mut Self::Lease;
     /// Run `action` on the lease where a foreign call ran it on the game: the
     /// foreign entry's preflight, with the inputs observed afresh on entry and
     /// again on return.
@@ -75,13 +80,15 @@ pub(crate) trait Interpreter: HdmaTable {
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
-    fn with_object<T>(
+    /// Run `action` for object `index` on the lease, where a foreign call ran
+    /// it on the game, after checking the index.
+    fn on_object<T>(
         &mut self,
         index: usize,
-        action: impl FnOnce(usize, &mut Self::Game) -> T,
+        action: impl FnOnce(usize, &mut Self::Lease) -> T,
     ) -> T {
         sm_data::table::check_index(index, OBJECTS);
-        self.foreign(|game| action(index, game))
+        self.on_lease(|lease| action(index, lease))
     }
     fn set_word(&mut self, at: usize, value: u16) {
         let [low, high] = value.to_le_bytes();
@@ -110,7 +117,6 @@ impl<L: HdmaLease> HdmaTable for Leased<L> {
 }
 
 impl<L: HdmaLease> Interpreter for Leased<L> {
-    type Game = L::Game;
     fn byte(&self, at: usize) -> u8 {
         self.0.byte(at)
     }
@@ -120,8 +126,8 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
     fn image(&self) -> RomImage {
         crate::cartridge::NativeImage::native_image(&self.0)
     }
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut L::Game) -> T) -> T {
-        self.0.foreign(action)
+    fn lease(&mut self) -> &mut L {
+        &mut self.0
     }
     fn unreachable(&mut self) {
         crate::diagnostics::Fatal::unreachable(&mut self.0)
@@ -282,7 +288,7 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             } as u16;
             let channel = crate::hdma_word!(it, index, BankSlot) & 0xff;
             let value = script.byte(0);
-            it.foreign(|game| {
+            it.lease().foreign(|game| {
                 crate::hdma_objects::write_channel_register(register + channel, value, game)
             });
             return script.advance(1);

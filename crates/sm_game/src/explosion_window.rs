@@ -8,21 +8,26 @@ use crate::menus::prelude::do_until;
 use crate::player_movement::forced;
 use crate::scene::hdma_sources::LiveOwner;
 
-/// What the explosion windows need from the runtime besides RAM and sound.
+/// What the explosion windows run on: the projected RAM and named views, the
+/// window sources and FX controls, the display mirrors, the HDMA objects,
+/// sound, Samus's position and the explosion words. A Session lease is one.
 pub trait Host:
     crate::fx_domain::Controls
     + crate::fx_domain::Sources
     + crate::display::preparation::Access
-    + crate::ram::CompatibilityRam
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
-    + crate::menus::host::MenuRuntime
-    + crate::runtime_access::RuntimeAccess
     + crate::runtime_access::SessionRam
     + crate::hdma_objects::HdmaTable
+    + crate::sequence_state::Access
+    + crate::gameplay_context::Access
+    + crate::projection::Views
+    + crate::player_position::PlayerPosition
 {
     /// Enter the Crystal Flash pose transition on the owned Session.
     fn initialize_crystal_flash(&mut self) -> bool;
+    /// Run Samus's pose command `command`.
+    fn pose_command(&mut self, command: u16);
     /// The scratch row byte one window pass leaves for the next.
     fn window_row(&self) -> u16;
     fn set_window_row(&mut self, row: u16);
@@ -152,7 +157,7 @@ pub fn begin_prescaled_explosion<H: crate::sequence_state::Access + ?Sized>(game
         e.bomb.shape_definition = ADDR_POWER_BOMB_EXPLOSION_SHAPE_DEF0 as u16;
     });
 }
-// Rejection and pose publication precede Session admission, including import failures.
+// The rejection checks and the pose store precede the Crystal Flash transition.
 pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
     let inventory = crate::gameplay_context::inventory(game);
     if !forced::crystal_flash_allowed(
@@ -181,7 +186,7 @@ pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
 }
 pub fn finish_power_bomb<H: Host + ?Sized>(hdma_index: usize, v0: u16, game: &mut H) {
     let bomb = explosion(game).bomb;
-    // A crystal flash starts on its own lease, after the position check.
+    // A crystal flash starts only after the position check.
     let crystal_flash =
         game.player_x() == bomb.x && game.player_y() == bomb.y && try_crystal_flash(game);
     with_explosion(game, |_, e: &mut Explosion| {
@@ -192,7 +197,7 @@ pub fn finish_power_bomb<H: Host + ?Sized>(hdma_index: usize, v0: u16, game: &mu
         e.bomb.pre_flash_radius = 0;
         e.radius = 0;
     });
-    // The right half is the next hdma_index, which stays on the host.
+    // The right half is the next hdma_index.
     crate::hdma_word!(game, hdma_index, Channels => 0);
     let next = usize::from(v0 >> 1) + 1;
     if next < crate::hdma::OBJECTS {
@@ -212,7 +217,7 @@ pub fn finish_power_bomb<H: Host + ?Sized>(hdma_index: usize, v0: u16, game: &mu
             0,
         );
     }
-    game.player_command(0x1e);
+    game.pose_command(0x1e);
 }
 pub fn set_power_bomb_blending<H: crate::fx_domain::Controls + ?Sized>(game: &mut H) {
     {
@@ -506,7 +511,7 @@ pub fn finish_crystal_flash<H: Host + ?Sized>(hdma_index: usize, k: u16, game: &
         e.bomb.pre_flash_radius = 0;
         e.radius = 0;
     });
-    // The right half is the next hdma_index, which stays on the host.
+    // The right half is the next hdma_index.
     crate::hdma_word!(game, hdma_index, Channels => 0);
     let next = usize::from(k >> 1) + 1;
     if next < crate::hdma::OBJECTS {

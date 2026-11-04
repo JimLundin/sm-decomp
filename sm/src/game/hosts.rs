@@ -4,20 +4,6 @@ use crate::game_state::Game;
 use sm_game::inventory::{self, Word};
 use sm_game::player_position::{PlayerPosition, PlayerWord};
 
-impl sm_game::explosion_window::Host for Game {
-    fn initialize_crystal_flash(&mut self) -> bool {
-        sm_game::player_movement::forced::initialize_crystal_flash(
-            &mut crate::game::session_runtime::Runtime::new(self),
-        )
-    }
-    fn window_row(&self) -> u16 {
-        self.k_out
-    }
-    fn set_window_row(&mut self, row: u16) {
-        self.k_out = row;
-    }
-}
-
 impl sm_game::runtime_access::RuntimeAccess for Game {
     type Runtime<'a> = crate::game::session_runtime::Runtime<'a>;
     fn runtime(&mut self) -> Self::Runtime<'_> {
@@ -232,8 +218,10 @@ impl sm_game::actors::phantoon::Lease for crate::game::session_runtime::Runtime<
         sm_game::hdma_objects::spawn_hdma_owned(bank, args, self);
     }
     fn start_wave(&mut self, direction: u16, speed: u16) {
-        self.foreign(|game| {
-            crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, game)
+        // The motion and the wave object are the lease's; the observations are
+        // refreshed on entry and on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| {
+            crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, runtime)
         });
     }
     fn disable_minimap(&mut self) {

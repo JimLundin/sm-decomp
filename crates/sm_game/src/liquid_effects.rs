@@ -48,29 +48,32 @@ pub fn start_water(room: &mut crate::session::Room) -> bool {
 }
 
 /// Spawn the lava's HDMA objects and animated tiles, after [`start_hot`].
-pub fn initialize_lava<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_lava<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     initialize_hot(ADDR_K_ANIMTILES_LAVA as u16, game);
 }
 /// Spawn the acid's HDMA objects and animated tiles, after [`start_hot`].
-pub fn initialize_acid<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_acid<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     initialize_hot(ADDR_K_ANIMTILES_ACID as u16, game);
 }
-fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H) {
+fn initialize_hot<H: crate::room_state::fx::SetupHost + ?Sized>(tiles: u16, game: &mut H) {
     static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x12, 0xc3e1);
     static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x10, 0xc3f0);
-    game.spawn_hdma(0x88, &SURFACE);
-    game.spawn_hdma(0x88, &BACKGROUND);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &SURFACE, game);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &BACKGROUND, game);
     crate::hdma_objects::spawn_bg3_scroll(game);
-    crate::animated_tiles::execution::leased::spawn(tiles, game);
+    game.spawn_animated_tiles(tiles);
 }
 /// Spawn the water's HDMA objects after [`start_water`]: its surface, and its
 /// background wave when `background` is set.
-pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(background: bool, game: &mut H) {
+pub fn initialize_water<H: crate::hdma_objects::Allocator + ?Sized>(
+    background: bool,
+    game: &mut H,
+) {
     static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x11, 0xd856);
     static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xd847);
-    game.spawn_hdma(0x88, &SURFACE);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &SURFACE, game);
     if background {
-        game.spawn_hdma(0x88, &BACKGROUND);
+        crate::hdma_objects::spawn_hdma_owned(0x88, &BACKGROUND, game);
     }
     crate::hdma_objects::spawn_bg3_scroll(game);
 }

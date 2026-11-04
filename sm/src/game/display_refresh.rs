@@ -23,10 +23,7 @@ impl refresh::DisplayOwner for Game {
     }
 }
 
-impl refresh::Host for Game {
-    fn hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
-        self.projected_hdma_objects()
-    }
+impl refresh::ReadbackQueue for Game {
     fn readback_queue_tail(&self) -> u16 {
         crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL)
     }
@@ -35,6 +32,12 @@ impl refresh::Host for Game {
     }
     fn store_readback_byte(&mut self, offset: usize, value: u8) {
         self.compatibility_write_byte(0x340 + offset, value);
+    }
+}
+
+impl refresh::Host for Game {
+    fn hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
+        self.projected_hdma_objects()
     }
     fn start_graphics_dma(&mut self, source: u32) {
         let assets = if source == 0x9ab200 {

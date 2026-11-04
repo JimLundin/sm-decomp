@@ -128,10 +128,12 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
     }
 }
 
-/// The morph ball eye runs on the scheduler's lease; its beam starts on the game.
+/// The morph ball eye runs on the scheduler's lease, and its beam starts on
+/// it; the observations are refreshed on entry and on return, as the former
+/// foreign call left them.
 impl sm_game::actors::morph_ball_eye::Host for Runtime<'_> {
     fn start_beam(&mut self) {
-        self.foreign(crate::game::visual_runtime::initialize_morph_eye_beam);
+        self.owned_player_call(crate::game::visual_runtime::initialize_morph_eye_beam);
     }
 }
 
@@ -2163,7 +2165,7 @@ pub(crate) use player_movement_runtime::{
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
     command as player_command, command_in as player_command_in, damage_player, finish_player_frame,
-    finish_xray, initialize as initialize_player,
+    initialize as initialize_player,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;
@@ -2365,6 +2367,23 @@ impl sm_game::mother_brain_visuals::PaletteHost for Runtime<'_> {
         &self.game.mother_brain_visuals
     }
 }
+/// The explosion windows run on the lease: the Crystal Flash and the pose
+/// command are its own player rules, and the window row is the game's.
+impl sm_game::explosion_window::Host for Runtime<'_> {
+    fn initialize_crystal_flash(&mut self) -> bool {
+        sm_game::player_movement::forced::initialize_crystal_flash(self)
+    }
+    fn pose_command(&mut self, command: u16) {
+        player_command_in(self, command);
+    }
+    fn window_row(&self) -> u16 {
+        self.game.k_out
+    }
+    fn set_window_row(&mut self, row: u16) {
+        self.game.k_out = row;
+    }
+}
+
 impl sm_game::player_position::PlayerFacts for Runtime<'_> {
     fn facing(&self) -> u8 {
         Runtime::byte(self, 0xa1e)

@@ -31,6 +31,7 @@ pub trait Lease:
     + crate::visual_host::Host
     + PaletteAccess
     + crate::palette_effects::fading::Host
+    + crate::hdma_objects::Allocator
 {
 }
 impl<T> Lease for T where
@@ -43,6 +44,7 @@ impl<T> Lease for T where
         + crate::visual_host::Host
         + PaletteAccess
         + crate::palette_effects::fading::Host
+        + crate::hdma_objects::Allocator
         + ?Sized
 {
 }
@@ -238,10 +240,7 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
 
 /// What the Torizos' AI needs beyond the movement and drool host: the shared
 /// boss effects, deaths and the compat dispatch.
-pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
-    /// Spawn the Bomb Torizo room's haze.
-    fn spawn_haze(&mut self);
-}
+pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {}
 
 /// The Torizos' sprite palettes: each pair is the high palette's sixteen
 /// colours, then the low palette's.
@@ -885,7 +884,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
         }
     } else {
         set_palette_targets(game, palettes::BOMB_START);
-        game.foreign(|game| game.spawn_haze());
+        // The haze's objects spawn on the lease, where the game spawned them.
+        game.owned_step(crate::room_visuals::initialize_bomb_torizo_haze);
     }
 }
 

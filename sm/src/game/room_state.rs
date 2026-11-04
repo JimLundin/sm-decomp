@@ -94,7 +94,7 @@ impl sm_game::room_state::fx::FxHost for Runtime<'_> {
         use crate::game::visual_runtime::*;
         use sm_game::session_access::SessionAccess as _;
         use sm_game::{liquid_effects, scrolling_sky};
-        // A liquid starts on the Session; its HDMA objects then spawn on the game.
+        // A liquid starts on the Session; its HDMA objects then spawn on the lease.
         let mut water_background = false;
         match initializer {
             Initializer::Lava | Initializer::Acid => {
@@ -107,18 +107,20 @@ impl sm_game::room_state::fx::FxHost for Runtime<'_> {
             }
             _ => {}
         }
-        self.foreign(|game| match initializer {
-            Initializer::Lava => liquid_effects::initialize_lava(game),
-            Initializer::Acid => liquid_effects::initialize_acid(game),
-            Initializer::Water => liquid_effects::initialize_water(water_background, game),
-            Initializer::Weather(weather) => initialize_weather(weather, game),
-            Initializer::Land => scrolling_sky::initialize_land(game),
-            Initializer::BandedSky => scrolling_sky::initialize_banded_sky(game),
-            Initializer::FirefleaLighting => initialize_fireflea_lighting(game),
-            Initializer::TourianStatue => initialize_tourian_statue(game),
-            Initializer::CeresRidley => initialize_ceres_ridley(game),
-            Initializer::CeresElevator => initialize_ceres_elevator(game),
-            Initializer::Haze => initialize_room_haze(game),
+        // The observations are refreshed on entry and on return, as the former
+        // foreign call left them.
+        self.owned_player_call(|runtime| match initializer {
+            Initializer::Lava => liquid_effects::initialize_lava(runtime),
+            Initializer::Acid => liquid_effects::initialize_acid(runtime),
+            Initializer::Water => liquid_effects::initialize_water(water_background, runtime),
+            Initializer::Weather(weather) => initialize_weather(weather, runtime),
+            Initializer::Land => scrolling_sky::initialize_land(runtime),
+            Initializer::BandedSky => scrolling_sky::initialize_banded_sky(runtime),
+            Initializer::FirefleaLighting => initialize_fireflea_lighting(runtime),
+            Initializer::TourianStatue => initialize_tourian_statue(runtime),
+            Initializer::CeresRidley => initialize_ceres_ridley(runtime),
+            Initializer::CeresElevator => initialize_ceres_elevator(runtime),
+            Initializer::Haze => initialize_room_haze(runtime),
         });
     }
     fn spawn_fx_palette(&mut self, definition: u16) {
@@ -130,6 +132,29 @@ impl sm_game::room_state::fx::FxHost for Runtime<'_> {
         self.owned_player_call(|runtime| {
             crate::game::animated_tiles::execution::spawn(runtime, definition)
         });
+    }
+}
+
+/// The FX initializers on the lease: its rules run on itself.
+impl sm_game::room_state::fx::SetupHost for Runtime<'_> {
+    fn boss_defeated(&mut self, mask: u16) -> bool {
+        sm_game::progress::boss_defeated(self, mask)
+    }
+    fn event_happened(&mut self, event: u16) -> bool {
+        sm_game::progress::event_happened(self, event)
+    }
+    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, header: u16) {
+        sm_game::room_mechanisms::creation::spawn_hardcoded_in(self, x, y, header);
+    }
+    fn spawn_animated_tiles(&mut self, definition: u16) {
+        sm_game::animated_tiles::execution::spawn(self, definition);
+    }
+    fn store_session(&mut self, refresh: bool, store: impl FnOnce(&mut sm_game::session::Session)) {
+        use sm_game::session_access::SessionAccess as _;
+        store(self.session_mut());
+        if refresh {
+            self.words_stored();
+        }
     }
 }
 

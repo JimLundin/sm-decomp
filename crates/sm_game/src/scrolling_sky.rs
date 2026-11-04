@@ -8,27 +8,23 @@ use crate::projection::Field;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
 
-pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_banded_sky<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, 1248);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 6);
     static UNK_88A62E: HdmaObjectDefinition = HdmaObjectDefinition::new(0x2, 0x12, 0xad63 as VoidP);
     static UNK_88A636: HdmaObjectDefinition =
         HdmaObjectDefinition::new(0x42, 0x11, 0xad4e as VoidP);
     static UNK_88A63E: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xd, 0xad39 as VoidP);
-    game.spawn_hdma(0x88, &UNK_88A62E);
-    game.spawn_hdma(0x88, &UNK_88A636);
-    game.spawn_hdma(0x88, &UNK_88A63E);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A62E, game);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A636, game);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &UNK_88A63E, game);
     update_vertical_scroll(game);
 }
-fn sky_table_word<H: crate::menus::host::Host + ?Sized>(
-    address: u32,
-    index: isize,
-    game: &H,
-) -> u16 {
-    game.native_image()
+fn sky_table_word<H: ScrollHost + ?Sized>(address: u32, index: isize, game: &H) -> u16 {
+    crate::cartridge::NativeImage::native_image(game)
         .table_word(sm_data::cartridge::lorom_offset(address) as usize, index)
 }
-fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
+fn build_vertical_bands<H: ScrollHost + ?Sized>(game: &mut H) -> u16 {
     {
         let fx_value = 32;
         let mut fx = game.fx_controls();
@@ -87,15 +83,12 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
         inset = 0;
     }
 }
-pub fn update_vertical_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn update_vertical_scroll<H: ScrollHost + ?Sized>(game: &mut H) {
     damage_above_screen(game);
     let row = build_vertical_bands(game);
     game.store_source_word(LiveOwner::LiquidSurface, row as usize, native_order(), 0);
 }
-pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
-    hdma_index: usize,
-    game: &mut H,
-) {
+pub fn update_horizontal_scroll<H: ScrollHost + ?Sized>(hdma_index: usize, game: &mut H) {
     let layer1_y = crate::sequence_word!(game.LAYER1_Y_POS);
     if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
         if (game.display_control_byte(DisplayField::NmiFrameByte) & 1) == 0 {
@@ -160,7 +153,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     write_scroll_pair(v7 as usize + 1, -24960i32 as u16, game);
     write_scroll_pair(v7 as usize + 3, 0, game);
 }
-fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
+fn append_upper_band<H: ScrollHost + ?Sized>(
     k: u16,
     r18: u16,
     r20: u16,
@@ -211,13 +204,13 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
 }
 static LAND_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad76 as VoidP);
 static OCEAN_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad89 as VoidP);
-pub fn initialize_land<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_land<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     // Set bit 0 of both layer 2 scroll bytes ($091B, $091C).
     for field in [Field::Layer2ScrollX, Field::Layer2ScrollY] {
         let scroll = game.view_word(field).to_le_bytes()[0];
         game.set_view_low_byte(field, scroll | 1);
     }
-    game.spawn_hdma(0x88, &LAND_SCROLL);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &LAND_SCROLL, game);
     let mut fx = game.fx_controls();
     fx.sky_visible_height = 224;
     fx.sky_compatibility_word = 0;
@@ -243,7 +236,7 @@ pub fn initialize_ocean<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         ],
     );
 }
-fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn damage_above_screen<H: ScrollHost + ?Sized>(game: &mut H) {
     if (game.player_y() as i16).wrapping_sub(game.player_y_radius() as i16) < 0
         || (game.player_y() as i32 - game.player_y_radius() as i32 - 17i32) & 0x8000 != 0
     {
@@ -395,6 +388,24 @@ impl<T> RowHost for T where
         + ?Sized
 {
 }
+/// What the sky's HDMA scrolls reach besides the tile rows' host: the HDMA
+/// objects, the gameplay tables, and Samus's position and periodic damage.
+/// Every menu host is one; a Session lease is one too.
+pub trait ScrollHost:
+    RowHost
+    + crate::hdma_objects::HdmaTable
+    + crate::records::Records
+    + crate::player_position::PlayerPosition
+{
+}
+impl<T> ScrollHost for T where
+    T: RowHost
+        + crate::hdma_objects::HdmaTable
+        + crate::records::Records
+        + crate::player_position::PlayerPosition
+        + ?Sized
+{
+}
 pub fn queue_land_rows<H: RowHost + ?Sized>(game: &mut H) {
     queue_tile_rows(0x88ad9c, game);
 }
@@ -402,11 +413,7 @@ pub fn queue_ocean_rows<H: RowHost + ?Sized>(game: &mut H) {
     queue_tile_rows(0x88ada6, game);
 }
 // HDMA entries overlap word stores at byte offsets; retain channel write order.
-fn write_scroll_pair<H: crate::menus::host::Host + ?Sized>(
-    offset: usize,
-    value: u16,
-    game: &mut H,
-) {
+fn write_scroll_pair<H: ScrollHost + ?Sized>(offset: usize, value: u16, game: &mut H) {
     game.store_source_word(LiveOwner::WindowLeft, offset, native_order(), value);
     write_sky_word(value, offset as isize, game);
 }

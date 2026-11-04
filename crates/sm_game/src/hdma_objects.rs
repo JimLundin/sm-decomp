@@ -62,7 +62,7 @@ use crate::menus::prelude::HdmaObjectDefinition;
 use sm_data::title_screen::GRADIENT_ADDRESS;
 
 /// Spawn the BG3 scroll object in the last slot.
-pub fn spawn_bg3_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn spawn_bg3_scroll<H: Allocator + ?Sized>(game: &mut H) {
     let words = hdma_definition(&HdmaObjectDefinition::new(0x43, 0x11, 0xd8d0));
     place_hdma(Some(5), 0x88, |index| words[index], game);
 }
@@ -431,11 +431,12 @@ pub(crate) fn refresh_title_gradient<H: GradientHost + ?Sized>(game: &mut H) {
 }
 
 /// Refresh the title gradient's table from the zoom, then step its program.
-pub fn advance_title_gradient_backdrop<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn advance_title_gradient_backdrop<H>(game: &mut H)
+where
+    H: GradientHost + crate::sequence_state::Access + crate::hdma_effects::HdmaEffects + ?Sized,
+{
     refresh_title_gradient(game);
-    if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0x9b68 {
-        crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
-    }
+    advance_title_gradient(game);
 }
 
 /// Step the title gradient's program once the title's cinematic reaches it.

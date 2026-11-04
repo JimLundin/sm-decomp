@@ -83,10 +83,6 @@ impl Host for Runtime<'_> {}
 pub(crate) use sm_game::player_transitions::input::dispatch_input;
 pub(crate) use sm_game::player_transitions::input::finish_frame as finish_player_frame;
 
-pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {
-    crate::game::player_transitions::xray::finish(&mut Runtime::new(game));
-}
-
 pub(crate) fn damage_player(amount: u16, game: &mut crate::game_state::Game) {
     sm_game::samus_periodic_damage::contact(&mut Runtime::new(game), amount);
 }
@@ -117,7 +113,9 @@ impl GameEffects for Runtime<'_> {
         use sm_game::hdma_program::with_current_object;
         match step {
             XrayRestore::Left => with_current_object(self, restore_left),
-            XrayRestore::Right => self.foreign(restore_right),
+            // The restore runs on the lease; the observations are refreshed on
+            // entry and on return, as the former foreign call left them.
+            XrayRestore::Right => self.owned_player_call(restore_right),
             XrayRestore::Finish => with_current_object(self, finish_restore),
         }
     }
