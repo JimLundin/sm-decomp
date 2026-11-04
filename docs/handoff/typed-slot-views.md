@@ -290,3 +290,51 @@ Left, with what each needs:
   epoch for a fresh lease; on the held lease it needs a per-site audit.
 - The grapple tiles: the queue words alias the tile fields; both TileAccess impls exist,
   but the Game side writes the sequence owner, so the alias cases need a replay first.
+
+## Residuals lane 3 (2026-11-04, `collab/rs-resid3`)
+
+The save file is one typed record. `save_file::FileWord` names its 814 words in file
+order ($D7C0..$DE1B): the saved player block, the gameplay flags' 122 words, the save
+selection's loading state, station and area, the room's loaded items count and the
+compressed maps. `SaveHost` reads and stores file words, and the SRAM save, load and
+clear walk `FileWord::all()`.
+
+New owners:
+- `GameplayFlags::spare` ($D910..$D913).
+- `Session::compressed_maps` (`save_file::CompressedMaps`, $D91C..$DE1B).
+
+Both are byte-encoded, with layout tests (format bump: SMAUXGS 18).
+
+New `Field` keys:
+- `SaveFile(word)`, which replaces `SavedPlayer`.
+- `SavedMapAt(offset)` and `CompressedMapAt(offset)`, the word at a map byte.
+
+The map packing reads each byte as its word's low byte and stores it with
+`set_view_low_byte`.
+
+Other changes:
+- The enemy projectile table's Game copy uses `Views::load_words`/`store_words`, storing
+  every word but the zoom. `table::free`'s store past the slots goes through
+  `legacy_overflow` (new LEGACY row). The palette fade stores through
+  `Field::PaletteColor`. The `projection::image_*` helpers are gone.
+- Crocomire's melting tiles load stores into the new `Role::MeltingTiles` ($7E:4000..)
+  through the lease Session's workspace publication, with `legacy_overflow` for a
+  destination outside $4000..$6FFF (format bump: SMDISPL 6, the role's binding).
+
+Left: the demo stop's $077C..$0997 clear (`gameplay_frame::stop_demo`, 270 words,
+descending, on Game). Every word needs a `Field` key whose `session_word` matches the
+projection, so the projection test covers it. Owners include:
+- the message delay and unpause queue tail ($077C..$0781);
+- the coroutine completion byte $0782;
+- the Mode 7 and menu words $0783..;
+- the door and room entry words, including the room header and the asset long pointers
+  $07BD..$07C8 (world keys, byte path);
+- the room music and code words;
+- the explored map $07F7..$08F6 (`Field::ExploredMap`);
+- the camera blocks and positions $08F7..$0932;
+- the door transition words;
+- the Ceres status, camera distance and timer $093F..$094B;
+- the file select words $0950..;
+- the BG1 update words up to $0997.
+
+Several have no `Field` yet. This is about 30 owners and was not started here.

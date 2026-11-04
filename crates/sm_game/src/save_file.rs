@@ -271,6 +271,101 @@ impl SavedMaps {
     }
 }
 
+/// Where the save keeps its compressed explored maps ($7E:D91C), the last
+/// part of [`PLAYER_BLOCK`].
+pub const COMPRESSED_MAPS: usize = 0xd91c;
+
+/// The explored maps as the save file carries them ($7E:D91C..$DE1B): each
+/// area's mapped bytes of [`SavedMaps`], packed one after another by the
+/// area's map records ($81:812D..). Saving packs the saved maps in; loading
+/// unpacks them out.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CompressedMaps {
+    pub bytes: [u8; Self::BYTES],
+}
+
+impl Default for CompressedMaps {
+    fn default() -> Self {
+        Self {
+            bytes: [0; Self::BYTES],
+        }
+    }
+}
+
+impl CompressedMaps {
+    /// The bytes the compressed maps take, from [`COMPRESSED_MAPS`].
+    pub const BYTES: usize = 0x500;
+
+    /// Little-endian word `index` of the compressed maps.
+    pub fn word(&self, index: usize) -> Option<u16> {
+        Some(u16::from_le_bytes([
+            *self.bytes.get(2 * index)?,
+            *self.bytes.get(2 * index + 1)?,
+        ]))
+    }
+}
+
+/// Where the save keeps the gameplay flags it carries ($7E:D820..$D913).
+pub const SAVED_FLAGS: usize = 0xd820;
+
+/// A word of a save file, in the order the file holds them: the save's
+/// copy of the player block, the gameplay flags, the save selection's
+/// loading state, station and area, the loaded items count and the
+/// compressed maps ($7E:D7C0..$DE1B, [`PLAYER_BLOCK`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FileWord {
+    /// The save's copy of the player block ($D7C0..$D81F).
+    Player(PlayerWord),
+    /// Word `index` of the gameplay flags ($D820 + 2 * index, up to $D913):
+    /// the events, the bosses, the room objects, the items, the doors, the
+    /// unused bytes, the stations, the map stations and the spare bytes.
+    Flags(usize),
+    /// The game state a load starts in ($D914).
+    LoadingGameState,
+    /// The save station and area the file was saved at ($D916, $D918).
+    SaveStation,
+    SaveArea,
+    /// The items the rooms loaded so far ($D91A).
+    LoadedItems,
+    /// Word `index` of the compressed maps ($D91C + 2 * index).
+    CompressedMap(usize),
+}
+
+impl FileWord {
+    /// The gameplay flags' words.
+    pub const FLAGS: usize = 122;
+    /// The compressed maps' words.
+    pub const COMPRESSED_MAP: usize = CompressedMaps::BYTES / 2;
+
+    /// Every word of the file, in file order.
+    pub fn all() -> impl DoubleEndedIterator<Item = Self> {
+        PlayerWord::ALL
+            .into_iter()
+            .map(Self::Player)
+            .chain((0..Self::FLAGS).map(Self::Flags))
+            .chain([
+                Self::LoadingGameState,
+                Self::SaveStation,
+                Self::SaveArea,
+                Self::LoadedItems,
+            ])
+            .chain((0..Self::COMPRESSED_MAP).map(Self::CompressedMap))
+    }
+
+    /// Where the projection encodes the word.
+    pub fn address(self) -> usize {
+        match self {
+            Self::Player(word) => SAVED_PLAYER + 2 * word.index(),
+            Self::Flags(index) => SAVED_FLAGS + 2 * index,
+            Self::LoadingGameState => 0xd914,
+            Self::SaveStation => 0xd916,
+            Self::SaveArea => 0xd918,
+            Self::LoadedItems => 0xd91a,
+            Self::CompressedMap(index) => COMPRESSED_MAPS + 2 * index,
+        }
+    }
+}
+
 /// The SRAM header (SRAM map): per-slot checksums and their complements,
 /// mirrored near the end of SRAM, and the last selected slot.
 pub mod header {
@@ -289,11 +384,11 @@ pub mod header {
     }
 }
 
-/// Work RAM and SRAM as the save format reads and writes them.
+/// The file's words and SRAM as the save format reads and writes them.
 pub trait SaveHost {
-    /// A native-order word of work RAM.
-    fn ram_word(&self, at: usize) -> u16;
-    fn set_ram_word(&mut self, at: usize, value: u16);
+    /// A file word, in native byte order.
+    fn file_word(&self, word: FileWord) -> u16;
+    fn set_file_word(&mut self, word: FileWord, value: u16);
     fn sram_word(&self, at: usize) -> u16;
     fn set_sram_word(&mut self, at: usize, value: u16);
     /// File `slot`'s SRAM byte offset, as the $81:812B table gives it.
@@ -306,20 +401,20 @@ enum Direction {
     Load,
 }
 
-/// Copy the player block one word at a time, each word read then written
-/// before the next, and return the words' wrapping sum.
+/// Copy the file one word at a time, in file order, each word read then
+/// written before the next, and return the words' wrapping sum.
 fn transfer(host: &mut (impl SaveHost + ?Sized), slot: u16, direction: Direction) -> u16 {
     let mut cursor = host.slot_offset((slot & 3) as isize);
     let mut checksum = 0u16;
-    for at in PLAYER_BLOCK.step_by(2) {
+    for word in FileWord::all() {
         let sram = usize::from(cursor & !1);
         let value = match direction {
-            Direction::Save => host.ram_word(at),
+            Direction::Save => host.file_word(word),
             Direction::Load => host.sram_word(sram),
         };
         match direction {
             Direction::Save => host.set_sram_word(sram, value),
-            Direction::Load => host.set_ram_word(at, value),
+            Direction::Load => host.set_file_word(word, value),
         }
         checksum = checksum.wrapping_add(value);
         cursor = cursor.wrapping_add(2);
@@ -358,7 +453,7 @@ pub fn checksum_matches(host: &(impl SaveHost + ?Sized), slot: u16, checksum: u1
 /// Zero file `slot`'s words.
 pub fn clear(host: &mut (impl SaveHost + ?Sized), slot: u16) {
     let mut cursor = host.slot_offset((slot & 3) as isize);
-    for _ in PLAYER_BLOCK.step_by(2) {
+    for _ in FileWord::all() {
         host.set_sram_word(usize::from(cursor & !1), 0);
         cursor = cursor.wrapping_add(2);
     }
@@ -384,10 +479,12 @@ mod tests {
     }
 
     impl SaveHost for Memory {
-        fn ram_word(&self, at: usize) -> u16 {
+        fn file_word(&self, word: FileWord) -> u16 {
+            let at = word.address();
             u16::from_ne_bytes([self.ram[at], self.ram[at + 1]])
         }
-        fn set_ram_word(&mut self, at: usize, value: u16) {
+        fn set_file_word(&mut self, word: FileWord, value: u16) {
+            let at = word.address();
             self.ram[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
         fn sram_word(&self, at: usize) -> u16 {
@@ -399,6 +496,13 @@ mod tests {
         fn slot_offset(&self, slot: isize) -> u16 {
             [0x10, 0x66c, 0xcc8][slot as usize]
         }
+    }
+
+    #[test]
+    fn the_file_words_are_the_player_block_in_order() {
+        let addresses: Vec<usize> = FileWord::all().map(FileWord::address).collect();
+        let block: Vec<usize> = PLAYER_BLOCK.step_by(2).collect();
+        assert_eq!(addresses, block);
     }
 
     #[test]

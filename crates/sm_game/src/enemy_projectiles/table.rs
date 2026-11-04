@@ -2,7 +2,7 @@
 //! projectile host: the owned Session's under one lease when one can open,
 //! otherwise a copy decoded from RAM and stored back if it changed.
 
-use crate::ram::WorkRamAccess;
+use crate::projection::Views;
 use crate::runtime_access::RuntimeAccess;
 use crate::session::{EnemyProjectile, EnemyProjectiles};
 
@@ -116,29 +116,21 @@ impl crate::session_cohort::Cohort for EnemyProjectiles {
     }
 }
 
-/// The table's scalar words the projectile host and the file select menu
-/// share, then every slot word.
-fn table_words(projectiles: &mut EnemyProjectiles, mut each: impl FnMut(usize, &mut u16)) {
-    each(0x198d, &mut projectiles.flags);
-    each(0x1991, &mut projectiles.selected);
-    each(0x1993, &mut projectiles.spawn.primary);
-    each(0x1995, &mut projectiles.spawn.secondary);
-    slot_words(&mut projectiles.slots, each);
-}
-
 /// Run `action` on the projectile slots.
 pub fn with_slots<H, T>(game: &mut H, action: impl FnOnce(&mut [EnemyProjectile; SLOTS]) -> T) -> T
 where
-    H: WorkRamAccess + RuntimeAccess + ?Sized,
+    H: Views + RuntimeAccess + ?Sized,
 {
     with_projectiles(game, |projectiles| action(&mut projectiles.slots))
 }
 
-/// Run `action` on the projectile table. On the RAM copy only the words
-/// `table_words` lists are decoded and stored, so `action` must keep to them.
+/// Run `action` on the projectile table. Without a lease the table is loaded
+/// through the host's projection and, if it changed, stored back without the
+/// Mode 7 zoom ($198F), which the projectile host and the file select menu
+/// do not share, so `action` must leave the zoom alone.
 pub fn with_projectiles<H, T>(game: &mut H, action: impl FnOnce(&mut EnemyProjectiles) -> T) -> T
 where
-    H: WorkRamAccess + RuntimeAccess + ?Sized,
+    H: Views + RuntimeAccess + ?Sized,
 {
     use crate::session_access::SessionAccess;
     #[cfg(sm_verify_dll)]
@@ -147,18 +139,17 @@ where
         return action(&mut game.runtime().session_mut().enemy_projectiles);
     }
     let mut projectiles = EnemyProjectiles::default();
-    table_words(&mut projectiles, |at, word| {
-        *word = crate::projection::image_word(game, at);
-    });
+    game.load_words(&mut projectiles);
     let before = projectiles.clone();
     let result = action(&mut projectiles);
     if projectiles != before {
-        table_words(&mut projectiles, |at, word| {
-            crate::projection::set_image_word(game, at, *word);
-        });
+        game.store_words(&mut projectiles, |index| index != ZOOM);
     }
     result
 }
+
+/// The Mode 7 zoom's index in the table's visit order: the flags, then the zoom.
+const ZOOM: usize = 1;
 
 /// The file select menu's reuse of the table (RAM map $198D..$19BC), by the
 /// RAM map's names. Helmet `n` is slot A, B or C's.
@@ -229,7 +220,7 @@ impl FileSelect<'_> {
 /// Run `action` on the file select menu's view of the table.
 pub fn with_file_select<H, T>(game: &mut H, action: impl FnOnce(&mut FileSelect<'_>) -> T) -> T
 where
-    H: WorkRamAccess + RuntimeAccess + ?Sized,
+    H: Views + RuntimeAccess + ?Sized,
 {
     with_projectiles(game, |projectiles| action(&mut FileSelect(projectiles)))
 }

@@ -170,7 +170,9 @@ const QUARTER_TURN: u8 = 0x40;
 const SIGN: u16 = 0x8000;
 
 /// What Yapping Maw needs beyond the shared actor operations.
-pub trait Host: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess {
+pub trait Host:
+    crate::projection::Views + crate::legacy_overflow::SlotBytes + crate::runtime_access::RuntimeAccess
+{
     fn update_maw_visibility(&mut self, actor: i32);
 }
 

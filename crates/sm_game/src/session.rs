@@ -143,6 +143,8 @@ pub struct Session {
     pub saved_maps: crate::save_file::SavedMaps,
     /// The save's copy of the player block ($7E:D7C0..$D81F).
     pub saved_player: crate::save_file::SavedPlayer,
+    /// The explored maps as the save file packs them ($7E:D91C..$DE1B).
+    pub compressed_maps: crate::save_file::CompressedMaps,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
     pub room: Room,
@@ -324,6 +326,7 @@ impl Session {
             minimap: Default::default(),
             saved_maps: Default::default(),
             saved_player: Default::default(),
+            compressed_maps: Default::default(),
             inventory: Default::default(),
             mechanisms: Default::default(),
             feedback: Default::default(),

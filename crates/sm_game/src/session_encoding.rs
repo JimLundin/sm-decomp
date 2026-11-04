@@ -1024,6 +1024,7 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
         (0xd8f0, s.gameplay_flags.unused.as_mut_slice()),
         (0xd8f8, s.gameplay_flags.used_stations.as_mut_slice()),
         (0xd908, s.gameplay_flags.map_stations.as_mut_slice()),
+        (0xd910, s.gameplay_flags.spare.as_mut_slice()),
     ] {
         let end = base + flags.len();
         assert!(end <= byte_len, "short gameplay flags import");
@@ -1041,6 +1042,16 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
             for (offset, value) in area.iter_mut().enumerate() {
                 *value = bytes(SAVED_MAPS + index * 256 + offset);
             }
+        }
+    }
+    {
+        use crate::save_file::{COMPRESSED_MAPS, CompressedMaps};
+        assert!(
+            COMPRESSED_MAPS + CompressedMaps::BYTES <= byte_len,
+            "short compressed maps import"
+        );
+        for (offset, value) in s.compressed_maps.bytes.iter_mut().enumerate() {
+            *value = bytes(COMPRESSED_MAPS + offset);
         }
     }
     s.enemy_projectiles.spawn.angle = bytes(0x60b);
@@ -1231,6 +1242,10 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
             area.as_chunks::<2>().0,
         );
     }
+    visit.le_words(
+        crate::save_file::COMPRESSED_MAPS,
+        s.compressed_maps.bytes.as_chunks::<2>().0,
+    );
     crate::actors::codec::visit_common(s, |at, pairs| visit.le_words(at, pairs));
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
@@ -1270,6 +1285,7 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
         (0xd8f0, s.gameplay_flags.unused.as_slice()),
         (0xd8f8, s.gameplay_flags.used_stations.as_slice()),
         (0xd908, s.gameplay_flags.map_stations.as_slice()),
+        (0xd910, s.gameplay_flags.spare.as_slice()),
     ] {
         for (index, pair) in flags.as_chunks::<2>().0.iter().enumerate() {
             visit.word(base + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
@@ -1372,6 +1388,12 @@ fn saved_map_offset(at: usize) -> Option<usize> {
     at.checked_sub(SAVED_MAPS)
         .filter(|offset| *offset < SavedMaps::BYTES)
 }
+/// Byte `at`'s offset in the compressed maps, when it is one of theirs.
+fn compressed_map_offset(at: usize) -> Option<usize> {
+    use crate::save_file::{COMPRESSED_MAPS, CompressedMaps};
+    at.checked_sub(COMPRESSED_MAPS)
+        .filter(|offset| *offset < CompressedMaps::BYTES)
+}
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     owned_byte(s, at).or_else(|| scalar_byte(s, at))
 }
@@ -1405,6 +1427,12 @@ fn owned_byte(s: &Session, at: usize) -> Option<u8> {
     }
     if (0xd908..0xd910).contains(&at) {
         return Some(s.gameplay_flags.map_stations[at - 0xd908]);
+    }
+    if (0xd910..0xd914).contains(&at) {
+        return Some(s.gameplay_flags.spare[at - 0xd910]);
+    }
+    if let Some(offset) = compressed_map_offset(at) {
+        return Some(s.compressed_maps.bytes[offset]);
     }
     if (0x765..0x776).contains(&at) {
         return Some(s.menu_screens.graphics.bytes[at - 0x765]);
@@ -1629,6 +1657,14 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     }
     if (0xd908..0xd910).contains(&at) {
         s.gameplay_flags.map_stations[at - 0xd908] = value;
+        return true;
+    }
+    if (0xd910..0xd914).contains(&at) {
+        s.gameplay_flags.spare[at - 0xd910] = value;
+        return true;
+    }
+    if let Some(offset) = compressed_map_offset(at) {
+        s.compressed_maps.bytes[offset] = value;
         return true;
     }
     if (0x765..0x776).contains(&at) {

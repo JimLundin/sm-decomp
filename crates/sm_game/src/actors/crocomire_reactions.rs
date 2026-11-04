@@ -853,7 +853,8 @@ pub fn load_melting_tiles<L: Lease>(game: &mut L) {
         }
         let mut v3: u16 = native_graphics_word!(game, MELTING_TILES_DESTINATION, i);
         for _ in 0..=battle!(game.MeltWords) {
-            crate::word_transfers!(game, ascending, 1; native(v3) <- value(native_graphics_word!(game, (u32::from(bank) << 16) | u32::from(v2), 0)));
+            let word = native_graphics_word!(game, (u32::from(bank) << 16) | u32::from(v2), 0);
+            store_melting_tile_word(game, v3, word);
             v3 = (v3).wrapping_add(2);
             v2 = (v2).wrapping_add(2);
         }
@@ -868,6 +869,30 @@ pub fn load_melting_tiles<L: Lease>(game: &mut L) {
     // Then every column's height, from the last word down.
     game.session_mut().actors.crocomire_melt.column_heights = [[0; 32]; 4];
     game.words_stored();
+}
+
+/// Store `word`, in native byte order, to the melting tiles at RAM address
+/// `at`, the destination the ROM's melting tile table gives.
+fn store_melting_tile_word<L: Lease>(game: &mut L, at: u16, word: u16) {
+    use crate::presentation_workspace::{BYTES, FIRST, Point, Role};
+    let at = usize::from(at);
+    let buffer = MELTING_TILES_BUFFER..FIRST + BYTES;
+    let bytes = word.to_ne_bytes();
+    if buffer.contains(&at) && buffer.contains(&(at + 1)) {
+        let offset = at - MELTING_TILES_BUFFER;
+        for (lane, byte) in bytes.into_iter().enumerate() {
+            game.session_mut()
+                .publish_workspace_byte(Point::new(Role::MeltingTiles, offset + lane), byte)
+                .expect("melting tiles byte");
+        }
+        game.words_stored();
+    } else {
+        // LEGACY(original-overflow): a destination outside the melting tiles
+        // buffer reaches whatever RAM it names.
+        for (lane, byte) in bytes.into_iter().enumerate() {
+            legacy_overflow::set_slot_byte(game, at + lane, byte);
+        }
+    }
 }
 
 /// Power bomb reaction - Crocomire ($A4:B992).

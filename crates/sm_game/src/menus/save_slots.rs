@@ -3,9 +3,7 @@ use super::prelude::*;
 use crate::imported::Imported;
 use crate::menu_state::SaveSelection;
 use crate::projection::Field;
-// The save transfer of $D7C0..$DE1C and the packed map copy are still raw RAM.
-use crate::ram::RawRam as _;
-use crate::save_file::{self, PlayerWord, SaveHost};
+use crate::save_file::{self, FileWord, PlayerWord, SaveHost};
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
 
@@ -26,15 +24,17 @@ pub fn sram_offset<H: Host + ?Sized>(game: &H, slot: isize) -> u16 {
         .unwrap_or_else(|| rom.table_word(lorom_offset(ADDRESS) as usize, slot))
 }
 
-/// The save format's view of work RAM, SRAM and the slot offsets.
+/// The save format's view of the file's owners, SRAM and the slot offsets.
+/// The file's words go as the CPU holds them, in native byte order.
 struct SaveFile<'a, H: ?Sized>(&'a mut H);
 
 impl<H: Host + ?Sized> SaveHost for SaveFile<'_, H> {
-    fn ram_word(&self, at: usize) -> u16 {
-        u16::from_ne_bytes([self.0.ram().read_byte(at), self.0.ram().read_byte(at + 1)])
+    fn file_word(&self, word: FileWord) -> u16 {
+        crate::word_transfers::stored_native(self.0.view_word(Field::SaveFile(word)))
     }
-    fn set_ram_word(&mut self, at: usize, value: u16) {
-        self.0.ram().copy_in(at, &value.to_ne_bytes());
+    fn set_file_word(&mut self, word: FileWord, value: u16) {
+        let value = crate::word_transfers::stored_native(value);
+        self.0.set_view_word(Field::SaveFile(word), value);
     }
     fn sram_word(&self, at: usize) -> u16 {
         self.0.sram().word(at)
@@ -62,7 +62,11 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     game.observe_flags_save(0);
     // The player block into the save's copy, from its last word down.
     for word in PlayerWord::ALL.into_iter().rev() {
-        copy_word(game, Field::Player(word), Field::SavedPlayer(word));
+        copy_word(
+            game,
+            Field::Player(word),
+            Field::SaveFile(FileWord::Player(word)),
+        );
     }
     game.observe_flags_save(1);
     // The current area's explored map into its saved map, word by word.
@@ -99,7 +103,11 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
     if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
         // The save's copy back into the player block, from its last word down.
         for word in PlayerWord::ALL.into_iter().rev() {
-            copy_word(game, Field::SavedPlayer(word), Field::Player(word));
+            copy_word(
+                game,
+                Field::SaveFile(FileWord::Player(word)),
+                Field::Player(word),
+            );
         }
         transfer_map(Direction::Load, game);
         crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
@@ -137,14 +145,14 @@ fn transfer_map<H: Host + ?Sized>(direction: Direction, game: &mut H) {
         let mut packed = usize::from(crate::menu_lists::area_map_bit_offset(game, area as isize));
         let mut record = 0;
         loop {
-            let unpacked = 0xcd52 + area * 256 + usize::from(map.byte(record));
-            let packed_at = 0xd91c + packed;
+            let unpacked = Field::SavedMapAt(area * 256 + usize::from(map.byte(record)));
+            let compressed = Field::CompressedMapAt(packed);
             let (source, destination) = match direction {
-                Direction::Save => (unpacked, packed_at),
-                Direction::Load => (packed_at, unpacked),
+                Direction::Save => (unpacked, compressed),
+                Direction::Load => (compressed, unpacked),
             };
-            let value = game.ram().read_byte(source);
-            game.ram().write_byte(destination, value);
+            let [value, _] = game.view_word(source).to_le_bytes();
+            game.set_view_low_byte(destination, value);
             record += 1;
             packed += 1;
             remaining -= 1;

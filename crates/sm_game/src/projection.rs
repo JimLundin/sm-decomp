@@ -13,13 +13,8 @@
 //! lease is current, and for `Game` over the installed Session's projection
 //! or its RAM image. The byte layout stays with `session_encoding` and the
 //! views' layouts; the byte access stays in `sm`.
-//!
-//! The `image_*` helpers address the work RAM image directly, for a view that
-//! must not admit the owned Session (the enemy projectile table when no lease
-//! can open).
 use crate::cinematic_state as cinematic;
 use crate::menus::options_objects::objects;
-use crate::ram::{RawRam as _, WorkRamAccess};
 
 /// A word a view reads or stores, named by its owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -114,8 +109,19 @@ pub enum Field {
     /// auto-cancel word ($09EC) and the control's bindings store through
     /// the byte path.
     Player(PlayerWord),
-    /// A word of the save's copy of the player block ($D7C0..$D81F).
-    SavedPlayer(PlayerWord),
+    /// A word of the save file's block ($D7C0..$DE1B), from the owner that
+    /// holds it: the save's copy of the player block, the gameplay flags, the
+    /// save selection, the room's loaded items count and the compressed
+    /// maps. The flags and the maps hold bytes, so their stores take the byte
+    /// path.
+    SaveFile(FileWord),
+    /// The word at byte `offset` of the saved explored maps ($CD52 +
+    /// offset): the map's byte, then the next one. The maps hold bytes, so
+    /// stores take the byte path.
+    SavedMapAt(usize),
+    /// The word at byte `offset` of the compressed maps ($D91C + offset),
+    /// as [`Self::SavedMapAt`] for the saved maps.
+    CompressedMapAt(usize),
 }
 
 impl Field {
@@ -163,7 +169,9 @@ impl Field {
             Self::SavedMap(index) => crate::save_file::SAVED_MAPS + 2 * index,
             Self::MapStations(index) => crate::ram::bytes::MAP_STATION_BYTE_ARRAY + index,
             Self::Player(word) => crate::save_file::PLAYER + 2 * word.index(),
-            Self::SavedPlayer(word) => crate::save_file::SAVED_PLAYER + 2 * word.index(),
+            Self::SaveFile(word) => word.address(),
+            Self::SavedMapAt(offset) => crate::save_file::SAVED_MAPS + offset,
+            Self::CompressedMapAt(offset) => crate::save_file::COMPRESSED_MAPS + offset,
         }
     }
 
@@ -235,7 +243,15 @@ impl Field {
                 u16::from_le_bytes([*stations.get(index)?, *stations.get(index + 1)?])
             }
             Self::Player(word) => return player_word(session, word),
-            Self::SavedPlayer(word) => session.saved_player.get(word),
+            Self::SaveFile(word) => return save_file_word(session, word),
+            Self::SavedMapAt(offset) => {
+                let maps = &session.saved_maps;
+                u16::from_le_bytes([maps.byte(offset)?, maps.byte(offset + 1)?])
+            }
+            Self::CompressedMapAt(offset) => {
+                let bytes = &session.compressed_maps.bytes;
+                u16::from_le_bytes([*bytes.get(offset)?, *bytes.get(offset + 1)?])
+            }
         })
     }
 
@@ -302,7 +318,8 @@ impl Field {
             Self::Bg2Scroll(axis) => session.room.camera.bg2_scroll.get_mut(axis)?,
             Self::ExploredMap(_) | Self::SavedMap(_) | Self::MapStations(_) => return None,
             Self::Player(word) => return player_word_mut(session, word),
-            Self::SavedPlayer(word) => session.saved_player.get_mut(word),
+            Self::SaveFile(word) => return save_file_word_mut(session, word),
+            Self::SavedMapAt(_) | Self::CompressedMapAt(_) => return None,
         })
     }
 }
@@ -360,9 +377,37 @@ fn player_word_mut(session: &mut Session, word: PlayerWord) -> Option<&mut u16> 
     })
 }
 
+/// Save file `word` as its owner holds it.
+fn save_file_word(session: &Session, word: FileWord) -> Option<u16> {
+    let selection = &session.menu_screens.save_selection;
+    Some(match word {
+        FileWord::Player(word) => session.saved_player.get(word),
+        FileWord::Flags(index) => session.gameplay_flags.word(index)?,
+        FileWord::LoadingGameState => selection.loading_game_state,
+        FileWord::SaveStation => selection.save_station,
+        FileWord::SaveArea => selection.save_area,
+        FileWord::LoadedItems => session.room.loaded_items,
+        FileWord::CompressedMap(index) => session.compressed_maps.word(index)?,
+    })
+}
+
+/// Save file `word`'s Session field, for a store. The flags and the
+/// compressed maps hold bytes and keep the byte path.
+fn save_file_word_mut(session: &mut Session, word: FileWord) -> Option<&mut u16> {
+    let selection = &mut session.menu_screens.save_selection;
+    Some(match word {
+        FileWord::Player(word) => session.saved_player.get_mut(word),
+        FileWord::LoadingGameState => &mut selection.loading_game_state,
+        FileWord::SaveStation => &mut selection.save_station,
+        FileWord::SaveArea => &mut selection.save_area,
+        FileWord::LoadedItems => &mut session.room.loaded_items,
+        FileWord::Flags(_) | FileWord::CompressedMap(_) => return None,
+    })
+}
+
 use crate::cinematic_state::{Array as CinematicArray, Word as CinematicWord};
 use crate::room_view::{EffectWord, Word as RoomWord};
-use crate::save_file::PlayerWord;
+use crate::save_file::{FileWord, PlayerWord};
 use crate::session::Session;
 
 /// Cinematic `word`'s Session field: a named word outside the enemy
@@ -578,26 +623,6 @@ pub trait Views {
     /// Store each of `words` whose index in visit order `select` accepts, in
     /// visit order.
     fn store_words(&mut self, words: &mut impl Layout, select: impl FnMut(usize) -> bool);
-}
-
-/// The little-endian word at `at` of the work RAM image.
-pub fn image_word<H: WorkRamAccess + ?Sized>(h: &H, at: usize) -> u16 {
-    let ram = h.ram();
-    u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)])
-}
-
-/// Store `value` as the little-endian word at `at` of the work RAM image,
-/// low byte then high.
-pub fn set_image_word<H: WorkRamAccess + ?Sized>(h: &H, at: usize, value: u16) {
-    let [low, high] = value.to_le_bytes();
-    let ram = h.ram();
-    ram.write_byte(at, low);
-    ram.write_byte(at + 1, high);
-}
-
-/// Copy `bytes` into the work RAM image at `at`.
-pub fn copy_into_image<H: WorkRamAccess + ?Sized>(h: &H, at: usize, bytes: &[u8]) {
-    h.ram().copy_in(at, bytes);
 }
 
 /// A host over a Session's projection, as the compat game's is while one is
@@ -979,7 +1004,11 @@ mod tests {
         fields.extend((0..1024).map(Field::SavedMap));
         fields.extend((0..7).map(Field::MapStations));
         fields.extend(PlayerWord::ALL.map(Field::Player));
-        fields.extend(PlayerWord::ALL.map(Field::SavedPlayer));
+        fields.extend(crate::save_file::FileWord::all().map(Field::SaveFile));
+        let maps = crate::save_file::SavedMaps::BYTES;
+        fields.extend((0..maps - 1).map(Field::SavedMapAt));
+        let compressed = crate::save_file::CompressedMaps::BYTES;
+        fields.extend((0..compressed - 1).map(Field::CompressedMapAt));
         fields
     }
 
