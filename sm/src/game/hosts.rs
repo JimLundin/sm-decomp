@@ -425,9 +425,12 @@ impl sm_game::hud::HudPlayer for crate::game::session_runtime::Runtime<'_> {
 impl sm_game::hud::HudFrameHost for crate::game::session_runtime::Runtime<'_> {
     fn raw_frame_counter_byte(&self) -> u8 {
         // As on the game: the raw work-RAM byte, not the Display projection.
-        self.samus_game()
-            .ram()
-            .read_byte(sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE)
+        // The Legacy presentation's byte is the one its export publishes.
+        let at = sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE;
+        if self.persistent_is_current() && !self.has_owned_display() {
+            return self.byte(at);
+        }
+        self.samus_game().ram().read_byte(at)
     }
     fn point_pointer_scratch(&mut self, address: u16) {
         crate::game::session_runtime::Runtime::point_pointer_scratch(self, address);

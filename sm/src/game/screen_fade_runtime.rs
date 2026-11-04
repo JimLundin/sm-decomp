@@ -159,7 +159,12 @@ impl Runtime<'_> {
         }
         // Keep this lazy RAW read: an owned display's brightness projection is
         // a different value. No read happens while the signed delay is positive.
-        let brightness = self.game.ram().read_byte(0x51);
+        // The Legacy presentation's byte is the one its export publishes.
+        let brightness = if self.has_owned_display() {
+            self.game.ram().read_byte(0x51)
+        } else {
+            self.byte(0x51)
+        };
         let Some((next, complete)) =
             self.with_screen_fade(|screen| screen.cinematic_brightness(fade, brightness))
         else {

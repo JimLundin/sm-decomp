@@ -36,6 +36,16 @@ impl From<Word> for usize {
         }
     }
 }
+/// Where the scroll words start in work RAM ($B1), BG1 H first.
+pub const FIRST: usize = 0xb1;
+/// The scroll words' bytes ($B1..$C0).
+pub const BYTES: std::ops::Range<usize> = FIRST..FIRST + 2 * WORDS.len();
+impl Word {
+    /// The first of the two work RAM bytes the original keeps the word in.
+    pub fn address(self) -> usize {
+        FIRST + 2 * usize::from(self)
+    }
+}
 
 /// Residency metadata belongs to the adapter, never to persisted gameplay.
 /// Legacy presentation has no Display; this owner never manufactures one.

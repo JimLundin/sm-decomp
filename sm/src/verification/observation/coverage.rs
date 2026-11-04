@@ -236,23 +236,12 @@ pub(super) fn shared_summary(classes: &Classes) -> String {
     )
 }
 
-/// The ranges the host's typed domains hold while the presentation is
-/// Legacy (an owned Display carries them in the Session): the frame display
-/// (`crate::game_state::frame_display_ranges`, `display::preparation`) and
-/// the BG scroll words (`display_scroll`, `$B1..C0`).
+/// The ranges an engine owner outside the Session holds: none since the
+/// Legacy presentation owns the frame display and the BG scroll words
+/// (`LegacyPresentation::frame`, `scroll`), which the host's typed domains
+/// held before. A new holder is listed here, so the coverage line counts it.
 pub(super) fn held() -> Vec<Held> {
-    let mut held: Vec<Held> = crate::game_state::frame_display_ranges()
-        .into_iter()
-        .map(|range| Held {
-            owner: "frame display",
-            range,
-        })
-        .collect();
-    held.push(Held {
-        owner: "scroll",
-        range: 0xb1..0xc1,
-    });
-    held
+    Vec::new()
 }
 
 /// Every range the coverage map counts as unowned: the normalized ranges and

@@ -2049,3 +2049,97 @@ fn queued_transfer_tails_round_trip() {
         ],
     );
 }
+
+/// The frame display and the BG scroll words the Legacy presentation owns,
+/// as the original lays them out: the register mirrors ($51..$86), the
+/// interrupt commands ($A7, $AB), the scroll words ($B1..$C0), the NMI
+/// counters ($05B4..$05BB), the HUD values ($077C, $09EC, $0A06..$0A0F) and
+/// the HUD tilemap's cells outside the minimap ($7E:C608..$C6C7): the 258
+/// bytes the host's frame display and scroll domains held.
+fn frame_display_bytes() -> Vec<usize> {
+    [
+        0x51..0x87,
+        0xa7..0xa9,
+        0xab..0xad,
+        0xb1..0xc1,
+        0x5b4..0x5bc,
+        0x77c..0x77e,
+        0x9ec..0x9ee,
+        0xa06..0xa10,
+        0xc608..0xc63c,
+        0xc646..0xc67c,
+        0xc686..0xc6bc,
+        0xc6c6..0xc6c8,
+    ]
+    .into_iter()
+    .flatten()
+    .collect()
+}
+
+/// The Legacy presentation owns the frame display and the scroll words byte
+/// by byte, and none of the minimap's HUD cells. The frame display's
+/// committed fake mode ($07EC) and NMI acknowledgment ($0782) stay with
+/// their other owners, the Ceres HDMA table word and RAM: the presentation
+/// neither decodes, projects, stores nor encodes them.
+#[test]
+fn legacy_frame_display_round_trips_every_byte() {
+    let bytes = frame_display_bytes();
+    assert_eq!(bytes.len(), 258);
+    let base = session();
+    assert!(!base.presentation.is_owned());
+    for elsewhere in [0x782, 0x7ec] {
+        assert!(sm_game::session_owners::kept_elsewhere(elsewhere));
+        assert_eq!(
+            base.presentation.legacy_display_byte(elsewhere),
+            None,
+            "{elsewhere:#x}"
+        );
+    }
+    let mut s = base.clone();
+    assert!(write_projected_byte(&mut s, 0x7ec, 0x5a));
+    assert_eq!(s.room.ceres_hdma_table.to_le_bytes()[1], 0x5a);
+    assert!(!write_projected_byte(&mut s, 0x782, 0x5a));
+    for &at in &bytes {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        for &other in &bytes {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                s.presentation.legacy_display_byte(other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for minimap in (0xc63c..0xc646).chain(0xc67c..0xc686).chain(0xc6bc..0xc6c6) {
+        assert_eq!(
+            base.presentation.legacy_display_byte(minimap),
+            None,
+            "{minimap:#x}"
+        );
+    }
+    for seed in [11, 0x3c5a_9e07] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        let encoded = encoded(&s);
+        for &at in &bytes {
+            assert_eq!(encoded.get(&at), Some(&ram[at]), "encode {at:#x}");
+            assert_eq!(projected_byte(&s, at), Some(ram[at]), "projection {at:#x}");
+        }
+        for word in sm_game::display_scroll::WORDS {
+            let at = word.address();
+            assert_eq!(s.presentation.scroll_word(word), read(&ram, at), "{word:?}");
+        }
+        // The bytes other owners keep are not in the frame display's image:
+        // RAM's values there decode to the same presentation.
+        let mut moved = ram.clone();
+        for elsewhere in [0x782, 0x7ec] {
+            moved[elsewhere] ^= 0x5a;
+        }
+        assert!(
+            decoded(&moved).presentation == s.presentation,
+            "seed {seed:#x}: the presentation decodes $0782 or $07EC"
+        );
+    }
+}

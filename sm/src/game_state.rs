@@ -3032,7 +3032,7 @@ impl Game {
 }
 
 pub(crate) fn scroll_address(word: sm_game::display_scroll::Word) -> usize {
-    0xb1 + 2 * usize::from(word)
+    word.address()
 }
 fn scroll_lane(at: usize) -> (sm_game::display_scroll::Word, usize) {
     let offset = at - 0xb1;
@@ -3075,18 +3075,7 @@ impl Game {
         let (word, offset) = scroll_lane(at);
         self.scroll_word(word).to_le_bytes()[offset]
     }
-    pub(crate) fn set_scroll_byte(&mut self, at: usize, byte: u8) {
-        let (word, offset) = scroll_lane(at);
-        let mut bytes = self.scroll_word(word).to_le_bytes();
-        bytes[offset] = byte;
-        self.publish_scroll(word, u16::from_le_bytes(bytes), Some(offset));
-    }
-    fn publish_scroll(
-        &mut self,
-        word: sm_game::display_scroll::Word,
-        value: u16,
-        byte: Option<usize>,
-    ) {
+    fn publish_scroll(&mut self, word: sm_game::display_scroll::Word, value: u16) {
         if self.persistent_session_current() {
             if let persistent_session::AggregateSlot::Ready(state) =
                 &mut self.persistent_session.aggregate
@@ -3094,12 +3083,10 @@ impl Game {
                 if let Ok(display) = state.gameplay.presentation.owner_mut() {
                     display.state.controls.scroll_words[usize::from(word)] = value;
                     for (offset, byte_value) in value.to_le_bytes().into_iter().enumerate() {
-                        if byte.is_none_or(|selected| selected == offset) {
-                            self.compatibility_write_owned_byte(
-                                scroll_address(word) + offset,
-                                byte_value,
-                            );
-                        }
+                        self.compatibility_write_owned_byte(
+                            scroll_address(word) + offset,
+                            byte_value,
+                        );
                     }
                     *self.persistent_session.scroll.get_mut() =
                         sm_game::display_scroll::ScrollDomain::InSession {
@@ -3155,11 +3142,9 @@ impl Game {
             completed: false,
         };
         for (offset, byte_value) in value.to_le_bytes().into_iter().enumerate() {
-            if byte.is_none_or(|selected| selected == offset) {
-                publish
-                    .game
-                    .compatibility_write_byte(scroll_address(word) + offset, byte_value);
-            }
+            publish
+                .game
+                .compatibility_write_byte(scroll_address(word) + offset, byte_value);
         }
         publish.completed = true;
     }
@@ -3210,7 +3195,7 @@ impl Game {
         ])
     }
     pub(crate) fn set_scroll_word(&mut self, word: sm_game::display_scroll::Word, value: u16) {
-        self.publish_scroll(word, value, None);
+        self.publish_scroll(word, value);
     }
     pub(crate) fn physical_scroll_byte(
         &self,
@@ -3488,73 +3473,7 @@ pub(crate) fn frame_display_ranges() -> [Range<usize>; 19] {
     ]
 }
 pub(crate) fn frame_field_address(field: sm_game::display::preparation::Field) -> usize {
-    use sm_game::display::preparation::Field;
-    match field {
-        Field::Brightness => 0x51,
-        Field::ObjectLayout => 0x52,
-        Field::ObjectAddressLow => 0x53,
-        Field::ObjectAddressHigh => 0x54,
-        Field::Mode => 0x55,
-        Field::FakeMode => 0x56,
-        Field::Mosaic => 0x57,
-        Field::Screens0 => 0x58,
-        Field::Screens1 => 0x59,
-        Field::Screens2 => 0x5a,
-        Field::Background3Map => 0x5b,
-        Field::Screens3 => 0x5c,
-        Field::Characters0 => 0x5d,
-        Field::Characters1 => 0x5e,
-        Field::AffineSelection => 0x5f,
-        Field::WindowSelection0 => 0x60,
-        Field::WindowSelection1 => 0x61,
-        Field::WindowSelection2 => 0x62,
-        Field::WindowPositions0 => 0x63,
-        Field::WindowPositions1 => 0x64,
-        Field::WindowPositions2 => 0x65,
-        Field::WindowPositions3 => 0x66,
-        Field::WindowLogic0 => 0x67,
-        Field::WindowLogic1 => 0x68,
-        Field::MainLayers => 0x69,
-        Field::PreviousMainLayers => 0x6a,
-        Field::SubLayers => 0x6b,
-        Field::MainWindow => 0x6c,
-        Field::SubWindow => 0x6d,
-        Field::NextColorSelection => 0x6e,
-        Field::ColorSelection => 0x6f,
-        Field::PreviousColorSelection => 0x70,
-        Field::NextColorMath => 0x71,
-        Field::ColorMath => 0x72,
-        Field::PreviousColorMath => 0x73,
-        Field::FixedColor0 => 0x74,
-        Field::FixedColor1 => 0x75,
-        Field::FixedColor2 => 0x76,
-        Field::Geometry => 0x77,
-        Field::AffineWords0Low => 0x78,
-        Field::AffineWords0High => 0x79,
-        Field::AffineWords1Low => 0x7a,
-        Field::AffineWords1High => 0x7b,
-        Field::AffineWords2Low => 0x7c,
-        Field::AffineWords2High => 0x7d,
-        Field::AffineWords3Low => 0x7e,
-        Field::AffineWords3High => 0x7f,
-        Field::AffineWords4Low => 0x80,
-        Field::AffineWords4High => 0x81,
-        Field::AffineWords5Low => 0x82,
-        Field::AffineWords5High => 0x83,
-        Field::NmiEnable => 0x84,
-        Field::HdmaEnable => 0x85,
-        Field::MemorySelect => 0x86,
-        Field::NmiPending => 0x5b4,
-        Field::NmiFrameByte => 0x5b5,
-        Field::NmiFrameWordLow => 0x5b6,
-        Field::NmiFrameWordHigh => 0x5b7,
-        Field::NmiIncludingLagLow => 0x5b8,
-        Field::NmiIncludingLagHigh => 0x5b9,
-        Field::NmiMissed => 0x5ba,
-        Field::NmiMaxMissed => 0x5bb,
-        Field::NmiAcknowledgment => 0x782,
-        Field::CommittedFakeMode => 0x7ec,
-    }
+    field.address()
 }
 pub(crate) fn frame_hud_address(index: isize) -> usize {
     let at = 0xc608usize
@@ -3565,34 +3484,13 @@ pub(crate) fn frame_hud_address(index: isize) -> usize {
     at
 }
 pub(crate) fn frame_word_address(word: sm_game::display::preparation::Word) -> usize {
-    use sm_game::display::preparation::Word;
-    match word {
-        Word::PendingInterrupt => 0xa7,
-        Word::CurrentInterrupt => 0xab,
-        Word::HudPalette => 0x77c,
-        Word::HudAutoCancel => 0x9ec,
-        Word::PreviousHealth => 0xa06,
-        Word::PreviousMissiles => 0xa08,
-        Word::PreviousSupers => 0xa0a,
-        Word::PreviousBombs => 0xa0c,
-        Word::PreviousSelection => 0xa0e,
-    }
+    word.address()
 }
 
 #[forbid(unsafe_code)]
 impl Game {
     fn selected_frame_display(&self) -> sm_game::display::preparation::State {
-        sm_game::display::preparation::State::read(
-            |field| self.ram.read_byte(frame_field_address(field)),
-            |word| {
-                let at = frame_word_address(word);
-                u16::from_le_bytes([self.ram.read_byte(at), self.ram.read_byte(at + 1)])
-            },
-            |index| {
-                let at = 0xc608 + 2 * index;
-                u16::from_le_bytes([self.ram.read_byte(at), self.ram.read_byte(at + 1)])
-            },
-        )
+        sm_game::display::preparation::State::decode(&|at| self.ram.read_byte(at))
     }
     pub(crate) fn revoke_frame_display_domain(&mut self) {
         *self.persistent_session.frame_display.get_mut() =

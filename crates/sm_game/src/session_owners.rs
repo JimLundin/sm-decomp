@@ -1048,6 +1048,72 @@ pub struct LegacyPresentation {
     objects: crate::scene::state::ObjectStaging,
     /// Samus's top and bottom half upload requests ($071D..$0722).
     samus_requests: [SamusRequest; 2],
+    /// The frame display: the register mirrors ($51..$86), the NMI counters
+    /// ($05B4..$05BB), the interrupt commands ($A7, $AB), the HUD values
+    /// ($077C, $09EC, $0A06..$0A0F) and the HUD tilemap outside the minimap
+    /// ($7E:C608..$C6C7). The two bytes another owner keeps
+    /// (`kept_elsewhere`) are not in its RAM image: they are neither decoded,
+    /// projected, stored nor encoded, and their fields stay zero.
+    frame: crate::display::preparation::State,
+    /// The BG scroll words ($B1..$C0), BG1 H first.
+    scroll: [u16; 8],
+}
+/// Whether work RAM byte `at` is one of the frame display's that another
+/// owner keeps while the presentation is Legacy, as the host's frame display
+/// left them: the committed fake mode's $07EC is the Ceres HDMA table word's
+/// high byte (`room.ceres_hdma_table`, which Ceres Ridley's room setup
+/// stores), and the NMI acknowledgment's $0782 stays RAM's (snesrev's counter
+/// RAM in `NORMALIZED_RAM`). An owned Display keeps both in its state.
+pub fn kept_elsewhere(at: usize) -> bool {
+    use crate::display::preparation::{Field, Lane};
+    matches!(
+        crate::display::preparation::lane(at),
+        Some(Lane::Field(
+            Field::CommittedFakeMode | Field::NmiAcknowledgment
+        ))
+    )
+}
+impl LegacyPresentation {
+    /// The frame display work RAM `bytes` holds, without the bytes other
+    /// owners keep: a Session decoded from RAM and one retained across leases
+    /// hold the same frame display whatever RAM holds at $07EC and $0782.
+    fn decode_frame(bytes: &impl Fn(usize) -> u8) -> crate::display::preparation::State {
+        crate::display::preparation::State::decode(&|at| {
+            if kept_elsewhere(at) { 0 } else { bytes(at) }
+        })
+    }
+    /// Work RAM byte `at`, if the frame display or the scroll words hold it.
+    fn projected_byte(&self, at: usize) -> Option<u8> {
+        if kept_elsewhere(at) {
+            return None;
+        }
+        if let Some(byte) = self.frame.projected_byte(at) {
+            return Some(byte);
+        }
+        let offset = at.checked_sub(crate::display_scroll::FIRST)?;
+        let word = self.scroll.get(offset / 2)?;
+        Some(word.to_le_bytes()[offset % 2])
+    }
+    /// Store work RAM byte `at` in the frame display or the scroll words;
+    /// false when neither holds it.
+    fn write_projected_byte(&mut self, at: usize, value: u8) -> bool {
+        if kept_elsewhere(at) {
+            return false;
+        }
+        if self.frame.write_projected_byte(at, value) {
+            return true;
+        }
+        let Some(offset) = at.checked_sub(crate::display_scroll::FIRST) else {
+            return false;
+        };
+        let Some(word) = self.scroll.get_mut(offset / 2) else {
+            return false;
+        };
+        let mut bytes = word.to_le_bytes();
+        bytes[offset % 2] = value;
+        *word = u16::from_le_bytes(bytes);
+        true
+    }
 }
 /// The object staging bytes, from the table's first entry through the cursor.
 pub const OBJECTS: std::ops::Range<usize> = 0x370..0x592;
@@ -1200,8 +1266,9 @@ impl Presentation {
                 self.samus_request((offset - 2) / 2).pointer.to_le_bytes()[offset % 2]
             });
         }
-        let Self::Owned { display, .. } = self else {
-            return None;
+        let display = match self {
+            Self::Legacy(state) => return state.projected_byte(at),
+            Self::Owned { display, .. } => display,
         };
         let state = &display.owner().state;
         let mut projected = None;
@@ -1250,8 +1317,9 @@ impl Presentation {
             }
             return true;
         }
-        let Self::Owned { display, .. } = self else {
-            return false;
+        let display = match self {
+            Self::Legacy(state) => return state.write_projected_byte(at, value),
+            Self::Owned { display, .. } => display,
         };
         let state = &mut display.owner_mut().state;
         let write_word = |word: &mut u16, part: usize| {
@@ -1311,6 +1379,25 @@ impl Presentation {
                     bottom_high,
                 ],
             );
+            // Each run of the frame display's spans, without the bytes it
+            // leaves to their other owners.
+            state.frame.encode(|at, bytes| {
+                let mut first = 0;
+                for offset in (0..bytes.len()).filter(|&offset| kept_elsewhere(at + offset)) {
+                    if first < offset {
+                        span(at + first, &bytes[first..offset]);
+                    }
+                    first = offset + 1;
+                }
+                if first < bytes.len() {
+                    span(at + first, &bytes[first..]);
+                }
+            });
+            let mut scroll = [0; 16];
+            for (bytes, word) in scroll.as_chunks_mut::<2>().0.iter_mut().zip(state.scroll) {
+                *bytes = word.to_le_bytes();
+            }
+            span(crate::display_scroll::FIRST, &scroll);
         }
         if let Self::Owned { display, .. } = self {
             let state = &display.owner().state;
@@ -1347,12 +1434,20 @@ impl Presentation {
                 produced: Vec::new(),
             },
             samus_requests: Default::default(),
+            frame: crate::display::preparation::State::blank(),
+            scroll: [0; 8],
         }))
     }
-    /// Load the Legacy object staging and Samus half requests from RAM; an
-    /// owned Display adopts its own with the rest of its projection.
+    /// Load the Legacy object staging, Samus half requests, frame display and
+    /// scroll words from RAM; an owned Display adopts its own with the rest
+    /// of its projection.
     pub fn import_legacy_projection(&mut self, bytes: &impl Fn(usize) -> u8) {
         if let Self::Legacy(state) = self {
+            state.frame = LegacyPresentation::decode_frame(bytes);
+            state.scroll = crate::display_scroll::WORDS.map(|word| {
+                let at = word.address();
+                u16::from_le_bytes([bytes(at), bytes(at + 1)])
+            });
             for (index, request) in state.samus_requests.iter_mut().enumerate() {
                 let pointer = SAMUS_REQUESTS.start + 2 + 2 * index;
                 *request = SamusRequest {
@@ -1405,6 +1500,32 @@ impl Presentation {
             Self::Owned { display, .. } => {
                 let half = &mut display.owner_mut().state.samus[index];
                 (&mut half.enabled, &mut half.pointer)
+            }
+        }
+    }
+    /// Work RAM byte `at`, if the Legacy presentation's frame display or
+    /// scroll words hold it; none under an owned Display.
+    pub fn legacy_display_byte(&self, at: usize) -> Option<u8> {
+        match self {
+            Self::Legacy(state) => state.projected_byte(at),
+            Self::Owned { .. } => None,
+        }
+    }
+    /// Scroll word `word`, from the selected owner.
+    pub fn scroll_word(&self, word: crate::display_scroll::Word) -> u16 {
+        match self {
+            Self::Legacy(state) => state.scroll[usize::from(word)],
+            Self::Owned { display, .. } => {
+                display.owner().state.controls.scroll_words[usize::from(word)]
+            }
+        }
+    }
+    /// Store scroll word `word` in the selected owner.
+    pub fn set_scroll_word(&mut self, word: crate::display_scroll::Word, value: u16) {
+        match self {
+            Self::Legacy(state) => state.scroll[usize::from(word)] = value,
+            Self::Owned { display, .. } => {
+                display.owner_mut().state.controls.scroll_words[usize::from(word)] = value;
             }
         }
     }

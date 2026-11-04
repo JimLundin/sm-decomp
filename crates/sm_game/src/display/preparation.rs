@@ -496,6 +496,232 @@ impl State {
         true
     }
 }
+
+impl Field {
+    /// The work RAM byte the original keeps the field in.
+    pub fn address(self) -> usize {
+        match self {
+            Self::Brightness => 0x51,
+            Self::ObjectLayout => 0x52,
+            Self::ObjectAddressLow => 0x53,
+            Self::ObjectAddressHigh => 0x54,
+            Self::Mode => 0x55,
+            Self::FakeMode => 0x56,
+            Self::Mosaic => 0x57,
+            Self::Screens0 => 0x58,
+            Self::Screens1 => 0x59,
+            Self::Screens2 => 0x5a,
+            Self::Background3Map => 0x5b,
+            Self::Screens3 => 0x5c,
+            Self::Characters0 => 0x5d,
+            Self::Characters1 => 0x5e,
+            Self::AffineSelection => 0x5f,
+            Self::WindowSelection0 => 0x60,
+            Self::WindowSelection1 => 0x61,
+            Self::WindowSelection2 => 0x62,
+            Self::WindowPositions0 => 0x63,
+            Self::WindowPositions1 => 0x64,
+            Self::WindowPositions2 => 0x65,
+            Self::WindowPositions3 => 0x66,
+            Self::WindowLogic0 => 0x67,
+            Self::WindowLogic1 => 0x68,
+            Self::MainLayers => 0x69,
+            Self::PreviousMainLayers => 0x6a,
+            Self::SubLayers => 0x6b,
+            Self::MainWindow => 0x6c,
+            Self::SubWindow => 0x6d,
+            Self::NextColorSelection => 0x6e,
+            Self::ColorSelection => 0x6f,
+            Self::PreviousColorSelection => 0x70,
+            Self::NextColorMath => 0x71,
+            Self::ColorMath => 0x72,
+            Self::PreviousColorMath => 0x73,
+            Self::FixedColor0 => 0x74,
+            Self::FixedColor1 => 0x75,
+            Self::FixedColor2 => 0x76,
+            Self::Geometry => 0x77,
+            Self::AffineWords0Low => 0x78,
+            Self::AffineWords0High => 0x79,
+            Self::AffineWords1Low => 0x7a,
+            Self::AffineWords1High => 0x7b,
+            Self::AffineWords2Low => 0x7c,
+            Self::AffineWords2High => 0x7d,
+            Self::AffineWords3Low => 0x7e,
+            Self::AffineWords3High => 0x7f,
+            Self::AffineWords4Low => 0x80,
+            Self::AffineWords4High => 0x81,
+            Self::AffineWords5Low => 0x82,
+            Self::AffineWords5High => 0x83,
+            Self::NmiEnable => 0x84,
+            Self::HdmaEnable => 0x85,
+            Self::MemorySelect => 0x86,
+            Self::NmiPending => 0x5b4,
+            Self::NmiFrameByte => 0x5b5,
+            Self::NmiFrameWordLow => 0x5b6,
+            Self::NmiFrameWordHigh => 0x5b7,
+            Self::NmiIncludingLagLow => 0x5b8,
+            Self::NmiIncludingLagHigh => 0x5b9,
+            Self::NmiMissed => 0x5ba,
+            Self::NmiMaxMissed => 0x5bb,
+            Self::NmiAcknowledgment => 0x782,
+            Self::CommittedFakeMode => 0x7ec,
+        }
+    }
+}
+impl Word {
+    /// The first of the two work RAM bytes the original keeps the word in.
+    pub fn address(self) -> usize {
+        match self {
+            Self::PendingInterrupt => 0xa7,
+            Self::CurrentInterrupt => 0xab,
+            Self::HudPalette => 0x77c,
+            Self::HudAutoCancel => 0x9ec,
+            Self::PreviousHealth => 0xa06,
+            Self::PreviousMissiles => 0xa08,
+            Self::PreviousSupers => 0xa0a,
+            Self::PreviousBombs => 0xa0c,
+            Self::PreviousSelection => 0xa0e,
+        }
+    }
+}
+/// The words in their RAM order.
+pub const WORDS: [Word; 9] = [
+    Word::PendingInterrupt,
+    Word::CurrentInterrupt,
+    Word::HudPalette,
+    Word::HudAutoCancel,
+    Word::PreviousHealth,
+    Word::PreviousMissiles,
+    Word::PreviousSupers,
+    Word::PreviousBombs,
+    Word::PreviousSelection,
+];
+/// The NMI's counters in their RAM order ($05B4..$05BB).
+const NMI_FIELDS: [Field; 8] = [
+    Field::NmiPending,
+    Field::NmiFrameByte,
+    Field::NmiFrameWordLow,
+    Field::NmiFrameWordHigh,
+    Field::NmiIncludingLagLow,
+    Field::NmiIncludingLagHigh,
+    Field::NmiMissed,
+    Field::NmiMaxMissed,
+];
+/// Where the HUD tilemap starts ($7E:C608): 96 cells, of which `State`
+/// keeps the 81 outside the minimap.
+pub const HUD_TILES: usize = 0xc608;
+/// The HUD tilemap's cells.
+const HUD_CELLS: usize = 96;
+/// One byte of the frame display's work RAM image: the part of `State` that
+/// holds it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Lane {
+    Field(Field),
+    /// The word and the byte of it (0 low, 1 high).
+    Word(Word, usize),
+    /// The HUD cell (`hud_index` maps it) and the byte of its word.
+    Tile(usize, usize),
+}
+/// The part of `State` that holds work RAM byte `at`, if any: the register
+/// mirrors, the NMI counters, the interrupt commands, the HUD values and the
+/// HUD tilemap outside the minimap.
+pub fn lane(at: usize) -> Option<Lane> {
+    Some(match at {
+        0x51..=0x86 => Lane::Field(MIRRORS[at - 0x51]),
+        0x5b4..=0x5bb => Lane::Field(NMI_FIELDS[at - 0x5b4]),
+        0x782 => Lane::Field(Field::NmiAcknowledgment),
+        0x7ec => Lane::Field(Field::CommittedFakeMode),
+        0xa7..=0xa8 => Lane::Word(Word::PendingInterrupt, at - 0xa7),
+        0xab..=0xac => Lane::Word(Word::CurrentInterrupt, at - 0xab),
+        0x77c..=0x77d => Lane::Word(Word::HudPalette, at - 0x77c),
+        0x9ec..=0x9ed => Lane::Word(Word::HudAutoCancel, at - 0x9ec),
+        0xa06..=0xa07 => Lane::Word(Word::PreviousHealth, at - 0xa06),
+        0xa08..=0xa09 => Lane::Word(Word::PreviousMissiles, at - 0xa08),
+        0xa0a..=0xa0b => Lane::Word(Word::PreviousSupers, at - 0xa0a),
+        0xa0c..=0xa0d => Lane::Word(Word::PreviousBombs, at - 0xa0c),
+        0xa0e..=0xa0f => Lane::Word(Word::PreviousSelection, at - 0xa0e),
+        _ => {
+            let offset = at
+                .checked_sub(HUD_TILES)
+                .filter(|&offset| offset < 2 * HUD_CELLS)?;
+            let cell = offset / 2;
+            hud_index(cell)?;
+            Lane::Tile(cell, offset % 2)
+        }
+    })
+}
+impl State {
+    /// The state of all-zero RAM.
+    pub fn blank() -> Self {
+        Self::read(|_| 0, |_| 0, |_| 0)
+    }
+    /// The state work RAM `bytes` holds, as the original lays it out.
+    pub fn decode(bytes: &impl Fn(usize) -> u8) -> Self {
+        let word = |at: usize| u16::from_le_bytes([bytes(at), bytes(at + 1)]);
+        Self::read(
+            |field| bytes(field.address()),
+            |held| word(held.address()),
+            |cell| word(HUD_TILES + 2 * cell),
+        )
+    }
+    /// Work RAM byte `at` as the original lays the state out, if the state
+    /// holds it.
+    pub fn projected_byte(&self, at: usize) -> Option<u8> {
+        Some(match lane(at)? {
+            Lane::Field(field) => self.byte(field),
+            Lane::Word(word, part) => self.word(word).to_le_bytes()[part],
+            Lane::Tile(cell, part) => self.tile(cell)?.to_le_bytes()[part],
+        })
+    }
+    /// Store work RAM byte `at` in the state; false when it holds no such byte.
+    pub fn write_projected_byte(&mut self, at: usize, value: u8) -> bool {
+        let Some(lane) = lane(at) else {
+            return false;
+        };
+        match lane {
+            Lane::Field(field) => self.set_byte(field, value),
+            Lane::Word(word, part) => {
+                let mut held = self.word(word);
+                replace_lane(&mut held, part, value);
+                self.set_word(word, held);
+            }
+            Lane::Tile(cell, part) => {
+                let Some(mut tile) = self.tile(cell) else {
+                    return false;
+                };
+                replace_lane(&mut tile, part, value);
+                self.set_tile(cell, tile);
+            }
+        }
+        true
+    }
+    /// The state's work RAM bytes, as the original lays them out, in spans
+    /// of consecutive bytes.
+    pub fn encode(&self, mut span: impl FnMut(usize, &[u8])) {
+        span(0x51, &MIRRORS.map(|field| self.byte(field)));
+        span(0x5b4, &NMI_FIELDS.map(|field| self.byte(field)));
+        span(0x782, &[self.nmi.acknowledgment]);
+        span(0x7ec, &[self.controls.committed_fake_mode]);
+        for word in WORDS {
+            span(word.address(), &self.word(word).to_le_bytes());
+        }
+        // The tiles outside the minimap, one span per run of adjacent cells.
+        let mut run: Vec<u8> = Vec::with_capacity(2 * HUD_CELLS);
+        let mut first = 0;
+        for (index, tile) in self.hud.iter().enumerate() {
+            let cell = hud_cell(index);
+            if !run.is_empty() && first + run.len() / 2 != cell {
+                span(HUD_TILES + 2 * first, &run);
+                run.clear();
+            }
+            if run.is_empty() {
+                first = cell;
+            }
+            run.extend_from_slice(&tile.to_le_bytes());
+        }
+        span(HUD_TILES + 2 * first, &run);
+    }
+}
 pub fn display_byte(display: &DisplayState, field: Field) -> u8 {
     match field {
         Field::Brightness => display.controls.brightness,

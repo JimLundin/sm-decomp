@@ -877,9 +877,6 @@ impl<'g> Runtime<'g> {
             .persistent_is_current()
             .then(|| encoding::InputProjection::new(self.session()));
         encoding::inputs(&|at| {
-            if (0xb1..0xc1).contains(&at) && !self.display_owned() {
-                return self.game.scroll_byte(at);
-            }
             projection
                 .as_ref()
                 .and_then(|projection| projection.byte(at))
@@ -987,9 +984,6 @@ impl<'g> Runtime<'g> {
         }
     }
     pub(crate) fn byte(&self, at: usize) -> u8 {
-        if (0xb1..0xc1).contains(&at) && !self.display_owned() {
-            return self.game.scroll_byte(at);
-        }
         if self.persistent_is_current() {
             if let Some(byte) = encoding::projected_byte(self.session(), at) {
                 return byte;
@@ -1117,8 +1111,12 @@ impl<'g> Runtime<'g> {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
     }
     pub(crate) fn set_byte(&mut self, at: usize, value: u8) {
-        if (0xb1..0xc1).contains(&at) && self.persistent_is_current() && !self.display_owned() {
-            self.game.set_scroll_byte(at, value);
+        if sm_game::display_scroll::BYTES.contains(&at)
+            && self.persistent_is_current()
+            && !self.display_owned()
+        {
+            // The Legacy presentation's scroll words, refreshed as a scroll store.
+            encoding::write_projected_byte(self.session_mut(), at, value);
             self.refresh_scroll_inputs();
             return;
         }
@@ -1164,7 +1162,15 @@ impl<'g> Runtime<'g> {
     /// tanks set at the end of a frame, reaches RAM only at the lease's next
     /// export, and the enemy BG2 tilemap transfer reads it after these stores.
     pub(crate) fn refresh_scroll_inputs(&mut self) {
-        self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+        // The frame display's bytes (the NMI counters, the Mode 7 words) are the
+        // Legacy presentation's, which RAM holds once it is published.
+        let presentation = &self.session().presentation;
+        let inputs = encoding::inputs(&|lane| {
+            presentation
+                .legacy_display_byte(lane)
+                .unwrap_or_else(|| self.game.ram().read_byte(lane))
+        });
+        self.inputs = inputs;
         let session = self.session();
         let frozen = session.timing.time_frozen;
         let origin = session.enemy_projectiles.drop_origin;
