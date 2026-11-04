@@ -2675,12 +2675,6 @@ impl sm_game::scene::owned_samus::SamusSources for Game {
     }
 }
 
-impl sm_game::records::Records for Game {
-    fn records(&self) -> &sm_game::records::RomRecords {
-        &self.records
-    }
-}
-
 impl sm_game::cartridge::LoadedImage for Game {
     fn loaded_image(&self) -> &crate::rom::RomImage {
         self.loaded_rom.as_ref().expect("ROM must be loaded")
@@ -2906,7 +2900,6 @@ impl Game {
         state
     }
     fn menu_byte(&self, at: usize) -> u8 {
-        use sm_game::menus::state::Access;
         use sm_game::session_cohort::Cohort;
         let state = self.menu_state();
         if (0x765..0x776).contains(&at) {
@@ -2974,38 +2967,8 @@ impl Game {
 }
 
 #[forbid(unsafe_code)]
-impl sm_game::menus::state::Access for Game {
-    fn reset_pause_menu(&mut self) {
-        let mut state = self.menu_state();
-        state.clear_pause_menu();
-        struct Clear<'a> {
-            game: &'a mut Game,
-            state: sm_game::menus::state::State,
-            completed: bool,
-        }
-        impl Drop for Clear<'_> {
-            fn drop(&mut self) {
-                self.game.return_menu_domain(self.state, self.completed);
-            }
-        }
-        *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::Leased;
-        let mut clear = Clear {
-            game: self,
-            state,
-            completed: false,
-        };
-        // The old three ascending LE transfers, including zero-to-zero stores.
-        // Keep physical publication here so a subsequent player-command failure
-        // retains exactly the original clear prefix and admission ordering.
-        for (start, words) in [(0x727, 10), (0x73d, 9), (0x751, 9)] {
-            for index in 0..words {
-                let at = start + 2 * index;
-                clear.game.compatibility_write_byte(at, 0);
-                clear.game.compatibility_write_byte(at + 1, 0);
-            }
-        }
-        clear.completed = true;
-    }
+impl Game {
+    /// The menu state as Game holds it, for its own byte projection.
     fn menu_state(&self) -> sm_game::menus::state::State {
         use sm_game::menus::state::{Domain, State};
         let epoch = self.menu_owner_epoch();
@@ -3035,91 +2998,6 @@ impl sm_game::menus::state::Access for Game {
         let state = self.read_menu_image();
         *domain = Domain::Owned { state, epoch };
         state
-    }
-    fn commit_menu<C: sm_game::menus::state::Value>(&mut self, before: &C, after: C) {
-        use sm_game::menus::state::State;
-        use sm_game::session_cohort::Cohort;
-        if after == *before {
-            return;
-        }
-        if self.persistent_session_current() {
-            // Preserve precisely the former changed-copy store's lease admission.
-            use sm_game::session_access::SessionAccess;
-            let mut runtime = crate::game::session_runtime::Runtime::new(self);
-            let session = runtime.session_mut();
-            let mut state = State {
-                menu: session.menu,
-                window: sm_game::fx_encoding::session_window(session),
-                screens: session.menu_screens,
-            };
-            C::merge(before, &after, &mut state);
-            session.menu = state.menu;
-            for field in sm_game::menu_window_state::Field::ALL {
-                let at = sm_game::menu_window_encoding::address(field);
-                if field.get(&state.window) != sm_game::fx_encoding::control_word(session, at) {
-                    sm_game::fx_encoding::write_control_word(session, at, field.get(&state.window));
-                }
-            }
-            session.menu_screens = state.screens;
-            runtime.refresh_inputs();
-            return;
-        }
-        let previous = self.menu_state();
-        let mut state = previous;
-        C::merge(before, &after, &mut state);
-        // Select physical stores from the draft's original before/after values,
-        // even if a native alias already wrote the same result during the call.
-        // Unchanged draft fields preserve the completed foreign byte prefix.
-        let mut original = previous;
-        C::replace(before, &mut original);
-        let mut changed = original;
-        C::merge(before, &after, &mut changed);
-        let mut old = (original.menu, original.screens);
-        let mut words = Vec::new();
-        old.words(|at, word| words.push((at, *word)));
-        let mut new = (changed.menu, changed.screens);
-        let mut changes = Vec::new();
-        let mut index = 0;
-        new.words(|at, word| {
-            if words[index].1 != *word {
-                changes.push((at, *word));
-            }
-            index += 1;
-        });
-        let graphics_changes: Vec<_> = original
-            .screens
-            .graphics
-            .bytes
-            .into_iter()
-            .zip(changed.screens.graphics.bytes)
-            .enumerate()
-            .filter_map(|(index, (old, new))| (old != new).then_some((0x765 + index, new)))
-            .collect();
-        struct Publish<'a> {
-            game: &'a mut Game,
-            state: State,
-            completed: bool,
-        }
-        impl Drop for Publish<'_> {
-            fn drop(&mut self) {
-                self.game.return_menu_domain(self.state, self.completed);
-            }
-        }
-        *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::Leased;
-        let mut publish = Publish {
-            game: self,
-            state,
-            completed: false,
-        };
-        for (at, word) in changes {
-            let [low, high] = word.to_le_bytes();
-            publish.game.compatibility_write_byte(at, low);
-            publish.game.compatibility_write_byte(at + 1, high);
-        }
-        for (at, byte) in graphics_changes {
-            publish.game.compatibility_write_byte(at, byte);
-        }
-        publish.completed = true;
     }
 }
 
@@ -4259,7 +4137,6 @@ impl Game {
 #[forbid(unsafe_code)]
 impl Game {
     fn selected_fx_image(&self) -> sm_game::fx_domain::State {
-        use sm_game::menus::state::Access;
         let window = self.menu_state().window;
         sm_game::fx_domain::State {
             numeric: sm_game::fx_encoding::decode(&|at| self.ram.read_byte(at)),
