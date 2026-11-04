@@ -47,17 +47,6 @@ pub struct Runtime<'g> {
     )>,
 }
 
-/// Runs the bank $AA function at `address` for the current enemy. Was in bank $AA.
-pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
-    unsafe { actor_species_pre_instruction(address, game) };
-}
-
-/// Every pre-instruction enters through the sm_game table, which reads the
-/// current enemy once and falls back to the compatibility arms.
-pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
-    sm_game::actors::species::pre_instruction(ea, game);
-}
-
 /// Magdollite's original diagnostic for an undefined lava height.
 pub(crate) fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };

@@ -844,6 +844,13 @@ pub fn is_torizo_pre_instruction(ea: u32) -> bool {
     matches!(ea, 11192146 | 11192364 | 11195889 | 11192360 | 11195885)
 }
 
+/// The empty bank $AA functions the pre-instruction table answers: $AA:807B,
+/// the Torizo's and Shaktool's nothing movements ($AA:C95E, $AA:DCAA) and
+/// $AA:DCAB, $AA:E7A6 and $AA:E7DA. With the Torizo pre-instructions they are
+/// the table's only bank $AA addresses; any other fails as unreachable.
+pub const EMPTY_AA_FUNCTIONS: [u32; 6] =
+    [11174011, 11192670, 11197610, 11197611, 11200422, 11200474];
+
 /// Run a selected Torizo pre-instruction using the caller's captured enemy.
 pub fn torizo_pre_instruction<L: torizo::Lease>(ea: u32, k: u16, game: &mut L) {
     match ea {
@@ -924,12 +931,7 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10741441 => (),
         10998952 => (),
         11047388 => (),
-        11192670 => (),
-        11197610 => (),
-        11200422 => (),
-        11174011 => (),
-        11200474 => (),
-        11197611 => (),
+        ea if EMPTY_AA_FUNCTIONS.contains(&ea) => (),
         0xb30000..=0xb3ffff => crate::actors::species::b3_pre_instruction(ea, k, game),
         // Bank $A7: Phantoon, the etecoons and the dachora.
         10999114 | 10999271 | 10999309 | 10999416 | 10999481 | 10999522 | 10999597 | 10999615
