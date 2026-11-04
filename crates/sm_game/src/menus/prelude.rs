@@ -104,7 +104,6 @@ pub type CoroutineRet = u8;
 pub mod enemy_data {
     /// The first enemy record, `enemy_data[0]`.
     pub const FIRST: usize = 0xf78;
-    pub const X_POS: usize = 2;
 }
 
 /// Run `body`, then stop once `guard` holds.

@@ -643,7 +643,6 @@ pub const KON: u8 = 76;
 pub const KOF: u8 = 92;
 pub const NON: u8 = 61;
 pub const PMON: u8 = 45;
-pub const EDL: u8 = 125;
 pub const DIR: u8 = 93;
 pub const MVOLR: u8 = 28;
 pub const MVOLL: u8 = 12;

@@ -22,7 +22,6 @@ use crate::visual_state::{CinematicDisplay, CinematicFade};
 pub mod function {
     pub const NOTHING: u16 = 0x9a47;
     pub const SETUP: u16 = 0x9b68;
-    pub const ZOOMING_OUT: u16 = 0x9e8b;
     pub const WAITING: u16 = 0x9f28;
     pub const TITLE_SCREEN: u16 = 0x9f29;
     pub const TO_FILE_SELECT: u16 = 0x9f52;

@@ -1218,37 +1218,6 @@ macro_rules! display_words {
     };
 }
 impl Presentation {
-    /// Import only this owner's numeric projection after a selected native interval.
-    /// Prepared source bindings and authored producer/media identities stay supplied.
-    pub fn adopt_projection(&mut self, bytes: &impl Fn(usize) -> u8) {
-        let Self::Owned { display, .. } = self else {
-            return;
-        };
-        let state = &mut display.owner_mut().state;
-        let load_byte = |at: usize, byte: &mut u8| *byte = bytes(at);
-        display_bytes!(state,load_byte,(&mut));
-        let load_word =
-            |at: usize, word: &mut u16| *word = u16::from_le_bytes([bytes(at), bytes(at + 1)]);
-        display_words!(state,load_word,(&mut));
-        for at in 0x370..0x592 {
-            state
-                .objects
-                .write_byte(at - 0x370, bytes(at))
-                .expect("owned object projection");
-        }
-        state.nmi.pending = bytes(0x5b4);
-        state.nmi.frame_byte = bytes(0x5b5);
-        load_word(0x5b6, &mut state.nmi.frame_word);
-        load_word(0x5b8, &mut state.nmi.including_lag);
-        state.nmi.missed = bytes(0x5ba);
-        state.nmi.max_missed = bytes(0x5bb);
-        for (index, half) in state.samus.iter_mut().enumerate() {
-            half.enabled = bytes(0x71d + index);
-            load_word(0x71f + 2 * index, &mut half.pointer);
-        }
-        state.nmi.acknowledgment = bytes(0x782);
-    }
-
     pub fn requires_semantic_counterpart(at: usize) -> bool {
         // Publishing these numeric requests also needs supplied source/audio
         // identities. Their actual semantic publication seams are not closed.

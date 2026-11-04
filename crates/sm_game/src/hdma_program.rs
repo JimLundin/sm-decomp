@@ -1,7 +1,6 @@
 //! HDMA programs use current owner fields and captured object identities.
 use crate::enemy_script::{EnemyScript as Script, bank_base};
 use crate::hdma::OBJECTS;
-use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::HdmaEffect;
 use crate::hdma_objects::HdmaTable;
 use sm_data::cartridge::RomImage;
@@ -131,16 +130,6 @@ impl<L: HdmaLease> Interpreter for Leased<'_, L> {
     fn on_lease<T>(&mut self, action: impl FnOnce(&mut L) -> T) -> T {
         crate::lease::Lease::owned_player_call(self.0, action)
     }
-}
-
-/// Run every active object's program once, as the enabled branch of
-/// `update_hdma`.
-///
-/// The objects always run on the lease. A host that cannot open one cannot
-/// publish this frame's Session either, so no completed frame ran the RAM
-/// copy the interpreter once fell back to.
-pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(handler_carry: bool, game: &mut H) {
-    run_objects_on(handler_carry, &mut game.hdma_lease());
 }
 
 /// [`run_objects`] on a lease already open.

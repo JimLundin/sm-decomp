@@ -1186,50 +1186,6 @@ impl GraphicsAsset {
 }
 
 // The VRAM decoder output reads back through the PPU data port.
-struct DecompressionVram<'a, 'b, H: ?Sized> {
-    game: &'a mut H,
-    prepared: Option<core::slice::Iter<'b, u8>>,
-}
-impl<H: Host + ?Sized> decompression::Output for DecompressionVram<'_, '_, H> {
-    fn next_byte(&mut self) -> u8 {
-        match self.prepared.as_mut() {
-            Some(stream) => *stream.next().expect("validated prepared VRAM room stream"),
-            None => decompression::next_byte(self.game),
-        }
-    }
-    fn read(&mut self, position: i32) -> u8 {
-        read_ppu_byte(position as u16, self.game)
-    }
-    fn write(&mut self, position: i32, value: u8, back_reference: bool) {
-        if back_reference {
-            self.game
-                .apply(GRAPHICS, Command::VramAddress((position >> 1) as u16));
-        }
-        let high = position & 1 != 0;
-        self.game.apply(GRAPHICS, Command::VramData { high, value });
-    }
-}
-fn read_ppu_byte<H: Host + ?Sized>(addr: u16, game: &mut H) -> u8 {
-    game.apply(GRAPHICS, Command::VramAddress(addr >> 1));
-    // The prefetch read, then the word.
-    game.read_vram_data();
-    let data: u16 = game.read_vram_data();
-    (if addr & 1 != 0 {
-        (data as i32 & 0xff00) >> 8
-    } else {
-        data as i32
-    }) as u8
-}
-pub fn decompress_to_vram<H: Host + ?Sized>(src: u32, dst_addr: u16, game: &mut H) {
-    game.set_decompress_source(src);
-    decompression::decode(
-        i32::from(dst_addr),
-        &mut DecompressionVram {
-            game,
-            prepared: None,
-        },
-    );
-}
 
 pub(crate) fn mult8x8(a: u8, b: u8) -> u16 {
     u16::from(a) * u16::from(b)
