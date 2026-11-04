@@ -478,7 +478,8 @@ pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     runtime.edit_actor(key, Native, |actor| {
         actor.properties = actor.variables[2] | actor.properties & !3
     });
-    runtime.foreign(|game| crate::actors::crawlers::common_initialisation(raw, game));
+    runtime
+        .lease_owned_step(|runtime| crate::actors::crawlers::common_initialisation(raw, runtime));
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = NO_MOVEMENT;
         actor.instruction = actor.variables[3];

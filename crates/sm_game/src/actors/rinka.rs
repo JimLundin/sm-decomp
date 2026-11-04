@@ -3,7 +3,7 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Key};
 use crate::actors::api::{DeathHandling, DeathKind, ShotHandling, angle_from_delta};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::actors::{population, scheduling};
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
@@ -260,9 +260,9 @@ fn react_to_death(runtime: &mut impl Lease, index: u16) {
         runtime.resolve_actor(key, Native).x.whole,
         runtime.resolve_actor(key, Native).y.whole,
     );
-    runtime.foreign(|game| {
-        game.set_projectile_spawn_point(x, y);
-        game.spawn_room_projectile(0xe509, 3);
+    runtime.lease_owned_step(|runtime| {
+        runtime.session_mut().enemy_projectiles.spawn.point = crate::geometry::Point { x, y };
+        crate::enemy_projectiles::lifecycle::spawn_room(runtime, 0xe509, 3);
     });
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[0] = KILLED;

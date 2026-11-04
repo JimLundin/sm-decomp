@@ -3,7 +3,7 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{DeathKind, ShotHandling};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::session_access::SessionAccess as _;
 
@@ -97,7 +97,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     }
     let y = runtime.resolve_actor(key, Native).y.whole;
     let current = runtime.session().actors.controls.selected;
-    runtime.foreign(|game| {
-        game.spawn_projectile(y, current, KAGO_BUG);
+    runtime.lease_owned_step(|runtime| {
+        crate::enemy_projectiles::lifecycle::spawn_from_enemy(runtime, y, current, KAGO_BUG);
     });
 }
