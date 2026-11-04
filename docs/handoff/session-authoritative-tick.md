@@ -827,6 +827,65 @@ former `foreign` call left them. Writes are identical and in the same order.
     `credits`, and the SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and
     `music-fir-selector10`. The `lease counters:` lines should show `leases=` falling
     against main at the same `ticks=` and `nested=` unchanged.
+- **Third slice (lane `tick-s9c`, on `1fc085dca`, `collab/tick-s9b`).** Not yet
+  replayed. Ratchet: `session_entries` 50 → 48, `game_host_impls` 78 → 60,
+  `foreign_calls` 43.
+  - Every pass state's frame runs on the frame's first lease, from the HDMA handler to
+    the frame's end: the pre-pass work (the Ceres escape timer, the reserve tanks'
+    refill and its pose command), the pass from any resume point, an enemy's message
+    box (`message_boxes::display` on the lease, as the room mechanisms' boxes already
+    ran), the per-state finish (`finish_pass`, now generic over `PassLease`) and the
+    frame's end (`close_frame`). A resumed pass and the resume-skip byte take one lease
+    in `advance_gameplay`; the demo's play loop runs its pass there without the frame's
+    end. `Host` loses `set_resume_point`, `update_hdma` and
+    `advance_low_health_warning` (a `PassLease` method now, Samus's lease rule).
+  - The last three foreign calls in sm_game (UFCS, which the ratchet's `.foreign(`
+    pattern did not count) went to the lease: Draygon's breath bubbles
+    (`lease_owned_step`), Draygon's BG layers (`owned_step` over
+    `room_visuals::initialize_draygon_layer`, now generic over the HDMA allocator and
+    the Session) and the species tables' unknown routine (`Fatal::unreachable`).
+  - With no foreign call left, `BossLease`, `ActorLease` and
+    `mother_brain_fight::Lease` lose their associated `Game` type and `foreign`, with
+    about 40 `BossLease<Game: ...>` bounds. The bosses' Game hosts then had no
+    instantiation and went: `BossState`, `BossLease`, `AiHost` (trait too),
+    `torizo::Ai` (trait too), `DrawHookHost`, `LeaseActors`, `BossEffects`,
+    `ActorRuntime`, `EnemyHost`, `SpeciesHost`, `Deaths`, `phantoon::Dispatch`,
+    `mother_brain_fight::Host` and `OwnedWords`, crocomire's and Magdollite's hosts,
+    `DisplayObjects` and the overflow `SlotBytes`. The species `touch`, `shot` and
+    `draw_hook` dispatchers had no caller and went with their hosts. Verification
+    needed one edit (`inventory_restore_cases.rs` leases with `Runtime::new`, as
+    `LeaseScope` on Game did); `room_mechanisms.rs` and `flags_candidate.rs` needed none.
+  - **Left.**
+    - Menus, pause (setup, frame, unpause, the fade-in and fade-outs), game over, the
+      time-up exit, the death states, the demo reset, stop, next and play loop, and
+      the initial room load still run on Game, then `finish_state`. They are generic
+      over `menus::host::Host` (and `display_refresh::Host` for the death states),
+      which Runtime lacks: `LevelData`, `SpriteWords` (so `SpriteHost`),
+      `InventoryAccess`, `menu_window_state::Access` and `ArrowAccess`, `ActorImage`
+      (an excluded facade: narrow it out first), `RuntimeAccess` (the lease itself),
+      `MenuRuntime` (`load_vram_words`, `write_dma_register`, `handle_music_queue` and
+      `run_hdma_objects` exist on the lease as `DialogueHost`'s music, sounds and HDMA
+      update; `flush_sram`, the observers and the diagnostics are Game-only), and
+      Host's own tables and controller words (`sram`, the menu, slot, demo and palette
+      tables, `nmi_controller_word`, `controller_word`), which the lease can answer
+      from `samus_game()` as `Tables` does. Few of the menu modules open nested leases
+      (`demo_rooms` 9, `samus_death` 7, `save_slots` 2), so the work is the host
+      surface: narrow each state's bounds (as `refill_auto` and `reset_gameplay_layers`
+      were here), implement the rest on Runtime, then run the state on the frame's
+      first lease as `Native` states do.
+    - Game hosts still needed by the Game-side states: `actors::host::Random`
+      (`kraid_pause`, the pause hooks), `hdma_program::LeaseHdma` (Game's
+      `UpdateHost`, the menus' `run_hdma_objects`), `escape_countdown::Access`,
+      `NativeImage`, `SamusSources`, `grapple_swing::TileAccess` and `ObjectAccess`
+      (all through `gameplay_frame::Host` or `menus::host::Host` on Game).
+  - **Rows.** Every pass state: the chain rooms, `door-transition`, `death`,
+    `save-death-reload`, the Ceres rows (`area-ceres`, `tas-ceres-four-doors`, the
+    escape), the reserve tank rows, `demo-attract-setup`, `pause-menu-tour`; the
+    bosses (`boss-*`, Draygon's in particular, for the bubbles and the layers); the
+    `item-*` rows if an enemy queues a box; and the SFX-loss rows
+    `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`. The
+    `lease counters:` lines should show `leases=` falling against main at the same
+    `ticks=`, with `nested=` unchanged.
 
 ### Stage 10: NMI and settlement inside the tick
 
