@@ -15,8 +15,8 @@ impl sm_game::room_scrolls::Host for crate::game::session_runtime::Runtime<'_> {
         });
     }
     fn flush_tilemaps(&mut self) {
-        // SAFETY: room scrolling runs from the frame loop or a room-entry
-        // effect with the backend installed and exclusively accessed.
-        self.foreign(|game| unsafe { crate::game::display_refresh::flush_tilemaps(game) });
+        // The observations are refreshed on entry and on return, as the former
+        // foreign call left them.
+        self.owned_player_call(crate::game::display_refresh::flush_tilemaps_on_lease);
     }
 }

@@ -144,13 +144,13 @@ impl Wire for Lease<'_, '_> {
 }
 
 /// One register byte through `wire`.
-fn byte(register: u32, value: u8, wire: &mut impl Wire) {
+pub(crate) fn byte(register: u32, value: u8, wire: &mut impl Wire) {
     wire.byte(register, value);
 }
 
 /// A 16-bit store: its low byte to `register`, its high byte to the next
 /// register up.
-fn word(register: u32, value: u16, wire: &mut impl Wire) {
+pub(crate) fn word(register: u32, value: u16, wire: &mut impl Wire) {
     let [low, high] = value.to_le_bytes();
     wire.byte(register, low);
     wire.byte(register + 1, high);
