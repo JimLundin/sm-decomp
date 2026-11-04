@@ -103,10 +103,9 @@ use {
     crate::game::{
         player_collision::operations as player_collision,
         player_movement::{self, forced, speed},
-        prelude::{K_MOVEMENT_TYPE_0E_TURNING_AROUND_ON_GROUND, abs16, word},
+        prelude::{K_MOVEMENT_TYPE_0E_TURNING_AROUND_ON_GROUND, word},
         visual_runtime::set_hdma_enabled,
     },
-    crate::game_state::Game,
     crate::projection::ProjectedBytes,
     sm_game::effects::SoundEffects,
     sm_game::projectile_initialization::Initialization,
@@ -267,24 +266,5 @@ fn advance_shinespark(axes: &[player_collision::Axis], runtime: &mut Runtime<'_>
         && (word!(runtime.SAMUS_HEALTH -= 1, reread) & 0x8000) != 0
     {
         word!(runtime.SAMUS_HEALTH = 0);
-    }
-}
-
-pub(crate) fn correct_previous_position(game: &mut Game) {
-    use crate::ram_map::{checked_word, words as ram};
-    for (current, previous) in [
-        (ram::SAMUS_Y_POS, ram::SAMUS_PREV_Y_POS),
-        (ram::SAMUS_X_POS, ram::SAMUS_PREV_X_POS),
-    ] {
-        let position = checked_word!(game, current;);
-        let delta = position.wrapping_sub(checked_word!(game, previous;));
-        if abs16(delta).wrapping_sub(12) & 0x8000 == 0 {
-            let correction = if delta & 0x8000 == 0 {
-                12
-            } else {
-                (-12i16) as u16
-            };
-            checked_word!(game, previous; = position.wrapping_add(correction));
-        }
     }
 }

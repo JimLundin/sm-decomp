@@ -852,8 +852,6 @@ pub trait Lease:
     + crate::visual_host::Host
     + crate::hardware::Multiplier
 {
-    type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// Run `action` on the lease itself where a `foreign` call ran it on the
     /// game: the external observations are refreshed on entry and on return,
     /// as `foreign` left them.
@@ -874,7 +872,7 @@ pub trait Host:
     + OwnedWords
 {
     /// The lease an AI's frame runs its state steps in.
-    type Lease<'a>: Lease<Game = Self>
+    type Lease<'a>: Lease
     where
         Self: 'a;
     fn lease(&mut self) -> Self::Lease<'_>;

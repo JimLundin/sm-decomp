@@ -184,10 +184,8 @@ pub trait ActorLease:
     + crate::cartridge::LoadedImage
     + crate::actors::gunship::Host
 {
-    type Game: BossEffects + LeaseActors + crate::records::Records + ?Sized;
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// Store `value` natively at `at` through the session projection.
     fn write_slice_native(&mut self, at: usize, value: u16);
     /// Store `value` little-endian at `at` through the session projection.
@@ -217,7 +215,7 @@ pub trait ActorLease:
 /// A host that can lease its actors; each `lease` is one original `Runtime`.
 pub trait LeaseActors {
     type Lease<'a>: ActorLease
-        + crate::actors::boss_lease::BossLease<Game: crate::actors::species::AiHost + Sized>
+        + crate::actors::boss_lease::BossLease
         + crate::actors::torizo::Lease
         + crate::actors::spore_spawn::Lease
         + crate::actors::draygon_host::Lease
@@ -231,7 +229,7 @@ pub trait LeaseActors {
 /// leases its actors, or the lease the work already runs inside.
 pub trait LeaseScope {
     type Scoped<'a>: ActorLease
-        + crate::actors::boss_lease::BossLease<Game: crate::actors::species::AiHost + Sized>
+        + crate::actors::boss_lease::BossLease
         + crate::actors::torizo::Lease
         + crate::actors::spore_spawn::Lease
         + crate::actors::draygon_host::Lease

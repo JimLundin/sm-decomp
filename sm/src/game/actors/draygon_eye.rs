@@ -2,18 +2,11 @@
 //! Game is the compat Runtime.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::Runtime;
-use crate::game_state::Game;
-use sm_game::actors::host::{ActorLease, LeaseActors};
+use sm_game::actors::host::ActorLease;
 
 impl ActorLease for Runtime<'_> {
-    type Game = Game;
-
     fn word(&self, at: usize) -> u16 {
         Runtime::word(self, at)
-    }
-
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        Runtime::foreign(self, action)
     }
 
     fn write_slice_native(&mut self, at: usize, value: u16) {
@@ -54,13 +47,5 @@ impl ActorLease for Runtime<'_> {
 
     fn lease_owned_step<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
         Runtime::owned_player_call(self, action)
-    }
-}
-
-impl LeaseActors for Game {
-    type Lease<'a> = Runtime<'a>;
-
-    fn lease(&mut self) -> Runtime<'_> {
-        Runtime::new(self)
     }
 }

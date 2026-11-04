@@ -35,7 +35,7 @@ use sm_data::cartridge::RomRecord;
 
 /// A lease on a game with Kraid's effects.
 pub trait Lease:
-    BossLease<Game: Host>
+    BossLease
     + crate::session_access::SessionAccess
     + crate::room_mechanisms::host::Host
     + crate::player_update::effects::Host

@@ -74,12 +74,6 @@ pub(crate) fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
 }
 
-impl sm_game::actors::species::AiHost for Game {
-    fn install_draygon_layers(&mut self) {
-        crate::game::visual_runtime::initialize_draygon_layer(self);
-    }
-}
-
 /// The generic species tables run on the scheduler's lease; these are the arms they
 /// still reach on this side, each on the lease.
 impl sm_game::actors::species::TableLease for Runtime<'_> {
@@ -2442,14 +2436,11 @@ mod player_collision_runtime;
 pub(crate) use player_collision_runtime::set_player_radius;
 #[path = "player_movement_runtime.rs"]
 mod player_movement_runtime;
-pub(crate) use player_movement_runtime::{
-    advance_special_movement, ceres_movement, correct_previous_position,
-};
+pub(crate) use player_movement_runtime::{advance_special_movement, ceres_movement};
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
-    command as player_command, command_in as player_command_in, damage_player, finish_player_frame,
-    initialize as initialize_player,
+    command_in as player_command_in, finish_player_frame, initialize as initialize_player,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;
@@ -2501,28 +2492,6 @@ mod lease_counters;
 #[cfg(sm_verify_dll)]
 #[path = "../verification/player_normal_transfers.rs"]
 pub(crate) mod player_normal_transfers;
-
-pub(crate) fn actor_cosine(phase: u16, amplitude: u16, game: &mut Game) -> u16 {
-    (actor_cosine_full(phase, amplitude, game) >> 16) as u16
-}
-pub(crate) fn actor_sine(phase: u16, amplitude: u16, game: &mut Game) -> u16 {
-    (actor_sine_full(phase, amplitude, game) >> 16) as u16
-}
-crate::forward_calls! { pub(crate) fn (phase: u16, amplitude: u16, game: &mut Game) -> u32;
-    actor_cosine_full => crate::game::actors::queries::sine_product(&mut Runtime::new(game), amplitude, phase.wrapping_add(64) as u8 as u16);
-    actor_sine_full => crate::game::actors::queries::sine_product(&mut Runtime::new(game), amplitude, phase.wrapping_add(0x80) as u8 as u16);
-}
-pub(crate) fn actor_direction_vector(
-    phase: u16,
-    amplitude: u16,
-    game: &mut Game,
-) -> sm_game::session::Vector32 {
-    let [x, y] = [0x40u16, 0x80].map(|offset| {
-        let index = usize::from(phase.wrapping_add(offset) & 0x7f);
-        u32::from(game.read_rom_word(0xa0b7ee, index * 2)) * u32::from(amplitude)
-    });
-    sm_game::session::Vector32 { x, y }
-}
 
 // Shared native diagnostic; callers retain their own publication boundary.
 pub(crate) fn legacy_assertion(drawing: bool) -> ! {
@@ -2743,7 +2712,7 @@ impl sm_game::cartridge::NativeImage for Runtime<'_> {
         self.game.capture_native_rom()
     }
 }
-// Magdollite's imported tables are the game's; reading them touches no RAM.
+// Magdollite's imported tables are the game's (`Game::magdollite_glow_colors`).
 impl sm_game::actors::magdollite::Host for Runtime<'_> {
     fn magdollite_glow_colors(&self, source: isize) -> [u16; 4] {
         self.game.magdollite_glow_colors(source)

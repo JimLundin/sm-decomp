@@ -4,8 +4,7 @@
 //!
 //! Was `Zebetites` in the original decompilation (bank $A6:FB72-$A6:FD54).
 use crate::actors::boss_lease::BossLease;
-use crate::actors::deaths::Deaths;
-use crate::actors::host::{BossEffects, Death, Shot};
+use crate::actors::host::{Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DELETED;
 use crate::palette_copies::copy_rom_colors_to_palette;
@@ -13,7 +12,7 @@ use crate::zebetite_data;
 
 /// The lease the zebetites run on, with the room's event flags and spawning the
 /// next zebetites; dying and the shared boss effects are the game's.
-pub trait Lease: BossLease<Game: BossEffects + Deaths> + SlotState {
+pub trait Lease: BossLease + SlotState {
     fn event_happened(&mut self, event: u16) -> u16;
     fn set_event(&mut self, event: u16);
     fn clear_event(&mut self, event: u16);

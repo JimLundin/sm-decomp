@@ -457,7 +457,12 @@ fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> 
     game.runtime().session().room.area
 }
 
-pub fn reset_gameplay_layers<H: Host + ?Sized>(clear_current_irq: bool, game: &mut H) {
+pub fn reset_gameplay_layers<
+    H: crate::display::preparation::Access + crate::sequence_state::Access + ?Sized,
+>(
+    clear_current_irq: bool,
+    game: &mut H,
+) {
     crate::sequence_state::with_words_projected(
         game,
         |_, words: &mut crate::session_words::SessionWords| {
@@ -471,7 +476,7 @@ pub fn reset_gameplay_layers<H: Host + ?Sized>(clear_current_irq: bool, game: &m
     crate::frame_display_byte!(game, crate::display::preparation::Field::Mode => 9);
 }
 
-pub fn reset_layer_mirrors<H: Host + ?Sized>(game: &mut H) {
+pub fn reset_layer_mirrors<H: crate::display::preparation::Access + ?Sized>(game: &mut H) {
     crate::frame_display_byte!(game, crate::display::preparation::Field::NextColorSelection => 0);
     crate::frame_display_byte!(game, crate::display::preparation::Field::NextColorMath => 0);
     crate::frame_display_byte!(game, crate::display::preparation::Field::MainLayers => 16);

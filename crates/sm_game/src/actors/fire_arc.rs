@@ -5,7 +5,6 @@
 //! decompilation. The arc's body is five enemy projectiles and three sprite
 //! objects; the active swing runs with them in the enemy projectile code.
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::BossEffects;
 use crate::actors::layouts::EnemyLayout104;
 use crate::actors::slot_view::{SlotState, extended_var, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_PROCESSED_OFFSCREEN;
@@ -13,9 +12,7 @@ use core::mem::offset_of;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with the fire arc's effects.
-pub trait Lease:
-    BossLease<Game: BossEffects> + SlotState + crate::sprite_effect_host::Host
-{
+pub trait Lease: BossLease + SlotState + crate::sprite_effect_host::Host {
     /// Fire arc function - active ($A6:9682): advance the orbit, whose
     /// projectiles run in the host. Was `NuclearWaffle_Func_2`.
     fn advance_orbit(&mut self);

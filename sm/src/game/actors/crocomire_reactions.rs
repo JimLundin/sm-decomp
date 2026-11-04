@@ -77,8 +77,6 @@ pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
     }
 }
 
-impl Host for Game {}
-
 /// The word at `index` of the game's Crocomire table at `address`.
 pub(crate) fn crocomire_table_word(game: &Game, address: u32, index: isize) -> u16 {
     let tables = &game.crocomire;

@@ -46,9 +46,10 @@ pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
     }
 }
 
-impl Host for Game {
+// The imported tables Magdollite's lease reads; reading them touches no RAM.
+impl Game {
     /// Colours 9-12 of the glow palette whose colour 0 is word `source`.
-    fn magdollite_glow_colors(&self, source: isize) -> [u16; 4] {
+    pub(crate) fn magdollite_glow_colors(&self, source: isize) -> [u16; 4] {
         Imported::read(
             &self.magdollite.palettes,
             self,
@@ -62,7 +63,7 @@ impl Host for Game {
 
     /// Arm step `index`'s field; other images and indices run the original load
     /// at `address`.
-    fn magdollite_arm(&self, address: u32, index: isize) -> u16 {
+    pub(crate) fn magdollite_arm(&self, address: u32, index: isize) -> u16 {
         Imported::read(
             &self.magdollite.arm_steps,
             self,
@@ -76,9 +77,5 @@ impl Host for Game {
             },
             |rom| load(rom, address, index),
         )
-    }
-
-    fn warn_lava_height(&mut self, value: i32) {
-        crate::game::session_runtime::warn_lava_height(value);
     }
 }

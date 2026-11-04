@@ -2,13 +2,13 @@
 //! Native actor words remain authoritative across the existing query boundaries.
 use crate::actors::access::{ActorAccess, ActorKey as Key};
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{Axis, BossEffects, abs16};
+use crate::actors::host::{Axis, abs16};
 use crate::actors::queries;
 use crate::actors::slot_view::{SlotState, slot_view};
 
 /// A lease on a game with the zebs' effects.
-pub trait Lease: BossLease<Game: BossEffects> + ActorAccess + SlotState {}
-impl<T: BossLease<Game: BossEffects> + ActorAccess + SlotState + ?Sized> Lease for T {}
+pub trait Lease: BossLease + ActorAccess + SlotState {}
+impl<T: BossLease + ActorAccess + SlotState + ?Sized> Lease for T {}
 
 slot_view! {
     /// A zeb's slot: its direction (bit 15 left), spawn position, cooldown,

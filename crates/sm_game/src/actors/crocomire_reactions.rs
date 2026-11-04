@@ -36,7 +36,7 @@ use sm_data::crocomire::{
 /// Crocomire's melt words, which the Session holds as `actors.crocomire_melt`,
 /// read and stored through the host's projected bytes.
 pub trait Lease:
-    BossLease<Game: Host>
+    BossLease
     + ActorAccess
     + crate::actors::boss_interaction::Access
     + SlotState
@@ -50,7 +50,7 @@ pub trait Lease:
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: Host>
+    T: BossLease
         + ActorAccess
         + crate::actors::boss_interaction::Access
         + SlotState

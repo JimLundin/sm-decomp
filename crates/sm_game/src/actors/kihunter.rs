@@ -4,7 +4,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::api::Axis;
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{BossEffects, Shot, Slopes, abs16};
+use crate::actors::host::{Shot, Slopes, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_lists::kihunter_wing_instruction_list;
 use crate::enemy_script::EnemyScript;
@@ -67,8 +67,8 @@ const QUADRATIC_SPEEDS: u32 = 0xa2_838f;
 const WINGS: u16 = 64;
 
 /// A lease on a game with the Kihunter's effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
-impl<T: BossLease<Game: BossEffects> + SlotState + ?Sized> Lease for T {}
+pub trait Lease: BossLease + SlotState {}
+impl<T: BossLease + SlotState + ?Sized> Lease for T {}
 
 /// Set up falling Kihunter wings drifting left ($A8:F947) or right ($A8:F96A).
 fn begin_drift(game: &mut impl Lease, wings: u16, left: bool) {

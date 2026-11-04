@@ -2831,17 +2831,6 @@ impl sm_game::runtime_access::SessionRam for Game {
     }
 }
 
-// LEGACY(original-overflow): the overflow paths' bytes on the RAM image.
-/// The RAM image's bytes, as the overflow paths that run on `Game` reach them.
-impl sm_game::legacy_overflow::SlotBytes for Game {
-    fn slot_byte(&self, at: usize) -> u8 {
-        self.ram().read_byte(at)
-    }
-    fn set_slot_byte(&mut self, at: usize, value: u8) {
-        self.ram().write_byte(at, value);
-    }
-}
-
 /// Actor records on the RAM image, through the actor codec in native order,
 /// as the RAM image holds their words.
 impl sm_game::actors::access::ActorImage for Game {

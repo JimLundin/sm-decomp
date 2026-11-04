@@ -3,10 +3,9 @@
 #![forbid(unsafe_code)]
 use super::{api, combat, queries};
 use crate::game::session_runtime::Runtime;
-use crate::game_state::Game;
 use sm_game::actors::access::ActorKey;
 use sm_game::actors::boss_lease::{BossLease, BossState};
-use sm_game::actors::host::{ActorRuntime, BossEffects, Death, EnemyHost, Shot};
+use sm_game::actors::host::{Death, Shot};
 use sm_game::geometry::{Point, Vector32};
 
 fn death(death: Death) -> api::DeathHandling {
@@ -21,93 +20,6 @@ fn shot(shot: Shot) -> api::ShotHandling {
         Shot::ReactionOnly => api::ShotHandling::ReactionOnly,
         Shot::Flash => api::ShotHandling::Flash,
         Shot::Finalize => api::ShotHandling::Finalize,
-    }
-}
-
-impl BossState for Game {
-    fn react_to_shot(&mut self, handling: Shot) {
-        ActorRuntime::shot_reaction(self, handling);
-    }
-    fn react_to_contact(&mut self, handling: Death) {
-        ActorRuntime::contact_reaction(self, handling);
-    }
-    fn place_projectile_spawn(&mut self, x: u16, y: u16) {
-        BossEffects::set_projectile_spawn_point(self, x, y);
-    }
-    fn spawn_room_eproj(&mut self, definition: u16, parameter: u16) -> u16 {
-        ActorRuntime::spawn_room_projectile(self, definition, parameter)
-    }
-    fn spawn_actor_eproj(&mut self, parameter: u16, k: u16, definition: u16) -> u16 {
-        ActorRuntime::spawn_projectile(self, parameter, k, definition)
-    }
-    fn roll_random(&mut self) -> u16 {
-        Game::next_random(self)
-    }
-    fn decompress_into_ram(&mut self, source: u32, destination: usize) {
-        sm_game::decompression::decompress_to_ram(source, destination, self);
-    }
-    fn player_direction(&mut self) -> api::PlayerDirection {
-        api::direction_to_player(&mut Runtime::new(self))
-    }
-    fn camera(&mut self) -> sm_game::camera::Camera {
-        sm_game::camera::current(self)
-    }
-    fn current_enemy(&self) -> u16 {
-        Game::cur_enemy_index(self)
-    }
-    fn area(&self) -> u16 {
-        let game = self;
-        crate::ram_map::word!(game.AREA_INDEX)
-    }
-    fn frame(&self) -> u16 {
-        let game = self;
-        crate::ram_map::word!(game.NMI_FRAME_COUNTER_WORD)
-    }
-    fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
-        BossEffects::actor_cosine(self, phase, amplitude)
-    }
-    fn scaled_sine(&mut self, phase: u16, amplitude: u16) -> u16 {
-        BossEffects::actor_sine(self, phase, amplitude)
-    }
-    fn direction_step(&mut self, phase: u16, amplitude: u16) -> Vector32 {
-        BossEffects::actor_direction_vector(self, phase, amplitude)
-    }
-    fn step_along(&mut self, phase: u16, vector: Vector32) {
-        BossEffects::apply_vector(self, phase, vector);
-    }
-    fn set_step_scratch(&mut self, value: u16) {
-        BossEffects::set_enemy_scratch(self, value);
-    }
-    fn actor_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
-        BossEffects::actor_legacy_record(self, bank, address)
-    }
-    fn player_angle(&mut self, k: u16) -> u16 {
-        EnemyHost::angle_to_player(self, k)
-    }
-    fn shot_direction(&self) -> u16 {
-        EnemyHost::collided_projectile_direction(self)
-    }
-    fn current_random(&self) -> u16 {
-        EnemyHost::random_number(self)
-    }
-    fn select_enemy(&mut self, k: u16) {
-        EnemyHost::set_current_enemy(self, k);
-    }
-    fn kill_current(&mut self, kind: api::DeathKind) {
-        combat::die(&mut Runtime::new(self), kind);
-    }
-    fn area_boss_byte(&mut self) -> u8 {
-        EnemyHost::area_boss_flags(self)
-    }
-}
-
-impl BossLease for Game {
-    type Game = Game;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        action(self)
-    }
-    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        action(self)
     }
 }
 
@@ -199,10 +111,6 @@ impl BossState for Runtime<'_> {
 }
 
 impl BossLease for Runtime<'_> {
-    type Game = Game;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        Runtime::foreign(self, action)
-    }
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T {
         self.owned_player_call(action)
     }

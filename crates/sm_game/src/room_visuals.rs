@@ -5,7 +5,6 @@ use crate::fx_domain::native_order;
 use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma, spawn_hdma_owned};
 use crate::menus::prelude::HdmaObjectDefinition;
 use crate::scene::hdma_sources::LiveOwner;
-use crate::session_access::SessionAccess as _;
 use crate::visual_state::{TourianStatuePhase, Weather};
 
 /// What the Tourian statue's HDMA object runs on: the owned-Session view, the
@@ -273,13 +272,15 @@ pub fn initialize_ceres_elevator<H: crate::hdma_objects::Allocator + ?Sized>(gam
     spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd939), game);
 }
 
-pub fn initialize_draygon_layer<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xdf4f), game);
-    {
-        let mut runtime = game.runtime();
-        runtime.session_mut().room.entry.irq_policy = 12;
-        runtime.words_stored();
-    }
+/// Draygon's BG layers, as its initialisation installs them, on its lease.
+pub fn initialize_draygon_layer<
+    H: crate::hdma_objects::Allocator + crate::session_access::SessionAccess + ?Sized,
+>(
+    game: &mut H,
+) {
+    spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xdf4f), game);
+    game.session_mut().room.entry.irq_policy = 12;
+    game.words_stored();
     spawn_bg3_scroll(game);
 }
 

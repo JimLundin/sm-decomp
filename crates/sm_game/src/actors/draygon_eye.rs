@@ -5,7 +5,7 @@ use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::boss_lease::BossState;
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{BODY, EYE, function, instruction_list as list};
-use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _};
+use crate::actors::host::ActorLease;
 use crate::actors::queries::angle_from_delta;
 use crate::enemy_script::EnemyScript;
 
@@ -57,9 +57,10 @@ pub fn look_at_samus<L: Lease + ActorLease>(k: u16, right: bool, runtime: &mut L
                 origin.y.whole.wrapping_sub(BUBBLE_Y),
             )
         };
-        ActorLease::foreign(runtime, |game| {
-            game.set_projectile_spawn_point(x, y);
-            game.spawn_room_projectile(DUST_CLOUD, LONG_BREATH_BUBBLES);
+        // The spawn the game made in one call, on the lease.
+        runtime.lease_owned_step(|runtime| {
+            BossState::place_projectile_spawn(runtime, x, y);
+            BossState::spawn_room_eproj(runtime, DUST_CLOUD, LONG_BREATH_BUBBLES);
         });
     }
     let (x, y) = {

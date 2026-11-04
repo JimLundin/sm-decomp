@@ -10,7 +10,6 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, Source},
     },
-    game_state::Game,
     ram_map::checked_word as word,
     rom::RomRecord,
 };
@@ -196,20 +195,8 @@ pub(crate) fn advance_frame(runtime: &mut Runtime<'_>) {
     }
 }
 
-pub(crate) fn low_health(game: &mut Game) {
-    if (game.samus_health().wrapping_sub(31) as i16) < 0 {
-        if game.samus_health_warning() == 0 {
-            crate::game::music::queue_sfx3_max6(2, game);
-            game.set_samus_health_warning(1);
-        }
-    } else if game.samus_health_warning() != 0 {
-        game.set_samus_health_warning(0);
-        crate::game::music::queue_sfx3_max6(1, game);
-    }
-}
-
 /// The low health warning on the lease Samus's frame holds.
-fn low_health_on(runtime: &mut Runtime<'_>) {
+pub(crate) fn low_health_on(runtime: &mut Runtime<'_>) {
     if (word!(runtime.SAMUS_HEALTH).wrapping_sub(31) as i16) < 0 {
         if word!(runtime.SAMUS_HEALTH_WARNING) == 0 {
             runtime.queue_sound(2, 2, 6);

@@ -8,7 +8,7 @@
 //! runs the bank $AA function in its `function` word, whose ids are the
 //! original's.
 use crate::actors::boss_lease::{BossLease, steps};
-use crate::actors::host::{BossEffects, Slopes, abs16};
+use crate::actors::host::{Slopes, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_PROCESSED_OFFSCREEN,
@@ -19,9 +19,7 @@ use crate::room_mechanisms::creation::spawn_hardcoded_in;
 use crate::statue_tables;
 
 /// A lease on a game with the statues' effects.
-pub trait Lease:
-    BossLease<Game: BossEffects> + SlotState + crate::room_mechanisms::host::Host
-{
+pub trait Lease: BossLease + SlotState + crate::room_mechanisms::host::Host {
     /// The boss word of `area`, in native byte order.
     fn boss_word_native(&mut self, area: u16) -> u16;
     /// Start the room's acid lowering.

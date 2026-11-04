@@ -1,13 +1,13 @@
 //! Geega detection, straight flight, curved turns and home reset.
 //! Native actor fields retain authority and original query/ROM failure ordering.
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{Axis, BossEffects};
+use crate::actors::host::Axis;
 use crate::actors::slot_view::{SlotState, slot_view};
 use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with the geegas' effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
-impl<T: BossLease<Game: BossEffects> + SlotState + ?Sized> Lease for T {}
+pub trait Lease: BossLease + SlotState {}
+impl<T: BossLease + SlotState + ?Sized> Lease for T {}
 
 slot_view! {
     /// A geega's slot: its state routine; the turn's arc step and whether the

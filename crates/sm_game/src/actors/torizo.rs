@@ -7,8 +7,7 @@
 //! unchanged.
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::{BossLease, BossState};
-use crate::actors::deaths::Deaths;
-use crate::actors::host::{BossEffects, Shot, Slopes};
+use crate::actors::host::{Shot, Slopes};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
@@ -18,11 +17,10 @@ use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
 use crate::presentation_workspace::PaletteAccess;
-use crate::records::Records;
 
 /// A lease on a game with the Torizos' effects.
 pub trait Lease:
-    BossLease<Game: Ai>
+    BossLease
     + crate::actors::boss_interaction::Access
     + SlotState
     + crate::progress::FlagHost
@@ -35,7 +33,7 @@ pub trait Lease:
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: Ai>
+    T: BossLease
         + crate::actors::boss_interaction::Access
         + SlotState
         + crate::progress::FlagHost
@@ -237,10 +235,6 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
         golden_damaged_shot_reaction(game);
     }
 }
-
-/// What the Torizos' AI needs beyond the movement and drool host: the shared
-/// boss effects, deaths and the compat dispatch.
-pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {}
 
 /// The Torizos' sprite palettes: each pair is the high palette's sixteen
 /// colours, then the low palette's.

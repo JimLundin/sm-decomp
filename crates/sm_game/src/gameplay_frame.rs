@@ -71,7 +71,6 @@ pub trait Host:
     fn begin_session_interval(&mut self, fresh: bool);
     /// The gameplay pass resume byte ($7E:0612).
     fn resume_point(&self) -> u8;
-    fn set_resume_point(&mut self, point: u8);
 
     // Frame phase.
     fn resume_boot(&mut self) -> u8;
@@ -79,7 +78,6 @@ pub trait Host:
     fn fail_frame_state(&mut self);
     /// The original's warning when a pass leaves continuation bytes set.
     fn report_broken_coroutine(&mut self, state: [u8; 4]);
-    fn update_hdma(&mut self);
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
     fn debug_game_over_menu(&mut self);
     /// Emit this frame's queued gameplay sound effects.
@@ -96,15 +94,31 @@ pub trait Host:
     // Pause phase.
     fn pause_hook(&mut self, hook: PauseHook);
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
-
-    // Death phase.
-    fn advance_low_health_warning(&mut self);
 }
 
 /// The gameplay pass phases the compatibility runtime runs on a lease the pass
 /// already holds.
 pub trait PassLease:
-    crate::gameplay_context::Access + crate::presentation_workspace::ContinuationAccess
+    crate::gameplay_context::Access
+    + crate::presentation_workspace::ContinuationAccess
+    + crate::presentation_workspace::Access
+    + crate::presentation_workspace::PaletteAccess
+    + crate::sequence_state::Access
+    + crate::menus::state::Access
+    + crate::menus::save_slots::SlotHost
+    + crate::message_boxes::DialogueHost
+    + crate::effects::DisplayRefresh
+    + crate::effects::SoundEffects
+    + crate::session_owners::AudioHost
+    + crate::screen_fade::Owner
+    + crate::palette_effects::fading::Host
+    + crate::display::preparation::Access
+    + crate::display::video::Video
+    + crate::display_refresh::DisplayOwner
+    + crate::hdma_objects::HdmaTable
+    + crate::hdma_objects::UpdateHost
+    + crate::ram::CompatibilityRam
+    + crate::escape_timer::Host
 {
     /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
@@ -123,6 +137,8 @@ pub trait PassLease:
     fn advance_native_state(&mut self, state: NativeState) -> u8;
     /// A door transition state's frame; nonzero when it yields.
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
+    /// The reserve tanks state's low health warning.
+    fn advance_low_health_warning(&mut self);
 }
 
 #[derive(Clone, Copy)]
@@ -209,9 +225,6 @@ enum ResumePoint {
 }
 
 impl ResumePoint {
-    fn read<H: Host>(game: &H) -> Self {
-        Self::of(game.resume_point())
-    }
     fn of(byte: u8) -> Self {
         match byte {
             0 => Self::Start,
@@ -264,6 +277,7 @@ pub fn tick<H: Host>(input: TickInput, game: &mut H) -> CoroutineRet {
     advance(Entry::Frame, game)
 }
 
+/// Run `entry`; a pass state's pass also ends the frame, on its last lease.
 pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     match entry {
         Entry::Frame => frame(game),
@@ -288,6 +302,25 @@ pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         | Entry::PrepareDeath
         | Entry::DeathBlackout => pass(entry, game),
     }
+}
+
+/// The states that run the gameplay pass.
+fn runs_pass(entry: Entry) -> bool {
+    matches!(
+        entry,
+        Entry::Gameplay
+            | Entry::FadeIn
+            | Entry::Unpause
+            | Entry::DemoStart
+            | Entry::PauseFadeOut
+            | Entry::CeresElevator
+            | Entry::CeresBlackout
+            | Entry::ZebesEscape
+            | Entry::TimeUp
+            | Entry::ReserveTanks
+            | Entry::PrepareDeath
+            | Entry::DeathBlackout
+    )
 }
 
 /// Frame phase: boot continuation, frame start, state dispatch and frame end.
@@ -319,39 +352,16 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             start_frame::<H>(&mut lease);
             st = game_state(&lease) as i32 + 10;
             lease.set_outer_continuation(st as u8);
-            // The main gameplay state's frame runs from here to the frame's end on this
-            // lease, unless an enemy's message box splits its pass. Every other state
-            // closes it and ends the frame on Game.
+            // A pass state runs from here to the frame's end on this lease: its
+            // pre-pass work, the pass, an enemy's message box, the state's finish
+            // and the frame's end.
             let entry = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16));
-            if matches!(entry, Some(Advance(Entry::Gameplay)))
-                && ResumePoint::of(lease.screen_primary()) == ResumePoint::Start
-            {
-                crate::probe::hit("coroutine.gameplay");
-                let completed = pass_from_start::<H>(&mut lease, true);
-                drop(lease);
-                break 'frame match completed {
-                    Some(yielded) => yielded,
-                    None => pass_after_message(ResumePoint::Start, true, game),
-                };
-            }
-            // A pass state with no work before its pass runs the pass from its start
-            // on this lease too; its finish and the frame's end run on Game.
             if let Some(&Advance(entry)) = entry
-                && plain_pass(entry)
-                && ResumePoint::of(lease.screen_primary()) == ResumePoint::Start
+                && runs_pass(entry)
             {
-                crate::probe::hit("coroutine.gameplay");
-                let completed = pass_from_start::<H>(&mut lease, false);
+                let returned = run_pass::<H>(&mut lease, PassEnd::Frame(entry));
                 drop(lease);
-                let yielded = match completed {
-                    Some(yielded) => yielded,
-                    None => pass_after_message(ResumePoint::Start, false, game),
-                };
-                if yielded != 0 {
-                    break 'frame yielded;
-                }
-                finish_pass(entry, game);
-                break 'frame finish_state(game);
+                break 'frame returned;
             }
             // A cinematic or door transition state's frame runs on this lease too;
             // the frame ends on Game once it returns.
@@ -369,6 +379,8 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             }
         }
         let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
+            // A pass state's frame ends on its pass's last lease.
+            Advance(entry) if runs_pass(entry) => break 'frame advance(entry, game),
             Advance(entry) => advance(entry, game),
             // A cinematic state resuming after a yield opens the frame's lease here.
             Native(state) => game.runtime().advance_native_state(state),
@@ -382,7 +394,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             FlashDeath => samus_death::flash_death(game),
             ExplodeSuit => samus_death::explode_suit(game),
             Door(signal) => game.resume_room_entry(signal),
-            Demo => demo_rooms::play(game, |game| advance(Entry::Gameplay, game)),
+            Demo => demo_rooms::play(game, |game| advance_gameplay(PassEnd::Pass, game)),
             Null => 0,
             Unused => {
                 game.rtl_unreachable();
@@ -916,103 +928,110 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
     0
 }
 
-/// The pass states that do no work before their pass.
-fn plain_pass(entry: Entry) -> bool {
-    matches!(
-        entry,
-        Entry::FadeIn
-            | Entry::Unpause
-            | Entry::DemoStart
-            | Entry::PauseFadeOut
-            | Entry::ZebesEscape
-            | Entry::TimeUp
-            | Entry::PrepareDeath
-            | Entry::DeathBlackout
-    )
+/// What a completed pass's lease runs after the pass's own bookkeeping.
+#[derive(Clone, Copy)]
+enum PassEnd {
+    /// Nothing more: the demo's play loop continues its frame.
+    Pass,
+    /// The state's per-state finish, then the frame's end.
+    Frame(Entry),
 }
 
-/// States that run the gameplay pass: their pre-pass work, the pass and,
-/// once it completes, their per-state finish.
+/// States that run the gameplay pass: their pre-pass work, the pass, their
+/// per-state finish and the frame's end, on one lease.
 fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
+    advance_gameplay(PassEnd::Frame(entry), game)
+}
+
+/// Frame phase: the resumable gameplay pass shared by playing states, on one
+/// lease.
+fn advance_gameplay<H: Host>(end: PassEnd, game: &mut H) -> CoroutineRet {
+    run_pass::<H>(&mut game.runtime(), end)
+}
+
+/// The gameplay pass on `lease`: a pass state's pre-pass work, then the pass
+/// from the resume point, then `end`.
+fn run_pass<'a, H: Host + 'a>(lease: &mut H::Runtime<'a>, end: PassEnd) -> CoroutineRet {
+    if let PassEnd::Frame(entry) = end {
+        prepare_pass::<H>(entry, lease);
+    }
+    crate::probe::hit("coroutine.gameplay");
+    let resume = ResumePoint::of(lease.screen_primary());
+    pass_on::<H>(lease, resume, end)
+}
+
+/// A pass state's work before its pass: the Ceres escape timer, and the
+/// reserve tanks' automatic refill.
+fn prepare_pass<'a, H: Host + 'a>(entry: Entry, lease: &mut H::Runtime<'a>) {
     if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout)
-        && crate::session_words::current(game).timer_status != 0
+        && crate::session_words::current(lease).timer_status != 0
     {
-        escape_timer::draw(game);
+        escape_timer::draw(lease);
     }
     if matches!(entry, Entry::ReserveTanks)
-        && game.screen_primary() == 0
-        && reserve_tanks::refill_auto(game) != 0
+        && lease.screen_primary() == 0
+        && reserve_tanks::refill_auto(lease) != 0
     {
-        crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
-        crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
-        game.player_command(0x10);
-    }
-    let yielded = advance_gameplay(game);
-    if yielded != 0 {
-        return yielded;
-    }
-    finish_pass(entry, game);
-    0
-}
-
-/// Frame phase: the resumable gameplay pass shared by playing states.
-fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
-    crate::probe::hit("coroutine.gameplay");
-    let resume = ResumePoint::read(game);
-    if resume == ResumePoint::Skip {
-        game.set_resume_point(ResumePoint::Start as u8);
-        return 0;
-    }
-    if resume == ResumePoint::Start
-        && let Some(yielded) = pass_from_start::<H>(&mut game.runtime(), false)
-    {
-        return yielded;
-    }
-    pass_after_message(resume, false, game)
-}
-
-/// The pass from its start on `lease`. Its result, or `None` when an enemy
-/// queued a message box, which displays on Game.
-fn pass_from_start<'a, H: Host + 'a>(
-    lease: &mut H::Runtime<'a>,
-    end_frame: bool,
-) -> Option<CoroutineRet> {
-    begin_pass::<H>(lease);
-    // Read the queue after enemy callbacks, even when they changed it this pass. Without
-    // a queued message box the rest of the pass runs on the same lease.
-    (lease.session().messages.queued == 0).then(|| complete_pass::<H>(lease, true, end_frame))
-}
-
-/// The pass after an enemy's message box, queued this pass or resumed: the box
-/// on Game, then the rest of the pass on one lease.
-fn pass_after_message<H: Host>(resume: ResumePoint, end_frame: bool, game: &mut H) -> CoroutineRet {
-    let player = resume != ResumePoint::RoomObjects;
-    if player {
-        let yielded = message_boxes::display(
-            crate::session_words::current(game).queued_message_box_index,
-            game,
+        crate::sequence_word!(lease.TIME_IS_FROZEN_FLAG = 0);
+        crate::gameplay_word!(lease.GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
+        crate::player_transitions::command(
+            lease,
+            0x10,
+            crate::player_transitions::commands::finish_ceres_arrival,
         );
+    }
+}
+
+/// The pass on `lease` from `resume`: from its start, after an enemy's message
+/// box, or from the room mechanisms. Once it completes, the frame's health,
+/// time and timer bookkeeping, the resume point and `end`. Nonzero when the
+/// message box or the mechanisms yield.
+fn pass_on<'a, H: Host + 'a>(
+    lease: &mut H::Runtime<'a>,
+    resume: ResumePoint,
+    end: PassEnd,
+) -> CoroutineRet {
+    let player = match resume {
+        ResumePoint::Skip => {
+            lease.screen_set_primary(ResumePoint::Start as u8);
+            end_pass::<H>(end, lease);
+            return 0;
+        }
+        ResumePoint::Start => {
+            begin_pass::<H>(lease);
+            // Read the queue after enemy callbacks, even when they changed it this pass.
+            if lease.session().messages.queued == 0 {
+                return complete_pass::<H>(lease, true, end);
+            }
+            true
+        }
+        ResumePoint::EnemyMessage => true,
+        ResumePoint::RoomObjects => false,
+    };
+    if player {
+        let message = crate::session_words::current(lease).queued_message_box_index;
+        let yielded = message_boxes::display(message, lease);
         if yielded != 0 {
-            game.set_resume_point(ResumePoint::EnemyMessage as u8);
+            lease.screen_set_primary(ResumePoint::EnemyMessage as u8);
             return yielded;
         }
         crate::sequence_state::with_words(
-            game,
+            lease,
             |_, words: &mut crate::session_words::SessionWords| {
                 words.queued_message_box_index = 0;
             },
         );
     }
-    complete_pass::<H>(&mut game.runtime(), player, end_frame)
+    complete_pass::<H>(lease, player, end)
 }
 
 /// The rest of the pass and, once it completes, the frame's health, time and
-/// timer bookkeeping, the resume point and, with `end_frame`, the frame's end,
-/// on one lease. Nonzero when the mechanisms yield.
+/// timer bookkeeping, the resume point and `end`, on one lease. Nonzero when
+/// the mechanisms yield.
 fn complete_pass<'a, H: Host + 'a>(
     lease: &mut H::Runtime<'a>,
     player: bool,
-    end_frame: bool,
+    end: PassEnd,
 ) -> CoroutineRet {
     let yielded = continue_pass::<H>(lease, player);
     if yielded != 0 {
@@ -1022,10 +1041,16 @@ fn complete_pass<'a, H: Host + 'a>(
     finish_health_and_time(lease);
     finish_frame(lease);
     lease.screen_set_primary(ResumePoint::Start as u8);
-    if end_frame {
+    end_pass::<H>(end, lease);
+    0
+}
+
+/// A completed pass's `end`: the state's finish and the frame's end.
+fn end_pass<'a, H: Host + 'a>(end: PassEnd, lease: &mut H::Runtime<'a>) {
+    if let PassEnd::Frame(entry) = end {
+        finish_pass(entry, lease);
         close_frame::<H>(lease);
     }
-    0
 }
 
 /// The pass's first phases: actor selection, the palette effects, Samus's
@@ -1111,14 +1136,23 @@ fn upload_options_tiles<H: Host>(game: &mut H) {
 }
 
 /// Clear HDMA and the scanline IRQ, then reset the gameplay layers.
-fn finish_gameplay<H: Host>(clear_current_irq: bool, game: &mut H) {
+fn finish_gameplay<H>(clear_current_irq: bool, game: &mut H)
+where
+    H: crate::display::video::Video
+        + crate::display::preparation::Access
+        + crate::display_refresh::DisplayOwner
+        + crate::hdma_objects::HdmaTable
+        + crate::ram::CompatibilityRam
+        + crate::sequence_state::Access
+        + ?Sized,
+{
     crate::hdma_objects::clear_hdma(game);
-    game.disable_scanline_irq();
+    display_refresh::disable_scanline_irq(game);
     display_refresh::reset_gameplay_layers(clear_current_irq, game);
 }
 
 /// Cancel the three sound channels, keeping at most `max_queued` queued.
-fn cancel_sound_effects<H: Host>(game: &mut H, max_queued: u8) {
+fn cancel_sound_effects<H: crate::effects::SoundEffects + ?Sized>(game: &mut H, max_queued: u8) {
     for (channel, sound) in [2, 0x71, 1].into_iter().enumerate() {
         game.queue_sound(channel, sound, max_queued);
     }
@@ -1135,7 +1169,7 @@ fn set_mechanisms_enabled(lease: &mut impl SessionAccess, enabled: bool) {
 
 /// Start the death sequence's progress: its first phase after a three-frame
 /// delay, with the death pose's flash timer at `flash_timer`.
-fn begin_death_sequence<H: Host>(game: &mut H, flash_timer: u16) {
+fn begin_death_sequence<H: crate::menus::state::Access + ?Sized>(game: &mut H, flash_timer: u16) {
     crate::menus::state::with(game, |_, screens: &mut MenuScreens| {
         screens.options_menu.screen_index = 3;
         screens.death = DeathSequence {
@@ -1146,8 +1180,8 @@ fn begin_death_sequence<H: Host>(game: &mut H, flash_timer: u16) {
     });
 }
 
-/// Per-state work after a completed gameplay pass.
-fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
+/// Per-state work after a completed gameplay pass, on the pass's lease.
+fn finish_pass<L: PassLease + SessionAccess + ?Sized>(entry: Entry, game: &mut L) {
     match entry {
         Entry::FadeIn | Entry::Unpause => {
             game.fade(true);
@@ -1181,11 +1215,10 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     finish_gameplay(true, game);
                     begin_death_sequence(game, 16);
                     crate::screen_fade::store(game, 0, 0);
-                    crate::enemy_projectiles::table::with_slots(game, clear_projectile_motion);
+                    clear_projectile_motion(&mut game.session_mut().enemy_projectiles.slots);
                     crate::gameplay_word!(game.GAME_STATE += 1);
-                    with_session(game, |session| {
-                        session.projectiles.power_bomb.explosion_status = 0;
-                    });
+                    game.session_mut().projectiles.power_bomb.explosion_status = 0;
+                    game.words_stored();
                     cancel_sound_effects(game, 15);
                     crate::music_requests::queue_delayed_8(0, game);
                     crate::music_requests::queue_delayed_8(0xff39, game);
@@ -1206,17 +1239,16 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 let value = game.palette_word(false, index * 2);
                 game.screen_write_word(Point::new(Role::Pause, (384 + index) * 2), value);
             }
-            with_session(game, |session| {
-                // Keep palette 6's sprite colours as the death sequence's targets.
-                let visual = session.presentation.visual_mut();
-                for (index, target) in visual.targets.iter_mut().enumerate() {
-                    *target = if (192..208).contains(&index) {
-                        visual.colors[index]
-                    } else {
-                        0
-                    };
-                }
-            });
+            // Keep palette 6's sprite colours as the death sequence's targets.
+            let visual = game.session_mut().presentation.visual_mut();
+            for (index, target) in visual.targets.iter_mut().enumerate() {
+                *target = if (192..208).contains(&index) {
+                    visual.colors[index]
+                } else {
+                    0
+                };
+            }
+            game.words_stored();
             begin_death_sequence(game, 0);
             crate::sequence_state::with_words(
                 game,
@@ -1283,7 +1315,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             }
         }
         Entry::DemoStart => {
-            game.update_hdma();
+            crate::hdma_objects::update_hdma(true, game);
             crate::gameplay_word!(game.GAME_STATE += 1);
             game.store_display_control_byte(DisplayField::Brightness, 15, Store::Named);
         }
