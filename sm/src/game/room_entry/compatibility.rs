@@ -2,7 +2,10 @@
 use super::{api::EntryWait, content::*, effects::*};
 use crate::game::actors;
 use crate::{
-    game::{self, room_mechanisms, session_runtime::Runtime},
+    game::{
+        self, room_mechanisms,
+        session_runtime::{Compressed, Runtime},
+    },
     ram_map::words as W,
     snes::registers::*,
 };
@@ -347,10 +350,15 @@ impl EntryEffects for Runtime<'_> {
             InstallBuffer::TileTableAfterCre => 0xa800,
             InstallBuffer::Background(target) => target.compatibility_offset(),
         };
-        let produced = self.foreign(|game| match prepared {
-            Some(stream) => sm_game::decompression::decompress_prepared_table(&stream, at, game),
-            None => sm_game::decompression::decompress_to_ram(legacy.unwrap(), at, game),
-        });
+        // The decoder writes the published RAM image, and the lease takes back
+        // the bytes it produced.
+        let produced = self.decompress_to_ram(
+            match prepared.as_deref() {
+                Some(stream) => Compressed::Prepared(stream),
+                None => Compressed::Rom(legacy.unwrap()),
+            },
+            at,
+        );
         if palette {
             if let (Some(assets), Some(resource)) = (&assets, palette_resource) {
                 for row in 0..(produced / 32).min(8) {
@@ -448,13 +456,10 @@ impl EntryEffects for Runtime<'_> {
             let stream = assets
                 .stream(&source)
                 .expect("selected Level stream is unavailable");
-            self.foreign(|game| {
-                sm_game::decompression::decompress_prepared_table(&stream, 0x10000, game);
-                sm_game::room_state::LevelData::copy_level_planes(game);
-            });
+            self.decompress_level(Compressed::Prepared(&stream));
         } else {
             let source = source.compatibility_address(&self.session().world);
-            self.foreign(|game| game::room_state::decompress_level(source, game));
+            self.decompress_level(Compressed::Rom(source));
         }
     }
     fn setup(&mut self, action: SetupAction) {

@@ -51,6 +51,24 @@ pub struct Runtime<'g> {
     )>,
 }
 
+/// A compressed asset a lease decompresses into work RAM: a prepared room stream,
+/// or the loaded image's bytes at a LoROM address.
+pub(crate) enum Compressed<'a> {
+    Prepared(&'a [u8]),
+    Rom(u32),
+}
+impl Compressed<'_> {
+    /// Decode into work RAM at `at` through Game's decompressor; the bytes produced.
+    fn decompress(self, at: usize, game: &mut Game) -> usize {
+        match self {
+            Self::Prepared(stream) => {
+                sm_game::decompression::decompress_prepared_table(stream, at, game)
+            }
+            Self::Rom(address) => sm_game::decompression::decompress_to_ram(address, at, game),
+        }
+    }
+}
+
 /// Magdollite's original diagnostic for an undefined lava height.
 pub(crate) fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
@@ -606,6 +624,49 @@ impl<'g> Runtime<'g> {
             }
         }
         (reads, writes)
+    }
+    /// Decompress `source` into work RAM at `at`, as the original's decoder writes it; the
+    /// bytes it produced. The decoder runs on the published RAM image, where its back
+    /// references read the bytes it wrote, and the lease takes back exactly the bytes it
+    /// produced (`take_published_writes`).
+    pub(crate) fn decompress_to_ram(&mut self, source: Compressed<'_>, at: usize) -> usize {
+        self.publish();
+        let produced = source.decompress(at, self.game);
+        self.take_published_writes(&[at..(at + produced).min(crate::game_state::WorkRam::LEN)]);
+        produced
+    }
+    /// Decompress the room's level data from `source` to $7F:0000, then split its planes
+    /// (`LevelData::copy_level_planes`), on the published RAM image as
+    /// `decompress_to_ram` runs; the lease takes back the decoded bytes and the two plane
+    /// copies' destinations.
+    pub(crate) fn decompress_level(&mut self, source: Compressed<'_>) {
+        use sm_game::room_state::LevelData as _;
+        const LEVEL: usize = 0x10000;
+        let end = crate::game_state::WorkRam::LEN;
+        self.publish();
+        let produced = source.decompress(LEVEL, self.game);
+        self.game.copy_level_planes();
+        let size = usize::from(self.game.level_data_size());
+        self.take_published_writes(&[
+            LEVEL..(LEVEL + produced).min(end),
+            0x19602..(0x19602 + size).min(end),
+            0x16402..(0x16402 + size / 2).min(end),
+        ]);
+    }
+    /// Take back the RAM bytes in `written`, which a writer on the published image (after
+    /// `publish`) stored there, as a decode of just those bytes would read them; then
+    /// refresh the observations, as the former foreign call's import left them.
+    fn take_published_writes(&mut self, written: &[std::ops::Range<usize>]) {
+        take_written_bytes(
+            self.state.as_mut().expect("Session lease"),
+            self.game,
+            written,
+        );
+        if self.persistent_epoch.is_some() {
+            self.persistent_epoch = Some(self.game.compatibility_write_epoch());
+        }
+        self.refresh_player_observations();
+        self.refresh_actor_observations();
     }
     /// The game's imported visual tables.
     pub(crate) fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
