@@ -22,7 +22,7 @@ pub trait SampleHost:
     /// `controller`'s word as the auto-joypad read holds it now.
     fn sampled_controller_word(&mut self, controller: Controller) -> u16;
 }
-impl<T: Host + ?Sized> SampleHost for T {
+impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> SampleHost for T {
     fn sampled_controller_word(&mut self, controller: Controller) -> u16 {
         self.controller_word(controller)
     }

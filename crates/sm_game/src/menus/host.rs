@@ -44,7 +44,7 @@ pub trait Tables {
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
     fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
 }
-impl<T: Host + ?Sized> Tables for T {
+impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> Tables for T {
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette> {
         Host::intro_palette(self)
     }
@@ -67,7 +67,7 @@ pub trait CommonRuntime {
     fn assert_ram_pointer(&mut self, address: u16);
     fn update_beam_tiles_and_palette(&mut self);
 }
-impl<T: MenuRuntime + ?Sized> CommonRuntime for T {
+impl<T: MenuRuntime + crate::runtime_access::RuntimeAccess + ?Sized> CommonRuntime for T {
     fn spawn_hdma(
         &mut self,
         bank: u8,
@@ -141,7 +141,6 @@ pub trait MenuRuntime:
     /// The original's unreachable-state failure.
     fn rtl_unreachable(&mut self) -> bool;
     fn update_beam_tiles_and_palette(&mut self);
-    fn flush_sram(&mut self);
     fn invalid_window(&mut self, address: u32);
     /// The original's failed drawing or bounds assertion.
     fn legacy_assertion(&self, drawing: bool) -> !;
@@ -149,7 +148,6 @@ pub trait MenuRuntime:
     fn unreachable_native(&mut self) -> u16;
     /// Verification observers; the defaults observe nothing.
     fn observe_map_write(&self, _byte: usize, _index: usize, _stage: u8) {}
-    fn observe_flags_save(&mut self, _stage: u8) {}
     fn observe_selected_continue(&mut self, _load_result: u8) {}
 }
 
@@ -187,12 +185,11 @@ pub trait Host:
     + ResetRequest
     + crate::runtime_access::Lend
     + crate::screen_fade::Owner
+    + super::save_slots::MapHost
+    + super::controller_input::SampleHost
 {
-    type Sram: SaveRam + ?Sized;
-    fn sram(&self) -> &Self::Sram;
     fn pause_menu_tables(&self) -> &super::map_menu::ImportedTables;
     fn equipment_screen_tables(&self) -> &super::equipment_menu::ImportedTables;
-    fn save_slot_offsets(&self) -> &Option<super::save_slots::ImportedSlots>;
     fn demo_sets(&self) -> &Option<crate::demo_rooms::ImportedSets>;
     fn demo_scenes(&self) -> &Option<crate::demo_rooms::ImportedScenes>;
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;

@@ -510,31 +510,34 @@ fn copy_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     let (source, destination) = (copy_source(game), copy_destination(game));
     let src_addr: u16 = save_slots::sram_offset(game, source as isize);
     let dst_addr: u16 = save_slots::sram_offset(game, destination as isize);
-    game.sram().copy_within(
+    game.slot_ram().copy_within(
         src_addr as usize..src_addr as usize + 1628,
         dst_addr as usize,
     );
     // Copy the source's header words; the reads precede every header write.
     let source = usize::from(copy_source(game));
     let mirrored_checksum = game
-        .sram()
+        .slot_ram()
         .word(header::slot(header::MIRRORED_CHECKSUMS, source));
     let mirrored_complement = game
-        .sram()
+        .slot_ram()
         .word(header::slot(header::MIRRORED_COMPLEMENTS, source));
-    let checksum = game.sram().word(header::slot(header::CHECKSUMS, source));
+    let checksum = game
+        .slot_ram()
+        .word(header::slot(header::CHECKSUMS, source));
     let destination = usize::from(copy_destination(game));
-    game.sram().set_word(
+    game.slot_ram().set_word(
         header::slot(header::COMPLEMENTS, destination),
-        game.sram().word(header::slot(header::COMPLEMENTS, source)),
+        game.slot_ram()
+            .word(header::slot(header::COMPLEMENTS, source)),
     );
-    game.sram()
+    game.slot_ram()
         .set_word(header::slot(header::CHECKSUMS, destination), checksum);
-    game.sram().set_word(
+    game.slot_ram().set_word(
         header::slot(header::MIRRORED_COMPLEMENTS, destination),
         mirrored_complement,
     );
-    game.sram().set_word(
+    game.slot_ram().set_word(
         header::slot(header::MIRRORED_CHECKSUMS, destination),
         mirrored_checksum,
     );
@@ -558,7 +561,7 @@ fn copy_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x510, ADDR_K_MENU_TILEMAP_COPY_COMPLETED as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
-    game.flush_sram();
+    game.flush_slots();
 }
 fn complete_operation<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
@@ -597,7 +600,7 @@ fn clear_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(0x4a, game);
     let source = copy_source(game);
     let sram_addr: i32 = save_slots::sram_offset(game, source as isize) as i32;
-    game.sram()
+    game.slot_ram()
         .fill(sram_addr as usize..sram_addr as usize + 1628, 0);
     let _v1: u16 = (2u16).wrapping_mul(copy_source(game));
     let slot = usize::from(copy_source(game));
@@ -607,7 +610,7 @@ fn clear_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
         header::MIRRORED_CHECKSUMS,
         header::MIRRORED_COMPLEMENTS,
     ] {
-        game.sram().set_word(header::slot(table, slot), 0);
+        game.slot_ram().set_word(header::slot(table, slot), 0);
     }
     menu.menu_index = menu.menu_index.wrapping_add(1);
     save_slots::initialize(game);
@@ -625,7 +628,7 @@ fn clear_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x500, ADDR_K_MENU_TILEMAP_DATA_CLEARED as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
-    game.flush_sram();
+    game.flush_slots();
 }
 fn return_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(0x48, game);
@@ -745,10 +748,10 @@ fn choose_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
                     &1u16.to_ne_bytes(),
                 );
             }
-            game.sram().set_word(header::LAST_SLOT, selected);
-            game.sram()
+            game.slot_ram().set_word(header::LAST_SLOT, selected);
+            game.slot_ram()
                 .set_word(header::LAST_SLOT_COMPLEMENT, !selected);
-            game.flush_sram();
+            game.flush_slots();
             let failed = save_slots::load(selected, game) != 0;
             if failed {
                 save_slots::initialize(game);

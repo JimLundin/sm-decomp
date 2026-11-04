@@ -443,7 +443,9 @@ pub trait GradientHost:
 {
     fn gradient_tables(&self) -> &crate::visual_tables::ImportedTables;
 }
-impl<T: crate::menus::host::Host + ?Sized> GradientHost for T {
+impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> GradientHost
+    for T
+{
     fn gradient_tables(&self) -> &crate::visual_tables::ImportedTables {
         self.visual_tables()
     }

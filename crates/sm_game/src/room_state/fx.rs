@@ -77,7 +77,7 @@ pub trait SetupHost:
     /// as the projected word stores did.
     fn store_session(&mut self, refresh: bool, store: impl FnOnce(&mut crate::session::Session));
 }
-impl<T: crate::menus::host::Host + ?Sized> SetupHost for T {
+impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> SetupHost for T {
     fn boss_defeated(&mut self, mask: u16) -> bool {
         crate::progress::leased::check_boss_bit_for_cur_area(mask, self) & 1 != 0
     }
