@@ -218,8 +218,9 @@ fn crystal_flash_start(runtime: &mut Runtime<'_>) {
         word!(runtime.POWER_BOMB_EXPLOSION_X_POS = word!(runtime.SAMUS_X_POS));
         word!(runtime.POWER_BOMB_EXPLOSION_Y_POS = word!(runtime.SAMUS_Y_POS));
         set_hdma_enabled(true, runtime);
-        // The HDMA objects still spawn on the game.
-        runtime.foreign(|game: &mut Game| spawn_crystal_flash(game));
+        // The explosion words and the HDMA objects are the lease's; the owned
+        // call keeps the former foreign entry's observation refresh.
+        runtime.owned_player_call(spawn_crystal_flash);
     }
 }
 

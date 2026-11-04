@@ -1098,7 +1098,9 @@ impl Host for Runtime<'_> {
         });
     }
     fn spawn_power_bomb(&mut self) {
-        self.foreign(|g| sm_game::explosion_window::spawn_power_bomb(g));
+        // The explosion words and the HDMA objects are the lease's; the owned
+        // call keeps the former foreign entry's observation refresh.
+        self.owned_player_call(sm_game::explosion_window::spawn_power_bomb);
     }
     fn spawn_mechanism(&mut self, header: u16) {
         let mut contact = sm_game::room_mechanisms::host::Contact::Absent;
