@@ -214,7 +214,9 @@ def game_boundary() -> dict[str, int]:
     """Calls across the Game boundary: foreign calls (crates and sm/src), host
     traits implemented for Game (sm/src), and leases opened from Game-hosted
     sm_game code. Line comments are ignored."""
-    foreign = re.compile(r"\.foreign\s*\(")
+    # Method syntax (`x.foreign(`) and path syntax (`Trait::foreign(x, ...)`):
+    # tick-s9c found three path-syntax calls the method pattern alone missed.
+    foreign = re.compile(r"(?:\.|\b[A-Z]\w*::)foreign\s*\(")
     host = re.compile(r"^\s*impl\b[^{;]*\bfor\s+Game\b")
     # A trait sm/ defines for itself (`impl crate::...`) is not a host the engine
     # calls through, so it is not part of the Game boundary (D6, 2026-11-04).
