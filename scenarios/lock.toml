@@ -962,7 +962,7 @@ frames = 1207
 format = 1
 ticks = 1207
 combined = "374ac03db0ce4ba1"
-digests = { "wram" = "a4da4acd8070c71c", "sram" = "4385631861fcc18b", "vram" = "72e3fba3667e9719", "cgram" = "b3d84b67580a7bf4", "oam" = "9946c200c7dd765b", "ppu" = "1be9edf86421319d", "video" = "bce89e861bbd8981", "apu" = "a8ee4545dfa87300", "input" = "ba05891f646964f1", "samus" = "af0eefd31f7f814f", "camera" = "dbf75e344699cd59", "room" = "63249e451918af4e", "progress" = "19f5060194594499", "actors" = "1d25213bbce4732a", "effects" = "4827ae769a5cea99" }
+digests = { "wram" = "a4da4acd8070c71c", "sram" = "4385631861fcc18b", "vram" = "72e3fba3667e9719", "cgram" = "b3d84b67580a7bf4", "oam" = "9946c200c7dd765b", "ppu" = "1be9edf86421319d", "video" = "bce89e861bbd8981", "apu" = "a8ee4545dfa87300", "input" = "ba05891f646964f1", "samus" = "af0eefd31f7f814f", "camera" = "dbf75e344699cd59", "room" = "63249e451918af4e", "progress" = "19f5060194594499", "actors" = "1d25213bbce4732a", "effects" = "4827ae769a5cea99", "session_actors" = "8c025c3317a19789", "session_display" = "3c630af636959a64", "session_loop" = "64391af33a10e60f", "session_menus" = "fa624378dbf81bab", "session_player" = "25d518b60e7e5705", "session_room" = "729155b3bb8112fe", "session_save" = "bc1987db611ae2b9", "session_scratch" = "6dc4769e56369396" }
 marks = { "1000" = "724cd5a548c46b83" }
 
 [[scenario]]
@@ -998,7 +998,7 @@ frames = 1001
 format = 1
 ticks = 1001
 combined = "e1f8a650549b87b3"
-digests = { "wram" = "1be2d984236328a2", "sram" = "aec22ccec91c59ba", "vram" = "0172222b921328a5", "cgram" = "606bb121a15ec317", "oam" = "1fba45ab4dcf7323", "ppu" = "2ed3635f198b7794", "video" = "a41be9a12d5bfca8", "apu" = "a1a1c4aabc5b82af", "input" = "8e20b19b45e1979e", "samus" = "e2c9ac8cbbf6a597", "camera" = "00a82200867ff28e", "room" = "f71b653d596e15db", "progress" = "9f5486c5e3c52683", "actors" = "4f77a93398def161", "effects" = "60152a58e6a83a33" }
+digests = { "wram" = "1be2d984236328a2", "sram" = "aec22ccec91c59ba", "vram" = "0172222b921328a5", "cgram" = "606bb121a15ec317", "oam" = "1fba45ab4dcf7323", "ppu" = "2ed3635f198b7794", "video" = "a41be9a12d5bfca8", "apu" = "a1a1c4aabc5b82af", "input" = "8e20b19b45e1979e", "samus" = "e2c9ac8cbbf6a597", "camera" = "00a82200867ff28e", "room" = "f71b653d596e15db", "progress" = "9f5486c5e3c52683", "actors" = "4f77a93398def161", "effects" = "60152a58e6a83a33", "session_actors" = "79d466bfa5b6b7ab", "session_display" = "44102d94bc28c235", "session_loop" = "4c74b15f5e86ae1d", "session_menus" = "c4bc4b8daf5cd1f5", "session_player" = "7440e7bb06b186a0", "session_room" = "ab100c8498bffc47", "session_save" = "79e1764d37d8eeda", "session_scratch" = "8b19e4c74b8aaa22" }
 marks = { "1000" = "f95a99c3f103ef58" }
 
 [[scenario]]
@@ -1022,7 +1022,7 @@ frames = 1501
 format = 1
 ticks = 1501
 combined = "3cac57d6431e7f79"
-digests = { "wram" = "3482852af1d7cf6d", "sram" = "67d3b7556954ab70", "vram" = "ba30271e29bf2f2a", "cgram" = "b475bc52edacd098", "oam" = "18b138633141da0f", "ppu" = "2bc48a832f0b8be2", "video" = "ac3c37bb998c27e9", "apu" = "3c7df46aa0c2c071", "input" = "fa3bf33abc3ad7ef", "samus" = "ece50c2a4a5f9615", "camera" = "7d43554c54c35978", "room" = "2b998f2dfa882ee6", "progress" = "9437259ef1a0f5c3", "actors" = "f4a77abb7f99956e", "effects" = "54f883a839a6cb0d" }
+digests = { "wram" = "3482852af1d7cf6d", "sram" = "67d3b7556954ab70", "vram" = "ba30271e29bf2f2a", "cgram" = "b475bc52edacd098", "oam" = "18b138633141da0f", "ppu" = "2bc48a832f0b8be2", "video" = "ac3c37bb998c27e9", "apu" = "3c7df46aa0c2c071", "input" = "fa3bf33abc3ad7ef", "samus" = "ece50c2a4a5f9615", "camera" = "7d43554c54c35978", "room" = "2b998f2dfa882ee6", "progress" = "9437259ef1a0f5c3", "actors" = "f4a77abb7f99956e", "effects" = "54f883a839a6cb0d", "session_actors" = "26f25f94a54109e3", "session_display" = "2299466e22af39ed", "session_loop" = "1f1e28c3a3bdee50", "session_menus" = "1f646a5e48dd9d87", "session_player" = "197e61bb3712c267", "session_room" = "2b357ce4ca91fbbc", "session_save" = "4a3a32f8467d5dce", "session_scratch" = "c40c1672cc964149" }
 marks = { "1000" = "49f5306a49bf08f5" }
 
 [[scenario]]
@@ -7298,7 +7298,7 @@ frames = 757
 format = 1
 ticks = 757
 combined = "0b1a1a0a136fb654"
-digests = { "wram" = "bc4e1d9976c532e8", "sram" = "2351715febebdea6", "vram" = "94fdf287533965ad", "cgram" = "c74c3ea687d82b4a", "oam" = "e449ee87f32502bc", "ppu" = "81c019da123aaf6b", "video" = "54e35e7a3085ef7e", "apu" = "68ee80f8fac02da6", "input" = "3b33727b3c77a271", "samus" = "09a60df8c69f7ede", "camera" = "93c2414571c2a9e7", "room" = "d789dcc041ad0fba", "progress" = "cc2d1bc6c4d29d4a", "actors" = "09f09482972d784f", "effects" = "75769b2e190a0006" }
+digests = { "wram" = "bc4e1d9976c532e8", "sram" = "2351715febebdea6", "vram" = "94fdf287533965ad", "cgram" = "c74c3ea687d82b4a", "oam" = "e449ee87f32502bc", "ppu" = "81c019da123aaf6b", "video" = "54e35e7a3085ef7e", "apu" = "68ee80f8fac02da6", "input" = "3b33727b3c77a271", "samus" = "09a60df8c69f7ede", "camera" = "93c2414571c2a9e7", "room" = "d789dcc041ad0fba", "progress" = "cc2d1bc6c4d29d4a", "actors" = "09f09482972d784f", "effects" = "75769b2e190a0006", "session_actors" = "76439d9a271233b2", "session_display" = "0443dce8cf859e1d", "session_loop" = "b6725209211334d6", "session_menus" = "311064f686edf520", "session_player" = "7c2308ecf0557080", "session_room" = "063e434aefb0164a", "session_save" = "7135586efb5a40d4", "session_scratch" = "328d6e8e0a7c0293" }
 marks = {  }
 
 [[scenario]]
@@ -7310,7 +7310,7 @@ frames = 502
 format = 1
 ticks = 502
 combined = "f759be6b9da7576c"
-digests = { "wram" = "c071880f768fb124", "sram" = "dd9914eaeb30a9e8", "vram" = "d6856fd571630c77", "cgram" = "73ac102ea9b5c3b1", "oam" = "24a21c44318fb49c", "ppu" = "15378c7fcc3de4f6", "video" = "ae78fce2178ed243", "apu" = "0018025b2f73e682", "input" = "f5a9b5ef9a6ba517", "samus" = "0b6c901667020b7e", "camera" = "4ad18237bee218de", "room" = "6727fee8c7edf931", "progress" = "56468afdd8a652d6", "actors" = "33658c9892acd34a", "effects" = "71eb25b1ddb5e89f" }
+digests = { "wram" = "c071880f768fb124", "sram" = "dd9914eaeb30a9e8", "vram" = "d6856fd571630c77", "cgram" = "73ac102ea9b5c3b1", "oam" = "24a21c44318fb49c", "ppu" = "15378c7fcc3de4f6", "video" = "ae78fce2178ed243", "apu" = "0018025b2f73e682", "input" = "f5a9b5ef9a6ba517", "samus" = "0b6c901667020b7e", "camera" = "4ad18237bee218de", "room" = "6727fee8c7edf931", "progress" = "56468afdd8a652d6", "actors" = "33658c9892acd34a", "effects" = "71eb25b1ddb5e89f", "session_actors" = "9416fbe853aaa399", "session_display" = "259c5782b2bb7283", "session_loop" = "c709e9c117246635", "session_menus" = "2324fc472f290c33", "session_player" = "a848d5dc1e59db83", "session_room" = "1957ab867868a742", "session_save" = "faf80059be7a06ad", "session_scratch" = "1d611a239b9217ad" }
 marks = {  }
 
 [[scenario]]
