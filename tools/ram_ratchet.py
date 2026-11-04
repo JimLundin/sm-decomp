@@ -65,7 +65,7 @@ BASELINE = {
     "engine_ram_address_sites": 11,
     "engine_raw_ram_calls": 0,
     "engine_unresolved_ram_methods": 981,
-    "legacy_engine_ram_sites": 483,
+    "legacy_engine_ram_sites": 460,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     # Advisory, rebaselined 2026-11-04: 61 -> 73. Every new site is an original-game
     # out-of-range access routed through legacy_overflow with a docs/LEGACY.md row
@@ -76,8 +76,8 @@ BASELINE = {
     # image; Session entries are leases opened from Game-hosted code. All three
     # reach zero when the Session drives the tick. Foreign calls and Game hosts
     # may not rise; lease moves can add entries, so those are reported.
-    "foreign_calls": 138,
-    "game_host_impls": 94,  # SpriteHost split into MapHost + SpriteWords (same coupling)
+    "foreign_calls": 121,
+    "game_host_impls": 91,  # SpriteHost split into MapHost + SpriteWords (same coupling)
     "session_entries": 99,
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
     # gameplay_word! read and store typed Session-backed keys, not RAM, so

@@ -338,3 +338,43 @@ projection, so the projection test covers it. Owners include:
 - the BG1 update words up to $0997.
 
 Several have no `Field` yet. This is about 30 owners and was not started here.
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc5`, on `rs-fc4`)
+
+`foreign_calls` 138 to 121, `game_host_impls` 94 to 91, `legacy_engine_ram_sites` 483 to
+460; `sm_game_ram_sites` unchanged (95). No lease is added; each retired call runs in
+an owned player call (`owned_step`, `lease_owned_step`, `draw_objects`,
+`report_invalid_window`), which refreshes the observations on entry and return.
+Moved to the lease:
+- Mother Brain's `on_game!` macro is gone: its 17 entries run on the fight's lease
+  (`Lease::player_command`/`player_mother_brain` for Samus; the rest through sm_game
+  bounds). The wall pushes are ported onto `PlayerPosition`, and the player collision
+  ownership check runs the same port on the game. The wall seal, the death explosions
+  and the tube landing's earthquake also moved; sm's `mother_brain_visuals` and
+  `actors::mother_brain_effects` modules are deleted.
+- `ActorLease::lease_owned_step`: Alcoon, Kago, Fune/Namihe and Rinka spawns, the
+  Yard's crawler speed, the roach's sine products and the shutter timers.
+- Draygon's grab (command, then grab, one step each); Draygon's `Host` is a blanket alias.
+- Ridley's Ceres door spritemap; the room mechanisms' invalid-window reports; the pickup
+  visuals and the transitions' beam update (`hud::install` needs only `HudFrameHost`).
+
+Left, with what each needs:
+- Hardware (stage 4, D2): the neck's and Ridley's sine multiplier, Yapping Maw's
+  multiplicand, Bomb Torizo's haze, the morph ball eye beam, Phantoon's wave, the HDMA
+  channel registers, lava background video, the Mode 7 queue, animated tile upload.
+- Dispatcher fallbacks: the species `ai`/`touch`/`shot`/`draw_hook`/`instruction`/
+  `pre_instruction` arms and `run_a7`/`run_aa`/Torizo's `run_movement` fallback still
+  reach the generic table on Game; the pirates' `dispatch_state` handlers each open
+  `game.lease()` several times, so it needs every handler rewritten onto `PirateLease`.
+  The HDMA calls and pre-actions left are the explosion window and X-ray ones, which
+  need `sequence_state::Access` and `MenuRuntime` on the lease (the crystal flash spawn too).
+- Message boxes and item restore: their verify observers snapshot RAM on the game
+  (`observe_message_display`, `restore_cases::observe`). Save is resid3's.
+- Ridley's tail floor test: the lease has no `LevelData`.
+- Yapping Maw's visibility: the audit is clean for every scheduler slot (the word,
+  $7E:802C + slot, is in the extended block, which adopts it, and meets no Botwoon death
+  word), so the held lease could store `off_screen` through the view. But the D7 checks
+  (`actor_runtime_checks`, `persistent_session_cases`) call `Runtime::update_maw_visibility`
+  directly, including the $7F:0002 overflow slot 7FD6h, so the function would live only
+  for them. It retires with D7.
+- The grapple tiles (unchanged from fc4).
