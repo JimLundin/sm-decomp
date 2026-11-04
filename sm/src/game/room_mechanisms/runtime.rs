@@ -182,19 +182,20 @@ impl Effects for Runtime<'_> {
         });
     }
     fn pickup_visual(&mut self, visual: VisualUpdate) {
-        self.foreign(|game| {
+        self.owned_player_call(|runtime| {
             use sm_game::hud::{self, Item};
-            match visual {
-                VisualUpdate::None => {}
+            let item = match visual {
+                VisualUpdate::None => return,
                 VisualUpdate::Beams => {
-                    crate::game::visual_runtime::update_beam_tiles_and_palette(game)
+                    return sm_game::player_drawing::update_beam_tiles_and_palette(runtime);
                 }
-                VisualUpdate::Grapple => hud::install(Item::Grapple, game),
-                VisualUpdate::Xray => hud::install(Item::Xray, game),
-                VisualUpdate::Missiles => hud::install(Item::Missiles, game),
-                VisualUpdate::SuperMissiles => hud::install(Item::SuperMissiles, game),
-                VisualUpdate::PowerBombs => hud::install(Item::PowerBombs, game),
-            }
+                VisualUpdate::Grapple => Item::Grapple,
+                VisualUpdate::Xray => Item::Xray,
+                VisualUpdate::Missiles => Item::Missiles,
+                VisualUpdate::SuperMissiles => Item::SuperMissiles,
+                VisualUpdate::PowerBombs => Item::PowerBombs,
+            };
+            hud::install(item, runtime);
         });
     }
     fn save(&mut self, slot: u16) {

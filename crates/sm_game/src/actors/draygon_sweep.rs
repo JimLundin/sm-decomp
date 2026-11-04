@@ -45,7 +45,7 @@ fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
         write_y_position(index, next, game);
         index = index.wrapping_add(SWOOP_STEP);
         if index.wrapping_sub(SWOOP_TABLE_BYTES) & SIGN == 0 {
-            game.unreachable();
+            crate::diagnostics::Fatal::unreachable(game);
         }
     }
     let distance = abs16(

@@ -1,6 +1,5 @@
 //! Mother Brain encounter palettes, fades, wall sealing, body flicker and HDMA spawns.
 use crate::actors::boss_lease::BossState;
-use crate::actors::host::BossEffects;
 use crate::actors::mother_brain::{BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain};
 use crate::actors::mother_brain_fight::{Fade, Lease};
 use crate::actors::slot_view::SlotState;
@@ -8,7 +7,6 @@ use crate::constants::bank_86::ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_INVISIBLE;
 use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::imported::{Imported, word};
-use crate::menus::host::Host;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::runtime_access::SessionRam;
 use sm_data::mother_brain::{
@@ -49,11 +47,6 @@ pub trait PaletteHost:
 {
     fn mother_brain_visuals(&self) -> &ImportedTables;
 }
-
-/// The wall seal's spawns' host: the menus host's spawns and the boss
-/// effects' spawn point.
-pub trait VisualsHost: Host + BossEffects {}
-impl<T: Host + BossEffects + ?Sized> VisualsHost for T {}
 
 /// $A9:881D: Mother Brain body function - fake death - descent - initial pause.
 const FAKE_DEATH_DESCENT_INITIAL_PAUSE: u16 = 0x881d;
@@ -135,25 +128,25 @@ pub fn lights_off<H: PaletteHost + ?Sized>(game: &mut H) {
     }
 }
 
-/// Seal the wall behind Mother Brain: two dust clouds and two wall blocks on
-/// the game, then her next function.
+/// Seal the wall behind Mother Brain: two dust clouds and two wall blocks,
+/// then her next function.
 pub fn seal_wall(game: &mut impl Lease) {
-    game.foreign(crate::actors::mother_brain_fight::Host::spawn_wall_seal);
+    game.owned_step(spawn_wall_seal);
     *BodyEdit::of(game, BODY_INDEX).function() = FAKE_DEATH_DESCENT_INITIAL_PAUSE;
 }
 
 /// The wall seal's two dust clouds and two wall blocks.
-pub fn spawn_wall_seal<H: VisualsHost + ?Sized>(game: &mut H) {
+fn spawn_wall_seal(game: &mut impl Lease) {
     for y in [72, 152] {
-        game.set_projectile_spawn_point(248, y);
-        crate::enemy_projectiles::lifecycle::spawn_room_leased(
+        game.place_projectile_spawn(248, y);
+        crate::enemy_projectiles::lifecycle::spawn_room(
+            game,
             ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16,
             9,
-            game,
         );
     }
     for y in [4, 9] {
-        crate::room_mechanisms::creation::spawn_hardcoded(0xf, y, 0xb673, game);
+        crate::room_mechanisms::creation::spawn_hardcoded_in(game, 0xf, y, 0xb673);
     }
 }
 
@@ -172,9 +165,13 @@ pub fn flicker_body<H: PaletteHost + ?Sized>(game: &mut H) {
 }
 
 /// The rising and rainbow beams' HDMA objects; each returns its slot.
-pub fn spawn_rising_hdma<H: Host + ?Sized>(game: &mut H) -> u16 {
-    crate::hdma_objects::spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xe727), game)
+pub fn spawn_rising_hdma<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) -> u16 {
+    crate::hdma_objects::spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xe727), game)
 }
-pub fn spawn_rainbow_hdma<H: Host + ?Sized>(game: &mut H) -> u16 {
-    crate::hdma_objects::spawn_hdma(0x88, &HdmaObjectDefinition::new(0x41, 0x26, 0xe751), game)
+pub fn spawn_rainbow_hdma<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) -> u16 {
+    crate::hdma_objects::spawn_hdma_owned(
+        0x88,
+        &HdmaObjectDefinition::new(0x41, 0x26, 0xe751),
+        game,
+    )
 }

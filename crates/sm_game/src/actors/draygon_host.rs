@@ -20,6 +20,8 @@ pub trait Lease:
     + crate::player_projectiles::host::Host
     + crate::cartridge::NativeDiagnostics
     + crate::player_update::effects::Host
+    + crate::player_transitions::effects::Host
+    + crate::player_transitions::effects::SamusLease
 {
 }
 impl<T> Lease for T where
@@ -33,14 +35,15 @@ impl<T> Lease for T where
         + crate::player_projectiles::host::Host
         + crate::cartridge::NativeDiagnostics
         + crate::player_update::effects::Host
+        + crate::player_transitions::effects::Host
+        + crate::player_transitions::effects::SamusLease
         + ?Sized
 {
 }
 
-pub trait Host: BossEffects + BossLease<Game = Self> {
-    /// Draygon grabs Samus, facing `direction`.
-    fn grab_samus(&mut self, direction: u16);
-}
+/// The game Draygon's lease runs foreign calls on: the shared boss effects.
+pub trait Host: BossEffects + BossLease<Game = Self> {}
+impl<T: BossEffects + BossLease<Game = T>> Host for T {}
 
 slot_view! {
     /// A Draygon part's slot; the named words are the body's: its function and

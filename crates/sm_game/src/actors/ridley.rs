@@ -34,7 +34,7 @@ use crate::menus::prelude::owned;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::session_access::SessionAccess;
 use crate::sprite_drawing::Clip;
-use crate::{ridley_data, ridley_explosion_data, sprite_output};
+use crate::{ridley_data, ridley_explosion_data};
 use sm_data::cartridge::lorom_offset;
 use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
@@ -100,6 +100,16 @@ pub trait Host {
     fn hardware_sine_cosine(&mut self, amplitude: u16, angle: u16) -> (u16, u16);
     /// Move the room's liquid to `target` at `velocity` after `delay` frames.
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16);
+    /// Draw the bank `bank` spritemap at `address` at `position` with
+    /// `palette`, as `sprite_output::paletted` does, on the lease's objects.
+    fn draw_paletted_spritemap(
+        &mut self,
+        bank: u8,
+        address: u16,
+        position: (u16, u16),
+        palette: u16,
+        clip: Clip,
+    );
 }
 
 /// What Ridley's state steps read and write: his slot on the lease's Session
@@ -626,16 +636,7 @@ pub fn draw_baby_metroid_and_door<L: Lease>(game: &mut L) {
             .whole
             .wrapping_add(offset as u16);
         let y = CeresDoor::of(game, CERES_DOOR).actor().y.whole;
-        game.foreign(|game| {
-            sprite_output::paletted(
-                0xa6,
-                CERES_DOOR_SPRITEMAP,
-                (x, y),
-                1024,
-                Clip::Bounded,
-                game,
-            )
-        });
+        game.draw_paletted_spritemap(0xa6, CERES_DOOR_SPRITEMAP, (x, y), 1024, Clip::Bounded);
     }
 }
 

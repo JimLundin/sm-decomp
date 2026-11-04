@@ -2,10 +2,11 @@
 //! a fune spits on a timer, a namihe when Samus comes into its vertical range.
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{Axis, player_within};
-use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
+use crate::enemy_projectiles::lifecycle::spawn_from_enemy;
 use crate::enemy_script::EnemyScript;
 use crate::session_access::SessionAccess as _;
 
@@ -177,8 +178,8 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             } else {
                 FUNE_FIREBALL
             };
-            runtime.foreign(|game| {
-                game.spawn_projectile(right, actor, definition);
+            runtime.lease_owned_step(|runtime| {
+                spawn_from_enemy(runtime, right, actor, definition);
             });
         }
         FINISH_ACTIVITY | FINISH_ACTIVITY_2 => {

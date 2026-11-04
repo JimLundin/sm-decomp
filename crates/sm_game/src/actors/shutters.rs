@@ -72,8 +72,8 @@ enum Phase {
 use Phase::*;
 
 /// A lease on a game whose slots are the Session's typed storage.
-pub trait Lease: ActorLease + SlotState {}
-impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+pub trait Lease: ActorLease + SlotState + crate::records::Records {}
+impl<T: ActorLease + SlotState + crate::records::Records + ?Sized> Lease for T {}
 
 /// An axis's functions, by phase.
 struct Motion {
@@ -161,8 +161,10 @@ pub fn initialize(kind: Kind, runtime: &mut impl Lease) {
             *growing.growth_level() = 0;
             2 * isize::from(*growing.parameter_2() as u8)
         };
-        let mut timer =
-            |index| runtime.foreign(|game| crate::gameplay_tables::shutter_timer(game, index));
+        let mut timer = |index| {
+            runtime
+                .lease_owned_step(|runtime| crate::gameplay_tables::shutter_timer(runtime, index))
+        };
         let (speed, subspeed) = (timer(index), timer(index + 1));
         {
             let mut part = GrowingEdit::of(runtime, e);

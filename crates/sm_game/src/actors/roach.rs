@@ -3,7 +3,7 @@
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, BossEffects as _};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::geometry::Vector32;
 use crate::player_projectiles::content::table;
@@ -123,12 +123,10 @@ fn calculate_velocities(runtime: &mut impl Lease, x: usize, adjustment: Option<u
             };
             (angle, u16::from(actor.parameters[0].to_ne_bytes()[0]))
         };
-        let value = runtime.foreign(|game| {
-            if cosine {
-                game.actor_cosine_full(angle, speed)
-            } else {
-                game.actor_sine_full(angle, speed)
-            }
+        // The cosine is the sine a quarter turn on, each of the angle's low byte.
+        let phase = angle.wrapping_add(if cosine { 0x40 } else { 0x80 }) & 0xff;
+        let value = runtime.lease_owned_step(|runtime| {
+            crate::actors::queries::sine_product(runtime, speed, phase)
         });
         store_velocity(runtime, roach, x + axis_offset, value);
     }

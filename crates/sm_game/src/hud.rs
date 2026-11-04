@@ -182,7 +182,7 @@ fn stamp<H: crate::display::preparation::Access + ?Sized>(
 }
 
 /// Native icon reads retain their address-formation contract, even if already installed.
-pub fn install<H: HudHost + ?Sized>(item: Item, game: &mut H) {
+pub fn install<H: HudFrameHost + ?Sized>(item: Item, game: &mut H) {
     let index = item as usize;
     let base = usize::from(ITEM_OFFSETS[index] >> 1);
     let native = (index != 0).then(|| native_record(0x8099a3 + 4 + 8 * index as u32, game));

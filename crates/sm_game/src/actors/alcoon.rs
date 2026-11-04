@@ -3,10 +3,11 @@
 //! Was `lava_seahorse`.
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
-use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};
+use crate::actors::host::{ActorLease, LeaseActors, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
+use crate::enemy_projectiles::lifecycle::spawn_from_enemy;
 use crate::enemy_script::EnemyScript;
 use crate::session_access::SessionAccess as _;
 
@@ -334,8 +335,8 @@ pub fn instruction<H: LeaseActors + ?Sized>(
                 SPAWN_FIREBALL_2 => 2,
                 _ => 4,
             };
-            runtime.foreign(|game| {
-                game.spawn_projectile(index, key.byte_index(), FIREBALL);
+            runtime.lease_owned_step(|runtime| {
+                spawn_from_enemy(runtime, index, key.byte_index(), FIREBALL);
             });
             runtime.queue_sound(2, 6, FIREBALL_SOUND);
         }

@@ -131,8 +131,8 @@ fn set_speed(runtime: &mut impl ActorLease, key: Key, common: bool) {
 }
 /// Common crawler initialisation AI ($A3:E67A) for actor `raw`, as other
 /// initialisations call it. Was `prepare`.
-pub fn common_initialisation<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    set_speed(&mut game.lease(), Key::from_legacy(raw), true);
+pub fn common_initialisation(raw: u16, runtime: &mut impl ActorLease) {
+    set_speed(runtime, Key::from_legacy(raw), true);
 }
 /// Initialisation AI - Sciser ($A3:96E3), Zero ($A3:993B), Viola ($A3:B66F),
 /// orange Geemer ($A3:E043), Zeela ($A3:E2D4), Sova ($A3:E59C) and Geemer

@@ -51,6 +51,10 @@ impl ActorLease for Runtime<'_> {
     fn owned_lease_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
         Runtime::owned_call(self, action)
     }
+
+    fn lease_owned_step<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        Runtime::owned_player_call(self, action)
+    }
 }
 
 impl LeaseActors for Game {

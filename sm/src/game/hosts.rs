@@ -177,12 +177,6 @@ impl sm_game::player_position::PlayerFacts for Game {
     }
 }
 
-impl sm_game::actors::mother_brain_tubes::Host for Game {
-    fn start_earthquake(&mut self, kind: u16) {
-        crate::game::mother_brain_visuals::start_earthquake(kind, self);
-    }
-}
-
 // The phase-3 neck functions are the ones `dispatch_neck_function` dispatched on.
 const _: () = {
     use crate::game::sm_a9::*;
@@ -301,6 +295,19 @@ impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_>
         room.liquid_target = target;
         room.liquid_velocity = velocity;
         room.liquid_delay = delay;
+    }
+
+    fn draw_paletted_spritemap(
+        &mut self,
+        bank: u8,
+        address: u16,
+        position: (u16, u16),
+        palette: u16,
+        clip: sm_game::sprite_drawing::Clip,
+    ) {
+        self.draw_objects(|drawing| {
+            sm_game::sprite_output::paletted(bank, address, position, palette, clip, drawing)
+        });
     }
 }
 

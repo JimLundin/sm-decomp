@@ -210,6 +210,10 @@ pub trait ActorLease:
     /// Run `action` on the lease as an owned Session call: the lease is
     /// exported first and relinquished if `action` does not complete.
     fn owned_lease_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R;
+    /// Run `action` on the lease where a `foreign` call ran it on the game:
+    /// the actor and player observations are refreshed on entry and on
+    /// return, as `foreign` left them.
+    fn lease_owned_step<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R;
 }
 
 /// A host that can lease its actors; each `lease` is one original `Runtime`.

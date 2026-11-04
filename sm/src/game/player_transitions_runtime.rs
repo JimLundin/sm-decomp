@@ -83,10 +83,6 @@ impl Host for Runtime<'_> {}
 pub(crate) use sm_game::player_transitions::input::dispatch_input;
 pub(crate) use sm_game::player_transitions::input::finish_frame as finish_player_frame;
 
-pub(crate) fn mother_brain(event: u16, game: &mut crate::game_state::Game) {
-    crate::game::player_transitions::mother_brain::react(&mut Runtime::new(game), event);
-}
-
 pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {
     crate::game::player_transitions::xray::finish(&mut Runtime::new(game));
 }
@@ -107,7 +103,7 @@ impl GameEffects for Runtime<'_> {
         sm_game::hdma_objects::spawn_hdma_owned(0x91, definition, self);
     }
     fn update_beam_graphics(&mut self) {
-        self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
+        self.owned_player_call(sm_game::player_drawing::update_beam_tiles_and_palette);
     }
     fn draw_xray_window_table(&mut self, window: sm_game::beam_windows::XrayWindow) -> Option<u16> {
         self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game))
