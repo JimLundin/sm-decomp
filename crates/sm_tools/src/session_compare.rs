@@ -12,11 +12,12 @@
 //! lease takes up, and counts the fields written after the last lease
 //! separately: they are timing, not divergence.
 //!
-//! Console text names ticks and field paths, never values,
+//! Console text names ticks, field paths and RAM addresses, never values,
 //! because values can be derived from the ROM.
 
 use sm_game::session::Session;
 use std::fmt::Debug;
+use std::ops::Range;
 use std::time::Duration;
 
 /// Lists every `Session` field the comparison covers, and generates the
@@ -231,6 +232,116 @@ impl FieldTicks {
     }
 }
 
+/// Which Work RAM bytes the Session's encoder wrote over a replay: slice 2's
+/// byte-to-field coverage map. A byte is decoded (the encoder writes it for
+/// some Session field), unowned (a listed range the comparison does not
+/// own: today `NORMALIZED_RAM`), both, or neither.
+#[derive(Default)]
+pub struct Coverage {
+    /// Per byte, whether a span covered it; empty until the first span.
+    encoded: Vec<bool>,
+}
+
+impl Coverage {
+    /// Work RAM's size.
+    pub const BYTES: usize = 0x20000;
+    /// How many ranges of each kind the summary names.
+    const NAMED: usize = 12;
+
+    /// Mark a span the encoder wrote.
+    pub fn mark(&mut self, span: Range<usize>) {
+        if self.encoded.is_empty() {
+            self.encoded.resize(Self::BYTES, false);
+        }
+        self.encoded[span].fill(true);
+    }
+
+    /// Class every byte against the ranges the comparison does not own.
+    pub fn classes(&self, unowned: &[Range<usize>]) -> Classes {
+        let mut listed = vec![false; Self::BYTES];
+        for range in unowned {
+            listed[range.clone()].fill(true);
+        }
+        let mut classes = Classes::default();
+        let unmarked = vec![false; Self::BYTES];
+        let encoded = if self.encoded.is_empty() {
+            &unmarked
+        } else {
+            &self.encoded
+        };
+        for (at, (&encoded, &listed)) in encoded.iter().zip(&listed).enumerate() {
+            let (count, ranges) = match (encoded, listed) {
+                (true, false) => (&mut classes.decoded, None),
+                (false, true) => (&mut classes.unowned, None),
+                (true, true) => (&mut classes.both, Some(&mut classes.both_ranges)),
+                (false, false) => (&mut classes.neither, Some(&mut classes.neither_ranges)),
+            };
+            *count += 1;
+            if let Some(ranges) = ranges {
+                match ranges.last_mut() {
+                    Some(Range { end, .. }) if *end == at => *end = at + 1,
+                    _ => ranges.push(at..at + 1),
+                }
+            }
+        }
+        classes
+    }
+
+    /// The summary lines, given the ranges the comparison does not own.
+    pub fn finish(&self, unowned: &[Range<usize>]) -> Vec<String> {
+        let classes = self.classes(unowned);
+        let named = |ranges: &[Range<usize>]| -> String {
+            let mut text: Vec<String> = ranges
+                .iter()
+                .take(Self::NAMED)
+                .map(|range| format!("${:05X}-${:05X}", range.start, range.end - 1))
+                .collect();
+            if ranges.len() > Self::NAMED {
+                text.push(format!("and {} more", ranges.len() - Self::NAMED));
+            }
+            if text.is_empty() {
+                "none".to_owned()
+            } else {
+                text.join(", ")
+            }
+        };
+        vec![
+            format!(
+                "Session RAM coverage: {} bytes decoded, {} unowned, {} both, {} neither (in {} ranges)",
+                classes.decoded,
+                classes.unowned,
+                classes.both,
+                classes.neither,
+                classes.neither_ranges.len()
+            ),
+            format!(
+                "Session RAM neither decoded nor unowned: {}",
+                named(&classes.neither_ranges)
+            ),
+            format!(
+                "Session RAM decoded and unowned: {}",
+                named(&classes.both_ranges)
+            ),
+        ]
+    }
+}
+
+/// Work RAM's bytes by coverage class: counts, and the ranges of the two
+/// classes slice 2 must resolve.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Classes {
+    /// Bytes the encoder writes, outside the unowned ranges.
+    pub decoded: usize,
+    /// Bytes in the unowned ranges the encoder never writes.
+    pub unowned: usize,
+    /// Bytes the encoder writes inside the unowned ranges.
+    pub both: usize,
+    /// Bytes neither written nor listed.
+    pub neither: usize,
+    pub both_ranges: Vec<Range<usize>>,
+    pub neither_ranges: Vec<Range<usize>>,
+}
+
 /// The first Tick at which the Sessions differed.
 struct Divergence {
     tick: i32,
@@ -251,6 +362,8 @@ pub struct SessionCompare {
     divergence: FieldTicks,
     /// The fields written after the engine's last lease, before the frame's end.
     after_lease: FieldTicks,
+    /// The encoder's spans over the replay.
+    pub coverage: Coverage,
     /// This Tick's result, until the RAM verdict arrives.
     pending: Option<bool>,
     both_passed: u64,
@@ -443,5 +556,23 @@ mod tests {
         assert_eq!(compare.session_only, (1, Some(1)));
         assert_eq!(compare.ram_only, (1, Some(2)));
         assert_eq!(compare.undecodable, 1);
+    }
+
+    #[test]
+    fn coverage_classes_each_byte() {
+        let mut coverage = Coverage::default();
+        coverage.mark(0x10..0x20);
+        coverage.mark(0x44..0x50);
+        assert_eq!(
+            coverage.classes(&[0x18..0x30, 0x40..0x48]),
+            Classes {
+                decoded: 16,
+                unowned: 20,
+                both: 12,
+                neither: Coverage::BYTES - 48,
+                both_ranges: vec![0x18..0x20, 0x44..0x48],
+                neither_ranges: vec![0..0x10, 0x30..0x40, 0x50..Coverage::BYTES],
+            }
+        );
     }
 }

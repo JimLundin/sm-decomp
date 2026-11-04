@@ -19,7 +19,7 @@
 use crate::cpu_infra::NORMALIZED_RAM;
 use sm_game::room_entry::world::WorldBinding;
 use sm_game::session::Session;
-use sm_tools::session_compare::SessionSource;
+use sm_tools::session_compare::{Coverage, SessionSource};
 use std::ops::Range;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -88,12 +88,13 @@ fn normalize(image: &mut [u8], theirs: &[u8; RAM_BYTES]) {
 /// onto the engine's frame result (which supplies the bytes the Session does
 /// not own), the RAM written after it taken from that result, with the
 /// normalized ranges taken from the oracle, then decoded. `None` when the
-/// codec rejects an image.
+/// codec rejects an image. The encoder's spans are marked in `coverage`.
 pub(super) fn engine(
     frame: &Frame<'_>,
     mine: &[u8; RAM_BYTES],
     theirs: &[u8; RAM_BYTES],
     world: &Arc<WorldBinding>,
+    coverage: &mut Coverage,
 ) -> Option<Engine> {
     quietly(|| {
         let lease = match frame {
@@ -105,6 +106,7 @@ pub(super) fn engine(
             let mut image = mine.to_vec();
             sm_game::session_encoding::encode(session, |at, span| {
                 image[at..at + span.len()].copy_from_slice(span);
+                coverage.mark(at..at + span.len());
             });
             image
         });

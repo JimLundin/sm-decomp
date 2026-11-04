@@ -157,6 +157,12 @@ impl Observer {
                 if let Some(mut session) = self.session {
                     session.elapsed += self.leases.session_elapsed;
                     lines.extend(session.finish());
+                    // Slice 2: today the unowned table is the normalized ranges.
+                    let unowned: Vec<_> = crate::cpu_infra::NORMALIZED_RAM
+                        .into_iter()
+                        .map(|(_, range)| range)
+                        .collect();
+                    lines.extend(session.coverage.finish(&unowned));
                 }
                 Ok((lines, None))
             }
@@ -241,12 +247,15 @@ pub(crate) fn observe(game: &mut Game) -> Option<bool> {
 /// Session its next lease takes up, and the oracle's result decoded from its
 /// RAM. Report-only; the RAM comparison decides.
 pub(crate) fn observe_session(game: &mut Game) {
-    let comparing = game.observation.as_deref().is_some_and(|observer| {
-        observer.session.is_some() && matches!(observer.mode, Mode::Lockstep(_))
-    });
-    if !comparing {
+    let Some(compare) = game
+        .observation
+        .as_mut()
+        .filter(|observer| matches!(observer.mode, Mode::Lockstep(_)))
+        .and_then(|observer| observer.session.as_mut())
+    else {
         return;
-    }
+    };
+    let mut coverage = std::mem::take(&mut compare.coverage);
     let start = std::time::Instant::now();
     let last_lease = game
         .observation
@@ -271,6 +280,7 @@ pub(crate) fn observe_session(game: &mut Game) {
         &game.g_snapshot_mine.ram,
         &game.g_snapshot_theirs.ram,
         world,
+        &mut coverage,
     ));
     let tick = game.snes_frame_counter;
     let Some(compare) = game
@@ -280,6 +290,7 @@ pub(crate) fn observe_session(game: &mut Game) {
     else {
         return;
     };
+    compare.coverage = coverage;
     compare.source(source);
     match sessions {
         None => compare.skip(Skip::Undecodable),
