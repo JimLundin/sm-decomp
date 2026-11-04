@@ -886,6 +886,55 @@ former `foreign` call left them. Writes are identical and in the same order.
     `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`. The
     `lease counters:` lines should show `leases=` falling against main at the same
     `ticks=`, with `nested=` unchanged.
+- **Fourth slice (lane `tick-s9d`, on `f2d2d7a86`, `collab/tick-s9c`).** Not yet
+  replayed. Ratchet: `session_entries` 48 → 29, `game_host_impls` 60 → 60,
+  `foreign_calls` 43.
+  - On the frame's first lease, to the frame's end (`lease_frame`: the state, then
+    `close_frame` on the same lease): the death states (`samus_death::Lease`; its
+    six nested leases go, and `samus_death::Host`), the time-up exit, the demo's
+    reset, play loop (its pass is `run_pass` on the frame's lease), stop and next
+    step, the initial room load (`initialize`, with `demo_rooms::load`,
+    `finish_setup` and `run_room_hook`), and the game over fade-out. The cinematic
+    and door states end their frame on the lease too, in place of `finish_state` on
+    Game. A resumed lease state opens the frame's lease once in the dispatch.
+  - New lease ports: `PassLease::load_title_sequence_graphics` and
+    `initialize_player` (both left `gameplay_frame::Host`), `demo_rooms::Tables`
+    (a blanket over the menus host for Game; the Runtime answers from
+    `samus_game()`), and the supertraits `samus_death::Lease`,
+    `demo_rooms::TableReads`, `NativeDiagnostics`, `projection::Views`,
+    `CommonRuntime`, `GraphicsLoad` and `save_slots::MapHost`.
+    `display_refresh::initialize_gameplay` is bound on `GraphicsLoad`. The demo
+    hook's actor edit is the lease's `edit_actor`, not `ActorImage`.
+  - Deleted with no callers: `progress::leased::set_boss_byte_at`,
+    `set_boss_word_le` and `hdma_effects::apply_leased`. `flags_candidate.rs` runs
+    the demo load and hook on `Runtime::new`.
+  - **Left.** Every state still on Game reaches `menus::host::Host`: the file,
+    map, options and game over menus, the pause fade-in, setup, frame and unpause
+    (and the unpause fade's pause screen draw). Until they all run on the lease,
+    no Game host impl loses its last caller; `grapple_swing::TileAccess` is the
+    exception, now called only by `verification/grapple_tile_alias_checks.rs`.
+    Implementing `menus::host::Host` for Runtime, the probe found:
+    - `RuntimeAccess` comes in through `MenuRuntime: PlayerRuntime` and
+      `SpriteHost`. Dropping it leaves 68 sites in the menu graph: `with_session`
+      (35), `screen_fade::Owner` (14, add it as a supertrait), `with_projectiles`
+      and `with_file_select`, `session_cohort::{store, with}`, the
+      `progress::leased` and `animated_tiles::execution::leased` facades, and
+      `map_menu`'s room entry. Each needs a port that runs directly on the lease
+      and opens one on Game, or the whole graph moves at once.
+    - Eight Runtime impls collide with blankets over `menus::host::Host`
+      (`BeamHost`, `DialogueHost`, `GradientHost`, `SampleHost`, `SetupHost`,
+      `SlotHost`, `Tables`, `save_slots::MapHost`): bound those blankets on
+      `Host + RuntimeAccess`.
+    - Still missing on Runtime: `ActorImage` (narrow it out: only `game_over`'s
+      baby and the demo hook used it), `LevelData`, `SpriteWords`,
+      `InventoryAccess`, `menu_window_state::Access`, `ArrowAccess`, `MenuRuntime`
+      and Host's own tables and controller words.
+  - **Rows.** `death`, `save-death-reload`, game over, the time-up exit (the Ceres
+    escape rows), `demo-attract-setup`, the initial power-on and file loads, the
+    chain rooms, the intro and `credits` (their frame end moved), and the SFX-loss
+    rows `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`. The
+    `lease counters:` lines should show `leases=` falling against the base at the
+    same `ticks=`, with `nested=` unchanged.
 
 ### Stage 10: NMI and settlement inside the tick
 
