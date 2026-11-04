@@ -834,6 +834,16 @@ pub struct SpawnContext {
     pub point: Point,
     pub drop_definition: u16,
 }
+impl SpawnContext {
+    /// $7E:060B, whose low byte `angle` keeps: Botwoon's spit angle shares the
+    /// word with the counters the original leaves there (the extended
+    /// spritemap draw and scans' remaining entries, the drop and palette
+    /// copy counts) and the mini-map's bit index ($90:AA4F).
+    pub fn store_shared_counter(&mut self, value: u16) {
+        let [low, _] = value.to_le_bytes();
+        self.angle = low;
+    }
+}
 
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct EnemyProjectiles {
