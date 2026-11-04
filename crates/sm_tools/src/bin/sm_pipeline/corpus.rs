@@ -148,6 +148,25 @@ pub fn oracle_sample(
     Ok(selected)
 }
 
+/// The locked ids whose entries lack the Session streams, once any entry
+/// carries them (docs/handoff/session-compare.md, slice 5); none before.
+/// The oracle sample records them all beside its rotation, so the scheduled
+/// run after the first streams are committed completes the rest, and slice
+/// 6 can drop `wram`.
+pub fn lacking_session_streams(lock: &Lock, locked: &BTreeSet<String>) -> Vec<String> {
+    let streams = |id: &str| {
+        lock.entries
+            .get(id)
+            .and_then(|entry| entry.get("digests"))
+            .and_then(crate::toml::Value::as_table)
+            .is_some_and(|digests| digests.keys().any(|name| name.starts_with("session_")))
+    };
+    if !locked.iter().any(|id| streams(id)) {
+        return Vec::new();
+    }
+    locked.iter().filter(|id| !streams(id)).cloned().collect()
+}
+
 /// What to shard: the selected corpus rows (all when empty) and, with a sample,
 /// the faithful-oracle sample's rows.
 pub struct Selection<'a> {
@@ -342,5 +361,23 @@ mod tests {
         assert_eq!(sample[3], "c15");
         assert_eq!(sample.iter().collect::<BTreeSet<_>>().len(), 30);
         assert!(oracle_sample(&rows[..10], &locked, 1, 30).is_err());
+    }
+
+    #[test]
+    fn the_sample_completes_the_session_streams_once_they_start() {
+        let entry = |digests: &str| {
+            crate::toml::parse(&format!("digests = {{ {digests} }}")).expect("entry")
+        };
+        let locked: BTreeSet<String> = ["a", "b", "c"].map(str::to_owned).into();
+        let mut lock = Lock::default();
+        for id in &locked {
+            lock.entries.insert(id.clone(), entry(r#""wram" = "0""#));
+        }
+        assert!(lacking_session_streams(&lock, &locked).is_empty());
+        lock.entries.insert(
+            "b".to_owned(),
+            entry(r#""wram" = "0", "session_loop" = "1""#),
+        );
+        assert_eq!(lacking_session_streams(&lock, &locked), ["a", "c"]);
     }
 }

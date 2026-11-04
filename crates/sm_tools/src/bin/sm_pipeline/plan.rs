@@ -97,12 +97,14 @@ impl Planner<'_> {
     /// The corpus shards for the selected rows (every row when empty).
     fn shards(&self, selected: &[String], sample: bool) -> Result<Vec<Shard>, String> {
         let sampled = if sample {
-            Some(corpus::oracle_sample(
-                self.rows,
-                self.locked,
-                self.settings.slot,
-                30,
-            )?)
+            let mut sampled =
+                corpus::oracle_sample(self.rows, self.locked, self.settings.slot, 30)?;
+            for id in corpus::lacking_session_streams(self.lock, self.locked) {
+                if !sampled.contains(&id) {
+                    sampled.push(id);
+                }
+            }
+            Some(sampled)
         } else {
             None
         };
