@@ -103,7 +103,7 @@ impl GameEffects for Runtime<'_> {
         sm_game::hdma_objects::spawn_hdma_owned(0x91, definition, self);
     }
     fn update_beam_graphics(&mut self) {
-        self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
+        self.owned_player_call(sm_game::player_drawing::update_beam_tiles_and_palette);
     }
     fn draw_xray_window_table(&mut self, window: sm_game::beam_windows::XrayWindow) -> Option<u16> {
         self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game))
