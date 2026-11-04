@@ -2663,7 +2663,7 @@ impl sm_game::menus::controller_input::SampleHost for Runtime<'_> {
         } as u16)
     }
     fn latched_controller_word(&mut self) -> u16 {
-        sm_game::menus::controller_input::SampleHost::latched_controller_word(self.game)
+        self.game.latched_controller_word()
     }
 }
 // A lease lends itself, with the observations refreshed as the fresh lease

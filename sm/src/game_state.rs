@@ -1370,6 +1370,8 @@ impl Game {
         result
     }
 
+    /// The oracle checkpoint latch's soft reset request.
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
     pub(crate) fn request_reset(&mut self) {
         crate::ram_map::word!(self.GAME_STATE = u16::MAX);
     }
@@ -3123,7 +3125,7 @@ impl sm_game::menus::state::Access for Game {
 
 use sm_game::display_scroll::Access as _;
 
-fn scroll_address(word: sm_game::display_scroll::Word) -> usize {
+pub(crate) fn scroll_address(word: sm_game::display_scroll::Word) -> usize {
     0xb1 + 2 * usize::from(word)
 }
 fn scroll_lane(at: usize) -> (sm_game::display_scroll::Word, usize) {
