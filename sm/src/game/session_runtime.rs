@@ -52,11 +52,6 @@ pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };
 }
 
-/// Runs the bank $A7 function at `address` for the current enemy. Was in bank $A7.
-pub(crate) fn run_a7_function(address: u32, game: &mut Game) {
-    unsafe { actor_species_pre_instruction(address, game) };
-}
-
 /// Every pre-instruction enters through the sm_game table, which reads the
 /// current enemy once and falls back to the compatibility arms.
 pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
@@ -2029,7 +2024,9 @@ impl Runtime<'_> {
             // Nothing to draw; keep the former foreign call's observation refresh.
             self.owned_player_call(|_| ());
         } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {
-            self.foreign(|game| species::draw_hook(routine, game));
+            // No other draw hook exists: the table's fallback is the original's
+            // unreachable failure, which reads no game state.
+            sm_game::diagnostics::Fatal::unreachable(self);
         }
     }
     pub(crate) fn produce_player_scene(&mut self) {

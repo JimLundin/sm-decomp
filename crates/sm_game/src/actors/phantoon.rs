@@ -35,7 +35,6 @@ pub trait Lease:
     + crate::enemy_projectiles::host::Host
     + BossLease<Game: crate::actors::host::BossEffects + crate::actors::deaths::Deaths>
 {
-    fn run_foreign_function(&mut self, address: u32);
     fn spawn_hdma(&mut self, bank: u8, args: &HdmaObjectDefinition);
     fn start_wave(&mut self, direction: u16, speed: u16);
     fn disable_minimap(&mut self);
@@ -1014,8 +1013,9 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 }
 
 /// Run the bank $A7 function `function` for the current part, as the bank's
-/// pre-instruction dispatch does: Phantoon's on this lease, any other on the
-/// game.
+/// pre-instruction dispatch does. Phantoon's functions are the bank's only
+/// ones besides the empty $A7:D4A8, so any other address is the dispatch's
+/// unreachable failure.
 fn run_function_on<L: Lease>(game: &mut L, function: u16) {
     let k = game.current_enemy();
     run_function_at(game, function, k);
@@ -1054,7 +1054,7 @@ fn run_function_at<L: Lease>(game: &mut L, function: u16, k: u16) {
         | function::SPAWN_FLAME_RAIN
         | function::MOVE_TO_TOP_CENTRE
         | function::DYING_EXPLOSIONS => countdown(game, k, function),
-        _ => game.run_foreign_function(u32::from(function) | 0xa7_0000),
+        _ => crate::diagnostics::Fatal::unreachable(game),
     }
 }
 
