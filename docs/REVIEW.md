@@ -133,6 +133,27 @@ the unsafe goal). The N-SPC sequencer (`spc_player.rs`) and S-DSP are the seed
 of `sm_runtime` audio; continue them only once separated from emulator types,
 with verification growth no larger than the production change it covers.
 
+### Session-authoritative tick decisions (Jim, 2026-11-04)
+
+These answer the decisions D6, D7 and D9 in
+[docs/handoff/session-authoritative-tick.md](handoff/session-authoritative-tick.md).
+
+- **Goal.** The old `sm/` game is the first attempt, and the aim is to remove it.
+  Verification may still use pieces of it for now, but it must not shape or hold
+  back the new engine (`sm_game`, `sm_runtime`).
+- **D9: the owned renderer is the authority.** Our own renderer, not the emulated
+  PPU, is the authority for the new engine. Register writes leave `sm_game` as typed
+  display commands. If a RAM or register compatibility shim is still needed, it
+  lives outside the engine.
+- **D6: RAM translation belongs to verification.** RAM compatibility shims such as
+  `CompatibilityRam` and the RAM ↔ Session translation may live in `sm/`, preferably
+  under verification. Verification is responsible for translating RAM into the
+  Session format for comparison. Moving such a shim out of `sm_game` into
+  verification counts as retiring it from the engine.
+- **D7: verification foreign calls go with `foreign`.** The verification-only
+  `foreign` calls are retired together when `foreign` itself is removed. They are
+  not ported one by one.
+
 ### Scenario harness, lane S (Jim, 2026-10-31)
 
 Jim approved the scenario harness in #6 on 2026-10-31; the design is
