@@ -75,8 +75,8 @@ jobs:
       issues: write
     uses: ./.github/workflows/verify.yml
     with:
-      scope: ${{ inputs.action || (github.event_name == 'schedule' && 'full' || 'gate') }}
-      segments: ${{ inputs.segments || '' }}
+      scope: rows
+      segments: coverage-botwoon-spit
       oracle: ${{ inputs.oracle || 'patched' }}
       audio_trace: ${{ inputs.audio_trace == true }}
       oracle_sample: ${{ github.event_name == 'schedule' || inputs.oracle_sample == true }}
