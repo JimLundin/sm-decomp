@@ -174,7 +174,11 @@ pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 9] = [
         "compatibility_enemy_scratch, actors.compatibility",
         Shared::UntilRowRetires,
     ),
-    (0xe54..0xe5a, "actors.controls", Shared::UntilRowRetires),
+    (
+        0xe54..0xe56,
+        "actors.controls.selected",
+        Shared::UntilRowRetires,
+    ),
     (
         0x1784..0x178c,
         "actors.compatibility.pre_hook",

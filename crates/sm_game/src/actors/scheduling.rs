@@ -163,6 +163,9 @@ pub fn advance_selected<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H) 
                 break;
             }
             h.session_mut().actors.controls.selected = index;
+            // $A0:9015: the enemy data pointer, $0F78 + the enemy index.
+            h.session_mut().actors.controls.compatibility_data_pointer =
+                ENEMY_DATA.wrapping_add(index);
             let key = ActorKey::from_legacy(index);
             process_actor(h, key);
             let flash = h.resolve_actor(key, AccessMode::Native).flash;
@@ -262,6 +265,8 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
     }
 }
 
+/// $7E:0F78, where the enemy slots begin; the enemy data pointer's base.
+const ENEMY_DATA: u16 = 0x0f78;
 /// The byte offset of list entry `index`, as the original's list indices
 /// ($17A8, $17AA) hold it.
 pub fn list_offset(index: usize) -> u16 {

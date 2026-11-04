@@ -487,4 +487,6 @@ pub fn apply_power_bomb_to_enemies<H: ActorHost + EprojHost>(h: &mut H) {
             h.edit_actor(key, AccessMode::Native, |actor| actor.properties |= 0x800);
         }
     }
+    // $A0:A398: the scan counts the enemy index down past slot 0.
+    h.session_mut().actors.controls.selected = 0u16.wrapping_sub(64);
 }

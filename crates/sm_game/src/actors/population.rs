@@ -338,6 +338,11 @@ fn spawn_from_cursor<H: ActorHost + crate::enemy_projectiles::host::Host>(
 ) -> Result<Option<(u16, Option<InstanceHandle>)>, crate::actors::identity::ActorIdentityError> {
     use crate::enemy_population::{SearchResult, SpawnSearch, SpawnSequence};
     let saved = h.session().actors.controls.selected;
+    // $A0:927C: the enemy index backup, which the spawn restores from.
+    h.session_mut()
+        .actors
+        .controls
+        .compatibility_selected_backup = saved;
     let entry = h.capture_actor_population(&cursor);
     let raw = h.population_definition(&entry);
     let definition = h.capture_actor_definition(ActorDefinitionKey::from_legacy(raw));
