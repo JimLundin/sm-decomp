@@ -952,16 +952,8 @@ fn unreachable_failure(invalid_interrupt: bool) -> ! {
 }
 pub use crate::rom::lorom_offset;
 
-/// Capture a checked record while preserving the legacy low-window diagnostic.
-pub(crate) unsafe fn rom_record(bank: u8, addr: u16, game: &mut Game) -> crate::rom::RomRecord {
-    let views = (game.g_snes, game.g_cpu);
-    let (backend, mut host) = game.execution_parts();
-    unsafe {
-        rom_record_parts(bank, addr, &mut host, |output| {
-            observe_backend(backend.as_deref(), views, output)
-        })
-    }
-}
+/// Save the backend's inert observation copies into `output`.
+#[cfg(sm_verify_dll)]
 fn observe_backend(
     backend: Option<&crate::snes::snes::Backend>,
     views: (*mut Snes, *mut Cpu),
@@ -1011,44 +1003,6 @@ pub(crate) fn low_window_observers(
         spawn_var_e24,
     );
 }
-unsafe fn rom_record_parts(
-    bank: u8,
-    addr: u16,
-    host: &mut HostContext<'_>,
-    mut _observe: impl FnMut(&mut crate::recording::RecordingBytes),
-) -> crate::rom::RomRecord {
-    unsafe {
-        let address = (u32::from(bank) << 16) | u32::from(addr);
-        if address & 0x8000 == 0 {
-            printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-            *host.g_fail = true;
-            #[cfg(sm_verify_dll)]
-            low_window_observers(
-                address,
-                host.ram,
-                host.loaded_rom,
-                host.g_fail,
-                host.decompress_src,
-                (
-                    host.eproj_spawn_rect,
-                    host.eproj_spawn_r22,
-                    host.eproj_spawn_pt,
-                    host.eproj_spawn_varE24,
-                ),
-                &mut _observe,
-            );
-        }
-        crate::rom::RomRecord {
-            image: host
-                .loaded_rom
-                .as_ref()
-                .expect("ROM must be loaded")
-                .clone(),
-            base: lorom_offset(address) as usize,
-        }
-    }
-}
-
 /// Resolve a word address in a fixed ROM bank through the maintained validator.
 #[inline]
 pub(crate) unsafe fn rom_bank_ptr<const BANK: u8>(addr: u16, game: &mut Game) -> *const u8 {

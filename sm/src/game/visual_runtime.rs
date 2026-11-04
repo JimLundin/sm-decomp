@@ -1,7 +1,6 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
 pub(crate) use sm_game::hdma_objects::{
-    clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, spawn_bg3_scroll,
-    update_hdma,
+    clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, update_hdma,
 };
 pub(crate) use sm_game::room_visuals::{
     initialize_ceres_elevator, initialize_ceres_ridley, initialize_draygon_layer,

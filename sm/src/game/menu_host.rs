@@ -201,6 +201,17 @@ impl sm_game::menus::save_slots::SlotHost for Runtime<'_> {
     }
 }
 
+/// The area map leaves on the lease: the flags store on its Session.
+impl sm_game::menus::save_slots::MapHost for Runtime<'_> {
+    fn store_gameplay_flags(
+        &mut self,
+        store: impl FnOnce(&mut sm_game::gameplay_flag_state::GameplayFlags),
+    ) {
+        store(&mut self.session_mut().gameplay_flags);
+        self.words_stored();
+    }
+}
+
 impl Host for Game {
     type Sram = SaveRam;
     fn sram(&self) -> &SaveRam {

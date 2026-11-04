@@ -171,6 +171,7 @@ impl Backend {
 
     /// Save inert copies, never borrow live devices or follow a supplied pointer.
     /// Callers hold Game exclusivity; raw backend borrows must end before callbacks.
+    #[cfg(sm_verify_dll)]
     pub(crate) fn save_observation(
         &self,
         snes: *mut Snes,

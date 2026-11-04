@@ -103,7 +103,11 @@ impl<T> Host for T where
 /// Load the sprite palettes into the target palettes: colours 208..224 from
 /// bank $9A, colours 224..240 from the current palette, and colours 128..144
 /// (the beam's) from $9A:FC00.
-pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
+pub fn load_sprite_palettes<
+    H: crate::word_transfers::LoadedRom + crate::session_access::SessionAccess + ?Sized,
+>(
+    game: &mut H,
+) {
     use sm_data::cartridge::lorom_offset;
     let rom = game.loaded_rom_image();
     // The ROM words load in native order, as the original's word copies did.
@@ -111,8 +115,7 @@ pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
         let base = usize::try_from(lorom_offset(address)).expect("LoROM offset");
         rom.table_word(base, isize::try_from(index).expect("palette index"))
     };
-    let mut runtime = game.runtime();
-    let visual = runtime.session_mut().presentation.visual_mut();
+    let visual = game.session_mut().presentation.visual_mut();
     // Each copy runs from its last word down, as the original's did.
     for index in (208..224).rev() {
         visual.targets[index] = rom_word(0x9a8000, index);
@@ -686,9 +689,7 @@ pub fn shake_ridley<H: SessionView + ?Sized>(h: &mut H) {
 
 /// What loading the room's enemy graphics needs: named RAM, immediate DMA,
 /// and the original's RomPtr fetches with their observations.
-pub trait EnemyGraphicsHost:
-    crate::ram::CompatibilityRam + crate::display::transfer::RoomDma
-{
+pub trait EnemyGraphicsHost: crate::display::transfer::RoomDma {
     fn rom_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
 }
 

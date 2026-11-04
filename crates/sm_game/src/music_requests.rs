@@ -1,6 +1,7 @@
 //! Ordered request algorithms over the actual audio state owner.
 
 use crate::scene::state::DisplayError;
+use crate::session_access::SessionAccess;
 use crate::session_owners::{AudioHost, QueuedMusicMeaning, QueuedSoundMeaning};
 
 // Complete only after a successful numeric prefix. This neither publishes a
@@ -92,6 +93,54 @@ pub fn queue_room_track_after(delay: u16, host: &mut (impl AudioHost + ?Sized)) 
         queue_delayed(0, delay, host);
         let track = host.audio_word(0x7f5);
         queue_delayed_8(track, host);
+    }
+}
+
+/// The room's music data ($07CB) and track ($07C9), which the room entry owns.
+fn room_music(host: &(impl SessionAccess + ?Sized)) -> (u16, u16) {
+    let entry = &host.session().room.entry;
+    (entry.music_data, entry.music_track)
+}
+
+/// Whether, outside the demos and the ending, the room's track is set and its
+/// data and track differ from the loaded ones ($07F3, $07F5). The original's
+/// packed comparison deliberately lets track bits overlap data bits.
+fn room_track_changed(host: &(impl AudioHost + SessionAccess + ?Sized)) -> bool {
+    if host.audio_word(0x998) >= 40 {
+        return false;
+    }
+    let (data, track) = room_music(host);
+    track != 0 && ((data << 8) | track) != ((host.audio_word(0x7f3) << 8) | host.audio_word(0x7f5))
+}
+
+/// LoadRoomMusic: outside the demos and the ending, when the room's music
+/// data is set and differs from the loaded data ($07F3), queue no track, then
+/// the room's data.
+pub fn load_room_music(host: &mut (impl AudioHost + SessionAccess + ?Sized)) {
+    if host.audio_word(0x998) < 40 {
+        let (data, _) = room_music(host);
+        if data != 0 && data != host.audio_word(0x7f3) {
+            queue_delayed_8(0, host);
+            queue_delayed_8(room_music(host).0 | 0xff00, host);
+        }
+    }
+}
+
+/// UpdateMusicTrackIndex: the room's track becomes the current track ($07F5)
+/// when it changed.
+pub fn update_music_track_index(host: &mut (impl AudioHost + SessionAccess + ?Sized)) {
+    if room_track_changed(host) {
+        let (_, track) = room_music(host);
+        host.audio_store_word(0x7f5, track);
+    }
+}
+
+/// LoadNewMusicTrackIfChanged: queue the room's track after six frames when
+/// it changed.
+pub fn load_new_music_track_if_changed(host: &mut (impl AudioHost + SessionAccess + ?Sized)) {
+    if room_track_changed(host) {
+        let (_, track) = room_music(host);
+        queue_delayed(track, 6, host);
     }
 }
 
