@@ -50,6 +50,11 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
             sm_game::title_sequence::load_graphics(cine, lease)
         });
     }
+    /// Samus's set-up runs on the frame's lease, with the observations
+    /// refreshed as the fresh lease it opened left them.
+    fn initialize_player(&mut self) {
+        self.owned_player_call(sm_game::player_transitions::initialize);
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.
@@ -105,10 +110,6 @@ impl sm_game::gameplay_frame::Host for Game {
                 game,
             )
         });
-    }
-
-    fn initialize_player(&mut self) {
-        crate::game::session_runtime::initialize_player(self);
     }
 
     fn disable_scanline_irq(&mut self) {

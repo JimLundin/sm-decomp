@@ -79,9 +79,6 @@ pub trait Host:
     /// Emit this frame's queued gameplay sound effects.
     fn advance_sound_effects(&mut self);
 
-    // Room transition phase.
-    fn initialize_player(&mut self);
-
     // Demo phase.
     fn disable_scanline_irq(&mut self);
     fn enable_scanline_irq(&mut self, immediate: bool);
@@ -118,6 +115,9 @@ pub trait PassLease:
     + crate::demo_rooms::TableReads
     + crate::cartridge::NativeDiagnostics
     + crate::projection::Views
+    + crate::menus::host::CommonRuntime
+    + crate::display_refresh::GraphicsLoad
+    + crate::menus::save_slots::MapHost
 {
     /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
@@ -140,6 +140,8 @@ pub trait PassLease:
     fn advance_low_health_warning(&mut self);
     /// The demo phase's title sequence graphics.
     fn load_title_sequence_graphics(&mut self);
+    /// Set up Samus for the initial room load.
+    fn initialize_player(&mut self);
 }
 
 #[derive(Clone, Copy)]
@@ -282,13 +284,14 @@ pub fn tick<H: Host>(input: TickInput, game: &mut H) -> CoroutineRet {
 pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     match entry {
         Entry::Frame => frame(game),
-        Entry::Initialize => initialize(game),
         Entry::PauseSetup => setup_pause(game),
         Entry::Paused => advance_pause(game),
         Entry::UnpauseSetup => setup_unpause(game),
         Entry::UnpauseFadeOut | Entry::GameOverFadeOut => fade_out(entry, game),
         // The lease entries run from the frame's lease.
-        Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext => unreachable!("a lease state"),
+        Entry::Initialize | Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext => {
+            unreachable!("a lease state")
+        }
         Entry::Gameplay
         | Entry::FadeIn
         | Entry::Unpause
@@ -386,7 +389,9 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             | DeathPose
             | FlashDeath
             | ExplodeSuit
-            | Advance(Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext)
+            | Advance(
+                Entry::Initialize | Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext,
+            )
             | DemoReset
             | Demo) => advance_on_lease::<H>(entry, &mut game.runtime()),
             Advance(entry) => advance(entry, game),
@@ -442,7 +447,7 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             | DeathPose
             | FlashDeath
             | ExplodeSuit
-            | Advance(Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext)
+            | Advance(Entry::Initialize | Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext)
             | DemoReset
             | Demo
     )
@@ -458,6 +463,7 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         FlashDeath => samus_death::flash_death(lease),
         ExplodeSuit => samus_death::explode_suit(lease),
         Advance(Entry::TimeUpExit) => exit_time_up::<H>(lease),
+        Advance(Entry::Initialize) => initialize::<H>(lease),
         Advance(Entry::DemoStop) => stop_demo::<H>(lease),
         Advance(Entry::DemoNext) => next_demo::<H>(lease),
         DemoReset => demo_rooms::reset(lease),
@@ -588,8 +594,9 @@ const SOFT_RESET_REQUESTED: u16 = 0xffff;
 /// The frame resume byte that enters boot at the soft reset.
 const RESUME_SOFT_RESET: u8 = 3;
 
-/// Room transition phase: initial room load and actor tile staging.
-fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
+/// Room transition phase: initial room load and actor tile staging, on the
+/// frame's lease.
+fn initialize<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
     crate::probe::hit("coroutine.init");
     let mut stage = game.screen_primary();
     let mut waiting = stage >= 2;
@@ -600,11 +607,11 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
                 let loading = u32::from(selection.loading_game_state);
                 if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
-                    game.runtime().session_mut().room.area = 6;
+                    game.session_mut().room.area = 6;
                     selection.load_station = 0;
                     escape_timer::clear(game);
                 } else if loading == K_LOADING_GAME_STATE_22_ESCAPING_CERES {
-                    game.runtime().session_mut().room.area = 0;
+                    game.session_mut().room.area = 0;
                     selection.load_station = 18;
                     save_slots::load_area_map(selection, game);
                 }
@@ -616,7 +623,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             demo_rooms::load(game);
         } else {
             crate::room_entry::selection::begin(
-                &mut game.runtime(),
+                game,
                 ArrivalRequest::Start(StartSite::CurrentLoadStation),
             );
         }
@@ -628,21 +635,17 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             return yielded;
         }
         hud::initialize(game);
-        with_session(game, |session| {
-            let visual = session.presentation.visual_mut();
-            visual.targets[192..208].copy_from_slice(&visual.colors[192..208]);
-        });
+        let visual = game.session_mut().presentation.visual_mut();
+        visual.targets[192..208].copy_from_slice(&visual.colors[192..208]);
+        game.words_stored();
         crate::screen_fade::store(game, 1, 1);
         crate::display_refresh::enable(true, game);
-        // The enables and the liquid physics run on one lease.
-        let mut lease = game.runtime();
-        enemy_projectiles::lifecycle::set_enabled(&mut lease, true);
-        set_mechanisms_enabled(&mut lease, true);
-        palette_effects::set_enabled(lease.session_mut(), true);
-        crate::hdma_objects::set_hdma_enabled(true, &mut lease);
-        animated_tiles::set_enabled(lease.session_mut(), true);
-        crate::player_movement::speed::set_liquid_physics(&mut lease);
-        drop(lease);
+        enemy_projectiles::lifecycle::set_enabled(game, true);
+        set_mechanisms_enabled(game, true);
+        palette_effects::set_enabled(game.session_mut(), true);
+        crate::hdma_objects::set_hdma_enabled(true, game);
+        animated_tiles::set_enabled(game.session_mut(), true);
+        crate::player_movement::speed::set_liquid_physics(game);
         stage = if u32::from(crate::gameplay_word!(game.GAME_STATE))
             == K_GAME_STATE_40_TRANSITION_TO_DEMO
         {
@@ -655,9 +658,8 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         } else {
             4
         };
-        with_session(game, |session| {
-            session.wavy_samus.speed = if stage == 3 { 15 } else { 6 };
-        });
+        game.session_mut().wavy_samus.speed = if stage == 3 { 15 } else { 6 };
+        game.words_stored();
     }
     if matches!(stage, 2..=4) {
         crate::probe::hit(match stage {
@@ -667,18 +669,17 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         });
         loop {
             if !waiting {
-                actors::staging::transfer_actor_tiles_and_initialize(&mut game.runtime());
+                actors::staging::transfer_actor_tiles_and_initialize(game);
             }
             let yielded = crate::display_refresh::wait(true, game);
             if yielded != 0 {
                 game.screen_set_primary(stage);
                 return yielded;
             }
-            let remaining = with_session(game, |session| {
-                let counter = &mut session.wavy_samus.speed;
-                *counter = counter.wrapping_sub(1);
-                *counter
-            });
+            let counter = &mut game.session_mut().wavy_samus.speed;
+            *counter = counter.wrapping_sub(1);
+            let remaining = *counter;
+            game.words_stored();
             if (remaining & 0x8000) != 0 {
                 break;
             }
@@ -692,27 +693,31 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         } else {
             crate::gameplay_word!(game.GAME_STATE += 1);
         }
-        with_session(game, |session| {
-            let visual = session.presentation.visual_mut();
-            for (color, &target) in visual.colors.iter_mut().zip(&visual.targets) {
-                *color = crate::word_transfers::stored_native(target);
-            }
-        });
+        let visual = game.session_mut().presentation.visual_mut();
+        for (color, &target) in visual.colors.iter_mut().zip(&visual.targets) {
+            *color = crate::word_transfers::stored_native(target);
+        }
+        game.words_stored();
         if stage == 4 {
             if u32::from(crate::menus::state::load::<SaveSelection, _>(game).loading_game_state)
                 == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
             {
-                with_session(game, |session| {
-                    session.presentation.visual_mut().colors[223] = 0;
-                });
-                game.player_command(8);
+                game.session_mut().presentation.visual_mut().colors[223] = 0;
+                game.words_stored();
+                player_command::<H>(game, 8);
             } else {
-                game.player_command(9);
+                player_command::<H>(game, 9);
             }
         }
     }
     game.screen_set_primary(0);
     0
+}
+
+/// Run Samus's pose command `command` on the frame's lease.
+fn player_command<'a, H: Host + 'a>(lease: &mut H::Runtime<'a>, command: u16) {
+    use crate::player_transitions::commands::finish_ceres_arrival;
+    crate::player_transitions::command(lease, command, finish_ceres_arrival);
 }
 
 /// Demo phase: leave a finished demo.

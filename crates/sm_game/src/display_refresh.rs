@@ -232,7 +232,13 @@ pub fn initialize_io_and_oam<H: Video + crate::display::preparation::Access + ?S
 
 /// Gameplay display registers, cleared tilemaps and the common graphics.
 pub fn initialize_gameplay<
-    H: Host + crate::sprite_drawing::ObjectAccess + crate::presentation_workspace::Access + ?Sized,
+    H: GraphicsLoad
+        + crate::display::preparation::Access
+        + crate::word_transfers::LoadedRom
+        + crate::projection::Views
+        + crate::sprite_drawing::ObjectAccess
+        + crate::presentation_workspace::Access
+        + ?Sized,
 >(
     game: &mut H,
 ) {
