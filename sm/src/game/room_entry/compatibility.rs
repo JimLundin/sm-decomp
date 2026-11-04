@@ -491,15 +491,14 @@ impl EntryEffects for Runtime<'_> {
     }
 }
 
-/// One room-entry register write on the lease. An MDMAEN start publishes the lease, then starts on its
-/// transfer port, so the DMA reads the Session's bytes; any other write is a
+/// One room-entry register write on the lease. An MDMAEN start runs on the lease's transfer port, which
+/// publishes the bytes the DMA reads, so it reads the Session's bytes; any other write is a
 /// device write. The room background observer snapshots RAM at these writes and
 /// may swap the loaded image there: while a case captures, a verify build runs
 /// it over a detached image of the lease's projected RAM, the RAM the foreign
 /// call exported.
 fn entry_register(register: u32, value: u8, runtime: &mut Runtime<'_>) {
     if register == MDMAEN && value != 0 {
-        runtime.publish();
         runtime.start_dma(value, None);
         return;
     }

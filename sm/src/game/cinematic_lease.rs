@@ -9,8 +9,8 @@ use crate::game::session_runtime::{Compressed, Runtime};
 use sm_game::session_access::SessionAccess as _;
 
 // The graphics loads on the lease: the decompression writes the published
-// image and the lease takes back the bytes it produced; the channel-1 DMA reads
-// the published lease through the transfer port; the VRAM fill writes device
+// image and the lease takes back the bytes it produced; the channel-1 DMA
+// publishes and reads the lease's bytes through the transfer port; the VRAM fill writes device
 // registers only.
 impl sm_game::display_refresh::GraphicsLoad for Runtime<'_> {
     fn start_graphics_dma(&mut self, source: u32) {
@@ -21,7 +21,6 @@ impl sm_game::display_refresh::GraphicsLoad for Runtime<'_> {
         };
         self.owned_player_call(|runtime| {
             use crate::game::display_commands::Wire as _;
-            runtime.publish();
             crate::game::display_commands::Lease(runtime).start_room_dma(2, assets.as_deref());
         });
     }

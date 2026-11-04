@@ -452,9 +452,10 @@ impl<'g> Runtime<'g> {
         })
     }
     /// Write this lease's Session to RAM now, as its release would export it, and keep the
-    /// lease: the Session stays the authority, nothing is decoded, and RAM projects it. A
-    /// port runs this before a DMA that reads work RAM, since the hardware reads the bytes
-    /// there (`start_dma`). An export deferred by an earlier release is written first, as
+    /// lease: the Session stays the authority, nothing is decoded, and RAM projects it.
+    /// Settlement runs this before HDMA reads its tables, and an interrupt pass that
+    /// stored runs it for the lines after; a DMA start publishes only the bytes it reads
+    /// (`publish_reads`). An export deferred by an earlier release is written first, as
     /// any RAM write writes it; the kept frame Session's write log, when open, logs the
     /// bytes, which the next lease takes up as it would this lease's release. A persistent
     /// lease takes the new write epoch, as its release does.
@@ -469,10 +470,51 @@ impl<'g> Runtime<'g> {
             self.persistent_epoch = Some(self.game.compatibility_write_epoch());
         }
     }
+    /// Write the Session's projection of each work RAM byte in `reads`: the part of
+    /// `publish` a DMA start reads (`start_dma`). The bytes are the full publish's
+    /// (`encode_spans` writes each projected byte's projection), an export deferred by an
+    /// earlier release is written first, as `publish` writes it, and the rest of RAM
+    /// waits for the lease's release, which exports the whole Session, or for the next
+    /// `publish`. A persistent lease takes the new write epoch, as `publish` does.
+    fn publish_reads(&mut self, reads: &[usize]) {
+        use sm_game::session_encoding::Spans as _;
+        if reads.is_empty() {
+            return;
+        }
+        preflight_export(self.session(), self.game);
+        let state = self.state.as_ref().expect("Session lease");
+        let mut sorted = reads.to_vec();
+        sorted.sort_unstable();
+        sorted.dedup();
+        self.game.ram().copy_spans(|mut ram| {
+            // One span per run of adjacent projected bytes.
+            let mut run: Vec<u8> = Vec::new();
+            let mut start = 0;
+            for &at in &sorted {
+                let byte = encoding::projected_byte(state, at);
+                if byte.is_none() || at != start + run.len() {
+                    if !run.is_empty() {
+                        ram.span(start, &run);
+                    }
+                    run.clear();
+                    start = at;
+                }
+                if let Some(byte) = byte {
+                    run.push(byte);
+                }
+            }
+            if !run.is_empty() {
+                ram.span(start, &run);
+            }
+        });
+        if self.persistent_epoch.is_some() {
+            self.persistent_epoch = Some(self.game.compatibility_write_epoch());
+        }
+    }
     /// Samus's NMI tile upload from the lease. It reads its descriptors
     /// ($7E:071D..0722) from the lease and the cartridge, and writes registers
-    /// and VRAM alone. The publish keeps RAM where the NMI's later uploads
-    /// found it.
+    /// and VRAM alone. The publish keeps RAM as Game's native upload found it
+    /// before the NMI's DMA starts published only what they read.
     pub(crate) fn upload_samus_tiles(&mut self) {
         self.owned_player_call(|runtime| {
             runtime.publish();
@@ -507,9 +549,9 @@ impl<'g> Runtime<'g> {
         unsafe { crate::rtl::read_device(address, self.game) }
     }
     /// Start the DMA channels in `mask` from the lease, as an MDMAEN write starts them,
-    /// reading the prepared room image `source` when given. The transfer reads work RAM,
-    /// which a port has published (`publish`): verify builds assert that RAM holds the
-    /// Session's projection of every work RAM byte the channels read. The work RAM bytes
+    /// reading the prepared room image `source` when given. The transfer reads work RAM:
+    /// the lease first publishes the bytes the channels read (`publish_reads`), and verify
+    /// builds assert that RAM holds the Session's projection of each. The work RAM bytes
     /// the channels write (a B-to-A transfer, or one to the WRAM data port) are taken
     /// back into the Session, as a decode of just those bytes would read them.
     pub(crate) fn start_dma(
@@ -518,9 +560,10 @@ impl<'g> Runtime<'g> {
         source: Option<&crate::execution::DmaRomSource<'_>>,
     ) {
         assert!(self.persistent_is_current(), "Session lease is dirty");
-        let (_reads, writes) = self.dma_wram(mask);
+        let (reads, writes) = self.dma_wram(mask);
+        self.publish_reads(&reads);
         #[cfg(sm_verify_dll)]
-        transfer_checks::assert_published(self.session(), self.game, &_reads);
+        transfer_checks::assert_published(self.session(), self.game, &reads);
         // SAFETY: as for `write_device`.
         unsafe { crate::rtl::start_device_dma(mask, source, self.game) };
         if !writes.is_empty() {

@@ -108,8 +108,8 @@ impl Wire for Device<'_> {
 }
 
 /// A lease's transfer port: device registers through the device interval, and
-/// each DMA start through `Runtime::start_dma`, after the port has published the
-/// lease (`Runtime::publish`).
+/// each DMA start through `Runtime::start_dma`, which publishes the work RAM
+/// bytes the channels read.
 pub(crate) struct Lease<'a, 'g>(pub(crate) &'a mut Runtime<'g>);
 
 impl Wire for Lease<'_, '_> {
@@ -283,11 +283,10 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
     encode(producer, command, game);
 }
 
-/// Apply `command` from `producer` on the lease: the lease is published, then
-/// the same writes go through its transfer port, so every DMA start reads the
-/// Session's bytes and the bytes a readback writes return to the Session.
+/// Apply `command` from `producer` on the lease: the same writes go through its
+/// transfer port, so every DMA start reads the Session's bytes (it publishes the
+/// bytes it reads) and the bytes a readback writes return to the Session.
 pub(crate) fn apply_on_lease(producer: &'static str, command: Command, runtime: &mut Runtime<'_>) {
-    runtime.publish();
     encode(producer, command, &mut Lease(runtime));
 }
 
@@ -712,7 +711,8 @@ fn scroll_hdma(channel: u8, scroll: ScrollOffset, table: Source, game: &mut impl
     }
 }
 
-/// `CopyToVramNow` on the lease, published first, through its transfer port:
+/// `CopyToVramNow` on the lease, through its transfer port (the DMA start
+/// publishes the bytes it reads):
 /// forced blank, the VRAM address, channel 1, the VRAM step, the start
 /// (reading the room's prepared assets when given), then full brightness.
 pub(crate) fn copy_to_vram_on_lease(
@@ -722,7 +722,6 @@ pub(crate) fn copy_to_vram_on_lease(
     assets: Option<&PreparedRoomAssets>,
     runtime: &mut Runtime<'_>,
 ) {
-    runtime.publish();
     copy_to_vram(address, source, bytes, assets, &mut Lease(runtime));
 }
 

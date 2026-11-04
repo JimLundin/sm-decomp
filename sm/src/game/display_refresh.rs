@@ -7,9 +7,9 @@ pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
 
-/// The NMI on the frame's lease, inside the tick: each upload publishes the
-/// lease before its DMA reads work RAM, and goes through the lease's transfer
-/// port, so a readback's work RAM bytes return to the Session; the queue tails,
+/// The NMI on the frame's lease, inside the tick: each upload goes through the
+/// lease's transfer port, whose DMA starts publish the work RAM bytes they read
+/// (`Runtime::start_dma`), so a readback's work RAM bytes return to the Session; the queue tails,
 /// the sentinels and the consumed scrolling enables are the lease's stores.
 impl refresh::Nmi for crate::game::session_runtime::Runtime<'_> {
     fn upload_samus(&mut self) {
@@ -21,13 +21,11 @@ impl refresh::Nmi for crate::game::session_runtime::Runtime<'_> {
     }
     fn process_mode7(&mut self) {
         self.owned_player_call(|runtime| {
-            runtime.publish();
             mode7_transfers::process(&mut crate::game::display_commands::Lease(runtime));
         });
     }
     fn process_readbacks(&mut self) {
         self.owned_player_call(|runtime| {
-            runtime.publish();
             vram_read_queue::process(&mut crate::game::display_commands::Lease(runtime));
         });
     }
@@ -132,12 +130,11 @@ fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
     }
 }
 
-/// The tilemap flush on the lease: it publishes, then drains the queue and the
-/// scrolling requests through the lease's transfer port, so each DMA start reads
-/// the Session's bytes, and the queue's end word, its tail and the consumed
-/// enable bytes are the lease's stores.
+/// The tilemap flush on the lease: it drains the queue and the scrolling requests
+/// through the lease's transfer port, so each DMA start reads the Session's bytes
+/// (it publishes them), and the queue's end word, its tail and the consumed enable
+/// bytes are the lease's stores.
 pub(crate) fn flush_tilemaps_on_lease(runtime: &mut crate::game::session_runtime::Runtime<'_>) {
-    runtime.publish();
     crate::game::display_transfers::flush_tilemaps(&mut crate::game::display_commands::Lease(
         runtime,
     ));
