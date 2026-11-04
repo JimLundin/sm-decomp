@@ -554,10 +554,7 @@ their writers:
   ($88:EC57) and the rotating Ceres elevator ($90:8C27, $BC46).
 - `$0E20-$0E45`: the enemy loop's temporaries ($0E20/$0E22/$0E26 in spawn,
   $0E2E in the enemy set load, $0E32 in the solid collision, ...).
-- `$0E54`: the current enemy index; the power bomb scan now leaves FFC0h,
-  the draw, select and Kraid/Ki-Hunter writers are unchecked.
-- `$1784-$178B`: the AI pointer every dispatch jumps through ($1784/$1786
-  before each JML, the backups in spawn).
+- `$0E54` and `$1784-$178B`: retired by `collab/both-73` (below).
 
 Each differs where the engine does not leave the original's value: they are
 real divergences of fields the Session owns, not scratch a split can free.
@@ -568,6 +565,49 @@ now also names, per differing entry, the bytes that never differed
 corpus and both routes can be split, comparing those bytes, in one change
 with its row. The scheduled run's lockstep of the whole corpus is the place
 to read it.
+
+**Lane `collab/both-73`.** Read from the both-101 PR run's evidence lines
+(41914108052: lockstep corpus 00-02 and both routes' first four rooms).
+Retired (until-row-retires 73 -> 63 bytes):
+
+- `$0E54-$0E55`: differed on no tick, so its row retires as is.
+- `$1784-$178B`: every dispatch now stores its routine in $1784 and the
+  enemy's bank word ($0FA6: bank, hurt time) in $1786 where the original
+  does: the main enemy routine's entry per active enemy ($A0:901B), the
+  main and time-frozen AI, each collision scan's entry and dispatch, the
+  power bomb reaction, the grapple latch, each enemy instruction
+  ($A0:C289), and the initialisation AI in the room load, spawn and respawn.
+  $1788-$178B never differed.
+
+Fixed at their writers, still normalized:
+
+- `$060B`: the mini-map ($90:AA4F), the extended spritemap draw and scans,
+  the drops and the palette copies store it
+  (`SpawnContext::store_shared_counter`). Left: the HUD initialisation's
+  broken mini-map setup ($90:A8EF from $80:9AF3) stores it from the stale
+  direct-page $22, outside the Session.
+- `$0D82-$0D8F`: the grapple (`game_loop::Temporary`: $94:A957's inputs from
+  every caller, the swing, the clearance check, the length change, the block
+  collision's substep count), the connecting grapple's jump target and the
+  rotating Ceres elevator store them. Left: tick 0 of `elevator-up` and
+  `space-jump-bubble-word-counter` differ in the words' low bytes; the
+  writer is not identified.
+- `$0E20-$0E45`: the draw stores $0E22 beside $0E20. Left: $0E22-$0E25,
+  $0E28-$0E2B, $0E2E and $0E32-$0E3B differ; their other writers (spawn
+  $A0:9275, $A0:ACA8, $A0:9894, the enemy set load, the solid collision)
+  are not stored. The PR corpus (41 of 161 rows) never saw $0E20, $0E26,
+  $0E2C, $0E30 or $0E3C-$0E45 differ; the scheduled whole-corpus run decides
+  whether they split out.
+- `$0000-$0003`, `$0012-$0017`: not attempted. "The last writer this frame"
+  is every routine that uses the direct page ($12-$16 alone: the enemy set
+  load, the solid and power bomb collisions, the minimap, the drop spread,
+  the extended spritemap draw, Samus's flare, ...). A typed owner would
+  have to be stored by each of them in frame order, and several of them
+  ($90:A8EF, the 65816 helpers the engine does not run) leave values the
+  Session cannot compute.
+
+The next PR run's evidence line shows whether `$060B` and `$0D82-$0D8F`
+differ only where named above.
 
 ### The nightly whole-RAM report (#246)
 

@@ -104,6 +104,8 @@ fn draw_actor<H: ActorHost + EprojHost>(h: &mut H) {
             actor.shake = shake.wrapping_sub(1)
         });
     }
+    // $A0:9465, $A0:948A/$9491: the enemy's X position on screen, shaken.
+    h.session_mut().actors.compatibility.scratch[0] = x;
     let frozen = h.resolve_actor(key, AccessMode::Native).frozen;
     let (palette, palette_mode) = if h.resolve_actor(key, AccessMode::Native).flash != 0
         && h.session().actors.controls.phase_counter & 2 != 0
