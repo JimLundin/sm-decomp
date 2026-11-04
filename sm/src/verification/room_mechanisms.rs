@@ -20,8 +20,7 @@ mod callback_edges;
 mod drawing_extended;
 #[cfg(sm_verify_dll)]
 pub(crate) use callback_edges::{
-    display as observe_message_display, native_read as observe_native_draw_read,
-    native_read_traced as native_draw_read_traced,
+    display as observe_message_display, native_read_on_lease as observe_native_draw_read_on_lease,
 };
 #[path = "room_mechanism_getters.rs"]
 mod getter_checks;

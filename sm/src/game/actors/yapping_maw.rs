@@ -1,8 +1,7 @@
-//! Yapping Maw runs in `sm_game::actors::yapping_maw`; its Samus control and
-//! visibility come from here.
+//! Yapping Maw runs in `sm_game::actors::yapping_maw`; its main AI and its
+//! multiplicand writes run from here.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::{Runtime, write_multiplicand};
-use crate::game_state::Game;
 pub(crate) use sm_game::actors::yapping_maw::*;
 
 // The named bank $A8 addresses are the ones `session_runtime` dispatches on.
@@ -25,10 +24,4 @@ pub(crate) fn run_main_ai(runtime: &mut Runtime<'_>) {
         crate::rtl::unreachable();
     }
     update_segments(runtime);
-}
-
-impl Host for Game {
-    fn update_maw_visibility(&mut self, actor: i32) {
-        Runtime::new(self).update_maw_visibility(actor);
-    }
 }

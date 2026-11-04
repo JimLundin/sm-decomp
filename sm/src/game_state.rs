@@ -1292,6 +1292,34 @@ impl Game {
         );
     }
 
+    /// The verifier's room background observer over `ram`, a detached image of a
+    /// lease's projected RAM, with this game's loaded image, failure flag,
+    /// decompression source and backend.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn observe_room_background(&mut self, address: u32, ram: &WorkRam) {
+        let views = (self.g_snes, self.g_cpu);
+        let Self {
+            backend,
+            loaded_rom,
+            g_fail,
+            decompress_src,
+            ..
+        } = self;
+        crate::room_background_observer::diagnostic_parts(
+            address,
+            ram,
+            loaded_rom,
+            g_fail,
+            decompress_src,
+            |output| {
+                backend
+                    .as_ref()
+                    .expect("observation requires an owned backend")
+                    .save_observation(views.0, views.1, output);
+            },
+        );
+    }
+
     #[cfg(sm_verify_dll)]
     pub(crate) fn save_backend_observation(&self, output: &mut crate::recording::RecordingBytes) {
         self.backend

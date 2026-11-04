@@ -18,7 +18,7 @@ use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with Yapping Maw's effects.
 pub trait Lease:
-    BossLease<Game: Host>
+    BossLease
     + SlotState
     + crate::actors::effects::ActorHost
     + crate::sprite_effect_host::Host
@@ -28,7 +28,7 @@ pub trait Lease:
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: Host>
+    T: BossLease
         + SlotState
         + crate::actors::effects::ActorHost
         + crate::sprite_effect_host::Host
@@ -168,13 +168,6 @@ const LOCK_SAMUS: u16 = 3;
 const BITE_SOUND: u8 = 0x2f;
 const QUARTER_TURN: u8 = 0x40;
 const SIGN: u16 = 0x8000;
-
-/// What Yapping Maw needs beyond the shared actor operations.
-pub trait Host:
-    crate::projection::Views + crate::legacy_overflow::SlotBytes + crate::runtime_access::RuntimeAccess
-{
-    fn update_maw_visibility(&mut self, actor: i32);
-}
 
 /// Initialisation AI - Yapping Maw ($A8:A148).
 pub fn initialize<L: Lease>(game: &mut L) {
@@ -523,7 +516,11 @@ pub fn main_ai<L: Lease>(game: &mut L, mut write_operand: impl FnMut(u8, &mut L)
         let timer = edit.intangibility_timer();
         *timer = timer.wrapping_sub(1);
     }
-    game.foreign(|game| game.update_maw_visibility(i32::from(maw)));
+    // Whether the maw is off screen, from the camera as the game's RAM held it.
+    game.owned_step(|game| {
+        let outside = crate::actors::queries::current_outside_screen(&*game);
+        *YappingMawEdit::of(game, maw).off_screen() = u16::from(outside);
+    });
     match YappingMaw::of(game, maw).function() {
         function::NEUTRAL => neutral(game),
         function::ATTACK => attack(&mut write_operand, game),

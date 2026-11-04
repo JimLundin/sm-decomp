@@ -48,13 +48,7 @@ impl sprite_effect_host::Effects for Runtime<'_> {
         let position = (request.position.x, request.position.y);
         let (palette, tile) = (request.palette, request.base_tile);
         #[cfg(sm_verify_dll)]
-        if crate::sprite_effect_observer::observing() {
-            // A sprite-effect case's observer stores into RAM before the draw.
-            self.foreign(|game| {
-                let (x, y) = position;
-                crate::sprite_effect_observer::draw(map, x, y, palette, tile, game);
-                sprite_output::with_base_tile(0xb4, map, position, palette, tile, Clip::None, game);
-            });
+        if crate::sprite_effect_observer::draw_on_lease(self, map, position, palette, tile) {
             return;
         }
         self.draw_objects(|drawing| {

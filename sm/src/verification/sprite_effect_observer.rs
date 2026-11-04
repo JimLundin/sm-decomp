@@ -182,3 +182,25 @@ pub(crate) fn seed(id: u32, g: &mut Game, image: &mut [u8]) -> Operation {
         _ => unreachable!(),
     }
 }
+/// A sprite-effect case's draw on the scheduler's lease: while a case is
+/// capturing, its observer stores into RAM and the sprite draws on the game,
+/// which the lease exports to. False when no case is capturing.
+#[cfg(sm_verify_dll)]
+pub(crate) fn draw_on_lease(
+    runtime: &mut crate::game::session_runtime::Runtime<'_>,
+    map: u16,
+    position: (u16, u16),
+    palette: u16,
+    tile: u16,
+) -> bool {
+    use sm_game::{sprite_drawing::Clip, sprite_output};
+    if !observing() {
+        return false;
+    }
+    runtime.foreign(|game| {
+        let (x, y) = position;
+        draw(map, x, y, palette, tile, game);
+        sprite_output::with_base_tile(0xb4, map, position, palette, tile, Clip::None, game);
+    });
+    true
+}
