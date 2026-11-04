@@ -317,10 +317,9 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             // The main gameplay state's frame runs from here to the frame's end on this
             // lease, unless an enemy's message box splits its pass. Every other state
             // closes it and ends the frame on Game.
-            if matches!(
-                GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16)),
-                Some(Advance(Entry::Gameplay))
-            ) && ResumePoint::of(lease.screen_primary()) == ResumePoint::Start
+            let entry = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16));
+            if matches!(entry, Some(Advance(Entry::Gameplay)))
+                && ResumePoint::of(lease.screen_primary()) == ResumePoint::Start
             {
                 crate::probe::hit("coroutine.gameplay");
                 let completed = pass_from_start::<H>(&mut lease, true);
@@ -329,6 +328,25 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                     Some(yielded) => yielded,
                     None => pass_after_message(ResumePoint::Start, true, game),
                 };
+            }
+            // A pass state with no work before its pass runs the pass from its start
+            // on this lease too; its finish and the frame's end run on Game.
+            if let Some(&Advance(entry)) = entry
+                && plain_pass(entry)
+                && ResumePoint::of(lease.screen_primary()) == ResumePoint::Start
+            {
+                crate::probe::hit("coroutine.gameplay");
+                let completed = pass_from_start::<H>(&mut lease, false);
+                drop(lease);
+                let yielded = match completed {
+                    Some(yielded) => yielded,
+                    None => pass_after_message(ResumePoint::Start, false, game),
+                };
+                if yielded != 0 {
+                    break 'frame yielded;
+                }
+                finish_pass(entry, game);
+                break 'frame finish_state(game);
             }
             // A cinematic state's frame runs on this lease too; the frame ends on
             // Game once it returns.
@@ -884,6 +902,21 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         }
     }
     0
+}
+
+/// The pass states that do no work before their pass.
+fn plain_pass(entry: Entry) -> bool {
+    matches!(
+        entry,
+        Entry::FadeIn
+            | Entry::Unpause
+            | Entry::DemoStart
+            | Entry::PauseFadeOut
+            | Entry::ZebesEscape
+            | Entry::TimeUp
+            | Entry::PrepareDeath
+            | Entry::DeathBlackout
+    )
 }
 
 /// States that run the gameplay pass: their pre-pass work, the pass and,
