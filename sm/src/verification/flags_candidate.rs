@@ -1,7 +1,7 @@
 //! Actual candidate entry adapter; identical operations and fixture carrier. No SaveToSram call exists here.
 use super::flags_cases::{self, Operation, Returned};
 use crate::{
-    game::{enemy_script::EnemyScript, gameplay_flag_runtime as flags},
+    game::{enemy_script::EnemyScript, gameplay_flag_runtime as flags, session_runtime::Runtime},
     game_state::Game,
     rom::RomImage,
 };
@@ -41,14 +41,17 @@ fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
             }
             Operation::PalettePre => crate::game::palette_effects::checks::pre(9301701, 0, g),
             Operation::NewSave => sm_game::menus::save_slots::initialize(g),
-            Operation::Demo => sm_game::demo_rooms::load(g),
-            Operation::DemoBoss => sm_game::demo_rooms::run_room_hook(0x828932, g),
+            // The demo room load and its hook run on a lease, as the frame runs them.
+            Operation::Demo => sm_game::demo_rooms::load(&mut Runtime::new(g)),
+            Operation::DemoBoss => {
+                sm_game::demo_rooms::run_room_hook(0x828932, &mut Runtime::new(g))
+            }
             Operation::Load(slot) => {
                 return Returned::word(u16::from(sm_game::menus::save_slots::load(slot, g)));
             }
-            Operation::SporeDeath => crate::game::actors::spore_spawn::after_damage(
-                &mut crate::game::session_runtime::Runtime::new(g),
-            ),
+            Operation::SporeDeath => {
+                crate::game::actors::spore_spawn::after_damage(&mut Runtime::new(g))
+            }
         }
     }
     Returned { kind: 0, value: 0 }

@@ -127,6 +127,15 @@ impl sm_game::display::transfer::Mode7Queue for Runtime<'_> {
     }
 }
 
+impl sm_game::demo_rooms::Tables for Runtime<'_> {
+    fn demo_sets(&self) -> &Option<sm_game::demo_rooms::ImportedSets> {
+        &self.samus_game().demo_sets
+    }
+    fn demo_scenes(&self) -> &Option<sm_game::demo_rooms::ImportedScenes> {
+        &self.samus_game().demo_scenes
+    }
+}
+
 impl sm_game::menus::host::Tables for Runtime<'_> {
     fn intro_palette(&self) -> &Option<sm_game::intro_pages::ImportedIntroPalette> {
         &self.samus_game().intro_palette

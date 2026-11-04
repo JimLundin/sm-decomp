@@ -1,10 +1,9 @@
 //! Attract-mode playback, room selection, placement and delayed setup.
-use crate::actors::access::{ActorKey, edit_image_actor};
+use crate::actors::access::{AccessMode, ActorKey};
 use crate::display::preparation::Field;
 use crate::imported::Imported;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
-use crate::runtime_access::with_session;
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::demo_rooms::{
     DemoEntry, DemoScene, DemoScenes, DemoSets, SCENES_ADDRESS, SCENES_BYTES, SETS_ADDRESS,
@@ -22,10 +21,35 @@ pub fn import_scenes(image: &RomImage) -> Option<ImportedScenes> {
     Imported::import(image, SCENES_ADDRESS, SCENES_BYTES, DemoScenes::import)
 }
 
+/// The imported demo tables.
+pub trait Tables {
+    fn demo_sets(&self) -> &Option<ImportedSets>;
+    fn demo_scenes(&self) -> &Option<ImportedScenes>;
+}
+impl<T: crate::menus::host::Host + ?Sized> Tables for T {
+    fn demo_sets(&self) -> &Option<ImportedSets> {
+        crate::menus::host::Host::demo_sets(self)
+    }
+    fn demo_scenes(&self) -> &Option<ImportedScenes> {
+        crate::menus::host::Host::demo_scenes(self)
+    }
+}
+
+/// What the demo tables' reads need: the tables and the loaded and native
+/// images.
+pub trait TableReads:
+    Tables + crate::cartridge::LoadedImage + crate::cartridge::NativeImage
+{
+}
+impl<T: Tables + crate::cartridge::LoadedImage + crate::cartridge::NativeImage + ?Sized> TableReads
+    for T
+{
+}
+
 /// The set's first scene address in the loaded image. The table serves it
 /// while that image is the imported allocation; otherwise, and past the four
 /// sets, the original indexed load runs with its failures.
-fn set_start<H: crate::menus::host::Host + ?Sized>(game: &H, set: u16) -> u16 {
+fn set_start<H: TableReads + ?Sized>(game: &H, set: u16) -> u16 {
     let rom = game.loaded_image();
     Imported::from(game.demo_sets(), rom)
         .and_then(|sets| sets.start(usize::from(set)))
@@ -36,24 +60,25 @@ fn set_start<H: crate::menus::host::Host + ?Sized>(game: &H, set: u16) -> u16 {
 /// is the imported allocation. Every imported entry lies above $8000, so its
 /// original fetch has no invalid-window diagnostic; callers keep that fetch
 /// for any other address, image or a missing image.
-fn entry<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option<DemoEntry> {
+fn entry<H: TableReads + ?Sized>(game: &H, address: u16) -> Option<DemoEntry> {
     let native = game.native_image_binding()?;
     Imported::from(game.demo_scenes(), &native).and_then(|scenes| scenes.entry(address))
 }
 
-fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option<DemoScene> {
+fn scene<H: TableReads + ?Sized>(game: &H, address: u16) -> Option<DemoScene> {
     match entry(game, address)? {
         DemoEntry::Scene(scene) => Some(scene),
         DemoEntry::End => None,
     }
 }
 
-pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    with_session(game, |session| {
-        session.player.turn_request = 0;
-        session.projectiles.preparation.aim_history = 0;
-        session.player.spare_0dfc = 0;
-    });
+/// The demo reset state's frame, on the frame's lease.
+pub fn reset<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) -> u8 {
+    let session = game.session_mut();
+    session.player.turn_request = 0;
+    session.projectiles.preparation.aim_history = 0;
+    session.player.spare_0dfc = 0;
+    game.words_stored();
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = 0x9b68
     });
@@ -65,7 +90,9 @@ pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     0
 }
 
-pub fn play<H: crate::menus::host::Host + ?Sized>(
+/// The demo's play loop on the frame's lease: the pass, the demo timer and
+/// the closing wait.
+pub fn play<H: crate::gameplay_frame::PassLease + ?Sized>(
     game: &mut H,
     gameplay: impl FnOnce(&mut H) -> u8,
 ) -> u8 {
@@ -101,7 +128,8 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                     break 'done;
                 }
                 crate::sequence_word!(game.SUBSTATE = 0);
-                with_session(game, |session| session.messages.delay = 90);
+                game.session_mut().messages.delay = 90;
+                game.words_stored();
             }
             do_until! { count_down(game) == 0;
                 let yielded: u8 = crate::display_refresh::wait(true, game);
@@ -124,7 +152,8 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
     0
 }
 
-pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// Step to the demo's next scene or set, on the frame's lease.
+pub fn advance_set<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) {
     let base = set_start(
         game,
         crate::sequence_state::Access::sequence_flow(&*game).demo_set,
@@ -162,9 +191,9 @@ pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    use crate::session_access::SessionAccess;
-    game.runtime().session_mut().set_exit_key(0);
+/// Load the demo's room on the frame's lease.
+pub fn load<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) {
+    game.session_mut().set_exit_key(0);
     // Loading reads the scene before the set table; the resumed hook does the reverse.
     let offset = 18 * i32::from(crate::sequence_state::Access::sequence_flow(&*game).demo_scene);
     let base = set_start(
@@ -188,16 +217,15 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     });
     {
         // The room and door keys, the camera and Samus's position are Session
-        // state: they are placed on one lease.
+        // state.
         use crate::camera::{set_bg1_offset, set_layer1};
-        use crate::player_position::PlayerPosition as _;
-        let mut runtime = game.runtime();
+        let runtime = &mut *game;
         runtime.session_mut().set_room_key(room.room);
         runtime.session_mut().set_exit_key(room.door);
-        set_layer1(&mut runtime, 0, room.layer1_x);
+        set_layer1(runtime, 0, room.layer1_x);
         let x = runtime.session().room.camera.layer1[0];
-        set_bg1_offset(&mut runtime, 0, x);
-        set_layer1(&mut runtime, 1, room.layer1_y);
+        set_bg1_offset(runtime, 0, x);
+        set_layer1(runtime, 1, room.layer1_y);
         let y = runtime.session().room.camera.layer1[1];
         runtime.session_mut().room.camera.bg1_offset[1] = y;
         let layer1 = runtime.session().room.camera.layer1;
@@ -215,14 +243,12 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.demo_timer = room.timer
     });
-    // The room header's area byte is read and stored on one lease.
-    let mut runtime = game.runtime();
-    let room_key = runtime.session().room_key();
-    let value = native_record(0x8f0000 | u32::from(room_key), &mut runtime).byte(1);
+    // The room header's area byte.
+    let room_key = game.session().room_key();
+    let value = native_record(0x8f0000 | u32::from(room_key), game).byte(1);
     // The original stores only the area's low byte.
-    let area = &mut runtime.session_mut().room.area;
+    let area = &mut game.session_mut().room.area;
     *area = *area & 0xff00 | u16::from(value);
-    drop(runtime);
     {
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg1H, 0);
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg1V, 0);
@@ -237,8 +263,8 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     };
     // A demo's flags: every room object, item, station and map station used,
     // no door opened, no event or boss.
-    with_session(game, |session| {
-        let flags = &mut session.gameplay_flags;
+    {
+        let flags = &mut game.session_mut().gameplay_flags;
         for flag in flags
             .used_room_objects
             .iter_mut()
@@ -257,7 +283,8 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             *flag = 0;
         }
         flags.unused = [0xff; 8];
-    });
+    }
+    game.words_stored();
     // A demo's explored maps: the first six areas' clear.
     crate::menus::save_slots::clear_saved_maps(game, 0..768);
     crate::gameplay_context::with_inventory(
@@ -274,19 +301,21 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             selection.loading_game_state = 0;
         },
     );
-    with_session(game, |session| session.minimap.disabled = 0);
+    game.session_mut().minimap.disabled = 0;
+    game.words_stored();
 }
 
 /// Count the demo's closing delay down a frame; the frames left.
-fn count_down<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
-    with_session(game, |session| {
-        let delay = &mut session.messages.delay;
-        *delay = delay.wrapping_sub(1);
-        *delay
-    })
+fn count_down<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) -> u16 {
+    let delay = &mut game.session_mut().messages.delay;
+    *delay = delay.wrapping_sub(1);
+    let left = *delay;
+    game.words_stored();
+    left
 }
 
-pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// Run the demo room's setup hook on the frame's lease.
+pub fn finish_setup<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) {
     let base = set_start(
         game,
         crate::sequence_state::Access::sequence_flow(&*game).demo_set,
@@ -301,21 +330,26 @@ pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     run_room_hook(0x820000 | u32::from(hook), game);
 }
 
-pub fn run_room_hook<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mut H) {
+/// Run the demo room hook at `address` on a lease.
+pub fn run_room_hook<H: crate::gameplay_frame::PassLease + ?Sized>(address: u32, game: &mut H) {
     match address {
-        0x82891a => with_session(game, |session| session.room.set_scroll(33, 0)),
+        0x82891a => {
+            game.session_mut().room.set_scroll(33, 0);
+            game.words_stored();
+        }
         0x828924 => {}
         0x828925 => {
             let [low, high] = 74u16.to_ne_bytes();
             crate::frame_display_byte!(game, Field::Screens1 => low);
             crate::frame_display_byte!(game, Field::Screens2 => high);
         }
-        0x82892b => edit_image_actor(game, ActorKey::from_legacy(0), |actor| {
-            actor.pre_instruction = 60;
-        }),
-        0x828932 => crate::progress::leased::set_boss_byte_at(1, 1, game),
+        0x82892b => {
+            let key = ActorKey::from_legacy(0);
+            game.edit_actor(key, AccessMode::Native, |actor| actor.pre_instruction = 60);
+        }
+        0x828932 => crate::progress::set_boss_byte_at(game, 1, 1),
         _ => {
-            game.unreachable_native();
+            game.rtl_unreachable();
         }
     }
 }

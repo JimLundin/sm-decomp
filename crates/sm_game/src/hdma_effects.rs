@@ -590,15 +590,6 @@ fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
     }
 }
 
-/// Run HDMA object effect `effect` for the object in `slot` on a fresh
-/// lease of `game`.
-pub fn apply_leased<H>(effect: crate::hdma_objects::HdmaEffect, slot: u16, game: &mut H)
-where
-    H: crate::runtime_access::RuntimeAccess + ?Sized,
-{
-    apply(effect, slot, &mut game.runtime());
-}
-
 /// Run HDMA object effect `effect` for the object in `slot`, through the
 /// owned-Session view.
 pub fn apply<H>(effect: crate::hdma_objects::HdmaEffect, slot: u16, h: &mut H)

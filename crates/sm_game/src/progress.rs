@@ -198,10 +198,4 @@ pub mod leased {
     pub fn boss_byte_at<H: RuntimeAccess + ?Sized>(area: u16, game: &mut H) -> u8 {
         super::boss_byte_at(&game.runtime(), area)
     }
-    pub fn set_boss_byte_at<H: RuntimeAccess + ?Sized>(area: u16, value: u8, game: &mut H) {
-        super::set_boss_byte_at(&mut game.runtime(), area, value);
-    }
-    pub fn set_boss_word_le<H: RuntimeAccess + ?Sized>(area: u16, value: u16, game: &mut H) {
-        super::set_boss_word_le(&mut game.runtime(), area, value);
-    }
 }
