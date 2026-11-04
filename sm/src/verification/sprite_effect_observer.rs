@@ -27,7 +27,7 @@ pub(crate) fn begin(id: u32) {
         });
     });
 }
-/// Whether a sprite-effect case is capturing; its draws run on the Game.
+/// Whether a sprite-effect case is capturing; its draws run on the lease.
 #[cfg(sm_verify_dll)]
 pub(crate) fn observing() -> bool {
     ACTIVE.with(|a| a.borrow().is_some())
@@ -103,8 +103,18 @@ pub(crate) fn diagnostic_parts(address: u32, ram: &WorkRam, loaded_rom: &mut Opt
         }
     });
 }
+/// Record one draw and, on a case's first draw, store its slot changes
+/// through the lease's byte path, as the effect table's next reads see them.
 #[cfg(sm_verify_dll)]
-pub(crate) fn draw(map: u16, x: u16, y: u16, palette: u16, tile: u16, g: &mut Game) {
+fn draw(
+    map: u16,
+    x: u16,
+    y: u16,
+    palette: u16,
+    tile: u16,
+    lease: &mut crate::game::session_runtime::Runtime<'_>,
+) {
+    let mut put = |at: usize, value: u16| lease.write_slice_le(at, value);
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -120,12 +130,12 @@ pub(crate) fn draw(map: u16, x: u16, y: u16, palette: u16, tile: u16, g: &mut Ga
         if c.draws == 0 {
             match c.id {
                 114 => {
-                    put(g, 0xef78 + 10, 0x9100);
-                    put(g, 0xf0f8 + 10, 99);
-                    put(g, 0xf1f8 + 10, 77);
-                    put(g, 0xf078 + 10, 0xffff);
+                    put(0xef78 + 10, 0x9100);
+                    put(0xf0f8 + 10, 99);
+                    put(0xf1f8 + 10, 77);
+                    put(0xf078 + 10, 0xffff);
                 }
-                116 => put(g, 0xef78 + 10, 0),
+                116 => put(0xef78 + 10, 0),
                 _ => (),
             }
         }
@@ -183,8 +193,9 @@ pub(crate) fn seed(id: u32, g: &mut Game, image: &mut [u8]) -> Operation {
     }
 }
 /// A sprite-effect case's draw on the scheduler's lease: while a case is
-/// capturing, its observer stores into RAM and the sprite draws on the game,
-/// which the lease exports to. False when no case is capturing.
+/// capturing, its observer stores through the lease and the sprite draws on
+/// the lease's objects, as an uncaptured draw does. False when no case is
+/// capturing.
 #[cfg(sm_verify_dll)]
 pub(crate) fn draw_on_lease(
     runtime: &mut crate::game::session_runtime::Runtime<'_>,
@@ -197,10 +208,10 @@ pub(crate) fn draw_on_lease(
     if !observing() {
         return false;
     }
-    runtime.foreign(|game| {
-        let (x, y) = position;
-        draw(map, x, y, palette, tile, game);
-        sprite_output::with_base_tile(0xb4, map, position, palette, tile, Clip::None, game);
+    let (x, y) = position;
+    draw(map, x, y, palette, tile, runtime);
+    runtime.draw_objects(|drawing| {
+        sprite_output::with_base_tile(0xb4, map, position, palette, tile, Clip::None, drawing);
     });
     true
 }

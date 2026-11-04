@@ -46,15 +46,6 @@ impl Game {
     }
 }
 
-impl sm_game::sprite_output::MapHost for Game {
-    fn warn_invalid_rom(&mut self, address: u32) {
-        self.warn_invalid_sprite_rom(address);
-    }
-    fn set_failure(&mut self) {
-        self.set_sprite_failure();
-    }
-}
-
 /// The original's `RomPtr_RAM` assertion on a RAM-table address.
 pub(crate) fn assert_ram_pointer(address: u16) {
     // SAFETY: the failure path reports through the C assertion binding and does not return.
