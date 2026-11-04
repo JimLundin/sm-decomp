@@ -2,6 +2,7 @@
 use crate::actors::{self, api as actor_api};
 use crate::combat_rules::GrappleOutcome;
 use crate::constants::{buttons::*, samus_movement::*, samus_poses::*};
+use crate::game_loop::Temporary;
 use crate::grapple_aim::{self, ConnectionSet};
 use crate::grapple_origins::{self, OriginSet};
 use crate::player_collision::operations as player_collision;
@@ -132,6 +133,11 @@ fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     }
 }
 fn place_sample<H: Host + ?Sized>(angle: u16, length: u16, game: &mut H) {
+    // $94:A957 reads its angle and distance from $0D82 and $0D84, where every
+    // caller stores them.
+    let loop_state = &mut game.session_mut().game_loop;
+    loop_state.store_temporary(Temporary::Angle, angle);
+    loop_state.store_temporary(Temporary::Distance, length);
     {
         let index = (angle >> 1) as usize;
         if game.session().player.grapple_flags & 0x8000 == 0 {
@@ -213,6 +219,10 @@ fn check_clearance<H: Host + ?Sized>(angle: u16, game: &mut H) -> u8 {
             return blocked;
         }
         length = length.wrapping_add(8);
+        // $94:AC05: the distance advances before the count runs out.
+        game.session_mut()
+            .game_loop
+            .store_temporary(Temporary::Distance, length);
         let remaining = &mut game.session_mut().player.swing.collision_distance;
         *remaining = remaining.wrapping_sub(1);
         if *remaining == 0 {
@@ -221,6 +231,11 @@ fn check_clearance<H: Host + ?Sized>(angle: u16, game: &mut H) -> u8 {
     }
 }
 fn dispatch_connection<H: Host + ?Sized>(ea: u32, game: &mut H) {
+    // $9B:B9B5, $B9C4, $B9D3: the handler is reached through `JMP ($0D82)`.
+    let [low, high, ..] = ea.to_le_bytes();
+    game.session_mut()
+        .game_loop
+        .store_temporary(Temporary::Angle, u16::from_le_bytes([low, high]));
     let (pose, transition_graphics) = match ea {
         10205657 => (K_POSE_B2_FACE_R_GRAPPLE_AIR as u16, 9),
         10205666 => (K_POSE_B3_FACE_L_GRAPPLE_AIR as u16, 9),
@@ -346,8 +361,17 @@ pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
     }
     let (end, shortening) = length_target(&mut game.session_mut().player);
     let angle = 2 * game.grapple_angle() as u16;
+    // $94:AC53-$AC63, $94:ACB0-$ACC0.
+    let loop_state = &mut game.session_mut().game_loop;
+    loop_state.store_temporary(Temporary::TargetLength, end);
+    loop_state.store_temporary(Temporary::FrontOffset, if shortening { 8 } else { 0x38 });
+    loop_state.store_temporary(Temporary::Angle, angle);
     let mut length = game.session().player.grapple_length;
     while length != end {
+        // $94:AC6E, $94:ACCB: the new length.
+        game.session_mut()
+            .game_loop
+            .store_temporary(Temporary::Counter, length);
         let sample_length = length.wrapping_add(if shortening { 7 } else { 57 });
         place_sample(angle, sample_length, game);
         if contact(game) != 0 {
@@ -359,6 +383,10 @@ pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
         } else {
             length.wrapping_add(1)
         };
+        // $94:AC81, $94:ACDE.
+        game.session_mut()
+            .game_loop
+            .store_temporary(Temporary::Counter, length);
     }
     game.session_mut().player.grapple_length = end;
     0
@@ -525,8 +553,17 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
     // the ending's wavy Samus flag.
     game.session_mut().wavy_samus.enabled = delta;
     let target = 2 * (game.session().player.grapple_angle.wrapping_add(delta) >> 8);
+    // $94:AD49/$AD4F, $94:AE19/$AE1F.
+    let length = game.session().player.grapple_length;
+    let loop_state = &mut game.session_mut().game_loop;
+    loop_state.store_temporary(Temporary::TargetAngle, target);
+    loop_state.store_temporary(Temporary::Distance, length);
     let mut angle = 2 * game.grapple_angle() as u16;
     while angle != target {
+        // $94:AD5E, $94:AE2E.
+        game.session_mut()
+            .game_loop
+            .store_temporary(Temporary::NewAngle, angle);
         let next = (if backwards {
             angle.wrapping_sub(2)
         } else {

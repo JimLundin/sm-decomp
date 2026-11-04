@@ -188,6 +188,10 @@ pub fn draw_flare(h: &mut impl Host, raw: u16) {
     let direction = usize::from(direction & 15);
     let (old_x, old_y) = (h.session().player.x, h.session().player.y);
     if h.inputs().ceres & 0x8000 != 0 {
+        // $90:BC46/$BC4C: the rotating elevator keeps Samus's position there.
+        let loop_state = &mut h.session_mut().game_loop;
+        loop_state.store_temporary(crate::game_loop::Temporary::Angle, old_x);
+        loop_state.store_temporary(crate::game_loop::Temporary::Distance, old_y);
         super::presentation::project_player(h);
     }
     const X: [i16; 13] = [2, 18, 15, 17, 3, -4, -17, -15, -18, -2, -4, -4, -4];
