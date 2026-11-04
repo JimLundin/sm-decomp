@@ -1966,3 +1966,86 @@ fn legacy_audio_requests_round_trip_every_byte() {
         }
     }
 }
+
+/// Check a byte owner at `range`: each store reaches only its own byte, and
+/// the projection, decode and encode agree with RAM.
+fn check_bytes(owner: &str, range: std::ops::Range<usize>, bytes: fn(&Session) -> &[u8]) {
+    let base = session();
+    for at in range.clone() {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(
+            write_projected_byte(&mut s, at, value),
+            "{owner}: store {at:#x}"
+        );
+        assert_eq!(bytes(&s)[at - range.start], value, "{owner}: field {at:#x}");
+        for other in at.saturating_sub(2)..at + 3 {
+            let expected = if other == at { value } else { 0 };
+            if range.contains(&other) {
+                assert_eq!(
+                    projected_byte(&s, other),
+                    Some(expected),
+                    "{owner}: storing {at:#x} -> projection {other:#x}"
+                );
+            }
+        }
+    }
+    for seed in [13, range.start as u64 | 0x5a00_0000] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        assert_eq!(bytes(&s), &ram[range.clone()], "{owner}: decode");
+        let encoded = encoded(&s);
+        for at in range.clone() {
+            assert_eq!(encoded.get(&at), Some(&ram[at]), "{owner}: encode {at:#x}");
+        }
+    }
+}
+
+/// The NMI's queues beside the tilemap queue own their bytes as the original
+/// packs them: the scrolling requests ($0956..$098D), the Mode 7 transfers
+/// ($02D0..$032F) and the VRAM read table ($0340..$035F).
+#[test]
+fn queued_transfers_round_trip_every_byte() {
+    check_bytes("scrolling requests", 0x956..0x98e, |s| {
+        &s.queued_tilemaps.requests
+    });
+    check_bytes("Mode 7 transfers", 0x2d0..0x330, |s| {
+        &s.queued_tilemaps.mode7
+    });
+    check_bytes("VRAM read table", 0x340..0x360, |s| {
+        &s.queued_tilemaps.readbacks
+    });
+}
+
+/// The pause menu's BG2 backup ($7E:DF5C..$EF5B) and the ending's blank
+/// tilemap past the custom background ($7F:FA02..$FFFF) own their bytes.
+#[test]
+fn tilemap_buffers_round_trip_every_byte() {
+    use sm_game::menu_state::{EndingTilemap, PauseBackground};
+    check_bytes(
+        "pause background",
+        PauseBackground::START..PauseBackground::START + PauseBackground::BYTES,
+        |s| s.pause_background.bytes.as_slice(),
+    );
+    check_bytes(
+        "ending tilemap",
+        EndingTilemap::START..EndingTilemap::START + EndingTilemap::BYTES,
+        |s| s.ending_tilemap.bytes.as_slice(),
+    );
+}
+
+/// The Mode 7 queue's tail ($0334) and the VRAM read table's ($0360).
+#[test]
+fn queued_transfer_tails_round_trip() {
+    check_owner(
+        "queued transfer tails",
+        &[
+            (
+                0x334,
+                0,
+                (|s, _| &mut s.queued_tilemaps.mode7_tail) as Field,
+            ),
+            (0x360, 0, |s, _| &mut s.queued_tilemaps.readback_tail),
+        ],
+    );
+}

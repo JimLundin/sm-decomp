@@ -6,13 +6,39 @@ use super::transfer_types::ScrollingLayout;
 pub const QUEUE_BYTES: usize = 512;
 pub const SCROLL_WORDS: usize = 264;
 pub const BACKGROUND_BLOCKS: usize = 12_800;
+/// The four scrolling requests at $7E:0956..$098D: the BG1 column, BG1 row,
+/// BG2 column and BG2 row updates, seven words each.
+pub const REQUEST_BYTES: usize = 56;
+/// The Mode 7 transfer queue at $7E:02D0..$032F.
+pub const MODE7_BYTES: usize = 96;
+/// The VRAM read table at $7E:0340..$035F.
+pub const READBACK_BYTES: usize = 32;
 
 /// Byte-compatible queue storage is owned, including incomplete records and
 /// unknown bytes. The compatibility cursor retains its full identity.
+///
+/// Beside the tilemap queue, the NMI drains the scrolling requests, the
+/// Mode 7 transfer queue and the VRAM read table. Their bytes are owned as the
+/// original packs them: the requests are addressed with odd layer offsets, and
+/// a readback's DMA can overwrite the records after it, so no record is
+/// decoded ahead of its drain.
 #[derive(Clone, Debug, PartialEq)]
 pub struct QueuedTilemaps {
     pub queue: [u8; QUEUE_BYTES],
     pub tail: u16,
+    /// The scrolling requests ($7E:0956..$098D): each request's unwrapped and
+    /// wrapped sizes, destinations and sources, then its update flag.
+    pub requests: [u8; REQUEST_BYTES],
+    /// The Mode 7 transfers ($7E:02D0..$032F): tagged 9-byte VRAM and 7-byte
+    /// CGRAM records, ended by a tag without bits 6 or 7.
+    pub mode7: [u8; MODE7_BYTES],
+    /// The Mode 7 queue's tail ($7E:0334).
+    pub mode7_tail: u16,
+    /// The VRAM read table ($7E:0340..$035F): 9-byte records ended by a
+    /// zero word.
+    pub readbacks: [u8; READBACK_BYTES],
+    /// The VRAM read table's tail ($7E:0360).
+    pub readback_tail: u16,
     pub native_order: crate::scene::state::WordOrder,
     pub scrolling: [u16; SCROLL_WORDS],
     background: Box<[u16; BACKGROUND_BLOCKS]>,
@@ -33,6 +59,11 @@ impl QueuedTilemaps {
         Some(Self {
             queue,
             tail,
+            requests: [0; REQUEST_BYTES],
+            mode7: [0; MODE7_BYTES],
+            mode7_tail: 0,
+            readbacks: [0; READBACK_BYTES],
+            readback_tail: 0,
             scrolling,
             background,
             source_block,
@@ -44,6 +75,11 @@ impl QueuedTilemaps {
         Self {
             queue: [0; QUEUE_BYTES],
             tail: 0,
+            requests: [0; REQUEST_BYTES],
+            mode7: [0; MODE7_BYTES],
+            mode7_tail: 0,
+            readbacks: [0; READBACK_BYTES],
+            readback_tail: 0,
             native_order: if cfg!(target_endian = "little") {
                 crate::scene::state::WordOrder::Little
             } else {

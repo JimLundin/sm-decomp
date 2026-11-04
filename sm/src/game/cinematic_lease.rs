@@ -113,8 +113,8 @@ impl sm_game::display::queued_tilemaps::BackgroundBlocks for Runtime<'_> {
     }
 }
 
-// The Mode 7 queue ($7E:02D0) and its tail have no Session owner: on a Legacy
-// lease they are the RAM bytes Game writes.
+// The Mode 7 queue ($7E:02D0) and its tail are the Session's
+// (`QueuedTilemaps::mode7`), through the lease's projection.
 impl sm_game::display::transfer::Mode7Queue for Runtime<'_> {
     fn mode7_queue_tail(&self) -> u16 {
         self.word(sm_game::ram::words::MODE7_VRAM_WRITE_QUEUE_TAIL)

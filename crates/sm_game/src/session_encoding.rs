@@ -1049,6 +1049,19 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
             *value = bytes(COMPRESSED_MAPS + offset);
         }
     }
+    {
+        use crate::menu_state::{EndingTilemap, PauseBackground};
+        assert!(
+            EndingTilemap::START + EndingTilemap::BYTES <= byte_len,
+            "short ending tilemap import"
+        );
+        for (offset, value) in s.pause_background.bytes.iter_mut().enumerate() {
+            *value = bytes(PauseBackground::START + offset);
+        }
+        for (offset, value) in s.ending_tilemap.bytes.iter_mut().enumerate() {
+            *value = bytes(EndingTilemap::START + offset);
+        }
+    }
     s.enemy_projectiles.spawn.angle = bytes(0x60b);
     let load = |at: usize, value: &mut u16| *value = read(bytes, at);
     scalar_words!(s,load,(&mut));
@@ -1090,6 +1103,17 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
         *byte = bytes(0xd0 + index);
     }
     s.queued_tilemaps.tail = read(bytes, 0x330);
+    for (byte, at) in s.queued_tilemaps.requests.iter_mut().zip(REQUESTS) {
+        *byte = bytes(at);
+    }
+    for (byte, at) in s.queued_tilemaps.mode7.iter_mut().zip(MODE7) {
+        *byte = bytes(at);
+    }
+    s.queued_tilemaps.mode7_tail = read(bytes, 0x334);
+    for (byte, at) in s.queued_tilemaps.readbacks.iter_mut().zip(READBACKS) {
+        *byte = bytes(at);
+    }
+    s.queued_tilemaps.readback_tail = read(bytes, 0x360);
     s.queued_tilemaps.source_block = [read(bytes, 0x990), read(bytes, 0x992)];
     s.queued_tilemaps.destination_block = [read(bytes, 0x994), read(bytes, 0x996)];
     for (index, word) in s.queued_tilemaps.scrolling.iter_mut().enumerate() {
@@ -1216,6 +1240,17 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
     );
     visit.le_words(0xd0, s.queued_tilemaps.queue.as_chunks::<2>().0);
     visit.word(0x330, s.queued_tilemaps.tail);
+    visit.le_words(
+        REQUESTS.start,
+        s.queued_tilemaps.requests.as_chunks::<2>().0,
+    );
+    visit.le_words(MODE7.start, s.queued_tilemaps.mode7.as_chunks::<2>().0);
+    visit.word(0x334, s.queued_tilemaps.mode7_tail);
+    visit.le_words(
+        READBACKS.start,
+        s.queued_tilemaps.readbacks.as_chunks::<2>().0,
+    );
+    visit.word(0x360, s.queued_tilemaps.readback_tail);
     for (index, &word) in s
         .queued_tilemaps
         .source_block
@@ -1240,6 +1275,14 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
     visit.le_words(
         crate::save_file::COMPRESSED_MAPS,
         s.compressed_maps.bytes.as_chunks::<2>().0,
+    );
+    visit.le_words(
+        crate::menu_state::PauseBackground::START,
+        s.pause_background.bytes.as_chunks::<2>().0,
+    );
+    visit.le_words(
+        crate::menu_state::EndingTilemap::START,
+        s.ending_tilemap.bytes.as_chunks::<2>().0,
     );
     crate::actors::codec::visit_common(s, |at, pairs| visit.le_words(at, pairs));
     macro_rules! emit_key {
@@ -1389,6 +1432,18 @@ fn compressed_map_offset(at: usize) -> Option<usize> {
     at.checked_sub(COMPRESSED_MAPS)
         .filter(|offset| *offset < CompressedMaps::BYTES)
 }
+/// Byte `at`'s offset in the pause menu's BG2 backup, when it is one of its.
+fn pause_background_offset(at: usize) -> Option<usize> {
+    use crate::menu_state::PauseBackground;
+    at.checked_sub(PauseBackground::START)
+        .filter(|offset| *offset < PauseBackground::BYTES)
+}
+/// Byte `at`'s offset in the ending's blank tilemap tail, when it is one of its.
+fn ending_tilemap_offset(at: usize) -> Option<usize> {
+    use crate::menu_state::EndingTilemap;
+    at.checked_sub(EndingTilemap::START)
+        .filter(|offset| *offset < EndingTilemap::BYTES)
+}
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     owned_byte(s, at).or_else(|| scalar_byte(s, at))
 }
@@ -1428,6 +1483,12 @@ fn owned_byte(s: &Session, at: usize) -> Option<u8> {
     }
     if let Some(offset) = compressed_map_offset(at) {
         return Some(s.compressed_maps.bytes[offset]);
+    }
+    if let Some(offset) = pause_background_offset(at) {
+        return Some(s.pause_background.bytes[offset]);
+    }
+    if let Some(offset) = ending_tilemap_offset(at) {
+        return Some(s.ending_tilemap.bytes[offset]);
     }
     if (0x765..0x776).contains(&at) {
         return Some(s.menu_screens.graphics.bytes[at - 0x765]);
@@ -1660,6 +1721,14 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     }
     if let Some(offset) = compressed_map_offset(at) {
         s.compressed_maps.bytes[offset] = value;
+        return true;
+    }
+    if let Some(offset) = pause_background_offset(at) {
+        s.pause_background.bytes[offset] = value;
+        return true;
+    }
+    if let Some(offset) = ending_tilemap_offset(at) {
+        s.ending_tilemap.bytes[offset] = value;
         return true;
     }
     if (0x765..0x776).contains(&at) {
@@ -1937,14 +2006,37 @@ pub fn inputs(bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
     }
 }
 
+/// The scrolling requests' bytes ($7E:0956..$098D).
+const REQUESTS: std::ops::Range<usize> =
+    0x956..0x956 + crate::display::queued_tilemaps::REQUEST_BYTES;
+/// The Mode 7 transfer queue's bytes ($7E:02D0..$032F).
+const MODE7: std::ops::Range<usize> = 0x2d0..0x2d0 + crate::display::queued_tilemaps::MODE7_BYTES;
+/// The VRAM read table's bytes ($7E:0340..$035F).
+const READBACKS: std::ops::Range<usize> =
+    0x340..0x340 + crate::display::queued_tilemaps::READBACK_BYTES;
+
 // The selected machine image retains these exact spans. Detached Session
 // checkpoints additionally encode the complete fixed owner payload.
 fn queued_byte(s: &Session, at: usize) -> Option<u8> {
+    let queued = &s.queued_tilemaps;
     if (0xd0..0x2d0).contains(&at) {
-        return Some(s.queued_tilemaps.queue[at - 0xd0]);
+        return Some(queued.queue[at - 0xd0]);
+    }
+    for (range, bytes) in [
+        (REQUESTS, queued.requests.as_slice()),
+        (MODE7, queued.mode7.as_slice()),
+        (READBACKS, queued.readbacks.as_slice()),
+    ] {
+        if range.contains(&at) {
+            return Some(bytes[at - range.start]);
+        }
     }
     let (value, lane) = if (0x330..0x332).contains(&at) {
         (s.queued_tilemaps.tail, at - 0x330)
+    } else if (0x334..0x336).contains(&at) {
+        (s.queued_tilemaps.mode7_tail, at - 0x334)
+    } else if (0x360..0x362).contains(&at) {
+        (s.queued_tilemaps.readback_tail, at - 0x360)
     } else if (0xc8c8..0xcad8).contains(&at) {
         let offset = at - 0xc8c8;
         (s.queued_tilemaps.scrolling[offset / 2], offset % 2)
@@ -1965,12 +2057,27 @@ fn queued_byte(s: &Session, at: usize) -> Option<u8> {
     Some(value.to_le_bytes()[lane])
 }
 fn write_queued_byte(s: &mut Session, at: usize, byte: u8) -> bool {
+    let queued = &mut s.queued_tilemaps;
     if (0xd0..0x2d0).contains(&at) {
-        s.queued_tilemaps.queue[at - 0xd0] = byte;
+        queued.queue[at - 0xd0] = byte;
         return true;
+    }
+    for (range, bytes) in [
+        (REQUESTS, queued.requests.as_mut_slice()),
+        (MODE7, queued.mode7.as_mut_slice()),
+        (READBACKS, queued.readbacks.as_mut_slice()),
+    ] {
+        if range.contains(&at) {
+            bytes[at - range.start] = byte;
+            return true;
+        }
     }
     let (word, lane) = if (0x330..0x332).contains(&at) {
         (&mut s.queued_tilemaps.tail, at - 0x330)
+    } else if (0x334..0x336).contains(&at) {
+        (&mut s.queued_tilemaps.mode7_tail, at - 0x334)
+    } else if (0x360..0x362).contains(&at) {
+        (&mut s.queued_tilemaps.readback_tail, at - 0x360)
     } else if (0xc8c8..0xcad8).contains(&at) {
         let offset = at - 0xc8c8;
         (&mut s.queued_tilemaps.scrolling[offset / 2], offset % 2)

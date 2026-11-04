@@ -86,6 +86,8 @@ session_fields!(
     saved_maps,
     saved_player,
     compressed_maps,
+    pause_background,
+    ending_tilemap,
     inventory,
     mechanisms,
     room,

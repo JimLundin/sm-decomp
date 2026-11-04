@@ -306,3 +306,51 @@ pub struct DeathSequence {
 pub struct MenuGraphics {
     pub bytes: [u8; 17],
 }
+
+/// The pause menu's backup of the room's BG2 tilemap ($7E:DF5C..$EF5B):
+/// pausing reads the tilemap back from VRAM into it, and unpausing uploads
+/// it again, so it holds the room's background for the whole pause.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PauseBackground {
+    pub bytes: Box<[u8; Self::BYTES]>,
+}
+
+impl Default for PauseBackground {
+    fn default() -> Self {
+        Self {
+            bytes: Box::new([0; Self::BYTES]),
+        }
+    }
+}
+
+impl PauseBackground {
+    /// Where the backup starts ($7E:DF5C).
+    pub const START: usize = 0xdf5c;
+    /// The bytes the backup takes: one 32x64 tilemap.
+    pub const BYTES: usize = 0x1000;
+}
+
+/// The ending's blank tilemap past the custom background ($7F:FA02..$FFFF).
+/// The ending's setup ($8B:D480) decompresses the blank tilemap to
+/// $7F:F800..$FFFF and the cross-fade to the space view ($8B:D837) uploads
+/// it, Ticks later; its first $202 bytes are the custom background's last
+/// blocks (`QueuedTilemaps::background`).
+#[derive(Clone, Debug, PartialEq)]
+pub struct EndingTilemap {
+    pub bytes: Box<[u8; Self::BYTES]>,
+}
+
+impl Default for EndingTilemap {
+    fn default() -> Self {
+        Self {
+            bytes: Box::new([0; Self::BYTES]),
+        }
+    }
+}
+
+impl EndingTilemap {
+    /// Where the part past the custom background starts ($7F:FA02).
+    pub const START: usize = 0x1fa02;
+    /// The bytes it takes, to the end of work RAM.
+    pub const BYTES: usize = 0x5fe;
+}

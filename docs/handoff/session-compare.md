@@ -8,7 +8,9 @@ compared today, gives the design, and records the first slice (lane
 `collab/session-compare`, on `0b19d8a24`) and the second (lane
 `collab/session-compare-2`, on `8f90bd4bf`: next slice 1's findings and fix,
 and slice 2's coverage report), and the third (lane
-`collab/session-compare-3`, on `ec858a96f`: slice 2's classification).
+`collab/session-compare-3`, on `ec858a96f`: slice 2's classification),
+and the fourth (lane `collab/session-compare-3` again, on `5bdb96711`: the
+last "neither" owners and the "both" decisions as data).
 
 ## Today's comparison
 
@@ -258,21 +260,31 @@ unowned, 107 both, 258 held, 5,818 neither in 6 ranges. The 9,649:
 | (a) held outside the Session | 258 | the frame display (`display::preparation::State`: the register mirrors $51..86, the interrupt commands $A7/$AB, the NMI counters $05B4..BB, the HUD palette bits $077C, auto-cancel $09EC, previous HUD values $0A06..0F, the non-minimap HUD tilemap at $7E:C608..C6C7), 242; the BG scroll words $B1..C0 (`display_scroll`), 16. The host keeps both as typed domains (`SessionSlot::frame_display`, `scroll`) over RAM while the presentation is Legacy; an owned Display carries them in the Session (`display_bytes!`, `display_words!`), but the corpus runs Legacy. The coverage map counts them as held, by owner, from `game_state::frame_display_ranges` |
 | (c) unowned | 3,569 | `observation::coverage::UNOWNED_RAM`, 45 ranges with the RAM map's reason each: unused 3,403 (e.g. $9B..A2, $C1..CF, $0B4E..55, $1E9D..AC, $7E:F438..FFFF), debug 4 ($0DF4..F7), never read 160 (the debug enemy set, $7E:D552..D5F1), handshake 2 ($0641, the APU upload's poll budget) |
 | (b) now Session owners | 4 | `Player::health_warning` ($0A6A) and `Room::level_data_size` ($7F:0000), scalar words with layout lanes; SMPLAYER 9, SMROOMS 13 |
-| (b) still neither | 5,818 | below |
+| (b) owned in the fourth slice | 5,818 | below |
 
-Still neither, engine state with no Session owner (sizes in bytes):
+The fourth slice gave the last 5,818 bytes Session owners (SMAUXGS 19, then
+20). Each is a byte buffer of the projection, as the original packs it, with
+byte layout tests (`queued_transfers_round_trip_every_byte`,
+`queued_transfer_tails_round_trip`, `tilemap_buffers_round_trip_every_byte`):
 
-| Range | Bytes | What | Owner it needs |
+| Range | Bytes | What | Owner |
 | --- | --- | --- | --- |
-| $02D0..032F, $0334 | 98 | the Mode 7 transfer queue and its tail | Display's transfer queues: an owned Display treats these as needing a semantic counterpart (`Presentation::requires_semantic_counterpart`); in Legacy, Game-side `mode7_transfers` writes them |
-| $0340..035F, $0360 | 34 | the VRAM read queue and its tail | as above (`vram_read_queue`) |
-| $0956..098D | 56 | the BG1/BG2 row and column tilemap update descriptors, which the scrolling builds and the NMI consumes | as above (`display_transfers`) |
-| $7E:DF5C..EF5B | 4,096 | the pause menu's backup of the BG2 tilemap | the menus' Session state (pause entry and exit) |
-| $7F:FA02..FFFF | 1,534 | the ending's blank tilemap tail ($7F:F800..FFFF, staged across Ticks before its VRAM transfer); snesrev's bug-fix counter copy ($7F:FF00) sits inside | the ending sequence |
+| $02D0..032F, $0334 | 98 | the Mode 7 transfer queue and its tail | `QueuedTilemaps::mode7`, `mode7_tail` |
+| $0340..035F, $0360 | 34 | the VRAM read table and its tail | `QueuedTilemaps::readbacks`, `readback_tail` |
+| $0956..098D | 56 | the BG1/BG2 column and row update requests, which the scrolling builds and the NMI consumes | `QueuedTilemaps::requests` |
+| $7E:DF5C..EF5B | 4,096 | the pause menu's backup of the BG2 tilemap: pausing reads it back from VRAM, unpausing uploads it | `Session::pause_background` |
+| $7F:FA02..FFFF | 1,534 | the ending's blank tilemap past the custom background ($7F:F800..FFFF: the ending's setup decompresses it, the cross-fade to the space view uploads it); snesrev's bug-fix counter copy ($7F:FF00) lies inside, and the Session owns it as the original's tilemap byte | `Session::ending_tilemap` |
 
-Each needs a buffer or queue owner and its writers moved, not a scalar word,
-so none was small. The three display queues go with whichever of (owned
-Display in the corpus, or a Legacy Session owner) lands first.
+The three queues' writers and readers already went through the lease's
+projection (`Runtime::byte`/`set_byte`), and a readback's DMA writes return
+to the Session through `start_dma`. The pause backup's writer is a VRAM
+readback DMA on Game and the ending tilemap's a decompression on the lease
+(`decompress_to_ram` takes its bytes back); RAM written off the lease reaches
+the next lease through its write log or an import. So the RAM image is
+unchanged. An owned Display still marks itself failed on a store to the
+three queues (`Presentation::requires_semantic_counterpart`), and its own
+`mode7_tail`/`readback_tail` words are shadowed by the Session's in the
+projection, as its `upload_tail` already is by `QueuedTilemaps::tail`.
 
 ### The 107 "both" bytes
 
@@ -300,24 +312,49 @@ So 101 bytes become owned when their rows retire (drop the range from
 and 6 stay unowned for good. Slice 6 turns the table into the comparison's
 ignore list for those fields.
 
+The decisions are data since the fourth slice:
+`observation::coverage::SHARED_RAM` lists the 16 ranges with their field and
+`Shared` decision (`UntilRowRetires`, `Permanent`), and the coverage report
+adds one line:
+
+```
+Session RAM decoded and unowned by decision: until its row retires 101, permanent 6 (control.primary, control.secondary; messages.delay, room.unpause_queue_tail), undecided 0
+```
+
+"undecided" counts "both" bytes no entry covers and names the first, so a
+field that newly lands in a normalized range shows there. "Both" itself
+reaches 0 only as the rows retire (101 bytes, behaviour fixes each) and the
+6 permanent bytes move to slice 4's list of fields RAM cannot carry.
+
 ### Rows to confirm
 
 `death` and `save-death-reload` (the low-health warning sets and clears),
 `door-transition` and `tas-ceres-four-doors` (room loads store the level
 data's size): lockstep must stay at 0 failing frames and 0 Session
-divergences, and the coverage line must print 120963 decoded, 3926 unowned,
-107 both, 258 held, 5818 neither in 6 ranges.
+divergences. For the fourth slice, the rows that drive the new owners:
+the pause and unpause rows (the BG2 backup), Kraid and the X-ray
+rows (the VRAM read table), the Ceres and ending rows (`credits`, the Mode 7
+queue and the ending tilemap), and any scrolling room (the requests). On
+every row the coverage line must print:
+
+```
+Session RAM coverage: 126781 bytes decoded, 3926 unowned, 107 both, 258 held outside the Session, 0 neither (in 0 ranges)
+```
+
+with `undecided 0` on the decision line. Detached checkpoints written before
+SMAUXGS 20 are rejected as an unsupported schema.
 
 ## Next slices
 
 1. Done (above). Confirm on dispatched rows: Session-only failures 0 and
    the fields on the "written after the last lease" line.
-2. Classified (above): 3,827 of the 9,649 "neither" bytes are unowned
-   (with reasons), held outside the Session, or new Session words; the
-   "both" bytes are decided. Left: the five owners in the table above
-   (5,818 bytes), and moving the frame display and scroll (258 held bytes)
-   into the Session before slice 6 drops the WRAM compare. Confirm the
-   counts on the corpus and both routes.
+2. Done (above): every one of the 9,649 "neither" bytes is unowned (with
+   reasons), held outside the Session, or a Session owner, so "neither" is
+   0; the "both" bytes' decisions are a typed table with 0 undecided. Left:
+   moving the frame display and scroll (258 held bytes) into the Session,
+   and the 101 "both" bytes that wait on their `LEGACY(verifier)` rows,
+   before slice 6 drops the WRAM compare. Confirm the counts on the corpus
+   and both routes.
 3. Copy the decode half into `sm/src/verification`, compare it with the
    engine's decode on every frame, then use it for the oracle side.
 4. Compare the engine's Session directly, with a declared list of fields RAM
