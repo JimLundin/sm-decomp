@@ -200,6 +200,32 @@ The plan is issue #231. Jim's ruling:
   and data tokens and structure (traits, blanket impls), which joining lines
   doesn't move; it is advisory beside `production_lines`.
 
+### External review work list (#254) decisions (Jim, 2026-11-04)
+
+Jim accepted the coordinator's recommendations on the review's seven open decisions,
+on condition that progress is reported in concrete measures (the dashboard in #177).
+
+1. **Shell (#248).** The target is winit, wgpu and cpal. Gate 1 runs on whatever shell
+   exists, and the shell swap is a separate lane.
+2. **Gate 1 first (#248).** The Morph room slice with no `sm` dependency comes before
+   #231's size lanes.
+3. **Retiring the whole-RAM comparison (#246).** The nightly whole-RAM lockstep stays
+   as a report until #249's any%, 100% and low% movies pass and the nightly report of
+   unowned-byte differences has been quiet for two weeks.
+4. **Independent reference (#250).** Mesen is the second reference, with spot checks on
+   real hardware for disputed behaviour. The unpatched real game stays the authority.
+5. **Goals and process (#252).** Only text Jim has approved, landed on main, changes
+   goals or process.
+6. **Game data (#253).** Values the ROM provides are read from the ROM at load time.
+   Source holds structure (types and tables of meaning) and behaviour.
+7. **Size floor (#231).** There is no fixed floor. The target for this phase is about
+   125k engine lines, revisited after #251's real types.
+
+**Order:** finish the in-flight decoupling (Session compare, then deleting `foreign`
+and the RAM export). In parallel, fix the safety net (#239, #240) and put in place the
+advisory measures and nightly reports (#245, #246). Then Gate 1 (#248), then the size
+work and #251. Landing is one PR at a time through `tools/lane/land.sh` (#240).
+
 ### Scenario harness, lane S (Jim, 2026-10-31)
 
 Jim approved the scenario harness in #6 on 2026-10-31; the design is
