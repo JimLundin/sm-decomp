@@ -58,4 +58,25 @@ pub fn verify_grapple_tile_alias_prefixes() {
     assert_eq!(word(&late, 0xcd0), 32);
     assert_eq!(word(&late, 0x330), 0xc07);
     assert_eq!(word(&late, 0xcd7), 128);
+    lease_matches_game();
+}
+/// The lease's update (`player_drawing::Host for Runtime`) stores what the Game
+/// path stores, at an ordinary tail and at each tail whose full-u16 cursor reaches
+/// the charge word or the point animation's timer and tiles. Both start from a
+/// fixture taken through one lease, so only the update differs.
+fn lease_matches_game() {
+    use crate::game::session_runtime::Runtime;
+    for tail in [0, 0xc00, 0xc6e, 0xc70] {
+        let mut game = fixture(tail, 1, 0xdc348);
+        drop(Runtime::new(&mut game));
+        sm_game::grapple_swing::update_tiles(&mut *game);
+        drop(Runtime::new(&mut game));
+        let mut lease = fixture(tail, 1, 0xdc348);
+        drop(Runtime::new(&mut lease));
+        sm_game::player_drawing::Host::update_grapple_tiles(&mut Runtime::new(&mut lease));
+        drop(Runtime::new(&mut lease));
+        let differs =
+            (0..game.ram().len()).find(|&at| game.ram().read_byte(at) != lease.ram().read_byte(at));
+        assert_eq!(differs, None, "tail {tail:#x}");
+    }
 }

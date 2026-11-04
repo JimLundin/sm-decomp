@@ -455,7 +455,11 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
         self.owned_call(|runtime| sm_game::grapple_swing::restore_start_positions(runtime));
     }
     fn update_grapple_tiles(&mut self) {
-        self.foreign(sm_game::grapple_swing::update_tiles);
+        // The queue stores and the tile words go through the lease's projection,
+        // the same per-byte write the former foreign call's return took them
+        // back with, so a full-u16 cursor that aliases the charge or the point
+        // animation words stores them as it did (grapple_tile_alias_checks).
+        self.owned_player_call(sm_game::grapple_swing::update_tiles);
     }
     fn draw_grapple_rope(&mut self) {
         self.owned_player_call(|runtime| sm_game::grapple_rope::draw(runtime));
