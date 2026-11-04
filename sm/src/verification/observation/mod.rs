@@ -16,7 +16,7 @@ use sm_tools::engine::{Domains, Leases, Projection};
 use sm_tools::free_run::FreeRun;
 use sm_tools::lockstep::{EngineSource, Lockstep};
 use sm_tools::observation::Domain;
-use sm_tools::session_compare::{SessionCompare, Skip};
+use sm_tools::session_compare::{SessionCompare, SessionStreams, Skip};
 use sm_tools::trace::{Running, Tick, TraceWriter};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -37,6 +37,9 @@ pub struct Single {
     /// Where the run's lock entry (its running digests) is written.
     lock: Option<(PathBuf, Running)>,
     free_run: Option<FreeRun>,
+    /// The Session streams' state, when the run takes them: always on the
+    /// oracle, with `--session-streams` on the engine.
+    session: Option<SessionStreams>,
 }
 
 /// A single-side run's options: free run, determinism and the digest lock.
@@ -47,6 +50,8 @@ pub struct SingleOptions<'a> {
     pub trace_out: Option<&'a String>,
     pub lock_out: Option<&'a String>,
     pub free_run: Option<&'a String>,
+    /// The engine also takes the Session streams, as the oracle always does.
+    pub session_streams: bool,
 }
 
 impl SingleOptions<'_> {
@@ -63,8 +68,12 @@ impl SingleOptions<'_> {
             (false, false) if self.untyped || self.trace_out.is_some() => {
                 return Err("--untyped and --trace-out take a single-side run".into());
             }
-            (false, false) if self.lock_out.is_some() || self.free_run.is_some() => {
-                return Err("--lock-out and --free-run take a single-side run".into());
+            (false, false)
+                if self.lock_out.is_some() || self.free_run.is_some() || self.session_streams =>
+            {
+                return Err(
+                    "--lock-out, --free-run and --session-streams take a single-side run".into(),
+                );
             }
             (false, false) => return Ok(None),
         };
@@ -73,6 +82,7 @@ impl SingleOptions<'_> {
         }
         Ok(Some(Single {
             side,
+            session: (side == Side::Oracle || self.session_streams).then(SessionStreams::default),
             typed: !self.untyped,
             trace: self
                 .trace_out
@@ -179,6 +189,7 @@ impl Observer {
                     trace,
                     lock,
                     free_run,
+                    session: _,
                 } = *single;
                 if let Some(trace) = trace {
                     trace.finish()?;
@@ -337,6 +348,7 @@ pub fn single_tick(game: &mut Game, index: usize) -> Result<bool, String> {
         return Ok(false);
     };
     let (side, typed) = (single.side, single.typed);
+    let streams = single.session.is_some();
     let start = std::time::Instant::now();
     let engine = match side {
         Side::Engine if typed => engine_projection(game).map(|(projection, _)| projection),
@@ -356,19 +368,29 @@ pub fn single_tick(game: &mut Game, index: usize) -> Result<bool, String> {
         }
         _ => engine,
     };
-    let tick = Tick {
+    let mut tick = Tick {
         index: u32::try_from(index).map_err(|_| "input frame index overflow")?,
         // The lockstep names a Tick by the frame counter before it advanced.
         tick: game.snes_frame_counter - 1,
         machine: machine::result_digests(game),
         typed,
+        session: None,
     };
+    // Both sides decode their frame result, with the normalized RAM masked as
+    // the wram stream masks it, until the engine's own Session is compared
+    // (docs/handoff/session-compare.md, slice 5).
+    let decoded = streams
+        .then(|| session::oracle(&game.g_snapshot_mine.ram, game.world()))
+        .flatten();
     let Some(observer) = game.observation.as_mut() else {
         return Ok(false);
     };
     let Mode::Single(single) = &mut observer.mode else {
         return Ok(false);
     };
+    if let (Some(state), Some(decoded)) = (single.session.as_mut(), decoded) {
+        tick.session = Some(state.digests(decoded));
+    }
     if let Some(trace) = single.trace.as_mut() {
         trace.write(&tick)?;
     }

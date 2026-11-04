@@ -1120,6 +1120,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             #[cfg(sm_verify_dll)]
             "--untyped" if !single.untyped => single.untyped = true,
             #[cfg(sm_verify_dll)]
+            "--session-streams" if !single.session_streams => single.session_streams = true,
+            #[cfg(sm_verify_dll)]
             "--trace-out" if single.trace_out.is_none() => {
                 single.trace_out = Some(options.next().ok_or("missing trace output path")?);
             }

@@ -25,7 +25,10 @@ import scenario  # noqa: E402
 
 def compare_oracle(locked: Mapping[str, dict[str, Any]], recorded: Mapping[str, dict[str, Any]],
                    selected: list[str]) -> list[str]:
-    """Exact entries include identity, format, ticks, every domain and every mark."""
+    """Exact entries include identity, format, ticks, every locked stream and every mark.
+
+    A recorded stream the locked entry lacks (a new stream, such as the Session
+    streams) is not a failure: `new_streams` names it for the lock to take up."""
     failures: list[str] = []
     if set(recorded) != set(selected):
         failures.append("recorded scenario ids differ from the selected ids")
@@ -38,12 +41,27 @@ def compare_oracle(locked: Mapping[str, dict[str, Any]], recorded: Mapping[str, 
             if expected.get(field) != actual.get(field):
                 if field in ("digests", "marks"):
                     before, after = expected.get(field, {}), actual.get(field, {})
-                    changed = sorted(key for key in before.keys() | after.keys()
-                                     if before.get(key) != after.get(key))
+                    keys = before.keys() if field == "digests" else before.keys() | after.keys()
+                    changed = sorted(key for key in keys if before.get(key) != after.get(key))
+                    if not changed:
+                        continue
                     failures.append(f"{name}: {field} differ in {', '.join(changed)}")
                 else:
                     failures.append(f"{name}: {field} differs")
     return failures
+
+
+def new_streams(locked: Mapping[str, dict[str, Any]], recorded: Mapping[str, dict[str, Any]],
+                selected: list[str]) -> list[str]:
+    """`STREAM <id> <stream> <digest>` for each recorded stream the locked entry lacks:
+    names and hashes only, which `tools/scenario.py lock --add-streams` takes up."""
+    lines: list[str] = []
+    for name in selected:
+        before = locked.get(name, {}).get("digests", {})
+        after = recorded.get(name, {}).get("digests", {})
+        lines.extend(f"STREAM {name} {stream} {after[stream]}"
+                     for stream in sorted(after.keys() - before.keys()))
+    return lines
 
 
 def record_oracle() -> None:
@@ -69,7 +87,11 @@ def record_oracle() -> None:
             raise SystemExit("FAIL: committed oracle lock changed during recording")
         if result.returncode:
             raise SystemExit(f"FAIL: faithful oracle recording exited {result.returncode}")
-        failures = compare_oracle(expected, scenario.read_lock(ROOT, recorded).entries, selected)
+        entries = scenario.read_lock(ROOT, recorded).entries
+        failures = compare_oracle(expected, entries, selected)
+        added = [] if failures else new_streams(expected, entries, selected)
+    for line in added:
+        print(line, flush=True)
     for failure in failures:
         print(f"FAIL {failure}", flush=True)
     if failures:

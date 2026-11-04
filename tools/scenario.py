@@ -30,6 +30,9 @@ oracle's running digests (REVIEW lane S condition 8).
         and, with --record, record the oracle for every stale lockable scenario
   lock --check
         check the scenarios and lock are complete and current, without data (CI)
+  lock --add-streams LOG
+        take up the new streams an oracle sample's log names (`STREAM <id>
+        <stream> <digest>` lines from .github/scripts/lock_gate.py record-oracle)
   cut ID --at TICK --window N [--lead L] [--report R | --fact F...] [--why TEXT]
         turn ID's divergence at TICK into a scenario: a checkpoint L ticks before
         it and the next N ticks, packed into a new bundle for ci-data
@@ -345,8 +348,29 @@ def replace_start(root: Path, row: Row, digest: str) -> None:
     path.write_text(text[:end] + f'"seed:{digest}"' + text[end + len(old):], encoding="utf-8", newline="\n")
 
 
+# A new stream an oracle sample recorded for a locked entry (lock_gate.py new_streams).
+STREAM_LINE = re.compile(r"\bSTREAM (\S+) (session_[a-z]+) ([0-9a-f]{16})\b")
+
+
+def add_streams(data: Lock, log: Path) -> int:
+    """Add each stream `log` names to its entry; the count of streams added."""
+    added = 0
+    for name, stream, digest in STREAM_LINE.findall(log.read_text(encoding="utf-8", errors="replace")):
+        entry = data.entries.get(name)
+        if entry is None:
+            raise SystemExit(f"--add-streams: {name} has no lock entry")
+        digests: dict[str, str] = entry["digests"]
+        if digests.get(stream, digest) != digest:
+            raise SystemExit(f"--add-streams: {name} {stream} already locked with another digest")
+        added += stream not in digests
+        digests[stream] = digest
+    return added
+
+
 def lock(args: argparse.Namespace) -> None:
     root, data = args.root, read_lock(args.root)
+    for log in args.add_streams:
+        print(f"Lock: {add_streams(data, log)} streams added from {log}")
     for name, *values in args.pin:
         pin = data.pins.setdefault(name, {"id": name})
         for value in values:
@@ -505,6 +529,7 @@ def main() -> None:
     locking.add_argument("--bundle", type=Path, action="append", default=[])
     locking.add_argument("--pin", nargs="+", action="append", default=[], metavar="ID KEY=VALUE")
     locking.add_argument("--record", action="store_true")
+    locking.add_argument("--add-streams", type=Path, action="append", default=[], metavar="LOG")
     cutting = commands.add_parser("cut")
     cutting.add_argument("run")
     cutting.add_argument("--at", type=int, required=True)

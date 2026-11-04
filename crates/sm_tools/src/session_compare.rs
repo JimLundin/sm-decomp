@@ -23,9 +23,24 @@ use std::time::Duration;
 /// Lists every `Session` field the comparison covers, and generates the
 /// per-field comparison and the field's debug text from that one list.
 macro_rules! session_fields {
-    ($($field:ident),* $(,)?) => {
+    ($($field:ident => $group:ident),* $(,)?) => {
         /// The Session's compared fields, in declaration order.
         pub const FIELDS: &[&str] = &[$(stringify!($field)),*];
+
+        /// Each field's lock stream group, in `FIELDS` order.
+        const FIELD_GROUPS: &[Group] = &[$(Group::$group),*];
+
+        /// The digest of the field's debug text.
+        fn field_digest(session: &Session, index: usize) -> u64 {
+            let mut at = 0;
+            $(
+                if at == index {
+                    return text_digest(&session.$field);
+                }
+                at += 1;
+            )*
+            unreachable!("field index {index} of {at}")
+        }
 
         /// The indexes into `FIELDS` of the fields that differ.
         fn differing(engine: &Session, oracle: &Session) -> Vec<usize> {
@@ -59,49 +74,176 @@ macro_rules! session_fields {
 }
 
 session_fields!(
-    game_loop,
-    actor_identity,
-    actors,
-    botwoon_death,
-    timing,
-    fx,
-    fx_control_ownership,
-    fx_sources,
-    options,
-    flow,
-    menu,
-    menu_window,
-    menu_screens,
-    prepared_dialogue,
-    control,
-    gameplay_flags,
-    flag_compatibility,
-    sprite_effects,
-    sprite_compatibility,
-    presentation,
-    projectiles,
-    enemy_projectiles,
-    player,
-    minimap,
-    saved_maps,
-    saved_player,
-    compressed_maps,
-    pause_background,
-    ending_tilemap,
-    inventory,
-    mechanisms,
-    room,
-    queued_tilemaps,
-    feedback,
-    hdma,
-    messages,
-    spawn_scratch,
-    compatibility_enemy_scratch,
-    shared_sequence,
-    multiply_scratch,
-    pointer_scratch,
-    wavy_samus,
+    game_loop => Loop,
+    actor_identity => Actors,
+    actors => Actors,
+    botwoon_death => Actors,
+    timing => Loop,
+    fx => Display,
+    fx_control_ownership => Display,
+    fx_sources => Display,
+    options => Loop,
+    flow => Loop,
+    menu => Menus,
+    menu_window => Menus,
+    menu_screens => Menus,
+    prepared_dialogue => Menus,
+    control => Loop,
+    gameplay_flags => Room,
+    flag_compatibility => Room,
+    sprite_effects => Display,
+    sprite_compatibility => Display,
+    presentation => Display,
+    projectiles => Player,
+    enemy_projectiles => Actors,
+    player => Player,
+    minimap => Menus,
+    saved_maps => Save,
+    saved_player => Save,
+    compressed_maps => Save,
+    pause_background => Menus,
+    ending_tilemap => Menus,
+    inventory => Player,
+    mechanisms => Room,
+    room => Room,
+    queued_tilemaps => Display,
+    feedback => Display,
+    hdma => Display,
+    messages => Menus,
+    spawn_scratch => Scratch,
+    compatibility_enemy_scratch => Scratch,
+    shared_sequence => Player,
+    multiply_scratch => Scratch,
+    pointer_scratch => Scratch,
+    wavy_samus => Player,
 );
+
+/// The lock's Session streams (docs/handoff/session-compare.md, slice 5):
+/// the top-level Session fields in groups, one running digest each.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Group {
+    /// The game loop, timing, options, flow and control.
+    Loop,
+    /// The actors, their identities and the enemy projectiles.
+    Actors,
+    /// Samus, her projectiles and the inventory.
+    Player,
+    /// The room, its mechanisms and the gameplay flags.
+    Room,
+    /// The presentation, FX, HDMA, sprite effects and queued transfers.
+    Display,
+    /// The menus, messages, the minimap and the tilemap buffers.
+    Menus,
+    /// The save file's copies.
+    Save,
+    /// The scratch words the Session owns.
+    Scratch,
+}
+
+impl Group {
+    pub const ALL: [Self; 8] = [
+        Self::Loop,
+        Self::Actors,
+        Self::Player,
+        Self::Room,
+        Self::Display,
+        Self::Menus,
+        Self::Save,
+        Self::Scratch,
+    ];
+
+    /// The group's lock stream name.
+    pub fn stream(self) -> &'static str {
+        match self {
+            Self::Loop => "session_loop",
+            Self::Actors => "session_actors",
+            Self::Player => "session_player",
+            Self::Room => "session_room",
+            Self::Display => "session_display",
+            Self::Menus => "session_menus",
+            Self::Save => "session_save",
+            Self::Scratch => "session_scratch",
+        }
+    }
+
+    fn index(self) -> usize {
+        Self::ALL
+            .iter()
+            .position(|&group| group == self)
+            .expect("listed group")
+    }
+}
+
+/// A digest of text written in pieces, equal to the digest of the whole
+/// text however it was split.
+struct TextDigest {
+    digest: crate::trace::Digest,
+    pending: [u8; 8],
+    filled: usize,
+}
+
+impl std::fmt::Write for TextDigest {
+    fn write_str(&mut self, text: &str) -> std::fmt::Result {
+        use std::hash::Hasher as _;
+        for &byte in text.as_bytes() {
+            self.pending[self.filled] = byte;
+            self.filled += 1;
+            if self.filled == self.pending.len() {
+                self.digest.write(&self.pending);
+                self.filled = 0;
+            }
+        }
+        Ok(())
+    }
+}
+
+/// The digest of a value's debug text: the canonical form of a decoded
+/// Session field, which names no value outside the digest.
+fn text_digest(value: &impl Debug) -> u64 {
+    use std::fmt::Write as _;
+    use std::hash::Hasher as _;
+    let mut text = TextDigest {
+        digest: crate::trace::Digest::default(),
+        pending: [0; 8],
+        filled: 0,
+    };
+    write!(text, "{value:?}").expect("digest write");
+    text.digest.write(&text.pending[..text.filled]);
+    text.digest.finish()
+}
+
+/// The Session streams of a run's Ticks: per Tick, one digest per `Group`
+/// of its fields' debug texts. A field's text is digested again only on the
+/// Ticks it changes.
+#[derive(Default)]
+pub struct SessionStreams {
+    previous: Option<(Session, Vec<u64>)>,
+}
+
+impl SessionStreams {
+    /// The Tick's digest of each group, in `Group::ALL` order.
+    pub fn digests(&mut self, session: Session) -> [u64; Group::ALL.len()] {
+        let fields = match self.previous.take() {
+            Some((previous, mut fields)) => {
+                for index in differing(&session, &previous) {
+                    fields[index] = field_digest(&session, index);
+                }
+                fields
+            }
+            None => (0..FIELDS.len())
+                .map(|index| field_digest(&session, index))
+                .collect(),
+        };
+        use std::hash::Hasher as _;
+        let mut groups = [crate::trace::Digest::default().finish(); Group::ALL.len()];
+        for (&group, &digest) in FIELD_GROUPS.iter().zip(&fields) {
+            let running = &mut groups[group.index()];
+            *running = crate::trace::fold(*running, digest);
+        }
+        self.previous = Some((session, fields));
+        groups
+    }
+}
 
 fn pretty(value: &impl Debug) -> String {
     format!("{value:#?}")
@@ -592,6 +734,49 @@ mod tests {
         names.sort_unstable();
         names.dedup();
         assert_eq!(names.len(), FIELDS.len());
+    }
+
+    #[test]
+    fn a_text_digest_ignores_how_the_text_was_split() {
+        use std::fmt::Write as _;
+        use std::hash::Hasher as _;
+        let text = "Session { room: Room { width: 4 }, cells: [1, 2, 3] }";
+        let mut pieces = TextDigest {
+            digest: crate::trace::Digest::default(),
+            pending: [0; 8],
+            filled: 0,
+        };
+        for piece in text.split_inclusive(' ') {
+            pieces.write_str(piece).expect("write");
+        }
+        pieces.digest.write(&pieces.pending[..pieces.filled]);
+        assert_eq!(
+            pieces.digest.finish(),
+            crate::trace::Digest::of(text.as_bytes())
+        );
+        assert_eq!(text_digest(&"ab"), crate::trace::Digest::of(b"\"ab\""));
+    }
+
+    #[test]
+    fn a_changed_field_changes_only_its_group() {
+        let blank = || {
+            sm_game::session_encoding::decode(
+                &|_| 0,
+                0x20000,
+                sm_game::room_entry::world::WorldBinding::canonical_legacy(),
+            )
+        };
+        assert_eq!(FIELD_GROUPS.len(), FIELDS.len());
+        let mut streams = SessionStreams::default();
+        let first = streams.digests(blank());
+        assert_eq!(streams.digests(blank()), first);
+        assert_eq!(SessionStreams::default().digests(blank()), first);
+        let mut moved = blank();
+        moved.player.x = 1;
+        let changed = streams.digests(moved);
+        for (group, (before, after)) in Group::ALL.iter().zip(first.iter().zip(&changed)) {
+            assert_eq!(before == after, *group != Group::Player, "{group:?}");
+        }
     }
 
     #[test]

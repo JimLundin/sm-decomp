@@ -10,6 +10,7 @@
 
 use crate::engine::{Domains, Projection};
 use crate::observation::{Domain, Observation};
+use crate::session_compare::Group;
 use std::fmt::Write as _;
 use std::hash::Hasher;
 use std::io::{BufWriter, Write as _};
@@ -20,10 +21,12 @@ pub const MACHINE: [&str; 8] = [
     "wram", "sram", "vram", "cgram", "oam", "ppu", "video", "apu",
 ];
 
-/// Every stream a run compares: the machine's, then each typed domain.
-pub const STREAMS: usize = MACHINE.len() + Domain::ALL.len();
+/// Every stream a run compares: the machine's, each typed domain, then each
+/// Session field group (`session_compare::Group`).
+pub const STREAMS: usize = MACHINE.len() + Domain::ALL.len() + Group::ALL.len();
 
 /// Bump when a stream's content or the digest changes; it refreshes every lock.
+/// New streams need no bump: a lock compares the streams both entries have.
 pub const FORMAT: u32 = 1;
 
 /// Ticks between the combined digest's marks.
@@ -31,12 +34,20 @@ pub const MARK_TICKS: u32 = 1000;
 
 const MAGIC: &[u8; 8] = b"SMTRACE\x01";
 
-/// Stream `stream`'s name: a machine stream or a typed domain.
+/// Stream `stream`'s name: a machine stream, a typed domain or a Session group.
 pub fn stream_name(stream: usize) -> &'static str {
     match stream.checked_sub(MACHINE.len()) {
         None => MACHINE[stream],
-        Some(domain) => Domain::ALL[domain].name(),
+        Some(domain) => match Domain::ALL.get(domain) {
+            Some(domain) => domain.name(),
+            None => Group::ALL[domain - Domain::ALL.len()].stream(),
+        },
     }
+}
+
+/// A typed domain's stream index, when `stream` is one.
+pub fn stream_domain(stream: usize) -> Option<Domain> {
+    Domain::ALL.get(stream.checked_sub(MACHINE.len())?).copied()
 }
 
 /// A typed domain's stream.
@@ -99,6 +110,8 @@ pub struct Tick {
     pub machine: [u64; MACHINE.len()],
     /// The typed observation, absent when observation is off or the side had none.
     pub typed: Option<Projection>,
+    /// The Session streams' digests, in `Group::ALL` order, when the run takes them.
+    pub session: Option<[u64; Group::ALL.len()]>,
 }
 
 impl Tick {
@@ -106,6 +119,9 @@ impl Tick {
     pub fn digest(&self, stream: usize) -> Option<u64> {
         match stream.checked_sub(MACHINE.len()) {
             None => Some(self.machine[stream]),
+            Some(group) if group >= Domain::ALL.len() => {
+                Some(self.session?[group - Domain::ALL.len()])
+            }
             Some(domain) => {
                 let domain = Domain::ALL[domain];
                 let typed = self.typed.as_ref()?;
@@ -155,6 +171,10 @@ impl TraceWriter {
                 projection.observation.encode(&mut record);
             }
         }
+        // The Session digests end the record, so a trace without them reads back.
+        for digest in tick.session.iter().flatten() {
+            record.extend(digest.to_le_bytes());
+        }
         let length = u32::try_from(record.len()).map_err(|_| "trace record too long")?;
         self.0
             .write_all(&length.to_le_bytes())
@@ -202,7 +222,7 @@ fn decode(mut record: &[u8]) -> Option<Tick> {
         *digest = u64::from_le_bytes(take(8)?.try_into().ok()?);
     }
     let mask = take(1)?[0];
-    let typed = if mask == 0 {
+    let mut typed = if mask == 0 {
         None
     } else {
         let mut domains = Domains::default();
@@ -211,20 +231,31 @@ fn decode(mut record: &[u8]) -> Option<Tick> {
                 domains.insert(domain);
             }
         }
-        let observation = Observation::decode(&mut record)?;
-        if !record.is_empty() {
-            return None;
-        }
         Some(Projection {
-            observation,
+            observation: Observation::default(),
             domains,
         })
+    };
+    if let Some(projection) = &mut typed {
+        projection.observation = Observation::decode(&mut record)?;
+    }
+    let session = match record.len() {
+        0 => None,
+        bytes if bytes == 8 * Group::ALL.len() => {
+            let mut digests = [0; Group::ALL.len()];
+            for (digest, bytes) in digests.iter_mut().zip(record.as_chunks::<8>().0) {
+                *digest = u64::from_le_bytes(*bytes);
+            }
+            Some(digests)
+        }
+        _ => return None,
     };
     Some(Tick {
         index,
         tick,
         machine,
         typed,
+        session,
     })
 }
 
@@ -262,6 +293,7 @@ impl Running {
             }
         }
         // The combined digest folds the machine streams, which every side has.
+        // The typed and Session streams are compared only where both entries have them.
         for &digest in &tick.machine {
             self.combined = fold(self.combined, digest);
         }
@@ -316,6 +348,7 @@ mod tests {
                     domains,
                 }
             }),
+            session: samus_x.map(|x| [u64::from(x); Group::ALL.len()]),
         }
     }
 
@@ -359,6 +392,9 @@ mod tests {
         let right = fold_all(&[tick(0, 1, Some(1)), tick(1, 2, Some(2))]);
         let samus = typed_stream(Domain::Samus);
         assert_ne!(left.digests[samus], right.digests[samus]);
+        let loop_stream = MACHINE.len() + Domain::ALL.len();
+        assert_ne!(left.digests[loop_stream], right.digests[loop_stream]);
+        assert_eq!(stream_name(loop_stream), "session_loop");
         assert_eq!(left.digests[0], right.digests[0]);
         assert_eq!(left.combined, right.combined);
         let changed = fold_all(&[tick(0, 1, Some(1)), tick(1, 3, Some(1))]);

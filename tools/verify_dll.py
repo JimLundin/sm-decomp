@@ -461,6 +461,15 @@ def corpus_child(command: list[str], root: Path) -> tuple[int, bool]:
     return result, result == 2 and not replayed and len(errors) == 1 and errors[0] in rejected
 
 
+# The lock's Session streams (sm_tools::session_compare::Group) share this prefix.
+SESSION_STREAM = "session_"
+
+
+def has_session_streams(entry: Row | None) -> bool:
+    """Whether a lock entry carries any Session stream."""
+    return entry is not None and any(name.startswith(SESSION_STREAM) for name in entry["digests"])
+
+
 def compare_lock(locked: Row, run: Row) -> tuple[list[str], int | None]:
     """The streams whose running digest differs and the last mark both runs share."""
     if locked["format"] != run["format"]:
@@ -605,7 +614,11 @@ def run_single_side(root: Path, args: argparse.Namespace, segment: Row, replay: 
                                         "--checkpoint-in", str(checkpoint)] + report, root)[0]
         entry = work / "entry.toml"
         side = "--oracle-only" if args.mode == "lock" else "--engine-only"
-        code = child([side, "--lock-out", str(entry)])
+        # The engine takes the Session streams only for an entry that has them
+        # (the oracle always takes them), so entries without them cost nothing.
+        streams = ["--session-streams"] if args.mode == "check-lock" and has_session_streams(
+            args.lock_entries.get(name)) else []
+        code = child([side, "--lock-out", str(entry)] + streams)
         if code and (args.mode == "lock" or not entry.exists()):
             return code
         with entry.open("rb") as file:

@@ -8,8 +8,8 @@
 //! Console text names ticks, streams and fields only; the optional TOML
 //! report also holds the first differing values of each typed domain.
 
-use crate::observation::{Difference, Domain};
-use crate::trace::{MACHINE, STREAMS, Tick, stream_name};
+use crate::observation::Difference;
+use crate::trace::{STREAMS, Tick, stream_domain, stream_name};
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
@@ -86,11 +86,9 @@ impl FreeRun {
             if counts.first_divergent.is_none() {
                 counts.first_divergent = Some(at);
                 counts.last_equal_before_first = counts.last_equal;
-                if let (Some(domain), Some(left), Some(right)) = (
-                    stream.checked_sub(MACHINE.len()).map(|d| Domain::ALL[d]),
-                    &reference.typed,
-                    &tick.typed,
-                ) {
+                if let (Some(domain), Some(left), Some(right)) =
+                    (stream_domain(stream), &reference.typed, &tick.typed)
+                {
                     counts.first_differences =
                         left.observation.differences(&right.observation, domain);
                 }
@@ -256,7 +254,7 @@ impl FreeRun {
 mod tests {
     use super::*;
     use crate::engine::{Domains, Projection};
-    use crate::observation::Observation;
+    use crate::observation::{Domain, Observation};
     use crate::trace::typed_stream;
 
     fn tick(index: u32, wram: u64, charge: u16) -> Tick {
@@ -272,6 +270,7 @@ mod tests {
                 observation,
                 domains,
             }),
+            session: None,
         }
     }
 
