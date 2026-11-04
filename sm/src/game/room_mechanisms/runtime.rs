@@ -278,13 +278,15 @@ impl Effects for Runtime<'_> {
         }
     }
     fn diagnostic(&mut self, diagnostic: Diagnostic) -> u8 {
-        self.foreign(|game|match diagnostic {
+        // The diagnostics read and store no game state; the former foreign
+        // entry's observation refresh is kept.
+        self.owned_player_call(|_| match diagnostic {
             Diagnostic::MissingScroll=>loop {},
             Diagnostic::MissingDisplacement=>unsafe{
                 crate::c_library::printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
-                crate::rtl::report_unreachable(game);0
+                crate::rtl::unreachable()
             },
-            Diagnostic::Unreachable=>crate::rtl::report_unreachable(game) as u8,
+            Diagnostic::Unreachable=>crate::rtl::unreachable(),
             Diagnostic::UnsupportedSetup=>{
                 unsafe{crate::native_assertion! { '_c2rust_label; b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0" };}
             },
