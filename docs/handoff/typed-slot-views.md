@@ -687,3 +687,50 @@ Left (outside D2/D7/D9):
 - Unchanged from fc8: the room-entry leaf effects (compatibility 83), the level and buffer
   operations and setup codes in compatibility, the Maw visibility store, `flush_tilemaps`,
   the boss lease's decompression, the mode 7 queue and animated tile uploads.
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc10`, on `rs-fc9`)
+
+`foreign_calls` 75 to 73, `game_host_impls` 86 to 85; `sm_game_ram_sites`,
+`engine_ram_address_sites` and `legacy_engine_ram_sites` unchanged. No lease is added
+mid-frame: each retired call runs on the lease that called it, in an owned call, which
+refreshes the observations on entry and return. No Session field or format changed.
+
+Retired:
+- The room background's initial-load diagnostic (room_entry content 96):
+  `Runtime::room_background_diagnostic` prints, marks the game failed and runs the room
+  background observer over a detached image of the projected RAM. `Runtime::observe_detached`
+  is now the shared detached-image helper; `observe_low_window` uses it too. The observer's
+  Game form (`room_background_observer::diagnostic`) is gone. Case that decides it: room
+  background 29.
+- Yapping Maw's off-screen word: the main AI stores the slot view's `off_screen` (var_36) on
+  its own lease in `owned_step`, which refreshes the camera the fresh lease imported. For a
+  slot in the table the word is at $7E:802C + slot, in the extended RAM the fresh lease
+  already adopted, and never one of Botwoon's death words, so the final state is the fresh
+  lease's. The Maw's `Host` trait and its Game impl are gone. `Runtime::update_maw_visibility`
+  is now `cfg(sm_verify_dll)` for the two D7 cases that call it. Row: `enemy-yapping-maw`.
+- No count change: the four cfg-gated verify-only hooks in sm/src/game (the sprite effect
+  draw, the mechanism native read, the actor population stage and opcode) now live in their
+  observers (`draw_on_lease`, `native_read_on_lease`, `stage_on_lease`, `opcode_on_lease`).
+  The engine methods only forward. They stay foreign calls until `foreign` goes (D7).
+
+Left, with what each needs:
+- The message display (room_mechanisms runtime 155). Not attempted, because it would not
+  lower the count. Of `PresentationDialogue`'s 21 effects, the audio ones (`emit_cue`), the
+  dialogue words, the workspace, the display controls, the palette, the das0l word
+  (`samus_game()`) and `display_refresh::wait` all have lease forms. Three things do not:
+  - About ten effects (`PrepareDisplay`, the background save, upload and restore, the
+    scroll enable and HDMA, the message and selection uploads, `RestoreDisplay`) are
+    `Video::apply` commands. On Game these are immediate DMAs and register writes
+    (`display_commands::apply`) that read and write the message workspace in RAM. On the
+    lease each would be a D2 device foreign of its own, unless `display_commands::apply`
+    were made generic over the lease's `Registers`. That costs one export and import per
+    register write.
+  - `UpdateHdma` runs `hdma_objects::update_hdma`. Its `DispatchHost` bound is the whole
+    menu `Host`, and `hdma_objects` is the d9 lane's file. It also opens `hdma_lease()`,
+    which would be a nested lease.
+  - `input` samples through `menus::controller_input::sample`, which needs the menu `Host`
+    and reads JOY1L (D2).
+  So a dialogue host on the Runtime would remove one call and add at least two (Video and
+  the HDMA update). It belongs after D2's device port and D9's renderer.
+- Unchanged from fc9: the grapple tiles (not proved) and the room-entry leaf effects
+  (compatibility 83). The rest are D2, D7 or D9.
