@@ -488,6 +488,13 @@ impl<'g> Runtime<'g> {
             result
         })
     }
+    /// The RomPtr invalid-window diagnostic on the lease. It prints and marks the
+    /// game failed, reading and storing no RAM, so the Session stays current; the
+    /// observations are refreshed on entry and on return, as the former foreign
+    /// call left them.
+    pub(crate) fn report_invalid_window(&mut self, address: u32) {
+        self.owned_player_call(|runtime| invalid_window(runtime.game, address));
+    }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
     /// observations are refreshed on entry and on return, as the former foreign call left them.
     pub(crate) fn next_random_number(&mut self) -> u16 {
@@ -969,7 +976,7 @@ impl Host for Runtime<'_> {
     fn native_record(&mut self, bank: u8, cursor: u16) -> RomRecord {
         let address = (u32::from(bank) << 16) | u32::from(cursor);
         if cursor & 0x8000 == 0 {
-            self.foreign(|g| invalid_window(g, address));
+            self.report_invalid_window(address);
         }
         content::captured(self.game.capture_native_rom(), address)
     }

@@ -82,7 +82,7 @@ impl EntryContent for Runtime<'_> {
     fn closing_capture<P>(&mut self, bank: u8, address: u16) -> Capture<P> {
         let absolute = (u32::from(bank) << 16) | u32::from(address);
         if address & 0x8000 == 0 {
-            self.foreign(|game| invalid_window(game, absolute));
+            self.report_invalid_window(absolute);
         }
         Capture::Legacy {
             image: self.loaded_image().expect("ROM must be loaded"),
