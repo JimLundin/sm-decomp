@@ -373,6 +373,11 @@ pub fn grapple_contact<H: ActorHost + EprojHost + MechanismEffects>(
 ) -> Option<GrappleContact> {
     h.player_control(0xd);
     h.session_mut().room.collision_detection_index = 0;
+    // $A0:9EAC: the interactive enemy indices index follows the scan.
+    h.session_mut()
+        .actors
+        .schedule
+        .compatibility_interactive_cursor = 0;
     let mut index = 0usize;
     loop {
         h.session_mut().actors.controls.selected = crate::actors::scheduling::interactive(h, index);
@@ -425,6 +430,10 @@ pub fn grapple_contact<H: ActorHost + EprojHost + MechanismEffects>(
             });
         }
         index += 1;
+        h.session_mut()
+            .actors
+            .schedule
+            .compatibility_interactive_cursor = crate::actors::scheduling::list_offset(index);
     }
 }
 pub fn apply_power_bomb_to_enemies<H: ActorHost + EprojHost>(h: &mut H) {

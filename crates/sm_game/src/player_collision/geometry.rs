@@ -153,6 +153,11 @@ pub fn solid_contact<H: Host>(h: &mut H, amount: i32) -> MotionResult {
     }
     let (position, radius) = player_probe(h, amount);
     h.session_mut().room.collision_detection_index = 0;
+    // $A0:A9C7: the interactive enemy indices index follows the scan.
+    h.session_mut()
+        .actors
+        .schedule
+        .compatibility_interactive_cursor = 0;
     let mut list_index = 0usize;
     loop {
         let index = if let Some(index) = h.session().actors.schedule.interactive.get(list_index) {
@@ -225,6 +230,10 @@ pub fn solid_contact<H: Host>(h: &mut H, amount: i32) -> MotionResult {
             };
         }
         list_index += 1;
+        h.session_mut()
+            .actors
+            .schedule
+            .compatibility_interactive_cursor = crate::actors::scheduling::list_offset(list_index);
     }
     MotionResult {
         displacement: amount,

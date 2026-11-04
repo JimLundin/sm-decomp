@@ -150,6 +150,12 @@ pub fn advance_selected<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H) 
             });
             h.session_mut().actors.controls.shake_request = 0xffff;
         }
+        // $A0:8FF9: both list indices restart; the active one follows the loop.
+        h.session_mut()
+            .actors
+            .schedule
+            .compatibility_interactive_cursor = 0;
+        h.session_mut().actors.schedule.compatibility_active_cursor = 0;
         let mut cursor = 0usize;
         loop {
             let index = active(h, cursor);
@@ -170,6 +176,7 @@ pub fn advance_selected<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H) 
                 });
             }
             cursor += 1;
+            h.session_mut().actors.schedule.compatibility_active_cursor = list_offset(cursor);
         }
     }
     sprite_objects::update(h);
@@ -255,6 +262,11 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
     }
 }
 
+/// The byte offset of list entry `index`, as the original's list indices
+/// ($17A8, $17AA) hold it.
+pub fn list_offset(index: usize) -> u16 {
+    u16::try_from(index.checked_mul(2).unwrap()).unwrap()
+}
 pub fn active(h: &(impl ActorAccess + ActorCollections), index: usize) -> u16 {
     h.collection_word(
         CollectionWindow::Active,

@@ -97,7 +97,6 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 | $0E54-$0E55 | mine | current enemy index | 4 / 211 | as above, for the enemy loop | actors |
 | $0E56-$0E59 | mine | enemy index backup, enemy data pointer | 51 / 7763 | as above | actors |
 | $1784-$178B | mine | enemy AI pointer and backup | 60 / 7731 | storing the species' AI pointer the dispatch would jump through | actors |
-| $17A8-$17AB | mine | active and interactive enemy list indices | 60 / 15948 | storing the indices the list loops leave | actors |
 | $184A-$185B | mine | colliding-solid-enemy positions and deltas | 13 / 251 | as above | player collision |
 | $186E-$1873, $1876-$1885 | mine | enemy spritemap and border collision temporaries (the right border, $1874, is compared: the projectile and bomb scans store it) | 36 / 4260 | storing them in the enemy collision | actors |
 | $189A-$18A5 | mine | Samus target positions and radius mirrors | 58 / 13225 | storing them in the Samus/enemy collision | player collision |
