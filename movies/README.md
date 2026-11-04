@@ -110,6 +110,8 @@ CI decrypts the ROM from a private repository and keeps every ROM-derived file
 Called jobs report as `<caller job> / <job>`, for example `quality / Quality` and
 `verify / Verify result`. To run selected rows on a branch, dispatch `ci.yml` with
 `action=rows` and space-separated row IDs; unknown IDs fail. `action=full` runs everything. A change lands after CI and Verify pass on its exact head.
+A red nightly reopens (or opens) the issue titled "Nightly Verify is red", assigned to
+the repository owner, and comments with the run.
 
 ### ROM import check
 

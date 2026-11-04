@@ -285,6 +285,9 @@ jobs:
     needs: [verify-plan, verify-build, verify-replay, verify-replay-first, verify-coverage]
     if: always() && needs.verify-plan.result != 'skipped'
     runs-on: ubuntu-24.04
+    permissions:
+      # A red nightly reopens and comments on its issue.
+      issues: write
     steps:
       - name: Require every planned job to pass
         env:
@@ -309,3 +312,22 @@ jobs:
             if [ "$SCOPE" = coverage ]; then require verify-coverage "$COVERAGE"; fi
           fi
           exit "$failed"
+      # Nobody watches the nightly, so a red one reopens the issue titled below (or opens
+      # it), assigned to the repository owner, and comments with the run.
+      - name: Report a red nightly on its issue
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: Nightly Verify is red
+        run: |
+          body="Nightly Verify failed on ${GITHUB_SHA::9}: $RUN"
+          number=$(gh issue list --state all --search "$TITLE in:title" --json number,title \
+            --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue reopen "$number" || true
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$TITLE" --body "$body" --assignee "$GITHUB_REPOSITORY_OWNER"
+          fi

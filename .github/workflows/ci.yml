@@ -71,6 +71,8 @@ jobs:
     permissions:
       contents: read
       actions: read
+      # Verify's result reports a red nightly on its issue.
+      issues: write
     uses: ./.github/workflows/verify.yml
     with:
       scope: ${{ inputs.action || (github.event_name == 'schedule' && 'full' || 'gate') }}
