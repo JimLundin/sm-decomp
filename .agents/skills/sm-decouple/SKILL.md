@@ -5,19 +5,20 @@ description: Move sm_game state off SNES RAM onto typed Session state, using typ
 
 # Decouple sm_game from RAM
 
-Progress is `sm_game_ram_sites` falling in `python tools/ram_ratchet.py`, which
-counts every RAM-by-name access. Renaming a RAM word does not count. A word is
-decoupled only when sm_game reads and writes it as a typed Session field.
-Moving a site into an address API (`session_slot!`, `ram_slot!(@at)`,
-`SlotAccess`, `native_word`, `write_slice_*`) is not decoupling: those still name
-RAM addresses. The ratchet's engine inventory reports them; never raise it.
+Progress is measured by `python tools/ram_ratchet.py`. `sm_game_ram_sites`
+(every RAM-by-name access) is at 0 and must stay there; the open strict measures
+are `engine_ram_address_sites`, `engine_raw_ram_calls`, `foreign_calls` and
+`game_host_impls`. Renaming a RAM word does not count. A word is decoupled only
+when sm_game reads and writes it as a typed Session field. Moving a site into an
+address API (`native_word`, `write_slice_*`, `Point::physical`, `shared_byte`) is
+not decoupling: those still name RAM addresses. Never raise those measures.
 
 ## Pick the tool
 
 | The code... | Use |
 | --- | --- |
 | runs on the scheduler's lease (actors, bosses) and still has a `Host for Game` path | move the family onto the lease |
-| reads or writes a group of Session-projected words through a view (`boss!`, `menu!`, a `*_view`) | a typed copy (`session_cohort`) |
+| reads or writes a group of Session-projected words through a `*_view` | a typed copy (`session_cohort`) |
 | touches words no Session field holds yet | add the field first (with its RAM encoding, checkpoint lane and layout test), then a copy |
 
 ## Typed copy
@@ -33,8 +34,8 @@ pause menu's `MenuState`.
 
 **Hold rule.** While a copy is held, nothing reaches its words any other way.
 Before converting, grep the function and everything it calls for raw addresses
-in the copy's range: `ram()`, `word_transfers!`, address tables in ROM, and lease
-reads. The verify guard catches projection access only. Past misses:
+in the copy's range: `ram()`, address tables in ROM, and lease reads. The verify
+guard catches projection access only. Past misses:
 - Samus's frame read the cinematic table as enemy projectiles.
 - The pause sprites addressed their timers through a bank $82 table.
 
@@ -50,7 +51,7 @@ Read a finished example: `git log --grep "scheduler's lease"` (Ridley, the corps
 
 - Report `sm_game_ram_sites` and `sm_game_coupled_files` before and after each commit.
 - For lease moves, also tally Game-hosted calls in a local instrumented build: count
-  calls in `SlotAccess for Game` against the lease impl, by caller. The moved family
+  calls in the family's `Host for Game` impl against the lease impl, by caller. The moved family
   must show 0. Never commit the instrumentation; your brief may name a ready script.
 
 ## Prove it

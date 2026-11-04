@@ -1,5 +1,9 @@
 # Session authoritative for the whole tick: a staged plan (2026-11-03)
 
+> Retired since this plan was written: `word_transfers!`, `register_writes!` and
+> `RawRam` are gone from the code (checked on `caae95ea9`). Stage notes below that
+> name them describe the code at their own date.
+
 Design lane `tick-plan`, on main `ecb4dee74`. This note has no engine changes. It plans
 docs/PERFORMANCE.md step 2: game code runs as a client of one Session for the whole tick,
 not the Session as a guest of `Game`.

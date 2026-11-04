@@ -1,5 +1,10 @@
 # Typed slot views handoff (2026-11-03)
 
+> Retired since these lanes ran: `session_slot!`, `ram_words!`, `word_transfers!`,
+> `RawRam` and `SlotAccess` are gone from the code (checked on `caae95ea9`), and
+> `sm_game_ram_sites` is 0. The sections below are dated lane records; read them
+> as history, not as current APIs.
+
 Branch `collab/typed-all` (PR #155) converts the address-API layer to typed Session
 fields. Engine address APIs (`ram_ratchet.py`, ROM record reads excluded) fall from
 5805 on main `0115740f5` to 36, and `collab/f36-owners` takes them to 27.

@@ -1,5 +1,9 @@
 # Owned display registers: survey and blocker (2026-11-03, lane `disp`)
 
+> Retired since this survey: `register_writes!` and the `RawRam` display-mirror
+> path are gone from the code (checked on `caae95ea9`). The sections below are
+> dated lane records; read them as history, not as current APIs.
+
 The `register_writes!`/`write_register` form is 85 of `sm_game_ram_sites`: display_refresh 27,
 message_boxes 13, cinematic_display 10, display/sequence 9, display/transfer 8, map_menu 4,
 hdma_objects 4, gameplay_frame 3, hud 2, and one each in liquid_effects, cinematic_states,
