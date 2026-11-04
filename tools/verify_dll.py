@@ -620,6 +620,10 @@ def run_single_side(root: Path, args: argparse.Namespace, segment: Row, replay: 
             args.lock_entries.get(name)) else []
         code = child([side, "--lock-out", str(entry)] + streams)
         if code and (args.mode == "lock" or not entry.exists()):
+            # The job console keeps only fixed lines (replay_job.py), so the
+            # failure is named here; the verifier's own text is in the raw log.
+            print(f"{name}: lock entry not written: verifier exit {code}"
+                  + (" (with --session-streams)" if streams else ""), flush=True)
             return code
         with entry.open("rb") as file:
             run: Row = tomllib.load(file)
@@ -1158,6 +1162,8 @@ def main() -> int:
                         help="run only the engine (no oracle, no comparison unless --free-run)")
     single.add_argument("--untyped", action="store_true",
                         help="take only the machine streams, without typed observation")
+    single.add_argument("--session-streams", action="store_true",
+                        help="the engine also takes the Session streams (the oracle always does)")
     single.add_argument("--trace-out", type=Path, metavar="PATH",
                         help="write the single-side run's per-Tick trace (a run artifact)")
     single.add_argument("--lock-out", type=Path, metavar="PATH",
@@ -1189,6 +1195,7 @@ def main() -> int:
                 or args.build_only or args.frontend_check or args.segment
                 or args.no_build or args.cargo is not None or args.oracle is not None or args.oracle_keep is not None
                 or args.mode != "lockstep" or args.lock is not None or args.untyped
+                or args.session_streams
                 or args.divergence_report is not None or args.divergence_report_directory is not None
                 or args.room_pack_alternate or args.room_pack_changed):
             parser.error("original native phase admission takes only actual original/closed source handles")
@@ -1202,7 +1209,8 @@ def main() -> int:
         return 0
     if any(original_native):
         parser.error("original native phase options require --original-native-phase")
-    single_side = (args.engine_only or args.untyped or args.trace_out is not None
+    single_side = (args.engine_only or args.untyped or args.session_streams
+                   or args.trace_out is not None
                    or args.lock_out is not None or args.free_run is not None)
     if args.mode != "lockstep" and args.corpus is None:
         parser.error("--mode requires --corpus")
@@ -1354,6 +1362,8 @@ def main() -> int:
         replay_args.append("--engine-only")
     if args.untyped:
         replay_args.append("--untyped")
+    if args.session_streams:
+        replay_args.append("--session-streams")
     for option, path in (("--trace-out", args.trace_out), ("--lock-out", args.lock_out),
                          ("--free-run", args.free_run)):
         if path is not None:
