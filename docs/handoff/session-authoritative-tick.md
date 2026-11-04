@@ -988,6 +988,77 @@ former `foreign` call left them. Writes are identical and in the same order.
     rooms, and the SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and
     `music-fir-selector10`. `lease counters:` should show `leases=` falling on the
     menu and pause rows at the same `ticks=`, with `nested=` unchanged.
+- **Sixth slice (lane `hosts-1`, on `13e0f2318`, `collab/tick-s9e`).** Not yet
+  replayed. Ratchet: `game_host_impls` 60 → 50, `session_entries` 6 → 5 (the
+  deleted `UpdateHost` blanket's lease), `legacy_engine_ram_sites` 393 → 387,
+  `foreign_calls` 43.
+  - `menus::host::Host` and `MenuRuntime` for Game are deleted, with
+    `SpriteHost`, `SpriteWords`, `InventoryAccess`, `menu_window_state::Access`
+    and `ArrowAccess`, `MapFacts`, `escape_countdown::Access`, `LeaseHdma` and
+    `grapple_swing::TileAccess`. So are the blankets over `Host + RuntimeAccess`
+    and `MenuRuntime + RuntimeAccess` (`BeamHost`, the demo `Tables`,
+    `Allocator`, `GradientHost`, `CommonRuntime`, `save_slots::MapHost`,
+    `DialogueHost`, the FX `SetupHost`) and `UpdateHost`'s blanket: only the
+    lease implements them now.
+  - Boot stays on Game, on narrow ports. `save_slots::load`, `initialize` and
+    `verify_boot` bind on `LoadHost` (`SlotHost`, the menu and sequence state,
+    the display history, `Lend`). `cinematic_host::Scene`'s
+    `menus::host::Tables` is a direct Game impl (+1), not the menus host's
+    blanket.
+  - Verification on the lease (D6, D7):
+    - `player_legacy_edges`'s map check renders on `Runtime::new`. The lease's
+      `MenuRuntime::observe_map_write` checks each rotation on the lease's
+      projection (the exploration byte, and the destination tile through the
+      workspace). Before the lease closes the check asserts it holds the whole
+      rendered map; after, the published physical RAM, as before.
+    - `flags_candidate` (cases 60, 63..66) and `flags_runtime_checks` run the
+      new game and the load on `Runtime::new`; in the runtime checks that lease
+      opens inside the existing `foreign` call.
+    - `grapple_tile_alias_checks` runs each prefix and tail case on a lease,
+      asserting the lease's projection (after the panic, for the two failing
+      tails) and then physical RAM. Its Game comparison is now the bare update on
+      a lease against the lease's owned-call `update_grapple_tiles`.
+  - **Census: the 50 Game impls left**, from deleting each in turn and
+    compiling (sm in both cfgs and the detached player). "Logo" means the only
+    caller is `boot::resume`'s `nintendo_logo` through `Scene`.
+    - Logo only (10): `TilemapQueue`, `menus::host::Tables`, `Mode7Queue`,
+      `palette_effects::fading::Host`, `BackgroundBlocks`, `fx_lighting::Access`,
+      `presentation_workspace::{Access, PaletteAccess, QueueAccess}`,
+      `dialogue_ram::Access`. Running the logo on the frame's lease, or giving it
+      a typed boot host, retires all ten.
+    - Logo plus a little more: `fx_domain::Sources` (Game's own FX encoding),
+      `PlayerPosition` (`sm_a9`), `ObjectAccess` and `sprite_output::MapHost`
+      (boot's high table and `lease_drawing`'s forwarding to Game; the sprite
+      effect observer), `menus::state::Access` (boot's `verify_boot`, Game's own
+      menu commit), `SlotHost` (`verify_boot`, `flags_save_candidate`),
+      `LevelData` (boot's `LevelReads` through the logo, `room_state::
+      decompress_level` and the lease's `decompress_level` on the published
+      image).
+    - The Game frame (`gameplay_frame::Host` for Game, called from `cpu_infra`):
+      `gameplay_frame::Host`, `display_refresh::{Host, DisplayOwner,
+      ReadbackQueue}`, `Video`, `QueueAccess`, `Scrolling`, `HdmaTable`,
+      `PlayerFacts`, `HudPlayer`, `HudFrameHost`, `ResetRequest` and `SampleHost`
+      (the latched controller sample), `ContinuationAccess`, `fx_domain::
+      Controls`, `SoundEffects`, `DisplayRefresh`, `Records`, `LoadedRom`,
+      `SessionRam`, `screen_fade::Owner`. These go with stage 10 (the NMI inside
+      the tick).
+    - Broad (frame, boot, sm/ runtime and verification): `RuntimeAccess`
+      (`flags_candidate`, `animated_tiles`, `enemy_projectiles_candidate`,
+      `room_mechanisms`), `CompatibilityRam`, `display::preparation::Access`
+      (`scanline_irq`, `rtl`, `room_world_cases`), `sequence_state::Access`,
+      `gameplay_context::Access`, `display_scroll::Access` (`scroll_runtime`),
+      `AudioHost` (`music`, `session_audio_checkpoint_cases`), `LoadedImage`
+      (`lease_drawing`, Crocomire, Magdollite), `NativeImage`,
+      `NativeDiagnostics`, `DecompressionHost` (room loads on the published
+      image), and `SamusSources` (the persistent Session's body drawing on Game,
+      `display_transfers`, `samus_animation`, the Samus binding and persistent
+      Session cases).
+  - **Rows.** Any power-on row (boot and the logo), the file select and save
+    rows (`save-memory`, `save-death-reload`, `file-copy-clear`), the map rows,
+    game over, and the verifier's flags (cases 60, 63..66 and the runtime
+    guard), save, map (`player_legacy_edges`) and grapple alias cases. The
+    engine paths are unchanged, so the replays should match the base exactly;
+    the three verification checks are the ones to watch.
 
 ### Stage 10: NMI and settlement inside the tick
 
