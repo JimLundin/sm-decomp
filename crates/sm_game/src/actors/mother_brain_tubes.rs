@@ -12,12 +12,6 @@ use crate::actors::slot_view::slot_view;
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::mother_brain_tables;
 
-/// What the falling tubes still reach in the compatibility runtime.
-pub trait Host {
-    /// Start an earthquake of `kind`. Was `MotherBrain`'s `start_earthquake`.
-    fn start_earthquake(&mut self, kind: u16);
-}
-
 slot_view! {
     /// A falling tube's slot: its function, burst height, fall speed, smoke
     /// timer and index, kind and fall delay.
@@ -151,6 +145,15 @@ fn wait_to_fall(game: &mut impl Lease, k: u16) {
     }
 }
 
+/// Start an earthquake of `kind` for 20 frames, with its sound (25h,
+/// library 2, at most 6 queued).
+fn start_earthquake(game: &mut impl Lease, kind: u16) {
+    use crate::actors::mother_brain_fight::OwnedWord;
+    game.set_owned(OwnedWord::EarthquakeType, kind);
+    game.set_owned(OwnedWord::EarthquakeTimer, 20);
+    crate::actors::mother_brain_fight::queue_sfx2_max6(0x25, game);
+}
+
 /// Falls with the brain above it. When the brain lands it ends the flash,
 /// shakes the room, moves the body into place for the fake death's ascent and
 /// bursts. Was `MotherBrainsTubesFalling_Falling`.
@@ -167,8 +170,8 @@ fn fall_with_brain(game: &mut impl Lease, k: u16) {
         trail_smoke(game, k);
     } else {
         crate::actors::mother_brain_fight::end_screen_flashing(game);
-        game.foreign(|game| {
-            Host::start_earthquake(game, LANDING_EARTHQUAKE);
+        game.owned_step(|game| {
+            start_earthquake(game, LANDING_EARTHQUAKE);
             crate::hdma_objects::free_hdma_object(0, game);
             crate::hdma_objects::free_hdma_object(2, game);
         });

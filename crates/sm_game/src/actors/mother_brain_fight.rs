@@ -868,15 +868,11 @@ pub trait Lease:
 /// What the fight still reaches in the compatibility runtime.
 pub trait Host:
     crate::actors::host::BossEffects
-    + crate::actors::mother_brain_effects::Host
     + crate::actors::mother_brain_neck::Host
-    + crate::actors::mother_brain_tubes::Host
     + crate::records::Records
     + crate::cartridge::NativeImage
     + OwnedWords
 {
-    /// The wall seal's dust clouds and wall blocks.
-    fn spawn_wall_seal(&mut self);
     /// The lease an AI's frame runs its state steps in.
     type Lease<'a>: Lease<Game = Self>
     where

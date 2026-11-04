@@ -177,12 +177,6 @@ impl sm_game::player_position::PlayerFacts for Game {
     }
 }
 
-impl sm_game::actors::mother_brain_tubes::Host for Game {
-    fn start_earthquake(&mut self, kind: u16) {
-        crate::game::mother_brain_visuals::start_earthquake(kind, self);
-    }
-}
-
 // The phase-3 neck functions are the ones `dispatch_neck_function` dispatched on.
 const _: () = {
     use crate::game::sm_a9::*;

@@ -5,16 +5,9 @@ use crate::actors::mother_brain_fight::{Lease, State};
 use crate::cartridge::NativeDiagnostics;
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
+use crate::constants::bank_86::ADDR_K_EPROJ_MOTHER_BRAIN_DEATH_EXPLOSION;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use sm_data::cartridge::lorom_offset;
-
-/// What Mother Brain's effects still reach in the compatibility runtime.
-pub trait Host {
-    /// Where the next enemy projectile spawns.
-    fn set_projectile_spawn_point(&mut self, x: u16, y: u16);
-    /// Spawn a death explosion of `kind` at the projectile spawn point.
-    fn spawn_death_explosion(&mut self, kind: u16);
-}
 
 /// Mother Brain's palettes are in bank $AD.
 const PALETTE_BANK: u8 = 0xad;
@@ -108,35 +101,30 @@ pub fn generate_explosions(interval: u16, kinds: u16, count: u16, game: &mut imp
     }
     let position = EXPLOSION_ROW_BYTES.wrapping_mul(*brain.explosion_index());
     drop(brain);
-    game.foreign(|game| spawn_explosions(position, kinds, count, game));
+    game.owned_step(|game| spawn_explosions(position, kinds, count, game));
     crate::effects::SoundEffects::queue_sound(game, 2, EXPLODING_SOUND, 3);
 }
 
 /// Spawns `count` explosions from offset row byte `position`, each kind
 /// drawn from the three words at `kinds`.
-fn spawn_explosions(
-    mut position: u16,
-    kinds: u16,
-    count: u16,
-    game: &mut (impl Host + crate::actors::host::ActorHost + ?Sized),
-) {
+fn spawn_explosions(mut position: u16, kinds: u16, count: u16, game: &mut impl Lease) {
     let mut remaining = count;
     loop {
         let current = remaining;
         let index = (position >> 1) as isize;
         let x = rom_table_word!(game, EXPLOSION_OFFSETS, index);
         let y = rom_table_word!(game, EXPLOSION_OFFSETS, index + 1);
-        game.set_projectile_spawn_point(x, y);
+        game.place_projectile_spawn(x, y);
         let table = native_record(EXPLOSION_BANK, kinds, game);
         let mut kind = table.word(0);
-        let random = game.next_random();
+        let random = game.roll_random();
         if random >= SECOND_KIND {
             kind = table.word(2);
             if random >= THIRD_KIND {
                 kind = table.word(4);
             }
         }
-        game.spawn_death_explosion(kind);
+        game.spawn_room_eproj(ADDR_K_EPROJ_MOTHER_BRAIN_DEATH_EXPLOSION as u16, kind);
         position = position.wrapping_add(4);
         remaining = current.wrapping_sub(1);
         if current == 1 {

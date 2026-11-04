@@ -163,8 +163,4 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     fn lease(&mut self) -> crate::game::session_runtime::Runtime<'_> {
         crate::game::session_runtime::Runtime::new(self)
     }
-
-    fn spawn_wall_seal(&mut self) {
-        crate::game::mother_brain_visuals::spawn_wall_seal(self);
-    }
 }

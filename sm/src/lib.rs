@@ -364,7 +364,6 @@ pub mod game {
     pub use sm_game::enemy_population;
     pub use sm_game::enemy_script;
     pub(crate) mod mother_brain_body;
-    pub(crate) mod mother_brain_visuals;
     pub mod projectile_contact;
     pub mod sm_a9;
     pub(crate) mod space_pirates;

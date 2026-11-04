@@ -29,7 +29,6 @@ pub(in crate::game) use sm_game::actors::contacts;
 pub(in crate::game) use sm_game::actors::drawing;
 pub(in crate::game) mod kraid_fingernails;
 pub(in crate::game) mod media_runtime;
-pub(in crate::game) mod mother_brain_effects;
 #[cfg(sm_verify_dll)]
 pub(in crate::game) use sm_game::actors::movement;
 pub(in crate::game) mod phantoon_actions;
