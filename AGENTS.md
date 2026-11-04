@@ -14,7 +14,7 @@ Load the skill for your role first; each is short and self-contained.
 | You are | Load |
 | --- | --- |
 | a lane agent, on any task | [sm-lane](.agents/skills/sm-lane/SKILL.md), then your task skill |
-| cutting sm_game RAM coupling | [sm-decouple](.agents/skills/sm-decouple/SKILL.md) |
+| cutting the engine's ties to the old game (foreign calls, Game host impls, address sites) | [sm-decouple](.agents/skills/sm-decouple/SKILL.md) |
 | fixing a faithful-only divergence | [sm-hardware](.agents/skills/sm-hardware/SKILL.md) |
 | triaging drift, a lock mismatch or a failing row | [sm-drift](.agents/skills/sm-drift/SKILL.md) |
 | adding a corpus scenario | [sm-scenario](.agents/skills/sm-scenario/SKILL.md) |

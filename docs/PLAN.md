@@ -40,7 +40,7 @@ a verifier build or replays. Push a slice once and let its gate finish unless fi
 failure. New commits supersede their branch's PR and push gates; nightly and dispatched runs finish.
 Jim's workflow direction (2026-11-03): CI has fixed-scope, delimited workflows that `ci.yml`
 composes. `ci.yml` alone holds triggers and has no steps; it calls `quality.yml` (format, lints,
-ratchets, tests, dependency direction, the Windows desktop type-check), `verify.yml` (replays,
+ratchets, tests, dependency direction), `verify.yml` (replays,
 by `scope`) and `bench.yml` (replay speed against a base ref). Dispatch picks one `action`. Unused workflows go; the nightly desktop link and mutant runs were removed,
 and Quality still checks the mutation anchors. Verify skips replays when a pull request changes
 no replay-relevant file. Python is typed and type-checked in Quality. Avoid adding Python unless
