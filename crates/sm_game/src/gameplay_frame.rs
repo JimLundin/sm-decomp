@@ -121,6 +121,8 @@ pub trait PassLease:
     /// A cinematic game state's frame: the title sequence, the intro or the
     /// ending; nonzero when it yields to the next frame.
     fn advance_native_state(&mut self, state: NativeState) -> u8;
+    /// A door transition state's frame; nonzero when it yields.
+    fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
 }
 
 #[derive(Clone, Copy)]
@@ -351,10 +353,14 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 finish_pass(entry, game);
                 break 'frame finish_state(game);
             }
-            // A cinematic state's frame runs on this lease too; the frame ends on
-            // Game once it returns.
-            if let Some(&Native(state)) = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16)) {
-                let returned = lease.advance_native_state(state);
+            // A cinematic or door transition state's frame runs on this lease too;
+            // the frame ends on Game once it returns.
+            let native = match entry {
+                Some(&Native(state)) => Some(lease.advance_native_state(state)),
+                Some(&Door(signal)) => Some(lease.resume_room_entry(signal)),
+                _ => None,
+            };
+            if let Some(returned) = native {
                 drop(lease);
                 if returned != 0 {
                     break 'frame returned;
