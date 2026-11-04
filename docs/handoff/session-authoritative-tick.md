@@ -1650,6 +1650,32 @@ former `foreign` call left them. Writes are identical and in the same order.
     copy cases (their new entries), and the SFX-loss rows
     `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`. RAM
     lockstep must stay at 0 failing frames.
+- **Sixth slice (lane `delete-foreign`, on `2c228ee77`, `collab/no-foreign`).** Not
+  yet replayed. Ratchet: `foreign_calls` 42 → 0, `engine_ram_export_lines` 4692 →
+  4620, `legacy_engine_ram_sites` 325 → 320.
+  - **The six hooks on the lease** (`5b12f0252`, exact). The population stage,
+    opcode and $A2:804C observers run over a detached image of the lease's
+    projected RAM and the Session's native spawn words (`observe_hook`) and store
+    back what they change; the initializer check reads the payload the lease
+    holds, and both nested spawns run on the same lease. The native read trace
+    registers its replacement through the lease; the qualified mechanism calls
+    store through its byte path. Each keeps the observation refresh
+    (`owned_player_call`).
+  - **`foreign` deleted** (`e6a49972c`, exact: no replay called it). Under D7 the
+    36 contract checks go with it, keeping what still exists as drop, act on
+    Game, `Runtime::new` (the publication and import, the mismatched world's
+    silent drop, the unwind after a hand-off); the unwind and Samus revocation
+    cases run on `owned_player_call`, and the returning-Die load runs under the
+    Samus mutation. Gone with it: the resume path, the carried presentation
+    stack and the suspended-display reads, the source interval and the lease
+    counters' nested and foreign counts.
+  - **The codec's foreign-only helpers** (`dee38dbd6`, exact):
+    `physical_source_spans` and `suspended_domain_byte`, and the lease traits'
+    docs. Game's source publications are now never tracked (only foreign
+    tracked them); capture and restore remain and can go next.
+  - **The RAM export stays** for the device (the NMI's DMA after `publish`,
+    settlement's HDMA, the Samus upload), lockstep's RAM compare, checkpoints and
+    the verification checks that read Game after a drop.
 
 ### Stage 11: the rest
 

@@ -90,7 +90,7 @@ BASELINE = {
     "engine_ram_address_sites": 19,
     "engine_raw_ram_calls": 0,
     "engine_unresolved_ram_methods": 981,
-    "legacy_engine_ram_sites": 325,
+    "legacy_engine_ram_sites": 320,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     # Advisory, rebaselined 2026-11-04: 61 -> 73. Every new site is an original-game
     # out-of-range access routed through legacy_overflow with a docs/LEGACY.md row
@@ -101,7 +101,7 @@ BASELINE = {
     # image; Session entries are leases opened from Game-hosted code. All three
     # reach zero when the Session drives the tick. Foreign calls and Game hosts
     # may not rise; lease moves can add entries, so those are reported.
-    "foreign_calls": 42,
+    "foreign_calls": 0,
     "game_host_impls": 0,  # no-foreign: the runtime owns the tick; Game is a device
     "session_entries": 0,
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
@@ -111,7 +111,7 @@ BASELINE = {
     "session_word_view_sites": 202,
     # The Session <-> RAM codec in sm_game (docs/handoff/session-compare.md).
     # First measured on 0b19d8a24; advisory until it first falls, then strict.
-    "engine_ram_export_lines": 4685,
+    "engine_ram_export_lines": 4620,
     # Code volume (sm_pipeline volume), first measured on 7bf8f9f51. Advisory.
     "engine_logic_tokens": 1225258,
     "engine_data_tokens": 52807,
