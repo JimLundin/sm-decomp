@@ -2,11 +2,11 @@
 //! mini-tatoris that crawl beside it (bank $A2:8B60-$A2:998C). Was `maridia_turtles`.
 use crate::actors::access::{
     AccessMode::{LittleEndian as Le, Native},
-    ActorAccess as _, ActorKey as Key,
+    ActorKey as Key,
 };
 use crate::actors::api::{self, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors, abs16};
+use crate::actors::host::{ActorLease, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content;
@@ -180,8 +180,7 @@ pub fn initialize(child: bool, lease: &mut impl Lease) {
     });
 }
 /// Main AI - tatori ($A2:8DD2) or mini-tatori ($A2:912E); false for an unknown function.
-pub fn main_ai<H: LeaseActors + ?Sized>(child: bool, game: &mut H) -> bool {
-    let runtime = &mut game.lease();
+pub fn main_ai(child: bool, runtime: &mut impl crate::actors::species::TableLease) -> bool {
     let key = combat::current(runtime);
     if child {
         let parent = runtime.resolve_actor(key, Le).variables[1];
@@ -498,8 +497,11 @@ pub fn shot(lease: &mut impl Lease) {
     detach_child(lease);
 }
 /// The tatori instructions ($A2:9381-$A2:94C7).
-pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut H) -> EnemyScript {
-    let runtime = &mut game.lease();
+pub fn instruction(
+    ea: u32,
+    j: EnemyScript,
+    runtime: &mut impl crate::actors::species::TableLease,
+) -> EnemyScript {
     let key = combat::current(runtime);
     match ea {
         // Instruction - mini-tatori - crawl ($A2:9381): over the sleeping tatori's shell.

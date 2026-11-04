@@ -1,15 +1,12 @@
 //! The Work Robot, which walks the Wrecked Ship shooting lasers once the power is back,
 //! and stands dormant before (bank $A8:C6B3-$A8:D820). Was `wrecked_ship_robots`.
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, ShotHandling, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, EnemyHost, LeaseActors};
-use crate::diagnostics::Fatal as _;
-use crate::enemy_projectiles::host::Effects as _;
+use crate::actors::host::ActorLease;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
-use crate::session_access::SessionAccess as _;
 
 /// The palette cycle ($A8:CC67): four colours then a duration, ended by -1.
 const PALETTE: [i16; 31] = [
@@ -22,8 +19,8 @@ const BANK: u8 = 0xa8;
 /// The robot's colours, 137 entries into its palette line.
 const COLOURS: usize = 137;
 
-fn powered(game: &mut (impl EnemyHost + ?Sized)) -> bool {
-    game.area_boss_flags() & 1 != 0
+fn powered(runtime: &mut impl crate::actors::species::TableLease) -> bool {
+    crate::actors::boss_lease::BossState::area_boss_byte(runtime) & 1 != 0
 }
 fn delay_laser(runtime: &mut impl ActorLease, key: Key, frames: u16) {
     runtime.edit_actor(key, Native, |actor| {
@@ -72,11 +69,10 @@ pub fn palette(runtime: &mut impl ActorLease) {
     runtime.words_stored();
 }
 /// Initialisation AI - work robot ($A8:CB77), or deactivated while the power is off.
-pub fn initialize<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
-    if !powered(game) {
-        return initialize_deactivated(game);
+pub fn initialize(runtime: &mut impl crate::actors::species::TableLease) {
+    if !powered(runtime) {
+        return initialize_deactivated(runtime);
     }
-    let runtime = &mut game.lease();
     let hook = &mut runtime.session_mut().actors.drawing.hook_address;
     hook[2] = BANK;
     hook[..2].copy_from_slice(&PALETTE_CYCLE_HOOK.to_ne_bytes());
@@ -102,8 +98,7 @@ pub fn initialize<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
     runtime.words_stored();
 }
 /// Initialisation AI - work robot deactivated ($A8:CBCC).
-pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize_deactivated(runtime: &mut impl crate::actors::species::TableLease) {
     let key = combat::current(runtime);
     let pose = runtime.edit_actor(key, Native, |actor| {
         if actor.parameters[0] & 0x8000 != 0 || (actor.parameters[0].wrapping_sub(4) as i16) >= 0 {
@@ -153,16 +148,15 @@ pub fn touch(runtime: &mut impl ActorLease) {
     runtime.session_mut().player.contact.external_x.whole = if left { 4 } else { 0xfffc };
 }
 /// Enemy shot - work robot deactivated ($A8:D18D).
-pub fn shot_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
-    combat::shot_reaction(&mut game.lease(), ShotHandling::Finalize);
+pub fn shot_deactivated(runtime: &mut impl crate::actors::species::TableLease) {
+    combat::shot_reaction(runtime, ShotHandling::Finalize);
 }
 /// Enemy shot - work robot ($A8:D192): knocked back and its laser delayed, while powered.
-pub fn shot<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
+pub fn shot(runtime: &mut impl crate::actors::species::TableLease) {
     crate::probe::hit("work_robot.shot");
-    if !powered(game) {
+    if !powered(runtime) {
         return;
     }
-    let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let key = combat::current(runtime);
     let actor = runtime.resolve_actor(key, Native);
@@ -235,18 +229,17 @@ fn walk(
     script
 }
 /// The work robot instructions ($A8:CD09-$A8:D16B).
-pub fn instruction<H: LeaseActors + ?Sized>(
+pub fn instruction(
     ea: u32,
     k: u16,
     j: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl crate::actors::species::TableLease,
 ) -> EnemyScript {
     match ea {
         0xa8_cecb => return EnemyScript::jump(0xc92d),
         0xa8_d0c2 => return EnemyScript::jump(0xc6e9),
         _ => {}
     }
-    let runtime = &mut game.lease();
     match ea {
         // Instruction - queue work robot sound effect if on screen ($A8:D091).
         0xa8_d091 => {
@@ -258,7 +251,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
                 && (camera_y.wrapping_sub(y) as i16) < 0
                 && (camera_y.wrapping_add(224).wrapping_sub(y) as i16) >= 0
             {
-                runtime.queue_sound(2, 6, 0x68);
+                crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, 0x68);
             }
         }
         0xa8_d16b => cooldown(runtime),
@@ -303,7 +296,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             };
             return walk(runtime, j, motion, instructions, restore_y_first);
         }
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
     j
 }

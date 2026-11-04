@@ -1,14 +1,12 @@
 //! Dragon, lava seahorses with wings (bank $A2:E57B-$A2:E977). Was `lava_seahorse_pair`. Lane
 //! 3 is the timer; its extended words hold the list index, current list index and fire flag.
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api;
-use crate::actors::host::{ActorLease, ActorRuntime, Death, LeaseActors, Shot};
+use crate::actors::host::{ActorLease, Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table as list_table;
-use crate::session_access::SessionAccess as _;
 
 /// A lease the dragons run on: their slots are the Session's.
 pub trait Lease: ActorLease + SlotState {}
@@ -73,20 +71,14 @@ fn set_timer(runtime: &mut impl ActorLease, key: Key, timer: u16, function: u16)
 }
 
 /// Initialisation AI - enemy $D4BF (dragon) ($A2:E606): parameter 1 non-zero for the wings.
-pub fn initialize<H: LeaseActors>(game: &mut H) {
-    let mut runtime = game.lease();
+pub fn initialize(runtime: &mut impl crate::actors::species::TableLease) {
     let raw = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(raw);
-    store(&mut runtime, raw, |dragon| dragon.fire(), 0);
+    store(runtime, raw, |dragon| dragon.fire(), 0);
     let wings = runtime.resolve_actor(key, Native).parameters[0] != 0;
     let list = if wings { 2 } else { 0 };
-    store(&mut runtime, raw, |dragon| dragon.list_index(), list);
-    store(
-        &mut runtime,
-        raw,
-        |dragon| dragon.current_list_index(),
-        list,
-    );
+    store(runtime, raw, |dragon| dragon.list_index(), list);
+    store(runtime, raw, |dragon| dragon.current_list_index(), list);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = if wings { 0xe5a1 } else { 0xe59b };
         actor.properties |= if wings { 0x400 } else { 0 };
@@ -95,110 +87,105 @@ pub fn initialize<H: LeaseActors>(game: &mut H) {
 }
 
 /// Instruction - set animation finished flag ($A2:E5FB): ready to fire.
-pub fn set_animation_finished<H: LeaseActors>(cursor: EnemyScript, game: &mut H) -> EnemyScript {
-    let mut runtime = game.lease();
+pub fn set_animation_finished(
+    cursor: EnemyScript,
+    runtime: &mut impl crate::actors::species::TableLease,
+) -> EnemyScript {
     let k = runtime.session().actors.controls.selected;
-    store(&mut runtime, k, |dragon| dragon.fire(), 1);
+    store(runtime, k, |dragon| dragon.fire(), 1);
     cursor
 }
 
 /// Touch, shot and power bomb reactions ($A2:E7C8-E7D4), then the dragon reaction ($A2:E7DA):
 /// the wings take the body's shake, invincibility, flash, frozen and AI handler words while
 /// it lives, and become ignored by its death otherwise.
-pub fn react<H: LeaseActors + ActorRuntime>(ea: u32, game: &mut H) {
+pub fn react(ea: u32, runtime: &mut impl crate::actors::species::TableLease) {
     match ea {
-        0xa2_e7c8 => game.contact_reaction(Death::Finalize),
-        0xa2_e7ce => game.shot_reaction(Shot::Finalize),
-        _ => game.power_bomb_reaction(Death::Finalize),
+        0xa2_e7c8 => crate::actors::host::ActorRuntime::contact_reaction(runtime, Death::Finalize),
+        0xa2_e7ce => crate::actors::host::ActorRuntime::shot_reaction(runtime, Shot::Finalize),
+        _ => crate::actors::host::ActorRuntime::power_bomb_reaction(runtime, Death::Finalize),
     }
-    let mut runtime = game.lease();
     let k = runtime.session().actors.controls.selected;
     let wings = k + 64;
-    if Dragon::of(&runtime, k).actor().health != 0 {
-        let shake = Dragon::of(&runtime, k).actor().shake;
-        DragonEdit::of(&mut runtime, wings).actor().shake = shake;
-        let invincibility = Dragon::of(&runtime, k).actor().invincibility;
-        DragonEdit::of(&mut runtime, wings).actor().invincibility = invincibility;
-        let flash = Dragon::of(&runtime, k).actor().flash;
-        DragonEdit::of(&mut runtime, wings).actor().flash = flash;
-        let frozen = Dragon::of(&runtime, k).actor().frozen;
-        DragonEdit::of(&mut runtime, wings).actor().frozen = frozen;
-        let ai_handlers = Dragon::of(&runtime, k).actor().ai_handlers;
-        DragonEdit::of(&mut runtime, wings).actor().ai_handlers = ai_handlers;
+    if Dragon::of(&*runtime, k).actor().health != 0 {
+        let shake = Dragon::of(&*runtime, k).actor().shake;
+        DragonEdit::of(runtime, wings).actor().shake = shake;
+        let invincibility = Dragon::of(&*runtime, k).actor().invincibility;
+        DragonEdit::of(runtime, wings).actor().invincibility = invincibility;
+        let flash = Dragon::of(&*runtime, k).actor().flash;
+        DragonEdit::of(runtime, wings).actor().flash = flash;
+        let frozen = Dragon::of(&*runtime, k).actor().frozen;
+        DragonEdit::of(runtime, wings).actor().frozen = frozen;
+        let ai_handlers = Dragon::of(&*runtime, k).actor().ai_handlers;
+        DragonEdit::of(runtime, wings).actor().ai_handlers = ai_handlers;
     } else {
-        DragonEdit::of(&mut runtime, wings).actor().properties |= 0x200;
+        DragonEdit::of(runtime, wings).actor().properties |= 0x200;
     }
 }
 
 /// Dragon functions - wait to rise, rising, attacking, wait to sink and sinking ($A2:E654-E780).
-pub fn step<H: LeaseActors>(k: u16, function: u16, game: &mut H) {
-    let mut runtime = game.lease();
+pub fn step(k: u16, function: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let key = Key::from_legacy(k);
     match function {
         WAIT_TO_RISE | RISING | SINKING => {
-            if (tick(&mut runtime, key).wrapping_sub(1) & 0x8000) != 0 {
+            if (tick(runtime, key).wrapping_sub(1) & 0x8000) != 0 {
                 let (delay, next) = match function {
                     WAIT_TO_RISE => (48, RISING),
                     RISING => (3, ATTACKING),
                     _ => (128, WAIT_TO_RISE),
                 };
                 if function == RISING {
-                    let list = Dragon::of(&runtime, k).list_index().wrapping_add(4);
-                    store(&mut runtime, k, |dragon| dragon.list_index(), list);
+                    let list = Dragon::of(&*runtime, k).list_index().wrapping_add(4);
+                    store(runtime, k, |dragon| dragon.list_index(), list);
                 }
-                set_timer(&mut runtime, key, delay, next);
+                set_timer(runtime, key, delay, next);
                 if function == WAIT_TO_RISE {
-                    let delta = api::player_delta(&runtime, key, api::Axis::X);
+                    let delta = api::player_delta(&*runtime, key, api::Axis::X);
                     let left = runtime.edit_actor(key, Native, |actor| {
                         actor.variables[0] = actor.variables[0] & 0x7fff | delta & 0x8000;
                         (actor.variables[0] & 0x8000) != 0
                     });
                     // Bit 0 of the list index faces right; the high byte is rewritten as is.
                     for part in [k, k + 64] {
-                        let index = Dragon::of(&runtime, part).list_index();
+                        let index = Dragon::of(&*runtime, part).list_index();
                         let index = if left { index & !1 } else { index | 1 };
-                        store(&mut runtime, part, |dragon| dragon.list_index(), index);
+                        store(runtime, part, |dragon| dragon.list_index(), index);
                     }
-                    restart_from_list_cache(&mut runtime, k, LISTS);
-                    restart_from_list_cache(&mut runtime, k + 64, LISTS);
+                    restart_from_list_cache(runtime, k, LISTS);
+                    restart_from_list_cache(runtime, k + 64, LISTS);
                 }
             }
             if function != WAIT_TO_RISE {
                 for part in [k, k + 64] {
                     let delta = if function == RISING { u16::MAX } else { 1 };
-                    let mut dragon = DragonEdit::of(&mut runtime, part);
+                    let mut dragon = DragonEdit::of(runtime, part);
                     let y = &mut dragon.actor().y.whole;
                     *y = y.wrapping_add(delta);
                 }
             }
         }
         ATTACKING => {
-            restart_from_list_cache(&mut runtime, k, LISTS);
-            if Dragon::of(&runtime, k).fire() != 0 {
-                store(&mut runtime, k, |dragon| dragon.fire(), 0);
-                store(
-                    &mut runtime,
-                    k,
-                    |dragon| dragon.current_list_index(),
-                    u16::MAX,
-                );
-                crate::actors::boss_lease::BossLease::owned_step(&mut runtime, |runtime| {
+            restart_from_list_cache(runtime, k, LISTS);
+            if Dragon::of(&*runtime, k).fire() != 0 {
+                store(runtime, k, |dragon| dragon.fire(), 0);
+                store(runtime, k, |dragon| dragon.current_list_index(), u16::MAX);
+                crate::actors::boss_lease::BossLease::owned_step(runtime, |runtime| {
                     crate::enemy_projectiles::lifecycle::spawn_from_enemy(
                         runtime, 0xffff, k, 0xb5cb,
                     )
                 });
-                runtime.queue_sound(2, 6, 0x61);
-                if tick(&mut runtime, key) == 1 {
-                    let list = Dragon::of(&runtime, k).list_index().wrapping_sub(4);
-                    store(&mut runtime, k, |dragon| dragon.list_index(), list);
-                    set_timer(&mut runtime, key, 96, WAIT_TO_SINK);
+                crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, 0x61);
+                if tick(runtime, key) == 1 {
+                    let list = Dragon::of(&*runtime, k).list_index().wrapping_sub(4);
+                    store(runtime, k, |dragon| dragon.list_index(), list);
+                    set_timer(runtime, key, 96, WAIT_TO_SINK);
                 }
             }
         }
         WAIT_TO_SINK => {
-            if tick(&mut runtime, key) == 1 {
-                set_timer(&mut runtime, key, 48, SINKING);
-                restart_from_list_cache(&mut runtime, k, LISTS);
+            if tick(runtime, key) == 1 {
+                set_timer(runtime, key, 48, SINKING);
+                restart_from_list_cache(runtime, k, LISTS);
             }
         }
         _ => unreachable!("unknown paired seahorse phase"),

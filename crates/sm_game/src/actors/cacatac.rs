@@ -1,9 +1,9 @@
 //! Cacatac, the spiked cactus that paces and fires spikes, and Owtch, the spiked shell that
 //! shares its patrol and burrows (bank $A2:9E6A-$A2:A59D). Was `ground_patrol`.
-use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey};
+use crate::actors::access::{AccessMode::Native, ActorKey};
 use crate::actors::api::ShotHandling;
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
@@ -121,16 +121,18 @@ pub(crate) fn patrol(runtime: &mut impl Lease, owtch: bool, right: bool) {
     }
 }
 /// Cacatac function - moving left ($A2:9FBA) or right ($A2:9FEC).
-pub fn moving<H: LeaseActors + ?Sized>(right: bool, game: &mut H) {
-    patrol(&mut game.lease(), false, right);
+pub fn moving(right: bool, runtime: &mut impl crate::actors::species::TableLease) {
+    patrol(runtime, false, right);
 }
 /// Instruction - function = moving left/right ($A2:A095), by the direction of enemy `k`.
-pub fn resume_moving<H: LeaseActors + ?Sized>(k: u16, j: EnemyScript, game: &mut H) -> EnemyScript {
-    game.lease()
-        .edit_actor(ActorKey::from_legacy(k), Native, |actor| {
-            actor.pre_instruction =
-                [MOVING_LEFT, MOVING_RIGHT][usize::from(actor.variables[4] != 0)]
-        });
+pub fn resume_moving(
+    k: u16,
+    j: EnemyScript,
+    runtime: &mut impl crate::actors::species::TableLease,
+) -> EnemyScript {
+    runtime.edit_actor(ActorKey::from_legacy(k), Native, |actor| {
+        actor.pre_instruction = [MOVING_LEFT, MOVING_RIGHT][usize::from(actor.variables[4] != 0)]
+    });
     j
 }
 /// Owtch ($A2:A38B-$A2:A59D).
@@ -166,8 +168,7 @@ pub mod owtch {
         *OwtchEdit::of(runtime, owtch).underground_timer() = timer;
     }
     /// Initialisation AI - owtch ($A2:A3F9).
-    pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-        let runtime = &mut game.lease();
+    pub fn initialize(runtime: &mut impl crate::actors::species::TableLease) {
         let owtch = current(runtime);
         let index = {
             let mut edit = OwtchEdit::of(runtime, owtch);
@@ -190,8 +191,7 @@ pub mod owtch {
         }
     }
     /// Main AI - owtch ($A2:A47E): run its function index.
-    pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-        let runtime = &mut game.lease();
+    pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
         let owtch = current(runtime);
         let index = Owtch::of(runtime, owtch).function_index() as i16;
         match index {
@@ -231,21 +231,19 @@ pub mod owtch {
         }
     }
     /// Instruction - enemy function index = 0 (moving left, $A2:A56D) or 1 ($A2:A571).
-    pub fn set_function_index<H: LeaseActors + ?Sized>(
+    pub fn set_function_index(
         ea: u32,
         k: u16,
         j: EnemyScript,
-        game: &mut H,
+        runtime: &mut impl crate::actors::species::TableLease,
     ) -> EnemyScript {
         let index = u16::from(ea == 0xa2_a571);
         let key = ActorKey::from_legacy(k);
-        game.lease()
-            .edit_actor(key, Native, |actor| actor.variables[4] = index);
+        runtime.edit_actor(key, Native, |actor| actor.variables[4] = index);
         j
     }
     /// Enemy shot - owtch ($A2:A579): hurt only while moving.
-    pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-        let runtime = &mut game.lease();
+    pub fn shot(runtime: &mut impl crate::actors::species::TableLease) {
         let owtch = current(runtime);
         if Owtch::of(runtime, owtch).function_index().wrapping_sub(1) & 0x8000 != 0 {
             combat::shot_reaction(runtime, ShotHandling::Finalize);

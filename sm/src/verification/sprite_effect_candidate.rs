@@ -25,10 +25,10 @@ fn run(operation: Operation, game: &mut Game) -> u16 {
             pool::update_sprites(game);
         }
         Operation::Draw => pool::draw_sprites(game),
-        Operation::MetroidInit => sm_game::actors::metroid::initialize(game),
-        Operation::MetroidHurt => sm_game::actors::metroid::hurt(game),
-        Operation::MetroidMain => sm_game::actors::metroid::main_ai(game),
-        Operation::MetroidFrozen => sm_game::actors::metroid::frozen(game),
+        Operation::MetroidInit => sm_game::actors::metroid::initialize(&mut Runtime::new(game)),
+        Operation::MetroidHurt => sm_game::actors::metroid::hurt(&mut Runtime::new(game)),
+        Operation::MetroidMain => sm_game::actors::metroid::main_ai(&mut Runtime::new(game)),
+        Operation::MetroidFrozen => sm_game::actors::metroid::frozen(&mut Runtime::new(game)),
         Operation::MawAppearance => yapping_maw::appearance(&mut Runtime::new(game)),
         Operation::DraygonMotion(parameter) => pool::draygon_motion(parameter, game),
         Operation::DraygonStart => pool::draygon_spawn_ring(game),

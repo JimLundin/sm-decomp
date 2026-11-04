@@ -3,9 +3,8 @@
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, DeathKind};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors, sign_extend8};
+use crate::actors::host::{ActorLease, sign_extend8};
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::access::shot_word;
 use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_script::EnemyScript;
@@ -144,14 +143,13 @@ pub fn initialize(runtime: &mut impl Lease) {
 }
 /// Main AI - bang ($A3:BB25): the AI function in its first parameter, for the
 /// electricity, the core or the shell, three consecutive slots.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     let bang = combat::current(runtime).byte_index();
     match Bang::of(runtime, bang).ai_function() {
         ai::ELECTRICITY => follow_core(runtime, bang + PART, ELECTRICITY_LISTS),
         ai::SHELL => follow_core(runtime, bang - PART, SHELL_LISTS),
         ai::CORE => core(runtime),
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
 }
 /// Bang AI - electricity ($A3:BB2B) or shell ($A3:BB4A): the core's growth level in
@@ -245,8 +243,8 @@ fn fire_charged_beam(runtime: &mut impl Lease, direction: u16) -> u16 {
     0
 }
 /// Bang movement function - movement delay ($A3:BCA5). Was `wait`.
-pub fn movement_delay<H: LeaseActors + ?Sized>(game: &mut H) {
-    delay(&mut game.lease());
+pub fn movement_delay(runtime: &mut impl crate::actors::species::TableLease) {
+    delay(runtime);
 }
 fn delay(runtime: &mut impl Lease) {
     let bang = combat::current(runtime).byte_index();
@@ -268,8 +266,8 @@ fn angle_to_samus(runtime: &impl Lease) -> u16 {
     )
 }
 /// Bang movement function - target Samus ($A3:BCC5). Was `aim`.
-pub fn target_samus<H: LeaseActors + ?Sized>(game: &mut H) {
-    target(&mut game.lease());
+pub fn target_samus(runtime: &mut impl crate::actors::species::TableLease) {
+    target(runtime);
 }
 fn target(runtime: &mut impl Lease) {
     let angle = angle_to_samus(runtime);
@@ -289,8 +287,8 @@ fn target(runtime: &mut impl Lease) {
 /// decelerating ($A3:BD2C): move along the angle (bang X and Y movement,
 /// $A3:BDB9), then accelerate ($A3:BD4F) and trigger deceleration if too far
 /// off target ($A3:BCF1), or decelerate ($A3:BD89). Was `fly`.
-pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
-    move_bang(decelerating, &mut game.lease());
+pub fn fly(decelerating: bool, runtime: &mut impl crate::actors::species::TableLease) {
+    move_bang(decelerating, runtime);
 }
 fn move_bang(decelerating: bool, runtime: &mut impl Lease) {
     for (x, adjustment) in [(true, QUARTER_TURN), (false, 0)] {

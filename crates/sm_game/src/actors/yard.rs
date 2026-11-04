@@ -1,19 +1,17 @@
 //! Yard, Maridia's shelled snail, which crawls around walls and ceilings, hides from
 //! Samus, and is kicked or shot into the air (bank $A3:C8A6-$A3:DA9B). Was `maridia_snail`.
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{
     self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy,
 };
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::controller_state::Word as Input;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
+use crate::player_projectiles::access::shot;
 use crate::player_projectiles::content::{self, table};
-use crate::player_projectiles::{access::shot, host::Host as _};
-use crate::session_access::SessionAccess as _;
 
 /// A lease on a game whose slots are the Session's typed storage.
 pub trait Lease: ActorLease + SlotState {}
@@ -236,8 +234,12 @@ fn move_axis(runtime: &mut impl Lease, key: Key, axis: usize, amount: i32) -> bo
 }
 /// Yard movement function - crawling ($A3:CFA6-$A3:CFFC), by its turn data at
 /// `turn`: Yard crawling movement - vertical ($A3:D002) or horizontal ($A3:D07E).
-pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, turn: u32, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn crawl(
+    raw: u16,
+    axis: Axis,
+    turn: u32,
+    runtime: &mut impl crate::actors::species::TableLease,
+) {
     let key = Key::from_legacy(raw);
     let axis = usize::from(axis == Axis::Y);
     let turn = if axis == 1 && Yard::of(runtime, slot(key)).turn_disabled() != 0 {
@@ -245,7 +247,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, turn: u32, game: &mu
     } else {
         turn
     };
-    let record = content::captured(runtime.native_image(), turn);
+    let record = content::captured(crate::cartridge::NativeImage::native_image(runtime), turn);
     shift(runtime, key, |offset| record.word(offset), false);
     let amount = velocity(runtime, key, axis, 1);
     let blocked = move_axis(runtime, key, axis, amount);
@@ -356,8 +358,7 @@ fn set_solidity(runtime: &mut impl Lease, key: Key) {
 }
 /// Main AI - yard ($A3:CE64): drop it on a super missile quake ($A3:CE73), handle
 /// hiding and solidity; its movement function, which runs next.
-pub fn prepare<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
-    let runtime = &mut game.lease();
+pub fn prepare(runtime: &mut impl crate::actors::species::TableLease) -> u32 {
     let key = combat::current(runtime);
     let feedback = &runtime.session().feedback;
     let quake = feedback.earthquake_timer == 30 && feedback.earthquake_kind == 20;
@@ -373,8 +374,7 @@ pub fn prepare<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
     u32::from(runtime.resolve_actor(key, Native).pre_instruction) | 0xa3_0000
 }
 /// Yard movement function - hiding ($A3:CF60): drop when nothing is ahead of it.
-pub fn hiding<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn hiding(raw: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let key = Key::from_legacy(raw);
     let axis = usize::from(Yard::of(runtime, slot(key)).direction() >= 4);
     let amount = velocity(runtime, key, axis, 7);
@@ -415,8 +415,7 @@ fn bounce_sound(runtime: &mut impl Lease) {
     runtime.queue_sound(2, 3, 0x70);
 }
 /// Yard movement function - airborne ($A3:D1B3): fly, bouncing off walls, then land.
-pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn airborne(raw: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let key = Key::from_legacy(raw);
     let yard = slot(key);
     if Yard::of(runtime, yard).behaviour() != DROPPED {
@@ -565,13 +564,12 @@ pub fn shot(runtime: &mut impl Lease) {
 /// The yard instructions: enemy movement function ($A3:CC36) or hiding instruction list
 /// ($A3:CC3F) = [[Y]], set enemy direction ($A3:CC48), move ($A3:CC5F), and go back 4
 /// bytes if hiding or with 50% chance ($A3:CC78).
-pub fn instruction<H: LeaseActors + ?Sized>(
+pub fn instruction(
     ea: u32,
     k: u16,
     j: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl crate::actors::species::TableLease,
 ) -> EnemyScript {
-    let runtime = &mut game.lease();
     let key = Key::from_legacy(k);
     match ea {
         0xa3_cc36 | 0xa3_cc3f => {

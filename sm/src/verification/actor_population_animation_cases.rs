@@ -126,7 +126,7 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
                 ));
             }
             Operation::CallerSpawn => sm_game::actors::ceres_ridley::spawn_getaway_walls(
-                &mut crate::game::session_runtime::Runtime::new(g),
+                &mut crate::game::session_runtime::Runtime::new(&mut *g),
             ),
             Operation::Record => crate::game::actors::reference_population_animation::record(64, g),
             Operation::Respawn => {
@@ -510,7 +510,7 @@ fn fire_geyser_widened() -> Vec<u8> {
         ] {
             expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
-        fire_geysers::main_ai(&mut *g);
+        fire_geysers::main_ai(&mut crate::game::session_runtime::Runtime::new(&mut *g));
         assert_eq!(
             (0..g.ram().len())
                 .map(|at| g.ram().read_byte(at))
@@ -534,7 +534,11 @@ fn fire_geyser_widened() -> Vec<u8> {
             expected[child + 6..child + 8].copy_from_slice(&y.to_ne_bytes());
             expected[child + 12..child + 14].copy_from_slice(&height.to_ne_bytes());
             expected[child + 10..child + 12].copy_from_slice(&8u16.to_ne_bytes());
-            let result = fire_geysers::instruction(ea, EnemyScript::Jump(0x1234), &mut *g);
+            let result = fire_geysers::instruction(
+                ea,
+                EnemyScript::Jump(0x1234),
+                &mut crate::game::session_runtime::Runtime::new(&mut *g),
+            );
             assert!(matches!(result, EnemyScript::Jump(0x1234)));
             assert_eq!(
                 (0..g.ram().len())
@@ -555,7 +559,11 @@ fn fire_geyser_widened() -> Vec<u8> {
         ] {
             expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
-        let result = fire_geysers::instruction(0xa68fd1, EnemyScript::Jump(0x1234), &mut *g);
+        let result = fire_geysers::instruction(
+            0xa68fd1,
+            EnemyScript::Jump(0x1234),
+            &mut crate::game::session_runtime::Runtime::new(&mut *g),
+        );
         assert!(matches!(result, EnemyScript::Jump(0x1234)));
         assert_eq!(
             (0..g.ram().len())
@@ -601,7 +609,9 @@ fn spikey_initialization_prefix() -> Vec<u8> {
         for (at, value) in [(0xf92, 0x8b29u16), (0xfa8, 0x8bb4), (0x7804, 24)] {
             expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
-        let result = catch_unwind(AssertUnwindSafe(|| spike_platform::initialize(&mut *g)));
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            spike_platform::initialize(&mut crate::game::session_runtime::Runtime::new(&mut *g))
+        }));
         if mode < 2 {
             assert!(result.is_err(), "missing/truncated loaded ROM must fail");
         } else {
@@ -632,7 +642,7 @@ fn spikey_initialization_prefix() -> Vec<u8> {
             for (at, value) in [(0xfa8, 0x8bdcu16), (0x7804, 32)] {
                 expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
             }
-            spike_platform::run(&mut *g);
+            spike_platform::run(&mut crate::game::session_runtime::Runtime::new(&mut *g));
             assert_eq!(
                 (0..g.ram().len())
                     .map(|at| g.ram().read_byte(at))

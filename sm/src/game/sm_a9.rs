@@ -1,4 +1,3 @@
-use crate::game::actors;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 use sm_game::actors::corpses;
@@ -46,22 +45,12 @@ pub fn sin_angle_times(a: u16, j: u16, game: &mut Game) -> u16 {
     }
 }
 
-crate::game::callback_dispatch! {
-    pub(crate) fn dispatch_enemy_ai(ea: u32, game: &mut Game) => ea;
-    call (game); default { crate::rtl::report_unreachable(game); };
-    @forward [pub fn (game: &mut Game)];
-    [11108367] enemy_grapple_react_cancel_beam_a9 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
-    [11108417] enemy_normal_frozen_ai_a9 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
-}
-
-/// Bank $A9's instructions still on the game: Mother Brain's body's.
-pub(crate) fn dispatch_enemy_instr(ea: u32, j: EnemyScript, game: &mut Game) -> EnemyScript {
-    match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) {
+/// Bank $A9's instructions the species table reaches here, on its lease: Mother Brain's
+/// body's.
+pub(crate) fn dispatch_enemy_instr(ea: u32, j: EnemyScript, runtime: &mut Runtime) -> EnemyScript {
+    match crate::game::mother_brain_body::dispatch_instruction(ea, j, runtime) {
         Some(script) => script,
-        None => {
-            crate::rtl::report_unreachable(game);
-            EnemyScript::Stop
-        }
+        None => crate::rtl::unreachable(),
     }
 }
 

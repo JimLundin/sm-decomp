@@ -111,6 +111,10 @@ pub(crate) fn stage(event: u16, key: u16, g: &mut Game) -> bool {
         false
     })
 }
+/// Whether the population case that observes the $A2:804C dispatch is capturing.
+pub(crate) fn noop_armed() -> bool {
+    ACTIVE.with(|a| a.borrow().as_ref().is_some_and(|c| c.id == 13))
+}
 pub(crate) fn dispatch_noop(g: &mut Game) -> bool {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();

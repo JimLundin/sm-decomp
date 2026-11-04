@@ -1,12 +1,10 @@
 //! Polyp, lava vents shooting rocks at Samus (bank $A2:B51A-$A2:B601). Was `lavaquake`.
 #![forbid(unsafe_code)]
-use crate::actors::access::{AccessMode::Native, ActorAccess};
+use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis};
 use crate::actors::combat::current;
-use crate::actors::host::{ActorLease, LeaseActors};
-use crate::diagnostics::Fatal as _;
+use crate::actors::host::ActorLease;
 use crate::player_projectiles::content::table;
-use crate::session_access::SessionAccess as _;
 
 const WAIT_FOR_SAMUS_TO_GET_NEAR: u16 = 0xb596;
 const SHOOT_ROCK: u16 = 0xb5b2;
@@ -29,23 +27,22 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 }
 
 /// Main AI ($A2:B58F): Samus within 40h px, a random rock ($A2:B550/30), random cooldown ($A2:B520).
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     crate::probe::hit("polyp.main_ai");
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+    let key = current(&*runtime);
     match runtime.resolve_actor(key, Native).variables[0] {
         WAIT_FOR_SAMUS_TO_GET_NEAR => {
-            let mut near = |axis| api::player_within(&mut runtime, key, axis, 0x40);
+            let mut near = |axis| api::player_within(runtime, key, axis, 0x40);
             if near(Axis::X) && near(Axis::Y) {
                 runtime.edit_actor(key, Native, |actor| actor.variables[0] = SHOOT_ROCK);
             }
         }
         SHOOT_ROCK => {
-            let x_velocity = random_entry(&mut runtime, 0xa2_b550, 0x1e);
+            let x_velocity = random_entry(runtime, 0xa2_b550, 0x1e);
             runtime.session_mut().enemy_projectiles.spawn.secondary = x_velocity;
-            let y_speed_index = random_entry(&mut runtime, 0xa2_b530, 0x1e);
+            let y_speed_index = random_entry(runtime, 0xa2_b530, 0x1e);
             let k = runtime.session().actors.controls.selected;
-            crate::actors::boss_lease::BossLease::owned_step(&mut runtime, |runtime| {
+            crate::actors::boss_lease::BossLease::owned_step(runtime, |runtime| {
                 crate::enemy_projectiles::lifecycle::spawn_from_enemy(
                     runtime,
                     y_speed_index,
@@ -53,9 +50,9 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                     0xbd5a,
                 )
             });
-            let key = current(&runtime);
+            let key = current(&*runtime);
             runtime.edit_actor(key, Native, |actor| actor.variables[0] = COOLDOWN);
-            let cooldown = random_entry(&mut runtime, 0xa2_b520, 0xe);
+            let cooldown = random_entry(runtime, 0xa2_b520, 0xe);
             runtime.edit_actor(key, Native, |actor| actor.variables[1] = cooldown);
         }
         COOLDOWN => runtime.edit_actor(key, Native, |actor| {
@@ -64,6 +61,6 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 actor.variables[0] = WAIT_FOR_SAMUS_TO_GET_NEAR;
             }
         }),
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
 }

@@ -1,10 +1,8 @@
 //! The elevator platform, which carries Samus between rooms (bank
 //! $A3:94D6-$A3:95F5); its status lives with the room entry state.
-use crate::actors::access::{AccessMode::Native, ActorAccess};
+use crate::actors::access::AccessMode::Native;
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
-use crate::enemy_projectiles::host::Effects as _;
-use crate::session_access::SessionAccess as _;
+use crate::actors::host::ActorLease;
 
 /// Elevator status values.
 pub mod status {
@@ -70,8 +68,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 }
 /// Main AI / grapple AI / frozen AI - elevator ($A3:952A): run the elevator
 /// AI for its status. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     let entry = &runtime.session().room.entry;
     if entry.elevator_interlock != 0 || (entry.elevator_status == 0 && entry.elevator_flags == 0) {
         return;
@@ -86,24 +83,21 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     if status == status::INACTIVE {
         // Elevator AI - elevator status = 0: inactive ($A3:9548).
         let image = runtime.leased_image().expect("ROM must be loaded");
-        let key = combat::current(&runtime);
+        let key = combat::current(&*runtime);
         let index = runtime.resolve_actor(key, Native).parameters[0] >> 1;
         let buttons = image.table_word(
             sm_data::cartridge::lorom_offset(CONTROLLER_INPUTS) as usize,
             index as isize,
         );
         if buttons & runtime.inputs().pressed != 0 {
-            runtime.queue_sound(3, 6, ELEVATOR_SOUND);
-            runtime.queue_sound(1, 6, SPIN_JUMP_END);
-            crate::room_mechanisms::host::Effects::player_control(
-                &mut runtime,
-                SET_UP_FOR_ELEVATOR,
-            );
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, ELEVATOR_SOUND);
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 1, 6, SPIN_JUMP_END);
+            crate::room_mechanisms::host::Effects::player_control(runtime, SET_UP_FOR_ELEVATOR);
             crate::actors::boss_lease::BossLease::owned_step(
-                &mut runtime,
+                runtime,
                 crate::player_projectiles::motion::reset,
             );
-            place_samus(&mut runtime);
+            place_samus(runtime);
             let entry = &mut runtime.session_mut().room.entry;
             entry.elevator_status = entry.elevator_status.wrapping_add(1);
         } else {
@@ -119,7 +113,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     // Elevator AI - elevator status = 1: leaving room ($A3:9579), and 3:
     // entering room ($A3:95BC).
     let leaving = status == status::LEAVING_ROOM;
-    let key = combat::current(&runtime);
+    let key = combat::current(&*runtime);
     let upward = runtime.resolve_actor(key, Native).parameters[0] != 0;
     if leaving {
         runtime.session_mut().room.entry.elevator_direction = if upward { UP } else { 0 };
@@ -133,11 +127,11 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     if arrived {
         runtime.session_mut().room.entry.elevator_status = status::INACTIVE;
         runtime.session_mut().room.entry.elevator_flags = 0;
-        runtime.queue_sound(3, 6, SILENCE);
+        crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, SILENCE);
         runtime.edit_actor(key, Native, |actor| {
             actor.y.whole = actor.variables[TARGET_Y]
         });
-        crate::room_mechanisms::host::Effects::player_control(&mut runtime, UNLOCK_FACING_FORWARD);
+        crate::room_mechanisms::host::Effects::player_control(runtime, UNLOCK_FACING_FORWARD);
     }
-    place_samus(&mut runtime);
+    place_samus(runtime);
 }

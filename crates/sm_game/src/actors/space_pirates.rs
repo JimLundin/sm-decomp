@@ -1,16 +1,12 @@
 //! Space pirates in bank $B2: wall-jumping pirates, ninja pirates and walking
 //! pirates. They share checked actor state and movement; their extended words
 //! are the Session's, through [`Pirate`].
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult};
 use crate::actors::combat;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::diagnostics::Fatal as _;
-use crate::enemy_projectiles::host::Effects;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::access::shot;
-use crate::ram::CompatibilityRam;
-use crate::session_access::SessionAccess;
 use crate::sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn};
 use sm_data::cartridge::RomRecord;
 
@@ -47,16 +43,12 @@ pub trait PirateLease:
     fn legacy_native_record(&mut self, bank: u8, address: u16) -> RomRecord;
 }
 
-/// What the pirates need from the game outside a lease.
-pub trait Pirates: CompatibilityRam + crate::records::Records {
-    type Lease<'a>: PirateLease
-    where
-        Self: 'a;
-    /// Open one lease, as one original `Runtime::new`.
-    fn lease(&mut self) -> Self::Lease<'_>;
+/// What the pirates need beyond their lease: the two projectile spawns that set
+/// the spawn parameters first.
+pub trait PirateHost: PirateLease {
     /// Fire a pirate laser from (`x`, `y`): the spawn point, its facing and
     /// the room-graphics laser projectile, in that order.
-    fn fire_laser(&mut self, x: u16, y: u16, right: bool);
+    fn fire_laser_projectile(&mut self, x: u16, y: u16, right: bool);
     /// Spawn projectile `parameter` from the current enemy within the
     /// rectangle at (`x`, `y`), after setting the rectangle.
     fn spawn_in_rect(&mut self, x: u16, y: u16, width: u16, height: u16, parameter: u16);
@@ -301,8 +293,7 @@ fn snap_to_wall(x: u16) -> u16 {
     }
 }
 
-fn initialize_wall<G: Pirates + ?Sized>(game: &mut G) {
-    let mut runtime = game.lease();
+fn initialize_wall(runtime: &mut impl PirateHost) {
     let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     runtime.edit_actor(key, Native, |actor| {
@@ -317,7 +308,7 @@ fn initialize_wall<G: Pirates + ?Sized>(game: &mut G) {
         (Extra::ArcLeftTarget, 66),
         (Extra::ArcAngleDelta, 2),
     ] {
-        set_extra(&mut runtime, index, word, value);
+        set_extra(runtime, index, word, value);
     }
     if runtime.resolve_actor(key, Native).parameters[0] & PARAMETER_ALTERNATE == 0 {
         for (word, delta) in [
@@ -325,8 +316,8 @@ fn initialize_wall<G: Pirates + ?Sized>(game: &mut G) {
             (Extra::ArcLeftTarget, u16::MAX - 1),
             (Extra::ArcAngleDelta, 2),
         ] {
-            let value = extra(&runtime, index, word).wrapping_add(delta);
-            set_extra(&mut runtime, index, word, value);
+            let value = extra(&*runtime, index, word).wrapping_add(delta);
+            set_extra(runtime, index, word, value);
         }
     }
     runtime.edit_actor(key, Native, |actor| {
@@ -406,25 +397,24 @@ fn wall_jump<R: PirateLease>(right: bool, runtime: &mut R) {
     }
 }
 
-fn choose_wall_direction<G: Pirates + ?Sized>(
+fn choose_wall_direction(
     right: bool,
     random: bool,
     script: EnemyScript,
-    game: &mut G,
+    runtime: &mut impl PirateHost,
 ) -> EnemyScript {
-    let mut runtime = game.lease();
     let direction = if random {
         let value = runtime.next_random() & 1;
-        let key = current(&runtime);
+        let key = current(&*runtime);
         runtime.edit_actor(key, Native, |actor| actor.variables[WALL_DIRECTION] = value);
         value
     } else {
-        let key = current(&runtime);
+        let key = current(&*runtime);
         let distance = (script.word(0) as i16 as i32) << 16;
-        if api::move_vertical(&mut runtime, key, distance) != MovementResult::Blocked {
+        if api::move_vertical(runtime, key, distance) != MovementResult::Blocked {
             return script.offset(1);
         }
-        let key = current(&runtime);
+        let key = current(&*runtime);
         runtime.edit_actor(key, Native, |actor| {
             actor.variables[WALL_DIRECTION] ^= 1;
             actor.variables[WALL_DIRECTION]
@@ -438,13 +428,12 @@ fn choose_wall_direction<G: Pirates + ?Sized>(
     })
 }
 
-fn prepare_wall_jump<G: Pirates + ?Sized>(
+fn prepare_wall_jump(
     right: bool,
     script: EnemyScript,
-    game: &mut G,
+    runtime: &mut impl PirateHost,
 ) -> EnemyScript {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+    let key = current(&*runtime);
     runtime.edit_actor(key, Native, |actor| {
         let x = actor.x.whole;
         let distance = actor.parameters[1];
@@ -528,16 +517,15 @@ fn flinch<R: PirateLease>(walking: bool, runtime: &mut R) -> bool {
     true
 }
 
-fn fire_laser<G: Pirates + ?Sized>(right: bool, height: u16, game: &mut G) {
+fn fire_laser(right: bool, height: u16, runtime: &mut impl PirateHost) {
     let (x, y) = {
-        let runtime = game.lease();
-        let actor = runtime.resolve_actor(current(&runtime), Native);
+        let actor = runtime.resolve_actor(current(&*runtime), Native);
         (
             offset_x(actor.x.whole, 24, right),
             actor.y.whole.wrapping_sub(height),
         )
     };
-    game.fire_laser(x, y, right);
+    runtime.fire_laser_projectile(x, y, right);
 }
 
 fn landing_dust<R: PirateLease>(runtime: &mut R, key: Key) {
@@ -699,13 +687,12 @@ fn divekick<R: PirateLease>(index: u16, right: bool, phase: DivekickPhase, runti
     }
 }
 
-fn stop_ninja<G: Pirates + ?Sized>(index: u16, game: &mut G) {
-    set_extra(&mut game.lease(), index, Extra::Speed, 0);
+fn stop_ninja(index: u16, runtime: &mut impl PirateHost) {
+    set_extra(runtime, index, Extra::Speed, 0);
 }
 
-fn set_divekick_speed<G: Pirates + ?Sized>(index: u16, right: bool, game: &mut G) {
-    let mut runtime = game.lease();
-    set_extra(&mut runtime, index, Extra::Speed, 1536);
+fn set_divekick_speed(index: u16, right: bool, runtime: &mut impl PirateHost) {
+    set_extra(runtime, index, Extra::Speed, 1536);
     let actor = runtime.resolve_actor(Key::from_legacy(index), Native);
     let (start, end) = if right {
         (
@@ -716,11 +703,10 @@ fn set_divekick_speed<G: Pirates + ?Sized>(index: u16, right: bool, game: &mut G
         (actor.variables[POSTS_MIDPOINT_X], actor.pre_instruction)
     };
     let midpoint = start.wrapping_add(end.wrapping_sub(start) >> 1);
-    set_extra(&mut runtime, index, Extra::DivekickMidpointX, midpoint);
+    set_extra(runtime, index, Extra::DivekickMidpointX, midpoint);
 }
 
-fn initialize_ninja<G: Pirates + ?Sized>(game: &mut G) {
-    let mut runtime = game.lease();
+fn initialize_ninja(runtime: &mut impl PirateHost) {
     let index = runtime.session().actors.controls.selected;
     let y = runtime.edit_actor(Key::from_legacy(index), Native, |actor| {
         let right = actor.parameters[0] & 1 != 0;
@@ -758,7 +744,7 @@ fn initialize_ninja<G: Pirates + ?Sized>(game: &mut G) {
         actor.variables[FUNCTION] = function::NONE;
         actor.y.whole
     });
-    set_extra(&mut runtime, index, Extra::SpawnY, y);
+    set_extra(runtime, index, Extra::SpawnY, y);
     runtime.owned_step(load_ninja_palette);
 }
 
@@ -959,9 +945,8 @@ fn reflect_shot<R: PirateLease>(runtime: &mut R) {
     runtime.queue_sound(2, 6, 0x66);
 }
 
-fn initialize_walking<G: Pirates + ?Sized>(game: &mut G) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+fn initialize_walking(runtime: &mut impl PirateHost) {
+    let key = current(&*runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = if actor.parameters[0] & 1 != 0 {
             list::WALKING_RIGHT
@@ -1043,9 +1028,8 @@ fn walk<R: PirateLease>(right: bool, runtime: &mut R) {
     }
 }
 
-fn advance<G: Pirates + ?Sized>(walking: bool, game: &mut G) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+fn advance(walking: bool, runtime: &mut impl PirateHost) {
+    let key = current(&*runtime);
     let state = u32::from(runtime.resolve_actor(key, Native).variables[FUNCTION]) | 0xb20000;
     let index = runtime.session().actors.controls.selected;
     runtime.owned_step(|runtime| dispatch_state(state, index, runtime));
@@ -1054,53 +1038,50 @@ fn advance<G: Pirates + ?Sized>(walking: bool, game: &mut G) {
     }
 }
 
-pub fn dispatch_ai<G: Pirates + ?Sized>(ea: u32, game: &mut G) {
+pub fn dispatch_ai(ea: u32, runtime: &mut impl PirateHost) {
     match ea {
-        routine::TOUCH => touch_on(&mut game.lease()),
-        routine::SHOT => shot_on(&mut game.lease()),
-        routine::WALKING_INITIALIZATION => initialize_walking(game),
-        routine::WALKING_MAIN_AI => advance(true, game),
-        routine::FROZEN_AI => combat::select_frozen_ai(&mut game.lease()),
-        routine::UPDATE_FROZEN => crate::actors::scheduling::update_frozen_enemy(&mut game.lease()),
+        routine::TOUCH => touch_on(runtime),
+        routine::SHOT => shot_on(runtime),
+        routine::WALKING_INITIALIZATION => initialize_walking(runtime),
+        routine::WALKING_MAIN_AI => advance(true, runtime),
+        routine::FROZEN_AI => combat::select_frozen_ai(runtime),
+        routine::UPDATE_FROZEN => crate::actors::scheduling::update_frozen_enemy(runtime),
         routine::POWER_BOMB_REACTION => {
-            combat::power_bomb_reaction(&mut game.lease(), api::DeathHandling::Finalize)
+            combat::power_bomb_reaction(runtime, api::DeathHandling::Finalize)
         }
-        routine::WALL_MAIN_AI | routine::NINJA_MAIN_AI => advance(false, game),
-        routine::WALL_INITIALIZATION => initialize_wall(game),
-        routine::NINJA_INITIALIZATION => initialize_ninja(game),
-        _ => game.lease().unreachable(),
+        routine::WALL_MAIN_AI | routine::NINJA_MAIN_AI => advance(false, runtime),
+        routine::WALL_INITIALIZATION => initialize_wall(runtime),
+        routine::NINJA_INITIALIZATION => initialize_ninja(runtime),
+        _ => runtime.unreachable(),
     }
 }
 
-pub fn dispatch_instruction<G: Pirates + ?Sized>(
+pub fn dispatch_instruction(
     ea: u32,
     k: u16,
     script: EnemyScript,
-    game: &mut G,
+    runtime: &mut impl PirateHost,
 ) -> EnemyScript {
     match ea {
         instruction::FIRE_LASER_LEFT => {
-            let mut runtime = game.lease();
             let index = runtime.session().actors.controls.selected;
             let definition = runtime
                 .resolve_actor(Key::from_legacy(index), Native)
                 .definition;
-            let value = runtime.legacy_native_record(0xa0, definition).word(6);
+            let value = PirateLease::legacy_native_record(runtime, 0xa0, definition).word(6);
             runtime.session_mut().enemy_projectiles.spawn.primary = value;
-            drop(runtime);
-            fire_laser(false, 16, game);
+            fire_laser(false, 16, runtime);
             script
         }
         instruction::FIRE_LASER_RIGHT => {
-            fire_laser(true, 16, game);
+            fire_laser(true, 16, runtime);
             script
         }
         instruction::WALL_SET_FUNCTION
         | instruction::WALKING_SET_FUNCTION
         | instruction::SET_PALETTE => {
             let value = script.word(0);
-            let mut runtime = game.lease();
-            let key = current(&runtime);
+            let key = current(&*runtime);
             runtime.edit_actor(key, Native, |actor| {
                 if ea == instruction::SET_PALETTE {
                     actor.palette = value;
@@ -1111,27 +1092,25 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
             script.offset(1)
         }
         instruction::QUEUE_ATTACK_SOUND => {
-            game.lease().queue_sound(2, 6, 0x66);
+            runtime.queue_sound(2, 6, 0x66);
             script
         }
         instruction::QUEUE_SOUND => {
             let sound = script.word(0);
-            game.lease().queue_sound(2, 6, sound);
+            runtime.queue_sound(2, 6, sound);
             script.offset(1)
         }
         instruction::SPAWN_CLAW => {
             let (x, y) = {
-                let runtime = game.lease();
-                let actor = runtime.resolve_actor(current(&runtime), Native);
+                let actor = runtime.resolve_actor(current(&*runtime), Native);
                 (actor.x.whole, actor.y.whole)
             };
             let (width, height) = (script.word(2), script.word(4));
-            game.spawn_in_rect(x, y, width, height, script.word(0));
+            runtime.spawn_in_rect(x, y, width, height, script.word(0));
             script.offset(3)
         }
         instruction::GO_TO_ACTIVE => {
-            let mut runtime = game.lease();
-            let key = current(&runtime);
+            let key = current(&*runtime);
             runtime.edit_actor(key, Native, |actor| actor.instruction_delay = 1);
             let x = runtime.resolve_actor(key, Native).x.whole;
             let instruction = if (x.wrapping_sub(runtime.session().player.x) as i16) < 0 {
@@ -1149,39 +1128,43 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
             fire_laser(
                 ea == instruction::FIRE_LASER_RIGHT_WITH_Y_OFFSET,
                 script.word(0),
-                game,
+                runtime,
             );
             script.offset(1)
         }
         instruction::CHOOSE_MOVEMENT => {
-            let mut runtime = game.lease();
-            let key = current(&runtime);
-            let attack = api::player_within(&mut runtime, key, Axis::Y, 16);
-            EnemyScript::jump(walking_instruction(&runtime, current(&runtime), attack))
+            let key = current(&*runtime);
+            let attack = api::player_within(runtime, key, Axis::Y, 16);
+            EnemyScript::jump(walking_instruction(&*runtime, current(&*runtime), attack))
         }
         instruction::STOP => {
-            stop_ninja(k, game);
+            stop_ninja(k, runtime);
             script
         }
         instruction::SET_LEFT_DIVEKICK_SPEED | instruction::SET_RIGHT_DIVEKICK_SPEED => {
-            set_divekick_speed(k, ea == instruction::SET_RIGHT_DIVEKICK_SPEED, game);
+            set_divekick_speed(k, ea == instruction::SET_RIGHT_DIVEKICK_SPEED, runtime);
             script
         }
         instruction::MOVE_DOWN_LEFT_WALL | instruction::MOVE_DOWN_RIGHT_WALL => {
-            choose_wall_direction(ea == instruction::MOVE_DOWN_LEFT_WALL, false, script, game)
+            choose_wall_direction(
+                ea == instruction::MOVE_DOWN_LEFT_WALL,
+                false,
+                script,
+                runtime,
+            )
         }
         instruction::RANDOM_DIRECTION_LEFT_WALL | instruction::RANDOM_DIRECTION_RIGHT_WALL => {
             choose_wall_direction(
                 ea == instruction::RANDOM_DIRECTION_LEFT_WALL,
                 true,
                 script,
-                game,
+                runtime,
             )
         }
         instruction::PREPARE_WALL_JUMP_RIGHT | instruction::PREPARE_WALL_JUMP_LEFT => {
-            prepare_wall_jump(ea == instruction::PREPARE_WALL_JUMP_RIGHT, script, game)
+            prepare_wall_jump(ea == instruction::PREPARE_WALL_JUMP_RIGHT, script, runtime)
         }
-        _ => game.lease().unreachable(),
+        _ => runtime.unreachable(),
     }
 }
 

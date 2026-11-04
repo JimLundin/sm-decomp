@@ -1,15 +1,12 @@
 //! Alcoon, Norfair's lava seahorse, which leaps out of the lava near Samus,
 //! walks and spits fireballs, then dives back in (bank $A8:DBC7-$A8:DFA2).
 //! Was `lava_seahorse`.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
-use crate::actors::host::{ActorLease, LeaseActors, abs16};
+use crate::actors::host::{ActorLease, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::diagnostics::Fatal as _;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_projectiles::lifecycle::spawn_from_enemy;
 use crate::enemy_script::EnemyScript;
-use crate::session_access::SessionAccess as _;
 
 /// A lease the alcoons run on: their slots are the Session's.
 pub trait Lease: ActorLease + SlotState {}
@@ -318,13 +315,12 @@ pub fn main_ai(runtime: &mut impl Lease) {
     }
 }
 /// Run one of Alcoon's script instructions (one of [`instruction`]).
-pub fn instruction<H: LeaseActors + ?Sized>(
+pub fn instruction(
     address: u32,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl crate::actors::species::TableLease,
 ) -> EnemyScript {
     use instruction::*;
-    let runtime = &mut game.lease();
     let key = selected(runtime);
     let alcoon = key.byte_index();
     match address {
@@ -338,7 +334,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             runtime.lease_owned_step(|runtime| {
                 spawn_from_enemy(runtime, index, key.byte_index(), FIREBALL);
             });
-            runtime.queue_sound(2, 6, FIREBALL_SOUND);
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, FIREBALL_SOUND);
         }
         START_WALKING => {
             runtime.edit_actor(key, Native, |actor| {
@@ -380,7 +376,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             let live = selected(runtime);
             api::snap_to_slopes(runtime, live);
         }
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
     script
 }

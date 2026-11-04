@@ -3,7 +3,7 @@
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::player_projectiles::content;
 
@@ -261,8 +261,7 @@ fn land(runtime: &mut impl Lease, puyo: u16, landing: Landing) {
     set_instruction_list(runtime, list);
 }
 /// Main AI - puyo ($A2:9A7D); false for an unknown function, as the source fails.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) -> bool {
     let puyo = combat::current(runtime).byte_index();
     match Puyo::of(runtime, puyo).function() {
         GROUNDED => grounded(runtime, puyo),

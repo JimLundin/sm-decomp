@@ -2,14 +2,11 @@
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::sidehopper::initial_hop_phase;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::controller_state::Word as Input;
-use crate::diagnostics::Fatal as _;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::player_projectiles::content::table;
-use crate::session_access::SessionAccess as _;
 
 /// A lease on a game whose slots are the Session's typed storage.
 pub trait Lease: ActorLease + SlotState {}
@@ -252,9 +249,8 @@ fn drain(runtime: &mut impl Lease, beetom: u16, push_left: bool) {
     *part.function() = function::START_BEING_FLUNG;
 }
 /// Main AI - beetom ($A8:B80D): run its function.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) {
     use function::*;
-    let runtime = &mut game.lease();
     let beetom = combat::current(runtime).byte_index();
     let function = Beetom::of(runtime, beetom).function();
     match function {
@@ -353,13 +349,12 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 reverse(runtime, beetom);
             }
         }
-        _ => runtime.unreachable(),
+        _ => crate::diagnostics::Fatal::unreachable(runtime),
     }
 }
 /// Enemy touch - beetom ($A8:BE2E): latch on, and hurt Samus every 40h frames.
-pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn touch(runtime: &mut impl crate::actors::species::TableLease) {
     use function::*;
-    let runtime = &mut game.lease();
     let beetom = combat::current(runtime).byte_index();
     if Beetom::of(runtime, beetom).attached() == 0 {
         let start = [START_DRAINING_FACING_LEFT, START_DRAINING_FACING_RIGHT];
@@ -381,7 +376,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         if runtime.session().actors.controls.phase_counter & 7 == 7
             && runtime.session().inventory.health.current.wrapping_sub(30) & SIGN == 0
         {
-            runtime.queue_sound(3, 6, 0x2d); // Health tick.
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, 0x2d); // Health tick.
         }
         Beetom::of(runtime, beetom).actor().frame & 0x3f == 0x3f
     };
@@ -393,9 +388,8 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Enemy shot - beetom ($A8:BEAC): a frozen beetom drops off Samus.
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
+pub fn shot(runtime: &mut impl crate::actors::species::TableLease) {
     use function::*;
-    let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let beetom = combat::current(runtime).byte_index();
     let function = Beetom::of(runtime, beetom).function();

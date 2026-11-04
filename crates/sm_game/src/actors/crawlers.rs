@@ -3,17 +3,16 @@
 //! Ship's orange Geemer, which turns towards Samus (bank $A3:DFA2-$A3:E9AF).
 //! The bank log calls the family "creepy crawlies" and the Geemer "zoomer"
 //! (with a "stone zoomer" palette variant). Was `wall_crawlers`.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
 use crate::legacy_overflow;
 use crate::player_projectiles::content::{self, table};
 use crate::ram::word_arrays;
-use crate::session_access::SessionAccess as _;
 
 /// Which crawler is initialising, by species.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -173,22 +172,20 @@ pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
 }
 /// Main AI ($A3:E6C2, and the orange Geemer's $A3:E08B): the function. Was
 /// `state_address`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
-    let runtime = game.lease();
-    let key = combat::current(&runtime);
+pub fn main_ai(runtime: &mut impl crate::actors::species::TableLease) -> u32 {
+    let key = combat::current(&*runtime);
     u32::from(runtime.resolve_actor(key, Native).pre_instruction) | BANK << 16
 }
 /// Instruction - enemy function = [[Y]] ($A3:E660, $A3:DFC2). Was `set_state`.
-pub fn set_function<H: LeaseActors + ?Sized>(
+pub fn set_function(
     raw: u16,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl crate::actors::species::TableLease,
 ) -> EnemyScript {
     let next = script.word(0);
-    game.lease()
-        .edit_actor(Key::from_legacy(raw), Native, |actor| {
-            actor.pre_instruction = next
-        });
+    runtime.edit_actor(Key::from_legacy(raw), Native, |actor| {
+        actor.pre_instruction = next
+    });
     script.offset(1)
 }
 /// Start falling, remembering the function to return to.
@@ -297,9 +294,13 @@ fn slope_x_velocity(runtime: &mut impl ActorLease) -> i32 {
 /// Crawler function - crawling horizontally ($A3:E7F2) or vertically
 /// ($A3:E6C8), or the orange Geemer's ($A3:E168, $A3:E091): crawl
 /// along the surface, turning at corners and falling off edges. Was `crawl`.
-pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: &mut H) {
+pub fn crawl(
+    raw: u16,
+    axis: Axis,
+    orange: bool,
+    runtime: &mut impl crate::actors::species::TableLease,
+) {
     let axis = usize::from(axis == Axis::Y);
-    let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     if runtime.session().feedback.earthquake_timer == SHAKE_TIMER
         && runtime.session().feedback.earthquake_kind == SHAKE_KIND
@@ -358,8 +359,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: 
 }
 /// Crawler function - falling ($A3:E785): fall until landing, then
 /// return to crawling. Was `falling`.
-pub fn falling<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn falling(raw: u16, runtime: &mut impl crate::actors::species::TableLease) {
     let key = Key::from_legacy(raw);
     let crawler = Crawler::of(runtime, raw);
     let velocity = (u32::from(crawler.falling_y_velocity()) << 16)
