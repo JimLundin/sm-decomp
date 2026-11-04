@@ -4,10 +4,10 @@ use super::options_objects::definition;
 use super::prelude::*;
 use crate::menu_state::{OptionsMenu, SaveSelection};
 
-/// The options screen's BG tilemap buffer ($7E:3000, `ram3000`).
-const TILEMAP: usize = 0x3000;
+/// The options screen's BG tilemap: the pause map's buffer ($7E:3000, `ram3000`).
+const TILEMAP: Point = Point::new(Role::Pause, 0);
 /// The language highlight's last tile in that buffer.
-const LANGUAGE_HIGHLIGHT_TILE: usize = TILEMAP + 0x3b8;
+const LANGUAGE_HIGHLIGHT_TILE: Point = Point::new(Role::Pause, 0x3b8);
 
 pub fn initialize<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu, upload: fn(&mut H)) {
     game.store_display_control_byte(
@@ -50,7 +50,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu, upl
     }
     copy_screen(MAIN_SCREEN, false, game);
     // The ROM keeps the final copied tile in A through the object clear.
-    let initial_tile = game.screen_word(Point::physical(TILEMAP));
+    let initial_tile = game.screen_word(TILEMAP);
     options.menu_option_index = 0;
     super::options_objects::clear(game);
     super::options_objects::spawn(initial_tile, definition::MENU_SELECTION_MISSILE, game);
@@ -172,7 +172,8 @@ pub fn highlight_language<H: Host + ?Sized>(game: &mut H) {
         (0x348, 25, !japanese),
         (0x388, 25, !japanese),
     ] {
-        menu_tilemap::recolor_native(0x3000 + offset, if dimmed { 0x400 } else { 0 }, words, game);
+        let palette = if dimmed { 0x400 } else { 0 };
+        menu_tilemap::recolor_tiles(Point::new(Role::Pause, offset), palette, words, game);
     }
 }
 
@@ -215,15 +216,11 @@ pub fn highlight_special<H: Host + ?Sized>(option: u16, game: &mut H) {
     let enabled = super::named_player_word(game, address) != 0;
     let palette = if enabled { 0 } else { 0x400 };
     let first = pair;
-    menu_tilemap::recolor_native(0x3000 + usize::from(ON[first]), palette, 6, game);
-    menu_tilemap::recolor_native(0x3000 + usize::from(ON[pair + 1]), palette, 6, game);
-    menu_tilemap::recolor_native(0x3000 + usize::from(OFF[pair]), palette ^ 0x400, 6, game);
-    menu_tilemap::recolor_native(
-        0x3000 + usize::from(OFF[pair + 1]),
-        palette ^ 0x400,
-        6,
-        game,
-    );
+    let tile = |offset: u16| Point::new(Role::Pause, usize::from(offset));
+    menu_tilemap::recolor_tiles(tile(ON[first]), palette, 6, game);
+    menu_tilemap::recolor_tiles(tile(ON[pair + 1]), palette, 6, game);
+    menu_tilemap::recolor_tiles(tile(OFF[pair]), palette ^ 0x400, 6, game);
+    menu_tilemap::recolor_tiles(tile(OFF[pair + 1]), palette ^ 0x400, 6, game);
 }
 
 pub fn controller<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
@@ -404,7 +401,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
                 + usize::from(crate::session_words::current(game).japanese_text_flag != 0);
             copy_screen(screen, true, game);
             // The controller initializer receives the final native word copied to tile zero.
-            let tile = game.screen_native_word(Point::physical(TILEMAP));
+            let tile = game.screen_native_word(TILEMAP);
             spawn(tile, definition::CONTROLLER_SETTING_MODE_BORDER, game);
             super::controller_input::load_binding_choices(game);
             menu_tilemap::controller_bindings(game);
@@ -413,7 +410,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
         copy_screen(MAIN_SCREEN, false, game);
         highlight_language(game);
         // The ROM passes the final language-highlight tile left in A (82:EFD7).
-        let tile = game.screen_word(Point::physical(LANGUAGE_HIGHLIGHT_TILE));
+        let tile = game.screen_word(LANGUAGE_HIGHLIGHT_TILE);
         spawn(tile, definition::OPTION_MODE_BORDER, game);
     }
 }

@@ -65,12 +65,14 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             initialize_registers(game);
             // The tile buffers at $7E:3000, $4000 and $6000, 1024 words of
             // $1C2F each, in the presentation workspace Game holds as RAM.
-            for target in [0x3000, 0x4000, 0x6000] {
+            use sm_game::presentation_workspace::{Point, Role};
+            for target in [
+                Point::new(Role::Pause, 0),
+                Point::new(Role::TilemapStaging, 0),
+                Point::new(Role::TilemapStaging, 0x2000),
+            ] {
                 sm_game::presentation_workspace::Access::screen_fill_native(
-                    game,
-                    sm_game::presentation_workspace::Point::physical(target),
-                    1024,
-                    0x1c2f,
+                    game, target, 1024, 0x1c2f,
                 );
             }
             for base in [0x643, 0x646, 0x649, 0x64d, 0x650] {

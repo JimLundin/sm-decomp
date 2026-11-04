@@ -15,7 +15,7 @@ use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
 use crate::display::video::{
     Background, Command, Control, Mirror, Upload, apply_controls, apply_mirrored,
 };
-use crate::presentation_workspace::Point;
+use crate::presentation_workspace::{Point, Role};
 use crate::ram::CompatibilityRam;
 use crate::scene::irq;
 use crate::scene::state::DisplayError;
@@ -321,9 +321,9 @@ pub fn initialize_gameplay<
     crate::sprite_drawing::reset_cursor(game);
     // The tile buffer: 1023 clear words from $7E:3000, 1023 words of tile
     // $6F from $7E:4000, then 127 words of $2C0F over the start of those.
-    game.screen_fill_native(Point::physical(0x3000), 1023, 0);
-    game.screen_fill_native(Point::physical(0x4000), 1023, 0x6f);
-    game.screen_fill_native(Point::physical(0x4000), 127, 0x2c0f);
+    game.screen_fill_native(Point::new(Role::Pause, 0), 1023, 0);
+    game.screen_fill_native(Point::new(Role::TilemapStaging, 0), 1023, 0x6f);
+    game.screen_fill_native(Point::new(Role::TilemapStaging, 0), 127, 0x2c0f);
     GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x2000).load(game);
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2e00).load(game);
     GraphicsAsset::VramWords(0x7e4000, 0x5000, 0x1000).load(game);
@@ -1018,7 +1018,7 @@ pub fn queue_fx_clear<
 ) {
     // The 1920 words $7E:4000..$4F00, which the original fills from the top
     // down; nothing reads them between the stores.
-    game.screen_fill_native(Point::physical(0x4000), 1920, 6222);
+    game.screen_fill_native(Point::new(Role::TilemapStaging, 0), 1920, 6222);
     let tail = game.tilemap_queue_tail();
     let entry = 0xd0 + usize::from(game.tilemap_queue_tail());
     set_native_word(entry, 3840, game);

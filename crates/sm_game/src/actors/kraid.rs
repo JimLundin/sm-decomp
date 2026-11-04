@@ -1463,10 +1463,13 @@ fn death_fade_out<L: Lease>(game: &mut L) {
         *BodyEdit::of(game, BODY).hurt_frame_timer() = 1;
         *BodyEdit::of(game, BODY).hurt_frame() = 1;
         palette(game);
-        // The 512 bytes at $7E:4000 in the workspace's shared bytes.
+        // The first 512 bytes of the tilemap staging buffer ($7E:4000).
         game.session_mut()
             .publish_workspace_slice(
-                crate::presentation_workspace::Point::physical(BG2_TILES_RAM),
+                crate::presentation_workspace::Point::new(
+                    crate::presentation_workspace::Role::TilemapStaging,
+                    0,
+                ),
                 &[0; 512],
             )
             .expect("shared workspace bytes");

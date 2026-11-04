@@ -349,7 +349,7 @@ RAM_INVENTORY_RULES = {
     "ram_macro": "word/checked_word/ram_word/slot/word_transfers invocations, outside macro definitions",
     "ram_view": "Existing named RAM/view call patterns; may project owned fields at runtime",
     "cohort_copy": "session_cohort load/with/with_projected calls, including file-local import aliases",
-    "address_api": "SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, and session_slot macro; may use typed storage, never added to raw calls",
+    "address_api": "SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, session_slot macro, and presentation workspace points or bytes named by WRAM address (Point::physical, shared_byte, write_shared_byte, bus_point, alias_address); may use typed storage, never added to raw calls",
     "legacy_overflow": "calls into crate::legacy_overflow (path or imported alias): original-game reads and stores past their tables, tagged LEGACY(original-overflow); the module's own internals count as their kinds",
     "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer, a binding typed as or produced as a content Record/RomRecord/RomImage, self in a file-local ROM-holding struct's impl, or a fallible native_word (?-propagated or a Result-returning fn's tail) content or display-staging read; not RAM",
     "unresolved_method": "word/byte/read/write/copy method without explicit raw receiver or known address API spelling",
@@ -518,6 +518,10 @@ def inventory_sites(text: str) -> list[tuple[int, int, str, str]]:
             add(match.start(), match.end(1), "legacy_overflow", path)
         elif any(spellings.get(part) == "SlotAccess" for part in parts) and leaf in ("slot_word", "set_slot_word", "slot_byte", "set_slot_byte"):
             add(match.start(), match.end(1), "address_api", path)
+    # A presentation workspace point named by its WRAM address, not by a Role
+    # and offset (Jim, 2026-11-02: address-shaped access is RAM access).
+    for match in re.finditer(r"\bPoint\s*::\s*physical\s*(?=\()", calls):
+        add(match.start(), match.end(), "address_api", "Point::physical")
     # Preserve the existing view taxonomy, but do not count type-only RawRam references as calls.
     for label, pattern in RAM_COUPLINGS.items():
         if label in (COHORT_LABEL, RAW_CALL_LABEL) or label.startswith("raw RAM hosts"):
@@ -525,7 +529,9 @@ def inventory_sites(text: str) -> list[tuple[int, int, str, str]]:
         for match in pattern.finditer(calls):
             add(match.start(), match.end(), "ram_view", match.group().split("(")[0].strip())
     raw_methods = {"read_byte", "write_byte", "copy_in", "copy_out", "fill", "copy_within"}
-    address_methods = {"native_word", "lease_native_word", "write_word_le", "write_word_native", "write_slice_le", "write_slice_native", "slot_word", "set_slot_word", "slot_byte", "set_slot_byte", "compatibility_byte", "compatibility_write_byte", "projected_slot_byte", "store_projected_slot_byte"}
+    address_methods = {"native_word", "lease_native_word", "write_word_le", "write_word_native", "write_slice_le", "write_slice_native", "slot_word", "set_slot_word", "slot_byte", "set_slot_byte", "compatibility_byte", "compatibility_write_byte", "projected_slot_byte", "store_projected_slot_byte",
+                       # Workspace bytes and points by WRAM address, and back.
+                       "shared_byte", "write_shared_byte", "bus_point", "alias_address"}
     generic = {"word", "byte", "set_byte", "read_byte", "write_byte", "read_word", "write_word", "write_slice", "copy_in", "copy_out", "copy_within"}
     # ROM content: reads through a record or table a ROM producer returned,
     # bound by a simple let or chained directly. Reads only; parameters and

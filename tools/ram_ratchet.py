@@ -53,6 +53,11 @@ import cycle_report  # noqa: E402
 # method call through `.ram()` (the engine inventory's raw_ram_call sites): 56
 # calls in 11 files (nine menu files, scrolling_sky, projection), which the
 # ratchet saw only as the menu prelude's RawRam import. 85/14 becomes 141/24.
+# Measurement-only rebaseline on fef6b74c1 (2026-11-04): count presentation
+# workspace points and bytes named by WRAM address (Point::physical,
+# shared_byte, write_shared_byte, bus_point, alias_address) as address API
+# sites. 25 target sites (19 Point::physical in 9 sm_game files): engine
+# address sites 11 becomes 36; the legacy engine adds 7 (452 becomes 459).
 BASELINE = {
     "sm_game_ram_sites": 42,
     "sm_game_coupled_files": 10,
@@ -62,10 +67,10 @@ BASELINE = {
     # converting counted sites into them is not a retirement, and the address
     # decoding behind them slows every replay. The lexical unresolved-method and
     # legacy-engine measures are reported only.
-    "engine_ram_address_sites": 11,
+    "engine_ram_address_sites": 19,
     "engine_raw_ram_calls": 0,
     "engine_unresolved_ram_methods": 981,
-    "legacy_engine_ram_sites": 452,
+    "legacy_engine_ram_sites": 455,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     # Advisory, rebaselined 2026-11-04: 61 -> 73. Every new site is an original-game
     # out-of-range access routed through legacy_overflow with a docs/LEGACY.md row
