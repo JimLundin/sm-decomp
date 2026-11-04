@@ -46,8 +46,7 @@ pub trait Host:
     + crate::records::Records
     + DisplayOwner
     + crate::display::queued_tilemaps::Scrolling
-    + crate::display::video::Video
-    + crate::hdma_objects::HdmaTable
+    + Nmi
     + ReadbackQueue
 {
     /// The HDMA object table as the compatibility projection reads it.
@@ -58,14 +57,29 @@ pub trait Host:
     /// Fill VRAM's low bytes with `fill` from address 0, resetting the
     /// address as one word or two bytes.
     fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
-    fn upload_samus(&mut self);
-    fn upload_animated_tiles(&mut self);
-    fn process_mode7(&mut self);
-    fn process_readbacks(&mut self);
-    fn flush_tilemaps(&mut self);
     /// Read the VRAM port's data word, stepping the port as the hardware
     /// does; the first read after setting the address is the prefetch.
     fn read_vram_data(&mut self) -> u16;
+}
+
+/// What the NMI's display refresh (`run`) needs: the frame display, the HDMA
+/// objects, the display commands and the five uploads the refresh orders. The
+/// frame's lease is one, so the NMI runs inside the tick; Game is one for the
+/// frames that have no lease (a yielding boot, a resumed pass).
+pub trait Nmi:
+    crate::display::preparation::Access
+    + crate::display_scroll::Access
+    + crate::display::video::Video
+    + crate::hdma_objects::HdmaTable
+{
+    /// Samus's two tile halves, from the upload descriptors at $7E:071D.
+    fn upload_samus(&mut self);
+    fn upload_animated_tiles(&mut self);
+    /// Drain the Mode 7 transfer queue ($7E:02D0).
+    fn process_mode7(&mut self);
+    /// Drain the VRAM readback queue ($7E:0340) into work RAM.
+    fn process_readbacks(&mut self);
+    fn flush_tilemaps(&mut self);
 }
 
 /// The graphics loads' hardware work: a decompression into work RAM, the
@@ -651,14 +665,14 @@ pub fn disable_scanline_irq<H: crate::display::preparation::Access + Compatibili
 
 /// Commit each mirror field's byte to the display in order, reading each
 /// just before its commit.
-fn commit<H: Host + ?Sized>(game: &mut H, fields: &[DisplayField]) {
+fn commit<H: Nmi + ?Sized>(game: &mut H, fields: &[DisplayField]) {
     for &field in fields {
         let value = crate::display::preparation::Access::display_control_byte(&*game, field);
         game.apply(REFRESH, Command::Commit(field, value));
     }
 }
 
-fn upload_affine_latches<H: Host + ?Sized>(game: &mut H) {
+fn upload_affine_latches<H: Nmi + ?Sized>(game: &mut H) {
     use crate::display::preparation::{Access, Field};
     for (parameter, (low, high)) in Mode7Parameter::ALL.into_iter().zip([
         (Field::AffineWords0Low, Field::AffineWords0High),
@@ -682,7 +696,7 @@ fn upload_affine_latches<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-fn upload_registers<H: Host + ?Sized>(game: &mut H) {
+fn upload_registers<H: Nmi + ?Sized>(game: &mut H) {
     use crate::display::preparation::{Access, Field};
     commit(
         game,
@@ -753,7 +767,7 @@ fn upload_registers<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-fn upload_palette_and_oam<H: Host + ?Sized>(game: &mut H) {
+fn upload_palette_and_oam<H: Nmi + ?Sized>(game: &mut H) {
     // The OAM entries and their high table, and palette_buffer.
     game.apply(
         "palette and objects",
@@ -777,7 +791,7 @@ struct Refresh<'a, H: ?Sized>(&'a mut H);
 
 // The host's uploads either complete or keep their original panic/failure
 // behavior; this adapter never produces a portable DisplayError.
-impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
+impl<H: Nmi + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
     fn pending_nmi(&self) -> u8 {
         crate::display::preparation::Access::display_control_byte(
             &*self.0,
@@ -908,7 +922,7 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
 }
 
 /// Run the display refresh in the original order.
-pub fn run<H: Host + ?Sized>(game: &mut H) {
+pub fn run<H: Nmi + ?Sized>(game: &mut H) {
     crate::scene::commit::refresh(&mut Refresh(game))
         .expect("native display refresh adapter cannot return an error");
 }

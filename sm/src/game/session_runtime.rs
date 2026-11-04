@@ -511,6 +511,17 @@ impl<'g> Runtime<'g> {
             self.persistent_epoch = Some(self.game.compatibility_write_epoch());
         }
     }
+    /// Samus's NMI tile upload from the lease. It reads its descriptors
+    /// ($7E:071D..0722) and the cartridge, and writes registers and VRAM alone,
+    /// so it runs on Game's published RAM: the lease's descriptors.
+    pub(crate) fn upload_samus_tiles(&mut self) {
+        self.owned_player_call(|runtime| {
+            runtime.publish();
+            // SAFETY: a lease runs with the backend installed, and `&mut Game`
+            // excludes other access.
+            unsafe { crate::game::display_transfers::upload_samus(runtime.game) }
+        });
+    }
     /// One device register write from the lease (`rtl::write_device`).
     pub(crate) fn write_device(&mut self, register: u16, value: u8) {
         // SAFETY: a lease runs with the backend installed, and `&mut Game`

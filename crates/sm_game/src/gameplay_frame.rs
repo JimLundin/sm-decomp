@@ -59,8 +59,7 @@ pub enum UnpauseHook {
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
 pub trait Host:
-    crate::hud::HudHost
-    + crate::display_refresh::Host
+    crate::display_refresh::Nmi
     + crate::presentation_workspace::ContinuationAccess
     + crate::menus::controller_input::SampleHost
     + RuntimeAccess
@@ -107,6 +106,7 @@ pub trait PassLease:
     + crate::projection::Views
     + crate::menus::host::CommonRuntime
     + crate::display_refresh::GraphicsLoad
+    + crate::display_refresh::Nmi
     + crate::menus::save_slots::MapHost
 {
     /// Samus's own projectiles against her: the bomb jump.
@@ -327,60 +327,75 @@ fn runs_pass(entry: Entry) -> bool {
 }
 
 /// Frame phase: boot continuation, frame start, state dispatch and frame end.
+/// The frame's end (`end_frame`: the NMI and the controller latch) runs on the
+/// frame's lease, and on Game only when boot yields before the frame's lease.
 fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     game.begin_session_interval(game.resume_point() == 0);
-    let returned = 'frame: {
-        let mut st: i32 = game.outer_continuation() as i32;
-        let begin_frame: bool = if (1..=3).contains(&st) {
-            let returned = game.resume_boot();
-            if returned != 0 {
-                break 'frame returned;
+    let mut st: i32 = game.outer_continuation() as i32;
+    let begin_frame: bool = if (1..=3).contains(&st) {
+        let returned = game.resume_boot();
+        if returned != 0 {
+            return end_frame(returned, game);
+        }
+        true
+    } else {
+        st < 10 && {
+            if st != 0 {
+                game.fail_frame_state();
             }
             true
-        } else {
-            st < 10 && {
-                if st != 0 {
-                    game.fail_frame_state();
-                }
-                true
-            }
-        };
-        if begin_frame {
-            game.clear_pass_continuations();
-            // The HDMA object handler, with its music queue step, runs on the
-            // frame's first lease. The main game loop's PLP restores the carry
-            // loading the save slots ($80:8261) set.
-            let mut lease = game.runtime();
-            crate::hdma_objects::update_hdma(true, &mut lease);
-            start_frame::<H>(&mut lease);
-            st = game_state(&lease) as i32 + 10;
-            lease.set_outer_continuation(st as u8);
-            // A pass state runs from here to the frame's end on this lease: its
-            // pre-pass work, the pass, an enemy's message box, the state's finish
-            // and the frame's end.
-            let entry = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16));
-            if let Some(&Advance(entry)) = entry
-                && runs_pass(entry)
-            {
-                let returned = run_pass::<H>(&mut lease, PassEnd::Frame(entry));
-                drop(lease);
-                break 'frame returned;
-            }
-            // Every other state's frame runs on this lease too, to the frame's
-            // end.
-            if let Some(&entry) = entry {
-                let returned = lease_frame::<H>(entry, &mut lease);
-                drop(lease);
-                break 'frame returned;
-            }
-        }
-        match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
-            // A pass state's frame ends on its pass's last lease.
-            Advance(entry) if runs_pass(entry) => advance(entry, game),
-            // A lease state resuming after a yield opens the frame's lease here.
-            entry => lease_frame::<H>(entry, &mut game.runtime()),
         }
     };
+    if begin_frame {
+        game.clear_pass_continuations();
+        // The HDMA object handler, with its music queue step, runs on the
+        // frame's first lease. The main game loop's PLP restores the carry
+        // loading the save slots ($80:8261) set.
+        let mut lease = game.runtime();
+        crate::hdma_objects::update_hdma(true, &mut lease);
+        start_frame::<H>(&mut lease);
+        st = game_state(&lease) as i32 + 10;
+        lease.set_outer_continuation(st as u8);
+        // A pass state runs from here to the frame's end on this lease: its
+        // pre-pass work, the pass, an enemy's message box, the state's finish
+        // and the frame's end.
+        let entry = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16));
+        if let Some(&Advance(entry)) = entry
+            && runs_pass(entry)
+        {
+            let returned = run_pass::<H>(&mut lease, PassEnd::Frame(entry));
+            return end_frame(returned, &mut lease);
+        }
+        // Every other state's frame runs on this lease too, to the frame's
+        // end.
+        if let Some(&entry) = entry {
+            let returned = lease_frame::<H>(entry, &mut lease);
+            return end_frame(returned, &mut lease);
+        }
+    }
+    // A state resuming after a yield opens the frame's lease here: a pass
+    // state's pass from its resume point, or a lease state.
+    let entry = GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)];
+    let mut lease = game.runtime();
+    let returned = match entry {
+        Advance(entry) if runs_pass(entry) => run_pass::<H>(&mut lease, PassEnd::Frame(entry)),
+        entry => lease_frame::<H>(entry, &mut lease),
+    };
+    end_frame(returned, &mut lease)
+}
+
+/// The frame's end after a state returned `returned`: a completed frame
+/// requests the NMI, which refreshes the display and, when requested, latches
+/// the controller, as on hardware; a missed NMI (a yield, a lag frame) only
+/// counts. Then the next frame's state, or boot's soft reset. The frame's lease
+/// runs it, and so does Game.
+fn end_frame<E>(returned: u8, game: &mut E) -> CoroutineRet
+where
+    E: display_refresh::Nmi
+        + controller_input::SampleHost
+        + crate::presentation_workspace::ContinuationAccess
+        + ?Sized,
+{
     if returned == 0 {
         game.store_display_control_byte(DisplayField::NmiPending, 1, Store::Named);
     }

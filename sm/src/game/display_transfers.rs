@@ -3,63 +3,60 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game::display_commands::{Lease, Wire, byte, word};
 use crate::game_state::Game;
-use crate::rtl::{read_reg_word, write_reg, write_reg_word};
+use crate::rtl::{write_reg, write_reg_word};
 use crate::snes::registers::*;
 use sm_game::display::control::{Brightness, FixedColor};
 use sm_game::display::transfer::{
     Mode7Target, Mode7Upload, ScrollingLayout, TilemapUpload, TransferHost, VramReadback,
 };
 
-/// Requires a live, exclusively accessed SNES backend.
-unsafe fn upload_mode7(upload: Mode7Upload, game: &mut Game) {
-    unsafe {
-        write_reg(DMAP1 as u16, upload.mode, game);
-        write_reg_word(A1T1L as u16, upload.source.address, game);
-        write_reg(A1B1 as u16, upload.source.bank, game);
-        write_reg_word(DAS1L as u16, upload.bytes, game);
-        match upload.target {
-            Mode7Target::Vram {
-                high_byte,
-                address,
-                increment,
-            } => {
-                write_reg(BBAD1 as u16, if high_byte { 0x19 } else { 0x18 }, game);
-                write_reg_word(VMADDL as u16, address, game);
-                write_reg(VMAIN as u16, increment, game);
-            }
-            Mode7Target::Cgram { index } => {
-                write_reg(BBAD1 as u16, 0x22, game);
-                write_reg(CGADD as u16, index, game);
-            }
+/// One Mode 7 queue record's transfer through `wire`.
+fn upload_mode7(upload: Mode7Upload, wire: &mut impl Wire) {
+    byte(DMAP1, upload.mode, wire);
+    word(A1T1L, upload.source.address, wire);
+    byte(A1B1, upload.source.bank, wire);
+    word(DAS1L, upload.bytes, wire);
+    match upload.target {
+        Mode7Target::Vram {
+            high_byte,
+            address,
+            increment,
+        } => {
+            byte(BBAD1, if high_byte { 0x19 } else { 0x18 }, wire);
+            word(VMADDL, address, wire);
+            byte(VMAIN, increment, wire);
         }
-        write_reg(MDMAEN as u16, 2, game);
+        Mode7Target::Cgram { index } => {
+            byte(BBAD1, 0x22, wire);
+            byte(CGADD, index, wire);
+        }
     }
+    byte(MDMAEN, 2, wire);
 }
 
-/// Requires a live, exclusively accessed SNES backend. The VRAM address write
+/// One VRAM readback record's transfer through `wire`. The VRAM address write
 /// and dummy data-port read prime the readback latch before the DMA.
-unsafe fn read_vram(readback: VramReadback, game: &mut Game) {
+fn read_vram(readback: VramReadback, wire: &mut impl Wire) {
     let destination = readback.destination;
-    unsafe {
-        write_reg_word(VMADDL as u16, readback.vram_address, game);
-        read_reg_word(RDVRAML as u16, game);
-        write_reg_word(
-            DMAP1 as u16,
-            u16::from_le_bytes([readback.control, readback.port]),
-            game,
-        );
-        write_reg_word(A1T1L as u16, destination.address, game);
-        // This overlapping word sets the high address byte again, then the bank.
-        write_reg_word(
-            A1T1H as u16,
-            u16::from_le_bytes([destination.address.to_le_bytes()[1], destination.bank]),
-            game,
-        );
-        write_reg_word(DAS1L as u16, readback.bytes, game);
-        write_reg_word(DAS10 as u16, 0, game);
-        write_reg_word(A2A1H as u16, 0, game);
-        write_reg(MDMAEN as u16, 2, game);
-    }
+    word(VMADDL, readback.vram_address, wire);
+    wire.read(RDVRAML);
+    wire.read(RDVRAML + 1);
+    word(
+        DMAP1,
+        u16::from_le_bytes([readback.control, readback.port]),
+        wire,
+    );
+    word(A1T1L, destination.address, wire);
+    // This overlapping word sets the high address byte again, then the bank.
+    word(
+        A1T1H,
+        u16::from_le_bytes([destination.address.to_le_bytes()[1], destination.bank]),
+        wire,
+    );
+    word(DAS1L, readback.bytes, wire);
+    word(DAS10, 0, wire);
+    word(A2A1H, 0, wire);
+    byte(MDMAEN, 2, wire);
 }
 
 /// One queued tilemap upload through `wire`. DMAP1 was set once for the whole
@@ -85,39 +82,75 @@ fn upload_tilemap(upload: TilemapUpload, wire: &mut impl Wire) {
     );
 }
 
-/// A queue read from raw work RAM, as the Mode 7 and readback drains read it.
-pub(crate) struct RawQueue<'a>(&'a mut Game);
+/// What the Mode 7 and readback drains read and store between their register
+/// writes: Game's work RAM and compatibility projection, or the lease's Session
+/// through its transfer port.
+pub(crate) trait DrainHost: Wire {
+    /// A queue record byte, as the drain reads it between transfers.
+    fn queue_byte(&self, at: usize) -> u8;
+    fn store_queue_byte(&mut self, at: usize, value: u8);
+    /// A queue's tail word.
+    fn tail(&self, at: usize) -> u16;
+    fn set_tail(&mut self, at: usize, value: u16);
+}
 
-impl<'a> RawQueue<'a> {
-    /// Requires a live, exclusively accessed SNES backend for the host's lifetime.
-    pub(crate) unsafe fn new(game: &'a mut Game) -> Self {
-        Self(game)
+impl crate::game::display_transfers::DrainHost for Game {
+    fn queue_byte(&self, at: usize) -> u8 {
+        self.ram().read_byte(at)
+    }
+    fn store_queue_byte(&mut self, at: usize, value: u8) {
+        self.ram().write_byte(at, value);
+    }
+    fn tail(&self, at: usize) -> u16 {
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn set_tail(&mut self, at: usize, value: u16) {
+        let [low, high] = value.to_le_bytes();
+        self.compatibility_write_byte(at, low);
+        self.compatibility_write_byte(at + 1, high);
     }
 }
 
-macro_rules! sink {
-    ($host:ident, $byte:expr) => {
-        impl TransferHost for $host<'_> {
-            fn byte(&self, at: usize) -> u8 {
-                ($byte)(&*self.0, at)
-            }
-            fn word(&self, at: usize) -> u16 {
-                u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
-            }
-            fn upload_mode7(&mut self, upload: Mode7Upload) {
-                // Constructing the host required the caller's backend capability.
-                unsafe { upload_mode7(upload, self.0) }
-            }
-            fn read_vram(&mut self, readback: VramReadback) {
-                unsafe { read_vram(readback, self.0) }
-            }
-            fn upload_tilemap(&mut self, upload: TilemapUpload) {
-                upload_tilemap(upload, self.0)
-            }
-        }
-    };
+/// The lease's drains: the queues and their tails are the lease's bytes, each
+/// DMA start reads what the port published, and a readback's work RAM bytes
+/// return to the Session.
+impl DrainHost for Lease<'_, '_> {
+    fn queue_byte(&self, at: usize) -> u8 {
+        self.0.byte(at)
+    }
+    fn store_queue_byte(&mut self, at: usize, value: u8) {
+        self.0.set_byte(at, value);
+    }
+    fn tail(&self, at: usize) -> u16 {
+        self.0.word(at)
+    }
+    fn set_tail(&mut self, at: usize, value: u16) {
+        let [low, high] = value.to_le_bytes();
+        self.0.set_byte(at, low);
+        self.0.set_byte(at + 1, high);
+    }
 }
-sink!(RawQueue, |game: &Game, at| game.ram().read_byte(at));
+
+/// The Mode 7 and readback drains over a drain host.
+pub(crate) struct Queue<'a, H>(pub(crate) &'a mut H);
+
+impl<H: DrainHost> TransferHost for Queue<'_, H> {
+    fn byte(&self, at: usize) -> u8 {
+        self.0.queue_byte(at)
+    }
+    fn word(&self, at: usize) -> u16 {
+        u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
+    }
+    fn upload_mode7(&mut self, upload: Mode7Upload) {
+        upload_mode7(upload, self.0);
+    }
+    fn read_vram(&mut self, readback: VramReadback) {
+        read_vram(readback, self.0);
+    }
+    fn upload_tilemap(&mut self, upload: TilemapUpload) {
+        upload_tilemap(upload, self.0);
+    }
+}
 
 /// What the tilemap flush reads and stores between its register writes: Game's
 /// compatibility projection, or the lease's Session through its transfer port.

@@ -52,27 +52,59 @@ impl refresh::Host for Game {
         // SAFETY: as for `start_graphics_dma`.
         unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
     }
+    fn read_vram_data(&mut self) -> u16 {
+        self.read_register_word(crate::rtl::RDVRAML as u16)
+    }
+}
+
+/// The NMI on Game, for the frames that hold no lease at their end: a yielding
+/// boot and a resumed pass.
+impl refresh::Nmi for Game {
     fn upload_samus(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
+        // SAFETY: the NMI runs from the frame loop with the backend installed.
         unsafe { crate::game::display_transfers::upload_samus(self) }
     }
     fn upload_animated_tiles(&mut self) {
         animated_tiles::upload_pending(self);
     }
     fn process_mode7(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { mode7_transfers::process(self) }
+        mode7_transfers::process(self);
     }
     fn process_readbacks(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { vram_read_queue::process(self) }
+        vram_read_queue::process(self);
     }
     fn flush_tilemaps(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
+        // SAFETY: as for `upload_samus`.
         unsafe { flush_tilemaps(self) }
     }
-    fn read_vram_data(&mut self) -> u16 {
-        self.read_register_word(crate::rtl::RDVRAML as u16)
+}
+
+/// The NMI on the frame's lease, inside the tick: each upload publishes the
+/// lease before its DMA reads work RAM, and goes through the lease's transfer
+/// port, so a readback's work RAM bytes return to the Session; the queue tails,
+/// the sentinels and the consumed scrolling enables are the lease's stores.
+impl refresh::Nmi for crate::game::session_runtime::Runtime<'_> {
+    fn upload_samus(&mut self) {
+        self.upload_samus_tiles();
+    }
+    fn upload_animated_tiles(&mut self) {
+        // The lease lends itself, as Game's fresh lease ran it.
+        animated_tiles::upload_pending(self);
+    }
+    fn process_mode7(&mut self) {
+        self.owned_player_call(|runtime| {
+            runtime.publish();
+            mode7_transfers::process(&mut crate::game::display_commands::Lease(runtime));
+        });
+    }
+    fn process_readbacks(&mut self) {
+        self.owned_player_call(|runtime| {
+            runtime.publish();
+            vram_read_queue::process(&mut crate::game::display_commands::Lease(runtime));
+        });
+    }
+    fn flush_tilemaps(&mut self) {
+        self.owned_player_call(flush_tilemaps_on_lease);
     }
 }
 
