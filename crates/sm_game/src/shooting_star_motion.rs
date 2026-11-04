@@ -17,7 +17,6 @@
 use crate::actors::codec::record_word_mut;
 use crate::actors::state::Actor;
 use crate::imported::{Imported, word as table_word};
-use crate::menus::host::Host;
 use crate::session::Session;
 use crate::session_access::SessionAccess;
 use sm_data::shooting_stars::{TILE_ADDRESS as STAR_TILE_ADDRESS, Tiles};
@@ -222,8 +221,8 @@ fn rewind<L: Lease + ?Sized>(game: &mut L, star: usize) {
 }
 
 /// Reset every star record to the centre with its start delay.
-pub fn initialize_shooting_stars<H: Host + ?Sized>(game: &mut H) {
-    initialize(&mut game.runtime());
+pub fn initialize_shooting_stars<L: Lease + ?Sized>(game: &mut L) {
+    initialize(game);
 }
 
 fn initialize<L: Lease + ?Sized>(game: &mut L) {
@@ -248,11 +247,11 @@ fn initialize<L: Lease + ?Sized>(game: &mut L) {
 
 /// Move every star, then draw the visible ones into OAM, while `enabled`
 /// (`shooting_stars_enabled`) is set.
-pub fn advance_shooting_stars<H: Host + ?Sized>(enabled: u16, game: &mut H) {
+pub fn advance_shooting_stars<L: Lease + ?Sized>(enabled: u16, game: &mut L) {
     if enabled == 0 {
         return;
     }
-    advance(&mut game.runtime());
+    advance(game);
 }
 
 fn advance<L: Lease + ?Sized>(game: &mut L) {

@@ -272,7 +272,10 @@ unsafe fn invoke(id: u32, game: &mut Game) {
         _ => {
             let mut table =
                 sm_game::session_cohort::load::<sm_game::cinematic_state::Cinematic, _>(game);
-            sm_game::cinematic_states::handle_samus_during_intro(*table.intro_samus_display(), game)
+            sm_game::cinematic_states::handle_samus_during_intro(
+                *table.intro_samus_display(),
+                &mut crate::game::session_runtime::Runtime::new(game),
+            )
         }
     }
 }

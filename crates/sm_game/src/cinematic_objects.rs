@@ -92,7 +92,7 @@ impl CinematicObjects {
         }
     }
 
-    pub fn spawn<H: crate::menus::host::Host + ?Sized>(
+    pub fn spawn<H: crate::cinematic_host::Host>(
         self,
         definition: u16,
         parameter: u16,
@@ -109,7 +109,7 @@ impl CinematicObjects {
         1
     }
 
-    pub fn advance<H: crate::menus::host::Host + ?Sized>(self, cine: &mut Cinematic, game: &mut H) {
+    pub fn advance<H: crate::cinematic_host::Host>(self, cine: &mut Cinematic, game: &mut H) {
         use crate::visual_state::CinematicTilemap;
         use CinematicObjects::Background;
         if matches!(self, Background) && *cine.enable_objects() & 0x8000 == 0 {
@@ -138,7 +138,7 @@ impl CinematicObjects {
     }
 }
 
-pub fn spawn_cinematic_burst<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_cinematic_burst<H: crate::cinematic_host::Host>(
     mut definition: u16,
     parameters: impl IntoIterator<Item = u16>,
     stride: u16,
@@ -151,7 +151,7 @@ pub fn spawn_cinematic_burst<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_intro_mother_brain<H: crate::cinematic_host::Host>(
     object: u16,
     stage: u8,
     cine: &mut Cinematic,
@@ -192,14 +192,14 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         }
     }
     if stage == 0 {
-        let shots: ShotWords = crate::session_cohort::load(game);
-        let Some(projectile) = (0..5).rfind(|&i| shots.kind[i] & 0xfff == 256) else {
+        let shots = &game.session().projectiles.shots;
+        let Some(projectile) = (0..5).rfind(|&i| shots[i].kind & 0xfff == 256) else {
             return;
         };
-        if (shots.x[projectile] as i32 - 84) & 0x8000 == 0 {
+        if (shots[projectile].x as i32 - 84) & 0x8000 == 0 {
             return;
         }
-        game.retire_projectile(2 * projectile as u16);
+        crate::player_projectiles::lifecycle::retire(game, 2 * projectile as u16);
         *cine.spr_arr6(slot) = 8;
     } else {
         if *cine.frame_counter() & 1 != 0 {
@@ -225,7 +225,7 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized>(
+pub fn execute_cinematic_sprite_instruction<H: crate::cinematic_host::Host>(
     address: u32,
     k: u16,
     mut j: u16,
@@ -339,12 +339,12 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             *cine.var17() = 32;
             capture_cinematic_palette(game);
             prepare_cinematic_palette_fade(game);
-            game.queue_sound(0, 0x22_u8, 15);
+            crate::effects::SoundEffects::queue_sound(game, 0, 0x22_u8, 15);
                 },
             9172561 => {
             crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| { words.samus_y_subspeed = 0; words.samus_y_speed = -16i32 as u16; });
                 },
-            9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, cine, game); game.queue_sound(1, 0xb_u8, 6); },
+            9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, cine, game); crate::effects::SoundEffects::queue_sound(game, 1, 0xb_u8, 6); },
             9159684 => { spawn_cinematic_burst(0xcebb, 0..5, 0, cine, game); },
             9159948 => { spawn_cinematic_burst(0xcec7, 0..4, 0, cine, game); },
             9157153 => { spawn_cinematic_burst(0xcf21, 0..2, 0, cine, game); },
@@ -372,7 +372,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
         })
 }
 
-pub fn spawn_cinematic_sprite_at<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_cinematic_sprite_at<H: crate::cinematic_host::Host>(
     definition: u16,
     slot: u16,
     parameter: u16,
@@ -383,7 +383,7 @@ pub fn spawn_cinematic_sprite_at<H: crate::menus::host::Host + ?Sized>(
     initialize_cinematic_object(CinematicObjects::Sprites, definition, slot, cine, game)
 }
 
-fn initialize_cinematic_object<H: crate::menus::host::Host + ?Sized>(
+fn initialize_cinematic_object<H: crate::cinematic_host::Host>(
     objects: CinematicObjects,
     definition: u16,
     object: u16,
@@ -414,7 +414,7 @@ fn initialize_cinematic_object<H: crate::menus::host::Host + ?Sized>(
     0
 }
 
-fn initialize_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
+fn initialize_cinematic_sprite<H: crate::cinematic_host::Host>(
     setup: u32,
     object: u16,
     mode7: bool,
@@ -532,7 +532,7 @@ fn initialize_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn cinematic_mode7_command<H: crate::menus::host::Host + ?Sized>(
+pub fn cinematic_mode7_command<H: crate::cinematic_host::Host>(
     address: u32,
     operand: u16,
     cine: &mut Cinematic,
@@ -560,7 +560,7 @@ pub fn cinematic_mode7_command<H: crate::menus::host::Host + ?Sized>(
     })
 }
 
-pub fn cinematic_mode7_pre<H: crate::menus::host::Host + ?Sized>(
+pub fn cinematic_mode7_pre<H: crate::cinematic_host::Host>(
     address: u32,
     object: u16,
     cine: &mut Cinematic,
@@ -581,7 +581,7 @@ fn advance_cinematic_object<const BANK: u8>(
     objects: CinematicObjects,
     object: u16,
     cine: &mut Cinematic,
-    game: &mut (impl crate::menus::host::Host + ?Sized),
+    game: &mut impl crate::cinematic_host::Host,
 ) {
     use CinematicObjects::*;
     let layout = objects.layout();
@@ -687,7 +687,7 @@ fn advance_cinematic_object<const BANK: u8>(
     layout.set(cine, 0, selected, address.wrapping_add(size));
 }
 
-pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_cinematic_background_pre<H: crate::cinematic_host::Host>(
     command: u32,
     object: u16,
     cine: &mut Cinematic,
@@ -710,7 +710,7 @@ pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
+fn draw_cinematic_background<H: crate::cinematic_host::Host>(
     object: u16,
     position: u16,
     cine: &mut Cinematic,
@@ -737,7 +737,7 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                 };
                 *cine.bg_arr8(15) = bottom.wrapping_sub(8);
                 if record.word(4) != 0xd67d && *cine.intro_text_click_flag() != 0 {
-                    game.queue_sound(2, 0xd_u8, 6);
+                    crate::effects::SoundEffects::queue_sound(game, 2, 0xd_u8, 6);
                 }
             }
             draw_cinematic_rectangle(command != 0x88fd, definition, position, game);
@@ -791,7 +791,7 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
+fn cinematic_background_command<H: crate::cinematic_host::Host>(
     command: u32,
     object: u16,
     operand: u16,
@@ -860,7 +860,7 @@ fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
     operand
 }
 
-pub fn draw_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(
+pub fn draw_cinematic_sprites<H: crate::cinematic_host::Host>(
     ending: bool,
     cine: &mut Cinematic,
     game: &mut H,

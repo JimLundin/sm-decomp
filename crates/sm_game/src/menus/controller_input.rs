@@ -189,7 +189,7 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
 }
 
 // Intro playback saves only action bindings; its directional defaults remain after restoration.
-pub fn use_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
+pub fn use_cinematic_bindings<H: crate::gameplay_context::Access + ?Sized>(game: &mut H) {
     for (current, saved) in [
         (
             crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigShootX),
@@ -242,7 +242,7 @@ pub fn use_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
     BUTTON_CONFIG_AIM_DOWN_L = K_BUTTON_L as u16; BUTTON_CONFIG_AIM_UP_R = K_BUTTON_R as u16; }
 }
 
-pub fn restore_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
+pub fn restore_cinematic_bindings<H: crate::gameplay_context::Access + ?Sized>(game: &mut H) {
     for (current, saved) in [
         (
             crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigShootX),

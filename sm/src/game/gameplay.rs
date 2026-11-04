@@ -29,6 +29,14 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn report_broken_coroutine(&mut self, state: [u8; 4]) {
         report_broken_coroutine(state);
     }
+    fn advance_native_state(&mut self, state: NativeState) -> u8 {
+        use sm_game::cinematic_states::{ending_and_credits, intro, title_sequence};
+        match state {
+            NativeState::OpeningCinematic => title_sequence(self),
+            NativeState::CeresGoesBoom => intro(self),
+            NativeState::EndingAndCredits => ending_and_credits(self),
+        }
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.
@@ -73,14 +81,6 @@ impl sm_game::gameplay_frame::Host for Game {
         // The main game loop's PLP restores the carry loading the save slots ($80:8261) set.
         crate::game::visual_runtime::update_hdma(true, self)
     }
-    fn advance_native_state(&mut self, state: NativeState) -> u8 {
-        use sm_game::cinematic_states::{ending_and_credits, intro, title_sequence};
-        match state {
-            NativeState::OpeningCinematic => title_sequence(self),
-            NativeState::CeresGoesBoom => intro(self),
-            NativeState::EndingAndCredits => ending_and_credits(self),
-        }
-    }
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8 {
         crate::game::room_entry::protocol::resume(&mut Runtime::new(self), signal).returned_byte()
     }
@@ -105,9 +105,11 @@ impl sm_game::gameplay_frame::Host for Game {
         crate::game::session_runtime::initialize_player(self);
     }
 
+    /// The demo phase's title graphics run on one lease, which takes the place
+    /// of the leases their palette effects and stores opened.
     fn load_title_sequence_graphics(&mut self) {
-        sm_game::session_cohort::with(self, |game, cine| {
-            sm_game::title_sequence::load_graphics(cine, game)
+        sm_game::cinematic_state::Cinematic::lend(&mut Runtime::new(self), |lease, cine| {
+            sm_game::title_sequence::load_graphics(cine, lease)
         });
     }
     fn disable_scanline_irq(&mut self) {

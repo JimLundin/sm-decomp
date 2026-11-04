@@ -214,6 +214,40 @@ impl crate::session_cohort::Cohort for Cinematic {
 }
 
 impl Cinematic {
+    /// Run `action` with the lease's cinematic table: its Session field, the
+    /// enemy projectile table, lent to the cinematic functions, which take it
+    /// beside the lease. The words `action` changed are stored back to the
+    /// field, and the lease's observations refreshed, once it returns. While
+    /// the table is lent nothing reaches its words any other way: the verify
+    /// build checks that no projection access does.
+    pub fn lend<L: crate::session_access::SessionAccess + ?Sized, T>(
+        lease: &mut L,
+        action: impl FnOnce(&mut L, &mut Self) -> T,
+    ) -> T {
+        use crate::session_cohort::Cohort as _;
+        let before = Self(lease.session().enemy_projectiles.clone());
+        let mut table = before.clone();
+        #[cfg(sm_verify_dll)]
+        let held = crate::session_cohort::hold(&mut table);
+        let result = action(lease, &mut table);
+        #[cfg(sm_verify_dll)]
+        crate::session_cohort::release(held);
+        if table != before {
+            let mut previous = Vec::new();
+            before.clone().words(|_, word| previous.push(*word));
+            let mut changed = Vec::new();
+            table.words(|_, word| changed.push(*word));
+            let mut index = 0;
+            Self::session_words(lease.session_mut(), |_, word| {
+                if previous[index] != changed[index] {
+                    *word = changed[index];
+                }
+                index += 1;
+            });
+            lease.refresh_inputs();
+        }
+        result
+    }
     /// The table's word at RAM address `at`.
     fn word_at(&mut self, at: usize) -> &mut u16 {
         self.0

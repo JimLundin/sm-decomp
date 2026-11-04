@@ -59,7 +59,7 @@ pub fn initialize_room_haze<H: crate::room_state::fx::SetupHost + ?Sized>(game: 
     spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x40, 0x32, program), game);
 }
 
-pub fn initialize_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_title_gradient<H: crate::menus::host::CommonRuntime + ?Sized>(game: &mut H) {
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x32, 0xeb73));
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x31, 0xeb85));
 }
@@ -299,16 +299,15 @@ where
     spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x42, 0xf, 0xe4a8), lease);
 }
 
-pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_intro_wave<H: crate::cinematic_host::Host>(game: &mut H) {
     {
-        let mut runtime = game.runtime();
-        let wave = &mut runtime.session_mut().wavy_samus;
+        let wave = &mut game.session_mut().wavy_samus;
         wave.enabled = 1;
         // The amplitude's store is native-order.
         wave.amplitude = u16::from_le_bytes(0x4000u16.to_ne_bytes());
         wave.speed = 8;
     }
-    crate::hdma_effects::apply_leased(
+    crate::hdma_effects::apply(
         HdmaEffect::InitializeWavePair {
             table: crate::hdma_objects::WaveTable::Intro,
             primary: 0x9800,

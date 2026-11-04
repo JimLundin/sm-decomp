@@ -5,31 +5,6 @@ use crate::ram_map::checked_word as word;
 
 const QUEUE: usize = sm_game::display::transfer::MODE7_QUEUE;
 
-#[forbid(unsafe_code)]
-pub(super) fn write_word(tail: u16, field: usize, value: u16, game: &mut Game) {
-    let at = QUEUE + usize::from(tail) + field;
-    let bytes = value.to_ne_bytes();
-    game.ram().write_byte(at, bytes[0]);
-    game.ram().write_byte(at + 1, bytes[1]);
-}
-
-#[forbid(unsafe_code)]
-pub(crate) fn advance_ending_tile_upload(page: u16, game: &mut Game) {
-    use crate::ram_map::word;
-    let tail = word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL);
-    let high_plane = page.wrapping_sub(8) & 0x8000 != 0;
-    write_word(tail, 0, if high_plane { 192 } else { 128 }, game);
-    // Both original tables have 16 pages; bounds failure follows the first store.
-    assert!(page < 16);
-    let source = page * 0x800;
-    write_word(tail, 1, source, game);
-    write_word(tail, 3, 127, game);
-    write_word(tail, 4, 2048, game);
-    write_word(tail, 6, source & 0x3fff, game);
-    write_word(tail, 8, if high_plane { 128 } else { 0 }, game);
-    word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(9));
-}
-
 pub(super) use sm_game::display::transfer::enqueue_mode7_rom as enqueue_rom;
 
 pub(super) unsafe fn process(game: &mut Game) {

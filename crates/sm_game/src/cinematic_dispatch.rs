@@ -19,7 +19,7 @@ const PAGE_4: u16 = 0xcf51;
 const PAGE_5: u16 = 0xcf57;
 
 /// Runs the cinematic function at `address`. Was `CallCinematicFunction`.
-pub fn run_function<H: Host + ?Sized>(address: u32, cine: &mut Cinematic, game: &mut H) {
+pub fn run_function<H: Host>(address: u32, cine: &mut Cinematic, game: &mut H) {
     match address {
         0x8b_9b68 => title_sequence::setup(cine, game),
         0x8b_9d17 => title_screen::advance_title_pan(0, cine, game),
@@ -125,7 +125,7 @@ pub fn run_function<H: Host + ?Sized>(address: u32, cine: &mut Cinematic, game: 
 
 /// Runs cinematic sprite object `object`'s pre-instruction at `address`. Was
 /// `CallCinematicSprPreInstr`.
-pub fn run_sprite_pre_instruction<H: Host + ?Sized>(
+pub fn run_sprite_pre_instruction<H: Host>(
     address: u32,
     object: u16,
     cine: &mut Cinematic,

@@ -58,16 +58,16 @@ pub const METROID_PAL_4: [u16; 16] = [
     0x46d5, 0x7bd6, 0x7fff, 0x77a6,
 ];
 
-pub fn title_metroid_cry<H: crate::menus::host::Host + ?Sized>(
+pub fn title_metroid_cry<H: crate::cinematic_host::Host>(
     sound: u16,
     cursor: u16,
     game: &mut H,
 ) -> u16 {
-    game.queue_sound(2, (sound) as u8, 6);
+    crate::effects::SoundEffects::queue_sound(game, 2, (sound) as u8, 6);
     cursor
 }
 
-pub fn title_metroid_palette<H: crate::menus::host::Host + ?Sized>(
+pub fn title_metroid_palette<H: crate::cinematic_host::Host>(
     palette: [u16; 16],
     cursor: u16,
     game: &mut H,
@@ -87,7 +87,7 @@ pub fn title_metroid_palette<H: crate::menus::host::Host + ?Sized>(
     cursor
 }
 
-pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
+pub fn start_title_pan<H: crate::cinematic_host::Host>(
     stage: usize,
     cursor: u16,
     cine: &mut Cinematic,
@@ -120,7 +120,7 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
     cursor
 }
 
-pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_title_pan<H: crate::cinematic_host::Host>(
     stage: usize,
     cine: &mut Cinematic,
     game: &mut H,
@@ -152,10 +152,7 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(
     request_title_skip(cine, game);
 }
 
-pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(
-    cine: &mut Cinematic,
-    game: &mut H,
-) {
+pub fn request_title_skip<H: crate::cinematic_host::Host>(cine: &mut Cinematic, game: &mut H) {
     // Before the title screen: the original adds the function's negation plus one.
     if (crate::sequence_state::Access::sequence_flow(&*game).cinematic_function as i32
         + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1))
@@ -169,7 +166,7 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn advance_title_wait<H: crate::cinematic_host::Host>(game: &mut H) {
     let expired = {
         let flow_word = crate::sequence_state::Access::sequence_flow(&*game)
             .demo_timer
@@ -195,7 +192,7 @@ pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::screen_fade::store(game, 2, 2);
 }
 
-pub fn initialize_title_sprite<H: crate::menus::host::Host + ?Sized>(
+pub fn initialize_title_sprite<H: crate::cinematic_host::Host>(
     object: u16,
     variant: usize,
     cine: &mut Cinematic,

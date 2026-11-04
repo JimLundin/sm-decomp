@@ -23,8 +23,7 @@ use crate::display_refresh::GraphicsAsset;
 use crate::intro_sequence::countdown;
 use crate::menus::prelude::display_scroll;
 use crate::presentation_workspace::{Point, Role};
-use crate::runtime_access::with_session;
-use crate::session_access::SessionAccess as _;
+use crate::session_access::with_stores;
 use crate::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 use crate::word_transfers::WordEndpoint;
 
@@ -133,13 +132,13 @@ const CLEAR_HOURS: u16 = 10;
 /// The item percentage stops scrolling at Y -79.
 const ITEM_PERCENTAGE_STOP: u16 = -79i32 as u16;
 
-fn sprites<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H, definition: u16, parameter: u16) {
+fn sprites<H: Host>(cine: &mut Cinematic, game: &mut H, definition: u16, parameter: u16) {
     spawn(cine, game, CinematicObjects::Sprites, definition, parameter);
 }
 
 /// Cinematic function - ending - setup ($8B:D480): Zebes's destruction,
 /// with its clouds and the escape music. Was `CinematicFunctionEscapeFromCebes`.
-pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     use crate::cinematic_states::{resuming, wait_for_nmis};
     if !resuming(game) {
         crate::frame_display_word!(game.CurrentInterrupt = 0);
@@ -172,7 +171,7 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::Decompress(0x988304, 0x18000).load(game);
     GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
     GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
-    with_session(game, |session| {
+    with_stores(game, |session| {
         let cells = session.room.terrain.cells_mut();
         for cell in &mut cells[MODE7_FIRST_LEVEL..] {
             cell.level = u16::from_le_bytes([MODE7_FILL; 2]);
@@ -225,7 +224,7 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - ending - wait for music to change ($8B:D6D7). Was
 /// `CinematicFunction_Intro_Func109`.
-pub fn wait_for_music<H: Host + ?Sized>(game: &mut H) {
+pub fn wait_for_music<H: Host>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_2, game);
@@ -237,7 +236,7 @@ pub fn wait_for_music<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - ending - Zebes destruction scene 1 - zooming out,
 /// clouds on top/bottom - setup ($8B:D731). Was `CinematicFunction_Intro_Func112`.
-pub fn scene_1_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn scene_1_setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
     GraphicsAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
     GraphicsAsset::Decompress(0x98ed4f, 0x2000).load(game);
@@ -257,7 +256,7 @@ pub fn scene_1_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - ending - Zebes destruction scene 2 - cross-fade to
 /// space view - setup ($8B:D837). Was `CinematicFunction_Intro_Func115`.
-pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn scene_2_setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::VramWords(0x7e6000, 0x0000, 0x4000).load(game);
     GraphicsAsset::VramWords(0x7e6000, 0x2000, 0x4000).load(game);
     GraphicsAsset::Decompress(0x999101, 0x6000).load(game);
@@ -284,7 +283,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         game,
     );
     // The palette copy and each initializer leave A for the next spawn.
-    let palette_tail = game.runtime().session().presentation.visual().colors[255];
+    let palette_tail = game.session().presentation.visual().colors[255];
     sprites(cine, game, object::EXPLODING_ZEBES, palette_tail);
     sprites(cine, game, object::LAVA, 0x0e00);
     sprites(cine, game, object::PURPLE_GLOW, 0x0a00);
@@ -313,7 +312,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - ending - Zebes destruction scene 2 - cross-fade to
 /// space view - fading in ($8B:DA02). Was `CinematicFunction_Intro_Func116`.
-pub fn scene_2_fading_in<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn scene_2_fading_in<H: Host>(cine: &mut Cinematic, game: &mut H) {
     scene_2(cine, game);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastIn, game) {
         crate::screen_fade::store(game, 2, 2);
@@ -326,7 +325,7 @@ pub fn scene_2_fading_in<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Cinematic function - ending - Zebes destruction scene 2 - cross-fade to
 /// space view ($8B:DA1A): every other frame a fade step; at the end the
 /// space view's display. Was `CinematicFunction_Intro_Func117`.
-pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn scene_2<H: Host>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(4);
     if (*cine.function_timer() & 1) == 0 {
         fade_cinematic_colors(0xe0, 0x10, false, game);
@@ -399,7 +398,7 @@ pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - ending - upload the Mode 7 tiles ($8B:DAD3): a page
 /// a frame, the function timer's, sixteen pages.
-pub fn upload_tiles<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn upload_tiles<H: Host>(cine: &mut Cinematic, game: &mut H) {
     let page = *cine.function_timer();
     game.advance_ending_tile_upload(page);
     *cine.function_timer() = page.wrapping_add(1);
@@ -414,7 +413,7 @@ pub fn upload_tiles<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - ending - space view - change music ($8B:DB9E). Was
 /// `CinematicFunction_Intro_Func119`.
-pub fn change_music<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn change_music<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::music_requests::queue_delayed_8(NO_MUSIC, game);
         crate::music_requests::queue_delayed_8(CREDITS_MUSIC_DATA, game);
@@ -427,7 +426,7 @@ pub fn change_music<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - ending - space view - gunship emergence - setup
 /// ($8B:DBC4). Was `CinematicFunction_Intro_Func120`.
-pub fn gunship_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn gunship_setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::frame_display_byte!(game, Field::Mode => 7);
         crate::frame_display_byte!(game, Field::AffineSelection => 0x80);
@@ -456,9 +455,9 @@ pub fn gunship_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Cinematic function - ending - space view - gunship emergence - spinning
 /// slow ($8B:DD42): the critters escape too, if they did. Was
 /// `CinematicFunction_Intro_Func123`.
-pub fn gunship_spinning_slow<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn gunship_spinning_slow<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if crate::ending_screens::advance_ending_gunship_spin(true, cine, game)
-        && crate::progress::leased::event_has_happened(CRITTERS_ESCAPED, game) != 0
+        && crate::progress::event_happened(game, CRITTERS_ESCAPED)
     {
         spawn_at(cine, game, object::CRITTERS_ESCAPE, 4, 4);
     }
@@ -466,7 +465,7 @@ pub fn gunship_spinning_slow<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut 
 
 /// Cinematic function - ending - space view - gunship emergence - fly into
 /// camera ($8B:DDCD). Was `CinematicFunction_Intro_Func124`.
-pub fn gunship_fly_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn gunship_fly_into_camera<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::ending_screens::fade_ending_gunship_backdrop(cine, game);
     cine.add_pair(Word::Var13, Word::Var14, -256i32 as u32);
     let speed = ((*cine.var13() as u32) << 16) | *cine.var14() as u32;
@@ -502,7 +501,7 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
 
 /// Cinematic function - ending - space view - transition to credits
 /// ($8B:DE64). Was `CinematicFunction_Intro_Func125`.
-pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
+pub fn transition_to_credits<H: Host>(game: &mut H) {
     game.set_screen_fade_counter(1);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastOut, game) {
         crate::display_refresh::enable(true, game);
@@ -516,7 +515,7 @@ pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - credits - setup ($8B:DE80): the credits graphics,
 /// the post-credits Samus for the clear time, the shooting stars and the
 /// roll. Was `CinematicFunction_Intro_Func126`.
-pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn credits_setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Credits, cine, game);
     clear_cinematic_sprites(cine);
     crate::palette_effects::execution::leased::clear(game);
@@ -570,11 +569,8 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         words.layer1_y_pos = 0
     });
     crate::hdma_objects::set_hdma_enabled(true, game);
-    {
-        let mut runtime = game.runtime();
-        for row in (0..256).rev() {
-            crate::player_transitions::xray::set_window_word(&mut runtime, row, 0);
-        }
+    for row in (0..256).rev() {
+        crate::player_transitions::xray::set_window_word(game, row, 0);
     }
     crate::shooting_star_motion::initialize_shooting_stars(game);
     GraphicsAsset::Decompress(0x97eeff, 0x10000).load(game);
@@ -588,7 +584,7 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - post-credits - blank screen ($8B:E0F4). Was
 /// `CinematicFunction_Intro_Func129`.
-pub fn blank_screen<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn blank_screen<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FADE_IN_SHOOTING_STARS
@@ -600,7 +596,7 @@ pub fn blank_screen<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - post-credits - fade in shooting stars ($8B:E110).
 /// Was `CinematicFunction_Intro_Func130`.
-pub fn fade_in_shooting_stars<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn fade_in_shooting_stars<H: Host>(cine: &mut Cinematic, game: &mut H) {
     crate::display_refresh::fade(true, game);
     if game.display_control_byte(Field::Brightness) == 15 {
         set_cinematic_blend(2, 16, 2, 34, game);
@@ -618,7 +614,7 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut
 
 /// Cinematic function - post-credits - fade in Samus ($8B:E158). Was
 /// `CinematicFunction_Intro_Func131`.
-pub fn fade_in_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn fade_in_samus<H: Host>(cine: &mut Cinematic, game: &mut H) {
     fade_cinematic_colors(0x40, 0x10, true, game);
     compose_cinematic_palette(game);
     if countdown(cine) {
@@ -633,7 +629,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - post-credits - wavy Samus ($8B:E190). Was
 /// `CinematicFunction_Intro_Func132`.
-pub fn wavy_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn wavy_samus<H: Host>(cine: &mut Cinematic, game: &mut H) {
     display_scroll!(game.Bg3V += 2);
     if countdown(cine) {
         crate::cinematic::transfer_cinematic_words(
@@ -651,14 +647,14 @@ pub fn wavy_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::DEER_FORCE
         });
-        with_session(game, |session| session.wavy_samus.enabled = 0);
+        with_stores(game, |session| session.wavy_samus.enabled = 0);
     }
 }
 
 /// Cinematic function - post-credits - 1994 Nintendo ($8B:E2DD): then the
 /// second idle Samus, cross-faded out of her suit unless the clear was slow.
 /// Was `CinematicFunction_Intro_Func137`.
-pub fn nintendo_1994<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn nintendo_1994<H: Host>(cine: &mut Cinematic, game: &mut H) {
     *cine.var13() = cine.var13().wrapping_sub(1);
     let expired = (*cine.var13() & 0x8000) != 0;
     if *cine.var13() == 0 || expired {
@@ -681,7 +677,7 @@ pub fn nintendo_1994<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - post-credits - fade from white ($8B:E504): then the
 /// Super Metroid icon. Was `CinematicFunction_Intro_Func143`.
-pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn fade_from_white<H: Host>(cine: &mut Cinematic, game: &mut H) {
     fade_cinematic_fixed_color(game);
     if countdown(cine) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -736,7 +732,7 @@ pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 
 /// Cinematic function - post-credits - grey out Super Metroid icon
 /// ($8B:E58A): then the icon background. Was `CinematicFunction_Intro_Func144`.
-pub fn grey_out_icon<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn grey_out_icon<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if crate::ending_graphics::advance_ending_logo_palette(cine, game) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FINISHED
@@ -755,7 +751,7 @@ pub fn grey_out_icon<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Cinematic function - post-credits - scroll item percentage down
 /// ($8B:E797): then the percentage, and the completion record. Was
 /// `CinematicFunction_Intro_Func148`.
-pub fn scroll_item_percentage<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+pub fn scroll_item_percentage<H: Host>(cine: &mut Cinematic, game: &mut H) {
     *cine.y() = cine.y().wrapping_sub(2);
     if below(*cine.y(), ITEM_PERCENTAGE_STOP) {
         spawn(
@@ -774,14 +770,14 @@ pub fn scroll_item_percentage<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut
 
 /// Pre-instruction - cinematic sprite object $EF81 (Super Metroid icon - S -
 /// top half) ($8B:F1E7). Was `CinematicFunction_Intro_Func179`.
-pub fn icon_s_top<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
+pub fn icon_s_top<H: Host>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     if crate::ending_screens::advance_ending_sprite_pair(slot, true, cine) {
         crate::palette_effects::execution::leased::spawn(ICON_GLOW, game);
     }
 }
 
-fn spawn<H: Host + ?Sized>(
+fn spawn<H: Host>(
     cine: &mut Cinematic,
     game: &mut H,
     objects: CinematicObjects,
@@ -791,7 +787,7 @@ fn spawn<H: Host + ?Sized>(
     objects.spawn(definition, parameter, cine, game);
 }
 
-fn spawn_at<H: Host + ?Sized>(
+fn spawn_at<H: Host>(
     cine: &mut Cinematic,
     game: &mut H,
     definition: u16,

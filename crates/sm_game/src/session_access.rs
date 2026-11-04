@@ -1,5 +1,16 @@
 //! Shared access implemented once by the aggregate runtime and composed harness.
 use crate::{external_inputs::ExternalInputs, session::Session};
+/// Run `store` on the lease's Session, then refresh its observations as the
+/// projected word stores did.
+pub fn with_stores<L: SessionAccess + ?Sized, T>(
+    lease: &mut L,
+    store: impl FnOnce(&mut Session) -> T,
+) -> T {
+    let result = store(lease.session_mut());
+    lease.words_stored();
+    result
+}
+
 pub trait SessionAccess {
     fn session(&self) -> &Session;
     fn session_mut(&mut self) -> &mut Session;

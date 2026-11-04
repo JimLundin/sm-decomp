@@ -440,21 +440,20 @@ pub fn setup(host: &mut impl Host, ea: u32, slot: u16) {
     }
 }
 
-/// The compatibility entries: each runs on a fresh lease of `game`.
+/// The cinematic entries, on the lease the cinematic state runs on.
 pub mod leased {
-    use crate::runtime_access::RuntimeAccess;
-    use crate::session_access::SessionAccess;
+    use crate::cinematic_host::Host;
 
-    pub fn set_enabled<H: RuntimeAccess + ?Sized>(enabled: bool, game: &mut H) {
-        super::set_enabled(game.runtime().session_mut(), enabled);
+    pub fn set_enabled<H: Host>(enabled: bool, game: &mut H) {
+        crate::session_access::with_stores(game, |session| super::set_enabled(session, enabled));
     }
-    pub fn clear<H: RuntimeAccess + ?Sized>(game: &mut H) {
-        super::clear(game.runtime().session_mut());
+    pub fn clear<H: Host>(game: &mut H) {
+        crate::session_access::with_stores(game, super::clear);
     }
-    pub fn spawn<H: RuntimeAccess + ?Sized>(definition: u16, game: &mut H) {
-        super::spawn(&mut game.runtime(), definition);
+    pub fn spawn<H: Host>(definition: u16, game: &mut H) {
+        super::spawn(game, definition);
     }
-    pub fn advance<H: RuntimeAccess + ?Sized>(game: &mut H) {
-        super::advance(&mut game.runtime());
+    pub fn advance<H: Host>(game: &mut H) {
+        super::advance(game);
     }
 }

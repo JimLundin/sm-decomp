@@ -123,7 +123,7 @@ pub fn update_ending_critters(object: u16, initialize: bool, cine: &mut Cinemati
     }
 }
 
-pub fn fade_ending_gunship_backdrop<H: crate::menus::host::Host + ?Sized>(
+pub fn fade_ending_gunship_backdrop<H: crate::cinematic_host::Host>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
@@ -145,7 +145,7 @@ pub fn fade_ending_gunship_backdrop<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_ending_gunship_spin<H: crate::cinematic_host::Host>(
     slow: bool,
     cine: &mut Cinematic,
     game: &mut H,
@@ -187,7 +187,7 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
     true
 }
 
-pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_ending_samus_jump<H: crate::cinematic_host::Host>(
     object: u16,
     phase: u8,
     cine: &mut Cinematic,
@@ -223,7 +223,7 @@ pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn position_ending_samus_head<H: crate::menus::host::Host + ?Sized>(
+pub fn position_ending_samus_head<H: crate::cinematic_host::Host>(
     object: u16,
     jumping: bool,
     cursor: u16,
@@ -239,7 +239,7 @@ pub fn position_ending_samus_head<H: crate::menus::host::Host + ?Sized>(
     cursor
 }
 
-pub fn fade_postcredits_samus_suit<H: crate::menus::host::Host + ?Sized>(
+pub fn fade_postcredits_samus_suit<H: crate::cinematic_host::Host>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
@@ -253,7 +253,7 @@ pub fn fade_postcredits_samus_suit<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_postcredits_samus_reveal<H: crate::cinematic_host::Host>(
     stage: u8,
     cine: &mut Cinematic,
     game: &mut H,
@@ -316,7 +316,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
     // decomposition its last blue delta ($7E:2FFE); each later one the
     // palette index the previous initializer loaded.
     let mut parameter = if initial && under_ten {
-        crate::session_cohort::load::<crate::cinematic::FadePlanes, _>(game).0[2047]
+        game.session().actors.extended.blocks[5][1023]
     } else {
         crate::gameplay_word!(game.GAME_TIME_HOURS)
     };
@@ -363,7 +363,7 @@ pub(crate) fn initializer_palette(definition: u16) -> u16 {
     }
 }
 
-pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_postcredits_samus_message<H: crate::cinematic_host::Host>(
     fade_suit: bool,
     cine: &mut Cinematic,
     game: &mut H,
@@ -447,7 +447,7 @@ pub fn move_ending_cloud(object: u16, velocity: (i16, i16), cine: &mut Cinematic
     }
 }
 
-pub fn prepare_ending_time<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn prepare_ending_time<H: crate::cinematic_host::Host>(game: &mut H) {
     let hours = crate::gameplay_word!(game.GAME_TIME_HOURS);
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.substate = hours / 10;
@@ -463,7 +463,7 @@ pub fn prepare_ending_time<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-pub fn initialize_ending_time_glyph<H: crate::menus::host::Host + ?Sized>(
+pub fn initialize_ending_time_glyph<H: crate::cinematic_host::Host>(
     object: u16,
     glyph: u8,
     cine: &mut Cinematic,
@@ -486,7 +486,7 @@ pub fn initialize_ending_time_glyph<H: crate::menus::host::Host + ?Sized>(
     place_cinematic_sprite(object, (156 + 8 * u16::from(glyph), 160), 0, cine);
 }
 
-pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_postcredits_zoom<H: crate::cinematic_host::Host>(
     zooming: bool,
     cine: &mut Cinematic,
     game: &mut H,
