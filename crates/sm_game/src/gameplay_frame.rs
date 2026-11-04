@@ -384,16 +384,14 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             | DeathPose
             | FlashDeath
             | ExplodeSuit
-            | Advance(Entry::TimeUpExit | Entry::DemoNext)) => {
-                advance_on_lease::<H>(entry, &mut game.runtime())
-            }
+            | Advance(Entry::TimeUpExit | Entry::DemoNext)
+            | DemoReset
+            | Demo) => advance_on_lease::<H>(entry, &mut game.runtime()),
             Advance(entry) => advance(entry, game),
-            DemoReset => demo_rooms::reset(game),
             FileMenu => file_menu::advance(game),
             MapMenu => map_menu::advance(game),
             PauseFadeIn => pause_controls::fade_in(game),
             GameOver => game_over::advance(game),
-            Demo => demo_rooms::play(game, |game| advance_gameplay(PassEnd::Pass, game)),
             Null => 0,
             Unused => {
                 game.rtl_unreachable();
@@ -443,6 +441,8 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             | FlashDeath
             | ExplodeSuit
             | Advance(Entry::TimeUpExit | Entry::DemoNext)
+            | DemoReset
+            | Demo
     )
 }
 
@@ -457,6 +457,8 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         ExplodeSuit => samus_death::explode_suit(lease),
         Advance(Entry::TimeUpExit) => exit_time_up::<H>(lease),
         Advance(Entry::DemoNext) => next_demo::<H>(lease),
+        DemoReset => demo_rooms::reset(lease),
+        Demo => demo_rooms::play(lease, |lease| run_pass::<H>(lease, PassEnd::Pass)),
         _ => unreachable!("not a lease state"),
     }
 }

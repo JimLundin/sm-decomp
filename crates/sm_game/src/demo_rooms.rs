@@ -48,12 +48,13 @@ fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option
     }
 }
 
-pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    with_session(game, |session| {
-        session.player.turn_request = 0;
-        session.projectiles.preparation.aim_history = 0;
-        session.player.spare_0dfc = 0;
-    });
+/// The demo reset state's frame, on the frame's lease.
+pub fn reset<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) -> u8 {
+    let session = game.session_mut();
+    session.player.turn_request = 0;
+    session.projectiles.preparation.aim_history = 0;
+    session.player.spare_0dfc = 0;
+    game.words_stored();
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = 0x9b68
     });
@@ -65,7 +66,9 @@ pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     0
 }
 
-pub fn play<H: crate::menus::host::Host + ?Sized>(
+/// The demo's play loop on the frame's lease: the pass, the demo timer and
+/// the closing wait.
+pub fn play<H: crate::gameplay_frame::PassLease + ?Sized>(
     game: &mut H,
     gameplay: impl FnOnce(&mut H) -> u8,
 ) -> u8 {
@@ -101,7 +104,8 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                     break 'done;
                 }
                 crate::sequence_word!(game.SUBSTATE = 0);
-                with_session(game, |session| session.messages.delay = 90);
+                game.session_mut().messages.delay = 90;
+                game.words_stored();
             }
             do_until! { count_down(game) == 0;
                 let yielded: u8 = crate::display_refresh::wait(true, game);
@@ -278,12 +282,12 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 /// Count the demo's closing delay down a frame; the frames left.
-fn count_down<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
-    with_session(game, |session| {
-        let delay = &mut session.messages.delay;
-        *delay = delay.wrapping_sub(1);
-        *delay
-    })
+fn count_down<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) -> u16 {
+    let delay = &mut game.session_mut().messages.delay;
+    *delay = delay.wrapping_sub(1);
+    let left = *delay;
+    game.words_stored();
+    left
 }
 
 pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
