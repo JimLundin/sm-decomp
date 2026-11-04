@@ -102,8 +102,8 @@ BASELINE = {
     # reach zero when the Session drives the tick. Foreign calls and Game hosts
     # may not rise; lease moves can add entries, so those are reported.
     "foreign_calls": 42,
-    "game_host_impls": 7,  # game-hosts: OracleHost serves the oracle settlement and checks
-    "session_entries": 3,
+    "game_host_impls": 0,  # no-foreign: the runtime owns the tick; Game is a device
+    "session_entries": 0,
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
     # gameplay_word! read and store typed Session-backed keys, not RAM, so
     # sm_game_ram_sites does not count them. They are still a word bag named
@@ -113,10 +113,10 @@ BASELINE = {
     # First measured on 0b19d8a24; advisory until it first falls, then strict.
     "engine_ram_export_lines": 4685,
     # Code volume (sm_pipeline volume), first measured on 7bf8f9f51. Advisory.
-    "engine_logic_tokens": 1237789,
+    "engine_logic_tokens": 1225258,
     "engine_data_tokens": 52807,
-    "engine_traits": 343,
-    "engine_blanket_impls": 88,
+    "engine_traits": 338,
+    "engine_blanket_impls": 87,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
             "engine_legacy_overflow_sites", "session_word_view_sites",

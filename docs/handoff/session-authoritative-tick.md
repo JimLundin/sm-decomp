@@ -1580,6 +1580,77 @@ former `foreign` call left them. Writes are identical and in the same order.
     and animated runtime checks; and the Crocomire and Magdollite rows. RAM
     lockstep must stay at 0 failing frames.
 
+- **Fifth slice (lane `no-foreign`, on `b9da49f22`).** Not yet replayed.
+  Ratchet: `game_host_impls` 7 → 0, `session_entries` 3 → 0, `foreign_calls`
+  42 (unchanged), `engine_ram_export_lines` 4692 (unchanged).
+  - **The runtime owns the tick** (`4d04e08f5`, exact). sm/'s `gameplay::tick`
+    makes the device's steps before the lease (the controller latch,
+    `begin_session_interval`, `boot::resume`, the invalid-state failure, the
+    pass continuations' clear: the same Game calls in the same order), then
+    opens the one lease and calls `gameplay_frame::frame(start, &mut lease)`.
+    `Continuation::of` classifies $0611; `Start` is public. The frame is
+    generic over `FrameLease` (the bounds `RuntimeAccess::Runtime` had).
+    `gameplay_frame::Host` and Game's impl go. The out-of-table panic no
+    longer drops the lease first.
+  - **No `RuntimeAccess`** (`cc1ab06d3`, exact). Game's impl goes and with it
+    the trait, `Lend`'s blanket, `lend_admissible`, `with_projectiles`'
+    projection fallback and `session_cohort::{store, with, with_projected}`,
+    none of which had another caller. The sm/ entries that leased Game (the
+    flag entries, the animated tile cases, the projectile room spawn and
+    `spawn_hardcoded`) call the engine function on `Runtime::new(game)`, which
+    is what Game's `Lend` ran; the engine's `leased` facades for them go.
+  - **Samus content view** (`7ae0215f1`, exact). `samus_binding::SamusContent`
+    (the owner and its images) serves `SamusSources`; `samus_drawing::Host::
+    samus_sources` returns it by value. `owned_samus::SamusDrawing` serves the
+    three owned draws and records their native diagnostics, which the lease
+    makes on Game in order once the draw returns (a draw reads only the view
+    and the Session). Game's `SamusSources`, `NativeImage` and
+    `NativeDiagnostics` go.
+  - **The decoder on the lease's byte path** (`f9391a493`, behaviour: lease
+    merge). The room load's `decompress_to_ram` and `decompress_level` run on
+    the lease's existing `DecompressionHost` (as the boss, options and display
+    refresh decodes did) with the plane split on the lease's bytes, instead of
+    publish, decode on Game, take back. Game's `DecompressionHost` and
+    `SessionRam` go. Not exact by construction: back-references read the
+    lease's bytes, where Game read its projection (its held menu bytes at
+    $7E:9E20.. fall inside the CRE tile buffer). The room level copy check
+    runs on `Runtime::new`; its case 2 panics mid-copy on the lease.
+  - **Left: `foreign` (42, all verification, D7).** Classified by reading
+    each site:
+    - 36 check `foreign`'s own contract (RAM equals the Session at entry, the
+      callback's writes visible after, the unwind keeps the prefix or
+      quarantines, the world and identity mismatch rejections, Samus authority
+      revoked inside): `actor_owner_checks` 2, `actor_runtime_checks` 3 (one
+      nests a lease inside `foreign`), `animated_runtime_checks` 1,
+      `enemy_native_runtime_cases` 2, `flags_runtime_checks` 5 (one,
+      `next_random`, runs Game's RNG), `palette_runtime_checks` 1,
+      `player_collision_owned_checks` 1, `player_collision_ownership` 3,
+      `player_projectiles` 3, `room_mechanism_ownership` 3,
+      `room_runtime_checks` 3, `samus_game_binding_cases` 5,
+      `sprite_runtime_checks` 2, `visual_runtime_checks` 2. Their subject goes
+      with `foreign`; the same properties for the lease are its open (decode)
+      and drop (export), which a rewrite would assert as drop, act on Game,
+      `Runtime::new`.
+    - 6 run verification hooks on Game mid-lease and need a port that reads
+      the lease (as the sprite effect observer's did):
+      `actor_population_animation_entry` 1, `actor_population_animation_
+      observer` 2, `room_mechanism_callback_edges` 1,
+      `room_mechanism_qualified` 2.
+  - **The RAM export stays.** The lease's drop still exports the Session to
+    RAM: the device reads it (the NMI's DMA after `publish`, settlement's
+    HDMA tables, the Samus upload), as do lockstep's RAM compare, the
+    checkpoints and every check above. It goes after the Session-space
+    compare and the native renderer (end state steps 1 and 3).
+  - **Rows.** Every row runs the new tick entry; watch the boot and power-on
+    rows, `door-transition`, `door-loading-lag-nmi` and `elevator-up` (the
+    frame's start), the room loads (the chain rooms, `door-transition`, the
+    save and death reloads, `demo-attract-setup`: the decoder), the Samus rows
+    and the verifier's persistent Session and Samus binding cases (the
+    content view), the flags, animated tile, enemy projectile and room level
+    copy cases (their new entries), and the SFX-loss rows
+    `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`. RAM
+    lockstep must stay at 0 failing frames.
+
 ### Stage 11: the rest
 
 - **Change.**
