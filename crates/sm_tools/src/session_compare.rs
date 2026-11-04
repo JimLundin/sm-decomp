@@ -6,8 +6,14 @@
 //! field path. It is report-only: the whole-RAM comparison stays
 //! authoritative, and nothing here sets a frame's pass or fail.
 //!
-//! Console text names ticks and field paths, never values, because values
-//! can be derived from the ROM.
+//! Both Sessions are the frame's end. The engine's last lease ends before
+//! Game-side code finishes the frame (the NMI's tilemap flush, the
+//! controller latch), so the verifier compares the Session the engine's next
+//! lease takes up, and counts the fields written after the last lease
+//! separately: they are timing, not divergence.
+//!
+//! Console text names ticks and field paths, never values,
+//! because values can be derived from the ROM.
 
 use sm_game::session::Session;
 use std::fmt::Debug;
@@ -144,10 +150,85 @@ fn first_differing_path(root: &str, engine: &str, oracle: &str) -> String {
 /// Why a paired frame had no Session-space comparison.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Skip {
-    /// The engine's Tick released no lease and kept no current Session.
-    NoEngineSession,
     /// A side's RAM image did not decode into a Session.
     Undecodable,
+}
+
+/// Where the engine's frame-end Session came from: the Session its next
+/// lease takes up.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SessionSource {
+    /// The retained Session, current with RAM.
+    Retained,
+    /// The Tick's last lease Session, kept for the next frame, with the RAM
+    /// written since its export.
+    Kept,
+    /// A decode of the engine's RAM, which no Session is current with.
+    Imported,
+}
+
+/// Per field of `FIELDS`, the Ticks on which it differed, and the first.
+#[derive(Default)]
+struct FieldTicks {
+    ticks: u64,
+    by_field: Vec<u64>,
+    first: Option<Divergence>,
+}
+
+impl FieldTicks {
+    /// Count one Tick's differing fields; the first Tick's path is named.
+    /// The first Divergence, when this call recorded it.
+    fn count(&mut self, tick: i32, engine: &Session, oracle: &Session) -> Option<&Divergence> {
+        let differing = differing(engine, oracle);
+        let (&field, also) = differing.split_first()?;
+        self.ticks += 1;
+        self.by_field.resize(FIELDS.len(), 0);
+        for &index in &differing {
+            self.by_field[index] += 1;
+        }
+        if self.first.is_some() {
+            return None;
+        }
+        let (engine_text, oracle_text) = debug_texts(engine, oracle, field);
+        self.first = Some(Divergence {
+            tick,
+            path: first_differing_path(FIELDS[field], &engine_text, &oracle_text),
+            also: also.to_vec(),
+        });
+        self.first.as_ref()
+    }
+
+    /// `name 3, other 1`, or `none`.
+    fn fields(&self) -> String {
+        let fields: Vec<String> = FIELDS
+            .iter()
+            .zip(&self.by_field)
+            .filter(|(_, ticks)| **ticks != 0)
+            .map(|(name, ticks)| format!("{name} {ticks}"))
+            .collect();
+        if fields.is_empty() {
+            "none".to_owned()
+        } else {
+            fields.join(", ")
+        }
+    }
+
+    /// `first at tick 3 in path (and 1 more fields)`, or `none`.
+    fn first(&self, what: &str) -> String {
+        match &self.first {
+            Some(first) => format!(
+                "first {what} at tick {} in {}{}",
+                first.tick,
+                first.path,
+                if first.also.is_empty() {
+                    String::new()
+                } else {
+                    format!(" (and {} more fields)", first.also.len())
+                }
+            ),
+            None => format!("no {what}"),
+        }
+    }
 }
 
 /// The first Tick at which the Sessions differed.
@@ -163,12 +244,13 @@ struct Divergence {
 pub struct SessionCompare {
     ticks: u64,
     compared: u64,
-    divergent: u64,
-    no_engine_session: u64,
     undecodable: u64,
-    /// Per field of `FIELDS`, the Ticks on which it differed.
-    field_ticks: Vec<u64>,
-    first: Option<Divergence>,
+    /// Ticks by the engine Session's source: retained, kept, imported.
+    sources: [u64; 3],
+    /// The fields that differed between the Sessions.
+    divergence: FieldTicks,
+    /// The fields written after the engine's last lease, before the frame's end.
+    after_lease: FieldTicks,
     /// This Tick's result, until the RAM verdict arrives.
     pending: Option<bool>,
     both_passed: u64,
@@ -184,35 +266,38 @@ impl SessionCompare {
     pub fn compare(&mut self, tick: i32, engine: &Session, oracle: &Session) -> bool {
         self.ticks += 1;
         self.compared += 1;
-        let differing = differing(engine, oracle);
-        self.pending = Some(!differing.is_empty());
-        let Some((&field, also)) = differing.split_first() else {
-            return false;
-        };
-        self.divergent += 1;
-        self.field_ticks.resize(FIELDS.len(), 0);
-        for &index in &differing {
-            self.field_ticks[index] += 1;
-        }
-        if self.first.is_none() {
-            let (engine_text, oracle_text) = debug_texts(engine, oracle, field);
-            let path = first_differing_path(FIELDS[field], &engine_text, &oracle_text);
-            let also_names: Vec<&str> = also.iter().map(|&index| FIELDS[index]).collect();
+        let before = self.divergence.ticks;
+        if let Some(first) = self.divergence.count(tick, engine, oracle) {
+            let also_names: Vec<&str> = first.also.iter().map(|&index| FIELDS[index]).collect();
             eprintln!(
-                "@{tick}: Session divergence in {path}{}",
-                if also.is_empty() {
+                "@{tick}: Session divergence in {}{}",
+                first.path,
+                if also_names.is_empty() {
                     String::new()
                 } else {
                     format!("; also differs: {}", also_names.join(", "))
                 }
             );
-            self.first = Some(Divergence {
-                tick,
-                path,
-                also: also.to_vec(),
-            });
         }
-        true
+        let diverged = self.divergence.ticks != before;
+        self.pending = Some(diverged);
+        diverged
+    }
+
+    /// Count where this Tick's engine Session came from.
+    pub fn source(&mut self, source: SessionSource) {
+        let index = match source {
+            SessionSource::Retained => 0,
+            SessionSource::Kept => 1,
+            SessionSource::Imported => 2,
+        };
+        self.sources[index] += 1;
+    }
+
+    /// Count the fields written after the Tick's last lease: its Session
+    /// against the frame-end Session. Timing, not divergence.
+    pub fn written_after_lease(&mut self, tick: i32, last_lease: &Session, frame_end: &Session) {
+        self.after_lease.count(tick, last_lease, frame_end);
     }
 
     /// Count a paired frame that had no comparison.
@@ -220,7 +305,6 @@ impl SessionCompare {
         self.ticks += 1;
         self.pending = None;
         match skip {
-            Skip::NoEngineSession => self.no_engine_session += 1,
             Skip::Undecodable => self.undecodable += 1,
         }
     }
@@ -248,45 +332,29 @@ impl SessionCompare {
 
     /// The summary lines, which name no values.
     pub fn finish(&self) -> Vec<String> {
-        let first = match &self.first {
-            Some(first) => format!(
-                "first divergence at tick {} in {}{}",
-                first.tick,
-                first.path,
-                if first.also.is_empty() {
-                    String::new()
-                } else {
-                    format!(" (and {} more fields)", first.also.len())
-                }
-            ),
-            None => "no divergence".to_owned(),
-        };
-        let fields: Vec<String> = FIELDS
-            .iter()
-            .zip(&self.field_ticks)
-            .filter(|(_, ticks)| **ticks != 0)
-            .map(|(name, ticks)| format!("{name} {ticks}"))
-            .collect();
         let first_tick = |first: Option<i32>| {
             first.map_or_else(String::new, |tick| format!(", first tick {tick}"))
         };
+        let [retained, kept, imported] = self.sources;
         vec![
             format!(
-                "Session compare: {} ticks, {} compared, {} divergent; {first}; {} without an engine Session, {} undecodable; {:.2}s comparing",
+                "Session compare: {} ticks, {} compared, {} divergent; {}; {} undecodable; engine Session {retained} retained, {kept} kept, {imported} imported; {:.2}s comparing",
                 self.ticks,
                 self.compared,
-                self.divergent,
-                self.no_engine_session,
+                self.divergence.ticks,
+                self.divergence.first("divergence"),
                 self.undecodable,
                 self.elapsed.as_secs_f64()
             ),
             format!(
                 "Session divergent ticks by field: {}",
-                if fields.is_empty() {
-                    "none".to_owned()
-                } else {
-                    fields.join(", ")
-                }
+                self.divergence.fields()
+            ),
+            format!(
+                "Session written after the last lease: {} ticks; {}; by field: {}",
+                self.after_lease.ticks,
+                self.after_lease.first("write"),
+                self.after_lease.fields()
             ),
             format!(
                 "Session/RAM agreement: {} both passed, {} both failed, {} RAM-only failures{}, {} Session-only failures{}",

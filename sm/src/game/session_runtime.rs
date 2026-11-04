@@ -1555,6 +1555,22 @@ pub(crate) fn with_frame_session<R>(game: &mut Game, tick: impl FnOnce(&mut Game
     result
 }
 
+/// The RAM the next lease takes up beside the kept frame Session, as `reuse_frame_session`
+/// reads it: the ranges written since its export (empty when nothing was written), or `None`
+/// when the next lease decodes RAM instead (no kept Session, a foreign presentation, or an
+/// overflowed log). For the verifier's Session-space comparison.
+#[cfg(sm_verify_dll)]
+pub(crate) fn kept_session_writes(game: &Game) -> Option<Vec<std::ops::Range<usize>>> {
+    let kept = game.frame_session.kept.as_ref()?;
+    if game.foreign_presentation_active() {
+        return None;
+    }
+    if kept.epoch == game.compatibility_write_epoch() {
+        return Some(Vec::new());
+    }
+    game.ram().logged_writes()
+}
+
 /// Bring `state` up to the RAM bytes in `written`: each byte the Session projects and the RAM
 /// now holds differently goes in as a store of that byte would put it.
 fn take_written_bytes(state: &mut Session, game: &Game, written: &[std::ops::Range<usize>]) {

@@ -526,6 +526,13 @@ impl WorkRam {
             by_classes: [0; 1 << WRITE_CLASSES.len()],
         }
     }
+    /// The ranges written since the write log opened, leaving it open; `None` when it is
+    /// closed or overflowed. The Session-space comparison reads it as `close_write_log` would.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn logged_writes(&self) -> Option<Vec<Range<usize>>> {
+        let log = &self.9;
+        (log.open.get() && !log.overflowed.get()).then(|| log.ranges.borrow().clone())
+    }
     /// Whether the write log is open.
     pub(crate) fn write_log_open(&self) -> bool {
         self.9.open.get()

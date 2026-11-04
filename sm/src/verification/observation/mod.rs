@@ -237,30 +237,41 @@ pub(crate) fn observe(game: &mut Game) -> Option<bool> {
     Some(diverged)
 }
 
-/// Compare the paired frame's Sessions: the engine's, and the oracle's
-/// result decoded from its RAM. Report-only; the RAM comparison decides.
+/// Compare the paired frame's Sessions at the frame's end: the engine's, the
+/// Session its next lease takes up, and the oracle's result decoded from its
+/// RAM. Report-only; the RAM comparison decides.
 pub(crate) fn observe_session(game: &mut Game) {
-    let Some(observer) = game.observation.as_deref() else {
-        return;
-    };
-    if observer.session.is_none() || !matches!(observer.mode, Mode::Lockstep(_)) {
+    let comparing = game.observation.as_deref().is_some_and(|observer| {
+        observer.session.is_some() && matches!(observer.mode, Mode::Lockstep(_))
+    });
+    if !comparing {
         return;
     }
     let start = std::time::Instant::now();
-    let engine = game
-        .observed_session()
-        .or_else(|| observer.leases.last_session());
-    let sessions = engine.map(|engine| {
-        let world = game.world();
-        let oracle = session::oracle(&game.g_snapshot_theirs.ram, world);
-        let engine = session::engine(
-            engine,
-            &game.g_snapshot_mine.ram,
-            &game.g_snapshot_theirs.ram,
-            world,
-        );
-        oracle.zip(engine)
-    });
+    let last_lease = game
+        .observation
+        .as_deref()
+        .and_then(|observer| observer.leases.last_session());
+    let frame = match game.observed_session() {
+        Some(retained) => session::Frame::Retained(retained),
+        None => match (
+            last_lease,
+            crate::game::session_runtime::kept_session_writes(game),
+        ) {
+            (Some(kept), Some(written)) if same_world(kept, game) => {
+                session::Frame::Kept(kept, written)
+            }
+            (last_lease, _) => session::Frame::Imported(last_lease),
+        },
+    };
+    let source = frame.source();
+    let world = game.world();
+    let sessions = session::oracle(&game.g_snapshot_theirs.ram, world).zip(session::engine(
+        &frame,
+        &game.g_snapshot_mine.ram,
+        &game.g_snapshot_theirs.ram,
+        world,
+    ));
     let tick = game.snes_frame_counter;
     let Some(compare) = game
         .observation
@@ -269,14 +280,23 @@ pub(crate) fn observe_session(game: &mut Game) {
     else {
         return;
     };
+    compare.source(source);
     match sessions {
-        None => compare.skip(Skip::NoEngineSession),
-        Some(None) => compare.skip(Skip::Undecodable),
-        Some(Some((oracle, engine))) => {
-            compare.compare(tick, &engine, &oracle);
+        None => compare.skip(Skip::Undecodable),
+        Some((oracle, engine)) => {
+            if let Some(last_lease) = &engine.last_lease {
+                compare.written_after_lease(tick, last_lease, &engine.frame_end);
+            }
+            compare.compare(tick, &engine.frame_end, &oracle);
         }
     }
     compare.elapsed += start.elapsed();
+}
+
+/// Whether `session` binds the world Game holds, as a kept Session's reuse requires.
+fn same_world(session: &sm_game::session::Session, game: &Game) -> bool {
+    std::sync::Arc::ptr_eq(&session.world, game.world())
+        && session.world.revision() == game.world().revision()
 }
 
 /// Count the paired frame's agreement between the two comparisons.
