@@ -395,9 +395,27 @@ where
     }
 }
 
-pub(crate) fn refresh_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// What the title gradient's refresh reaches: the Mode 7 zoom, the colour
+/// selection, HDMA table 1, the gradient table and its native records. Every
+/// menu host is one; a Session lease is one too.
+pub trait GradientHost:
+    crate::projection::Views
+    + crate::display::preparation::Access
+    + crate::fx_domain::Sources
+    + crate::cartridge::NativeDiagnostics
+    + crate::cartridge::LoadedImage
+{
+    fn gradient_tables(&self) -> &crate::visual_tables::ImportedTables;
+}
+impl<T: crate::menus::host::Host + ?Sized> GradientHost for T {
+    fn gradient_tables(&self) -> &crate::visual_tables::ImportedTables {
+        self.visual_tables()
+    }
+}
+
+pub(crate) fn refresh_title_gradient<H: GradientHost + ?Sized>(game: &mut H) {
     let mut cursor = table_word(
-        &game.visual_tables().title_gradients,
+        &game.gradient_tables().title_gradients,
         game,
         GRADIENT_ADDRESS,
         ((game.view_word(Field::Cinematic(CinematicWord::Mode7Zoom)) & 0xf0) >> 4) as isize,
@@ -468,7 +486,7 @@ pub(crate) fn write_channel_register<H: crate::menus::host::Host + ?Sized>(
     game.write_register(register, value);
 }
 
-pub(crate) fn restart_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub(crate) fn restart_title_gradient<H: GradientHost + ?Sized>(game: &mut H) {
     game.store_display_control_byte(DisplayField::ColorSelection, 0, DisplayStore::Named);
     refresh_title_gradient(game);
 }
