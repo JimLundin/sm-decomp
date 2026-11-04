@@ -1984,19 +1984,6 @@ impl Game {
             _ => None,
         }
     }
-    /// The HDMA object table as `compatibility_byte` projects it: the
-    /// retained Session's while it is current, the RAM words otherwise.
-    pub(crate) fn projected_hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
-        if let persistent_session::AggregateSlot::Ready(state) = &self.persistent_session.aggregate
-        {
-            if self.persistent_ram_epoch == self.ram.write_epoch()
-                && self.preflight_samus_runtime().is_ok()
-            {
-                return state.gameplay.hdma_objects();
-            }
-        }
-        sm_game::hdma_objects::read_table(self)
-    }
     pub fn compatibility_byte(&self, at: usize) -> u8 {
         if menu_ranges().iter().any(|range| range.contains(&at)) {
             return self.menu_byte(at);
@@ -2027,14 +2014,6 @@ impl Game {
     /// the retained semantic owner suspended until complete scoped adoption.
     pub fn compatibility_write_byte(&self, at: usize, byte: u8) {
         self.ram.write_byte(at, byte);
-    }
-    /// Point the direct-page long pointer scratch at bank $00 `address`
-    /// ($00..$02), as the HUD leaves it; RAM stores like the native macros'.
-    pub(crate) fn point_pointer_scratch(&self, address: u16) {
-        let [low, high] = address.to_le_bytes();
-        for (at, byte) in [(0, low), (1, high), (2, 0)] {
-            self.ram.write_byte(at, byte);
-        }
     }
     pub fn compatibility_write_owned_byte(&mut self, at: usize, byte: u8) {
         self.ram.read_byte(at); // Preserve the original byte bounds failure before mutation.
@@ -2643,21 +2622,6 @@ impl crate::projection::ProjectedBytes for Game {
     }
     fn compatibility_write_byte(&mut self, at: usize, value: u8) {
         Game::compatibility_write_byte(self, at, value)
-    }
-}
-
-impl sm_game::effects::SoundEffects for Game {
-    fn queue_sound(&mut self, channel: usize, sound: u8, max_queued: u8) {
-        crate::game::music::queue_sfx(channel, sound, max_queued, self);
-    }
-}
-
-impl sm_game::effects::DisplayRefresh for Game {
-    fn fade(&mut self, fade_in: bool) {
-        crate::game::display_refresh::fade(fade_in, self);
-    }
-    fn set_blank(&mut self, blank: bool) {
-        crate::game::display_refresh::set_blank(blank, self);
     }
 }
 
@@ -4364,173 +4328,6 @@ impl Game {
             }
         };
     }
-    fn ensure_fx_domain(&self) {
-        use sm_game::fx_domain::Domain;
-        let epoch = self.ram.fx_epoch();
-        let mut domain = self.persistent_session.fx.borrow_mut();
-        if self.persistent_session_current() && !matches!(&*domain, Domain::Leased) {
-            *domain = Domain::InSession {
-                epoch: self.ram.write_epoch(),
-            };
-            return;
-        }
-        if matches!(&*domain, Domain::Owned { epoch: current, .. } if *current == epoch)
-            || matches!(&*domain,
-                Domain::InSession { epoch: current } if *current == self.ram.write_epoch())
-            || matches!(&*domain, Domain::Leased)
-        {
-            return;
-        }
-        *domain = if self.persistent_session_current() {
-            Domain::InSession {
-                epoch: self.ram.write_epoch(),
-            }
-        } else {
-            Domain::Owned {
-                state: Box::new(self.selected_fx_image()),
-                epoch,
-            }
-        };
-    }
-    fn store_fx_byte(&mut self, at: usize, byte: u8) {
-        use sm_game::fx_domain::Domain;
-        // Match the byte's physical bounds failure before publishing a typed mutation.
-        self.ram.read_byte(at);
-        if self.persistent_session_current() {
-            self.compatibility_write_owned_byte(at, byte);
-            *self.persistent_session.fx.get_mut() = Domain::InSession {
-                epoch: self.ram.write_epoch(),
-            };
-            return;
-        }
-        self.ensure_fx_domain();
-        let slot = std::mem::replace(self.persistent_session.fx.get_mut(), Domain::Leased);
-        struct Publication<'a> {
-            game: &'a mut Game,
-            slot: Option<Domain>,
-            complete: bool,
-        }
-        impl Drop for Publication<'_> {
-            fn drop(&mut self) {
-                if !matches!(self.game.persistent_session.fx.get_mut(), Domain::Leased) {
-                    return;
-                }
-                *self.game.persistent_session.fx.get_mut() = if self.complete {
-                    match self.slot.take() {
-                        Some(Domain::Owned { state, .. }) => Domain::Owned {
-                            state,
-                            epoch: self.game.ram.fx_epoch(),
-                        },
-                        _ => Domain::Revoked,
-                    }
-                } else {
-                    Domain::Revoked
-                };
-            }
-        }
-        let mut publication = Publication {
-            game: self,
-            slot: Some(slot),
-            complete: false,
-        };
-        if let Some(Domain::Owned { state, .. }) = &mut publication.slot {
-            if !sm_game::fx_encoding::write_byte(&mut state.numeric, at, byte)
-                && !sm_game::fx_encoding::write_lighting_byte(&mut state.lighting, at, byte)
-            {
-                if let Some((owner, offset)) = sm_game::fx_encoding::source_coordinate(at) {
-                    if state
-                        .sources
-                        .window_control_lane(owner, offset)
-                        .ok()
-                        .flatten()
-                        .is_none()
-                    {
-                        // Missing bindings/out-of-owner aliases retain the physical fallback.
-                        let _ = state.sources.write_buffer(owner, offset, byte);
-                    }
-                }
-            }
-        }
-        // A control lane is a real ordered native alias publication. Its menu epoch
-        // revokes the previous control image; the next read adopts this actual prefix.
-        publication.game.compatibility_write_byte(at, byte);
-        publication.complete = true;
-    }
-}
-
-#[forbid(unsafe_code)]
-impl sm_game::fx_domain::Controls for Game {
-    fn room_blending(&self) -> sm_game::fx_domain::RoomBlending {
-        if self.persistent_session_current() {
-            if let persistent_session::AggregateSlot::Ready(state) =
-                &self.persistent_session.aggregate
-            {
-                return sm_game::fx_encoding::session_room_blending(&state.gameplay);
-            }
-        }
-        if self.suspended_display().is_some() {
-            return sm_game::fx_domain::RoomBlending {
-                primary: u16::from_le_bytes([
-                    self.suspended_control_byte(0x1982),
-                    self.suspended_control_byte(0x1983),
-                ]),
-                liquid: u16::from_le_bytes([
-                    self.suspended_control_byte(0x1984),
-                    self.suspended_control_byte(0x1985),
-                ]),
-            };
-        }
-        sm_game::fx_domain::RoomBlending {
-            primary: u16::from_le_bytes([
-                self.compatibility_byte(0x1982),
-                self.compatibility_byte(0x1983),
-            ]),
-            liquid: u16::from_le_bytes([
-                self.compatibility_byte(0x1984),
-                self.compatibility_byte(0x1985),
-            ]),
-        }
-    }
-    fn publish_room_blending(&mut self, value: sm_game::fx_domain::RoomBlending, primary: bool) {
-        let (at, value) = if primary {
-            (0x1982, value.primary)
-        } else {
-            (0x1984, value.liquid)
-        };
-        let bytes = value.to_le_bytes();
-        self.compatibility_write_owned_byte(at, bytes[0]);
-        self.compatibility_write_owned_byte(at + 1, bytes[1]);
-    }
-    fn fx_controls(&self) -> sm_game::fx_state::FxState {
-        use sm_game::fx_domain::Domain;
-        if self.persistent_session_current() {
-            if let persistent_session::AggregateSlot::Ready(state) =
-                &self.persistent_session.aggregate
-            {
-                return sm_game::fx_encoding::session_controls(&state.gameplay);
-            }
-        }
-        if self.suspended_display().is_some() {
-            return sm_game::fx_encoding::decode(&|at| self.suspended_control_byte(at));
-        }
-        self.ensure_fx_domain();
-        match &*self.persistent_session.fx.borrow() {
-            Domain::Owned { state, epoch } if *epoch == self.ram.fx_epoch() => state.numeric,
-            _ => sm_game::fx_encoding::decode(&|at| self.ram.read_byte(at)),
-        }
-    }
-    fn publish_fx_controls(
-        &mut self,
-        value: sm_game::fx_state::FxState,
-        fields: &[sm_game::fx_state::Field],
-    ) {
-        for &field in fields {
-            let at = sm_game::fx_encoding::address(field);
-            let bytes = field.get(&value).to_le_bytes();
-            self.store_fx_byte(at, bytes[0]);
-            self.store_fx_byte(at + 1, bytes[1]);
-        }
-    }
 }
 
 // Compat bookkeeping only. Source bytes remain in their actual exclusive owner.
@@ -4830,25 +4627,6 @@ impl Game {
             self.suspended_control_byte(at),
             self.suspended_control_byte(at + 1),
         ])
-    }
-    pub(crate) fn store_hdma_domain_byte(
-        &mut self,
-        word: sm_game::hdma::Word,
-        high: bool,
-        value: u8,
-    ) {
-        self.compatibility_write_owned_byte(word.address() + usize::from(high), value);
-    }
-    pub(crate) fn store_hdma_domain_word(
-        &mut self,
-        word: sm_game::hdma::Word,
-        value: u16,
-        order: sm_game::scene::state::WordOrder,
-    ) {
-        let at = word.address();
-        let [first, second] = order.encode(value);
-        self.compatibility_write_owned_byte(at, first);
-        self.compatibility_write_owned_byte(at + 1, second);
     }
 }
 

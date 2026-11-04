@@ -6,16 +6,6 @@ use crate::rtl::{MDMAEN, write_reg};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
-pub(crate) use sm_game::display_refresh::{fade, set_blank, set_native_word};
-
-/// The native-order word at RAM `offset` through Game's compatibility
-/// projection: the scrolling requests and the level data blocks.
-pub(crate) fn native_word(offset: usize, game: &Game) -> u16 {
-    u16::from_ne_bytes([
-        game.compatibility_byte(offset),
-        game.compatibility_byte(offset + 1),
-    ])
-}
 
 impl refresh::DisplayOwner for Game {
     fn write_owned_byte(&mut self, at: usize, value: u8) {
@@ -23,56 +13,32 @@ impl refresh::DisplayOwner for Game {
     }
 }
 
-impl refresh::ReadbackQueue for Game {
-    fn readback_queue_tail(&self) -> u16 {
-        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL)
-    }
-    fn set_readback_queue_tail(&mut self, tail: u16) {
-        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL = tail);
-    }
-    fn store_readback_byte(&mut self, offset: usize, value: u8) {
-        self.compatibility_write_byte(0x340 + offset, value);
-    }
-}
-
-impl refresh::Host for Game {
-    fn hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
-        self.projected_hdma_objects()
-    }
-    fn start_graphics_dma(&mut self, source: u32) {
-        let assets = if source == 0x9ab200 {
-            self.world().prepared_room_assets()
-        } else {
-            None
-        };
-        // SAFETY: refresh hosts run from the frame loop with the backend installed.
-        unsafe { start_room_dma(2, assets.as_deref(), self) }
-    }
-    fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
-    }
+/// The NMI on the frame's lease, inside the tick: each upload publishes the
+/// lease before its DMA reads work RAM, and goes through the lease's transfer
+/// port, so a readback's work RAM bytes return to the Session; the queue tails,
+/// the sentinels and the consumed scrolling enables are the lease's stores.
+impl refresh::Nmi for crate::game::session_runtime::Runtime<'_> {
     fn upload_samus(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { crate::game::display_transfers::upload_samus(self) }
+        self.upload_samus_tiles();
     }
     fn upload_animated_tiles(&mut self) {
+        // The lease lends itself, as Game's fresh lease ran it.
         animated_tiles::upload_pending(self);
     }
     fn process_mode7(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { mode7_transfers::process(self) }
+        self.owned_player_call(|runtime| {
+            runtime.publish();
+            mode7_transfers::process(&mut crate::game::display_commands::Lease(runtime));
+        });
     }
     fn process_readbacks(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { vram_read_queue::process(self) }
+        self.owned_player_call(|runtime| {
+            runtime.publish();
+            vram_read_queue::process(&mut crate::game::display_commands::Lease(runtime));
+        });
     }
     fn flush_tilemaps(&mut self) {
-        // SAFETY: as for `start_graphics_dma`.
-        unsafe { flush_tilemaps(self) }
-    }
-    fn read_vram_data(&mut self) -> u16 {
-        self.read_register_word(crate::rtl::RDVRAML as u16)
+        self.owned_player_call(flush_tilemaps_on_lease);
     }
 }
 
@@ -179,11 +145,6 @@ pub(crate) fn enable(enabled: bool, game: &mut Game) {
     refresh::enable(enabled, game);
 }
 
-/// Requires a live, exclusively accessed SNES backend throughout the queue drain.
-pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
-    crate::game::display_transfers::flush_tilemaps(game);
-}
-
 /// The tilemap flush on the lease: it publishes, then drains the queue and the
 /// scrolling requests through the lease's transfer port, so each DMA start reads
 /// the Session's bytes, and the queue's end word, its tail and the consumed
@@ -195,9 +156,11 @@ pub(crate) fn flush_tilemaps_on_lease(runtime: &mut crate::game::session_runtime
     ));
 }
 
-/// The ordered display refresh uploads.
+/// The ordered display refresh uploads, on a lease of their own: the NMI as
+/// the frame's lease runs it, for the verification routes that step frames by
+/// hand.
 pub(crate) fn run(game: &mut Game) {
-    refresh::run(game);
+    refresh::run(&mut crate::game::session_runtime::Runtime::new(game));
 }
 
 pub(crate) unsafe fn start_room_dma(
@@ -245,76 +208,6 @@ fn scrolling_probe(row: bool, background: bool) {
         (true, false) => "scroll_tiles.row.bg1",
         (true, true) => "scroll_tiles.row.bg2",
     });
-}
-impl QueueAccess for Game {
-    fn queue_live_source(
-        &mut self,
-        address: u16,
-        bank: u8,
-        source: sm_game::scene::state::TransferSource,
-    ) {
-        let mut runtime = crate::game::session_runtime::Runtime::new(self);
-        QueueAccess::queue_live_source(&mut runtime, address, bank, source);
-    }
-    fn queue_tail(&self) -> u16 {
-        self.vram_write_queue_tail()
-    }
-    fn store_queue_tail(&mut self, value: u16) {
-        self.set_vram_write_queue_tail(value);
-    }
-    fn queue_native_word(&mut self, cursor: u16, value: u16) {
-        let at = 0xd0 + usize::from(cursor);
-        let [low, high] = value.to_ne_bytes();
-        self.compatibility_write_byte(at, low);
-        self.compatibility_write_byte(at + 1, high);
-    }
-    fn queue_byte(&mut self, cursor: u16, value: u8) {
-        self.compatibility_write_byte(0xd0 + usize::from(cursor), value);
-    }
-}
-impl Scrolling for Game {
-    fn mode7_enabled(&self, selection: Selection) -> bool {
-        let enabled = u16::from_le_bytes([
-            self.compatibility_byte(0x783),
-            self.compatibility_byte(0x784),
-        ]) != 0;
-        if !enabled {
-            scrolling_probe(
-                matches!(selection.layout, ScrollingDmaLayout::Row),
-                selection.layer_offset != 0,
-            );
-        }
-        enabled
-    }
-    fn coordinate(&self, field: Coordinate) -> u16 {
-        let at = scrolling_coordinate(field);
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn room_width(&self) -> u16 {
-        sm_game::gameplay_context::navigation(self).width
-    }
-    fn request(&self, selection: Selection, field: Request) -> u16 {
-        native_word(scrolling_parameter(selection, field), self)
-    }
-    fn store_request(&mut self, selection: Selection, field: Request, value: u16) {
-        set_native_word(scrolling_parameter(selection, field), value, self);
-    }
-    fn block(&self, source: u16, delta: u16) -> u16 {
-        native_word(
-            0x10000 + usize::from(source) + 2 * usize::from(delta >> 1),
-            self,
-        )
-    }
-    fn tile(&self, definition: usize, corner: usize) -> u16 {
-        let at = 0xa000 + definition * 8 + corner * 2;
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn store_scrolling(&mut self, word: usize, value: u16) {
-        let at = 0xc8c8 + word * 2;
-        let [low, high] = value.to_le_bytes();
-        self.compatibility_write_byte(at, low);
-        self.compatibility_write_byte(at + 1, high);
-    }
 }
 impl QueueAccess for crate::game::session_runtime::Runtime<'_> {
     fn queue_live_source(

@@ -1,17 +1,18 @@
 //! Mode 7 VRAM and palette transfers, packed in the original RAM queue.
-#![deny(unsafe_op_in_unsafe_fn)]
-use crate::game_state::Game;
-use crate::ram_map::checked_word as word;
+use crate::game::display_transfers::{DrainHost, Queue};
 
 const QUEUE: usize = sm_game::display::transfer::MODE7_QUEUE;
+/// The queue's tail ($7E:0334).
+const TAIL: usize = crate::ram_map::words::MODE7_VRAM_WRITE_QUEUE_TAIL;
 
-pub(super) unsafe fn process(game: &mut Game) {
-    if word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL) == 0 {
+/// The Mode 7 queue's drain, on the frame's lease, through its transfer
+/// port, as the NMI runs it.
+pub(super) fn process(host: &mut impl DrainHost) {
+    if host.tail(TAIL) == 0 {
         return;
     }
-    sm_game::display::transfer::drain_mode7(&mut unsafe {
-        crate::game::display_transfers::RawQueue::new(game)
-    });
-    game.ram().fill(QUEUE..QUEUE + 2, 0);
-    word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = 0);
+    sm_game::display::transfer::drain_mode7(&mut Queue(host));
+    host.store_queue_byte(QUEUE, 0);
+    host.store_queue_byte(QUEUE + 1, 0);
+    host.set_tail(TAIL, 0);
 }

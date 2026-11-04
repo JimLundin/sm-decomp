@@ -58,13 +58,7 @@ pub enum UnpauseHook {
 
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
-pub trait Host:
-    crate::hud::HudHost
-    + crate::display_refresh::Host
-    + crate::presentation_workspace::ContinuationAccess
-    + crate::menus::controller_input::SampleHost
-    + RuntimeAccess
-{
+pub trait Host: crate::presentation_workspace::ContinuationAccess + RuntimeAccess {
     /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
     fn latch_controller(&mut self, buttons: u16);
     /// Admit the owned Session for this frame; `fresh` when no pass is resuming.
@@ -107,6 +101,7 @@ pub trait PassLease:
     + crate::projection::Views
     + crate::menus::host::CommonRuntime
     + crate::display_refresh::GraphicsLoad
+    + crate::display_refresh::Nmi
     + crate::menus::save_slots::MapHost
 {
     /// Samus's own projectiles against her: the bomb jump.
@@ -276,11 +271,10 @@ pub fn tick<H: Host>(input: TickInput, game: &mut H) -> CoroutineRet {
     advance(Entry::Frame, game)
 }
 
-/// Run `entry`; a pass state's pass also ends the frame, on its last lease.
+/// Run `entry`: the frame. Every state's frame runs from the frame's lease.
 pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     match entry {
         Entry::Frame => frame(game),
-        // The lease entries run from the frame's lease.
         Entry::PauseSetup
         | Entry::Paused
         | Entry::UnpauseSetup
@@ -289,10 +283,8 @@ pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         | Entry::GameOverFadeOut
         | Entry::TimeUpExit
         | Entry::DemoStop
-        | Entry::DemoNext => {
-            unreachable!("a lease state")
-        }
-        Entry::Gameplay
+        | Entry::DemoNext
+        | Entry::Gameplay
         | Entry::FadeIn
         | Entry::Unpause
         | Entry::DemoStart
@@ -303,7 +295,7 @@ pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         | Entry::TimeUp
         | Entry::ReserveTanks
         | Entry::PrepareDeath
-        | Entry::DeathBlackout => pass(entry, game),
+        | Entry::DeathBlackout => unreachable!("a state runs from the frame's lease"),
     }
 }
 
@@ -326,61 +318,80 @@ fn runs_pass(entry: Entry) -> bool {
     )
 }
 
-/// Frame phase: boot continuation, frame start, state dispatch and frame end.
+/// How a frame starts, before its lease opens.
+enum Start {
+    /// Boot yielded with this byte: the logo's frames.
+    Boot(u8),
+    /// The frame begins: the HDMA handler, then the game state's frame.
+    Begin,
+    /// A state resumes after a yield.
+    Resume(StateEntry),
+}
+
+/// Frame phase: boot continuation, frame start, state dispatch and frame end,
+/// on the frame's lease. Boot runs before it, on Game and the logo's own lease.
+/// The frame's end (`end_frame`: the NMI and the controller latch) runs on the
+/// frame's lease too, inside the tick.
 fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     game.begin_session_interval(game.resume_point() == 0);
-    let returned = 'frame: {
-        let mut st: i32 = game.outer_continuation() as i32;
-        let begin_frame: bool = if (1..=3).contains(&st) {
-            let returned = game.resume_boot();
-            if returned != 0 {
-                break 'frame returned;
-            }
-            true
-        } else {
-            st < 10 && {
-                if st != 0 {
-                    game.fail_frame_state();
-                }
-                true
-            }
-        };
-        if begin_frame {
-            game.clear_pass_continuations();
+    let st: i32 = game.outer_continuation() as i32;
+    let start = if (1..=3).contains(&st) {
+        match game.resume_boot() {
+            0 => Start::Begin,
+            returned => Start::Boot(returned),
+        }
+    } else if st < 10 {
+        if st != 0 {
+            game.fail_frame_state();
+        }
+        Start::Begin
+    } else {
+        Start::Resume(GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)])
+    };
+    if matches!(start, Start::Begin) {
+        game.clear_pass_continuations();
+    }
+    let mut lease = game.runtime();
+    let returned = match start {
+        // A yielding boot frame's NMI follows the logo's lease on this one.
+        Start::Boot(returned) => returned,
+        Start::Begin => {
             // The HDMA object handler, with its music queue step, runs on the
-            // frame's first lease. The main game loop's PLP restores the carry
+            // frame's lease. The main game loop's PLP restores the carry
             // loading the save slots ($80:8261) set.
-            let mut lease = game.runtime();
             crate::hdma_objects::update_hdma(true, &mut lease);
             start_frame::<H>(&mut lease);
-            st = game_state(&lease) as i32 + 10;
+            let st = game_state(&lease) as i32 + 10;
             lease.set_outer_continuation(st as u8);
-            // A pass state runs from here to the frame's end on this lease: its
-            // pre-pass work, the pass, an enemy's message box, the state's finish
-            // and the frame's end.
-            let entry = GAME_STATE_ENTRIES.get(usize::from((st - 10i32) as u16));
-            if let Some(&Advance(entry)) = entry
-                && runs_pass(entry)
-            {
-                let returned = run_pass::<H>(&mut lease, PassEnd::Frame(entry));
-                drop(lease);
-                break 'frame returned;
-            }
-            // Every other state's frame runs on this lease too, to the frame's
-            // end.
-            if let Some(&entry) = entry {
-                let returned = lease_frame::<H>(entry, &mut lease);
-                drop(lease);
-                break 'frame returned;
+            // A state runs from here to the frame's end on this lease: a pass
+            // state's pre-pass work, the pass, an enemy's message box, the
+            // state's finish and the frame's end; any other state's frame.
+            let index = usize::from((st - 10i32) as u16);
+            match GAME_STATE_ENTRIES.get(index) {
+                Some(&Advance(entry)) if runs_pass(entry) => {
+                    run_pass::<H>(&mut lease, PassEnd::Frame(entry))
+                }
+                Some(&entry) => lease_frame::<H>(entry, &mut lease),
+                None => {
+                    drop(lease);
+                    panic!("game state {} is outside the state table", st - 10);
+                }
             }
         }
-        match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
-            // A pass state's frame ends on its pass's last lease.
-            Advance(entry) if runs_pass(entry) => advance(entry, game),
-            // A lease state resuming after a yield opens the frame's lease here.
-            entry => lease_frame::<H>(entry, &mut game.runtime()),
+        // A pass state's pass from its resume point, or a lease state.
+        Start::Resume(Advance(entry)) if runs_pass(entry) => {
+            run_pass::<H>(&mut lease, PassEnd::Frame(entry))
         }
+        Start::Resume(entry) => lease_frame::<H>(entry, &mut lease),
     };
+    end_frame(returned, &mut lease)
+}
+
+/// The frame's end after a state returned `returned`: a completed frame
+/// requests the NMI, which refreshes the display and, when requested, latches
+/// the controller, as on hardware; a missed NMI (a yield, a lag frame) only
+/// counts. Then the next frame's state, or boot's soft reset.
+fn end_frame<L: PassLease + ?Sized>(returned: u8, game: &mut L) -> CoroutineRet {
     if returned == 0 {
         game.store_display_control_byte(DisplayField::NmiPending, 1, Store::Named);
     }
@@ -960,18 +971,6 @@ enum PassEnd {
     Pass,
     /// The state's per-state finish, then the frame's end.
     Frame(Entry),
-}
-
-/// States that run the gameplay pass: their pre-pass work, the pass, their
-/// per-state finish and the frame's end, on one lease.
-fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
-    advance_gameplay(PassEnd::Frame(entry), game)
-}
-
-/// Frame phase: the resumable gameplay pass shared by playing states, on one
-/// lease.
-fn advance_gameplay<H: Host>(end: PassEnd, game: &mut H) -> CoroutineRet {
-    run_pass::<H>(&mut game.runtime(), end)
 }
 
 /// The gameplay pass on `lease`: a pass state's pre-pass work, then the pass

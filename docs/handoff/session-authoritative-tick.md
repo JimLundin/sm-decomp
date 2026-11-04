@@ -1131,17 +1131,104 @@ former `foreign` call left them. Writes are identical and in the same order.
 
 ### Stage 10: NMI and settlement inside the tick
 
-- **Change.**
-  - `display_refresh::run` runs on the tick lease through stage 4's port; readbacks are taken
-    back.
-  - The single publish moves to just before `settle`, and `scanline_irq::advance` runs on
-    `ScanlineIrq(&mut lease)`.
-  - The NMI and IRQ register writes become typed display commands, encoded in sm/ (lane
-    `owned-pres`).
-  - Removing them from sm_game also needs D9. Done under D9 (lane `d9`, 2026-11-04): sm_game
-    makes no register write; see owned-display-registers.md, "Retirement step 1 under D9".
-- **Delta.** `display_refresh` 27, `hdma_objects` 4, `gameplay_frame` 3. With the
-  message box, cinematic display and transfer slices, up to −77.
+- **Goal.** The NMI, the controller latch and settlement run as tick-scheduled
+  steps on the frame's lease, at the point the emulated NMI fires, with the same
+  writes in the same order. Removing the register writes from sm_game was done
+  under D9 (lane `d9`, 2026-11-04): sm_game makes no register write; see
+  owned-display-registers.md, "Retirement step 1 under D9".
+- **What ran on Game in a frame (base `947f8db62`), in order.**
+
+  | # | Step | Where | Writes |
+  | --- | --- | --- | --- |
+  | 1 | `latch_controller` | Game (device) | the joypad register the auto-read latches |
+  | 2 | `begin_session_interval` | Game | Game's held domains adopted |
+  | 3 | Boot (`$0611` 1..3, `boot::resume`): `clear_work_ram`, the logo on one `Runtime::new` per logo frame, then boot's work: the audio init cue, blank, `clear_work_ram(0x10000)`, NMI off, `initialize_registers`, the tile buffers at $7E:3000/4000/6000, the APU queue bytes, the OAM pointers, `clear_high_table` and `finish_frame` (`ObjectAccess`), the Samus upload words, NMI on, the APU ports, `RANDOM_NUMBER`, `reset_delays`, `ENABLE_DEBUG`, `save_slots::verify_boot` (`LoadHost`), the sound words, `$0611 = 2` | Game, before any frame lease | RAM, registers, APU |
+  | 4 | `clear_pass_continuations` | Game | $0612..0615 |
+  | 5 | The frame's lease: `update_hdma`, `start_frame`, the state, `close_frame` (stage 9) | lease | Session |
+  | 6 | The lease closes (deferred export) | | |
+  | 7 | `NmiPending = 1` when the state completed; `display_refresh::run` (`scene::commit::refresh`): palette and OAM DMA ($0370, $7E:C000), Samus tiles ($071D..0722 descriptors, cartridge source), animated tiles (a fresh lease through `Lend`), the register mirrors, HDMA channel binds, the Mode 7 queue ($02D0, tail $0334), the tilemap flush (queue end word, tail, scrolling enables), the VRAM readbacks into WRAM ($0340, tail $0360), HDMA enable, the NMI counters; or, with no request, the missed-NMI counters | Game | registers, VRAM/OAM/CGRAM, WRAM (readbacks, queue stores, counters) |
+  | 8 | `controller_input::sample_latched` when the NMI was requested | Game | `control[0].input.ports[0]` |
+  | 9 | Soft reset check, `$0611` | Game | $0611 |
+  | 10 | `with_frame_session` ends | | |
+  | 11 | `draw_frame_to_ppu` (`cpu_infra.rs`): `samus_mutation`, then `scene::settle::settle` over `NativeSettlement(Game)`: per line the four beam events (`advance_beam`: raster, HDMA reading its tables from WRAM), and at `vTimer` the IRQ (`scanline_irq::advance`: `scene::irq::advance` on `ScanlineIrq(Game)`, display mirrors and history words, registers; the door resume poll `follow_transition`, one `Runtime::new` each); `finish_current`, `reconcile_current` | Game | registers, WRAM (IRQ stores, the door resume's lease) |
+
+- **Design.**
+  - **One lease per frame.** `gameplay_frame::frame` decides how the frame
+    starts (a yielding boot frame, a frame that begins, a resumed state), opens
+    the frame's lease once, runs the state on it and then `end_frame` on it: the
+    NMI request, `display_refresh::run`, the latched sample, the soft reset
+    check and the next frame state. Done in the first slice (below).
+  - **The NMI on the lease.** `display_refresh::run` binds on the `Nmi` port:
+    the frame display, the scroll words, `Video`, the HDMA objects, and the
+    refresh's five uploads. `scene::commit::refresh` is unchanged, so the order
+    is the original's; only the host changes. On the lease:
+    - palette, OAM and the register commits go through the lease's `Video`
+      (publish, then the transfer port; device-only commands in a device
+      interval), as every other lease display command does;
+    - Samus's tiles (`Runtime::upload_samus_tiles`) publish, then run the
+      native upload on Game's RAM: it reads the descriptors and the cartridge
+      and writes registers and VRAM alone;
+    - the animated tiles run on the lease itself (it lends itself), where
+      Game's NMI opened a fresh lease;
+    - the Mode 7 and readback drains are generic over `DrainHost` and run on
+      the lease's transfer port after a publish: each DMA start reads the
+      published bytes (verify builds assert it), a readback's work RAM bytes
+      return to the Session (`start_dma`), and the sentinels and tails are the
+      lease's stores;
+    - the tilemap flush is `flush_tilemaps_on_lease`, which the room scrolls
+      already ran.
+  - **Why byte-exact.** Each upload makes the same register writes in the same
+    order, and each DMA reads the bytes it read on Game: Game read the lease's
+    export (deferred, settled at the DMA's first RAM read), the lease reads its
+    own publish of the same Session. RAM stores land in the Session and reach
+    RAM at the release instead of in RAM and the next lease's write log. No
+    emulated CPU runs inside the tick, and the beam starts at `settle`'s
+    `reset_beam`, so moving Rust work from after the lease to inside it moves
+    nothing relative to the emulated CPU.
+  - **Lag frames.** `end_frame` keeps the original's logic: a state that yields
+    (`returned != 0`, as door loading does) stores no request, so the refresh
+    only counts the missed NMI, and the controller is latched only when an
+    earlier request is still pending. `door-loading-lag-nmi` covers it.
+  - **Boot's work (next slice).** Split `boot::resume` into its yielding part
+    (Game and the logo's lease) and boot's work after `clear_work_ram(0x10000)`,
+    and run the work as the frame's lease's first step, before `update_hdma`,
+    in the same order. Ports: the workspace fill (`presentation_workspace`),
+    the APU queue bytes and sound words (the audio owner), the OAM pointer
+    words, `ObjectAccess` (the lease has it), NMI enable (`display_refresh::
+    enable`), the APU ports (device), `RANDOM_NUMBER` and `ENABLE_DEBUG`
+    (gameplay words), `reset_delays`, and `verify_boot` on `LoadHost` (the
+    lease has `SlotHost` and the menu state). Then Game's `ObjectAccess`,
+    `sprite_output::MapHost`'s boot use, `SlotHost` and `menus::state::Access`
+    lose boot. Not in this slice: the lease would open on RAM cleared by
+    `clear_work_ram(0x10000)` but before `initialize_registers` and boot's raw
+    stores, and each of those raw `game.ram()` stores needs its lease form; the
+    soft reset (`$0611` = 3) takes the same path.
+  - **Settlement and the IRQ stay after the lease.** Not provably byte-exact
+    yet, for four reasons:
+    1. HDMA reads its tables from WRAM on every line inside the emulated beam
+       (`advance_beam`), between IRQ handlers whose RAM stores (the display
+       history words, the door resume's Session writes) it reads on later
+       lines. On the lease every IRQ that stores would need a publish before
+       the next `advance_at`. That publish (`encode_spans`) would have to equal
+       the release's export for every lane an IRQ writes, including Game's
+       held frame display and scroll domains, which `ScanlineIrq(Game)` writes
+       through Game's projection. Nobody has shown that.
+    2. The door resume (`follow_transition`) opens `Runtime::new` per poll.
+       Inside the tick lease that is a nested lease. On the tick lease it
+       would be `room_entry::protocol::resume(&mut lease, ScrollIrq)` with a
+       publish after each poll; the polls fall on `vTimer` lines, so its
+       equivalence rests on (1).
+    3. Settlement holds `samus_mutation()` across the whole beam and finishes
+       it after; the lease takes Samus authority too. Nesting one inside the
+       other changes ownership; it is not a move.
+    4. `scanline_irq::table_check` (`SM_IRQ_TABLE`) plans each frame's
+       interrupts from Game's controls when settlement begins.
+    So the Session reaches RAM at the lease's release (the deferred export
+    settles at HDMA's first table read), as today. The path: give settlement a
+    WRAM view HDMA reads through (the lease's published image), make the IRQ's
+    stores lease stores with a publish when dirty, and run the door resume on
+    the tick lease; or, under D9, the native renderer's own HDMA replaces the
+    register-level one.
 - **Rows.**
   - Missed NMI: `door-loading-lag-nmi`.
   - IRQ door resume: `door-transition`, `elevator-up`.
@@ -1149,6 +1236,79 @@ former `foreign` call left them. Writes are identical and in the same order.
   - Mode 7: `boss-ceres-ridley`, `area-ceres`.
   - `credits`.
   - The nightly `SM_NATIVE_LINES` route.
+- **First slice (lane `tick-s10`, on `947f8db62`, `collab/hosts-2`).** Not yet
+  replayed. Ratchet: `game_host_impls` 37 → 25, `session_entries` 5 → 3,
+  `legacy_engine_ram_sites` 381 → 342, `foreign_calls` 43.
+  - Every frame opens one lease and ends on it (`frame`, `end_frame`): the
+    state's frame, the NMI and the latched sample, the soft reset check and
+    `$0611`. That covers a resumed pass (it opened its own lease in `pass` and
+    then ran the NMI on Game) and a boot frame that yields after the logo's
+    lease. `advance` runs only the frame; `pass` and `advance_gameplay` go.
+  - The NMI runs on the lease through `display_refresh::Nmi`, as the design
+    says. `gameplay_frame::Host` binds on `ContinuationAccess` and
+    `RuntimeAccess` alone.
+  - The Mode 7 and readback drains (`mode7_transfers`, `vram_read_queue`)
+    take a `DrainHost` (the lease's transfer port). The record transfers
+    (`upload_mode7`, `read_vram`) go through `Wire` with the same byte and word
+    writes, in the same order, as `write_reg`/`write_reg_word`/`read_reg_word`.
+  - Verification (D7): the routes that step frames by hand
+    (`actor_composed_route`, `player_collision_composed_route`,
+    `room_world_cases`) run the NMI on `Runtime::new`.
+  - **Lease counts to check.** On `lease counters:` at the same `ticks=`,
+    `nested=` should be unchanged. `leases=` should fall by one on every frame
+    whose NMI was requested: Game's NMI opened a lease for the animated tiles,
+    and a resumed pass's NMI ran after its lease. On a yielding boot frame
+    with no request it rises by one, since the NMI now has a lease there.
+  - **"Session written after the last lease".** The NMI's tilemap flush and the
+    latch now come before the last lease ends, so the line should read
+    `0 ticks` on the rows below. Where it could still show: settlement, which
+    is after the lease. Its IRQ display stores are frame display words, held
+    outside the Session in Legacy. The door resume's `Runtime::new` per poll
+    is the tick's last lease on `door-transition`, `elevator-up` and
+    `door-loading-lag-nmi`. A field there names a settlement writer.
+  - **Census: the 25 Game impls left.** Found by deleting each in turn and
+    compiling sm in the verify cfg (the detached player and `cargo check` at
+    the end).
+    - The Game frame (2): `gameplay_frame::Host`, and `screen_fade::Owner`
+      (`RuntimeAccess`'s supertrait).
+    - Boot, before the frame's lease (11): `ContinuationAccess` (the logo's
+      `nintendo_logo_ending`), `Video`, `DisplayOwner` and
+      `display::preparation::Access` (`end_nintendo_logo`, boot's display
+      enable), `ObjectAccess` (`clear_high_table`, `finish_frame`), `SlotHost`
+      and `menus::state::Access` (`verify_boot`), and `LoadHost`'s other
+      supertraits, `LoadedImage`, `NativeImage`, `NativeDiagnostics` and
+      `Records`. Some of these have callers outside boot as well (below).
+      These go with boot's work on the frame's lease.
+    - The oracle checkpoint resume (`verify/checkpoint.rs`,
+      `resume_original_main_loop`) latches the next frame's controller on
+      Game: `SampleHost`, `ResetRequest`, `CompatibilityRam`,
+      `display_scroll::Access`, `sequence_state::Access` and
+      `gameplay_context::Access`. The lease's own `latched_controller_word`
+      also forwards to Game's. The resume runs on the oracle's RAM in the
+      middle of snesrev's main loop. A lease there would decode and export
+      that image, and the codec's round trip on a mid-loop oracle image is
+      not known to be the identity, so it stays on Game.
+    - Broad: `RuntimeAccess`, `SamusSources` (the Samus animation, and the
+      NMI's Samus upload, which runs on Game's published RAM),
+      `sprite_output::MapHost` (the sprite effect observer, cases 111..116),
+      `DecompressionHost` (`room_state`'s plane split), `AudioHost` (`music`,
+      the audio checkpoint cases), `SessionRam`.
+  - **Left, and why.** Settlement and the IRQ: see the design above. Boot's
+    work: the next slice. The NMI's Samus upload still runs native code on
+    Game's RAM after a publish. A lease host for `samus_tile_upload` (the
+    descriptors from the Session, `capture_table` on `samus_game()`) would
+    retire that.
+  - **Rows.** `door-loading-lag-nmi` (missed NMI), `door-transition` and
+    `elevator-up` (the IRQ door resume, after the lease), pause and unpause
+    (`pause-menu-tour`, `boss-kraid-pause-*`), the `item-*` message boxes,
+    `credits`, the Mode 7 rows (`boss-ceres-ridley`, `area-ceres`: the Mode 7
+    queue on the lease), the X-ray and Kraid pause readbacks (the readback
+    queue on the lease), any power-on row (the logo's frames now end on a
+    lease), the chain rooms, the SFX-loss rows `item-speed-booster`,
+    `enemy-fire-arc` and `music-fir-selector10`, and the nightly
+    `SM_NATIVE_LINES` route. RAM lockstep must stay at 0 failing frames.
+    The verifier's room world cases and the two composed routes should match
+    exactly.
 
 ### Stage 11: the rest
 
