@@ -296,6 +296,19 @@ impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_>
         room.liquid_velocity = velocity;
         room.liquid_delay = delay;
     }
+
+    fn draw_paletted_spritemap(
+        &mut self,
+        bank: u8,
+        address: u16,
+        position: (u16, u16),
+        palette: u16,
+        clip: sm_game::sprite_drawing::Clip,
+    ) {
+        self.draw_objects(|drawing| {
+            sm_game::sprite_output::paletted(bank, address, position, palette, clip, drawing)
+        });
+    }
 }
 
 impl sm_game::actors::ceres_ridley::Host for crate::game::session_runtime::Runtime<'_> {
