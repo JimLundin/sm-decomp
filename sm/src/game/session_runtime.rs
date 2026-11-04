@@ -112,7 +112,9 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.owned_player_call(|runtime| sm_game::message_boxes::poll(kind, runtime))
     }
     fn save_game(&mut self, slot: u16) {
-        self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
+        // The save's words are the lease's; the observations are refreshed on
+        // entry and on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| sm_game::menus::save_slots::save(slot, runtime));
     }
     fn run_other_pre_instruction(&mut self, address: u32) {
         if sm_game::actors::species::is_torizo_pre_instruction(address) {

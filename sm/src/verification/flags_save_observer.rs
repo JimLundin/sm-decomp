@@ -14,6 +14,20 @@ pub fn begin(id: u32) {
 }
 #[cfg(sm_verify_dll)]
 pub fn observe(stage: u8, game: &Game) {
+    observe_image(
+        stage,
+        || {
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect()
+        },
+        &game.g_sram,
+    );
+}
+/// The save stage over a RAM image, which a Session lease projects; it is
+/// taken only while a capture is active.
+#[cfg(sm_verify_dll)]
+pub fn observe_image(stage: u8, ram: impl FnOnce() -> Vec<u8>, sram: &sm_game::save_file::SaveRam) {
     if stage == 6 {
         // All in-memory save data and both checksum pairs have been written.
         crate::verify_probe::hit("save.sram.committed");
@@ -21,7 +35,7 @@ pub fn observe(stage: u8, game: &Game) {
     CAPTURE.with(|capture| {
         if let Some((output, next)) = capture.borrow_mut().as_mut() {
             assert_eq!(stage, *next, "actual save observer stage order");
-            case::state(output, stage, [0; 16], game);
+            case::state_image(output, stage, [0; 16], ram(), sram);
             *next += 1;
         }
     });

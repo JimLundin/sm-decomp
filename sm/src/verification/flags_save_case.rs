@@ -51,10 +51,21 @@ pub fn record(output: &mut Vec<u8>, tag: u8, payload: &[u8]) {
     output.extend_from_slice(payload);
 }
 pub fn state(output: &mut Vec<u8>, stage: u8, cpu: [u8; 16], game: &Game) {
+    let ram = (0..game.ram().len()).map(|at| game.ram().read_byte(at));
+    state_image(output, stage, cpu, ram, &game.g_sram);
+}
+/// A state record from a RAM image and the SRAM, as `state` records the game's.
+pub fn state_image(
+    output: &mut Vec<u8>,
+    stage: u8,
+    cpu: [u8; 16],
+    ram: impl IntoIterator<Item = u8>,
+    sram: &sm_game::save_file::SaveRam,
+) {
     let mut payload = vec![stage];
     payload.extend_from_slice(&cpu);
-    payload.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
-    payload.extend_from_slice(&game.g_sram.bytes(0..8192));
+    payload.extend(ram);
+    payload.extend_from_slice(&sram.bytes(0..8192));
     record(output, 1, &payload);
 }
 pub fn mask(output: &mut Vec<u8>, stage: u8, addresses: &std::collections::BTreeSet<usize>) {

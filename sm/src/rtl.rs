@@ -1471,7 +1471,7 @@ pub unsafe fn rtl_read_sram(game: &mut Game) {
         }
     }
 }
-pub unsafe fn rtl_write_sram(game: &mut Game) {
+pub unsafe fn rtl_write_sram(game: &Game) {
     unsafe {
         if game.VERIFY_ACTIVE {
             return;
