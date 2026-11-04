@@ -2678,58 +2678,6 @@ impl Game {
     }
 }
 
-/// The room load's level data steps on the RAM image.
-impl Game {
-    /// The level data's size in bytes ($7F:0000), little-endian.
-    pub(crate) fn level_data_size(&self) -> u16 {
-        let at = sm_game::ram::words::RAM7_F_START;
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    /// Split the level data the decompressor left in the RAM image into its
-    /// planes, as `LevelData::copy_level_planes` describes: the room load's
-    /// step on the published image, before the lease takes the bytes back.
-    pub(crate) fn copy_level_planes(&mut self) {
-        let size = usize::from(self.level_data_size());
-        for (source, destination, count) in [
-            (0x10002 + size + size / 2, 0x19602, size),
-            (0x10002 + size, 0x16402, size / 2),
-        ] {
-            // Valid room arrays can overlap. Preserve their pre-copy contents;
-            // malformed extents retain the checked forward loop's write prefix.
-            if source < destination + count
-                && destination < source + count
-                && source + count <= 0x20000
-                && destination + count <= 0x20000
-            {
-                crate::verify_probe::hit(if destination == 0x19602 {
-                    "room.level.layer2_overlap"
-                } else {
-                    "room.level.bts_overlap"
-                });
-                self.ram().copy_within(source..source + count, destination);
-            } else {
-                for index in 0..count {
-                    self.ram()
-                        .write_byte(destination + index, self.ram().read_byte(source + index));
-                }
-            }
-        }
-    }
-}
-
-/// Game's projection: compatibility reads and RAM-image stores, as named RAM words use.
-impl sm_game::runtime_access::SessionRam for Game {
-    fn byte(&self, at: usize) -> u8 {
-        Game::compatibility_byte(self, at)
-    }
-    fn set_byte(&mut self, at: usize, value: u8) {
-        self.ram().write_byte(at, value);
-    }
-    fn write_slice(&mut self, at: usize, bytes: &[u8]) {
-        self.ram().copy_in(at, bytes);
-    }
-}
-
 fn inventory_address(at: usize) -> bool {
     [
         0x9a2..0x9aa,

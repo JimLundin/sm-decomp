@@ -2,7 +2,6 @@
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::word;
-use sm_game::decompression::decompress_to_ram;
 
 /// Draygon's pause hook: the next scanline interrupt handler, on the lease.
 pub(crate) fn pause_draygon(game: &mut Runtime<'_>) {
@@ -30,10 +29,11 @@ pub(crate) fn unpause_draygon(game: &mut Runtime<'_>) -> crate::types::Coroutine
     0
 }
 
+/// The room load's level data step, on a fresh lease of `game`, as the room
+/// load runs it on the frame's lease.
 #[forbid(unsafe_code)]
 pub(crate) fn decompress_level(source: u32, game: &mut Game) {
-    decompress_to_ram(source, 0x10000, game);
-    game.copy_level_planes();
+    Runtime::new(game).decompress_level(crate::game::session_runtime::Compressed::Rom(source));
 }
 
 // The room's enemy tilesets load on the lease: each record is the loaded

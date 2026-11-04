@@ -67,8 +67,8 @@ pub(crate) enum Compressed<'a> {
     Rom(u32),
 }
 impl Compressed<'_> {
-    /// Decode into work RAM at `at` through Game's decompressor; the bytes produced.
-    fn decompress(self, at: usize, game: &mut Game) -> usize {
+    /// Decode into work RAM at `at` on the lease's byte path; the bytes produced.
+    fn decompress(self, at: usize, game: &mut Runtime<'_>) -> usize {
         match self {
             Self::Prepared(stream) => {
                 sm_game::decompression::decompress_prepared_table(stream, at, game)
@@ -650,47 +650,53 @@ impl<'g> Runtime<'g> {
         (reads, writes)
     }
     /// Decompress `source` into work RAM at `at`, as the original's decoder writes it; the
-    /// bytes it produced. The decoder runs on the published RAM image, where its back
-    /// references read the bytes it wrote, and the lease takes back exactly the bytes it
-    /// produced (`take_published_writes`).
+    /// bytes it produced. The decoder runs on the lease's byte path, where its back
+    /// references read the bytes it wrote; then the observations are refreshed, as the
+    /// former take-back of the published image's bytes left them.
     pub(crate) fn decompress_to_ram(&mut self, source: Compressed<'_>, at: usize) -> usize {
-        self.publish();
-        let produced = source.decompress(at, self.game);
-        let written = at..(at + produced).min(crate::game_state::WorkRam::LEN);
-        self.take_published_writes(std::slice::from_ref(&written));
+        let produced = source.decompress(at, self);
+        self.refresh_player_observations();
+        self.refresh_actor_observations();
         produced
     }
     /// Decompress the room's level data from `source` to $7F:0000, then split its planes
-    /// (`Game::copy_level_planes`), on the published RAM image as
-    /// `decompress_to_ram` runs; the lease takes back the decoded bytes and the two plane
-    /// copies' destinations.
+    /// (`copy_level_planes`), on the lease's byte path as `decompress_to_ram` runs.
     pub(crate) fn decompress_level(&mut self, source: Compressed<'_>) {
-        const LEVEL: usize = 0x10000;
-        let end = crate::game_state::WorkRam::LEN;
-        self.publish();
-        let produced = source.decompress(LEVEL, self.game);
-        self.game.copy_level_planes();
-        let size = usize::from(self.game.level_data_size());
-        self.take_published_writes(&[
-            LEVEL..(LEVEL + produced).min(end),
-            0x19602..(0x19602 + size).min(end),
-            0x16402..(0x16402 + size / 2).min(end),
-        ]);
-    }
-    /// Take back the RAM bytes in `written`, which a writer on the published image (after
-    /// `publish`) stored there, as a decode of just those bytes would read them; then
-    /// refresh the observations, as the former foreign call's import left them.
-    fn take_published_writes(&mut self, written: &[std::ops::Range<usize>]) {
-        take_written_bytes(
-            self.state.as_mut().expect("Session lease"),
-            self.game,
-            written,
-        );
-        if self.persistent_epoch.is_some() {
-            self.persistent_epoch = Some(self.game.compatibility_write_epoch());
-        }
+        source.decompress(0x10000, self);
+        self.copy_level_planes();
         self.refresh_player_observations();
         self.refresh_actor_observations();
+    }
+    /// Split the level data the decoder left at $7F:0000 into its planes: the
+    /// layer 2 tiles to $7F:9602 and the BTS to $7F:6402, each sized by the
+    /// level data's little-endian size word.
+    fn copy_level_planes(&mut self) {
+        let size = usize::from(self.word(sm_game::ram::words::RAM7_F_START));
+        for (source, destination, count) in [
+            (0x10002 + size + size / 2, 0x19602, size),
+            (0x10002 + size, 0x16402, size / 2),
+        ] {
+            // Valid room arrays can overlap. Preserve their pre-copy contents;
+            // malformed extents retain the checked forward loop's write prefix.
+            if source < destination + count
+                && destination < source + count
+                && source + count <= 0x20000
+                && destination + count <= 0x20000
+            {
+                crate::verify_probe::hit(if destination == 0x19602 {
+                    "room.level.layer2_overlap"
+                } else {
+                    "room.level.bts_overlap"
+                });
+                let bytes: Vec<u8> = (source..source + count).map(|at| self.byte(at)).collect();
+                self.write_slice(destination, &bytes);
+            } else {
+                for index in 0..count {
+                    let value = self.byte(source + index);
+                    self.set_byte(destination + index, value);
+                }
+            }
+        }
     }
     /// The game's imported visual tables.
     pub(crate) fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {

@@ -128,21 +128,6 @@ impl Game {
     }
 }
 
-impl sm_game::decompression::DecompressionHost for Game {
-    fn decompress_source(&self) -> u32 {
-        self.decompress_src
-    }
-    fn set_decompress_source(&mut self, source: u32) {
-        self.decompress_src = source;
-    }
-    fn report_invalid_rom_address(&mut self, address: u32) {
-        crate::rtl::report_invalid_rom_address(address, self)
-    }
-    fn read_rom_byte(&self, address: u32, offset: usize) -> u8 {
-        Game::read_rom_byte(self, address, offset)
-    }
-}
-
 // The moved menus and screens address these records by layout.
 const _: () = assert!(core::mem::size_of::<crate::types::VramWriteEntry>() == 7);
 const _: () = assert!(core::mem::offset_of!(crate::types::PairU16, j) == 2);
