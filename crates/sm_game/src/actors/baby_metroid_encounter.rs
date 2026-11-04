@@ -108,14 +108,8 @@ const _: () = {
     assert!(at(f::REMORSE) == 11137982);
 };
 
-pub trait Host: crate::actors::mother_brain_fight::Host {
-    /// Drain Samus's health while the baby Metroid is latched on. Was
-    /// `drain_health_by_baby_metroid`.
-    fn drain_health_by_baby_metroid(&mut self);
-}
-
-/// A Mother Brain lease whose game is this module's host.
-pub trait Lease: FightLease<Game: Host> {
+/// A Mother Brain lease with the baby Metroid's camera wait.
+pub trait Lease: FightLease {
     /// Run the camera wait on the current Session, retaining the former
     /// foreign entry's preflight and publication if an effect fails.
     fn wait_for_camera(&mut self);
@@ -353,7 +347,7 @@ crate::dispatch::callback_dispatch! {
             let v2: i32 = (BabyMetroid::of(game, e).actor().frame as i32 & 6) >> 1;
             BabyMetroidEdit::of(game, e).actor().x.whole = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16).wrapping_add(carry);
             BabyMetroidEdit::of(game, e).actor().y.whole = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16;
-            game.foreign(|game| game.drain_health_by_baby_metroid());
+            game.owned_step(crate::actors::mother_brain_vitals::drain_health_by_baby_metroid);
         };
     };
     [11137698] start_heel_realisation [] {

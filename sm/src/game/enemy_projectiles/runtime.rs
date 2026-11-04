@@ -1,7 +1,7 @@
 //! Content capture and exceptional imported aliases for the shared Session.
 #![forbid(unsafe_code)]
 use super::host::*;
-use crate::game::session_runtime::{Runtime, invalid_window};
+use crate::game::session_runtime::Runtime;
 use crate::ram_map::word_arrays as A;
 use crate::rom::RomImage;
 impl Host for Runtime<'_> {}
@@ -14,7 +14,7 @@ impl Content for Runtime<'_> {
     fn loaded_record(&mut self, bank: u8, bank_address: u16) -> Self::Loaded {
         let address = (u32::from(bank) << 16) | u32::from(bank_address);
         if address & 0x8000 == 0 {
-            self.foreign(|game| invalid_window(game, address));
+            self.report_invalid_window(address);
         }
         Self::Loaded::new(
             self.loaded_image().expect("ROM loaded"),
@@ -24,7 +24,7 @@ impl Content for Runtime<'_> {
     fn native_record(&mut self, bank: u8, bank_address: u16) -> Self::Native {
         let address = (u32::from(bank) << 16) | u32::from(bank_address);
         if address & 0x8000 == 0 {
-            self.foreign(|game| invalid_window(game, address));
+            self.report_invalid_window(address);
         }
         Self::Native::new(
             self.native_image(),

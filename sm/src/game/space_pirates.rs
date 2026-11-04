@@ -38,11 +38,6 @@ impl Pirates for Game {
         };
         spawn_with_enemy_gfx(parameter, word!(self.CUR_ENEMY_INDEX), 0xa189, self);
     }
-
-    fn load_ninja_palette(&mut self) {
-        let game = self;
-        word_transfers!(game, ascending, 16; native(0xc3e0) <- rom(0xb28727, 0));
-    }
 }
 
 impl PirateLease for Runtime<'_> {

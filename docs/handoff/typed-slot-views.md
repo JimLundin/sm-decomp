@@ -257,3 +257,36 @@ Left (10 raw calls):
   and the palette fade's colour store. The table copy needs a typed Game path before
   the helpers can go.
 - The demo stop's $077C..$0997 clear and the Crocomire melt copies, as before.
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc4`, on `tick-s9`)
+
+`foreign_calls` 168 to 138, `game_host_impls` 95 to 94; `sm_game_ram_sites` unchanged
+(88). No lease is opened that the code did not open, and every retired call refreshes
+the observations on entry and return (`owned_step`, `owned_player_call`, `on_lease`).
+Moved to the lease:
+- the Torizos' palette loads, hurt flash and Golden Torizo health bands (the pairs moved
+  from sm/'s `palette_effects::torizo` to `torizo::palettes`);
+- the palette fades, through `fading::Host` (the game keeps its RAM image store): Kraid's
+  three, the Torizo's colour change and the room entry's;
+- Mother Brain's Samus vitals (`actors::mother_brain_vitals`), contact damage, part
+  hitboxes and dead Torizo push-out (`actors::part_hitboxes`), and sprite tile entries;
+- the ninja pirate's palette and both pirate flinches from a held lease; Ridley's drops
+  and music; Yapping Maw's segment frees (`table::free`, new LEGACY overflow row); the
+  corpse rot overflow read; the BG3 velocity pick; the four pure invalid-window reports.
+
+Left, with what each needs:
+- Hardware (stage 4, D2): the room entry's register, VRAM and decompression calls, Bomb
+  Torizo's haze, the morph ball eye beam, Phantoon's wave, `hdma_program`'s channel
+  register, the animated tile upload, the sine/cosine multiplier, Yapping Maw's
+  multiplicand, the Mode 7 queue (`Mode7Queue` has no lease impl).
+- Dispatcher fallbacks (`species::ai`/`touch`/`shot`/`draw_hook`/`instruction`/
+  `pre_instruction`, `run_a7_function`, Torizo's `run_function`, the pirates' state
+  dispatch, the HDMA calls and pre-actions): they retire as their last species moves.
+- Diagnostics with a verify observer that snapshots RAM (`native_rom_diagnostic`,
+  the room background's): they need the observer to read the lease.
+- Mother Brain's `on_game` arm: one `foreign` for 17 entries; it goes when the last does.
+- Message boxes, save, item restore and pickup visuals: Game-hosted families.
+- Yapping Maw's visibility: `Runtime::update_maw_visibility` re-stamps the persistent
+  epoch for a fresh lease; on the held lease it needs a per-site audit.
+- The grapple tiles: the queue words alias the tile fields; both TileAccess impls exist,
+  but the Game side writes the sequence owner, so the alias cases need a replay first.

@@ -32,6 +32,7 @@ pub trait PirateLease:
     + crate::player_projectiles::host::Host
     + crate::sprite_effect_host::Host
     + crate::records::Records
+    + crate::word_transfers::LoadedRom
     + SlotState
 {
     type Game: Pirates + ?Sized;
@@ -61,8 +62,20 @@ pub trait Pirates: CompatibilityRam + crate::records::Records {
     /// Spawn projectile `parameter` from the current enemy within the
     /// rectangle at (`x`, `y`), after setting the rectangle.
     fn spawn_in_rect(&mut self, x: u16, y: u16, width: u16, height: u16, parameter: u16);
-    /// Copy the ninja pirates' palette into the sprite palette buffer.
-    fn load_ninja_palette(&mut self);
+}
+
+/// The ninja pirates' palette ($B2:8727), the target colours of sprite palette 7.
+const NINJA_PALETTE: u32 = 0xb2_8727;
+const NINJA_PALETTE_TARGETS: core::ops::Range<usize> = 240..256;
+
+/// Copy the ninja pirates' palette into the target colours, first colour
+/// first, in native order.
+fn load_ninja_palette<R: PirateLease>(runtime: &mut R) {
+    let colours: [u16; 16] = crate::word_transfers::rom_words(runtime, NINJA_PALETTE);
+    let targets = &mut runtime.session_mut().presentation.visual_mut().targets;
+    for (target, colour) in targets[NINJA_PALETTE_TARGETS].iter_mut().zip(colours) {
+        *target = colour;
+    }
 }
 
 /// The high word of `amplitude` times the sine of `phase`.
@@ -481,7 +494,12 @@ fn ninja_close_attack<G: Pirates + ?Sized>(check_center: bool, game: &mut G) -> 
 }
 
 fn flinch_from_projectile<G: Pirates + ?Sized>(walking: bool, game: &mut G) -> bool {
-    let mut runtime = game.lease();
+    flinch(walking, &mut game.lease())
+}
+
+/// Flinch from the last of Samus's first five shots within 32 pixels of the
+/// current pirate: the flinch list facing her, on `runtime`.
+fn flinch<R: PirateLease>(walking: bool, runtime: &mut R) -> bool {
     let Some(shot) = runtime.session().projectiles.shots[..5]
         .iter()
         .rev()
@@ -489,7 +507,7 @@ fn flinch_from_projectile<G: Pirates + ?Sized>(walking: bool, game: &mut G) -> b
     else {
         return false;
     };
-    let key = current(&runtime);
+    let key = current(runtime);
     let actor = runtime.resolve_actor(key, Native);
     if !within(shot.x.wrapping_sub(actor.x.whole), 32)
         || !within(shot.y.wrapping_sub(actor.y.whole), 32)
@@ -753,7 +771,7 @@ fn initialize_ninja<G: Pirates + ?Sized>(game: &mut G) {
         actor.y.whole
     });
     set_extra(&mut runtime, index, Extra::SpawnY, y);
-    runtime.foreign(|game| game.load_ninja_palette());
+    runtime.owned_step(load_ninja_palette);
 }
 
 fn ninja_initial<G: Pirates + ?Sized>(game: &mut G) {
@@ -772,7 +790,7 @@ fn ninja_initial<G: Pirates + ?Sized>(game: &mut G) {
             actor.instruction_delay = 1;
         });
     } else {
-        runtime.foreign(|game| flinch_from_projectile(false, game));
+        runtime.owned_step(|runtime| flinch(false, runtime));
     }
 }
 
@@ -1045,7 +1063,7 @@ fn advance<G: Pirates + ?Sized>(walking: bool, game: &mut G) {
     let index = runtime.session().actors.controls.selected;
     runtime.foreign(|game| dispatch_state(state, index, game));
     if walking && runtime.resolve_actor(key, Native).parameters[0] & PARAMETER_ALTERNATE != 0 {
-        runtime.foreign(|game| flinch_from_projectile(true, game));
+        runtime.owned_step(|runtime| flinch(true, runtime));
     }
 }
 

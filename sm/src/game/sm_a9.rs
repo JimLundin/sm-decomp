@@ -11,7 +11,6 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
-use crate::game::mother_brain_samus_vitals as vitals;
 use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 pub use crate::types::ConstsB7;
@@ -146,18 +145,6 @@ impl baby_metroid_encounter::Lease for Runtime<'_> {
     }
 }
 
-impl baby_metroid_encounter::Host for Game {
-    fn drain_health_by_baby_metroid(&mut self) {
-        vitals::drain_health_by_baby_metroid(self);
-    }
-}
-
-impl baby_metroid_cutscene::Host for Game {
-    fn heal_by_baby_metroid(&mut self) -> bool {
-        vitals::heal_by_baby_metroid(self)
-    }
-}
-
 impl Runtime<'_> {
     /// Bank $A9's AI, reactions and draw hooks that run on this lease: Mother
     /// Brain's, the tubes', the baby Metroid's and the corpses'; false when
@@ -259,24 +246,12 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         crate::game::mother_brain_visuals::spawn_wall_seal(self);
     }
 
-    fn drain_health_by_rainbow_beam(&mut self) {
-        crate::game::mother_brain_samus_vitals::drain_health_by_rainbow_beam(self);
-    }
-
-    fn drain_ammo_by_rainbow_beam(&mut self) {
-        crate::game::mother_brain_samus_vitals::drain_ammo_by_rainbow_beam(self);
-    }
-
     fn add_glass_hits(&mut self, slot: usize, amount: u16) {
         crate::game::room_mechanisms::add_glass_hits(slot, amount, self);
     }
 
     fn spawn_palette_effect(&mut self, definition: u16) {
         crate::game::palette_effects::spawn(definition, self);
-    }
-
-    fn queue_sprite_tile_entry(&mut self, bank: u8, at: u16) -> u16 {
-        crate::game::rom_vram_entries::queue_sprite_tile_entry(bank, at, self)
     }
 
     fn set_boss_bit_for_current_area(&mut self, mask: u16) {
@@ -309,25 +284,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
 
     fn set_native_word(&mut self, offset: usize, value: u16) {
         crate::game::display_refresh::set_native_word(offset, value, self);
-    }
-
-    fn samus_contact(
-        &mut self,
-        boxes: u16,
-        x: u16,
-        y: u16,
-    ) -> sm_game::actors::mother_brain_fight::Contact {
-        use crate::game::actors::part_hitboxes::Contact as Part;
-        use sm_game::actors::mother_brain_fight::Contact;
-        match crate::game::actors::part_hitboxes::samus_contact(boxes, x, y, self) {
-            Part::None => Contact::None,
-            Part::Pushed => Contact::Pushed,
-            Part::Hurt => Contact::Hurt,
-        }
-    }
-
-    fn dead_torizo_contact(&mut self) -> bool {
-        actors::part_hitboxes::dead_torizo_contact(self)
     }
 
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8 {

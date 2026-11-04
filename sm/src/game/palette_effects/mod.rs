@@ -1,10 +1,26 @@
 //! Palette effects using the shared gameplay Session and runtime.
-pub(crate) use sm_game::palette_effects::execution;
-pub(crate) mod torizo;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+pub(crate) use sm_game::palette_effects::execution;
 
 pub(crate) use execution::leased::{advance, clear, set_enabled, spawn};
+
+/// The game's fades store their colours in the work RAM image, outside the
+/// projection, as they always have.
+impl sm_game::palette_effects::fading::Host for Game {
+    fn store_faded_colour(&mut self, at: usize, bytes: [u8; 2]) {
+        self.ram().copy_in(at, &bytes);
+    }
+}
+
+/// A lease's fades store their colours in the Session, low byte then high.
+impl sm_game::palette_effects::fading::Host for Runtime<'_> {
+    fn store_faded_colour(&mut self, at: usize, bytes: [u8; 2]) {
+        for (at, byte) in (at..).zip(bytes) {
+            self.set_byte(at, byte);
+        }
+    }
+}
 
 /// Numeric identities remain private to the existing actual-code comparison carrier.
 pub(crate) mod checks {

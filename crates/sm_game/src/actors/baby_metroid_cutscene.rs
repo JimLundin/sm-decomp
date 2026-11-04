@@ -36,18 +36,9 @@ use crate::menus::menu_tilemap::native_record;
 use crate::palette_copies::copy_rom_colors_to_palette;
 
 /// What the cutscene reaches beyond the baby Metroid's encounter.
-pub trait Host: crate::actors::baby_metroid_encounter::Host {
-    /// Heal Samus by the baby Metroid; false once she is full. Was
-    /// `heal_by_baby_metroid`.
-    fn heal_by_baby_metroid(&mut self) -> bool;
-}
-
-/// A Mother Brain lease whose game is this module's host.
-pub trait Lease: FightLease<Game: Host> + crate::actors::baby_metroid_encounter::Lease {}
-impl<T: FightLease<Game: Host> + crate::actors::baby_metroid_encounter::Lease + ?Sized> Lease
-    for T
-{
-}
+/// A Mother Brain lease with the baby Metroid's camera wait.
+pub trait Lease: FightLease + crate::actors::baby_metroid_encounter::Lease {}
+impl<T: FightLease + crate::actors::baby_metroid_encounter::Lease + ?Sized> Lease for T {}
 
 /// The bank $A9 functions these slots run, named after the bank log's headings.
 pub mod function {
@@ -492,7 +483,7 @@ crate::dispatch::callback_dispatch! {
         let v2: i32 = (BabyMetroidInCutscene::of(game, e).actor().frame as i32 & 6) >> 1;
         BabyMetroidInCutsceneEdit::of(game, e).actor().x.whole = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16);
         BabyMetroidInCutsceneEdit::of(game, e).actor().y.whole = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16;
-        if !game.foreign(|game| game.heal_by_baby_metroid()) {
+        if !game.owned_step(crate::actors::mother_brain_vitals::heal_by_baby_metroid) {
             game.set_owned(OwnedWord::ReserveHealth, game.owned(OwnedWord::MaxReserveHealth));
             *BabyMetroidInCutsceneEdit::of(game, e).function() = function::IDLE_UNTIL_RUN_OUT_OF_HEALTH;
             *BabyMetroidInCutsceneEdit::of(game, e).palette_function() = function::PALETTE_NONE;

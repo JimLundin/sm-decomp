@@ -132,6 +132,7 @@ pub trait Host:
     + crate::presentation_workspace::ContinuationAccess
     + crate::presentation_workspace::Access
     + crate::presentation_workspace::PaletteAccess
+    + crate::palette_effects::fading::Host
     + crate::presentation_workspace::QueueAccess
     + crate::display::transfer::Mode7Queue
     + crate::display::transfer::TilemapQueue

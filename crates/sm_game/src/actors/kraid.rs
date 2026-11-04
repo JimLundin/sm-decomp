@@ -43,6 +43,7 @@ pub trait Lease:
     + crate::sprite_effect_host::Host
     + crate::enemy_projectiles::host::Host
     + crate::actors::boss_interaction::Access
+    + crate::palette_effects::fading::Host
     + SlotState
 {
     /// Whether actor `k` is touching Samus from above.
@@ -1212,7 +1213,7 @@ fn finish_bg2_tilemap<L: Lease>(game: &mut L) {
 
 /// Fades in the room, then starts the fight. Was `Kraid_GetsBig_FadeInRoomBg`.
 fn fade_in_room_bg<L: Lease>(game: &mut L) {
-    if game.foreign(background6) & 1 != 0 {
+    if game.owned_step(background6) & 1 != 0 {
         start_growing_thinking(game);
         enable_lint(game, TOP_LINT, LINT_TIMERS[0]);
         enable_lint(game, MIDDLE_LINT, LINT_TIMERS[1]);
@@ -1457,7 +1458,7 @@ fn foot_retreat_from_lunge<L: Lease>(game: &mut L) {
 /// Fades out the room, then queues the dying tilemap. Was `Kraid_Death_Fadeout`.
 fn death_fade_out<L: Lease>(game: &mut L) {
     process_script(game);
-    if game.foreign(background6) & 1 != 0 {
+    if game.owned_step(background6) & 1 != 0 {
         *BodyEdit::of(game, BODY).function() = function::DEATH_BG2_TOP_HALF;
         *BodyEdit::of(game, BODY).hurt_frame_timer() = 1;
         *BodyEdit::of(game, BODY).hurt_frame() = 1;
@@ -1553,7 +1554,7 @@ fn fade_in_clear_bg2_top<L: Lease>(game: &mut L) {
 /// `Kraid_FadeInBg_FadeInBp6`.
 pub fn fade_in_bg6<L: Lease>(game: &mut L) {
     game.observe_kraid_flags(0);
-    if game.foreign(background6) & 1 != 0 {
+    if game.owned_step(background6) & 1 != 0 {
         game.observe_kraid_flags(1);
         crate::enemy_projectiles::host::Effects::queue_music(game, 3);
         game.observe_kraid_flags(2);

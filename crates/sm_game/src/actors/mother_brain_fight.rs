@@ -844,6 +844,7 @@ pub trait Lease:
     + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
     + crate::player_update::effects::Host
+    + crate::player_projectiles::host::Host
     + crate::hdma_objects::HdmaTable
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
@@ -870,13 +871,8 @@ pub trait Host:
     fn bank_unreachable(&mut self) -> bool;
     /// The wall seal's dust clouds and wall blocks.
     fn spawn_wall_seal(&mut self);
-    fn drain_health_by_rainbow_beam(&mut self);
-    fn drain_ammo_by_rainbow_beam(&mut self);
     fn add_glass_hits(&mut self, slot: usize, amount: u16);
     fn spawn_palette_effect(&mut self, definition: u16);
-    /// Queue the sprite tile transfer entry at `at` in `bank` unless its size
-    /// is 0; the size.
-    fn queue_sprite_tile_entry(&mut self, bank: u8, at: u16) -> u16;
     fn set_boss_bit_for_current_area(&mut self, mask: u16);
     fn set_event_happened(&mut self, event: u16);
     fn check_event_happened(&mut self, event: u16) -> u16;
@@ -885,9 +881,6 @@ pub trait Host:
     fn player_mother_brain(&mut self, command: u16);
     fn load_fx_entry(&mut self, index: u16);
     fn set_native_word(&mut self, offset: usize, value: u16);
-    fn samus_contact(&mut self, boxes: u16, x: u16, y: u16) -> Contact;
-    /// Whether Samus touches one of the dead Torizo's hitboxes.
-    fn dead_torizo_contact(&mut self) -> bool;
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8;
     fn move_samus_vertically_towards_ceiling_floor(&mut self, amount: u16) -> u8;
     /// Start the corpse rotting of slot `k` from `definition`. Was
@@ -923,7 +916,6 @@ on_game! {
     spawn_rising_hdma() -> u16 => spawn_rising_hdma;
     player_mother_brain(command: u16) => player_mother_brain;
     load_fx_entry(index: u16) => load_fx_entry;
-    samus_contact(boxes: u16, x: u16, y: u16) -> Contact => samus_contact;
     move_samus_horizontally_towards_wall(amount: u16) -> u8 => move_samus_horizontally_towards_wall;
     move_samus_vertically_towards_ceiling_floor(amount: u16) -> u8 => move_samus_vertically_towards_ceiling_floor;
     add_glass_hits(slot: usize, amount: u16) => add_glass_hits;
@@ -940,7 +932,14 @@ pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut i
     if cursor == 0 {
         cursor = start;
     }
-    let mut size = game.foreign(|game| game.queue_sprite_tile_entry(bank, cursor));
+    let mut size = game.owned_step(|game| {
+        let entry = crate::cartridge::native_record(bank, cursor, game);
+        let size = entry.word(0);
+        if size != 0 {
+            crate::display::transfer::push_tilemap_record(game, &entry);
+        }
+        size
+    });
     if size != 0 {
         *BodyEdit::of(game, BODY_INDEX).sprite_tile_transfer() =
             cursor.wrapping_add(SPRITE_TILE_ENTRY);
@@ -1446,9 +1445,9 @@ crate::dispatch::callback_dispatch! {
         handle_body_rainbow_palette(game);
         aim_rainbow_beam_and_increase_width(game);
         handle_rainbow_beam_explosions(game);
-        game.foreign(|game| {
-            game.drain_health_by_rainbow_beam();
-            game.drain_ammo_by_rainbow_beam();
+        game.owned_step(|game| {
+            crate::actors::mother_brain_vitals::drain_health_by_rainbow_beam(game);
+            crate::actors::mother_brain_vitals::drain_ammo_by_rainbow_beam(game);
         });
         move_samus_towards_middle_of_wall(game);
         *BodyEdit::of(game, BODY_INDEX).function_timer() = Body::of(game, BODY_INDEX).function_timer().wrapping_sub(1);
@@ -2811,7 +2810,7 @@ pub fn samus_collision_detection(game: &mut impl Lease) {
 }
 pub fn part_samus_collision_detection(k: u16, r18: u16, r20: u16, game: &mut impl Lease) -> u8 {
     use crate::actors::mother_brain_fight::Contact;
-    match samus_contact(k, r18, r20, game) {
+    match game.owned_step(|game| crate::actors::part_hitboxes::samus_contact(k, r18, r20, game)) {
         Contact::None => 0,
         Contact::Pushed => 1,
         Contact::Hurt => {
@@ -2857,9 +2856,9 @@ pub(crate) fn collided_shot_kind(game: &impl State) -> u16 {
 /// the current enemy's contact damage. Was `Ridley_Func_98`.
 fn deal_contact_damage(game: &mut impl Lease) {
     let damage = crate::actors::ridley::contact_damage(game);
-    game.foreign(|game| {
-        let amount = game.suit_damage(damage);
-        game.damage_player(amount);
+    game.owned_step(|game| {
+        let amount = crate::actors::combat::suit_damage(game, damage);
+        crate::samus_periodic_damage::contact(game, amount);
     });
 }
 pub fn hurt_samus(game: &mut impl Lease) {

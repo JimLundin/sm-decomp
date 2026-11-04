@@ -30,19 +30,6 @@ pub(crate) fn native_rom_diagnostic(address: u32, game: &mut Game) {
     crate::room_contact_start_observer::diagnostic(address, game);
 }
 
-/// The native image at `bank:cursor`, as one original RomPtr fetch: a cursor
-/// below $8000 reports the invalid-window diagnostic and still reads its offset.
-pub(crate) fn native_record(bank: u8, cursor: u16, game: &mut Game) -> RomRecord {
-    let address = (u32::from(bank) << 16) | u32::from(cursor);
-    if address & 0x8000 == 0 {
-        native_rom_diagnostic(address, game);
-    }
-    RomRecord {
-        image: game.capture_native_rom(),
-        base: crate::rom::lorom_offset(address) as usize,
-    }
-}
-
 #[forbid(unsafe_code)]
 #[cfg(sm_verify_dll)]
 #[path = "../verification/actor_movement_runtime_observer.rs"]
@@ -487,6 +474,17 @@ impl<'g> Runtime<'g> {
             runtime.refresh_player_observations();
             result
         })
+    }
+    /// The game's imported visual tables.
+    pub(crate) fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
+        &self.game.visual_tables
+    }
+    /// The RomPtr invalid-window diagnostic on the lease. It prints and marks the
+    /// game failed, reading and storing no RAM, so the Session stays current; the
+    /// observations are refreshed on entry and on return, as the former foreign
+    /// call left them.
+    pub(crate) fn report_invalid_window(&mut self, address: u32) {
+        self.owned_player_call(|runtime| invalid_window(runtime.game, address));
     }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
     /// observations are refreshed on entry and on return, as the former foreign call left them.
@@ -969,7 +967,7 @@ impl Host for Runtime<'_> {
     fn native_record(&mut self, bank: u8, cursor: u16) -> RomRecord {
         let address = (u32::from(bank) << 16) | u32::from(cursor);
         if cursor & 0x8000 == 0 {
-            self.foreign(|g| invalid_window(g, address));
+            self.report_invalid_window(address);
         }
         content::captured(self.game.capture_native_rom(), address)
     }
