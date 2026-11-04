@@ -1952,17 +1952,19 @@ impl GameOwner {
     }
 }
 
-impl persistent_session::AudioHost for Game {
-    fn audio_byte(&self, at: usize) -> u8 {
+/// The audio request bytes and owner as Game's projection holds them, for the
+/// verification checks (`oracle_host::OracleHost`'s `AudioHost`).
+impl Game {
+    pub(crate) fn audio_byte(&self, at: usize) -> u8 {
         let byte = self.compatibility_byte(at);
         #[cfg(sm_verify_dll)]
         crate::game::session_runtime::assert_kept_audio_matches(self, at, byte);
         byte
     }
-    fn audio_store_byte(&mut self, at: usize, byte: u8) {
+    pub(crate) fn audio_store_byte(&mut self, at: usize, byte: u8) {
         self.compatibility_write_owned_byte(at, byte);
     }
-    fn audio_mutation<R>(
+    pub(crate) fn audio_mutation<R>(
         &mut self,
         operation: impl FnOnce(
             &mut persistent_session::AudioRequests,

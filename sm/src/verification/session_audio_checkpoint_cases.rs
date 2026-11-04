@@ -7,6 +7,7 @@ use crate::game_state::persistent_session::{
     AudioHost, AudioRequestCatalog, AudioRequests, MusicContinuation, MusicMeaning, MusicRequests,
     QueuedMusicMeaning, QueuedSoundMeaning, SessionStartContract, SoundMeaning, SoundRequests,
 };
+use crate::oracle_host::OracleHost;
 
 fn program() -> sc::AssetRef {
     sc::AssetRef {
@@ -433,7 +434,7 @@ fn assert_malformed(bytes: &[u8], reject: impl Fn(&[u8], &str)) {
 fn producing<R>(
     owner: &GameOwner,
     prepare: impl FnOnce(&mut AudioRequests),
-    operation: impl FnOnce(&mut crate::game_state::Game) -> R,
+    operation: impl FnOnce(&mut OracleHost<'_>) -> R,
 ) -> R {
     owner.with(|game| {
         let epoch = game.compatibility_write_epoch();
@@ -441,14 +442,15 @@ fn producing<R>(
         session.begin_interval(true).unwrap();
         prepare(session.gameplay.control.requests_mut().unwrap());
         game.return_persistent_session(session, true, epoch);
-        operation(game)
+        operation(&mut OracleHost(game))
     })
 }
 
 fn inspect_audio(
-    game: &mut crate::game_state::Game,
+    host: &mut OracleHost<'_>,
     inspect: impl FnOnce(&AudioRequests, &ss::InitialAudioIntent),
 ) {
+    let game = host.game();
     let epoch = game.compatibility_write_epoch();
     let session = game.lease_persistent_session().unwrap().unwrap();
     inspect(
@@ -633,7 +635,7 @@ fn assert_deliveries(
                 assert_eq!(game.audio_word(0x63b), 14);
                 assert_eq!(game.audio_word(0x7f3), 6);
                 assert_eq!(game.audio_byte(0x64c), 0xff);
-                assert_eq!(ApuQueueSnapshot::capture(game).to_bytes(), *accepted);
+                assert_eq!(ApuQueueSnapshot::capture(game.game()).to_bytes(), *accepted);
             },
         );
         assert!(owner.encode_session_checkpoint().is_err());

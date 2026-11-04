@@ -1,82 +1,9 @@
 //! Native callers and retained hardware effects for the shared request owner.
-use crate::game_state::Game;
-use crate::ram_map::checked_word;
-
 pub(crate) use sm_game::music_requests as requests;
 
-#[forbid(unsafe_code)]
-pub fn has_queued_music(game: &mut Game) -> u8 {
-    requests::has_queued_music(game)
-}
-
-pub(crate) use requests::{
-    queue_delayed as queue_music_delayed_y, queue_delayed_8 as queue_music_delayed_8,
-};
-
-pub unsafe fn handle_music_queue(game: &mut Game) {
-    unsafe {
-        requests::advance_music(game, |effect, meaning, game| {
-            match effect {
-                requests::MusicEffect::UploadBank => {
-                    let selector =
-                        sm_data::OriginalMusicBank(checked_word!(game.MUSIC_ENTRY) as u8);
-                    crate::native_audio::emit(
-                        crate::native_audio::music_bank_cue(selector, meaning),
-                        sm_data::CuePhase::MusicBank,
-                        game,
-                    );
-                }
-                requests::MusicEffect::WriteTrack(track) => crate::native_audio::emit(
-                    crate::native_audio::music_cue(sm_data::OriginalMusicTrack(track), meaning),
-                    sm_data::CuePhase::MusicTrack,
-                    game,
-                ),
-            }
-            Ok(())
-        })
-        .expect("audio music advance");
-    }
-}
-
-#[forbid(unsafe_code)]
-pub fn play_room_music_track_after_aframes(delay: u16, game: &mut Game) {
-    if checked_word!(game.GAME_STATE) < 40 {
-        queue_music_delayed_y(0, delay, game);
-        queue_music_delayed_8(checked_word!(game.MUSIC_TRACK_INDEX), game);
-    }
-}
-
-// Byte-backed queue layout from ram_map: three channels, sixteen slots each.
-pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) -> u16 {
-    #[cfg(sm_verify_dll)]
-    crate::game::visual_runtime::samus_observer::sound(channel, sound, max_queued);
-    requests::queue_sfx(channel, sound, max_queued, game).expect("audio sound enqueue")
-}
-
-crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    queue_sfx1_max15 => queue_sfx(0, sound as u8, 15, game);
-    queue_sfx1_max9 => queue_sfx(0, sound as u8, 9, game);
-    queue_sfx1_max3 => queue_sfx(0, sound as u8, 3, game);
-    queue_sfx1_max1 => queue_sfx(0, sound as u8, 1, game);
-    queue_sfx1_max6 => queue_sfx(0, sound as u8, 6, game);
-}
-crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    queue_sfx2_max15 => queue_sfx(1, sound as u8, 15, game);
-    queue_sfx2_max9 => queue_sfx(1, sound as u8, 9, game);
-    queue_sfx2_max3 => queue_sfx(1, sound as u8, 3, game);
-    queue_sfx2_max1 => queue_sfx(1, sound as u8, 1, game);
-    queue_sfx2_max6 => queue_sfx(1, sound as u8, 6, game);
-}
-crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    queue_sfx3_max15 => queue_sfx(2, sound as u8, 15, game);
-    queue_sfx3_max9 => queue_sfx(2, sound as u8, 9, game);
-    queue_sfx3_max3 => queue_sfx(2, sound as u8, 3, game);
-    queue_sfx3_max1 => queue_sfx(2, sound as u8, 1, game);
-    queue_sfx3_max6 => queue_sfx(2, sound as u8, 6, game);
-}
-pub fn clear_sound_queues(game: &mut Game) {
-    requests::reset_sound_queues(game).expect("audio sound queue reset");
-}
+// The verification checks queue music on Game's image through
+// `oracle_host::OracleHost`; the engine queues it on its lease (below).
+pub(crate) use requests::queue_delayed_8 as queue_music_delayed_8;
 
 /// The requests a lease queues on its own Session: the routines the foreign calls ran on the
 /// exported game, over the lease's audio host. The Session's control owns the request bytes

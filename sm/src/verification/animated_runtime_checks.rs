@@ -92,7 +92,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                 catch_unwind(AssertUnwindSafe(|| {
                     runtime.foreign(|game| {
                         assert_eq!(word(&|at| game.ram().read_byte(at), 0x1ef3), 10);
-                        queue_music_delayed_8(0x3456, game);
+                        queue_music_delayed_8(0x3456, &mut crate::oracle_host::OracleHost(game));
                         panic!("intentional animation callback unwind");
                     });
                 }))

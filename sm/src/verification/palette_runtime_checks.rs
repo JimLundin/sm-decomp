@@ -131,7 +131,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                         14
                     );
                     assert_eq!(word(&|at| game.ram().read_byte(at), 0xc00a), 0x4567);
-                    queue_music_delayed_8(0x2345, game);
+                    queue_music_delayed_8(0x2345, &mut crate::oracle_host::OracleHost(game));
                     panic!("intentional palette callback unwind");
                 });
             }));

@@ -142,3 +142,22 @@ impl sm_game::gameplay_context::Access for OracleHost<'_> {
         self.0.set_gameplay_byte(word, lane, byte);
     }
 }
+
+impl sm_game::session_owners::AudioHost for OracleHost<'_> {
+    fn audio_byte(&self, at: usize) -> u8 {
+        self.0.audio_byte(at)
+    }
+    fn audio_store_byte(&mut self, at: usize, byte: u8) {
+        self.0.audio_store_byte(at, byte);
+    }
+    fn audio_mutation<R>(
+        &mut self,
+        operation: impl FnOnce(
+            &mut sm_game::session_owners::AudioRequests,
+            &mut sm_game::scene::start::InitialAudioIntent,
+            sm_game::session_owners::AudioStamp,
+        ) -> Result<R, sm_game::scene::state::DisplayError>,
+    ) -> Result<Option<R>, sm_game::scene::state::DisplayError> {
+        self.0.audio_mutation(operation)
+    }
+}
