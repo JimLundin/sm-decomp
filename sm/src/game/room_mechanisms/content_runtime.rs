@@ -3,10 +3,7 @@
 use super::host::{
     Content, ContentAddress, ContentTable, Diagnostic, DrawCursor, DrawProgramId, Effects,
 };
-use crate::{
-    game::session_runtime::{Runtime, invalid_window},
-    rom::RomRecord,
-};
+use crate::{game::session_runtime::Runtime, rom::RomRecord};
 
 pub enum TerrainProgram {
     Loaded(RomRecord),
@@ -22,7 +19,7 @@ impl Content for Runtime<'_> {
     fn loaded_record(&mut self, location: ContentAddress) -> RomRecord {
         let absolute = address(location);
         if location.offset & 0x8000 == 0 {
-            self.foreign(|g| invalid_window(g, absolute));
+            self.report_invalid_window(absolute);
         }
         RomRecord {
             image: self.loaded_image().expect("ROM must be loaded"),
@@ -45,7 +42,7 @@ impl Content for Runtime<'_> {
             self.refresh_player_observations();
         }
         if location.offset & 0x8000 == 0 {
-            self.foreign(|g| invalid_window(g, absolute));
+            self.report_invalid_window(absolute);
         }
         RomRecord {
             image: self.native_image(),
