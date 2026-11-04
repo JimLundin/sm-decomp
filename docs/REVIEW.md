@@ -154,6 +154,31 @@ These answer the decisions D6, D7 and D9 in
   `foreign` calls are retired together when `foreign` itself is removed. They are
   not ported one by one.
 
+### End state: the engine alone, against the emulator oracle (Jim, 2026-11-04)
+
+Jim confirmed the target. Only the new engine runs the game, and the emulator is
+used solely as the oracle. Once `sm_game_ram_sites` reached 0, the work runs in
+this order:
+
+1. **Compare in Session space.** Verification decodes the oracle emulator's RAM
+   into a Session and compares it with the engine's Session (D6). The engine then
+   no longer needs to export RAM for comparison.
+2. **The runtime owns the tick.** One lease per tick, with the NMI inside the
+   tick. After that, `foreign`, the leases and the Session ↔ RAM export are
+   deleted, and `Game` implements no `sm_game` host trait.
+3. **The native renderer is the replay output (D9).** The emulated PPU remains
+   only on the oracle side.
+4. **The old `sm/` game code is deleted.** What stays is the emulator, used as the
+   oracle, plus the RAM-to-Session translation in verification.
+
+Strict ratchet measures for this phase:
+
+- `game_host_impls` must reach 0.
+- `session_entries` (leases opened from the engine) must reach 0.
+- The RAM export/decode lines in the engine must reach 0.
+
+`sm_game_ram_sites` and `foreign_calls` stay strict as well.
+
 ### Scenario harness, lane S (Jim, 2026-10-31)
 
 Jim approved the scenario harness in #6 on 2026-10-31; the design is

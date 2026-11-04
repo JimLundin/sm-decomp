@@ -91,7 +91,9 @@ BASELINE = {
     "session_word_view_sites": 202,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
-            "engine_legacy_overflow_sites", "session_entries", "session_word_view_sites"}
+            "engine_legacy_overflow_sites", "session_word_view_sites"}
+# session_entries is strict from 2026-11-04: Jim's end state (docs/REVIEW.md) is
+# the engine alone, so leases opened from the engine must reach 0.
 
 
 CFG_TEST = re.compile(r"^\s*#\[cfg\(test\)\]\s*$")
