@@ -271,6 +271,7 @@ pub fn queue_sfx(
     max_queued: u8,
     host: &mut (impl AudioHost + ?Sized),
 ) -> Result<u16, DisplayError> {
+    let sound = if channel == 2 { sound.wrapping_add(1) } else { sound };
     let read_pos = 0x643 + channel;
     let write_pos = 0x646 + channel;
     let limit_pos = 0x653 + channel;
