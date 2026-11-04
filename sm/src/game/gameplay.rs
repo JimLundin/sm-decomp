@@ -82,6 +82,9 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
             }
         }
     }
+    fn settle_frame(&mut self) {
+        crate::game::scanline_irq::settle_on_lease(self);
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.

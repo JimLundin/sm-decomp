@@ -2703,6 +2703,42 @@ impl sm_game::display::video::Video for Runtime<'_> {
         }
     }
 }
+// The beam on the frame's lease: its events are the device's (`cpu_infra::beam`),
+// and HDMA reads work RAM, which the lease has published; each scanline
+// interrupt runs on this lease (`scanline_irq::advance_on_lease`).
+impl sm_game::scene::settle::SettlementHost for Runtime<'_> {
+    type Error = std::convert::Infallible;
+
+    // SAFETY, for each call below: a lease runs with the backend installed, and
+    // `&mut Game` excludes other access.
+    fn reset_beam(&mut self) {
+        unsafe { crate::cpu_infra::beam::reset(self.game) }
+    }
+    fn nmi_wanted(&self) -> bool {
+        unsafe { crate::cpu_infra::beam::nmi_wanted(self.game) }
+    }
+    fn advance_at(&mut self, position: u16) -> Result<(), Self::Error> {
+        unsafe { crate::cpu_infra::beam::advance_at(self.game, position) };
+        Ok(())
+    }
+    fn vertical_irq_enabled(&self) -> bool {
+        unsafe { crate::cpu_infra::beam::vertical_irq_enabled(self.game) }
+    }
+    fn vertical_position(&self) -> u16 {
+        unsafe { crate::cpu_infra::beam::vertical_position(self.game) }
+    }
+    fn vertical_timer(&self) -> u16 {
+        unsafe { crate::cpu_infra::beam::vertical_timer(self.game) }
+    }
+    fn interrupt(&mut self) -> Result<(), Self::Error> {
+        let line = self.vertical_timer();
+        crate::game::scanline_irq::advance_on_lease(self, line);
+        Ok(())
+    }
+    fn clear_nmi(&mut self) {
+        unsafe { crate::cpu_infra::beam::clear_nmi(self.game) }
+    }
+}
 // The channel registers are device registers; the object table is the lease's.
 impl sm_game::hdma_objects::Allocator for Runtime<'_> {
     fn write_channel_control(&mut self, register: u16, control: u16) {

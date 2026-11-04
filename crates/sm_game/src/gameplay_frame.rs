@@ -138,6 +138,10 @@ pub trait PassLease:
     fn pause_hook(&mut self, hook: PauseHook);
     /// The room's unpause hook, as the pause screen closes; nonzero when it yields.
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
+    /// The frame's settlement after its end: the beam from the top of the
+    /// screen to the next vertical blank, with HDMA on every line and the
+    /// scanline interrupts and their door resume polls on this lease.
+    fn settle_frame(&mut self);
 }
 
 #[derive(Clone, Copy)]
@@ -337,8 +341,8 @@ enum Start {
 
 /// Frame phase: boot continuation, frame start, state dispatch and frame end,
 /// on the frame's lease. Boot runs before it, on Game and the logo's own lease.
-/// The frame's end (`end_frame`: the NMI and the controller latch) runs on the
-/// frame's lease too, inside the tick.
+/// The frame's end (`end_frame`: the NMI and the controller latch) and the
+/// beam's settlement run on the frame's lease too, inside the tick.
 fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     game.begin_session_interval(game.resume_point() == 0);
     let st: i32 = game.outer_continuation() as i32;
@@ -394,7 +398,11 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         }
         Start::Resume(entry) => lease_frame::<H>(entry, &mut lease),
     };
-    end_frame(returned, &mut lease)
+    let returned = end_frame(returned, &mut lease);
+    // The beam runs after the frame's end, on the frame's lease: the door
+    // resume an interrupt polls runs on it too, so no lease opens inside it.
+    lease.settle_frame();
+    returned
 }
 
 /// Boot's work after its RAM clear and register setup, as the frame lease's

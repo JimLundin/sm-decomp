@@ -1,4 +1,5 @@
-//! Native access for the shared scanline interrupt's per-line handler.
+//! Native access for the shared scanline interrupt's per-line handler, on Game
+//! and on the frame's lease.
 use crate::game_state::Game;
 use std::convert::Infallible;
 use {
@@ -58,6 +59,9 @@ pub(crate) unsafe fn follow_transition(game: &mut Game) {
     );
 }
 
+/// One interrupt pass on Game: settlement after an emulated frame (the
+/// oracle's) or a frame stepped by hand. The engine's frames settle on their
+/// lease (`advance_on_lease`).
 /// Requires a live, exclusively accessed SNES backend for the entire interrupt.
 pub(crate) unsafe fn advance(game: &mut Game) {
     #[cfg(sm_verify_dll)]
@@ -69,6 +73,87 @@ pub(crate) unsafe fn advance(game: &mut Game) {
     )));
     #[cfg(sm_verify_dll)]
     publish_check::end_pass(game);
+}
+
+/// The scanline interrupt on the frame's lease: the controls and mirrors are
+/// the lease's, the outputs device writes, and a door resume poll runs on the
+/// lease itself, with the observations refreshed as the fresh lease Game's
+/// poll opened left them. `stored` records a control store or a poll, after
+/// which the lease publishes before the beam's next event reads work RAM.
+struct LeaseIrqHost<'a, 'g> {
+    irq: sm_game::display_refresh::ScanlineIrq<'a, session_runtime::Runtime<'g>>,
+    stored: bool,
+}
+impl irq::Controls for LeaseIrqHost<'_, '_> {
+    fn read_control(&mut self, field: irq::Control) -> u16 {
+        irq::Controls::read_control(&mut self.irq, field)
+    }
+    fn write_control(&mut self, field: irq::Store, value: u16) {
+        #[cfg(sm_verify_dll)]
+        table_check::store(field, value);
+        irq::Controls::write_control(&mut self.irq, field, value);
+        self.stored = true;
+    }
+}
+impl irq::Display for LeaseIrqHost<'_, '_> {
+    type Error = Infallible;
+
+    fn read_mirror(&mut self, field: irq::Mirror) -> u8 {
+        irq::Display::read_mirror(&mut self.irq, field)
+    }
+    fn write_display(&mut self, field: irq::Output, value: u8) -> Result<(), Infallible> {
+        #[cfg(sm_verify_dll)]
+        table_check::record(field, value);
+        irq::Display::write_display(&mut self.irq, field, value)
+    }
+}
+impl irq::Host for LeaseIrqHost<'_, '_> {
+    fn follow_transition(&mut self) -> Result<(), Infallible> {
+        #[cfg(sm_verify_dll)]
+        table_check::resumed();
+        self.irq.0.owned_player_call(|lease| {
+            room_entry::protocol::resume(lease, room_entry::EntrySignal::ScrollIrq);
+        });
+        self.stored = true;
+        Ok(())
+    }
+}
+
+/// One interrupt pass on the frame's lease, at the line the beam reached. A
+/// pass that stored publishes the lease, so HDMA on the following lines reads
+/// work RAM as Game's stores and its poll's lease release left it.
+pub(crate) fn advance_on_lease(lease: &mut session_runtime::Runtime<'_>, line: u16) {
+    #[cfg(sm_verify_dll)]
+    table_check::begin_pass(line);
+    #[cfg(not(sm_verify_dll))]
+    let _ = line;
+    let mut host = LeaseIrqHost {
+        irq: sm_game::display_refresh::ScanlineIrq(lease),
+        stored: false,
+    };
+    let Ok(()) = irq::advance(&mut host);
+    if host.stored {
+        lease.publish();
+    }
+}
+
+/// The frame's settlement on its lease (`PassLease::settle_frame`): the lease
+/// publishes first, so HDMA's first table read finds the bytes the lease's
+/// deferred export would have written there, then the beam runs as on Game.
+pub(crate) fn settle_on_lease(lease: &mut session_runtime::Runtime<'_>) {
+    lease.publish();
+    #[cfg(sm_verify_dll)]
+    {
+        use sm_game::scene::settle::SettlementHost as _;
+        let (timer, enable) = (lease.vertical_timer(), lease.vertical_irq_enabled());
+        table_check::begin_frame_on(lease, timer, enable);
+    }
+    match sm_game::scene::settle::settle(lease) {
+        Ok(()) => (),
+        Err(never) => match never {},
+    }
+    #[cfg(sm_verify_dll)]
+    table_check::end_frame();
 }
 
 /// Scanline interrupts as per-frame tables (native renderer step 4). With
@@ -183,10 +268,26 @@ pub(crate) mod table_check {
     }
 
     pub(crate) fn begin_frame(game: &mut Game) {
+        let (timer, enable) = unsafe { ((*game.g_snes).vTimer, (*game.g_snes).vIrqEnabled) };
+        begin_frame_on(game, timer, enable);
+    }
+
+    /// `begin_frame` from `host`'s controls and mirrors (Game's, or the frame
+    /// lease's), with the device's vertical timer and its enable.
+    pub(crate) fn begin_frame_on<
+        H: sm_game::display::preparation::Access
+            + sm_game::ram::CompatibilityRam
+            + sm_game::display::video::Video
+            + ?Sized,
+    >(
+        host: &mut H,
+        timer: u16,
+        enable: bool,
+    ) {
         if !planning() {
             return;
         }
-        let mut live = ScanlineIrq(&mut *game);
+        let mut live = ScanlineIrq(host);
         let mut scratch = Scratch {
             controls: [
                 irq::Control::Current,
@@ -206,7 +307,6 @@ pub(crate) mod table_check {
             ]
             .map(|field| irq::Display::read_mirror(&mut live, field)),
         };
-        let (timer, enable) = unsafe { ((*game.g_snes).vTimer, (*game.g_snes).vIrqEnabled) };
         let planned = match irq::frame_table(&mut scratch, timer, enable) {
             Ok(planned) => planned,
             Err(never) => match never {},
@@ -309,6 +409,11 @@ pub(crate) mod table_check {
 /// addresses and counts; no byte values). `SM_IRQ_PUBLISH_COUNTS.<pid>` holds
 /// each verifier process's running totals, so a run that checked nothing
 /// shows it.
+///
+/// The check hooks Game's interrupt pass (`advance`). Once the engine's frames
+/// settle on their lease (`settle_on_lease`), only the oracle's frames and the
+/// frames verification steps by hand pass there, so its engine numbers are the
+/// ones a run of the commit before that move reports.
 #[cfg(sm_verify_dll)]
 pub(crate) mod publish_check {
     use super::{Game, irq};
