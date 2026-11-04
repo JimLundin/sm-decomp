@@ -387,7 +387,7 @@ pub fn draw_body<A: Authority>(h: &mut A, mode: Body) {
     // Setting the tiles definitions ($92:8023) leaves the top half's table index in $16, the
     // scratch word the next door-closing PLM takes as its room argument.
     let Ok(definition) = samus_position_tiles::definition(&mut TileHost(h));
-    h.session_mut().spawn_scratch.argument = u16::from(definition.byte(0));
+    h.session_mut().spawn_scratch.argument = u16::from(definition.byte(0)) ^ 1;
 }
 
 fn sprite_index<A: Authority>(h: &mut A, half: Half, pose: u16, little_endian: bool) -> u16 {
