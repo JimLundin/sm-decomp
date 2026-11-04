@@ -38,11 +38,12 @@ fn hit<H: ActorHost>(
     index: usize,
     touch: bool,
 ) -> bool {
-    bounds.hits(
+    let mut right = None;
+    let hits = bounds.hits(
         x,
         y,
         |edge| {
-            h.actor_collision_word(
+            let word = h.actor_collision_word(
                 source,
                 index,
                 match edge {
@@ -51,10 +52,20 @@ fn hit<H: ActorHost>(
                     HitboxEdge::Top => ActorCollisionWord::Top,
                     HitboxEdge::Bottom => ActorCollisionWord::Bottom,
                 },
-            )
+            );
+            if let HitboxEdge::Right = edge {
+                right = Some(word);
+            }
+            word
         },
         touch,
-    )
+    );
+    // The projectile and bomb scans ($A0:9C6B, $A0:9E06) leave the last right
+    // boundary they reached in $1874; the Samus scan keeps it in a register.
+    if !touch && let Some(word) = right {
+        h.session_mut().actors.compatibility.right_border = word.wrapping_add(x);
+    }
+    hits
 }
 pub fn process_contacts<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H) {
     if h.resolve_actor(current(h), AccessMode::Native)

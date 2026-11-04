@@ -189,8 +189,8 @@ pub struct ActorCompatibility {
     pub debug_enemy_index: u16,
     pub log_index: u16,
     pub scratch: [u16; 5],
-    /// $7E:1874, the removed spritemap collision's right border word, which
-    /// the bang still stores its beam direction to.
+    /// $7E:1874, the enemy right boundary the extended spritemap projectile
+    /// and bomb scans leave ($A0:9C6B, $A0:9E06).
     pub right_border: u16,
     /// The spare words among the enemy globals, which no gameplay routine
     /// uses and the ending's shooting stars keep records in: $7E:0E0C..$0E11,

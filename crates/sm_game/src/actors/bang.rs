@@ -213,9 +213,11 @@ fn core(runtime: &mut impl Lease) {
 /// Fire charged beam at Samus ($A3:BBEB) in projectile `direction`, as Samus's own
 /// charged beam with the bang's damage; the death animation: a small explosion, or
 /// with five projectiles out already, the Samus-contact death.
+///
+/// The original also keeps `direction` in $7E:1872 (the bottom border scratch
+/// the enemy collision shares), which no Session field owns; its
+/// `LEGACY(verifier)` row still normalizes it.
 fn fire_charged_beam(runtime: &mut impl Lease, direction: u16) -> u16 {
-    runtime.session_mut().actors.compatibility.right_border = direction;
-    runtime.words_stored();
     if runtime.session().projectiles.count.wrapping_sub(5) & SIGN == 0 {
         return 1;
     }
