@@ -537,3 +537,58 @@ Left (18 calls outside D2/D7/D9), with what each needs:
 - The slope behaviour read (player_collision): past $7F:FFFF it reads bank $80's low
   half. That half is the WRAM mirror, the PPU/CPU registers (some of them, such as
   $2180, read WRAM) and open bus, so the bus read can't be a projection.
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc8`, on `rs-fc7`)
+
+`foreign_calls` 90 to 80, `game_host_impls` 90 to 89; `sm_game_ram_sites`,
+`engine_ram_address_sites` and `legacy_engine_ram_sites` unchanged. No lease is added
+mid-frame. Each retired call runs on the lease that called it, in an owned player call
+(`on_lease`, `on_object`, `owned_player_call`, a boss's `owned_step`), which refreshes
+the observations on entry and return. No Session field or format changed.
+
+Retired:
+- The X-ray background (3). `xray_background::Host` is the owned-Session view plus the
+  readback queue (`display_refresh::ReadbackQueue`, split out of the refresh host), the
+  VRAM write queue, the screen workspace, the HDMA objects, the sequence words, the
+  window sources and sound. The Runtime implements it; Game does not. The HDMA call
+  fallback, `with_current_object` and the restore right are gone.
+- The explosion windows. `explosion_window::Host` drops `MenuRuntime`,
+  `RuntimeAccess` and `CompatibilityRam` for what the windows call, plus
+  `pose_command`; the window row is still Game's `k_out`.
+- The sky scrolls (`scrolling_sky::ScrollHost`), the title gradient backdrop and the
+  Tourian statue (`room_visuals::StatueHost`, now the Session view plus the shake).
+  With these, `with_object` and the pre-action fallback are gone (2), and the
+  interpreter's own `foreign` forwarder, whose one caller left was the channel register
+  write, is gone too (1): that D2 write now calls the lease's `foreign` directly.
+- The FX initializers (1), through `room_state::fx::SetupHost`. Game is a SetupHost
+  through a blanket over menu hosts that opens a fresh lease per rule, so the room setup
+  code's land and haze calls are unchanged.
+- HDMA spawns (3): the morph ball eye's beam, Phantoon's wave and the Bomb Torizo haze.
+  Each spawn's channel registers make the allocator's existing D2 foreign call on the
+  lease, as the power bomb spawns do.
+
+Corpus that exercises these: the X-ray scope rows (capture, overlay, restore); power
+bombs and the Crystal Flash; the Wrecked Ship's land and ocean sky rooms and the banded
+sky; the title (gradient backdrop); the Tourian statue room; every room whose FX starts
+lava, acid, water, weather, fireflea lighting, haze or the Ceres effects; the morph ball
+eye, Phantoon and Bomb Torizo rows.
+
+Left (outside D2/D7/D9), with what each needs:
+- The species fallbacks (`actor_ai_legacy`, `actor_instruction_legacy`, the gunship's
+  other pre-instruction): unchanged from fc7.
+- The room-entry leaf effects (compatibility 83). Moving every arm does not lower the
+  count: `LoadEnemyGraphics` copies to VRAM now (`RoomDma::copy_to_vram_now`, a forced
+  blank DMA), so on the lease it needs a D2 foreign of its own. The music arms can use
+  `music_requests` over the lease's `AudioHost`; the map arms need `map_station_byte`
+  and the used-station bytes on the lease.
+- The message display (room_mechanisms runtime 155) and `rom_record` ×3: unchanged; their
+  verify observers replace the loaded ROM and write RAM inside the read.
+- The grapple tiles: not proved.
+- The slope read (player_collision): D2. For a block of $9BFE or more the read leaves
+  $7F and reaches bank $80's low half: the WRAM mirror, then from block $BBFE the PPU
+  and CPU registers ($2180 WMDATA advances the WRAM address on read) and open bus. It
+  is a bus access to hardware, so it stays with D2.
+- Also seen: Yapping Maw's visibility (`Runtime::new(game).update_maw_visibility`) stores
+  raw RAM and projects only some lanes into the fresh lease, so running it on the
+  calling lease could leave lanes that the publication would overwrite. It needs a typed
+  store first. Mother Brain's neck offsets use the multiplier registers (D2).
