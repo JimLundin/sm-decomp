@@ -8,7 +8,7 @@ use crate::game::session_runtime::Runtime;
 use sm_game::gameplay_frame::{NativeState, PauseHook, UnpauseHook};
 use sm_game::room_entry::api::EntrySignal;
 
-pub(crate) use sm_game::gameplay_frame::{TickInput, tick};
+pub(crate) use sm_game::gameplay_frame::TickInput;
 
 impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn clear_apu_ports(&mut self) {
@@ -101,28 +101,33 @@ fn report_broken_coroutine(state: [u8; 4]) {
     }
 }
 
-impl sm_game::gameplay_frame::Host for Game {
-    fn latch_controller(&mut self, buttons: u16) {
-        // The emulated joypad register reads the controller state bit-reversed.
-        self.input1_mut().currentState = buttons.reverse_bits();
+/// One tick, which the runtime owns: the device's work before the frame's
+/// lease (the controller latch, the Session interval, boot's device work and
+/// the pass continuations' clear), then the frame on the one lease the runtime
+/// opens for it. Each device step is the call the frame made through its host.
+pub(crate) fn tick(input: TickInput, game: &mut Game) -> CoroutineRet {
+    use sm_game::gameplay_frame::{Continuation, Start, frame};
+    // The emulated joypad register reads the controller state bit-reversed.
+    game.input1_mut().currentState = input.buttons.reverse_bits();
+    let fresh = game.coroutine_state_1() == 0;
+    Game::begin_session_interval(game, fresh).expect("Session interval entry");
+    let start = match Continuation::of(Game::frame_state(game)) {
+        // SAFETY: boot resumes with the backend installed and exclusively
+        // accessed, as the frame loop runs it.
+        Continuation::Boot => match unsafe { crate::game::boot::resume(game) } {
+            0 => Start::Booted,
+            returned => Start::Boot(returned),
+        },
+        Continuation::Begin => Start::Begin,
+        Continuation::Invalid => {
+            // SAFETY: the original's failure reads no game state.
+            unsafe { crate::host::fatal_error(c"Incorrect coroutine_state_0".as_ptr()) };
+            Start::Begin
+        }
+        Continuation::Resume(state) => Start::Resume(state),
+    };
+    if start.clears_pass_continuations() {
+        Game::clear_pass_continuations(game);
     }
-    fn frame_state(&self) -> u8 {
-        Game::frame_state(self)
-    }
-    fn clear_pass_continuations(&mut self) {
-        Game::clear_pass_continuations(self);
-    }
-    fn begin_session_interval(&mut self, fresh: bool) {
-        Game::begin_session_interval(self, fresh).expect("Session interval entry");
-    }
-    fn resume_point(&self) -> u8 {
-        self.coroutine_state_1()
-    }
-
-    fn resume_boot(&mut self) -> u8 {
-        unsafe { crate::game::boot::resume(self) }
-    }
-    fn fail_frame_state(&mut self) {
-        unsafe { crate::host::fatal_error(c"Incorrect coroutine_state_0".as_ptr()) }
-    }
+    frame(start, &mut Runtime::new(game))
 }
