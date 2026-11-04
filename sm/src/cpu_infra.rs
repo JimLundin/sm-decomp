@@ -1255,7 +1255,7 @@ unsafe fn report_first_verify_failure(game: &mut Game) {
             if differing_bytes > 64 {
                 continue;
             }
-            let var = crate::ram_map::RAM_VARS
+            let var = crate::ram_names::RAM_VARS
                 .iter()
                 .rev()
                 .find(|var| var.addr <= addr as u32);

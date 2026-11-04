@@ -1,11 +1,12 @@
 //! The oracle projection: observations decoded from work RAM.
 //!
-//! Every address comes from the RAM map (`sm_game::ram`, also the verifier's
-//! failure names) or the enemy record layout; none is written here.
+//! Every address comes from the RAM map (`sm_game::ram`, and its named table
+//! `crate::ram_names`, the verifier's failure names) or the enemy record layout; none is written here.
 
 use crate::game::prelude::EnemyData;
+use crate::ram_names::RAM_VARS;
 use core::mem::{offset_of, size_of};
-use sm_game::ram::{RAM_VARS, bytes, word_arrays, words};
+use sm_game::ram::{bytes, word_arrays, words};
 use sm_tools::observation::{
     Actor, Actors, Camera, Effects, Input, Music, Observation, Progress, Room, Samus, Sound,
 };
