@@ -412,12 +412,19 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
 }
 
 /// Boot's work after its RAM clear and register setup, as the frame lease's
-/// first step: the NMI's enable, the APU ports' clear, the random seed, the
-/// music queue's delays, the debug mode, the save slots' check, the sound words
-/// and boot's resume byte. The pass continuations the frame clears before its
-/// lease are not among its stores.
-fn finish_boot<L: PassLease + crate::menus::host::Host + ?Sized>(lease: &mut L) {
+/// first step: the object table's high bits and its unused entries, the NMI's
+/// enable, the APU ports' clear, the random seed, the music queue's delays, the
+/// debug mode, the save slots' check, the sound words and boot's resume byte.
+/// The pass continuations the frame clears before its lease and the Samus
+/// upload words boot clears on Game are not among its stores.
+fn finish_boot<
+    L: PassLease + crate::menus::host::Host + crate::sprite_drawing::ObjectAccess + ?Sized,
+>(
+    lease: &mut L,
+) {
     use crate::projection::Field;
+    crate::sprite_drawing::clear_high_table(lease);
+    crate::sprite_drawing::finish_frame(lease);
     display_refresh::enable(true, lease);
     lease.clear_apu_ports();
     lease.set_view_word(Field::RandomNumber, 97);
