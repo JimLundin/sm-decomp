@@ -99,13 +99,23 @@ fn record(
     }
 }
 /// Observer only; never changes the behavior or supplies a restoration result.
-/// The old-reference overlay calls this at each actual restore entry and return.
+/// The old-reference overlay calls this at each actual restore entry and return,
+/// reading the words as the restoring lease projects them.
 #[cfg(sm_verify_dll)]
-pub(crate) fn observe(resource: u8, phase: u8, amount: u16, game: &Game) {
+pub(crate) fn observe(
+    resource: u8,
+    phase: u8,
+    amount: u16,
+    runtime: &crate::game::session_runtime::Runtime<'_>,
+) {
     TRACE.with(|trace| {
         if let Some(trace) = trace.borrow_mut().as_mut() {
             record(
-                |at, span| game.ram().copy_out(at, span),
+                |at, span| {
+                    for (offset, byte) in span.iter_mut().enumerate() {
+                        *byte = runtime.byte(at + offset);
+                    }
+                },
                 resource,
                 phase,
                 amount,
@@ -139,7 +149,11 @@ fn restore(resource: u8, amount: u16, game: &mut Game) {
         3 => Resource::PowerBombs,
         _ => unreachable!(),
     };
-    crate::game::item_pickups_runtime::restore(resource, amount, game);
+    crate::game::item_pickups_runtime::restore(
+        resource,
+        amount,
+        &mut crate::game::session_runtime::Runtime::new(game),
+    );
 }
 fn boundary(id: u32, game: &mut Game) {
     let (resource, row) = match id {

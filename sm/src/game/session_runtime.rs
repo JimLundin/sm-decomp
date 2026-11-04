@@ -116,7 +116,11 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.owned_call(|runtime| sm_game::progress::event_happened(runtime, event))
     }
     fn restore(&mut self, resource: sm_game::item_pickups::Resource, amount: u16) {
-        self.foreign(|game| crate::game::item_pickups_runtime::restore(resource, amount, game));
+        // The former foreign entry restored on a nested lease; this one keeps
+        // its observation refresh.
+        self.owned_player_call(|runtime| {
+            crate::game::item_pickups_runtime::restore(resource, amount, runtime)
+        });
     }
     fn message_box_response(&mut self, kind: u16) -> i32 {
         // The dialogue words are the lease's; the former foreign entry's
