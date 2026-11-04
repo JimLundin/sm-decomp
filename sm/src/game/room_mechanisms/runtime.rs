@@ -149,17 +149,17 @@ impl Effects for Runtime<'_> {
     fn delayed_room_music(&mut self, frames: u16) {
         self.queue_room_music_after(frames);
     }
-    // The verifier's callback edge is unsafe; the plain build calls safe code.
-    #[allow(unused_unsafe)]
     fn display_message(&mut self, request: u16) -> u8 {
-        self.foreign(|game| unsafe {
+        // The box runs on this lease, with the observations refreshed on entry
+        // and on return as the former foreign call left them.
+        self.owned_player_call(|runtime| {
             #[cfg(sm_verify_dll)]
             {
-                crate::game::room_mechanism_checks::observe_message_display(request, game)
+                crate::game::room_mechanism_checks::observe_message_display(request, runtime)
             }
             #[cfg(not(sm_verify_dll))]
             {
-                sm_game::message_boxes::display(request, game)
+                sm_game::message_boxes::display(request, runtime)
             }
         })
     }

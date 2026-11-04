@@ -24,6 +24,60 @@ const BG3_VERTICAL: ScrollOffset = ScrollOffset {
 /// HDMA channel 6's bit: the box's scroll channel.
 const SCROLL_CHANNEL: Control = Control::HdmaChannels(0x40);
 
+/// What a message box reaches: the video commands, the display mirrors, the
+/// presentation workspace and palette, the dialogue words, the native image,
+/// the sound queues, the unreachable failure, the NMI wait's words, the
+/// controller sample, and five rules: the box's DMA length, the music queue's
+/// and the dialogue sounds' steps, the HDMA object handler and the movement
+/// sound's restore. Every menu host is one; a Session lease is one and runs
+/// them on itself.
+pub trait DialogueHost:
+    crate::display::video::Video
+    + crate::display::preparation::Access
+    + crate::presentation_workspace::Access
+    + crate::presentation_workspace::PaletteAccess
+    + crate::dialogue_ram::Access
+    + crate::cartridge::NativeDiagnostics
+    + crate::effects::SoundEffects
+    + crate::menus::host::CommonRuntime
+    + crate::ram::CompatibilityRam
+    + crate::display_refresh::DisplayOwner
+    + crate::menus::controller_input::SampleHost
+{
+    /// The message box DMA length the original kept outside RAM.
+    fn dialogue_dma_length(&self) -> u16;
+    fn set_dialogue_dma_length(&mut self, value: u16);
+    /// Advance the music queue.
+    fn advance_dialogue_music(&mut self);
+    /// Emit the queued dialogue sound effects as Cues.
+    fn emit_dialogue_sounds(&mut self);
+    /// Run the HDMA object handler with its carry clear, as closing the box
+    /// ($85:8589) enters it.
+    fn update_dialogue_hdma(&mut self);
+    /// Restore Samus's movement sound after the box.
+    fn resume_movement_sound(&mut self);
+}
+impl<T: crate::menus::host::Host + ?Sized> DialogueHost for T {
+    fn dialogue_dma_length(&self) -> u16 {
+        self.message_box_das0l_value()
+    }
+    fn set_dialogue_dma_length(&mut self, value: u16) {
+        self.set_message_box_das0l_value(value);
+    }
+    fn advance_dialogue_music(&mut self) {
+        self.handle_music_queue();
+    }
+    fn emit_dialogue_sounds(&mut self) {
+        self.advance_dialogue_sound_effects();
+    }
+    fn update_dialogue_hdma(&mut self) {
+        self.run_hdma_objects();
+    }
+    fn resume_movement_sound(&mut self) {
+        self.restore_movement_sound();
+    }
+}
+
 fn work_ram(address: u16) -> Source {
     Source {
         address,
@@ -33,7 +87,7 @@ fn work_ram(address: u16) -> Source {
 
 /// The first half of "Initialise PPU for message boxes" ($85:8143), after its
 /// first lag frame: save and replace the BG3 and blending registers.
-fn prepare_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn prepare_display<H: DialogueHost + ?Sized>(game: &mut H) {
     game.apply(PRODUCER, Command::Control(Control::HdmaChannels(0)));
     game.apply(
         PRODUCER,
@@ -74,7 +128,7 @@ fn prepare_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.screen_write_slice(Point::new(Role::Pause, 0), &[0; 0x82]);
 }
 /// Read the BG3 tilemap the box covers back to $7E:4100.
-fn save_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn save_background<H: DialogueHost + ?Sized>(game: &mut H) {
     game.apply(
         PRODUCER,
         Command::ReadTilemapNow {
@@ -85,7 +139,7 @@ fn save_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     );
 }
 /// DMA the BG3 tilemap at `source` to VRAM $5880.
-fn upload_background<H: crate::menus::host::Host + ?Sized>(source: u16, game: &mut H) {
+fn upload_background<H: DialogueHost + ?Sized>(source: u16, game: &mut H) {
     game.apply(
         PRODUCER,
         Command::TilemapNow {
@@ -95,11 +149,7 @@ fn upload_background<H: crate::menus::host::Host + ?Sized>(source: u16, game: &m
         },
     );
 }
-fn message_tile<H: crate::menus::host::Host + ?Sized>(
-    start: u16,
-    byte_offset: u16,
-    game: &mut H,
-) -> u16 {
+fn message_tile<H: DialogueHost + ?Sized>(start: u16, byte_offset: u16, game: &mut H) -> u16 {
     let address = 0x850000 | u32::from(start);
     if start & 0x8000 == 0 {
         game.native_rom_diagnostic(address);
@@ -111,7 +161,7 @@ fn message_tile<H: crate::menus::host::Host + ?Sized>(
     .word(usize::from(byte_offset))
 }
 
-fn write_message_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
+fn write_message_tilemap<H: DialogueHost + ?Sized>(game: &mut H) -> u16 {
     game.dialogue_set_scratch(1, 112);
     game.dialogue_set_scratch(0, 124);
     game.dialogue_set_radius(0);
@@ -122,7 +172,7 @@ fn write_message_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> 
     let length = configs
         .table_word(MESSAGE_CONFIG_BASE, 3 * message + 2)
         .wrapping_sub(start);
-    game.set_message_box_das0l_value(composition::dma_length(length));
+    game.set_dialogue_dma_length(composition::dma_length(length));
     let mut cursor = composition::TextCursor::new(length);
     loop {
         // Keep every fresh media query before the selected destination check.
@@ -138,15 +188,11 @@ fn write_message_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> 
     }
     cursor.word
 }
-fn write_message_box_tilemap_row<H: crate::menus::host::Host + ?Sized>(
-    word: u16,
-    tiles: &[u16],
-    game: &mut H,
-) {
+fn write_message_box_tilemap_row<H: DialogueHost + ?Sized>(word: u16, tiles: &[u16], game: &mut H) {
     game.screen_apply(|workspace| crate::message_workspace::row(workspace, word, tiles));
 }
 /// The message's routine from its configuration row: 0 modifies, 1 draws.
-fn message_routine<H: crate::menus::host::Host + ?Sized>(column: isize, game: &H) -> u32 {
+fn message_routine<H: DialogueHost + ?Sized>(column: isize, game: &H) -> u32 {
     let index = game.dialogue_active_index() as isize - 1;
     let routine = game
         .native_image()
@@ -154,7 +200,7 @@ fn message_routine<H: crate::menus::host::Host + ?Sized>(column: isize, game: &H
     0x850000 | u32::from(routine)
 }
 /// The box size from the original's draw table, keyed by routine address.
-fn drawn_size<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> Option<BoxSize> {
+fn drawn_size<H: DialogueHost + ?Sized>(game: &mut H) -> Option<BoxSize> {
     match message_routine(1, game) {
         0x85825a => Some(BoxSize::Large),
         0x858289 => Some(BoxSize::Small),
@@ -165,9 +211,7 @@ fn drawn_size<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> Option<BoxS
     }
 }
 /// The original's modify table: its button letter and the size it uploads.
-fn modified_size<H: crate::menus::host::Host + ?Sized>(
-    game: &mut H,
-) -> Option<(Option<usize>, BoxSize)> {
+fn modified_size<H: DialogueHost + ?Sized>(game: &mut H) -> Option<(Option<usize>, BoxSize)> {
     match message_routine(0, game) {
         0x8583c5 => Some((Some(0x9b2), BoxSize::Large)),
         0x8583cc => Some((Some(0x9b6), BoxSize::Large)),
@@ -179,12 +223,12 @@ fn modified_size<H: crate::menus::host::Host + ?Sized>(
         }
     }
 }
-fn draw_top_border<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn draw_top_border<H: DialogueHost + ?Sized>(game: &mut H) {
     if let Some(size) = drawn_size(game) {
         write_message_box_tilemap_row(0, composition::border(size), game);
     }
 }
-fn write_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn write_message<H: DialogueHost + ?Sized>(game: &mut H) {
     if let Some(size) = drawn_size(game) {
         let end = write_message_tilemap(game);
         write_message_box_tilemap_row(end, composition::border(size), game);
@@ -192,7 +236,7 @@ fn write_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 /// Draw the bound button's letter, then set up the BG3 Y scroll HDMA channel
 /// ($85:8363) before its table.
-fn prepare_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn prepare_scroll<H: DialogueHost + ?Sized>(game: &mut H) {
     let Some((button, _)) = modified_size(game) else {
         return;
     };
@@ -218,7 +262,7 @@ fn prepare_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         },
     );
 }
-fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn msg_box_make_hdma_table<H: DialogueHost + ?Sized>(game: &mut H) {
     let radius = game.dialogue_radius();
     let values = game.screen_apply(|workspace| crate::message_workspace::radius(workspace, radius));
     // Retain the final scratch publication order after all scanline writes.
@@ -227,12 +271,12 @@ fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 /// DMA the composed box from $7E:3200 to its BG3 rows ($85:831E).
-fn upload_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn upload_message<H: DialogueHost + ?Sized>(game: &mut H) {
     let Some((_, size)) = modified_size(game) else {
         return;
     };
     let destination = composition::map_offset(size).wrapping_add(0x5800);
-    let bytes = game.message_box_das0l_value();
+    let bytes = game.dialogue_dma_length();
     game.apply(
         PRODUCER,
         Command::TilemapNow {
@@ -242,7 +286,7 @@ fn upload_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         },
     );
 }
-fn upload_selection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn upload_selection<H: DialogueHost + ?Sized>(game: &mut H) {
     game.apply(
         PRODUCER,
         Command::TilemapNow {
@@ -253,7 +297,7 @@ fn upload_selection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     );
 }
 /// The second half of "Restore PPU" ($85:861A), after its second lag frame.
-fn restore_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn restore_display<H: DialogueHost + ?Sized>(game: &mut H) {
     game.store_display_control_byte(
         Field::HdmaEnable,
         game.screen_byte(Point::new(Role::MessageDescriptor, 0x6a)),
@@ -300,9 +344,7 @@ fn restore_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 // Each effect publishes control state before reaching the current presentation owner.
 struct PresentationDialogue<'a, H: ?Sized>(&'a mut H);
-impl<H: crate::menus::host::Host + ?Sized> crate::dialogue::Context
-    for PresentationDialogue<'_, H>
-{
+impl<H: DialogueHost + ?Sized> crate::dialogue::Context for PresentationDialogue<'_, H> {
     type Id = u16;
     fn effect(
         &mut self,
@@ -332,14 +374,14 @@ impl<H: crate::menus::host::Host + ?Sized> crate::dialogue::Context
             UploadMessage => upload_message(game),
             SaveSound => game.queue_sound(0, 0x2e, 6),
             AdvanceAudio => {
-                game.handle_music_queue();
-                game.advance_dialogue_sound_effects();
+                game.advance_dialogue_music();
+                game.emit_dialogue_sounds();
             }
-            AdvanceSoundEffects => game.advance_dialogue_sound_effects(),
+            AdvanceSoundEffects => game.emit_dialogue_sounds(),
             RestoreBackground => upload_background(0x4100, game),
             RestoreDisplay => restore_display(game),
-            UpdateHdma => game.run_hdma_objects(),
-            ResumeMovementSound => game.restore_movement_sound(),
+            UpdateHdma => game.update_dialogue_hdma(),
+            ResumeMovementSound => game.resume_movement_sound(),
             SelectPause => dialogue_ram::select_pause(game),
             DrawRadius => msg_box_make_hdma_table(game),
             StageSelection => {
@@ -372,7 +414,7 @@ impl<H: crate::menus::host::Host + ?Sized> crate::dialogue::Context
         (dialogue_ram::import(self.0), dialogue_ram::input(self.0))
     }
 }
-pub fn display<H: crate::menus::host::Host + ?Sized>(message: u16, game: &mut H) -> CoroutineRet {
+pub fn display<H: DialogueHost + ?Sized>(message: u16, game: &mut H) -> CoroutineRet {
     use {crate::dialogue, crate::dialogue_ram};
     let state = dialogue_ram::import(game);
     let (state, outcome) = dialogue::run(
@@ -396,6 +438,6 @@ pub fn poll<H: crate::dialogue_ram::Access + ?Sized>(a: u16, game: &mut H) -> i3
     game.dialogue_set_request(a);
     -1
 }
-pub fn queue<H: crate::menus::host::Host + ?Sized>(a: u16, game: &mut H) {
+pub fn queue<H: DialogueHost + ?Sized>(a: u16, game: &mut H) {
     game.dialogue_set_request(a);
 }

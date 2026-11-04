@@ -52,6 +52,27 @@ impl<H: Host + ?Sized> SlotHost for H {
     }
 }
 
+/// What the area map leaves reach beyond a save host: the map station and
+/// used-station bytes, and the gameplay flags' store. Every menu host is one,
+/// storing through a fresh lease; a Session lease is one and stores on itself.
+pub trait MapHost: SlotHost + super::host::MapFacts {
+    /// Store the gameplay flags through the Session, then refresh the
+    /// observations as the projected word stores did.
+    fn store_gameplay_flags(
+        &mut self,
+        store: impl FnOnce(&mut crate::gameplay_flag_state::GameplayFlags),
+    );
+}
+
+impl<H: Host + ?Sized> MapHost for H {
+    fn store_gameplay_flags(
+        &mut self,
+        store: impl FnOnce(&mut crate::gameplay_flag_state::GameplayFlags),
+    ) {
+        crate::runtime_access::with_session(self, |session| store(&mut session.gameplay_flags));
+    }
+}
+
 pub fn import(image: &RomImage) -> Option<ImportedSlots> {
     Imported::import(image, ADDRESS, BYTES, SaveSlots::import)
 }
@@ -328,7 +349,7 @@ fn area_map_words(area: u16) -> impl Iterator<Item = (usize, u16)> {
 
 /// Load the current area's explored map, and whether its map station was
 /// used, into `selection`.
-pub fn load_area_map<H: Host + ?Sized>(selection: &mut SaveSelection, game: &mut H) {
+pub fn load_area_map<H: MapHost + ?Sized>(selection: &mut SaveSelection, game: &mut H) {
     for (active, saved) in area_map_words(crate::gameplay_context::navigation(game).area) {
         copy_map_word(
             game,
@@ -340,7 +361,7 @@ pub fn load_area_map<H: Host + ?Sized>(selection: &mut SaveSelection, game: &mut
     selection.has_area_map = u16::from(game.map_station_byte(area));
 }
 
-pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
+pub fn save_area_map<H: MapHost + ?Sized>(game: &mut H) {
     for (active, saved) in area_map_words(crate::gameplay_context::navigation(game).area) {
         copy_map_word(
             game,
@@ -348,17 +369,15 @@ pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
             Field::SavedMap(usize::from(saved)),
         );
     }
-    if crate::menus::state::load::<SaveSelection, _>(game).has_area_map != 0 {
+    if game.save_selection().has_area_map != 0 {
         // The area's map station byte; the word store's high byte keeps the
         // next area's.
         let area = usize::from(crate::gameplay_context::navigation(game).area);
-        crate::runtime_access::with_session(game, |session| {
-            session.gameplay_flags.map_stations[area] = 0xff;
-        });
+        game.store_gameplay_flags(|flags| flags.map_stations[area] = 0xff);
     }
 }
 
-pub fn mark_elevator<H: Host + ?Sized>(game: &mut H) {
+pub fn mark_elevator<H: MapHost + ?Sized>(game: &mut H) {
     let table = crate::menu_lists::elevator_door_table(
         game,
         crate::gameplay_context::navigation(game).area as isize,

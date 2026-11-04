@@ -31,14 +31,25 @@ pub(crate) fn decompress_level(source: u32, game: &mut Game) {
     sm_game::room_state::LevelData::copy_level_planes(game);
 }
 
-impl sm_game::room_state::EnemyGraphicsHost for Game {
+// The room's enemy tilesets load on the lease: each record is the loaded
+// image's, through the RomPtr boundary below $8000, as `rtl::rom_record` takes
+// it, and each copy publishes, then runs on the lease's transfer port.
+impl sm_game::room_state::EnemyGraphicsHost for Runtime<'_> {
     fn rom_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
-        // SAFETY: room loading runs with the backend installed.
-        unsafe { crate::rtl::rom_record(bank, address, self) }
+        self.actor_legacy_record(bank, address)
     }
 }
-
-pub(crate) use sm_game::room_state::load_sprite_palettes;
+impl sm_game::display::transfer::RoomDma for Runtime<'_> {
+    fn copy_to_vram_now(
+        &mut self,
+        address: u16,
+        source: sm_game::display::transfer::Source,
+        bytes: u16,
+        assets: Option<&crate::game::room_entry::PreparedRoomAssets>,
+    ) {
+        crate::game::display_commands::copy_to_vram_on_lease(address, source, bytes, assets, self);
+    }
+}
 
 // The lease reads the cells from its Session terrain.
 impl sm_game::room_state::LevelCells for Runtime<'_> {
@@ -155,6 +166,17 @@ impl sm_game::room_state::fx::SetupHost for Runtime<'_> {
         if refresh {
             self.words_stored();
         }
+    }
+}
+
+/// Room setup and door ASM on the lease: the event mark and the door's scroll
+/// updates run on itself.
+impl sm_game::room_state::ScriptHost for Runtime<'_> {
+    fn mark_event(&mut self, event: u16) {
+        sm_game::progress::set_event(self, event);
+    }
+    fn apply_door_scrolls(&mut self, address: u32) -> bool {
+        sm_game::room_scrolls::apply(address, self)
     }
 }
 

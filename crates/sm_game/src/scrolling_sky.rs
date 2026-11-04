@@ -222,9 +222,9 @@ pub fn initialize_land<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut 
         ],
     );
 }
-pub fn initialize_ocean<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_ocean<H: crate::room_state::fx::SetupHost + ?Sized>(game: &mut H) {
     game.store_display_control_byte(DisplayField::Screens1, 74, DisplayStore::Named);
-    game.spawn_hdma(0x88, &OCEAN_SCROLL);
+    crate::hdma_objects::spawn_hdma_owned(0x88, &OCEAN_SCROLL, game);
     let mut fx = game.fx_controls();
     fx.sky_visible_height = 224;
     fx.sky_compatibility_word = 0;

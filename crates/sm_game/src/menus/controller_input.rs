@@ -7,7 +7,28 @@ use crate::constants::buttons::{
     K_BUTTON_SELECT, K_BUTTON_START, K_BUTTON_UP, K_BUTTON_X, K_BUTTON_Y,
 };
 
-fn repeat<H: Host + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
+/// What a controller sample reaches: the gameplay context's input and debug
+/// words, the projected words, the observed inputs, the display mirrors, the
+/// sequence words, the soft reset, and the controllers as the auto-joypad read
+/// holds them. Every menu host is one; a Session lease is one too.
+pub trait SampleHost:
+    crate::gameplay_context::Access
+    + crate::projection::Views
+    + crate::ram::CompatibilityRam
+    + crate::display::preparation::Access
+    + crate::sequence_state::Access
+    + super::host::ResetRequest
+{
+    /// `controller`'s word as the auto-joypad read holds it now.
+    fn sampled_controller_word(&mut self, controller: Controller) -> u16;
+}
+impl<T: Host + ?Sized> SampleHost for T {
+    fn sampled_controller_word(&mut self, controller: Controller) -> u16 {
+        self.controller_word(controller)
+    }
+}
+
+fn repeat<H: SampleHost + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
     use crate::{controller_state::Word as Input, gameplay_context::Word};
     let [last, pressed, repeated, previous, counter] = match offset {
         0 => [
@@ -75,8 +96,8 @@ pub fn filter<H: Host + ?Sized>(delay: u16, game: &mut H) {
 }
 
 /// Requires a live, exclusively accessed SNES backend for controller register reads.
-pub fn sample<H: Host + ?Sized>(game: &mut H) {
-    let first = game.controller_word(Controller::One);
+pub fn sample<H: SampleHost + ?Sized>(game: &mut H) {
+    let first = game.sampled_controller_word(Controller::One);
     sample_word(first, game);
 }
 
@@ -87,16 +108,16 @@ pub fn sample_latched<H: Host + ?Sized>(game: &mut H) {
     sample_word(first, game);
 }
 
-fn sample_word<H: Host + ?Sized>(first: u16, game: &mut H) {
+fn sample_word<H: SampleHost + ?Sized>(first: u16, game: &mut H) {
     repeat(0, first, game);
     if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 {
-        let second = game.controller_word(Controller::Two);
+        let second = game.sampled_controller_word(Controller::Two);
         repeat(2, second, game);
         debug_controls(game);
     }
 }
 
-fn debug_controls<H: Host + ?Sized>(game: &mut H) {
+fn debug_controls<H: SampleHost + ?Sized>(game: &mut H) {
     let reset = (K_BUTTON_SELECT | K_BUTTON_START | K_BUTTON_L | K_BUTTON_R) as u16;
     if game.view_word(crate::projection::Field::ApuUploading) != 0
         || game.observed_inputs().held != reset

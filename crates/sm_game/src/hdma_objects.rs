@@ -366,11 +366,8 @@ where
 /// Run the HDMA object handler ($88:84B9) with `handler_carry`, the carry it
 /// is entered with: the main game loop's, set from power-on, or clear when a
 /// message box restores the display.
-pub fn update_hdma<H>(handler_carry: bool, game: &mut H)
-where
-    H: crate::hdma_dispatch::DispatchHost + crate::hdma_program::LeaseHdma + ?Sized,
-{
-    game.handle_music_queue();
+pub fn update_hdma<H: UpdateHost + ?Sized>(handler_carry: bool, game: &mut H) {
+    game.advance_music_queue();
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
         && crate::explosion_window::explosion(game)
             .bomb
@@ -381,8 +378,8 @@ where
         crate::explosion_window::with_explosion(game, |_, e| {
             e.bomb.explosion_status = 0x8000;
         });
-        spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
-        spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
+        spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
+        spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
     }
     {
         let fx_value = game.room_blending().primary;
@@ -391,8 +388,46 @@ where
         game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
     };
     if game.hdma_word(crate::hdma::Word::Enabled) & 0x8000 != 0 {
-        crate::hdma_program::run_objects(handler_carry, game);
+        game.run_hdma_programs(handler_carry);
         crate::layer_blending::update(game);
+    }
+}
+
+/// What the HDMA object handler reaches beyond its object table: the
+/// sequence words, the allocator, the FX controls and display mirrors, and
+/// three rules: the music queue's step, the room key the layer blending reads,
+/// and the objects' programs. Every host that can lease its Session to the
+/// interpreter is one, running the programs on a fresh lease; a Session lease
+/// is one and runs them on itself.
+pub trait UpdateHost:
+    Allocator
+    + crate::sequence_state::Access
+    + crate::fx_domain::Controls
+    + crate::display::preparation::Access
+{
+    /// Advance the music queue, as the handler does first.
+    fn advance_music_queue(&mut self);
+    /// The current room's key.
+    fn blending_room_key(&mut self) -> u16;
+    /// Run every active object's program once.
+    fn run_hdma_programs(&mut self, handler_carry: bool);
+}
+impl<T> UpdateHost for T
+where
+    T: crate::hdma_dispatch::DispatchHost
+        + crate::hdma_program::LeaseHdma
+        + crate::menus::host::MenuRuntime
+        + ?Sized,
+{
+    fn advance_music_queue(&mut self) {
+        self.handle_music_queue();
+    }
+    fn blending_room_key(&mut self) -> u16 {
+        use crate::session_access::SessionAccess as _;
+        self.runtime().session().room_key()
+    }
+    fn run_hdma_programs(&mut self, handler_carry: bool) {
+        crate::hdma_program::run_objects(handler_carry, self);
     }
 }
 

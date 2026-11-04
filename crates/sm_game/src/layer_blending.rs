@@ -3,9 +3,8 @@ use crate::constants::bank_8f::{ADDR_K_ROOM_A66A, ADDR_K_ROOM_CEFB};
 use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
 
 // W12SEL, W34SEL, WOBJSEL, TM, TS, TMW, TSW, CGWSEL and CGADSUB shadows.
-fn room_key<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> u16 {
-    use crate::session_access::SessionAccess;
-    game.runtime().session().room_key()
+fn room_key<H: crate::hdma_objects::UpdateHost + ?Sized>(game: &mut H) -> u16 {
+    game.blending_room_key()
 }
 
 fn apply<H: crate::display::preparation::Access + ?Sized>(settings: [u8; 9], game: &mut H) {
@@ -106,15 +105,7 @@ const ROOM_SETTINGS: [&[(DisplayField, u8)]; 27] = [
     &[],
 ];
 
-pub fn update<
-    H: crate::fx_domain::Controls
-        + crate::display::preparation::Access
-        + crate::ram::CompatibilityRam
-        + crate::runtime_access::RuntimeAccess
-        + ?Sized,
->(
-    game: &mut H,
-) {
+pub fn update<H: crate::hdma_objects::UpdateHost + ?Sized>(game: &mut H) {
     let configuration = game.fx_controls().blending;
     let mut bomb_mode = 0;
     if configuration as u8 != 0 {

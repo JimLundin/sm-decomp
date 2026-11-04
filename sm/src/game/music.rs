@@ -44,39 +44,6 @@ pub(crate) fn reset_delays(game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-fn room_track_changed(game: &Game) -> bool {
-    checked_word!(game.GAME_STATE) < 40 && checked_word!(game.ROOM_MUSIC_TRACK_INDEX) != 0
-        // The original packed comparison deliberately lets track bits overlap data bits.
-        && (checked_word!(game.ROOM_MUSIC_DATA_INDEX) << 8 | checked_word!(game.ROOM_MUSIC_TRACK_INDEX))
-            != (checked_word!(game.MUSIC_DATA_INDEX) << 8 | checked_word!(game.MUSIC_TRACK_INDEX))
-}
-
-#[forbid(unsafe_code)]
-pub fn load_room_music(game: &mut Game) {
-    if checked_word!(game.GAME_STATE) < 40
-        && checked_word!(game.ROOM_MUSIC_DATA_INDEX) != 0
-        && checked_word!(game.ROOM_MUSIC_DATA_INDEX) != checked_word!(game.MUSIC_DATA_INDEX)
-    {
-        queue_music_delayed_8(0, game);
-        queue_music_delayed_8(checked_word!(game.ROOM_MUSIC_DATA_INDEX) | 0xff00, game);
-    }
-}
-
-#[forbid(unsafe_code)]
-pub fn update_music_track_index(game: &mut Game) {
-    if room_track_changed(game) {
-        checked_word!(game.MUSIC_TRACK_INDEX = checked_word!(game.ROOM_MUSIC_TRACK_INDEX));
-    }
-}
-
-#[forbid(unsafe_code)]
-pub fn load_new_music_track_if_changed(game: &mut Game) {
-    if room_track_changed(game) {
-        queue_music_delayed_y(checked_word!(game.ROOM_MUSIC_TRACK_INDEX), 6, game);
-    }
-}
-
-#[forbid(unsafe_code)]
 pub fn play_room_music_track_after_aframes(delay: u16, game: &mut Game) {
     if checked_word!(game.GAME_STATE) < 40 {
         queue_music_delayed_y(0, delay, game);
@@ -175,6 +142,18 @@ impl crate::game::session_runtime::Runtime<'_> {
     pub(crate) fn queue_room_music_after(&mut self, delay: u16) {
         self.audio_request(|runtime| requests::queue_room_track_after(delay, runtime));
     }
+    /// LoadRoomMusic on the lease, over the room entry's music fields.
+    pub(crate) fn load_room_music(&mut self) {
+        self.audio_request(requests::load_room_music);
+    }
+    /// UpdateMusicTrackIndex on the lease.
+    pub(crate) fn update_music_track_index(&mut self) {
+        self.audio_request(requests::update_music_track_index);
+    }
+    /// LoadNewMusicTrackIfChanged on the lease.
+    pub(crate) fn load_new_music_track_if_changed(&mut self) {
+        self.audio_request(requests::load_new_music_track_if_changed);
+    }
     /// Whether any music request is still delayed.
     pub(crate) fn music_queued(&mut self) -> u8 {
         self.audio_request(|runtime| requests::has_queued_music(runtime))
@@ -247,6 +226,13 @@ impl crate::game::session_runtime::Runtime<'_> {
     /// The frame's sound effect advance on the lease: the queues step on the Session's
     /// audio owner, and each sound goes out through the cue port as it is sent.
     pub(crate) fn advance_sound_requests(&mut self) {
+        self.emit_sound_requests(sm_data::CuePhase::GameplaySound);
+    }
+    /// A message box's sound effect advance on the lease, as the frame's.
+    pub(crate) fn advance_dialogue_sound_requests(&mut self) {
+        self.emit_sound_requests(sm_data::CuePhase::DialogueSound);
+    }
+    fn emit_sound_requests(&mut self, phase: sm_data::CuePhase) {
         #[cfg(sm_verify_dll)]
         self.assert_audio_requests_owned();
         requests::advance_sound_effects(self, |channel, value, meaning, runtime| {
@@ -256,7 +242,7 @@ impl crate::game::session_runtime::Runtime<'_> {
                     sm_data::OriginalSoundEffect(value),
                     meaning,
                 ),
-                sm_data::CuePhase::GameplaySound,
+                phase,
             );
             Ok(())
         })

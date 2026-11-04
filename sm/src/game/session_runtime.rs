@@ -2643,6 +2643,58 @@ impl sm_game::hdma_objects::Allocator for Runtime<'_> {
         });
     }
 }
+// The HDMA object handler on the lease: the music queue steps on the Session's
+// audio owner, and the objects' programs run on this lease.
+impl sm_game::hdma_objects::UpdateHost for Runtime<'_> {
+    fn advance_music_queue(&mut self) {
+        self.advance_music_requests();
+    }
+    fn blending_room_key(&mut self) -> u16 {
+        self.session().room_key()
+    }
+    fn run_hdma_programs(&mut self, handler_carry: bool) {
+        sm_game::hdma_program::run_objects_on(handler_carry, self);
+    }
+}
+// The controllers read through their device registers, as the game reads them.
+impl sm_game::menus::controller_input::SampleHost for Runtime<'_> {
+    fn sampled_controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
+        use sm_game::menus::host::Controller;
+        self.game.read_register_word(match controller {
+            Controller::One => crate::rtl::JOY1L,
+            Controller::Two => crate::rtl::JOY2L,
+        } as u16)
+    }
+}
+// The soft reset's request is the Session's game state word.
+impl sm_game::menus::host::ResetRequest for Runtime<'_> {
+    fn request_reset(&mut self) {
+        sm_game::gameplay_word!(self.GAME_STATE = u16::MAX);
+    }
+}
+// A message box on the lease: its DMA length is the game's, the audio steps on
+// the Session's owner, and the HDMA object handler and the movement sound run
+// on this lease.
+impl sm_game::message_boxes::DialogueHost for Runtime<'_> {
+    fn dialogue_dma_length(&self) -> u16 {
+        self.game.message_box_das0l_value
+    }
+    fn set_dialogue_dma_length(&mut self, value: u16) {
+        self.game.message_box_das0l_value = value;
+    }
+    fn advance_dialogue_music(&mut self) {
+        self.advance_music_requests();
+    }
+    fn emit_dialogue_sounds(&mut self) {
+        self.advance_dialogue_sound_requests();
+    }
+    fn update_dialogue_hdma(&mut self) {
+        sm_game::hdma_objects::update_hdma(false, self);
+    }
+    fn resume_movement_sound(&mut self) {
+        sm_game::player_projectiles::feedback::restore_sound(self);
+    }
+}
 // The lease's projection stores display mirrors in the owned display state.
 impl sm_game::display_refresh::DisplayOwner for Runtime<'_> {
     fn write_owned_byte(&mut self, at: usize, value: u8) {
