@@ -13,13 +13,8 @@
 //! lease is current, and for `Game` over the installed Session's projection
 //! or its RAM image. The byte layout stays with `session_encoding` and the
 //! views' layouts; the byte access stays in `sm`.
-//!
-//! The `image_*` helpers address the work RAM image directly, for a view that
-//! must not admit the owned Session (the enemy projectile table when no lease
-//! can open).
 use crate::cinematic_state as cinematic;
 use crate::menus::options_objects::objects;
-use crate::ram::{RawRam as _, WorkRamAccess};
 
 /// A word a view reads or stores, named by its owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -628,26 +623,6 @@ pub trait Views {
     /// Store each of `words` whose index in visit order `select` accepts, in
     /// visit order.
     fn store_words(&mut self, words: &mut impl Layout, select: impl FnMut(usize) -> bool);
-}
-
-/// The little-endian word at `at` of the work RAM image.
-pub fn image_word<H: WorkRamAccess + ?Sized>(h: &H, at: usize) -> u16 {
-    let ram = h.ram();
-    u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)])
-}
-
-/// Store `value` as the little-endian word at `at` of the work RAM image,
-/// low byte then high.
-pub fn set_image_word<H: WorkRamAccess + ?Sized>(h: &H, at: usize, value: u16) {
-    let [low, high] = value.to_le_bytes();
-    let ram = h.ram();
-    ram.write_byte(at, low);
-    ram.write_byte(at + 1, high);
-}
-
-/// Copy `bytes` into the work RAM image at `at`.
-pub fn copy_into_image<H: WorkRamAccess + ?Sized>(h: &H, at: usize, bytes: &[u8]) {
-    h.ram().copy_in(at, bytes);
 }
 
 /// A host over a Session's projection, as the compat game's is while one is
