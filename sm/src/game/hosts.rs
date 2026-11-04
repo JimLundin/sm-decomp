@@ -421,7 +421,12 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
         });
     }
     fn native_upload(&mut self, request: sm_game::visual_state::Upload) {
-        self.foreign(|game| crate::game::animated_tiles::native::upload(request, game));
+        // The upload reads the cartridge through the lease's transfer port, with
+        // the observations refreshed on entry and on return as the former foreign
+        // call left them.
+        self.owned_player_call(|runtime| {
+            crate::game::display_commands::animated_tiles_on_lease(request, runtime);
+        });
     }
     fn native_unreachable(&mut self) {
         crate::rtl::unreachable()

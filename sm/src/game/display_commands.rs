@@ -457,6 +457,37 @@ pub(crate) fn apply_device_on_lease(command: Command, runtime: &mut Runtime<'_>)
     registers(command, &mut Lease(runtime));
 }
 
+/// An animated tile upload on the lease's transfer port: channel 0 from bank
+/// $87 to VMDATA, a word at a time, in the original's register order. It reads
+/// the cartridge alone, so the lease needs no publish.
+pub(crate) fn animated_tiles_on_lease(
+    request: sm_game::visual_state::Upload,
+    runtime: &mut Runtime<'_>,
+) {
+    const BANK: u8 = 0x87;
+    let mut lease = Lease(runtime);
+    lease.producing();
+    word(A1T0L, request.source, &mut lease);
+    byte(A1B0, BANK, &mut lease);
+    word(DMAP0, TO_VRAM_DATA, &mut lease);
+    word(DAS0L, request.size, &mut lease);
+    word(VMADDL, request.vram, &mut lease);
+    byte(VMAIN, STEP_AFTER_HIGH, &mut lease);
+    byte(MDMAEN, 1, &mut lease);
+    lease.produced(
+        "animated tiles",
+        &[Upload::Tiles {
+            address: request.vram,
+            increment: 1,
+            source: Source {
+                address: request.source,
+                bank: BANK,
+            },
+            bytes: request.size,
+        }],
+    );
+}
+
 /// The VRAM data word as `read_register_word` reads it: the low byte, then the
 /// high byte, which steps the port.
 pub(crate) fn read_vram_data_on_lease(runtime: &mut Runtime<'_>) -> u16 {
