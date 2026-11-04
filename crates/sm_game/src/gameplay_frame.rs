@@ -59,11 +59,7 @@ pub enum UnpauseHook {
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
 pub trait Host:
-    crate::menus::host::Host
-    + crate::hud::HudHost
-    + crate::display_refresh::Host
-    + RuntimeAccess
-    + crate::actors::access::ActorImage
+    crate::menus::host::Host + crate::hud::HudHost + crate::display_refresh::Host + RuntimeAccess
 {
     /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
     fn latch_controller(&mut self, buttons: u16);
@@ -393,9 +389,8 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             }
             Advance(entry) => advance(entry, game),
             PauseFadeIn => pause_controls::fade_in(game),
-            GameOver => game_over::advance(game),
             Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit | DemoReset
-            | Demo | Options | FileMenu | MapMenu => unreachable!("a lease state"),
+            | Demo | Options | FileMenu | MapMenu | GameOver => unreachable!("a lease state"),
             Null => 0,
             Unused => {
                 game.rtl_unreachable();
@@ -451,6 +446,7 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             | DemoReset
             | Demo
             | Options
+            | GameOver
             | MapMenu
             | FileMenu
     )
@@ -487,6 +483,7 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         }),
         FileMenu => file_menu::advance(lease),
         MapMenu => map_menu::advance(lease),
+        GameOver => game_over::advance(lease),
         _ => unreachable!("not a lease state"),
     }
 }

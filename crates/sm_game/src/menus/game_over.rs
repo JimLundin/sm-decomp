@@ -1,6 +1,6 @@
 //! Game-over choices and transitions over the shared menu presentation.
 use super::prelude::*;
-use crate::actors::access::{ActorKey, edit_image_actor};
+use crate::actors::access::{AccessMode, ActorAccess, ActorKey};
 use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_FIND_METROID_LARVA, ADDR_K_MENU_TILEMAP_GAME_OVER,
     ADDR_K_MENU_TILEMAP_NO_GO_TO_TITLE, ADDR_K_MENU_TILEMAP_TRY_AGAIN,
@@ -13,9 +13,22 @@ use crate::menus::menu_tilemap;
 use crate::menus::save_slots;
 
 /// The game over menu's host: the menus' host, with the baby's record in the
-/// host's RAM image.
-pub trait GameOverHost: crate::menus::host::Host + crate::actors::access::ActorImage {}
-impl<T: crate::menus::host::Host + crate::actors::access::ActorImage + ?Sized> GameOverHost for T {}
+/// Session's actors.
+pub trait GameOverHost: crate::menus::host::Host + ActorAccess {}
+impl<T: crate::menus::host::Host + ActorAccess + ?Sized> GameOverHost for T {}
+
+/// The baby's record, as the actor codec reads it in native order.
+fn baby<H: GameOverHost + ?Sized>(game: &H) -> crate::actors::access::ActorRead<'_> {
+    game.resolve_actor(BABY, AccessMode::Native)
+}
+
+/// Edit the baby's record.
+fn edit_baby<H: GameOverHost + ?Sized>(
+    game: &mut H,
+    edit: impl FnOnce(&mut crate::actors::state::Actor),
+) {
+    game.edit_actor(BABY, AccessMode::Native, edit);
+}
 
 /// Requires a live, exclusively accessed graphics backend and native ROM allocation
 /// covering the referenced menu text, baby animation and save-map records.
@@ -185,7 +198,7 @@ fn choose<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
             selection.map_area_index ^= 1;
         });
     } else if game.observed_inputs().pressed & K_BUTTON_A as u16 != 0 {
-        edit_image_actor(game, BABY, |baby| baby.instruction_delay = 180);
+        edit_baby(game, |baby| baby.instruction_delay = 180);
         let selection = crate::menus::state::load::<SaveSelection, _>(game);
         if selection.map_area_index != 0 {
             menu.menu_index = 7;
@@ -244,13 +257,13 @@ const BABY: ActorKey = ActorKey::from_legacy(0);
 
 /// The baby's animation, on its record's instruction and instruction delay.
 fn animate_baby<H: GameOverHost + ?Sized>(game: &mut H, invalid: impl FnOnce(&mut H)) {
-    let mut timer = game.actor_record(BABY).instruction_delay;
+    let mut timer = baby(game).instruction_delay;
     if timer == 0 {
         timer = start_baby(0xbc27, 10, game);
     }
     loop {
-        let cursor = game.actor_record(BABY).instruction;
-        edit_image_actor(game, BABY, |baby| {
+        let cursor = baby(game).instruction;
+        edit_baby(game, |baby| {
             baby.instruction_delay = timer.wrapping_sub(1);
         });
         if timer != 1 {
@@ -273,18 +286,18 @@ fn animate_baby<H: GameOverHost + ?Sized>(game: &mut H, invalid: impl FnOnce(&mu
                     }
                 };
                 game.queue_sound(2, (sound) as u8, 6);
-                let at = game.actor_record(BABY).instruction;
+                let at = baby(game).instruction;
                 (baby_record(at, game).word(8), 8)
             };
-            edit_image_actor(game, BABY, |baby| baby.instruction_delay = duration);
-            edit_image_actor(game, BABY, |baby| {
+            edit_baby(game, |baby| baby.instruction_delay = duration);
+            edit_baby(game, |baby| {
                 baby.instruction = baby.instruction.wrapping_add(bytes);
             });
             if duration != 0xffff {
                 let at = if ordinary {
                     cursor.wrapping_add(6)
                 } else {
-                    game.actor_record(BABY).instruction
+                    baby(game).instruction
                 };
                 draw_baby(at, game);
                 return;
@@ -295,7 +308,7 @@ fn animate_baby<H: GameOverHost + ?Sized>(game: &mut H, invalid: impl FnOnce(&mu
 }
 
 fn start_baby<H: GameOverHost + ?Sized>(cursor: u16, timer: u16, game: &mut H) -> u16 {
-    edit_image_actor(game, BABY, |baby| {
+    edit_baby(game, |baby| {
         baby.instruction = cursor;
         baby.instruction_delay = timer;
     });
