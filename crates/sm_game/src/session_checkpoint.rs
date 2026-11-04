@@ -50,6 +50,8 @@ pub struct AuxiliaryGameplayCheckpoint {
     pub multiply_scratch: crate::player_collision::state::MultiplyScratch,
     pub pointer_scratch: crate::session::PointerScratch,
     pub wavy_samus: crate::session::WavySamus,
+    pub pause_background: crate::menu_state::PauseBackground,
+    pub ending_tilemap: crate::menu_state::EndingTilemap,
 }
 fn audio_asset(bytes: &mut Vec<u8>, asset: AssetRef) {
     bytes.extend_from_slice(&asset.id.0.to_le_bytes());
@@ -1464,6 +1466,30 @@ checkpoint_fields!(checkpoint_saved_player, checkpoint_read_saved_player, crate:
     words: checkpoint_words/audio_words);
 checkpoint_fields!(checkpoint_compressed_maps, checkpoint_read_compressed_maps, crate::save_file::CompressedMaps,
     bytes: checkpoint_bytes/checkpoint_read_bytes);
+fn checkpoint_pause_background(bytes: &mut Vec<u8>, value: &crate::menu_state::PauseBackground) {
+    bytes.extend_from_slice(value.bytes.as_slice());
+}
+fn checkpoint_read_pause_background(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::menu_state::PauseBackground, String> {
+    use crate::menu_state::PauseBackground;
+    let bytes: Box<[u8]> = read.bytes(PauseBackground::BYTES)?.into();
+    Ok(PauseBackground {
+        bytes: bytes.try_into().map_err(|_| "pause background length")?,
+    })
+}
+fn checkpoint_ending_tilemap(bytes: &mut Vec<u8>, value: &crate::menu_state::EndingTilemap) {
+    bytes.extend_from_slice(value.bytes.as_slice());
+}
+fn checkpoint_read_ending_tilemap(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::menu_state::EndingTilemap, String> {
+    use crate::menu_state::EndingTilemap;
+    let bytes: Box<[u8]> = read.bytes(EndingTilemap::BYTES)?.into();
+    Ok(EndingTilemap {
+        bytes: bytes.try_into().map_err(|_| "ending tilemap length")?,
+    })
+}
 fn checkpoint_saved_maps(bytes: &mut Vec<u8>, value: &crate::save_file::SavedMaps) {
     for area in &value.areas {
         checkpoint_bytes(bytes, area);
@@ -1635,7 +1661,7 @@ macro_rules! checkpoint_auxiliary {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
                 if !self.menu_window.is_initialized() { return Err("unsupplied map-menu window checkpoint".into()); }
-                let mut bytes = Vec::from(b"SMAUXGS\x13".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x14".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1644,7 +1670,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x13" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x14" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1771,7 +1797,9 @@ checkpoint_auxiliary!(
     shared_sequence: checkpoint_sequence/checkpoint_read_sequence,
     multiply_scratch: checkpoint_multiply/checkpoint_read_multiply,
     pointer_scratch: checkpoint_pointer/checkpoint_read_pointer,
-    wavy_samus: checkpoint_wavy_samus/checkpoint_read_wavy_samus);
+    wavy_samus: checkpoint_wavy_samus/checkpoint_read_wavy_samus,
+    pause_background: checkpoint_pause_background/checkpoint_read_pause_background,
+    ending_tilemap: checkpoint_ending_tilemap/checkpoint_read_ending_tilemap);
 
 use crate::room_entry::{content as room_content, state::RoomEntry, world};
 use crate::session::{Cell, Room, TERRAIN_CELLS, TILE_DEFINITIONS, Terrain};
@@ -2404,6 +2432,8 @@ impl NumericGameplayCheckpoint {
             multiply_scratch,
             pointer_scratch,
             wavy_samus,
+            pause_background,
+            ending_tilemap,
         } = self.auxiliary;
         // Exhaustive construction also makes future Session/auxiliary fields a
         // compiler error until their checkpoint participation is explicit.
@@ -2449,6 +2479,8 @@ impl NumericGameplayCheckpoint {
             multiply_scratch,
             pointer_scratch,
             wavy_samus,
+            pause_background,
+            ending_tilemap,
         }
     }
 }

@@ -2017,6 +2017,23 @@ fn queued_transfers_round_trip_every_byte() {
     });
 }
 
+/// The pause menu's BG2 backup ($7E:DF5C..$EF5B) and the ending's blank
+/// tilemap past the custom background ($7F:FA02..$FFFF) own their bytes.
+#[test]
+fn tilemap_buffers_round_trip_every_byte() {
+    use sm_game::menu_state::{EndingTilemap, PauseBackground};
+    check_bytes(
+        "pause background",
+        PauseBackground::START..PauseBackground::START + PauseBackground::BYTES,
+        |s| s.pause_background.bytes.as_slice(),
+    );
+    check_bytes(
+        "ending tilemap",
+        EndingTilemap::START..EndingTilemap::START + EndingTilemap::BYTES,
+        |s| s.ending_tilemap.bytes.as_slice(),
+    );
+}
+
 /// The Mode 7 queue's tail ($0334) and the VRAM read table's ($0360).
 #[test]
 fn queued_transfer_tails_round_trip() {

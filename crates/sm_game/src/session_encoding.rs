@@ -1049,6 +1049,19 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
             *value = bytes(COMPRESSED_MAPS + offset);
         }
     }
+    {
+        use crate::menu_state::{EndingTilemap, PauseBackground};
+        assert!(
+            EndingTilemap::START + EndingTilemap::BYTES <= byte_len,
+            "short ending tilemap import"
+        );
+        for (offset, value) in s.pause_background.bytes.iter_mut().enumerate() {
+            *value = bytes(PauseBackground::START + offset);
+        }
+        for (offset, value) in s.ending_tilemap.bytes.iter_mut().enumerate() {
+            *value = bytes(EndingTilemap::START + offset);
+        }
+    }
     s.enemy_projectiles.spawn.angle = bytes(0x60b);
     let load = |at: usize, value: &mut u16| *value = read(bytes, at);
     scalar_words!(s,load,(&mut));
@@ -1263,6 +1276,14 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
         crate::save_file::COMPRESSED_MAPS,
         s.compressed_maps.bytes.as_chunks::<2>().0,
     );
+    visit.le_words(
+        crate::menu_state::PauseBackground::START,
+        s.pause_background.bytes.as_chunks::<2>().0,
+    );
+    visit.le_words(
+        crate::menu_state::EndingTilemap::START,
+        s.ending_tilemap.bytes.as_chunks::<2>().0,
+    );
     crate::actors::codec::visit_common(s, |at, pairs| visit.le_words(at, pairs));
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
@@ -1411,6 +1432,18 @@ fn compressed_map_offset(at: usize) -> Option<usize> {
     at.checked_sub(COMPRESSED_MAPS)
         .filter(|offset| *offset < CompressedMaps::BYTES)
 }
+/// Byte `at`'s offset in the pause menu's BG2 backup, when it is one of its.
+fn pause_background_offset(at: usize) -> Option<usize> {
+    use crate::menu_state::PauseBackground;
+    at.checked_sub(PauseBackground::START)
+        .filter(|offset| *offset < PauseBackground::BYTES)
+}
+/// Byte `at`'s offset in the ending's blank tilemap tail, when it is one of its.
+fn ending_tilemap_offset(at: usize) -> Option<usize> {
+    use crate::menu_state::EndingTilemap;
+    at.checked_sub(EndingTilemap::START)
+        .filter(|offset| *offset < EndingTilemap::BYTES)
+}
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     owned_byte(s, at).or_else(|| scalar_byte(s, at))
 }
@@ -1450,6 +1483,12 @@ fn owned_byte(s: &Session, at: usize) -> Option<u8> {
     }
     if let Some(offset) = compressed_map_offset(at) {
         return Some(s.compressed_maps.bytes[offset]);
+    }
+    if let Some(offset) = pause_background_offset(at) {
+        return Some(s.pause_background.bytes[offset]);
+    }
+    if let Some(offset) = ending_tilemap_offset(at) {
+        return Some(s.ending_tilemap.bytes[offset]);
     }
     if (0x765..0x776).contains(&at) {
         return Some(s.menu_screens.graphics.bytes[at - 0x765]);
@@ -1682,6 +1721,14 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     }
     if let Some(offset) = compressed_map_offset(at) {
         s.compressed_maps.bytes[offset] = value;
+        return true;
+    }
+    if let Some(offset) = pause_background_offset(at) {
+        s.pause_background.bytes[offset] = value;
+        return true;
+    }
+    if let Some(offset) = ending_tilemap_offset(at) {
+        s.ending_tilemap.bytes[offset] = value;
         return true;
     }
     if (0x765..0x776).contains(&at) {

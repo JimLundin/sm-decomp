@@ -145,6 +145,10 @@ pub struct Session {
     pub saved_player: crate::save_file::SavedPlayer,
     /// The explored maps as the save file packs them ($7E:D91C..$DE1B).
     pub compressed_maps: crate::save_file::CompressedMaps,
+    /// The pause menu's backup of the BG2 tilemap ($7E:DF5C..$EF5B).
+    pub pause_background: crate::menu_state::PauseBackground,
+    /// The ending's blank tilemap past the custom background ($7F:FA02..$FFFF).
+    pub ending_tilemap: crate::menu_state::EndingTilemap,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
     pub room: Room,
@@ -327,6 +331,8 @@ impl Session {
             saved_maps: Default::default(),
             saved_player: Default::default(),
             compressed_maps: Default::default(),
+            pause_background: Default::default(),
+            ending_tilemap: Default::default(),
             inventory: Default::default(),
             mechanisms: Default::default(),
             feedback: Default::default(),
