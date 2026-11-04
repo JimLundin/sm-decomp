@@ -2672,6 +2672,22 @@ impl sm_game::room_state::LevelData for Game {
     fn level_behavior(&self, cell: usize) -> u8 {
         self.compatibility_byte(sm_game::ram::bytes::BTS + cell)
     }
+    /// The Game holds the level data as RAM, where the decompressor writes it.
+    fn clear_level_data(&mut self, mode: sm_game::room_entry::content::LoadMode) {
+        use sm_game::room_entry::content::LoadMode;
+        let (words, runs): (usize, &[usize]) = match mode {
+            LoadMode::Initial => (12800, &[0x10002]),
+            LoadMode::Door => (3200, &[0x10002, 0x13200, 0x14b00, 0x16400]),
+        };
+        let [low, high] = 0x8000u16.to_le_bytes();
+        for word in (0..words).rev() {
+            for &run in runs {
+                let at = run + 2 * word;
+                self.compatibility_write_byte(at, low);
+                self.compatibility_write_byte(at + 1, high);
+            }
+        }
+    }
     /// The Game holds the level data as RAM, where the decompressor left it.
     fn copy_level_planes(&mut self) {
         let size = usize::from(sm_game::room_state::LevelData::level_data_size(self));

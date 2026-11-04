@@ -25,6 +25,11 @@ pub trait LevelData {
     /// $7F:9602, then the behaviour bytes to $7F:6402, as the original copies
     /// them (overlapping room arrays keep their pre-copy contents).
     fn copy_level_planes(&mut self);
+    /// Fill the level words with air ($8000) before a room's level data
+    /// decompresses over them, from the last word down: all 12800 of them
+    /// for an initial load; for a door, 3200 words from each of $7F:0002,
+    /// $7F:3200, $7F:4B00 and $7F:6400, a word of each run at a time.
+    fn clear_level_data(&mut self, mode: crate::room_entry::content::LoadMode);
 }
 
 /// Named work RAM, the loaded cartridge and its records, and the
