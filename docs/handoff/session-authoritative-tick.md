@@ -724,7 +724,7 @@ destination, it proposes the following:
   (`session_native_adoption`, `SessionSnapshotPayload` is `None` in Legacy).
 - **D5. New owners in stage 8**, each with its own format bump: the save block $0A00.., $D7C0,
   $CD52, $D8F0 and Kraid's pause counters.
-- **D6. The machinery.** `ram.rs`, `word_transfers.rs` and `projection.rs` (43 sites) serve
+- **D6. The machinery.** `ram.rs`, `word_transfers.rs` and `projection.rs` (17 sites since `collab/rs-infra`) serve
   sm/ callers. Moving them into sm/ would zero the sm_game count without retiring any access.
   - *Proposal.* They count until their sm/ callers go.
 - **D7. The 39 `foreign` calls in `sm/src/verification`** test `foreign`'s export and import

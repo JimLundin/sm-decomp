@@ -378,3 +378,41 @@ Left, with what each needs:
   directly, including the $7F:0002 overflow slot 7FD6h, so the function would live only
   for them. It retires with D7.
 - The grapple tiles (unchanged from fc4).
+
+## Infrastructure lane (2026-11-04, `collab/rs-infra`)
+
+The demo stop's clear is done. `demo_clear` lists the owner of every byte of
+$077C..$0997 in address order, and `Field::DemoClear(index)` reads word `index` byte by
+byte from those owners, so the projection test checks each word whose bytes all have
+Session owners. Stores take the byte path, word $0996 first, as the transfer did. No
+Session fields or formats changed.
+
+These bytes have no Session owner, and their words read `None`:
+- the Mode 7 rotation angle $0785;
+- the removed words $078F, $07B7 and $0933..$093E;
+- $07D3..$07DE, $07ED..$07F2 and $094C..$094F;
+- the BG1/BG2 tilemap update requests $0956..$098D. Their numeric stores still need
+  semantic counterparts (`Presentation::requires_semantic_counterpart`).
+
+The HUD palette $077C, the NMI acknowledgment $0782 and the committed fake mode $07EC
+read from an owned display only.
+
+Other changes:
+- The cinematic palette capture stores through `Field::PaletteColor` and
+  `Field::CinematicElement(TilemapStuff, ..)`.
+- `RawRam`, `WorkRamAccess` and `RamHost` are gone. Nothing in sm_game called `.ram()`,
+  so the bounds were unused.
+- sm_game's `ram_word!`/`word!` and `ram_checked_word!`/`checked_word!` are gone. sm/
+  has its own macros in `ram_words.rs`.
+- `word_transfers!` lost its `rom`, `table` and stride arms, which nothing called.
+
+What is left in ram.rs, word_transfers.rs and projection.rs (17 sites), for D6:
+
+| Item | Sites | Callers |
+| --- | ---: | --- |
+| `word_transfers!` (word_transfers.rs) | 13 | sm/ only, 8 transfers: `boot.rs:67`, `player_update_runtime.rs:277`, `room_backgrounds.rs:10,23,32`, `room_entry/compatibility.rs:269,273,287` |
+| `CompatibilityRam::compatibility_byte`/`compatibility_write_byte` (ram.rs) | 2 | sm/ only: 156 references, 109 of them in `game_state.rs`. In sm_game, only test hosts implement them. |
+| `SessionProjection`'s `CompatibilityRam` impl (projection.rs, a test host) | 2 | the trait's methods above, and `session_cohort::load` in cohort tests (stage 7) |
+
+The ratchet does not count these, but only sm/ calls them: `RAM_VARS`, `RamVar`, `Shape`
+(`ram_map.rs`, `cpu_infra.rs:1258`, `verification/observation/oracle.rs`).

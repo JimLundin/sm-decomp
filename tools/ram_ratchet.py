@@ -54,8 +54,8 @@ import cycle_report  # noqa: E402
 # calls in 11 files (nine menu files, scrolling_sky, projection), which the
 # ratchet saw only as the menu prelude's RawRam import. 85/14 becomes 141/24.
 BASELINE = {
-    "sm_game_ram_sites": 82,
-    "sm_game_coupled_files": 12,
+    "sm_game_ram_sites": 55,
+    "sm_game_coupled_files": 11,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
