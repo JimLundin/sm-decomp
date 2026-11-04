@@ -45,6 +45,28 @@ original's behaviour, not its C shapes:
 - Use `std::fs` and owned buffers, not libc `fopen`/`fread`/`malloc`.
 - Store text files with LF line endings (`.gitattributes` and CI enforce it).
 
+Model the domain with types, not raw numbers:
+
+- Use an `enum` for a state, mode, kind or choice instead of a `u16` code.
+  Avoid magic constants and state words compared with `==`. Match on the enum
+  exhaustively; don't fall back to `_ =>` when every case can be named.
+- Give an enum variant the data it carries, rather than storing that data in
+  sibling fields that only mean something in one state.
+- Use a newtype for an index or a quantity that must not mix with others: slot,
+  room, pose, frame count.
+- Use a typed flag set, a struct of `bool`s or an enum set, instead of bit masks
+  tested inline.
+- Keep behaviour tables as data: arrays of typed records or enums, plus a small
+  interpreter. Don't repeat a code path once per entry.
+- Convert at the edges. Turn ROM bytes and checkpoint formats into the enum
+  once, with `TryFrom`, and keep the raw value out of engine logic.
+  - When the original treats an invalid value as an error, map it to
+    `Fatal::unreachable`.
+  - When the original tolerates an invalid value, keep it as a named variant
+    (for example `Unknown(u16)`) and list it in docs/LEGACY.md.
+  - Stay byte-exact: the original's numeric value goes back out wherever it is
+    observed.
+
 `cargo clippy -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets` must
 pass in CI. Fix findings; don't add `allow`s for these patterns.
 
