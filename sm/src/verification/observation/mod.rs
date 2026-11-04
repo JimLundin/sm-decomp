@@ -115,6 +115,8 @@ pub struct Observer {
     session: Option<SessionCompare>,
     /// Where the Session fields the normalized ranges cover differ, beside it.
     shared: coverage::SharedDifferences,
+    /// The nightly report of the unowned bytes that differ, when asked for.
+    unowned: Option<coverage::UnownedDifferences>,
     elapsed: Duration,
 }
 
@@ -135,6 +137,7 @@ impl Observer {
             mode: Mode::Lockstep(Lockstep::new(report)),
             session,
             shared: coverage::SharedDifferences::default(),
+            unowned: coverage::UnownedDifferences::requested(),
             elapsed: Duration::ZERO,
         }
     }
@@ -146,6 +149,7 @@ impl Observer {
             mode: Mode::Single(Box::new(single)),
             session: None,
             shared: coverage::SharedDifferences::default(),
+            unowned: None,
             elapsed: Duration::ZERO,
         }
     }
@@ -185,6 +189,7 @@ impl Observer {
                     ));
                     lines.push(self.shared.summary());
                 }
+                lines.extend(self.unowned.map(|unowned| unowned.summary()));
                 Ok((lines, None))
             }
             Mode::Single(single) => {
@@ -267,8 +272,21 @@ pub(crate) fn observe(game: &mut Game) -> Option<bool> {
 
 /// Compare the paired frame's Sessions at the frame's end: the engine's own,
 /// the Session its next lease takes up, and the oracle's result decoded from
-/// its RAM. Report-only; the RAM comparison decides.
+/// its RAM. Report-only; the RAM comparison decides. The unowned bytes' report
+/// counts the same frame.
 pub(crate) fn observe_session(game: &mut Game) {
+    if let Some(unowned) = game
+        .observation
+        .as_mut()
+        .filter(|observer| matches!(observer.mode, Mode::Lockstep(_)))
+        .and_then(|observer| observer.unowned.as_mut())
+    {
+        unowned.note(
+            game.snes_frame_counter,
+            &game.g_snapshot_mine.ram,
+            &game.g_snapshot_theirs.ram,
+        );
+    }
     let Some(compare) = game
         .observation
         .as_mut()

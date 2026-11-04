@@ -236,26 +236,107 @@ pub(super) fn shared_summary(classes: &Classes) -> String {
     )
 }
 
+/// One range's differences over a replay: the Ticks whose two results differ
+/// in it before normalization, the first of them, and which of its bytes
+/// ever differed.
+struct Differing {
+    range: Range<usize>,
+    ticks: u64,
+    first: Option<i32>,
+    /// Per byte of `range`, whether it ever differed.
+    bytes: Vec<bool>,
+}
+
+impl Differing {
+    fn new(range: Range<usize>) -> Self {
+        Self {
+            bytes: vec![false; range.len()],
+            range,
+            ticks: 0,
+            first: None,
+        }
+    }
+
+    fn note(&mut self, tick: i32, mine: &[u8], theirs: &[u8]) {
+        let (mine, theirs) = (&mine[self.range.clone()], &theirs[self.range.clone()]);
+        if mine == theirs {
+            return;
+        }
+        self.ticks += 1;
+        self.first.get_or_insert(tick);
+        for ((differed, ours), oracle) in self.bytes.iter_mut().zip(mine).zip(theirs) {
+            *differed |= ours != oracle;
+        }
+    }
+
+    /// The runs of bytes that never differed.
+    fn unchanged(&self) -> Vec<Range<usize>> {
+        let mut runs: Vec<Range<usize>> = Vec::new();
+        for (at, _) in self
+            .range
+            .clone()
+            .zip(&self.bytes)
+            .filter(|&(_, &differed)| !differed)
+        {
+            match runs.last_mut() {
+                Some(run) if run.end == at => run.end = at + 1,
+                _ => runs.push(at..at + 1),
+            }
+        }
+        runs
+    }
+
+    /// `$0000-$0003 <ticks> from @<tick> in <bytes> bytes`.
+    fn text(&self) -> String {
+        format!(
+            "{} {}{} in {} bytes",
+            named(&self.range),
+            self.ticks,
+            self.first
+                .map_or_else(String::new, |tick| format!(" from @{tick}")),
+            self.bytes.iter().filter(|&&differed| differed).count()
+        )
+    }
+}
+
+/// `$0000-$0003`, or `$0612` for one byte.
+fn named(range: &Range<usize>) -> String {
+    if range.len() == 1 {
+        format!("${:04X}", range.start)
+    } else {
+        format!("${:04X}-${:04X}", range.start, range.end - 1)
+    }
+}
+
 /// Per `SHARED_RAM` entry, the Ticks whose two results differ in its bytes
 /// before normalization copies one side over the other: the evidence that
 /// retires a `LEGACY(verifier)` row (an entry that never differs on the
-/// corpus can leave the normalized range) or names the Ticks to fix.
-#[derive(Default)]
+/// corpus can leave the normalized range) or names the Ticks to fix. An
+/// entry that differs also names its bytes that never did, which a split of
+/// its row could compare.
 pub(super) struct SharedDifferences {
-    /// Per entry: the differing Ticks and the first of them.
-    ticks: [(u64, Option<i32>); SHARED_RAM.len()],
+    entries: Vec<Differing>,
     compared: u64,
+}
+
+impl Default for SharedDifferences {
+    fn default() -> Self {
+        Self {
+            entries: SHARED_RAM
+                .iter()
+                .map(|(range, _, _)| Differing::new(range.clone()))
+                .collect(),
+            compared: 0,
+        }
+    }
 }
 
 impl SharedDifferences {
     /// Count one paired frame's results.
     pub(super) fn note(&mut self, tick: i32, mine: &[u8], theirs: &[u8]) {
         self.compared += 1;
-        for ((range, _, _), (count, first)) in SHARED_RAM.iter().zip(&mut self.ticks) {
-            if mine[range.clone()] != theirs[range.clone()] {
-                *count += 1;
-                first.get_or_insert(tick);
-            }
+        for entry in &mut self.entries {
+            entry.note(tick, mine, theirs);
         }
     }
 
@@ -263,14 +344,24 @@ impl SharedDifferences {
     pub(super) fn summary(&self) -> String {
         let entries: Vec<String> = SHARED_RAM
             .iter()
-            .zip(&self.ticks)
+            .zip(&self.entries)
             .filter(|((_, _, shared), _)| *shared == Shared::UntilRowRetires)
-            .map(|((range, field, _), (count, first))| {
-                let first = first.map_or_else(String::new, |tick| format!(" from @{tick}"));
+            .map(|((range, field, _), entry)| {
+                let first = entry
+                    .first
+                    .map_or_else(String::new, |tick| format!(" from @{tick}"));
+                let unchanged = entry.unchanged();
+                let unchanged = if entry.first.is_none() || unchanged.is_empty() {
+                    String::new()
+                } else {
+                    let runs: Vec<String> = unchanged.iter().map(named).collect();
+                    format!(" (never differed: {})", runs.join(", "))
+                };
                 format!(
-                    "${:04X}-${:04X} {field} {count}{first}",
+                    "${:04X}-${:04X} {field} {}{first}{unchanged}",
                     range.start,
-                    range.end - 1
+                    range.end - 1,
+                    entry.ticks
                 )
             })
             .collect();
@@ -278,6 +369,120 @@ impl SharedDifferences {
             "Session RAM both bytes differing before normalization, of {} ticks: {}",
             self.compared,
             entries.join("; ")
+        )
+    }
+}
+
+/// Why a byte is unowned, as the nightly report groups it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Reason {
+    /// An `UNOWNED_RAM` range, with the RAM map's reason.
+    Unowned(Kind),
+    /// A `NORMALIZED_RAM` range outside the Session fields it covers: its
+    /// reason is its `LEGACY(verifier)` row.
+    Normalized,
+}
+
+impl Reason {
+    const ALL: [Self; 5] = [
+        Self::Unowned(Kind::Unused),
+        Self::Unowned(Kind::Debug),
+        Self::Unowned(Kind::NeverRead),
+        Self::Unowned(Kind::Handshake),
+        Self::Normalized,
+    ];
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Unowned(Kind::Unused) => "unused",
+            Self::Unowned(Kind::Debug) => "debug",
+            Self::Unowned(Kind::NeverRead) => "never read",
+            Self::Unowned(Kind::Handshake) => "handshake",
+            Self::Normalized => "normalized (LEGACY(verifier) rows)",
+        }
+    }
+}
+
+/// The nightly whole-RAM report (#246; docs/handoff/session-compare.md):
+/// per replay, the unowned bytes whose two results differ before
+/// normalization, by reason. It keeps watching the bytes the Session compare
+/// does not own after the locks drop `wram` (slice 6). A difference is worth
+/// a look, never a failure: the RAM and Session compares decide. The
+/// scheduled run turns it on (`SM_VERIFY_UNOWNED_REPORT=1`).
+pub(super) struct UnownedDifferences {
+    ranges: Vec<(Reason, Differing)>,
+    compared: u64,
+}
+
+impl Default for UnownedDifferences {
+    fn default() -> Self {
+        let shared = |at: &usize| SHARED_RAM.iter().any(|(range, _, _)| range.contains(at));
+        let mut ranges: Vec<(Reason, Differing)> = UNOWNED_RAM
+            .iter()
+            .map(|(range, kind)| (Reason::Unowned(*kind), Differing::new(range.clone())))
+            .collect();
+        for (_, range) in crate::cpu_infra::NORMALIZED_RAM {
+            let mut runs: Vec<Range<usize>> = Vec::new();
+            for at in range.filter(|at| !shared(at)) {
+                match runs.last_mut() {
+                    Some(run) if run.end == at => run.end = at + 1,
+                    _ => runs.push(at..at + 1),
+                }
+            }
+            ranges.extend(
+                runs.into_iter()
+                    .map(|run| (Reason::Normalized, Differing::new(run))),
+            );
+        }
+        ranges.sort_by_key(|(_, entry)| entry.range.start);
+        Self {
+            ranges,
+            compared: 0,
+        }
+    }
+}
+
+impl UnownedDifferences {
+    /// The report, when the run asks for it.
+    pub(super) fn requested() -> Option<Self> {
+        (std::env::var_os("SM_VERIFY_UNOWNED_REPORT").as_deref() == Some("1".as_ref()))
+            .then(Self::default)
+    }
+
+    /// Count one paired frame's results.
+    pub(super) fn note(&mut self, tick: i32, mine: &[u8], theirs: &[u8]) {
+        self.compared += 1;
+        for (_, entry) in &mut self.ranges {
+            entry.note(tick, mine, theirs);
+        }
+    }
+
+    /// The summary line: per reason, the ranges that differed, or none.
+    pub(super) fn summary(&self) -> String {
+        let reasons: Vec<String> = Reason::ALL
+            .iter()
+            .map(|&reason| {
+                let differing: Vec<String> = self
+                    .ranges
+                    .iter()
+                    .filter(|(entry_reason, entry)| *entry_reason == reason && entry.ticks != 0)
+                    .map(|(_, entry)| entry.text())
+                    .collect();
+                format!(
+                    "{} {}",
+                    reason.name(),
+                    if differing.is_empty() {
+                        "none".to_owned()
+                    } else {
+                        differing.join(", ")
+                    }
+                )
+            })
+            .collect();
+        format!(
+            "Unowned RAM differing before normalization, of {} ticks: {}",
+            self.compared,
+            reasons.join("; ")
         )
     }
 }

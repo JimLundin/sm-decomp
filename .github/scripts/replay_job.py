@@ -32,6 +32,9 @@ ROOM_LOGS: dict[str, tuple[str, str, int | None]] = {
     "SM_HDMA_TABLE_LOG": ("HDMA tables", "frames differ from their frame-start table", None),
     "SM_IRQ_TABLE_LOG": ("IRQ tables", "frames differ from their planned interrupts", None),
 }
+# The nightly whole-RAM report (#246, docs/handoff/session-compare.md): each lockstep row's
+# unowned bytes that differ, by reason. Addresses, ticks and counts only; never a failure.
+UNOWNED_LINE = re.compile(r"^Unowned RAM differing before normalization, (.*)$")
 print_lock = threading.Lock()
 
 
@@ -132,18 +135,27 @@ def worker(index: int, group: list[str], mode: str, audio: bool, summary: list[s
             for name in ROOM_LOGS:
                 logs[name] = TEMP / f"{name.lower()}-{index}.csv"
                 environment[name] = str(logs[name])
+        if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not os.environ.get("LLVM_PROFILE_FILE"):
+            environment["SM_VERIFY_UNOWNED_REPORT"] = "1"
         if publish_check():
             environment.update(SM_IRQ_PUBLISH_CHECK="1", SM_IRQ_PUBLISH_LOG=str(publish_log(index)),
                                SM_IRQ_PUBLISH_COUNTS=str(publish_log(index).with_suffix(".counts")))
     if JOB["kinds"] == "room":
         environment["FULL_ROUTE"] = JOB["route"]
     state: dict[str, str] = {}
+    row = ""
     with (TEMP / f"replay-{index}.log").open("w", encoding="utf-8", errors="replace") as raw:
         process = subprocess.Popen(arguments, cwd=ROOT, env=environment, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
         assert process.stdout is not None  # stdout=PIPE
         for line in process.stdout:
             raw.write(line)
+            segment = re.match(r"^SEGMENT ([A-Za-z0-9-]+)", line)
+            row = segment[1] if segment else row
+            unowned = UNOWNED_LINE.match(line.rstrip("\n"))
+            if unowned:
+                with print_lock:
+                    summary.append(f"UNOWNED {row}: {unowned[1]}")
             shown = console_line(line.rstrip("\n"), state, mode, audio)
             if shown is None:
                 continue
