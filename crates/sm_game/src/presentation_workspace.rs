@@ -68,8 +68,10 @@ impl Point {
             physical: None,
         }
     }
-    /// A retained physical alias. Prepared role accesses never infer this mapping.
-    pub const fn physical(at: usize) -> Self {
+    /// A transient alias by WRAM address, for the RAM encoding and original
+    /// table destinations outside the workspace. Prepared role accesses never
+    /// infer this mapping, and retained state never holds one.
+    pub(crate) const fn physical(at: usize) -> Self {
         Self {
             role: Role::Pause,
             offset: 0,
