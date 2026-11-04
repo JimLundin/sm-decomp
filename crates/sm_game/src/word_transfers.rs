@@ -2,7 +2,7 @@
 use sm_data::cartridge::RomImage;
 pub use sm_data::cartridge::lorom_offset;
 
-/// The loaded cartridge image, for `word_transfers!`'s `rom` endpoint.
+/// The loaded cartridge image, for ROM word reads.
 pub trait LoadedRom {
     fn loaded_rom_image(&self) -> RomImage;
 }
@@ -110,7 +110,6 @@ macro_rules! word_transfers {
     }};
     (@step ascending) => { 2isize };
     (@step descending) => { -2isize };
-    (@step $stride:expr) => { $stride };
     (@endpoint $game:ident, le($field:ident, $index:expr)) => {
         $crate::word_transfers::WordEndpoint::Ram(
             ($crate::ram::word_arrays::$field as isize)
@@ -122,15 +121,6 @@ macro_rules! word_transfers {
     };
     (@endpoint $game:ident, little($address:expr)) => {
         $crate::word_transfers::WordEndpoint::Ram($address as isize, false)
-    };
-    (@endpoint $game:ident, rom($address:expr, $index:expr)) => {{
-        let image = $crate::word_transfers::LoadedRom::loaded_rom_image(&*$game);
-        let base = $crate::word_transfers::lorom_offset($address);
-        let offset = ($index as isize).checked_mul(2).unwrap();
-        $crate::word_transfers::WordEndpoint::Rom(image, base.checked_add(offset).unwrap())
-    }};
-    (@endpoint $game:ident, table($table:ident, $index:expr)) => {
-        $crate::word_transfers::WordEndpoint::Table(&$table, 0).shifted($index as isize)
     };
     (@endpoint $game:ident, value($value:expr)) => {
         $crate::word_transfers::WordEndpoint::Value($value)
