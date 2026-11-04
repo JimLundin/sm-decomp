@@ -267,35 +267,33 @@ impl EntryEffects for Runtime<'_> {
         self.owned_player_call(|runtime| entry_register(reg, value, runtime));
     }
     fn clear_buffer(&mut self, operation: BufferClear) {
-        self.foreign(|game| unsafe {
-            match operation {
-                BufferClear::InitialLevel => {
-                    sm_game::room_state::LevelData::clear_level_data(game, LoadMode::Initial)
-                }
-                BufferClear::DoorLevel => {
-                    sm_game::room_state::LevelData::clear_level_data(game, LoadMode::Door)
-                }
-                BufferClear::InitialFx => game::room_backgrounds::clear_fx(LoadMode::Initial, game),
-                BufferClear::InitialBg2 => {
-                    game::room_backgrounds::clear_bg2(LoadMode::Initial, game)
-                }
-                BufferClear::DoorFx => game::room_backgrounds::clear_fx(LoadMode::Door, game),
-                BufferClear::DoorBg2 => game::room_backgrounds::clear_bg2(LoadMode::Door, game),
-                BufferClear::DoorDualBg => game::room_backgrounds::clear_dual_bg(game),
-                BufferClear::TransitionXray => {
-                    // The liquid surface and HDMA table 2 ($7E:9C00..$9E00)
-                    // and the window tables ($7E:9E00..$A000) cleared from
-                    // the top down, a word of each half at a time.
-                    use sm_game::fx_domain::Sources as _;
-                    use sm_game::scene::{hdma_sources::LiveOwner, state::WordOrder};
-                    for offset in (0..0x100usize).rev().map(|word| 2 * word) {
-                        let (owner, at) = match offset.checked_sub(0x100) {
-                            Some(at) => (LiveOwner::HdmaTable2, at),
-                            None => (LiveOwner::LiquidSurface, offset),
-                        };
-                        game.store_buffer_word(owner, at, WordOrder::Little, 0);
-                        game.store_buffer_word(LiveOwner::WindowLeft, offset, WordOrder::Little, 0);
-                    }
+        // Each clear stores the lease's bytes, and each DMA starts on its
+        // transfer port, with the observations refreshed on entry and on return
+        // as the former foreign call left them.
+        self.owned_player_call(|runtime| match operation {
+            BufferClear::InitialLevel | BufferClear::DoorLevel => {
+                game::room_backgrounds::clear_level(runtime)
+            }
+            BufferClear::InitialFx => game::room_backgrounds::clear_fx(LoadMode::Initial, runtime),
+            BufferClear::InitialBg2 => {
+                game::room_backgrounds::clear_bg2(LoadMode::Initial, runtime)
+            }
+            BufferClear::DoorFx => game::room_backgrounds::clear_fx(LoadMode::Door, runtime),
+            BufferClear::DoorBg2 => game::room_backgrounds::clear_bg2(LoadMode::Door, runtime),
+            BufferClear::DoorDualBg => game::room_backgrounds::clear_dual_bg(runtime),
+            BufferClear::TransitionXray => {
+                // The liquid surface and HDMA table 2 ($7E:9C00..$9E00)
+                // and the window tables ($7E:9E00..$A000) cleared from
+                // the top down, a word of each half at a time.
+                use sm_game::fx_domain::Sources as _;
+                use sm_game::scene::{hdma_sources::LiveOwner, state::WordOrder};
+                for offset in (0..0x100usize).rev().map(|word| 2 * word) {
+                    let (owner, at) = match offset.checked_sub(0x100) {
+                        Some(at) => (LiveOwner::HdmaTable2, at),
+                        None => (LiveOwner::LiquidSurface, offset),
+                    };
+                    runtime.store_buffer_word(owner, at, WordOrder::Little, 0);
+                    runtime.store_buffer_word(LiveOwner::WindowLeft, offset, WordOrder::Little, 0);
                 }
             }
         });
