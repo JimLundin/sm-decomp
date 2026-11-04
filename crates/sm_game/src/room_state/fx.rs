@@ -77,28 +77,6 @@ pub trait SetupHost:
     /// as the projected word stores did.
     fn store_session(&mut self, refresh: bool, store: impl FnOnce(&mut crate::session::Session));
 }
-impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> SetupHost for T {
-    fn boss_defeated(&mut self, mask: u16) -> bool {
-        crate::progress::leased::check_boss_bit_for_cur_area(mask, self) & 1 != 0
-    }
-    fn event_happened(&mut self, event: u16) -> bool {
-        crate::progress::leased::event_has_happened(event, self) & 1 != 0
-    }
-    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, header: u16) {
-        crate::room_mechanisms::creation::spawn_hardcoded(x, y, header, self);
-    }
-    fn spawn_animated_tiles(&mut self, definition: u16) {
-        crate::animated_tiles::execution::leased::spawn(definition, self);
-    }
-    fn store_session(&mut self, refresh: bool, store: impl FnOnce(&mut crate::session::Session)) {
-        self.lend(|runtime| {
-            store(runtime.session_mut());
-            if refresh {
-                runtime.words_stored();
-            }
-        });
-    }
-}
 
 /// An FX record: the loaded cartridge's, or a prepared world's copy of the same bytes.
 enum FxRecord {

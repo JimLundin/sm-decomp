@@ -89,15 +89,6 @@ pub trait Allocator: HdmaTable {
     /// Write the DMA control and target registers at `register`, control first.
     fn write_channel_control(&mut self, register: u16, control: u16);
 }
-impl<T: crate::menus::host::MenuRuntime + HdmaTable + crate::runtime_access::RuntimeAccess + ?Sized>
-    Allocator for T
-{
-    fn write_channel_control(&mut self, register: u16, control: u16) {
-        let [low, high] = control.to_le_bytes();
-        self.write_dma_register(register, low);
-        self.write_dma_register(register + 1, high);
-    }
-}
 
 /// The host's HDMA spawn on the owned table.
 pub fn spawn_hdma_owned<H: Allocator + ?Sized>(
@@ -416,7 +407,8 @@ pub trait UpdateHost:
 }
 impl<T> UpdateHost for T
 where
-    T: crate::hdma_dispatch::DispatchHost
+    T: Allocator
+        + crate::hdma_dispatch::DispatchHost
         + crate::hdma_program::LeaseHdma
         + crate::menus::host::MenuRuntime
         + ?Sized,
@@ -444,13 +436,6 @@ pub trait GradientHost:
     + crate::cartridge::LoadedImage
 {
     fn gradient_tables(&self) -> &crate::visual_tables::ImportedTables;
-}
-impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> GradientHost
-    for T
-{
-    fn gradient_tables(&self) -> &crate::visual_tables::ImportedTables {
-        self.visual_tables()
-    }
 }
 
 pub(crate) fn refresh_title_gradient<H: GradientHost + ?Sized>(game: &mut H) {

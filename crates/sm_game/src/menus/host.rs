@@ -59,24 +59,6 @@ pub trait CommonRuntime {
     fn assert_ram_pointer(&mut self, address: u16);
     fn update_beam_tiles_and_palette(&mut self);
 }
-impl<T: MenuRuntime + crate::runtime_access::RuntimeAccess + ?Sized> CommonRuntime for T {
-    fn spawn_hdma(
-        &mut self,
-        bank: u8,
-        args: &crate::display::hdma_spawn::HdmaObjectDefinition,
-    ) -> u16 {
-        MenuRuntime::spawn_hdma(self, bank, args)
-    }
-    fn rtl_unreachable(&mut self) -> bool {
-        MenuRuntime::rtl_unreachable(self)
-    }
-    fn assert_ram_pointer(&mut self, address: u16) {
-        MenuRuntime::assert_ram_pointer(self, address)
-    }
-    fn update_beam_tiles_and_palette(&mut self) {
-        MenuRuntime::update_beam_tiles_and_palette(self)
-    }
-}
 
 /// The cinematic sprite objects' bank $8B routines, which run on the
 /// cinematic host.

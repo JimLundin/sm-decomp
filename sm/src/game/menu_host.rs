@@ -5,8 +5,6 @@ use sm_game::menu_state::SaveSelection;
 use sm_game::save_file::SaveRam;
 use sm_game::session_access::SessionAccess as _;
 
-impl sm_game::sprite_output::SpriteHost for Game {}
-
 /// The RAM address of a sprite output word.
 pub(crate) fn sprite_word_address(word: sm_game::sprite_output::SpriteWord) -> usize {
     use sm_game::sprite_output::SpriteWord::*;
@@ -25,30 +23,6 @@ pub(crate) const SPRITE_CAMERA: [usize; 2] = [0x911, 0x915];
 /// The RAM address of shot `slot`'s spritemap pointer.
 pub(crate) fn projectile_sprite_address(slot: u16) -> usize {
     0xcb8 + 2 * usize::from(slot >> 1)
-}
-
-impl sm_game::sprite_output::SpriteWords for Game {
-    fn sprite_word(&self, word: sm_game::sprite_output::SpriteWord) -> u16 {
-        let at = sprite_word_address(word);
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn sprite_camera(&self) -> [u16; 2] {
-        SPRITE_CAMERA.map(|at| {
-            u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-        })
-    }
-    fn projectile_sprite_cursor(&self, slot: u16) -> u16 {
-        let at = projectile_sprite_address(slot);
-        u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn echo_frame(&self) -> u16 {
-        let game = self;
-        sm_game::frame_display_word!(game.NmiFrameWordPair)
-    }
-    fn samus_pose(&self) -> u16 {
-        let game = self;
-        sm_game::sequence_word!(game.SAMUS_POSE)
-    }
 }
 
 impl sm_game::sprite_output::MapHost for Game {

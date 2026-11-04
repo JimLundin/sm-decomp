@@ -42,15 +42,6 @@ pub trait MapHost: SlotHost + super::host::MapFacts {
     );
 }
 
-impl<H: Host + crate::runtime_access::RuntimeAccess + ?Sized> MapHost for H {
-    fn store_gameplay_flags(
-        &mut self,
-        store: impl FnOnce(&mut crate::gameplay_flag_state::GameplayFlags),
-    ) {
-        crate::runtime_access::with_session(self, |session| store(&mut session.gameplay_flags));
-    }
-}
-
 /// What a load, a new game and the boot check reach beyond a save host: the
 /// menu and sequence state, the display history and the owned Session. A
 /// Session lease is one, and so is boot's host.

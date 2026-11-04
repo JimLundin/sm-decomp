@@ -51,13 +51,6 @@ impl sm_game::hdma_objects::HdmaTable for crate::game::session_runtime::Runtime<
     }
 }
 
-impl sm_game::hdma_program::LeaseHdma for Game {
-    type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
-    fn hdma_lease(&mut self) -> Self::Lease<'_> {
-        crate::game::session_runtime::Runtime::new(self)
-    }
-}
-
 /// The title gradient refreshes from the game's imported gradient table.
 impl sm_game::hdma_objects::GradientHost for crate::game::session_runtime::Runtime<'_> {
     fn gradient_tables(&self) -> &sm_game::visual_tables::ImportedTables {

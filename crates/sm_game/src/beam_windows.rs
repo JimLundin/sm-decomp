@@ -2,7 +2,6 @@
 //! `actors::mother_brain_rainbow`, which shares the edge stepper).
 
 use crate::legacy_overflow;
-use crate::menus::host::Host;
 use crate::menus::prelude::do_until;
 use crate::runtime_access::SessionRam;
 
@@ -25,11 +24,6 @@ const CLOSED: u16 = 255;
 pub trait BeamHost: SessionRam {
     /// The loaded image's little-endian word at LoROM `address` plus `offset`.
     fn gradient_word(&self, address: u32, offset: usize) -> u16;
-}
-impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> BeamHost for T {
-    fn gradient_word(&self, address: u32, offset: usize) -> u16 {
-        self.read_rom_word(address, offset)
-    }
 }
 
 /// Advance the two 8.8 fixed-point edges and pack one SNES window word.
