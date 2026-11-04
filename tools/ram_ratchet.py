@@ -65,7 +65,7 @@ BASELINE = {
     # decoding behind them slows every replay.
     "engine_ram_address_sites": 19,
     "engine_raw_ram_calls": 0,
-    "engine_unresolved_ram_methods": 1032,
+    "engine_unresolved_ram_methods": 1031,
     "legacy_engine_ram_sites": 319,  # 320 was set by hand; main 2fb64f221 measures 321
     # Original-game overflow paths (LEGACY(original-overflow)).
     # Rebaselined 2026-11-04: 61 -> 75. Every new site is an original-game
