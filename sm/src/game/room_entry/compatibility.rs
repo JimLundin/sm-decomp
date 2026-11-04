@@ -194,22 +194,18 @@ impl EntryEffects for Runtime<'_> {
         self.owned_player_call(|runtime| sm_game::palette_effects::fading::all(12, runtime))
     }
     fn wait(&mut self, cause: EntryWait) -> u8 {
-        self.foreign(|game| unsafe {
-            match cause {
-                EntryWait::Nmi => crate::game::display_refresh::wait(true, game),
-                EntryWait::NoUpdate => crate::game::display_refresh::wait(false, game),
-                EntryWait::Music => {
-                    game::music::wait_for_music(game, |effect, game| match effect {
-                        game::music::MusicWaitEffect::EnableNmi(enabled) => {
-                            game::display_refresh::enable(enabled, game)
-                        }
-                        game::music::MusicWaitEffect::AdvanceQueue => {
-                            game::music::handle_music_queue(game)
-                        }
-                    })
-                }
-                EntryWait::Mechanisms => room_mechanisms::run_door(game),
-            }
+        // Each wait runs on the lease, with the observations refreshed on entry
+        // and on return as the former foreign call left them. An NMI wait is the
+        // frame display's acknowledgment and pending bytes; the door's room
+        // mechanisms run on this lease in place of one the game opened.
+        self.owned_player_call(|runtime| match cause {
+            EntryWait::Nmi => sm_game::display_refresh::wait(true, runtime),
+            EntryWait::NoUpdate => sm_game::display_refresh::wait(false, runtime),
+            EntryWait::Music => runtime.wait_for_music(),
+            EntryWait::Mechanisms => game::session_runtime::run_mechanisms_in(
+                runtime,
+                room_mechanisms::host::CallerContext::DoorTransition,
+            ),
         })
     }
     fn sfx_empty(&mut self, queue: SfxQueue) -> bool {
@@ -257,45 +253,43 @@ impl EntryEffects for Runtime<'_> {
             DeviceWord::Dma1Count => DAS1L,
             DeviceWord::DmaEnable => MDMAEN,
         };
-        self.foreign(|game| unsafe { crate::rtl::write_reg_word(reg as u16, value, game) });
+        self.owned_player_call(|runtime| entry_register_word(reg, value, runtime));
     }
     fn device_byte(&mut self, register: DeviceByte, value: u8) {
         let reg = match register {
             DeviceByte::VramIncrement => VMAIN,
             DeviceByte::DmaEnable => MDMAEN,
         };
-        self.foreign(|game| unsafe { crate::rtl::write_reg(reg as u16, value, game) });
+        self.owned_player_call(|runtime| entry_register(reg, value, runtime));
     }
     fn clear_buffer(&mut self, operation: BufferClear) {
-        self.foreign(|game| unsafe {
-            match operation {
-                BufferClear::InitialLevel => {
-                    sm_game::room_state::LevelData::clear_level_data(game, LoadMode::Initial)
-                }
-                BufferClear::DoorLevel => {
-                    sm_game::room_state::LevelData::clear_level_data(game, LoadMode::Door)
-                }
-                BufferClear::InitialFx => game::room_backgrounds::clear_fx(LoadMode::Initial, game),
-                BufferClear::InitialBg2 => {
-                    game::room_backgrounds::clear_bg2(LoadMode::Initial, game)
-                }
-                BufferClear::DoorFx => game::room_backgrounds::clear_fx(LoadMode::Door, game),
-                BufferClear::DoorBg2 => game::room_backgrounds::clear_bg2(LoadMode::Door, game),
-                BufferClear::DoorDualBg => game::room_backgrounds::clear_dual_bg(game),
-                BufferClear::TransitionXray => {
-                    // The liquid surface and HDMA table 2 ($7E:9C00..$9E00)
-                    // and the window tables ($7E:9E00..$A000) cleared from
-                    // the top down, a word of each half at a time.
-                    use sm_game::fx_domain::Sources as _;
-                    use sm_game::scene::{hdma_sources::LiveOwner, state::WordOrder};
-                    for offset in (0..0x100usize).rev().map(|word| 2 * word) {
-                        let (owner, at) = match offset.checked_sub(0x100) {
-                            Some(at) => (LiveOwner::HdmaTable2, at),
-                            None => (LiveOwner::LiquidSurface, offset),
-                        };
-                        game.store_buffer_word(owner, at, WordOrder::Little, 0);
-                        game.store_buffer_word(LiveOwner::WindowLeft, offset, WordOrder::Little, 0);
-                    }
+        // Each clear stores the lease's bytes, and each DMA starts on its
+        // transfer port, with the observations refreshed on entry and on return
+        // as the former foreign call left them.
+        self.owned_player_call(|runtime| match operation {
+            BufferClear::InitialLevel | BufferClear::DoorLevel => {
+                game::room_backgrounds::clear_level(runtime)
+            }
+            BufferClear::InitialFx => game::room_backgrounds::clear_fx(LoadMode::Initial, runtime),
+            BufferClear::InitialBg2 => {
+                game::room_backgrounds::clear_bg2(LoadMode::Initial, runtime)
+            }
+            BufferClear::DoorFx => game::room_backgrounds::clear_fx(LoadMode::Door, runtime),
+            BufferClear::DoorBg2 => game::room_backgrounds::clear_bg2(LoadMode::Door, runtime),
+            BufferClear::DoorDualBg => game::room_backgrounds::clear_dual_bg(runtime),
+            BufferClear::TransitionXray => {
+                // The liquid surface and HDMA table 2 ($7E:9C00..$9E00)
+                // and the window tables ($7E:9E00..$A000) cleared from
+                // the top down, a word of each half at a time.
+                use sm_game::fx_domain::Sources as _;
+                use sm_game::scene::{hdma_sources::LiveOwner, state::WordOrder};
+                for offset in (0..0x100usize).rev().map(|word| 2 * word) {
+                    let (owner, at) = match offset.checked_sub(0x100) {
+                        Some(at) => (LiveOwner::HdmaTable2, at),
+                        None => (LiveOwner::LiquidSurface, offset),
+                    };
+                    runtime.store_buffer_word(owner, at, WordOrder::Little, 0);
+                    runtime.store_buffer_word(LiveOwner::WindowLeft, offset, WordOrder::Little, 0);
                 }
             }
         });
@@ -305,7 +299,7 @@ impl EntryEffects for Runtime<'_> {
     }
     fn device_vram_address(&mut self, destination: VramDestination) {
         let value = destination.compatibility_word();
-        self.foreign(|game| unsafe { crate::rtl::write_reg_word(VMADDL as u16, value, game) });
+        self.owned_player_call(|runtime| entry_register_word(VMADDL, value, runtime));
     }
     fn decompress(&mut self, source: AssetSource, destination: InstallBuffer) {
         let palette = matches!(destination, InstallBuffer::Palette);
@@ -501,6 +495,39 @@ impl EntryEffects for Runtime<'_> {
             }
         }
     }
+}
+
+/// One room-entry register write on the lease, in place of the former foreign
+/// call's `write_reg`. An MDMAEN start publishes the lease, then starts on its
+/// transfer port, so the DMA reads the Session's bytes; any other write is a
+/// device write. The room background observer snapshots RAM at these writes and
+/// may swap the loaded image there: while a case captures, a verify build runs
+/// it over a detached image of the lease's projected RAM, the RAM the foreign
+/// call exported.
+fn entry_register(register: u32, value: u8, runtime: &mut Runtime<'_>) {
+    if register == MDMAEN && value != 0 {
+        runtime.publish();
+        runtime.start_dma(value, None);
+        return;
+    }
+    #[cfg(sm_verify_dll)]
+    if crate::room_background_observer::active() {
+        runtime.observe_detached(|game, ram| {
+            // SAFETY: room entry runs with the backend installed, and the
+            // lease's `&mut Game` excludes other access.
+            unsafe { crate::rtl::write_device_observed_over(register as u16, value, game, ram) }
+        });
+        return;
+    }
+    runtime.write_device(register as u16, value);
+}
+
+/// `entry_register` of `value`'s low byte to `register`, then its high byte to
+/// the next register up, as `write_reg_word` writes them.
+fn entry_register_word(register: u32, value: u16, runtime: &mut Runtime<'_>) {
+    let [low, high] = value.to_le_bytes();
+    entry_register(register, low, runtime);
+    entry_register(register + 1, high, runtime);
 }
 
 /// The VRAM decoder's output on the lease: each byte goes to VRAM, and each back

@@ -1209,6 +1209,44 @@ pub(crate) unsafe fn write_device(reg: u16, value: u8, game: &mut Game) {
     );
 }
 
+/// `write_device` with the register observer over `ram`, a detached image of a
+/// lease's projected RAM, where `write_reg` inside a foreign call gave it the
+/// exported RAM. The observer reads the image alone.
+/// # Safety
+/// As `write_reg`.
+#[cfg(sm_verify_dll)]
+pub(crate) unsafe fn write_device_observed_over(
+    reg: u16,
+    value: u8,
+    game: &mut Game,
+    ram: &crate::game_state::WorkRam,
+) {
+    assert!(
+        device_write_register(reg, value),
+        "not a device register write"
+    );
+    let epoch = game.compatibility_write_epoch();
+    let views = (game.g_snes, game.g_cpu);
+    unsafe {
+        let execution = &mut game.device_execution();
+        execution.write(u32::from(reg), value);
+        crate::room_background_observer::written_parts(
+            reg,
+            value,
+            ram,
+            execution.host.loaded_rom,
+            execution.host.g_fail,
+            execution.host.decompress_src,
+            |output| observe_backend(Some(execution.backend), views, output),
+        );
+    }
+    assert_eq!(
+        epoch,
+        game.compatibility_write_epoch(),
+        "a device write moved RAM"
+    );
+}
+
 /// `write_device` of `value`'s low byte to `reg`, then its high byte to the next
 /// register up, as `write_reg_word` writes them.
 /// # Safety

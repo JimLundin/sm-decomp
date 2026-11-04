@@ -734,3 +734,76 @@ Left, with what each needs:
   the HDMA update). It belongs after D2's device port and D9's renderer.
 - Unchanged from fc9: the grapple tiles (not proved) and the room-entry leaf effects
   (compatibility 83). The rest are D2, D7 or D9.
+
+## Foreign calls lane (2026-11-04, `collab/rs-fc11`, on `tick-s7c`)
+
+`foreign_calls` 55 to 46; `game_host_impls` 82, `sm_game_ram_sites` 0 and
+`engine_ram_address_sites` 19 unchanged; `legacy_engine_ram_sites` 441 to 425. Outside
+`sm/src/verification` three calls are left (from 12). No lease is added mid-frame: each
+retired call runs on the lease that called it, in an owned player call, which refreshes the
+observations on entry and return. No Session field or format changed.
+
+Retired:
+- The Mode 7 queue (2): Ceres Ridley's and the Ceres doors' `queue_mode7_transfer` run
+  `enqueue_mode7_rom` on the lease, which already implements `Mode7Queue` for the cinematics.
+- `flush_tilemaps` (room scrolling): one encoder over the sm/ trait
+  `display_transfers::FlushHost`, implemented by Game (the NMI path) and by
+  `display_commands::Lease`. The lease publishes, then makes the same register writes through
+  the device interval and `start_dma`. The end word, the cleared tail and the consumed enable
+  bytes are `set_byte` stores. `CompatibilityQueue` is gone.
+- The grapple tiles. The lease's queue stores and tile words use `write_projected_byte`, the
+  same per-byte write that the foreign return (`take_written_bytes`) applies to the bytes RAM
+  logged. The typed fields that `tile_word` reads are lanes of that projection. So a cursor
+  that aliases the charge word or the point animation words stores them as before.
+  `grapple_tile_alias_checks` now runs the update on a lease at tail 0 and at the three alias
+  tails ($0C00, $0C6E, $0C70), and requires the RAM the Game path leaves.
+- The room-entry device writes (3). An MDMAEN start publishes, then calls `start_dma`. Every
+  other write is a device write. While a room background case captures, a verify build runs
+  the observer over a detached image (`observe_detached`, `rtl::write_device_observed_over`)
+  in place of the exported RAM. Case 4's swaps at VMADDH and DMAP1 are the check.
+- The room-entry clears (1). The level clear sets each of the 12800 terrain cells to $8000;
+  both original store orders reach each word once. The door clears fill the staging
+  workspace on the lease, then call `copy_to_vram_on_lease`. The initial FX and BG2 clears
+  start from bank $80 or the prepared image on the lease's wire, and read no work RAM. The
+  X-ray transition clear runs through the lease's FX sources.
+- The room-entry waits (1). The NMI waits are `display_refresh::wait` on the lease (D9).
+  `Runtime::wait_for_music` is the same loop, with $0614 and the counter on the lease. Its
+  queue step, `Runtime::advance_music_requests`, sends bank uploads and tracks through the
+  cue port. The door mechanisms run on this lease (`run_mechanisms_in`).
+
+Display owner fields: not added, no format bump.
+- The queue ($00D0..$02CF) and its tail ($0330) already are Session fields
+  (`queued_tilemaps`).
+- The scrolling requests ($0956..$098D) were already lease stores: `Scrolling::store_request`
+  writes them with `set_byte`. The cinematic lease already stores the Mode 7 queue the same
+  way.
+- The Display's own forms, `scrolling: [ScrollTransfer; 4]` and `mode7_uploads`, need asset
+  identities that a numeric store cannot supply. A raw byte field beside them would be a
+  second owner.
+- Under a persistent owned Display, these stores still mark the Display failed, as the
+  existing stores do. Replays run Legacy, where they are the raw stores Game made.
+
+Left outside verification (3):
+- The room-entry leaf effects (compatibility 87).
+  - Most arms have lease forms: the player commands, `draw_body`, the beam tiles, the three
+    music arms over `queue_music_request`/`queue_music_delayed`, and probably the BG3 spawn.
+  - `LoadEnemyGraphics` needs `EnemyGraphicsHost` with `copy_to_vram_on_lease`.
+  - The three map arms (`save_area_map`, `load_area_map`, `mark_elevator`) are bound on the
+    menu `save_slots::Host`, which the Runtime does not implement, and `load_area_map` goes
+    through `session_cohort::with`.
+  - `DrawTimer` and `LoadSpritePalettes` need their hosts checked. The count falls only when
+    all 14 arms move.
+- The setup codes (compatibility 461). `execute_setup_code` and `execute_door_code` dispatch
+  the room and door ASM routines on Game; each routine needs a lease host.
+- The message display (room_mechanisms runtime 155): unchanged from fc10. It needs a narrow
+  dialogue host; its `UpdateHdma` must run on the current lease, not open a nested
+  `hdma_lease()`.
+
+Corpus that exercises these:
+- `boss-ceres-ridley`, `area-ceres` and `tas-ceres-four-doors` (Mode 7).
+- Every room load and door: `door-transition`, `door-loading-lag-nmi`, the `area-*` routes,
+  and `elevator-traversal` (flush, clears, device writes and waits, including the door
+  mechanisms and room music).
+- The `samus-grapple-*` rows.
+- The room background verification cases (4 and 5) and `grapple_tile_alias_checks`.
+- The SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`.

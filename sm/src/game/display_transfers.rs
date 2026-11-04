@@ -1,8 +1,8 @@
 //! Compat sink for `sm_game::display::transfer`: each decoded transfer becomes
 //! the original DMA channel 1 register sequence, in the original order.
 #![deny(unsafe_op_in_unsafe_fn)]
+use crate::game::display_commands::{Lease, Wire, byte, word};
 use crate::game_state::Game;
-use crate::ram_map::checked_word as at;
 use crate::rtl::{read_reg_word, write_reg, write_reg_word};
 use crate::snes::registers::*;
 use sm_game::display::control::{Brightness, FixedColor};
@@ -62,21 +62,19 @@ unsafe fn read_vram(readback: VramReadback, game: &mut Game) {
     }
 }
 
-/// Requires a live, exclusively accessed SNES backend. DMAP1 was set once for
-/// the whole queue by the caller.
-unsafe fn upload_tilemap(upload: TilemapUpload, game: &mut Game) {
+/// One queued tilemap upload through `wire`. DMAP1 was set once for the whole
+/// queue by the caller.
+fn upload_tilemap(upload: TilemapUpload, wire: &mut impl Wire) {
     use sm_game::display::video::Upload;
-    game.producing();
-    unsafe {
-        write_reg_word(DAS1L as u16, upload.bytes, game);
-        write_reg_word(A1T1L as u16, upload.source.address, game);
-        write_reg(A1B1 as u16, upload.source.bank, game);
-        // This word write also clears VMADDL before the full destination write.
-        write_reg_word(VMAIN as u16, if upload.column { 0x81 } else { 0x80 }, game);
-        write_reg_word(VMADDL as u16, upload.vram_address, game);
-        write_reg(MDMAEN as u16, 2, game);
-    }
-    game.produced(
+    wire.producing();
+    word(DAS1L, upload.bytes, wire);
+    word(A1T1L, upload.source.address, wire);
+    byte(A1B1, upload.source.bank, wire);
+    // This word write also clears VMADDL before the full destination write.
+    word(VMAIN, if upload.column { 0x81 } else { 0x80 }, wire);
+    word(VMADDL, upload.vram_address, wire);
+    byte(MDMAEN, 2, wire);
+    wire.produced(
         "tilemaps",
         &[Upload::Tiles {
             address: upload.vram_address,
@@ -90,17 +88,7 @@ unsafe fn upload_tilemap(upload: TilemapUpload, game: &mut Game) {
 /// A queue read from raw work RAM, as the Mode 7 and readback drains read it.
 pub(crate) struct RawQueue<'a>(&'a mut Game);
 
-/// A queue read through the compatibility projection, as the tilemap drain reads it.
-pub(crate) struct CompatibilityQueue<'a>(&'a mut Game);
-
 impl<'a> RawQueue<'a> {
-    /// Requires a live, exclusively accessed SNES backend for the host's lifetime.
-    pub(crate) unsafe fn new(game: &'a mut Game) -> Self {
-        Self(game)
-    }
-}
-
-impl<'a> CompatibilityQueue<'a> {
     /// Requires a live, exclusively accessed SNES backend for the host's lifetime.
     pub(crate) unsafe fn new(game: &'a mut Game) -> Self {
         Self(game)
@@ -124,58 +112,165 @@ macro_rules! sink {
                 unsafe { read_vram(readback, self.0) }
             }
             fn upload_tilemap(&mut self, upload: TilemapUpload) {
-                unsafe { upload_tilemap(upload, self.0) }
+                upload_tilemap(upload, self.0)
             }
         }
     };
 }
 sink!(RawQueue, |game: &Game, at| game.ram().read_byte(at));
-sink!(CompatibilityQueue, |game: &Game, at| game
-    .compatibility_byte(at));
 
-/// Requires a live, exclusively accessed SNES backend. RAM parameters are read
-/// between the register writes exactly where the original read them.
-pub(crate) unsafe fn upload_scrolling_tilemap(
+/// What the tilemap flush reads and stores between its register writes: Game's
+/// compatibility projection, or the lease's Session through its transfer port.
+pub(crate) trait FlushHost: Wire {
+    fn flush_byte(&self, at: usize) -> u8;
+    fn flush_word(&self, at: usize) -> u16 {
+        u16::from_le_bytes([self.flush_byte(at), self.flush_byte(at + 1)])
+    }
+    fn tilemap_tail(&self) -> u16;
+    fn set_tilemap_tail(&mut self, tail: u16);
+    /// The queue's zero end word at byte cursor `tail`.
+    fn store_sentinel(&mut self, tail: u16);
+    /// Consume a scrolling request's enable byte.
+    fn clear_enable(&mut self, at: usize);
+}
+
+impl crate::game::display_transfers::FlushHost for Game {
+    fn flush_byte(&self, at: usize) -> u8 {
+        self.compatibility_byte(at)
+    }
+    fn tilemap_tail(&self) -> u16 {
+        self.vram_write_queue_tail()
+    }
+    fn set_tilemap_tail(&mut self, tail: u16) {
+        self.set_vram_write_queue_tail(tail);
+    }
+    fn store_sentinel(&mut self, tail: u16) {
+        self.write_vram_queue_word(tail, 0, 0);
+    }
+    fn clear_enable(&mut self, at: usize) {
+        self.compatibility_write_owned_byte(at, 0);
+    }
+}
+
+/// The lease's flush: the queue, its tail and the requests are the lease's
+/// bytes, and each DMA start reads what the port published.
+impl FlushHost for Lease<'_, '_> {
+    fn flush_byte(&self, at: usize) -> u8 {
+        self.0.byte(at)
+    }
+    fn tilemap_tail(&self) -> u16 {
+        sm_game::display::transfer::TilemapQueue::tilemap_queue_tail(&*self.0)
+    }
+    fn set_tilemap_tail(&mut self, tail: u16) {
+        sm_game::display::transfer::TilemapQueue::set_tilemap_queue_tail(&mut *self.0, tail);
+    }
+    fn store_sentinel(&mut self, tail: u16) {
+        let at = 0xd0 + usize::from(tail);
+        self.0.set_byte(at, 0);
+        self.0.set_byte(at + 1, 0);
+    }
+    fn clear_enable(&mut self, at: usize) {
+        sm_game::display_refresh::DisplayOwner::write_owned_byte(&mut *self.0, at, 0);
+    }
+}
+
+/// The queued tilemap drain over a flush host; it uploads tilemaps alone.
+struct Drain<'a, H>(&'a mut H);
+
+impl<H: FlushHost> TransferHost for Drain<'_, H> {
+    fn byte(&self, at: usize) -> u8 {
+        self.0.flush_byte(at)
+    }
+    fn word(&self, at: usize) -> u16 {
+        self.0.flush_word(at)
+    }
+    fn upload_mode7(&mut self, _upload: Mode7Upload) {
+        unreachable!("the tilemap drain uploads tilemaps alone")
+    }
+    fn read_vram(&mut self, _readback: VramReadback) {
+        unreachable!("the tilemap drain uploads tilemaps alone")
+    }
+    fn upload_tilemap(&mut self, upload: TilemapUpload) {
+        upload_tilemap(upload, self.0);
+    }
+}
+
+/// Drain the tilemap queue, then the four scrolling requests, in the original's
+/// order: the queue's end word, DMAP1 once, each queued upload, the cleared
+/// tail, then the column and row requests with their VRAM steps.
+pub(crate) fn flush_tilemaps(host: &mut impl FlushHost) {
+    let tail = host.tilemap_tail();
+    if tail != 0 {
+        // The sentinel uses the byte tail, which need not lie on an entry boundary.
+        host.store_sentinel(tail);
+        word(DMAP1, 0x1801, host);
+        sm_game::display::transfer::drain_tilemaps(&mut Drain(host));
+    }
+    host.set_tilemap_tail(0);
+    for (increment, layout, buffers) in [
+        (
+            0x81,
+            ScrollingLayout::Column,
+            [(0x956, [0xc8c8, 0xc908]), (0x972, [0xc9d0, 0xca10])],
+        ),
+        (
+            0x80,
+            ScrollingLayout::Row,
+            [(0x964, [0xc948, 0xc98c]), (0x980, [0xca50, 0xca94])],
+        ),
+    ] {
+        byte(VMAIN, increment, host);
+        for (parameters, sources) in buffers {
+            upload_scrolling_tilemap(parameters, sources, layout, host);
+        }
+    }
+}
+
+/// One scrolling request's uploads. Its RAM parameters are read between the
+/// register writes exactly where the original read them.
+fn upload_scrolling_tilemap(
     parameters: usize,
     initial_sources: [u16; 2],
     layout: ScrollingLayout,
-    game: &mut Game,
+    host: &mut impl FlushHost,
 ) {
-    unsafe {
-        let enable = parameters + 12;
-        if game.compatibility_byte(enable) == 0 {
-            return;
-        }
-        // Only the low enable byte is consumed, before reading transfer parameters.
-        game.compatibility_write_owned_byte(enable, 0);
-        // Sizes, destinations and wrapped sources are three pairs of RAM words.
-        let destination = at!(game, parameters + 4;);
-        crate::rtl::register_writes! { game;
-            word(VMADDL as u16, destination); word(DMAP1 as u16, 0x1801);
-            word(A1T1L as u16, initial_sources[0]); byte(A1B1 as u16, 0x7e);
-        }
-        let size = at!(game, parameters + 0;);
-        // A zero unwrapped size still triggers a full 65,536-byte DMA.
-        crate::rtl::register_writes! { game;
-            word(DAS1L as u16, size); byte(MDMAEN as u16, 2);
-            word(VMADDL as u16,
-            layout.second_half_destination(destination),); word(DAS1L as u16, size);
-            word(A1T1L as u16, initial_sources[1]); byte(MDMAEN as u16, 2);
-        }
+    let enable = parameters + 12;
+    if host.flush_byte(enable) == 0 {
+        return;
+    }
+    // Only the low enable byte is consumed, before reading transfer parameters.
+    host.clear_enable(enable);
+    // Sizes, destinations and wrapped sources are three pairs of RAM words.
+    let destination = host.flush_word(parameters + 4);
+    word(VMADDL, destination, host);
+    word(DMAP1, 0x1801, host);
+    word(A1T1L, initial_sources[0], host);
+    byte(A1B1, 0x7e, host);
+    let size = host.flush_word(parameters);
+    // A zero unwrapped size still triggers a full 65,536-byte DMA.
+    word(DAS1L, size, host);
+    byte(MDMAEN, 2, host);
+    word(VMADDL, layout.second_half_destination(destination), host);
+    word(DAS1L, size, host);
+    word(A1T1L, initial_sources[1], host);
+    byte(MDMAEN, 2, host);
 
-        // Prepare the wrapped source even when there is no wrapped transfer.
-        write_reg_word(A1T1L as u16, at!(game, parameters + 8;), game);
-        let wrapped_size = at!(game, parameters + 2;);
-        if wrapped_size != 0 {
-            write_reg_word(DAS1L as u16, wrapped_size, game);
-            let wrapped_destination = at!(game, parameters + 6;);
-            crate::rtl::register_writes! { game;
-                word(VMADDL as u16, wrapped_destination); byte(MDMAEN as u16, 2);
-                word(VMADDL as u16,
-                layout.second_half_destination(wrapped_destination),); word(DAS1L as u16, wrapped_size);
-                word(A1T1L as u16, at!(game, parameters + 10;)); byte(MDMAEN as u16, 2);
-            }
-        }
+    // Prepare the wrapped source even when there is no wrapped transfer.
+    word(A1T1L, host.flush_word(parameters + 8), host);
+    let wrapped_size = host.flush_word(parameters + 2);
+    if wrapped_size != 0 {
+        word(DAS1L, wrapped_size, host);
+        let wrapped_destination = host.flush_word(parameters + 6);
+        word(VMADDL, wrapped_destination, host);
+        byte(MDMAEN, 2, host);
+        word(
+            VMADDL,
+            layout.second_half_destination(wrapped_destination),
+            host,
+        );
+        word(DAS1L, wrapped_size, host);
+        word(A1T1L, host.flush_word(parameters + 10), host);
+        byte(MDMAEN, 2, host);
     }
 }
 

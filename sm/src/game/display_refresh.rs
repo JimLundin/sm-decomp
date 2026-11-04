@@ -2,11 +2,11 @@
 //! still owns, plus unsafe entries for callers with a live backend.
 use crate::game::{animated_tiles, mode7_transfers, vram_read_queue};
 use crate::game_state::Game;
-use crate::rtl::{DMAP1, MDMAEN, VMAIN, write_reg, write_reg_word};
+use crate::rtl::{MDMAEN, write_reg};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
-pub(crate) use sm_game::display_refresh::{fade, set_blank, set_native_word, wait};
+pub(crate) use sm_game::display_refresh::{fade, set_blank, set_native_word};
 
 /// The native-order word at RAM `offset` through Game's compatibility
 /// projection: the scrolling requests and the level data blocks.
@@ -181,37 +181,18 @@ pub(crate) fn enable(enabled: bool, game: &mut Game) {
 
 /// Requires a live, exclusively accessed SNES backend throughout the queue drain.
 pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
-    unsafe {
-        let tail = game.vram_write_queue_tail();
-        if tail != 0 {
-            // The sentinel uses the byte tail, which need not lie on an entry boundary.
-            game.write_vram_queue_word(tail, 0, 0);
-            write_reg_word(DMAP1 as u16, 0x1801, game);
-            sm_game::display::transfer::drain_tilemaps(
-                &mut crate::game::display_transfers::CompatibilityQueue::new(game),
-            );
-        }
-        game.set_vram_write_queue_tail(0);
-        for (increment, layout, buffers) in [
-            (
-                0x81,
-                ScrollingDmaLayout::Column,
-                [(0x956, [0xc8c8, 0xc908]), (0x972, [0xc9d0, 0xca10])],
-            ),
-            (
-                0x80,
-                ScrollingDmaLayout::Row,
-                [(0x964, [0xc948, 0xc98c]), (0x980, [0xca50, 0xca94])],
-            ),
-        ] {
-            write_reg(VMAIN as u16, increment, game);
-            for (parameters, sources) in buffers {
-                crate::game::display_transfers::upload_scrolling_tilemap(
-                    parameters, sources, layout, game,
-                );
-            }
-        }
-    }
+    crate::game::display_transfers::flush_tilemaps(game);
+}
+
+/// The tilemap flush on the lease: it publishes, then drains the queue and the
+/// scrolling requests through the lease's transfer port, so each DMA start reads
+/// the Session's bytes, and the queue's end word, its tail and the consumed
+/// enable bytes are the lease's stores.
+pub(crate) fn flush_tilemaps_on_lease(runtime: &mut crate::game::session_runtime::Runtime<'_>) {
+    runtime.publish();
+    crate::game::display_transfers::flush_tilemaps(&mut crate::game::display_commands::Lease(
+        runtime,
+    ));
 }
 
 /// The ordered display refresh uploads.

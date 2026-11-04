@@ -37,6 +37,10 @@ pub(crate) fn begin(
         });
     });
 }
+/// Whether a room background case is capturing.
+pub(crate) fn active() -> bool {
+    ACTIVE.with(|s| s.borrow().is_some())
+}
 pub(crate) fn finish() -> Vec<u8> {
     ACTIVE.with(|s| {
         let c = s.borrow_mut().take().unwrap();
