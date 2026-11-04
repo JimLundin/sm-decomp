@@ -184,7 +184,6 @@ pub const HDMA_PRE_ACTIONS: [(u32, HdmaPreAction); 59] = [
 pub(crate) fn run_call<I>(address: u32, index: usize, it: &mut I)
 where
     I: crate::hdma_program::Interpreter,
-    I::Game: DispatchHost,
 {
     let slot = 2 * index as u16;
     let Some(&(_, target)) = HDMA_CALLS.iter().find(|(at, _)| *at == address) else {
@@ -235,7 +234,6 @@ impl<T> DispatchHost for T where T: Host + ?Sized {}
 pub(crate) fn run_pre_action<I>(address: u32, index: usize, it: &mut I, handler_carry: bool)
 where
     I: crate::hdma_program::Interpreter,
-    I::Game: DispatchHost,
 {
     let slot = 2 * index as u16;
     let Some(&(_, target)) = HDMA_PRE_ACTIONS.iter().find(|(at, _)| *at == address) else {

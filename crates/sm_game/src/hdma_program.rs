@@ -59,15 +59,15 @@ pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
 
 /// What one interpreter frame needs from the lease.
 pub(crate) trait Interpreter: HdmaTable {
-    type Game: DispatchHost + ?Sized;
     /// Work RAM outside the object table.
     fn byte(&self, at: usize) -> u8;
     fn set_byte(&mut self, at: usize, value: u8);
     fn image(&self) -> RomImage;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// The original's unreachable-state failure, reported by the lease.
     fn unreachable(&mut self);
-    type Lease: HdmaLease<Game = Self::Game>;
+    type Lease: HdmaLease;
+    /// The lease itself, for the compatibility effects it still leaves for.
+    fn lease(&mut self) -> &mut Self::Lease;
     /// Run `action` on the lease where a foreign call ran it on the game: the
     /// foreign entry's preflight, with the inputs observed afresh on entry and
     /// again on return.
@@ -117,7 +117,6 @@ impl<L: HdmaLease> HdmaTable for Leased<L> {
 }
 
 impl<L: HdmaLease> Interpreter for Leased<L> {
-    type Game = L::Game;
     fn byte(&self, at: usize) -> u8 {
         self.0.byte(at)
     }
@@ -127,8 +126,8 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
     fn image(&self) -> RomImage {
         crate::cartridge::NativeImage::native_image(&self.0)
     }
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut L::Game) -> T) -> T {
-        self.0.foreign(action)
+    fn lease(&mut self) -> &mut L {
+        &mut self.0
     }
     fn unreachable(&mut self) {
         crate::diagnostics::Fatal::unreachable(&mut self.0)
@@ -289,7 +288,7 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             } as u16;
             let channel = crate::hdma_word!(it, index, BankSlot) & 0xff;
             let value = script.byte(0);
-            it.foreign(|game| {
+            it.lease().foreign(|game| {
                 crate::hdma_objects::write_channel_register(register + channel, value, game)
             });
             return script.advance(1);
