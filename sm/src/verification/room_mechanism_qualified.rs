@@ -30,12 +30,12 @@ fn prepare(game: &mut Game, bytes: &[u8]) -> RomImage {
 fn script(image: &RomImage) -> EnemyScript {
     EnemyScript::at(image.clone(), crate::rtl::lorom_offset(0x849000) as usize)
 }
-fn record_call(identity: u32, game: &mut Game) {
-    game.ram().copy_in(0x20, &identity.to_le_bytes());
+fn record_call(identity: u32, runtime: &mut Runtime<'_>) {
+    runtime.write_slice(0x20, &identity.to_le_bytes());
 }
-fn observe_station(game: &mut Game) {
-    assert_eq!(&ram_span::<2>(&game, 0xaf6), &[0x30, 0x12]);
-    game.ram().write_byte(0x20, 0xa5);
+fn observe_station(runtime: &mut Runtime<'_>) {
+    assert_eq!([runtime.byte(0xaf6), runtime.byte(0xaf7)], [0x30, 0x12]);
+    runtime.set_byte(0x20, 0xa5);
 }
 // These verification-only adapters preserve the old qualified mock interval.
 // They exercise maintained Script reads/advancement and aggregate publication,
@@ -66,22 +66,23 @@ fn returned(position: Script<RomRecord>) -> EnemyScript {
 fn qualified_call_function(
     game: &mut Game,
     position: EnemyScript,
-    call: fn(u32, &mut Game),
+    call: fn(u32, &mut Runtime<'_>),
 ) -> EnemyScript {
     let mut runtime = Runtime::new(game);
     let position = captured(position);
-    runtime.foreign(|game| call(position.load24(0), game));
+    let identity = position.load24(0);
+    runtime.owned_player_call(|runtime| call(identity, runtime));
     returned(position.advance(3))
 }
 fn qualified_place_on_station(
     game: &mut Game,
     position: EnemyScript,
-    call: fn(&mut Game),
+    call: fn(&mut Runtime<'_>),
 ) -> EnemyScript {
     let mut runtime = Runtime::new(game);
     let position = captured(position);
     runtime.session_mut().player.x = runtime.session().player.x.wrapping_add(8) & 0xfff0;
-    runtime.foreign(call);
+    runtime.owned_player_call(call);
     returned(position)
 }
 pub(super) fn run(game: &mut Game) -> bool {

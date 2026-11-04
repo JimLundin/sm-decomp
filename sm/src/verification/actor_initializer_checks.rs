@@ -84,9 +84,9 @@ pub(super) fn armed() -> bool {
     ACTIVE.with(|cell| cell.borrow().is_some())
 }
 
-/// Called only inside the existing real A2804C dispatch hook. When dormant it
-/// checks one TLS cell and returns: no Runtime, foreign transition or APAN event.
-pub(super) fn dispatch_noop(game: &mut Game) {
+/// Called only inside the existing real A2804C dispatch hook, on the scheduler's
+/// lease. When dormant it checks one TLS cell and returns: no store or APAN event.
+pub(super) fn dispatch_noop(runtime: &mut Runtime<'_>) {
     let active = ACTIVE.with(|cell| {
         cell.borrow()
             .as_ref()
@@ -97,18 +97,20 @@ pub(super) fn dispatch_noop(game: &mut Game) {
     };
     assert!(ordinal < 2, "actor.initializer.exact_dispatch_count");
     assert!(
-        !game.actor_identity_is_with_session(),
-        "actor.initializer.game_owns_payload"
+        runtime.samus_game().actor_identity_is_with_session(),
+        "actor.initializer.lease_owns_payload"
     );
-    let key = game.cur_enemy_index();
+    let key = runtime.native_word(crate::ram_map::words::CUR_ENEMY_INDEX);
     assert_eq!(
         key,
         (ordinal as u16) * 64,
         "actor.initializer.actual_selected_slot"
     );
-    let observation = game
-        .actor_identity()
-        .observe(ordinal as u16, true, Some(SpeciesId(7)));
+    let observation =
+        runtime
+            .session()
+            .actor_identity
+            .observe(ordinal as u16, true, Some(SpeciesId(7)));
     // This assertion must precede handle unwrap/resolution: F2 is killed by
     // missing publication, never by an unrelated Option/borrow panic.
     assert!(
@@ -131,7 +133,9 @@ pub(super) fn dispatch_noop(game: &mut Game) {
         "actor.initializer.first_callback_appearance"
     );
     assert_eq!(
-        game.actor_identity()
+        runtime
+            .session()
+            .actor_identity
             .initializer_fixture_origin(ordinal as u16),
         Some(ActorBirthOrigin::Dynamic {
             template: ActorTemplateId(11 + ordinal as u32),
@@ -140,11 +144,7 @@ pub(super) fn dispatch_noop(game: &mut Game) {
         "actor.initializer.first_callback_authored_occurrence"
     );
     assert_eq!(
-        u16::from_ne_bytes({
-            let mut bytes = [0; 2];
-            game.ram().copy_out(0xf78 + usize::from(key), &mut bytes);
-            bytes
-        }),
+        runtime.native_word(0xf78 + usize::from(key)),
         0xd000,
         "actor.initializer.definition_already_written"
     );
@@ -158,7 +158,7 @@ pub(super) fn dispatch_noop(game: &mut Game) {
     // Release the observer borrow before the actual nested Runtime/spawn entry.
     if ordinal == 0 && mode != Mode::Single {
         let handle = crate::game::actors::population::spawn(
-            &mut Runtime::new(game),
+            runtime,
             ActorSpawnRequest {
                 template: ActorTemplateId(12),
                 appearance: Some(AppearanceId(21)),
@@ -173,7 +173,7 @@ pub(super) fn dispatch_noop(game: &mut Game) {
             "actor.initializer.nested_return_matches_observed_handle"
         );
         assert_eq!(
-            game.cur_enemy_index(),
+            runtime.native_word(crate::ram_map::words::CUR_ENEMY_INDEX),
             0,
             "actor.initializer.nested_restores_outer_selector"
         );

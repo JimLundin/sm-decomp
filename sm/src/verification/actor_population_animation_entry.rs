@@ -27,22 +27,20 @@ pub(crate) fn animation(g: &mut Game) {
 pub(crate) fn advance(g: &mut Game) {
     crate::game::actors::api::advance_selected(&mut Runtime::new(g));
 }
-// Remains INSIDE the actual A2804C dispatch, after outer Runtime ownership export.
-// Observer releases its RefCell borrow before this actual nested spawn enters Runtime.
-pub(crate) fn dispatch_noop(g: &mut Game) {
-    crate::game::actors::initializer_checks::dispatch_noop(g);
-    if crate::actor_population_animation_observer::dispatch_noop(g) {
-        spawn(0xa1, 0x8040, g);
-    }
-}
 /// The $A2:804C AI on the scheduler's lease. Only an armed initializer or population case
-/// observes it, and those check the payload the game owns inside the dispatch, so they
-/// run on the game exported from the lease, as the engine's former foreign fallback ran
-/// them; otherwise the RTL does nothing and the lease stays held.
+/// observes it: each checks the payload the lease holds inside the dispatch, and the
+/// population case's one nested spawn runs on the same lease, after the observer
+/// releases its borrow. Otherwise the RTL does nothing. The observations are refreshed
+/// on entry and on return, as the former foreign call left them.
 pub(crate) fn dispatch_noop_on_lease(runtime: &mut Runtime) {
     if crate::game::actors::initializer_checks::armed()
         || crate::actor_population_animation_observer::noop_armed()
     {
-        runtime.foreign(dispatch_noop);
+        runtime.owned_player_call(|runtime| {
+            crate::game::actors::initializer_checks::dispatch_noop(runtime);
+            if crate::actor_population_animation_observer::dispatch_noop(runtime) {
+                crate::game::actors::population::spawn_legacy(runtime, 0xa1, 0x8040);
+            }
+        });
     }
 }

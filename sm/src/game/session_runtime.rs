@@ -49,6 +49,10 @@ mod actor_movement_runtime_observer;
 mod transfer_checks;
 
 /// `pub` inside the crate-private module, so `LeaseActors` can name it.
+/// The enemy projectile spawn words as Game holds them: the rectangle, the
+/// variant, the point and the drop definition.
+#[cfg(sm_verify_dll)]
+pub(crate) type NativeSpawn = (crate::types::Rect16U, u16, crate::types::Point16U, u16);
 pub struct Runtime<'g> {
     game: &'g mut Game,
     state: Option<Session>,
@@ -764,8 +768,16 @@ impl<'g> Runtime<'g> {
     /// store back each byte they changed, in address order.
     #[cfg(sm_verify_dll)]
     fn observe_low_window(&mut self, address: u32) {
+        let spawn = self.native_spawn();
+        self.observe_detached(|game, ram| game.observe_low_window(address, ram, spawn));
+    }
+    /// The Session's enemy projectile spawn words in Game's native shape, as the
+    /// release exports them (`export_native_spawn`), for a verifier observer that
+    /// snapshots them.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn native_spawn(&self) -> NativeSpawn {
         let spawn = &self.session().enemy_projectiles.spawn;
-        let spawn = (
+        (
             crate::types::Rect16U {
                 x: spawn.rectangle.origin.x,
                 y: spawn.rectangle.origin.y,
@@ -778,8 +790,29 @@ impl<'g> Runtime<'g> {
                 y: spawn.point.y,
             },
             spawn.drop_definition,
-        );
-        self.observe_detached(|game, ram| game.observe_low_window(address, ram, spawn));
+        )
+    }
+    /// Run a verifier hook on the lease where it ran on Game: over a detached image
+    /// of the lease's projected RAM and the Session's native spawn words, storing
+    /// back each byte it changes. The observations are refreshed on entry and on
+    /// return, as the former foreign call left them.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn observe_hook<R>(
+        &mut self,
+        observe: impl FnOnce(&mut Game, &crate::game_state::WorkRam, &NativeSpawn) -> R,
+    ) -> R {
+        self.owned_player_call(|runtime| {
+            let spawn = runtime.native_spawn();
+            let mut result = None;
+            runtime.observe_detached(|game, ram| result = Some(observe(game, ram, &spawn)));
+            result.expect("observed hook returns")
+        })
+    }
+    /// Register `image` as the game's native image from the lease: a verifier
+    /// hook's environmental input, which reads and stores no RAM.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn register_native_rom(&mut self, image: RomImage) {
+        self.game.register_native_rom(image);
     }
     /// Run a verifier observer over a detached image of the lease's projected RAM,
     /// where it had the RAM the former foreign call exported, and store back each

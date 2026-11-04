@@ -1,7 +1,5 @@
 //! Scoped verifier-only environment changes at actual legacy callback edges.
 //! The display and native renderer still execute their maintained algorithms.
-#[cfg(sm_verify_dll)]
-use crate::game_state::Game;
 use crate::rom::RomImage;
 use std::cell::RefCell;
 
@@ -102,38 +100,41 @@ pub(super) fn finish_native() -> Vec<u16> {
     })
 }
 
-/// Whether a case traces native draw reads; only then do they reach the Game.
+/// Whether a case traces native draw reads; only then does the hook record them.
 #[cfg(sm_verify_dll)]
 pub(crate) fn native_read_traced() -> bool {
     NATIVE.with(|state| state.borrow().is_some())
 }
 
-/// The native read hook on the scheduler's lease: traced, it runs on the game,
-/// which the lease exports to; untraced, the observer does nothing and the
-/// lease keeps the foreign call's observation refresh.
+/// The native read hook on the scheduler's lease, immediately before the real
+/// RomPtr: traced, it records the read and, on the second, registers the case's
+/// replacement image on the game; untraced, it does nothing. Either way the
+/// lease keeps the former foreign call's observation refresh.
 #[cfg(sm_verify_dll)]
 pub(crate) fn native_read_on_lease(
     runtime: &mut crate::game::session_runtime::Runtime<'_>,
     bank: u8,
     address: u16,
 ) {
-    if native_read_traced() {
-        runtime.foreign(|game| native_read(bank, address, game));
-    } else {
+    if !native_read_traced() {
         runtime.refresh_player_observations();
+        return;
     }
-}
-/// Runs immediately before real RomPtr at the existing foreign boundary.
-/// Allocation replacement is environmental input; no stream value is mocked.
-#[cfg(sm_verify_dll)]
-pub(crate) fn native_read(bank: u8, address: u16, game: &mut Game) {
-    NATIVE.with(|state| {
-        if let Some(trace) = state.borrow_mut().as_mut() {
-            assert_eq!(bank, 0x84);
-            trace.addresses.push(address);
-            if trace.addresses.len() == 2 {
-                game.register_native_rom(trace.replacement.clone());
-            }
+    runtime.owned_player_call(|runtime| {
+        // Allocation replacement is environmental input; no stream value is mocked.
+        if let Some(replacement) = native_read(bank, address) {
+            runtime.register_native_rom(replacement);
         }
     });
+}
+/// Record one traced native read; the replacement image to register, on the second.
+#[cfg(sm_verify_dll)]
+fn native_read(bank: u8, address: u16) -> Option<RomImage> {
+    NATIVE.with(|state| {
+        let mut state = state.borrow_mut();
+        let trace = state.as_mut()?;
+        assert_eq!(bank, 0x84);
+        trace.addresses.push(address);
+        (trace.addresses.len() == 2).then(|| trace.replacement.clone())
+    })
 }

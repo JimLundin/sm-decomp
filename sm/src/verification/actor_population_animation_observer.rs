@@ -1,7 +1,8 @@
 //! Verification-only actual-boundary trace. Dormant outside this fixture carrier.
 #![forbid(unsafe_code)]
-use crate::actor_population_animation_cases::{get, get_parts, offset, put, snapshot_parts};
+use crate::actor_population_animation_cases::{get_parts, offset, snapshot_parts};
 use crate::{
+    game::session_runtime::{NativeSpawn, Runtime},
     game_state::{Game, WorkRam},
     rom::RomImage,
     types::{EnemyDef as D, Point16U, Rect16U},
@@ -35,19 +36,26 @@ pub(crate) fn clear() {
         a.borrow_mut().take();
     });
 }
-fn append(c: &mut Capture, event: u16, key: u16, address: u32, g: &Game) {
+/// Record one event over the lease's projected RAM `ram` and its spawn words.
+fn append(
+    c: &mut Capture,
+    event: u16,
+    key: u16,
+    address: u32,
+    (g, ram, spawn): (&Game, &WorkRam, &NativeSpawn),
+) {
     append_parts(
         c,
         event,
         key,
         address,
-        g.ram(),
+        ram,
         &g.loaded_rom,
         &g.g_fail,
-        &g.eproj_spawn_rect,
-        &g.eproj_spawn_r22,
-        &g.eproj_spawn_pt,
-        &g.eproj_spawn_varE24,
+        &spawn.0,
+        &spawn.1,
+        &spawn.2,
+        &spawn.3,
     );
 }
 fn append_parts(
@@ -79,43 +87,47 @@ fn append_parts(
         spawn_var_e24,
     );
 }
-pub(crate) fn stage(event: u16, key: u16, g: &mut Game) -> bool {
+fn stage(event: u16, key: u16, view: (&Game, &WorkRam, &NativeSpawn)) {
+    let ram = view.1;
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
-            return false;
+            return;
         };
-        append(c, event, key, 0, g);
+        append(c, event, key, 0, view);
         if event == 6 {
             assert!(
-                matches!(get(g, 0xf78 + usize::from(key)), 0x9000 | 0x9100),
+                matches!(get_parts(ram, 0xf78 + usize::from(key)), 0x9000 | 0x9100),
                 "initializer sees published definition"
             );
             assert_eq!(
-                get(g, crate::ram_map::words::CUR_ENEMY_INDEX),
+                get_parts(ram, crate::ram_map::words::CUR_ENEMY_INDEX),
                 key,
                 "initializer live selector"
             );
             // Species definition is already in the saved record for room/dynamic creation.
             if !matches!(c.id, 16..=21) {
                 assert_eq!(
-                    get(
-                        g,
+                    get_parts(
+                        ram,
                         0x7000 + usize::from(key) + offset_of!(crate::types::EnemySpawnData, id)
                     ),
-                    get(g, 0xf78 + usize::from(key)),
+                    get_parts(ram, 0xf78 + usize::from(key)),
                     "record before initializer"
                 );
             }
         }
-        false
-    })
+    });
 }
 /// Whether the population case that observes the $A2:804C dispatch is capturing.
 pub(crate) fn noop_armed() -> bool {
     ACTIVE.with(|a| a.borrow().as_ref().is_some_and(|c| c.id == 13))
 }
-pub(crate) fn dispatch_noop(g: &mut Game) -> bool {
+/// The $A2:804C dispatch on the lease: whether the case's one nested spawn runs now.
+pub(crate) fn dispatch_noop(runtime: &mut Runtime<'_>) -> bool {
+    runtime.observe_hook(|g, ram, spawn| dispatch_noop_observed((g, ram, spawn)))
+}
+fn dispatch_noop_observed(view: (&Game, &WorkRam, &NativeSpawn)) -> bool {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -124,8 +136,8 @@ pub(crate) fn dispatch_noop(g: &mut Game) -> bool {
         if c.id != 13 {
             return false;
         }
-        let key = get(g, crate::ram_map::words::CUR_ENEMY_INDEX);
-        append(c, 20, key, 0xa2804c, g);
+        let key = get_parts(view.1, crate::ram_map::words::CUR_ENEMY_INDEX);
+        append(c, 20, key, 0xa2804c, view);
         if c.nested {
             false
         } else {
@@ -134,20 +146,22 @@ pub(crate) fn dispatch_noop(g: &mut Game) -> bool {
         }
     })
 }
-pub(crate) fn opcode(event: u16, address: u32, key: u16, g: &mut Game) {
+fn opcode(event: u16, address: u32, g: &mut Game, ram: &WorkRam, spawn: &NativeSpawn) {
+    let key = get_parts(ram, crate::ram_map::words::CUR_ENEMY_INDEX);
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
             return;
         };
-        append(c, event, key, address, g);
+        append(c, event, key, address, (g, ram, spawn));
         if event == 16 {
             c.opcodes += 1;
             if c.id == 32 && c.opcodes == 1 {
                 // Explicit callback-boundary perturbation; actual opcode already completed.
-                put(g, crate::ram_map::words::CUR_ENEMY_INDEX, 64);
+                // The lease takes the selector store back through its byte path.
+                ram.copy_in(crate::ram_map::words::CUR_ENEMY_INDEX, &64u16.to_ne_bytes());
                 g.loaded_rom = Some(RomImage::zeroed(0x200000));
-                append(c, 17, 64, address, g);
+                append(c, 17, 64, address, (g, ram, spawn));
             }
         }
     });
@@ -271,26 +285,16 @@ pub(crate) fn active() -> bool {
     ACTIVE.with(|state| state.borrow().is_some())
 }
 /// The population case's stage hook on the scheduler's lease: while a case is
-/// capturing, its observer runs on the game, which the lease exports to.
-pub(crate) fn stage_on_lease(
-    runtime: &mut crate::game::session_runtime::Runtime<'_>,
-    event: u16,
-    key: u16,
-) {
+/// capturing, its observer snapshots the lease's projected RAM.
+pub(crate) fn stage_on_lease(runtime: &mut Runtime<'_>, event: u16, key: u16) {
     if active() {
-        runtime.foreign(|game| {
-            stage(event, key, game);
-        });
+        runtime.observe_hook(|game, ram, spawn| stage(event, key, (game, ram, spawn)));
     }
 }
 /// The population case's opcode hook on the scheduler's lease, as
-/// [`stage_on_lease`] runs its stage hook.
-pub(crate) fn opcode_on_lease(
-    runtime: &mut crate::game::session_runtime::Runtime<'_>,
-    event: u16,
-    address: u32,
-) {
+/// [`stage_on_lease`] runs its stage hook; the selected slot is the lease's.
+pub(crate) fn opcode_on_lease(runtime: &mut Runtime<'_>, event: u16, address: u32) {
     if active() {
-        runtime.foreign(|game| opcode(event, address, game.cur_enemy_index(), game));
+        runtime.observe_hook(|game, ram, spawn| opcode(event, address, game, ram, spawn));
     }
 }
