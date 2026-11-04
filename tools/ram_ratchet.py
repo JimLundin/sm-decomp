@@ -59,8 +59,8 @@ import cycle_report  # noqa: E402
 # sites. 25 target sites (19 Point::physical in 9 sm_game files): engine
 # address sites 11 becomes 36; the legacy engine adds 7 (452 becomes 459).
 BASELINE = {
-    "sm_game_ram_sites": 38,
-    "sm_game_coupled_files": 8,
+    "sm_game_ram_sites": 11,
+    "sm_game_coupled_files": 4,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
@@ -70,7 +70,7 @@ BASELINE = {
     "engine_ram_address_sites": 19,
     "engine_raw_ram_calls": 0,
     "engine_unresolved_ram_methods": 981,
-    "legacy_engine_ram_sites": 450,
+    "legacy_engine_ram_sites": 446,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     # Advisory, rebaselined 2026-11-04: 61 -> 73. Every new site is an original-game
     # out-of-range access routed through legacy_overflow with a docs/LEGACY.md row
@@ -81,8 +81,8 @@ BASELINE = {
     # image; Session entries are leases opened from Game-hosted code. All three
     # reach zero when the Session drives the tick. Foreign calls and Game hosts
     # may not rise; lease moves can add entries, so those are reported.
-    "foreign_calls": 75,
-    "game_host_impls": 86,  # SpriteHost split into MapHost + SpriteWords (same coupling)
+    "foreign_calls": 72,
+    "game_host_impls": 85,  # SpriteHost split into MapHost + SpriteWords (same coupling)
     "session_entries": 88,
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
     # gameplay_word! read and store typed Session-backed keys, not RAM, so
