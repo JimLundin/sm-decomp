@@ -485,7 +485,7 @@ def compare_lock(locked: Row, run: Row) -> tuple[list[str], int | None]:
 LOCK_MARK = 1000
 # Free-run and lockstep console lines naming the first differing Tick, stream
 # and field; whatever follows a lockstep name is a value.
-LOCALIZED = re.compile(r"^(@[0-9]+: (?:(?:Free-run|Observation) divergence in [^;]*"
+LOCALIZED = re.compile(r"^(@[0-9]+: (?:(?:Free-run|Observation|Session) divergence in [^;]*"
                        r"|[A-Za-z0-9 ,()/-]*? (?:compare failed|differs))"
                        r"|Free run: .*|Free-run spread: .*)")
 # Each corpus run localizes at most this many mismatches; the rest only fail.

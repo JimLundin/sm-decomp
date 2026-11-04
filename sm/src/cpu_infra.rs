@@ -1379,6 +1379,9 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             // Typed observations of both results, beside the RAM comparison below.
             #[cfg(sm_verify_dll)]
             let observation_failed = crate::observation::observe(game);
+            // The report-only Session-space comparison, before RAM normalization.
+            #[cfg(sm_verify_dll)]
+            crate::observation::observe_session(game);
             verify_snapshots_eq(
                 &raw mut *game.g_snapshot_mine,
                 &raw mut *game.g_snapshot_theirs,

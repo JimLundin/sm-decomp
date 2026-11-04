@@ -8,12 +8,14 @@
 
 mod machine;
 pub(crate) mod oracle;
+mod session;
 
 use crate::game_state::Game;
 use sm_tools::engine::{Domains, Leases, Projection};
 use sm_tools::free_run::FreeRun;
 use sm_tools::lockstep::{EngineSource, Lockstep};
 use sm_tools::observation::Domain;
+use sm_tools::session_compare::{SessionCompare, Skip};
 use sm_tools::trace::{Running, Tick, TraceWriter};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -98,15 +100,27 @@ enum Mode {
 pub struct Observer {
     pub(crate) leases: Leases,
     mode: Mode,
+    /// The report-only Session-space comparison beside the lockstep's.
+    session: Option<SessionCompare>,
     elapsed: Duration,
 }
 
 impl Observer {
     /// Compare typed observations beside RAM on every paired frame.
+    /// The Session-space comparison runs beside it unless
+    /// `SM_VERIFY_SESSION_COMPARE=0`.
     pub fn lockstep(report: Option<PathBuf>) -> Self {
+        let mut leases = Leases::default();
+        let session = (std::env::var_os("SM_VERIFY_SESSION_COMPARE").as_deref()
+            != Some("0".as_ref()))
+        .then(|| {
+            leases.keep_sessions();
+            SessionCompare::default()
+        });
         Self {
-            leases: Leases::default(),
+            leases,
             mode: Mode::Lockstep(Lockstep::new(report)),
+            session,
             elapsed: Duration::ZERO,
         }
     }
@@ -116,6 +130,7 @@ impl Observer {
         Self {
             leases: Leases::default(),
             mode: Mode::Single(Box::new(single)),
+            session: None,
             elapsed: Duration::ZERO,
         }
     }
@@ -138,7 +153,12 @@ impl Observer {
         match self.mode {
             Mode::Lockstep(mut lockstep) => {
                 lockstep.elapsed += self.leases.elapsed;
-                Ok((lockstep.finish()?, None))
+                let mut lines = lockstep.finish()?;
+                if let Some(mut session) = self.session {
+                    session.elapsed += self.leases.session_elapsed;
+                    lines.extend(session.finish());
+                }
+                Ok((lines, None))
             }
             Mode::Single(single) => {
                 let Single {
@@ -217,13 +237,59 @@ pub(crate) fn observe(game: &mut Game) -> Option<bool> {
     Some(diverged)
 }
 
+/// Compare the paired frame's Sessions: the engine's, and the oracle's
+/// result decoded from its RAM. Report-only; the RAM comparison decides.
+pub(crate) fn observe_session(game: &mut Game) {
+    let Some(observer) = game.observation.as_deref() else {
+        return;
+    };
+    if observer.session.is_none() || !matches!(observer.mode, Mode::Lockstep(_)) {
+        return;
+    }
+    let start = std::time::Instant::now();
+    let engine = game
+        .observed_session()
+        .or_else(|| observer.leases.last_session());
+    let sessions = engine.map(|engine| {
+        let world = game.world();
+        let oracle = session::oracle(&game.g_snapshot_theirs.ram, world);
+        let engine = session::engine(
+            engine,
+            &game.g_snapshot_mine.ram,
+            &game.g_snapshot_theirs.ram,
+            world,
+        );
+        oracle.zip(engine)
+    });
+    let tick = game.snes_frame_counter;
+    let Some(compare) = game
+        .observation
+        .as_mut()
+        .and_then(|observer| observer.session.as_mut())
+    else {
+        return;
+    };
+    match sessions {
+        None => compare.skip(Skip::NoEngineSession),
+        Some(None) => compare.skip(Skip::Undecodable),
+        Some(Some((oracle, engine))) => {
+            compare.compare(tick, &engine, &oracle);
+        }
+    }
+    compare.elapsed += start.elapsed();
+}
+
 /// Count the paired frame's agreement between the two comparisons.
 pub(crate) fn agree(game: &mut Game, observation_failed: Option<bool>, ram_failed: bool) {
     let tick = game.snes_frame_counter;
-    if let (Some(observer), Some(failed)) = (game.observation.as_mut(), observation_failed) {
-        if let Mode::Lockstep(lockstep) = &mut observer.mode {
-            lockstep.agree(tick, failed, ram_failed);
-        }
+    let Some(observer) = game.observation.as_mut() else {
+        return;
+    };
+    if let (Mode::Lockstep(lockstep), Some(failed)) = (&mut observer.mode, observation_failed) {
+        lockstep.agree(tick, failed, ram_failed);
+    }
+    if let Some(session) = observer.session.as_mut() {
+        session.agree(tick, ram_failed);
     }
 }
 

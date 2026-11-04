@@ -43,8 +43,13 @@ pub struct Projection {
 pub struct Leases {
     capturing: bool,
     captured: Option<Projection>,
+    /// Whether the Tick's last lease Session is kept, for the Session-space comparison.
+    keeps_sessions: bool,
+    session: Option<Box<Session>>,
     /// Time spent projecting leases.
     pub elapsed: std::time::Duration,
+    /// Time spent keeping lease Sessions.
+    pub session_elapsed: std::time::Duration,
 }
 
 impl Leases {
@@ -52,6 +57,18 @@ impl Leases {
     pub fn begin_tick(&mut self) {
         self.capturing = true;
         self.captured = None;
+        self.session = None;
+    }
+
+    /// Keep a copy of each Tick's last lease Session (`last_session`).
+    pub fn keep_sessions(&mut self) {
+        self.keeps_sessions = true;
+    }
+
+    /// The Session of the Tick's last lease, when sessions are kept and the
+    /// Tick released one; it stays until the next Tick begins.
+    pub fn last_session(&self) -> Option<&Session> {
+        self.session.as_deref()
     }
 
     /// Project a frame lease's Session as it is released, inside the engine's Tick.
@@ -60,6 +77,11 @@ impl Leases {
             let start = std::time::Instant::now();
             self.captured = Some(project(session));
             self.elapsed += start.elapsed();
+            if self.keeps_sessions {
+                let start = std::time::Instant::now();
+                self.session = Some(Box::new(session.clone()));
+                self.session_elapsed += start.elapsed();
+            }
         }
     }
 
