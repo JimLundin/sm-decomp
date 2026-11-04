@@ -873,9 +873,6 @@ pub trait Host:
     fn spawn_wall_seal(&mut self);
     fn add_glass_hits(&mut self, slot: usize, amount: u16);
     fn spawn_palette_effect(&mut self, definition: u16);
-    /// Queue the sprite tile transfer entry at `at` in `bank` unless its size
-    /// is 0; the size.
-    fn queue_sprite_tile_entry(&mut self, bank: u8, at: u16) -> u16;
     fn set_boss_bit_for_current_area(&mut self, mask: u16);
     fn set_event_happened(&mut self, event: u16);
     fn check_event_happened(&mut self, event: u16) -> u16;
@@ -935,7 +932,14 @@ pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut i
     if cursor == 0 {
         cursor = start;
     }
-    let mut size = game.foreign(|game| game.queue_sprite_tile_entry(bank, cursor));
+    let mut size = game.owned_step(|game| {
+        let entry = crate::cartridge::native_record(bank, cursor, game);
+        let size = entry.word(0);
+        if size != 0 {
+            crate::display::transfer::push_tilemap_record(game, &entry);
+        }
+        size
+    });
     if size != 0 {
         *BodyEdit::of(game, BODY_INDEX).sprite_tile_transfer() =
             cursor.wrapping_add(SPRITE_TILE_ENTRY);

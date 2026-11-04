@@ -254,10 +254,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         crate::game::palette_effects::spawn(definition, self);
     }
 
-    fn queue_sprite_tile_entry(&mut self, bank: u8, at: u16) -> u16 {
-        crate::game::rom_vram_entries::queue_sprite_tile_entry(bank, at, self)
-    }
-
     fn set_boss_bit_for_current_area(&mut self, mask: u16) {
         crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(mask, self);
     }

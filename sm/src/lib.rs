@@ -330,7 +330,6 @@ pub mod game {
     pub(crate) use sm_game::player_movement;
     pub(crate) use sm_game::player_transitions;
     pub(crate) use sm_game::player_update;
-    pub(crate) mod rom_vram_entries;
 
     pub(crate) mod boot;
     pub(crate) mod display_commands;
