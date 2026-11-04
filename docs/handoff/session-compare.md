@@ -5,7 +5,9 @@ emulator's RAM into a Session and compares it with the engine's Session (D6:
 RAM translation belongs to verification). After that, the engine no longer
 has to export its Session as RAM for comparison. This note maps what is
 compared today, gives the design, and records the first slice (lane
-`collab/session-compare`, on `0b19d8a24`).
+`collab/session-compare`, on `0b19d8a24`) and the second (lane
+`collab/session-compare-2`, on `8f90bd4bf`: next slice 1's findings and fix,
+and slice 2's coverage report).
 
 ## Today's comparison
 
@@ -143,22 +145,111 @@ Advisory until it first falls, then strict. `ram.rs` (the name list the codec
 addresses, about 810 lines) and the 16 other `fn address` helpers are not
 counted; they go with the codec.
 
+## Slice 1: what the first report showed
+
+The first report (#221's lockstep rows, 52 replays) had 0 RAM-only failures
+and Session-only failures on about 30-100% of each replay's Ticks, all in two
+field groups: `control[0].input.ports[0]` (`.sampled` first on 28 replays,
+`.repeat_counter` 14, `.pressed` 9) and `queued_tilemaps` (`.tail` 7,
+`.queue[7]` 3), with `room` (2 replays) and `presentation` (6) on 1-4 Ticks.
+
+**Cause: timing, every class.** RAM passed on every one of those Ticks, and
+the engine side was its Session encoded onto its own passing RAM, so the
+Sessions could differ only where the encoded Session differed from the
+engine's own frame-end RAM. They did, because the Session was the Tick's
+*last lease* and Game-side code finishes the frame after it
+(`gameplay_frame::frame`, on `Game`, not on a lease):
+
+- `display_refresh::run` is the NMI. Its `flush_tilemaps`
+  (`sm/src/game/display_transfers.rs`) stores the queue's end word at the
+  byte tail (`queue[tail..tail + 2] = 0`: `queue[7]` after one 7-byte entry)
+  and clears `tail`. The lease Session holds the pre-flush queue.
+- `controller_input::sample_latched` then latches the joypad: it writes
+  `sampled`, `pressed`, `repeated`, `previous` and `repeat_counter`.
+  `sampled` differs whenever the buttons change between frames,
+  `repeat_counter` while one is held, `pressed` on an edge.
+- `room` and `presentation` on a few Ticks: the same mechanism for
+  Game-side room-entry and display writes after the lease (expected to show on
+  the new "written after the last lease" line, below, and not as divergence).
+
+None is a codec asymmetry, a field RAM does not carry, or a real divergence:
+the oracle holds the same values, one frame-end later in the engine's
+order. No `docs/LEGACY.md` row is needed.
+
+**Fix (comparison only).** The engine's frame-end Session is the Session its
+next lease takes up, in the lease's own order (`Runtime::new`): the
+retained Session while it is current with RAM (`observed_session`); else the
+kept frame Session with the RAM ranges written since its export, which
+`reuse_frame_session` takes from RAM (`kept_session_writes` peeks the write
+log without closing it; `logged_writes`); else a decode of the engine's RAM
+(an import). So the comparison reads the engine at the oracle's snapshot
+point. The last lease Session is still compared, against the frame-end
+Session, and its differing fields go on their own summary line:
+
+```
+Session written after the last lease: <n> ticks; first write at tick <t> in <path>; by field: control <n>, queued_tilemaps <n>
+```
+
+That line is the list of Game-side frame-end writers that the runtime's
+Tick (step 2) must take over before slice 4 can compare the engine's
+Session directly. The `Session compare:` line also counts the engine
+Session's source (`retained`, `kept`, `imported`); `without an engine
+Session` is gone (a Tick with no lease is an import).
+
+No stale-slot normalization was added: `queue[7]` is the NMI's end word, not
+a stale slot, and the bytes past the tail are real RAM the engine reproduces
+(the RAM compare passes them). Whether a direct compare (slice 4) should
+compare the queue only up to its tail is decided there, when the queue is no
+longer read from RAM.
+
+**What remains possible.** With the aligned engine image, a Session-only
+failure can now only be an encoded byte that differs from the engine's own
+RAM outside the write log: an export the codec does not reproduce (a codec
+asymmetry), or a Game-side write the log missed. Both are worth a row.
+
+## Slice 2: coverage (started)
+
+Each frame's encode of the engine's lease Session marks the bytes its spans
+write; at the replay's end `session_compare::Coverage` classes all 128 KiB
+against the unowned table, which today is `NORMALIZED_RAM`:
+
+```
+Session RAM coverage: <n> bytes decoded, <n> unowned, <n> both, <n> neither (in <n> ranges)
+Session RAM neither decoded nor unowned: $xxxxx-$xxxxx, ... (first 12)
+Session RAM decoded and unowned: $xxxxx-$xxxxx, ... (first 12)
+```
+
+"Decoded" is the encoder's spans (the decode reads the same layout);
+"both" are Session bytes the RAM compare normalizes, so neither compare
+sees them today; "neither" are bytes with no field and no listed reason,
+which must reach 0. Report-only. The union over a replay is the measure,
+because spans depend on state (room size, actor slots).
+
 ## Next slices
 
-1. Read the slice's agreement counts over the corpus and both routes.
-   Session-only failures are codec asymmetries or fields RAM does not carry;
-   RAM-only failures are bytes no Session field decodes. Fix or list each.
-2. Build the byte-to-field map from the encoder's spans, check it against
-   `NORMALIZED_RAM` and the unowned table, and report coverage (decoded,
-   unowned, neither) per replay. "Neither" must reach 0.
+1. Done (above). Confirm on dispatched rows: Session-only failures 0 and
+   the fields on the "written after the last lease" line.
+2. Read the coverage lines over the corpus and both routes. Give each
+   "neither" range a field or a row in a new unowned table (with its
+   reason), and decide each "both" range: owned (drop it from the table) or
+   unowned (the encoder stops writing it, or the comparison ignores it). The
+   unowned table then replaces `NORMALIZED_RAM` in the coverage check.
 3. Copy the decode half into `sm/src/verification`, compare it with the
    engine's decode on every frame, then use it for the oracle side.
 4. Compare the engine's Session directly, with a declared list of fields RAM
-   cannot carry, and drop the encode round trip.
+   cannot carry, and drop the encode round trip. It needs the frame-end
+   Session as an object: until the runtime owns the NMI flush and the
+   controller latch (step 2), the frame-end Session is the next lease's take
+   on RAM, so the direct compare either waits for step 2 or applies the
+   logged writes to the kept Session itself (`take_written_bytes`).
 5. Add the Session streams to the lock; re-record through the oracle sample.
+   The streams digest the frame-end Session (as above), not the last lease.
 6. Switch lockstep and locks to Session space: drop the WRAM byte compare and
    `wram` (one `FORMAT` bump, one re-record), replace `NORMALIZED_RAM` with the
-   unowned table, and retire its `LEGACY(verifier)` rows.
+   unowned table, and retire its `LEGACY(verifier)` rows. Needs slice 2's
+   "neither" at 0 and the "both" ranges decided.
 7. With step 2 (the runtime owns the tick), delete the export and import, and
    move the observers' `encode`/`decode` calls to verification:
-   `engine_ram_export_lines` reaches 0.
+   `engine_ram_export_lines` reaches 0. The "written after the last lease"
+   line reaches 0 ticks when the NMI and controller latch run inside the
+   Tick, which is step 2's own check.
