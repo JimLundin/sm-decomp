@@ -643,6 +643,7 @@ macro_rules! scalar_words {
         $f(ram::SAMUS_POWER_BOMBS,$($borrow)* $s.inventory.ammunition[2].current);
         $f(ram::GRAPPLE_BEAM_FUNCTION,$($borrow)* $s.player.grapple);
         $f(ram::SAMUS_SHINE_TIMER,$($borrow)* $s.player.shine_timer);
+        $f(ram::SAMUS_HEALTH_WARNING,$($borrow)* $s.player.health_warning);
         $f(ram::TIMER_FOR_SHINE_TIMER,$($borrow)* $s.player.shine_tick);
         $f(ram::SPECIAL_SAMUS_PALETTE_FRAME,$($borrow)* $s.player.palette_frame);
         $f(ram::SAMUS_SPECIAL_SUPER_PALETTE_FLAGS,$($borrow)* $s.player.special_palette_flags);
@@ -795,6 +796,7 @@ macro_rules! scalar_words {
         $f(ram::HDMA_DATA_TABLE_IN_CERES,$($borrow)* $s.room.ceres_hdma_table);
         $f(ram::SIZE_OF_BG2,$($borrow)* $s.room.background_size);
         $f(ram::MY_COUNTER2,$($borrow)* $s.room.unpause_queue_tail);
+        $f(ram::RAM7_F_START,$($borrow)* $s.room.level_data_size);
         $f(0x197e,$($borrow)* $s.room.liquid_options);
         $f(0x1978,$($borrow)* $s.room.liquid_height);
         $f(0x197a,$($borrow)* $s.room.liquid_target);

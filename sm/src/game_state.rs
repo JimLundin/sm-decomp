@@ -3748,7 +3748,7 @@ impl sm_game::sequence_state::Access for Game {
     }
 }
 
-fn frame_display_ranges() -> [Range<usize>; 19] {
+pub(crate) fn frame_display_ranges() -> [Range<usize>; 19] {
     [
         0x51..0x87,
         0x5b4..0x5bc,
