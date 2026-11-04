@@ -95,24 +95,11 @@ impl ActorEffects for Runtime<'_> {
     #[cfg(sm_verify_dll)]
     fn actor_reference_stage(&mut self, event: u16, key: u16) {
         crate::game::actors::composed_checks::stage(self, event, key);
-        if crate::actor_population_animation_observer::active() {
-            self.foreign(|game| {
-                crate::actor_population_animation_observer::stage(event, key, game);
-            });
-        }
+        crate::actor_population_animation_observer::stage_on_lease(self, event, key);
     }
     #[cfg(sm_verify_dll)]
     fn actor_reference_opcode(&mut self, event: u16, address: u32) {
-        if crate::actor_population_animation_observer::active() {
-            self.foreign(|game| {
-                crate::actor_population_animation_observer::opcode(
-                    event,
-                    address,
-                    game.cur_enemy_index(),
-                    game,
-                );
-            });
-        }
+        crate::actor_population_animation_observer::opcode_on_lease(self, event, address);
     }
     fn actor_ai(&mut self, routine: ActorRoutine) {
         self.actor_ai_legacy(routine.0);

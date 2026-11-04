@@ -270,3 +270,27 @@ pub(crate) fn finish() -> Vec<u8> {
 pub(crate) fn active() -> bool {
     ACTIVE.with(|state| state.borrow().is_some())
 }
+/// The population case's stage hook on the scheduler's lease: while a case is
+/// capturing, its observer runs on the game, which the lease exports to.
+pub(crate) fn stage_on_lease(
+    runtime: &mut crate::game::session_runtime::Runtime<'_>,
+    event: u16,
+    key: u16,
+) {
+    if active() {
+        runtime.foreign(|game| {
+            stage(event, key, game);
+        });
+    }
+}
+/// The population case's opcode hook on the scheduler's lease, as
+/// [`stage_on_lease`] runs its stage hook.
+pub(crate) fn opcode_on_lease(
+    runtime: &mut crate::game::session_runtime::Runtime<'_>,
+    event: u16,
+    address: u32,
+) {
+    if active() {
+        runtime.foreign(|game| opcode(event, address, game.cur_enemy_index(), game));
+    }
+}

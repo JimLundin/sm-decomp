@@ -107,6 +107,21 @@ pub(crate) fn native_read_traced() -> bool {
     NATIVE.with(|state| state.borrow().is_some())
 }
 
+/// The native read hook on the scheduler's lease: traced, it runs on the game,
+/// which the lease exports to; untraced, the observer does nothing and the
+/// lease keeps the foreign call's observation refresh.
+#[cfg(sm_verify_dll)]
+pub(crate) fn native_read_on_lease(
+    runtime: &mut crate::game::session_runtime::Runtime<'_>,
+    bank: u8,
+    address: u16,
+) {
+    if native_read_traced() {
+        runtime.foreign(|game| native_read(bank, address, game));
+    } else {
+        runtime.refresh_player_observations();
+    }
+}
 /// Runs immediately before real RomPtr at the existing foreign boundary.
 /// Allocation replacement is environmental input; no stream value is mocked.
 #[cfg(sm_verify_dll)]

@@ -29,18 +29,11 @@ impl Content for Runtime<'_> {
     fn native_record(&mut self, location: ContentAddress) -> RomRecord {
         let absolute = address(location);
         #[cfg(sm_verify_dll)]
-        if crate::game::room_mechanism_checks::native_draw_read_traced() {
-            self.foreign(|game| {
-                crate::game::room_mechanism_checks::observe_native_draw_read(
-                    location.bank,
-                    location.offset,
-                    game,
-                )
-            });
-        } else {
-            // Untraced, the observer does nothing; keep the foreign call's refresh.
-            self.refresh_player_observations();
-        }
+        crate::game::room_mechanism_checks::observe_native_draw_read_on_lease(
+            self,
+            location.bank,
+            location.offset,
+        );
         if location.offset & 0x8000 == 0 {
             self.report_invalid_window(absolute);
         }
