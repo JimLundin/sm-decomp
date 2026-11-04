@@ -106,7 +106,11 @@ impl GameEffects for Runtime<'_> {
         self.owned_player_call(sm_game::player_drawing::update_beam_tiles_and_palette);
     }
     fn draw_xray_window_table(&mut self, window: sm_game::beam_windows::XrayWindow) -> Option<u16> {
-        self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game))
+        // The table is the lease's; the observations are refreshed on entry and
+        // on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| {
+            sm_game::beam_windows::calculate_xray_window(window, runtime)
+        })
     }
     fn restore_xray_background(&mut self, step: XrayRestore) {
         use crate::game::xray_background::{finish_restore, restore_left, restore_right};
