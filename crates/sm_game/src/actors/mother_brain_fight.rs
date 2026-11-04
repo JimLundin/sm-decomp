@@ -833,8 +833,8 @@ pub trait OwnedWords {
     fn set_owned(&mut self, word: OwnedWord, value: u16);
 }
 
-/// A lease on the game for one frame of an AI: the state steps run on it, and
-/// `foreign` runs the rest on the game it leases.
+/// A lease on the game for one frame of an AI: the state steps and the rest of
+/// the frame run on it.
 pub trait Lease:
     State
     + escape_typewriter::Host

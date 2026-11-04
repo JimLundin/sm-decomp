@@ -41,7 +41,7 @@ impl<T> Lease for T where
 {
 }
 
-/// The game Draygon's lease runs foreign calls on: the shared boss effects.
+/// What Draygon's lease runs its game-side effects on: the shared boss effects.
 pub trait Host: BossEffects + BossLease {}
 impl<T: BossEffects + BossLease> Host for T {}
 

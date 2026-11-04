@@ -469,67 +469,6 @@ pub fn physical_work_ram(bank: u8, address: u16) -> Option<usize> {
         _ => None,
     }
 }
-pub fn physical_source_spans(
-    display: &crate::scene::state::DisplayState,
-) -> Vec<std::ops::Range<usize>> {
-    let mut spans: Vec<_> = (0..crate::fx_state::ControlOwnership::LANES)
-        .map(|lane| {
-            let at = control_address(lane);
-            at..at + 1
-        })
-        .collect();
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
-        let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
-        else {
-            continue;
-        };
-        for window in windows.iter() {
-            let Some(first) = physical_work_ram(window.bank, window.address) else {
-                continue;
-            };
-            let length = if matches!(window.bank, 0x7e | 0x7f) {
-                window.length
-            } else {
-                window.length.min(0x2000 - usize::from(window.address))
-            };
-            spans.push(first..first + length);
-            for offset in window.offset..window.offset + window.length {
-                if let Ok(Some(point)) =
-                    display
-                        .hdma_live
-                        .workspace_coordinate(&display.workspace, *owner, offset)
-                {
-                    display
-                        .workspace
-                        .visit_source_bus_addresses(point, |bank, address| {
-                            if let Some(at) = physical_work_ram(bank, address) {
-                                spans.push(at..at + 1);
-                            }
-                        })
-                        .expect("actual Workspace publication spans");
-                }
-                if let Ok(coordinate) = display.hdma_live.canonical_coordinate(*owner, offset)
-                    && let Ok(Some(at)) = source_counterpart(display, coordinate.0, coordinate.1)
-                {
-                    spans.push(at..at + 1);
-                }
-            }
-        }
-    }
-    spans
-}
 /// Native bytes adopt in the actual last-publication order. Snapshot restoration
 /// supplies no new ordinals and follows the selected checkpoint's saved origin.
 /// With no physical origin, the supplied canonical owner remains authoritative
@@ -1740,17 +1679,6 @@ fn display_owner_address(
         .map(|(_, at)| at)
         .or(saved)
         .or_else(|| equal.then_some(first).flatten()))
-}
-pub fn suspended_domain_byte(
-    display: &crate::scene::state::DisplayState,
-    window: &crate::menu_window_state::WindowState,
-    at: usize,
-    bytes: &impl Fn(usize) -> u8,
-    order: &impl Fn(usize) -> Option<u64>,
-) -> Result<u8, crate::scene::state::DisplayError> {
-    let graph = display_control_graph(display)?;
-    let selected = graph[control_lane(at).ok_or(crate::scene::state::DisplayError::Source)?];
-    display_owner_byte(display, window, &graph, selected, bytes, order)
 }
 fn display_owner_byte(
     display: &crate::scene::state::DisplayState,

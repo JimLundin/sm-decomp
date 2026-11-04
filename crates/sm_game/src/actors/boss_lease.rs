@@ -1,6 +1,6 @@
 //! A boss's per-frame lease: the state steps of its main AI run on the owned
-//! Session, with the shared reactions and spawns it needs, and `foreign` runs
-//! the rest on the game.
+//! Session, with the shared reactions and spawns it needs, and the effects
+//! that still need the game run on the lease's owned steps.
 //!
 //! # Design
 //!
@@ -12,7 +12,7 @@
 //! the lease implements it on the Session, running those effects on the same
 //! lease (they were leases of their own on the game). So a step behaves the same
 //! called from either, and a main AI that opens one lease per frame keeps its
-//! steps there, grouping what still needs the game into `foreign` calls.
+//! steps there.
 use crate::actors::host::{Death, Shot};
 use crate::legacy_overflow::SlotBytes;
 
@@ -83,8 +83,8 @@ pub trait BossState:
     fn area_boss_byte(&mut self) -> u8;
 }
 
-/// A lease on a boss's game. The game is its own lease, whose `foreign` runs
-/// the action on itself, so steps written against a lease also run unleased.
+/// A lease on a boss's game. Its owned steps run the action on the lease itself,
+/// so steps written against a lease also run unleased.
 pub trait BossLease: BossState + crate::diagnostics::Fatal {
     /// Run `action` on the lease itself where a `foreign` call ran it on the
     /// game: the external observations are refreshed on entry, as the game's

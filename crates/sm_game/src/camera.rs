@@ -26,9 +26,8 @@
 //! refresh the host's observations, as the byte path did after each byte.
 //! The remaining writers are compatibility code that still names the RAM
 //! words: bank code (cinematics, boss shakes, the demo loader, Ceres) and
-//! native CPU or DMA writes. They write the byte image outside a lease, or
-//! inside a lease's foreign call, which exports first and imports after, so
-//! no typed copy competes with them. Each moves onto these fields when its domain does; the projection
+//! native CPU or DMA writes. They write the byte image outside a lease, which
+//! the next lease imports, so no typed copy competes with them. Each moves onto these fields when its domain does; the projection
 //! can shrink once no reader or writer names the RAM words.
 use crate::session_access::SessionAccess;
 

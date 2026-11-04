@@ -21,7 +21,6 @@ use crate::actors::mother_brain_fight::{
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::actors::{api, combat};
 use crate::runtime_access::SessionRam;
-// The game's traits, for the calls made on it through `foreign`.
 
 use crate::constants::bank_86::*;
 use crate::constants::bank_a9::*;

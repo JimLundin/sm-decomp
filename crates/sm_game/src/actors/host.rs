@@ -149,8 +149,7 @@ pub fn below(value: u16, limit: u16) -> bool {
 }
 
 /// A session lease over the actors: what a compat `Runtime` gives code that
-/// edits actors directly, plus the session-aware RAM word read and `foreign`
-/// onto the leased game.
+/// edits actors directly, plus the session-aware RAM word read.
 pub trait ActorLease:
     crate::screen_fade::Owner
     + crate::actors::access::ActorAccess

@@ -20,7 +20,6 @@ use crate::actors::mother_brain_fight::{
     set_enemy_instruction_list, spawn_plm,
 };
 use crate::runtime_access::SessionRam;
-// The game's traits, for the calls made on it through `foreign`.
 
 use crate::constants::bank_a9::*;
 use crate::constants::enemy_properties::*;

@@ -1,4 +1,4 @@
-//! External observations refreshed at foreign and imported-alias boundaries.
+//! External observations refreshed at owned-call and imported-alias boundaries.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ExternalInputs {
     pub transitions: super::player_transitions::state::TransitionObservations,
