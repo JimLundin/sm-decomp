@@ -107,6 +107,8 @@ pub trait PassLease:
     + crate::display_refresh::Nmi
     + crate::menus::save_slots::MapHost
 {
+    /// Boot's clear of the APU's four input ports, in port order.
+    fn clear_apu_ports(&mut self);
     /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
     /// Samus's frame: the frame handler's beta and gamma work.
@@ -395,12 +397,15 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     end_frame(returned, &mut lease)
 }
 
-/// Boot's work after its device work ($80:8482 on), as the frame lease's first
-/// step: the random seed, the music queue's delays, the debug mode, the save
-/// slots' check, the sound words and boot's resume byte. The pass
-/// continuations the frame clears before its lease are not among its stores.
+/// Boot's work after its RAM clear and register setup, as the frame lease's
+/// first step: the NMI's enable, the APU ports' clear, the random seed, the
+/// music queue's delays, the debug mode, the save slots' check, the sound words
+/// and boot's resume byte. The pass continuations the frame clears before its
+/// lease are not among its stores.
 fn finish_boot<L: PassLease + crate::menus::host::Host + ?Sized>(lease: &mut L) {
     use crate::projection::Field;
+    display_refresh::enable(true, lease);
+    lease.clear_apu_ports();
     lease.set_view_word(Field::RandomNumber, 97);
     crate::music_requests::reset_delays(lease).expect("audio delay reset");
     crate::gameplay_word!(lease.ENABLE_DEBUG = 0);

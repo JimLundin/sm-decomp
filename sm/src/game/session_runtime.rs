@@ -838,6 +838,28 @@ impl<'g> Runtime<'g> {
         }
         unsafe { crate::native_audio::emit(cue, phase, self.game) }
     }
+    /// Boot's clear of the APU's four input ports from the lease, in port order.
+    /// The ports read only the upload flags ($0617, $0618) from RAM, as a cue
+    /// does (`emit_cue`); verify builds check that RAM holds the lease's flags.
+    pub(crate) fn clear_apu_ports(&mut self) {
+        use crate::rtl::{APUI00, APUI01, APUI02, APUI03};
+        #[cfg(sm_verify_dll)]
+        {
+            let control = &self.session().control;
+            let uploading = [0x617, 0x618]
+                .into_iter()
+                .any(|at| control.projected_byte(at).expect("audio upload flag") != 0);
+            assert!(
+                self.game.uploading_apu() == uploading,
+                "the lease's audio upload flags differ from RAM at the APU ports' clear"
+            );
+        }
+        for port in [APUI00, APUI01, APUI02, APUI03] {
+            // SAFETY: a lease runs with the backend installed, and `&mut Game`
+            // excludes other access.
+            unsafe { crate::rtl::rtl_apu_write(port, 0, self.game) }
+        }
+    }
     fn refresh_actor_observations(&mut self) {
         self.inputs.enemy_zero_health = self.native_word(0xF8C);
         self.inputs.current_enemy = self.word(0xE54);

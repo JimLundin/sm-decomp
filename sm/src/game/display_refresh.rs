@@ -7,12 +7,6 @@ pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
 
-impl refresh::DisplayOwner for Game {
-    fn write_owned_byte(&mut self, at: usize, value: u8) {
-        self.compatibility_write_owned_byte(at, value);
-    }
-}
-
 /// The NMI on the frame's lease, inside the tick: each upload publishes the
 /// lease before its DMA reads work RAM, and goes through the lease's transfer
 /// port, so a readback's work RAM bytes return to the Session; the queue tails,
@@ -138,11 +132,6 @@ pub(crate) fn initialize_io_and_oam(
     game: &mut Game,
 ) {
     refresh::initialize_io_and_oam(brightness, game);
-}
-
-/// Enable or disable the NMI.
-pub(crate) fn enable(enabled: bool, game: &mut Game) {
-    refresh::enable(enabled, game);
 }
 
 /// The tilemap flush on the lease: it publishes, then drains the queue and the
