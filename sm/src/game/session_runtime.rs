@@ -492,6 +492,31 @@ impl<'g> Runtime<'g> {
     pub(crate) fn report_invalid_window(&mut self, address: u32) {
         self.owned_player_call(|runtime| invalid_window(runtime.game, address));
     }
+    /// The native-pointer RomPtr diagnostic on the lease: it prints and marks the
+    /// game failed, as `report_invalid_window`, and the verifier's low-window
+    /// observer snapshots the lease's projected RAM where it copied the RAM the
+    /// former foreign call had exported. The observations are refreshed on entry
+    /// and on return, as the foreign call left them.
+    pub(crate) fn report_native_diagnostic(&mut self, address: u32) {
+        self.owned_player_call(|runtime| {
+            invalid_window(runtime.game, address);
+            #[cfg(sm_verify_dll)]
+            {
+                // The case's injection replaces the loaded image, which the lease
+                // does not project: the image after it is the one before.
+                let ram = (0..runtime.game.ram().len())
+                    .map(|at| runtime.byte(at))
+                    .collect::<Vec<u8>>();
+                let game = &mut *runtime.game;
+                crate::room_contact_start_observer::diagnostic_image(
+                    address,
+                    || ram.clone(),
+                    &mut game.loaded_rom,
+                    &game.g_fail,
+                );
+            }
+        });
+    }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
     /// observations are refreshed on entry and on return, as the former foreign call left them.
     pub(crate) fn next_random_number(&mut self) -> u16 {

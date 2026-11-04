@@ -22,14 +22,9 @@ impl Content for Runtime<'_> {
             SpeedRecord::GrappleLava => 0x9f49,
         };
         if cursor & 0x8000 == 0 {
-            self.foreign(|game| {
-                crate::game::session_runtime::native_rom_diagnostic(
-                    0x900000 | u32::from(cursor),
-                    game,
-                );
-                // Preserve the actual optional native-binding capture and release.
-                drop(game.capture_native_rom_binding());
-            });
+            self.report_native_diagnostic(0x900000 | u32::from(cursor));
+            // Preserve the actual optional native-binding capture and release.
+            drop(self.samus_game().capture_native_rom_binding());
         }
         visual_host::Content::table(self, Source::Native, 0x900000 | u32::from(cursor))
     }

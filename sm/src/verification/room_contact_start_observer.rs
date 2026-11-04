@@ -3,7 +3,8 @@
 use crate::{
     game_state::{Game, WorkRam},
     rom::RomImage,
-    room_contact_start_cases::{offset, snapshot_parts},
+    room_background_support::ram_bytes_parts,
+    room_contact_start_cases::{offset, snapshot_image},
 };
 use std::cell::RefCell;
 struct Capture {
@@ -45,6 +46,16 @@ pub(crate) fn diagnostic_parts(
     loaded_rom: &mut Option<RomImage>,
     fail: &bool,
 ) {
+    diagnostic_image(address, || ram_bytes_parts(ram), loaded_rom, fail);
+}
+/// The diagnostic as a lease reports it: `ram` reads the image the lease
+/// projects, once a case observes the diagnostic and again after its injection.
+pub(crate) fn diagnostic_image(
+    address: u32,
+    mut ram: impl FnMut() -> Vec<u8>,
+    loaded_rom: &mut Option<RomImage>,
+    fail: &bool,
+) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -60,7 +71,7 @@ pub(crate) fn diagnostic_parts(
         };
         assert_eq!(address, expected_address);
         let mut before = Vec::new();
-        snapshot_parts(&mut before, ram, fail);
+        snapshot_image(&mut before, &ram(), fail);
         assert_eq!(
             Some(&before),
             c.expected.as_ref(),
@@ -73,7 +84,7 @@ pub(crate) fn diagnostic_parts(
             *loaded_rom = Some(RomImage::zeroed(offset(0x838010) + 1));
         }
         let mut after = Vec::new();
-        snapshot_parts(&mut after, ram, fail);
+        snapshot_image(&mut after, &ram(), fail);
         assert_eq!(
             Some(&after),
             c.expected.as_ref(),
