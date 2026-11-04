@@ -59,7 +59,8 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             // registers come first on the frame's lease
             // (`display_refresh::initialize_boot_registers`): they store only
             // the display mirrors ($51..$86), which none of the stores below
-            // touch, and no register write reads RAM.
+            // touch but the OAM address mirror's clear, which moves with them,
+            // and no register write reads RAM.
             // The tile buffers at $7E:3000, $4000 and $6000, 1024 words of
             // $1C2F each, in address order: the next lease adopts them.
             use sm_game::presentation_workspace::{Point, Role};
@@ -86,7 +87,9 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             for address in [0x656, 0x666, 0x676] {
                 game.ram().write_byte(address, 0);
             }
-            word! { game, 0; OAM_NEXT_PTR, REG_OA_MADDR_UNUSED }
+            // The OAM address mirror's clear ($53) follows the display setup on
+            // the lease (`gameplay_frame::finish_boot`).
+            word! { game, 0; OAM_NEXT_PTR }
             word! { game, 0;
                 NMI_COPY_SAMUS_HALVES, NMI_COPY_SAMUS_TOP_HALF_SRC, NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
             }

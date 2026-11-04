@@ -415,7 +415,8 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
 /// off and the display registers with their mirrors, the object table's high
 /// bits and its unused entries, the NMI's enable, the APU ports' clear, the
 /// random seed, the music queue's delays, the debug mode, the save slots'
-/// check, the sound words and boot's resume byte. The pass continuations the
+/// check, the sound words and boot's resume byte. The OAM address mirror's
+/// clear follows the setup, as in the original. The pass continuations the
 /// frame clears before its lease, and the tile buffers, APU queue, OAM pointer
 /// and Samus upload words boot stores on Game, are not among its stores.
 fn finish_boot<
@@ -425,6 +426,14 @@ fn finish_boot<
 ) {
     use crate::projection::Field;
     display_refresh::initialize_boot_registers(lease);
+    // Boot's 16-bit clear of the OAM address mirror ($53, after its OAM
+    // pointer), which undoes the setup's $80 priority bit in the high byte.
+    for field in [
+        DisplayField::ObjectAddressLow,
+        DisplayField::ObjectAddressHigh,
+    ] {
+        lease.store_display_control_byte(field, 0, Store::Named);
+    }
     crate::sprite_drawing::clear_high_table(lease);
     crate::sprite_drawing::finish_frame(lease);
     display_refresh::enable(true, lease);
