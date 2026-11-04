@@ -222,18 +222,6 @@ pub(crate) unsafe fn start_room_dma(
     }
 }
 
-impl sm_game::display::transfer::RoomDma for Game {
-    fn copy_to_vram_now(
-        &mut self,
-        address: u16,
-        source: sm_game::display::transfer::Source,
-        bytes: u16,
-        assets: Option<&super::room_entry::PreparedRoomAssets>,
-    ) {
-        crate::game::display_commands::copy_to_vram_now(address, source, bytes, assets, self);
-    }
-}
-
 use sm_game::display::queued_tilemaps::{Coordinate, QueueAccess, Request, Scrolling, Selection};
 fn scrolling_parameter(selection: Selection, field: Request) -> usize {
     let base = if matches!(selection.layout, ScrollingDmaLayout::Row) {

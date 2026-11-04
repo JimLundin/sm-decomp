@@ -37,6 +37,9 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
             NativeState::EndingAndCredits => ending_and_credits(self),
         }
     }
+    fn resume_room_entry(&mut self, signal: EntrySignal) -> u8 {
+        crate::game::room_entry::protocol::resume(self, signal).returned_byte()
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.

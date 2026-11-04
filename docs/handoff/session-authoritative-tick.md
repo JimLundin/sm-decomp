@@ -797,6 +797,36 @@ former `foreign` call left them. Writes are identical and in the same order.
     publication on Game, so joining needs stage 5 or a reorder. The NMI and its
     `NmiPending` store stay on Game (stage 10). Other pass states, resumed passes and the
     demo's pass still end the frame on Game.
+- **Second slice (lane `tick-s9b`, on `3dd546550`).** Not yet replayed. Ratchet:
+  `session_entries` 70 → 50, `game_host_impls` 81 → 78, `foreign_calls` 43.
+  - `update_hdma` runs on the frame's first lease through `UpdateHost for Runtime`, as
+    message boxes already did: the music queue steps on the Session's audio owner and
+    emits through `emit_cue`; the time-frozen flag, the explosion status and the FX
+    blending are the lease's; the HDMA programs run on it (`run_objects_on`) and the
+    layer blending reads its room key from it. A main gameplay frame with HDMA running
+    now holds one lease (was 2, or 3 when the blending read the room key).
+  - The pass states with no pre-pass work (fade-in, unpause, demo start, pause fade-out,
+    Zebes escape, time-up, prepare-death, death blackout) run their pass from its start
+    on that lease; their finish and the frame's end stay on Game. The door states 9-11
+    resume the room entry on it (`PassLease::resume_room_entry`).
+  - Consecutive leases merged: the room load's enables and liquid physics (5 → 1),
+    the demo stop's clears (3 → 1), the unpause reload (4 → 1) and resume (2 → 1), the
+    death steps (pose, palettes, explosion table), and the demo room load (5 → 2).
+    Samus's position in the death pose and the demo load is read from the Session.
+  - Deleted with no callers: five `PlayerRuntime` entries, `progress::leased::boss_word_at`,
+    and Game's `TouchHost`, `ShotHost` and `RoomDma` impls.
+  - **Left.** The other Game actor hosts (`BossState`, `BossLease`, `ActorRuntime`,
+    `EnemyHost`, `Deaths` and others) are bound by the actor leases' associated `Game`
+    type, by `room_state` and by verification cases (`room_mechanisms.rs`,
+    `inventory_restore_cases.rs`, `flags_candidate.rs`); deleting them together leaves
+    18 unsatisfied bounds. The `progress::leased` and `animated_tiles::execution::leased`
+    facades are re-exported to sm/ Game callers and verification candidates. Menus,
+    pause, game over, the demo's play and the per-state pass finishes still run on Game.
+  - **Rows.** The chain rooms, `door-transition`, `death`, `save-death-reload`,
+    `pause-menu-tour`, `options-menu-tour`, file select, `demo-attract-setup`, the intro,
+    `credits`, and the SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and
+    `music-fir-selector10`. The `lease counters:` lines should show `leases=` falling
+    against main at the same `ticks=` and `nested=` unchanged.
 
 ### Stage 10: NMI and settlement inside the tick
 

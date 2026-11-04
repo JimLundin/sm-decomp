@@ -178,7 +178,6 @@ pub fn set_boss_word_native(host: &mut (impl FlagHost + ?Sized), area: u16, valu
 /// The compatibility flag entries, each on a fresh lease of `game`, with the
 /// original's return widths.
 pub mod leased {
-    use super::BossWordOrder;
     use crate::runtime_access::RuntimeAccess;
 
     pub fn set_boss_bits_for_current_area<H: RuntimeAccess + ?Sized>(mask: u16, game: &mut H) {
@@ -201,13 +200,6 @@ pub mod leased {
     }
     pub fn set_boss_byte_at<H: RuntimeAccess + ?Sized>(area: u16, value: u8, game: &mut H) {
         super::set_boss_byte_at(&mut game.runtime(), area, value);
-    }
-    pub fn boss_word_at<H: RuntimeAccess + ?Sized>(
-        area: u16,
-        order: BossWordOrder,
-        game: &mut H,
-    ) -> u16 {
-        super::boss_word_at(&game.runtime(), area, order)
     }
     pub fn set_boss_word_le<H: RuntimeAccess + ?Sized>(area: u16, value: u16, game: &mut H) {
         super::set_boss_word_le(&mut game.runtime(), area, value);

@@ -33,8 +33,4 @@ impl sm_game::actors::species::SpeciesHost for Game {
     }
 }
 
-impl sm_game::actors::species::TouchHost for Game {}
-
-impl sm_game::actors::species::ShotHost for Game {}
-
 impl sm_game::actors::species::DrawHookHost for Game {}

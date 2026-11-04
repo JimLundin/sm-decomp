@@ -18,12 +18,6 @@ pub trait SaveRam {
 
 /// Samus's rules the menus and frame phases run, each on the game's own lease.
 pub trait PlayerRuntime: crate::runtime_access::RuntimeAccess {
-    /// Draw Samus's current frame.
-    fn draw_player_frame(&mut self) {
-        use crate::lease::Lease as _;
-        self.runtime()
-            .owned_player_call(crate::player_drawing::draw_player_frame);
-    }
     /// Draw the player projectiles.
     fn draw_projectiles(&mut self) {
         crate::player_projectiles::presentation::draw_projectiles(&mut self.runtime());
@@ -32,25 +26,10 @@ pub trait PlayerRuntime: crate::runtime_access::RuntimeAccess {
     fn restore_movement_sound(&mut self) {
         crate::player_projectiles::feedback::restore_sound(&mut self.runtime());
     }
-    /// Retire the player projectile in `slot`.
-    fn retire_projectile(&mut self, slot: u16) {
-        crate::player_projectiles::lifecycle::retire(&mut self.runtime(), slot);
-    }
     /// Run Samus's pose command `command`; returns the original's result.
     fn player_command(&mut self, command: u16) -> u16 {
         use crate::player_transitions::commands::finish_ceres_arrival;
         crate::player_transitions::command(&mut self.runtime(), command, finish_ceres_arrival)
-    }
-    /// Samus's pending pose change, as the intro's demo applies it.
-    fn finish_pose_change(&mut self) {
-        crate::player_transitions::finish_pose_change(&mut self.runtime());
-    }
-    fn demo_start(&mut self) {
-        use crate::session_access::SessionAccess as _;
-        crate::player_transitions::demo::start(self.runtime().session_mut());
-    }
-    fn demo_load(&mut self, mode: u16, input: u16) {
-        crate::player_transitions::demo::load(&mut self.runtime(), mode, input);
     }
 }
 impl<T: crate::runtime_access::RuntimeAccess + ?Sized> PlayerRuntime for T {}

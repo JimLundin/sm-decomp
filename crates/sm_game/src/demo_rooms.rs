@@ -187,36 +187,39 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         }
     });
     {
+        // The room and door keys, the camera and Samus's position are Session
+        // state: they are placed on one lease.
+        use crate::camera::{set_bg1_offset, set_layer1};
+        use crate::player_position::PlayerPosition as _;
         let mut runtime = game.runtime();
         runtime.session_mut().set_room_key(room.room);
         runtime.session_mut().set_exit_key(room.door);
-    }
-    let layer1 = {
-        use crate::camera::{set_bg1_offset, set_layer1};
-        let mut runtime = game.runtime();
         set_layer1(&mut runtime, 0, room.layer1_x);
         let x = runtime.session().room.camera.layer1[0];
         set_bg1_offset(&mut runtime, 0, x);
         set_layer1(&mut runtime, 1, room.layer1_y);
         let y = runtime.session().room.camera.layer1[1];
         runtime.session_mut().room.camera.bg1_offset[1] = y;
-        runtime.session().room.camera.layer1
-    };
-    game.set_player_y(layer1[1].wrapping_add(room.samus_y_offset));
-    game.set_previous_player_y(game.player_y());
-    game.set_player_x(
-        room.samus_x_offset
-            .wrapping_add(layer1[0])
-            .wrapping_add(128),
-    );
-    game.set_previous_player_x(game.player_x());
+        let layer1 = runtime.session().room.camera.layer1;
+        runtime.set_player_y(layer1[1].wrapping_add(room.samus_y_offset));
+        let y = runtime.player_y();
+        runtime.set_previous_player_y(y);
+        runtime.set_player_x(
+            room.samus_x_offset
+                .wrapping_add(layer1[0])
+                .wrapping_add(128),
+        );
+        let x = runtime.player_x();
+        runtime.set_previous_player_x(x);
+    }
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.demo_timer = room.timer
     });
-    let room_key = game.runtime().session().room_key();
-    let value = native_record(0x8f0000 | u32::from(room_key), game).byte(1);
-    // The original stores only the area's low byte.
+    // The room header's area byte is read and stored on one lease.
     let mut runtime = game.runtime();
+    let room_key = runtime.session().room_key();
+    let value = native_record(0x8f0000 | u32::from(room_key), &mut runtime).byte(1);
+    // The original stores only the area's low byte.
     let area = &mut runtime.session_mut().room.area;
     *area = *area & 0xff00 | u16::from(value);
     drop(runtime);
