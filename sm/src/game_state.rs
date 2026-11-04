@@ -2572,14 +2572,17 @@ impl Game {
 /// The named-RAM interface `sm_game` modules use; the same projection as the
 /// compat `word!` macros.
 impl sm_game::ram::CompatibilityRam for Game {
+    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
+        crate::projection::observed_inputs(self)
+    }
+}
+
+impl crate::projection::ProjectedBytes for Game {
     fn compatibility_byte(&self, at: usize) -> u8 {
         Game::compatibility_byte(self, at)
     }
     fn compatibility_write_byte(&mut self, at: usize, value: u8) {
         Game::compatibility_write_byte(self, at, value)
-    }
-    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
-        crate::projection::observed_inputs(self)
     }
 }
 

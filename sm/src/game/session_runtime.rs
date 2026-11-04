@@ -2319,14 +2319,16 @@ pub(crate) fn legacy_assertion(drawing: bool) -> ! {
 // player rules read and write the lease, and only its game-side effects (sound,
 // unreachable failure, pose command) go out through foreign.
 impl sm_game::ram::CompatibilityRam for Runtime<'_> {
+    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
+        Runtime::observed_inputs(self)
+    }
+}
+impl crate::projection::ProjectedBytes for Runtime<'_> {
     fn compatibility_byte(&self, at: usize) -> u8 {
         Runtime::byte(self, at)
     }
     fn compatibility_write_byte(&mut self, at: usize, value: u8) {
         Runtime::set_byte(self, at, value)
-    }
-    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
-        Runtime::observed_inputs(self)
     }
 }
 // A register write may read or change RAM (DMA, the WRAM port), so each one

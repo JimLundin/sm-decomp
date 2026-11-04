@@ -226,10 +226,10 @@ use crate::game::{
     player_movement::forced,
     prelude::{K_BUTTON_UP, K_GAME_STATE_35_TIME_UP, K_POSE_E9_FACE_L_DRAINED_CROUCH_FALLING},
 };
+use crate::projection::ProjectedBytes;
 use crate::ram_map::word as legacy_word;
 use sm_game::effects::SoundEffects;
 use sm_game::escape_timer;
-use sm_game::ram::CompatibilityRam;
 fn advance_gamma(mode: FrameGammaMode, runtime: &mut Runtime<'_>) {
     use FrameGammaMode::*;
     match mode {

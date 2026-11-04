@@ -1,5 +1,5 @@
-//! Names for work RAM ($7E:0000-$7F:FFFF) offsets, and the compatibility
-//! RAM interface that game modules read and write them through.
+//! Names for work RAM ($7E:0000-$7F:FFFF) offsets, and the host interface
+//! game modules run on outside a lease.
 //!
 //! Extracted from snesrev/sm `variables.h` and `variables_extra.h` (rev 578f90b).
 //! c2rust expanded those macros, so the transpiled code reads e.g.
@@ -7,16 +7,16 @@
 //! The verifier uses this table to name RAM mismatches. Use these names when
 //! replacing raw gameplay accesses (phase 3 of docs/PLAN.md).
 
-/// Byte access to work RAM as the compatibility runtime projects it: owned
-/// Session state where it is current, otherwise the RAM bytes themselves.
+/// The typed accesses a host outside a lease provides: the display scroll,
+/// sequence and gameplay owners, the projection's views, and the external
+/// observations. Byte access to the projected RAM is the compatibility layer's
+/// (`sm/src/projection.rs`); no sm_game code addresses RAM bytes through a host.
 pub trait CompatibilityRam:
     crate::display_scroll::Access
     + crate::sequence_state::Access
     + crate::gameplay_context::Access
     + crate::projection::Views
 {
-    fn compatibility_byte(&self, at: usize) -> u8;
-    fn compatibility_write_byte(&mut self, at: usize, value: u8);
     /// The external observations (joypad keys, frame counter, camera...) as
     /// the host's projection holds them, as a lease's `inputs()`; no lease.
     fn observed_inputs(&self) -> crate::external_inputs::ExternalInputs;

@@ -15,7 +15,7 @@
 //! reads them from raw RAM or on another lease (Samus's frame reads the
 //! cinematic table as enemy projectiles; the save file transfer reads the save
 //! selection) runs between copies, after the store.
-use crate::ram::CompatibilityRam;
+use crate::projection::Views;
 use crate::runtime_access::RuntimeAccess;
 use crate::session::Session;
 
@@ -47,7 +47,7 @@ impl<A: Cohort, B: Cohort> Cohort for (A, B) {
 }
 
 /// The group as the host's projection holds it.
-pub fn load<C: Cohort, H: CompatibilityRam + ?Sized>(game: &H) -> C {
+pub fn load<C: Cohort, H: Views + ?Sized>(game: &H) -> C {
     let mut cohort = C::default();
     game.load_words(&mut cohort);
     cohort
@@ -73,7 +73,7 @@ fn changes<C: Cohort>(before: &C, mut after: C) -> Vec<(usize, u16)> {
 fn store_projected<C, H>(game: &mut H, changes: &[(usize, u16)], mut after: C)
 where
     C: Cohort,
-    H: CompatibilityRam + ?Sized,
+    H: Views + ?Sized,
 {
     game.store_words(&mut after, |index| {
         changes.iter().any(|change| change.0 == index)
@@ -84,7 +84,7 @@ where
 pub fn store<C, H>(game: &mut H, before: &C, after: C)
 where
     C: Cohort,
-    H: CompatibilityRam + RuntimeAccess + ?Sized,
+    H: Views + RuntimeAccess + ?Sized,
 {
     if after == *before {
         return;
@@ -113,7 +113,7 @@ where
 pub fn with<C, H, T>(game: &mut H, action: impl FnOnce(&mut H, &mut C) -> T) -> T
 where
     C: Cohort,
-    H: CompatibilityRam + RuntimeAccess + ?Sized,
+    H: Views + RuntimeAccess + ?Sized,
 {
     let before = load::<C, H>(game);
     let mut cohort = before.clone();
@@ -131,7 +131,7 @@ where
 pub fn with_projected<C, H, T>(game: &mut H, action: impl FnOnce(&mut H, &mut C) -> T) -> T
 where
     C: Cohort,
-    H: CompatibilityRam + ?Sized,
+    H: Views + ?Sized,
 {
     let before = load::<C, H>(game);
     let mut cohort = before.clone();

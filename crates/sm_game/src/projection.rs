@@ -713,12 +713,6 @@ impl crate::sequence_state::Access for SessionProjection {
 
 #[cfg(test)]
 impl crate::ram::CompatibilityRam for SessionProjection {
-    fn compatibility_byte(&self, at: usize) -> u8 {
-        self.projected(at)
-    }
-    fn compatibility_write_byte(&mut self, at: usize, value: u8) {
-        self.project(at, value);
-    }
     fn observed_inputs(&self) -> crate::external_inputs::ExternalInputs {
         crate::session_encoding::inputs(&|at| self.projected(at))
     }
