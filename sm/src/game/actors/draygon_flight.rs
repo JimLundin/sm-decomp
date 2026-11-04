@@ -4,7 +4,6 @@
 use crate::game::actors::{api, combat};
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::queue_music_delayed_8;
-use crate::game::player_movement::forced;
 use crate::game::session_runtime::{
     Runtime, actor_cosine, actor_direction_vector, actor_sine, correct_previous_position,
     damage_player, player_command,
@@ -14,7 +13,6 @@ use crate::game_state::Game;
 use crate::types::{EnemyDef, Point16U};
 use core::mem::offset_of;
 use sm_game::actors::draygon_grab::{ENEMY_DEF_DAMAGE, ENEMY_DEF_HURT_AI_TIME};
-use sm_game::actors::draygon_host::Host;
 use sm_game::actors::host::BossEffects;
 use sm_game::geometry::Vector32;
 
@@ -56,12 +54,6 @@ const _: () = {
     assert!(at(f::DEATH_BURIED_BY_EVIRS) == 10850987 && at(f::NONE) == 10846283);
     assert!(at(f::EYE_FACING_LEFT) == 10863757 && at(f::EYE_FACING_RIGHT) == 10863891);
 };
-
-impl Host for Game {
-    fn grab_samus(&mut self, direction: u16) {
-        forced::grab_by_draygon(direction, &mut Runtime::new(self));
-    }
-}
 
 impl BossEffects for Game {
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16 {

@@ -4,10 +4,9 @@
 use crate::actors::draygon_flight::{facing_animation, fire_wall_turret, foam_at_mouth};
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
-    ARMS, BODY, Draygon, DraygonEdit, GRAPPLE_DROPPED, Host, INTANGIBLE, SIGN, TAIL, abs16,
-    function, instruction_list as list,
+    ARMS, BODY, Draygon, DraygonEdit, GRAPPLE_DROPPED, INTANGIBLE, SIGN, TAIL, abs16, function,
+    instruction_list as list,
 };
-use crate::actors::host::BossEffects as _;
 use crate::actors::queries::angle_from_delta;
 
 use crate::menus::prelude::{battle, owned};
@@ -138,14 +137,16 @@ pub fn chase_samus<L: Lease>(game: &mut L) {
             game,
         );
         let direction = u16::from(Draygon::of(game, BODY).facing_right() != 0);
-        let repelled = game.foreign(|game| {
-            let repelled = game.command_player(GRAB_COMMAND) != 0;
-            if !repelled {
-                crate::probe::hit("draygon_grab.grab");
-                game.grab_samus(direction);
-            }
-            repelled
+        let repelled = game.owned_step(|game| {
+            use crate::player_transitions::{command, commands::finish_ceres_arrival};
+            command(game, GRAB_COMMAND, finish_ceres_arrival) != 0
         });
+        if !repelled {
+            crate::probe::hit("draygon_grab.grab");
+            game.owned_step(|game| {
+                crate::player_movement::forced::grab_by_draygon(direction, game)
+            });
+        }
         if repelled {
             *DraygonEdit::of(game, BODY).function() = function::REPELLED_BY_GRAPPLE;
         } else {
