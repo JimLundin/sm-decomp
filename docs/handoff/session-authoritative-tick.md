@@ -701,6 +701,46 @@ former `foreign` call left them. Writes are identical and in the same order.
     - `foreign` delegations for the DMA starts and the NMI-only methods. They would raise
       `foreign_calls` by about 12.
 
+- **Done (lane `tick-s7c`, on `87e62488b`).** Not yet replayed. Ratchet:
+  `sm_game_ram_sites` 11 → 0, `sm_game_coupled_files` 4 → 0, `session_entries` 88 → 77,
+  `game_host_impls` 83 → 82, `legacy_engine_ram_sites` 444 → 441, `foreign_calls` 55.
+  - `gameplay_frame::frame` keeps step 6's lease open for the `Native` states and runs
+    them through `PassLease::advance_native_state`; the frame ends on Game after it
+    drops. A state resuming after a yield (`wait_for_nmis`) has no step 6 lease, so it
+    opens one there, in place of the several its helpers opened on Game.
+  - `cinematic_host` is two traits: `Scene`, which the boot Nintendo logo still runs on
+    Game, and `Host`, the lease. Runtime's impls are in `sm/src/game/cinematic_lease.rs`.
+    `MenuRuntime` split off `CommonRuntime` and `CinematicRuntime`, so the lease never
+    implements `run_hdma_objects` or `handle_music_queue`. New supertraits that Game
+    also needs (`GraphicsLoad`, `LevelReads`, `Tables`, `CommonRuntime`) are blanket
+    impls over Game's existing hosts, so no Game impl was added.
+  - `GraphicsAsset::load` takes `display_refresh::GraphicsLoad`. On the lease its DMA
+    publishes, then starts on #217's wire, and its decompression is
+    `Runtime::decompress_to_ram`, which takes the decoded bytes back. A WRAM-port load's
+    written bytes come back through `start_dma`. The VRAM fill is device writes only.
+  - The copies: the palette helpers and the two reads (`ending_screens` fade plane,
+    `cinematic_objects` shot words) are Session field access. The `Cinematic` table is
+    lent from the lease (`Cinematic::lend`): the functions take it beside the lease,
+    and the verify build still holds its words.
+  - The demo's `load_title_sequence_graphics` runs on one lease (`Runtime::new` in
+    `gameplay.rs`), which replaces the leases its palette effects opened.
+  - **Left.**
+    - `intro`'s split loan stays. Samus's frame reads the table as enemy projectiles
+      straight from the Session, so the lent copy must be stored before her frame. It
+      goes when the cinematic functions borrow the table from the Session in place of
+      a copy.
+    - The Mode 7 queue ($02D0..$032F) and its tail ($0334) still have no Display owner
+      field. On a Legacy lease `set_byte` writes the same raw RAM Game wrote. Under a
+      persistent owned Display a store there marks the Display failed, so an Owned
+      verification start inside the title or the ending would fail there. Adding the
+      field needs a format bump.
+    - The level data size word ($7F:0000) has no Session owner; `LevelReads` reads it
+      through the lease's projection.
+  - **Rows.** `samus-scripted-intro`, `demo-attract-setup`, title and logo,
+    file select, `credits`, `credits-ending`, the `credits-*` rows, `area-ceres`,
+    `boss-ceres-ridley`, `pause-menu-tour`, and the SFX-loss rows `item-speed-booster`,
+    `enemy-fire-arc` and `music-fir-selector10`.
+
 ### Stage 8: pause hooks, save slots and demo on owners
 
 - **Change.**
