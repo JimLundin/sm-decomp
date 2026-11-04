@@ -10,7 +10,9 @@ compared today, gives the design, and records the first slice (lane
 and slice 2's coverage report), and the third (lane
 `collab/session-compare-3`, on `ec858a96f`: slice 2's classification),
 and the fourth (lane `collab/session-compare-3` again, on `5bdb96711`: the
-last "neither" owners and the "both" decisions as data).
+last "neither" owners and the "both" decisions as data), and the fifth (lane
+`collab/session-compare-4`, on `4c97f65ec`: the held bytes in the Session,
+the "both" evidence line and the lock's Session streams).
 
 ## Today's comparison
 
@@ -344,17 +346,114 @@ Session RAM coverage: 126781 bytes decoded, 3926 unowned, 107 both, 258 held out
 with `undecided 0` on the decision line. Detached checkpoints written before
 SMAUXGS 20 are rejected as an unsupported schema.
 
+## Fifth slice (lane `collab/session-compare-4`)
+
+**The 258 held bytes are Session fields.** `LegacyPresentation` holds the
+frame display as a `display::preparation::State` and the eight scroll words,
+as the owned Display does in its state: decode loads them at every lease
+import, encode publishes them at every export, and `projected_byte` and
+`write_projected_byte` serve them from whichever presentation owns them.
+The address map moved into sm_game (`preparation::Field::address`,
+`Word::address`, `lane`, `display_scroll::Word::address`). The Runtime's
+scroll access reads and stores the Session (`Presentation::scroll_word`),
+and the RAW reads that bypass the owned Display's projection (the physical
+scroll bytes, `$51` in the cinematic fade, the HUD's frame counter byte)
+read the Legacy presentation's byte, which is the byte RAM held before; the
+scroll stores' input refresh takes the frame display's bytes (the NMI
+counters and the Mode 7 words) from it too. No checkpoint holds the Legacy
+presentation (an owned Display's checkpoint already carries the bytes), so
+there is no format change. Two of the frame display's 260 bytes keep their
+other owners under Legacy (`session_owners::kept_elsewhere`), as the host's
+domain left them: `$07EC`, the committed fake mode, is the high byte of
+`room.ceres_hdma_table` ($07EB, which Ceres Ridley's room setup $8F:C97B
+and the haze's HDMA instruction store), and `$0782`, the NMI acknowledgment,
+stays RAM's (snesrev's counter RAM in `NORMALIZED_RAM`). They are not in the
+Legacy frame display's RAM image at all: its decode
+(`LegacyPresentation::decode_frame`) reads neither, and its projection,
+store and encode skip both, so their fields stay zero. A first attempt
+(`collab/sc4-held`) claimed `$07EC` twice, so the frame display's encode
+overwrote the Ceres word's high byte (`chain-any-0006-E0B5`); its fix
+skipped the two in the projection and encode but still decoded them, which
+broke `session_round_trips_random_ram` and the verify build's
+`assert_projects_ram` (`samus-scripted-intro`, `demo-attract-setup`). Layout test:
+`legacy_frame_display_round_trips_every_byte`. Edits in `session_runtime.rs`
+(the other lane's file): the scroll special cases in `byte`, `set_byte`,
+`observed_inputs` and `refresh_scroll_inputs`.
+
+The coverage line must now print, on every row:
+
+```
+Session RAM coverage: 127039 bytes decoded, 3926 unowned, 107 both, 0 held outside the Session, 0 neither (in 0 ranges)
+```
+
+and `Session RAM held outside the Session: none`. Rows that drive the moved
+owners: every row (the NMI counters and HUD), and especially the scroll
+writers (`boss-kraid*`, `boss-crocomire`, Draygon, Phantoon, Mother Brain's
+body, Ceres Ridley), the cinematic fades (`samus-scripted-intro`, the Ceres
+and ending rows, `credits`), the pause rows, and the rows the first
+attempt failed: Ceres Ridley's room (`chain-any-0006-E0B5`, the `$07EC`
+word), `samus-scripted-intro` and `demo-attract-setup` (the retained
+Session against a fresh decode).
+
+**The "both" evidence.** The 101 bytes behind `UntilRowRetires` wait on 14
+`LEGACY(verifier)` rows, and none could be retired here: each row's
+divergence has to be found on oracle replays, which this machine cannot run.
+The lockstep summary now counts, per `SHARED_RAM` entry, the Ticks whose two
+results differ before normalization:
+
+```
+Session RAM both bytes differing before normalization, of <n> ticks: $0000-$0003 pointer_scratch <n> from @<t>; ...
+```
+
+An entry at 0 on the corpus and both routes leaves its normalized range in
+one change (split the row; the field is then compared and "both" falls by
+its bytes). One that differs names the first Tick to localise. Expected
+causes, from the rows: `pointer_scratch`, `spawn_scratch` (the $0000-$0050
+row: other routines' direct-page scratch shares the range, so only a split
+can retire these 10 bytes); `enemy_projectiles.spawn.angle` (the
+$060B-$0610 row: $060B is also other routines' parameter, and the hitbox
+counters at $060D the engine's loops do not leave); `game_loop.saved_bindings`
+and `wavy_samus.enabled` (the grapple temporaries share $0D82 and $0D9C,
+and the engine's grapple keeps them in its own fields); the enemy temporary
+rows (`$0E20-$0E45`, `$0E4A`, `$0E54-$0E59`, `$1784-$178B`, `$17A8-$17AB`,
+`$1834-$183B`, `$1874-$1875`: the indices and pointers the enemy loops
+leave); `room.collision_detection_index` (the index the projectile loops
+leave); `actors.graphics.compatibility` (the enemy graphics load, one frame
+per room load).
+
+**Session streams in the lock.** `session_compare::Group` puts the
+top-level fields in eight groups (`session_loop`, `session_actors`,
+`session_player`, `session_room`, `session_display`, `session_menus`,
+`session_save`, `session_scratch`). Each Tick's group digest folds its
+fields' digests, a field's digest being that of its debug text, recomputed
+only on the Ticks the field changes. Until slice 4 both sides decode their
+frame result with the normalized RAM masked, as `wram` masks it. Trace
+records end with the digests (old traces read back); the lock writes them
+only when every Tick had them; the combined digest and `FORMAT` (1) are
+unchanged. The oracle always takes the streams; the engine takes them with
+`--session-streams`, which check-lock passes only for entries that have
+them, so the gate costs nothing until entries carry them.
+
+How they reach the lock: the rotating faithful oracle sample
+(`lock_gate.py record-oracle`, the scheduled Verify's `oracle_sample`, or a
+dispatch with scope `full` and `oracle_sample`) now accepts recorded streams
+the committed entry lacks and prints `STREAM <id> <stream> <digest>` for
+each; the root runs `python tools/scenario.py lock --add-streams <job log>`
+and commits the lock. Each scheduled run covers its sample of at least 30
+entries; once every entry carries them, slice 6's one `FORMAT` bump drops
+`wram`.
+
 ## Next slices
 
 1. Done (above). Confirm on dispatched rows: Session-only failures 0 and
    the fields on the "written after the last lease" line.
 2. Done (above): every one of the 9,649 "neither" bytes is unowned (with
    reasons), held outside the Session, or a Session owner, so "neither" is
-   0; the "both" bytes' decisions are a typed table with 0 undecided. Left:
-   moving the frame display and scroll (258 held bytes) into the Session,
-   and the 101 "both" bytes that wait on their `LEGACY(verifier)` rows,
-   before slice 6 drops the WRAM compare. Confirm the counts on the corpus
-   and both routes.
+   0; the "both" bytes' decisions are a typed table with 0 undecided; the
+   frame display and scroll (258 held bytes) are in the Session (fifth
+   slice). Left: the 101 "both" bytes that wait on their `LEGACY(verifier)`
+   rows, before slice 6 drops the WRAM compare; the evidence line names
+   which differ. Confirm the counts on the corpus and both routes.
 3. Copy the decode half into `sm/src/verification`, compare it with the
    engine's decode on every frame, then use it for the oracle side.
 4. Compare the engine's Session directly, with a declared list of fields RAM
@@ -363,13 +462,15 @@ SMAUXGS 20 are rejected as an unsupported schema.
    controller latch (step 2), the frame-end Session is the next lease's take
    on RAM, so the direct compare either waits for step 2 or applies the
    logged writes to the kept Session itself (`take_written_bytes`).
-5. Add the Session streams to the lock; re-record through the oracle sample.
-   The streams digest the frame-end Session (as above), not the last lease.
+5. Done (fifth slice): the lock has Session streams, populated through the
+   oracle sample and `scenario.py lock --add-streams`. Left: the engine's
+   streams digest its frame-end Session directly once slice 4 lands, not a
+   decode of its RAM.
 6. Switch lockstep and locks to Session space: drop the WRAM byte compare and
    `wram` (one `FORMAT` bump, one re-record), replace `NORMALIZED_RAM` with the
    unowned table, and retire its `LEGACY(verifier)` rows. Needs slice 2's
-   "neither" and "held" at 0 (the frame display and scroll words in the
-   Session) and the "both" ranges' fields on the comparison's ignore list.
+   "neither" and "held" at 0 (both are, from the fifth slice) and the
+   "both" ranges' fields on the comparison's ignore list.
 7. With step 2 (the runtime owns the tick), delete the export and import, and
    move the observers' `encode`/`decode` calls to verification:
    `engine_ram_export_lines` reaches 0. The "written after the last lease"
