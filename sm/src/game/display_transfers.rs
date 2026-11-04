@@ -65,7 +65,7 @@ unsafe fn read_vram(readback: VramReadback, game: &mut Game) {
 /// Requires a live, exclusively accessed SNES backend. DMAP1 was set once for
 /// the whole queue by the caller.
 unsafe fn upload_tilemap(upload: TilemapUpload, game: &mut Game) {
-    use sm_game::display::video::{Upload, Video as _};
+    use sm_game::display::video::Upload;
     game.producing();
     unsafe {
         write_reg_word(DAS1L as u16, upload.bytes, game);

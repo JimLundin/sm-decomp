@@ -247,9 +247,14 @@ impl Host for Game {
     fn nmi_controller_word(&mut self) -> u16 {
         crate::oracle_mode::nmi_input()
             .map(u16::reverse_bits)
-            .unwrap_or_else(|| {
-                sm_game::display::sequence::Registers::read_register_word(self, 0x4218)
-            })
+            .unwrap_or_else(|| self.read_register_word(crate::rtl::JOY1L as u16))
+    }
+    fn controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
+        use sm_game::menus::host::Controller;
+        self.read_register_word(match controller {
+            Controller::One => crate::rtl::JOY1L,
+            Controller::Two => crate::rtl::JOY2L,
+        } as u16)
     }
 }
 

@@ -1,8 +1,9 @@
-//! Typed video memory uploads. A producer brackets its register writes with
-//! `producing` and `produced`, giving the uploads those writes make as typed
-//! values, so a host whose video memory takes typed calls can apply them in
-//! place of the register writes. A producer that no longer names registers
-//! hands the host a `Command` instead, which the host applies at once.
+//! Typed display commands and video memory uploads. The game names each
+//! display change as a `Command`, which the host applies at once; sm_game
+//! names no register. The emulated backend's encoder (in sm/) makes the
+//! original's register writes for it, bracketing an upload's writes with
+//! `producing` and `produced` so a host whose video memory takes typed calls
+//! can apply the `Upload`s in place of the writes.
 
 use super::control::{Brightness, FixedColor, Layers};
 use super::preparation::{Access, Field, Store};
@@ -380,14 +381,73 @@ pub enum Command {
     /// Start no DMA and stop every HDMA channel: one 16-bit store of zero
     /// that clears both enables.
     StopDma,
+    /// A display mirror's byte, committed to the display as the NMI refresh
+    /// does: the NMI enable, brightness, the screen, window and colour-math
+    /// controls, a fixed colour channel byte or the screen settings.
+    Commit(Field, u8),
+    /// One byte into a scroll offset's two-write latch.
+    ScrollByte {
+        scroll: ScrollOffset,
+        value: u8,
+    },
+    /// One of the scanline interrupt's outputs.
+    IrqOutput(crate::scene::irq::Output, u8),
+    /// Upload OAM from address 0 and CGRAM from entry 0 now, as
+    /// `Upload::Objects` and `Upload::Palette`: the objects' channel and the
+    /// OAM address, the palette's channel and the CGRAM address, then both
+    /// channels start together.
+    ObjectsAndPaletteNow {
+        objects: Source,
+        object_bytes: u16,
+        palette: Source,
+        palette_bytes: u16,
+    },
+    /// An HDMA object's table address, set for the channel its bank slot
+    /// byte selects. The slot byte is the channel times 16; any other value
+    /// sets the register the original's offset reaches.
+    HdmaTable {
+        bank_slot: u8,
+        table: u16,
+    },
+    /// One parameter byte of the HDMA channel an object's bank slot selects,
+    /// as an HDMA program command sets it.
+    HdmaChannelByte {
+        bank_slot: u8,
+        register: sm_data::hdma_programs::ChannelRegister,
+        value: u8,
+    },
+    /// Clear HDMA channels `first` to 7 for the room: direct mode to
+    /// `target`, and their table, indirect and current table addresses
+    /// zeroed, in register order. Their indirect banks and line counters are
+    /// kept.
+    ClearHdmaChannels {
+        first: u8,
+        target: ScrollOffset,
+    },
+    /// Set channel 1 for a graphics load of `bytes` from `source`, its mode
+    /// and target first, then its source and count; the host starts it.
+    GraphicsChannel {
+        transfer: GraphicsTransfer,
+        source: Source,
+        bytes: u16,
+    },
+}
+
+/// Where a graphics load's channel writes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GraphicsTransfer {
+    /// VRAM words through the data port's two bytes.
+    VramWords,
+    /// VRAM's low bytes alone.
+    VramLowBytes,
+    /// VRAM's high bytes alone.
+    VramHighBytes,
+    /// Work RAM through its port.
+    WramBytes,
 }
 
 /// A host that takes a producer's uploads and display commands as typed calls.
 pub trait Video {
-    /// The producer's register writes begin.
-    fn producing(&mut self);
-    /// The producer's register writes are done; `uploads` are what they did.
-    fn produced(&mut self, producer: &'static str, uploads: &[Upload]);
     /// Apply `producer`'s `command` now.
     fn apply(&mut self, producer: &'static str, command: Command);
 }

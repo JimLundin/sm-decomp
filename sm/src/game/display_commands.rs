@@ -5,19 +5,23 @@
 use crate::game::room_entry::PreparedRoomAssets;
 use crate::game_state::Game;
 use crate::rtl::{
-    A1B1, A1T1L, A2A1H, A2A1L, BBAD0, BBAD1, BG1HOFS, BG1SC, BG12NBA, BG34NBA, BGMODE, CGADD,
-    CGADSUB, CGDATA, CGWSEL, COLDATA, DAS1H, DAS1L, DAS10, DMAP1, HDMAEN, HTIMEH, HTIMEL, INIDISP,
-    M7A, M7SEL, MDMAEN, MEMSEL, MOSAIC, NMITIMEN, NTRL1, OAMADDH, OAMADDL, OAMDATA, OBSEL, RDVRAML,
-    SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAH, VMDATAL, VTIMEH, VTIMEL, W12SEL,
-    W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG, WOBJSEL, WRDIVB, WRDIVH,
-    WRDIVL, WRIO, WRMPYA, WRMPYB, read_reg, read_reg_word, write_reg, write_reg_word,
+    A1B0, A1B1, A1T0L, A1T1L, A2A1H, A2A1L, BBAD0, BBAD1, BG1HOFS, BG1SC, BG12NBA, BG34NBA, BGMODE,
+    CGADD, CGADSUB, CGDATA, CGWSEL, COLDATA, DAS0L, DAS1H, DAS1L, DAS10, DMAP0, DMAP1, HDMAEN,
+    HTIMEH, HTIMEL, INIDISP, M7A, M7SEL, MDMAEN, MEMSEL, MOSAIC, NMITIMEN, NTRL1, OAMADDH, OAMADDL,
+    OAMDATA, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAH, VMDATAL,
+    VTIMEH, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG,
+    WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_reg, read_reg_word, write_reg,
+    write_reg_word,
 };
+use sm_data::hdma_programs::ChannelRegister;
 use sm_game::display::control::Brightness;
+use sm_game::display::preparation::Field;
 use sm_game::display::transfer::Source;
 use sm_game::display::video::{
-    Axis, Command, Control, Mode7Parameter, ScrollOffset, Upload, Video as _, WindowEdge,
+    Axis, Command, Control, GraphicsTransfer, Mode7Parameter, ScrollOffset, Upload, WindowEdge,
     WindowHdma,
 };
+use sm_game::scene::irq::Output;
 
 /// VMAIN's increment-after-high-byte mode for a word step of `increment`.
 fn vram_increment_mode(increment: u16) -> u8 {
@@ -35,6 +39,10 @@ const STEP_AFTER_HIGH: u8 = 0x80;
 const TO_VRAM_DATA: u16 = u16::from_le_bytes([1, 0x18]);
 /// DMAP and BBAD for channel 1's RDVRAM-to-CPU word transfers.
 const FROM_VRAM_DATA: u16 = u16::from_le_bytes([0x81, 0x39]);
+/// DMAP and BBAD for byte transfers to OAMDATA.
+const TO_OAM_DATA: u16 = u16::from_le_bytes([0, 0x04]);
+/// DMAP and BBAD for byte transfers to CGDATA.
+const TO_CGRAM_DATA: u16 = u16::from_le_bytes([0, 0x22]);
 
 /// One register byte through the backend.
 fn byte(register: u32, value: u8, game: &mut Game) {
@@ -98,6 +106,77 @@ fn control_register(control: Control) -> u32 {
         Control::ObjectAddressLow(_) => OAMADDL,
         Control::ObjectAddressHigh(_) => OAMADDH,
     }
+}
+
+/// The register a display mirror field is committed to.
+fn committed_register(field: Field) -> u32 {
+    match field {
+        Field::NmiEnable => NMITIMEN,
+        Field::Brightness => INIDISP,
+        Field::ObjectLayout => OBSEL,
+        Field::Mode => BGMODE,
+        Field::Mosaic => MOSAIC,
+        Field::Screens0 => BG1SC,
+        Field::Screens1 => BG1SC + 1,
+        Field::Screens2 => BG1SC + 2,
+        Field::Screens3 => BG1SC + 3,
+        Field::Characters0 => BG12NBA,
+        Field::Characters1 => BG34NBA,
+        Field::AffineSelection => M7SEL,
+        Field::WindowSelection0 => W12SEL,
+        Field::WindowSelection1 => W34SEL,
+        Field::WindowSelection2 => WOBJSEL,
+        Field::WindowPositions0 => WH0,
+        Field::WindowPositions1 => WH1,
+        Field::WindowPositions2 => WH2,
+        Field::WindowPositions3 => WH3,
+        Field::WindowLogic0 => WBGLOG,
+        Field::WindowLogic1 => WOBJLOG,
+        Field::MainLayers => TM,
+        Field::MainWindow => TMW,
+        Field::SubLayers => TS,
+        Field::SubWindow => TSW,
+        Field::ColorSelection => CGWSEL,
+        Field::ColorMath => CGADSUB,
+        Field::FixedColor0 | Field::FixedColor1 | Field::FixedColor2 => COLDATA,
+        Field::Geometry => SETINI,
+        field => unreachable!("{field:?} is not committed to the display"),
+    }
+}
+
+/// The register each scanline interrupt output reaches.
+fn irq_register(output: Output) -> u32 {
+    match output {
+        Output::Background3Map => BG1SC + 2,
+        Output::ColorWindow => CGWSEL,
+        Output::ColorArithmetic => CGADSUB,
+        Output::MainLayers => TM,
+        Output::VerticalLow => VTIMEL,
+        Output::VerticalHigh => VTIMEH,
+        Output::HorizontalLow => HTIMEL,
+        Output::HorizontalHigh => HTIMEH,
+        Output::InterruptEnable => NMITIMEN,
+    }
+}
+
+/// An HDMA program's channel register, as an offset from the channel's first.
+fn channel_register_offset(register: ChannelRegister) -> u32 {
+    match register {
+        ChannelRegister::Control => 0,
+        ChannelRegister::Target => 1,
+        ChannelRegister::TableBank => 4,
+        ChannelRegister::IndirectBank => 7,
+    }
+}
+
+/// DMAP and BBAD for a graphics load's channel.
+fn graphics_mode(transfer: GraphicsTransfer) -> u16 {
+    u16::from_le_bytes(match transfer {
+        GraphicsTransfer::VramWords => [1, 0x18],
+        GraphicsTransfer::VramLowBytes => [0, 0x18],
+        GraphicsTransfer::VramHighBytes => [0, 0x19],
+        GraphicsTransfer::WramBytes => [0, 0x80],
+    })
 }
 
 /// Apply `command` from `producer` to the emulated backend.
@@ -258,6 +337,74 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
             table,
         } => scroll_hdma(channel, scroll, table, game),
         Command::StopDma => word(MDMAEN, 0, game),
+        Command::Commit(field, value) => byte(committed_register(field), value, game),
+        Command::ScrollByte { scroll, value } => byte(scroll_register(scroll), value, game),
+        Command::IrqOutput(output, value) => byte(irq_register(output), value, game),
+        Command::ObjectsAndPaletteNow {
+            objects,
+            object_bytes,
+            palette,
+            palette_bytes,
+        } => {
+            game.producing();
+            word(DMAP0, TO_OAM_DATA, game);
+            word(A1T0L, objects.address, game);
+            byte(A1B0, objects.bank, game);
+            word(DAS0L, object_bytes, game);
+            word(OAMADDL, 0, game);
+            channel1(TO_CGRAM_DATA, palette, palette_bytes, game);
+            byte(CGADD, 0, game);
+            byte(MDMAEN, 3, game);
+            game.produced(
+                producer,
+                &[
+                    Upload::Objects {
+                        address: 0,
+                        source: usize::from(objects.address),
+                        bytes: object_bytes,
+                    },
+                    Upload::Palette {
+                        index: 0,
+                        source: usize::from(palette.address),
+                        bytes: palette_bytes,
+                    },
+                ],
+            );
+        }
+        Command::HdmaTable { bank_slot, table } => word(A1T0L + u32::from(bank_slot), table, game),
+        Command::HdmaChannelByte {
+            bank_slot,
+            register,
+            value,
+        } => byte(
+            DMAP0 + channel_register_offset(register) + u32::from(bank_slot),
+            value,
+            game,
+        ),
+        Command::ClearHdmaChannels { first, target } => {
+            let target = scroll_register(target).to_le_bytes()[0];
+            for channel in first..8 {
+                let base = 0x4300 | (u32::from(channel) << 4);
+                for (offset, value) in [
+                    (0, 0),
+                    (1, target),
+                    (2, 0),
+                    (3, 0),
+                    (4, 0),
+                    (5, 0),
+                    (6, 0),
+                    (8, 0),
+                    (9, 0),
+                ] {
+                    byte(base + offset, value, game);
+                }
+            }
+        }
+        Command::GraphicsChannel {
+            transfer,
+            source,
+            bytes,
+        } => channel1(graphics_mode(transfer), source, bytes, game),
     }
 }
 

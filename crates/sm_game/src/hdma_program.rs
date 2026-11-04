@@ -233,8 +233,7 @@ fn run_program<I: Interpreter>(index: usize, it: &mut I, handler_carry: bool) {
 }
 
 fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut I) -> Script {
-    use crate::display::registers::{A1B0, BBAD0, DAS00, DMAP0};
-    use sm_data::hdma_programs::{ChannelRegister, Command};
+    use sm_data::hdma_programs::Command;
     let slot = 2 * index as u16;
     let Some(command) = Command::decode(handler) else {
         it.unreachable();
@@ -280,16 +279,10 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             return script.advance(1);
         }
         Command::SetChannelRegister(register) => {
-            let register = match register {
-                ChannelRegister::Control => DMAP0,
-                ChannelRegister::Target => BBAD0,
-                ChannelRegister::TableBank => A1B0,
-                ChannelRegister::IndirectBank => DAS00,
-            } as u16;
-            let channel = crate::hdma_word!(it, index, BankSlot) & 0xff;
+            let [bank_slot, _] = crate::hdma_word!(it, index, BankSlot).to_le_bytes();
             let value = script.byte(0);
             it.lease().foreign(|game| {
-                crate::hdma_objects::write_channel_register(register + channel, value, game)
+                crate::hdma_objects::write_channel_byte(bank_slot, register, value, game)
             });
             return script.advance(1);
         }

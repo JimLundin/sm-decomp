@@ -5,7 +5,7 @@ pub(crate) fn unreachable(game: &mut Game) -> u16 {
 }
 pub(crate) fn upload(request: sm_game::visual_state::Upload, game: &mut Game) {
     use crate::game::prelude::*;
-    use sm_game::display::video::{Upload, Video as _};
+    use sm_game::display::video::Upload;
     game.producing();
     unsafe {
         crate::rtl::register_writes! { game;

@@ -6,7 +6,7 @@ use super::{
         VramDestination,
     },
 };
-use crate::display::sequence::scroll;
+use crate::display_scroll as scroll;
 
 pub trait EntryHost:
     crate::visual_host::Host
