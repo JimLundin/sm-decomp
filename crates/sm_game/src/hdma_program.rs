@@ -25,6 +25,7 @@ pub trait HdmaLease:
     + crate::effects::SoundEffects
     + crate::hdma_objects::GradientHost
     + crate::xray_background::Host
+    + crate::explosion_window::Host
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.

@@ -203,10 +203,10 @@ where
         HdmaCall::UploadRight => it.on_lease(xray_background::upload_right),
         HdmaCall::SetBackdrop => it.on_lease(xray_background::set_backdrop),
         HdmaCall::FreezeAndBackup => it.on_object(index, xray_background::freeze_and_backup),
-        HdmaCall::FinishPowerBomb => it.with_object(index, |index, game| {
+        HdmaCall::FinishPowerBomb => it.on_object(index, |index, game| {
             explosion_window::finish_power_bomb(index, slot, game)
         }),
-        HdmaCall::FinishCrystalFlash => it.with_object(index, |index, game| {
+        HdmaCall::FinishCrystalFlash => it.on_object(index, |index, game| {
             explosion_window::finish_crystal_flash(index, slot, game)
         }),
         HdmaCall::InitializeRainbowBeam => it.effect(HdmaEffect::InitializeRainbowBeam, slot),
@@ -226,9 +226,8 @@ where
 }
 
 /// The hosts every pre-instruction target runs on.
-pub trait DispatchHost: Host + explosion_window::Host + room_visuals::StatueHost {}
-impl<T> DispatchHost for T where T: Host + explosion_window::Host + room_visuals::StatueHost + ?Sized
-{}
+pub trait DispatchHost: Host + room_visuals::StatueHost {}
+impl<T> DispatchHost for T where T: Host + room_visuals::StatueHost + ?Sized {}
 
 /// Run the pre-instruction at `address` for HDMA object `index`. Targets
 /// that own their object's words run on it as typed fields; the rest run on
@@ -300,15 +299,15 @@ where
         RestoreRight => it.on_lease(xray_background::restore_right),
         FinishRestore => it.on_object(index, xray_background::finish_restore),
         SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
-        PowerBombAfterglow => it.with_object(index, explosion_window::power_bomb_afterglow),
-        CrystalFlashAfterglow => it.with_object(index, explosion_window::crystal_flash_afterglow),
+        PowerBombAfterglow => it.on_object(index, explosion_window::power_bomb_afterglow),
+        CrystalFlashAfterglow => it.on_object(index, explosion_window::crystal_flash_afterglow),
         PowerBombScaled | PreFlashScaled | CrystalFlashScaled => {
             let phase = match target {
                 PowerBombScaled => Phase::PowerBomb,
                 PreFlashScaled => Phase::PreFlash,
                 _ => Phase::CrystalFlash,
             };
-            it.with_object(index, |index, game| {
+            it.on_object(index, |index, game| {
                 explosion_window::update_scaled(index, slot, phase, game)
             })
         }
@@ -317,7 +316,7 @@ where
                 PowerBombPrescaled => Phase::PowerBomb,
                 _ => Phase::PreFlash,
             };
-            it.with_object(index, |index, game| {
+            it.on_object(index, |index, game| {
                 explosion_window::update_prescaled(index, slot, phase, game)
             })
         }

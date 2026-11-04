@@ -2365,6 +2365,23 @@ impl sm_game::mother_brain_visuals::PaletteHost for Runtime<'_> {
         &self.game.mother_brain_visuals
     }
 }
+/// The explosion windows run on the lease: the Crystal Flash and the pose
+/// command are its own player rules, and the window row is the game's.
+impl sm_game::explosion_window::Host for Runtime<'_> {
+    fn initialize_crystal_flash(&mut self) -> bool {
+        sm_game::player_movement::forced::initialize_crystal_flash(self)
+    }
+    fn pose_command(&mut self, command: u16) {
+        player_command_in(self, command);
+    }
+    fn window_row(&self) -> u16 {
+        self.game.k_out
+    }
+    fn set_window_row(&mut self, row: u16) {
+        self.game.k_out = row;
+    }
+}
+
 impl sm_game::player_position::PlayerFacts for Runtime<'_> {
     fn facing(&self) -> u8 {
         Runtime::byte(self, 0xa1e)

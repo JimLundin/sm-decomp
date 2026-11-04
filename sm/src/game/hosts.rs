@@ -4,20 +4,6 @@ use crate::game_state::Game;
 use sm_game::inventory::{self, Word};
 use sm_game::player_position::{PlayerPosition, PlayerWord};
 
-impl sm_game::explosion_window::Host for Game {
-    fn initialize_crystal_flash(&mut self) -> bool {
-        sm_game::player_movement::forced::initialize_crystal_flash(
-            &mut crate::game::session_runtime::Runtime::new(self),
-        )
-    }
-    fn window_row(&self) -> u16 {
-        self.k_out
-    }
-    fn set_window_row(&mut self, row: u16) {
-        self.k_out = row;
-    }
-}
-
 impl sm_game::runtime_access::RuntimeAccess for Game {
     type Runtime<'a> = crate::game::session_runtime::Runtime<'a>;
     fn runtime(&mut self) -> Self::Runtime<'_> {
