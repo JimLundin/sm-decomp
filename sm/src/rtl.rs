@@ -69,33 +69,6 @@ macro_rules! words {
 }
 pub(crate) use words;
 
-/// Apply an ordered register sequence without pre-evaluating later values.
-macro_rules! register_writes {
-    ($game:ident; $($kind:ident($($argument:tt)*);)*) => {
-        $($crate::rtl::register_writes!(@write $game; $kind($($argument)*));)*
-    };
-    (@write $game:ident; byte($address:expr, $value:expr $(, $($tail:tt)*)?)) => {
-        $crate::rtl::write_reg($address, $value, $game $(, $($tail)*)?)
-    };
-    (@write $game:ident; word($address:expr, $value:expr $(, $($tail:tt)*)?)) => {
-        $crate::rtl::write_reg_word($address, $value, $game $(, $($tail)*)?)
-    };
-    (@write $game:ident; mirror($address:expr, $value:expr, $mirror:expr, $before:expr $(, $($tail:tt)*)?)) => {
-        $crate::rtl::write_register_and_mirror($address, $value, $mirror, $before, $game $(, $($tail)*)?)
-    };
-    (@write $game:ident; show($display:expr $(,)?)) => {{
-        use $crate::game::display_transfers::DisplayRegister as _;
-        let display = $display;
-        $crate::rtl::write_reg(display.register(), display.value(), $game)
-    }};
-    (@write $game:ident; show_mirror($display:expr, $mirror:expr, $before:expr $(,)?)) => {{
-        use $crate::game::display_transfers::DisplayRegister as _;
-        let display = $display;
-        $crate::rtl::write_register_and_mirror(display.register(), display.value(), $mirror, $before, $game)
-    }};
-}
-pub(crate) use register_writes;
-
 use crate::c_library::{fprintf, memcpy, printf, sprintf, stderr};
 use crate::cpu_infra::rtl_update_snes_patch_for_bugfix;
 use crate::game_state::Game;

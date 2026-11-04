@@ -126,14 +126,6 @@ fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
     }
 }
 
-/// The ordered CPU I/O and OAM reset.
-pub(crate) fn initialize_io_and_oam(
-    brightness: Option<sm_game::display::control::Brightness>,
-    game: &mut Game,
-) {
-    refresh::initialize_io_and_oam(brightness, game);
-}
-
 /// The tilemap flush on the lease: it publishes, then drains the queue and the
 /// scrolling requests through the lease's transfer port, so each DMA start reads
 /// the Session's bytes, and the queue's end word, its tail and the consumed

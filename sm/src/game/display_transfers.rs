@@ -5,7 +5,7 @@ use crate::game::display_commands::{Lease, Wire, byte, word};
 use crate::game_state::Game;
 use crate::rtl::{write_reg, write_reg_word};
 use crate::snes::registers::*;
-use sm_game::display::control::{Brightness, FixedColor};
+use sm_game::display::control::Brightness;
 use sm_game::display::transfer::{
     Mode7Target, Mode7Upload, ScrollingLayout, TilemapUpload, TransferHost, VramReadback,
 };
@@ -416,13 +416,3 @@ pub(crate) unsafe fn upload_samus(descriptors: [u8; 6], game: &mut Game) {
 pub(crate) unsafe fn set_brightness(brightness: Brightness, game: &mut Game) {
     unsafe { write_reg(INIDISP as u16, brightness.byte(), game) }
 }
-
-/// Requires a live, exclusively accessed SNES backend. One COLDATA write per
-/// colour, in order.
-pub(crate) unsafe fn set_fixed_color(colors: &[FixedColor], game: &mut Game) {
-    for color in colors {
-        unsafe { write_reg(COLDATA as u16, color.byte(), game) }
-    }
-}
-
-pub(crate) use sm_game::display::control::DisplayRegister;

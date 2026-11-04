@@ -247,6 +247,181 @@ pub fn initialize_io_and_oam<H: Video + crate::display::preparation::Access + ?S
     game.apply(INITIALISE, Command::ObjectBytes([0, 0]));
 }
 
+/// Boot's display setup after its RAM clear: the NMI off, the brightness
+/// mirror, then the CPU I/O, OAM and PPU registers, each control with its
+/// mirror, in the original's order. Every write is a
+/// device write and every mirror a display field store.
+pub fn initialize_boot_registers<H: Video + crate::display::preparation::Access + ?Sized>(
+    game: &mut H,
+) {
+    use crate::display::control::{Brightness, Mode7Settings};
+    use crate::display::preparation::{Access, Store};
+    apply_mirrored(
+        game,
+        INITIALISE,
+        Control::Interrupts(0),
+        DisplayField::NmiEnable,
+        false,
+    );
+    Access::store_display_control_byte(game, DisplayField::Brightness, 0x8f, Store::Named);
+    initialize_io_and_oam(Some(Brightness::BLANK_FULL), game);
+    apply_controls(
+        game,
+        INITIALISE,
+        &[
+            (
+                Control::BackgroundMode(BgMode::MODE1_BG3_PRIORITY.byte()),
+                Mirror::After(DisplayField::Mode),
+            ),
+            (Control::Mosaic(0), Mirror::After(DisplayField::Mosaic)),
+            (
+                Control::Tilemap(Background::Bg1, 0x40),
+                Mirror::After(DisplayField::Screens0),
+            ),
+            (
+                Control::Tilemap(Background::Bg2, 0x44),
+                Mirror::After(DisplayField::Screens1),
+            ),
+            (
+                Control::Tilemap(Background::Bg3, 0x48),
+                Mirror::After(DisplayField::Screens2),
+            ),
+            (
+                Control::Tilemap(Background::Bg4, 0),
+                Mirror::After(DisplayField::Screens3),
+            ),
+            (
+                Control::CharactersBg1Bg2(0),
+                Mirror::After(DisplayField::Characters0),
+            ),
+            (
+                Control::CharactersBg3Bg4(5),
+                Mirror::After(DisplayField::Characters1),
+            ),
+        ],
+    );
+    // Each scroll offset's two-write latch takes two zero bytes: BG1's
+    // horizontal then vertical offset, up to BG4's.
+    for background in Background::ALL {
+        for axis in [Axis::Horizontal, Axis::Vertical] {
+            for _ in 0..2 {
+                game.apply(
+                    INITIALISE,
+                    Command::ScrollByte {
+                        scroll: ScrollOffset { background, axis },
+                        value: 0,
+                    },
+                );
+            }
+        }
+    }
+    apply_controls(
+        game,
+        INITIALISE,
+        &[
+            (Control::VramStep(0), Mirror::None),
+            (
+                Control::Mode7Selection(Mode7Settings::WRAP.byte()),
+                Mirror::After(DisplayField::AffineSelection),
+            ),
+        ],
+    );
+    for parameter in Mode7Parameter::ALL {
+        game.apply(
+            INITIALISE,
+            Command::Control(Control::Mode7Latch(parameter, 0)),
+        );
+    }
+    let main = Layers::of(true, false, false, false, true);
+    let sub = Layers::of(false, true, false, false, false);
+    apply_controls(
+        game,
+        INITIALISE,
+        &[
+            (
+                Control::WindowsBg1Bg2(0),
+                Mirror::After(DisplayField::WindowSelection0),
+            ),
+            (
+                Control::WindowsBg3Bg4(0),
+                Mirror::After(DisplayField::WindowSelection1),
+            ),
+            (
+                Control::WindowsSpritesColor(0),
+                Mirror::After(DisplayField::WindowSelection2),
+            ),
+            (
+                Control::Window1Left(0),
+                Mirror::After(DisplayField::WindowPositions0),
+            ),
+            (
+                Control::Window1Right(0xf8),
+                Mirror::After(DisplayField::WindowPositions1),
+            ),
+            (
+                Control::Window2Left(0),
+                Mirror::After(DisplayField::WindowPositions2),
+            ),
+            (
+                Control::Window2Right(0),
+                Mirror::After(DisplayField::WindowPositions3),
+            ),
+            (
+                Control::WindowLogicBackgrounds(0),
+                Mirror::After(DisplayField::WindowLogic0),
+            ),
+            (
+                Control::WindowLogicSpritesColor(0),
+                Mirror::After(DisplayField::WindowLogic1),
+            ),
+            (
+                Control::MainScreen(main),
+                Mirror::After(DisplayField::MainLayers),
+            ),
+            (
+                Control::MainWindowMask(main),
+                Mirror::After(DisplayField::MainWindow),
+            ),
+            (
+                Control::SubScreen(sub),
+                Mirror::After(DisplayField::SubLayers),
+            ),
+            (
+                Control::SubWindowMask(sub),
+                Mirror::After(DisplayField::SubWindow),
+            ),
+            (
+                Control::ColorSelection(2),
+                Mirror::After(DisplayField::NextColorSelection),
+            ),
+            (
+                Control::ColorMath(0xa1),
+                Mirror::After(DisplayField::NextColorMath),
+            ),
+        ],
+    );
+    // The fixed colour: every channel cleared twice, then each channel with
+    // its mirror, blue, green and red.
+    for color in [FixedColor::all(0), FixedColor::all(0)] {
+        game.apply(INITIALISE, Command::FixedColor(color));
+    }
+    for (color, mirror) in [
+        (FixedColor::blue(0), DisplayField::FixedColor0),
+        (FixedColor::green(0), DisplayField::FixedColor1),
+        (FixedColor::red(0), DisplayField::FixedColor2),
+    ] {
+        game.apply(INITIALISE, Command::FixedColor(color));
+        Access::store_display_control_byte(game, mirror, color.byte(), Store::Named);
+    }
+    apply_mirrored(
+        game,
+        INITIALISE,
+        Control::ScreenSettings(ScreenSettings::STANDARD.byte()),
+        DisplayField::Geometry,
+        false,
+    );
+}
+
 /// Gameplay display registers, cleared tilemaps and the common graphics.
 pub fn initialize_gameplay<
     H: GraphicsLoad
