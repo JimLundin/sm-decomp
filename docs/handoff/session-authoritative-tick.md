@@ -1203,7 +1203,8 @@ former `foreign` call left them. Writes are identical and in the same order.
     `clear_work_ram(0x10000)` but before `initialize_registers` and boot's raw
     stores, and each of those raw `game.ram()` stores needs its lease form; the
     soft reset (`$0611` = 3) takes the same path.
-  - **Settlement and the IRQ stay after the lease.** Not provably byte-exact
+  - **Settlement and the IRQ stay after the lease** (until the third slice,
+    below, which moves them). Not provably byte-exact
     yet, for four reasons:
     1. HDMA reads its tables from WRAM on every line inside the emulated beam
        (`advance_beam`), between IRQ handlers whose RAM stores (the display
@@ -1452,6 +1453,78 @@ former `foreign` call left them. Writes are identical and in the same order.
     SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and
     `music-fir-selector10` (the APU ports, music delays and downtime at boot).
     RAM lockstep must stay at 0 failing frames.
+
+- **Third slice (lane `tick-s10c`, on `5bdb96711`, after #236).** Not yet
+  replayed. Ratchet: `game_host_impls` 19 → 18, `session_entries` 3
+  (unchanged), `legacy_engine_ram_sites` 336, `foreign_calls` 43.
+  - **Order to land: the check first.** The first commit (`SM_IRQ_PUBLISH_CHECK`,
+    `scanline_irq::publish_check`) is the proof the settlement move needs: it
+    replays each interrupt pass of Game's path on a copy of the lease's
+    Session and compares the publish with RAM. It hooks Game's interrupt
+    pass, which the engine's frames leave in the next commit, so its engine
+    numbers come only from a run of that first commit: `door-transition`,
+    `elevator-up` and the nightly `SM_NATIVE_LINES` route, with
+    `lane_mismatches=0 read_mismatches=0 other_mismatches=0` wanted. If
+    lockstep fails on the move, drop the move and read the check.
+  - **Settlement on the frame's lease.** `gameplay_frame::frame` ends with
+    `PassLease::settle_frame` after `end_frame`, on the same lease
+    (`scanline_irq::settle_on_lease`):
+    - the lease publishes, so HDMA's first table read finds the bytes the
+      release's deferred export would have put there;
+    - the beam is `SettlementHost` for `Runtime`, over the device steps
+      Game's settlement uses too (`cpu_infra::beam`);
+    - each interrupt pass runs on `ScanlineIrq(lease)` (`advance_on_lease`),
+      and publishes after a control store or a resume poll, before the next
+      beam event reads work RAM;
+    - the IRQ door resume (`follow_transition`) runs
+      `room_entry::protocol::resume(lease, ScrollIrq)` inside
+      `owned_player_call` on the frame's lease. Its observations are
+      refreshed as the fresh lease Game's poll opened left them. No lease
+      opens inside the frame's lease, and none nests;
+    - `table_check` plans from the lease (`begin_frame_on`).
+    - The engine's callers (`run_one_frame_of_game_both`, `RM_MINE`) end with
+      `finish_settled_frame`: the Samus mutation and Session adoption that
+      followed Game's settlement, without the beam. The oracle's frames and
+      the hand-stepped verification routes keep `draw_frame_to_ppu` on Game.
+  - **What changes besides the host.** A door resume frame's next tick now
+    takes the kept frame Session up. Game's poll lease released outside the
+    tick and exported without keeping, so that tick decoded RAM. `leases=`
+    falls by one per resume poll; `nested=` is unchanged. The "Session
+    written after the last lease" line should read `0 ticks` on
+    `door-transition`, `elevator-up` and `door-loading-lag-nmi`.
+  - **Game's `ContinuationAccess` is deleted.** Its only caller was
+    `gameplay_frame::Host`'s supertrait. The frame reads $0611 and clears
+    $0612..0615 before its lease through `Host::frame_state` and
+    `Host::clear_pass_continuations`, which make the same byte reads and
+    stores.
+  - **Boot.** `clear_high_table` and `finish_frame` run first in `finish_boot`,
+    on the frame's lease, through its `ObjectAccess`. Their bytes (the object
+    table and its high bits) and the Samus upload words boot still clears on Game are separate, so the
+    stores only trade places. Game's `ObjectAccess` stays: `MapHost` for Game
+    (the sprite effect observer) needs it.
+  - **Left, and why.**
+    - Game's `Video`, `display::preparation::Access` and `CompatibilityRam`
+      (and its three supertraits): the oracle's settlement still runs
+      `ScanlineIrq(Game)`. It needs a verification host over the oracle's
+      RAM, as `OracleRam` does for the checkpoint latch, that makes the same
+      held-domain reads and stores. Boot's `initialize_registers`,
+      `write_register_and_mirror` and `initialize_io_and_oam`, and
+      `room_world_cases`, use them as well.
+    - Boot's remaining Game work (NMITIMEN off, `$51`, `initialize_registers`,
+      the tile buffers, the APU queue bytes, the OAM pointer and Samus upload
+      words) needs the lease forms the second slice lists. Moving it also
+      opens the frame's lease on RAM before those raw stores, which nobody
+      has checked.
+    - `session_entries` (3): see the second slice. None of this slice's moves
+      touches the three.
+  - **Rows.** `door-transition`, `elevator-up` and `door-loading-lag-nmi` (the
+    resume poll on the lease); the Mode 7 and HDMA rows (`boss-ceres-ridley`,
+    `area-ceres`, X-ray, the Kraid pause, the FX rooms); the `item-*` message
+    boxes; `credits`; every power-on and boot row (the object table's clear on
+    the lease); the chain rooms; the SFX-loss rows `item-speed-booster`,
+    `enemy-fire-arc` and `music-fir-selector10`; and the nightly
+    `SM_NATIVE_LINES` route with `SM_IRQ_TABLE` and `SM_HDMA_TABLE`. RAM
+    lockstep must stay at 0 failing frames.
 
 ### Stage 11: the rest
 

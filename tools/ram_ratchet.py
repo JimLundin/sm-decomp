@@ -102,7 +102,7 @@ BASELINE = {
     # reach zero when the Session drives the tick. Foreign calls and Game hosts
     # may not rise; lease moves can add entries, so those are reported.
     "foreign_calls": 43,
-    "game_host_impls": 19,  # tick-s10b: boot's work and the oracle latch left Game
+    "game_host_impls": 18,  # tick-s10c: the frame host lost Game's ContinuationAccess
     "session_entries": 3,
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
     # gameplay_word! read and store typed Session-backed keys, not RAM, so

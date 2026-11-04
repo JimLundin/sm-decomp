@@ -1656,6 +1656,57 @@ fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
     take_game_owners(&mut state, game);
     Some((state, inputs))
 }
+/// Where a lease opened now would take its Session from, as `Runtime::new` chooses.
+#[cfg(sm_verify_dll)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum LeaseSource {
+    /// The persistent Session.
+    Persistent,
+    /// The kept frame Session, with the RAM written since its export.
+    Kept,
+    /// A decode of RAM.
+    Import,
+}
+/// A copy of the Session a lease opened now would hold, built from `image` (RAM as
+/// `WorkRam::peek_image` sees it) without opening the lease: nothing is taken from Game,
+/// no epoch moves and no deferred export is written. Game's held owners (actor identity,
+/// inventory, FX and menu domains) are not taken in, so their lanes may differ from RAM.
+#[cfg(sm_verify_dll)]
+pub(crate) fn preview_lease_session(game: &Game, image: &[u8]) -> (Session, LeaseSource) {
+    if let Some(state) = game.peek_persistent_gameplay() {
+        return (state, LeaseSource::Persistent);
+    }
+    let kept = game
+        .frame_session
+        .kept
+        .as_ref()
+        .filter(|_| !game.foreign_presentation_active())
+        .and_then(|kept| {
+            let state = kept
+                .state
+                .clone()
+                .or_else(|| game.ram().peek_deferred_session())?;
+            let written = if kept.epoch == game.compatibility_write_epoch() {
+                Vec::new()
+            } else {
+                game.ram().logged_writes()?
+            };
+            same_world(&state, game).then_some((state, written))
+        });
+    if let Some((mut state, written)) = kept {
+        for at in written.iter().flat_map(Clone::clone) {
+            let value = image[at];
+            if encoding::projected_byte(&state, at).is_some_and(|byte| byte != value) {
+                encoding::write_projected_byte(&mut state, at, value);
+            }
+        }
+        import_native_spawn(&mut state, game);
+        return (state, LeaseSource::Kept);
+    }
+    let mut state = encoding::decode(&|at| image[at], 0x20000, game.world().clone());
+    import_native_spawn(&mut state, game);
+    (state, LeaseSource::Import)
+}
 /// The Session a foreign call resumes: the Session it exported with the RAM bytes it wrote,
 /// when the log holds them; a decode of the RAM otherwise.
 fn resume_session(
@@ -2650,6 +2701,42 @@ impl sm_game::display::video::Video for Runtime<'_> {
         } else {
             self.owned_player_call(|runtime| apply_on_lease(producer, command, runtime));
         }
+    }
+}
+// The beam on the frame's lease: its events are the device's (`cpu_infra::beam`),
+// and HDMA reads work RAM, which the lease has published; each scanline
+// interrupt runs on this lease (`scanline_irq::advance_on_lease`).
+impl sm_game::scene::settle::SettlementHost for Runtime<'_> {
+    type Error = std::convert::Infallible;
+
+    // SAFETY, for each call below: a lease runs with the backend installed, and
+    // `&mut Game` excludes other access.
+    fn reset_beam(&mut self) {
+        unsafe { crate::cpu_infra::beam::reset(self.game) }
+    }
+    fn nmi_wanted(&self) -> bool {
+        unsafe { crate::cpu_infra::beam::nmi_wanted(self.game) }
+    }
+    fn advance_at(&mut self, position: u16) -> Result<(), Self::Error> {
+        unsafe { crate::cpu_infra::beam::advance_at(self.game, position) };
+        Ok(())
+    }
+    fn vertical_irq_enabled(&self) -> bool {
+        unsafe { crate::cpu_infra::beam::vertical_irq_enabled(self.game) }
+    }
+    fn vertical_position(&self) -> u16 {
+        unsafe { crate::cpu_infra::beam::vertical_position(self.game) }
+    }
+    fn vertical_timer(&self) -> u16 {
+        unsafe { crate::cpu_infra::beam::vertical_timer(self.game) }
+    }
+    fn interrupt(&mut self) -> Result<(), Self::Error> {
+        let line = self.vertical_timer();
+        crate::game::scanline_irq::advance_on_lease(self, line);
+        Ok(())
+    }
+    fn clear_nmi(&mut self) {
+        unsafe { crate::cpu_infra::beam::clear_nmi(self.game) }
     }
 }
 // The channel registers are device registers; the object table is the lease's.

@@ -58,9 +58,15 @@ pub enum UnpauseHook {
 
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
-pub trait Host: crate::presentation_workspace::ContinuationAccess + RuntimeAccess {
+pub trait Host: RuntimeAccess {
     /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
     fn latch_controller(&mut self, buttons: u16);
+    /// The outer continuation ($7E:0611) as the frame begins, before its lease:
+    /// the frame state, or boot's resume point.
+    fn frame_state(&self) -> u8;
+    /// Clear the pass continuations ($0612..$0615), the last first, as a frame
+    /// begins, before its lease opens.
+    fn clear_pass_continuations(&mut self);
     /// Admit the owned Session for this frame; `fresh` when no pass is resuming.
     fn begin_session_interval(&mut self, fresh: bool);
     /// The gameplay pass resume byte ($7E:0612).
@@ -138,6 +144,10 @@ pub trait PassLease:
     fn pause_hook(&mut self, hook: PauseHook);
     /// The room's unpause hook, as the pause screen closes; nonzero when it yields.
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
+    /// The frame's settlement after its end: the beam from the top of the
+    /// screen to the next vertical blank, with HDMA on every line and the
+    /// scanline interrupts and their door resume polls on this lease.
+    fn settle_frame(&mut self);
 }
 
 #[derive(Clone, Copy)]
@@ -337,11 +347,11 @@ enum Start {
 
 /// Frame phase: boot continuation, frame start, state dispatch and frame end,
 /// on the frame's lease. Boot runs before it, on Game and the logo's own lease.
-/// The frame's end (`end_frame`: the NMI and the controller latch) runs on the
-/// frame's lease too, inside the tick.
+/// The frame's end (`end_frame`: the NMI and the controller latch) and the
+/// beam's settlement run on the frame's lease too, inside the tick.
 fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     game.begin_session_interval(game.resume_point() == 0);
-    let st: i32 = game.outer_continuation() as i32;
+    let st: i32 = game.frame_state() as i32;
     let start = if (1..=3).contains(&st) {
         match game.resume_boot() {
             0 => Start::Booted,
@@ -394,16 +404,27 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         }
         Start::Resume(entry) => lease_frame::<H>(entry, &mut lease),
     };
-    end_frame(returned, &mut lease)
+    let returned = end_frame(returned, &mut lease);
+    // The beam runs after the frame's end, on the frame's lease: the door
+    // resume an interrupt polls runs on it too, so no lease opens inside it.
+    lease.settle_frame();
+    returned
 }
 
 /// Boot's work after its RAM clear and register setup, as the frame lease's
-/// first step: the NMI's enable, the APU ports' clear, the random seed, the
-/// music queue's delays, the debug mode, the save slots' check, the sound words
-/// and boot's resume byte. The pass continuations the frame clears before its
-/// lease are not among its stores.
-fn finish_boot<L: PassLease + crate::menus::host::Host + ?Sized>(lease: &mut L) {
+/// first step: the object table's high bits and its unused entries, the NMI's
+/// enable, the APU ports' clear, the random seed, the music queue's delays, the
+/// debug mode, the save slots' check, the sound words and boot's resume byte.
+/// The pass continuations the frame clears before its lease and the Samus
+/// upload words boot clears on Game are not among its stores.
+fn finish_boot<
+    L: PassLease + crate::menus::host::Host + crate::sprite_drawing::ObjectAccess + ?Sized,
+>(
+    lease: &mut L,
+) {
     use crate::projection::Field;
+    crate::sprite_drawing::clear_high_table(lease);
+    crate::sprite_drawing::finish_frame(lease);
     display_refresh::enable(true, lease);
     lease.clear_apu_ports();
     lease.set_view_word(Field::RandomNumber, 97);

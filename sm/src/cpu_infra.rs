@@ -1159,8 +1159,48 @@ pub unsafe fn run_one_frame_of_game_emulated(native_game: &mut Game) {
             .expect("Session native result adoption rejected");
     }
 }
+/// The emulated beam the settlement steps on Game's backend. Settlement on
+/// Game (`draw_frame_to_ppu`) and on the frame's lease share it.
+pub(crate) mod beam {
+    use crate::game_state::Game;
+
+    /// # Safety
+    /// The backend must be installed and exclusively accessed, as for every
+    /// function here.
+    pub(crate) unsafe fn reset(game: &mut Game) {
+        unsafe {
+            (*game.g_snes).vPos = 0;
+            (*game.g_snes).hPos = (*game.g_snes).vPos;
+        }
+    }
+    pub(crate) unsafe fn nmi_wanted(game: &Game) -> bool {
+        unsafe { (*(*game.g_snes).cpu).nmiWanted }
+    }
+    /// One beam event at `position` on the current line: the raster, HDMA
+    /// reading its tables from work RAM, or the line's wrap.
+    pub(crate) unsafe fn advance_at(game: &mut Game, position: u16) {
+        unsafe {
+            (*game.g_snes).hPos = position;
+            game.execution().advance_beam();
+        }
+    }
+    pub(crate) unsafe fn vertical_irq_enabled(game: &Game) -> bool {
+        unsafe { (*game.g_snes).vIrqEnabled }
+    }
+    pub(crate) unsafe fn vertical_position(game: &Game) -> u16 {
+        unsafe { (*game.g_snes).vPos }
+    }
+    pub(crate) unsafe fn vertical_timer(game: &Game) -> u16 {
+        unsafe { (*game.g_snes).vTimer }
+    }
+    pub(crate) unsafe fn clear_nmi(game: &mut Game) {
+        unsafe { (*(*game.g_snes).cpu).nmiWanted = false };
+    }
+}
+/// Settle the beam on Game after an emulated frame (the oracle's) or a frame
+/// stepped by hand: the scanline interrupts run on Game, each door resume poll
+/// on a lease of its own.
 pub unsafe fn draw_frame_to_ppu(native_game: &mut Game) {
-    let game = &mut *native_game;
     // This local capability is constructed only under this function's existing
     // exclusive, live-backend contract. No safe caller can construct it.
     struct NativeSettlement<'a>(&'a mut Game);
@@ -1168,49 +1208,59 @@ pub unsafe fn draw_frame_to_ppu(native_game: &mut Game) {
         type Error = std::convert::Infallible;
 
         fn reset_beam(&mut self) {
-            unsafe {
-                (*self.0.g_snes).vPos = 0;
-                (*self.0.g_snes).hPos = (*self.0.g_snes).vPos;
-            }
+            unsafe { beam::reset(self.0) }
         }
         fn nmi_wanted(&self) -> bool {
-            unsafe { (*(*self.0.g_snes).cpu).nmiWanted }
+            unsafe { beam::nmi_wanted(self.0) }
         }
         fn advance_at(&mut self, position: u16) -> Result<(), Self::Error> {
-            unsafe {
-                (*self.0.g_snes).hPos = position;
-                self.0.execution().advance_beam();
-            }
+            unsafe { beam::advance_at(self.0, position) };
             Ok(())
         }
         fn vertical_irq_enabled(&self) -> bool {
-            unsafe { (*self.0.g_snes).vIrqEnabled }
+            unsafe { beam::vertical_irq_enabled(self.0) }
         }
         fn vertical_position(&self) -> u16 {
-            unsafe { (*self.0.g_snes).vPos }
+            unsafe { beam::vertical_position(self.0) }
         }
         fn vertical_timer(&self) -> u16 {
-            unsafe { (*self.0.g_snes).vTimer }
+            unsafe { beam::vertical_timer(self.0) }
         }
         fn interrupt(&mut self) -> Result<(), Self::Error> {
             unsafe { crate::game::scanline_irq::advance(self.0) };
             Ok(())
         }
         fn clear_nmi(&mut self) {
-            unsafe { (*(*self.0.g_snes).cpu).nmiWanted = false };
+            unsafe { beam::clear_nmi(self.0) }
         }
     }
+    unsafe {
+        adopt_settlement(native_game, |game| {
+            #[cfg(sm_verify_dll)]
+            crate::game::scanline_irq::table_check::begin_frame(game);
+            match sm_game::scene::settle::settle(&mut NativeSettlement(game)) {
+                Ok(()) => (),
+                Err(never) => match never {},
+            }
+            #[cfg(sm_verify_dll)]
+            crate::game::scanline_irq::table_check::end_frame();
+        })
+    }
+}
+/// The engine's frame end after its tick: the frame's lease settled the beam
+/// (`PassLease::settle_frame`), so only the Samus and Session adoption that
+/// followed settlement on Game is left.
+pub unsafe fn finish_settled_frame(native_game: &mut Game) {
+    unsafe { adopt_settlement(native_game, |_| ()) }
+}
+/// `settle` under the Samus mutation settlement on Game holds, then the Samus
+/// and Session adoption after it.
+unsafe fn adopt_settlement(native_game: &mut Game, settle: impl FnOnce(&mut Game)) {
+    let game = &mut *native_game;
     game.preflight_samus_runtime()
         .expect("Samus settlement entry rejected");
     let mut mutation = game.samus_mutation();
-    #[cfg(sm_verify_dll)]
-    crate::game::scanline_irq::table_check::begin_frame(mutation.game());
-    match sm_game::scene::settle::settle(&mut NativeSettlement(mutation.game())) {
-        Ok(()) => (),
-        Err(never) => match never {},
-    }
-    #[cfg(sm_verify_dll)]
-    crate::game::scanline_irq::table_check::end_frame();
+    settle(mutation.game());
     mutation
         .finish_current()
         .expect("Samus settlement adoption rejected");
@@ -1363,7 +1413,7 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             crate::game::session_runtime::with_frame_session(game, |game| {
                 gameplay::tick(gameplay::TickInput { buttons }, game)
             });
-            draw_frame_to_ppu(game);
+            finish_settled_frame(game);
             let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             {
                 let snes = game.g_snes;
@@ -1597,7 +1647,7 @@ pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mu
             crate::game::session_runtime::with_frame_session(game, |game| {
                 gameplay::tick(gameplay::TickInput { buttons }, game)
             });
-            draw_frame_to_ppu(game);
+            finish_settled_frame(game);
             (*game.g_snes).runningWhichVersion = 0;
         } else {
             run_one_frame_of_game_both(game);

@@ -82,6 +82,9 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
             }
         }
     }
+    fn settle_frame(&mut self) {
+        crate::game::scanline_irq::settle_on_lease(self);
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.
@@ -102,6 +105,12 @@ impl sm_game::gameplay_frame::Host for Game {
     fn latch_controller(&mut self, buttons: u16) {
         // The emulated joypad register reads the controller state bit-reversed.
         self.input1_mut().currentState = buttons.reverse_bits();
+    }
+    fn frame_state(&self) -> u8 {
+        Game::frame_state(self)
+    }
+    fn clear_pass_continuations(&mut self) {
+        Game::clear_pass_continuations(self);
     }
     fn begin_session_interval(&mut self, fresh: bool) {
         Game::begin_session_interval(self, fresh).expect("Session interval entry");

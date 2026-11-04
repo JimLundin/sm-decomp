@@ -575,6 +575,33 @@ impl WorkRam {
         }
         state.as_ref().map(|deferred| (*deferred.session).clone())
     }
+    /// A copy of the last deferred export's Session, whether or not its bytes are in RAM,
+    /// leaving the export as it is: the IRQ publish check's view of the kept Session.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn peek_deferred_session(&self) -> Option<sm_game::session::Session> {
+        self.10
+            .state
+            .borrow()
+            .as_ref()
+            .map(|deferred| (*deferred.session).clone())
+    }
+    /// The bytes RAM holds once a deferred export is written, without writing it, serving
+    /// a read from it or taking an epoch: the IRQ publish check's view of RAM.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn peek_image(&self) -> Vec<u8> {
+        let mut image: Vec<u8> = self.0.bytes.iter().map(Cell::get).collect();
+        if self.10.armed.get()
+            && let Some(deferred) = self.10.state.borrow().as_ref()
+        {
+            sm_game::session_encoding::encode_spans(
+                &deferred.session,
+                |at: usize, bytes: &[u8]| {
+                    image[at..at + bytes.len()].copy_from_slice(bytes);
+                },
+            );
+        }
+        image
+    }
     /// Whether an export's bytes are deferred.
     #[cfg(sm_verify_dll)]
     pub(crate) fn export_deferred(&self) -> bool {
@@ -2161,6 +2188,20 @@ impl Game {
         self.persistent_session
             .foreign_presentations
             .push(Some(presentation));
+    }
+    /// A copy of the persistent Session a lease opened now would take, without taking it:
+    /// `lease_persistent_session`'s admission, for the IRQ publish check.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn peek_persistent_gameplay(&self) -> Option<sm_game::session::Session> {
+        match &self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Ready(session)
+                if self.preflight_samus_runtime().is_ok()
+                    && self.persistent_ram_epoch == self.ram.write_epoch() =>
+            {
+                Some(session.gameplay.clone())
+            }
+            _ => None,
+        }
     }
     pub(crate) fn lease_persistent_session(
         &mut self,
@@ -4509,38 +4550,14 @@ impl Game {
     }
 }
 
-#[forbid(unsafe_code)]
-impl sm_game::presentation_workspace::ContinuationAccess for Game {
-    fn screen_primary(&self) -> u8 {
-        self.compatibility_byte(0x612)
-    }
-    fn screen_set_primary(&mut self, value: u8) {
-        self.compatibility_write_owned_byte(0x612, value);
-    }
-    fn demo_phase(&self) -> u8 {
-        self.compatibility_byte(0x614)
-    }
-    fn demo_set_phase(&mut self, value: u8) {
-        self.compatibility_write_owned_byte(0x614, value);
-    }
-    fn secondary_continuation(&self) -> u8 {
-        self.compatibility_byte(0x613)
-    }
-    // A plain RAM store, as the pause hooks' stores were: the retained
-    // Session re-adopts the byte at its next lease.
-    fn set_secondary_continuation(&mut self, value: u8) {
-        self.compatibility_write_byte(0x613, value);
-    }
-    fn outer_continuation(&self) -> u8 {
+impl Game {
+    /// The outer continuation ($0611) the frame begins on, before its lease.
+    pub(crate) fn frame_state(&self) -> u8 {
         self.compatibility_byte(0x611)
     }
-    fn set_outer_continuation(&mut self, value: u8) {
-        self.compatibility_write_byte(0x611, value);
-    }
-    fn message_continuation(&self) -> u8 {
-        self.compatibility_byte(0x615)
-    }
-    fn clear_pass_continuations(&mut self) {
+    /// The frame's clear of the pass continuations ($0612..$0615), the last
+    /// first, before its lease.
+    pub(crate) fn clear_pass_continuations(&self) {
         for at in (0x612..0x616).rev() {
             self.compatibility_write_byte(at, 0);
         }

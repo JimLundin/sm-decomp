@@ -11,7 +11,6 @@ use sm_game::display::control::{
     SubWindowMask,
 };
 use sm_game::display::preparation::Field as DisplayField;
-use sm_game::sprite_drawing::{clear_high_table, finish_frame};
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
     let bug_fix_counter = word!(game.BUG_FIX_COUNTER);
@@ -99,13 +98,13 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
                 game.ram().write_byte(address, 0);
             }
             word! { game, 0; OAM_NEXT_PTR, REG_OA_MADDR_UNUSED }
-            clear_high_table(game);
-            finish_frame(game);
             word! { game, 0;
                 NMI_COPY_SAMUS_HALVES, NMI_COPY_SAMUS_TOP_HALF_SRC, NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
             }
-            // The rest of boot's work, from the NMI's enable to boot's resume
-            // byte, is the frame lease's first step (`gameplay_frame::finish_boot`).
+            // The rest of boot's work, from the object table's clear to boot's
+            // resume byte, is the frame lease's first step
+            // (`gameplay_frame::finish_boot`). The object table and the Samus
+            // upload words are separate bytes, so their stores trade places.
             return 0;
         }
         game.ram().write_byte(0x611, 2);
