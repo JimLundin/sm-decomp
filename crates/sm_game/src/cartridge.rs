@@ -6,6 +6,14 @@ pub trait LoadedImage {
     fn loaded_image(&self) -> &RomImage;
 }
 
+/// An image read as the loaded one: a table read on a host's image already
+/// in hand.
+impl LoadedImage for RomImage {
+    fn loaded_image(&self) -> &RomImage {
+        self
+    }
+}
+
 pub trait NativeImage {
     /// The exact native allocation; panics with "native ROM must be
     /// registered" when none is.

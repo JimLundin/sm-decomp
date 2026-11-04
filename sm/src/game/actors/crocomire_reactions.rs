@@ -81,12 +81,27 @@ pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
 pub(crate) fn crocomire_table_word(game: &Game, address: u32, index: isize) -> u16 {
     let tables = &game.crocomire;
     match address {
-        SCROLL_SPRITEMAP_ADDRESS => table_word(&tables.scroll_spritemaps, game, address, index),
-        BRIDGE_DEBRIS_ADDRESS => table_word(&tables.bridge_debris, game, address, index),
-        SPIKE_WALL_TILE_ADDRESS => table_word(&tables.spike_wall_tiles, game, address, index),
-        SPIKE_WALL_DESTINATION_ADDRESS => {
-            table_word(&tables.spike_wall_destinations, game, address, index)
+        SCROLL_SPRITEMAP_ADDRESS => table_word(
+            &tables.scroll_spritemaps,
+            game.loaded_image(),
+            address,
+            index,
+        ),
+        BRIDGE_DEBRIS_ADDRESS => {
+            table_word(&tables.bridge_debris, game.loaded_image(), address, index)
         }
+        SPIKE_WALL_TILE_ADDRESS => table_word(
+            &tables.spike_wall_tiles,
+            game.loaded_image(),
+            address,
+            index,
+        ),
+        SPIKE_WALL_DESTINATION_ADDRESS => table_word(
+            &tables.spike_wall_destinations,
+            game.loaded_image(),
+            address,
+            index,
+        ),
         _ => unreachable!("Crocomire table {address:#x}"),
     }
 }

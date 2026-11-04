@@ -52,7 +52,7 @@ impl Game {
     pub(crate) fn magdollite_glow_colors(&self, source: isize) -> [u16; 4] {
         Imported::read(
             &self.magdollite.palettes,
-            self,
+            self.loaded_image(),
             |table| {
                 let palette = table.row(sm_game::imported::row_of(source, 16)?)?;
                 Some(core::array::from_fn(|i| palette[9 + i]))
@@ -66,7 +66,7 @@ impl Game {
     pub(crate) fn magdollite_arm(&self, address: u32, index: isize) -> u16 {
         Imported::read(
             &self.magdollite.arm_steps,
-            self,
+            self.loaded_image(),
             |table| {
                 let step = table.step(usize::try_from(index).ok()?)?;
                 Some(match address {

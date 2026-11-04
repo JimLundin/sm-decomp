@@ -2719,8 +2719,9 @@ impl sm_game::scene::owned_samus::SamusSources for Game {
     }
 }
 
-impl sm_game::cartridge::LoadedImage for Game {
-    fn loaded_image(&self) -> &crate::rom::RomImage {
+impl Game {
+    /// The loaded image; panics with "ROM must be loaded" when none is.
+    pub(crate) fn loaded_image(&self) -> &crate::rom::RomImage {
         self.loaded_rom.as_ref().expect("ROM must be loaded")
     }
 }
