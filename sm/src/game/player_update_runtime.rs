@@ -221,9 +221,8 @@ fn low_health_on(runtime: &mut Runtime<'_>) {
     }
 }
 
-// The gamma actions, on the lease. The escape countdown still draws on the game.
+// The gamma actions, on the lease.
 use crate::game::{
-    palette_effects,
     player_movement::forced,
     prelude::{K_BUTTON_UP, K_GAME_STATE_35_TIME_UP, K_POSE_E9_FACE_L_DRAINED_CROUCH_FALLING},
 };
@@ -252,7 +251,10 @@ fn advance_gamma(mode: FrameGammaMode, runtime: &mut Runtime<'_>) {
                 legacy_word! {runtime; SAMUS_ANIM_FRAME_TIMER = 1; SAMUS_ANIM_FRAME = 18; }
             }
         }
-        EscapeTimer | DrawEscapeTimer => runtime.foreign(|game| escape_countdown(mode, game)),
+        // The owned call keeps the former foreign entry's observation refresh.
+        EscapeTimer | DrawEscapeTimer => {
+            runtime.owned_player_call(|runtime| escape_countdown(mode, runtime))
+        }
         BeginCeresPush => {
             crate::game::session_runtime::ceres_movement(runtime, |h| forced::push_out_of_ceres(h))
         }
@@ -267,26 +269,28 @@ fn advance_gamma(mode: FrameGammaMode, runtime: &mut Runtime<'_>) {
     }
 }
 
-/// The escape countdown's gamma actions: advance and draw it, or only draw it.
-fn escape_countdown(mode: FrameGammaMode, game: &mut Game) {
+/// The escape countdown's gamma actions on the lease: advance and draw it, or
+/// only draw it. Time up stores the game state, the white target palettes, the
+/// draw-only gamma action and the disabled palette effects, in that order.
+fn escape_countdown(mode: FrameGammaMode, runtime: &mut Runtime<'_>) {
     if mode == FrameGammaMode::EscapeTimer {
-        if escape_timer::advance(game) & 1 != 0 {
-            legacy_word!(game.GAME_STATE = K_GAME_STATE_35_TIME_UP as u16);
+        if escape_timer::advance(runtime) & 1 != 0 {
+            legacy_word!(runtime.GAME_STATE = K_GAME_STATE_35_TIME_UP as u16);
             // Every target colour white, from the last colour down.
             for index in (0..256).rev() {
                 sm_game::projection::Views::set_view_word(
-                    game,
+                    runtime,
                     sm_game::projection::Field::PaletteTarget(index),
                     0x7fff,
                 );
             }
-            legacy_word!(game.FRAME_HANDLER_GAMMA = FrameGammaMode::DrawEscapeTimer.to_raw());
-            palette_effects::set_enabled(false, game);
+            legacy_word!(runtime.FRAME_HANDLER_GAMMA = FrameGammaMode::DrawEscapeTimer.to_raw());
+            sm_game::palette_effects::execution::set_enabled(runtime.session_mut(), false);
         }
-        if legacy_word!(game.TIMER_STATUS) != 0 {
-            escape_timer::draw(game);
+        if sm_game::session_words::current(runtime).timer_status != 0 {
+            escape_timer::draw(runtime);
         }
     } else {
-        escape_timer::draw(game);
+        escape_timer::draw(runtime);
     }
 }

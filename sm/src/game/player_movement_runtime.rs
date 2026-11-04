@@ -83,13 +83,15 @@ impl Effects for Runtime<'_> {
     }
 }
 
-/// Samus's Ceres push on the lease, then the escape countdown, which still draws on the game.
+/// Samus's Ceres push on the lease, then the escape countdown: its owner, the
+/// timer status and the objects are the lease's. The owned call keeps the
+/// former foreign entry's observation refresh.
 pub(crate) fn ceres_movement(runtime: &mut Runtime<'_>, action: fn(&mut Runtime<'_>)) {
     action(runtime);
-    runtime.foreign(|game| {
-        sm_game::escape_timer::advance(game);
-        if crate::ram_map::word!(game.TIMER_STATUS) != 0 {
-            sm_game::escape_timer::draw(game);
+    runtime.owned_player_call(|runtime| {
+        sm_game::escape_timer::advance(runtime);
+        if sm_game::session_words::current(runtime).timer_status != 0 {
+            sm_game::escape_timer::draw(runtime);
         }
     });
 }
