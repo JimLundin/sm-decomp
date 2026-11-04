@@ -95,9 +95,9 @@ pub(crate) trait Interpreter: HdmaTable {
     }
 }
 
-struct Leased<L>(L);
+struct Leased<'a, L>(&'a mut L);
 
-impl<L: HdmaLease> HdmaTable for Leased<L> {
+impl<L: HdmaLease> HdmaTable for Leased<'_, L> {
     fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
         self.0.hdma_word(word)
     }
@@ -114,7 +114,7 @@ impl<L: HdmaLease> HdmaTable for Leased<L> {
     }
 }
 
-impl<L: HdmaLease> Interpreter for Leased<L> {
+impl<L: HdmaLease> Interpreter for Leased<'_, L> {
     fn byte(&self, at: usize) -> u8 {
         self.0.byte(at)
     }
@@ -122,17 +122,17 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
         self.0.set_byte(at, value);
     }
     fn image(&self) -> RomImage {
-        crate::cartridge::NativeImage::native_image(&self.0)
+        crate::cartridge::NativeImage::native_image(&*self.0)
     }
     fn lease(&mut self) -> &mut L {
-        &mut self.0
+        self.0
     }
     fn unreachable(&mut self) {
-        crate::diagnostics::Fatal::unreachable(&mut self.0)
+        crate::diagnostics::Fatal::unreachable(self.0)
     }
     type Lease = L;
     fn on_lease<T>(&mut self, action: impl FnOnce(&mut L) -> T) -> T {
-        crate::lease::Lease::owned_player_call(&mut self.0, action)
+        crate::lease::Lease::owned_player_call(self.0, action)
     }
 }
 
@@ -173,7 +173,12 @@ pub(crate) fn table_words(objects: &mut HdmaObjects, mut each: impl FnMut(usize,
 /// publish this frame's Session either, so no completed frame ran the RAM
 /// copy the interpreter once fell back to.
 pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(handler_carry: bool, game: &mut H) {
-    run(&mut Leased(game.hdma_lease()), handler_carry);
+    run_objects_on(handler_carry, &mut game.hdma_lease());
+}
+
+/// [`run_objects`] on a lease already open.
+pub fn run_objects_on<L: HdmaLease>(handler_carry: bool, lease: &mut L) {
+    run(&mut Leased(lease), handler_carry);
 }
 
 fn run<I: Interpreter>(it: &mut I, handler_carry: bool) {

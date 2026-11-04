@@ -37,15 +37,16 @@ pub(super) fn finish_message() -> Vec<u8> {
     })
 }
 
-/// Called inside the scheduler's existing released-owner display closure.
-/// Each edge records613 before changing the environment; the actual display
-/// then runs and613 is inspected again before returning to the scheduler.
+/// Called inside the scheduler's existing released-owner display call, on its
+/// lease. Each edge records $0613 before changing the environment; the actual
+/// display then runs and $0613 is inspected again before returning to the
+/// scheduler. The byte is the lease's.
 #[cfg(sm_verify_dll)]
-pub(crate) unsafe fn display(request: u16, game: &mut Game) -> u8 {
+pub(crate) fn display(request: u16, runtime: &mut crate::game::session_runtime::Runtime<'_>) -> u8 {
     let marker = MESSAGE.with(|state| {
         let mut state = state.borrow_mut();
         state.as_mut().map(|trace| {
-            let before = game.ram().read_byte(0x613);
+            let before = runtime.byte(0x613);
             assert_eq!(
                 before,
                 if trace.calls == 0 { 0 } else { 1 },
@@ -55,14 +56,14 @@ pub(crate) unsafe fn display(request: u16, game: &mut Game) -> u8 {
             trace.bytes.extend_from_slice(&[before, marker]);
             trace.bytes.extend_from_slice(&request.to_le_bytes());
             trace.calls += 1;
-            game.ram().write_byte(0x613, marker);
+            runtime.set_byte(0x613, marker);
             marker
         })
     });
-    let returned = sm_game::message_boxes::display(request, game);
+    let returned = sm_game::message_boxes::display(request, runtime);
     if let Some(marker) = marker {
         assert_eq!(
-            game.ram().read_byte(0x613),
+            runtime.byte(0x613),
             marker,
             "display changed caller continuation"
         );
@@ -72,7 +73,7 @@ pub(crate) unsafe fn display(request: u16, game: &mut Game) -> u8 {
                 .as_mut()
                 .unwrap()
                 .bytes
-                .extend_from_slice(&[game.ram().read_byte(0x613), returned]);
+                .extend_from_slice(&[runtime.byte(0x613), returned]);
         });
     }
     returned
