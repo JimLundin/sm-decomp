@@ -59,8 +59,8 @@ import cycle_report  # noqa: E402
 # sites. 25 target sites (19 Point::physical in 9 sm_game files): engine
 # address sites 11 becomes 36; the legacy engine adds 7 (452 becomes 459).
 BASELINE = {
-    "sm_game_ram_sites": 42,
-    "sm_game_coupled_files": 10,
+    "sm_game_ram_sites": 38,
+    "sm_game_coupled_files": 8,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
