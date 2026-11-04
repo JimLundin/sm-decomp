@@ -870,7 +870,7 @@ impl ReplayCoverage {
     }
 
     fn observe(&mut self, game: &Game, frame: usize, trace: bool) {
-        // Addresses and slot stride match ram_map::RAM_VARS / EnemyData.
+        // Addresses and slot stride match ram_names::RAM_VARS / EnemyData.
         let current = CoverageState::read(game);
         let state = current.state;
         let room = current.room;

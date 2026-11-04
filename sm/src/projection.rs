@@ -12,39 +12,48 @@ use sm_game::external_inputs::ExternalInputs;
 use sm_game::projection::{Decode, Field, Layout, Views};
 use sm_game::ram::CompatibilityRam;
 
+/// Byte access to work RAM as a compatibility host projects it: owned Session
+/// state where it is current, otherwise the RAM bytes themselves. Only the
+/// compatibility layer and verification address RAM bytes; sm_game's hosts
+/// provide its typed views (`CompatibilityRam`).
+pub(crate) trait ProjectedBytes: CompatibilityRam {
+    fn compatibility_byte(&self, at: usize) -> u8;
+    fn compatibility_write_byte(&mut self, at: usize, value: u8);
+}
+
 /// Byte `at` as the host's projection holds it.
-pub(crate) fn byte<H: CompatibilityRam + ?Sized>(h: &H, at: usize) -> u8 {
+pub(crate) fn byte<H: ProjectedBytes + ?Sized>(h: &H, at: usize) -> u8 {
     #[cfg(sm_verify_dll)]
     sm_game::session_cohort::check_not_held(at);
     h.compatibility_byte(at)
 }
 
 /// Store byte `at` through the host's projection.
-pub(crate) fn set_byte<H: CompatibilityRam + ?Sized>(h: &mut H, at: usize, value: u8) {
+pub(crate) fn set_byte<H: ProjectedBytes + ?Sized>(h: &mut H, at: usize, value: u8) {
     #[cfg(sm_verify_dll)]
     sm_game::session_cohort::check_not_held(at);
     h.compatibility_write_byte(at, value);
 }
 
 /// The little-endian word at `at`, low byte then high.
-pub(crate) fn word<H: CompatibilityRam + ?Sized>(h: &H, at: usize) -> u16 {
+pub(crate) fn word<H: ProjectedBytes + ?Sized>(h: &H, at: usize) -> u16 {
     u16::from_le_bytes([byte(h, at), byte(h, at + 1)])
 }
 
 /// Store `value` as the little-endian word at `at`, low byte then high, as a
 /// named word store does.
-pub(crate) fn set_word<H: CompatibilityRam + ?Sized>(h: &mut H, at: usize, value: u16) {
+pub(crate) fn set_word<H: ProjectedBytes + ?Sized>(h: &mut H, at: usize, value: u16) {
     for (lane, value) in value.to_le_bytes().into_iter().enumerate() {
         set_byte(h, at + lane, value);
     }
 }
 
 /// The external observations as the host's projection holds them.
-pub(crate) fn observed_inputs<H: CompatibilityRam + ?Sized>(h: &H) -> ExternalInputs {
+pub(crate) fn observed_inputs<H: ProjectedBytes + ?Sized>(h: &H) -> ExternalInputs {
     sm_game::session_encoding::inputs(&|at| h.compatibility_byte(at))
 }
 
-fn store_words<H: CompatibilityRam + ?Sized>(
+fn store_words<H: ProjectedBytes + ?Sized>(
     h: &mut H,
     words: &mut impl Layout,
     mut select: impl FnMut(usize) -> bool,

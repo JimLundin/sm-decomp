@@ -297,6 +297,9 @@ pub mod cpu_infra;
 mod initial_state;
 /// Names for raw `g_ram` offsets, recovered from snesrev's variable macros.
 pub mod ram_map;
+/// The verifier's named RAM table: each address's snesrev name, type and shape.
+#[path = "verification/ram_names.rs"]
+pub mod ram_names;
 /// Named RAM word and enemy-record access by those names.
 mod ram_words;
 /// Game runtime library: RAM, ROM access, save states, frame loop glue.

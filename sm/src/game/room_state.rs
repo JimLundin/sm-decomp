@@ -160,7 +160,7 @@ impl sm_game::room_state::fx::SetupHost for Runtime<'_> {
 
 /// The room's main code, on the gameplay pass's lease.
 pub(crate) fn advance_room(runtime: &mut Runtime<'_>) {
-    use sm_game::ram::CompatibilityRam;
+    use crate::projection::ProjectedBytes;
     let script = word!(runtime.ROOM_MAIN_CODE_PTR);
     if script != 0 {
         sm_game::room_state::execute_main_code(script, runtime);

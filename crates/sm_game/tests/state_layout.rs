@@ -143,26 +143,26 @@ impl sm_game::gameplay_context::Access for Projection {
     }
 }
 impl CompatibilityRam for Projection {
-    fn compatibility_byte(&self, at: usize) -> u8 {
+    fn observed_inputs(&self) -> ExternalInputs {
+        sm_game::session_encoding::inputs(&|at| self.byte(at))
+    }
+}
+impl Projection {
+    fn byte(&self, at: usize) -> u8 {
         projected_byte(&self.0, at).unwrap_or_else(|| panic!("{at:#x} is not projected"))
     }
-    fn compatibility_write_byte(&mut self, at: usize, value: u8) {
+    fn set_byte(&mut self, at: usize, value: u8) {
         assert!(
             write_projected_byte(&mut self.0, at, value),
             "{at:#x} is not projected"
         );
     }
-    fn observed_inputs(&self) -> ExternalInputs {
-        sm_game::session_encoding::inputs(&|at| self.compatibility_byte(at))
-    }
-}
-impl Projection {
     fn word(&self, at: usize) -> u16 {
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+        u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
     fn set_word(&mut self, at: usize, value: u16) {
         for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
-            self.compatibility_write_byte(at + lane, byte);
+            self.set_byte(at + lane, byte);
         }
     }
 }
@@ -174,10 +174,10 @@ impl Views for Projection {
         self.set_word(field.address(), value);
     }
     fn set_view_low_byte(&mut self, field: ViewField, value: u8) {
-        self.compatibility_write_byte(field.address(), value);
+        self.set_byte(field.address(), value);
     }
     fn decode_view<T: Decode>(&self) -> T {
-        T::decode(&|at| self.compatibility_byte(at))
+        T::decode(&|at| self.byte(at))
     }
     fn load_words(&self, words: &mut impl Layout) {
         words.visit(|at, word| *word = self.word(at));
@@ -1652,12 +1652,12 @@ fn session_round_trips_random_ram() {
 impl sm_game::sequence_state::Access for Projection {
     fn set_cinematic_function(&mut self, value: u16) {
         for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
-            self.compatibility_write_byte(0x1f51 + part, byte);
+            self.set_byte(0x1f51 + part, byte);
         }
     }
     fn set_sequence_word(&mut self, word: sm_game::session_words::Word, value: u16) {
         for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
-            self.compatibility_write_byte((word as usize) + part, byte);
+            self.set_byte((word as usize) + part, byte);
         }
     }
     fn sequence_flow(&self) -> sm_game::flow::Flow {

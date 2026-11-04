@@ -107,9 +107,9 @@ use {
         visual_runtime::set_hdma_enabled,
     },
     crate::game_state::Game,
+    crate::projection::ProjectedBytes,
     sm_game::effects::SoundEffects,
     sm_game::projectile_initialization::Initialization,
-    sm_game::ram::CompatibilityRam,
 };
 fn samus_end_super_jump(runtime: &mut Runtime<'_>) -> u8 {
     if word!(runtime.SAMUS_HEALTH).wrapping_sub(30) & 0x8000 == 0

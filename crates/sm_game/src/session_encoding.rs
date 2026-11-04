@@ -154,13 +154,6 @@ macro_rules! menu_words {
         $f(ram::PAUSE_SCREEN_MODE,$($borrow)* $c.pause_screen_mode);
     };
 }
-/// The menu state as `bytes` encode it.
-pub fn menu(bytes: &impl Fn(usize) -> u8) -> crate::menu_state::MenuState {
-    let mut menu = crate::menu_state::MenuState::default();
-    let load = |at: usize, value: &mut u16| *value = read(bytes, at);
-    menu_words!((menu), load, (&mut));
-    menu
-}
 /// RAM address of the first flow word, `cinematic_function`.
 pub const FLOW: usize = ram::CINEMATIC_FUNCTION;
 /// The camera as `bytes` encode it.

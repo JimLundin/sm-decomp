@@ -134,7 +134,7 @@ macro_rules! checked_word {
     }};
 }
 
-/// Named word access through any `CompatibilityRam`; the receiver must have
+/// Named word access through any `ProjectedBytes` host; the receiver must have
 /// `compatibility_byte`/`compatibility_write_byte` methods in scope.
 pub(crate) use {checked_word, word};
 

@@ -59,8 +59,8 @@ import cycle_report  # noqa: E402
 # sites. 25 target sites (19 Point::physical in 9 sm_game files): engine
 # address sites 11 becomes 36; the legacy engine adds 7 (452 becomes 459).
 BASELINE = {
-    "sm_game_ram_sites": 42,
-    "sm_game_coupled_files": 10,
+    "sm_game_ram_sites": 38,
+    "sm_game_coupled_files": 8,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
@@ -201,6 +201,9 @@ def game_boundary() -> dict[str, int]:
     sm_game code. Line comments are ignored."""
     foreign = re.compile(r"\.foreign\s*\(")
     host = re.compile(r"^\s*impl\b[^{;]*\bfor\s+Game\b")
+    # A trait sm/ defines for itself (`impl crate::...`) is not a host the engine
+    # calls through, so it is not part of the Game boundary (D6, 2026-11-04).
+    local = re.compile(r"^\s*impl\b(?:<[^>]*>)?\s+crate::")
     entry = re.compile(r"\.runtime\s*\(\s*\)")
     # Built with fromkeys: --update rewrites `"name": <n>` literals, which a
     # dict display here would match.
@@ -215,7 +218,8 @@ def game_boundary() -> dict[str, int]:
                     lines = [line.split("//", 1)[0] for line in source]
                 counts["foreign_calls"] += sum(len(foreign.findall(line)) for line in lines)
                 if path.startswith("sm/src/"):
-                    counts["game_host_impls"] += sum(1 for line in lines if host.match(line))
+                    counts["game_host_impls"] += sum(
+                        1 for line in lines if host.match(line) and not local.match(line))
                 if path.startswith("crates/sm_game/src/"):
                     counts["session_entries"] += sum(len(entry.findall(line)) for line in lines)
     return counts

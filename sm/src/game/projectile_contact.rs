@@ -2,9 +2,9 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game::actors;
 use crate::game::session_runtime::Runtime;
+use crate::projection::ProjectedBytes;
 use crate::ram_map::checked_word as word;
 use sm_game::contact_rules::axis;
-use sm_game::ram::CompatibilityRam;
 
 fn mark(index: u16, runtime: &mut Runtime<'_>) {
     word!(runtime.PROJECTILE_DIR[index] = word!(runtime.PROJECTILE_DIR[index]) | 0x10);

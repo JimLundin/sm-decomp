@@ -164,12 +164,6 @@ impl sm_game::gameplay_context::Access for World {
     }
 }
 impl CompatibilityRam for World {
-    fn compatibility_byte(&self, at: usize) -> u8 {
-        self.ram[at]
-    }
-    fn compatibility_write_byte(&mut self, at: usize, value: u8) {
-        self.ram[at] = value;
-    }
     fn observed_inputs(&self) -> ExternalInputs {
         sm_game::session_encoding::inputs(&|at| self.ram[at])
     }
@@ -352,12 +346,12 @@ fn a_vram_address_with_bit_15_keeps_it_in_the_record() {
 impl sm_game::sequence_state::Access for World {
     fn set_cinematic_function(&mut self, value: u16) {
         for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
-            self.compatibility_write_byte(0x1f51 + part, byte);
+            self.ram[0x1f51 + part] = byte;
         }
     }
     fn set_sequence_word(&mut self, word: sm_game::session_words::Word, value: u16) {
         for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
-            self.compatibility_write_byte((word as usize) + part, byte);
+            self.ram[(word as usize) + part] = byte;
         }
     }
     fn sequence_flow(&self) -> sm_game::flow::Flow {

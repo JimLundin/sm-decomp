@@ -424,6 +424,45 @@ three HDMA buffers.
 The ratchet does not count these, but only sm/ calls them: `RAM_VARS`, `RamVar`, `Shape`
 (`ram_map.rs`, `cpu_infra.rs:1258`, `verification/observation/oracle.rs`).
 
+## D6 lane (2026-11-04, `collab/rs-d6`)
+
+Jim's D6 decision (REVIEW, PR #211) puts RAM compatibility shims and the RAM to
+Session translation in sm/. The four ram.rs and projection.rs sites above are gone;
+`sm_game_ram_sites` 42 to 38, `sm_game_coupled_files` 10 to 8. No Session field or
+format changed.
+
+- `compatibility_byte`/`compatibility_write_byte` are sm/'s own trait,
+  `ProjectedBytes` in `sm/src/projection.rs`, implemented by `Game` and the Runtime
+  with the delegates they had. sm_game's `CompatibilityRam` keeps its typed
+  supertraits and `observed_inputs`; its name is now a misnomer. Renaming it touches
+  about 30 files, including the `d9` and `fc9` lanes', so it waits for them.
+- `session_cohort` needs only the projection's `Views` (`load_words`,
+  `store_words`), so `load`, `store`, `with` and `with_projected` bound on `Views`.
+  The cohort copies stay.
+- The sm_game test hosts (`tests/state_layout.rs`, `tests/escape_typewriter.rs`)
+  address their bytes through their own helpers.
+- `RAM_VARS`, `RamVar` and `Shape` are in `sm/src/verification/ram_names.rs`.
+  sm_game keeps the one name list as `ram_table!` and generates its offsets
+  (`words`, `word_arrays`, `bytes`) from it. sm/ builds the named table from the
+  same rows, and the register mirrors' name check moved with it.
+- `session_encoding::menu`, a RAM decode nothing called, is gone.
+
+What stays in sm_game until `foreign` and `Game` go (production lines, before
+each file's tests):
+
+| Code | Lines | Why it stays |
+| --- | ---: | --- |
+| `session_encoding.rs` | about 2,000 | the lease's export and import (`encode`, `encode_spans`, `decode`, `projected_byte`, `write_projected_byte`, `inputs`, `inputs_from_session`, `InputProjection`); scene commits and persistent sessions also call `projected_byte` |
+| `fx_encoding.rs` | about 2,030 | the FX lanes of the same projection |
+| `actors/codec.rs` | about 480 | the actor lanes |
+| `menu_window_encoding.rs` | about 80 | the map-menu window lanes |
+| `ram.rs` | about 810 | the name list and offsets every encoder above addresses |
+| `projection.rs`'s `Field::address`, `Decode::decode` | about 70 | the byte path of `Views` hosts: `Game`, and the Runtime outside its lease |
+
+Another 16 files have a `fn address` for their words. sm/ calls `encode` and
+`decode` in about 20 verification observers too; those move to sm/ verification
+with the encoder.
+
 ## Foreign calls lane (2026-11-04, `collab/rs-fc6`, on `rs-fc5`)
 
 `foreign_calls` 121 to 103, `legacy_engine_ram_sites` 460 to 458; `sm_game_ram_sites` and
