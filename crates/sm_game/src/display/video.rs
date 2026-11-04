@@ -380,6 +380,52 @@ pub enum Command {
     /// Start no DMA and stop every HDMA channel: one 16-bit store of zero
     /// that clears both enables.
     StopDma,
+    /// A display mirror's byte, committed to the display as the NMI refresh
+    /// does: the NMI enable, brightness, the screen, window and colour-math
+    /// controls, a fixed colour channel byte or the screen settings.
+    Commit(Field, u8),
+    /// One byte into a scroll offset's two-write latch.
+    ScrollByte {
+        scroll: ScrollOffset,
+        value: u8,
+    },
+    /// Upload OAM from address 0 and CGRAM from entry 0 now, as
+    /// `Upload::Objects` and `Upload::Palette`: the objects' channel and the
+    /// OAM address, the palette's channel and the CGRAM address, then both
+    /// channels start together.
+    ObjectsAndPaletteNow {
+        objects: Source,
+        object_bytes: u16,
+        palette: Source,
+        palette_bytes: u16,
+    },
+    /// An HDMA object's table address, set for the channel its bank slot
+    /// byte selects. The slot byte is the channel times 16; any other value
+    /// sets the register the original's offset reaches.
+    HdmaTable {
+        bank_slot: u8,
+        table: u16,
+    },
+    /// Set channel 1 for a graphics load of `bytes` from `source`, its mode
+    /// and target first, then its source and count; the host starts it.
+    GraphicsChannel {
+        transfer: GraphicsTransfer,
+        source: Source,
+        bytes: u16,
+    },
+}
+
+/// Where a graphics load's channel writes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GraphicsTransfer {
+    /// VRAM words through the data port's two bytes.
+    VramWords,
+    /// VRAM's low bytes alone.
+    VramLowBytes,
+    /// VRAM's high bytes alone.
+    VramHighBytes,
+    /// Work RAM through its port.
+    WramBytes,
 }
 
 /// A host that takes a producer's uploads and display commands as typed calls.

@@ -71,6 +71,9 @@ impl refresh::Host for Game {
         // SAFETY: as for `start_graphics_dma`.
         unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
     }
+    fn read_vram_data(&mut self) -> u16 {
+        sm_game::display::sequence::Registers::read_register_word(self, crate::rtl::RDVRAML as u16)
+    }
 }
 
 impl sm_game::display::video::Video for Game {

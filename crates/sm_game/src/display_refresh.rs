@@ -4,16 +4,12 @@ use crate::constants::bank_60::ADDR_UNK_605880;
 use crate::decompression::{self, decompress_to_ram};
 use crate::display::control::{BgMode, FixedColor, Layers, ScreenSettings};
 use crate::display::preparation::Field as DisplayField;
-use crate::display::registers::{
-    A1B0, A1T0L, BG1HOFS, BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADD, CGADSUB,
-    CGWSEL, COLDATA, DAS0L, DMAP0, HDMAEN, HTIMEL, INIDISP, M7A, M7SEL, MDMAEN, MOSAIC, NMITIMEN,
-    OAMADDL, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0, WH1,
-    WH2, WH3, WOBJLOG, WOBJSEL,
-};
-use crate::display::sequence::{Registers, register_writes};
-use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
+use crate::display::registers::{BG3SC, CGADSUB, CGWSEL, HTIMEL, NMITIMEN, TM, VTIMEL};
+use crate::display::sequence::Registers;
+use crate::display::transfer::{ScrollingLayout, Source, TilemapQueue};
 use crate::display::video::{
-    Background, Command, Control, Mirror, Upload, apply_controls, apply_mirrored,
+    Axis, Background, Command, Control, GraphicsTransfer, Mirror, Mode7Parameter, ScrollOffset,
+    apply_controls, apply_mirrored,
 };
 use crate::presentation_workspace::{Point, Role};
 use crate::ram::CompatibilityRam;
@@ -40,7 +36,7 @@ pub trait ReadbackQueue: crate::display::preparation::Access {
     fn store_readback_byte(&mut self, offset: usize, value: u8);
 }
 
-/// What the display refresh needs besides RAM, registers and the cartridge:
+/// What the display refresh needs besides RAM, the display and the cartridge:
 /// owned display stores and the uploads the compatibility runtime still owns.
 pub trait Host:
     crate::fx_domain::Controls
@@ -70,6 +66,9 @@ pub trait Host:
     /// Fill VRAM's low bytes with `fill` from address 0, resetting the
     /// address as one word or two bytes.
     fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
+    /// Read the VRAM port's data word, stepping the port as the hardware
+    /// does; the first read after setting the address is the prefetch.
+    fn read_vram_data(&mut self) -> u16;
 }
 
 /// The producer name of the pause screen's display commands.
@@ -510,6 +509,9 @@ pub fn wait<H: crate::display::preparation::Access + CompatibilityRam + DisplayO
     1
 }
 
+/// The producer name of the NMI display refresh's commands.
+const REFRESH: &str = "display refresh";
+
 pub fn enable<
     H: Registers + crate::display::preparation::Access + CompatibilityRam + DisplayOwner + ?Sized,
 >(
@@ -612,104 +614,126 @@ pub fn disable_scanline_irq<H: crate::display::preparation::Access + Compatibili
     irq::disable(&mut ScanlineIrq(game));
 }
 
+/// Commit each mirror field's byte to the display in order, reading each
+/// just before its commit.
+fn commit<H: Host + ?Sized>(game: &mut H, fields: &[DisplayField]) {
+    for &field in fields {
+        let value = crate::display::preparation::Access::display_control_byte(&*game, field);
+        game.apply(REFRESH, Command::Commit(field, value));
+    }
+}
+
 fn upload_affine_latches<H: Host + ?Sized>(game: &mut H) {
     use crate::display::preparation::{Access, Field};
-    for (index, (low, high)) in [
+    for (parameter, (low, high)) in Mode7Parameter::ALL.into_iter().zip([
         (Field::AffineWords0Low, Field::AffineWords0High),
         (Field::AffineWords1Low, Field::AffineWords1High),
         (Field::AffineWords2Low, Field::AffineWords2High),
         (Field::AffineWords3Low, Field::AffineWords3High),
         (Field::AffineWords4Low, Field::AffineWords4High),
         (Field::AffineWords5Low, Field::AffineWords5High),
-    ]
-    .into_iter()
-    .enumerate()
-    {
-        let register = (M7A as u16) + u16::try_from(index).expect("six affine latches");
-        game.write_register(register, Access::display_control_byte(&*game, low));
-        // The low register callback precedes the high field observation.
-        game.write_register(register, Access::display_control_byte(&*game, high));
+    ]) {
+        let value = Access::display_control_byte(&*game, low);
+        game.apply(
+            REFRESH,
+            Command::Control(Control::Mode7Latch(parameter, value)),
+        );
+        // The low latch's write precedes the high field's read.
+        let value = Access::display_control_byte(&*game, high);
+        game.apply(
+            REFRESH,
+            Command::Control(Control::Mode7Latch(parameter, value)),
+        );
     }
 }
 
 fn upload_registers<H: Host + ?Sized>(game: &mut H) {
-    register_writes! { game;
-        byte(NMITIMEN as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::NmiEnable)); byte(INIDISP as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Brightness));
-        byte(OBSEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::ObjectLayout)); byte(BGMODE as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Mode));
-        byte(MOSAIC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Mosaic)); byte(BG1SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens0));
-        byte(BG2SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens1)); byte(BG3SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens2));
-        byte(BG4SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens3)); byte(BG12NBA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Characters0));
-        byte(BG34NBA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Characters1)); byte(M7SEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::AffineSelection));
-        byte(W12SEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowSelection0)); byte(W34SEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowSelection1));
-        byte(WOBJSEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowSelection2)); byte(WH0 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions0));
-        byte(WH1 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions1)); byte(WH2 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions2));
-        byte(WH3 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions3)); byte(WBGLOG as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowLogic0));
-        byte(WOBJLOG as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowLogic1));
-    }
-    crate::frame_display_byte!(game, crate::display::preparation::Field::PreviousMainLayers => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::MainLayers));
-    register_writes! { game;
-        byte(TM as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::MainLayers)); byte(TMW as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::MainWindow));
-        byte(TS as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::SubLayers)); byte(TSW as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::SubWindow));
-        byte(CGWSEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::ColorSelection)); byte(CGADSUB as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::ColorMath));
-    }
-    crate::frame_display_byte!(game, crate::display::preparation::Field::PreviousColorSelection => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::NextColorSelection));
-    crate::frame_display_byte!(game, crate::display::preparation::Field::PreviousColorMath => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::NextColorMath));
-    register_writes! { game;
-        byte(COLDATA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FixedColor0)); byte(COLDATA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FixedColor1));
-        byte(COLDATA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FixedColor2)); byte(SETINI as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Geometry));
-    }
+    use crate::display::preparation::{Access, Field};
+    commit(
+        game,
+        &[
+            Field::NmiEnable,
+            Field::Brightness,
+            Field::ObjectLayout,
+            Field::Mode,
+            Field::Mosaic,
+            Field::Screens0,
+            Field::Screens1,
+            Field::Screens2,
+            Field::Screens3,
+            Field::Characters0,
+            Field::Characters1,
+            Field::AffineSelection,
+            Field::WindowSelection0,
+            Field::WindowSelection1,
+            Field::WindowSelection2,
+            Field::WindowPositions0,
+            Field::WindowPositions1,
+            Field::WindowPositions2,
+            Field::WindowPositions3,
+            Field::WindowLogic0,
+            Field::WindowLogic1,
+        ],
+    );
+    crate::frame_display_byte!(game, Field::PreviousMainLayers => Access::display_control_byte(&*game, Field::MainLayers));
+    commit(
+        game,
+        &[
+            Field::MainLayers,
+            Field::MainWindow,
+            Field::SubLayers,
+            Field::SubWindow,
+            Field::ColorSelection,
+            Field::ColorMath,
+        ],
+    );
+    crate::frame_display_byte!(game, Field::PreviousColorSelection => Access::display_control_byte(&*game, Field::NextColorSelection));
+    crate::frame_display_byte!(game, Field::PreviousColorMath => Access::display_control_byte(&*game, Field::NextColorMath));
+    commit(
+        game,
+        &[
+            Field::FixedColor0,
+            Field::FixedColor1,
+            Field::FixedColor2,
+            Field::Geometry,
+        ],
+    );
 
-    // Scroll and Mode 7 words latch low then high through the same register.
-    for (index, word) in crate::display_scroll::WORDS.into_iter().enumerate() {
-        let register = (BG1HOFS as u16) + u16::try_from(index).expect("eight scroll registers");
-        game.write_register(register, game.scroll_byte(word, false));
-        // Re-sample after the low latch: the register callback may change it.
-        game.write_register(register, game.scroll_byte(word, true));
+    // Each scroll offset latches its low byte, then its high byte.
+    let offsets = Background::ALL.into_iter().flat_map(|background| {
+        [Axis::Horizontal, Axis::Vertical].map(|axis| ScrollOffset { background, axis })
+    });
+    for (word, scroll) in crate::display_scroll::WORDS.into_iter().zip(offsets) {
+        let value = game.scroll_byte(word, false);
+        game.apply(REFRESH, Command::ScrollByte { scroll, value });
+        // Re-sample after the low latch: its write may change the word.
+        let value = game.scroll_byte(word, true);
+        game.apply(REFRESH, Command::ScrollByte { scroll, value });
     }
-    crate::frame_display_byte!(game, crate::display::preparation::Field::CommittedFakeMode => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FakeMode));
-    if crate::display::preparation::Access::display_control_byte(
-        &*game,
-        crate::display::preparation::Field::Mode,
-    ) & 7
-        == 7
-        || crate::display::preparation::Access::display_control_byte(
-            &*game,
-            crate::display::preparation::Field::FakeMode,
-        ) & 7
-            == 7
+    crate::frame_display_byte!(game, Field::CommittedFakeMode => Access::display_control_byte(&*game, Field::FakeMode));
+    if Access::display_control_byte(&*game, Field::Mode) & 7 == 7
+        || Access::display_control_byte(&*game, Field::FakeMode) & 7 == 7
     {
         upload_affine_latches(game);
     }
 }
 
 fn upload_palette_and_oam<H: Host + ?Sized>(game: &mut H) {
-    game.producing();
-    // Channel 0 uploads the OAM entries and their high table from RAM.
-    register_writes! { game;
-        word(DMAP0 as u16, 0x0400); word(A1T0L as u16, 0x0370);
-        byte(A1B0 as u16, 0); word(DAS0L as u16, 0x0220);
-        word(OAMADDL as u16, 0);
-    }
-
-    // Channel 1 uploads palette_buffer to CGRAM.
-    setup_transfer(0x2200, 0x7ec000, 0x0200, game);
-    register_writes! { game;
-        byte(CGADD as u16, 0); byte(MDMAEN as u16, 3);
-    }
-    game.produced(
+    // The OAM entries and their high table, and palette_buffer.
+    game.apply(
         "palette and objects",
-        &[
-            Upload::Objects {
-                address: 0,
-                source: 0x0370,
-                bytes: 0x0220,
+        Command::ObjectsAndPaletteNow {
+            objects: Source {
+                address: 0x0370,
+                bank: 0,
             },
-            Upload::Palette {
-                index: 0,
-                source: 0xc000,
-                bytes: 0x0200,
+            object_bytes: 0x0220,
+            palette: Source {
+                address: 0xc000,
+                bank: 0x7e,
             },
-        ],
+            palette_bytes: 0x0200,
+        },
     );
     crate::probe::hit("palette.dma.uploaded");
 }
@@ -760,7 +784,9 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
         })
     }
     fn bind_hdma(&mut self, bank_slot: u16, table: u16) -> Result<(), DisplayError> {
-        self.0.write_register_word(A1T0L as u16 + bank_slot, table);
+        let bank_slot = u8::try_from(bank_slot).expect("an HDMA object's bank slot byte");
+        self.0
+            .apply(REFRESH, Command::HdmaTable { bank_slot, table });
         Ok(())
     }
     fn mode(&self) -> u8 {
@@ -794,7 +820,8 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
         )
     }
     fn publish_hdma(&mut self, value: u8) -> Result<(), DisplayError> {
-        self.0.write_register(HDMAEN as u16, value);
+        self.0
+            .apply(REFRESH, Command::Control(Control::HdmaChannels(value)));
         Ok(())
     }
     fn set_pending_nmi(&mut self, value: u8) {
@@ -882,20 +909,29 @@ impl GraphicsAsset {
             Self::VramHighBytes(..) => "graphics-load-vram-high",
             Self::WramBytes(..) => "graphics-load-wram",
         });
-        let (mode, source, size, vram) = match self {
+        let (transfer, source, size, vram) = match self {
             Self::Decompress(source, destination) => {
                 decompress_to_ram(source, destination, game);
                 return;
             }
-            Self::VramWords(source, destination, size) => {
-                ([1, 0x18], source, size, Some((destination, 0x80)))
-            }
-            Self::VramLowBytes(source, destination, size) => {
-                ([0, 0x18], source, size, Some((destination, 0)))
-            }
-            Self::VramHighBytes(source, destination, size) => {
-                ([0, 0x19], source, size, Some((destination, 0x80)))
-            }
+            Self::VramWords(source, destination, size) => (
+                GraphicsTransfer::VramWords,
+                source,
+                size,
+                Some((destination, 0x80)),
+            ),
+            Self::VramLowBytes(source, destination, size) => (
+                GraphicsTransfer::VramLowBytes,
+                source,
+                size,
+                Some((destination, 0)),
+            ),
+            Self::VramHighBytes(source, destination, size) => (
+                GraphicsTransfer::VramHighBytes,
+                source,
+                size,
+                Some((destination, 0x80)),
+            ),
             Self::WramBytes(source, destination, size) => {
                 game.apply(
                     GRAPHICS,
@@ -903,14 +939,24 @@ impl GraphicsAsset {
                         address: destination,
                     },
                 );
-                ([0, 0x80], source, size, None)
+                (GraphicsTransfer::WramBytes, source, size, None)
             }
         };
         if let Some((address, step)) = vram {
             game.apply(GRAPHICS, Command::VramPort { address, step });
         }
-        // The old packed descriptor read its adjacent mode/register bytes natively.
-        setup_transfer(u16::from_ne_bytes(mode), source, size, game);
+        let [address_low, address_high, bank, _] = source.to_le_bytes();
+        game.apply(
+            GRAPHICS,
+            Command::GraphicsChannel {
+                transfer,
+                source: Source {
+                    address: u16::from_le_bytes([address_low, address_high]),
+                    bank,
+                },
+                bytes: size,
+            },
+        );
         game.start_graphics_dma(source);
     }
 }
@@ -942,8 +988,8 @@ impl<H: Host + ?Sized> decompression::Output for DecompressionVram<'_, '_, H> {
 fn read_ppu_byte<H: Host + ?Sized>(addr: u16, game: &mut H) -> u8 {
     game.apply(GRAPHICS, Command::VramAddress(addr >> 1));
     // The prefetch read, then the word.
-    game.read_register_word(RDVRAML as u16);
-    let data: u16 = game.read_register_word(RDVRAML as u16);
+    game.read_vram_data();
+    let data: u16 = game.read_vram_data();
     (if addr & 1 != 0 {
         (data as i32 & 0xff00) >> 8
     } else {
