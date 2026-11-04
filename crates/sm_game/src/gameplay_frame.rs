@@ -309,8 +309,11 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         };
         if begin_frame {
             game.clear_pass_continuations();
-            game.update_hdma();
+            // The HDMA object handler, with its music queue step, runs on the
+            // frame's first lease. The main game loop's PLP restores the carry
+            // loading the save slots ($80:8261) set.
             let mut lease = game.runtime();
+            crate::hdma_objects::update_hdma(true, &mut lease);
             start_frame::<H>(&mut lease);
             st = game_state(&lease) as i32 + 10;
             lease.set_outer_continuation(st as u8);
