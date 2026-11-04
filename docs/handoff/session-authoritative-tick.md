@@ -618,6 +618,88 @@ former `foreign` call left them. Writes are identical and in the same order.
   delegations (`foreign_calls` is strict). Two of them (`run_hdma_objects` and
   `advance_intro_player`) would open a lease inside `foreign`: the section 4 failure mode. A Game-held `Cinematic`, fade plane or palette owner would be a
   second state owner outside the plan. A Game-side accessor would be an excluded facade.
+- **Attempted again (lane `tick-s7b`, on `ba7cfe351`, `collab/tick-s4`).** Not landed; no
+  engine change. Ratchet then: `sm_game_ram_sites` 11, `foreign_calls` 62,
+  `game_host_impls` 83.
+  - **Where the 11 copies run.** All of them run inside `title_sequence`, `intro` and
+    `ending_and_credits` (`cinematic_states.rs`) or in helpers those states reach. The
+    five `cinematic.rs` palette helpers are called from `cinematic_objects`,
+    `ending_sequence`, `ending_screens`, `intro_pages` and `title_sequence`.
+    - A copy can only become field access once the whole state runs on a lease. The
+      state's one lease is the frame's first (step 6), kept open through the dispatch.
+      Splitting a state across a lease and Game would open a lease mid-frame.
+    - `title_sequence::load_graphics` also runs from the demo phase on Game
+      (`load_title_sequence_graphics` in `gameplay.rs`). Its palette helper calls keep a
+      Game caller until the demo moves too.
+  - **What is now covered.** A compile probe checked `Runtime<'_>` against each supertrait
+    of `cinematic_host::Host`, `menus::host::Host`, `display_refresh::Host` and
+    `sprite_output::SpriteHost`. `Runtime` already implements:
+    - display: `Video`, `HdmaTable`, `DisplayOwner`, `ReadbackQueue`, `Scrolling` and
+      `TilemapQueue`;
+    - player and audio: `PlayerPosition`, `PlayerFacts`, `HudPlayer`, `SoundEffects` and
+      `AudioHost`;
+    - everything else: `LoadedRom`, `DecompressionHost`, `SessionRam`, `MapFacts`, the
+      presentation and FX access traits, `MapHost`, `NativeImage`, `ObjectAccess`,
+      `escape_countdown::Access` and `screen_fade::Owner`.
+
+    Stage 6 already runs `advance_intro_player` and `initialize_player` on one lease.
+    `spawn_power_bomb` and `spawn_hdma` are generic over hosts `Runtime` implements
+    (`explosion_window::Host`, `hdma_objects::Allocator`). `update_beam_tiles_and_palette`
+    is generic over a lease (`player_drawing`).
+  - **Still missing on `Runtime` (16).**
+    - Typed Session access, independent of other lanes:
+      - `LevelData` (the Session terrain; `cinematic.rs` reads the size and level words);
+      - `BackgroundBlocks` (`QueuedTilemaps`);
+      - `menus::state::Access`, `menu_window_state::Access` and `ArrowAccess`;
+      - `InventoryAccess`;
+      - `SpriteWords` (after which `SpriteHost` is an empty impl);
+      - `ResetRequest` (the `GAME_STATE` word);
+      - `ActorImage` (the lease's actor records).
+    - `Mode7Queue` and `cinematic_host::Host::advance_ending_tile_upload`: Game writes
+      $02D0..$032F as raw RAM. On a Legacy lease that is the same raw write. Under an owned
+      Display the bytes still need their semantic counterpart (stage 4's note).
+    - `effects::DisplayRefresh`. `display_refresh::fade` and `set_blank` are generic but
+      bounded on `display_refresh::Host`. Their bodies use only the screen fade, the display
+      mirrors and `Video`. Narrowing those bounds, and `initialize_io_and_oam`'s, leaves
+      the cinematic graph needing `display_refresh::Host` only for `GraphicsAsset::load`.
+    - `RuntimeAccess`. The cinematic graph makes 14 nested `.runtime()` or `with_session`
+      calls: `cinematic.rs` 3, `intro_pages` 4, `ending_sequence` 4,
+      `shooting_star_motion` 2 and `cinematic_states` 1, plus
+      `palette_effects::execution::leased`. On the lease they take the lease itself, in
+      one of two ways:
+      - `RuntimeAccess for Runtime` hands out a child lease that returns its Session to
+        the parent on drop (stage 9's rule);
+      - once nothing on Game calls the graph, those helpers take the lease directly.
+    - `MenuRuntime`. The cinematic graph calls only `cinematic_sprite_*`, `spawn_hdma`,
+      `rtl_unreachable`, `assert_ram_pointer` and `update_beam_tiles_and_palette`.
+      Splitting the trait, as fc7 and fc8 narrowed theirs, avoids implementing
+      `run_hdma_objects` and `handle_music_queue` on the lease. Implementing them there
+      would nest the HDMA lease or run the music on Game.
+    - `display_refresh::Host`: **blocked on lane `tick-s4b`**.
+      - 83 `GraphicsAsset` loads decompress into WRAM ($7E:2000.., $7F:0000..), then DMA
+        from it: `ending_sequence` 50, `intro_sequence` 26, `title_sequence` 5 and
+        `cinematic_states` 2. The DMA is `start_graphics_dma`, plus `fill_vram_low_bytes`
+        in `load_planes`.
+      - On the lease the decompression goes to the Session, so the DMA first needs
+        `Runtime::publish()` and a DMA start port.
+      - The cinematic states do not reach the NMI methods of `display_refresh::Host`
+        (`upload_samus`, `upload_animated_tiles`, `process_mode7`, `process_readbacks`,
+        `flush_tilemaps`). A narrow graphics-load trait keeps them off the lease.
+  - **Order once `tick-s4b` lands.**
+    1. Land the typed impls and the bound narrowing above, each `[exact]`.
+    2. Put `GraphicsAsset::load` behind a graphics-load trait, with its DMA start on
+       s4b's port.
+    3. In `gameplay_frame::frame`, keep step 6's lease open for `Native` states and run
+       the state on it through a `PassLease` method. The lease drops before
+       `advance_sound_effects`, as it now drops before the dispatch, so no lease is added.
+    4. Turn the copies into `lease.session_mut()` fields. `intro`'s split copy goes,
+       because Samus's frame runs on the same lease.
+  - **Rejected.**
+    - A host trait that returns a `FadePlanes` or `Cinematic` copy, with a Game impl in sm/
+      that calls `session_cohort`. It would lower the count without changing what the
+      engine reads.
+    - `foreign` delegations for the DMA starts and the NMI-only methods. They would raise
+      `foreign_calls` by about 12.
 
 ### Stage 8: pause hooks, save slots and demo on owners
 
