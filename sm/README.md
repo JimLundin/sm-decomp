@@ -1,9 +1,9 @@
 # sm (compat)
 
 The compatibility crate: everything that still needs the SNES machine model.
-It holds game code not yet moved to `sm_game`, the RAM-compatible runtime the
-game runs on, the emulated hardware and the oracle used for verification.
-It only shrinks and gets no new features.
+It holds game code not yet moved to `sm_game`, the Runtime that hosts the
+engine's tick, the emulated hardware and the oracle used for verification.
+It only shrinks and gets no new features; the old game code goes first, leaving the emulator as the oracle.
 
 | Path | Contents |
 | --- | --- |
@@ -14,7 +14,7 @@ It only shrinks and gets no new features.
 | `src/snes/` | Emulated hardware: the 65816 CPU (LakeSnes, native C), PPU (`ppu.rs`, with the LakeSnes C core in `backend.c`), DMA, APU, SPC700 and DSP |
 | `src/spc_player.rs`, `src/native_audio.rs`, `src/apu_*.rs`, `src/audio_*.rs` | The music and sound-effect sequencer and the APU upload and output paths |
 | `src/cpu_infra.rs` | Paired-frame execution of ROM and Rust, and the per-frame comparison |
-| `src/verify.rs`, `src/verify_dll.rs`, `src/verify/` | The headless verifier DLL loaded by `tools/verify_dll.py`, and checkpoints |
+| `src/verify.rs`, `src/verify_dll.rs`, `src/verify/` | The headless verifier run by `tools/verify_dll.py`, and checkpoints |
 | `src/verification/` | Verification-only checks registered with the verifier, and the detached `player_detached` example run in CI |
 | `src/native_*.c`, `native/stb_image.c` | C bridges for the zelda3 configuration, utility, shader and desktop routines, and for the PNG decoder |
 | `src/room_pack.rs` | Room-pack bytes and command-line selection |

@@ -1,35 +1,10 @@
-# External review
+# Milestones and decisions
 
-Living independent review, commissioned by the user. This file holds current
-direction; [frozen qualification history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md)
-retains earlier results and contracts. Retired issue receipts remain in the
-primary's owned archive, located by their original comment IDs in that history.
-
-## Milestone plan (2026-10-29)
-
-Approved by Jim on 2026-10-29; it supersedes the 2026-10-27 plan and its pacing
-advice. PLAN remains authoritative for the Fast loop, Git, resources and commit
-rules; the accepted architecture, ADRs and ENGINE_STATE_MIGRATION are unchanged.
-Primary (Jim, 2026-10-29 evening): the collaborator session is the sole Git
-writer for main; root releases main and hands in-flight work over as patches.
-Jim, 2026-11-02: CI replays run on Linux; PLAN's CI direction replaces the earlier stop.
-
-Jim clarified on 2026-11-02 that Linux CI is intentional. PLAN records this
-hosted-platform direction and the continuing local Cargo-check policy. Earlier
-Windows CI evidence keeps its exact source, host and artifact identities.
-
-Read PLAN's 2026-11-01 work order and migration scope before assigning phase work.
-PLAN owns current pacing and reporting; the compiler/fidelity gates and full
-completion scope below remain required.
-
-**Landing rule (Jim, 2026-10-29; local execution clarified 2026-11-02).**
-A change lands when local formatting, ordinary `cargo check` with warnings
-denied and source inventory checks pass, and PR CI and PR Verify's oracle-lock
-gate on its exact head are green. Full live lockstep runs nightly. CI builds
-and links the actual headless verifier
-executable and runs the replays; local checks do not need an executable or DLL
-build. The PR description carries the evidence; no separate qualification
-records, timing tables or resource-ledger prose are required.
+Jim's decisions and the milestones they set. [PLAN](PLAN.md) holds the standing rules,
+and [#177](https://github.com/JimLundin/sm-decomp/issues/177) holds live status. Git
+history keeps everything retired from here; the
+[last full edition](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/REVIEW.md) and the
+[frozen progress report](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md) are starting points.
 
 ### Direction (Jim, 2026-10-29)
 
@@ -54,151 +29,6 @@ review rather than waiting.
 from the emulator. Code that exists only to keep the original runtime and oracle
 working is **compat**: it shrinks and gets no new features. Owners built inside
 the RAM-compatible runtime stay inside the backend cycle and are not the goal.
-
-The [review baseline](PROGRESS_REPORT.md#review-baseline) records the measured
-backend cycle, coupling and checkpoint invalidations that motivated these phases.
-
-### Phases
-
-Each phase closes on evidence, not a date. Lanes: A tooling/verification,
-M seams and cycle cuts, B bank retirement.
-
-0. **Verification loop (A; prerequisite for later phases).** Fingerprint the
-   Checkpoint's serialised layout (`State` field names and types) instead of
-   source text; keep the round-trip/extra-bytes/input-prefix rejections. Refresh
-   the `f158` seed asset; split the checkpoint shard to at most ~60 minutes. Run
-   `tools/cycle_report.py` in CI. *Exit:* two consecutive green full-corpus runs
-   on main, scheduled or dispatched (Jim, 2026-10-29: the schedule fired only
-   every 4â€“9 h, so dispatched runs count). The retained exit evidence is in
-   [Phase 0 qualification](PROGRESS_REPORT.md#phase-0-qualification).
-1. **Package graph and seams (M).** Add `sm_data`, `sm_game` and `sm_runtime`
-   to the workspace; `sm` becomes compat plus oracle tools. Put the CONTRACTS
-   types in place: `TickOutput`, a coarse `Scene`, a `Cue` record in `sm_data`.
-   Route `game/`'s audio backend calls (`write_sound_port`, `upload_bank`)
-   through Cues; a compat adapter maps each Cue back to `ApuQueue` port bytes so
-   oracle input is unchanged. Move the cycle-free files from the
-   [review baseline](PROGRESS_REPORT.md#review-baseline) into `sm_game`; CI
-   fails if `sm_data` or `sm_game` depends on compat. *Exit:* both build headless
-   without compat, the corpus is green, and the Cue trace reproduces the port
-   trace on every corpus row.
-2. **Cut the backend cycle (M and B, rolling).** Cheapest coupling first:
-   (a) ROM reads become `sm_data` tables built by an `sm_tools` importer, checked
-   byte-equal to the ROM at load and keyed by stable room/door IDs, which is what
-   Map Rando's room graph needs; (b) PPU register writes pass through one
-   display-state type feeding `sm_game::extraction` and the Scene; (c) RAM state
-   moves to typed domain modules in CONTRACTS order (progress, rooms, player,
-   actors) under the existing interval rules; (d) B resumes sm_8b, sm_a3,
-   sm_a5..sm_a9 and sm_aa, retiring straight into `sm_game` domain modules.
-   *Exit per domain:* it compiles in `sm_game` and its corpus rows pass.
-
-   **Phase 2 ratchets (review, 2026-10-30; flagged in two consecutive reviews).**
-   The [ratchet review snapshot](PROGRESS_REPORT.md#ratchet-review-snapshot)
-   records the increases that prompted these rules.
-   From now: (1) no landing may raise `sm_game_ram` total sites or coupled
-   files; a move that brings RAM-addressed code must convert at least as many
-   sites to typed `Session` fields in the same landing; make `cycle_report.py`
-   fail CI on an increase over a checked-in baseline. (2) A move is line-neutral
-   or smaller in production lines; host/lease adapters added to make it compile
-   count against it. (3) Each landing's PR description states both deltas.
-
-   **Address-shaped access is RAM access (Jim, 2026-11-02).** Macros and APIs that
-   name SNES RAM addresses (`session_slot!`, `ram_slot!(@at)`, `SlotAccess`,
-   `native_word`, `write_slice_*`) violate the migration even when typed Session
-   storage answers them. `ram_ratchet.py` reports them with direct `.ram()` calls,
-   unresolved word/byte methods and legacy-engine access, against main's baseline.
-   A migration must not convert counted sites into these forms; address APIs and
-   raw calls fail the ratchet when they rise. Completion requires all of them at
-   zero in the target packages. `land/owned-pattern152` adds about 2,650 address
-   APIs in its `*_owned.rs` actor files, and their address decoding costs 12-18% of
-   replay time, so it does not land until those use typed Session fields (Jim:
-   slowing every later replay costs more than the delay).
-
-   **Landing size and reporting (review, 2026-10-31; flagged in three reviews).**
-   (4) A landing PR carries at most ~25 commits; when its CI or corpus fails,
-   land the green prefix rather than holding everything. The original
-   [landing stall](PROGRESS_REPORT.md#landing-stall-snapshot) remains recorded. (5) The Phase 1 exit item, the Cue trace matching
-   the port trace on every corpus row, is still open (`sm/src/verify.rs:1184`
-   requires the physical-audio oracle). Before the next landing, either run it or
-   state the blocker and next action to Jim in the conversation. Keep measured
-   cycle and ratchet figures in the dated PROGRESS_REPORT.
-3. **Gate 1 vertical slice.** Morph room 9E9F: `Session::open` from prepared
-   content, the full Morph1200 inputs, `sm_runtime` renderer and sequencer, a
-   minimal `sm_app`, headless replay in `sm_tools`, compared to the oracle
-   through the scenario harness's projections (lane S, below) in free-run mode.
-   *Exit:* VALIDATION Gate 1 evidence.
-4. **Gates 2â€“5**, then Map Rando import through the same `sm_data` IDs.
-
-SPC700 CPU and APU bus emulation are frozen compat (unsafe permitted, outside
-the unsafe goal). The N-SPC sequencer (`spc_player.rs`) and S-DSP are the seed
-of `sm_runtime` audio; continue them only once separated from emulator types,
-with verification growth no larger than the production change it covers.
-
-### Session-authoritative tick decisions (Jim, 2026-11-04)
-
-These answer the decisions D6, D7 and D9 in
-[docs/handoff/session-authoritative-tick.md](handoff/session-authoritative-tick.md).
-
-- **Goal.** The old `sm/` game is the first attempt, and the aim is to remove it.
-  Verification may still use pieces of it for now, but it must not shape or hold
-  back the new engine (`sm_game`, `sm_runtime`).
-- **D9: the owned renderer is the authority.** Our own renderer, not the emulated
-  PPU, is the authority for the new engine. Register writes leave `sm_game` as typed
-  display commands. If a RAM or register compatibility shim is still needed, it
-  lives outside the engine.
-- **D6: RAM translation belongs to verification.** RAM compatibility shims such as
-  `CompatibilityRam` and the RAM ↔ Session translation may live in `sm/`, preferably
-  under verification. Verification is responsible for translating RAM into the
-  Session format for comparison. Moving such a shim out of `sm_game` into
-  verification counts as retiring it from the engine.
-- **D7: verification foreign calls go with `foreign`.** The verification-only
-  `foreign` calls are retired together when `foreign` itself is removed. They are
-  not ported one by one.
-
-### End state: the engine alone, against the emulator oracle (Jim, 2026-11-04)
-
-Jim confirmed the target. Only the new engine runs the game, and the emulator is
-used solely as the oracle. Once `sm_game_ram_sites` reached 0, the work runs in
-this order:
-
-1. **Compare in Session space.** Verification decodes the oracle emulator's RAM
-   into a Session and compares it with the engine's Session (D6). The engine then
-   no longer needs to export RAM for comparison.
-2. **The runtime owns the tick.** One lease per tick, with the NMI inside the
-   tick. After that, `foreign`, the leases and the Session ↔ RAM export are
-   deleted, and `Game` implements no `sm_game` host trait.
-3. **The native renderer is the replay output (D9).** The emulated PPU remains
-   only on the oracle side.
-4. **The old `sm/` game code is deleted.** What stays is the emulator, used as the
-   oracle, plus the RAM-to-Session translation in verification.
-
-Strict ratchet measures for this phase:
-
-- `game_host_impls` must reach 0.
-- `session_entries` (leases opened from the engine) must reach 0.
-- The RAM export/decode lines in the engine must reach 0.
-
-`sm_game_ram_sites` and `foreign_calls` stay strict as well.
-
-### After the decoupling: as few lines as possible (Jim, 2026-11-04)
-
-The plan is issue #231. Jim's ruling:
-
-- **Get the engine as small as it can go.** The aim is no bloat, not a fixed
-  number. No floor is accepted in advance: neither 100k nor 125k is the stopping
-  point.
-- **Architecture first.** Lines come off by better structure, not by hacks.
-  Joining lines, cramming expressions, or macros that turn code into an
-  unreadable generator don't count, and the Rust style rules in AGENTS.md still
-  apply.
-- **Data-driven structure is valid and preferred.** Moving behaviour into data
-  (tables, state machines described as data, importer-resolved hooks) is a valid
-  way to cut code, and that includes redesigning the bosses as data-driven state
-  machines. The data has to be typed and stored in `.rs` or `.py` modules, not
-  JSON. Moving import code into `sm_tools` counts only when it replaces engine
-  logic with data; moving code between packages unchanged doesn't count.
-- **Measure:** the [code volume](VERIFY_PIPELINE.md#code-volume) counts logic
-  and data tokens and structure (traits, blanket impls), which joining lines
-  doesn't move; it is advisory beside `production_lines`.
 
 ### External review work list (#254) decisions (Jim, 2026-11-04)
 
@@ -226,6 +56,103 @@ and the RAM export). In parallel, fix the safety net (#239, #240) and put in pla
 advisory measures and nightly reports (#245, #246). Then Gate 1 (#248), then the size
 work and #251. Landing is one PR at a time through `tools/lane/land.sh` (#240).
 
+### End state: the engine alone, against the emulator oracle (Jim, 2026-11-04)
+
+Jim confirmed the target. Only the new engine runs the game, and the emulator is
+used solely as the oracle. Once `sm_game_ram_sites` reached 0, the work runs in
+this order:
+
+1. **Compare in Session space.** Verification decodes the oracle emulator's RAM
+   into a Session and compares it with the engine's Session (D6). The engine then
+   no longer needs to export RAM for comparison.
+2. **The runtime owns the tick.** One lease per tick, with the NMI inside the
+   tick. After that, `foreign`, the leases and the Session ↔ RAM export are
+   deleted, and `Game` implements no `sm_game` host trait.
+3. **The native renderer is the replay output (D9).** The emulated PPU remains
+   only on the oracle side.
+4. **The old `sm/` game code is deleted.** What stays is the emulator, used as the
+   oracle, plus the RAM-to-Session translation in verification.
+
+Strict ratchet measures for this phase:
+
+- `game_host_impls` must reach 0.
+- `session_entries` (leases opened from the engine) must reach 0.
+- The RAM export/decode lines in the engine must reach 0.
+
+`sm_game_ram_sites` and `foreign_calls` stay strict as well.
+
+### Session-authoritative tick decisions (Jim, 2026-11-04)
+
+These answer the decisions D6, D7 and D9 in
+[the tick handoff](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/handoff/session-authoritative-tick.md).
+
+- **Goal.** The old `sm/` game is the first attempt, and the aim is to remove it.
+  Verification may still use pieces of it for now, but it must not shape or hold
+  back the new engine (`sm_game`, `sm_runtime`).
+- **D9: the owned renderer is the authority.** Our own renderer, not the emulated
+  PPU, is the authority for the new engine. Register writes leave `sm_game` as typed
+  display commands. If a RAM or register compatibility shim is still needed, it
+  lives outside the engine.
+- **D6: RAM translation belongs to verification.** RAM compatibility shims such as
+  `CompatibilityRam` and the RAM ↔ Session translation may live in `sm/`, preferably
+  under verification. Verification is responsible for translating RAM into the
+  Session format for comparison. Moving such a shim out of `sm_game` into
+  verification counts as retiring it from the engine.
+- **D7: verification foreign calls go with `foreign`.** The verification-only
+  `foreign` calls are retired together when `foreign` itself is removed. They are
+  not ported one by one.
+
+### After the decoupling: as few lines as possible (Jim, 2026-11-04)
+
+The plan is issue #231. Jim's ruling:
+
+- **Get the engine as small as it can go.** The aim is no bloat, not a fixed
+  number. No floor is accepted in advance: neither 100k nor 125k is the stopping
+  point.
+- **Architecture first.** Lines come off by better structure, not by hacks.
+  Joining lines, cramming expressions, or macros that turn code into an
+  unreadable generator don't count, and the Rust style rules in AGENTS.md still
+  apply.
+- **Data-driven structure is valid and preferred.** Moving behaviour into data
+  (tables, state machines described as data, importer-resolved hooks) is a valid
+  way to cut code, and that includes redesigning the bosses as data-driven state
+  machines. The data has to be typed and stored in `.rs` or `.py` modules, not
+  JSON. Moving import code into `sm_tools` counts only when it replaces engine
+  logic with data; moving code between packages unchanged doesn't count.
+- **Measure:** the [code volume](VERIFY_PIPELINE.md#code-volume) counts logic
+  and data tokens and structure (traits, blanket impls), which joining lines
+  doesn't move; it is advisory beside `production_lines`.
+
+### Gate 1 slice
+
+Morph room 9E9F: `Session::open` from prepared content, the full Morph1200 inputs, the
+`sm_runtime` renderer and sequencer, a minimal `sm_app` and headless replay in `sm_tools`,
+compared to the oracle in free run. *Exit:* [VALIDATION](target-architecture/VALIDATION.md)
+Gate 1 evidence. Then Gates 2 to 5, and Map Rando import through the same `sm_data` IDs.
+
+Accepted interface decisions for the slice:
+
+1. Tools construct the complete sealed validated start; `sm_data` owns the immutable
+   envelope and IDs. Session never runs CPU normalization, opens a RAM dump or guesses fields.
+2. The initial observation is Tick 0; input index i commits Tick(i+1).
+3. `sm_game` checkpoints semantic audio intent and delays; the mixer, voices and echo stay
+   outside. Opening never resends an accepted fanfare batch.
+4. The portable, default and headless build edges exclude the old game, the backend, native
+   code, reference code and devices.
+
+### Ratchets
+
+`tools/ram_ratchet.py` holds them, and CI fails on a rise. A deliberate rise raises its
+baseline by hand in the same PR, and the PR says why. Macros and APIs that name SNES RAM
+addresses count as RAM access even when typed Session storage answers them (Jim,
+2026-11-02). Each landing's PR description states its ratchet deltas. A landing carries at
+most about 25 commits; when its gate fails, land the green prefix.
+
+**Independent pixels.** Both sides of a lockstep frame draw through the shared emulated
+PPU, so their agreement alone doesn't establish fidelity. See #250.
+
+SPC700 CPU and APU bus emulation are frozen compat, and unsafe is allowed there.
+
 ### Scenario harness, lane S (Jim, 2026-10-31)
 
 Jim approved the scenario harness in #6 on 2026-10-31; the design is
@@ -238,7 +165,7 @@ beside M and B under the landing rule and ratchets (1) to (5).
 **Jim's decisions.** (a) No tolerances: every divergence is fixed or listed in
 `docs/LEGACY.md`. For this harness that overrides "documented tolerances" in
 VALIDATION Gate 2. (b) The original step-1 lane decision and its retained
-status are recorded in the [harness snapshot](PROGRESS_REPORT.md#harness-snapshot).
+status are recorded in the [harness snapshot](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#harness-snapshot).
 Current harness work supports migration under PLAN's work order.
 
 **Review conditions (reviewer, 2026-10-31).**
@@ -301,7 +228,7 @@ Current harness work supports migration under PLAN's work order.
    - *Oracle independence (Jim, 2026-10-31).* Engine work never changes the lock.
      (i) Lock against the **faithful** oracle, the real game. The patched oracle
      applies entries the engine reproduces; its output moves with engine work
-     as native fixes flip entries. Read the [oracle snapshot](PROGRESS_REPORT.md#oracle-and-trick-source-snapshot)
+     as native fixes flip entries. Read the [oracle snapshot](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#oracle-and-trick-source-snapshot)
      for the retained inventory. A row
      whose engine still reproduces a gameplay-visible patch is listed in LEGACY
      and stays on live patched lockstep until that entry `follows`; the list only
@@ -310,7 +237,7 @@ Current harness work supports migration under PLAN's work order.
      engine State and are regenerated when its layout changes. (iii) *Decided
      (review, 2026-11-01): no standalone recorder now.* Extracting it means
      refactoring the oracle frame off `Game`, which is compat work
-     ([retained inventory](PROGRESS_REPORT.md#oracle-and-trick-source-snapshot)). Prove independence by evidence
+     ([retained inventory](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#oracle-and-trick-source-snapshot)). Prove independence by evidence
      instead: the scheduled corpus re-records a rotating sample of at least 30
      locked scenarios on the faithful oracle from the current main and fails if
      any digest differs from the committed lock without a lock change in the
@@ -328,7 +255,7 @@ Current harness work supports migration under PLAN's work order.
      frames, so one job replays each commit of a landing (at most 25) in order
      and names the first red commit: ratchet (4)'s green prefix.
    - *Adopted (Jim, 2026-10-31).* Engine-only free run against the lock is the
-     frequent verifier. The [adoption measurement](PROGRESS_REPORT.md#harness-snapshot)
+     frequent verifier. The [adoption measurement](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#harness-snapshot)
      retains the step-1 comparison. Jim replaced the former 2x adoption bar: a hash per
      scenario is deterministic and small, coverage grows by adding scenarios,
      and engine optimisation widens the gap. Running lockstep across everything
@@ -353,7 +280,7 @@ Current harness work supports migration under PLAN's work order.
      into the repo) and turns a chosen strat into a scenario skeleton: its
      stable ID (room, from node, to node, name), the entrance and exit
      conditions, and the equipment and end node as named facts. See the
-     [source inventory](PROGRESS_REPORT.md#oracle-and-trick-source-snapshot) for the
+     [source inventory](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#oracle-and-trick-source-snapshot) for the
      retained upstream snapshot. Choose by tech frequency and
      by door conditions first (G-mode, shinecharged, runway, spark), because
      carrying state into rooms that were never neighbours is what Map Rando
@@ -369,152 +296,6 @@ Current harness work supports migration under PLAN's work order.
      reconstruct the start (room, entry, equipment, position) as a documented
      constructed start; replay on the faithful oracle. *Success:* the oracle
      reaches the end node, and frames outside the HUD match the video. Report
-     the hit rate and per-strat cost in a dated PROGRESS_REPORT entry, then
+     the hit rate and per-strat cost in its PR, then
      decide whether to scale it.
      Videos are fetched by pinned digest and never committed.
-
-### Retained publication and acceptance
-
-Read the dated [Phase 0 qualification](PROGRESS_REPORT.md#phase-0-qualification)
-and [cohort proofs](PROGRESS_REPORT.md#retained-cohort-proofs) before changing an
-accepted owner. Frozen reports retain full hashes, native/cache/compiler/profile/
-source/codec/input/loader pins, donor/caller costs, exact deltas and failed or
-unexecuted variants. Consult the relevant original owned receipt.
-
-Catalog/schema/validation/adapters and verification growth all count; moves and
-formatter joins earn no savings. Windows selected ROM/search paths retain ASCII
-policy; pack/verifier paths retain Rust handling. Absolute ASCII ROM paths work
-independently of cwd; --config skips relative-directory search; no-room-pack flow
-adds no guard. Native dependencies stay disclosed until actual consumers retire.
-
-### Shared renderer contracts
-
-Preserve these interfaces and source contracts:
-
-- BG wraps its base before column/plane additions. Reads reach801e; retain 31
-  native tail words, port/padding/cgram aliases. No final-address mask or zeros.
-- Sprite evaluation writes directly through a narrow mutable 256-word native
-  workspace. Completed pixels survive explicit errors and Rust unwinding.
-  Success publishes sticky overflow before lineHasSprites; failure keeps prior
-  flags/lineHasSprites. No production panic wrapper or whole-Ppu borrow.
-- Keep brightness/backdrop/forcedblank/line0 mutation order. C acquires gated
-  signed sprite aliases from surrounding native storage. Per-pixel borrows end
-  before the original four-byte native commit. Preserve failures and aliases.
-- Pure color begin/needs-subscreen/finish stages retain native/reference policy,
-  including pseudo-hires/modes5/6 subpixels without math. EXTBG/mosaic fallback,
-  register/latch/snapshot/reference/device dependencies remain disclosed.
-- Keep whole ppu.rs in checkpoint contributors and add all three rendering
-  leaves, plus actual library/literal registrations, through the sole integrator.
-  New codec requires genuine initialized/required starts/continuation and complete
-  source/native/ROM/input guards. Never restamp 05 checkpoints.
-
-The safe core and actual prepared consumer must compile without oldsm/SNES/native/
-device/ROM dependencies. The direct metadata entry reaches only the three frozen
-leaves and std/core; whole sm --no-default-features is not that proof. Retain the
-original Linux detached proof; no new Linux job. Source authors remain source-only.
-Release original handles before changed-entry reuse.
-
-**Independent pixels are required.** Oracle and mine movie branches both use the
-shared renderer. Their pixel/RAM agreement alone cannot establish fidelity.
-The existing verifier now supplies independent Mode1/Mode7 pixels, priority/masks/
-color/scanline/affine, alias/failure and actual EXTBG/mosaic boundary witnesses.
-Broader variants and checked-overflow mutation sensitivity remain scoped/unproven.
-PLAN affected rows/four smokes/full Morph1200 retain their original proofs.
-
-### Message composition contracts
-
-Reuse the unchanged dialogue runner and frozen V03 renderer
-([retained slice evidence](PROGRESS_REPORT.md#owned-slice-snapshot)). One pure
-message-composition implementation serves the native writer and an actual prepared
-display consumer. Remove replaced borders/text/button/selection/radius/scanline
-bodies in the same cohort. Keep lazy draw/drawing/fresh modify reads, scratch/text/
-DAS/word/bound failure order, do-until zero/odd/wrapped behavior, letter priority,
-HDMA repeat/count and palette/saved-display restore order. Preserve live request
-clearing, parent/child suspension, input filtering, reset/load and checkpoints.
-
-Prepared starts require complete validated saved display, message/font/media IDs
-and revisions; missing data rejects. Do not infer a message or initial display
-from 9E9F. Native writable RAM and separately owned prepared display do not become
-competing authorities. display_refresh::wait's0782 request/acknowledgment structure
-is retained; no new clock, loop-to-completion or invented 60Hz policy. Audio/device
-delivery and full Session/Scene extraction remain explicit dependencies.
-
-### Full owned playable slice remains open
-
-The four accepted interface decisions below refine the full Morph9E9F proposal.
-The retained production estimate is not blanket authorization
-([snapshot](PROGRESS_REPORT.md#owned-slice-snapshot)).
-Preserve all eight full-slice proof groups and original full 1,200-frame Morph.
-
-1. Tools construct G's complete sealed validated start; D owns immutable envelope/
-   IDs. Session never runs CPU normalization, opens a RAM dump or guesses fields.
-2. Initial observation is Tick 0; input index i commits Tick(i+1). Preserve actual
-   normal/dialogue suspension, source sampling and late NMI/HDMA/IRQ settlement.
-3. G checkpoints semantic audio intent/delays; A mixer/voices/echo and C epoch/
-   acceptance/outbox stay outside. Opening never resends an accepted fanfare batch.
-4. Actual portable/default/headless edges exclude oldsm/backend/native/reference/
-   devices. Reuse actual pure leaves once; package moves alone do not establish it.
-
-The [retained seed/trace facts](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#full-owned-playable-slice-20-remains-open)
-use normalized WRAM06b4d253, not unavailable raw89960823. Room 9E9F / state 9EB1,
-equipment 0 and next input 18109 are observed. The original full 1,200 trace stays
-in 9E9F; award 590 / completion 977 retain source eba0 / DLL a1c0 / codec 3ac provenance.
-These facts do not establish complete initial Scene/audio or a committed Scenario.
-Exact cadence/reference policy and G's complete field schema still need evidence.
-Use the completed original reader; do not start duplicate artifact surveys.
-
-Scene extraction still needs immediate atmospheric/OAM/Samus aliases, NMI544-byte
-display commitment and later effects. Terrain/observation/gamma surveys remain
-scoped constraints; no standalone cache, dispatch facade or getter campaign is
-released. ENGINE_STATE_MIGRATION and retained qualified history hold their actual
-foreign-transfer/reset/adoption/failure contracts.
-
-### Pace, readable handoffs and publication
-
-Keep useful Windows owners supplied with bounded core work and a concrete ready
-follow-up: exact owner/files/source/budget/rows/handles and next recipient. Prepare
-successor commands and pinned inputs before upstream READY; collect/release the
-prior family, sample shared resources and immediately launch pregranted successors.
-Wake completed workers with followup_task; send_message does not activate them.
-Preserve live jobs/frozen sources and send minimal actual results before prose.
-Drain qualified code to main at the next safe boundary; documentation ACKs and
-CI observation never gate publication or independent implementation.
-
-Follow PLAN's current reporting rules. Mark pending checks honestly and keep
-exact proof in owned records. Direct handoffs continue during CI; historical
-issue receipts remain evidence provenance.
-
-Measure each cycle's actual source/review/build/capture/replay/publication time,
-queue/handoff gaps and net deltas. Preserve original handles and exact attribution;
-cached refs/mailbox observations do not prove push time. Correct measured stalls;
-do not repeat accepted campaigns for timing or claim unmeasured speedups.
-Pages, progress images, treemaps and the codebase map are retired. Keep commit
-messages concise under PLAN; retain exact metrics/proofs separately. Docs updates
-travel with code. Current qualification requires compiler warnings as errors on
-every real Rust path; historical warning-bearing results are not strict-lint proof.
-Preserve other workers' source/caches/locks and all fidelity gates.
-
-### Size, metrics and final acceptance
-
-The engine should end compact: the 100,000-line goal applies to the target
-packages (`sm_data`, `sm_game`, `sm_runtime`, `sm_app`) at completion. Compat
-and verification are reported separately and do not count against it. Moving
-code into a package is neutral, not growth; moves, formatting and relocation to
-verification are still not savings, and every adapter counts once.
-
-The dated PROGRESS_REPORT carries these measures and each observation's source
-and qualification scope. Its historical
-[baseline](PROGRESS_REPORT.md#daily-report-baseline) is retained separately:
-
-| Measure | Direction |
-| --- | --- |
-| Lines in target packages | up |
-| Lines outside the backend cycle (`tools/cycle_report.py`) | up |
-| Legacy bank lines | 0 |
-| Compat lines | down |
-| Unsafe fns/blocks/impls in `game/` (excluding compat) | 0 |
-| Scheduled full corpus | green |
-| Validation gates passed | Gate 1 at phase 3 |
-
-Full owned Session, independent renderer/audio, boot-to-credits fidelity and Map
-Rando remain open; the accepted architecture and VALIDATION gates define them.

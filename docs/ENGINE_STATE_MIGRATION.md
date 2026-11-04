@@ -45,7 +45,7 @@ and the condition that permits its removal.
   predecode, broader validation or sorted/batched traversal can change behavior.
 - Keep entry contracts unsafe while reachable unchecked backend or ROM operations
   remain. Checked RAM, passing replays and a safe-looking wrapper do not prove
-  transitive safety. See the archived [M1 audit](archive/M1A-REVIEW.md).
+  transitive safety.
 
 ## Reset, import and external writers
 

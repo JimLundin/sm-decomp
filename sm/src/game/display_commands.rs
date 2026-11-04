@@ -1,7 +1,7 @@
 //! The emulated backend's encoder for sm_game's typed display commands: each
 //! command becomes the original's register writes, made now and in the
 //! original's order and widths. Retires with the emulated PPU once the native
-//! renderer is the authority (docs/handoff/owned-display-registers.md).
+//! renderer is the authority.
 use crate::game::room_entry::PreparedRoomAssets;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;

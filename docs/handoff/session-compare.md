@@ -207,7 +207,7 @@ Session` is gone (a Tick with no lease is an import).
 **The NMI and the latch moved into the Tick (lane `tick-s10`, 2026-11-04;
 not yet replayed).** Every frame now opens one lease and runs its state, the
 NMI (`display_refresh::run`, with `flush_tilemaps`) and `sample_latched` on it
-(session-authoritative-tick.md, stage 10). The two writers above are inside the
+(stage 10 of the tick work). The two writers above are inside the
 last lease, so the line should fall to `0 ticks` on every row whose only
 post-lease writers were they: the chain rooms, pause and unpause, the `item-*`
 boxes, `credits`, the SFX-loss rows and the power-on rows (the logo's frames

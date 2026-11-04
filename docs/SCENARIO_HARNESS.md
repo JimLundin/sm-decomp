@@ -4,7 +4,7 @@ Accepted by Jim on 2026-10-31 under
 [REVIEW's lane S conditions](REVIEW.md#scenario-harness-lane-s-jim-2026-10-31).
 Engine-only free run against the committed oracle digest lock is the frequent
 gate (Jim, 2026-10-31, Decision 4). For implementation steps, lock coverage and
-timing evidence, read the dated [harness snapshot](PROGRESS_REPORT.md#harness-snapshot).
+timing evidence, read the dated [harness snapshot](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#harness-snapshot).
 
 This expands [Validation · Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
 into a concrete design. It is PLAN's one runner: the harness grows inside the
@@ -22,7 +22,7 @@ design has three consequences:
    still has to re-encode itself into SNES bytes so that the comparison can see it
    (`validate_normalized_projection`). Some places can't be made to agree, and those
    are hidden by normalization ranges whose stated reason is "existing
-   exceptions"; the [design snapshot](PROGRESS_REPORT.md#harness-measurements)
+   exceptions"; the [design snapshot](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#harness-measurements)
    retains the inventory.
 2. **It can't show drift.** Because the oracle's state is adopted every frame, the
    native engine never runs freely. A small difference is counted once and then wiped
@@ -124,7 +124,7 @@ plan (`.github/scripts/lock_gate.py`) runs it, then the engine over every
 locked scenario on each pull request and push; its console carries ids, stream and
 field names, ticks and hashes only.
 
-Read the dated [lock coverage snapshot](PROGRESS_REPORT.md#lock-coverage-snapshot)
+Read the dated [lock coverage snapshot](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#lock-coverage-snapshot)
 for measured locked/unlocked scope. Checkpoint starts need an oracle-side input
 prefix before faithful locking; [LEGACY](LEGACY.md) names retained divergences.
 
@@ -260,7 +260,7 @@ the design-baseline corpus run alone; measure current throughput in a dated repo
   runs when the hashes differ. Video compares line hashes. Pixels, PPU model checks
   and PCM are sampled every N Ticks, the way SM_PPU_MODEL_CHECK works today.
 - **Free run needs no snapshot or restore per Tick.** Lockstep pays that cost
-  inside a localisation window; the [design snapshot](PROGRESS_REPORT.md#harness-measurements)
+  inside a localisation window; the [design snapshot](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#harness-measurements)
   retains the earlier operation counts.
 - **Shared prefixes:** checkpoints are cached by (start, input-prefix hash), as the
   corpus already does, so scenarios with a common route prefix don't replay it.
@@ -306,7 +306,7 @@ ground (VALIDATION.md).
    on every PR once it is stable.
 3. **`scenario` manifests** generated from `movies/segments.toml` and the route CSVs,
    so the formats change without losing a row. Retain the
-   [migration evidence](PROGRESS_REPORT.md#harness-measurements). Add `scenario cut`
+   [migration evidence](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#harness-measurements). Add `scenario cut`
    and `scenario lock`.
 4. **The `sm_tools` binary** takes over orchestration from `verify_dll.py` and
    `full_route.py`. The DLL build stays, so the oracle remains reachable while it is
@@ -328,7 +328,7 @@ ground (VALIDATION.md).
 3. Step 1 starts now as its own lane, in parallel with the moves into the crates.
 4. **Free run against the lock is the frequent gate.** Engine-only free run against
    the committed oracle digest lock runs on every pull request and push. The
-   [adoption measurement](PROGRESS_REPORT.md#harness-measurements) retains the
+   [adoption measurement](https://github.com/JimLundin/sm-decomp/blob/e281ce9153a8bf35a48c5d7aca2a48533df49cac/docs/PROGRESS_REPORT.md#harness-measurements) retains the
    five-room comparison. This overrides the 2x adoption bar in REVIEW's lane S condition 8. A locked scenario
    needs only its digests, runs deterministically, and costs no oracle frames, and
    scenarios will keep being added. Engine optimization is expected to widen the gap.

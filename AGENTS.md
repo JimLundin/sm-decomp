@@ -3,11 +3,9 @@
 The goal is the new game engine in the new crates (`crates/sm_data`, `sm_game`,
 `sm_runtime`, `sm_tools`, `sm_app`), behaving like the real game. `sm/` is the
 compatibility layer and oracle tooling we are moving off.
-[docs/REVIEW.md](docs/REVIEW.md)'s Milestone plan sets the active phase and records
-Jim's decisions; [docs/PLAN.md](docs/PLAN.md) holds the standing rules.
-For measured counts, retained job evidence or timing, read the dated
-[progress report](docs/PROGRESS_REPORT.md). PLAN owns current coordination and
-reporting rules, including Jim's pattern-wide migration work order.
+[docs/REVIEW.md](docs/REVIEW.md) holds Jim's decisions and the milestones, and
+[docs/PLAN.md](docs/PLAN.md) the standing rules. #177 holds live status; measure
+counts with the tools rather than reading them from a document.
 
 Load the skill for your role first; each is short and self-contained.
 
@@ -74,6 +72,3 @@ Checks assert behaviour, not wording: never match on panic or `Die` text. The
 verifier doesn't decide engine behaviour. Where an existing check forces us to
 keep something only it needs, tag it `LEGACY(<kind>)` and list it in
 [docs/LEGACY.md](docs/LEGACY.md), then retire it when the check is fixed.
-
-Pre-2026-10-17 workflows, `.scratch/`, readiness gates, acceptance pointers and
-translation scopes are inactive in `archive/pre-transpile-2026-10-17`.

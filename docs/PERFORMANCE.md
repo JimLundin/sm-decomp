@@ -17,7 +17,7 @@ ticks per second, and a game this old should run headless at hundreds.
 1. **Measure.** Add a headless engine-only ticks/s measurement for a fixed set of rows: no oracle,
    no RAM compare. Run a `perf` profile of the current main in CI. Record leases per tick, encode
    and decode bytes per tick, and the time per phase. These numbers become the baseline and are
-   recorded in PROGRESS_REPORT.
+   recorded here.
 2. **Session as the authority for the whole tick.** The address-API layer is nearly retired, so
    engine code reaches state through typed Session fields.
    - Keep one retained Session through each tick.

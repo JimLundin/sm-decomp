@@ -1,8 +1,17 @@
 # Evidence and implementation gates
 
-Record gate results in the dated [progress report](../PROGRESS_REPORT.md#architecture-snapshot); require the exit evidence below before marking a gate passed. Existing `sm-decomp` comparisons remain useful evidence for the behavior they exercise. A report that renders correctly is not evidence that the proposed engine is deterministic, faithful, fast, or complete. Implement the smallest useful slice at each gate and use its failures to revise the architecture before expanding content.
+Require the exit evidence below before marking a gate passed, and link its CI runs in the table. Existing `sm-decomp` comparisons remain useful evidence for the behavior they exercise. A report that renders correctly is not evidence that the proposed engine is deterministic, faithful, fast, or complete. Implement the smallest useful slice at each gate and use its failures to revise the architecture before expanding content.
 
 Use [Migration](README.md#responsibility-migration) for current Windows work and intermediate replacements. These gates describe completion of the new architecture; they do not replace the current plan's work order, require immediate emulator removal, or invalidate its existing checks.
+
+| Gate | Status |
+| --- | --- |
+| 0 Pin the target | Not passed |
+| 1 Prove the real seams | Not passed |
+| 2 Prove Samus and collision | Not passed |
+| 3 Prove rooms and a representative encounter | Not passed |
+| 4 Prove authoring and failure recovery | Not passed |
+| 5 Cover the whole game | Not passed |
 
 ## Gate 0 · Pin the target
 

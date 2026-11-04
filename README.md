@@ -20,22 +20,11 @@ content in `sm_data`, rendering/audio in `sm_runtime`, the device shell in
 `sm_app`, and replay/import tooling in `sm_tools`. `sm` supplies retained compat
 and oracle tooling while responsibilities migrate.
 
-For measured crate size, implementation status and retained validation evidence,
-read the dated [progress report](docs/PROGRESS_REPORT.md#readme-snapshot).
+`sm_game` runs the tick, on a Runtime lease that `sm` still hosts, so the engine doesn't
+run without `sm` yet. Proving that it can is the next milestone
+([#248](https://github.com/JimLundin/sm-decomp/issues/248)).
 [Architecture migration](docs/target-architecture/README.md#responsibility-migration)
 defines each responsibility's destination and removal condition.
-
-### How code moves
-
-A module moves into `sm_game` once it compiles without `sm`. Where it still
-needs the emulated machine, it declares a narrow host trait, and `sm`
-implements that trait for `Game` or for a Runtime session lease
-(`sm/src/game/session_runtime.rs`). A re-export shim stays at the old `sm`
-path so remaining callers keep compiling. State that `sm_game` owns lives in
-`Session`; `session_encoding.rs` projects it back into the SNES RAM layout so
-the oracle comparison and checkpoints still see the original bytes.
-`Imported<T>` (`sm_game::imported`) ties an `sm_data` record to the cartridge
-image it was imported from.
 
 ## Build and run
 
@@ -68,13 +57,10 @@ compared. Every frame it checks WRAM, SRAM, VRAM, CGRAM, OAM, PPU registers and
 port state, and the rendered 256x240 image. Any difference fails the run. The
 [verification guide](movies/README.md) explains how to run it locally.
 
-Read the workflow definitions for their current triggers and selections:
 [CI](.github/workflows/ci.yml), the only entry point, calls
 [quality.yml](.github/workflows/quality.yml) (format, lints, ratchets, tests),
 [verify.yml](.github/workflows/verify.yml) (the replays and coverage) and, on dispatch,
 [bench.yml](.github/workflows/bench.yml) (replay speed against a base ref).
-The [report](docs/PROGRESS_REPORT.md#workflow-inventory-snapshot) retains the old
-inventory; selected-frame counts alone do not prove complete movie coverage.
 
 The ROM for CI is decrypted from a private repository. The ROM import check confirms
 that every `sm_data` record accepts the real cartridge; a record that rejected
@@ -98,21 +84,14 @@ What this does not cover:
 - The desktop build links only on Windows.
 - Self-consistency of the target crates is not fidelity: the target-engine
   gates in [VALIDATION](docs/target-architecture/VALIDATION.md) require their own
-  evidence; consult the dated [report](docs/PROGRESS_REPORT.md#architecture-snapshot).
+  evidence.
 
 ## Progress
 
-Progress means behaviour moving into the target crates, and moved code no
-longer reaching into the compat RAM image or hardware registers.
-`python3 tools/cycle_report.py` prints both: line counts per target crate,
-the coupling that ties `sm/src/game/` to the emulator, and
-"sm_game files still on compat RAM/registers" with the number of sites per kind
-of access. Code in `sm_game` that still reads the RAM image through those macros
-is relocated, not yet owned. `sh tools/progress.sh` counts transpiler residue
-(unsafe functions, C ABI exports, casts, legacy bank lines). CI prints both.
-
-For source-bound measurements, read the [progress report](docs/PROGRESS_REPORT.md#source-count-snapshot).
-Rerun the accounting tools for current numbers; #177 holds the live dashboard.
+Progress means behaviour moving into the target crates and running without `sm`.
+[#177](https://github.com/JimLundin/sm-decomp/issues/177) is the live dashboard.
+`python3 tools/ram_ratchet.py`, `python3 tools/cycle_report.py` and `sh tools/progress.sh`
+measure it, and CI prints all three.
 
 ## Documentation
 
@@ -123,8 +102,7 @@ Rerun the accounting tools for current numbers; #177 holds the live dashboard.
 | [Native dependencies](docs/NATIVE_DEPENDENCIES.md), [PNG decoder](docs/PNG_DEPENDENCY.md) | Pinned native libraries and how to build them |
 | [Accepted architecture](docs/target-architecture/README.md) | Destination packages, contracts and validation gates |
 | [State migration](docs/ENGINE_STATE_MIGRATION.md) | Rules for moving state out of RAM |
-| [Plan](docs/PLAN.md), [Review](docs/REVIEW.md) | Current work order, milestones and process |
-| [Archive](docs/archive/README.md) | Retired documents |
+| [Plan](docs/PLAN.md), [Review](docs/REVIEW.md) | Standing rules, milestones and Jim's decisions |
 
 ## Credits and licence
 

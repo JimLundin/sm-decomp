@@ -5,12 +5,8 @@ engine. It depends only on `sm_data`, forbids `unsafe`, and cannot reach the
 emulator or devices except through host traits that `sm` implements. CI checks the dependency tree and runs
 `cargo test -p sm_game`.
 
-Modules arrive here from `sm/src/game/` once they compile without `sm`. A
-module that still needs the emulated machine declares a narrow `Host` trait;
-`sm` implements it for `Game` or for a Runtime session lease, and keeps a
-re-export shim at the old path. Code that still reads the RAM image through
-`word!`, `slot!`, `word_transfers!`, register writes or raw RAM hosts has
-moved but is not yet owned; `tools/cycle_report.py` counts those sites.
+Each frame runs on a Runtime lease that `sm` hosts today; the host traits here are the
+seam it implements. `tools/cycle_report.py` and `tools/ram_ratchet.py` measure what's left.
 
 ## Main modules
 

@@ -89,7 +89,3 @@ changes. Original Super Metroid C is not a regeneration source.
   the forced 44,100 Hz stereo request, the owner gate around input, frame,
   presentation and audio, and GL-call order. Disable floating-point
   contraction.
-
-The [archived edition](archive/NATIVE_DEPENDENCIES-2026-10-26.md) keeps the
-full adapter contracts, the retired SPC700, DSP and music archives, and the
-adoption comparisons and line accounting.

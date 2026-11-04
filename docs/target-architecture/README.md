@@ -11,10 +11,6 @@ graphs and explicit opt-in re-spin/QoL mechanics. Keep content, topology and
 options separate from platform and ROM/RAM compatibility. Vanilla is the first
 fidelity profile; intentional options need their own interaction checks.
 
-## Implementation evidence
-
-For package migration counts, backend dependencies and validation status, read
-the dated [architecture snapshot](../PROGRESS_REPORT.md#architecture-snapshot).
 [REVIEW](../REVIEW.md) owns milestone direction; this document owns the destination.
 
 ## Migration policy
