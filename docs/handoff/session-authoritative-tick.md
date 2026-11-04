@@ -426,6 +426,88 @@ program channel bytes); `door-transition` and `door-loading-lag-nmi` (room-entry
 HDMA channel commands); slopes on every area route, `terrain-quicksand` and the
 `terrain-*-hand` rows.
 
+### Stage 4b: `publish` and the transfer port (lane `tick-s4b`, 2026-11-04)
+
+**`Runtime::publish()`.** The lease writes its Session to RAM as its release would export it
+(`copy_spans` over `encode_spans`) and keeps going. It clones nothing, decodes nothing and
+returns no domain to Game. The Session stays the authority and RAM projects it.
+- An export a frame lease deferred earlier is written first, as any RAM write writes it.
+- When a write log is open around the lease (a nested lease inside `foreign`), the log takes
+  the published bytes, and the outer call adopts them as it would this lease's release.
+- A persistent lease takes the new write epoch, as its release does.
+- `publish` is not a lease and never decodes. It is the export half of `foreign` without
+  the release.
+
+**The DMA start.** `Runtime::start_dma(mask, source)` starts the channels through
+`rtl::start_device_dma`. That is the MDMAEN write `write_reg` makes, with the register
+observer, inside the device interval, so Samus authority and the lease stay current.
+- Before the start it reads the channel registers (DMAP, BBAD, A1T, A1B, DAS) and the WRAM
+  port address, and lists the work RAM bytes the channels read and write.
+- Verify builds assert that RAM holds the Session's projection of every byte the channels
+  read (`verification/transfer_checks.rs`).
+- Bytes a channel writes go back to the Session through `take_written_bytes` over just those
+  bytes. That means a B-to-A readback's A-bus bytes, or an A-to-B transfer to $2180 at the
+  port address. This is the typed decode of the range, not the write log: the log is shared,
+  and it overflows at 4 KiB.
+
+**The ports.** Each runs inside `owned_player_call`, so the observations are refreshed as the
+former `foreign` call left them. Writes are identical and in the same order.
+- `Video for Runtime` (the DMA and WRAM commands: `TilesNow`, `TilesNowBytePort`,
+  `TilemapNow`, `ReadTilemapNow`, `ReadVramNow`, `TilesThroughPort(Bytes)`,
+  `ObjectsAndPaletteNow`, `StopDma`, `ClearCpuIo`) publishes, then encodes through
+  `display_commands::Lease`. That wire sends device registers through the device interval
+  and MDMAEN starts through `start_dma`. The encoder's `Wire` carries the upload bracket
+  (`producing`/`produced`, which now reach the PPU through the device split) and the room
+  DMA start.
+- `EntryEffects::copy_vram` publishes, then runs `CopyToVramNow` on the same wire, with the
+  prepared room image as the DMA's ROM source.
+- `EntryEffects::decompress_vram` reads ROM and VRAM and writes VRAM through device
+  registers only, so it needs no publish. Its decoder output runs on the lease.
+- The animated tile upload reads bank $87 only, so it starts on the wire with no publish.
+- `EntryEffects::decompress` and both forms of `decode_level_and_copy_planes` call
+  `Runtime::decompress_to_ram` and `Runtime::decompress_level`. These publish, run the same
+  decoder and the level's plane split on the RAM image, and take back exactly the decoded
+  bytes and the two plane destinations. The former calls overflowed the write log and
+  decoded the whole image again. `room_level_copy`'s check still pins the split's
+  failure-prefix behaviour on the RAM image the port writes.
+
+**Outcome.** `foreign_calls` 62 → 55 (`c3bd4f25a`, `cf22ccb9a`, `2b9013193` on
+`collab/tick-s4b`). `game_host_impls` 83 is unchanged and `legacy_engine_ram_sites` is
+445 → 444.
+
+**What stays on `foreign`, and why.**
+- `flush_tilemaps` (`room_scrolls.rs`). Its RAM stores interleave with its DMA starts: the
+  queue sentinel, the tail, and each scrolling enable byte, cleared through the owned-byte
+  path. The enable bytes ($0956-$098D) are among those a persistent owned Display needs a
+  semantic counterpart for, so a lease store there fails it. Its readbacks also write WRAM
+  ranges that come from queue entries. It moves when the tilemap queue and the scrolling
+  parameters have Display owner fields; then it is the wire above plus typed queue reads.
+- The grapple tiles. These make no DMA: they are native queue stores whose full-u16 cursor
+  can alias the charge and animation fields. `publish` does not settle that question. The
+  aliasing is in the lease's projection of the stores, not in what the hardware reads.
+- The Mode 7 queue (Ceres Ridley, ×2). `publish` does not resolve it either: the lease's
+  stores into $02D0-$032F still fail a persistent owned Display. It needs the queue as a
+  Display owner field, as stage 4 said.
+- The room entry device writes (`device_word`, `device_byte`, `device_vram_address`): the
+  observer case swaps the loaded image there (lane `fc10`).
+  - `publish` gives these the exported RAM.
+  - They still need the Samus re-adoption that `foreign` does after the swap.
+  - `copy_vram` meets the same swap in room background case 5, at its first write. Case 5
+    is the row to watch: on the lease, Samus is not re-adopted after the swap.
+
+**Rows.**
+- Every room load and door (the decompressions and the VRAM copy): `door-transition`,
+  `door-loading-lag-nmi`, `tas-ceres-four-doors` and the `area-*` routes.
+- Animated tile rooms: `area-norfair`, `area-maridia`, `area-wrecked-ship`, `area-brinstar`.
+- The DMA commands: `pause-menu-tour` (pause and map), `save-memory`, `samus-gunship-save`
+  and `save-death-reload` (message boxes), `samus-scripted-intro`, and the title and intro
+  frames of every route.
+- The verifier's room background cases (case 5) and `room_level_copy`.
+- The SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`.
+  - No port writes the audio request bytes.
+  - `publish` exports them from the Session in the export's own order. A release does the
+    same.
+
 ### Stage 5: HDMA on the lease
 
 - **Change.**
