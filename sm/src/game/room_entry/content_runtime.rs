@@ -50,8 +50,8 @@ impl EntryContent for Runtime<'_> {
     /// Normal room_record policy: loaded image, native words, room observer.
     fn room_capture<P>(&mut self, bank: u8, address: u16) -> Capture<P> {
         let record = if address & 0x8000 == 0 {
-            // Retain the real rom_record boundary, including its cfg observers.
-            self.foreign(|game| unsafe { crate::rtl::rom_record(bank, address, game) })
+            // The rom_record boundary on the lease, including its cfg observers.
+            self.low_window_record(bank, address)
         } else {
             RomRecord {
                 image: self.loaded_image().expect("ROM must be loaded"),

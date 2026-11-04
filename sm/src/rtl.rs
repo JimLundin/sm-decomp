@@ -970,6 +970,47 @@ fn observe_backend(
     let backend = backend.expect("observation requires an owned backend");
     backend.save_observation(views.0, views.1, output);
 }
+/// The verifier's low-window RomPtr observers, in the order the diagnostic
+/// reaches them. `ram` is the work RAM they snapshot and inject into: the
+/// game's own inside a foreign call, or a detached image of a lease's
+/// projected RAM, whose injected bytes the lease stores back.
+#[cfg(sm_verify_dll)]
+#[forbid(unsafe_code)]
+pub(crate) fn low_window_observers(
+    address: u32,
+    ram: &crate::game_state::WorkRam,
+    loaded_rom: &mut Option<crate::rom::RomImage>,
+    fail: &bool,
+    decompress_src: &u32,
+    (spawn_rect, spawn_r22, spawn_pt, spawn_var_e24): (
+        &crate::types::Rect16U,
+        &u16,
+        &crate::types::Point16U,
+        &u16,
+    ),
+    observe: &mut impl FnMut(&mut RecordingBytes),
+) {
+    crate::sprite_effect_observer::diagnostic_parts(address, ram, loaded_rom);
+    crate::room_reference_observer::diagnostic_parts(address, ram, loaded_rom, fail);
+    crate::room_background_observer::diagnostic_parts(
+        address,
+        ram,
+        loaded_rom,
+        fail,
+        decompress_src,
+        observe,
+    );
+    crate::actor_population_animation_observer::diagnostic_parts(
+        address,
+        ram,
+        loaded_rom,
+        fail,
+        spawn_rect,
+        spawn_r22,
+        spawn_pt,
+        spawn_var_e24,
+    );
+}
 unsafe fn rom_record_parts(
     bank: u8,
     addr: u16,
@@ -982,33 +1023,19 @@ unsafe fn rom_record_parts(
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
             *host.g_fail = true;
             #[cfg(sm_verify_dll)]
-            crate::sprite_effect_observer::diagnostic_parts(address, host.ram, host.loaded_rom);
-            #[cfg(sm_verify_dll)]
-            crate::room_reference_observer::diagnostic_parts(
-                address,
-                host.ram,
-                host.loaded_rom,
-                host.g_fail,
-            );
-            #[cfg(sm_verify_dll)]
-            crate::room_background_observer::diagnostic_parts(
+            low_window_observers(
                 address,
                 host.ram,
                 host.loaded_rom,
                 host.g_fail,
                 host.decompress_src,
+                (
+                    host.eproj_spawn_rect,
+                    host.eproj_spawn_r22,
+                    host.eproj_spawn_pt,
+                    host.eproj_spawn_varE24,
+                ),
                 &mut _observe,
-            );
-            #[cfg(sm_verify_dll)]
-            crate::actor_population_animation_observer::diagnostic_parts(
-                address,
-                host.ram,
-                host.loaded_rom,
-                host.g_fail,
-                host.eproj_spawn_rect,
-                host.eproj_spawn_r22,
-                host.eproj_spawn_pt,
-                host.eproj_spawn_varE24,
             );
         }
         crate::rom::RomRecord {

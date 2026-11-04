@@ -505,6 +505,63 @@ impl<'g> Runtime<'g> {
             }
         });
     }
+    /// A RomRecord in a bank's low window ($xx:0000..$7FFF) on the lease, as
+    /// `rtl::rom_record` takes it: the RomPtr diagnostic prints and marks the game
+    /// failed, the verifier's low-window observers run, and the record is the
+    /// loaded image's at the address, captured after them. The observers snapshot
+    /// a detached image of the lease's projected RAM where they had the RAM the
+    /// former foreign call exported, and the bytes they inject are stored back
+    /// through the projection, where the foreign call's import took them. The
+    /// observations are refreshed on entry and on return, as the foreign call
+    /// left them.
+    pub(crate) fn low_window_record(&mut self, bank: u8, address: u16) -> RomRecord {
+        let address = (u32::from(bank) << 16) | u32::from(address);
+        self.owned_player_call(|runtime| {
+            invalid_window(runtime.game, address);
+            #[cfg(sm_verify_dll)]
+            runtime.observe_low_window(address);
+            RomRecord {
+                image: runtime
+                    .game
+                    .loaded_rom
+                    .as_ref()
+                    .expect("ROM must be loaded")
+                    .clone(),
+                base: crate::rtl::lorom_offset(address) as usize,
+            }
+        })
+    }
+    /// Run the verifier's low-window observers over the lease's projected RAM and
+    /// store back each byte they changed, in address order.
+    #[cfg(sm_verify_dll)]
+    fn observe_low_window(&mut self, address: u32) {
+        let before = (0..self.game.ram().len())
+            .map(|at| self.byte(at))
+            .collect::<Vec<u8>>();
+        let ram = crate::game_state::WorkRam::detached(&before);
+        let spawn = &self.session().enemy_projectiles.spawn;
+        let spawn = (
+            crate::types::Rect16U {
+                x: spawn.rectangle.origin.x,
+                y: spawn.rectangle.origin.y,
+                w: spawn.rectangle.extent.x,
+                h: spawn.rectangle.extent.y,
+            },
+            spawn.variant,
+            crate::types::Point16U {
+                x: spawn.point.x,
+                y: spawn.point.y,
+            },
+            spawn.drop_definition,
+        );
+        self.game.observe_low_window(address, &ram, spawn);
+        for (at, old) in before.into_iter().enumerate() {
+            let new = ram.read_byte(at);
+            if new != old {
+                self.set_byte(at, new);
+            }
+        }
+    }
     /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
     /// observations are refreshed on entry and on return, as the former foreign call left them.
     pub(crate) fn next_random_number(&mut self) -> u16 {
@@ -975,7 +1032,7 @@ impl Host for Runtime<'_> {
     }
     fn record(&mut self, bank: u8, cursor: u16) -> RomRecord {
         if cursor & 0x8000 == 0 {
-            self.foreign(|g| unsafe { crate::rtl::rom_record(bank, cursor, g) })
+            self.low_window_record(bank, cursor)
         } else {
             content::captured(
                 content::image(self),
@@ -1714,7 +1771,7 @@ impl Runtime<'_> {
     /// Preserve the actor content diagnostic observer and allocation capture order.
     pub(crate) fn actor_legacy_record(&mut self, bank: u8, address: u16) -> RomRecord {
         if address & 0x8000 == 0 {
-            self.foreign(|game| unsafe { crate::rtl::rom_record(bank, address, game) })
+            self.low_window_record(bank, address)
         } else {
             content::captured(
                 content::image(self),
