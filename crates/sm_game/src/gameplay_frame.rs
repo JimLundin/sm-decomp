@@ -287,9 +287,13 @@ pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         Entry::PauseSetup => setup_pause(game),
         Entry::Paused => advance_pause(game),
         Entry::UnpauseSetup => setup_unpause(game),
-        Entry::UnpauseFadeOut | Entry::GameOverFadeOut => fade_out(entry, game),
+        Entry::UnpauseFadeOut => fade_out_unpause(game),
         // The lease entries run from the frame's lease.
-        Entry::Initialize | Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext => {
+        Entry::Initialize
+        | Entry::GameOverFadeOut
+        | Entry::TimeUpExit
+        | Entry::DemoStop
+        | Entry::DemoNext => {
             unreachable!("a lease state")
         }
         Entry::Gameplay
@@ -380,22 +384,16 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             // A pass state's frame ends on its pass's last lease.
             Advance(entry) if runs_pass(entry) => break 'frame advance(entry, game),
             // A lease state resuming after a yield opens the frame's lease here.
-            entry @ (Native(_)
-            | Door(_)
-            | BeginDeath
-            | DeathPose
-            | FlashDeath
-            | ExplodeSuit
-            | Advance(
-                Entry::Initialize | Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext,
-            )
-            | DemoReset
-            | Demo) => break 'frame lease_frame::<H>(entry, &mut game.runtime()),
+            entry if runs_on_lease(entry) => {
+                break 'frame lease_frame::<H>(entry, &mut game.runtime());
+            }
             Advance(entry) => advance(entry, game),
             FileMenu => file_menu::advance(game),
             MapMenu => map_menu::advance(game),
             PauseFadeIn => pause_controls::fade_in(game),
             GameOver => game_over::advance(game),
+            Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit | DemoReset
+            | Demo => unreachable!("a lease state"),
             Null => 0,
             Unused => {
                 game.rtl_unreachable();
@@ -444,7 +442,13 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             | DeathPose
             | FlashDeath
             | ExplodeSuit
-            | Advance(Entry::Initialize | Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext)
+            | Advance(
+                Entry::Initialize
+                    | Entry::GameOverFadeOut
+                    | Entry::TimeUpExit
+                    | Entry::DemoStop
+                    | Entry::DemoNext
+            )
             | DemoReset
             | Demo
     )
@@ -471,6 +475,7 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         ExplodeSuit => samus_death::explode_suit(lease),
         Advance(Entry::TimeUpExit) => exit_time_up::<H>(lease),
         Advance(Entry::Initialize) => initialize::<H>(lease),
+        Advance(Entry::GameOverFadeOut) => fade_out(Entry::GameOverFadeOut, lease),
         Advance(Entry::DemoStop) => stop_demo::<H>(lease),
         Advance(Entry::DemoNext) => next_demo::<H>(lease),
         DemoReset => demo_rooms::reset(lease),
@@ -913,13 +918,29 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
     0
 }
 
-/// Pause and death phases: fade to black before unpausing or game over.
-fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
-    if matches!(entry, Entry::UnpauseFadeOut) {
-        crate::menus::state::with(game, |game, menu: &mut MenuState| {
-            pause_controls::draw_unpause(menu, game)
-        });
-    }
+/// Pause phase: draw the pause screen, then fade to black before unpausing.
+fn fade_out_unpause<H: Host>(game: &mut H) -> CoroutineRet {
+    crate::menus::state::with(game, |game, menu: &mut MenuState| {
+        pause_controls::draw_unpause(menu, game)
+    });
+    fade_out(Entry::UnpauseFadeOut, game)
+}
+
+/// Pause and death phases: fade to black before unpausing or game over; the
+/// game over fade runs on the frame's lease.
+fn fade_out<H>(entry: Entry, game: &mut H) -> CoroutineRet
+where
+    H: crate::effects::DisplayRefresh
+        + crate::display::video::Video
+        + crate::display::preparation::Access
+        + crate::ram::CompatibilityRam
+        + crate::display_refresh::DisplayOwner
+        + crate::screen_fade::Owner
+        + crate::gameplay_context::Access
+        + crate::menus::state::Access
+        + crate::sequence_state::Access
+        + ?Sized,
+{
     game.fade(false);
     if game.display_control_byte(crate::display::preparation::Field::Brightness) == 0x80 {
         crate::display_refresh::enable(true, game);
