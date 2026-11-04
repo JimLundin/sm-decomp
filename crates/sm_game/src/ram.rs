@@ -9,27 +9,6 @@
 
 /// Byte access to work RAM as the compatibility runtime projects it: owned
 /// Session state where it is current, otherwise the RAM bytes themselves.
-/// The raw work RAM bytes, without the compatibility projection.
-pub trait RawRam {
-    fn read_byte(&self, at: usize) -> u8;
-    fn write_byte(&self, at: usize, value: u8);
-    fn copy_in(&self, at: usize, input: &[u8]);
-    fn copy_out(&self, at: usize, out: &mut [u8]);
-    fn fill(&self, range: core::ops::Range<usize>, value: u8);
-    /// Copy `source` to `destination` as if through a temporary buffer.
-    fn copy_within(&self, source: core::ops::Range<usize>, destination: usize);
-}
-
-/// The raw work RAM a host owns.
-pub trait WorkRamAccess {
-    type Ram: RawRam + ?Sized;
-    fn ram(&self) -> &Self::Ram;
-}
-
-/// Named and raw work RAM together, for modules that need nothing else.
-pub trait RamHost: CompatibilityRam + WorkRamAccess {}
-impl<T: CompatibilityRam + WorkRamAccess + ?Sized> RamHost for T {}
-
 pub trait CompatibilityRam:
     crate::display_scroll::Access
     + crate::sequence_state::Access
@@ -847,81 +826,6 @@ ram_vars! {
     0x19602, uint16 Array => [CUSTOM_BACKGROUND];
     0x1FF00, uint16 Scalar => [BUG_FIX_COUNTER_BAD];
 }
-
-// Named SNES word reads and stores for sm_game's remaining RAM callers; the
-// compatibility layer (sm/src/ram_words.rs) keeps the full interface.
-// `word!(game.field)` reads; `word!(game.field = value)` writes.
-// `word!(game.field += value)` wraps at 16 bits. Ordered stores of one literal
-// use `(game, value; field, other)`; different values use
-// `(game; field = value; other = next;)`.
-//
-// Checked byte places stay at the caller: borrowing the whole Game/RAM here
-// could invalidate retained raw enemy pointers. No reference escapes an access.
-// Odd addresses and signed array offsets outside a named table remain valid.
-// Assignments evaluate RHS before the destination, retaining RHS temporaries
-// through the store. An update captures the destination and reads its old
-// value before evaluating the RHS. No value or index is hoisted across
-// ordered stores.
-#[macro_export]
-macro_rules! ram_word {
-    ($game:ident.$field:ident += $value:expr $(,)?) => {{
-        let destination = $crate::ram::words::$field;
-        let old = $crate::ram_word!(@read $game, destination);
-        $crate::ram_word!(@write $game, destination, old.wrapping_add($value));
-    }};
-    ($game:ident.$field:ident) => {
-        $crate::ram_word!(@read $game, $crate::ram::words::$field)
-    };
-    ($game:ident.$field:ident = $value:expr $(,)?) => {
-        $crate::ram_word!(@write $game, $crate::ram::words::$field, $value)
-    };
-    ($game:ident; $($field:ident = $value:expr;)+) => {
-        $($crate::ram_word!($game.$field = $value);)+
-    };
-    ($game:ident, $value:literal; $($field:ident),+ $(,)?) => {
-        $($crate::ram_word!($game.$field = $value);)+
-    };
-    (@read $game:ident, $offset:expr) => {
-        match $offset {
-            offset => {
-                // Check both bytes without borrowing any part of the RAM array.
-                assert!(offset < 131071, "word address outside RAM");
-                u16::from_le_bytes([$game.compatibility_byte(offset), $game.compatibility_byte(offset + 1)])
-            }
-        }
-    };
-    (@write $game:ident, $offset:expr, $value:expr) => {
-        // Match keeps RHS/index temporaries alive through both stores, unlike
-        // a let-value statement.
-        match ($value, $offset) {
-            (value, offset) => {
-                assert!(offset < 131071, "word address outside RAM");
-                let bytes = u16::to_le_bytes(value);
-                $game.compatibility_write_byte(offset, bytes[0]);
-                $game.compatibility_write_byte(offset + 1, bytes[1]);
-            }
-        }
-    };
-}
-
-// Checked word reads for migrated callers that retain offsets, not pointers:
-// an array element or a raw offset. Byte places avoid borrowing the whole RAM
-// array. This smaller interface retains its existing low-byte-first failure prefix.
-#[macro_export]
-macro_rules! ram_checked_word {
-    ($game:ident.$field:ident[$index:expr] $($tail:tt)*) => {
-        $crate::ram_checked_word!($game,
-            $crate::ram::word_arrays::$field.checked_add_signed(($index as isize).checked_mul(2).unwrap()).unwrap(); $($tail)*)
-    };
-    ($game:ident, $offset:expr;) => {{
-        let offset: usize = $offset;
-        u16::from_le_bytes([$game.compatibility_byte(offset), $game.compatibility_byte(offset + 1)])
-    }};
-}
-
-/// Named word access through any `CompatibilityRam`; the receiver must have
-/// `compatibility_byte`/`compatibility_write_byte` methods in scope.
-pub use crate::{ram_checked_word as checked_word, ram_word as word};
 
 /// The work RAM bytes that mirror PPU and CPU registers ($7E:0051..), written
 /// by game code and copied to the hardware during NMI. Each is checked against

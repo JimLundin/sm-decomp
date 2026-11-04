@@ -27,12 +27,11 @@ pub trait LevelData {
     fn copy_level_planes(&mut self);
 }
 
-/// Named and raw work RAM, the loaded cartridge and its records, and the
+/// Named work RAM, the loaded cartridge and its records, and the
 /// Samus pose command.
 pub trait Host:
     crate::display::preparation::Access
     + crate::ram::CompatibilityRam
-    + crate::ram::WorkRamAccess
     + crate::word_transfers::LoadedRom
     + crate::records::Records
     + crate::menus::host::MenuRuntime
@@ -42,7 +41,6 @@ pub trait Host:
 impl<T> Host for T where
     T: crate::display::preparation::Access
         + crate::ram::CompatibilityRam
-        + crate::ram::WorkRamAccess
         + crate::word_transfers::LoadedRom
         + crate::records::Records
         + crate::menus::host::MenuRuntime

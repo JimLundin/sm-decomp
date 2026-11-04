@@ -1,10 +1,10 @@
-//! What the menus need from the runtime: named and raw work RAM, SRAM, the
+//! What the menus need from the runtime: named work RAM, SRAM, the
 //! cartridge, register writes, sound and brightness, plus the sprite,
 //! HDMA, display-refresh and room-entry operations still
 //! implemented by the compatibility runtime.
 use crate::display::sequence::Registers;
 use crate::effects::{DisplayRefresh, SoundEffects};
-use crate::ram::{CompatibilityRam, WorkRamAccess};
+use crate::ram::CompatibilityRam;
 use crate::word_transfers::LoadedRom;
 
 /// Battery-backed save RAM.
@@ -142,7 +142,6 @@ pub trait Host:
     + crate::runtime_access::SessionRam
     + crate::player_position::PlayerPosition
     + crate::hud::HudPlayer
-    + WorkRamAccess
     + LoadedRom
     + Registers
     + crate::display::video::Video

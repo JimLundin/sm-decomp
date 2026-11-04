@@ -42,11 +42,14 @@ pub trait HudFrameHost:
     fn point_pointer_scratch(&mut self, address: u16);
 }
 
-/// What the whole HUD reads and writes: the frame step's host, plus raw RAM
+/// What the whole HUD reads and writes: the frame step's host, plus the RAM projection
 /// and the video host its initial upload uses.
-pub trait HudHost: HudFrameHost + crate::ram::RamHost + crate::display::video::Video {}
+pub trait HudHost:
+    HudFrameHost + crate::ram::CompatibilityRam + crate::display::video::Video
+{
+}
 impl<T> HudHost for T where
-    T: HudFrameHost + crate::ram::RamHost + crate::display::video::Video + ?Sized
+    T: HudFrameHost + crate::ram::CompatibilityRam + crate::display::video::Video + ?Sized
 {
 }
 

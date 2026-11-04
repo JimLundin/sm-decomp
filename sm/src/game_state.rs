@@ -2651,27 +2651,6 @@ impl sm_game::display::sequence::Registers for Game {
     }
 }
 
-impl sm_game::ram::RawRam for WorkRam {
-    fn read_byte(&self, at: usize) -> u8 {
-        WorkRam::read_byte(self, at)
-    }
-    fn write_byte(&self, at: usize, value: u8) {
-        WorkRam::write_byte(self, at, value)
-    }
-    fn copy_in(&self, at: usize, input: &[u8]) {
-        WorkRam::copy_in(self, at, input)
-    }
-    fn copy_out(&self, at: usize, out: &mut [u8]) {
-        WorkRam::copy_out(self, at, out)
-    }
-    fn fill(&self, range: core::ops::Range<usize>, value: u8) {
-        WorkRam::fill(self, range, value)
-    }
-    fn copy_within(&self, source: core::ops::Range<usize>, destination: usize) {
-        WorkRam::copy_within(self, source, destination)
-    }
-}
-
 /// The custom background blocks through the compatibility projection.
 impl sm_game::display::queued_tilemaps::BackgroundBlocks for Game {
     fn background_block(&self, index: usize) -> u16 {
@@ -2775,13 +2754,6 @@ impl sm_game::actors::access::ActorImage for Game {
             edited,
             |game, at, value| game.ram().write_byte(at, value),
         );
-    }
-}
-
-impl sm_game::ram::WorkRamAccess for Game {
-    type Ram = WorkRam;
-    fn ram(&self) -> &WorkRam {
-        Game::ram(self)
     }
 }
 

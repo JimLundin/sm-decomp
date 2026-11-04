@@ -142,9 +142,9 @@ macro_rules! word_transfers {
 
 #[cfg(test)]
 mod tests {
-    use crate::ram::{CompatibilityRam, word};
+    use crate::ram::CompatibilityRam;
 
-    /// The named-RAM macros over a plain byte array instead of the compat Game.
+    /// The transfers over a plain byte array instead of the compat Game.
     struct Ram(Vec<u8>);
 
     impl crate::display_scroll::Access for Ram {
@@ -244,14 +244,9 @@ mod tests {
     }
 
     #[test]
-    fn named_words_and_transfers_work_over_any_host() {
+    fn transfers_work_over_any_host() {
         let mut ram = Ram(vec![0; 0x20000]);
         let game = &mut ram;
-        word!(game.SAMUS_HEALTH = 0x1234);
-        assert_eq!(word!(game.SAMUS_HEALTH), 0x1234);
-        assert_eq!(game.0[crate::ram::words::SAMUS_HEALTH], 0x34);
-        word!(game.SAMUS_HEALTH += 1);
-        assert_eq!(word!(game.SAMUS_HEALTH), 0x1235);
         crate::word_transfers!(game, ascending, 2;
             native(0x100) <- value(0xabcd),
             little(0x200) <- native(0x100),

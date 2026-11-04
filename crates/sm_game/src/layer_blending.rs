@@ -109,7 +109,7 @@ const ROOM_SETTINGS: [&[(DisplayField, u8)]; 27] = [
 pub fn update<
     H: crate::fx_domain::Controls
         + crate::display::preparation::Access
-        + crate::ram::RamHost
+        + crate::ram::CompatibilityRam
         + crate::runtime_access::RuntimeAccess
         + ?Sized,
 >(
