@@ -55,6 +55,26 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn initialize_player(&mut self) {
         self.owned_player_call(sm_game::player_transitions::initialize);
     }
+    fn pause_hook(&mut self, hook: PauseHook) {
+        match hook {
+            PauseHook::Draygon => crate::game::room_state::pause_draygon(self),
+            PauseHook::Kraid => sm_game::actors::kraid_pause::pause(self),
+        }
+    }
+    /// The hooks run on the frame's lease; Mother Brain's, which opened a
+    /// lease of its own, refreshes the observations as that lease left them.
+    fn unpause_hook(&mut self, hook: UnpauseHook) -> u8 {
+        use sm_game::actors::kraid_pause::{unpause_alive, unpause_dead, unpause_sinking};
+        match hook {
+            UnpauseHook::Draygon => crate::game::room_state::unpause_draygon(self),
+            UnpauseHook::KraidDead => unpause_dead(self),
+            UnpauseHook::KraidAlive => unpause_alive(self),
+            UnpauseHook::KraidSinking => unpause_sinking(self),
+            UnpauseHook::MotherBrain => {
+                self.owned_player_call(crate::game::sm_a9::body_unpause_hook)
+            }
+        }
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.
@@ -117,24 +137,5 @@ impl sm_game::gameplay_frame::Host for Game {
     }
     fn enable_scanline_irq(&mut self, immediate: bool) {
         sm_game::display_refresh::enable_scanline_irq(immediate, self)
-    }
-
-    fn pause_hook(&mut self, hook: PauseHook) {
-        match hook {
-            PauseHook::Draygon => crate::game::room_state::pause_draygon(self),
-            PauseHook::Kraid => sm_game::actors::kraid_pause::pause(self),
-        }
-    }
-    fn unpause_hook(&mut self, hook: UnpauseHook) -> u8 {
-        use sm_game::actors::kraid_pause::{unpause_alive, unpause_dead, unpause_sinking};
-        match hook {
-            UnpauseHook::Draygon => crate::game::room_state::unpause_draygon(self),
-            UnpauseHook::KraidDead => unpause_dead(self),
-            UnpauseHook::KraidAlive => unpause_alive(self),
-            UnpauseHook::KraidSinking => unpause_sinking(self),
-            UnpauseHook::MotherBrain => {
-                crate::game::sm_a9::body_unpause_hook(&mut Runtime::new(self))
-            }
-        }
     }
 }

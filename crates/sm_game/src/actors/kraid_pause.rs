@@ -6,27 +6,35 @@
 //! Was `UnpauseHook_Kraid_*`, `Kraid_UnpauseHook_IsSinking`,
 //! `Kraid_TransferTopHalfToVram` and `PauseHook_Kraid` in the original
 //! decompilation.
-use crate::actors::access::{ActorImage, ActorKey};
+use crate::actors::access::{AccessMode, ActorAccess, ActorKey};
 use crate::actors::kraid_sinking;
 use crate::display::preparation::Field as Display;
 use crate::display_refresh::{GraphicsAsset, enqueue_readback, set_blank, wait};
 use crate::presentation_workspace::ContinuationAccess;
 use crate::projection::Field;
 
-/// What the hooks need: the display refresh, actor RAM and the hooks'
-/// coroutine state.
+/// What the hooks need: the graphics loads, the readback and tilemap queues,
+/// the display mirrors, Kraid's record and the hooks' coroutine state.
 pub trait Host:
-    crate::display_refresh::Host
-    + crate::actors::host::ActorHost
-    + ActorImage
+    crate::display_refresh::GraphicsLoad
+    + crate::display_refresh::ReadbackQueue
+    + crate::display_refresh::DisplayOwner
+    + crate::ram::CompatibilityRam
+    + crate::projection::Views
+    + crate::cartridge::NativeDiagnostics
+    + ActorAccess
     + crate::display::transfer::TilemapQueue
     + ContinuationAccess
 {
 }
 impl<
-    T: crate::display_refresh::Host
-        + crate::actors::host::ActorHost
-        + ActorImage
+    T: crate::display_refresh::GraphicsLoad
+        + crate::display_refresh::ReadbackQueue
+        + crate::display_refresh::DisplayOwner
+        + crate::ram::CompatibilityRam
+        + crate::projection::Views
+        + crate::cartridge::NativeDiagnostics
+        + ActorAccess
         + crate::display::transfer::TilemapQueue
         + ContinuationAccess
         + ?Sized,
@@ -174,7 +182,9 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 
 /// Kraid's y position: his record is the first enemy's.
 fn kraid_y<H: Host + ?Sized>(game: &H) -> u16 {
-    game.actor_record(ActorKey::from_legacy(0)).y.whole
+    game.resolve_actor(ActorKey::from_legacy(0), AccessMode::Native)
+        .y
+        .whole
 }
 
 /// Pause hook - Kraid ($A7:C325): read his BG2 tiles back to $7E:5000. Was
