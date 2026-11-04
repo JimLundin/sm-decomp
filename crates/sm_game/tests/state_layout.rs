@@ -1717,6 +1717,79 @@ fn saved_maps_round_trip_every_byte() {
     }
 }
 
+/// The compressed maps own $D91C..$DE1B byte by byte; each store reaches
+/// only its own byte, and the projection, decode and encode agree with RAM.
+#[test]
+fn compressed_maps_round_trip_every_byte() {
+    use sm_game::save_file::{COMPRESSED_MAPS, CompressedMaps};
+    const MAPS: std::ops::Range<usize> = COMPRESSED_MAPS..COMPRESSED_MAPS + CompressedMaps::BYTES;
+    let base = session();
+    for at in MAPS {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        assert_eq!(s.compressed_maps.bytes[at - MAPS.start], value);
+        for other in at.saturating_sub(2)..at + 3 {
+            let expected = if other == at { value } else { 0 };
+            if MAPS.contains(&other) {
+                assert_eq!(
+                    projected_byte(&s, other),
+                    Some(expected),
+                    "storing {at:#x} -> projection {other:#x}"
+                );
+            }
+        }
+    }
+    for seed in [7, 0xd91c_de1b] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        assert_eq!(s.compressed_maps.bytes.as_slice(), &ram[MAPS]);
+        let bytes = encoded(&s);
+        for at in MAPS {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+        }
+    }
+}
+
+/// The gameplay flags own the spare bytes after the map stations
+/// ($D910..$D913) byte by byte; each store reaches only its own byte.
+#[test]
+fn spare_flag_bytes_round_trip_every_byte() {
+    const SPARE: std::ops::Range<usize> = 0xd910..0xd914;
+    let base = session();
+    for at in SPARE {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        assert_eq!(s.gameplay_flags.spare[at - SPARE.start], value);
+        for other in SPARE {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [11, 0xd910_d913] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        assert_eq!(s.gameplay_flags.spare.as_slice(), &ram[SPARE]);
+        let bytes = encoded(&s);
+        for at in SPARE {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+        }
+        for (offset, at) in (0xd820..0xd914).enumerate() {
+            assert_eq!(
+                s.gameplay_flags.byte(offset),
+                Some(ram[at]),
+                "flag byte {at:#x}"
+            );
+        }
+        assert_eq!(s.gameplay_flags.byte(0xf4), None);
+    }
+}
+
 /// The gameplay flags own the unused bytes between the doors and the stations
 /// ($D8F0..$D8F7) byte by byte; each store reaches only its own byte.
 #[test]
