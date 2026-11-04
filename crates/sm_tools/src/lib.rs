@@ -10,4 +10,5 @@ pub mod engine;
 pub mod free_run;
 pub mod lockstep;
 pub mod observation;
+pub mod session_compare;
 pub mod trace;

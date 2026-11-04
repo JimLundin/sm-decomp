@@ -28,6 +28,15 @@ LEGACY(original-overflow) and listed in docs/LEGACY.md. They are not address
 APIs (the module's own internals still count as their kinds); their count,
 engine_legacy_overflow_sites, is reported only.
 
+engine_ram_export_lines (2026-11-04, docs/handoff/session-compare.md) counts
+the sm_game production lines whose only purpose is encoding the Session to RAM
+or decoding it from RAM: the codec files session_encoding.rs, fx_encoding.rs,
+actors/codec.rs and menu_window_encoding.rs (outside #[cfg(test)] items), and
+projection.rs's `Field::address` and `Decode` trait with its impls (whole
+items, attributes and doc comments included). It reaches 0 when verification
+owns the oracle's RAM decode and the engine exports no RAM (REVIEW's end state).
+It is advisory until it first falls, then strict.
+
 Run from the repository root: python3 tools/ram_ratchet.py [--update]
 """
 import os
@@ -89,9 +98,13 @@ BASELINE = {
     # sm_game_ram_sites does not count them. They are still a word bag named
     # after RAM words rather than domain fields; reported only.
     "session_word_view_sites": 202,
+    # The Session <-> RAM codec in sm_game (docs/handoff/session-compare.md).
+    # First measured on 0b19d8a24; advisory until it first falls, then strict.
+    "engine_ram_export_lines": 4685,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
-            "engine_legacy_overflow_sites", "session_word_view_sites"}
+            "engine_legacy_overflow_sites", "session_word_view_sites",
+            "engine_ram_export_lines"}
 # session_entries is strict from 2026-11-04: Jim's end state (docs/REVIEW.md) is
 # the engine alone, so leases opened from the engine must reach 0.
 
@@ -241,6 +254,46 @@ def session_word_view_sites() -> int:
     return total
 
 
+# The sm_game files that are only the Session <-> RAM codec.
+EXPORT_CODEC = ("session_encoding.rs", "fx_encoding.rs", os.path.join("actors", "codec.rs"),
+                "menu_window_encoding.rs")
+# The codec items in projection.rs: Field's address and the Decode trait and impls.
+EXPORT_ITEMS = re.compile(r"^\s*(?:pub fn address\(self\) -> usize|pub trait Decode\b|impl Decode for\b)")
+DOC_OR_ATTRIBUTE = re.compile(r"^\s*(?:///|#\[)")
+
+
+def item_end(lines: list[str], start: int) -> int:
+    """The index of the line that closes the braced item opening at `start`."""
+    depth, opened, end = 0, False, start
+    while end < len(lines):
+        code = NOT_CODE.sub("", lines[end])
+        depth += code.count("{") - code.count("}")
+        opened = opened or "{" in code
+        if opened and depth == 0:
+            return end
+        end += 1
+    return end
+
+
+def engine_ram_export_lines() -> int:
+    """Production lines of sm_game's Session <-> RAM codec (see the module docstring)."""
+    base = os.path.join("crates", "sm_game", "src")
+    total = 0
+    for name in EXPORT_CODEC:
+        with open(os.path.join(base, name), "rb") as source:
+            text = source.read().decode("utf-8")
+        total += text.count("\n") - test_lines(text.split("\n"))
+    with open(os.path.join(base, "projection.rs"), "rb") as source:
+        lines = source.read().decode("utf-8").split("\n")
+    for index, line in enumerate(lines):
+        if EXPORT_ITEMS.match(line):
+            start = index
+            while start > 0 and DOC_OR_ATTRIBUTE.match(lines[start - 1]):
+                start -= 1
+            total += item_end(lines, index) + 1 - start
+    return total
+
+
 def measure() -> dict[str, int]:
     ram = cycle_report.sm_game_ram_couplings()
     return {
@@ -250,6 +303,7 @@ def measure() -> dict[str, int]:
         **engine_inventory(),
         **game_boundary(),
         "session_word_view_sites": session_word_view_sites(),
+        "engine_ram_export_lines": engine_ram_export_lines(),
     }
 
 

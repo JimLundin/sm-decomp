@@ -104,7 +104,7 @@ def console_line(line: str, state: dict[str, str], mode: str, audio: bool) -> st
     match = re.match(r"^Verified ([0-9]+) frames: ([0-9]+) failing frames", line)
     if match:
         return f"RESULT {state.get('row', '')}: {match[1]} frames, {match[2]} failing frames"
-    match = re.match(r"^@([0-9]+): (?:Observation|Free-run) divergence in ([A-Za-z0-9_.\[\]-]+)", line)
+    match = re.match(r"^@([0-9]+): (?:Observation|Free-run|Session) divergence in ([A-Za-z0-9_.\[\]-]+)", line)
     if match:
         return f"DOMAIN {state.get('row', '')}: tick {match[1]}, field {match[2]}"
     return line if line.startswith("Corpus") else None
