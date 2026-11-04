@@ -91,7 +91,7 @@ The register half of each call is still a register write.
   producers (Samus tiles, tilemaps, animated tiles), which feed it `Video::produced` uploads.
 - It is not yet the authority: the emulated PPU draws the frame, and DMA, HDMA and the IRQ
   timing still read the emulated backend. Making it the authority is the step-5 work in
-  `v2-native-video.md`, and it is not one landable slice.
+  [`v2-native-video.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff/v2-native-video.md) (retired), and it is not one landable slice.
 
 ### The slice: sm_game says what, the backend's encoder says how
 

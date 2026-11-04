@@ -473,7 +473,7 @@ These are prepared-source observations, not qualification of the new observer.
 Exact root receipts are in `$TEMP/collab/docs-ci-coverage-composition/checks.json`,
 `l6-integrated-260d11ef6/`, `l6-integrated-rows/` and
 `verification-spring-ball-jump/`. CI timing/capacity evidence remains in
-[VERIFICATION_SHARDING](VERIFICATION_SHARDING.md), rather than duplicated here.
+[VERIFICATION_SHARDING](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/VERIFICATION_SHARDING.md), rather than duplicated here.
 The preceding CI slice, PR #145, landed at `534c5be320c20856e3ef5f710ea35f639579eea3`
 after its exact-head gates passed; original watcher `25370` exited 0. This
 landing does not qualify the prepared composition above.
@@ -501,7 +501,7 @@ input with a 906-Tick pickup prefix; preparation is not executed coverage.
 unproved. Full engine and complete any%/100%/low% acceptance remain unproved.
 
 CI concurrency and queue-duration measurements belong in the separate dated
-[verification sharding report](VERIFICATION_SHARDING.md); PLAN's resource and
+[verification sharding report](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/VERIFICATION_SHARDING.md); PLAN's resource and
 runner limits remain standing policy. No job completion is inferred from queues.
 
 ## Coordinator handoff snapshot
@@ -630,17 +630,17 @@ handoffs above for live qualification and new source, preserving donor patches.
 
 | Branch | State | Handoff |
 | --- | --- | --- |
-| `lane/l4-cohorts` (`f8863ac38`) | 13 commits, typed copies for scroll, camera, rooms, melt, liquids, message box and fade; RAM sites 1835 → 1496. Rebased on `170979ac2`. Gate on the rebased tip, check-lock, and commit 13's replays still to run | `docs/handoff/l4-cohorts.md` |
-| `lane/l5-slot-access` (`22bcb8d48`) | batch 1 has landed. Batch 2 (10 families, 1809 sites) is gated but not replay-qualified. The top commit is a Crocomire WIP with 2 compile errors. 58 errors remain before `SlotAccess for Game` can go | `docs/handoff/l5-slot-access.md` |
-| `lane/l6-hosts-kraid` (`910e393ba`, on L5's `0cc19efe8`) | 7 families: fire arc, boulders, statues, etecoons, dachora, Mini Kraid, Kraid. 1803 sites. The first 5 pass lockstep; Mini Kraid and Kraid not replayed; no check-lock | `docs/handoff/l6-hosts-kraid.md` |
-| `lane/d-free-run-drift` (`00ef5d5b1`) | 3 engine fixes: a held button dismisses a message box; the escape timer and liquids leave `$16`. 26 listed drift rows now match the lock. Needs lockstep on both oracles, then remove their `unlocked` notes and `lock --record`. The top commit is a WIP oracle change for item-gravity, which needs a full lock re-record | `docs/handoff/d-free-run-drift.md` |
-| `lane/c2-reseed` (`cd241c5b1`) | WIP: recipes and scenario seeds for the 6 stale checkpoint rows. Next: corpus entries, LEGACY rows, bundle upload, then the checkpoint policy guard `7048175e9` | `docs/handoff/c2-reseed.md` |
+| `lane/l4-cohorts` (`f8863ac38`) | 13 commits, typed copies for scroll, camera, rooms, melt, liquids, message box and fade; RAM sites 1835 → 1496. Rebased on `170979ac2`. Gate on the rebased tip, check-lock, and commit 13's replays still to run | [`docs/handoff/l4-cohorts.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff/l4-cohorts.md) |
+| `lane/l5-slot-access` (`22bcb8d48`) | batch 1 has landed. Batch 2 (10 families, 1809 sites) is gated but not replay-qualified. The top commit is a Crocomire WIP with 2 compile errors. 58 errors remain before `SlotAccess for Game` can go | [`docs/handoff/l5-slot-access.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff/l5-slot-access.md) |
+| `lane/l6-hosts-kraid` (`910e393ba`, on L5's `0cc19efe8`) | 7 families: fire arc, boulders, statues, etecoons, dachora, Mini Kraid, Kraid. 1803 sites. The first 5 pass lockstep; Mini Kraid and Kraid not replayed; no check-lock | [`docs/handoff/l6-hosts-kraid.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff/l6-hosts-kraid.md) |
+| `lane/d-free-run-drift` (`00ef5d5b1`) | 3 engine fixes: a held button dismisses a message box; the escape timer and liquids leave `$16`. 26 listed drift rows now match the lock. Needs lockstep on both oracles, then remove their `unlocked` notes and `lock --record`. The top commit is a WIP oracle change for item-gravity, which needs a full lock re-record | [`docs/handoff/d-free-run-drift.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff/d-free-run-drift.md) |
+| `lane/c2-reseed` (`cd241c5b1`) | WIP: recipes and scenario seeds for the 6 stale checkpoint rows. Next: corpus entries, LEGACY rows, bundle upload, then the checkpoint policy guard `7048175e9` | [`docs/handoff/c2-reseed.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff/c2-reseed.md) |
 
 Native video step 5 has source commit `38051cfd9` in `20261101/v2-native-video`;
 its Samus typed VRAM sink still needs compilation/replays and remaining consumers.
-See `docs/handoff/v2-native-video.md` and `$TEMP/collab/v2-native-video-20261101/HANDOFF.md`.
+See [`docs/handoff/v2-native-video.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff/v2-native-video.md) and `$TEMP/collab/v2-native-video-20261101/HANDOFF.md`.
 The finished lanes'
-handoffs in `docs/handoff/*-done.md`, `f1-`, `o-` and `t-` explain those subsystems.
+handoffs in [`docs/handoff/`](https://github.com/JimLundin/sm-decomp/tree/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/handoff) (`*-done.md`, `f1-`, `o-` and `t-`) explain those subsystems.
 
 #### Open goals, in priority order
 
@@ -649,7 +649,7 @@ handoffs in `docs/handoff/*-done.md`, `f1-`, `o-` and `t-` explain those subsyst
 2. **Verification.** Land D's fixes and unlock their rows; aim for every scenario locked.
    Harness step 5: retire whole-RAM comparison domain by domain (REVIEW lane S).
 3. **Native video step 5,** then audio and the remaining endgame items in
-   `docs/ENDGAME_SURVEY.md`.
+   [`docs/ENDGAME_SURVEY.md`](https://github.com/JimLundin/sm-decomp/blob/caae95ea9b65a3afac314252d788fe59224fa0c5/docs/ENDGAME_SURVEY.md).
 4. **Coverage.** Run a coverage pass (`coverage.yml`, full_route), then add rows (`sm-scenario`).
 5. **Later:** the sm-json-data importer (REVIEW lane S, condition 9), which also supplies the
    community room names Jim wants shown next to hex ids.
