@@ -98,8 +98,14 @@ impl Game {
     }
 }
 
-impl sm_game::display::video::Video for Game {
-    fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
+impl Game {
+    /// Apply a display command to the backend outside any lease, as
+    /// `oracle_host::OracleHost`'s `Video` does.
+    pub(crate) fn apply(
+        &mut self,
+        producer: &'static str,
+        command: sm_game::display::video::Command,
+    ) {
         crate::game::display_commands::apply(producer, command, self);
     }
 }

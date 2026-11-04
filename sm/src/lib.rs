@@ -296,6 +296,9 @@ pub mod c_library;
 /// Frame runner and the per-frame comparison against the original ROM.
 pub mod cpu_infra;
 mod initial_state;
+/// The verification host over the oracle's work RAM and backend.
+#[path = "verification/oracle_host.rs"]
+pub(crate) mod oracle_host;
 /// Names for raw `g_ram` offsets, recovered from snesrev's variable macros.
 pub mod ram_map;
 /// The verifier's named RAM table: each address's snesrev name, type and shape.

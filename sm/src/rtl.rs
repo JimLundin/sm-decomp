@@ -1028,7 +1028,7 @@ pub(crate) unsafe fn write_register_and_mirror(
     mirror_first: bool,
     game: &mut Game,
 ) {
-    use sm_game::display::preparation::{Access, Store};
+    use sm_game::display::preparation::Store;
     unsafe {
         if mirror_first {
             game.store_display_control_byte(mirror, value, Store::Named);

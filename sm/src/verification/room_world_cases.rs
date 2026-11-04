@@ -478,6 +478,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         #[cfg(sm_verify_dll)]
         if id == 100 {
             use crate::game::scanline_irq;
+            use crate::oracle_host::OracleHost;
             crate::rtl::rtl_reset(2, g);
             let snes = g.g_snes;
             assert!(!snes.is_null());
@@ -486,14 +487,14 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             put(g, 0x84, 0xa5cf);
             (*snes).hTimer = 0x145;
             (*snes).vTimer = 0x1ee;
-            sm_game::display_refresh::enable_scanline_irq(false, g);
+            sm_game::display_refresh::enable_scanline_irq(false, &mut OracleHost(g));
             assert_eq!(word(g, 0x84), 0xa5ff, "irq.full-enable-word");
             assert_eq!(((*snes).vTimer, (*snes).hTimer), (0, 152));
             assert!(!(*snes).hIrqEnabled && !(*snes).vIrqEnabled);
-            sm_game::display_refresh::enable_scanline_irq(true, g);
+            sm_game::display_refresh::enable_scanline_irq(true, &mut OracleHost(g));
             assert!((*snes).hIrqEnabled && (*snes).vIrqEnabled);
             assert_eq!(word(g, 0x84), 0xa5ff);
-            sm_game::display_refresh::disable_scanline_irq(g);
+            sm_game::display_refresh::disable_scanline_irq(&mut OracleHost(g));
             assert_eq!(word(g, 0x84), 0xa5cf, "irq.high-hdma-byte-preserved");
             assert!((*snes).hIrqEnabled && (*snes).vIrqEnabled);
             put(g, 0xa7, 0xfedc);

@@ -2651,10 +2651,13 @@ impl Game {
     }
 }
 
-/// The named-RAM interface `sm_game` modules use; the same projection as the
-/// compat `word!` macros.
-impl sm_game::ram::CompatibilityRam for Game {
-    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
+/// The external observations as Game's projection holds them, the same
+/// projection as the compat `word!` macros. Game serves no sm_game host trait
+/// for these views: the oracle's settlement and the hand-stepped verification
+/// routes reach them through `oracle_host::OracleHost`, the lease's fallbacks
+/// call them directly.
+impl Game {
+    pub(crate) fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
         crate::projection::observed_inputs(self)
     }
 }
@@ -3042,8 +3045,6 @@ impl Game {
     }
 }
 
-use sm_game::display_scroll::Access as _;
-
 pub(crate) fn scroll_address(word: sm_game::display_scroll::Word) -> usize {
     0xb1 + 2 * usize::from(word)
 }
@@ -3178,9 +3179,10 @@ impl Game {
     }
 }
 
+/// The scroll words as Game's held scroll domain projects them, then RAM.
 #[forbid(unsafe_code)]
-impl sm_game::display_scroll::Access for Game {
-    fn scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
+impl Game {
+    pub(crate) fn scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
         if self.persistent_session_current() {
             if let persistent_session::AggregateSlot::Ready(state) =
                 &self.persistent_session.aggregate
@@ -3214,21 +3216,25 @@ impl sm_game::display_scroll::Access for Game {
             }
         }
     }
-    fn actor_scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
+    pub(crate) fn actor_scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
         // The old boss view called Game::slot_byte, which samples raw RAM.
         u16::from_le_bytes([
             self.physical_scroll_byte(word, false),
             self.physical_scroll_byte(word, true),
         ])
     }
-    fn set_scroll_word(&mut self, word: sm_game::display_scroll::Word, value: u16) {
+    pub(crate) fn set_scroll_word(&mut self, word: sm_game::display_scroll::Word, value: u16) {
         self.publish_scroll(word, value, None);
     }
-    fn physical_scroll_byte(&self, word: sm_game::display_scroll::Word, high: bool) -> u8 {
+    pub(crate) fn physical_scroll_byte(
+        &self,
+        word: sm_game::display_scroll::Word,
+        high: bool,
+    ) -> u8 {
         self.ram()
             .read_byte(scroll_address(word) + usize::from(high))
     }
-    fn write_physical_scroll_byte(
+    pub(crate) fn write_physical_scroll_byte(
         &mut self,
         word: sm_game::display_scroll::Word,
         high: bool,
@@ -3425,21 +3431,22 @@ impl Game {
         publish.completed = true;
     }
 }
+/// The sequence flow and words as Game's held sequence domain projects them.
 #[forbid(unsafe_code)]
-impl sm_game::sequence_state::Access for Game {
-    fn set_cinematic_function(&mut self, value: u16) {
+impl Game {
+    pub(crate) fn set_cinematic_function(&mut self, value: u16) {
         self.publish_sequence_words(vec![(0x1f51, value)]);
     }
-    fn sequence_flow(&self) -> sm_game::flow::Flow {
+    pub(crate) fn sequence_flow(&self) -> sm_game::flow::Flow {
         self.sequence_state().flow
     }
-    fn sequence_words(&self) -> sm_game::session_words::SessionWords {
+    pub(crate) fn sequence_words(&self) -> sm_game::session_words::SessionWords {
         self.sequence_state().words
     }
-    fn set_sequence_word(&mut self, word: sm_game::session_words::Word, value: u16) {
+    pub(crate) fn set_sequence_word(&mut self, word: sm_game::session_words::Word, value: u16) {
         self.publish_sequence_words(vec![(word as usize, value)]);
     }
-    fn commit_flow(&mut self, before: &sm_game::flow::Flow, after: sm_game::flow::Flow) {
+    pub(crate) fn commit_flow(&mut self, before: &sm_game::flow::Flow, after: sm_game::flow::Flow) {
         if *before == after {
             return;
         }
@@ -3452,7 +3459,7 @@ impl sm_game::sequence_state::Access for Game {
         }
         self.publish_sequence_words(after.changes(before));
     }
-    fn commit_sequence_words(
+    pub(crate) fn commit_sequence_words(
         &mut self,
         before: &sm_game::session_words::SessionWords,
         after: sm_game::session_words::SessionWords,
@@ -3746,9 +3753,11 @@ impl Game {
         publish.completed = true;
     }
 }
+/// The frame display mirrors, history words and HUD tiles as Game's held frame
+/// display projects them: the installed Session's display, then RAM.
 #[forbid(unsafe_code)]
-impl sm_game::display::preparation::Access for Game {
-    fn display_control_byte(&self, field: sm_game::display::preparation::Field) -> u8 {
+impl Game {
+    pub(crate) fn display_control_byte(&self, field: sm_game::display::preparation::Field) -> u8 {
         // This is precisely the original projected read's current-owner predicate.
         if let persistent_session::AggregateSlot::Ready(session) =
             &self.persistent_session.aggregate
@@ -3763,7 +3772,7 @@ impl sm_game::display::preparation::Access for Game {
             |game| game.ram.read_byte(frame_field_address(field)),
         )
     }
-    fn store_display_control_byte(
+    pub(crate) fn store_display_control_byte(
         &mut self,
         field: sm_game::display::preparation::Field,
         value: u8,
@@ -3775,7 +3784,7 @@ impl sm_game::display::preparation::Access for Game {
             store,
         );
     }
-    fn display_history_word(&self, word: sm_game::display::preparation::Word) -> u16 {
+    pub(crate) fn display_history_word(&self, word: sm_game::display::preparation::Word) -> u16 {
         if let persistent_session::AggregateSlot::Ready(session) =
             &self.persistent_session.aggregate
             && self.persistent_ram_epoch == self.ram.write_epoch()
@@ -3792,7 +3801,7 @@ impl sm_game::display::preparation::Access for Game {
             },
         )
     }
-    fn store_display_history_word(
+    pub(crate) fn store_display_history_word(
         &mut self,
         word: sm_game::display::preparation::Word,
         value: u16,
@@ -3806,7 +3815,7 @@ impl sm_game::display::preparation::Access for Game {
             store,
         );
     }
-    fn hud_tile(&self, index: isize) -> u16 {
+    pub(crate) fn hud_tile(&self, index: isize) -> u16 {
         let at = frame_hud_address(index);
         let normal = usize::try_from(index).ok();
         if let persistent_session::AggregateSlot::Ready(session) =
@@ -3832,7 +3841,7 @@ impl sm_game::display::preparation::Access for Game {
             |game| u16::from_le_bytes([game.ram.read_byte(at), game.ram.read_byte(at + 1)]),
         )
     }
-    fn store_hud_tile(
+    pub(crate) fn store_hud_tile(
         &mut self,
         index: isize,
         value: u16,
@@ -3864,10 +3873,13 @@ impl sm_game::display::preparation::Access for Game {
             store,
         );
     }
-    fn physical_display_control_byte(&self, field: sm_game::display::preparation::Field) -> u8 {
+    pub(crate) fn physical_display_control_byte(
+        &self,
+        field: sm_game::display::preparation::Field,
+    ) -> u8 {
         self.ram.read_byte(frame_field_address(field))
     }
-    fn store_physical_display_control_byte(
+    pub(crate) fn store_physical_display_control_byte(
         &mut self,
         field: sm_game::display::preparation::Field,
         value: u8,
@@ -3951,40 +3963,39 @@ impl Game {
         }
     }
 }
+/// The grapple animation, inventory and gameplay words as Game projects them.
 #[forbid(unsafe_code)]
-impl sm_game::gameplay_context::Access for Game {
-    fn grapple_animation(&self) -> sm_game::gameplay_context::GrappleAnimation {
-        let state = sm_game::sequence_state::Access::sequence_words(self);
+impl Game {
+    pub(crate) fn grapple_animation(&self) -> sm_game::gameplay_context::GrappleAnimation {
+        let state = self.sequence_words();
         sm_game::gameplay_context::GrappleAnimation {
             timer: state.grapple_point_anim_timer,
             tiles: state.grapple_point_anim_ptr,
         }
     }
-    fn commit_grapple_animation(
+    pub(crate) fn commit_grapple_animation(
         &mut self,
         before: sm_game::gameplay_context::GrappleAnimation,
         after: sm_game::gameplay_context::GrappleAnimation,
     ) {
         if before.timer != after.timer {
-            sm_game::sequence_state::Access::set_sequence_word(
-                self,
+            self.set_sequence_word(
                 sm_game::session_words::Word::GrapplePointAnimTimer,
                 after.timer,
             );
         }
         if before.tiles != after.tiles {
-            sm_game::sequence_state::Access::set_sequence_word(
-                self,
+            self.set_sequence_word(
                 sm_game::session_words::Word::GrapplePointAnimPtr,
                 after.tiles,
             );
         }
     }
 
-    fn inventory_state(&self) -> sm_game::inventory::Inventory {
+    pub(crate) fn inventory_state(&self) -> sm_game::inventory::Inventory {
         self.context_inventory()
     }
-    fn commit_inventory(
+    pub(crate) fn commit_inventory(
         &mut self,
         before: &sm_game::inventory::Inventory,
         after: sm_game::inventory::Inventory,
@@ -4052,10 +4063,15 @@ impl sm_game::gameplay_context::Access for Game {
         publish.completed = true;
     }
 
-    fn gameplay_word(&self, word: sm_game::gameplay_context::Word) -> u16 {
+    pub(crate) fn gameplay_word(&self, word: sm_game::gameplay_context::Word) -> u16 {
         word.get(&self.gameplay_context())
     }
-    fn set_gameplay_byte(&mut self, word: sm_game::gameplay_context::Word, lane: usize, byte: u8) {
+    pub(crate) fn set_gameplay_byte(
+        &mut self,
+        word: sm_game::gameplay_context::Word,
+        lane: usize,
+        byte: u8,
+    ) {
         use sm_game::gameplay_context::Domain;
         assert!(lane < 2);
         let needs_image = {

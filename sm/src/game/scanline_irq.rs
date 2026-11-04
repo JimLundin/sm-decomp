@@ -1,6 +1,7 @@
 //! Native access for the shared scanline interrupt's per-line handler, on Game
 //! and on the frame's lease.
 use crate::game_state::Game;
+use crate::oracle_host::OracleHost;
 use std::convert::Infallible;
 use {
     crate::game::{room_entry, session_runtime},
@@ -8,8 +9,8 @@ use {
 };
 
 /// The projected controls and registers, plus the door resume a handler polls.
-struct NativeIrqHost<'a>(sm_game::display_refresh::ScanlineIrq<'a, Game>);
-impl irq::Controls for NativeIrqHost<'_> {
+struct NativeIrqHost<'a, 'g>(sm_game::display_refresh::ScanlineIrq<'a, OracleHost<'g>>);
+impl irq::Controls for NativeIrqHost<'_, '_> {
     fn read_control(&mut self, field: irq::Control) -> u16 {
         let value = irq::Controls::read_control(&mut self.0, field);
         #[cfg(sm_verify_dll)]
@@ -24,7 +25,7 @@ impl irq::Controls for NativeIrqHost<'_> {
         publish_check::store(field, value);
     }
 }
-impl irq::Display for NativeIrqHost<'_> {
+impl irq::Display for NativeIrqHost<'_, '_> {
     type Error = Infallible;
 
     fn read_mirror(&mut self, field: irq::Mirror) -> u8 {
@@ -39,14 +40,14 @@ impl irq::Display for NativeIrqHost<'_> {
         irq::Display::write_display(&mut self.0, field, value)
     }
 }
-impl irq::Host for NativeIrqHost<'_> {
+impl irq::Host for NativeIrqHost<'_, '_> {
     fn follow_transition(&mut self) -> Result<(), Infallible> {
         #[cfg(sm_verify_dll)]
         table_check::resumed();
         // One resume poll, with the same live native capability as the caller.
-        unsafe { follow_transition(self.0.0) };
+        unsafe { follow_transition(self.0.0.game()) };
         #[cfg(sm_verify_dll)]
-        publish_check::resumed(self.0.0);
+        publish_check::resumed(self.0.0.game());
         Ok(())
     }
 }
@@ -59,9 +60,9 @@ pub(crate) unsafe fn follow_transition(game: &mut Game) {
     );
 }
 
-/// One interrupt pass on Game: settlement after an emulated frame (the
-/// oracle's) or a frame stepped by hand. The engine's frames settle on their
-/// lease (`advance_on_lease`).
+/// One interrupt pass on Game's image: settlement after an emulated frame (the
+/// oracle's) or a frame stepped by hand, through the verification host. The
+/// engine's frames settle on their lease (`advance_on_lease`).
 /// Requires a live, exclusively accessed SNES backend for the entire interrupt.
 pub(crate) unsafe fn advance(game: &mut Game) {
     #[cfg(sm_verify_dll)]
@@ -69,7 +70,7 @@ pub(crate) unsafe fn advance(game: &mut Game) {
     #[cfg(sm_verify_dll)]
     publish_check::begin_pass(game, unsafe { (*game.g_snes).vTimer });
     let Ok(()) = irq::advance(&mut NativeIrqHost(sm_game::display_refresh::ScanlineIrq(
-        game,
+        &mut OracleHost(game),
     )));
     #[cfg(sm_verify_dll)]
     publish_check::end_pass(game);
@@ -269,7 +270,7 @@ pub(crate) mod table_check {
 
     pub(crate) fn begin_frame(game: &mut Game) {
         let (timer, enable) = unsafe { ((*game.g_snes).vTimer, (*game.g_snes).vIrqEnabled) };
-        begin_frame_on(game, timer, enable);
+        begin_frame_on(&mut crate::oracle_host::OracleHost(game), timer, enable);
     }
 
     /// `begin_frame` from `host`'s controls and mirrors (Game's, or the frame

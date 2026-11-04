@@ -10,13 +10,12 @@ use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::external_inputs::ExternalInputs;
 use sm_game::projection::{Decode, Field, Layout, Views};
-use sm_game::ram::CompatibilityRam;
 
 /// Byte access to work RAM as a compatibility host projects it: owned Session
 /// state where it is current, otherwise the RAM bytes themselves. Only the
 /// compatibility layer and verification address RAM bytes; sm_game's hosts
 /// provide its typed views (`CompatibilityRam`).
-pub(crate) trait ProjectedBytes: CompatibilityRam {
+pub(crate) trait ProjectedBytes {
     fn compatibility_byte(&self, at: usize) -> u8;
     fn compatibility_write_byte(&mut self, at: usize, value: u8);
 }
@@ -97,8 +96,7 @@ macro_rules! projected_views {
 }
 
 projected_views!(Game);
-// The oracle checkpoint's latch host takes the same views.
-#[cfg(any(feature = "frontend", sm_verify_dll))]
+// The oracle's hosts (the checkpoint latch, `oracle_host`) take the same views.
 pub(crate) use projected_views;
 
 /// The verify build's check that no access reaches a held copy's bytes,

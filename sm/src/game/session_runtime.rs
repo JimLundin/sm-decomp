@@ -3374,7 +3374,7 @@ impl sm_game::gameplay_context::Access for Runtime<'_> {
                 tiles: state.start_animation_tiles,
             }
         } else {
-            sm_game::gameplay_context::Access::grapple_animation(self.game)
+            self.game.grapple_animation()
         }
     }
     fn commit_grapple_animation(
@@ -3394,7 +3394,7 @@ impl sm_game::gameplay_context::Access for Runtime<'_> {
         if self.persistent_is_current() {
             self.session().inventory.clone()
         } else {
-            sm_game::gameplay_context::Access::inventory_state(self.game)
+            self.game.inventory_state()
         }
     }
     fn commit_inventory(
@@ -3436,7 +3436,7 @@ impl sm_game::gameplay_context::Access for Runtime<'_> {
         if self.persistent_is_current() {
             word.get_session(self.session())
         } else {
-            sm_game::gameplay_context::Access::gameplay_word(self.game, word)
+            self.game.gameplay_word(word)
         }
     }
     fn set_gameplay_byte(&mut self, word: sm_game::gameplay_context::Word, lane: usize, byte: u8) {
@@ -3448,7 +3448,7 @@ impl sm_game::gameplay_context::Access for Runtime<'_> {
             *field = u16::from_le_bytes(bytes);
             self.refresh_inputs();
         } else {
-            sm_game::gameplay_context::Access::set_gameplay_byte(self.game, word, lane, byte);
+            self.game.set_gameplay_byte(word, lane, byte);
         }
     }
 }
