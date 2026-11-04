@@ -196,6 +196,9 @@ The plan is issue #231. Jim's ruling:
   machines. The data has to be typed and stored in `.rs` or `.py` modules, not
   JSON. Moving import code into `sm_tools` counts only when it replaces engine
   logic with data; moving code between packages unchanged doesn't count.
+- **Measure:** the [code volume](VERIFY_PIPELINE.md#code-volume) counts logic
+  and data tokens and structure (traits, blanket impls), which joining lines
+  doesn't move; it is advisory beside `production_lines`.
 
 ### Scenario harness, lane S (Jim, 2026-10-31)
 

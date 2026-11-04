@@ -97,6 +97,7 @@ They are a separate track; the last step below lists them.
 | `lock-check` | `scenario.py lock --check` | none |
 | `relevant` | replay_relevant.py's classification | `gh api` for passed heads, `git diff --name-only`, piped in |
 | `test-summary` | test_summary.py | none |
+| `volume` (measurement, not verification) | none: the [code volume](#code-volume) | none; Quality prints it and `tools/ram_ratchet.py` reads it |
 | `restore` | prepare_corpus_inputs.py (seeds), ci_seed_data.py `restore`, full_route.py `restore` | `curl`, `sha256sum -c`, `openssl enc -d`, `tar -tz`/`-xz`; `restore` prints the allowed members, checks the listing and the restored pins |
 | `replay` | replay_job.py, verify_dll.py's corpus driver and lock compare, pack.py `partition`, lock_gate.py `record-oracle` | none; it runs `sm_verify` |
 | `build-verifier` | verify_dll.py `--build-only`, `--unit-tests`, check_actor_exports.py | rustc and native archives, as now |
@@ -251,3 +252,66 @@ golden plans in `plan_golden.rs` depend on each):
 - **Movie maps.** scenario.py checks a movie-map pin's work events when its
   manifest is present. No scenario has one; the Rust planner refuses such a
   pin with a clear error until step 8 ports the check.
+
+## Code volume
+
+`sm_pipeline volume` (crates/sm_tools/src/bin/sm_pipeline/volume.rs) measures
+code size in lexer tokens, so joining or splitting lines moves nothing but the
+line count. It serves REVIEW's "After the decoupling: as few lines as possible"
+beside `production_lines`, and like it is advisory for now.
+
+- **Logic tokens.** Tokens outside comments, doc comments, `#[cfg(test)]` items
+  and pure data items. Compound operators (`::`, `->`, `=>`, `..=`, `<<=`) are
+  one token; a literal of any kind is one token.
+- **Data tokens and entries.** The tokens of pure data items: a `const` or
+  `static` with a value made only of literals, arrays, tuples, struct and
+  tuple-struct literals and paths (with unary `-` and `&`). A call (a lowercase
+  name before `(`), a macro, a closure, an operator, a cast, `if`, `match` or
+  a block makes the item logic. Entries are the top-level elements of the
+  item's outermost array or slice; a repeat array or a non-array value is one.
+  Constants generated inside a macro invocation are logic.
+- **Comment lines.** Lines holding any comment or doc comment; reported only.
+- **Structure counts.** Lexical: `trait` followed by a name; `impl` at the start
+  of an item (not `impl Trait` types); blanket impls, an `impl<...>` whose self
+  type after `for` is one of its own type parameters (behind `&`, `&mut` or a
+  lifetime too); `fn` followed by a name; match arms, `=>` outside
+  `macro_rules!` bodies (a macro invocation's own `=>` syntax counts); and
+  `macro_rules!` definitions.
+
+The lexer handles line, nested block and doc comments, strings, byte and C
+strings, raw strings with any number of `#`s, raw identifiers, character and
+byte literals versus lifetimes and loop labels, and numbers with exponents and
+suffixes. Its golden fixtures (`fixture/volume`) cover each case, and
+`split.rs` and `joined.rs` hold the same code on 13 lines and on 2.
+
+**Scope.** `production_lines`' files: `.rs` under `crates/*/src` and `sm/src`.
+The engine is crates/sm_data, sm_game, sm_runtime and sm_app outside
+`verification` directories, reported per package and per top-level sm_game
+module (a file or directory under `src`). sm/src outside `verification` (the
+oracle and the legacy game) and verification (`verification` directories and
+crates/sm_tools/src outside its `fixture` test inputs) are separate rows, so
+the engine measures do not move with them. `#[cfg(test)]` items are excluded
+everywhere; `#[cfg(sm_verify_dll)]` items in engine files are counted, as
+`production_lines` counts them.
+
+**Running it.** `sm_pipeline volume [--root DIR]` prints the table and then
+the ratchet's measures as `name: value` lines; `--baseline tools/ram_ratchet.py`
+compares those with the file's `"name": value` entries and exits 1 when one
+rose; `--file PATH...` measures single files. Quality builds sm_pipeline,
+prints the report into the step summary, and runs `tools/ram_ratchet.py` with
+`SM_PIPELINE` set, which adds `engine_logic_tokens`, `engine_data_tokens`,
+`engine_traits` and `engine_blanket_impls` to its advisory measures. Locally
+the ratchet builds the binary with rustc and skips these measures when it
+cannot run it.
+
+First measured on 7bf8f9f51:
+
+| Row | Lines | Logic tokens | Data tokens | Data entries | Traits | Blanket impls |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Engine | 171,321 | 1,237,775 | 52,807 | 10,212 | 342 | 88 |
+| sm_data | 5,282 | 26,597 | 3,353 | 544 | 0 | 0 |
+| sm_game | 159,261 | 1,166,937 | 45,031 | 8,438 | 334 | 88 |
+| sm_runtime | 5,340 | 35,563 | 3,997 | 1,162 | 8 | 0 |
+| sm_app | 1,438 | 8,678 | 426 | 68 | 0 | 0 |
+| sm/src (oracle, legacy) | 36,937 | 255,516 | 6,507 | 2,172 | 8 | 0 |
+| Verification | 61,429 | 443,985 | 6,432 | 1,084 | 2 | 0 |

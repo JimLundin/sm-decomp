@@ -37,11 +37,22 @@ items, attributes and doc comments included). It reaches 0 when verification
 owns the oracle's RAM decode and the engine exports no RAM (REVIEW's end state).
 It is advisory until it first falls, then strict.
 
+The code volume (2026-11-04, docs/VERIFY_PIPELINE.md "Code volume") comes from
+`sm_pipeline volume`: engine_logic_tokens and engine_data_tokens count lexer
+tokens in the engine packages (crates/sm_data, sm_game, sm_runtime, sm_app),
+so joining or splitting lines moves neither; engine_traits and
+engine_blanket_impls count trait items and `impl<T> X for T` impls. They are
+advisory, beside production_lines. The ratchet runs the binary SM_PIPELINE names
+(Quality builds it first) and fails if that run fails; without SM_PIPELINE it
+builds one with rustc and skips the volume measures when it cannot build or run it.
+
 Run from the repository root: python3 tools/ram_ratchet.py [--update]
 """
 import os
 import re
+import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cycle_report  # noqa: E402
@@ -101,10 +112,18 @@ BASELINE = {
     # The Session <-> RAM codec in sm_game (docs/handoff/session-compare.md).
     # First measured on 0b19d8a24; advisory until it first falls, then strict.
     "engine_ram_export_lines": 4685,
+    # Code volume (sm_pipeline volume), first measured on 7bf8f9f51. Advisory.
+    "engine_logic_tokens": 1237775,
+    "engine_data_tokens": 52807,
+    "engine_traits": 342,
+    "engine_blanket_impls": 88,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
             "engine_legacy_overflow_sites", "session_word_view_sites",
-            "engine_ram_export_lines"}
+            "engine_ram_export_lines", "engine_logic_tokens", "engine_data_tokens",
+            "engine_traits", "engine_blanket_impls"}
+VOLUME = ("engine_logic_tokens", "engine_data_tokens", "engine_traits", "engine_blanket_impls")
+PIPELINE = os.path.join("crates", "sm_tools", "src", "bin", "sm_pipeline", "main.rs")
 # session_entries is strict from 2026-11-04: Jim's end state (docs/REVIEW.md) is
 # the engine alone, so leases opened from the engine must reach 0.
 
@@ -296,6 +315,36 @@ def engine_ram_export_lines() -> int:
     return total
 
 
+def run_volume(binary: str) -> dict[str, int]:
+    """The ratchet's measures from `sm_pipeline volume`'s `name: value` lines."""
+    output = subprocess.run([binary, "volume"], check=True, capture_output=True, text=True).stdout
+    found = {}
+    for line in output.splitlines():
+        name, _, value = line.partition(": ")
+        if name in VOLUME:
+            found[name] = int(value)
+    missing = [name for name in VOLUME if name not in found]
+    if missing:
+        raise RuntimeError("sm_pipeline volume did not report " + ", ".join(missing))
+    return found
+
+
+def volume() -> dict[str, int]:
+    """The code volume measures, or none when no sm_pipeline can be built or run here."""
+    binary = os.environ.get("SM_PIPELINE")
+    if binary:
+        return run_volume(binary)
+    with tempfile.TemporaryDirectory() as scratch:
+        binary = os.path.join(scratch, "sm_pipeline" + (".exe" if os.name == "nt" else ""))
+        try:
+            subprocess.run(["rustc", "--edition=2024", "-O", "-o", binary, PIPELINE],
+                           check=True, capture_output=True)
+            return run_volume(binary)
+        except (OSError, subprocess.CalledProcessError) as error:
+            print(f"code volume skipped: sm_pipeline could not be built or run ({error})")
+            return {}
+
+
 def measure() -> dict[str, int]:
     ram = cycle_report.sm_game_ram_couplings()
     return {
@@ -306,6 +355,7 @@ def measure() -> dict[str, int]:
         **game_boundary(),
         "session_word_view_sites": session_word_view_sites(),
         "engine_ram_export_lines": engine_ram_export_lines(),
+        **volume(),
     }
 
 
@@ -313,6 +363,8 @@ def main() -> None:
     now = measure()
     over = []
     for name, base in BASELINE.items():
+        if name not in now:
+            continue
         print(f"{name}: {now[name]} (baseline {base}, delta {now[name] - base:+d})")
         if now[name] > base:
             if name in ADVISORY:
@@ -324,7 +376,7 @@ def main() -> None:
         path = os.path.abspath(__file__)
         text = open(path, encoding="utf-8").read()
         for name, base in BASELINE.items():
-            lowered = min(base, now[name])
+            lowered = min(base, now.get(name, base))
             text = re.sub(rf'("{name}": )\d+', rf"\g<1>{lowered}", text)
         open(path, "w", encoding="utf-8", newline="\n").write(text)
         print("baseline updated (only lowered measures change)")
