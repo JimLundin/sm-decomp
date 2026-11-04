@@ -133,16 +133,6 @@ impl sm_game::menus::save_slots::SlotHost for Game {
     }
 }
 
-/// The cinematic tables the boot logo's scene reads.
-impl sm_game::menus::host::Tables for Game {
-    fn intro_palette(&self) -> &Option<sm_game::intro_pages::ImportedIntroPalette> {
-        &self.intro_palette
-    }
-    fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
-        &self.visual_tables
-    }
-}
-
 // The controllers read through their device registers, as the game reads them.
 impl sm_game::menus::controller_input::SampleHost for Game {
     fn sampled_controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {

@@ -300,18 +300,6 @@ impl sm_game::escape_typewriter::Host for crate::game::session_runtime::Runtime<
     }
 }
 
-impl sm_game::display::transfer::TilemapQueue for Game {
-    fn tilemap_queue_tail(&self) -> u16 {
-        crate::ram_map::word!(self.VRAM_WRITE_QUEUE_TAIL)
-    }
-    fn set_tilemap_queue_tail(&mut self, tail: u16) {
-        crate::ram_map::word!(self.VRAM_WRITE_QUEUE_TAIL = tail);
-    }
-    fn set_tilemap_queue_byte(&mut self, at: usize, value: u8) {
-        self.ram().write_byte(at, value);
-    }
-}
-
 impl sm_game::actors::fire_arc::Lease for crate::game::session_runtime::Runtime<'_> {
     fn advance_orbit(&mut self) {
         sm_game::enemy_projectiles::attachments_fire_arc_botwoon::advance_fire_arc_orbit(self);

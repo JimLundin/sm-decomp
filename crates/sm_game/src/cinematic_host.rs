@@ -7,10 +7,10 @@ use crate::effects::SoundEffects;
 use crate::ram::CompatibilityRam;
 use crate::word_transfers::LoadedRom;
 
-/// What the cinematic functions read and store on either host: the display,
-/// palette, presentation and level data owners, the cartridge, sound and the
-/// graphics loads. The Nintendo logo runs on it at boot, before the frame's
-/// lease opens.
+/// What the cinematic functions read and store: the display, palette,
+/// presentation and level data owners, the cartridge, sound and the graphics
+/// loads. Only the lease implements it; the boot Nintendo logo runs on the
+/// boot frame's lease.
 pub trait Scene:
     crate::fx_domain::Controls
     + crate::fx_domain::Sources

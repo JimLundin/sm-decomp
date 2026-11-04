@@ -18,14 +18,6 @@ pub(crate) fn advance(game: &mut Game) {
     execution::advance(&mut Runtime::new(game));
 }
 
-/// The game's fades store their colours in the work RAM image, outside the
-/// projection, as they always have.
-impl sm_game::palette_effects::fading::Host for Game {
-    fn store_faded_colour(&mut self, at: usize, bytes: [u8; 2]) {
-        self.ram().copy_in(at, &bytes);
-    }
-}
-
 /// A lease's fades store their colours in the Session, low byte then high.
 impl sm_game::palette_effects::fading::Host for Runtime<'_> {
     fn store_faded_colour(&mut self, at: usize, bytes: [u8; 2]) {

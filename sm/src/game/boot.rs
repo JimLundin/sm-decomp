@@ -40,7 +40,16 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             clear_work_ram(0x2000, game);
         }
         if matches!(resume, 1 | 2) {
-            let yielded: u8 = sm_game::cinematic_states::nintendo_logo(game);
+            use sm_game::cinematic_states::{
+                end_nintendo_logo, nintendo_logo, nintendo_logo_ending,
+            };
+            // The logo runs on the boot frame's one lease. Its last frame,
+            // which boot's own work follows, only blanks the screen, without one.
+            let yielded: u8 = if nintendo_logo_ending(game) {
+                end_nintendo_logo(game)
+            } else {
+                nintendo_logo(&mut crate::game::session_runtime::Runtime::new(game))
+            };
             if yielded != 0 {
                 game.ram().write_byte(0x611, 2);
                 return yielded;
@@ -64,16 +73,22 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             game.ram().write_byte(0x51, 0x8f);
             initialize_registers(game);
             // The tile buffers at $7E:3000, $4000 and $6000, 1024 words of
-            // $1C2F each, in the presentation workspace Game holds as RAM.
+            // $1C2F each, in address order: the next lease adopts them.
             use sm_game::presentation_workspace::{Point, Role};
             for target in [
                 Point::new(Role::Pause, 0),
                 Point::new(Role::TilemapStaging, 0),
                 Point::new(Role::TilemapStaging, 0x2000),
             ] {
-                sm_game::presentation_workspace::Access::screen_fill_native(
-                    game, target, 1024, 0x1c2f,
-                );
+                let at = target.compatibility_address().expect("screen offset");
+                for (offset, byte) in 0x1c2f_u16
+                    .to_ne_bytes()
+                    .repeat(1024)
+                    .into_iter()
+                    .enumerate()
+                {
+                    game.compatibility_write_byte(at + offset, byte);
+                }
             }
             for base in [0x643, 0x646, 0x649, 0x64d, 0x650] {
                 for offset in 0..3 {
