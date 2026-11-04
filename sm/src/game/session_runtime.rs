@@ -2133,7 +2133,7 @@ pub(crate) use player_movement_runtime::{
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
     command as player_command, command_in as player_command_in, damage_player, finish_player_frame,
-    finish_xray, initialize as initialize_player, mother_brain as player_mother_brain,
+    finish_xray, initialize as initialize_player,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;

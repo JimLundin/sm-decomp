@@ -172,9 +172,13 @@ pub fn flicker_body<H: PaletteHost + ?Sized>(game: &mut H) {
 }
 
 /// The rising and rainbow beams' HDMA objects; each returns its slot.
-pub fn spawn_rising_hdma<H: Host + ?Sized>(game: &mut H) -> u16 {
-    crate::hdma_objects::spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xe727), game)
+pub fn spawn_rising_hdma<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) -> u16 {
+    crate::hdma_objects::spawn_hdma_owned(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xe727), game)
 }
-pub fn spawn_rainbow_hdma<H: Host + ?Sized>(game: &mut H) -> u16 {
-    crate::hdma_objects::spawn_hdma(0x88, &HdmaObjectDefinition::new(0x41, 0x26, 0xe751), game)
+pub fn spawn_rainbow_hdma<H: crate::hdma_objects::Allocator + ?Sized>(game: &mut H) -> u16 {
+    crate::hdma_objects::spawn_hdma_owned(
+        0x88,
+        &HdmaObjectDefinition::new(0x41, 0x26, 0xe751),
+        game,
+    )
 }

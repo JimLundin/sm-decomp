@@ -83,10 +83,6 @@ impl Host for Runtime<'_> {}
 pub(crate) use sm_game::player_transitions::input::dispatch_input;
 pub(crate) use sm_game::player_transitions::input::finish_frame as finish_player_frame;
 
-pub(crate) fn mother_brain(event: u16, game: &mut crate::game_state::Game) {
-    crate::game::player_transitions::mother_brain::react(&mut Runtime::new(game), event);
-}
-
 pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {
     crate::game::player_transitions::xray::finish(&mut Runtime::new(game));
 }

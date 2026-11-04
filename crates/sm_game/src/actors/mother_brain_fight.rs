@@ -23,8 +23,6 @@ use crate::actors::mother_brain_neck::function as neck;
 use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::escape_typewriter;
 use crate::runtime_access::SessionRam;
-// The game's traits, for the calls made on it through `foreign`.
-use crate::actors::host::{ActorRuntime as _, BossEffects as _};
 
 use crate::constants::bank_8d::*;
 use crate::constants::bank_86::*;
@@ -845,7 +843,13 @@ pub trait Lease:
     + crate::enemy_projectiles::host::Host
     + crate::player_update::effects::Host
     + crate::player_projectiles::host::Host
-    + crate::hdma_objects::HdmaTable
+    + crate::hdma_objects::Allocator
+    + crate::diagnostics::Fatal
+    + crate::display_refresh::DisplayOwner
+    + crate::progress::FlagHost
+    + crate::room_mechanisms::host::Host
+    + crate::room_state::fx::FxHost
+    + crate::visual_host::Host
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
@@ -855,6 +859,10 @@ pub trait Lease:
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
     /// QueueSound on `channel` on the lease, with the original's result.
     fn queue_sound_with_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16;
+    /// Run Samus command `command` on the lease; the original's result.
+    fn player_command(&mut self, command: u16) -> u16;
+    /// Samus's reaction `event` to the drain and Hyper Beam sequence, on the lease.
+    fn player_mother_brain(&mut self, event: u16);
 }
 
 /// What the fight still reaches in the compatibility runtime.
@@ -867,26 +875,8 @@ pub trait Host:
     + crate::cartridge::NativeImage
     + OwnedWords
 {
-    /// The original's unreachable-state failure. Was `Unreachable`.
-    fn bank_unreachable(&mut self) -> bool;
     /// The wall seal's dust clouds and wall blocks.
     fn spawn_wall_seal(&mut self);
-    fn add_glass_hits(&mut self, slot: usize, amount: u16);
-    fn spawn_palette_effect(&mut self, definition: u16);
-    fn set_boss_bit_for_current_area(&mut self, mask: u16);
-    fn set_event_happened(&mut self, event: u16);
-    fn check_event_happened(&mut self, event: u16) -> u16;
-    fn spawn_rainbow_hdma(&mut self) -> u16;
-    fn spawn_rising_hdma(&mut self) -> u16;
-    fn player_mother_brain(&mut self, command: u16);
-    fn load_fx_entry(&mut self, index: u16);
-    fn set_native_word(&mut self, offset: usize, value: u16);
-    fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8;
-    fn move_samus_vertically_towards_ceiling_floor(&mut self, amount: u16) -> u8;
-    /// Start the corpse rotting of slot `k` from `definition`. Was
-    /// `InitializeEnemyCorpseRotting`.
-    /// Queue a sound; the value the original left in A. Was `queue_sfx`.
-    fn queue_sound_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16;
     /// The lease an AI's frame runs its state steps in.
     type Lease<'a>: Lease<Game = Self>
     where
@@ -894,32 +884,156 @@ pub trait Host:
     fn lease(&mut self) -> Self::Lease<'_>;
 }
 
-// The calls the moved bodies make on the game, each through `foreign`.
-macro_rules! on_game {
-    ($($name:ident($($arg:ident: $ty:ty),*) $(-> $ret:ty)? => $method:ident;)*) => {
-        $(pub(crate) fn $name($($arg: $ty,)* game: &mut impl Lease) $(-> $ret)? {
-            game.foreign(|game| game.$method($($arg),*))
-        })*
-    };
+// The calls the moved bodies made on the game through one `foreign` each,
+// now on the fight's lease: every step refreshes the observations on entry
+// and on return, as the foreign call left them.
+/// The original's unreachable-state failure. It reads no game state.
+pub(crate) fn bank_unreachable(game: &mut impl Lease) -> bool {
+    crate::diagnostics::Fatal::unreachable(game)
 }
-on_game! {
-    bank_unreachable() -> bool => bank_unreachable;
-    spawn_room_projectile(definition: u16, parameter: u16) -> u16 => spawn_room_projectile;
-    spawn_plm(block_x: u8, block_y: u8, header: u16) => spawn_plm;
-    queue_music(track: u16) => queue_music_delayed;
-    run_samus_command(command: u16) -> u16 => command_player;
-    set_native_word(offset: usize, value: u16) => set_native_word;
-    set_boss_bit_for_current_area(mask: u16) => set_boss_bit_for_current_area;
-    set_event_happened(event: u16) => set_event_happened;
-    check_event_happened(event: u16) -> u16 => check_event_happened;
-    spawn_rainbow_hdma() -> u16 => spawn_rainbow_hdma;
-    spawn_rising_hdma() -> u16 => spawn_rising_hdma;
-    player_mother_brain(command: u16) => player_mother_brain;
-    load_fx_entry(index: u16) => load_fx_entry;
-    move_samus_horizontally_towards_wall(amount: u16) -> u8 => move_samus_horizontally_towards_wall;
-    move_samus_vertically_towards_ceiling_floor(amount: u16) -> u8 => move_samus_vertically_towards_ceiling_floor;
-    add_glass_hits(slot: usize, amount: u16) => add_glass_hits;
-    spawn_palette_effect(definition: u16) => spawn_palette_effect;
+/// Spawn the room-graphics enemy projectile `definition` with `parameter`.
+pub(crate) fn spawn_room_projectile(definition: u16, parameter: u16, game: &mut impl Lease) -> u16 {
+    game.owned_step(|game| {
+        crate::enemy_projectiles::lifecycle::spawn_room(game, definition, parameter)
+    })
+}
+/// Spawn the hardcoded PLM `header` at block (`block_x`, `block_y`).
+pub(crate) fn spawn_plm(block_x: u8, block_y: u8, header: u16, game: &mut impl Lease) {
+    game.owned_step(|game| {
+        crate::room_mechanisms::creation::spawn_hardcoded_in(game, block_x, block_y, header);
+    });
+}
+/// Queue music `track` after 8 frames. Was `QueueMusic_Delayed8`.
+pub(crate) fn queue_music(track: u16, game: &mut impl Lease) {
+    game.owned_step(|game| crate::room_mechanisms::host::Effects::music(game, track));
+}
+/// Run Samus command `command`; the original's result.
+pub(crate) fn run_samus_command(command: u16, game: &mut impl Lease) -> u16 {
+    game.player_command(command)
+}
+/// Store `value` to the work RAM word at `offset`.
+pub(crate) fn set_native_word(offset: usize, value: u16, game: &mut impl Lease) {
+    game.owned_step(|game| crate::display_refresh::set_native_word(offset, value, game));
+}
+/// Mark the current area's boss bits `mask` as defeated.
+pub(crate) fn set_boss_bit_for_current_area(mask: u16, game: &mut impl Lease) {
+    game.owned_step(|game| crate::progress::mark_boss_defeated(game, mask));
+}
+/// Mark event `event` as happened.
+pub(crate) fn set_event_happened(event: u16, game: &mut impl Lease) {
+    game.owned_step(|game| crate::progress::set_event(game, event));
+}
+/// Whether event `event` has happened, as the original's 0 or 1.
+pub(crate) fn check_event_happened(event: u16, game: &mut impl Lease) -> u16 {
+    game.owned_step(|game| u16::from(crate::progress::event_happened(game, event)))
+}
+/// The rainbow beam's HDMA object; its slot.
+pub(crate) fn spawn_rainbow_hdma(game: &mut impl Lease) -> u16 {
+    game.owned_step(crate::mother_brain_visuals::spawn_rainbow_hdma)
+}
+/// The rising beam's HDMA object; its slot.
+pub(crate) fn spawn_rising_hdma(game: &mut impl Lease) -> u16 {
+    game.owned_step(crate::mother_brain_visuals::spawn_rising_hdma)
+}
+/// Samus's reaction `event` to the drain and Hyper Beam sequence.
+pub(crate) fn player_mother_brain(event: u16, game: &mut impl Lease) {
+    game.player_mother_brain(event);
+}
+/// Load FX entry `index` of the room state's FX list.
+pub(crate) fn load_fx_entry(index: u16, game: &mut impl Lease) {
+    game.owned_step(|game| crate::room_state::fx::load_entry(game, index));
+}
+/// Add `amount` hits to the glass mechanism in `slot`.
+pub(crate) fn add_glass_hits(slot: usize, amount: u16, game: &mut impl Lease) {
+    game.owned_step(|game| {
+        crate::room_mechanisms::rules::mother_brain_glass::add_hits(game, slot, amount);
+    });
+}
+/// Spawn palette effect `definition`.
+pub(crate) fn spawn_palette_effect(definition: u16, game: &mut impl Lease) {
+    game.owned_step(|game| crate::palette_effects::execution::spawn(game, definition));
+}
+/// Move Samus right by `amount` (8.8 pixels) up to the wall at X = 235; 1
+/// when she reached it. Was `MotherBrain_MoveSamusHorizTowardsWall`.
+pub(crate) fn move_samus_horizontally_towards_wall(amount: u16, game: &mut impl Lease) -> u8 {
+    game.owned_step(|game| move_samus_towards_wall(amount, game))
+}
+/// Move Samus down by `amount` (8.8 pixels), held between the ceiling at
+/// Y = 48 and the floor at Y = 192; 1 when she was held. Was
+/// `MotherBrain_MoveSamusVerticallyTowardsCeilingFloor`.
+pub(crate) fn move_samus_vertically_towards_ceiling_floor(
+    amount: u16,
+    game: &mut impl Lease,
+) -> u8 {
+    game.owned_step(|game| move_samus_towards_ceiling_floor(amount, game))
+}
+
+/// Add the low byte of `amount` to the high byte of `fraction`, storing the sum
+/// to it and to `previous_fraction`; `position` plus the high byte of `amount`
+/// (signed) and the carry.
+fn step_with_fraction(
+    game: &mut impl crate::player_position::PlayerPosition,
+    amount: u16,
+    [fraction, previous_fraction, position]: [crate::player_position::PlayerWord; 3],
+) -> u16 {
+    let [_, high] = game.player_word(fraction).to_le_bytes();
+    let [low_amount, high_amount] = amount.to_le_bytes();
+    let (sum, carry) = high.overflowing_add(low_amount);
+    for word in [fraction, previous_fraction] {
+        let [low, _] = game.player_word(word).to_le_bytes();
+        game.set_player_word(word, u16::from_le_bytes([low, sum]));
+    }
+    game.player_word(position)
+        .wrapping_add_signed(i16::from(i8::from_le_bytes([high_amount])))
+        .wrapping_add(u16::from(carry))
+}
+/// Move Samus right by `amount` (8.8 pixels) up to the wall at X = 235,
+/// through her position words; 1 when she reached it.
+pub fn move_samus_towards_wall(
+    amount: u16,
+    game: &mut impl crate::player_position::PlayerPosition,
+) -> u8 {
+    use crate::player_position::PlayerWord::*;
+    let x = step_with_fraction(game, amount, [XFraction, PreviousXFraction, X]);
+    if x.wrapping_sub(235) & 0x8000 != 0 {
+        game.set_player_word(X, x);
+        game.set_player_word(PreviousX, x);
+        return 0;
+    }
+    for (word, value) in [
+        (X, 235),
+        (PreviousX, 235),
+        (XFraction, 0),
+        (PreviousXFraction, 0),
+    ] {
+        game.set_player_word(word, value);
+    }
+    1
+}
+/// Move Samus down by `amount` (8.8 pixels) between the ceiling at Y = 48 and
+/// the floor at Y = 192, through her position words; 1 when she was held.
+pub fn move_samus_towards_ceiling_floor(
+    amount: u16,
+    game: &mut impl crate::player_position::PlayerPosition,
+) -> u8 {
+    use crate::player_position::PlayerWord::*;
+    let y = step_with_fraction(game, amount, [YFraction, PreviousYFraction, Y]);
+    let held = if y.wrapping_sub(48) & 0x8000 != 0 {
+        48
+    } else if y.wrapping_sub(192) & 0x8000 != 0 {
+        game.set_player_word(Y, y);
+        let y = game.player_word(Y);
+        game.set_player_word(PreviousY, y);
+        return 0;
+    } else {
+        192
+    };
+    game.set_player_word(Y, held);
+    let y = game.player_word(Y);
+    game.set_player_word(PreviousY, y);
+    game.set_player_word(YFraction, 0);
+    game.set_player_word(PreviousYFraction, 0);
+    1
 }
 /// A sprite tile transfer entry's bytes: size, source and destination.
 const SPRITE_TILE_ENTRY: u16 = 7;

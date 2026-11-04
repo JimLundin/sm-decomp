@@ -191,6 +191,16 @@ impl sm_game::actors::mother_brain_fight::Lease for Runtime<'_> {
     fn queue_sound_with_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {
         self.queue_sound_request(channel, sound, max_queued)
     }
+    fn player_command(&mut self, command: u16) -> u16 {
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, command)
+        })
+    }
+    fn player_mother_brain(&mut self, event: u16) {
+        self.owned_player_call(|runtime| {
+            crate::game::player_transitions::mother_brain::react(runtime, event)
+        });
+    }
 }
 use sm_game::actors::mother_brain_fight::OwnedWord;
 

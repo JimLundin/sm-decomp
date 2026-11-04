@@ -22,85 +22,11 @@ pub unsafe fn mother_brain_move_samus_vertically_towards_ceiling_floor(
     a: u16,
     game: &mut Game,
 ) -> u8 {
-    move_samus_vertically_towards_ceiling_floor(a, game)
-}
-pub(crate) fn move_samus_vertically_towards_ceiling_floor(a: u16, game: &mut Game) -> u8 {
-    {
-        let carry: i32 = game.ram().read_byte(0xafc + 1) as i32 + a.to_ne_bytes()[0] as i32;
-        {
-            let value: u8 = carry as u8;
-            let at: usize = 0xafc + 1;
-            game.ram().write_byte(at, value);
-        };
-        {
-            let value: u8 = carry as u8;
-            let at: usize = 0xb16 + 1;
-            game.ram().write_byte(at, value);
-        };
-        let v4: u16 =
-            (word!(game.SAMUS_Y_POS) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
-        let v6: u16 = if v4 as i32 - 48i32 & 0x8000 != 0 {
-            48
-        } else {
-            if v4 as i32 - 192i32 & 0x8000 != 0 {
-                {
-                    let at: usize = 0xafa;
-                    let bytes: [u8; 2] = (v4).to_le_bytes();
-                    game.ram().write_byte(at, bytes[0]);
-                    game.ram().write_byte(at + 1, bytes[1]);
-                }
-                word!(
-                    game.SAMUS_PREV_Y_POS = u16::from_le_bytes([
-                        game.ram().read_byte(0xafa),
-                        game.ram().read_byte(0xafb)
-                    ])
-                );
-                return 0;
-            }
-            192
-        };
-        {
-            let at: usize = 0xafa;
-            let bytes: [u8; 2] = (v6).to_le_bytes();
-            game.ram().write_byte(at, bytes[0]);
-            game.ram().write_byte(at + 1, bytes[1]);
-        }
-        word!(
-            game.SAMUS_PREV_Y_POS =
-                u16::from_le_bytes([game.ram().read_byte(0xafa), game.ram().read_byte(0xafb)])
-        );
-        word! { game, 0; SAMUS_Y_SUBPOS, SAMUS_PREV_Y_SUBPOS }
-        1
-    }
+    mother_brain_fight::move_samus_towards_ceiling_floor(a, game)
 }
 /// Kept unsafe for the player collision ownership checks, which wrap it in an unsafe block.
 pub unsafe fn mother_brain_move_samus_horiz_towards_wall(a: u16, game: &mut Game) -> u8 {
-    move_samus_horizontally_towards_wall(a, game)
-}
-pub(crate) fn move_samus_horizontally_towards_wall(a: u16, game: &mut Game) -> u8 {
-    {
-        let carry: i32 = game.ram().read_byte(0xaf8 + 1) as i32 + a.to_ne_bytes()[0] as i32;
-        {
-            let value: u8 = carry as u8;
-            let at: usize = 0xaf8 + 1;
-            game.ram().write_byte(at, value);
-        };
-        {
-            let value: u8 = carry as u8;
-            let at: usize = 0xb12 + 1;
-            game.ram().write_byte(at, value);
-        };
-        let v4: u16 =
-            (word!(game.SAMUS_X_POS) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
-        if v4 as i32 - 235i32 & 0x8000 != 0 {
-            word! {game; SAMUS_X_POS = v4; SAMUS_PREV_X_POS = v4; }
-            0
-        } else {
-            word! { game, 235; SAMUS_X_POS, SAMUS_PREV_X_POS }
-            word! { game, 0; SAMUS_X_SUBPOS, SAMUS_PREV_X_SUBPOS }
-            1
-        }
-    }
+    mother_brain_fight::move_samus_towards_wall(a, game)
 }
 crate::forward_calls! { pub fn (a: u16, r18: u16, game: &mut Game) -> u16;
     sin_times => sin_angle_times(r18, a, game);
@@ -238,63 +164,7 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         crate::game::session_runtime::Runtime::new(self)
     }
 
-    fn bank_unreachable(&mut self) -> bool {
-        crate::rtl::report_unreachable(self)
-    }
-
     fn spawn_wall_seal(&mut self) {
         crate::game::mother_brain_visuals::spawn_wall_seal(self);
-    }
-
-    fn add_glass_hits(&mut self, slot: usize, amount: u16) {
-        crate::game::room_mechanisms::add_glass_hits(slot, amount, self);
-    }
-
-    fn spawn_palette_effect(&mut self, definition: u16) {
-        crate::game::palette_effects::spawn(definition, self);
-    }
-
-    fn set_boss_bit_for_current_area(&mut self, mask: u16) {
-        crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(mask, self);
-    }
-
-    fn set_event_happened(&mut self, event: u16) {
-        crate::game::gameplay_flag_runtime::mark_event(event, self);
-    }
-
-    fn check_event_happened(&mut self, event: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::event_has_happened(event, self)
-    }
-
-    fn spawn_rainbow_hdma(&mut self) -> u16 {
-        crate::game::mother_brain_visuals::spawn_rainbow_hdma(self)
-    }
-
-    fn spawn_rising_hdma(&mut self) -> u16 {
-        crate::game::mother_brain_visuals::spawn_rising_hdma(self)
-    }
-
-    fn player_mother_brain(&mut self, command: u16) {
-        crate::game::session_runtime::player_mother_brain(command, self);
-    }
-
-    fn load_fx_entry(&mut self, index: u16) {
-        sm_game::room_state::fx::load_entry(&mut Runtime::new(self), index);
-    }
-
-    fn set_native_word(&mut self, offset: usize, value: u16) {
-        crate::game::display_refresh::set_native_word(offset, value, self);
-    }
-
-    fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8 {
-        crate::game::sm_a9::move_samus_horizontally_towards_wall(amount, self)
-    }
-
-    fn queue_sound_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {
-        crate::game::music::queue_sfx(channel, sound, max_queued, self)
-    }
-
-    fn move_samus_vertically_towards_ceiling_floor(&mut self, amount: u16) -> u8 {
-        crate::game::sm_a9::move_samus_vertically_towards_ceiling_floor(amount, self)
     }
 }
