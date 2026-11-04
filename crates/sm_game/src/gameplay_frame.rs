@@ -29,7 +29,6 @@ use crate::room_entry::content::LoadMode;
 use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_scrolls};
 use crate::runtime_access::{RuntimeAccess, with_session};
 use crate::session_access::SessionAccess;
-use crate::word_transfers;
 use crate::{escape_timer, hud, message_boxes, samus_death, sprite_drawing};
 
 /// State callbacks the compatibility runtime still implements.
@@ -641,7 +640,10 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     with_session(game, |session| {
         clear_projectile_table(&mut session.enemy_projectiles)
     });
-    word_transfers!(game, descending, 270; native(0x996) <- value(0));
+    // The original clears the block a word at a time, from the top down.
+    for index in (0..crate::demo_clear::WORDS).rev() {
+        game.set_view_word(crate::projection::Field::DemoClear(index), 0);
+    }
     display_refresh::reset_layer_mirrors(game);
     0
 }

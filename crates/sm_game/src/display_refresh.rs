@@ -35,7 +35,6 @@ pub trait Host:
     crate::fx_domain::Controls
     + crate::display::preparation::Access
     + CompatibilityRam
-    + crate::ram::WorkRamAccess
     + Registers
     + crate::word_transfers::LoadedRom
     + crate::cartridge::LoadedImage

@@ -33,7 +33,7 @@ pub trait SpriteWords {
     /// Samus's pose, which sets the echoes' height.
     fn samus_pose(&self) -> u16;
 }
-/// What sprite output reads and writes: named and raw work RAM, besides
+/// What sprite output reads and writes: named work RAM, besides
 /// spritemap drawing.
 pub trait SpriteHost:
     MapHost
@@ -41,7 +41,6 @@ pub trait SpriteHost:
     + crate::display::preparation::Access
     + crate::ram::CompatibilityRam
     + crate::records::Records
-    + crate::ram::WorkRamAccess
     + crate::cartridge::LoadedImage
     + crate::cartridge::NativeImage
     + crate::runtime_access::RuntimeAccess

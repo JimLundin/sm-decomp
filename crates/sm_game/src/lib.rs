@@ -21,6 +21,7 @@ pub mod contact_rules;
 pub mod controller_state;
 pub mod credits;
 pub mod decompression;
+pub mod demo_clear;
 pub mod demo_rooms;
 pub mod diagnostics;
 pub mod dialogue;

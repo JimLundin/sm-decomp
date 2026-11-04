@@ -2,7 +2,7 @@
 use sm_data::cartridge::RomImage;
 pub use sm_data::cartridge::lorom_offset;
 
-/// The loaded cartridge image, for `word_transfers!`'s `rom` endpoint.
+/// The loaded cartridge image, for ROM word reads.
 pub trait LoadedRom {
     fn loaded_rom_image(&self) -> RomImage;
 }
@@ -110,7 +110,6 @@ macro_rules! word_transfers {
     }};
     (@step ascending) => { 2isize };
     (@step descending) => { -2isize };
-    (@step $stride:expr) => { $stride };
     (@endpoint $game:ident, le($field:ident, $index:expr)) => {
         $crate::word_transfers::WordEndpoint::Ram(
             ($crate::ram::word_arrays::$field as isize)
@@ -123,15 +122,6 @@ macro_rules! word_transfers {
     (@endpoint $game:ident, little($address:expr)) => {
         $crate::word_transfers::WordEndpoint::Ram($address as isize, false)
     };
-    (@endpoint $game:ident, rom($address:expr, $index:expr)) => {{
-        let image = $crate::word_transfers::LoadedRom::loaded_rom_image(&*$game);
-        let base = $crate::word_transfers::lorom_offset($address);
-        let offset = ($index as isize).checked_mul(2).unwrap();
-        $crate::word_transfers::WordEndpoint::Rom(image, base.checked_add(offset).unwrap())
-    }};
-    (@endpoint $game:ident, table($table:ident, $index:expr)) => {
-        $crate::word_transfers::WordEndpoint::Table(&$table, 0).shifted($index as isize)
-    };
     (@endpoint $game:ident, value($value:expr)) => {
         $crate::word_transfers::WordEndpoint::Value($value)
     };
@@ -142,9 +132,9 @@ macro_rules! word_transfers {
 
 #[cfg(test)]
 mod tests {
-    use crate::ram::{CompatibilityRam, word};
+    use crate::ram::CompatibilityRam;
 
-    /// The named-RAM macros over a plain byte array instead of the compat Game.
+    /// The transfers over a plain byte array instead of the compat Game.
     struct Ram(Vec<u8>);
 
     impl crate::display_scroll::Access for Ram {
@@ -244,14 +234,9 @@ mod tests {
     }
 
     #[test]
-    fn named_words_and_transfers_work_over_any_host() {
+    fn transfers_work_over_any_host() {
         let mut ram = Ram(vec![0; 0x20000]);
         let game = &mut ram;
-        word!(game.SAMUS_HEALTH = 0x1234);
-        assert_eq!(word!(game.SAMUS_HEALTH), 0x1234);
-        assert_eq!(game.0[crate::ram::words::SAMUS_HEALTH], 0x34);
-        word!(game.SAMUS_HEALTH += 1);
-        assert_eq!(word!(game.SAMUS_HEALTH), 0x1235);
         crate::word_transfers!(game, ascending, 2;
             native(0x100) <- value(0xabcd),
             little(0x200) <- native(0x100),

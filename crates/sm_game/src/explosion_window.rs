@@ -14,7 +14,6 @@ pub trait Host:
     + crate::fx_domain::Sources
     + crate::display::preparation::Access
     + crate::ram::CompatibilityRam
-    + crate::ram::WorkRamAccess
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
     + crate::menus::host::MenuRuntime

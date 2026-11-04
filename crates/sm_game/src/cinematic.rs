@@ -375,8 +375,16 @@ pub fn drift_cinematic_sprite(
     }
 }
 
+/// Copy the palette buffer's colours into the fade planes' plane 1
+/// ($7E:2200..$7E:23FF), colour by colour, each stored in native byte order.
 pub fn capture_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, ascending, 256; native(0x2200) <- le(PALETTE_BUFFER, 0));
+    use crate::cinematic_state::Array;
+    use crate::projection::Field as View;
+    for (color, plane) in (0..256).zip(256..) {
+        let value = game.view_word(View::PaletteColor(color));
+        let plane = View::CinematicElement(Array::TilemapStuff, plane);
+        game.set_view_word(plane, crate::word_transfers::stored_native(value));
+    }
 }
 
 pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
