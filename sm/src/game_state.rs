@@ -1,13 +1,7 @@
 //! Explicit per-game ownership; RAM bytes retain their exact SNES layout.
 use crate::cpu_infra::Snapshot;
 use sm_game::room_entry::world::WorldBinding;
-use {
-    crate::game::scene::records::SceneMedia,
-    sm_game::scene::{
-        samus::SamusCatalog, samus_content as content, samus_native_content as native_content,
-        samus_position_tiles::TileRequest, state::DisplayError,
-    },
-};
+use {crate::game::scene::records::SceneMedia, sm_game::scene::state::DisplayError};
 #[path = "game/persistent_session.rs"]
 pub mod persistent_session;
 use crate::initial_state::InitialState;
@@ -2656,51 +2650,15 @@ impl crate::projection::ProjectedBytes for Game {
     }
 }
 
-impl sm_game::scene::owned_samus::SamusSources for Game {
-    fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError> {
-        Game::samus_execution(self)
-    }
-    fn capture_samus_role(
-        &self,
-        role: content::Role,
-        registration: content::Registration,
-        displacement: usize,
-        selected: &crate::rom::RomImage,
-    ) -> Result<Option<content::RoleLease<native_content::CapturedRom>>, DisplayError> {
-        self.samus.capture_role(
-            self.samus_images(),
-            role,
-            registration,
-            displacement,
-            selected,
-        )
-    }
-    fn prepared_samus_role(
-        &self,
-        role: content::Role,
-        registration: content::Registration,
-        displacement: usize,
-    ) -> Result<Option<content::RoleLease<content::PreparedBytes>>, DisplayError> {
-        self.samus
-            .prepared_role(self.samus_images(), role, registration, displacement)
-    }
-    fn samus_role_base(
-        &self,
-        role: content::Role,
-        registration: content::Registration,
-    ) -> Result<Option<usize>, DisplayError> {
-        self.samus
-            .role_base(self.samus_images(), role, registration)
-    }
-    fn samus_request(
-        &self,
-        half: sm_game::scene::samus_body::Half,
-        pointer: u16,
-    ) -> Result<Option<TileRequest>, DisplayError> {
-        self.samus.request(self.samus_images(), half, pointer)
-    }
-    fn samus_spritemaps(&self) -> Result<Option<Arc<SamusCatalog>>, DisplayError> {
-        self.samus.spritemaps(self.samus_images())
+impl Game {
+    /// Samus's bound content and the images it reads, apart from the rest of
+    /// Game: what the lease's Samus draws, the animation and the NMI's tile
+    /// upload read.
+    pub(crate) fn samus_content(&self) -> sm_game::scene::samus_binding::SamusContent<'_> {
+        sm_game::scene::samus_binding::SamusContent {
+            owner: &self.samus,
+            images: self.samus_images(),
+        }
     }
 }
 
@@ -2708,15 +2666,6 @@ impl Game {
     /// The loaded image; panics with "ROM must be loaded" when none is.
     pub(crate) fn loaded_image(&self) -> &crate::rom::RomImage {
         self.loaded_rom.as_ref().expect("ROM must be loaded")
-    }
-}
-
-impl sm_game::cartridge::NativeImage for Game {
-    fn native_image(&self) -> crate::rom::RomImage {
-        self.capture_native_rom()
-    }
-    fn native_image_binding(&self) -> Option<crate::rom::RomImage> {
-        self.capture_native_rom_binding()
     }
 }
 

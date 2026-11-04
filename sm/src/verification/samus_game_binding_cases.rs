@@ -106,7 +106,7 @@ fn installed(execution: SamusExecution) -> (Box<Game>, RomImage, RomImage) {
 // Movies cannot replace independently expected role metadata during unpublished preparation.
 pub fn samus_game_rejected_expectation_preserves_binding() {
     let (game, _, _) = installed(Prepared);
-    let owner = game.samus_spritemaps().unwrap().unwrap();
+    let owner = game.samus_content().samus_spritemaps().unwrap().unwrap();
     let media = game.samus_request_media().unwrap().unwrap();
     let mut expected = description(&game, fixture::expected(), Prepared);
     expected
@@ -124,14 +124,15 @@ pub fn samus_game_rejected_expectation_preserves_binding() {
     assert_eq!(game.samus_execution(), Ok(Some(Prepared)));
     assert!(Arc::ptr_eq(
         &owner,
-        &game.samus_spritemaps().unwrap().unwrap()
+        &game.samus_content().samus_spritemaps().unwrap().unwrap()
     ));
     assert!(Arc::ptr_eq(
         &media,
         &game.samus_request_media().unwrap().unwrap()
     ));
     assert_eq!(
-        game.prepared_samus_role(BodyTop, Loaded, 0)
+        game.samus_content()
+            .prepared_samus_role(BodyTop, Loaded, 0)
             .unwrap()
             .unwrap()
             .native_word(0),
@@ -145,6 +146,7 @@ pub fn samus_game_native_capture_retains_allocation() {
     let selected = game.capture_native_rom();
     assert!(selected.same_allocation(&native));
     let lease = game
+        .samus_content()
         .capture_samus_role(PositionFallback, Native, 0, &selected)
         .unwrap()
         .unwrap();
@@ -156,12 +158,14 @@ pub fn samus_game_native_capture_retains_allocation() {
     // The lease keeps reading its captured allocation, not the replacement.
     assert_eq!(lease.native_word(0), Ok(0x4433));
     assert_eq!(
-        game.capture_samus_role(PositionFallback, Native, 0, &selected)
+        game.samus_content()
+            .capture_samus_role(PositionFallback, Native, 0, &selected)
             .err(),
         Some(DisplayError::Identity)
     );
     assert_eq!(
-        game.capture_samus_role(PositionFallback, Native, 0, &replacement)
+        game.samus_content()
+            .capture_samus_role(PositionFallback, Native, 0, &replacement)
             .err(),
         Some(DisplayError::Identity)
     );
@@ -174,7 +178,9 @@ pub fn samus_game_prepared_replacement_is_rejected() {
     assert_eq!(game.samus_authority(), Revoked);
     assert_eq!(game.samus_execution(), Err(DisplayError::Identity));
     assert_eq!(
-        game.prepared_samus_role(BodyTop, Loaded, 0).err(),
+        game.samus_content()
+            .prepared_samus_role(BodyTop, Loaded, 0)
+            .err(),
         Some(DisplayError::Identity)
     );
 
@@ -183,7 +189,9 @@ pub fn samus_game_prepared_replacement_is_rejected() {
     assert_eq!(game.samus_authority(), Revoked);
     assert_eq!(game.samus_execution(), Err(DisplayError::Poisoned));
     assert_eq!(
-        game.prepared_samus_role(BodyTop, Loaded, 0).err(),
+        game.samus_content()
+            .prepared_samus_role(BodyTop, Loaded, 0)
+            .err(),
         Some(DisplayError::Poisoned)
     );
 }
@@ -237,7 +245,7 @@ pub fn samus_game_panicking_callback_keeps_prefix() {
 // Movies cannot supply distinct before/selected registrations while a competing image is live.
 pub fn samus_game_adoption_uses_captured_target() {
     let (mut game, before_loaded, before_native) = installed(Prepared);
-    let before_owner = game.samus_spritemaps().unwrap().unwrap();
+    let before_owner = game.samus_content().samus_spritemaps().unwrap().unwrap();
     let before = game.capture_samus_snapshot();
     let selected_loaded = image();
     let selected_native = image();
@@ -278,7 +286,7 @@ pub fn samus_game_adoption_uses_captured_target() {
     assert!(game.capture_native_rom().same_allocation(&before_native));
     assert!(Arc::ptr_eq(
         &before_owner,
-        &game.samus_spritemaps().unwrap().unwrap()
+        &game.samus_content().samus_spritemaps().unwrap().unwrap()
     ));
     assert_eq!(game.samus_authority(), Available);
 
@@ -293,12 +301,13 @@ pub fn samus_game_adoption_uses_captured_target() {
     assert!(game.capture_native_rom().same_allocation(&selected_native));
     assert!(!Arc::ptr_eq(
         &before_owner,
-        &game.samus_spritemaps().unwrap().unwrap()
+        &game.samus_content().samus_spritemaps().unwrap().unwrap()
     ));
     assert_eq!(game.samus_authority(), Available);
     assert_eq!(game.samus_execution(), Ok(Some(Prepared)));
     assert_eq!(
-        game.prepared_samus_role(BodyTop, Loaded, 0)
+        game.samus_content()
+            .prepared_samus_role(BodyTop, Loaded, 0)
             .unwrap()
             .unwrap()
             .native_word(0),

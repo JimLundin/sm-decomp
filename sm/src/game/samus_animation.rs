@@ -40,8 +40,7 @@ impl samus_drawing::Authority for Runtime<'_> {
     fn samus_request_written(&mut self, half: samus_body::Half, pointer: u16) {
         Runtime::samus_request_written(self, half, pointer);
     }
-    type Sources = Game;
-    fn samus_sources(&self) -> &Game {
-        self.samus_game()
+    fn samus_sources(&self) -> sm_game::scene::samus_binding::SamusContent<'_> {
+        self.samus_game().samus_content()
     }
 }

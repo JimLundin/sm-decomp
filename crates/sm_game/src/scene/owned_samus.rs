@@ -17,7 +17,7 @@ pub enum SamusExecution {
     RetainedNative,
 }
 /// The bound Samus content a persistent Session draws from.
-pub trait SamusSources: crate::cartridge::NativeDiagnostics {
+pub trait SamusSources {
     /// How the bound content executes; `None` when no content is bound.
     fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError>;
     /// The native role lease at `displacement` from the role's base, over the
@@ -49,7 +49,6 @@ pub trait SamusSources: crate::cartridge::NativeDiagnostics {
 }
 
 /// The capabilities used by the shared producer, without a native image API.
-/// The compatibility implementation below retains its original diagnostics.
 pub trait DrawingSources {
     fn prepared_role(
         &self,
@@ -70,34 +69,50 @@ pub trait DrawingSources {
     fn spritemaps(&self) -> Result<Option<Arc<samus::SamusCatalog>>, DisplayError>;
     fn diagnostic(&mut self, address: u32) -> Result<(), DisplayError>;
 }
-impl<G: SamusSources + ?Sized> DrawingSources for G {
+/// Samus's drawing sources: the bound content, and the native diagnostics a
+/// draw reports, in order, for the host to make once the draw returns. A draw
+/// changes nothing else on the host, so the diagnostics land as they did.
+pub struct SamusDrawing<'a> {
+    pub content: crate::scene::samus_binding::SamusContent<'a>,
+    pub diagnostics: Vec<u32>,
+}
+impl<'a> SamusDrawing<'a> {
+    pub fn new(content: crate::scene::samus_binding::SamusContent<'a>) -> Self {
+        Self {
+            content,
+            diagnostics: Vec::new(),
+        }
+    }
+}
+impl DrawingSources for SamusDrawing<'_> {
     fn prepared_role(
         &self,
         role: Role,
         registration: Registration,
         displacement: usize,
     ) -> Result<Option<RoleLease<PreparedBytes>>, DisplayError> {
-        self.prepared_samus_role(role, registration, displacement)
+        self.content
+            .prepared_samus_role(role, registration, displacement)
     }
     fn role_base(
         &self,
         role: Role,
         registration: Registration,
     ) -> Result<Option<usize>, DisplayError> {
-        self.samus_role_base(role, registration)
+        self.content.samus_role_base(role, registration)
     }
     fn request(
         &self,
         half: samus_body::Half,
         pointer: u16,
     ) -> Result<Option<positions::TileRequest>, DisplayError> {
-        self.samus_request(half, pointer)
+        self.content.samus_request(half, pointer)
     }
     fn spritemaps(&self) -> Result<Option<Arc<samus::SamusCatalog>>, DisplayError> {
-        self.samus_spritemaps()
+        self.content.samus_spritemaps()
     }
     fn diagnostic(&mut self, address: u32) -> Result<(), DisplayError> {
-        self.native_rom_diagnostic(address);
+        self.diagnostics.push(address);
         Ok(())
     }
 }

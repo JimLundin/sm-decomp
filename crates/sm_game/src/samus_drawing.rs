@@ -105,8 +105,7 @@ pub trait Authority:
     fn samus_source_diagnostic(&mut self, address: u32);
     fn samus_request_written(&mut self, half: Half, pointer: u16);
     /// The bound Samus content the role tables come from.
-    type Sources: SamusSources + ?Sized;
-    fn samus_sources(&self) -> &Self::Sources;
+    fn samus_sources(&self) -> crate::scene::samus_binding::SamusContent<'_>;
     /// The prepared role table at `displacement` from the role's base.
     fn prepared_role(
         &self,
@@ -128,7 +127,7 @@ pub trait Authority:
         registration: Registration,
         record: RomRecord,
     ) -> RoleTable {
-        capture_table(self.samus_sources(), role, registration, record)
+        capture_table(&self.samus_sources(), role, registration, record)
     }
     /// The role's mapped base in the prepared Samus content.
     fn role_base(&self, role: Role, registration: Registration) -> usize {

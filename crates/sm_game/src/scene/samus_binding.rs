@@ -423,3 +423,50 @@ impl SamusOwner {
             .map(|binding| binding.request_media.clone()))
     }
 }
+
+/// Samus's bound content and the images it reads: the content view the
+/// lease's Samus draws, the animation and the NMI's tile upload read, apart
+/// from the host that holds it.
+#[derive(Clone, Copy)]
+pub struct SamusContent<'a> {
+    pub owner: &'a SamusOwner,
+    pub images: SamusImages<'a>,
+}
+
+impl super::owned_samus::SamusSources for SamusContent<'_> {
+    fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError> {
+        self.owner.execution(self.images)
+    }
+    fn capture_samus_role(
+        &self,
+        role: Role,
+        registration: Registration,
+        displacement: usize,
+        selected: &RomImage,
+    ) -> Result<Option<RoleLease<CapturedRom>>, DisplayError> {
+        self.owner
+            .capture_role(self.images, role, registration, displacement, selected)
+    }
+    fn prepared_samus_role(
+        &self,
+        role: Role,
+        registration: Registration,
+        displacement: usize,
+    ) -> Result<Option<RoleLease<PreparedBytes>>, DisplayError> {
+        self.owner
+            .prepared_role(self.images, role, registration, displacement)
+    }
+    fn samus_role_base(
+        &self,
+        role: Role,
+        registration: Registration,
+    ) -> Result<Option<usize>, DisplayError> {
+        self.owner.role_base(self.images, role, registration)
+    }
+    fn samus_request(&self, half: Half, pointer: u16) -> Result<Option<TileRequest>, DisplayError> {
+        self.owner.request(self.images, half, pointer)
+    }
+    fn samus_spritemaps(&self) -> Result<Option<Arc<SamusCatalog>>, DisplayError> {
+        self.owner.spritemaps(self.images)
+    }
+}

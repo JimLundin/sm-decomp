@@ -9,7 +9,7 @@ use sm_game::player_projectiles::{
     content,
     host::{Drawing, Host, PaletteEffect, PlayerStep},
 };
-use sm_game::scene::owned_samus::SamusSources as _;
+use sm_game::scene::owned_samus::{SamusDrawing, SamusSources as _};
 use sm_game::session_access::SessionAccess;
 use {
     crate::game::session_encoding as encoding,
@@ -27,6 +27,15 @@ pub(crate) fn native_rom_diagnostic(address: u32, game: &mut Game) {
     invalid_window(game, address);
     #[cfg(sm_verify_dll)]
     crate::room_contact_start_observer::diagnostic(address, game);
+}
+
+/// The native diagnostics a Samus draw reported, made on Game in order once
+/// the draw returns: the draw reads only the content view, so Game is as it
+/// was at each report.
+fn report_draw_diagnostics(diagnostics: Vec<u32>, game: &mut Game) {
+    for address in diagnostics {
+        native_rom_diagnostic(address, game);
+    }
 }
 
 #[forbid(unsafe_code)]
@@ -231,16 +240,18 @@ impl<'g> Runtime<'g> {
         else {
             panic!("owned Display required");
         };
-        persistent_session::draw_body(
+        let mut drawing = SamusDrawing::new(self.game.samus_content());
+        let drawn = persistent_session::draw_body(
             display.owner_mut(),
-            self.game,
+            &mut drawing,
             &mut state.player,
             &self.inputs,
             samus_publications.clone(),
             marker,
             mode,
-        )
-        .expect("owned Samus body");
+        );
+        report_draw_diagnostics(drawing.diagnostics, self.game);
+        drawn.expect("owned Samus body");
     }
     pub(crate) fn owned_bottom_visible(&mut self) -> bool {
         use crate::game_state::persistent_session::{self, Presentation};
@@ -255,15 +266,17 @@ impl<'g> Runtime<'g> {
         else {
             panic!("owned Display required");
         };
-        persistent_session::bottom_visible(
+        let mut drawing = SamusDrawing::new(self.game.samus_content());
+        let drawn = persistent_session::bottom_visible(
             display.owner_mut(),
-            self.game,
+            &mut drawing,
             &mut state.player,
             &self.inputs,
             samus_publications.clone(),
             marker,
-        )
-        .expect("owned Samus bottom")
+        );
+        report_draw_diagnostics(drawing.diagnostics, self.game);
+        drawn.expect("owned Samus bottom")
     }
     pub(crate) fn draw_owned_echo(&mut self, slot: u16) {
         use sm_game::scene::samus_content::{Registration, Role};
@@ -271,6 +284,7 @@ impl<'g> Runtime<'g> {
         let y = self.word(0xab8 + index * 2);
         let source = self
             .game
+            .samus_content()
             .prepared_samus_role(Role::PositionFallback, Registration::Loaded, 0)
             .expect("echo role")
             .expect("supplied loaded echo role");
@@ -329,6 +343,7 @@ impl<'g> Runtime<'g> {
     ) {
         let request = self
             .game
+            .samus_content()
             .samus_request(half, pointer)
             .expect("Samus request admission");
         if !self.has_owned_display() {
@@ -381,9 +396,10 @@ impl<'g> Runtime<'g> {
         else {
             panic!("owned Display required");
         };
-        persistent_session::draw_sprite(
+        let mut drawing = SamusDrawing::new(self.game.samus_content());
+        let drawn = persistent_session::draw_sprite(
             display.owner_mut(),
-            self.game,
+            &mut drawing,
             &mut state.player,
             &self.inputs,
             samus_publications.clone(),
@@ -392,8 +408,9 @@ impl<'g> Runtime<'g> {
                 index,
                 position,
             },
-        )
-        .expect("owned Samus publication");
+        );
+        report_draw_diagnostics(drawing.diagnostics, self.game);
+        drawn.expect("owned Samus publication");
     }
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
         #[cfg(sm_verify_dll)]

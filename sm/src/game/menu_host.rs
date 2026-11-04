@@ -128,12 +128,6 @@ impl Game {
     }
 }
 
-impl sm_game::cartridge::NativeDiagnostics for Game {
-    fn native_rom_diagnostic(&mut self, address: u32) {
-        crate::game::session_runtime::native_rom_diagnostic(address, self)
-    }
-}
-
 impl sm_game::decompression::DecompressionHost for Game {
     fn decompress_source(&self) -> u32 {
         self.decompress_src

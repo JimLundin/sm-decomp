@@ -584,7 +584,7 @@ pub(crate) fn assert_ready_owner_rejects_native_binding(
 ) {
     let before = owner.checkpoint_session().unwrap().into_start().unwrap();
     owner.with(|game| {
-        let catalog = game.samus_spritemaps().unwrap().unwrap();
+        let catalog = game.samus_content().samus_spritemaps().unwrap().unwrap();
         let media = game.samus_request_media().unwrap().unwrap();
         assert_eq!(game.samus_execution(), Ok(Some(SamusExecution::Prepared)));
         assert_eq!(game.samus_authority(), SamusAuthority::Available);
@@ -593,7 +593,7 @@ pub(crate) fn assert_ready_owner_rejects_native_binding(
         assert_eq!(game.samus_authority(), SamusAuthority::Available);
         assert!(Arc::ptr_eq(
             &catalog,
-            &game.samus_spritemaps().unwrap().unwrap()
+            &game.samus_content().samus_spritemaps().unwrap().unwrap()
         ));
         assert!(Arc::ptr_eq(
             &media,
@@ -629,7 +629,7 @@ fn assert_clean_runtime_writer_preserves_admission(owner: &GameOwner) {
     use crate::game::session_runtime::Runtime;
     owner.with(|game| {
         let world = game.world().clone();
-        let catalog = game.samus_spritemaps().unwrap().unwrap();
+        let catalog = game.samus_content().samus_spritemaps().unwrap().unwrap();
         let media = game.samus_request_media().unwrap().unwrap();
         let mut runtime = Runtime::new(game);
         runtime.update_maw_visibility(0);
@@ -641,7 +641,7 @@ fn assert_clean_runtime_writer_preserves_admission(owner: &GameOwner) {
         assert!(Arc::ptr_eq(game.world(), &world));
         assert!(Arc::ptr_eq(
             &catalog,
-            &game.samus_spritemaps().unwrap().unwrap()
+            &game.samus_content().samus_spritemaps().unwrap().unwrap()
         ));
         assert!(Arc::ptr_eq(
             &media,
