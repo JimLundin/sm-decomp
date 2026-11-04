@@ -11,6 +11,9 @@ use sm_game::room_entry::api::EntrySignal;
 pub(crate) use sm_game::gameplay_frame::{TickInput, tick};
 
 impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
+    fn clear_apu_ports(&mut self) {
+        Runtime::clear_apu_ports(self);
+    }
     fn player_projectiles_hit_samus(&mut self) {
         crate::game::projectile_contact::player_projectiles_hit_samus(self);
     }

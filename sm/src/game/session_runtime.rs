@@ -512,14 +512,16 @@ impl<'g> Runtime<'g> {
         }
     }
     /// Samus's NMI tile upload from the lease. It reads its descriptors
-    /// ($7E:071D..0722) and the cartridge, and writes registers and VRAM alone,
-    /// so it runs on Game's published RAM: the lease's descriptors.
+    /// ($7E:071D..0722) from the lease and the cartridge, and writes registers
+    /// and VRAM alone. The publish keeps RAM where the NMI's later uploads
+    /// found it.
     pub(crate) fn upload_samus_tiles(&mut self) {
         self.owned_player_call(|runtime| {
             runtime.publish();
+            let descriptors = std::array::from_fn(|lane| runtime.byte(0x71d + lane));
             // SAFETY: a lease runs with the backend installed, and `&mut Game`
             // excludes other access.
-            unsafe { crate::game::display_transfers::upload_samus(runtime.game) }
+            unsafe { crate::game::display_transfers::upload_samus(descriptors, runtime.game) }
         });
     }
     /// One device register write from the lease (`rtl::write_device`).
@@ -835,6 +837,28 @@ impl<'g> Runtime<'g> {
             );
         }
         unsafe { crate::native_audio::emit(cue, phase, self.game) }
+    }
+    /// Boot's clear of the APU's four input ports from the lease, in port order.
+    /// The ports read only the upload flags ($0617, $0618) from RAM, as a cue
+    /// does (`emit_cue`); verify builds check that RAM holds the lease's flags.
+    pub(crate) fn clear_apu_ports(&mut self) {
+        use crate::rtl::{APUI00, APUI01, APUI02, APUI03};
+        #[cfg(sm_verify_dll)]
+        {
+            let control = &self.session().control;
+            let uploading = [0x617, 0x618]
+                .into_iter()
+                .any(|at| control.projected_byte(at).expect("audio upload flag") != 0);
+            assert!(
+                self.game.uploading_apu() == uploading,
+                "the lease's audio upload flags differ from RAM at the APU ports' clear"
+            );
+        }
+        for port in [APUI00, APUI01, APUI02, APUI03] {
+            // SAFETY: a lease runs with the backend installed, and `&mut Game`
+            // excludes other access.
+            unsafe { crate::rtl::rtl_apu_write(port, 0, self.game) }
+        }
     }
     fn refresh_actor_observations(&mut self) {
         self.inputs.enemy_zero_health = self.native_word(0xF8C);
@@ -2661,7 +2685,7 @@ impl sm_game::menus::controller_input::SampleHost for Runtime<'_> {
         } as u16)
     }
     fn latched_controller_word(&mut self) -> u16 {
-        sm_game::menus::controller_input::SampleHost::latched_controller_word(self.game)
+        self.game.latched_controller_word()
     }
 }
 // A lease lends itself, with the observations refreshed as the fresh lease

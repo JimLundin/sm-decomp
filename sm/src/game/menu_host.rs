@@ -66,12 +66,6 @@ pub(crate) fn assert_ram_pointer(address: u16) {
     }
 }
 
-impl sm_game::menus::host::ResetRequest for Game {
-    fn request_reset(&mut self) {
-        Game::request_reset(self)
-    }
-}
-
 /// A save on the lease: the projected words and the save selection are its
 /// Session's, and SRAM and its slot offsets the game's, which the lease does
 /// not hold.
@@ -119,43 +113,24 @@ impl sm_game::menus::save_slots::MapHost for Runtime<'_> {
     }
 }
 
-/// A save on Game: SRAM, its slot offsets and the save selection in the menu
-/// state.
-impl sm_game::menus::save_slots::SlotHost for Game {
-    type SlotRam = SaveRam;
-    fn slot_ram(&self) -> &SaveRam {
-        &self.g_sram
-    }
-    fn slot_offsets(&self) -> &Option<sm_game::menus::save_slots::ImportedSlots> {
-        &self.save_slots
-    }
-    fn flush_slots(&mut self) {
-        // SAFETY: the menus run from the frame loop with the SNES backend installed.
-        unsafe { crate::rtl::rtl_write_sram(self) }
-    }
-    fn save_selection(&self) -> SaveSelection {
-        sm_game::menus::state::load(self)
-    }
-    fn commit_save_selection(&mut self, before: &SaveSelection, after: SaveSelection) {
-        use sm_game::menus::state::Access as _;
-        self.commit_menu(before, after);
-    }
-    fn observe_save(&mut self, _stage: u8) {
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(_stage, self)
-    }
-}
-
 // The controllers read through their device registers, as the game reads them.
-impl sm_game::menus::controller_input::SampleHost for Game {
-    fn sampled_controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
+impl Game {
+    /// `controller`'s word as the auto-joypad read holds it now, for the oracle
+    /// checkpoint's latch.
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    pub(crate) fn sampled_controller_word(
+        &mut self,
+        controller: sm_game::menus::host::Controller,
+    ) -> u16 {
         use sm_game::menus::host::Controller;
         self.read_register_word(match controller {
             Controller::One => crate::rtl::JOY1L,
             Controller::Two => crate::rtl::JOY2L,
         } as u16)
     }
-    fn latched_controller_word(&mut self) -> u16 {
+    /// Controller 1's word as auto-joypad read latches it at this vblank: the
+    /// device's, or the next recorded frame's for an oracle that reads it in NMI.
+    pub(crate) fn latched_controller_word(&mut self) -> u16 {
         crate::oracle_mode::nmi_input()
             .map(u16::reverse_bits)
             .unwrap_or_else(|| self.read_register_word(crate::rtl::JOY1L as u16))

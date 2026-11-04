@@ -848,9 +848,224 @@ unsafe fn resume_original_main_loop(game: &mut Game, next: Option<u16>) {
         let pc = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc);
         if pc == 0x80834a {
             crate::oracle_mode::set_next_frame_input(next);
-            sm_game::menus::controller_input::sample_latched(game);
+            sm_game::menus::controller_input::sample_latched(&mut OracleRam(game));
             crate::oracle_mode::set_next_frame_input(None);
         }
+    }
+}
+
+/// The oracle's NMI controller latch on the oracle's work RAM itself, for a
+/// checkpoint cut inside its main loop: no Session holds that image, so the
+/// latch reads and stores its bytes (D6), and the controllers through the
+/// device. The restore has just written every RAM byte and the checkpoint
+/// holds no Session, so none of Game's held images differs from RAM: each read
+/// here is the byte Game's held images served, and each store the byte store
+/// Game made, in the same order.
+struct OracleRam<'a>(&'a mut Game);
+
+impl OracleRam<'_> {
+    fn byte(&self, at: usize) -> u8 {
+        self.0.ram().read_byte(at)
+    }
+    fn set_byte(&mut self, at: usize, value: u8) {
+        self.0.ram().write_byte(at, value);
+    }
+    fn word(&self, at: usize) -> u16 {
+        u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
+    }
+    fn set_word(&mut self, at: usize, value: u16) {
+        for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.set_byte(at + lane, byte);
+        }
+    }
+    /// Store each changed word, low byte then high, in `changes`' order.
+    fn set_words(&mut self, changes: Vec<(usize, u16)>) {
+        for (at, value) in changes {
+            self.set_word(at, value);
+        }
+    }
+}
+
+impl crate::projection::ProjectedBytes for OracleRam<'_> {
+    fn compatibility_byte(&self, at: usize) -> u8 {
+        self.byte(at)
+    }
+    fn compatibility_write_byte(&mut self, at: usize, value: u8) {
+        self.set_byte(at, value);
+    }
+}
+crate::projection::projected_views!(OracleRam<'_>);
+
+impl sm_game::ram::CompatibilityRam for OracleRam<'_> {
+    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
+        crate::projection::observed_inputs(self)
+    }
+}
+
+impl sm_game::display_scroll::Access for OracleRam<'_> {
+    fn scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
+        self.word(crate::game_state::scroll_address(word))
+    }
+    fn actor_scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
+        self.scroll_word(word)
+    }
+    fn set_scroll_word(&mut self, word: sm_game::display_scroll::Word, value: u16) {
+        self.set_word(crate::game_state::scroll_address(word), value);
+    }
+    fn physical_scroll_byte(&self, word: sm_game::display_scroll::Word, high: bool) -> u8 {
+        self.byte(crate::game_state::scroll_address(word) + usize::from(high))
+    }
+    fn write_physical_scroll_byte(
+        &mut self,
+        word: sm_game::display_scroll::Word,
+        high: bool,
+        value: u8,
+    ) {
+        self.set_byte(
+            crate::game_state::scroll_address(word) + usize::from(high),
+            value,
+        );
+    }
+}
+
+impl sm_game::sequence_state::Access for OracleRam<'_> {
+    fn sequence_flow(&self) -> sm_game::flow::Flow {
+        sm_game::session_encoding::flow(&|at| self.byte(at))
+    }
+    fn set_cinematic_function(&mut self, value: u16) {
+        self.set_word(0x1f51, value);
+    }
+    fn sequence_words(&self) -> sm_game::session_words::SessionWords {
+        use sm_game::session_cohort::Cohort as _;
+        let mut words = sm_game::session_words::SessionWords::default();
+        words.words(|at, value| *value = self.word(at));
+        words
+    }
+    fn commit_flow(&mut self, before: &sm_game::flow::Flow, after: sm_game::flow::Flow) {
+        self.set_words(after.changes(before));
+    }
+    fn commit_sequence_words(
+        &mut self,
+        before: &sm_game::session_words::SessionWords,
+        after: sm_game::session_words::SessionWords,
+    ) {
+        self.set_words(after.changes(before));
+    }
+    fn set_sequence_word(&mut self, word: sm_game::session_words::Word, value: u16) {
+        self.set_word(word as usize, value);
+    }
+}
+
+impl sm_game::gameplay_context::Access for OracleRam<'_> {
+    fn grapple_animation(&self) -> sm_game::gameplay_context::GrappleAnimation {
+        let words = sm_game::sequence_state::Access::sequence_words(self);
+        sm_game::gameplay_context::GrappleAnimation {
+            timer: words.grapple_point_anim_timer,
+            tiles: words.grapple_point_anim_ptr,
+        }
+    }
+    fn commit_grapple_animation(
+        &mut self,
+        before: sm_game::gameplay_context::GrappleAnimation,
+        after: sm_game::gameplay_context::GrappleAnimation,
+    ) {
+        use sm_game::sequence_state::Access as _;
+        use sm_game::session_words::Word;
+        if before.timer != after.timer {
+            self.set_sequence_word(Word::GrapplePointAnimTimer, after.timer);
+        }
+        if before.tiles != after.tiles {
+            self.set_sequence_word(Word::GrapplePointAnimPtr, after.tiles);
+        }
+    }
+    fn inventory_state(&self) -> sm_game::inventory::Inventory {
+        sm_game::inventory::decode(&|at| self.byte(at))
+    }
+    fn commit_inventory(
+        &mut self,
+        before: &sm_game::inventory::Inventory,
+        mut after: sm_game::inventory::Inventory,
+    ) {
+        use sm_game::session_cohort::Cohort as _;
+        let mut old = Vec::new();
+        before.clone().words(|_, value| old.push(*value));
+        let mut changed = Vec::new();
+        let mut index = 0;
+        after.words(|at, value| {
+            if old[index] != *value {
+                changed.push((at, *value));
+            }
+            index += 1;
+        });
+        self.set_words(changed);
+    }
+    fn gameplay_word(&self, word: sm_game::gameplay_context::Word) -> u16 {
+        self.word(word.address())
+    }
+    fn set_gameplay_byte(&mut self, word: sm_game::gameplay_context::Word, lane: usize, byte: u8) {
+        assert!(lane < 2);
+        self.set_byte(word.address() + lane, byte);
+    }
+}
+
+impl sm_game::display::preparation::Access for OracleRam<'_> {
+    fn display_control_byte(&self, field: sm_game::display::preparation::Field) -> u8 {
+        self.byte(crate::game_state::frame_field_address(field))
+    }
+    fn store_display_control_byte(
+        &mut self,
+        field: sm_game::display::preparation::Field,
+        value: u8,
+        _: sm_game::display::preparation::Store,
+    ) {
+        self.set_byte(crate::game_state::frame_field_address(field), value);
+    }
+    fn display_history_word(&self, word: sm_game::display::preparation::Word) -> u16 {
+        self.word(crate::game_state::frame_word_address(word))
+    }
+    fn store_display_history_word(
+        &mut self,
+        word: sm_game::display::preparation::Word,
+        value: u16,
+        _: sm_game::display::preparation::Store,
+    ) {
+        self.set_word(crate::game_state::frame_word_address(word), value);
+    }
+    fn hud_tile(&self, index: isize) -> u16 {
+        self.word(crate::game_state::frame_hud_address(index))
+    }
+    fn store_hud_tile(
+        &mut self,
+        index: isize,
+        value: u16,
+        _: sm_game::display::preparation::Store,
+    ) {
+        self.set_word(crate::game_state::frame_hud_address(index), value);
+    }
+    fn physical_display_control_byte(&self, field: sm_game::display::preparation::Field) -> u8 {
+        self.display_control_byte(field)
+    }
+    fn store_physical_display_control_byte(
+        &mut self,
+        field: sm_game::display::preparation::Field,
+        value: u8,
+    ) {
+        self.set_byte(crate::game_state::frame_field_address(field), value);
+    }
+}
+
+impl sm_game::menus::host::ResetRequest for OracleRam<'_> {
+    fn request_reset(&mut self) {
+        self.0.request_reset();
+    }
+}
+
+impl sm_game::menus::controller_input::SampleHost for OracleRam<'_> {
+    fn sampled_controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
+        self.0.sampled_controller_word(controller)
+    }
+    fn latched_controller_word(&mut self) -> u16 {
+        self.0.latched_controller_word()
     }
 }
 

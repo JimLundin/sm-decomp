@@ -53,7 +53,7 @@ pub(crate) fn observed_inputs<H: ProjectedBytes + ?Sized>(h: &H) -> ExternalInpu
     sm_game::session_encoding::inputs(&|at| h.compatibility_byte(at))
 }
 
-fn store_words<H: ProjectedBytes + ?Sized>(
+pub(crate) fn store_words<H: ProjectedBytes + ?Sized>(
     h: &mut H,
     words: &mut impl Layout,
     mut select: impl FnMut(usize) -> bool,
@@ -69,30 +69,37 @@ fn store_words<H: ProjectedBytes + ?Sized>(
 
 macro_rules! projected_views {
     ($host:ty) => {
-        impl Views for $host {
-            fn view_word(&self, field: Field) -> u16 {
-                word(self, field.address())
+        impl sm_game::projection::Views for $host {
+            fn view_word(&self, field: sm_game::projection::Field) -> u16 {
+                $crate::projection::word(self, field.address())
             }
-            fn set_view_word(&mut self, field: Field, value: u16) {
-                set_word(self, field.address(), value);
+            fn set_view_word(&mut self, field: sm_game::projection::Field, value: u16) {
+                $crate::projection::set_word(self, field.address(), value);
             }
-            fn set_view_low_byte(&mut self, field: Field, value: u8) {
-                set_byte(self, field.address(), value);
+            fn set_view_low_byte(&mut self, field: sm_game::projection::Field, value: u8) {
+                $crate::projection::set_byte(self, field.address(), value);
             }
-            fn decode_view<T: Decode>(&self) -> T {
-                T::decode(&|at| byte(self, at))
+            fn decode_view<T: sm_game::projection::Decode>(&self) -> T {
+                T::decode(&|at| $crate::projection::byte(self, at))
             }
-            fn load_words(&self, words: &mut impl Layout) {
-                words.visit(|at, value| *value = word(self, at));
+            fn load_words(&self, words: &mut impl sm_game::projection::Layout) {
+                words.visit(|at, value| *value = $crate::projection::word(self, at));
             }
-            fn store_words(&mut self, words: &mut impl Layout, select: impl FnMut(usize) -> bool) {
-                store_words(self, words, select);
+            fn store_words(
+                &mut self,
+                words: &mut impl sm_game::projection::Layout,
+                select: impl FnMut(usize) -> bool,
+            ) {
+                $crate::projection::store_words(self, words, select);
             }
         }
     };
 }
 
 projected_views!(Game);
+// The oracle checkpoint's latch host takes the same views.
+#[cfg(any(feature = "frontend", sm_verify_dll))]
+pub(crate) use projected_views;
 
 /// The verify build's check that no access reaches a held copy's bytes,
 /// for the bytes `field`'s word access covers.

@@ -1,8 +1,6 @@
 //! Actual save stages for captures and explicitly requested replay probes.
 #![forbid(unsafe_code)]
 use crate::flags_save_case as case;
-#[cfg(sm_verify_dll)]
-use crate::game_state::Game;
 use std::cell::RefCell;
 thread_local! {static CAPTURE:RefCell<Option<(Vec<u8>,u8)>>=const {RefCell::new(None)};}
 pub fn begin(id: u32) {
@@ -11,18 +9,6 @@ pub fn begin(id: u32) {
         case::record(&mut output, 0, &id.to_le_bytes());
         *capture.borrow_mut() = Some((output, 0));
     });
-}
-#[cfg(sm_verify_dll)]
-pub fn observe(stage: u8, game: &Game) {
-    observe_image(
-        stage,
-        || {
-            (0..game.ram().len())
-                .map(|at| game.ram().read_byte(at))
-                .collect()
-        },
-        &game.g_sram,
-    );
 }
 /// The save stage over a RAM image, which a Session lease projects; it is
 /// taken only while a capture is active.

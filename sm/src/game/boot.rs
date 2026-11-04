@@ -2,17 +2,15 @@
 use crate::game_state::Game;
 use crate::ram_map::word;
 use crate::rtl::{
-    APUI00, APUI01, APUI02, APUI03, BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS,
-    BG3SC, BG3VOFS, BG4HOFS, BG4SC, BG4VOFS, BG12NBA, BG34NBA, CGADSUB, CGWSEL, M7A, M7B, M7C, M7D,
-    M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, SETINI, VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3,
-    WOBJLOG, WOBJSEL, rtl_apu_write,
+    BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS, BG3SC, BG3VOFS, BG4HOFS, BG4SC,
+    BG4VOFS, BG12NBA, BG34NBA, CGADSUB, CGWSEL, M7A, M7B, M7C, M7D, M7X, M7Y, MEMSEL, MOSAIC,
+    NMITIMEN, SETINI, VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL,
 };
 use sm_game::display::control::{
     BgMode, Brightness, FixedColor, Layers, MainScreen, MainWindowMask, Mode7Settings, SubScreen,
     SubWindowMask,
 };
 use sm_game::display::preparation::Field as DisplayField;
-use sm_game::menus::save_slots;
 use sm_game::sprite_drawing::{clear_high_table, finish_frame};
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
@@ -43,13 +41,15 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             use sm_game::cinematic_states::{
                 end_nintendo_logo, nintendo_logo, nintendo_logo_ending,
             };
-            // The logo runs on the boot frame's one lease. Its last frame,
-            // which boot's own work follows, only blanks the screen, without one.
-            let yielded: u8 = if nintendo_logo_ending(game) {
-                end_nintendo_logo(game)
+            // Each logo frame runs on a lease of its own, before boot's RAM
+            // clear; its last frame only blanks the screen.
+            let mut lease = crate::game::session_runtime::Runtime::new(game);
+            let yielded: u8 = if nintendo_logo_ending(&lease) {
+                end_nintendo_logo(&mut lease)
             } else {
-                nintendo_logo(&mut crate::game::session_runtime::Runtime::new(game))
+                nintendo_logo(&mut lease)
             };
+            drop(lease);
             if yielded != 0 {
                 game.ram().write_byte(0x611, 2);
                 return yielded;
@@ -104,16 +104,9 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             word! { game, 0;
                 NMI_COPY_SAMUS_HALVES, NMI_COPY_SAMUS_TOP_HALF_SRC, NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
             }
-            crate::game::display_refresh::enable(true, game);
-            rtl_apu_write(APUI00, 0, game);
-            rtl_apu_write(APUI01, 0, game);
-            rtl_apu_write(APUI02, 0, game);
-            rtl_apu_write(APUI03, 0, game);
-            word!(game.RANDOM_NUMBER = 97);
-            crate::game::music::reset_delays(game);
-            word!(game.ENABLE_DEBUG = 0);
-            save_slots::verify_boot(game);
-            word! { game, 0; DEBUG_DISABLE_SOUNDS, SOUND_HANDLER_DOWNTIME }
+            // The rest of boot's work, from the NMI's enable to boot's resume
+            // byte, is the frame lease's first step (`gameplay_frame::finish_boot`).
+            return 0;
         }
         game.ram().write_byte(0x611, 2);
         0
