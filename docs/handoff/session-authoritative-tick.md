@@ -367,12 +367,13 @@ hands a generic closure to `foreign` does not count.
 
 **The device interval.** `foreign` exports the Session to RAM, runs its action inside a Samus
 mutation scope, and re-imports. A register that holds no WRAM, ROM or Samus state needs none
-of that. `Game::device_parts` splits the backend and host as `execution_parts` does, without
+of that. `Game::device_execution` splits the backend and host as `execution_parts` does, without
 the unscoped-writer Samus revocation, and `rtl::write_device`/`read_device` make one register
 access through it. They take only device registers: the PPU ($2100-$213F), the WRAM port
 address ($2181-$2183), the CPU registers ($4200-$421F, with MDMAEN only when it starts no
 transfer) and the DMA channel parameters ($4300-$437F). The register observer still sees
-each write. Verify builds assert the write epoch did not move.
+each write. `display_commands::device_only` also leaves out `StopDma` and `ClearCpuIo`: the
+room background check snapshots RAM at every MDMAEN write. Verify builds assert the write epoch did not move.
 
 On the lease, each port call runs inside `owned_player_call`, so the observations are
 refreshed on entry and on return as the former `foreign` call left them. No RAM moves, so
@@ -381,13 +382,22 @@ the lease stays current and nothing is exported or imported.
 | Port | Signature | Runtime impl | Reaches the emulated hardware |
 | --- | --- | --- | --- |
 | `hardware::Multiplier` | `mode7_product(multiplicand: u16, multiplier: u8) -> u16`, `cpu_multiplicand(u8)` | device interval | M7A low, M7A high, M7B, then MPYM and MPYH reads; WRMPYA |
-| `display::video::Video` (device commands) | `apply(producer, Command)` | device interval when `Command::device_only` | the encoder's register writes, through `Wire` |
+| `display::video::Video` (device commands) | `apply(producer, Command)` | device interval when `display_commands::device_only` | the encoder's register writes, through `Wire` |
 | `hdma_objects::Allocator` | `write_channel_control(register, control)` | device interval | DMAPx then BBADx |
 | `hardware::Bus` | `read_bus_byte(address: u32) -> u8` | WRAM and its low mirror from the lease's projection; $2180 reads the lease's byte at the port address and advances it; the rest from the backend | one backend read per non-WRAM byte |
-| `decompression::DecompressionHost` | as on `Game` | the lease: bytes through its projection, the cursor in `Game::decompress_src` | none (ROM reads only) |
-| `display::transfer::Mode7Queue` | as on `Game` | the lease's bytes | none |
+| `decompression::DecompressionHost` (boss lease) | as on `Game` | the lease: bytes through its projection, the cursor in `Game::decompress_src` | none (ROM reads only) |
+
+**Outcome.** `foreign_calls` 72 → 64 (`7deecc6fc`, `d7f1d3f2a` on `collab/tick-s4`): Mother
+Brain's neck, Ridley's tail, Yapping Maw's multiplicand, the HDMA program's channel byte, the
+lava background's scroll target, the allocator's channel control, the slope BTS read and
+Kraid's decompression. `game_host_impls` 85 → 84 (the neck `Host` for Game). The
+device-only commands that already ran inside `Video for Runtime`'s one `foreign` (NMI enable,
+the scanline IRQ, `initialize_room_effects`' channel bytes and WRAM port) no longer export.
 
 **What stays on `foreign`, and why.**
+- The Mode 7 queue (Ceres Ridley, ×2): its bytes ($02D0-$032F) are among those whose
+  publication still needs a semantic counterpart, so a lease store there fails a persistent
+  owned Display. It moves when the queue has a Display owner field.
 - Commands and room entry writes that start a DMA (MDMAEN non-zero) or move WRAM: the DMA
   reads WRAM the lease has not published. They need the `publish` step below.
 - The room entry device writes (`device_word`, `device_byte`, `device_vram_address`): the
@@ -399,11 +409,13 @@ the lease stays current and nothing is exported or imported.
   the next step for the DMA starts: VRAM copy (`copy_to_vram_now`), the VRAM decompressions,
   the animated tile upload, `flush_tilemaps` and the grapple tiles.
 
-**Rows.** `enemy-yapping-maw`, `boss-mother-brain-*` (the neck), `boss-ridley` (the tail),
-`boss-kraid` and `boss-draygon` (boss lease decompression), Ceres Ridley (Mode 7 queue), the
-liquid rows (`volcano-room-lavaquake`, `area-norfair`), `boss-crocomire` (HDMA spawn), the
-HDMA program rows (`area-crateria` sky, `xray-activate-release`), and slopes
-(`terrain-*`, every area route).
+**Rows.** `enemy-yapping-maw`; `boss-mother-brain`, `mother-brain-phase2` and
+`mother-brain-glass` (the neck); `boss-ridley` and `boss-ridley-swoop` (the tail);
+`boss-kraid` (its decompression); `volcano-room-lavaquake` and `area-norfair` (lava
+background); `boss-crocomire` (HDMA spawn); `area-crateria` and `xray-activate-release` (HDMA
+program channel bytes); `door-transition` and `door-loading-lag-nmi` (room-entry NMI, IRQ and
+HDMA channel commands); slopes on every area route, `terrain-quicksand` and the
+`terrain-*-hand` rows.
 
 ### Stage 5: HDMA on the lease
 
