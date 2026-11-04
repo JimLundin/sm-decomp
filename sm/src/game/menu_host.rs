@@ -133,9 +133,6 @@ impl MenuRuntime for Game {
         // SAFETY: HDMA updates run from the frame loop with the backend installed.
         unsafe { crate::game::music::handle_music_queue(self) }
     }
-    fn flush_sram(&mut self) {
-        unsafe { crate::rtl::rtl_write_sram(self) }
-    }
     fn invalid_window(&mut self, address: u32) {
         crate::game::session_runtime::invalid_window(self, address)
     }
@@ -148,10 +145,6 @@ impl MenuRuntime for Game {
     #[cfg(sm_verify_dll)]
     fn observe_map_write(&self, byte: usize, index: usize, stage: u8) {
         crate::game::session_runtime::player_legacy_edges::map_write(self, byte, index, stage)
-    }
-    #[cfg(sm_verify_dll)]
-    fn observe_flags_save(&mut self, stage: u8) {
-        crate::flags_save_observer::observe(stage, self)
     }
     #[cfg(sm_verify_dll)]
     fn observe_selected_continue(&mut self, load_result: u8) {
@@ -212,19 +205,39 @@ impl sm_game::menus::save_slots::MapHost for Runtime<'_> {
     }
 }
 
-impl Host for Game {
-    type Sram = SaveRam;
-    fn sram(&self) -> &SaveRam {
+/// A save on Game: SRAM, its slot offsets and the save selection in the menu
+/// state.
+impl sm_game::menus::save_slots::SlotHost for Game {
+    type SlotRam = SaveRam;
+    fn slot_ram(&self) -> &SaveRam {
         &self.g_sram
     }
+    fn slot_offsets(&self) -> &Option<sm_game::menus::save_slots::ImportedSlots> {
+        &self.save_slots
+    }
+    fn flush_slots(&mut self) {
+        // SAFETY: the menus run from the frame loop with the SNES backend installed.
+        unsafe { crate::rtl::rtl_write_sram(self) }
+    }
+    fn save_selection(&self) -> SaveSelection {
+        sm_game::menus::state::load(self)
+    }
+    fn commit_save_selection(&mut self, before: &SaveSelection, after: SaveSelection) {
+        use sm_game::menus::state::Access as _;
+        self.commit_menu(before, after);
+    }
+    fn observe_save(&mut self, _stage: u8) {
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(_stage, self)
+    }
+}
+
+impl Host for Game {
     fn pause_menu_tables(&self) -> &sm_game::menus::map_menu::ImportedTables {
         &self.pause_menu
     }
     fn equipment_screen_tables(&self) -> &sm_game::menus::equipment_menu::ImportedTables {
         &self.equipment_screen
-    }
-    fn save_slot_offsets(&self) -> &Option<sm_game::menus::save_slots::ImportedSlots> {
-        &self.save_slots
     }
     fn demo_sets(&self) -> &Option<sm_game::demo_rooms::ImportedSets> {
         &self.demo_sets
@@ -244,17 +257,21 @@ impl Host for Game {
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.area_select_palettes
     }
-    fn nmi_controller_word(&mut self) -> u16 {
-        crate::oracle_mode::nmi_input()
-            .map(u16::reverse_bits)
-            .unwrap_or_else(|| self.read_register_word(crate::rtl::JOY1L as u16))
-    }
-    fn controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
+}
+
+// The controllers read through their device registers, as the game reads them.
+impl sm_game::menus::controller_input::SampleHost for Game {
+    fn sampled_controller_word(&mut self, controller: sm_game::menus::host::Controller) -> u16 {
         use sm_game::menus::host::Controller;
         self.read_register_word(match controller {
             Controller::One => crate::rtl::JOY1L,
             Controller::Two => crate::rtl::JOY2L,
         } as u16)
+    }
+    fn latched_controller_word(&mut self) -> u16 {
+        crate::oracle_mode::nmi_input()
+            .map(u16::reverse_bits)
+            .unwrap_or_else(|| self.read_register_word(crate::rtl::JOY1L as u16))
     }
 }
 

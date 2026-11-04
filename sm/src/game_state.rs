@@ -2721,12 +2721,6 @@ impl sm_game::cartridge::LoadedImage for Game {
     }
 }
 
-impl sm_game::actors::host::Random for Game {
-    fn next_random(&mut self) -> u16 {
-        Game::next_random(self)
-    }
-}
-
 impl sm_game::cartridge::NativeImage for Game {
     fn native_image(&self) -> crate::rom::RomImage {
         self.capture_native_rom()
@@ -2828,37 +2822,6 @@ impl sm_game::runtime_access::SessionRam for Game {
     }
     fn write_slice(&mut self, at: usize, bytes: &[u8]) {
         self.ram().copy_in(at, bytes);
-    }
-}
-
-/// Actor records on the RAM image, through the actor codec in native order,
-/// as the RAM image holds their words.
-impl sm_game::actors::access::ActorImage for Game {
-    fn actor_record(
-        &self,
-        key: sm_game::actors::access::ActorKey,
-    ) -> sm_game::actors::state::Actor {
-        sm_game::actors::codec::read_actor(
-            self,
-            key,
-            sm_game::actors::access::AccessMode::Native,
-            |game, at| game.ram().read_byte(at),
-        )
-    }
-    fn store_actor_record(
-        &mut self,
-        key: sm_game::actors::access::ActorKey,
-        original: &sm_game::actors::state::Actor,
-        edited: &sm_game::actors::state::Actor,
-    ) {
-        sm_game::actors::codec::write_actor_changes(
-            self,
-            key,
-            sm_game::actors::access::AccessMode::Native,
-            original,
-            edited,
-            |game, at, value| game.ram().write_byte(at, value),
-        );
     }
 }
 

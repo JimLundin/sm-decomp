@@ -55,6 +55,30 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn initialize_player(&mut self) {
         self.owned_player_call(sm_game::player_transitions::initialize);
     }
+    fn debug_game_over_menu(&mut self) {
+        // SAFETY: the failed assertion reads no game state and does not return.
+        unsafe { crate::cpu_infra::debug_game_over_menu() }
+    }
+    fn pause_hook(&mut self, hook: PauseHook) {
+        match hook {
+            PauseHook::Draygon => crate::game::room_state::pause_draygon(self),
+            PauseHook::Kraid => sm_game::actors::kraid_pause::pause(self),
+        }
+    }
+    /// The hooks run on the frame's lease; Mother Brain's, which opened a
+    /// lease of its own, refreshes the observations as that lease left them.
+    fn unpause_hook(&mut self, hook: UnpauseHook) -> u8 {
+        use sm_game::actors::kraid_pause::{unpause_alive, unpause_dead, unpause_sinking};
+        match hook {
+            UnpauseHook::Draygon => crate::game::room_state::unpause_draygon(self),
+            UnpauseHook::KraidDead => unpause_dead(self),
+            UnpauseHook::KraidAlive => unpause_alive(self),
+            UnpauseHook::KraidSinking => unpause_sinking(self),
+            UnpauseHook::MotherBrain => {
+                self.owned_player_call(crate::game::sm_a9::body_unpause_hook)
+            }
+        }
+    }
 }
 
 /// The original's warning when a frame ends with pass continuation bytes set.
@@ -88,53 +112,5 @@ impl sm_game::gameplay_frame::Host for Game {
     }
     fn fail_frame_state(&mut self) {
         unsafe { crate::host::fatal_error(c"Incorrect coroutine_state_0".as_ptr()) }
-    }
-    fn report_broken_coroutine(&mut self, state: [u8; 4]) {
-        report_broken_coroutine(state);
-    }
-    fn resume_room_entry(&mut self, signal: EntrySignal) -> u8 {
-        crate::game::room_entry::protocol::resume(&mut Runtime::new(self), signal).returned_byte()
-    }
-    fn debug_game_over_menu(&mut self) {
-        unsafe { crate::cpu_infra::debug_game_over_menu() }
-    }
-    fn advance_sound_effects(&mut self) {
-        crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| unsafe {
-            crate::native_audio::emit(
-                crate::native_audio::sound_cue(
-                    channel,
-                    sm_data::OriginalSoundEffect(value),
-                    meaning,
-                ),
-                sm_data::CuePhase::GameplaySound,
-                game,
-            )
-        });
-    }
-
-    fn disable_scanline_irq(&mut self) {
-        sm_game::display_refresh::disable_scanline_irq(self);
-    }
-    fn enable_scanline_irq(&mut self, immediate: bool) {
-        sm_game::display_refresh::enable_scanline_irq(immediate, self)
-    }
-
-    fn pause_hook(&mut self, hook: PauseHook) {
-        match hook {
-            PauseHook::Draygon => crate::game::room_state::pause_draygon(self),
-            PauseHook::Kraid => sm_game::actors::kraid_pause::pause(self),
-        }
-    }
-    fn unpause_hook(&mut self, hook: UnpauseHook) -> u8 {
-        use sm_game::actors::kraid_pause::{unpause_alive, unpause_dead, unpause_sinking};
-        match hook {
-            UnpauseHook::Draygon => crate::game::room_state::unpause_draygon(self),
-            UnpauseHook::KraidDead => unpause_dead(self),
-            UnpauseHook::KraidAlive => unpause_alive(self),
-            UnpauseHook::KraidSinking => unpause_sinking(self),
-            UnpauseHook::MotherBrain => {
-                crate::game::sm_a9::body_unpause_hook(&mut Runtime::new(self))
-            }
-        }
     }
 }

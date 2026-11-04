@@ -26,7 +26,7 @@ pub trait BeamHost: SessionRam {
     /// The loaded image's little-endian word at LoROM `address` plus `offset`.
     fn gradient_word(&self, address: u32, offset: usize) -> u16;
 }
-impl<T: Host + ?Sized> BeamHost for T {
+impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> BeamHost for T {
     fn gradient_word(&self, address: u32, offset: usize) -> u16 {
         self.read_rom_word(address, offset)
     }

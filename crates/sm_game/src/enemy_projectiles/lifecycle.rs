@@ -51,9 +51,9 @@ fn allocate(h: &mut impl Host, definition: u16, graphics: u16) -> Option<u16> {
 /// Spawn `definition` with the room's graphics on a fresh lease of `game`.
 pub fn spawn_room_leased<H>(definition: u16, parameter: u16, game: &mut H) -> u16
 where
-    H: crate::runtime_access::RuntimeAccess + ?Sized,
+    H: crate::runtime_access::Lend + ?Sized,
 {
-    spawn_room(&mut game.runtime(), definition, parameter)
+    game.lend(|lease| spawn_room(lease, definition, parameter))
 }
 pub fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> u16 {
     h.session_mut().enemy_projectiles.spawn.primary = parameter;

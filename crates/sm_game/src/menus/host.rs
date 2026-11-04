@@ -17,22 +17,22 @@ pub trait SaveRam {
 }
 
 /// Samus's rules the menus and frame phases run, each on the game's own lease.
-pub trait PlayerRuntime: crate::runtime_access::RuntimeAccess {
+pub trait PlayerRuntime: crate::runtime_access::Lend {
     /// Draw the player projectiles.
     fn draw_projectiles(&mut self) {
-        crate::player_projectiles::presentation::draw_projectiles(&mut self.runtime());
+        self.lend(crate::player_projectiles::presentation::draw_projectiles);
     }
     /// Restore Samus's movement sound after a message box.
     fn restore_movement_sound(&mut self) {
-        crate::player_projectiles::feedback::restore_sound(&mut self.runtime());
+        self.lend(crate::player_projectiles::feedback::restore_sound);
     }
     /// Run Samus's pose command `command`; returns the original's result.
     fn player_command(&mut self, command: u16) -> u16 {
         use crate::player_transitions::commands::finish_ceres_arrival;
-        crate::player_transitions::command(&mut self.runtime(), command, finish_ceres_arrival)
+        self.lend(|lease| crate::player_transitions::command(lease, command, finish_ceres_arrival))
     }
 }
-impl<T: crate::runtime_access::RuntimeAccess + ?Sized> PlayerRuntime for T {}
+impl<T: crate::runtime_access::Lend + ?Sized> PlayerRuntime for T {}
 
 /// The frontend's soft-reset request, as the menus raise it.
 pub trait ResetRequest {
@@ -44,7 +44,7 @@ pub trait Tables {
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
     fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
 }
-impl<T: Host + ?Sized> Tables for T {
+impl<T: Host + crate::runtime_access::RuntimeAccess + ?Sized> Tables for T {
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette> {
         Host::intro_palette(self)
     }
@@ -67,7 +67,7 @@ pub trait CommonRuntime {
     fn assert_ram_pointer(&mut self, address: u16);
     fn update_beam_tiles_and_palette(&mut self);
 }
-impl<T: MenuRuntime + ?Sized> CommonRuntime for T {
+impl<T: MenuRuntime + crate::runtime_access::RuntimeAccess + ?Sized> CommonRuntime for T {
     fn spawn_hdma(
         &mut self,
         bank: u8,
@@ -141,7 +141,6 @@ pub trait MenuRuntime:
     /// The original's unreachable-state failure.
     fn rtl_unreachable(&mut self) -> bool;
     fn update_beam_tiles_and_palette(&mut self);
-    fn flush_sram(&mut self);
     fn invalid_window(&mut self, address: u32);
     /// The original's failed drawing or bounds assertion.
     fn legacy_assertion(&self, drawing: bool) -> !;
@@ -149,7 +148,6 @@ pub trait MenuRuntime:
     fn unreachable_native(&mut self) -> u16;
     /// Verification observers; the defaults observe nothing.
     fn observe_map_write(&self, _byte: usize, _index: usize, _stage: u8) {}
-    fn observe_flags_save(&mut self, _stage: u8) {}
     fn observe_selected_continue(&mut self, _load_result: u8) {}
 }
 
@@ -167,7 +165,6 @@ pub trait Host:
     + crate::display::transfer::Mode7Queue
     + crate::display::transfer::TilemapQueue
     + crate::display::queued_tilemaps::BackgroundBlocks
-    + crate::room_state::LevelData
     + CompatibilityRam
     + crate::runtime_access::SessionRam
     + crate::player_position::PlayerPosition
@@ -185,14 +182,13 @@ pub trait Host:
     + crate::records::Records
     + MenuRuntime
     + ResetRequest
-    + crate::runtime_access::RuntimeAccess
-    + crate::actors::access::ActorImage
+    + crate::runtime_access::Lend
+    + crate::screen_fade::Owner
+    + super::save_slots::MapHost
+    + super::controller_input::SampleHost
 {
-    type Sram: SaveRam + ?Sized;
-    fn sram(&self) -> &Self::Sram;
     fn pause_menu_tables(&self) -> &super::map_menu::ImportedTables;
     fn equipment_screen_tables(&self) -> &super::equipment_menu::ImportedTables;
-    fn save_slot_offsets(&self) -> &Option<super::save_slots::ImportedSlots>;
     fn demo_sets(&self) -> &Option<crate::demo_rooms::ImportedSets>;
     fn demo_scenes(&self) -> &Option<crate::demo_rooms::ImportedScenes>;
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
@@ -200,11 +196,6 @@ pub trait Host:
     fn read_rom_word(&self, address: u32, offset: usize) -> u16;
     fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
     fn area_select_palettes(&self) -> &Option<super::menu_tilemap::ImportedAreaPalettes>;
-    /// Controller 1's word as auto-joypad read latches it at this vblank: the
-    /// live controller, or the next recorded frame's word during a replay.
-    fn nmi_controller_word(&mut self) -> u16;
-    /// `controller`'s word as the auto-joypad read holds it now.
-    fn controller_word(&mut self, controller: Controller) -> u16;
 }
 
 /// One of the two controllers the auto-joypad read latches.

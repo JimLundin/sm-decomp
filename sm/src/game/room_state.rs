@@ -4,11 +4,16 @@ use crate::game_state::Game;
 use crate::ram_map::word;
 use sm_game::decompression::decompress_to_ram;
 
-pub(crate) fn pause_draygon(game: &mut Game) {
-    word!(game.IRQHANDLER_NEXT_HANDLER = 4);
+/// Draygon's pause hook: the next scanline interrupt handler, on the lease.
+pub(crate) fn pause_draygon(game: &mut Runtime<'_>) {
+    use sm_game::room_entry::effects::{EntryEffects as _, ExternalField};
+    game.write_external(ExternalField::NextIrqHandler, 4);
 }
 
-pub(crate) fn unpause_draygon(game: &mut Game) -> crate::types::CoroutineRet {
+/// Draygon's unpause hook: the next scanline interrupt handler, on the lease,
+/// when HDMA object 1 drives channel 3.
+pub(crate) fn unpause_draygon(game: &mut Runtime<'_>) -> crate::types::CoroutineRet {
+    use sm_game::room_entry::effects::{EntryEffects as _, ExternalField};
     if u16::from_ne_bytes(
         sm_game::hdma_objects::HdmaTable::hdma_word(
             game,
@@ -20,7 +25,7 @@ pub(crate) fn unpause_draygon(game: &mut Game) -> crate::types::CoroutineRet {
         .to_le_bytes(),
     ) == 8
     {
-        word!(game.IRQHANDLER_NEXT_HANDLER = 12);
+        game.write_external(ExternalField::NextIrqHandler, 12);
     }
     0
 }

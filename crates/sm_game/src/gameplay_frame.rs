@@ -59,7 +59,11 @@ pub enum UnpauseHook {
 /// What the frame phases need beyond the menu, HUD, scroll and Session hosts:
 /// the operations the compatibility runtime still implements.
 pub trait Host:
-    crate::menus::host::Host + crate::hud::HudHost + crate::display_refresh::Host + RuntimeAccess
+    crate::hud::HudHost
+    + crate::display_refresh::Host
+    + crate::presentation_workspace::ContinuationAccess
+    + crate::menus::controller_input::SampleHost
+    + RuntimeAccess
 {
     /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
     fn latch_controller(&mut self, buttons: u16);
@@ -72,20 +76,6 @@ pub trait Host:
     fn resume_boot(&mut self) -> u8;
     /// The original's failure on an unknown frame state byte.
     fn fail_frame_state(&mut self);
-    /// The original's warning when a pass leaves continuation bytes set.
-    fn report_broken_coroutine(&mut self, state: [u8; 4]);
-    fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
-    fn debug_game_over_menu(&mut self);
-    /// Emit this frame's queued gameplay sound effects.
-    fn advance_sound_effects(&mut self);
-
-    // Demo phase.
-    fn disable_scanline_irq(&mut self);
-    fn enable_scanline_irq(&mut self, immediate: bool);
-
-    // Pause phase.
-    fn pause_hook(&mut self, hook: PauseHook);
-    fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
 }
 
 /// The gameplay pass phases the compatibility runtime runs on a lease the pass
@@ -142,6 +132,12 @@ pub trait PassLease:
     fn load_title_sequence_graphics(&mut self);
     /// Set up Samus for the initial room load.
     fn initialize_player(&mut self);
+    /// The debug game over state's frame: the original's failed assertion.
+    fn debug_game_over_menu(&mut self);
+    /// The room's pause hook, as the pause screen opens.
+    fn pause_hook(&mut self, hook: PauseHook);
+    /// The room's unpause hook, as the pause screen closes; nonzero when it yields.
+    fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
 }
 
 #[derive(Clone, Copy)]
@@ -284,12 +280,12 @@ pub fn tick<H: Host>(input: TickInput, game: &mut H) -> CoroutineRet {
 pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     match entry {
         Entry::Frame => frame(game),
-        Entry::PauseSetup => setup_pause(game),
-        Entry::Paused => advance_pause(game),
-        Entry::UnpauseSetup => setup_unpause(game),
-        Entry::UnpauseFadeOut => fade_out_unpause(game),
         // The lease entries run from the frame's lease.
-        Entry::Initialize
+        Entry::PauseSetup
+        | Entry::Paused
+        | Entry::UnpauseSetup
+        | Entry::UnpauseFadeOut
+        | Entry::Initialize
         | Entry::GameOverFadeOut
         | Entry::TimeUpExit
         | Entry::DemoStop
@@ -370,47 +366,20 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 drop(lease);
                 break 'frame returned;
             }
-            // A cinematic, door transition, death, demo or room load state's
-            // frame runs on this lease too, to the frame's end.
-            if let Some(&entry) = entry
-                && runs_on_lease(entry)
-            {
+            // Every other state's frame runs on this lease too, to the frame's
+            // end.
+            if let Some(&entry) = entry {
                 let returned = lease_frame::<H>(entry, &mut lease);
                 drop(lease);
                 break 'frame returned;
             }
         }
-        let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
+        match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
             // A pass state's frame ends on its pass's last lease.
-            Advance(entry) if runs_pass(entry) => break 'frame advance(entry, game),
+            Advance(entry) if runs_pass(entry) => advance(entry, game),
             // A lease state resuming after a yield opens the frame's lease here.
-            entry if runs_on_lease(entry) => {
-                break 'frame lease_frame::<H>(entry, &mut game.runtime());
-            }
-            Advance(entry) => advance(entry, game),
-            FileMenu => file_menu::advance(game),
-            MapMenu => map_menu::advance(game),
-            PauseFadeIn => pause_controls::fade_in(game),
-            GameOver => game_over::advance(game),
-            Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit | DemoReset
-            | Demo => unreachable!("a lease state"),
-            Null => 0,
-            Unused => {
-                game.rtl_unreachable();
-                0
-            }
-            Debug => {
-                game.debug_game_over_menu();
-                0
-            }
-            Options => options_settings::advance(game, upload_options_tiles, |game| {
-                crate::display_refresh::enable(true, game)
-            }),
-        };
-        if returned != 0 {
-            break 'frame returned;
+            entry => lease_frame::<H>(entry, &mut game.runtime()),
         }
-        finish_state(game)
     };
     if returned == 0 {
         game.store_display_control_byte(DisplayField::NmiPending, 1, Store::Named);
@@ -429,29 +398,6 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_outer_continuation(resume);
     }
     returned
-}
-
-/// The states whose frame runs on the frame's first lease, up to the frame's
-/// end.
-fn runs_on_lease(entry: StateEntry) -> bool {
-    matches!(
-        entry,
-        Native(_)
-            | Door(_)
-            | BeginDeath
-            | DeathPose
-            | FlashDeath
-            | ExplodeSuit
-            | Advance(
-                Entry::Initialize
-                    | Entry::GameOverFadeOut
-                    | Entry::TimeUpExit
-                    | Entry::DemoStop
-                    | Entry::DemoNext
-            )
-            | DemoReset
-            | Demo
-    )
 }
 
 /// A lease state's frame on `lease`, then the frame's end once the state
@@ -475,31 +421,33 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         ExplodeSuit => samus_death::explode_suit(lease),
         Advance(Entry::TimeUpExit) => exit_time_up::<H>(lease),
         Advance(Entry::Initialize) => initialize::<H>(lease),
+        Advance(Entry::PauseSetup) => setup_pause::<H>(lease),
+        Advance(Entry::Paused) => advance_pause::<H>(lease),
+        Advance(Entry::UnpauseSetup) => setup_unpause::<H>(lease),
+        Advance(Entry::UnpauseFadeOut) => fade_out_unpause::<H>(lease),
         Advance(Entry::GameOverFadeOut) => fade_out(Entry::GameOverFadeOut, lease),
         Advance(Entry::DemoStop) => stop_demo::<H>(lease),
         Advance(Entry::DemoNext) => next_demo::<H>(lease),
         DemoReset => demo_rooms::reset(lease),
         Demo => demo_rooms::play(lease, |lease| run_pass::<H>(lease, PassEnd::Pass)),
-        _ => unreachable!("not a lease state"),
+        Options => options_settings::advance(lease, upload_options_tiles, |lease| {
+            crate::display_refresh::enable(true, lease)
+        }),
+        FileMenu => file_menu::advance(lease),
+        MapMenu => map_menu::advance(lease),
+        GameOver => game_over::advance(lease),
+        PauseFadeIn => pause_controls::fade_in(lease),
+        Null => 0,
+        Unused => {
+            crate::menus::host::MenuRuntime::rtl_unreachable(lease);
+            0
+        }
+        Debug => {
+            lease.debug_game_over_menu();
+            0
+        }
+        Advance(_) => unreachable!("a pass state"),
     }
-}
-
-/// The frame's end on Game, after a completed state: the sound effects, the
-/// sprite table's finish, the joypad filter word and the continuation check.
-fn finish_state<H: Host>(game: &mut H) -> CoroutineRet {
-    game.advance_sound_effects();
-    sprite_drawing::finish_frame(game);
-    filter_joypad(game);
-    let state = [
-        game.resume_point(),
-        game.secondary_continuation(),
-        game.demo_phase(),
-        game.message_continuation(),
-    ];
-    if broken_coroutine(state) {
-        game.report_broken_coroutine(state);
-    }
-    0
 }
 
 /// The frame's start on its first lease: the random number steps, the sprite
@@ -789,7 +737,10 @@ fn next_demo<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
 }
 
 /// Pause phase: enter the pause screen.
-fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
+fn setup_pause<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
+    use crate::menus::host::MenuRuntime as _;
+    use crate::presentation_workspace::{Access as _, PaletteAccess as _};
+    use crate::runtime_access::Lend as _;
     crate::hdma_objects::set_hdma_enabled(false, game);
     apply_mirrored(
         game,
@@ -798,7 +749,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
         DisplayField::HdmaEnable,
         true,
     );
-    animated_tiles::set_enabled(game.runtime().session_mut(), false);
+    game.lend(|lease| animated_tiles::set_enabled(lease.session_mut(), false));
     display_refresh::capture_pause_background(game);
     match pause_controls::hook_address(true, game) {
         8946657 => {}
@@ -828,7 +779,8 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
 }
 
 /// Pause phase: one pause menu frame.
-fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
+fn advance_pause<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
+    use crate::menus::host::MenuRuntime as _;
     crate::menus::state::with(game, |game, menu: &mut MenuState| {
         controller_input::filter(3, game);
         // Preserve the eight-entry bounds failure before any tab work.
@@ -856,7 +808,12 @@ fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
 }
 
 /// Pause phase: restore the room after the pause screen.
-fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
+fn setup_unpause<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
+    use crate::display::preparation::Access as _;
+    use crate::display::video::Video as _;
+    use crate::menus::host::MenuRuntime as _;
+    use crate::presentation_workspace::{Access as _, PaletteAccess as _};
+    use crate::runtime_access::Lend as _;
     let resume = game.screen_primary();
     if resume == 0 {
         game.load_vram_words(0x9ad200, 0x6000, 0x1000);
@@ -868,17 +825,17 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
         pause_controls::resume(game);
         game.apply("unpause", Command::StopDma);
         crate::display_refresh::enable(false, game);
-        game.disable_scanline_irq();
+        crate::display_refresh::disable_scanline_irq(game);
         // The room's tiles, palette, background, viewport and mechanism
-        // graphics reload on one lease.
-        let mut lease = game.runtime();
-        crate::room_entry::installation::load_tiles_and_palette(&mut lease);
-        crate::room_entry::background::load(&mut lease, LoadMode::Initial);
-        fill_viewport(&mut lease);
-        crate::room_mechanisms::graphics::reload_graphics(&mut lease);
-        drop(lease);
+        // graphics reload on the frame's lease, as on the lease they opened.
+        game.lend(|lease| {
+            crate::room_entry::installation::load_tiles_and_palette(lease);
+            crate::room_entry::background::load(lease, LoadMode::Initial);
+            fill_viewport(lease);
+            crate::room_mechanisms::graphics::reload_graphics(lease);
+        });
         crate::display_refresh::enable(true, game);
-        game.enable_scanline_irq(false);
+        crate::display_refresh::enable_scanline_irq(false, game);
         pause_controls::restore_graphics(game);
         game.load_vram_words(
             0x7edf5c,
@@ -906,12 +863,13 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
             game.screen_set_primary(1);
             return yielded;
         }
-        // HDMA, the animated tiles and Samus's movement sound resume on one lease.
-        let mut lease = game.runtime();
-        crate::hdma_objects::set_hdma_enabled(true, &mut lease);
-        animated_tiles::set_enabled(lease.session_mut(), true);
-        crate::player_projectiles::feedback::restore_sound(&mut lease);
-        drop(lease);
+        // HDMA, the animated tiles and Samus's movement sound resume on the
+        // frame's lease, as on the lease they opened.
+        game.lend(|lease| {
+            crate::hdma_objects::set_hdma_enabled(true, lease);
+            animated_tiles::set_enabled(lease.session_mut(), true);
+            crate::player_projectiles::feedback::restore_sound(lease);
+        });
         crate::gameplay_word!(game.GAME_STATE += 1);
     }
     game.screen_set_primary(0);
@@ -919,7 +877,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
 }
 
 /// Pause phase: draw the pause screen, then fade to black before unpausing.
-fn fade_out_unpause<H: Host>(game: &mut H) -> CoroutineRet {
+fn fade_out_unpause<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
     crate::menus::state::with(game, |game, menu: &mut MenuState| {
         pause_controls::draw_unpause(menu, game)
     });
@@ -1185,7 +1143,10 @@ fn prepare_player_projectiles(lease: &mut impl crate::runtime_access::PlayerLeas
 }
 
 /// Upload the options screen tiles.
-fn upload_options_tiles<H: Host>(game: &mut H) {
+fn upload_options_tiles<H>(game: &mut H)
+where
+    H: crate::display::preparation::Access + crate::display::video::Video + ?Sized,
+{
     // The original also stores the VRAM address's low byte (0) to the colour
     // math mirror, before the port.
     game.store_display_control_byte(DisplayField::ColorMath, 0, Store::Named);

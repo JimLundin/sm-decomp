@@ -2650,7 +2650,165 @@ impl sm_game::menus::controller_input::SampleHost for Runtime<'_> {
             Controller::Two => crate::rtl::JOY2L,
         } as u16)
     }
+    fn latched_controller_word(&mut self) -> u16 {
+        sm_game::menus::controller_input::SampleHost::latched_controller_word(self.game)
+    }
 }
+// A lease lends itself, with the observations refreshed as the fresh lease
+// the call opened left them.
+impl<'g> sm_game::runtime_access::Lend for Runtime<'g> {
+    type View<'a>
+        = Runtime<'g>
+    where
+        Self: 'a;
+    fn lend<'a, T>(&'a mut self, call: impl FnOnce(&mut Self::View<'a>) -> T) -> T {
+        self.owned_player_call(call)
+    }
+}
+// The menus on the lease: the game's tables, its controller registers and its
+// message box DMA length, which the lease does not hold; the graphics and the
+// HDMA on this lease.
+impl sm_game::menus::host::Host for Runtime<'_> {
+    fn pause_menu_tables(&self) -> &sm_game::menus::map_menu::ImportedTables {
+        &self.game.pause_menu
+    }
+    fn equipment_screen_tables(&self) -> &sm_game::menus::equipment_menu::ImportedTables {
+        &self.game.equipment_screen
+    }
+    fn demo_sets(&self) -> &Option<sm_game::demo_rooms::ImportedSets> {
+        &self.game.demo_sets
+    }
+    fn demo_scenes(&self) -> &Option<sm_game::demo_rooms::ImportedScenes> {
+        &self.game.demo_scenes
+    }
+    fn intro_palette(&self) -> &Option<sm_game::intro_pages::ImportedIntroPalette> {
+        &self.game.intro_palette
+    }
+    fn read_rom_word(&self, address: u32, offset: usize) -> u16 {
+        self.game.read_rom_word(address, offset)
+    }
+    fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
+        &self.game.visual_tables
+    }
+    fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
+        &self.game.area_select_palettes
+    }
+}
+impl sm_game::menus::host::MenuRuntime for Runtime<'_> {
+    fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16) {
+        sm_game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes).load(self)
+    }
+    fn write_dma_register(&mut self, register: u16, value: u8) {
+        crate::rtl::write_dma_register(register, value, self.game)
+    }
+    fn handle_music_queue(&mut self) {
+        self.advance_music_requests();
+    }
+    fn assert_ram_pointer(&mut self, address: u16) {
+        crate::game::menu_host::assert_ram_pointer(address);
+    }
+    fn message_box_das0l_value(&self) -> u16 {
+        self.game.message_box_das0l_value
+    }
+    fn set_message_box_das0l_value(&mut self, value: u16) {
+        self.game.message_box_das0l_value = value;
+    }
+    fn advance_dialogue_sound_effects(&mut self) {
+        self.advance_dialogue_sound_requests();
+    }
+    fn run_hdma_objects(&mut self) {
+        // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
+        sm_game::hdma_objects::update_hdma(false, self);
+    }
+    fn spawn_hdma(&mut self, bank: u8, args: &crate::types::HdmaObjectDefinition) -> u16 {
+        sm_game::hdma_objects::spawn_hdma_owned(bank, args, self)
+    }
+    fn rtl_unreachable(&mut self) -> bool {
+        crate::rtl::unreachable()
+    }
+    fn update_beam_tiles_and_palette(&mut self) {
+        self.owned_player_call(sm_game::player_drawing::update_beam_tiles_and_palette);
+    }
+    fn invalid_window(&mut self, address: u32) {
+        invalid_window(self.game, address)
+    }
+    fn legacy_assertion(&self, drawing: bool) -> ! {
+        legacy_assertion(drawing)
+    }
+    fn unreachable_native(&mut self) -> u16 {
+        crate::rtl::unreachable()
+    }
+    #[cfg(sm_verify_dll)]
+    fn observe_selected_continue(&mut self, load_result: u8) {
+        crate::flags_save_observer::selected_continue(load_result)
+    }
+}
+// The reserve tanks' state on the lease: the Session's inventory, stored as
+// the retained Session's inventory store does.
+impl sm_game::inventory_domain::InventoryAccess for Runtime<'_> {
+    fn reserve_state(&self) -> sm_game::inventory_domain::ReserveState {
+        sm_game::inventory_domain::ReserveState::from(&self.session().inventory)
+    }
+    fn commit_reserve(&mut self, change: sm_game::inventory_domain::ReserveChange) {
+        if change.is_empty() {
+            return;
+        }
+        change.apply(&mut self.session_mut().inventory);
+        self.refresh_inputs();
+    }
+}
+// The menu window on the lease: the Session's window words, stored as the
+// retained Session's window store does.
+impl sm_game::menu_window_state::Access for Runtime<'_> {
+    fn window_state(&self) -> sm_game::menu_window_state::WindowState {
+        sm_game::fx_encoding::session_window(self.session())
+    }
+    fn publish_window(
+        &mut self,
+        value: sm_game::menu_window_state::WindowState,
+        fields: &[sm_game::menu_window_state::Field],
+    ) {
+        for &field in fields {
+            let at = sm_game::menu_window_encoding::address(field);
+            self.write_word_le(field.get(&value), at);
+        }
+    }
+}
+// The file copy arrow's palette timer on the lease: the Session's projectile
+// table word ($198F), as the retained Session holds it.
+impl sm_game::menu_window_state::ArrowAccess for Runtime<'_> {
+    fn file_arrow(&mut self, action: sm_game::menu_window_state::ArrowAction) -> bool {
+        let mut menu = sm_game::enemy_projectiles::table::FileSelect(
+            &mut self.session_mut().enemy_projectiles,
+        );
+        let change = sm_game::menu_window_state::update_arrow(menu.arrow_palette_timer(), action);
+        if change.publications.iter().any(Option::is_some) {
+            self.words_stored();
+        }
+        change.rotate
+    }
+}
+// Sprite output's words on the lease, through its projection.
+impl sm_game::sprite_output::SpriteWords for Runtime<'_> {
+    fn sprite_word(&self, word: sm_game::sprite_output::SpriteWord) -> u16 {
+        self.word(crate::game::menu_host::sprite_word_address(word))
+    }
+    fn sprite_camera(&self) -> [u16; 2] {
+        crate::game::menu_host::SPRITE_CAMERA.map(|at| self.word(at))
+    }
+    fn projectile_sprite_cursor(&self, slot: u16) -> u16 {
+        self.native_word(crate::game::menu_host::projectile_sprite_address(slot))
+    }
+    fn echo_frame(&self) -> u16 {
+        let game = self;
+        sm_game::frame_display_word!(game.NmiFrameWordPair)
+    }
+    fn samus_pose(&self) -> u16 {
+        let game = self;
+        sm_game::sequence_word!(game.SAMUS_POSE)
+    }
+}
+impl sm_game::sprite_output::SpriteHost for Runtime<'_> {}
 // The soft reset's request is the Session's game state word.
 impl sm_game::menus::host::ResetRequest for Runtime<'_> {
     fn request_reset(&mut self) {

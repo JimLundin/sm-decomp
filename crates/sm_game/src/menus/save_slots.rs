@@ -30,28 +30,6 @@ pub trait SlotHost:
     fn observe_save(&mut self, stage: u8);
 }
 
-impl<H: Host + ?Sized> SlotHost for H {
-    type SlotRam = H::Sram;
-    fn slot_ram(&self) -> &H::Sram {
-        self.sram()
-    }
-    fn slot_offsets(&self) -> &Option<ImportedSlots> {
-        self.save_slot_offsets()
-    }
-    fn flush_slots(&mut self) {
-        self.flush_sram();
-    }
-    fn save_selection(&self) -> SaveSelection {
-        crate::menus::state::load(self)
-    }
-    fn commit_save_selection(&mut self, before: &SaveSelection, after: SaveSelection) {
-        self.commit_menu(before, after);
-    }
-    fn observe_save(&mut self, stage: u8) {
-        self.observe_flags_save(stage);
-    }
-}
-
 /// What the area map leaves reach beyond a save host: the map station and
 /// used-station bytes, and the gameplay flags' store. Every menu host is one,
 /// storing through a fresh lease; a Session lease is one and stores on itself.
@@ -64,7 +42,7 @@ pub trait MapHost: SlotHost + super::host::MapFacts {
     );
 }
 
-impl<H: Host + ?Sized> MapHost for H {
+impl<H: Host + crate::runtime_access::RuntimeAccess + ?Sized> MapHost for H {
     fn store_gameplay_flags(
         &mut self,
         store: impl FnOnce(&mut crate::gameplay_flag_state::GameplayFlags),
@@ -331,9 +309,9 @@ pub fn verify_boot<H: Host + ?Sized>(game: &mut H) {
         flow.num_demo_sets = 3
     });
     if (0..3).all(|slot| load(slot, game) != 0) {
-        game.sram().write_bytes(0x1fe0, b"madadameyohn");
-        game.flush_sram();
-    } else if game.sram().bytes(crate::save_file::header::SIGNATURE) == b"supermetroid" {
+        game.slot_ram().write_bytes(0x1fe0, b"madadameyohn");
+        game.flush_slots();
+    } else if game.slot_ram().bytes(crate::save_file::header::SIGNATURE) == b"supermetroid" {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.num_demo_sets = 4
         });

@@ -1,6 +1,6 @@
 //! Game-over choices and transitions over the shared menu presentation.
 use super::prelude::*;
-use crate::actors::access::{ActorKey, edit_image_actor};
+use crate::actors::access::{AccessMode, ActorAccess, ActorKey};
 use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_FIND_METROID_LARVA, ADDR_K_MENU_TILEMAP_GAME_OVER,
     ADDR_K_MENU_TILEMAP_NO_GO_TO_TITLE, ADDR_K_MENU_TILEMAP_TRY_AGAIN,
@@ -12,9 +12,27 @@ use crate::menu_state::SaveSelection;
 use crate::menus::menu_tilemap;
 use crate::menus::save_slots;
 
+/// The game over menu's host: the menus' host, with the baby's record in the
+/// Session's actors.
+pub trait GameOverHost: crate::menus::host::Host + ActorAccess {}
+impl<T: crate::menus::host::Host + ActorAccess + ?Sized> GameOverHost for T {}
+
+/// The baby's record, as the actor codec reads it in native order.
+fn baby<H: GameOverHost + ?Sized>(game: &H) -> crate::actors::access::ActorRead<'_> {
+    game.resolve_actor(BABY, AccessMode::Native)
+}
+
+/// Edit the baby's record.
+fn edit_baby<H: GameOverHost + ?Sized>(
+    game: &mut H,
+    edit: impl FnOnce(&mut crate::actors::state::Actor),
+) {
+    game.edit_actor(BABY, AccessMode::Native, edit);
+}
+
 /// Requires a live, exclusively accessed graphics backend and native ROM allocation
 /// covering the referenced menu text, baby animation and save-map records.
-pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineRet {
+pub fn advance<H: GameOverHost + ?Sized>(game: &mut H) -> CoroutineRet {
     // The original state table, indexed and bounds-checked as before.
     let states: [fn(&mut MenuState, &mut H); 8] = [
         prepare::<H>,
@@ -32,7 +50,7 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
     super::pending_wait(game)
 }
 
-fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+fn prepare<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         game.fade(false);
         if game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf != 0 {
@@ -64,7 +82,7 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
 
-fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+fn initialize<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         draw_menu(game);
     }
@@ -80,7 +98,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: 
 }
 
 /// Index 1 up to the clear-forced-blank wait: the menu, the baby and the gradient.
-fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn draw_menu<H: GameOverHost + ?Sized>(game: &mut H) {
     use crate::display::preparation::{Field, Store};
     for (field, value) in [
         (Field::MainLayers, 17),
@@ -138,20 +156,20 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-fn wait_for_music<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+fn wait_for_music<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if crate::music_requests::has_queued_music(game) == 0 {
         menu.menu_index = menu.menu_index.wrapping_add(1);
         crate::music_requests::queue_delayed_8(4, game);
     }
 }
 
-fn fade_in<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+fn fade_in<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
     fade(true, 15, menu, game);
 }
-fn fade_to_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+fn fade_to_map<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
     fade(false, 0, menu, game);
 }
-fn fade<H: crate::menus::host::Host + ?Sized>(
+fn fade<H: GameOverHost + ?Sized>(
     fade_in: bool,
     brightness: u8,
     menu: &mut MenuState,
@@ -168,7 +186,7 @@ fn fade<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-fn choose<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+fn choose<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
     animate_baby(game, |game| {
         game.rtl_unreachable();
     });
@@ -180,7 +198,7 @@ fn choose<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut
             selection.map_area_index ^= 1;
         });
     } else if game.observed_inputs().pressed & K_BUTTON_A as u16 != 0 {
-        edit_image_actor(game, BABY, |baby| baby.instruction_delay = 180);
+        edit_baby(game, |baby| baby.instruction_delay = 180);
         let selection = crate::menus::state::load::<SaveSelection, _>(game);
         if selection.map_area_index != 0 {
             menu.menu_index = 7;
@@ -215,14 +233,14 @@ fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
     });
 }
 
-fn load_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+fn load_map<H: GameOverHost + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
     crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
     menu.menu_index = 0;
 }
 
-fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn fade_to_title<H: GameOverHost + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     animate_baby(game, |game| {
         game.rtl_unreachable();
@@ -238,14 +256,14 @@ fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 const BABY: ActorKey = ActorKey::from_legacy(0);
 
 /// The baby's animation, on its record's instruction and instruction delay.
-fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: impl FnOnce(&mut H)) {
-    let mut timer = game.actor_record(BABY).instruction_delay;
+fn animate_baby<H: GameOverHost + ?Sized>(game: &mut H, invalid: impl FnOnce(&mut H)) {
+    let mut timer = baby(game).instruction_delay;
     if timer == 0 {
         timer = start_baby(0xbc27, 10, game);
     }
     loop {
-        let cursor = game.actor_record(BABY).instruction;
-        edit_image_actor(game, BABY, |baby| {
+        let cursor = baby(game).instruction;
+        edit_baby(game, |baby| {
             baby.instruction_delay = timer.wrapping_sub(1);
         });
         if timer != 1 {
@@ -268,18 +286,18 @@ fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: imp
                     }
                 };
                 game.queue_sound(2, (sound) as u8, 6);
-                let at = game.actor_record(BABY).instruction;
+                let at = baby(game).instruction;
                 (baby_record(at, game).word(8), 8)
             };
-            edit_image_actor(game, BABY, |baby| baby.instruction_delay = duration);
-            edit_image_actor(game, BABY, |baby| {
+            edit_baby(game, |baby| baby.instruction_delay = duration);
+            edit_baby(game, |baby| {
                 baby.instruction = baby.instruction.wrapping_add(bytes);
             });
             if duration != 0xffff {
                 let at = if ordinary {
                     cursor.wrapping_add(6)
                 } else {
-                    game.actor_record(BABY).instruction
+                    baby(game).instruction
                 };
                 draw_baby(at, game);
                 return;
@@ -289,15 +307,15 @@ fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: imp
     }
 }
 
-fn start_baby<H: crate::menus::host::Host + ?Sized>(cursor: u16, timer: u16, game: &mut H) -> u16 {
-    edit_image_actor(game, BABY, |baby| {
+fn start_baby<H: GameOverHost + ?Sized>(cursor: u16, timer: u16, game: &mut H) -> u16 {
+    edit_baby(game, |baby| {
         baby.instruction = cursor;
         baby.instruction_delay = timer;
     });
     timer
 }
 
-fn baby_record<H: crate::menus::host::Host + ?Sized>(
+fn baby_record<H: GameOverHost + ?Sized>(
     cursor: u16,
     game: &mut H,
 ) -> sm_data::cartridge::RomRecord {
@@ -311,7 +329,7 @@ fn baby_record<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-fn draw_baby<H: crate::menus::host::Host + ?Sized>(cursor: u16, game: &mut H) {
+fn draw_baby<H: GameOverHost + ?Sized>(cursor: u16, game: &mut H) {
     let palette = baby_record(cursor, game).word(4);
     for index in 0..16 {
         let color = baby_record(palette.wrapping_add(2 * index), game).word(0);

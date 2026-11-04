@@ -108,6 +108,7 @@ pub trait RuntimeAccess: crate::screen_fade::Owner {
         + crate::shooting_star_motion::Lease
         + crate::gameplay_frame::PassLease
         + crate::hdma_objects::UpdateHost
+        + crate::menus::host::Host
     where
         Self: 'a;
     /// A fresh owned-Session view; publication happens when it is dropped.
@@ -126,16 +127,50 @@ pub trait RuntimeAccess: crate::screen_fade::Owner {
     }
 }
 
-/// Run `store` on the Session of a fresh runtime view, then refresh the view's
-/// observations as the projected word stores did; the view publishes the
+/// A host that lends its owned-Session view for one call: a lease lends
+/// itself, and a compatibility host opens a fresh view, which publishes the
+/// Session when the call returns.
+pub trait Lend: crate::screen_fade::Owner {
+    type View<'a>: PlayerLease
+        + crate::hdma_effects::HdmaEffects
+        + crate::actors::mother_brain_rainbow::Host
+        + crate::actors::boss_lease::BossState
+        + crate::shooting_star_motion::Lease
+        + crate::gameplay_frame::PassLease
+        + crate::hdma_objects::UpdateHost
+    where
+        Self: 'a;
+    /// Run `call` on the owned-Session view.
+    fn lend<'a, T>(&'a mut self, call: impl FnOnce(&mut Self::View<'a>) -> T) -> T;
+    /// Whether the view can be lent now ([`RuntimeAccess::runtime_admissible`]).
+    fn lend_admissible(&self) -> bool {
+        true
+    }
+}
+impl<H: RuntimeAccess + ?Sized> Lend for H {
+    type View<'a>
+        = H::Runtime<'a>
+    where
+        Self: 'a;
+    fn lend<'a, T>(&'a mut self, call: impl FnOnce(&mut Self::View<'a>) -> T) -> T {
+        call(&mut self.runtime())
+    }
+    fn lend_admissible(&self) -> bool {
+        self.runtime_admissible()
+    }
+}
+
+/// Run `store` on the Session of the host's view, then refresh the view's
+/// observations as the projected word stores did; a fresh view publishes the
 /// Session when it closes.
-pub fn with_session<H: RuntimeAccess + ?Sized, T>(
+pub fn with_session<H: Lend + ?Sized, T>(
     host: &mut H,
     store: impl FnOnce(&mut crate::session::Session) -> T,
 ) -> T {
     use crate::session_access::SessionAccess as _;
-    let mut runtime = host.runtime();
-    let result = store(runtime.session_mut());
-    runtime.words_stored();
-    result
+    host.lend(|runtime| {
+        let result = store(runtime.session_mut());
+        runtime.words_stored();
+        result
+    })
 }

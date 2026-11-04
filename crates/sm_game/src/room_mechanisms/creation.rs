@@ -52,9 +52,9 @@ fn definition_word(
 /// `game` (SpawnHardcodedPlm).
 pub fn spawn_hardcoded<H>(x: u8, y: u8, header: u16, game: &mut H)
 where
-    H: crate::runtime_access::RuntimeAccess + ?Sized,
+    H: crate::runtime_access::Lend + ?Sized,
 {
-    spawn_hardcoded_in(&mut game.runtime(), x, y, header);
+    game.lend(|lease| spawn_hardcoded_in(lease, x, y, header));
 }
 /// Spawn the hardcoded PLM `header` at block (`x`, `y`) on the lease `c`
 /// already holds (SpawnHardcodedPlm).

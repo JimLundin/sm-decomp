@@ -106,7 +106,10 @@ pub fn set_blank<H: crate::display::preparation::Access + ?Sized>(blank: bool, g
     crate::frame_display_byte!(game, crate::display::preparation::Field::Brightness => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Brightness) & 0x7f | if blank { 0x80 } else { 0 });
 }
 
-pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
+pub fn pause_graphics<H: Video + crate::display::preparation::Access + ?Sized>(
+    paused: bool,
+    game: &mut H,
+) {
     let (objects, bg1, bg2, bg3) = if paused {
         (1, 0x31, 0x38, 0x58)
     } else {
@@ -370,7 +373,9 @@ pub fn initialize_gameplay<
 }
 
 /// Read the room's BG2 tilemap back into RAM for the pause screen.
-pub fn capture_pause_background<H: Host + ?Sized>(game: &mut H) {
+pub fn capture_pause_background<H: Video + crate::display::preparation::Access + ?Sized>(
+    game: &mut H,
+) {
     // The BG2 tilemap's base, one word in, as the original addresses it.
     let address = (u16::from(
         crate::display::preparation::Access::display_control_byte(
@@ -392,7 +397,7 @@ pub fn capture_pause_background<H: Host + ?Sized>(game: &mut H) {
     );
 }
 
-pub fn load_pause_assets<H: Host + crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn load_pause_assets<H: GraphicsLoad + crate::menus::host::Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0xb68000, 0, 0x4000).load(game);
     GraphicsAsset::VramWords(0xb6c000, 0x2000, 0x2000).load(game);
     GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x2000).load(game);
@@ -403,7 +408,7 @@ pub fn load_pause_assets<H: Host + crate::menus::host::Host + ?Sized>(game: &mut
 }
 
 /// Upload the pause map and the area label.
-pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn upload_pause_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         crate::menus::prelude::display_scroll!(
             game.Bg1H = crate::menus::prelude::display_scroll!(game.Bg4H)
@@ -458,9 +463,9 @@ pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut 
     );
 }
 
-fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> u16 {
+fn room_area<H: crate::runtime_access::Lend + ?Sized>(game: &mut H) -> u16 {
     use crate::session_access::SessionAccess;
-    game.runtime().session().room.area
+    game.lend(|lease| lease.session().room.area)
 }
 
 pub fn reset_gameplay_layers<

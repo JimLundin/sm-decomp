@@ -57,7 +57,9 @@ pub trait DialogueHost:
     /// Restore Samus's movement sound after the box.
     fn resume_movement_sound(&mut self);
 }
-impl<T: crate::menus::host::Host + ?Sized> DialogueHost for T {
+impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> DialogueHost
+    for T
+{
     fn dialogue_dma_length(&self) -> u16 {
         self.message_box_das0l_value()
     }

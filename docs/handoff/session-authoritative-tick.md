@@ -935,6 +935,59 @@ former `foreign` call left them. Writes are identical and in the same order.
     rows `item-speed-booster`, `enemy-fire-arc` and `music-fir-selector10`. The
     `lease counters:` lines should show `leases=` falling against the base at the
     same `ticks=`, with `nested=` unchanged.
+- **Fifth slice (lane `tick-s9e`, on `2523e1fd1`, `collab/tick-s9d`).** Not yet
+  replayed. Ratchet: `game_host_impls` 60 → 60, `session_entries` 29 → 6,
+  `foreign_calls` 43.
+  - Every game state's frame now runs on the frame's first lease, to the frame's
+    end: the options, file select and file select map menus, game over, the pause
+    fade-in, setup, frame, unpause and unpause fade-out, and the null, unused and
+    debug states. Game's `finish_state` is gone; Game's frame keeps only the boot
+    resume, the NMI (`display_refresh::run`) and the latched controller sample.
+  - `runtime_access::Lend` lends the owned-Session view for one call: a blanket
+    over `RuntimeAccess` opens a fresh lease on Game; the lease lends itself inside
+    `owned_player_call`. `with_session`, `with_projectiles`, the
+    `progress::leased` and `animated_tiles::execution::leased` facades,
+    `PlayerRuntime` and the FX setup's store bind on it. Part of the
+    `session_entries` fall is these facades' `.runtime()` calls collapsing into
+    the blanket's one; the moved states' own leases (the unpause's two, the map
+    menu's room entry, the pause's animated tiles) are the rest.
+  - `menus::host::Host` takes `Lend`, `screen_fade::Owner`, `SlotHost`, `MapHost`
+    and `SampleHost`, and loses `RuntimeAccess`, `ActorImage`, `LevelData`, `sram`,
+    `save_slot_offsets` and the controller words (now `SampleHost`'s
+    `latched_controller_word`). SRAM flushes are `SlotHost::flush_slots`. The
+    lease implements the menus host and `MenuRuntime`; the blankets over the menus
+    host bind on `Host + RuntimeAccess` (Game alone) beside the lease's own impls.
+  - The pause and unpause hooks are `PassLease` ports. Kraid's bind on the
+    graphics, readback, tilemap and actor ports; Draygon's next IRQ handler goes
+    through `write_external`. The baby and Kraid read actor 0 through
+    `ActorAccess`; `ActorImage` and Game's `Random` are deleted. Game gained
+    `SlotHost` and `SampleHost` impls with its former blankets' bodies.
+  - **Left.** `menus::host::Host for Game` still has callers outside the frame, so
+    it and its supertraits' Game impls (`MenuRuntime`, `SpriteHost`,
+    `SpriteWords`, `NativeImage`, `ObjectAccess`, `escape_countdown::Access`,
+    `LeaseHdma` through `spawn_hdma_owned`, `MapFacts`, `InventoryAccess`, the
+    window and arrow access) stay:
+    - boot: `nintendo_logo` (`cinematic_host::Scene` needs `menus::host::Tables`,
+      Game's through the blanket) and `save_slots::verify_boot`, which loads the
+      three slots on Game before any frame lease;
+    - verification: `player_legacy_edges`'s map check runs `render_map` on Game and
+      asserts the physical RAM bytes between rotations (on a lease they are not
+      published until it closes, so the check has to read the lease's projection
+      to keep its strength), and `flags_candidate` / `flags_runtime_checks` run
+      `save_slots::initialize` and `load` on Game.
+    Narrowing `load`, `initialize` and `verify_boot` to `SlotHost` plus the state
+    ports, giving Scene its own tables port, and moving the three checks onto
+    `Runtime::new` (D7) would let `Host for Game` and about a dozen impls go.
+    `SamusSources`, `LevelData` and `grapple_swing::TileAccess` have callers
+    outside the menus (Samus animation, room loads, display refresh and the
+    grapple alias check).
+  - **Rows.** `options-menu-tour`, `options-menu-return-parameter`,
+    `pause-menu-tour`, `file-copy-clear`, the file select and save rows
+    (`save-memory`, `save-death-reload`), the map rows, game over,
+    `boss-kraid-pause-*` and the Draygon and Mother Brain rooms' pauses, the chain
+    rooms, and the SFX-loss rows `item-speed-booster`, `enemy-fire-arc` and
+    `music-fir-selector10`. `lease counters:` should show `leases=` falling on the
+    menu and pause rows at the same `ticks=`, with `nested=` unchanged.
 
 ### Stage 10: NMI and settlement inside the tick
 
