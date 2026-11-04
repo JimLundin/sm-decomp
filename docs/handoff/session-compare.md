@@ -7,7 +7,8 @@ has to export its Session as RAM for comparison. This note maps what is
 compared today, gives the design, and records the first slice (lane
 `collab/session-compare`, on `0b19d8a24`) and the second (lane
 `collab/session-compare-2`, on `8f90bd4bf`: next slice 1's findings and fix,
-and slice 2's coverage report).
+and slice 2's coverage report), and the third (lane
+`collab/session-compare-3`, on `ec858a96f`: slice 2's classification).
 
 ## Today's comparison
 
@@ -207,33 +208,102 @@ failure can now only be an encoded byte that differs from the engine's own
 RAM outside the write log: an export the codec does not reproduce (a codec
 asymmetry), or a Game-side write the log missed. Both are worth a row.
 
-## Slice 2: coverage (started)
+## Slice 2: coverage
 
 Each frame's encode of the engine's lease Session marks the bytes its spans
 write; at the replay's end `session_compare::Coverage` classes all 128 KiB
-against the unowned table, which today is `NORMALIZED_RAM`:
+against the unowned ranges (`NORMALIZED_RAM` and the verifier's
+`UNOWNED_RAM`) and the ranges held outside the Session:
 
 ```
-Session RAM coverage: <n> bytes decoded, <n> unowned, <n> both, <n> neither (in <n> ranges)
+Session RAM coverage: <n> bytes decoded, <n> unowned, <n> both, <n> held outside the Session, <n> neither (in <n> ranges)
+Session RAM held outside the Session: frame display <n>, scroll <n>
 Session RAM neither decoded nor unowned: $xxxxx-$xxxxx, ... (first 12)
 Session RAM decoded and unowned: $xxxxx-$xxxxx, ... (first 12)
+Session RAM unowned beside the normalized ranges: unused <n>, debug <n>, never read <n>, handshake <n>
 ```
 
 "Decoded" is the encoder's spans (the decode reads the same layout);
 "both" are Session bytes the RAM compare normalizes, so neither compare
-sees them today; "neither" are bytes with no field and no listed reason,
-which must reach 0. Report-only. The union over a replay is the measure,
-because spans depend on state (room size, actor slots).
+sees them today; "held" are bytes an engine owner outside the Session keeps;
+"neither" are bytes with no field, no holder and no listed reason, which must
+reach 0. Report-only. The union over a replay is the measure, because spans
+could depend on state; on #223's dispatched rows every replay printed the
+same counts, and a decode of zeroed RAM (`session_encoding::decode`, then
+`encode`, in a verify-only DLL loaded from Python) reproduces them exactly,
+so today's spans are fixed.
+
+### Classification (lane `collab/session-compare-3`)
+
+Before: 120,959 decoded, 357 unowned, 107 both, 9,649 neither in 56 ranges
+(#223's rows). After, by the same zero-RAM measure: 120,963 decoded, 3,926
+unowned, 107 both, 258 held, 5,818 neither in 6 ranges. The 9,649:
+
+| Class | Bytes | What |
+| --- | --- | --- |
+| (a) held outside the Session | 258 | the frame display (`display::preparation::State`: the register mirrors $51..86, the interrupt commands $A7/$AB, the NMI counters $05B4..BB, the HUD palette bits $077C, auto-cancel $09EC, previous HUD values $0A06..0F, the non-minimap HUD tilemap at $7E:C608..C6C7), 242; the BG scroll words $B1..C0 (`display_scroll`), 16. The host keeps both as typed domains (`SessionSlot::frame_display`, `scroll`) over RAM while the presentation is Legacy; an owned Display carries them in the Session (`display_bytes!`, `display_words!`), but the corpus runs Legacy. The coverage map counts them as held, by owner, from `game_state::frame_display_ranges` |
+| (c) unowned | 3,569 | `observation::coverage::UNOWNED_RAM`, 45 ranges with the RAM map's reason each: unused 3,403 (e.g. $9B..A2, $C1..CF, $0B4E..55, $1E9D..AC, $7E:F438..FFFF), debug 4 ($0DF4..F7), never read 160 (the debug enemy set, $7E:D552..D5F1), handshake 2 ($0641, the APU upload's poll budget) |
+| (b) now Session owners | 4 | `Player::health_warning` ($0A6A) and `Room::level_data_size` ($7F:0000), scalar words with layout lanes; SMPLAYER 9, SMROOMS 13 |
+| (b) still neither | 5,818 | below |
+
+Still neither, engine state with no Session owner (sizes in bytes):
+
+| Range | Bytes | What | Owner it needs |
+| --- | --- | --- | --- |
+| $02D0..032F, $0334 | 98 | the Mode 7 transfer queue and its tail | Display's transfer queues: an owned Display treats these as needing a semantic counterpart (`Presentation::requires_semantic_counterpart`); in Legacy, Game-side `mode7_transfers` writes them |
+| $0340..035F, $0360 | 34 | the VRAM read queue and its tail | as above (`vram_read_queue`) |
+| $0956..098D | 56 | the BG1/BG2 row and column tilemap update descriptors, which the scrolling builds and the NMI consumes | as above (`display_transfers`) |
+| $7E:DF5C..EF5B | 4,096 | the pause menu's backup of the BG2 tilemap | the menus' Session state (pause entry and exit) |
+| $7F:FA02..FFFF | 1,534 | the ending's blank tilemap tail ($7F:F800..FFFF, staged across Ticks before its VRAM transfer); snesrev's bug-fix counter copy ($7F:FF00) sits inside | the ending sequence |
+
+Each needs a buffer or queue owner and its writers moved, not a scalar word,
+so none was small. The three display queues go with whichever of (owned
+Display in the corpus, or a Legacy Session owner) lands first.
+
+### The 107 "both" bytes
+
+Every "both" byte is a Session field whose range a `LEGACY(verifier)` row
+normalizes (found by decoding zeroed RAM with each byte set and naming the
+field that changes). None can be dropped from `NORMALIZED_RAM` yet: each row
+records frames where the two sides differ. Decision per range:
+
+| Range | Session field | Decision |
+| --- | --- | --- |
+| $0000..0003 | `pointer_scratch` | unowned: the comparison ignores the field until the $0000-$0050 row retires (theirs: the engine does not leave the original's value) |
+| $0012..0017 | `spawn_scratch` | as above |
+| $060B | `enemy_projectiles.spawn.angle` | unowned until the $060B-$0610 row retires |
+| $0612..0613 | `control[0].primary`, `.secondary` | unowned, permanent: snesrev's coroutine state, which a faithful oracle never writes; a field RAM cannot carry (slice 4's declared list) |
+| $077E..0781 | `messages.delay`, `room.unpause_queue_tail` | unowned, permanent: the engine keeps them in snesrev's counter RAM, which the original leaves unused ($077E..82); fields RAM cannot carry |
+| $0D82..0D8F | `game_loop.saved_bindings` | unowned until the $0D82-$0D8F row retires (the grapple temporaries share it) |
+| $0D9C..0D9D | `wavy_samus.enabled` | unowned until the $0D9C-$0D9D row retires (the grapple swing's angular velocity shares it) |
+| $0E20..0E45, $0E4A..0E4B, $0E54..0E59 | `compatibility_enemy_scratch`, `actors.compatibility.*`, `actors.combat.last_power`, `actors.controls.*` | unowned until the enemy temporary rows retire |
+| $1784..178B, $17A8..17AB, $1834..183B, $1874..1875 | `actors.compatibility.pre_hook`, `actors.schedule.*`, `actors.compatibility.right_border` | as above |
+| $18A6..18A7 | `room.collision_detection_index` | unowned until its row retires |
+| $7E:EF74..EF77 | `actors.graphics.compatibility_*` | as above (the enemy graphics load frame) |
+
+So 101 bytes become owned when their rows retire (drop the range from
+`NORMALIZED_RAM` and its row in the same change, as `docs/LEGACY.md` says),
+and 6 stay unowned for good. Slice 6 turns the table into the comparison's
+ignore list for those fields.
+
+### Rows to confirm
+
+`death` and `save-death-reload` (the low-health warning sets and clears),
+`door-transition` and `tas-ceres-four-doors` (room loads store the level
+data's size): lockstep must stay at 0 failing frames and 0 Session
+divergences, and the coverage line must print 120963 decoded, 3926 unowned,
+107 both, 258 held, 5818 neither in 6 ranges.
 
 ## Next slices
 
 1. Done (above). Confirm on dispatched rows: Session-only failures 0 and
    the fields on the "written after the last lease" line.
-2. Read the coverage lines over the corpus and both routes. Give each
-   "neither" range a field or a row in a new unowned table (with its
-   reason), and decide each "both" range: owned (drop it from the table) or
-   unowned (the encoder stops writing it, or the comparison ignores it). The
-   unowned table then replaces `NORMALIZED_RAM` in the coverage check.
+2. Classified (above): 3,827 of the 9,649 "neither" bytes are unowned
+   (with reasons), held outside the Session, or new Session words; the
+   "both" bytes are decided. Left: the five owners in the table above
+   (5,818 bytes), and moving the frame display and scroll (258 held bytes)
+   into the Session before slice 6 drops the WRAM compare. Confirm the
+   counts on the corpus and both routes.
 3. Copy the decode half into `sm/src/verification`, compare it with the
    engine's decode on every frame, then use it for the oracle side.
 4. Compare the engine's Session directly, with a declared list of fields RAM
@@ -247,7 +317,8 @@ because spans depend on state (room size, actor slots).
 6. Switch lockstep and locks to Session space: drop the WRAM byte compare and
    `wram` (one `FORMAT` bump, one re-record), replace `NORMALIZED_RAM` with the
    unowned table, and retire its `LEGACY(verifier)` rows. Needs slice 2's
-   "neither" at 0 and the "both" ranges decided.
+   "neither" and "held" at 0 (the frame display and scroll words in the
+   Session) and the "both" ranges' fields on the comparison's ignore list.
 7. With step 2 (the runtime owns the tick), delete the export and import, and
    move the observers' `encode`/`decode` calls to verification:
    `engine_ram_export_lines` reaches 0. The "written after the last lease"
