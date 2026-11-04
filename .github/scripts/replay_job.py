@@ -132,6 +132,9 @@ def worker(index: int, group: list[str], mode: str, audio: bool, summary: list[s
             for name in ROOM_LOGS:
                 logs[name] = TEMP / f"{name.lower()}-{index}.csv"
                 environment[name] = str(logs[name])
+        if publish_check():
+            environment.update(SM_IRQ_PUBLISH_CHECK="1", SM_IRQ_PUBLISH_LOG=str(publish_log(index)),
+                               SM_IRQ_PUBLISH_COUNTS=str(publish_log(index).with_suffix(".counts")))
     if JOB["kinds"] == "room":
         environment["FULL_ROUTE"] = JOB["route"]
     state: dict[str, str] = {}
@@ -159,7 +162,37 @@ def worker(index: int, group: list[str], mode: str, audio: bool, summary: list[s
                 for entry in lines[:20]:
                     print(",".join(entry.split(",")[:columns]) if columns else entry)
             code = code or 1
+    if publish_check():
+        report_publish_check(index)
     return code
+
+
+def publish_check() -> bool:
+    """The frame lease's IRQ publish check (scanline_irq::publish_check): on dispatched rows
+    and the nightly route, in lockstep. It reports and never fails the job."""
+    if JOB["mode"] == "lock" or os.environ.get("LLVM_PROFILE_FILE"):
+        return False
+    nightly_route = JOB["kinds"] == "room" and os.environ.get("GITHUB_EVENT_NAME") == "schedule"
+    return os.environ.get("SCOPE") == "rows" or nightly_route
+
+
+def publish_log(index: int) -> pathlib.Path:
+    return TEMP / f"sm_irq_publish_log-{index}.csv"
+
+
+def report_publish_check(index: int) -> None:
+    # Only frames, lines, sources, counts and addresses: no byte values.
+    log = publish_log(index)
+    rows = log.read_text().splitlines() if log.exists() else []
+    totals = sorted(log.parent.glob(log.with_suffix(".counts").name + ".*"))
+    with print_lock:
+        for path in totals:
+            print(f"IRQ publish check totals: {path.read_text().strip()}")
+        if not totals:
+            print("IRQ publish check totals: no interrupt pass ran")
+        print(f"IRQ publish check: {len(rows)} passes differ (report-only):")
+        for entry in rows[:20]:
+            print(entry)
 
 
 def replay() -> int:

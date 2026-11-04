@@ -575,6 +575,33 @@ impl WorkRam {
         }
         state.as_ref().map(|deferred| (*deferred.session).clone())
     }
+    /// A copy of the last deferred export's Session, whether or not its bytes are in RAM,
+    /// leaving the export as it is: the IRQ publish check's view of the kept Session.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn peek_deferred_session(&self) -> Option<sm_game::session::Session> {
+        self.10
+            .state
+            .borrow()
+            .as_ref()
+            .map(|deferred| (*deferred.session).clone())
+    }
+    /// The bytes RAM holds once a deferred export is written, without writing it, serving
+    /// a read from it or taking an epoch: the IRQ publish check's view of RAM.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn peek_image(&self) -> Vec<u8> {
+        let mut image: Vec<u8> = self.0.bytes.iter().map(Cell::get).collect();
+        if self.10.armed.get()
+            && let Some(deferred) = self.10.state.borrow().as_ref()
+        {
+            sm_game::session_encoding::encode_spans(
+                &deferred.session,
+                |at: usize, bytes: &[u8]| {
+                    image[at..at + bytes.len()].copy_from_slice(bytes);
+                },
+            );
+        }
+        image
+    }
     /// Whether an export's bytes are deferred.
     #[cfg(sm_verify_dll)]
     pub(crate) fn export_deferred(&self) -> bool {
@@ -2161,6 +2188,20 @@ impl Game {
         self.persistent_session
             .foreign_presentations
             .push(Some(presentation));
+    }
+    /// A copy of the persistent Session a lease opened now would take, without taking it:
+    /// `lease_persistent_session`'s admission, for the IRQ publish check.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn peek_persistent_gameplay(&self) -> Option<sm_game::session::Session> {
+        match &self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Ready(session)
+                if self.preflight_samus_runtime().is_ok()
+                    && self.persistent_ram_epoch == self.ram.write_epoch() =>
+            {
+                Some(session.gameplay.clone())
+            }
+            _ => None,
+        }
     }
     pub(crate) fn lease_persistent_session(
         &mut self,
