@@ -19,9 +19,15 @@ pub enum Role {
     /// Crocomire's melting tiles, which its death loads from ROM and melts
     /// column by column ($7E:4000..).
     MeltingTiles,
+    /// The message box's BG3 scanline scroll table ($7E:3000..), which its
+    /// indirect HDMA descriptor at `MessageDescriptor` points into.
+    MessageScanlines,
+    /// The tilemap staging buffer ($7E:4000..) that the boot, the room FX
+    /// clear and Kraid's death fill and queue to VRAM.
+    TilemapStaging,
 }
 impl Role {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 10] = [
         Self::Pause,
         Self::MessageText,
         Self::MessageDescriptor,
@@ -30,6 +36,8 @@ impl Role {
         Self::SavedBackground,
         Self::Xray,
         Self::MeltingTiles,
+        Self::MessageScanlines,
+        Self::TilemapStaging,
     ];
     pub const fn compatibility_base(self) -> usize {
         match self {
@@ -41,6 +49,8 @@ impl Role {
             Self::SavedBackground => 0x4100,
             Self::Xray => 0x4000,
             Self::MeltingTiles => 0x4000,
+            Self::MessageScanlines => 0x3000,
+            Self::TilemapStaging => 0x4000,
         }
     }
 }

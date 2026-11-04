@@ -6521,7 +6521,7 @@ fn scene_read_results_codec_and_reopen() {
     assert_eq!(captured.display.as_ref().unwrap().read_results, expected);
     scene_owner_unchanged(&display, &before, &metadata);
     let bytes = before.encode_checkpoint(&metadata, &requirements).unwrap();
-    assert_eq!(&bytes[..8], b"SMDISPL\x06");
+    assert_eq!(&bytes[..8], b"SMDISPL\x07");
     let decoded =
         sd::DisplayCheckpoint::decode_checkpoint(&bytes, media.clone(), &metadata, &requirements)
             .unwrap();

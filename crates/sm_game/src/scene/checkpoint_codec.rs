@@ -702,7 +702,8 @@ variants!(h::SourceBinding, "source binding" {
 
 choices!(d::WordOrder { 0 => Little, 1 => Big });
 choices!(crate::presentation_workspace::Role { 0 => Pause, 1 => MessageText, 2 => MessageDescriptor,
-    3 => Menu, 4 => Equipment, 5 => SavedBackground, 6 => Xray, 7 => MeltingTiles });
+    3 => Menu, 4 => Equipment, 5 => SavedBackground, 6 => Xray, 7 => MeltingTiles,
+    8 => MessageScanlines, 9 => TilemapStaging });
 variants!(crate::presentation_workspace::Origin, "workspace origin" { 0 => Shared, 1 => Allocation(value) });
 record!(crate::presentation_workspace::Window {
     bank,
@@ -748,11 +749,10 @@ impl Field for crate::presentation_workspace::Point {
     fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
         let role = Field::get(read)?;
         let offset = Field::get(read)?;
+        // Retained state names its points by role; a WRAM alias is transient.
         let physical: Option<usize> = Field::get(read)?;
         match physical {
-            Some(at) => crate::presentation_workspace::Point::physical(at)
-                .advance(offset)
-                .map_err(|error| format!("workspace checkpoint point {error:?}")),
+            Some(_) => Err("workspace checkpoint point names a WRAM alias".into()),
             None => Ok(Self::new(role, offset)),
         }
     }
@@ -1299,7 +1299,7 @@ pub fn encode(
     required: &t::DisplayStartRequirements,
 ) -> Result<Vec<u8>, String> {
     let binding = binding(media, metadata, required)?;
-    let mut bytes = Vec::from(b"SMDISPL\x06".as_slice());
+    let mut bytes = Vec::from(b"SMDISPL\x07".as_slice());
     binding.put(&mut bytes);
     description.put(&mut bytes);
     resident.put(&mut bytes);
@@ -1316,7 +1316,7 @@ pub fn decode(
 ) -> Result<t::ValidatedDisplayStart, String> {
     let expected = binding(&media, metadata, required)?;
     let mut read = CheckpointReader(bytes);
-    if read.bytes(8)? != b"SMDISPL\x06" {
+    if read.bytes(8)? != b"SMDISPL\x07" {
         return Err("unsupported display checkpoint schema".into());
     }
     let binding_length = usize::get(&mut read)?;

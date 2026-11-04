@@ -229,14 +229,20 @@ pub fn decode_sources(
         HdmaLiveRegion {
             owner: LiveOwner::MessageDescriptor,
             source: HdmaRegionSource::Workspace {
-                point: crate::presentation_workspace::Point::physical(0x3380),
+                point: crate::presentation_workspace::Point::new(
+                    crate::presentation_workspace::Role::MessageDescriptor,
+                    0,
+                ),
             },
             length: 7,
         },
         HdmaLiveRegion {
             owner: LiveOwner::MessageScanlines,
             source: HdmaRegionSource::Workspace {
-                point: crate::presentation_workspace::Point::physical(0x3000),
+                point: crate::presentation_workspace::Point::new(
+                    crate::presentation_workspace::Role::MessageScanlines,
+                    0,
+                ),
             },
             length: 480,
         },
