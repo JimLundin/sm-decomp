@@ -10,8 +10,6 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
-use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-
 pub use crate::types::ConstsB7;
 
 /// Mother Brain's fight runs in `sm_game::actors::mother_brain_fight`.
@@ -26,23 +24,6 @@ pub unsafe fn mother_brain_move_samus_vertically_towards_ceiling_floor(
 /// Kept unsafe for the player collision ownership checks, which wrap it in an unsafe block.
 pub unsafe fn mother_brain_move_samus_horiz_towards_wall(a: u16, game: &mut Game) -> u8 {
     mother_brain_fight::move_samus_towards_wall(a, game)
-}
-crate::forward_calls! { pub fn (a: u16, r18: u16, game: &mut Game) -> u16;
-    sin_times => sin_angle_times(r18, a, game);
-    cos_times => sin_angle_times((r18).wrapping_add(64), a, game);
-}
-pub fn sin_angle_times(a: u16, j: u16, game: &mut Game) -> u16 {
-    {
-        let v2: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as u16;
-        // Hardware multiply through the PPU's Mode 7 registers.
-        unsafe {
-            crate::rtl::register_writes! { game;
-                byte(M7A as u16, v2 as u8); byte(M7A as u16, v2.to_ne_bytes()[1]);
-                byte(M7B as u16, j as u8);
-            }
-            read_reg_word(MPYM as u16, game)
-        }
-    }
 }
 
 /// Bank $A9's instructions the species table reaches here, on its lease: Mother Brain's

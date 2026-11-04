@@ -51,15 +51,7 @@ pub(crate) fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
 }
 
-/// Write `operand` to the multiplicand register, for Yapping Maw.
-pub(crate) fn write_multiplicand(operand: u8, game: &mut Game) {
-    unsafe { crate::rtl::write_reg(crate::rtl::WRMPYA as u16, operand, game) };
-}
-
 impl sm_game::actors::species::AiHost for Game {
-    fn write_multiplicand(&mut self, operand: u8) {
-        write_multiplicand(operand, self);
-    }
     fn install_draygon_layers(&mut self) {
         crate::game::visual_runtime::initialize_draygon_layer(self);
     }
@@ -941,12 +933,16 @@ impl<'g> Runtime<'g> {
     }
     /// The scroll stores' refresh while the Session is current: the external
     /// observations as RAM holds them, except the drop origin, the moonwalk
-    /// setting, the turn request, the HUD auto-cancel flag and the grapple
-    /// beam's previous start, which the Session owns and RAM holds only once
-    /// it is published.
+    /// setting, the turn request, the HUD auto-cancel flag, the grapple beam's
+    /// previous start and the time-frozen flag, which the Session owns and RAM
+    /// holds only once it is published. A device interval publishes nothing:
+    /// the flag the X-ray scope sets just before its HDMA spawn, or the reserve
+    /// tanks set at the end of a frame, reaches RAM only at the lease's next
+    /// export, and the enemy BG2 tilemap transfer reads it after these stores.
     pub(crate) fn refresh_scroll_inputs(&mut self) {
         self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
         let session = self.session();
+        let frozen = session.timing.time_frozen;
         let origin = session.enemy_projectiles.drop_origin;
         let (moonwalk, turn_request) = (session.player.moonwalk, session.player.turn_request);
         let previous_start = session.player.swing.previous_start;
@@ -958,6 +954,7 @@ impl<'g> Runtime<'g> {
         self.inputs.hud_auto_cancel = hud_auto_cancel;
         self.inputs.grapple_x = previous_start.x;
         self.inputs.grapple_y = previous_start.y;
+        self.inputs.frozen = frozen;
     }
     pub(crate) fn refresh_written_inputs(&mut self) {
         self.inputs =
@@ -2352,19 +2349,100 @@ impl crate::projection::ProjectedBytes for Runtime<'_> {
         Runtime::set_byte(self, at, value)
     }
 }
-// A display command may read or change RAM (DMA, the WRAM port), so each one
-// runs on the exported game, whose backend encodes it, and the lease
-// re-imports what it left.
-impl sm_game::display::video::Video for Runtime<'_> {
-    fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
-        self.foreign(|game| sm_game::display::video::Video::apply(game, producer, command));
+// The multipliers hold no WRAM, ROM or Samus state: each port call is one device
+// interval on the backend, with the observations refreshed on entry and on return
+// as the former foreign call left them.
+impl sm_game::hardware::Multiplier for Runtime<'_> {
+    fn mode7_product(&mut self, multiplicand: u16, multiplier: u8) -> u16 {
+        use crate::rtl::{M7A, M7B, MPYM, read_device, write_device};
+        let [low, high] = multiplicand.to_le_bytes();
+        self.owned_player_call(|runtime| {
+            let game = &mut *runtime.game;
+            // SAFETY: a lease runs with the backend installed, and `&mut Game`
+            // excludes other access.
+            unsafe {
+                write_device(M7A as u16, low, game);
+                write_device(M7A as u16, high, game);
+                write_device(M7B as u16, multiplier, game);
+                let low = read_device(MPYM, game);
+                let high = read_device(MPYM + 1, game);
+                u16::from_le_bytes([low, high])
+            }
+        })
+    }
+    fn cpu_multiplicand(&mut self, operand: u8) {
+        self.owned_player_call(|runtime| {
+            // SAFETY: as for `mode7_product`.
+            unsafe { crate::rtl::write_device(crate::rtl::WRMPYA as u16, operand, runtime.game) }
+        });
     }
 }
-// The channel registers are the game's backend; the object table is the lease's.
+// A bus read: WRAM and its low mirror come from the lease's projection, as the
+// former foreign call's export left them in RAM; the WRAM data port reads the
+// lease's byte at its address and advances it; any other address is one device
+// read on the backend. The observations are refreshed on entry and on return.
+impl sm_game::hardware::Bus for Runtime<'_> {
+    fn read_bus_byte(&mut self, address: u32) -> u8 {
+        self.owned_player_call(|runtime| {
+            let [offset_low, offset_high, bank, _] = address.to_le_bytes();
+            let offset = usize::from(u16::from_le_bytes([offset_low, offset_high]));
+            let system = matches!(bank, 0x00..=0x3f | 0x80..=0xbf);
+            if matches!(bank, 0x7e | 0x7f) {
+                return runtime.byte((usize::from(bank & 1) << 16) | offset);
+            }
+            if system && offset < 0x2000 {
+                return runtime.byte(offset);
+            }
+            // SAFETY: a lease runs with the backend installed, and `&mut Game`
+            // excludes other access.
+            unsafe {
+                if system && offset == 0x2180 {
+                    let at = crate::rtl::advance_wram_port(runtime.game);
+                    return runtime.byte(at);
+                }
+                crate::rtl::read_device(address, runtime.game)
+            }
+        })
+    }
+}
+// The decompressor on the lease: its output and back-references are the lease's
+// bytes, its source cursor the game's, and its source the loaded image.
+impl sm_game::decompression::DecompressionHost for Runtime<'_> {
+    fn decompress_source(&self) -> u32 {
+        self.game.decompress_src
+    }
+    fn set_decompress_source(&mut self, source: u32) {
+        self.game.decompress_src = source;
+    }
+    fn report_invalid_rom_address(&mut self, address: u32) {
+        crate::rtl::report_invalid_rom_address(address, self.game);
+    }
+    fn read_rom_byte(&self, address: u32, offset: usize) -> u8 {
+        self.game.read_rom_byte(address, offset)
+    }
+}
+// A device-only display command writes registers alone: the backend encodes it
+// in one device interval, with the observations refreshed on entry and on return
+// as the former foreign call left them. A command that starts a DMA or moves WRAM
+// reads or changes RAM, so it runs on the exported game, whose backend encodes
+// it, and the lease re-imports what it left.
+impl sm_game::display::video::Video for Runtime<'_> {
+    fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
+        use crate::game::display_commands::{apply_device, device_only};
+        if device_only(&command) {
+            self.owned_player_call(|runtime| apply_device(command, runtime.game));
+        } else {
+            self.foreign(|game| sm_game::display::video::Video::apply(game, producer, command));
+        }
+    }
+}
+// The channel registers are device registers; the object table is the lease's.
 impl sm_game::hdma_objects::Allocator for Runtime<'_> {
     fn write_channel_control(&mut self, register: u16, control: u16) {
-        self.foreign(|game| {
-            sm_game::hdma_objects::Allocator::write_channel_control(game, register, control)
+        self.owned_player_call(|runtime| {
+            // SAFETY: a lease runs with the backend installed, and `&mut Game`
+            // excludes other access.
+            unsafe { crate::rtl::write_device_word(register, control, runtime.game) }
         });
     }
 }

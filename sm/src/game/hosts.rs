@@ -65,10 +65,6 @@ impl sm_game::hdma_objects::GradientHost for crate::game::session_runtime::Runti
     }
 }
 impl sm_game::hdma_program::HdmaLease for crate::game::session_runtime::Runtime<'_> {
-    type Game = Game;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        crate::game::session_runtime::Runtime::foreign(self, action)
-    }
     fn bg3_x_velocity(&self, index: isize) -> u16 {
         sm_game::imported::word(
             &self.visual_tables().bg3_x_velocities,
@@ -184,16 +180,6 @@ const _: () = {
     assert!(a::HYPER_BEAM_HIT == ADDR_K_MOTHER_BRAIN_ILIST_9BE7 as u16);
 };
 
-impl sm_game::actors::mother_brain_neck::Host for Game {
-    fn sine_times(&mut self, length: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::sin_times(length, angle, self)
-    }
-
-    fn cosine_times(&mut self, length: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::cos_times(length, angle, self)
-    }
-}
-
 impl sm_game::actors::phantoon::Dispatch for Game {
     fn phantoon(&mut self, callback: sm_game::actors::phantoon::Callback) {
         crate::game::session_runtime::Runtime::new(self)
@@ -275,10 +261,9 @@ impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_>
     }
 
     fn hardware_sine_cosine(&mut self, amplitude: u16, angle: u16) -> (u16, u16) {
-        self.foreign(|game| {
-            let sine = crate::game::sm_a9::sin_times(amplitude, angle, game);
-            (sine, crate::game::sm_a9::cos_times(amplitude, angle, game))
-        })
+        use sm_game::hardware::{cosine_times, sine_times};
+        let sine = sine_times(self, amplitude, angle);
+        (sine, cosine_times(self, amplitude, angle))
     }
 
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16) {

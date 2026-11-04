@@ -10,8 +10,8 @@ use crate::rtl::{
     HTIMEH, HTIMEL, INIDISP, M7A, M7SEL, MDMAEN, MEMSEL, MOSAIC, NMITIMEN, NTRL1, OAMADDH, OAMADDL,
     OAMDATA, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAH, VMDATAL,
     VTIMEH, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG,
-    WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_reg, read_reg_word, write_reg,
-    write_reg_word,
+    WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_device, read_reg, read_reg_word,
+    write_device, write_reg,
 };
 use sm_data::hdma_programs::ChannelRegister;
 use sm_game::display::control::Brightness;
@@ -44,18 +44,52 @@ const TO_OAM_DATA: u16 = u16::from_le_bytes([0, 0x04]);
 /// DMAP and BBAD for byte transfers to CGDATA.
 const TO_CGRAM_DATA: u16 = u16::from_le_bytes([0, 0x22]);
 
-/// One register byte through the backend.
-fn byte(register: u32, value: u8, game: &mut Game) {
-    // SAFETY: `apply` and `copy_to_vram_now` check the backend is installed,
-    // and `&mut Game` excludes other access.
-    unsafe { write_reg(register as u16, value, game) }
+/// Where the encoder's register accesses go: the bus, as the game's own code
+/// makes them, or a device interval for a lease (`Device`).
+trait Wire {
+    fn byte(&mut self, register: u32, value: u8);
+    fn read(&mut self, register: u32) -> u8;
+}
+
+impl crate::game::display_commands::Wire for Game {
+    fn byte(&mut self, register: u32, value: u8) {
+        // SAFETY: `apply` and `copy_to_vram_now` check the backend is installed,
+        // and `&mut Game` excludes other access.
+        unsafe { write_reg(register as u16, value, self) }
+    }
+    fn read(&mut self, register: u32) -> u8 {
+        // SAFETY: as for `byte`.
+        unsafe { read_reg(register as u16, self) }
+    }
+}
+
+/// The device-register interval a lease's device-only command runs in: the same
+/// writes, which leave Samus authority and the lease current.
+struct Device<'a>(&'a mut Game);
+
+impl Wire for Device<'_> {
+    fn byte(&mut self, register: u32, value: u8) {
+        // SAFETY: `apply_device` checks the backend is installed, and the
+        // borrow of Game excludes other access.
+        unsafe { write_device(register as u16, value, self.0) }
+    }
+    fn read(&mut self, register: u32) -> u8 {
+        // SAFETY: as for `byte`.
+        unsafe { read_device(register, self.0) }
+    }
+}
+
+/// One register byte through `wire`.
+fn byte(register: u32, value: u8, wire: &mut impl Wire) {
+    wire.byte(register, value);
 }
 
 /// A 16-bit store: its low byte to `register`, its high byte to the next
 /// register up.
-fn word(register: u32, value: u16, game: &mut Game) {
-    // SAFETY: as for `byte`.
-    unsafe { write_reg_word(register as u16, value, game) }
+fn word(register: u32, value: u16, wire: &mut impl Wire) {
+    let [low, high] = value.to_le_bytes();
+    wire.byte(register, low);
+    wire.byte(register + 1, high);
 }
 
 /// A scroll offset's register: BG1HOFS, BG1VOFS, BG2HOFS and so on.
@@ -265,6 +299,82 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
             byte(NTRL1, 0, game);
             byte(MDMAEN, 2, game);
         }
+        Command::ObjectsAndPaletteNow {
+            objects,
+            object_bytes,
+            palette,
+            palette_bytes,
+        } => {
+            game.producing();
+            word(DMAP0, TO_OAM_DATA, game);
+            word(A1T0L, objects.address, game);
+            byte(A1B0, objects.bank, game);
+            word(DAS0L, object_bytes, game);
+            word(OAMADDL, 0, game);
+            channel1(TO_CGRAM_DATA, palette, palette_bytes, game);
+            byte(CGADD, 0, game);
+            byte(MDMAEN, 3, game);
+            game.produced(
+                producer,
+                &[
+                    Upload::Objects {
+                        address: 0,
+                        source: usize::from(objects.address),
+                        bytes: object_bytes,
+                    },
+                    Upload::Palette {
+                        index: 0,
+                        source: usize::from(palette.address),
+                        bytes: palette_bytes,
+                    },
+                ],
+            );
+        }
+        command => registers(command, game),
+    }
+}
+
+/// Whether `command` reaches only device registers: no DMA transfer starts, and
+/// no WRAM, ROM or Samus state moves. MDMAEN writes are left out even when they
+/// start nothing (`StopDma`, `ClearCpuIo`): the room background check
+/// snapshots RAM at each one.
+pub(crate) fn device_only(command: &Command) -> bool {
+    !matches!(
+        command,
+        Command::TilesNow { .. }
+            | Command::TilesNowBytePort { .. }
+            | Command::TilemapNow { .. }
+            | Command::ReadTilemapNow { .. }
+            | Command::ReadVramNow { .. }
+            | Command::TilesThroughPort { .. }
+            | Command::TilesThroughPortBytes { .. }
+            | Command::ObjectsAndPaletteNow { .. }
+            | Command::StopDma
+            | Command::ClearCpuIo
+    )
+}
+
+/// Apply device-only `command` (`device_only`) to the emulated backend in a
+/// device interval, with the same writes `apply` makes.
+pub(crate) fn apply_device(command: Command, game: &mut Game) {
+    assert!(!game.g_snes.is_null(), "SNES backend must be installed");
+    assert!(device_only(&command), "a display command that moves RAM");
+    // A command that left RAM moved would leave the lease's Session behind it:
+    // the lease neither exports before nor imports after a device interval.
+    #[cfg(sm_verify_dll)]
+    let epoch = game.compatibility_write_epoch();
+    registers(command, &mut Device(game));
+    #[cfg(sm_verify_dll)]
+    assert_eq!(
+        epoch,
+        game.compatibility_write_epoch(),
+        "a device-only display command moved RAM"
+    );
+}
+
+/// The commands that write registers only, through `game`.
+fn registers(command: Command, game: &mut impl Wire) {
+    match command {
         Command::VramPort { address, step } => {
             let [low, high] = address.to_le_bytes();
             byte(VMADDL, low, game);
@@ -322,8 +432,7 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
         }
         Command::Scroll { scroll, offset } => scroll_latch(scroll, offset, game),
         Command::ScrollAfterRead { scroll, offset } => {
-            // SAFETY: as for `byte`.
-            unsafe { read_reg(scroll_register(scroll) as u16, game) };
+            game.read(scroll_register(scroll));
             scroll_latch(scroll, offset, game);
         }
         Command::Mode7Word(parameter, value) => word(mode7_register(parameter), value, game),
@@ -340,37 +449,6 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
         Command::Commit(field, value) => byte(committed_register(field), value, game),
         Command::ScrollByte { scroll, value } => byte(scroll_register(scroll), value, game),
         Command::IrqOutput(output, value) => byte(irq_register(output), value, game),
-        Command::ObjectsAndPaletteNow {
-            objects,
-            object_bytes,
-            palette,
-            palette_bytes,
-        } => {
-            game.producing();
-            word(DMAP0, TO_OAM_DATA, game);
-            word(A1T0L, objects.address, game);
-            byte(A1B0, objects.bank, game);
-            word(DAS0L, object_bytes, game);
-            word(OAMADDL, 0, game);
-            channel1(TO_CGRAM_DATA, palette, palette_bytes, game);
-            byte(CGADD, 0, game);
-            byte(MDMAEN, 3, game);
-            game.produced(
-                producer,
-                &[
-                    Upload::Objects {
-                        address: 0,
-                        source: usize::from(objects.address),
-                        bytes: object_bytes,
-                    },
-                    Upload::Palette {
-                        index: 0,
-                        source: usize::from(palette.address),
-                        bytes: palette_bytes,
-                    },
-                ],
-            );
-        }
         Command::HdmaTable { bank_slot, table } => word(A1T0L + u32::from(bank_slot), table, game),
         Command::HdmaChannelByte {
             bank_slot,
@@ -405,12 +483,18 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
             source,
             bytes,
         } => channel1(graphics_mode(transfer), source, bytes, game),
+        Command::TilesNow { .. }
+        | Command::TilesNowBytePort { .. }
+        | Command::TilemapNow { .. }
+        | Command::ReadTilemapNow { .. }
+        | Command::ReadVramNow { .. }
+        | Command::ObjectsAndPaletteNow { .. } => unreachable!("`apply` encodes the uploads"),
     }
 }
 
 /// Channel 1's mode and target as one word, then its source address, bank and
 /// byte count.
-fn channel1(mode: u16, source: Source, bytes: u16, game: &mut Game) {
+fn channel1(mode: u16, source: Source, bytes: u16, game: &mut impl Wire) {
     word(DMAP1, mode, game);
     word(A1T1L, source.address, game);
     byte(A1B1, source.bank, game);
@@ -420,7 +504,7 @@ fn channel1(mode: u16, source: Source, bytes: u16, game: &mut Game) {
 /// Channel 1 as the message boxes set it: every register a word, so the bank's
 /// word also clears the count's low byte before the count is written, and the
 /// indirect bank, table address and line counter are cleared after.
-fn channel1_words(mode: u16, source: Source, bytes: u16, game: &mut Game) {
+fn channel1_words(mode: u16, source: Source, bytes: u16, game: &mut impl Wire) {
     word(DMAP1, mode, game);
     word(A1T1L, source.address, game);
     word(A1B1, u16::from(source.bank), game);
@@ -438,7 +522,7 @@ fn word_step_tiles(address: u16, source: Source, bytes: u16) -> Upload {
     }
 }
 
-fn scroll_latch(scroll: ScrollOffset, offset: u16, game: &mut Game) {
+fn scroll_latch(scroll: ScrollOffset, offset: u16, game: &mut impl Wire) {
     let register = scroll_register(scroll);
     let [low, high] = offset.to_le_bytes();
     byte(register, low, game);
@@ -447,7 +531,7 @@ fn scroll_latch(scroll: ScrollOffset, offset: u16, game: &mut Game) {
 
 /// An indirect one-register HDMA channel to a window 1 edge, in the original's
 /// order: mode, target, table address and bank, indirect bank, then the cursors.
-fn window_hdma(hdma: WindowHdma, game: &mut Game) {
+fn window_hdma(hdma: WindowHdma, game: &mut impl Wire) {
     const INDIRECT_ONE_REGISTER: u8 = 0x40;
     let WindowHdma {
         channel,
@@ -482,7 +566,7 @@ fn window_hdma(hdma: WindowHdma, game: &mut Game) {
 /// order ($85:8363): mode, target, each table byte followed by the matching
 /// indirect address byte, the table bank then the indirect bank, then the
 /// cursors.
-fn scroll_hdma(channel: u8, scroll: ScrollOffset, table: Source, game: &mut Game) {
+fn scroll_hdma(channel: u8, scroll: ScrollOffset, table: Source, game: &mut impl Wire) {
     const INDIRECT_TWO_WRITES: u8 = 0x42;
     let [table_low, table_high] = table.address.to_le_bytes();
     let base = 0x4300 | (u32::from(channel) << 4);

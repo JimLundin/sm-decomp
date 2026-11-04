@@ -156,8 +156,6 @@ pub trait AiHost:
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
 {
-    /// Write `operand` to the multiplicand register, for Yapping Maw.
-    fn write_multiplicand(&mut self, operand: u8);
     /// Install Draygon's BG layers as its initialisation does.
     fn install_draygon_layers(&mut self);
 }

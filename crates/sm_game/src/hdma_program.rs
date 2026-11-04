@@ -27,10 +27,8 @@ pub trait HdmaLease:
     + crate::xray_background::Host
     + crate::explosion_window::Host
     + crate::room_visuals::StatueHost
+    + crate::display::video::Video
 {
-    type Game: DispatchHost + ?Sized;
-    /// Run `action` on the compatibility host with the Session published.
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// Word `index` of the BG3 X velocity table ($88:D992), from the imported
     /// visual tables, or the loaded image for another one.
     fn bg3_x_velocity(&self, index: isize) -> u16;
@@ -281,9 +279,7 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
         Command::SetChannelRegister(register) => {
             let [bank_slot, _] = crate::hdma_word!(it, index, BankSlot).to_le_bytes();
             let value = script.byte(0);
-            it.lease().foreign(|game| {
-                crate::hdma_objects::write_channel_byte(bank_slot, register, value, game)
-            });
+            crate::hdma_objects::write_channel_byte(bank_slot, register, value, it.lease());
             return script.advance(1);
         }
         Command::SetTable => {
