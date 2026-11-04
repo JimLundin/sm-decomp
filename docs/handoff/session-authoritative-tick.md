@@ -1526,6 +1526,56 @@ former `foreign` call left them. Writes are identical and in the same order.
     `SM_NATIVE_LINES` route with `SM_IRQ_TABLE` and `SM_HDMA_TABLE`. RAM
     lockstep must stay at 0 failing frames.
 
+- **Fourth slice (lane `game-hosts`, on `117522061`, `collab/tick-s10c`).** Not
+  yet replayed. Ratchet: `game_host_impls` 18 → 7, `session_entries` 3
+  (unchanged), `foreign_calls` 43 → 42.
+  - **Boot's display setup on the frame's lease.** NMITIMEN off, the `$51`
+    store, `initialize_registers` and its raw `$64`, `$71`, `$74..76` stores are
+    `display_refresh::initialize_boot_registers`, a typed control table and the
+    first step of `finish_boot`. Why it is exact: those steps store only the
+    display mirrors ($51..$86) and no register write reads RAM. Boot's other
+    stores on Game (the tile buffers, APU queue bytes, OAM pointer and Samus
+    upload words) are other bytes, so each byte keeps its store order. The
+    lease now opens on cleared mirrors and stores each one.
+  - **The oracle's settlement on a verification host.** `oracle_host::
+    OracleHost` (sm/src/verification, D6) serves `Video`,
+    `display::preparation::Access`, `CompatibilityRam` and its supertraits, and
+    `AudioHost`, by forwarding to the projection Game's impls made, which are
+    now Game's inherent methods. `scanline_irq::advance`, `table_check`'s plan,
+    `room_world_cases` and the audio, palette and animated checks run on it.
+    The lease's fallbacks (scroll, gameplay context, screen fade) call Game's
+    inherent methods.
+  - **The sprite effect observer (cases 111..116)** stores its slot changes
+    through the lease's byte path and draws with `draw_objects`, not inside
+    `foreign`. Game's `MapHost` and `ObjectAccess` go.
+  - **Also gone:** Game's `LoadedImage` (a `RomImage` is its own), its
+    `screen_fade::Owner` (`RuntimeAccess` and `Lend` no longer require it), and
+    music.rs's Game wrappers, which nothing called.
+  - **The 7 left.** Engine-needed, each for a stated reason:
+    - `gameplay_frame::Host` and `RuntimeAccess`: the tick entry and the frame's
+      lease (`game.runtime()`). They go when the runtime owns the tick.
+      `RuntimeAccess` also gives `Lend` for Game to `room_mechanisms` and the
+      verification candidates.
+    - `DecompressionHost` and `SessionRam` (its supertrait): the lease's
+      `decompress_to_ram` and `decompress_level` run the decoder on the
+      published image and take back the bytes it wrote. The decoder could run on
+      the lease's byte path instead, but that needs a replay of the room loads.
+      `room_state::decompress_level` on Game is used only by `room_level_copy`.
+    - `SamusSources`, `NativeImage` and `NativeDiagnostics`: the Samus content
+      catalogs Game holds, which the lease's Samus draws, `samus_animation` and
+      the NMI's Samus upload read. They need a content view that is not Game,
+      because the lease lends its state and Game at the same time.
+  - **`session_entries` (3)** is unchanged: the frame's lease, `Lend`'s
+    blanket for `RuntimeAccess` and `session_cohort`'s lease all need the
+    runtime to own the tick.
+  - **Rows.** Every power-on and soft reset row (boot's registers on the
+    lease); the oracle frames and checkpoint rows, `door-transition`,
+    `elevator-up` and the nightly `SM_NATIVE_LINES` route with `SM_IRQ_TABLE`
+    (the oracle's settlement on `OracleHost`); the verifier's room world cases,
+    sprite effect cases 111..116, the audio checkpoint cases and the palette
+    and animated runtime checks; and the Crocomire and Magdollite rows. RAM
+    lockstep must stay at 0 failing frames.
+
 ### Stage 11: the rest
 
 - **Change.**
