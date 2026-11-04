@@ -54,9 +54,6 @@ impl Content for Runtime<'_> {
         landing::room_rule(region, self.session().room.entry.room_index)
     }
 }
-pub(crate) fn command(a: u16, game: &mut crate::game_state::Game) -> u16 {
-    command_in(&mut Runtime::new(game), a)
-}
 /// Run Samus pose command `a` on a lease that is already open.
 pub(crate) fn command_in(runtime: &mut Runtime<'_>, a: u16) -> u16 {
     crate::game::player_transitions::command(runtime, a, commands::finish_ceres_arrival)
@@ -83,9 +80,6 @@ impl Host for Runtime<'_> {}
 pub(crate) use sm_game::player_transitions::input::dispatch_input;
 pub(crate) use sm_game::player_transitions::input::finish_frame as finish_player_frame;
 
-pub(crate) fn damage_player(amount: u16, game: &mut crate::game_state::Game) {
-    sm_game::samus_periodic_damage::contact(&mut Runtime::new(game), amount);
-}
 pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     sm_game::player_transitions::initialize(&mut Runtime::new(game));
 }

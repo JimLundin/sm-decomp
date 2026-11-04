@@ -1319,11 +1319,6 @@ fn observe_register_write(
         |output| observe_backend(Some(_backend), _views, output),
     );
 }
-/// Magnitude of a signed SNES word; 0x8000 remains the unsigned value 0x8000.
-#[inline]
-pub(crate) fn abs16(value: u16) -> u16 {
-    (value as i16).unsigned_abs()
-}
 
 pub fn multiply_8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16

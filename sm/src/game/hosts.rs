@@ -93,22 +93,6 @@ impl sm_game::actors::boulder::Lease for crate::game::session_runtime::Runtime<'
     }
 }
 
-impl sm_game::actors::deaths::Deaths for Game {
-    fn normal_death(&mut self, animation: u16) {
-        crate::game::actors::combat::die(
-            &mut crate::game::session_runtime::Runtime::new(self),
-            crate::game::actors::api::DeathKind::Normal { animation },
-        );
-    }
-    fn scatter_enemy_drop(
-        &mut self,
-        source: sm_game::enemy_projectiles::drops::DropSource,
-        index: u16,
-    ) {
-        crate::game::enemy_projectiles::scatter_drop(source, index, self);
-    }
-}
-
 impl sm_game::actors::zebetites::Lease for crate::game::session_runtime::Runtime<'_> {
     // The flag rules ran on a nested lease of the game; they run on this one.
     fn event_happened(&mut self, event: u16) -> u16 {
@@ -180,12 +164,6 @@ const _: () = {
     assert!(a::HYPER_BEAM_HIT == ADDR_K_MOTHER_BRAIN_ILIST_9BE7 as u16);
 };
 
-impl sm_game::actors::phantoon::Dispatch for Game {
-    fn phantoon(&mut self, callback: sm_game::actors::phantoon::Callback) {
-        crate::game::session_runtime::Runtime::new(self)
-            .owned_call(|runtime| sm_game::actors::phantoon::callback(runtime, callback));
-    }
-}
 impl sm_game::actors::phantoon::State for crate::game::session_runtime::Runtime<'_> {
     fn phantoon_random(&mut self) -> u16 {
         self.owned_call(|runtime| {
