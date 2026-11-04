@@ -11,6 +11,7 @@ use {
     crate::actors::{
         api::{GrappleContact, GrappleReaction},
         combat::current,
+        scheduling::{store_ai_bank, store_ai_dispatch, store_ai_pointer},
     },
 };
 use {
@@ -130,11 +131,15 @@ fn touch_body<H: ActorHost>(h: &mut H) {
     if overlaps {
         let bank = h.resolve_actor(key, AccessMode::Native).bank;
         let routine = h.definition_routine_offset(&definition, DefinitionRoutine::Touch);
+        // $A0:A137, $A0:A13D.
+        store_ai_dispatch(h, key, routine);
         h.actor_ai(ActorRoutine(u32::from(bank) << 16 | u32::from(routine)));
     }
 }
 fn touch_hitboxes<H: ActorHost>(h: &mut H) {
     let key = current(h);
+    // $A0:9A61: the scan stores the enemy's bank word on entry.
+    store_ai_bank(h, key);
     h.session_mut().room.enemy_processing_stage = 6;
     if h.resolve_actor(key, AccessMode::Native).spritemap == 0 {
         return;
@@ -185,6 +190,8 @@ fn touch_hitboxes<H: ActorHost>(h: &mut H) {
             if hit(h, &bounds, x, y, &hitboxes, index, true) {
                 let bank = h.resolve_actor(key, AccessMode::Native).bank;
                 let target = h.actor_collision_target(&hitboxes, index, ActorCollisionWord::Touch);
+                // $A0:9B49: the hitbox's touch routine.
+                store_ai_pointer(h, target.bind(bank).offset());
                 h.actor_hitbox_touch(target.bind(bank));
                 return;
             }
@@ -217,6 +224,9 @@ impl Attack {
 }
 fn projectile_contacts<H: ActorHost + EprojHost>(h: &mut H, attack: Attack, extended: bool) {
     let key = current(h);
+    // $A0:9B86, $A0:9D2A, $A0:A14A, $A0:A23D: each scan stores the enemy's
+    // bank word on entry.
+    store_ai_bank(h, key);
     let bomb = attack == Attack::Bomb;
     h.session_mut().room.enemy_processing_stage = if extended {
         if bomb { 4 } else { 3 }
@@ -318,12 +328,16 @@ fn projectile_contacts<H: ActorHost + EprojHost>(h: &mut H, attack: Attack, exte
         }
         if let Some(function) = hitbox {
             let bank = h.resolve_actor(key, AccessMode::Native).bank;
+            // $A0:9D1D, $A0:9E94: the hitbox's shot routine.
+            store_ai_pointer(h, function.bind(bank).offset());
             h.actor_hitbox_shot(function.bind(bank), (index * 2) as u16);
         } else {
             let bank = h.resolve_actor(key, AccessMode::Native).bank;
             let definition = h.resolve_actor(key, AccessMode::Native).definition;
             let definition = h.capture_actor_definition(ActorDefinitionKey(definition));
             let routine = h.definition_routine_offset(&definition, DefinitionRoutine::Shot);
+            // $A0:A230, $A0:A300.
+            store_ai_pointer(h, routine);
             h.actor_ai(ActorRoutine(u32::from(bank) << 16 | u32::from(routine)));
         }
         return;
@@ -480,10 +494,11 @@ pub fn apply_power_bomb_to_enemies<H: ActorHost + EprojHost>(h: &mut H) {
         {
             h.session_mut().actors.controls.selected = offset;
             let reaction = h.definition_routine_offset(&definition, DefinitionRoutine::PowerBomb);
+            let reaction = if reaction == 0 { 0x8037 } else { reaction };
+            // $A0:A37E, $A0:A3A5.
+            store_ai_dispatch(h, key, reaction);
             let bank = h.resolve_actor(key, AccessMode::Native).bank;
-            h.actor_ai(ActorRoutine(
-                u32::from(bank) << 16 | u32::from(if reaction == 0 { 0x8037 } else { reaction }),
-            ));
+            h.actor_ai(ActorRoutine(u32::from(bank) << 16 | u32::from(reaction)));
             h.edit_actor(key, AccessMode::Native, |actor| actor.properties |= 0x800);
         }
     }

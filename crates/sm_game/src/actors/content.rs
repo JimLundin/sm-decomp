@@ -368,6 +368,11 @@ impl ActorRoutine {
     pub fn from_bank_offset(bank: u8, offset: u16) -> Self {
         Self((u32::from(bank) << 16) | u32::from(offset))
     }
+    /// The routine's address within its bank.
+    pub fn offset(self) -> u16 {
+        let [low, high, ..] = self.0.to_le_bytes();
+        u16::from_le_bytes([low, high])
+    }
 }
 impl PopulationCursor {
     pub fn position(&self) -> Option<PopulationPosition> {

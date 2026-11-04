@@ -390,6 +390,8 @@ pub fn latch<H: ActorHost>(h: &mut H, mode: LatchMode) {
             }
             LatchMode::Active => {
                 let routine = h.definition_routine_offset(&definition, DefinitionRoutine::Main);
+                // $A0:9FFC, $A0:A01E.
+                crate::actors::scheduling::store_ai_dispatch(h, actor, routine);
                 h.actor_ai(ActorRoutine(u32::from(bank) << 16 | u32::from(routine)));
             }
         }

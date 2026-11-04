@@ -200,6 +200,18 @@ pub struct ActorCompatibility {
     pub spare_0e2c: [u16; 10],
     pub spare_0e42: u16,
 }
+impl ActorCompatibility {
+    /// $7E:1784: the AI pointer every enemy dispatch stores before its
+    /// `JML [$1784]`, and each enemy instruction before it runs ($A0:C289).
+    pub fn store_ai_pointer(&mut self, pointer: u16) {
+        self.pre_hook[..2].copy_from_slice(&pointer.to_le_bytes());
+    }
+    /// $7E:1786: the enemy's bank word ($0FA6: the bank, then the hurt time)
+    /// the dispatch jumps into.
+    pub fn store_ai_bank(&mut self, bank: [u8; 2]) {
+        self.pre_hook[2..4].copy_from_slice(&bank);
+    }
+}
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ActorDiagnostics {
     pub index: u16,

@@ -94,6 +94,12 @@ fn finish_initialization<H: ActorHost>(
     h.session_mut().actors.controls.selected = key.byte_index();
     let function = h.definition_routine_offset(definition, DefinitionRoutine::Initialize);
     if creation.run_initializer(function) {
+        // $A0:8B82/$8B88, $A0:93BF/$93C6: the initialisation AI and the
+        // definition's bank word.
+        let word = h.definition_word(definition, DW::NativeBank);
+        let compatibility = &mut h.session_mut().actors.compatibility;
+        compatibility.store_ai_pointer(function);
+        compatibility.store_ai_bank(word.to_le_bytes());
         let bank = h.definition_byte(definition, DB::Bank);
         #[cfg(sm_verify_dll)]
         h.actor_reference_stage(6, key.byte_index());
@@ -324,6 +330,8 @@ pub fn respawn<H: ActorHost + crate::enemy_projectiles::host::Host>(h: &mut H, k
     });
     let bank = h.definition_byte(&definition, DB::Bank);
     let offset = h.definition_routine_offset(&definition, DefinitionRoutine::Initialize);
+    // $86:F2F8, $86:F31C.
+    crate::actors::scheduling::store_ai_dispatch(h, key, offset);
     #[cfg(sm_verify_dll)]
     h.actor_reference_stage(6, key.byte_index());
     h.actor_ai(ActorRoutine::from_bank_offset(bank, offset));
