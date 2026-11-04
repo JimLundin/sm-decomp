@@ -13,13 +13,15 @@ use crate::rtl::{
     WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_reg, read_reg_word, write_reg,
     write_reg_word,
 };
+use sm_data::hdma_programs::ChannelRegister;
 use sm_game::display::control::Brightness;
 use sm_game::display::preparation::Field;
 use sm_game::display::transfer::Source;
 use sm_game::display::video::{
-    Axis, Command, Control, GraphicsTransfer, Mode7Parameter, ScrollOffset, Upload, Video as _,
-    WindowEdge, WindowHdma,
+    Axis, Command, Control, GraphicsTransfer, Mode7Parameter, ScrollOffset, Upload, WindowEdge,
+    WindowHdma,
 };
+use sm_game::scene::irq::Output;
 
 /// VMAIN's increment-after-high-byte mode for a word step of `increment`.
 fn vram_increment_mode(increment: u16) -> u8 {
@@ -139,6 +141,31 @@ fn committed_register(field: Field) -> u32 {
         Field::FixedColor0 | Field::FixedColor1 | Field::FixedColor2 => COLDATA,
         Field::Geometry => SETINI,
         field => unreachable!("{field:?} is not committed to the display"),
+    }
+}
+
+/// The register each scanline interrupt output reaches.
+fn irq_register(output: Output) -> u32 {
+    match output {
+        Output::Background3Map => BG1SC + 2,
+        Output::ColorWindow => CGWSEL,
+        Output::ColorArithmetic => CGADSUB,
+        Output::MainLayers => TM,
+        Output::VerticalLow => VTIMEL,
+        Output::VerticalHigh => VTIMEH,
+        Output::HorizontalLow => HTIMEL,
+        Output::HorizontalHigh => HTIMEH,
+        Output::InterruptEnable => NMITIMEN,
+    }
+}
+
+/// An HDMA program's channel register, as an offset from the channel's first.
+fn channel_register_offset(register: ChannelRegister) -> u32 {
+    match register {
+        ChannelRegister::Control => 0,
+        ChannelRegister::Target => 1,
+        ChannelRegister::TableBank => 4,
+        ChannelRegister::IndirectBank => 7,
     }
 }
 
@@ -312,6 +339,7 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
         Command::StopDma => word(MDMAEN, 0, game),
         Command::Commit(field, value) => byte(committed_register(field), value, game),
         Command::ScrollByte { scroll, value } => byte(scroll_register(scroll), value, game),
+        Command::IrqOutput(output, value) => byte(irq_register(output), value, game),
         Command::ObjectsAndPaletteNow {
             objects,
             object_bytes,
@@ -344,6 +372,34 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
             );
         }
         Command::HdmaTable { bank_slot, table } => word(A1T0L + u32::from(bank_slot), table, game),
+        Command::HdmaChannelByte {
+            bank_slot,
+            register,
+            value,
+        } => byte(
+            DMAP0 + channel_register_offset(register) + u32::from(bank_slot),
+            value,
+            game,
+        ),
+        Command::ClearHdmaChannels { first, target } => {
+            let target = scroll_register(target).to_le_bytes()[0];
+            for channel in first..8 {
+                let base = 0x4300 | (u32::from(channel) << 4);
+                for (offset, value) in [
+                    (0, 0),
+                    (1, target),
+                    (2, 0),
+                    (3, 0),
+                    (4, 0),
+                    (5, 0),
+                    (6, 0),
+                    (8, 0),
+                    (9, 0),
+                ] {
+                    byte(base + offset, value, game);
+                }
+            }
+        }
         Command::GraphicsChannel {
             transfer,
             source,

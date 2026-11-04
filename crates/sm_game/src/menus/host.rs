@@ -2,7 +2,6 @@
 //! cartridge, register writes, sound and brightness, plus the sprite,
 //! HDMA, display-refresh and room-entry operations still
 //! implemented by the compatibility runtime.
-use crate::display::sequence::Registers;
 use crate::effects::{DisplayRefresh, SoundEffects};
 use crate::ram::CompatibilityRam;
 use crate::word_transfers::LoadedRom;
@@ -143,7 +142,6 @@ pub trait Host:
     + crate::player_position::PlayerPosition
     + crate::hud::HudPlayer
     + LoadedRom
-    + Registers
     + crate::display::video::Video
     + SoundEffects
     + DisplayRefresh
@@ -174,6 +172,15 @@ pub trait Host:
     /// Controller 1's word as auto-joypad read latches it at this vblank: the
     /// live controller, or the next recorded frame's word during a replay.
     fn nmi_controller_word(&mut self) -> u16;
+    /// `controller`'s word as the auto-joypad read holds it now.
+    fn controller_word(&mut self, controller: Controller) -> u16;
+}
+
+/// One of the two controllers the auto-joypad read latches.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Controller {
+    One,
+    Two,
 }
 
 /// Map presentation reads and rotations use the existing progress/minimap owners.

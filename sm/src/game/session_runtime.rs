@@ -4,7 +4,6 @@ use crate::{
     game_state::Game,
     rom::{RomImage, RomRecord},
 };
-use sm_game::display::sequence::Registers;
 use sm_game::player_projectiles::{
     access::{ShotLane, Store},
     content,
@@ -2331,20 +2330,12 @@ impl crate::projection::ProjectedBytes for Runtime<'_> {
         Runtime::set_byte(self, at, value)
     }
 }
-// A register write may read or change RAM (DMA, the WRAM port), so each one
-// runs on the exported game and the lease re-imports what it left.
-impl Registers for Runtime<'_> {
-    fn write_register(&mut self, register: u16, value: u8) {
-        self.foreign(|game| Registers::write_register(game, register, value));
-    }
-    fn write_register_word(&mut self, register: u16, value: u16) {
-        self.foreign(|game| Registers::write_register_word(game, register, value));
-    }
-    fn read_register_word(&mut self, register: u16) -> u16 {
-        self.foreign(|game| Registers::read_register_word(game, register))
-    }
-    fn read_register(&mut self, register: u16) -> u8 {
-        self.foreign(|game| Registers::read_register(game, register))
+// A display command may read or change RAM (DMA, the WRAM port), so each one
+// runs on the exported game, whose backend encodes it, and the lease
+// re-imports what it left.
+impl sm_game::display::video::Video for Runtime<'_> {
+    fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
+        self.foreign(|game| sm_game::display::video::Video::apply(game, producer, command));
     }
 }
 // The channel registers are the game's backend; the object table is the lease's.

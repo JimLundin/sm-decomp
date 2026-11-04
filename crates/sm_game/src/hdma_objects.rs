@@ -2,8 +2,8 @@
 use crate::cinematic::cinematic_native_record;
 use crate::cinematic_state::Word as CinematicWord;
 use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
-use crate::display::registers::{DMAP0, HDMAEN, MDMAEN};
-use crate::display::sequence::Registers;
+use crate::display::registers::DMAP0;
+use crate::display::video::{Axis, Background, Command, ScrollOffset, Video};
 use crate::display_refresh::DisplayOwner;
 use crate::imported::word as table_word;
 use crate::projection::Field;
@@ -206,20 +206,21 @@ pub fn clear_hdma_channels<
     }
 }
 
+/// The producer name of the HDMA resets' commands.
+const HDMA_RESET: &str = "hdma reset";
+
 pub fn clear_hdma<
-    H: Registers + crate::display::preparation::Access + DisplayOwner + HdmaTable + ?Sized,
+    H: Video + crate::display::preparation::Access + DisplayOwner + HdmaTable + ?Sized,
 >(
     game: &mut H,
 ) {
-    crate::display::sequence::register_writes! { game;
-        byte(MDMAEN as u16, 0); byte(HDMAEN as u16, 0);
-    }
+    game.apply(HDMA_RESET, Command::StopDma);
     clear_hdma_channels(game);
 }
 
 pub fn initialize_room_effects<H>(game: &mut H)
 where
-    H: Registers
+    H: Video
         + crate::display::preparation::Access
         + crate::ram::CompatibilityRam
         + DisplayOwner
@@ -227,7 +228,6 @@ where
         + crate::fx_domain::Controls
         + ?Sized,
 {
-    use crate::display::registers::{WMADDH, WMADDL, WMADDM};
     {
         let mut fx = game.fx_controls();
         fx.earthquake_sound_index = 0;
@@ -253,12 +253,16 @@ where
     }
     game.session_mut().minimap.disabled = 0;
     game.words_stored();
-    for channel in (0x20..0x80u16).step_by(0x10) {
-        for register in [0, 1, 2, 3, 4, 5, 6, 8, 9] {
-            let value = if register == 1 { 0x13 } else { 0 };
-            game.write_register(0x4300 + channel + register, value);
-        }
-    }
+    game.apply(
+        HDMA_RESET,
+        Command::ClearHdmaChannels {
+            first: 2,
+            target: ScrollOffset {
+                background: Background::Bg4,
+                axis: Axis::Horizontal,
+            },
+        },
+    );
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.fraction, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, -1i32 as u16);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.lava_acid.fraction, 0);
@@ -335,10 +339,7 @@ where
         room.set_hook_address(hook, 0x83e1u16.to_le_bytes());
     }
     game.words_stored();
-    crate::display::sequence::register_writes! { game;
-        byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
-        byte(WMADDH as u16, 1);
-    }
+    game.apply(HDMA_RESET, Command::WramPort { address: 0x01_fff0 });
     crate::frame_display_byte!(game, crate::display::preparation::Field::HdmaEnable => 0);
     set_fixed_color([32, 64, 0x80], game);
     // Mosaic, main layers, colour selection and math, BG character and screen bases.
@@ -479,12 +480,22 @@ pub fn read_table<H: HdmaTable + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
     objects
 }
 
-pub(crate) fn write_channel_register<H: crate::menus::host::Host + ?Sized>(
-    register: u16,
+/// Set one parameter byte of the HDMA channel `bank_slot` selects, as an
+/// HDMA program command does.
+pub(crate) fn write_channel_byte<H: Video + ?Sized>(
+    bank_slot: u8,
+    register: sm_data::hdma_programs::ChannelRegister,
     value: u8,
     game: &mut H,
 ) {
-    game.write_register(register, value);
+    game.apply(
+        "hdma program",
+        Command::HdmaChannelByte {
+            bank_slot,
+            register,
+            value,
+        },
+    );
 }
 
 pub(crate) fn restart_title_gradient<H: GradientHost + ?Sized>(game: &mut H) {

@@ -2676,26 +2676,12 @@ impl sm_game::cartridge::NativeImage for Game {
     }
 }
 
-impl sm_game::display::sequence::Registers for Game {
-    fn write_register(&mut self, register: u16, value: u8) {
+impl Game {
+    /// A word from two consecutive backend registers, low byte first.
+    pub(crate) fn read_register_word(&mut self, register: u16) -> u16 {
         assert!(!self.g_snes.is_null(), "SNES backend must be installed");
         // SAFETY: the backend is installed, and `&mut self` excludes other access.
-        unsafe { crate::rtl::write_reg(register, value, self) }
-    }
-    fn write_register_word(&mut self, register: u16, value: u16) {
-        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
-        // SAFETY: as for `write_register`.
-        unsafe { crate::rtl::write_reg_word(register, value, self) }
-    }
-    fn read_register_word(&mut self, register: u16) -> u16 {
-        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
-        // SAFETY: as for `write_register`.
         unsafe { crate::rtl::read_reg_word(register, self) }
-    }
-    fn read_register(&mut self, register: u16) -> u8 {
-        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
-        // SAFETY: as for `write_register`.
-        unsafe { crate::rtl::read_reg(register, self) }
     }
 }
 

@@ -112,7 +112,6 @@ pub mod display {
     pub mod preparation;
     pub mod queued_tilemaps;
     pub mod registers;
-    pub mod sequence;
     pub mod transfer;
     pub mod transfer_types;
     pub mod video;

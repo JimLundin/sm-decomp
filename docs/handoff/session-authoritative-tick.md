@@ -554,7 +554,8 @@ A decision (D3).
     `ScanlineIrq(&mut lease)`.
   - The NMI and IRQ register writes become typed display commands, encoded in sm/ (lane
     `owned-pres`).
-  - Removing them from sm_game also needs D9.
+  - Removing them from sm_game also needs D9. Done under D9 (lane `d9`, 2026-11-04): sm_game
+    makes no register write; see owned-display-registers.md, "Retirement step 1 under D9".
 - **Delta.** `display_refresh` 27, `hdma_objects` 4, `gameplay_frame` 3. With the
   message box, cinematic display and transfer slices, up to −77.
 - **Rows.**

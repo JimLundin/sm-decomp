@@ -72,16 +72,19 @@ impl refresh::Host for Game {
         unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
     }
     fn read_vram_data(&mut self) -> u16 {
-        sm_game::display::sequence::Registers::read_register_word(self, crate::rtl::RDVRAML as u16)
+        self.read_register_word(crate::rtl::RDVRAML as u16)
     }
 }
 
-impl sm_game::display::video::Video for Game {
-    fn producing(&mut self) {
+/// The typed uploads' bracket around the encoder's register writes.
+impl Game {
+    /// The producer's register writes begin.
+    pub(crate) fn producing(&mut self) {
         let ppu = self.execution_parts().0.unwrap().selected_video();
         crate::snes::ppu::producing(ppu);
     }
-    fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
+    /// The producer's register writes are done; `uploads` are what they did.
+    pub(crate) fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
         let ppu = self.execution_parts().0.unwrap().selected_video();
         let self_ref = &*self;
         let ram = self.ram();
@@ -126,6 +129,9 @@ impl sm_game::display::video::Video for Game {
             }
         });
     }
+}
+
+impl sm_game::display::video::Video for Game {
     fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
         crate::game::display_commands::apply(producer, command, self);
     }

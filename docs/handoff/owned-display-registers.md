@@ -200,3 +200,48 @@ Still left:
 - display/sequence.rs now keeps only the `Registers` trait and the macro's `byte`/`word` arms.
   The `mirror`/`show`/`show_mirror` arms and `write_register_and_mirror` are gone. It goes when
   the adapter does.
+
+## Retirement step 1 under D9 (lane `d9`, 2026-11-04)
+
+D9 (Jim, 2026-11-04, PR #211): our own renderer is the authority for the new engine, not the
+emulated PPU. Register writes leave `sm_game` as typed display commands, and the encoder that
+turns them into writes is the emulated backend's, in sm/. With that, the Legacy `Refresh`
+adapter is no longer the encoder: it emits commands, and `register writes` fell from 27 to 0.
+The `Registers` trait, the `register_sequence!` macro and display/sequence.rs are gone.
+
+| Site | Command |
+| --- | --- |
+| `upload_registers` | `Commit(Field, byte)` per mirror field, `ScrollByte` per scroll latch byte |
+| `upload_affine_latches` | `Control::Mode7Latch` |
+| `upload_palette_and_oam` | `ObjectsAndPaletteNow` (bracketed by the encoder as "palette and objects") |
+| `Refresh::bind_hdma`, `publish_hdma` | `HdmaTable { bank_slot, table }`, `Control::HdmaChannels` |
+| `ScanlineIrq::write_display` | `IrqOutput(irq::Output, byte)` |
+| `display_refresh::enable` | `Control::Interrupts` |
+| `GraphicsAsset::load` (was `setup_transfer`) | `GraphicsChannel { transfer, source, bytes }` |
+| `hdma_objects::clear_hdma` | `StopDma` (the same two bytes, MDMAEN then HDMAEN) |
+| `initialize_room_effects` | `ClearHdmaChannels { first: 2, target: BG4 horizontal }`, `WramPort` |
+| HDMA program `SetChannelRegister` | `HdmaChannelByte { bank_slot, register, value }` |
+
+Each value is still read just before its command, so the reads between writes (the scroll
+re-sample after the low latch, the affine high byte after the low) keep their order. The reads
+left the trait too: `display_refresh::Host::read_vram_data` (the decompressor's prefetch and
+data word) and `menus::host::Host::controller_word` (JOY1/JOY2). `producing`/`produced` left
+the `Video` trait; only the encoder brackets uploads now, as inherent `Game` methods.
+
+Where the commands run:
+
+- On `Game` through `Video for Game`, as before: the NMI refresh, graphics loads, the HDMA
+  program command (already inside its `foreign`).
+- On the lease `Runtime` (room-entry leaf effects: NMI enable, scanline IRQ, `clear_hdma`,
+  `initialize_room_effects`): `Video for Runtime` sends each command through one `foreign`,
+  replacing `Registers for Runtime` (4 `foreign` sites become 1). One command now covers the
+  writes that were one `foreign` each: `clear_hdma`'s two bytes and the 54 channel bytes of
+  `initialize_room_effects`. No write between them touches RAM, so the export and re-import
+  around them are unchanged.
+
+`HdmaTable` and `HdmaChannelByte` carry the object's bank slot byte, not a channel number,
+because the Legacy host performs non-canonical slot offsets as the original did; the Owned
+presentation rejects them (`DisplayError::Alias`).
+
+Still left, outside sm_game: the encoder (`sm/src/game/display_commands.rs`) and `rtl`'s own
+`register_writes!` in sm/. They go with the emulated backend once the native renderer draws.

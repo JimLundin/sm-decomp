@@ -4,8 +4,8 @@
 #![forbid(unsafe_code)]
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::cartridge::NativeDiagnostics;
-use crate::display::sequence::scroll::{self, Word::Bg2H, Word::Bg2V};
 use crate::display::transfer::{Source, TilemapQueue, TilemapUpload, queue_tilemap};
+use crate::display_scroll::{self as scroll, Word::Bg2H, Word::Bg2V};
 use crate::effects::SoundEffects;
 use crate::player_projectiles::content;
 use crate::ram::CompatibilityRam;

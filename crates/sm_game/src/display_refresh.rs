@@ -4,12 +4,10 @@ use crate::constants::bank_60::ADDR_UNK_605880;
 use crate::decompression::{self, decompress_to_ram};
 use crate::display::control::{BgMode, FixedColor, Layers, ScreenSettings};
 use crate::display::preparation::Field as DisplayField;
-use crate::display::registers::{BG3SC, CGADSUB, CGWSEL, HTIMEL, NMITIMEN, TM, VTIMEL};
-use crate::display::sequence::Registers;
 use crate::display::transfer::{ScrollingLayout, Source, TilemapQueue};
 use crate::display::video::{
     Axis, Background, Command, Control, GraphicsTransfer, Mirror, Mode7Parameter, ScrollOffset,
-    apply_controls, apply_mirrored,
+    Video, apply_controls, apply_mirrored,
 };
 use crate::presentation_workspace::{Point, Role};
 use crate::ram::CompatibilityRam;
@@ -42,7 +40,6 @@ pub trait Host:
     crate::fx_domain::Controls
     + crate::display::preparation::Access
     + CompatibilityRam
-    + Registers
     + crate::word_transfers::LoadedRom
     + crate::cartridge::LoadedImage
     + crate::decompression::DecompressionHost
@@ -509,11 +506,15 @@ pub fn wait<H: crate::display::preparation::Access + CompatibilityRam + DisplayO
     1
 }
 
+/// The producer name of the NMI enable's commands.
+const NMI_ENABLE: &str = "nmi enable";
+/// The producer name of the scanline interrupt's commands.
+const SCANLINE_IRQ: &str = "scanline interrupt";
 /// The producer name of the NMI display refresh's commands.
 const REFRESH: &str = "display refresh";
 
 pub fn enable<
-    H: Registers + crate::display::preparation::Access + CompatibilityRam + DisplayOwner + ?Sized,
+    H: Video + crate::display::preparation::Access + CompatibilityRam + DisplayOwner + ?Sized,
 >(
     enabled: bool,
     game: &mut H,
@@ -524,13 +525,13 @@ pub fn enable<
         crate::display::preparation::Field::NmiEnable,
     ) & 0x7f)
         | mask;
-    game.write_register(NMITIMEN as u16, value);
+    game.apply(NMI_ENABLE, Command::Control(Control::Interrupts(value)));
     // The hardware write may change RAM; publish the value captured before it.
     crate::frame_display_byte!(game, crate::display::preparation::Field::NmiEnable => value);
 }
 
 /// The scanline interrupt's controls and display through a host's projection
-/// and registers: the owned display state's words where the Session owns the
+/// and display: the owned display state's words where the Session owns the
 /// presentation, RAM otherwise, as a lease or the compatibility game holds them.
 pub struct ScanlineIrq<'a, H: ?Sized>(pub &'a mut H);
 
@@ -562,7 +563,7 @@ impl<H: crate::display::preparation::Access + CompatibilityRam + ?Sized> irq::Co
         place.write(self.0, value);
     }
 }
-impl<H: crate::display::preparation::Access + CompatibilityRam + Registers + ?Sized> irq::Display
+impl<H: crate::display::preparation::Access + CompatibilityRam + Video + ?Sized> irq::Display
     for ScanlineIrq<'_, H>
 {
     type Error = Infallible;
@@ -581,25 +582,14 @@ impl<H: crate::display::preparation::Access + CompatibilityRam + Registers + ?Si
         )
     }
     fn write_display(&mut self, field: irq::Output, value: u8) -> Result<(), Infallible> {
-        let register = match field {
-            irq::Output::Background3Map => BG3SC,
-            irq::Output::ColorWindow => CGWSEL,
-            irq::Output::ColorArithmetic => CGADSUB,
-            irq::Output::MainLayers => TM,
-            irq::Output::VerticalLow => VTIMEL,
-            irq::Output::VerticalHigh => VTIMEL + 1,
-            irq::Output::HorizontalLow => HTIMEL,
-            irq::Output::HorizontalHigh => HTIMEL + 1,
-            irq::Output::InterruptEnable => NMITIMEN,
-        };
-        self.0.write_register(register as u16, value);
+        self.0.apply(SCANLINE_IRQ, Command::IrqOutput(field, value));
         Ok(())
     }
 }
 
-/// Enable the scanline interrupt through `game`'s projection and registers.
+/// Enable the scanline interrupt through `game`'s projection and display.
 pub fn enable_scanline_irq<
-    H: crate::display::preparation::Access + CompatibilityRam + Registers + ?Sized,
+    H: crate::display::preparation::Access + CompatibilityRam + Video + ?Sized,
 >(
     immediate: bool,
     game: &mut H,

@@ -1,4 +1,5 @@
 //! Controller sampling, repeat edges, menu filtering and action bindings.
+use super::host::Controller;
 use super::options_objects::objects::{self as bindings, Array};
 use super::prelude::*;
 use crate::constants::buttons::{
@@ -75,7 +76,7 @@ pub fn filter<H: Host + ?Sized>(delay: u16, game: &mut H) {
 
 /// Requires a live, exclusively accessed SNES backend for controller register reads.
 pub fn sample<H: Host + ?Sized>(game: &mut H) {
-    let first = { game.read_register_word(JOY1L as u16) };
+    let first = game.controller_word(Controller::One);
     sample_word(first, game);
 }
 
@@ -89,7 +90,7 @@ pub fn sample_latched<H: Host + ?Sized>(game: &mut H) {
 fn sample_word<H: Host + ?Sized>(first: u16, game: &mut H) {
     repeat(0, first, game);
     if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 {
-        let second = { game.read_register_word(JOY2L as u16) };
+        let second = game.controller_word(Controller::Two);
         repeat(2, second, game);
         debug_controls(game);
     }
