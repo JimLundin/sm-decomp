@@ -100,7 +100,7 @@ impl<
 > PlayerLease for T
 {
 }
-pub trait RuntimeAccess: crate::screen_fade::Owner {
+pub trait RuntimeAccess {
     type Runtime<'a>: PlayerLease
         + crate::hdma_effects::HdmaEffects
         + crate::actors::mother_brain_rainbow::Host
@@ -130,7 +130,7 @@ pub trait RuntimeAccess: crate::screen_fade::Owner {
 /// A host that lends its owned-Session view for one call: a lease lends
 /// itself, and a compatibility host opens a fresh view, which publishes the
 /// Session when the call returns.
-pub trait Lend: crate::screen_fade::Owner {
+pub trait Lend {
     type View<'a>: PlayerLease
         + crate::hdma_effects::HdmaEffects
         + crate::actors::mother_brain_rainbow::Host

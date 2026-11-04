@@ -4,8 +4,11 @@ use super::Runtime;
 use crate::game_state::Game;
 use sm_game::screen_fade::{CinematicFade, Owner, ScreenFade};
 
-impl Owner for Game {
-    fn with_screen_fade<R>(&mut self, action: impl FnOnce(&mut ScreenFade) -> R) -> R {
+/// The screen fade on Game's image, which a lease whose Session is not current
+/// falls back to: a fresh lease when one is admissible, else the selected
+/// projection's words. Game serves no sm_game host trait for it.
+impl Game {
+    pub(crate) fn with_screen_fade<R>(&mut self, action: impl FnOnce(&mut ScreenFade) -> R) -> R {
         if self.session_lease_admissible() {
             return Runtime::new(self).with_screen_fade(action);
         }
@@ -38,7 +41,7 @@ impl Owner for Game {
         result
     }
 
-    fn tick_screen_fade(&mut self) -> bool {
+    pub(crate) fn tick_screen_fade(&mut self) -> bool {
         if self.session_lease_admissible() {
             return Runtime::new(self).tick_screen_fade();
         }
@@ -50,7 +53,7 @@ impl Owner for Game {
         due
     }
 
-    fn cinematic_screen_fade(&mut self, fade: CinematicFade) -> bool {
+    pub(crate) fn cinematic_screen_fade(&mut self, fade: CinematicFade) -> bool {
         if self.session_lease_admissible() {
             return Runtime::new(self).advance_owned_screen_fade(fade);
         }
@@ -91,7 +94,7 @@ impl Owner for Game {
         complete
     }
 
-    fn set_screen_fade(&mut self, delay: u16, counter: u16) {
+    pub(crate) fn set_screen_fade(&mut self, delay: u16, counter: u16) {
         if self.session_lease_admissible() {
             Runtime::new(self).set_screen_fade(delay, counter);
         } else {
@@ -101,7 +104,7 @@ impl Owner for Game {
         }
     }
 
-    fn set_screen_fade_counter(&mut self, counter: u16) {
+    pub(crate) fn set_screen_fade_counter(&mut self, counter: u16) {
         if self.session_lease_admissible() {
             Runtime::new(self).set_screen_fade_counter(counter);
         } else {
