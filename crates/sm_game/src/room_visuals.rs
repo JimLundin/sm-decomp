@@ -8,18 +8,36 @@ use crate::scene::hdma_sources::LiveOwner;
 use crate::session_access::SessionAccess;
 use crate::visual_state::{TourianStatuePhase, Weather};
 
-/// Statue transitions on the current Session; compatibility keeps the terminal
-/// store available while the HDMA interpreter cannot admit a Session lease.
-pub trait StatueHost: crate::runtime_access::RuntimeAccess {
-    fn begin_statue_animation(&mut self) -> bool {
-        let mut runtime = self.runtime();
-        let animation = &mut runtime.session_mut().mechanisms.statue_animation;
-        *animation |= 0x10;
-        *animation & 0x8000 == 0
-    }
-    /// Mark the statue animation finished, then make scroll cells 0 and 1
-    /// blue (two bytes of 2, in native order).
-    fn finish_statue_animation(&mut self);
+/// What the Tourian statue's HDMA object runs on: the owned-Session view, the
+/// room shake, the sequence words and the window sources. A Session lease is
+/// one.
+pub trait StatueHost:
+    crate::runtime_access::SessionView
+    + ShakeHost
+    + crate::sequence_state::Access
+    + crate::fx_domain::Sources
+{
+}
+impl<T> StatueHost for T where
+    T: crate::runtime_access::SessionView
+        + ShakeHost
+        + crate::sequence_state::Access
+        + crate::fx_domain::Sources
+{
+}
+
+/// Start the statue's animation; whether it had not finished yet.
+fn begin_statue_animation(session: &mut crate::session::Session) -> bool {
+    let animation = &mut session.mechanisms.statue_animation;
+    *animation |= 0x10;
+    *animation & 0x8000 == 0
+}
+
+/// Mark the statue animation finished, then make scroll cells 0 and 1 blue
+/// (two bytes of 2, in native order).
+fn finish_statue_animation(session: &mut crate::session::Session) {
+    session.mechanisms.statue_finished = 0x8000;
+    session.room.set_scroll_pair(0, 514u16.to_ne_bytes());
 }
 
 pub fn initialize_ceres_ridley<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -166,7 +184,7 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
     spawn_bg3_scroll(game);
 }
 
-pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>(
+pub fn advance_tourian_statue<H: StatueHost>(
     hdma_index: usize,
     phase: TourianStatuePhase,
     handler_carry: bool,
@@ -178,9 +196,8 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
     }
     match phase {
         Waiting => {
-            if (6..=9)
-                .all(|event| crate::progress::leased::event_has_happened(event, game) & 1 != 0)
-                && game.begin_statue_animation()
+            if (6..=9).all(|event| crate::progress::event_happened(game, event))
+                && begin_statue_animation(game.session_mut())
             {
                 crate::hdma_word!(game, hdma_index, C => 300);
                 advance_statue_program(hdma_index, game);
@@ -194,10 +211,10 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
                 // returned slot.
                 let mut parameter = EARTHQUAKE_TIMER;
                 for _ in 0..4 {
-                    parameter = crate::enemy_projectiles::lifecycle::spawn_room_leased(
+                    parameter = crate::enemy_projectiles::lifecycle::spawn_room(
+                        game,
                         ADDR_K_EPROJ_TOURIAN_STATUE_DUST_CLOUDS as u16,
                         parameter,
-                        game,
                     );
                 }
                 advance_statue_program(hdma_index, game);
@@ -214,14 +231,12 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
             crate::hdma_word!(game, hdma_index, A => position as u16);
             crate::hdma_word!(game, hdma_index, B => (position >> 16) as u16);
             if crate::hdma_word!(game, hdma_index, B) == 0xff10 {
-                crate::room_mechanisms::creation::spawn_hardcoded(6, 12, 0xb773, game);
-                crate::progress::leased::mark_event(0xa, game);
+                crate::room_mechanisms::creation::spawn_hardcoded_in(game, 6, 12, 0xb773);
+                crate::progress::set_event(game, 0xa);
                 advance_statue_program(hdma_index, game);
             }
         }
-        Finished => {
-            game.finish_statue_animation();
-        }
+        Finished => finish_statue_animation(game.session_mut()),
     }
     let scroll = crate::sequence_word!(game.LAYER1_Y_POS)
         .wrapping_add(crate::hdma_word!(game, hdma_index, B));

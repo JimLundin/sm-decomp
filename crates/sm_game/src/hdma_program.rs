@@ -26,6 +26,7 @@ pub trait HdmaLease:
     + crate::hdma_objects::GradientHost
     + crate::xray_background::Host
     + crate::explosion_window::Host
+    + crate::room_visuals::StatueHost
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -79,16 +80,8 @@ pub(crate) trait Interpreter: HdmaTable {
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
-    fn with_object<T>(
-        &mut self,
-        index: usize,
-        action: impl FnOnce(usize, &mut Self::Game) -> T,
-    ) -> T {
-        sm_data::table::check_index(index, OBJECTS);
-        self.foreign(|game| action(index, game))
-    }
-    /// Run `action` for object `index` on the lease, as `with_object` ran it
-    /// on the game.
+    /// Run `action` for object `index` on the lease, where a foreign call ran
+    /// it on the game, after checking the index.
     fn on_object<T>(
         &mut self,
         index: usize,

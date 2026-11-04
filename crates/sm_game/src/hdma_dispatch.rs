@@ -226,8 +226,8 @@ where
 }
 
 /// The hosts every pre-instruction target runs on.
-pub trait DispatchHost: Host + room_visuals::StatueHost {}
-impl<T> DispatchHost for T where T: Host + room_visuals::StatueHost + ?Sized {}
+pub trait DispatchHost: Host {}
+impl<T> DispatchHost for T where T: Host + ?Sized {}
 
 /// Run the pre-instruction at `address` for HDMA object `index`. Targets
 /// that own their object's words run on it as typed fields; the rest run on
@@ -298,7 +298,9 @@ where
         RestoreLeft => it.on_object(index, xray_background::restore_left),
         RestoreRight => it.on_lease(xray_background::restore_right),
         FinishRestore => it.on_object(index, xray_background::finish_restore),
-        SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
+        SkyHorizontalScroll => it.on_object(index, scrolling_sky::update_horizontal_scroll),
+        SkyVerticalScroll => it.on_lease(scrolling_sky::update_vertical_scroll),
+        TitleGradientBackdrop => it.on_lease(hdma_objects::advance_title_gradient_backdrop),
         PowerBombAfterglow => it.on_object(index, explosion_window::power_bomb_afterglow),
         CrystalFlashAfterglow => it.on_object(index, explosion_window::crystal_flash_afterglow),
         PowerBombScaled | PreFlashScaled | CrystalFlashScaled => {
@@ -327,11 +329,31 @@ where
                 StatueSinking => TourianStatuePhase::Sinking,
                 _ => TourianStatuePhase::Finished,
             };
-            it.with_object(index, |index, game| {
+            it.on_object(index, |index, game| {
                 room_visuals::advance_tourian_statue(index, phase, handler_carry, game)
             })
         }
-        _ => it.foreign(|game| host_pre_action(target, game)),
+        AdvanceXrayBackground
+        | XrayBeamInitial
+        | XrayBeamWidening
+        | XrayBeamFull
+        | BeginBrightHaze
+        | BeginDimHaze
+        | HazeFadingIn
+        | HazeFadedIn
+        | HazeFadingOut
+        | DraygonLayer
+        | SuitPickup
+        | GravitySuitPickup
+        | PhantoonLayer
+        | PhantoonWave
+        | RainbowBeam
+        | EyeBeamWidening
+        | EyeBeamFull
+        | EyeBeamFading
+        | IntroWave => {
+            unreachable!("pre_action_effect runs {target:?}")
+        }
     }
 }
 
@@ -360,66 +382,4 @@ fn pre_action_effect(target: HdmaPreAction) -> Option<HdmaEffect> {
         IntroWave => HdmaEffect::AdvanceWave(HdmaWave::Intro),
         _ => return None,
     })
-}
-
-/// A pre-instruction target that runs on the compatibility host.
-fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, game: &mut H) {
-    use HdmaPreAction::*;
-    match target {
-        Nothing
-        | RestoreLeft
-        | RestoreRight
-        | FinishRestore
-        | LavaSurface
-        | LavaBackground
-        | WaterSurface
-        | WaterBackground
-        | WaterWave
-        | WaterFlat
-        | SkyHorizontalScroll
-        | StatueWaiting
-        | StatueShaking
-        | StatueSinking
-        | StatueFinished
-        | PowerBombAfterglow
-        | CrystalFlashAfterglow
-        | PowerBombScaled
-        | PreFlashScaled
-        | CrystalFlashScaled
-        | PowerBombPrescaled
-        | PreFlashPrescaled
-        | AdvanceXrayBackground
-        | XrayBeamInitial
-        | XrayBeamWidening
-        | XrayBeamFull
-        | BeginBrightHaze
-        | BeginDimHaze
-        | HazeFadingIn
-        | HazeFadedIn
-        | HazeFadingOut
-        | DraygonLayer
-        | SuitPickup
-        | GravitySuitPickup
-        | PhantoonLayer
-        | PhantoonWave
-        | RainbowBeam
-        | EyeBeamWidening
-        | EyeBeamFull
-        | EyeBeamFading
-        | IntroWave
-        | SetupXrayBlending
-        | PowerBombBlending
-        | CrystalFlashBlending
-        | SkyParallax
-        | AdvanceSkyParallax
-        | FirefleaLighting
-        | Rain
-        | Spores
-        | Fog
-        | StatueBlending
-        | TitleGradient
-        | IntroCrossfade => unreachable!("run_pre_action runs {target:?}"),
-        SkyVerticalScroll => scrolling_sky::update_vertical_scroll(game),
-        TitleGradientBackdrop => hdma_objects::advance_title_gradient_backdrop(game),
-    }
 }
