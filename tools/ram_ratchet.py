@@ -201,6 +201,9 @@ def game_boundary() -> dict[str, int]:
     sm_game code. Line comments are ignored."""
     foreign = re.compile(r"\.foreign\s*\(")
     host = re.compile(r"^\s*impl\b[^{;]*\bfor\s+Game\b")
+    # A trait sm/ defines for itself (`impl crate::...`) is not a host the engine
+    # calls through, so it is not part of the Game boundary (D6, 2026-11-04).
+    local = re.compile(r"^\s*impl\b(?:<[^>]*>)?\s+crate::")
     entry = re.compile(r"\.runtime\s*\(\s*\)")
     # Built with fromkeys: --update rewrites `"name": <n>` literals, which a
     # dict display here would match.
@@ -215,7 +218,8 @@ def game_boundary() -> dict[str, int]:
                     lines = [line.split("//", 1)[0] for line in source]
                 counts["foreign_calls"] += sum(len(foreign.findall(line)) for line in lines)
                 if path.startswith("sm/src/"):
-                    counts["game_host_impls"] += sum(1 for line in lines if host.match(line))
+                    counts["game_host_impls"] += sum(
+                        1 for line in lines if host.match(line) and not local.match(line))
                 if path.startswith("crates/sm_game/src/"):
                     counts["session_entries"] += sum(len(entry.findall(line)) for line in lines)
     return counts
