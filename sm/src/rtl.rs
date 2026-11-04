@@ -1251,6 +1251,41 @@ pub(crate) unsafe fn advance_wram_port(game: &mut Game) -> usize {
         address as usize
     }
 }
+
+/// The WRAM data port's address, which a DMA to $2180 writes from.
+/// # Safety
+/// As `read_reg`.
+pub(crate) unsafe fn wram_port_address(game: &mut Game) -> usize {
+    unsafe { (*game.device_execution().snes()).ramAdr as usize }
+}
+
+/// Start the DMA channels in `mask` as `write_reg` of MDMAEN starts them, the
+/// register observer included, reading the prepared room image `source` when
+/// given (`write_dma_start`), inside a device interval: Samus authority, and an
+/// open Session lease, stay current. The transfer reads and writes RAM as the
+/// hardware does, so a lease publishes its Session first
+/// (`Runtime::start_dma`).
+/// # Safety
+/// As `write_reg`.
+pub(crate) unsafe fn start_device_dma(
+    mask: u8,
+    source: Option<&DmaRomSource<'_>>,
+    game: &mut Game,
+) {
+    assert!(mask != 0, "a DMA start with no channel");
+    let views = (game.g_snes, game.g_cpu);
+    unsafe {
+        let mut execution = game.device_execution();
+        execution.write_with_dma_source(MDMAEN as u32, mask, source);
+        observe_register_write(
+            MDMAEN as u16,
+            mask,
+            &mut execution.host,
+            execution.backend,
+            views,
+        );
+    }
+}
 // Bank-0 DMA writes have an inert cartridge tail; preserve byte observations.
 #[forbid(unsafe_code)]
 pub(crate) fn write_dma_register(reg: u16, value: u8, game: &mut Game) {

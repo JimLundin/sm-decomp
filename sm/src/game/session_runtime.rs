@@ -34,6 +34,11 @@ pub(crate) fn native_rom_diagnostic(address: u32, game: &mut Game) {
 #[path = "../verification/actor_movement_runtime_observer.rs"]
 mod actor_movement_runtime_observer;
 
+#[forbid(unsafe_code)]
+#[cfg(sm_verify_dll)]
+#[path = "../verification/transfer_checks.rs"]
+mod transfer_checks;
+
 /// `pub` inside the crate-private module, so `LeaseActors` can name it.
 pub struct Runtime<'g> {
     game: &'g mut Game,
@@ -475,6 +480,132 @@ impl<'g> Runtime<'g> {
             runtime.refresh_player_observations();
             result
         })
+    }
+    /// Write this lease's Session to RAM now, as its release would export it, and keep the
+    /// lease: the Session stays the authority, nothing is decoded, and RAM projects it. A
+    /// port runs this before a DMA that reads work RAM, since the hardware reads the bytes
+    /// there (`start_dma`). An export deferred by an earlier release is written first, as
+    /// any RAM write writes it; a write log open around this lease (a nested lease inside
+    /// `foreign`) logs the bytes, which the outer call takes back as it would this lease's
+    /// release. A persistent lease takes the new write epoch, as its release does.
+    pub(crate) fn publish(&mut self) {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
+        preflight_export(self.session(), self.game);
+        let state = self.state.as_ref().expect("Session lease");
+        self.game
+            .ram()
+            .copy_spans(|ram| encoding::encode_spans(state, ram));
+        if self.persistent_epoch.is_some() {
+            self.persistent_epoch = Some(self.game.compatibility_write_epoch());
+        }
+    }
+    /// One device register write from the lease (`rtl::write_device`).
+    pub(crate) fn write_device(&mut self, register: u16, value: u8) {
+        // SAFETY: a lease runs with the backend installed, and `&mut Game`
+        // excludes other access.
+        unsafe { crate::rtl::write_device(register, value, self.game) }
+    }
+    /// The typed uploads' bracket around a port's register writes, which reaches
+    /// the selected PPU alone (`Game::producing`).
+    pub(crate) fn producing(&mut self) {
+        self.game.producing();
+    }
+    /// The bracket's end: `uploads` are what the port's writes did.
+    pub(crate) fn produced(
+        &mut self,
+        producer: &'static str,
+        uploads: &[sm_game::display::video::Upload],
+    ) {
+        self.game.produced(producer, uploads);
+    }
+    /// One device bus read from the lease (`rtl::read_device`).
+    pub(crate) fn read_device(&mut self, address: u32) -> u8 {
+        // SAFETY: as for `write_device`.
+        unsafe { crate::rtl::read_device(address, self.game) }
+    }
+    /// Start the DMA channels in `mask` from the lease, as an MDMAEN write starts them,
+    /// reading the prepared room image `source` when given. The transfer reads work RAM,
+    /// which a port has published (`publish`): verify builds assert that RAM holds the
+    /// Session's projection of every work RAM byte the channels read. The work RAM bytes
+    /// the channels write (a B-to-A transfer, or one to the WRAM data port) are taken
+    /// back into the Session, as a decode of just those bytes would read them.
+    pub(crate) fn start_dma(
+        &mut self,
+        mask: u8,
+        source: Option<&crate::execution::DmaRomSource<'_>>,
+    ) {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
+        let (_reads, writes) = self.dma_wram(mask);
+        #[cfg(sm_verify_dll)]
+        transfer_checks::assert_published(self.session(), self.game, &_reads);
+        // SAFETY: as for `write_device`.
+        unsafe { crate::rtl::start_device_dma(mask, source, self.game) };
+        if !writes.is_empty() {
+            let written = writes.into_iter().map(|at| at..at + 1).collect::<Vec<_>>();
+            take_written_bytes(
+                self.state.as_mut().expect("Session lease"),
+                self.game,
+                &written,
+            );
+            if self.persistent_epoch.is_some() {
+                self.persistent_epoch = Some(self.game.compatibility_write_epoch());
+            }
+        }
+    }
+    /// The work RAM bytes the DMA channels in `mask` read and write, from their channel
+    /// registers and the WRAM data port's address, in channel order.
+    fn dma_wram(&mut self, mask: u8) -> (Vec<usize>, Vec<usize>) {
+        /// The work RAM byte at A bus `bank:address`, if it is one.
+        fn wram(bank: u8, address: u16) -> Option<usize> {
+            match bank {
+                0x7e | 0x7f => Some((usize::from(bank & 1) << 16) | usize::from(address)),
+                0x00..=0x3f | 0x80..=0xbf if address < 0x2000 => Some(usize::from(address)),
+                _ => None,
+            }
+        }
+        let mut reads = Vec::new();
+        let mut writes = Vec::new();
+        // SAFETY: as for `write_device`.
+        let mut port = unsafe { crate::rtl::wram_port_address(self.game) };
+        for channel in (0..8u32).filter(|channel| mask & (1 << channel) != 0) {
+            let base = 0x4300 | (channel << 4);
+            let mode = self.read_device(base);
+            let target = self.read_device(base + 1);
+            let start =
+                u16::from_le_bytes([self.read_device(base + 2), self.read_device(base + 3)]);
+            let bank = self.read_device(base + 4);
+            let count =
+                u16::from_le_bytes([self.read_device(base + 5), self.read_device(base + 6)]);
+            let count = if count == 0 {
+                0x10000
+            } else {
+                u32::from(count)
+            };
+            // DMAP bit 3 fixes the A bus address; otherwise bit 4 steps it down.
+            let step: u16 = match (mode & 0x08 != 0, mode & 0x10 != 0) {
+                (true, _) => 0,
+                (false, true) => 0xffff,
+                (false, false) => 1,
+            };
+            let to_bus_b = mode & 0x80 == 0;
+            let to_wram_port = to_bus_b && target == 0x80;
+            let mut address = start;
+            for _ in 0..count {
+                if let Some(at) = wram(bank, address) {
+                    if to_bus_b {
+                        reads.push(at);
+                    } else {
+                        writes.push(at);
+                    }
+                }
+                if to_wram_port {
+                    writes.push(port);
+                    port = (port + 1) & 0x1ffff;
+                }
+                address = address.wrapping_add(step);
+            }
+        }
+        (reads, writes)
     }
     /// The game's imported visual tables.
     pub(crate) fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
@@ -2422,17 +2553,18 @@ impl sm_game::decompression::DecompressionHost for Runtime<'_> {
     }
 }
 // A device-only display command writes registers alone: the backend encodes it
-// in one device interval, with the observations refreshed on entry and on return
-// as the former foreign call left them. A command that starts a DMA or moves WRAM
-// reads or changes RAM, so it runs on the exported game, whose backend encodes
-// it, and the lease re-imports what it left.
+// in one device interval. A command that starts a DMA or moves WRAM runs on the
+// lease's transfer port: the lease is published, so the DMA reads the Session's
+// bytes, and the bytes a readback writes return to the Session. Either way the
+// observations are refreshed on entry and on return, as the former foreign call
+// left them.
 impl sm_game::display::video::Video for Runtime<'_> {
     fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
-        use crate::game::display_commands::{apply_device, device_only};
+        use crate::game::display_commands::{apply_device, apply_on_lease, device_only};
         if device_only(&command) {
             self.owned_player_call(|runtime| apply_device(command, runtime.game));
         } else {
-            self.foreign(|game| sm_game::display::video::Video::apply(game, producer, command));
+            self.owned_player_call(|runtime| apply_on_lease(producer, command, runtime));
         }
     }
 }

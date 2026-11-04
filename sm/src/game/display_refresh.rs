@@ -78,14 +78,21 @@ impl refresh::Host for Game {
 
 /// The typed uploads' bracket around the encoder's register writes.
 impl Game {
-    /// The producer's register writes begin.
+    fn selected_video(&mut self) -> *mut crate::types::Ppu {
+        // SAFETY: the bracket's callers make register writes, which require the
+        // installed backend, and `&mut Game` excludes other access.
+        unsafe { self.device_execution() }.backend.selected_video()
+    }
+    /// The producer's register writes begin. The bracket reaches the selected
+    /// PPU alone, so it runs in a device interval: a lease's transfer port
+    /// brackets its writes with it and stays current.
     pub(crate) fn producing(&mut self) {
-        let ppu = self.execution_parts().0.unwrap().selected_video();
+        let ppu = self.selected_video();
         crate::snes::ppu::producing(ppu);
     }
     /// The producer's register writes are done; `uploads` are what they did.
     pub(crate) fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
-        let ppu = self.execution_parts().0.unwrap().selected_video();
+        let ppu = self.selected_video();
         let self_ref = &*self;
         let ram = self.ram();
         let bytes = |source: usize, count: u16| {
@@ -244,15 +251,6 @@ impl sm_game::display::transfer::RoomDma for Game {
     ) {
         crate::game::display_commands::copy_to_vram_now(address, source, bytes, assets, self);
     }
-}
-
-/// Decompress `src` into VRAM at `dst_addr`, with its PPU readback.
-pub fn decompress_to_vram(src: u32, dst_addr: u16, game: &mut Game) {
-    refresh::decompress_to_vram(src, dst_addr, game);
-}
-/// Decompress a prepared stream into VRAM, with its PPU readback.
-pub(crate) fn decompress_prepared_vram(stream: &[u8], destination: u16, game: &mut Game) {
-    refresh::decompress_prepared_vram(stream, destination, game);
 }
 
 use sm_game::display::queued_tilemaps::{Coordinate, QueueAccess, Request, Scrolling, Selection};
