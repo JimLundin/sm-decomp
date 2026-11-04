@@ -6,7 +6,7 @@ pub use crate::constants::buttons::*;
 pub use crate::constants::game_states::*;
 pub use crate::display::registers::*;
 pub use crate::effects::{DisplayRefresh as _, SoundEffects as _};
-pub use crate::ram::{CompatibilityRam as _, RawRam as _, WorkRamAccess as _, word};
+pub use crate::ram::{CompatibilityRam as _, WorkRamAccess as _, word};
 
 pub use crate::display::hdma_spawn::HdmaObjectDefinition;
 

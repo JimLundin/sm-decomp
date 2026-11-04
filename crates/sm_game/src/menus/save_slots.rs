@@ -3,6 +3,8 @@ use super::prelude::*;
 use crate::imported::Imported;
 use crate::menu_state::SaveSelection;
 use crate::projection::Field;
+// The save transfer of $D7C0..$DE1C and the packed map copy are still raw RAM.
+use crate::ram::RawRam as _;
 use crate::save_file::{self, PlayerWord, SaveHost};
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
