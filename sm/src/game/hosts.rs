@@ -1,7 +1,6 @@
 //! Game's implementations of the sm_game host traits whose modules moved.
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
-use sm_game::inventory::{self, Word};
 use sm_game::player_position::{PlayerPosition, PlayerWord};
 
 impl sm_game::runtime_access::RuntimeAccess for Game {
@@ -14,23 +13,6 @@ impl sm_game::runtime_access::RuntimeAccess for Game {
     }
     fn session_retained(&self) -> bool {
         self.persistent_session_current()
-    }
-}
-
-impl sm_game::hdma_objects::HdmaTable for Game {
-    fn hdma_word(&self, word: sm_game::hdma::Word) -> u16 {
-        self.hdma_domain_word(word)
-    }
-    fn store_hdma_word(
-        &mut self,
-        word: sm_game::hdma::Word,
-        value: u16,
-        order: sm_game::scene::state::WordOrder,
-    ) {
-        self.store_hdma_domain_word(word, value, order);
-    }
-    fn store_hdma_byte(&mut self, word: sm_game::hdma::Word, high: bool, value: u8) {
-        self.store_hdma_domain_byte(word, high, value);
     }
 }
 
@@ -112,22 +94,6 @@ impl PlayerPosition for crate::game::session_runtime::Runtime<'_> {
     }
     fn set_player_word(&mut self, word: PlayerWord, value: u16) {
         self.write_word_le(value, word.address())
-    }
-}
-
-/// The raw work-RAM byte reads these facts replaced, unchanged.
-impl sm_game::player_position::PlayerFacts for Game {
-    fn facing(&self) -> u8 {
-        self.ram().read_byte(0xa1e)
-    }
-    fn movement_type(&self) -> u8 {
-        self.ram().read_byte(0xa1f)
-    }
-    fn grapple_angle(&self) -> u8 {
-        self.ram().read_byte(0xcfb)
-    }
-    fn grapple_mirrored_angle(&self) -> u8 {
-        self.ram().read_byte(0xcfd)
     }
 }
 
@@ -417,55 +383,6 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
     }
     fn finish_player_frame(&mut self) {
         self.owned_call(crate::game::session_runtime::finish_player_frame);
-    }
-}
-
-/// Draw Samus's frame on a fresh lease, inside the player driver's owned call.
-/// The HUD's values on the game: the inventory view over the projected bytes,
-/// and the named words for the HUD items and grapple, read the same way.
-impl sm_game::hud::HudPlayer for Game {
-    fn health(&self) -> u16 {
-        inventory::get(self, Word::Health)
-    }
-    fn max_health(&self) -> u16 {
-        inventory::get(self, Word::MaxHealth)
-    }
-    fn ammunition(&self, index: usize) -> u16 {
-        inventory::get(self, Word::ammunition(index).0)
-    }
-    fn max_ammunition(&self, index: usize) -> u16 {
-        inventory::get(self, Word::ammunition(index).1)
-    }
-    fn reserve_health(&self) -> u16 {
-        inventory::get(self, Word::ReserveHealth)
-    }
-    fn reserve_mode(&self) -> u16 {
-        inventory::get(self, Word::ReserveMode)
-    }
-    fn equipped_items(&self) -> u16 {
-        inventory::get(self, Word::EquippedItems)
-    }
-    fn selected_item(&self) -> u16 {
-        let game = self;
-        crate::ram_map::word!(game.HUD_ITEM_INDEX)
-    }
-    fn automatic_item(&self) -> u16 {
-        let game = self;
-        crate::ram_map::word!(game.SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX)
-    }
-    fn grapple_function(&self) -> u16 {
-        let game = self;
-        crate::ram_map::word!(game.GRAPPLE_BEAM_FUNCTION)
-    }
-}
-
-impl sm_game::hud::HudFrameHost for Game {
-    fn raw_frame_counter_byte(&self) -> u8 {
-        self.ram()
-            .read_byte(sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE)
-    }
-    fn point_pointer_scratch(&mut self, address: u16) {
-        Game::point_pointer_scratch(self, address);
     }
 }
 

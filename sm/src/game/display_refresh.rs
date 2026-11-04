@@ -6,32 +6,10 @@ use crate::rtl::{MDMAEN, write_reg};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
-pub(crate) use sm_game::display_refresh::{fade, set_blank, set_native_word};
-
-/// The native-order word at RAM `offset` through Game's compatibility
-/// projection: the scrolling requests and the level data blocks.
-pub(crate) fn native_word(offset: usize, game: &Game) -> u16 {
-    u16::from_ne_bytes([
-        game.compatibility_byte(offset),
-        game.compatibility_byte(offset + 1),
-    ])
-}
 
 impl refresh::DisplayOwner for Game {
     fn write_owned_byte(&mut self, at: usize, value: u8) {
         self.compatibility_write_owned_byte(at, value);
-    }
-}
-
-impl refresh::ReadbackQueue for Game {
-    fn readback_queue_tail(&self) -> u16 {
-        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL)
-    }
-    fn set_readback_queue_tail(&mut self, tail: u16) {
-        crate::ram_map::checked_word!(self.VRAM_READ_QUEUE_TAIL = tail);
-    }
-    fn store_readback_byte(&mut self, offset: usize, value: u8) {
-        self.compatibility_write_byte(0x340 + offset, value);
     }
 }
 
@@ -230,76 +208,6 @@ fn scrolling_probe(row: bool, background: bool) {
         (true, false) => "scroll_tiles.row.bg1",
         (true, true) => "scroll_tiles.row.bg2",
     });
-}
-impl QueueAccess for Game {
-    fn queue_live_source(
-        &mut self,
-        address: u16,
-        bank: u8,
-        source: sm_game::scene::state::TransferSource,
-    ) {
-        let mut runtime = crate::game::session_runtime::Runtime::new(self);
-        QueueAccess::queue_live_source(&mut runtime, address, bank, source);
-    }
-    fn queue_tail(&self) -> u16 {
-        self.vram_write_queue_tail()
-    }
-    fn store_queue_tail(&mut self, value: u16) {
-        self.set_vram_write_queue_tail(value);
-    }
-    fn queue_native_word(&mut self, cursor: u16, value: u16) {
-        let at = 0xd0 + usize::from(cursor);
-        let [low, high] = value.to_ne_bytes();
-        self.compatibility_write_byte(at, low);
-        self.compatibility_write_byte(at + 1, high);
-    }
-    fn queue_byte(&mut self, cursor: u16, value: u8) {
-        self.compatibility_write_byte(0xd0 + usize::from(cursor), value);
-    }
-}
-impl Scrolling for Game {
-    fn mode7_enabled(&self, selection: Selection) -> bool {
-        let enabled = u16::from_le_bytes([
-            self.compatibility_byte(0x783),
-            self.compatibility_byte(0x784),
-        ]) != 0;
-        if !enabled {
-            scrolling_probe(
-                matches!(selection.layout, ScrollingDmaLayout::Row),
-                selection.layer_offset != 0,
-            );
-        }
-        enabled
-    }
-    fn coordinate(&self, field: Coordinate) -> u16 {
-        let at = scrolling_coordinate(field);
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn room_width(&self) -> u16 {
-        sm_game::gameplay_context::navigation(self).width
-    }
-    fn request(&self, selection: Selection, field: Request) -> u16 {
-        native_word(scrolling_parameter(selection, field), self)
-    }
-    fn store_request(&mut self, selection: Selection, field: Request, value: u16) {
-        set_native_word(scrolling_parameter(selection, field), value, self);
-    }
-    fn block(&self, source: u16, delta: u16) -> u16 {
-        native_word(
-            0x10000 + usize::from(source) + 2 * usize::from(delta >> 1),
-            self,
-        )
-    }
-    fn tile(&self, definition: usize, corner: usize) -> u16 {
-        let at = 0xa000 + definition * 8 + corner * 2;
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn store_scrolling(&mut self, word: usize, value: u16) {
-        let at = 0xc8c8 + word * 2;
-        let [low, high] = value.to_le_bytes();
-        self.compatibility_write_byte(at, low);
-        self.compatibility_write_byte(at + 1, high);
-    }
 }
 impl QueueAccess for crate::game::session_runtime::Runtime<'_> {
     fn queue_live_source(
