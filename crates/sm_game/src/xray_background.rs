@@ -81,8 +81,8 @@ fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
 fn write_block<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4], h: &mut R) {
     let tiles = h.session().room.terrain.tiles()[usize::from(tile)];
     for corner in (0..4).rev() {
-        let at = 0x4000 + usize::from(destination) + 2 * offsets[corner];
-        store_xray(h, at, &tiles[corner].to_le_bytes());
+        let offset = usize::from(destination) + 2 * offsets[corner];
+        store_xray(h, offset, &tiles[corner].to_le_bytes());
     }
 }
 
@@ -107,8 +107,8 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
             });
             let destination = row * 64 + if block < 16 { block * 2 } else { 1024 };
             for corner in (0..4).rev() {
-                let at = 0x4000 + 2 * (destination + corners[corner]);
-                game.screen_write_native_slice(Point::physical(at), tiles[corner]);
+                let point = Point::new(Role::Xray, 2 * (destination + corners[corner]));
+                game.screen_write_native_slice(point, tiles[corner]);
             }
             column += 2;
         }
@@ -215,8 +215,8 @@ fn write_neighbor<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 
                 [h.byte(source), h.byte(source + 1)]
             }
         };
-        let at = 0x4000 + usize::from(destination) + 2 * offset;
-        store_xray(h, at, &bytes);
+        let offset = usize::from(destination) + 2 * offset;
+        store_xray(h, offset, &bytes);
     }
 }
 
@@ -520,12 +520,15 @@ pub fn reveal_room_items<R: SessionView>(game: &mut R) {
     }
 }
 
+/// The X-ray background's work RAM alias ($7E:4000), for stores past the workspace.
+const XRAY_ALIAS: usize = 0x4000;
+
 /// Known owned overlay bytes use the single screen allocation; full native
 /// identities spilling outside it retain the existing Session alias protocol.
-fn store_xray<R: SessionView>(host: &mut R, at: usize, bytes: &[u8]) {
-    let point = Point::physical(at);
+fn store_xray<R: SessionView>(host: &mut R, offset: usize, bytes: &[u8]) {
+    let point = Point::new(Role::Xray, offset);
     match host.session_mut().publish_workspace_slice(point, bytes) {
         Ok(()) => {}
-        Err(_) => host.write_slice(at, bytes),
+        Err(_) => host.write_slice(XRAY_ALIAS + offset, bytes),
     }
 }
