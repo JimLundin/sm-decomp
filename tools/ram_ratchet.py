@@ -19,14 +19,13 @@ The engine inventory (Jim, 2026-11-02) also counts what the sm_game measure
 misses: address APIs (session_slot!, SlotAccess, native_word, write_slice_*),
 direct .ram() calls and unresolved word/byte methods in the target packages, and
 all RAM access in the legacy engine under sm/src/game. Completion means these
-reach zero too. Address APIs and raw calls may not rise above main's baseline;
-the other two are reported.
+reach zero too. None of these may rise above main's baseline (#245).
 
 Calls into crate::legacy_overflow (cycle_report kind legacy_overflow) are the
 original game's reads and stores past their tables, tagged
 LEGACY(original-overflow) and listed in docs/LEGACY.md. They are not address
-APIs (the module's own internals still count as their kinds); their count,
-engine_legacy_overflow_sites, is reported only.
+APIs (the module's own internals still count as their kinds); their count is
+engine_legacy_overflow_sites.
 
 engine_ram_export_lines (2026-11-04, docs/handoff/session-compare.md) counts
 the sm_game production lines whose only purpose is encoding the Session to RAM
@@ -35,7 +34,6 @@ actors/codec.rs and menu_window_encoding.rs (outside #[cfg(test)] items), and
 projection.rs's `Field::address` and `Decode` trait with its impls (whole
 items, attributes and doc comments included). It reaches 0 when verification
 owns the oracle's RAM decode and the engine exports no RAM (REVIEW's end state).
-It is advisory until it first falls, then strict.
 
 The code volume (2026-11-04, docs/VERIFY_PIPELINE.md "Code volume") comes from
 `sm_pipeline volume`: engine_logic_tokens and engine_data_tokens count lexer
@@ -85,17 +83,16 @@ BASELINE = {
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
     # converting counted sites into them is not a retirement, and the address
-    # decoding behind them slows every replay. The lexical unresolved-method and
-    # legacy-engine measures are reported only.
+    # decoding behind them slows every replay.
     "engine_ram_address_sites": 19,
     "engine_raw_ram_calls": 0,
-    "engine_unresolved_ram_methods": 981,
-    "legacy_engine_ram_sites": 320,
-    # Original-game overflow paths (LEGACY(original-overflow)), reported only.
-    # Advisory, rebaselined 2026-11-04: 61 -> 73. Every new site is an original-game
+    "engine_unresolved_ram_methods": 1032,
+    "legacy_engine_ram_sites": 321,  # 320 was set by hand; main 2fb64f221 measures 321
+    # Original-game overflow paths (LEGACY(original-overflow)).
+    # Rebaselined 2026-11-04: 61 -> 75. Every new site is an original-game
     # out-of-range access routed through legacy_overflow with a docs/LEGACY.md row
     # (HDMA objects past six, Crocomire heights, menu tables, helmet timer, Maw frees).
-    "engine_legacy_overflow_sites": 73,
+    "engine_legacy_overflow_sites": 75,
     # The Game boundary (Jim, 2026-11-03): each foreign call is a full Session
     # export and re-import; Game host impls are host traits served from the RAM
     # image; Session entries are leases opened from Game-hosted code. All three
@@ -107,10 +104,10 @@ BASELINE = {
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
     # gameplay_word! read and store typed Session-backed keys, not RAM, so
     # sm_game_ram_sites does not count them. They are still a word bag named
-    # after RAM words rather than domain fields; reported only.
-    "session_word_view_sites": 202,
+    # after RAM words rather than domain fields.
+    "session_word_view_sites": 204,
     # The Session <-> RAM codec in sm_game (docs/handoff/session-compare.md).
-    # First measured on 0b19d8a24; advisory until it first falls, then strict.
+    # First measured on 0b19d8a24.
     "engine_ram_export_lines": 4620,
     # Code volume (sm_pipeline volume), first measured on 7bf8f9f51. Advisory.
     "engine_logic_tokens": 1225258,
@@ -118,9 +115,9 @@ BASELINE = {
     "engine_traits": 338,
     "engine_blanket_impls": 87,
 }
-ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
-            "engine_legacy_overflow_sites", "session_word_view_sites",
-            "engine_ram_export_lines", "engine_logic_tokens", "engine_data_tokens",
+# Jim, 2026-11-04 (#245): the remaining RAM measures may not rise, rebaselined on 2fb64f221 as CI
+# measured them. A deliberate rise raises its baseline by hand in the same PR, and the PR says why.
+ADVISORY = {"production_lines", "engine_logic_tokens", "engine_data_tokens",
             "engine_traits", "engine_blanket_impls"}
 VOLUME = ("engine_logic_tokens", "engine_data_tokens", "engine_traits", "engine_blanket_impls")
 PIPELINE = os.path.join("crates", "sm_tools", "src", "bin", "sm_pipeline", "main.rs")
