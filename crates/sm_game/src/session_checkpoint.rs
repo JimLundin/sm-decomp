@@ -1279,6 +1279,7 @@ checkpoint_fields!(checkpoint_player, checkpoint_read_player, Player,
     movement_and_facing: checkpoint_word/checkpoint_read_word, grapple: checkpoint_word/checkpoint_read_word,
     movement_handler: checkpoint_movement_mode/checkpoint_read_movement_mode,
     shine_timer: checkpoint_word/checkpoint_read_word, shine_tick: checkpoint_word/checkpoint_read_word,
+    health_warning: checkpoint_word/checkpoint_read_word,
     palette_frame: checkpoint_word/checkpoint_read_word, special_palette_flags: checkpoint_word/checkpoint_read_word,
     contact: checkpoint_contact/checkpoint_read_contact,
     invincibility: checkpoint_word/checkpoint_read_word, periodic_damage: checkpoint_word/checkpoint_read_word,
@@ -1308,7 +1309,7 @@ impl Player {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("player checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMPLAYER\x08".as_slice());
+        let mut bytes = Vec::from(b"SMPLAYER\x09".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1320,7 +1321,7 @@ impl Player {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMPLAYER\x08" {
+        if read.bytes(9)? != b"SMPLAYER\x09" {
             return Err("unsupported player checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
@@ -2169,6 +2170,7 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     mode7_irq: checkpoint_word/checkpoint_read_word, ceres_hdma_table: checkpoint_word/checkpoint_read_word,
     background_size: checkpoint_word/checkpoint_read_word,
     unpause_queue_tail: checkpoint_word/checkpoint_read_word,
+    level_data_size: checkpoint_word/checkpoint_read_word,
     main_variables: checkpoint_words/audio_words, pause_hooks: checkpoint_words/audio_words,
     scrolls: checkpoint_words/audio_words,
     camera: checkpoint_camera/checkpoint_read_camera);
@@ -2220,7 +2222,7 @@ impl Room {
         }
         let topology = checkpoint_world_binding(binding)?;
         checkpoint_validate_room(self, binding)?;
-        let mut bytes = Vec::from(b"SMROOMS\x0c".as_slice());
+        let mut bytes = Vec::from(b"SMROOMS\x0d".as_slice());
         let source = observation_binding(metadata);
         checkpoint_count(&mut bytes, source.len());
         bytes.extend_from_slice(&source);
@@ -2235,7 +2237,7 @@ impl Room {
         expected: &world::WorldBinding,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMROOMS\x0c" {
+        if read.bytes(8)? != b"SMROOMS\x0d" {
             return Err("unsupported room checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)

@@ -664,8 +664,8 @@ fn message_box_round_trips_every_word() {
 }
 
 /// The room's FX blending configurations, the Ceres status, the mode 7
-/// interrupt flag, the Ceres haze's HDMA table word, the size of BG2 and
-/// Kraid's sinking unpause queue tail.
+/// interrupt flag, the Ceres haze's HDMA table word, the size of BG2,
+/// Kraid's sinking unpause queue tail and the level data's size.
 fn room_state_lanes() -> Vec<Lane> {
     vec![
         (0x1982, 0, |s, _| &mut s.room.fx_blending),
@@ -676,6 +676,7 @@ fn room_state_lanes() -> Vec<Lane> {
         (0x07eb, 0, |s, _| &mut s.room.ceres_hdma_table),
         (0x098e, 0, |s, _| &mut s.room.background_size),
         (0x0780, 0, |s, _| &mut s.room.unpause_queue_tail),
+        (0x10000, 0, |s, _| &mut s.room.level_data_size),
     ]
 }
 
@@ -1209,12 +1210,14 @@ fn player_spare_words_round_trip_every_word() {
     check_owner("player spare words", &player_spare_lanes());
 }
 
-/// $0A5E, which nothing reads, and $0A8A, the demo's input frame count that
-/// the X-ray and suit pickup HDMA tables overlay.
+/// $0A5E, which nothing reads, $0A8A, the demo's input frame count that
+/// the X-ray and suit pickup HDMA tables overlay, and $0A6A, the low-health
+/// warning flag.
 fn player_spare_lanes() -> Vec<Lane> {
     vec![
         (0x0a5e, 0, (|s, _| &mut s.player.spare_0a5e) as Field),
         (0x0a8a, 0, (|s, _| &mut s.player.demo.input_frames) as Field),
+        (0x0a6a, 0, (|s, _| &mut s.player.health_warning) as Field),
     ]
 }
 

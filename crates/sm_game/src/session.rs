@@ -417,6 +417,10 @@ pub struct Player {
     pub grapple: u16,
     pub movement_handler: crate::player_transitions::state::MovementMode,
     pub shine_timer: u16,
+    /// $0A6A, set while the low-health warning sound is on: the low-health
+    /// check sets it when Samus's health drops below 31 and clears it when
+    /// her health is 31 or more.
+    pub health_warning: u16,
     pub shine_tick: u16,
     pub palette_frame: u16,
     pub special_palette_flags: u16,
@@ -576,6 +580,10 @@ pub struct Room {
     /// Where Kraid's sinking unpause hook queues its row erasures ($7E:0780):
     /// the tilemap queue's tail when the hook starts erasing.
     pub unpause_queue_tail: u16,
+    /// The level data's size in bytes ($7F:0000), which the level data's
+    /// decompression stores ahead of the level words and the plane copies
+    /// size the behaviour and layer-2 planes by.
+    pub level_data_size: u16,
     /// The room main code's variables at $07E1..$07E9, as the little-endian
     /// words of the byte image. Rooms give them their own meanings.
     pub main_variables: [u16; 4],
@@ -715,6 +723,7 @@ impl Room {
             ceres_hdma_table: 0,
             background_size: 0,
             unpause_queue_tail: 0,
+            level_data_size: 0,
             main_variables: [0; 4],
             pause_hooks: [0; 3],
             scrolls: [0; 25],
