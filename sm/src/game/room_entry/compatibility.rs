@@ -194,22 +194,18 @@ impl EntryEffects for Runtime<'_> {
         self.owned_player_call(|runtime| sm_game::palette_effects::fading::all(12, runtime))
     }
     fn wait(&mut self, cause: EntryWait) -> u8 {
-        self.foreign(|game| unsafe {
-            match cause {
-                EntryWait::Nmi => crate::game::display_refresh::wait(true, game),
-                EntryWait::NoUpdate => crate::game::display_refresh::wait(false, game),
-                EntryWait::Music => {
-                    game::music::wait_for_music(game, |effect, game| match effect {
-                        game::music::MusicWaitEffect::EnableNmi(enabled) => {
-                            game::display_refresh::enable(enabled, game)
-                        }
-                        game::music::MusicWaitEffect::AdvanceQueue => {
-                            game::music::handle_music_queue(game)
-                        }
-                    })
-                }
-                EntryWait::Mechanisms => room_mechanisms::run_door(game),
-            }
+        // Each wait runs on the lease, with the observations refreshed on entry
+        // and on return as the former foreign call left them. An NMI wait is the
+        // frame display's acknowledgment and pending bytes; the door's room
+        // mechanisms run on this lease in place of one the game opened.
+        self.owned_player_call(|runtime| match cause {
+            EntryWait::Nmi => sm_game::display_refresh::wait(true, runtime),
+            EntryWait::NoUpdate => sm_game::display_refresh::wait(false, runtime),
+            EntryWait::Music => runtime.wait_for_music(),
+            EntryWait::Mechanisms => game::session_runtime::run_mechanisms_in(
+                runtime,
+                room_mechanisms::host::CallerContext::DoorTransition,
+            ),
         })
     }
     fn sfx_empty(&mut self, queue: SfxQueue) -> bool {

@@ -53,9 +53,6 @@ pub(crate) unsafe fn close_door(game: &mut Game) {
 pub(crate) fn run(runtime: &mut Runtime<'_>) -> u8 {
     session_runtime::run_mechanisms_in(runtime, host::CallerContext::Gameplay)
 }
-pub(crate) unsafe fn run_door(game: &mut Game) -> u8 {
-    session_runtime::run_mechanisms(game, host::CallerContext::DoorTransition)
-}
 pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
     let mut h = Runtime::new(game);
     let flags = h.session().mechanisms.flags;

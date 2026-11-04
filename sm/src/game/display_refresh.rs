@@ -6,7 +6,7 @@ use crate::rtl::{MDMAEN, write_reg};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
-pub(crate) use sm_game::display_refresh::{fade, set_blank, set_native_word, wait};
+pub(crate) use sm_game::display_refresh::{fade, set_blank, set_native_word};
 
 /// The native-order word at RAM `offset` through Game's compatibility
 /// projection: the scrolling requests and the level data blocks.
