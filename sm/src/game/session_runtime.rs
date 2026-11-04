@@ -1977,7 +1977,7 @@ impl Runtime<'_> {
         } else if routine == 10795325 {
             self.owned_call(actors::crocomire_reactions::touch);
         } else if !self.bank_a9_routine(routine) && !species::lease_touch(routine, self) {
-            self.foreign(|game| species::touch(routine, game));
+            self.empty_or_unreachable(species::EMPTY_TOUCHES.contains(&routine));
         }
     }
     pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
@@ -1998,7 +1998,18 @@ impl Runtime<'_> {
         } else if routine == 10795525 {
             self.owned_call(actors::crocomire_reactions::hit);
         } else if !self.bank_a9_routine(routine) && !species::lease_shot(routine, self) {
-            self.foreign(|game| species::shot(routine, argument, game));
+            self.empty_or_unreachable(species::EMPTY_SHOTS.contains(&routine));
+        }
+    }
+    /// What the game's table did with a routine no lease arm runs: an empty one
+    /// returned at once, and that keeps the former foreign call's observation
+    /// refresh; any other was the original's unreachable failure, which reads
+    /// no game state.
+    fn empty_or_unreachable(&mut self, empty: bool) {
+        if empty {
+            self.owned_player_call(|_| ());
+        } else {
+            sm_game::diagnostics::Fatal::unreachable(self);
         }
     }
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {

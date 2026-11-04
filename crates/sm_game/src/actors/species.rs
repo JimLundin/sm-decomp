@@ -8,6 +8,7 @@
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
 use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorAccess as _};
+use crate::actors::api::DeathHandling;
 use crate::actors::gunship::Host as _;
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, LeaseScope, Shot};
 use crate::actors::{
@@ -63,31 +64,23 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         return;
     }
     match ea {
-        10518563 => game.contact_reaction(Death::Finalize),
-        10780707 => game.contact_reaction(Death::Finalize),
-        10795344 => (),
-        10846284 => (),
-        // Ridley's contact leaves the death pending.
-        10936153 => game.contact_reaction(Death::LeavePending),
-        10977356 => (),
+        ea if EMPTY_TOUCHES.contains(&ea) => (),
         11001237 => game.phantoon(phantoon::Callback::Touch),
-        11122117 => (),
-        11700076 => space_pirates::touch(game),
         _ => game.unknown_routine(),
     }
 }
 
-/// Shot reactions whose routines still run in the compatibility crate.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NativeShot {
-    Dud,
-}
+/// The contact reactions that return at once: $A4:B950, $A5:804C, $A7:804C
+/// and $A9:B5C5.
+pub const EMPTY_TOUCHES: [u32; 4] = [10795344, 10846284, 10977356, 11122117];
+
+/// The shot reactions that return at once.
+pub const EMPTY_SHOTS: [u32; 6] = [10649676, 10846284, 10911820, 10977356, 10982581, 11192769];
 
 /// What the shot reactions need beyond their actors' own hosts.
 pub trait ShotHost:
     SpeciesHost + ActorRuntime + LeaseActors + space_pirates::Pirates + torizo::Ai + phantoon::Dispatch
 {
-    fn native_shot(&mut self, shot: NativeShot);
 }
 
 /// An enemy species' shot reaction, keyed by its address; `_j` is the projectile, which none of them reads.
@@ -96,20 +89,8 @@ pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
         return;
     }
     match ea {
-        10518573 => game.shot_reaction(Shot::Finalize),
-        10846278 => game.native_shot(NativeShot::Dud),
-        10649676 => (),
-        10780717 => game.shot_reaction(Shot::Finalize),
-        10846253 => game.shot_reaction(Shot::Finalize),
-        10846284 => (),
-        10911820 => (),
-        10977356 => (),
-        10982581 => (),
+        ea if EMPTY_SHOTS.contains(&ea) => (),
         11001243 => game.phantoon(phantoon::Callback::Shot),
-        11192769 => (),
-        11700089 => space_pirates::shot(game),
-        11700168 => space_pirates::check_shot(game),
-        11700286 => space_pirates::reflect(game),
         _ => game.unknown_routine(),
     }
 }
@@ -592,6 +573,14 @@ pub fn lease_touch<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10670988 => game.with_lease(|runtime| oum::touch(false, runtime)),
         11192695 => game.with_lease(torizo::touch),
         10851818 => game.with_lease(draygon_death::touch),
+        10518563 | 10780707 => game.with_lease(|runtime| {
+            crate::actors::combat::contact_reaction(runtime, DeathHandling::Finalize)
+        }),
+        // Ridley's contact leaves the death pending.
+        10936153 => game.with_lease(|runtime| {
+            crate::actors::combat::contact_reaction(runtime, DeathHandling::LeavePending)
+        }),
+        11700076 => game.with_lease(space_pirates::touch_on),
         _ => return false,
     }
     true
@@ -605,6 +594,16 @@ pub fn lease_shot<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         11192700 => game.with_lease(torizo::shot),
         11192770 => game.with_lease(torizo::standing_shot),
         10851824 => game.with_lease(draygon_death::shot),
+        10518573 | 10780717 | 10846253 => game.with_lease(|runtime| {
+            crate::actors::combat::shot_reaction(
+                runtime,
+                crate::actors::api::ShotHandling::Finalize,
+            )
+        }),
+        10846278 => game.with_lease(crate::actors::combat::create_dud),
+        11700089 => game.with_lease(space_pirates::shot_on),
+        11700168 => game.with_lease(space_pirates::check_shot_on),
+        11700286 => game.with_lease(space_pirates::reflect_on),
         _ => return false,
     }
     true

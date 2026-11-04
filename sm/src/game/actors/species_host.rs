@@ -35,13 +35,6 @@ impl sm_game::actors::species::SpeciesHost for Game {
 
 impl sm_game::actors::species::TouchHost for Game {}
 
-impl sm_game::actors::species::ShotHost for Game {
-    fn native_shot(&mut self, shot: sm_game::actors::species::NativeShot) {
-        use sm_game::actors::species::NativeShot::*;
-        match shot {
-            Dud => api::create_dud(&mut Runtime::new(self)),
-        }
-    }
-}
+impl sm_game::actors::species::ShotHost for Game {}
 
 impl sm_game::actors::species::DrawHookHost for Game {}

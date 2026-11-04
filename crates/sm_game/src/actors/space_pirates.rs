@@ -8,7 +8,7 @@ use crate::actors::slot_view::{SlotState, slot_view};
 use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects;
 use crate::enemy_script::EnemyScript;
-use crate::player_projectiles::{access::shot, host::Host as _};
+use crate::player_projectiles::access::shot;
 use crate::ram::CompatibilityRam;
 use crate::session_access::SessionAccess;
 use crate::sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn};
@@ -865,25 +865,26 @@ fn damage<R: PirateLease>(runtime: &mut R) {
     }
 }
 
-pub fn touch<G: Pirates + ?Sized>(game: &mut G) {
-    let mut runtime = game.lease();
-    if runtime.resolve_actor(current(&runtime), Native).frozen == 0 {
-        combat::contact_reaction(&mut runtime, api::DeathHandling::Finalize);
+/// Enemy touch - space pirate ($B2:876C), on the actor's lease.
+pub fn touch_on<R: PirateLease>(runtime: &mut R) {
+    if runtime.resolve_actor(current(runtime), Native).frozen == 0 {
+        combat::contact_reaction(runtime, api::DeathHandling::Finalize);
     }
 }
 
-pub fn shot<G: Pirates + ?Sized>(game: &mut G) {
-    let mut runtime = game.lease();
-    if runtime.resolve_actor(current(&runtime), Native).definition == GOLD_NINJA {
-        damage(&mut runtime);
+/// Enemy shot - space pirate ($B2:8779), on the actor's lease.
+pub fn shot_on<R: PirateLease>(runtime: &mut R) {
+    if runtime.resolve_actor(current(runtime), Native).definition == GOLD_NINJA {
+        damage(runtime);
     } else {
-        combat::shot_reaction(&mut runtime, api::ShotHandling::Finalize);
+        combat::shot_reaction(runtime, api::ShotHandling::Finalize);
     }
 }
 
-pub fn check_shot<G: Pirates + ?Sized>(game: &mut G) {
-    let mut runtime = game.lease();
-    if runtime.resolve_actor(current(&runtime), Native).definition == GOLD_NINJA {
+/// Enemy shot - space pirate, reflecting what the gold ninja pirate is immune
+/// to ($B2:87C8), on the actor's lease.
+pub fn check_shot_on<R: PirateLease>(runtime: &mut R) {
+    if runtime.resolve_actor(current(runtime), Native).definition == GOLD_NINJA {
         let raw = runtime
             .session()
             .room
@@ -894,7 +895,7 @@ pub fn check_shot<G: Pirates + ?Sized>(game: &mut G) {
         if class >= 0x300 {
             return;
         }
-        let definition = runtime.resolve_actor(current(&runtime), Native).definition;
+        let definition = runtime.resolve_actor(current(runtime), Native).definition;
         let vulnerability = runtime
             .actor_legacy_record(0xa0, definition)
             .word(DEFINITION_VULNERABILITY);
@@ -913,15 +914,17 @@ pub fn check_shot<G: Pirates + ?Sized>(game: &mut G) {
             .byte(field)
             & 15;
         if matches!(coefficient, 0 | 15) {
-            reflect_shot(&mut runtime);
+            reflect_shot(runtime);
             return;
         }
     }
-    damage(&mut runtime);
+    damage(runtime);
 }
 
-pub fn reflect<G: Pirates + ?Sized>(game: &mut G) {
-    reflect_shot(&mut game.lease());
+/// Enemy shot - space pirate, the gold ninja's reflection ($B2:883E), on the
+/// actor's lease.
+pub fn reflect_on<R: PirateLease>(runtime: &mut R) {
+    reflect_shot(runtime);
 }
 
 fn reflect_shot<R: PirateLease>(runtime: &mut R) {
@@ -1053,8 +1056,8 @@ fn advance<G: Pirates + ?Sized>(walking: bool, game: &mut G) {
 
 pub fn dispatch_ai<G: Pirates + ?Sized>(ea: u32, game: &mut G) {
     match ea {
-        routine::TOUCH => touch(game),
-        routine::SHOT => shot(game),
+        routine::TOUCH => touch_on(&mut game.lease()),
+        routine::SHOT => shot_on(&mut game.lease()),
         routine::WALKING_INITIALIZATION => initialize_walking(game),
         routine::WALKING_MAIN_AI => advance(true, game),
         routine::FROZEN_AI => combat::select_frozen_ai(&mut game.lease()),
