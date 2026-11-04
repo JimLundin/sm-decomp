@@ -1,16 +1,16 @@
 //! The Session-space comparison (docs/handoff/session-compare.md).
 //!
 //! Each paired frame, the verifier decodes the oracle's RAM into a Session
-//! and hands it over with the engine's Session, both read through the same
-//! codec. This compares them field by field and names the first differing
-//! field path. It is report-only: the whole-RAM comparison stays
-//! authoritative, and nothing here sets a frame's pass or fail.
+//! and hands it over with the engine's own Session, compared directly, with
+//! the fields RAM cannot carry (`Uncarried`) taken from the oracle. This
+//! compares them field by field and names the first differing field path.
+//! It is report-only: the whole-RAM comparison stays authoritative, and
+//! nothing here sets a frame's pass or fail.
 //!
-//! Both Sessions are the frame's end. The engine's last lease ends before
-//! Game-side code finishes the frame (the NMI's tilemap flush, the
-//! controller latch), so the verifier compares the Session the engine's next
-//! lease takes up, and counts the fields written after the last lease
-//! separately: they are timing, not divergence.
+//! Both Sessions are the frame's end. Game-side code can still write RAM
+//! after the engine's last lease (settlement), so the verifier compares the
+//! Session the engine's next lease takes up, and counts the fields written
+//! after the last lease separately: they are timing, not divergence.
 //!
 //! Console text names ticks, field paths and RAM addresses, never values,
 //! because values can be derived from the ROM.
@@ -292,6 +292,70 @@ fn first_differing_path(root: &str, engine: &str, oracle: &str) -> String {
     open.into_iter().map(|(label, _)| label).collect()
 }
 
+/// The Session fields RAM cannot carry (docs/handoff/session-compare.md, slice
+/// 4). The engine's Session is compared directly and the oracle's is decoded
+/// from its RAM, so the oracle's value of these fields is the decoder's, and
+/// a difference in them means nothing: the comparison gives the engine's
+/// Session the oracle's value of each before comparing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Uncarried {
+    /// `actor_identity`: the actors' lineage and palette residency, which
+    /// the engine keeps beside the actor slots and RAM never holds.
+    ActorIdentity,
+    /// `enemy_projectiles.spawn`'s rectangle, variant, point and drop
+    /// definition: the spawn context Game holds between leases
+    /// (`export_native_spawn`), which no RAM byte carries.
+    NativeSpawn,
+    /// `control.primary` and `control.secondary` ($0612..0613): snesrev's
+    /// coroutine state, which a faithful oracle never writes.
+    Coroutines,
+    /// `messages.delay` and `room.unpause_queue_tail` ($077E..0781): the
+    /// engine keeps them in snesrev's counter RAM, which the original leaves
+    /// unused.
+    SnesrevCounters,
+}
+
+impl Uncarried {
+    pub const ALL: [Self; 4] = [
+        Self::ActorIdentity,
+        Self::NativeSpawn,
+        Self::Coroutines,
+        Self::SnesrevCounters,
+    ];
+
+    /// Give `engine` the oracle's value of the field.
+    pub fn take(self, engine: &mut Session, oracle: &Session) {
+        match self {
+            Self::ActorIdentity => engine.actor_identity.clone_from(&oracle.actor_identity),
+            Self::NativeSpawn => {
+                let (to, from) = (
+                    &mut engine.enemy_projectiles.spawn,
+                    &oracle.enemy_projectiles.spawn,
+                );
+                to.rectangle = from.rectangle;
+                to.variant = from.variant;
+                to.point = from.point;
+                to.drop_definition = from.drop_definition;
+            }
+            Self::Coroutines => {
+                *engine.control.primary_mut() = *oracle.control.primary();
+                *engine.control.secondary_mut() = *oracle.control.secondary();
+            }
+            Self::SnesrevCounters => {
+                engine.messages.delay = oracle.messages.delay;
+                engine.room.unpause_queue_tail = oracle.room.unpause_queue_tail;
+            }
+        }
+    }
+
+    /// Give `engine` the oracle's value of every field RAM cannot carry.
+    pub fn take_all(engine: &mut Session, oracle: &Session) {
+        for field in Self::ALL {
+            field.take(engine, oracle);
+        }
+    }
+}
+
 /// Why a paired frame had no Session-space comparison.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Skip {
@@ -376,7 +440,8 @@ impl FieldTicks {
     }
 }
 
-/// Which Work RAM bytes the Session's encoder wrote over a replay: slice 2's
+/// Which Work RAM bytes the Session's encoder writes (one Session per replay marks
+/// them; its spans do not depend on state): slice 2's
 /// byte-to-field coverage map. A byte is decoded (the encoder writes it for
 /// some Session field), unowned (a listed range the comparison does not own,
 /// with its reason), both, held (an engine owner outside the Session codec
@@ -392,6 +457,11 @@ impl Coverage {
     pub const BYTES: usize = 0x20000;
     /// How many ranges of each kind the summary names.
     const NAMED: usize = 12;
+
+    /// Whether any span has been marked.
+    pub fn is_marked(&self) -> bool {
+        !self.encoded.is_empty()
+    }
 
     /// Mark a span the encoder wrote.
     pub fn mark(&mut self, span: Range<usize>) {
@@ -556,7 +626,7 @@ pub struct SessionCompare {
     divergence: FieldTicks,
     /// The fields written after the engine's last lease, before the frame's end.
     after_lease: FieldTicks,
-    /// The encoder's spans over the replay.
+    /// The encoder's spans, marked from the replay's first engine Session.
     pub coverage: Coverage,
     /// This Tick's result, until the RAM verdict arrives.
     pending: Option<bool>,
@@ -777,6 +847,31 @@ mod tests {
         for (group, (before, after)) in Group::ALL.iter().zip(first.iter().zip(&changed)) {
             assert_eq!(before == after, *group != Group::Player, "{group:?}");
         }
+    }
+
+    #[test]
+    fn uncarried_fields_take_the_oracles_value() {
+        let blank = || {
+            sm_game::session_encoding::decode(
+                &|_| 0,
+                0x20000,
+                sm_game::room_entry::world::WorldBinding::canonical_legacy(),
+            )
+        };
+        let oracle = blank();
+        let mut engine = blank();
+        engine.enemy_projectiles.spawn.variant = 3;
+        engine.enemy_projectiles.spawn.point.x = 5;
+        *engine.control.primary_mut() = 2;
+        engine.messages.delay = 1;
+        engine.room.unpause_queue_tail = 4;
+        engine.player.x = 6;
+        Uncarried::take_all(&mut engine, &oracle);
+        let still = differing(&engine, &oracle);
+        assert_eq!(
+            still.iter().map(|&index| FIELDS[index]).collect::<Vec<_>>(),
+            ["player"]
+        );
     }
 
     #[test]

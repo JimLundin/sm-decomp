@@ -265,9 +265,9 @@ pub(crate) fn observe(game: &mut Game) -> Option<bool> {
     Some(diverged)
 }
 
-/// Compare the paired frame's Sessions at the frame's end: the engine's, the
-/// Session its next lease takes up, and the oracle's result decoded from its
-/// RAM. Report-only; the RAM comparison decides.
+/// Compare the paired frame's Sessions at the frame's end: the engine's own,
+/// the Session its next lease takes up, and the oracle's result decoded from
+/// its RAM. Report-only; the RAM comparison decides.
 pub(crate) fn observe_session(game: &mut Game) {
     let Some(compare) = game
         .observation
@@ -297,13 +297,15 @@ pub(crate) fn observe_session(game: &mut Game) {
     };
     let source = frame.source();
     let world = game.world();
-    let sessions = session::oracle(&game.g_snapshot_theirs.ram, world).zip(session::engine(
-        &frame,
-        &game.g_snapshot_mine.ram,
-        &game.g_snapshot_theirs.ram,
-        world,
-        &mut coverage,
-    ));
+    if !coverage.is_marked()
+        && let Some(session) = frame.session()
+    {
+        session::mark_coverage(session, &mut coverage);
+    }
+    let sessions = session::oracle(&game.g_snapshot_theirs.ram, world).and_then(|oracle| {
+        let engine = session::engine(&frame, &game.g_snapshot_mine.ram, &oracle, world)?;
+        Some((oracle, engine))
+    });
     let tick = game.snes_frame_counter;
     let (mine, theirs) = (&game.g_snapshot_mine.ram, &game.g_snapshot_theirs.ram);
     let Some(observer) = game.observation.as_mut() else {
