@@ -292,7 +292,11 @@ pub fn extend_beam(
         quarter_velocity(h, 2, velocity.y),
     ];
     let mut result = 0;
-    for _ in 0..4 {
+    // $94:A89D: four substeps, counted down in $0D8A.
+    h.session_mut()
+        .game_loop
+        .store_temporary(crate::game_loop::Temporary::Counter, 4);
+    for remaining in (0..4).rev() {
         for (axis, &speed) in velocity.iter().enumerate() {
             let offset = &mut h.session_mut().player.grapple_offset[axis];
             let sum =
@@ -326,6 +330,9 @@ pub fn extend_beam(
             endpoint.y = (endpoint.y & 0xfff0) | 8;
             return result;
         }
+        h.session_mut()
+            .game_loop
+            .store_temporary(crate::game_loop::Temporary::Counter, remaining);
     }
     result
 }

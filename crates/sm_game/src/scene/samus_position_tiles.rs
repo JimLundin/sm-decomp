@@ -31,6 +31,12 @@ pub trait PositionHost {
     fn camera_y(&mut self) -> Result<u16, Self::Error>;
     fn set_body_x(&mut self, value: u16) -> Result<(), Self::Error>;
     fn set_body_y(&mut self, value: u16) -> Result<(), Self::Error>;
+    /// $90:8C27/$8C2D: the rotating Ceres elevator keeps Samus's position in
+    /// $0D82/$0D84 while it draws her projected. A host without the Session
+    /// has nowhere to keep it.
+    fn keep_rotating_position(&mut self, _x: u16, _y: u16) -> Result<(), Self::Error> {
+        Ok(())
+    }
 }
 pub fn default_landing_bytes(offset: usize) -> [u8; 2] {
     static LANDING: [u8; 16] = [3, 6, 0, 0, 3, 6, 0, 0, 3, 3, 6, 0, 3, 3, 6, 0];
@@ -103,6 +109,7 @@ pub fn sprite_position<H: PositionHost>(
     }
     let old_x = host.player_x()?;
     let old_y = host.player_y()?;
+    host.keep_rotating_position(old_x, old_y)?;
     let (x, y) = host.project(old_x, old_y)?;
     host.set_player_x(x)?;
     host.set_player_y(y)?;

@@ -47,6 +47,34 @@ impl GameLoop {
     pub fn is_initialized(&self) -> bool {
         self.initialized
     }
+    /// Stores a temporary in the saved button configuration's word, as the
+    /// grapple and the rotating Ceres elevator leave it there.
+    pub fn store_temporary(&mut self, temporary: Temporary, value: u16) {
+        self.saved_bindings[temporary as usize] = value;
+    }
+}
+/// The temporaries the original keeps in the saved button configuration
+/// ($7E:0D82..$0D8F), one word each, in address order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Temporary {
+    /// $0D82: the grapple sample's angle * 2 ($94:A957's input), the
+    /// connecting grapple's jump target ($9B:B9B5), or Samus's X position the
+    /// rotating Ceres elevator restores ($90:8C27, $90:BC46).
+    Angle,
+    /// $0D84: the grapple sample's distance from the beam end, or Samus's Y
+    /// position the rotating Ceres elevator restores.
+    Distance,
+    /// $0D86: the swing's next beam end angle * 2 ($94:AD5E, $AE2E).
+    NewAngle,
+    /// $0D88: the swing's target beam end angle * 2 ($94:AD49, $AE19).
+    TargetAngle,
+    /// $0D8A: the block collision's remaining substeps ($94:A89D) or the
+    /// length change's new beam length ($94:AC6E, $ACCB).
+    Counter,
+    /// $0D8C: the length change's target beam length ($94:AC53, $ACB0).
+    TargetLength,
+    /// $0D8E: the length change's Samus front boundary offset ($94:AC59, $ACB6).
+    FrontOffset,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Word {

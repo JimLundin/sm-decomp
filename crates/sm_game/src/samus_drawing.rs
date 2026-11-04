@@ -242,6 +242,13 @@ impl<A: Authority> samus_position_tiles::PositionHost for LeaseBody<'_, A> {
         self.0.session_mut().player.y = value;
         Ok(())
     }
+    fn keep_rotating_position(&mut self, x: u16, y: u16) -> Result<(), Infallible> {
+        use crate::game_loop::Temporary;
+        let loop_state = &mut self.0.session_mut().game_loop;
+        loop_state.store_temporary(Temporary::Angle, x);
+        loop_state.store_temporary(Temporary::Distance, y);
+        Ok(())
+    }
     fn project(&mut self, x: u16, y: u16) -> Result<(u16, u16), Infallible> {
         let point = crate::cinematic::project_cinematic_point_reads(
             crate::geometry::Point { x, y },
