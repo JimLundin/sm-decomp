@@ -72,16 +72,6 @@ pub trait Host:
     fn resume_boot(&mut self) -> u8;
     /// The original's failure on an unknown frame state byte.
     fn fail_frame_state(&mut self);
-    /// The original's warning when a pass leaves continuation bytes set.
-    fn report_broken_coroutine(&mut self, state: [u8; 4]);
-    fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
-    fn debug_game_over_menu(&mut self);
-    /// Emit this frame's queued gameplay sound effects.
-    fn advance_sound_effects(&mut self);
-
-    // Demo phase.
-    fn disable_scanline_irq(&mut self);
-    fn enable_scanline_irq(&mut self, immediate: bool);
 }
 
 /// The gameplay pass phases the compatibility runtime runs on a lease the pass
@@ -138,6 +128,8 @@ pub trait PassLease:
     fn load_title_sequence_graphics(&mut self);
     /// Set up Samus for the initial room load.
     fn initialize_player(&mut self);
+    /// The debug game over state's frame: the original's failed assertion.
+    fn debug_game_over_menu(&mut self);
     /// The room's pause hook, as the pause screen opens.
     fn pause_hook(&mut self, hook: PauseHook);
     /// The room's unpause hook, as the pause screen closes; nonzero when it yields.
@@ -370,42 +362,20 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 drop(lease);
                 break 'frame returned;
             }
-            // A cinematic, door transition, death, demo or room load state's
-            // frame runs on this lease too, to the frame's end.
-            if let Some(&entry) = entry
-                && runs_on_lease(entry)
-            {
+            // Every other state's frame runs on this lease too, to the frame's
+            // end.
+            if let Some(&entry) = entry {
                 let returned = lease_frame::<H>(entry, &mut lease);
                 drop(lease);
                 break 'frame returned;
             }
         }
-        let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
+        match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
             // A pass state's frame ends on its pass's last lease.
-            Advance(entry) if runs_pass(entry) => break 'frame advance(entry, game),
+            Advance(entry) if runs_pass(entry) => advance(entry, game),
             // A lease state resuming after a yield opens the frame's lease here.
-            entry if runs_on_lease(entry) => {
-                break 'frame lease_frame::<H>(entry, &mut game.runtime());
-            }
-            Advance(entry) => advance(entry, game),
-            Native(_) | Door(_) | BeginDeath | DeathPose | FlashDeath | ExplodeSuit | DemoReset
-            | Demo | Options | FileMenu | MapMenu | GameOver | PauseFadeIn => {
-                unreachable!("a lease state")
-            }
-            Null => 0,
-            Unused => {
-                game.rtl_unreachable();
-                0
-            }
-            Debug => {
-                game.debug_game_over_menu();
-                0
-            }
-        };
-        if returned != 0 {
-            break 'frame returned;
+            entry => lease_frame::<H>(entry, &mut game.runtime()),
         }
-        finish_state(game)
     };
     if returned == 0 {
         game.store_display_control_byte(DisplayField::NmiPending, 1, Store::Named);
@@ -424,38 +394,6 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_outer_continuation(resume);
     }
     returned
-}
-
-/// The states whose frame runs on the frame's first lease, up to the frame's
-/// end.
-fn runs_on_lease(entry: StateEntry) -> bool {
-    matches!(
-        entry,
-        Native(_)
-            | Door(_)
-            | BeginDeath
-            | DeathPose
-            | FlashDeath
-            | ExplodeSuit
-            | Advance(
-                Entry::Initialize
-                    | Entry::PauseSetup
-                    | Entry::Paused
-                    | Entry::UnpauseSetup
-                    | Entry::UnpauseFadeOut
-                    | Entry::GameOverFadeOut
-                    | Entry::TimeUpExit
-                    | Entry::DemoStop
-                    | Entry::DemoNext
-            )
-            | DemoReset
-            | Demo
-            | Options
-            | PauseFadeIn
-            | GameOver
-            | MapMenu
-            | FileMenu
-    )
 }
 
 /// A lease state's frame on `lease`, then the frame's end once the state
@@ -495,26 +433,17 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         MapMenu => map_menu::advance(lease),
         GameOver => game_over::advance(lease),
         PauseFadeIn => pause_controls::fade_in(lease),
-        _ => unreachable!("not a lease state"),
+        Null => 0,
+        Unused => {
+            crate::menus::host::MenuRuntime::rtl_unreachable(lease);
+            0
+        }
+        Debug => {
+            lease.debug_game_over_menu();
+            0
+        }
+        Advance(_) => unreachable!("a pass state"),
     }
-}
-
-/// The frame's end on Game, after a completed state: the sound effects, the
-/// sprite table's finish, the joypad filter word and the continuation check.
-fn finish_state<H: Host>(game: &mut H) -> CoroutineRet {
-    game.advance_sound_effects();
-    sprite_drawing::finish_frame(game);
-    filter_joypad(game);
-    let state = [
-        game.resume_point(),
-        game.secondary_continuation(),
-        game.demo_phase(),
-        game.message_continuation(),
-    ];
-    if broken_coroutine(state) {
-        game.report_broken_coroutine(state);
-    }
-    0
 }
 
 /// The frame's start on its first lease: the random number steps, the sprite
