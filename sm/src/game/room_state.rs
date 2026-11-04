@@ -63,11 +63,13 @@ impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     }
     fn queue_sky_rows(&mut self, ocean: bool) {
         use sm_game::scrolling_sky::{queue_land_rows, queue_ocean_rows};
-        self.foreign(|game| {
+        // The rows' words, source and queue are the lease's; the observations are
+        // refreshed on entry and on return, as the former foreign call left them.
+        self.owned_player_call(|runtime| {
             if ocean {
-                queue_ocean_rows(game)
+                queue_ocean_rows(runtime)
             } else {
-                queue_land_rows(game)
+                queue_land_rows(runtime)
             }
         });
     }
