@@ -6,12 +6,12 @@
 //! $A7 function in its `function` word, whose ids are the original's.
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{Axis, BossEffects, Slopes, below};
+use crate::actors::host::{Axis, Slopes, below};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
 
 /// A lease on a game with the etecoons' effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {
+pub trait Lease: BossLease + SlotState {
     /// Whether moving actor `k` by `amount` (16.16) horizontally would be
     /// blocked, without moving it.
     fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool;

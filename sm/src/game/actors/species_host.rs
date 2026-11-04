@@ -32,5 +32,3 @@ impl sm_game::actors::species::SpeciesHost for Game {
         crate::rtl::report_unreachable(self);
     }
 }
-
-impl sm_game::actors::species::DrawHookHost for Game {}

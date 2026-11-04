@@ -174,7 +174,7 @@ pub trait RuntimeHost:
 }
 impl<T> RuntimeHost for T where
     T: crate::actors::host::ActorLease
-        + BossLease<Game = <T as crate::actors::host::ActorLease>::Game>
+        + BossLease
         + Lease
         + crate::actors::boss_interaction::Access
         + ?Sized

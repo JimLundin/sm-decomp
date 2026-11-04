@@ -5,7 +5,7 @@
 //! The three parts occupy consecutive enemy slots, head first. Each part reads
 //! and writes its neighbours' slot fields; the view below names them.
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{Axis, BossEffects, Death, Shot};
+use crate::actors::host::{Axis, Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::enemy_script::EnemyScript;
@@ -13,8 +13,8 @@ use sm_data::enemy_speeds::SpeedTable;
 use sm_data::magdollite::{ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS};
 
 /// A lease on a game with Magdollite's effects.
-pub trait Lease: BossLease<Game: Host + BossEffects> + SlotState + Host {}
-impl<T: BossLease<Game: Host + BossEffects> + SlotState + Host + ?Sized> Lease for T {}
+pub trait Lease: BossLease + SlotState + Host {}
+impl<T: BossLease + SlotState + Host + ?Sized> Lease for T {}
 
 /// What Magdollite needs beyond the shared actor operations: its tables.
 pub trait Host {

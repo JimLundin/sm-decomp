@@ -4,13 +4,13 @@
 //! Was `Boulder` in the original decompilation (bank $A6:86F5-$A6:89FC). Its
 //! state words name the slot fields over the same RAM bytes as `EnemyLayout40`.
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{Axis, BossEffects, Slopes};
+use crate::actors::host::{Axis, Slopes};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What the boulder needs beyond the shared boss effects: the 32-bit speeds.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {
+pub trait Lease: BossLease + SlotState {
     /// The native-order 32-bit enemy speed at byte `offset` from $A0:CBC7.
     fn enemy_speed32(&self, offset: usize) -> u32;
 }

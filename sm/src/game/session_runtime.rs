@@ -74,12 +74,6 @@ pub(crate) fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
 }
 
-impl sm_game::actors::species::AiHost for Game {
-    fn install_draygon_layers(&mut self) {
-        crate::game::visual_runtime::initialize_draygon_layer(self);
-    }
-}
-
 /// The generic species tables run on the scheduler's lease; these are the arms they
 /// still reach on this side, each on the lease.
 impl sm_game::actors::species::TableLease for Runtime<'_> {

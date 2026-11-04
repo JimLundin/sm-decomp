@@ -33,7 +33,7 @@ pub trait Lease:
     + crate::progress::FlagHost
     + crate::room_mechanisms::host::Host
     + crate::enemy_projectiles::host::Host
-    + BossLease<Game: crate::actors::host::BossEffects + crate::actors::deaths::Deaths>
+    + BossLease
 {
     fn spawn_hdma(&mut self, bank: u8, args: &HdmaObjectDefinition);
     fn start_wave(&mut self, direction: u16, speed: u16);

@@ -10,9 +10,7 @@
 use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native};
 use crate::actors::api::DeathHandling;
 use crate::actors::gunship::Host as _;
-use crate::actors::host::{
-    ActorHost, ActorLease, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
-};
+use crate::actors::host::{ActorLease, ActorRuntime, Death, LeaseScope, Shot};
 use crate::actors::{
     alcoon, bang, beetom, boyon, cacatac, choot, covern, crawlers, dragon, draygon_death,
     draygon_eye, draygon_flight, draygon_grab, elevator, evir, fire_pillar, flies, fune, geruta,
@@ -36,7 +34,7 @@ pub trait SpeciesHost {
 /// compatibility side still answers.
 pub trait TableLease:
     ActorLease
-    + crate::actors::boss_lease::BossLease<Game: AiHost + Sized>
+    + crate::actors::boss_lease::BossLease
     + torizo::Lease
     + spore_spawn::Lease
     + crate::actors::draygon_host::Lease
@@ -56,46 +54,6 @@ pub trait TableLease:
     fn lease_phantoon(&mut self, callback: phantoon::Callback);
 }
 
-/// What the bank $B3 routines need beyond their actors' own hosts.
-pub trait B3Host:
-    SpeciesHost
-    + ActorHost
-    + ActorRuntime
-    + LeaseActors
-    + crate::actors::boss_lease::BossState
-    + crate::records::Records
-{
-}
-
-impl<T> B3Host for T where
-    T: SpeciesHost
-        + ActorHost
-        + ActorRuntime
-        + LeaseActors
-        + crate::actors::boss_lease::BossState
-        + crate::records::Records
-        + ?Sized
-{
-}
-
-/// What the contact reactions need beyond their actors' own hosts.
-pub trait TouchHost:
-    SpeciesHost + ActorRuntime + LeaseActors + torizo::Ai + phantoon::Dispatch
-{
-}
-
-/// An enemy species' contact reaction, keyed by its address.
-pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
-    if lease_touch(ea, game) {
-        return;
-    }
-    match ea {
-        ea if EMPTY_TOUCHES.contains(&ea) => (),
-        11001237 => game.phantoon(phantoon::Callback::Touch),
-        _ => game.unknown_routine(),
-    }
-}
-
 /// The contact reactions that return at once: $A4:B950, $A5:804C, $A7:804C
 /// and $A9:B5C5.
 pub const EMPTY_TOUCHES: [u32; 4] = [10795344, 10846284, 10977356, 11122117];
@@ -103,38 +61,9 @@ pub const EMPTY_TOUCHES: [u32; 4] = [10795344, 10846284, 10977356, 11122117];
 /// The shot reactions that return at once.
 pub const EMPTY_SHOTS: [u32; 6] = [10649676, 10846284, 10911820, 10977356, 10982581, 11192769];
 
-/// What the shot reactions need beyond their actors' own hosts.
-pub trait ShotHost:
-    SpeciesHost + ActorRuntime + LeaseActors + torizo::Ai + phantoon::Dispatch
-{
-}
-
-/// An enemy species' shot reaction, keyed by its address; `_j` is the projectile, which none of them reads.
-pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
-    if lease_shot(ea, game) {
-        return;
-    }
-    match ea {
-        ea if EMPTY_SHOTS.contains(&ea) => (),
-        11001243 => game.phantoon(phantoon::Callback::Shot),
-        _ => game.unknown_routine(),
-    }
-}
-
-/// What the draw hooks need beyond their actors' own hosts.
-pub trait DrawHookHost: SpeciesHost + LeaseActors {}
-
 /// The draw hooks that return at once: $A0:804C, the room's default, and
 /// $A8:804C and $A9:8686.
 pub const EMPTY_DRAW_HOOKS: [u32; 3] = [10518604, 11042892, 11110278];
-
-/// An enemy species' graphics draw hook, keyed by its address.
-pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
-    if lease_draw_hook(ea, game) || EMPTY_DRAW_HOOKS.contains(&ea) {
-        return;
-    }
-    game.unknown_routine();
-}
 
 /// A bank $B3 enemy pre-instruction on the scheduler's lease, keyed by its address.
 pub fn b3_pre_instruction<L: TableLease>(ea: u32, k: u16, runtime: &mut L) {
@@ -147,26 +76,11 @@ pub fn b3_pre_instruction<L: TableLease>(ea: u32, k: u16, runtime: &mut L) {
     }
 }
 
-/// What a boss lease's game needs beyond its actors' own hosts.
-pub trait AiHost:
-    B3Host
-    + DrawHookHost
-    + torizo::Ai
-    + phantoon::Dispatch
-    + crate::actors::host::EnemyHost
-    + crate::effects::SoundEffects
-{
-    /// Install Draygon's BG layers as its initialisation does.
-    fn install_draygon_layers(&mut self);
-}
-
 /// Run the bank $A5 functions Draygon's dispatch shares but does not own: Spore
 /// Spawn's ($A5:EB1A-$A5:EBEE), while retaining the scheduler's lease.
 pub fn draygon_function_on_lease<L>(ea: u32, k: u16, game: &mut L)
 where
-    L: crate::actors::host::ActorLease
-        + spore_spawn::Lease
-        + crate::actors::boss_lease::BossLease<Game: SpeciesHost>,
+    L: crate::actors::host::ActorLease + spore_spawn::Lease + crate::actors::boss_lease::BossLease,
 {
     use crate::actors::host::ActorLease as Owned;
     match ea {
@@ -175,7 +89,7 @@ where
         10873682 => Owned::owned_lease_call(game, |game| spore_spawn::orbit(k, game)),
         10873755 => Owned::owned_lease_call(game, spore_spawn::begin_return),
         10873838 => Owned::owned_lease_call(game, spore_spawn::finish_return),
-        _ => crate::actors::boss_lease::BossLease::foreign(game, |game| game.unknown_routine()),
+        _ => crate::diagnostics::Fatal::unreachable(game),
     }
 }
 
@@ -282,9 +196,10 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10847879 => game.with_lease(|runtime| {
             draygon_flight::initialize(
                 |runtime| {
-                    crate::actors::boss_lease::BossLease::foreign(runtime, |game| {
-                        game.install_draygon_layers()
-                    })
+                    crate::actors::boss_lease::BossLease::owned_step(
+                        runtime,
+                        crate::room_visuals::initialize_draygon_layer,
+                    )
                 },
                 runtime,
             )

@@ -2,7 +2,6 @@
 //! off or drips falling sparks on random delays (bank $A8:E587-$A8:E7AB).
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::BossEffects;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_lists::{spark_function, spark_instruction_list};
 use crate::enemy_script::EnemyScript;
@@ -26,8 +25,8 @@ const EMIT_FALLING_SPARKS: u16 = 0xe6dc;
 const QUEUED_WORD: usize = 0x30;
 
 /// A lease on a game with the sparks' effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
-impl<T: BossLease<Game: BossEffects> + SlotState + ?Sized> Lease for T {}
+pub trait Lease: BossLease + SlotState {}
+impl<T: BossLease + SlotState + ?Sized> Lease for T {}
 
 /// Set Wrecked Ship spark function timer ($A8:E6F6): its base time, or a random 4..43h.
 fn reload_timer(game: &mut impl Lease, k: u16, bias: u16) {

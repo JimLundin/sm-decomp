@@ -7,7 +7,6 @@ use crate::game::constants::bank_aa::{
     ADDR_K_TORIZO_ILIST_CEA5, ADDR_K_TORIZO_ILIST_CEFF, ADDR_K_TORIZO_ILIST_D1F1,
     ADDR_K_TORIZO_ILIST_D2AD,
 };
-use crate::game_state::Game;
 pub(crate) use sm_game::actors::torizo::*;
 
 const _: () = {
@@ -23,8 +22,6 @@ const _: () = {
             && LOW_HEALTH_DROOL == ADDR_K_EPROJ_BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL as u16
     );
 };
-
-impl Ai for Game {}
 
 // The named functions, lists and projectiles are the decompilation's.
 const _: () = {

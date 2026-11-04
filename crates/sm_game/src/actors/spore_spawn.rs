@@ -6,7 +6,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::{BossLease, BossState, steps};
-use crate::actors::host::{BossEffects, Death, Shot, abs16, below};
+use crate::actors::host::{Death, Shot, abs16, below};
 use crate::actors::queries::angle_from_delta;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::{attachments_spore_maw, drops};
@@ -19,7 +19,7 @@ use crate::menus::prelude::owned;
 /// A lease on a game with Spore Spawn's effects: its stem, boss flags, PLMs,
 /// sprites and drops run on the lease.
 pub trait Lease:
-    BossLease<Game: BossEffects>
+    BossLease
     + crate::actors::boss_interaction::Access
     + SlotState
     + crate::progress::FlagHost
@@ -29,7 +29,7 @@ pub trait Lease:
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: BossEffects>
+    T: BossLease
         + crate::actors::boss_interaction::Access
         + SlotState
         + crate::progress::FlagHost

@@ -2,13 +2,13 @@
 //! off its heading; a shot knocks it away (bank $A8:D821-$A8:DBC6). Was `maridia_puffer`.
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{BossEffects, Shot, abs16, sign_extend8};
+use crate::actors::host::{Shot, abs16, sign_extend8};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::gameplay_tables::enemy_sine;
 
 /// A lease on a game with the bulls' effects; its slots are the Session's.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
-impl<T: BossLease<Game: BossEffects> + SlotState + ?Sized> Lease for T {}
+pub trait Lease: BossLease + SlotState {}
+impl<T: BossLease + SlotState + ?Sized> Lease for T {}
 
 slot_view! {
     /// A bull's slot: its function, acceleration and its step, speed, activation and

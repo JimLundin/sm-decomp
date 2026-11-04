@@ -4,7 +4,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::api::DeathKind;
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{BossEffects, Death, Shot};
+use crate::actors::host::{Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_lists::floater_spike_instruction_list;
 
@@ -137,8 +137,8 @@ fn begin_deflating(game: &mut impl Lease, body: u16) {
     part.actor().instruction = DEFLATE;
 }
 /// A lease on a game with the powamps' effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
-impl<T: BossLease<Game: BossEffects> + SlotState + ?Sized> Lease for T {}
+pub trait Lease: BossLease + SlotState {}
+impl<T: BossLease + SlotState + ?Sized> Lease for T {}
 
 /// Main AI - powamp ($A8:C21C): run its function.
 pub fn main_ai(game: &mut impl Lease) {

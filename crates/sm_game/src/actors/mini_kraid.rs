@@ -4,8 +4,7 @@
 //! Was `FakeKraid` in the original decompilation (bank $A6:9A58-$A6:9C50). Its
 //! view names the slot words over the same RAM bytes as `EnemyLayout40`.
 use crate::actors::boss_lease::BossLease;
-use crate::actors::deaths::Deaths;
-use crate::actors::host::{BossEffects, Death, Shot, Slopes};
+use crate::actors::host::{Death, Shot, Slopes};
 use crate::actors::layouts::EnemyLayout104;
 use crate::actors::slot_view::{SlotState, extended_var, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
@@ -15,17 +14,8 @@ use core::mem::offset_of;
 
 /// A lease on a game with Mini Kraid's effects: the shared boss effects,
 /// dying and its drop.
-pub trait Lease:
-    BossLease<Game: BossEffects + Deaths> + SlotState + crate::enemy_projectiles::host::Host
-{
-}
-impl<T> Lease for T where
-    T: BossLease<Game: BossEffects + Deaths>
-        + SlotState
-        + crate::enemy_projectiles::host::Host
-        + ?Sized
-{
-}
+pub trait Lease: BossLease + SlotState + crate::enemy_projectiles::host::Host {}
+impl<T> Lease for T where T: BossLease + SlotState + crate::enemy_projectiles::host::Host + ?Sized {}
 
 slot_view! {
     /// Mini Kraid's slot. `walk_speed` is pixels per step, signed: negative

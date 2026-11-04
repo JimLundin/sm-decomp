@@ -44,7 +44,7 @@ use sm_data::ridley_explosion::{
 /// destruct text, on a game with the shared boss effects, deaths and sprites.
 pub trait Lease:
     crate::actors::boss_interaction::Access
-    + BossLease<Game: GameEffects>
+    + BossLease
     + SlotState
     + crate::actors::ceres_ridley::Host
     + crate::escape_typewriter::Host
@@ -58,7 +58,7 @@ pub trait Lease:
 }
 impl<T> Lease for T where
     T: crate::actors::boss_interaction::Access
-        + BossLease<Game: GameEffects>
+        + BossLease
         + SlotState
         + crate::actors::ceres_ridley::Host
         + crate::escape_typewriter::Host

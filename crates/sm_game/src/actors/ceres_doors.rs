@@ -5,7 +5,7 @@
 //!
 //! Was `CeresSteam_*` and `CeresDoor_*` in the original decompilation.
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{BossEffects, Death, abs16};
+use crate::actors::host::{Death, abs16};
 use crate::actors::slot_view::{SlotState, slot_index, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
@@ -16,9 +16,7 @@ use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_targe
 
 /// The lease the steam and doors run on, with what they still reach in the
 /// game. Their slots are the Session's.
-pub trait Lease:
-    BossLease<Game: BossEffects> + crate::display::preparation::Access + SlotState
-{
+pub trait Lease: BossLease + crate::display::preparation::Access + SlotState {
     /// The current area's boss bits.
     fn area_boss_flags(&mut self) -> u8;
     /// Queue the bank `bank` mode 7 transfer list at `list`.

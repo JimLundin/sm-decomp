@@ -7,7 +7,7 @@
 //! original's.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::dachora::load_palette;
-use crate::actors::host::{Axis, BossEffects, Slopes};
+use crate::actors::host::{Axis, Slopes};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
@@ -76,14 +76,9 @@ use crate::actors::host::below;
 use instruction_list as list;
 
 /// A lease on a game with the dachora's effects.
-pub trait Lease:
-    BossLease<Game: BossEffects> + crate::actors::boss_interaction::Access + SlotState
-{
-}
-impl<T> Lease for T where
-    T: BossLease<Game: BossEffects> + crate::actors::boss_interaction::Access + SlotState + ?Sized
-{
-}
+pub trait Lease: BossLease + crate::actors::boss_interaction::Access + SlotState {}
+impl<T> Lease for T where T: BossLease + crate::actors::boss_interaction::Access + SlotState + ?Sized
+{}
 
 /// The dachora constants at $A7:F4C9: how near Samus must be, the blink,
 /// the shinespark charge, the echo interval and lifetime, the top running

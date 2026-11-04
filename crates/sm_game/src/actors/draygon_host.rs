@@ -10,7 +10,7 @@ use crate::actors::slot_view::{SlotState, slot_view};
 
 /// A lease on a game with Draygon's effects.
 pub trait Lease:
-    BossLease<Game: Host>
+    BossLease
     + crate::actors::boss_interaction::Access
     + SlotState
     + crate::progress::FlagHost
@@ -25,7 +25,7 @@ pub trait Lease:
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: Host>
+    T: BossLease
         + crate::actors::boss_interaction::Access
         + SlotState
         + crate::progress::FlagHost
@@ -42,8 +42,8 @@ impl<T> Lease for T where
 }
 
 /// The game Draygon's lease runs foreign calls on: the shared boss effects.
-pub trait Host: BossEffects + BossLease<Game = Self> {}
-impl<T: BossEffects + BossLease<Game = T>> Host for T {}
+pub trait Host: BossEffects + BossLease {}
+impl<T: BossEffects + BossLease> Host for T {}
 
 slot_view! {
     /// A Draygon part's slot; the named words are the body's: its function and

@@ -1,7 +1,7 @@
 //! Gamet's ordered five-part emergence and flight.
 //! Native actor words remain authoritative across the existing query boundaries.
 use crate::actors::boss_lease::{BossLease, BossState};
-use crate::actors::host::{Axis, BossEffects};
+use crate::actors::host::Axis;
 use crate::actors::slot_view::{SlotState, slot_view};
 use sm_data::enemy_speeds::SpeedTable;
 
@@ -45,7 +45,7 @@ pub fn initialize<H: Lease + ?Sized>(game: &mut H) {
 }
 /// Main AI - gamet ($B3:8B9E): run its state, then send it back to its
 /// pipe once it is off screen.
-pub fn main_ai<L: BossLease<Game: BossEffects> + SlotState + ?Sized>(game: &mut L) {
+pub fn main_ai<L: BossLease + SlotState + ?Sized>(game: &mut L) {
     match state_address(game) {
         11766733 => await_group(game),
         11766783 => await_player(game),
