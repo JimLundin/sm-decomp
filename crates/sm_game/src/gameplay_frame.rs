@@ -845,9 +845,12 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
             game.screen_set_primary(1);
             return yielded;
         }
-        crate::hdma_objects::set_hdma_enabled(true, game);
-        animated_tiles::set_enabled(game.runtime().session_mut(), true);
-        game.restore_movement_sound();
+        // HDMA, the animated tiles and Samus's movement sound resume on one lease.
+        let mut lease = game.runtime();
+        crate::hdma_objects::set_hdma_enabled(true, &mut lease);
+        animated_tiles::set_enabled(lease.session_mut(), true);
+        crate::player_projectiles::feedback::restore_sound(&mut lease);
+        drop(lease);
         crate::gameplay_word!(game.GAME_STATE += 1);
     }
     game.screen_set_primary(0);
