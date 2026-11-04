@@ -29,8 +29,9 @@ impl samus_drawing::Authority for Runtime<'_> {
         Runtime::draw_echo_samus_sprite(self, slot, index, x, y);
     }
     fn draw_native_echo(&mut self, slot: u16) {
-        self.foreign(|game| {
-            sm_game::sprite_output::echo(slot, game, &mut sm_game::sprite_output::Native)
+        // The echo draws on the lease's object owner, as the trail does.
+        self.draw_objects(|drawing| {
+            sm_game::sprite_output::echo(slot, drawing, &mut sm_game::sprite_output::Native)
         });
     }
     fn samus_source_diagnostic(&mut self, address: u32) {
