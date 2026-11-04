@@ -389,9 +389,7 @@ pub fn update_hdma<H: UpdateHost + ?Sized>(handler_carry: bool, game: &mut H) {
 /// What the HDMA object handler reaches beyond its object table: the
 /// sequence words, the allocator, the FX controls and display mirrors, and
 /// three rules: the music queue's step, the room key the layer blending reads,
-/// and the objects' programs. Every host that can lease its Session to the
-/// interpreter is one, running the programs on a fresh lease; a Session lease
-/// is one and runs them on itself.
+/// and the objects' programs. A Session lease is one and runs them on itself.
 pub trait UpdateHost:
     Allocator
     + crate::sequence_state::Access
@@ -405,29 +403,10 @@ pub trait UpdateHost:
     /// Run every active object's program once.
     fn run_hdma_programs(&mut self, handler_carry: bool);
 }
-impl<T> UpdateHost for T
-where
-    T: Allocator
-        + crate::hdma_dispatch::DispatchHost
-        + crate::hdma_program::LeaseHdma
-        + crate::menus::host::MenuRuntime
-        + ?Sized,
-{
-    fn advance_music_queue(&mut self) {
-        self.handle_music_queue();
-    }
-    fn blending_room_key(&mut self) -> u16 {
-        use crate::session_access::SessionAccess as _;
-        self.runtime().session().room_key()
-    }
-    fn run_hdma_programs(&mut self, handler_carry: bool) {
-        crate::hdma_program::run_objects(handler_carry, self);
-    }
-}
 
 /// What the title gradient's refresh reaches: the Mode 7 zoom, the colour
-/// selection, HDMA table 1, the gradient table and its native records. Every
-/// menu host is one; a Session lease is one too.
+/// selection, HDMA table 1, the gradient table and its native records. A
+/// Session lease is one.
 pub trait GradientHost:
     crate::projection::Views
     + crate::display::preparation::Access

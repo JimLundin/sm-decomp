@@ -29,8 +29,7 @@ const SCROLL_CHANNEL: Control = Control::HdmaChannels(0x40);
 /// the sound queues, the unreachable failure, the NMI wait's words, the
 /// controller sample, and five rules: the box's DMA length, the music queue's
 /// and the dialogue sounds' steps, the HDMA object handler and the movement
-/// sound's restore. Every menu host is one; a Session lease is one and runs
-/// them on itself.
+/// sound's restore. A Session lease is one and runs them on itself.
 pub trait DialogueHost:
     crate::display::video::Video
     + crate::display::preparation::Access

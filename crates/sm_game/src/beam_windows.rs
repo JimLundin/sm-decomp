@@ -13,8 +13,7 @@ const TABLE_BYTES: u16 = 460;
 const CLOSED: u16 = 255;
 
 /// The beam window's host: tables through the RAM projection and the
-/// cartridge's gradient words. Every menu host is one; a Session lease is one
-/// too.
+/// cartridge's gradient words. A Session lease is one.
 ///
 /// LEGACY(original-overflow): the table stores below go through
 /// `legacy_overflow` because the ROM's row offsets leave the 230-row table:

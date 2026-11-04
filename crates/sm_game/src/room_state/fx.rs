@@ -54,9 +54,8 @@ pub trait FxHost: SessionAccess + Content<Record = RomRecord> + NativeDiagnostic
 
 /// What the FX initializers reach: the HDMA allocator, the display mirrors,
 /// the named views and RAM projection, the FX controls, sources and
-/// lighting, the sky's scroll host, and the leased rules they run. Every menu
-/// host is one, opening a fresh lease for each rule; a Session lease is one
-/// and runs them on itself.
+/// lighting, the sky's scroll host, and the leased rules they run. A Session
+/// lease is one and runs them on itself.
 pub trait SetupHost:
     crate::hdma_objects::Allocator
     + crate::display::preparation::Access

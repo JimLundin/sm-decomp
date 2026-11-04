@@ -31,8 +31,8 @@ pub trait SlotHost:
 }
 
 /// What the area map leaves reach beyond a save host: the map station and
-/// used-station bytes, and the gameplay flags' store. Every menu host is one,
-/// storing through a fresh lease; a Session lease is one and stores on itself.
+/// used-station bytes, and the gameplay flags' store. A Session lease is one
+/// and stores on itself.
 pub trait MapHost: SlotHost + super::host::MapFacts {
     /// Store the gameplay flags through the Session, then refresh the
     /// observations as the projected word stores did.
