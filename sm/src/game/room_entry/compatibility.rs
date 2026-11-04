@@ -2,10 +2,14 @@
 use super::{api::EntryWait, content::*, effects::*};
 use crate::game::actors;
 use crate::{
-    game::{self, room_mechanisms, session_runtime::Runtime},
+    game::{
+        self, room_mechanisms,
+        session_runtime::{Compressed, Runtime},
+    },
     ram_map::words as W,
     snes::registers::*,
 };
+use sm_game::display::video::Command;
 fn external_address(field: ExternalField) -> usize {
     match field {
         ExternalField::GameMode => W::GAME_STATE,
@@ -346,10 +350,15 @@ impl EntryEffects for Runtime<'_> {
             InstallBuffer::TileTableAfterCre => 0xa800,
             InstallBuffer::Background(target) => target.compatibility_offset(),
         };
-        let produced = self.foreign(|game| match prepared {
-            Some(stream) => sm_game::decompression::decompress_prepared_table(&stream, at, game),
-            None => sm_game::decompression::decompress_to_ram(legacy.unwrap(), at, game),
-        });
+        // The decoder writes the published RAM image, and the lease takes back
+        // the bytes it produced.
+        let produced = self.decompress_to_ram(
+            match prepared.as_deref() {
+                Some(stream) => Compressed::Prepared(stream),
+                None => Compressed::Rom(legacy.unwrap()),
+            },
+            at,
+        );
         if palette {
             if let (Some(assets), Some(resource)) = (&assets, palette_resource) {
                 for row in 0..(produced / 32).min(8) {
@@ -392,13 +401,26 @@ impl EntryEffects for Runtime<'_> {
         } else {
             None
         };
-        let target = match destination {
+        let target: u16 = match destination {
             VramDecodeTarget::MainTiles => 0,
             VramDecodeTarget::Cre => 0x5000,
         };
-        self.foreign(|game| match prepared {
-            Some(stream) => game::display_refresh::decompress_prepared_vram(&stream, target, game),
-            None => game::display_refresh::decompress_to_vram(legacy.unwrap(), target, game),
+        // The decoder reads ROM and VRAM and writes VRAM through device registers
+        // alone, so it runs on the lease in one device interval, with the
+        // observations refreshed on entry and on return as the former foreign call
+        // left them.
+        self.owned_player_call(|runtime| {
+            if prepared.is_none() {
+                use sm_game::decompression::DecompressionHost as _;
+                runtime.set_decompress_source(legacy.expect("legacy VRAM source"));
+            }
+            sm_game::decompression::decode(
+                i32::from(target),
+                &mut VramOutput {
+                    runtime,
+                    prepared: prepared.as_deref().map(<[u8]>::iter),
+                },
+            );
         });
     }
     fn copy_vram(&mut self, destination: VramDestination, source: AssetSource, bytes: u16) {
@@ -408,15 +430,24 @@ impl EntryEffects for Runtime<'_> {
         } else {
             self.session().world.prepared_room_assets()
         };
-        let source = source.compatibility_address(&self.session().world);
-        self.foreign(|game| {
-            sm_game::display::transfer::copy_to_vram_now(
+        let [address_low, address_high, bank, _] = source
+            .compatibility_address(&self.session().world)
+            .to_le_bytes();
+        let source = sm_game::display::transfer::Source {
+            address: u16::from_le_bytes([address_low, address_high]),
+            bank,
+        };
+        // The DMA reads the published lease through its transfer port, with the
+        // observations refreshed on entry and on return as the former foreign call
+        // left them.
+        self.owned_player_call(|runtime| {
+            crate::game::display_commands::copy_to_vram_on_lease(
                 destination,
                 source,
                 bytes,
                 assets.as_deref(),
-                game,
-            )
+                runtime,
+            );
         });
     }
     fn decode_level_and_copy_planes(&mut self, source: AssetSource) {
@@ -425,13 +456,10 @@ impl EntryEffects for Runtime<'_> {
             let stream = assets
                 .stream(&source)
                 .expect("selected Level stream is unavailable");
-            self.foreign(|game| {
-                sm_game::decompression::decompress_prepared_table(&stream, 0x10000, game);
-                sm_game::room_state::LevelData::copy_level_planes(game);
-            });
+            self.decompress_level(Compressed::Prepared(&stream));
         } else {
             let source = source.compatibility_address(&self.session().world);
-            self.foreign(|game| game::room_state::decompress_level(source, game));
+            self.decompress_level(Compressed::Rom(source));
         }
     }
     fn setup(&mut self, action: SetupAction) {
@@ -472,5 +500,38 @@ impl EntryEffects for Runtime<'_> {
                 );
             }
         }
+    }
+}
+
+/// The VRAM decoder's output on the lease: each byte goes to VRAM, and each back
+/// reference reads VRAM back, through the data port's device registers, as
+/// `display_refresh::decompress_to_vram` makes them.
+struct VramOutput<'a, 'g, 's> {
+    runtime: &'a mut Runtime<'g>,
+    prepared: Option<core::slice::Iter<'s, u8>>,
+}
+impl sm_game::decompression::Output for VramOutput<'_, '_, '_> {
+    fn next_byte(&mut self) -> u8 {
+        match self.prepared.as_mut() {
+            Some(stream) => *stream.next().expect("validated prepared VRAM room stream"),
+            None => sm_game::decompression::next_byte(self.runtime),
+        }
+    }
+    fn read(&mut self, position: i32) -> u8 {
+        use crate::game::display_commands::{apply_device_on_lease, read_vram_data_on_lease};
+        let address = position as u16;
+        apply_device_on_lease(Command::VramAddress(address >> 1), self.runtime);
+        // The prefetch read, then the word.
+        read_vram_data_on_lease(self.runtime);
+        let [low, high] = read_vram_data_on_lease(self.runtime).to_le_bytes();
+        if address & 1 != 0 { high } else { low }
+    }
+    fn write(&mut self, position: i32, value: u8, back_reference: bool) {
+        use crate::game::display_commands::apply_device_on_lease;
+        if back_reference {
+            apply_device_on_lease(Command::VramAddress((position >> 1) as u16), self.runtime);
+        }
+        let high = position & 1 != 0;
+        apply_device_on_lease(Command::VramData { high, value }, self.runtime);
     }
 }

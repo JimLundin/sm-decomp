@@ -3,6 +3,7 @@
 //! original's order and widths. Retires with the emulated PPU once the native
 //! renderer is the authority (docs/handoff/owned-display-registers.md).
 use crate::game::room_entry::PreparedRoomAssets;
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rtl::{
     A1B0, A1B1, A1T0L, A1T1L, A2A1H, A2A1L, BBAD0, BBAD1, BG1HOFS, BG1SC, BG12NBA, BG34NBA, BGMODE,
@@ -10,8 +11,8 @@ use crate::rtl::{
     HTIMEH, HTIMEL, INIDISP, M7A, M7SEL, MDMAEN, MEMSEL, MOSAIC, NMITIMEN, NTRL1, OAMADDH, OAMADDL,
     OAMDATA, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAH, VMDATAL,
     VTIMEH, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG,
-    WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_device, read_reg, read_reg_word,
-    write_device, write_reg,
+    WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_device, read_reg, write_device,
+    write_reg,
 };
 use sm_data::hdma_programs::ChannelRegister;
 use sm_game::display::control::Brightness;
@@ -45,10 +46,18 @@ const TO_OAM_DATA: u16 = u16::from_le_bytes([0, 0x04]);
 const TO_CGRAM_DATA: u16 = u16::from_le_bytes([0, 0x22]);
 
 /// Where the encoder's register accesses go: the bus, as the game's own code
-/// makes them, or a device interval for a lease (`Device`).
-trait Wire {
+/// makes them, a device interval for a lease's device-only command (`Device`),
+/// or the lease's transfer port (`Lease`).
+pub(crate) trait Wire {
     fn byte(&mut self, register: u32, value: u8);
     fn read(&mut self, register: u32) -> u8;
+    /// The producer's register writes begin.
+    fn producing(&mut self);
+    /// The producer's register writes are done; `uploads` are what they did.
+    fn produced(&mut self, producer: &'static str, uploads: &[Upload]);
+    /// Start the DMA channels in `mask`, reading the room's prepared image when
+    /// given.
+    fn start_room_dma(&mut self, mask: u8, assets: Option<&PreparedRoomAssets>);
 }
 
 impl crate::game::display_commands::Wire for Game {
@@ -60,6 +69,16 @@ impl crate::game::display_commands::Wire for Game {
     fn read(&mut self, register: u32) -> u8 {
         // SAFETY: as for `byte`.
         unsafe { read_reg(register as u16, self) }
+    }
+    fn producing(&mut self) {
+        Game::producing(self);
+    }
+    fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
+        Game::produced(self, producer, uploads);
+    }
+    fn start_room_dma(&mut self, mask: u8, assets: Option<&PreparedRoomAssets>) {
+        // SAFETY: as for `byte`.
+        unsafe { crate::game::display_refresh::start_room_dma(mask, assets, self) }
     }
 }
 
@@ -76,6 +95,51 @@ impl Wire for Device<'_> {
     fn read(&mut self, register: u32) -> u8 {
         // SAFETY: as for `byte`.
         unsafe { read_device(register, self.0) }
+    }
+    fn producing(&mut self) {
+        unreachable!("a device-only command produces no upload")
+    }
+    fn produced(&mut self, _producer: &'static str, _uploads: &[Upload]) {
+        unreachable!("a device-only command produces no upload")
+    }
+    fn start_room_dma(&mut self, _mask: u8, _assets: Option<&PreparedRoomAssets>) {
+        unreachable!("a device-only command starts no DMA")
+    }
+}
+
+/// A lease's transfer port: device registers through the device interval, and
+/// each DMA start through `Runtime::start_dma`, after the port has published the
+/// lease (`Runtime::publish`).
+pub(crate) struct Lease<'a, 'g>(pub(crate) &'a mut Runtime<'g>);
+
+impl Wire for Lease<'_, '_> {
+    fn byte(&mut self, register: u32, value: u8) {
+        if register == MDMAEN && value != 0 {
+            self.0.start_dma(value, None);
+        } else {
+            self.0.write_device(register as u16, value);
+        }
+    }
+    fn read(&mut self, register: u32) -> u8 {
+        self.0.read_device(register)
+    }
+    fn producing(&mut self) {
+        self.0.producing();
+    }
+    fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
+        self.0.produced(producer, uploads);
+    }
+    fn start_room_dma(&mut self, mask: u8, assets: Option<&PreparedRoomAssets>) {
+        match assets {
+            Some(assets) => {
+                let (first, bytes) = assets.raw_window();
+                self.0.start_dma(
+                    mask,
+                    Some(&crate::execution::DmaRomSource::new(first, bytes)),
+                );
+            }
+            None => self.0.start_dma(mask, None),
+        }
     }
 }
 
@@ -216,6 +280,19 @@ fn graphics_mode(transfer: GraphicsTransfer) -> u16 {
 /// Apply `command` from `producer` to the emulated backend.
 pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
     assert!(!game.g_snes.is_null(), "SNES backend must be installed");
+    encode(producer, command, game);
+}
+
+/// Apply `command` from `producer` on the lease: the lease is published, then
+/// the same writes go through its transfer port, so every DMA start reads the
+/// Session's bytes and the bytes a readback writes return to the Session.
+pub(crate) fn apply_on_lease(producer: &'static str, command: Command, runtime: &mut Runtime<'_>) {
+    runtime.publish();
+    encode(producer, command, &mut Lease(runtime));
+}
+
+/// `command`'s register writes through `game`.
+fn encode(producer: &'static str, command: Command, game: &mut impl Wire) {
     match command {
         Command::TilesNow {
             address,
@@ -275,8 +352,9 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
             bytes,
         } => {
             word(VMADDL, address, game);
-            // SAFETY: as for `byte`.
-            unsafe { read_reg_word(RDVRAML as u16, game) };
+            // The prefetch read of the data word, low byte then high.
+            game.read(RDVRAML);
+            game.read(RDVRAML + 1);
             channel1_words(FROM_VRAM_DATA, destination, bytes, game);
             byte(VMAIN, STEP_AFTER_HIGH, game);
             byte(MDMAEN, 2, game);
@@ -370,6 +448,53 @@ pub(crate) fn apply_device(command: Command, game: &mut Game) {
         game.compatibility_write_epoch(),
         "a device-only display command moved RAM"
     );
+}
+
+/// Apply device-only `command` on the lease's transfer port, with the same
+/// writes `apply` makes: a port that has its own observation seams makes many.
+pub(crate) fn apply_device_on_lease(command: Command, runtime: &mut Runtime<'_>) {
+    assert!(device_only(&command), "a display command that moves RAM");
+    registers(command, &mut Lease(runtime));
+}
+
+/// An animated tile upload on the lease's transfer port: channel 0 from bank
+/// $87 to VMDATA, a word at a time, in the original's register order. It reads
+/// the cartridge alone, so the lease needs no publish.
+pub(crate) fn animated_tiles_on_lease(
+    request: sm_game::visual_state::Upload,
+    runtime: &mut Runtime<'_>,
+) {
+    const BANK: u8 = 0x87;
+    let mut lease = Lease(runtime);
+    lease.producing();
+    word(A1T0L, request.source, &mut lease);
+    byte(A1B0, BANK, &mut lease);
+    word(DMAP0, TO_VRAM_DATA, &mut lease);
+    word(DAS0L, request.size, &mut lease);
+    word(VMADDL, request.vram, &mut lease);
+    byte(VMAIN, STEP_AFTER_HIGH, &mut lease);
+    byte(MDMAEN, 1, &mut lease);
+    lease.produced(
+        "animated tiles",
+        &[Upload::Tiles {
+            address: request.vram,
+            increment: 1,
+            source: Source {
+                address: request.source,
+                bank: BANK,
+            },
+            bytes: request.size,
+        }],
+    );
+}
+
+/// The VRAM data word as `read_register_word` reads it: the low byte, then the
+/// high byte, which steps the port.
+pub(crate) fn read_vram_data_on_lease(runtime: &mut Runtime<'_>) -> u16 {
+    let mut lease = Lease(runtime);
+    let low = lease.read(RDVRAML);
+    let high = lease.read(RDVRAML + 1);
+    u16::from_le_bytes([low, high])
 }
 
 /// The commands that write registers only, through `game`.
@@ -598,11 +723,32 @@ pub(crate) fn copy_to_vram_now(
     game: &mut Game,
 ) {
     assert!(!game.g_snes.is_null(), "SNES backend must be installed");
+    copy_to_vram(address, source, bytes, assets, game);
+}
+
+/// `CopyToVramNow` on the lease, published first, through its transfer port.
+pub(crate) fn copy_to_vram_on_lease(
+    address: u16,
+    source: Source,
+    bytes: u16,
+    assets: Option<&PreparedRoomAssets>,
+    runtime: &mut Runtime<'_>,
+) {
+    runtime.publish();
+    copy_to_vram(address, source, bytes, assets, &mut Lease(runtime));
+}
+
+fn copy_to_vram(
+    address: u16,
+    source: Source,
+    bytes: u16,
+    assets: Option<&PreparedRoomAssets>,
+    game: &mut impl Wire,
+) {
     byte(INIDISP, Brightness::BLANK_DARK.byte(), game);
     word(VMADDL, address, game);
     channel1(TO_VRAM_DATA, source, bytes, game);
     byte(VMAIN, STEP_AFTER_HIGH, game);
-    // SAFETY: as for `byte`.
-    unsafe { crate::game::display_refresh::start_room_dma(2, assets, game) };
+    game.start_room_dma(2, assets);
     byte(INIDISP, Brightness::FULL.byte(), game);
 }
