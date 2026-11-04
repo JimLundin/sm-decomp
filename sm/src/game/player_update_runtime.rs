@@ -7,7 +7,7 @@ use crate::{
         },
         player_update::{self, MovementStep},
         player_update::{content::Content, effects::Effects},
-        session_runtime::{Runtime, native_rom_diagnostic},
+        session_runtime::Runtime,
         visual_host::{self, Source},
     },
     game_state::Game,
@@ -17,11 +17,9 @@ use crate::{
 
 fn native_record(runtime: &mut Runtime<'_>, address: u32) -> RomRecord {
     if address & 0x8000 == 0 {
-        runtime.foreign(|game| {
-            native_rom_diagnostic(address, game);
-            // Acquire and release the actual binding before Runtime imports again.
-            drop(game.capture_native_rom_binding());
-        });
+        runtime.report_native_diagnostic(address);
+        // Acquire and release the actual binding, as the foreign call did.
+        drop(runtime.samus_game().capture_native_rom_binding());
     }
     visual_host::Content::table(runtime, Source::Native, address)
 }

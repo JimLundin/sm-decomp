@@ -1716,9 +1716,7 @@ impl Runtime<'_> {
     pub(crate) fn legacy_native_record(&mut self, bank: u8, address: u16) -> RomRecord {
         let address = (u32::from(bank) << 16) | u32::from(address);
         if address & 0x8000 == 0 {
-            self.foreign(|game| {
-                native_rom_diagnostic(address, game);
-            });
+            self.report_native_diagnostic(address);
         }
         content::captured(self.native_image(), address)
     }
