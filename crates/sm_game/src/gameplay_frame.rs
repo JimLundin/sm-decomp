@@ -366,17 +366,14 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 drop(lease);
                 break 'frame returned;
             }
-            // A cinematic, door transition or death state's frame runs on this
-            // lease too; the frame ends on Game once it returns.
+            // A cinematic, door transition, death, demo or room load state's
+            // frame runs on this lease too, to the frame's end.
             if let Some(&entry) = entry
                 && runs_on_lease(entry)
             {
-                let returned = advance_on_lease::<H>(entry, &mut lease);
+                let returned = lease_frame::<H>(entry, &mut lease);
                 drop(lease);
-                if returned != 0 {
-                    break 'frame returned;
-                }
-                break 'frame finish_state(game);
+                break 'frame returned;
             }
         }
         let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
@@ -393,7 +390,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 Entry::Initialize | Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext,
             )
             | DemoReset
-            | Demo) => advance_on_lease::<H>(entry, &mut game.runtime()),
+            | Demo) => break 'frame lease_frame::<H>(entry, &mut game.runtime()),
             Advance(entry) => advance(entry, game),
             FileMenu => file_menu::advance(game),
             MapMenu => map_menu::advance(game),
@@ -451,6 +448,16 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             | DemoReset
             | Demo
     )
+}
+
+/// A lease state's frame on `lease`, then the frame's end once the state
+/// completes; nonzero when it yields.
+fn lease_frame<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<'a>) -> u8 {
+    let returned = advance_on_lease::<H>(entry, lease);
+    if returned == 0 {
+        close_frame::<H>(lease);
+    }
+    returned
 }
 
 /// Run a lease state's frame on `lease`; nonzero when it yields.
