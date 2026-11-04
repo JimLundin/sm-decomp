@@ -5468,21 +5468,3 @@ impl sm_game::sprite_drawing::ObjectAccess for Game {
         self.compatibility_write_owned_byte(at + 1, bytes[1]);
     }
 }
-
-#[forbid(unsafe_code)]
-impl sm_game::grapple_swing::TileAccess for Game {
-    fn tile_word(&self, field: sm_game::grapple_swing::TileField) -> u16 {
-        if self.persistent_session_current() {
-            if let persistent_session::AggregateSlot::Ready(state) =
-                &self.persistent_session.aggregate
-            {
-                return field.current(&state.gameplay);
-            }
-        }
-        let at = field.sequence_word() as usize;
-        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
-    }
-    fn store_tile_word(&mut self, field: sm_game::grapple_swing::TileField, value: u16) {
-        sm_game::sequence_state::Access::set_sequence_word(self, field.sequence_word(), value);
-    }
-}
