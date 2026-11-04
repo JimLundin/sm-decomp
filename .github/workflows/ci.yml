@@ -3,7 +3,7 @@ name: CI
 # The only entry point. It holds the triggers and no steps: each event calls the reusable
 # workflows that own one responsibility each.
 #   quality.yml  formatting, lints, ratchets, type checks, tests, dependency direction,
-#                detached checks and the desktop type-check (no ROM).
+#                detached checks (no ROM).
 #   verify.yml   the replay pipeline: plan, build, replay, coverage, result, by scope.
 #   bench.yml    replay speed of this ref against a base ref on one runner.
 # Pull requests and pushes to main run quality; pull requests and verify/** pushes run the

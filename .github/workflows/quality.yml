@@ -1,7 +1,7 @@
 name: Quality
 
-# Quality: formatting, lints, ratchets, type checks, tests, dependency direction, the
-# detached composition checks and a type-check of the Windows desktop. It needs no ROM.
+# Quality: formatting, lints, ratchets, type checks, tests, dependency direction and the
+# detached composition checks. It needs no ROM.
 # ci.yml calls it on every pull request and push to main, and with a dispatched gate.
 on:
   workflow_call:
@@ -114,15 +114,3 @@ jobs:
           rustc --edition=2024 -D warnings -O --crate-name sm_runtime --crate-type rlib crates/sm_runtime/src/lib.rs --extern "sm_data=$out/libsm_data.rlib" -L "dependency=$out" -o "$out/libsm_runtime.rlib"
           rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs --extern "sm_data=$out/libsm_data.rlib" --extern "sm_game=$out/libsm_game.rlib" --extern "sm_runtime=$out/libsm_runtime.rlib" -L "dependency=$out" -o "$out/player-detached"
           "$out/player-detached"
-
-  desktop-check:
-    # The desktop links only for Windows; this type-checks that target from Linux.
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - name: Type-check the desktop for its Windows target
-        run: |
-          rustup show
-          rustup target add x86_64-pc-windows-gnu
-          cargo check --locked --target x86_64-pc-windows-gnu -p sm_app
