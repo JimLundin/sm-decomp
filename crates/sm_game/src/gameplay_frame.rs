@@ -115,6 +115,9 @@ pub trait PassLease:
     + crate::ram::CompatibilityRam
     + crate::escape_timer::Host
     + crate::samus_death::Lease
+    + crate::demo_rooms::TableReads
+    + crate::cartridge::NativeDiagnostics
+    + crate::projection::Views
 {
     /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
@@ -280,13 +283,12 @@ pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     match entry {
         Entry::Frame => frame(game),
         Entry::Initialize => initialize(game),
-        Entry::DemoStop => stop_demo(game),
         Entry::PauseSetup => setup_pause(game),
         Entry::Paused => advance_pause(game),
         Entry::UnpauseSetup => setup_unpause(game),
         Entry::UnpauseFadeOut | Entry::GameOverFadeOut => fade_out(entry, game),
         // The lease entries run from the frame's lease.
-        Entry::TimeUpExit | Entry::DemoNext => unreachable!("a lease state"),
+        Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext => unreachable!("a lease state"),
         Entry::Gameplay
         | Entry::FadeIn
         | Entry::Unpause
@@ -384,7 +386,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             | DeathPose
             | FlashDeath
             | ExplodeSuit
-            | Advance(Entry::TimeUpExit | Entry::DemoNext)
+            | Advance(Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext)
             | DemoReset
             | Demo) => advance_on_lease::<H>(entry, &mut game.runtime()),
             Advance(entry) => advance(entry, game),
@@ -440,7 +442,7 @@ fn runs_on_lease(entry: StateEntry) -> bool {
             | DeathPose
             | FlashDeath
             | ExplodeSuit
-            | Advance(Entry::TimeUpExit | Entry::DemoNext)
+            | Advance(Entry::TimeUpExit | Entry::DemoStop | Entry::DemoNext)
             | DemoReset
             | Demo
     )
@@ -456,6 +458,7 @@ fn advance_on_lease<'a, H: Host + 'a>(entry: StateEntry, lease: &mut H::Runtime<
         FlashDeath => samus_death::flash_death(lease),
         ExplodeSuit => samus_death::explode_suit(lease),
         Advance(Entry::TimeUpExit) => exit_time_up::<H>(lease),
+        Advance(Entry::DemoStop) => stop_demo::<H>(lease),
         Advance(Entry::DemoNext) => next_demo::<H>(lease),
         DemoReset => demo_rooms::reset(lease),
         Demo => demo_rooms::play(lease, |lease| run_pass::<H>(lease, PassEnd::Pass)),
@@ -713,7 +716,8 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
 }
 
 /// Demo phase: leave a finished demo.
-fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
+fn stop_demo<'a, H: Host + 'a>(game: &mut H::Runtime<'a>) -> CoroutineRet {
+    use crate::projection::Views as _;
     if crate::session_words::current(game).substate != 1 {
         demo_rooms::advance_set(game);
     }
@@ -721,19 +725,16 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     crate::gameplay_word!(game.GAME_STATE += 1);
     crate::screen_fade::store(game, 0, 0);
     crate::hdma_objects::clear_hdma(game);
-    game.disable_scanline_irq();
+    display_refresh::disable_scanline_irq(game);
     crate::sequence_word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
     {
         crate::frame_display_word!(game.CurrentInterrupt = 0);
         crate::frame_display_word!(game.PendingInterrupt = 0);
     }
-    // The palette effects and the enemy projectile table clear on one lease.
-    let mut lease = game.runtime();
-    palette_effects::set_enabled(lease.session_mut(), false);
-    palette_effects::clear(lease.session_mut());
-    clear_projectile_table(&mut lease.session_mut().enemy_projectiles);
-    lease.words_stored();
-    drop(lease);
+    palette_effects::set_enabled(game.session_mut(), false);
+    palette_effects::clear(game.session_mut());
+    clear_projectile_table(&mut game.session_mut().enemy_projectiles);
+    game.words_stored();
     // The original clears the block a word at a time, from the top down.
     for index in (0..crate::demo_clear::WORDS).rev() {
         game.set_view_word(crate::projection::Field::DemoClear(index), 0);

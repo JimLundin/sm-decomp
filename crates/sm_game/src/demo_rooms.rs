@@ -22,10 +22,35 @@ pub fn import_scenes(image: &RomImage) -> Option<ImportedScenes> {
     Imported::import(image, SCENES_ADDRESS, SCENES_BYTES, DemoScenes::import)
 }
 
+/// The imported demo tables.
+pub trait Tables {
+    fn demo_sets(&self) -> &Option<ImportedSets>;
+    fn demo_scenes(&self) -> &Option<ImportedScenes>;
+}
+impl<T: crate::menus::host::Host + ?Sized> Tables for T {
+    fn demo_sets(&self) -> &Option<ImportedSets> {
+        crate::menus::host::Host::demo_sets(self)
+    }
+    fn demo_scenes(&self) -> &Option<ImportedScenes> {
+        crate::menus::host::Host::demo_scenes(self)
+    }
+}
+
+/// What the demo tables' reads need: the tables and the loaded and native
+/// images.
+pub trait TableReads:
+    Tables + crate::cartridge::LoadedImage + crate::cartridge::NativeImage
+{
+}
+impl<T: Tables + crate::cartridge::LoadedImage + crate::cartridge::NativeImage + ?Sized> TableReads
+    for T
+{
+}
+
 /// The set's first scene address in the loaded image. The table serves it
 /// while that image is the imported allocation; otherwise, and past the four
 /// sets, the original indexed load runs with its failures.
-fn set_start<H: crate::menus::host::Host + ?Sized>(game: &H, set: u16) -> u16 {
+fn set_start<H: TableReads + ?Sized>(game: &H, set: u16) -> u16 {
     let rom = game.loaded_image();
     Imported::from(game.demo_sets(), rom)
         .and_then(|sets| sets.start(usize::from(set)))
@@ -36,12 +61,12 @@ fn set_start<H: crate::menus::host::Host + ?Sized>(game: &H, set: u16) -> u16 {
 /// is the imported allocation. Every imported entry lies above $8000, so its
 /// original fetch has no invalid-window diagnostic; callers keep that fetch
 /// for any other address, image or a missing image.
-fn entry<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option<DemoEntry> {
+fn entry<H: TableReads + ?Sized>(game: &H, address: u16) -> Option<DemoEntry> {
     let native = game.native_image_binding()?;
     Imported::from(game.demo_scenes(), &native).and_then(|scenes| scenes.entry(address))
 }
 
-fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option<DemoScene> {
+fn scene<H: TableReads + ?Sized>(game: &H, address: u16) -> Option<DemoScene> {
     match entry(game, address)? {
         DemoEntry::Scene(scene) => Some(scene),
         DemoEntry::End => None,
@@ -128,7 +153,8 @@ pub fn play<H: crate::gameplay_frame::PassLease + ?Sized>(
     0
 }
 
-pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// Step to the demo's next scene or set, on the frame's lease.
+pub fn advance_set<H: crate::gameplay_frame::PassLease + ?Sized>(game: &mut H) {
     let base = set_start(
         game,
         crate::sequence_state::Access::sequence_flow(&*game).demo_set,
