@@ -67,7 +67,14 @@ jobs:
     uses: ./.github/workflows/quality.yml
 
   verify:
-    if: (github.event_name != 'push' || startsWith(github.ref, 'refs/heads/verify/')) && inputs.action != 'bench'
+    # Replays are most of the runner time, so a Quality failure stops them before they start.
+    # Scheduled and most dispatched runs skip Quality, which doesn't block them.
+    needs: quality
+    if: >-
+      !cancelled()
+      && (needs.quality.result == 'success' || needs.quality.result == 'skipped')
+      && (github.event_name != 'push' || startsWith(github.ref, 'refs/heads/verify/'))
+      && inputs.action != 'bench'
     permissions:
       contents: read
       actions: read
