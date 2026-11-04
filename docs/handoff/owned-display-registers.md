@@ -249,3 +249,47 @@ presentation rejects them (`DisplayError::Alias`).
 
 Still left, outside sm_game: the encoder (`sm/src/game/display_commands.rs`) and `rtl`'s own
 `register_writes!` in sm/. They go with the emulated backend once the native renderer draws.
+
+## Native output, first slice (lane `native-output`, 2026-11-04)
+
+End state step 3 (REVIEW): the native renderer is the replay output, and the
+emulated PPU stays only on the oracle side.
+
+**Landed (`b0e7d2c62`, exact).**
+
+- `ppu::engine_frame` marks the lines that the engine's tick draws: lockstep's
+  mine half and `RM_MINE`'s tick. With `SM_NATIVE_LINES` set, `native_line::check`
+  writes the native line into the render buffer, so the lock's `video` stream
+  digests the native renderer. The emulated PPU's line is drawn only so the
+  native line can be compared with it. The oracle's frames (lockstep's theirs
+  half, `RM_THEIRS`) keep the emulated PPU's lines.
+- The lease's typed producers (`Runtime::produced`) feed the native PPU each work
+  RAM byte from the lease's Session projection instead of RAM. Game's producers
+  still use RAM. One interpreter, `display_refresh::feed_native`, serves both.
+- A DMA start on the lease publishes only the bytes it reads (stage 10's
+  seventh slice). So the NMI's DMA no longer needs a whole exported image.
+
+**Why it is exact.** The nightly route logs no differing native line (run
+41424604620). Off `SM_NATIVE_LINES`, nothing changes. Lines drawn on the
+per-pixel path keep the emulated pixels: Mode 7 EXTBG and enabled mosaic.
+
+**Next slices, in order.**
+
+1. **Native output on every replay.** Run `native_line` outside
+   `SM_NATIVE_LINES` on the engine's PPU, which drops the emulated line draw
+   there (`pixels_observed`). PR rows then digest native video. This needs the
+   per-pixel lines (EXTBG, mosaic) drawn natively first.
+2. **The native PPU fed by commands.** Feed it from the typed display commands
+   (`video::Command` and `Upload`) at the encoder, not from the `$21xx` port
+   writes. The emulated PPU still takes the encoder's writes, for the oracle
+   comparison.
+3. **DMA from the Session.** The native PPU takes every DMA's bytes from the
+   Session, as the typed producers now do. The readback, Mode 7 and tilemap
+   drains need `Upload` records for this. Once it is done, `publish_reads` serves
+   only the emulated PPU.
+4. **Native HDMA.** HDMA reads its tables from the Session (`scene::hdma`'s
+   interpreter over the lease) and drives the native registers per line.
+   Settlement's and the IRQ's `publish` then serve only the emulated side, and
+   the device stops being a consumer of the export.
+5. **Retire the emulated PPU from the engine side.** After that, the emulated
+   PPU runs only on the oracle frames.

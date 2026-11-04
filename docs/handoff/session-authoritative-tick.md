@@ -1677,6 +1677,68 @@ former `foreign` call left them. Writes are identical and in the same order.
     settlement's HDMA, the Samus upload), lockstep's RAM compare, checkpoints and
     the verification checks that read Game after a drop.
 
+- **Seventh slice (lane `native-output`, on `1cbd71058`).** Not yet replayed.
+  Ratchet: `legacy_engine_ram_sites` 321 → 319; `engine_ram_export_lines` 4620
+  (unchanged: the changes are in sm/, and no codec part lost its last consumer).
+  - **A DMA start publishes what it reads** (`51ab946d3`, exact).
+    `Runtime::start_dma` writes the Session's projection of each work RAM byte
+    its channels read (`publish_reads`, from `dma_wram`), the bytes
+    `transfer_checks::assert_published` checks. The full `publish` before the
+    palette/OAM, Mode 7, readback and tilemap drains, the cinematic graphics
+    DMA, `CopyToVramNow` and room entry's MDMAEN is gone: up to 4 whole-Session
+    encodes a frame fewer. Settlement's publish, the interrupt pass's and the
+    Samus upload's stay.
+  - **The native renderer is the engine's video output** (`b0e7d2c62`, exact;
+    D9, end state step 3). See owned-display-registers.md, "Native output".
+
+#### The RAM export's consumers (lane `native-output`, 2026-11-04)
+
+The codec splits into four parts. Line counts are of `engine_ram_export_lines`
+(4620), from the items' extents on `1cbd71058`, rounded:
+
+- **Encode**, about 430 lines: `visit`, `visit_owned_words`, `encode_spans`
+  and `Spans`, `fx_encoding::encode_sources`/`encode_display_sources`, and
+  `actors::codec::visit_common`.
+- **Decode**, about 640 lines: `decode`, `inputs`, `inputs_from_session`, the
+  view decoders (`camera`, `flow`, `room_geometry`, `room_effects`) and
+  projection.rs's `Decode`, `fx_encoding::decode*`/`import_window`,
+  `actors::codec::import_common` and `menu_window_encoding::decode`.
+- **The byte path**, about 900 lines: `projected_byte`/`write_projected_byte`
+  and their per-owner arms (queued, input lanes, Botwoon, actors, menu window,
+  FX lighting and sources).
+- **Shared tables and the ownership graph**, about 2650 lines. The 730-line
+  scalar word table (`scalar_words!`) is used by all three parts. The FX/HDMA
+  control and source ownership (`control_*`, `adopt_*`, `validate_*`,
+  `ControlReader`) is used by encode and the byte path. The release and
+  `preflight_export` validate it on every export.
+
+| Consumer | What it reads | Parts it keeps alive |
+| --- | --- | --- |
+| 1. Device: DMA (NMI uploads, graphics loads, room entry) | the bytes the channels read, from `dma_wram` (this slice) | the byte path only |
+| 1. Device: settlement's HDMA, the interrupt pass | tables on every line, through the emulated bus, after a full `publish` | encode |
+| 1. Device: the Samus upload | nothing in WRAM: descriptors from the lease, tiles from the cartridge | encode (its `publish` is conservative; it can go) |
+| 2. Lockstep's WRAM compare, the lock's `wram` stream | the whole image after the tick (the release's export) | encode, until slice 6 |
+| 3. Checkpoints (Legacy binary, `require_legacy_binary`) | save: the whole image; load: an import decode at the next lease | encode and decode |
+| 4. Verification after a drop, the oracle's Session decode | Game's RAM; `decode` of the oracle's RAM; observers' direct `encode`/`projected_byte` | encode, decode, byte path |
+| 5. The engine's own addressed accesses (not in the brief) | `Runtime::byte`/`compatibility_byte` and stores: `legacy_engine_ram_sites` 321, `engine_unresolved_ram_methods` 1032, `session_word_view_sites` 204, the kept Session's take-up of logged writes, imports | byte path, decode, shared tables |
+
+No part has a single consumer, so nothing can be deleted yet. The order that
+retires them:
+
+1. Encode goes when three things have happened. Slice 6 drops `wram`.
+   Settlement's HDMA reads its tables from the Session, either through the
+   native renderer's own HDMA or through a WRAM view over the lease's
+   projection. Checkpoints serialize the Session.
+2. Decode goes to verification (D6), as session-compare.md's step 3 does,
+   once imports stop: no Legacy checkpoint load and no fresh import.
+3. The byte path and the tables go with consumer 5, as the addressed sites
+   reach 0.
+
+Checkpoints in a typed format are a `FORMAT` bump and a re-record of every
+ci-data checkpoint bundle, which the root uploads. `session_checkpoint.rs`
+already holds the typed components for the persistent Session. That work is
+not in this slice.
+
 ### Stage 11: the rest
 
 - **Change.**
@@ -1765,8 +1827,8 @@ former `foreign` call left them. Writes are identical and in the same order.
   the faithful oracle keep their entry points. `SM_NATIVE_LINES` keeps the native renderer's
   check.
 - **Headless.** Headless runs still publish. Settlement's HDMA reads WRAM, so skipping the
-  publish is a later speed step: publish only the HDMA source spans
-  (`fx_encoding::physical_source_spans`). It is outside this plan.
+  publish is a later speed step. A DMA start now publishes only what it reads
+  (stage 10's seventh slice). HDMA's tables are still published whole.
 
 ## 6. Stage 1, scoped for one 2-3 hour lane
 
