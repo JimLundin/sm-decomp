@@ -1,4 +1,5 @@
 [toolchain]
-channel = "stable"
+# An exact release: warnings are denied, so a new compiler must arrive in its own PR.
+channel = "1.99.1"
 profile = "minimal"
 components = ["rustfmt", "clippy"]

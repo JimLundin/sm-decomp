@@ -7,7 +7,7 @@ Supply an unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`
 included. Commands below run from the repository root.
 
 Install [rustup](https://rustup.rs/); [rust-toolchain.toml](../rust-toolchain.toml)
-selects the stable compiler with rustfmt and clippy. The project uses Rust
+pins the exact compiler, with rustfmt and clippy. The project uses Rust
 edition 2024.
 
 ## Target crates on any platform
@@ -34,10 +34,11 @@ Do not publish its output; failures can contain ROM-derived values.
 The desktop game (`sm_app`) currently links only for Windows x86-64 with the GNU
 toolchain: the native desktop bridge relies on Windows' 32-bit `long`. The verifier
 also builds on Linux, which is where CI runs it
-([the action](../.github/actions/linux-native/action.yml) has the steps). CI does not build the desktop
-(issue #243); building and linking it is local. You need:
+([the action](../.github/actions/linux-native/action.yml) has the steps). CI type-checks the desktop's
+Windows target from Linux on every pull request (quality.yml `desktop-check`); linking it is
+local (#243). You need:
 
-- the `stable-x86_64-pc-windows-gnu` Rust toolchain and a MinGW-w64 GCC linker;
+- the `x86_64-pc-windows-gnu` Rust toolchain at the version in `rust-toolchain.toml` and a MinGW-w64 GCC linker;
 - Python 3.11 or newer;
 - Zig 0.15.2 for Windows x86-64 and the SDL2 2.32.10 MinGW development SDK;
 - the pinned native archives, built as described in
@@ -70,7 +71,8 @@ See [Verify gameplay](../movies/README.md) for headless replay.
 If tools are missing from PATH, point this shell at their installed locations:
 
 ```powershell
-$iterationRust = "$env:USERPROFILE\.rustup\toolchains\stable-x86_64-pc-windows-gnu\bin"
+$iterationChannel = (Select-String '^channel = "(.+)"' rust-toolchain.toml).Matches.Groups[1].Value
+$iterationRust = "$env:USERPROFILE\.rustup\toolchains\$iterationChannel-x86_64-pc-windows-gnu\bin"
 $iterationTools = "$env:LOCALAPPDATA\sm-decomp-tools"
 $env:PATH = "$iterationRust;$iterationTools\python-3.13.7;$env:LOCALAPPDATA\Programs\Git\bin;$env:PATH"
 Get-Command cargo,rustc,python,sh

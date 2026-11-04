@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Local source gate. CI builds/links the verifier executable and runs units/replays.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python 3.11+), SM_GATE_DIR.
-R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/stable-x86_64-pc-windows-gnu/bin}"
+CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
+R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/$CHANNEL-x86_64-pc-windows-gnu/bin}"
 PY="${SM_PY:-/c/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/python-3.13.7/python.exe}"
 O="${SM_GATE_DIR:-$TEMP/sm-gate}/$(git rev-parse --short HEAD)-$$"
 mkdir -p "$O"; ok=1

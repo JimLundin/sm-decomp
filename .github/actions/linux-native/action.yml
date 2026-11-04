@@ -7,7 +7,7 @@ runs:
   steps:
     - name: Install the repository toolchain
       shell: bash
-      run: rustup show
+      run: rustup toolchain install
     - name: Install pinned Zig
       shell: bash
       run: |
