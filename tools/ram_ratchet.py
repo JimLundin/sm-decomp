@@ -113,9 +113,9 @@ BASELINE = {
     # First measured on 0b19d8a24; advisory until it first falls, then strict.
     "engine_ram_export_lines": 4685,
     # Code volume (sm_pipeline volume), first measured on 7bf8f9f51. Advisory.
-    "engine_logic_tokens": 1237775,
+    "engine_logic_tokens": 1237789,
     "engine_data_tokens": 52807,
-    "engine_traits": 342,
+    "engine_traits": 343,
     "engine_blanket_impls": 88,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
