@@ -441,7 +441,7 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
             for index in 0..3 {
                 let tile = source.read(isize::try_from(2 * index).unwrap());
                 game.screen_write_native_word(
-                    Point::physical(OPTIONS_TILEMAP + usize::from(destination) + row + 2 * index),
+                    Point::new(Role::Pause, usize::from(destination) + row + 2 * index),
                     tile,
                 );
             }
@@ -449,7 +449,7 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
     }
     // The aim up and aim down rows' 3x2 hint, cleared unless bound to L or R.
     let cleared_hint = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
-    let hints = [cell(20, 23), cell(23, 23)].map(|at| OPTIONS_TILEMAP + at);
+    let hints = [cell(20, 23), cell(23, 23)];
     for (index, destination) in hints.into_iter().enumerate() {
         if bindings::get_at(game, Array::ControllerBindings, index + 5) != 5
             && bindings::get_at(game, Array::ControllerBindings, index + 5) != 6
@@ -457,7 +457,7 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
             for (row, tiles) in cleared_hint.as_chunks::<3>().0.iter().enumerate() {
                 for (column, tile) in tiles.iter().enumerate() {
                     game.screen_write_native_word(
-                        Point::physical(destination + row * ROW + 2 * column),
+                        Point::new(Role::Pause, destination + row * ROW + 2 * column),
                         *tile,
                     );
                 }
@@ -521,7 +521,7 @@ pub fn reserve_arrow_tiles<H: Host + ?Sized>(lit: bool, game: &mut H) {
         bg_tile::palette(7)
     };
     for index in (0..8).map(|row| 129 + row * 32).chain(385..387) {
-        recolor_native(EQUIPMENT_TILEMAP + 2 * index, palette, 1, game);
+        recolor_tiles(Point::new(Role::Equipment, 2 * index), palette, 1, game);
     }
 }
 
@@ -534,26 +534,53 @@ pub fn copy_native_tiles<H: Host + ?Sized>(
     let source = native_record(0x820000 | u32::from(cursor), game);
     for index in 0..bytes {
         let byte = source.byte(index);
-        game.screen_write_byte(Point::physical(destination + index), byte);
+        game.screen_write_byte(table_point(destination + index), byte);
     }
 }
 
+/// The screen point a bank $82 table's work RAM destination names: the pause
+/// map's or the equipment screen's buffer at its offset while it lies in the
+/// workspace ($7E:3000..$6FFE), else the original's alias at that address.
+fn table_point(destination: usize) -> Point {
+    match destination {
+        PAUSE_TILEMAP..EQUIPMENT_TILEMAP => Point::new(Role::Pause, destination - PAUSE_TILEMAP),
+        EQUIPMENT_TILEMAP..0x6fff => Point::new(Role::Equipment, destination - EQUIPMENT_TILEMAP),
+        // Any other destination keeps the original's work RAM alias.
+        _ => Point::physical(destination),
+    }
+}
+
+/// Recolor `words` tiles from a bank $82 table's work RAM destination.
 pub fn recolor_native<H: Host + ?Sized>(
     destination: usize,
     palette: u16,
     words: usize,
     game: &mut H,
 ) {
-    // Publish each tile before selecting the next one, including failure prefixes.
     for index in 0..words {
-        let point = Point::physical(destination + 2 * index);
-        if (0x3000..0x6fff).contains(&(destination + 2 * index)) {
-            game.screen_apply(|workspace| super::canvas::recolor(workspace, point, palette));
-        } else {
-            // Native ROM destinations can select retained physical aliases.
-            let tile = game.screen_native_word(point);
-            game.screen_write_native_word(point, bg_tile::recolour(tile, palette));
-        }
+        recolor_tile(table_point(destination + 2 * index), palette, game);
+    }
+}
+
+/// Recolor `words` tiles of a workspace buffer from `start`.
+pub fn recolor_tiles<H: Host + ?Sized>(start: Point, palette: u16, words: usize, game: &mut H) {
+    for index in 0..words {
+        recolor_tile(
+            start.advance(2 * index).expect("screen offset"),
+            palette,
+            game,
+        );
+    }
+}
+
+fn recolor_tile<H: Host + ?Sized>(point: Point, palette: u16, game: &mut H) {
+    // Publish each tile before selecting the next one, including failure prefixes.
+    if point.physical_address().is_none() {
+        game.screen_apply(|workspace| super::canvas::recolor(workspace, point, palette));
+    } else {
+        // Native ROM destinations can select retained physical aliases.
+        let tile = game.screen_native_word(point);
+        game.screen_write_native_word(point, bg_tile::recolour(tile, palette));
     }
 }
 
@@ -611,7 +638,7 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn wireframe_rows<H: Host + ?Sized>(
-    destination: usize,
+    destination: Point,
     row_stride: usize,
     mut source: impl FnMut(&mut H) -> u16,
     game: &mut H,
@@ -620,7 +647,9 @@ fn wireframe_rows<H: Host + ?Sized>(
         for column in 0..8 {
             let tile = source(game);
             game.screen_write_native_word(
-                Point::physical(destination + row_stride * row + 2 * column),
+                destination
+                    .advance(row_stride * row + 2 * column)
+                    .expect("screen offset"),
                 tile,
             );
         }
@@ -630,7 +659,7 @@ fn wireframe_rows<H: Host + ?Sized>(
 pub fn prepare_equipment_frame<H: Host + ?Sized>(game: &mut H) {
     let mut cursor = DUMMY_WIREFRAME;
     wireframe_rows(
-        PAUSE_TILEMAP + WIREFRAME,
+        Point::new(Role::Pause, WIREFRAME),
         32,
         |game| {
             let tile = native_record(0x820000 | u32::from(cursor), game).word(0);
@@ -658,7 +687,7 @@ pub fn equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
     let record = native_record(0x820000 | u32::from(address), game);
     let mut offset = 0;
     wireframe_rows(
-        EQUIPMENT_TILEMAP + WIREFRAME,
+        Point::new(Role::Equipment, WIREFRAME),
         64,
         |_| {
             let tile = record.word(offset);
