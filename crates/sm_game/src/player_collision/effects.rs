@@ -61,9 +61,9 @@ pub trait Effects {
     fn cancel_speed_boost(&mut self);
     /// Existing current-area boss-bit query used only by the spike rule.
     fn boss_defeated(&mut self) -> bool;
-    /// Two actual ordered physical reads at7F6402+block and+1. Export/relinquish
-    /// Session before backend execution; import and refresh inputs afterward,
-    /// including unwind handling. Do not replace this with a cached terrain word.
+    /// Two actual ordered bus reads at $7F:6402+block and +1, through the
+    /// `hardware::Bus` port: past $7F:FFFF they reach bank $80's registers. Do
+    /// not replace this with a cached terrain word.
     fn vertical_slope_bts(&mut self, block: u16) -> u16;
     /// Preserve the diagnostic at invalid clearance dispatch, after all prior
     /// state publications. This is not permission to sanitize unknown flags.

@@ -3,7 +3,6 @@
 //! unknown address keeps the original unreachable failure.
 use crate::explosion_window::{self, Phase};
 use crate::hdma_objects::{self, HdmaEffect};
-use crate::hdma_program::HdmaLease as _;
 use crate::menus::host::Host;
 use crate::player_transitions::xray::BeamPhase;
 use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, TourianStatuePhase, Weather};
@@ -252,9 +251,7 @@ where
         }
         LavaBackground => it.on_lease(|lease| {
             liquid_effects::lava_background(index, lease, |lease, command| {
-                lease.foreign(|game| {
-                    crate::display::video::Video::apply(game, "lava background", command)
-                })
+                crate::display::video::Video::apply(lease, "lava background", command)
             })
         }),
         WaterSurface => {

@@ -983,6 +983,16 @@ impl Game {
         &mut StateRecorder,
     ) {
         self.note_samus_external_mutation();
+        self.split_parts()
+    }
+
+    fn split_parts(
+        &mut self,
+    ) -> (
+        Option<&mut crate::snes::snes::Backend>,
+        crate::execution::HostContext<'_>,
+        &mut StateRecorder,
+    ) {
         // The host context borrows these fields, each once, beside the backend
         // and recorder.
         macro_rules! split {
@@ -1024,6 +1034,21 @@ impl Game {
         // The optional Backend owns both views for this synchronous observation.
         unsafe {
             crate::rtl::audio_execution_position(self.backend.as_ref(), self.snes_frame_counter)
+        }
+    }
+
+    /// The backend for one device-register access: a PPU or CPU register, a DMA
+    /// channel parameter or the WRAM port address, none of which holds WRAM, ROM or
+    /// Samus state. Unlike `execution_parts` it leaves Samus authority, and with it
+    /// an open Session lease, current; `rtl::write_device` and `rtl::read_device`
+    /// admit only those registers.
+    /// # Safety
+    /// As `execution`: the owned backend is live and exclusive.
+    pub(crate) unsafe fn device_execution(&mut self) -> crate::execution::Execution<'_> {
+        let (backend, host, _) = self.split_parts();
+        crate::execution::Execution {
+            backend: backend.expect("device access requires an owned backend"),
+            host,
         }
     }
 

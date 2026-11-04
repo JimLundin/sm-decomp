@@ -1163,6 +1163,85 @@ pub(crate) unsafe fn write_reg_execution(reg: u16, value: u8, game: &mut Executi
     let views = game.backend.views();
     unsafe { write_reg_parts(reg, value, game, views) }
 }
+/// Whether writing `value` to `reg` reaches only device state: a PPU register, the
+/// WRAM port address, a CPU register (MDMAEN only when it starts no transfer) or a
+/// DMA channel parameter. The WRAM data port, the APU ports and a DMA start move
+/// RAM or audio state and are not device writes.
+const fn device_write_register(reg: u16, value: u8) -> bool {
+    matches!(
+        reg,
+        0x2100..=0x213f | 0x2181..=0x2183 | 0x4200..=0x420a | 0x420c | 0x420d | 0x4300..=0x437f
+    ) || (reg == MDMAEN as u16 && value == 0)
+}
+
+/// Whether a bus read of `address` reaches only device state or the cartridge:
+/// neither WRAM, its low mirror, nor the WRAM data port.
+const fn device_bus_address(address: u32) -> bool {
+    let bank = (address >> 16) as u8;
+    let offset = address as u16;
+    let system = matches!(bank, 0x00..=0x3f | 0x80..=0xbf);
+    !matches!(bank, 0x7e | 0x7f) && !(system && (offset < 0x2000 || offset == 0x2180))
+}
+
+/// Write `value` to device register `reg` as `write_reg` writes it, the register
+/// observer included, inside a device interval: Samus authority, and an open
+/// Session lease, stay current.
+/// # Safety
+/// As `write_reg`.
+pub(crate) unsafe fn write_device(reg: u16, value: u8, game: &mut Game) {
+    assert!(
+        device_write_register(reg, value),
+        "not a device register write"
+    );
+    #[cfg(sm_verify_dll)]
+    let epoch = game.compatibility_write_epoch();
+    let views = (game.g_snes, game.g_cpu);
+    unsafe {
+        let mut execution = game.device_execution();
+        execution.write(u32::from(reg), value);
+        observe_register_write(reg, value, &mut execution.host, execution.backend, views);
+    }
+    #[cfg(sm_verify_dll)]
+    assert_eq!(
+        epoch,
+        game.compatibility_write_epoch(),
+        "a device write moved RAM"
+    );
+}
+
+/// `write_device` of `value`'s low byte to `reg`, then its high byte to the next
+/// register up, as `write_reg_word` writes them.
+/// # Safety
+/// As `write_reg`.
+pub(crate) unsafe fn write_device_word(reg: u16, value: u16, game: &mut Game) {
+    let [low, high] = value.to_le_bytes();
+    unsafe {
+        write_device(reg, low, game);
+        write_device(reg.wrapping_add(1), high, game);
+    }
+}
+
+/// One bus read of `address` as `read_reg` reads it, inside a device interval.
+/// `address` is not WRAM or the WRAM data port (`device_bus_address`).
+/// # Safety
+/// As `read_reg`.
+pub(crate) unsafe fn read_device(address: u32, game: &mut Game) -> u8 {
+    assert!(device_bus_address(address), "not a device bus read");
+    unsafe { game.device_execution().read(address) }
+}
+
+/// The WRAM data port's address before a read of $2180, which advances it, as
+/// the B bus does; the caller reads the byte there.
+/// # Safety
+/// As `read_reg`.
+pub(crate) unsafe fn advance_wram_port(game: &mut Game) -> usize {
+    unsafe {
+        let snes = game.device_execution().snes();
+        let address = (*snes).ramAdr;
+        (*snes).ramAdr = address.wrapping_add(1) & 0x1ffff;
+        address as usize
+    }
+}
 // Bank-0 DMA writes have an inert cartridge tail; preserve byte observations.
 #[forbid(unsafe_code)]
 pub(crate) fn write_dma_register(reg: u16, value: u8, game: &mut Game) {

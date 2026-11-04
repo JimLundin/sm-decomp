@@ -850,6 +850,7 @@ pub trait Lease:
     + crate::room_mechanisms::host::Host
     + crate::room_state::fx::FxHost
     + crate::visual_host::Host
+    + crate::hardware::Multiplier
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
@@ -868,7 +869,6 @@ pub trait Lease:
 /// What the fight still reaches in the compatibility runtime.
 pub trait Host:
     crate::actors::host::BossEffects
-    + crate::actors::mother_brain_neck::Host
     + crate::records::Records
     + crate::cartridge::NativeImage
     + OwnedWords

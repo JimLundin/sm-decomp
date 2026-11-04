@@ -101,13 +101,13 @@ impl Effects for Runtime<'_> {
     }
 
     fn vertical_slope_bts(&mut self, block: u16) -> u16 {
+        use sm_game::hardware::Bus;
+        // A block past the level's end reads on into bank $80: its WRAM mirror,
+        // the PPU and CPU registers, the WRAM port and the cartridge.
         let address = 0x7f6402 + u32::from(block);
-        self.foreign(|game| unsafe {
-            let mut execution = game.execution();
-            let low = execution.read(address);
-            let high = execution.read(address + 1);
-            u16::from_le_bytes([low, high])
-        })
+        let low = self.read_bus_byte(address);
+        let high = self.read_bus_byte(address + 1);
+        u16::from_le_bytes([low, high])
     }
 
     fn invalid_clearance_flags(&mut self, _flags: u16) {

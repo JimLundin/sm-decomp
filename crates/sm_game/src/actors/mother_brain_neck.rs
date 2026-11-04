@@ -7,15 +7,7 @@
 //! decompilation (bank $A9). The body's and the brain's slot words are the
 //! fields of `mother_brain`'s typed slot views.
 use crate::actors::mother_brain_fight::Lease;
-
-/// What the neck needs from the game: the PPU's hardware multiply, which the
-/// original drives through the Mode 7 registers.
-pub trait Host {
-    /// `length` times the sine of `angle`. Was `ComputeSinMult`.
-    fn sine_times(&mut self, length: u16, angle: u16) -> u16;
-    /// `length` times the cosine of `angle`. Was `ComputeCosMult`.
-    fn cosine_times(&mut self, length: u16, angle: u16) -> u16;
-}
+use crate::hardware::{Multiplier, cosine_times, sine_times};
 
 use crate::actors::mother_brain::{BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, BrainEdit};
 
@@ -108,7 +100,7 @@ pub fn handle_neck(game: &mut impl Lease) {
         Brain::of(game, BRAIN_INDEX).segment_5_length(),
     ];
     let angles = [lower, lower, lower, upper, upper];
-    let [one, two, three, four, five] = game.foreign(|game| segment_offsets(game, lengths, angles));
+    let [one, two, three, four, five] = segment_offsets(game, lengths, angles);
     let base_x = Body::of(game, BODY_INDEX)
         .neck_base_x()
         .wrapping_add(SEGMENT_X_OFFSET);
@@ -142,11 +134,12 @@ struct Offset {
 
 /// Each segment's offset, its length times the sine and then the cosine of
 /// its angle, in the original's order through the hardware multiplier.
-fn segment_offsets(game: &mut impl Host, lengths: [u16; 5], angles: [u16; 5]) -> [Offset; 5] {
+/// The PPU multiplier places each segment, as the original's Mode 7 multiply did.
+fn segment_offsets(game: &mut impl Multiplier, lengths: [u16; 5], angles: [u16; 5]) -> [Offset; 5] {
     let mut offsets = [const { Offset { x: 0, y: 0 } }; 5];
     for ((offset, length), angle) in offsets.iter_mut().zip(lengths).zip(angles) {
-        offset.x = game.sine_times(length, angle);
-        offset.y = game.cosine_times(length, angle);
+        offset.x = sine_times(game, length, angle);
+        offset.y = cosine_times(game, length, angle);
     }
     offsets
 }
