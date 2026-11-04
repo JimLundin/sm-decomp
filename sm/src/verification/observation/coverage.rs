@@ -9,7 +9,7 @@
 //! Engine state with no owner yet stays "neither", so the coverage line keeps
 //! counting it.
 
-use sm_tools::session_compare::Held;
+use sm_tools::session_compare::{Classes, Held};
 use std::ops::Range;
 
 /// Why no Session field owns a range.
@@ -121,6 +121,120 @@ pub(super) const UNOWNED_RAM: [(Range<usize>, Kind); 45] = [
     // $7E:F4A0..FFFF: unused.
     (0xf4a0..0x10000, Kind::Unused),
 ];
+
+/// What becomes of a Session field whose bytes a `NORMALIZED_RAM` range
+/// covers, so that neither compare sees them today ("both").
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum Shared {
+    /// The field is compared once its `LEGACY(verifier)` row retires: the
+    /// row's divergence is fixed, then the range leaves `NORMALIZED_RAM` and
+    /// the row leaves `docs/LEGACY.md` in the same change.
+    UntilRowRetires,
+    /// The engine keeps the field in RAM the original leaves to snesrev's
+    /// bookkeeping or unused, so RAM cannot carry it: it goes on the direct
+    /// compare's declared list of fields RAM cannot carry (slice 4).
+    Permanent,
+}
+
+/// The Session fields the normalized ranges cover, in address order, each
+/// with the field and its decision (docs/handoff/session-compare.md, "The
+/// 107 both bytes").
+pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 16] = [
+    // The direct-page long pointer scratch; the $0000-$0050 row.
+    (0x0..0x4, "pointer_scratch", Shared::UntilRowRetires),
+    // The enemy projectile spawn scratch; the $0000-$0050 row.
+    (0x12..0x18, "spawn_scratch", Shared::UntilRowRetires),
+    // The $060B-$0610 row.
+    (
+        0x60b..0x60c,
+        "enemy_projectiles.spawn.angle",
+        Shared::UntilRowRetires,
+    ),
+    // snesrev's coroutine state, which a faithful oracle never writes.
+    (
+        0x612..0x614,
+        "control.primary, control.secondary",
+        Shared::Permanent,
+    ),
+    // snesrev's counter RAM, which the original leaves unused ($077E..82).
+    (
+        0x77e..0x782,
+        "messages.delay, room.unpause_queue_tail",
+        Shared::Permanent,
+    ),
+    // The $0D82-$0D8F rows, which the grapple temporaries share.
+    (
+        0xd82..0xd90,
+        "game_loop.saved_bindings",
+        Shared::UntilRowRetires,
+    ),
+    // The $0D9C-$0D9D row, which the grapple swing's angular velocity shares.
+    (0xd9c..0xd9e, "wavy_samus.enabled", Shared::UntilRowRetires),
+    // The enemy temporary rows from here to $EF77.
+    (
+        0xe20..0xe46,
+        "compatibility_enemy_scratch, actors.compatibility",
+        Shared::UntilRowRetires,
+    ),
+    (
+        0xe4a..0xe4c,
+        "actors.combat.last_power",
+        Shared::UntilRowRetires,
+    ),
+    (0xe54..0xe5a, "actors.controls", Shared::UntilRowRetires),
+    (
+        0x1784..0x178c,
+        "actors.compatibility.pre_hook",
+        Shared::UntilRowRetires,
+    ),
+    (0x17a8..0x17ac, "actors.schedule", Shared::UntilRowRetires),
+    (0x1834..0x183c, "actors.schedule", Shared::UntilRowRetires),
+    (
+        0x1874..0x1876,
+        "actors.compatibility.right_border",
+        Shared::UntilRowRetires,
+    ),
+    (
+        0x18a6..0x18a8,
+        "room.collision_detection_index",
+        Shared::UntilRowRetires,
+    ),
+    (
+        0xef74..0xef78,
+        "actors.graphics.compatibility",
+        Shared::UntilRowRetires,
+    ),
+];
+
+/// The summary line for the "both" bytes: by `SHARED_RAM`'s decision, and
+/// the ranges no entry decides, which must stay none.
+pub(super) fn shared_summary(classes: &Classes) -> String {
+    let mut until = 0;
+    let mut permanent = 0;
+    let mut fields: Vec<&str> = Vec::new();
+    let mut undecided = 0;
+    let mut first_undecided = None;
+    for at in classes.both_ranges.iter().flat_map(Clone::clone) {
+        match SHARED_RAM.iter().find(|(range, _, _)| range.contains(&at)) {
+            Some((_, _, Shared::UntilRowRetires)) => until += 1,
+            Some(&(_, field, Shared::Permanent)) => {
+                permanent += 1;
+                if !fields.contains(&field) {
+                    fields.push(field);
+                }
+            }
+            None => {
+                undecided += 1;
+                first_undecided.get_or_insert(at);
+            }
+        }
+    }
+    format!(
+        "Session RAM decoded and unowned by decision: until its row retires {until}, permanent {permanent} ({}), undecided {undecided}{}",
+        fields.join("; "),
+        first_undecided.map_or_else(String::new, |at| format!(" (first ${at:05X})"))
+    )
+}
 
 /// The ranges the host's typed domains hold while the presentation is
 /// Legacy (an owned Display carries them in the Session): the frame display

@@ -164,6 +164,11 @@ impl Observer {
                             .finish(&coverage::unowned(), &coverage::held()),
                     );
                     lines.push(coverage::unowned_summary());
+                    lines.push(coverage::shared_summary(
+                        &session
+                            .coverage
+                            .classes(&coverage::unowned(), &coverage::held()),
+                    ));
                 }
                 Ok((lines, None))
             }
