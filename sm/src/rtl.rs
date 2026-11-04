@@ -1227,7 +1227,16 @@ pub(crate) unsafe fn write_device_word(reg: u16, value: u16, game: &mut Game) {
 /// As `read_reg`.
 pub(crate) unsafe fn read_device(address: u32, game: &mut Game) -> u8 {
     assert!(device_bus_address(address), "not a device bus read");
-    unsafe { game.device_execution().read(address) }
+    #[cfg(sm_verify_dll)]
+    let epoch = game.compatibility_write_epoch();
+    let value = unsafe { game.device_execution().read(address) };
+    #[cfg(sm_verify_dll)]
+    assert_eq!(
+        epoch,
+        game.compatibility_write_epoch(),
+        "a device read moved RAM"
+    );
+    value
 }
 
 /// The WRAM data port's address before a read of $2180, which advances it, as

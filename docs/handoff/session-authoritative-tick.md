@@ -373,11 +373,20 @@ access through it. They take only device registers: the PPU ($2100-$213F), the W
 address ($2181-$2183), the CPU registers ($4200-$421F, with MDMAEN only when it starts no
 transfer) and the DMA channel parameters ($4300-$437F). The register observer still sees
 each write. `display_commands::device_only` also leaves out `StopDma` and `ClearCpuIo`: the
-room background check snapshots RAM at every MDMAEN write. Verify builds assert the write epoch did not move.
+room background check snapshots RAM at every MDMAEN write. Verify builds assert the write
+epoch did not move across each device write, each device read and each device-only command.
 
 On the lease, each port call runs inside `owned_player_call`, so the observations are
 refreshed on entry and on return as the former `foreign` call left them. No RAM moves, so
 the lease stays current and nothing is exported or imported.
+
+Because nothing is exported, RAM no longer holds what the Session changed since its last
+export. The former `foreign` export had published it. The scroll stores' observation refresh
+(`Runtime::refresh_scroll_inputs`) reads RAM, so it now takes the time-frozen flag ($0A78)
+from the Session, as it already took the drop origin and the grapple start. Before that
+change, `boss-draygon` (@1520) and `chain-any-0144-DA60` (@1542) queued the enemy BG2 tilemap
+in the first frozen frame. The cause was the X-ray scope's HDMA spawn, which no longer
+published the flag, or the reserve tanks' freeze.
 
 | Port | Signature | Runtime impl | Reaches the emulated hardware |
 | --- | --- | --- | --- |

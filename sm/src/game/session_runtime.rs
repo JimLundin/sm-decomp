@@ -933,12 +933,16 @@ impl<'g> Runtime<'g> {
     }
     /// The scroll stores' refresh while the Session is current: the external
     /// observations as RAM holds them, except the drop origin, the moonwalk
-    /// setting, the turn request, the HUD auto-cancel flag and the grapple
-    /// beam's previous start, which the Session owns and RAM holds only once
-    /// it is published.
+    /// setting, the turn request, the HUD auto-cancel flag, the grapple beam's
+    /// previous start and the time-frozen flag, which the Session owns and RAM
+    /// holds only once it is published. A device interval publishes nothing:
+    /// the flag the X-ray scope sets just before its HDMA spawn, or the reserve
+    /// tanks set at the end of a frame, reaches RAM only at the lease's next
+    /// export, and the enemy BG2 tilemap transfer reads it after these stores.
     pub(crate) fn refresh_scroll_inputs(&mut self) {
         self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
         let session = self.session();
+        let frozen = session.timing.time_frozen;
         let origin = session.enemy_projectiles.drop_origin;
         let (moonwalk, turn_request) = (session.player.moonwalk, session.player.turn_request);
         let previous_start = session.player.swing.previous_start;
@@ -950,6 +954,7 @@ impl<'g> Runtime<'g> {
         self.inputs.hud_auto_cancel = hud_auto_cancel;
         self.inputs.grapple_x = previous_start.x;
         self.inputs.grapple_y = previous_start.y;
+        self.inputs.frozen = frozen;
     }
     pub(crate) fn refresh_written_inputs(&mut self) {
         self.inputs =

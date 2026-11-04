@@ -359,7 +359,17 @@ pub(crate) fn device_only(command: &Command) -> bool {
 pub(crate) fn apply_device(command: Command, game: &mut Game) {
     assert!(!game.g_snes.is_null(), "SNES backend must be installed");
     assert!(device_only(&command), "a display command that moves RAM");
+    // A command that left RAM moved would leave the lease's Session behind it:
+    // the lease neither exports before nor imports after a device interval.
+    #[cfg(sm_verify_dll)]
+    let epoch = game.compatibility_write_epoch();
     registers(command, &mut Device(game));
+    #[cfg(sm_verify_dll)]
+    assert_eq!(
+        epoch,
+        game.compatibility_write_epoch(),
+        "a device-only display command moved RAM"
+    );
 }
 
 /// The commands that write registers only, through `game`.
