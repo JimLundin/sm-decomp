@@ -883,6 +883,25 @@ pub(crate) unsafe fn native_line_restored(ppu: *mut Ppu) {
     unsafe { native_line::restored(ppu) }
 }
 
+/// Run `frame` as the engine's frame. Under `SM_NATIVE_LINES` the lines it draws
+/// are the native renderer's (D9: the replay's video output); an oracle frame's
+/// stay the emulated PPU's, which the native lines are compared with.
+pub(crate) fn engine_frame<R>(frame: impl FnOnce() -> R) -> R {
+    #[cfg(sm_verify_dll)]
+    {
+        struct Restore(bool);
+        impl Drop for Restore {
+            fn drop(&mut self) {
+                native_line::set_engine_frame(self.0);
+            }
+        }
+        let _restore = Restore(native_line::set_engine_frame(true));
+        frame()
+    }
+    #[cfg(not(sm_verify_dll))]
+    frame()
+}
+
 /// A typed producer's port writes begin: until `produced`, they reach only the
 /// emulated PPU, not the native one.
 pub(crate) fn producing(ppu: *mut Ppu) {
@@ -909,7 +928,8 @@ pub(crate) fn produced(
 /// accesses (`Registers`, `Ports`, `OwnedMemory`) and the frame count, rendering
 /// each line with no emulated PPU or beam state. With
 /// `SM_NATIVE_LINES` set, each natively drawn line is drawn again from it and
-/// compared with the emulated PPU's line; `SM_NATIVE_LINES_LOG` receives the
+/// compared with the emulated PPU's line, and on the engine's frame
+/// (`engine_frame`) the native line replaces it (the replay's video output, D9); `SM_NATIVE_LINES_LOG` receives the
 /// differing lines and each resync. Harness snapshot restores resync it
 /// explicitly; any other frame whose start finds the emulated PPU's state
 /// differing from the native one is logged as a resync, since it means some
@@ -1015,6 +1035,14 @@ mod native_line {
         static STATES: RefCell<HashMap<usize, NativePpu>> = RefCell::new(HashMap::new());
         /// The PPU whose port writes a typed producer is making, if any.
         static PRODUCING: Cell<Option<usize>> = const { Cell::new(None) };
+        /// Whether the lines drawn now are the engine's frame (`engine_frame`).
+        static ENGINE_FRAME: Cell<bool> = const { Cell::new(false) };
+    }
+
+    /// Mark the lines drawn from here on as the engine's frame, or not; the
+    /// previous mark.
+    pub(super) fn set_engine_frame(engine: bool) -> bool {
+        ENGINE_FRAME.replace(engine)
     }
 
     /// Port accesses the native PPU takes: none of a typed producer's.
@@ -1207,7 +1235,10 @@ mod native_line {
             state.overflow = sprites.overflow;
             let start = ((line - 1) as u32).wrapping_mul(ppu.renderPitch) as usize
                 + usize::from(ppu.extraLeftRight) * 4;
-            let row = unsafe { core::slice::from_raw_parts(ppu.renderBuffer.add(start), 256 * 4) };
+            // SAFETY: the host registered a render buffer of `renderPitch`-byte
+            // rows for the frame's PPU, and the emulated PPU has finished the line.
+            let row =
+                unsafe { core::slice::from_raw_parts_mut(ppu.renderBuffer.add(start), 256 * 4) };
             let mut differing = (0..256).filter(|&x| pixels[x][..] != row[x * 4..x * 4 + 4]);
             if let Some(first) = differing.next() {
                 let count = 1 + differing.count();
@@ -1215,6 +1246,11 @@ mod native_line {
                     "{},{line},{},{count},{first}\n",
                     state.frame, registers.mode
                 ));
+            }
+            // D9: the engine's line is the native renderer's; the emulated PPU's
+            // was drawn only for this comparison. An oracle frame keeps its own.
+            if ENGINE_FRAME.get() {
+                row.copy_from_slice(pixels.as_flattened());
             }
         });
     }

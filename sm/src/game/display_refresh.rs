@@ -36,7 +36,7 @@ impl refresh::Nmi for crate::game::session_runtime::Runtime<'_> {
 
 /// The typed uploads' bracket around the encoder's register writes.
 impl Game {
-    fn selected_video(&mut self) -> *mut crate::types::Ppu {
+    pub(crate) fn selected_video(&mut self) -> *mut crate::types::Ppu {
         // SAFETY: the bracket's callers make register writes, which require the
         // installed backend, and `&mut Game` excludes other access.
         unsafe { self.device_execution() }.backend.selected_video()
@@ -48,51 +48,63 @@ impl Game {
         let ppu = self.selected_video();
         crate::snes::ppu::producing(ppu);
     }
-    /// The producer's register writes are done; `uploads` are what they did.
+    /// The producer's register writes are done; `uploads` are what they did,
+    /// each work RAM byte as RAM holds it.
     pub(crate) fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
         let ppu = self.selected_video();
-        let self_ref = &*self;
-        let ram = self.ram();
-        let bytes = |source: usize, count: u16| {
-            (source..source + usize::from(count)).map(|at| ram.read_byte(at))
-        };
+        let game = &*self;
         crate::snes::ppu::produced(ppu, producer, |ports, memory| {
-            for &upload in uploads {
-                match upload {
-                    Upload::Objects {
-                        address,
-                        source,
-                        bytes: count,
-                    } => {
-                        ports.set_oam_address(address);
-                        ports.upload_oam(memory, bytes(source, count));
-                    }
-                    Upload::Palette {
-                        index,
-                        source,
-                        bytes: count,
-                    } => {
-                        ports.set_cgram_pointer(index);
-                        ports.upload_cgram(memory, bytes(source, count));
-                    }
-                    Upload::Tiles {
-                        address,
-                        increment,
-                        source,
-                        bytes: count,
-                    } => {
-                        ports.set_vram_mode(increment, 0, true);
-                        ports.set_vram_pointer(memory, address);
-                        ports.upload_vram(
-                            memory,
-                            (0..=count.wrapping_sub(1)).map(|offset| {
-                                bus_byte(self_ref, source.bank, source.address.wrapping_add(offset))
-                            }),
-                        );
-                    }
-                }
-            }
+            feed_native(uploads, &|at| game.ram().read_byte(at), game, ports, memory);
         });
+    }
+}
+
+/// The native PPU takes `uploads` in place of the port writes that made them:
+/// each work RAM byte from `wram`, the live HUD and scrolling bytes and the
+/// cartridge's from `game`.
+pub(crate) fn feed_native(
+    uploads: &[Upload],
+    wram: &dyn Fn(usize) -> u8,
+    game: &Game,
+    ports: &mut crate::rendering::memory::Ports,
+    memory: &mut crate::rendering::memory::OwnedMemory,
+) {
+    let bytes =
+        |source: usize, count: u16| (source..source + usize::from(count)).map(|at| wram(at));
+    for &upload in uploads {
+        match upload {
+            Upload::Objects {
+                address,
+                source,
+                bytes: count,
+            } => {
+                ports.set_oam_address(address);
+                ports.upload_oam(memory, bytes(source, count));
+            }
+            Upload::Palette {
+                index,
+                source,
+                bytes: count,
+            } => {
+                ports.set_cgram_pointer(index);
+                ports.upload_cgram(memory, bytes(source, count));
+            }
+            Upload::Tiles {
+                address,
+                increment,
+                source,
+                bytes: count,
+            } => {
+                ports.set_vram_mode(increment, 0, true);
+                ports.set_vram_pointer(memory, address);
+                ports.upload_vram(
+                    memory,
+                    (0..=count.wrapping_sub(1)).map(|offset| {
+                        bus_byte(game, wram, source.bank, source.address.wrapping_add(offset))
+                    }),
+                );
+            }
+        }
     }
 }
 
@@ -108,8 +120,8 @@ impl Game {
     }
 }
 
-/// A byte a DMA reads from the CPU bus: work RAM or the cartridge.
-fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
+/// A byte a DMA reads from the CPU bus: work RAM (from `wram`) or the cartridge.
+fn bus_byte(game: &Game, wram: &dyn Fn(usize) -> u8, bank: u8, address: u16) -> u8 {
     use sm_game::display::queued_tilemaps::{LiveByte, live_byte};
     if let Some(owner) = live_byte(bank, address) {
         return match owner {
@@ -122,10 +134,8 @@ fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
         };
     }
     match bank {
-        0x7e | 0x7f => game
-            .ram()
-            .read_byte((usize::from(bank & 1) << 16) | usize::from(address)),
-        0x00..=0x3f | 0x80..=0xbf if address < 0x2000 => game.ram().read_byte(usize::from(address)),
+        0x7e | 0x7f => wram((usize::from(bank & 1) << 16) | usize::from(address)),
+        0x00..=0x3f | 0x80..=0xbf if address < 0x2000 => wram(usize::from(address)),
         _ => game.read_rom_byte((u32::from(bank) << 16) | u32::from(address), 0),
     }
 }

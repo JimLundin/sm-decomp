@@ -535,13 +535,26 @@ impl<'g> Runtime<'g> {
     pub(crate) fn producing(&mut self) {
         self.game.producing();
     }
-    /// The bracket's end: `uploads` are what the port's writes did.
+    /// The bracket's end: `uploads` are what the port's writes did. The native PPU
+    /// takes their work RAM bytes from the lease's Session where it projects them
+    /// (as `byte` reads them), not from RAM: the Session is the source of what the
+    /// native renderer draws.
     pub(crate) fn produced(
         &mut self,
         producer: &'static str,
         uploads: &[sm_game::display::video::Upload],
     ) {
-        self.game.produced(producer, uploads);
+        let ppu = self.game.selected_video();
+        let lease = &*self;
+        crate::snes::ppu::produced(ppu, producer, |ports, memory| {
+            crate::game::display_refresh::feed_native(
+                uploads,
+                &|at| lease.byte(at),
+                lease.game,
+                ports,
+                memory,
+            );
+        });
     }
     /// One device bus read from the lease (`rtl::read_device`).
     pub(crate) fn read_device(&mut self, address: u32) -> u8 {

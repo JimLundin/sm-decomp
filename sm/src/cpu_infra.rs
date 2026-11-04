@@ -1444,8 +1444,10 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             let buttons = game.input1_mut().currentState.reverse_bits();
             #[cfg(sm_verify_dll)]
             crate::observation::begin_engine_tick(game);
-            crate::game::session_runtime::with_frame_session(game, |game| {
-                gameplay::tick(gameplay::TickInput { buttons }, game)
+            crate::snes::ppu::engine_frame(|| {
+                crate::game::session_runtime::with_frame_session(game, |game| {
+                    gameplay::tick(gameplay::TickInput { buttons }, game)
+                })
             });
             finish_settled_frame(game);
             let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
@@ -1678,8 +1680,10 @@ pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mu
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
             let buttons = input.reverse_bits();
-            crate::game::session_runtime::with_frame_session(game, |game| {
-                gameplay::tick(gameplay::TickInput { buttons }, game)
+            crate::snes::ppu::engine_frame(|| {
+                crate::game::session_runtime::with_frame_session(game, |game| {
+                    gameplay::tick(gameplay::TickInput { buttons }, game)
+                })
             });
             finish_settled_frame(game);
             (*game.g_snes).runningWhichVersion = 0;
