@@ -71,6 +71,10 @@ impl Effects for Runtime<'_> {
         });
     }
     fn reset_room_enemy_workspace(&mut self) {
-        self.foreign(|game| game.ram().fill(0x7000..0x9800, 0));
+        // The workspace's owners are the Session's; the observations are refreshed
+        // on entry and on return, as the former foreign fill left them.
+        self.owned_player_call(|runtime| {
+            sm_game::actors::codec::clear_room_workspace(runtime.session_mut());
+        });
     }
 }
