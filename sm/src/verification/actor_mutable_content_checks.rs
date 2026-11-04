@@ -227,6 +227,12 @@ pub(crate) fn consume_checked(g: &mut Game, label: &str) {
     put(&mut expected, ram::ENEMY_PROCESSING_STAGE, 6); // Actual final extended touch stage.
     put(&mut expected, arrays::PROJECTILE_DIR, 0x10);
     put(&mut expected, ram::COLLISION_DETECTION_INDEX, 0);
+    // The hitting hitbox's right boundary, X 128 + entry 0 + right 8 ($A0:9C6B).
+    put(
+        &mut expected,
+        ram::REMOVED_ENEMY_RIGHT_BORDER_COLLISION,
+        136,
+    );
     let identity = g.actor_identity().clone();
     let before_native = native(g);
     crate::game::actors::contacts::process_contacts(&mut Runtime::new(g));

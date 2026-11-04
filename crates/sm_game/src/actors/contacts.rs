@@ -328,6 +328,9 @@ fn projectile_contacts<H: ActorHost + EprojHost>(h: &mut H, attack: Attack, exte
         }
         return;
     }
+    // $A0:9D07, $A0:9E7E, $A0:A216, $A0:A2E6: a scan that hits nothing leaves
+    // the projectile index past its last slot.
+    h.session_mut().room.collision_detection_index = if bomb { 10 } else { 5 };
 }
 fn projectile_hitbox<H: ActorHost + EprojHost>(
     h: &mut H,

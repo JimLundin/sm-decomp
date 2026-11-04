@@ -139,7 +139,7 @@ pub(super) enum Shared {
 /// The Session fields the normalized ranges cover, in address order, each
 /// with the field and its decision (docs/handoff/session-compare.md, "The
 /// 107 both bytes").
-pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 10] = [
+pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 9] = [
     // The direct-page long pointer scratch; the $0000-$0050 row.
     (0x0..0x4, "pointer_scratch", Shared::UntilRowRetires),
     // The enemy projectile spawn scratch; the $0000-$0050 row.
@@ -178,11 +178,6 @@ pub(super) const SHARED_RAM: [(Range<usize>, &str, Shared); 10] = [
     (
         0x1784..0x178c,
         "actors.compatibility.pre_hook",
-        Shared::UntilRowRetires,
-    ),
-    (
-        0x18a6..0x18a8,
-        "room.collision_detection_index",
         Shared::UntilRowRetires,
     ),
 ];

@@ -81,4 +81,6 @@ pub(crate) fn player_projectiles_hit_samus(runtime: &mut Runtime<'_>) {
             );
         }
     }
+    // $A0:9884: the scan leaves the projectile index at the count it checked.
+    word!(runtime.COLLISION_DETECTION_INDEX = count);
 }

@@ -41,7 +41,13 @@ pub fn enemy_projectiles_hit_samus(h: &mut impl Host) {
             hit_samus((index * 2) as u16, h);
         }
     }
+    // $A0:9915: the scan counts the enemy projectile index down past 0.
+    h.session_mut().room.collision_detection_index = PAST_FIRST_ENEMY_PROJECTILE;
 }
+
+/// The enemy projectile index both enemy projectile scans leave ($A0:9915,
+/// $A0:99E8): one slot (2 bytes) below the first.
+const PAST_FIRST_ENEMY_PROJECTILE: u16 = 0u16.wrapping_sub(2);
 
 pub fn hit_samus(offset: u16, h: &mut impl Host) {
     h.session_mut().player.invincibility = 96;
@@ -94,6 +100,8 @@ pub fn shoot_enemy_projectiles(h: &mut impl Host) {
             }
         }
     }
+    // $A0:99E8: the scan counts the enemy projectile index down past 0.
+    h.session_mut().room.collision_detection_index = PAST_FIRST_ENEMY_PROJECTILE;
 }
 
 pub fn hit_enemy_projectile(enemy_offset: u16, shot_offset: u16, h: &mut impl Host) {
