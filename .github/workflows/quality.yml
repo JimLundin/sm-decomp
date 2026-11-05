@@ -1,7 +1,8 @@
 name: Quality
 
-# Quality: formatting, lints, ratchets, type checks, tests, dependency direction, the
-# detached composition checks and a type-check of the Windows desktop. It needs no ROM.
+# Quality: formatting, lints, ratchets, type checks, tests, dependency direction, the crate
+# plan's rules, the detached composition checks and a type-check of the Windows desktop. It
+# needs no ROM.
 # ci.yml calls it on every pull request and push to main, and with a dispatched gate.
 on:
   workflow_call:
@@ -35,6 +36,12 @@ jobs:
           cargo clippy --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets --no-deps
           cargo clippy --locked -p sm_app --all-targets --no-deps
           cargo clippy --locked -p sm_app --no-default-features --features slice --all-targets --no-deps
+      - name: Lint the rebuild's crates
+        # Their lint set is the root Cargo.toml's [workspace.lints] (PRINCIPLES K8).
+        run: cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical --all-targets --no-deps
+      - name: Hold the crate plan's dependency and source rules
+        # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
+        run: bash tools/check_crate_rules.sh
       - name: Progress
         run: |
           sh tools/progress.sh
