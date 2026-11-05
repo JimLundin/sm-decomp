@@ -8,13 +8,19 @@ Read the workflow's latest run for the row count; do not copy it here.
 
 ## How a row runs
 
+`sm_pipeline gate1 [--shard I/N] [--slice ROW]... ROW...` runs from the repository root
+(`all` is every locked corpus row). It still calls `tools/verify_dll.py` and
+`tools/ci_seed_data.py restore` as subprocesses until those are ported
+(docs/VERIFY_PIPELINE.md).
+
 1. The verifier imports the row's seed, the only step that runs the CPU (accepted
    decision 1), and `SM_EXPORT_START=<path>` writes the start.
 2. `sm_replay prepare` seals the content image and the start.
 3. `sm_replay gate` replays the row: the base run with digests, then the same inputs
    again, three presentation rates, the audio queue held full and the save sink
    accepting later. Each schedule must leave game state and effects identical.
-4. `tools/gate1.py` compares the eight machine streams and the tick count with the lock.
+4. `sm_pipeline gate1` (`crates/sm_tools/src/bin/sm_pipeline/gate1.rs`) compares the
+   eight machine streams and the tick count with the lock.
    A row the lock lacks is recorded against the faithful oracle on the runner, and its
    lines are printed (`LOCK+`) so the entry can be committed.
 5. On the Morph, door and save rows, the windowed `sm_slice` runs headless (xvfb, the
@@ -47,6 +53,5 @@ row whose next word differs).
 
 ## Next
 
-1. Port `tools/gate1.py` to Rust in `sm_tools` and delete it (PLAN: avoid adding Python).
-2. Replace what `sm_host` borrows from the old game, starting with the renderer
+1. Replace what `sm_host` borrows from the old game, starting with the renderer
    (the native renderer as replay output) and the frame lease.

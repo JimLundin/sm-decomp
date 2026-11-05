@@ -181,7 +181,7 @@ fn strings(value: &Value, what: &str) -> Result<Vec<String>, String> {
         .collect()
 }
 
-fn tables<'a>(document: &'a Table, key: &str) -> Result<Vec<&'a Table>, String> {
+pub fn tables<'a>(document: &'a Table, key: &str) -> Result<Vec<&'a Table>, String> {
     match document.get(key) {
         None => Ok(Vec::new()),
         Some(value) => value
@@ -300,11 +300,15 @@ fn load(root: &Path) -> Result<Vec<Scenario>, String> {
 
 /// scenarios/lock.toml; an absent lock is empty.
 pub fn read_lock(root: &Path) -> Result<Lock, String> {
-    let path = root.join(LOCK);
+    read_lock_file(&root.join(LOCK))
+}
+
+/// A lock file at any path; an absent one is empty.
+pub fn read_lock_file(path: &Path) -> Result<Lock, String> {
     if !path.exists() {
         return Ok(Lock::default());
     }
-    let data = toml::read(&path)?;
+    let data = toml::read(path)?;
     let mut lock = Lock::default();
     for bundle in tables(&data, "bundles")? {
         let field = |key: &str| {
