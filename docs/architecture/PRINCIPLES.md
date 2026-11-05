@@ -4,6 +4,22 @@ Architecture lane, `research/architecture`, 2026-11-05. Jim reviewed this on 202
 agreed with the principles. His decisions on K5, K8, K9 and K10 are recorded under each
 one.
 
+## The thesis (Jim, 2026-11-05)
+
+**We model Super Metroid's behaviour in its entirety.** The engine is a model of what the
+game does, made of named behaviours. It is not a copy of the original's code. Because each
+behaviour is an identifiable part of the model, three things are possible:
+
+- reproducing it exactly, which is vanilla, proven against the oracle;
+- adjusting it, for example the original's poor space jump timing window;
+- adding new behaviours, such as respin and other quality-of-life rules, or removing
+  undesirable ones, such as lag (P20).
+
+Every principle below serves this thesis. A behaviour hidden inside the structure, such as
+a timing accident, a constant buried in a routine, or a rule spread across modules, can
+neither be adjusted nor removed. So it counts as a modelling failure even if it matches the
+oracle.
+
 These principles come before the architecture. Every decision in
 [ARCHITECTURE.md](ARCHITECTURE.md) cites the principles it follows. A decision that no
 principle supports is either a missing principle or a wrong decision.
