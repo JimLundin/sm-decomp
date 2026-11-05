@@ -286,6 +286,7 @@ pub mod snes {
     pub mod dsp;
     #[path = "../../../crates/sm_host/src/snes/ppu.rs"]
     pub mod ppu;
+    pub mod ppu_lines;
     #[path = "../../../crates/sm_host/src/snes/registers.rs"]
     pub mod registers;
     #[path = "../../../crates/sm_host/src/snes/snes.rs"]

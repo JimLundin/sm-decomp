@@ -130,10 +130,8 @@ pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mu
         let position = game.audio_execution_position();
         game.audio_output.enter_execution(position);
         let buttons = input.reverse_bits();
-        crate::snes::ppu::engine_frame(|| {
-            crate::game::session_runtime::with_frame_session(game, |game| {
-                crate::game::gameplay::tick(crate::game::gameplay::TickInput { buttons }, game)
-            })
+        crate::game::session_runtime::with_frame_session(game, |game| {
+            crate::game::gameplay::tick(crate::game::gameplay::TickInput { buttons }, game)
         });
         finish_settled_frame(game);
         (*game.g_snes).runningWhichVersion = 0;

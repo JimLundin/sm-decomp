@@ -166,7 +166,6 @@ impl Session {
             }
             crate::verification_checkpoint::restore_capture_with_sources(state, g, &[])
                 .map_err(OpenError::Start)?;
-            crate::snes::ppu::observe_pixels(true);
         }
         let cues = Rc::new(RefCell::new(Vec::new()));
         let recorded = cues.clone();
