@@ -164,10 +164,14 @@ fn options() -> Result<Options, String> {
             other => return Err(format!("unknown option {other}")),
         }
     }
-    // A replay of `--ticks` Ticks sees no input past its last, as `sm_replay`
-    // does: the closing NMI of the last Tick latches nothing.
+    // A replay of `--ticks` Ticks keeps the word after its last, as `sm_replay`
+    // and the verifier do: the closing NMI of the last Tick latches it.
     if let (Some(pads), Some(ticks)) = (&mut options.inputs, options.ticks) {
-        pads.truncate(usize::try_from(ticks).unwrap_or(usize::MAX));
+        pads.truncate(
+            usize::try_from(ticks)
+                .unwrap_or(usize::MAX)
+                .saturating_add(1),
+        );
     }
     Ok(options)
 }
