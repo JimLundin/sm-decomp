@@ -1,0 +1,82 @@
+diff --git a/snes/snes.c b/snes/snes.c
+index b73fc2e..85ceb86 100644
+--- a/snes/snes.c
++++ b/snes/snes.c
+@@ -15,10 +15,17 @@
+ #include "input.h"
+ #include "statehandler.h"
+ 
+-// sm-decomp fix 0001: the SPC700 clock against the real NTSC master clock
+-// (21.477272 MHz), not 1364 * 262 * 60 dots, which runs the APU 0.16% fast.
+-static const double apuCyclesPerMaster = (32040 * 32) / 21477272.0;
+-static const double apuCyclesPerMasterPal = (32040 * 32) / (1364 * 312 * 50.0);
++// sm-decomp fix 0002: the SPC700 clock at bsnes v085's rate, exactly. bsnes
++// v085 (lsnes rr2) runs the SMP at 24 607 104 Hz, 32040.5 samples/s * 768, and
++// the CPU at 21 477 272 Hz. The SPC takes 32 cycles per sample, so it gains
++// 32040.5 * 32 = 1 025 296 cycles per 21 477 272 master clocks. The debt is a
++// count of SPC cycles scaled by the master clock rate, in integers, so the
++// rate does not drift with the float rounding of fix 0001's constant. PAL keeps
++// upstream's 32040 Hz against 1364 * 312 * 50 dots, as an exact ratio too.
++static const int64_t apuCyclesPerSecond = 1025296;
++static const int64_t masterCyclesPerSecond = 21477272;
++static const int64_t apuCyclesPerSecondPal = 32040 * 32;
++static const int64_t masterCyclesPerSecondPal = 1364 * 312 * 50;
+ 
+ static void snes_runCycle(Snes* snes);
+ static void snes_catchupApu(Snes* snes);
+@@ -67,7 +74,7 @@ void snes_reset(Snes* snes, bool hard) {
+   snes->frames = 0;
+   snes->cycles = 0;
+   snes->syncCycle = 0;
+-  snes->apuCatchupCycles = 0.0;
++  snes->apuCatchupDebt = 0;
+   snes->hIrqEnabled = false;
+   snes->vIrqEnabled = false;
+   snes->nmiEnabled = false;
+@@ -102,7 +109,7 @@ void snes_handleState(Snes* snes, StateHandler* sh) {
+   );
+   sh_handleInts(sh, &snes->ramAdr, &snes->frames, NULL);
+   sh_handleLongLongs(sh, &snes->cycles, &snes->syncCycle, NULL);
+-  sh_handleDoubles(sh, &snes->apuCatchupCycles, NULL);
++  sh_handleLongLongs(sh, (uint64_t*) &snes->apuCatchupDebt, NULL);
+   sh_handleByteArray(sh, snes->ram, 0x20000);
+   // components
+   cpu_handleState(snes->cpu, sh);
+@@ -150,7 +157,7 @@ void snes_syncCycles(Snes* snes, bool start, int syncCycles) {
+ }
+ 
+ static void snes_runCycle(Snes* snes) {
+-  snes->apuCatchupCycles += (snes->palTiming ? apuCyclesPerMasterPal : apuCyclesPerMaster) * 2.0;
++  snes->apuCatchupDebt += 2 * (snes->palTiming ? apuCyclesPerSecondPal : apuCyclesPerSecond);
+   snes->cycles += 2;
+   // check for h/v timer irq's
+   bool condition = (
+@@ -231,9 +238,12 @@ static void snes_runCycle(Snes* snes) {
+ }
+ 
+ static void snes_catchupApu(Snes* snes) {
+-  int catchupCycles = (int) snes->apuCatchupCycles;
++  int64_t perCycle = snes->palTiming ? masterCyclesPerSecondPal : masterCyclesPerSecond;
++  // Truncates toward zero like the upstream (int) cast; the debt goes negative
++  // only by the overrun of the last opcode, and then no cycles are wanted.
++  int catchupCycles = (int) (snes->apuCatchupDebt / perCycle);
+   int ranCycles = apu_runCycles(snes->apu, catchupCycles);
+-  snes->apuCatchupCycles -= (double) ranCycles;
++  snes->apuCatchupDebt -= (int64_t) ranCycles * perCycle;
+ }
+ 
+ static void snes_doAutoJoypad(Snes* snes) {
+diff --git a/snes/snes.h b/snes/snes.h
+index 8583491..17975bc 100644
+--- a/snes/snes.h
++++ b/snes/snes.h
+@@ -35,7 +35,8 @@ struct Snes {
+   uint64_t cycles;
+   uint64_t syncCycle;
+   // cpu handling
+-  double apuCatchupCycles;
++  // SPC cycles owed, times the master clock rate (fix 0002)
++  int64_t apuCatchupDebt;
+   // nmi / irq
+   bool hIrqEnabled;
+   bool vIrqEnabled;

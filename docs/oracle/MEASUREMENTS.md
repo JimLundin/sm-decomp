@@ -338,3 +338,283 @@ the pad's meaning), sub-instruction NMI timing in the wait loop (`cut`,
 `cpu`, the stack page), and sound timing (`$0641`, then one frame from 1342).
 So LakeSnes's memories are lsnes's only up to these, and only up to 1341
 without a shift.
+
+## (g) MesenCE as a third vote: frame 1342 and the later lag
+
+MesenCE is the maintained fork of Mesen 2 and GPL-3, so we run its released
+binary as a separate process and never link or copy its code
+([ACCURACY](ACCURACY.md), "What would settle 1342").
+
+**Binary.** MesenCE 2.2.1 (tag `2.2.1`, commit
+`20ba206cef5ba207c21203176d02cb9f43dda9fb`, released 2026-06-05),
+`https://github.com/nesdev-org/MesenCE/releases/download/2.2.1/Mesen_2.2.1_Windows.zip`,
+zip sha256 `c19e10b3b3865eb0e86e4d01bf09a5027a4452081c04b5bd5b6cbbf76e346fd6`,
+`Mesen.exe` sha256 `8ef403d6b9af32075416193914d7993ce8480b347fe1f20a0cfd9815374933e7`.
+Unpacked in `%LOCALAPPDATA%/sm-decomp-tools/mesence-2.2.1/`; it runs from a
+copy in `mesence-2.2.1-run/` beside a `settings.json` of `{}`, which makes it
+portable (without one it opens its setup window).
+
+**Command.** [`tools/oracle/mesen_lag_log.lua`](../../tools/oracle/mesen_lag_log.lua)
+feeds the `.inputs` pads from `inputPolled` (pad k to the k-th poll) and
+writes one row per frame at `startFrame` (line 0) in the column layout of
+`tools/lsnes_lag_log.lua`, plus `$0641`, the line of the frame's last `$05B8`
+write and the line the main loop entered its NMI wait (`$80:8338`):
+
+```
+rm -rf mesence-2.2.1-run/Saves
+SM_MESEN_INPUTS=movies/any.inputs SM_MESEN_LOG=out.csv SM_MESEN_FRAMES=9001 \
+  mesence-2.2.1-run/Mesen.exe --testRunner --timeout=150 --doNotSaveSettings \
+  --debug.scriptWindow.allowIoOsAccess=true --snes.port1.type=SnesController \
+  --snes.ramPowerOnState=AllZeros --snes.spcClockSpeedAdjustment=40 \
+  tools/oracle/mesen_lag_log.lua rom/sm.smc
+```
+
+9001 frames take 76 s (about 120 frames/s; lsnes is at 29). With `Saves/`
+cleared each run, two runs give the same file. Mesen keeps the cartridge's
+SRAM in `Saves/sm.srm` between runs, and a kept save sends the boot through
+other SRAM checks in bank `$81` from frame 268: clear it every time.
+
+We compared the rows with the lsnes lag log of the movie
+(`any-boundary/lag.csv` from the seeds bundle) and, through
+`oracle movie ROM INPUTS --frames 9001 --oracle lakesnes --lag-log out.csv`,
+with LakeSnes (`9db90b8`, fix 0001). Column: `$05B6`/`$05B8`/lag flag after
+the step. Line: Mesen's line of the `$05B8` write (`-1`: no write that frame).
+
+| Step | lsnes | LakeSnes | Mesen +40 | Mesen +41 | Line (+40/+41) | Agrees with |
+| --- | --- | --- | --- | --- | --- | --- |
+| 303 | 1/46/1 | 1/46/1 | 1/46/1 | 1/46/1 | -1/-1 | all |
+| 396 | 51/139/1 | 52/140/0 | 52/140/0 | 52/140/0 | 249/249 | LakeSnes |
+| 400 | 52/143/1 | 53/144/0 | 53/144/0 | 53/144/0 | 249/249 | LakeSnes |
+| 472 | 117/215/1 | 118/216/0 | 118/216/0 | 118/216/0 | 249/249 | LakeSnes |
+| 1290 | 824/1033/1 | 825/1034/0 | 825/1034/0 | 825/1034/0 | 249/249 | LakeSnes |
+| 1341 | 841/1085/1 | 841/1085/1 | 841/1085/1 | 841/1085/1 | 225/225 | all |
+| 1342 | 841/1085/1 | 842/1086/0 | 842/1086/0 | 842/1086/0 | 249/249 | LakeSnes |
+| 8465 | 7779/8125/0 | (as +40) | 7778/8125/1 | 7779/8125/0 | 225/236 | +41 with lsnes |
+| 8469 | 7782/8128/1 | (as +40) | 7782/8129/0 | 7782/8128/1 | 236/-1 | +41 with lsnes |
+
+Through frame 9000, LakeSnes and Mesen +40 agree on all three words but at
+8421 (`$05B8` one less on LakeSnes); the other rows the harness prints are
+game-state and position samples a step apart at transitions. +40 and +41
+agree with each other through 8464, `$0641` aside.
+
+**1342 is lsnes's cut, not a lag.** At every step from 21 to 9000, Mesen +41
+equals lsnes when its `$05B8` write is on line 240 or earlier (2005 steps), and
+is one ahead in both counters when the write is on line 241 or later (6975
+steps). There is no exception. So lsnes records the frame at line 241, before a
+long NMI's counter writes and joypad read (its lag flag is set on those
+steps); LakeSnes and Mesen record after the RTI. Both counters move together,
+so no NMI is lost or gained: the "one frame behind for good" from 1342 is
+the NMI after the boot upload running to line 249 on every step, which
+straddles lsnes's cut, on all three emulators. The upload itself ends with
+room to spare: Mesen's main loop reaches its wait at line 183 (+40) or 175
+(+41) of step 1342, 42 lines before vblank, so the SPC rate does not decide it.
+
+**The real lasting lag is at 8465, and it is the SPC clock.** At 8465 Mesen
++40 has a lag frame that lsnes and +41 don't. +40, like LakeSnes, then
+desyncs from the movie: Samus's X differs from step 8643 (LakeSnes: 8567).
++41 stays in sync with lsnes through 9000: two single-step samples at room
+transitions (8506, 8788) differ beyond a one-step shift. lsnes's 32040.5 Hz
+lies between +40 (32040) and +41 (32041), and here the movie needs the
+upper side.
+
+**Verdict, by the rule in ACCURACY.** At 1342 MesenCE agrees with LakeSnes,
+so we do not need a LakeSnes fix 0002 for port sync: the difference is lsnes's,
+and it is in its cut, not in bsnes v085's game timing. We record it as
+`LEGACY(oracle)`: lsnes rows are cut at line 241, and a NMI whose writes
+pass that line shows one step later. A comparison that cuts at the RTI, or
+at a fixed line after vblank, removes it. The lag that persists, at 8465,
+goes with the SPC rate. The candidate for LakeSnes is a rate closer to
+32040.5 Hz (a revision of fix 0001), not a port latch. Steps 3 and 4 of
+ACCURACY's list (the rate sweep and ares) are still open. The threshold
+between 32040 and 32041 Hz at 8465 already shows that lag there depends on
+the console's clock.
+
+## (h) LakeSnes at bsnes v085's SPC rate: fix 0002
+
+**Fix.** `crates/oracle/native/fixes/0002-apu-clock-bsnes-v085-exact.patch`,
+applied after 0001. bsnes v085 (lsnes rr2) clocks the SMP at 24 607 104 Hz
+(32040.5 · 768) against a 21 477 272 Hz CPU, so the SPC gains
+32040.5 · 32 = 1 025 296 cycles per 21 477 272 master clocks. LakeSnes's
+`double apuCatchupCycles` becomes `int64_t apuCatchupDebt`, the SPC cycles
+owed scaled by the master rate: each 2-clock step adds 2 · 1 025 296, and a
+catch-up runs `debt / 21 477 272` cycles and subtracts what ran times
+21 477 272. The rate is exact and does not drift. PAL keeps upstream's
+32040 Hz against 1364 · 312 · 50, also as an exact ratio. The save state still
+holds 8 bytes there (`sh_handleLongLongs`). A separate 0002, not a revised
+0001: records name their fixes in `OracleId::fixes`, so records cut at
+32040 Hz (`0001` alone) keep an identity that still says what they ran.
+
+**Command.** `oracle movie ROM movies/any.inputs --frames 36000 --no-picture
+--oracle lakesnes --lag-log any-boundary/lag.csv --positions-only` (166 s,
+217 frames/s), and a per-step dump of the seven lag-log words from the same
+run to classify each step against lsnes's rows k-1, k and k+1.
+
+**Boot: unchanged.** The full lag log (all seven columns) matches exactly
+through step 395, as with 0001 alone; the first rows that differ are 396,
+397, 400, 472-476, the NMI-outlasts-vblank cut of (f), the same rows as
+before. The boot upload around step 352 is unaffected.
+
+**Counters, steps 21-17999.** `$05B6`/`$05B8` equal lsnes on 5955 steps and
+are one NMI ahead on 12015 (lsnes's line-241 cut of (g)). Nine steps are
+neither: 8421 and 15235 (`$05B8` one less, as before), and 17967-17988, a
+door transition (below). At 8465 and 8469 LakeSnes now has lsnes's lag flag
+(7779/8125/0 and 7782/8128/1), as Mesen +41 has, where 0001 had +40's.
+
+**State, room and position.** They match lsnes through step 18107, but for
+single steps. Every step in 1-18107 equals lsnes's row k, or k-1 (the cut a
+frame apart at a transition), except 12 door-transition samples (8905, 9187,
+9532, 9732, 9796, 10052, 11894, 12353, 12684, 13027, 17334, 17398), where X
+is one pixel short of lsnes's row k and equal to it at k+1: the cut catches
+the door's position step at another point. So 8314 (0001: one frame behind
+from there) is now one sampled step, and 8567 (0001: the Ceres desync)
+passes.
+
+| Steps | LakeSnes against lsnes |
+| --- | --- |
+| 0-395 | exact, all seven columns |
+| 396-17984 | state, room, position equal (single-step samples above) |
+| 17985 | `$05B6` one behind with `$05B8` equal: LakeSnes has one more lag frame, in the door transition from room `97B5` into `9E9F` |
+| 18108-18586 | state, room, position equal to lsnes's previous step: one game frame behind |
+| 18587 | Samus's X differs beyond a shift; from then LakeSnes stays in room `9E9F` (20000, 30000, 35999) while the movie goes on |
+
+**Mesen +41 to 18300**, same Lua and settings as (g): it leaves the movie at
+16065 (20 consecutive steps differing beyond a one-step shift), before
+LakeSnes does, so it does not vote on 17985.
+
+**Reading.** At bsnes v085's exact rate LakeSnes follows the any% movie
+through Ceres, the escape and Crateria to the door out of room `97B5`, 2.1×
+as far as at 32040 Hz (8566). The lasting lag at 17985 is again a lag frame
+at the end of a door transition, the kind that rides on the CPU-SPC
+handshake. The rate is now lsnes's, so what is left is how the communication
+is modelled: LakeSnes catches the SPC up in whole opcodes at each port
+access, bsnes v085 syncs its cothreads on every access (ACCURACY, section 3).
+Not tried here: a sub-opcode catch-up, or the rate sweep around 32040.5 on
+LakeSnes.
+
+## (i) lsnes cuts at the NMI's RTI also when the NMI outlasts its frame
+
+(g) found lsnes's record cut at its frame boundary (line 241) whenever SM's
+NMI was still running there, before the NMI's counter writes and joypad
+read. The cut is now always the NMI handler's RTI (`0:9601`), as D20
+asks; a frame without an NMI keeps the boundary cut (`9777b468a`, lane
+`lane/oracle-lsnes-rti`, on `794ac546d`, LakeSnes with fixes 0001 and 0002).
+
+**Why the server needs the next pad.** lsnes calls `on_input` right after
+`on_frame_emulated`, at line 241, and commits the frame's input there;
+`input.set` anywhere else returns without error and has no effect (probe:
+Up set at the RTI of lsnes frame 1344 never reached `219`; set in
+`on_input` of 1346 it was read by the NMI at line 249 of 1347). An NMI
+running past 241 returns at line 249 of the next lsnes frame, whose input is
+already committed. So the client announces the next step's pad with each
+step (`S pad memories next`, `Lsnes::preview`, `Backend::preview`); at a
+boundary inside an NMI the server commits that pad for the next frame and
+sends the owed record from the RTI, and the next step must bring the same
+pad. Each step's request still gets exactly one record. A save (`V`) is now
+requested before its step and taken at the boundary that ends the step,
+inside the NMI if it runs on; a resumed run restarts its counts at that
+NMI's dangling RTI. The record's video frame is the lsnes frame the NMI
+began in. `movie`, `cross` and `ladder-check` preview; `corpus` cannot (its
+next pad depends on this step's cut), so corpus rows on lsnes keep the
+boundary cut (`NmiStillRunning`) for such steps. So the cut difference (g)
+recorded as `LEGACY(oracle)` is gone for `movie`, `cross` and the ladders,
+and stays for lsnes corpus rows.
+
+**Cross-oracle report, any% steps 0-1500** (`oracle cross`, 38.7 s):
+
+| Part | First | Steps differing (of 1501) | Before (f) |
+| --- | --- | --- | --- |
+| sram | 0 | 1500 | power-on contents |
+| pad | 0 | 5 | the pad's meaning |
+| cpu | 0 | 834 | |
+| wram | 4 | 1384 | |
+| cut | 21 | 795 | |
+| frame | 303 | 2 | 303, then every long NMI |
+| vram | 303 | 2 | 303, 699 of 4801 |
+| joypad-reads | 307 | 1 | 307, 24 of 4801 |
+| cgram | 307 | 1 | 307, 221 of 4801 |
+| oam | equal throughout | 0 | 480, 1519 of 4801 |
+
+Steps 396, 472, 1290 and 1342 no longer show "right a frame behind": each
+differs only in wram `/usr/bin/bash641`-`/usr/bin/bash642` (sound acknowledgement), the stack page,
+`E:D7C0-DE1B` (zero against `0xFF`, copied from the power-on SRAM) and
+where in the wait loop the NMI landed. With `--ranges-at 1340..1500` the
+only wram ranges are `/usr/bin/bash641`(-`/usr/bin/bash64B`) and `FDD`-`FFF`: `/usr/bin/bash5B6` and
+`/usr/bin/bash5B8` agree after 1342. Left: 303-307, the title's NMI (`B:9C..`),
+where LakeSnes counts its frame one later and lsnes's uploads land a step
+later (vram 304, cgram 307 "right a frame behind"); unchanged, not looked into.
+
+**Resuming.** From native seed 16 (`movie --from 0016.lss 17829 --frames
+18130 --ladder 50 --native-seeds room-seeds-any-boundary.csv`): no errors,
+seed 17 cut, `ladder-check` 5 of 5 rungs equal. None of those boundaries
+fell inside an NMI, so also from power-on with `--ladder 10` to 1420: 17 of
+141 saves were inside an NMI (rungs 480-560, 1300, 1350-1410), and
+`ladder-check --rungs 470..570` and `1290..1420` give 23 of 23 equal (the
+resumed record, memories included, equals the straight run's byte for byte).
+
+**Speed.** `movie --frames 3000 --oracle lsnes`, memories on, alternating
+runs: 42 and 43 frames/s, against 44 and 43 with the previous server.
+
+**Records change.** Every lsnes record of a step whose NMI outlasted line 241
+changes (its cut kind, CPU, counts, memories and frame), and later saves
+are requested a step earlier in the client. The lsnes ladders and the
+native seeds' `.record` files cut before `9777b468a` must be regenerated before
+they are compared with new records.
+
+## (j) Ports in time order (candidate 0003): not the cause of 17985
+
+**Candidate.** `crates/oracle/native/candidates/0003-apu-ports-in-time-order.patch`,
+on top of 0001 and 0002. It is not in `fixes/`, so the build does not apply
+it. It orders every CPU-SPC port access by master-clock time, as bsnes v085's
+cothreads do:
+
+- The SPC pays off the catch-up debt cycle by cycle, so each of its accesses
+  knows its time against the CPU's.
+- At a CPU access to `$2140-$2143` the SPC runs to the access time (reads 4
+  master clocks before the end of the access, writes at its end, as bsnes
+  v085's CPU does). It stops before an opcode that would touch `$F4-$F7` at
+  or after that time; a dry run of the next opcode on a copy of the SPC
+  registers tells. On a tie the CPU goes first.
+- The SPC reads mid-cycle and writes at the end of its cycle, as bsnes v085's
+  SMP does. A CPU write keeps the previous value and its time, so an SPC read
+  made before the write still sees the old value. `$F1` port clears follow
+  the same order.
+- The port history goes into the save state. Applying it needs two bridge
+  edits: `snes_catchupApu(snes, 0)` at the end of a step, and
+  `oh_set_spc` copying the seeded ports into `apuPortBefore`.
+
+**Command.** The same as (h): any% from power-on, the seven lag-log words
+dumped per step, steps 0-35999 with 0003 and 0-18999 with 0002 alone, and a
+per-step trace of steps 17950-17995 on both (wait entry, cut, CPU PC, the APU
+port log and the SPC PC).
+
+**Result: no change.** All seven words are equal on every step 0-18999 with
+and without 0003. The classification is (h)'s: exact through 395, the boot
+upload (352) and 8465/8469 unchanged, 17985 one more lag frame, one frame
+behind from 18108 and the desync from 18587.
+
+**Evidence.** The candidate is active: the SPC's own timing changes. Its port
+writes land up to 257 SPC cycles (one timer-2 period of 16 ticks) apart from
+0002's in the traced window, and its PC at the step ends differs. The CPU's
+side does not change: the wait-entry beam, the cut and the CPU PC are equal on
+all 46 traced steps. The door does not talk to the SPC. The CPU accesses the
+ports only at 17950, 17952, 17958 and 17961, two to four times each. From
+17962 to 17995 it makes none, and the SPC only writes its status. The extra
+lag is a long room-load frame: the main loop reaches its NMI wait at line 251
+on step 17986, past vblank (line 225), in both builds. lsnes is in room
+`9E9F` a step earlier. So the extra time is in the CPU's own work for the
+load (decompression, DMA, VRAM uploads), not in a CPU-SPC handshake.
+
+**Speed.** The machine was shared with other lanes, so the numbers are
+noisy. `oracle movie ... --frames 20000 --positions-only` ran back to back:
+0002 at 56 frames/s, 0003 at 48 (about 15 % slower). Earlier, on a quieter
+machine, 0003 alone ran at 295 frames/s. The dry run happens only within 16
+SPC cycles of a port access, so the cost is probably the per-cycle debt
+update.
+
+**Reading.** At the exact rate, port order is not what LakeSnes lacks for the
+any% movie through 18999. What is left at 17985 is CPU-side timing in the
+room load. Next: find the load's time on both emulators. Log the master-clock
+position of the load's phases on LakeSnes and lsnes (watched PCs in the
+door's `$82:E2xx` and decompression routines, and DMA start lines) and
+compare them. Then check the CPU timing models that differ: DMA setup and
+per-byte cost, DRAM refresh, and HDMA during the load.

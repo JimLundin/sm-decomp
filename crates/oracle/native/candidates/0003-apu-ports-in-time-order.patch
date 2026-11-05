@@ -1,0 +1,261 @@
+diff --git a/snes/apu.c b/snes/apu.c
+index 7c03a2a..d7d26e1 100644
+--- a/snes/apu.c
++++ b/snes/apu.c
+@@ -104,6 +104,54 @@ static void apu_cycle(Apu* apu) {
+   }
+ 
+   apu->cycles++;
++  // fix 0003: pay off the catch-up debt as the SPC runs, so its accesses know
++  // their time against the CPU's
++  apu->snes->apuCatchupDebt -= snes_spcCycleWeight(apu->snes);
++}
++
++// fix 0003: a dry run of the SPC's next opcode. `slack` is how far the CPU's
++// access lies ahead of the SPC, in the debt's scale. The opcode runs on a copy
++// of the registers; reads have no side effects and writes go nowhere. True if
++// it would read or write $F4-$F7 at or after the CPU's access.
++typedef struct ApuProbe {
++  Apu* apu;
++  int64_t slack;
++  int64_t weight;
++  bool meets;
++} ApuProbe;
++
++static bool apu_isPort(uint16_t adr) {
++  return adr >= 0xf4 && adr <= 0xf7;
++}
++
++static uint8_t apu_probeRead(void* mem, uint16_t adr) {
++  ApuProbe* probe = (ApuProbe*) mem;
++  probe->slack -= probe->weight;
++  if(apu_isPort(adr) && probe->slack + probe->weight / 2 <= 0) probe->meets = true;
++  if(adr >= 0xfd && adr <= 0xff) return probe->apu->timer[adr - 0xfd].counter; // without the reset
++  return apu_read(probe->apu, adr);
++}
++
++static void apu_probeWrite(void* mem, uint16_t adr, uint8_t val) {
++  ApuProbe* probe = (ApuProbe*) mem;
++  probe->slack -= probe->weight;
++  if(apu_isPort(adr) && probe->slack <= 0) probe->meets = true;
++}
++
++static void apu_probeIdle(void* mem, bool waiting) {
++  ApuProbe* probe = (ApuProbe*) mem;
++  probe->slack -= probe->weight;
++}
++
++bool apu_opcodeMeetsCpu(Apu* apu, int64_t slack) {
++  ApuProbe probe = {apu, slack, snes_spcCycleWeight(apu->snes), false};
++  Spc copy = *apu->spc;
++  copy.mem = &probe;
++  copy.read = apu_probeRead;
++  copy.write = apu_probeWrite;
++  copy.idle = apu_probeIdle;
++  spc_runOpcode(&copy);
++  return probe.meets;
+ }
+ 
+ uint8_t apu_read(Apu* apu, uint16_t adr) {
+@@ -157,12 +205,12 @@ void apu_write(Apu* apu, uint16_t adr, uint8_t val) {
+         apu->timer[i].enabled = val & (1 << i);
+       }
+       if(val & 0x10) {
+-        apu->inPorts[0] = 0;
+-        apu->inPorts[1] = 0;
++        snes_spcClearPort(apu->snes, 0); // fix 0003
++        snes_spcClearPort(apu->snes, 1);
+       }
+       if(val & 0x20) {
+-        apu->inPorts[2] = 0;
+-        apu->inPorts[3] = 0;
++        snes_spcClearPort(apu->snes, 2);
++        snes_spcClearPort(apu->snes, 3);
+       }
+       apu->romReadable = val & 0x80;
+       break;
+@@ -200,6 +248,7 @@ void apu_write(Apu* apu, uint16_t adr, uint8_t val) {
+ uint8_t apu_spcRead(void* mem, uint16_t adr) {
+   Apu* apu = (Apu*) mem;
+   apu_cycle(apu);
++  if(adr >= 0xf4 && adr <= 0xf7) return snes_spcReadPort(apu->snes, adr - 0xf4); // fix 0003
+   return apu_read(apu, adr);
+ }
+ 
+diff --git a/snes/apu.h b/snes/apu.h
+index 71e3ab6..9f396c0 100644
+--- a/snes/apu.h
++++ b/snes/apu.h
+@@ -38,6 +38,7 @@ void apu_free(Apu* apu);
+ void apu_reset(Apu* apu);
+ void apu_handleState(Apu* apu, StateHandler* sh);
+ int apu_runCycles(Apu* apu, int wantedCycles);
++bool apu_opcodeMeetsCpu(Apu* apu, int64_t slack);
+ uint8_t apu_read(Apu* apu, uint16_t adr);
+ void apu_write(Apu* apu, uint16_t adr, uint8_t val);
+ uint8_t apu_spcRead(void* mem, uint16_t adr);
+diff --git a/snes/snes.c b/snes/snes.c
+index 85ceb86..1dbd9c1 100644
+--- a/snes/snes.c
++++ b/snes/snes.c
+@@ -28,7 +28,8 @@ static const int64_t apuCyclesPerSecondPal = 32040 * 32;
+ static const int64_t masterCyclesPerSecondPal = 1364 * 312 * 50;
+ 
+ static void snes_runCycle(Snes* snes);
+-static void snes_catchupApu(Snes* snes);
++static void snes_catchupApu(Snes* snes, int64_t lead);
++static int64_t snes_spcTime(const Snes* snes);
+ static void snes_doAutoJoypad(Snes* snes);
+ static uint8_t snes_readReg(Snes* snes, uint16_t adr);
+ static void snes_writeReg(Snes* snes, uint16_t adr, uint8_t val);
+@@ -75,6 +76,8 @@ void snes_reset(Snes* snes, bool hard) {
+   snes->cycles = 0;
+   snes->syncCycle = 0;
+   snes->apuCatchupDebt = 0;
++  memcpy(snes->apuPortBefore, snes->apu->inPorts, sizeof(snes->apuPortBefore));
++  memset(snes->apuPortWriteTime, 0, sizeof(snes->apuPortWriteTime));
+   snes->hIrqEnabled = false;
+   snes->vIrqEnabled = false;
+   snes->nmiEnabled = false;
+@@ -110,6 +113,13 @@ void snes_handleState(Snes* snes, StateHandler* sh) {
+   sh_handleInts(sh, &snes->ramAdr, &snes->frames, NULL);
+   sh_handleLongLongs(sh, &snes->cycles, &snes->syncCycle, NULL);
+   sh_handleLongLongs(sh, (uint64_t*) &snes->apuCatchupDebt, NULL);
++  sh_handleBytes(sh,
++    &snes->apuPortBefore[0], &snes->apuPortBefore[1], &snes->apuPortBefore[2], &snes->apuPortBefore[3], NULL
++  );
++  sh_handleLongLongs(sh,
++    (uint64_t*) &snes->apuPortWriteTime[0], (uint64_t*) &snes->apuPortWriteTime[1],
++    (uint64_t*) &snes->apuPortWriteTime[2], (uint64_t*) &snes->apuPortWriteTime[3], NULL
++  );
+   sh_handleByteArray(sh, snes->ram, 0x20000);
+   // components
+   cpu_handleState(snes->cpu, sh);
+@@ -132,7 +142,7 @@ void snes_runFrame(Snes* snes) {
+   while(!snes->inVblank && frame == snes->frames) {
+     cpu_runOpcode(snes->cpu);
+   }
+-  snes_catchupApu(snes); // catch up the apu after running
++  snes_catchupApu(snes, 0); // catch up the apu after running
+ }
+ 
+ void snes_runCycles(Snes* snes, int cycles) {
+@@ -237,13 +247,50 @@ static void snes_runCycle(Snes* snes) {
+   }
+ }
+ 
+-static void snes_catchupApu(Snes* snes) {
+-  int64_t perCycle = snes->palTiming ? masterCyclesPerSecondPal : masterCyclesPerSecond;
+-  // Truncates toward zero like the upstream (int) cast; the debt goes negative
+-  // only by the overrun of the last opcode, and then no cycles are wanted.
+-  int catchupCycles = (int) (snes->apuCatchupDebt / perCycle);
+-  int ranCycles = apu_runCycles(snes->apu, catchupCycles);
+-  snes->apuCatchupDebt -= (int64_t) ranCycles * perCycle;
++int64_t snes_spcCycleWeight(const Snes* snes) {
++  return snes->palTiming ? masterCyclesPerSecondPal : masterCyclesPerSecond;
++}
++
++// The time the SPC has reached, in master clocks times the SPC rate.
++static int64_t snes_spcTime(const Snes* snes) {
++  int64_t rate = snes->palTiming ? apuCyclesPerSecondPal : apuCyclesPerSecond;
++  return (int64_t) snes->cycles * rate - snes->apuCatchupDebt;
++}
++
++// sm-decomp fix 0003: the CPU and the SPC meet at the ports in time order, as
++// bsnes v085's cothreads do. Upstream runs the SPC in whole opcodes until it
++// has passed the CPU, so the opcode that crosses the CPU's access does its port
++// reads and writes early: it reads the CPU's port before the CPU writes it, and
++// the CPU reads what the SPC writes after the access. Here the SPC runs
++// opcodes until it reaches the time of the CPU's access, `lead` before the
++// CPU's current time, but it stops before an opcode that would touch $F4-$F7
++// at or after that time (bsnes lets the CPU go first on a tie). Whether the
++// next opcode does is found by running it on a copy of the SPC registers
++// against side-effect-free memory, only when it starts within an opcode's
++// length of the access. The SPC's own accesses read halfway through its cycle
++// and write at its end, as bsnes v085's SMP does.
++static void snes_catchupApu(Snes* snes, int64_t lead) {
++  // longer than any SPC700 opcode (12 cycles)
++  int64_t window = 16 * snes_spcCycleWeight(snes);
++  while(snes->apuCatchupDebt - lead > 0) {
++    int64_t slack = snes->apuCatchupDebt - lead;
++    if(slack <= window && apu_opcodeMeetsCpu(snes->apu, slack)) break;
++    spc_runOpcode(snes->apu->spc); // apu_cycle pays off the debt
++  }
++}
++
++// An SPC read of port $F4-$F7: the value the CPU had written by the time of the
++// read, halfway through the SPC cycle apu_cycle has just ended.
++uint8_t snes_spcReadPort(Snes* snes, int port) {
++  int64_t time = snes_spcTime(snes) - snes_spcCycleWeight(snes) / 2;
++  return time < snes->apuPortWriteTime[port] ? snes->apuPortBefore[port] : snes->apu->inPorts[port];
++}
++
++// The SPC clears a port through $F1 at the end of its cycle; a CPU write that
++// happened after that keeps its value.
++void snes_spcClearPort(Snes* snes, int port) {
++  if(snes_spcTime(snes) >= snes->apuPortWriteTime[port]) snes->apu->inPorts[port] = 0;
++  snes->apuPortBefore[port] = 0;
+ }
+ 
+ static void snes_doAutoJoypad(Snes* snes) {
+@@ -268,7 +315,11 @@ uint8_t snes_readBBus(Snes* snes, uint8_t adr) {
+     return ppu_read(snes->ppu, adr);
+   }
+   if(adr < 0x80) {
+-    snes_catchupApu(snes); // catch up the apu before reading
++    // fix 0003: bsnes v085 reads 4 master clocks before the end of the access,
++    // LakeSnes runs the whole access first. DMA reads of the ports take the same
++    // timing; Super Metroid does not make them.
++    int64_t rate = snes->palTiming ? apuCyclesPerSecondPal : apuCyclesPerSecond;
++    snes_catchupApu(snes, 4 * rate); // catch up the apu before reading
+     return snes->apu->outPorts[adr & 0x3];
+   }
+   if(adr == 0x80) {
+@@ -285,8 +336,14 @@ void snes_writeBBus(Snes* snes, uint8_t adr, uint8_t val) {
+     return;
+   }
+   if(adr < 0x80) {
+-    snes_catchupApu(snes); // catch up the apu before writing
+-    snes->apu->inPorts[adr & 0x3] = val;
++    snes_catchupApu(snes, 0); // catch up the apu before writing
++    // fix 0003: the write lands at the end of the access, as in bsnes v085; the
++    // old value stays visible to SPC reads made before then.
++    int port = adr & 0x3;
++    int64_t rate = snes->palTiming ? apuCyclesPerSecondPal : apuCyclesPerSecond;
++    snes->apuPortBefore[port] = snes->apu->inPorts[port];
++    snes->apuPortWriteTime[port] = (int64_t) snes->cycles * rate;
++    snes->apu->inPorts[port] = val;
+     return;
+   }
+   switch(adr) {
+diff --git a/snes/snes.h b/snes/snes.h
+index 17975bc..50da02e 100644
+--- a/snes/snes.h
++++ b/snes/snes.h
+@@ -35,8 +35,14 @@ struct Snes {
+   uint64_t cycles;
+   uint64_t syncCycle;
+   // cpu handling
+-  // SPC cycles owed, times the master clock rate (fix 0002)
++  // SPC cycles owed, times the master clock rate (fix 0002). The APU pays it
++  // off cycle by cycle as it runs (fix 0003).
+   int64_t apuCatchupDebt;
++  // sm-decomp fix 0003: each CPU-to-SPC port's value before the CPU's last
++  // write to it, and the time of that write (master clocks times the SPC rate),
++  // so an SPC read that happens before the write sees the old value.
++  uint8_t apuPortBefore[4];
++  int64_t apuPortWriteTime[4];
+   // nmi / irq
+   bool hIrqEnabled;
+   bool vIrqEnabled;
+@@ -71,6 +77,10 @@ void snes_runFrame(Snes* snes);
+ void snes_runCycles(Snes* snes, int cycles);
+ void snes_syncCycles(Snes* snes, bool start, int syncCycles);
+ uint8_t snes_readBBus(Snes* snes, uint8_t adr);
++// fix 0003: the SPC's side of the ports, at the SPC's own time
++uint8_t snes_spcReadPort(Snes* snes, int port);
++void snes_spcClearPort(Snes* snes, int port);
++int64_t snes_spcCycleWeight(const Snes* snes);
+ void snes_writeBBus(Snes* snes, uint8_t adr, uint8_t val);
+ uint8_t snes_read(Snes* snes, uint32_t adr);
+ void snes_write(Snes* snes, uint32_t adr, uint8_t val);

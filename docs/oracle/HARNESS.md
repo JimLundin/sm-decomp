@@ -137,15 +137,19 @@ These speeds are published orders of magnitude, not measurements here.
 The lsnes backend (`src/lsnes.rs`, `--oracle lsnes`) runs lsnes rr2-beta23,
 the bsnes v085 core that recorded the movies, as a separate GPL process: no
 emulator code is linked or copied. lsnes runs `tools/oracle/lsnes_server.lua`;
-requests go to its standard input, and each lsnes frame's record goes to a
+requests go to its standard input, and each step's record goes to a
 file it overwrites, announced on its standard output. The cut is the
 interrupted instruction reached again with the stack restored (the NMI's RTI
-has completed); a frame without a returned NMI is cut at lsnes's frame
-boundary. It records the memories, the CPU, the cut, the joypad reads and the
+has completed); a frame without an NMI is cut at lsnes's frame boundary
+(line 241). An NMI that runs past that boundary is cut at its RTI in the
+next lsnes frame, which takes the next pad the client previewed, since lsnes
+fixes a frame's input at its start (MEASUREMENTS.md (i)); without a preview
+it is cut at the boundary with the NMI running. It records the memories, the CPU, the cut, the joypad reads and the
 wait entry. It does not record the picture, the APU port log, the SPC state
 (lsnes shows SPC700 and DSP only as raw core structs), the profile, the write
 log, watched-PC hits, `PpuRegisters` or `overscan`. Its state is lsnes's own
-savestate at the frame boundary after a cut, before the next step's NMI.
+savestate at the frame boundary that ends the step it was requested before
+(inside that step's NMI if it runs on), before the next step's NMI.
 The script loads a starting state itself (`OH_START`, `load-state`), because
 lsnes refuses a state given on its command line with this ROM and hangs.
 
@@ -275,10 +279,22 @@ counter `$05B8`, the lag flag, the game state, the room and Samus's position.
 | --- | --- | --- | --- |
 | LakeSnes 9db90b8 | frame 352 | frame 352 | boot APU upload ends 12 lines early, frame 353 not lag |
 | + fix 0001 (APU clock) | frame 395 | frame 8566 | one-frame NMI shifts around NMI re-enable in loads (396, 8314); Ceres desync from 8567 |
+| + fix 0002 (bsnes v085 SPC rate, exact) | frame 395 | frame 17984 | one more lag frame on the door out of room 97B5 (17985); one frame behind from 18108, desync from 18587 |
 
 Fixes live in `crates/oracle/native/fixes/NNNN-name.patch`. They are applied
 to a copy of the pinned sources by `tools/oracle/build_lakesnes.sh` and named
 in `OracleId::fixes`. They are emulator fixes, not ROM patches.
+
+- `0001-apu-clock-real-master-rate`: the SPC at 32040 Hz against the real
+  NTSC master clock (21 477 272 Hz), not 1364 · 262 · 60 dots.
+- `0002-apu-clock-bsnes-v085-exact`: the SPC at bsnes v085's 32040.5 Hz, the
+  rate the movies were recorded at, stepped as an exact integer ratio
+  (MEASUREMENTS (h)).
+
+Tried and not applied: `native/candidates/0003-apu-ports-in-time-order.patch`
+orders the CPU-SPC port accesses in time, as bsnes v085 does. It changes no
+lag-log word in any% steps 0-18999 (MEASUREMENTS (j)), so it is not in
+`fixes/`.
 
 ## Proving it against the lock
 

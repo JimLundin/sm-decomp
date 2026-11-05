@@ -150,6 +150,16 @@ impl Backend {
         }
     }
 
+    /// Announce the pad of the step after the coming one. lsnes needs it to
+    /// cut a step whose NMI outlasts its frame at the RTI ([`lsnes::Lsnes::preview`]);
+    /// LakeSnes runs each step to its cut and needs none.
+    pub fn preview(&mut self, next: Pad) {
+        match self {
+            Self::LakeSnes(_) => {}
+            Self::Lsnes(oracle) => oracle.preview(next),
+        }
+    }
+
     pub fn set_tiers(&mut self, tiers: Tiers) {
         match self {
             Self::LakeSnes(oracle) => oracle.set_tiers(tiers),
