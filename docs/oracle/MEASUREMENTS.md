@@ -267,7 +267,10 @@ redefined, so not compared.
   writable` and then did not exit, so their corpus processes waited at step 0.
   Killed by PID, the harness reported `lsnes exited at step 0` as designed,
   but the panic aborts the whole process (non-unwinding), losing its other
-  rows. Started a few seconds apart, the re-runs completed.
+  rows. Started a few seconds apart, the re-runs completed. Fixed since: each
+  lsnes has its own configuration directory, a silent lsnes is killed after
+  60 s, and a failed lsnes fails only its row (14 processes started within
+  0.5 s all completed; docs/handoff/oracle-harness.md).
 
 **Native-seeded rows that already run on lsnes:** chain-any-0001-DF45,
 chain-any-0006-E0B5 and chain-any-0012-91F8, 3220 ticks in all, at 39 frames/s.

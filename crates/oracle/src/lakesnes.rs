@@ -771,7 +771,7 @@ impl Oracle for LakeSnes {
         Ok(oracle)
     }
 
-    fn step(&mut self, pad: Pad) -> &FrameRecord {
+    fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
         if core::mem::take(&mut self.reset_pending) {
             // SAFETY: the machine is live and between steps.
             unsafe { ffi::oh_reset(self.machine, false) };
@@ -780,7 +780,7 @@ impl Oracle for LakeSnes {
         unsafe { ffi::oh_step(self.machine, pad.0) };
         self.capture();
         self.record.index += 1;
-        &self.record
+        Ok(&self.record)
     }
 
     fn save_state(&self) -> Vec<u8> {

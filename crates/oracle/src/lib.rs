@@ -78,7 +78,7 @@ impl Default for Tiers {
     }
 }
 
-/// Why an oracle could not start.
+/// Why an oracle could not start, or stopped.
 #[derive(Debug)]
 pub enum OracleError {
     /// The emulator rejected the cartridge image.
@@ -87,6 +87,8 @@ pub enum OracleError {
     State,
     /// A migration seed could not be applied.
     Seed(String),
+    /// The lsnes process stopped serving.
+    Lsnes(lsnes::Failure),
 }
 
 impl core::fmt::Display for OracleError {
@@ -95,6 +97,7 @@ impl core::fmt::Display for OracleError {
             Self::Rom => write!(f, "the emulator rejected the ROM"),
             Self::State => write!(f, "the emulator rejected the saved state"),
             Self::Seed(reason) => write!(f, "the seed could not be applied: {reason}"),
+            Self::Lsnes(failure) => write!(f, "{failure}"),
         }
     }
 }
@@ -108,7 +111,8 @@ pub trait Oracle: Sized {
     /// Power on with `rom`, or resume `start`.
     fn open(rom: &[u8], start: Start) -> Result<Self, OracleError>;
     /// Run one video frame with `pad` on controller 1, to the frame's cut.
-    fn step(&mut self, pad: Pad) -> &FrameRecord;
+    /// An emulator in another process can stop serving; the error says why.
+    fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError>;
     /// The machine at the last cut, as this oracle's own resumable state.
     fn save_state(&self) -> Vec<u8>;
     /// Select the observation tiers for the following steps.
@@ -137,7 +141,7 @@ impl Backend {
         }
     }
 
-    pub fn step(&mut self, pad: Pad) -> &FrameRecord {
+    pub fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
         match self {
             Self::LakeSnes(oracle) => oracle.step(pad),
             Self::Lsnes(oracle) => oracle.step(pad),

@@ -90,7 +90,10 @@ fn native_seed(
         }
     }
     if !targets.is_empty() {
-        *pending = Some((lsnes.request_save(), targets));
+        *pending = Some((
+            lsnes.request_save().unwrap_or_else(|error| fail(error)),
+            targets,
+        ));
     }
 }
 
@@ -203,7 +206,7 @@ fn movie(arguments: &[String]) {
     let (mut lag, mut overrun, mut no_nmi, mut synced, mut checked) = (0u64, 0u64, 0u64, 0, 0);
     let started = Instant::now();
     for (frame, &pad) in pads.iter().enumerate().take(frames).skip(first) {
-        let record: &FrameRecord = oracle.step(pad);
+        let record: &FrameRecord = oracle.step(pad).unwrap_or_else(|error| fail(error));
         let record = record.clone();
         let record = &record;
         if let crate::Backend::Lsnes(lsnes) = &mut oracle
@@ -393,8 +396,12 @@ fn derive_seed(arguments: &[String]) {
     let step = |seed: &NativeSeed| {
         let mut lsnes =
             Lsnes::open(&rom, Start::State(seed.state.clone())).unwrap_or_else(|error| fail(error));
-        seed.apply(&mut lsnes);
-        lsnes.step(crate::record::Pad(0)).wram.clone()
+        seed.apply(&mut lsnes).unwrap_or_else(|error| fail(error));
+        lsnes
+            .step(crate::record::Pad(0))
+            .unwrap_or_else(|error| fail(error))
+            .wram
+            .clone()
     };
     let plain = step(&base);
     let derived = step(&NativeSeed::read(out).unwrap_or_else(|error| fail(error)));
@@ -605,7 +612,7 @@ fn corpus(arguments: &[String]) {
         match crate::corpus::run_row_with(&rom, pin, entry, data, &observing, &mut watch) {
             Err(error) => {
                 failed += 1;
-                println!("{}: not run: {error}", entry.id);
+                println!("{}: {error}", entry.id);
             }
             Ok(run) => {
                 rows += 1;
@@ -648,7 +655,9 @@ fn corpus(arguments: &[String]) {
             }
         }
     }
-    println!("rows run {rows}, not run {failed}; all comparable streams equal on {all_six}");
+    println!(
+        "rows run {rows}, failed or not run {failed}; all comparable streams equal on {all_six}"
+    );
     for (stream, name) in names.iter().enumerate() {
         if compared[stream] > 0 {
             println!(
@@ -786,7 +795,7 @@ fn measure_movie(arguments: &[String]) {
     oracle.set_watch(&crate::measure::WATCHED, crate::measure::PEEK);
     let mut measurements = crate::measure::Measurements::default();
     for &pad in pads.iter().take(frames) {
-        measurements.frame(oracle.step(pad));
+        measurements.frame(oracle.step(pad).unwrap_or_else(|error| fail(error)));
     }
     println!("### {inputs}, frames 0-{} (from power-on)", frames - 1);
     print!("{}", measurements.report(&rom));

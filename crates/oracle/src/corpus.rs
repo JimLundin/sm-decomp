@@ -12,7 +12,7 @@ use crate::lock::{Entry, Pin};
 use crate::record::{FrameRecord, NmiKind, Pad};
 use crate::seed::Capture;
 use crate::streams::{self, NAMES, Running};
-use crate::{Backend, Start, Tiers};
+use crate::{Backend, OracleError, Start, Tiers};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -38,6 +38,39 @@ pub struct RowRun {
     pub seconds: f64,
 }
 
+/// Why a row has no run.
+#[derive(Debug)]
+pub enum RowError {
+    /// Its data or start could not be set up, so it never ran.
+    NotRun(String),
+    /// The game stopped requesting frames.
+    Stalled(String),
+    /// The oracle failed under it; the rest of the corpus still runs.
+    Oracle(OracleError),
+}
+
+impl core::fmt::Display for RowError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::NotRun(reason) => write!(f, "not run: {reason}"),
+            Self::Stalled(reason) => write!(f, "stalled: {reason}"),
+            Self::Oracle(error) => write!(f, "failed: {error}"),
+        }
+    }
+}
+
+impl From<String> for RowError {
+    fn from(reason: String) -> Self {
+        Self::NotRun(reason)
+    }
+}
+
+impl From<OracleError> for RowError {
+    fn from(error: OracleError) -> Self {
+        Self::Oracle(error)
+    }
+}
+
 /// Where a row's private data lives under `data`: one directory per
 /// ci-data bundle, named as the asset without `.tar.gz.enc`.
 pub fn bundle_directory(data: &Path, pin: &Pin) -> PathBuf {
@@ -45,7 +78,7 @@ pub fn bundle_directory(data: &Path, pin: &Pin) -> PathBuf {
 }
 
 /// Run `entry`'s row with `pin`'s data from `data`.
-pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowRun, String> {
+pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowRun, RowError> {
     run_row_with(rom, pin, entry, data, &Observe::default(), &mut |_| ())
 }
 
@@ -73,15 +106,15 @@ pub fn run_row_with(
     data: &Path,
     observing: &Observe<'_>,
     observe: &mut dyn FnMut(&FrameRecord),
-) -> Result<RowRun, String> {
+) -> Result<RowRun, RowError> {
     let root = bundle_directory(data, pin);
     let inputs = crate::inputs::read(&root.join("movies").join(&pin.inputs))?;
     let mut native_seed = None;
     let start = match (&pin.seed, &pin.checkpoint) {
         (_, Some(checkpoint)) => {
-            return Err(format!(
+            return Err(RowError::NotRun(format!(
                 "starts from the old verifier's checkpoint {checkpoint}"
-            ));
+            )));
         }
         (Some(seed), None) => {
             let (capture, index) = seed
@@ -104,11 +137,12 @@ pub fn run_row_with(
         }
         (None, None) => Start::PowerOn { wram_fill: 0x55 },
     };
-    let mut oracle =
-        Backend::open(observing.backend, rom, start).map_err(|error| error.to_string())?;
+    let mut oracle = Backend::open(observing.backend, rom, start)?;
     match (&mut oracle, &native_seed) {
-        (Backend::Lsnes(lsnes), Some(seed)) => seed.apply(lsnes),
-        (Backend::LakeSnes(_), Some(_)) => return Err("native seeds are lsnes states".into()),
+        (Backend::Lsnes(lsnes), Some(seed)) => seed.apply(lsnes)?,
+        (Backend::LakeSnes(_), Some(_)) => {
+            return Err(RowError::NotRun("native seeds are lsnes states".into()));
+        }
         (_, None) => {}
     }
     oracle.set_tiers(observing.tiers);
@@ -135,7 +169,7 @@ pub fn run_row_with(
             .or_else(|| inputs.get(index(run.ticks)))
             .copied()
             .unwrap_or(Pad(0));
-        let record = oracle.step(pad);
+        let record = oracle.step(pad)?;
         run.frames += 1;
         observe(record);
         run.v1.fold(&streams::v1(record));
@@ -165,12 +199,12 @@ pub fn run_row_with(
                 .take(3)
                 .map(|(count, pc)| format!("${pc:06X}x{count}"))
                 .collect();
-            return Err(format!(
-                "stalled: {} Ticks in {} frames; overruns interrupted {}",
+            return Err(RowError::Stalled(format!(
+                "{} Ticks in {} frames; overruns interrupted {}",
                 run.ticks,
                 run.frames,
                 common.join(" ")
-            ));
+            )));
         }
     }
     run.seconds = started.elapsed().as_secs_f64();

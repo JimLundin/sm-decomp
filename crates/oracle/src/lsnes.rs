@@ -20,7 +20,9 @@ use crate::record::{Beam, CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, Ppu
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::process::{Child, ChildStdin, Command, Stdio};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
+use std::time::{Duration, Instant};
 
 /// The server script, written next to the run's files at start.
 const SERVER: &str = include_str!("../../../tools/oracle/lsnes_server.lua");
@@ -36,6 +38,18 @@ const SRAM: usize = 0x2000;
 /// error goes; lsnes then keeps running without a script) lands there too.
 const STDERR: &str = "stderr.txt";
 const LUA_LOG: &str = "lua.log";
+/// lsnes's configuration directory, inside the run's directory. lsnes takes
+/// it from `APPDATA` (`%APPDATA%/lsnes`); a shared one races when several
+/// processes start in the same second, and the loser stops at a fatal
+/// "not writable" message without exiting.
+const CONFIG: &str = "config";
+/// How long the first record may take: lsnes starts, loads the ROM and the
+/// server, and runs a frame.
+const START_TIMEOUT: Duration = Duration::from_secs(60);
+/// How long any later record may take.
+const STEP_TIMEOUT: Duration = Duration::from_secs(30);
+/// How long lsnes may take to quit once asked.
+const QUIT_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// The executable: `SM_LSNES`, or the copy this machine keeps.
 fn executable() -> PathBuf {
@@ -49,11 +63,64 @@ fn executable() -> PathBuf {
     )
 }
 
+/// Why an lsnes process stopped serving.
+#[derive(Debug)]
+pub enum Cause {
+    /// It closed its standard output: it exited or crashed.
+    Exited,
+    /// It sent no record within this long, and was killed.
+    Silent(Duration),
+    /// A request could not be written to its standard input.
+    Request(std::io::Error),
+    /// Its standard output could not be read.
+    Reply(std::io::Error),
+    /// Its announcement or record file was malformed.
+    Record(String),
+}
+
+impl core::fmt::Display for Cause {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Exited => write!(f, "exited"),
+            Self::Silent(waited) => write!(f, "sent no record in {}s; killed", waited.as_secs()),
+            Self::Request(error) => write!(f, "took no request: {error}"),
+            Self::Reply(error) => write!(f, "reply unreadable: {error}"),
+            Self::Record(what) => write!(f, "bad record: {what}"),
+        }
+    }
+}
+
+/// An lsnes process that stopped serving, with the evidence it left.
+#[derive(Debug)]
+pub struct Failure {
+    pub cause: Cause,
+    /// The step it was asked for.
+    pub step: u64,
+    /// Its process id.
+    pub pid: u32,
+    /// Its exit status and the tails of its logs; its directory is kept.
+    pub report: String,
+}
+
+impl core::fmt::Display for Failure {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "lsnes (pid {}) {} at step {}: {}",
+            self.pid, self.cause, self.step, self.report
+        )
+    }
+}
+
 /// One lsnes process running the original game.
 pub struct Lsnes {
     child: Child,
     requests: ChildStdin,
-    replies: BufReader<ChildStdout>,
+    /// Its standard output, a line at a time, from a reader thread, so that a
+    /// silent lsnes can be timed out. Disconnected once lsnes closes it.
+    replies: Receiver<std::io::Result<String>>,
+    /// A failure met outside a step (by `reset`), returned by the next step.
+    failed: Option<Failure>,
     directory: PathBuf,
     record: FrameRecord,
     steps: u64,
@@ -156,10 +223,10 @@ impl NativeSeed {
     }
 
     /// Ask a just-opened oracle resumed from this seed's state for its edits.
-    pub fn apply(&self, lsnes: &mut Lsnes) {
-        for &word in &self.words {
-            lsnes.write_wram(word);
-        }
+    pub fn apply(&self, lsnes: &mut Lsnes) -> Result<(), OracleError> {
+        self.words
+            .iter()
+            .try_for_each(|&word| lsnes.write_wram(word))
     }
 }
 
@@ -170,6 +237,9 @@ pub const IDENTITY: OracleId = OracleId {
     patches: &[],
     fixes: &[],
 };
+
+/// The memories after the header, when the record carries them.
+const MEMORIES: usize = WRAM + VRAM + CGRAM + OAM + SRAM;
 
 fn le16(bytes: &[u8], at: usize) -> u16 {
     u16::from_le_bytes([bytes[at], bytes[at + 1]])
@@ -217,25 +287,38 @@ impl Lsnes {
         std::env::temp_dir().join(unique)
     }
 
-    fn send(&mut self, line: &str) {
+    fn send(&mut self, line: &str) -> Result<(), OracleError> {
         writeln!(self.requests, "{line}")
             .and_then(|()| self.requests.flush())
-            .unwrap_or_else(|error| panic!("lsnes request {line}: {error}"));
+            .map_err(|error| self.fail(Cause::Request(error)))
     }
 
     /// Ask for the state at the next frame boundary, written to the returned
     /// file once the next step has run; [`Oracle::save_state`] then reads it.
-    pub fn request_save(&mut self) -> PathBuf {
+    pub fn request_save(&mut self) -> Result<PathBuf, OracleError> {
         self.saves += 1;
         let path = self.directory.join(format!("state-{}.lss", self.saves));
-        self.send(&format!("V {}", path.display()));
-        path
+        self.send(&format!("V {}", path.display()))?;
+        Ok(path)
     }
 
     /// Write `edit` to work RAM. Asked for before a resumed run's first step,
     /// it lands right after the start state loads, at that state's boundary.
-    pub fn write_wram(&mut self, edit: WramWord) {
-        self.send(&format!("W {:x} {:x}", edit.offset, edit.value));
+    pub fn write_wram(&mut self, edit: WramWord) -> Result<(), OracleError> {
+        self.send(&format!("W {:x} {:x}", edit.offset, edit.value))
+    }
+
+    /// End a process that stopped serving, and say why. One still alive
+    /// (silent, or refusing requests) is killed first, so none outlives its run.
+    fn fail(&mut self, cause: Cause) -> OracleError {
+        // Killing a process that already exited fails harmlessly.
+        let _ = self.child.kill();
+        OracleError::Lsnes(Failure {
+            cause,
+            step: self.steps,
+            pid: self.child.id(),
+            report: self.exit_report(),
+        })
     }
 
     /// Why lsnes ended: its exit status, the Lua errors the server logged and
@@ -268,11 +351,17 @@ impl Lsnes {
         &self.raw
     }
 
-    fn decode(&mut self, bytes: &[u8]) {
-        assert!(
-            bytes.len() >= HEADER && &bytes[..4] == b"OHR1",
-            "bad lsnes record"
-        );
+    fn decode(&mut self, bytes: &[u8]) -> Result<(), Cause> {
+        if bytes.len() < HEADER || &bytes[..4] != b"OHR1" {
+            return Err(Cause::Record(format!("no header in {} bytes", bytes.len())));
+        }
+        let dumped = bytes[42] != 0;
+        if dumped && bytes.len() < HEADER + MEMORIES {
+            return Err(Cause::Record(format!(
+                "{} bytes, short of the memories",
+                bytes.len()
+            )));
+        }
         let record = &mut self.record;
         let interrupted_pc = le32(bytes, 5);
         let polled = bytes[9] != 0;
@@ -288,7 +377,7 @@ impl Lsnes {
             }),
             1 => Cut::VblankWithoutNmi,
             2 => Cut::NmiStillRunning { interrupted_pc },
-            other => panic!("lsnes record kind {other}"),
+            other => return Err(Cause::Record(format!("kind {other}"))),
         };
         record.joypad_reads = le32(bytes, 10);
         record.wait_entry = (bytes[14] != 0).then(|| Beam {
@@ -310,8 +399,8 @@ impl Lsnes {
             p: bytes[40],
             emulation: bytes[41] != 0,
         };
-        if bytes[42] == 0 {
-            return;
+        if !dumped {
+            return Ok(());
         }
         let mut at = HEADER;
         let mut take = |size: usize| {
@@ -328,6 +417,7 @@ impl Lsnes {
         }
         record.oam.copy_from_slice(take(OAM));
         record.sram.copy_from_slice(take(SRAM));
+        Ok(())
     }
 }
 
@@ -363,6 +453,8 @@ impl Oracle for Lsnes {
             }
         }
         let stderr = std::fs::File::create(directory.join(STDERR)).map_err(|_| OracleError::Rom)?;
+        let config = directory.join(CONFIG);
+        std::fs::create_dir_all(&config).map_err(|_| OracleError::Rom)?;
         let mut child = command
             .arg(format!("--rom={}", rom_path.display()))
             .arg(format!("--lua={}", script.display()))
@@ -370,17 +462,31 @@ impl Oracle for Lsnes {
             .current_dir(&directory)
             .env("OH_RECORD", directory.join("record.bin"))
             .env("OH_LOG", directory.join(LUA_LOG))
+            .env("APPDATA", &config)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(stderr)
             .spawn()
             .map_err(|_| OracleError::Rom)?;
-        let requests = child.stdin.take().ok_or(OracleError::Rom)?;
-        let replies = BufReader::new(child.stdout.take().ok_or(OracleError::Rom)?);
+        let (Some(requests), Some(stdout)) = (child.stdin.take(), child.stdout.take()) else {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(OracleError::Rom);
+        };
+        let (sender, replies) = mpsc::channel();
+        // Ends when lsnes closes its standard output, or the oracle is gone.
+        std::thread::spawn(move || {
+            for line in BufReader::new(stdout).lines() {
+                if sender.send(line).is_err() {
+                    break;
+                }
+            }
+        });
         Ok(Self {
             child,
             requests,
             replies,
+            failed: None,
             directory,
             record: empty_record(),
             steps: 0,
@@ -391,34 +497,53 @@ impl Oracle for Lsnes {
         })
     }
 
-    fn step(&mut self, pad: Pad) -> &FrameRecord {
-        self.send(&format!("S {:04x} {}", pad.0, u8::from(self.memories)));
-        let mut line = String::new();
+    fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
+        if let Some(failure) = self.failed.take() {
+            return Err(OracleError::Lsnes(failure));
+        }
+        self.send(&format!("S {:04x} {}", pad.0, u8::from(self.memories)))?;
+        let waited = if self.steps == 0 {
+            START_TIMEOUT
+        } else {
+            STEP_TIMEOUT
+        };
+        let deadline = Instant::now() + waited;
         let size = loop {
-            line.clear();
-            let read = self
+            let line = match self
                 .replies
-                .read_line(&mut line)
-                .unwrap_or_else(|error| panic!("lsnes reply: {error}"));
-            if read == 0 {
-                let report = self.exit_report();
-                panic!("lsnes exited at step {}: {report}", self.steps);
-            }
+                .recv_timeout(deadline.saturating_duration_since(Instant::now()))
+            {
+                Ok(Ok(line)) => line,
+                Ok(Err(error)) => return Err(self.fail(Cause::Reply(error))),
+                Err(RecvTimeoutError::Disconnected) => return Err(self.fail(Cause::Exited)),
+                Err(RecvTimeoutError::Timeout) => return Err(self.fail(Cause::Silent(waited))),
+            };
+            // Any other line is lsnes's own output.
             if let Some(size) = line
                 .strip_prefix("R ")
                 .and_then(|rest| rest.split(' ').next())
             {
-                break size.trim().parse::<usize>().expect("lsnes record size");
+                match size.trim().parse::<usize>() {
+                    Ok(size) => break size,
+                    Err(_) => return Err(self.fail(Cause::Record(format!("announced {line}")))),
+                }
             }
         };
-        let bytes = std::fs::read(self.directory.join("record.bin"))
-            .unwrap_or_else(|error| panic!("lsnes record: {error}"));
-        assert_eq!(bytes.len(), size, "lsnes record size");
-        self.decode(&bytes);
+        let bytes = match std::fs::read(self.directory.join("record.bin")) {
+            Ok(bytes) if bytes.len() == size => bytes,
+            Ok(bytes) => {
+                let cause = Cause::Record(format!("{} bytes, announced {size}", bytes.len()));
+                return Err(self.fail(cause));
+            }
+            Err(error) => return Err(self.fail(Cause::Record(error.to_string()))),
+        };
+        if let Err(cause) = self.decode(&bytes) {
+            return Err(self.fail(cause));
+        }
         self.raw = bytes;
         self.record.index = self.steps;
         self.steps += 1;
-        &self.record
+        Ok(&self.record)
     }
 
     fn save_state(&self) -> Vec<u8> {
@@ -429,7 +554,9 @@ impl Oracle for Lsnes {
     fn set_tiers(&mut self, _tiers: Tiers) {}
 
     fn reset(&mut self) {
-        self.send("R");
+        if let Err(OracleError::Lsnes(failure)) = self.send("R") {
+            self.failed = Some(failure);
+        }
     }
 
     fn set_watch(&mut self, _addresses: &[u32], _peek: u32) {}
@@ -438,6 +565,12 @@ impl Oracle for Lsnes {
 impl Drop for Lsnes {
     fn drop(&mut self) {
         let _ = writeln!(self.requests, "Q").and_then(|()| self.requests.flush());
+        let deadline = Instant::now() + QUIT_TIMEOUT;
+        while matches!(self.child.try_wait(), Ok(None)) && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        // One that has not quit by now never will.
+        let _ = self.child.kill();
         let _ = self.child.wait();
         if !self.keep {
             let _ = std::fs::remove_dir_all(&self.directory);

@@ -61,7 +61,11 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
   - Fixed: the cut is a callback that stays on the NMI handler's RTI (`$80:9601`, found from the ROM), matched by S equal to the NMI's S. Records are byte-identical over 1000 frames; 17829 to 19829 with `--native-seeds` runs clean at 44 frames/s (HARNESS.md, "lsnes crashes").
 - Diagnosis now kept (commit on this branch):
   - lsnes runs in its run directory; `stderr.txt`, the server's `lua.log` (`OH_LOG`) and `lsnes.log` go there.
-  - An exit panics with the exit status and the tail of all three, and keeps the directory. `SM_LSNES_KEEP=1` always keeps it.
+  - lsnes stopping is an error, not a panic: `OracleError::Lsnes(lsnes::Failure)` with the cause (exited, silent, request or reply refused, bad record), the step, the PID, the exit status and the tail of all three logs; the directory is kept. `SM_LSNES_KEEP=1` always keeps it.
+  - `Oracle::step` returns `Result`. In `corpus` the failure ends only its row (`corpus::RowError::Oracle`, printed `ID: failed: ...`); the next row runs. `movie` and the other one-run commands still stop on it.
+  - Each lsnes gets its own configuration directory, `APPDATA=<run dir>/config` (lsnes keeps its config in `%APPDATA%/lsnes`), so processes started together no longer race on the shared one.
+  - A record not announced within 60 s (the first step) or 30 s (later steps) kills that lsnes (its own child handle) and fails the row as silent. Drop asks lsnes to quit, waits up to 5 s, then kills it.
+  - Checked (lane `lane/oracle-lsnes-robust`): 14 corpus processes started within 0.5 s, one chain-any row each, all started and completed (13 rows; chain-any-0011 has no faithful entry). Killing chain-any-0006's lsnes at step 475 failed that row with the log tails, and chain-any-0012 then ran its 1031 ticks in the same process. With `SM_LSNES=cmd.exe` (never answers) both rows failed as silent after 60 s each and the process exited 0.
 - Resume: `Start::State` loads the state from the script (`OH_START`, `load-state`). On the command line lsnes rejects it (core type snes_ntsc against ROM type SNES) and hangs.
   - From seed 16 (frame 17829) the lag log matches in every column but `lagged`, which the log samples differently.
 - `movie --from STATE FRAME` resumes there. `--native-seeds CSV DIR` can be repeated, with one save serving captures that share a frame. `--no-memories` drops the memories (lsnes only).
@@ -90,7 +94,9 @@ Orphaned lsnes processes remain from hung or killed runs: PIDs 6176 and 14972 fr
 
 ## Pitfalls
 
-- Start lsnes processes a few seconds apart: started in the same second, an lsnes can die with `FATAL: Configuration directory ... is not writable` and not exit, so its corpus waits at step 0. Killing it by PID makes the harness panic, which aborts the whole process with the rest of its rows.
+- Fixed: lsnes processes started in the same second raced on `%APPDATA%/lsnes` (`FATAL: Configuration directory ... is not writable`, and no exit). Each now has its own config directory, and a hung start is killed after 60 s. A per-run config starts from lsnes's defaults (the shared `lsneswxw.cfg` held only defaults and audio devices).
+- Builds older than this fix still share the config directory and still panic on a dead lsnes; don't start those in a burst.
+- A killed lsnes usually shows as `took no request` (the next request's write fails before the read sees the closed pipe); both mean it is gone.
 - A Tick is an NMI that interrupted a wait site (`game::WAIT_SITES`, which includes the message-box input loop), not a "polled" NMI.
 - Seeds resume at `seed_boundary_pc` (`$80:8348`), not `pc`.
 - Old-lock alignment: present pad k+1 until the k-th requested NMI.
