@@ -368,15 +368,15 @@ pub(super) unsafe fn load_with(mut load: impl FnMut(&str) -> *const c_void) {
     let mut pending = None::<(usize, usize)>;
     gl::load_with(|name| {
         let address = load(name);
-        if let Some((slot, next)) = pending.take() {
-            if PROCEDURES[slot].get(next) == Some(&name) {
-                if !address.is_null() {
-                    sm_shader_gl[slot].store(address.cast_mut(), Ordering::Relaxed);
-                } else if next + 1 < PROCEDURES[slot].len() {
-                    pending = Some((slot, next + 1));
-                }
-                return address;
+        if let Some((slot, next)) = pending.take()
+            && PROCEDURES[slot].get(next) == Some(&name)
+        {
+            if !address.is_null() {
+                sm_shader_gl[slot].store(address.cast_mut(), Ordering::Relaxed);
+            } else if next + 1 < PROCEDURES[slot].len() {
+                pending = Some((slot, next + 1));
             }
+            return address;
         }
         if let Some(slot) = PROCEDURES.iter().position(|names| names[0] == name) {
             sm_shader_gl[slot].store(

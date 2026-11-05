@@ -7,11 +7,15 @@ publish = false
 description = "The Super Metroid desktop application: window, input, configuration and the run loop"
 autobins = false
 
-# The desktop binary keeps its name and command line.
+# The desktop binary keeps its name and command line. Its shared replay checks
+# (sm/src/verify.rs) need the verifier build's `sm_verify_dll` cfg, so they run
+# through tools/verify_dll.py, not as cargo tests or benches.
 [[bin]]
 name = "sm"
 path = "src/main.rs"
 required-features = ["frontend"]
+test = false
+bench = false
 
 [features]
 default = ["frontend"]
