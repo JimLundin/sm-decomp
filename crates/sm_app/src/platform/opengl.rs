@@ -36,20 +36,22 @@ impl Presenter {
 }
 
 thread_local! {
-    static PRESENTER: RefCell<Presenter> = RefCell::new(Presenter {
-        window: null_mut(),
-        pixels: Vec::new(),
-        width: 0,
-        height: 0,
-        program: 0,
-        vao: 0,
-        texture: GlTextureWithSize {
-            gl_texture: 0,
+    static PRESENTER: RefCell<Presenter> = const {
+        RefCell::new(Presenter {
+            window: null_mut(),
+            pixels: Vec::new(),
             width: 0,
             height: 0,
-        },
-        shader: null_mut(),
-    });
+            program: 0,
+            vao: 0,
+            texture: GlTextureWithSize {
+                gl_texture: 0,
+                width: 0,
+                height: 0,
+            },
+            shader: null_mut(),
+        })
+    };
 }
 
 unsafe fn compile_display_shader(stage: u32, source: &CStr) -> u32 {
@@ -189,8 +191,9 @@ unsafe extern "C-unwind" fn opengl_renderer_end_draw() {
                 }
             }
             let x = (drawable_width - width) >> 1;
-            // Preserve the current top-aligned viewport, including its zero-Y formula.
-            let y = (height - height) >> 1;
+            // The viewport stays top-aligned: the original's Y offset, (height - height) >> 1,
+            // is always zero.
+            let y = 0;
             gl::BindTexture(gl::TEXTURE_2D, state.texture.gl_texture);
             if state.width == state.texture.width as i32
                 && state.height == state.texture.height as i32

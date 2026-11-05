@@ -193,11 +193,12 @@ impl Expectation {
     }
 }
 
+/// The suit-pickup step a run awaits next.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum SuitProgress {
-    AwaitingAward,
-    AwaitingAnimation,
-    AwaitingControl,
+    Award,
+    Animation,
+    Control,
 }
 
 struct RequiredExpectation {
@@ -794,24 +795,24 @@ impl ReplayCoverage {
                 // The PLM grants equipment before its message and suit HDMA.
                 // Stage3 re-ORs that bit; it is not a second acquisition edge.
                 if !before.same_gameplay_room(&current) || current.items[0] & mask == 0 {
-                    expected.suit_progress = SuitProgress::AwaitingAward;
+                    expected.suit_progress = SuitProgress::Award;
                 }
                 if observed {
-                    expected.suit_progress = SuitProgress::AwaitingAnimation;
+                    expected.suit_progress = SuitProgress::Animation;
                 }
-                if expected.suit_progress == SuitProgress::AwaitingAnimation
+                if expected.suit_progress == SuitProgress::Animation
                     && before.suit_substate == 3
                     && current.suit_substate == 4
                     && current.player_handlers == [0xe713, 0xe8cd, 0xec1d]
                 {
-                    expected.suit_progress = SuitProgress::AwaitingControl;
+                    expected.suit_progress = SuitProgress::Control;
                 }
-                if expected.suit_progress == SuitProgress::AwaitingControl
+                if expected.suit_progress == SuitProgress::Control
                     && current.suit_substate == 0
                     && current.player_handlers == [0xe695, 0xe725, 0xeb52]
                 {
                     expected.first_frame = Some(frame);
-                    expected.suit_progress = SuitProgress::AwaitingAward;
+                    expected.suit_progress = SuitProgress::Award;
                 }
             } else if observed {
                 expected.first_frame = Some(frame);
@@ -881,7 +882,7 @@ impl ReplayCoverage {
             && (self.last_state_room != Some(state_room)
                 || (u32::from(state)
                     == sm::game::constants::game_states::K_GAME_STATE_8_MAIN_GAMEPLAY
-                    && frame % 100 == 0))
+                    && frame.is_multiple_of(100)))
         {
             eprintln!(
                 "Replay trace: frame {frame}, state {state}, room ${room:04X}, samus_x_pos {}, samus_y_pos {}, samus_pose ${:04X}, timer_status {}, equipped_items ${:04X}, collected_items ${:04X}, missiles {}/{}",
@@ -1165,7 +1166,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                     name: name.clone(),
                     kind,
                     first_frame: None,
-                    suit_progress: SuitProgress::AwaitingAward,
+                    suit_progress: SuitProgress::Award,
                 });
             }
             "--after-expectations" if after_expectations.is_none() => {
@@ -1542,10 +1543,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             }
             // Advance the music driver once per frame without playing audio.
             sm::rtl::rtl_render_audio(&mut discarded_audio, game);
-            if audio_trace.is_some() {
-                if let Some(error) = game.audio_output.failure() {
-                    return Err(format!("input frame {index}: {error}"));
-                }
+            if audio_trace.is_some()
+                && let Some(error) = game.audio_output.failure()
+            {
+                return Err(format!("input frame {index}: {error}"));
             }
             coverage.observe(game, index, trace);
             completed = offset + 1;
@@ -1593,10 +1594,11 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             Some(observer) => observer.finish()?,
             None => (Vec::new(), None),
         };
-        #[cfg(not(sm_verify_dll))]
-        let free_run_failures: Option<u64> = None;
         // A free run fails on the Ticks it diverged; nothing else is compared.
+        #[cfg(sm_verify_dll)]
         let failures = free_run_failures.unwrap_or(game.VERIFY_FAILURES);
+        #[cfg(not(sm_verify_dll))]
+        let failures = game.VERIFY_FAILURES;
         coverage.report();
         println!(
             "Verified {completed} frames: {failures} failing frames ({:.2}s)",

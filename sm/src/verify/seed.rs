@@ -11,8 +11,9 @@ fn bytes<const N: usize>(path: &Path) -> Result<Box<[u8; N]>, String> {
 }
 
 fn words(output: &mut [u16], input: &[u8]) {
-    for (word, pair) in output.iter_mut().zip(input.chunks_exact(2)) {
-        *word = u16::from_le_bytes([pair[0], pair[1]]);
+    let (pairs, _) = input.as_chunks::<2>();
+    for (word, pair) in output.iter_mut().zip(pairs) {
+        *word = u16::from_le_bytes(*pair);
     }
 }
 
@@ -299,14 +300,13 @@ pub(super) unsafe fn load(
     let r = Registers(registers);
     let controller = controller_read(&r, ram.as_slice(), first_input)?;
     let boundary_pc = r.0.get("seed_boundary_pc").copied();
-    if let Some(pc) = boundary_pc {
-        if pc != 0x808348
+    if let Some(pc) = boundary_pc
+        && (pc != 0x808348
             || r.get("pbpc")? != pc + 1
             || r.get("e")? != 0
-            || r.get("seed_boundary_frame")? < r.get("seed_movie_frame")?
-        {
-            return Err("unsupported seed opcode-fetch boundary".into());
-        }
+            || r.get("seed_boundary_frame")? < r.get("seed_movie_frame")?)
+    {
+        return Err("unsupported seed opcode-fetch boundary".into());
     }
     if r.get("seed_room")? != u64::from(u16::from_le_bytes([ram[0x79b], ram[0x79c]]))
         || r.get("seed_nmi")? != u64::from(u16::from_le_bytes([ram[0x5b6], ram[0x5b7]]))

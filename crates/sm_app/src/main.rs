@@ -113,6 +113,12 @@ sm::forward_calls! { unsafe fn ();
     host_apu_unlock => SDL_UnlockMutex(g_audio_mutex);
 }
 
+/// Copies the 256x240 PPU frame into `pixel_buffer`, one 1024-byte row per `pitch` bytes.
+///
+/// # Safety
+///
+/// `pixel_buffer` must be valid for writes of 240 rows of `pitch` bytes, with
+/// `pitch` at least 1024, and no other code may access the frame buffers meanwhile.
 pub unsafe fn rtl_draw_ppu_frame(
     pixel_buffer: *mut u8,
     pitch: usize,
@@ -125,12 +131,12 @@ pub unsafe fn rtl_draw_ppu_frame(
         } else {
             &raw mut PIXELS as *mut u8
         };
+        const ROW_BYTES: usize = 256 * 4;
         for y in 0usize..240 {
             memcpy(
-                (pixel_buffer).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
-                ppu_pixels.offset(y.wrapping_mul(256 as usize).wrapping_mul(4 as usize) as isize)
-                    as *const c_void,
-                (256 * 4) as usize,
+                pixel_buffer.add(y * pitch).cast::<c_void>(),
+                ppu_pixels.add(y * ROW_BYTES).cast::<c_void>().cast_const(),
+                ROW_BYTES,
             );
         }
     }

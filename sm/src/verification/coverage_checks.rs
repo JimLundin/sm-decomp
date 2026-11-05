@@ -1765,7 +1765,7 @@ fn required(name: &str) -> RequiredExpectation {
         name: name.into(),
         kind: Expectation::parse(name).unwrap(),
         first_frame: None,
-        suit_progress: SuitProgress::AwaitingAward,
+        suit_progress: SuitProgress::Award,
     }
 }
 
