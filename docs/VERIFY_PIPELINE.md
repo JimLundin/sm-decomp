@@ -62,7 +62,6 @@ gone. "Caller" is who runs it.
 | --- | --- | --- | --- |
 | `.github/scripts/replay_job.py` | Runs one matrix job: restores, splits rows into worker processes, runs `verify_dll.py --corpus` per process, filters console lines to what may be public, writes the summary; rom-import and record modes | env JOB (matrix entry), ORACLE, AUDIO_TRACE | verify.yml |
 | `tools/verify_dll.py` | Builds `sm_verify` (`--build-only`: source hash, inventory, rustc chain, native archives); runs it (`--unit-tests`, single replays, `--corpus` driver with checkpoint prefixes, lock record/check, localisation, audio-trace checks) | many flags | verify.yml, bench.yml, gate1.yml, .github/actions/verifier, replay_job.py, lock_gate.py, full_route.py, scenario.py, people |
-| `tools/gate1.py` | Gate 1's headless replay against the oracle, row by row | rows, lock; verdicts | gate1.yml |
 | `tools/scenario.py` | The scenario model: `rows`, `read_lock`, `write_lock`, `lock --check`; local `lock` (rehash, record) and `cut` | scenarios/, lock | every script above; people |
 
 ### Reporting
