@@ -175,7 +175,7 @@ pub fn run(
         outbox.offer(&mut audio, &mut save);
         if schedule.digests {
             let machine = session.digests();
-            digest_lines.push(session.digest_line());
+            digest_lines.push(session.line_of(&machine));
             running.fold(&Tick {
                 index: index as u32,
                 tick: index as i32,

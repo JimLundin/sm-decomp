@@ -245,8 +245,15 @@ impl Session {
     /// The committed Tick's digests as one text line: the Tick, then each
     /// machine stream in `MACHINE` order. Two hosts' lines compare Tick by Tick.
     pub fn digest_line(&mut self) -> String {
+        let digests = self.digests();
+        self.line_of(&digests)
+    }
+
+    /// `digests`, taken once for the committed Tick, as `digest_line` writes them.
+    /// Taking the digests is an observation: `SM_DIGEST_LOG` logs each one.
+    pub fn line_of(&self, digests: &[u64; MACHINE.len()]) -> String {
         let mut line = self.tick.to_string();
-        for digest in self.digests() {
+        for digest in digests {
             line.push_str(&format!(" {digest:016x}"));
         }
         line
