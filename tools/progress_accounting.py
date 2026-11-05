@@ -150,7 +150,7 @@ def main() -> None:
             verification = any(p in ("verification", "verify") for p in parts) or Path(rel).name.startswith("verify")
             totals["verification" if verification else "production"] += len(lines)
             totals["unsafe_containing"] += sum(b"unsafe" in line for line in lines)
-            if Path(rel).parent.as_posix() == "sm/src/game" and Path(rel).name.startswith("sm_"):
+            if Path(rel).parent.as_posix() in ("sm/src/game", "crates/sm_host/src/game") and Path(rel).name.startswith("sm_"):
                 totals["legacy"] += len(lines)
             if rel in needed:
                 kept[rel] = data.decode()

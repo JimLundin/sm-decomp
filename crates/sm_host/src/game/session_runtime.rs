@@ -40,12 +40,12 @@ fn report_draw_diagnostics(diagnostics: Vec<u32>, game: &mut Game) {
 
 #[forbid(unsafe_code)]
 #[cfg(sm_verify_dll)]
-#[path = "../verification/actor_movement_runtime_observer.rs"]
+#[path = "../../../../sm/src/verification/actor_movement_runtime_observer.rs"]
 mod actor_movement_runtime_observer;
 
 #[forbid(unsafe_code)]
 #[cfg(sm_verify_dll)]
-#[path = "../verification/transfer_checks.rs"]
+#[path = "../../../../sm/src/verification/transfer_checks.rs"]
 mod transfer_checks;
 
 /// `pub` inside the crate-private module, so `LeaseActors` can name it.
@@ -2441,42 +2441,42 @@ mod scroll_runtime;
 mod sequence_runtime;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/collision_mechanism_checks.rs"]
+#[path = "../../../../sm/src/verification/collision_mechanism_checks.rs"]
 pub(crate) mod collision_mechanism_checks;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_spin_bounds.rs"]
+#[path = "../../../../sm/src/verification/player_spin_bounds.rs"]
 pub(crate) mod player_spin_bounds;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_movement_edges.rs"]
+#[path = "../../../../sm/src/verification/player_movement_edges.rs"]
 pub(crate) mod player_movement_edges;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_minimap_bytes.rs"]
+#[path = "../../../../sm/src/verification/player_minimap_bytes.rs"]
 pub(crate) mod player_minimap_bytes;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_legacy_edges.rs"]
+#[path = "../../../../sm/src/verification/player_legacy_edges.rs"]
 pub(crate) mod player_legacy_edges;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_update_aliases.rs"]
+#[path = "../../../../sm/src/verification/player_update_aliases.rs"]
 pub(crate) mod player_update_aliases;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_minimap_boss.rs"]
+#[path = "../../../../sm/src/verification/player_minimap_boss.rs"]
 pub(crate) mod player_minimap_boss;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_minimap_edges.rs"]
+#[path = "../../../../sm/src/verification/player_minimap_edges.rs"]
 pub(crate) mod player_minimap_edges;
 
 #[cfg(sm_verify_dll)]
-#[path = "../verification/lease_counters.rs"]
+#[path = "../../../../sm/src/verification/lease_counters.rs"]
 mod lease_counters;
 #[cfg(sm_verify_dll)]
-#[path = "../verification/player_normal_transfers.rs"]
+#[path = "../../../../sm/src/verification/player_normal_transfers.rs"]
 pub(crate) mod player_normal_transfers;
 
 // Shared native diagnostic; callers retain their own publication boundary.

@@ -157,7 +157,8 @@ def harness_lines() -> int:
     """Lines of the scenario harness, which count as verification."""
     total = 0
     for top in [os.path.join("crates", "sm_tools", "src"),
-                os.path.join("sm", "src", "verification", "observation")]:
+                os.path.join("sm", "src", "verification", "observation"),
+                os.path.join("crates", "sm_host", "src", "verification", "observation")]:
         for root, dirs, names in os.walk(top):
             for name in names:
                 if name.endswith(".rs"):

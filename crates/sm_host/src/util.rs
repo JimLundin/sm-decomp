@@ -86,10 +86,10 @@ unsafe extern "C-unwind" fn sm_util_die(message: *const c_char) {
 pub fn native_source_matches() -> bool {
     [
         include_bytes!("util.rs").as_slice(),
-        include_bytes!("native_util.c").as_slice(),
-        include_bytes!("native_util.h").as_slice(),
+        include_bytes!("../../../sm/src/native_util.c").as_slice(),
+        include_bytes!("../../../sm/src/native_util.h").as_slice(),
         include_bytes!("types.rs").as_slice(),
-        include_bytes!("../../tools/install_native_config.py").as_slice(),
+        include_bytes!("../../../tools/install_native_config.py").as_slice(),
     ]
     .into_iter()
     .enumerate()

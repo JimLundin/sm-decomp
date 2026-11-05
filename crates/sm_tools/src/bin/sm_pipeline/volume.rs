@@ -702,6 +702,8 @@ pub fn row(relative: &str) -> Option<Row> {
             (!rest.contains(&"fixture")).then_some(Row::Verification)
         }
         ["crates", _, "src", ..] if verification => Some(Row::Verification),
+        // The engine host compiles the legacy game moved out of sm/src.
+        ["crates", "sm_host", "src", ..] => Some(Row::Oracle),
         ["crates", package, "src", first, ..] => {
             let index = ENGINE.iter().position(|engine| engine == package)?;
             let module = (*package == "sm_game")
@@ -1063,7 +1065,8 @@ mod tests {
             None
         );
         assert_eq!(row("sm/src/verification/mod.rs"), Some(Row::Verification));
-        assert_eq!(row("sm/src/game/sm_80.rs"), Some(Row::Oracle));
+        assert_eq!(row("sm/src/cpu_infra.rs"), Some(Row::Oracle));
+        assert_eq!(row("crates/sm_host/src/game/sm_a9.rs"), Some(Row::Oracle));
         assert_eq!(row("crates/sm_game/tests/replay.rs"), None);
         assert_eq!(row("crates/sm_game/build.rs"), None);
     }

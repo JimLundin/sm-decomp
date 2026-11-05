@@ -18,9 +18,9 @@ FILES = {
     "LICENSE.txt": "78b243fa858f4bcb49f8ccca14fec262f62fcee4e44a1ce7565840bdb4ca2217",
 }
 NATIVE_INPUTS = ("crates/sm_app/src/config.rs", "sm/src/native_config.c", "sm/src/native_config.h",
-                 "sm/src/native_util.h", "sm/src/types.rs", "tools/install_native_config.py")
-UTILITY_INPUTS = ("sm/src/util.rs", "sm/src/native_util.c", "sm/src/native_util.h",
-                  "sm/src/types.rs", "tools/install_native_config.py")
+                 "sm/src/native_util.h", "crates/sm_host/src/types.rs", "tools/install_native_config.py")
+UTILITY_INPUTS = ("crates/sm_host/src/util.rs", "sm/src/native_util.c", "sm/src/native_util.h",
+                  "crates/sm_host/src/types.rs", "tools/install_native_config.py")
 SYMBOLS = {
     "g_config": "sm_config_state", "ParseConfigFile": "sm_config_parse_file",
     "FindCmdForSdlKey": "sm_config_find_key", "FindCmdForGamepadButton": "sm_config_find_button",
@@ -135,7 +135,7 @@ def write_stamp(root: Path, path: Path, prefix: str, inputs: tuple[str, ...]) ->
 
 SHADER_INPUTS = ("crates/sm_app/src/platform/glsl_shader.rs", "sm/src/native_shader.c",
                  "sm/src/native_shader.h", "crates/sm_app/src/platform/texture_png.rs",
-                 "crates/sm_app/src/platform/opengl.rs", "sm/src/types.rs", "tools/install_native_config.py")
+                 "crates/sm_app/src/platform/opengl.rs", "crates/sm_host/src/types.rs", "tools/install_native_config.py")
 
 
 def shader_source(source: str) -> str:

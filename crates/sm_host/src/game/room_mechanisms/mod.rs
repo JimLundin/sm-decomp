@@ -142,14 +142,14 @@ pub(crate) mod checks {
     }
 }
 #[cfg(not(sm_host))]
-#[path = "../../verification/room_mechanism_ownership.rs"]
+#[path = "../../../../../sm/src/verification/room_mechanism_ownership.rs"]
 mod ownership_checks;
 #[cfg(not(sm_host))]
 pub(crate) fn ownership_checks(game: &mut Game) -> bool {
     ownership_checks::run(game)
 }
 #[cfg(not(sm_host))]
-#[path = "../../verification/room_mechanism_qualified.rs"]
+#[path = "../../../../../sm/src/verification/room_mechanism_qualified.rs"]
 mod qualified_checks;
 #[cfg(not(sm_host))]
 pub(crate) fn qualified_checks(game: &mut Game) -> bool {
