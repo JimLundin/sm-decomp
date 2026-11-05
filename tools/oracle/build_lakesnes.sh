@@ -57,18 +57,29 @@ while read -r sha256 name; do
   echo "$sha256  $path"
 done <<< "$pins" | sha256sum --check --quiet
 
+# Named emulator fixes (crates/oracle/native/fixes/NNNN-*.patch) apply in order to
+# a copy of the pinned sources; the upstream cache stays untouched.
+build="$cache/build-$target"
+rm -rf "$build"
+mkdir -p "$build"
+cp -r "$source/snes" "$build/snes"
+for fix in "$root"/crates/oracle/native/fixes/*.patch; do
+  [ -e "$fix" ] || continue
+  (cd "$build" && git apply "$fix")
+done
+
 library="$cache/lib-$target"
 objects="$library/objects"
 mkdir -p "$objects"
 flags=(-target "$target" -O2 -std=c11 -fno-sanitize=undefined -ffp-contract=off -fno-strict-aliasing
-  -I "$source/snes")
+  -I "$build/snes")
 if [ "$target" = x86_64-linux-gnu ]; then flags+=(-fPIC -D_DEFAULT_SOURCE); fi
 for unit in cpu apu spc dsp ppu cart input statehandler snes_other; do
-  "$zig" cc "${flags[@]}" -c "$source/snes/$unit.c" -o "$objects/lakesnes_$unit.o"
+  "$zig" cc "${flags[@]}" -c "$build/snes/$unit.c" -o "$objects/lakesnes_$unit.o"
 done
 # DMA's B-bus accesses go through the bridge, which logs the APU ports.
 "$zig" cc "${flags[@]}" -Dsnes_readBBus=oh_dma_readBBus -Dsnes_writeBBus=oh_dma_writeBBus \
-  -c "$source/snes/dma.c" -o "$objects/lakesnes_dma.o"
+  -c "$build/snes/dma.c" -o "$objects/lakesnes_dma.o"
 "$zig" cc "${flags[@]}" -c "$root/crates/oracle/native/bridge.c" -o "$objects/oracle_bridge.o"
 rm -f "$library/liboracle_lakesnes.a"
 "$zig" ar rcs "$library/liboracle_lakesnes.a" "$objects"/*.o

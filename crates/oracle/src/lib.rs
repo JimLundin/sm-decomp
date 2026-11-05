@@ -9,6 +9,7 @@
 //! these observations to the engine's State lives with the comparison.
 
 pub mod cli;
+pub mod corpus;
 pub mod game;
 pub mod inputs;
 pub mod lakesnes;

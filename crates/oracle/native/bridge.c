@@ -558,3 +558,42 @@ void oh_set_wait_sites(OhMachine* m, const uint32_t* pcs, uint32_t count) {
   m->wait_site_count = count < 8 ? count : 8;
   memcpy(m->wait_sites, pcs, m->wait_site_count * sizeof(uint32_t));
 }
+
+// Place the beam, for loading a migration seed. The NMI flag counts as read.
+void oh_set_beam(OhMachine* m, uint16_t h, uint16_t v) {
+  Snes* s = m->snes;
+  s->hPos = h & ~1;
+  s->vPos = v;
+  s->inVblank = v >= (s->ppu->overscan ? 240 : 225);
+  s->inNmi = false;
+  s->autoJoyTimer = 0;
+  s->irqCondition = false;
+  s->inIrq = false;
+}
+
+// Set the SPC700 registers and APU I/O, for loading a migration seed.
+void oh_set_spc(OhMachine* m, const OhSpc* in) {
+  Spc* spc = m->snes->apu->spc;
+  spc->a = in->a;
+  spc->x = in->x;
+  spc->y = in->y;
+  spc->sp = in->sp;
+  spc->pc = in->pc;
+  uint8_t p = in->psw;
+  spc->n = p & 0x80;
+  spc->v = p & 0x40;
+  spc->p = p & 0x20;
+  spc->b = p & 0x10;
+  spc->h = p & 0x08;
+  spc->i = p & 0x04;
+  spc->z = p & 0x02;
+  spc->c = p & 0x01;
+  spc->stopped = in->stopped;
+  spc->resetWanted = false;
+  memcpy(m->snes->apu->inPorts, in->in_ports, 4);
+  memcpy(m->snes->apu->outPorts, in->out_ports, 4);
+}
+
+// Write an SPC700 I/O register ($F0-$FF) or a DSP register, for loading a migration seed.
+void oh_apu_write(OhMachine* m, uint16_t adr, uint8_t value) { apu_write(m->snes->apu, adr, value); }
+void oh_dsp_write(OhMachine* m, uint8_t adr, uint8_t value) { dsp_write(m->snes->apu->dsp, adr, value); }

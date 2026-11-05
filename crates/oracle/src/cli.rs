@@ -1,10 +1,9 @@
 //! The oracle harness's command line (`oracle`).
 //!
-//! `oracle movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--no-picture]`
-//!   plays a per-video-frame movie from power-on and, at each room seed of an
-//!   lsnes capture, reports how far the emulator's WRAM is from the capture.
-//! `oracle row ROM LOCK ID INPUTS [--seed DIR INDEX]` runs one lock row
-//!   and compares its streams with the lock.
+//! `oracle movie ROM INPUTS [...]` plays a per-video-frame movie from power-on;
+//!   `--lag-log` compares it frame by frame with an lsnes lag log and
+//!   `--seeds` with lsnes room captures.
+//! `oracle corpus ROM LOCK DATA [...]` runs the lock's rows and compares them.
 
 use crate::lakesnes::LakeSnes;
 use crate::{FrameRecord, NmiKind, Oracle, Start, Tiers};
@@ -64,7 +63,9 @@ fn differing(left: &[u8], right: &[u8]) -> usize {
 
 fn movie(arguments: &[String]) {
     let [rom, inputs, rest @ ..] = arguments else {
-        fail("movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--no-picture]")
+        fail(
+            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture]",
+        )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
     let pads = crate::inputs::read(Path::new(inputs)).unwrap_or_else(|error| fail(error));
@@ -74,6 +75,8 @@ fn movie(arguments: &[String]) {
     let mut ranges = false;
     let mut lag_log: Option<Vec<[i64; 7]>> = None;
     let mut lag_mismatches = 0;
+    let mut watch: Option<(usize, usize)> = None;
+    let mut spc = false;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -91,6 +94,16 @@ fn movie(arguments: &[String]) {
             }
             "--no-picture" => picture = false,
             "--ranges" => ranges = true,
+            "--spc" => spc = true,
+            "--watch" => {
+                let mut number = || {
+                    options
+                        .next()
+                        .and_then(|value| value.parse().ok())
+                        .unwrap_or_else(|| fail("--watch FROM EVERY"))
+                };
+                watch = Some((number(), number()));
+            }
             "--lag-log" => {
                 lag_log = Some(read_lag_log(Path::new(
                     options.next().unwrap_or_else(|| fail("--lag-log CSV")),
@@ -103,6 +116,7 @@ fn movie(arguments: &[String]) {
         .unwrap_or_else(|error| fail(error));
     oracle.set_tiers(Tiers {
         picture,
+        apu_state: spc,
         ..Tiers::default()
     });
     let mut history: std::collections::VecDeque<Box<[u8]>> = std::collections::VecDeque::new();
@@ -111,30 +125,10 @@ fn movie(arguments: &[String]) {
     let started = Instant::now();
     for (frame, &pad) in pads.iter().enumerate().take(frames) {
         let record: &FrameRecord = oracle.step(pad);
-        if std::env::var("OH_TRACE")
-            .ok()
-            .and_then(|v| v.parse::<usize>().ok())
-            .is_some_and(|at| frame + 8 >= at && frame <= at + 2)
-        {
-            let writes = record
-                .apu_log
-                .iter()
-                .filter(|a| a.kind == crate::ApuAccessKind::CpuWrite)
-                .count();
-            println!(
-                "trace {frame}: wait {:?} cut {:?} apu reads {} writes {writes} joy {} pc {:02x}:{:04x}",
-                record.wait_entry,
-                record.cut,
-                record.apu_log.len() - writes,
-                record.joypad_reads,
-                record.cpu.k,
-                record.cpu.pc
-            );
-        }
         match record.nmi() {
             Some(nmi) => {
-                lag += u64::from(nmi.kind == NmiKind::Lag);
-                overrun += u64::from(nmi.overrun);
+                lag += u64::from(!nmi.polled);
+                overrun += u64::from(nmi.kind == NmiKind::Overrun);
             }
             None => no_nmi += 1,
         }
@@ -142,7 +136,7 @@ fn movie(arguments: &[String]) {
             && let Some(row) = log.get(frame)
         {
             let w = |address| i64::from(word(&record.wram, address));
-            let lagged = i64::from(record.nmi().is_none_or(|nmi| nmi.kind == NmiKind::Lag));
+            let lagged = i64::from(record.nmi().is_none_or(|nmi| !nmi.polled));
             let mine = [
                 w(0x05b6),
                 w(0x05b8),
@@ -152,8 +146,7 @@ fn movie(arguments: &[String]) {
                 w(0x0af6),
                 w(0x0afa),
             ];
-            let skip_counter = std::env::var_os("OH_SKIP_COUNTER").is_some();
-            if (skip_counter && mine[1..] != row[1..]) || (!skip_counter && mine != *row) {
+            if mine != *row {
                 lag_mismatches += 1;
                 if lag_mismatches <= 40 {
                     println!(
@@ -162,6 +155,38 @@ fn movie(arguments: &[String]) {
                     );
                 }
             }
+        }
+        if let Some((from, every)) = watch
+            && frame >= from
+            && frame.is_multiple_of(every)
+        {
+            let w = |address| word(&record.wram, address);
+            if let Some(spc) = &record.spc {
+                println!(
+                    "spc {frame}: pc {:04x} sp {:02x} a {:02x} x {:02x} y {:02x} psw {:02x} ports in {:02x?} out {:02x?} f1 {:02x} fa {:02x?}",
+                    spc.pc,
+                    spc.sp,
+                    spc.a,
+                    spc.x,
+                    spc.y,
+                    spc.psw,
+                    spc.cpu_to_apu,
+                    spc.apu_to_cpu,
+                    spc.ram[0xf1],
+                    &spc.ram[0xfa..0xfd]
+                );
+            }
+            println!(
+                "watch {frame}: state {:04x} room {:04x} x {:04x} y {:04x} pose {:04x} hp {:04x} cut {:?} pad {:04x}",
+                w(0x0998),
+                w(0x079b),
+                w(0x0af6),
+                w(0x0afa),
+                w(0x0a1c),
+                w(0x09c2),
+                record.cut,
+                record.pad.0
+            );
         }
         let Some((list, directory)) = &seeds else {
             continue;
@@ -213,7 +238,7 @@ fn movie(arguments: &[String]) {
     }
     let seconds = started.elapsed().as_secs_f64();
     println!(
-        "frames {frames} in {seconds:.2}s: {:.0} frames/s; lag NMIs {lag}, overrun NMIs {overrun}, frames without NMI {no_nmi}",
+        "frames {frames} in {seconds:.2}s: {:.0} frames/s; NMIs without a joypad read {lag}, overrun NMIs {overrun}, frames without NMI {no_nmi}",
         frames as f64 / seconds
     );
     if seeds.is_some() {
@@ -225,6 +250,7 @@ fn movie(arguments: &[String]) {
 pub fn main(arguments: &[String]) -> i32 {
     match arguments.split_first() {
         Some((command, rest)) if command == "movie" => movie(rest),
+        Some((command, rest)) if command == "corpus" => corpus(rest),
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0
@@ -276,4 +302,113 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
             ]
         })
         .collect()
+}
+
+/// `corpus ROM LOCK DATA [--only ID]... [--limit N]`: run the lock's rows
+/// whose private data is restored under DATA (one directory per bundle) and
+/// compare each with its `faithful` entry.
+fn corpus(arguments: &[String]) {
+    let [rom, lock, data, rest @ ..] = arguments else {
+        fail("corpus ROM LOCK DATA [--only ID]... [--limit N]")
+    };
+    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
+    let lock =
+        std::fs::read_to_string(lock).unwrap_or_else(|error| fail(format!("{lock}: {error}")));
+    let lock = crate::lock::Lock::parse(&lock);
+    let data = Path::new(data);
+    let mut only = Vec::new();
+    let mut limit = usize::MAX;
+    let mut shard: (usize, usize) = (0, 1);
+    let mut options = rest.iter();
+    while let Some(option) = options.next() {
+        match option.as_str() {
+            "--only" => only.push(options.next().unwrap_or_else(|| fail("--only ID")).clone()),
+            "--shard" => {
+                let text = options.next().unwrap_or_else(|| fail("--shard I/N"));
+                let (index, count) = text.split_once('/').unwrap_or_else(|| fail("--shard I/N"));
+                shard = (
+                    index.parse().unwrap_or_else(|_| fail("--shard I/N")),
+                    count.parse().unwrap_or_else(|_| fail("--shard I/N")),
+                );
+            }
+            "--limit" => {
+                limit = options
+                    .next()
+                    .and_then(|value| value.parse().ok())
+                    .unwrap_or_else(|| fail("--limit N"));
+            }
+            other => fail(format!("unknown option {other}")),
+        }
+    }
+    let names = crate::streams::NAMES;
+    let mut matched = [0u32; 8];
+    let mut compared = [0u32; 8];
+    let (mut rows, mut failed, mut all_six) = (0u32, 0u32, 0u32);
+    let (mut ticks, mut frames, mut seconds) = (0u64, 0u64, 0.0f64);
+    let entries = lock
+        .entries
+        .iter()
+        .filter(|entry| entry.oracle == "faithful")
+        .filter(|entry| only.is_empty() || only.contains(&entry.id))
+        .enumerate()
+        .filter(|(position, _)| position % shard.1 == shard.0)
+        .map(|(_, entry)| entry)
+        .take(limit);
+    for entry in entries {
+        let Some(pin) = lock.pin(&entry.id) else {
+            println!("{}: no pin", entry.id);
+            continue;
+        };
+        match crate::corpus::run_row(&rom, pin, entry, data) {
+            Err(error) => {
+                failed += 1;
+                println!("{}: not run: {error}", entry.id);
+            }
+            Ok(run) => {
+                rows += 1;
+                ticks += u64::from(run.ticks);
+                frames += run.frames;
+                seconds += run.seconds;
+                let verdicts = crate::corpus::compare(entry, &run);
+                let mut line = String::new();
+                for (stream, verdict) in verdicts.iter().enumerate() {
+                    if let Some(same) = verdict {
+                        compared[stream] += 1;
+                        matched[stream] += u32::from(*same);
+                        line.push_str(&format!(
+                            " {}={}",
+                            names[stream],
+                            if *same { "ok" } else { "DIFF" }
+                        ));
+                    }
+                }
+                all_six += u32::from(verdicts.iter().flatten().all(|&same| same));
+                println!(
+                    "{}: {} ticks, {} frames, {} overrun, {} without NMI, {:.0} frames/s;{line}",
+                    entry.id,
+                    run.ticks,
+                    run.frames,
+                    run.overrun,
+                    run.without_nmi,
+                    run.frames as f64 / run.seconds
+                );
+            }
+        }
+    }
+    println!("rows run {rows}, not run {failed}; all comparable streams equal on {all_six}");
+    for (stream, name) in names.iter().enumerate() {
+        if compared[stream] > 0 {
+            println!(
+                "  {name}: {} of {} rows equal",
+                matched[stream], compared[stream]
+            );
+        } else {
+            println!("  {name}: not comparable (redefined by the oracle contract)");
+        }
+    }
+    println!(
+        "{ticks} ticks, {frames} frames in {seconds:.1}s: {:.0} ticks/s, {:.0} frames/s",
+        ticks as f64 / seconds,
+        frames as f64 / seconds
+    );
 }

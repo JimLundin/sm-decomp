@@ -15,18 +15,18 @@ pub struct Nmi {
     pub kind: NmiKind,
     /// The 24-bit address the NMI interrupted.
     pub interrupted_pc: u32,
-    /// Whether the interrupted address is not one of the game's wait sites:
-    /// the main thread had not finished its frame.
-    pub overrun: bool,
+    /// Whether the handler read the joypad registers.
+    pub polled: bool,
 }
 
-/// What the NMI handler did with the frame.
+/// Where the NMI found the main thread.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NmiKind {
-    /// The handler read the controllers: the commit path of a requested frame.
+    /// Waiting at one of the game's wait sites: the frame was requested and
+    /// the handler runs its commit path.
     Requested,
-    /// The handler did not read the controllers: a lag frame.
-    Lag,
+    /// Anywhere else: the main thread overran its frame, a lag frame.
+    Overrun,
 }
 
 /// How a record's interval ended.

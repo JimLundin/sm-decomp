@@ -1,0 +1,118 @@
+//! Running the lock's corpus rows on an oracle and comparing their streams.
+//!
+//! The existing lock (`oracle = "faithful"`) was recorded by the old frame
+//! stepper, whose Tick is one run of the game's main loop. Its rows' inputs
+//! hold one pad word per Tick, and the NMI ending Tick k latched word k+1.
+//! On a real machine a Tick is a requested frame, so the runner presents word
+//! k+1 until the k-th requested NMI has read it, and folds the existing lock's
+//! streams on requested frames only. The oracle contract's streams fold on
+//! every video frame.
+
+use crate::lakesnes::LakeSnes;
+use crate::lock::{Entry, Pin};
+use crate::record::{NmiKind, Pad};
+use crate::seed::Capture;
+use crate::streams::{self, NAMES, Running};
+use crate::{Oracle, Start, Tiers};
+use std::path::{Path, PathBuf};
+use std::time::Instant;
+
+/// One row's run.
+#[derive(Clone, Debug)]
+pub struct RowRun {
+    /// Requested frames: the old stepper's Ticks.
+    pub ticks: u32,
+    /// Video frames.
+    pub frames: u64,
+    /// Frames whose NMI interrupted the main thread outside a wait site: lag frames.
+    pub overrun: u64,
+    /// Frames without an NMI (NMI disabled).
+    pub without_nmi: u64,
+    /// The existing lock's streams, folded per Tick.
+    pub legacy: Running,
+    /// The oracle contract's streams, folded per video frame.
+    pub v1: Running,
+    pub seconds: f64,
+}
+
+/// Where a row's private data lives under `data`: one directory per
+/// ci-data bundle, named as the asset without `.tar.gz.enc`.
+pub fn bundle_directory(data: &Path, pin: &Pin) -> PathBuf {
+    data.join(pin.bundle.trim_end_matches(".tar.gz.enc"))
+}
+
+/// Run `entry`'s row with `pin`'s data from `data`.
+pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowRun, String> {
+    let root = bundle_directory(data, pin);
+    let inputs = crate::inputs::read(&root.join("movies").join(&pin.inputs))?;
+    let start = match (&pin.seed, &pin.checkpoint) {
+        (_, Some(checkpoint)) => {
+            return Err(format!(
+                "starts from the old verifier's checkpoint {checkpoint}"
+            ));
+        }
+        (Some(seed), None) => {
+            let (capture, index) = seed
+                .split_once(':')
+                .ok_or_else(|| format!("seed {seed} is not CAPTURE:INDEX"))?;
+            let index = index
+                .parse()
+                .map_err(|_| format!("seed {seed}: bad index"))?;
+            let directory = root.join("target").join("seeds").join(capture);
+            Start::Capture(Box::new(Capture::read(&directory, index)?))
+        }
+        (None, None) => Start::PowerOn { wram_fill: 0x55 },
+    };
+    let mut oracle = LakeSnes::open(rom, start).map_err(|error| error.to_string())?;
+    oracle.set_tiers(Tiers::default());
+    let started = Instant::now();
+    let mut run = RowRun {
+        ticks: 0,
+        frames: 0,
+        overrun: 0,
+        without_nmi: 0,
+        legacy: Running::default(),
+        v1: Running::default(),
+        seconds: 0.0,
+    };
+    let mut scratch = Vec::with_capacity(0x2_0000);
+    // A stall (the game never requesting a frame) ends the row.
+    let limit = u64::from(entry.ticks) * 4 + 600;
+    let index = |tick: u32| usize::try_from(tick).unwrap_or(usize::MAX);
+    while run.ticks < entry.ticks {
+        let pad = inputs
+            .get(index(run.ticks) + 1)
+            .or_else(|| inputs.get(index(run.ticks)))
+            .copied()
+            .unwrap_or(Pad(0));
+        let record = oracle.step(pad);
+        run.frames += 1;
+        run.v1.fold(&streams::v1(record));
+        match record.nmi().map(|nmi| nmi.kind) {
+            Some(NmiKind::Requested) => {
+                run.legacy.fold(&streams::legacy(record, &mut scratch));
+                run.ticks += 1;
+            }
+            Some(NmiKind::Overrun) => run.overrun += 1,
+            None => run.without_nmi += 1,
+        }
+        if run.frames > limit {
+            return Err(format!(
+                "stalled: {} Ticks in {} frames",
+                run.ticks, run.frames
+            ));
+        }
+    }
+    run.seconds = started.elapsed().as_secs_f64();
+    Ok(run)
+}
+
+/// Which of the existing lock's streams the run matches: `Some(true)` or
+/// `Some(false)` per stream, `None` where the harness cannot compute it.
+pub fn compare(entry: &Entry, run: &RowRun) -> [Option<bool>; 8] {
+    core::array::from_fn(|stream| {
+        let mine = run.legacy.digest(stream)?;
+        let locked = entry.digests.get(NAMES[stream])?;
+        Some(format!("{mine:016x}") == *locked)
+    })
+}

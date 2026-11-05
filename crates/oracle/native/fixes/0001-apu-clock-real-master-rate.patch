@@ -1,0 +1,15 @@
+diff --git a/snes/snes.c b/snes/snes.c
+index 3688180..b73fc2e 100644
+--- a/snes/snes.c
++++ b/snes/snes.c
+@@ -15,7 +15,9 @@
+ #include "input.h"
+ #include "statehandler.h"
+ 
+-static const double apuCyclesPerMaster = (32040 * 32) / (1364 * 262 * 60.0);
++// sm-decomp fix 0001: the SPC700 clock against the real NTSC master clock
++// (21.477272 MHz), not 1364 * 262 * 60 dots, which runs the APU 0.16% fast.
++static const double apuCyclesPerMaster = (32040 * 32) / 21477272.0;
+ static const double apuCyclesPerMasterPal = (32040 * 32) / (1364 * 312 * 50.0);
+ 
+ static void snes_runCycle(Snes* snes);

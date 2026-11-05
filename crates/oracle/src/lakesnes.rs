@@ -216,6 +216,12 @@ mod ffi {
         pub fn oh_ppu_written(machine: *mut Machine) -> *const u8;
         pub fn oh_io_written(machine: *mut Machine) -> *const u8;
         pub fn oh_set_wait_sites(machine: *mut Machine, pcs: *const u32, count: u32);
+        pub fn oh_set_cpu(machine: *mut Machine, cpu: *const Cpu);
+        pub fn oh_poke(machine: *mut Machine, adr: u32, value: u8);
+        pub fn oh_set_beam(machine: *mut Machine, h: u16, v: u16);
+        pub fn oh_set_spc(machine: *mut Machine, spc: *const Spc);
+        pub fn oh_apu_write(machine: *mut Machine, adr: u16, value: u8);
+        pub fn oh_dsp_write(machine: *mut Machine, adr: u8, value: u8);
         pub fn oh_running_nmi(machine: *mut Machine) -> u32;
         pub fn oh_cpu(machine: *mut Machine, out: *mut Cpu);
         pub fn oh_spc(machine: *mut Machine, out: *mut Spc);
@@ -319,13 +325,13 @@ impl LakeSnes {
                 let count = usize::try_from(facts.nmi_count).unwrap_or(usize::MAX);
                 let last = facts.nmis[count.min(facts.nmis.len()) - 1];
                 Cut::NmiReturn(Nmi {
-                    kind: if last.polled != 0 {
+                    kind: if crate::game::is_wait_site(last.interrupted_pc) {
                         NmiKind::Requested
                     } else {
-                        NmiKind::Lag
+                        NmiKind::Overrun
                     },
                     interrupted_pc: last.interrupted_pc,
-                    overrun: !crate::game::is_wait_site(last.interrupted_pc),
+                    polled: last.polled != 0,
                 })
             } else {
                 let running = ffi::oh_running_nmi(machine);
@@ -726,4 +732,139 @@ impl Oracle for LakeSnes {
     fn reset(&mut self) {
         self.reset_pending = true;
     }
+}
+
+/// Write access to a LakeSnes machine between steps, for loading a migration seed.
+pub(crate) struct Raw<'a> {
+    machine: *mut ffi::Machine,
+    _borrow: core::marker::PhantomData<&'a mut LakeSnes>,
+}
+
+impl LakeSnes {
+    pub(crate) fn raw(&mut self) -> Raw<'_> {
+        Raw {
+            machine: self.machine,
+            _borrow: core::marker::PhantomData,
+        }
+    }
+}
+
+impl Raw<'_> {
+    /// # Safety
+    /// `pointer` must address `length` items of the live machine, which this
+    /// borrow holds exclusively between steps.
+    unsafe fn slice<T>(&mut self, pointer: *mut T, length: usize) -> &mut [T] {
+        // SAFETY: the caller's contract.
+        unsafe { core::slice::from_raw_parts_mut(pointer, length) }
+    }
+
+    pub fn wram(&mut self) -> &mut [u8] {
+        // SAFETY: WRAM is 128K bytes of the live machine.
+        unsafe { self.slice(ffi::oh_wram(self.machine), 0x2_0000) }
+    }
+
+    pub fn vram(&mut self) -> &mut [u16] {
+        // SAFETY: VRAM is 32K words.
+        unsafe { self.slice(ffi::oh_vram(self.machine), 0x8000) }
+    }
+
+    pub fn cgram(&mut self) -> &mut [u16] {
+        // SAFETY: CGRAM is 256 words.
+        unsafe { self.slice(ffi::oh_cgram(self.machine), 0x100) }
+    }
+
+    pub fn oam(&mut self) -> &mut [u16] {
+        // SAFETY: low OAM is 256 words.
+        unsafe { self.slice(ffi::oh_oam(self.machine), 0x100) }
+    }
+
+    pub fn high_oam(&mut self) -> &mut [u8] {
+        // SAFETY: high OAM is 32 bytes.
+        unsafe { self.slice(ffi::oh_high_oam(self.machine), 0x20) }
+    }
+
+    pub fn sram(&mut self) -> &mut [u8] {
+        let mut size = 0;
+        // SAFETY: the bridge reports the cartridge RAM and its size.
+        unsafe {
+            let sram = ffi::oh_sram(self.machine, &mut size);
+            if sram.is_null() {
+                return &mut [];
+            }
+            self.slice(sram, usize::try_from(size).unwrap_or(0))
+        }
+    }
+
+    pub fn apu_ram(&mut self) -> &mut [u8] {
+        // SAFETY: SPC RAM is 64K bytes.
+        unsafe { self.slice(ffi::oh_apu_ram(self.machine), 0x1_0000) }
+    }
+
+    /// Write a CPU-bus register as the CPU would.
+    pub fn poke(&mut self, address: u32, value: u8) {
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_poke(self.machine, address, value) }
+    }
+
+    pub fn set_cpu(&mut self, cpu: CpuRegisters) {
+        let raw = ffi::Cpu {
+            a: cpu.a,
+            x: cpu.x,
+            y: cpu.y,
+            sp: cpu.s,
+            pc: cpu.pc,
+            dp: cpu.d,
+            k: cpu.k,
+            db: cpu.db,
+            p: cpu.p,
+            e: u8::from(cpu.emulation),
+        };
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_set_cpu(self.machine, &raw) }
+    }
+
+    pub fn set_beam(&mut self, beam: Beam) {
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_set_beam(self.machine, beam.h, beam.v) }
+    }
+
+    pub fn set_spc(&mut self, spc: &SpcRegisters) {
+        let raw = ffi::Spc {
+            a: spc.a,
+            x: spc.x,
+            y: spc.y,
+            sp: spc.sp,
+            pc: spc.pc,
+            psw: spc.psw,
+            stopped: 0,
+            in_ports: spc.cpu_to_apu,
+            out_ports: spc.apu_to_cpu,
+        };
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_set_spc(self.machine, &raw) }
+    }
+
+    /// Write an SPC700 I/O register $F0-$FF.
+    pub fn apu_write(&mut self, address: u16, value: u8) {
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_apu_write(self.machine, address, value) }
+    }
+
+    pub fn dsp_write(&mut self, address: u8, value: u8) {
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_dsp_write(self.machine, address, value) }
+    }
+}
+
+/// The SPC700 registers and ports a seed sets.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct SpcRegisters {
+    pub a: u8,
+    pub x: u8,
+    pub y: u8,
+    pub sp: u8,
+    pub pc: u16,
+    pub psw: u8,
+    pub cpu_to_apu: [u8; 4],
+    pub apu_to_cpu: [u8; 4],
 }
