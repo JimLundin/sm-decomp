@@ -186,9 +186,10 @@ not the cause (docs/oracle/HARNESS.md, "lsnes crashes").
 **Resumed from seed 16:** the lag log matches in every column except
 `lagged`, frames 17829-17900.
 
-**The 27 stalled rows** (31 lines in the LakeSnes run, with credits rows
-sharing seeds). Not re-run on lsnes: none of their captures has a native seed
-yet. The captures they need, with the movie frame to cut at:
+**The 27 stalled rows, on lsnes native seeds: all 27 complete.** They stalled
+on LakeSnes (31 lines, credits rows sharing seeds), where the migration seeds
+have no SPC state. Cut from the movies on lsnes (`$TEMP/ohx/cut_seeds.sh`) at
+these captures, the seeds carry the sound CPU's state too:
 
 | Capture | Frame | Rows |
 | --- | --- | --- |
@@ -202,6 +203,71 @@ yet. The captures they need, with the movie frame to cut at:
 | low-input-phase:129 | 100731 | 2 |
 | any-boundary:110, 190 | 73446, 116359 | 3 |
 | scenario-one-energy-crocomire:142 | 99412 (100-input-phase:142, edited) | 2 |
+
+`corpus --oracle lsnes --native-seeds DIR --only ROW...` at `9db02d2e3`, 13
+processes (two re-run after a start-up failure, see below), 2026-11-05.
+Every row ran to the lock's tick count; none stalled. Streams equal to the
+lock: sram on 25 rows; wram, vram, cgram, oam and ppu on none, as on the other
+native rows (the old lock came from the patched oracle). video and apu are
+redefined, so not compared.
+
+| Row | Ticks | Frames | Overrun | Without NMI | Equal |
+| --- | --- | --- | --- | --- | --- |
+| boss-draygon-final-whips | 4480 | 4568 | 75 | 13 | sram |
+| boss-draygon-later-swoop | 2650 | 2736 | 73 | 13 | sram |
+| boss-draygon-tail-whip | 3500 | 3586 | 73 | 13 | sram |
+| boss-mother-brain | 1380 | 1542 | 132 | 30 | sram |
+| chain-0324-DD58 | 10134 | 10630 | 123 | 373 | sram |
+| chain-any-0190-DD58 | 10175 | 10428 | 120 | 133 | sram |
+| credits | 11900 | 11967 | 55 | 12 | sram |
+| credits-completed-spawn | 2902 | 2903 | 0 | 1 | sram |
+| credits-ending | 15900 | 15967 | 55 | 12 | none |
+| credits-explosion-afterglow-slot | 1652 | 1653 | 0 | 1 | sram |
+| credits-explosion-slot | 1508 | 1509 | 0 | 1 | sram |
+| credits-postroll-wave | 11790 | 11857 | 55 | 12 | sram |
+| credits-silhouette-spawn | 1500 | 1501 | 0 | 1 | sram |
+| credits-time-hours-spawn | 3170 | 3171 | 0 | 1 | sram |
+| credits-time-hours-units-spawn | 3178 | 3179 | 0 | 1 | sram |
+| credits-time-minutes-spawn | 3194 | 3195 | 0 | 1 | sram |
+| credits-time-minutes-units-spawn | 3202 | 3203 | 0 | 1 | sram |
+| credits-time-separator-spawn | 3186 | 3187 | 0 | 1 | sram |
+| credits-time-spawn | 3084 | 3085 | 0 | 1 | sram |
+| credits-zebes-spawn | 1112 | 1113 | 0 | 1 | sram |
+| death | 1800 | 2137 | 219 | 118 | sram |
+| file-copy-clear | 3612 | 3954 | 223 | 119 | none |
+| mother-brain-beam-spawn-parameters | 4560 | 4813 | 120 | 133 | sram |
+| mother-brain-escape-door | 1500 | 1684 | 132 | 52 | sram |
+| mother-brain-fake-death | 1360 | 1397 | 35 | 2 | sram |
+| mother-brain-glass | 760 | 809 | 0 | 49 | sram |
+| mother-brain-purple-breath-parameter | 2756 | 2968 | 2 | 210 | sram |
+
+- `credits-ending` differs in sram too: the ending saves the game, so its sram
+  is written during the row.
+- `death`: Samus dies. `--watch-words 0998,09C2,09D6` (game state, energy,
+  reserve energy): energy 1 and reserve 0 at frame 0; at frame 277 energy
+  becomes 0 and the game state `$0998` goes from 8 (main gameplay) to `0x13`
+  (death sequence), then `0x14` to `0x19`, and `0x1A` (game over) at 604. The
+  row's movie words then leave the game over menu: state 0 at 746, the title
+  (1), the file select (4 at 884, 2, 5), loading (6, 7), and main gameplay (8)
+  again at frame 1771 with energy 99.
+- `file-copy-clear` completes its 3612 ticks but does not do what it is for.
+  It follows `death` frame for frame to frame 1771, back in gameplay. Its
+  authored part starts after the death row's 1,800 movie words and expects
+  the game over menu (tools/authored_inputs.py); here the game is in
+  gameplay, so its presses pause the game (state `0x0C` to `0x0F` from frame
+  2462), and no copy or clear happens. Hence sram differs. The recipe was
+  timed on the old patched oracle, where the game was presumably still at the
+  game over menu at word 1,800; on lsnes the movie words already pass it. The
+  recipe needs re-timing against the unpatched game (prefix shorter than 604
+  frames, or start it from the game over state).
+- Speed: about 18 to 23 frames/s per process with 13 at once on 14 cores
+  (about 260 in total), 40 frames/s for one or two at once.
+- Start-up race: two of 13 lsnes processes started in the same second died
+  with `FATAL: Configuration directory '...\AppData\Roaming/lsnes' is not
+  writable` and then did not exit, so their corpus processes waited at step 0.
+  Killed by PID, the harness reported `lsnes exited at step 0` as designed,
+  but the panic aborts the whole process (non-unwinding), losing its other
+  rows. Started a few seconds apart, the re-runs completed.
 
 **Native-seeded rows that already run on lsnes:** chain-any-0001-DF45,
 chain-any-0006-E0B5 and chain-any-0012-91F8, 3220 ticks in all, at 39 frames/s.

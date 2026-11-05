@@ -71,30 +71,17 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 - `corpus --oracle lsnes --native-seeds DIR` maps `CAPTURE:INDEX` to `DIR/CAPTURE/INDEX.lss` (`Start::State`); `run_row_with` goes through `Backend` (`Observe::backend`, `Observe::native_seeds`).
   - Checked on chain-any-0001-DF45, -0006-E0B5 and -0012-91F8: they run to their tick count, at 39 frames/s.
   - wram, vram, cgram, oam and ppu differ, as under LakeSnes; sram matches.
-- The 27 stalled rows are not re-run: none of their 13 captures has a native seed yet (table in MEASUREMENTS.md; the cut is prepared, item 2).
+- The 27 stalled rows all complete on lsnes native seeds (`9db02d2e3`; per-row table in MEASUREMENTS.md (e)): every row reaches the lock's tick count. sram equals the lock on 25 (not `credits-ending`, which saves, nor `file-copy-clear`); wram, vram, cgram, oam and ppu differ on all, as on the other native rows.
+  - `death`: Samus dies (`--watch-words 0998,09C2`: energy 0 and game state `0x13` at frame 277, game over `0x1A` at 604), then the movie words take the game over menu, the title and the file select back to gameplay at 1771.
+  - `file-copy-clear` runs its ticks but its authored part (after 1,800 death-row words) expects the game over menu, which lsnes left at frame 746; its presses pause the game instead, so no copy or clear happens. The recipe needs re-timing on the unpatched game.
+- `corpus --watch-words ADDR,...` prints work-RAM words whenever they change, per row, to read an outcome off the oracle.
 
 ## Next, in order
 
 1. Done: the cut callback is on the NMI handler's RTI. Open question: the record's PC is one past the interrupted opcode (lsnes's exec-callback convention, kept for byte identity). Compare it with the LakeSnes record and settle it in the cross-oracle report (item 4).
-2. Cut the 13 captures the 27 stalled rows need: prepared, not yet run. `$TEMP/ohx/cut_seeds.sh 100|low|any` (private) runs `movie --oracle lsnes --no-memories` with one `--native-seeds` per capture. The CSVs are `movies/room-seeds-<capture>.csv` filtered to the needed rows (`$TEMP/ohx/cut-<capture>.csv`). The three runs are independent:
-
-   | Run | Movie | Captures (indices) | Start | `--frames` | Time at 81 frames/s |
-   | --- | --- | --- | --- | --- | --- |
-   | `100` | `100.inputs` | `100-input-phase` (27, 104, 142, 305, 324), `100-mb-phases` (324, 325, 329), `100-boundary` (259), `100-credits` (336) | power-on | 222658 | about 46 min |
-   | `low` | `low.inputs` | `low-input-phase` (129) | power-on | 100732 | about 21 min |
-   | `any` | `any.inputs` | `any-boundary` (110, 190) | native seed 16, frame 17829 | 116360 | about 20 min |
-
-   - A seed at movie frame F is saved after step F-1 and copied one step later, so each run stops at the last F plus 1.
-   - Seeds go to `$TEMP/ohx/data/lsnes-native/<capture>/NNNN.lss`; logs go to `$TEMP/ohx/cut-<run>.log`.
-   - Success: one `native seed` line per seed (10, 1, 2; frame 209945 serves two captures), then `frames ... in`, then `cut_seeds <run> exit 0`.
-   - Proof: cutting `any-boundary:17` (frame 18109) from seed 16 ran at 81 frames/s. `corpus --oracle lsnes --native-seeds` then ran `chain-any-0017-9E9F` from it to its 592 ticks, with sram equal and the other streams differing, as on the other native rows.
-   - `scenario-one-energy-crocomire:142` is `100-input-phase:142` (movie frame 99412) with energy `$09C2` = 1 and reserve energy `$09D6` = 0 (`tools/scenario_seeds.py`). The `100` run cuts the base. Its rows are `death` and `file-copy-clear`.
-     - Derive it with `oracle derive-seed ROM $(python tools/scenario_seeds.py native-args one-energy-crocomire DIR)`. It writes the base's state as `DIR/scenario-one-energy-crocomire/0142.lss` and the edits as `0142.words` (`OFFSET=VALUE` lines), then steps once from the result and checks every word.
-     - The server's `W OFFSET VALUE` request writes a work-RAM word; asked for before a resumed run's state loads, it lands in `on_post_load`, at the state's own boundary. `corpus --native-seeds` applies a seed's `.words` the same way.
-     - lsnes cannot save the edited state at the base's boundary: at a boundary it saves before it loads, and a save asked for in `on_post_load` waits for the next boundary. Hence the sidecar.
-     - Proof on `any-boundary:16`: energy `0x0063` reads back as `0x0001` after one step, 11 WRAM bytes differ from the base. `chain-any-0016-97B5` from the edited seed ran its 280 ticks; wram, vram, cgram and oam differ from the plain seed's run and sram matches.
-     - Derived from the real base (cut at 20:22 by the `100` run): energy `0x001d` reads back as `0x0001`, 8 WRAM bytes differ after one step. The `death` row then ran its 1800 ticks (2137 frames, 40 frames/s; it stalled before): sram equal, wram, vram, cgram, oam and ppu differ, as on the other native rows. `file-copy-clear` not run yet.
-   - Then run `corpus --oracle lsnes --native-seeds DIR --only ...` on the 27 rows (88 under the diagnosis).
+2. Done: the 13 captures are cut (`$TEMP/ohx/cut_seeds.sh`, private; seeds in `$TEMP/ohx/data/lsnes-native/<capture>/`, with `scenario-one-energy-crocomire/0142.lss` + `.words` from `oracle derive-seed`), and all 27 rows complete on them (MEASUREMENTS.md (e)).
+   - Re-time `file-copy-clear` (`tools/authored_inputs.py`): on the unpatched game the death row's movie words leave the game over menu at frame 746 and reach gameplay at 1771, so a 1,800-word prefix is too long. Use a prefix that ends on the game over menu (before about 700) and check the copy and clear with `--watch-words` on the file select's words. That changes the row's inputs, so it is the root's call with the re-lock.
+   - The 88 rows that stall under `--diagnose-kept-patches` are not re-run here; that is a diagnosis of the old lock, not needed for the lsnes rows.
 3. Door lengths and busy spans from lsnes. Fix the DMA-under-blank count to check INIDISP per write.
 4. A cross-oracle report, LakeSnes against lsnes, per stream per frame. Then the re-lock (the root's call).
 5. Speed: dump only the memories a step needs (the `memories` flag), or hash them in Lua.
@@ -103,6 +90,7 @@ Orphaned lsnes processes remain from hung or killed runs: PIDs 6176 and 14972 fr
 
 ## Pitfalls
 
+- Start lsnes processes a few seconds apart: started in the same second, an lsnes can die with `FATAL: Configuration directory ... is not writable` and not exit, so its corpus waits at step 0. Killing it by PID makes the harness panic, which aborts the whole process with the rest of its rows.
 - A Tick is an NMI that interrupted a wait site (`game::WAIT_SITES`, which includes the message-box input loop), not a "polled" NMI.
 - Seeds resume at `seed_boundary_pc` (`$80:8348`), not `pc`.
 - Old-lock alignment: present pad k+1 until the k-th requested NMI.
