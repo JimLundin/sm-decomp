@@ -74,11 +74,12 @@ impl Part {
 /// How the other backend's neighbouring frame compares, for a memory that differs.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Shift {
-    /// Left at this frame equals right one frame earlier: left is a frame behind.
+    /// Left at this frame is closer to right one frame earlier, by more than
+    /// half the differing bytes: left is a frame behind.
     LeftBehind,
-    /// Right at this frame equals left one frame earlier: right is a frame behind.
+    /// Right at this frame is that much closer to left one frame earlier.
     RightBehind,
-    /// Neither neighbour matches.
+    /// Neither neighbour is that much closer.
     Content,
 }
 
@@ -203,9 +204,13 @@ impl Compare {
                 };
                 let left_behind = against(right_before, &a);
                 let right_behind = against(left_before, &b);
-                let verdict = if left_behind == 0 {
+                // A frame's work moves more bytes than the scratch and stack
+                // bytes that stay different, so a lag shows as a shifted
+                // count well under the unshifted one, not as zero.
+                let closer = |shifted: usize| shifted.saturating_mul(2) < count;
+                let verdict = if closer(left_behind) && left_behind <= right_behind {
                     Shift::LeftBehind
-                } else if right_behind == 0 {
+                } else if closer(right_behind) {
                     Shift::RightBehind
                 } else {
                     Shift::Content
@@ -309,6 +314,19 @@ mod tests {
         assert_eq!(differences[0].count, 16);
         // Right moved on to 2 while left stayed at 1: right one frame earlier was 1.
         assert_eq!(differences[0].shifted, Some((0, 16, Shift::LeftBehind)));
+    }
+
+    #[test]
+    fn a_shift_with_a_few_scratch_bytes_is_still_timing() {
+        let mut compare = Compare::default();
+        let mut stale = record(1);
+        stale.wram[15] = 9;
+        assert!(!compare.frame(&stale, &record(1)).is_empty());
+        let mut behind = record(1);
+        behind.wram[15] = 7;
+        let differences = compare.frame(&record(2), &behind);
+        // Right now holds what left held a frame earlier, but for one byte.
+        assert_eq!(differences[0].shifted, Some((16, 1, Shift::RightBehind)));
     }
 
     #[test]

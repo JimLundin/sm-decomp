@@ -276,3 +276,65 @@ redefined, so not compared.
 chain-any-0006-E0B5 and chain-any-0012-91F8, 3220 ticks in all, at 39 frames/s.
 sram matches; wram, vram, cgram, oam and ppu differ, as they do under LakeSnes.
 These ran with an interim script that wrapped the cut callback in `xpcall`.
+
+## (f) Cross-oracle report: LakeSnes against lsnes, any%, frames 0-4800
+
+`oracle cross ROM INPUTS --frames A..B [--ranges] [--ranges-at A..B]` steps
+LakeSnes (left, `9db90b8` with fix 0001) and lsnes (right, rr2-beta23) from
+power-on with the same pads, and prints per step `equal` or each differing
+part with its byte count (fields for the cut, frame, pad and CPU). A memory
+that differs is also compared with the other backend's previous step: when
+that count is under half the unshifted one, the step is a one-frame lag
+(`right a frame behind`), otherwise `content`. The video frame counter is
+compared against its offset at step 0 (lsnes counts from 1, LakeSnes from 0).
+4801 steps take 170 s (lsnes, all memories, is the pace).
+
+**PC at the cut: settled.** Both backends record the same interrupted PC
+whenever their NMIs interrupt the same instruction. The CPU's PC after the RTI
+was one past it on lsnes: `$80:8344` and `$80:8347`, against LakeSnes's
+`$80:8343` and `$80:8346`. The ROM at `$80:8343` is `AD B4 05` (`LDA $05B4`)
+and at `$80:8346` `D0 FB` (`BNE $8343`), so `$8344` and `$8347` lie inside
+instructions: the stacked return address (LakeSnes's value) is the true
+interrupted instruction. lsnes now records it (`2da4d4ae6`). This changes
+bytes 34-35 of every lsnes record with a returned NMI, so ladders and native
+seed records cut before differ there from records cut after.
+
+**First difference per part** (frames are 0-based steps):
+
+| Part | First | Steps differing (of 4801) | Nature |
+| --- | --- | --- | --- |
+| sram | 0 | 4800 | Power-on contents: LakeSnes 0x00, lsnes 0xFF. From about 250 the game's writes leave 3292 bytes different (`$0000-$000F`, `$1324-$1FDF`, `$1FF0-$1FFF`). Not behaviour. |
+| pad | 0 | 5 | Meaning: LakeSnes records the word auto-joypad latched (0 before the game enables it), lsnes the pad it was given. |
+| cpu | 0 | 2588 | Steps 0-20 have no NMI and are cut at each emulator's own frame boundary, at different instructions. Afterwards the CPU differs only where the cut does. |
+| wram | 4 | 4684 | Step 4: the boot clear loop is cut at a different index (no NMI yet). Steady state 1-21 bytes: `$0641` (the APU upload's acknowledgement polls, sound timing) and stale bytes in the stack page `$1Fxx`. |
+| cut | 21 | 2536 | Timing inside a frame: the NMI lands on the other instruction of the two-instruction wait loop (`$8343` against `$8346`), on about half the steps. Same kind, same frame. |
+| frame | 303 | 2 | Sampling: LakeSnes reads its counter at the cut; an NMI that ends after the next frame began counts one more. |
+| vram | 303 | 699 | One frame: lsnes's NMI outlasts its frame (`nmi-running`, PC `$80:8CC1`), so its uploads land a step later. |
+| joypad-reads | 307 | 24 | The same: an lsnes lag frame where LakeSnes polled. |
+| cgram | 307 | 221 | Right a frame behind: the title palette arrives on lsnes one step later. |
+| oam | 480 | 1519 | Right a frame behind (2 bytes at the first). |
+
+**The NMI that outlasts vblank (from 303, 396, 472, 1290, 1342).** lsnes cuts
+at its frame boundary with the handler still running (`nmi-running`, at
+`$80:8CC1`); LakeSnes runs on to the RTI and records a requested NMI. The next
+step realigns: wram is back to 5 bytes two steps later at 398. This is where
+the lag log stops matching (it matched through 395). It is a cut-definition
+difference between the backends, not a different game.
+
+**The first lasting lag: 1342, timing, sound.** Steps 1307-1341 are the APU
+upload (`$80:8070-$80:8104`, overruns on both): lsnes is about 7 bytes ahead
+in X but takes one frame longer to finish it, and at 1342 LakeSnes is back at
+the wait loop while lsnes's NMI is still running. From there the game logic
+on lsnes is one frame behind LakeSnes whenever the frame's work moves bytes:
+at 3100 the frame counter `$05B6` is 0x23 against 0x22 and the NMI counter
+`$05B8` 0x1C against 0x1B, and right at step k equals left at k-1 but for a
+byte. Before 1342 the game logic agrees; the memories differ only in the
+bytes above.
+
+**What this means for the lock (D25).** No content difference in the game's
+own state was found through 4800. Every difference is one of: power-on SRAM,
+the cut's definition (no NMI; NMI outlasting vblank; frame counter sampling;
+the pad's meaning), sub-instruction NMI timing in the wait loop (`cut`,
+`cpu`, the stack page), and sound timing (`$0641`, then one frame from 1342).
+So LakeSnes's memories are lsnes's only up to these, and only up to 1341
+without a shift.

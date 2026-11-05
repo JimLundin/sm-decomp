@@ -95,12 +95,16 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 
 0. Ladders: the root runs `build_ladders.sh 100`, `low` and `any` in parallel, then `build_ladders.sh <movie> check`. Then cut seeds with `--from-ladder` instead of from power-on (`cut_seeds.sh`), and add the nightly job (run whole with `--ladder` into a fresh directory, diff `ladder.txt`, `ladder-check` the stored ladder). The ladders are ROM-derived: a ci-data bundle is the root's call.
 
-1. Done: the cut callback is on the NMI handler's RTI. Open question: the record's PC is one past the interrupted opcode (lsnes's exec-callback convention, kept for byte identity). Compare it with the LakeSnes record and settle it in the cross-oracle report (item 4).
+1. Done: the cut callback is on the NMI handler's RTI. Settled (`2da4d4ae6`, lane `lane/oracle-xreport`): the lsnes record's PC was one past the interrupted opcode (`$80:8344`/`$80:8347`, inside `LDA $05B4`/`BNE`); it now holds the stacked return address, as LakeSnes does. Ladders and native-seed records cut with older builds differ in record bytes 34-35: re-cut them with a build that has this commit before mixing them with new records (`ladder-check` compares raw records).
 2. Done: the 13 captures are cut (`$TEMP/ohx/cut_seeds.sh`, private; seeds in `$TEMP/ohx/data/lsnes-native/<capture>/`, with `scenario-one-energy-crocomire/0142.lss` + `.words` from `oracle derive-seed`), and all 27 rows complete on them (MEASUREMENTS.md (e)).
    - Done: `file-copy-clear` re-timed (`c58d7ccc9`); its new inputs go in the bundle with the re-lock.
    - The 88 rows that stall under `--diagnose-kept-patches` are not re-run here; that is a diagnosis of the old lock, not needed for the lsnes rows.
 3. Door lengths and busy spans from lsnes. Fix the DMA-under-blank count to check INIDISP per write.
-4. A cross-oracle report, LakeSnes against lsnes, per stream per frame. Then the re-lock (the root's call).
+4. Done, first version: `oracle cross ROM INPUTS --frames A..B [--ranges] [--ranges-at A..B]` (MEASUREMENTS.md (f)). On any% 0-4800 the game state agrees; the differences are power-on SRAM, the cut's definition, wait-loop NMI timing and sound timing, and lsnes runs one frame behind from 1342 (end of an APU upload). Next for the report:
+   - normalise the definitional differences so they stop hiding real ones: cut both backends the same way when the NMI outlasts vblank (lsnes waits for the RTI, or LakeSnes cuts at its boundary), compare SRAM only after the game first writes it, and drop the stack page below S and the pad from the memory comparison;
+   - align by game frame (`$05B8`) as well as by step, so that after 1342 the report measures content and not the lag;
+   - resume both backends at a ladder rung (`--from` per backend; LakeSnes needs its own state at the rung), to cover 8314 (LakeSnes behind) and 8567 (the Ceres desync) within the 3-minute run limit;
+   - then the re-lock (the root's call).
 5. Speed: dump only the memories a step needs (the `memories` flag), or hash them in Lua.
 
 Orphaned lsnes processes remain from hung or killed runs: PIDs 6176 and 14972 from the previous lane, 24536, 22000 and 25512 from this one. Stop-Process and taskkill could not end them from this shell.
