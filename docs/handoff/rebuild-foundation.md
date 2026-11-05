@@ -9,8 +9,9 @@ The foundation's design comes first and Jim reviews it before any spine code is 
 Jim asked for **one list of the questions he needs to answer, each with its context**, presented
 so it is easy to digest. Compile it; this session did not.
 
-1. Collect every open question from the documents below (each ends with its open questions
-   or "questions for Jim"), plus the issue comments that ask Jim something (#252, #253, #242).
+1. Start from FOUNDATION.md's "Decisions for Jim" (J1-J24, each with a recommendation), then
+   add every open question from the three requirement reports that J1-J24 don't already
+   cover, plus the issue comments that ask Jim something (#252, #253, #242).
 2. Deduplicate and group them by topic (for example: fidelity and lag, actors and handles,
    content and Map Rando, verification and gates, docs and process).
 3. For each question give, in a few lines: what is being decided, why it matters for the
@@ -30,25 +31,28 @@ Do not start building the spine until Jim has answered the questions that block 
 | Frame behaviour requirements (R1-R31: Tick, NMI and input latch, lag, per-scanline display, door transition, sound protocol, limits) | `research/foundation-frame` | `docs/foundation/frame-requirements.md` |
 | Domain model and size (one instruction-list interpreter, slot store, behaviour as data; rebuilt `sm_game` estimated 57-84k lines) | `research/foundation-domains` | `docs/foundation/domain-model.md` |
 | Map Rando modularity (doorway IDs, topology and media as content, typed profiles, transitions carry the Session) | `research/foundation-maprando` | `docs/foundation/map-rando-requirements.md` |
-| **The foundation design** (in progress when this was written) | `research/foundation-design` | `docs/foundation/FOUNDATION.md` |
+| **The foundation design** (done: decisions, traceability table, Jim's decisions J1-J24, build order, size budget) | `research/foundation-design` (head `0436208`) | `docs/foundation/FOUNDATION.md`; the three reports are copied beside it; the compile-checked type sketch is `scratch/foundation_sketch/` (its own workspace) |
 | Game data audit (#253) | on main | `docs/handoff/game-data-audit.md` |
 | Mutation sample design (#242) | on main | `docs/handoff/mutation-sample.md` |
 | Native renderer in `sm_host` (paused) | `gate1/render` | see below |
 
-The design lane was asked to: trace every requirement in the three reports to a design element
-or an explicit deferral; give each decision with its alternatives; check the core types with a
-compile-checked scratch sketch; collect Jim's decisions with recommendations; and propose the
-first slice and the build order. If `research/foundation-design` is missing or incomplete,
-redo that step from the three reports before the question list.
+The design maps every requirement (R1-R31, the domain decisions, the Map Rando items) to a
+design element or a stated deferral, and lists ten revisions to the accepted
+target-architecture docs, which wait for Jim's approval. Its build order: preparation (the
+crate plan, the Checkpoint derive and state skeleton, two oracle measurements, the decoder
+skeleton), then slice 0 in the Morph Ball Room (`area-brinstar`, then `item-morph-ball`), then
+clusters of rows that share a room, then the room chains and the full movies. Size budget:
+83-123k engine lines.
 
-## One finding to carry into the lag question
+## Confirmed in the oracle code
 
-Each oracle frame runs the game's main loop until it waits for the NMI
-(`run_cpu_until_pc(0x808343, ...)` in `sm/src/cpu_infra.rs`). So the oracle itself appears not
-to lag from CPU overrun: one main-loop iteration is one Tick. If confirmed, "no overrun lag"
-matches the oracle exactly, and real-hardware lag is a Reference-profile question rather than a
-foundation requirement. The frame report's overrun-lag options (cost model, recorded lag, none)
-should be weighed with this.
+The oracle does not model CPU-overrun lag: each frame runs the main loop to `$80:8343` or
+`$85:813C`, then the NMI, with no cycles counted against the beam; the beam and IRQs are
+stepped afterwards at line granularity. So overrun lag, mid-frame HDMA tearing and the IRQ's
+multiplier clobber cannot occur in the oracle (FOUNDATION.md, J1). The APU ports reach the
+sound driver once per frame, so the sound handshake can match exactly in Tick time. 157 of the
+161 corpus rows start from a seed snapshot, so the oracle RAM → Session decoder is needed to
+open rows, not only to compare them.
 
 ## State of main and CI
 
