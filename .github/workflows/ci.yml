@@ -82,11 +82,11 @@ jobs:
       issues: write
     uses: ./.github/workflows/verify.yml
     with:
-      scope: ${{ inputs.action || (github.event_name == 'schedule' && 'full' || 'gate') }}
+      scope: full
       segments: ${{ inputs.segments || '' }}
       oracle: ${{ inputs.oracle || 'patched' }}
       audio_trace: ${{ inputs.audio_trace == true }}
-      oracle_sample: ${{ github.event_name == 'schedule' || inputs.oracle_sample == true }}
+      oracle_sample: true
       cover_routes: ${{ inputs.cover_routes == true }}
     secrets:
       SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
