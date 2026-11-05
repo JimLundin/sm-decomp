@@ -41,13 +41,15 @@ def restore(row: str, pins: dict, bundles: dict, work: pathlib.Path) -> None:
 
 
 def verifier_entry(row: str, lock: pathlib.Path, mode: str) -> int:
-    result = run(VERIFY + ["--segment", row, "--mode", mode, "--lock", str(lock)])
+    # A lock records the faithful oracle, the real game (REVIEW condition 8(i)).
+    oracle = ["--oracle", "faithful"] if mode == "lock" else []
+    result = run(VERIFY + ["--segment", row, "--mode", mode, "--lock", str(lock)] + oracle)
     print(f"{row}: verifier {mode}: exit {result.returncode}: "
           + " | ".join(line for line in result.stdout.splitlines()
                        if line.startswith(row) or line.startswith("FAIL")), flush=True)
     if result.returncode:
         # The verifier reports its own errors on stderr; names and reasons only.
-        tail = [line for line in result.stderr.splitlines() if line.startswith(("verify:", "FAIL", "error"))]
+        tail = [line for line in result.stderr.splitlines() if line.startswith(("verify:", "FAIL", "error", "usage:")) or ": error:" in line]
         print(f"{row}: verifier {mode} stderr: " + " | ".join(tail[-5:]), flush=True)
     return result.returncode
 
