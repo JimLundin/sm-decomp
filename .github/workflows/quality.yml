@@ -38,7 +38,9 @@ jobs:
           cargo clippy --locked -p sm_app --no-default-features --features slice --all-targets --no-deps
       - name: Lint the rebuild's crates
         # Their lint set is the root Cargo.toml's [workspace.lints] (PRINCIPLES K8).
-        run: cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical --all-targets --no-deps
+        run: cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive --all-targets --no-deps
+      - name: Test the rebuild's crates
+        run: cargo test --locked -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools --no-fail-fast
       - name: Hold the crate plan's dependency and source rules
         # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
         run: bash tools/check_crate_rules.sh
