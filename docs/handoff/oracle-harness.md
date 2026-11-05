@@ -58,7 +58,7 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
   - lsnes.log fills with `Error in Lua memory callback: attempt to call a nil value`, then lsnes dies (once `0xC0000028`, STATUS_BAD_STACK).
   - It follows the server's cut callback unregistering itself inside lsnes's dispatcher, and is intermittent: from power-on without saves, all 19000 frames ran clean.
   - It happens in runs that save states (`--native-seeds`): 1180 errors and a hang by frame 19829, from seed 16.
-  - Not fixed. Never unregistering, or unregistering at the next wait entry or frame end, is clean but runs at 7 frames/s instead of 44.
+  - Fixed: the cut is a callback that stays on the NMI handler's RTI (`$80:9601`, found from the ROM), matched by S equal to the NMI's S. Records are byte-identical over 1000 frames; 17829 to 19829 with `--native-seeds` runs clean at 44 frames/s (HARNESS.md, "lsnes crashes").
 - Diagnosis now kept (commit on this branch):
   - lsnes runs in its run directory; `stderr.txt`, the server's `lua.log` (`OH_LOG`) and `lsnes.log` go there.
   - An exit panics with the exit status and the tail of all three, and keeps the directory. `SM_LSNES_KEEP=1` always keeps it.
@@ -75,9 +75,7 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 
 ## Next, in order
 
-1. Make the cut callback stable and fast. Hook the NMI handler's own RTI, found once from the ROM, with S equal to the NMI's S.
-   - Derive the after-RTI registers there: S+4, P, PC and PB from the stack.
-   - Check that the records equal today's byte for byte over 1000 frames (`movie --lag-log` output, raw records), then rerun 17829 to 19829 with `--native-seeds` and expect no `nil value` in lsnes.log.
+1. Done: the cut callback is on the NMI handler's RTI. Open question: the record's PC is one past the interrupted opcode (lsnes's exec-callback convention, kept for byte identity). Compare it with the LakeSnes record and settle it in the cross-oracle report (item 4).
 2. Cut the 13 captures the 27 stalled rows need, each in one run with repeated `--native-seeds` and `--no-memories`:
    - from `movies/100.inputs`: `100-input-phase`, `100-mb-phases`, `100-boundary`, `100-credits` (credits at frame 222657);
    - from `low.inputs`: `low-input-phase`;

@@ -25,8 +25,7 @@ end
 -- Run a callback under a handler that logs the error with its traceback and
 -- quits, so a failing script ends the run instead of desyncing it. Only for
 -- the frame callbacks: wrapping the memory callbacks costs speed in the hot
--- ones (joypad reads, wait loops), and wrapping the self-removing cut callback
--- made lsnes crash within 154 frames (docs/oracle/HARNESS.md, lsnes backend).
+-- ones (joypad reads, wait loops) and the cut.
 local function guarded(callback)
     return function(...)
         local ok, message = xpcall(callback, debug.traceback, ...)
@@ -37,9 +36,35 @@ local function guarded(callback)
     end
 end
 -- Native NMI vector target ($00:FFEA), the game's wait sites (game::WAIT_SITES).
-local NMI = 0x1000000 + memory.readword(0x100FFEA)
-local WAIT_ENTRIES = {0x808338, 0x858136, 0x8584A3}
 local BUS = 0x1000000
+local NMI = memory.readword(BUS + 0xFFEA)
+local WAIT_ENTRIES = {0x808338, 0x858136, 0x8584A3}
+
+-- The NMI handler's own RTI, found once from the ROM: the vector's
+-- `REP #$30; JML handler`, then the handler's one epilogue, which pops what its
+-- prologue pushed (PLY PLX PLA PLD PLB RTI). A callback that stays registered
+-- there takes the cut. Unregistering a callback from inside lsnes's dispatcher
+-- made lsnes call the freed entry (docs/oracle/HARNESS.md, "lsnes crashes").
+local function find_rti()
+    local function byte(address) return memory.readbyte(BUS + address) end
+    assert(byte(NMI) == 0xC2 and byte(NMI + 1) == 0x30 and byte(NMI + 2) == 0x5C,
+        "NMI vector is not REP #$30; JML")
+    local handler = byte(NMI + 3) + byte(NMI + 4) * 256 + byte(NMI + 5) * 65536
+    local epilogue = {0x7A, 0xFA, 0x68, 0x2B, 0xAB, 0x40}
+    local found = nil
+    for at = handler, handler + 0x200 - #epilogue do
+        local matches = true
+        for offset, value in ipairs(epilogue) do
+            if byte(at + offset - 1) ~= value then matches = false; break end
+        end
+        if matches then
+            assert(found == nil, "NMI handler has more than one epilogue")
+            found = at + #epilogue - 1
+        end
+    end
+    return assert(found, "NMI handler epilogue not found")
+end
+local NMI_RTI = find_rti()
 
 local pad, dump = 0, true
 local nmi_s, nmi_pc, in_nmi = nil, nil, false
@@ -83,8 +108,8 @@ end
 local captured = nil
 
 -- kind: 0 NMI return, 1 vblank without NMI, 2 NMI still running.
-local function capture(kind, pc)
-    local r = memory.getregisters()
+-- r: the CPU registers, as memory.getregisters() returns them.
+local function capture(kind, pc, r)
     local parts = {
         "OHR1", u8(kind), u32(pc or 0), u8(nmi_reads > 0 and 1 or 0), u32(reads),
         wait_entry and (u8(1) .. u16(wait_entry[1]) .. u16(wait_entry[2])) or (u8(0) .. u16(0) .. u16(0)),
@@ -115,21 +140,34 @@ local function send()
     read_request()
 end
 
-local function on_cut()
-    local s = memory.getregisters().s
-    if not in_nmi or s ~= (nmi_s + 4) % 65536 then return end
-    memory.unregisterexec(BUS + nmi_pc, on_cut)
-    in_nmi = false
-    if captured == nil then capture(0, nmi_pc) end
+local function stack_byte(s, offset)
+    return memory.readbyte(0x7E0000 + (s + offset) % 0x2000)
 end
 
-memory.registerexec(NMI, function()
+-- The cut: the handler's RTI with S back at the NMI's S, so the RTI returns to
+-- the interrupted instruction. The record holds the registers after the RTI:
+-- it pops P, PC and PB, and with P.x set the index registers' high bytes clear.
+-- PC is one past the interrupted opcode, as lsnes reports it in an exec
+-- callback at that instruction, where records were taken before.
+memory.registerexec(BUS + NMI_RTI, function()
+    if not in_nmi then return end
+    local r = memory.getregisters()
+    if r.s ~= nmi_s then return end
+    in_nmi = false
+    if captured ~= nil then return end
+    local p = stack_byte(nmi_s, 1)
+    r.s, r.p = (nmi_s + 4) % 65536, p
+    r.pc, r.pb = (nmi_pc + 1) % 65536, math.floor(nmi_pc / 65536)
+    if math.floor(p / 16) % 2 == 1 then r.x, r.y = r.x % 256, r.y % 256 end
+    capture(0, nmi_pc, r)
+end)
+
+memory.registerexec(BUS + NMI, function()
     if in_nmi then return end
     local s = memory.getregisters().s
-    local byte = function(offset) return memory.readbyte(0x7E0000 + (s + offset) % 0x2000) end
-    nmi_s, nmi_pc = s, byte(2) + byte(3) * 256 + byte(4) * 65536
+    nmi_s = s
+    nmi_pc = stack_byte(s, 2) + stack_byte(s, 3) * 256 + stack_byte(s, 4) * 65536
     in_nmi, nmi_reads = true, 0
-    memory.registerexec(BUS + nmi_pc, on_cut)
 end)
 for _, bank in ipairs({0x00, 0x80}) do
     for address = 0x4218, 0x421F do
@@ -157,7 +195,8 @@ end)
 
 on_frame_emulated = guarded(function()
     if captured == nil then
-        if in_nmi then capture(2, nmi_pc) else capture(1, 0) end
+        local r = memory.getregisters()
+        if in_nmi then capture(2, nmi_pc, r) else capture(1, 0, r) end
     end
     send()
 end)

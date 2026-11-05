@@ -149,10 +149,10 @@ savestate at the frame boundary after a cut, before the next step's NMI.
 The script loads a starting state itself (`OH_START`, `load-state`), because
 lsnes refuses a state given on its command line with this ROM and hangs.
 
-**lsnes crashes.** The server's cut callback unregisters itself while lsnes
-dispatches it. Now and then lsnes then calls a freed entry: lsnes.log fills
-with `Error in Lua memory callback: attempt to call a nil value` and lsnes
-dies, which was the "exit at step 18068".
+**lsnes crashes (fixed).** The server's cut callback used to unregister
+itself while lsnes dispatched it. Now and then lsnes then called a freed entry:
+lsnes.log filled with `Error in Lua memory callback: attempt to call a nil
+value` and lsnes died, which was the "exit at step 18068".
 
 | Run | Result |
 | --- | --- |
@@ -163,8 +163,20 @@ dies, which was the "exit at step 18068".
 
 Never unregistering, or unregistering from the next wait-entry callback or the
 frame callback, is clean but runs at 7 frames/s instead of 44: the wait loops
-spin through the cut's address. The fix to try is a callback on the NMI
-handler's own RTI.
+spin through the cut's address.
+
+The cut is now a callback that stays on the NMI handler's own RTI. The server
+finds it once from the ROM: the vector's `REP #$30; JML`, then the handler's
+one `PLY PLX PLA PLD PLB RTI`, at `$80:9601`. It takes the cut when S equals
+the NMI's S and derives the registers after the RTI: S+4, and P, PC and PB
+from the stack, with X and Y cut to 8 bits when that P has x set. PC stays one
+past the interrupted opcode, as lsnes reported it at the old cut.
+
+| Check | Result |
+| --- | --- |
+| Records over 1000 frames from power-on, any% pads | byte-identical to the old script's |
+| From seed 16, 17829 to 19829, `--native-seeds` (3 saves) | clean, twice; no `nil value` in lsnes.log |
+| Speed, all memories | 46 frames/s from power-on (old 44.7), 44 from seed 16 |
 
 Each run keeps lsnes's standard error, the server's Lua error log and lsnes.log
 in its run directory, and reports them if lsnes exits.
