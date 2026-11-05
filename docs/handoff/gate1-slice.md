@@ -24,11 +24,11 @@ The Tick's closing NMI latches the *next* Tick's controller word, as on hardware
 `TickInput::latched` carries it: a replay passes the next pad, live play the device's
 word at vblank.
 
-## Known divergences
+## The last Tick's latch
 
-- `wall-crawler-slope-step` (8 ticks, a genuine room seed): the replay's WRAM digest
-  differs from the lock while the verifier's own free run matches it. The verifier's
-  digest log for it has twice the slice's lines, so the exported start is suspect.
+A replay keeps one input word past its Tick budget: the last Tick's closing NMI latches
+the movie word after it, as the verifier's loop does (`wall-crawler-slope-step` is the
+row whose next word differs).
 
 ## Where Gate 1 still falls short of VALIDATION
 
@@ -47,7 +47,6 @@ word at vblank.
 
 ## Next
 
-1. `wall-crawler-slope-step` (above).
-2. Port `tools/gate1.py` to Rust in `sm_tools` and delete it (PLAN: avoid adding Python).
-3. Replace what `sm_host` borrows from the old game, starting with the renderer
+1. Port `tools/gate1.py` to Rust in `sm_tools` and delete it (PLAN: avoid adding Python).
+2. Replace what `sm_host` borrows from the old game, starting with the renderer
    (the native renderer as replay output) and the frame lease.
