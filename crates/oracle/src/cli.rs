@@ -483,7 +483,7 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
         fail(
-            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR]",
+            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -497,6 +497,7 @@ fn corpus(arguments: &[String]) {
     let mut record: Option<std::fs::File> = None;
     let mut backend = String::new();
     let mut native_seeds: Option<PathBuf> = None;
+    let mut watched: Vec<usize> = Vec::new();
     let mut rom = rom;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
@@ -543,6 +544,19 @@ fn corpus(arguments: &[String]) {
                     options.next().unwrap_or_else(|| fail("--native-seeds DIR")),
                 ));
             }
+            "--watch-words" => {
+                // Work-RAM words (hex) printed whenever their value changes,
+                // to read a row's outcome (game state, energy) off the oracle.
+                let list = options
+                    .next()
+                    .unwrap_or_else(|| fail("--watch-words ADDR,..."));
+                for address in list.split(',') {
+                    watched.push(
+                        usize::from_str_radix(address.trim_start_matches('$'), 16)
+                            .unwrap_or_else(|_| fail(format!("--watch-words: {address}"))),
+                    );
+                }
+            }
             "--limit" => {
                 limit = options
                     .next()
@@ -576,7 +590,19 @@ fn corpus(arguments: &[String]) {
             native_seeds: native_seeds.as_deref(),
             ..crate::corpus::Observe::default()
         };
-        match crate::corpus::run_row_with(&rom, pin, entry, data, &observing, &mut |_| ()) {
+        let mut last: Vec<Option<u16>> = vec![None; watched.len()];
+        let mut frame = 0u64;
+        let mut watch = |record: &FrameRecord| {
+            for (address, last) in watched.iter().zip(last.iter_mut()) {
+                let value = word(&record.wram, *address);
+                if *last != Some(value) {
+                    println!("  {} frame {frame}: ${address:04x}={value:#06x}", entry.id);
+                    *last = Some(value);
+                }
+            }
+            frame += 1;
+        };
+        match crate::corpus::run_row_with(&rom, pin, entry, data, &observing, &mut watch) {
             Err(error) => {
                 failed += 1;
                 println!("{}: not run: {error}", entry.id);
