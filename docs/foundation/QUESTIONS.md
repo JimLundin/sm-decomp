@@ -22,7 +22,27 @@ questions are in three tiers:
 To answer, write under **Answer:**. "Yes" means you accept the recommendation.
 Anything else is a change to it.
 
-## At a glance
+## Jim's direction on this list (2026-11-05)
+
+This list is being rewritten. Jim's answers so far:
+
+- **The rebuild changes the target architecture; that was its purpose.** Q1-Q4 are not
+  questions for him. The coordinator decides them and records them in FOUNDATION.
+- **Lag (Q5, Q6, Q23).** The oracles are emulators, and there may be more than one. We
+  take what they give us: if they are accurate up to lag, the engine follows them. If
+  integrating Map Rando or other community work later needs native lag, the engine
+  must be able to support it. The same goes for widescreen, audio upgrades and quick
+  transitions. These are architecture requirements, not decisions for Jim.
+- **Map Rando is an aspiration, not a roadmap (Q24-Q28).** No Map Rando plan now. The
+  architecture must not rule it out.
+- **Order of work:** a functional oracle, then the engine's architecture, then
+  implementation against the oracle. The architecture is checked for robustness
+  against future features, whatever features are added.
+- **Format:** one-line questions without context can't be answered. A question for
+  Jim explains what it means, what each answer changes, and examples. Engineering
+  choices are not questions for Jim.
+
+## At a glance (superseded, see above)
 
 | Q | Decision | Recommendation | Was |
 | --- | --- | --- | --- |
