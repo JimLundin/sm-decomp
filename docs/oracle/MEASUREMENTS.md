@@ -98,10 +98,23 @@ check; open.
 
 ## (b) Busy frames per row (coverage)
 
-From the corpus run (`oracle corpus`), the `overrun` count per row is the
-number of busy frames (seed). It is in the corpus log, and summarised in the
-handoff. Movie frames 0-8499 have 432 busy frames, all at boot, title,
-intro and Ceres loading.
+**Seed:** from `oracle corpus` over the 601 rows that ran, 176 rows have
+busy frames, 2,231 in total. The rows with the most:
+
+| Row | Busy frames | Ticks | Video frames |
+| --- | ---: | ---: | ---: |
+| options-menu-tour (from boot) | 283 | 2310 | 2614 |
+| chain-any-0097-B32E | 129 | 2672 | 2801 |
+| area-maridia | 126 | 300 | 426 |
+| chain-0170-CEFB | 123 | 190 | 313 |
+| chain-0232-D5A7 | 64 | 632 | 696 |
+| chain-0118-B32E, boss-ridley | 50 each | 2209, 2100 | 2259, 2150 |
+| boss-phantoon, phantoon-exit-spawn-parameter, chain-any-0165-CD13 | 47 each | 1989-2215 | 2036-2262 |
+| chain-0190-CD13 | 41 | 2281 | 2322 |
+| terrain-lower-norfair-hand, enemy-shaktool, chain-0238-D8C5 | 40 each | 1391-2479 | 1431-2519 |
+
+**Movie:** frames 0-8499 have 432 busy frames, all at boot, the title,
+the intro and the Ceres load.
 
 ## (c) Line timing (tier a)
 
