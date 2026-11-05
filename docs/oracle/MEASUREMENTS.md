@@ -618,3 +618,119 @@ position of the load's phases on LakeSnes and lsnes (watched PCs in the
 door's `$82:E2xx` and decompression routines, and DMA start lines) and
 compare them. Then check the CPU timing models that differ: DMA setup and
 per-byte cost, DRAM refresh, and HDMA during the load.
+
+## (k) The 17985 lag is HDMA overhead on lines after the HUD, not the room load
+
+**Command.** Watched PCs on both emulators over the same movie steps.
+LakeSnes: `oracle movie ROM movies/any.inputs --frames 17996 --no-picture
+--oracle lakesnes --trace 17955 17995 PC,...` from power-on (82 s). It prints
+each step's game state, door function (`$099C`), wait entry, cut, HDMAEN and
+DMAP, then every hit with its line and dot. The bridge now keeps up to 32
+watched PCs and 16384 hits per step, and logs each `$420B` write as a pseudo
+hit (`0x01000000 | MDMAEN`, with the first channel's DMAP, B-bus address and
+size). lsnes: the same command with `--oracle lsnes --from 010000.lss 10000`
+(the any% ladder rung, 190 s) and `OH_TRACE=PC,...`, `OH_TRACE_LOG=FILE`,
+`OH_TRACE_FROM=FRAME` set. The server then logs `pc ADDR LINE DOT` at each
+watched address and a `cut` line after each record. lsnes's `$420B` write
+callback never fired, so the DMA starts are LakeSnes-only. lsnes fires exec
+callbacks on operand fetches too (a watch on `$82:DA2B`, the operand of a
+`BEQ`, hit), so watch instruction starts only. Lines are 0-261 and dots
+0-1363 on both.
+
+**Not the load.** Steps 17955-17986 are game state `$0B` with door function
+`$E2DB` (fade out the screen). Each pass is `$82:D961` (advance the palette
+fade by 1/12) and then the enemy routines and drawing. A pass takes 2-3 video
+frames. The room load (`$E36E`, `$EA73`, decompression `$80:B119`) starts
+after the fade, at 17989 on lsnes and 17990 on LakeSnes, so it is already a
+step late. The wait entry (`$80:8338`) of each pass, line/dot:
+
+| Step | lsnes | LakeSnes |
+| --- | --- | --- |
+| 17955 | 31/368 | 36/1200 |
+| 17958 | 24/842 | 29/846 |
+| 17961 | 24/960 | 29/1040 |
+| 17964 | 17/54 | 22/170 |
+| 17967 | 3/942 | 8/948 |
+| 17970 | 248/1262 | 253/986 |
+| 17973 | 242/1226 | 247/926 |
+| 17975 / 17976 | 223/156 (step 17975) | 228/680 (step 17976) |
+
+Both start each pass at the same beam: `$82:E288` at 246/1104 (LakeSnes) and
+246/1108 (lsnes) at 17956. LakeSnes ends every pass about 5 lines later. The
+game's own work per pass gets shorter, so the wait entry drifts up the frame.
+At 17975 lsnes enters its wait on line 223 and the NMI on line 225 takes it:
+a 2-frame pass. LakeSnes enters on line 228, after vblank started, so its
+pass takes 3 frames. From there LakeSnes is one step behind: its last fade
+pass, its `$E2F7` and its room load each come a step later. So 17985 is the
+first step whose counters show the lag.
+
+**Phase table**, one fade pass (master clocks between watched PCs; a frame is
+262 x 1364):
+
+| Phase (from, to) | 17953 LakeSnes / lsnes | 17956 | 17962 |
+| --- | --- | --- | --- |
+| `$E288` to `$E2DB` (state `$0B` dispatch) | 166 / 166 | 126 / 126 | 126 / 126 |
+| `$E2DB` to `$D961` | 40 / 40 | 40 / 40 | 40 / 40 |
+| `$D961` to `$E2DE`: **palette fade** | 728658 / 722210 (**+6448**) | 724462 / 717958 (**+6504**) | 714982 / 708430 (**+6552**) |
+| `$E2DE` to `$E2E4`: which enemies to process | 8870 / 8910 | 8910 / 8910 | 8910 / 8910 |
+| `$E2E4` to `$E2E8`: main enemy routine | 13248 / 11846 | 12946 / 12592 | 11398 / 11398 |
+| `$E2E8` to `$E2EC`: draw | 36606 / 36580 | 23016 / 23040 | 23966 / 23608 |
+| `$E2EC` to `$E2EF` | 150 / 132 | 132 / 132 | 132 / 132 |
+| `$E2EF` to the wait | 5482 / 5708 | 6226 / 6232 | 6078 / 6072 |
+
+The first phase that differs is the palette fade, by about 6,500 master
+clocks (4.8 lines) per pass. The other phases differ by at most a few hundred
+clocks. The fade runs from line 241 of one frame to about line 250 two frames
+later, so it covers about 1.9 frames of display lines.
+
+**Where in the fade.** We watched 16 PCs inside the fade's colour routines
+(`$82:DA4A`, `$DAA6` and the division at `$DAC9`-`$DAE3`), steps 17953-17955.
+For each pair of consecutive PCs we compared the clocks between them. In
+vblank the two emulators agree (the sum of pair means is 2315.2 on LakeSnes
+and 2317.6 on lsnes, ratio 0.999). On display lines LakeSnes is slower (2366.0
+against 2355.6). On short pairs (base 30-40 clocks) the extra time is a step at
+dot 1076-1110, the HDMA point:
+
+| Lines | LakeSnes | lsnes |
+| --- | --- | --- |
+| 0-31 (HUD) | +72 per line (6 samples) | +72 per line (4 samples) |
+| 32-224 | **+12 or +18** per line (27 samples, lines 37-223) | nothing (no sample) |
+| 225-261 | nothing | nothing |
+| 0, dot 18 | nothing | +36 or +42 (HDMA init) |
+
+The +40 of DRAM refresh (dot 536) shows equally on both. During the fade one
+HDMA channel is enabled: HDMAEN `$80`, channel 7 with DMAP `$43` (indirect,
+mode 3, 4 bytes a line to BG3 scroll): the HUD's scroll split. It transfers on
+the HUD lines and then ends. On lines 32-224 lsnes charges nothing for it,
+and LakeSnes charges 12-18 clocks every line. 193 lines x about 15 clocks is
+about 2,900 clocks a frame. Over the fade's 1.9 frames of lines that is
+about 5,600-6,000 clocks, close to the measured +6,450 to +6,550 per pass.
+
+**Mechanism (hypothesis).** LakeSnes's `dma_doHdma` runs on every display line
+when any channel's HDMAEN bit is set: `hdmaActive` there is the enable bit
+only, terminated channels included. It aligns to an 8-clock boundary, adds 8
+clocks of overhead and re-aligns to the CPU's cycle, which makes 12 or 18 at
+6-clock FastROM cycles. Its per-channel work (`do all copies`, `do all
+updates`) skips terminated channels, but the overhead is still charged. bsnes
+v085 counts a channel as HDMA-active only while it is enabled and not
+completed, and charges no overhead on a line where no channel is active. That
+is what lsnes shows from line 32. This is a reading of the measurement against
+how bsnes and Mesen describe HDMA (a per-line overhead, plus 8 clocks per
+active channel and 8 per byte, while a channel is still running); no GPL code
+was read or copied. The ruled-out candidates: DMA cost per byte and DMA setup
+(no general DMA in the main thread during the fade; the NMI's `$420B`
+transfers start at 225/950-970 every pass and do not differ), DRAM refresh
+(equal), slow/fast ROM and WRAM access cycles (vblank pairs are equal to the
+clock), and the APU (no port accesses, (j)).
+
+**Mesen** was not run: at +41 it leaves the movie at 16065 ((h)), so it cannot
+vote at this door.
+
+**Next.** A LakeSnes fix, `0004`: in `dma_doHdma` (and the HDMA run inside
+`dma_waitCycle`), skip the sync and overhead when every enabled channel has
+terminated. Then rerun (h)'s any% command and the per-step classification:
+17985 should be one-step-equal, and the boot (exact through 395), 8465/8469
+and 1342 must stay unchanged. Check whether 18108 and 18587 move. Hardware
+also counts here: if Mesen or the timing documents (anomie, fullsnes) charge
+the overhead on lines after termination, the fix follows lsnes for the movies
+and is listed as such.
