@@ -71,3 +71,20 @@ unsafe fn adopt_settlement(native_game: &mut Game, settle: impl FnOnce(&mut Game
     session_native_adoption::reconcile_current(native_game)
         .expect("Session native result adoption rejected");
 }
+
+/// The oracle's patches are not installed here.
+pub fn rtl_update_snes_patch_for_bugfix(_game: &mut Game) {}
+/// The lockstep comparison's images are the oracle's; the host keeps only the
+/// fields the audio upload path records in them.
+pub struct Snapshot {
+    pub player: crate::audio_snapshot::PlayerSnapshot,
+    pub apu_upload_count: u32,
+    pub apu_startup_upload: bool,
+}
+impl Snapshot {
+    pub const INITIAL: Snapshot = Snapshot {
+        player: crate::initial_state::InitialState::INITIAL,
+        apu_upload_count: 0,
+        apu_startup_upload: false,
+    };
+}

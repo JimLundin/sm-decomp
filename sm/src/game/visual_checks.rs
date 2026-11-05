@@ -12,9 +12,11 @@ mod palette_guard_checks;
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
 
+#[cfg(not(sm_host))]
 pub(crate) fn check_palette_guard(game: &mut Game) -> bool {
     palette_guard_checks::run(game)
 }
+#[cfg(not(sm_host))]
 pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
     animation_guard_checks::run(game)
 }

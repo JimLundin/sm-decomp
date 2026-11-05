@@ -28,6 +28,7 @@ impl sm_game::palette_effects::fading::Host for Runtime<'_> {
 }
 
 /// Numeric identities remain private to the existing actual-code comparison carrier.
+#[cfg(not(sm_host))]
 pub(crate) mod checks {
     pub(crate) fn guard(game: &mut crate::game_state::Game) -> bool {
         crate::game::visual_runtime::check_palette_guard(game)

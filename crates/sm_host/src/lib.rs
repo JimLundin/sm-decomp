@@ -246,16 +246,16 @@ pub mod game {
 /// Emulated SNES hardware. Also runs the original ROM as the differential
 /// oracle: see `cpu_infra::run_one_frame_of_game_both`.
 pub mod snes {
+    #[path = "../../../crates/sm_host/src/stubs/apu.rs"]
     pub mod apu;
-    pub mod cart;
+    #[path = "../../../crates/sm_host/src/stubs/cpu.rs"]
     pub mod cpu;
+    pub mod cart;
     pub mod dma;
-    pub mod dsp;
     pub mod ppu;
     pub mod registers;
     pub mod snes;
     pub mod snes_other;
-    pub mod spc;
 }
 #[path = "../../../sm/src/apu_queue.rs"]
 pub mod apu_queue;
@@ -278,8 +278,6 @@ pub mod ram_words;
 pub mod rtl;
 #[path = "../../../sm/src/spc_player.rs"]
 pub mod spc_player;
-#[path = "../../../sm/src/tracing.rs"]
-pub mod tracing;
 #[path = "../../../sm/src/types.rs"]
 pub mod types;
 #[path = "../../../sm/src/util.rs"]
@@ -294,18 +292,14 @@ pub mod game_state;
 pub mod projection;
 #[path = "../../../sm/src/native_rom.rs"]
 pub mod native_rom;
+#[path = "../../../sm/src/oracle_patch_policy.rs"]
+mod oracle_patch_policy;
 #[path = "../../../sm/src/oracle_mode.rs"]
 pub mod oracle_mode;
-#[path = "../../../sm/src/oracle_patch_policy.rs"]
-pub mod oracle_patch_policy;
 #[path = "../../../sm/src/recording.rs"]
 pub mod recording;
 #[path = "../../../sm/src/rom.rs"]
 pub mod rom;
-#[path = "../../../sm/src/rom_patches.rs"]
-pub mod rom_patches;
-#[path = "../../../sm/src/room_pack.rs"]
-pub mod room_pack;
 #[path = "../../../sm/src/snapshot_io.rs"]
 pub mod snapshot_io;
 #[path = "../../../sm/src/verify_probe.rs"]
@@ -330,3 +324,5 @@ macro_rules! type_aliases {
     };
 }
 pub(crate) use type_aliases;
+#[path = "stubs/rom_patches.rs"]
+pub mod rom_patches;
