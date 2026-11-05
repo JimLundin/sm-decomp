@@ -5,16 +5,26 @@
 //!
 //! The cut is the instruction the NMI interrupted, reached again with the
 //! stack back where the NMI found it: the RTI has just completed. A frame in
-//! which no NMI returned is cut at lsnes's frame boundary.
+//! which no NMI ran is cut at lsnes's frame boundary (line 241).
+//!
+//! An NMI that outlasts that boundary returns early in lsnes's next frame,
+//! whose input lsnes commits at its start. So that frame takes the pad given
+//! to [`Lsnes::preview`] before the step, and the next step must bring that
+//! pad. Without a preview such a step is cut at the boundary with its NMI
+//! still running ([`Cut::NmiStillRunning`]), before the NMI's counter writes
+//! and joypad read.
 //!
 //! Not recorded by this backend: the picture, the APU port log, the SPC state
 //! (lsnes exposes SPC700 and DSP only as raw core structs), the instruction
 //! profile, the PPU register write log, watched-PC hits, `PpuRegisters` (left
 //! at their defaults), `overscan` and the old lock's `legacy_ppu_digest`.
 //!
-//! A saved state is lsnes's own, taken at the frame boundary that follows the
-//! last cut: it lies before the next step's NMI, so a resumed oracle's first
-//! step reproduces the next cut, with only that interval's counts partial.
+//! A saved state is lsnes's own, taken at the frame boundary that ends the
+//! step it was requested before: after that step's cut, or inside its NMI
+//! when the NMI outlasts the boundary. Either way it lies before the next
+//! step's NMI, so a resumed oracle's first step reproduces the next cut; its
+//! counts restart where the straight run's do (at the RTI of an NMI the
+//! state was saved inside).
 
 use crate::record::{Beam, CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
@@ -132,6 +142,8 @@ pub struct Lsnes {
     /// Whether each record carries the memories (on by default; the streams
     /// need them, and leaving them out roughly doubles the speed).
     pub memories: bool,
+    /// The pad of the step after the coming one, from [`Lsnes::preview`].
+    next_pad: Option<Pad>,
 }
 
 /// A little-endian word to write at a work-RAM offset (`$7E:0000` + offset).
@@ -293,8 +305,16 @@ impl Lsnes {
             .map_err(|error| self.fail(Cause::Request(error)))
     }
 
-    /// Ask for the state at the next frame boundary, written to the returned
-    /// file once the next step has run; [`Oracle::save_state`] then reads it.
+    /// Announce the pad of the step after the coming one, so that the coming
+    /// step is cut at its NMI's RTI even when the NMI outlasts lsnes's frame.
+    /// The step after must then bring this pad, and no reset before it.
+    pub fn preview(&mut self, next: Pad) {
+        self.next_pad = Some(next);
+    }
+
+    /// Ask for the state at the frame boundary that ends the coming step,
+    /// written to the returned file once the step after it has run;
+    /// [`Oracle::save_state`] then reads it.
     pub fn request_save(&mut self) -> Result<PathBuf, OracleError> {
         self.saves += 1;
         let path = self.directory.join(format!("state-{}.lss", self.saves));
@@ -494,6 +514,7 @@ impl Oracle for Lsnes {
             raw: Vec::new(),
             keep: std::env::var_os("SM_LSNES_KEEP").is_some(),
             memories: true,
+            next_pad: None,
         })
     }
 
@@ -501,7 +522,12 @@ impl Oracle for Lsnes {
         if let Some(failure) = self.failed.take() {
             return Err(OracleError::Lsnes(failure));
         }
-        self.send(&format!("S {:04x} {}", pad.0, u8::from(self.memories)))?;
+        let memories = u8::from(self.memories);
+        let request = match self.next_pad.take() {
+            Some(next) => format!("S {:04x} {memories} {:04x}", pad.0, next.0),
+            None => format!("S {:04x} {memories}", pad.0),
+        };
+        self.send(&request)?;
         let waited = if self.steps == 0 {
             START_TIMEOUT
         } else {

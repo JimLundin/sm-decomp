@@ -65,8 +65,9 @@ fn differing(left: &[u8], right: &[u8]) -> usize {
         .count()
 }
 
-/// A save asked for after one step, written by lsnes once the next step has
-/// run: the native seeds and the ladder rung it serves.
+/// A save asked for before one step and taken at its boundary, written by
+/// lsnes once the next step has run: the native seeds and the ladder rung it
+/// serves.
 struct PendingSave {
     state: PathBuf,
     seeds: Vec<PathBuf>,
@@ -91,13 +92,14 @@ impl Cutting {
 /// room-seed row whose capture followed lsnes frame N (1-based) is the state at
 /// the boundary after the cut of step N-1 (0-based), with that cut's raw
 /// record; rung F likewise. Captures of several lists and a rung can share a
-/// frame; one saved state then serves them all.
+/// frame; one saved state then serves them all. The save is requested before
+/// the step (`save_due`) and handled after it.
 fn save_after_step(
     lsnes: &mut crate::lsnes::Lsnes,
     lists: &[(Vec<RoomSeed>, PathBuf)],
     mut cutting: Option<&mut Cutting>,
     (step, frames): (u64, u64),
-    pending: &mut Option<PendingSave>,
+    (requested, pending): (Option<PathBuf>, &mut Option<PendingSave>),
 ) {
     if let Some(save) = pending.take() {
         for target in save.seeds {
@@ -127,13 +129,22 @@ fn save_after_step(
     let rung = cutting
         .filter(|cutting| cutting.rung_after(step, frames))
         .map(|_| (step + 1, lsnes.raw().to_vec()));
-    if !seeds.is_empty() || rung.is_some() {
-        *pending = Some(PendingSave {
-            state: lsnes.request_save().unwrap_or_else(|error| fail(error)),
-            seeds,
-            rung,
-        });
+    if let Some(state) = requested {
+        *pending = Some(PendingSave { state, seeds, rung });
     }
+}
+
+/// Whether a native seed or a rung follows step `step`: its save must be
+/// requested before the step.
+fn save_due(
+    lists: &[(Vec<RoomSeed>, PathBuf)],
+    cutting: Option<&Cutting>,
+    (step, frames): (u64, u64),
+) -> bool {
+    lists
+        .iter()
+        .any(|(list, _)| list.iter().any(|seed| seed.movie_frame == step + 1))
+        || cutting.is_some_and(|cutting| cutting.rung_after(step, frames))
 }
 
 fn movie(arguments: &[String]) {
@@ -294,6 +305,7 @@ fn movie(arguments: &[String]) {
     let run = u64::try_from(frames.min(pads.len())).unwrap_or(u64::MAX);
     for (frame, &pad) in pads.iter().enumerate().take(frames).skip(first) {
         let step = u64::try_from(frame).unwrap_or(u64::MAX);
+        let mut requested = None;
         if let crate::Backend::Lsnes(lsnes) = &mut oracle {
             // A rung's record always carries the memories, so that resuming
             // the rung before can be checked against all of them.
@@ -301,6 +313,12 @@ fn movie(arguments: &[String]) {
                 || cutting
                     .as_ref()
                     .is_some_and(|cutting| cutting.rung_after(step, run));
+            if save_due(&native, cutting.as_ref(), (step, run)) {
+                requested = Some(lsnes.request_save().unwrap_or_else(|error| fail(error)));
+            }
+        }
+        if let Some(&next) = pads.get(frame + 1) {
+            oracle.preview(next);
         }
         let record: &FrameRecord = oracle.step(pad).unwrap_or_else(|error| fail(error));
         let record = record.clone();
@@ -313,7 +331,7 @@ fn movie(arguments: &[String]) {
                 &native,
                 cutting.as_mut(),
                 (step, run),
-                &mut pending_save,
+                (requested, &mut pending_save),
             );
         }
         match record.nmi() {
@@ -634,8 +652,12 @@ fn check_rung(
         .and_then(|(from, to)| pads.get(from..to))
         .ok_or_else(|| format!("rungs {from}..{to} lie past the movie's end"))?;
     let last = steps.len().saturating_sub(1);
+    let after = usize::try_from(to).ok().and_then(|to| pads.get(to));
     for (step, &pad) in steps.iter().enumerate() {
         lsnes.memories = step == last;
+        if let Some(&next) = steps.get(step + 1).or(after) {
+            lsnes.preview(next);
+        }
         lsnes.step(pad).map_err(|error| error.to_string())?;
     }
     Ok(crate::ladder::differences(lsnes.raw(), &stored))
@@ -1086,6 +1108,12 @@ fn cross(arguments: &[String]) {
     let mut equal = 0u64;
     let started = Instant::now();
     for (step, &pad) in (0..=*range.end()).zip(&pads) {
+        if let Some(&next) = usize::try_from(step + 1)
+            .ok()
+            .and_then(|next| pads.get(next))
+        {
+            right.preview(next);
+        }
         let a = left.step(pad).unwrap_or_else(|error| fail(error)).clone();
         let b = right.step(pad).unwrap_or_else(|error| fail(error));
         let differences = compare.frame(&a, b);

@@ -2,19 +2,30 @@
 -- (bsnes v085 core) runs it as a separate process; no emulator code is linked.
 --
 -- Requests arrive on stdin, one line each. The first is read at start and
--- each later one right after the previous record, at its cut:
---   S <pad hex> <memories 0|1>   step: this frame's pad, then run to its cut
---   V <path>                     save the state at the next frame boundary,
---                                which lies before the coming step's NMI
+-- each later one right after the previous record:
+--   S <pad hex> <memories 0|1> [<next pad hex>]
+--                                step: this frame's pad, then run to its cut;
+--                                the next step's pad, when the client knows it
+--   V <path>                     save the state at the frame boundary that
+--                                ends the coming step: after its cut, or
+--                                inside its NMI, but before the next NMI
 --   R                            press reset for the coming frame
 --   W <offset hex> <word hex>    write a little-endian word to work RAM
 --                                ($7E:0000 + offset); asked for before a
 --                                resumed run's state has loaded, right
 --                                after it loads
 --   Q                            quit
--- One record per lsnes frame: taken at the frame's cut (the NMI's RTI, or the
--- boundary when no NMI returned), written to OH_RECORD at the frame boundary
--- (overwritten each time) and announced on stdout as "R <bytes>".
+-- One record per video frame, cut at the NMI handler's RTI, or at lsnes's
+-- frame boundary (line 241) in a frame without an NMI. It is written to
+-- OH_RECORD (overwritten each time) and announced on stdout as "R <bytes>":
+-- at the boundary, or at the RTI when the NMI outlasts the boundary.
+--
+-- lsnes commits a frame's input at its start (on_input, at the boundary), and
+-- input.set has no effect anywhere else. An NMI that outlasts the boundary
+-- returns early in the next lsnes frame, whose input is already committed,
+-- so that frame takes the next pad the client announced with this step; the
+-- next step must then bring the same pad. Without an announced pad such a
+-- frame is still cut at the boundary, with its NMI running.
 local unpack = table.unpack or unpack
 local record_path = assert(os.getenv("OH_RECORD"), "set OH_RECORD")
 -- Lua errors in callbacks otherwise reach only lsnes.log; keep them here too.
@@ -71,7 +82,15 @@ end
 local NMI_RTI = find_rti()
 
 local pad, dump = 0, true
-local nmi_s, nmi_pc, in_nmi = nil, nil, false
+-- The next step's pad, as announced; the pad committed ahead for the frame
+-- after a boundary inside an NMI; the save that waits for this step's boundary.
+local next_pad, committed, save_path = nil, nil, nil
+-- A resumed state saved inside an NMI returns from it first, with the counts
+-- of a step already recorded: they restart at that RTI.
+local dangling = os.getenv("OH_START") ~= nil
+-- nmi_frame: the lsnes frame the running NMI began in, the record's frame
+-- even when the NMI returns in the next one.
+local nmi_s, nmi_pc, nmi_frame, in_nmi = nil, nil, nil, false
 local reads, nmi_reads = 0, 0
 local wait_entry = nil
 local reset_next = false
@@ -96,18 +115,35 @@ local function region(base, size)
     return table.concat(parts)
 end
 
+-- Stop the run: an error raised in a memory callback reaches only lsnes.log
+-- and lsnes keeps running, desynced.
+local function abort(message)
+    log("frame " .. tostring(movie.currentframe()) .. ": " .. message)
+    exec("quit-emulator")
+end
+
 local function read_request()
     while true do
         local line = io.stdin:read("*l")
         if line == nil or line == "Q" then exec("quit-emulator"); return end
         local op, rest = line:match("^(%a) ?(.*)$")
         if op == "S" then
-            local hex, flag = rest:match("^(%x+) (%d)$")
+            local hex, flag, ahead = rest:match("^(%x+) (%d) ?(%x*)$")
+            if hex == nil then abort("bad request: " .. line); return end
             pad, dump = tonumber(hex, 16), flag == "1"
+            next_pad = ahead ~= "" and tonumber(ahead, 16) or nil
+            if committed ~= nil and committed ~= pad then
+                abort(string.format("step pad %04x, announced %04x", pad, committed))
+            end
+            committed = nil
             return
         elseif op == "V" then
-            exec("save-state " .. rest)
+            save_path = rest
         elseif op == "R" then
+            if committed ~= nil then
+                abort("reset asked for after its frame's input was committed")
+                return
+            end
             reset_next = true
         elseif op == "W" then
             local offset, value = rest:match("^(%x+) (%x+)$")
@@ -124,8 +160,9 @@ local function read_request()
     end
 end
 
--- The record of this lsnes frame's cut, taken at the RTI and sent at the boundary.
-local captured = nil
+-- The record of this step's cut, taken at the RTI and sent at the boundary;
+-- owed: the boundary passed inside the NMI, so the RTI sends it.
+local captured, owed = nil, false
 
 -- kind: 0 NMI return, 1 vblank without NMI, 2 NMI still running.
 -- r: the CPU registers, as memory.getregisters() returns them.
@@ -133,7 +170,7 @@ local function capture(kind, pc, r)
     local parts = {
         "OHR1", u8(kind), u32(pc or 0), u8(nmi_reads > 0 and 1 or 0), u32(reads),
         wait_entry and (u8(1) .. u16(wait_entry[1]) .. u16(wait_entry[2])) or (u8(0) .. u16(0) .. u16(0)),
-        u8(0), u32(movie.currentframe()), u16(pad),
+        u8(0), u32(kind == 1 and movie.currentframe() or nmi_frame), u16(pad),
         u16(r.a), u16(r.x), u16(r.y), u16(r.s), u16(r.pc % 65536), u16(r.d),
         u8(r.pb), u8(r.db), u8(r.p), u8(r.e),
         u8(dump and 1 or 0),
@@ -148,7 +185,7 @@ local function capture(kind, pc, r)
     captured = table.concat(parts)
 end
 
--- One record per lsnes frame, at its boundary; then the next request.
+-- One record per step; then the next requests.
 local function send()
     local data = captured
     local file = assert(io.open(record_path, "wb"))
@@ -170,6 +207,10 @@ end
 -- PC is the interrupted instruction's address, the one the RTI returns to (an
 -- exec callback at that instruction would report one past it).
 memory.registerexec(BUS + NMI_RTI, function()
+    if dangling then
+        dangling, reads, wait_entry = false, 0, nil
+        return
+    end
     if not in_nmi then return end
     local r = memory.getregisters()
     if r.s ~= nmi_s then return end
@@ -180,6 +221,10 @@ memory.registerexec(BUS + NMI_RTI, function()
     r.pc, r.pb = nmi_pc % 65536, math.floor(nmi_pc / 65536)
     if math.floor(p / 16) % 2 == 1 then r.x, r.y = r.x % 256, r.y % 256 end
     capture(0, nmi_pc, r)
+    if owed then
+        owed = false
+        send()
+    end
 end)
 
 memory.registerexec(BUS + NMI, function()
@@ -187,7 +232,8 @@ memory.registerexec(BUS + NMI, function()
     local s = memory.getregisters().s
     nmi_s = s
     nmi_pc = stack_byte(s, 2) + stack_byte(s, 3) * 256 + stack_byte(s, 4) * 65536
-    in_nmi, nmi_reads = true, 0
+    in_nmi, nmi_reads, dangling = true, 0, false
+    nmi_frame = movie.currentframe()
 end)
 for _, bank in ipairs({0x00, 0x80}) do
     for address = 0x4218, 0x421F do
@@ -207,13 +253,22 @@ for _, entry in ipairs(WAIT_ENTRIES) do
 end
 
 on_input = guarded(function()
+    local frame_pad = committed or pad
     for index = 0, 11 do
-        input.set(0, index, math.floor(pad / 2 ^ (15 - index)) % 2)
+        input.set(0, index, math.floor(frame_pad / 2 ^ (15 - index)) % 2)
     end
     if reset_next then input.reset(); reset_next = false end
 end)
 
 on_frame_emulated = guarded(function()
+    if save_path ~= nil then
+        exec("save-state " .. save_path)
+        save_path = nil
+    end
+    if captured == nil and in_nmi and next_pad ~= nil then
+        owed, committed = true, next_pad
+        return
+    end
     if captured == nil then
         local r = memory.getregisters()
         if in_nmi then capture(2, nmi_pc, r) else capture(1, 0, r) end
