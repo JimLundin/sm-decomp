@@ -1106,12 +1106,12 @@ ticks = 1501
 facts = ["room:B32E", "probe:ridley.swoop_velocities"]
 
 # The file select's copy and clear (tools/authored_inputs.py file-copy-clear):
-# after the death row's movie words, quit from the game over menu, copy the
-# saved file to another slot and clear one.
+# after the death row's first 600 movie words, quit from the game over menu,
+# copy the saved file to another slot and clear one.
 [[scenario]]
 id = "file-copy-clear"
 start = "seed:63f0a5d9f7f38da95e78ec31ff64c94f2108f92b44c4652bcdf9661cb598d624"
-ticks = 3612
+ticks = 2230
 facts = ["state:26", "state:4", "probe:file_menu.confirm_copy", "probe:file_menu.copy_slot", "probe:file_menu.confirm_clear", "probe:file_menu.clear_slot"]
 
 # Enemy rows from 100% chain rooms (the full route's seeds and aligned movie
