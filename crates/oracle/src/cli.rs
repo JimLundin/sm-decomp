@@ -150,7 +150,7 @@ fn save_due(
 fn movie(arguments: &[String]) {
     let [rom, inputs, rest @ ..] = arguments else {
         fail(
-            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
+            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -162,6 +162,7 @@ fn movie(arguments: &[String]) {
     let mut lag_log: Option<Vec<[i64; 7]>> = None;
     let mut lag_mismatches = 0;
     let mut watch: Option<(usize, usize)> = None;
+    let mut trace: Option<(usize, usize, Vec<u32>)> = None;
     let mut spc = false;
     let mut positions_only = false;
     let mut profile: Option<(usize, usize)> = None;
@@ -252,6 +253,25 @@ fn movie(arguments: &[String]) {
                 };
                 watch = Some((number(), number()));
             }
+            "--trace" => {
+                let mut number = || {
+                    options
+                        .next()
+                        .and_then(|text| text.parse().ok())
+                        .unwrap_or_else(|| fail("--trace FROM TO PC,..."))
+                };
+                let (from, to) = (number(), number());
+                let pcs = options
+                    .next()
+                    .unwrap_or_else(|| fail("--trace FROM TO PC,..."))
+                    .split(',')
+                    .map(|pc| {
+                        u32::from_str_radix(pc, 16)
+                            .unwrap_or_else(|_| fail(format!("--trace: {pc}")))
+                    })
+                    .collect();
+                trace = Some((from, to, pcs));
+            }
             "--lag-log" => {
                 lag_log = Some(read_lag_log(Path::new(
                     options.next().unwrap_or_else(|| fail("--lag-log CSV")),
@@ -298,6 +318,10 @@ fn movie(arguments: &[String]) {
         profile: profile.is_some(),
         ..Tiers::default()
     });
+    if let Some((_, _, pcs)) = &trace {
+        // The door transition's function pointer and the step's beam marks.
+        oracle.set_watch(pcs, 0x099c);
+    }
     let mut history: std::collections::VecDeque<Box<[u8]>> = std::collections::VecDeque::new();
     let mut next_seed = 0;
     let (mut lag, mut overrun, mut no_nmi, mut synced, mut checked) = (0u64, 0u64, 0u64, 0, 0);
@@ -390,6 +414,30 @@ fn movie(arguments: &[String]) {
                 record.joypad_reads,
                 record.apu_log.len()
             );
+        }
+        if let Some((from, to, _)) = &trace
+            && (*from..=*to).contains(&frame)
+        {
+            println!(
+                "trace {frame}: state {:04x} door {:04x} wait {:?} cut {:?} hdmaen {:02x} dmap {:02x?}",
+                word(&record.wram, 0x0998),
+                word(&record.wram, 0x099c),
+                record.wait_entry,
+                record.cut,
+                record.ppu.hdmaen,
+                record
+                    .ppu
+                    .dma
+                    .iter()
+                    .map(|channel| channel[0])
+                    .collect::<Vec<u8>>()
+            );
+            for hit in &record.hits {
+                println!(
+                    "  hit {:08x} {} {} {:02x?}",
+                    hit.pc, hit.beam.v, hit.beam.h, hit.peek
+                );
+            }
         }
         if let Some((from, every)) = watch
             && frame >= from

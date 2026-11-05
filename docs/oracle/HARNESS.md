@@ -219,6 +219,11 @@ One record per video frame, lag or not. Record k is the closed interval
   watched instruction address reached. The APU log also carries the SPC700's
   own port writes and an SPC700 cycle stamp on each access, which the
   latency measurement uses. These extras are not digested.
+  Up to 32 watched addresses and 16384 hits a step; with a watch set, each
+  `$420B` write is a hit too (`0x01000000 | MDMAEN`, the first channel's DMAP,
+  B-bus address and size in the peek). `oracle movie --trace FROM TO PC,...`
+  prints them; on lsnes the server logs the same PCs to `OH_TRACE_LOG` when
+  `OH_TRACE` is set (MEASUREMENTS.md (k)).
 - **Profile (on request):** instructions executed per program bank.
 
 ## Inputs and starts

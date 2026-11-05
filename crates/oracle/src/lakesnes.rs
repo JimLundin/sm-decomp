@@ -812,8 +812,8 @@ impl Oracle for LakeSnes {
     }
 
     fn set_watch(&mut self, addresses: &[u32], peek: u32) {
-        let count = u32::try_from(addresses.len().min(8)).unwrap_or(8);
-        // SAFETY: the machine is live; the bridge copies at most 8 addresses.
+        let count = u32::try_from(addresses.len().min(32)).unwrap_or(32);
+        // SAFETY: the machine is live; the bridge copies at most 32 addresses.
         unsafe { ffi::oh_set_watch(self.machine, addresses.as_ptr(), count, peek) };
     }
 }
