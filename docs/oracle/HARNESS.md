@@ -169,8 +169,12 @@ The cut is now a callback that stays on the NMI handler's own RTI. The server
 finds it once from the ROM: the vector's `REP #$30; JML`, then the handler's
 one `PLY PLX PLA PLD PLB RTI`, at `$80:9601`. It takes the cut when S equals
 the NMI's S and derives the registers after the RTI: S+4, and P, PC and PB
-from the stack, with X and Y cut to 8 bits when that P has x set. PC stays one
-past the interrupted opcode, as lsnes reported it at the old cut.
+from the stack, with X and Y cut to 8 bits when that P has x set. PC is the
+interrupted instruction's address, the one the RTI returns to, as LakeSnes
+records it. It used to be one past it, as an exec callback at that
+instruction reports it (`$80:8344` and `$80:8347`, inside `LDA $05B4` and
+`BNE` of the wait loop); the cross-oracle report found it (MEASUREMENTS.md
+(f)). Records and ladder rungs cut before the fix differ in those two bytes.
 
 | Check | Result |
 | --- | --- |

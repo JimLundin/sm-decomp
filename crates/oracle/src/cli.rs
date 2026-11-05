@@ -6,6 +6,8 @@
 //! `oracle corpus ROM LOCK DATA [...]` runs the lock's rows and compares them.
 //! `oracle ladder-check ROM INPUTS DIR` checks that each rung of a movie's
 //!   ladder (`movie --ladder N DIR`), resumed, reproduces the next.
+//! `oracle cross ROM INPUTS [--frames A..B]` steps LakeSnes and lsnes with the
+//!   same pads from power-on and reports where their records differ.
 
 use crate::lakesnes::LakeSnes;
 use crate::{FrameRecord, NmiKind, Oracle, Start, Tiers};
@@ -533,6 +535,7 @@ pub fn main(arguments: &[String]) -> i32 {
         Some((command, rest)) if command == "derive-seed" => derive_seed(rest),
         Some((command, rest)) if command == "ladder-check" => return ladder_check(rest),
         Some((command, rest)) if command == "ladder-rung" => ladder_rung(rest),
+        Some((command, rest)) if command == "cross" => cross(rest),
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0
@@ -1018,4 +1021,127 @@ fn measure_movie(arguments: &[String]) {
     }
     println!("### {inputs}, frames 0-{} (from power-on)", frames - 1);
     print!("{}", measurements.report(&rom));
+}
+
+/// `cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B]`: step
+/// LakeSnes (left) and lsnes (right) from power-on with the movie's pads
+/// through step B (0-based, inclusive), and print for each step from A whether
+/// their records are equal or which parts differ (`crate::cross`), then the
+/// first differing step of each part. `--ranges` lists the differing address
+/// ranges of each memory at its first differing step, `--ranges-at` at every
+/// differing step in its window.
+fn cross(arguments: &[String]) {
+    use crate::cross::{Compare, Difference, Part, describe};
+    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B]";
+    let [rom, inputs, rest @ ..] = arguments else {
+        fail(usage)
+    };
+    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
+    let pads = crate::inputs::read(Path::new(inputs)).unwrap_or_else(|error| fail(error));
+    let last = u64::try_from(pads.len().saturating_sub(1)).unwrap_or(u64::MAX);
+    let steps = |text: Option<&String>| {
+        let (from, to) = text
+            .and_then(|text| text.split_once(".."))
+            .unwrap_or_else(|| fail(usage));
+        let (Ok(from), Ok(to)) = (from.parse::<u64>(), to.parse::<u64>()) else {
+            fail(usage)
+        };
+        from..=to.min(last)
+    };
+    let mut range = 0..=last;
+    let mut first_ranges = false;
+    let mut ranges_at: Option<std::ops::RangeInclusive<u64>> = None;
+    let mut options = rest.iter();
+    while let Some(option) = options.next() {
+        match option.as_str() {
+            "--frames" => range = steps(options.next()),
+            "--ranges" => first_ranges = true,
+            "--ranges-at" => ranges_at = Some(steps(options.next())),
+            _ => fail(usage),
+        }
+    }
+    let start = Start::PowerOn { wram_fill: 0x55 };
+    let mut left =
+        crate::Backend::open("lakesnes", &rom, start.clone()).unwrap_or_else(|error| fail(error));
+    left.set_tiers(Tiers {
+        picture: false,
+        apu_log: false,
+        ..Tiers::default()
+    });
+    let mut right = crate::Backend::open("lsnes", &rom, start).unwrap_or_else(|error| fail(error));
+    println!(
+        "cross: left {} {}, right {} {}, steps {}..={}",
+        left.identity().emulator,
+        left.identity().version,
+        right.identity().emulator,
+        right.identity().version,
+        range.start(),
+        range.end()
+    );
+    let mut compare = Compare::default();
+    let mut first: std::collections::BTreeMap<Part, (u64, Difference)> =
+        std::collections::BTreeMap::new();
+    let mut frames_differing: std::collections::BTreeMap<Part, u64> =
+        std::collections::BTreeMap::new();
+    let mut equal = 0u64;
+    let started = Instant::now();
+    for (step, &pad) in (0..=*range.end()).zip(&pads) {
+        let a = left.step(pad).unwrap_or_else(|error| fail(error)).clone();
+        let b = right.step(pad).unwrap_or_else(|error| fail(error));
+        let differences = compare.frame(&a, b);
+        if !range.contains(&step) {
+            continue;
+        }
+        if differences.is_empty() {
+            equal += 1;
+            println!("{step} equal");
+            continue;
+        }
+        let parts: Vec<String> = differences.iter().map(describe).collect();
+        println!("{step} {}", parts.join("; "));
+        for difference in differences {
+            *frames_differing.entry(difference.part).or_default() += 1;
+            let is_first = !first.contains_key(&difference.part);
+            if ((first_ranges && is_first)
+                || ranges_at
+                    .as_ref()
+                    .is_some_and(|window| window.contains(&step)))
+                && let (Some(left_bytes), Some(right_bytes)) =
+                    (difference.part.bytes(&a), difference.part.bytes(b))
+            {
+                let ranges = crate::cross::ranges(&left_bytes, &right_bytes);
+                println!(
+                    "  {} at {step}: {} ranges",
+                    difference.part.name(),
+                    ranges.len()
+                );
+                for &(start, end, count) in ranges.iter().take(40) {
+                    let shown = start..(end + 1).min(start + 16);
+                    println!(
+                        "    {start:05x}-{end:05x} {count} bytes: left {:02x?} right {:02x?}",
+                        left_bytes.get(shown.clone()).unwrap_or_default(),
+                        right_bytes.get(shown).unwrap_or_default()
+                    );
+                }
+            }
+            first.entry(difference.part).or_insert((step, difference));
+        }
+    }
+    let compared = range.end().saturating_sub(*range.start()) + 1;
+    println!(
+        "summary: {equal} of {compared} steps equal, in {:.1} s; video frame offset (right less left) {}",
+        started.elapsed().as_secs_f64(),
+        compare.frame_offset().unwrap_or_default()
+    );
+    for part in Part::ALL {
+        match first.get(&part) {
+            Some((step, difference)) => println!(
+                "  {:<12} first differs at {step}, on {} steps: {}",
+                part.name(),
+                frames_differing.get(&part).copied().unwrap_or_default(),
+                describe(difference)
+            ),
+            None => println!("  {:<12} equal throughout", part.name()),
+        }
+    }
 }

@@ -167,8 +167,8 @@ end
 -- The cut: the handler's RTI with S back at the NMI's S, so the RTI returns to
 -- the interrupted instruction. The record holds the registers after the RTI:
 -- it pops P, PC and PB, and with P.x set the index registers' high bytes clear.
--- PC is one past the interrupted opcode, as lsnes reports it in an exec
--- callback at that instruction, where records were taken before.
+-- PC is the interrupted instruction's address, the one the RTI returns to (an
+-- exec callback at that instruction would report one past it).
 memory.registerexec(BUS + NMI_RTI, function()
     if not in_nmi then return end
     local r = memory.getregisters()
@@ -177,7 +177,7 @@ memory.registerexec(BUS + NMI_RTI, function()
     if captured ~= nil then return end
     local p = stack_byte(nmi_s, 1)
     r.s, r.p = (nmi_s + 4) % 65536, p
-    r.pc, r.pb = (nmi_pc + 1) % 65536, math.floor(nmi_pc / 65536)
+    r.pc, r.pb = nmi_pc % 65536, math.floor(nmi_pc / 65536)
     if math.floor(p / 16) % 2 == 1 then r.x, r.y = r.x % 256, r.y % 256 end
     capture(0, nmi_pc, r)
 end)
