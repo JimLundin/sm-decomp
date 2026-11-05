@@ -181,6 +181,13 @@ def main() -> int:
                 continue
             locked = scenario.read_lock(root, fresh).entries.get(row)
             entries = fresh
+            # The verifier's recorded lines (digests only), so the entry can be committed.
+            import difflib
+            added = [line[1:] for line in difflib.ndiff(
+                pathlib.Path("scenarios/lock.toml").read_text().splitlines(),
+                fresh.read_text().splitlines()) if line.startswith("+ ")]
+            for line in added:
+                print(f"{row}: LOCK+ {line[1:]}", flush=True)
         start = work / f"{row}.start"
         environment = dict(os.environ, SM_EXPORT_START=str(start))
         run(VERIFY + ["--segment", row, "--mode", "check-lock", "--lock", str(entries)],
