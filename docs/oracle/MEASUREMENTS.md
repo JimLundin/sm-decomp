@@ -338,3 +338,93 @@ the pad's meaning), sub-instruction NMI timing in the wait loop (`cut`,
 `cpu`, the stack page), and sound timing (`$0641`, then one frame from 1342).
 So LakeSnes's memories are lsnes's only up to these, and only up to 1341
 without a shift.
+
+## (g) MesenCE as a third vote: frame 1342 and the later lag
+
+MesenCE is the maintained fork of Mesen 2 and GPL-3, so we run its released
+binary as a separate process and never link or copy its code
+([ACCURACY](ACCURACY.md), "What would settle 1342").
+
+**Binary.** MesenCE 2.2.1 (tag `2.2.1`, commit
+`20ba206cef5ba207c21203176d02cb9f43dda9fb`, released 2026-06-05),
+`https://github.com/nesdev-org/MesenCE/releases/download/2.2.1/Mesen_2.2.1_Windows.zip`,
+zip sha256 `c19e10b3b3865eb0e86e4d01bf09a5027a4452081c04b5bd5b6cbbf76e346fd6`,
+`Mesen.exe` sha256 `8ef403d6b9af32075416193914d7993ce8480b347fe1f20a0cfd9815374933e7`.
+Unpacked in `%LOCALAPPDATA%/sm-decomp-tools/mesence-2.2.1/`; it runs from a
+copy in `mesence-2.2.1-run/` beside a `settings.json` of `{}`, which makes it
+portable (without one it opens its setup window).
+
+**Command.** [`tools/oracle/mesen_lag_log.lua`](../../tools/oracle/mesen_lag_log.lua)
+feeds the `.inputs` pads from `inputPolled` (pad k to the k-th poll) and
+writes one row per frame at `startFrame` (line 0) in the column layout of
+`tools/lsnes_lag_log.lua`, plus `$0641`, the line of the frame's last `$05B8`
+write and the line the main loop entered its NMI wait (`$80:8338`):
+
+```
+rm -rf mesence-2.2.1-run/Saves
+SM_MESEN_INPUTS=movies/any.inputs SM_MESEN_LOG=out.csv SM_MESEN_FRAMES=9001 \
+  mesence-2.2.1-run/Mesen.exe --testRunner --timeout=150 --doNotSaveSettings \
+  --debug.scriptWindow.allowIoOsAccess=true --snes.port1.type=SnesController \
+  --snes.ramPowerOnState=AllZeros --snes.spcClockSpeedAdjustment=40 \
+  tools/oracle/mesen_lag_log.lua rom/sm.smc
+```
+
+9001 frames take 76 s (about 120 frames/s; lsnes is at 29). With `Saves/`
+cleared each run, two runs give the same file. Mesen keeps the cartridge's
+SRAM in `Saves/sm.srm` between runs, and a kept save sends the boot through
+other SRAM checks in bank `$81` from frame 268: clear it every time.
+
+We compared the rows with the lsnes lag log of the movie
+(`any-boundary/lag.csv` from the seeds bundle) and, through
+`oracle movie ROM INPUTS --frames 9001 --oracle lakesnes --lag-log out.csv`,
+with LakeSnes (`9db90b8`, fix 0001). Column: `$05B6`/`$05B8`/lag flag after
+the step. Line: Mesen's line of the `$05B8` write (`-1`: no write that frame).
+
+| Step | lsnes | LakeSnes | Mesen +40 | Mesen +41 | Line (+40/+41) | Agrees with |
+| --- | --- | --- | --- | --- | --- | --- |
+| 303 | 1/46/1 | 1/46/1 | 1/46/1 | 1/46/1 | -1/-1 | all |
+| 396 | 51/139/1 | 52/140/0 | 52/140/0 | 52/140/0 | 249/249 | LakeSnes |
+| 400 | 52/143/1 | 53/144/0 | 53/144/0 | 53/144/0 | 249/249 | LakeSnes |
+| 472 | 117/215/1 | 118/216/0 | 118/216/0 | 118/216/0 | 249/249 | LakeSnes |
+| 1290 | 824/1033/1 | 825/1034/0 | 825/1034/0 | 825/1034/0 | 249/249 | LakeSnes |
+| 1341 | 841/1085/1 | 841/1085/1 | 841/1085/1 | 841/1085/1 | 225/225 | all |
+| 1342 | 841/1085/1 | 842/1086/0 | 842/1086/0 | 842/1086/0 | 249/249 | LakeSnes |
+| 8465 | 7779/8125/0 | (as +40) | 7778/8125/1 | 7779/8125/0 | 225/236 | +41 with lsnes |
+| 8469 | 7782/8128/1 | (as +40) | 7782/8129/0 | 7782/8128/1 | 236/-1 | +41 with lsnes |
+
+Through frame 9000, LakeSnes and Mesen +40 agree on all three words but at
+8421 (`$05B8` one less on LakeSnes); the other rows the harness prints are
+game-state and position samples a step apart at transitions. +40 and +41
+agree with each other through 8464, `$0641` aside.
+
+**1342 is lsnes's cut, not a lag.** At every step from 21 to 9000, Mesen +41
+equals lsnes when its `$05B8` write is on line 240 or earlier (2005 steps), and
+is one ahead in both counters when the write is on line 241 or later (6975
+steps). There is no exception. So lsnes records the frame at line 241, before a
+long NMI's counter writes and joypad read (its lag flag is set on those
+steps); LakeSnes and Mesen record after the RTI. Both counters move together,
+so no NMI is lost or gained: the "one frame behind for good" from 1342 is
+the NMI after the boot upload running to line 249 on every step, which
+straddles lsnes's cut, on all three emulators. The upload itself ends with
+room to spare: Mesen's main loop reaches its wait at line 183 (+40) or 175
+(+41) of step 1342, 42 lines before vblank, so the SPC rate does not decide it.
+
+**The real lasting lag is at 8465, and it is the SPC clock.** At 8465 Mesen
++40 has a lag frame that lsnes and +41 don't. +40, like LakeSnes, then
+desyncs from the movie: Samus's X differs from step 8643 (LakeSnes: 8567).
++41 stays in sync with lsnes through 9000: two single-step samples at room
+transitions (8506, 8788) differ beyond a one-step shift. lsnes's 32040.5 Hz
+lies between +40 (32040) and +41 (32041), and here the movie needs the
+upper side.
+
+**Verdict, by the rule in ACCURACY.** At 1342 MesenCE agrees with LakeSnes,
+so we do not need a LakeSnes fix 0002 for port sync: the difference is lsnes's,
+and it is in its cut, not in bsnes v085's game timing. We record it as
+`LEGACY(oracle)`: lsnes rows are cut at line 241, and a NMI whose writes
+pass that line shows one step later. A comparison that cuts at the RTI, or
+at a fixed line after vblank, removes it. The lag that persists, at 8465,
+goes with the SPC rate. The candidate for LakeSnes is a rate closer to
+32040.5 Hz (a revision of fix 0001), not a port latch. Steps 3 and 4 of
+ACCURACY's list (the rate sweep and ares) are still open. The threshold
+between 32040 and 32041 Hz at 8465 already shows that lag there depends on
+the console's clock.
