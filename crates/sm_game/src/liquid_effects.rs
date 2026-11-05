@@ -150,7 +150,7 @@ pub fn lava_surface<H: Host + ?Sized>(hdma_index: usize, handler_carry: bool, ga
         fx.blending = fx_value;
         game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
     };
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0 {
+    if game.session().timing.time_frozen == 0 {
         let Stepped { words, camera } =
             step_liquid(game, crate::liquid::Surface::LavaAcid, handler_carry);
         {
@@ -195,7 +195,7 @@ pub fn water_surface<H: Host + ?Sized>(hdma_index: usize, handler_carry: bool, g
         fx.blending = fx_value;
         game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
     };
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         return;
     }
     let Stepped { words, camera } = step_liquid(game, crate::liquid::Surface::Water, handler_carry);
@@ -300,8 +300,7 @@ pub fn lava_background<H: Host + ?Sized>(
         WordOrder::Little,
         crate::menus::prelude::display_scroll!(game.Bg2V),
     );
-    let active =
-        crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0 && liquid_words(game).options & 6 != 0;
+    let active = game.session().timing.time_frozen == 0 && liquid_words(game).options & 6 != 0;
     let horizontal = active && liquid_words(game).options & 2 == 0;
     use crate::display::video::{Axis, Background, Command, ScrollOffset};
     // The slot's low byte is its channel's register offset, the channel times 16.
@@ -351,7 +350,7 @@ pub fn water_background<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
         WordOrder::Little,
         crate::menus::prelude::display_scroll!(game.Bg2H),
     );
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         water_flat(game);
     } else if liquid_words(game).options & 2 == 0 {
         crate::hdma_word!(game, hdma_index, Channels => 0);

@@ -127,7 +127,7 @@ pub fn instruction<L: Lease + ?Sized>(
             return branch(far, script);
         }
         0xa6_f66a => return branch((game.area_boss_flags() & 1) == 0, script),
-        0xa6_f678 => return branch(crate::sequence_word!(game.CERES_STATUS) == 0, script),
+        0xa6_f678 => return branch(game.session().room.ceres_status == 0, script),
         0xa6_f68b => change_properties(k, INTANGIBLE, 0, game),
         0xa6_f695 => change_properties(k, 0, INTANGIBLE, game),
         0xa6_f6a6 => change_properties(k, INVISIBLE, 0, game),
@@ -243,7 +243,7 @@ pub fn initialize_door<L: Lease + ?Sized>(game: &mut L) {
         *door.drawn_by_ridley() = 0;
     }
     load_overlay_tiles(game.current_enemy(), game);
-    let palette = if crate::sequence_word!(game.CERES_STATUS) != 0 {
+    let palette = if game.session().room.ceres_status != 0 {
         ESCAPE_DOOR_PALETTE.wrapping_add(2)
     } else {
         if Door::of(game, e).kind() == RIDLEYS_ROOM_FACING_RIGHT {
@@ -297,7 +297,7 @@ pub fn door_main<L: Lease + ?Sized>(game: &mut L) {
 /// Handle Ceres door earthquake during escape ($A6:F773): a rare stronger
 /// earthquake type replaces `earthquake`.
 pub fn escape_rumble<L: Lease + ?Sized>(earthquake: u16, game: &mut L) {
-    if crate::sequence_word!(game.CERES_STATUS) >= ESCAPE_STARTED
+    if game.session().room.ceres_status >= ESCAPE_STARTED
         && game.session().feedback.earthquake_timer == 0
     {
         let (timer, kind) = if (game.session().timing.random_number & 0xfff) < 0x80 {
@@ -321,7 +321,7 @@ pub fn mode7_wall<L: Lease + ?Sized>(game: &mut L) {
         0,
         game,
     );
-    if crate::sequence_word!(game.CERES_STATUS) & RIDLEY_ESCAPING != 0 {
+    if game.session().room.ceres_status & RIDLEY_ESCAPING != 0 {
         let door = current(game);
         DoorEdit::of(game, door).actor().palette = 3584;
         change_properties(
@@ -337,7 +337,7 @@ pub fn mode7_wall<L: Lease + ?Sized>(game: &mut L) {
 /// elevator animates; once the escape starts, 48 frames of rumbling.
 pub fn elevator_default<L: Lease + ?Sized>(k: u16, game: &mut L) {
     elevator_animations(game);
-    if crate::sequence_word!(game.CERES_STATUS) >= ESCAPE_STARTED {
+    if game.session().room.ceres_status >= ESCAPE_STARTED {
         {
             let mut door = DoorEdit::of(game, k);
             *door.function() = door_function::RUMBLING_AND_EXPLOSIONS;
@@ -402,7 +402,7 @@ pub fn rumbling_and_explosions<L: Lease + ?Sized>(k: u16, game: &mut L) {
 
 /// Set Ceres elevator room to rotate if Ridley has escaped ($A6:F67F).
 pub fn start_elevator_rotation<L: Lease + ?Sized>(game: &mut L) {
-    if crate::sequence_word!(game.CERES_STATUS) != 0 {
+    if game.session().room.ceres_status != 0 {
         crate::sequence_word!(game.CERES_STATUS = ELEVATOR_ROTATING);
     }
 }

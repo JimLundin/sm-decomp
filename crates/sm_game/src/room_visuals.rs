@@ -216,7 +216,7 @@ pub fn advance_tourian_statue<H: StatueHost>(
             }
         }
         Sinking => {
-            if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+            if game.session().timing.time_frozen != 0 {
                 return;
             }
             // A is the fraction and B the whole of the statue's scroll offset.
@@ -233,8 +233,8 @@ pub fn advance_tourian_statue<H: StatueHost>(
         }
         Finished => finish_statue_animation(game.session_mut()),
     }
-    let scroll = crate::sequence_word!(game.LAYER1_Y_POS)
-        .wrapping_add(crate::hdma_word!(game, hdma_index, B));
+    let scroll =
+        game.session().room.camera.layer1[1].wrapping_add(crate::hdma_word!(game, hdma_index, B));
     game.store_source_word(LiveOwner::WindowLeft, 0, native_order(), scroll);
 }
 
@@ -334,7 +334,7 @@ where
         fx.blending = fx_value;
         game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
     };
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         return;
     }
     // The effect ran on a nested lease of the game; it runs on this one.

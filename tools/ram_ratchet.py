@@ -65,7 +65,7 @@ BASELINE = {
     # decoding behind them slows every replay.
     "engine_ram_address_sites": 19,
     "engine_raw_ram_calls": 0,
-    "engine_unresolved_ram_methods": 1031,
+    "engine_unresolved_ram_methods": 1030,
     "legacy_engine_ram_sites": 319,  # 320 was set by hand; main 2fb64f221 measures 321
     # Original-game overflow paths (LEGACY(original-overflow)).
     # Rebaselined 2026-11-04: 61 -> 75. Every new site is an original-game
@@ -84,13 +84,13 @@ BASELINE = {
     # gameplay_word! read and store typed Session-backed keys, not RAM, so
     # sm_game_ram_sites does not count them. They are still a word bag named
     # after RAM words rather than domain fields.
-    "session_word_view_sites": 204,
+    "session_word_view_sites": 187,
     # The Session <-> RAM codec in sm_game (docs/handoff/session-compare.md).
     # First measured on 0b19d8a24.
     "engine_ram_export_lines": 4620,
     # Code volume (sm_pipeline volume), first measured on 7bf8f9f51. Advisory.
     "engine_logic_tokens": 1225258,
-    "engine_data_tokens": 52807,
+    "engine_data_tokens": 52755,
     "engine_traits": 338,
     "engine_blanket_impls": 87,
 }

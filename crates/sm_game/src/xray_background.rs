@@ -513,7 +513,7 @@ pub fn restore_right<H: Host>(game: &mut H) {
 }
 pub fn finish_restore<H: Host>(hdma_index: usize, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
         stop_demo(0, game);
         restore_hdma_table(game);

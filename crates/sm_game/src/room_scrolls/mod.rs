@@ -317,7 +317,7 @@ pub fn update_map<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn update_scrolls<H: Host + ?Sized>(game: &mut H) {
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         return;
     }
     let camera = game.session().room.camera;

@@ -2830,7 +2830,7 @@ impl sm_game::sprite_output::SpriteWords for Runtime<'_> {
     }
     fn samus_pose(&self) -> u16 {
         let game = self;
-        sm_game::sequence_word!(game.SAMUS_POSE)
+        game.session().player.pose
     }
 }
 impl sm_game::sprite_output::SpriteHost for Runtime<'_> {}
