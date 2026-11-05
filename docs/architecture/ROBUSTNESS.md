@@ -262,6 +262,28 @@ typed items and events, `StartDefinition`, `GameplayProfile` presets, the import
 | Speedrun autosplitters | events derived from projections (room entered, boss defeated) | `app` | no |
 | Live content editing (hot reload) | reopen at the current room with `Start::Arrival` and the carried State, keyed by stable keys (CONTRACTS' gameplay reload) | tools | no |
 
+## 8a. Adjusted and new behaviours (the thesis, Jim 2026-11-05)
+
+Jim's thesis (PRINCIPLES): the engine models the game's behaviour, so behaviours can be
+reproduced, adjusted, added or removed. His examples are the space jump timing window and
+respin. Map Rando ships both (`infinite_space_jump`, `respin`), along with
+`momentum_conservation` and others (map-rando-requirements.md).
+
+| Behaviour | Kind | How | Foundation change |
+| --- | --- | --- | --- |
+| Space jump timing window | adjust | The window is a named value in Samus's movement rules (`rules.movement.space_jump`). Vanilla's value comes from the original. A lenient window is a different value. | no |
+| Respin (spin again in mid-air after the spin is broken) | add | A new transition in Samus's movement state machine, enabled by a `GameplayProfile` field. With the field off, the transition doesn't exist and vanilla digests are unchanged. | no |
+| Momentum conservation, lag off, quick transitions | adjust or remove | A modelled behaviour with a profile value (D8, D19) | no |
+
+**What this requires of each domain's design.** When a domain's cluster starts, its design
+lists its behaviours as a catalogue before code. Samus is the first and largest. Each entry
+has a name, the routine it models, and the parameters it exposes as rule values. An
+adjustable behaviour must be one unit: one transition, one rule value or one table entry. It
+must not be a condition spread through several routines. Review question: "could a player
+option change or remove this behaviour by changing one value or one entry?" When the answer
+is no for a behaviour players care about, the model is reshaped before it lands. This is
+what keeps the thesis true as the engine grows (P20, P17, P16).
+
 ## 9. A feature that would need a foundation change
 
 **Two Samuses in one world (local co-op).** The State has one Samus, and many rules read "the"
