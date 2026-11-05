@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 
 pub mod audio;
+pub mod outbox;
 pub mod rendering;
 pub mod scene;
 

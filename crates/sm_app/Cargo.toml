@@ -16,10 +16,18 @@ required-features = ["frontend"]
 [features]
 default = ["frontend"]
 frontend = ["dep:sm", "dep:gl", "dep:sdl2-sys"]
+slice = ["dep:sm_host", "dep:sdl2-sys"]
+
+# The Gate 1 slice: one window, one sound device, no compatibility runtime.
+[[bin]]
+name = "sm_slice"
+path = "src/slice/main.rs"
+required-features = ["slice"]
 
 # The compatibility runtime stays a dependency until it is replaced.
 [dependencies]
 sm = { path = "../../sm", features = ["frontend"], optional = true }
+sm_host = { path = "../sm_host", optional = true }
 sm_game = { path = "../sm_game" }
 sm_runtime = { path = "../sm_runtime" }
 sm_data = { path = "../sm_data" }

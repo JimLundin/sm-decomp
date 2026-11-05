@@ -255,7 +255,6 @@ start = "seed:683b99270f4445a643b13de71614ce5c34e1a6aae9e34d16431f5194243ff939"
 ticks = 1200
 facts = ["item:morph-ball", "room:9E9F", "probe:coroutine.plm.message.completed"]
 tags = ["required"]
-unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
 
 [[scenario]]
 id = "item-bombs"

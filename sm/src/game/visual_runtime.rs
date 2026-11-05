@@ -8,6 +8,7 @@ pub(crate) use sm_game::room_visuals::{
     initialize_tourian_statue, initialize_weather,
 };
 
+#[cfg(not(sm_host))]
 pub(crate) use crate::game::visual_checks::{
     check_animation_guard, check_palette_guard, samus_observer,
 };

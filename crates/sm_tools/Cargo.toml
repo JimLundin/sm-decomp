@@ -10,6 +10,17 @@ description = "Super Metroid verification tooling: scenario observations, their 
 # sm, and any target package depending on this one.
 [dependencies]
 sm_game = { path = "../sm_game" }
+sm_data = { path = "../sm_data" }
+sm_host = { path = "../sm_host", optional = true }
+sm_runtime = { path = "../sm_runtime", optional = true }
+
+[features]
+replay = ["dep:sm_host", "dep:sm_runtime"]
+
+[[bin]]
+name = "sm_replay"
+path = "src/bin/sm_replay/main.rs"
+required-features = ["replay"]
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }

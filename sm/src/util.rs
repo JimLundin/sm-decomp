@@ -6,7 +6,7 @@ pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
 
 // Preserve the native lexical policy: directory bytes plus the full new name.
 // Absolute names, dots and slash styles are copied without normalization.
-#[cfg(all(not(sm_verify_dll), feature = "frontend"))]
+#[cfg(all(not(sm_verify_dll), not(sm_host), feature = "frontend"))]
 pub fn include_path(base: &core::ffi::CStr, name: &core::ffi::CStr) -> std::ffi::CString {
     let base = base.to_bytes();
     let name = name.to_bytes_with_nul();
@@ -67,6 +67,7 @@ pub fn read_up_to(source: &mut impl std::io::Read, buffer: &mut [u8]) -> usize {
     filled
 }
 
+#[cfg(not(sm_host))]
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
     fn sm_util_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
@@ -80,6 +81,7 @@ unsafe extern "C-unwind" fn sm_util_die(message: *const c_char) {
     }
 }
 
+#[cfg(not(sm_host))]
 #[doc(hidden)]
 pub fn native_source_matches() -> bool {
     [

@@ -1364,6 +1364,14 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 .reverse_bits();
             seed::load(std::path::Path::new(path), game, first_input, &rom)?;
         }
+        // The prepared start the slice opens: this oracle-side import is the
+        // only step that runs the CPU (Gate 1, decision 1).
+        if let Ok(path) = std::env::var("SM_EXPORT_START") {
+            std::fs::write(&path, checkpoint::capture(game)?)
+                .map_err(|error| format!("{path}: {error}"))?;
+            eprintln!("Prepared start exported: {path}");
+            return Ok(0);
+        }
         let frames = frame_limit.unwrap_or(inputs.len() - first);
         let end = first
             .checked_add(frames)

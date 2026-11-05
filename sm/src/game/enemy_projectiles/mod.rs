@@ -78,6 +78,7 @@ pub fn reset_room_metadata(game: &mut Game) {
     with_execution(game, |ctx| drops::reset_room_metadata(ctx));
 }
 
+#[cfg(not(sm_host))]
 #[path = "../../verification/enemy_projectiles_candidate.rs"]
 pub(crate) mod checks;
 
@@ -85,7 +86,9 @@ pub fn reset_room_enemy_workspace(game: &mut Game) {
     with_execution(game, |ctx| ctx.reset_room_enemy_workspace());
 }
 
+#[cfg(not(sm_host))]
 #[path = "../../verification/native_content_checks.rs"]
 pub(crate) mod native_content_checks;
+#[cfg(not(sm_host))]
 #[path = "../../verification/reset_metadata_checks.rs"]
 pub(crate) mod reset_metadata_checks;

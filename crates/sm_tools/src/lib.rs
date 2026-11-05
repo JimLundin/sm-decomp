@@ -11,4 +11,6 @@ pub mod free_run;
 pub mod lockstep;
 pub mod observation;
 pub mod session_compare;
+#[cfg(feature = "replay")]
+pub mod slice;
 pub mod trace;

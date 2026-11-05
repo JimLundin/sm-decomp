@@ -296,6 +296,8 @@ pub mod c_library;
 /// Frame runner and the per-frame comparison against the original ROM.
 pub mod cpu_infra;
 mod initial_state;
+#[cfg(sm_verify_dll)]
+mod lock_masks;
 /// The verification host over the oracle's work RAM and backend.
 #[path = "verification/oracle_host.rs"]
 pub(crate) mod oracle_host;

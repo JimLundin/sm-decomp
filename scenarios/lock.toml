@@ -7818,6 +7818,18 @@ digests = { "wram" = "f06373fb4b05620b", "sram" = "c0daad7518d2be61", "vram" = "
 marks = {  }
 
 [[scenario]]
+id = "item-morph-ball"
+oracle = "faithful"
+start = "seed:683b99270f4445a643b13de71614ce5c34e1a6aae9e34d16431f5194243ff939"
+inputs = "3091dcd8621efbdadf285cb42ba548d3eaae6d96bae5837c19d1f76fbafbb8e8"
+frames = 1200
+format = 1
+ticks = 1200
+combined = "cf4739b8f2b8bb6a"
+digests = { "wram" = "b54bdf640b865378", "sram" = "9c1ede4cc830d095", "vram" = "da7ef2b0e9d22fcd", "cgram" = "0336d406c9826230", "oam" = "d48a518789a482a8", "ppu" = "1f73115dcc88d522", "video" = "71172ef9ed6fd0d8", "apu" = "576ea35ce95062b5", "input" = "f41ac4266d5370f8", "samus" = "87dd31d6bb0e7187", "camera" = "6a9241e499c69ca6", "room" = "eb49bf63c1279df4", "progress" = "f49898e1dc00c1f7", "actors" = "2f14b7f375eb0429", "effects" = "4cc6a50376c1f5eb", "session_loop" = "8431d6bc852cc864", "session_actors" = "46eca02e144a1b28", "session_player" = "490b1e6f7bf43f67", "session_room" = "35a47d1273e25e2a", "session_display" = "647e7feb4eae4f8b", "session_menus" = "4d3d4dcabc672c38", "session_save" = "8172c57d74b4d57b", "session_scratch" = "a9e0d00f54e19a20" }
+marks = { "1000" = "4bed024d4ecfe888" }
+
+[[scenario]]
 id = "item-wave"
 oracle = "faithful"
 start = "seed:cf9249a38227658aae6216cfa495663e8f3de653b2a0cd06bd981e56cff22bf6"
