@@ -619,6 +619,10 @@ def inventory_sites(text: str) -> list[tuple[int, int, str, str]]:
 
 def inventory_scope(path: str) -> tuple[str, str]:
     """Physical classification retained across the target-package migration."""
+    # sm_host is the old game's host with its emulators removed, not a target
+    # package: its sources are classified as if they were still under sm/src.
+    if path.startswith("crates/sm_host/src/"):
+        path = "sm/src/" + path.removeprefix("crates/sm_host/src/")
     parts = path.split("/")
     if "verification" in parts or "verify" in parts or parts[-1].startswith("verify") or "sm_tools" in parts:
         return "verification", "verification"

@@ -111,41 +111,32 @@ def diagnose(row: str, entries: pathlib.Path, content: pathlib.Path, sealed: pat
 
 
 def windowed(row: str, content: pathlib.Path, sealed: pathlib.Path, inputs: pathlib.Path,
-             ticks: int, replayed: dict, work: pathlib.Path) -> bool:
-    """The windowed app on the same row, headless, against sm_replay's run of it."""
-    out = work / f"{row}-window.toml"
+             ticks: int, work: pathlib.Path) -> bool:
+    """The windowed app on the same row, headless, against sm_replay's run of it,
+    compared Tick by Tick on every machine stream's digest."""
+    logs = {side: work / f"{row}-{side}-digests.txt" for side in ("window", "replay")}
+    for path in logs.values():
+        path.unlink(missing_ok=True)
     command = ["xvfb-run", "-a", "target/release/sm_slice", str(content), str(sealed),
-               "--inputs", str(inputs), "--ticks", str(ticks), "--lock-out", str(out),
+               "--inputs", str(inputs), "--ticks", str(ticks), "--digests-out", str(logs["window"]),
                "--save", str(work / f"{row}-window.srm")]
     environment = dict(os.environ, SDL_AUDIODRIVER="dummy")
     shown = run(command, env=environment)
     print(f"{row}: sm_slice exit {shown.returncode}: {shown.stdout.strip()[-400:]}"
           f" {shown.stderr.strip()[-400:]}", flush=True)
-    if shown.returncode or not out.exists():
+    if shown.returncode:
         return False
-    with out.open("rb") as file:
-        entry = tomllib.load(file)
-    differing = check(row, replayed, entry)
-    if entry.get("combined") != replayed.get("combined"):
-        differing.append("combined")
-    if not differing:
-        print(f"{row}: sm_slice MATCHES sm_replay on {len(MACHINE)} streams"
-              f" ({entry['ticks']} ticks)", flush=True)
-        return True
-    print(f"{row}: sm_slice DIFFERS from sm_replay in {', '.join(differing)}"
-          f" ({entry['ticks']} and {replayed['ticks']} ticks)", flush=True)
-    # The first differing Tick, from both sides' per-Tick digest logs.
-    logs = {side: work / f"{row}-{side}-pair.log" for side in ("window", "replay")}
-    for path in logs.values():
-        path.unlink(missing_ok=True)
-    run(command, env=dict(environment, SM_DIGEST_LOG=str(logs["window"])))
-    run(["target/release/sm_replay", "one", str(content), str(sealed), str(inputs), str(ticks)],
-        env=dict(os.environ, SM_DIGEST_LOG=str(logs["replay"])))
+    run(["target/release/sm_replay", "one", str(content), str(sealed), str(inputs), str(ticks),
+         str(logs["replay"])])
     left, right = (logs[side].read_text().splitlines() if logs[side].exists() else []
                    for side in ("window", "replay"))
     first = next((a.split()[0] for a, b in zip(left, right) if a != b), None)
-    print(f"{row}: digest logs {len(left)} and {len(right)} ticks; first differing tick: {first}",
-          flush=True)
+    if first is None and len(left) == len(right) == ticks:
+        print(f"{row}: sm_slice MATCHES sm_replay on all {len(MACHINE)} machine streams at every Tick"
+              f" ({ticks} ticks)", flush=True)
+        return True
+    print(f"{row}: sm_slice DIFFERS from sm_replay: digest logs {len(left)} and {len(right)}"
+          f" of {ticks} ticks; first differing tick: {first}", flush=True)
     return False
 
 
@@ -210,8 +201,7 @@ def main() -> int:
         print(f"{row}: {'MATCHES the oracle on ' + str(len(MACHINE)) + ' streams' if not differing else 'DIFFERS in ' + ', '.join(differing)}"
               f" ({entry['ticks']} ticks)", flush=True)
         failed += bool(differing)
-        if row in args.slice and not windowed(row, content, sealed, inputs, locked["ticks"],
-                                              entry, work):
+        if row in args.slice and not windowed(row, content, sealed, inputs, locked["ticks"], work):
             window_failed += 1
         if differing and diagnosed < 3:
             diagnosed += 1

@@ -71,12 +71,18 @@ jobs:
           # The verification tooling reads the target packages, never sm.
           deps=$(cargo tree -p sm_tools -e normal --prefix none --format '{p}' | tail -n +2 | grep -Ev '^(sm_data|sm_game|sm_runtime) ' || true)
           if [ -n "$deps" ]; then echo "sm_tools has forbidden dependencies:"; echo "$deps"; exit 1; fi
-          # No target package depends on the verification tooling.
+          # The Gate 1 replay runs the legacy host (sm_host), never the emulator crate.
+          deps=$(cargo tree -p sm_tools --features replay -e normal --prefix none --format '{p}' | tail -n +2 | grep -Ev '^(sm_data|sm_game|sm_runtime|sm_host) ' || true)
+          if [ -n "$deps" ]; then echo "sm_tools (replay) has forbidden dependencies:"; echo "$deps"; exit 1; fi
+          # No target package depends on the verification tooling, the slice app included.
           for package in sm_data sm_game sm_runtime sm_app; do
             if cargo tree -p $package -e normal --prefix none --format '{p}' | grep -q '^sm_tools '; then
               echo "$package depends on sm_tools"; exit 1
             fi
           done
+          if cargo tree -p sm_app --no-default-features --features slice -e normal --prefix none --format '{p}' | grep -Eq '^(sm_tools|sm) '; then
+            echo "sm_app (slice) depends on sm_tools or sm"; exit 1
+          fi
       - name: Test target packages
         # Unit, integration (tests/*.rs) and doc tests of all three packages.
         # The summary lists every test binary and fails if one expected from

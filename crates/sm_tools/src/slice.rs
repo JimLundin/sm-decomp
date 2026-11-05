@@ -24,6 +24,8 @@ pub struct Schedule {
 pub struct Outcome {
     pub ticks: u64,
     pub lock_toml: String,
+    /// Each Tick's digest line, when the schedule reads the digests.
+    pub digest_lines: Vec<String>,
     pub effect_trace: u64,
     pub audio_batches: u64,
     pub cues: u64,
@@ -131,6 +133,7 @@ pub fn run(
         .sum::<u64>();
     let mut most_waiting = 0;
     let mut saves = 0;
+    let mut digest_lines = Vec::new();
     for (index, &pad) in pads.iter().enumerate() {
         // Admit: no Tick while the last one's effects wait. The loop stays live:
         // every failed offer returns here, where a real loop handles its events.
@@ -171,10 +174,12 @@ pub fn run(
         }
         outbox.offer(&mut audio, &mut save);
         if schedule.digests {
+            let machine = session.digests();
+            digest_lines.push(session.digest_line());
             running.fold(&Tick {
                 index: index as u32,
                 tick: index as i32,
-                machine: session.digests(),
+                machine,
                 typed: None,
                 session: None,
             });
@@ -191,6 +196,7 @@ pub fn run(
     Ok(Outcome {
         ticks: delivered,
         lock_toml: running.lock_toml(),
+        digest_lines,
         effect_trace: session.effect_trace(),
         audio_batches: audio.taken,
         cues: audio.cues,

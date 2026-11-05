@@ -242,6 +242,16 @@ impl Session {
         }
     }
 
+    /// The committed Tick's digests as one text line: the Tick, then each
+    /// machine stream in `MACHINE` order. Two hosts' lines compare Tick by Tick.
+    pub fn digest_line(&mut self) -> String {
+        let mut line = self.tick.to_string();
+        for digest in self.digests() {
+            line.push_str(&format!(" {digest:016x}"));
+        }
+        line
+    }
+
     /// The committed Tick's digests of the machine streams the oracle lock names.
     pub fn digests(&mut self) -> [u64; MACHINE.len()] {
         crate::machine::capture_result(&mut self.game);

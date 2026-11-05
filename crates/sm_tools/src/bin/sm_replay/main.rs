@@ -41,15 +41,28 @@ fn load(content: &str, start: &str, inputs: &str, ticks: &str) -> Result<Loaded,
 
 /// One replay and nothing else, for a diagnostic's digest log.
 fn one(args: &[String]) -> Result<(), String> {
-    let [content, start, inputs, ticks] = args else {
-        return Err("usage: sm_replay one <content> <start> <inputs> <ticks>".into());
+    let (content, start, inputs, ticks, out) = match args {
+        [content, start, inputs, ticks] => (content, start, inputs, ticks, None),
+        [content, start, inputs, ticks, out] => (content, start, inputs, ticks, Some(out)),
+        _ => {
+            return Err(
+                "usage: sm_replay one <content> <start> <inputs> <ticks> [<digest lines out>]"
+                    .into(),
+            );
+        }
     };
     let (content, start, pads) = load(content, start, inputs, ticks)?;
     let schedule = Schedule {
         digests: true,
         ..Schedule::default()
     };
-    run(&content, &start, &pads, schedule).map(|_| ())
+    let outcome = run(&content, &start, &pads, schedule)?;
+    if let Some(out) = out {
+        let mut text = outcome.digest_lines.join("\n");
+        text.push('\n');
+        write(out, text.as_bytes())?;
+    }
+    Ok(())
 }
 
 fn gate(args: &[String]) -> Result<(), String> {

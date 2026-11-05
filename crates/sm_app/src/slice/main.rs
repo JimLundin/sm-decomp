@@ -1,6 +1,6 @@
 //! The Gate 1 slice: one window, one sound device, one owned Session.
 //!
-//! `sm_slice <content> <start> [--inputs <file> --ticks <n> --lock-out <file>]`
+//! `sm_slice <content> <start> [--inputs <file> --ticks <n> --digests-out <file>]`
 //!
 //! Live input by default; `--inputs` replays through the same loop, window and
 //! sound path. The clock is the reference cadence, never the display.
@@ -125,7 +125,8 @@ struct Options {
     start: String,
     inputs: Option<Vec<u16>>,
     ticks: Option<u64>,
-    lock_out: Option<String>,
+    /// Where each Tick's digest line goes.
+    digests_out: Option<String>,
     save: String,
 }
 
@@ -158,7 +159,7 @@ fn options() -> Result<Options, String> {
                 );
             }
             "--ticks" => options.ticks = Some(value()?.parse().map_err(|_| "bad tick count")?),
-            "--lock-out" => options.lock_out = Some(value()?),
+            "--digests-out" => options.digests_out = Some(value()?),
             "--save" => options.save = value()?,
             other => return Err(format!("unknown option {other}")),
         }
@@ -239,12 +240,12 @@ fn run() -> Result<(), String> {
     let mut audio = Device(device);
     let mut saves = SaveWorker::start(options.save.clone());
     let mut outbox: Outbox<AudioBatch, SaveRequest> = Outbox::new(1);
-    let mut running = sm_tools::trace::Running::default();
     let replaying = options.inputs.is_some();
     // SAFETY: SDL is initialized.
     let began = unsafe { SDL_GetPerformanceCounter() };
     let (mut index, mut admitted) = (0u64, 0u64);
     let mut receipts = Vec::new();
+    let mut digest_lines = Vec::new();
     'game: loop {
         // SAFETY: a zeroed event is a valid buffer for SDL to fill.
         unsafe {
@@ -291,14 +292,8 @@ fn run() -> Result<(), String> {
                 latched,
                 host_results: std::mem::take(&mut receipts),
             });
-            if options.lock_out.is_some() {
-                running.fold(&sm_tools::trace::Tick {
-                    index: index as u32,
-                    tick: index as i32,
-                    machine: session.digests(),
-                    typed: None,
-                    session: None,
-                });
+            if options.digests_out.is_some() {
+                digest_lines.push(session.digest_line());
             }
             scene = Some(output.scene);
             if outbox
@@ -333,8 +328,10 @@ fn run() -> Result<(), String> {
         session.effect_trace(),
         session.faulted()
     );
-    if let Some(path) = &options.lock_out {
-        std::fs::write(path, running.lock_toml()).map_err(|e| format!("{path}: {e}"))?;
+    if let Some(path) = &options.digests_out {
+        let mut text = digest_lines.join("\n");
+        text.push('\n');
+        std::fs::write(path, text).map_err(|e| format!("{path}: {e}"))?;
     }
     // SAFETY: nothing uses SDL after this.
     unsafe { SDL_Quit() };

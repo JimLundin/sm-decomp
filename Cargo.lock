@@ -79,7 +79,6 @@ dependencies = [
  "sm_game",
  "sm_host",
  "sm_runtime",
- "sm_tools",
 ]
 
 [[package]]

@@ -228,6 +228,9 @@ def game_boundary() -> dict[str, int]:
                 path = os.path.join(root, name).replace("\\", "/")
                 with open(path, encoding="utf-8", errors="replace") as source:
                     lines = [line.split("//", 1)[0] for line in source]
+                # sm_host's sources are the old game's, counted as sm/src.
+                if path.startswith("crates/sm_host/src/"):
+                    path = "sm/src/" + path.removeprefix("crates/sm_host/src/")
                 counts["foreign_calls"] += sum(len(foreign.findall(line)) for line in lines)
                 if path.startswith("sm/src/"):
                     counts["game_host_impls"] += sum(
