@@ -31,8 +31,7 @@ pub(super) fn result_digests(game: &mut Game) -> [u64; sm_tools::trace::MACHINE.
     use sm_tools::trace::Digest;
     let pending = game.apu_queue.pending;
     let result = &mut *game.g_snapshot_mine;
-    for range in crate::cpu_infra::NORMALIZED_RAM
-        .map(|(_, range)| range)
+    for range in crate::cpu_infra::LOCK_SESSION_MASK
         .into_iter()
         .chain([ORACLE_RAM])
     {
@@ -40,7 +39,7 @@ pub(super) fn result_digests(game: &mut Game) -> [u64; sm_tools::trace::MACHINE.
     }
     // LEGACY(verifier): the lock's `wram` stream zeroes the frozen `LOCK_WRAM_MASK`, a
     // superset of `NORMALIZED_RAM`. Its ranges are zeroed for the digest and then
-    // restored, so the Session streams' decode keeps `NORMALIZED_RAM`'s mask.
+    // restored, so the Session streams' decode keeps `LOCK_SESSION_MASK`.
     let mask = crate::cpu_infra::LOCK_WRAM_MASK;
     let saved: Vec<u8> = mask
         .iter()
@@ -147,6 +146,19 @@ pub(super) fn result_digests(game: &mut Game) -> [u64; sm_tools::trace::MACHINE.
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_lock_session_mask_holds_every_normalized_range() {
+        let mask = crate::cpu_infra::LOCK_SESSION_MASK;
+        for (_, range) in crate::cpu_infra::NORMALIZED_RAM {
+            for address in range {
+                assert!(
+                    mask.iter().any(|frozen| frozen.contains(&address)),
+                    "{address:#x}"
+                );
+            }
+        }
+    }
+
     #[test]
     fn the_lock_wram_mask_holds_every_normalized_range() {
         let mask = crate::cpu_infra::LOCK_WRAM_MASK;

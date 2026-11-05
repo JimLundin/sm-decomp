@@ -437,7 +437,7 @@ pub(crate) enum Source {
 // LEGACY(verifier): RAM the comparison does not check, copied from one side to the other
 // before comparing. Each range, why it differs and what would retire it is in docs/LEGACY.md.
 // These ranges belong to disjoint snapshot RAM fields, not live RAM. Free run masks them.
-pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 23] = {
+pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 24] = {
     use Source::{Mine, Theirs};
     [
         (Theirs, 0x0000..0x0051),
@@ -457,6 +457,7 @@ pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 23] = {
         (Mine, 0x0d8a..0x0d90),
         (Mine, 0x0e20..0x0e46),
         (Mine, 0x0e02..0x0e04),
+        (Mine, 0x1788..0x178c),
         (Mine, 0x184a..0x185c),
         (Mine, 0x186e..0x1874),
         (Mine, 0x1876..0x1886),
@@ -465,6 +466,38 @@ pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 23] = {
         (Mine, 0xf37a..0xf380),
     ]
 };
+// LEGACY(verifier): the RAM the lock's Session streams decode with zeroed, frozen at the ranges
+// `NORMALIZED_RAM` held when they were recorded. `NORMALIZED_RAM` narrows as its rows retire, and
+// following it would invalidate those digests. Frozen until the lock drops `wram` (docs/LEGACY.md).
+// Holds every `NORMALIZED_RAM` range.
+#[cfg(sm_verify_dll)]
+pub(crate) const LOCK_SESSION_MASK: [core::ops::Range<usize>; 25] = [
+    0x0000..0x0051,
+    0x1f5b..0x2000,
+    0x00ad..0x00b1,
+    0x05ed..0x05f5,
+    0x05bc..0x05c5,
+    0x060b..0x0611,
+    0x0611..0x0617,
+    0x077e..0x0783,
+    0x078f..0x0791,
+    0x07b7..0x07b9,
+    0x0933..0x093d,
+    0x0b24..0x0b28,
+    0x0d82..0x0d8a,
+    0x0dd2..0x0dd8,
+    0x0d8a..0x0d90,
+    0x0e20..0x0e46,
+    0x0e02..0x0e04,
+    0x0e54..0x0e56,
+    0x1784..0x178c,
+    0x184a..0x185c,
+    0x186e..0x1874,
+    0x1876..0x1886,
+    0x189a..0x18a6,
+    0x1966..0x196c,
+    0xf37a..0xf380,
+];
 // LEGACY(verifier): the RAM the oracle digest lock's `wram` stream zeroes, frozen at the
 // 31 ranges `NORMALIZED_RAM` held when the committed lock was recorded. `NORMALIZED_RAM`
 // narrows as its rows retire; the lock's `wram` digests would then need a full
