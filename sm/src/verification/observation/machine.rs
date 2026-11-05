@@ -26,9 +26,9 @@ pub(super) fn capture_result(game: &mut Game) -> &Snapshot {
 /// The captured result's machine streams (`sm_tools::trace::MACHINE`): what
 /// `verify_snapshots_eq` and the APU queue check compare, with the normalized
 /// RAM masked.
-pub(super) fn result_digests(game: &mut Game) -> [u64; sm_tools::trace::MACHINE.len()] {
+pub(super) fn result_digests(game: &mut Game) -> [u64; sm_data::digest::MACHINE.len()] {
     use core::hash::{Hash, Hasher};
-    use sm_tools::trace::Digest;
+    use sm_data::digest::Digest;
     let pending = game.apu_queue.pending;
     let result = &mut *game.g_snapshot_mine;
     for range in crate::cpu_infra::LOCK_SESSION_MASK

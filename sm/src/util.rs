@@ -6,7 +6,7 @@ pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
 
 // Preserve the native lexical policy: directory bytes plus the full new name.
 // Absolute names, dots and slash styles are copied without normalization.
-#[cfg(all(not(sm_verify_dll), feature = "frontend"))]
+#[cfg(all(not(sm_verify_dll), not(sm_host), feature = "frontend"))]
 pub fn include_path(base: &core::ffi::CStr, name: &core::ffi::CStr) -> std::ffi::CString {
     let base = base.to_bytes();
     let name = name.to_bytes_with_nul();

@@ -17,9 +17,7 @@ use std::io::{BufWriter, Write as _};
 use std::path::Path;
 
 /// The machine streams, in record order.
-pub const MACHINE: [&str; 8] = [
-    "wram", "sram", "vram", "cgram", "oam", "ppu", "video", "apu",
-];
+pub use sm_data::digest::MACHINE;
 
 /// Every stream a run compares: the machine's, each typed domain, then each
 /// Session field group (`session_compare::Group`).
@@ -59,46 +57,7 @@ pub fn typed_stream(domain: Domain) -> usize {
             .expect("listed domain")
 }
 
-/// A word-at-a-time 64-bit digest of bytes or `Hash` values. It detects
-/// change; it is not meant to resist anyone choosing the input.
-#[derive(Clone, Copy, Debug)]
-pub struct Digest(u64);
-
-impl Default for Digest {
-    fn default() -> Self {
-        Self(0xcbf2_9ce4_8422_2325)
-    }
-}
-
-impl Hasher for Digest {
-    fn write(&mut self, bytes: &[u8]) {
-        for chunk in bytes.chunks(8) {
-            let mut word = [0; 8];
-            word[..chunk.len()].copy_from_slice(chunk);
-            self.0 = (self.0.rotate_left(23) ^ u64::from_le_bytes(word))
-                .wrapping_mul(0x9e37_79b9_7f4a_7c15);
-        }
-    }
-    fn finish(&self) -> u64 {
-        self.0
-    }
-}
-
-impl Digest {
-    /// The digest of `bytes`.
-    pub fn of(bytes: &[u8]) -> u64 {
-        let mut digest = Self::default();
-        digest.write(bytes);
-        digest.finish()
-    }
-}
-
-/// Fold one Tick's digest into a running digest.
-pub fn fold(running: u64, value: u64) -> u64 {
-    let mut digest = Digest(running);
-    digest.write_u64(value);
-    digest.finish()
-}
+pub use sm_data::digest::{Digest, fold};
 
 /// One Tick of a single-side run.
 #[derive(Clone, Debug, PartialEq, Eq)]

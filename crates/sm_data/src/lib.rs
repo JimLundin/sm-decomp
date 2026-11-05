@@ -5,6 +5,7 @@
 //! RAM or backend type crosses this boundary.
 #![forbid(unsafe_code)]
 
+pub mod digest;
 pub mod actor_tables;
 pub mod animated_programs;
 pub mod area_select_palettes;

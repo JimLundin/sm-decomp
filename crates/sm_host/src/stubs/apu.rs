@@ -10,3 +10,6 @@ pub unsafe fn apu_reset(apu: *mut Apu) {
 }
 pub unsafe fn apu_saveload(_apu: *mut Apu, _io: &mut crate::snapshot_io::SnapshotIo<'_>) {}
 pub(crate) unsafe fn apu_cycle_execution(_game: &mut Execution<'_>) {}
+pub(crate) fn snapshot_layout(layout: &mut String) {
+    layout.push_str("apu-snapshot{}");
+}

@@ -526,10 +526,10 @@ pub struct _IO_FILE {
 
 pub type FILE = _IO_FILE;
 
-#[cfg(all(feature = "frontend", not(sm_verify_dll)))]
+#[cfg(all(feature = "frontend", not(sm_verify_dll), not(sm_host)))]
 pub use sdl2_sys::SDL_Window;
 
-#[cfg(any(not(feature = "frontend"), sm_verify_dll))]
+#[cfg(any(not(feature = "frontend"), sm_verify_dll, sm_host))]
 #[repr(C)]
 pub struct SDL_Window {
     _private: [u8; 0],

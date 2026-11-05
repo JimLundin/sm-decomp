@@ -326,3 +326,10 @@ macro_rules! type_aliases {
 pub(crate) use type_aliases;
 #[path = "stubs/rom_patches.rs"]
 pub mod rom_patches;
+#[path = "../../../sm/src/lock_masks.rs"]
+mod lock_masks;
+#[path = "../../../sm/src/verify/checkpoint.rs"]
+pub mod verification_checkpoint;
+#[path = "../../../sm/src/verification/observation/machine.rs"]
+mod machine;
+pub mod replay;
