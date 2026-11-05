@@ -275,10 +275,17 @@ counter `$05B8`, the lag flag, the game state, the room and Samus's position.
 | --- | --- | --- | --- |
 | LakeSnes 9db90b8 | frame 352 | frame 352 | boot APU upload ends 12 lines early, frame 353 not lag |
 | + fix 0001 (APU clock) | frame 395 | frame 8566 | one-frame NMI shifts around NMI re-enable in loads (396, 8314); Ceres desync from 8567 |
+| + fix 0002 (bsnes v085 SPC rate, exact) | frame 395 | frame 17984 | one more lag frame on the door out of room 97B5 (17985); one frame behind from 18108, desync from 18587 |
 
 Fixes live in `crates/oracle/native/fixes/NNNN-name.patch`. They are applied
 to a copy of the pinned sources by `tools/oracle/build_lakesnes.sh` and named
 in `OracleId::fixes`. They are emulator fixes, not ROM patches.
+
+- `0001-apu-clock-real-master-rate`: the SPC at 32040 Hz against the real
+  NTSC master clock (21 477 272 Hz), not 1364 · 262 · 60 dots.
+- `0002-apu-clock-bsnes-v085-exact`: the SPC at bsnes v085's 32040.5 Hz, the
+  rate the movies were recorded at, stepped as an exact integer ratio
+  (MEASUREMENTS (h)).
 
 ## Proving it against the lock
 

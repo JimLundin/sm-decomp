@@ -127,7 +127,8 @@ to control, not something a console gets right (**report**).
 **How the emulators chose.** They all pick about 32040 Hz, a typical
 measured value rather than the 32000 Hz specification: bsnes v085 uses
 32040.5, while ares, bsnes v115, snes9x, Mesen and LakeSnes after fix 0001
-use 32040 (**fact**, the sources in 2). Fix 0001 brings LakeSnes from
+use 32040 (**fact**, the sources in 2). LakeSnes with fix 0002 uses
+bsnes v085's 32040.5, exactly (MEASUREMENTS (h)). Fix 0001 brings LakeSnes from
 1364·262·60 master clocks per second to 21 477 272, 0.17 % slower.
 Measuring from that patch, the pre-fix LakeSnes was 0.17 % fast, not 5 %.
 

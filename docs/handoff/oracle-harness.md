@@ -8,10 +8,10 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
   - One step is one video frame; the cut is the RTI of that frame's NMI.
   - Each record holds the memories, the CPU, `PpuRegisters`, the APU port log and the BGR555 picture.
   - Optional tiers add the SPC state, writes with line, dot and source, watched-PC hits and a profile.
-- Fix 0001 (`native/fixes/`, the APU clock against the real master clock):
-  - the any% movie matches the lsnes lag log exactly through frame 395;
-  - state, room and position match through 8566;
-  - the logic is one frame behind from 8314, and Ceres desyncs at about 8567.
+- Fixes 0001 and 0002 (`native/fixes/`): the SPC at bsnes v085's 32040.5 Hz against the real master clock, as an exact integer ratio (MEASUREMENTS.md (h), lane `lane/oracle-lakesnes-rate`):
+  - the any% movie matches the lsnes lag log exactly through frame 395, as with 0001 alone;
+  - state, room and position match through 17984 (0001 alone: 8566), but for single-step samples at transitions; 8314 and 8567 pass;
+  - at 17985, the door out of room 97B5, LakeSnes has one more lag frame; one frame behind from 18108, desync from 18587 (stays in room 9E9F).
 - Corpus against today's lock: 601 of 638 faithful rows ran (lsnes seeds, plus `options-menu-tour` from power-on); 27 stalled.
   - Equal: sram 600, cgram 162, vram 150, oam 150, wram 2.
   - ppu 0, because the old definition includes renderer scratch. video and apu are redefined.
@@ -105,7 +105,8 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
    - align by game frame (`$05B8`) as well as by step, so that after 1342 the report measures content and not the lag;
    - resume both backends at a ladder rung (`--from` per backend; LakeSnes needs its own state at the rung), to cover 8314 (LakeSnes behind) and 8567 (the Ceres desync) within the 3-minute run limit;
    - then the re-lock (the root's call).
-5. Speed: dump only the memories a step needs (the `memories` flag), or hash them in Lua.
+5. LakeSnes past 17985: the rate is lsnes's now, so try a sub-opcode SPC catch-up at port accesses (LakeSnes runs whole opcodes; bsnes v085 syncs per access) as fix 0003, measured on the same movie run (`$TEMP/olr/dump.rs` dumps the seven lag-log words per step; `$TEMP/olr/tail.py` classifies steps as equal, one behind, one ahead or other).
+6. Speed: dump only the memories a step needs (the `memories` flag), or hash them in Lua.
 
 Orphaned lsnes processes remain from hung or killed runs: PIDs 6176 and 14972 from the previous lane, 24536, 22000 and 25512 from this one. Stop-Process and taskkill could not end them from this shell.
 

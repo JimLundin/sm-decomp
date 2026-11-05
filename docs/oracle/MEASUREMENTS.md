@@ -428,3 +428,65 @@ goes with the SPC rate. The candidate for LakeSnes is a rate closer to
 ACCURACY's list (the rate sweep and ares) are still open. The threshold
 between 32040 and 32041 Hz at 8465 already shows that lag there depends on
 the console's clock.
+
+## (h) LakeSnes at bsnes v085's SPC rate: fix 0002
+
+**Fix.** `crates/oracle/native/fixes/0002-apu-clock-bsnes-v085-exact.patch`,
+applied after 0001. bsnes v085 (lsnes rr2) clocks the SMP at 24 607 104 Hz
+(32040.5 · 768) against a 21 477 272 Hz CPU, so the SPC gains
+32040.5 · 32 = 1 025 296 cycles per 21 477 272 master clocks. LakeSnes's
+`double apuCatchupCycles` becomes `int64_t apuCatchupDebt`, the SPC cycles
+owed scaled by the master rate: each 2-clock step adds 2 · 1 025 296, and a
+catch-up runs `debt / 21 477 272` cycles and subtracts what ran times
+21 477 272. The rate is exact and does not drift. PAL keeps upstream's
+32040 Hz against 1364 · 312 · 50, also as an exact ratio. The save state still
+holds 8 bytes there (`sh_handleLongLongs`). A separate 0002, not a revised
+0001: records name their fixes in `OracleId::fixes`, so records cut at
+32040 Hz (`0001` alone) keep an identity that still says what they ran.
+
+**Command.** `oracle movie ROM movies/any.inputs --frames 36000 --no-picture
+--oracle lakesnes --lag-log any-boundary/lag.csv --positions-only` (166 s,
+217 frames/s), and a per-step dump of the seven lag-log words from the same
+run to classify each step against lsnes's rows k-1, k and k+1.
+
+**Boot: unchanged.** The full lag log (all seven columns) matches exactly
+through step 395, as with 0001 alone; the first rows that differ are 396,
+397, 400, 472-476, the NMI-outlasts-vblank cut of (f), the same rows as
+before. The boot upload around step 352 is unaffected.
+
+**Counters, steps 21-17999.** `$05B6`/`$05B8` equal lsnes on 5955 steps and
+are one NMI ahead on 12015 (lsnes's line-241 cut of (g)). Nine steps are
+neither: 8421 and 15235 (`$05B8` one less, as before), and 17967-17988, a
+door transition (below). At 8465 and 8469 LakeSnes now has lsnes's lag flag
+(7779/8125/0 and 7782/8128/1), as Mesen +41 has, where 0001 had +40's.
+
+**State, room and position.** They match lsnes through step 18107, but for
+single steps. Every step in 1-18107 equals lsnes's row k, or k-1 (the cut a
+frame apart at a transition), except 12 door-transition samples (8905, 9187,
+9532, 9732, 9796, 10052, 11894, 12353, 12684, 13027, 17334, 17398), where X
+is one pixel short of lsnes's row k and equal to it at k+1: the cut catches
+the door's position step at another point. So 8314 (0001: one frame behind
+from there) is now one sampled step, and 8567 (0001: the Ceres desync)
+passes.
+
+| Steps | LakeSnes against lsnes |
+| --- | --- |
+| 0-395 | exact, all seven columns |
+| 396-17984 | state, room, position equal (single-step samples above) |
+| 17985 | `$05B6` one behind with `$05B8` equal: LakeSnes has one more lag frame, in the door transition from room `97B5` into `9E9F` |
+| 18108-18586 | state, room, position equal to lsnes's previous step: one game frame behind |
+| 18587 | Samus's X differs beyond a shift; from then LakeSnes stays in room `9E9F` (20000, 30000, 35999) while the movie goes on |
+
+**Mesen +41 to 18300**, same Lua and settings as (g): it leaves the movie at
+16065 (20 consecutive steps differing beyond a one-step shift), before
+LakeSnes does, so it does not vote on 17985.
+
+**Reading.** At bsnes v085's exact rate LakeSnes follows the any% movie
+through Ceres, the escape and Crateria to the door out of room `97B5`, 2.1×
+as far as at 32040 Hz (8566). The lasting lag at 17985 is again a lag frame
+at the end of a door transition, the kind that rides on the CPU-SPC
+handshake. The rate is now lsnes's, so what is left is how the communication
+is modelled: LakeSnes catches the SPC up in whole opcodes at each port
+access, bsnes v085 syncs its cothreads on every access (ACCURACY, section 3).
+Not tried here: a sub-opcode catch-up, or the rate sweep around 32040.5 on
+LakeSnes.
