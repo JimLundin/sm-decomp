@@ -46,10 +46,12 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 - `src/lsnes.rs` drives `lsnes-bsnes.exe` as a separate process with `tools/oracle/lsnes_server.lua`.
   - The exe is rr2-beta23 (bsnes v085), in `%LOCALAPPDATA%/sm-decomp-experiments/20261025/tas-alignment/lsnes-rr2-beta23/`, or wherever `SM_LSNES` points.
   - Requests (`S pad memories`, `V path`, `R`, `Q`) go to its stdin. One record per lsnes frame goes to a file, announced as `R <bytes>` on its stdout. Stdout is text mode on Windows, so no binary goes there.
-  - The cut is the interrupted instruction reached again with S restored. With no returned NMI, the cut is the lsnes frame boundary.
-  - Reading requests in `on_input`, or emitting at the RTI, desyncs the protocol: records outnumber lsnes frames. Read and emit only at `on_frame_emulated`.
+  - The cut is the interrupted instruction reached again with S restored. With no NMI in the frame, the cut is the lsnes frame boundary (line 241).
+  - An NMI that runs past line 241 is cut at its RTI too (lane `lane/oracle-lsnes-rti`, MEASUREMENTS.md (i)). lsnes commits a frame's input in `on_input` at line 241 and `input.set` does nothing elsewhere, so the client previews the next pad (`Lsnes::preview`, `Backend::preview`; `S pad memories next`); the server commits it for the next frame and sends the owed record from the RTI. The next step must bring that pad (else the server quits). Without a preview (corpus: its next pad depends on the cut) such a step is still cut at the boundary (`NmiStillRunning`).
+  - Each request gets exactly one record: at the boundary, or from the RTI when the boundary passed inside the NMI. Reading requests in `on_input`, or emitting at every RTI, desyncs the protocol (records outnumber requests).
   - Missing fields: picture, APU log, SPC state (SMP_STATE and DSP_STATE are raw core structs), profile, write log, hits, `PpuRegisters`, `overscan`, `legacy_ppu_digest`.
-  - `save_state` returns lsnes's savestate from the boundary after the last cut; call `request_save` first. A resumed run reproduces the next cut.
+  - `request_save` is called before the step it follows: the state is taken at the boundary that ends that step (after its cut, or inside its NMI), before the next step's NMI. `save_state` returns it once the step after has run. A resumed run reproduces the next cut; its counts restart at the dangling RTI of an NMI it was saved inside.
+  - All lsnes records of steps whose NMI ran past line 241 changed with the RTI cut: ladders (`$TEMP/ohx/data/lsnes-ladder`) and native seeds' `.record` files cut before it must be regenerated (the root's job).
 - Sync: `movie ROM any.inputs --oracle lsnes --seeds room-seeds-any-boundary.csv <any-boundary dir>`, from power-on.
   - All 16 room seeds through frame 17829 match: same room, 0 WRAM bytes differing, offset +0. They cover Ceres, the escape and Crateria up to room 97B5. LakeSnes desyncs at about 8567.
   - The NMI counter matches the lsnes lag log. Positions are off by one frame because the log samples at frame end.
@@ -101,7 +103,7 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
    - The 88 rows that stall under `--diagnose-kept-patches` are not re-run here; that is a diagnosis of the old lock, not needed for the lsnes rows.
 3. Door lengths and busy spans from lsnes. Fix the DMA-under-blank count to check INIDISP per write.
 4. Done, first version: `oracle cross ROM INPUTS --frames A..B [--ranges] [--ranges-at A..B]` (MEASUREMENTS.md (f)). On any% 0-4800 the game state agrees; the differences are power-on SRAM, the cut's definition, wait-loop NMI timing and sound timing, and lsnes runs one frame behind from 1342 (end of an APU upload). Next for the report:
-   - normalise the definitional differences so they stop hiding real ones: cut both backends the same way when the NMI outlasts vblank (lsnes waits for the RTI, or LakeSnes cuts at its boundary), compare SRAM only after the game first writes it, and drop the stack page below S and the pad from the memory comparison;
+   - normalise the definitional differences so they stop hiding real ones: cut both backends the same way when the NMI outlasts vblank (done: lsnes waits for the RTI, MEASUREMENTS.md (i); 396/472/1290/1342 no longer lag, `$05B6`/`$05B8` agree after 1342), compare SRAM only after the game first writes it, and drop the stack page below S and the pad from the memory comparison;
    - align by game frame (`$05B8`) as well as by step, so that after 1342 the report measures content and not the lag;
    - resume both backends at a ladder rung (`--from` per backend; LakeSnes needs its own state at the rung), to cover 8314 (LakeSnes behind) and 8567 (the Ceres desync) within the 3-minute run limit;
    - then the re-lock (the root's call).

@@ -137,15 +137,19 @@ These speeds are published orders of magnitude, not measurements here.
 The lsnes backend (`src/lsnes.rs`, `--oracle lsnes`) runs lsnes rr2-beta23,
 the bsnes v085 core that recorded the movies, as a separate GPL process: no
 emulator code is linked or copied. lsnes runs `tools/oracle/lsnes_server.lua`;
-requests go to its standard input, and each lsnes frame's record goes to a
+requests go to its standard input, and each step's record goes to a
 file it overwrites, announced on its standard output. The cut is the
 interrupted instruction reached again with the stack restored (the NMI's RTI
-has completed); a frame without a returned NMI is cut at lsnes's frame
-boundary. It records the memories, the CPU, the cut, the joypad reads and the
+has completed); a frame without an NMI is cut at lsnes's frame boundary
+(line 241). An NMI that runs past that boundary is cut at its RTI in the
+next lsnes frame, which takes the next pad the client previewed, since lsnes
+fixes a frame's input at its start (MEASUREMENTS.md (i)); without a preview
+it is cut at the boundary with the NMI running. It records the memories, the CPU, the cut, the joypad reads and the
 wait entry. It does not record the picture, the APU port log, the SPC state
 (lsnes shows SPC700 and DSP only as raw core structs), the profile, the write
 log, watched-PC hits, `PpuRegisters` or `overscan`. Its state is lsnes's own
-savestate at the frame boundary after a cut, before the next step's NMI.
+savestate at the frame boundary that ends the step it was requested before
+(inside that step's NMI if it runs on), before the next step's NMI.
 The script loads a starting state itself (`OH_START`, `load-state`), because
 lsnes refuses a state given on its command line with this ROM and hangs.
 

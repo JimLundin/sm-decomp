@@ -490,3 +490,72 @@ is modelled: LakeSnes catches the SPC up in whole opcodes at each port
 access, bsnes v085 syncs its cothreads on every access (ACCURACY, section 3).
 Not tried here: a sub-opcode catch-up, or the rate sweep around 32040.5 on
 LakeSnes.
+
+## (i) lsnes cuts at the NMI's RTI also when the NMI outlasts its frame
+
+(g) found lsnes's record cut at its frame boundary (line 241) whenever SM's
+NMI was still running there, before the NMI's counter writes and joypad
+read. The cut is now always the NMI handler's RTI (`0:9601`), as D20
+asks; a frame without an NMI keeps the boundary cut (`9777b468a`, lane
+`lane/oracle-lsnes-rti`, on `794ac546d`, LakeSnes with fixes 0001 and 0002).
+
+**Why the server needs the next pad.** lsnes calls `on_input` right after
+`on_frame_emulated`, at line 241, and commits the frame's input there;
+`input.set` anywhere else returns without error and has no effect (probe:
+Up set at the RTI of lsnes frame 1344 never reached `219`; set in
+`on_input` of 1346 it was read by the NMI at line 249 of 1347). An NMI
+running past 241 returns at line 249 of the next lsnes frame, whose input is
+already committed. So the client announces the next step's pad with each
+step (`S pad memories next`, `Lsnes::preview`, `Backend::preview`); at a
+boundary inside an NMI the server commits that pad for the next frame and
+sends the owed record from the RTI, and the next step must bring the same
+pad. Each step's request still gets exactly one record. A save (`V`) is now
+requested before its step and taken at the boundary that ends the step,
+inside the NMI if it runs on; a resumed run restarts its counts at that
+NMI's dangling RTI. The record's video frame is the lsnes frame the NMI
+began in. `movie`, `cross` and `ladder-check` preview; `corpus` cannot (its
+next pad depends on this step's cut), so corpus rows on lsnes keep the
+boundary cut (`NmiStillRunning`) for such steps. So the cut difference (g)
+recorded as `LEGACY(oracle)` is gone for `movie`, `cross` and the ladders,
+and stays for lsnes corpus rows.
+
+**Cross-oracle report, any% steps 0-1500** (`oracle cross`, 38.7 s):
+
+| Part | First | Steps differing (of 1501) | Before (f) |
+| --- | --- | --- | --- |
+| sram | 0 | 1500 | power-on contents |
+| pad | 0 | 5 | the pad's meaning |
+| cpu | 0 | 834 | |
+| wram | 4 | 1384 | |
+| cut | 21 | 795 | |
+| frame | 303 | 2 | 303, then every long NMI |
+| vram | 303 | 2 | 303, 699 of 4801 |
+| joypad-reads | 307 | 1 | 307, 24 of 4801 |
+| cgram | 307 | 1 | 307, 221 of 4801 |
+| oam | equal throughout | 0 | 480, 1519 of 4801 |
+
+Steps 396, 472, 1290 and 1342 no longer show "right a frame behind": each
+differs only in wram `/usr/bin/bash641`-`/usr/bin/bash642` (sound acknowledgement), the stack page,
+`E:D7C0-DE1B` (zero against `0xFF`, copied from the power-on SRAM) and
+where in the wait loop the NMI landed. With `--ranges-at 1340..1500` the
+only wram ranges are `/usr/bin/bash641`(-`/usr/bin/bash64B`) and `FDD`-`FFF`: `/usr/bin/bash5B6` and
+`/usr/bin/bash5B8` agree after 1342. Left: 303-307, the title's NMI (`B:9C..`),
+where LakeSnes counts its frame one later and lsnes's uploads land a step
+later (vram 304, cgram 307 "right a frame behind"); unchanged, not looked into.
+
+**Resuming.** From native seed 16 (`movie --from 0016.lss 17829 --frames
+18130 --ladder 50 --native-seeds room-seeds-any-boundary.csv`): no errors,
+seed 17 cut, `ladder-check` 5 of 5 rungs equal. None of those boundaries
+fell inside an NMI, so also from power-on with `--ladder 10` to 1420: 17 of
+141 saves were inside an NMI (rungs 480-560, 1300, 1350-1410), and
+`ladder-check --rungs 470..570` and `1290..1420` give 23 of 23 equal (the
+resumed record, memories included, equals the straight run's byte for byte).
+
+**Speed.** `movie --frames 3000 --oracle lsnes`, memories on, alternating
+runs: 42 and 43 frames/s, against 44 and 43 with the previous server.
+
+**Records change.** Every lsnes record of a step whose NMI outlasted line 241
+changes (its cut kind, CPU, counts, memories and frame), and later saves
+are requested a step earlier in the client. The lsnes ladders and the
+native seeds' `.record` files cut before `9777b468a` must be regenerated before
+they are compared with new records.
