@@ -12,7 +12,7 @@ They come from two attempts:
 
 - **Attempt 1, the transpiled game on the RAM image.** snesrev's C, turned into Rust,
   running on a 128 KiB WRAM image. The oracle came from the same harness.
-- **Attempt 2, incremental extraction.** Domains moved into `sm_game` while the old game
+- **Attempt 2, incremental extraction.** Domains moved into the old `sm_game` crate while the old game
   kept running. This needed host traits, `foreign` calls, leases, a Session ↔ RAM codec and
   ratchets on site counts.
 
@@ -189,11 +189,11 @@ panic text. These extend it where the lessons demand.
 
 **K1. No addresses in engine code.**
 Program places are labels, and content is referred to by ID. ROM and RAM addresses appear
-only in `sm_data`'s import tables and in verification.
+only in `data`'s import tables and in verification.
 *Why:* 1,861 `const X: u16 = 0x...` and ROM addresses used as state (Ridley's
-`LIFTOFF: u16 = 0xb2f3`) are still in today's `sm_game` (Retro A1).
-*How we know:* a source check rejects SNES address literals in `sm_game`, `sm_runtime` and
-`sm_app`.
+`LIFTOFF: u16 = 0xb2f3`) are still in the old `sm_game` crate (Retro A1).
+*How we know:* a source check rejects SNES address literals in `game`, `runtime` and
+`app`.
 
 **K2. Make invalid states unrepresentable, including progress through time.**
 A routine that spans Ticks is an explicit typed cursor. No async, no generators, no flag
@@ -241,6 +241,34 @@ The patterns that kept the cost small:
   = &mut ports`), which cannot be out of range;
 - newtype indices that only the slot store can construct, so they are valid by construction;
 - the rotate-and-chain idiom (`tail.iter_mut().chain(head)`) for wrap-around writes.
+
+*Measured on arithmetic-heavy code:* the sketch above is mostly types, so a second sample
+(`scratch/lint_cost`) writes the same behaviour twice. The behaviour is Samus's horizontal
+acceleration and run speed, gravity and jumping in pixel:subpixel fixed point with 16-bit
+wraparound, and landing on slopes through a height table with mirrored blocks.
+`plain.rs` uses ordinary `+`, `-`, `as` and indexing. `strict.rs` passes the whole lint set
+below. A test checks that the two agree on every field over 120,000 random frames.
+
+| | `plain.rs` | `strict.rs` |
+| --- | ---: | ---: |
+| Movement and landing routines | 74 lines | 53 lines |
+| Shared types: the `Fixed` pixel:subpixel type (41 lines, defined once for the engine), plus `Column`, `Slope`, `Facing` and `Vertical` | 0 | 105 lines |
+| Constants, `Samus`, input and level structs | 30 lines | 41 lines |
+| Total | 104 | 199 |
+
+The routines got 28% *shorter* under the lints, because the enums carry the logic. For
+example, `Vertical::{Grounded, Rising(speed), Falling(speed)}` replaces two bools and a
+speed. The growth is all in types that every movement, collision and camera routine shares,
+so across a 60-100k-line engine it is a few hundred lines in total. The lints didn't bloat
+the maths. Good types absorbed them, as the coordinator expected.
+
+Two findings for the lint configuration:
+- `arithmetic_side_effects` also flags operator impls on our own types. Clippy's
+  `arithmetic-side-effects-allowed` setting did not take effect on 1.99.1. So `Fixed` uses
+  named methods (`wrapping_add`, `wrapping_sub`), which state the overflow at each use.
+  They are no longer than `+`.
+- `From` isn't usable in `const fn` on stable, so const constructors build values from bytes
+  (`u32::from_be_bytes`) instead of using `as`.
 *How we know:* the lint set in K8, denied in every engine crate. Tests may use `unwrap`,
 `expect`, `panic` and indexing, through clippy's `allow-*-in-tests` configuration, not
 through `allow` attributes.
@@ -266,9 +294,9 @@ for each type.
   `clippy::nursery`; and from `restriction`: `unwrap_used`, `expect_used`, `panic`,
   `indexing_slicing`, `arithmetic_side_effects`, `as_conversions`, `unreachable`, `todo`,
   `unimplemented`, `wildcard_enum_match_arm` (AGENTS.md's "no `_ =>` when every case can be
-  named"), `float_arithmetic` in `sm_game` (the original has no floats), `print_stdout`,
+  named"), `float_arithmetic` in `game` (the original has no floats), `print_stdout`,
   `print_stderr`, `dbg_macro` and `allow_attributes`. Rust's `missing_docs` is denied for
-  public items of `sm_data` and `sm_game`. A nursery lint that misfires is dropped from the
+  public items of `data` and `game`. A nursery lint that misfires is dropped from the
   workspace set, with the reason recorded beside the set. It is never silenced at a site.
 *Decision:* stable, not nightly. Unstable features can change or disappear between
 nightlies, and that would force the churn this rebuild exists to avoid. Nightly would buy

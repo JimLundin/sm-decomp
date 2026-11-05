@@ -100,7 +100,7 @@ each approach in plain terms.
 
 | # | Decision | Principles | Section |
 | --- | --- | --- | --- |
-| D1 | Fresh crates under the accepted names; old crates renamed to `crates/legacy/*`; CI forbids the dependency by name | P3, P5, P15 | 4 |
+| D1 | Fresh crates with plain names (`data`, `game`, `runtime`, `app`, `oracle`, `verify`, `tools`, `canonical`); old `sm_*` crates keep their names until deleted; CI forbids any new crate depending on `sm` or `sm_*` | P3, P5, P15 | 4 |
 | D2 | Two public engine traits (`Family`, `Canonical`) and concrete context types; trait list kept in this doc | K3, P16 | 4.3 |
 | D3 | State is a public plain-data schema with private behaviour; one authority | P5, P6, P8 | 5.1 |
 | D4 | `RoomScoped` is one struct, so the door's reset list is a type | P8, K2 | 5.1 |
@@ -117,7 +117,7 @@ each approach in plain terms.
 | D15 | Content is decoded at load time; dense IDs inside, stable keys outside; overlays produce the same records | P1, P7, K1 | 8 |
 | D16 | Exact output and intent output; presentation receives `&State` and intent | P18, K4 | 9 |
 | D17 | The renderer is a CPU line compositor writing PPU-domain pixels, with `wgpu` presentation | P12, P14 | 9.3 |
-| D18 | Sound: CPU protocol and a driver model in the Session; synthesis behind a backend in `sm_runtime` | P18, P4 | 9.4 |
+| D18 | Sound: CPU protocol and a driver model in the Session; synthesis behind a backend in `runtime` | P18, P4 | 9.4 |
 | D19 | Profiles: Reference (`OracleRules`), Gameplay (resolved `Rules`), Timing source, Presentation, Input | P17, P4 | 10 |
 | D20 | The oracle contract: one record per video frame, cut at each NMI return, raw machine data | P5, P12 | 11.1 |
 | D21 | One decoder (oracle record → State), one projection per stream, compared at quiescent cuts | P6, P7 | 11.2 |
@@ -131,13 +131,13 @@ each approach in plain terms.
 
 ```mermaid
 flowchart TD
-    App["sm_app · coordinator, clock, input profile, outbox"]
-    Tools["sm_tools · CLI: replay, scenarios, lock, importers"]
-    Verify["sm_verify · decoder, projections, facts, streams, lock compare"]
-    Oracle["sm_oracle · emulator adapters (LakeSnes, later Mesen), FrameRecord"]
-    Game["sm_game · Session, State, Tick, domains, intent view"]
-    Runtime["sm_runtime · compositor, presentation, sound backends, storage"]
-    Data["sm_data · IDs, ROM decoder, typed content, profiles, portable records, digest"]
+    App["app · coordinator, clock, input profile, outbox"]
+    Tools["tools · CLI: replay, scenarios, lock, importers"]
+    Verify["verify · decoder, projections, facts, streams, lock compare"]
+    Oracle["oracle · emulator adapters (LakeSnes, later Mesen), FrameRecord"]
+    Game["game · Session, State, Tick, domains, intent view"]
+    Runtime["runtime · compositor, presentation, sound backends, storage"]
+    Data["data · IDs, ROM decoder, typed content, profiles, portable records, digest"]
     App --> Game
     App --> Runtime
     App --> Data
@@ -147,7 +147,7 @@ flowchart TD
     Verify --> Game
     Verify --> Data
     Verify --> Runtime
-    Verify --> OracleRec["sm_oracle::record (types only)"]
+    Verify --> OracleRec["oracle::record (types only)"]
     Oracle --> Data
     Game --> Data
     Runtime --> Data
@@ -155,39 +155,50 @@ flowchart TD
 
 | Crate | Owns | Must not |
 | --- | --- | --- |
-| `sm_data` | IDs and stable keys; the ROM decoder and its tables; typed content; world records; profiles; the portable records that `sm_game` emits and `sm_runtime` consumes (display frame, video memory image, sound frame, intent view); the address map as a side output; the shared digest | hold mutable state or rules |
-| `sm_game` | `Session`, the `State` schema and its codec, the Tick, strands, slot store, interpreter, every gameplay domain, the CPU-side sound protocol and driver model, the cost model, SRAM, the intent view (`view::describe(&State)`) | touch pixels, samples, files, devices or addresses (K1) |
-| `sm_runtime` | the line compositor, `wgpu` presentation, the wide renderer, sound backends (N-SPC sequencer and DSP, replacements), `cpal`, storage | feed anything back into the Session |
-| `sm_app` | the run coordinator, Tick admission at the Reference cadence, the input profile, effect delivery, cutovers | contain gameplay |
-| `sm_oracle` | the emulator adapters, `Oracle` trait, `FrameRecord`, seeds, the lock recorder | depend on `sm_game`, `sm_verify` or any legacy crate |
-| `sm_verify` | the oracle record → State decoder, one projection per stream, facts, the stream digests, free-run and lockstep comparison | be depended on by an engine crate |
-| `sm_tools` | the command line over the above, the Map Rando and sm-json-data importers | contain comparison logic of its own |
-| `sm_derive` | the `Canonical` derive (proc macro, `syn` and `quote` at build time) | anything else |
+| `data` | IDs and stable keys; the ROM decoder and its tables; typed content; world records; profiles; the portable records that `game` emits and `runtime` consumes (display frame, video memory image, sound frame, intent view); the address map as a side output; the shared digest | hold mutable state or rules |
+| `game` | `Session`, the `State` schema and its codec, the Tick, strands, slot store, interpreter, every gameplay domain, the CPU-side sound protocol and driver model, the cost model, SRAM, the intent view (`view::describe(&State)`) | touch pixels, samples, files, devices or addresses (K1) |
+| `runtime` | the line compositor, `wgpu` presentation, the wide renderer, sound backends (N-SPC sequencer and DSP, replacements), `cpal`, storage | feed anything back into the Session |
+| `app` | the run coordinator, Tick admission at the Reference cadence, the input profile, effect delivery, cutovers | contain gameplay |
+| `oracle` | the emulator adapters, `Oracle` trait, `FrameRecord`, seeds, the lock recorder | depend on `game`, `verify` or any old `sm_*` crate |
+| `verify` | the oracle record → State decoder, one projection per stream, facts, the stream digests, free-run and lockstep comparison | be depended on by an engine crate |
+| `tools` | the command line over the above, the Map Rando and sm-json-data importers | contain comparison logic of its own |
+| `canonical` | the `Canonical` derive (proc macro, `syn` and `quote` at build time) | anything else |
 
-**D1. Fresh crates, old crates renamed.** Today's `sm_game`, `sm_data` and `sm_runtime`
-become `crates/legacy/*_v1`, used only by `sm_host`. The accepted names start empty. A CI
-check fails if any non-legacy crate depends on a legacy one, or on `sm` or `sm_host`, by
-name (rule 2). Modules carry over only from a closed list (the digest, the line compositor
+**D1. Fresh crates with plain names; the old crates keep theirs until deleted.** Jim
+decided (2026-11-05) that the new crates have no `sm_` prefix and are named for what they
+are. The prefix only existed because the first attempt took `sm` and `game`. The new crates
+are `data`, `game`, `runtime`, `app`, `oracle`, `verify` and `tools`, plus the derive crate
+`canonical`, named for the derive it provides. The app's binary has a user-facing name
+(working name `super-metroid`). Checks on the names: none shadows a built-in crate (`core`,
+`std`, `alloc`, `test`, `proc_macro`) or a dependency we are likely to take, and the derive
+crate isn't called `derive`.
+
+**The old crates are not renamed.** FOUNDATION's J7 renamed them to `crates/legacy/*_v1` so
+that new and old couldn't be confused or linked. With the new names, they no longer collide:
+`game` is old and `game` is new. The separation is enforced by a CI check that fails if
+any new crate depends on `sm` or on any `sm_*` package, by name (rule 2). That saves a
+mechanical commit across the old code and its CI. The old crates are deleted as the new
+engine covers what they did (REVIEW's deletion measure). Modules carry over only from a closed list (the digest, the line compositor
 from `gate1/render`, the lock reader), and each one names the contract it meets.
 *Principles:* P3, P5, P15. *Rejected:* new modules inside the old crates. That would be
 one compile unit, easy to reuse by accident, and attempt 2's trap (Retro A1). *Rejected:*
 new crate names, which contradict the accepted package names.
 
-**Why `sm_verify` is separate from `sm_tools`.** The decoder and projections are the riskiest
+**Why `verify` is separate from `tools`.** The decoder and projections are the riskiest
 verification code (Retro section 5, V5). They need their own mutants and their own budget,
-and the CLI should not be able to grow a second comparison path (P7). `sm_oracle` keeps its
-record types in a module that `sm_verify` can use without pulling in an emulator. So the
+and the CLI should not be able to grow a second comparison path (P7). `oracle` keeps its
+record types in a module that `verify` can use without pulling in an emulator. So the
 decoder can be tested from stored records, and the harness doesn't depend on the engine
 (P5).
 
 ### 4.2 Dependency rules (checked in CI)
 
-1. No engine crate (`sm_data`, `sm_game`, `sm_runtime`, `sm_app`) depends on `sm_oracle`,
-   `sm_verify`, `sm_tools` or any legacy crate.
-2. `sm_game` and `sm_runtime` do not depend on each other.
-3. `sm_oracle` depends only on `sm_data` (for the digest).
+1. No engine crate (`data`, `game`, `runtime`, `app`) depends on `oracle`,
+   `verify`, `tools`, `sm` or any `sm_*` crate.
+2. `game` and `runtime` do not depend on each other.
+3. `oracle` depends only on `data` (for the digest).
 4. Engine crates contain no `cfg(verify)`, probe or observer (P6, PLAN).
-5. No SNES address literal appears in `sm_game`, `sm_runtime` or `sm_app` (K1).
+5. No SNES address literal appears in `game`, `runtime` or `app` (K1).
 
 ### 4.3 The trait budget
 
@@ -196,11 +207,11 @@ design change to this document (K3, P16).
 
 | Trait | Crate | Implementations | Why it is a trait |
 | --- | --- | --- | --- |
-| `Family` | `sm_data` | in slice 0: `Plm`, `Enemy`, `SamusAnimation`. Later: enemy projectiles, Samus projectiles, sprite objects, HDMA objects, palette FX, animated tiles, demo input, cinematic scripts | the interpreter is generic over the family's payload, op and pre-op types |
-| `Canonical` | `sm_game` (derived by `sm_derive`) | every State type | the encode, decode and diff of one canonical codec (K6) |
+| `Family` | `data` | in slice 0: `Plm`, `Enemy`, `SamusAnimation`. Later: enemy projectiles, Samus projectiles, sprite objects, HDMA objects, palette FX, animated tiles, demo input, cinematic scripts | the interpreter is generic over the family's payload, op and pre-op types |
+| `Canonical` | `game` (derived by `canonical`) | every State type | the encode, decode and diff of one canonical codec (K6) |
 
-Outside the engine: `Oracle` in `sm_oracle` (LakeSnes, then Mesen), and a `SoundBackend`
-and `MusicSource` pair in `sm_runtime` (the N-SPC backend and the replacement backends).
+Outside the engine: `Oracle` in `oracle` (LakeSnes, then Mesen), and a `SoundBackend`
+and `MusicSource` pair in `runtime` (the N-SPC backend and the replacement backends).
 
 FOUNDATION's `Interpret<F>` host trait is dropped. A family's op handler is an associated
 function on the family that takes a **concrete context struct**, for example
@@ -214,7 +225,7 @@ object for code to hide behind (Retro A2). `Machine<S, A, M, X>` is deferred (D1
 
 **D3.** The State is the whole Session as public plain data: structs and enums with no
 behaviour. It is the Checkpoint's schema, the decoder's output and the projections' input.
-Mutation and rules are private to `sm_game`. Opening a Session from a State validates its
+Mutation and rules are private to `game`. Opening a Session from a State validates its
 invariants. The domain table is FOUNDATION §4.1, with three additions:
 
 - `timing`: the NMI timing state, including the cost model's accumulator (D8, D9);
@@ -391,41 +402,96 @@ up as a gameplay divergence, and it never hides one (P11, P13). *Principles:* P4
 
 ### 6.5 Named CPU costs
 
-**D9.** On a real-beam oracle, some frame counts depend on CPU time:
+**D9.** This changes FOUNDATION's direction (J18: "no CPU-time cost model"), so it is set out
+here as a hypothesis, the evidence for it, a bounded model, the test that confirms or
+rejects it, and what happens when the model is wrong.
 
-- **loading:** decompressing level data, tiles and tilemaps during a door or room load. The
-  NMIs that arrive during it are lag NMIs;
-- **APU uploads:** the CPU's handshake loop sending song data to the driver;
-- **forced-blank transfers:** DMA during loading, and the door IRQ's VRAM update.
+**The hypothesis (H9).** On a real-beam oracle, the number of lag NMIs during certain busy
+routines depends on CPU time. That time varies with the data the routine processes. The
+routines are decompression during door and room loading, the CPU's handshake loop that
+uploads song data to the APU, and DMA under forced blank. So the length of a door
+transition depends on the rooms involved.
 
-The old stepper hid these because it ran a whole load inside one frame. FOUNDATION's J18
-("no CPU-time cost model") assumed that oracle. On the new oracle, door transitions take as
-many frames as the console takes (the frame report's open question 2), and that depends on
-the room's data.
+**Why we believe it before measuring.**
 
-The engine models these as a **cost model**: a typed table of costs per unit of named work,
-in master cycles. Examples are "per decompression command of kind K and length n", "per byte
-uploaded to the APU", "per DMA byte" and "per lag NMI". There is also a per-frame overhead
-table (the NMI paths, the IRQ handlers, HDMA per active channel per line). A busy routine
-charges its costs as it runs. The cost model then says how many NMIs arrive during it.
+- The bank-log reading in the frame report lists the door's room load as "load the room
+  header and decompress level, scroll and CRE data (`$E36E`, overrun lag under black)". It
+  also names "decompression in loading states" among the sources of overrun lag (frame
+  report §3 and §6).
+- Map Rando ships a `decompression` patch in its speed and flow group (Map Rando report §9).
+  A patch that only speeds up decompression is worth shipping only if decompression time is
+  visible as frames.
+- The old frame stepper ran a whole load inside one frame, so it could not show the effect.
+  That is why FOUNDATION's open question 2 ("door loading lag per room") stayed open.
 
-- The costs are **measured, not derived** (P2). The harness runs each routine on the corpus's
-  inputs, and the table is fitted and then checked on every room load in the corpus. The
-  bank logs give the code paths. The measurement gives the cycles.
-- The engine does the busy work in one Tick and then waits for the counted number of NMIs.
-  Partial state at overrun cuts isn't compared (D21), so the order inside the span doesn't
-  matter. What does matter is the number of frames, the forced-blank picture, the aggregated
-  port log, and the state at the next quiescent cut.
-- In the gate, the `Recorded` source still supplies the NMI timing. So gameplay checks never
-  depend on the model, and the model is gated by the `timing` stream.
-- Gameplay overruns (busy rooms) use the same table later, with a cost per unit of gameplay
-  work (enemies by species, projectiles, collisions, sprites). This is "native lag". It needs
-  no foundation change, only more table rows and their measurement.
+This is evidence, not proof. Busy-waits that spin on an IRQ-set flag (`$82:E06B`, `$E50D`,
+`$E526`) are a different case. Their length is the interrupt strand's timing, which is
+structural (`Wait::Until`). They are not CPU cost.
 
-*Principles:* P2, P4, P9. *Rejected:* FOUNDATION's J18, because door transitions would be
-wrong in live play on the new oracle. *Rejected:* emulating the decompressor's instructions
-(P9). *Rejected:* recorded timing only, which leaves live play and Map Rando seeds without
-correct load times.
+**The test, before any cost code exists** (P2). The harness plays the movies from power-on
+and reports, for every busy span (a run of frames whose NMIs interrupted a PC that isn't a
+wait site):
+
+- the span's first and last frame, the room pair, and the door;
+- a histogram of interrupted PCs, which tells us *which* routine the NMIs landed in;
+- each decompression call's source, output size and command mix;
+- the DMA bytes per frame under forced blank;
+- the APU upload bytes;
+- the frames in busy spans per row, which section 11.2 needs.
+
+The outcomes and what each one means:
+
+| Outcome | Meaning | What the engine does |
+| --- | --- | --- |
+| H9 holds: the lag count is a function of the named work | the model below | cost table, gated by the `timing` stream |
+| The count is constant per transition kind | there is no CPU-time dependence worth modelling | a structural count per kind in `Rules`, and D9 is dropped |
+| The count varies, but not predictably from the named work | the model would have to approach emulation | vanilla uses a per-(room, state, door) table of recorded counts, which is exact. Unseen content (Map Rando, custom rooms) uses the nearest model estimate, and the difference is listed as a limit. |
+
+**The model, bounded.** If H9 holds:
+
+- **Admission rule.** A routine gets a cost only if the harness shows NMIs landing inside it
+  on corpus rows. Everything else runs within its frame, and the model never sees it. The
+  expected list is short: the decompressor, the APU upload loop, forced-blank DMA, and
+  possibly the level data copy. The list is confirmed by the histogram above, not assumed.
+- **Unit of cost.** A cost is per unit of the routine's input: per decompression command of
+  a kind and length, per byte uploaded, per DMA byte (a hardware rule: 8 master cycles per
+  byte, plus a per-transfer overhead). It is never per instruction. A per-frame overhead
+  table covers the NMI paths, the IRQ handlers and HDMA per active channel per line, because
+  those steal time from the busy routine.
+- **Size cap.** The table is expected to have about 10-30 rows. The model has no CPU
+  registers, no instruction decoding and no branches on data values below the routine's own
+  units. If reaching zero-frame residuals needs more than that, we stop and review. The
+  fallback is the recorded-count table, not a bigger model (P16, P9).
+- **Measured, not derived.** The bank logs give the code paths, the harness measurements give
+  the cycles, and the table is fitted and then checked on every busy span in the corpus.
+- **How the engine runs it.** The busy routine does its work in one Tick and charges its
+  costs. The timing source then counts how many NMIs arrive before the strand yields, and
+  those Ticks are `Overrun`. Partial state at overrun cuts isn't compared (D21), so the order
+  inside the span doesn't matter. What matters is the number of frames, the forced-blank
+  picture, the aggregated port log, and the state at the next quiescent cut.
+
+**When the model is off by a frame.**
+
+- **In the gate:** nothing changes for gameplay. The gate runs `Recorded` timing, so every
+  gameplay stream is checked on the oracle's own frame schedule. The `timing` stream fails on
+  that row at the first wrong busy span. Its report names the span's first Tick, the door
+  and room pair, the work quantities, and the predicted against the recorded frame count,
+  with the residual in cycles. So it is localised without lockstep, and green (row, `timing`)
+  pairs measure the model's progress.
+- **In live play, or a `Modeled` replay of a console movie:** the door finishes one Tick
+  early or late. Everything after it is shifted by a frame relative to the console. The
+  NMI counters, and the animations that count all NMIs, differ by one, and a recorded movie
+  desyncs from that door on. That is why the `timing` stream is a gate in its own right for
+  live-play fidelity, and why `Recorded` never hides it.
+
+**Gameplay overruns** (busy rooms) use the same mechanism later, with costs per unit of
+gameplay work. This is native lag (ROBUSTNESS §4). It needs no foundation change: only more
+table rows, admitted by the same rule.
+
+*Principles:* P2, P4, P9, P16. *Rejected:* FOUNDATION's J18 as written, because door
+transitions would be wrong in live play on the new oracle if H9 holds. *Rejected:* emulating
+the decompressor's instructions (P9). *Rejected:* recorded timing only, which leaves live play
+and Map Rando seeds without load times.
 
 ### 6.6 Strands and continuations
 
@@ -575,7 +641,7 @@ build time, which rules out Map Rando seeds and custom content without a rebuild
 | | Exact output | Intent output |
 | --- | --- | --- |
 | What | what the oracle compares: video memory (in the State), the display frame (uploads with commit points, registers at line 0, changes at `LinePoint`s), the port frame and port log, SRAM writes | what the exact bytes mean: the camera and level layers in room coordinates, sprite entries at full precision (pre-OAM), effect parameters, the HUD's values, music cues and sound requests |
-| Produced by | the Tick itself, in `TickOutput` and the State | `sm_game::view::describe(&State, &ViewRequest) -> View`, a pure function, called only when a presentation profile needs it |
+| Produced by | the Tick itself, in `TickOutput` and the State | `game::view::describe(&State, &ViewRequest) -> View`, a pure function, called only when a presentation profile needs it |
 | Consumed by | the vanilla renderer and sound backend; verification | wide rendering, HD art, interpolation, replacement audio, overlays, accessibility |
 | Compared | yes, every stream | no. It is checked against the exact output (below). |
 
@@ -628,7 +694,7 @@ never replay sounds when a presentation is repeated, never vary the Tick.
    under forced blank are large but rare.
 
 The compositor is a CPU line compositor (the `gate1/render` branch's `draw_line` and
-per-pixel composer move into fresh `sm_runtime`, under D1's closed list). `wgpu` scales and
+per-pixel composer move into fresh `runtime`, under D1's closed list). `wgpu` scales and
 presents. The wide renderer (ROBUSTNESS §1) is a second consumer of the same mirror and the
 `View`. *Principles:* P12, P14. *Rejected:* GPU composition now. Exactness is easier to reach
 and prove on the CPU, and the per-pixel cost was measured (`gate1/render`: Mode 1 with BG3 at
@@ -673,11 +739,11 @@ exactly one module (P17).
 
 | Profile | Owner | In the gameplay fingerprint | Contents |
 | --- | --- | --- | --- |
-| `ReferenceProfile` | `sm_data` | yes | cadence (NTSC, exact rational); `OracleRules`: the oracle's identity and version, the IRQ write dots (D11), beam-sync measurements (D7), the cost table (D9), the driver model's constants (D18), and any oracle-specific LEGACY behaviour. A new oracle or a corrected measurement changes this data, not types. |
-| `GameplayProfile` | `sm_data` | yes | the rule options (suits, door and transition timing, movement capabilities, shinespark cost, pickups, refills, drops, respawn, bosses, escape, glitch policy, failure policy), the `Viewport` (ROBUSTNESS §1), and the `LagModel` for live play. Presets: `VANILLA`, and later `MAP_RANDO_BASE`. |
-| `TimingSource` | `sm_app` / `sm_tools` | recorded in the replay | `Recorded(schedule)`, `Modeled` or `None` (D8) |
-| `PresentationProfile` | `sm_runtime` | no (media revision) | view width and margin policy, palettes and themes, the Samus sheet, HD packs, shake and flash levels, the sound backend and music source, the resampler |
-| `InputProfile` | `sm_app` | no | physical to logical buttons, spin lock, the bindings that emit Session commands |
+| `ReferenceProfile` | `data` | yes | cadence (NTSC, exact rational); `OracleRules`: the oracle's identity and version, the IRQ write dots (D11), beam-sync measurements (D7), the cost table (D9), the driver model's constants (D18), and any oracle-specific LEGACY behaviour. A new oracle or a corrected measurement changes this data, not types. |
+| `GameplayProfile` | `data` | yes | the rule options (suits, door and transition timing, movement capabilities, shinespark cost, pickups, refills, drops, respawn, bosses, escape, glitch policy, failure policy), the `Viewport` (ROBUSTNESS §1), and the `LagModel` for live play. Presets: `VANILLA`, and later `MAP_RANDO_BASE`. |
+| `TimingSource` | `app` / `tools` | recorded in the replay | `Recorded(schedule)`, `Modeled` or `None` (D8) |
+| `PresentationProfile` | `runtime` | no (media revision) | view width and margin policy, palettes and themes, the Samus sheet, HD packs, shake and flash levels, the sound backend and music source, the resampler |
+| `InputProfile` | `app` | no | physical to logical buttons, spin lock, the bindings that emit Session commands |
 
 **Profiles resolve into rules at open.** `GameplayProfile` is resolved once into a `Rules`
 value that the Session holds. Each module reads its own section. For example, the door
@@ -735,7 +801,7 @@ video frame, and a record per frame keeps lag as an observation.
 
 **D21.**
 
-- **One decoder** (`sm_verify::decode`) turns a record into a `State` and a `Quiescence`. It
+- **One decoder** (`verify::decode`) turns a record into a `State` and a `Quiescence`. It
   reads WRAM through `ram_map.rs`, uses the `AddressMap` for every ROM pointer, and copies
   video memory and SRAM. It maps the PC and stack to a `MainStrand`. A cut whose main thread
   is at a known wait site is **quiescent**. A cut at an unknown site is
@@ -760,9 +826,26 @@ video frame, and a record per frame keeps lag as an observation.
 **Why quiescent cuts.** At an overrun cut the oracle is mid-routine, and no engine state
 corresponds to it. Comparing there would force the engine to copy the original's
 instruction-level progress, which is emulation (P9). Logs that accumulate during the span,
-and the picture, are still compared. *Principles:* P6, P7, P9. *Rejected:* comparing every
-cut, which is impossible without emulation. *Rejected:* skipping busy spans entirely, which
-would lose the port handshake during APU uploads.
+and the picture, are still compared.
+
+**Partial comparison at busy cuts.** Each costed routine (D9) declares the State domains it
+writes. At a busy cut inside a routine, every typed stream whose domains the routine *can't*
+write is still compared. For example, decompression writes the room's level and tile
+buffers, so `samus`, `progress`, `rng` and `input` are compared at every cut inside a load.
+A gameplay overrun is a different case. It interrupts the gameplay pass, which can write
+anything, so no typed stream is compared at its cuts.
+
+**What this gives up.** Typed coverage is lost only on the busy frames, and only for the
+domains the busy routine writes. How many frames that is per row is one of the measurements
+D9 asks the harness for. The expectation, to be replaced by the number, is that busy frames
+are a few per door transition and APU upload, so a small share of a row's Ticks, and none on
+rows without loading or busy rooms. Gameplay overruns are the unknown. If a row turns out to
+have many, its typed coverage is reported beside its result, so the loss is visible rather
+than silent (P12).
+
+*Principles:* P6, P7, P9. *Rejected:* comparing every cut, which is impossible without
+emulation. *Rejected:* skipping busy spans entirely, which would lose the port handshake
+during APU uploads.
 
 ### 11.3 Facts
 
@@ -783,7 +866,7 @@ again on the engine in every gate run. Facts are written with the row and live i
   lock can't follow the engine (Retro section 5, risk e).
 - **Green on the new engine** means the row's free run, with the `Recorded` timing source,
   matches the lock on every compared stream (every stream except `wram` and `audio`), every
-  fact holds, and the build excludes the legacy crates by name. The gate is: the number of
+  fact holds, and the build excludes `sm` and every `sm_*` crate by name. The gate is: the number of
   green rows doesn't fall, and Quality passes. Green (row, stream) pairs are reported and
   ratcheted, so progress inside a row is protected.
 - **Reports keep three things apart:** reached (facts), matches (streams) and deterministic
@@ -819,7 +902,7 @@ again on the engine in every gate run. Facts are written with the row and live i
 
 | Mode | Target at slice 0's exit | Measured how |
 | --- | --- | --- |
-| free run against the lock, every stream including `video` | ≥ 1,000 Ticks/s on one CI core | `sm_tools` on the slice's rows, reported on every landing relative to the oracle in the same job |
+| free run against the lock, every stream including `video` | ≥ 1,000 Ticks/s on one CI core | `tools` on the slice's rows, reported on every landing relative to the oracle in the same job |
 | free run, picture off (digests of everything else) | ≥ 3,000 Ticks/s | same |
 | headless engine, no verification | ≥ 5,000 Ticks/s | same |
 | lockstep (oracle, decode and diff per cut) | bounded by the oracle | reported, not gated |
@@ -846,7 +929,7 @@ rule 19).
 
 Two estimates move:
 
-- The cost model (D9) adds about 1-2k lines to `sm_game`: the cost table, its accumulator,
+- The cost model (D9) adds about 1-2k lines to `game`: the cost table, its accumulator,
   and the busy-frame accounting.
 - Dropping the deferred message box and the other kept-patch behaviour removes a little.
 
@@ -863,7 +946,7 @@ Two estimates move:
 | §8.1: one projection reads the State at every Tick | Compared at quiescent cuts; logs concatenated over busy spans (D21) | P9. Overrun cuts have no engine equivalent. |
 | §8.3: green by digests | Green by digests plus facts; three-way reports (D22) | P10, P11 (Retro V3) |
 | J5: re-lock the redefined streams once | Locks keyed by (row, oracle), recorded oracle-side before engine code (D22) | Retro risk e |
-| §3: projections in `sm_tools`, the decoder on the old oracle side | `sm_oracle` (engine-free) and `sm_verify` (decoder, projections, facts) (D1) | P5, P7 |
+| §3: projections in `tools`, the decoder on the old oracle side | `oracle` (engine-free) and `verify` (decoder, projections, facts) (D1) | P5, P7 |
 | `Interpret<F>` host trait | `Family` with a concrete `Context<'a>` (D13) | K3 (Retro A2) |
 | `Machine<S, A, M, X>` (J13) | Concrete per species; extracted at the second user; bosses designed as phase tables at their cluster (D14) | P16 (Retro risk c) |
 | §7: IDs | Dense IDs inside, stable keys outside, overlays (D15) | P17. Custom content and saves. |
@@ -893,7 +976,7 @@ As FOUNDATION §11, amended.
 **The spine, by one lane** (Retro rule 25).
 
 3. The crate plan (D1) and its CI checks (section 4.2).
-4. `sm_derive` and the State skeleton for slice 0's domains, time-boxed. Its first users are
+4. `canonical` and the State skeleton for slice 0's domains, time-boxed. Its first users are
    slice 0's Checkpoint test and lockstep diff.
 5. The decoder for that skeleton, with its mutants.
 
@@ -928,11 +1011,11 @@ and where the architecture meets it.
 | 1 | Fresh code to target types; transpile is reference only | D1; P3; section 2 |
 | 2 | Compiler forbids new crates depending on old, in CI | D1; §4.2 rule 1 |
 | 3 | One authority per state; no codec back to the old layout | D3; P5; no State → WRAM encoder exists |
-| 4 | Translation one way, oracle to engine, in verification | D21 (`sm_verify::decode`); P5 |
+| 4 | Translation one way, oracle to engine, in verification | D21 (`verify::decode`); P5 |
 | 5 | State modelled from behaviour; nothing only for comparison | D3's "every field has an engine reader"; D5's reason is readbacks and stale display, not digests |
 | 6 | No trait so the old system can host new code; concrete contexts; count traits | D2 trait budget; D13's `Family::Context`; K3 |
 | 7 | Spine runs end to end in the first slice | Section 15, slice 0's exit; `begin`/`end`/`step` (§6.3) |
-| 8 | The gate counts rows the new spine executes | D22; legacy crates excluded from the gate build by name |
+| 8 | The gate counts rows the new spine executes | D22; `sm` and the `sm_*` crates excluded from the gate build by name |
 | 9 | One path per responsibility; replacement deletes the old | P7; D16's one drawing source for exact and intent; one decoder, one projection |
 | 10 | No probes, observers or verify cfgs in engine code | §4.2 rule 4; verification reads `State` and `TickOutput` |
 | 11 | Per-domain size budget, reported every landing | D24 |
@@ -943,7 +1026,7 @@ and where the architecture meets it.
 | 16 | Facts per row; reached, matches and deterministic kept apart | §11.3, D22 |
 | 17 | Verified speed requirement from slice 0 | D23 |
 | 18 | Starts keyed to oracle-side identities; one canonical Checkpoint format, versioned by schema | §11.1 seeds; D15's fingerprint; FOUNDATION §4.6's `Checkpoint { schema, fingerprint, state }` |
-| 19 | Verification's own budget, one runner, Rust, depends only on engine output and the oracle | D1 (`sm_verify`, `sm_oracle`); D24 |
+| 19 | Verification's own budget, one runner, Rust, depends only on engine output and the oracle | D1 (`verify`, `oracle`); D24 |
 | 20 | Continuous boot-to-credits runs on a schedule, with facts | Section 15, "Continuity from the start" |
 | 21 | Refactors are `[exact]` | P3; D14's machine extraction is an `[exact]` refactor |
 | 22 | Structural counts are advisory | P13; only D22's outcomes and D23's speed can fail CI |
@@ -964,6 +1047,6 @@ And the retrospective's critique of FOUNDATION (section 5), each answered:
 | A3 schema pulled toward RAM by decoder coverage | D3, coverage both ways |
 | V1 pixel authority is LakeSnes | D17's PPU-domain pixels; the Mesen spot check |
 | V2 unowned RAM never compared | §11.6, the nightly unowned-RAM report |
-| V5 decoder is the riskiest verification code | the decoder's own mutants (§11.5); `sm_verify` has its own budget |
+| V5 decoder is the riskiest verification code | the decoder's own mutants (§11.5); `verify` has its own budget |
 | V6 seeded rows | section 15, continuity from the start |
 | P3 who builds the spine | section 15, one lane |
