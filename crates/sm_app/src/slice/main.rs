@@ -10,8 +10,9 @@ use sdl2_sys::{
     SDL_CreateWindow, SDL_Delay, SDL_Event, SDL_EventType, SDL_GetError, SDL_GetKeyboardState,
     SDL_GetPerformanceCounter, SDL_GetPerformanceFrequency, SDL_GetQueuedAudioSize, SDL_INIT_AUDIO,
     SDL_INIT_EVENTS, SDL_INIT_VIDEO, SDL_Init, SDL_OpenAudioDevice, SDL_PauseAudioDevice,
-    SDL_PixelFormatEnum, SDL_PollEvent, SDL_QueueAudio, SDL_Quit, SDL_RenderCopy, SDL_RenderPresent,
-    SDL_Scancode, SDL_TextureAccess, SDL_UpdateTexture, SDL_WINDOWPOS_CENTERED_MASK, SDL_WindowFlags,
+    SDL_PixelFormatEnum, SDL_PollEvent, SDL_QueueAudio, SDL_Quit, SDL_RenderCopy,
+    SDL_RenderPresent, SDL_Scancode, SDL_TextureAccess, SDL_UpdateTexture,
+    SDL_WINDOWPOS_CENTERED_MASK, SDL_WindowFlags,
 };
 use sm_data::prepared::{PreparedContent, PreparedStart};
 use sm_host::session::{AudioBatch, HostResult, SaveRequest, Session, TickInput};
@@ -131,8 +132,12 @@ struct Options {
 fn options() -> Result<Options, String> {
     let mut args = std::env::args().skip(1);
     let mut options = Options {
-        content: args.next().ok_or("usage: sm_slice <content> <start> [options]")?,
-        start: args.next().ok_or("usage: sm_slice <content> <start> [options]")?,
+        content: args
+            .next()
+            .ok_or("usage: sm_slice <content> <start> [options]")?,
+        start: args
+            .next()
+            .ok_or("usage: sm_slice <content> <start> [options]")?,
         save: "saves/slice.srm".into(),
         ..Options::default()
     };
@@ -146,7 +151,9 @@ fn options() -> Result<Options, String> {
                     text.lines()
                         .map(str::trim)
                         .filter(|line| !line.is_empty() && !line.starts_with('#'))
-                        .map(|line| u16::from_str_radix(line, 16).map_err(|_| format!("bad input {line}")))
+                        .map(|line| {
+                            u16::from_str_radix(line, 16).map_err(|_| format!("bad input {line}"))
+                        })
                         .collect::<Result<_, _>>()?,
                 );
             }
@@ -256,7 +263,8 @@ fn run() -> Result<(), String> {
         } else {
             // SAFETY: SDL is initialized.
             let elapsed = unsafe { SDL_GetPerformanceCounter() } - began;
-            (u128::from(elapsed) * u128::from(TICKS_P) / u128::from(TICKS_Q)
+            (u128::from(elapsed) * u128::from(TICKS_P)
+                / u128::from(TICKS_Q)
                 / u128::from(frequency)) as u64
         };
         let mut scene = None;
