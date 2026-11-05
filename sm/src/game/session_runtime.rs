@@ -2722,24 +2722,11 @@ impl sm_game::menus::host::MenuRuntime for Runtime<'_> {
     fn write_dma_register(&mut self, register: u16, value: u8) {
         crate::rtl::write_dma_register(register, value, self.game)
     }
-    fn handle_music_queue(&mut self) {
-        self.advance_music_requests();
-    }
     fn assert_ram_pointer(&mut self, address: u16) {
         crate::game::menu_host::assert_ram_pointer(address);
     }
     fn message_box_das0l_value(&self) -> u16 {
         self.game.message_box_das0l_value
-    }
-    fn set_message_box_das0l_value(&mut self, value: u16) {
-        self.game.message_box_das0l_value = value;
-    }
-    fn advance_dialogue_sound_effects(&mut self) {
-        self.advance_dialogue_sound_requests();
-    }
-    fn run_hdma_objects(&mut self) {
-        // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
-        sm_game::hdma_objects::update_hdma(false, self);
     }
     fn spawn_hdma(&mut self, bank: u8, args: &crate::types::HdmaObjectDefinition) -> u16 {
         sm_game::hdma_objects::spawn_hdma_owned(bank, args, self)
@@ -3682,9 +3669,6 @@ impl sm_game::presentation_workspace::ContinuationAccess for Runtime<'_> {
     fn set_secondary_continuation(&mut self, value: u8) {
         *self.session_mut().control.secondary_mut() = value;
     }
-    fn outer_continuation(&self) -> u8 {
-        self.byte(0x611)
-    }
     fn set_outer_continuation(&mut self, value: u8) {
         self.set_byte(0x611, value);
     }
@@ -3720,9 +3704,6 @@ impl sm_game::dialogue_ram::Access for Runtime<'_> {
         self.set_byte(0x615, value.child);
         self.set_byte(0x614, value.parent);
     }
-    fn dialogue_request(&self) -> u16 {
-        self.word(0xdc8)
-    }
     fn dialogue_set_request(&mut self, value: u16) {
         self.write_word_le(value, 0xdc8);
     }
@@ -3743,9 +3724,6 @@ impl sm_game::dialogue_ram::Access for Runtime<'_> {
     }
     fn dialogue_set_radius(&mut self, value: u16) {
         self.write_word_le(value, 0x5a2);
-    }
-    fn dialogue_scratch(&self) -> [u16; 4] {
-        [0x5a4, 0x5a6, 0x5a8, 0x5aa].map(|at| self.word(at))
     }
     fn dialogue_set_scratch(&mut self, index: usize, value: u16) {
         sm_data::table::check_index(index, 4);

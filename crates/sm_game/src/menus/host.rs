@@ -22,10 +22,6 @@ pub trait PlayerRuntime: crate::runtime_access::Lend {
     fn draw_projectiles(&mut self) {
         self.lend(crate::player_projectiles::presentation::draw_projectiles);
     }
-    /// Restore Samus's movement sound after a message box.
-    fn restore_movement_sound(&mut self) {
-        self.lend(crate::player_projectiles::feedback::restore_sound);
-    }
     /// Run Samus's pose command `command`; returns the original's result.
     fn player_command(&mut self, command: u16) -> u16 {
         use crate::player_transitions::commands::finish_ceres_arrival;
@@ -95,17 +91,10 @@ pub trait MenuRuntime:
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
     /// Write a DMA channel register on the owned backend.
     fn write_dma_register(&mut self, register: u16, value: u8);
-    /// Advance the music queue, as the HDMA update did first each frame.
-    fn handle_music_queue(&mut self);
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.
     fn assert_ram_pointer(&mut self, address: u16);
     /// The message box DMA length the original kept outside RAM.
     fn message_box_das0l_value(&self) -> u16;
-    fn set_message_box_das0l_value(&mut self, value: u16);
-    /// Emit the queued dialogue sound effects as Cues.
-    fn advance_dialogue_sound_effects(&mut self);
-    /// Run the HDMA object handler, which also handles the music queue ($88:84B9).
-    fn run_hdma_objects(&mut self);
     /// Spawn an HDMA object from bank `bank`; returns its slot.
     fn spawn_hdma(
         &mut self,

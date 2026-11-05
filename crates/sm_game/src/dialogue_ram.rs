@@ -31,13 +31,11 @@ pub struct Encoded {
 pub trait Access {
     fn dialogue_state(&self) -> Dialogue<u16>;
     fn dialogue_publish(&mut self, state: Dialogue<u16>);
-    fn dialogue_request(&self) -> u16;
     fn dialogue_set_request(&mut self, value: u16);
     fn dialogue_active_index(&self) -> u16;
     fn dialogue_clear_active(&mut self);
     fn dialogue_selection(&self) -> u16;
     fn dialogue_set_selection(&mut self, value: u16);
-    fn dialogue_scratch(&self) -> [u16; 4];
     fn dialogue_set_scratch(&mut self, index: usize, value: u16);
     fn dialogue_radius(&self) -> u16;
     fn dialogue_set_radius(&mut self, value: u16);

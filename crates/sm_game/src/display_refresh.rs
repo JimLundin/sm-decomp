@@ -57,9 +57,6 @@ pub trait Host:
     /// Fill VRAM's low bytes with `fill` from address 0, resetting the
     /// address as one word or two bytes.
     fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
-    /// Read the VRAM port's data word, stepping the port as the hardware
-    /// does; the first read after setting the address is the prefetch.
-    fn read_vram_data(&mut self) -> u16;
 }
 
 /// What the NMI's display refresh (`run`) needs: the frame display, the HDMA

@@ -40,10 +40,6 @@ pub trait Lease:
     fn disable_minimap(&mut self);
     fn owned<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R;
 }
-/// Compatibility dispatch only; state transitions themselves require a Session.
-pub trait Dispatch {
-    fn phantoon(&mut self, callback: Callback);
-}
 #[derive(Clone, Copy)]
 pub enum Callback {
     Initialize,

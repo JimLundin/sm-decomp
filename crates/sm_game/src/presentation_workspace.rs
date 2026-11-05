@@ -624,9 +624,6 @@ pub trait ContinuationAccess {
     /// or the room mechanisms' pass.
     fn secondary_continuation(&self) -> u8;
     fn set_secondary_continuation(&mut self, value: u8);
-    /// The outer continuation ($0611): the frame state, or the boot's resume
-    /// point.
-    fn outer_continuation(&self) -> u8;
     fn set_outer_continuation(&mut self, value: u8);
     /// The message box continuation ($0615).
     fn message_continuation(&self) -> u8;

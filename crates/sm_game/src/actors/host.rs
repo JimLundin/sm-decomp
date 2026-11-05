@@ -97,22 +97,12 @@ pub trait BossEffects:
 {
     /// Create a sprite object of `kind` at (`x`, `y`); its handle.
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;
-    /// Where the next enemy projectile spawns.
-    fn set_projectile_spawn_point(&mut self, x: u16, y: u16);
     /// The high word of `amplitude` times the cosine of `phase`.
     fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16;
     /// The high word of `amplitude` times the sine of `phase`.
     fn actor_sine(&mut self, phase: u16, amplitude: u16) -> u16;
-    /// `amplitude` times the cosine of `phase`, as 16.16.
-    fn actor_cosine_full(&mut self, phase: u16, amplitude: u16) -> u32;
-    /// `amplitude` times the sine of `phase`, as 16.16.
-    fn actor_sine_full(&mut self, phase: u16, amplitude: u16) -> u32;
-    /// The (x, y) step of `amplitude` along direction `phase`.
-    fn actor_direction_vector(&mut self, phase: u16, amplitude: u16) -> crate::geometry::Vector32;
     /// Move the current actor by `vector` along `phase`.
     fn apply_vector(&mut self, phase: u16, vector: crate::geometry::Vector32);
-    /// The enemy scratch word the vector movement reads.
-    fn set_enemy_scratch(&mut self, value: u16);
     /// The actor content record at `bank:address`, as the original actor read.
     fn actor_legacy_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
     /// The native record at `bank:address`, with the original diagnostic.

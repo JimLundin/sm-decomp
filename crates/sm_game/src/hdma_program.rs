@@ -44,15 +44,6 @@ pub fn with_current_object<L: HdmaLease, T>(
     crate::lease::Lease::owned_player_call(lease, |lease| action(index, lease))
 }
 
-/// A host that can lease its Session to the interpreter.
-pub trait LeaseHdma {
-    type Lease<'a>: HdmaLease
-    where
-        Self: 'a;
-    /// One owned-Session view for the frame's objects.
-    fn hdma_lease(&mut self) -> Self::Lease<'_>;
-}
-
 /// What one interpreter frame needs from the lease.
 pub(crate) trait Interpreter: HdmaTable {
     /// Work RAM outside the object table.
