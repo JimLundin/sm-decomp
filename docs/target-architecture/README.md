@@ -15,16 +15,16 @@ fidelity profile; intentional options need their own interaction checks.
 
 ## Migration policy
 
-Workers may retain the current Rust game's emulated backend and built-in
-oracle while replacing responsibilities. [PLAN](../PLAN.md) and
-[REVIEW](../REVIEW.md) govern current tasks, verification, resources and platform
-restrictions. Do not remove a working comparison path before replacement evidence
-exists. Backend independence is a completed-slice/final-runtime criterion.
+The new engine is built on a fresh foundation, verified against the built-in
+oracle ([REVIEW](../REVIEW.md#rebuild-on-a-new-foundation-jim-2026-11-05)). The old
+transpiled game and its host are frozen reference material, deleted as the new engine
+covers them. [PLAN](../PLAN.md) and [REVIEW](../REVIEW.md) govern current tasks,
+verification, resources and platform restrictions. Keep the oracle and its comparisons
+working. Backend independence is a completed-slice/final-runtime criterion.
 
-Migrate a complete responsibility and its callers, with one state owner and
-explicit inputs/results. Preserve RAM compatibility until consumers move;
-[the state migration contract](../ENGINE_STATE_MIGRATION.md) covers external
-writers, reset/load, oracle adoption and suspended execution. Introduce packages
+Build a complete responsibility with one state owner and explicit inputs/results.
+The new engine does not keep the old RAM layout; verification translates the oracle's
+RAM into the engine's terms. Introduce packages
 when real responsibilities meet their contracts; file moves or crate skeletons
 alone do not achieve ownership. Count retained code, adapters and dependencies
 in the full replacement cost.

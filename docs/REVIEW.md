@@ -30,6 +30,34 @@ from the emulator. Code that exists only to keep the original runtime and oracle
 working is **compat**: it shrinks and gets no new features. Owners built inside
 the RAM-compatible runtime stay inside the backend cycle and are not the goal.
 
+### Rebuild on a new foundation (Jim, 2026-11-05)
+
+Jim approved replacing incremental extraction with a rebuild, and asked for it to be
+more aggressive, with the foundation right first:
+
+- **No reverence for the old code.** The transpiled game, its host (`crates/sm_host`,
+  `sm/src/game`), the RAM image, the Session ↔ RAM codec and the leases are frozen as
+  reference material. They are not adapted further or kept green, and they are deleted
+  as the new engine covers what they did. The end state does not cite the transpilation.
+- **Foundation first.** Before the spine is built, its design (the Session's state model,
+  the Tick, Scenes and effects, content and IDs, actors, the renderer and sound
+  interfaces) is written down and checked against the hardest behaviour the original
+  game shows and against Map Rando's modularity, and Jim reviews it. A longer road to
+  something playable is accepted in exchange for a foundation that serves the whole
+  design and the size target.
+- **What stays:** the oracle (the ROM on the emulator), the scenario corpus and its
+  locks, and comparison of what does not depend on the old RAM layout: video, the APU
+  ports, VRAM, CGRAM, OAM and PPU registers, typed observations, and Session-space
+  comparison through the oracle RAM → Session decoder.
+- **The gate:** a change may not lower the number of rows the new engine passes, and
+  Quality passes. The old path's Verify no longer gates engine changes; the nightly keeps
+  checking the oracle and the old path until the old path is deleted.
+- **Measures:** rows green on the new engine (corpus rows, then the room chains, then the
+  full any%, 100% and low% movies), and old lines deleted.
+
+This replaces the end-state order above and the migration policy's rule to keep the old
+path working until each replacement has evidence.
+
 ### External review work list (#254) decisions (Jim, 2026-11-04)
 
 Jim accepted the coordinator's recommendations on the review's seven open decisions,

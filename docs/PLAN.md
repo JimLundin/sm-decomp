@@ -63,7 +63,9 @@ Avoid adding Python: this is a Rust project ([plan](VERIFY_PIPELINE.md)).
 - No tolerances: fix a divergence or list it in [LEGACY](LEGACY.md).
 - Never weaken a comparison or expectation to pass. Every comparison failure gets a
   regression row with its fix. Retry a flaky step once; a second failure is real.
-- Keep a working comparison path until its replacement has evidence.
+- Keep the oracle and its comparisons working. The old engine path is frozen reference
+  ([REVIEW](REVIEW.md#rebuild-on-a-new-foundation-jim-2026-11-05)): it is not kept green,
+  and the new engine's row count may not fall.
 - Report reached behaviour and mutation sensitivity separately from passing rows.
 - A constructed code check is only for behaviour no movie reaches: under 100 lines, with the
   reason in its first line. Otherwise add a named row or scenario.
