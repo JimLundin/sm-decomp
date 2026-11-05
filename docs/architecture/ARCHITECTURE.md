@@ -903,8 +903,12 @@ again on the engine in every gate run. Facts are written with the row and live i
   The full TAS movies are the long complement, run nightly. The source of tricks is the
   vanilla trick library that Map Rando relies on, through our own translation of
   [sm-json-data](https://github.com/vg-json-data/sm-json-data), not its raw JSON. sm-json-data
-  (CC-BY-4.0) is translated once into a typed Rust representation (Jim's work in progress),
-  which can be packaged on demand into a complete binary. That form is also what a Map
+  (CC-BY-4.0) is translated once into a typed Rust representation:
+  [sm-json-data-rs](https://github.com/JimLundin/sm-json-data-rs) (0BSD, Jim's). Its
+  dependency-free `sm-logic` crate holds the domain model (typed IDs, enum-with-data nodes and
+  requirements) and decodes an LZMA pack built ahead of time by its `sm-json-data` crate,
+  from upstream or from Map Rando's fork. We depend on `sm-logic` at a pinned commit and load
+  a pack. Only the pack-building step sees JSON. That form is also what a Map
   Rando-style randomizer consumes. Nothing in the engine or `tools` reads the JSON. From the
   translated data, a `tools` step turns a strat into a row skeleton: its stable ID (room, from node, to
   node, name), its entrance and exit conditions, and its equipment and end node as facts.
