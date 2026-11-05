@@ -875,6 +875,28 @@ mod tests {
     }
 
     #[test]
+    fn every_field_is_compared() {
+        let blank = || {
+            sm_game::session_encoding::decode(
+                &|_| 0,
+                0x20000,
+                sm_game::room_entry::world::WorldBinding::canonical_legacy(),
+            )
+        };
+        let oracle = blank();
+        assert!(differing(&blank(), &oracle).is_empty());
+        // The last listed field, so the end of the list is not skipped.
+        let mut engine = blank();
+        engine.wavy_samus.speed = 1;
+        let names: Vec<&str> = differing(&engine, &oracle)
+            .iter()
+            .map(|&index| FIELDS[index])
+            .collect();
+        assert_eq!(names, ["wavy_samus"]);
+        assert_eq!(FIELDS.last(), Some(&"wavy_samus"));
+    }
+
+    #[test]
     fn agreement_counts_each_side() {
         let mut compare = SessionCompare {
             pending: Some(true),
