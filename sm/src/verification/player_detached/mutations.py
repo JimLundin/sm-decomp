@@ -142,7 +142,7 @@ SPRITE_MUTATIONS: tuple[SuiteMutation, ...] = (
      (
          ('crates/sm_game/src/sprite_objects.rs',
           '                    timer = program_word(host, next, 0);',
-          '                    let record = host.table(Source::Loaded, 0xb40000 | u32::from(next));\n                    let _diagnosed = program_word(host, next, 0);\n                    timer = record.native_word(0);'),
+          '                    let record = crate::visual_host::Content::table(\n                        host,\n                        crate::visual_host::Source::Loaded,\n                        0xb40000 | u32::from(next),\n                    );\n                    let _diagnosed = program_word(host, next, 0);\n                    timer = crate::visual_host::Record::native_word(&record, 0);'),
      )),
     ('sprite_draw_ascending', 'draw_live',
      'sprite.mutation.draw_order_and_live_next',
@@ -510,6 +510,9 @@ def main() -> None:
         raise RuntimeError("install this runner alongside the repo detached harness")
     with tempfile.TemporaryDirectory(prefix="player-detached-mutations-") as directory:
         work = Path(directory)
+        # shared.rs includes sm_host's ram_map.rs by a path four levels up from
+        # player_detached; each copy at work/<name>/src resolves that to work/crates.
+        shutil.copytree(source.parent.parent / "crates" / "sm_host" / "src", work / "crates" / "sm_host" / "src")
         # This same runner compiles every detached baseline and selected mutant.
         SM_GAME.extend(["-L", f"dependency={work}"])
         for crate in ("sm_data", "sm_game", "sm_runtime"):
