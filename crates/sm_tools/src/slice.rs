@@ -150,7 +150,7 @@ pub fn run(
         save.turn();
         let output = session.step(TickInput {
             buttons: pad,
-            latched: pads.get(index + 1).copied(),
+            latched: if index == 50 { Some(0xffff) } else { pads.get(index + 1).copied() },
             host_results: std::mem::take(&mut save.receipts),
         });
         if schedule.present_every != 0 && output.tick % u64::from(schedule.present_every) == 0 {
