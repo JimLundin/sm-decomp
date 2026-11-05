@@ -201,7 +201,7 @@ yet. The captures they need, with the movie frame to cut at:
 | 100-boundary:259 | 169581 | 1 |
 | low-input-phase:129 | 100731 | 2 |
 | any-boundary:110, 190 | 73446, 116359 | 3 |
-| scenario-one-energy-crocomire:142 | not a movie capture | 2 |
+| scenario-one-energy-crocomire:142 | 99412 (100-input-phase:142, edited) | 2 |
 
 **Native-seeded rows that already run on lsnes:** chain-any-0001-DF45,
 chain-any-0006-E0B5 and chain-any-0012-91F8, 3220 ticks in all, at 39 frames/s.

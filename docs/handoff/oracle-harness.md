@@ -71,16 +71,24 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 - `corpus --oracle lsnes --native-seeds DIR` maps `CAPTURE:INDEX` to `DIR/CAPTURE/INDEX.lss` (`Start::State`); `run_row_with` goes through `Backend` (`Observe::backend`, `Observe::native_seeds`).
   - Checked on chain-any-0001-DF45, -0006-E0B5 and -0012-91F8: they run to their tick count, at 39 frames/s.
   - wram, vram, cgram, oam and ppu differ, as under LakeSnes; sram matches.
-- The 27 stalled rows are not re-run: none of their 13 captures has a native seed yet (table in MEASUREMENTS.md).
+- The 27 stalled rows are not re-run: none of their 13 captures has a native seed yet (table in MEASUREMENTS.md; the cut is prepared, item 2).
 
 ## Next, in order
 
 1. Done: the cut callback is on the NMI handler's RTI. Open question: the record's PC is one past the interrupted opcode (lsnes's exec-callback convention, kept for byte identity). Compare it with the LakeSnes record and settle it in the cross-oracle report (item 4).
-2. Cut the 13 captures the 27 stalled rows need, each in one run with repeated `--native-seeds` and `--no-memories`:
-   - from `movies/100.inputs`: `100-input-phase`, `100-mb-phases`, `100-boundary`, `100-credits` (credits at frame 222657);
-   - from `low.inputs`: `low-input-phase`;
-   - from `any.inputs`: `any-boundary` 110 and 190 (frame 116359).
-   - `scenario-one-energy-crocomire:142` is not on a movie; find its source.
+2. Cut the 13 captures the 27 stalled rows need: prepared, not yet run. `$TEMP/ohx/cut_seeds.sh 100|low|any` (private) runs `movie --oracle lsnes --no-memories` with one `--native-seeds` per capture. The CSVs are `movies/room-seeds-<capture>.csv` filtered to the needed rows (`$TEMP/ohx/cut-<capture>.csv`). The three runs are independent:
+
+   | Run | Movie | Captures (indices) | Start | `--frames` | Time at 81 frames/s |
+   | --- | --- | --- | --- | --- | --- |
+   | `100` | `100.inputs` | `100-input-phase` (27, 104, 142, 305, 324), `100-mb-phases` (324, 325, 329), `100-boundary` (259), `100-credits` (336) | power-on | 222658 | about 46 min |
+   | `low` | `low.inputs` | `low-input-phase` (129) | power-on | 100732 | about 21 min |
+   | `any` | `any.inputs` | `any-boundary` (110, 190) | native seed 16, frame 17829 | 116360 | about 20 min |
+
+   - A seed at movie frame F is saved after step F-1 and copied one step later, so each run stops at the last F plus 1.
+   - Seeds go to `$TEMP/ohx/data/lsnes-native/<capture>/NNNN.lss`; logs go to `$TEMP/ohx/cut-<run>.log`.
+   - Success: one `native seed` line per seed (10, 1, 2; frame 209945 serves two captures), then `frames ... in`, then `cut_seeds <run> exit 0`.
+   - Proof: cutting `any-boundary:17` (frame 18109) from seed 16 ran at 81 frames/s. `corpus --oracle lsnes --native-seeds` then ran `chain-any-0017-9E9F` from it to its 592 ticks, with sram equal and the other streams differing, as on the other native rows.
+   - `scenario-one-energy-crocomire:142` is `100-input-phase:142` (movie frame 99412) with energy `$09C2` = 1 and reserve energy `$09D6` = 0 (`tools/scenario_seeds.py`). The `100` run cuts the base. The edit needs a WRAM write request in `lsnes_server.lua`, plus a way to apply it before the save or after the load. Neither exists yet. Its rows are `death` and `file-copy-clear`.
    - Then run `corpus --oracle lsnes --native-seeds DIR --only ...` on the 27 rows (88 under the diagnosis).
 3. Door lengths and busy spans from lsnes. Fix the DMA-under-blank count to check INIDISP per write.
 4. A cross-oracle report, LakeSnes against lsnes, per stream per frame. Then the re-lock (the root's call).
