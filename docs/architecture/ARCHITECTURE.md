@@ -127,6 +127,7 @@ each approach in plain terms.
 | D23 | A speed budget with a slice-0 exit target | P14 | 12 |
 | D24 | A per-domain size budget and a trait budget, reported on every landing | P16 | 13 |
 | D25 | Locks are recorded by the most accurate oracle producing each stream; the gate runs no oracle, so oracle speed only matters for re-locking and lockstep | P10, P12 | 11.4 |
+| D26 | Dedicated short trick movies from seeds (sm-json-data strats, door conditions first), accepted when the oracle reaches the end node with facts; full TAS movies run nightly | P10, P11 | 11.4 |
 
 ## 4. Packages and ownership
 
@@ -895,6 +896,21 @@ again on the engine in every gate run. Facts are written with the row and live i
   `PpuRegisters`). LakeSnes's records count only on frames where its memories agree with
   lsnes's. LakeSnes stays the fast oracle for lockstep. The `ReferenceProfile` names the
   oracle for each stream. Changing one re-locks that stream oracle-side.
+
+- **Dedicated trick movies (D26, Jim, 2026-11-05).** This carries REVIEW item 9 into the
+  rebuild. We record and author our own short movies, one per trick or strat. Each starts
+  from a seed, either a movie rung or another trick movie's end, and covers only the trick.
+  The full TAS movies are the long complement, run nightly. The source of tricks is the
+  vanilla trick library that Map Rando relies on. A `tools` importer reads a pinned
+  [sm-json-data](https://github.com/vg-json-data/sm-json-data) commit (CC-BY-4.0, not copied
+  into the repo) and turns a strat into a row skeleton: its stable ID (room, from node, to
+  node, name), its entrance and exit conditions, and its equipment and end node as facts.
+  Door conditions come first (G-mode, shinecharged, runway, spark), because carrying state
+  between rooms that were never neighbours is what Map Rando adds. The inputs are authored
+  (in Rust, in `tools`), recorded from play in `app`, or extracted from video later. A trick
+  movie is accepted only when the oracle reaches its end node with its facts. It is then
+  locked like any other row. The engine needs no oracle for tricks it has a row for. Unseen
+  combinations run under `Modeled` timing (D8) with facts only.
 
 *Principles:* P10, P11, P12, P13.
 
