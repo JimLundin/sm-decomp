@@ -81,7 +81,19 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
     - Re-timed in `c58d7ccc9`: 600 death-row words, then its own presses; 2230 ticks (was 3612). On lsnes (`--watch-words 0998,0727,0952,19B5,19B7,19B9`): game over `0x1A` at 604, quit chosen at 813 (`$0727=7`), title at 847, file select `4` at 1100, copy (`$0727=0x0D`, slot A to B) at 1521, clear (`$0727=0x19`, slot A) at 2063, main file menu again at 2200. SRAM (a scratch per-slot sum, not committed): slot B takes slot A's bytes and checksum at 1522, slot A is zeroed at 2064. The title needs two A presses (the first skips its zoom; Start alone does nothing). The bundle's `authored-file-copy-clear.inputs` (SHA-256 `c9084e8f5a7cd83eb144fe9f17318609d3faf3181aecd17451f96081552f8cb6`) and the lock are the root's to replace.
 - `corpus --watch-words ADDR,...` prints work-RAM words whenever they change, per row, to read an outcome off the oracle.
 
+## Ladders (lane `lane/oracle-ladder`)
+
+- `movie --ladder N DIR`, `ladder-check`, `ladder-rung` and `--from-ladder` (HARNESS.md, "Ladders"). A rung's record always carries the memories, also under `--no-memories`.
+- Proved from native seed 16 (frame 17829) on any%, N=1000, `--no-memories`, 100 frames/s:
+  - rungs 18000, 19000 and 20000 cut; the manifest's SHA-256 values equal `sha256sum` of the records, and a second cut gave the same records;
+  - `ladder-check`: 18000 -> 19000 and 19000 -> 20000 equal, about 11 s each;
+  - negative control: with pads 18100-18899 replaced by `0200`, 18000 -> 19000 is different (cut 5, cpu 9, wram 4525, vram 3244, cgram 4, oam 80 bytes) and the exit is 1;
+  - native seed 18 (frame 19514) cut with `--from-ladder` (from rung 19000, 5 s) and from seed 16 directly (17 s): the records are equal, and equal to `$TEMP/ohx/nm/0018.record`. The `.lss` bytes differ, as expected, yet both states resumed give identical full records at 19515, 19520 and 19525.
+- Full ladders: `$TEMP/ohx/build_ladders.sh 100|low|any [check]` (private), into `$TEMP/ohx/data/lsnes-ladder/<movie>/`, with N=10000, `--no-memories`, from power-on, wrapper `$TEMP/ohx/oh-ladder` (`oracle_ladder.dll`, built by `$TEMP/ohx/build-ladder.sh`). Rungs: 100 -> 22, low -> 16, any -> 12. Not run yet in this lane.
+
 ## Next, in order
+
+0. Ladders: the root runs `build_ladders.sh 100`, `low` and `any` in parallel, then `build_ladders.sh <movie> check`. Then cut seeds with `--from-ladder` instead of from power-on (`cut_seeds.sh`), and add the nightly job (run whole with `--ladder` into a fresh directory, diff `ladder.txt`, `ladder-check` the stored ladder). The ladders are ROM-derived: a ci-data bundle is the root's call.
 
 1. Done: the cut callback is on the NMI handler's RTI. Open question: the record's PC is one past the interrupted opcode (lsnes's exec-callback convention, kept for byte identity). Compare it with the LakeSnes record and settle it in the cross-oracle report (item 4).
 2. Done: the 13 captures are cut (`$TEMP/ohx/cut_seeds.sh`, private; seeds in `$TEMP/ohx/data/lsnes-native/<capture>/`, with `scenario-one-energy-crocomire/0142.lss` + `.words` from `oracle derive-seed`), and all 27 rows complete on them (MEASUREMENTS.md (e)).

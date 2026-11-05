@@ -4,6 +4,8 @@
 //!   `--lag-log` compares it frame by frame with an lsnes lag log and
 //!   `--seeds` with lsnes room captures.
 //! `oracle corpus ROM LOCK DATA [...]` runs the lock's rows and compares them.
+//! `oracle ladder-check ROM INPUTS DIR` checks that each rung of a movie's
+//!   ladder (`movie --ladder N DIR`), resumed, reproduces the next.
 
 use crate::lakesnes::LakeSnes;
 use crate::{FrameRecord, NmiKind, Oracle, Start, Tiers};
@@ -61,24 +63,55 @@ fn differing(left: &[u8], right: &[u8]) -> usize {
         .count()
 }
 
-/// Cut harness-native seeds on lsnes. The seed of a room-seed row whose
-/// capture followed lsnes frame N (1-based) is the state at the boundary
-/// after the cut of step N-1 (0-based), with that cut's raw record. Captures
-/// of several lists can share a frame; one saved state then serves them all.
-fn native_seed(
+/// A save asked for after one step, written by lsnes once the next step has
+/// run: the native seeds and the ladder rung it serves.
+struct PendingSave {
+    state: PathBuf,
+    seeds: Vec<PathBuf>,
+    rung: Option<(u64, Vec<u8>)>,
+}
+
+/// The ladder a movie run cuts: a rung every `every` frames.
+struct Cutting {
+    ladder: crate::ladder::Ladder,
+    every: u64,
+}
+
+impl Cutting {
+    /// Whether step `step` (0-based) ends right before a rung that a run of
+    /// `frames` steps can still save (its state lands one step later).
+    fn rung_after(&self, step: u64, frames: u64) -> bool {
+        (step + 1).is_multiple_of(self.every) && step + 1 < frames
+    }
+}
+
+/// Cut harness-native seeds and ladder rungs on lsnes. The seed of a
+/// room-seed row whose capture followed lsnes frame N (1-based) is the state at
+/// the boundary after the cut of step N-1 (0-based), with that cut's raw
+/// record; rung F likewise. Captures of several lists and a rung can share a
+/// frame; one saved state then serves them all.
+fn save_after_step(
     lsnes: &mut crate::lsnes::Lsnes,
     lists: &[(Vec<RoomSeed>, PathBuf)],
-    step: u64,
-    pending: &mut Option<(PathBuf, Vec<PathBuf>)>,
+    mut cutting: Option<&mut Cutting>,
+    (step, frames): (u64, u64),
+    pending: &mut Option<PendingSave>,
 ) {
-    if let Some((path, targets)) = pending.take() {
-        for target in targets {
-            std::fs::copy(&path, &target)
-                .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
+    if let Some(save) = pending.take() {
+        for target in save.seeds {
+            std::fs::copy(&save.state, &target)
+                .unwrap_or_else(|error| fail(format!("{}: {error}", save.state.display())));
             println!("native seed {}: state after step {step}", target.display());
         }
+        if let (Some((frame, record)), Some(cutting)) = (save.rung, cutting.as_deref_mut()) {
+            cutting
+                .ladder
+                .add(frame, &record, &save.state)
+                .unwrap_or_else(|error| fail(error));
+            println!("rung {}", cutting.ladder.state_path(frame).display());
+        }
     }
-    let mut targets = Vec::new();
+    let mut seeds = Vec::new();
     for (list, directory) in lists {
         for seed in list.iter().filter(|seed| seed.movie_frame == step + 1) {
             std::fs::write(
@@ -86,21 +119,25 @@ fn native_seed(
                 lsnes.raw(),
             )
             .unwrap_or_else(|error| fail(error));
-            targets.push(directory.join(format!("{:04}.lss", seed.index)));
+            seeds.push(directory.join(format!("{:04}.lss", seed.index)));
         }
     }
-    if !targets.is_empty() {
-        *pending = Some((
-            lsnes.request_save().unwrap_or_else(|error| fail(error)),
-            targets,
-        ));
+    let rung = cutting
+        .filter(|cutting| cutting.rung_after(step, frames))
+        .map(|_| (step + 1, lsnes.raw().to_vec()));
+    if !seeds.is_empty() || rung.is_some() {
+        *pending = Some(PendingSave {
+            state: lsnes.request_save().unwrap_or_else(|error| fail(error)),
+            seeds,
+            rung,
+        });
     }
 }
 
 fn movie(arguments: &[String]) {
     let [rom, inputs, rest @ ..] = arguments else {
         fail(
-            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME]",
+            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -120,6 +157,8 @@ fn movie(arguments: &[String]) {
     let mut memories = true;
     let mut start = Start::PowerOn { wram_fill: 0x55 };
     let mut first = 0;
+    let mut cutting: Option<Cutting> = None;
+    let mut from_ladder: Option<PathBuf> = None;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -156,6 +195,25 @@ fn movie(arguments: &[String]) {
                 );
                 first = frame.parse().unwrap_or_else(|_| fail("--from STATE FRAME"));
             }
+            "--ladder" => {
+                let (Some(every), Some(directory)) = (
+                    options.next().and_then(|every| every.parse().ok()),
+                    options.next(),
+                ) else {
+                    fail("--ladder N DIR")
+                };
+                if every == 0 {
+                    fail("--ladder N DIR: N is at least 1");
+                }
+                let ladder = crate::ladder::Ladder::open(Path::new(directory), Path::new(inputs))
+                    .unwrap_or_else(|error| fail(error));
+                cutting = Some(Cutting { ladder, every });
+            }
+            "--from-ladder" => {
+                from_ladder = Some(PathBuf::from(
+                    options.next().unwrap_or_else(|| fail("--from-ladder DIR")),
+                ));
+            }
             "--no-picture" => picture = false,
             // lsnes only: records without the memories, about twice as fast;
             // for cutting native seeds, not for comparing.
@@ -189,12 +247,38 @@ fn movie(arguments: &[String]) {
             other => fail(format!("unknown option {other}")),
         }
     }
+    if let Some(directory) = &from_ladder {
+        // The earliest seed is cut after step F-1, so the run starts at or before it.
+        let Some(target) = native
+            .iter()
+            .flat_map(|(list, _)| list.iter().map(|seed| seed.movie_frame.saturating_sub(1)))
+            .min()
+        else {
+            fail(
+                "--from-ladder resumes for --native-seeds; for another frame use `oracle ladder-rung`",
+            )
+        };
+        let ladder = crate::ladder::Ladder::open(directory, Path::new(inputs))
+            .unwrap_or_else(|error| fail(error));
+        match ladder.nearest(target) {
+            Some(rung) => {
+                let path = ladder.state_path(rung);
+                start = Start::State(
+                    std::fs::read(&path)
+                        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display()))),
+                );
+                first = usize::try_from(rung).unwrap_or_else(|_| fail("rung past the movie"));
+                println!("from rung {} for step {target}", path.display());
+            }
+            None => println!("no rung at or before step {target}: from power-on"),
+        }
+    }
+    if (cutting.is_some() || !native.is_empty()) && backend != "lsnes" {
+        fail("--ladder and --native-seeds need --oracle lsnes");
+    }
     let mut oracle =
         crate::Backend::open(&backend, &rom, start).unwrap_or_else(|error| fail(error));
-    if let crate::Backend::Lsnes(lsnes) = &mut oracle {
-        lsnes.memories = memories;
-    }
-    let mut pending_seed: Option<(PathBuf, Vec<PathBuf>)> = None;
+    let mut pending_save: Option<PendingSave> = None;
     oracle.set_tiers(Tiers {
         picture,
         apu_state: spc,
@@ -205,14 +289,30 @@ fn movie(arguments: &[String]) {
     let mut next_seed = 0;
     let (mut lag, mut overrun, mut no_nmi, mut synced, mut checked) = (0u64, 0u64, 0u64, 0, 0);
     let started = Instant::now();
+    let run = u64::try_from(frames.min(pads.len())).unwrap_or(u64::MAX);
     for (frame, &pad) in pads.iter().enumerate().take(frames).skip(first) {
+        let step = u64::try_from(frame).unwrap_or(u64::MAX);
+        if let crate::Backend::Lsnes(lsnes) = &mut oracle {
+            // A rung's record always carries the memories, so that resuming
+            // the rung before can be checked against all of them.
+            lsnes.memories = memories
+                || cutting
+                    .as_ref()
+                    .is_some_and(|cutting| cutting.rung_after(step, run));
+        }
         let record: &FrameRecord = oracle.step(pad).unwrap_or_else(|error| fail(error));
         let record = record.clone();
         let record = &record;
         if let crate::Backend::Lsnes(lsnes) = &mut oracle
-            && !native.is_empty()
+            && (!native.is_empty() || cutting.is_some())
         {
-            native_seed(lsnes, &native, frame as u64, &mut pending_seed);
+            save_after_step(
+                lsnes,
+                &native,
+                cutting.as_mut(),
+                (step, run),
+                &mut pending_save,
+            );
         }
         match record.nmi() {
             Some(nmi) => {
@@ -431,9 +531,128 @@ pub fn main(arguments: &[String]) -> i32 {
         Some((command, rest)) if command == "measure" => measure(rest),
         Some((command, rest)) if command == "measure-movie" => measure_movie(rest),
         Some((command, rest)) if command == "derive-seed" => derive_seed(rest),
+        Some((command, rest)) if command == "ladder-check" => return ladder_check(rest),
+        Some((command, rest)) if command == "ladder-rung" => ladder_rung(rest),
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0
+}
+
+/// `ladder-check ROM INPUTS DIR [--rungs A..B]`: resume each rung of the
+/// movie's ladder whose frame lies in A..B (inclusive; all by default), run to
+/// the next rung and compare the record of the step before it with the stored
+/// one (`crate::ladder`). Exits 1 when any rung does not reproduce the next.
+fn ladder_check(arguments: &[String]) -> i32 {
+    let usage = "ladder-check ROM INPUTS DIR [--rungs A..B]";
+    let [rom, inputs, directory, rest @ ..] = arguments else {
+        fail(usage)
+    };
+    let rungs = match rest {
+        [] => 0..=u64::MAX,
+        [option, range] if option == "--rungs" => {
+            let Some((Ok(low), Ok(high))) = range
+                .split_once("..")
+                .map(|(low, high)| (low.parse(), high.parse()))
+            else {
+                fail(usage)
+            };
+            low..=high
+        }
+        _ => fail(usage),
+    };
+    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
+    let pads = crate::inputs::read(Path::new(inputs)).unwrap_or_else(|error| fail(error));
+    let ladder = crate::ladder::Ladder::open(Path::new(directory), Path::new(inputs))
+        .unwrap_or_else(|error| fail(error));
+    let frames: Vec<u64> = ladder.frames().collect();
+    let (mut equal, mut different) = (0u32, 0u32);
+    for pair in frames.windows(2) {
+        let &[from, to] = pair else { continue };
+        if !rungs.contains(&from) {
+            continue;
+        }
+        let started = Instant::now();
+        let verdict = check_rung(&rom, &pads, &ladder, from, to);
+        let seconds = started.elapsed().as_secs_f64();
+        match verdict {
+            Ok(parts) if parts.is_empty() => {
+                equal += 1;
+                println!("rung {from} -> {to}: equal ({seconds:.0}s)");
+            }
+            Ok(parts) => {
+                different += 1;
+                let parts: Vec<String> = parts
+                    .iter()
+                    .map(|(part, bytes)| format!("{part} {bytes}"))
+                    .collect();
+                println!(
+                    "rung {from} -> {to}: different, bytes {} ({seconds:.0}s)",
+                    parts.join(", ")
+                );
+            }
+            Err(error) => {
+                different += 1;
+                println!("rung {from} -> {to}: failed: {error}");
+            }
+        }
+    }
+    println!(
+        "ladder-check: {equal} equal, {different} different or failed, of {}",
+        equal + different
+    );
+    i32::from(different > 0)
+}
+
+/// Resume rung `from` and step to rung `to`: the parts in which the record of
+/// step `to - 1` differs from the stored one, empty when it reproduces it.
+fn check_rung(
+    rom: &[u8],
+    pads: &[crate::Pad],
+    ladder: &crate::ladder::Ladder,
+    from: u64,
+    to: u64,
+) -> Result<Vec<(&'static str, usize)>, String> {
+    let read = |path: PathBuf| {
+        std::fs::read(&path).map_err(|error| format!("{}: {error}", path.display()))
+    };
+    let stored = read(ladder.record_path(to))?;
+    let sha = crate::ladder::hex(&crate::ladder::sha256(&stored));
+    if ladder.record_sha256(to) != Some(sha.as_str()) {
+        return Err(format!(
+            "rung {to}'s record is not the one its manifest lists"
+        ));
+    }
+    let state = read(ladder.state_path(from))?;
+    let mut lsnes =
+        crate::lsnes::Lsnes::open(rom, Start::State(state)).map_err(|error| error.to_string())?;
+    let steps = usize::try_from(from)
+        .ok()
+        .zip(usize::try_from(to).ok())
+        .and_then(|(from, to)| pads.get(from..to))
+        .ok_or_else(|| format!("rungs {from}..{to} lie past the movie's end"))?;
+    let last = steps.len().saturating_sub(1);
+    for (step, &pad) in steps.iter().enumerate() {
+        lsnes.memories = step == last;
+        lsnes.step(pad).map_err(|error| error.to_string())?;
+    }
+    Ok(crate::ladder::differences(lsnes.raw(), &stored))
+}
+
+/// `ladder-rung INPUTS DIR FRAME`: the latest rung of the movie's ladder at or
+/// before FRAME, as `FRAME PATH`, to resume with `movie --from PATH FRAME`.
+fn ladder_rung(arguments: &[String]) {
+    let [inputs, directory, frame] = arguments else {
+        fail("ladder-rung INPUTS DIR FRAME")
+    };
+    let frame = frame
+        .parse()
+        .unwrap_or_else(|_| fail("ladder-rung INPUTS DIR FRAME"));
+    let ladder = crate::ladder::Ladder::open(Path::new(directory), Path::new(inputs))
+        .unwrap_or_else(|error| fail(error));
+    match ladder.nearest(frame) {
+        Some(rung) => println!("{rung} {}", ladder.state_path(rung).display()),
+        None => fail(format!("no rung at or before frame {frame}")),
+    }
 }
 
 /// Print the differing address ranges of two WRAM images, coalescing gaps under 16 bytes.

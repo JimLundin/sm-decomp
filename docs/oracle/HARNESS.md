@@ -232,6 +232,35 @@ The corpus runner (`corpus.rs`) maps the existing lock's Ticks onto video frames
 - the runner presents pad word k+1 until that NMI has run;
 - the lock's streams fold on Ticks only.
 
+## Ladders
+
+A long emulator run is the exception. Each movie keeps a ladder of lsnes
+states, a rung every N frames (10000 by default), so that a seed cut or a
+measurement resumes from the nearest rung and runs for minutes
+(`crates/oracle/src/ladder.rs`).
+
+- `oracle movie ROM movies/NAME.inputs --oracle lsnes --ladder N DIR` saves
+  rung F, for each multiple F of N the run passes, as `DIR/NAME/FFFFFF.lss`
+  (the state before step F, as for native seeds) and `FFFFFF.record` (the raw
+  record of step F-1). `DIR/NAME/ladder.txt` lists each rung's frame and the
+  SHA-256 of its record. It works with `--from` and `--no-memories`; a rung's
+  record always carries the memories.
+- `oracle ladder-check ROM INPUTS DIR [--rungs A..B]` resumes each rung whose
+  frame lies in A..B, runs to the next rung and prints `equal` or the parts
+  that differ, with byte counts. It exits 1 if any rung differs or fails.
+- Reproduces means the record of the step before the next rung is
+  byte-identical to the stored one: the cut (kind, interrupted PC, joypad
+  reads, wait entry), the frame counter, the pad, the CPU and all five
+  memories. The `.lss` bytes are not compared, because two runs that reach the
+  same machine state can save different state bytes.
+- `movie ... --native-seeds CSV DIR --from-ladder LADDERS` starts at the
+  latest rung at or before the earliest seed's step. For any other frame,
+  `oracle ladder-rung INPUTS LADDERS FRAME` prints `RUNG PATH`, for
+  `movie --from PATH RUNG`.
+- The nightly check runs each movie whole with `--ladder` into a fresh
+  directory, compares its `ladder.txt` with the stored one, and runs
+  `ladder-check` over the stored ladder.
+
 ## Movie sync
 
 `oracle movie ROM movies/any.inputs --lag-log CSV` compares each frame with

@@ -13,6 +13,7 @@ pub mod corpus;
 pub mod diagnose;
 pub mod game;
 pub mod inputs;
+pub mod ladder;
 pub mod lakesnes;
 pub mod lock;
 pub mod lsnes;
