@@ -513,11 +513,9 @@ impl<'g> Runtime<'g> {
     }
     /// Samus's NMI tile upload from the lease. It reads its descriptors
     /// ($7E:071D..0722) from the lease and the cartridge, and writes registers
-    /// and VRAM alone. The publish keeps RAM as Game's native upload found it
-    /// before the NMI's DMA starts published only what they read.
+    /// and VRAM alone, so it publishes nothing.
     pub(crate) fn upload_samus_tiles(&mut self) {
         self.owned_player_call(|runtime| {
-            runtime.publish();
             let descriptors = std::array::from_fn(|lane| runtime.byte(0x71d + lane));
             // SAFETY: a lease runs with the backend installed, and `&mut Game`
             // excludes other access.
