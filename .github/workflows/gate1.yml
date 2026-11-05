@@ -27,6 +27,14 @@ jobs:
           env -u LIBRARY_PATH cargo build --locked --release -p sm_tools --features replay --bin sm_replay
           # A record of the edge: the replay may not reach sm.
           ! cargo tree --locked -p sm_tools --features replay -e normal | grep -E '^[^a-z]*sm v'
+      - name: Build the windowed slice
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libsdl2-dev xvfb xauth
+          env -u LIBRARY_PATH cargo build --locked --release -p sm_app --no-default-features --features slice --bin sm_slice
+          ldd target/release/sm_slice | grep -E 'libSDL2'
+          # The windowed slice may not reach sm either.
+          ! cargo tree --locked -p sm_app --no-default-features --features slice -e normal | grep -E '^[^a-z]*sm v'
       - uses: actions/checkout@v4
         with:
           repository: JimLundin/ci-data
@@ -42,4 +50,4 @@ jobs:
           echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check
           rm -rf .ci-data
       - name: The slice against the oracle
-        run: python3 tools/gate1.py $ROWS
+        run: python3 tools/gate1.py --slice door-transition $ROWS
