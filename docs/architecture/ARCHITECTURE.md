@@ -402,6 +402,14 @@ up as a gameplay divergence, and it never hides one (P11, P13). *Principles:* P4
 *Rejected:* FOUNDATION's J1 "no overrun lag" as structure. The new oracle has overrun lag.
 *Rejected:* a cycle-exact CPU model, which is emulation (P9).
 
+**Jim's decision (2026-11-05).** Vanilla play reproduces the console's slowdown: both load
+times and busy-room lag, through the `Modeled` timing source, so that every trick in the TAS
+movies can be executed in play. `None` remains only as the "lag off" option the player can
+choose, and that option records that lag-dependent tricks don't work (PRINCIPLES P20). The
+busy-room part of the model is therefore required for vanilla play, not optional. Its place
+in the build order is unchanged: after the corpus is mostly green. Until then the gap is a
+LEGACY row.
+
 ### 6.5 Named CPU costs
 
 **D9.** This changes FOUNDATION's direction (J18: "no CPU-time cost model"), so it is set out

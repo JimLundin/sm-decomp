@@ -53,7 +53,9 @@ Then one of these happens:
 possible as a separate, clearly non-vanilla gameplay option, built only if players ask for
 it. The architecture already supports both, so this decides priority, not structure.
 
-**Answer:**
+**Answer (Jim, 2026-11-05):** widescreen is not built now. It was a suggestion. When it
+is built, it is option **(b), wide gameplay**, and only once a solid vanilla
+implementation is in place. The `Viewport` seam stays in the design for it.
 
 ## Q2. Should playing the game reproduce the original's slowdown?
 
@@ -95,4 +97,15 @@ original game, faithfully" includes how it feels under load, and the trick and r
 community depends on it. Until busy-room slowdown lands, vanilla play is (b), and that
 difference is listed in LEGACY.
 
-**Answer:**
+**Answer (Jim, 2026-11-05):** **(a), reproduce the slowdown**: both load times and
+busy-room lag. If a speedrunner can't execute every trick in the TAS movies we use, we
+aren't reproducing the game. Lag must also be removable on demand, as a toggle. Because it
+is modelled, it can be switched off. Switching it off has consequences for Map Rando (no
+lag-dependent tricks), and the option records them. The general rule: identify each
+behaviour and model it, so it can be reproduced exactly or turned off (PRINCIPLES P20).
+
+## Also decided (Jim, 2026-11-05): a GPL emulator may be an oracle
+
+A GPL emulator (Mesen2, bsnes) may be a reference oracle, and the primary one if
+necessary. It runs as a separate binary that the harness calls. None of its code is
+linked into or copied into this repository.

@@ -181,6 +181,16 @@ each with context. The rules live in one short file Jim approves.
 *How we know:* every ARCHITECTURE decision has a "rejected" line. QUESTIONS holds only goal
 questions.
 
+**P20. Identify each behaviour, and model it so it can be reproduced exactly or switched off.**
+Lag, load times and the console's other emergent behaviours become named, modelled
+behaviours, not accidents of timing. In vanilla a modelled behaviour is exact. As an option
+it can be turned off, and that option records what it breaks, for example lag-dependent
+tricks in Map Rando. (Jim, 2026-11-05.)
+*Why:* a speedrunner must be able to execute every trick in the TAS movies we use, or we
+are not reproducing the game. Removing slowdown is only a feature once slowdown is a model.
+*How we know:* every option that changes timing names the modelled behaviour it switches.
+Every TAS movie syncs with all behaviours on.
+
 ## Coding principles
 
 AGENTS.md's Rust style is the base: enums with data, newtypes, typed flag sets, behaviour
