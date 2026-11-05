@@ -1,0 +1,106 @@
+//! The oracle harness: the original, unmodified ROM on an emulator, recorded
+//! one video frame at a time (docs/oracle/HARNESS.md).
+//!
+//! An [`Oracle`] is one emulator backend. Each [`Oracle::step`] runs one video
+//! frame with one pad word and returns the [`FrameRecord`] of the closed
+//! interval that ends at the frame's cut: the RTI of the NMI serviced in that
+//! frame's vblank. The record holds the raw machine state at the cut and what
+//! happened in the interval. Nothing here knows the engine; the decoder from
+//! these observations to the engine's State lives with the comparison.
+
+pub mod cli;
+pub mod game;
+pub mod inputs;
+pub mod lakesnes;
+pub mod lock;
+pub mod record;
+pub mod seed;
+pub mod streams;
+
+pub use record::{
+    ApuAccess, ApuAccessKind, CpuRegisters, FrameRecord, Nmi, NmiKind, Pad, Picture, PpuRegisters,
+    SpcState,
+};
+
+/// Who produced a record: locks and records are keyed by it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OracleId {
+    /// The emulator, for example `lakesnes`.
+    pub emulator: &'static str,
+    /// The emulator's pinned upstream revision.
+    pub version: &'static str,
+    /// The ROM patches the oracle applies. Always empty: the ROM runs unmodified.
+    pub patches: &'static [&'static str],
+}
+
+/// Where a run begins.
+#[derive(Clone, Debug)]
+pub enum Start {
+    /// Power on, with work RAM filled with `wram_fill` (hardware leaves it
+    /// unspecified; bsnes v085, which recorded the movies, fills 0x55).
+    PowerOn { wram_fill: u8 },
+    /// Resume this oracle's own saved machine state.
+    State(Vec<u8>),
+    /// Load a migration seed captured on another emulator (`seed::Capture`).
+    Capture(Box<seed::Capture>),
+}
+
+/// The optional observation tiers a step records.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Tiers {
+    /// The picture scanned out in the interval.
+    pub picture: bool,
+    /// The APU port log of the interval.
+    pub apu_log: bool,
+    /// The APU side at the cut: SPC700 registers, SPC RAM and DSP registers.
+    pub apu_state: bool,
+}
+
+impl Default for Tiers {
+    fn default() -> Self {
+        Self {
+            picture: true,
+            apu_log: true,
+            apu_state: false,
+        }
+    }
+}
+
+/// Why an oracle could not start.
+#[derive(Debug)]
+pub enum OracleError {
+    /// The emulator rejected the cartridge image.
+    Rom,
+    /// The emulator rejected a saved state.
+    State,
+    /// A migration seed could not be applied.
+    Seed(String),
+}
+
+impl core::fmt::Display for OracleError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Rom => write!(f, "the emulator rejected the ROM"),
+            Self::State => write!(f, "the emulator rejected the saved state"),
+            Self::Seed(reason) => write!(f, "the seed could not be applied: {reason}"),
+        }
+    }
+}
+
+impl std::error::Error for OracleError {}
+
+/// One emulator running the original game.
+pub trait Oracle: Sized {
+    /// Who this oracle is.
+    fn identity(&self) -> OracleId;
+    /// Power on with `rom`, or resume `start`.
+    fn open(rom: &[u8], start: Start) -> Result<Self, OracleError>;
+    /// Run one video frame with `pad` on controller 1, to the frame's cut.
+    fn step(&mut self, pad: Pad) -> &FrameRecord;
+    /// The machine at the last cut, as this oracle's own resumable state.
+    fn save_state(&self) -> Vec<u8>;
+    /// Select the observation tiers for the following steps.
+    fn set_tiers(&mut self, tiers: Tiers);
+    /// Press the console's reset button before the next step.
+    fn reset(&mut self);
+}
