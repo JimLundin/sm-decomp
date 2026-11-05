@@ -10,6 +10,7 @@
 
 pub mod cli;
 pub mod corpus;
+pub mod cross;
 pub mod diagnose;
 pub mod game;
 pub mod inputs;
