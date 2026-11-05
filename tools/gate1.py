@@ -45,6 +45,10 @@ def verifier_entry(row: str, lock: pathlib.Path, mode: str) -> int:
     print(f"{row}: verifier {mode}: exit {result.returncode}: "
           + " | ".join(line for line in result.stdout.splitlines()
                        if line.startswith(row) or line.startswith("FAIL")), flush=True)
+    if result.returncode:
+        # The verifier reports its own errors on stderr; names and reasons only.
+        tail = [line for line in result.stderr.splitlines() if line.startswith(("verify:", "FAIL", "error"))]
+        print(f"{row}: verifier {mode} stderr: " + " | ".join(tail[-5:]), flush=True)
     return result.returncode
 
 

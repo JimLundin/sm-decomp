@@ -14,7 +14,9 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_BUILD_JOBS: '4'
       ROWS: >-
-        door-transition samus-mockball item-morph-ball
+        item-morph-ball door-transition samus-mockball area-ceres area-norfair area-maridia
+        area-wrecked-ship xray-scan-91f8 boss-ceres-ridley power-bomb-room-entry boss-phantoon
+        special-beam-plasma terrain-quicksand save-memory samus-gunship-save
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-native
