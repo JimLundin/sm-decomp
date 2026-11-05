@@ -260,8 +260,7 @@ impl Oracle for Lsnes {
                 ));
             }
         }
-        let stderr =
-            std::fs::File::create(directory.join(STDERR)).map_err(|_| OracleError::Rom)?;
+        let stderr = std::fs::File::create(directory.join(STDERR)).map_err(|_| OracleError::Rom)?;
         let mut child = command
             .arg(format!("--rom={}", rom_path.display()))
             .arg(format!("--lua={}", script.display()))
