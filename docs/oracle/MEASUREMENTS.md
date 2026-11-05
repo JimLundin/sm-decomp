@@ -1,0 +1,160 @@
+# Oracle measurements for the architecture lane
+
+Measured on the oracle harness (`crates/oracle`, LakeSnes `9db90b8` with fix
+0001) on 2026-11-05, for the decisions on door and loading timing, the line
+program and sound. Ids, frames, counts, lines, dots and addresses only.
+
+Two sources, marked on every result:
+
+- **movie**: the any% movie (`movies/any.inputs`) from power-on, frames
+  0-8499. The game state, room and Samus position match the lsnes lag log
+  through frame 8566, so these frames are valid. The game logic is one
+  frame behind lsnes from frame 8314, which becomes a desync in Ceres.
+- **seed**: corpus rows from their lsnes room captures. A capture has no
+  SPC700 or DSP state, so the harness resumes the sound driver at its idle
+  loop (docs/oracle/HARNESS.md). In some rows the driver then does not answer
+  the CPU's sound requests (see "Sound" below), which stalls door transitions
+  and music uploads. Loop timing is the hardware's; anything that waits on
+  the APU is not.
+
+Lines are the PPU's V counter (0-261; 225 is the first vblank line) and dots
+are the master-clock H position (0-1363). Commands: `oracle measure ROM LOCK
+DATA ID...` and `oracle measure-movie ROM INPUTS FRAMES`.
+
+## (a) Busy spans, decompression, uploads, door transitions
+
+A busy frame is one whose NMI interrupted the main thread outside a wait site
+(`game::WAIT_SITES`): a lag frame.
+
+**Movie, frames 0-8499:** 432 busy frames in 31 spans.
+
+| Frames | Length | Where the NMIs landed (address: count, most common) |
+| --- | --- | --- |
+| 168-256 | 89 | $80:8096 20, $80:8092 15, $80:8103 9, $80:808E 8 (APU upload loop) |
+| 258-270 | 13 | $80:8528 3, $81:811B, $81:8114, $81:810F |
+| 272-302 | 31 | $80:B23B 2, $80:B22D 2, $80:B1AA 2, $80:B193 2 (decompression) |
+| 304-305 | 2 | $8B:9C1C 2 |
+| 316-353 | 38 | $80:808E 6, $80:8096 4, $80:8092 4, $80:8091 4 (APU upload) |
+| 394, 397-399, 432 | 1, 3, 1 | $81:8E43, $81:811B, $81:8116, $81:810F |
+| 466-471 | 6 | $80:B234, $80:B1D7, $80:B1D1, $80:B185 (decompression) |
+| 569-621 | 53 | $80:B193 3, $80:B188 3, $80:B237 2, $80:B22F 2 (decompression) |
+| 639-672 | 34 | $80:8096 7, $80:8091 5, $80:809F 4, $80:808E 4 (APU upload) |
+| 980-1003 | 24 | APU upload ($80:8092, $80:8096, $80:8091, $80:808E) |
+| 1307-1341 | 35 | APU upload ($80:8103, $80:8096, $80:808E, $80:8091) |
+| 2219-6415 | 13 single frames | $8B:8CF1-$8B:8D14, $8B:A886, $8D:C538/$8D:C53B, $80:8A3A, $80:898A (intro cinematics) |
+| 7513-7543 | 31 | $80:B1AA 6, $8B:BD25 2, $80:B18E 2, $80:B16F 2 (decompression) |
+| 7553-7580 | 28 | APU upload ($80:809F, $80:8096, $80:8092, $80:808E) |
+| 8315 | 1 | $81:8056 |
+| 8438-8465 | 28 | APU upload, room DF45 (Ceres), door pointer $AB58 |
+
+**Movie decompression calls** (`$80:B119` to RAM, `$80:B271` to VRAM; output
+size and command mix parsed from the compressed stream; duration from entry
+to RTL):
+
+| Frame, line | Entry | Output bytes | Commands (0-6: count) | Lines |
+| --- | --- | --- | --- | --- |
+| 5, 259 | B119 | 16384 | 0:939 1:610 2:787 3:2 4:113 5:6 6:166 | 3406 |
+| 272, 87 | B119 | 16384 | 0:968 1:1317 2:120 3:57 4:374 6:500 | 4363 |
+| 288, 258 | B119 | 4096 | 0:69 1:101 3:49 4:12 6:7 | 178 |
+| 289, 175 | B119 | 16384 | 0:939 1:610 2:787 3:2 4:113 5:6 6:166 | 3414 |
+| 302, 183 | B119 | 1024 | 0:91 1:57 2:2 3:8 4:4 6:57 | 261 |
+| 466-470 | B119 | 5 x 2048 | 0:39-63 1:4-7 2:26-43 4:5-15 6:13-39 | 254-299 each |
+| 569, 195 | B119 | 32768 | 0:1784 1:768 2:1464 3:5 4:453 5:92 6:212 | 7410 |
+| 598, 8 | B119 | 2304 | 0:187 1:72 2:129 4:26 6:86 | 624 |
+| 600, 109 | B119 | 2048 | 0:30 2:26 6:5 | 246 |
+| 601, 93 | B119 | 8192 | 0:145 1:4 2:164 4:3 6:76 | 1457 |
+| 606, 240 | B119 | 9216 | 0:378 1:232 2:128 3:5 4:49 5:3 6:289 | 1914 |
+| 614, 59 | B119 | 2048 | 0:29 2:10 4:4 6:26 | 233 |
+| 616, 166 | B119 | 4608 | 0:396 1:27 2:293 4:134 5:1 6:175 | 1653 |
+| 7513, 7 | B119 | 16384 | 0:1367 1:1563 2:67 3:73 4:483 6:452 | 4337 |
+| 7529, 153 | B119 | 4096 | 0:7 1:26 3:32 | 309 |
+| 7530, 200 | B119 | 16384 | 0:505 1:330 2:162 3:3 4:91 5:32 6:78 | 2513 |
+| 8318, 199 | B271 | 12288 | 0:677 1:343 2:464 3:5 4:147 5:13 6:219 | 4108 |
+| 8334, 115 | B271 | 32768 | 0:665 1:4 2:216 4:1348 6:1003 | 17516 |
+| 8401, 77 | B119 | 256 | 0:11 1:6 6:7 | 61 |
+| 8473, 8 | B119 | 3842 | 0:139 1:77 2:43 4:37 6:83 | 1017 |
+| 8476, 105 | B119 | 8192 | 0:109 1:3 2:93 4:7 6:33 | 1197 |
+
+Decompression to RAM costs about 210-270 lines per KiB of output (a 16 KiB
+block takes 13-17 frames). To VRAM it costs 340-550 lines per KiB, the most
+where dictionary copies (command 4) dominate.
+
+**APU uploads (movie):** the busy spans marked "APU upload" are the
+`$80:8059` send loop (`$80:808A`-`$80:8106`). The boot upload, frames 168-353,
+is about 1,218 CPU port writes per frame for 10 frames before its last span.
+
+**Door transitions (seed):** every door row measured stalls in its door
+transition because the resumed sound driver does not answer: door-transition
+(frames 117-372, room E06B), elevator-traversal (71-859, 97B5),
+power-bomb-red-tower-refill-door (155-412, A253), chain-0006-E0B5 (1610-1776,
+E0B5). Their door-transition lengths are therefore not hardware lengths;
+they wait for harness-native seeds. No door transition happens in movie
+frames 0-8499.
+
+**DMA bytes under forced blank:** not yet measured correctly. The harness
+counts DMA register writes when INIDISP at the cut has forced blank, which
+misses transfers inside a blanked interval. It needs a per-write forced-blank
+check; open.
+
+## (b) Busy frames per row (coverage)
+
+From the corpus run (`oracle corpus`), the `overrun` count per row is the
+number of busy frames (seed). It is in the corpus log, and summarised in the
+handoff. Movie frames 0-8499 have 432 busy frames, all at boot, title,
+intro and Ceres loading.
+
+## (c) Line timing (tier a)
+
+**HDMA object handler** (`$88:84B9`, its RTL at `$88:8516` or `$88:851B`),
+the line at which it returned:
+
+| Source | Frames | Min | Median | Max |
+| --- | --- | --- | --- | --- |
+| seed, area-brinstar | 250 | 241 | 247 | 248 |
+| seed, item-morph-ball | 802 of 1200 | 6 | 246 | 249 |
+| seed, door-transition | 373 | 244 | 244 | 248 |
+| seed, elevator-traversal | 860 | 240 | 245 | 250 |
+| seed, chain-0006-E0B5 | 1777 | 246 | 247 | 252 |
+| movie, frames 0-8499 | 7741 | 61 | 251 | 258 |
+
+It runs in vblank, right after the NMI returns to the main loop. The handler
+finishes inside vblank on every frame except a few frames during loads, where
+it ends early in the next display.
+
+**IRQ handler register writes** (line, register: count, dot range). The two
+HUD split IRQs:
+
+| Source | Line | Register writes (dot range) |
+| --- | --- | --- |
+| seed, area-brinstar (250 frames) | 0 | $2109 (1044-1084), $2130 (1068-1108), $2131 (1092-1208), $212C (1138-1244) |
+| seed, area-brinstar | 31 | $2130 (1052-1100), $2131 (1096-1214), $2109 (1142-1258), $212C (1186-1302) |
+| seed, item-morph-ball (1200 frames) | 0 | $2109 (1044-1098), $2130 (1068-1196), $2131 (1092-1230), $212C (1130-1266) |
+| seed, item-morph-ball | 31 | $2130 (1052-1106), $2131 (1096-1234), $2109 (1142-1278), $212C (1186-1322) |
+| movie (18 frames in Ceres) | 0 | $2109 (446-1068), $212C (530-1152), $2130 (470-1092), $2131 (494-1116) |
+| movie | 31 | $2130 (1056-1072), $2131 (1100-1116), $2109 (1144-1160), $212C (1188-1204) |
+
+Every write lands in the last third of its line (H-blank begins at dot
+1096), one write per register per IRQ. The line-0 IRQ's writes spread
+further in the movie's Ceres frames.
+
+## (d) Sound: port traffic and the driver's echo latency
+
+Echo latency: from a CPU write of a value to port N until the SPC700 writes
+the same value to port N, in SPC700 cycles (1,024,000 per second; about 17,060
+per frame).
+
+| Source | CPU writes (ports 0-3) | SPC700 writes | Echo latency, cycles (median, range) |
+| --- | --- | --- | --- |
+| movie, frames 0-8499 | 164844, 164978, 168, 1487 | 170608, 8407, 8400, 8400 | port 0: 21 (12-70224) over 164837 echoes (uploads); ports 1-3: 8354-8690 (50-85713) over 139, 125, 801 |
+| seed, item-morph-ball | 3, 715, 224, 741 | 1093, 1250, 1250, 1250 | ports 1-3: 8674-8844 (1635-13945) over 25-26 |
+| seed, chain-0006-E0B5 | 2, 1773, 1744, 1712 | 1851, 1850, 1850, 1850 | ports 1-3: 3876-4044 (250-16287) over 18 |
+| seed, area-brinstar | 0, 0, 0, 0 | 227, 260, 260, 260 | no requests |
+
+The driver answers a sound request in about half a frame (median about 8,500
+cycles), at worst within one frame; upload bytes echo in about 21 cycles.
+music-fir-selector10 has no faithful lock entry, so its row was not run;
+item-morph-ball and chain-0006-E0B5 stand in.
+
+In the stalled seeded rows (credits, Mother Brain, death, save, the door
+rows), the CPU writes the same request every frame and the resumed driver never
+echoes it. That is the migration seed's missing SPC state, not the driver.

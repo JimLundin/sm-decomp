@@ -351,7 +351,7 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
 /// compare each with its `faithful` entry.
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
-        fail("corpus ROM LOCK DATA [--only ID]... [--limit N]")
+        fail("corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE]")
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
     let lock =
@@ -361,6 +361,7 @@ fn corpus(arguments: &[String]) {
     let mut only = Vec::new();
     let mut limit = usize::MAX;
     let mut shard: (usize, usize) = (0, 1);
+    let mut record: Option<std::fs::File> = None;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -371,6 +372,13 @@ fn corpus(arguments: &[String]) {
                 shard = (
                     index.parse().unwrap_or_else(|_| fail("--shard I/N")),
                     count.parse().unwrap_or_else(|_| fail("--shard I/N")),
+                );
+            }
+            "--record" => {
+                let path = options.next().unwrap_or_else(|| fail("--record FILE"));
+                record = Some(
+                    std::fs::File::create(path)
+                        .unwrap_or_else(|error| fail(format!("{path}: {error}"))),
                 );
             }
             "--limit" => {
@@ -411,6 +419,11 @@ fn corpus(arguments: &[String]) {
                 ticks += u64::from(run.ticks);
                 frames += run.frames;
                 seconds += run.seconds;
+                if let Some(file) = record.as_mut() {
+                    use std::io::Write as _;
+                    let text = crate::corpus::lock_entry(entry, crate::lakesnes::IDENTITY, &run);
+                    writeln!(file, "{text}").unwrap_or_else(|error| fail(error));
+                }
                 let verdicts = crate::corpus::compare(entry, &run);
                 let mut line = String::new();
                 for (stream, verdict) in verdicts.iter().enumerate() {

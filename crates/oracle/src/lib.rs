@@ -33,6 +33,8 @@ pub struct OracleId {
     pub version: &'static str,
     /// The ROM patches the oracle applies. Always empty: the ROM runs unmodified.
     pub patches: &'static [&'static str],
+    /// The named fixes applied to the emulator's pinned sources.
+    pub fixes: &'static [&'static str],
 }
 
 /// Where a run begins.

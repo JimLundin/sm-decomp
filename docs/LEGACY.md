@@ -165,3 +165,25 @@ lease); it replaced the retired `SlotAccess`.
 To retire a row: prove the index in range (then use the typed owner and delete
 the fallback) or give the Session an owner for the RAM the overflow reaches;
 remove the calls, their tags and the row together.
+
+## The oracle harness (`crates/oracle`)
+
+`LEGACY(verifier)` in `crates/oracle/src/streams.rs` copies the frozen
+`LOCK_WRAM_MASK` and snesrev's bug-fix counter range `$C2-$C3`. The harness's
+`Definition::Legacy` streams can then be compared with today's lock, whose
+`wram` digests zero those ranges. The contract's `V1` streams mask nothing.
+Remove both with the lock's `faithful` entries, once the harness has
+re-recorded the corpus.
+
+`LEGACY(seed)` in `crates/oracle/src/seed.rs` covers the lsnes room captures,
+which the corpus still starts from. They hold no SPC700, DSP or timer state,
+so a migration seed resumes:
+
+- the SPC700 at the sound driver's idle loop (`$15BF`, SP `$CF`);
+- the CPU-to-APU ports from the driver's copy at SPC `$00-$03`;
+- the timers from their RAM shadows;
+- the DSP from reset, with echo writes off.
+
+In some rows the resumed driver then answers no sound request, so music
+uploads, door transitions and message boxes that wait on it stall. Harness-native
+seeds (the emulator's own state blob, cut by the harness) retire this entry.

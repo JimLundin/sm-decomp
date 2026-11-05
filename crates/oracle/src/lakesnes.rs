@@ -15,6 +15,7 @@ pub const IDENTITY: OracleId = OracleId {
     emulator: "lakesnes",
     version: "angelo-wf/LakeSnes 9db90b86e46a377609305e298dd92d71cd1d4c8a",
     patches: &[],
+    fixes: &["0001-apu-clock-real-master-rate"],
 };
 
 mod ffi {

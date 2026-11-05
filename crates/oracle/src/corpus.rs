@@ -30,6 +30,8 @@ pub struct RowRun {
     pub without_nmi: u64,
     /// How often an overrun NMI interrupted each address.
     pub interrupted: std::collections::BTreeMap<u32, u32>,
+    /// The frames (from 0) whose NMI overran.
+    pub overrun_frames: Vec<u64>,
     /// The existing lock's streams, folded per Tick.
     pub legacy: Running,
     /// The oracle contract's streams, folded per video frame.
@@ -97,6 +99,7 @@ pub fn run_row_with(
         overrun: 0,
         without_nmi: 0,
         interrupted: std::collections::BTreeMap::new(),
+        overrun_frames: Vec::new(),
         legacy: Running::default(),
         v1: Running::default(),
         seconds: 0.0,
@@ -122,6 +125,7 @@ pub fn run_row_with(
             }
             Some(NmiKind::Overrun) => {
                 run.overrun += 1;
+                run.overrun_frames.push(run.frames - 1);
                 if let Some(nmi) = record.nmi() {
                     *run.interrupted.entry(nmi.interrupted_pc).or_default() += 1;
                 }
@@ -160,4 +164,58 @@ pub fn compare(entry: &Entry, run: &RowRun) -> [Option<bool>; 8] {
         let locked = entry.digests.get(NAMES[stream])?;
         Some(format!("{mine:016x}") == *locked)
     })
+}
+
+/// The lock entry the harness records for a run: the v1 streams per video
+/// frame, the existing lock's definitions per Tick beside them, and the
+/// frames whose NMI overran.
+pub fn lock_entry(entry: &Entry, oracle: crate::OracleId, run: &RowRun) -> String {
+    use std::fmt::Write as _;
+    let digests = |running: &Running| {
+        NAMES
+            .iter()
+            .enumerate()
+            .filter_map(|(stream, name)| {
+                running
+                    .digest(stream)
+                    .map(|digest| format!("\"{name}\" = \"{digest:016x}\""))
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let marks = run
+        .v1
+        .marks
+        .iter()
+        .map(|(frames, digest)| format!("\"{frames}\" = \"{digest:016x}\""))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let overruns = run
+        .overrun_frames
+        .iter()
+        .map(u64::to_string)
+        .collect::<Vec<_>>()
+        .join(", ");
+    let mut text = String::new();
+    let _ = writeln!(text, "[[scenario]]");
+    let _ = writeln!(text, "id = \"{}\"", entry.id);
+    let _ = writeln!(text, "oracle = \"{}\"", oracle.emulator);
+    let _ = writeln!(text, "version = \"{}\"", oracle.version);
+    let fixes: Vec<String> = oracle
+        .fixes
+        .iter()
+        .map(|fix| format!("\"{fix}\""))
+        .collect();
+    let _ = writeln!(text, "fixes = [{}]", fixes.join(", "));
+    let _ = writeln!(text, "start = \"{}\"", entry.start);
+    let _ = writeln!(text, "inputs = \"{}\"", entry.inputs);
+    let _ = writeln!(text, "format = 1");
+    let _ = writeln!(text, "frames = {}", run.frames);
+    let _ = writeln!(text, "ticks = {}", run.ticks);
+    let _ = writeln!(text, "combined = \"{:016x}\"", run.v1.combined);
+    let _ = writeln!(text, "digests = {{ {} }}", digests(&run.v1));
+    let _ = writeln!(text, "legacy = {{ {} }}", digests(&run.legacy));
+    let _ = writeln!(text, "marks = {{ {marks} }}");
+    let _ = writeln!(text, "overruns = [{overruns}]");
+    text
 }
