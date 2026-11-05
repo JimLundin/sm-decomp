@@ -46,4 +46,3 @@ pub fn fold(running: u64, value: u64) -> u64 {
     digest.write_u64(value);
     digest.finish()
 }
-

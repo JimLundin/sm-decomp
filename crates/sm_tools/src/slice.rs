@@ -122,7 +122,13 @@ pub fn run(
         accepted: 0,
         last_sram: Vec::new(),
     };
-    let mut presented = opened.initial.scene.pixels.iter().map(|&b| u64::from(b)).sum::<u64>();
+    let mut presented = opened
+        .initial
+        .scene
+        .pixels
+        .iter()
+        .map(|&b| u64::from(b))
+        .sum::<u64>();
     let mut most_waiting = 0;
     let mut saves = 0;
     for (index, &pad) in pads.iter().enumerate() {
@@ -142,7 +148,14 @@ pub fn run(
             host_results: std::mem::take(&mut save.receipts),
         });
         if schedule.present_every != 0 && output.tick % u64::from(schedule.present_every) == 0 {
-            presented = presented.wrapping_add(output.scene.pixels.iter().map(|&b| u64::from(b)).sum::<u64>());
+            presented = presented.wrapping_add(
+                output
+                    .scene
+                    .pixels
+                    .iter()
+                    .map(|&b| u64::from(b))
+                    .sum::<u64>(),
+            );
         }
         saves += u64::from(output.effects.save.is_some());
         most_waiting = most_waiting.max(1);

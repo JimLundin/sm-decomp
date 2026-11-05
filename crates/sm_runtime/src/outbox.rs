@@ -65,7 +65,6 @@ impl<A, S> Outbox<A, S> {
 
     /// Move a completed Tick's effects in; `false` hands nothing over because a
     /// batch still waits, and the caller must not have run that Tick.
-    #[must_use]
     pub fn put(&mut self, batch: TickBatch<A, S>) -> Result<(), TickBatch<A, S>> {
         if !self.admits() {
             return Err(batch);
@@ -77,11 +76,7 @@ impl<A, S> Outbox<A, S> {
     }
 
     /// Offer whatever waits to its sink, audio first, without blocking.
-    pub fn offer(
-        &mut self,
-        audio: &mut impl Sink<A>,
-        save: &mut impl Sink<S>,
-    ) -> Waiting {
+    pub fn offer(&mut self, audio: &mut impl Sink<A>, save: &mut impl Sink<S>) -> Waiting {
         let id = |ordinal| EffectId {
             epoch: self.epoch,
             tick: self.tick,

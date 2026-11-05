@@ -1,1 +1,3 @@
-fn main() { println!("cargo:rustc-cfg=sm_host"); }
+fn main() {
+    println!("cargo:rustc-cfg=sm_host");
+}

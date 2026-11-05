@@ -208,10 +208,8 @@ pub(crate) unsafe fn sm_backend_ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
                 ppu.m7matrix[6] = ((high | u16::from(ppu.m7prev)) & 0x1fff) as i16;
                 ppu.m7prev = val;
             }
-            ppu.bgLayer[usize::from(adr - 0xd) / 2].hScroll = (high
-                | u16::from(ppu.scrollPrev & 0xf8)
-                | u16::from(ppu.scrollPrev2 & 7))
-                & 0x3ff;
+            ppu.bgLayer[usize::from(adr - 0xd) / 2].hScroll =
+                (high | u16::from(ppu.scrollPrev & 0xf8) | u16::from(ppu.scrollPrev2 & 7)) & 0x3ff;
             ppu.scrollPrev = val;
             ppu.scrollPrev2 = val;
         }
@@ -346,40 +344,40 @@ pub(crate) unsafe fn sm_backend_ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
 }
 
 const LAYERS: [[i32; 12]; 10] = [
-  [4, 0, 1, 4, 0, 1, 4, 2, 3, 4, 2, 3],
-  [4, 0, 1, 4, 0, 1, 4, 2, 4, 2, 5, 5],
-  [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-  [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-  [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-  [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-  [4, 0, 4, 4, 0, 4, 5, 5, 5, 5, 5, 5],
-  [4, 4, 4, 0, 4, 5, 5, 5, 5, 5, 5, 5],
-  [2, 4, 0, 1, 4, 0, 1, 4, 4, 2, 5, 5],
-  [4, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5, 5]
+    [4, 0, 1, 4, 0, 1, 4, 2, 3, 4, 2, 3],
+    [4, 0, 1, 4, 0, 1, 4, 2, 4, 2, 5, 5],
+    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
+    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
+    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
+    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
+    [4, 0, 4, 4, 0, 4, 5, 5, 5, 5, 5, 5],
+    [4, 4, 4, 0, 4, 5, 5, 5, 5, 5, 5, 5],
+    [2, 4, 0, 1, 4, 0, 1, 4, 4, 2, 5, 5],
+    [4, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5, 5],
 ];
 const PRIORITIES: [[i32; 12]; 10] = [
-  [3, 1, 1, 2, 0, 0, 1, 1, 1, 0, 0, 0],
-  [3, 1, 1, 2, 0, 0, 1, 1, 0, 0, 5, 5],
-  [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-  [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-  [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-  [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-  [3, 1, 2, 1, 0, 0, 5, 5, 5, 5, 5, 5],
-  [3, 2, 1, 0, 0, 5, 5, 5, 5, 5, 5, 5],
-  [1, 3, 1, 1, 2, 0, 0, 1, 0, 0, 5, 5],
-  [3, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5, 5]
+    [3, 1, 1, 2, 0, 0, 1, 1, 1, 0, 0, 0],
+    [3, 1, 1, 2, 0, 0, 1, 1, 0, 0, 5, 5],
+    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
+    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
+    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
+    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
+    [3, 1, 2, 1, 0, 0, 5, 5, 5, 5, 5, 5],
+    [3, 2, 1, 0, 0, 5, 5, 5, 5, 5, 5, 5],
+    [1, 3, 1, 1, 2, 0, 0, 1, 0, 0, 5, 5],
+    [3, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5, 5],
 ];
 const BIT_DEPTHS: [[i32; 4]; 10] = [
-  [2, 2, 2, 2],
-  [4, 4, 2, 5],
-  [4, 4, 5, 5],
-  [8, 4, 5, 5],
-  [8, 2, 5, 5],
-  [4, 2, 5, 5],
-  [4, 5, 5, 5],
-  [8, 5, 5, 5],
-  [4, 4, 2, 5],
-  [8, 7, 5, 5]
+    [2, 2, 2, 2],
+    [4, 4, 2, 5],
+    [4, 4, 5, 5],
+    [8, 4, 5, 5],
+    [8, 2, 5, 5],
+    [4, 2, 5, 5],
+    [4, 5, 5, 5],
+    [8, 5, 5, 5],
+    [4, 4, 2, 5],
+    [8, 7, 5, 5],
 ];
 const LAYER_COUNTS: [i32; 10] = [12, 10, 8, 8, 8, 8, 6, 5, 10, 7];
 
@@ -472,8 +470,16 @@ fn background_pixel(ppu: &Ppu, x: i32, y: i32, layer: usize, priority: bool) -> 
         return 0;
     }
     let mut palette = (tile & 0x1c00) >> 10;
-    let row = if tile & 0x8000 != 0 { 7 - (y & 7) } else { y & 7 };
-    let col = if tile & 0x4000 != 0 { x & 7 } else { 7 - (x & 7) };
+    let row = if tile & 0x8000 != 0 {
+        7 - (y & 7)
+    } else {
+        y & 7
+    };
+    let col = if tile & 0x4000 != 0 {
+        x & 7
+    } else {
+        7 - (x & 7)
+    };
     let mut number = tile & 0x3ff;
     if wide && ((x & 8 != 0) != (tile & 0x4000 != 0)) {
         number += 1;
@@ -504,13 +510,27 @@ fn background_pixel(ppu: &Ppu, x: i32, y: i32, layer: usize, priority: bool) -> 
         let fourth = plane(24);
         pixel |= ((fourth >> col) & 1) << 6 | ((fourth >> (8 + col)) & 1) << 7;
     }
-    if pixel == 0 { 0 } else { size * palette + pixel }
+    if pixel == 0 {
+        0
+    } else {
+        size * palette + pixel
+    }
 }
 
 fn affine_pixel(ppu: &Ppu, x: i32, layer: usize, priority: bool) -> i32 {
-    let rx = i32::from(if ppu.m7xFlip { (255 - x) as u8 } else { x as u8 });
-    let mut x_pos = ppu.m7startX.wrapping_add(i32::from(ppu.m7matrix[0]).wrapping_mul(rx)) >> 8;
-    let mut y_pos = ppu.m7startY.wrapping_add(i32::from(ppu.m7matrix[2]).wrapping_mul(rx)) >> 8;
+    let rx = i32::from(if ppu.m7xFlip {
+        (255 - x) as u8
+    } else {
+        x as u8
+    });
+    let mut x_pos = ppu
+        .m7startX
+        .wrapping_add(i32::from(ppu.m7matrix[0]).wrapping_mul(rx))
+        >> 8;
+    let mut y_pos = ppu
+        .m7startY
+        .wrapping_add(i32::from(ppu.m7matrix[2]).wrapping_mul(rx))
+        >> 8;
     let mut outside = x_pos < 0 || x_pos >= 1024 || y_pos < 0 || y_pos >= 1024;
     x_pos &= 0x3ff;
     y_pos &= 0x3ff;
@@ -586,7 +606,11 @@ pub(crate) unsafe fn sm_backend_ppu_pixel(
                         lx += if sub || bg.mosaicEnabled { 0 } else { 1 };
                         if ppu.interlace {
                             ly *= 2;
-                            ly += if ppu.evenFrame || bg.mosaicEnabled { 0 } else { 1 };
+                            ly += if ppu.evenFrame || bg.mosaicEnabled {
+                                0
+                            } else {
+                                1
+                            };
                         }
                     }
                     ly += i32::from(bg.vScroll);

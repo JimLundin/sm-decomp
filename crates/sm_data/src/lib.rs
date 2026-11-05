@@ -5,8 +5,6 @@
 //! RAM or backend type crosses this boundary.
 #![forbid(unsafe_code)]
 
-pub mod digest;
-pub mod prepared;
 pub mod actor_tables;
 pub mod animated_programs;
 pub mod area_select_palettes;
@@ -23,6 +21,7 @@ pub mod corpses;
 pub mod credits;
 pub mod crocomire;
 pub mod demo_rooms;
+pub mod digest;
 pub mod enemy_lists;
 pub mod enemy_speeds;
 pub mod equipment_screen;
@@ -41,6 +40,7 @@ pub mod mother_brain;
 pub mod palette_programs;
 pub mod pause_menu;
 pub mod phantoon;
+pub mod prepared;
 pub mod program_bank;
 pub mod raster;
 pub mod ridley;

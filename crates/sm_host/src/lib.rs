@@ -167,7 +167,6 @@ extern crate sm_game;
 #[path = "../../../sm/src/word_transfers.rs"]
 mod word_transfers;
 
-
 pub mod game {
     pub(crate) mod actors;
 
@@ -248,9 +247,9 @@ pub mod game {
 pub mod snes {
     #[path = "../../../crates/sm_host/src/stubs/apu.rs"]
     pub mod apu;
+    pub mod cart;
     #[path = "../../../crates/sm_host/src/stubs/cpu.rs"]
     pub mod cpu;
-    pub mod cart;
     pub mod dma;
     pub mod ppu;
     pub mod registers;
@@ -261,6 +260,8 @@ pub mod snes {
 pub mod apu_queue;
 #[path = "../../../sm/src/apu_ram.rs"]
 pub mod apu_ram;
+#[path = "../../../sm/src/audio_output.rs"]
+pub mod audio_output;
 #[path = "../../../sm/src/audio_snapshot.rs"]
 pub mod audio_snapshot;
 #[path = "../../../sm/src/audio_upload.rs"]
@@ -268,70 +269,68 @@ pub mod audio_upload;
 #[path = "../../../sm/src/c_library.rs"]
 pub mod c_library;
 pub mod cpu_infra;
+#[path = "../../../sm/src/execution.rs"]
+pub mod execution;
+#[path = "../../../sm/src/game_state.rs"]
+pub mod game_state;
+#[path = "../../../sm/src/host.rs"]
+pub mod host;
 #[path = "../../../sm/src/initial_state.rs"]
 pub mod initial_state;
+#[path = "../../../sm/src/native_audio.rs"]
+pub mod native_audio;
+#[path = "../../../sm/src/native_rom.rs"]
+pub mod native_rom;
+#[path = "../../../sm/src/verification/oracle_host.rs"]
+pub(crate) mod oracle_host;
+#[path = "../../../sm/src/oracle_mode.rs"]
+pub mod oracle_mode;
+#[path = "../../../sm/src/oracle_patch_policy.rs"]
+mod oracle_patch_policy;
+#[path = "../../../sm/src/projection.rs"]
+pub mod projection;
 #[path = "../../../sm/src/ram_map.rs"]
 pub mod ram_map;
+#[path = "../../../sm/src/verification/ram_names.rs"]
+pub mod ram_names;
 #[path = "../../../sm/src/ram_words.rs"]
 pub mod ram_words;
+#[path = "../../../sm/src/recording.rs"]
+pub mod recording;
+#[path = "../../../sm/src/rom.rs"]
+pub mod rom;
 #[path = "../../../sm/src/rtl.rs"]
 pub mod rtl;
+#[path = "../../../sm/src/snapshot_io.rs"]
+pub mod snapshot_io;
 #[path = "../../../sm/src/spc_player.rs"]
 pub mod spc_player;
 #[path = "../../../sm/src/types.rs"]
 pub mod types;
 #[path = "../../../sm/src/util.rs"]
 pub mod util;
-#[path = "../../../sm/src/host.rs"]
-pub mod host;
-#[path = "../../../sm/src/execution.rs"]
-pub mod execution;
-#[path = "../../../sm/src/game_state.rs"]
-pub mod game_state;
-#[path = "../../../sm/src/projection.rs"]
-pub mod projection;
-#[path = "../../../sm/src/native_rom.rs"]
-pub mod native_rom;
-#[path = "../../../sm/src/oracle_patch_policy.rs"]
-mod oracle_patch_policy;
-#[path = "../../../sm/src/oracle_mode.rs"]
-pub mod oracle_mode;
-#[path = "../../../sm/src/recording.rs"]
-pub mod recording;
-#[path = "../../../sm/src/rom.rs"]
-pub mod rom;
-#[path = "../../../sm/src/snapshot_io.rs"]
-pub mod snapshot_io;
 #[path = "../../../sm/src/verify_probe.rs"]
 pub mod verify_probe;
-#[path = "../../../sm/src/audio_output.rs"]
-pub mod audio_output;
-#[path = "../../../sm/src/native_audio.rs"]
-pub mod native_audio;
-#[path = "../../../sm/src/verification/oracle_host.rs"]
-pub(crate) mod oracle_host;
-#[path = "../../../sm/src/verification/ram_names.rs"]
-pub mod ram_names;
-pub use sm_runtime::rendering;
 pub use game_state::persistent_session::{
     PreparedSessionStart, SessionCheckpoint, SessionStartContract, SessionStartError,
     SuppliedSessionStart,
 };
 pub use native_audio::SampleDelivery;
+pub use sm_runtime::rendering;
 macro_rules! type_aliases {
     ($visibility:vis $($name:ident),+ = $target:ty;) => {
         $($visibility type $name = $target;)+
     };
 }
 pub(crate) use type_aliases;
-#[path = "stubs/rom_patches.rs"]
-pub mod rom_patches;
 #[path = "../../../sm/src/lock_masks.rs"]
 mod lock_masks;
-#[path = "../../../sm/src/verify/checkpoint.rs"]
-pub mod verification_checkpoint;
 #[path = "../../../sm/src/verification/observation/machine.rs"]
 mod machine;
-pub mod session;
 #[path = "stubs/ppu_ports.rs"]
 pub(crate) mod ppu_ports;
+#[path = "stubs/rom_patches.rs"]
+pub mod rom_patches;
+pub mod session;
+#[path = "../../../sm/src/verify/checkpoint.rs"]
+pub mod verification_checkpoint;

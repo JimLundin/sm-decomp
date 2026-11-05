@@ -1,8 +1,8 @@
 //! Prepared media and shared rendering for the Super Metroid engine.
 #![forbid(unsafe_code)]
 
-pub mod outbox;
 pub mod audio;
+pub mod outbox;
 pub mod rendering;
 pub mod scene;
 

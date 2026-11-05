@@ -84,13 +84,61 @@ fn gate(args: &[String]) -> Result<(), String> {
         return Err("a Tick's sound batch was skipped or duplicated".into());
     }
     let schedules = [
-        ("the same inputs again", Schedule { digests: true, ..Schedule::default() }),
-        ("presenting every Tick (a 60 Hz display)", Schedule { digests: true, present_every: 1, ..Schedule::default() }),
-        ("presenting every second Tick (30 Hz)", Schedule { digests: true, present_every: 2, ..Schedule::default() }),
-        ("presenting every seventh Tick", Schedule { digests: true, present_every: 7, ..Schedule::default() }),
-        ("the audio queue held full", Schedule { digests: true, audio_held_offers: 5, ..Schedule::default() }),
-        ("the save sink accepting later", Schedule { digests: true, save_held_offers: 40, ..Schedule::default() }),
-        ("both held, without the digests read", Schedule { audio_held_offers: 3, save_held_offers: 9, ..Schedule::default() }),
+        (
+            "the same inputs again",
+            Schedule {
+                digests: true,
+                ..Schedule::default()
+            },
+        ),
+        (
+            "presenting every Tick (a 60 Hz display)",
+            Schedule {
+                digests: true,
+                present_every: 1,
+                ..Schedule::default()
+            },
+        ),
+        (
+            "presenting every second Tick (30 Hz)",
+            Schedule {
+                digests: true,
+                present_every: 2,
+                ..Schedule::default()
+            },
+        ),
+        (
+            "presenting every seventh Tick",
+            Schedule {
+                digests: true,
+                present_every: 7,
+                ..Schedule::default()
+            },
+        ),
+        (
+            "the audio queue held full",
+            Schedule {
+                digests: true,
+                audio_held_offers: 5,
+                ..Schedule::default()
+            },
+        ),
+        (
+            "the save sink accepting later",
+            Schedule {
+                digests: true,
+                save_held_offers: 40,
+                ..Schedule::default()
+            },
+        ),
+        (
+            "both held, without the digests read",
+            Schedule {
+                audio_held_offers: 3,
+                save_held_offers: 9,
+                ..Schedule::default()
+            },
+        ),
     ];
     for (name, schedule) in schedules {
         let outcome = run(&content, &start, &pads, schedule)?;
@@ -119,7 +167,9 @@ fn main() {
     let result = match args.split_first() {
         Some((command, rest)) if command == "prepare" => match rest {
             [rom, exported, content, start] => prepare(rom, exported, content, start),
-            _ => Err("usage: sm_replay prepare <rom> <exported start> <content out> <start out>".into()),
+            _ => Err(
+                "usage: sm_replay prepare <rom> <exported start> <content out> <start out>".into(),
+            ),
         },
         Some((command, rest)) if command == "gate" => gate(rest),
         Some((command, rest)) if command == "one" => one(rest),
