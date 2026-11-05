@@ -46,3 +46,18 @@ pub fn fold(running: u64, value: u64) -> u64 {
     digest.write_u64(value);
     digest.finish()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every committed lock digest depends on this exact function, so a
+    /// change to it must fail here, not only on the ROM rows.
+    #[test]
+    fn the_digest_is_the_one_the_lock_recorded() {
+        assert_eq!(Digest::of(b""), 0xcbf2_9ce4_8422_2325);
+        let text = Digest::of(b"sm-decomp digest");
+        assert_eq!(text, 0x619b_8bdf_b4a8_3537);
+        assert_eq!(fold(text, 7), 0xf546_e3f9_213e_d8ea);
+    }
+}

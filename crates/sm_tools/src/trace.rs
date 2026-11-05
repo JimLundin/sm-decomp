@@ -359,5 +359,7 @@ mod tests {
         let changed = fold_all(&[tick(0, 1, Some(1)), tick(1, 3, Some(1))]);
         assert_ne!(left.combined, changed.combined);
         assert_eq!(stream_name(samus), "samus");
+        // The committed locks hold this exact fold: a lossy fold must fail here.
+        assert_eq!(left.digests[0], 0x7496_2c2e_ed8a_dfed);
     }
 }
