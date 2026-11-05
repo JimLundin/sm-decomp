@@ -188,6 +188,10 @@ def engine_inventory() -> dict[str, int]:
                 path = os.path.join(root, name).replace("\\", "/")
                 if path.startswith("crates/") and "/src/" not in path:
                     continue
+                # The rebuild's crates and the oracle are held by tools/check_crate_rules.sh
+                # (no SNES address in game, runtime or app); this measure is the old engine's.
+                if path.startswith("crates/") and not path.startswith("crates/sm_"):
+                    continue
                 counts = kinds.get(cycle_report.inventory_scope(path)[0])
                 if counts is None:
                     continue
