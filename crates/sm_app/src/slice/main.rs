@@ -269,8 +269,13 @@ fn run() -> Result<(), String> {
                 },
                 None => held_buttons(),
             };
+            let latched = match &options.inputs {
+                Some(pads) => pads.get(index as usize + 1).copied(),
+                None => Some(held_buttons()),
+            };
             let output = session.step(TickInput {
                 buttons,
+                latched,
                 host_results: std::mem::take(&mut receipts),
             });
             if options.lock_out.is_some() {

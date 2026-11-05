@@ -69,6 +69,9 @@ pub enum HostResult {
 #[derive(Clone, Debug, Default)]
 pub struct TickInput {
     pub buttons: u16,
+    /// The controller word the Tick's closing NMI latches: the next Tick's
+    /// buttons on a replay, the device's word at vblank in live play.
+    pub latched: Option<u16>,
     pub host_results: Vec<HostResult>,
 }
 
@@ -205,12 +208,14 @@ impl Session {
         game.g_runmode = RM_MINE as u8;
         // SAFETY: as in `open`; a frame runs to completion on this owner.
         unsafe {
+            crate::oracle_mode::set_next_frame_input(input.latched.map(u16::reverse_bits));
             crate::rtl::rtl_run_frame(
                 crate::rtl::TickInput {
                     buttons: input.buttons,
                 },
                 game,
             );
+            crate::oracle_mode::set_next_frame_input(None);
             crate::rtl::rtl_render_audio(&mut self.samples, game);
         }
         self.tick += 1;
