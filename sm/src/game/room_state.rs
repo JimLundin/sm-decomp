@@ -99,6 +99,7 @@ impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     }
 }
 
+#[cfg(not(sm_host))]
 #[path = "../verification/room_level_copy.rs"]
 mod level_copy_checks;
 pub(crate) use level_copy_checks::check_level_copy;

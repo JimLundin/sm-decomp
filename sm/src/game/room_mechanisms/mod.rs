@@ -141,11 +141,13 @@ pub(crate) mod checks {
         presentation::draw(&mut Runtime::new(game), k);
     }
 }
+#[cfg(not(sm_host))]
 #[path = "../../verification/room_mechanism_ownership.rs"]
 mod ownership_checks;
 pub(crate) fn ownership_checks(game: &mut Game) -> bool {
     ownership_checks::run(game)
 }
+#[cfg(not(sm_host))]
 #[path = "../../verification/room_mechanism_qualified.rs"]
 mod qualified_checks;
 pub(crate) fn qualified_checks(game: &mut Game) -> bool {

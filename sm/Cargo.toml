@@ -38,4 +38,4 @@ verify = ["dep:sm_tools"]
 [lints.rust]
 warnings = { level = "deny", priority = -1 }
 # tools/verify_dll.py selects the headless host with this rustc configuration.
-unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)", "cfg(sm_source_inventory)"] }
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)", "cfg(sm_source_inventory)", "cfg(sm_host)"] }
