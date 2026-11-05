@@ -332,6 +332,6 @@ mod lock_masks;
 pub mod verification_checkpoint;
 #[path = "../../../sm/src/verification/observation/machine.rs"]
 mod machine;
-pub mod replay;
+pub mod session;
 #[path = "stubs/ppu_ports.rs"]
 pub(crate) mod ppu_ports;

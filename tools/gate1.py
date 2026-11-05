@@ -87,9 +87,16 @@ def main() -> int:
         verifier_entry(row, entries, "check-lock")
         inputs = pathlib.Path("movies") / lock.pins[row]["inputs"]
         out = work / f"{row}-entry.toml"
-        replay = run(["target/release/sm_replay", "rom/sm.smc", str(start), str(inputs),
+        content, sealed = work / f"{row}.content", work / f"{row}.sealed"
+        prepared = run(["target/release/sm_replay", "prepare", "rom/sm.smc", str(start),
+                        str(content), str(sealed)])
+        if prepared.returncode:
+            print(f"{row}: prepare failed: {prepared.stderr[-300:]}", flush=True)
+            failed += 1
+            continue
+        replay = run(["target/release/sm_replay", "gate", str(content), str(sealed), str(inputs),
                       str(locked["ticks"]), str(out)])
-        print(f"{row}: replay exit {replay.returncode}: {replay.stdout.strip()[-200:]}"
+        print(f"{row}: replay exit {replay.returncode}\n{replay.stdout.strip()[-1200:]}\n"
               f"{replay.stderr.strip()[-600:]}", flush=True)
         if replay.returncode:
             failed += 1

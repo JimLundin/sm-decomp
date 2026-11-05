@@ -114,6 +114,7 @@ dependencies = [
  "sm_data",
  "sm_game",
  "sm_host",
+ "sm_runtime",
 ]
 
 [[package]]
