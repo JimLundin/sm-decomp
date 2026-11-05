@@ -146,6 +146,28 @@ wait entry. It does not record the picture, the APU port log, the SPC state
 (lsnes shows SPC700 and DSP only as raw core structs), the profile, the write
 log, watched-PC hits, `PpuRegisters` or `overscan`. Its state is lsnes's own
 savestate at the frame boundary after a cut, before the next step's NMI.
+The script loads a starting state itself (`OH_START`, `load-state`), because
+lsnes refuses a state given on its command line with this ROM and hangs.
+
+**lsnes crashes.** The server's cut callback unregisters itself while lsnes
+dispatches it. Now and then lsnes then calls a freed entry: lsnes.log fills
+with `Error in Lua memory callback: attempt to call a nil value` and lsnes
+dies, which was the "exit at step 18068".
+
+| Run | Result |
+| --- | --- |
+| Power-on to 19000, no saves | clean |
+| From seed 16, to 18300 | clean |
+| With saves | 1180 errors and a hang by 19829 |
+| Cut callback wrapped in `xpcall` | crashed with `0xC0000028` after 154 frames |
+
+Never unregistering, or unregistering from the next wait-entry callback or the
+frame callback, is clean but runs at 7 frames/s instead of 44: the wait loops
+spin through the cut's address. The fix to try is a callback on the NMI
+handler's own RTI.
+
+Each run keeps lsnes's standard error, the server's Lua error log and lsnes.log
+in its run directory, and reports them if lsnes exits.
 
 ## The frame record (the oracle contract v1)
 

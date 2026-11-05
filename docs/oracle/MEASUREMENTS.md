@@ -171,3 +171,39 @@ item-morph-ball and chain-0006-E0B5 stand in.
 In the stalled seeded rows (credits, Mother Brain, death, save, the door
 rows), the CPU writes the same request every frame and the resumed driver never
 echoes it. That is the migration seed's missing SPC state, not the driver.
+
+## (e) lsnes: the any% movie, resuming, and the stalled rows
+
+**How far lsnes runs the any% movie.** With the cut callback of `97ae09a2d`,
+lsnes ran all 19000 frames from power-on, without saves, at 32 frames/s, and
+logged no errors. From native seed 16 (frame 17829) it ran to 18300, past 18068,
+with no errors either. With saves (`--native-seeds`) from seed 16, it cut seeds
+17, 18 and 19 (frames 18109, 19514 and 19809), logged 1180 `nil value`
+callback errors and hung before 21829. So the exit at 18068 is lsnes failing
+inside its callback dispatcher, which the saves make more likely; the game is
+not the cause (docs/oracle/HARNESS.md, "lsnes crashes").
+
+**Resumed from seed 16:** the lag log matches in every column except
+`lagged`, frames 17829-17900.
+
+**The 27 stalled rows** (31 lines in the LakeSnes run, with credits rows
+sharing seeds). Not re-run on lsnes: none of their captures has a native seed
+yet. The captures they need, with the movie frame to cut at:
+
+| Capture | Frame | Rows |
+| --- | --- | --- |
+| 100-credits:336 | 222657 | 14 (credits-*) |
+| 100-input-phase:27 | 24079 | 1 |
+| 100-input-phase:104 | 72927 | 1 |
+| 100-input-phase:305 | 196264 | 1 |
+| 100-input-phase:324 | 209945 | 2 |
+| 100-mb-phases:324, 325, 329 | 209945, 210553, 218608 | 4 |
+| 100-boundary:259 | 169581 | 1 |
+| low-input-phase:129 | 100731 | 2 |
+| any-boundary:110, 190 | 73446, 116359 | 3 |
+| scenario-one-energy-crocomire:142 | not a movie capture | 2 |
+
+**Native-seeded rows that already run on lsnes:** chain-any-0001-DF45,
+chain-any-0006-E0B5 and chain-any-0012-91F8, 3220 ticks in all, at 39 frames/s.
+sram matches; wram, vram, cgram, oam and ppu differ, as they do under LakeSnes.
+These ran with an interim script that wrapped the cut callback in `xpcall`.

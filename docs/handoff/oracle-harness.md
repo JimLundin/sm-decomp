@@ -53,19 +53,42 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 - Sync: `movie ROM any.inputs --oracle lsnes --seeds room-seeds-any-boundary.csv <any-boundary dir>`, from power-on.
   - All 16 room seeds through frame 17829 match: same room, 0 WRAM bytes differing, offset +0. They cover Ceres, the escape and Crateria up to room 97B5. LakeSnes desyncs at about 8567.
   - The NMI counter matches the lsnes lag log. Positions are off by one frame because the log samples at frame end.
-  - lsnes exited at step 18068, cause unknown (its stderr is not captured). Speed: 45 frames/s with all memories dumped every frame.
-- Native seeds: `--native-seeds CSV DIR` writes `NNNN.lss` (the state before step N) and `NNNN.record` (the raw record of step N-1, the capture's cut). 16 are in `$TEMP/ohx/data/lsnes-native/any-boundary/` (private).
-- Not done: `corpus` takes neither `--oracle lsnes` nor native seeds, so no stalled row has been re-run; door lengths from this core are not measured.
+  - Speed: 45 frames/s with all memories dumped every frame.
+- The exit at 18068 is an lsnes crash, not the game (details: HARNESS.md, "lsnes crashes").
+  - lsnes.log fills with `Error in Lua memory callback: attempt to call a nil value`, then lsnes dies (once `0xC0000028`, STATUS_BAD_STACK).
+  - It follows the server's cut callback unregistering itself inside lsnes's dispatcher, and is intermittent: from power-on without saves, all 19000 frames ran clean.
+  - It happens in runs that save states (`--native-seeds`): 1180 errors and a hang by frame 19829, from seed 16.
+  - Not fixed. Never unregistering, or unregistering at the next wait entry or frame end, is clean but runs at 7 frames/s instead of 44.
+- Diagnosis now kept (commit on this branch):
+  - lsnes runs in its run directory; `stderr.txt`, the server's `lua.log` (`OH_LOG`) and `lsnes.log` go there.
+  - An exit panics with the exit status and the tail of all three, and keeps the directory. `SM_LSNES_KEEP=1` always keeps it.
+- Resume: `Start::State` loads the state from the script (`OH_START`, `load-state`). On the command line lsnes rejects it (core type snes_ntsc against ROM type SNES) and hangs.
+  - From seed 16 (frame 17829) the lag log matches in every column but `lagged`, which the log samples differently.
+- `movie --from STATE FRAME` resumes there. `--native-seeds CSV DIR` can be repeated, with one save serving captures that share a frame. `--no-memories` drops the memories (lsnes only).
+- Native seeds: `NNNN.lss` (the state before step N) and `NNNN.record` (the raw record of step N-1).
+  - 16 are in `$TEMP/ohx/data/lsnes-native/any-boundary/` (private).
+  - 17 to 19 (frames 18109, 19514, 19809) are in `$TEMP/ohx/nm/`, cut in a run that later hung; check them before use.
+- `corpus --oracle lsnes --native-seeds DIR` maps `CAPTURE:INDEX` to `DIR/CAPTURE/INDEX.lss` (`Start::State`); `run_row_with` goes through `Backend` (`Observe::backend`, `Observe::native_seeds`).
+  - Checked on chain-any-0001-DF45, -0006-E0B5 and -0012-91F8: they run to their tick count, at 39 frames/s.
+  - wram, vram, cgram, oam and ppu differ, as under LakeSnes; sram matches.
+- The 27 stalled rows are not re-run: none of their 13 captures has a native seed yet (table in MEASUREMENTS.md).
 
 ## Next, in order
 
-1. Fix lsnes's exit at step 18068: keep its stderr and log Lua errors to a file.
-2. `corpus --oracle lsnes --native-seeds DIR`: map `CAPTURE:INDEX` to `DIR/CAPTURE/INDEX.lss` and start with `Start::State`.
-   - `run_row_with` must use `Backend`. Then re-run the 27 stalled rows (88 under the diagnosis).
-   - Cut seeds for `100-input-phase`, `100-mb-phases` and credits from `movies/100.inputs`, with their CSVs. Cut any-boundary seeds past 17829.
+1. Make the cut callback stable and fast. Hook the NMI handler's own RTI, found once from the ROM, with S equal to the NMI's S.
+   - Derive the after-RTI registers there: S+4, P, PC and PB from the stack.
+   - Check that the records equal today's byte for byte over 1000 frames (`movie --lag-log` output, raw records), then rerun 17829 to 19829 with `--native-seeds` and expect no `nil value` in lsnes.log.
+2. Cut the 13 captures the 27 stalled rows need, each in one run with repeated `--native-seeds` and `--no-memories`:
+   - from `movies/100.inputs`: `100-input-phase`, `100-mb-phases`, `100-boundary`, `100-credits` (credits at frame 222657);
+   - from `low.inputs`: `low-input-phase`;
+   - from `any.inputs`: `any-boundary` 110 and 190 (frame 116359).
+   - `scenario-one-energy-crocomire:142` is not on a movie; find its source.
+   - Then run `corpus --oracle lsnes --native-seeds DIR --only ...` on the 27 rows (88 under the diagnosis).
 3. Door lengths and busy spans from lsnes. Fix the DMA-under-blank count to check INIDISP per write.
 4. A cross-oracle report, LakeSnes against lsnes, per stream per frame. Then the re-lock (the root's call).
 5. Speed: dump only the memories a step needs (the `memories` flag), or hash them in Lua.
+
+Orphaned lsnes processes remain from hung or killed runs: PIDs 6176 and 14972 from the previous lane, 24536, 22000 and 25512 from this one. Stop-Process and taskkill could not end them from this shell.
 
 ## Pitfalls
 
@@ -77,4 +100,5 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 ## Cleanup
 
 - `$TEMP/ohx/data` (1.3 GB, ROM-derived) and `$TEMP/ohx/bundles` (328 MB): keep them for the next lane.
-- `$TEMP/oracle-harness-target`: deleted at the end of this lane. `$TEMP/ohx/data/lsnes-native` (2 MB): keep.
+- `$TEMP/oracle-harness-target`: the build target; keep it while lanes build. `$TEMP/ohx/data/lsnes-native` (2 MB) and `$TEMP/ohx/nm`: keep.
+- Kept lsnes run directories `%TEMP%/oracle-lsnes-*` (about 5 MB each, a ROM copy inside): delete them when done.

@@ -8,12 +8,11 @@
 //! streams on requested frames only. The oracle contract's streams fold on
 //! every video frame.
 
-use crate::lakesnes::LakeSnes;
 use crate::lock::{Entry, Pin};
 use crate::record::{FrameRecord, NmiKind, Pad};
 use crate::seed::Capture;
 use crate::streams::{self, NAMES, Running};
-use crate::{Oracle, Start, Tiers};
+use crate::{Backend, Start, Tiers};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -50,9 +49,15 @@ pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowR
     run_row_with(rom, pin, entry, data, &Observe::default(), &mut |_| ())
 }
 
-/// What a run records beyond its streams.
+/// What a run records beyond its streams, and on which oracle.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Observe<'a> {
+    /// The backend `Backend::open` names (LakeSnes when empty).
+    pub backend: &'a str,
+    /// Harness-native seeds (`movie --native-seeds`): a row seeded from
+    /// `CAPTURE:INDEX` resumes the oracle's own state `DIR/CAPTURE/INDEX.lss`
+    /// instead of loading the migration capture.
+    pub native_seeds: Option<&'a Path>,
     pub tiers: Tiers,
     /// Watched instruction addresses (`Oracle::set_watch`).
     pub watch: &'a [u32],
@@ -81,15 +86,24 @@ pub fn run_row_with(
             let (capture, index) = seed
                 .split_once(':')
                 .ok_or_else(|| format!("seed {seed} is not CAPTURE:INDEX"))?;
-            let index = index
+            let index: u32 = index
                 .parse()
                 .map_err(|_| format!("seed {seed}: bad index"))?;
-            let directory = root.join("target").join("seeds").join(capture);
-            Start::Capture(Box::new(Capture::read(&directory, index)?))
+            if let Some(native) = observing.native_seeds {
+                let path = native.join(capture).join(format!("{index:04}.lss"));
+                Start::State(
+                    std::fs::read(&path)
+                        .map_err(|error| format!("native seed {}: {error}", path.display()))?,
+                )
+            } else {
+                let directory = root.join("target").join("seeds").join(capture);
+                Start::Capture(Box::new(Capture::read(&directory, index)?))
+            }
         }
         (None, None) => Start::PowerOn { wram_fill: 0x55 },
     };
-    let mut oracle = LakeSnes::open(rom, start).map_err(|error| error.to_string())?;
+    let mut oracle =
+        Backend::open(observing.backend, rom, start).map_err(|error| error.to_string())?;
     oracle.set_tiers(observing.tiers);
     oracle.set_watch(observing.watch, observing.peek);
     let started = Instant::now();

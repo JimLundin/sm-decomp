@@ -150,4 +150,18 @@ impl Backend {
             Self::Lsnes(oracle) => oracle.set_tiers(tiers),
         }
     }
+
+    pub fn set_watch(&mut self, addresses: &[u32], peek: u32) {
+        match self {
+            Self::LakeSnes(oracle) => oracle.set_watch(addresses, peek),
+            Self::Lsnes(oracle) => oracle.set_watch(addresses, peek),
+        }
+    }
+
+    pub fn identity(&self) -> OracleId {
+        match self {
+            Self::LakeSnes(oracle) => oracle.identity(),
+            Self::Lsnes(oracle) => oracle.identity(),
+        }
+    }
 }

@@ -31,6 +31,11 @@ const VRAM: usize = 0x1_0000;
 const CGRAM: usize = 0x200;
 const OAM: usize = 0x220;
 const SRAM: usize = 0x2000;
+/// lsnes's standard error and the server's Lua error log, in the run's
+/// directory. lsnes runs there, so its own `lsnes.log` (where a Lua syntax
+/// error goes; lsnes then keeps running without a script) lands there too.
+const STDERR: &str = "stderr.txt";
+const LUA_LOG: &str = "lua.log";
 
 /// The executable: `SM_LSNES`, or the copy this machine keeps.
 fn executable() -> PathBuf {
@@ -54,6 +59,9 @@ pub struct Lsnes {
     steps: u64,
     saves: u32,
     raw: Vec<u8>,
+    /// Keep the run's directory at the end: lsnes exited early, or
+    /// `SM_LSNES_KEEP` is set.
+    keep: bool,
     /// Whether each record carries the memories (on by default; the streams
     /// need them, and leaving them out roughly doubles the speed).
     pub memories: bool,
@@ -126,6 +134,31 @@ impl Lsnes {
         let path = self.directory.join(format!("state-{}.lss", self.saves));
         self.send(&format!("V {}", path.display()));
         path
+    }
+
+    /// Why lsnes ended: its exit status, the Lua errors the server logged and
+    /// the end of its standard error. The run's directory is kept for a look.
+    fn exit_report(&mut self) -> String {
+        let status = self
+            .child
+            .wait()
+            .map_or_else(|error| error.to_string(), |status| status.to_string());
+        let tail = |name: &str| {
+            // lsnes.log holds device names that are not UTF-8.
+            let bytes = std::fs::read(self.directory.join(name)).unwrap_or_default();
+            let text = String::from_utf8_lossy(&bytes);
+            let lines: Vec<&str> = text.lines().collect();
+            lines[lines.len().saturating_sub(20)..].join("\n")
+        };
+        let report = format!(
+            "{status}; directory {}\nLua log:\n{}\nstderr:\n{}\nlsnes.log:\n{}",
+            self.directory.display(),
+            tail(LUA_LOG),
+            tail(STDERR),
+            tail("lsnes.log")
+        );
+        self.keep = true;
+        report
     }
 
     /// The last record as the server wrote it.
@@ -216,7 +249,10 @@ impl Oracle for Lsnes {
             Start::State(state) => {
                 let path = directory.join("start.lss");
                 std::fs::write(&path, state).map_err(|_| OracleError::State)?;
-                command.arg(&path);
+                // Given on the command line, a state's core type (snes_ntsc)
+                // mismatches the ROM's (SNES) and lsnes hangs; the server
+                // loads it before the first frame instead.
+                command.env("OH_START", &path);
             }
             Start::Capture(_) => {
                 return Err(OracleError::Seed(
@@ -224,13 +260,18 @@ impl Oracle for Lsnes {
                 ));
             }
         }
+        let stderr =
+            std::fs::File::create(directory.join(STDERR)).map_err(|_| OracleError::Rom)?;
         let mut child = command
             .arg(format!("--rom={}", rom_path.display()))
             .arg(format!("--lua={}", script.display()))
             .arg("--unpause")
+            .current_dir(&directory)
             .env("OH_RECORD", directory.join("record.bin"))
+            .env("OH_LOG", directory.join(LUA_LOG))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
+            .stderr(stderr)
             .spawn()
             .map_err(|_| OracleError::Rom)?;
         let requests = child.stdin.take().ok_or(OracleError::Rom)?;
@@ -244,6 +285,7 @@ impl Oracle for Lsnes {
             steps: 0,
             saves: 0,
             raw: Vec::new(),
+            keep: std::env::var_os("SM_LSNES_KEEP").is_some(),
             memories: true,
         })
     }
@@ -257,7 +299,10 @@ impl Oracle for Lsnes {
                 .replies
                 .read_line(&mut line)
                 .unwrap_or_else(|error| panic!("lsnes reply: {error}"));
-            assert!(read > 0, "lsnes exited at step {}", self.steps);
+            if read == 0 {
+                let report = self.exit_report();
+                panic!("lsnes exited at step {}: {report}", self.steps);
+            }
             if let Some(size) = line
                 .strip_prefix("R ")
                 .and_then(|rest| rest.split(' ').next())
@@ -293,6 +338,8 @@ impl Drop for Lsnes {
     fn drop(&mut self) {
         let _ = writeln!(self.requests, "Q").and_then(|()| self.requests.flush());
         let _ = self.child.wait();
-        let _ = std::fs::remove_dir_all(&self.directory);
+        if !self.keep {
+            let _ = std::fs::remove_dir_all(&self.directory);
+        }
     }
 }

@@ -63,34 +63,41 @@ fn differing(left: &[u8], right: &[u8]) -> usize {
 
 /// Cut harness-native seeds on lsnes. The seed of a room-seed row whose
 /// capture followed lsnes frame N (1-based) is the state at the boundary
-/// after the cut of step N-1 (0-based), with that cut's raw record.
+/// after the cut of step N-1 (0-based), with that cut's raw record. Captures
+/// of several lists can share a frame; one saved state then serves them all.
 fn native_seed(
     lsnes: &mut crate::lsnes::Lsnes,
-    list: &[RoomSeed],
-    directory: &Path,
+    lists: &[(Vec<RoomSeed>, PathBuf)],
     step: u64,
-    pending: &mut Option<(u32, PathBuf)>,
+    pending: &mut Option<(PathBuf, Vec<PathBuf>)>,
 ) {
-    if let Some((index, path)) = pending.take() {
-        let target = directory.join(format!("{index:04}.lss"));
-        std::fs::copy(&path, &target)
-            .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-        println!("native seed {index}: state after step {step}");
+    if let Some((path, targets)) = pending.take() {
+        for target in targets {
+            std::fs::copy(&path, &target)
+                .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
+            println!("native seed {}: state after step {step}", target.display());
+        }
     }
-    if let Some(seed) = list.iter().find(|seed| seed.movie_frame == step + 1) {
-        std::fs::write(
-            directory.join(format!("{:04}.record", seed.index)),
-            lsnes.raw(),
-        )
-        .unwrap_or_else(|error| fail(error));
-        *pending = Some((seed.index, lsnes.request_save()));
+    let mut targets = Vec::new();
+    for (list, directory) in lists {
+        for seed in list.iter().filter(|seed| seed.movie_frame == step + 1) {
+            std::fs::write(
+                directory.join(format!("{:04}.record", seed.index)),
+                lsnes.raw(),
+            )
+            .unwrap_or_else(|error| fail(error));
+            targets.push(directory.join(format!("{:04}.lss", seed.index)));
+        }
+    }
+    if !targets.is_empty() {
+        *pending = Some((lsnes.request_save(), targets));
     }
 }
 
 fn movie(arguments: &[String]) {
     let [rom, inputs, rest @ ..] = arguments else {
         fail(
-            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]",
+            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -106,7 +113,10 @@ fn movie(arguments: &[String]) {
     let mut positions_only = false;
     let mut profile: Option<(usize, usize)> = None;
     let mut backend = "lakesnes".to_owned();
-    let mut native: Option<(Vec<RoomSeed>, PathBuf)> = None;
+    let mut native: Vec<(Vec<RoomSeed>, PathBuf)> = Vec::new();
+    let mut memories = true;
+    let mut start = Start::PowerOn { wram_fill: 0x55 };
+    let mut first = 0;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -132,9 +142,21 @@ fn movie(arguments: &[String]) {
                 let (Some(csv), Some(directory)) = (options.next(), options.next()) else {
                     fail("--native-seeds CSV DIR")
                 };
-                native = Some((room_seeds(Path::new(csv)), PathBuf::from(directory)));
+                native.push((room_seeds(Path::new(csv)), PathBuf::from(directory)));
+            }
+            "--from" => {
+                let (Some(state), Some(frame)) = (options.next(), options.next()) else {
+                    fail("--from STATE FRAME")
+                };
+                start = Start::State(
+                    std::fs::read(state).unwrap_or_else(|error| fail(format!("{state}: {error}"))),
+                );
+                first = frame.parse().unwrap_or_else(|_| fail("--from STATE FRAME"));
             }
             "--no-picture" => picture = false,
+            // lsnes only: records without the memories, about twice as fast;
+            // for cutting native seeds, not for comparing.
+            "--no-memories" => memories = false,
             "--ranges" => ranges = true,
             "--spc" => spc = true,
             "--positions-only" => positions_only = true,
@@ -164,9 +186,12 @@ fn movie(arguments: &[String]) {
             other => fail(format!("unknown option {other}")),
         }
     }
-    let mut oracle = crate::Backend::open(&backend, &rom, Start::PowerOn { wram_fill: 0x55 })
-        .unwrap_or_else(|error| fail(error));
-    let mut pending_seed: Option<(u32, PathBuf)> = None;
+    let mut oracle =
+        crate::Backend::open(&backend, &rom, start).unwrap_or_else(|error| fail(error));
+    if let crate::Backend::Lsnes(lsnes) = &mut oracle {
+        lsnes.memories = memories;
+    }
+    let mut pending_seed: Option<(PathBuf, Vec<PathBuf>)> = None;
     oracle.set_tiers(Tiers {
         picture,
         apu_state: spc,
@@ -177,14 +202,14 @@ fn movie(arguments: &[String]) {
     let mut next_seed = 0;
     let (mut lag, mut overrun, mut no_nmi, mut synced, mut checked) = (0u64, 0u64, 0u64, 0, 0);
     let started = Instant::now();
-    for (frame, &pad) in pads.iter().enumerate().take(frames) {
+    for (frame, &pad) in pads.iter().enumerate().take(frames).skip(first) {
         let record: &FrameRecord = oracle.step(pad);
         let record = record.clone();
         let record = &record;
         if let crate::Backend::Lsnes(lsnes) = &mut oracle
-            && let Some((list, directory)) = &native
+            && !native.is_empty()
         {
-            native_seed(lsnes, list, directory, frame as u64, &mut pending_seed);
+            native_seed(lsnes, &native, frame as u64, &mut pending_seed);
         }
         match record.nmi() {
             Some(nmi) => {
@@ -326,7 +351,7 @@ fn movie(arguments: &[String]) {
     let seconds = started.elapsed().as_secs_f64();
     println!(
         "frames {frames} in {seconds:.2}s: {:.0} frames/s; NMIs without a joypad read {lag}, overrun NMIs {overrun}, frames without NMI {no_nmi}",
-        frames as f64 / seconds
+        frames.saturating_sub(first) as f64 / seconds
     );
     if seeds.is_some() {
         println!("room seeds in the same room: {synced} of {checked}");
@@ -399,7 +424,9 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
 /// compare each with its `faithful` entry.
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
-        fail("corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE]")
+        fail(
+            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR]",
+        )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
     let lock =
@@ -410,6 +437,8 @@ fn corpus(arguments: &[String]) {
     let mut limit = usize::MAX;
     let mut shard: (usize, usize) = (0, 1);
     let mut record: Option<std::fs::File> = None;
+    let mut backend = String::new();
+    let mut native_seeds: Option<PathBuf> = None;
     let mut rom = rom;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
@@ -445,6 +474,17 @@ fn corpus(arguments: &[String]) {
                         .unwrap_or_else(|error| fail(format!("{path}: {error}"))),
                 );
             }
+            "--oracle" => {
+                backend = options
+                    .next()
+                    .cloned()
+                    .unwrap_or_else(|| fail("--oracle NAME"));
+            }
+            "--native-seeds" => {
+                native_seeds = Some(PathBuf::from(
+                    options.next().unwrap_or_else(|| fail("--native-seeds DIR")),
+                ));
+            }
             "--limit" => {
                 limit = options
                     .next()
@@ -473,7 +513,12 @@ fn corpus(arguments: &[String]) {
             println!("{}: no pin", entry.id);
             continue;
         };
-        match crate::corpus::run_row(&rom, pin, entry, data) {
+        let observing = crate::corpus::Observe {
+            backend: &backend,
+            native_seeds: native_seeds.as_deref(),
+            ..crate::corpus::Observe::default()
+        };
+        match crate::corpus::run_row_with(&rom, pin, entry, data, &observing, &mut |_| ()) {
             Err(error) => {
                 failed += 1;
                 println!("{}: not run: {error}", entry.id);
@@ -485,7 +530,12 @@ fn corpus(arguments: &[String]) {
                 seconds += run.seconds;
                 if let Some(file) = record.as_mut() {
                     use std::io::Write as _;
-                    let text = crate::corpus::lock_entry(entry, crate::lakesnes::IDENTITY, &run);
+                    let oracle = if backend == "lsnes" {
+                        crate::lsnes::IDENTITY
+                    } else {
+                        crate::lakesnes::IDENTITY
+                    };
+                    let text = crate::corpus::lock_entry(entry, oracle, &run);
                     writeln!(file, "{text}").unwrap_or_else(|error| fail(error));
                 }
                 let verdicts = crate::corpus::compare(entry, &run);
@@ -625,6 +675,7 @@ fn measure(arguments: &[String]) {
                 tiers: measuring(),
                 watch: &crate::measure::WATCHED,
                 peek: crate::measure::PEEK,
+                ..crate::corpus::Observe::default()
             },
             &mut |record| measurements.frame(record),
         );

@@ -13,6 +13,29 @@
 -- (overwritten each time) and announced on stdout as "R <bytes>".
 local unpack = table.unpack or unpack
 local record_path = assert(os.getenv("OH_RECORD"), "set OH_RECORD")
+-- Lua errors in callbacks otherwise reach only lsnes.log; keep them here too.
+local log_path = os.getenv("OH_LOG")
+
+local function log(text)
+    if log_path == nil then return end
+    local file = io.open(log_path, "a")
+    if file then file:write(text, "\n"); file:close() end
+end
+
+-- Run a callback under a handler that logs the error with its traceback and
+-- quits, so a failing script ends the run instead of desyncing it. Only for
+-- the frame callbacks: wrapping the memory callbacks costs speed in the hot
+-- ones (joypad reads, wait loops), and wrapping the self-removing cut callback
+-- made lsnes crash within 154 frames (docs/oracle/HARNESS.md, lsnes backend).
+local function guarded(callback)
+    return function(...)
+        local ok, message = xpcall(callback, debug.traceback, ...)
+        if not ok then
+            log("frame " .. tostring(movie.currentframe()) .. ": " .. tostring(message))
+            exec("quit-emulator")
+        end
+    end
+end
 -- Native NMI vector target ($00:FFEA), the game's wait sites (game::WAIT_SITES).
 local NMI = 0x1000000 + memory.readword(0x100FFEA)
 local WAIT_ENTRIES = {0x808338, 0x858136, 0x8584A3}
@@ -125,19 +148,25 @@ for _, entry in ipairs(WAIT_ENTRIES) do
     end)
 end
 
-function on_input()
+on_input = guarded(function()
     for index = 0, 11 do
         input.set(0, index, math.floor(pad / 2 ^ (15 - index)) % 2)
     end
     if reset_next then input.reset(); reset_next = false end
-end
+end)
 
-function on_frame_emulated()
+on_frame_emulated = guarded(function()
     if captured == nil then
         if in_nmi then capture(2, nmi_pc) else capture(1, 0) end
     end
     send()
-end
+end)
 
 exec("set-speed turbo")
+-- A resumed run. On the command line a state's core type (snes_ntsc) does not
+-- match the ROM's (SNES) and lsnes hangs, so the script loads it: read-write,
+-- so on_input still sets the pads, at the coming frame boundary, before any
+-- frame is emulated.
+local start = os.getenv("OH_START")
+if start then exec("load-state " .. start) end
 read_request()
