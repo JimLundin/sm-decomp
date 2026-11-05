@@ -68,7 +68,10 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SM_ROM_KEY -in .ci-data/payload.enc -out rom/sm.smc
           echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check
           rm -rf .ci-data
+      # The pipeline tool (crates/sm_tools/src/bin/sm_pipeline) needs only the standard library.
+      - name: Build sm_pipeline
+        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs
       - name: The slice against the oracle
         run: >-
-          python3 tools/gate1.py --shard ${{ matrix.shard }}/8
+          "$RUNNER_TEMP/sm_pipeline" gate1 --shard ${{ matrix.shard }}/8
           --slice item-morph-ball --slice door-transition --slice save-memory $ROWS

@@ -24,12 +24,20 @@
 //!       oracle and verification apart, then `tools/ram_ratchet.py`'s measures.
 //!       --baseline compares those measures with a file's `"name": value`
 //!       entries and exits 1 when one rose; --file measures the given files.
+//!   sm_pipeline gate1 [--shard I/N] [--slice ROW]... ROW...
+//!       Gate 1 (gate1.rs): from the repository root, replay each row (or
+//!       `all`, every locked corpus row) with sm_replay from the verifier's
+//!       exported start and compare its machine streams with the lock; --slice
+//!       also runs the windowed sm_slice on ROW against sm_replay. It runs the
+//!       verifier, the bundle restore, curl, sm_replay and xvfb-run as
+//!       subprocesses, and exits 1 when a row differs.
 //!
 //! It needs only the standard library, so CI builds it in seconds with
 //! `rustc --edition=2024 -O crates/sm_tools/src/bin/sm_pipeline/main.rs`.
 #![forbid(unsafe_code)]
 
 mod corpus;
+mod gate1;
 mod json;
 mod pack;
 mod plan;
@@ -53,7 +61,8 @@ const USAGE: &str = "usage: sm_pipeline plan [--root DIR]
        sm_pipeline lock-check [--root DIR]
        sm_pipeline relevant < LISTING
        sm_pipeline test-summary LOG PACKAGE_DIR...
-       sm_pipeline volume [--root DIR] [--baseline FILE] [--file PATH...]";
+       sm_pipeline volume [--root DIR] [--baseline FILE] [--file PATH...]
+       sm_pipeline gate1 [--shard I/N] [--slice ROW]... ROW...";
 
 /// An environment variable, empty when unset.
 fn variable(name: &str) -> String {
@@ -199,6 +208,7 @@ fn run() -> Result<ExitCode, String> {
         "relevant" if rest.is_empty() => relevant_command(),
         "test-summary" => test_summary_command(rest),
         "volume" => volume_command(rest),
+        "gate1" => gate1::command(rest),
         _ => Err(USAGE.into()),
     }
 }

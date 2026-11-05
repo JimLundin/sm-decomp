@@ -97,6 +97,7 @@ They are a separate track; the last step below lists them.
 | `lock-check` | `scenario.py lock --check` | none |
 | `relevant` | replay_relevant.py's classification | `gh api` for passed heads, `git diff --name-only`, piped in |
 | `test-summary` | test_summary.py | none |
+| `gate1` (done) | gate1.py, the Gate 1 row runner (`.github/workflows/gate1.yml`) | verify_dll.py and ci_seed_data.py `restore` until `replay` and `restore` port them; `curl` for a bundle, `sm_replay`, `xvfb-run sm_slice` |
 | `volume` (measurement, not verification) | none: the [code volume](#code-volume) | none; Quality prints it and `tools/ram_ratchet.py` reads it |
 | `restore` | prepare_corpus_inputs.py (seeds), ci_seed_data.py `restore`, full_route.py `restore` | `curl`, `sha256sum -c`, `openssl enc -d`, `tar -tz`/`-xz`; `restore` prints the allowed members, checks the listing and the restored pins |
 | `replay` | replay_job.py, verify_dll.py's corpus driver and lock compare, pack.py `partition`, lock_gate.py `record-oracle` | none; it runs `sm_verify` |
