@@ -81,6 +81,7 @@ crates/oracle/
   src/record.rs           FrameRecord and its parts (machine-domain types)
   src/game.rs             the game's wait-for-NMI sites (the only game knowledge)
   src/lakesnes.rs         the LakeSnes backend (FFI)
+  src/lsnes.rs            the lsnes backend: lsnes-bsnes.exe as a separate process
   src/streams.rs          per-stream digests, legacy and v1, and the running fold
   src/lock.rs             reading scenarios/lock.toml pins and entries
   src/inputs.rs           .inputs files
@@ -91,6 +92,7 @@ crates/oracle/
   src/cli.rs              the command line
   src/bin/oracle.rs       the binary around cli::main
 tools/oracle/build_lakesnes.sh   pinned fetch and Zig build of the native archive
+tools/oracle/lsnes_server.lua    the Lua server lsnes runs for the lsnes backend
 ```
 
 Dependencies: `sm_data` for the shared digest only; no crates.io dependency.
@@ -131,6 +133,19 @@ record's memories, registers, port log and picture out), and this crate's
   Roughly 300-600 frames/s for the accuracy profile, more for performance.
 
 These speeds are published orders of magnitude, not measurements here.
+
+The lsnes backend (`src/lsnes.rs`, `--oracle lsnes`) runs lsnes rr2-beta23,
+the bsnes v085 core that recorded the movies, as a separate GPL process: no
+emulator code is linked or copied. lsnes runs `tools/oracle/lsnes_server.lua`;
+requests go to its standard input, and each lsnes frame's record goes to a
+file it overwrites, announced on its standard output. The cut is the
+interrupted instruction reached again with the stack restored (the NMI's RTI
+has completed); a frame without a returned NMI is cut at lsnes's frame
+boundary. It records the memories, the CPU, the cut, the joypad reads and the
+wait entry. It does not record the picture, the APU port log, the SPC state
+(lsnes shows SPC700 and DSP only as raw core structs), the profile, the write
+log, watched-PC hits, `PpuRegisters` or `overscan`. Its state is lsnes's own
+savestate at the frame boundary after a cut, before the next step's NMI.
 
 ## The frame record (the oracle contract v1)
 
