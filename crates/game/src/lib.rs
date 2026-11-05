@@ -9,3 +9,4 @@
 extern crate self as game;
 
 pub mod canonical;
+pub mod state;

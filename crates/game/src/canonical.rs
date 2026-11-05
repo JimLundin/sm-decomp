@@ -12,6 +12,7 @@
 //! a fixed array is its elements with no length.
 
 use std::fmt;
+use std::marker::PhantomData;
 
 /// A type with one canonical encoding, a fallible decoder and a field-path diff.
 pub trait Canonical: Sized {
@@ -330,6 +331,48 @@ impl<T: Canonical> Canonical for Vec<T> {
         }
     }
 }
+
+/// A type marker carries no State.
+impl<T> Canonical for PhantomData<T> {
+    fn encode(&self, _out: &mut Vec<u8>) {}
+
+    fn decode(_input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+        Ok(Self)
+    }
+
+    fn diff(&self, _other: &Self) -> Option<Difference> {
+        None
+    }
+}
+
+/// `data`'s newtypes, which can't derive `Canonical` there because `data` can't depend on
+/// `game`. Each encodes as its one field, like a derived newtype.
+macro_rules! canonical_data_newtype {
+    ($($newtype:ident($inner:ty)),* $(,)?) => {$(
+        impl Canonical for data::id::$newtype {
+            fn encode(&self, out: &mut Vec<u8>) {
+                self.0.encode(out);
+            }
+
+            fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+                <$inner>::decode(input).map(Self)
+            }
+
+            fn diff(&self, other: &Self) -> Option<Difference> {
+                self.0.diff(&other.0)
+            }
+        }
+    )*};
+}
+
+canonical_data_newtype!(
+    RoomId(u16),
+    DoorwayId(u16),
+    SpeciesId(u16),
+    ProgramId(u16),
+    Line(u16),
+    Cycles(u32),
+);
 
 #[cfg(test)]
 mod tests {

@@ -15,7 +15,8 @@
 //!
 //! The macro reads its input with `proc_macro` alone. It only needs field and variant names,
 //! never types, so it takes no `syn` or `quote`, whose build scripts can't run on locked-down
-//! machines. Generic State types are refused until the State has one.
+//! machines. A generic type's impl bounds every type parameter by `Canonical`, as the standard
+//! derives do; const parameters pass through and lifetimes are refused.
 
 use proc_macro::{Delimiter, Group, Spacing, TokenStream, TokenTree};
 
@@ -26,7 +27,7 @@ const CODEC: &str = "::game::canonical";
 #[proc_macro_derive(Canonical)]
 pub fn derive_canonical(input: TokenStream) -> TokenStream {
     let code = match Item::parse(input) {
-        Ok(item) => item.expand(),
+        Ok((item, generics)) => item.expand(&generics),
         Err(message) => format!("::core::compile_error!({message:?});"),
     };
     code.parse().unwrap_or_default()
@@ -37,6 +38,69 @@ enum Shape {
     Named(Vec<String>),
     Unnamed(usize),
     Unit,
+}
+
+/// A generic item's parameters, as the impl header needs them.
+#[derive(Default)]
+struct Generics {
+    /// The parameters as declared, for `impl<..>`.
+    declared: String,
+    /// The parameter names, for `Name<..>`.
+    arguments: String,
+    /// One `T: Canonical` per type parameter, for the where clause.
+    bounds: String,
+}
+
+impl Generics {
+    /// Reads the parameters between a type's `<` and `>`.
+    fn parse(tokens: &[TokenTree]) -> Result<Self, String> {
+        let mut arguments = Vec::new();
+        let mut bounds = Vec::new();
+        for parameter in split_commas(tokens.iter().cloned().collect()) {
+            match parameter.as_slice() {
+                [TokenTree::Ident(keyword), TokenTree::Ident(name), ..]
+                    if keyword.to_string() == "const" =>
+                {
+                    arguments.push(name.to_string());
+                }
+                [TokenTree::Ident(name), ..] => {
+                    bounds.push(format!("{name}: {CODEC}::Canonical"));
+                    arguments.push(name.to_string());
+                }
+                _ => return Err("Canonical takes type and const parameters only".to_owned()),
+            }
+        }
+        Ok(Self {
+            declared: tokens.iter().cloned().collect::<TokenStream>().to_string(),
+            arguments: arguments.join(", "),
+            bounds: bounds.join(", "),
+        })
+    }
+}
+
+/// Splits `<..> rest` into the parameters inside the angle brackets and the rest.
+fn split_generics(tokens: &[TokenTree]) -> Option<(&[TokenTree], &[TokenTree])> {
+    let mut depth = 0_usize;
+    let mut after_minus = false;
+    for (index, token) in tokens.iter().enumerate() {
+        if let TokenTree::Punct(punct) = token {
+            match punct.as_char() {
+                '<' => depth = depth.saturating_add(1),
+                '>' if !after_minus => {
+                    depth = depth.saturating_sub(1);
+                    if depth == 0 {
+                        let rest = tokens.get(index.checked_add(1)?..)?;
+                        return Some((tokens.get(1..index)?, rest));
+                    }
+                }
+                _ => {}
+            }
+            after_minus = punct.as_char() == '-' && punct.spacing() == Spacing::Joint;
+        } else {
+            after_minus = false;
+        }
+    }
+    None
 }
 
 /// The item the derive is attached to: only what the codec needs.
@@ -133,7 +197,7 @@ fn diff_step(left: &str, right: &str, segment: Option<&str>, variant: Option<&st
 }
 
 impl Item {
-    fn parse(input: TokenStream) -> Result<Self, String> {
+    fn parse(input: TokenStream) -> Result<(Self, Generics), String> {
         let tokens: Vec<TokenTree> = input.into_iter().collect();
         let [TokenTree::Ident(keyword), TokenTree::Ident(name), rest @ ..] =
             skip_attributes(&tokens)
@@ -141,10 +205,19 @@ impl Item {
             return Err("Canonical expects a struct or an enum".to_owned());
         };
         let name = name.to_string();
-        match (keyword.to_string().as_str(), rest) {
-            (_, [TokenTree::Punct(open), ..]) if open.as_char() == '<' => {
-                Err(format!("Canonical doesn't take generic types yet: {name}"))
+        let (generics, rest) = match rest {
+            [TokenTree::Punct(open), ..] if open.as_char() == '<' => {
+                let (parameters, rest) = split_generics(rest)
+                    .ok_or_else(|| format!("Canonical can't read the generics of {name}"))?;
+                (Generics::parse(parameters)?, rest)
             }
+            _ => (Generics::default(), rest),
+        };
+        Self::parse_body(&keyword.to_string(), name, rest).map(|item| (item, generics))
+    }
+
+    fn parse_body(keyword: &str, name: String, rest: &[TokenTree]) -> Result<Self, String> {
+        match (keyword, rest) {
             ("struct", [TokenTree::Group(body)]) if body.delimiter() == Delimiter::Brace => {
                 Ok(Self::Struct {
                     name,
@@ -179,7 +252,12 @@ impl Item {
         }
     }
 
-    fn expand(&self) -> String {
+    fn expand(&self, generics: &Generics) -> String {
+        let Generics {
+            declared,
+            arguments,
+            bounds,
+        } = generics;
         let (name, (encode, decode, diff)) = match self {
             Self::Struct { name, shape } => (name, expand_struct(shape)),
             Self::Enum { name, variants } => match expand_enum(name, variants) {
@@ -188,7 +266,7 @@ impl Item {
             },
         };
         format!(
-            "#[automatically_derived] impl {CODEC}::Canonical for {name} {{ \
+            "#[automatically_derived] impl<{declared}> {CODEC}::Canonical for {name}<{arguments}> where {bounds} {{ \
              fn encode(&self, out: &mut ::std::vec::Vec<u8>) {{ {encode} }} \
              fn decode(input: &mut {CODEC}::Reader<'_>) -> ::core::result::Result<Self, {CODEC}::DecodeError> {{ {decode} }} \
              fn diff(&self, other: &Self) -> ::core::option::Option<{CODEC}::Difference> {{ {diff} }} }}"
