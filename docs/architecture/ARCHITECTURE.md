@@ -18,6 +18,8 @@ Companion documents:
   upgrades, quick transitions, native lag, custom content, multiple oracles, Map Rando and
   others) and shows how it is added and what it touches.
 - [QUESTIONS.md](QUESTIONS.md) holds the few goal questions that are Jim's to answer.
+- [`scratch/architecture_sketch`](../../scratch/architecture_sketch) is a compile-checked
+  sketch of the new seams (see the [appendix](#appendix-the-compile-checked-sketch)).
 
 The oracle is the one in [docs/oracle/HARNESS.md](https://github.com/JimLundin/sm-decomp/blob/94d3c697a/docs/oracle/HARNESS.md)
 (`research/oracle-harness`): upstream LakeSnes running the unmodified ROM with a real beam,
@@ -946,6 +948,7 @@ Two estimates move:
 | §8.1: one projection reads the State at every Tick | Compared at quiescent cuts; logs concatenated over busy spans (D21) | P9. Overrun cuts have no engine equivalent. |
 | §8.3: green by digests | Green by digests plus facts; three-way reports (D22) | P10, P11 (Retro V3) |
 | J5: re-lock the redefined streams once | Locks keyed by (row, oracle), recorded oracle-side before engine code (D22) | Retro risk e |
+| J7: rename the old crates to `crates/legacy/*` | No rename. The new crates have plain names, and CI forbids depending on `sm` or `sm_*` (D1) | Jim's naming decision; the names no longer collide |
 | §3: projections in `tools`, the decoder on the old oracle side | `oracle` (engine-free) and `verify` (decoder, projections, facts) (D1) | P5, P7 |
 | `Interpret<F>` host trait | `Family` with a concrete `Context<'a>` (D13) | K3 (Retro A2) |
 | `Machine<S, A, M, X>` (J13) | Concrete per species; extracted at the second user; bosses designed as phase tables at their cluster (D14) | P16 (Retro risk c) |
@@ -1050,3 +1053,23 @@ And the retrospective's critique of FOUNDATION (section 5), each answered:
 | V5 decoder is the riskiest verification code | the decoder's own mutants (§11.5); `verify` has its own budget |
 | V6 seeded rows | section 15, continuity from the start |
 | P3 who builds the spine | section 15, one lane |
+
+## Appendix: the compile-checked sketch
+
+`scratch/architecture_sketch` is its own workspace (Rust 1.99.1, edition 2024). It has about
+780 lines, and each module stands for the crate of the same name. It compiles under the full
+K8 lint set, denied in its `Cargo.toml`: `pedantic`, `nursery`, the restriction picks and
+`missing_docs`, with no `allow`. Its seven tests check these claims:
+
+| Test | Claim | Decision |
+| --- | --- | --- |
+| `an_overrun_commits_one_frame_late_with_one_rng_call` | an `Overrun` NMI takes the lag path and leaves the request pending. The next Tick doesn't rerun the main strand, and its NMI commits. So one RNG call happens across the two frames. | D8 |
+| `a_load_costs_the_frames_its_work_takes` | under `Modeled`, a load charging 1,000,000 cycles against a 300,000-cycle budget produces exactly three lag NMIs | D9 |
+| `the_hud_split_lands_where_the_oracle_rules_say` | the HUD split's change is placed at the `LinePoint` from `OracleRules` | D11, D19 |
+| `begin_returns_the_picture_before_the_input_is_known` | the scan-out runs before the input is needed. `begin` borrows the Session, so a Checkpoint can't be taken mid-Tick. | D6, §6.3 |
+| `one_interpreter_runs_a_family_through_its_concrete_context` | `Family::Context<'a>` carries disjoint borrows, with no host trait | D13, K3 |
+| `typed_streams_agree_when_folded_only_at_quiescent_cuts` | the oracle's mid-load state at busy cuts doesn't break the typed digest when folding happens only at quiescent cuts | D21 |
+| `intent_at_native_width_equals_the_exact_sprites` | over 120 Ticks of scrolling, the intent view placed at 256 px equals the sprites read back from the exact OAM. An enemy outside the processing window appears only as a margin entry. | D16, ROBUSTNESS §1 |
+
+FOUNDATION's sketch (`scratch/foundation_sketch`) still covers the slot store's live pass and
+the requested NMI's latch. Neither of those changed.
