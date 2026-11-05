@@ -85,6 +85,9 @@ crates/oracle/
   src/lock.rs             reading scenarios/lock.toml pins and entries
   src/inputs.rs           .inputs files
   src/seed.rs             lsnes room captures (migration seeds)
+  src/corpus.rs           running lock rows, comparing and recording lock entries
+  src/measure.rs          the architecture lane's measurements (MEASUREMENTS.md)
+  native/fixes/           named emulator fixes, applied by the build script
   src/cli.rs              the command line
   src/bin/oracle.rs       the binary around cli::main
 tools/oracle/build_lakesnes.sh   pinned fetch and Zig build of the native archive
@@ -103,6 +106,8 @@ pub trait Oracle: Sized {
     fn save_state(&self) -> Vec<u8>;
     fn set_tiers(&mut self, tiers: Tiers);
     fn reset(&mut self);
+    /// Beam position and four WRAM bytes whenever the CPU reaches an address.
+    fn set_watch(&mut self, addresses: &[u32], peek: u32);
 }
 ```
 
@@ -152,35 +157,89 @@ One record per video frame, lag or not. Record k is the closed interval
   $2140-$2143, in order.
 - **Tier b (on request):** SPC700 registers, the four ports each way, SPC RAM
   64K and the DSP's 128 registers at the cut.
+- **Tier a (on request):** every PPU register write of the interval, with
+  its line, dot and source (main thread, NMI, IRQ, DMA, HDMA), and every
+  watched instruction address reached. The APU log also carries the SPC700's
+  own port writes and an SPC700 cycle stamp on each access, which the
+  latency measurement uses. These extras are not digested.
+- **Profile (on request):** instructions executed per program bank.
 
 ## Inputs and starts
 
-- `Start::PowerOn` with a row's `.inputs` file (one pad word per tick, as
-  today's runner reads them).
-- `Start::Seed`: today's lsnes seed directories (`target/seeds/<capture>/`)
-  are loaded into the emulator field by field. They lack SPC700/DSP/timer
-  state, so a seeded APU starts from a reconstructed state; this is reported,
-  not hidden. The durable answer is harness-native seeds: the raw record plus
-  the emulator's own save state, cut by playing the movies from power-on.
+- `Start::PowerOn { wram_fill }`: power on with WRAM filled; the movies were
+  recorded on bsnes v085, which fills 0x55, and that fill is what makes the
+  `$7F:E800+` block match the lsnes captures. Pads are one per video frame.
+- `Start::State(blob)`: this emulator's own save state (`Oracle::save_state`).
+  This is what harness-native seeds will be.
+- `Start::Capture`: an lsnes room capture (`target/seeds/<capture>/NNNN-ROOM-*`),
+  for migration only (`seed.rs`, `LEGACY(seed)`). Memories are copied, and the
+  PPU, DMA and CPU I/O registers are replayed as register writes. The CPU
+  resumes at the capture's boundary hook (`seed_boundary_pc`, `$80:8348`). The
+  SPC700 has no captured state, so it resumes at the sound driver's idle loop.
+
+The corpus runner (`corpus.rs`) maps the existing lock's Ticks onto video frames:
+
+- a Tick is a requested frame, one whose NMI interrupted a wait site;
+- the runner presents pad word k+1 until that NMI has run;
+- the lock's streams fold on Ticks only.
+
+## Movie sync
+
+`oracle movie ROM movies/any.inputs --lag-log CSV` compares each frame with
+the lsnes lag log (`any-boundary/lag.csv`): the frame counter `$05B6`, the NMI
+counter `$05B8`, the lag flag, the game state, the room and Samus's position.
+
+| Emulator | Exact through | State, room and position through | First difference |
+| --- | --- | --- | --- |
+| LakeSnes 9db90b8 | frame 352 | frame 352 | boot APU upload ends 12 lines early, frame 353 not lag |
+| + fix 0001 (APU clock) | frame 395 | frame 8566 | one-frame NMI shifts around NMI re-enable in loads (396, 8314); Ceres desync from 8567 |
+
+Fixes live in `crates/oracle/native/fixes/NNNN-name.patch`. They are applied
+to a copy of the pinned sources by `tools/oracle/build_lakesnes.sh` and named
+in `OracleId::fixes`. They are emulator fixes, not ROM patches.
 
 ## Proving it against the lock
 
-Streams whose definition the existing lock shares (`wram` with its frozen
-`LOCK_WRAM_MASK`, `sram`, `vram`, `cgram`, `oam`) are compared directly.
-Streams the lock defines by old internals (`ppu`: LakeSnes and snesrev struct
-fields including renderer scratch; `video`: snesrev's RGB; `apu`: the native
-player's pending queue) are emitted in both the old definition (where it can
-be computed) and the new one, and reported separately. Every mismatch is
-classified (frame-stepper sample point, kept patch, seed without APU state,
-emulator difference).
+`oracle corpus ROM scenarios/lock.toml DATA` runs every faithful entry whose
+data is restored under DATA (one directory per ci-data bundle). It compares the
+streams whose definition the lock shares, which `streams::legacy` computes:
+
+- `wram` with the frozen `LOCK_WRAM_MASK`;
+- `sram`, `vram`, `cgram` and `oam`;
+- `ppu` from the same LakeSnes PPU fields, rebuilding snesrev's register
+  caches and leaving its renderer scratch at zero.
+
+`video` (snesrev's RGB) and `apu` (the native player's pending queue) cannot
+be computed: they are redefined by the contract and emitted only in their v1
+definition. `--record FILE` writes the new entries. The counts are in
+docs/handoff/oracle-harness.md.
+
+Expected, explainable mismatches:
+
+- **Kept patches.** `$A0:896F` (the debug enemy-set names, WRAM
+  `$7E:D552-D5F1` on every room load) and the native-audio handshake
+  `$82:8A59/8A72/8A80` (immediate APU acknowledgement) change WRAM.
+- **Door timing.** The door-transition spin removals (`$82:E400`... `$82:E540`)
+  and the deferred message boxes (`$85:9670`, `$A2:AB22`, `$84:EFDC`) change the
+  frame on which things happen.
+- **The migration seeds' missing APU state.** In some rows the resumed driver
+  answers no request, so the CPU's sound state differs, and uploads and door
+  transitions stall.
+- **`ppu`.** The old struct includes renderer scratch and latch fields.
 
 ## Speed
 
-Measured as ticks/s on the same machine against today's oracle path, with and
-without picture capture. The bridge's step loop is C; Rust sees one call per
-tick.
+One process with the picture on runs 236-366 frames/s (about 300) on the
+seeded rows of this machine. Ten processes in parallel run about 95 frames/s
+each, about 950 in total. For comparison, today's check-lock (engine replay
+against the lock, single process, GitHub runner) is 133-156 ticks/s
+(docs/PERFORMANCE.md). The old oracle could not be built on this
+locked-down host, so there is no same-machine figure for it. The bridge's
+step loop is C, with one Rust call per frame. Per-frame copies of the
+memories (about 200 KB) and the tiers are the remaining overhead.
 
 ## Out of scope here
 
-The oracle RAM to engine State decoder (the architecture lane's schema), CI
-workflow changes (proposed in the handoff), and Mesen.
+- The oracle RAM to engine State decoder (the architecture lane's schema).
+- CI workflow changes (proposed in the handoff).
+- Mesen and bsnes, which are GPL-3 and would run out of process.

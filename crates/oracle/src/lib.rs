@@ -10,6 +10,7 @@
 
 pub mod cli;
 pub mod corpus;
+pub mod diagnose;
 pub mod game;
 pub mod inputs;
 pub mod lakesnes;

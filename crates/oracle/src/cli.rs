@@ -362,6 +362,7 @@ fn corpus(arguments: &[String]) {
     let mut limit = usize::MAX;
     let mut shard: (usize, usize) = (0, 1);
     let mut record: Option<std::fs::File> = None;
+    let mut rom = rom;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -373,6 +374,21 @@ fn corpus(arguments: &[String]) {
                     index.parse().unwrap_or_else(|_| fail("--shard I/N")),
                     count.parse().unwrap_or_else(|_| fail("--shard I/N")),
                 );
+            }
+            "--diagnose-kept-patches" => {
+                // Diagnosis only, never an oracle: the old stepper's kept ROM
+                // patches applied to a copy of the cartridge, to test whether
+                // a lock mismatch is theirs.
+                let names = options
+                    .next()
+                    .unwrap_or_else(|| fail("--diagnose-kept-patches LIST"));
+                for name in names.split(',') {
+                    let patch = crate::diagnose::KEPT_PATCHES
+                        .iter()
+                        .find(|patch| patch.name == name)
+                        .unwrap_or_else(|| fail(format!("no kept patch {name}")));
+                    crate::diagnose::apply(&mut rom, patch);
+                }
             }
             "--record" => {
                 let path = options.next().unwrap_or_else(|| fail("--record FILE"));
