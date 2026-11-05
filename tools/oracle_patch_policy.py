@@ -1,4 +1,4 @@
-"""Write sm/src/oracle_patch_policy.rs from tools/snesrev_patches.py.
+"""Write crates/sm_host/src/oracle_patch_policy.rs from tools/snesrev_patches.py.
 
 The oracle reads the generated lists when it installs snesrev's patches; see
 the inventory's docstring for the meaning of each field. Run without
@@ -13,7 +13,7 @@ import sys
 from collections.abc import Callable, Iterable
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUTPUT = ROOT / "sm" / "src" / "oracle_patch_policy.rs"
+OUTPUT = ROOT / "crates" / "sm_host" / "src" / "oracle_patch_policy.rs"
 TABLES = ("CARRY", "BUG_HOOKS", "OTHER_HOOKS", "ROM_PATCHES")
 OTHER_HOOK_SITES = {0xA08086, 0x808573}
 

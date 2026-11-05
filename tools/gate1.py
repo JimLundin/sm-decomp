@@ -15,6 +15,7 @@ import sys
 import tempfile
 import tomllib
 import urllib.request
+from typing import Any
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import scenario  # noqa: E402
@@ -25,11 +26,11 @@ VERIFY = [sys.executable, "tools/verify_dll.py", "rom/sm.smc", "--corpus", "scen
           "--no-build", "--direct"]
 
 
-def run(command: list[str], **kwargs) -> subprocess.CompletedProcess:
+def run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, capture_output=True, text=True, **kwargs)
 
 
-def restore(row: str, pins: dict, bundles: dict, work: pathlib.Path) -> None:
+def restore(row: str, pins: dict[str, Any], bundles: dict[str, Any], work: pathlib.Path) -> None:
     asset = pins[row]["bundle"]
     path = work / asset
     if not path.exists():
@@ -140,7 +141,7 @@ def windowed(row: str, content: pathlib.Path, sealed: pathlib.Path, inputs: path
     return False
 
 
-def check(row: str, locked: dict, run_entry: dict) -> list[str]:
+def check(row: str, locked: dict[str, Any], run_entry: dict[str, Any]) -> list[str]:
     differing = [name for name in MACHINE if locked["digests"][name] != run_entry["digests"][name]]
     if locked["ticks"] != run_entry["ticks"]:
         differing.append("ticks")
@@ -179,7 +180,12 @@ def main() -> int:
             if verifier_entry(row, fresh, "lock"):
                 failed += 1
                 continue
-            locked = scenario.read_lock(root, fresh).entries.get(row)
+            recorded = scenario.read_lock(root, fresh).entries.get(row)
+            if recorded is None:
+                print(f"{row}: the lock recorded no entry", flush=True)
+                failed += 1
+                continue
+            locked = recorded
             entries = fresh
             # The verifier's recorded lines (digests only), so the entry can be committed.
             import difflib

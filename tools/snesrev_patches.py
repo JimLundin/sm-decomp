@@ -34,7 +34,7 @@ not when it only changes instructions. Each entry is
   entry and the default oracle stays green. When every removable entry
   follows, the default equals faithful mode.
 
-`python tools/oracle_patch_policy.py` writes sm/src/oracle_patch_policy.rs
+`python tools/oracle_patch_policy.py` writes crates/sm_host/src/oracle_patch_policy.rs
 from these tables; `--check` verifies it is current.
 
 The faithful oracle removes every CARRY site, every BUG_HOOK and the PEA $C2AE
