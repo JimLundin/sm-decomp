@@ -44,7 +44,7 @@ pub fn window_contains(windows: &Windows, layer: usize, x: i32, policy: Quantiza
         2 => first,
         8 => second,
         10 => match policy {
-            // LEGACY(native-renderer): the native path ignores the mask logic.
+            // Lines whose windows use another logic are composed per pixel.
             Quantization::Native => first || second,
             Quantization::Reference => match window.logic {
                 0 => first || second,

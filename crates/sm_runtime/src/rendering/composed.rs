@@ -149,10 +149,27 @@ impl Registers {
         self.mosaic_size > 1 && self.layers.iter().any(|layer| layer.mosaic)
     }
 
-    /// Lines with mosaic or Mode 7 EXTBG are composed per pixel; the rest take
-    /// the native line path.
+    /// Whether a layer's two windows combine with AND, XOR or XNOR, which the
+    /// native line path does not model (it combines them with OR).
+    fn window_logic_applies(&self) -> bool {
+        self.windows
+            .layers
+            .iter()
+            .any(|window| window.first_enabled && window.second_enabled && window.logic != 0)
+    }
+
+    /// The native line path draws Mode 1 with BG3's high tiles in front and 8x8
+    /// tiles, and Mode 7 with palette colour, both at 256 pixels and with OR
+    /// windows. Every other line is composed per pixel: mosaic, EXTBG, the other
+    /// modes, BG3 at normal priority, 16x16 tiles, direct colour, pseudo-hires
+    /// and the other window logics.
     pub fn composes_per_pixel(&self) -> bool {
-        (self.mode == 7 && self.extended_background) || self.mosaic_applies()
+        let native = match self.mode {
+            1 => self.bg3_priority && self.layers[..3].iter().all(|layer| !layer.big_tiles),
+            7 => !self.extended_background && !self.direct_color,
+            _ => false,
+        };
+        !native || self.pseudo_hires || self.mosaic_applies() || self.window_logic_applies()
     }
 }
 

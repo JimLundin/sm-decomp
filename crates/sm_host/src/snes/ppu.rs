@@ -403,28 +403,15 @@ pub fn ppu_get_current_render_scale(_ppu: *mut Ppu, _render_flags: u32) -> i32 {
     1
 }
 
-/// The PPU's memory as the native renderer reads it: VRAM, then the 31 words
-/// the original renderer reads past VRAM's end (the VRAM port fields, then
-/// CGRAM), and CGRAM's palette (`LEGACY(native-renderer)`).
+/// The PPU's memory as the native renderer reads it. VRAM addresses wrap at
+/// its end, as on the PPU.
 #[cfg(sm_host)]
 struct VideoSource<'a>(&'a Ppu);
 
 #[cfg(sm_host)]
 impl raster::IndexedSource for VideoSource<'_> {
     fn word(&self, index: usize) -> Result<u16, raster::RasterFault> {
-        let ppu = self.0;
-        Ok(match index {
-            0..=0x7fff => ppu.vram[index],
-            0x8000 => ppu.vramPointer,
-            0x8001 => {
-                u16::from_ne_bytes([u8::from(ppu.vramIncrementOnHigh), ppu.snapshot_padding0[0]])
-            }
-            0x8002 => ppu.vramIncrement,
-            0x8003 => u16::from_ne_bytes([ppu.vramRemapMode, ppu.snapshot_padding1[0]]),
-            0x8004 => ppu.vramReadBuffer,
-            0x8005..=0x801e => ppu.cgram[index - 0x8005],
-            _ => return Err(raster::RasterFault::Word(index)),
-        })
+        Ok(self.0.vram[index & 0x7fff])
     }
 
     fn palette(&self, index: u8) -> Result<u16, raster::RasterFault> {

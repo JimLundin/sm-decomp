@@ -155,6 +155,45 @@ mod tests {
     }
 
     #[test]
+    fn lines_the_native_path_does_not_model_are_composed() {
+        let (registers, _) = screen(&[]);
+        assert!(!registers.composes_per_pixel());
+        for writes in [
+            &[(0x05, 0x00)][..],
+            &[(0x05, 0x01)],
+            &[(0x05, 0x19)],
+            &[(0x33, 0x08)],
+            &[(0x23, 0x0a), (0x2a, 0x01)],
+        ] {
+            let (registers, _) = screen(writes);
+            assert!(registers.composes_per_pixel(), "{writes:x?}");
+        }
+    }
+
+    #[test]
+    fn windows_combine_with_their_mask_logic() {
+        // BG1 masked on the main screen where window 1 (0-99) AND window 2
+        // (50-199) both cover: only 50-99 shows the backdrop.
+        let windows = [
+            (0x2e, 0x01),
+            (0x23, 0x0a),
+            (0x26, 0),
+            (0x27, 99),
+            (0x28, 50),
+            (0x29, 199),
+            (0x2a, 0x01),
+        ];
+        let (registers, memory) = screen(&windows);
+        let output = draw(&registers, &memory);
+        let red = [0, 0, 255, 0];
+        let blue = [255, 0, 0, 0];
+        assert_eq!(
+            (output[49], output[50], output[99], output[100]),
+            (red, blue, blue, red)
+        );
+    }
+
+    #[test]
     fn mosaic_repeats_each_blocks_first_pixel() {
         let (registers, mut memory) = screen(&[(0x06, 0x31)]);
         // Only column 0 of each tile is opaque.

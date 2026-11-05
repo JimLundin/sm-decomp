@@ -146,8 +146,8 @@ pub fn evaluate_sprites(
     Ok((tiles != 0, overflow))
 }
 
-/// A map row near VRAM's end reads up to 31 words past it from the source
-/// (`LEGACY(native-renderer)`).
+/// A tile's second plane pair can lie past VRAM's end; the source decides what
+/// that reads.
 pub fn background_pixel(
     source: &impl IndexedSource,
     bg: &Background,
@@ -306,8 +306,8 @@ pub fn sprite_enabled(config: &LineConfig<'_>, x: i32, sub: bool) -> bool {
     config.has_sprites && routing_enabled(&config.routing, &config.windows, 4, x, sub)
 }
 
-/// Mode 1 with BG3's high tiles in front, and every other mode as Mode 7
-/// (`LEGACY(native-renderer)`).
+/// Mode 1 with BG3's high tiles in front, or Mode 7; `scanline::draw_line`
+/// composes every other line per pixel (`Registers::composes_per_pixel`).
 pub fn native_pixel(
     source: &impl IndexedSource,
     config: &LineConfig<'_>,
