@@ -1,0 +1,15 @@
+[package]
+name = "canonical"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The Canonical derive: encode, decode and diff for State types"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+
+[lints]
+workspace = true

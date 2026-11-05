@@ -3,10 +3,34 @@
 version = 4
 
 [[package]]
+name = "app"
+version = "0.1.0"
+dependencies = [
+ "data",
+ "game",
+ "runtime",
+]
+
+[[package]]
+name = "canonical"
+version = "0.1.0"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
+
+[[package]]
+name = "data"
+version = "0.1.0"
+
+[[package]]
+name = "game"
+version = "0.1.0"
+dependencies = [
+ "data",
+]
 
 [[package]]
 name = "gl"
@@ -51,6 +75,13 @@ name = "oracle"
 version = "0.1.0"
 dependencies = [
  "sm_data",
+]
+
+[[package]]
+name = "runtime"
+version = "0.1.0"
+dependencies = [
+ "data",
 ]
 
 [[package]]
@@ -123,6 +154,25 @@ dependencies = [
  "sm_game",
  "sm_host",
  "sm_runtime",
+]
+
+[[package]]
+name = "tools"
+version = "0.1.0"
+dependencies = [
+ "oracle",
+ "runtime",
+ "verify",
+]
+
+[[package]]
+name = "verify"
+version = "0.1.0"
+dependencies = [
+ "data",
+ "game",
+ "oracle",
+ "runtime",
 ]
 
 [[package]]

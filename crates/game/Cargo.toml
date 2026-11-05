@@ -1,0 +1,13 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The Session, its State and the Tick: every gameplay domain"
+
+[dependencies]
+data = { path = "../data" }
+
+[lints]
+workspace = true

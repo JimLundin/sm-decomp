@@ -1,0 +1,19 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The run coordinator: Tick admission, the input profile and effect delivery"
+
+[[bin]]
+name = "super-metroid"
+path = "src/main.rs"
+
+[dependencies]
+data = { path = "../data" }
+game = { path = "../game" }
+runtime = { path = "../runtime" }
+
+[lints]
+workspace = true

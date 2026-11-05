@@ -1,0 +1,15 @@
+[package]
+name = "tools"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The command line over the engine, the oracle and the comparison"
+
+[dependencies]
+oracle = { path = "../oracle" }
+runtime = { path = "../runtime" }
+verify = { path = "../verify" }
+
+[lints]
+workspace = true

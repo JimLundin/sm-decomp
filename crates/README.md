@@ -1,0 +1,26 @@
+# Crates
+
+The rebuild's crates, as planned in
+[ARCHITECTURE §4](../docs/architecture/ARCHITECTURE.md#4-packages-and-ownership) (D1). The old
+`sm` and `sm_*` crates keep their names until the new engine covers them and they are deleted;
+no new crate depends on them.
+
+| Crate | Owns | May depend on (workspace) |
+| --- | --- | --- |
+| `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical` |
+| `game` | the `Session`, the `State` and its codec, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical` |
+| `runtime` | the line compositor, presentation, sound backends, storage. Feeds nothing back into the Session. | `data` |
+| `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `game`, `runtime` |
+| `oracle` | the emulator adapters, `Oracle`, `FrameRecord`, seeds, the lock recorder. | `data` (and `sm_data` until the digest moves to `data`) |
+| `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `game`, `runtime`, `oracle` (record types only) |
+| `tools` | the command line over the above and the importers. No comparison logic of its own. | `verify`, `oracle`, `runtime` |
+| `canonical` | the `Canonical` derive, and nothing else. | none |
+
+`data`, `game`, `runtime` and `app` are the engine. Every new crate takes the workspace lint
+set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float arithmetic.
+
+`tools/check_crate_rules.sh` checks the table's last column and the source rules of
+[§4.2](../docs/architecture/ARCHITECTURE.md#42-dependency-rules-checked-in-ci): no
+`cfg(verify)`, probe or observer in the engine, no SNES address literal in `game`, `runtime` or
+`app`, no `#![feature]`, `allow` or `expect` in the engine, and no routine-label names. CI runs
+it in Quality.

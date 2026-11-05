@@ -1,0 +1,12 @@
+[package]
+name = "data"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "IDs, the ROM decoder, typed content, profiles, the portable records and the shared digest"
+
+[dependencies]
+
+[lints]
+workspace = true
