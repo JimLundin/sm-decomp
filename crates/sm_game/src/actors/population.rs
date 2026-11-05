@@ -97,7 +97,11 @@ fn finish_initialization<H: ActorHost>(
         // $A0:8B82/$8B88, $A0:93BF/$93C6: the initialisation AI and the
         // definition's bank word.
         let word = h.definition_word(definition, DW::NativeBank);
+        let dynamic = matches!(creation, Creation::Dynamic);
         let compatibility = &mut h.session_mut().actors.compatibility;
+        if dynamic {
+            compatibility.back_up_ai_dispatch();
+        }
         compatibility.store_ai_pointer(function);
         compatibility.store_ai_bank(word.to_le_bytes());
         let bank = h.definition_byte(definition, DB::Bank);
@@ -106,6 +110,9 @@ fn finish_initialization<H: ActorHost>(
         h.actor_ai(ActorRoutine::from_bank_offset(bank, function));
         #[cfg(sm_verify_dll)]
         h.actor_reference_stage(7, key.byte_index());
+        if dynamic {
+            h.session_mut().actors.compatibility.restore_ai_dispatch();
+        }
     }
     let properties = h.resolve_actor(key, Native).properties;
     let extra = h.resolve_actor(key, Native).extra_properties;

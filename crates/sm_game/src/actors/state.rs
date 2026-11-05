@@ -211,6 +211,14 @@ impl ActorCompatibility {
     pub fn store_ai_bank(&mut self, bank: [u8; 2]) {
         self.pre_hook[2..4].copy_from_slice(&bank);
     }
+    /// $7E:1788: a spawn keeps the running dispatch while the new enemy initialises.
+    pub fn back_up_ai_dispatch(&mut self) {
+        self.pre_hook.copy_within(0..4, 4);
+    }
+    /// The running dispatch again, once the new enemy has initialised.
+    pub fn restore_ai_dispatch(&mut self) {
+        self.pre_hook.copy_within(4..8, 0);
+    }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ActorDiagnostics {
