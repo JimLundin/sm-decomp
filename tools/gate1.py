@@ -48,6 +48,62 @@ def verifier_entry(row: str, lock: pathlib.Path, mode: str) -> int:
     return result.returncode
 
 
+def ranges(left: bytes, right: bytes) -> str:
+    """The first differing byte ranges of two dumps, named by region."""
+    regions = (("wram", 0, 0x20000), ("vram", 0x20000, 0x30000), ("cgram", 0x30000, 0x30200),
+               ("oam", 0x30200, 0x30400))
+    parts = []
+    for name, first, end in regions:
+        found: list[list[int]] = []
+        for at in range(first, min(end, len(left), len(right))):
+            if left[at] != right[at]:
+                if found and at - found[-1][1] <= 2:
+                    found[-1][1] = at
+                else:
+                    found.append([at, at])
+        total = sum(end - start + 1 for start, end in found)
+        shown = ", ".join(f"{start - first:05x}-{end - first:05x}" for start, end in found[:40])
+        parts.append(f"{name}: {total} bytes in {len(found)} ranges: {shown}")
+    return "\n".join(parts)
+
+
+def diagnose(row: str, entries: pathlib.Path, content: pathlib.Path, sealed: pathlib.Path,
+             inputs: pathlib.Path, ticks: int, work: pathlib.Path) -> None:
+    """Where the slice and the verifier's own engine run part."""
+    logs = {}
+    for side in ("verifier", "slice"):
+        log = work / f"{row}-{side}.log"
+        log.unlink(missing_ok=True)
+        logs[side] = log
+    def verifier(extra: dict[str, str]) -> None:
+        run(VERIFY + ["--segment", row, "--mode", "check-lock", "--lock", str(entries)],
+            env=dict(os.environ, **extra))
+    def slice_run(extra: dict[str, str]) -> None:
+        run(["target/release/sm_replay", "one", str(content), str(sealed), str(inputs), str(ticks)],
+            env=dict(os.environ, **extra))
+    verifier({"SM_DIGEST_LOG": str(logs["verifier"])})
+    slice_run({"SM_DIGEST_LOG": str(logs["slice"])})
+    left = logs["verifier"].read_text().splitlines()
+    right = logs["slice"].read_text().splitlines()
+    print(f"{row}: logs {len(left)} and {len(right)} ticks", flush=True)
+    names = ("wram", "vram", "cgram", "oam", "high oam")
+    first = {}
+    for a, b in zip(left, right):
+        for name, x, y in zip(names, a.split()[1:], b.split()[1:]):
+            if x != y and name not in first:
+                first[name] = int(a.split()[0])
+    print(f"{row}: first differing tick per region: {first}", flush=True)
+    if not first:
+        return
+    tick = min(first.values())
+    dumps = {}
+    for side, call in (("verifier", verifier), ("slice", slice_run)):
+        path = work / f"{row}-{side}.dump"
+        call({"SM_DUMP_TICK": str(tick), "SM_DUMP_OUT": str(path)})
+        dumps[side] = path.read_bytes()
+    print(f"{row}: at tick {tick}:\n{ranges(dumps['verifier'], dumps['slice'])}", flush=True)
+
+
 def check(row: str, locked: dict, run_entry: dict) -> list[str]:
     differing = [name for name in MACHINE if locked["digests"][name] != run_entry["digests"][name]]
     if locked["ticks"] != run_entry["ticks"]:
@@ -61,7 +117,7 @@ def main() -> int:
     args = parser.parse_args()
     root = pathlib.Path(".")
     lock = scenario.read_lock(root)
-    failed = 0
+    failed = diagnosed = 0
     work = pathlib.Path(tempfile.mkdtemp(prefix="gate1-"))
     for row in args.rows:
         restore(row, lock.pins, lock.bundles, work)
@@ -107,6 +163,9 @@ def main() -> int:
         print(f"{row}: {'MATCHES the oracle on ' + str(len(MACHINE)) + ' streams' if not differing else 'DIFFERS in ' + ', '.join(differing)}"
               f" ({entry['ticks']} ticks)", flush=True)
         failed += bool(differing)
+        if differing and diagnosed < 3:
+            diagnosed += 1
+            diagnose(row, entries, content, sealed, inputs, locked["ticks"], work)
     print(f"Gate 1 rows: {len(args.rows) - failed}/{len(args.rows)} match", flush=True)
     return 1 if failed else 0
 

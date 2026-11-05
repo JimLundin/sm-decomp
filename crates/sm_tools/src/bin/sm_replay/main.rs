@@ -22,10 +22,9 @@ fn prepare(rom: &str, exported: &str, content_out: &str, start_out: &str) -> Res
     Ok(())
 }
 
-fn gate(args: &[String]) -> Result<(), String> {
-    let [content, start, inputs, ticks, out] = args else {
-        return Err("usage: sm_replay gate <content> <start> <inputs> <ticks> <lock out>".into());
-    };
+type Loaded = (PreparedContent, PreparedStart, Vec<u16>);
+
+fn load(content: &str, start: &str, inputs: &str, ticks: &str) -> Result<Loaded, String> {
     let content = PreparedContent::decode(&read(content)?).map_err(|error| error.to_string())?;
     let start = PreparedStart::decode(&read(start)?).map_err(|error| error.to_string())?;
     let text = String::from_utf8(read(inputs)?).map_err(|_| "inputs are not text")?;
@@ -37,6 +36,27 @@ fn gate(args: &[String]) -> Result<(), String> {
         .map(|line| u16::from_str_radix(line, 16).map_err(|_| format!("bad input {line}")))
         .take(ticks)
         .collect::<Result<Vec<u16>, String>>()?;
+    Ok((content, start, pads))
+}
+
+/// One replay and nothing else, for a diagnostic's digest log.
+fn one(args: &[String]) -> Result<(), String> {
+    let [content, start, inputs, ticks] = args else {
+        return Err("usage: sm_replay one <content> <start> <inputs> <ticks>".into());
+    };
+    let (content, start, pads) = load(content, start, inputs, ticks)?;
+    let schedule = Schedule {
+        digests: true,
+        ..Schedule::default()
+    };
+    run(&content, &start, &pads, schedule).map(|_| ())
+}
+
+fn gate(args: &[String]) -> Result<(), String> {
+    let [content, start, inputs, ticks, out] = args else {
+        return Err("usage: sm_replay gate <content> <start> <inputs> <ticks> <lock out>".into());
+    };
+    let (content, start, pads) = load(content, start, inputs, ticks)?;
     let timed = std::time::Instant::now();
     let base = run(
         &content,
@@ -102,6 +122,7 @@ fn main() {
             _ => Err("usage: sm_replay prepare <rom> <exported start> <content out> <start out>".into()),
         },
         Some((command, rest)) if command == "gate" => gate(rest),
+        Some((command, rest)) if command == "one" => one(rest),
         _ => Err("usage: sm_replay prepare|gate ...".into()),
     };
     if let Err(error) = result {

@@ -31,6 +31,7 @@ pub(super) fn result_digests(game: &mut Game) -> [u64; sm_data::digest::MACHINE.
     use sm_data::digest::Digest;
     let pending = game.apu_queue.pending;
     let result = &mut *game.g_snapshot_mine;
+    diagnostic::tick(result);
     for range in crate::cpu_infra::LOCK_SESSION_MASK
         .into_iter()
         .chain([ORACLE_RAM])
@@ -169,6 +170,58 @@ mod tests {
                     "{address:#x}"
                 );
             }
+        }
+    }
+}
+
+/// A run's per-Tick digests and one Tick's memory, for locating where two hosts
+/// part: `SM_DIGEST_LOG` names a text file, `SM_DUMP_TICK` and `SM_DUMP_OUT` a Tick.
+mod diagnostic {
+    use crate::cpu_infra::Snapshot;
+    use std::cell::Cell;
+    use std::io::Write;
+
+    thread_local! {
+        static TICK: Cell<u64> = const { Cell::new(0) };
+    }
+
+    pub(super) fn tick(result: &Snapshot) {
+        let log = std::env::var_os("SM_DIGEST_LOG");
+        let dump = std::env::var("SM_DUMP_TICK").ok();
+        if log.is_none() && dump.is_none() {
+            return;
+        }
+        let tick = TICK.replace(TICK.get() + 1);
+        let ppu = &result.ppu;
+        let words = |words: &[u16]| -> Vec<u8> {
+            words.iter().flat_map(|word| word.to_le_bytes()).collect()
+        };
+        let (vram, cgram, oam) = (words(&ppu.vram), words(&ppu.cgram), words(&ppu.oam));
+        if let Some(path) = log {
+            let mut file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .expect("digest log");
+            use sm_data::digest::Digest;
+            writeln!(
+                file,
+                "{tick} {:016x} {:016x} {:016x} {:016x} {:016x}",
+                Digest::of(&result.ram),
+                Digest::of(&vram),
+                Digest::of(&cgram),
+                Digest::of(&oam),
+                Digest::of(&ppu.highOam)
+            )
+            .expect("digest log");
+        }
+        if dump.as_deref().and_then(|at| at.parse().ok()) == Some(tick) {
+            let mut bytes = result.ram.to_vec();
+            bytes.extend_from_slice(&vram);
+            bytes.extend_from_slice(&cgram);
+            bytes.extend_from_slice(&oam);
+            std::fs::write(std::env::var("SM_DUMP_OUT").expect("SM_DUMP_OUT"), bytes)
+                .expect("dump");
         }
     }
 }

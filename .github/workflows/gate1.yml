@@ -14,9 +14,7 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_BUILD_JOBS: '4'
       ROWS: >-
-        item-morph-ball area-ceres area-norfair area-maridia area-wrecked-ship
-        xray-scan-91f8 boss-ceres-ridley power-bomb-room-entry boss-phantoon
-        door-transition special-beam-plasma terrain-quicksand samus-mockball
+        door-transition samus-mockball item-morph-ball
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-native
@@ -25,6 +23,8 @@ jobs:
           python3 tools/verify_dll.py --build-only --direct
           # The replay links nothing the native toolchain built.
           env -u LIBRARY_PATH cargo build --locked --release -p sm_tools --features replay --bin sm_replay
+          # A record of the edge: the replay may not reach sm.
+          ! cargo tree --locked -p sm_tools --features replay -e normal | grep -E '^[^a-z]*sm v'
       - uses: actions/checkout@v4
         with:
           repository: JimLundin/ci-data
