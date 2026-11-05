@@ -7,6 +7,7 @@ publish = false
 description = "The Session, its State and the Tick: every gameplay domain"
 
 [dependencies]
+canonical = { path = "../canonical" }
 data = { path = "../data" }
 
 [lints]
