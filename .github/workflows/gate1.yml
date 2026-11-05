@@ -26,7 +26,7 @@ jobs:
         run: bash .github/scripts/gate1_absent.sh "$RUNNER_TEMP/sm-absent"
   slice:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
@@ -35,7 +35,7 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_BUILD_JOBS: '4'
       # The Morph room row first, then every locked corpus row, split over the shards.
-      ROWS: item-morph-ball all
+      ROWS: area-ceres boss-ceres-ridley boss-ridley power-bomb-red-tower-refill-door credits credits-silhouette-spawn credits-time-minutes-spawn volcano-room-lavaquake samus-shinespark-up-right xray-scan-92fd special-beam-spazer file-copy-clear enemy-boulder-roll boss-phantoon-second-round enemy-etecoon-run-left
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-native

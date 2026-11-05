@@ -450,6 +450,51 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, _new_ppu: &bool) {
         range: ppu.rangeOver,
         time: ppu.timeOver,
     };
+    if registers.composes_per_pixel() && !registers.forced_blank {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static COUNTS: [AtomicU64; 8] = [const { AtomicU64::new(0) }; 8];
+        let r = &registers;
+        let reasons = [
+            r.mode != 1 && r.mode != 7,
+            r.mode == 1 && !r.bg3_priority,
+            r.mode == 1 && r.layers[..3].iter().any(|l| l.big_tiles),
+            r.mode == 7 && r.extended_background,
+            r.mode == 7 && r.direct_color,
+            r.pseudo_hires,
+            r.mosaic_size > 1 && r.layers.iter().any(|l| l.mosaic),
+            r.windows
+                .layers
+                .iter()
+                .any(|w| w.first_enabled && w.second_enabled && w.logic != 0),
+        ];
+        let names = [
+            "mode",
+            "bg3-normal",
+            "big-tiles",
+            "extbg",
+            "direct",
+            "hires",
+            "mosaic",
+            "window-logic",
+        ];
+        for (index, _) in reasons.iter().enumerate().filter(|(_, hit)| **hit) {
+            let count = COUNTS[index].fetch_add(1, Ordering::Relaxed) + 1;
+            if count == 1 {
+                let logic: Vec<u8> = r.windows.layers.iter().map(|w| w.logic).collect();
+                eprintln!(
+                    "DIAG composed {} #{count} line {line} mode {} bg3 {} main {:02x} sub {:02x} winsel {:06x} logic {logic:?}",
+                    names[index],
+                    r.mode,
+                    r.bg3_priority,
+                    r.routing.enabled[0],
+                    r.routing.enabled[1],
+                    r.windows.native_flags
+                );
+            } else if count == 10_000 || count == 1_000_000 {
+                eprintln!("DIAG {} #{count}", names[index]);
+            }
+        }
+    }
     let mut pixels = [[0; 4]; raster::WIDTH];
     let overflow = raster::scanline::draw_line(
         &VideoSource(ppu),
