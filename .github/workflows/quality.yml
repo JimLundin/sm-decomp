@@ -28,8 +28,13 @@ jobs:
         run: |
           crlf=$(git ls-files --eol | awk '$1 == "i/crlf" || $1 == "i/mixed" { print $NF }')
           if [ -n "$crlf" ]; then echo "Committed with CRLF line endings:"; echo "$crlf"; exit 1; fi
-      - name: Lint target packages
-        run: cargo clippy --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets --no-deps
+      - name: Lint target packages and the desktop
+        # sm_app is linted apart so its features don't unify into the target packages'.
+        # Its default features are the desktop (on sm); `slice` is the Gate 1 slice.
+        run: |
+          cargo clippy --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets --no-deps
+          cargo clippy --locked -p sm_app --all-targets --no-deps
+          cargo clippy --locked -p sm_app --no-default-features --features slice --all-targets --no-deps
       - name: Progress
         run: |
           sh tools/progress.sh

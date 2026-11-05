@@ -66,7 +66,9 @@ Model the domain with types, not raw numbers:
     observed.
 
 `cargo clippy -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets` must
-pass in CI. Fix findings; don't add `allow`s for these patterns.
+pass in CI, and so must `cargo clippy -p sm_app --all-targets`, with default
+features and with `--no-default-features --features slice`. Fix findings; don't
+add `allow`s for these patterns.
 
 Checks assert behaviour, not wording: never match on panic or `Die` text. The
 verifier doesn't decide engine behaviour. Where an existing check forces us to
