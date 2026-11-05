@@ -465,6 +465,7 @@ pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 23] = {
         (Mine, 0xf37a..0xf380),
     ]
 };
+#[cfg(sm_verify_dll)]
 pub(crate) use crate::lock_masks::{LOCK_SESSION_MASK, LOCK_WRAM_MASK};
 fn normalize_snapshot_ram(
     mine: &mut [u8; 0x20000],

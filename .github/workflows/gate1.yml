@@ -38,7 +38,8 @@ jobs:
           rm -rf .ci-data
           asset=$(python3 -c "import sys; sys.path.insert(0, 'tools'); import pathlib, scenario; print(scenario.read_lock(pathlib.Path('.')).pins['$ROW']['bundle'])")
           curl -sSfL --retry 3 -o "$RUNNER_TEMP/$asset" "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$asset"
-          python3 tools/ci_seed_data.py restore "$RUNNER_TEMP/$asset" >/dev/null
+          sha=$(python3 -c "import sys; sys.path.insert(0, 'tools'); import pathlib, scenario; print(scenario.read_lock(pathlib.Path('.')).bundles['$asset'])")
+          python3 tools/ci_seed_data.py restore "$RUNNER_TEMP/$asset" --sha256 "$sha" --runtime-only --segment "$ROW" >/dev/null
       - name: The row still meets its lock through the verifier
         run: python3 tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct --segment "$ROW" --mode check-lock --lock scenarios/lock.toml
       - name: Prepare the start with the oracle-side importer

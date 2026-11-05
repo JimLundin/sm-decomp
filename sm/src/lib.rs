@@ -295,6 +295,7 @@ pub mod audio_upload;
 pub mod c_library;
 /// Frame runner and the per-frame comparison against the original ROM.
 pub mod cpu_infra;
+#[cfg(sm_verify_dll)]
 mod lock_masks;
 mod initial_state;
 /// The verification host over the oracle's work RAM and backend.
