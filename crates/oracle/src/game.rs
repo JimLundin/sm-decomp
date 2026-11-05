@@ -14,7 +14,7 @@ pub struct WaitSite {
 }
 
 /// The game's wait-for-NMI loops.
-pub const WAIT_SITES: [WaitSite; 2] = [
+pub const WAIT_SITES: [WaitSite; 3] = [
     WaitSite {
         routine: "$80:8338 Wait for NMI (LDA $05B4; BNE)",
         entry: 0x80_8338,
@@ -24,6 +24,13 @@ pub const WAIT_SITES: [WaitSite; 2] = [
         routine: "$85:8136 Wait for lag frame (LDA $05B8 compare loop)",
         entry: 0x85_8136,
         loop_pcs: &[0x85_813c, 0x85_813f],
+    },
+    WaitSite {
+        routine: "$85:84A3 Message box input loop (spins on $4212 and the joypad)",
+        entry: 0x85_84a3,
+        loop_pcs: &[
+            0x85_84a3, 0x85_84a6, 0x85_84a8, 0x85_84aa, 0x85_84ad, 0x85_84af, 0x85_84b2,
+        ],
     },
 ];
 

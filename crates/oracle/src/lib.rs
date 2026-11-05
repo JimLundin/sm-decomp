@@ -14,13 +14,14 @@ pub mod game;
 pub mod inputs;
 pub mod lakesnes;
 pub mod lock;
+pub mod measure;
 pub mod record;
 pub mod seed;
 pub mod streams;
 
 pub use record::{
-    ApuAccess, ApuAccessKind, CpuRegisters, FrameRecord, Nmi, NmiKind, Pad, Picture, PpuRegisters,
-    SpcState,
+    ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Hit, Nmi, NmiKind, Pad,
+    Picture, PpuRegisters, RegisterWrite, SpcState, WriteSource,
 };
 
 /// Who produced a record: locks and records are keyed by it.
@@ -55,6 +56,10 @@ pub struct Tiers {
     pub apu_log: bool,
     /// The APU side at the cut: SPC700 registers, SPC RAM and DSP registers.
     pub apu_state: bool,
+    /// Instructions executed per program bank in the interval.
+    pub profile: bool,
+    /// Every B-bus PPU register write in the interval, with its beam position and source.
+    pub write_log: bool,
 }
 
 impl Default for Tiers {
@@ -63,6 +68,8 @@ impl Default for Tiers {
             picture: true,
             apu_log: true,
             apu_state: false,
+            profile: false,
+            write_log: false,
         }
     }
 }
@@ -104,4 +111,7 @@ pub trait Oracle: Sized {
     fn set_tiers(&mut self, tiers: Tiers);
     /// Press the console's reset button before the next step.
     fn reset(&mut self);
+    /// Record the beam position and four WRAM bytes at `peek` whenever the
+    /// CPU reaches one of `addresses` (at most 8), in `FrameRecord::hits`.
+    fn set_watch(&mut self, addresses: &[u32], peek: u32);
 }

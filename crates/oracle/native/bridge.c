@@ -26,13 +26,15 @@ void ppu_handleVblank(Ppu* ppu);
 enum { OH_LINES = 239, OH_WIDTH = 256, OH_MAX_NMIS = 8 };
 
 // The kinds of APU port access, as the Rust side names them.
-enum { OH_APU_CPU_WRITE = 0, OH_APU_CPU_READ = 1, OH_APU_DMA_WRITE = 2, OH_APU_DMA_READ = 3 };
+enum { OH_APU_CPU_WRITE = 0, OH_APU_CPU_READ = 1, OH_APU_DMA_WRITE = 2, OH_APU_DMA_READ = 3, OH_APU_SPC_WRITE = 4 };
 
 typedef struct OhApuAccess {
   uint8_t kind;
   uint8_t port;
   uint8_t value;
   uint8_t reserved;
+  // The SPC700 cycle counter when the access landed (the APU is caught up first).
+  uint32_t apu_cycle;
 } OhApuAccess;
 
 typedef struct OhNmi {
@@ -57,6 +59,28 @@ typedef struct OhFacts {
   uint16_t wait_v;
   uint16_t wait_h;
 } OhFacts;
+
+// The source of a register write, as the Rust side names it.
+enum { OH_SOURCE_MAIN = 0, OH_SOURCE_NMI = 1, OH_SOURCE_IRQ = 2, OH_SOURCE_DMA = 3, OH_SOURCE_HDMA = 4 };
+
+enum { OH_MAX_HITS = 64 };
+
+typedef struct OhWrite {
+  uint16_t v;
+  uint16_t h;
+  uint8_t adr;
+  uint8_t value;
+  uint8_t source;
+  uint8_t reserved;
+} OhWrite;
+
+typedef struct OhHit {
+  uint32_t pc;
+  uint16_t v;
+  uint16_t h;
+  // Four bytes of WRAM at the watch's peek address, at the moment of the hit.
+  uint8_t peek[4];
+} OhHit;
 
 typedef struct OhMachine {
   Snes* snes;
@@ -84,6 +108,25 @@ typedef struct OhMachine {
   // The game's wait-for-NMI loop addresses (oh_set_wait_sites).
   uint32_t wait_sites[8];
   uint32_t wait_site_count;
+  // Instructions per program bank in the step, when profiling.
+  // IRQ tracking, as for NMI.
+  bool in_irq;
+  uint16_t irq_stack;
+  uint32_t irq_interrupted;
+  // The register write log of the step (tier): every B-bus PPU write with
+  // the beam position and its source.
+  bool record_writes;
+  OhWrite* writes;
+  uint32_t writes_len;
+  uint32_t writes_cap;
+  // Watched instruction addresses and the step's hits (pc, beam).
+  uint32_t watch[8];
+  uint32_t watch_count;
+  uint32_t watch_peek;
+  OhHit hits[OH_MAX_HITS];
+  uint32_t hit_count;
+  bool profile;
+  uint32_t bank_instructions[256];
 } OhMachine;
 
 static _Thread_local OhMachine* oh_current;
@@ -97,7 +140,7 @@ static void oh_log_apu(OhMachine* m, uint8_t kind, uint8_t port, uint8_t value) 
     m->apu_log = grown;
     m->apu_cap = cap;
   }
-  m->apu_log[m->apu_len++] = (OhApuAccess){kind, port, value, 0};
+  m->apu_log[m->apu_len++] = (OhApuAccess){kind, port, value, 0, m->snes->apu->cycles};
 }
 
 // Whether a CPU address reaches the system area ($00-$3F and $80-$BF banks, $0000-$7FFF).
@@ -119,6 +162,15 @@ static uint8_t oh_cpu_read(void* mem, uint32_t adr) {
     m->nmi_polled = false;
     m->nmi_interrupted = ((uint32_t) ram[(uint16_t) (sp + 4)] << 16)
       | ((uint32_t) ram[(uint16_t) (sp + 3)] << 8) | ram[(uint16_t) (sp + 2)];
+  } else if(adr == 0xffee && !m->in_irq) {
+    // The native-mode IRQ vector, tracked as NMI is.
+    Cpu* cpu = m->snes->cpu;
+    uint8_t* ram = m->snes->ram;
+    uint16_t sp = cpu->sp;
+    m->in_irq = true;
+    m->irq_stack = sp;
+    m->irq_interrupted = ((uint32_t) ram[(uint16_t) (sp + 4)] << 16)
+      | ((uint32_t) ram[(uint16_t) (sp + 3)] << 8) | ram[(uint16_t) (sp + 2)];
   } else if(oh_system(adr)) {
     uint16_t low = adr & 0xffff;
     if(low >= 0x2140 && low < 0x2180) {
@@ -133,6 +185,7 @@ static uint8_t oh_cpu_read(void* mem, uint32_t adr) {
 
 static void oh_cpu_write(void* mem, uint32_t adr, uint8_t value) {
   OhMachine* m = mem;
+  snes_cpuWrite(m->snes, adr, value);
   if(oh_system(adr)) {
     uint16_t low = adr & 0xffff;
     if(low >= 0x2140 && low < 0x2180) {
@@ -141,7 +194,13 @@ static void oh_cpu_write(void* mem, uint32_t adr, uint8_t value) {
       m->io_written[low - 0x4200] = value;
     }
   }
-  snes_cpuWrite(m->snes, adr, value);
+}
+
+// The SPC700's write callback: its writes to the CPU ports $F4-$F7 are logged.
+static void oh_spc_write(void* mem, uint16_t adr, uint8_t value) {
+  apu_spcWrite(mem, adr, value);
+  OhMachine* m = oh_current;
+  if(m != NULL && adr >= 0xf4 && adr <= 0xf7) oh_log_apu(m, OH_APU_SPC_WRITE, adr - 0xf4, value);
 }
 
 static void oh_cpu_idle(void* mem, bool waiting) {
@@ -149,9 +208,29 @@ static void oh_cpu_idle(void* mem, bool waiting) {
   snes_cpuIdle(m->snes, waiting);
 }
 
+static void oh_log_write(OhMachine* m, uint8_t adr, uint8_t val, uint8_t source) {
+  if(!m->record_writes) return;
+  if(m->writes_len == m->writes_cap) {
+    uint32_t cap = m->writes_cap ? m->writes_cap * 2 : 1024;
+    OhWrite* grown = realloc(m->writes, cap * sizeof(OhWrite));
+    if(grown == NULL) return;
+    m->writes = grown;
+    m->writes_cap = cap;
+  }
+  m->writes[m->writes_len++] = (OhWrite){m->snes->vPos, m->snes->hPos, adr, val, source, 0};
+}
+
+// Whether the bridge is inside a DMA or HDMA transfer (set by the DMA hooks).
+static _Thread_local int oh_in_dma;
+
 void oh_hook_ppu_write(Ppu* ppu, uint8_t adr, uint8_t val) {
   OhMachine* m = oh_current;
-  if(m != NULL && adr < 0x40) m->ppu_written[adr] = val;
+  if(m != NULL && adr < 0x40) {
+    m->ppu_written[adr] = val;
+    uint8_t source = oh_in_dma ? (m->snes->dma->dmaState == 2 ? OH_SOURCE_DMA : OH_SOURCE_HDMA)
+      : m->in_irq ? OH_SOURCE_IRQ : m->in_nmi ? OH_SOURCE_NMI : OH_SOURCE_MAIN;
+    oh_log_write(m, adr, val, source);
+  }
   ppu_write(ppu, adr, val);
 }
 
@@ -194,8 +273,10 @@ uint8_t oh_dma_readBBus(Snes* snes, uint8_t adr) {
 
 void oh_dma_writeBBus(Snes* snes, uint8_t adr, uint8_t val) {
   OhMachine* m = oh_current;
-  if(m != NULL && adr >= 0x40 && adr < 0x80) oh_log_apu(m, OH_APU_DMA_WRITE, adr & 3, val);
+  oh_in_dma++;
   snes_writeBBus(snes, adr, val);
+  oh_in_dma--;
+  if(m != NULL && adr >= 0x40 && adr < 0x80) oh_log_apu(m, OH_APU_DMA_WRITE, adr & 3, val);
 }
 
 OhMachine* oh_open(const uint8_t* rom, int length) {
@@ -206,6 +287,7 @@ OhMachine* oh_open(const uint8_t* rom, int length) {
   m->snes->cpu->read = oh_cpu_read;
   m->snes->cpu->write = oh_cpu_write;
   m->snes->cpu->idle = oh_cpu_idle;
+  m->snes->apu->spc->write = oh_spc_write;
   m->record_apu = true;
   m->record_picture = true;
   oh_current = m;
@@ -223,6 +305,7 @@ void oh_close(OhMachine* m) {
   if(m == NULL) return;
   snes_free(m->snes);
   free(m->apu_log);
+  free(m->writes);
   free(m);
 }
 
@@ -243,6 +326,7 @@ static uint16_t oh_serial(uint16_t pad) {
 // Run one instruction (or interrupt entry); note an NMI handler's return.
 static void oh_run_opcode(OhMachine* m) {
   Cpu* cpu = m->snes->cpu;
+  if(m->profile) m->bank_instructions[cpu->k]++;
   cpu_runOpcode(cpu);
   if(m->facts.wait_v == 0xffff) {
     uint32_t pc = ((uint32_t) cpu->k << 16) | cpu->pc;
@@ -250,6 +334,21 @@ static void oh_run_opcode(OhMachine* m) {
       if(pc == m->wait_sites[i]) {
         m->facts.wait_v = m->snes->vPos;
         m->facts.wait_h = m->snes->hPos;
+        break;
+      }
+    }
+  }
+  if(m->in_irq && cpu->sp == (uint16_t) (m->irq_stack + 4)
+    && (((uint32_t) cpu->k << 16) | cpu->pc) == m->irq_interrupted) {
+    m->in_irq = false;
+  }
+  if(m->watch_count != 0 && m->hit_count < OH_MAX_HITS) {
+    uint32_t pc = ((uint32_t) cpu->k << 16) | cpu->pc;
+    for(uint32_t i = 0; i < m->watch_count; i++) {
+      if(pc == m->watch[i]) {
+        OhHit* hit = &m->hits[m->hit_count++];
+        *hit = (OhHit){pc, m->snes->vPos, m->snes->hPos, {0}};
+        for(int b = 0; b < 4; b++) hit->peek[b] = m->snes->ram[(m->watch_peek + b) & 0x1ffff];
         break;
       }
     }
@@ -275,6 +374,9 @@ int oh_step(OhMachine* m, uint16_t pad) {
   memset(&m->facts, 0, sizeof(m->facts));
   m->apu_len = 0;
   m->facts.wait_v = 0xffff;
+  m->writes_len = 0;
+  m->hit_count = 0;
+  if(m->profile) memset(m->bank_instructions, 0, sizeof(m->bank_instructions));
   snes->input1->currentState = oh_serial(pad);
   int status = 0;
   while(snes->inVblank) oh_run_opcode(m);
@@ -510,6 +612,7 @@ void oh_reset(OhMachine* m, bool hard) {
   oh_current = m;
   snes_reset(m->snes, hard);
   m->in_nmi = false;
+  m->in_irq = false;
   oh_current = NULL;
 }
 
@@ -544,6 +647,7 @@ void oh_set_cpu(OhMachine* m, const OhCpu* in) {
   cpu->intWanted = false;
   cpu->resetWanted = false;
   m->in_nmi = false;
+  m->in_irq = false;
 }
 
 // Write one B-bus or CPU register as the CPU would, for loading a migration seed.
@@ -597,3 +701,17 @@ void oh_set_spc(OhMachine* m, const OhSpc* in) {
 // Write an SPC700 I/O register ($F0-$FF) or a DSP register, for loading a migration seed.
 void oh_apu_write(OhMachine* m, uint16_t adr, uint8_t value) { apu_write(m->snes->apu, adr, value); }
 void oh_dsp_write(OhMachine* m, uint8_t adr, uint8_t value) { dsp_write(m->snes->apu->dsp, adr, value); }
+
+// Count instructions per program bank in each step (oh_bank_instructions).
+void oh_set_profile(OhMachine* m, bool profile) { m->profile = profile; }
+const uint32_t* oh_bank_instructions(OhMachine* m) { return m->bank_instructions; }
+
+// The register write log (tier) and watched-address hits of the last step.
+void oh_set_write_log(OhMachine* m, bool on) { m->record_writes = on; }
+const OhWrite* oh_write_log(OhMachine* m, uint32_t* length) { *length = m->writes_len; return m->writes; }
+void oh_set_watch(OhMachine* m, const uint32_t* pcs, uint32_t count, uint32_t peek) {
+  m->watch_peek = peek;
+  m->watch_count = count < 8 ? count : 8;
+  memcpy(m->watch, pcs, m->watch_count * sizeof(uint32_t));
+}
+const OhHit* oh_hits(OhMachine* m, uint32_t* length) { *length = m->hit_count; return m->hits; }

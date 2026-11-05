@@ -118,12 +118,50 @@ pub struct PpuRegisters {
     pub dma: [[u8; 11]; 8],
 }
 
-/// One CPU or DMA access to the APU ports $2140-$2143.
+/// One write to a PPU register $2100-$213F.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct RegisterWrite {
+    pub beam: Beam,
+    /// The B-bus address: $21xx.
+    pub register: u8,
+    pub value: u8,
+    pub source: WriteSource,
+}
+
+/// The CPU reaching a watched address.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct Hit {
+    pub pc: u32,
+    pub beam: Beam,
+    /// Four bytes of WRAM at the watch's peek address, at that moment.
+    pub peek: [u8; 4],
+}
+
+/// Who wrote a register.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum WriteSource {
+    /// The main thread.
+    Main,
+    /// The NMI handler.
+    Nmi,
+    /// An IRQ handler.
+    Irq,
+    /// General-purpose DMA.
+    Dma,
+    /// HDMA.
+    Hdma,
+}
+
+/// One access to the APU ports: $2140-$2143 from the CPU or DMA, or
+/// $F4-$F7 from the SPC700.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ApuAccess {
     pub kind: ApuAccessKind,
     pub port: u8,
     pub value: u8,
+    /// The SPC700 cycle counter when it landed, the APU caught up first:
+    /// for measuring the sound driver's latency, not for comparison.
+    pub apu_cycle: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -132,6 +170,8 @@ pub enum ApuAccessKind {
     CpuRead,
     DmaWrite,
     DmaRead,
+    /// The SPC700 writing a port the CPU reads.
+    SpcWrite,
 }
 
 /// The picture scanned out in a record's interval, in the PPU's domain:
@@ -222,6 +262,12 @@ pub struct FrameRecord {
     pub picture: Option<Picture>,
     /// The APU at the cut (tier).
     pub spc: Option<SpcState>,
+    /// Instructions executed per program bank in the interval (tier).
+    pub bank_instructions: Option<Box<[u32]>>,
+    /// The B-bus PPU register writes of the interval, in order (tier).
+    pub writes: Vec<RegisterWrite>,
+    /// Each time the CPU reached a watched address in the interval.
+    pub hits: Vec<Hit>,
     /// Backend detail kept only to compare with the existing lock's `ppu`
     /// stream, which hashed the old PPU's struct fields.
     pub legacy_ppu_digest: u64,

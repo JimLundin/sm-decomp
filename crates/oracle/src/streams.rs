@@ -5,7 +5,7 @@
 //! lock). `V1` is the oracle contract's: raw memories, the architectural PPU
 //! registers, the APU port log and the PPU-domain picture.
 
-use crate::record::FrameRecord;
+use crate::record::{ApuAccess, ApuAccessKind, FrameRecord};
 use core::hash::{Hash, Hasher};
 use sm_data::digest::{Digest, fold};
 
@@ -92,6 +92,25 @@ fn oam_digest(record: &FrameRecord) -> u64 {
     digest.finish()
 }
 
+/// The v1 `apu` stream: the CPU side's port accesses as (kind, port, value).
+fn apu_digest(log: &[ApuAccess]) -> u64 {
+    let bytes: Vec<u8> = log
+        .iter()
+        .filter_map(|access| {
+            let kind = match access.kind {
+                ApuAccessKind::CpuWrite => 0,
+                ApuAccessKind::CpuRead => 1,
+                ApuAccessKind::DmaWrite => 2,
+                ApuAccessKind::DmaRead => 3,
+                ApuAccessKind::SpcWrite => return None,
+            };
+            Some([kind, access.port, access.value])
+        })
+        .flatten()
+        .collect();
+    Digest::of(&bytes)
+}
+
 /// The existing lock's streams for `record`.
 pub fn legacy(record: &FrameRecord, scratch: &mut Vec<u8>) -> FrameDigests {
     scratch.clear();
@@ -135,7 +154,7 @@ pub fn v1(record: &FrameRecord) -> FrameDigests {
         Some(oam_digest(record)),
         Some(hashed(&record.ppu)),
         video,
-        Some(hashed(&record.apu_log)),
+        Some(apu_digest(&record.apu_log)),
     ]
 }
 

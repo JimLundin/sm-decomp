@@ -348,7 +348,7 @@ pub(crate) fn apply(oracle: &mut LakeSnes, capture: &Capture) -> Result<(), Orac
     raw.dsp_write(0x6c, DSP_FLAGS);
     let ports = [shadow(0xf4), shadow(0xf5), shadow(0xf6), shadow(0xf7)];
     raw.set_spc(&SpcRegisters {
-        cpu_to_apu: ports,
+        cpu_to_apu: [shadow(0), shadow(1), shadow(2), shadow(3)],
         apu_to_cpu: ports,
         ..DRIVER_IDLE
     });

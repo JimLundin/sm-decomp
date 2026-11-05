@@ -77,6 +77,8 @@ fn movie(arguments: &[String]) {
     let mut lag_mismatches = 0;
     let mut watch: Option<(usize, usize)> = None;
     let mut spc = false;
+    let mut positions_only = false;
+    let mut profile: Option<(usize, usize)> = None;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -95,6 +97,16 @@ fn movie(arguments: &[String]) {
             "--no-picture" => picture = false,
             "--ranges" => ranges = true,
             "--spc" => spc = true,
+            "--positions-only" => positions_only = true,
+            "--profile" => {
+                let mut number = || {
+                    options
+                        .next()
+                        .and_then(|value| value.parse().ok())
+                        .unwrap_or_else(|| fail("--profile FROM TO"))
+                };
+                profile = Some((number(), number()));
+            }
             "--watch" => {
                 let mut number = || {
                     options
@@ -117,6 +129,7 @@ fn movie(arguments: &[String]) {
     oracle.set_tiers(Tiers {
         picture,
         apu_state: spc,
+        profile: profile.is_some(),
         ..Tiers::default()
     });
     let mut history: std::collections::VecDeque<Box<[u8]>> = std::collections::VecDeque::new();
@@ -146,7 +159,8 @@ fn movie(arguments: &[String]) {
                 w(0x0af6),
                 w(0x0afa),
             ];
-            if mine != *row {
+            let compared = if positions_only { 3 } else { 0 };
+            if mine[compared..] != row[compared..] {
                 lag_mismatches += 1;
                 if lag_mismatches <= 40 {
                     println!(
@@ -155,6 +169,31 @@ fn movie(arguments: &[String]) {
                     );
                 }
             }
+        }
+        if let Some((from, to)) = profile
+            && (from..=to).contains(&frame)
+            && let Some(banks) = &record.bank_instructions
+        {
+            let mut top: Vec<(u32, usize)> = banks
+                .iter()
+                .enumerate()
+                .map(|(bank, &count)| (count, bank))
+                .filter(|&(count, _)| count > 0)
+                .collect();
+            top.sort_unstable_by(|a, b| b.cmp(a));
+            let top: Vec<String> = top
+                .iter()
+                .take(5)
+                .map(|(count, bank)| format!("{bank:02x}:{count}"))
+                .collect();
+            println!(
+                "profile {frame}: {} cut {:?} wait {:?} joypad reads {} apu {}",
+                top.join(" "),
+                record.cut,
+                record.wait_entry,
+                record.joypad_reads,
+                record.apu_log.len()
+            );
         }
         if let Some((from, every)) = watch
             && frame >= from
@@ -251,6 +290,9 @@ pub fn main(arguments: &[String]) -> i32 {
     match arguments.split_first() {
         Some((command, rest)) if command == "movie" => movie(rest),
         Some((command, rest)) if command == "corpus" => corpus(rest),
+        Some((command, rest)) if command == "trace" => trace(rest),
+        Some((command, rest)) if command == "measure" => measure(rest),
+        Some((command, rest)) if command == "measure-movie" => measure_movie(rest),
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0
@@ -411,4 +453,129 @@ fn corpus(arguments: &[String]) {
         ticks as f64 / seconds,
         frames as f64 / seconds
     );
+}
+
+/// `trace ROM LOCK DATA ID FROM TO`: one row's frames FROM-TO in detail.
+fn trace(arguments: &[String]) {
+    let [rom, lock, data, id, from, to] = arguments else {
+        fail("trace ROM LOCK DATA ID FROM TO")
+    };
+    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
+    let lock =
+        std::fs::read_to_string(lock).unwrap_or_else(|error| fail(format!("{lock}: {error}")));
+    let lock = crate::lock::Lock::parse(&lock);
+    let (Some(pin), Some(entry)) = (lock.pin(id), lock.entry(id, "faithful")) else {
+        fail(format!("{id}: no pin or entry"))
+    };
+    let range = from.parse().unwrap_or(0)..=to.parse().unwrap_or(0);
+    let mut frame = 0usize;
+    let tiers = Tiers {
+        apu_state: true,
+        ..Tiers::default()
+    };
+    let result = crate::corpus::run_row_with(
+        &rom,
+        pin,
+        entry,
+        Path::new(data),
+        &crate::corpus::Observe {
+            tiers,
+            ..Default::default()
+        },
+        &mut |record| {
+            if range.contains(&frame) {
+                let w = |address| word(&record.wram, address);
+                let spc = record
+                    .spc
+                    .as_ref()
+                    .map(|spc| (spc.pc, spc.cpu_to_apu, spc.apu_to_cpu));
+                let apu: Vec<String> = record
+                    .apu_log
+                    .iter()
+                    .take(12)
+                    .map(|access| format!("{:?}{}={:02x}", access.kind, access.port, access.value))
+                    .collect();
+                println!(
+                    "frame {frame}: cut {:?} cpu {:02x}:{:04x} state {:04x} room {:04x} spc {spc:02x?} apu[{}] {}",
+                    record.cut,
+                    record.cpu.k,
+                    record.cpu.pc,
+                    w(0x0998),
+                    w(0x079b),
+                    record.apu_log.len(),
+                    apu.join(" ")
+                );
+            }
+            frame += 1;
+        },
+    );
+    if let Err(error) = result {
+        println!("{id}: {error}");
+    }
+}
+
+/// The tiers and watched addresses the measurements need.
+fn measuring() -> Tiers {
+    Tiers {
+        picture: false,
+        write_log: true,
+        ..Tiers::default()
+    }
+}
+
+/// `measure ROM LOCK DATA ID...`: the architecture lane's measurements over
+/// lock rows (from their lsnes seeds), as Markdown.
+fn measure(arguments: &[String]) {
+    let [rom_path, lock, data, ids @ ..] = arguments else {
+        fail("measure ROM LOCK DATA ID...")
+    };
+    let rom = std::fs::read(rom_path).unwrap_or_else(|error| fail(format!("{rom_path}: {error}")));
+    let lock =
+        std::fs::read_to_string(lock).unwrap_or_else(|error| fail(format!("{lock}: {error}")));
+    let lock = crate::lock::Lock::parse(&lock);
+    for id in ids {
+        let (Some(pin), Some(entry)) = (lock.pin(id), lock.entry(id, "faithful")) else {
+            println!("### {id}\n- no pin or entry");
+            continue;
+        };
+        let mut measurements = crate::measure::Measurements::default();
+        let result = crate::corpus::run_row_with(
+            &rom,
+            pin,
+            entry,
+            Path::new(data),
+            &crate::corpus::Observe {
+                tiers: measuring(),
+                watch: &crate::measure::WATCHED,
+                peek: crate::measure::PEEK,
+            },
+            &mut |record| measurements.frame(record),
+        );
+        println!("### {id} (from its lsnes seed)");
+        if let Err(error) = result {
+            println!("- run ended: {error}");
+        }
+        print!("{}", measurements.report(&rom));
+    }
+}
+
+/// `measure-movie ROM INPUTS FRAMES`: the measurements over a movie's first
+/// FRAMES frames from power-on, as Markdown.
+fn measure_movie(arguments: &[String]) {
+    let [rom_path, inputs, frames] = arguments else {
+        fail("measure-movie ROM INPUTS FRAMES")
+    };
+    let rom = std::fs::read(rom_path).unwrap_or_else(|error| fail(format!("{rom_path}: {error}")));
+    let pads = crate::inputs::read(Path::new(inputs)).unwrap_or_else(|error| fail(error));
+    let frames: usize = frames.parse().unwrap_or_else(|_| fail("FRAMES"));
+    let mut oracle = LakeSnes::open(&rom, Start::PowerOn { wram_fill: 0x55 })
+        .unwrap_or_else(|error| fail(error));
+    oracle.set_tiers(measuring());
+    oracle.set_watch(&crate::measure::WATCHED, crate::measure::PEEK);
+    let mut measurements = crate::measure::Measurements::default();
+    for &pad in pads.iter().take(frames) {
+        measurements.frame(oracle.step(pad));
+    }
+    println!("### {inputs}, frames 0-{} (from power-on)", frames - 1);
+    print!("{}", measurements.report(&rom));
 }

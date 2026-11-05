@@ -10,7 +10,7 @@
 
 use crate::lakesnes::LakeSnes;
 use crate::lock::{Entry, Pin};
-use crate::record::{NmiKind, Pad};
+use crate::record::{FrameRecord, NmiKind, Pad};
 use crate::seed::Capture;
 use crate::streams::{self, NAMES, Running};
 use crate::{Oracle, Start, Tiers};
@@ -28,6 +28,8 @@ pub struct RowRun {
     pub overrun: u64,
     /// Frames without an NMI (NMI disabled).
     pub without_nmi: u64,
+    /// How often an overrun NMI interrupted each address.
+    pub interrupted: std::collections::BTreeMap<u32, u32>,
     /// The existing lock's streams, folded per Tick.
     pub legacy: Running,
     /// The oracle contract's streams, folded per video frame.
@@ -43,6 +45,28 @@ pub fn bundle_directory(data: &Path, pin: &Pin) -> PathBuf {
 
 /// Run `entry`'s row with `pin`'s data from `data`.
 pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowRun, String> {
+    run_row_with(rom, pin, entry, data, &Observe::default(), &mut |_| ())
+}
+
+/// What a run records beyond its streams.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Observe<'a> {
+    pub tiers: Tiers,
+    /// Watched instruction addresses (`Oracle::set_watch`).
+    pub watch: &'a [u32],
+    /// The WRAM address a watch hit peeks.
+    pub peek: u32,
+}
+
+/// `run_row` with chosen tiers and watched addresses, showing `observe` every frame.
+pub fn run_row_with(
+    rom: &[u8],
+    pin: &Pin,
+    entry: &Entry,
+    data: &Path,
+    observing: &Observe<'_>,
+    observe: &mut dyn FnMut(&FrameRecord),
+) -> Result<RowRun, String> {
     let root = bundle_directory(data, pin);
     let inputs = crate::inputs::read(&root.join("movies").join(&pin.inputs))?;
     let start = match (&pin.seed, &pin.checkpoint) {
@@ -64,13 +88,15 @@ pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowR
         (None, None) => Start::PowerOn { wram_fill: 0x55 },
     };
     let mut oracle = LakeSnes::open(rom, start).map_err(|error| error.to_string())?;
-    oracle.set_tiers(Tiers::default());
+    oracle.set_tiers(observing.tiers);
+    oracle.set_watch(observing.watch, observing.peek);
     let started = Instant::now();
     let mut run = RowRun {
         ticks: 0,
         frames: 0,
         overrun: 0,
         without_nmi: 0,
+        interrupted: std::collections::BTreeMap::new(),
         legacy: Running::default(),
         v1: Running::default(),
         seconds: 0.0,
@@ -87,19 +113,38 @@ pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowR
             .unwrap_or(Pad(0));
         let record = oracle.step(pad);
         run.frames += 1;
+        observe(record);
         run.v1.fold(&streams::v1(record));
         match record.nmi().map(|nmi| nmi.kind) {
             Some(NmiKind::Requested) => {
                 run.legacy.fold(&streams::legacy(record, &mut scratch));
                 run.ticks += 1;
             }
-            Some(NmiKind::Overrun) => run.overrun += 1,
+            Some(NmiKind::Overrun) => {
+                run.overrun += 1;
+                if let Some(nmi) = record.nmi() {
+                    *run.interrupted.entry(nmi.interrupted_pc).or_default() += 1;
+                }
+            }
             None => run.without_nmi += 1,
         }
         if run.frames > limit {
+            let mut common: Vec<(u32, u32)> = run
+                .interrupted
+                .iter()
+                .map(|(&pc, &count)| (count, pc))
+                .collect();
+            common.sort_unstable_by(|a, b| b.cmp(a));
+            let common: Vec<String> = common
+                .iter()
+                .take(3)
+                .map(|(count, pc)| format!("${pc:06X}x{count}"))
+                .collect();
             return Err(format!(
-                "stalled: {} Ticks in {} frames",
-                run.ticks, run.frames
+                "stalled: {} Ticks in {} frames; overruns interrupted {}",
+                run.ticks,
+                run.frames,
+                common.join(" ")
             ));
         }
     }

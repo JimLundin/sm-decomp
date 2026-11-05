@@ -2,8 +2,8 @@
 //! `native/bridge.c`.
 
 use crate::record::{
-    ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, MAX_LINES, Nmi, NmiKind, Pad,
-    PpuRegisters, SpcState, WIDTH,
+    ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Hit, MAX_LINES, Nmi, NmiKind,
+    Pad, PpuRegisters, RegisterWrite, SpcState, WIDTH, WriteSource,
 };
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use core::ffi::c_int;
@@ -50,11 +50,32 @@ mod ffi {
 
     #[repr(C)]
     #[derive(Clone, Copy)]
+    pub struct Write {
+        pub v: u16,
+        pub h: u16,
+        pub adr: u8,
+        pub value: u8,
+        pub source: u8,
+        pub reserved: u8,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct Hit {
+        pub pc: u32,
+        pub v: u16,
+        pub h: u16,
+        pub peek: [u8; 4],
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
     pub struct ApuAccess {
         pub kind: u8,
         pub port: u8,
         pub value: u8,
         pub reserved: u8,
+        pub apu_cycle: u32,
     }
 
     #[repr(C)]
@@ -222,6 +243,12 @@ mod ffi {
         pub fn oh_set_spc(machine: *mut Machine, spc: *const Spc);
         pub fn oh_apu_write(machine: *mut Machine, adr: u16, value: u8);
         pub fn oh_dsp_write(machine: *mut Machine, adr: u8, value: u8);
+        pub fn oh_set_profile(machine: *mut Machine, profile: bool);
+        pub fn oh_bank_instructions(machine: *mut Machine) -> *const u32;
+        pub fn oh_set_write_log(machine: *mut Machine, on: bool);
+        pub fn oh_write_log(machine: *mut Machine, length: *mut u32) -> *const Write;
+        pub fn oh_set_watch(machine: *mut Machine, pcs: *const u32, count: u32, peek: u32);
+        pub fn oh_hits(machine: *mut Machine, length: *mut u32) -> *const Hit;
         pub fn oh_running_nmi(machine: *mut Machine) -> u32;
         pub fn oh_cpu(machine: *mut Machine, out: *mut Cpu);
         pub fn oh_spc(machine: *mut Machine, out: *mut Spc);
@@ -288,6 +315,9 @@ impl LakeSnes {
                 apu_log: Vec::new(),
                 picture: None,
                 spc: None,
+                bank_instructions: None,
+                writes: Vec::new(),
+                hits: Vec::new(),
                 legacy_ppu_digest: 0,
             },
         };
@@ -406,10 +436,12 @@ impl LakeSnes {
                             0 => ApuAccessKind::CpuWrite,
                             1 => ApuAccessKind::CpuRead,
                             2 => ApuAccessKind::DmaWrite,
-                            _ => ApuAccessKind::DmaRead,
+                            3 => ApuAccessKind::DmaRead,
+                            _ => ApuAccessKind::SpcWrite,
                         },
                         port: access.port,
                         value: access.value,
+                        apu_cycle: access.apu_cycle,
                     }));
                 }
             }
@@ -431,6 +463,44 @@ impl LakeSnes {
                 }
                 picture
             });
+            record.writes.clear();
+            if self.tiers.write_log {
+                let mut length = 0;
+                let log = ffi::oh_write_log(machine, &mut length);
+                if length > 0 {
+                    let log = view(log, usize::try_from(length).unwrap_or(0));
+                    record.writes.extend(log.iter().map(|write| RegisterWrite {
+                        beam: Beam {
+                            v: write.v,
+                            h: write.h,
+                        },
+                        register: write.adr,
+                        value: write.value,
+                        source: match write.source {
+                            0 => WriteSource::Main,
+                            1 => WriteSource::Nmi,
+                            2 => WriteSource::Irq,
+                            3 => WriteSource::Dma,
+                            _ => WriteSource::Hdma,
+                        },
+                    }));
+                }
+            }
+            record.hits.clear();
+            let mut length = 0;
+            let hits = ffi::oh_hits(machine, &mut length);
+            if length > 0 {
+                let hits = view(hits, usize::try_from(length).unwrap_or(0));
+                record.hits.extend(hits.iter().map(|hit| Hit {
+                    pc: hit.pc,
+                    beam: Beam { v: hit.v, h: hit.h },
+                    peek: hit.peek,
+                }));
+            }
+            record.bank_instructions = self
+                .tiers
+                .profile
+                .then(|| view(ffi::oh_bank_instructions(machine), 256).into());
             record.spc = self.tiers.apu_state.then(|| {
                 let mut spc = ffi::Spc::default();
                 ffi::oh_spc(machine, &mut spc);
@@ -727,10 +797,20 @@ impl Oracle for LakeSnes {
         self.tiers = tiers;
         // SAFETY: the machine is live and between steps.
         unsafe { ffi::oh_set_recording(self.machine, tiers.picture, tiers.apu_log) };
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_set_profile(self.machine, tiers.profile) };
+        // SAFETY: the machine is live and between steps.
+        unsafe { ffi::oh_set_write_log(self.machine, tiers.write_log) };
     }
 
     fn reset(&mut self) {
         self.reset_pending = true;
+    }
+
+    fn set_watch(&mut self, addresses: &[u32], peek: u32) {
+        let count = u32::try_from(addresses.len().min(8)).unwrap_or(8);
+        // SAFETY: the machine is live; the bridge copies at most 8 addresses.
+        unsafe { ffi::oh_set_watch(self.machine, addresses.as_ptr(), count, peek) };
     }
 }
 
