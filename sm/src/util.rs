@@ -67,6 +67,7 @@ pub fn read_up_to(source: &mut impl std::io::Read, buffer: &mut [u8]) -> usize {
     filled
 }
 
+#[cfg(not(sm_host))]
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
     fn sm_util_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
@@ -80,6 +81,7 @@ unsafe extern "C-unwind" fn sm_util_die(message: *const c_char) {
     }
 }
 
+#[cfg(not(sm_host))]
 #[doc(hidden)]
 pub fn native_source_matches() -> bool {
     [

@@ -333,3 +333,5 @@ pub mod verification_checkpoint;
 #[path = "../../../sm/src/verification/observation/machine.rs"]
 mod machine;
 pub mod replay;
+#[path = "stubs/ppu_ports.rs"]
+pub(crate) mod ppu_ports;

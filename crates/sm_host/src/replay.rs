@@ -5,6 +5,27 @@ use sm_data::digest::MACHINE;
 
 const FRAME_BYTES: usize = 256 * 240 * 4;
 
+unsafe fn die(message: *const core::ffi::c_char) {
+    let message = unsafe { core::ffi::CStr::from_ptr(message) };
+    panic!("{}", message.to_string_lossy());
+}
+unsafe fn warning(message: *const core::ffi::c_char) {
+    let message = unsafe { core::ffi::CStr::from_ptr(message) };
+    eprintln!("{}", message.to_string_lossy());
+}
+unsafe fn no_lock() {}
+fn install_hooks() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        crate::host::install_host_hooks(crate::host::HostHooks {
+            die,
+            warning,
+            apu_lock: no_lock,
+            apu_unlock: no_lock,
+        })
+    });
+}
+
 /// One running slice. It owns the frame the renderer draws into.
 pub struct Engine {
     game: Box<Game>,
@@ -15,6 +36,7 @@ pub struct Engine {
 impl Engine {
     /// Open `start` (a prepared start) over `content` (the content image).
     pub fn open(content: &[u8], start: &[u8]) -> Result<Self, String> {
+        install_hooks();
         let mut game = Game::new();
         let mut pixels = vec![0; FRAME_BYTES];
         unsafe {
