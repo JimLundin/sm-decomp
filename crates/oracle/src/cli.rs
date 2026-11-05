@@ -61,10 +61,36 @@ fn differing(left: &[u8], right: &[u8]) -> usize {
         .count()
 }
 
+/// Cut harness-native seeds on lsnes. The seed of a room-seed row whose
+/// capture followed lsnes frame N (1-based) is the state at the boundary
+/// after the cut of step N-1 (0-based), with that cut's raw record.
+fn native_seed(
+    lsnes: &mut crate::lsnes::Lsnes,
+    list: &[RoomSeed],
+    directory: &Path,
+    step: u64,
+    pending: &mut Option<(u32, PathBuf)>,
+) {
+    if let Some((index, path)) = pending.take() {
+        let target = directory.join(format!("{index:04}.lss"));
+        std::fs::copy(&path, &target)
+            .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
+        println!("native seed {index}: state after step {step}");
+    }
+    if let Some(seed) = list.iter().find(|seed| seed.movie_frame == step + 1) {
+        std::fs::write(
+            directory.join(format!("{:04}.record", seed.index)),
+            lsnes.raw(),
+        )
+        .unwrap_or_else(|error| fail(error));
+        *pending = Some((seed.index, lsnes.request_save()));
+    }
+}
+
 fn movie(arguments: &[String]) {
     let [rom, inputs, rest @ ..] = arguments else {
         fail(
-            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture]",
+            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -79,6 +105,8 @@ fn movie(arguments: &[String]) {
     let mut spc = false;
     let mut positions_only = false;
     let mut profile: Option<(usize, usize)> = None;
+    let mut backend = "lakesnes".to_owned();
+    let mut native: Option<(Vec<RoomSeed>, PathBuf)> = None;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -93,6 +121,18 @@ fn movie(arguments: &[String]) {
                     fail("--seeds CSV DIR")
                 };
                 seeds = Some((room_seeds(Path::new(csv)), PathBuf::from(directory)));
+            }
+            "--oracle" => {
+                backend = options
+                    .next()
+                    .cloned()
+                    .unwrap_or_else(|| fail("--oracle NAME"));
+            }
+            "--native-seeds" => {
+                let (Some(csv), Some(directory)) = (options.next(), options.next()) else {
+                    fail("--native-seeds CSV DIR")
+                };
+                native = Some((room_seeds(Path::new(csv)), PathBuf::from(directory)));
             }
             "--no-picture" => picture = false,
             "--ranges" => ranges = true,
@@ -124,8 +164,9 @@ fn movie(arguments: &[String]) {
             other => fail(format!("unknown option {other}")),
         }
     }
-    let mut oracle = LakeSnes::open(&rom, Start::PowerOn { wram_fill: 0x55 })
+    let mut oracle = crate::Backend::open(&backend, &rom, Start::PowerOn { wram_fill: 0x55 })
         .unwrap_or_else(|error| fail(error));
+    let mut pending_seed: Option<(u32, PathBuf)> = None;
     oracle.set_tiers(Tiers {
         picture,
         apu_state: spc,
@@ -138,6 +179,13 @@ fn movie(arguments: &[String]) {
     let started = Instant::now();
     for (frame, &pad) in pads.iter().enumerate().take(frames) {
         let record: &FrameRecord = oracle.step(pad);
+        let record = record.clone();
+        let record = &record;
+        if let crate::Backend::Lsnes(lsnes) = &mut oracle
+            && let Some((list, directory)) = &native
+        {
+            native_seed(lsnes, list, directory, frame as u64, &mut pending_seed);
+        }
         match record.nmi() {
             Some(nmi) => {
                 lag += u64::from(!nmi.polled);

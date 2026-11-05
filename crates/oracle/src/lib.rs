@@ -15,6 +15,7 @@ pub mod game;
 pub mod inputs;
 pub mod lakesnes;
 pub mod lock;
+pub mod lsnes;
 pub mod measure;
 pub mod record;
 pub mod seed;
@@ -117,4 +118,36 @@ pub trait Oracle: Sized {
     /// Record the beam position and four WRAM bytes at `peek` whenever the
     /// CPU reaches one of `addresses` (at most 8), in `FrameRecord::hits`.
     fn set_watch(&mut self, addresses: &[u32], peek: u32);
+}
+
+/// A backend chosen at run time.
+pub enum Backend {
+    LakeSnes(Box<lakesnes::LakeSnes>),
+    Lsnes(Box<lsnes::Lsnes>),
+}
+
+impl Backend {
+    /// Open the backend `name` names: `lakesnes` or `lsnes`.
+    pub fn open(name: &str, rom: &[u8], start: Start) -> Result<Self, OracleError> {
+        match name {
+            "lsnes" => lsnes::Lsnes::open(rom, start).map(|oracle| Self::Lsnes(Box::new(oracle))),
+            _ => {
+                lakesnes::LakeSnes::open(rom, start).map(|oracle| Self::LakeSnes(Box::new(oracle)))
+            }
+        }
+    }
+
+    pub fn step(&mut self, pad: Pad) -> &FrameRecord {
+        match self {
+            Self::LakeSnes(oracle) => oracle.step(pad),
+            Self::Lsnes(oracle) => oracle.step(pad),
+        }
+    }
+
+    pub fn set_tiers(&mut self, tiers: Tiers) {
+        match self {
+            Self::LakeSnes(oracle) => oracle.set_tiers(tiers),
+            Self::Lsnes(oracle) => oracle.set_tiers(tiers),
+        }
+    }
 }
