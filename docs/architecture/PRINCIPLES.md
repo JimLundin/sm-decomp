@@ -1,6 +1,8 @@
 # Principles
 
-Architecture lane, `research/architecture`, 2026-11-05. Draft for Jim's review.
+Architecture lane, `research/architecture`, 2026-11-05. Jim reviewed this on 2026-11-05 and
+agreed with the principles. His decisions on K5, K8, K9 and K10 are recorded under each
+one.
 
 These principles come before the architecture. Every decision in
 [ARCHITECTURE.md](ARCHITECTURE.md) cites the principles it follows. A decision that no
@@ -213,10 +215,35 @@ only through `&`.
 *How we know:* the compiler. A write outside a guard does not type-check.
 
 **K5. The engine fails in types, not panics.**
-An original crash is an `OriginalFailure`, an engine fault is a `SessionFault`, and a full
-table is a gameplay result.
-*How we know:* clippy denies `unwrap`, `expect`, `panic` and indexing panics in `sm_game`
-outside tests.
+Engine code has no `unwrap`, no `expect`, no `panic!` and no indexing that can panic.
+Arithmetic states how it overflows (`wrapping_*`, `checked_*`, `saturating_*`). An engine
+fault is a `SessionFault`, and a full table is a gameplay result. The one exception is the
+original's own crashes, where accuracy requires modelling them. The working answer is that
+they become an `OriginalFailure` outcome, and the details are decided when the first one is
+built.
+*Why:* panics in Tick paths ended whole replays and hid where they started. Silent
+overflow is a behaviour difference: the original's arithmetic is 16-bit and wraps.
+*Jim (2026-11-05):* confirmed. He would reconsider only if the rule grew code volume by a
+factor or more.
+*Measured:* the lint set below was applied to FOUNDATION's compile-checked sketch
+(`scratch/foundation_sketch`, 1,123 non-blank, non-comment production lines). The
+restriction lints (`unwrap_used`, `expect_used`, `panic`, `indexing_slicing`,
+`arithmetic_side_effects`, `unreachable`) found 15 sites outside tests. Fixing them took the count to
+1,138 lines (+1.3%). `pedantic` and `nursery` then added 21 findings. After fixing them the
+count is 1,146 lines (+2.0% in total), plus about ten doc lines for the `# Errors` sections.
+The patterns that kept the cost small:
+- iterators instead of indices: `iter_mut().enumerate().find(..)` returns the slot itself,
+  and `zip` pairs two arrays;
+- `get`, `split_at_mut_checked` and `split_first_mut` with `?` and `let-else`;
+- a step past the end is `checked_add(1).ok_or(fault)?`, and "go back one" is replaced by
+  remembering where you were;
+- fixed arrays indexed by an enum, through a destructuring `match` (`let [music, l1, l2, l3]
+  = &mut ports`), which cannot be out of range;
+- newtype indices that only the slot store can construct, so they are valid by construction;
+- the rotate-and-chain idiom (`tail.iter_mut().chain(head)`) for wrap-around writes.
+*How we know:* the lint set in K8, denied in every engine crate. Tests may use `unwrap`,
+`expect`, `panic` and indexing, through clippy's `allow-*-in-tests` configuration, not
+through `allow` attributes.
 
 **K6. Mechanical code is derived once.**
 The Checkpoint encode, decode and diff come from one derive. They are not written by hand
@@ -226,3 +253,59 @@ for each type.
 
 **K7. Safe Rust only in the engine.**
 *How we know:* `unsafe_code = "forbid"` in every engine crate.
+
+**K8. The strictest, most current idiomatic Rust: the newest stable toolchain and a strict lint set.**
+- **Toolchain:** the newest stable release, pinned exactly in `rust-toolchain.toml` and
+  bumped in its own PR within a week of each release. Edition 2024 (or newer when one
+  ships). Engine crates use no `#![feature]` gates. Nightly is for tooling only (rustfmt's
+  unstable options, miri).
+- **Idioms:** the current language: let-chains, `let-else`, `impl Trait` in argument and
+  return position where it fits, const generics, `?` everywhere, iterator adaptors, and
+  `From`/`TryFrom` instead of `as` (AGENTS.md).
+- **Lints, all denied in engine crates, with no `allow` attributes:** `clippy::pedantic`;
+  `clippy::nursery`; and from `restriction`: `unwrap_used`, `expect_used`, `panic`,
+  `indexing_slicing`, `arithmetic_side_effects`, `as_conversions`, `unreachable`, `todo`,
+  `unimplemented`, `wildcard_enum_match_arm` (AGENTS.md's "no `_ =>` when every case can be
+  named"), `float_arithmetic` in `sm_game` (the original has no floats), `print_stdout`,
+  `print_stderr`, `dbg_macro` and `allow_attributes`. Rust's `missing_docs` is denied for
+  public items of `sm_data` and `sm_game`. A nursery lint that misfires is dropped from the
+  workspace set, with the reason recorded beside the set. It is never silenced at a site.
+*Decision:* stable, not nightly. Unstable features can change or disappear between
+nightlies, and that would force the churn this rebuild exists to avoid. Nightly would buy
+features we don't need for an engine of plain data and functions.
+*Jim (2026-11-05):* asked for "the strictest, most idiomatic Rust possible", meaning the
+most current language, styles and behaviour. He confirmed the newest stable toolchain, with
+nightly for tooling only.
+*How we know:* the workspace `[lints]` table and `rust-toolchain.toml`, checked in CI. A
+source check rejects `#![feature` and `#[allow(` in engine crates.
+
+**K9. A modern reader can understand the code without the original.**
+The code must make sense to someone who has never seen the transpilation, the C or the
+assembly. Names come from the domain: official names for enemies, bosses, items, rooms and
+mechanics, never addresses, routine labels or decompiler names. A reader understands a
+module from its names and types without opening the bank logs. A bank-log reference is a
+short source line in a doc comment where a behaviour is surprising. It is never the
+structure of the module.
+*Why:* attempt 1's code was organised by the original's routines and named by addresses
+(Retro A1). Understanding it took the bank logs open beside it, so every change was slow
+and risky.
+*Jim (2026-11-05):* asked for this explicitly.
+*How we know:* review question: "could someone who has never seen the original follow this
+module from its names and types?" A source check rejects routine-label names (`func_80_8343`
+and the like) in engine crates.
+
+**K10. The code explains itself; comments say why, never what.**
+Names and types carry the meaning. There are no comments that restate what the code does. A
+comment exists to justify the unexpected:
+- an original quirk being reproduced;
+- an order that matters;
+- a value that looks wrong but is the game's own;
+- an oracle difference, with its LEGACY row.
+
+Doc comments on public items say briefly what the item is for and its contract. A bank-log
+reference may be the source line of such a comment where the behaviour is surprising, not
+narration. This is how K9 and K10 fit together: a reader learns the module from names and
+types (K9), and comments carry only the surprises (K10).
+*Jim (2026-11-05):* his own principle.
+*How we know:* review question: "does this comment say anything the code doesn't?" There
+is no comment-ratio metric.
