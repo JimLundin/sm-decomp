@@ -136,7 +136,7 @@ in parallel. Dispatch with `regenerate` to rebuild the boundary checkpoints.
 
 `ci.yml` with `action=coverage` builds the verifier with `-C instrument-coverage`, runs the
 selected rows (all by default), merges the profiles and summarises line and
-function coverage of `crates/sm_game` and `sm/src/game` with
+function coverage of `crates/sm_game` and `crates/sm_host/src/game` with
 [coverage_summary.py](../tools/coverage_summary.py). The `coverage` artifact
 lists files and the largest functions the corpus never executes; no
 ROM-derived data is recorded. It is manual and does not gate landing.

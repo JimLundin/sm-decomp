@@ -37,7 +37,7 @@ and suspension paths, retained dependencies and their removal condition.
 
 | Current responsibility | Destination | Removal condition |
 | --- | --- | --- |
-| `sm/src/game/`, `game_state.rs`, `ram_map.rs` | `sm_game`: owned Session and private gameplay modules | Complete producer/consumer cohorts use typed state; remaining RAM consumers have migrated. |
+| `crates/sm_host/src/game/`, `game_state.rs`, `ram_map.rs` | `sm_game`: owned Session and private gameplay modules | Complete producer/consumer cohorts use typed state; remaining RAM consumers have migrated. |
 | `main.rs`, `host.rs`, `config.rs`, host portions of `rtl.rs` | `sm_app`: input, clock, lifecycle; `sm_runtime`: devices/storage | Gameplay consumes recorded values and returns owned records without host policy. |
 | `platform/`, PPU/DMA drawing and effects | `sm_runtime`: our renderer/shaders; `sm_game`: Scene extraction | Complete drawing-to-pixels behavior is preserved; remaining game/oracle backend consumers are accounted for. |
 | `spc_player.rs`, `native_audio.rs`, SNES audio/DSP | `sm_runtime`: our sequencer, voices, mixer/output | Cue order, instruments, pitch, envelopes, voice rules and echo have independent checks. |

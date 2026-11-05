@@ -62,7 +62,7 @@ boundaries, not proof that every generic native access is disjoint:
 
 Follow the current code in `game_state.rs`, `cpu_infra.rs`, `rtl.rs`,
 `snapshot_io.rs`, `verify/checkpoint.rs`, `ram_map.rs` and
-`game/session_runtime.rs` under `sm/src`, and in `session.rs`,
+`game/session_runtime.rs` under `crates/sm_host/src`, and in `session.rs`,
 `persistent_session.rs` and `session_encoding.rs` under `crates/sm_game/src`.
 Audit current callers; historical bank filenames are not an ownership map.
 

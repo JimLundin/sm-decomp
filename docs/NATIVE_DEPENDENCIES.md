@@ -11,13 +11,13 @@ callers count as project code; fetched dependency code is counted separately.
 | Archive | Contents | Installer | Linked from |
 | --- | --- | --- | --- |
 | `liblakesnes_cpu.a` | LakeSnes 65816 CPU, used by the oracle | `tools/install_lakesnes.py cpu` | `sm/src/snes/cpu.rs` |
-| `liblakesnes_backend.a` | LakeSnes PPU, built through `sm/src/snes/backend.c` | `tools/install_lakesnes.py backend` | `sm/src/snes/ppu.rs` |
-| `libsm_config.a` | Selected zelda3 configuration, utility and shader routines, with `sm/src/native_config.c`, `native_util.c` and `native_shader.c` | `tools/install_native_config.py` | `sm/src/util.rs`, `crates/sm_app/src/config.rs`, `crates/sm_app/src/platform/glsl_shader.rs` |
+| `liblakesnes_backend.a` | LakeSnes PPU, built through `sm/src/snes/backend.c` | `tools/install_lakesnes.py backend` | `crates/sm_host/src/snes/ppu.rs` |
+| `libsm_config.a` | Selected zelda3 configuration, utility and shader routines, with `sm/src/native_config.c`, `native_util.c` and `native_shader.c` | `tools/install_native_config.py` | `crates/sm_host/src/util.rs`, `crates/sm_app/src/config.rs`, `crates/sm_app/src/platform/glsl_shader.rs` |
 | `libsm_desktop.a` | Selected zelda3 desktop loop, with `sm/src/native_desktop.c`; Windows GNU x64 only | `tools/install_native_desktop.py` | `crates/sm_app/src/main.rs` |
 | `libsm_stb_image.a` | stb_image 2.26 PNG decoder; [separate recipe](PNG_DEPENDENCY.md) | none | `crates/sm_app/src/platform/texture_png.rs` |
 
 The SPC700, DSP and music sequencer now run as Rust in `sm/src/snes/` and
-`sm/src/spc_player.rs`; no archive provides them. `install_lakesnes.py` still
+`crates/sm_host/src/spc_player.rs`; no archive provides them. `install_lakesnes.py` still
 accepts an `spc` component, but no build links its archive. The headless
 verifier links the CPU, PPU and utility code, not the configuration-input,
 shader or desktop implementations.

@@ -30,7 +30,7 @@ design has three consequences:
 3. **It's slow to extend.** Scenario data is opaque and maintained by hand:
    - inputs are hex text tied to controller reads;
    - SHAs are typed into TOML by hand;
-   - bundles are mapped by `if` chains in `plan_corpus.py`;
+   - bundles are mapped by hand-written `if` chains in the planner;
    - reports are free text that the tools scrape;
    - each row starts a new Python process, which re-hashes the source tree.
 
