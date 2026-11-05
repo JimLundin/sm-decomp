@@ -11,3 +11,4 @@ sm_data = { path = "../sm_data" }
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }
+unsafe_code = "forbid"
