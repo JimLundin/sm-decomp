@@ -23,7 +23,7 @@ use game::room_mechanisms as room;
     unused_macros,
     reason = "Only RAM layout constants participate; raw compatibility macros have no consumers in this owned carrier."
 )]
-#[path = "../../ram_map.rs"]
+#[path = "../../../../crates/sm_host/src/ram_map.rs"]
 pub(crate) mod ram_map;
 #[allow(
     unused_imports,
@@ -31,11 +31,11 @@ pub(crate) mod ram_map;
     dead_code,
     reason = "ram_map re-exports these compatibility macros and their helper; this owned carrier calls none of them."
 )]
-#[path = "../../ram_words.rs"]
+#[path = "../../../../crates/sm_host/src/ram_words.rs"]
 pub(crate) mod ram_words;
-#[path = "../../rom.rs"]
+#[path = "../../../../crates/sm_host/src/rom.rs"]
 pub(crate) mod rom;
-#[path = "../../verify_probe.rs"]
+#[path = "../../../../crates/sm_host/src/verify_probe.rs"]
 pub(crate) mod verify_probe;
 use animation::execution as animated;
 use game::visual_state::Upload;

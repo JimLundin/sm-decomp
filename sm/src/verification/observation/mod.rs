@@ -7,6 +7,7 @@
 //! over, beside the unchanged RAM comparison.
 
 mod coverage;
+#[path = "../../../../crates/sm_host/src/verification/observation/machine.rs"]
 mod machine;
 pub(crate) mod oracle;
 mod session;

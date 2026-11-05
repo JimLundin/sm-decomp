@@ -14,7 +14,7 @@
 #[path = "verification/observation/mod.rs"]
 pub mod observation;
 #[cfg(any(feature = "frontend", sm_verify_dll))]
-#[path = "verify/checkpoint.rs"]
+#[path = "../../crates/sm_host/src/verify/checkpoint.rs"]
 pub mod verification_checkpoint;
 #[cfg(sm_verify_dll)]
 pub use actor_composed_route::checkpoint as verify_prepared_actor_checkpoint;
@@ -173,6 +173,7 @@ pub(crate) use set_fields;
 // Access macros of the moved projectile, enemy-projectile and room mechanism modules.
 #[macro_use]
 extern crate sm_game;
+#[path = "../../crates/sm_host/src/word_transfers.rs"]
 mod word_transfers;
 
 #[cfg(sm_verify_dll)]
@@ -186,9 +187,10 @@ pub fn verify_actor_population_animation_case(id: u32) -> Option<Vec<u8>> {
     actor_population_animation_cases::capture_case(id, actor_population_animation_cases::run)
 }
 
+#[path = "../../crates/sm_host/src/game"]
 pub mod game {
     #[cfg(sm_verify_dll)]
-    #[path = "../verification/actor_composed_route.rs"]
+    #[path = "../../../../sm/src/verification/actor_composed_route.rs"]
     pub(crate) mod actor_composed_route;
     pub(crate) mod actors;
 
@@ -208,7 +210,7 @@ pub mod game {
     pub(crate) mod xray_background;
 
     pub(crate) mod player_projectiles;
-    #[path = "../verification/room_mechanisms.rs"]
+    #[path = "../../../../sm/src/verification/room_mechanisms.rs"]
     pub(crate) mod room_mechanism_checks;
 
     pub(crate) mod projectile_block_reactions_ram;
@@ -224,10 +226,10 @@ pub mod game {
     pub(crate) mod palette_effects;
     pub(crate) use sm_game::player_collision;
     #[cfg(sm_verify_dll)]
-    #[path = "../verification/player_collision_entry_adapters.rs"]
+    #[path = "../../../../sm/src/verification/player_collision_entry_adapters.rs"]
     pub(crate) mod player_collision_adapters;
     #[cfg(sm_verify_dll)]
-    #[path = "../verification/player_collision_owned_checks.rs"]
+    #[path = "../../../../sm/src/verification/player_collision_owned_checks.rs"]
     pub(crate) mod player_collision_owned_checks;
     pub(crate) use sm_game::player_movement;
     pub(crate) use sm_game::player_transitions;
@@ -276,71 +278,101 @@ pub mod game {
 /// oracle: see `cpu_infra::run_one_frame_of_game_both`.
 pub mod snes {
     pub mod apu;
+    #[path = "../../../crates/sm_host/src/snes/cart.rs"]
     pub mod cart;
     pub mod cpu;
+    #[path = "../../../crates/sm_host/src/snes/dma.rs"]
     pub mod dma;
     pub mod dsp;
+    #[path = "../../../crates/sm_host/src/snes/ppu.rs"]
     pub mod ppu;
+    #[path = "../../../crates/sm_host/src/snes/registers.rs"]
     pub mod registers;
+    #[path = "../../../crates/sm_host/src/snes/snes.rs"]
     pub mod snes;
+    #[path = "../../../crates/sm_host/src/snes/snes_other.rs"]
     pub mod snes_other;
     pub mod spc;
 }
 
+#[path = "../../crates/sm_host/src/apu_queue.rs"]
 pub mod apu_queue;
+#[path = "../../crates/sm_host/src/apu_ram.rs"]
 pub mod apu_ram;
+#[path = "../../crates/sm_host/src/audio_snapshot.rs"]
 pub(crate) mod audio_snapshot;
+#[path = "../../crates/sm_host/src/audio_upload.rs"]
 pub mod audio_upload;
 #[doc(hidden)]
+#[path = "../../crates/sm_host/src/c_library.rs"]
 pub mod c_library;
 /// Frame runner and the per-frame comparison against the original ROM.
 pub mod cpu_infra;
+#[path = "../../crates/sm_host/src/initial_state.rs"]
 mod initial_state;
 #[cfg(sm_verify_dll)]
+#[path = "../../crates/sm_host/src/lock_masks.rs"]
 mod lock_masks;
 /// The verification host over the oracle's work RAM and backend.
-#[path = "verification/oracle_host.rs"]
+#[path = "../../crates/sm_host/src/verification/oracle_host.rs"]
 pub(crate) mod oracle_host;
 /// Names for raw `g_ram` offsets, recovered from snesrev's variable macros.
+#[path = "../../crates/sm_host/src/ram_map.rs"]
 pub mod ram_map;
 /// The verifier's named RAM table: each address's snesrev name, type and shape.
-#[path = "verification/ram_names.rs"]
+#[path = "../../crates/sm_host/src/verification/ram_names.rs"]
 pub mod ram_names;
 /// Named RAM word and enemy-record access by those names.
+#[path = "../../crates/sm_host/src/ram_words.rs"]
 mod ram_words;
 /// Game runtime library: RAM, ROM access, save states, frame loop glue.
+#[path = "../../crates/sm_host/src/rtl.rs"]
 pub mod rtl;
 /// Music/sound driver reimplementation.
+#[path = "../../crates/sm_host/src/spc_player.rs"]
 pub mod spc_player;
 /// Debug tracing.
 pub mod tracing;
 /// Shared byte-compatible gameplay types.
+#[path = "../../crates/sm_host/src/types.rs"]
 pub mod types;
 /// Small helpers (file I/O, strings).
+#[path = "../../crates/sm_host/src/util.rs"]
 pub mod util;
 
 /// Runtime globals and callbacks supplied by the frontend.
+#[path = "../../crates/sm_host/src/host.rs"]
 pub mod host;
 
+#[path = "../../crates/sm_host/src/execution.rs"]
 mod execution;
+#[path = "../../crates/sm_host/src/game_state.rs"]
 pub mod game_state;
+#[path = "../../crates/sm_host/src/projection.rs"]
 mod projection;
 pub use game_state::persistent_session::{
     PreparedSessionStart, SessionCheckpoint, SessionStartContract, SessionStartError,
     SuppliedSessionStart,
 };
+#[path = "../../crates/sm_host/src/native_rom.rs"]
 pub(crate) mod native_rom;
 /// Selects whether the oracle keeps snesrev's compatibility patches.
+#[path = "../../crates/sm_host/src/oracle_mode.rs"]
 pub mod oracle_mode;
+#[path = "../../crates/sm_host/src/oracle_patch_policy.rs"]
 mod oracle_patch_policy;
+#[path = "../../crates/sm_host/src/recording.rs"]
 pub mod recording;
 pub use sm_runtime::rendering;
+#[path = "../../crates/sm_host/src/rom.rs"]
 pub mod rom;
 pub mod rom_patches;
 pub mod room_pack;
+#[path = "../../crates/sm_host/src/snapshot_io.rs"]
 pub mod snapshot_io;
 
 /// Execution requirements for focused verifier scenarios.
+#[path = "../../crates/sm_host/src/verify_probe.rs"]
 pub mod verify_probe;
 
 /// Source bytes captured by the game library compilation; the launcher
@@ -413,7 +445,9 @@ pub fn verify_room_level_copy(case: u32) {
     game::room_state::check_level_copy(case)
 }
 
+#[path = "../../crates/sm_host/src/audio_output.rs"]
 pub mod audio_output;
+#[path = "../../crates/sm_host/src/native_audio.rs"]
 pub(crate) mod native_audio;
 pub use native_audio::SampleDelivery;
 

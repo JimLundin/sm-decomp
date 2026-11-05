@@ -12,7 +12,7 @@ use ::core::ptr::null_mut;
 use crate::c_library::{fprintf, memcmp, printf, puts, snprintf, stderr, time};
 use crate::rtl::{rtl_save_snapshot, rtl_setup_emu_callbacks};
 
-#[path = "game/session_native_adoption.rs"]
+#[path = "../../crates/sm_host/src/game/session_native_adoption.rs"]
 pub(crate) mod session_native_adoption;
 use crate::game_state::persistent_session::SessionSnapshotPayload;
 use crate::snes::cpu::{cpu_get_flags, cpu_set_flags};

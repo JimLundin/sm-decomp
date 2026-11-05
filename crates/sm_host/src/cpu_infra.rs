@@ -2,7 +2,7 @@
 use crate::game_state::Game;
 pub use crate::snes::registers::*;
 pub use crate::types::{BotwoonLayout, Cpu, Dma, Ppu, Snes};
-#[path = "../../../sm/src/game/session_native_adoption.rs"]
+#[path = "game/session_native_adoption.rs"]
 pub(crate) mod session_native_adoption;
 pub use crate::types::ProjectileInstr;
 pub use crate::types::RunMode;

@@ -39,7 +39,7 @@ fn check_dependency() {
             include_bytes!("../../../../sm/src/native_shader.h").as_slice(),
             include_bytes!("texture_png.rs").as_slice(),
             include_bytes!("opengl.rs").as_slice(),
-            include_bytes!("../../../../sm/src/types.rs").as_slice(),
+            include_bytes!("../../../sm_host/src/types.rs").as_slice(),
             include_bytes!("../../../../tools/install_native_config.py").as_slice(),
         ]
         .into_iter()

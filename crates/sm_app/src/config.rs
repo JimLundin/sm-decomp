@@ -29,7 +29,7 @@ pub(crate) fn check_dependency() {
             include_bytes!("../../../sm/src/native_config.c").as_slice(),
             include_bytes!("../../../sm/src/native_config.h").as_slice(),
             include_bytes!("../../../sm/src/native_util.h").as_slice(),
-            include_bytes!("../../../sm/src/types.rs").as_slice(),
+            include_bytes!("../../sm_host/src/types.rs").as_slice(),
             include_bytes!("../../../tools/install_native_config.py").as_slice(),
         ]
         .into_iter()

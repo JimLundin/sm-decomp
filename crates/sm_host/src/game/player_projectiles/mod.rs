@@ -14,7 +14,7 @@ use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use host::Host;
 #[cfg(not(sm_host))]
-#[path = "../../verification/player_projectiles.rs"]
+#[path = "../../../../../sm/src/verification/player_projectiles.rs"]
 pub(crate) mod checks;
 
 /// Prepare Samus's projectiles through the frame handler's entry, on the lease the

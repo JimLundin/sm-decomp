@@ -55,7 +55,7 @@ fn check_dependency() {
         include_bytes!("main.rs").as_slice(),
         include_bytes!("../../../sm/src/native_desktop.c").as_slice(),
         include_bytes!("../../../sm/src/native_desktop.h").as_slice(),
-        include_bytes!("../../../sm/src/types.rs").as_slice(),
+        include_bytes!("../../sm_host/src/types.rs").as_slice(),
         include_bytes!("platform/opengl.rs").as_slice(),
         include_bytes!("../../../tools/install_native_desktop.py").as_slice(),
         include_bytes!("../../../tools/install_native_config.py").as_slice(),
