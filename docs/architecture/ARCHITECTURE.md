@@ -126,6 +126,7 @@ each approach in plain terms.
 | D22 | Green = every compared stream matches, plus the row's facts; locks keyed by (row, oracle) | P10, P11, P13 | 11.4 |
 | D23 | A speed budget with a slice-0 exit target | P14 | 12 |
 | D24 | A per-domain size budget and a trait budget, reported on every landing | P16 | 13 |
+| D25 | Two oracle tiers: the faster oracle runs the frequent gate rows, the slower one the nightly large-coverage rows; a row stays frequent only while they agree | P10, P14 | 11.4 |
 
 ## 4. Packages and ownership
 
@@ -885,6 +886,16 @@ again on the engine in every gate run. Facts are written with the row and live i
   same pads and diffs records stream by stream. A disagreement is a dispute for a hardware
   capture, not an engine bug. The primary oracle for the gate is named in the
   `ReferenceProfile`. Changing it re-locks the corpus oracle-side.
+- **Two oracle tiers (D25, Jim, 2026-11-05).** The faster oracle is the frequent tier: it
+  records and re-checks the locks of the per-change gate rows and serves lockstep. Today
+  that is LakeSnes (about 300 frames/s with the picture). The slower, more accurate oracle
+  is the nightly tier: it runs the large-coverage rows, full movies included, and the
+  cross-oracle report. Today that is lsnes (bsnes v085, about 45 frames/s, any% in sync
+  through frame 17829, where LakeSnes desyncs at about 8567). A row is in the frequent tier
+  only while the two oracles agree on it. A disagreement moves the row to the nightly tier
+  and opens a fix for the fast oracle, or a LEGACY entry if the slow oracle is the one
+  that's wrong. The `ReferenceProfile` names each tier's oracle. Changing either re-locks
+  that tier's rows oracle-side.
 
 *Principles:* P10, P11, P12, P13.
 
