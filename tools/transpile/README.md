@@ -18,7 +18,7 @@ and `sm/src` is maintained by hand from here on.
      pointers with `read_unaligned`/`write_unaligned` (15 sites)
 4. Files moved into `sm/src/{game,snes,platform}`, `sm_cpu_infra.rs` →
    `cpu_infra.rs`, `sm_rtl.rs` → `rtl.rs`, and `cargo fmt` applied.
-5. `sm/src/ram_map.rs` was generated from `variables.h` and
+5. `ram_map.rs` (now in `crates/sm_host/src`) was generated from `variables.h` and
    `variables_extra.h`, because c2rust expands those macros into raw offsets.
 
 The retired fixup script is preserved in Git history at

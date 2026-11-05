@@ -105,13 +105,13 @@ corpus, then delete it from `normalize_snapshot_ram` and from this table in
 the same change.
 
 Free run (docs/SCENARIO_HARNESS.md) masks the same ranges in its WRAM digest, and
-one more, `ORACLE_RAM` in `sm/src/verification/observation/machine.rs`:
+one more, `ORACLE_RAM` in `crates/sm_host/src/verification/observation/machine.rs`:
 
 | Range | What it holds | Why | What would retire it | Owner |
 | --- | --- | --- | --- | --- |
 | $00C2-$00C3 | snesrev's bug-fix counter, the oracle's patch selector; the original never uses it | only an oracle frame writes it; lockstep's sides share RAM, so only free run sees it (from the first Tick of a seeded row) | the oracle keeping its patch selector outside game RAM | verifier |
-| `LOCK_SESSION_MASK` (`sm/src/cpu_infra.rs`): the ranges the lock's Session streams decode with zeroed, as they stood when those streams were recorded | retiring a row would otherwise invalidate them | the lock dropping `wram`, with one re-record | verification |
-| `LOCK_WRAM_MASK` (`sm/src/cpu_infra.rs`): the 31 ranges above as they stood before lane `collab/both-101` retired $0D9C-$0D9D, $0E4A-$0E4B, $0E56-$0E59, $17A8-$17AB, $1834-$183B, $1874-$1875, $18A6-$18A7 and $EF74-$EF77 | the oracle digest lock's `wram` stream (recorded, checked and free run) still zeroes those bytes | the committed lock's `wram` digests were recorded with that mask; narrowing it would need a full faithful-oracle re-record. Lockstep and the Session compare use `NORMALIZED_RAM` | frozen until slice 6 drops `wram` from the lock (docs/handoff/session-compare.md) | verifier |
+| `LOCK_SESSION_MASK` (`crates/sm_host/src/lock_masks.rs`): the ranges the lock's Session streams decode with zeroed, as they stood when those streams were recorded | retiring a row would otherwise invalidate them | the lock dropping `wram`, with one re-record | verification |
+| `LOCK_WRAM_MASK` (`crates/sm_host/src/lock_masks.rs`): 31 ranges, those above plus $0D9C-$0D9D, $0E4A-$0E4B, $0E56-$0E59, $17A8-$17AB, $1834-$183B, $1874-$1875, $18A6-$18A7 and $EF74-$EF77, which `NORMALIZED_RAM` no longer masks | the oracle digest lock's `wram` stream (recorded, checked and free run) still zeroes those bytes | the committed lock's `wram` digests were recorded with that mask; narrowing it would need a full faithful-oracle re-record. Lockstep and the Session compare use `NORMALIZED_RAM` | frozen until the lock drops `wram` (docs/handoff/session-compare.md) | verifier |
 
 ## `LEGACY(video-observer)`: typed video preserves register observer boundaries
 
