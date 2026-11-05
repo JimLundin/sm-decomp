@@ -149,7 +149,9 @@ def check(row: str, locked: dict, run_entry: dict) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("rows", nargs="+")
+    parser.add_argument("rows", nargs="+", help="row ids, or `all` for every locked row")
+    parser.add_argument("--shard", default="1/1", metavar="I/N",
+                        help="run only the I-th of N equal parts of the rows")
     parser.add_argument("--slice", action="append", default=[], metavar="ROW",
                         help="also run the windowed sm_slice on ROW against sm_replay")
     args = parser.parse_args()
@@ -157,7 +159,16 @@ def main() -> int:
     lock = scenario.read_lock(root)
     failed = diagnosed = window_failed = 0
     work = pathlib.Path(tempfile.mkdtemp(prefix="gate1-"))
-    for row in args.rows:
+    rows = [row for row in args.rows if row != "all"]
+    if "all" in args.rows:
+        # Every locked corpus row; the room-chain entries are left to the corpus jobs.
+        with (root / "scenarios/corpus.toml").open("rb") as file:
+            corpus = [entry["id"] for entry in tomllib.load(file)["scenario"]]
+        rows += [row for row in corpus if row in lock.entries and row not in rows]
+    index, count = (int(part) for part in args.shard.split("/"))
+    rows = rows[index - 1::count]
+    print(f"Gate 1 shard {args.shard}: {len(rows)} rows", flush=True)
+    for row in rows:
         restore(row, lock.pins, lock.bundles, work)
         entries = pathlib.Path("scenarios/lock.toml")
         locked = lock.entries.get(row)
@@ -206,7 +217,7 @@ def main() -> int:
         if differing and diagnosed < 3:
             diagnosed += 1
             diagnose(row, entries, content, sealed, inputs, locked["ticks"], work)
-    print(f"Gate 1 rows: {len(args.rows) - failed}/{len(args.rows)} match", flush=True)
+    print(f"Gate 1 rows: {len(rows) - failed}/{len(rows)} match", flush=True)
     if args.slice:
         print(f"sm_slice rows: {len(args.slice) - window_failed}/{len(args.slice)} match sm_replay", flush=True)
     return 1 if failed or window_failed else 0

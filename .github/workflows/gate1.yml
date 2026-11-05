@@ -9,14 +9,16 @@ permissions:
 jobs:
   slice:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     env:
       CARGO_INCREMENTAL: '0'
       CARGO_BUILD_JOBS: '4'
-      ROWS: >-
-        item-morph-ball door-transition samus-mockball area-ceres area-norfair area-maridia
-        area-wrecked-ship xray-scan-91f8 boss-ceres-ridley power-bomb-room-entry boss-phantoon
-        special-beam-plasma terrain-quicksand save-memory samus-gunship-save
+      # The Morph room row first, then every locked corpus row, split over the shards.
+      ROWS: item-morph-ball all
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-native
@@ -50,4 +52,6 @@ jobs:
           echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check
           rm -rf .ci-data
       - name: The slice against the oracle
-        run: python3 tools/gate1.py --slice door-transition $ROWS
+        run: >-
+          python3 tools/gate1.py --shard ${{ matrix.shard }}/6
+          --slice item-morph-ball --slice door-transition --slice save-memory $ROWS
