@@ -22,21 +22,22 @@ fn prepare(rom: &str, exported: &str, content_out: &str, start_out: &str) -> Res
     Ok(())
 }
 
-type Loaded = (PreparedContent, PreparedStart, Vec<u16>);
+type Loaded = (PreparedContent, PreparedStart, Vec<u16>, usize);
 
 fn load(content: &str, start: &str, inputs: &str, ticks: &str) -> Result<Loaded, String> {
     let content = PreparedContent::decode(&read(content)?).map_err(|error| error.to_string())?;
     let start = PreparedStart::decode(&read(start)?).map_err(|error| error.to_string())?;
     let text = String::from_utf8(read(inputs)?).map_err(|_| "inputs are not text")?;
     let ticks: usize = ticks.parse().map_err(|_| "bad tick count")?;
+    // The word after the last Tick stays: that Tick's closing NMI latches it.
     let pads = text
         .lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .map(|line| u16::from_str_radix(line, 16).map_err(|_| format!("bad input {line}")))
-        .take(ticks)
+        .take(ticks.saturating_add(1))
         .collect::<Result<Vec<u16>, String>>()?;
-    Ok((content, start, pads))
+    Ok((content, start, pads, ticks))
 }
 
 /// One replay and nothing else, for a diagnostic's digest log.
@@ -51,12 +52,12 @@ fn one(args: &[String]) -> Result<(), String> {
             );
         }
     };
-    let (content, start, pads) = load(content, start, inputs, ticks)?;
+    let (content, start, pads, ticks) = load(content, start, inputs, ticks)?;
     let schedule = Schedule {
         digests: true,
         ..Schedule::default()
     };
-    let outcome = run(&content, &start, &pads, schedule)?;
+    let outcome = run(&content, &start, &pads, ticks, schedule)?;
     if let Some(out) = out {
         let mut text = outcome.digest_lines.join("\n");
         text.push('\n');
@@ -69,12 +70,13 @@ fn gate(args: &[String]) -> Result<(), String> {
     let [content, start, inputs, ticks, out] = args else {
         return Err("usage: sm_replay gate <content> <start> <inputs> <ticks> <lock out>".into());
     };
-    let (content, start, pads) = load(content, start, inputs, ticks)?;
+    let (content, start, pads, ticks) = load(content, start, inputs, ticks)?;
     let timed = std::time::Instant::now();
     let base = run(
         &content,
         &start,
         &pads,
+        ticks,
         Schedule {
             digests: true,
             ..Schedule::default()
@@ -154,7 +156,7 @@ fn gate(args: &[String]) -> Result<(), String> {
         ),
     ];
     for (name, schedule) in schedules {
-        let outcome = run(&content, &start, &pads, schedule)?;
+        let outcome = run(&content, &start, &pads, ticks, schedule)?;
         let same_game = !schedule.digests || outcome.lock_toml == base.lock_toml;
         let same_effects = outcome.effect_trace == base.effect_trace
             && outcome.audio_batches == base.audio_batches

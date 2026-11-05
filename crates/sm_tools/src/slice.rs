@@ -98,11 +98,14 @@ impl Sink<SaveRequest> for SaveWorker {
     }
 }
 
-/// Replay `pads` from the start, with the outbox between the Session and its sinks.
+/// Replay the first `ticks` of `pads` from the start, with the outbox between the
+/// Session and its sinks. Each Tick's closing NMI latches the next word, the one
+/// after the last Tick included when `pads` has it, as the verifier's replay does.
 pub fn run(
     content: &PreparedContent,
     start: &PreparedStart,
     pads: &[u16],
+    ticks: usize,
     schedule: Schedule,
 ) -> Result<Outcome, String> {
     let opened = Session::open(content, start).map_err(|error| error.to_string())?;
@@ -134,7 +137,7 @@ pub fn run(
     let mut most_waiting = 0;
     let mut saves = 0;
     let mut digest_lines = Vec::new();
-    for (index, &pad) in pads.iter().enumerate() {
+    for (index, &pad) in pads.iter().take(ticks).enumerate() {
         // Admit: no Tick while the last one's effects wait. The loop stays live:
         // every failed offer returns here, where a real loop handles its events.
         let mut turns = 0u32;
