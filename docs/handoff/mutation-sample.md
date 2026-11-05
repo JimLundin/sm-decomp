@@ -180,10 +180,11 @@ mutant through the Gate 1 tier below instead.
 
 ### Gate 1 slice mutant
 
-`tools/gate1.py` compares `sm_replay gate` digests with the lock for each
-machine stream (`check()`). The proposed mutant is
+`sm_pipeline gate1` compares `sm_replay gate` digests with the lock for each
+machine stream. The proposed mutant is
 `video_brightness_over_sixteen` (or `ram_botwoon_spit_spread`), built into
-`target/release/sm_replay` and run with `python tools/gate1.py <row>`. It must
+`target/release/sm_replay` and run with `sm_pipeline gate1 <row>`. A forced latch at one Tick already
+showed the runner reports and locates a mismatch (Gate 1 run 42014394657). It must
 print `DIFFERS in video`. That needs the same ROM and bundles as the Gate 1
 workflow, so it belongs in that job's nightly slot rather than in this one.
 `Proof::Gate1 { rows }` is the catalogue variant to add, with the same verdict
