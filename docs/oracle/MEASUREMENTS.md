@@ -559,3 +559,62 @@ changes (its cut kind, CPU, counts, memories and frame), and later saves
 are requested a step earlier in the client. The lsnes ladders and the
 native seeds' `.record` files cut before `9777b468a` must be regenerated before
 they are compared with new records.
+
+## (j) Ports in time order (candidate 0003): not the cause of 17985
+
+**Candidate.** `crates/oracle/native/candidates/0003-apu-ports-in-time-order.patch`,
+on top of 0001 and 0002. It is not in `fixes/`, so the build does not apply
+it. It orders every CPU-SPC port access by master-clock time, as bsnes v085's
+cothreads do:
+
+- The SPC pays off the catch-up debt cycle by cycle, so each of its accesses
+  knows its time against the CPU's.
+- At a CPU access to `$2140-$2143` the SPC runs to the access time (reads 4
+  master clocks before the end of the access, writes at its end, as bsnes
+  v085's CPU does). It stops before an opcode that would touch `$F4-$F7` at
+  or after that time; a dry run of the next opcode on a copy of the SPC
+  registers tells. On a tie the CPU goes first.
+- The SPC reads mid-cycle and writes at the end of its cycle, as bsnes v085's
+  SMP does. A CPU write keeps the previous value and its time, so an SPC read
+  made before the write still sees the old value. `$F1` port clears follow
+  the same order.
+- The port history goes into the save state. Applying it needs two bridge
+  edits: `snes_catchupApu(snes, 0)` at the end of a step, and
+  `oh_set_spc` copying the seeded ports into `apuPortBefore`.
+
+**Command.** The same as (h): any% from power-on, the seven lag-log words
+dumped per step, steps 0-35999 with 0003 and 0-18999 with 0002 alone, and a
+per-step trace of steps 17950-17995 on both (wait entry, cut, CPU PC, the APU
+port log and the SPC PC).
+
+**Result: no change.** All seven words are equal on every step 0-18999 with
+and without 0003. The classification is (h)'s: exact through 395, the boot
+upload (352) and 8465/8469 unchanged, 17985 one more lag frame, one frame
+behind from 18108 and the desync from 18587.
+
+**Evidence.** The candidate is active: the SPC's own timing changes. Its port
+writes land up to 257 SPC cycles (one timer-2 period of 16 ticks) apart from
+0002's in the traced window, and its PC at the step ends differs. The CPU's
+side does not change: the wait-entry beam, the cut and the CPU PC are equal on
+all 46 traced steps. The door does not talk to the SPC. The CPU accesses the
+ports only at 17950, 17952, 17958 and 17961, two to four times each. From
+17962 to 17995 it makes none, and the SPC only writes its status. The extra
+lag is a long room-load frame: the main loop reaches its NMI wait at line 251
+on step 17986, past vblank (line 225), in both builds. lsnes is in room
+`9E9F` a step earlier. So the extra time is in the CPU's own work for the
+load (decompression, DMA, VRAM uploads), not in a CPU-SPC handshake.
+
+**Speed.** The machine was shared with other lanes, so the numbers are
+noisy. `oracle movie ... --frames 20000 --positions-only` ran back to back:
+0002 at 56 frames/s, 0003 at 48 (about 15 % slower). Earlier, on a quieter
+machine, 0003 alone ran at 295 frames/s. The dry run happens only within 16
+SPC cycles of a port access, so the cost is probably the per-cycle debt
+update.
+
+**Reading.** At the exact rate, port order is not what LakeSnes lacks for the
+any% movie through 18999. What is left at 17985 is CPU-side timing in the
+room load. Next: find the load's time on both emulators. Log the master-clock
+position of the load's phases on LakeSnes and lsnes (watched PCs in the
+door's `$82:E2xx` and decompression routines, and DMA start lines) and
+compare them. Then check the CPU timing models that differ: DMA setup and
+per-byte cost, DRAM refresh, and HDMA during the load.

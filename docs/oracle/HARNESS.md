@@ -291,6 +291,11 @@ in `OracleId::fixes`. They are emulator fixes, not ROM patches.
   rate the movies were recorded at, stepped as an exact integer ratio
   (MEASUREMENTS (h)).
 
+Tried and not applied: `native/candidates/0003-apu-ports-in-time-order.patch`
+orders the CPU-SPC port accesses in time, as bsnes v085 does. It changes no
+lag-log word in any% steps 0-18999 (MEASUREMENTS (j)), so it is not in
+`fixes/`.
+
 ## Proving it against the lock
 
 `oracle corpus ROM scenarios/lock.toml DATA` runs every faithful entry whose
