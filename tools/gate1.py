@@ -108,6 +108,45 @@ def diagnose(row: str, entries: pathlib.Path, content: pathlib.Path, sealed: pat
     print(f"{row}: at tick {tick}:\n{ranges(dumps['verifier'], dumps['slice'])}", flush=True)
 
 
+def windowed(row: str, content: pathlib.Path, sealed: pathlib.Path, inputs: pathlib.Path,
+             ticks: int, replayed: dict, work: pathlib.Path) -> bool:
+    """The windowed app on the same row, headless, against sm_replay's run of it."""
+    out = work / f"{row}-window.toml"
+    command = ["xvfb-run", "-a", "target/release/sm_slice", str(content), str(sealed),
+               "--inputs", str(inputs), "--ticks", str(ticks), "--lock-out", str(out),
+               "--save", str(work / f"{row}-window.srm")]
+    environment = dict(os.environ, SDL_AUDIODRIVER="dummy")
+    shown = run(command, env=environment)
+    print(f"{row}: sm_slice exit {shown.returncode}: {shown.stdout.strip()[-400:]}"
+          f" {shown.stderr.strip()[-400:]}", flush=True)
+    if shown.returncode or not out.exists():
+        return False
+    with out.open("rb") as file:
+        entry = tomllib.load(file)
+    differing = check(row, replayed, entry)
+    if entry.get("combined") != replayed.get("combined"):
+        differing.append("combined")
+    if not differing:
+        print(f"{row}: sm_slice MATCHES sm_replay on {len(MACHINE)} streams"
+              f" ({entry['ticks']} ticks)", flush=True)
+        return True
+    print(f"{row}: sm_slice DIFFERS from sm_replay in {', '.join(differing)}"
+          f" ({entry['ticks']} and {replayed['ticks']} ticks)", flush=True)
+    # The first differing Tick, from both sides' per-Tick digest logs.
+    logs = {side: work / f"{row}-{side}-pair.log" for side in ("window", "replay")}
+    for path in logs.values():
+        path.unlink(missing_ok=True)
+    run(command, env=dict(environment, SM_DIGEST_LOG=str(logs["window"])))
+    run(["target/release/sm_replay", "one", str(content), str(sealed), str(inputs), str(ticks)],
+        env=dict(os.environ, SM_DIGEST_LOG=str(logs["replay"])))
+    left, right = (logs[side].read_text().splitlines() if logs[side].exists() else []
+                   for side in ("window", "replay"))
+    first = next((a.split()[0] for a, b in zip(left, right) if a != b), None)
+    print(f"{row}: digest logs {len(left)} and {len(right)} ticks; first differing tick: {first}",
+          flush=True)
+    return False
+
+
 def check(row: str, locked: dict, run_entry: dict) -> list[str]:
     differing = [name for name in MACHINE if locked["digests"][name] != run_entry["digests"][name]]
     if locked["ticks"] != run_entry["ticks"]:
@@ -118,10 +157,12 @@ def check(row: str, locked: dict, run_entry: dict) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("rows", nargs="+")
+    parser.add_argument("--slice", action="append", default=[], metavar="ROW",
+                        help="also run the windowed sm_slice on ROW against sm_replay")
     args = parser.parse_args()
     root = pathlib.Path(".")
     lock = scenario.read_lock(root)
-    failed = diagnosed = 0
+    failed = diagnosed = window_failed = 0
     work = pathlib.Path(tempfile.mkdtemp(prefix="gate1-"))
     for row in args.rows:
         restore(row, lock.pins, lock.bundles, work)
@@ -167,11 +208,16 @@ def main() -> int:
         print(f"{row}: {'MATCHES the oracle on ' + str(len(MACHINE)) + ' streams' if not differing else 'DIFFERS in ' + ', '.join(differing)}"
               f" ({entry['ticks']} ticks)", flush=True)
         failed += bool(differing)
+        if row in args.slice and not windowed(row, content, sealed, inputs, locked["ticks"],
+                                              entry, work):
+            window_failed += 1
         if differing and diagnosed < 3:
             diagnosed += 1
             diagnose(row, entries, content, sealed, inputs, locked["ticks"], work)
     print(f"Gate 1 rows: {len(args.rows) - failed}/{len(args.rows)} match", flush=True)
-    return 1 if failed else 0
+    if args.slice:
+        print(f"sm_slice rows: {len(args.slice) - window_failed}/{len(args.slice)} match sm_replay", flush=True)
+    return 1 if failed or window_failed else 0
 
 
 if __name__ == "__main__":
