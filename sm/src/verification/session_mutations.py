@@ -1,4 +1,5 @@
-"""Mutation check of the Session's RAM mappings. No workflow runs the mutants now (#242).
+"""Mutation check of the Session's RAM mappings. No workflow runs the mutants; Quality runs only
+--check-anchors.
 
 Each mutant perturbs one owner's or view's mapping between RAM and Session
 fields: it shifts a field's address by 2, swaps two fields, or drops one byte
@@ -7,7 +8,7 @@ integration tests in crates/sm_game/tests (state_layout.rs, collision_wrap.rs,
 grapple_swing.rs). A surviving mutant, a
 compile error or a failure in any other test is not a kill.
 
-    python session_mutations.py                  run every mutant (GitHub CI only)
+    python session_mutations.py                  run every mutant (GitHub Actions only)
     python session_mutations.py --check-anchors  check every anchor exists, no build
 """
 from collections.abc import Iterable

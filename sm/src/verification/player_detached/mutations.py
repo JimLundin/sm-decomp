@@ -1,4 +1,8 @@
-"""Bounded mutation check of actual detached-core assertions; GitHub CI only."""
+"""Bounded mutation check of actual detached-core assertions.
+
+The mutants build and run only under GitHub Actions, and no workflow runs them now;
+Quality runs only --check-anchors.
+"""
 
 from collections.abc import Iterator, Sequence
 import os
