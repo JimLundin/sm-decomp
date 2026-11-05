@@ -12,7 +12,7 @@ pub mod slots;
 pub mod strand;
 pub mod video;
 
-use canonical::Canonical;
+use canonical::{Canonical, Schema};
 use data::id::Cycles;
 use slots::FlagSet;
 
@@ -178,10 +178,11 @@ pub struct State {
     pub room: RoomScoped,
 }
 
-/// The State's schema: a hash of its type structure, so a Checkpoint only opens against the
-/// State shape that wrote it.
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Schema(pub u64);
+/// The State's schema: [`State`]'s structural hash.
+///
+/// A Checkpoint only opens against the State shape that wrote it: another shape's bytes fail
+/// with [`canonical::DecodeError::SchemaMismatch`] before the State is read.
+pub type StateSchema = Schema<State>;
 
 /// The content fingerprint: a Checkpoint only opens against the content it was made with.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -190,18 +191,30 @@ pub struct Fingerprint(pub u64);
 /// A saved State (FOUNDATION §4.6), encoded canonically.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Checkpoint {
-    /// The schema that wrote it.
-    pub schema: Schema,
+    /// The schema that wrote it, always this build's.
+    pub schema: StateSchema,
     /// The content it was made against.
     pub fingerprint: Fingerprint,
     /// The State.
     pub state: State,
 }
 
+impl Checkpoint {
+    /// `state`, saved against the content `fingerprint` names.
+    #[must_use]
+    pub const fn new(fingerprint: Fingerprint, state: State) -> Self {
+        Self {
+            schema: Schema::new(),
+            fingerprint,
+            state,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Checkpoint, Fingerprint, Schema, State};
-    use crate::canonical::{Canonical, from_bytes, to_bytes};
+    use super::{Checkpoint, Fingerprint, State};
+    use canonical::{Canonical, DecodeError, from_bytes, to_bytes};
 
     #[test]
     fn a_default_state_round_trips() {
@@ -211,12 +224,10 @@ mod tests {
 
     #[test]
     fn a_checkpoint_round_trips_and_diffs_by_path() {
-        let checkpoint = Checkpoint {
-            schema: Schema(1),
-            fingerprint: Fingerprint(2),
-            state: State::default(),
-        };
-        let decoded = from_bytes::<Checkpoint>(&to_bytes(&checkpoint));
+        let checkpoint = Checkpoint::new(Fingerprint(2), State::default());
+        let bytes = to_bytes(&checkpoint);
+        assert_eq!(bytes[..8], State::SCHEMA.to_le_bytes());
+        let decoded = from_bytes::<Checkpoint>(&bytes);
         assert_eq!(decoded.as_ref(), Ok(&checkpoint));
         let mut moved = checkpoint.clone();
         moved.state.samus.position.x.pixels = 1;
@@ -226,6 +237,20 @@ mod tests {
         assert_eq!(
             difference.as_deref(),
             Some("state.samus.position.x.pixels: 0000 != 0100")
+        );
+    }
+
+    #[test]
+    fn a_checkpoint_from_another_schema_does_not_open() {
+        let mut bytes = to_bytes(&Checkpoint::new(Fingerprint(2), State::default()));
+        let other = State::SCHEMA ^ 1;
+        bytes[..8].copy_from_slice(&other.to_le_bytes());
+        assert_eq!(
+            from_bytes::<Checkpoint>(&bytes),
+            Err(DecodeError::SchemaMismatch {
+                expected: State::SCHEMA,
+                found: other,
+            })
         );
     }
 }

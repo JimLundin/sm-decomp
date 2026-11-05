@@ -7,6 +7,7 @@ publish = false
 description = "IDs, the ROM decoder, typed content, profiles, the portable records and the shared digest"
 
 [dependencies]
+canonical = { path = "../canonical" }
 
 [lints]
 workspace = true

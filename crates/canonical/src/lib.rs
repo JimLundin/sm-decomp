@@ -1,465 +1,497 @@
-//! `#[derive(Canonical)]`: the one Checkpoint codec and diff for every State type (K6).
+//! The one canonical codec of the State (K6): encode, decode, diff and schema.
 //!
-//! The trait and its primitive impls live in `game::canonical`, beside the State it encodes.
-//! This crate only writes the per-type impls, so no State type has a hand-written codec.
-//! Generated code names `::game::canonical`, so `game` declares `extern crate self as game;`.
+//! Every State type, and every `data` type the State holds, derives [`Canonical`] with
+//! `#[derive(canonical::Canonical)]`. It is its own crate, not part of `game`, so `data` can
+//! derive it without depending on `game`. The Checkpoint is this encoding of the whole State
+//! inside its envelope (schema, fingerprint), and lockstep uses [`Canonical::diff`] to name
+//! the first field where the engine and the decoded oracle State part.
 //!
-//! The encoding, per shape:
-//! - a struct or newtype encodes its fields in declaration order, with no framing;
-//! - an enum encodes a one-byte tag, the variant's position in declaration order (not its
-//!   discriminant), then that variant's fields;
-//! - a field-less struct encodes nothing.
-//!
-//! `diff` names the first differing field by path. A lone unnamed field (a newtype, or a
-//! variant like `Rising(Speed)`) is transparent: the path stops at the newtype's own name.
-//!
-//! The macro reads its input with `proc_macro` alone. It only needs field and variant names,
-//! never types, so it takes no `syn` or `quote`, whose build scripts can't run on locked-down
-//! machines. A generic type's impl bounds every type parameter by `Canonical`, as the standard
-//! derives do; const parameters pass through and lifetimes are refused.
+//! The encoding is byte-exact and has no per-type version: [`Canonical::SCHEMA`], a hash of
+//! the type's structure, versions a whole State, and [`Schema`] carries it in an envelope.
+//! Integers are fixed-width little-endian, `bool` is one byte that must be 0 or 1, an enum is
+//! a one-byte tag (declaration order) followed by its fields, `Option` is a tag then its
+//! value, a `Vec` is a `u32` length then its elements, and a fixed array is its elements with
+//! no length.
 
-use proc_macro::{Delimiter, Group, Spacing, TokenStream, TokenTree};
+use std::fmt;
+use std::marker::PhantomData;
 
-/// The path every generated impl uses for the trait and its helpers.
-const CODEC: &str = "::game::canonical";
+pub use canonical_derive::Canonical;
 
-/// Derives `game::canonical::Canonical` for a struct, a newtype or an enum with data.
-#[proc_macro_derive(Canonical)]
-pub fn derive_canonical(input: TokenStream) -> TokenStream {
-    let code = match Item::parse(input) {
-        Ok((item, generics)) => item.expand(&generics),
-        Err(message) => format!("::core::compile_error!({message:?});"),
-    };
-    code.parse().unwrap_or_default()
+/// A type with one canonical encoding, a fallible decoder, a field-path diff and a schema.
+pub trait Canonical: Sized {
+    /// A hash of this type's structure: its kind and name, its variants' and fields' names in
+    /// order and their types' schemas. Two types with equal schemas encode alike.
+    const SCHEMA: u64;
+
+    /// Appends this value's canonical bytes to `out`.
+    fn encode(&self, out: &mut Vec<u8>);
+
+    /// Reads one value from the front of `input`.
+    ///
+    /// # Errors
+    /// [`DecodeError`] when the bytes end early or hold a value the type can't have.
+    fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError>;
+
+    /// The first field, in declaration order, where `self` and `other` differ.
+    fn diff(&self, other: &Self) -> Option<Difference>;
 }
 
-/// The fields of a struct or of one variant.
-enum Shape {
-    Named(Vec<String>),
-    Unnamed(usize),
-    Unit,
+/// The canonical bytes of `value`.
+pub fn to_bytes<T: Canonical>(value: &T) -> Vec<u8> {
+    let mut out = Vec::new();
+    value.encode(&mut out);
+    out
 }
 
-/// A generic item's parameters, as the impl header needs them.
-#[derive(Default)]
-struct Generics {
-    /// The parameters as declared, for `impl<..>`.
-    declared: String,
-    /// The parameter names, for `Name<..>`.
-    arguments: String,
-    /// One `T: Canonical` per type parameter, for the where clause.
-    bounds: String,
-}
-
-impl Generics {
-    /// Reads the parameters between a type's `<` and `>`.
-    fn parse(tokens: &[TokenTree]) -> Result<Self, String> {
-        let mut arguments = Vec::new();
-        let mut bounds = Vec::new();
-        for parameter in split_commas(tokens.iter().cloned().collect()) {
-            match parameter.as_slice() {
-                [TokenTree::Ident(keyword), TokenTree::Ident(name), ..]
-                    if keyword.to_string() == "const" =>
-                {
-                    arguments.push(name.to_string());
-                }
-                [TokenTree::Ident(name), ..] => {
-                    bounds.push(format!("{name}: {CODEC}::Canonical"));
-                    arguments.push(name.to_string());
-                }
-                _ => return Err("Canonical takes type and const parameters only".to_owned()),
-            }
-        }
-        Ok(Self {
-            declared: tokens.iter().cloned().collect::<TokenStream>().to_string(),
-            arguments: arguments.join(", "),
-            bounds: bounds.join(", "),
-        })
-    }
-}
-
-/// Splits `<..> rest` into the parameters inside the angle brackets and the rest.
-fn split_generics(tokens: &[TokenTree]) -> Option<(&[TokenTree], &[TokenTree])> {
-    let mut depth = 0_usize;
-    let mut after_minus = false;
-    for (index, token) in tokens.iter().enumerate() {
-        if let TokenTree::Punct(punct) = token {
-            match punct.as_char() {
-                '<' => depth = depth.saturating_add(1),
-                '>' if !after_minus => {
-                    depth = depth.saturating_sub(1);
-                    if depth == 0 {
-                        let rest = tokens.get(index.checked_add(1)?..)?;
-                        return Some((tokens.get(1..index)?, rest));
-                    }
-                }
-                _ => {}
-            }
-            after_minus = punct.as_char() == '-' && punct.spacing() == Spacing::Joint;
-        } else {
-            after_minus = false;
-        }
-    }
-    None
-}
-
-/// The item the derive is attached to: only what the codec needs.
-enum Item {
-    Struct {
-        name: String,
-        shape: Shape,
-    },
-    Enum {
-        name: String,
-        variants: Vec<(String, Shape)>,
-    },
-}
-
-/// One field: how generated code reaches it, and the path segment its diff adds.
-struct Field {
-    /// The member in `self.member` and in patterns: a name or a position.
-    member: String,
-    /// `None` for a lone unnamed field, which is transparent in paths.
-    segment: Option<String>,
-}
-
-impl Shape {
-    fn fields(&self) -> Vec<Field> {
-        match self {
-            Self::Named(names) => names
-                .iter()
-                .map(|name| Field {
-                    member: name.clone(),
-                    segment: Some(name.trim_start_matches("r#").to_owned()),
-                })
-                .collect(),
-            Self::Unnamed(count) => (0..*count)
-                .map(|position| Field {
-                    member: position.to_string(),
-                    segment: (*count > 1).then(|| position.to_string()),
-                })
-                .collect(),
-            Self::Unit => Vec::new(),
-        }
-    }
-
-    /// The pattern `path { member: prefix0, .. }`, `path(prefix0, ..)` or `path`.
-    fn pattern(&self, path: &str, prefix: &str) -> String {
-        let fields = self.fields();
-        let bindings = fields
-            .iter()
-            .enumerate()
-            .map(|(position, field)| (field.member.clone(), format!("{prefix}{position}")));
-        match self {
-            Self::Named(_) => {
-                let members: Vec<String> = bindings
-                    .map(|(member, binding)| format!("{member}: {binding}"))
-                    .collect();
-                format!("{path} {{ {} }}", members.join(", "))
-            }
-            Self::Unnamed(_) => {
-                let members: Vec<String> = bindings.map(|(_, binding)| binding).collect();
-                format!("{path}({})", members.join(", "))
-            }
-            Self::Unit => path.to_owned(),
-        }
-    }
-
-    /// The expression that decodes this shape's fields in order into `path`.
-    fn decoded(&self, path: &str) -> String {
-        let decode = format!("{CODEC}::Canonical::decode(input)?");
-        match self {
-            Self::Named(names) => {
-                let members: Vec<String> = names
-                    .iter()
-                    .map(|name| format!("{name}: {decode}"))
-                    .collect();
-                format!("{path} {{ {} }}", members.join(", "))
-            }
-            Self::Unnamed(count) => format!("{path}({})", vec![decode; *count].join(", ")),
-            Self::Unit => path.to_owned(),
-        }
-    }
-}
-
-/// The diff step for one pair of fields: return the first difference, extended by its path.
-fn diff_step(left: &str, right: &str, segment: Option<&str>, variant: Option<&str>) -> String {
-    let field = segment
-        .map(|label| format!(".within({CODEC}::Segment::Field({label:?}))"))
-        .unwrap_or_default();
-    let variant = variant
-        .map(|label| format!(".within({CODEC}::Segment::Variant({label:?}))"))
-        .unwrap_or_default();
-    format!(
-        "if let ::core::option::Option::Some(difference) = {CODEC}::Canonical::diff({left}, {right}) {{ \
-         return ::core::option::Option::Some(difference{field}{variant}); }}"
-    )
-}
-
-impl Item {
-    fn parse(input: TokenStream) -> Result<(Self, Generics), String> {
-        let tokens: Vec<TokenTree> = input.into_iter().collect();
-        let [TokenTree::Ident(keyword), TokenTree::Ident(name), rest @ ..] =
-            skip_attributes(&tokens)
-        else {
-            return Err("Canonical expects a struct or an enum".to_owned());
-        };
-        let name = name.to_string();
-        let (generics, rest) = match rest {
-            [TokenTree::Punct(open), ..] if open.as_char() == '<' => {
-                let (parameters, rest) = split_generics(rest)
-                    .ok_or_else(|| format!("Canonical can't read the generics of {name}"))?;
-                (Generics::parse(parameters)?, rest)
-            }
-            _ => (Generics::default(), rest),
-        };
-        Self::parse_body(&keyword.to_string(), name, rest).map(|item| (item, generics))
-    }
-
-    fn parse_body(keyword: &str, name: String, rest: &[TokenTree]) -> Result<Self, String> {
-        match (keyword, rest) {
-            ("struct", [TokenTree::Group(body)]) if body.delimiter() == Delimiter::Brace => {
-                Ok(Self::Struct {
-                    name,
-                    shape: Shape::Named(named_fields(body)?),
-                })
-            }
-            ("struct", [TokenTree::Group(body), TokenTree::Punct(end)])
-                if body.delimiter() == Delimiter::Parenthesis && end.as_char() == ';' =>
-            {
-                Ok(Self::Struct {
-                    name,
-                    shape: Shape::Unnamed(split_commas(body.stream()).len()),
-                })
-            }
-            ("struct", [TokenTree::Punct(end)]) if end.as_char() == ';' => Ok(Self::Struct {
-                name,
-                shape: Shape::Unit,
-            }),
-            ("enum", [TokenTree::Group(body)]) if body.delimiter() == Delimiter::Brace => {
-                let variants = split_commas(body.stream())
-                    .iter()
-                    .map(|tokens| variant(tokens))
-                    .collect::<Result<Vec<_>, _>>()?;
-                if variants.is_empty() {
-                    return Err(format!("Canonical needs at least one variant: {name}"));
-                }
-                Ok(Self::Enum { name, variants })
-            }
-            _ => Err(format!(
-                "Canonical expects a struct or an enum with no where clause: {name}"
-            )),
-        }
-    }
-
-    fn expand(&self, generics: &Generics) -> String {
-        let Generics {
-            declared,
-            arguments,
-            bounds,
-        } = generics;
-        let (name, (encode, decode, diff)) = match self {
-            Self::Struct { name, shape } => (name, expand_struct(shape)),
-            Self::Enum { name, variants } => match expand_enum(name, variants) {
-                Ok(parts) => (name, parts),
-                Err(message) => return format!("::core::compile_error!({message:?});"),
-            },
-        };
-        format!(
-            "#[automatically_derived] impl<{declared}> {CODEC}::Canonical for {name}<{arguments}> where {bounds} {{ \
-             fn encode(&self, out: &mut ::std::vec::Vec<u8>) {{ {encode} }} \
-             fn decode(input: &mut {CODEC}::Reader<'_>) -> ::core::result::Result<Self, {CODEC}::DecodeError> {{ {decode} }} \
-             fn diff(&self, other: &Self) -> ::core::option::Option<{CODEC}::Difference> {{ {diff} }} }}"
-        )
-    }
-}
-
-fn expand_struct(shape: &Shape) -> (String, String, String) {
-    let fields = shape.fields();
-    if fields.is_empty() {
-        return (
-            "let _ = out;".to_owned(),
-            "let _ = input; ::core::result::Result::Ok(Self {})".to_owned(),
-            "let _ = (self, other); ::core::option::Option::None".to_owned(),
-        );
-    }
-    let encode = fields
-        .iter()
-        .map(|field| format!("{CODEC}::Canonical::encode(&self.{}, out);", field.member))
-        .collect::<Vec<_>>()
-        .concat();
-    let members: Vec<String> = fields
-        .iter()
-        .map(|field| format!("{}: {CODEC}::Canonical::decode(input)?", field.member))
-        .collect();
-    let decode = format!(
-        "::core::result::Result::Ok(Self {{ {} }})",
-        members.join(", ")
-    );
-    let steps: String = fields
-        .iter()
-        .map(|field| {
-            diff_step(
-                &format!("&self.{}", field.member),
-                &format!("&other.{}", field.member),
-                field.segment.as_deref(),
-                None,
-            )
-        })
-        .collect();
-    (
-        encode,
-        decode,
-        format!("{steps} ::core::option::Option::None"),
-    )
-}
-
-fn expand_enum(
-    name: &str,
-    variants: &[(String, Shape)],
-) -> Result<(String, String, String), String> {
-    let single = variants.len() == 1;
-    let (mut encode, mut decode, mut diff) = (Vec::new(), Vec::new(), Vec::new());
-    for (position, (variant, shape)) in variants.iter().enumerate() {
-        let tag = u8::try_from(position)
-            .map_err(|_| format!("Canonical encodes at most 256 variants: {name}"))?;
-        let path = format!("Self::{variant}");
-        let label = variant.trim_start_matches("r#");
-        let (left, right) = (
-            shape.pattern(&path, "left_"),
-            shape.pattern(&path, "right_"),
-        );
-        let fields = shape.fields();
-        let encode_fields = (0..fields.len())
-            .map(|position| format!("{CODEC}::Canonical::encode(left_{position}, out);"))
-            .collect::<Vec<_>>()
-            .concat();
-        encode.push(format!(
-            "{left} => {{ out.push({tag}u8); {encode_fields} }}"
-        ));
-        decode.push(format!(
-            "{tag}u8 => ::core::result::Result::Ok({}),",
-            shape.decoded(&path)
-        ));
-        let bind_other = if single {
-            format!("let {right} = other;")
-        } else {
-            format!(
-                "let {right} = other else {{ return ::core::option::Option::Some({CODEC}::Difference::here(self, other)); }};"
-            )
-        };
-        let steps: String = fields
-            .iter()
-            .enumerate()
-            .map(|(position, field)| {
-                diff_step(
-                    &format!("left_{position}"),
-                    &format!("right_{position}"),
-                    field.segment.as_deref(),
-                    Some(label),
-                )
-            })
-            .collect();
-        diff.push(format!(
-            "{left} => {{ {bind_other} {steps} ::core::option::Option::None }}"
-        ));
-    }
-    Ok((
-        format!("match self {{ {} }}", encode.concat()),
-        format!(
-            "match <u8 as {CODEC}::Canonical>::decode(input)? {{ {} \
-             tag => ::core::result::Result::Err({CODEC}::DecodeError::UnknownVariant {{ type_name: {name:?}, tag }}), }}",
-            decode.concat()
-        ),
-        format!("match self {{ {} }}", diff.concat()),
-    ))
-}
-
-/// The tokens after any leading attributes and visibility.
-fn skip_attributes(mut tokens: &[TokenTree]) -> &[TokenTree] {
-    loop {
-        tokens = match tokens {
-            [
-                TokenTree::Punct(hash),
-                TokenTree::Group(attribute),
-                rest @ ..,
-            ] if hash.as_char() == '#' && attribute.delimiter() == Delimiter::Bracket => rest,
-            [TokenTree::Ident(public), TokenTree::Group(scope), rest @ ..]
-                if public.to_string() == "pub" && scope.delimiter() == Delimiter::Parenthesis =>
-            {
-                rest
-            }
-            [TokenTree::Ident(public), rest @ ..] if public.to_string() == "pub" => rest,
-            _ => return tokens,
-        };
-    }
-}
-
-/// The names of a braced field list.
-fn named_fields(body: &Group) -> Result<Vec<String>, String> {
-    split_commas(body.stream())
-        .iter()
-        .map(|tokens| match skip_attributes(tokens) {
-            [TokenTree::Ident(name), TokenTree::Punct(colon), ..] if colon.as_char() == ':' => {
-                Ok(name.to_string())
-            }
-            _ => Err("Canonical expects `name: Type` fields".to_owned()),
-        })
-        .collect()
-}
-
-/// One enum variant's name and fields. A `= discriminant` is ignored: the tag is the position.
-fn variant(tokens: &[TokenTree]) -> Result<(String, Shape), String> {
-    match skip_attributes(tokens) {
-        [TokenTree::Ident(name)] => Ok((name.to_string(), Shape::Unit)),
-        [TokenTree::Ident(name), TokenTree::Punct(equals), ..] if equals.as_char() == '=' => {
-            Ok((name.to_string(), Shape::Unit))
-        }
-        [TokenTree::Ident(name), TokenTree::Group(body), ..]
-            if body.delimiter() == Delimiter::Brace =>
-        {
-            Ok((name.to_string(), Shape::Named(named_fields(body)?)))
-        }
-        [TokenTree::Ident(name), TokenTree::Group(body), ..]
-            if body.delimiter() == Delimiter::Parenthesis =>
-        {
-            Ok((
-                name.to_string(),
-                Shape::Unnamed(split_commas(body.stream()).len()),
-            ))
-        }
-        _ => Err("Canonical can't read an enum variant".to_owned()),
-    }
-}
-
-/// Splits a list at its top-level commas, dropping empty entries (a trailing comma).
+/// Decodes a whole value from `bytes`, which must hold nothing after it.
 ///
-/// Commas inside `<..>` belong to a type such as `Map<K, V>`, so angle brackets are counted;
-/// the `>` of `->` doesn't close one.
-fn split_commas(stream: TokenStream) -> Vec<Vec<TokenTree>> {
-    let mut entries = vec![Vec::new()];
-    let mut depth = 0_usize;
-    let mut after_minus = false;
-    for token in stream {
-        if let TokenTree::Punct(punct) = &token {
-            match punct.as_char() {
-                ',' if depth == 0 => {
-                    entries.push(Vec::new());
-                    after_minus = false;
-                    continue;
-                }
-                '<' => depth = depth.saturating_add(1),
-                '>' if !after_minus => depth = depth.saturating_sub(1),
-                _ => {}
+/// # Errors
+/// [`DecodeError`] when the bytes don't hold exactly one `T`.
+pub fn from_bytes<T: Canonical>(bytes: &[u8]) -> Result<T, DecodeError> {
+    let mut input = Reader::new(bytes);
+    let value = T::decode(&mut input)?;
+    match input.remaining() {
+        0 => Ok(value),
+        left => Err(DecodeError::TrailingBytes(left)),
+    }
+}
+
+/// Why canonical bytes didn't decode.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DecodeError {
+    /// The bytes ended inside a value.
+    UnexpectedEnd,
+    /// A `bool` byte other than 0 or 1.
+    InvalidBool(u8),
+    /// An enum or `Option` tag with no variant.
+    UnknownVariant {
+        /// The enum's name.
+        type_name: &'static str,
+        /// The tag read.
+        tag: u8,
+    },
+    /// A fixed array's elements didn't fill it.
+    ArrayLength,
+    /// Bytes left over after a whole value.
+    TrailingBytes(usize),
+    /// An envelope written by a different shape of the type it holds.
+    SchemaMismatch {
+        /// This build's schema.
+        expected: u64,
+        /// The schema the bytes were written with.
+        found: u64,
+    },
+}
+
+impl fmt::Display for DecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::UnexpectedEnd => write!(f, "the bytes end inside a value"),
+            Self::InvalidBool(byte) => write!(f, "bool byte {byte:#04x} is neither 0 nor 1"),
+            Self::UnknownVariant { type_name, tag } => {
+                write!(f, "{type_name} has no variant {tag}")
             }
-            after_minus = punct.as_char() == '-' && punct.spacing() == Spacing::Joint;
-        } else {
-            after_minus = false;
-        }
-        if let Some(entry) = entries.last_mut() {
-            entry.push(token);
+            Self::ArrayLength => write!(f, "an array's elements don't fill it"),
+            Self::TrailingBytes(count) => write!(f, "{count} bytes after the value"),
+            Self::SchemaMismatch { expected, found } => {
+                write!(
+                    f,
+                    "schema {found:#018x} is not this build's {expected:#018x}"
+                )
+            }
         }
     }
-    entries.retain(|entry| !entry.is_empty());
-    entries
+}
+
+impl std::error::Error for DecodeError {}
+
+/// Builds a [`Canonical::SCHEMA`] at compile time: FNV-1a over the structure's names, counts
+/// and the schemas of its parts, each in a self-delimiting form so no two shapes collide by
+/// concatenation.
+#[derive(Clone, Copy, Debug)]
+#[must_use]
+pub struct SchemaHasher(u64);
+
+impl SchemaHasher {
+    /// FNV-1a's 64-bit offset basis.
+    const OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+    /// FNV-1a's 64-bit prime.
+    const PRIME: u64 = 0x0000_0100_0000_01b3;
+
+    /// A hasher that has seen nothing.
+    pub const fn new() -> Self {
+        Self(Self::OFFSET)
+    }
+
+    const fn bytes(self, mut bytes: &[u8]) -> Self {
+        let mut hash = self.0;
+        while let [byte, rest @ ..] = bytes {
+            hash =
+                (hash ^ u64::from_le_bytes([*byte, 0, 0, 0, 0, 0, 0, 0])).wrapping_mul(Self::PRIME);
+            bytes = rest;
+        }
+        Self(hash)
+    }
+
+    /// Mixes in a count as eight little-endian bytes, the same on every target.
+    pub const fn count(self, count: usize) -> Self {
+        let bytes = count.to_le_bytes();
+        let mut hasher = self.bytes(&bytes);
+        let mut padding = size_of::<u64>().saturating_sub(bytes.len());
+        while padding > 0 {
+            hasher = hasher.bytes(&[0]);
+            padding = padding.saturating_sub(1);
+        }
+        hasher
+    }
+
+    /// Mixes in a name, prefixed by its length.
+    pub const fn name(self, name: &str) -> Self {
+        self.count(name.len()).bytes(name.as_bytes())
+    }
+
+    /// Mixes in a part's schema.
+    pub const fn schema(self, schema: u64) -> Self {
+        self.bytes(&schema.to_le_bytes())
+    }
+
+    /// The schema.
+    #[must_use]
+    pub const fn finish(self) -> u64 {
+        self.0
+    }
+}
+
+impl Default for SchemaHasher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// `T`'s schema, as an envelope carries it.
+///
+/// It encodes [`Canonical::SCHEMA`] as a `u64` and decodes only that value, so bytes written
+/// by another shape of `T` fail with [`DecodeError::SchemaMismatch`] before `T` is read.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Schema<T>(PhantomData<T>);
+
+impl<T: Canonical> Schema<T> {
+    /// The schema of this build's `T`.
+    #[must_use]
+    pub const fn new() -> Self {
+        Self(PhantomData)
+    }
+
+    /// Its value, `T::SCHEMA`.
+    #[must_use]
+    pub const fn value(self) -> u64 {
+        T::SCHEMA
+    }
+}
+
+impl<T: Canonical> Canonical for Schema<T> {
+    const SCHEMA: u64 = SchemaHasher::new()
+        .name("Schema")
+        .schema(T::SCHEMA)
+        .finish();
+
+    fn encode(&self, out: &mut Vec<u8>) {
+        T::SCHEMA.encode(out);
+    }
+
+    fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+        match u64::decode(input)? {
+            found if found == T::SCHEMA => Ok(Self::new()),
+            found => Err(DecodeError::SchemaMismatch {
+                expected: T::SCHEMA,
+                found,
+            }),
+        }
+    }
+
+    // Every value of a `Schema<T>` is the same: this build's `T::SCHEMA`.
+    fn diff(&self, _other: &Self) -> Option<Difference> {
+        None
+    }
+}
+
+/// The unread rest of a canonical encoding.
+#[derive(Clone, Copy, Debug)]
+pub struct Reader<'a> {
+    rest: &'a [u8],
+}
+
+impl<'a> Reader<'a> {
+    /// A reader over `bytes`.
+    #[must_use]
+    pub const fn new(bytes: &'a [u8]) -> Self {
+        Self { rest: bytes }
+    }
+
+    /// How many bytes are still unread.
+    #[must_use]
+    pub const fn remaining(&self) -> usize {
+        self.rest.len()
+    }
+
+    /// Takes the next `N` bytes.
+    ///
+    /// # Errors
+    /// [`DecodeError::UnexpectedEnd`] when fewer than `N` are left.
+    pub fn take<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
+        let (bytes, rest) = self
+            .rest
+            .split_first_chunk::<N>()
+            .ok_or(DecodeError::UnexpectedEnd)?;
+        self.rest = rest;
+        Ok(*bytes)
+    }
+}
+
+/// One step of a path into the State.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Segment {
+    /// A named field, or the position of an unnamed one.
+    Field(&'static str),
+    /// The enum variant both sides hold.
+    Variant(&'static str),
+    /// An element of an array or `Vec`.
+    Index(usize),
+    /// A `Vec`'s length.
+    Len,
+}
+
+/// The first place two values differ: its path and both sides' canonical bytes there.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Difference {
+    path: Vec<Segment>,
+    left: Vec<u8>,
+    right: Vec<u8>,
+}
+
+impl Difference {
+    /// A difference at the current value itself, holding both sides' encodings.
+    pub fn here<T: Canonical>(left: &T, right: &T) -> Self {
+        Self {
+            path: Vec::new(),
+            left: to_bytes(left),
+            right: to_bytes(right),
+        }
+    }
+
+    /// The same difference, seen from the value that contains it at `segment`.
+    #[must_use]
+    pub fn within(mut self, segment: Segment) -> Self {
+        self.path.insert(0, segment);
+        self
+    }
+
+    /// The path from the compared value down to the difference.
+    #[must_use]
+    pub fn path(&self) -> &[Segment] {
+        &self.path
+    }
+
+    /// The left side's canonical bytes at the path.
+    #[must_use]
+    pub fn left(&self) -> &[u8] {
+        &self.left
+    }
+
+    /// The right side's canonical bytes at the path.
+    #[must_use]
+    pub fn right(&self) -> &[u8] {
+        &self.right
+    }
+}
+
+/// The path as `samus.vertical.Rising[2].len`, for logs and lockstep reports.
+impl fmt::Display for Difference {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (position, segment) in self.path.iter().enumerate() {
+            match (position, segment) {
+                (0, Segment::Field(name) | Segment::Variant(name)) => write!(f, "{name}")?,
+                (_, Segment::Field(name) | Segment::Variant(name)) => write!(f, ".{name}")?,
+                (0, Segment::Len) => write!(f, "len")?,
+                (_, Segment::Len) => write!(f, ".len")?,
+                (_, Segment::Index(index)) => write!(f, "[{index}]")?,
+            }
+        }
+        if self.path.is_empty() {
+            write!(f, "(value)")?;
+        }
+        write!(f, ": ")?;
+        write_hex(f, &self.left)?;
+        write!(f, " != ")?;
+        write_hex(f, &self.right)
+    }
+}
+
+fn write_hex(f: &mut fmt::Formatter<'_>, bytes: &[u8]) -> fmt::Result {
+    bytes.iter().try_for_each(|byte| write!(f, "{byte:02x}"))
+}
+
+macro_rules! canonical_integer {
+    ($($integer:ty),*) => {$(
+        impl Canonical for $integer {
+            const SCHEMA: u64 = SchemaHasher::new().name(stringify!($integer)).finish();
+
+            fn encode(&self, out: &mut Vec<u8>) {
+                out.extend_from_slice(&self.to_le_bytes());
+            }
+
+            fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+                input.take().map(Self::from_le_bytes)
+            }
+
+            fn diff(&self, other: &Self) -> Option<Difference> {
+                (self != other).then(|| Difference::here(self, other))
+            }
+        }
+    )*};
+}
+
+canonical_integer!(u8, u16, u32, u64, i8, i16, i32, i64);
+
+impl Canonical for bool {
+    const SCHEMA: u64 = SchemaHasher::new().name("bool").finish();
+
+    fn encode(&self, out: &mut Vec<u8>) {
+        out.push(u8::from(*self));
+    }
+
+    fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+        match u8::decode(input)? {
+            0 => Ok(false),
+            1 => Ok(true),
+            byte => Err(DecodeError::InvalidBool(byte)),
+        }
+    }
+
+    fn diff(&self, other: &Self) -> Option<Difference> {
+        (self != other).then(|| Difference::here(self, other))
+    }
+}
+
+impl<T: Canonical> Canonical for Option<T> {
+    const SCHEMA: u64 = SchemaHasher::new()
+        .name("Option")
+        .schema(T::SCHEMA)
+        .finish();
+
+    fn encode(&self, out: &mut Vec<u8>) {
+        match self {
+            None => out.push(0),
+            Some(value) => {
+                out.push(1);
+                value.encode(out);
+            }
+        }
+    }
+
+    fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+        match u8::decode(input)? {
+            0 => Ok(None),
+            1 => T::decode(input).map(Some),
+            tag => Err(DecodeError::UnknownVariant {
+                type_name: "Option",
+                tag,
+            }),
+        }
+    }
+
+    fn diff(&self, other: &Self) -> Option<Difference> {
+        match (self, other) {
+            (Some(left), Some(right)) => left
+                .diff(right)
+                .map(|difference| difference.within(Segment::Variant("Some"))),
+            (None, None) => None,
+            (Some(_), None) | (None, Some(_)) => Some(Difference::here(self, other)),
+        }
+    }
+}
+
+/// The first differing element of two equal-length sequences, by index.
+fn diff_elements<T: Canonical>(left: &[T], right: &[T]) -> Option<Difference> {
+    left.iter()
+        .zip(right)
+        .enumerate()
+        .find_map(|(index, (left, right))| {
+            left.diff(right)
+                .map(|difference| difference.within(Segment::Index(index)))
+        })
+}
+
+impl<T: Canonical, const N: usize> Canonical for [T; N] {
+    const SCHEMA: u64 = SchemaHasher::new()
+        .name("array")
+        .count(N)
+        .schema(T::SCHEMA)
+        .finish();
+
+    fn encode(&self, out: &mut Vec<u8>) {
+        for element in self {
+            element.encode(out);
+        }
+    }
+
+    fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+        let elements = (0..N)
+            .map(|_| T::decode(input))
+            .collect::<Result<Vec<T>, _>>()?;
+        elements.try_into().map_err(|_| DecodeError::ArrayLength)
+    }
+
+    fn diff(&self, other: &Self) -> Option<Difference> {
+        diff_elements(self, other)
+    }
+}
+
+impl<T: Canonical> Canonical for Vec<T> {
+    const SCHEMA: u64 = SchemaHasher::new().name("Vec").schema(T::SCHEMA).finish();
+
+    // A State `Vec` is bounded far below `u32::MAX` elements (Session invariants), so the
+    // saturation never changes the length; it only keeps this path free of panics.
+    fn encode(&self, out: &mut Vec<u8>) {
+        u32::try_from(self.len()).unwrap_or(u32::MAX).encode(out);
+        for element in self {
+            element.encode(out);
+        }
+    }
+
+    fn decode(input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+        let len = usize::try_from(u32::decode(input)?).map_err(|_| DecodeError::UnexpectedEnd)?;
+        // Corrupt input can claim any length; reserve no more than the bytes could hold.
+        let mut elements = Self::with_capacity(len.min(input.remaining()));
+        for _ in 0..len {
+            elements.push(T::decode(input)?);
+        }
+        Ok(elements)
+    }
+
+    fn diff(&self, other: &Self) -> Option<Difference> {
+        if self.len() == other.len() {
+            diff_elements(self, other)
+        } else {
+            let len = |elements: &Self| u32::try_from(elements.len()).unwrap_or(u32::MAX);
+            Some(Difference::here(&len(self), &len(other)).within(Segment::Len))
+        }
+    }
+}
+
+/// A type marker carries no State. Its schema is fixed, since `T` needn't be `Canonical`; a
+/// derived generic type mixes in its own parameters' schemas instead.
+impl<T> Canonical for PhantomData<T> {
+    const SCHEMA: u64 = SchemaHasher::new().name("PhantomData").finish();
+
+    fn encode(&self, _out: &mut Vec<u8>) {}
+
+    fn decode(_input: &mut Reader<'_>) -> Result<Self, DecodeError> {
+        Ok(Self)
+    }
+
+    fn diff(&self, _other: &Self) -> Option<Difference> {
+        None
+    }
 }

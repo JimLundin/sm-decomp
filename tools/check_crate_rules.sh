@@ -13,7 +13,7 @@ fail() { echo "$1"; bad=1; }
 
 engine="data game runtime app"
 # The workspace packages each new crate may depend on directly (crates/README.md).
-# `canonical` is the derive for State types; the lane that fills it in adds the edge.
+# `canonical` holds the codec trait so `data` can derive it; `canonical_derive` is its macro.
 allowed() {
   case $1 in
     data) echo "canonical" ;;
@@ -23,10 +23,11 @@ allowed() {
     oracle) echo "data sm_data" ;; # sm_data until the digest moves to data (crates/README.md)
     verify) echo "data game runtime oracle" ;;
     tools) echo "verify oracle runtime" ;;
-    canonical) echo "" ;;
+    canonical) echo "canonical_derive" ;;
+    canonical_derive) echo "" ;;
   esac
 }
-new_crates="data game runtime app oracle verify tools canonical"
+new_crates="data game runtime app oracle verify tools canonical canonical_derive"
 
 # Name the rule a forbidden edge breaks, for the message.
 rule() {

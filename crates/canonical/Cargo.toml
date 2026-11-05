@@ -4,13 +4,10 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 publish = false
-description = "The Canonical derive: one encode, decode and diff for every State type (K6)"
+description = "The one canonical codec, diff and schema hash of every State type (K6)"
 
-[lib]
-proc-macro = true
-
-# Deliberately none: see the crate docs.
 [dependencies]
+canonical_derive = { path = "../canonical_derive" }
 
 [lints]
 workspace = true

@@ -1,0 +1,16 @@
+[package]
+name = "canonical_derive"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "#[derive(Canonical)]: writes each State type's encode, decode, diff and schema"
+
+[lib]
+proc-macro = true
+
+# Deliberately none: see the crate docs.
+[dependencies]
+
+[lints]
+workspace = true

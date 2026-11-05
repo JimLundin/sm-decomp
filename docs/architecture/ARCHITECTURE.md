@@ -102,7 +102,7 @@ each approach in plain terms.
 
 | # | Decision | Principles | Section |
 | --- | --- | --- | --- |
-| D1 | Fresh crates with plain names (`data`, `game`, `runtime`, `app`, `oracle`, `verify`, `tools`, `canonical`); old `sm_*` crates keep their names until deleted; CI forbids any new crate depending on `sm` or `sm_*` | P3, P5, P15 | 4 |
+| D1 | Fresh crates with plain names (`data`, `game`, `runtime`, `app`, `oracle`, `verify`, `tools`, `canonical`, `canonical_derive`); old `sm_*` crates keep their names until deleted; CI forbids any new crate depending on `sm` or `sm_*` | P3, P5, P15 | 4 |
 | D2 | Two public engine traits (`Family`, `Canonical`) and concrete context types; trait list kept in this doc | K3, P16 | 4.3 |
 | D3 | State is a public plain-data schema with private behaviour; one authority | P5, P6, P8 | 5.1 |
 | D4 | `RoomScoped` is one struct, so the door's reset list is a type | P8, K2 | 5.1 |
@@ -166,16 +166,18 @@ flowchart TD
 | `oracle` | the emulator adapters, `Oracle` trait, `FrameRecord`, seeds, the lock recorder | depend on `game`, `verify` or any old `sm_*` crate |
 | `verify` | the oracle record → State decoder, one projection per stream, facts, the stream digests, free-run and lockstep comparison | be depended on by an engine crate |
 | `tools` | the command line over the above, the Map Rando and sm-json-data importers | contain comparison logic of its own |
-| `canonical` | the `Canonical` derive (proc macro, `syn` and `quote` at build time) | anything else |
+| `canonical` | the `Canonical` trait, codec, diff and schema hash, re-exporting the derive; its own crate so `data` can derive it without `game` | hold State or rules |
+| `canonical_derive` | the `Canonical` derive (a proc macro over `proc_macro` alone: no `syn` or `quote`, whose build scripts Defender blocks locally, and fewer dependencies suit the binary-size goal) | anything else |
 
 **D1. Fresh crates with plain names; the old crates keep theirs until deleted.** Jim
 decided (2026-11-05) that the new crates have no `sm_` prefix and are named for what they
 are. The prefix only existed because the first attempt took `sm` and `game`. The new crates
-are `data`, `game`, `runtime`, `app`, `oracle`, `verify` and `tools`, plus the derive crate
-`canonical`, named for the derive it provides. The app's binary has a user-facing name
-(working name `super-metroid`). Checks on the names: none shadows a built-in crate (`core`,
-`std`, `alloc`, `test`, `proc_macro`) or a dependency we are likely to take, and the derive
-crate isn't called `derive`.
+are `data`, `game`, `runtime`, `app`, `oracle`, `verify` and `tools`, plus the codec crate
+`canonical` and its derive, `canonical_derive` (a proc-macro crate can export nothing else,
+and `data` must derive the trait without depending on `game`). The app's binary has a
+user-facing name (working name `super-metroid`). Checks on the names: none shadows a
+built-in crate (`core`, `std`, `alloc`, `test`, `proc_macro`) or a dependency we are likely
+to take, and the derive crate isn't called `derive`.
 
 **The old crates are not renamed.** FOUNDATION's J7 renamed them to `crates/legacy/*_v1` so
 that new and old couldn't be confused or linked. With the new names, they no longer collide:
@@ -212,7 +214,7 @@ design change to this document (K3, P16).
 | Trait | Crate | Implementations | Why it is a trait |
 | --- | --- | --- | --- |
 | `Family` | `data` | in slice 0: `Plm`, `Enemy`, `SamusAnimation`. Later: enemy projectiles, Samus projectiles, sprite objects, HDMA objects, palette FX, animated tiles, demo input, cinematic scripts | the interpreter is generic over the family's payload, op and pre-op types |
-| `Canonical` | `game` (derived by `canonical`) | every State type | the encode, decode and diff of one canonical codec (K6) |
+| `Canonical` | `canonical` (derived by `canonical_derive`; outside `game` so `data` types derive it too) | every State type and the `data` types it holds | the encode, decode, diff and structural schema hash of one canonical codec (K6) |
 
 Outside the engine: `Oracle` in `oracle` (LakeSnes, then Mesen), and a `SoundBackend`
 and `MusicSource` pair in `runtime` (the N-SPC backend and the replacement backends).

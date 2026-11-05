@@ -5,8 +5,4 @@
 //! It touches no pixels, samples, files, devices or SNES addresses (ARCHITECTURE §4.1, K1).
 #![deny(clippy::float_arithmetic)]
 
-// The Canonical derive names `::game::canonical`, which needs this inside the crate too.
-extern crate self as game;
-
-pub mod canonical;
 pub mod state;
