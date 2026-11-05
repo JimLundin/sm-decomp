@@ -7,6 +7,10 @@
 --   V <path>                     save the state at the next frame boundary,
 --                                which lies before the coming step's NMI
 --   R                            press reset for the coming frame
+--   W <offset hex> <word hex>    write a little-endian word to work RAM
+--                                ($7E:0000 + offset); asked for before a
+--                                resumed run's state has loaded, right
+--                                after it loads
 --   Q                            quit
 -- One record per lsnes frame: taken at the frame's cut (the NMI's RTI, or the
 -- boundary when no NMI returned), written to OH_RECORD at the frame boundary
@@ -71,6 +75,13 @@ local nmi_s, nmi_pc, in_nmi = nil, nil, false
 local reads, nmi_reads = 0, 0
 local wait_entry = nil
 local reset_next = false
+-- Work-RAM writes waiting for the start state: a load requested at start
+-- happens at the coming frame boundary, after the first requests are read.
+local loading, pending_writes = os.getenv("OH_START") ~= nil, {}
+
+local function write_word(offset, value)
+    memory.writeword(0x7E0000 + offset, value)
+end
 
 local function u8(v) return string.char(v % 256) end
 local function u16(v) return string.char(v % 256, math.floor(v / 256) % 256) end
@@ -98,6 +109,15 @@ local function read_request()
             exec("save-state " .. rest)
         elseif op == "R" then
             reset_next = true
+        elseif op == "W" then
+            local offset, value = rest:match("^(%x+) (%x+)$")
+            offset, value = tonumber(offset, 16), tonumber(value, 16)
+            assert(offset and offset < 0x20000 - 1 and value < 0x10000, "bad write: " .. line)
+            if loading then
+                pending_writes[#pending_writes + 1] = {offset, value}
+            else
+                write_word(offset, value)
+            end
         else
             error("bad request: " .. line)
         end
@@ -199,6 +219,17 @@ on_frame_emulated = guarded(function()
         if in_nmi then capture(2, nmi_pc, r) else capture(1, 0, r) end
     end
     send()
+end)
+
+-- The start state is in: apply the writes asked for before it loaded. A save
+-- requested now would land a frame later (lsnes saves before it loads at a
+-- boundary, and a save asked for here waits for the next one), so an edited
+-- seed is its base state plus these writes (crates/oracle/src/lsnes.rs).
+on_post_load = guarded(function()
+    if not loading then return end
+    loading = false
+    for _, write in ipairs(pending_writes) do write_word(write[1], write[2]) end
+    pending_writes = {}
 end)
 
 exec("set-speed turbo")

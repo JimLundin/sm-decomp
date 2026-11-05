@@ -20,6 +20,11 @@ published only in encrypted bundles.
     python tools/scenario_seeds.py write draygon-repel
     python tools/scenario_seeds.py show draygon-repel
     python tools/scenario_seeds.py check
+    python tools/scenario_seeds.py native-args one-energy-crocomire DIR
+
+native-args prints the arguments of `oracle derive-seed ROM ...`, which cuts
+the scenario's lsnes native seed DIR/scenario-NAME/INDEX.lss from the base's
+DIR/CAPTURE/INDEX.lss with the same edits.
 """
 import argparse
 import csv
@@ -274,6 +279,15 @@ def show(name: str) -> None:
         print(f"${offset:04X} {names.get(offset, 'word'):20} {before:#06x} -> {value:#06x}")
 
 
+def native_args(name: str, directory: str) -> None:
+    scenario = SCENARIOS[name]
+    capture, index = scenario.base.split(":")
+    seed = f"{int(index):04}.lss"
+    words = " ".join(f"--word {offset:04X}={value:04X}"
+                     for offset, value in sorted(planned_words(scenario).items()))
+    print(f"{directory}/{capture}/{seed} {directory}/scenario-{name}/{seed} {words}")
+
+
 def check() -> None:
     for name, scenario in SCENARIOS.items():
         if not re.fullmatch(r"[a-z0-9-]+", name):
@@ -305,10 +319,15 @@ def main() -> None:
     for command in ("write", "show"):
         commands.add_parser(command).add_argument("scenario", choices=sorted(SCENARIOS))
     commands.add_parser("check")
+    native = commands.add_parser("native-args")
+    native.add_argument("scenario", choices=sorted(SCENARIOS))
+    native.add_argument("directory")
     args = parser.parse_args()
     try:
         if args.command == "check":
             check()
+        elif args.command == "native-args":
+            native_args(args.scenario, args.directory)
         elif args.command == "write":
             write(args.scenario)
         else:

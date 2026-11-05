@@ -76,6 +76,7 @@ pub fn run_row_with(
 ) -> Result<RowRun, String> {
     let root = bundle_directory(data, pin);
     let inputs = crate::inputs::read(&root.join("movies").join(&pin.inputs))?;
+    let mut native_seed = None;
     let start = match (&pin.seed, &pin.checkpoint) {
         (_, Some(checkpoint)) => {
             return Err(format!(
@@ -90,11 +91,12 @@ pub fn run_row_with(
                 .parse()
                 .map_err(|_| format!("seed {seed}: bad index"))?;
             if let Some(native) = observing.native_seeds {
-                let path = native.join(capture).join(format!("{index:04}.lss"));
-                Start::State(
-                    std::fs::read(&path)
-                        .map_err(|error| format!("native seed {}: {error}", path.display()))?,
-                )
+                let seed = crate::lsnes::NativeSeed::read(
+                    &native.join(capture).join(format!("{index:04}.lss")),
+                )?;
+                let start = Start::State(seed.state.clone());
+                native_seed = Some(seed);
+                start
             } else {
                 let directory = root.join("target").join("seeds").join(capture);
                 Start::Capture(Box::new(Capture::read(&directory, index)?))
@@ -104,6 +106,11 @@ pub fn run_row_with(
     };
     let mut oracle =
         Backend::open(observing.backend, rom, start).map_err(|error| error.to_string())?;
+    match (&mut oracle, &native_seed) {
+        (Backend::Lsnes(lsnes), Some(seed)) => seed.apply(lsnes),
+        (Backend::LakeSnes(_), Some(_)) => return Err("native seeds are lsnes states".into()),
+        (_, None) => {}
+    }
     oracle.set_tiers(observing.tiers);
     oracle.set_watch(observing.watch, observing.peek);
     let started = Instant::now();

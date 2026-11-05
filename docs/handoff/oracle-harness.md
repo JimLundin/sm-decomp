@@ -88,7 +88,11 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
    - Seeds go to `$TEMP/ohx/data/lsnes-native/<capture>/NNNN.lss`; logs go to `$TEMP/ohx/cut-<run>.log`.
    - Success: one `native seed` line per seed (10, 1, 2; frame 209945 serves two captures), then `frames ... in`, then `cut_seeds <run> exit 0`.
    - Proof: cutting `any-boundary:17` (frame 18109) from seed 16 ran at 81 frames/s. `corpus --oracle lsnes --native-seeds` then ran `chain-any-0017-9E9F` from it to its 592 ticks, with sram equal and the other streams differing, as on the other native rows.
-   - `scenario-one-energy-crocomire:142` is `100-input-phase:142` (movie frame 99412) with energy `$09C2` = 1 and reserve energy `$09D6` = 0 (`tools/scenario_seeds.py`). The `100` run cuts the base. The edit needs a WRAM write request in `lsnes_server.lua`, plus a way to apply it before the save or after the load. Neither exists yet. Its rows are `death` and `file-copy-clear`.
+   - `scenario-one-energy-crocomire:142` is `100-input-phase:142` (movie frame 99412) with energy `$09C2` = 1 and reserve energy `$09D6` = 0 (`tools/scenario_seeds.py`). The `100` run cuts the base. Its rows are `death` and `file-copy-clear`.
+     - Derive it with `oracle derive-seed ROM $(python tools/scenario_seeds.py native-args one-energy-crocomire DIR)`. It writes the base's state as `DIR/scenario-one-energy-crocomire/0142.lss` and the edits as `0142.words` (`OFFSET=VALUE` lines), then steps once from the result and checks every word.
+     - The server's `W OFFSET VALUE` request writes a work-RAM word; asked for before a resumed run's state loads, it lands in `on_post_load`, at the state's own boundary. `corpus --native-seeds` applies a seed's `.words` the same way.
+     - lsnes cannot save the edited state at the base's boundary: at a boundary it saves before it loads, and a save asked for in `on_post_load` waits for the next boundary. Hence the sidecar.
+     - Proof on `any-boundary:16`: energy `0x0063` reads back as `0x0001` after one step, 11 WRAM bytes differ from the base. `chain-any-0016-97B5` from the edited seed ran its 280 ticks; wram, vram, cgram and oam differ from the plain seed's run and sram matches.
    - Then run `corpus --oracle lsnes --native-seeds DIR --only ...` on the 27 rows (88 under the diagnosis).
 3. Door lengths and busy spans from lsnes. Fix the DMA-under-blank count to check INIDISP per write.
 4. A cross-oracle report, LakeSnes against lsnes, per stream per frame. Then the re-lock (the root's call).

@@ -358,6 +358,63 @@ fn movie(arguments: &[String]) {
     }
 }
 
+/// Derive an lsnes native seed: the state of `BASE` with the words written
+/// right after it loads (`NativeSeed`), saved as `OUT` and `OUT`'s `.words`.
+/// Then prove it: one step from `OUT` as read back must show every word
+/// written, and the work-RAM bytes differing from one step of the plain base
+/// are reported. `tools/scenario_seeds.py native-args` gives a scenario's
+/// arguments.
+fn derive_seed(arguments: &[String]) {
+    use crate::lsnes::{Lsnes, NativeSeed};
+    let [rom, base, out, rest @ ..] = arguments else {
+        fail("derive-seed ROM BASE.lss OUT.lss [--word OFFSET=VALUE]...")
+    };
+    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
+    let base = NativeSeed::read(Path::new(base)).unwrap_or_else(|error| fail(error));
+    let mut seed = base.clone();
+    let mut options = rest.iter();
+    while let Some(option) = options.next() {
+        match option.as_str() {
+            "--word" => seed.words.push(
+                options
+                    .next()
+                    .unwrap_or_else(|| fail("--word OFFSET=VALUE"))
+                    .parse()
+                    .unwrap_or_else(|error| fail(error)),
+            ),
+            other => fail(format!("unknown option {other}")),
+        }
+    }
+    let out = Path::new(out);
+    if let Some(parent) = out.parent() {
+        std::fs::create_dir_all(parent).unwrap_or_else(|error| fail(error));
+    }
+    seed.write(out).unwrap_or_else(|error| fail(error));
+    let step = |seed: &NativeSeed| {
+        let mut lsnes =
+            Lsnes::open(&rom, Start::State(seed.state.clone())).unwrap_or_else(|error| fail(error));
+        seed.apply(&mut lsnes);
+        lsnes.step(crate::record::Pad(0)).wram.clone()
+    };
+    let plain = step(&base);
+    let derived = step(&NativeSeed::read(out).unwrap_or_else(|error| fail(error)));
+    for word in &seed.words {
+        let (before, after) = (word.read(&plain), word.read(&derived));
+        println!(
+            "${:05X}: {before:#06x} -> {after:#06x} after one step (written {:#06x})",
+            word.offset, word.value
+        );
+        if after != word.value {
+            fail(format!("${:05X} did not keep its write", word.offset));
+        }
+    }
+    println!(
+        "derived {}: {} work-RAM bytes differ from the base after one step",
+        out.display(),
+        differing(&derived, &plain)
+    );
+}
+
 /// Run the command line `arguments` (without the program name).
 pub fn main(arguments: &[String]) -> i32 {
     match arguments.split_first() {
@@ -366,6 +423,7 @@ pub fn main(arguments: &[String]) -> i32 {
         Some((command, rest)) if command == "trace" => trace(rest),
         Some((command, rest)) if command == "measure" => measure(rest),
         Some((command, rest)) if command == "measure-movie" => measure_movie(rest),
+        Some((command, rest)) if command == "derive-seed" => derive_seed(rest),
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0

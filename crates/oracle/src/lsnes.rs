@@ -19,7 +19,7 @@
 use crate::record::{Beam, CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 
 /// The server script, written next to the run's files at start.
@@ -65,6 +65,102 @@ pub struct Lsnes {
     /// Whether each record carries the memories (on by default; the streams
     /// need them, and leaving them out roughly doubles the speed).
     pub memories: bool,
+}
+
+/// A little-endian word to write at a work-RAM offset (`$7E:0000` + offset).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WramWord {
+    pub offset: u32,
+    pub value: u16,
+}
+
+impl core::str::FromStr for WramWord {
+    type Err = String;
+
+    /// `OFFSET=VALUE`, both hexadecimal: `09C2=0001`.
+    fn from_str(text: &str) -> Result<Self, Self::Err> {
+        let bad = || format!("{text}: expected OFFSET=VALUE in hexadecimal");
+        let (offset, value) = text.split_once('=').ok_or_else(bad)?;
+        let offset = u32::from_str_radix(offset, 16).map_err(|_| bad())?;
+        let value = u16::from_str_radix(value, 16).map_err(|_| bad())?;
+        if usize::try_from(offset).map_or(true, |offset| offset + 1 >= WRAM) {
+            return Err(format!("{text}: the word lies outside work RAM"));
+        }
+        Ok(Self { offset, value })
+    }
+}
+
+impl WramWord {
+    /// The word at this offset in a work-RAM image.
+    pub fn read(self, wram: &[u8]) -> u16 {
+        let at = usize::try_from(self.offset).unwrap_or(usize::MAX);
+        wram.get(at..)
+            .and_then(<[u8]>::first_chunk::<2>)
+            .map_or(0, |pair| u16::from_le_bytes(*pair))
+    }
+}
+
+/// A harness-native seed: an lsnes state and the work-RAM words written right
+/// after it loads. A scenario seed is its base's state with the scenario's
+/// edits: lsnes saves before it loads at a frame boundary, and a save asked for
+/// after the load waits for the next boundary, so an edited state cannot be
+/// saved at the base's own boundary.
+#[derive(Clone, Debug, Default)]
+pub struct NativeSeed {
+    pub state: Vec<u8>,
+    pub words: Vec<WramWord>,
+}
+
+impl NativeSeed {
+    /// The edits beside a seed's state: `NNNN.words`, one `OFFSET=VALUE` a line.
+    fn words_path(path: &Path) -> PathBuf {
+        path.with_extension("words")
+    }
+
+    /// The seed whose state is `path` (`NNNN.lss`), with its edits if it has any.
+    pub fn read(path: &Path) -> Result<Self, String> {
+        let state = std::fs::read(path)
+            .map_err(|error| format!("native seed {}: {error}", path.display()))?;
+        let words_path = Self::words_path(path);
+        let words = match std::fs::read_to_string(&words_path) {
+            Ok(text) => text
+                .lines()
+                .filter(|line| !line.is_empty())
+                .map(str::parse)
+                .collect::<Result<_, _>>()
+                .map_err(|error| format!("{}: {error}", words_path.display()))?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+            Err(error) => return Err(format!("{}: {error}", words_path.display())),
+        };
+        Ok(Self { state, words })
+    }
+
+    /// Write the state to `path` and the edits beside it.
+    pub fn write(&self, path: &Path) -> Result<(), String> {
+        let words: String = self
+            .words
+            .iter()
+            .map(|word| {
+                format!(
+                    "{:04X}={:04X}
+",
+                    word.offset, word.value
+                )
+            })
+            .collect();
+        let words_path = Self::words_path(path);
+        std::fs::write(path, &self.state)
+            .map_err(|error| format!("{}: {error}", path.display()))?;
+        std::fs::write(&words_path, words)
+            .map_err(|error| format!("{}: {error}", words_path.display()))
+    }
+
+    /// Ask a just-opened oracle resumed from this seed's state for its edits.
+    pub fn apply(&self, lsnes: &mut Lsnes) {
+        for &word in &self.words {
+            lsnes.write_wram(word);
+        }
+    }
 }
 
 /// lsnes rr2-beta23 with the bsnes v085 core.
@@ -134,6 +230,12 @@ impl Lsnes {
         let path = self.directory.join(format!("state-{}.lss", self.saves));
         self.send(&format!("V {}", path.display()));
         path
+    }
+
+    /// Write `edit` to work RAM. Asked for before a resumed run's first step,
+    /// it lands right after the start state loads, at that state's boundary.
+    pub fn write_wram(&mut self, edit: WramWord) {
+        self.send(&format!("W {:x} {:x}", edit.offset, edit.value));
     }
 
     /// Why lsnes ended: its exit status, the Lua errors the server logged and
