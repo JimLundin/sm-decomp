@@ -286,7 +286,7 @@ to a copy of the pinned sources by `tools/oracle/build_lakesnes.sh` and named
 in `OracleId::fixes`. They are emulator fixes, not ROM patches.
 
 - `0001-apu-clock-real-master-rate`: the SPC at 32040 Hz against the real
-  NTSC master clock (21 477 272 Hz), not 1364 · 262 · 60 dots.
+  NTSC master clock (21 477 272 Hz), not 1364 Â· 262 Â· 60 dots.
 - `0002-apu-clock-bsnes-v085-exact`: the SPC at bsnes v085's 32040.5 Hz, the
   rate the movies were recorded at, stepped as an exact integer ratio
   (MEASUREMENTS (h)).
