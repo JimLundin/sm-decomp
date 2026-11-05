@@ -99,7 +99,7 @@ jobs:
           BEFORE: ${{ github.event.before }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          deleted=$(git diff --no-renames --diff-filter=D --name-only "$BEFORE" HEAD -- 'sm/src/game/sm_*.rs')
+          deleted=$(git diff --no-renames --diff-filter=D --name-only "$BEFORE" HEAD -- 'sm/src/game/sm_*.rs' 'crates/sm_host/src/game/sm_*.rs')
           if [ -n "$deleted" ]; then
             gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main -f action=full
           fi

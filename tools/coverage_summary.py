@@ -5,7 +5,7 @@ Usage: coverage_summary.py LLVM_COV PROFDATA OBJECT OUTPUT.md [ROUTE_PROFDATA]
            [--unit UNIT_PROFDATA --combined COMBINED_PROFDATA --unit-object TEST_BINARY...]
 
 Reads `llvm-cov export` in memory and writes a markdown report covering the
-engine sources only (crates/sm_game and sm/src/game): per-module line and
+engine sources only (crates/sm_game and crates/sm_host/src/game): per-module line and
 function coverage, files never executed, and the largest never-executed
 functions. With ROUTE_PROFDATA (the full 100% route) it also lists what the
 route executes that the corpus never does. With --unit, it also reports the
@@ -19,7 +19,7 @@ import collections, functools, json, os, re, subprocess, sys
 FileCounts = tuple[int, int, int, int]
 # (path, start line, name) -> (call count, size in lines).
 FunctionKey = tuple[str, int, str]
-SCOPES = ("crates/sm_game/src/", "sm/src/game/")
+SCOPES = ("crates/sm_game/src/", "crates/sm_host/src/game/", "sm/src/game/")
 
 
 def scope_of(path: str) -> str | None:
