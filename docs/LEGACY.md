@@ -95,7 +95,6 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 | $0E02-$0E03 | mine | Samus bottom boundary position | 66 / 16128 | as above | player collision |
 | $0E20-$0E45 | mine | enemy temporaries; the draw now stores $0E20 and $0E22 (both-73) | 58 / 12992 | storing $0E22-$0E25, $0E28-$0E2B, $0E2E and $0E32-$0E3B where spawn ($A0:9275), the distance and angle ($A0:ACA8), the enemy projectile collision ($A0:9894), the enemy set load and the solid collision leave them; the PR corpus never saw $0E20, $0E26, $0E2C, $0E30 or $0E3C-$0E45 differ | actors |
 
-| $1788-$178B | mine | enemy AI pointer backup | 1 / 1 | finding what writes it: `samus-forced-ceres` holds `$A6:A288`, bank word `08A6`, at tick 1157 | actors |
 | $184A-$185B | mine | colliding-solid-enemy positions and deltas | 13 / 251 | storing them in the solid enemy collision ($A0:AAC8, $AB22) | player collision |
 | $186E-$1873, $1876-$1885 | mine | enemy spritemap and border collision temporaries (the right border, $1874, is compared: the projectile and bomb scans store it) | 36 / 4260 | storing them in the enemy collision | actors |
 | $189A-$18A5 | mine | Samus target positions and radius mirrors | 58 / 13225 | storing them in the Samus/enemy collision | player collision |

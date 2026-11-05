@@ -577,10 +577,8 @@ Retired (until-row-retires 73 -> 63 bytes):
   main and time-frozen AI, each collision scan's entry and dispatch, the
   power bomb reaction, the grapple latch, each enemy instruction
   ($A0:C289), and the initialisation AI in the room load, spawn and respawn.
-  Only `$1784-$1787` retires. `$1788-$178B` stays normalized: it differs once, on
-  `samus-forced-ceres` at tick 1157, where the original holds `$A6:A288` and bank word
-  `08A6`. Backing up `$1784-$1787` at the spawn's entry gave the wrong value (`$C5F6`), so its
-  writer is still unknown.
+  A dynamic spawn backs the running dispatch up to `$1788-$178B` around the new enemy's
+  initialisation AI and restores it, so that range retires too.
 - The lock's Session streams decode with the frozen `LOCK_SESSION_MASK`, so retiring a row
   doesn't invalidate recorded digests.
 
