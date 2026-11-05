@@ -93,6 +93,7 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
      - The server's `W OFFSET VALUE` request writes a work-RAM word; asked for before a resumed run's state loads, it lands in `on_post_load`, at the state's own boundary. `corpus --native-seeds` applies a seed's `.words` the same way.
      - lsnes cannot save the edited state at the base's boundary: at a boundary it saves before it loads, and a save asked for in `on_post_load` waits for the next boundary. Hence the sidecar.
      - Proof on `any-boundary:16`: energy `0x0063` reads back as `0x0001` after one step, 11 WRAM bytes differ from the base. `chain-any-0016-97B5` from the edited seed ran its 280 ticks; wram, vram, cgram and oam differ from the plain seed's run and sram matches.
+     - Derived from the real base (cut at 20:22 by the `100` run): energy `0x001d` reads back as `0x0001`, 8 WRAM bytes differ after one step. The `death` row then ran its 1800 ticks (2137 frames, 40 frames/s; it stalled before): sram equal, wram, vram, cgram, oam and ppu differ, as on the other native rows. `file-copy-clear` not run yet.
    - Then run `corpus --oracle lsnes --native-seeds DIR --only ...` on the 27 rows (88 under the diagnosis).
 3. Door lengths and busy spans from lsnes. Fix the DMA-under-blank count to check INIDISP per write.
 4. A cross-oracle report, LakeSnes against lsnes, per stream per frame. Then the re-lock (the root's call).
