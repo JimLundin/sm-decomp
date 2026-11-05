@@ -40,21 +40,31 @@ Worktrees are under `sm-decomp-experiments/20261105/`, one per branch above, plu
 - **Questions for Jim** are goal trade-offs only, each with full context and examples.
   Engineering choices are the coordinator's, recorded with their reasons. Jim vetoes.
 
-## In flight when this was written
+## The last lane's result (no lane is running)
 
-One lane on `research/oracle-harness`, briefed for a single milestone (about 75 minutes):
-1. an lsnes backend run as a separate process behind the `Oracle` trait;
-2. any% sync past Ceres;
-3. harness-native seeds that include the SPC state;
-4. a re-run of the 27 corpus rows that stall on the old lsnes captures;
-5. if there's time, door-transition lengths.
+The lsnes backend works: `research/oracle-harness` at `97ae09a`, GATE OK, with next steps in
+order in `docs/handoff/oracle-harness.md`.
 
-It updates `docs/handoff/oracle-harness.md` and stops. If this session ended before it
-reported, read that file and the branch's log: what's committed is what's done.
+- **How it runs.** `crates/oracle/src/lsnes.rs` and `tools/oracle/lsnes_server.lua` drive
+  `lsnes-bsnes.exe` as a separate process (`movie --oracle lsnes`), with no emulator code in
+  the repo. It produces one FrameRecord per frame, cut at the NMI's RTI.
+- **Sync.** any% syncs from power-on through frame 17829. All 16 any% room-boundary seeds
+  match the old capture with 0 WRAM bytes differing. LakeSnes desyncs at about 8567.
+- **Speed.** 45 frames/s, recording full memories.
+- **Missing fields:** picture, APU log, SPC state (lsnes exposes the SMP and DSP only as raw
+  structs), the write log, PpuRegisters and overscan. So lsnes is the sync and seed authority,
+  and LakeSnes stays the full-record oracle.
+- **Native seeds.** 16 seeds (the `.lss` state plus the raw record) are in
+  `$TEMP/ohx/data/lsnes-native/any-boundary`, not in git.
+- **Not done:**
+  - lsnes exited at step 18068, cause unknown. Capture its stderr first.
+  - `corpus` doesn't yet accept `--oracle lsnes` or native seeds, so none of the 27 stalled
+    rows has been re-run.
+  - Door lengths haven't been measured.
 
 ## Next steps, in order
 
-1. **The oracle (finish (1)).**
+1. **The oracle (finish (1)).** First the lsnes lane's leftovers (the exit at 18068, `corpus --oracle lsnes` with native seeds, the 27 stalled rows, door lengths), then:
    - The cross-oracle disagreement report between LakeSnes and lsnes.
    - The re-lock, recorded oracle-side by `corpus --record`, keyed by (row, oracle, version), with
      the new stream definitions (D20-D23).
