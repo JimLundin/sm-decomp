@@ -440,7 +440,7 @@ fn end_frame<L: PassLease + ?Sized>(returned: u8, game: &mut L) -> CoroutineRet 
     }
     // A soft reset (the game over and file select quits, the debug reset chord)
     // jumps to $80:8462: the next frame resumes boot there, which clears bank $7E.
-    let reset = crate::gameplay_word!(game.GAME_STATE) == SOFT_RESET_REQUESTED;
+    let reset = game.session().game_loop.mode == SOFT_RESET_REQUESTED;
     if returned == 0 || reset {
         let resume = if reset { RESUME_SOFT_RESET } else { 0 };
         game.set_outer_continuation(resume);
@@ -609,8 +609,7 @@ fn initialize<L: FrameLease>(game: &mut L) -> CoroutineRet {
     let mut stage = game.screen_primary();
     let mut waiting = stage >= 2;
     if stage == 0 {
-        let demo =
-            u32::from(crate::gameplay_word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
+        let demo = u32::from(game.session().game_loop.mode) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
         if !demo {
             crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
                 let loading = u32::from(selection.loading_game_state);
@@ -654,9 +653,7 @@ fn initialize<L: FrameLease>(game: &mut L) -> CoroutineRet {
         crate::hdma_objects::set_hdma_enabled(true, game);
         animated_tiles::set_enabled(game.session_mut(), true);
         crate::player_movement::speed::set_liquid_physics(game);
-        stage = if u32::from(crate::gameplay_word!(game.GAME_STATE))
-            == K_GAME_STATE_40_TRANSITION_TO_DEMO
-        {
+        stage = if u32::from(game.session().game_loop.mode) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
             2
         } else if u32::from(crate::menus::state::load::<SaveSelection, _>(game).loading_game_state)
             == K_LOADING_GAME_STATE_22_ESCAPING_CERES

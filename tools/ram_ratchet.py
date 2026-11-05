@@ -84,7 +84,7 @@ BASELINE = {
     # gameplay_word! read and store typed Session-backed keys, not RAM, so
     # sm_game_ram_sites does not count them. They are still a word bag named
     # after RAM words rather than domain fields.
-    "session_word_view_sites": 187,
+    "session_word_view_sites": 165,
     # The Session <-> RAM codec in sm_game (docs/handoff/session-compare.md).
     # First measured on 0b19d8a24.
     "engine_ram_export_lines": 4620,

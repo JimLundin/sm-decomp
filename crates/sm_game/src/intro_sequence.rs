@@ -534,7 +534,7 @@ pub fn boom_initial<H: Host>(cine: &mut Cinematic, game: &mut H) {
     });
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(CERES_MUSIC_DATA, game);
-    if crate::gameplay_word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
+    if game.session().game_loop.mode == BOOM_WITH_SAMUS {
         crate::music_requests::queue_delayed(8, SONG_DELAY, game);
     } else {
         crate::music_requests::queue_delayed(7, SONG_DELAY, game);
@@ -587,7 +587,7 @@ pub fn boom_explosions<H: Host>(cine: &mut Cinematic, game: &mut H) {
         crate::frame_display_byte!(game, Field::ColorMath => 55);
         *cine.mode7_zoom() = 768;
         sprites(cine, game, object::CERES_EXPLOSION_GUNSHIP, 0);
-        if crate::gameplay_word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
+        if game.session().game_loop.mode == BOOM_WITH_SAMUS {
             crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::BOOM_WITH_SAMUS, game);
         } else {
             crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::BOOM, game);
@@ -632,7 +632,7 @@ pub fn boom_fade_out<H: Host>(cine: &mut Cinematic, game: &mut H) {
     if game.display_control_byte(Field::Brightness) == 0x80 {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::store(game, 0, 0);
-        if crate::gameplay_word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
+        if game.session().game_loop.mode == BOOM_WITH_SAMUS {
             crate::music_requests::queue_delayed_8(NO_MUSIC, game);
             crate::sequence_state::with_words(
                 game,

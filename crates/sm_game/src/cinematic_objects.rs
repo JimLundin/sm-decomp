@@ -258,7 +258,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::cinematic_host::Host>(
             },
             // A is the slot for the head, then the palette its initializer loaded.
             9172308 => {
-            let head = if (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 10i32) & 0x8000 != 0 {
+            let head = if (game.session().game_loop.clock.hours as i32 - 10i32) & 0x8000 != 0 {
                 samus::SUITED_JUMP_HEAD_WITHOUT_HELMET
             } else {
                 samus::SUITED_JUMP_HEAD_WITH_HELMET

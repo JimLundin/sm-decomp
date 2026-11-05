@@ -544,10 +544,7 @@ pub fn credits_setup<H: Host>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
     GraphicsAsset::Decompress(0x99e089, 0x6000).load(game);
     GraphicsAsset::Decompress(0x99ecc4, 0x8000).load(game);
-    if below(
-        crate::gameplay_word!(game.GAME_TIME_HOURS),
-        FAST_CLEAR_HOURS,
-    ) {
+    if below(game.session().game_loop.clock.hours, FAST_CLEAR_HOURS) {
         GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
     } else {
         GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
@@ -650,10 +647,8 @@ pub fn nintendo_1994<H: Host>(cine: &mut Cinematic, game: &mut H) {
     *cine.var13() = cine.var13().wrapping_sub(1);
     let expired = (*cine.var13() & 0x8000) != 0;
     if *cine.var13() == 0 || expired {
-        if below(
-            crate::gameplay_word!(game.GAME_TIME_HOURS),
-            FAST_CLEAR_HOURS,
-        ) || below(crate::gameplay_word!(game.GAME_TIME_HOURS), CLEAR_HOURS)
+        if below(game.session().game_loop.clock.hours, FAST_CLEAR_HOURS)
+            || below(game.session().game_loop.clock.hours, CLEAR_HOURS)
         {
             set_cinematic_blend(2, 16, 2, 34, game);
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {

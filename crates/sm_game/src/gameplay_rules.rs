@@ -15,9 +15,7 @@ pub fn finish_health_and_time<H: Host>(lease: &mut H) {
             freeze_time(lease);
             crate::gameplay_word!(lease.GAME_STATE = K_GAME_STATE_27_RESERVE_TANKS_AUTO as u16);
             lease.native_player_command(0x1b);
-        } else if crate::gameplay_word!(lease.GAME_STATE) as i32
-            != K_GAME_STATE_8_MAIN_GAMEPLAY as i32
-        {
+        } else if lease.session().game_loop.mode as i32 != K_GAME_STATE_8_MAIN_GAMEPLAY as i32 {
             return;
         } else {
             freeze_time(lease);
@@ -47,7 +45,7 @@ pub fn finish_health_and_time<H: Host>(lease: &mut H) {
         }
         crate::gameplay_word!(lease.GAME_TIME_HOURS += 1);
     }
-    if (crate::gameplay_word!(lease.GAME_TIME_HOURS).wrapping_sub(100) as i16) >= 0 {
+    if (lease.session().game_loop.clock.hours.wrapping_sub(100) as i16) >= 0 {
         crate::gameplay_word! { lease, 59; GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES }
         crate::gameplay_word!(lease.GAME_TIME_HOURS = 99);
     }

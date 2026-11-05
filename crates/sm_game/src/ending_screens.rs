@@ -231,7 +231,7 @@ pub fn position_ending_samus_head<H: crate::cinematic_host::Host>(
     game: &mut H,
 ) -> u16 {
     let slot = usize::from(object >> 1) + 1;
-    let under_ten = (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 10) & 0x8000 != 0;
+    let under_ten = (game.session().game_loop.clock.hours as i32 - 10) & 0x8000 != 0;
     let (x, y) = [[(118, 120), (120, 120)], [(120, 114), (121, 116)]][usize::from(jumping)]
         [usize::from(under_ten)];
     *cine.bg_arr7(slot) = x;
@@ -245,7 +245,7 @@ pub fn fade_postcredits_samus_suit<H: crate::cinematic_host::Host>(
 ) {
     if *cine.function_timer() & 3 == 0 {
         fade_cinematic_colors(0x40, 0x10, false, game);
-        if (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 3) & 0x8000 == 0 {
+        if (game.session().game_loop.clock.hours as i32 - 3) & 0x8000 == 0 {
             fade_cinematic_colors(0x1c0, 0x10, true, game);
         }
         fade_cinematic_colors(0x1a0, 0x10, true, game);
@@ -282,9 +282,8 @@ pub fn advance_postcredits_samus_reveal<H: crate::cinematic_host::Host>(
         });
         *cine.var14() = 0;
     }
-    let under_three = (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 3) & 0x8000 != 0;
-    let under_ten =
-        under_three || (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 10) & 0x8000 != 0;
+    let under_three = (game.session().game_loop.clock.hours as i32 - 3) & 0x8000 != 0;
+    let under_ten = under_three || (game.session().game_loop.clock.hours as i32 - 10) & 0x8000 != 0;
     if initial && under_ten {
         capture_cinematic_palette(game);
         prepare_cinematic_palette_fade(game);
@@ -318,7 +317,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::cinematic_host::Host>(
     let mut parameter = if initial && under_ten {
         game.session().actors.extended.blocks[5][1023]
     } else {
-        crate::gameplay_word!(game.GAME_TIME_HOURS)
+        game.session().game_loop.clock.hours
     };
     for &definition in sprites {
         CinematicObjects::Sprites.spawn(definition, parameter, cine, game);
@@ -448,12 +447,12 @@ pub fn move_ending_cloud(object: u16, velocity: (i16, i16), cine: &mut Cinematic
 }
 
 pub fn prepare_ending_time<H: crate::cinematic_host::Host>(game: &mut H) {
-    let hours = crate::gameplay_word!(game.GAME_TIME_HOURS);
+    let hours = game.session().game_loop.clock.hours;
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.substate = hours / 10;
         words.suit_pickup_light_beam_pos = hours % 10;
     });
-    let minutes = crate::gameplay_word!(game.GAME_TIME_MINUTES);
+    let minutes = game.session().game_loop.clock.minutes;
     // The minute digits are stored in native byte order.
     for (field, digit) in [
         (View::SuitRedGreen, minutes / 10),
