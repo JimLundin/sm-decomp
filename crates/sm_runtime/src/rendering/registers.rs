@@ -22,6 +22,8 @@ pub struct Layer {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Registers {
     pub mode: u8,
+    /// BGMODE bit 3: in Mode 1, BG3's high-priority tiles go in front of everything.
+    pub bg3_priority: bool,
     pub forced_blank: bool,
     pub layers: [Layer; 4],
     pub mosaic_size: u8,
@@ -72,6 +74,7 @@ impl Registers {
             }
             0x05 => {
                 self.mode = value & 7;
+                self.bg3_priority = bit(value, 8);
                 for (index, layer) in self.layers.iter_mut().enumerate() {
                     layer.big_tiles = bit(value, 0x10 << index);
                 }
@@ -221,6 +224,7 @@ impl Default for Registers {
         };
         Self {
             mode: 0,
+            bg3_priority: false,
             forced_blank: true,
             layers: [Layer::default(); 4],
             mosaic_size: 1,
@@ -339,6 +343,7 @@ mod tests {
         assert!(registers.forced_blank);
         assert_eq!(registers.color.brightness, 15);
         assert_eq!(registers.mode, 1);
+        assert!(registers.bg3_priority);
         let background = registers.layers[0].background;
         assert_eq!(
             (background.map_words, background.wider, background.higher),

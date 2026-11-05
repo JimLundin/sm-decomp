@@ -1,8 +1,10 @@
 //! Shared owned scanline computation; acquisition and publication belong to callers.
 
+pub mod composed;
 pub mod memory;
 pub mod prepared;
 pub mod registers;
+pub mod scanline;
 
 mod records;
 pub use records::*;
@@ -116,9 +118,9 @@ pub fn evaluate_sprites(
                         let tile = (((attribute & 255) >> 4) + (i32::from(row) >> 3)) << 4
                             | (((attribute & 15) + (used_column >> 3)) & 15);
                         let address = (base + tile * 16 + (i32::from(row) & 7)) & 0x7fff;
-                        let low = source.word(address as usize)?;
-                        let high = source.word(address as usize + 8)?;
-                        let plane = u32::from(low) | u32::from(high) << 16;
+                        // The tile row's low and high bitplane pairs.
+                        let [low, high] = [0, 8].map(|plane| source.word(address as usize + plane));
+                        let plane = u32::from(low?) | u32::from(high?) << 16;
                         let left = (-(column + x)).max(0);
                         let right = (256 - (column + x)).min(8);
                         if left < right {
@@ -144,6 +146,8 @@ pub fn evaluate_sprites(
     Ok((tiles != 0, overflow))
 }
 
+/// A map row near VRAM's end reads up to 31 words past it from the source
+/// (`LEGACY(native-renderer)`).
 pub fn background_pixel(
     source: &impl IndexedSource,
     bg: &Background,
@@ -302,6 +306,8 @@ pub fn sprite_enabled(config: &LineConfig<'_>, x: i32, sub: bool) -> bool {
     config.has_sprites && routing_enabled(&config.routing, &config.windows, 4, x, sub)
 }
 
+/// Mode 1 with BG3's high tiles in front, and every other mode as Mode 7
+/// (`LEGACY(native-renderer)`).
 pub fn native_pixel(
     source: &impl IndexedSource,
     config: &LineConfig<'_>,

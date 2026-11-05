@@ -122,6 +122,22 @@ This is verification compatibility, not an emulated PPU write or a second video
 producer. Remove these hooks when that verifier consumes equivalent typed video
 effects and preserves its source-mutation, failure-prefix and snapshot checks.
 
+## `LEGACY(native-renderer)`: the line renderer's departures from the PPU
+
+`sm_runtime::rendering` draws the replay's frames (D9). Its native line path is
+the oracle's own renderer, whose `video` digests the lock holds, so it keeps
+what that renderer does where hardware differs:
+
+| Where | What it does | What hardware does |
+| --- | --- | --- |
+| `background_pixel`, the host's `VideoSource` | a tilemap read up to 31 words past VRAM's end reads the VRAM port fields, then CGRAM, as the original renderer's struct layout lies | the map address wraps in VRAM |
+| `routing_enabled` (native window flags) | two enabled windows always combine with OR | the layer's mask logic (OR, AND, XOR, XNOR) |
+| `native_pixel` | any mode but 1 is drawn as Mode 7; Mode 1 always puts BG3's high tiles in front | each mode's own layers and the BG3 priority bit |
+
+Lines with mosaic or Mode 7 EXTBG are composed per pixel (`rendering::composed`),
+as the oracle draws them. Retire an entry by fixing the oracle's renderer and the
+native path together, with one lock re-record.
+
 ## `LEGACY(original-overflow)`: the original's reads and stores past their tables
 
 Some original routines index a table with a value that can leave it, and the
