@@ -1,4 +1,5 @@
 # Rebuild on a new foundation: handoff (2026-11-05)
+n> Superseded on 2026-11-05 by [coordinator.md](coordinator.md).
 
 For the next coordinator session. Jim approved rebuilding the engine on a new foundation
 (docs/REVIEW.md, "Rebuild on a new foundation (Jim, 2026-11-05)", on main since `52c2117`).
