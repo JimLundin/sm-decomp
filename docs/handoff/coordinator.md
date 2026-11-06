@@ -1,4 +1,4 @@
-# Coordinator handoff (2026-11-06, night)
+# Coordinator handoff (2026-11-06, morning)
 
 This is for the next coordinator session, and it replaces the version from the evening of 2026-11-05.
 Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/oracle-harness.md` and
@@ -27,18 +27,30 @@ Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/ora
   - **Paused on purpose:** the step-35175 HDMA question (MEASUREMENTS (m), (n), (p), (q)). lsnes's HDMA rule is fitted, but the residual starts at the line-0 IRQ. The next step is written in (q). Pick it up only if LakeSnes ever has to run whole movies.
 - **MesenCE 2.2.1** works as a third vote, run as a released binary in a separate process (MEASUREMENTS (g)). The accuracy research, scoped to Super Metroid, is in `docs/oracle/ACCURACY.md`.
 
-## In flight at hand-off
+## Done since the night version
 
-- `lane/oracle-apu-resume`: the lsnes APU log after a resume.
-- `lane/relock-plan`: `docs/oracle/RELOCK.md`, the re-lock plan (inventory, lock format, steps).
-
-Merge each one by fast-forward or a rebase onto its base branch, then remove its worktree and delete its remote branch.
+- **The re-lock (RELOCK steps a-f):** `scenarios/locks/lsnes.toml` (`f42c70c`) holds 635 rows in format 2, recorded by lsnes from per-frame pads.
+  - Every entry is agreed by two of three runs. Waves A and B agreed on 619 rows; the other 16 differed on one video frame each, the screenshot race (13 of them in the more loaded wave A), and wave C settled them.
+  - Bundle: `relock-v2-lsnes-5db3282dbb5aaf7a.tar.gz.enc` in ci-data, pinned by its ciphertext SHA-256. It holds the seeds, the pads, the ladders and the new `file-copy-clear` inputs.
+  - Left out: the three Golden Torizo rows. Their source is a snes9x movie, and the fix is a dedicated movie (D26).
+  - The working files are private, under `$TEMP/ohx/relock-d/`: waves a, b and c, their sidecars, `compare.txt`, `merge.txt`, and the wave C PNG dumps for diagnosing the race.
+- **Engine:**
+  - the decoder's three slices;
+  - the lock reader (`verify::lock`);
+  - the shared span fold (`data::span`);
+  - B1, the Session and Tick: 18.2M empty Ticks/s in CI. `Quality` runs the `empty_ticks` example.
 
 ## Next, in order
 
-1. **The re-lock**, following RELOCK.md: cut the missing native seeds from the ladders, then `corpus --record` in the new format with lsnes streams, then record every row in parallel shards, then bundle and upload to ci-data (root only), then the reader in `verify`. Doing this clears #285's Verify failure.
-2. **Slice 0 on the new engine** (ARCHITECTURE §15): the decoder's PC/stack slice, the Tick spine, then `area-brinstar` and `item-morph-ball` green at ≥1,000 Ticks/s.
-3. **Land on main:** the design docs first, then the oracle crate, through `land.sh`. Retire the PLAN/REVIEW lines that contradict PRINCIPLES/ARCHITECTURE (#252).
+1. **Slice 0** (`docs/architecture/SLICE0.md`):
+   - B2, lockstep, with A2, the record cache;
+   - B3-B7: content, blocks, video, the line program, the interpreter;
+   - the C domain lanes;
+   - D1, the gate on the lsnes lock.
+
+   A1 (census), A4 (typed facts), A5 (the compositor from `gate1/render`) and A6 (size) can run alongside.
+2. **The video race:** find it with the wave-C dumps against the odd runs' sidecars. It looks load-dependent: watch lsnes's frame hand-off.
+3. **Land on main:** the design docs first, then the oracle crate, through `land.sh`. Retire the old lock's Verify path and the PLAN/REVIEW lines that contradict the design (#252).
 
 ## Working rules learned (also in memory)
 
@@ -48,5 +60,7 @@ Merge each one by fast-forward or a rebase onto its base branch, then remove its
 - **Strats** come from sm-json-data-rs (the `sm-logic` crate and its packs), never raw JSON.
 - **Defender** blocks fresh test executables here at random. CI's Quality job runs the rebuild crates' tests.
 - **#177 edits:** run `gh` with `-R JimLundin/sm-decomp` and check the saved body isn't empty before editing (one edit wiped it; recovered from `userContentEdits`).
+- **YAML step names:** quote any step name with `: ` in it. One broke the workflow file.
+- **Encoding:** some lanes write Latin-1 (`§`, `×`). Check edited docs with `file`.
 - **Pushes:** don't chain cleanup after a push with `;`. One push hit a GitHub error, and the commit was lost after the branch removal.
 - **Orphans:** five lsnes processes (6176, 14972, 24536, 22000, 25512) can't be killed; a reboot clears them.
