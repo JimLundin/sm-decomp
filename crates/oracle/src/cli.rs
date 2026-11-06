@@ -150,7 +150,7 @@ fn save_due(
 fn movie(arguments: &[String]) {
     let [rom, inputs, rest @ ..] = arguments else {
         fail(
-            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--spc] [--no-picture] [--streams] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
+            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--spc] [--no-picture] [--streams] [--ppu] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -158,7 +158,8 @@ fn movie(arguments: &[String]) {
     let mut frames = pads.len();
     let mut seeds: Option<(Vec<RoomSeed>, PathBuf)> = None;
     let mut picture = true;
-    let mut streams = false;
+    // The record streams asked of lsnes: none, or the tiers with the PPU registers.
+    let mut streams: Option<Tiers> = None;
     let mut ranges = false;
     let mut lag_log: Option<Vec<[i64; 7]>> = None;
     let mut lag_mismatches = 0;
@@ -232,7 +233,23 @@ fn movie(arguments: &[String]) {
             "--no-picture" => picture = false,
             // lsnes only: the picture, the APU port log and the PPU registers
             // with each record (MEASUREMENTS.md (o)).
-            "--streams" => streams = true,
+            "--streams" => {
+                streams = Some(Tiers {
+                    picture: true,
+                    apu_log: true,
+                    ..Tiers::default()
+                });
+            }
+            // lsnes only: the PPU registers with each record, and no other
+            // stream: a seed record the gate decodes needs them, and the rest
+            // of the record stays byte for byte as without.
+            "--ppu" => {
+                streams.get_or_insert(Tiers {
+                    picture: false,
+                    apu_log: false,
+                    ..Tiers::default()
+                });
+            }
             // lsnes only: records without the memories, about twice as fast;
             // for cutting native seeds, not for comparing.
             "--no-memories" => memories = false,
@@ -322,14 +339,9 @@ fn movie(arguments: &[String]) {
         profile: profile.is_some(),
         ..Tiers::default()
     });
-    if streams {
+    if let Some(tiers) = streams {
         let crate::Backend::Lsnes(lsnes) = &mut oracle else {
-            fail("--streams needs --oracle lsnes")
-        };
-        let tiers = Tiers {
-            picture: true,
-            apu_log: true,
-            ..Tiers::default()
+            fail("--streams and --ppu need --oracle lsnes")
         };
         lsnes
             .record_streams(tiers)

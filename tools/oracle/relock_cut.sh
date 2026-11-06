@@ -90,7 +90,7 @@ window() {
     fi
     # A seed after step F-1 is copied once step F has run.
     local status=0 begun=$SECONDS
-    "$ORACLE" movie "$ROM" "$INPUTS/$movie.inputs" --oracle lsnes --no-memories --no-picture \
+    "$ORACLE" movie "$ROM" "$INPUTS/$movie.inputs" --oracle lsnes --no-memories --no-picture --ppu \
         --frames $((last + 1)) "${arguments[@]}" > "$log" 2>&1 || status=$?
     echo "relock_cut $movie-$rung exit $status in $((SECONDS - begun))s" >> "$log"
     echo "window $movie-$rung exit $status in $((SECONDS - begun))s"
@@ -165,7 +165,7 @@ realign_phase() {
         csv=$logs/csv/realign-$capture-$index.csv
         printf 'room_index,room,movie_frame\n%s,%s,%s\n' "$index" "$room" $((frame + 1)) > "$csv"
         mkdir -p "$logs/realign"
-        "$ORACLE" movie "$ROM" "$INPUTS/$movie.inputs" --oracle lsnes --no-memories --no-picture \
+        "$ORACLE" movie "$ROM" "$INPUTS/$movie.inputs" --oracle lsnes --no-memories --no-picture --ppu \
             --from "$stem.lss" "$frame" --frames $((frame + 2)) --native-seeds "$csv" "$logs/realign" \
             > "$logs/realign-$capture-$index.log" 2>&1
         mv -f "$(printf '%s/realign/%04d' "$logs" "$index").lss" "$stem.lss"
