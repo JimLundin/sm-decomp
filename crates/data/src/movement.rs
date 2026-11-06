@@ -117,6 +117,44 @@ impl SpeedTable {
     }
 }
 
+/// A table declared by movement type, as a test or an adjusted game gives one; a type not
+/// named has zero speeds.
+impl FromIterator<(MovementType, SpeedEntry)> for SpeedTable {
+    fn from_iter<I: IntoIterator<Item = (MovementType, SpeedEntry)>>(named: I) -> Self {
+        let mut entries = vec![SpeedEntry::default(); MOVEMENT_TYPES];
+        for (movement, entry) in named {
+            if let Some(slot) = entries.get_mut(usize::from(u8::from(movement))) {
+                *slot = entry;
+            }
+        }
+        Self { entries }
+    }
+}
+
+/// The fixed distances of Samus's ground motion, declared from its behaviour spec
+/// (`docs/behaviours/samus-ground.md`), each named after the behaviour that reads it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct GroundMotion {
+    /// Added to the step down beyond the frame's horizontal speed (`StepDown`).
+    pub step_down_extra: Speed,
+    /// The most whole pixels she moves sideways in a frame (`DisplacementClamp`).
+    pub max_displacement: u16,
+    /// How far a moving elevator carries her down a frame (`ElevatorRide`).
+    pub elevator_step: Speed,
+    /// The extra step forward when her running aim changes (`ArmPumpStep`).
+    pub arm_pump_step: Speed,
+}
+
+impl GroundMotion {
+    /// The vanilla values.
+    pub const VANILLA: Self = Self {
+        step_down_extra: Speed::new(1, 0),
+        max_displacement: 15,
+        elevator_step: Speed::new(1, 0),
+        arm_pump_step: Speed::new(1, 0),
+    };
+}
+
 /// The extra run speed holding the run button adds while running in air (`$90:9F01`; the
 /// handler reads the water and lava columns only after its own liquid test sends it away).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
