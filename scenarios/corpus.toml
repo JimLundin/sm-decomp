@@ -1113,7 +1113,6 @@ id = "file-copy-clear"
 start = "seed:63f0a5d9f7f38da95e78ec31ff64c94f2108f92b44c4652bcdf9661cb598d624"
 ticks = 2230
 facts = ["state:26", "state:4", "probe:file_menu.confirm_copy", "probe:file_menu.copy_slot", "probe:file_menu.confirm_clear", "probe:file_menu.clear_slot"]
-lock = "lsnes"
 
 # Enemy rows from 100% chain rooms (the full route's seeds and aligned movie
 # inputs): each room runs the named enemies' AI and the branches the route
