@@ -104,7 +104,9 @@ fn spawns_take_the_highest_free_slot_and_extensions_free_theirs() {
         Occupancy::Live(PlmBody::Item {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1a,
-            step: ItemStep::Shown,
+            step: ItemStep::Shown {
+                next: ItemFrame::First,
+            },
         })
     );
     assert_eq!(slots[38].generation.0, 3);
@@ -240,6 +242,28 @@ fn an_items_draw_makes_its_block_the_special_block_samus_touches() {
     assert_eq!(
         room.blocks[usize::from(ITEM.0)].kind,
         BlockKind::Special(PlmChoice::Common(0x45))
+    );
+}
+
+/// The item block's tile number after each of 10 passes from the spawn: frame 0's draw on the
+/// first pass, then each frame for 4.
+#[test]
+fn an_items_draws_turn_its_block_between_its_two_frames_tiles() {
+    let mut room = loaded();
+    let mut tiles = Vec::new();
+    for _ in 0..10 {
+        process(&mut room, &mut CollectedItems::default(), &population());
+        tiles.push(room.blocks[usize::from(ITEM.0)].tile.number.0);
+    }
+    assert_eq!(
+        tiles,
+        [0x8e, 0x8e, 0x8e, 0x8e, 0x8f, 0x8f, 0x8f, 0x8f, 0x8e, 0x8e]
+    );
+    assert_eq!(
+        item_step(&room),
+        Some(ItemStep::Shown {
+            next: ItemFrame::Second
+        })
     );
 }
 

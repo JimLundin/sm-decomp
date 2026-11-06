@@ -225,12 +225,23 @@ pub enum ScrollStep {
     Update,
 }
 
+/// Which of an item's two frames its next draw draws (`$84:E04F`, `$84:E067`).
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ItemFrame {
+    /// Frame 0: from its list's start, and past frame 1's wait.
+    First,
+    /// Frame 1: past frame 0's wait.
+    Second,
+}
+
 /// Where an item is in its instruction list (bank $84 log, the Morph Ball's `$84:E3EF`).
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ItemStep {
-    /// Drawing its two frames in turn (`$84:E407`).
-    #[default]
-    Shown,
+    /// Drawing its two frames in turn (`$84:E407`), `next` the one its timer waits for.
+    Shown {
+        /// The frame its next draw draws.
+        next: ItemFrame,
+    },
     /// Touched (`$1D77` = `FFh`, from `$84:EEAB`): its pre-instruction (`$84:DF89`) goes to
     /// the pickup when the PLM pass next reaches it. Never at a cut.
     Triggered,

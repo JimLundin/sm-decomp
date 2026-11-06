@@ -9,7 +9,7 @@
 use data::plm::{ItemPlm, PlmKind, PlmPopulation};
 use data::rom::RomAddress;
 use game::state::room::{
-    BlockIndex, Crumble, ItemStep, PLM_SLOTS, PlmBody, PlmCommon, ScrollPlm, ScrollStep,
+    BlockIndex, Crumble, ItemFrame, ItemStep, PLM_SLOTS, PlmBody, PlmCommon, ScrollPlm, ScrollStep,
 };
 use game::state::slots::{Cursor, Frames, Generation, Occupancy, Slot, SlotStore};
 
@@ -45,6 +45,13 @@ const SCROLL_UPDATE: u16 = 0xaf8c;
 const fn item_link(item: ItemPlm) -> u16 {
     match item {
         ItemPlm::MorphBall => 0xe40f,
+    }
+}
+/// An item's instruction pointer past frame 0's draw, waiting to draw frame 1 (`$84:E067`).
+/// Anywhere else before its link, its next draw is frame 0's.
+const fn item_second_frame(item: ItemPlm) -> u16 {
+    match item {
+        ItemPlm::MorphBall => 0xe409,
     }
 }
 /// An item's instruction pointer once the empty item is drawn: its delete (`$84:DFAD`).
@@ -177,7 +184,12 @@ impl PlmSources {
                             _ if word(self.variable)? & 0x00ff == ITEM_TRIGGERED => {
                                 ItemStep::Triggered
                             }
-                            _ => ItemStep::Shown,
+                            at if at == item_second_frame(item) => ItemStep::Shown {
+                                next: ItemFrame::Second,
+                            },
+                            _ => ItemStep::Shown {
+                                next: ItemFrame::First,
+                            },
                         },
                     },
                     Known::ItemCollision => match word(self.instruction)? {

@@ -14,9 +14,9 @@ use data::room::{Area, MapPosition};
 use game::enemy::instructions::label;
 use game::state::room::{
     Block, BlockIndex, Crumble, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
-    Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemStep,
-    LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep,
-    SpritePalette, TilesIndex,
+    Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemFrame,
+    ItemStep, LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm,
+    ScrollStep, SpritePalette, TilesIndex,
 };
 use game::state::room::{BlockPoint, DrawnBlocks};
 use game::state::samus::{
@@ -1214,7 +1214,9 @@ fn decodes_the_plms(state: &State) -> bool {
         37 => Occupancy::Live(PlmBody::Item {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1A,
-            step: ItemStep::Shown,
+            step: ItemStep::Shown {
+                next: ItemFrame::First,
+            },
         }),
         36 => Occupancy::Live(PlmBody::ScrollTouch),
         35 => Occupancy::Live(PlmBody::ItemCollision),
@@ -2144,13 +2146,16 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
     let mut picked_up = Vec::new();
     for (frame, state) in &rows.frames {
         let mut live = live_plms(&state.room.plms);
-        // The item's place in its list past its pickup, compared below.
+        // The item's place in its list past its pickup, compared below; shown, its frame
+        // turns every 4 frames.
         for (_, _, body) in &mut live {
-            if let PlmBody::Item { step, .. } = body
-                && *step != ItemStep::Shown
-            {
-                picked_up.push((frame.as_str(), *step));
-                *step = ItemStep::Shown;
+            if let PlmBody::Item { step, .. } = body {
+                if !matches!(step, ItemStep::Shown { .. }) {
+                    picked_up.push((frame.as_str(), *step));
+                }
+                *step = ItemStep::Shown {
+                    next: ItemFrame::First,
+                };
             }
         }
         if let Some(at) = live

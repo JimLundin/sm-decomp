@@ -9,8 +9,8 @@ use data::plm::{Extension, ItemPlm, PlmEntry, PlmKind, PlmPopulation};
 
 use crate::message_box;
 use crate::state::room::{
-    Block, BlockIndex, BlockKind, Bts, ItemStep, Offset, Plm, PlmBody, PlmChoice, PlmCommon,
-    RoomScoped, ScrollPlm, ScrollStep,
+    Block, BlockIndex, BlockKind, Bts, ItemFrame, ItemStep, Offset, Plm, PlmBody, PlmChoice,
+    PlmCommon, RoomScoped, ScrollPlm, ScrollStep,
 };
 use crate::state::samus::Item;
 use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
@@ -26,6 +26,21 @@ const ITEM_BLOCK: Bts = Bts(0x45);
 /// How long an item shows each of its two frames: each draw instruction draws the PLM and
 /// waits 4 frames (`$84:E04F`, `$84:E067`, through `$84:E07F`).
 const ITEM_FRAME: Frames = Frames(4);
+
+/// The tile an item's frame draws (`$84:A30F`, `$84:A315`): the first GFX slot's two tiles
+/// past the item tiles' start, `$8E`, through the frame tables `$84:E05F` and `$84:E077`.
+// open: the GFX slot its list's start loads (`$84:8764`), each later item in a room the next
+// one, two tiles on; slice 0's rooms place one item each.
+const fn item_frame_tile(frame: ItemFrame) -> Tile {
+    Tile {
+        number: TileNumber(match frame {
+            ItemFrame::First => 0x8e,
+            ItemFrame::Second => 0x8f,
+        }),
+        x_flip: false,
+        y_flip: false,
+    }
+}
 
 /// The empty item's draw (`$84:A2B5`): one block, air with tile `FFh`.
 const EMPTY_ITEM_TILE: Tile = Tile {
@@ -184,7 +199,9 @@ fn spawn(room: &mut RoomScoped, entry: PlmEntry) {
             PlmBody::Item {
                 item,
                 collected_bit,
-                step: ItemStep::Shown,
+                step: ItemStep::Shown {
+                    next: ItemFrame::First,
+                },
             }
         }
     };
@@ -257,7 +274,7 @@ pub fn touch_item_block(room: &mut RoomScoped, block: BlockIndex) -> Result<(), 
         return Err(TouchFault::NotAnItem(index));
     };
     // Once its pre-instruction has gone to the pickup, the trigger no longer matters.
-    if *step == ItemStep::Shown {
+    if let ItemStep::Shown { .. } = *step {
         *step = ItemStep::Triggered;
     }
     Ok(())
@@ -294,9 +311,9 @@ fn update_scroll(
 /// An item's pickup calls out of the pass into the message box: the slot whose instruction
 /// does is returned, the rest of the pass waiting for [`resume`].
 // open: the PLMs-enabled flag (`$1C23`); the item's GFX load and collected check at its
-// list's start, and its draws' tiles and tilemap writes; the shot block's crumble, whose draws
-// need the same writes, its timer waits. An untriggered item's list from its start or either
-// frame comes to a draw, so its timer counts without the list's place.
+// list's start, and its draws' tilemap writes; the shot block's crumble, whose draws need its
+// tiles and the same writes, its timer waits. An untriggered item's list from its start or past
+// frame 1 comes to frame 0's draw.
 pub fn process(
     room: &mut RoomScoped,
     collected: &mut CollectedItems,
@@ -344,7 +361,7 @@ pub fn resume(
                     };
                 }
             }
-            ItemStep::Shown | ItemStep::Triggered | ItemStep::Emptied => {}
+            ItemStep::Shown { .. } | ItemStep::Triggered | ItemStep::Emptied => {}
         }
     }
     run_below(
@@ -408,16 +425,27 @@ fn run_below(
                 step,
             } => match step {
                 // The next frame's draw, then its wait (`$84:E407`, `$84:E40B`'s go-to back):
-                // the block becomes the special block Samus collides with (`$84:A30F`,
-                // `$84:A315`: block type `Bh`), its BTS kept.
-                // open: the frames' tiles (`$08E`, `$08F` for the GFX index) and tilemap.
-                ItemStep::Shown => {
+                // the block becomes the special block Samus collides with, with the frame's
+                // tile (`$84:A30F`, `$84:A315`: block type `Bh`), its BTS kept.
+                // open: the draw's tilemap write while the block is on screen (`$84:8DAA`).
+                ItemStep::Shown { next } => {
                     slot.common.cursor.delay = ITEM_FRAME;
-                    write_block(
-                        room,
-                        block,
-                        BlockKind::Special(PlmChoice::Common(ITEM_BLOCK.0)),
-                    );
+                    slot.occupancy = Occupancy::Live(PlmBody::Item {
+                        item,
+                        collected_bit,
+                        step: ItemStep::Shown {
+                            next: match next {
+                                ItemFrame::First => ItemFrame::Second,
+                                ItemFrame::Second => ItemFrame::First,
+                            },
+                        },
+                    });
+                    if let Some(cell) = room.blocks.get_mut(usize::from(block.0)) {
+                        *cell = Block {
+                            kind: BlockKind::Special(PlmChoice::Common(ITEM_BLOCK.0)),
+                            tile: item_frame_tile(next),
+                        };
+                    }
                 }
                 // `$84:E40F`: set the room argument item collected (`$84:8899`), then the
                 // pickup instruction calls out.
