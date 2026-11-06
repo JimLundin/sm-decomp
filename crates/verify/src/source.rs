@@ -25,6 +25,30 @@ pub struct WramWord {
     pub offset: u16,
 }
 
+/// A run of work RAM bytes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WramBlock {
+    /// The `ram_map.rs` name.
+    pub name: &'static str,
+    /// The offset of the first byte from $7E:0000.
+    pub offset: u16,
+    /// The length in bytes.
+    pub len: u16,
+}
+
+impl WramBlock {
+    /// The bytes in `wram`, a record's work RAM from $7E:0000.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::WramTooShort`] when `wram` ends before the block does.
+    pub fn read(self, wram: &[u8]) -> Result<&[u8], DecodeError> {
+        let start = usize::from(self.offset);
+        wram.get(start..start.wrapping_add(usize::from(self.len)))
+            .ok_or(DecodeError::WramTooShort { source: self.name })
+    }
+}
+
 impl WramByte {
     /// The byte in `wram`, a record's work RAM from $7E:0000.
     ///
@@ -151,6 +175,14 @@ pub const SAMUS_Y_POS: WramWord = WramWord {
 pub const SAMUS_Y_SUBPOS: WramWord = WramWord {
     name: "SAMUS_Y_SUBPOS",
     offset: 0x0AFC,
+};
+
+/// Bank $80 log, update OAM and CGRAM `$80:933A`: the OAM buffer the NMI copies to OAM,
+/// $0370..$058F, the low table and then the high table.
+pub const OAM: WramBlock = WramBlock {
+    name: "OAM",
+    offset: 0x0370,
+    len: 0x0220,
 };
 
 /// Bank $82 log: the current room's header, a pointer into bank $8F.

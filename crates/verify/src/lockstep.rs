@@ -74,6 +74,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("video.memory.vram", video.memory.vram),
     field!("video.memory.cgram", video.memory.cgram),
     field!("video.memory.oam", video.memory.oam),
+    field!("video.batch.oam", video.batch.oam),
     field!("video.nmi_requested", video.nmi_requested),
     field!("samus.position.x.pixels", samus.position.x.pixels),
     field!("samus.position.x.subpixels", samus.position.x.subpixels),

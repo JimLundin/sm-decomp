@@ -92,9 +92,10 @@ pub fn nmi(state: &mut State, rules: Rules, timing: NmiTiming, pad: Buttons) -> 
 /// One commit step.
 fn run(command: NmiCommand, state: &mut State, rules: Rules, pad: Buttons) {
     match command {
-        // open: the video batch and its transfers are B5's; HDMA is B6's.
-        NmiCommand::OamAndCgram
-        | NmiCommand::SamusTiles
+        // open: the CGRAM half joins with palette FX's uploads.
+        NmiCommand::OamAndCgram => state.video.memory.oam = state.video.batch.oam,
+        // open: the video batch's transfers are B5's; HDMA is B6's.
+        NmiCommand::SamusTiles
         | NmiCommand::AnimatedTiles
         | NmiCommand::IoRegisters
         | NmiCommand::HdmaQueue
