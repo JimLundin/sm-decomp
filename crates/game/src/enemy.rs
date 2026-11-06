@@ -13,7 +13,10 @@ use crate::state::room::{
 use crate::state::samus::{Fixed, Samus, Speed};
 use crate::state::slots::{Frames, Occupancy, Slot};
 use crate::state::{Button, Controller, State};
+use data::enemy::program::EnemyPrograms;
 use data::id::SpeciesId;
+
+pub mod instructions;
 
 /// The slots processing this frame, in table order (the original's active enemy indices).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -101,10 +104,10 @@ pub fn select(state: &mut State) -> Active {
 
 /// The main enemy routine (`$A0:8FD4`) over the active slots.
 // open: the shake request, Samus's and projectiles' collisions (`$A0:9758`), time frozen
-// (the X-ray scope), the instruction lists (`$A0:C26A`: they wait for B7's enemy program
-// content; it sets or clears `GraphicUpdated`), the grapple paralysis death, drawing, the
-// sprite objects and the solid-enemy collision reset join with their lanes.
-pub fn run(state: &mut State, active: &Active) {
+// (the X-ray scope, which skips the frame count and the instructions), the grapple paralysis
+// death, drawing, the sprite objects and the solid-enemy collision reset join with their
+// lanes.
+pub fn run(state: &mut State, active: &Active, programs: &EnemyPrograms) {
     for &index in active.slots.iter().filter(|&&index| index < ENEMY_SLOTS) {
         let Some(slot) = state.room.enemies.slots.get_mut(index) else {
             continue;
@@ -131,6 +134,13 @@ pub fn run(state: &mut State, active: &Active) {
             &state.controller,
         );
         slot.common.frame_counter = slot.common.frame_counter.wrapping_add(1);
+        if slot
+            .common
+            .properties
+            .contains(EnemyProperty::ProcessesInstructions)
+        {
+            instructions::process(slot, programs);
+        }
         count_flash(slot);
     }
 }
@@ -437,7 +447,11 @@ mod tests {
         }
         let active = select(&mut state);
         assert_eq!(active, Active { slots: vec![0] });
-        run(&mut state, &active);
+        run(
+            &mut state,
+            &active,
+            &data::enemy::program::EnemyPrograms::default(),
+        );
         let counters: Vec<u16> = state
             .room
             .enemies

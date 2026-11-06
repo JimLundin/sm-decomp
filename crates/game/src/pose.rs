@@ -8,6 +8,7 @@
 //! transition handler (`$91:EB88`) then applies the request after the movement handler and
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
+use data::enemy::program::EnemyPrograms;
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::AnimationDelays;
@@ -38,6 +39,8 @@ pub struct Content {
     pub delays: AnimationDelays,
     /// The slope shapes her block collision reads.
     pub slopes: Slopes,
+    /// The loaded species' instruction lists.
+    pub enemy_programs: EnemyPrograms,
 }
 
 /// The pose a frame asks for, by the channel that asked.

@@ -1,6 +1,7 @@
 //! Everything a room transition resets, in one struct (D4): replacing it is the reset.
 
 use canonical::Canonical;
+use data::enemy::program::SpritemapId;
 use data::id::{DoorwayId, RoomId, SpeciesId};
 use data::room::{Room, RoomState};
 
@@ -378,6 +379,8 @@ pub struct EnemyCommon {
     pub timer: u16,
     /// Its instruction list; the delay is the instruction timer.
     pub cursor: Cursor<Enemy>,
+    /// The spritemap its instruction list shows.
+    pub spritemap: SpritemapId,
     /// Its palette.
     pub palette: PaletteIndex,
     /// Its tiles.
