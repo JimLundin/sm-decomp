@@ -5,6 +5,7 @@ area-brinstar vram
 area-brinstar cgram
 area-brinstar oam
 area-brinstar sram
+area-brinstar ppu
 area-brinstar timing
 item-morph-ball sram
 item-morph-ball timing
