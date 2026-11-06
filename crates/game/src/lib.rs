@@ -6,6 +6,7 @@
 #![deny(clippy::float_arithmetic)]
 
 pub mod animation;
+pub mod bg_graphics;
 pub mod collision;
 pub mod commit;
 pub mod enemy;

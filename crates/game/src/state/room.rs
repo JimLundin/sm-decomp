@@ -4,16 +4,17 @@ use canonical::Canonical;
 use data::enemy::program::SpritemapId;
 use data::id::{DoorwayId, RoomId, SpeciesId};
 use data::plm::{ItemPlm, ScrollChangesId};
-use data::room::{Room, RoomState};
+use data::room::{Area, Room, RoomState};
+use data::tileset::TilesetId;
 
 pub use data::level::{
-    Block, BlockKind, BombableBts, Bts, DoorIndex, Offset, PlmChoice, ScrollArea, Slope, Tile,
-    TileNumber,
+    Block, BlockKind, BombableBts, Bts, DoorIndex, Layer2Block, Offset, PlmChoice, ScrollArea,
+    Slope, Tile, TileNumber,
 };
 
 use super::samus::{Fixed, Point};
 use super::slots::{Cursor, Flag, FlagSet, Frames, SlotIndex, SlotStore};
-use super::video::Scroll;
+use super::video::{Scroll, VramWord};
 
 /// PLM slots (bank $84 log: the PLM tables hold 40 entries).
 pub const PLM_SLOTS: usize = 40;
@@ -46,6 +47,27 @@ pub struct Camera {
     pub scrollers: Scrollers,
     /// How layer 2 follows layer 1 across and down.
     pub layer2_scroll: Layer2Scrolls,
+    /// The layers' blocks the BG graphics update last built columns and rows from.
+    pub drawn: DrawnBlocks,
+}
+
+/// A layer's or a background's top-left corner in 16-pixel blocks.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BlockPoint {
+    /// Across.
+    pub x: u16,
+    /// Down.
+    pub y: u16,
+}
+
+/// The layers' block positions the BG graphics update last built from (bank `$80` log,
+/// `$80:A3DF`): a layer that has since moved into another block column or row builds it.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct DrawnBlocks {
+    /// Layer 1's.
+    pub layer1: BlockPoint,
+    /// Layer 2's.
+    pub layer2: BlockPoint,
 }
 
 /// How far to the left of Samus the camera aims its left edge: the camera distance index,
@@ -130,6 +152,19 @@ pub enum Layer2Scroll {
         /// the scrolling uploads (`$80:A416`); set, the library background.
         custom: bool,
     },
+}
+
+impl Layer2Scroll {
+    /// Whether BG2 shows the room's layer 2 level data, so the BG graphics update builds its
+    /// columns or rows on this axis (`$80:A416`): bit 0 of the scroll byte is clear.
+    #[must_use]
+    pub const fn shows_level(self) -> bool {
+        match self {
+            Self::WithLayer1 => true,
+            Self::Fixed => false,
+            Self::Scaled { custom, .. } => custom,
+        }
+    }
 }
 
 impl From<u8> for Layer2Scroll {
@@ -760,6 +795,19 @@ pub struct RoomScoped {
     pub blocks: Vec<Block>,
     /// How many blocks across the room is: the level's row length.
     pub width: BlockColumns,
+    /// Layer 2's level data, when the room has its own background.
+    pub layer2: Option<Vec<Layer2Block>>,
+    /// The decompressed level data past layer 1 (the BTS, then layer 2), which the original's
+    /// level buffer still holds there (bank `$82` log, `$82:E7D3`): a column or row past the
+    /// room's last block reads it.
+    pub level_tail: Vec<u8>,
+    /// The room's area, which says whether the common room elements' tiles are loaded.
+    pub area: Area,
+    /// The room's tileset, whose tile table draws its blocks.
+    pub tileset: TilesetId,
+    /// How far below BG1's tilemap in VRAM BG2's lies (`$098E`, from the BG tilemap base
+    /// registers as `$80:A176` displays the room).
+    pub tilemap_gap: VramWord,
     /// The room's default layer blending configuration.
     pub layer_blending: LayerBlending,
     /// One per screen, row-major.
@@ -792,6 +840,10 @@ impl RoomScoped {
         let mut loaded = Self {
             room,
             blocks: state.layers.layer1.clone(),
+            layer2: state.layers.layer2.clone(),
+            level_tail: level_tail(&state.layers),
+            area: header.area,
+            tileset: TilesetId(state.tileset),
             width: BlockColumns(u16::from(header.size.width).wrapping_mul(16)),
             scroll_areas: state.scroll_areas.clone(),
             camera: Camera {
@@ -807,4 +859,16 @@ impl RoomScoped {
         crate::plm::spawn_population(&mut loaded, &state.plms);
         loaded
     }
+}
+
+/// The level data's bytes past layer 1, as decompression leaves them: each block's BTS, then
+/// layer 2's words.
+fn level_tail(level: &data::level::Level) -> Vec<u8> {
+    let bts = level.layer1.iter().map(|block| block.kind.bts());
+    let layer2 = level
+        .layer2
+        .iter()
+        .flatten()
+        .flat_map(|block| block.word().to_le_bytes());
+    bts.chain(layer2).collect()
 }

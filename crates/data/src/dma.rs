@@ -52,6 +52,23 @@ pub const HUD_TILEMAP_BUFFER: BusAddress = BusAddress {
     offset: 0xC608,
 };
 
+/// BG1's block column buffer, the left 8x8 column then the right, which `$80:8CD8` DMAs from
+/// (bank `$80` log, the column builder `$80:A9DE`).
+pub const BG1_COLUMN_BUFFER: BusAddress = BusAddress {
+    bank: 0x7E,
+    offset: 0xC8C8,
+};
+
+/// BG1's block row buffer, the top 8x8 row then the bottom, which `$80:8DAC` DMAs from (the
+/// row builder `$80:AB78`).
+pub const BG1_ROW_BUFFER: BusAddress = BusAddress {
+    bank: 0x7E,
+    offset: 0xC948,
+};
+
+/// How far BG2's column and row buffers lie after BG1's.
+pub const BG2_BUFFER_OFFSET: u16 = 0x0108;
+
 #[cfg(test)]
 mod tests {
     use super::{BusAddress, PALETTE_BUFFER};

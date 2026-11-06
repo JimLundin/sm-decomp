@@ -21,6 +21,7 @@ use data::pose::tiles::{GRAPHICS_BANKS, Graphics, SamusTiles};
 use data::pose::transition::PoseTransitions;
 use data::pose::{PoseError, Poses};
 use data::rom::{AddressError, Rom, RomError};
+use data::tileset::{TileTables, TilesetError};
 use game::Content;
 use game::plm::RoomPlms;
 use game::state::Buttons;
@@ -141,6 +142,8 @@ pub enum ContentError {
     Rooms(data::room::RoomError),
     /// The area maps are outside the image.
     AreaMaps(AddressError),
+    /// The tile tables are outside the image or don't decompress.
+    TileTables(TilesetError),
 }
 
 impl fmt::Display for ContentError {
@@ -158,6 +161,7 @@ impl fmt::Display for ContentError {
             Self::SamusTiles(error) => write!(f, "Samus's tiles: {error:?}"),
             Self::Rooms(error) => write!(f, "the rooms: {error:?}"),
             Self::AreaMaps(error) => write!(f, "the area maps: {error:?}"),
+            Self::TileTables(error) => write!(f, "the tile tables: {error:?}"),
         }
     }
 }
@@ -201,6 +205,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         room_plms,
         area_maps: data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
+        tile_tables: TileTables::load(rom.lorom()).map_err(ContentError::TileTables)?,
     })
 }
 

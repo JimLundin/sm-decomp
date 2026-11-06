@@ -322,6 +322,14 @@ pub struct Layer2Block {
     pub unread: u8,
 }
 
+impl Layer2Block {
+    /// The level data word, as the original stores it.
+    #[must_use]
+    pub fn word(self) -> u16 {
+        self.tile.word() | (u16::from(self.unread) << TYPE_SHIFT)
+    }
+}
+
 /// A room's decoded level data.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Level {

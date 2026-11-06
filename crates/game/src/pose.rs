@@ -65,6 +65,8 @@ pub struct Content {
     pub room_plms: RoomPlms,
     /// The area maps the mini-map draws.
     pub area_maps: data::map::AreaMaps,
+    /// The tilesets' tile tables, which draw the level's blocks.
+    pub tile_tables: data::tileset::TileTables,
 }
 
 /// The pose a frame asks for, by the channel that asked.

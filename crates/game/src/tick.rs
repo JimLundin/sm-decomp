@@ -535,9 +535,7 @@ fn gameplay_phase(
             scrolling::follow(&mut room.camera, &mut state.samus, areas);
         }
         GameplayPhase::Draw => crate::enemy::drawing::draw(state, content),
-        GameplayPhase::BgScroll => {
-            scrolling::scroll_backgrounds(&mut state.room.camera, &mut state.video.batch.registers);
-        }
+        GameplayPhase::BgScroll => bg_scroll(state, content),
         GameplayPhase::PaletteFx
         | GameplayPhase::SamusProjectileInteraction
         | GameplayPhase::EnemyProjectiles
@@ -551,6 +549,17 @@ fn gameplay_phase(
         | GameplayPhase::HurtTimers => {}
     }
     Ok(())
+}
+
+/// The BG scrolls from the camera, then the BG graphics update (`$80:A3AB`).
+fn bg_scroll(state: &mut State, content: &Content) {
+    scrolling::scroll_backgrounds(&mut state.room.camera, &mut state.video.batch.registers);
+    crate::bg_graphics::update(
+        &mut state.room,
+        &state.video.batch.registers,
+        &content.tile_tables,
+        &mut state.video.batch.level,
+    );
 }
 
 /// The mini-map's update after the movement handler (`$90:E734`).

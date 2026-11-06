@@ -204,6 +204,19 @@ check needs it, when it becomes a named behaviour with the original's bytes as d
   variables around `$07F7`). The engine reads no cells and the blank tile there. Which
   vanilla rooms reach the edges is not yet checked; slice 0's rooms are inside them.
 
+- **Level columns and rows past the level buffer** (`game::bg_graphics`, bank `$80` log
+  `$80:A9DE`, `$80:AB78`): a column or row past the room's last block reads the level
+  buffer on. The engine reads it as the original holds it up to the buffer's 3200h blocks
+  (the BTS and layer 2 that decompression left after layer 1, then the `$8000` fill,
+  `RoomScoped::level_tail`). Past those, or past layer 2's copy, the original reads what
+  earlier rooms left in `$7F`, and the engine reads block word 0 there. Slice 0's rows
+  reach one row past the room's bottom, inside the buffer.
+- **Tile numbers past the tile tables** (`game::bg_graphics`, `data::tileset::TileTables`,
+  bank `$82` log `$82:E7D3`): a block whose tile number is past what the CRE's and the
+  tileset's tables fill reads `$7E:A000` past them, what an earlier room's tables or the
+  boot left. The engine draws zero words for it. A vanilla room's blocks stay within its
+  tables; a custom tileset with fewer entries than its level uses would not.
+
 ## Tolerated values the content keeps as named variants
 
 - `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (bank $91 log,

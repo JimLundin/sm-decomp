@@ -415,6 +415,98 @@ pub struct SamusTileUploads {
     pub bottom: Option<TileDefinitionId>,
 }
 
+/// A level tilemap upload's part: where it lands and how many bytes it writes.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TilemapPart {
+    /// Its first word in VRAM.
+    pub to: VramWord,
+    /// Its length in bytes.
+    pub bytes: u16,
+}
+
+/// How many times the main strand built an upload since the NMI last made it: the NMI
+/// makes it while the low byte is nonzero, then clears it.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct UploadRequests(pub u16);
+
+impl UploadRequests {
+    /// One more build.
+    #[must_use]
+    pub const fn requested(self) -> Self {
+        Self(self.0.wrapping_add(1))
+    }
+}
+
+/// The tilemap words a column of 16 blocks draws: two 8x8 columns, top to bottom.
+pub const COLUMN_WORDS: usize = 32;
+/// The tilemap words a row of 17 blocks draws: two 8x8 rows, left to right.
+pub const ROW_WORDS: usize = 34;
+
+/// A block column's tilemap upload (bank `$80` log, `$80:A9DE`): its two 8x8 columns go
+/// down the tilemap from the column's row, the part past the tilemap's bottom wrapping to its
+/// top.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ColumnUpload {
+    /// The left 8x8 column.
+    pub left: [TilemapEntry; COLUMN_WORDS],
+    /// The right one.
+    pub right: [TilemapEntry; COLUMN_WORDS],
+    /// The part to the tilemap's bottom.
+    pub first: TilemapPart,
+    /// The part wrapped to its top.
+    pub wrapped: TilemapPart,
+    /// Builds not yet made.
+    pub requests: UploadRequests,
+}
+
+/// A block row's tilemap upload (bank `$80` log, `$80:AB78`): its two 8x8 rows go along the
+/// tilemap from the row's column, the part past the screen's right edge wrapping to the other
+/// screen.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RowUpload {
+    /// The top 8x8 row.
+    pub top: [TilemapEntry; ROW_WORDS],
+    /// The bottom one.
+    pub bottom: [TilemapEntry; ROW_WORDS],
+    /// The part to the screen's right edge.
+    pub first: TilemapPart,
+    /// The part wrapped to the other screen.
+    pub wrapped: TilemapPart,
+    /// Builds not yet made.
+    pub requests: UploadRequests,
+}
+
+impl Default for RowUpload {
+    fn default() -> Self {
+        Self {
+            top: [TilemapEntry::default(); ROW_WORDS],
+            bottom: [TilemapEntry::default(); ROW_WORDS],
+            first: TilemapPart::default(),
+            wrapped: TilemapPart::default(),
+            requests: UploadRequests::default(),
+        }
+    }
+}
+
+/// One background's level uploads.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LayerUploads {
+    /// The block column scrolling across last built.
+    pub column: ColumnUpload,
+    /// The block row scrolling down or up last built.
+    pub row: RowUpload,
+}
+
+/// The level tilemap uploads the BG graphics update builds as the camera scrolls (bank `$80`
+/// log, `$80:A3DF`), which the NMI's scrolling DMAs make (`$80:8CD8`, `$80:8DAC`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LevelUploads {
+    /// BG1's, from layer 1.
+    pub bg1: LayerUploads,
+    /// BG2's, from layer 2's level data.
+    pub bg2: LayerUploads,
+}
+
 impl Default for VramSource {
     fn default() -> Self {
         Self::Words {
@@ -464,6 +556,8 @@ pub struct NmiBatch {
     pub vram: Vec<VramTransfer>,
     /// Samus's tile uploads.
     pub samus_tiles: SamusTileUploads,
+    /// The level tilemap uploads scrolling builds.
+    pub level: LevelUploads,
 }
 
 impl Default for NmiBatch {
@@ -476,6 +570,7 @@ impl Default for NmiBatch {
             cgram: [Colour::default(); CGRAM_COLOURS],
             vram: Vec::new(),
             samus_tiles: SamusTileUploads::default(),
+            level: LevelUploads::default(),
         }
     }
 }
