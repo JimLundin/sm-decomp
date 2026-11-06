@@ -519,14 +519,18 @@ and records the direction; the door transition status enters on the same frame; 
 moves an up elevator down (a down one up) to the target, where the ride ends on the target
 pixel; every step stands Samus `$1A` above its centre on a whole pixel, at its X, with no
 vertical speed (`$A3:9612`). Five hand-worked unit tests. Remaining:
-- verify decodes the ride (`elevator.*` rows are open, so lockstep's engine starts every
-  Tick with no ride and the elevator doesn't move): `$0E18` status 0-3, `$0E16` 0 or `$80`,
-  `$0799` 0 or `$8000`, each other value `Unrepresentable`; then lockstep both rows
-  (`area-brinstar` slot 2's Y and Samus's Y), not reached in the lane's time;
+- (C7b) verify decodes the ride from `ELEVATOR_STATUS` (`$0E18`, 0-3), `ELEVATOR_FLAGS`
+  (`$0E16`: `ElevatorArming::Disarmed` 0, `InDoorway` 1, `ElevatorDoor` `$80`) and
+  `ELEVATOR_DIRECTION` (`$0799`, 0 down or `$8000` up), each other value `Unrepresentable`.
+  Standing facing the screen on a ride steps Samus a pixel down (`$90:A383`) and takes no
+  pose input (`$91:805C`, guarded in `tick.rs` by `movement::carried`). Lockstep:
+  `area-brinstar` slot 2's Y, its frame counter and the ride match on all 476 ticks, Samus's
+  Y on 454; `item-morph-ball` every ride field but `armed` at frame 688 (the doorway's 1);
+- the step down is a terrain-only collision: a block under Samus stops it at the block with
+  subpixels `$FFFF` (`area-brinstar` frames 316-326 and 348-358), with Samus's block
+  collision; the doorway's arming (the door transition check, bank `$82`) is open;
 - the instruction lists (`$A0:C26A`, the timer, `GraphicUpdated`) wait for B7's enemy
   program content, so `cursor.delay` and bit 15 still differ;
-- standing in pose 0 or `$9B` takes no input while the ride's status isn't inactive
-  (`$91:805C`): `pose::input` needs `State.elevator`, left to the pose lane's files;
 - the door transition check (`$A3:952A`), the sounds, the Samus commands 7 and `$B`
   (`$90:F084`), the projectile reset (`$90:AD22`), the elevator's hurt AI, time frozen,
   collisions, the shake request and global off-screen processing.
