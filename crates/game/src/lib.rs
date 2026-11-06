@@ -16,6 +16,7 @@ pub mod message_box;
 pub mod movement;
 pub mod nmi;
 pub mod oam;
+pub mod plm;
 pub mod pose;
 pub mod rng;
 pub mod samus_drawing;

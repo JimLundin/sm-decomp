@@ -14,6 +14,7 @@ use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};
 use crate::id::RoomId;
 use crate::level::{Level, LevelError, ScrollArea, ScrollError, scroll_areas};
+use crate::plm::{PlmError, PlmPopulation, population};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 /// Room headers, state headers, door lists, scroll tables and PLM populations.
@@ -345,6 +346,8 @@ pub struct RoomState {
     pub main_code: RomAddress,
     /// The PLM population.
     pub plm_population: RomAddress,
+    /// The PLMs it places.
+    pub plms: PlmPopulation,
     /// The library background.
     pub library_background: RomAddress,
     /// The room's setup code.
@@ -461,6 +464,13 @@ pub enum RoomError {
         state: RomAddress,
         /// Why.
         error: ScrollError,
+    },
+    /// A state's PLM population doesn't decode.
+    Plm {
+        /// The state header.
+        state: RomAddress,
+        /// Why.
+        error: PlmError,
     },
     /// The load list repeats a key or is too long.
     RoomList,
@@ -653,6 +663,8 @@ fn state(rom: Lorom<'_>, at: RomAddress, size: Screens) -> Result<RoomState, Roo
     })?;
     let scroll_areas =
         scroll_areas(rom, scroll, size).map_err(|error| RoomError::Scroll { state: at, error })?;
+    let plms =
+        population(rom, plm_population).map_err(|error| RoomError::Plm { state: at, error })?;
     Ok(RoomState {
         at,
         level,
@@ -671,6 +683,7 @@ fn state(rom: Lorom<'_>, at: RomAddress, size: Screens) -> Result<RoomState, Roo
         special_xray_blocks,
         main_code,
         plm_population,
+        plms,
         library_background,
         setup_code,
     })

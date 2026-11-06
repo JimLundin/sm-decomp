@@ -205,6 +205,24 @@ frame 1,236; screen 13 turns green from frame 92 of both rows (a scroll PLM). Re
 PLM population's setup (C-lane) writes those cells and that screen; `Content` doesn't yet hold
 `Rooms`; lockstep of `room.blocks` not yet run.
 
+**Scroll PLM status (`lane/slice0-plm`).** Done: `data::plm::population` decodes a room
+state's PLM population (`$84:846A`: ID, X, Y, room argument; zero ends it) into typed
+`PlmKind`s (scroll PLM `$B703` with its scroll change list `$84:8B68`, the four extensions,
+the Morph Ball `$EF23`, and `Unmodelled(id)` for the Zebes-awake state's `$C848`), held on
+`RoomState.plms`; the ROM test reads the Morph Ball Room's 17 entries (five scroll PLMs over
+lists `$9F05`, `$9F08`, `$9F0B` twice and `$9F0E`, eight upwards and three rightwards
+extensions, the item). `game::plm` spawns them at `RoomScoped::load` into the highest free
+slot (`$84:8470`) and runs each setup: the scroll PLM's special air BTS `$46`, not triggered,
+past its debug draw (`$84:B371`, `$84:B366`); the extensions' blocks, then free (`$84:B33A`
+to `$84:B35B`, `$84:B333`); the item's air BTS `$45` (`$84:EE64`). `touch_scroll_block` is
+the scroll block touch PLM (`$84:B6FF`, setup `$84:B393`) and `process` the PLM pass for
+them (`$84:85B4`, the timer, sleep `$84:86B4`, the air scroll update `$84:8B55`, delete
+`$84:AAE3`). On A2's cache the loaded room's blocks now equal every frame's but for the
+item's cell 5,317 (its list's draw, `$84:E407`, C12) and the shot block; screen 13 still
+differs from frame 92. Remaining: the special air inside reaction calling
+`touch_scroll_block`, the PLM pass in the Tick (needs `Content` to hold the rooms' PLMs),
+verify's decode of the PLM table (`room.plms` is `open`), and lockstep of both rows.
+
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
 (bank `$82` log, `$82:DB69`: signed compares against 60, the 99:59:59.59 cap from 100 hours),

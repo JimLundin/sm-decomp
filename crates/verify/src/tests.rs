@@ -1551,10 +1551,14 @@ fn cached_rows() -> Option<(game::state::room::RoomScoped, Vec<(String, State)>)
     use data::room::{Progress, RoomKey, Rooms, SLICE_ZERO_ROOMS};
     let cache = std::path::PathBuf::from(std::env::var_os("SM_CACHE")?);
     let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
+    let content = crate::bundle::content(image.clone()).unwrap();
+    let rooms = crate::lockstep::slice_zero_rooms()
+        .with_programs(content.enemy_programs)
+        .with_samus_tiles(content.samus_tiles);
     let rom = data::rom::Rom::new(image).unwrap();
-    let (rooms, _) = Rooms::load(rom.lorom(), &SLICE_ZERO_ROOMS).unwrap();
-    let id = rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
-    let morph_ball_room = rooms.get(id).unwrap();
+    let (loaded_rooms, _) = Rooms::load(rom.lorom(), &SLICE_ZERO_ROOMS).unwrap();
+    let id = loaded_rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
+    let morph_ball_room = loaded_rooms.get(id).unwrap();
     let state = morph_ball_room
         .state(morph_ball_room.select(&Progress::default()))
         .unwrap();
@@ -1568,7 +1572,7 @@ fn cached_rows() -> Option<(game::state::room::RoomScoped, Vec<(String, State)>)
         let cache = crate::cache::Cache::open(&cache, row).unwrap();
         for item in cache.records() {
             let (frame, record) = item.unwrap();
-            if let Ok(decoded) = decode(&record, &crate::lockstep::slice_zero_rooms()) {
+            if let Ok(decoded) = decode(&record, &rooms) {
                 frames.push((format!("{}:{}", row.id.0, frame.0), decoded.state));
             }
         }
@@ -1576,23 +1580,24 @@ fn cached_rows() -> Option<(game::state::room::RoomScoped, Vec<(String, State)>)
     Some((loaded, frames))
 }
 
-/// Cells the Morph Ball Room's PLMs write as the room loads, which the content's level
-/// doesn't hold: scroll PLM triggers (special air, BTS $46, with an extension beside them),
-/// the columns of vertical extensions above them, and the item's block (special, BTS $45).
-const PLM_WRITTEN_CELLS: [usize; 17] = [
-    1367, 1368, 4311, 4312, 4488, 4616, 4744, 4872, 4951, 4952, 5000, 5128, 5256, 5317, 5384, 5512,
-    5535,
-];
-
 /// The shot block Samus shoots in `item-morph-ball`, a 1x1 block that doesn't reform.
 const SHOT_CELL: usize = 5708;
 
+/// The Morph Ball's block: its setup makes it air with BTS $45, then its instruction list's
+/// draw (`$84:E407`, the item frames) writes the block's word, which waits for the item's
+/// list (C12).
+const ITEM_CELL: usize = 5317;
+
+/// The cells the room's PLMs write at load (scroll PLM triggers, special air BTS $46, with
+/// an extension beside them, and the vertical extension columns above them) are the
+/// content's once `game::plm` spawns its population.
 #[test]
-fn the_cached_levels_are_the_contents_but_for_what_plms_write() {
+fn the_cached_levels_are_the_loaded_rooms_but_for_the_item_shot_block_and_screen_13() {
     let Some((loaded, frames)) = cached_rows() else {
         return;
     };
-    assert_eq!(frames.len(), 1905);
+    // The frames the decoder represents: 1,896 of both rows since C6e's Samus tile rules.
+    assert_eq!(frames.len(), 1896);
     let mut differing = std::collections::BTreeMap::new();
     let mut screens = std::collections::BTreeSet::new();
     for (frame, state) in &frames {
@@ -1609,14 +1614,14 @@ fn the_cached_levels_are_the_contents_but_for_what_plms_write() {
             screens.insert(screen);
         }
     }
-    let mut expected: Vec<usize> = PLM_WRITTEN_CELLS.to_vec();
-    expected.push(SHOT_CELL);
-    assert_eq!(differing.keys().copied().collect::<Vec<_>>(), expected);
-    for cell in PLM_WRITTEN_CELLS {
-        assert_eq!(differing[&cell], "area-brinstar:0");
-    }
+    assert_eq!(
+        differing.keys().copied().collect::<Vec<_>>(),
+        [ITEM_CELL, SHOT_CELL]
+    );
+    assert_eq!(differing[&ITEM_CELL], "area-brinstar:0");
     assert_eq!(differing[&SHOT_CELL], "item-morph-ball:1236");
-    // A scroll PLM turns screen 13 green from frame 92 of both rows.
+    // A scroll PLM turns screen 13 green from frame 92 of both rows: Samus touches its
+    // trigger, which the special air inside reaction doesn't run yet.
     assert_eq!(screens.into_iter().collect::<Vec<_>>(), [13]);
 }
 

@@ -3,6 +3,7 @@
 use canonical::Canonical;
 use data::enemy::program::SpritemapId;
 use data::id::{DoorwayId, RoomId, SpeciesId};
+use data::plm::{ItemPlm, ScrollChangesId};
 use data::room::{Room, RoomState};
 
 pub use data::level::{
@@ -167,31 +168,55 @@ pub struct Layer2Scrolls {
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Plm;
 
-/// The fields every PLM slot has, whatever occupies it.
+/// The fields every PLM slot has, whatever occupies it (bank $84 log, the PLM tables).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct PlmCommon {
-    /// The block it sits on.
+    /// The block it sits on (`$1C87`, which holds it times two).
     pub block: BlockIndex,
-    /// Its instruction list.
+    /// Its instruction list; the delay is the instruction timer (`$7E:DE1C`).
+    // open: the label stays at its default until the PLM programs decode (B7); a body that
+    // runs a list keeps its place in it.
     pub cursor: Cursor<Plm>,
-    /// Its room argument.
-    pub argument: u16,
 }
 
-/// A PLM's typed body.
-// open: the kinds slice 0's rooms place, as the decoder reads the Morph Ball Room's PLM
-// population; each kind's fields come from its bank $84 setup and instructions.
+/// Where a scroll PLM is in its instruction list (bank $84 log, `$84:AF86`), past the debug
+/// draw its setup skips (`$84:B366`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ScrollStep {
+    /// `$84:AF8A`: asleep until Samus touches its block.
+    #[default]
+    Sleep,
+    /// `$84:AF8C`: touched, the scroll update runs when the timer next runs out.
+    Update,
+}
+
+/// A scroll PLM: the block that changes scroll areas when Samus touches it.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ScrollPlm {
+    /// The changes it makes: its room argument.
+    pub changes: ScrollChangesId,
+    /// Touched and not yet updated (`$1E17`): a second touch before the update does nothing.
+    pub triggered: bool,
+    /// Its place in its instruction list.
+    pub step: ScrollStep,
+}
+
+/// A PLM's typed body: one variant per PLM slice 0's rooms run. An extension PLM deletes
+/// itself in its setup, so no body holds one.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PlmBody {
-    /// A door cap.
-    DoorCap {
-        /// Shots taken, for caps that need more than one.
-        hits: u8,
-    },
+    /// The scroll PLM, `$84:B703`.
+    Scroll(ScrollPlm),
+    /// The scroll block touch PLM, `$84:B6FF`: its setup triggers the scroll PLM on the
+    /// touched block, and its list deletes it (`$84:AAE3`).
+    ScrollTouch,
     /// An item.
+    // open: its instruction list, the collected check, drawing and the pickup (C12).
     Item {
-        /// Whether it hides in a shot block until revealed.
-        hidden: bool,
+        /// Which item.
+        item: ItemPlm,
+        /// Its collected bit's index, the room argument.
+        collected_bit: u16,
     },
 }
 
@@ -668,14 +693,14 @@ pub struct RoomScoped {
 
 impl RoomScoped {
     /// Room `room`, as it loads in `state`: its level's layer 1 blocks, its width in blocks,
-    /// its scroll areas and the camera's scroll settings, with no PLMs or enemies yet and the
-    /// camera at the top left.
-    // open: the door's arrival, the PLM and enemy populations, the FX's layer blending and the
+    /// its scroll areas and the camera's scroll settings, its PLMs spawned and set up, with no
+    /// enemies yet and the camera at the top left.
+    // open: the door's arrival, the enemy population, the FX's layer blending and the
     // camera's start join with the room transition (bank $82 log, `$82:E7D3`).
     #[must_use]
     pub fn load(room: RoomId, header: &Room, state: &RoomState) -> Self {
         let [x, y] = state.layer2_scroll.map(Layer2Scroll::from);
-        Self {
+        let mut loaded = Self {
             room,
             blocks: state.layers.layer1.clone(),
             width: BlockColumns(u16::from(header.size.width).wrapping_mul(16)),
@@ -689,6 +714,8 @@ impl RoomScoped {
                 ..Camera::default()
             },
             ..Self::default()
-        }
+        };
+        crate::plm::spawn_population(&mut loaded, &state.plms);
+        loaded
     }
 }

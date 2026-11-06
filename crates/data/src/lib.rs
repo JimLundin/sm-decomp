@@ -12,6 +12,7 @@ pub mod id;
 pub mod level;
 pub mod movement;
 pub mod palette;
+pub mod plm;
 pub mod pose;
 pub mod rom;
 pub mod room;
