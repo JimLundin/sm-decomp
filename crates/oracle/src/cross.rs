@@ -7,7 +7,7 @@
 //! record one frame earlier and one frame later, which tells a timing
 //! difference (one oracle a frame behind) from a content difference.
 
-use crate::record::{CpuRegisters, Cut, FrameRecord};
+use crate::record::{ApuAccessKind, CpuRegisters, Cut, FrameRecord, PpuRegisters};
 
 /// A part of the record both backends produce.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -26,10 +26,16 @@ pub enum Part {
     Cgram,
     Oam,
     Sram,
+    /// The PPU registers at the cut, without the CPU I/O words lsnes lacks.
+    Ppu,
+    /// The CPU's APU port accesses in the interval, in order.
+    ApuLog,
+    /// The picture as it shows: 8-bit R, G, B per dot (`Picture::shown`).
+    Picture,
 }
 
 impl Part {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 13] = [
         Self::Cut,
         Self::Frame,
         Self::Pad,
@@ -40,6 +46,9 @@ impl Part {
         Self::Cgram,
         Self::Oam,
         Self::Sram,
+        Self::Ppu,
+        Self::ApuLog,
+        Self::Picture,
     ];
 
     pub fn name(self) -> &'static str {
@@ -54,6 +63,9 @@ impl Part {
             Self::Cgram => "cgram",
             Self::Oam => "oam",
             Self::Sram => "sram",
+            Self::Ppu => "ppu",
+            Self::ApuLog => "apu-log",
+            Self::Picture => "picture",
         }
     }
 
@@ -66,6 +78,25 @@ impl Part {
             Self::Cgram => Some(words(&record.cgram)),
             Self::Oam => Some(record.oam.to_vec()),
             Self::Sram => Some(record.sram.to_vec()),
+            Self::Ppu => Some(ppu_bytes(&record.ppu)),
+            Self::ApuLog => Some(
+                record
+                    .apu_log
+                    .iter()
+                    .filter_map(|access| match access.kind {
+                        ApuAccessKind::CpuWrite => Some([0, access.port, access.value]),
+                        ApuAccessKind::CpuRead => Some([1, access.port, access.value]),
+                        ApuAccessKind::DmaWrite
+                        | ApuAccessKind::DmaRead
+                        | ApuAccessKind::SpcWrite => None,
+                    })
+                    .flatten()
+                    .collect(),
+            ),
+            Self::Picture => record
+                .picture
+                .as_ref()
+                .map(|picture| picture.shown().into_iter().flatten().collect()),
             Self::Cut | Self::Frame | Self::Pad | Self::JoypadReads | Self::Cpu => None,
         }
     }
@@ -139,6 +170,8 @@ pub struct Compare {
     previous: Option<(FrameRecord, FrameRecord)>,
     /// Right's video frame counter less left's, at the first step.
     frame_offset: Option<i64>,
+    /// Compare the streams too: the PPU registers, the APU log and the picture.
+    pub streams: bool,
 }
 
 impl Compare {
@@ -190,6 +223,9 @@ impl Compare {
             differences.push(small(Part::Cpu, cpu.len(), cpu.join(" ")));
         }
         for part in Part::ALL {
+            if !self.streams && matches!(part, Part::Ppu | Part::ApuLog | Part::Picture) {
+                continue;
+            }
             let (Some(a), Some(b)) = (part.bytes(left), part.bytes(right)) else {
                 continue;
             };
@@ -269,6 +305,30 @@ pub fn describe(difference: &Difference) -> String {
     text
 }
 
+/// The PPU registers both backends record: all but the CPU I/O words
+/// (`nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel`), which lsnes cannot read.
+fn ppu_bytes(ppu: &PpuRegisters) -> Vec<u8> {
+    let mut bytes = vec![ppu.inidisp, ppu.obsel, ppu.bgmode, ppu.mosaic];
+    bytes.extend(ppu.bg_sc);
+    bytes.extend([ppu.bg12nba, ppu.bg34nba]);
+    bytes.extend(
+        ppu.bg_scroll
+            .iter()
+            .flatten()
+            .flat_map(|word| word.to_le_bytes()),
+    );
+    bytes.push(ppu.m7sel);
+    bytes.extend(ppu.m7.iter().flat_map(|word| word.to_le_bytes()));
+    bytes.extend(ppu.window_select);
+    bytes.extend(ppu.window_positions);
+    bytes.extend([ppu.wbglog, ppu.wobjlog]);
+    bytes.extend(ppu.screens);
+    bytes.extend([ppu.cgwsel, ppu.cgadsub]);
+    bytes.extend(ppu.fixed_color);
+    bytes.push(ppu.setini);
+    bytes.extend(ppu.dma.iter().flatten());
+    bytes
+}
 #[cfg(test)]
 mod tests {
     use super::*;

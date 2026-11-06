@@ -150,7 +150,7 @@ fn save_due(
 fn movie(arguments: &[String]) {
     let [rom, inputs, rest @ ..] = arguments else {
         fail(
-            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--spc] [--no-picture] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
+            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--spc] [--no-picture] [--streams] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -158,6 +158,7 @@ fn movie(arguments: &[String]) {
     let mut frames = pads.len();
     let mut seeds: Option<(Vec<RoomSeed>, PathBuf)> = None;
     let mut picture = true;
+    let mut streams = false;
     let mut ranges = false;
     let mut lag_log: Option<Vec<[i64; 7]>> = None;
     let mut lag_mismatches = 0;
@@ -229,6 +230,9 @@ fn movie(arguments: &[String]) {
                 ));
             }
             "--no-picture" => picture = false,
+            // lsnes only: the picture, the APU port log and the PPU registers
+            // with each record (MEASUREMENTS.md (o)).
+            "--streams" => streams = true,
             // lsnes only: records without the memories, about twice as fast;
             // for cutting native seeds, not for comparing.
             "--no-memories" => memories = false,
@@ -318,6 +322,19 @@ fn movie(arguments: &[String]) {
         profile: profile.is_some(),
         ..Tiers::default()
     });
+    if streams {
+        let crate::Backend::Lsnes(lsnes) = &mut oracle else {
+            fail("--streams needs --oracle lsnes")
+        };
+        let tiers = Tiers {
+            picture: true,
+            apu_log: true,
+            ..Tiers::default()
+        };
+        lsnes
+            .record_streams(tiers)
+            .unwrap_or_else(|error| fail(error));
+    }
     if let Some((_, _, pcs)) = &trace {
         // The door transition's function pointer and the step's beam marks.
         oracle.set_watch(pcs, 0x099c);
@@ -1099,10 +1116,12 @@ fn measure_movie(arguments: &[String]) {
 /// their records are equal or which parts differ (`crate::cross`), then the
 /// first differing step of each part. `--ranges` lists the differing address
 /// ranges of each memory at its first differing step, `--ranges-at` at every
-/// differing step in its window.
+/// differing step in its window. `--right-from STATE STEP` resumes lsnes from
+/// its saved state (a ladder rung) at STEP, while LakeSnes runs from power-on
+/// through the steps before it uncompared.
 fn cross(arguments: &[String]) {
     use crate::cross::{Compare, Difference, Part, describe};
-    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B]";
+    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams] [--right-from STATE STEP]";
     let [rom, inputs, rest @ ..] = arguments else {
         fail(usage)
     };
@@ -1120,25 +1139,45 @@ fn cross(arguments: &[String]) {
     };
     let mut range = 0..=last;
     let mut first_ranges = false;
+    let mut streams = false;
     let mut ranges_at: Option<std::ops::RangeInclusive<u64>> = None;
+    let mut right_start = Start::PowerOn { wram_fill: 0x55 };
+    let mut resume = 0u64;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
             "--frames" => range = steps(options.next()),
             "--ranges" => first_ranges = true,
+            "--streams" => streams = true,
             "--ranges-at" => ranges_at = Some(steps(options.next())),
+            "--right-from" => {
+                let (Some(state), Some(step)) = (options.next(), options.next()) else {
+                    fail(usage)
+                };
+                right_start = Start::State(
+                    std::fs::read(state).unwrap_or_else(|error| fail(format!("{state}: {error}"))),
+                );
+                resume = step.parse().unwrap_or_else(|_| fail(usage));
+            }
             _ => fail(usage),
         }
     }
     let start = Start::PowerOn { wram_fill: 0x55 };
     let mut left =
         crate::Backend::open("lakesnes", &rom, start.clone()).unwrap_or_else(|error| fail(error));
-    left.set_tiers(Tiers {
-        picture: false,
-        apu_log: false,
+    let tiers = Tiers {
+        picture: streams,
+        apu_log: streams,
         ..Tiers::default()
-    });
-    let mut right = crate::Backend::open("lsnes", &rom, start).unwrap_or_else(|error| fail(error));
+    };
+    left.set_tiers(tiers);
+    let mut right =
+        crate::Backend::open("lsnes", &rom, right_start).unwrap_or_else(|error| fail(error));
+    if streams && let crate::Backend::Lsnes(lsnes) = &mut right {
+        lsnes
+            .record_streams(tiers)
+            .unwrap_or_else(|error| fail(error));
+    }
     println!(
         "cross: left {} {}, right {} {}, steps {}..={}",
         left.identity().emulator,
@@ -1149,13 +1188,20 @@ fn cross(arguments: &[String]) {
         range.end()
     );
     let mut compare = Compare::default();
+    compare.streams = streams;
     let mut first: std::collections::BTreeMap<Part, (u64, Difference)> =
         std::collections::BTreeMap::new();
     let mut frames_differing: std::collections::BTreeMap<Part, u64> =
         std::collections::BTreeMap::new();
     let mut equal = 0u64;
     let started = Instant::now();
+    let mut lake_before: Option<crate::record::Picture> = None;
     for (step, &pad) in (0..=*range.end()).zip(&pads) {
+        if step < resume {
+            let a = left.step(pad).unwrap_or_else(|error| fail(error));
+            lake_before.clone_from(&a.picture);
+            continue;
+        }
         if let Some(&next) = usize::try_from(step + 1)
             .ok()
             .and_then(|next| pads.get(next))
@@ -1165,6 +1211,48 @@ fn cross(arguments: &[String]) {
         let a = left.step(pad).unwrap_or_else(|error| fail(error)).clone();
         let b = right.step(pad).unwrap_or_else(|error| fail(error));
         let differences = compare.frame(&a, b);
+        if streams
+            && range.contains(&step)
+            && let (Some(lake), Some(lsnes)) = (&a.picture, &b.picture)
+        {
+            // Dots compared as they show (`Picture::shown`), and as the
+            // BGR555 the two hold, which differ only below brightness 15.
+            let shown = lsnes.shown();
+            let equal_dots = |left: &crate::record::Picture| {
+                left.shown()
+                    .iter()
+                    .zip(&shown)
+                    .filter(|(x, y)| x == y)
+                    .count()
+            };
+            let equal_words = lake
+                .rows()
+                .flatten()
+                .zip(lsnes.rows().flatten())
+                .filter(|(x, y)| x == y)
+                .count();
+            let cpu_accesses = a
+                .apu_log
+                .iter()
+                .filter(|access| {
+                    matches!(
+                        access.kind,
+                        crate::record::ApuAccessKind::CpuWrite
+                            | crate::record::ApuAccessKind::CpuRead
+                    )
+                })
+                .count();
+            println!(
+                "{step} picture {} of {} dots equal as shown ({equal_words} as BGR555), {} against left's previous; brightness {}/{}; apu log {cpu_accesses}/{}",
+                equal_dots(lake),
+                lake.rows().flatten().count(),
+                lake_before.as_ref().map_or(0, equal_dots),
+                lake.brightness[0],
+                lsnes.brightness[0],
+                b.apu_log.len()
+            );
+        }
+        lake_before.clone_from(&a.picture);
         if !range.contains(&step) {
             continue;
         }

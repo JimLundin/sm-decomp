@@ -939,3 +939,312 @@ at a time and keeps 0-17974 unchanged ((l)'s check):
 
 The margin here is about 30 clocks after a 2-frame pass. Any per-line error
 left near vblank shows up as a one-step lag.
+
+## (n) HDMA variants on the HUD lines: none zeroes them, no fix 0005
+
+**Command.** (m)'s third round, LakeSnes only: `oracle movie ROM any.inputs
+--frames 35176 --no-picture --oracle lakesnes --trace 35173 35175 PC,...`
+from power-on (2.2-2.7 min), the 18 PCs of (m) (`$80:8338`, the fade's
+colour routines `$82:DA24`-`$DAED`, `$82:E752`, `$82:E755`). Each variant is
+a private DLL on top of 0001+0002+0004, built from `f25eb13f5`, scored against
+(m)'s lsnes log of the same steps. A logging build (no behaviour change)
+wrote every HDMA pause on lines 0-40 from frame 34900: line, start dot, master
+clock mod 8, the triggering access's speed, the alignment, the work and the
+re-alignment.
+
+**Score.** All watched-PC pairs from `$E752` to `$E755` whose first hit is on
+lines 0-32 of the fade's two HUD frames (601 pairs), LakeSnes minus lsnes;
+and the whole fade (`$E752` to `$E755`, the +36 of (m)). The target is 0.
+
+| Variant (on 0001+0002+0004) | HUD pairs: sum, nonzero | Fade total | 35175 wait, NMI |
+| --- | --- | --- | --- |
+| none ((m)) | +36, 65 | +36 | 224/1260, `Overrun` |
+| (a) line overhead 18 instead of 8 | - | - | desynced before 35173 (state `$08` at 35173) |
+| (b) HDMA request at 1112 (dot 278) instead of 1104 | +16, 60 | +14 | 224/1246, `Requested` |
+| (c) both alignments allow 0 (pre, or post), all DMA | - | - | desynced before 35173 |
+| (c) re-align from after the 8-clock alignment, all DMA | - | - | desynced before 35173 |
+| (b) + post-HDMA re-alignment allows 0, HDMA only | -62, 91 | -62 | 224/1162, `Requested` |
+| (b) + re-align from after the 8-clock alignment, HDMA only | - | - | desynced before 35173 |
+| (d) IRQ at H*4+14 (H-IRQ) and dot 10 (V-only), anomie | +14, 138 | +80 | 224/1354, `Overrun`; the fade starts 44 clocks late |
+| (b) + (d) | +18, 77 | +18 | 224/1276, `Overrun` |
+
+lsnes enters the 35175 wait at 224/1230. The lsnes side is (m)'s log in
+every row; it was not rerun.
+
+**(b) is not a fix.** It turns 35175 into `Requested`, but the HUD lines keep
+almost the same residuals (+16), and it moves the boot: (h)'s lag-log run
+with (b) (36000 frames, 129 s, 280 frames/s) is one frame ahead from step
+472 on (`$05B6`/`$05B8` +1, wait entries on line 16-26 of the title or
+intro), a row the 0001+0002+0004 build does not have ((l): exact through
+395, then only 396, 397, 400 before 1342). The print limit of 40 hid the
+rest; with 472 moved, (l)'s check fails already.
+
+**What the pause log shows.** During the fade HDMA runs on lines 0-31 only
+(channels 2 and 7 terminate at line 32 each frame), so (m)'s 351 exact pairs
+on lines 33-224 had no HDMA in them and do not confirm the alignment. The
+pause on lines 0-30 is 104 clocks of work (8 overhead, 6 bytes, the channel
+updates and channel 7's table reloads), 96 on line 31, plus the alignment.
+LakeSnes's pause is 108, 112, 114 or 120 clocks; the lsnes pause implied by
+the pair difference (LakeSnes pause minus the difference, on pairs that hold
+one pause on both sides) is 108, 112 or 114, never 120. LakeSnes reaches 120
+only from a start already on the 8-clock grid followed by an 8-clock access
+(8 + 104 + 8); lsnes takes 112 there on the first lines of the frame, where
+the two emulators are within 8 clocks of each other (lines 3, 8, 12 of the
+first HUD frame). Otherwise the same LakeSnes state (start dot, mod 8,
+speed) gives different lsnes lengths on different lines (line 2 and line 10:
+start dot 1106, mod 6, 6-clock access; lsnes 114 and 108), so lsnes's pause
+also depends on something LakeSnes's state does not show, most likely where
+lsnes's own CPU is when its pause starts (the running offset grows to +24 by
+line 20). lsnes cannot log its pause, so the lsnes rule is not pinned here.
+
+**Next.** Take lsnes's pause apart without its source: an `OH_TRACE` of
+every instruction's PC in the fade's inner loop, on HUD lines 0-12 only,
+brackets each lsnes pause by the instructions before and after it, and so
+gives its start and end. Fit the pause rule on those lines, where the offsets
+are under 8 clocks, then rerun this table. The "allow 0" end alignment
+(row 6) is the one variant that moves the 120 cases the right way; it
+overshoots because it also drops 6-8 clocks on lines lsnes keeps.
+
+## (o) lsnes gives the picture, the APU port accesses and the PPU registers
+
+**Question.** lsnes keeps sync with every movie but gave only the memories,
+CPU and cut; the picture, the APU port log and `PpuRegisters` came from
+LakeSnes (D25). Can lsnes rr2-beta23's Lua give them too?
+
+**How** (`a38bdc896`, lane `lane/oracle-lsnes-picture`; `T <picture> <apu>
+<ppu>` request in `tools/oracle/lsnes_server.lua`, `Lsnes::record_streams`,
+opt-in so ladders, seeds and corpus records are unchanged):
+
+- Picture: `gui.screenshot_bitmap()` in `send()`, after the frame boundary,
+  read with `pget`. lsnes decodes bsnes's 19-bit lrgb dots (brightness << 15 |
+  BGR555) to 8-bit RGB as `l*c*255/496` rounded (`l` = brightness + 1). The
+  client maps it back to BGR555 at the brightest `l` whose palette produces
+  every channel value. Exact at brightness 15; at lower levels ambiguous
+  values keep the smallest component, and an all-black picture reads as
+  brightness 15. Per-line brightness and forced blank are not visible.
+- APU port log: `memory.registerwrite`/`registerread` on `BUS + $00/$80:2140-2143`
+  fire for every CPU access (bsnes's `Bus::read`/`write` debug hook), with the
+  value. Registered from the main chunk only. No DMA or SPC700 side, no APU
+  cycle.
+- PPU registers: `memory.getregisters()` (already called at the cut) holds
+  bsnes's decoded PPU fields (`ppu_bg_hofs[0]`, `ppu_window1_enabled[5]`, ...);
+  the server rebuilds the written bytes from them (`ppu_bytes`), and reads
+  `$43x0-$43xA` on the bus. `nmitimen`, `htime`, `vtime`, `hdmaen` and
+  `memsel` are not exposed; the game mirrors `$4200` in `$84` and `$420C` in
+  `$85`.
+
+**Command.** `oracle cross ROM any.inputs --frames 0..1000 --streams` (LakeSnes
+left, lsnes right, from power-on), private DLL from `a38bdc896`.
+
+| Stream | Steps equal of 1001 | Detail |
+| --- | --- | --- |
+| picture | 942 | 876 static and 66 changing frames dot-identical; 53 where lsnes shows LakeSnes's previous picture exactly (fade and overrun frames: 19, 168, 355-358, ...); 6 other. 57,194,741 of 57,401,344 dots equal (99.64%) |
+| ppu (all but the CPU I/O words) | 993 | 2 fields at steps 0-4 (start-up), 3-8 fields at 303-307 (the one-frame lag of (f)) |
+| apu-log (CPU accesses only) | 727 | first differs at 168 (the SPC upload): same count of accesses (4405 both), different read values and order, as the two SPC700s answer at different times |
+
+**Speed.** The same 1001 steps, both backends: 27.4 s without `--streams`,
+76.0 s with (LakeSnes's picture and APU log included). lsnes alone was not
+timed separately; the `pget` loop (57,344 calls a frame) is the larger part.
+
+**Conclusion.** All three are feasible from lsnes's Lua without linking or
+copying emulator code. The picture is exact at full brightness; fades and
+brightness below 15 lose per-line brightness and some components. The CPU's
+APU port accesses are complete; the SPC700 side is not.
+
+## (p) lsnes's HDMA pause on the HUD lines: one CPU cycle after the request, fitted on 90 of 90 lines
+
+**Command.** lsnes: `oracle movie ROM any.inputs --frames 35176 --no-picture
+--oracle lsnes --from 030000.lss 30000` (the any% ladder rung), with
+`OH_TRACE` set to every instruction start from `$82:DA02` to `$DAF6` (138
+addresses, the fade's colour loop and its division) plus `$80:8338`,
+`$82:E752`, `$82:E755`, and `OH_TRACE_FROM=35173` (2.3 min). LakeSnes: the
+same PCs with `--oracle lakesnes` from power-on, in a private build whose
+watch limit is 256 addresses (the crate caps it at 32, in `set_watch` and in
+`bridge.c`'s `OH_MAX_WATCH`) and whose hit limit is 262144 per step (3 min).
+The private tools are in `$TEMP/hfit/`.
+
+**Cycle table.** A per-address table of the loop's bus cycles (FastROM fetch
+6, internal 6, WRAM and stack 8, `$42xx` 6; a taken branch one internal
+cycle more) gives every lsnes instruction delta exactly: 61656 pairs away
+from HDMA, no mismatches except the DRAM refresh (+40). On LakeSnes, 38176
+pairs, the same. The pause is the delta minus the table.
+
+**lsnes's pauses.** HUD lines 1-30 of three frames, 90 lines (line 0 and 31
+hold the IRQ). Every pause is 108, 112, 114 or 120 clocks, and the work is
+104 on all of them, as on LakeSnes. With the trace's beam in master clocks
+(the hit position lsnes reports), this rule reproduces all 90 (the search
+covered request point, overhead, the two alignment ranges, the alignment
+reference and a one-cycle delay):
+
+| Step | lsnes (fitted, 90 of 90) | LakeSnes (fix 0004 base, 60 of 60) |
+| --- | --- | --- |
+| Request seen | at the first CPU cycle edge at or after 1106 | the same |
+| Pause starts | **one CPU cycle later**, at the next edge | at that edge |
+| Start alignment | 2-8 clocks to a multiple of 8 on a counter that runs on across lines (the fit needs the 4-clock phase flip of each 1364-clock line, so not the dot) | the same, since power-on |
+| Work | 104 (lines 1-30) | 104 |
+| End alignment | 1 to s clocks to a whole number of s since the pause start, s = speed of the next CPU cycle | the same |
+| Length | 108 (s = 6, start alignment 2), 114 (s = 6, 4-8), 112 (s = 8, 2-6), 120 (s = 8, 8) | the same table |
+
+The one difference is the delay. lsnes lets the CPU run one more bus cycle
+after it sees the request, so the pause lands one cycle later than on
+LakeSnes, and the next cycle's speed (6 or 8) and the start's mod-8 phase
+change with it. That is anomie's DMA rule ("the CPU gets one more CPU cycle
+before the pause") applied to HDMA as well. (n)'s observation that the same
+LakeSnes start state gives different lsnes lengths follows: lsnes's start is
+a cycle later, and that cycle is 6 or 8 clocks depending on the instruction.
+lsnes's trace reports an instruction after any pause before its opcode
+fetch, LakeSnes's before it; the fit accounts for both.
+
+**Variants.** On 0001+0002+0004, scored as in (n) (HUD pairs over 601
+samples and the whole fade, against (m)'s lsnes log):
+
+| Variant | HUD pairs: sum, nonzero | Fade total | 35175 wait, NMI |
+| --- | --- | --- | --- |
+| none ((m)) | +36, 65 | +36 | 224/1260, `Overrun` |
+| A: one-cycle delay, request at 1104 | -2, 128 | +62 | 224/1332, `Overrun` |
+| B: one-cycle delay, request at 1102 | +24, 39 | +18 | 224/1246, `Requested` |
+
+B matches lsnes on lines 1-14 of the first HUD frame (same instructions,
+same lengths, LakeSnes 2 clocks later), then lengths differ by 2-12 on about
+half the lines. The trace beam's offset from the true cycle start is not
+known on either side (lsnes's could be the opcode read, 2 clocks into the
+fetch), and the mod-8 phase of LakeSnes's counter against lsnes's is a
+second unknown; these two choose between A, B and a phase shift of 2, 4 or
+6. Not tried for lack of time: B and A with the alignment counter offset by
+2, 4 and 6 clocks. No fix 0005 yet; (h)'s classification was not run.
+
+**Next.** Build the 3 x 4 grid (request 1102, 1104, 1106; counter offset 0,
+2, 4, 6), each with the one-cycle delay, score it, and fit the residual of B
+line by line with `$TEMP/hfit/fit4.py` on the LakeSnes trace (`LAKE=1`) against
+the lsnes trace: the right variant fits both with the same rule and the same
+per-frame phase. Then (h)'s lag-log run with the print limit lifted. No GPL
+code was read; the rule is fitted from lsnes's traces and anomie's text.
+
+## (q) The 3 x 4 grid of request point and alignment phase: none zeroes the HUD lines, no fix 0005
+
+**Command.** As (n) and (p): each variant is a private DLL on top of
+0001+0002+0004 plus (p)'s one-cycle delay (the run request is seen at one
+CPU cycle edge and served at the next), with the request at `hPos` 1102,
+1104 or 1106 and the HDMA run's start alignment taken on the master-clock
+counter plus K (K = 0, 2, 4, 6; `8 - (cycles + K) % 8`, the run only, not
+DMA or the HDMA init). LakeSnes from power-on to 35176 with (m)'s 18 PCs
+traced over 35173-35175 (3-4.5 min, ten in parallel), scored as in (n)
+against (m)'s lsnes log. Private tools in `$TEMP/hgrid/` (`mk.sh`, `run.sh`,
+`score.py`, `mkw.sh`, `runlk.sh`, `fit5.py`, `ph.py`).
+
+**Grid.** HUD pairs over the 601 samples (sum, nonzero), the whole fade, the
+35175 wait and NMI, and the fade's first `$E752` dot (lsnes: 63/262, the
+35175 wait 224/1230):
+
+| Request | K | HUD sum, nonzero | Fade total | 35175 wait, NMI | `$E752` at |
+| --- | --- | --- | --- | --- | --- |
+| 1102 | 0 ((p) B) | +24, 39 | +18 | 224/1246, `Requested` | 63/260 |
+| 1102 | 2 | -6, 99 | +56 | 224/1292, `Overrun` | 63/268 |
+| 1102 | 4 | -2, 74 | -2 | 224/1252, `Requested` | 63/286 |
+| 1102 | 6 | +14, 99 | +84 | 224/1318, `Overrun` | 63/266 |
+| 1104 | 0 ((p) A) | -2, 128 | +62 | 224/1332, `Overrun` | 63/302 |
+| 1104 | 2 | +4, 63 | -2 | 224/1254, `Requested` | 63/288 |
+| 1104 | 4 | +18, 136 | +78 | 224/1358, `Overrun` | 63/312 |
+| 1104 | 6 | +2, 132 | +66 | 224/1338, `Overrun` | 63/304 |
+| 1106 | 0 | -30, 123 | +30 | 224/1312, `Overrun` | 63/314 |
+| 1106 | 2 | +18, 109 | +78 | 224/1316, `Overrun` | 63/270 |
+| 1106 | 4 | +18, 44 | +18 | 224/1250, `Requested` | 63/264 |
+| 1106 | 6 | -20, 144 | +44 | 224/1334, `Overrun` | 63/322 |
+
+No cell is 0. Every cell has residuals of 2-6 clocks (and the 114-clock
+pairs where a pause falls in the neighbouring instruction), besides the ±40
+pairs that are the DRAM refresh landing in a different instruction on the
+two emulators and cancel.
+
+**The fit.** `fit5.py` is (p)'s `fit4.py` with LakeSnes's trace convention
+(`LAKE=1`: a pause at an opcode fetch shows in that instruction's pair, not
+the one before). On LakeSnes's own all-instruction trace of the fade, every
+delayed variant obeys the lsnes rule on 60 of 60 HUD lines, with the request
+2 clocks after the code's `hPos` in trace clocks (1102 fits at 1104, 1106 at
+1108) and the phase c = 4 + K. lsnes fits at 1106 with c = 6, 2, 2 on its
+three frames; its last two are LakeSnes's two (both phases constant across
+them). 1102/K=0 and 1106/K=4 give the same pause length on all 60 lines,
+4 trace clocks apart: the same rule under the two readings of the trace
+origin (LakeSnes's trace 2 clocks before lsnes's, or 2 after); 1104/K=6, the
+reading with equal origins, is not in the family and is far off (+66). So
+the rule is fitted, but the two remaining unknowns cannot be told apart by
+the HUD lines alone, and neither member zeroes them.
+
+**Where the residual starts.** In both family members the first nonzero
+pair of the first HUD frame is the one spanning line 0 (from 0/628 to
+1/338): LakeSnes +6. Line 0 holds the IRQ, which (p)'s fit leaves out. On
+lines 1-7 LakeSnes's instructions then sit a constant 2 trace clocks after
+lsnes's (1102/K=0) with the same pause lengths, and on line 8 (`$DA24`, six
+cycles 6-6-6-6-8-8) the request falls on the other side of a cycle edge:
+lsnes serves the pause at an 8-clock cycle (112), LakeSnes at a 6-clock one
+(114). From there the offset grows and about half the lines differ. The HUD
+residual is the CPU's phase on entry to line 1, not the pause rule.
+
+**Not run.** (h)'s lag-log classification needs a zero cell, so it was not
+run, and there is no fix 0005.
+
+**Next.** Fit the line-0 pause (the IRQ entry against the HDMA run, and the
+refresh at 536 on LakeSnes against anomie's 538 / nearest multiple of 8 to
+536) with an all-instruction trace of line 0 on both emulators, then rescore
+1102/K=0 and 1106/K=4 and take whichever zeroes; then (h)'s run with the
+print limit lifted, then fix 0005.
+
+## (r) lsnes's picture: the right frame, a PNG transport, compared as it shows
+
+**Question.** (o) left 53 lsnes pictures equal to LakeSnes's previous one, 6
+other, a 2.8x cost from the per-dot `pget` loop, and brightness below 15
+lossy. Which frame does the screenshot hold at the cut, what does a bulk read
+cost, how are fades compared, and do the streams hold past 17829?
+
+**Which frame.** lsnes calls `on_frame_emulated` from its frame output before
+it hands that frame to its screen buffer, and `on_frame` after the core
+returns (lsnes `mainloop.cpp` `output_frame`, read for the order only). So
+the screenshot in `on_frame_emulated` is the previous video frame; a record
+owed to the RTI (an NMI past line 241) is sent after the hand-over and so
+already held the right one. The server now sends boundary records from
+`on_frame` (`c2ab6e5eb`); the record's content is taken at the same points as
+before and non-stream records are unchanged.
+
+**Transport.** `bitmap:save_png()` (base64 PNG, one C++ call) replaces the
+`pget` loop; `crate::png` decodes it (base64, zlib inflate, PNG filters).
+`OH_PICTURE_DOTS=1` keeps the `pget` path; over any% 0-1000 the decoded RGB
+of all 1001 steps hashed equal to it (`01b2997f7`, a temporary hash print).
+
+**Comparison.** The picture is compared as the 8-bit colour each dot shows
+(HARNESS.md "The picture compared", `8f28a9a62`): exact at brightness 15,
+and below it equal exactly when no screenshot could tell the two apart.
+
+**Command.** `oracle cross ROM any.inputs --frames 0..1000 --streams`, private
+DLL from `8f28a9a62`; `oracle movie ROM any.inputs --frames 1001 --oracle lsnes
+[--streams]` (memories on) for lsnes alone.
+
+| Picture, any% 0-1000 | Steps equal of 1001 |
+| --- | --- |
+| (o): screenshot at `on_frame_emulated`, BGR555 | 942 |
+| screenshot at `on_frame`, BGR555 | 996 (401-403, 680, 681: brightness 0 or 3, read back as 1 or 4) |
+| screenshot at `on_frame`, as shown | 1001 (57,401,344 of 57,401,344 dots) |
+
+| Speed, 1001 steps | Seconds | Frames/s |
+| --- | --- | --- |
+| lsnes alone, no streams | 22.9 | 44 |
+| lsnes alone, streams, PNG | 28.8 | 35 |
+| lsnes alone, streams, `pget` | 72.0 | 14 |
+| cross, no streams ((o)) | 27.4 | |
+| cross, streams, `pget` | 82.6 | |
+| cross, streams, PNG | 32.3-33.3 | |
+
+**Past 17829.** `cross --frames 20000..21000 --streams --right-from
+020000.lss 20000` (`b755626ee`: lsnes from the any% ladder rung, LakeSnes
+from power-on through 19999 uncompared; 107 s): picture equal on 1001 of
+1001 steps, ppu equal throughout, vram, cgram, oam, frame and pad equal
+throughout; wram differs on 1-2 bytes and the cut on 509 steps (wait-loop
+NMI position, as in (i)). The APU log is empty on the resumed lsnes (0 CPU
+accesses against LakeSnes's 404 over the window), so it differs on 211 steps:
+the port callbacks, registered in the server's main chunk after its
+`load-state`, record nothing after a resume. Not fixed here; from power-on
+(0-1000) lsnes logs 845,053 accesses against LakeSnes's 845,048.
+
+**Conclusion.** The 53 late pictures were the callback order, not overrun or
+fade behaviour: each lsnes record now carries the picture scanned out in its
+video frame, dot-identical as shown to LakeSnes on 1001 of 1001 steps at
+0-1000 and 20000-21000. The streams cost lsnes 26% (was 3.1x).
