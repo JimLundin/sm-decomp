@@ -1,5 +1,9 @@
 # The behaviour model
 
+> **Pause: Jim's review is waiting.** Before more lane work, read
+> [MODEL-REVIEW.md](MODEL-REVIEW.md) and answer every row of its
+> Acknowledgement table. `tools/check_review_ack.sh` fails the gate and CI until you do.
+
 This note sets the shape of the engine's game code. It amends ARCHITECTURE where they disagree,
 and the amendments are listed in §7. It follows Jim's decisions of 2026-11-06, recorded in §1.
 

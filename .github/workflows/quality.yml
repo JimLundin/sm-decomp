@@ -36,6 +36,8 @@ jobs:
         run: cargo run --locked --release -p game --example empty_ticks
       - name: "Report the compositor time per frame (A5 target: 0.3 ms)"
         run: cargo run --locked --release -p runtime --example compose_bench
+      - name: Jim's MODEL review is acknowledged item by item
+        run: bash tools/check_review_ack.sh
       - name: Hold the crate plan's dependency and source rules
         # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
         run: bash tools/check_crate_rules.sh
