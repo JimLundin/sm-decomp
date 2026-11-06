@@ -606,6 +606,26 @@ on 35 Ticks from 1218), and the eye's `activated` at 1250, which the beam's HDMA
 Remaining (`// open:`): the beam (its HDMA object, the activated flag, the mount's window
 table), the ray's sounds (C11), the eye's grapple/hurt/frozen AI, and the face blocks' AI.
 
+**C8c status (`lane/slice0-c8c`), the Blue Brinstar face block's AI.** Done (bank $A8 log,
+`$A8:E82E` to `$A8:E91B`): `EnemyBody::FaceBlock(FaceBlock { activated, samus_offset, unused
+})`, the six AI words named (`+30` the activated flag, `+32` Samus's X less its X, `+34` to
+`+3A` unused); verify's `enemy::face_block` decodes them (an activated word other than 0/1 is
+`Unrepresentable`) and `face_block_words` gives them back; `AiVariables`, the six-word
+carrier, now lives in verify alone. `data::enemy::face_block::FaceBlockLists` resolves the
+lists (`Content::face_block_lists`: turning left `$A8:E80C`, turning right `$A8:E81A`, facing
+forward `$A8:E828`). `game::enemy::face_block`: `init` (`$A8:E82E`: facing forward; parameter
+2 becomes the sign of the side it never turns to, bit 0 set for left; not yet called, as the
+eye's) and `main_ai` (`$A8:E8AE`: nothing without the morph ball or once activated; within
+parameter 1 rows, `$A0:AEDD`/`$A0:B067`, it stores Samus's X offset, `$A0:AEE5`; within
+parameter 1 columns too and off its never side, the whole-word compare at `$A8:E8F5`, it
+starts the turning list for her side with the instruction timer 1 and sets the flag). Six
+hand-worked unit tests, a verify round-trip test and a ROM test of the lists. Lockstep on A2's
+cache, 2026-11-06: `item-morph-ball` enemies differ on 2 Ticks (from 38): `elevator.armed` at
+688 and the eye's `activated` at 1250; the face blocks are equal on every Tick;
+`area-brinstar` enemies stay equal on all 476. Remaining (`// open:`): the palette cycle
+(the enemy graphics drawn hook `$A8:E86E`, its palette index and timer), the face block's
+grapple/hurt/frozen AI, and its shot reaction (`$A8:E91D`, which undeletes the projectile).
+
 **C6c status (`lane/slice0-c6c`), drawing Samus.** Done: `data::spritemap` (the entry
 format of bank `$81`'s `$81:8A5F`: size, nine-bit X, Y, tile, palette, priority, flips) and
 `data::pose::spritemap::SamusSpritemaps` (`$92:9263`/`$92:945D` half indices by pose,
