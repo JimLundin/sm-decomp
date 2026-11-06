@@ -2,7 +2,7 @@ use data::pose::transition::{Control, Controls, PoseTransitions, Transition};
 use data::pose::{MovementType, PoseFacing, PoseId, Poses};
 
 use super::*;
-use crate::state::samus::Fixed;
+use crate::state::samus::Horizontal;
 use crate::state::slots::FlagSet;
 
 /// Pose definition bytes: facing, movement type, next pose, shot, then four more.
@@ -26,6 +26,7 @@ fn content() -> Content {
     Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(vec![Vec::new(), vec![run_right], vec![run_right]]),
+        speeds: HorizontalSpeeds::default(),
     }
 }
 
@@ -105,16 +106,76 @@ fn running_with_speed_keeps_its_pose_when_released() {
     let samus = Samus {
         pose: PoseId(2),
         movement: Movement::Running {
-            speed: Fixed {
-                pixels: 1,
-                subpixels: 0,
+            speed: Horizontal {
+                base: Speed::new(1, 0),
+                ..Horizontal::default()
             },
         },
         ..standing()
     };
     assert_eq!(
-        input(&samus, &Controller::default(), &content).ordinary,
-        Some(PoseId(2))
+        input(&samus, &Controller::default(), &content),
+        PoseRequests {
+            ordinary: Some(PoseId(2)),
+            command: Some(PoseCommand::Decelerate),
+        }
+    );
+}
+
+#[test]
+fn running_without_base_speed_stops_when_released() {
+    let content = content();
+    let samus = Samus {
+        pose: PoseId(2),
+        movement: Movement::from(MovementType::Running),
+        ..standing()
+    };
+    // Pose 2's definition names no next pose, so she keeps it; the command is a stop.
+    assert_eq!(
+        input(&samus, &Controller::default(), &content).command,
+        Some(PoseCommand::Stop)
+    );
+}
+
+#[test]
+fn letting_go_folds_the_run_speed_into_the_base_speed_and_decelerates() {
+    let mut speed = Horizontal {
+        base: Speed::new(2, 0xC000),
+        extra_run: Speed::new(1, 0x2000),
+        acceleration: Acceleration::Accelerating,
+        momentum: true,
+    };
+    apply(PoseCommand::Decelerate, &mut speed);
+    assert_eq!(
+        speed,
+        Horizontal {
+            base: Speed::new(3, 0xE000),
+            extra_run: Speed::ZERO,
+            acceleration: Acceleration::Decelerating,
+            momentum: false,
+        }
+    );
+}
+
+#[test]
+fn turning_on_the_ground_takes_the_run_speed_into_the_turn() {
+    let mut movement = Movement::TurningAround {
+        place: Turn::OnGround,
+        speed: Horizontal {
+            base: Speed::new(2, 0xC000),
+            extra_run: Speed::new(0, 0x4000),
+            ..Horizontal::default()
+        },
+    };
+    initialise(&mut movement);
+    assert_eq!(
+        movement.horizontal(),
+        Some(Horizontal {
+            base: Speed::new(3, 0),
+            extra_run: Speed::ZERO,
+            acceleration: Acceleration::TurningAround,
+            momentum: false,
+        })
     );
 }
 

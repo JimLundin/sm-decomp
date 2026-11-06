@@ -214,6 +214,31 @@ pub const FIELDS: &[Field] = &[
     open("samus.aim"),
     // The variant decodes from the movement type; the data it carries is C3's.
     wram_byte("samus.movement", source::SAMUS_MOVEMENT_TYPE),
+    // The standing, running and turning movements' horizontal motion.
+    wram(
+        "samus.movement.speed.base.pixels",
+        source::SAMUS_X_BASE_SPEED,
+    ),
+    wram(
+        "samus.movement.speed.base.subpixels",
+        source::SAMUS_X_BASE_SUBSPEED,
+    ),
+    wram(
+        "samus.movement.speed.extra_run.pixels",
+        source::SAMUS_X_EXTRA_RUN_SPEED,
+    ),
+    wram(
+        "samus.movement.speed.extra_run.subpixels",
+        source::SAMUS_X_EXTRA_RUN_SUBSPEED,
+    ),
+    wram(
+        "samus.movement.speed.acceleration",
+        source::SAMUS_X_ACCEL_MODE,
+    ),
+    wram(
+        "samus.movement.speed.momentum",
+        source::SAMUS_HAS_MOMENTUM_FLAG,
+    ),
     wram("samus.equipment.collected", source::COLLECTED_ITEMS),
     wram("samus.equipment.equipped", source::EQUIPPED_ITEMS),
     wram("samus.equipment.energy.current", source::SAMUS_HEALTH),
@@ -282,7 +307,7 @@ pub const FIELDS: &[Field] = &[
 mod tests {
     use super::{FIELDS, Source, Status};
     use crate::decode::Rules;
-    use crate::source::WramByte;
+    use crate::source::{WramByte, WramWord};
 
     #[test]
     fn paths_are_unique() {
@@ -356,10 +381,9 @@ mod tests {
         ]
     }
 
-    #[test]
-    fn every_wram_rule_is_a_decoder_source() {
-        let rules = Rules::ORIGINAL;
-        let words = [
+    /// The word sources the decoder reads.
+    fn word_sources(rules: &Rules<'_>) -> Vec<WramWord> {
+        vec![
             rules.nmi,
             rules.completed,
             rules.hours,
@@ -408,12 +432,24 @@ mod tests {
             rules.pose.pose,
             rules.previous_pose.pose,
             rules.last_different_pose.pose,
+            rules.horizontal.base,
+            rules.horizontal.base_subpixels,
+            rules.horizontal.extra_run,
+            rules.horizontal.extra_run_subpixels,
+            rules.horizontal.acceleration,
+            rules.horizontal.momentum,
             // The scroll row names the first mirror; the queue's tail bounds the queue block.
             rules.scroll[0][0],
             // An array of mirrors is named by its first; mode 7's centre by its own first.
             rules.mirrors.mode7[0],
             rules.mirrors.mode7[4],
-        ];
+        ]
+    }
+
+    #[test]
+    fn every_wram_rule_is_a_decoder_source() {
+        let rules = Rules::ORIGINAL;
+        let words = word_sources(&rules);
         let bytes = byte_sources(&rules);
         let blocks = [
             rules.oam_buffer,

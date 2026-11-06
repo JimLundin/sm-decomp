@@ -383,6 +383,56 @@ transition instructions (the turn ends at 687 by animation, not input); the elev
 "no input" case (C7); the controller bindings as State; the interrupted and transitional
 requests (hurt, blocks); the tools binary's lockstep runs on empty content (it reads no ROM).
 
+**C3a-2 status (`lane/slice0-c3a2`), Samus's horizontal motion on the ground.** Done:
+`data::movement` decodes bank `$90`'s normal X speed table (`$90:9F55`, twelve bytes a
+movement type: acceleration, max speed, deceleration, each pixels then subpixels; types $1A
+and $1B read on into the water table as the original does) and the extra run constants
+(`$90:9F01`, the air column: 0.1000 a frame, caps 2.0 and 7.0 with the speed booster) as
+`HorizontalSpeeds` of `Speed` (16.16) values; the ROM test (scratch DLL, real ROM) passes.
+`Movement::Standing`, `Running` and `TurningAround` carry `Horizontal { base, extra_run,
+acceleration: Acceleration::{Accelerating, TurningAround, Decelerating}, momentum }`, decoded
+from `SAMUS_X_BASE_SPEED`/`_SUBSPEED`, `SAMUS_X_EXTRA_RUN_SPEED`/`_SUBSPEED`,
+`SAMUS_X_ACCEL_MODE` and `SAMUS_HAS_MOMENTUM_FLAG` (`$0B3C`-`$0B4A`; a mode past 2 or a flag
+past 1 is `Unrepresentable`), with coverage rows and moved-source mutants. `game::movement`
+runs before the pose update (`$90:E725`): standing (`$90:A383`, the extra run speed moves her a
+last frame, then everything stops), running (`$90:A3E5`) and turning on the ground
+(`$90:A67C`) through "Samus X movement" (`$90:8E64`: the extra run speed `$90:973E`, the base
+speed `$90:9A7E` with the original's word-by-word cap test, so 2.1000 caps to 2.C000 and the
+turn's cap of 0.0 lets 0.C000 through every other frame, then the move `$90:8EA9` against
+her facing while turning, clamped to 15 pixels). `game::pose` now carries the speeds across a
+movement change, starts the turn's momentum (`$91:F8D3`: base += extra run, mode turning)
+and runs the lookup failure's prospective pose change command (`$91:8304`/`$91:8332`:
+decelerate, stop, kill X speed, kill run speed; `$91:EC16`). Unit tests (acceleration from
+rest to the cap worked by hand from the table, deceleration, the turn, standing's last
+frame) ran in the scratch DLL with the decode and pose tests: 38 pass. Lockstep
+`item-morph-ball` (1,427 Ticks; differing, first):
+
+| Field | before (C3a) | after | Owner of the rest |
+| --- | --- | --- | --- |
+| `samus.position.x.pixels` | 215, 683 | 206, 688 | see below |
+| `samus.position.x.subpixels` | 197, 683 | 147, 707 | C3b (the spin jump from 706) |
+| `samus.pose`, `samus.previous.pose` | 64, 687 | 64, 687 | C6 (the turn ends by animation) |
+| `samus.movement` | 63, 687 | 63, 687 | C6, C3b |
+
+Her X through the turn (681-687) now matches the record. Remaining:
+- 688-702 and 741-753: the record moves her one more pixel left on every frame her pose
+  changes to a running pose (from standing at 688 and 741, then the aim toggle alternating
+  $0A and $12), and not when it keeps the pose (703-705) or leaves running (706); the movement
+  handler's own displacement (`$0DAA`) is the table's. The pixel comes from the pose update,
+  not the movement handler; not found in `$91:F404` or `$91:FDAE` (which adjust Y). Open,
+  with C4 (the pose change's collision).
+- 687: pose $25 to $02 is the turn animation's transition instruction (`$90:8000` "Animate
+  Samus", between the movement handler and the pose update); it needs the animation delay
+  lists and `SAMUS_ANIM_FRAME`/`_TIMER` as State, so C6.
+- 706 on: jumping, wall jumping and falling keep `Horizontal` too in the original (the spin
+  jump at 706 carries base 2.C000 and extra 1.2000); they, the morph ball and the landing's
+  extra run speed into standing (740 to 741) join with C3b.
+- Not modelled: the deceleration multiplier (`SAMUS_X_DECEL_MULT`), the speed divisor
+  (`SAMUS_X_SPEED_DIVISOR`) and the extra displacement (`EXTRA_SAMUS_X_DISPLACEMENT`), zero in
+  slice 0's ground movements; the speed booster's boost counter, timer and palettes; the
+  water and lava tables; block and solid enemy collision on the move (C4); "kill Y speed if
+  started falling" after a command (C3b).
+
 **C9 status (`lane/slice0-c9`), the HUD.** Done: `game::state::hud::Hud` holds the HUD
 tilemap's three rows as typed cells (`video::TilemapEntry`: tile, palette, priority, flips;
 `from_word` and `word` round-trip every word), the selected and auto-cancel items

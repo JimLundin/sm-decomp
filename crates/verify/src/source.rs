@@ -600,6 +600,37 @@ pub const REG_BG_SCROLL: [[WramWord; 2]; 4] = [
     ],
 ];
 
+/// Bank $90 log, `$90:973E`: whether Samus kept her running momentum (the extra run speed
+/// survives leaving the running movement), 0 or 1.
+pub const SAMUS_HAS_MOMENTUM_FLAG: WramWord = WramWord {
+    name: "SAMUS_HAS_MOMENTUM_FLAG",
+    offset: 0x0B3C,
+};
+/// Bank $90 log, `$90:973E`: the extra run speed's pixels a frame.
+pub const SAMUS_X_EXTRA_RUN_SPEED: WramWord = WramWord {
+    name: "SAMUS_X_EXTRA_RUN_SPEED",
+    offset: 0x0B42,
+};
+/// Bank $90 log, `$90:973E`: the extra run speed's subpixels.
+pub const SAMUS_X_EXTRA_RUN_SUBSPEED: WramWord = WramWord {
+    name: "SAMUS_X_EXTRA_RUN_SUBSPEED",
+    offset: 0x0B44,
+};
+/// Bank $90 log, `$90:9A7E`: the base speed's pixels a frame.
+pub const SAMUS_X_BASE_SPEED: WramWord = WramWord {
+    name: "SAMUS_X_BASE_SPEED",
+    offset: 0x0B46,
+};
+/// Bank $90 log, `$90:9A7E`: the base speed's subpixels.
+pub const SAMUS_X_BASE_SUBSPEED: WramWord = WramWord {
+    name: "SAMUS_X_BASE_SUBSPEED",
+    offset: 0x0B48,
+};
+/// Bank $90 log, `$90:9A7E`: 0 accelerating, 1 turning around, 2 decelerating.
+pub const SAMUS_X_ACCEL_MODE: WramWord = WramWord {
+    name: "SAMUS_X_ACCEL_MODE",
+    offset: 0x0B4A,
+};
 /// Bank $90/$91 logs: Samus's pose, an index into the pose definitions (`$91:B629`).
 pub const SAMUS_POSE: WramWord = WramWord {
     name: "SAMUS_POSE",

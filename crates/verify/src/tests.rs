@@ -4,7 +4,9 @@
 //! to the wrong address fails these tests.
 
 use data::id::{Line, RoomId};
-use game::state::samus::{Facing, MovementType, PoseId, PoseRecord};
+use game::state::samus::{
+    Acceleration, Facing, Horizontal, Movement, MovementType, PoseId, PoseRecord, Speed,
+};
 use game::state::slots::Frames;
 use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
@@ -82,6 +84,12 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0A24, 0x0002); // SAMUS_LAST_DIFFERENT_POSE
     wram[0x0A26] = 0x04; // SAMUS_LAST_DIFFERENT_POSE_X_DIR: left
     wram[0x0A27] = 0x05; // SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: crouching
+    put(&mut wram, 0x0B3C, 0x0001); // SAMUS_HAS_MOMENTUM_FLAG
+    put(&mut wram, 0x0B42, 0x0001); // SAMUS_X_EXTRA_RUN_SPEED
+    put(&mut wram, 0x0B44, 0x2000); // SAMUS_X_EXTRA_RUN_SUBSPEED
+    put(&mut wram, 0x0B46, 0x0002); // SAMUS_X_BASE_SPEED
+    put(&mut wram, 0x0B48, 0xC000); // SAMUS_X_BASE_SUBSPEED
+    put(&mut wram, 0x0B4A, 0x0002); // SAMUS_X_ACCEL_MODE: decelerating
     put(&mut wram, 0x090F, 0x1111); // LAYER1_X_SUBPOS
     put(&mut wram, 0x0911, 0x0200); // LAYER1_X_POS
     put(&mut wram, 0x0913, 0x2222); // LAYER1_Y_SUBPOS
@@ -187,7 +195,15 @@ fn decodes_the_record(state: &State) -> bool {
         && state.mode == GameMode::Gameplay
         && state.samus.pose == PoseId(9)
         && state.samus.facing == Facing::Right
-        && state.samus.movement.kind() == MovementType::Running
+        && state.samus.movement
+            == Movement::Running {
+                speed: Horizontal {
+                    base: Speed::new(0x0002, 0xC000),
+                    extra_run: Speed::new(0x0001, 0x2000),
+                    acceleration: Acceleration::Decelerating,
+                    momentum: true,
+                },
+            }
         && state.samus.previous
             == PoseRecord {
                 pose: PoseId(3),
@@ -260,7 +276,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 32] = [
+const WORD_RULES: [(&str, WordRule); 38] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -295,6 +311,22 @@ const WORD_RULES: [(&str, WordRule); 32] = [
     ("last_different_pose", |rules| {
         &mut rules.last_different_pose.pose
     }),
+    ("horizontal.base", |rules| &mut rules.horizontal.base),
+    ("horizontal.base_subpixels", |rules| {
+        &mut rules.horizontal.base_subpixels
+    }),
+    ("horizontal.extra_run", |rules| {
+        &mut rules.horizontal.extra_run
+    }),
+    ("horizontal.extra_run_subpixels", |rules| {
+        &mut rules.horizontal.extra_run_subpixels
+    }),
+    ("horizontal.acceleration", |rules| {
+        &mut rules.horizontal.acceleration
+    }),
+    ("horizontal.momentum", |rules| {
+        &mut rules.horizontal.momentum
+    }),
 ];
 
 /// Every byte rule.
@@ -315,6 +347,21 @@ const BYTE_RULES: [(&str, ByteRule); 9] = [
         &mut rules.last_different_pose.movement
     }),
 ];
+
+#[test]
+fn an_acceleration_mode_past_2_or_a_momentum_flag_past_1_is_an_error() {
+    for (offset, source) in [
+        (0x0B4A, "SAMUS_X_ACCEL_MODE"),
+        (0x0B3C, "SAMUS_HAS_MOMENTUM_FLAG"),
+    ] {
+        let mut record = record();
+        put(&mut record.wram, offset, 0x0003);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable { source, value: 3 })
+        );
+    }
+}
 
 #[test]
 fn a_pose_past_the_table_or_a_movement_type_past_the_handler_is_an_error() {

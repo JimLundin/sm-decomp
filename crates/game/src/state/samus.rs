@@ -22,7 +22,36 @@ pub struct Point {
     pub y: Fixed,
 }
 
+pub use data::movement::Speed;
 pub use data::pose::{MovementType, PoseFacing as Facing, PoseId};
+
+/// How Samus's base speed changes each frame and which way it moves her (bank $90 log,
+/// `$90:9A7E` "Calculate Samus X base speed", `$90:8EA9` "Move Samus horizontally").
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Acceleration {
+    /// Speeding up to the movement type's cap, the way she faces.
+    #[default]
+    Accelerating,
+    /// Slowing down against the way she faces, the momentum of a turn.
+    TurningAround,
+    /// Slowing down the way she faces, after letting go.
+    Decelerating,
+}
+
+/// Samus's horizontal motion: the speeds the X movement routines (bank $90 log, `$90:8E64`
+/// "Samus X movement") read and keep from frame to frame.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Horizontal {
+    /// The speed the movement type's acceleration builds, capped by its speed table entry.
+    pub base: Speed,
+    /// The extra speed holding the run button adds while running (`$90:973E`).
+    pub extra_run: Speed,
+    /// How the base speed changes.
+    pub acceleration: Acceleration,
+    /// Whether she has started running with the run button held since the last speed boost
+    /// cancel: the extra run speed survives leaving the running movement only then.
+    pub momentum: bool,
+}
 
 /// Where Samus aims her arm cannon.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -56,17 +85,19 @@ pub enum Jump {
 /// The landing frames are not a movement type: the landing poses (bank $91 log, poses $A4
 /// to $A7, $E0 to $E5) are standing ones, so behaviour that keys on landing reads
 /// [`Samus::pose`].
-// open: the data each variant carries joins with movement (C3): the speeds the original
-// keeps in its X and Y speed words, and the jump's rise.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+// open: the jumps, falls and wall jumps keep `Horizontal` too, and the jump's rise; they
+// join with C3b.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Movement {
-    /// On the ground, still.
-    #[default]
-    Standing,
+    /// On the ground, still: a landing's extra run speed still moves her one frame.
+    Standing {
+        /// Horizontal motion.
+        speed: Horizontal,
+    },
     /// On the ground, moving.
     Running {
-        /// Horizontal speed.
-        speed: Fixed,
+        /// Horizontal motion.
+        speed: Horizontal,
     },
     /// Crouched.
     Crouching,
@@ -102,6 +133,8 @@ pub enum Movement {
     TurningAround {
         /// Where she turns.
         place: Turn,
+        /// Horizontal motion.
+        speed: Horizontal,
     },
     /// Crouching, standing, morphing or unmorphing.
     Transition,
@@ -163,6 +196,14 @@ pub enum Turn {
     Falling,
 }
 
+impl Default for Movement {
+    fn default() -> Self {
+        Self::Standing {
+            speed: Horizontal::default(),
+        }
+    }
+}
+
 impl From<MovementType> for Movement {
     /// The movement a type starts, its data at rest.
     fn from(kind: MovementType) -> Self {
@@ -171,14 +212,18 @@ impl From<MovementType> for Movement {
             vertical: Fixed::default(),
             rising: false,
         };
+        let turning = |place| Self::TurningAround {
+            place,
+            speed: Horizontal::default(),
+        };
         let morph_ball = |airborne| Self::MorphBall {
             speed: Fixed::default(),
             airborne,
         };
         match kind {
-            MovementType::Standing => Self::Standing,
+            MovementType::Standing => Self::default(),
             MovementType::Running => Self::Running {
-                speed: Fixed::default(),
+                speed: Horizontal::default(),
             },
             MovementType::NormalJumping => jumping(Jump::Normal),
             MovementType::SpinJumping => jumping(Jump::Spin),
@@ -189,15 +234,9 @@ impl From<MovementType> for Movement {
                 vertical: Fixed::default(),
             },
             MovementType::KnockbackOrCrystalFlashEnding => Self::KnockbackOrCrystalFlashEnding,
-            MovementType::TurningAroundOnGround => Self::TurningAround {
-                place: Turn::OnGround,
-            },
-            MovementType::TurningAroundJumping => Self::TurningAround {
-                place: Turn::Jumping,
-            },
-            MovementType::TurningAroundFalling => Self::TurningAround {
-                place: Turn::Falling,
-            },
+            MovementType::TurningAroundOnGround => turning(Turn::OnGround),
+            MovementType::TurningAroundJumping => turning(Turn::Jumping),
+            MovementType::TurningAroundFalling => turning(Turn::Falling),
             MovementType::CrouchingTransition => Self::Transition,
             MovementType::Moonwalking => Self::Moonwalking,
             MovementType::SpringBallOnGround => Self::SpringBall {
@@ -225,11 +264,60 @@ impl From<MovementType> for Movement {
 }
 
 impl Movement {
+    /// The horizontal motion this movement keeps, if it keeps one.
+    #[must_use]
+    pub const fn horizontal(self) -> Option<Horizontal> {
+        match self {
+            Self::Standing { speed }
+            | Self::Running { speed }
+            | Self::TurningAround { speed, .. } => Some(speed),
+            Self::Crouching
+            | Self::Jumping { .. }
+            | Self::Falling { .. }
+            | Self::MorphBall { .. }
+            | Self::SpringBall { .. }
+            | Self::KnockbackOrCrystalFlashEnding
+            | Self::Transition
+            | Self::Moonwalking
+            | Self::WallJumping
+            | Self::RanIntoWall
+            | Self::Grappling
+            | Self::DamageBoost
+            | Self::GrabbedByDraygon
+            | Self::Shinespark
+            | Self::Unused(_) => None,
+        }
+    }
+
+    /// The horizontal motion this movement keeps, to change, if it keeps one.
+    pub const fn horizontal_mut(&mut self) -> Option<&mut Horizontal> {
+        match self {
+            Self::Standing { speed }
+            | Self::Running { speed }
+            | Self::TurningAround { speed, .. } => Some(speed),
+            Self::Crouching
+            | Self::Jumping { .. }
+            | Self::Falling { .. }
+            | Self::MorphBall { .. }
+            | Self::SpringBall { .. }
+            | Self::KnockbackOrCrystalFlashEnding
+            | Self::Transition
+            | Self::Moonwalking
+            | Self::WallJumping
+            | Self::RanIntoWall
+            | Self::Grappling
+            | Self::DamageBoost
+            | Self::GrabbedByDraygon
+            | Self::Shinespark
+            | Self::Unused(_) => None,
+        }
+    }
+
     /// The movement type the original keeps for this movement, byte-exact.
     #[must_use]
     pub const fn kind(self) -> MovementType {
         match self {
-            Self::Standing => MovementType::Standing,
+            Self::Standing { .. } => MovementType::Standing,
             Self::Running { .. } => MovementType::Running,
             Self::Crouching => MovementType::Crouching,
             Self::Jumping {
@@ -255,12 +343,15 @@ impl Movement {
             Self::KnockbackOrCrystalFlashEnding => MovementType::KnockbackOrCrystalFlashEnding,
             Self::TurningAround {
                 place: Turn::OnGround,
+                ..
             } => MovementType::TurningAroundOnGround,
             Self::TurningAround {
                 place: Turn::Jumping,
+                ..
             } => MovementType::TurningAroundJumping,
             Self::TurningAround {
                 place: Turn::Falling,
+                ..
             } => MovementType::TurningAroundFalling,
             Self::Transition => MovementType::CrouchingTransition,
             Self::Moonwalking => MovementType::Moonwalking,
@@ -322,6 +413,35 @@ pub enum Item {
 
 /// A set of items.
 pub type Items = FlagSet<Item>;
+
+impl Item {
+    /// The item's bit in an [`Items`] set: its place in declaration order.
+    #[must_use]
+    pub const fn bit(self) -> u32 {
+        let place = match self {
+            Self::VariaSuit => 0,
+            Self::SpringBall => 1,
+            Self::MorphBall => 2,
+            Self::ScrewAttack => 3,
+            Self::GravitySuit => 4,
+            Self::HiJumpBoots => 5,
+            Self::SpaceJump => 6,
+            Self::Bombs => 7,
+            Self::SpeedBooster => 8,
+            Self::GrappleBeam => 9,
+            Self::XRayScope => 10,
+        };
+        1 << place
+    }
+}
+
+impl Items {
+    /// Whether the set holds `item`.
+    #[must_use]
+    pub const fn contains(&self, item: Item) -> bool {
+        (self.bits & item.bit()) != 0
+    }
+}
 
 /// A quantity with a ceiling: energy, a reserve, an ammunition type.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]

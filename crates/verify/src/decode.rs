@@ -12,8 +12,8 @@ use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{Camera, RoomScoped};
 use game::state::samus::{
-    Equipment, Facing, Fixed, Gauge, Item, Items, Movement, Point, PoseId, PoseRecord, ReserveMode,
-    Samus,
+    Acceleration, Equipment, Facing, Fixed, Gauge, Horizontal, Item, Items, Movement, Point,
+    PoseId, PoseRecord, ReserveMode, Samus, Speed,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
@@ -298,6 +298,8 @@ pub struct Rules<'t> {
     pub previous_pose: PoseSources,
     /// `samus.last_different`.
     pub last_different_pose: PoseSources,
+    /// The horizontal motion of `samus.movement`.
+    pub horizontal: HorizontalSources,
     /// `message`.
     pub message: WramWord,
 }
@@ -468,6 +470,14 @@ impl Rules<'_> {
             facing: source::SAMUS_LAST_DIFFERENT_POSE_X_DIR,
             movement: source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE,
         },
+        horizontal: HorizontalSources {
+            base: source::SAMUS_X_BASE_SPEED,
+            base_subpixels: source::SAMUS_X_BASE_SUBSPEED,
+            extra_run: source::SAMUS_X_EXTRA_RUN_SPEED,
+            extra_run_subpixels: source::SAMUS_X_EXTRA_RUN_SUBSPEED,
+            acceleration: source::SAMUS_X_ACCEL_MODE,
+            momentum: source::SAMUS_HAS_MOMENTUM_FLAG,
+        },
     };
 
     /// The State `record` shows, under these rules.
@@ -563,6 +573,10 @@ impl Rules<'_> {
     /// Samus: her position, pose and equipment.
     fn samus(&self, wram: &[u8]) -> Result<Samus, DecodeError> {
         let pose = self.pose.read(wram)?;
+        let mut movement = Movement::from(pose.movement);
+        if let Some(speed) = movement.horizontal_mut() {
+            *speed = self.horizontal.read(wram)?;
+        }
         Ok(Samus {
             position: Point {
                 x: Fixed {
@@ -588,7 +602,7 @@ impl Rules<'_> {
             previous: self.previous_pose.read(wram)?,
             last_different: self.last_different_pose.read(wram)?,
             facing: pose.facing,
-            movement: Movement::from(pose.movement),
+            movement,
             ..Samus::default()
         })
     }
@@ -1135,6 +1149,58 @@ pub struct PoseSources {
     pub facing: WramByte,
     /// Its movement type.
     pub movement: WramByte,
+}
+
+/// Where the original keeps Samus's horizontal motion (bank $90 log, `$90:8E64`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HorizontalSources {
+    /// `.base`'s pixels.
+    pub base: WramWord,
+    /// `.base`'s subpixels.
+    pub base_subpixels: WramWord,
+    /// `.extra_run`'s pixels.
+    pub extra_run: WramWord,
+    /// `.extra_run`'s subpixels.
+    pub extra_run_subpixels: WramWord,
+    /// `.acceleration`.
+    pub acceleration: WramWord,
+    /// `.momentum`.
+    pub momentum: WramWord,
+}
+
+impl HorizontalSources {
+    /// The motion in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for an acceleration mode past 2 or a momentum flag
+    /// past 1, which no routine of the original writes.
+    fn read(self, wram: &[u8]) -> Result<Horizontal, DecodeError> {
+        let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
+            source: source.name,
+            value,
+        };
+        let acceleration = match self.acceleration.read(wram)? {
+            0 => Acceleration::Accelerating,
+            1 => Acceleration::TurningAround,
+            2 => Acceleration::Decelerating,
+            other => return Err(unrepresentable(self.acceleration, other)),
+        };
+        let momentum = match self.momentum.read(wram)? {
+            0 => false,
+            1 => true,
+            other => return Err(unrepresentable(self.momentum, other)),
+        };
+        Ok(Horizontal {
+            base: Speed::new(self.base.read(wram)?, self.base_subpixels.read(wram)?),
+            extra_run: Speed::new(
+                self.extra_run.read(wram)?,
+                self.extra_run_subpixels.read(wram)?,
+            ),
+            acceleration,
+            momentum,
+        })
+    }
 }
 
 impl PoseSources {

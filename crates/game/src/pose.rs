@@ -8,10 +8,12 @@
 //! transition handler (`$91:EB88`) then applies the request after the movement handler and
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
+use data::movement::HorizontalSpeeds;
 use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
-use crate::state::samus::{Movement, PoseRecord, Samus};
+use crate::movement::cancel_speed_boosting;
+use crate::state::samus::{Acceleration, Horizontal, Movement, PoseRecord, Samus, Speed, Turn};
 use crate::state::{Button, Buttons, Controller};
 
 /// The content the Session reads: the decoded tables its rules look up.
@@ -21,6 +23,8 @@ pub struct Content {
     pub poses: Poses,
     /// Samus's pose transitions from input.
     pub transitions: PoseTransitions,
+    /// Samus's horizontal speed tables.
+    pub speeds: HorizontalSpeeds,
 }
 
 /// The pose a frame asks for, by the channel that asked.
@@ -31,6 +35,9 @@ pub struct Content {
 pub struct PoseRequests {
     /// From input or the pose's own next pose.
     pub ordinary: Option<PoseId>,
+    /// What the update does to her speeds after it (`SAMUS_MOMENTUM_ROUTINE_INDEX`, reset at
+    /// the start of every frame by `$90:E695`).
+    pub command: Option<PoseCommand>,
 }
 
 /// The pad buttons each control is on: the controller settings' defaults.
@@ -55,7 +62,7 @@ const fn holds(buttons: Buttons, button: Button) -> bool {
 }
 
 /// The controls `buttons` work under the bindings.
-fn controls(buttons: Buttons) -> Controls {
+pub(crate) fn controls(buttons: Buttons) -> Controls {
     let held: Vec<Control> = DEFAULT_BINDINGS
         .iter()
         .filter(|&&(button, _)| holds(buttons, button))
@@ -78,30 +85,69 @@ const fn ignores_input(movement: MovementType) -> bool {
     )
 }
 
-/// Whether a movement type keeps its pose while Samus still has horizontal speed when no
-/// entry matches: running, normal jumping and the falling morph ball (`$91:82EC`'s action
-/// table, the momentum action 1).
-const fn keeps_pose_while_moving(movement: MovementType) -> bool {
-    matches!(
-        movement,
-        MovementType::Running | MovementType::NormalJumping | MovementType::MorphBallFalling
-    )
+/// What the pose update does to Samus's speeds when no transition matched her controls.
+///
+/// Bank $91 log: `$91:8304` "Set prospective pose change command" and its table at
+/// `$91:8332`, one command a movement type.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PoseCommand {
+    /// Slow down and keep the pose while she still has base speed (`$91:EC50`).
+    Decelerate,
+    /// Stop accelerating (`$91:ECD0`).
+    Stop,
+    /// Lose the base speed, then the run speed (`$91:EC85`, which runs on into `$91:EC8E`).
+    KillXSpeed,
+    /// Lose the extra run speed (`$91:EC8E`).
+    KillRunSpeed,
 }
 
-/// Whether Samus has horizontal speed.
-const fn moving(movement: Movement) -> bool {
+/// The command a movement type's lookup failure gives (`$91:8332`); spin jumping has none.
+const fn failed_lookup_command(movement: MovementType) -> Option<PoseCommand> {
     match movement {
-        Movement::Running { speed } | Movement::MorphBall { speed, .. } => {
-            speed.pixels != 0 || speed.subpixels != 0
+        MovementType::SpinJumping => None,
+        MovementType::Running | MovementType::NormalJumping | MovementType::MorphBallFalling => {
+            Some(PoseCommand::Decelerate)
         }
+        MovementType::MorphBallOnGround
+        | MovementType::Unused09
+        | MovementType::Unused0D
+        | MovementType::SpringBallOnGround
+        | MovementType::SpringBallInAir
+        | MovementType::SpringBallFalling
+        | MovementType::WallJumping
+        | MovementType::Grappling => Some(PoseCommand::KillXSpeed),
+        MovementType::Falling => Some(PoseCommand::KillRunSpeed),
+        MovementType::Standing
+        | MovementType::Crouching
+        | MovementType::Unused07
+        | MovementType::KnockbackOrCrystalFlashEnding
+        | MovementType::Unused0B
+        | MovementType::Unused0C
+        | MovementType::TurningAroundOnGround
+        | MovementType::CrouchingTransition
+        | MovementType::Moonwalking
+        | MovementType::RanIntoWall
+        | MovementType::TurningAroundJumping
+        | MovementType::TurningAroundFalling
+        | MovementType::DamageBoost
+        | MovementType::GrabbedByDraygon
+        | MovementType::Shinespark => Some(PoseCommand::Stop),
+    }
+}
+
+/// Whether Samus has base speed, which decides whether decelerating keeps her pose.
+const fn has_base_speed(movement: Movement) -> bool {
+    match movement {
+        Movement::MorphBall { speed, .. } => speed.pixels != 0 || speed.subpixels != 0,
+        Movement::Standing { speed }
+        | Movement::Running { speed }
+        | Movement::TurningAround { speed, .. } => speed.base.0 != 0,
         // open: the jumps' and falls' horizontal speed joins with C3b.
-        Movement::Standing
-        | Movement::Crouching
+        Movement::Crouching
         | Movement::Jumping { .. }
         | Movement::Falling { .. }
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
-        | Movement::TurningAround { .. }
         | Movement::Transition
         | Movement::Moonwalking
         | Movement::WallJumping
@@ -132,10 +178,17 @@ pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseR
         if let Some(transition) = list.iter().find(|entry| entry.matches(pressed, held)) {
             return PoseRequests {
                 ordinary: (transition.pose != samus.pose).then_some(transition.pose),
+                command: None,
             };
         }
     }
-    let unaffected = if keeps_pose_while_moving(kind) && moving(samus.movement) {
+    // "Handle transition table lookup failure" (`$91:82D9`): decelerating keeps the pose,
+    // and with no base speed left it is a stop.
+    let command = match failed_lookup_command(kind) {
+        Some(PoseCommand::Decelerate) if !has_base_speed(samus.movement) => Some(PoseCommand::Stop),
+        other => other,
+    };
+    let unaffected = if command == Some(PoseCommand::Decelerate) {
         samus.pose
     } else {
         content
@@ -146,6 +199,7 @@ pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseR
     };
     PoseRequests {
         ordinary: Some(unaffected),
+        command,
     }
 }
 
@@ -161,8 +215,18 @@ pub fn change(samus: &mut Samus, requests: PoseRequests, content: &Content) {
     {
         samus.facing = definition.facing;
         if samus.movement.kind() != definition.movement {
+            // The original keeps her speeds in work RAM whatever the movement: a movement
+            // that keeps them takes them over.
+            let carried = samus.movement.horizontal();
             samus.movement = Movement::from(definition.movement);
+            if let (Some(carried), Some(speed)) = (carried, samus.movement.horizontal_mut()) {
+                *speed = carried;
+            }
         }
+        initialise(&mut samus.movement);
+    }
+    if let (Some(command), Some(speed)) = (requests.command, samus.movement.horizontal_mut()) {
+        apply(command, speed);
     }
     samus.last_different = samus.previous;
     samus.previous = PoseRecord {
@@ -170,6 +234,61 @@ pub fn change(samus: &mut Samus, requests: PoseRequests, content: &Content) {
         facing: samus.facing,
         movement: samus.movement.kind(),
     };
+}
+
+/// "Initialise Samus pose" (`$91:F433`) for a new pose, the part that sets her speeds:
+/// turning on the ground starts the turn's momentum, her run speed joining her base speed
+/// (`$91:F8D3`).
+// open: the other movement types' initialisations (jumps, the morph ball, spin jumps'
+// momentum, the wall jump) join with C3b; the turning poses chosen from the old pose's shot
+// direction (`$91:F9C2`) match the transition table's in slice 0.
+const fn initialise(movement: &mut Movement) {
+    if let Movement::TurningAround {
+        place: Turn::OnGround,
+        speed,
+    } = movement
+    {
+        speed.base = Speed(speed.base.0.wrapping_add(speed.extra_run.0));
+        speed.extra_run = Speed::ZERO;
+        speed.acceleration = Acceleration::TurningAround;
+    }
+}
+
+/// A prospective pose change command's effect on her speeds (`$91:EC16`'s table).
+// open: "Kill Y speed if started falling" (`$91:FB8E`) after decelerating or losing the run
+// speed joins with C3b; the movements without `Horizontal` yet ignore the commands.
+const fn apply(command: PoseCommand, speed: &mut Horizontal) {
+    match command {
+        PoseCommand::Decelerate => {
+            if speed.base.0 == 0 {
+                stop(speed);
+            } else {
+                speed.base = Speed(speed.base.0.wrapping_add(speed.extra_run.0));
+                speed.acceleration = Acceleration::Decelerating;
+                cancel_speed_boosting(speed);
+                speed.extra_run = Speed::ZERO;
+            }
+        }
+        PoseCommand::Stop => stop(speed),
+        PoseCommand::KillXSpeed => {
+            speed.acceleration = Acceleration::Accelerating;
+            speed.base = Speed::ZERO;
+            kill_run_speed(speed);
+        }
+        PoseCommand::KillRunSpeed => kill_run_speed(speed),
+    }
+}
+
+/// "Prospective pose change command 2 - stop" (`$91:ECD0`).
+const fn stop(speed: &mut Horizontal) {
+    speed.acceleration = Acceleration::Accelerating;
+    cancel_speed_boosting(speed);
+}
+
+/// "Prospective pose change command 8 - kill run speed" (`$91:EC8E`).
+const fn kill_run_speed(speed: &mut Horizontal) {
+    cancel_speed_boosting(speed);
+    speed.extra_run = Speed::ZERO;
 }
 
 #[cfg(test)]

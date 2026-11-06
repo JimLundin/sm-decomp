@@ -6,6 +6,7 @@
 //! their domain lanes fill them.
 
 use crate::message_box;
+use crate::movement;
 use crate::pose::{self, Content};
 use crate::session::{Rules, SessionFault};
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
@@ -402,8 +403,13 @@ fn gameplay_phase(
         GameplayPhase::SamusCurrentState => {
             *requests = pose::input(&state.samus, &state.controller, content);
         }
-        // open: the movement handlers run before the pose change (C3b, C4).
-        GameplayPhase::SamusNewState => pose::change(&mut state.samus, *requests, content),
+        // The movement handler runs before the pose update (`$90:E725`).
+        // open: the pose animation between them (`$90:8000`) joins with C6; the movement
+        // types beyond standing, running and turning join with C3b and C4.
+        GameplayPhase::SamusNewState => {
+            movement::run(&mut state.samus, &state.controller, content);
+            pose::change(&mut state.samus, *requests, content);
+        }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
         // with those game states. In game state 8 the clock still counts on that frame; it
         // stops only if an earlier phase this frame already left gameplay.
