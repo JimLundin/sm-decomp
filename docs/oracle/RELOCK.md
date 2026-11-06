@@ -549,7 +549,7 @@ pairs, the unit step g ratchets.
 
 **Tests** (`crates/verify/src/lock/tests.rs`; this machine can't run test
 executables, CI does): the fixture reads field by field; decoder, bundles,
-rungs and comments read; twelve strict rejections, one per error kind; a lock
+rungs and comments read; fourteen strict rejections (most error kinds); a lock
 of another oracle version is rejected; a faithful run is green; an absent
 stream is reported and blocks; a broken or unevaluated-by-engine fact blocks;
 a short run differs at its first missing span; and the lock mutants: for each
