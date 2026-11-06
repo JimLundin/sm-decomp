@@ -294,6 +294,50 @@ from the layer positions). Remaining:
   graphics content;
 - the unit tests in `game::commit` compiled but did not run here (Defender).
 
+**C2 status (`lane/slice0-c2`), Samus's pose as typed state.** Done: `data::pose` decodes
+bank `$91`'s pose definitions (`$91:B629`, 253 poses of 8 bytes, to `$91:BE11`) into
+`PoseDefinition { facing: PoseFacing, movement: MovementType, next: Option<PoseId>, shot:
+Shot, y_offset, y_radius }`: `MovementType` is the 28 movement types (`TryFrom<u8>`, $1C on
+an error), `PoseFacing::{Forward, Left, Right, Unknown(u8)}` (the unused poses $21 and $22
+hold 1 and 2; listed in LEGACY), `Shot::{Fires(ShotDirection), Withheld(u8)}` (high nybble
+set: $FA, $FB, $FC, $FF). `game::state::samus` holds `pose: PoseId`, `previous` and
+`last_different` as `PoseRecord { pose, facing, movement }` (the bytes the original copies
+beside each pose word), `facing` (now `PoseFacing`) and `Movement`, one variant per movement
+type (`Movement::from(MovementType)`, `Movement::kind()` back, byte-exact); `Landing` is gone
+because the landing poses ($A4-$A7, $E0-$E5) are standing ones, so landing keys on the pose.
+The decoder reads `SAMUS_POSE` (`$0A1C`), `SAMUS_POSE_X_DIR`, `SAMUS_MOVEMENT_TYPE`,
+`SAMUS_PREV_POSE`, `SAMUS_PREV_POSE_X_DIR`, `SAMUS_PREV_MOVEMENT_TYPE2`,
+`SAMUS_LAST_DIFFERENT_POSE` and its two bytes (`$0A1C`-`$0A27`); a pose past $FC or a
+movement type past $1B is `Unrepresentable`. The ROM test ran through a scratch DLL against
+the real ROM; on every decoded record of both rows the RAM's facing and movement type equal
+the table's for the pose. Lockstep on A2's cache, 2026-11-06 (Ticks differing, first frame;
+all new fields):
+
+| Field | `area-brinstar` (476) | `item-morph-ball` (1,427) |
+| --- | --- | --- |
+| `samus.pose`, `samus.previous.pose` | equal | 173, 681 |
+| `samus.last_different.pose` | equal | 172, 687 |
+| `samus.movement`, `samus.previous.movement` | equal | 105, 681 |
+| `samus.last_different.movement` | equal | 104, 687 |
+| `samus.facing`, `.previous.facing`, `.last_different.facing` | equal | 4, 681 (687) |
+
+Poses reached (frames, first..last): `area-brinstar` holds pose 0 (facing forward, the
+elevator) on all 477 records, though her Y differs from frame 1 (the elevator's descent).
+`item-morph-ball`: 0 (681, 0..680), then $25 turn (6), $0A/$12 run left (21, 20), $1A spin
+left (52), $84 wall jump (22), $6C/$16/$18/$52/$14 normal jump left, $A5 land left (2), $02
+stand left (1), $E4 land (2), $09/$11 run right (8, 6), $19 spin right (4), $17 jump (21),
+$37/$3D crouch transitions (6, 6), $1D/$1E morph ball (1, 38), $27 crouch (1), $4B/$4D/$51
+jump right (1, 1, 7), $6B jump aiming down-right (417, 817..1326, the message box's frames
+included), $D1/$89 ran into wall (1, 54), $07 stand aiming down-right (40). Movement types
+reached: standing, running, normal and spin jumping, morph ball on ground, crouching,
+crouching transition, turning around on ground, wall jumping, ran into wall.
+Remaining for C3/C4: the pose transitions from input (bank `$91`'s transition tables and
+`$91:82EC`'s "new pose if not affected by buttons"), the movement each type runs, and the
+data `Movement`'s variants carry (speeds); `samus.aim` stays open (it is the pose's `Shot`);
+`SAMUS_NEW_POSE`, `_INTERRUPTED` and `_TRANSITIONAL` (`$0A28`-`$0A2C`) are not decoded; the
+elevator ride in `area-brinstar` keeps pose 0 and moves Y; the verify and data unit tests
+compiled but only the data ones ran here (Defender).
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,
