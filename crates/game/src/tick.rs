@@ -10,6 +10,7 @@ use crate::collision::{Room, ScanOrder, Surroundings};
 use crate::message_box;
 use crate::movement;
 use crate::pose::{self, Content};
+use crate::scrolling;
 use crate::session::{Rules, SessionFault};
 use crate::state::samus::SuperSpecial;
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
@@ -372,6 +373,9 @@ const AFTER_PLMS: [GameplayPhase; 13] = [
     GameplayPhase::HurtTimers,
 ];
 
+/// Blocks a screen across.
+const SCREEN_BLOCKS: u16 = 16;
+
 /// What one gameplay pass hands from phase to phase: nothing outlives the step.
 #[derive(Default)]
 struct Pass {
@@ -457,6 +461,23 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         GameplayPhase::Hud => crate::hud::phase(state),
         GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
         GameplayPhase::Enemies => crate::enemy::run(state, &pass.active),
+        GameplayPhase::Scrolling => {
+            let room = &mut state.room;
+            let width = room.width.0 / SCREEN_BLOCKS;
+            let height = u16::try_from(room.scroll_areas.len())
+                .unwrap_or(u16::MAX)
+                .checked_div(width)
+                .unwrap_or(0);
+            let areas = scrolling::ScrollAreas {
+                areas: &room.scroll_areas,
+                width,
+                height,
+            };
+            scrolling::follow(&mut room.camera, &mut state.samus, areas);
+        }
+        GameplayPhase::BgScroll => {
+            scrolling::scroll_backgrounds(&mut state.room.camera, &mut state.video.batch.registers);
+        }
         GameplayPhase::PaletteFx
         | GameplayPhase::SamusProjectileInteraction
         | GameplayPhase::EnemyProjectiles
@@ -465,10 +486,8 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         | GameplayPhase::EnemyProjectileSamus
         | GameplayPhase::EnemyProjectileProjectile
         | GameplayPhase::EnemyPowerBomb
-        | GameplayPhase::Scrolling
         | GameplayPhase::Draw
         | GameplayPhase::EnemyBg2Tilemap
-        | GameplayPhase::BgScroll
         | GameplayPhase::RoomMain
         | GameplayPhase::RoomShaking
         | GameplayPhase::HurtTimers => {}

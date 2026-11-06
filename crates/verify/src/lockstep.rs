@@ -244,6 +244,22 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.position.x.subpixels", samus.position.x.subpixels),
     field!("samus.position.y.pixels", samus.position.y.pixels),
     field!("samus.position.y.subpixels", samus.position.y.subpixels),
+    field!(
+        "samus.previous_position.x.pixels",
+        samus.previous_position.x.pixels
+    ),
+    field!(
+        "samus.previous_position.x.subpixels",
+        samus.previous_position.x.subpixels
+    ),
+    field!(
+        "samus.previous_position.y.pixels",
+        samus.previous_position.y.pixels
+    ),
+    field!(
+        "samus.previous_position.y.subpixels",
+        samus.previous_position.y.subpixels
+    ),
     field!("samus.pose", samus.pose),
     field!("samus.previous.pose", samus.previous.pose),
     field!("samus.previous.facing", samus.previous.facing),
@@ -317,6 +333,17 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.camera.x.subpixels", room.camera.x.subpixels),
     field!("room.camera.y.pixels", room.camera.y.pixels),
     field!("room.camera.y.subpixels", room.camera.y.subpixels),
+    field!("room.camera.layer2.x", room.camera.layer2.x),
+    field!("room.camera.layer2.y", room.camera.layer2.y),
+    field!("room.camera.bg1_offset.x", room.camera.bg1_offset.x),
+    field!("room.camera.bg1_offset.y", room.camera.bg1_offset.y),
+    field!("room.camera.bg2_offset.x", room.camera.bg2_offset.x),
+    field!("room.camera.bg2_offset.y", room.camera.bg2_offset.y),
+    field!("room.camera.distance", room.camera.distance),
+    field!("room.camera.scrollers.up", room.camera.scrollers.up),
+    field!("room.camera.scrollers.down", room.camera.scrollers.down),
+    field!("room.camera.layer2_scroll.x", room.camera.layer2_scroll.x),
+    field!("room.camera.layer2_scroll.y", room.camera.layer2_scroll.y),
     enemy!("room.enemies.slots.common.species", species),
     enemy!(
         "room.enemies.slots.common.position.x.pixels",

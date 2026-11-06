@@ -2,7 +2,7 @@
 
 use canonical::Canonical;
 use data::id::{DoorwayId, RoomId, SpeciesId};
-use data::room::{RoomState, Screens};
+use data::room::{Room, RoomState};
 
 pub use data::level::{
     Block, BlockKind, BombableBts, Bts, DoorIndex, Offset, PlmChoice, ScrollArea, Slope, Tile,
@@ -11,6 +11,7 @@ pub use data::level::{
 
 use super::samus::{Fixed, Point};
 use super::slots::{Cursor, Flag, FlagSet, Frames, SlotStore};
+use super::video::Scroll;
 
 /// PLM slots (bank $84 log: the PLM tables hold 40 entries).
 pub const PLM_SLOTS: usize = 40;
@@ -21,13 +22,142 @@ pub const ENEMY_SLOTS: usize = 32;
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct BlockIndex(pub u16);
 
-/// The camera: the playfield's top-left corner in the room.
+/// The camera: layer 1's top-left corner in the room, layer 2's, and what the backgrounds
+/// add to them (bank `$80` log, the scrolling variables).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Camera {
-    /// Rightward.
+    /// Layer 1, rightward: the playfield's left edge.
     pub x: Fixed,
-    /// Downward.
+    /// Layer 1, downward: the playfield's top edge.
     pub y: Fixed,
+    /// Layer 2's position, which follows layer 1 at the room's layer 2 rates.
+    pub layer2: Scroll,
+    /// What BG1's scroll adds to layer 1's position.
+    pub bg1_offset: Scroll,
+    /// What BG2's scroll adds to layer 2's position.
+    pub bg2_offset: Scroll,
+    /// How far ahead of Samus the camera aims.
+    pub distance: CameraDistance,
+    /// How far below the camera's top edge it aims Samus as she goes up or down.
+    pub scrollers: Scrollers,
+    /// How layer 2 follows layer 1 across and down.
+    pub layer2_scroll: Layer2Scrolls,
+}
+
+/// How far to the left of Samus the camera aims its left edge: the camera distance index,
+/// whose entry the horizontal scrolling reads from the tables at `$90:963F` (facing right)
+/// and `$90:9647` (facing left).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CameraDistance {
+    /// $60 facing right, $A0 facing left: the camera shows more of the way she faces.
+    #[default]
+    Leading,
+    /// $40 facing right, $50 facing left.
+    Near,
+    /// $20 either way: she stays near the left edge.
+    LeftEdge,
+    /// $E0 either way: she stays near the right edge.
+    RightEdge,
+}
+
+impl CameraDistance {
+    /// The entries in the original's order.
+    pub const ALL: [Self; 4] = [Self::Leading, Self::Near, Self::LeftEdge, Self::RightEdge];
+
+    /// The camera's left edge's distance to the left of Samus: `(facing right, facing left)`.
+    #[must_use]
+    pub const fn lead(self) -> (u16, u16) {
+        match self {
+            Self::Leading => (0x60, 0xA0),
+            Self::Near => (0x40, 0x50),
+            Self::LeftEdge => (0x20, 0x20),
+            Self::RightEdge => (0xE0, 0xE0),
+        }
+    }
+}
+
+impl TryFrom<u16> for CameraDistance {
+    type Error = u16;
+
+    /// The original's index, a word offset into the tables: 0, 2, 4 or 6.
+    fn try_from(index: u16) -> Result<Self, u16> {
+        Self::ALL
+            .into_iter()
+            .find(|&distance| u16::from(distance) == index)
+            .ok_or(index)
+    }
+}
+
+impl From<CameraDistance> for u16 {
+    fn from(distance: CameraDistance) -> Self {
+        match distance {
+            CameraDistance::Leading => 0,
+            CameraDistance::Near => 2,
+            CameraDistance::LeftEdge => 4,
+            CameraDistance::RightEdge => 6,
+        }
+    }
+}
+
+/// The room header's vertical scrollers, as room loading widens them into words: how far
+/// below the camera's top edge the camera aims Samus.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Scrollers {
+    /// While she isn't going up (`$90:966E`).
+    pub up: u16,
+    /// While she goes up (`$90:967A`).
+    pub down: u16,
+}
+
+/// How layer 2 follows layer 1 on one axis: the room state's layer 2 scroll byte (bank `$80`
+/// log, `$80:A2F9` and `$80:A33A`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Layer2Scroll {
+    /// 0: at layer 1's position.
+    #[default]
+    WithLayer1,
+    /// 1: still, and BG2's scroll keeps what it has.
+    Fixed,
+    /// Any other byte: at layer 1's position times `rate` / 256.
+    Scaled {
+        /// The byte without bit 0: even and not zero.
+        rate: u8,
+        /// Bit 0 clear: BG2 shows the room's own layer 2 level data, whose columns and rows
+        /// the scrolling uploads (`$80:A416`); set, the library background.
+        custom: bool,
+    },
+}
+
+impl From<u8> for Layer2Scroll {
+    fn from(byte: u8) -> Self {
+        match byte {
+            0 => Self::WithLayer1,
+            1 => Self::Fixed,
+            _ => Self::Scaled {
+                rate: byte & 0xFE,
+                custom: byte & 1 == 0,
+            },
+        }
+    }
+}
+
+impl From<Layer2Scroll> for u8 {
+    fn from(scroll: Layer2Scroll) -> Self {
+        match scroll {
+            Layer2Scroll::WithLayer1 => 0,
+            Layer2Scroll::Fixed => 1,
+            Layer2Scroll::Scaled { rate, custom } => rate | Self::from(!custom),
+        }
+    }
+}
+
+/// Layer 2's scroll rates across and down.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Layer2Scrolls {
+    /// Across.
+    pub x: Layer2Scroll,
+    /// Down.
+    pub y: Layer2Scroll,
 }
 
 /// The PLM family marker.
@@ -397,17 +527,27 @@ pub struct RoomScoped {
 }
 
 impl RoomScoped {
-    /// Room `room`, `size` screens, as it loads in `state`: its level's layer 1 blocks, its width
-    /// in blocks and its scroll areas, with no PLMs or enemies yet and the camera at the top left.
+    /// Room `room`, as it loads in `state`: its level's layer 1 blocks, its width in blocks,
+    /// its scroll areas and the camera's scroll settings, with no PLMs or enemies yet and the
+    /// camera at the top left.
     // open: the door's arrival, the PLM and enemy populations and the camera's start join with
     // the room transition (bank $82 log, `$82:E7D3`).
     #[must_use]
-    pub fn load(room: RoomId, size: Screens, state: &RoomState) -> Self {
+    pub fn load(room: RoomId, header: &Room, state: &RoomState) -> Self {
+        let [x, y] = state.layer2_scroll.map(Layer2Scroll::from);
         Self {
             room,
             blocks: state.layers.layer1.clone(),
-            width: BlockColumns(u16::from(size.width).wrapping_mul(16)),
+            width: BlockColumns(u16::from(header.size.width).wrapping_mul(16)),
             scroll_areas: state.scroll_areas.clone(),
+            camera: Camera {
+                scrollers: Scrollers {
+                    up: u16::from(header.scrollers.up),
+                    down: u16::from(header.scrollers.down),
+                },
+                layer2_scroll: Layer2Scrolls { x, y },
+                ..Camera::default()
+            },
             ..Self::default()
         }
     }

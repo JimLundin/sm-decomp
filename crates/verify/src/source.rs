@@ -352,6 +352,82 @@ pub const LAYER1_Y_POS: WramWord = WramWord {
     offset: 0x0915,
 };
 
+/// Bank $80 log, `$80:A2F9`: layer 2's X position, which follows layer 1 at the room's rate.
+pub const LAYER2_X_POS: WramWord = WramWord {
+    name: "LAYER2_X_POS",
+    offset: 0x0917,
+};
+/// Bank $80 log, `$80:A33A`: layer 2's Y position.
+pub const LAYER2_Y_POS: WramWord = WramWord {
+    name: "LAYER2_Y_POS",
+    offset: 0x0919,
+};
+/// Bank $80 log, `$80:A2F9`: layer 2's X scroll rate, from the room state.
+pub const LAYER2_SCROLL_X: WramByte = WramByte {
+    name: "LAYER2_SCROLL_X",
+    offset: 0x091B,
+};
+/// Bank $80 log, `$80:A33A`: layer 2's Y scroll rate, from the room state.
+pub const LAYER2_SCROLL_Y: WramByte = WramByte {
+    name: "LAYER2_SCROLL_Y",
+    offset: 0x091C,
+};
+/// Bank $80 log, `$80:A3AB`: what BG1's X scroll adds to layer 1's X position.
+pub const BG1_X_OFFSET: WramWord = WramWord {
+    name: "BG1_X_OFFSET",
+    offset: 0x091D,
+};
+/// Bank $80 log, `$80:A3AB`: what BG1's Y scroll adds to layer 1's Y position.
+pub const BG1_Y_OFFSET: WramWord = WramWord {
+    name: "BG1_Y_OFFSET",
+    offset: 0x091F,
+};
+/// Bank $80 log, `$80:A3AB`: what BG2's X scroll adds to layer 2's X position.
+pub const BG2_X_OFFSET: WramWord = WramWord {
+    name: "BG2_X_OFFSET",
+    offset: 0x0921,
+};
+/// Bank $80 log, `$80:A3AB`: what BG2's Y scroll adds to layer 2's Y position.
+pub const BG2_Y_OFFSET: WramWord = WramWord {
+    name: "BG2_Y_OFFSET",
+    offset: 0x0923,
+};
+/// Bank $90 log, `$90:95E7`: the camera distance index, 0 to 6.
+pub const CAMERA_DISTANCE_INDEX: WramWord = WramWord {
+    name: "CAMERA_DISTANCE_INDEX",
+    offset: 0x0941,
+};
+/// Bank $90 log, `$90:966E`: the room header's up scroller.
+pub const UP_SCROLLER: WramWord = WramWord {
+    name: "UP_SCROLLER",
+    offset: 0x07AD,
+};
+/// Bank $90 log, `$90:967A`: the room header's down scroller.
+pub const DOWN_SCROLLER: WramWord = WramWord {
+    name: "DOWN_SCROLLER",
+    offset: 0x07AF,
+};
+/// Bank $90 log, `$90:956E`: Samus's X position when the camera last followed her.
+pub const SAMUS_PREV_X_POS: WramWord = WramWord {
+    name: "SAMUS_PREV_X_POS",
+    offset: 0x0B10,
+};
+/// Bank $90 log, `$90:9574`: its subpixels.
+pub const SAMUS_PREV_X_SUBPOS: WramWord = WramWord {
+    name: "SAMUS_PREV_X_SUBPOS",
+    offset: 0x0B12,
+};
+/// Bank $90 log, `$90:957A`: Samus's Y position when the camera last followed her.
+pub const SAMUS_PREV_Y_POS: WramWord = WramWord {
+    name: "SAMUS_PREV_Y_POS",
+    offset: 0x0B14,
+};
+/// Bank $90 log, `$90:9580`: its subpixels.
+pub const SAMUS_PREV_Y_SUBPOS: WramWord = WramWord {
+    name: "SAMUS_PREV_Y_SUBPOS",
+    offset: 0x0B16,
+};
+
 /// Bank $84 log: the PLM handler keeps the slot it is processing here, times two
 /// (`$84:85C5 STX $1C27`).
 pub const PLM_ID: WramWord = WramWord {

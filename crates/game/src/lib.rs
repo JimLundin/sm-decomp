@@ -18,6 +18,7 @@ pub mod nmi;
 pub mod oam;
 pub mod pose;
 pub mod rng;
+pub mod scrolling;
 pub mod session;
 pub mod state;
 pub mod tick;

@@ -203,6 +203,16 @@ pub const FIELDS: &[Field] = &[
     wram("samus.position.x.subpixels", source::SAMUS_X_SUBPOS),
     wram("samus.position.y.pixels", source::SAMUS_Y_POS),
     wram("samus.position.y.subpixels", source::SAMUS_Y_SUBPOS),
+    wram("samus.previous_position.x.pixels", source::SAMUS_PREV_X_POS),
+    wram(
+        "samus.previous_position.x.subpixels",
+        source::SAMUS_PREV_X_SUBPOS,
+    ),
+    wram("samus.previous_position.y.pixels", source::SAMUS_PREV_Y_POS),
+    wram(
+        "samus.previous_position.y.subpixels",
+        source::SAMUS_PREV_Y_SUBPOS,
+    ),
     wram("samus.pose", source::SAMUS_POSE),
     wram("samus.previous.pose", source::SAMUS_PREV_POSE),
     wram_byte("samus.previous.facing", source::SAMUS_PREV_POSE_X_DIR),
@@ -323,6 +333,17 @@ pub const FIELDS: &[Field] = &[
     wram("room.camera.x.subpixels", source::LAYER1_X_SUBPOS),
     wram("room.camera.y.pixels", source::LAYER1_Y_POS),
     wram("room.camera.y.subpixels", source::LAYER1_Y_SUBPOS),
+    wram("room.camera.layer2.x", source::LAYER2_X_POS),
+    wram("room.camera.layer2.y", source::LAYER2_Y_POS),
+    wram("room.camera.bg1_offset.x", source::BG1_X_OFFSET),
+    wram("room.camera.bg1_offset.y", source::BG1_Y_OFFSET),
+    wram("room.camera.bg2_offset.x", source::BG2_X_OFFSET),
+    wram("room.camera.bg2_offset.y", source::BG2_Y_OFFSET),
+    wram("room.camera.distance", source::CAMERA_DISTANCE_INDEX),
+    wram("room.camera.scrollers.up", source::UP_SCROLLER),
+    wram("room.camera.scrollers.down", source::DOWN_SCROLLER),
+    wram_byte("room.camera.layer2_scroll.x", source::LAYER2_SCROLL_X),
+    wram_byte("room.camera.layer2_scroll.y", source::LAYER2_SCROLL_Y),
     open("room.plms"),
     none(
         "room.enemies.slots.generation",
@@ -473,7 +494,7 @@ mod tests {
     }
 
     /// The byte sources the decoder reads.
-    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 29] {
+    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 31] {
         [
             rules.lag,
             rules.max_lag,
@@ -504,6 +525,8 @@ mod tests {
             rules.previous_pose.movement,
             rules.last_different_pose.facing,
             rules.last_different_pose.movement,
+            rules.scrolling.layer2_scroll[0],
+            rules.scrolling.layer2_scroll[1],
         ]
     }
 
@@ -554,6 +577,19 @@ mod tests {
             rules.camera_x_subpixels,
             rules.camera_y,
             rules.camera_y_subpixels,
+            rules.scrolling.layer2[0],
+            rules.scrolling.layer2[1],
+            rules.scrolling.bg1_offset[0],
+            rules.scrolling.bg1_offset[1],
+            rules.scrolling.bg2_offset[0],
+            rules.scrolling.bg2_offset[1],
+            rules.scrolling.distance,
+            rules.scrolling.scrollers[0],
+            rules.scrolling.scrollers[1],
+            rules.previous_position[0],
+            rules.previous_position[1],
+            rules.previous_position[2],
+            rules.previous_position[3],
             rules.irq_command,
             rules.message,
             rules.pose.pose,

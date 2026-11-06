@@ -655,6 +655,10 @@ pub struct SuperSpecial {
 pub struct Samus {
     /// Where she is.
     pub position: Point,
+    /// Where she was when the camera last followed her: the main scrolling routine keeps it
+    /// at its end (bank $90 log, `$90:956E`), and the next frame's camera speed is the
+    /// distance from it.
+    pub previous_position: Point,
     /// Her pose: the pose definitions table (`data::pose`) gives its facing, movement type,
     /// shot direction and radius, and behaviour that keys on one pose (landing, the
     /// elevator's facing forward) reads it.

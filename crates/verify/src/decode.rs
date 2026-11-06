@@ -12,8 +12,8 @@ use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{
-    Block, BlockColumns, Camera, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
-    RoomScoped, ScrollArea,
+    Block, BlockColumns, Camera, CameraDistance, ElevatorArming, ElevatorDirection, ElevatorRide,
+    ElevatorStatus, Layer2Scroll, Layer2Scrolls, RoomScoped, ScrollArea, Scrollers,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
@@ -295,6 +295,10 @@ pub struct Rules<'t> {
     pub camera_y: WramWord,
     /// `room.camera.y.subpixels`.
     pub camera_y_subpixels: WramWord,
+    /// The rest of `room.camera`.
+    pub scrolling: ScrollingSources,
+    /// `samus.previous_position`: x, its subpixels, y, its subpixels.
+    pub previous_position: [WramWord; 4],
     /// `main`: the wait sites, the return chains and the sources they resume from.
     pub strand: StrandRules<'t>,
     /// `irq.command`.
@@ -384,6 +388,58 @@ impl LevelSources {
             })
             .collect::<Result<_, _>>()?;
         Ok((layer1, scroll_areas))
+    }
+}
+
+/// Where the original keeps the camera's scroll state beside layer 1's position.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ScrollingSources {
+    /// `.layer2`: x, y.
+    pub layer2: [WramWord; 2],
+    /// `.bg1_offset`: x, y.
+    pub bg1_offset: [WramWord; 2],
+    /// `.bg2_offset`: x, y.
+    pub bg2_offset: [WramWord; 2],
+    /// `.distance`.
+    pub distance: WramWord,
+    /// `.scrollers`: up, down.
+    pub scrollers: [WramWord; 2],
+    /// `.layer2_scroll`: x, y.
+    pub layer2_scroll: [WramByte; 2],
+}
+
+impl ScrollingSources {
+    /// The camera but for layer 1's position.
+    fn read(self, wram: &[u8]) -> Result<Camera, DecodeError> {
+        let scroll = |[x, y]: [WramWord; 2]| -> Result<Scroll, DecodeError> {
+            Ok(Scroll {
+                x: x.read(wram)?,
+                y: y.read(wram)?,
+            })
+        };
+        let index = self.distance.read(wram)?;
+        let distance =
+            CameraDistance::try_from(index).map_err(|value| DecodeError::Unrepresentable {
+                source: self.distance.name,
+                value,
+            })?;
+        let [up, down] = self.scrollers;
+        let [x, y] = self.layer2_scroll;
+        Ok(Camera {
+            layer2: scroll(self.layer2)?,
+            bg1_offset: scroll(self.bg1_offset)?,
+            bg2_offset: scroll(self.bg2_offset)?,
+            distance,
+            scrollers: Scrollers {
+                up: up.read(wram)?,
+                down: down.read(wram)?,
+            },
+            layer2_scroll: Layer2Scrolls {
+                x: Layer2Scroll::from(x.read(wram)?),
+                y: Layer2Scroll::from(y.read(wram)?),
+            },
+            ..Camera::default()
+        })
     }
 }
 
@@ -560,6 +616,20 @@ impl Rules<'_> {
         camera_x_subpixels: source::LAYER1_X_SUBPOS,
         camera_y: source::LAYER1_Y_POS,
         camera_y_subpixels: source::LAYER1_Y_SUBPOS,
+        scrolling: ScrollingSources {
+            layer2: [source::LAYER2_X_POS, source::LAYER2_Y_POS],
+            bg1_offset: [source::BG1_X_OFFSET, source::BG1_Y_OFFSET],
+            bg2_offset: [source::BG2_X_OFFSET, source::BG2_Y_OFFSET],
+            distance: source::CAMERA_DISTANCE_INDEX,
+            scrollers: [source::UP_SCROLLER, source::DOWN_SCROLLER],
+            layer2_scroll: [source::LAYER2_SCROLL_X, source::LAYER2_SCROLL_Y],
+        },
+        previous_position: [
+            source::SAMUS_PREV_X_POS,
+            source::SAMUS_PREV_X_SUBPOS,
+            source::SAMUS_PREV_Y_POS,
+            source::SAMUS_PREV_Y_SUBPOS,
+        ],
         strand: StrandRules {
             sites: WAIT_SITES,
             calls: CALL_SITES,
@@ -706,6 +776,7 @@ impl Rules<'_> {
                         pixels: self.camera_y.read(wram)?,
                         subpixels: self.camera_y_subpixels.read(wram)?,
                     },
+                    ..self.scrolling.read(wram)?
                 },
                 enemies: self.enemies.read(wram, &rooms.species)?,
                 ..RoomScoped::default()
@@ -747,6 +818,19 @@ impl Rules<'_> {
                 super_missiles: gauge(self.super_missiles, self.max_super_missiles, wram)?,
                 power_bombs: gauge(self.power_bombs, self.max_power_bombs, wram)?,
                 reserve_mode: reserve_mode(self.reserve_mode, wram)?,
+            },
+            previous_position: {
+                let [x, x_subpixels, y, y_subpixels] = self.previous_position;
+                Point {
+                    x: Fixed {
+                        pixels: x.read(wram)?,
+                        subpixels: x_subpixels.read(wram)?,
+                    },
+                    y: Fixed {
+                        pixels: y.read(wram)?,
+                        subpixels: y_subpixels.read(wram)?,
+                    },
+                }
             },
             pose: pose.pose,
             previous: self.previous_pose.read(wram)?,

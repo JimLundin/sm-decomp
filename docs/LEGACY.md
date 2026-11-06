@@ -178,6 +178,12 @@ check needs it, when it becomes a named behaviour with the original's bytes as d
   bytes as tiles. The engine leaves the cell unchanged. No vanilla count gets there
   (supers and power bombs cap at 99 by their ceilings, missiles at 999 in vanilla
   item placement); a Map Rando or custom-content count could.
+- **Scroll areas past the room's table** (`game::scrolling`, bank `$80` log `$80:A528`,
+  `$80:A731`): with the camera's far side beyond the room's last screen row, the
+  scroll zone routines read the scroll buffer past the room's screens (what an earlier
+  room left there, or the RAM after the buffer). The engine reads those screens as red.
+  The room's edge clamps keep the camera off them in normal play; a camera pushed past
+  the room's last screen (a door's arrival, a custom room) could reach them.
 
 ## Tolerated values the content keeps as named variants
 
