@@ -784,7 +784,8 @@ const fn joy1_bit(button: Button) -> u16 {
 
 /// The buttons a JOY1-order word holds; its low four bits are the pad's signature, not
 /// buttons.
-fn buttons(word: u16) -> Buttons {
+#[must_use]
+pub fn buttons(word: u16) -> Buttons {
     // Fold from the last button, so each shift moves the earlier ones toward their bits.
     let bits = BUTTONS.iter().rev().fold(0_u32, |bits, &button| {
         bits.wrapping_shl(1) | u32::from(word & joy1_bit(button) != 0)

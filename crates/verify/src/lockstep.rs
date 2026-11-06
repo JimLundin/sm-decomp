@@ -505,8 +505,12 @@ const fn timing(cut: CutKind) -> Option<NmiTiming> {
     }
 }
 
-/// The auto-repeat delays a record's work RAM holds.
-fn auto_repeat(record: &FrameRecord) -> Result<AutoRepeat, DecodeError> {
+/// The auto-repeat delays a record's work RAM holds, the Session's rules for a run from it.
+///
+/// # Errors
+///
+/// A [`DecodeError`] when the record's work RAM is too short for the two words.
+pub fn auto_repeat(record: &FrameRecord) -> Result<AutoRepeat, DecodeError> {
     let read = |word: WramWord| word.read(&record.wram).map(Frames);
     Ok(AutoRepeat {
         initial: read(source::JOYPAD_CTR_REPEAT_FIRST)?,

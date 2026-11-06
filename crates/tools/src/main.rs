@@ -5,6 +5,10 @@
 //!
 //! `tools lockstep LOCK CACHE ROW [FROM [TICKS]]`: lockstep over a row's record cache
 //! (`verify::lockstep`), printing the report.
+//!
+//! `tools gate LOCK CACHE PADS GREEN [--update] ROW...`: the free-run gate ([`gate`]).
+
+mod gate;
 
 use std::io::Write;
 use std::path::Path;
@@ -14,15 +18,24 @@ use verify::cache::Cache;
 use verify::lock::{Lock, RowId};
 use verify::lockstep::{lockstep, slice_zero_rooms};
 
-const USAGE: &str = "usage: tools lockstep LOCK CACHE ROW [FROM [TICKS]]";
+const LOCKSTEP_USAGE: &str = "tools lockstep LOCK CACHE ROW [FROM [TICKS]]";
+
+fn usage() -> String {
+    format!("usage: {LOCKSTEP_USAGE}\n       {}", gate::USAGE)
+}
 
 fn run(args: &[String]) -> Result<String, String> {
-    let [command, lock, cache, row, window @ ..] = args else {
-        return Err(USAGE.to_owned());
-    };
-    if command != "lockstep" {
-        return Err(USAGE.to_owned());
+    match args {
+        [command, rest @ ..] if command == "lockstep" => run_lockstep(rest),
+        [command, rest @ ..] if command == "gate" => gate::run(rest),
+        _ => Err(usage()),
     }
+}
+
+fn run_lockstep(args: &[String]) -> Result<String, String> {
+    let [lock, cache, row, window @ ..] = args else {
+        return Err(usage());
+    };
     let number = |text: &String| {
         text.parse::<u64>()
             .map_err(|error| format!("{text}: {error}"))
@@ -31,7 +44,7 @@ fn run(args: &[String]) -> Result<String, String> {
         [] => (0, u64::MAX),
         [from] => (number(from)?, u64::MAX),
         [from, ticks] => (number(from)?, number(ticks)?),
-        [_, _, ..] => return Err(USAGE.to_owned()),
+        [_, _, ..] => return Err(usage()),
     };
     let text = std::fs::read_to_string(lock).map_err(|error| format!("{lock}: {error}"))?;
     let lock = Lock::parse(&text).map_err(|error| format!("{lock}: {error:?}"))?;

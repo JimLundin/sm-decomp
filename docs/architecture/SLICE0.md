@@ -470,6 +470,43 @@ domain's module, the Tick order (B1's, changed only by a B-style lane), or `orac
 D1 needs the lsnes lock (RELOCK steps d-e, root jobs; `scenarios/locks/` is not on this
 base yet). Until it lands, A3's fold is proved against the recorder's own output.
 
+**D1 status (`lane/slice0-d1`).** Done: `verify::gate::free_run(&Row, Seed, &[Buttons],
+&Arc<Content>) -> FreeRun` (the `RowReport`, the frames folded and why the run stopped
+early, if it did). `Seed::decode(&FrameRecord, &RoomMap)` gives the start State and the
+Session's rules (the record's auto-repeat words). The run's frame 0 is the seed State
+itself; each later frame f is one Tick with pad f and the `Recorded` schedule's entry for f
+(the lock's `overruns` and `nmi_off` count frames from the row's first). The frame's cut
+comes from the timing source, not the handler's path, because the record's cut says where
+the NMI found the main thread: a message-box lag NMI is a requested cut. Each frame folds
+video memory, `verify::ppu::digest` and the cut through `EngineFold`; SRAM and the shown
+picture are absent (no SRAM in the State; no line program until B6, so `runtime::compose`
+has no `DisplayFrame` to compose); the CPU's port accesses are none yet (C11), so `apu`
+folds an empty log. `verify::gate::Ratchet` is the ratchet of green (row, stream) pairs, one
+`ROW STREAM` line per pair in `scenarios/locks/lsnes.green.txt`. `tools gate LOCK CACHE PADS
+GREEN [--update] ROW...` runs the rows, checks each `PADS/ROW.pads` against the row's pin,
+prints every (row, stream) outcome, fails when a listed pair isn't green, and with
+`--update` adds new green pairs.
+
+Run 2026-11-06 through a scratch DLL (the `tools` executable doesn't link on this machine:
+`oracle_lakesnes` is missing), 0.3 s for both rows: neither row is green. `timing` is
+equal on both rows (the only green pairs, committed): under `Recorded` timing it holds
+whenever no Tick faults, so it guards against faults and early stops, not the cost model.
+`vram`, `cgram`, `oam`, `ppu` and `apu` differ from span 0; `sram`, `video` and `wram` are
+absent from the engine. Against the cache frame by frame (a diagnostic, not the gate), frame
+0 is equal on every memory stream, which checks the decoder at the seed, and the pads equal
+every decoded frame's auto-read pad. The first differing frame per stream, the D2…Dn
+worklist: `oam` frame 1 (no sprite drawing), `vram` frame 7, `ppu` frame 74 (a BG scroll
+512 against 513: the camera follows Samus's horizontal motion), `cgram` frame 453 and `apu`
+frame 453 (the first port accesses, 8 in `area-brinstar`, 293 in `item-morph-ball`), the
+same on both rows.
+
+Remaining: `tools gate` in CI's Verify job, which has the ROM and the ci-data bundle; the
+gate then needs the seed's first record in the bundle (pinned beside `seed_record`, decoded
+by `Seed::decode`) instead of A2's cache, the pad files, and `Content` read from the ROM
+(today `Arc::default()`, as `tools lockstep`); CI runs it without `--update` on every
+landing that touches the engine. The ratchet test in `gate.rs` and the cut test compile
+but didn't run here. A decoder mutant breaking a row (D1's proof row) is not done.
+
 ## 3. The lockstep loop
 
 `tools lockstep` (B2) is the development loop for every C lane, and only a localiser

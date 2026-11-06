@@ -7,6 +7,7 @@ pub mod cache;
 pub mod coverage;
 pub mod decode;
 pub mod fold;
+pub mod gate;
 pub mod lock;
 pub mod lockstep;
 pub mod ppu;
