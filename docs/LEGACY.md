@@ -184,6 +184,12 @@ check needs it, when it becomes a named behaviour with the original's bytes as d
   room left there, or the RAM after the buffer). The engine reads those screens as red.
   The room's edge clamps keep the camera off them in normal play; a camera pushed past
   the room's last screen (a door's arrival, a custom room) could reach them.
+- **Samus spritemaps with a zero pointer or past the table** (`data::pose::spritemap`,
+  bank `$81` log `$81:89AE`): 183 of the 2,096 pointers at `$92:808D` are zero, and the
+  original reads such a spritemap's count from `$92:0000`, low work RAM; an index past the
+  table reads a pointer from the spritemaps after it. The engine draws nothing for either.
+  The half tables plus a pose's animation frames select pointers the game draws; a pose
+  and frame no animation reaches (a custom pose, a hand-set frame) could select another.
 
 ## Tolerated values the content keeps as named variants
 

@@ -11,6 +11,7 @@ use canonical::Canonical;
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 pub mod animation;
+pub mod spritemap;
 pub mod transition;
 
 /// A pose: the index into the pose definitions, the number the original keeps in its pose
