@@ -28,6 +28,76 @@ pub struct Colour(pub u16);
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct VramWord(pub u16);
 
+/// One of a background's eight palettes.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BgPalette(pub u8);
+
+/// A background tile's number, ten bits.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TileNumber(pub u16);
+
+/// One background tilemap cell: the tile and how it's drawn. The PPU's word is
+/// [`TilemapEntry::word`], and [`TilemapEntry::from_word`] gives every word back exactly.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TilemapEntry {
+    /// The tile.
+    pub tile: TileNumber,
+    /// Its palette.
+    pub palette: BgPalette,
+    /// Whether it draws above the background's low-priority tiles.
+    pub priority: bool,
+    /// Mirrored left to right.
+    pub flip_x: bool,
+    /// Mirrored top to bottom.
+    pub flip_y: bool,
+}
+
+/// A tilemap word's tile number bits.
+const TILE_BITS: u16 = 0x03FF;
+/// A tilemap word's palette field: its shift and width.
+const PALETTE_SHIFT: u16 = 10;
+const PALETTE_BITS: u16 = 0x07;
+const PRIORITY_BIT: u16 = 0x2000;
+const FLIP_X_BIT: u16 = 0x4000;
+const FLIP_Y_BIT: u16 = 0x8000;
+
+/// `bit` when `set`, else nothing.
+const fn bit_if(set: bool, bit: u16) -> u16 {
+    if set { bit } else { 0 }
+}
+
+impl TilemapEntry {
+    /// The entry the PPU reads from `word`.
+    #[must_use]
+    pub const fn from_word(word: u16) -> Self {
+        let [palette, _] = ((word >> PALETTE_SHIFT) & PALETTE_BITS).to_le_bytes();
+        Self {
+            tile: TileNumber(word & TILE_BITS),
+            palette: BgPalette(palette),
+            priority: word & PRIORITY_BIT != 0,
+            flip_x: word & FLIP_X_BIT != 0,
+            flip_y: word & FLIP_Y_BIT != 0,
+        }
+    }
+
+    /// The word the PPU reads.
+    #[must_use]
+    pub const fn word(self) -> u16 {
+        let palette = u16::from_le_bytes([self.palette.0, 0]) & PALETTE_BITS;
+        (self.tile.0 & TILE_BITS)
+            | (palette << PALETTE_SHIFT)
+            | bit_if(self.priority, PRIORITY_BIT)
+            | bit_if(self.flip_x, FLIP_X_BIT)
+            | bit_if(self.flip_y, FLIP_Y_BIT)
+    }
+
+    /// The same tile in `palette`.
+    #[must_use]
+    pub const fn in_palette(self, palette: BgPalette) -> Self {
+        Self { palette, ..self }
+    }
+}
+
 /// One OAM low-table entry, in the PPU's byte order.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct OamEntry {

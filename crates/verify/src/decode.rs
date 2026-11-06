@@ -9,9 +9,11 @@ use std::fmt;
 
 use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
+use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{Camera, RoomScoped};
 use game::state::samus::{
-    Equipment, Facing, Fixed, Gauge, Item, Items, Movement, Point, PoseId, PoseRecord, Samus,
+    Equipment, Facing, Fixed, Gauge, Item, Items, Movement, Point, PoseId, PoseRecord, ReserveMode,
+    Samus,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
@@ -19,8 +21,8 @@ use game::state::video::{
     BACKGROUNDS, BgMode, Brightness, CGRAM_COLOURS, Colour, ColourMath, ColourMathLayers,
     ColourMathSelect, ColourWrite, DisplaySettings, DmaChannel, FixedColour, Layers, Mode7,
     Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Registers, Scroll,
-    TileBases, TilemapBase, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep, VramTransfer,
-    VramWord, WindowSettings, Windows,
+    TileBases, TilemapBase, TilemapEntry, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep,
+    VramTransfer, VramWord, WindowSettings, Windows,
 };
 use game::state::{
     Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
@@ -262,6 +264,20 @@ pub struct Rules<'t> {
     pub missiles: WramWord,
     /// `samus.equipment.missiles.max`.
     pub max_missiles: WramWord,
+    /// `samus.equipment.super_missiles.current`.
+    pub super_missiles: WramWord,
+    /// `samus.equipment.super_missiles.max`.
+    pub max_super_missiles: WramWord,
+    /// `samus.equipment.power_bombs.current`.
+    pub power_bombs: WramWord,
+    /// `samus.equipment.power_bombs.max`.
+    pub max_power_bombs: WramWord,
+    /// `samus.equipment.reserve_mode`.
+    pub reserve_mode: WramWord,
+    /// `clock.counters.requested_byte`.
+    pub requested_byte: WramByte,
+    /// `hud`.
+    pub hud: HudSources,
     /// `room.camera.x.pixels`.
     pub camera_x: WramWord,
     /// `room.camera.x.subpixels`.
@@ -284,6 +300,29 @@ pub struct Rules<'t> {
     pub last_different_pose: PoseSources,
     /// `message`.
     pub message: WramWord,
+}
+
+/// Where the original keeps the HUD.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HudSources {
+    /// `.tilemap`.
+    pub tilemap: WramBlock,
+    /// `.selected`.
+    pub selected: WramWord,
+    /// `.auto_cancel`.
+    pub auto_cancel: WramWord,
+    /// `.drawn.energy`.
+    pub energy: WramWord,
+    /// `.drawn.missiles`.
+    pub missiles: WramWord,
+    /// `.drawn.super_missiles`.
+    pub super_missiles: WramWord,
+    /// `.drawn.power_bombs`.
+    pub power_bombs: WramWord,
+    /// `.drawn.selection`.
+    pub selection: WramWord,
+    /// `.item_palette`.
+    pub item_palette: WramWord,
 }
 
 /// Where the original keeps the register mirrors beyond INIDISP, TM, TS and the scroll.
@@ -384,6 +423,23 @@ impl Rules<'_> {
         max_reserve: source::SAMUS_MAX_RESERVE_HEALTH,
         missiles: source::SAMUS_MISSILES,
         max_missiles: source::SAMUS_MAX_MISSILES,
+        super_missiles: source::SAMUS_SUPER_MISSILES,
+        max_super_missiles: source::SAMUS_MAX_SUPER_MISSILES,
+        power_bombs: source::SAMUS_POWER_BOMBS,
+        max_power_bombs: source::SAMUS_MAX_POWER_BOMBS,
+        reserve_mode: source::RESERVE_HEALTH_MODE,
+        requested_byte: source::NMI_FRAME_COUNTER_BYTE,
+        hud: HudSources {
+            tilemap: source::HUD_TILEMAP,
+            selected: source::HUD_ITEM_INDEX,
+            auto_cancel: source::SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX,
+            energy: source::SAMUS_PREV_HEALTH,
+            missiles: source::SAMUS_PREV_MISSILES,
+            super_missiles: source::SAMUS_PREV_SUPER_MISSILES,
+            power_bombs: source::SAMUS_PREV_POWER_BOMBS,
+            selection: source::SAMUS_PREV_HUD_ITEM_INDEX,
+            item_palette: source::HUD_ITEM_TILEMAP_PALETTE_BITS,
+        },
         camera_x: source::LAYER1_X_POS,
         camera_x_subpixels: source::LAYER1_X_SUBPOS,
         camera_y: source::LAYER1_Y_POS,
@@ -455,6 +511,7 @@ impl Rules<'_> {
                     completed: FrameCount(self.completed.read(wram)?),
                     lag: FrameCount(u16::from(self.lag.read(wram)?)),
                     max_lag: FrameCount(u16::from(self.max_lag.read(wram)?)),
+                    requested_byte: self.requested_byte.read(wram)?,
                 },
                 game_time: GameTime {
                     hours: self.hours.read(wram)?,
@@ -498,6 +555,7 @@ impl Rules<'_> {
                 ..RoomScoped::default()
             },
             message: Message(self.message.read(wram)?),
+            hud: self.hud.read(wram)?,
         };
         Ok(Decoded { state, quiescence })
     }
@@ -522,6 +580,9 @@ impl Rules<'_> {
                 energy: gauge(self.energy, self.max_energy, wram)?,
                 reserve: gauge(self.reserve, self.max_reserve, wram)?,
                 missiles: gauge(self.missiles, self.max_missiles, wram)?,
+                super_missiles: gauge(self.super_missiles, self.max_super_missiles, wram)?,
+                power_bombs: gauge(self.power_bombs, self.max_power_bombs, wram)?,
+                reserve_mode: reserve_mode(self.reserve_mode, wram)?,
             },
             pose: pose.pose,
             previous: self.previous_pose.read(wram)?,
@@ -784,6 +845,69 @@ const fn item_bit(item: Item) -> u16 {
         Item::SpeedBooster => 0x2000,
         Item::GrappleBeam => 0x4000,
         Item::XRayScope => 0x8000,
+    }
+}
+
+/// The reserve tanks' mode word.
+fn reserve_mode(source: WramWord, wram: &[u8]) -> Result<ReserveMode, DecodeError> {
+    match source.read(wram)? {
+        0 => Ok(ReserveMode::None),
+        1 => Ok(ReserveMode::Automatic),
+        2 => Ok(ReserveMode::Manual),
+        value => Err(DecodeError::Unrepresentable {
+            source: source.name,
+            value,
+        }),
+    }
+}
+
+/// A HUD item index: 0 for none, then the HUD's items left to right (`$80:9D6E`).
+fn hud_item(source: WramWord, wram: &[u8]) -> Result<Option<HudItem>, DecodeError> {
+    match source.read(wram)? {
+        0 => Ok(None),
+        1 => Ok(Some(HudItem::Missiles)),
+        2 => Ok(Some(HudItem::SuperMissiles)),
+        3 => Ok(Some(HudItem::PowerBombs)),
+        4 => Ok(Some(HudItem::GrappleBeam)),
+        5 => Ok(Some(HudItem::XRayScope)),
+        value => Err(DecodeError::Unrepresentable {
+            source: source.name,
+            value,
+        }),
+    }
+}
+
+/// A tilemap palette field's bits within a word.
+const TILEMAP_PALETTE_FIELD: u16 = 0x1C00;
+
+impl HudSources {
+    /// The HUD the record shows.
+    fn read(&self, wram: &[u8]) -> Result<Hud, DecodeError> {
+        let mut tilemap = HudTilemap::default();
+        let (words, _) = self.tilemap.read(wram)?.as_chunks::<2>();
+        for (cell, word) in tilemap.cells.iter_mut().zip(words) {
+            *cell = TilemapEntry::from_word(u16::from_le_bytes(*word));
+        }
+        let palette = self.item_palette.read(wram)?;
+        if palette & !TILEMAP_PALETTE_FIELD != 0 {
+            return Err(DecodeError::Unrepresentable {
+                source: self.item_palette.name,
+                value: palette,
+            });
+        }
+        Ok(Hud {
+            tilemap,
+            selected: hud_item(self.selected, wram)?,
+            auto_cancel: hud_item(self.auto_cancel, wram)?,
+            drawn: Drawn {
+                energy: self.energy.read(wram)?,
+                missiles: self.missiles.read(wram)?,
+                super_missiles: self.super_missiles.read(wram)?,
+                power_bombs: self.power_bombs.read(wram)?,
+                selection: hud_item(self.selection, wram)?,
+            },
+            item_palette: TilemapEntry::from_word(palette).palette,
+        })
     }
 }
 

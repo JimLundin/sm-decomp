@@ -7,6 +7,7 @@
 
 pub mod commit;
 pub mod game_time;
+pub mod hud;
 pub mod lines;
 pub mod message_box;
 pub mod nmi;

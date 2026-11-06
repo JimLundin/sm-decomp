@@ -166,6 +166,19 @@ To retire a row: prove the index in range (then use the typed owner and delete
 the fallback) or give the Session an owner for the RAM the overflow reaches;
 remove the calls, their tags and the row together.
 
+## The rebuild's engine: original overflows it doesn't reproduce yet
+
+The new engine (`crates/game`) has no RAM image, so where the original reads past a
+table it can't read "whatever lies there". Each such case is listed here until a
+check needs it, when it becomes a named behaviour with the original's bytes as data.
+
+- **HUD digits past their cells** (`game::hud`, bank `$80` log `$80:9DBF`/`$80:9DD3`):
+  a count above 99 in a two-digit cell, or above 999 in a three-digit one, makes the
+  original index past the digit table into the code at `$80:9DE7` and draw those
+  bytes as tiles. The engine leaves the cell unchanged. No vanilla count gets there
+  (supers and power bombs cap at 99 by their ceilings, missiles at 999 in vanilla
+  item placement); a Map Rando or custom-content count could.
+
 ## Tolerated values the content keeps as named variants
 
 - `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (bank $91 log,

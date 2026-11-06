@@ -232,6 +232,31 @@ pub const SAMUS_MAX_MISSILES: WramWord = WramWord {
     name: "SAMUS_MAX_MISSILES",
     offset: 0x09C8,
 };
+/// Bank $90 log: Samus's super missiles.
+pub const SAMUS_SUPER_MISSILES: WramWord = WramWord {
+    name: "SAMUS_SUPER_MISSILES",
+    offset: 0x09CA,
+};
+/// Bank $90 log: Samus's super missile ceiling.
+pub const SAMUS_MAX_SUPER_MISSILES: WramWord = WramWord {
+    name: "SAMUS_MAX_SUPER_MISSILES",
+    offset: 0x09CC,
+};
+/// Bank $90 log: Samus's power bombs.
+pub const SAMUS_POWER_BOMBS: WramWord = WramWord {
+    name: "SAMUS_POWER_BOMBS",
+    offset: 0x09CE,
+};
+/// Bank $90 log: Samus's power bomb ceiling.
+pub const SAMUS_MAX_POWER_BOMBS: WramWord = WramWord {
+    name: "SAMUS_MAX_POWER_BOMBS",
+    offset: 0x09D0,
+};
+/// Bank $80 log, `$80:9B4E`: the reserve tanks' mode, 0 none, 1 automatic, 2 manual.
+pub const RESERVE_HEALTH_MODE: WramWord = WramWord {
+    name: "RESERVE_HEALTH_MODE",
+    offset: 0x09C0,
+};
 /// Bank $84 log: the reserve tanks' ceiling, raised by each reserve tank.
 pub const SAMUS_MAX_RESERVE_HEALTH: WramWord = WramWord {
     name: "SAMUS_MAX_RESERVE_HEALTH",
@@ -620,4 +645,58 @@ pub const SAMUS_LAST_DIFFERENT_POSE_X_DIR: WramByte = WramByte {
 pub const SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: WramByte = WramByte {
     name: "SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE",
     offset: 0x0A27,
+};
+
+/// Bank $80 log, NMI `$80:95ED`: the requested NMIs in eight bits, which the HUD's
+/// auto-cancel flash reads.
+pub const NMI_FRAME_COUNTER_BYTE: WramByte = WramByte {
+    name: "NMI_FRAME_COUNTER_BYTE",
+    offset: 0x05B5,
+};
+/// Bank $80 log, `$80:9CAA`: the HUD tilemap, three rows of 32 words, queued to VRAM `$5820`
+/// every gameplay frame.
+pub const HUD_TILEMAP: WramBlock = WramBlock {
+    name: "HUD_TILEMAP",
+    offset: 0xC608,
+    len: 0x00C0,
+};
+/// Bank $80 log, `$80:9C55`: the selected HUD item, 0 for none, then missiles to X-ray.
+pub const HUD_ITEM_INDEX: WramWord = WramWord {
+    name: "HUD_ITEM_INDEX",
+    offset: 0x09D2,
+};
+/// Bank $80 log, `$80:9CA4`: the HUD item that cancels itself automatically.
+pub const SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX: WramWord = WramWord {
+    name: "SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX",
+    offset: 0x0A04,
+};
+/// Bank $80 log, `$80:9B8E`: the energy the HUD last drew.
+pub const SAMUS_PREV_HEALTH: WramWord = WramWord {
+    name: "SAMUS_PREV_HEALTH",
+    offset: 0x0A06,
+};
+/// Bank $80 log, `$80:9C08`: the missiles the HUD last drew.
+pub const SAMUS_PREV_MISSILES: WramWord = WramWord {
+    name: "SAMUS_PREV_MISSILES",
+    offset: 0x0A08,
+};
+/// Bank $80 log, `$80:9C1E`: the super missiles the HUD last drew.
+pub const SAMUS_PREV_SUPER_MISSILES: WramWord = WramWord {
+    name: "SAMUS_PREV_SUPER_MISSILES",
+    offset: 0x0A0A,
+};
+/// Bank $80 log, `$80:9C47`: the power bombs the HUD last drew.
+pub const SAMUS_PREV_POWER_BOMBS: WramWord = WramWord {
+    name: "SAMUS_PREV_POWER_BOMBS",
+    offset: 0x0A0C,
+};
+/// Bank $80 log, `$80:9C58`: the HUD item the HUD last highlighted.
+pub const SAMUS_PREV_HUD_ITEM_INDEX: WramWord = WramWord {
+    name: "SAMUS_PREV_HUD_ITEM_INDEX",
+    offset: 0x0A0E,
+};
+/// Bank $80 log, `$80:9CEA`: the palette bits the last item highlight wrote.
+pub const HUD_ITEM_TILEMAP_PALETTE_BITS: WramWord = WramWord {
+    name: "HUD_ITEM_TILEMAP_PALETTE_BITS",
+    offset: 0x077C,
 };

@@ -408,6 +408,9 @@ fn gameplay_phase(
         // with those game states. In game state 8 the clock still counts on that frame; it
         // stops only if an earlier phase this frame already left gameplay.
         GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
+        // open: the mini-map's update and its explored cells (bank $90) join with the map
+        // and `progress`; until then the HUD tilemap keeps the mini-map it was opened with.
+        GameplayPhase::Hud => crate::hud::phase(state),
         GameplayPhase::EnemySelection
         | GameplayPhase::PaletteFx
         | GameplayPhase::SamusProjectileInteraction
@@ -421,7 +424,6 @@ fn gameplay_phase(
         | GameplayPhase::Scrolling
         | GameplayPhase::Draw
         | GameplayPhase::EnemyBg2Tilemap
-        | GameplayPhase::Hud
         | GameplayPhase::BgScroll
         | GameplayPhase::RoomMain
         | GameplayPhase::RoomShaking
