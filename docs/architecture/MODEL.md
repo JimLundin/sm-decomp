@@ -1,9 +1,5 @@
 # The behaviour model
 
-> **Pause: Jim's review is waiting.** Before more lane work, read
-> [MODEL-REVIEW.md](MODEL-REVIEW.md) and answer every row of its
-> Acknowledgement table. `tools/check_review_ack.sh` fails the gate and CI until you do.
-
 This note sets the shape of the engine's game code. It amends ARCHITECTURE where they disagree,
 and the amendments are listed in §7. It follows Jim's decisions of 2026-11-06, recorded in §1.
 
@@ -280,7 +276,9 @@ The size report adds lines per layer, so the routine-port share is visible and f
 
 ## 8. Lessons
 
-This note answers these lessons from the three attempts so far.
+This note answers these lessons from the three attempts so far. The "review R1" to "R10" labels
+refer to an external review of this note (2026-11-06). Its text and the answers are in git history at
+commit `c1b3ea3`, `docs/architecture/MODEL-REVIEW.md`.
 
 **The earlier attempts.** Their rules are in ARCHITECTURE §16; these three apply here:
 - **The transpile is reference only (rule 1).** Attempt 1 transpiled the C, and attempt 2 spent

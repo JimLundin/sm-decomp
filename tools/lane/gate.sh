@@ -8,7 +8,6 @@ mkdir -p "$O"; ok=1
 trap 'rm -f -- "$O/check.log"; rmdir -- "$O" 2>/dev/null || true' EXIT
 fail() { echo "$1"; ok=0; }
 
-bash tools/check_review_ack.sh || fail "REVIEW ACK FAIL"
 
 "$R/cargo" fmt --all --check >/dev/null 2>&1 || fail "FMT FAIL"
 

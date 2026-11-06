@@ -1,9 +1,5 @@
 # Agent instructions
 
-> **Pause: Jim's review is waiting.** Before more lane work, read
-> [MODEL-REVIEW.md](docs/architecture/MODEL-REVIEW.md) and answer every row of its
-> Acknowledgement table. `tools/check_review_ack.sh` fails the gate and CI until you do.
-
 The goal is the new game engine in the new crates (`crates/sm_data`, `sm_game`,
 `sm_runtime`, `sm_tools`, `sm_app`), behaving like the real game. `sm/` is the
 compatibility layer and oracle tooling we are moving off.
