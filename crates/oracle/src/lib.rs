@@ -19,7 +19,7 @@ pub mod lakesnes;
 pub mod lock;
 pub mod lsnes;
 pub mod measure;
-pub mod record;
+pub use oracle_record as record;
 pub mod seed;
 pub mod streams;
 

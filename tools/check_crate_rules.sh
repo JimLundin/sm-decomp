@@ -20,14 +20,15 @@ allowed() {
     game) echo "data canonical" ;;
     runtime) echo "data" ;;
     app) echo "data game runtime" ;;
-    oracle) echo "data sm_data" ;; # sm_data until the digest moves to data (crates/README.md)
-    verify) echo "data game runtime oracle" ;;
+    oracle) echo "data oracle_record sm_data" ;; # sm_data until the digest moves to data (crates/README.md)
+    oracle_record) echo "" ;;
+    verify) echo "data game runtime oracle_record" ;;
     tools) echo "verify oracle runtime" ;;
     canonical) echo "canonical_derive" ;;
     canonical_derive) echo "" ;;
   esac
 }
-new_crates="data game runtime app oracle verify tools canonical canonical_derive"
+new_crates="data game runtime app oracle oracle_record verify tools canonical canonical_derive"
 
 # Name the rule a forbidden edge breaks, for the message.
 rule() {
@@ -36,7 +37,7 @@ rule() {
     case $2 in oracle|verify|tools) echo "rule 1: engine crates don't depend on oracle, verify or tools"; return ;; esac ;;
   esac
   case $1/$2 in game/runtime|runtime/game) echo "rule 2: game and runtime don't depend on each other"; return ;; esac
-  [ "$1" = oracle ] && { echo "rule 3: oracle depends only on data"; return; }
+  [ "$1" = oracle ] && { echo "rule 3: oracle depends only on data and its record types"; return; }
   echo "not in the crate plan"
 }
 

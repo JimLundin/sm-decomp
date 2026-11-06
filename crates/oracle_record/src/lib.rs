@@ -1,4 +1,6 @@
 //! The frame record: one closed interval (cut k-1, cut k] of the machine.
+//!
+//! Its own crate so `verify` can read records without linking an emulator (ARCHITECTURE §4.1).
 
 /// The picture's width in dots.
 pub const WIDTH: usize = 256;

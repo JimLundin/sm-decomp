@@ -1,0 +1,12 @@
+[package]
+name = "oracle_record"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The oracle's frame record: the types an oracle step returns, without an emulator"
+
+[dependencies]
+
+[lints.rust]
+warnings = { level = "deny", priority = -1 }

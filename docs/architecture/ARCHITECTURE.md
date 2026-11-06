@@ -193,7 +193,8 @@ new crate names, which contradict the accepted package names.
 **Why `verify` is separate from `tools`.** The decoder and projections are the riskiest
 verification code (Retro section 5, V5). They need their own mutants and their own budget,
 and the CLI should not be able to grow a second comparison path (P7). `oracle` keeps its
-record types in a module that `verify` can use without pulling in an emulator. So the
+record types in their own crate, `oracle_record` (re-exported as `oracle::record`), that
+`verify` can use without linking an emulator. So the
 decoder can be tested from stored records, and the harness doesn't depend on the engine
 (P5).
 
