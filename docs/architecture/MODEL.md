@@ -78,18 +78,24 @@ never from a constant buried in a routine. Adding a behaviour means adding a cat
 rule value and its model code (a table row, a variant, an encoder rule). It never means editing a
 port.
 
-## 4. The reference domain: Samus on the ground
+## 4. The reference domain: Samus's motion
 
-This domain is reshaped first, end to end, so every later domain has a working example to copy.
+This domain is replaced first, end to end, so every later domain has a working example to copy.
 
-**Scope:**
-- standing, running, turning on the ground, crouching;
-- the morph ball on the ground;
-- the speed rules they share: base speed, extra run speed, the cap;
-- the step down onto lower ground;
-- one collision sweep, horizontal and vertical.
+**Scope:** Samus's motion is one domain, because one set of speed quantities has writers across all
+of it (Jim, 2026-11-06, after an independent review). It covers:
+- the ground: standing, running, turning, crouching, the morph ball and the step down;
+- the air: jumps, the fall, the wall jump;
+- pose selection's writes to the speeds (pose-change commands, the landing stop).
 
-The air (jumps, the fall, the wall jump) is the second step.
+**Collision is the next domain, with a fixed slot.** Until then the motion model calls it through
+the collision interface, over a bridge to today's collision code. The bridge's quirks are the
+collision spec's first entries, so the bridge has an end.
+
+**Replace, never adapt.** The model is wired in and the old code (`movement.rs`, `movement/air.rs`,
+pose's motion part) is deleted in the same commit. No `LEGACY` gate or compatibility shim keeps
+today's port's behaviour inside a new type. Where the model and today's engine disagree, the
+oracle decides, and a fall in today's numbers is recorded as a defect of the old port.
 
 **Shape:**
 
@@ -118,25 +124,32 @@ pub fn step(samus: &mut Samus, pad: Controls, rules: &MotionRules, world: &World
 }
 ```
 
-**What the reshape proves:**
-- It is exact (review R1). Three checks:
-  - the free-run gate's green pairs hold;
-  - the free-run localiser's first differing frames are unchanged;
-  - the lockstep ratchet holds **on the domain's declared fields**.
+**What proves it: the oracle, directly, frame by frame.** The yardstick is the oracle, never
+today's engine, which is itself a partly wrong port. The **domain harness** in `verify` covers every
+recorded frame of every scenario. For each frame N it:
+1. decodes the domain's State and inputs from the oracle's record N;
+2. runs the model one frame;
+3. compares the domain's declared fields with the oracle's record N+1.
 
-  The declared fields are the spec's quantities whose **Read by** is not "none" (§5). Lockstep
-  compares State field by field, so comparing every decoded field would pull the State back to the
-  RAM layout. A quantity that no later rule reads and that never reaches output is not State, not
-  decoded and not compared.
+It reports **N of M oracle frames matched**, per behaviour. That is the domain's progress
+measure. Gaps come from frames that don't match, not from reading old code. The spec's vectors stay,
+for cases no recorded frame reaches.
+
+The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
+no later rule reads and that never reaches output is not State, not decoded and not compared. Once
+the domain is wired in, the free-run gate's green pairs must hold, and the lockstep ratchet and
+localiser show any change against today's engine. Each change is either a fix or a gap.
 - The thesis holds in code. `SpeedCap` is a switchable quirk:
   - `SpeedCap::Wordwise` is vanilla, the oracle-checked value. The original compares the pixel
     and subpixel words separately, so 2.1000 counts as past a cap of 2.C000.
   - `SpeedCap::Exact` is the corrected rule.
   - A unit test shows the two differ on exactly that case, and the Reference profile stays
     exact.
-- It's smaller (review R8). The spec header holds the baseline (today's lines for the domain) and
-  a budget, written before the build. The size report shows the domain against its budget, and
-  going over is a review stop.
+- It's smaller (Jim, 2026-11-06). **A domain that is larger than the old code it replaces is a
+  strict failure.** A domain must save significantly over the old code, unless the spec gives a
+  clear, substantiated reason why this domain can't. The spec header holds the baseline (the old
+  code's lines) and a target. A target over the baseline, or a scope change, goes to Jim with the
+  numbers, and the lane stops until he answers.
 
 **Done means:**
 - A movement kind is a row, a parameter is a table entry or a rule, and collision is one sweep.
@@ -147,9 +160,10 @@ pub fn step(samus: &mut Samus, pad: Controls, rules: &MotionRules, world: &World
 1. The three exactness checks above hold.
 2. No asm address appears in `game::model::samus`.
 3. The domain's RAM-shape list (§5) is short and every item on it is justified.
-4. The vector tests pass, and the domain is under its budget.
-5. At least one gap went from the implementer to the observer and back, and was fixed by amending
-   the spec, not by patching the code.
+4. The domain harness matches the oracle on the declared fields; the vector tests pass; and the
+   domain is significantly smaller than the old code it replaces.
+5. At least one gap from an unmatched oracle frame went from the implementer to the observer and
+   back, and was fixed by amending the spec, not by patching the code.
 6. The implementer never read the bank logs, `verify`'s address files or the old module.
 
 If the other items hold but item 3 doesn't, the clean room failed, however well the code reads.
@@ -225,13 +239,13 @@ and becomes an error domain by domain as each one is reshaped.
 coasts like standing; add its row"). It carries no bank-log excerpt and no address. A new free
 function named after a routine is a review stop.
 
-**Order** (each step is byte-identical unless it says otherwise):
+**Order** (each domain is proven against the oracle by its harness, §4):
 1. **Groundwork:**
    - the catalogue type and the `Rules` hook;
    - the numeric quirks once, on the types (signed compare, the word-by-word cap, wrapping
      moves);
    - the layer check as a warning.
-2. **Reference domain:** Samus on the ground (§4). Then the air.
+2. **Reference domain:** Samus's motion (§4), with the domain harness. Then **collision**, the next domain with a fixed slot.
 3. **Intents and the encoder:**
    - `SpriteDraw` plus `exact::oam` (Samus, enemies);
    - `TileWrite` plus `exact::tilemap`, which absorbs `plm/draw.rs`, the mapping in
