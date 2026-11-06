@@ -735,6 +735,23 @@ parts of the handlers, the atmospheric graphics, `$0AC8`/`$0ACA`/`$0B04`/`$0B06`
 rest of commands 7 and Bh (the new state handler `$90:E8EC` while riding, which C10's
 visor reads as status not Inactive).
 
+**C6e status (`lane/slice0-c6e`), Samus's tile uploads.** Done: `data::pose::tiles` decodes
+`$92:8000`'s tables (the animation definitions by pose `$92:D94E`, four bytes a frame; the
+top and bottom tiles definition lists `$92:D91E`, `$92:D938`, seven bytes an entry; ROM
+test) into `FrameTiles` by pose and frame naming `TileDefinition`s (`$80:9376`'s format:
+long source, part 1 and part 2 sizes) by `TileDefinitionId`, and `Graphics` resolves a
+`GraphicsRef` into the ROM bytes of banks `$9B`-`$9F`; both join `Content`.
+`VramSource::Content` is a `RomWords` reference the VRAM write table now resolves.
+`samus_drawing` queues the frame's uploads into `video.batch.samus_tiles` wherever
+`$90:85E2` (flickering or not) and `$90:8A00` end with `$92:8000`; the main loop clears
+them (`$82:8948`); the NMI's `SamusTiles` step (`$80:9376`) DMAs part 1 to `$6000`/`$6080`
+and part 2 to `$6100`/`$6180` and leaves channel 1's registers (DMAP 01h, BBAD 18h, the
+source past the bytes read, a zero count) in `video.dma[1]`. Verify decodes
+`NMI_COPY_SAMUS_HALVES` (`$071D`/`$071E`) and the two definition pointers (`$071F`,
+`$0721`) through `RoomMap::samus_tiles`, with coverage rows, comparators and moved-source
+mutants. Open: channel 1's registers from `$80:933A` and `$80:8C83`, lockstep of
+`video.memory.vram` and `video.dma`.
+
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
 running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of
