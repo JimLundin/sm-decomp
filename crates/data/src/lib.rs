@@ -7,3 +7,4 @@
 pub mod digest;
 pub mod id;
 pub mod span;
+pub mod video;

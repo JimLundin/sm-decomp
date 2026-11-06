@@ -3,3 +3,5 @@
 //! storage.
 //!
 //! It feeds nothing back into the Session (ARCHITECTURE §4.1).
+
+pub mod compose;
