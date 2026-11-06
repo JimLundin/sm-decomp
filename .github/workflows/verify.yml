@@ -331,3 +331,15 @@ jobs:
           else
             gh issue create --title "$TITLE" --body "$body" --assignee "$GITHUB_REPOSITORY_OWNER"
           fi
+
+  # The rebuild's content tests read the real ROM (data::room's Morph Ball Room test returns
+  # early without it), so they run here, where the ROM is decrypted, independent of the old plan.
+  content:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - *rom
+      - *decrypt
+      - name: Test the rebuild's content decoders against the ROM
+        run: cargo test --locked -p data --no-fail-fast
