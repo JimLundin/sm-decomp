@@ -154,3 +154,45 @@ fn a_timer_counted_past_zero_still_advances_the_frame() {
     assert_eq!(samus.animation.frame, AnimationFrame(1));
     assert_eq!(samus.animation.timer, AnimationTimer(4));
 }
+
+/// `$91:B491`, the wall jump's list: its start-up, the instruction at frame 2, then the
+/// spin's, the space jump's and the screw attack's sequences.
+fn wall_jump_list() -> DelayList {
+    let mut bytes = vec![0x05, 0x05, 0xFB];
+    bytes.extend([0x03, 0x02, 0x03, 0x02, 0x03, 0x02, 0x03, 0x02, 0xFE, 0x08]);
+    bytes.extend([0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0xFE, 0x08]);
+    bytes.extend([0x01; 0x18]);
+    bytes.extend([0xFE, 0x18]);
+    DelayList::decode(&bytes).unwrap()
+}
+
+#[test]
+fn the_wall_jumps_instruction_picks_its_sequence_by_her_items() {
+    let list = wall_jump_list();
+    let cases = [
+        (&[][..], 3, 3),
+        (&[Item::SpaceJump][..], 0x0D, 2),
+        (&[Item::ScrewAttack][..], 0x17, 1),
+        (&[Item::SpaceJump, Item::ScrewAttack][..], 0x17, 1),
+        // Out of liquids the gravity suit changes nothing.
+        (&[Item::GravitySuit][..], 3, 3),
+    ];
+    for (items, frame, timer) in cases {
+        let mut samus = samus(PoseId(0x84), MovementType::WallJumping, 2, 0);
+        for &item in items {
+            samus.equipment.equipped.insert(item);
+        }
+        assert_eq!(
+            list.at(samus.animation.frame),
+            Some(DelayItem::Instruction(Instruction::WallJump))
+        );
+        assert!(run(
+            Instruction::WallJump,
+            &mut samus,
+            PoseRequests::default()
+        ));
+        set_timer(&mut samus, &list, 0);
+        assert_eq!(samus.animation.frame, AnimationFrame(frame));
+        assert_eq!(samus.animation.timer, AnimationTimer(timer));
+    }
+}
