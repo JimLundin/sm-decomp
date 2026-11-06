@@ -304,6 +304,24 @@ const COMPARATORS: &[Comparator] = &[
     field!("video.memory.oam", video.memory.oam),
     field!("video.committed", video.committed),
     field!("video.dma", video.dma),
+    field!("video.playfield.main_screen", video.playfield.main_screen),
+    field!("video.playfield.bg3_tilemap", video.playfield.bg3_tilemap),
+    field!(
+        "video.playfield.colour_math.select",
+        video.playfield.colour_math.select
+    ),
+    field!(
+        "video.playfield.colour_math.layers",
+        video.playfield.colour_math.layers
+    ),
+    field!(
+        "video.batch.playfield_colour_math.select",
+        video.batch.playfield_colour_math.select
+    ),
+    field!(
+        "video.batch.playfield_colour_math.layers",
+        video.batch.playfield_colour_math.layers
+    ),
     field!("video.batch.samus_tiles", video.batch.samus_tiles),
     field!("video.batch.samus_tiles.top", video.batch.samus_tiles.top),
     field!(

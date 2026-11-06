@@ -59,13 +59,15 @@ pub enum BeamSync {
 /// The frame's beam-sync point.
 ///
 /// The main loop's is after the HDMA object handler, because on
-/// the console that handler finishes in vblank before line 0; every other frame's is before
-/// its work until a measurement places it (D7).
+/// the console that handler finishes in vblank before line 0. The message box's is after its
+/// step, at its next wait: each step starts as its lag NMI returns and finishes in vblank, so
+/// the HUD split shows the registers it wrote (CGADSUB from 818 on in item-morph-ball). Every
+/// other frame's is before its work until a measurement places it (D7).
 #[must_use]
 pub const fn beam_sync(frame: Frame) -> BeamSync {
     match frame {
-        Frame::MainLoop(_) => BeamSync::Within,
-        Frame::Gameplay(_) | Frame::Plms { .. } | Frame::MessageBox(_) => BeamSync::BeforeWork,
+        Frame::MainLoop(_) | Frame::MessageBox(_) => BeamSync::Within,
+        Frame::Gameplay(_) | Frame::Plms { .. } => BeamSync::BeforeWork,
     }
 }
 

@@ -6,8 +6,8 @@ use data::pose::tiles::{Graphics, GraphicsRef, SamusTiles, TileDefinitionId};
 use data::video::OAM_BYTES;
 
 use crate::state::video::{
-    BusAddress, CGRAM_COLOURS, DmaChannel, Mode7, SCROLL_BITS, Scroll, VRAM_WORDS, Video,
-    VramSource, VramTransfer, VramWord,
+    BusAddress, CGRAM_COLOURS, ColourMathLayers, ColourMathSelect, DmaChannel, Layer, Layers,
+    Mode7, SCROLL_BITS, Scroll, TilemapBase, VRAM_WORDS, Video, VramSource, VramTransfer, VramWord,
 };
 
 /// VRAM's word address is 15 bits; the PPU ignores the top bit.
@@ -31,6 +31,10 @@ const DMA_TO_OAM: u8 = 0x04;
 pub(crate) const DMA_TO_VRAM: u8 = 0x18;
 /// BBAD for CGDATA, `$2122`.
 const DMA_TO_CGRAM: u8 = 0x22;
+/// BG3's index among the tilemap registers.
+const BG3: usize = 2;
+/// BG3SC above the playfield: the HUD's tilemap at `$5800`, 32x64 (`$80:968D`).
+const HUD_BG3_TILEMAP: TilemapBase = TilemapBase(0x5A);
 /// The bytes a DMA with a zero count transfers.
 const FULL_COUNT: usize = 0x1_0000;
 
@@ -62,7 +66,9 @@ impl Video {
     ///
     /// Each scroll register keeps the ten bits the PPU has of the mirror's word (the record's
     /// BG1HOFS holds 0 where the mirror holds 400h), the three COLDATA writes each set the
-    /// components they select, and the mode 7 registers are written only in mode 7.
+    /// components they select, and the mode 7 registers are written only in mode 7. The
+    /// playfield takes the TM mirror and the batch's playfield colour math (`$80:9257`,
+    /// `$80:9277`), which the HUD interrupt writes below the HUD.
     // open: `$80:91EE` also tests `REG_BGMODE_FAKE`'s mode for the mode 7 registers.
     pub fn commit_registers(&mut self) {
         let mirrors = self.batch.registers;
@@ -89,6 +95,35 @@ impl Video {
         committed.colour_math.fixed = fixed;
         committed.mode7 = mode7;
         self.committed = committed;
+        self.playfield.main_screen = mirrors.main_screen;
+        self.playfield.colour_math = self.batch.playfield_colour_math;
+    }
+
+    /// Bank `$80` log, interrupt command 4, begin HUD drawing `$80:968B`: the HUD's own BG3
+    /// tilemap, no colour math, and BG3 alone on the main screen.
+    pub fn begin_hud(&mut self) {
+        let registers = &mut self.committed;
+        if let Some(bg3) = registers.tilemaps.get_mut(BG3) {
+            *bg3 = HUD_BG3_TILEMAP;
+        }
+        registers.colour_math.select = ColourMathSelect::default();
+        registers.colour_math.layers = ColourMathLayers::default();
+        let mut hud = Layers::default();
+        hud.insert(Layer::Bg3);
+        registers.main_screen = hud;
+    }
+
+    /// Bank `$80` log, interrupt command 6, end HUD drawing `$80:96A9`: the playfield's colour
+    /// math, BG3 tilemap and main screen.
+    pub fn end_hud(&mut self) {
+        let playfield = self.playfield;
+        let registers = &mut self.committed;
+        registers.colour_math.select = playfield.colour_math.select;
+        registers.colour_math.layers = playfield.colour_math.layers;
+        if let Some(bg3) = registers.tilemaps.get_mut(BG3) {
+            *bg3 = playfield.bg3_tilemap;
+        }
+        registers.main_screen = playfield.main_screen;
     }
 
     /// Bank `$80` log, process VRAM write table `$80:8C83`: each queued upload DMAs to VRAM
@@ -247,8 +282,9 @@ mod tests {
     };
 
     use crate::state::video::{
-        Brightness, BusAddress, Colour, ColourWrite, DmaChannel, FixedColour, Registers, RomWords,
-        SamusTileUploads, Scroll, VRAM_WORDS, Video, VramSource, VramStep, VramTransfer, VramWord,
+        Brightness, BusAddress, Colour, ColourMathLayers, ColourMathSelect, ColourWrite,
+        DmaChannel, FixedColour, Layer, Registers, RomWords, SamusTileUploads, Scroll, TilemapBase,
+        VRAM_WORDS, Video, VramSource, VramStep, VramTransfer, VramWord,
     };
 
     /// Words from a buffer at $7E:2000.
@@ -453,6 +489,29 @@ mod tests {
         video.commit_registers();
         assert_eq!(video.memory.cgram[5], Colour(0x7FFF));
         assert_eq!(video.committed.brightness, Brightness(15));
+    }
+
+    #[test]
+    fn the_hud_split_leaves_the_playfield_registers_and_the_commit_refreshes_them() {
+        let mut video = Video::default();
+        video.playfield.colour_math.layers = ColourMathLayers(0xB3);
+        video.playfield.bg3_tilemap = TilemapBase(0x58);
+        video.playfield.main_screen.insert(Layer::Bg1);
+        video.begin_hud();
+        assert_eq!(video.committed.tilemaps[2], TilemapBase(0x5A));
+        assert_eq!(video.committed.main_screen.bits, 0x04);
+        video.end_hud();
+        assert_eq!(video.committed.colour_math.layers, ColourMathLayers(0xB3));
+        assert_eq!(video.committed.tilemaps[2], TilemapBase(0x58));
+        assert_eq!(video.committed.main_screen.bits, 0x01);
+        // The commit copies TM's mirror and the next playfield colour math; BG3SC stays.
+        video.batch.registers.main_screen.insert(Layer::Objects);
+        video.batch.playfield_colour_math.select = ColourMathSelect(0x02);
+        video.commit_registers();
+        assert_eq!(video.playfield.main_screen.bits, 0x10);
+        assert_eq!(video.playfield.colour_math.select, ColourMathSelect(0x02));
+        assert_eq!(video.playfield.colour_math.layers, ColourMathLayers(0));
+        assert_eq!(video.playfield.bg3_tilemap, TilemapBase(0x58));
     }
 
     #[test]

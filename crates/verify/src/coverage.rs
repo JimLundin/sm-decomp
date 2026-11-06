@@ -153,6 +153,24 @@ pub const FIELDS: &[Field] = &[
     record("video.memory.oam", "oam"),
     record("video.committed", "ppu"),
     record("video.dma", "ppu"),
+    wram_byte("video.playfield.main_screen", source::GAMEPLAY_TM),
+    wram_byte("video.playfield.bg3_tilemap", source::GAMEPLAY_BG3SC),
+    wram_byte(
+        "video.playfield.colour_math.select",
+        source::GAMEPLAY_COLOUR_MATH[0],
+    ),
+    wram_byte(
+        "video.playfield.colour_math.layers",
+        source::GAMEPLAY_COLOUR_MATH[1],
+    ),
+    wram_byte(
+        "video.batch.playfield_colour_math.select",
+        source::NEXT_GAMEPLAY_COLOUR_MATH[0],
+    ),
+    wram_byte(
+        "video.batch.playfield_colour_math.layers",
+        source::NEXT_GAMEPLAY_COLOUR_MATH[1],
+    ),
     wram_byte("video.batch.registers.forced_blank", source::REG_INIDISP),
     wram_byte("video.batch.registers.brightness", source::REG_INIDISP),
     wram_byte("video.batch.registers.main_screen", source::REG_TM),
@@ -731,7 +749,7 @@ mod tests {
     }
 
     /// The byte sources the decoder reads.
-    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 31] {
+    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 37] {
         [
             rules.lag,
             rules.max_lag,
@@ -756,6 +774,12 @@ mod tests {
             rules.mirrors.colour_math_layers,
             rules.mirrors.fixed_colour[0],
             rules.mirrors.settings,
+            rules.playfield.main_screen,
+            rules.playfield.bg3_tilemap,
+            rules.playfield.colour_math[0],
+            rules.playfield.colour_math[1],
+            rules.playfield.next_colour_math[0],
+            rules.playfield.next_colour_math[1],
             rules.pose.facing,
             rules.pose.movement,
             rules.previous_pose.facing,

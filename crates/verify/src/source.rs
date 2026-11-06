@@ -873,6 +873,44 @@ pub const REG_COLDATA: [WramByte; 3] = [
     },
 ];
 
+/// Bank $80 log, end HUD drawing `$80:96A9`: the playfield's TM, which `$80:9257` copies from
+/// TM's mirror.
+pub const GAMEPLAY_TM: WramByte = WramByte {
+    name: "GAMEPLAY_TM",
+    offset: 0x006A,
+};
+
+/// Bank $80 log, `$80:96A9`: the playfield's BG3SC.
+pub const GAMEPLAY_BG3SC: WramByte = WramByte {
+    name: "GAMEPLAY_BG3SC",
+    offset: 0x005B,
+};
+
+/// Bank $80 log, `$80:96A9`: the playfield's CGWSEL, then its CGADSUB.
+pub const GAMEPLAY_COLOUR_MATH: [WramByte; 2] = [
+    WramByte {
+        name: "GAMEPLAY_CGWSEL",
+        offset: 0x0070,
+    },
+    WramByte {
+        name: "GAMEPLAY_CGADSUB",
+        offset: 0x0073,
+    },
+];
+
+/// Bank $80 log, `$80:9277`: the playfield's next CGWSEL, then its next CGADSUB, which the
+/// register commit copies to [`GAMEPLAY_COLOUR_MATH`].
+pub const NEXT_GAMEPLAY_COLOUR_MATH: [WramByte; 2] = [
+    WramByte {
+        name: "NEXT_GAMEPLAY_CGWSEL",
+        offset: 0x006E,
+    },
+    WramByte {
+        name: "NEXT_GAMEPLAY_CGADSUB",
+        offset: 0x0071,
+    },
+];
+
 /// Bank $80 log, `$80:91EE`: SETINI's mirror.
 pub const REG_SETINI: WramByte = WramByte {
     name: "REG_SETINI",

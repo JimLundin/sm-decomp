@@ -35,10 +35,10 @@ use game::state::video::{
     BACKGROUNDS, BgMode, Brightness, BusAddress, CGRAM_COLOURS, Colour, ColourMath,
     ColourMathLayers, ColourMathSelect, ColourWrite, ColumnUpload, DisplaySettings, DmaChannel,
     FixedColour, GraphicsRef, LayerUploads, Layers, LevelUploads, Mode7, Mode7Select, Mosaic,
-    NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Registers, RomWords, RowUpload,
-    SamusTileUploads, Scroll, TileBases, TilemapBase, TilemapEntry, TilemapPart, UploadRequests,
-    VRAM_WORDS, Video, VideoMemory, VramSource, VramStep, VramTransfer, VramWord, WindowSettings,
-    Windows,
+    NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Playfield, PlayfieldColourMath,
+    Registers, RomWords, RowUpload, SamusTileUploads, Scroll, TileBases, TilemapBase, TilemapEntry,
+    TilemapPart, UploadRequests, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep,
+    VramTransfer, VramWord, WindowSettings, Windows,
 };
 use game::state::{
     Button, Buttons, Clock, CollectedItems, Controller, Counters, FrameCount, GameMode, GameTime,
@@ -347,6 +347,8 @@ pub struct Rules<'t> {
     pub scroll: [[WramWord; 2]; BACKGROUNDS],
     /// The other register mirrors `$80:91EE` writes.
     pub mirrors: MirrorSources,
+    /// The registers the HUD interrupt writes for the playfield.
+    pub playfield: PlayfieldSources,
     /// `samus.equipment.collected`.
     pub collected: WramWord,
     /// `samus.equipment.equipped`.
@@ -778,6 +780,19 @@ pub struct MiniMapSources {
     pub disabled: WramWord,
 }
 
+/// Where the original keeps the HUD interrupt's playfield registers (bank $80 log, `$80:96A9`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PlayfieldSources {
+    /// `video.playfield.main_screen`.
+    pub main_screen: WramByte,
+    /// `video.playfield.bg3_tilemap`.
+    pub bg3_tilemap: WramByte,
+    /// `video.playfield.colour_math`: CGWSEL, then CGADSUB.
+    pub colour_math: [WramByte; 2],
+    /// `video.batch.playfield_colour_math`: CGWSEL, then CGADSUB.
+    pub next_colour_math: [WramByte; 2],
+}
+
 /// Where the original keeps the register mirrors beyond INIDISP, TM, TS and the scroll.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct MirrorSources {
@@ -872,6 +887,12 @@ impl Rules<'_> {
             colour_math_layers: source::REG_CGADSUB,
             fixed_colour: source::REG_COLDATA,
             settings: source::REG_SETINI,
+        },
+        playfield: PlayfieldSources {
+            main_screen: source::GAMEPLAY_TM,
+            bg3_tilemap: source::GAMEPLAY_BG3SC,
+            colour_math: source::GAMEPLAY_COLOUR_MATH,
+            next_colour_math: source::NEXT_GAMEPLAY_COLOUR_MATH,
         },
         collected: source::COLLECTED_ITEMS,
         equipped: source::EQUIPPED_ITEMS,
@@ -1211,6 +1232,7 @@ impl Rules<'_> {
         Ok(Video {
             memory: video_memory(record)?,
             committed: committed(&record.ppu)?,
+            playfield: self.playfield(wram)?,
             dma: record.ppu.dma.map(dma_channel),
             nmi_requested: flag(self.nmi_requested, wram)?,
             batch: NmiBatch {
@@ -1227,8 +1249,22 @@ impl Rules<'_> {
                         bg2: bg2.read(wram)?,
                     }
                 },
+                playfield_colour_math: playfield_colour_math(
+                    self.playfield.next_colour_math,
+                    wram,
+                )?,
                 ..NmiBatch::default()
             },
+        })
+    }
+
+    /// The HUD interrupt's playfield registers.
+    fn playfield(&self, wram: &[u8]) -> Result<Playfield, DecodeError> {
+        let sources = self.playfield;
+        Ok(Playfield {
+            main_screen: layers(sources.main_screen.read(wram)?, sources.main_screen.name)?,
+            bg3_tilemap: TilemapBase(sources.bg3_tilemap.read(wram)?),
+            colour_math: playfield_colour_math(sources.colour_math, wram)?,
         })
     }
 
@@ -1751,6 +1787,18 @@ fn bytes<const N: usize>(sources: [WramByte; N], wram: &[u8]) -> Result<[u8; N],
         *value = source.read(wram)?;
     }
     Ok(values)
+}
+
+/// CGWSEL and CGADSUB from their two bytes.
+fn playfield_colour_math(
+    sources: [WramByte; 2],
+    wram: &[u8],
+) -> Result<PlayfieldColourMath, DecodeError> {
+    let [select, layers] = bytes(sources, wram)?;
+    Ok(PlayfieldColourMath {
+        select: ColourMathSelect(select),
+        layers: ColourMathLayers(layers),
+    })
 }
 
 /// A DMA channel's registers, from the record's `$43x0`-`$43xA` bytes.

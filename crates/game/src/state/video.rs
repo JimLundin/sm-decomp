@@ -7,7 +7,7 @@ use canonical::Canonical;
 pub use data::dma::BusAddress;
 pub use data::pose::tiles::{GraphicsRef, TileDefinitionId};
 
-use super::slots::FlagSet;
+use super::slots::{Flag, FlagSet};
 
 /// VRAM's size in 16-bit words: 64 KiB.
 pub const VRAM_WORDS: usize = 0x8000;
@@ -165,6 +165,20 @@ pub enum Layer {
     Bg4,
     /// Sprites.
     Objects,
+}
+
+impl Flag for Layer {
+    /// The layer's bit in TM, TS, TMW and TSW.
+    fn bit(self) -> u32 {
+        let place = match self {
+            Self::Bg1 => 0,
+            Self::Bg2 => 1,
+            Self::Bg3 => 2,
+            Self::Bg4 => 3,
+            Self::Objects => 4,
+        };
+        1 << place
+    }
 }
 
 /// A set of layers.
@@ -353,6 +367,29 @@ impl FixedColour {
             blue: write.component(blue, self.blue),
         }
     }
+}
+
+/// The registers the HUD interrupt writes for the playfield below the HUD.
+///
+/// Bank `$80` log, end HUD drawing `$80:96A9`: the game's own copies, which the NMI's register
+/// commit refreshes and the message box overrides while it is up.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Playfield {
+    /// TM below the HUD; the commit copies the TM mirror here (`$80:9257`).
+    pub main_screen: Layers,
+    /// BG3SC below the HUD, which the HUD's own tilemap replaces above it.
+    pub bg3_tilemap: TilemapBase,
+    /// CGWSEL and CGADSUB below the HUD.
+    pub colour_math: PlayfieldColourMath,
+}
+
+/// The playfield's colour math registers, CGWSEL and CGADSUB.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PlayfieldColourMath {
+    /// CGWSEL.
+    pub select: ColourMathSelect,
+    /// CGADSUB.
+    pub layers: ColourMathLayers,
 }
 
 /// A scroll register's ten bits; the PPU keeps no more of what the game writes.
@@ -582,6 +619,8 @@ pub struct NmiBatch {
     pub samus_tiles: SamusTileUploads,
     /// The level tilemap uploads scrolling builds.
     pub level: LevelUploads,
+    /// The playfield's colour math the commit hands the HUD interrupt (`$80:9277`).
+    pub playfield_colour_math: PlayfieldColourMath,
 }
 
 impl Default for NmiBatch {
@@ -595,6 +634,7 @@ impl Default for NmiBatch {
             vram: Vec::new(),
             samus_tiles: SamusTileUploads::default(),
             level: LevelUploads::default(),
+            playfield_colour_math: PlayfieldColourMath::default(),
         }
     }
 }
@@ -606,6 +646,8 @@ pub struct Video {
     pub memory: VideoMemory,
     /// The registers the PPU holds now.
     pub committed: Registers,
+    /// What the HUD interrupt writes for the playfield.
+    pub playfield: Playfield,
     /// The DMA channels' registers as the last transfer left them.
     // open: the animated tiles (`$80:9416`, channel 0), the scrolling DMAs (`$80:8CD8`,
     // `$80:8DAC`, channel 1) and the HDMA queue join with their transfers.

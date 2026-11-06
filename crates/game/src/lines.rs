@@ -17,10 +17,25 @@ pub struct Picture {
 }
 
 /// Scan out the previous picture.
-pub const fn scan_out(state: &mut State) -> Picture {
+pub fn scan_out(state: &mut State) -> Picture {
     let picture = Picture { irq: state.irq };
+    hud_split(state);
     state.irq = interrupt(state.irq);
     picture
+}
+
+/// The HUD split's register writes during the picture (bank `$80` log, `$80:968B` at line 0,
+/// `$80:96A9` at line 31). A requested NMI's commit overwrites all of them, so they show where
+/// the NMI lags: the PPU keeps the playfield's registers into the next vblank.
+fn hud_split(state: &mut State) {
+    match state.irq.command {
+        IrqCommand::Off => {}
+        IrqCommand::GameplayHud => {
+            state.video.begin_hud();
+            state.video.end_hud();
+        }
+        IrqCommand::GameplayPlayfield => state.video.end_hud(),
+    }
 }
 
 /// The interrupt strand's command at its line: the next command and line.
