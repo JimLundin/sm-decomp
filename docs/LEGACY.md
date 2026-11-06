@@ -198,11 +198,15 @@ check needs it, when it becomes a named behaviour with the original's bytes as d
 - **The mini-map's edges** (`game::mini_map`, bank `$90` log `$90:A9A2`, `$90:AB75`,
   `$90:AAA8`): the 3 by 5 window around Samus reads the explored bitmap (`$7E:07F7`), the
   map station bitmap (`$82:9727` on) and the map tilemap (`$B5:8000` on) a row above, a
-  row below and two columns either side of her cell. On the map's top row or its bottom
-  rows, or in the spill onto the other page, those indices leave the area's 100h bytes or
-  800h words: the original reads the RAM or ROM after them (the next area's maps, the
-  variables around `$07F7`). The engine reads no cells and the blank tile there. Which
-  vanilla rooms reach the edges is not yet checked; slice 0's rooms are inside them.
+  row below and two columns either side of her cell, walking the map in layout order
+  (`data::map::LayoutIndex`). On the map's top row or its bottom rows, and for a room
+  placed off the 64 by 32 grid, those reads leave the area's 100h bytes or 800h words: the
+  original reads the RAM or ROM after them (the next area's maps, the variables around
+  `$07F7`). The engine reads no cells and the blank tile there. The reads that stay on the
+  map follow the original's, including those past the map's outer edge
+  (`Crossing::PastMap`: the left page's first two columns, the right page's last two),
+  which come from a row off and the other page. Which vanilla rooms reach the edges is not
+  yet checked; slice 0's rooms are inside them.
 
 - **Level columns and rows past the level buffer** (`game::bg_graphics`, bank `$80` log
   `$80:A9DE`, `$80:AB78`): a column or row past the room's last block reads the level

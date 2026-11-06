@@ -5,7 +5,7 @@
 //! tilemap they were drawn into.
 
 use canonical::Canonical;
-use data::map::MapBits;
+use data::map::MapCells;
 use data::room::{Area, MapPosition};
 
 use super::video::{BgPalette, TilemapEntry};
@@ -137,7 +137,7 @@ pub struct Hud {
 pub struct MiniMap {
     /// The current area's explored cells, which the mini-map marks as Samus moves.
     // open: the other areas' explored cells and the copy on area change join with `progress`.
-    pub explored: MapBits,
+    pub explored: MapCells,
     /// The current area.
     pub area: Area,
     /// The current room's top-left cell on the area map.

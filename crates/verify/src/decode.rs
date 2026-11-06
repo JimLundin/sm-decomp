@@ -10,7 +10,7 @@ use std::fmt;
 use data::enemy::SpeciesMap;
 use data::enemy::program::EnemyPrograms;
 use data::id::{Line, RoomId};
-use data::map::{MAP_BIT_BYTES, MapBits};
+use data::map::{MAP_BIT_BYTES, MapCells};
 use data::plm::PlmPopulation;
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
@@ -1587,7 +1587,7 @@ impl MiniMapSources {
                     source: self.explored.name,
                 })?;
         Ok(MiniMap {
-            explored: MapBits(*explored),
+            explored: MapCells::from_bitmap(explored),
             area: area(self.area, wram)?,
             room: MapPosition {
                 x: map_coordinate(self.room_x, wram)?,
