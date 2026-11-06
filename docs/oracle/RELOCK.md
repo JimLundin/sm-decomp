@@ -417,7 +417,7 @@ recorded twice (`a`, `b`) and as `--shard 0/3`, `1/3`, `2/3`:
    count.
 5. The step's mutant proof: a mutated pad changes only the spans from its
    frame on. Not run.
-6. ~~A reader for format 2~~: done, ง8.
+6. ~~A reader for format 2~~: done, ยง8.
 
 ## 7. Recordings check themselves
 
@@ -542,7 +542,7 @@ a typed stream the entry lacks), and per fact a `FactOutcome` (`Agrees`,
 `Disagrees`, `Unevaluated`, `NotEvaluated`). `RowReport::green()` is D22's
 green: every compared stream (all but `wram`) the entry has is `Equal`, and
 no fact blocks. An `Unevaluated` fact doesn't block yet; every fact is
-unevaluated until `tools relock` evaluates them (ง6, what remains 1), so
+unevaluated until `tools relock` evaluates them (ยง6, what remains 1), so
 until then green is decided by the streams alone. A locked fact the engine
 doesn't evaluate blocks. `green_streams()` names the green (row, stream)
 pairs, the unit step g ratchets.
