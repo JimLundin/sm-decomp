@@ -606,6 +606,22 @@ on 35 Ticks from 1218), and the eye's `activated` at 1250, which the beam's HDMA
 Remaining (`// open:`): the beam (its HDMA object, the activated flag, the mount's window
 table), the ray's sounds (C11), the eye's grapple/hurt/frozen AI, and the face blocks' AI.
 
+**C6c status (`lane/slice0-c6c`), drawing Samus.** Done: `data::spritemap` (the entry
+format of bank `$81`'s `$81:8A5F`: size, nine-bit X, Y, tile, palette, priority, flips) and
+`data::pose::spritemap::SamusSpritemaps` (`$92:9263`/`$92:945D` half indices by pose,
+`$92:808D`'s 0x830 pointers, the `$90:8C1F` offset tables `$90:8D28`, `$90:8D80`, `$90:8DEF`;
+ROM test); `NmiBatch::add_spritemap` (`$81:89AE`: ninth X and size bits, the `$200` wrap) and
+`game::samus_drawing::draw` in the Draw phase (`$90:85E2`: the invincibility flicker, the top
+half, the `$90:864E` bottom-half handlers with `$90:868D`'s chest sprite, `$90:8C1F`'s
+origin). Lockstep on A2's cache, 2026-11-06: OAM's first differing entry was entry 0 on
+every Tick; now entries 0-10 (Samus) are equal on frame 1, and the first difference is
+entry 11 on 146 Ticks of each row (the enemies, C7/C8), entry 0 on 330 of `area-brinstar`
+and 883 of `item-morph-ball` (a sprite the oracle draws before Samus, not yet traced: an
+enemy layer below 3, `$A0:884D`, or the elevator's drawing handler), none on 398 of
+`item-morph-ball`. Open: the arm cannon (`$90:C663`), flare, echoes, grapple, the other
+drawing handlers, the knockback and special palette timers, `$0AC8`/`$0ACA`/`$0B04`/`$0B06`,
+Samus's tile DMA (`$92:8000`).
+
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
 running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of

@@ -14,6 +14,7 @@ use data::enemy::program::{EnemyPrograms, ProgramError};
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::{AnimationDelays, AnimationError};
+use data::pose::spritemap::{SamusSpritemaps, SpritemapError};
 use data::pose::transition::PoseTransitions;
 use data::pose::{PoseError, Poses};
 use data::rom::{AddressError, Rom, RomError};
@@ -125,6 +126,8 @@ pub enum ContentError {
     Slopes(AddressError),
     /// The enemies' instruction lists don't decode.
     EnemyPrograms(ProgramError),
+    /// Samus's spritemaps don't decode.
+    SamusSpritemaps(SpritemapError),
 }
 
 impl fmt::Display for ContentError {
@@ -137,6 +140,7 @@ impl fmt::Display for ContentError {
             Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
             Self::Slopes(error) => write!(f, "the slope shapes: {error:?}"),
             Self::EnemyPrograms(error) => write!(f, "the enemy instruction lists: {error:?}"),
+            Self::SamusSpritemaps(error) => write!(f, "Samus's spritemaps: {error:?}"),
         }
     }
 }
@@ -162,5 +166,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
         enemy_programs,
         eye_lists,
+        samus_spritemaps: SamusSpritemaps::load(rom.lorom())
+            .map_err(ContentError::SamusSpritemaps)?,
     })
 }

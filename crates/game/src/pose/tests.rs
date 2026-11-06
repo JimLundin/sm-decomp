@@ -33,6 +33,7 @@ fn content() -> Content {
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
         eye_lists: data::enemy::eye::EyeLists::default(),
+        samus_spritemaps: data::pose::spritemap::SamusSpritemaps::default(),
     }
 }
 

@@ -13,6 +13,7 @@ use data::enemy::program::EnemyPrograms;
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::AnimationDelays;
+use data::pose::spritemap::SamusSpritemaps;
 use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
@@ -44,6 +45,8 @@ pub struct Content {
     pub enemy_programs: EnemyPrograms,
     /// The Morph Ball Room eye's lists in them.
     pub eye_lists: EyeLists,
+    /// Samus's spritemaps by pose and frame.
+    pub samus_spritemaps: SamusSpritemaps,
 }
 
 /// The pose a frame asks for, by the channel that asked.

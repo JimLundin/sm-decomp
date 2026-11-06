@@ -475,6 +475,9 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
             };
             scrolling::follow(&mut room.camera, &mut state.samus, areas);
         }
+        // open: bombs and projectile explosions, enemy projectiles and the enemies of layers
+        // 0 to 2 draw before her, and the rest after (`$A0:884D`), with C7 and C8.
+        GameplayPhase::Draw => crate::samus_drawing::draw(state, content),
         GameplayPhase::BgScroll => {
             scrolling::scroll_backgrounds(&mut state.room.camera, &mut state.video.batch.registers);
         }
@@ -486,7 +489,6 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         | GameplayPhase::EnemyProjectileSamus
         | GameplayPhase::EnemyProjectileProjectile
         | GameplayPhase::EnemyPowerBomb
-        | GameplayPhase::Draw
         | GameplayPhase::EnemyBg2Tilemap
         | GameplayPhase::RoomMain
         | GameplayPhase::RoomShaking
