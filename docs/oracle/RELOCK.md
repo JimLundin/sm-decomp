@@ -581,3 +581,33 @@ frames, of step d's wave A in progress; the section 7 altered copy C is caught (
 DIFFERS`). The fold's cost on a record-shaped frame with every cut quiescent, the worst
 case, release build beside an 11-process recording: about 0.07 ms per frame without
 `wram`, 0.11 ms with it.
+
+## 9. Seed records with the PPU registers
+
+Lane `lane/ppu-recut`. The seed cutter asked lsnes for no streams, so a seed's record held
+the header and the memories only, and the gate's seed decoded its PPU registers as the
+defaults (`ppu` differed from frame 0; SLICE0 D1). `oracle movie --ppu` asks for the PPU
+tier alone (`T 0 0 1`), and `relock_cut.sh` passes it in the cut and realign phases. The
+record is then the lean record byte for byte, followed by `OHS1`, flag 4 and the 146 PPU
+bytes; the emulation is the same (no callback is registered for the PPU tier).
+
+`tools/oracle/relock_ppu_recut.sh OLD PLAN WORK [ROW...]` re-cuts the records of the
+decrypted bundle `OLD` (all of them, or the seeds of the named rows), checks each against
+the old one (its old bytes, then the PPU part alone; the state equal in every member but
+`rrdata`, lsnes's per-run rerecord data), copies the new records into `OLD`'s tree, packs it
+deterministically, encrypts it and prints the name, the SHA-256 and the `bundles` line. The
+tree keeps the old `.lss` files: a re-cut state differs from the old only in `rrdata`, and
+the lock's `seed_record` pins are the `.lss` SHA-256, so they, the pads pins and every stream
+digest stay valid. Only the `bundles` line changes.
+
+**Proof** (`$TEMP/ppu-recut`, 2026-11-06): `100-input-phase:17`, the seed of `area-brinstar`
+and `item-morph-ball`, re-cut twice (window `100-10000` and a realign, 140 s alone): both
+records equal, their first 205,899 bytes equal the bundle's, and the state equals the old
+outside `rrdata`. The free-run gate on the repacked bundle: `area-brinstar ppu` equal (new
+green pair) beside `vram`, `cgram`, `oam`, `sram` and `timing`; `item-morph-ball` as before.
+
+**Cost.** The cut is step a2's: 40 windows, 11,202 s of jobs, the longest 881 s, about 30
+minutes wall at 8 at a time; the realigns and the check add a minute or two. The gate reads
+only the slice-0 rows' one seed, so the bundle with only that record re-cut (the `ROW`
+form, about 3.5 minutes) is valid on its own; the other records stay lean until the full
+re-cut.
