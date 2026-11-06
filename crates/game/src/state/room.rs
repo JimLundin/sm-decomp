@@ -2,6 +2,12 @@
 
 use canonical::Canonical;
 use data::id::{DoorwayId, RoomId, SpeciesId};
+use data::room::RoomState;
+
+pub use data::level::{
+    Block, BlockKind, BombableBts, Bts, DoorIndex, Offset, PlmChoice, ScrollArea, Slope, Tile,
+    TileNumber,
+};
 
 use super::samus::{Fixed, Point};
 use super::slots::{Cursor, Flag, FlagSet, Frames, SlotStore};
@@ -14,47 +20,6 @@ pub const ENEMY_SLOTS: usize = 32;
 /// A block's place in the room's level data, row-major from the top left.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct BlockIndex(pub u16);
-
-/// What a block does when something touches it.
-// open: the full set of the original's sixteen block types and what their BTS means for
-// each (bank $94 block collision and the BTS tables); the decoder's level codec decides it.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum BlockKind {
-    /// Nothing to collide with.
-    #[default]
-    Air,
-    /// Solid.
-    Solid,
-    /// A slope, its shape in the BTS.
-    Slope,
-    /// A door's edge, the doorway in the BTS.
-    Door,
-    /// Answers to the next block over, the offset in the BTS.
-    Extend,
-}
-
-/// One block of level data.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Block {
-    /// Its behaviour.
-    pub kind: BlockKind,
-    /// The tilemap block it draws, flips included.
-    pub tile: u16,
-    /// The block's argument: a slope shape, a doorway, an offset.
-    pub bts: u8,
-}
-
-/// A screen's scroll permission.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum ScrollArea {
-    /// The camera may not enter.
-    #[default]
-    Red,
-    /// The camera may enter; the HUD hides its bottom.
-    Blue,
-    /// The camera may enter freely.
-    Green,
-}
 
 /// The camera: the playfield's top-left corner in the room.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -423,4 +388,20 @@ pub struct RoomScoped {
     pub plms: SlotStore<PlmCommon, PlmBody, PLM_SLOTS>,
     /// The enemies.
     pub enemies: SlotStore<EnemyCommon, EnemyBody, ENEMY_SLOTS>,
+}
+
+impl RoomScoped {
+    /// Room `room` as it loads in `state`: its level's layer 1 blocks and its scroll areas,
+    /// with no PLMs or enemies yet and the camera at the top left.
+    // open: the door's arrival, the PLM and enemy populations and the camera's start join with
+    // the room transition (bank $82 log, `$82:E7D3`).
+    #[must_use]
+    pub fn load(room: RoomId, state: &RoomState) -> Self {
+        Self {
+            room,
+            blocks: state.layers.layer1.clone(),
+            scroll_areas: state.scroll_areas.clone(),
+            ..Self::default()
+        }
+    }
 }

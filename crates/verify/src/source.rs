@@ -30,8 +30,8 @@ pub struct WramWord {
 pub struct WramBlock {
     /// The `ram_map.rs` name.
     pub name: &'static str,
-    /// The offset of the first byte from $7E:0000.
-    pub offset: u16,
+    /// The offset of the first byte from $7E:0000; bank $7F's follow from $1:0000.
+    pub offset: u32,
     /// The length in bytes.
     pub len: u16,
 }
@@ -43,8 +43,9 @@ impl WramBlock {
     ///
     /// [`DecodeError::WramTooShort`] when `wram` ends before the block does.
     pub fn read(self, wram: &[u8]) -> Result<&[u8], DecodeError> {
-        let start = usize::from(self.offset);
-        wram.get(start..start.wrapping_add(usize::from(self.len)))
+        usize::try_from(self.offset)
+            .ok()
+            .and_then(|start| wram.get(start..start.checked_add(usize::from(self.len))?))
             .ok_or(DecodeError::WramTooShort { source: self.name })
     }
 }
@@ -183,6 +184,43 @@ pub const OAM: WramBlock = WramBlock {
     name: "OAM",
     offset: 0x0370,
     len: 0x0220,
+};
+
+/// Bank $82 log, load room header: the room's width in blocks, 16 a screen.
+pub const ROOM_WIDTH_IN_BLOCKS: WramWord = WramWord {
+    name: "ROOM_WIDTH_IN_BLOCKS",
+    offset: 0x07A5,
+};
+
+/// Bank $82 log, load room header: the room's height in blocks, 16 a screen.
+pub const ROOM_HEIGHT_IN_BLOCKS: WramWord = WramWord {
+    name: "ROOM_HEIGHT_IN_BLOCKS",
+    offset: 0x07A7,
+};
+
+/// Bank $94 log, the block reactions (`LDA $7F0002,x`): layer 1, a word a block, row-major;
+/// the level data decompresses to $7F:0000 behind its size word (bank $82 log, `$82:E7D3`),
+/// room for 50 screens.
+pub const LEVEL_DATA: WramBlock = WramBlock {
+    name: "LEVEL_DATA",
+    offset: 0x1_0002,
+    len: 0x6400,
+};
+
+/// Bank $94 log, the block reactions (`LDA $7F6402,x`): the BTS, a byte a block, which
+/// level loading moves here from behind layer 1 (bank $82 log, `$82:E7D3`).
+pub const BTS: WramBlock = WramBlock {
+    name: "BTS",
+    offset: 0x1_6402,
+    len: 0x3200,
+};
+
+/// Bank $82 log, `$82:EA73`: the scroll areas, a byte a screen, row-major: 0 red, 1 blue,
+/// 2 green; 50 bytes.
+pub const SCROLLS: WramBlock = WramBlock {
+    name: "SCROLLS",
+    offset: 0xCD20,
+    len: 0x0032,
 };
 
 /// Bank $82 log: the current room's header, a pointer into bank $8F.

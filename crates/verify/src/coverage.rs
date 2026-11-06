@@ -310,8 +310,14 @@ pub const FIELDS: &[Field] = &[
         status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
     },
     open("room.entered_by"),
-    open("room.blocks"),
-    open("room.scroll_areas"),
+    Field {
+        path: "room.blocks",
+        status: Status::Decoded(Source::WramBlock(source::LEVEL_DATA)),
+    },
+    Field {
+        path: "room.scroll_areas",
+        status: Status::Decoded(Source::WramBlock(source::SCROLLS)),
+    },
     wram("room.camera.x.pixels", source::LAYER1_X_POS),
     wram("room.camera.x.subpixels", source::LAYER1_X_SUBPOS),
     wram("room.camera.y.pixels", source::LAYER1_Y_POS),
@@ -621,6 +627,9 @@ mod tests {
             rules.palette_buffer,
             rules.vram_queue,
             rules.hud.tilemap,
+            // The BTS and the room's size, in blocks, go with layer 1.
+            rules.level.blocks,
+            rules.level.scrolls,
         ];
         for field in FIELDS {
             match field.status {

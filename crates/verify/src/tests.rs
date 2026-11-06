@@ -6,8 +6,8 @@
 use data::enemy::SpeciesMap;
 use data::id::{Line, RoomId, SpeciesId};
 use game::state::room::{
-    AiVariables, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
-    EnemyCommon, PaletteIndex, TilesIndex,
+    AiVariables, Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
+    EnemyCommon, PaletteIndex, ScrollArea, TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Jump, Movement,
@@ -1214,4 +1214,145 @@ fn a_y_direction_past_2_is_an_error() {
             value: 3
         })
     );
+}
+
+/// `record()` in a room one screen across and two down, each block and BTS distinct, the top
+/// screen green and the bottom blue.
+fn level_record() -> FrameRecord {
+    let mut record = record();
+    put(&mut record.wram, 0x07A5, 16); // ROOM_WIDTH_IN_BLOCKS
+    put(&mut record.wram, 0x07A7, 32); // ROOM_HEIGHT_IN_BLOCKS
+    for (block, bts) in (0..512_u16).zip((0..=u8::MAX).cycle()) {
+        let at = usize::from(block);
+        put(
+            &mut record.wram,
+            0x1_0002_usize.wrapping_add(at.wrapping_mul(2)),
+            block.wrapping_mul(0x0123),
+        ); // LEVEL_DATA
+        record.wram[0x1_6402_usize.wrapping_add(at)] = bts; // BTS
+    }
+    record.wram[0xCD20] = 2; // SCROLLS
+    record.wram[0xCD21] = 1;
+    record
+}
+
+fn level(rules: &Rules) -> Option<(Vec<Block>, Vec<ScrollArea>)> {
+    let state = rules.decode(&level_record(), &rooms()).ok()?.state;
+    Some((state.room.blocks, state.room.scroll_areas))
+}
+
+#[test]
+fn the_level_decodes_from_the_buffers_the_rooms_size_fills() {
+    let (blocks, areas) = level(&Rules::ORIGINAL).unwrap();
+    assert_eq!(blocks.len(), 512);
+    for (block, (index, bts)) in blocks.iter().zip((0..512_u16).zip((0..=u8::MAX).cycle())) {
+        assert_eq!(block.word(), index.wrapping_mul(0x0123));
+        assert_eq!(block.kind.bts(), bts);
+    }
+    assert_eq!(areas, [ScrollArea::Green, ScrollArea::Blue]);
+}
+
+#[test]
+fn every_moved_level_rule_fails() {
+    let original = level(&Rules::ORIGINAL);
+    let moved: [fn(&mut Rules<'static>); 5] = [
+        |rules| rules.level.width.offset = rules.level.width.offset.wrapping_add(2),
+        |rules| rules.level.height.offset = rules.level.height.offset.wrapping_add(2),
+        |rules| rules.level.blocks.offset = rules.level.blocks.offset.wrapping_add(2),
+        |rules| rules.level.bts.offset = rules.level.bts.offset.wrapping_add(1),
+        |rules| rules.level.scrolls.offset = rules.level.scrolls.offset.wrapping_add(1),
+    ];
+    for (index, mutate) in moved.into_iter().enumerate() {
+        let mut mutant = Rules::ORIGINAL;
+        mutate(&mut mutant);
+        assert_ne!(level(&mutant), original, "rule {index}");
+    }
+}
+
+#[test]
+fn a_scroll_byte_no_area_has_is_unrepresentable() {
+    let mut record = level_record();
+    record.wram[0xCD21] = 3;
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::Unrepresentable {
+            source: "SCROLLS",
+            value: 3
+        })
+    );
+}
+
+/// Each row's frames decoded from `SM_CACHE`, with the Morph Ball Room's level as content
+/// loads it from `SM_ROM`; `None` where either isn't present (CI's Verify job has neither).
+fn cached_rows() -> Option<(game::state::room::RoomScoped, Vec<(String, State)>)> {
+    use data::room::{Progress, RoomKey, Rooms, SLICE_ZERO_ROOMS};
+    let cache = std::path::PathBuf::from(std::env::var_os("SM_CACHE")?);
+    let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
+    let rom = data::rom::Rom::new(image).unwrap();
+    let (rooms, _) = Rooms::load(rom.lorom(), &SLICE_ZERO_ROOMS).unwrap();
+    let id = rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
+    let morph_ball_room = rooms.get(id).unwrap();
+    let state = morph_ball_room
+        .state(morph_ball_room.select(&Progress::default()))
+        .unwrap();
+    let loaded = game::state::room::RoomScoped::load(id, state);
+    let lock_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let lock = crate::lock::Lock::parse(&std::fs::read_to_string(lock_path).unwrap()).unwrap();
+    let mut frames = Vec::new();
+    for row in ["area-brinstar", "item-morph-ball"] {
+        let row = lock.row(&crate::lock::RowId(row.to_owned())).unwrap();
+        let cache = crate::cache::Cache::open(&cache, row).unwrap();
+        for item in cache.records() {
+            let (frame, record) = item.unwrap();
+            if let Ok(decoded) = decode(&record, &crate::lockstep::slice_zero_rooms()) {
+                frames.push((format!("{}:{}", row.id.0, frame.0), decoded.state));
+            }
+        }
+    }
+    Some((loaded, frames))
+}
+
+/// Cells the Morph Ball Room's PLMs write as the room loads, which the content's level
+/// doesn't hold: scroll PLM triggers (special air, BTS $46, with an extension beside them),
+/// the columns of vertical extensions above them, and the item's block (special, BTS $45).
+const PLM_WRITTEN_CELLS: [usize; 17] = [
+    1367, 1368, 4311, 4312, 4488, 4616, 4744, 4872, 4951, 4952, 5000, 5128, 5256, 5317, 5384, 5512,
+    5535,
+];
+
+/// The shot block Samus shoots in `item-morph-ball`, a 1x1 block that doesn't reform.
+const SHOT_CELL: usize = 5708;
+
+#[test]
+fn the_cached_levels_are_the_contents_but_for_what_plms_write() {
+    let Some((loaded, frames)) = cached_rows() else {
+        return;
+    };
+    assert_eq!(frames.len(), 1905);
+    let mut differing = std::collections::BTreeMap::new();
+    let mut screens = std::collections::BTreeSet::new();
+    for (frame, state) in &frames {
+        assert_eq!(state.room.blocks.len(), loaded.blocks.len(), "{frame}");
+        let cells = state.room.blocks.iter().zip(&loaded.blocks).enumerate();
+        for (cell, _) in cells.filter(|(_, (decoded, content))| decoded != content) {
+            differing.entry(cell).or_insert_with(|| frame.clone());
+        }
+        let areas = state.room.scroll_areas.iter().zip(&loaded.scroll_areas);
+        for (screen, _) in areas
+            .enumerate()
+            .filter(|(_, (decoded, content))| decoded != content)
+        {
+            screens.insert(screen);
+        }
+    }
+    let mut expected: Vec<usize> = PLM_WRITTEN_CELLS.to_vec();
+    expected.push(SHOT_CELL);
+    assert_eq!(differing.keys().copied().collect::<Vec<_>>(), expected);
+    for cell in PLM_WRITTEN_CELLS {
+        assert_eq!(differing[&cell], "area-brinstar:0");
+    }
+    assert_eq!(differing[&SHOT_CELL], "item-morph-ball:1236");
+    // A scroll PLM turns screen 13 green from frame 92 of both rows.
+    assert_eq!(screens.into_iter().collect::<Vec<_>>(), [13]);
 }

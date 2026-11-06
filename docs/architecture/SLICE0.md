@@ -183,6 +183,28 @@ data `$C5:DED5` decompressing to 18,434 bytes (`2 + 0x3000 + 0x1800`, no layer 2
   stay raw bytes until a rule reads them;
 - `Content`: `Rooms` is its first member, and `Session::open` should take it.
 
+**B4 status (`lane/slice0-b4`).** Done: `data::level` (`Level::decode` of the decompressed
+level data into layer 1 `Block { kind, tile }` and, when the length is `2 + 5n`, layer 2;
+`Tile` is the ten-bit `TileNumber` and the flips; `BlockKind` is the sixteen types of the
+bank `$94` tables, each carrying its BTS typed where the log is clear: `Slope` (shape, flips,
+bit 5 open), `Offset` for the extensions, `DoorIndex`, `PlmChoice` for shootable and special
+blocks (`$94:9EA6` or, bit 7 set, the area's table), `BombableBts`, and a raw `Bts` for the
+rest; `Block::word` and `BlockKind::bts` give the bytes back), and `scroll_areas` (bank `$82`,
+`$82:EA73`: a table of a byte a screen, or below `$8000` green with a generated bottom row).
+`RoomState` carries `layers` and `scroll_areas`; `game::state::room` uses the data types and
+`RoomScoped::load(room, &RoomState)` builds the level a room loads with. `verify` decodes
+`room.blocks` from `LEVEL_DATA`/`BTS` (`$7F:0002`, `$7F:6402`) over
+`ROOM_WIDTH_IN_BLOCKS` x `ROOM_HEIGHT_IN_BLOCKS`, and `room.scroll_areas` from `SCROLLS`
+(`$7E:CD20`); both have coverage rows, comparators and moved-rule mutants. The Morph Ball
+Room: 6,144 blocks, no layer 2, types 0, 1, 8, 9, C, D and F. Proof on A2's cache
+(`SM_CACHE`, `SM_ROM`; 1,905 decoded frames of both rows): every frame's blocks equal the
+content's but for 17 cells the room's PLMs write at load (scroll PLM triggers, special air
+BTS `$46` with an extension beside, the vertical extension columns above them, and the item's
+special block, BTS `$45`) and the shot block at cell 5,708, gone from `item-morph-ball`
+frame 1,236; screen 13 turns green from frame 92 of both rows (a scroll PLM). Remaining: the
+PLM population's setup (C-lane) writes those cells and that screen; `Content` doesn't yet hold
+`Rooms`; lockstep of `room.blocks` not yet run.
+
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
 (bank `$82` log, `$82:DB69`: signed compares against 60, the 99:59:59.59 cap from 100 hours),

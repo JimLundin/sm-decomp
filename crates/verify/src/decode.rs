@@ -12,7 +12,8 @@ use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{
-    Camera, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, RoomScoped,
+    Block, Camera, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, RoomScoped,
+    ScrollArea,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
@@ -320,6 +321,70 @@ pub struct Rules<'t> {
     pub super_special: SuperSpecialSources,
     /// `elevator`.
     pub elevator: ElevatorSources,
+    /// `room.blocks` and `room.scroll_areas`.
+    pub level: LevelSources,
+}
+
+/// Where the original keeps the room's level and its scroll areas.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LevelSources {
+    /// The room's width in blocks.
+    pub width: WramWord,
+    /// The room's height in blocks.
+    pub height: WramWord,
+    /// Layer 1's words.
+    pub blocks: WramBlock,
+    /// The BTS.
+    pub bts: WramBlock,
+    /// The scroll areas.
+    pub scrolls: WramBlock,
+}
+
+/// Blocks a screen across or down.
+const SCREEN_BLOCKS: u16 = 16;
+
+impl LevelSources {
+    /// Layer 1 and the scroll areas: the width and height say how much of each buffer the
+    /// room fills.
+    fn read(self, wram: &[u8]) -> Result<(Vec<Block>, Vec<ScrollArea>), DecodeError> {
+        let width = self.width.read(wram)?;
+        let height = self.height.read(wram)?;
+        let blocks = usize::from(width).saturating_mul(usize::from(height));
+        let short = |block: WramBlock| DecodeError::WramTooShort { source: block.name };
+        let words = self
+            .blocks
+            .read(wram)?
+            .get(..blocks.saturating_mul(2))
+            .ok_or_else(|| short(self.blocks))?;
+        let bts = self
+            .bts
+            .read(wram)?
+            .get(..blocks)
+            .ok_or_else(|| short(self.bts))?;
+        let layer1 = words
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .zip(bts)
+            .map(|(word, &bts)| Block::new(u16::from_le_bytes(*word), bts))
+            .collect();
+        let screens =
+            usize::from(width / SCREEN_BLOCKS).saturating_mul(usize::from(height / SCREEN_BLOCKS));
+        let scroll_areas = self
+            .scrolls
+            .read(wram)?
+            .get(..screens)
+            .ok_or_else(|| short(self.scrolls))?
+            .iter()
+            .map(|&area| {
+                ScrollArea::try_from(area).map_err(|value| DecodeError::Unrepresentable {
+                    source: self.scrolls.name,
+                    value: u16::from(value),
+                })
+            })
+            .collect::<Result<_, _>>()?;
+        Ok((layer1, scroll_areas))
+    }
 }
 
 /// Where the original keeps the elevator ride.
@@ -519,6 +584,13 @@ impl Rules<'_> {
             armed: source::ELEVATOR_FLAGS,
             direction: source::ELEVATOR_DIRECTION,
         },
+        level: LevelSources {
+            width: source::ROOM_WIDTH_IN_BLOCKS,
+            height: source::ROOM_HEIGHT_IN_BLOCKS,
+            blocks: source::LEVEL_DATA,
+            bts: source::BTS,
+            scrolls: source::SCROLLS,
+        },
         pose: PoseSources {
             pose: source::SAMUS_POSE,
             facing: source::SAMUS_POSE_X_DIR,
@@ -580,6 +652,7 @@ impl Rules<'_> {
             NmiKind::Overrun => (NmiTiming::Overrun, MainStrand::default(), Quiescence::Busy),
         };
         let irq = self.irq(record)?;
+        let (blocks, scroll_areas) = self.level.read(wram)?;
 
         let state = State {
             main,
@@ -621,6 +694,8 @@ impl Rules<'_> {
             samus: self.samus(wram)?,
             room: RoomScoped {
                 room,
+                blocks,
+                scroll_areas,
                 camera: Camera {
                     x: Fixed {
                         pixels: self.camera_x.read(wram)?,
