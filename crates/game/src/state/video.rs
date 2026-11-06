@@ -435,6 +435,19 @@ impl UploadRequests {
     pub const fn requested(self) -> Self {
         Self(self.0.wrapping_add(1))
     }
+
+    /// Whether the NMI has an upload to make: the flag's low byte is nonzero.
+    #[must_use]
+    pub const fn pending(self) -> bool {
+        self.0 & 0x00FF != 0
+    }
+
+    /// The requests after the NMI made the upload: the low byte clears (`STZ` with an 8-bit
+    /// accumulator), the high byte stays.
+    #[must_use]
+    pub const fn served(self) -> Self {
+        Self(self.0 & 0xFF00)
+    }
 }
 
 /// The tilemap words a column of 16 blocks draws: two 8x8 columns, top to bottom.
@@ -524,6 +537,17 @@ pub enum VramStep {
     Row,
     /// 32 words on: down a tilemap column.
     Column,
+}
+
+impl VramStep {
+    /// The words the address moves after each word written.
+    #[must_use]
+    pub const fn words(self) -> usize {
+        match self {
+            Self::Row => 1,
+            Self::Column => 32,
+        }
+    }
 }
 
 /// A queued VRAM upload.
