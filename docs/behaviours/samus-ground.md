@@ -5,21 +5,32 @@ The observer's spec for MODEL §4, written to the MODEL §5 template. Its vector
 
 ## Header
 
-**Scope.** On the ground: standing, running, turning, crouching, moonwalking, the
-crouch/stand/morph/unmorph transitions, running into a wall, the morph ball and the spring ball;
-the speed rules they share (base speed, extra run speed, the caps); the step down onto lower ground;
-the arm-pump step; one horizontal and one vertical sweep against blocks.
+**Scope: ground motion.** Standing, running, turning, crouching, moonwalking, the
+crouch/stand/morph/unmorph transitions, running into a wall, the morph ball and the spring ball on
+the ground: the motion table's rows; the speed rules and both caps; momentum; the direction; the
+displacement clamp; the step-down request; the wall stop's effect on the speeds; the arm-pump step;
+and the contacts handed to other domains.
 
-**Out of scope.** The air (jumps, falling, the wall jump), pose selection (which pose comes next),
-animation, footstep sounds and graphics, the speed booster's boost counter and palette, solid
-enemies, liquids beyond choosing the speed table, and the outside pushes listed in §9. Where one of
-these feeds the domain, it is an **input** (§1.2).
+**Out of scope.**
+- **Collision** is an interface (§5): motion asks for a move and gets the result back. How blocks
+  are found (the sweep, slopes, square-slope quadrants, the scan order) is the collision domain's,
+  listed in §9.
+- **Liquids and the speed booster** are deferred (§9). Only the normal speed table is in scope;
+  `submerged` and `speed_booster` are inputs fixed false for the pilot.
+- The air (jumps, falling, the wall jump), pose selection (which pose comes next, and the speed
+  changes it makes when a pose starts: see `mode`), animation, sounds and graphics, solid enemies
+  and the outside pushes (§9). Where one of these feeds the domain, it is an **input** (§1.2).
 
-**Baseline:** 516 lines (`crates/game/src/movement.rs` at `rebuild/spine` `982b203`, ground motion
-plus the ground half of collision).
+**Baseline: 516 lines** (`wc -l crates/game/src/movement.rs` at `rebuild/spine` `48d52f2`). That
+file holds ground motion and the ground half of collision together. The observer may not read it,
+so the ground-motion share isn't measured; 516 is an upper bound for this narrower scope.
 
-**Budget: 300 lines** for `game::model::samus` ground motion and the two sweeps, excluding tests
-and the `data` tables. Going over is a review stop (MODEL §4).
+**Budget: 200 lines** for `game::model::samus` ground motion, excluding tests and the `data`
+tables. Estimate: the row table and its enums ~50, the speed rules and both caps ~50, extra run
+and the clamp ~25, step down, elevator and the arm-pump step ~30, the collision interface (the
+request and result types) ~15, the contacts ~20. **`ArmPumpStep` counts** against this budget: it
+is a motion (a 1.0 px move through the collision interface) whose trigger comes from pose
+selection as an input, and whose result is a contact. Going over is a review stop (MODEL §4).
 
 **Notation.** A position or speed is `P.S`: a 16-bit pixel word and a 16-bit subpixel word, both
 hex, so `2.C000` is 2.75 px. A record N holds the state at the end of frame N; its pad is the pad
@@ -38,126 +49,184 @@ that frame N+1 reads.
 | `extra_run` | P.S, never negative | `Speed` | `ExtraRunSpeed`, `ExtraRunCap`, `HorizontalStep` |
 | `momentum` | | `bool` | `ExtraRunSpeed` |
 | `mode` | | `SpeedMode { Accelerating, TurningAround, Decelerating }` | `BaseSpeedAccelerate`, `BaseSpeedDecelerate`, `HorizontalDirection`, `BallAtRest` |
-| `on_square_slope` | | `bool`: the last vertical sweep stopped on a square-slope block | `StepDown` (next frame) |
 
-`on_square_slope` is the only quantity whose cross-frame use is easy to miss. Each vertical sweep
-that moves clears it, and a vertical stop on a square slope sets it. The next frame's step down
-reads it (with this frame's `SlopeSeat`): see `StepDown`. It was false at every frame's end in slice
-0, which has no slopes.
+**`mode` is shared with pose selection.** This domain writes it in two places: back to
+`Accelerating` when a deceleration reaches zero (`BaseSpeedDecelerate`), and in the `Stop` After
+(§3). Pose selection (out of scope) writes it when a new pose starts, between one frame's motion
+and the next. The events it writes are, in domain terms:
+- the on-ground turn starts: `TurningAround`; at the same moment extra_run is added into
+  base_speed and extra_run becomes 0;
+- the morph ball starts rolling the other way: `TurningAround`, with the same fold and a
+  `CancelSpeedBoost`;
+- the morph transition starts from a spin jump: `Decelerating`;
+- several air poses start (jumping, falling, the wall jump): `Decelerating` or `Accelerating`.
+
+So the model reads `mode` from its own State; a vector sets the mode pose selection would have
+left in `before`. Every vector here that starts in `TurningAround` or `Decelerating` stands for
+one of those events.
+
+`on_square_slope` (an earlier draft's State field) belongs to the collision domain (§9). Motion
+only reads the answer to "was she placed by a slope" (`on_slope`, §1.2).
 
 ### 1.2 Inputs (owned by other domains)
 
 | Input | Type | From | Read by |
 | --- | --- | --- | --- |
-| `locomotion` | `Locomotion` (§2) | the pose, as it stands at the frame's start | `LocomotionAtFrameStart`, the motion table |
-| `facing` | `Facing { Left, Right, Forward }` | the pose | `HorizontalDirection`, `BallAtRest`, `ArmPumpStep` |
-| `radius` | x, y in px | the pose domain (in slice 0: x = 5; y = 0x15 standing, running and turning, 0x10 crouching and the ball transitions, 7 ball, 0x18 the elevator pose) | the sweeps |
-| `pad` | buttons held: run, shoot, left, right | the controller | `ExtraRunSpeed`, `StandingShotRestartsAnimation` |
-| `new_running_pose` | `bool`: the pose update chose a new pose that runs | pose selection | `ArmPumpStep` |
-| `airborne` | `bool`: her vertical motion is not none | the air domain | the ball and transition rows |
-| `submerged` | `bool`: a liquid's surface is above her bottom edge, and liquid physics apply | the room's liquid | `SpeedTableRow`, `ExtraRunSpeed` |
-| `gravity_suit`, `speed_booster` | `bool` | equipment | `SpeedTableRow`, `ExtraRunSpeed`, `ExtraRunCap` |
+| `locomotion` | `Locomotion` (§2) | the pose, as it stands at the frame's start | `LocomotionAtFrameStart`, the motion table, `ArmPumpStep`, `StandingShotRestartsAnimation` |
+| `facing` | `Facing { Left, Right, Forward }` | the pose at the frame's start | `HorizontalDirection`, `ArmPumpStep` |
+| `radius` | x, y in px | the pose domain (in slice 0: x = 5; y = 0x15 standing, running and turning, 0x10 crouching and the ball transitions, 7 ball, 0x18 the elevator pose) | the collision requests (§5) |
+| `pad` | buttons held: run, shoot | the controller | `ExtraRunSpeed`, `StandingShotRestartsAnimation` |
+| `new_running_pose` | `bool`: pose selection asked for a pose change this frame, and the new pose runs | pose selection | `ArmPumpStep` |
+| `airborne` | `bool`: her vertical motion is not none | the air domain | the `StepDownUnlessAirborne` rows |
+| `air_vertical` | `Vertical` (§1.3): the air domain's result of its vertical move this frame | the air domain | the `StepDownUnlessAirborne` rows, when `airborne` |
 | `elevator_moving` | `bool` | the elevator | `ElevatorRide` |
-| `frame_parity` | `Even` / `Odd` | the frame counter | `VerticalScanAlternates` |
-| blocks | the room's block types and slopes | `data::level` | the sweeps |
+| `on_slope` | `bool`: the collision domain placed her by a slope (this frame's horizontal move seated her on one, or the last vertical stop was on a square slope) | collision | `StepDown` |
+| `submerged` | `bool`: liquid physics apply to her (below a liquid's surface, without the gravity suit). **Fixed false for the pilot.** | the room's liquid | `SpeedTableRow`, `ExtraRunSpeed` |
+| `speed_booster` | `bool`. **Fixed false for the pilot.** | equipment | `ExtraRunCap` |
+
+`facing = Forward` reaches only the `FacingForward` row in vanilla play (the facing-forward poses
+are the only ones without a side). Where a rule picks a side, Forward counts as **Right**
+(`HorizontalDirection`, `ArmPumpStep`).
 
 ### 1.3 Results of the frame (Contacts, not State)
 
-`step` returns these to the pose update the same frame. None of them is read on a later frame.
+`step` returns these the same frame. None of them is read on a later frame by this domain.
 
-| Result | Type | Read by |
+| Contact | Type | Read by |
 | --- | --- | --- |
-| `wall_stop` | `bool`: `WallStop` fired this frame | `ArmPumpStep` (same frame) |
-| `vertical` | `Vertical { None, Landed(LandingKind), Falling, HitCeiling }` after the row's After | the pose update (same frame) |
+| `wall_stop` | `bool`: `WallStop` fired this frame | `ArmPumpStep` (same frame); pose selection |
+| `vertical` | `Vertical { None, Landed, Falling(FallKind), HitCeiling }`, after the row's After | pose selection |
+| `ran_into_wall` | `bool`: `ArmPumpStep` asks for the "ran into a wall" pose | pose selection |
+| `end_vertical_motion` | `bool`: the air domain's vertical speed, vertical direction and ball bounce reset to none (`TransitionLanding`) | the air domain |
+| `restart_standing_animation` | `bool`: the standing animation restarts (timer = `standing_shot_timer`, frame 0) (`StandingShotRestartsAnimation`) | animation |
+
+`FallKind { Airborne, MorphBall, SpringBall, NoChange }` tells pose selection which falling pose
+to start. On the ground a landing never asks for a pose change, so `Landed` carries no kind.
+`HitCeiling` is produced only through `air_vertical`: ground motion never moves up.
 
 ### 1.4 Read by: none (they leave the State)
 
 MODEL decision 3 applies to each of these:
 
 - **total speed** (base + extra run). It is computed and used inside one frame: every row that
-  steps down steps horizontally first, so the step down always reads this frame's value. Nothing
-  reads it on a later frame. The value left over on a frame with no horizontal step is never
-  read. It is a local value in `HorizontalStep`, not stored.
+  steps down steps horizontally first, so the step down always reads this frame's value
+  (`StepDown`). It is a local value, not stored.
 - **the X-speed-killed direction.** Its two codes (left / right) are never told apart; the only
-  reader asks "was it killed". It is read the same frame and cleared by the pose update. It
-  becomes the `wall_stop` contact.
+  reader asks "was it killed". It is the `wall_stop` contact.
 - **the distances moved** left, right, up and down. No code reads them.
-- **the vertical result** as a stored value. It is cleared at the end of every frame; it is the
-  `vertical` contact.
-- **horizontal slope detection.** Always on: only an unused movement type turns it off. `SlopeSeat`
-  always runs.
+- **the vertical result** as a stored value. It is cleared every frame; it is the `vertical`
+  contact.
 - **the speed divisor, the extra X and Y displacement and the deceleration multiplier.** Out of
-  scope (§9, answer 2).
+  scope (§9).
 
 ---
 
 ## 2. Locomotion
 
 `Locomotion` names the way Samus moves this frame. It comes from the pose at the frame's start
-(`LocomotionAtFrameStart`). Every variant is one row of the motion table (§3).
+(`LocomotionAtFrameStart`). The pose codes for each variant are in §8.
 
-| Variant | Poses (domain) |
-| --- | --- |
-| `FacingForward` | standing, facing the screen |
-| `Standing` | every other standing pose, including landing from a jump |
-| `Running` | running, at every aim |
-| `Ball { spring: bool, at_rest: bool }` | the morph ball or spring ball on the ground; `at_rest` for the still ("facing") ball pose, false for the rolling ("moving") ones |
-| `Crouching` | crouching, at every aim |
-| `TurningOnGround` | the on-ground turn |
-| `Transition` | the crouch, stand, morph and unmorph transitions, at every aim |
-| `Moonwalking` | moonwalking, at every aim |
-| `RanIntoWall` | the "ran into a wall" poses |
+| Variant | Poses (domain) | Fall kind |
+| --- | --- | --- |
+| `FacingForward` | standing, facing the screen | Airborne |
+| `Standing { plain: bool }` | every other standing pose, including landing from a jump; `plain` for the two plain standing poses (no aim, not landing) | Airborne |
+| `Running` | running, at every aim | Airborne |
+| `Ball { spring: bool, at_rest: bool }` | the morph ball or spring ball on the ground; `at_rest` for the still ball pose of her facing, false for the rolling ones | `spring` false: MorphBall; true: SpringBall |
+| `Crouching` | crouching, at every aim | Airborne |
+| `TurningOnGround` | the on-ground turn | NoChange |
+| `Transition` | the crouch, stand, morph and unmorph transitions, at every aim | NoChange |
+| `Moonwalking` | moonwalking, at every aim | Airborne |
+| `RanIntoWall` | the "ran into a wall" poses | Airborne |
 
-The pose codes for each variant are in §8.
+The **Fall kind** column is the `FallKind` a `Falling` result carries (`LandingContact`).
 
 ---
 
 ## 3. Motion table
 
-Columns:
-- **Horizontal:** `Speed` = `ExtraRunSpeed`, then `BaseSpeedAccelerate` or `BaseSpeedDecelerate`
-  by `mode`, then `HorizontalStep`; `Hold` = `HorizontalStep` with the base speed taken as 0 (only
-  `extra_run` moves her, base_speed is unchanged); `None` = no horizontal step.
-- **Vertical:** `KeepToGround` = `StepDown`; `GroundUnlessAirborne` = the air domain's vertical
-  motion if `airborne`, else `StepDown`; `None`.
-- **After:** what runs after the vertical step. `Zero` = extra_run = 0, base_speed = 0, mode =
-  Accelerating. `Cancel` = `CancelSpeedBoost`.
+The row key is (`locomotion`, `mode`): every locomotion has one row, except `Ball`, whose
+`at_rest && mode == Accelerating` case is its own row (`BallAtRest`).
 
-| Row | Horizontal | Vertical | After |
+```
+enum Horizontal { Speed, Coast, None }
+enum VerticalStep { StepDown, StepDownUnlessAirborne, Elevator }
+enum After {
+    Keep,
+    Stop { cancel: bool },
+    StopUnlessAirborne,
+    EndTurn,
+    EndTransition,
+    NoVertical,
+}
+```
+
+- **Horizontal.** `Speed`: `ExtraRunSpeed`, then `BaseSpeedAccelerate` or `BaseSpeedDecelerate`
+  by `mode`, then `HorizontalStep`. `Coast`: `HorizontalStep` with the base speed taken as 0, so
+  only `extra_run` moves her; base_speed and mode are unchanged. `None`: no horizontal move.
+- **VerticalStep.** `StepDown`: `StepDown`. `StepDownUnlessAirborne`: if `airborne`,
+  `vertical = air_vertical` and no step down; else `StepDown`. `Elevator`: `ElevatorRide`.
+- **After**, applied after the vertical step:
+  - `Keep`: nothing.
+  - `Stop { cancel }`: if `cancel`, `CancelSpeedBoost`; then extra_run = 0, base_speed = 0, mode
+    = Accelerating.
+  - `StopUnlessAirborne`: `Stop { cancel: true }` if not `airborne`; else nothing.
+  - `EndTurn`: `CancelSpeedBoost`; extra_run = 0; vertical = None (`TurnIgnoresFall`).
+  - `EndTransition`: `TransitionLanding`; then vertical = None.
+  - `NoVertical`: vertical = None.
+
+| Row | Horizontal | VerticalStep | After |
 | --- | --- | --- | --- |
-| `FacingForward` | None | `ElevatorRide` | vertical = None |
-| `Standing` | Hold | KeepToGround | Cancel, Zero; `StandingShotRestartsAnimation` |
-| `Running` | Speed | KeepToGround | nothing |
-| `Ball`, `at_rest` and mode Accelerating | Hold | GroundUnlessAirborne | if not airborne: Cancel, Zero. If airborne: nothing |
-| `Ball`, otherwise | Speed | GroundUnlessAirborne | nothing |
-| `Crouching` | Hold | KeepToGround | Zero (no Cancel) |
-| `TurningOnGround` | Speed | KeepToGround | Cancel; extra_run = 0; vertical = None (`TurnIgnoresFall`) |
-| `Transition` | Hold | GroundUnlessAirborne | `TransitionLanding`; vertical = None |
-| `Moonwalking` | Speed | KeepToGround | nothing |
-| `RanIntoWall` | Hold | KeepToGround | Cancel, Zero |
+| `FacingForward` | None | Elevator | NoVertical |
+| `Standing` | Coast | StepDown | Stop { cancel: true } |
+| `Running` | Speed | StepDown | Keep |
+| `BallAtRest` (`Ball`, at_rest, mode Accelerating) | Coast | StepDownUnlessAirborne | StopUnlessAirborne |
+| `Ball` (otherwise) | Speed | StepDownUnlessAirborne | Keep |
+| `Crouching` | Coast | StepDown | Stop { cancel: false } |
+| `TurningOnGround` | Speed | StepDown | EndTurn |
+| `Transition` | Coast | StepDownUnlessAirborne | EndTransition |
+| `Moonwalking` | Speed | StepDown | Keep |
+| `RanIntoWall` | Coast | StepDown | Stop { cancel: true } |
 
-The spring ball and the morph ball share one row. They differ only in which poses are at rest.
+The spring ball and the morph ball share their rows; they differ only in which poses are at rest
+and in their fall kind. `StandingShotRestartsAnimation` and `ArmPumpStep` are not row columns:
+each has its own condition.
 
 ---
 
 ## 4. Behaviours
 
 Every entry is **Fixed** except `SpeedCap`, the one Toggle (MODEL §3). "Parameter" values live in
-`data` tables.
+`data` tables or `Rules`.
+
+### Numeric rules
+
+These hold for every entry below.
+
+- **`below(a, b)`**, for two 16-bit words: bit 15 of (a − b) mod 2^16 is set. It is a signed
+  compare of the difference, the same for pixel and subpixel words. Every "below" in this spec
+  means it. Worked examples:
+  - 0x1000 is **not** below 0xC000: 0x1000 − 0xC000 = 0x5000, bit 15 clear (`SpeedCap`, V3).
+  - 0xC000 is below 0x4000: 0xC000 − 0x4000 = 0x8000, bit 15 set (`SpeedCap`, V5).
+  - 0xC000 is below 0x0000: 0xC000 − 0 = 0xC000, bit 15 set (`TurnCreep`, V6).
+  - 0x8000 is below 0x0000 (`ExtraRunCap`, V11a); 0xF000 is below 0x0000 too (V11b).
+  - Equal words are never below each other.
+- **negative(w)**: bit 15 of the word w is set. A displacement moves right when its pixel word is
+  not negative.
+- **Adding to a P.S value** adds the subpixels mod 2^16 and carries into the pixel word, which
+  wraps mod 2^16. Positions wrap mod 2^32.
 
 ### LocomotionAtFrameStart
 - kind: Timing. summary: on the frame Samus changes pose, she still moves the way her old pose moved.
-- Rule: the row and the speed-table entry come from the locomotion at the frame's start. The pose
-  update later in the frame does not re-run motion.
-- switch: Fixed. checked: oracle (V6, V9, V13).
+- Rule: the row, the speed-table entry and the fall kind come from the locomotion at the frame's
+  start. The pose update later in the frame does not re-run motion.
+- Params: none. switch: Fixed. checked: oracle (V6, V9, V13, V14).
 - Source: `$90:A337`.
 
 ### SpeedTableRow
 - kind: Mechanic. summary: each way of moving has its own acceleration, top speed and braking.
-- Rule: the entry for the locomotion gives (accel, max, decel), each P.S. The normal table applies
-  unless she is `submerged` without the gravity suit; then the water table, or the lava/acid table,
-  applies.
-- Params (normal table), as accel / max / decel:
+- Rule: the entry for the locomotion gives (accel, max, decel), each P.S. With `submerged` false
+  (the pilot), the normal table applies.
+- Params, the normal table (`data::movement::NORMAL_SPEEDS`), as accel / max / decel:
 
   | Locomotion | accel | max | decel |
   | --- | --- | --- | --- |
@@ -170,245 +239,239 @@ Every entry is **Fixed** except `SpeedCap`, the one Toggle (MODEL §3). "Paramet
   | Moonwalking | 0.C000 | 0.8000 | 0.8000 |
   | RanIntoWall | 0.C000 | 0.0000 | 0.8000 |
 
-  The water table: Running and Ball accel 0.0400, max 2.C000, decel 0.0800.
-- switch: Parameter. checked: oracle (V1-V6, V10) for the normal table; original only for the water
-  and lava tables.
-- Source: `$90:9BD1` (tables `$90:9F55`, `$90:A08D`).
+  Only `Speed` rows read the table. The rows for Standing, FacingForward, Crouching, Transition and
+  RanIntoWall exist in the ROM but are never read, because those rows coast or don't move
+  (Transition's max 1.4000 never applies). They stay in the table for byte-exact data.
+- switch: Parameter. checked: oracle (V1-V6, V10).
+- Source: `$90:9BD1`.
 
 ### BaseSpeedAccelerate
 - kind: Mechanic. summary: Samus speeds up by the row's acceleration each frame, up to its top speed.
 - Rule: when mode = Accelerating: base_speed += accel, then `SpeedCap`.
-- switch: Fixed. checked: oracle (V1-V5, V10).
+- Params: the row's accel and max. switch: Fixed. checked: oracle (V1-V5, V10).
 - Source: `$90:9A7E`.
 
 ### SpeedCap
 - kind: Quirk. summary: speed briefly overshoots, or snaps *up* to, the top speed.
-- Rule, `SpeedCap::Wordwise` (vanilla). After adding, compare the pixel words, then the subpixel
-  words. "a is below b" means (a − b) mod 2^16 has bit 15 set.
-  - pixel below max.pixel: keep.
-  - pixels differ otherwise: base = max.
-  - pixels equal: keep if the subpixel is equal to max.sub or below it, else base = max.
+- Rule, `SpeedCap::Wordwise` (vanilla), after the add:
+  - `below(base.pixel, max.pixel)`: keep.
+  - else, if the pixel words differ: base = max.
+  - else (pixels equal): keep if the subpixels are equal or `below(base.sub, max.sub)`; else
+    base = max.
 
   Consequences in the oracle:
-  - Running: 1.E000 + 0.3000 = 2.1000. 0x1000 − 0xC000 = 0x5000, bit 15 clear, so it is past the
-    cap and becomes 2.C000: a free 0.B000 (V3).
-  - Ball: 3.0000 + 0.C000 = 3.C000. 0xC000 − 0x4000 = 0x8000, bit 15 set, so it is below the cap
-    and kept one frame above the max 3.4000. Next frame 4.8000 caps (V5).
-  - Turning (max 0): 0 + 0.C000 is kept, then 1.8000 caps to 0 (`TurnCreep`, V6).
-- Rule, `SpeedCap::Exact`: base = min(base, max), comparing the whole 32-bit values.
-- `SpeedCap` covers the base speed only. The extra run speed has its own cap (`ExtraRunCap`), which
-  doesn't follow this switch.
-- switch: **Toggle** (`Wordwise` vanilla | `Exact`). checked: oracle (V3, V5, V6) for `Wordwise`;
-  `Exact` is not compared (V3, V4, V5 and V6 have `Exact` variants).
+  - Running: 1.E000 + 0.3000 = 2.1000. Pixels equal; 0x1000 is not below 0xC000, so base = 2.C000:
+    a free 0.B000 (V3).
+  - Ball: 3.0000 + 0.C000 = 3.C000. Pixels equal; 0xC000 is below 0x4000, so it is kept one frame
+    above the max 3.4000. Next frame 4.8000 caps (V5).
+  - Turning (max 0): 0 + 0.C000: pixels equal, 0xC000 below 0, kept; then 1.8000 caps to 0
+    (`TurnCreep`, V6).
+  - Moonwalking (max 0.8000): 0 + 0.C000 = 0.C000: 0xC000 is not below 0x8000, so it caps to
+    0.8000 (V18).
+- Rule, `SpeedCap::Exact`: base = min(base, max), comparing the whole 32-bit values unsigned.
+- `SpeedCap` covers the base speed only. The extra run speed has its own cap (`ExtraRunCap`),
+  which doesn't follow this switch.
+- Params: the row's max. switch: **Toggle** (`Wordwise` vanilla | `Exact`). checked: oracle (V3,
+  V5, V6) for `Wordwise`; `Exact` is not compared (V3, V4, V5 and V6 have `Exact` variants).
 - Source: `$90:9A99`.
 
 ### TurnCreep
-- kind: Quirk. summary: during the on-ground turn, Samus slides 0.C000 px every other frame.
+- kind: Quirk. summary: during the on-ground turn from standing, Samus slides 0.C000 px every other frame.
 - Rule: none of its own: `SpeedCap::Wordwise` on the turning row. Base alternates 0, 0.C000, 0. She
-  moves along her facing, which is the *new* facing once mode is back to Accelerating. Under
+  moves along her facing, because mode is back to Accelerating (`HorizontalDirection`). Under
   `Exact` there is no creep.
-- switch: follows `SpeedCap`. checked: oracle (V6).
+- Params: none. switch: follows `SpeedCap`. checked: oracle (V6).
 - Source: `$90:A67C`.
 
 ### BaseSpeedDecelerate
-- kind: Mechanic. summary: when Samus brakes or reverses, her speed falls by the row's deceleration.
-- Rule: when mode = Decelerating or TurningAround: base_speed −= decel. If the pixel word then has
-  bit 15 set, base_speed = 0 and mode = Accelerating. No cap applies.
-- switch: Fixed. checked: oracle (V6, first frame).
+- kind: Mechanic. summary: when Samus brakes or turns, her speed falls by the row's deceleration.
+- Rule: when mode = Decelerating or TurningAround: base_speed −= decel. If the pixel word is then
+  negative, base_speed = 0 and mode = Accelerating. No cap applies.
+- Params: the row's decel. switch: Fixed. checked: oracle (V6, first frame); original only for a
+  decelerate that doesn't reach zero (V15, V16, constructed).
 - Source: `$90:9ABA`.
 
 ### ExtraRunSpeed
-- kind: Mechanic. summary: holding run while running adds speed, up to 2 px a frame (7 with the speed booster).
+- kind: Mechanic. summary: holding run while running adds speed, up to 2 px a frame; a kept momentum carries it into other rows.
 - Rule, on every `Speed` row:
-  - *Running* means: not `submerged` (with the gravity suit, never submerged), locomotion is
-    `Running`, and run is held. Then momentum = true (the speed booster's boost start is out of
-    scope), and `ExtraRunCap` decides the new extra_run.
+  - *Running* means: not `submerged`, locomotion is `Running`, and run is held. Then momentum =
+    true, and `ExtraRunCap` decides the new extra_run.
   - Otherwise: if momentum is false, extra_run = 0; else extra_run is kept.
-- Quirk: the water and lava columns of the extra-run table are never used, because a submerged
-  Samus is "not running" before the column is chosen.
-- Params: step 0.1000; cap 2.0000, or 7.0000 with the speed booster. switch: Parameter.
-- checked: oracle (V1-V4, V8); original only for the speed booster and liquids.
-- Source: `$90:973E` (table `$90:9F01`).
+- Params: none of its own (the step and cap are `ExtraRunCap`'s). switch: Fixed.
+- checked: oracle (V1-V4, V8); original only for momentum kept on a non-running row (V17,
+  constructed).
+- Source: `$90:973E`.
 
 ### ExtraRunCap
 - kind: Quirk. summary: (invisible in vanilla play) the run-speed cap is tested before the add, word by word.
 - Rule: when running, test the *old* extra_run against the cap:
-  - pixel below cap.pixel: add the step;
-  - otherwise, subpixel below cap.sub: add the step;
+  - `below(extra_run.pixel, cap.pixel)`: add the step;
+  - otherwise, `below(extra_run.sub, cap.sub)`: add the step;
   - otherwise: extra_run = cap.
 
   So the test happens before the add (extra_run can end a frame one step above the cap), and a
-  pixel word *above* the cap still adds when its subpixel is below. 2.8000 grows to 2.9000; 2.F000
-  grows to 3.0000, and the next frame snaps to 2.0000. From 0 in steps of 0x1000 she lands exactly
-  on 2.0000 or 7.0000, so vanilla play never shows it.
-- switch: Fixed. It does not follow `SpeedCap` (answer 3). checked: original only (V11, constructed).
+  pixel word *above* the cap still adds when its subpixel is below. 2.8000 grows to 2.9000 (0x8000
+  is below 0); 2.F000 grows to 3.0000, and the next frame snaps to 2.0000 (0 is not below 0). From
+  0 in steps of 0x1000 she lands exactly on 2.0000, so vanilla play never shows it.
+- Params: step 0.1000; cap 2.0000 (7.0000 with the speed booster, deferred). switch: Fixed; it
+  does not follow `SpeedCap`. checked: original only (V11, constructed).
 - Source: `$90:97D5`.
 
 ### CancelSpeedBoost
 - kind: Mechanic. summary: run speed carries through a jump and is lost when she stops.
-- Rule: momentum = false (the boost counter and palette also reset; out of scope). It runs in the
-  `Cancel` After of the rows (§3) and in `WallStop`. The crouching row does not cancel.
-- switch: Fixed. checked: oracle (V8, V12).
+- Rule: momentum = false (the boost counter and palette also reset; deferred). It runs in the
+  `Stop { cancel: true }`, `StopUnlessAirborne` and `EndTurn` Afters, and in `WallStop`.
+- Params: none. switch: Fixed. checked: oracle (V8, V14, V25); original only (V12, V15).
 - Source: `$91:DE53`.
 
 ### HorizontalStep
 - kind: Mechanic. summary: Samus moves sideways by her total speed.
-- Rule: total = (base_speed or 0 under `Hold`) + extra_run. The displacement is +total along the
-  direction (`HorizontalDirection`), −total against it, clamped by `DisplacementClamp`. One
-  horizontal sweep (§5) moves her. Then `WallStop`, then `SlopeSeat`.
-- switch: Fixed. checked: oracle (V1-V10).
+- Rule: total = (base_speed, or 0 on a `Coast` row) + extra_run. The displacement is +total
+  rightward or −total leftward (`HorizontalDirection`), then `DisplacementClamp`. Motion asks the
+  collision interface for a horizontal move by that displacement (§5) and applies the result.
+- Params: none. switch: Fixed. checked: oracle (V1-V10, V14).
 - Source: `$90:8EA9`.
 
 ### HorizontalDirection
 - kind: Mechanic. summary: during a turn, Samus keeps sliding the way she was going.
-- Rule: mode TurningAround: the step goes against the facing. Otherwise along it.
-- switch: Fixed. checked: oracle (V6).
+- Rule: read **after** this frame's `BaseSpeedDecelerate`. If mode is TurningAround, she moves
+  leftward when facing Right and rightward otherwise. In the other modes, she moves leftward when
+  facing Left and rightward otherwise. So a decelerate that reaches zero this frame also turns the
+  step to her facing, which matters when extra_run is not zero (V15b).
+- Params: none. switch: Fixed. checked: oracle (V6); original only for a moving turn (V15,
+  constructed).
 - Source: `$90:8EA9`.
 
 ### DisplacementClamp
 - kind: Mechanic. summary: Samus never moves more than 15 px sideways in a frame.
-- Rule: the displacement's pixel word is clamped to [−15, +15] as a signed word, and the subpixel
-  word is kept. So right, 10.4000 becomes 0F.4000. Left, −10.4000 (FFEF.C000) becomes FFF1.C000,
-  which is −0E.4000: leftward, she moves at most 15 − sub.
-- Unreachable on the ground in vanilla (the largest total is 9.C000), and reachable through the
-  out-of-scope pushes (§9).
-- Params: 15. switch: Parameter. checked: original only (V12, constructed).
+- Rule: if the displacement's pixel word is not negative and not `below` 16, it becomes 15; if it
+  is negative and `below` −15 (0xFFF1), it becomes −15. The subpixel word is kept. So right,
+  10.4000 becomes 0F.4000. Left, −10.4000 (FFEF.C000) becomes FFF1.C000, which is −0E.4000:
+  leftward, she moves at most 15 − sub.
+- Unreachable on the ground in vanilla (the largest total is 9.C000, with the speed booster), and
+  reachable through the deferred pushes (§9).
+- Params: `max_displacement` = 15 px. switch: Parameter. checked: original only (V12, constructed).
 - Source: `$90:E4AD`.
 
 ### WallStop
 - kind: Mechanic. summary: running into a wall stops her dead, flush against it.
-- Rule: if the horizontal sweep collided: `CancelSpeedBoost`; extra_run = 0, base_speed = 0, mode =
-  Accelerating; `wall_stop` = true. Otherwise `wall_stop` = false and the vertical result is
-  cleared.
-- switch: Fixed. checked: oracle (V8).
+- Rule: if the horizontal move stopped: `CancelSpeedBoost`; extra_run = 0, base_speed = 0, mode =
+  Accelerating; `wall_stop` = true. The step down still uses this frame's total (`StepDown`).
+- Params: none. switch: Fixed. checked: oracle (V8); original only leftward (V20, constructed).
 - Source: `$90:E5CE`.
-
-### SlopeSeat
-- kind: Mechanic. summary: walking across a slope keeps her feet on its surface.
-- Rule: after every horizontal step:
-  - Feet: the block under her centre x at her bottom edge (y + ry − 1). If it is a non-square slope,
-    not upside down: A = surface(column) − (bottom mod 16) − 1, where column = x mod 16, mirrored if
-    the slope is x-flipped. If A < 0: y += A (raises her), and she counts as seated this frame.
-  - Head: the block under her centre x at her top edge (y − ry). If it is a non-square slope and
-    upside down, the mirror rule pushes her down when she is inside it, and she counts as seated.
-- Params: `data::level::slope` surfaces. switch: Fixed. checked: original only.
-- Source: `$94:87F4` (surfaces `$94:8B2B`).
 
 ### StepDown
 - kind: Mechanic. summary: walking off a ledge or down a slope, Samus sticks to the ground beneath her.
-- Rule: one downward vertical sweep (§5) by:
-  - 1.0 px, if she was seated this frame (`SlopeSeat`) or `on_square_slope`;
-  - otherwise total + 1.0 px (1 is added to the pixel word, the subpixel kept). The total is the
-    unclamped one.
+- Rule: motion asks the collision interface for a downward move (§5) by:
+  - `step_down_extra` (1.0 px), if `on_slope`;
+  - otherwise total + `step_down_extra`, where total is the one `HorizontalStep` computed this
+    frame, before `WallStop` zeroed the speeds and unclamped.
 
-  A hit gives `Landed`, flush with the surface. A miss moves her the whole way and gives `Falling`.
-- Params: `step_down_extra` = 1.0 px. switch: Parameter. checked: oracle (V7, V10, V13).
+  A stop gives `Landed`, a move the whole way gives `Falling(fall kind of the locomotion)`.
+- Params: `step_down_extra` = 1.0 px. switch: Parameter. checked: oracle (V7, V10, V13); original
+  only for the total after a wall stop (V21, constructed).
 - Source: `$90:923F`.
+
+### BallAtRest
+- kind: Mechanic. summary: the still morph ball sheds any speed it has, unless it's in the air.
+- Rule: the `BallAtRest` row (§3) is chosen when the locomotion is `Ball` with `at_rest` and mode
+  is Accelerating. A `Ball` in another mode takes the `Ball` row and keeps braking or turning, even
+  in an at-rest pose.
+- Params: none. switch: Fixed. checked: oracle (V10); original only for a braking ball at rest
+  (V16, constructed) and an airborne one (V19b, constructed).
+- Source: `$90:A521`.
 
 ### TurnIgnoresFall
 - kind: Quirk. summary: a turning Samus sinks onto lower ground instead of falling.
-- Rule: the turning row clears the vertical result after its step down, so a `Falling` step down
-  doesn't start a fall. She sinks by total + 1.0 px a frame until she lands (V7: three frames).
-- switch: Fixed. checked: oracle (V7).
+- Rule: the `EndTurn` After clears the vertical result after its step down, so a `Falling` step
+  down doesn't start a fall. She sinks by total + 1.0 px a frame until she lands (V7: three
+  frames).
+- Params: none. switch: Fixed. checked: oracle (V7).
 - Source: `$90:A68F`.
 
 ### TransitionLanding
 - kind: Mechanic. summary: landing during a crouch or morph transition ends the vertical motion.
-- Rule: if the vertical result is `Landed` and this locomotion's landing kind is "no change", the
-  air domain's vertical speed, vertical direction and ball bounce are reset to none.
-- switch: Fixed. checked: oracle (V13).
+- Rule: in the `EndTransition` After: if vertical is `Landed`, `end_vertical_motion` = true.
+- Params: none. switch: Fixed. checked: oracle (V13, a step-down landing); original only for an
+  airborne landing and for no landing (V13b, constructed).
 - Source: `$90:A640`.
+
+### LandingContact
+- kind: Mechanic. summary: falling off the ground tells pose selection which fall to start.
+- Rule: a `Falling` result carries the fall kind of the frame-start locomotion (§2). A landing
+  carries none.
+- Params: the §2 fall-kind column (`data`). switch: Fixed. checked: oracle (V9, V10, V25 for `Landed`);
+  original only for each fall kind (V19, V19-spring, V21b, constructed).
+- Source: `$90:E61B`.
 
 ### ElevatorRide
 - kind: Mechanic. summary: on a moving elevator, Samus facing the screen rides it down.
-- Rule: no horizontal step and no speed change. If `elevator_moving`: one vertical sweep down 1.0,
-  with no solid-enemy test, and with slope reactions told the move is *upward* (Quirk). If not,
-  nothing moves.
-- switch: Fixed. checked: original only.
+- Rule: no horizontal move and no speed change. If `elevator_moving`: one downward move by
+  `elevator_step` with no solid-enemy test (§5). If not, nothing moves. The row's After makes
+  vertical None either way.
+- Params: `elevator_step` = 1.0 px. switch: Fixed. checked: original only (V23, constructed).
 - Source: `$90:A392`.
 
 ### StandingShotRestartsAnimation
-- kind: Mechanic. summary: shooting while standing un-aimed restarts the standing animation.
-- Rule: on the `Standing` row, for the plain standing poses (no aim), with shoot held: animation
-  timer = 0x10, animation frame = 0. It is output for the animation domain, not State here.
-- switch: Fixed. checked: original only.
+- kind: Mechanic. summary: shooting while standing plainly restarts the standing animation.
+- Rule: if the locomotion is `Standing { plain: true }` and shoot is held:
+  `restart_standing_animation` = true.
+- Params: `standing_shot_timer` = 0x10 frames (for the animation domain). switch: Fixed. checked:
+  original only (V24, constructed).
 - Source: `$90:A3AD`.
 
 ### FloorFlushSubpixel
-- kind: Quirk. summary: (invisible) on flat solid floor her vertical subpixel is FFFF.
-- Rule: a sweep that stops on a solid block sets the subpixel first: down or right, FFFF; up or
-  left, 0. The distance it then moves has subpixel 0, so the subpixel stays. A non-square slope stop
-  leaves the subpixel alone.
-- switch: Fixed. checked: oracle (V7, V8).
+- kind: Quirk. summary: (invisible) flush against a floor her vertical subpixel is FFFF; against a wall, FFFF or 0 by side.
+- Rule: part of the collision interface's contract (§5). A move stopped by a solid block leaves
+  the subpixel on that axis at FFFF when she moved right or down, 0 when she moved left or up.
+- Params: none. switch: Fixed. checked: oracle (V7, V8); original only leftward (V20,
+  constructed).
 - Source: `$94:8F82`.
-
-### SlopeSlowdown
-- kind: Mechanic. summary: running up or down a steep slope covers less ground.
-- Rule: in the horizontal sweep, each non-square slope block (not upside down) in the leading
-  column, while her vertical speed is 0, scales the displacement: d = d × factor / 256, done on d
-  reduced to 8.8 (its subpixel low byte is lost) and negated back for a leftward step. The block
-  never stops her, and the scan continues, so two slope rows scale twice.
-- Params (by slope shape): 12, 14, 15 → 0xC0; 16, 17 → 0xD8; 1B, 1C → 0x80; E, F → 0xB0; others
-  0x100. switch: Parameter. checked: original only.
-- Source: `$94:84D6` (factors `$94:8586`).
-
-### VerticalScanAlternates
-- kind: Quirk. summary: which block she lands on, when two differ under her, flips every frame.
-- Rule: the vertical sweep scans her columns left to right on even frames and right to left on odd
-  ones. The first block that collides decides.
-- switch: Fixed. checked: original only.
-- Source: `$94:9763`.
 
 ### ArmPumpStep
 - kind: Quirk. summary: changing aim while running moves Samus an extra pixel forward.
-- Rule, in the pose update after all motion:
-  - if `wall_stop` and the locomotion is `Running`: the pose becomes "ran into a wall"; no step.
-  - else if `new_running_pose`: test 1.0 px forward against solid enemies (a hit: "ran into a
-    wall"). Otherwise move 1.0 px forward through the horizontal sweep, with no `SlopeSeat`, no
-    `WallStop` and no step down. A block hit: "ran into a wall".
+- Rule, after the row's After:
+  - if `wall_stop` and the frame-start locomotion is `Running`: `ran_into_wall` = true; no step;
+  - else if `new_running_pose`: forward is left when facing Left and right otherwise. If a solid
+    enemy is within `arm_pump_step` forward (§5, the enemy query), `ran_into_wall` = true and she
+    doesn't move. Otherwise one horizontal move by `arm_pump_step` forward, with no solid-enemy
+    test; a stop sets `ran_into_wall` = true (and leaves her flush, as every stop does). There is
+    no `WallStop`, no step down and no speed change.
 
-  It changes no speed. With no step down after it, it can lift her off a downward slope.
-- Params: 1.0 px. switch: Fixed. checked: oracle (V2-V4, V9; V1 shows no step on an unchanged pose).
+  With no step down after it, it can lift her off a downward slope.
+- Params: `arm_pump_step` = 1.0 px. switch: Fixed. checked: oracle (V2-V4, V9, V14; V1 shows no
+  step without a pose change; V8 the wall branch); original only for a block stop (V22b,
+  constructed) and Forward (V23).
 - Source: `$91:EADE`.
 
 ---
 
-## 5. Collision: one sweep
+## 5. Collision interface
 
-A sweep moves Samus by a signed P.S distance `d` along one axis. It reads her position, radii and
-`d` (and `frame_parity`, vertically). Solid enemies are tested first by the enemy domain; if one
-blocks, it adjusts `d` and no block test runs.
+Motion never looks at blocks. It asks the collision domain three things, each with the **body**:
+her position and her radius (x, y).
 
-**Horizontal.** Leading edge: x + d + rx − 1 moving right (d's pixel word ≥ 0), x + d − rx moving
-left. One column, edge >> 4. Rows from her top ((y − ry) >> 4) to her bottom ((y + ry − 1) >> 4), at
-the current y, top first; the first block that collides ends the scan.
-- air: pass.
-- solid: right, d = max(0, (edge & ~F) − rx − x).0000 and x.sub = FFFF; left, d = min(0, (edge | F)
-  + 1 + rx − x).0000 and x.sub = 0.
-- non-square slope: pass, scaling d (`SlopeSlowdown`).
-- square slope: only the half of the block the edge is in, by row half, from the quadrant table;
-  a solid quadrant stops her as a solid block does, aligned to 8 px.
-- doors, spikes, special and bombable blocks: their own domains.
+| Request | Asks | Gets back |
+| --- | --- | --- |
+| `move_horizontal(body, d, enemies)` | a horizontal move by the signed P.S displacement `d` | `Moved { distance, stop: Option<Stop> }` |
+| `move_down(body, d, enemies)` | a downward move by the P.S distance `d` ≥ 0 | `Moved { distance, stop: Option<Stop> }` |
+| `enemy_blocks(body, side, d)` | is a solid enemy within `d` on that side? | `bool` |
 
-Then x += d. The result is "collided".
+- `enemies` is `TestEnemies` or `SkipEnemies`. Every move here tests solid enemies, except
+  `ElevatorRide`'s and `ArmPumpStep`'s (which asked `enemy_blocks` first).
+- `distance` is the signed displacement actually made. Motion adds it to the position on that
+  axis.
+- `Stop { side: Side, subpixel: Option<u16> }`, with `Side { Left, Right, Below }`, says she was
+  stopped and on which side. When `subpixel` is set, motion writes it to that axis's subpixel
+  before adding `distance`: FFFF for `Right` and `Below`, 0 for `Left`, against a solid block
+  (`FloorFlushSubpixel`). It is `None` when a slope or an enemy stopped her (the collision domain
+  defines those).
+- A horizontal stop is "the horizontal move stopped" for `WallStop`. A downward stop is `Landed`.
+- `on_slope` (§1.2) comes from the same domain.
 
-**Vertical.** Edge: y + d + ry − 1 moving down, y + d − ry up. One row. Columns from (x − rx) >> 4 to
-(x + rx − 1) >> 4, in `VerticalScanAlternates` order; the first collision ends the scan. A sweep
-that moves clears `on_square_slope`.
-- solid: down, d = max(0, (edge & ~F) − ry − y).0000 and y.sub = FFFF; up, d = min(0, (edge | F) +
-  1 + ry − y).0000 and y.sub = 0.
-- non-square slope, only in the column under her centre x; going down it must not be upside down
-  (going up, it must be): A = surface(column) − (edge mod 16) − 1. If A ≤ 0: d = max(0, d.pixel +
-  A).0000, y.sub unchanged.
-- square slope: quadrants, aligned to 8 px; y.sub = FFFF down, 0 up; `on_square_slope` = true.
-
-Then y += d. Down: `Landed(kind)` on a collision, else `Falling`. Up: `HitCeiling` or None. The
-landing kind comes from the locomotion: ground, ball, spring ball, or no change (`Transition`).
-
-**Slopes and the step down together.** Up a slope, `SlopeSeat` raises her and the step down is only
-1.0, which finds the surface she was seated on. Down a slope she isn't seated, and the step of total
-+ 1.0 px pulls her onto the lower surface, which covers slopes up to 45°. Steeper, or a drop deeper
-than that, and she is `Falling`.
+The vectors use a flat stand-in for the collision domain: block-aligned solid floor, walls and
+ceiling, described in the vector file's header. It is enough for every vector here; the collision
+domain's own spec replaces it.
 
 ---
 
@@ -419,38 +482,30 @@ Everything else in the frame is free (MODEL §1). These orders are visible at th
 1. The row is chosen from the locomotion at the frame's start, before the pose update.
 2. `ExtraRunSpeed` comes before the base speed, and both before the horizontal step: the step uses
    the updated speeds.
-3. The horizontal step (with `WallStop` and `SlopeSeat`) comes before the step down, which reads
-   this frame's total and this frame's seat.
-4. The After runs after the step down: `Standing`, `Crouching` and `RanIntoWall` move by the old
-   extra_run this frame, then zero it.
-5. `ArmPumpStep` comes after all motion, and so after `WallStop`.
-6. In a sweep the first block that collides wins, in scan order.
-7. A solid stop sets the subpixel before the move is added (`FloorFlushSubpixel`).
+3. `HorizontalDirection` reads mode after this frame's `BaseSpeedDecelerate` (V15b).
+4. The horizontal step (with `WallStop`) comes before the step down, which reads this frame's
+   total (V21).
+5. The After runs after the step down: `Standing`, `Crouching` and `RanIntoWall` move by the old
+   extra_run this frame, then zero it (V14).
+6. `ArmPumpStep` comes after all motion, and so after `WallStop`.
 
 ---
 
 ## 7. Answers to the implementer
 
 1. **Crouching, moonwalking and the spring ball.** They all run on the ground path.
-   - `Crouching`: `Hold` horizontally (only extra_run moves her), then `StepDown` unconditionally
-     (no airborne test), then extra_run = 0, base_speed = 0, mode = Accelerating. It does **not**
-     cancel momentum. V13's second frame shows the zeroing.
+   - `Crouching`: `Coast` horizontally (only extra_run moves her), then `StepDown` unconditionally
+     (no airborne test), then `Stop { cancel: false }`. It does **not** cancel momentum. V13's
+     second frame shows the zeroing.
    - `Moonwalking`: the `Speed` row with its own table entry (max 0.8000), then `StepDown`, then
-     nothing.
-   - The spring ball: the morph ball's row exactly, with the spring-ball poses as `at_rest`.
-2. **The speed divisor and the extra X and Y displacement are out of scope.** They are 0 in every
-   slice-0 record, nothing in this domain writes them, and the original writes them only from other
-   domains: the displacements from treadmill blocks, enemies that carry Samus and some PLMs, the
-   divisor from two enemy and boss effects. The displacements and the deceleration multiplier are
-   reset every frame by the block-inside check, so they are per-frame pushes, not State. The ground
-   model has no divisor, no displacement and no multiplier. Their rules are kept in §9 for the
-   domain that adds them.
-3. **Two behaviours.** The base speed's cap (`SpeedCap`) adds, then compares, and snaps when the
-   pixel word is above. The extra run's cap (`ExtraRunCap`) compares before the add, and still adds
-   when the pixel word is above but the subpixel is below. The rules differ, so `SpeedCap::Exact`
-   doesn't change the extra run. `ExtraRunCap` is Fixed: vanilla never reaches it, and there is no
-   named use for a corrected version. The old V11 `Exact` row is removed. V11 now runs under both
-   settings with the same result.
+     `Keep`.
+   - The spring ball: the morph ball's rows exactly, with the spring-ball poses as `at_rest`, and
+     its own fall kind.
+2. **The speed divisor and the extra X and Y displacement are out of scope** (§9).
+3. **Two caps.** The base speed's cap (`SpeedCap`) adds, then compares, and snaps when the pixel
+   word is above. The extra run's cap (`ExtraRunCap`) compares before the add, and still adds when
+   the pixel word is above but the subpixel is below. `SpeedCap::Exact` doesn't change the extra
+   run. V11 runs under both settings with the same result.
 
 ---
 
@@ -461,50 +516,92 @@ ROM codes, for `verify`'s decode and the `data` tables only. The model never nam
 - **mode:** 0 Accelerating, 1 TurningAround, 2 Decelerating.
 - **facing** (the pose's direction byte): 4 Left, 8 Right, 0 Forward.
 - **momentum:** a word, 0 or 1.
-- **on_square_slope:** a word, 0 or 1. The decode reads the "position adjusted by slope" flag at the
-  frame's end. At that point the horizontal seat has already been consumed and cleared, so the flag
-  means exactly "the last vertical sweep stopped on a square slope".
 - **Locomotion from the pose** (movement type, then pose):
-  - type 0 Standing: poses 00 and 9B are `FacingForward`; the rest (01-08, 47, 48, A4-A7, D5,
-    D6, E0-E7) are `Standing`. The plain standing poses for `StandingShotRestartsAnimation` are 01
-    and 02.
+  - type 0 Standing: poses 00 and 9B are `FacingForward`; 01 and 02 are `Standing { plain: true }`;
+    the rest (03-08, 47, 48, A4-A7, D5, D6, E0-E7) are `Standing { plain: false }`.
   - type 1 `Running`: 09-12, 45, 46.
   - type 4 `Ball { spring: false }`: `at_rest` 1D (right) and 41 (left); rolling 1E and 1F.
   - type 5 `Crouching`: 27, 28, 71-74, 85, 86, D9, DA.
   - type E `TurningOnGround`: 25, 26, 43, 44, 8B-8E, 9C, 9D, BF-C4.
   - type F `Transition`: 35-38, 3B-3E, F1-FC. Poses 39, 3A, 3F, 40 and DB-DE are unused; the
-    original gives DB-DE no motion at all.
+    original gives DB-F0 no vertical step.
   - type 10 `Moonwalking`: 49, 4A, 75-78.
   - type 11 `Ball { spring: true }`: `at_rest` 79 and 7A; rolling 7B and 7C.
   - type 15 `RanIntoWall`: 89, 8A, CF-D2.
-- **the vertical result:** 0 none, 1 landed, 2 falling, 4 hit ceiling (5 is the wall jump's).
-  Landing kind is a second byte, per movement type.
-- **the X-speed-killed flag:** 0, 4 (left) or 8 (right); decoded as `wall_stop` = non-zero, and only
-  needed if a cut falls between motion and the pose update, which it doesn't.
-- **pad:** the motion reads run (B by default) and shoot (X by default). The vectors also name
-  left, right, jump (A) and aim_down (L) for the pose update.
+- **the vertical result:** 0 none, 1 landed, 2 falling, 4 hit ceiling (5 is the wall jump's). The
+  second byte is the pose request, from two tables by movement type (one for falling, one for
+  landed): falling 0 Airborne, 1 MorphBall, 3 SpringBall, 4 NoChange; landed is 4 (no change) for
+  every ground movement type.
+- **the X-speed-killed flag:** 0, 4 (left) or 8 (right); `wall_stop` = non-zero.
+- **the radius in the records** lags the pose by one frame: the radius used by frame N's motion is
+  the one in record N.
+- **pad:** run is B, shoot is X by default. The vectors also name left, right, jump (A) and
+  aim_down (L) for the pose update.
 
 **RAM shape** (MODEL §5): the State fields whose decode is one word copied as-is.
 - `position` x and y: the pixel and subpixel words are the quantity itself.
 - `base_speed`, `extra_run`: the speed is its P.S value; no smaller form preserves the cap quirks.
-- `momentum`, `on_square_slope`: one bool each, already the domain's value.
+- `momentum`: one bool, already the domain's value.
 - `mode` is decoded to an enum, so it isn't copied as-is.
 
 ---
 
-## 9. Deferred: pushes from other domains
+## 9. Deferred
 
-Not in this domain's model. Recorded for the domain that adds them (treadmills, carrying enemies,
-the slowing effects).
+### To the collision domain
 
-- **Extra X displacement** is added to ±total, before the clamp (right and left).
-  If the sum's sign disagrees with the direction the step started in, the collision flag is cleared
-  and nothing is killed.
+What is known, recorded for that domain's spec. Not checked further here.
+
+- **The horizontal sweep.** Leading edge: x + d + rx − 1 moving right (d's pixel word not
+  negative), x + d − rx moving left, pixel words. One column, edge >> 4. Rows from her top
+  ((y − ry) >> 4) to her bottom ((y + ry − 1) >> 4), top first; the first block that collides
+  ends the scan. Solid: right, d = max(0, (edge & ~F) − rx − x).0000 and x.sub = FFFF; left,
+  d = min(0, (edge | F) + 1 + rx − x).0000 and x.sub = 0.
+- **The vertical sweep.** Edge y + d + ry − 1 down, y + d − ry up; one row, so a move of 16 px or
+  more can pass a floor (long-sweep tunnelling; V12's 11.4000 step down reaches past the floor's
+  first row, so V12 doesn't compare y). Columns (x − rx) >> 4 to (x + rx − 1) >> 4, left to right
+  on even frames and right to left on odd ones (the first collision decides). Solid: down,
+  d = max(0, (edge & ~F) − ry − y).0000, y.sub = FFFF; up, d = min(0, (edge | F) + 1 + ry − y).0000,
+  y.sub = 0.
+- **Non-square slopes.** Horizontally they never stop her, and each one in the leading column,
+  not upside down, while her vertical speed is 0, scales d by a per-shape factor (12, 14, 15 →
+  0xC0; 16, 17 → 0xD8; 1B, 1C → 0x80; E, F → 0xB0; others 0x100; over 256), done on d reduced to
+  8.8. Vertically, only the column under her centre; A = surface(column) − (edge mod 16) − 1, and
+  if A ≤ 0, d = max(0, d.pixel + A).0000 with y.sub unchanged.
+- **The slope seat** after every horizontal move: feet on a non-square slope raise her by A and
+  count as seated; an upside-down slope at her head pushes her down. It feeds `on_slope`.
+- **Square slopes:** quadrant tables, aligned to 8 px; a vertical stop on one sets
+  `on_square_slope` (State of that domain), read by the next frame's `on_slope`. Each vertical
+  move clears it.
+- **The elevator's request** tells slope reactions the move is upward although it goes down.
+- Doors, spikes, special and bombable blocks: their own reactions. In the elevator room the floor
+  row is a door-type block that behaved as solid (V7).
+- Out-of-room block lookups: not read.
+- An airborne leftward stop at item-morph-ball:711 ended with x.sub FFFF, not 0. It is an air
+  frame (spin jump, near a wall-jump check), so it doesn't touch this spec; the collision or air
+  observer should explain it.
+
+### Liquids and the speed booster
+
+- `submerged` picks the water or the lava/acid table in `SpeedTableRow`; the water
+  table gives Running and Ball accel 0.0400, max 2.C000, decel 0.0800. The other rows and the
+  lava/acid values were not read. Nothing in motion chooses the normal table back; the block-inside
+  check resets it when her bottom point is in air or a solid block, but not in a slope block, so
+  leaving liquid onto a slope may keep the water table (if reachable, the table choice becomes
+  State: `SpeedTableKind { Normal, Water, LavaAcid }`).
+- A submerged Samus is "not running" in `ExtraRunSpeed`, so the water and lava columns of the
+  extra-run table are never used.
+- The speed booster: cap 7.0000 in `ExtraRunCap`, the boost counter and timer reset when running
+  starts, and the palette; `CancelSpeedBoost` resets them.
+
+### Pushes from other domains
+
+- **Extra X displacement** is added to ±total before the clamp. If the sum's sign disagrees with
+  the direction the step started in, the collision flag is cleared and nothing is killed.
 - **Extra Y displacement**, when non-zero, replaces the step down: down by it + 1.0 when its pixel
-  word is ≥ 0, up by its magnitude when negative.
-- **Speed divisor** n (capped at 4): total = (base + extra_run) >> n. The subpixel sum carries into
-  the pixels, then the pixel sum's low byte is shifted, its lost bits fill the subpixel's top, and
-  the subpixel's low bits are lost. Exact only for pixel sums below 256.
+  word is not negative, up by its magnitude when negative.
+- **Speed divisor** n (capped at 4): total = (base + extra_run) >> n, exact only for pixel sums
+  below 256.
 - **Deceleration multiplier** m (non-zero): the decel step is (decel.sub high byte × m) as the
   subpixel and the high byte of (decel.pixel low byte × m) as the pixel.
 
@@ -512,17 +609,15 @@ the slowing effects).
 
 ## 10. Open questions
 
-1. **The stale speed table.** The water or lava table is chosen while submerged, but nothing in
-   motion chooses the normal table back. The block-inside check resets it to normal every frame
-   when her bottom point is in air or a solid block, but not in a slope block. So leaving liquid
-   directly onto a slope may keep the water table. Slice 0 never leaves the normal table. Is it
-   reachable in vanilla play? If it is, the table choice becomes a State quantity.
-2. **A skipped pose check.** The X-speed-killed flag is cleared by the pose update's wall check,
+1. **A skipped pose check.** The X-speed-killed flag is cleared by pose selection's wall check,
    which is skipped when another system forces a pose that frame. Then the flag survives to the
-   next frame's check. That needs a wall stop and a forced pose on the same frame, outside this
-   domain; never seen in the records.
-3. **Door blocks as floor.** In the elevator room the floor row is a door-type block that behaved
-   as solid (V7). The door reaction belongs to the door domain.
-4. **Speed booster and liquids** (cap 7.0, the boost counter, the water table) are not exercised in
-   slice 0.
-5. **Morph-ball turning momentum** belongs to pose selection and was not read.
+   next frame's check. It needs a wall stop and a forced pose on the same frame; never seen in the
+   records.
+2. **Moonwalking's direction.** Moonwalking moves backwards in play, but its row moves along the
+   facing unless mode is TurningAround, and the moonwalk pose's start writes no mode. Which pose
+   change gives her the backward step was not read (pose selection). V18 checks only the speed.
+3. **The elevator descent** (item-morph-ball:0-680) moves her 1 and 2 px on alternate frames with
+   the subpixel 0, so the elevator itself seems to set her y; `ElevatorRide`'s 1.0 can't be told
+   apart there. V23 is constructed.
+4. **The arm-pump step's facing** is the frame-start pose's facing, not the new pose's. They agree
+   in every record.
