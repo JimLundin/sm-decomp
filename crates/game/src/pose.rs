@@ -296,12 +296,9 @@ pub fn change(
     };
     samus.pose = pose;
     if pose != samus.previous.pose {
-        // "Handle Samus pose change" (`$91:F404`): initialise the pose, then the jump.
-        // open: "Handle collision due to change of pose" (`$91:FDAE`) runs first: a pose with
-        // a larger Y radius checks the difference up and down for solid enemies
-        // (`$A0:A8F0`) and blocks (`$94:96AB`), then moves her to fit or reverts the pose. It
-        // joins with the radius change's block checks; until then `item-morph-ball` frame
-        // 797 lands her on the face block at $29D.2BFF where the oracle has $29B.0000.
+        // "Handle Samus pose change" (`$91:F404`): fit the new pose's height, then initialise
+        // the pose, whichever it is now, and the jump.
+        fit::fit(samus, collisions.surroundings, touches, content);
         refresh(samus, content);
         jump_transition(samus, content);
         reset_animation(samus, content);
@@ -362,7 +359,7 @@ pub(crate) const JUMP_TAKE_OFF: [PoseId; 8] = [
 ];
 
 /// The crouching poses a jump from which starts higher (`$91:FC7D`).
-const CROUCHING: [PoseId; 2] = [PoseId(0x27), PoseId(0x28)];
+const CROUCHING: [PoseId; 2] = [fit::CROUCH_RIGHT, fit::CROUCH_LEFT];
 
 /// The crouch jump's boost in pixels (`$91:FC8A`).
 const CROUCH_JUMP_BOOST: u16 = 10;
@@ -605,6 +602,7 @@ const fn kill_run_speed(speed: &mut Horizontal) {
 }
 
 mod contact;
+mod fit;
 
 pub use contact::{Fall, Grounding, SolidVertical, request as collision_request};
 use contact::{runs_into_wall, solid_vertical};
