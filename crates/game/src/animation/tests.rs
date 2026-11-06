@@ -197,3 +197,55 @@ fn the_wall_jumps_instruction_picks_its_sequence_by_her_items() {
         assert_eq!(samus.animation.timer, AnimationTimer(timer));
     }
 }
+
+#[test]
+fn a_spin_jump_from_a_spin_or_wall_jump_starts_past_the_jump_from_the_floor() {
+    const SPIN_RIGHT: PoseId = PoseId(1);
+    const SPIN_LEFT: PoseId = PoseId(2);
+    const WALL_JUMP: PoseId = PoseId(3);
+    const STANDING: PoseId = PoseId(4);
+    let bytes = [
+        definition(8, 0),
+        definition(8, 0x03),
+        definition(4, 0x03),
+        definition(8, 0x14),
+        definition(8, 0),
+    ]
+    .concat();
+    let list = |bytes: &[u8]| DelayList::decode(bytes).unwrap();
+    let spin = list(&[0x04, 0x03, 0xFF]);
+    let content = Content {
+        poses: Poses::decode(&bytes).unwrap(),
+        delays: AnimationDelays::new(
+            vec![
+                list(&[0x08, 0xFF]),
+                spin.clone(),
+                spin,
+                list(&[0x08, 0xFF]),
+                list(&[0x08, 0xFF]),
+            ],
+            list(&[0x01, 0xFF]),
+        ),
+        ..content()
+    };
+    for (from, movement, frame, timer) in [
+        (SPIN_RIGHT, MovementType::SpinJumping, 1, 3),
+        (WALL_JUMP, MovementType::WallJumping, 1, 3),
+        (STANDING, MovementType::Standing, 0, 4),
+    ] {
+        let mut samus = samus(from, movement, 0, 8);
+        pose::change(
+            &mut samus,
+            PoseRequests {
+                ordinary: Some(SPIN_LEFT),
+                command: None,
+            },
+            pose::Collisions::default(),
+            &mut Touches::default(),
+            &content,
+        );
+        assert_eq!(samus.pose, SPIN_LEFT);
+        assert_eq!(samus.animation.frame, AnimationFrame(frame));
+        assert_eq!(samus.animation.timer, AnimationTimer(timer));
+    }
+}

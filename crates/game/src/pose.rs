@@ -324,8 +324,8 @@ fn refresh(samus: &mut Samus, content: &Content) {
         return;
     };
     samus.facing = definition.facing;
-    if animation::preserves(samus.previous.movement, definition.movement) {
-        samus.animation.new_pose_frame = NewPoseFrame::Preserve;
+    if let Some(frame) = animation::new_pose_frame(samus.previous.movement, definition.movement) {
+        samus.animation.new_pose_frame = frame;
     }
     if samus.movement.kind() != definition.movement {
         // The original keeps her speeds in work RAM whatever the movement: a movement that
@@ -495,7 +495,7 @@ const fn record_history(samus: &mut Samus) {
 /// (`$91:F59A`, `$91:F60D`); a spin jump from a spin or wall jump the other way turns her
 /// momentum around (`$91:F624`).
 // open: the shinespark windup from a normal jump (`$91:F543`, the special palette timer),
-// the animation skips (`$91:F5AF`, `$91:F634`), the spin jump's sounds, space jump and screw
+// the animation skip from $55/$56 (`$91:F5AF`), the spin jump's sounds, space jump and screw
 // attack poses (`$91:F67F`), the morph ball and the other types' initialisations join with
 // the speed booster, C6 and the items; the turning poses chosen from the old pose's shot
 // direction (`$91:F9C2`) match the transition table's in slice 0.
