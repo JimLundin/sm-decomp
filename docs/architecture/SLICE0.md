@@ -243,10 +243,20 @@ each row from frame 92, and one `room.plms` slot's block there: at frame 92 Samu
 elevator, so the touch comes from the vertical special air *collision* reaction (`$94:909D`,
 PLM `$94:9139` + BTS * 2 = `$B6FF` at `$46`) in the ride's one-pixel step, not the inside
 handling. `room.plms.slots.common.cursor.delay` differs on every Tick: the item's timer,
-which the pass holds until its list (C12). Remaining: the special air collision reactions (`$94:906F`,
-`$94:909D`) spawning the touch PLM from `collision::move_x`/`move_y` (their scans borrow the
-room; the touches can be applied after the moves, as they touch only PLM slots), the two
-bodies above, and the item's list.
+which the pass holds until its list (C12).
+
+**Special air collision reactions (`lane/slice0-plm3`).** Done: special air BTS `$46` met by
+a move's scan (`$94:906F` horizontal, `$94:909D` vertical) adds the block the extensions led
+to (`$0DC4`) to `collision::Touches` and lets her through; `movement::run` (the `Mover`'s
+moves), `movement::ride` and `pose::change`'s wall check (`pose::contact::runs_into_wall`)
+collect them, and `SamusNewState` spawns each touch PLM (`touch_scroll_block`) after the pose
+change in scan order, as its setup changes only PLM slots, which no move reads. Lockstep on
+A2's cache, 2026-11-06: `room.scroll_areas` and `room.plms.slots.common.block` are equal on
+every Tick of both rows (each differed on 2 and 1 from frame 92 before). The camera's Y
+(`$01FB` against `$01FF`) and OAM entry 0's Y still differ on frame 414 alone, with the scroll
+areas equal: a camera difference, not a scroll PLM one. Remaining: the other special air
+(the area-dependent PLMs, whose setup can stop her, `$94:9087`), bombable air (`$94:92F9`),
+the two bodies above, and the item's list.
 
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
