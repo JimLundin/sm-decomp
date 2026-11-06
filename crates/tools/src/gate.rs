@@ -1,50 +1,20 @@
-//! `tools gate LOCK CACHE PADS GREEN [--update] ROW...`: the free-run gate (D22) over the
-//! named rows, each from its cache's first record (the seed's first frame), with
-//! `PADS/ROW.pads` checked against the row's pin. It prints every (row, stream) outcome and
-//! the row's green status, fails when a pair the ratchet file `GREEN` lists isn't green, and
-//! with `--update` adds the new green pairs to it.
+//! `tools gate LOCK BUNDLE ROM GREEN [--update] ROW...`: the free-run gate (D22) over the
+//! named rows. Each row starts from its seed's record in the relock bundle's directory
+//! `BUNDLE` (`seeds/<capture>/NNNN.record`), with `BUNDLE/pads/ROW.pads` checked against the
+//! row's pin, and runs on the content read from `ROM`. It prints every (row, stream) outcome
+//! and the row's green status, fails when a pair the ratchet file `GREEN` lists isn't green,
+//! and with `--update` adds the new green pairs to it.
 
 use std::fmt::Write as _;
 use std::path::Path;
 use std::sync::Arc;
 
-use verify::cache::Cache;
-use verify::gate::{FreeRun, Ratchet, Seed, buttons, free_run};
-use verify::lock::{Lock, Outcome, Row, RowId, Side};
+use verify::bundle::{RowInputs, content};
+use verify::gate::{Ratchet, free_run};
+use verify::lock::{Lock, Outcome, RowId, Side};
 use verify::lockstep::slice_zero_rooms;
 
-pub const USAGE: &str = "tools gate LOCK CACHE PADS GREEN [--update] ROW...";
-
-/// The run of one row: its seed decoded from the cache and its pads from the pad file.
-fn run_row(row: &Row, cache: &Path, pads: &Path) -> Result<FreeRun, String> {
-    let id = &row.id;
-    let pad_file = pads.join(format!("{id}.pads"));
-    let pin = oracle::relock::file_sha256(&pad_file);
-    if pin.as_deref() != Some(row.pads.to_string().as_str()) {
-        return Err(format!("{}: not the row's pads", pad_file.display()));
-    }
-    let pads: Vec<_> = oracle::inputs::read(&pad_file)?
-        .into_iter()
-        .map(buttons)
-        .collect();
-    let cache = Cache::open(cache, row).map_err(|error| format!("{id}: {error}"))?;
-    let first = cache
-        .entries()
-        .first()
-        .ok_or_else(|| format!("{id}: the cache holds no frames"))?;
-    let record = cache
-        .record(first)
-        .map_err(|error| format!("{id}: {error}"))?;
-    let seed = Seed::decode(&record, &slice_zero_rooms())
-        .map_err(|error| format!("{id}: the seed doesn't decode: {error:?}"))?;
-    Ok(free_run(
-        row,
-        seed,
-        &pads,
-        // open: the tool reads no ROM yet, so Samus's pose rules run on empty tables.
-        &Arc::default(),
-    ))
-}
+pub const USAGE: &str = "tools gate LOCK BUNDLE ROM GREEN [--update] ROW...";
 
 fn outcome(outcome: Outcome) -> String {
     match outcome {
@@ -58,7 +28,7 @@ fn outcome(outcome: Outcome) -> String {
 
 /// Runs the gate; the report, or why it failed.
 pub fn run(args: &[String]) -> Result<String, String> {
-    let [lock_path, cache, pads, green, rest @ ..] = args else {
+    let [lock_path, bundle, rom, green, rest @ ..] = args else {
         return Err(USAGE.to_owned());
     };
     let (update, rows) = match rest {
@@ -76,13 +46,18 @@ pub fn run(args: &[String]) -> Result<String, String> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ratchet::default(),
         Err(error) => return Err(format!("{green}: {error}")),
     };
+    let image = std::fs::read(rom).map_err(|error| format!("{rom}: {error}"))?;
+    let content = Arc::new(content(image).map_err(|error| format!("{rom}: {error}"))?);
+    let rooms = slice_zero_rooms();
     let mut out = String::new();
     let mut reports = Vec::new();
     for id in rows {
         let row = lock
             .row(&RowId(id.clone()))
             .ok_or_else(|| format!("{id}: not in the lock"))?;
-        let run = run_row(row, Path::new(cache), Path::new(pads))?;
+        let inputs =
+            RowInputs::read(Path::new(bundle), row, &rooms).map_err(|error| error.to_string())?;
+        let run = free_run(row, inputs.seed, &inputs.pads, &content);
         let green = if run.report.green() { "yes" } else { "no" };
         let _ = writeln!(out, "{id}: {} frames, green {green}", run.frames.0);
         if let Some(stop) = run.stop {

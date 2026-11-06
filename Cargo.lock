@@ -176,7 +176,6 @@ dependencies = [
 name = "tools"
 version = "0.1.0"
 dependencies = [
- "oracle",
  "runtime",
  "verify",
 ]

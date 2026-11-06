@@ -196,6 +196,14 @@ const fn hex_digit(byte: u8) -> Option<u8> {
     }
 }
 
+impl Sha256 {
+    /// The SHA-256 of `bytes`.
+    #[must_use]
+    pub fn of(bytes: &[u8]) -> Self {
+        Self(data::rom::sha256(bytes))
+    }
+}
+
 impl TryFrom<&str> for Sha256 {
     type Error = ErrorKind;
 

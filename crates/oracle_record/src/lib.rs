@@ -3,6 +3,9 @@
 //! Its own crate so `verify` can read records without linking an emulator (ARCHITECTURE §4.1).
 
 pub mod codec;
+pub mod game;
+pub mod inputs;
+pub mod lsnes;
 
 /// The picture's width in dots.
 pub const WIDTH: usize = 256;

@@ -3,6 +3,7 @@
 //!
 //! No engine crate depends on it (ARCHITECTURE §4.1, §4.2).
 
+pub mod bundle;
 pub mod cache;
 pub mod coverage;
 pub mod decode;

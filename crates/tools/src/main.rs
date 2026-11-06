@@ -6,7 +6,7 @@
 //! `tools lockstep LOCK CACHE ROW [FROM [TICKS]]`: lockstep over a row's record cache
 //! (`verify::lockstep`), printing the report.
 //!
-//! `tools gate LOCK CACHE PADS GREEN [--update] ROW...`: the free-run gate ([`gate`]).
+//! `tools gate LOCK BUNDLE ROM GREEN [--update] ROW...`: the free-run gate ([`gate`]).
 
 mod gate;
 

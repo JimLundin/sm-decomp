@@ -7,7 +7,6 @@ publish = false
 description = "The command line over the engine, the oracle and the comparison"
 
 [dependencies]
-oracle = { path = "../oracle" }
 runtime = { path = "../runtime" }
 verify = { path = "../verify" }
 

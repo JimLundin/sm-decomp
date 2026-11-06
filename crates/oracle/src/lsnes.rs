@@ -35,10 +35,8 @@
 //! counts restart where the straight run's do (at the RTI of an NMI the
 //! state was saved inside).
 
-use crate::record::{
-    ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, MAX_LINES, Nmi, NmiKind, Pad,
-    Picture, PpuRegisters, WIDTH, shown_channel,
-};
+use crate::record::lsnes::RawPicture;
+use crate::record::{FrameRecord, MAX_LINES, Pad, Picture, WIDTH, shown_channel};
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -48,13 +46,8 @@ use std::time::{Duration, Instant};
 
 /// The server script, written next to the run's files at start.
 const SERVER: &str = include_str!("../../../tools/oracle/lsnes_server.lua");
-/// The record header: magic through the memory flag.
-const HEADER: usize = 43;
+/// Work RAM's size, which bounds a seed's edits.
 const WRAM: usize = 0x2_0000;
-const VRAM: usize = 0x1_0000;
-const CGRAM: usize = 0x200;
-const OAM: usize = 0x220;
-const SRAM: usize = 0x2000;
 /// lsnes's standard error and the server's Lua error log, in the run's
 /// directory. lsnes runs there, so its own `lsnes.log` (where a Lua syntax
 /// error goes; lsnes then keeps running without a script) lands there too.
@@ -262,16 +255,6 @@ pub const IDENTITY: OracleId = OracleId {
     fixes: &[],
 };
 
-/// The memories after the header, when the record carries them.
-const MEMORIES: usize = WRAM + VRAM + CGRAM + OAM + SRAM;
-
-/// The record's optional streams, appended after the memories when a `T`
-/// request asked for any (`tools/oracle/lsnes_server.lua`).
-const STREAMS_MAGIC: &[u8; 4] = b"OHS1";
-/// The PPU block: `PpuRegisters` from `inidisp` to `setini` as the bytes the
-/// game wrote (scroll and mode 7 words little-endian), then `$43x0-$43xA`.
-const PPU_BYTES: usize = 58 + 88;
-
 /// One master brightness's 8-bit channel values ([`shown_channel`], lsnes's
 /// lrgb palette) mapped back to the 5-bit component; ambiguous values keep
 /// the smallest, which shows the same value.
@@ -321,83 +304,6 @@ fn decode_picture(width: usize, height: usize, rgb: &[u8]) -> Picture {
         }
     }
     picture
-}
-
-fn decode_ppu(bytes: &[u8]) -> PpuRegisters {
-    let mut at = 0;
-    let mut byte = || {
-        let value = bytes[at];
-        at += 1;
-        value
-    };
-    let mut ppu = PpuRegisters {
-        inidisp: byte(),
-        obsel: byte(),
-        bgmode: byte(),
-        mosaic: byte(),
-        ..PpuRegisters::default()
-    };
-    ppu.bg_sc = [byte(), byte(), byte(), byte()];
-    ppu.bg12nba = byte();
-    ppu.bg34nba = byte();
-    for layer in &mut ppu.bg_scroll {
-        for value in layer.iter_mut() {
-            *value = u16::from_le_bytes([byte(), byte()]);
-        }
-    }
-    ppu.m7sel = byte();
-    for value in &mut ppu.m7 {
-        *value = i16::from_le_bytes([byte(), byte()]);
-    }
-    ppu.window_select = [byte(), byte(), byte()];
-    ppu.window_positions = [byte(), byte(), byte(), byte()];
-    ppu.wbglog = byte();
-    ppu.wobjlog = byte();
-    ppu.screens = [byte(), byte(), byte(), byte()];
-    ppu.cgwsel = byte();
-    ppu.cgadsub = byte();
-    ppu.fixed_color = [byte(), byte(), byte()];
-    ppu.setini = byte();
-    for channel in &mut ppu.dma {
-        for value in channel.iter_mut() {
-            *value = byte();
-        }
-    }
-    ppu
-}
-
-fn le16(bytes: &[u8], at: usize) -> u16 {
-    u16::from_le_bytes([bytes[at], bytes[at + 1]])
-}
-
-fn le32(bytes: &[u8], at: usize) -> u32 {
-    u32::from_le_bytes([bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]])
-}
-
-fn empty_record() -> FrameRecord {
-    FrameRecord {
-        index: 0,
-        video_frame: 0,
-        pad: Pad(0),
-        cut: Cut::VblankWithoutNmi,
-        joypad_reads: 0,
-        wait_entry: None,
-        overscan: false,
-        cpu: CpuRegisters::default(),
-        wram: vec![0; WRAM].into_boxed_slice(),
-        vram: vec![0; VRAM / 2].into_boxed_slice(),
-        cgram: vec![0; CGRAM / 2].into_boxed_slice(),
-        oam: vec![0; OAM].into_boxed_slice(),
-        sram: vec![0; SRAM].into_boxed_slice(),
-        ppu: PpuRegisters::default(),
-        apu_log: Vec::new(),
-        picture: None,
-        spc: None,
-        bank_instructions: None,
-        writes: Vec::new(),
-        hits: Vec::new(),
-        legacy_ppu_digest: 0,
-    }
 }
 
 impl Lsnes {
@@ -497,133 +403,21 @@ impl Lsnes {
     }
 
     fn decode(&mut self, bytes: &[u8]) -> Result<(), Cause> {
-        if bytes.len() < HEADER || &bytes[..4] != b"OHR1" {
-            return Err(Cause::Record(format!("no header in {} bytes", bytes.len())));
-        }
-        let dumped = bytes[42] != 0;
-        if dumped && bytes.len() < HEADER + MEMORIES {
-            return Err(Cause::Record(format!(
-                "{} bytes, short of the memories",
-                bytes.len()
-            )));
-        }
-        let record = &mut self.record;
-        let interrupted_pc = le32(bytes, 5);
-        let polled = bytes[9] != 0;
-        record.cut = match bytes[4] {
-            0 => Cut::NmiReturn(Nmi {
-                kind: if crate::game::is_wait_site(interrupted_pc) {
-                    NmiKind::Requested
-                } else {
-                    NmiKind::Overrun
-                },
-                interrupted_pc,
-                polled,
-            }),
-            1 => Cut::VblankWithoutNmi,
-            2 => Cut::NmiStillRunning { interrupted_pc },
-            other => return Err(Cause::Record(format!("kind {other}"))),
-        };
-        record.joypad_reads = le32(bytes, 10);
-        record.wait_entry = (bytes[14] != 0).then(|| Beam {
-            v: le16(bytes, 15),
-            h: le16(bytes, 17),
-        });
-        record.overscan = bytes[19] != 0;
-        record.video_frame = le32(bytes, 20);
-        record.pad = Pad(le16(bytes, 24));
-        record.cpu = CpuRegisters {
-            a: le16(bytes, 26),
-            x: le16(bytes, 28),
-            y: le16(bytes, 30),
-            s: le16(bytes, 32),
-            pc: le16(bytes, 34),
-            d: le16(bytes, 36),
-            k: bytes[38],
-            db: bytes[39],
-            p: bytes[40],
-            emulation: bytes[41] != 0,
-        };
-        let mut at = HEADER;
-        if dumped {
-            let mut take = |size: usize| {
-                let part = &bytes[at..at + size];
-                at += size;
-                part
-            };
-            record.wram.copy_from_slice(take(WRAM));
-            for (word, pair) in record.vram.iter_mut().zip(take(VRAM).as_chunks::<2>().0) {
-                *word = u16::from_le_bytes(*pair);
+        let picture = crate::record::lsnes::decode(bytes, &mut self.record)
+            .map_err(|error| Cause::Record(error.to_string()))?;
+        self.record.picture = match picture {
+            None => None,
+            Some(RawPicture::Png(text)) => {
+                let (width, height, rgb) = crate::png::base64(text)
+                    .as_deref()
+                    .and_then(crate::png::rgb)
+                    .ok_or_else(|| Cause::Record("picture: not a PNG this decoder reads".into()))?;
+                Some(decode_picture(width, height, &rgb))
             }
-            for (word, pair) in record.cgram.iter_mut().zip(take(CGRAM).as_chunks::<2>().0) {
-                *word = u16::from_le_bytes(*pair);
+            Some(RawPicture::Rgb { width, height, rgb }) => {
+                Some(decode_picture(width, height, rgb))
             }
-            record.oam.copy_from_slice(take(OAM));
-            record.sram.copy_from_slice(take(SRAM));
-        }
-        Self::decode_streams(record, &bytes[at..])
-    }
-
-    /// The optional streams after the memories (`STREAMS_MAGIC`).
-    fn decode_streams(record: &mut FrameRecord, bytes: &[u8]) -> Result<(), Cause> {
-        record.apu_log.clear();
-        record.picture = None;
-        if bytes.is_empty() {
-            return Ok(());
-        }
-        let short = || Cause::Record(format!("streams cut short at {} bytes", bytes.len()));
-        let Some((STREAMS_MAGIC, rest)) = bytes.split_first_chunk::<4>() else {
-            return Err(Cause::Record("no streams header".into()));
         };
-        let (&flags, mut rest) = rest.split_first().ok_or_else(short)?;
-        if flags & 4 != 0 {
-            let (ppu, after) = rest.split_at_checked(PPU_BYTES).ok_or_else(short)?;
-            record.ppu = decode_ppu(ppu);
-            rest = after;
-        }
-        if flags & 2 != 0 {
-            let (count, after) = rest.split_first_chunk::<4>().ok_or_else(short)?;
-            let count = usize::try_from(u32::from_le_bytes(*count)).map_err(|_| short())?;
-            let (log, after) = after
-                .split_at_checked(count.saturating_mul(3))
-                .ok_or_else(short)?;
-            record
-                .apu_log
-                .extend(
-                    log.as_chunks::<3>()
-                        .0
-                        .iter()
-                        .map(|&[kind, port, value]| ApuAccess {
-                            kind: if kind == 0 {
-                                ApuAccessKind::CpuWrite
-                            } else {
-                                ApuAccessKind::CpuRead
-                            },
-                            port,
-                            value,
-                            apu_cycle: 0,
-                        }),
-                );
-            rest = after;
-        }
-        if flags & 8 != 0 {
-            let (length, after) = rest.split_first_chunk::<4>().ok_or_else(short)?;
-            let length = usize::try_from(u32::from_le_bytes(*length)).map_err(|_| short())?;
-            let text = after.get(..length).ok_or_else(short)?;
-            let (width, height, rgb) = crate::png::base64(text)
-                .as_deref()
-                .and_then(crate::png::rgb)
-                .ok_or_else(|| Cause::Record("picture: not a PNG this decoder reads".into()))?;
-            record.picture = Some(decode_picture(width, height, &rgb));
-        } else if flags & 1 != 0 {
-            let (size, rgb) = rest.split_first_chunk::<4>().ok_or_else(short)?;
-            let width = usize::from(u16::from_le_bytes([size[0], size[1]]));
-            let height = usize::from(u16::from_le_bytes([size[2], size[3]]));
-            if rgb.len() != width * height * 3 {
-                return Err(short());
-            }
-            record.picture = Some(decode_picture(width, height, rgb));
-        }
         Ok(())
     }
 }
@@ -695,7 +489,7 @@ impl Oracle for Lsnes {
             replies,
             failed: None,
             directory,
-            record: empty_record(),
+            record: crate::record::lsnes::blank(),
             steps: 0,
             saves: 0,
             raw: Vec::new(),

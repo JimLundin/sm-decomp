@@ -1,7 +1,7 @@
 //! Scenario input files: one hexadecimal JOY1 word per line, per Tick in
 //! the lock's inputs and per video frame in a frame-pad file (RELOCK b1).
 
-use crate::record::Pad;
+use crate::Pad;
 use std::path::Path;
 
 /// Read an `.inputs` file.

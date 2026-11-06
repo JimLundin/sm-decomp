@@ -4,10 +4,11 @@
 //! recorder folds the oracle's records and compared with the row's lock; green (row, stream)
 //! pairs are kept in a ratchet.
 //!
-//! The run's frame 0 is the start State itself: the row's first record is the oracle's frame
-//! after the seed loads, and the gate starts from its decoded State. Each later frame is one
-//! Tick. The lock's `overruns` and `nmi_off` frames are counted from the row's first, so
-//! the Tick that ends at frame f takes the schedule's entry for f.
+//! The start State is the seed's record decoded: the oracle's cut before the row's first
+//! frame (`seeds/<capture>/NNNN.record`, [`crate::bundle`]). Every frame of the row is one
+//! Tick, frame 0's included, with that frame's pad. The lock's `overruns` and `nmi_off` frames
+//! are counted from the row's first, so the Tick that ends at frame f takes the schedule's
+//! entry for f.
 //!
 //! What the engine doesn't give yet: SRAM (the State has none) and the shown picture (the
 //! scan-out has no line program until B6) are left out, so the comparison reports them
@@ -60,7 +61,7 @@ impl fmt::Display for Stop {
 pub struct FreeRun {
     /// The comparison, per stream and fact.
     pub report: RowReport,
-    /// The frames folded, the start's included.
+    /// The frames folded.
     pub frames: FrameCount,
     /// Why the run stopped early, if it did; the streams then differ at the span the run
     /// didn't finish.
@@ -83,15 +84,6 @@ const fn cut(timing: NmiTiming, nmi: NmiKind) -> Cut {
         (NmiTiming::Disabled, _) | (_, NmiKind::Disabled) => Cut::VblankWithoutNmi,
         (NmiTiming::Overrun, NmiKind::Committed | NmiKind::Lag) => Cut::Overrun,
         (NmiTiming::OnTime, NmiKind::Committed | NmiKind::Lag) => Cut::Requested,
-    }
-}
-
-/// The cut the timing source gives a frame with no Tick of the engine's: the start.
-const fn scheduled_cut(timing: NmiTiming) -> Cut {
-    match timing {
-        NmiTiming::OnTime => Cut::Requested,
-        NmiTiming::Overrun => Cut::Overrun,
-        NmiTiming::Disabled => Cut::VblankWithoutNmi,
     }
 }
 
@@ -119,7 +111,8 @@ fn recorded(row: &Row) -> TimingSource {
     TimingSource::Recorded(Schedule::new(ticks(&row.overruns), ticks(&row.nmi_off)))
 }
 
-/// Where a free run starts: the row's first frame as a State, and the rules it runs under.
+/// Where a free run starts: the cut before the row's first frame as a State, and the rules it
+/// runs under.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Seed {
     /// The decoded State.
@@ -129,8 +122,8 @@ pub struct Seed {
 }
 
 impl Seed {
-    /// The seed a row's first record gives: today the first record of the row's cache;
-    /// without a cache, the same record carried in the row's bundle, decoded the same way.
+    /// The seed a seed's record gives: the record of the cut its state was saved after, one
+    /// frame before the row's first.
     ///
     /// # Errors
     ///
@@ -144,7 +137,7 @@ impl Seed {
     }
 }
 
-/// Runs `row` from `seed` for its frames with `pads` (one per frame, frame 0's unused) and
+/// Runs `row` from `seed` for its frames with `pads` (one per frame, from frame 0) and
 /// the row's `Recorded` timing, folds the engine's outputs and compares them with the lock.
 #[must_use]
 pub fn free_run(row: &Row, seed: Seed, pads: &[Buttons], content: &Arc<Content>) -> FreeRun {
@@ -154,9 +147,8 @@ pub fn free_run(row: &Row, seed: Seed, pads: &[Buttons], content: &Arc<Content>)
     } = seed;
     let timing = recorded(row);
     let mut fold = EngineFold::default();
-    fold_state(&mut fold, &start, scheduled_cut(timing.at(Tick(0))));
     let stop = match Session::open(start, rules, Arc::clone(content)) {
-        Ok(mut session) => (1..row.frames.0).find_map(|index| {
+        Ok(mut session) => (0..row.frames.0).find_map(|index| {
             let frame = Frame(index);
             let pad = usize::try_from(index)
                 .ok()
