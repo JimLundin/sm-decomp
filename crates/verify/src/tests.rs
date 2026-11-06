@@ -272,7 +272,7 @@ fn decodes_the_room(state: &State) -> bool {
         && mini_map.disabled
         && mini_map
             .explored
-            .0
+            .to_bitmap()
             .iter()
             .zip(0..=u8::MAX)
             .all(|(&byte, value)| byte == value | 0x80)

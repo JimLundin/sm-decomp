@@ -480,7 +480,7 @@ fn gameplay_phase(
                 &mut state.hud,
                 state.samus.position,
                 &state.room,
-                state.clock.counters.requested_byte,
+                crate::mini_map::Blink::at(state.clock.counters.requested_byte),
                 content,
             );
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
@@ -567,7 +567,7 @@ fn mini_map(
     hud: &mut crate::state::hud::Hud,
     samus: crate::state::samus::Point,
     room: &crate::state::room::RoomScoped,
-    requested: u8,
+    blink: crate::mini_map::Blink,
     content: &Content,
 ) {
     let width = room.width.0;
@@ -581,7 +581,7 @@ fn mini_map(
         &mut hud.tilemap,
         samus,
         room,
-        requested,
+        blink,
         &content.area_maps,
     );
 }
