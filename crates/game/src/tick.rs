@@ -6,12 +6,14 @@
 //! their domain lanes fill them.
 
 use crate::animation;
+use crate::collision::solid_enemy::SolidEnemies;
 use crate::collision::{Room, ScanOrder, Surroundings, Touches, inside};
 use crate::message_box;
 use crate::movement;
 use crate::pose::{self, Content};
 use crate::scrolling;
 use crate::session::{Rules, SessionFault};
+use crate::state::room::RoomScoped;
 use crate::state::samus::SuperSpecial;
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
 use crate::state::video::SamusTileUploads;
@@ -459,14 +461,8 @@ fn gameplay_phase(
         // the pose update (`$90:E725`).
         // open: the movement types beyond standing, running and turning join with C3b and C4.
         GameplayPhase::SamusNewState => {
-            let surroundings = Surroundings {
-                room: Room {
-                    blocks: &state.room.blocks,
-                    width: state.room.width,
-                    slopes: Some(&content.slopes),
-                },
-                order: ScanOrder::of(state.clock.counters.completed.0),
-            };
+            let completed = state.clock.counters.completed.0;
+            let surroundings = surroundings(&state.room, completed, content, &pass.active);
             let mut touches = Touches::default();
             let contacts = movement::run(
                 &mut state.samus,
@@ -549,6 +545,29 @@ fn gameplay_phase(
         | GameplayPhase::HurtTimers => {}
     }
     Ok(())
+}
+
+/// Where Samus's moves happen this frame: the room's blocks, the vertical scans' order by the
+/// `completed` frame count, and the interactive enemies the selection earlier in the pass
+/// chose.
+fn surroundings<'a>(
+    room: &'a RoomScoped,
+    completed: u16,
+    content: &'a Content,
+    active: &'a crate::enemy::Active,
+) -> Surroundings<'a> {
+    Surroundings {
+        room: Room {
+            blocks: &room.blocks,
+            width: room.width,
+            slopes: Some(&content.slopes),
+        },
+        order: ScanOrder::of(completed),
+        enemies: SolidEnemies {
+            interactive: active.interactive(),
+            slots: &room.enemies.slots,
+        },
+    }
 }
 
 /// The BG scrolls from the camera, then the BG graphics update (`$80:A3AB`).

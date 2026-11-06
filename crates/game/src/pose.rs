@@ -297,6 +297,11 @@ pub fn change(
     samus.pose = pose;
     if pose != samus.previous.pose {
         // "Handle Samus pose change" (`$91:F404`): initialise the pose, then the jump.
+        // open: "Handle collision due to change of pose" (`$91:FDAE`) runs first: a pose with
+        // a larger Y radius checks the difference up and down for solid enemies
+        // (`$A0:A8F0`) and blocks (`$94:96AB`), then moves her to fit or reverts the pose. It
+        // joins with the radius change's block checks; until then `item-morph-ball` frame
+        // 797 lands her on the face block at $29D.2BFF where the oracle has $29B.0000.
         refresh(samus, content);
         jump_transition(samus, content);
         reset_animation(samus, content);

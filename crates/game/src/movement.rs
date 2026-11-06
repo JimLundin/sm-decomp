@@ -16,6 +16,7 @@ pub use air::make_jump;
 use data::movement::{HorizontalSpeeds, Speed, SpeedEntry};
 use data::pose::transition::Control;
 
+use crate::collision::solid_enemy::Direction;
 use crate::collision::{
     self, Body, Contacts, Heading, Side, Surroundings, Touches, VerticalContact,
 };
@@ -64,11 +65,17 @@ struct Mover<'a> {
 }
 
 impl Mover<'_> {
-    /// "Move Samus left" or "right" (`$90:9350`, `$90:93B1`) by a signed `displacement`
-    /// through the blocks (`$94:971E`), then "Kill Samus X speed if collision detected"
-    /// (`$90:E5CE`): a wall cancels her speed boost and zeroes her speeds.
-    // open: solid enemy collision (`$A0:A8F0`) and the slope alignment after the move
-    // (`$94:87F4`, which `$0A46` enables) join with solid enemies and the slopes' flags.
+    /// "Move Samus left" or "right" (`$90:9350`, `$90:93B1`) by a signed `displacement`, then
+    /// "Kill Samus X speed if collision detected" (`$90:E5CE`): a wall cancels her speed boost
+    /// and zeroes her speeds.
+    ///
+    /// The routine goes by the displacement's sign, but the solid enemy check (`$A0:A8F0`)
+    /// looks the way the displacement's calculation set the collision direction
+    /// (`$90:E464`, `$90:E4AD`): `leftwards`. An enemy in the way cuts the move, which then
+    /// meets no block (`$90:9842`, `$90:9826`); otherwise the blocks move her (`$94:971E`), and
+    /// a block counts only when the routine's way is the direction's (`$90:93A0`, `$90:93DB`).
+    // open: the slope alignment after either move (`$94:87F4`, which `$0A46` enables) joins
+    // with the slopes' flags.
     fn move_x(
         &mut self,
         speed: &mut Horizontal,
@@ -76,8 +83,33 @@ impl Mover<'_> {
         leftwards: bool,
         position: &mut Point,
     ) {
-        let room = self.surroundings.room;
-        if collision::move_x(room, self.body, position, displacement, self.touches).collided {
+        let direction = if leftwards {
+            Direction::Left
+        } else {
+            Direction::Right
+        };
+        let backwards = displacement.pixels().cast_signed() < 0;
+        let distance = if backwards {
+            Speed(displacement.0.wrapping_neg())
+        } else {
+            displacement
+        };
+        let enemies = self.surroundings.enemies;
+        let contact = enemies.check(direction, self.body, distance, position);
+        let stopped = if let Some(cut) = contact.distance() {
+            let signed = if backwards {
+                Speed(cut.0.wrapping_neg())
+            } else {
+                cut
+            };
+            position.x = collision::advance(position.x, signed);
+            true
+        } else {
+            let room = self.surroundings.room;
+            let moved = collision::move_x(room, self.body, position, displacement, self.touches);
+            moved.collided && backwards == leftwards
+        };
+        if stopped {
             self.contacts.wall = Some(if leftwards { Side::Left } else { Side::Right });
             cancel_speed_boosting(speed);
             *speed = Horizontal::default();
@@ -108,23 +140,36 @@ impl Mover<'_> {
         })
     }
 
-    /// "Move Samus up" or "down" (`$90:93EC`, `$90:9440`) by a signed `displacement`
-    /// through the blocks (`$94:9763`), then the solid vertical collision result
-    /// (`$90:E606`, `$90:E61B`).
+    /// "Move Samus up" or "down" (`$90:93EC`, `$90:9440`) by a signed `displacement`, then
+    /// the solid vertical collision result (`$90:E606`, `$90:E61B`).
+    ///
+    /// The solid enemy check (`$A0:A8F0`) comes first: an enemy in the way cuts the move,
+    /// which then meets no block (`$90:988D`, `$90:9871`), and stops her as a block would.
+    /// Otherwise the blocks move her (`$94:9763`).
     // The downwards result by movement type (`$90:E65A`, `$90:E676`) is `pose::contact`'s: no
     // phase between the move and the pose update changes the movement type.
     fn move_y(&mut self, displacement: Speed, heading: Heading, position: &mut Point) {
-        let Surroundings { room, order } = self.surroundings;
-        let collided = collision::move_y(
+        let (direction, distance) = match heading {
+            Heading::Up => (Direction::Up, Speed(displacement.0.wrapping_neg())),
+            Heading::Down => (Direction::Down, displacement),
+        };
+        let Surroundings {
             room,
-            self.body,
-            position,
-            displacement,
-            heading,
             order,
-            self.touches,
-        )
-        .collided;
+            enemies,
+        } = self.surroundings;
+        let contact = enemies.check(direction, self.body, distance, position);
+        let collided = if let Some(cut) = contact.distance() {
+            let signed = match heading {
+                Heading::Up => Speed(cut.0.wrapping_neg()),
+                Heading::Down => cut,
+            };
+            position.y = collision::advance(position.y, signed);
+            true
+        } else {
+            let (body, touches) = (self.body, &mut *self.touches);
+            collision::move_y(room, body, position, displacement, heading, order, touches).collided
+        };
         self.contacts.vertical = match (heading, collided) {
             (Heading::Up, true) => VerticalContact::HitCeiling,
             (Heading::Up, false) => VerticalContact::NoChange,
@@ -401,7 +446,7 @@ pub fn ride(
     touches: &mut Touches,
 ) {
     if carried(samus, ride) {
-        let Surroundings { room, order } = surroundings;
+        let Surroundings { room, order, .. } = surroundings;
         let body = body(samus);
         let step = Speed::new(1, 0);
         collision::move_y(

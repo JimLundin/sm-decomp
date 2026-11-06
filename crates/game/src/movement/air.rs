@@ -14,6 +14,7 @@ use data::pose::animation::wall_jump_frame;
 use data::pose::transition::Control;
 
 use super::{Mover, Rules, move_horizontally, over_cap};
+use crate::collision::solid_enemy::Direction;
 use crate::collision::{Heading, VerticalContact};
 use crate::pose::{Content, JUMP_TAKE_OFF, Takeoff, controls};
 use crate::state::samus::{
@@ -227,10 +228,12 @@ fn spin_vertically(
 /// jump with the wall nearer than the reach triggers the wall jump, and she doesn't move
 /// vertically this frame. Left is checked before right.
 ///
+/// A solid enemy that way (`$A0:A8F0`, `$90:9D80`, `$90:9D92`, `$90:9DF8`, `$90:9E1B`) is the
+/// wall, at the distance it cut the look to, and no block is looked for.
+///
 /// The look reaches blocks her move didn't, so it touches them as well: `item-morph-ball`
 /// frame 817 takes the Morph Ball's item 8 pixels to her left.
-// open: the solid enemy collision checked first (`$A0:A8F0`) and the enemy to shake
-// (`$0E1C`) join with solid enemies.
+// open: the enemy to shake (`$0E1C`, `$90:9E64`) has no reader until the enemies' shake.
 fn wall_jump_check(
     spin: Spin,
     animation: &mut Animation,
@@ -241,17 +244,25 @@ fn wall_jump_check(
         return false;
     }
     let reach = Speed::new(WALL_JUMP_REACH, 0);
-    let distance = if spin.pad.left {
-        reach
+    // Holding left, she looks right.
+    let (direction, distance) = if spin.pad.left {
+        (Direction::Right, reach)
     } else if spin.pad.right {
-        Speed(reach.0.wrapping_neg())
+        (Direction::Left, Speed(reach.0.wrapping_neg()))
     } else {
         return false;
     };
     let threshold = wall_jump_frame(spin.pose);
     // The original compares the frame and branches on the difference's sign.
     let eligible = animation.frame.0.wrapping_sub(threshold.0).cast_signed() >= 0;
-    let Some(wall) = mover.check_x(distance, position) else {
+    let enemies = mover.surroundings.enemies;
+    let enemy = enemies
+        .check(direction, mover.body, reach, position)
+        .distance();
+    let Some(wall) = enemy
+        .map(Speed::pixels)
+        .or_else(|| mover.check_x(distance, position))
+    else {
         return false;
     };
     if eligible {

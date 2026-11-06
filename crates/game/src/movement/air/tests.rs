@@ -492,3 +492,118 @@ fn a_wall_behind_her_readies_the_spin_then_triggers_the_wall_jump() {
     );
     assert_ne!(contacts.vertical, VerticalContact::WallJumpTriggered);
 }
+
+/// Falling at 4.0 a frame from Y `y`.`subpixels`, radius $10, over an enemy centred at
+/// ($80, $120): its top is $118.
+fn falling_onto(y: u16, subpixels: u16, solid: bool) -> (Samus, crate::collision::Contacts) {
+    use crate::collision::solid_enemy::{FIRST, SolidEnemies, one_enemy};
+    let content = content();
+    let slots = one_enemy(0x80, 0x120, solid);
+    let surroundings = Surroundings {
+        enemies: SolidEnemies {
+            interactive: &FIRST,
+            slots: &slots,
+        },
+        ..Surroundings::default()
+    };
+    let mut samus = jumping(Speed::new(4, 0), YDirection::Down);
+    samus.movement = Movement::Falling {
+        speed: Horizontal::default(),
+        vertical: vertical(&samus),
+    };
+    samus.y_radius = 0x10;
+    samus.position.y = at(y, subpixels);
+    let contacts = run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        surroundings,
+        &mut Touches::default(),
+    );
+    (samus, contacts)
+}
+
+#[test]
+fn a_fall_onto_a_solid_enemy_is_cut_to_its_top_and_lands_her() {
+    // Her bottom, $105 + $10, is 3 pixels above the enemy's top: the 4-pixel fall is cut to
+    // 3, with no fraction, and no block is looked for.
+    let (samus, contacts) = falling_onto(0x0105, 0x4000, true);
+    assert_eq!(contacts.vertical, VerticalContact::Landed);
+    assert_eq!(samus.position.y, at(0x0108, 0x4000));
+    // An enemy that isn't solid lets her fall the whole way.
+    let (samus, contacts) = falling_onto(0x0105, 0x4000, false);
+    assert_eq!(contacts.vertical, VerticalContact::Falling);
+    assert_eq!(samus.position.y, at(0x0109, 0x4000));
+}
+
+#[test]
+fn touching_a_solid_enemy_below_lands_her_where_she_is_and_zeroes_her_y_subpixels() {
+    let (samus, contacts) = falling_onto(0x0108, 0x8000, true);
+    assert_eq!(contacts.vertical, VerticalContact::Landed);
+    assert_eq!(samus.position.y, at(0x0108, 0));
+}
+
+#[test]
+fn a_rise_into_a_solid_enemy_is_cut_to_its_bottom_and_hits_the_ceiling() {
+    use crate::collision::solid_enemy::{FIRST, SolidEnemies, one_enemy};
+    let content = content();
+    // The enemy's bottom is $E0 + 8 = $E8; her top, $100 - $10 = $F0, is 8 below it.
+    let slots = one_enemy(0x80, 0xE0, true);
+    let surroundings = Surroundings {
+        enemies: SolidEnemies {
+            interactive: &FIRST,
+            slots: &slots,
+        },
+        ..Surroundings::default()
+    };
+    let mut samus = jumping(Speed::new(0x0A, 0), YDirection::Up);
+    samus.y_radius = 0x10;
+    let contacts = run(
+        &mut samus,
+        &holding(&[Button::A]),
+        &content,
+        surroundings,
+        &mut Touches::default(),
+    );
+    assert_eq!(contacts.vertical, VerticalContact::HitCeiling);
+    assert_eq!(samus.position.y, at(0x00F8, 0));
+}
+
+#[test]
+fn a_solid_enemy_behind_her_is_the_wall_the_wall_jump_check_finds() {
+    use crate::collision::solid_enemy::{FIRST, SolidEnemies, one_enemy};
+    let content = content();
+    // Holding right she looks left: the enemy's right edge, $70 + 8 = $78, is 3 pixels from
+    // her left side at $80 - 5 = $7B, with no block in the room.
+    let slots = one_enemy(0x70, 0x100, true);
+    let surroundings = Surroundings {
+        enemies: SolidEnemies {
+            interactive: &FIRST,
+            slots: &slots,
+        },
+        ..Surroundings::default()
+    };
+    let mut samus = spun(3);
+    run(
+        &mut samus,
+        &holding(&[Button::Right]),
+        &content,
+        surroundings,
+        &mut Touches::default(),
+    );
+    assert_eq!(
+        (samus.animation.frame, samus.animation.timer),
+        (AnimationFrame(0x0A), AnimationTimer(1))
+    );
+    let mut samus = spun(0x0B);
+    let mut jump = holding(&[Button::Right, Button::A]);
+    jump.pressed.bits = Button::A.bit();
+    let contacts = run(
+        &mut samus,
+        &jump,
+        &content,
+        surroundings,
+        &mut Touches::default(),
+    );
+    assert_eq!(contacts.vertical, VerticalContact::WallJumpTriggered);
+}

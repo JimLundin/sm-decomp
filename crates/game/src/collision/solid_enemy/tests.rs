@@ -86,12 +86,37 @@ fn frame_797_fall_is_cut_to_the_face_blocks_top() {
 }
 
 #[test]
-fn the_oracles_resting_y_is_the_one_a_y_radius_of_0x15_reaches() {
-    // The oracle rests her at Y $29B, whose bottom boundary is $2AF only with a radius of $15.
-    // open: whether her landing pose takes the radius from $13 to $15 and lifts her by the
-    // difference, or the frame-797 radius was $15 all along, the wiring settles.
-    let contact = detect(&falling(0x297, 0x15), [face_block()]);
-    assert_eq!(landed(0x297, contact), Some(0x29B));
+fn the_oracles_frame_797_lands_her_at_0x29d_and_the_landing_poses_radius_lifts_her_to_0x29b() {
+    // The oracle's frame 796 ends at Y $29A.2BFF falling at 4.9800, with the Y radius $13
+    // ($0B00 is $13 on frames 795 to 797 and $15 from 798, pose $A5's). The fall's target is
+    // $29A + 4 + 1 = $29F, and the gap from her bottom, $2AD, to the block's top is 3.
+    let fall = Move {
+        direction: Direction::Down,
+        position: point(0x494, 0x29A, 0x2BFF),
+        body: body(0x13),
+        distance: Speed::new(4, 0x9800),
+    };
+    let contact = detect(&fall, [face_block()]);
+    assert_eq!(
+        contact,
+        Contact::Blocked {
+            slot: slot(5),
+            distance: 3
+        }
+    );
+    assert_eq!(landed(0x29A, contact), Some(0x29D));
+    // The pose change to the landing pose $A5 grows her radius by 2 ("Handle collision due
+    // to change of pose", `$91:FDAE`): its downward check of 2 pixels with the old radius
+    // touches the block, zeroing her Y subpixels, so she is lifted by the 2 to $29B.0000.
+    let grown = Move {
+        position: point(0x494, 0x29D, 0x2BFF),
+        distance: Speed::new(2, 0),
+        ..fall
+    };
+    assert_eq!(
+        detect(&grown, [face_block()]),
+        Contact::Touching { slot: slot(5) }
+    );
 }
 
 #[test]
