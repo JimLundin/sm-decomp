@@ -1248,3 +1248,45 @@ the port callbacks, registered in the server's main chunk after its
 fade behaviour: each lsnes record now carries the picture scanned out in its
 video frame, dot-identical as shown to LakeSnes on 1001 of 1001 steps at
 0-1000 and 20000-21000. The streams cost lsnes 26% (was 3.1x).
+
+## (s) lsnes's APU port log after a resume: the port mirrors, not the load order
+
+**Question.** (r) left the APU log empty on a resumed lsnes (0 CPU accesses
+against LakeSnes's 404 over any% 20000-21000), blamed on the port callbacks
+being registered after the server's `load-state`.
+
+**Cause.** Not the order. With the callbacks moved before `load-state` the
+log stayed empty; a temporary counter per bank (`$00-$3F`, `$80-$BF`, each of
+`$2140-$2143`) showed why: over 20000-21001 the game reaches the ports only
+through banks `$82` (356 accesses) and `$85` (50), its data bank, and the
+server hooked only `$00` and `$80`. The power-on window has the same gap: over
+0-1001, `$00` 845,336, `$80` 4 and `$82` 237. The fix registers the callbacks
+in every bank that maps the I/O page.
+
+**Command.** As (r): `oracle cross ROM any.inputs --frames 20000..21000
+--streams --right-from 020000.lss 20000`, and `--frames 0..1000 --streams`
+from power-on; private DLL from this branch.
+
+| APU log, any% | Accesses LakeSnes / lsnes | Steps differing |
+| --- | --- | --- |
+| 20000-21000 resumed, (r) | 404 / 0 | 211 |
+| 20000-21000 resumed, all banks | 404 / 406 | 12 (20265-20270, 20871-20876) |
+| 0-1000 power-on, (r) | 845,048 / 845,053 | 274 |
+| 0-1000 power-on, all banks | 845,048 / 845,290 | 175 |
+
+The other parts are as in (r) (picture, ppu, vram, cgram, oam equal
+throughout). The 237 `$82` accesses at power-on fall in 101 steps (354-979);
+on 99 of them lsnes's count now equals LakeSnes's, which had them all along.
+
+**The power-on remainder.** With every bank logged, lsnes makes 242 more port
+accesses than LakeSnes over 0-1000, spread over 113 steps in the SPC upload
+phases (169-253, 318-354, 641-673, 982-1000; 82 of them at step 673), a few
+per step: the CPU's handshake polls of the port, whose count follows the
+SPC700's timing against the CPU's (the APU clock, HARNESS.md fixes 0001/0002).
+(r)'s 5 was this surplus less the 237 missed `$82` accesses. The 12 resumed
+steps are two short handshakes, 2 polls apart over the window.
+
+**Conclusion.** The APU log holds on a resumed lsnes; it differs from
+LakeSnes only in handshake poll counts. Records without streams are
+unchanged (the callbacks are registered only for a T request; `ladder-check`
+of the any% rung 20000 -> 30000 equal to the stored record).
