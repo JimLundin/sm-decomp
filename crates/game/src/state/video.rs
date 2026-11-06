@@ -130,18 +130,47 @@ pub struct Registers {
     pub scroll: [Scroll; SCROLLED_BACKGROUNDS],
 }
 
+/// Where a queued VRAM upload's words come from.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub enum VramSource {
+    /// Words from a State buffer, as the NMI's DMA reads them.
+    Words(Vec<u16>),
+    /// ROM graphics that content doesn't decode yet, by length in words.
+    // open: B3's graphics content gives this a `data` reference; until then the upload
+    // writes nothing and lockstep shows it.
+    Content(u16),
+}
+
+impl Default for VramSource {
+    fn default() -> Self {
+        Self::Words(Vec::new())
+    }
+}
+
+/// How VRAM's address moves after each word an upload writes.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum VramStep {
+    /// To the next word: along a tilemap row.
+    #[default]
+    Row,
+    /// 32 words on: down a tilemap column.
+    Column,
+}
+
 /// A queued VRAM upload.
 #[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
 pub struct VramTransfer {
     /// Where it lands.
     pub to: VramWord,
+    /// How the address moves.
+    pub step: VramStep,
     /// What it writes.
-    pub words: Vec<u16>,
+    pub source: VramSource,
 }
 
 /// What the next requested NMI commits.
-// open: CGRAM uploads and the HDMA channel table join with palette FX and HDMA objects.
-#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
+// open: the HDMA channel table joins with HDMA objects (B6).
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct NmiBatch {
     /// The register mirrors.
     pub registers: Registers,
@@ -149,8 +178,22 @@ pub struct NmiBatch {
     pub oam: Oam,
     /// The entries drawn into the OAM buffer so far this frame, from the first.
     pub sprites: SpriteCount,
+    /// The palette buffer, which every requested NMI uploads to CGRAM whole.
+    pub cgram: [Colour; CGRAM_COLOURS],
     /// The VRAM uploads, in queue order.
     pub vram: Vec<VramTransfer>,
+}
+
+impl Default for NmiBatch {
+    fn default() -> Self {
+        Self {
+            registers: Registers::default(),
+            oam: Oam::default(),
+            sprites: SpriteCount::default(),
+            cgram: [Colour::default(); CGRAM_COLOURS],
+            vram: Vec::new(),
+        }
+    }
 }
 
 /// Video: the memories, what's committed and what's queued.

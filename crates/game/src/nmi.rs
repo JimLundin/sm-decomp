@@ -92,15 +92,15 @@ pub fn nmi(state: &mut State, rules: Rules, timing: NmiTiming, pad: Buttons) -> 
 /// One commit step.
 fn run(command: NmiCommand, state: &mut State, rules: Rules, pad: Buttons) {
     match command {
-        // open: the CGRAM half joins with palette FX's uploads.
-        NmiCommand::OamAndCgram => state.video.memory.oam = state.video.batch.oam,
-        // open: the video batch's transfers are B5's; HDMA is B6's.
+        NmiCommand::OamAndCgram => state.video.upload_oam_and_cgram(),
+        NmiCommand::IoRegisters => state.video.commit_registers(),
+        NmiCommand::VramWrites => state.video.process_vram_writes(),
+        // open: Samus's and the animated tiles join with their content (B3, C lanes); mode 7
+        // and the read table have no slice 0 user; HDMA is B6's.
         NmiCommand::SamusTiles
         | NmiCommand::AnimatedTiles
-        | NmiCommand::IoRegisters
         | NmiCommand::HdmaQueue
         | NmiCommand::Mode7
-        | NmiCommand::VramWrites
         | NmiCommand::VramReads
         | NmiCommand::HdmaEnable => {}
         NmiCommand::ReadController => latch(&mut state.controller, rules, pad),

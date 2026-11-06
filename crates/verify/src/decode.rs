@@ -13,13 +13,15 @@ use game::state::samus::{Equipment, Fixed, Gauge, Item, Items, Point, Samus};
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
-    CGRAM_COLOURS, Colour, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, VRAM_WORDS, Video, VideoMemory,
+    Brightness, CGRAM_COLOURS, Colour, Layers, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, Registers,
+    SCROLLED_BACKGROUNDS, Scroll, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep,
+    VramTransfer, VramWord,
 };
 use game::state::{
     Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
     State, Timing,
 };
-use oracle_record::{Cut, FrameRecord, NmiKind};
+use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
 
 use crate::source::{self, WramBlock, WramByte, WramWord};
 use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
@@ -223,6 +225,20 @@ pub struct Rules<'t> {
     pub nmi_requested: WramByte,
     /// `video.batch.oam`.
     pub oam_buffer: WramBlock,
+    /// `video.batch.cgram`.
+    pub palette_buffer: WramBlock,
+    /// `video.batch.vram`: the queue.
+    pub vram_queue: WramBlock,
+    /// `video.batch.vram`: the queue's end.
+    pub vram_queue_tail: WramWord,
+    /// `video.batch.registers.forced_blank`, `.brightness`.
+    pub inidisp: WramByte,
+    /// `video.batch.registers.main_screen`.
+    pub main_screen: WramByte,
+    /// `video.batch.registers.sub_screen`.
+    pub sub_screen: WramByte,
+    /// `video.batch.registers.scroll`.
+    pub scroll: [[WramWord; 2]; SCROLLED_BACKGROUNDS],
     /// `samus.equipment.collected`.
     pub collected: WramWord,
     /// `samus.equipment.equipped`.
@@ -282,6 +298,13 @@ impl Rules<'_> {
         room: source::ROOM_PTR,
         nmi_requested: source::WAITING_FOR_NMI,
         oam_buffer: source::OAM,
+        palette_buffer: source::PALETTE_BUFFER,
+        vram_queue: source::VRAM_WRITE_QUEUE,
+        vram_queue_tail: source::VRAM_WRITE_QUEUE_TAIL,
+        inidisp: source::REG_INIDISP,
+        main_screen: source::REG_TM,
+        sub_screen: source::REG_TS,
+        scroll: source::REG_BG_SCROLL,
         collected: source::COLLECTED_ITEMS,
         equipped: source::EQUIPPED_ITEMS,
         energy: source::SAMUS_HEALTH,
@@ -412,17 +435,98 @@ impl Rules<'_> {
         Ok(Decoded { state, quiescence })
     }
 
-    /// Video: the PPU's memories, the NMI request and the OAM buffer.
+    /// Video: the PPU's memories and registers, the NMI request and the batch.
     fn video(&self, record: &FrameRecord) -> Result<Video, DecodeError> {
+        let wram = &*record.wram;
         Ok(Video {
             memory: video_memory(record)?,
-            nmi_requested: flag(self.nmi_requested, &record.wram)?,
+            committed: committed(&record.ppu)?,
+            nmi_requested: flag(self.nmi_requested, wram)?,
             batch: NmiBatch {
-                oam: oam(self.oam_buffer.read(&record.wram)?)?,
+                registers: self.mirrors(wram)?,
+                oam: oam(self.oam_buffer.read(wram)?)?,
+                cgram: colours(self.palette_buffer.read(wram)?),
+                vram: self.vram_queue(wram)?,
                 ..NmiBatch::default()
             },
-            ..Video::default()
         })
+    }
+
+    /// The register mirrors `$80:91EE` writes to the PPU.
+    fn mirrors(&self, wram: &[u8]) -> Result<Registers, DecodeError> {
+        let (forced_blank, brightness) = display(self.inidisp.read(wram)?);
+        let mut scroll = [Scroll::default(); SCROLLED_BACKGROUNDS];
+        for (layer, [x, y]) in scroll.iter_mut().zip(self.scroll) {
+            *layer = Scroll {
+                x: x.read(wram)?,
+                y: y.read(wram)?,
+            };
+        }
+        Ok(Registers {
+            forced_blank,
+            brightness,
+            main_screen: layers(self.main_screen.read(wram)?, self.main_screen.name)?,
+            sub_screen: layers(self.sub_screen.read(wram)?, self.sub_screen.name)?,
+            scroll,
+        })
+    }
+
+    /// The VRAM write queue up to its end (bank $80 log, `$80:8C83`). An upload from work
+    /// RAM carries the words the DMA reads; one from ROM is a content reference.
+    fn vram_queue(&self, wram: &[u8]) -> Result<Vec<VramTransfer>, DecodeError> {
+        let tail = self.vram_queue_tail.read(wram)?;
+        let queue = self.vram_queue.read(wram)?.get(..usize::from(tail)).ok_or(
+            DecodeError::Unrepresentable {
+                source: self.vram_queue_tail.name,
+                value: tail,
+            },
+        )?;
+        let (entries, rest) = queue.as_chunks::<VRAM_QUEUE_ENTRY>();
+        if !rest.is_empty() {
+            return Err(DecodeError::Unrepresentable {
+                source: self.vram_queue_tail.name,
+                value: tail,
+            });
+        }
+        entries
+            .iter()
+            .map(
+                |&[
+                    size_low,
+                    size_high,
+                    from_low,
+                    from_high,
+                    bank,
+                    to_low,
+                    to_high,
+                ]| {
+                    let size = u16::from_le_bytes([size_low, size_high]);
+                    // A DMA of size 0 moves 64 KiB.
+                    let bytes = if size == 0 {
+                        0x1_0000
+                    } else {
+                        usize::from(size)
+                    };
+                    if bytes % 2 != 0 {
+                        return Err(DecodeError::Unrepresentable {
+                            source: self.vram_queue.name,
+                            value: size,
+                        });
+                    }
+                    let to = u16::from_le_bytes([to_low, to_high]);
+                    let from = u16::from_le_bytes([from_low, from_high]);
+                    Ok(VramTransfer {
+                        to: VramWord(to & VRAM_ADDRESS_BITS),
+                        step: if to & VRAM_COLUMN_BIT == 0 {
+                            VramStep::Row
+                        } else {
+                            VramStep::Column
+                        },
+                        source: vram_source(wram, bank, from, bytes),
+                    })
+                },
+            )
+            .collect()
     }
 
     /// The interrupt strand: the IRQ handler's command, at the line VTIME holds.
@@ -622,4 +726,86 @@ fn oam(bytes: &[u8]) -> Result<Oam, DecodeError> {
         };
     }
     Ok(oam)
+}
+
+/// A VRAM write queue entry's size in bytes.
+const VRAM_QUEUE_ENTRY: usize = 7;
+/// The queue's destination bit for the 32-word step.
+const VRAM_COLUMN_BIT: u16 = 0x8000;
+/// The destination's word address.
+const VRAM_ADDRESS_BITS: u16 = 0x7FFF;
+/// INIDISP's forced blank bit.
+const FORCED_BLANK: u8 = 0x80;
+/// INIDISP's brightness bits.
+const BRIGHTNESS: u8 = 0x0F;
+/// TM's and TS's layer bits, BG1 to BG4 then sprites: `Layer`'s declaration order.
+const LAYER_BITS: u8 = 0x1F;
+
+/// Forced blank and brightness from INIDISP's value.
+const fn display(inidisp: u8) -> (bool, Brightness) {
+    (
+        inidisp & FORCED_BLANK != 0,
+        Brightness(inidisp & BRIGHTNESS),
+    )
+}
+
+/// The layers a TM or TS value from `source` enables.
+///
+/// # Errors
+///
+/// [`DecodeError::Unrepresentable`] when it sets a bit the PPU has no layer for.
+fn layers(screen: u8, source: &'static str) -> Result<Layers, DecodeError> {
+    if screen & !LAYER_BITS != 0 {
+        return Err(DecodeError::Unrepresentable {
+            source,
+            value: u16::from(screen),
+        });
+    }
+    Ok(FlagSet {
+        bits: u32::from(screen),
+        ..FlagSet::default()
+    })
+}
+
+/// Little-endian BGR555 colours.
+fn colours(bytes: &[u8]) -> [Colour; CGRAM_COLOURS] {
+    let mut colours = [Colour::default(); CGRAM_COLOURS];
+    for (colour, &pair) in colours.iter_mut().zip(bytes.as_chunks::<2>().0) {
+        *colour = Colour(u16::from_le_bytes(pair));
+    }
+    colours
+}
+
+/// Where an upload's bytes come from: work RAM in banks $7E and $7F, or ROM.
+fn vram_source(wram: &[u8], bank: u8, from: u16, bytes: usize) -> VramSource {
+    let start = match bank {
+        0x7E => usize::from(from),
+        0x7F => usize::from(from) | 0x1_0000,
+        _ => return VramSource::Content(u16::try_from(bytes / 2).unwrap_or(u16::MAX)),
+    };
+    let words = (0..bytes / 2)
+        .map(|index| {
+            let at = start.wrapping_add(index.wrapping_mul(2));
+            let byte = |offset: usize| wram.get(at.wrapping_add(offset)).copied().unwrap_or(0);
+            u16::from_le_bytes([byte(0), byte(1)])
+        })
+        .collect();
+    VramSource::Words(words)
+}
+
+/// The registers the PPU holds at the cut, from the record's register struct.
+fn committed(ppu: &PpuRegisters) -> Result<Registers, DecodeError> {
+    let [main, sub, _, _] = ppu.screens;
+    let (forced_blank, brightness) = display(ppu.inidisp);
+    let mut scroll = [Scroll::default(); SCROLLED_BACKGROUNDS];
+    for (layer, &[x, y]) in scroll.iter_mut().zip(&ppu.bg_scroll) {
+        *layer = Scroll { x, y };
+    }
+    Ok(Registers {
+        forced_blank,
+        brightness,
+        main_screen: layers(main, "ppu.screens[0]")?,
+        sub_screen: layers(sub, "ppu.screens[1]")?,
+        scroll,
+    })
 }
