@@ -7,6 +7,7 @@ publish = false
 description = "The oracle record to State decoder, the stream projections, facts and lock comparison"
 
 [dependencies]
+canonical = { path = "../canonical" }
 data = { path = "../data" }
 game = { path = "../game" }
 oracle_record = { path = "../oracle_record" }
