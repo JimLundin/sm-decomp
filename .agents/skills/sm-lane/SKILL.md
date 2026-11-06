@@ -37,7 +37,8 @@ Production lines are advisory; add none without a reason.
 
 ## Check every commit
 
-Run `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`.
+Run `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`, and
+`bash tools/lane/run_tests.sh <crate>...` for the crates you touched before pushing.
 Then get the replays your change needs through CI: see the `sm-check` skill.
 
 ## Report
@@ -55,8 +56,8 @@ the handoff and stop your background jobs.
 
 ## Traps
 
-- A locked-down Windows machine can't run test executables (exit 126). Compile-check
-  there and replay in CI.
+- A locked-down Windows machine can't run test executables (exit 126);
+  `run_tests.sh` runs them as DLLs instead. Doc tests run only in CI.
 - Python on Windows writes CRLF unless you pass `newline="\n"`.
 - `gh` can time out; wrap it in `timeout 600`.
 - Other lanes fetch in the shared repo, so the landing branch moves while you
