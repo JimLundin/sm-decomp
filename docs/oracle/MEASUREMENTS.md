@@ -797,3 +797,145 @@ phase of the pass is longer.
 **Speed.** 271 frames/s with 0004 (133.0 s for 36000), 260 frames/s for
 0001+0002 in the same session (138.5 s); the run with 0004 plays more of the
 game, so the two are not the same work after 18587.
+
+## (m) 35175: a 30-clock miss of the NMI request, from HDMA on the HUD lines
+
+**Command.** As in (k), with fixes 0001+0002+0004 (a private DLL built from
+`32eaa1838`). LakeSnes: `oracle movie ROM any.inputs --frames N --no-picture
+--oracle lakesnes --trace FROM TO PC,...` from power-on (2.2-2.7 min). lsnes:
+the same with `--oracle lsnes --from 030000.lss 30000` (the any% ladder rung)
+and `OH_TRACE`, `OH_TRACE_LOG`, `OH_TRACE_FROM`. Three rounds: the main loop
+over 35150-35204; the loop and every call of door function `$82:E737` (fade
+in, run enemies) over 35160-35179; 16 PCs inside the fade's colour routines
+(`$82:DA24`-`$DAED`, the division at `$DAC9`-`$DAE3`) over 35173-35175.
+
+**(l) misread the step.** From 35152 every pass is `$E737`, and both
+emulators enter their waits at the same beam, within about 40 clocks, pass
+for pass: 233/358 and 233/360, 226, 226, 224/906 and 224/904, 222/1152 and
+222/1160, 224/1260 and 224/1230, 224/316 and 224/360, then line 229 (four
+passes on both), then 108/588 and 108/612 in gameplay. lsnes also enters on
+line 229 from 35181; its record's `wait` field shows each wait a step earlier.
+The step attribution differs from 35175 on. There LakeSnes enters its wait at
+224/1260 and lsnes at 224/1230. The wait routine (`$80:8338`) is PHP, PHB,
+PHK, PLB, SEP, `LDA #$01` and then `STA $05B4` (NMI request flag) at
+`$80:8340`, about 104-120 clocks of work before the store. On lsnes the store
+comes before the line-225 NMI: the NMI is `Requested` (interrupted at
+`$80:8346`), a 2-frame pass. On LakeSnes the NMI interrupts at `$80:8340`,
+before the store: the game counts it as a lag frame (`Overrun`) and waits one
+more frame. From 35175 LakeSnes is one step behind (`$05B8` one ahead with
+`$05B6` equal, as (l) saw). It enters gameplay a step late at 35200, and
+Samus's movement then gets the wrong inputs. A 30-clock difference after a
+2-frame pass decides it.
+
+**Phase table**, the pass from the 35172 wait to the 35175 wait, master
+clocks between watched PCs (LakeSnes / lsnes):
+
+| Phase (from, to) | LakeSnes / lsnes | Difference |
+| --- | --- | --- |
+| wait to `$82:8948` (NMI, vblank) | 26220 / 26218 | +2 |
+| `$8948` to `$894F` (HDMA objects) | 4662 / 4662 | 0 |
+| `$894F` to `$8963` | 1494 / 1494 | 0 |
+| `$8963` to `$E288` to `$E737` | 128 + 126 / the same | 0 |
+| `$E737` to `$E73B` (animated tiles) | 1358 / 1358 | 0 |
+| `$E73B` to `$E73F` (which enemies) | 14560 / 14560 | 0 |
+| `$E73F` to `$E743`: main enemy routine, lines 258-27 | 43002 / 43012 | **-10** |
+| `$E743` to `$E747`: enemy projectiles | 3012 / 3006 | +6 |
+| `$E747` to `$E74B`: draw | 37052 / 37048 | +4 |
+| `$E74B` to `$E74E` to `$E752` | 7800 + 182 / the same | 0 |
+| `$E752` to `$E755`: **palette fade** (`$82:D961`), lines 63-224 and 0-220 | 215196 / 215160 | **+36** |
+| `$E755` to the wait (`$E292`, `$896E`-`$897A`) | 58 + 144 + 1192 + 3620 + 344 + 54 / the same | 0 |
+
+Clocks are beam distance (line x 1364 + dot); a phase that crosses a frame
+counts the frame once on both. The pass starts 6 clocks early on LakeSnes
+(`$E288` at 246/920 against 246/926) and ends 30 late. The three passes
+before it show the same pattern: the fade +14, +44 and +32, the main enemy
+routine -38, -28 and -34, the NMI +38, +20 and +8, and every other phase
+equal to the clock. The two phases that differ every pass both cover lines
+0-31, the HUD. The NMI phase (vblank, the NMI's `$420B` transfers) is not
+localized here; in the deciding pass it is +2.
+
+**Where in the fade.** 7099 consecutive watched-PC pairs from `$E752` to
+`$E755`. Both PC sequences are the same once LakeSnes's duplicate hit is
+dropped (it logs the PC an IRQ interrupts twice, before and after the IRQ).
+The running difference (LakeSnes minus lsnes) moves only on lines 0-32:
+
+| Lines | Running difference after them |
+| --- | --- |
+| 63-261, first frame | -2 |
+| 0-32 (HUD), second frame | +24 |
+| 33-261 | +24 |
+| 0-32 (HUD), third frame | +36 |
+| 33-220, to `$E755` | +36 |
+
+Pairs that span the HDMA point (start between dot 600 and 1090, end after
+1112, same line): on lines 33-224, 351 samples, all equal to the clock. On
+lines 1-31, 33 samples: 13 equal, and the rest -6 (4), -2 (3), +2, +4 (2), +6
+(4), +8 (2), plus 4 of +108 where lsnes's pause falls in the next pair
+(cancelled there by -108 or -114). Net about +0.7 clocks per HUD line, with
+2-8 clocks of noise either way. The DRAM refresh shows as a matched +40 and
+-40 pair (the hit lands after the pause, dot 532 on LakeSnes against 578)
+and cancels. During the fade HDMAEN is `$84`: channel 7 (DMAP `$43`,
+indirect, mode 3, 4 bytes to the BG3 scroll, the HUD split) and channel 2
+(DMAP `$42`, indirect, mode 2). Channel 7 transfers on the HUD lines.
+
+**Mechanism (hypothesis).** On the lines where a channel transfers, the HDMA
+pause rounds differently. It is not a fixed extra cost. anomie's SNES timing
+doc (revision 1126, sections "HDMA" and "DMA"):
+
+- HDMA starts "at dot 278 of the scanline (or just after, the current CPU
+  cycle is completed before pausing)".
+- Per line it costs "~18 master cycles overhead" while a channel runs,
+  "another 8 master cycles" per active channel, "16 master cycles" for a new
+  indirect address, and "8 cycles per byte".
+- The pause is aligned as a DMA is. Before the transfer it waits "2-8 master
+  cycles to reach a whole multiple of 8 master cycles since reset". After it,
+  it waits "2-8 master cycles to reach a whole number of CPU Clock cycles
+  since the pause", where "the speed of the next CPU cycle to execute after
+  the DMA determines the CPU Clock speed".
+
+LakeSnes (MIT) does this differently:
+
+- It requests HDMA at master clock 1104 (dot 276, not 278) and starts the
+  pause at the next CPU access.
+- It charges 8 clocks of line overhead (not ~18), 8 per running channel (in
+  its update loop), 8 per byte, and 8 + 8 for an indirect address.
+- It aligns the start to a multiple of 8 since power-on and the end to the
+  speed of the access that triggered the pause.
+
+Any of the start point, the overhead constant or the alignment phase moves
+the CPU-clock rounding by 2-8 clocks on a line, depending on where the CPU is.
+That fits the pattern: noise with a small mean, only on lines where bytes
+move. On lines 33-224 the pairs match exactly.
+
+The other candidates do not fit:
+
+- General DMA: there is none during the fade.
+- DRAM refresh: matched.
+- The division and multiply registers: the fade's division pairs are equal
+  away from the HUD lines.
+- WRAM and FastROM access speed: equal everywhere else.
+- The APU: no port accesses here.
+
+The H/V IRQ trigger point is a candidate on line 0 only. anomie puts a V-IRQ
+at "1374 master cycles after dot 0.0 of the previous scanline" and an H-IRQ
+at "14+H*4", and LakeSnes raises it at `hPos == HTIME*4`. The line-0 IRQ pair
+is +6, a small part of the +36. fullsnes and the nesdev wiki give no HDMA
+clock counts. No GPL code was read.
+
+**Next.** The fix lane first measures the HUD lines, then changes one thing
+at a time and keeps 0-17974 unchanged ((l)'s check):
+
+1. Log each HDMA pause on lines 0-32 from LakeSnes: start clock, clocks since
+   power-on mod 8, the speed of the triggering access, the work and the end.
+   Use the 35173-35175 fade, beside lsnes's watched-PC pairs on the same
+   lines. lsnes cannot log the pause itself.
+2. Try variants one at a time, each scored by the HUD-line pair sum against
+   lsnes (the target is 0 over the 33 samples): a line overhead of 18 instead
+   of 8; the request at 1112 (dot 278) instead of 1104; the H/V-IRQ point per
+   anomie.
+3. Keep the variant that zeroes the HUD lines and rerun (l)'s any%
+   classification. 35175 should become `Requested`. The boot (exact through
+   395), 1342, 8465/8469 and 17985 must not move.
+
+The margin here is about 30 clocks after a 2-frame pass. Any per-line error
+left near vblank shows up as a one-step lag.
