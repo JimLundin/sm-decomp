@@ -557,6 +557,30 @@ vertical speed (`$A3:9612`). Five hand-worked unit tests. Remaining:
   (`$90:F084`), the projectile reset (`$90:AD22`), the elevator's hurt AI, time frozen,
   collisions, the shake request and global off-screen processing.
 
+**C8a status (`lane/slice0-c8`), the enemy instruction lists.** Done: `data::enemy::program`
+decodes the lists slice 0's species start (`SLICE_ZERO_LISTS`: the elevator's `$A3:94D6`, the
+eye's eleven in `$A8:8FAC-$A8:904A`, the face block's three at `$A8:E80C-$A8:E828`) and every
+list they go to into `EnemyPrograms`: an `Instruction` per step (`Show { delay, spritemap }`,
+and the common instructions `$A0:807C` delete, `$A0:808A` call with an empty `Function` enum,
+`$A0:80ED` go-to, `$A0:8110` decrement-and-go-to, `$A0:8123` timer, `$A0:812F` sleep,
+`$A0:813A` wait, `$A0:8173`/`$A0:817D` off-screen; any other routine is an error). A program
+is a run of steps that fall through, so each address has one `Target` (an address entered
+mid-list, as the eye's closed lists are, is a step of the longer one); spritemaps get dense
+`SpritemapId`s, with the inits' empty `$A3:804D`/`$A8:804D`; steps that can loop without
+stopping are rejected at load (ROM test). `game::enemy::instructions::process` is `$A0:C26A`,
+run after the frame count for a slot with `ProcessesInstructions`: a frozen slot waits; the
+timer counts down and clears `GraphicUpdated`; at its end the steps run to a frame (timer,
+`EnemyCommon::spritemap`, cursor past it, `GraphicUpdated` set), a wait, a sleep (the cursor
+stays on it, so the timer then wraps below zero) or a delete (`Deleted`, `Occupancy::Deleting`);
+`Content::enemy_programs` holds the programs. verify decodes `+1A` and `+16` in the slot's AI
+bank (`+2E`) through `RoomMap::programs` (`with_programs`; a free slot keeps defaults, an
+occupied slot's unknown pointer is `Unrepresentable`), rows `cursor.at` and `spritemap` with
+comparators and moved-field mutants. Lockstep at `28ec682` + this lane: `area-brinstar` every
+enemy field equal on all 476 Ticks (83 Ticks now differ only in OAM); `item-morph-ball` enemies
+differ on 83 Ticks (from 1,028): `elevator.armed` at 688, then from 1217 the eye's slot 1
+(`cursor.at`, `cursor.delay`, `extra_properties`, `spritemap`, AI word `e`), which its AI
+starting the activating list explains: the eye's AI is the rest of C8.
+
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
 running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of
