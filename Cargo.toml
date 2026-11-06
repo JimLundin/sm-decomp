@@ -1,14 +1,12 @@
 [workspace]
 resolver = "3"
 members = [
-    # The old game and its compatibility crates, deleted as the new engine covers them.
-    "sm", "crates/sm_app", "crates/sm_host", "crates/sm_data", "crates/sm_game", "crates/sm_runtime", "crates/sm_tools",
     # The rebuild (docs/architecture/ARCHITECTURE.md §4, crates/README.md).
     "crates/app", "crates/canonical", "crates/canonical_derive", "crates/data", "crates/game", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/verify",
 ]
 
-# The new crates' lint set (PRINCIPLES K5, K7, K8), taken by each with `[lints] workspace = true`;
-# the old crates keep their own tables. Sites are never silenced with `allow` or `expect`.
+# The new crates' lint set (PRINCIPLES K5, K7, K8), taken by each with `[lints] workspace = true`.
+# Sites are never silenced with `allow` or `expect`.
 # Tests may unwrap, expect, panic and index through clippy.toml's `allow-*-in-tests`.
 # `game` adds `float_arithmetic` in its crate root: the original has no floats.
 [workspace.lints.rust]

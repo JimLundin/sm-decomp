@@ -1,9 +1,8 @@
 //! The digest of the verification streams, shared by the oracle's recorder and
 //! the engine's verifier so both sides compute the same marks (RELOCK §2).
 //!
-//! Moved from `sm_data::digest` bit for bit: every committed lock digest
-//! depends on these constants. `sm_data` keeps its copy for the old verifier
-//! until `sm/` is deleted.
+//! Every committed lock digest depends on these constants. They were moved
+//! bit for bit from the old engine (git tag `archive/old-engine`).
 
 use core::hash::Hasher;
 

@@ -3,7 +3,7 @@
 //! existing lock is theirs. The oracle never runs with them
 //! (`OracleId::patches` stays empty); a diagnosed run is not a record.
 
-/// One kept patch of the old stepper (`tools/snesrev_patches.py`), as bytes.
+/// One kept patch of the old stepper (`snesrev_patches.py` at git tag `archive/old-engine`), as bytes.
 #[derive(Clone, Copy, Debug)]
 pub struct KeptPatch {
     pub name: &'static str,

@@ -1,7 +1,7 @@
 //! Per-frame stream digests and their running fold.
 //!
 //! Two definitions sit side by side. `Legacy` is the existing lock's, where
-//! the harness can compute it (`sm_host`'s `result_digests`, frozen with the
+//! the harness can compute it (the old engine's `result_digests` at git tag `archive/old-engine`, frozen with the
 //! lock). `V1` is the oracle contract's: raw memories, the architectural PPU
 //! registers, the APU port log and the PPU-domain picture.
 
@@ -17,7 +17,7 @@ pub const MARK_FRAMES: u32 = 1000;
 
 /// LEGACY(verifier): the WRAM the existing lock's `wram` stream zeroes: the
 /// frozen `LOCK_WRAM_MASK` and snesrev's bug-fix counter `$C2-$C3`, copied
-/// from `crates/sm_host/src/lock_masks.rs` and `verification/observation/machine.rs`
+/// from the old engine's `lock_masks.rs` and `machine.rs` (git tag `archive/old-engine`)
 /// so the harness can match the committed digests. The V1 `wram` stream masks nothing.
 const LOCK_WRAM_MASK: [core::ops::Range<usize>; 32] = [
     0x0000..0x0051,

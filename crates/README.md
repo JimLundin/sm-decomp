@@ -1,9 +1,7 @@
 # Crates
 
 The rebuild's crates, as planned in
-[ARCHITECTURE §4](../docs/architecture/ARCHITECTURE.md#4-packages-and-ownership) (D1). The old
-`sm` and `sm_*` crates keep their names until the new engine covers them and they are deleted;
-no new crate depends on them.
+[ARCHITECTURE §4](../docs/architecture/ARCHITECTURE.md#4-packages-and-ownership) (D1).
 
 | Crate | Owns | May depend on (workspace) |
 | --- | --- | --- |

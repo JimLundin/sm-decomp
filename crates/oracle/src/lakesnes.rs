@@ -626,7 +626,7 @@ fn registers(
 }
 
 /// The existing lock's `ppu` stream: the old PPU struct's fields, hashed in
-/// the order and with the types `sm_host`'s `result_digests` used. LakeSnes's
+/// the order and with the types the old engine's `result_digests` used (git tag `archive/old-engine`). LakeSnes's
 /// struct is the same upstream PPU; the snesrev renderer's register caches
 /// (`windowsel`, `screenEnabled`, `screenWindowed`) are rebuilt from the
 /// registers, and its renderer scratch (`objPixelBufferXX`) is zero.
