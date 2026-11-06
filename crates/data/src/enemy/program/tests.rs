@@ -137,3 +137,41 @@ fn slice_zeros_lists_decode_as_the_bank_logs_say() {
         assert!(programs.spritemap_id(spritemap).is_some());
     }
 }
+
+#[test]
+fn the_eyes_lists_resolve_as_the_bank_log_says() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let programs = EnemyPrograms::slice_zero(cartridge.lorom()).unwrap();
+    let lists = crate::enemy::eye::EyeLists::resolve(&programs).unwrap();
+    // The active frames are one list's first sixteen steps, each ten frames, then back.
+    let [first, ..] = lists.active;
+    for (frame, step) in lists.active.iter().zip(0_u16..) {
+        assert_eq!(*frame, Target { step, ..first });
+        assert!(matches!(
+            programs.step(*frame),
+            Some(Instruction::Show { delay: 10, .. })
+        ));
+    }
+    assert_eq!(
+        programs.step(Target { step: 16, ..first }),
+        Some(Instruction::Goto(first))
+    );
+    // Closing falls through into closed: facing right, closed is deactivating's fourth step.
+    assert_eq!(
+        lists.closed.right,
+        Target {
+            step: 3,
+            ..lists.deactivating.right
+        }
+    );
+    // Opening ends asleep, after four frames.
+    assert_eq!(
+        programs.step(Target {
+            step: 4,
+            ..lists.activating.left
+        }),
+        Some(Instruction::Sleep)
+    );
+}

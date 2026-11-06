@@ -75,6 +75,11 @@ fn programs() -> EnemyPrograms {
 const EYE_BANK: u16 = 0x00A8;
 const EYE_INSTRUCTION: u16 = 0x9004;
 const EYE_SPRITEMAP: u16 = 0x9210;
+/// Slot 0's activated flag (its third AI word) and function (its sixth): the eye's words
+/// hold only these.
+const EYE_ACTIVATED: u16 = 1;
+/// `$A8:912E`, activating.
+const EYE_ACTIVATING: u16 = 0x912E;
 /// Slot 1's AI bank, instruction pointer (its go-to) and spritemap.
 const ELEVATOR_BANK: u16 = 0x00A3;
 const ELEVATOR_INSTRUCTION: u16 = 0x9404;
@@ -128,7 +133,7 @@ fn enemy_slot(
     properties: u16,
     pointers: (Label<Enemy>, SpritemapId),
     occupancy: fn(EnemyBody) -> Occupancy<EnemyBody>,
-    body: fn(AiVariables) -> EnemyBody,
+    body: fn(AiVariables) -> Result<EnemyBody, crate::enemy::UnknownWord>,
 ) -> Slot<EnemyCommon, EnemyBody> {
     let at = |offset: u16| base.wrapping_add(offset);
     let (place, spritemap) = pointers;
@@ -169,14 +174,17 @@ fn enemy_slot(
             parameter_1: at(0x3C),
             parameter_2: at(0x3E),
         },
-        occupancy: occupancy(body(AiVariables {
-            a: at(0x30),
-            b: at(0x32),
-            c: at(0x34),
-            d: at(0x36),
-            e: at(0x38),
-            f: at(0x3A),
-        })),
+        occupancy: occupancy(
+            body(AiVariables {
+                a: at(0x30),
+                b: at(0x32),
+                c: at(0x34),
+                d: at(0x36),
+                e: at(0x38),
+                f: at(0x3A),
+            })
+            .unwrap(),
+        ),
         ..Slot::default()
     }
 }
@@ -199,7 +207,16 @@ fn decodes_the_enemies(state: &State) -> bool {
         0x100E,
         pointers(EYE_BANK, EYE_INSTRUCTION, EYE_SPRITEMAP),
         Occupancy::Live,
-        |variables| EnemyBody::MorphBallEye { variables },
+        |variables| {
+            crate::enemy::body(
+                data::enemy::Behaviour::MorphBallEye,
+                AiVariables {
+                    c: EYE_ACTIVATED,
+                    f: EYE_ACTIVATING,
+                    ..variables
+                },
+            )
+        },
     );
     let elevator = enemy_slot(
         SpeciesId(1),
@@ -222,6 +239,8 @@ fn put(wram: &mut [u8], offset: usize, word: u16) {
 fn put_enemies(wram: &mut [u8]) {
     let eye = [EYE_SPRITEMAP, EYE_INSTRUCTION, EYE_BANK];
     put_enemy(wram, ENEMY_SLOT_0, EYE, 0x1000, eye);
+    put(wram, ENEMY_SLOT_0.wrapping_add(0x34), EYE_ACTIVATED);
+    put(wram, ENEMY_SLOT_0.wrapping_add(0x3A), EYE_ACTIVATING);
     let elevator = [ELEVATOR_SPRITEMAP, ELEVATOR_INSTRUCTION, ELEVATOR_BANK];
     put_enemy(wram, ENEMY_SLOT_1, ELEVATOR, 0x2000, elevator);
     put(wram, 0x0FC6, DELETED_PROPERTIES); // slot 1's properties

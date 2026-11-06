@@ -13,7 +13,7 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
-use game::state::room::{AiVariables, ENEMY_SLOTS, Elevator, EnemyBody};
+use game::state::room::{AiVariables, ENEMY_SLOTS, Elevator, EnemyBody, MorphBallEye};
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
 use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, TickInput};
@@ -91,9 +91,7 @@ macro_rules! enemy {
 /// Each enemy slot's occupancy without its AI words, which their own row compares.
 fn occupant(state: &State) -> [Occupancy<EnemyBody>; ENEMY_SLOTS] {
     let quiet = |body: EnemyBody| match body {
-        EnemyBody::MorphBallEye { .. } => EnemyBody::MorphBallEye {
-            variables: AiVariables::default(),
-        },
+        EnemyBody::MorphBallEye(_) => EnemyBody::MorphBallEye(MorphBallEye::default()),
         EnemyBody::Elevator(_) => EnemyBody::Elevator(Elevator::default()),
         EnemyBody::FaceBlock { .. } => EnemyBody::FaceBlock {
             variables: AiVariables::default(),
@@ -111,7 +109,8 @@ fn variables(state: &State) -> [Option<AiVariables>; ENEMY_SLOTS] {
     state.room.enemies.slots.map(|slot| match slot.occupancy {
         Occupancy::Free => None,
         Occupancy::Live(body) | Occupancy::Deleting(body) => Some(match body {
-            EnemyBody::MorphBallEye { variables } | EnemyBody::FaceBlock { variables } => variables,
+            EnemyBody::MorphBallEye(eye) => crate::enemy::eye_words(eye),
+            EnemyBody::FaceBlock { variables } => variables,
             EnemyBody::Elevator(elevator) => crate::enemy::elevator_words(elevator),
         }),
     })

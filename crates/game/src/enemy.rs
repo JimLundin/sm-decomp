@@ -6,6 +6,7 @@
 //! routine (`$A0:8FD4`) walks it, choosing the AI from the slot's AI handler bits, then
 //! counts the frame, and counts the hurt flash down after drawing.
 
+use crate::pose::Content;
 use crate::state::room::{
     AiHandler, ENEMY_SLOTS, Elevator, ElevatorArming, ElevatorDirection, ElevatorRide,
     ElevatorStatus, EnemyBody, EnemyCommon, EnemyExtraProperty, EnemyProperty,
@@ -13,9 +14,10 @@ use crate::state::room::{
 use crate::state::samus::{Fixed, Samus, Speed};
 use crate::state::slots::{Frames, Occupancy, Slot};
 use crate::state::{Button, Controller, State};
-use data::enemy::program::EnemyPrograms;
+use data::enemy::eye::EyeLists;
 use data::id::SpeciesId;
 
+pub mod eye;
 pub mod instructions;
 
 /// The slots processing this frame, in table order (the original's active enemy indices).
@@ -107,7 +109,7 @@ pub fn select(state: &mut State) -> Active {
 // (the X-ray scope, which skips the frame count and the instructions), the grapple paralysis
 // death, drawing, the sprite objects and the solid-enemy collision reset join with their
 // lanes.
-pub fn run(state: &mut State, active: &Active, programs: &EnemyPrograms) {
+pub fn run(state: &mut State, active: &Active, content: &Content) {
     for &index in active.slots.iter().filter(|&&index| index < ENEMY_SLOTS) {
         let Some(slot) = state.room.enemies.slots.get_mut(index) else {
             continue;
@@ -132,6 +134,7 @@ pub fn run(state: &mut State, active: &Active, programs: &EnemyPrograms) {
             &mut state.elevator,
             &mut state.samus,
             &state.controller,
+            &content.eye_lists,
         );
         slot.common.frame_counter = slot.common.frame_counter.wrapping_add(1);
         if slot
@@ -139,7 +142,7 @@ pub fn run(state: &mut State, active: &Active, programs: &EnemyPrograms) {
             .properties
             .contains(EnemyProperty::ProcessesInstructions)
         {
-            instructions::process(slot, programs);
+            instructions::process(slot, &content.enemy_programs);
         }
         count_flash(slot);
     }
@@ -159,13 +162,14 @@ fn count_flash(slot: &mut Slot<EnemyCommon, EnemyBody>) {
 }
 
 /// The species' AI for `routine` (`$A0:908E`), by its body.
-// open: the eye's AI joins with C8, the face block's with its lane.
+// open: the face block's AI joins with its lane.
 fn ai(
     slot: &mut Slot<EnemyCommon, EnemyBody>,
     routine: AiRoutine,
     ride: &mut ElevatorRide,
     samus: &mut Samus,
     controller: &Controller,
+    eye_lists: &EyeLists,
 ) {
     let (Occupancy::Live(body) | Occupancy::Deleting(body)) = &mut slot.occupancy else {
         return;
@@ -179,7 +183,12 @@ fn ai(
             // open: the elevator's hurt AI, as its header names it.
             AiRoutine::Hurt => {}
         },
-        EnemyBody::MorphBallEye { .. } | EnemyBody::FaceBlock { .. } => {}
+        EnemyBody::MorphBallEye(eye) => match routine {
+            AiRoutine::Main => eye::main_ai(&mut slot.common, eye, samus, eye_lists),
+            // open: the eye's grapple, hurt and frozen AI, as its header names them.
+            AiRoutine::Grapple | AiRoutine::Hurt | AiRoutine::Frozen => {}
+        },
+        EnemyBody::FaceBlock { .. } => {}
     }
 }
 
@@ -447,11 +456,7 @@ mod tests {
         }
         let active = select(&mut state);
         assert_eq!(active, Active { slots: vec![0] });
-        run(
-            &mut state,
-            &active,
-            &data::enemy::program::EnemyPrograms::default(),
-        );
+        run(&mut state, &active, &crate::pose::Content::default());
         let counters: Vec<u16> = state
             .room
             .enemies

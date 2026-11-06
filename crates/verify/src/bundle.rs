@@ -9,6 +9,7 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 
+use data::enemy::eye::EyeLists;
 use data::enemy::program::{EnemyPrograms, ProgramError};
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
@@ -149,6 +150,9 @@ impl std::error::Error for ContentError {}
 /// A [`ContentError`] when the image isn't the release or a table doesn't decode.
 pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let rom = Rom::new(image).map_err(ContentError::Rom)?;
+    let enemy_programs =
+        EnemyPrograms::slice_zero(rom.lorom()).map_err(ContentError::EnemyPrograms)?;
+    let eye_lists = EyeLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
     Ok(Content {
         poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
@@ -156,7 +160,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         vertical: VerticalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
         delays: AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?,
         slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
-        enemy_programs: EnemyPrograms::slice_zero(rom.lorom())
-            .map_err(ContentError::EnemyPrograms)?,
+        enemy_programs,
+        eye_lists,
     })
 }

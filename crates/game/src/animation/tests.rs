@@ -48,6 +48,7 @@ fn content() -> Content {
         delays: AnimationDelays::new(lists, list(&[0x01, 0xFF])),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
+        eye_lists: data::enemy::eye::EyeLists::default(),
     }
 }
 

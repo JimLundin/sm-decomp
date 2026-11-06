@@ -581,6 +581,31 @@ differ on 83 Ticks (from 1,028): `elevator.armed` at 688, then from 1217 the eye
 (`cursor.at`, `cursor.delay`, `extra_properties`, `spritemap`, AI word `e`), which its AI
 starting the activating list explains: the eye's AI is the rest of C8.
 
+**C8b status (`lane/slice0-c8b`), the Morph Ball Room eye's AI.** Done (bank $A8 log,
+`$A8:9058` to `$A8:91DC`): `EnemyBody::MorphBallEye(MorphBallEye { unused, activated, angle,
+function_timer, phase })`, the six AI words named (`+30`/`+32` unused, `+34` the activated
+flag, `+36` the angle, `+38` the function timer, `+3A` the function as `EyePhase::
+{WaitingForSamus, Activating, Active, Deactivating, Mount}`); verify's `enemy::eye` decodes
+them (an activated word other than 0/1 or an unknown function is `Unrepresentable`) and
+`eye_words` gives the words back. `data::enemy::eye::EyeLists` resolves the eye's lists in the
+loaded programs (`Content::eye_lists`: the sixteen active frames `$A8:8FAC` + 4n, closed,
+activating and deactivating by `Facing`, the mounts by `MountSide` from `$A8:90DA`, the
+empty spritemap). `game::enemy::eye`: `init` (`$A8:9058`: processes instructions, empty
+spritemap, instruction timer 1, timer 0; a mount, parameter 2 bit 15, moves 8 pixels to its
+side and starts its side's list, an eye starts closed by parameter 1 bit 0; not yet called,
+the population spawn joins with the room transition) and `main_ai` (`$A8:90E2`: nothing
+without the morph ball; waiting opens within 80h rows and columns, `$A0:AEED`/`$A0:AF0B`,
+with the function timer 20h and the activating list run this frame; activating and
+deactivating count the timer to zero or below, `DEC`/`BEQ`/`BPL`; opening aims, `$A0:C0AE`;
+active within 80h rows and B0h columns aims and starts the angle's frame, else clears the
+flag, starts closing; both set the instruction timer to 1; the mount does nothing). Eleven
+hand-worked unit tests and a ROM test of the lists. Lockstep on A2's cache, 2026-11-06:
+`area-brinstar` enemies equal on all 476 Ticks; `item-morph-ball` enemies differ on 38 Ticks
+(from 83): `elevator.armed` at 688, the face blocks (slot 5 at 1217, slot 6's second AI word
+on 35 Ticks from 1218), and the eye's `activated` at 1250, which the beam's HDMA object sets.
+Remaining (`// open:`): the beam (its HDMA object, the activated flag, the mount's window
+table), the ray's sounds (C11), the eye's grapple/hurt/frozen AI, and the face blocks' AI.
+
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
 running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of

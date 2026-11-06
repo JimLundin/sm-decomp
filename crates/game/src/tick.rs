@@ -460,7 +460,7 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         // and `progress`; until then the HUD tilemap keeps the mini-map it was opened with.
         GameplayPhase::Hud => crate::hud::phase(state),
         GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
-        GameplayPhase::Enemies => crate::enemy::run(state, &pass.active, &content.enemy_programs),
+        GameplayPhase::Enemies => crate::enemy::run(state, &pass.active, content),
         GameplayPhase::Scrolling => {
             let room = &mut state.room;
             let width = room.width.0 / SCREEN_BLOCKS;

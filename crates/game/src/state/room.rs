@@ -466,9 +466,44 @@ pub struct ElevatorRide {
     pub direction: ElevatorDirection,
 }
 
+/// What the Morph Ball Room eye's AI does each frame: its function (bank $A8 log, the
+/// function pointer the main AI jumps through, `$A8:90E2`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum EyePhase {
+    /// Closed, until Samus is near (`$A8:90F1`).
+    #[default]
+    WaitingForSamus,
+    /// Opening, until the function timer runs out (`$A8:912E`).
+    Activating,
+    /// Open and following Samus while she stays near (`$A8:9160`).
+    Active,
+    /// Closing, until the function timer runs out (`$A8:91CE`).
+    Deactivating,
+    /// The mount: the eye's second part, which does nothing (`$A8:91DC`, an `RTL`).
+    Mount,
+}
+
+/// The Morph Ball Room eye's AI words (bank $A8 log, `$A8:9058` to `$A8:91DC`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct MorphBallEye {
+    /// The first two words, which its AI never reads or writes: they keep what the spawn
+    /// left, in slot order.
+    pub unused: [u16; 2],
+    /// Whether its beam is on: the beam sets it (its HDMA object) and turning away clears
+    /// it (`$A8:9160`).
+    pub activated: bool,
+    /// The angle from it to Samus, 0 up and 40h right, as it last aimed (`$A8:912E`,
+    /// `$A8:91A2`).
+    pub angle: u16,
+    /// What's left of opening or closing (`$A8:90F1`, `$A8:9160`).
+    pub function_timer: Frames,
+    /// What it does each frame.
+    pub phase: EyePhase,
+}
+
 /// The six words the original gives each enemy's AI.
-// open: each species' names for them come with its AI lane (C8: the eye, and the face
-// blocks); until then they are the original's words in slot order.
+// open: the face block's names for them come with its AI lane; until then they are the
+// original's words in slot order.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct AiVariables {
     /// The slot's first AI word.
@@ -489,10 +524,7 @@ pub struct AiVariables {
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EnemyBody {
     /// One of the Morph Ball Room eye's two parts.
-    MorphBallEye {
-        /// Its AI words.
-        variables: AiVariables,
-    },
+    MorphBallEye(MorphBallEye),
     /// The elevator platform.
     Elevator(Elevator),
     /// A Blue Brinstar face block.

@@ -9,7 +9,8 @@ use data::id::SpeciesId;
 use data::rom::RomAddress;
 use game::enemy::instructions::label;
 use game::state::room::{
-    AiVariables, ENEMY_SLOTS, Elevator, EnemyBody, EnemyCommon, PaletteIndex, TilesIndex,
+    AiVariables, ENEMY_SLOTS, Elevator, EnemyBody, EnemyCommon, EyePhase, MorphBallEye,
+    PaletteIndex, TilesIndex,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot, SlotStore};
@@ -136,6 +137,39 @@ impl EnemySources {
         Ok(store)
     }
 
+    /// The occupant of slot `index`, a species with `behaviour` and `properties`: its body
+    /// from its AI words, deleting if the properties say so.
+    fn occupant(
+        &self,
+        wram: &[u8],
+        index: u16,
+        behaviour: Behaviour,
+        properties: u16,
+    ) -> Result<Occupancy<EnemyBody>, DecodeError> {
+        let word = |field: SlotField| self.table.word(field, index)?.read(wram);
+        let [first, second, third, fourth, fifth, sixth] = self.variables;
+        let variables = AiVariables {
+            a: word(first)?,
+            b: word(second)?,
+            c: word(third)?,
+            d: word(fourth)?,
+            e: word(fifth)?,
+            f: word(sixth)?,
+        };
+        let body = body(behaviour, variables).map_err(|word| DecodeError::Unrepresentable {
+            source: self
+                .variables
+                .get(word.index)
+                .map_or(self.species.name, |field| field.name),
+            value: word.value,
+        })?;
+        Ok(if properties & DELETED == 0 {
+            Occupancy::Live(body)
+        } else {
+            Occupancy::Deleting(body)
+        })
+    }
+
     /// Slot `index`.
     ///
     /// A free slot's pointers stay at their defaults: they are the last occupant's, which
@@ -160,22 +194,10 @@ impl EnemySources {
                     })?,
             ),
         };
-        let [first, second, third, fourth, fifth, sixth] = self.variables;
-        let variables = AiVariables {
-            a: word(first)?,
-            b: word(second)?,
-            c: word(third)?,
-            d: word(fourth)?,
-            e: word(fifth)?,
-            f: word(sixth)?,
-        };
         let properties = word(self.properties)?;
         let occupancy = match occupant {
             None => Occupancy::Free,
-            Some((_, behaviour)) if properties & DELETED != 0 => {
-                Occupancy::Deleting(body(behaviour, variables))
-            }
-            Some((_, behaviour)) => Occupancy::Live(body(behaviour, variables)),
+            Some((_, behaviour)) => self.occupant(wram, index, behaviour, properties)?,
         };
         let fixed = |pixels: SlotField, subpixels: SlotField| -> Result<_, DecodeError> {
             Ok(Fixed {
@@ -253,13 +275,82 @@ fn flags<E>(word: u16) -> FlagSet<E> {
     }
 }
 
+/// An AI word a species' body has no value for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct UnknownWord {
+    /// Which of the six, from the first.
+    pub index: usize,
+    /// The word.
+    pub value: u16,
+}
+
 /// The body a species with `behaviour` runs, holding its AI words.
-#[must_use]
-pub const fn body(behaviour: Behaviour, variables: AiVariables) -> EnemyBody {
-    match behaviour {
-        Behaviour::MorphBallEye => EnemyBody::MorphBallEye { variables },
+///
+/// # Errors
+///
+/// [`UnknownWord`] for a word the species' body has no value for.
+pub fn body(behaviour: Behaviour, variables: AiVariables) -> Result<EnemyBody, UnknownWord> {
+    Ok(match behaviour {
+        Behaviour::MorphBallEye => EnemyBody::MorphBallEye(eye(variables)?),
         Behaviour::Elevator => EnemyBody::Elevator(elevator(variables)),
         Behaviour::FaceBlock => EnemyBody::FaceBlock { variables },
+    })
+}
+
+/// The eye's function pointers in bank $A8 (bank $A8 log, `$A8:90E2`), by phase.
+const EYE_PHASES: [(u16, EyePhase); 5] = [
+    (0x90f1, EyePhase::WaitingForSamus),
+    (0x912e, EyePhase::Activating),
+    (0x9160, EyePhase::Active),
+    (0x91ce, EyePhase::Deactivating),
+    (0x91dc, EyePhase::Mount),
+];
+
+/// The eye's AI words (bank $A8 log, `$A8:9058` to `$A8:91DC`): the third its activated
+/// flag, the fourth its angle, the fifth its function timer, the sixth its function.
+///
+/// # Errors
+///
+/// [`UnknownWord`] for an activated flag other than 0 or 1, or a function that isn't one
+/// of the eye's.
+pub fn eye(variables: AiVariables) -> Result<MorphBallEye, UnknownWord> {
+    let activated = match variables.c {
+        0 => false,
+        1 => true,
+        value => return Err(UnknownWord { index: 2, value }),
+    };
+    let phase = EYE_PHASES
+        .iter()
+        .find(|&&(word, _)| word == variables.f)
+        .map(|&(_, phase)| phase)
+        .ok_or(UnknownWord {
+            index: 5,
+            value: variables.f,
+        })?;
+    Ok(MorphBallEye {
+        unused: [variables.a, variables.b],
+        activated,
+        angle: variables.d,
+        function_timer: Frames(variables.e),
+        phase,
+    })
+}
+
+/// The words `eye` holds, in slot order: [`eye`]'s inverse.
+#[must_use]
+pub fn eye_words(eye: MorphBallEye) -> AiVariables {
+    let [first, second] = eye.unused;
+    let function = EYE_PHASES
+        .iter()
+        .find(|&&(_, phase)| phase == eye.phase)
+        .map_or(0, |&(word, _)| word);
+    AiVariables {
+        a: first,
+        b: second,
+        c: u16::from(eye.activated),
+        d: eye.angle,
+        e: eye.function_timer.0,
+        f: function,
     }
 }
 

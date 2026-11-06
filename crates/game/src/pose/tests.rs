@@ -32,6 +32,7 @@ fn content() -> Content {
         delays: AnimationDelays::default(),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
+        eye_lists: data::enemy::eye::EyeLists::default(),
     }
 }
 

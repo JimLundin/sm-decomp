@@ -8,6 +8,7 @@
 //! transition handler (`$91:EB88`) then applies the request after the movement handler and
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
+use data::enemy::eye::EyeLists;
 use data::enemy::program::EnemyPrograms;
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
@@ -41,6 +42,8 @@ pub struct Content {
     pub slopes: Slopes,
     /// The loaded species' instruction lists.
     pub enemy_programs: EnemyPrograms,
+    /// The Morph Ball Room eye's lists in them.
+    pub eye_lists: EyeLists,
 }
 
 /// The pose a frame asks for, by the channel that asked.

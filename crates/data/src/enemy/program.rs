@@ -136,6 +136,8 @@ pub enum ProgramError {
     UnknownFunction(RomAddress),
     /// Steps that can run forever without stopping, through the address.
     Spins(RomAddress),
+    /// A list or spritemap a species' AI names that the loaded programs don't hold.
+    Unloaded(RomAddress),
 }
 
 impl From<AddressError> for ProgramError {
