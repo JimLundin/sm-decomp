@@ -264,10 +264,10 @@ fn facing_forward_on_a_ride_steps_down_a_pixel_and_not_without_one() {
         pixels: 0x02,
         subpixels: 0,
     };
-    super::ride(&mut samus, ride, &content(), Surroundings::default());
+    super::ride(&mut samus, ride, Surroundings::default());
     assert_eq!(samus.position.y.pixels, 0x03);
     ride.status = ElevatorStatus::Inactive;
-    super::ride(&mut samus, ride, &content(), Surroundings::default());
+    super::ride(&mut samus, ride, Surroundings::default());
     assert_eq!(samus.position.y.pixels, 0x03);
 }
 
@@ -319,8 +319,34 @@ fn running_into_a_wall_stops_her_and_kills_her_speed() {
 }
 
 #[test]
+fn a_ride_steps_with_the_radius_she_called_it_with() {
+    // `area-brinstar` frame 314: the ride keeps the standing radius 15h ($0B00), not the
+    // facing-forward pose's 18h, so 3 pixels above the floor the step still goes through.
+    let ride = ElevatorRide {
+        status: ElevatorStatus::EnteringRoom,
+        ..ElevatorRide::default()
+    };
+    let blocks = level(&[(1, 7)]);
+    let step = |y_radius| {
+        let mut samus = Samus {
+            pose: PoseId(0),
+            movement: Movement::Standing {
+                speed: Horizontal::default(),
+            },
+            y_radius,
+            ..Samus::default()
+        };
+        samus.position.x.pixels = 0x0018;
+        samus.position.y.pixels = 0x0058;
+        super::ride(&mut samus, ride, surroundings(&blocks));
+        (samus.position.y.pixels, samus.position.y.subpixels)
+    };
+    assert_eq!(step(0x15), (0x0059, 0));
+    assert_eq!(step(0x18), (0x0058, 0xFFFF));
+}
+
+#[test]
 fn a_ride_stops_its_step_on_a_block_under_her() {
-    let content = content();
     let ride = ElevatorRide {
         status: ElevatorStatus::EnteringRoom,
         ..ElevatorRide::default()
@@ -336,7 +362,7 @@ fn a_ride_stops_its_step_on_a_block_under_her() {
     samus.position.x.pixels = 0x0018;
     samus.position.y.pixels = 0x0010;
     let blocks = level(&[(1, 1)]);
-    super::ride(&mut samus, ride, &content, surroundings(&blocks));
+    super::ride(&mut samus, ride, surroundings(&blocks));
     assert_eq!(
         (samus.position.y.pixels, samus.position.y.subpixels),
         (0x0010, 0xFFFF)

@@ -31,15 +31,21 @@ const FACING_FORWARD: [PoseId; 2] = [PoseId(0), PoseId(0x9B)];
 /// Samus's X radius, which only her initialisation sets (`$90:EC39`).
 const X_RADIUS: u16 = 5;
 
-/// Samus as her block collision sees her: her X radius, her pose's Y radius (`$0B00`) and
-/// whether she has no Y speed.
-pub(crate) fn body(samus: &Samus, content: &Content) -> Body {
+/// "Set Samus radius" (`$90:EC22`), which the normal current state handler runs first: her
+/// Y radius is her pose's (`$91:B62F`).
+pub fn set_radius(samus: &mut Samus, content: &Content) {
+    samus.y_radius = content
+        .poses
+        .get(samus.pose)
+        .map_or(0, |pose| u16::from(pose.y_radius));
+}
+
+/// Samus as her block collision sees her: her X radius, her Y radius (`$0B00`) and whether
+/// she has no Y speed.
+pub(crate) fn body(samus: &Samus) -> Body {
     Body {
         x_radius: X_RADIUS,
-        y_radius: content
-            .poses
-            .get(samus.pose)
-            .map_or(0, |pose| u16::from(pose.y_radius)),
+        y_radius: samus.y_radius,
         still_vertically: samus
             .movement
             .vertical()
@@ -109,7 +115,7 @@ pub fn run(
 ) -> Contacts {
     let mut mover = Mover {
         surroundings,
-        body: body(samus, content),
+        body: body(samus),
         contacts: Contacts::default(),
     };
     if samus.movement.vertical().is_some() {
@@ -349,18 +355,14 @@ pub fn carried(samus: &Samus, ride: ElevatorRide) -> bool {
 /// Standing on a ride steps her a pixel down (`$90:A383`), after the platform has stood her
 /// on it this frame.
 ///
-/// The next frame's placement takes it back. The step is a terrain-only
-/// move with the collision direction up (`$90:A397`, `$94:9763`), so a block under her stops
-/// it at the block's top with subpixels $FFFF.
-pub fn ride(
-    samus: &mut Samus,
-    ride: ElevatorRide,
-    content: &Content,
-    surroundings: Surroundings<'_>,
-) {
+/// The next frame's placement takes it back. The step is a terrain-only move with the
+/// collision direction up (`$90:A397`, `$94:9763`), so a block under her stops it at the
+/// block's top with subpixels $FFFF. Her Y radius is the one the ride keeps (`$0B00`): the
+/// block that stops it is under her standing radius, not the facing-forward pose's.
+pub fn ride(samus: &mut Samus, ride: ElevatorRide, surroundings: Surroundings<'_>) {
     if carried(samus, ride) {
         let Surroundings { room, order } = surroundings;
-        let body = body(samus, content);
+        let body = body(samus);
         let step = Speed::new(1, 0);
         collision::move_y(room, body, &mut samus.position, step, Heading::Up, order);
     }

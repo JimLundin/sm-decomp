@@ -300,7 +300,7 @@ pub(super) fn runs_into_wall(
         Facing::Left => Speed::new(0xFFFF, 0),
         Facing::Right | Facing::Forward | Facing::Unknown(_) => Speed::new(1, 0),
     };
-    let body = crate::movement::body(samus, content);
+    let body = crate::movement::body(samus);
     let moved = collision::move_x(surroundings.room, body, &mut samus.position, pixel);
     if moved.collided {
         ran_into_wall(pose, content).or(requested)

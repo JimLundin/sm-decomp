@@ -340,6 +340,8 @@ pub struct Rules<'t> {
     pub layer_blending: WramWord,
     /// `samus.drawing`.
     pub drawing: WramWord,
+    /// `samus.y_radius`.
+    pub y_radius: WramWord,
     /// `elevator`.
     pub elevator: ElevatorSources,
     /// `room.drawing.hook`.
@@ -693,6 +695,7 @@ impl Rules<'_> {
         visor: source::SAMUS_VISOR_PALETTE_TIMER_INDEX,
         layer_blending: source::FX_LAYER_BLENDING_CONFIG_A,
         drawing: source::SAMUS_DRAW_HANDLER,
+        y_radius: source::SAMUS_Y_RADIUS,
         elevator: ElevatorSources {
             status: source::ELEVATOR_STATUS,
             armed: source::ELEVATOR_FLAGS,
@@ -900,6 +903,7 @@ impl Rules<'_> {
             super_special: self.super_special.read(wram)?,
             visor: visor(self.visor, wram)?,
             drawing: drawing_handler(self.drawing, wram)?,
+            y_radius: self.y_radius.read(wram)?,
             ..Samus::default()
         })
     }

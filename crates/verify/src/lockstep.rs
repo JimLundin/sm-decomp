@@ -295,6 +295,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.visor.shade", samus.visor.shade),
     field!("samus.visor.timer", samus.visor.timer),
     field!("samus.drawing", samus.drawing),
+    field!("samus.y_radius", samus.y_radius),
     field!("samus.equipment.equipped", samus.equipment.equipped),
     field!(
         "samus.equipment.energy.current",

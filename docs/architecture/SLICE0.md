@@ -550,7 +550,8 @@ vertical speed (`$A3:9612`). Five hand-worked unit tests. Remaining:
   Y on 454; `item-morph-ball` every ride field but `armed` at frame 688 (the doorway's 1);
 - the step down is a terrain-only collision: a block under Samus stops it at the block with
   subpixels `$FFFF` (`area-brinstar` frames 316-326 and 348-358), with Samus's block
-  collision; the doorway's arming (the door transition check, bank `$82`) is open;
+  collision and the Y radius the ride keeps (C4c); the doorway's arming (the door
+  transition check, bank `$82`) is open;
 - the instruction lists (`$A0:C26A`, the timer, `GraphicUpdated`) wait for B7's enemy
   program content, so `cursor.delay` and bit 15 still differ;
 - the door transition check (`$A3:952A`), the sounds, the Samus commands 7 and `$B`
@@ -679,6 +680,35 @@ enemy layer below 3, `$A0:884D`, or the elevator's drawing handler), none on 398
 `item-morph-ball`. Open: the arm cannon (`$90:C663`), flare, echoes, grapple, the other
 drawing handlers, the knockback and special palette timers, `$0AC8`/`$0ACA`/`$0B04`/`$0B06`,
 Samus's tile DMA (`$92:8000`).
+
+**C4c status (`lane/slice0-c4c`), the ride's Y radius.** Cause of `area-brinstar`'s Samus Y
+difference from frame 314: the engine took Samus's Y radius from her pose (facing forward
+`$18`), but the original's block collision reads `$0B00`, which "Set Samus radius"
+(`$90:EC22`) sets only in the normal current state handler (`$90:E695`). "Make Samus face
+forward" (`$91:E3F6`) lifts her 3 pixels for the taller pose but leaves `$0B00`, then installs
+the locked handler (`$91:E44D`, `$90:E713`), so the ride keeps the standing `$15`
+(`$0B00` = `$15` on all 452 riding frames of the oracle, `$18` from the frame after arrival).
+With `$18` the step's bottom edge (`$94:959E`: target Y + radius - 1) met the block row 3
+pixels early, 2 frames at 1.8000h a frame: the engine stopped the step on 314-324 and 346-356,
+the oracle on 316-326 and 348-358. Done: `samus.y_radius`, decoded from `SAMUS_Y_RADIUS`
+(`$0B00`) with a coverage row, comparator and moved-rule mutant; the SamusCurrentState phase
+sets it from the pose table unless the ride carries her; Samus's block collision reads it.
+Lockstep on A2's cache, 2026-11-06 (Ticks differing, first frame; before `049cea8`):
+
+| Field | `area-brinstar` before | after | `item-morph-ball` before | after |
+| --- | --- | --- | --- | --- |
+| Samus position | 8, 314 | 0 | 66, 314 | 58, 682 |
+| `samus.position.y.pixels` | 8, 314 | 0 | 25, 314 | 17, 682 |
+| camera | 9, 314 | 1, 414 | 60, 314 | 52, 414 |
+| `video.memory.oam` | 9, 314 | 1, 414 | 113, 314 | 105, 414 |
+| `samus.y_radius` | (new) | 0 | (new) | 1, 1259 |
+
+`area-brinstar`'s one remaining camera and OAM Tick (414, camera Y 4 pixels) has Samus equal
+and comes with a room blocks/scroll difference: the scroll PLMs (C5), not the ride. Open:
+`item-morph-ball` 682-686, after the ride, where her radius drops from `$18` to `$15` (pose
+$25) and the oracle settles her 3 pixels by the ground's Y movement (`$90:923F`, C4b); 1259,
+the pose change's radius (`$91:FDAE` and the solid enemy checks keep the previous pose's,
+`$91:FDE7`).
 
 **C6d status (`lane/slice0-c6d`), Samus's drawing handlers.** Done: `samus.drawing` is
 `DrawingHandler::{Default, FiringGrapple, ShinesparkCrashEchoCircle, UsingElevator,

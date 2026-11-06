@@ -766,4 +766,8 @@ pub struct Samus {
     pub visor: Visor,
     /// What draws her each frame.
     pub drawing: DrawingHandler,
+    /// The Y radius her block collision reads (`$0B00`): her pose's, as the normal current
+    /// state handler last set it (`$90:EC22`). The locked handler that replaces it for an
+    /// elevator ride doesn't, so the ride keeps the radius she called it with (`$91:E44D`).
+    pub y_radius: u16,
 }

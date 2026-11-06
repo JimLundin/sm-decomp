@@ -415,11 +415,13 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         // The frame starts with no super special request (`$90:E695`).
         GameplayPhase::SamusCurrentState => {
             state.samus.super_special = SuperSpecial::default();
-            // The pose input handler returns at once while the elevator carries her
-            // (`$91:805C`), before it reads the controls.
+            // While the elevator carries her, the locked current state handler (`$90:E713`,
+            // from `$91:E44D`) neither sets her radius nor runs the pose input handler, which
+            // would return at once anyway (`$91:805C`).
             pass.requests = if movement::carried(&state.samus, state.elevator) {
                 pose::PoseRequests::default()
             } else {
+                movement::set_radius(&mut state.samus, content);
                 pose::input(&state.samus, &state.controller, content)
             };
         }
@@ -437,7 +439,7 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
             };
             let contacts =
                 movement::run(&mut state.samus, &state.controller, content, surroundings);
-            movement::ride(&mut state.samus, state.elevator, content, surroundings);
+            movement::ride(&mut state.samus, state.elevator, surroundings);
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             let requests = pose::collision_request(
                 &state.samus,

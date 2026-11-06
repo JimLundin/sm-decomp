@@ -252,6 +252,7 @@ fn put_enemies(wram: &mut [u8]) {
 /// The elevator ride and the drawing handler that rides it, as the synthetic record sets them.
 fn put_ride(wram: &mut [u8]) {
     put(wram, 0x0A5C, 0xEC14); // SAMUS_DRAW_HANDLER: using elevator
+    put(wram, 0x0B00, 0x0015); // SAMUS_Y_RADIUS: the standing radius she called the ride with
     put(wram, 0x0E18, 0x0003); // ELEVATOR_STATUS: entering the room
     put(wram, 0x0E16, 0x0080); // ELEVATOR_FLAGS: armed
     put(wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
@@ -377,6 +378,7 @@ fn decodes_the_animation(state: &State) -> bool {
                 command: SuperSpecialCommand::TransitionAnimationFinished,
             }
         && state.samus.drawing == DrawingHandler::UsingElevator
+        && state.samus.y_radius == 0x15
 }
 
 /// Samus's visor cycle and the room's layer blending, as the synthetic record sets them.
@@ -561,7 +563,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 53] = [
+const WORD_RULES: [(&str, WordRule); 54] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -622,6 +624,7 @@ const WORD_RULES: [(&str, WordRule); 53] = [
         &mut rules.super_special.command
     }),
     ("drawing", |rules| &mut rules.drawing),
+    ("y_radius", |rules| &mut rules.y_radius),
     ("elevator.status", |rules| &mut rules.elevator.status),
     ("elevator.armed", |rules| &mut rules.elevator.armed),
     ("elevator.direction", |rules| &mut rules.elevator.direction),

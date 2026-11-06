@@ -854,6 +854,11 @@ pub const SAMUS_NEW_POSE_TRANSITIONAL: WramWord = WramWord {
     name: "SAMUS_NEW_POSE_TRANSITIONAL",
     offset: 0x0A2C,
 };
+/// Bank $90 log, `$90:EC22`: Samus's Y radius, which her block collision reads.
+pub const SAMUS_Y_RADIUS: WramWord = WramWord {
+    name: "SAMUS_Y_RADIUS",
+    offset: 0x0B00,
+};
 /// Bank $90 log, `$90:EB4B`: Samus's drawing handler, a bank $90 routine pointer.
 pub const SAMUS_DRAW_HANDLER: WramWord = WramWord {
     name: "SAMUS_DRAW_HANDLER",

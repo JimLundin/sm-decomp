@@ -318,6 +318,7 @@ pub const FIELDS: &[Field] = &[
     wram("samus.visor.shade", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
     wram("samus.visor.timer", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
     wram("samus.drawing", source::SAMUS_DRAW_HANDLER),
+    wram("samus.y_radius", source::SAMUS_Y_RADIUS),
     Field {
         path: "room.room",
         status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
@@ -640,6 +641,7 @@ mod tests {
             rules.palette_cycle.palette,
             rules.palette_cycle.set,
             rules.palette_cycle.timer,
+            rules.y_radius,
             rules.elevator.status,
             rules.elevator.armed,
             rules.elevator.direction,
