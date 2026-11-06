@@ -800,8 +800,16 @@ Lockstep on A2's cache, 2026-11-06 (Ticks differing, first frame; before `049cea
 and comes with a room blocks/scroll difference: the scroll PLMs (C5), not the ride. Open:
 `item-morph-ball` 682-686, after the ride, where her radius drops from `$18` to `$15` (pose
 $25) and the oracle settles her 3 pixels by the ground's Y movement (`$90:923F`, C4b); 1259,
-the pose change's radius (`$91:FDAE` and the solid enemy checks keep the previous pose's,
-`$91:FDE7`).
+the morphing transition from a jump: prospective pose change command 7, "start transition
+animation" (`$91:ECDA`), gives her pose $37's radius 7 and moves her down by its table's 9
+(`$91:ED36`) through the pose change's block check (`$94:96AB`), where the engine keeps
+radius `$0A` and Y `$2B1`.
+
+**C4f status (`lane/slice0-c4f`), the pose change's collision.** Done: `game::pose::fit` is
+"Handle collision due to change of pose" (`$91:FDAE`): a taller pose checks the height gained
+for solid enemies and blocks, moves her flush, crouches her when squeezed (`$91:FFA7`) or keeps
+the old pose, leaving the old radius in `samus.y_radius`. `item-morph-ball` 797 lands at
+`$29B.0000` with radius `$13`, as the oracle does.
 
 **C6d status (`lane/slice0-c6d`), Samus's drawing handlers.** Done: `samus.drawing` is
 `DrawingHandler::{Default, FiringGrapple, ShinesparkCrashEchoCircle, UsingElevator,
