@@ -123,10 +123,51 @@ pub const FIELDS: &[Field] = &[
     record("video.memory.cgram", "cgram"),
     record("video.memory.oam", "oam"),
     record("video.committed", "ppu"),
+    record("video.dma", "ppu"),
     wram_byte("video.batch.registers.forced_blank", source::REG_INIDISP),
     wram_byte("video.batch.registers.brightness", source::REG_INIDISP),
     wram_byte("video.batch.registers.main_screen", source::REG_TM),
     wram_byte("video.batch.registers.sub_screen", source::REG_TS),
+    wram_byte("video.batch.registers.objects", source::REG_OBSEL),
+    wram_byte("video.batch.registers.mode", source::REG_BGMODE),
+    wram_byte("video.batch.registers.mosaic", source::REG_MOSAIC),
+    wram_byte("video.batch.registers.tilemaps", source::REG_BG_SC[0]),
+    wram_byte("video.batch.registers.tile_bases", source::REG_BG_NBA[0]),
+    wram_byte("video.batch.registers.mode7.select", source::REG_M7SEL),
+    wram("video.batch.registers.mode7.matrix", source::REG_M7[0]),
+    wram("video.batch.registers.mode7.centre", source::REG_M7[4]),
+    wram_byte(
+        "video.batch.registers.windows.select",
+        source::REG_WINDOW_SELECT[0],
+    ),
+    wram_byte(
+        "video.batch.registers.windows.edges",
+        source::REG_WINDOW_EDGES[0],
+    ),
+    wram_byte(
+        "video.batch.registers.windows.background_logic",
+        source::REG_WBGLOG,
+    ),
+    wram_byte(
+        "video.batch.registers.windows.object_logic",
+        source::REG_WOBJLOG,
+    ),
+    wram_byte("video.batch.registers.main_window_mask", source::REG_TMW),
+    wram_byte("video.batch.registers.sub_window_mask", source::REG_TSW),
+    wram_byte(
+        "video.batch.registers.colour_math.select",
+        source::REG_CGWSEL,
+    ),
+    wram_byte(
+        "video.batch.registers.colour_math.layers",
+        source::REG_CGADSUB,
+    ),
+    none(
+        "video.batch.registers.colour_math.fixed",
+        "the mirrors hold COLDATA's three writes, video.batch.fixed_colour",
+    ),
+    wram_byte("video.batch.registers.settings", source::REG_SETINI),
+    wram_byte("video.batch.fixed_colour", source::REG_COLDATA[0]),
     Field {
         path: "video.batch.registers.scroll",
         status: Status::Decoded(Source::WramWord(source::REG_BG_SCROLL[0][0])),
@@ -188,6 +229,7 @@ pub const FIELDS: &[Field] = &[
 mod tests {
     use super::{FIELDS, Source, Status};
     use crate::decode::Rules;
+    use crate::source::WramByte;
 
     #[test]
     fn paths_are_unique() {
@@ -223,6 +265,34 @@ mod tests {
                 "{name} has no row"
             );
         }
+    }
+
+    /// The byte sources the decoder reads.
+    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 22] {
+        [
+            rules.lag,
+            rules.max_lag,
+            rules.nmi_requested,
+            rules.inidisp,
+            rules.main_screen,
+            rules.sub_screen,
+            rules.mirrors.objects,
+            rules.mirrors.mode,
+            rules.mirrors.mosaic,
+            rules.mirrors.tilemaps[0],
+            rules.mirrors.tile_bases[0],
+            rules.mirrors.mode7_select,
+            rules.mirrors.window_select[0],
+            rules.mirrors.window_edges[0],
+            rules.mirrors.background_logic,
+            rules.mirrors.object_logic,
+            rules.mirrors.main_window_mask,
+            rules.mirrors.sub_window_mask,
+            rules.mirrors.colour_math_select,
+            rules.mirrors.colour_math_layers,
+            rules.mirrors.fixed_colour[0],
+            rules.mirrors.settings,
+        ]
     }
 
     #[test]
@@ -263,15 +333,11 @@ mod tests {
             rules.message,
             // The scroll row names the first mirror; the queue's tail bounds the queue block.
             rules.scroll[0][0],
+            // An array of mirrors is named by its first; mode 7's centre by its own first.
+            rules.mirrors.mode7[0],
+            rules.mirrors.mode7[4],
         ];
-        let bytes = [
-            rules.lag,
-            rules.max_lag,
-            rules.nmi_requested,
-            rules.inidisp,
-            rules.main_screen,
-            rules.sub_screen,
-        ];
+        let bytes = byte_sources(&rules);
         let blocks = [rules.oam_buffer, rules.palette_buffer, rules.vram_queue];
         for field in FIELDS {
             match field.status {

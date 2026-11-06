@@ -394,7 +394,8 @@ fn oam_digest(oam: &[u8]) -> Option<u64> {
 
 /// The `ppu` stream's digest, the recorder's rule: the architectural registers in
 /// declaration order without `nmitimen`, `htime`, `vtime`, `hdmaen` and `memsel`.
-fn ppu_digest(ppu: &PpuRegisters) -> u64 {
+#[must_use]
+pub fn ppu_digest(ppu: &PpuRegisters) -> u64 {
     let PpuRegisters {
         inidisp,
         obsel,
