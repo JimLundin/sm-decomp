@@ -16,7 +16,8 @@ use canonical::{Canonical, Difference, Segment};
 use data::id::RoomId;
 use data::plm::PlmPopulation;
 use data::rom::Lorom;
-use data::room::{Progress, RoomError, Rooms, SLICE_ZERO_ROOMS};
+use data::room::{Progress, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
+use data::tileset::TilesetId;
 use game::state::room::{
     Crumble, ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, MorphBallEye, PLM_SLOTS, PlmBody,
     ScrollPlm,
@@ -28,7 +29,10 @@ use oracle_record::{Cut, FrameRecord};
 
 use crate::cache::{Cache, CacheError, CutKind};
 use crate::coverage::{FIELDS, Status};
-use crate::decode::{DecodeError, Decoded, Quiescence, RoomHeader, RoomMap, Unsupported, decode};
+use crate::decode::{
+    DecodeError, Decoded, Quiescence, RoomHeader, RoomMap, StateHeader, StateLevel, Unsupported,
+    decode,
+};
 use crate::enemy::AiVariables;
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
@@ -51,7 +55,35 @@ pub fn slice_zero_rooms() -> RoomMap {
         programs: data::enemy::program::EnemyPrograms::default(),
         samus_tiles: data::pose::tiles::SamusTiles::default(),
         plms: Vec::new(),
+        states: Vec::new(),
     }
+}
+
+/// What each state of each room [`slice_zero_rooms`] holds loads that RAM doesn't keep, by
+/// its state header's pointer.
+///
+/// # Errors
+///
+/// [`RoomError`] if a room doesn't decode from `image`.
+pub fn slice_zero_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>, RoomError> {
+    let (rooms, _) = Rooms::load(Lorom::new(image), &SLICE_ZERO_ROOMS)?;
+    Ok(rooms
+        .map()
+        .iter()
+        .filter_map(|(_, id)| rooms.get(id))
+        .flat_map(|room| room.states().map(|(_, state)| state))
+        .filter_map(|state| {
+            // A state header sits in the room headers' bank, which a room key names.
+            let pointer = RoomKey(state.at).room_pointer()?;
+            Some((
+                StateHeader(pointer),
+                StateLevel {
+                    tileset: TilesetId(state.tileset),
+                    layer2: state.layers.layer2.is_some(),
+                },
+            ))
+        })
+        .collect())
 }
 
 /// The PLM population of each room [`slice_zero_rooms`] holds, as it loads with no events
@@ -279,6 +311,118 @@ const COMPARATORS: &[Comparator] = &[
         video.batch.samus_tiles.bottom
     ),
     field!(
+        "video.batch.level.bg1.column.left",
+        video.batch.level.bg1.column.left
+    ),
+    field!(
+        "video.batch.level.bg1.column.right",
+        video.batch.level.bg1.column.right
+    ),
+    field!(
+        "video.batch.level.bg1.column.first.to",
+        video.batch.level.bg1.column.first.to
+    ),
+    field!(
+        "video.batch.level.bg1.column.first.bytes",
+        video.batch.level.bg1.column.first.bytes
+    ),
+    field!(
+        "video.batch.level.bg1.column.wrapped.to",
+        video.batch.level.bg1.column.wrapped.to
+    ),
+    field!(
+        "video.batch.level.bg1.column.wrapped.bytes",
+        video.batch.level.bg1.column.wrapped.bytes
+    ),
+    field!(
+        "video.batch.level.bg1.column.requests",
+        video.batch.level.bg1.column.requests
+    ),
+    field!(
+        "video.batch.level.bg1.row.top",
+        video.batch.level.bg1.row.top
+    ),
+    field!(
+        "video.batch.level.bg1.row.bottom",
+        video.batch.level.bg1.row.bottom
+    ),
+    field!(
+        "video.batch.level.bg1.row.first.to",
+        video.batch.level.bg1.row.first.to
+    ),
+    field!(
+        "video.batch.level.bg1.row.first.bytes",
+        video.batch.level.bg1.row.first.bytes
+    ),
+    field!(
+        "video.batch.level.bg1.row.wrapped.to",
+        video.batch.level.bg1.row.wrapped.to
+    ),
+    field!(
+        "video.batch.level.bg1.row.wrapped.bytes",
+        video.batch.level.bg1.row.wrapped.bytes
+    ),
+    field!(
+        "video.batch.level.bg1.row.requests",
+        video.batch.level.bg1.row.requests
+    ),
+    field!(
+        "video.batch.level.bg2.column.left",
+        video.batch.level.bg2.column.left
+    ),
+    field!(
+        "video.batch.level.bg2.column.right",
+        video.batch.level.bg2.column.right
+    ),
+    field!(
+        "video.batch.level.bg2.column.first.to",
+        video.batch.level.bg2.column.first.to
+    ),
+    field!(
+        "video.batch.level.bg2.column.first.bytes",
+        video.batch.level.bg2.column.first.bytes
+    ),
+    field!(
+        "video.batch.level.bg2.column.wrapped.to",
+        video.batch.level.bg2.column.wrapped.to
+    ),
+    field!(
+        "video.batch.level.bg2.column.wrapped.bytes",
+        video.batch.level.bg2.column.wrapped.bytes
+    ),
+    field!(
+        "video.batch.level.bg2.column.requests",
+        video.batch.level.bg2.column.requests
+    ),
+    field!(
+        "video.batch.level.bg2.row.top",
+        video.batch.level.bg2.row.top
+    ),
+    field!(
+        "video.batch.level.bg2.row.bottom",
+        video.batch.level.bg2.row.bottom
+    ),
+    field!(
+        "video.batch.level.bg2.row.first.to",
+        video.batch.level.bg2.row.first.to
+    ),
+    field!(
+        "video.batch.level.bg2.row.first.bytes",
+        video.batch.level.bg2.row.first.bytes
+    ),
+    field!(
+        "video.batch.level.bg2.row.wrapped.to",
+        video.batch.level.bg2.row.wrapped.to
+    ),
+    field!(
+        "video.batch.level.bg2.row.wrapped.bytes",
+        video.batch.level.bg2.row.wrapped.bytes
+    ),
+    field!(
+        "video.batch.level.bg2.row.requests",
+        video.batch.level.bg2.row.requests
+    ),
+    field!(
         "video.batch.registers.forced_blank",
         video.batch.registers.forced_blank
     ),
@@ -454,6 +598,11 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.room", room.room),
     field!("room.blocks", room.blocks),
     field!("room.width", room.width),
+    field!("room.layer2", room.layer2),
+    field!("room.level_tail", room.level_tail),
+    field!("room.area", room.area),
+    field!("room.tileset", room.tileset),
+    field!("room.tilemap_gap", room.tilemap_gap),
     field!("room.layer_blending", room.layer_blending),
     field!("room.scroll_areas", room.scroll_areas),
     field!("room.stale_scrolls", room.stale_scrolls),
@@ -472,6 +621,10 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.camera.scrollers.down", room.camera.scrollers.down),
     field!("room.camera.layer2_scroll.x", room.camera.layer2_scroll.x),
     field!("room.camera.layer2_scroll.y", room.camera.layer2_scroll.y),
+    field!("room.camera.drawn.layer1.x", room.camera.drawn.layer1.x),
+    field!("room.camera.drawn.layer1.y", room.camera.drawn.layer1.y),
+    field!("room.camera.drawn.layer2.x", room.camera.drawn.layer2.x),
+    field!("room.camera.drawn.layer2.y", room.camera.drawn.layer2.y),
     plm!("room.plms.slots.common.block", block),
     plm!("room.plms.slots.common.cursor.delay", cursor.delay),
     Comparator {
@@ -603,6 +756,8 @@ pub enum ErrorKind {
     WrongSize,
     /// [`DecodeError::UnknownRoom`].
     UnknownRoom,
+    /// [`DecodeError::UnknownRoomState`].
+    UnknownRoomState,
     /// [`Unsupported::GameState`].
     GameState,
     /// [`Unsupported::NoNmi`]: a vblank without an NMI.
@@ -625,6 +780,7 @@ impl ErrorKind {
             DecodeError::WramTooShort { .. } => Self::WramTooShort,
             DecodeError::WrongSize { .. } => Self::WrongSize,
             DecodeError::UnknownRoom(_) => Self::UnknownRoom,
+            DecodeError::UnknownRoomState(_) => Self::UnknownRoomState,
             DecodeError::Unsupported(Unsupported::GameState(_)) => Self::GameState,
             DecodeError::Unsupported(Unsupported::NoNmi(Cut::VblankWithoutNmi)) => {
                 Self::VblankWithoutNmi

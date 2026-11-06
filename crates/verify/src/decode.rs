@@ -15,11 +15,13 @@ use data::plm::PlmPopulation;
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
+use data::tileset::TilesetId;
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap, MiniMap};
 use game::state::room::{
-    Block, BlockColumns, Camera, CameraDistance, ElevatorArming, ElevatorDirection, ElevatorRide,
-    ElevatorStatus, EnemyDrawing, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, Layer2Scroll,
-    Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers, SpritePalette, StaleScroll,
+    Block, BlockColumns, BlockPoint, Camera, CameraDistance, DrawnBlocks, ElevatorArming,
+    ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyDrawing, EnemyPaletteCycle, GlowSet,
+    GraphicsDrawnHook, Layer2Block, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped,
+    ScrollArea, Scrollers, SpritePalette, StaleScroll,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing,
@@ -31,11 +33,12 @@ use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
     BACKGROUNDS, BgMode, Brightness, BusAddress, CGRAM_COLOURS, Colour, ColourMath,
-    ColourMathLayers, ColourMathSelect, ColourWrite, DisplaySettings, DmaChannel, FixedColour,
-    GraphicsRef, Layers, Mode7, Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry,
-    ObjectSelect, Registers, RomWords, SamusTileUploads, Scroll, TileBases, TilemapBase,
-    TilemapEntry, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep, VramTransfer, VramWord,
-    WindowSettings, Windows,
+    ColourMathLayers, ColourMathSelect, ColourWrite, ColumnUpload, DisplaySettings, DmaChannel,
+    FixedColour, GraphicsRef, LayerUploads, Layers, LevelUploads, Mode7, Mode7Select, Mosaic,
+    NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Registers, RomWords, RowUpload,
+    SamusTileUploads, Scroll, TileBases, TilemapBase, TilemapEntry, TilemapPart, UploadRequests,
+    VRAM_WORDS, Video, VideoMemory, VramSource, VramStep, VramTransfer, VramWord, WindowSettings,
+    Windows,
 };
 use game::state::{
     Button, Buttons, Clock, CollectedItems, Controller, Counters, FrameCount, GameMode, GameTime,
@@ -45,7 +48,7 @@ use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
 
 use crate::enemy::EnemySources;
 use crate::plm::PlmSources;
-use crate::source::{self, WramBlock, WramByte, WramWord};
+use crate::source::{self, TilemapUpload, WramBlock, WramByte, WramWord};
 use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
 
 /// Bank $82 log: game state 8 is main gameplay.
@@ -73,6 +76,22 @@ pub struct RoomMap {
     pub samus_tiles: SamusTiles,
     /// Each room's PLM population, which names the PLMs its slots hold.
     pub plms: Vec<(RoomId, PlmPopulation)>,
+    /// What each known room state loads that RAM doesn't keep, by its header pointer.
+    pub states: Vec<(StateHeader, StateLevel)>,
+}
+
+/// A pointer to a room state header in bank $8F, as `ROOMDEFROOMSTATE_PTR` holds it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct StateHeader(pub u16);
+
+/// What a room state loads that the original keeps only in its tile table and level buffer:
+/// the decoder takes it from the content.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct StateLevel {
+    /// The state's tileset, whose tile table `$82:E7D3` decompresses.
+    pub tileset: TilesetId,
+    /// Whether its level data has layer 2 after the BTS.
+    pub layer2: bool,
 }
 
 impl RoomMap {
@@ -95,6 +114,20 @@ impl RoomMap {
     #[must_use]
     pub fn with_plms(self, plms: Vec<(RoomId, PlmPopulation)>) -> Self {
         Self { plms, ..self }
+    }
+
+    /// The map with `states` as its room states' levels.
+    #[must_use]
+    pub fn with_states(self, states: Vec<(StateHeader, StateLevel)>) -> Self {
+        Self { states, ..self }
+    }
+
+    /// What the state whose header is at `header` loads, if the map knows it.
+    #[must_use]
+    pub fn state(&self, header: StateHeader) -> Option<StateLevel> {
+        self.states
+            .iter()
+            .find_map(|&(known, level)| (known == header).then_some(level))
     }
 
     /// Room `room`'s PLM population: empty for a room the map has none for, so no PLM
@@ -166,6 +199,8 @@ pub enum DecodeError {
     },
     /// `ROOM_PTR` names a room the map doesn't hold.
     UnknownRoom(RoomHeader),
+    /// `ROOMDEFROOMSTATE_PTR` names a room state the map doesn't hold.
+    UnknownRoomState(StateHeader),
     /// The record is in a state the decoder doesn't cover yet.
     Unsupported(Unsupported),
     /// A source holds a value no routine of the original writes, which the State has no
@@ -195,6 +230,9 @@ impl fmt::Display for DecodeError {
             } => write!(f, "{memory:?} holds {found}, not {expected}"),
             Self::UnknownRoom(RoomHeader(header)) => {
                 write!(f, "no room has its header at {header:04X}")
+            }
+            Self::UnknownRoomState(StateHeader(header)) => {
+                write!(f, "no room state has its header at {header:04X}")
             }
             Self::Unsupported(Unsupported::GameState(state)) => {
                 write!(f, "game state {state:#06X} isn't decoded yet")
@@ -395,6 +433,70 @@ pub struct Rules<'t> {
     pub palette_cycle: PaletteCycleSources,
     /// `room.blocks` and `room.scroll_areas`.
     pub level: LevelSources,
+    /// `room.area`.
+    pub area: WramWord,
+    /// `room.tilemap_gap`.
+    pub tilemap_gap: WramWord,
+    /// `video.batch.level`: BG1's, then BG2's.
+    pub uploads: [LayerUploadSources; 2],
+}
+
+/// Where the original keeps one background's level tilemap uploads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LayerUploadSources {
+    /// `.column`.
+    pub column: TilemapUpload,
+    /// `.row`.
+    pub row: TilemapUpload,
+}
+
+/// A tilemap upload part's bytes and VRAM word.
+fn part(bytes: WramWord, to: WramWord, wram: &[u8]) -> Result<TilemapPart, DecodeError> {
+    Ok(TilemapPart {
+        to: VramWord(to.read(wram)?),
+        bytes: bytes.read(wram)?,
+    })
+}
+
+/// The tilemap words a buffer holds.
+fn entries<const N: usize>(
+    block: WramBlock,
+    wram: &[u8],
+) -> Result<[TilemapEntry; N], DecodeError> {
+    let words = block.read(wram)?.as_chunks::<2>().0;
+    let mut entries = [TilemapEntry::default(); N];
+    if words.len() < N {
+        return Err(DecodeError::WramTooShort { source: block.name });
+    }
+    for (entry, word) in entries.iter_mut().zip(words) {
+        *entry = TilemapEntry::from_word(u16::from_le_bytes(*word));
+    }
+    Ok(entries)
+}
+
+impl LayerUploadSources {
+    /// The background's column and row as its builders last left them. The wrapped parts'
+    /// source addresses aren't read: `$80:A9DE` and `$80:AB78` set them to the buffer's
+    /// start plus the first part's bytes.
+    fn read(self, wram: &[u8]) -> Result<LayerUploads, DecodeError> {
+        let Self { column, row } = self;
+        Ok(LayerUploads {
+            column: ColumnUpload {
+                left: entries(column.first_halves, wram)?,
+                right: entries(column.second_halves, wram)?,
+                first: part(column.unwrapped_size, column.unwrapped_dst, wram)?,
+                wrapped: part(column.wrapped_size, column.wrapped_dst, wram)?,
+                requests: UploadRequests(column.enable.read(wram)?),
+            },
+            row: RowUpload {
+                top: entries(row.first_halves, wram)?,
+                bottom: entries(row.second_halves, wram)?,
+                first: part(row.unwrapped_size, row.unwrapped_dst, wram)?,
+                wrapped: part(row.wrapped_size, row.wrapped_dst, wram)?,
+                requests: UploadRequests(row.enable.read(wram)?),
+            },
+        })
+    }
 }
 
 /// Where the original keeps the room's level and its scroll areas.
@@ -410,15 +512,24 @@ pub struct LevelSources {
     pub bts: WramBlock,
     /// The scroll areas.
     pub scrolls: WramBlock,
+    /// The room state, which names its tileset and says whether it has layer 2.
+    pub state: WramWord,
+    /// Layer 2's words.
+    pub layer2: WramBlock,
 }
 
 /// Blocks a screen across or down.
 const SCREEN_BLOCKS: u16 = 16;
 
 impl LevelSources {
-    /// Layer 1 and the scroll areas: the width and height say how much of each buffer the
-    /// room fills. The rest of the scroll buffer is what earlier rooms left.
-    fn read(self, wram: &[u8]) -> Result<Level, DecodeError> {
+    /// Layer 1, layer 2, the level buffer past layer 1 and the scroll areas: the width and
+    /// height say how much of each buffer the room fills. The rest of the scroll buffer is
+    /// what earlier rooms left.
+    ///
+    /// The level buffer past layer 1 still holds the BTS and layer 2 as decompression wrote
+    /// them (`$82:E7D3`); it is read up to the buffer's end, past which a column or row never
+    /// reads.
+    fn read(self, wram: &[u8], rooms: &RoomMap) -> Result<Level, DecodeError> {
         let width = self.width.read(wram)?;
         let height = self.height.read(wram)?;
         let blocks = usize::from(width).saturating_mul(usize::from(height));
@@ -440,6 +551,38 @@ impl LevelSources {
             .zip(bts)
             .map(|(word, &bts)| Block::new(u16::from_le_bytes(*word), bts))
             .collect();
+        let header = StateHeader(self.state.read(wram)?);
+        let loaded = rooms
+            .state(header)
+            .ok_or(DecodeError::UnknownRoomState(header))?;
+        let layer2 = loaded
+            .layer2
+            .then(|| {
+                let words = self
+                    .layer2
+                    .read(wram)?
+                    .get(..blocks.saturating_mul(2))
+                    .ok_or_else(|| short(self.layer2))?;
+                Ok(words
+                    .as_chunks::<2>()
+                    .0
+                    .iter()
+                    .map(|word| Layer2Block::from_word(u16::from_le_bytes(*word)))
+                    .collect())
+            })
+            .transpose()?;
+        let tail_len = if loaded.layer2 {
+            blocks.saturating_mul(3)
+        } else {
+            blocks
+        };
+        let buffer = self.blocks.read(wram)?;
+        let tail_start = blocks.saturating_mul(2).min(buffer.len());
+        let tail_end = tail_start.saturating_add(tail_len).min(buffer.len());
+        let level_tail = buffer
+            .get(tail_start..tail_end)
+            .unwrap_or_default()
+            .to_vec();
         let screens =
             usize::from(width / SCREEN_BLOCKS).saturating_mul(usize::from(height / SCREEN_BLOCKS));
         let (areas, stale) = self
@@ -458,6 +601,9 @@ impl LevelSources {
             .collect::<Result<_, _>>()?;
         Ok(Level {
             blocks: layer1,
+            layer2,
+            tail: level_tail,
+            tileset: loaded.tileset,
             scroll_areas,
             stale_scrolls: stale.iter().copied().map(StaleScroll::from).collect(),
         })
@@ -467,6 +613,9 @@ impl LevelSources {
 /// The room's level as [`LevelSources::read`] decodes it.
 struct Level {
     blocks: Vec<Block>,
+    layer2: Option<Vec<Layer2Block>>,
+    tail: Vec<u8>,
+    tileset: TilesetId,
     scroll_areas: Vec<ScrollArea>,
     stale_scrolls: Vec<StaleScroll>,
 }
@@ -486,6 +635,8 @@ pub struct ScrollingSources {
     pub scrollers: [WramWord; 2],
     /// `.layer2_scroll`: x, y.
     pub layer2_scroll: [WramByte; 2],
+    /// `.drawn`: layer 1's x, y, then layer 2's.
+    pub drawn: [[WramWord; 2]; 2],
 }
 
 impl ScrollingSources {
@@ -505,6 +656,13 @@ impl ScrollingSources {
             })?;
         let [up, down] = self.scrollers;
         let [x, y] = self.layer2_scroll;
+        let block = |[x, y]: [WramWord; 2]| -> Result<BlockPoint, DecodeError> {
+            Ok(BlockPoint {
+                x: x.read(wram)?,
+                y: y.read(wram)?,
+            })
+        };
+        let [layer1, layer2] = self.drawn;
         Ok(Camera {
             layer2: scroll(self.layer2)?,
             bg1_offset: scroll(self.bg1_offset)?,
@@ -517,6 +675,10 @@ impl ScrollingSources {
             layer2_scroll: Layer2Scrolls {
                 x: Layer2Scroll::from(x.read(wram)?),
                 y: Layer2Scroll::from(y.read(wram)?),
+            },
+            drawn: DrawnBlocks {
+                layer1: block(layer1)?,
+                layer2: block(layer2)?,
             },
             ..Camera::default()
         })
@@ -755,6 +917,16 @@ impl Rules<'_> {
             distance: source::CAMERA_DISTANCE_INDEX,
             scrollers: [source::UP_SCROLLER, source::DOWN_SCROLLER],
             layer2_scroll: [source::LAYER2_SCROLL_X, source::LAYER2_SCROLL_Y],
+            drawn: [
+                [
+                    source::PREVIOUS_LAYER1_X_BLOCK,
+                    source::PREVIOUS_LAYER1_Y_BLOCK,
+                ],
+                [
+                    source::PREVIOUS_LAYER2_X_BLOCK,
+                    source::PREVIOUS_LAYER2_Y_BLOCK,
+                ],
+            ],
         },
         previous_position: [
             source::SAMUS_PREV_X_POS,
@@ -807,7 +979,21 @@ impl Rules<'_> {
             blocks: source::LEVEL_DATA,
             bts: source::BTS,
             scrolls: source::SCROLLS,
+            state: source::ROOMDEFROOMSTATE_PTR,
+            layer2: source::CUSTOM_BACKGROUND,
         },
+        area: source::AREA_INDEX,
+        tilemap_gap: source::SIZE_OF_BG2,
+        uploads: [
+            LayerUploadSources {
+                column: source::BG1_COLUMN_UPDATE,
+                row: source::BG1_ROW_UPDATE,
+            },
+            LayerUploadSources {
+                column: source::BG2_COLUMN_UPDATE,
+                row: source::BG2_ROW_UPDATE,
+            },
+        ],
         pose: PoseSources {
             pose: source::SAMUS_POSE,
             facing: source::SAMUS_POSE_X_DIR,
@@ -869,11 +1055,6 @@ impl Rules<'_> {
             NmiKind::Overrun => (NmiTiming::Overrun, MainStrand::default(), Quiescence::Busy),
         };
         let irq = self.irq(record)?;
-        let Level {
-            blocks,
-            scroll_areas,
-            stale_scrolls,
-        } = self.level.read(wram)?;
 
         let state = State {
             main,
@@ -913,32 +1094,7 @@ impl Rules<'_> {
             },
             video: self.video(record, rooms)?,
             samus: self.samus(wram)?,
-            room: RoomScoped {
-                room,
-                blocks,
-                width: BlockColumns(self.level.width.read(wram)?),
-                layer_blending: LayerBlending(self.layer_blending.read(wram)?),
-                scroll_areas,
-                stale_scrolls,
-                camera: Camera {
-                    x: Fixed {
-                        pixels: self.camera_x.read(wram)?,
-                        subpixels: self.camera_x_subpixels.read(wram)?,
-                    },
-                    y: Fixed {
-                        pixels: self.camera_y.read(wram)?,
-                        subpixels: self.camera_y_subpixels.read(wram)?,
-                    },
-                    ..self.scrolling.read(wram)?
-                },
-                plms: self.plms.read(wram, rooms.population(room))?,
-                enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
-                drawing: EnemyDrawing {
-                    hook: self.drawn_hook.read(wram)?,
-                    ..EnemyDrawing::default()
-                },
-                ..RoomScoped::default()
-            },
+            room: self.room(wram, rooms, room)?,
             elevator: self.elevator.read(wram)?,
             enemy_palette_cycle: self.palette_cycle.read(wram)?,
             message: Message(self.message.read(wram)?),
@@ -946,6 +1102,49 @@ impl Rules<'_> {
             hud: self.hud.read(wram)?,
         };
         Ok(Decoded { state, quiescence })
+    }
+
+    /// The room: its level, its camera and its slots.
+    fn room(&self, wram: &[u8], rooms: &RoomMap, room: RoomId) -> Result<RoomScoped, DecodeError> {
+        let Level {
+            blocks,
+            layer2,
+            tail,
+            tileset,
+            scroll_areas,
+            stale_scrolls,
+        } = self.level.read(wram, rooms)?;
+        Ok(RoomScoped {
+            room,
+            blocks,
+            width: BlockColumns(self.level.width.read(wram)?),
+            layer2,
+            level_tail: tail,
+            area: area(self.area, wram)?,
+            tileset,
+            tilemap_gap: VramWord(self.tilemap_gap.read(wram)?),
+            layer_blending: LayerBlending(self.layer_blending.read(wram)?),
+            scroll_areas,
+            stale_scrolls,
+            camera: Camera {
+                x: Fixed {
+                    pixels: self.camera_x.read(wram)?,
+                    subpixels: self.camera_x_subpixels.read(wram)?,
+                },
+                y: Fixed {
+                    pixels: self.camera_y.read(wram)?,
+                    subpixels: self.camera_y_subpixels.read(wram)?,
+                },
+                ..self.scrolling.read(wram)?
+            },
+            plms: self.plms.read(wram, rooms.population(room))?,
+            enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
+            drawing: EnemyDrawing {
+                hook: self.drawn_hook.read(wram)?,
+                ..EnemyDrawing::default()
+            },
+            ..RoomScoped::default()
+        })
     }
 
     /// Samus: her position, pose and equipment.
@@ -1021,6 +1220,13 @@ impl Rules<'_> {
                 cgram: colours(self.palette_buffer.read(wram)?),
                 vram: self.vram_queue(wram)?,
                 samus_tiles: self.samus_tiles.read(wram, &rooms.samus_tiles)?,
+                level: {
+                    let [bg1, bg2] = self.uploads;
+                    LevelUploads {
+                        bg1: bg1.read(wram)?,
+                        bg2: bg2.read(wram)?,
+                    }
+                },
                 ..NmiBatch::default()
             },
         })
@@ -1358,6 +1564,18 @@ fn map_coordinate(source: WramWord, wram: &[u8]) -> Result<u8, DecodeError> {
     })
 }
 
+/// The area an area index names.
+fn area(source: WramWord, wram: &[u8]) -> Result<Area, DecodeError> {
+    let index = source.read(wram)?;
+    u8::try_from(index)
+        .ok()
+        .and_then(|index| Area::try_from(index).ok())
+        .ok_or(DecodeError::Unrepresentable {
+            source: source.name,
+            value: index,
+        })
+}
+
 impl MiniMapSources {
     /// What the record's mini-map draws from.
     fn read(&self, wram: &[u8]) -> Result<MiniMap, DecodeError> {
@@ -1368,17 +1586,9 @@ impl MiniMapSources {
                 .ok_or(DecodeError::WramTooShort {
                     source: self.explored.name,
                 })?;
-        let area = self.area.read(wram)?;
-        let area = u8::try_from(area)
-            .ok()
-            .and_then(|area| Area::try_from(area).ok())
-            .ok_or(DecodeError::Unrepresentable {
-                source: self.area.name,
-                value: area,
-            })?;
         Ok(MiniMap {
             explored: MapBits(*explored),
-            area,
+            area: area(self.area, wram)?,
             room: MapPosition {
                 x: map_coordinate(self.room_x, wram)?,
                 y: map_coordinate(self.room_y, wram)?,

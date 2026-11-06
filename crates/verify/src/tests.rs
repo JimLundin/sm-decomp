@@ -18,6 +18,7 @@ use game::state::room::{
     LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep,
     SpritePalette, TilesIndex,
 };
+use game::state::room::{BlockPoint, DrawnBlocks};
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, Horizontal,
     Jump, Movement, MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial,
@@ -29,19 +30,29 @@ use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
     MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
 };
-use game::state::video::{OamEntry, SamusTileUploads, VRAM_WORDS};
+use game::state::video::{
+    LayerUploads, OamEntry, SamusTileUploads, TilemapEntry, TilemapPart, UploadRequests,
+    VRAM_WORDS, VramWord,
+};
 use game::state::{GameMode, NmiTiming, State};
 use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 
 use crate::decode::{
-    DecodeError, Memory, Quiescence, RoomHeader, RoomMap, Rules, Unsupported, decode,
+    DecodeError, LayerUploadSources, Memory, Quiescence, RoomHeader, RoomMap, Rules, StateHeader,
+    StateLevel, Unsupported, decode,
 };
-use crate::source::{SlotField, WramArray, WramByte, WramWord};
+use crate::source::{SlotField, WramArray, WramBlock, WramByte, WramWord};
 use crate::strand::StrandRules;
 
 /// The Morph Ball Room's header in bank $8F (bank $8F log).
 const MORPH_BALL_ROOM: RoomHeader = RoomHeader(0x9E9F);
 const MORPH_BALL_ROOM_ID: RoomId = RoomId(7);
+/// The synthetic room's state header, and what the content says it loads.
+const MORPH_BALL_STATE: StateHeader = StateHeader(0x9ECB);
+const MORPH_BALL_LEVEL: StateLevel = StateLevel {
+    tileset: data::tileset::TilesetId(8),
+    layer2: true,
+};
 
 /// The main thread's stack pointer in the synthetic record.
 const MAIN_LOOP_S: u16 = 0x1FF0;
@@ -56,6 +67,7 @@ fn rooms() -> RoomMap {
         programs: programs(),
         samus_tiles: samus_tiles(),
         plms: vec![(MORPH_BALL_ROOM_ID, population())],
+        states: vec![(MORPH_BALL_STATE, MORPH_BALL_LEVEL)],
     }
 }
 
@@ -258,9 +270,66 @@ fn put_room(wram: &mut [u8]) {
     put(wram, 0x07A3, 0x0004); // ROOM_Y_COORDINATE_ON_MAP
     put(wram, 0x0789, 0x0001); // HAS_AREA_MAP
     put(wram, 0x05F7, 0x0001); // DEBUG_DISABLE_MINIMAP
+    put(wram, 0x07BB, MORPH_BALL_STATE.0); // ROOMDEFROOMSTATE_PTR
+    put_scrolling(wram);
     for (byte, value) in wram[0x07F7..0x08F7].iter_mut().zip(0..=u8::MAX) {
         *byte = value | 0x80; // MAP_TILES_EXPLORED
     }
+}
+
+/// The BG graphics update's state: each word from `$08FF` to `$098E` that the decoder reads
+/// distinct, and each upload buffer word its own index.
+fn put_scrolling(wram: &mut [u8]) {
+    for (offset, value) in (0x08FF..0x0907).step_by(2).zip(0x0011_u16..) {
+        put(wram, offset, value); // PREVIOUS_LAYER1_X_BLOCK to PREVIOUS_LAYER2_Y_BLOCK
+    }
+    for (offset, value) in (0x0956..0x0990).step_by(2).zip(0x0101_u16..) {
+        put(wram, offset, value); // BG1_UPDATE_COL_UNWRAPPED_SIZE to SIZE_OF_BG2
+    }
+    for (offset, value) in (0xC8C8..0xCAD8).step_by(2).zip(0_u16..) {
+        put(wram, offset, value); // the BG1 and BG2 column and row buffers
+    }
+}
+
+/// The scrolling state [`put_scrolling`] sets.
+fn decodes_the_scrolling(state: &State) -> bool {
+    let level = &state.video.batch.level;
+    let word = |offset: u16| 0x0101_u16.wrapping_add(offset.wrapping_sub(0x0956) / 2);
+    let part = |to: u16, bytes: u16| TilemapPart {
+        to: VramWord(word(to)),
+        bytes: word(bytes),
+    };
+    let entries = |words: &[TilemapEntry], at: u16| {
+        words
+            .iter()
+            .zip(at.wrapping_sub(0xC8C8) / 2..)
+            .all(|(entry, word)| *entry == TilemapEntry::from_word(word))
+    };
+    let layer = |uploads: &LayerUploads, base: u16, buffers: u16| {
+        let column = &uploads.column;
+        let row = &uploads.row;
+        column.first == part(base.wrapping_add(4), base)
+            && column.wrapped == part(base.wrapping_add(6), base.wrapping_add(2))
+            && column.requests == UploadRequests(word(base.wrapping_add(0xC)))
+            && row.first == part(base.wrapping_add(0x12), base.wrapping_add(0xE))
+            && row.wrapped == part(base.wrapping_add(0x14), base.wrapping_add(0x10))
+            && row.requests == UploadRequests(word(base.wrapping_add(0x1A)))
+            && entries(&column.left, buffers)
+            && entries(&column.right, buffers.wrapping_add(0x40))
+            && entries(&row.top, buffers.wrapping_add(0x80))
+            && entries(&row.bottom, buffers.wrapping_add(0xC4))
+    };
+    state.room.camera.drawn
+        == DrawnBlocks {
+            layer1: BlockPoint { x: 0x11, y: 0x12 },
+            layer2: BlockPoint { x: 0x13, y: 0x14 },
+        }
+        && layer(&level.bg1, 0x0956, 0xC8C8)
+        && layer(&level.bg2, 0x0972, 0xC9D0)
+        && state.room.tilemap_gap == VramWord(word(0x098E))
+        && state.room.area == Area::Brinstar
+        && state.room.tileset == MORPH_BALL_LEVEL.tileset
+        && state.room.layer2 == Some(Vec::new())
 }
 
 fn decodes_the_room(state: &State) -> bool {
@@ -276,6 +345,7 @@ fn decodes_the_room(state: &State) -> bool {
             .iter()
             .zip(0..=u8::MAX)
             .all(|(&byte, value)| byte == value | 0x80)
+        && decodes_the_scrolling(state)
 }
 
 /// The synthetic enemy slots, a live eye in slot 0 and a deleting elevator in slot 1, and
@@ -620,7 +690,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 62] = [
+const WORD_RULES: [(&str, WordRule); 89] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -710,6 +780,73 @@ const WORD_RULES: [(&str, WordRule); 62] = [
     }),
     ("hud.mini_map.disabled", |rules| {
         &mut rules.hud.mini_map.disabled
+    }),
+    ("level.state", |rules| &mut rules.level.state),
+    ("area", |rules| &mut rules.area),
+    ("tilemap_gap", |rules| &mut rules.tilemap_gap),
+    ("drawn.layer1.x", |rules| &mut rules.scrolling.drawn[0][0]),
+    ("drawn.layer1.y", |rules| &mut rules.scrolling.drawn[0][1]),
+    ("drawn.layer2.x", |rules| &mut rules.scrolling.drawn[1][0]),
+    ("drawn.layer2.y", |rules| &mut rules.scrolling.drawn[1][1]),
+    ("uploads[0].column.unwrapped_size", |rules| {
+        &mut rules.uploads[0].column.unwrapped_size
+    }),
+    ("uploads[0].column.wrapped_size", |rules| {
+        &mut rules.uploads[0].column.wrapped_size
+    }),
+    ("uploads[0].column.unwrapped_dst", |rules| {
+        &mut rules.uploads[0].column.unwrapped_dst
+    }),
+    ("uploads[0].column.wrapped_dst", |rules| {
+        &mut rules.uploads[0].column.wrapped_dst
+    }),
+    ("uploads[0].column.enable", |rules| {
+        &mut rules.uploads[0].column.enable
+    }),
+    ("uploads[0].row.unwrapped_size", |rules| {
+        &mut rules.uploads[0].row.unwrapped_size
+    }),
+    ("uploads[0].row.wrapped_size", |rules| {
+        &mut rules.uploads[0].row.wrapped_size
+    }),
+    ("uploads[0].row.unwrapped_dst", |rules| {
+        &mut rules.uploads[0].row.unwrapped_dst
+    }),
+    ("uploads[0].row.wrapped_dst", |rules| {
+        &mut rules.uploads[0].row.wrapped_dst
+    }),
+    ("uploads[0].row.enable", |rules| {
+        &mut rules.uploads[0].row.enable
+    }),
+    ("uploads[1].column.unwrapped_size", |rules| {
+        &mut rules.uploads[1].column.unwrapped_size
+    }),
+    ("uploads[1].column.wrapped_size", |rules| {
+        &mut rules.uploads[1].column.wrapped_size
+    }),
+    ("uploads[1].column.unwrapped_dst", |rules| {
+        &mut rules.uploads[1].column.unwrapped_dst
+    }),
+    ("uploads[1].column.wrapped_dst", |rules| {
+        &mut rules.uploads[1].column.wrapped_dst
+    }),
+    ("uploads[1].column.enable", |rules| {
+        &mut rules.uploads[1].column.enable
+    }),
+    ("uploads[1].row.unwrapped_size", |rules| {
+        &mut rules.uploads[1].row.unwrapped_size
+    }),
+    ("uploads[1].row.wrapped_size", |rules| {
+        &mut rules.uploads[1].row.wrapped_size
+    }),
+    ("uploads[1].row.unwrapped_dst", |rules| {
+        &mut rules.uploads[1].row.unwrapped_dst
+    }),
+    ("uploads[1].row.wrapped_dst", |rules| {
+        &mut rules.uploads[1].row.wrapped_dst
+    }),
+    ("uploads[1].row.enable", |rules| {
+        &mut rules.uploads[1].row.enable
     }),
 ];
 
@@ -951,6 +1088,37 @@ fn every_moved_enemy_field_fails() {
         field.offset = field.offset.wrapping_add(2);
         assert!(!survives(&mutant), "{name}");
     }
+}
+
+/// A place in an upload's sources holding one of its buffers.
+type BufferRule = fn(&mut LayerUploadSources) -> &mut WramBlock;
+
+#[test]
+fn every_moved_upload_buffer_fails() {
+    let buffers: [(&str, BufferRule); 4] = [
+        ("column first", |sources| &mut sources.column.first_halves),
+        ("column second", |sources| &mut sources.column.second_halves),
+        ("row first", |sources| &mut sources.row.first_halves),
+        ("row second", |sources| &mut sources.row.second_halves),
+    ];
+    for layer in 0..2 {
+        for (name, buffer) in buffers {
+            let mut mutant = Rules::ORIGINAL;
+            let block = buffer(&mut mutant.uploads[layer]);
+            block.offset = block.offset.wrapping_add(2);
+            assert!(!survives(&mutant), "BG{} {name}", layer.wrapping_add(1));
+        }
+    }
+}
+
+#[test]
+fn a_room_state_the_map_doesnt_hold_is_an_error() {
+    let mut record = record();
+    put(&mut record.wram, 0x07BB, 0x1234);
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::UnknownRoomState(StateHeader(0x1234)))
+    );
 }
 
 #[test]
@@ -1835,7 +2003,8 @@ fn cached_rows() -> Option<CachedRows> {
     let rooms = crate::lockstep::slice_zero_rooms()
         .with_programs(content.enemy_programs)
         .with_samus_tiles(content.samus_tiles)
-        .with_plms(crate::lockstep::slice_zero_plms(&image).unwrap());
+        .with_plms(crate::lockstep::slice_zero_plms(&image).unwrap())
+        .with_states(crate::lockstep::slice_zero_states(&image).unwrap());
     let rom = data::rom::Rom::new(image).unwrap();
     let (loaded_rooms, _) = Rooms::load(rom.lorom(), &SLICE_ZERO_ROOMS).unwrap();
     let id = loaded_rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();

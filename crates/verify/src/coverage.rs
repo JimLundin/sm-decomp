@@ -61,6 +61,13 @@ const fn wram_byte(path: &'static str, byte: WramByte) -> Field {
     }
 }
 
+const fn block(path: &'static str, block: WramBlock) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramBlock(block)),
+    }
+}
+
 const fn enemy(path: &'static str, field: SlotField) -> Field {
     Field {
         path,
@@ -217,6 +224,118 @@ pub const FIELDS: &[Field] = &[
         "video.batch.samus_tiles.bottom",
         source::NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
     ),
+    block(
+        "video.batch.level.bg1.column.left",
+        source::BG1_COLUMN_UPDATE.first_halves,
+    ),
+    block(
+        "video.batch.level.bg1.column.right",
+        source::BG1_COLUMN_UPDATE.second_halves,
+    ),
+    wram(
+        "video.batch.level.bg1.column.first.to",
+        source::BG1_COLUMN_UPDATE.unwrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg1.column.first.bytes",
+        source::BG1_COLUMN_UPDATE.unwrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg1.column.wrapped.to",
+        source::BG1_COLUMN_UPDATE.wrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg1.column.wrapped.bytes",
+        source::BG1_COLUMN_UPDATE.wrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg1.column.requests",
+        source::BG1_COLUMN_UPDATE.enable,
+    ),
+    block(
+        "video.batch.level.bg1.row.top",
+        source::BG1_ROW_UPDATE.first_halves,
+    ),
+    block(
+        "video.batch.level.bg1.row.bottom",
+        source::BG1_ROW_UPDATE.second_halves,
+    ),
+    wram(
+        "video.batch.level.bg1.row.first.to",
+        source::BG1_ROW_UPDATE.unwrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg1.row.first.bytes",
+        source::BG1_ROW_UPDATE.unwrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg1.row.wrapped.to",
+        source::BG1_ROW_UPDATE.wrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg1.row.wrapped.bytes",
+        source::BG1_ROW_UPDATE.wrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg1.row.requests",
+        source::BG1_ROW_UPDATE.enable,
+    ),
+    block(
+        "video.batch.level.bg2.column.left",
+        source::BG2_COLUMN_UPDATE.first_halves,
+    ),
+    block(
+        "video.batch.level.bg2.column.right",
+        source::BG2_COLUMN_UPDATE.second_halves,
+    ),
+    wram(
+        "video.batch.level.bg2.column.first.to",
+        source::BG2_COLUMN_UPDATE.unwrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg2.column.first.bytes",
+        source::BG2_COLUMN_UPDATE.unwrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg2.column.wrapped.to",
+        source::BG2_COLUMN_UPDATE.wrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg2.column.wrapped.bytes",
+        source::BG2_COLUMN_UPDATE.wrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg2.column.requests",
+        source::BG2_COLUMN_UPDATE.enable,
+    ),
+    block(
+        "video.batch.level.bg2.row.top",
+        source::BG2_ROW_UPDATE.first_halves,
+    ),
+    block(
+        "video.batch.level.bg2.row.bottom",
+        source::BG2_ROW_UPDATE.second_halves,
+    ),
+    wram(
+        "video.batch.level.bg2.row.first.to",
+        source::BG2_ROW_UPDATE.unwrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg2.row.first.bytes",
+        source::BG2_ROW_UPDATE.unwrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg2.row.wrapped.to",
+        source::BG2_ROW_UPDATE.wrapped_dst,
+    ),
+    wram(
+        "video.batch.level.bg2.row.wrapped.bytes",
+        source::BG2_ROW_UPDATE.wrapped_size,
+    ),
+    wram(
+        "video.batch.level.bg2.row.requests",
+        source::BG2_ROW_UPDATE.enable,
+    ),
     wram_byte("video.nmi_requested", source::WAITING_FOR_NMI),
     wram("samus.position.x.pixels", source::SAMUS_X_POS),
     wram("samus.position.x.subpixels", source::SAMUS_X_SUBPOS),
@@ -348,6 +467,15 @@ pub const FIELDS: &[Field] = &[
         status: Status::Decoded(Source::WramBlock(source::LEVEL_DATA)),
     },
     wram("room.width", source::ROOM_WIDTH_IN_BLOCKS),
+    // Present when the room state's level data has layer 2, which the content says.
+    block("room.layer2", source::CUSTOM_BACKGROUND),
+    block("room.level_tail", source::LEVEL_DATA),
+    wram("room.area", source::AREA_INDEX),
+    Field {
+        path: "room.tileset",
+        status: Status::Decoded(Source::WramPointer(source::ROOMDEFROOMSTATE_PTR)),
+    },
+    wram("room.tilemap_gap", source::SIZE_OF_BG2),
     wram("room.layer_blending", source::FX_LAYER_BLENDING_CONFIG_A),
     Field {
         path: "room.scroll_areas",
@@ -372,6 +500,22 @@ pub const FIELDS: &[Field] = &[
     wram("room.camera.scrollers.down", source::DOWN_SCROLLER),
     wram_byte("room.camera.layer2_scroll.x", source::LAYER2_SCROLL_X),
     wram_byte("room.camera.layer2_scroll.y", source::LAYER2_SCROLL_Y),
+    wram(
+        "room.camera.drawn.layer1.x",
+        source::PREVIOUS_LAYER1_X_BLOCK,
+    ),
+    wram(
+        "room.camera.drawn.layer1.y",
+        source::PREVIOUS_LAYER1_Y_BLOCK,
+    ),
+    wram(
+        "room.camera.drawn.layer2.x",
+        source::PREVIOUS_LAYER2_X_BLOCK,
+    ),
+    wram(
+        "room.camera.drawn.layer2.y",
+        source::PREVIOUS_LAYER2_Y_BLOCK,
+    ),
     none(
         "room.plms.slots.generation",
         "the original keeps no count of a slot's fills; its ID word is the occupant",
@@ -729,6 +873,39 @@ mod tests {
         ]
     }
 
+    /// The BG graphics update's word sources, and the room state's.
+    fn scrolling_word_sources(rules: &Rules<'_>) -> Vec<WramWord> {
+        vec![
+            rules.level.state,
+            rules.area,
+            rules.tilemap_gap,
+            rules.scrolling.drawn[0][0],
+            rules.scrolling.drawn[0][1],
+            rules.scrolling.drawn[1][0],
+            rules.scrolling.drawn[1][1],
+            rules.uploads[0].column.unwrapped_size,
+            rules.uploads[0].column.wrapped_size,
+            rules.uploads[0].column.unwrapped_dst,
+            rules.uploads[0].column.wrapped_dst,
+            rules.uploads[0].column.enable,
+            rules.uploads[0].row.unwrapped_size,
+            rules.uploads[0].row.wrapped_size,
+            rules.uploads[0].row.unwrapped_dst,
+            rules.uploads[0].row.wrapped_dst,
+            rules.uploads[0].row.enable,
+            rules.uploads[1].column.unwrapped_size,
+            rules.uploads[1].column.wrapped_size,
+            rules.uploads[1].column.unwrapped_dst,
+            rules.uploads[1].column.wrapped_dst,
+            rules.uploads[1].column.enable,
+            rules.uploads[1].row.unwrapped_size,
+            rules.uploads[1].row.wrapped_size,
+            rules.uploads[1].row.unwrapped_dst,
+            rules.uploads[1].row.wrapped_dst,
+            rules.uploads[1].row.enable,
+        ]
+    }
+
     /// The slot sources the decoder reads; an array of words is named by its first.
     fn slot_sources(rules: &Rules<'_>) -> Vec<(WramTable, SlotField)> {
         let enemies = &rules.enemies;
@@ -781,7 +958,8 @@ mod tests {
     #[test]
     fn every_wram_rule_is_a_decoder_source() {
         let rules = Rules::ORIGINAL;
-        let words = word_sources(&rules);
+        let mut words = word_sources(&rules);
+        words.extend(scrolling_word_sources(&rules));
         let bytes = byte_sources(&rules);
         let slots = slot_sources(&rules);
         let arrays = array_sources(&rules);
@@ -794,7 +972,16 @@ mod tests {
             // The BTS and the room's size, in blocks, go with layer 1.
             rules.level.blocks,
             rules.level.scrolls,
+            rules.level.layer2,
             rules.collected_items,
+            rules.uploads[0].column.first_halves,
+            rules.uploads[0].column.second_halves,
+            rules.uploads[0].row.first_halves,
+            rules.uploads[0].row.second_halves,
+            rules.uploads[1].column.first_halves,
+            rules.uploads[1].column.second_halves,
+            rules.uploads[1].row.first_halves,
+            rules.uploads[1].row.second_halves,
         ];
         for field in FIELDS {
             match field.status {

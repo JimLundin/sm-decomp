@@ -407,6 +407,219 @@ pub const DOWN_SCROLLER: WramWord = WramWord {
     name: "DOWN_SCROLLER",
     offset: 0x07AF,
 };
+
+/// Bank $80 log, `$80:A3DF`: layer 1's X block when the BG graphics update last built a
+/// column, which it compares with the X block `$80:A4BB` works out now.
+pub const PREVIOUS_LAYER1_X_BLOCK: WramWord = WramWord {
+    name: "PREVIOUS_LAYER1_X_BLOCK",
+    offset: 0x08FF,
+};
+/// Bank $80 log, `$80:A3DF`: layer 1's Y block when it last built a row.
+pub const PREVIOUS_LAYER1_Y_BLOCK: WramWord = WramWord {
+    name: "PREVIOUS_LAYER1_Y_BLOCK",
+    offset: 0x0901,
+};
+/// Bank $80 log, `$80:A3DF`: layer 2's X block when it last built a column.
+pub const PREVIOUS_LAYER2_X_BLOCK: WramWord = WramWord {
+    name: "PREVIOUS_LAYER2_X_BLOCK",
+    offset: 0x0903,
+};
+/// Bank $80 log, `$80:A3DF`: layer 2's Y block when it last built a row.
+pub const PREVIOUS_LAYER2_Y_BLOCK: WramWord = WramWord {
+    name: "PREVIOUS_LAYER2_Y_BLOCK",
+    offset: 0x0905,
+};
+
+/// Where one of a background's block column or row uploads keeps its parts and request.
+///
+/// Bank $80 log: `$80:A9DE` and `$80:AB78` write them; `$80:8CD8` and `$80:8DAC` DMA them
+/// and clear the request.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TilemapUpload {
+    /// The first part's bytes.
+    pub unwrapped_size: WramWord,
+    /// The wrapped part's bytes.
+    pub wrapped_size: WramWord,
+    /// The first part's VRAM word.
+    pub unwrapped_dst: WramWord,
+    /// The wrapped part's VRAM word.
+    pub wrapped_dst: WramWord,
+    /// The builds not yet made, which the builder increments.
+    pub enable: WramWord,
+    /// The first 8x8 column or row: left for a column, top for a row.
+    pub first_halves: WramBlock,
+    /// The second: right, or bottom.
+    pub second_halves: WramBlock,
+}
+
+/// A column's two 8x8 columns' bytes: 16 blocks of two words.
+const COLUMN_HALF_BYTES: u16 = 0x40;
+/// A row's two 8x8 rows' bytes: 17 blocks of two words.
+const ROW_HALF_BYTES: u16 = 0x44;
+
+/// BG1's block column upload, from layer 1 (`$0956`-`$0962`, `$7E:C8C8`).
+pub const BG1_COLUMN_UPDATE: TilemapUpload = TilemapUpload {
+    unwrapped_size: WramWord {
+        name: "BG1_UPDATE_COL_UNWRAPPED_SIZE",
+        offset: 0x0956,
+    },
+    wrapped_size: WramWord {
+        name: "BG1_UPDATE_COL_WRAPPED_SIZE",
+        offset: 0x0958,
+    },
+    unwrapped_dst: WramWord {
+        name: "BG1_UPDATE_COL_UNWRAPPED_DST",
+        offset: 0x095A,
+    },
+    wrapped_dst: WramWord {
+        name: "BG1_UPDATE_COL_WRAPPED_DST",
+        offset: 0x095C,
+    },
+    enable: WramWord {
+        name: "BG1_UPDATE_COL_ENABLE",
+        offset: 0x0962,
+    },
+    first_halves: WramBlock {
+        name: "BG1_COLUMN_UPDATE_TILEMAP_LEFT_HALVES",
+        offset: 0xC8C8,
+        len: COLUMN_HALF_BYTES,
+    },
+    second_halves: WramBlock {
+        name: "BG1_COLUMN_UPDATE_TILEMAP_RIGHT_HALVES",
+        offset: 0xC908,
+        len: COLUMN_HALF_BYTES,
+    },
+};
+
+/// BG1's block row upload (`$0964`-`$0970`, `$7E:C948`).
+///
+/// `ram_map.rs` names the row's buffers `..._COLUMN_..._TOP_HALVES` and `..._BOTTOM_HALVES`
+/// after snesrev's `variables.h`; `$80:8DAC` DMAs them as the row's top and bottom.
+pub const BG1_ROW_UPDATE: TilemapUpload = TilemapUpload {
+    unwrapped_size: WramWord {
+        name: "BG1_UPDATE_ROW_UNWRAPPED_SIZE",
+        offset: 0x0964,
+    },
+    wrapped_size: WramWord {
+        name: "BG1_UPDATE_ROW_WRAPPED_SIZE",
+        offset: 0x0966,
+    },
+    unwrapped_dst: WramWord {
+        name: "BG1_UPDATE_ROW_UNWRAPPED_DST",
+        offset: 0x0968,
+    },
+    wrapped_dst: WramWord {
+        name: "BG1_UPDATE_ROW_WRAPPED_DST",
+        offset: 0x096A,
+    },
+    enable: WramWord {
+        name: "BG1_UPDATE_ROW_ENABLE",
+        offset: 0x0970,
+    },
+    first_halves: WramBlock {
+        name: "BG1_COLUMN_UPDATE_TILEMAP_TOP_HALVES",
+        offset: 0xC948,
+        len: ROW_HALF_BYTES,
+    },
+    second_halves: WramBlock {
+        name: "BG1_COLUMN_UPDATE_TILEMAP_BOTTOM_HALVES",
+        offset: 0xC98C,
+        len: ROW_HALF_BYTES,
+    },
+};
+
+/// BG2's block column upload, from layer 2 (`$0972`-`$097E`, `$7E:C9D0`): BG1's variables
+/// $1C bytes on, its buffers $108.
+pub const BG2_COLUMN_UPDATE: TilemapUpload = TilemapUpload {
+    unwrapped_size: WramWord {
+        name: "BG2_UPDATE_COL_UNWRAPPED_SIZE",
+        offset: 0x0972,
+    },
+    wrapped_size: WramWord {
+        name: "BG2_UPDATE_COL_WRAPPED_SIZE",
+        offset: 0x0974,
+    },
+    unwrapped_dst: WramWord {
+        name: "BG2_UPDATE_COL_UNWRAPPED_DST",
+        offset: 0x0976,
+    },
+    wrapped_dst: WramWord {
+        name: "BG2_UPDATE_COL_WRAPPED_DST",
+        offset: 0x0978,
+    },
+    enable: WramWord {
+        name: "BG2_UPDATE_COL_ENABLE",
+        offset: 0x097E,
+    },
+    first_halves: WramBlock {
+        name: "BG2_COLUMN_UPDATE_TILEMAP_LEFT_HALVES",
+        offset: 0xC9D0,
+        len: COLUMN_HALF_BYTES,
+    },
+    second_halves: WramBlock {
+        name: "bg2_column_update_tilemap_right_halves",
+        offset: 0xCA10,
+        len: COLUMN_HALF_BYTES,
+    },
+};
+
+/// BG2's block row upload (`$0980`-`$098C`, `$7E:CA50`).
+pub const BG2_ROW_UPDATE: TilemapUpload = TilemapUpload {
+    unwrapped_size: WramWord {
+        name: "BG2_UPDATE_ROW_UNWRAPPED_SIZE",
+        offset: 0x0980,
+    },
+    wrapped_size: WramWord {
+        name: "BG2_UPDATE_ROW_WRAPPED_SIZE",
+        offset: 0x0982,
+    },
+    unwrapped_dst: WramWord {
+        name: "BG2_UPDATE_ROW_UNWRAPPED_DST",
+        offset: 0x0984,
+    },
+    wrapped_dst: WramWord {
+        name: "BG2_UPDATE_ROW_WRAPPED_DST",
+        offset: 0x0986,
+    },
+    enable: WramWord {
+        name: "BG2_UPDATE_ROW_ENABLE",
+        offset: 0x098C,
+    },
+    first_halves: WramBlock {
+        name: "BG2_COLUMN_UPDATE_TILEMAP_TOP_HALVES",
+        offset: 0xCA50,
+        len: ROW_HALF_BYTES,
+    },
+    second_halves: WramBlock {
+        name: "BG2_COLUMN_UPDATE_TILEMAP_BOTTOM_HALVES",
+        offset: 0xCA94,
+        len: ROW_HALF_BYTES,
+    },
+};
+
+/// Bank $80 log, `$80:AA56`: how far below BG1's tilemap BG2's lies in VRAM, which the
+/// builders subtract for BG2's uploads.
+pub const SIZE_OF_BG2: WramWord = WramWord {
+    name: "SIZE_OF_BG2",
+    offset: 0x098E,
+};
+
+/// Bank $82 log, `$82:DEF2`: the room state header loaded, a pointer into bank $8F.
+///
+/// Its tileset byte and whether its level data has layer 2 aren't kept in RAM; the decoder
+/// takes them from the content's state at this pointer.
+pub const ROOMDEFROOMSTATE_PTR: WramWord = WramWord {
+    name: "ROOMDEFROOMSTATE_PTR",
+    offset: 0x07BB,
+};
+
+/// Bank $82 log, `$82:E7D3`: layer 2's level data, a word a block, which level loading
+/// mirrors here from behind the BTS whether or not the room has its own layer 2.
+pub const CUSTOM_BACKGROUND: WramBlock = WramBlock {
+    name: "CUSTOM_BACKGROUND",
+    offset: 0x1_9602,
+    len: 0x6400,
+};
 /// Bank $90 log, `$90:956E`: Samus's X position when the camera last followed her.
 pub const SAMUS_PREV_X_POS: WramWord = WramWord {
     name: "SAMUS_PREV_X_POS",
