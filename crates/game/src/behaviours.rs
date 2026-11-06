@@ -7,52 +7,89 @@
 /// A named behaviour.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum BehaviourId {
-    /// On the frame Samus changes pose, she still moves the way her old pose moved.
+    /// On the frame she changes pose she still moves as her old pose did.
     LocomotionAtFrameStart,
     /// Each way of moving has its own acceleration, top speed and braking.
-    SpeedTableRow,
-    /// Samus speeds up by the row's acceleration each frame, up to its top speed.
-    BaseSpeedAccelerate,
-    /// Speed briefly overshoots, or snaps *up* to, the top speed.
+    SpeedTable,
+    /// She speeds up by the row's acceleration to its top speed, and brakes by its deceleration.
+    BaseSpeed,
+    /// Speed overshoots, or snaps up, to the top speed.
     SpeedCap,
-    /// During the on-ground turn from standing, Samus slides 0.C000 px every other frame.
+    /// Turning from standing slides 0.C000 px every other frame along her facing.
     TurnCreep,
-    /// When Samus brakes or turns, her speed falls by the row's deceleration.
-    BaseSpeedDecelerate,
-    /// Holding run while running adds speed, up to 2 px a frame; a kept momentum carries it into other rows.
+    /// Holding run while running adds speed, up to 2 px; momentum carries it elsewhere.
     ExtraRunSpeed,
-    /// (invisible in vanilla play) the run-speed cap is tested before the add, word by word.
+    /// (invisible in vanilla) the run-speed cap is tested on the old speed, word by word.
     ExtraRunCap,
-    /// Run speed carries through a jump and is lost when she stops.
+    /// The run speed's momentum is lost.
     CancelSpeedBoost,
-    /// Samus moves sideways by her total speed.
+    /// She moves sideways by her total speed; a zero move still meets a solid enemy.
     HorizontalStep,
-    /// During a turn, Samus keeps sliding the way she was going.
+    /// During a turn, she keeps sliding the way she was going.
     HorizontalDirection,
-    /// Samus never moves more than 15 px sideways in a frame.
+    /// She never moves more than 15 px sideways in a frame.
     DisplacementClamp,
-    /// Running into a wall stops her dead, flush against it.
+    /// A stopped sideways move, on the ground or in the air, stops her speeds dead.
     WallStop,
-    /// Walking off a ledge or down a slope, Samus sticks to the ground beneath her.
+    /// On the ground she sticks to the floor beneath her.
     StepDown,
-    /// The still morph ball sheds any speed it has, unless it's in the air.
+    /// The still ball coasts and stops, unless it's in the air.
     BallAtRest,
     /// A turning Samus sinks onto lower ground instead of falling.
     TurnIgnoresFall,
     /// Landing during a crouch or morph transition ends the vertical motion.
     TransitionLanding,
-    /// Falling off the ground tells pose selection which fall to start.
+    /// A vertical move tells pose selection whether she landed, fell or hit the ceiling.
     LandingContact,
     /// On a moving elevator, Samus facing the screen rides it down.
     ElevatorRide,
+    /// The elevator's ride down tests the side above her.
+    ElevatorHeadsUp,
     /// Shooting while standing plainly restarts the standing animation.
     StandingShotRestartsAnimation,
-    /// (invisible) flush against a floor her vertical subpixel is FFFF; against a wall, FFFF or 0 by side.
+    /// (invisible) a block stop leaves the subpixel FFFF moving right or down, 0 moving left or up.
     FloorFlushSubpixel,
-    /// Changing aim while running moves Samus an extra pixel forward.
+    /// (invisible) a solid enemy she already touches clears her vertical subpixel.
+    EnemyTouchZeroesYSubpixel,
+    /// Changing aim while running moves her 1 px forward.
     ArmPumpStep,
+    /// Letting go of jump ends the rise at once.
+    JumpRelease,
+    /// A rise whose speed has gone negative turns into a fall.
+    StartedFalling,
+    /// She rises and falls under gravity, moving by the speed she had before it.
+    VerticalStep,
+    /// The fall speed stops growing when its pixel word is exactly 5.
+    FallCap,
+    /// In the air, letting go of left and right stops her drift, unless she is braking or turning.
+    NoInputStops,
+    /// A spin jump drifts only while the side she faces is held.
+    SpinJumpDrift,
+    /// A wall jump always drifts.
+    WallJumpDrift,
+    /// A falling ball with neither left nor right held stops dead.
+    BallDropStops,
+    /// Pressing away from a wall within 8 px arms the wall jump, and a new jump press fires it.
+    WallJumpCheck,
+    /// (invisible) the wall jump's wall test writes the horizontal subpixel as a stop would, without moving her.
+    WallProbeSubpixel,
+    /// With space jump, a new jump press while falling in a spin jump jumps again.
+    SpaceJump,
+    /// A jump starts at the jump speed, or the hi-jump's.
+    Jump,
+    /// Landing as a spring ball with jump held jumps again.
+    SpringBallJump,
+    /// A ball landing fast bounces twice before it rests.
+    BallBounce,
+    /// A new pose's start sets her speeds: a turn folds them, a jump sets its speed.
+    PoseStartWrites,
+    /// Pose selection's commands brake, stop or kill her speeds.
+    PoseCommandWrites,
+    /// The frame's vertical result, passed back, stops a landing, starts a fall or ends a rise.
+    VerticalResultWrites,
+    /// A new pose's start comes before its command, and a replaced pose skips the command.
+    PoseWriteOrder,
 }
-
 /// What sort of behaviour an entry is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Kind {
@@ -111,109 +148,102 @@ pub struct Behaviour {
     pub switch: Switch,
 }
 
-/// Samus on the ground (`docs/behaviours/samus-ground.md`).
-pub const SAMUS_GROUND: [Behaviour; 22] = [
+/// Samus's motion (`docs/behaviours/samus-motion.md`).
+pub const SAMUS_MOTION: [Behaviour; 41] = [
     Behaviour {
         id: BehaviourId::LocomotionAtFrameStart,
-        summary: "on the frame Samus changes pose, she still moves the way her old pose moved.",
+        summary: "on the frame she changes pose she still moves as her old pose did.",
         source: Source::bank(0x90, 0xA337),
         kind: Kind::Timing,
         switch: Switch::Fixed,
     },
     Behaviour {
-        id: BehaviourId::SpeedTableRow,
+        id: BehaviourId::SpeedTable,
         summary: "each way of moving has its own acceleration, top speed and braking.",
         source: Source::bank(0x90, 0x9BD1),
         kind: Kind::Mechanic,
-        switch: Switch::Parameter,
+        switch: Switch::Fixed,
     },
     Behaviour {
-        id: BehaviourId::BaseSpeedAccelerate,
-        summary: "Samus speeds up by the row's acceleration each frame, up to its top speed.",
+        id: BehaviourId::BaseSpeed,
+        summary: "she speeds up by the row's acceleration to its top speed, and brakes by its deceleration.",
         source: Source::bank(0x90, 0x9A7E),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::SpeedCap,
-        summary: "speed briefly overshoots, or snaps *up* to, the top speed.",
+        summary: "speed overshoots, or snaps up, to the top speed.",
         source: Source::bank(0x90, 0x9A99),
         kind: Kind::Quirk,
         switch: Switch::Toggle,
     },
     Behaviour {
         id: BehaviourId::TurnCreep,
-        summary: "during the on-ground turn from standing, Samus slides 0.C000 px every other frame.",
+        summary: "turning from standing slides 0.C000 px every other frame along her facing.",
         source: Source::bank(0x90, 0xA67C),
         kind: Kind::Quirk,
         switch: Switch::Follows(BehaviourId::SpeedCap),
     },
     Behaviour {
-        id: BehaviourId::BaseSpeedDecelerate,
-        summary: "when Samus brakes or turns, her speed falls by the row's deceleration.",
-        source: Source::bank(0x90, 0x9ABA),
-        kind: Kind::Mechanic,
-        switch: Switch::Fixed,
-    },
-    Behaviour {
         id: BehaviourId::ExtraRunSpeed,
-        summary: "holding run while running adds speed, up to 2 px a frame; a kept momentum carries it into other rows.",
+        summary: "holding run while running adds speed, up to 2 px; momentum carries it elsewhere.",
         source: Source::bank(0x90, 0x973E),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::ExtraRunCap,
-        summary: "(invisible in vanilla play) the run-speed cap is tested before the add, word by word.",
+        summary: "(invisible in vanilla) the run-speed cap is tested on the old speed, word by word.",
         source: Source::bank(0x90, 0x97D5),
         kind: Kind::Quirk,
         switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::CancelSpeedBoost,
-        summary: "run speed carries through a jump and is lost when she stops.",
+        summary: "the run speed's momentum is lost.",
         source: Source::bank(0x91, 0xDE53),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::HorizontalStep,
-        summary: "Samus moves sideways by her total speed.",
+        summary: "she moves sideways by her total speed; a zero move still meets a solid enemy.",
         source: Source::bank(0x90, 0x8EA9),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::HorizontalDirection,
-        summary: "during a turn, Samus keeps sliding the way she was going.",
+        summary: "during a turn, she keeps sliding the way she was going.",
         source: Source::bank(0x90, 0x8EA9),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::DisplacementClamp,
-        summary: "Samus never moves more than 15 px sideways in a frame.",
+        summary: "she never moves more than 15 px sideways in a frame.",
         source: Source::bank(0x90, 0xE4AD),
         kind: Kind::Mechanic,
-        switch: Switch::Parameter,
+        switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::WallStop,
-        summary: "running into a wall stops her dead, flush against it.",
+        summary: "a stopped sideways move, on the ground or in the air, stops her speeds dead.",
         source: Source::bank(0x90, 0xE5CE),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::StepDown,
-        summary: "walking off a ledge or down a slope, Samus sticks to the ground beneath her.",
+        summary: "on the ground she sticks to the floor beneath her.",
         source: Source::bank(0x90, 0x923F),
         kind: Kind::Mechanic,
-        switch: Switch::Parameter,
+        switch: Switch::Fixed,
     },
     Behaviour {
         id: BehaviourId::BallAtRest,
-        summary: "the still morph ball sheds any speed it has, unless it's in the air.",
+        summary: "the still ball coasts and stops, unless it's in the air.",
         source: Source::bank(0x90, 0xA521),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -234,7 +264,7 @@ pub const SAMUS_GROUND: [Behaviour; 22] = [
     },
     Behaviour {
         id: BehaviourId::LandingContact,
-        summary: "falling off the ground tells pose selection which fall to start.",
+        summary: "a vertical move tells pose selection whether she landed, fell or hit the ceiling.",
         source: Source::bank(0x90, 0xE61B),
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -247,6 +277,13 @@ pub const SAMUS_GROUND: [Behaviour; 22] = [
         switch: Switch::Fixed,
     },
     Behaviour {
+        id: BehaviourId::ElevatorHeadsUp,
+        summary: "the elevator's ride down tests the side above her.",
+        source: Source::bank(0x90, 0xA397),
+        kind: Kind::Quirk,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
         id: BehaviourId::StandingShotRestartsAnimation,
         summary: "shooting while standing plainly restarts the standing animation.",
         source: Source::bank(0x90, 0xA3AD),
@@ -255,16 +292,149 @@ pub const SAMUS_GROUND: [Behaviour; 22] = [
     },
     Behaviour {
         id: BehaviourId::FloorFlushSubpixel,
-        summary: "(invisible) flush against a floor her vertical subpixel is FFFF; against a wall, FFFF or 0 by side.",
+        summary: "(invisible) a block stop leaves the subpixel FFFF moving right or down, 0 moving left or up.",
         source: Source::bank(0x94, 0x8F82),
         kind: Kind::Quirk,
         switch: Switch::Fixed,
     },
     Behaviour {
+        id: BehaviourId::EnemyTouchZeroesYSubpixel,
+        summary: "(invisible) a solid enemy she already touches clears her vertical subpixel.",
+        source: Source::bank(0xA0, 0xAAC8),
+        kind: Kind::Quirk,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
         id: BehaviourId::ArmPumpStep,
-        summary: "changing aim while running moves Samus an extra pixel forward.",
+        summary: "changing aim while running moves her 1 px forward.",
         source: Source::bank(0x91, 0xEADE),
         kind: Kind::Quirk,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::JumpRelease,
+        summary: "letting go of jump ends the rise at once.",
+        source: Source::bank(0x90, 0x8FDC),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::StartedFalling,
+        summary: "a rise whose speed has gone negative turns into a fall.",
+        source: Source::bank(0x90, 0x90C4),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::VerticalStep,
+        summary: "she rises and falls under gravity, moving by the speed she had before it.",
+        source: Source::bank(0x90, 0x90E2),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::FallCap,
+        summary: "the fall speed stops growing when its pixel word is exactly 5.",
+        source: Source::bank(0x90, 0x910C),
+        kind: Kind::Quirk,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::NoInputStops,
+        summary: "in the air, letting go of left and right stops her drift, unless she is braking or turning.",
+        source: Source::bank(0x90, 0x900D),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::SpinJumpDrift,
+        summary: "a spin jump drifts only while the side she faces is held.",
+        source: Source::bank(0x90, 0x906C),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::WallJumpDrift,
+        summary: "a wall jump always drifts.",
+        source: Source::bank(0x90, 0x902D),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::BallDropStops,
+        summary: "a falling ball with neither left nor right held stops dead.",
+        source: Source::bank(0x90, 0xA5CD),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::WallJumpCheck,
+        summary: "pressing away from a wall within 8 px arms the wall jump, and a new jump press fires it.",
+        source: Source::bank(0x90, 0x9D35),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::WallProbeSubpixel,
+        summary: "(invisible) the wall jump's wall test writes the horizontal subpixel as a stop would, without moving her.",
+        source: Source::bank(0x94, 0x967F),
+        kind: Kind::Quirk,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::SpaceJump,
+        summary: "with space jump, a new jump press while falling in a spin jump jumps again.",
+        source: Source::bank(0x90, 0xA488),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::Jump,
+        summary: "a jump starts at the jump speed, or the hi-jump's.",
+        source: Source::bank(0x90, 0x98BC),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::SpringBallJump,
+        summary: "landing as a spring ball with jump held jumps again.",
+        source: Source::bank(0x91, 0xF25E),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::BallBounce,
+        summary: "a ball landing fast bounces twice before it rests.",
+        source: Source::bank(0x91, 0xF1FC),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::PoseStartWrites,
+        summary: "a new pose's start sets her speeds: a turn folds them, a jump sets its speed.",
+        source: Source::bank(0x91, 0xF543),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::PoseCommandWrites,
+        summary: "pose selection's commands brake, stop or kill her speeds.",
+        source: Source::bank(0x91, 0xEC50),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::VerticalResultWrites,
+        summary: "the frame's vertical result, passed back, stops a landing, starts a fall or ends a rise.",
+        source: Source::bank(0x91, 0xEFC4),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::PoseWriteOrder,
+        summary: "a new pose's start comes before its command, and a replaced pose skips the command.",
+        source: Source::bank(0x91, 0xEB88),
+        kind: Kind::Timing,
         switch: Switch::Fixed,
     },
 ];
