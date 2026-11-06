@@ -5,10 +5,12 @@
 //! returns a [`Next`]. The phases are in the original's call order; slice 0's are empty until
 //! their domain lanes fill them.
 
+use crate::animation;
 use crate::message_box;
 use crate::movement;
 use crate::pose::{self, Content};
 use crate::session::{Rules, SessionFault};
+use crate::state::samus::SuperSpecial;
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
 use crate::state::{GameMode, NmiTiming, State};
 
@@ -400,14 +402,16 @@ fn gameplay_phase(
     requests: &mut pose::PoseRequests,
 ) {
     match phase {
+        // The frame starts with no super special request (`$90:E695`).
         GameplayPhase::SamusCurrentState => {
+            state.samus.super_special = SuperSpecial::default();
             *requests = pose::input(&state.samus, &state.controller, content);
         }
-        // The movement handler runs before the pose update (`$90:E725`).
-        // open: the pose animation between them (`$90:8000`) joins with C6; the movement
-        // types beyond standing, running and turning join with C3b and C4.
+        // The movement handler, the animation, then the pose update (`$90:E725`).
+        // open: the movement types beyond standing, running and turning join with C3b and C4.
         GameplayPhase::SamusNewState => {
             movement::run(&mut state.samus, &state.controller, content);
+            animation::animate(&mut state.samus, &state.controller, *requests, content);
             pose::change(&mut state.samus, *requests, content);
         }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins

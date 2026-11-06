@@ -2,7 +2,7 @@
 
 use canonical::Canonical;
 
-use super::slots::{Cursor, FlagSet, Frames};
+use super::slots::{FlagSet, Frames};
 
 /// A pixel position or speed with its subpixel fraction, as the original keeps them.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -486,9 +486,85 @@ pub enum ReserveMode {
     Manual,
 }
 
-/// The family marker for Samus's animation delay lists, a single-cursor consumer (J14).
+pub use data::pose::animation::AnimationFrame;
+
+/// The frames an animation frame still shows, as the original counts them: a word that
+/// goes negative, since a decrement from 0 gives $FFFF and the frame then advances
+/// (bank $90 log, `$90:8000`).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct SamusAnimation;
+pub struct AnimationTimer(pub u16);
+
+impl AnimationTimer {
+    /// Whether the frame still shows: the timer is above zero, read as signed.
+    #[must_use]
+    pub const fn running(self) -> bool {
+        self.0 != 0 && (self.0 & 0x8000) == 0
+    }
+}
+
+/// The frame a new pose's animation starts on (bank $91 log, `$91:FB08`).
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NewPoseFrame {
+    /// From this frame.
+    From(AnimationFrame),
+    /// Keep the frame and its timer: running from running, a ball from a ball (the
+    /// original's $8000).
+    Preserve,
+}
+
+impl Default for NewPoseFrame {
+    fn default() -> Self {
+        Self::From(AnimationFrame::default())
+    }
+}
+
+/// Samus's animation: where her pose's delay list is and how long its frame still shows.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Animation {
+    /// The frame: a byte offset into the pose's delay list.
+    pub frame: AnimationFrame,
+    /// How long the frame still shows.
+    pub timer: AnimationTimer,
+    /// The frame the next pose change starts the animation on.
+    pub new_pose_frame: NewPoseFrame,
+}
+
+/// What the pose update does after it takes the super special prospective pose (bank $91
+/// log, the super special prospective pose change commands).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SuperSpecialCommand {
+    /// Nothing (0).
+    #[default]
+    None,
+    /// 1 (`$91:F31D`): knockback finished.
+    KnockbackFinished,
+    /// 2 (`$91:F34E`): shinespark finished.
+    ShinesparkFinished,
+    /// 3 (`$91:F36E`): the transition animation finished.
+    TransitionAnimationFinished,
+    /// 4 (`$91:F37C`): Samus to the screen's centre.
+    CentreOnScreen,
+    /// 5 (`$91:F397`): Samus 5 pixels down.
+    MoveDown,
+    /// 6 (`$91:F3A5`): start the grapple wall jump.
+    StartGrappleWallJump,
+    /// 7 (`$91:F3AA`): start the release from the grapple swing.
+    StartReleaseFromGrappleSwing,
+    /// 8 (`$91:F3FD`): knockback and the transition animation both finished.
+    KnockbackAndTransitionAnimationFinished,
+}
+
+/// The super special prospective pose request the frame made.
+///
+/// The pose update takes it before every other (bank $91 log, `$91:EB88`). The original clears it at the start
+/// of every frame (`$90:E695`) and it keeps the last frame's until then.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SuperSpecial {
+    /// The pose asked for.
+    pub pose: Option<PoseId>,
+    /// What the update does after taking it.
+    pub command: SuperSpecialCommand,
+}
 
 /// Samus.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -515,6 +591,8 @@ pub struct Samus {
     pub equipment: Equipment,
     /// Frames of invincibility left after a hit.
     pub invincibility: Frames,
-    /// Her animation delay list.
-    pub animation: Cursor<SamusAnimation>,
+    /// Her animation.
+    pub animation: Animation,
+    /// The super special prospective pose request.
+    pub super_special: SuperSpecial,
 }

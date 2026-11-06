@@ -541,6 +541,33 @@ read from the bank logs, for the next lane:
 - At frame 687 pose $25's list (`$91:B3BB`: 02, 02, 02, `F8 02`) reaches its `F8 02` and the
   pose update takes pose 2.
 
+**C6b status (`lane/slice0-c6b`), Animate Samus.** Done: `samus.animation` is
+`Animation { frame: AnimationFrame, timer: AnimationTimer, new_pose_frame: NewPoseFrame }`
+(`From(frame)` or `Preserve`, the original's $8000) and `samus.super_special` is
+`SuperSpecial { pose: Option<PoseId>, command: SuperSpecialCommand }` (the nine commands of
+`$91:EB88`'s table), decoded from `SAMUS_ANIM_FRAME`, `SAMUS_ANIM_FRAME_TIMER`,
+`SAMUS_ANIM_FRAME_SKIP`, `SAMUS_NEW_POSE_TRANSITIONAL` and `SAMUS_HURT_SWITCH_INDEX`, with
+coverage rows, comparators and moved-source mutants; `game::Content` carries the delay lists.
+`game::animation::animate` runs between the movement handler and the pose update: the timer
+counts down (a signed word), then the frame advances and the item runs: a delay (the running
+list while running with momentum), `$90:852C`'s takeover of the running list with run held,
+`NoOp`, `LoopIfHealthy`, `GoBack`, `Loop`, `Transition`, `AutoJumpTransition` (pose $25's
+`F8 02` is this one, nybble 8: it gives way to a prospective jump from the ground) and
+`BySpeed`. The SamusCurrentState phase clears the super special request (`$90:E695`).
+`pose::change` takes the super special pose first (`$91:F433`, `$91:FB08`, then command 3's
+timer += buffer, `$91:F36E`); the ordinary path also runs `$91:FB08` and zeroes the new pose
+frame; running from running and a ball from a ball preserve it. Unit tests: pose $25's list
+ends the turn into pose 2 on frame 3 with pose 2's first delay; a looping list; a timer
+counted past zero. Remaining:
+- Lockstep `item-morph-ball` at frame 687 and the before/after table (not reached).
+- open in `game::animation`: the X speed divisor and frame buffer (0 here; liquids C10), the
+  speed booster's stages (`$91:B5DE`), poses $4D/$4E's hold on frame 1, the auto-jump hack's
+  input handler and the demos' skip, `DrainedFalling`, `WallJump`, `ByItems` and
+  `ByItemsAndSpeed` (equipment item words, C3b/C4).
+- open in `pose::change`: the special prospective pose channel, the other super special
+  commands, the landing bounce clear, liquid delays in `$91:FB08`, the spin jump and standing
+  aim-up new pose frames (`$91:F624`, `$91:F5AF`, `$91:F4EE`).
+
 **C9 status (`lane/slice0-c9`), the HUD.** Done: `game::state::hud::Hud` holds the HUD
 tilemap's three rows as typed cells (`video::TilemapEntry`: tile, palette, priority, flips;
 `from_word` and `word` round-trip every word), the selected and auto-cancel items

@@ -5,6 +5,7 @@
 //! It touches no pixels, samples, files, devices or SNES addresses (ARCHITECTURE §4.1, K1).
 #![deny(clippy::float_arithmetic)]
 
+pub mod animation;
 pub mod commit;
 pub mod game_time;
 pub mod hud;

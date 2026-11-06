@@ -9,11 +9,16 @@
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
 use data::movement::HorizontalSpeeds;
+use data::pose::animation::AnimationDelays;
 use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
+use crate::animation;
 use crate::movement::cancel_speed_boosting;
-use crate::state::samus::{Acceleration, Horizontal, Movement, PoseRecord, Samus, Speed, Turn};
+use crate::state::samus::{
+    Acceleration, AnimationTimer, Horizontal, Movement, NewPoseFrame, PoseRecord, Samus, Speed,
+    SuperSpecialCommand, Turn,
+};
 use crate::state::{Button, Buttons, Controller};
 
 /// The content the Session reads: the decoded tables its rules look up.
@@ -25,6 +30,8 @@ pub struct Content {
     pub transitions: PoseTransitions,
     /// Samus's horizontal speed tables.
     pub speeds: HorizontalSpeeds,
+    /// Samus's animation delay lists.
+    pub delays: AnimationDelays,
 }
 
 /// The pose a frame asks for, by the channel that asked.
@@ -203,34 +210,113 @@ pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseR
     }
 }
 
-/// The pose change: take the requested pose, with the facing and movement type its
-/// definition gives when it differs from the last, then record the history (`$91:EB88`).
+/// The pose change (`$91:EB88`): the super special prospective pose first, else the
+/// requested pose.
+///
+/// The pose takes the facing and movement type its definition gives when it differs from
+/// the last; then the update records the history.
+// open: the special prospective pose between them joins with the
+// knockback and the grapple (C4); the super special pose with command 3 gives way to it
+// when its command is 9.
 pub fn change(samus: &mut Samus, requests: PoseRequests, content: &Content) {
+    if let Some(pose) = samus.super_special.pose {
+        let command = samus.super_special.command;
+        if command != SuperSpecialCommand::KnockbackFinished {
+            samus.pose = pose;
+            refresh(samus, content);
+            reset_animation(samus, content);
+        }
+        run_super_special(command, samus);
+        record_history(samus);
+        return;
+    }
     let Some(pose) = requests.ordinary else {
         return;
     };
     samus.pose = pose;
-    if pose != samus.previous.pose
-        && let Some(definition) = content.poses.get(pose)
-    {
-        samus.facing = definition.facing;
-        if samus.movement.kind() != definition.movement {
-            // The original keeps her speeds in work RAM whatever the movement: a movement
-            // that keeps them takes them over.
-            let carried = samus.movement.horizontal();
-            samus.movement = Movement::from(definition.movement);
-            if let (Some(carried), Some(speed)) = (carried, samus.movement.horizontal_mut()) {
-                *speed = carried;
-            }
-        }
-        initialise(&mut samus.movement);
+    if pose != samus.previous.pose {
+        refresh(samus, content);
+        reset_animation(samus, content);
+        samus.animation.new_pose_frame = NewPoseFrame::default();
     }
     if let (Some(command), Some(speed)) = (requests.command, samus.movement.horizontal_mut()) {
         apply(command, speed);
     }
+    record_history(samus);
+}
+
+/// Copy the pose's facing and movement type from its definition and initialise the pose
+/// (`$91:F433`).
+fn refresh(samus: &mut Samus, content: &Content) {
+    let Some(definition) = content.poses.get(samus.pose) else {
+        return;
+    };
+    samus.facing = definition.facing;
+    if animation::preserves(samus.previous.movement, definition.movement) {
+        samus.animation.new_pose_frame = NewPoseFrame::Preserve;
+    }
+    if samus.movement.kind() != definition.movement {
+        // The original keeps her speeds in work RAM whatever the movement: a movement that
+        // keeps them takes them over.
+        let carried = samus.movement.horizontal();
+        samus.movement = Movement::from(definition.movement);
+        if let (Some(carried), Some(speed)) = (carried, samus.movement.horizontal_mut()) {
+            *speed = carried;
+        }
+    }
+    initialise(&mut samus.movement);
+}
+
+/// Start the new pose's animation on the new pose frame (`$91:FB08`), unless the pose is
+/// unchanged or the frame is preserved.
+// open: with the gravity suit off, water gives a delay of 3 and lava or acid 2 in place of
+// the X speed divisor; they join with the liquids (C10).
+fn reset_animation(samus: &mut Samus, content: &Content) {
+    let NewPoseFrame::From(frame) = samus.animation.new_pose_frame else {
+        return;
+    };
+    if samus.pose == samus.previous.pose {
+        return;
+    }
+    samus.animation.frame = frame;
+    if let Some(byte) = content
+        .delays
+        .of(samus.pose)
+        .and_then(|list| list.byte(frame))
+    {
+        let delay = animation::frame_buffer(samus);
+        samus.animation.timer = AnimationTimer(delay.wrapping_add(u16::from(byte)));
+    }
+}
+
+/// The super special prospective pose change command, after the pose (bank $91 log, its
+/// table at `$91:EBEB`).
+// open: the knockback's, the shinespark's, the grapple's and the screen-centring commands
+// join with C4 and C7; "transition animation finished" also clears the landing bounce,
+// which joins with C3b.
+const fn run_super_special(command: SuperSpecialCommand, samus: &mut Samus) {
+    match command {
+        SuperSpecialCommand::TransitionAnimationFinished => {
+            let buffer = animation::frame_buffer(samus);
+            let timer = &mut samus.animation.timer;
+            *timer = AnimationTimer(timer.0.wrapping_add(buffer));
+        }
+        SuperSpecialCommand::None
+        | SuperSpecialCommand::KnockbackFinished
+        | SuperSpecialCommand::ShinesparkFinished
+        | SuperSpecialCommand::CentreOnScreen
+        | SuperSpecialCommand::MoveDown
+        | SuperSpecialCommand::StartGrappleWallJump
+        | SuperSpecialCommand::StartReleaseFromGrappleSwing
+        | SuperSpecialCommand::KnockbackAndTransitionAnimationFinished => {}
+    }
+}
+
+/// Record the pose history after a change.
+const fn record_history(samus: &mut Samus) {
     samus.last_different = samus.previous;
     samus.previous = PoseRecord {
-        pose,
+        pose: samus.pose,
         facing: samus.facing,
         movement: samus.movement.kind(),
     };

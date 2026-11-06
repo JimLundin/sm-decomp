@@ -255,6 +255,14 @@ const COMPARATORS: &[Comparator] = &[
     speed!("samus.movement.speed.acceleration", acceleration),
     speed!("samus.movement.speed.momentum", momentum),
     field!("samus.equipment.collected", samus.equipment.collected),
+    field!("samus.animation.frame", samus.animation.frame),
+    field!("samus.animation.timer", samus.animation.timer),
+    field!(
+        "samus.animation.new_pose_frame",
+        samus.animation.new_pose_frame
+    ),
+    field!("samus.super_special.pose", samus.super_special.pose),
+    field!("samus.super_special.command", samus.super_special.command),
     field!("samus.equipment.equipped", samus.equipment.equipped),
     field!(
         "samus.equipment.energy.current",
