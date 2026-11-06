@@ -5,6 +5,7 @@
 //! returns a [`Next`]. The phases are in the original's call order; slice 0's are empty until
 //! their domain lanes fill them.
 
+use crate::message_box;
 use crate::session::{Rules, SessionFault};
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
 use crate::state::{GameMode, NmiTiming, State};
@@ -178,9 +179,13 @@ fn step(frame: Frame, state: &mut State, rules: Rules) -> (Frame, Next) {
             let (at, next) = gameplay(at, state, rules);
             (Frame::Gameplay(at), next)
         }
-        // open: the PLM pass resumes at its slot once the interpreter exists (B7), and the
-        // message box runs its phases (C13); until then each returns as soon as it resumes.
-        Frame::Plms { .. } | Frame::MessageBox(_) => (frame, Next::Return),
+        Frame::MessageBox(at) => {
+            let (at, next) = message_box::step(at, state);
+            (Frame::MessageBox(at), next)
+        }
+        // open: the PLM pass resumes at its slot once the interpreter exists (B7); until then
+        // it returns as soon as it resumes.
+        Frame::Plms { .. } => (frame, Next::Return),
     }
 }
 

@@ -277,6 +277,13 @@ pub const MESSAGE_BOX_ANIMATION_Y_RADIUS: WramWord = WramWord {
     offset: 0x05A2,
 };
 
+/// Bank $85 log: the message box's message index, stored on entry to the display routine
+/// (`$85:8080`).
+pub const MESSAGE_BOX_INDEX: WramWord = WramWord {
+    name: "MESSAGE_BOX_INDEX",
+    offset: 0x1C1F,
+};
+
 /// Bank $80 log: the interrupt command the IRQ handler runs next.
 pub const CUR_IRQ_HANDLER: WramWord = WramWord {
     name: "CUR_IRQ_HANDLER",

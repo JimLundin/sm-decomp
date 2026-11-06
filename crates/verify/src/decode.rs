@@ -11,7 +11,7 @@ use data::id::{Line, RoomId};
 use game::state::room::{Camera, RoomScoped};
 use game::state::samus::{Equipment, Fixed, Gauge, Item, Items, Point, Samus};
 use game::state::slots::{FlagSet, Frames};
-use game::state::strand::{IrqStrand, MainStrand};
+use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
     CGRAM_COLOURS, Colour, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, VRAM_WORDS, Video, VideoMemory,
 };
@@ -253,6 +253,8 @@ pub struct Rules<'t> {
     pub irq_command: WramWord,
     /// The queued interrupt command, which the State has no place for yet.
     pub irq_next: WramWord,
+    /// `message`.
+    pub message: WramWord,
 }
 
 impl Rules<'_> {
@@ -300,6 +302,7 @@ impl Rules<'_> {
         },
         irq_command: source::CUR_IRQ_HANDLER,
         irq_next: source::IRQHANDLER_NEXT_HANDLER,
+        message: source::MESSAGE_BOX_INDEX,
     };
 
     /// The State `record` shows, under these rules.
@@ -404,6 +407,7 @@ impl Rules<'_> {
                 },
                 ..RoomScoped::default()
             },
+            message: Message(self.message.read(wram)?),
         };
         Ok(Decoded { state, quiescence })
     }

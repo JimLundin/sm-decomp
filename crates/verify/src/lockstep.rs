@@ -102,6 +102,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.camera.x.subpixels", room.camera.x.subpixels),
     field!("room.camera.y.pixels", room.camera.y.pixels),
     field!("room.camera.y.subpixels", room.camera.y.subpixels),
+    field!("message", message),
 ];
 
 /// Whether the coverage table marks `path` decoded.

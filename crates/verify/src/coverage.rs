@@ -167,6 +167,7 @@ pub const FIELDS: &[Field] = &[
     wram("room.camera.y.subpixels", source::LAYER1_Y_SUBPOS),
     open("room.plms"),
     open("room.enemies"),
+    wram("message", source::MESSAGE_BOX_INDEX),
 ];
 
 #[cfg(test)]
@@ -198,6 +199,7 @@ mod tests {
             "video",
             "samus",
             "room",
+            "message",
         ];
         for name in top {
             assert!(
@@ -244,6 +246,7 @@ mod tests {
             rules.camera_y,
             rules.camera_y_subpixels,
             rules.irq_command,
+            rules.message,
         ];
         let bytes = [rules.lag, rules.max_lag, rules.nmi_requested];
         let blocks = [rules.oam_buffer];

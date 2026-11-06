@@ -188,6 +188,38 @@ death game states; the Samus tile transfer flags reset with C6; the unit tests c
 did not run here (Defender), so they need CI. Lockstep time is unchanged (0.11 s and 0.17 s
 for the two rows, decode included).
 
+**C13 status (`lane/slice0-c13`), the box's control flow.** Done: `game::message_box::step`
+runs `Frame::MessageBox` through bank `$85`'s display message box (`$85:8080`) in its order,
+yielding `Wait::LagFrame` at each `JSR $8136`: initialise PPU (waits at `$8148`, `$81B2`),
+clear tilemap (`$8203`), initialise message box (the tilemap writer's `$82B8`, the scroll
+HDMA table's `$859C` via `$83BA`, the upload's `$8321`), play 2 lag frames (`$8578`, X = 2),
+open (13 `$859B` waits, radius 0 to `$1800` by `$200`), the interaction countdown (`$8493`,
+X = 360, or 10 for messages `$14`-`$16` and `$18`), `LOOP_INPUT` (`$84A3`: any auto-read
+button), close (13 waits, `$1800` down to 0), clear tilemap, restore PPU (`$861C`, `$8651`),
+play 2 lag frames, RTL. `message_box::display` is the entry C12's pickup op calls; it sets the
+new `State::message` (`$1C1F`, decoded, compared) and pushes `MessageBoxAt::Start`, a
+position never at a cut. Game time needs nothing of its own: the gameplay pass's
+`HealthAndTime` comes after the PLM pass, so it stops while the box is up, as the original's
+does. The PPU, tilemap, VRAM and HDMA work are named no-ops (`message_box::Work`): B5 takes
+the uploads and register mirrors, B6 the scroll HDMA table and channel; the music queue and
+sound effects of each lag frame are C11's. Lockstep on A2's cache, 2026-11-06 (Ticks differing,
+first frame):
+
+| Field | `item-morph-ball` (1,427) before | after |
+| --- | --- | --- |
+| `clock.counters.completed`, `.lag` | 399, 398 from 817 | 1, 817 |
+| `clock.counters.max_lag` | 202, 870 | equal |
+| `clock.game_time.frames` | 399, 817 | 1, 817 |
+| `controller.pressed`, `.repeat`, `.repeat_delay` | 399, 817 | 1, 817 |
+| `main.frames`, `main.waiting` | 399, 817 | 1, 817 |
+| `message` (new) | | 1, 817 |
+| Ticks equal on every field | 0 | 392 |
+
+`area-brinstar` is unchanged (it has no box). Frame 817 is the pickup Tick itself: the item's
+pickup op (C12) sets the message and calls the box. Remaining: the entry from C12; the box's
+graphics (B5, B6); the save confirmation's Yes/No loop (messages `$17`, `$1C`) and the gunship
+branch with saving; the unit tests compiled but did not run here (Defender).
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,

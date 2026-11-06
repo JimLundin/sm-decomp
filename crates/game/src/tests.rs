@@ -5,10 +5,14 @@ use std::marker::PhantomData;
 
 use canonical::{from_bytes, to_bytes};
 
+use crate::message_box::{self, ANIMATION_STEPS};
 use crate::nmi::NmiKind;
 use crate::session::{AutoRepeat, Rules, Schedule, Session, SessionFault, TickInput, TimingSource};
 use crate::state::slots::{FlagSet, Frames, SlotIndex};
-use crate::state::strand::{Frame, GameplayAt, MainLoopAt, MessageBoxAt, Wait};
+use crate::state::strand::{
+    Frame, GameplayAt, LagAt, MainLoopAt, Message, MessageBoxAt, MessageWrite, PpuPreparation,
+    PpuRestoration, Side, Wait,
+};
 use crate::state::{
     Buttons, Checkpoint, Counters, Fingerprint, FrameCount, NmiTiming, State, Tick,
 };
@@ -205,12 +209,16 @@ fn a_nested_strand_resumes_innermost_first_after_the_scan_out() -> Result<(), St
         Frame::Plms {
             slot: SlotIndex(3, PhantomData),
         },
-        Frame::MessageBox(MessageBoxAt::Shown),
+        Frame::MessageBox(MessageBoxAt::Lag {
+            at: LagAt::AfterClose,
+            left: Frames(0),
+        }),
     ];
     state.main.waiting = Some(Wait::LagFrame);
     let mut session = session(state)?;
     let begun = session.begin().map_err(|fault| format!("{fault:?}"))?;
     // The message box's beam-sync point is before its work: nothing ran before the scan-out.
+    // Its last lag frame returns, and the gameplay pass and main loop finish the iteration.
     let output = begun
         .end(TickInput::default())
         .map_err(|fault| format!("{fault:?}"))?;
@@ -279,5 +287,147 @@ fn an_iteration_steps_the_rng_and_the_clock_and_commits_an_empty_oam() -> Result
     assert!(oam.low.iter().all(|entry| entry.y == crate::oam::HIDDEN_Y));
     assert_eq!(oam.high, [0; _]);
     assert_eq!(after.video.batch.sprites.0, 0);
+    Ok(())
+}
+
+/// Step the message box from `at` until its routine returns, with `pad` auto-read from the
+/// `wait_for`th time the box is shown on; every step before the return must yield at a lag
+/// frame. Returns the positions it waited at, in order.
+fn box_waits(state: &mut State, wait_for: usize) -> Result<Vec<MessageBoxAt>, String> {
+    let mut at = MessageBoxAt::Start;
+    let mut waits = Vec::new();
+    let mut shown = 0_usize;
+    loop {
+        if at == MessageBoxAt::Shown {
+            shown = shown.wrapping_add(1);
+            if shown >= wait_for {
+                state.controller.auto_read = buttons(0x0080);
+            }
+        }
+        let (next_at, next) = message_box::step(at, state);
+        match next {
+            Next::Yield(Wait::LagFrame) => waits.push(next_at),
+            Next::Return => return Ok(waits),
+            Next::Continue | Next::Call(_) | Next::Sync | Next::Yield(_) => {
+                return Err(format!("{at:?} went on with {next:?}"));
+            }
+        }
+        if waits.len() > 1_000 {
+            return Err("the box never returned".into());
+        }
+        at = next_at;
+    }
+}
+
+fn countdown(at: LagAt, frames: u16) -> impl Iterator<Item = MessageBoxAt> {
+    (0..frames).rev().map(move |left| MessageBoxAt::Lag {
+        at,
+        left: Frames(left),
+    })
+}
+
+fn animation(frame: fn(Frames) -> MessageBoxAt) -> impl Iterator<Item = MessageBoxAt> {
+    (0..=ANIMATION_STEPS.0)
+        .rev()
+        .map(move |left| frame(Frames(left)))
+}
+
+/// The waits of bank `$85`'s display message box, in its order, for a message shown 360
+/// frames and a button pressed on the third button-wait frame.
+#[test]
+fn the_message_box_waits_where_the_original_does() -> Result<(), String> {
+    let mut state = State::default();
+    assert_eq!(
+        message_box::display(&mut state, Message(9)),
+        Next::Call(Frame::MessageBox(MessageBoxAt::Start))
+    );
+    assert_eq!(state.message, Message(9));
+    let waits = box_waits(&mut state, 3)?;
+    let expected: Vec<MessageBoxAt> = [
+        MessageBoxAt::PreparingPpu(PpuPreparation::Registers),
+        MessageBoxAt::PreparingPpu(PpuPreparation::TilemapBackup),
+        MessageBoxAt::ClearingTilemap(Side::BeforeOpen),
+        MessageBoxAt::Writing(MessageWrite::Tilemap),
+        MessageBoxAt::Writing(MessageWrite::ScrollHdma),
+        MessageBoxAt::Writing(MessageWrite::TilemapUpload),
+    ]
+    .into_iter()
+    .chain(countdown(LagAt::BeforeOpen, 2))
+    .chain(animation(|left| MessageBoxAt::Opening { left }))
+    .chain(countdown(LagAt::Shown, 360))
+    .chain([MessageBoxAt::Shown; 3])
+    .chain(animation(|left| MessageBoxAt::Closing { left }))
+    .chain([
+        MessageBoxAt::ClearingTilemap(Side::AfterClose),
+        MessageBoxAt::RestoringPpu(PpuRestoration::Tilemap),
+        MessageBoxAt::RestoringPpu(PpuRestoration::Registers),
+    ])
+    .chain(countdown(LagAt::AfterClose, 2))
+    .collect();
+    assert_eq!(waits, expected);
+    Ok(())
+}
+
+/// The station and save-completed messages stay shown 10 lag frames; a button held when the
+/// countdown ends closes the box without a button-wait frame.
+#[test]
+fn a_station_message_counts_down_ten_frames() -> Result<(), String> {
+    let mut state = State::default();
+    message_box::display(&mut state, Message::ENERGY_RECHARGE);
+    state.controller.auto_read = buttons(0x0080);
+    let waits = box_waits(&mut state, 0)?;
+    let shown: Vec<_> = waits
+        .iter()
+        .filter(|at| {
+            matches!(
+                at,
+                MessageBoxAt::Lag {
+                    at: LagAt::Shown,
+                    ..
+                } | MessageBoxAt::Shown
+            )
+        })
+        .copied()
+        .collect();
+    assert_eq!(shown, countdown(LagAt::Shown, 10).collect::<Vec<_>>());
+    Ok(())
+}
+
+/// Inside the box every Tick is a lag frame: no commit, the pad isn't latched, the lag counter
+/// runs and game time stands still, because the gameplay pass doesn't reach its clock.
+#[test]
+fn a_tick_inside_the_box_is_a_lag_frame() -> Result<(), String> {
+    let mut state = State::default();
+    state.main.frames = vec![
+        Frame::MainLoop(MainLoopAt::AfterGameState),
+        Frame::Gameplay(GameplayAt::AfterPlms),
+        Frame::Plms {
+            slot: SlotIndex(3, PhantomData),
+        },
+        Frame::MessageBox(MessageBoxAt::Opening {
+            left: ANIMATION_STEPS,
+        }),
+    ];
+    state.main.waiting = Some(Wait::LagFrame);
+    let mut session = session(state)?;
+    let output = session
+        .step(TickInput {
+            pad: buttons(0x0080),
+            timing: NmiTiming::OnTime,
+        })
+        .map_err(|fault| format!("{fault:?}"))?;
+    let after = session.state();
+    assert_eq!(output.nmi, NmiKind::Lag);
+    assert_eq!(after.clock.counters, counters(1, 0, 1, 1));
+    assert_eq!(after.clock.game_time.frames, 0);
+    assert!(after.controller.held.is_empty());
+    assert_eq!(after.controller.auto_read, buttons(0x0080));
+    assert_eq!(
+        after.main.frames.last(),
+        Some(&Frame::MessageBox(MessageBoxAt::Opening {
+            left: Frames(ANIMATION_STEPS.0 - 1)
+        }))
+    );
+    assert_eq!(after.main.waiting, Some(Wait::LagFrame));
     Ok(())
 }

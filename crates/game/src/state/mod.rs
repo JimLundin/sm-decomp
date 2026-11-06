@@ -18,7 +18,7 @@ use slots::FlagSet;
 
 use room::RoomScoped;
 use samus::Samus;
-use strand::{IrqStrand, MainStrand};
+use strand::{IrqStrand, MainStrand, Message};
 use video::Video;
 
 /// Ticks since the Session opened.
@@ -178,6 +178,8 @@ pub struct State {
     pub samus: Samus,
     /// The current room.
     pub room: RoomScoped,
+    /// The message the message box shows, or showed last.
+    pub message: Message,
 }
 
 /// The State's schema: [`State`]'s structural hash.

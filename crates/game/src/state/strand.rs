@@ -44,6 +44,8 @@ pub enum GameplayAt {
 /// is a wait inside one of those steps, in that order.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MessageBoxAt {
+    /// Just called: the work before its first wait runs next. Never at a cut.
+    Start,
     /// Setting up the PPU for the box ($85:8143).
     PreparingPpu(PpuPreparation),
     /// Clearing the box's BG3 tilemap ($85:81F3): its upload to VRAM comes next.
@@ -71,6 +73,37 @@ pub enum MessageBoxAt {
     },
     /// Restoring the PPU after the box ($85:861A).
     RestoringPpu(PpuRestoration),
+}
+
+/// The message a box shows: its index in the bank $85 message table, which the display
+/// routine stores in work RAM on entry ($85:8080) and leaves there after the box closes.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Message(pub u16);
+
+impl Message {
+    /// Map data access completed.
+    pub const MAP_DATA_ACCESS: Self = Self(0x14);
+    /// Energy recharge completed.
+    pub const ENERGY_RECHARGE: Self = Self(0x15);
+    /// Missile reload completed.
+    pub const MISSILE_RELOAD: Self = Self(0x16);
+    /// Save completed.
+    pub const SAVE_COMPLETED: Self = Self(0x18);
+
+    /// The lag frames the box stays shown before its button wait.
+    ///
+    /// Bank $85 log, $85:846D handle message box interaction: LDX #$000A for the map station,
+    /// recharge station and save-completed messages, otherwise $8490 LDX #$0168.
+    #[must_use]
+    pub const fn shown_lag(self) -> Frames {
+        match self {
+            Self::MAP_DATA_ACCESS
+            | Self::ENERGY_RECHARGE
+            | Self::MISSILE_RELOAD
+            | Self::SAVE_COMPLETED => Frames(10),
+            _ => Frames(360),
+        }
+    }
 }
 
 /// Which side of the box's animation a step shared by both sides is on.

@@ -7,6 +7,7 @@
 
 pub mod game_time;
 pub mod lines;
+pub mod message_box;
 pub mod nmi;
 pub mod oam;
 pub mod rng;
