@@ -604,6 +604,48 @@ counted past zero. Remaining:
   commands, the landing bounce clear, liquid delays in `$91:FB08`, the spin jump and standing
   aim-up new pose frames (`$91:F624`, `$91:F5AF`, `$91:F4EE`).
 
+**C3b status (`lane/slice0-c3b`), Samus's jumps and fall.** Done: `data::movement::VerticalSpeeds`
+decodes bank `$90`'s physics constants (`$90:9EA1` gravity 0.1C00 in air; `$90:9EB9` jump
+4.E000, `$9EC5` hi-jump 6.0, `$9ED1`/`$9EDD` wall jumps 4.A000 and 5.8000; the air column);
+the ROM test passes. `Movement::Jumping`, `Falling` and `WallJumping` carry `Horizontal` and
+`Vertical { speed: Speed, direction: YDirection::{None, Up, Down} }`, decoded from
+`SAMUS_Y_SPEED`, `_SUBSPEED` and `SAMUS_Y_DIR` (`$0B2C`-`$0B36`; a direction past 2 is
+`Unrepresentable`), with coverage rows, comparators and moved-rule mutants on a spin jump
+record. The Y acceleration is no State: `$90:9C5B` sets it every frame before the movement
+handler. `game::movement::air` runs normal and wall jumping (`$90:8FB3`: the take-off poses
+$4B/$4C/$55-$5A move by the extra run speed alone), spin jumping (`$90:9040`), falling
+(`$90:9168`, `$90:A58D`'s terminal velocity frame), the base speed without deceleration
+(`$90:9B1F`), the release check (`$90:8FDC`: jump let go, or a rise past zero, falls from
+rest), `$90:90C4`, and the Y movement (`$90:90E2`: the frame's starting speed, then gravity,
+which stops adding once the pixel word is 5). `game::pose` runs the jump transition
+(`$91:FBBB`: `$91:FC66` with the crouch jump's 10 pixels, `$91:FC99`, `$91:FC08`) into
+"Make Samus jump" / "wall-jump" (`$90:98BC`, `$90:9949`: hi-jump, speed booster's half run
+speed without a carry), the initialisations `$91:F59A`, `$91:F60D`, `$91:F624`, carries the
+vertical motion across movement changes and runs `$91:FB8E`. Twelve unit tests with values
+worked by hand. Lockstep `item-morph-ball` (1,427 Ticks; differing, first; "before" is
+`5293db4`, "after" this branch on `9893398`, so the elevator's Y from frame 1 is C7b's):
+
+| Field | 706..814 before | after | 1239..1326 before | after | whole row before | after |
+| --- | --- | --- | --- | --- | --- | --- |
+| `samus.position.y.pixels` | 74, 707 | 3, 739 | 32, 1243 | 9, 1259 | 573, 1 | 39, 316 |
+| `samus.position.y.subpixels` | 77, 707 | 4, 712 | 39, 1240 | 6, 1260 | 138, 316 | 36, 316 |
+| `samus.position.x.pixels` | 94, 707 | 24, 741 | 67, 1239 | 39, 1255 | 206, 688 | 92, 688 |
+| `samus.position.x.subpixels` | 65, 707 | 4, 711 | 68, 1239 | 38, 1255 | 147, 707 | 42, 711 |
+| `samus.pose` | 3, 712 | 3, 712 | 1, 1265 | 1, 1265 | 61, 712 | 61, 712 |
+| `samus.movement` | 3, 712 | 4, 712 | 1, 1265 | 2, 1255 | 61, 712 | 63, 712 |
+| `samus.movement.vertical.*` | (new) | 3, 712 | (new) | equal | (new) | 5, 712 |
+
+Remaining:
+- landing and walls (C4): the move goes through block and solid enemy collision
+  (`$90:93EC`, `$90:9440`), which lands her and stops her at walls and ceilings; without it
+  she keeps moving through them. The remaining first frames (712, 739-741, 1255, 1259) sit
+  where the record changes pose or speed by collision or animation, not yet attributed
+  frame by frame: the landing into $A5 (C4), the spin jump's wall jump check (`$90:9D35`,
+  C4) and the animation frame and timer from 711 (C6) are the candidates.
+- open: the air turns' vertical motion, the spring ball's jump (`$91:FC18`), water and
+  lava/acid speeds (liquids), the extra Y displacement, the space jump and screw attack,
+  the shinespark windup from a normal jump and the animation skips of `$91:F543`/`$91:F624`.
+
 **C9 status (`lane/slice0-c9`), the HUD.** Done: `game::state::hud::Hud` holds the HUD
 tilemap's three rows as typed cells (`video::TilemapEntry`: tile, palette, priority, flips;
 `from_word` and `word` round-trip every word), the selected and auto-cancel items
