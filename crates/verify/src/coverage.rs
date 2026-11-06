@@ -353,6 +353,10 @@ pub const FIELDS: &[Field] = &[
         path: "room.scroll_areas",
         status: Status::Decoded(Source::WramBlock(source::SCROLLS)),
     },
+    Field {
+        path: "room.stale_scrolls",
+        status: Status::Decoded(Source::WramBlock(source::SCROLLS)),
+    },
     wram("room.camera.x.pixels", source::LAYER1_X_POS),
     wram("room.camera.x.subpixels", source::LAYER1_X_SUBPOS),
     wram("room.camera.y.pixels", source::LAYER1_Y_POS),

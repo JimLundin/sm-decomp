@@ -37,6 +37,7 @@ fn across(areas: &[ScrollArea; 2]) -> ScrollAreas<'_> {
         areas,
         width: 2,
         height: 1,
+        stale: &[],
     }
 }
 
@@ -46,6 +47,7 @@ fn down(areas: &[ScrollArea; 2]) -> ScrollAreas<'_> {
         areas,
         width: 1,
         height: 2,
+        stale: &[],
     }
 }
 
@@ -210,6 +212,7 @@ fn a_still_camera_keeps_inside_the_room() {
         areas: &areas,
         width: 2,
         height: 2,
+        stale: &[],
     };
     follow(&mut camera, &mut samus, areas);
     assert_eq!((camera.x.pixels, camera.y.pixels), (0x100, 0));
@@ -247,4 +250,41 @@ fn the_scroll_settings_go_back_out_byte_exact() {
         assert_eq!(CameraDistance::try_from(u16::from(distance)), Ok(distance));
     }
     assert_eq!(CameraDistance::try_from(1), Err(1));
+}
+
+#[test]
+fn scrolling_down_reads_the_scroll_buffer_past_the_room() {
+    // area-brinstar's frame 414: the camera moves into the room's blue bottom row ahead of
+    // the ideal position, which pulls it back above. Scrolling down (`$80:A8FC`) then reads
+    // the screen below the one it moved into, past the room's table. The buffer holds $80
+    // there, not red, so the camera stays at the ideal position.
+    let start = Camera {
+        y: at(0xFD, 0),
+        ..camera()
+    };
+    let samus_at = |stale: &[StaleScroll]| {
+        let mut camera = start;
+        let mut samus = samus(
+            point(at(0x80, 0), at(0x16D, 0)),
+            point(at(0x80, 0), at(0x16F, 0)),
+        );
+        let areas = [ScrollArea::Green, ScrollArea::Blue];
+        let areas = ScrollAreas {
+            stale,
+            ..down(&areas)
+        };
+        follow(&mut camera, &mut samus, areas);
+        camera.y.pixels
+    };
+    assert_eq!(samus_at(&[StaleScroll::from(0x80)]), 0xFF);
+    // A red byte there backs the camera out, as one past the buffer does.
+    assert!(samus_at(&[StaleScroll::from(0)]) < 0xFF);
+    assert!(samus_at(&[]) < 0xFF);
+}
+
+#[test]
+fn a_stale_scroll_byte_goes_back_out_byte_exact() {
+    for byte in 0..=u8::MAX {
+        assert_eq!(u8::from(StaleScroll::from(byte)), byte);
+    }
 }

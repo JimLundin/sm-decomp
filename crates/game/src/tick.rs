@@ -513,6 +513,7 @@ fn gameplay_phase(
                 .unwrap_or(0);
             let areas = scrolling::ScrollAreas {
                 areas: &room.scroll_areas,
+                stale: &room.stale_scrolls,
                 width,
                 height,
             };

@@ -17,7 +17,7 @@ use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{
     Block, BlockColumns, Camera, CameraDistance, ElevatorArming, ElevatorDirection, ElevatorRide,
     ElevatorStatus, EnemyDrawing, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, Layer2Scroll,
-    Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers, SpritePalette,
+    Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers, SpritePalette, StaleScroll,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing,
@@ -413,8 +413,8 @@ const SCREEN_BLOCKS: u16 = 16;
 
 impl LevelSources {
     /// Layer 1 and the scroll areas: the width and height say how much of each buffer the
-    /// room fills.
-    fn read(self, wram: &[u8]) -> Result<(Vec<Block>, Vec<ScrollArea>), DecodeError> {
+    /// room fills. The rest of the scroll buffer is what earlier rooms left.
+    fn read(self, wram: &[u8]) -> Result<Level, DecodeError> {
         let width = self.width.read(wram)?;
         let height = self.height.read(wram)?;
         let blocks = usize::from(width).saturating_mul(usize::from(height));
@@ -438,11 +438,12 @@ impl LevelSources {
             .collect();
         let screens =
             usize::from(width / SCREEN_BLOCKS).saturating_mul(usize::from(height / SCREEN_BLOCKS));
-        let scroll_areas = self
+        let (areas, stale) = self
             .scrolls
             .read(wram)?
-            .get(..screens)
-            .ok_or_else(|| short(self.scrolls))?
+            .split_at_checked(screens)
+            .ok_or_else(|| short(self.scrolls))?;
+        let scroll_areas = areas
             .iter()
             .map(|&area| {
                 ScrollArea::try_from(area).map_err(|value| DecodeError::Unrepresentable {
@@ -451,8 +452,19 @@ impl LevelSources {
                 })
             })
             .collect::<Result<_, _>>()?;
-        Ok((layer1, scroll_areas))
+        Ok(Level {
+            blocks: layer1,
+            scroll_areas,
+            stale_scrolls: stale.iter().copied().map(StaleScroll::from).collect(),
+        })
     }
+}
+
+/// The room's level as [`LevelSources::read`] decodes it.
+struct Level {
+    blocks: Vec<Block>,
+    scroll_areas: Vec<ScrollArea>,
+    stale_scrolls: Vec<StaleScroll>,
 }
 
 /// Where the original keeps the camera's scroll state beside layer 1's position.
@@ -825,7 +837,11 @@ impl Rules<'_> {
             NmiKind::Overrun => (NmiTiming::Overrun, MainStrand::default(), Quiescence::Busy),
         };
         let irq = self.irq(record)?;
-        let (blocks, scroll_areas) = self.level.read(wram)?;
+        let Level {
+            blocks,
+            scroll_areas,
+            stale_scrolls,
+        } = self.level.read(wram)?;
 
         let state = State {
             main,
@@ -871,6 +887,7 @@ impl Rules<'_> {
                 width: BlockColumns(self.level.width.read(wram)?),
                 layer_blending: LayerBlending(self.layer_blending.read(wram)?),
                 scroll_areas,
+                stale_scrolls,
                 camera: Camera {
                     x: Fixed {
                         pixels: self.camera_x.read(wram)?,

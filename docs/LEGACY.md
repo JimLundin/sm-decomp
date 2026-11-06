@@ -179,11 +179,16 @@ check needs it, when it becomes a named behaviour with the original's bytes as d
   (supers and power bombs cap at 99 by their ceilings, missiles at 999 in vanilla
   item placement); a Map Rando or custom-content count could.
 - **Scroll areas past the room's table** (`game::scrolling`, bank `$80` log `$80:A528`,
-  `$80:A731`): with the camera's far side beyond the room's last screen row, the
-  scroll zone routines read the scroll buffer past the room's screens (what an earlier
-  room left there, or the RAM after the buffer). The engine reads those screens as red.
-  The room's edge clamps keep the camera off them in normal play; a camera pushed past
-  the room's last screen (a door's arrival, a custom room) could reach them.
+  `$80:A731`, `$80:A8FC`): with the screen below the camera past the room's last row,
+  the scroll zone routines read the scroll buffer past the room's screens. Scrolling
+  down does so whenever the camera moves into the bottom row ahead of its ideal
+  position (area-brinstar frame 414). The engine keeps that part of the buffer
+  (`RoomScoped::stale_scrolls`, decoded from the oracle) and reads it as the original
+  does; a byte no area has (`StaleScroll::Unknown`, e.g. `$80`) is neither red nor blue,
+  so the camera goes through it. Past the 50-byte buffer the original reads the RAM after
+  it, which the engine reads as red. A room load writes only its own screens, so the
+  rest is what earlier rooms left; the engine's room load leaves it empty (red) until the
+  room transition joins.
 - **Samus spritemaps with a zero pointer or past the table** (`data::pose::spritemap`,
   bank `$81` log `$81:89AE`): 183 of the 2,096 pointers at `$92:808D` are zero, and the
   original reads such a spritemap's count from `$92:0000`, low work RAM; an index past the

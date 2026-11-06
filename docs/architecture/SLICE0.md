@@ -253,8 +253,10 @@ collect them, and `SamusNewState` spawns each touch PLM (`touch_scroll_block`) a
 change in scan order, as its setup changes only PLM slots, which no move reads. Lockstep on
 A2's cache, 2026-11-06: `room.scroll_areas` and `room.plms.slots.common.block` are equal on
 every Tick of both rows (each differed on 2 and 1 from frame 92 before). The camera's Y
-(`$01FB` against `$01FF`) and OAM entry 0's Y still differ on frame 414 alone, with the scroll
-areas equal: a camera difference, not a scroll PLM one. Remaining: the other special air
+(`$01FB` against `$01FF`) on frame 414 was scrolling down (`$80:A8FC`) reading the screen below
+the bottom row, past the room's table, where the buffer holds `$80` (not red); the engine read
+red and backed the camera out. `room.stale_scrolls` now carries that part of the buffer
+(`lane/slice0-cam414`): camera and OAM equal on every Tick of area-brinstar. Remaining: the other special air
 (the area-dependent PLMs, whose setup can stop her, `$94:9087`), bombable air (`$94:92F9`),
 the two bodies above, and the item's list.
 

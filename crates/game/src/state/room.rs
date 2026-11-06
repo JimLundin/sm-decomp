@@ -690,6 +690,43 @@ impl LayerBlending {
     }
 }
 
+/// A byte of the scroll buffer past the room's screens: what an earlier room, or the RAM
+/// before any room filled the buffer, left there. Loading a room writes only its own screens.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StaleScroll {
+    /// A byte an area has.
+    Area(ScrollArea),
+    /// Another byte. The scroll zones test only for red and blue, so they let the camera
+    /// through it as they do a green screen (docs/LEGACY.md).
+    Unknown(u8),
+}
+
+impl StaleScroll {
+    /// The area the scroll zones read it as.
+    #[must_use]
+    pub const fn area(self) -> ScrollArea {
+        match self {
+            Self::Area(area) => area,
+            Self::Unknown(_) => ScrollArea::Green,
+        }
+    }
+}
+
+impl From<u8> for StaleScroll {
+    fn from(value: u8) -> Self {
+        ScrollArea::try_from(value).map_or(Self::Unknown(value), Self::Area)
+    }
+}
+
+impl From<StaleScroll> for u8 {
+    fn from(stale: StaleScroll) -> Self {
+        match stale {
+            StaleScroll::Area(area) => area.into(),
+            StaleScroll::Unknown(value) => value,
+        }
+    }
+}
+
 /// Everything room-scoped.
 // open: FX, enemy projectiles, sprite objects, Samus's projectiles and the visual effects
 // (HDMA objects, palette FX, animated tiles, layer blending) join with their domains.
@@ -707,6 +744,9 @@ pub struct RoomScoped {
     pub layer_blending: LayerBlending,
     /// One per screen, row-major.
     pub scroll_areas: Vec<ScrollArea>,
+    /// The scroll buffer past the room's screens, which the scroll zones read when the screen
+    /// below the camera is past the room's last row.
+    pub stale_scrolls: Vec<StaleScroll>,
     /// The camera.
     pub camera: Camera,
     /// The PLMs.
@@ -723,8 +763,9 @@ impl RoomScoped {
     /// Room `room`, as it loads in `state`: its level's layer 1 blocks, its width in blocks,
     /// its scroll areas and the camera's scroll settings, its PLMs spawned and set up, with no
     /// enemies yet and the camera at the top left.
-    // open: the door's arrival, the enemy population, the FX's layer blending and the
-    // camera's start join with the room transition (bank $82 log, `$82:E7D3`).
+    // open: the door's arrival, the enemy population, the FX's layer blending, the camera's
+    // start and the scroll buffer past the room's screens (`stale_scrolls`, what the room
+    // before left) join with the room transition (bank $82 log, `$82:E7D3`).
     #[must_use]
     pub fn load(room: RoomId, header: &Room, state: &RoomState) -> Self {
         let [x, y] = state.layer2_scroll.map(Layer2Scroll::from);

@@ -10,7 +10,7 @@
 //! pixels a frame faster than Samus moves, and a blue screen at the room's bottom hides the
 //! two rows the HUD would otherwise cover.
 
-use crate::state::room::{Camera, Layer2Scroll, ScrollArea};
+use crate::state::room::{Camera, Layer2Scroll, ScrollArea, StaleScroll};
 use crate::state::samus::{Acceleration, Facing, Fixed, MovementType, Samus, Speed, YDirection};
 use crate::state::video::{Registers, Scroll};
 
@@ -19,6 +19,8 @@ use crate::state::video::{Registers, Scroll};
 pub struct ScrollAreas<'a> {
     /// One per screen, row-major.
     pub areas: &'a [ScrollArea],
+    /// The scroll buffer after them.
+    pub stale: &'a [StaleScroll],
     /// Screens across: the row length.
     pub width: u16,
     /// Screens down.
@@ -28,15 +30,20 @@ pub struct ScrollAreas<'a> {
 impl ScrollAreas<'_> {
     /// The area at `index` into the row-major table.
     ///
-    /// The original reads past the room's table when the camera's far edge is beyond the
-    /// room's last screen (the notes at `$80:A528` and `$80:A731`); what it finds there is
-    /// whatever the buffer held, and the engine reads red, the area that stops the camera
-    /// (docs/LEGACY.md).
+    /// The original reads past the room's table when the screen below the camera is past
+    /// the room's last row (the notes at `$80:A528` and `$80:A731`; scrolling down,
+    /// `$80:A8FC`, reads the screen below the one the camera has moved into before the
+    /// room's bottom clamps it). It finds what the scroll buffer holds there. Past the
+    /// buffer it would read the RAM after it, which the engine reads as red, the area that
+    /// stops the camera (docs/LEGACY.md).
     fn at(self, index: u16) -> ScrollArea {
-        self.areas
-            .get(usize::from(index))
-            .copied()
-            .unwrap_or(ScrollArea::Red)
+        let index = usize::from(index);
+        self.areas.get(index).copied().unwrap_or_else(|| {
+            index
+                .checked_sub(self.areas.len())
+                .and_then(|past| self.stale.get(past))
+                .map_or(ScrollArea::Red, |stale| stale.area())
+        })
     }
 
     /// The index of the screen `column` across and `row` down, as the hardware multiplier
