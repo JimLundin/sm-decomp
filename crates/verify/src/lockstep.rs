@@ -325,6 +325,11 @@ const COMPARATORS: &[Comparator] = &[
     field!("video.dma", video.dma),
     field!("video.playfield.main_screen", video.playfield.main_screen),
     field!("video.playfield.bg3_tilemap", video.playfield.bg3_tilemap),
+    field!("video.message_box.tilemap", video.message_box.tilemap),
+    field!(
+        "video.message_box.bg3_tilemap",
+        video.message_box.bg3_tilemap
+    ),
     field!(
         "video.playfield.colour_math.select",
         video.playfield.colour_math.select

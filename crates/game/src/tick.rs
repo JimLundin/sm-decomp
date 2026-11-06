@@ -197,7 +197,7 @@ fn step(
             (Frame::Gameplay(at), next)
         }
         Frame::MessageBox(at) => {
-            let (at, next) = message_box::step(at, state);
+            let (at, next) = message_box::step(at, state, &content.message_boxes);
             (Frame::MessageBox(at), next)
         }
         // The PLM pass, called out of by an item's pickup.

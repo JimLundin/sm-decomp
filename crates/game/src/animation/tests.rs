@@ -59,6 +59,7 @@ fn content() -> Content {
         room_plms: crate::plm::RoomPlms::default(),
         area_maps: data::map::AreaMaps::default(),
         tile_tables: data::tileset::TileTables::default(),
+        message_boxes: data::message::MessageBoxes::default(),
     }
 }
 

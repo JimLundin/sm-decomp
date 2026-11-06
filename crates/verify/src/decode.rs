@@ -36,11 +36,11 @@ use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
     BACKGROUNDS, BgMode, Brightness, BusAddress, CGRAM_COLOURS, Colour, ColourMath,
     ColourMathLayers, ColourMathSelect, ColourWrite, ColumnUpload, DisplaySettings, DmaChannel,
-    FixedColour, GraphicsRef, LayerUploads, Layers, LevelUploads, Mode7, Mode7Select, Mosaic,
-    NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Playfield, PlayfieldColourMath,
-    Registers, RomWords, RowUpload, SamusTileUploads, Scroll, TileBases, TilemapBase, TilemapEntry,
-    TilemapPart, UploadRequests, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep,
-    VramTransfer, VramWord, WindowSettings, Windows,
+    FixedColour, GraphicsRef, LayerUploads, Layers, LevelUploads, MessageBoxSaved, Mode7,
+    Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Playfield,
+    PlayfieldColourMath, Registers, RomWords, RowUpload, SamusTileUploads, Scroll, TileBases,
+    TilemapBase, TilemapEntry, TilemapPart, UploadRequests, VRAM_WORDS, Video, VideoMemory,
+    VramSource, VramStep, VramTransfer, VramWord, WindowSettings, Windows,
 };
 use game::state::{
     Button, Buttons, Clock, CollectedItems, Controller, Counters, FrameCount, GameMode, GameTime,
@@ -353,6 +353,8 @@ pub struct Rules<'t> {
     pub mirrors: MirrorSources,
     /// The registers the HUD interrupt writes for the playfield.
     pub playfield: PlayfieldSources,
+    /// Where the message box keeps what it puts back when it closes.
+    pub message_box: MessageBoxSources,
     /// `samus.equipment.collected`.
     pub collected: WramWord,
     /// `samus.equipment.equipped`.
@@ -858,6 +860,16 @@ pub struct MiniMapSources {
     pub disabled: WramWord,
 }
 
+/// Where the original keeps what the message box saves (bank $85 log, `$85:814B` and
+/// `$85:81B5`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MessageBoxSources {
+    /// `video.message_box.tilemap`.
+    pub tilemap: WramBlock,
+    /// `video.message_box.bg3_tilemap`.
+    pub bg3_tilemap: WramByte,
+}
+
 /// Where the original keeps the HUD interrupt's playfield registers (bank $80 log, `$80:96A9`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PlayfieldSources {
@@ -965,6 +977,10 @@ impl Rules<'_> {
             colour_math_layers: source::REG_CGADSUB,
             fixed_colour: source::REG_COLDATA,
             settings: source::REG_SETINI,
+        },
+        message_box: MessageBoxSources {
+            tilemap: source::MESSAGE_BOX_TILEMAP_BACKUP,
+            bg3_tilemap: source::MESSAGE_BOX_SAVED_BG3SC,
         },
         playfield: PlayfieldSources {
             main_screen: source::GAMEPLAY_TM,
@@ -1320,6 +1336,7 @@ impl Rules<'_> {
             memory: video_memory(record)?,
             committed: committed(&record.ppu)?,
             playfield: self.playfield(wram)?,
+            message_box: self.message_box.read(wram)?,
             dma: record.ppu.dma.map(dma_channel),
             nmi_requested: flag(self.nmi_requested, wram)?,
             batch: NmiBatch {
@@ -1633,6 +1650,17 @@ fn collected_items(block: WramBlock, wram: &[u8]) -> Result<CollectedItems, Deco
 
 /// A tilemap palette field's bits within a word.
 const TILEMAP_PALETTE_FIELD: u16 = 0x1C00;
+
+impl MessageBoxSources {
+    /// What the message box saved.
+    fn read(&self, wram: &[u8]) -> Result<MessageBoxSaved, DecodeError> {
+        let words = self.tilemap.read(wram)?.as_chunks::<2>().0;
+        Ok(MessageBoxSaved {
+            tilemap: words.iter().map(|&word| u16::from_le_bytes(word)).collect(),
+            bg3_tilemap: TilemapBase(self.bg3_tilemap.read(wram)?),
+        })
+    }
+}
 
 impl HudSources {
     /// The HUD the record shows.

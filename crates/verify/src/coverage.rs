@@ -155,6 +155,14 @@ pub const FIELDS: &[Field] = &[
     record("video.dma", "ppu"),
     wram_byte("video.playfield.main_screen", source::GAMEPLAY_TM),
     wram_byte("video.playfield.bg3_tilemap", source::GAMEPLAY_BG3SC),
+    block(
+        "video.message_box.tilemap",
+        source::MESSAGE_BOX_TILEMAP_BACKUP,
+    ),
+    wram_byte(
+        "video.message_box.bg3_tilemap",
+        source::MESSAGE_BOX_SAVED_BG3SC,
+    ),
     wram_byte(
         "video.playfield.colour_math.select",
         source::GAMEPLAY_COLOUR_MATH[0],
@@ -757,7 +765,7 @@ mod tests {
     }
 
     /// The byte sources the decoder reads.
-    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 37] {
+    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 38] {
         [
             rules.lag,
             rules.max_lag,
@@ -784,6 +792,7 @@ mod tests {
             rules.mirrors.settings,
             rules.playfield.main_screen,
             rules.playfield.bg3_tilemap,
+            rules.message_box.bg3_tilemap,
             rules.playfield.colour_math[0],
             rules.playfield.colour_math[1],
             rules.playfield.next_colour_math[0],
@@ -1009,6 +1018,7 @@ mod tests {
             rules.oam_buffer,
             rules.palette_buffer,
             rules.vram_queue,
+            rules.message_box.tilemap,
             rules.hud.tilemap,
             rules.hud.mini_map.explored,
             // The BTS and the room's size, in blocks, go with layer 1.

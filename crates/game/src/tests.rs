@@ -4,6 +4,7 @@
 use std::marker::PhantomData;
 
 use canonical::{from_bytes, to_bytes};
+use data::message::MessageBoxes;
 
 use crate::message_box::{self, ANIMATION_STEPS};
 use crate::nmi::NmiKind;
@@ -311,7 +312,7 @@ fn box_waits(state: &mut State, wait_for: usize) -> Result<Vec<MessageBoxAt>, St
                 state.controller.auto_read = buttons(0x0080);
             }
         }
-        let (next_at, next) = message_box::step(at, state);
+        let (next_at, next) = message_box::step(at, state, &MessageBoxes::default());
         match next {
             Next::Yield(Wait::LagFrame) => waits.push(next_at),
             Next::Return => return Ok(waits),

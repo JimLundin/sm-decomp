@@ -80,6 +80,13 @@ pub const MESSAGE_BOX_BACKUP: BusAddress = BusAddress {
     offset: 0x4100,
 };
 
+/// The message box's rows, the borders and the message, which `$85:8324` uploads to BG3's
+/// tilemap.
+pub const MESSAGE_BOX_ROWS: BusAddress = BusAddress {
+    bank: 0x7E,
+    offset: 0x3200,
+};
+
 /// The message box's blank tilemap, which `$85:81F3` fills and DMAs to VRAM.
 pub const MESSAGE_BOX_BLANK: BusAddress = BusAddress {
     bank: 0x7E,

@@ -67,6 +67,8 @@ pub struct Content {
     pub area_maps: data::map::AreaMaps,
     /// The tilesets' tile tables, which draw the level's blocks.
     pub tile_tables: data::tileset::TileTables,
+    /// The message boxes' borders, letters and messages.
+    pub message_boxes: data::message::MessageBoxes,
 }
 
 /// The pose a frame asks for, by the channel that asked.

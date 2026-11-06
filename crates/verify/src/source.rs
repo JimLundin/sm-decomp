@@ -1471,3 +1471,16 @@ pub const PLM_INSTRUCTION_TIMER: WramArray = WramArray {
     name: "PLM_INSTRUCTION_TIMER",
     offset: 0xDE1C,
 };
+
+/// Bank $85 log, `$85:81B5`: the BG3 tilemap rows the message box covers, which it reads out
+/// of VRAM when it opens and writes back when it closes.
+pub const MESSAGE_BOX_TILEMAP_BACKUP: WramBlock = WramBlock {
+    name: "MESSAGE_BOX_TILEMAP_BACKUP",
+    offset: 0x4100,
+    len: 0x0700,
+};
+/// Bank $85 log, `$85:816F`: the playfield's BG3SC, which the message box saves when it opens.
+pub const MESSAGE_BOX_SAVED_BG3SC: WramByte = WramByte {
+    name: "MESSAGE_BOX_SAVED_BG3SC",
+    offset: 0x33EB,
+};

@@ -1,17 +1,23 @@
 //! The message box's video work: the PPU writes, DMAs and HDMA set-up the box makes itself,
 //! straight to the PPU while the NMI lags, rather than through the NMI's batch.
 
-use data::dma::{MESSAGE_BOX_BACKUP, MESSAGE_BOX_BLANK, MESSAGE_BOX_SCROLL_TABLE};
+use data::dma::{
+    MESSAGE_BOX_BACKUP, MESSAGE_BOX_BLANK, MESSAGE_BOX_ROWS, MESSAGE_BOX_SCROLL_TABLE,
+};
 
 use crate::commit::{DMA_TO_VRAM, DMA_TWO_REGISTERS, VRAM_CHANNEL, write_words};
 use crate::state::video::{
-    ColourWrite, DmaChannel, Layer, Layers, Playfield, PlayfieldColourMath, Scroll, TilemapBase,
-    Video, VramWord,
+    ColourWrite, DmaChannel, Layer, Layers, MESSAGE_BOX_BACKUP_WORDS, Playfield,
+    PlayfieldColourMath, Scroll, TilemapBase, Video, VramWord,
 };
 
 /// The BG3 tilemap rows the box covers: from `$5880`, 700h bytes (`$85:81B7`).
 const BOX_TILEMAP: VramWord = VramWord(0x5880);
 const BOX_TILEMAP_BYTES: u16 = 0x0700;
+/// The box's BG3 tilemap rows in words.
+const BOX_TILEMAP_WORDS: usize = MESSAGE_BOX_BACKUP_WORDS;
+/// BG3's tilemap base while the box is up, which its rows are placed from (`$85:8326`).
+const MESSAGE_BOX_TILEMAP_BASE: VramWord = VramWord(0x5800);
 /// The blank box tilemap's word (`$85:823F`).
 const BLANK_TILE: u16 = 0x000E;
 
@@ -50,9 +56,10 @@ impl Video {
     /// Bank `$85` log, initialise PPU for message boxes `$85:814B`, after its first wait:
     /// BG3 palette 6's text colours straight to CGRAM, the playfield the box shows over, a
     /// black sub screen backdrop and BG3's scroll at 0.
-    // open: HDMA's enable ($420C cleared), the saved HDMA channels and BG3SC the restore
-    // reads ($7E:33EA), and the cleared scroll table ($7E:3000) join with the HDMA channels.
+    // open: HDMA's enable ($420C cleared), the saved HDMA channels the restore reads
+    // ($7E:33EA), and the cleared scroll table ($7E:3000) join with the HDMA channels.
     pub(crate) fn prepare_message_box(&mut self) {
+        self.message_box.bg3_tilemap = self.playfield.bg3_tilemap;
         if let Some(colours) = self.memory.cgram.get_mut(TEXT_COLOUR_RANGE) {
             for (colour, &value) in colours.iter_mut().zip(&TEXT_COLOURS) {
                 colour.0 = value;
@@ -81,12 +88,20 @@ impl Video {
 
     /// Bank `$85` log, `$85:81B5`: DMA 1 reads the BG3 tilemap the box covers from VRAM into
     /// its backup.
-    // open: the backup's words join with the restore ($85:861F) that writes them back.
     pub(crate) fn back_up_message_box_tilemap(&mut self) {
+        let from = usize::from(BOX_TILEMAP.0);
+        if let Some(rows) = self
+            .memory
+            .vram
+            .get(from..from.saturating_add(BOX_TILEMAP_WORDS))
+        {
+            self.message_box.tilemap.clear();
+            self.message_box.tilemap.extend_from_slice(rows);
+        }
         if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
             channel.control = DMA_FROM_TWO_REGISTERS;
             channel.destination = DMA_FROM_VRAM;
-            channel.box_transfer(MESSAGE_BOX_BACKUP);
+            channel.box_transfer(MESSAGE_BOX_BACKUP, BOX_TILEMAP_BYTES);
         }
     }
 
@@ -103,7 +118,24 @@ impl Video {
         if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
             channel.control = DMA_TWO_REGISTERS;
             channel.destination = DMA_TO_VRAM;
-            channel.box_transfer(MESSAGE_BOX_BLANK);
+            channel.box_transfer(MESSAGE_BOX_BLANK, BOX_TILEMAP_BYTES);
+        }
+    }
+
+    /// Bank `$85` log, `$85:8324`: DMA 1 writes the box's `rows`, a border, the message and a
+    /// border, to BG3's tilemap `rows_at` words past `$5800`.
+    pub(crate) fn upload_message_box(&mut self, rows: &[u16], rows_at: u16) {
+        write_words(
+            &mut self.memory.vram,
+            VramWord(MESSAGE_BOX_TILEMAP_BASE.0.wrapping_add(rows_at)),
+            1,
+            rows.iter().copied(),
+        );
+        if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
+            channel.control = DMA_TWO_REGISTERS;
+            channel.destination = DMA_TO_VRAM;
+            let bytes = u16::try_from(rows.len().saturating_mul(2)).unwrap_or(u16::MAX);
+            channel.box_transfer(MESSAGE_BOX_ROWS, bytes);
         }
     }
 
@@ -129,21 +161,26 @@ impl Video {
 
 impl Video {
     /// Bank `$85` log, restore PPU `$85:861F`: DMA 1 writes the backup over the box's rows.
-    // open: the backup's words, which this writes, join with the State's copy of the backup;
-    // until then only the channel's registers move.
     pub(crate) fn restore_message_box_tilemap(&mut self) {
+        write_words(
+            &mut self.memory.vram,
+            BOX_TILEMAP,
+            1,
+            self.message_box.tilemap.iter().copied(),
+        );
         if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
             channel.control = DMA_TWO_REGISTERS;
             channel.destination = DMA_TO_VRAM;
-            channel.box_transfer(MESSAGE_BOX_BACKUP);
+            channel.box_transfer(MESSAGE_BOX_BACKUP, BOX_TILEMAP_BYTES);
         }
     }
 
     /// Bank `$85` log, `$85:8654`: the playfield's main screen and colour math back from the
     /// mirrors the NMI commits, and the text colours back from the palette buffer.
-    // open: HDMA's enable and the playfield's BG3SC come back from what `$85:8169` saved
-    // ($7E:33EA), which joins with the HDMA channels.
+    // open: HDMA's enable comes back from what `$85:8169` saved ($7E:33EA), which joins with
+    // the HDMA channels.
     pub(crate) fn restore_message_box_registers(&mut self) {
+        self.playfield.bg3_tilemap = self.message_box.bg3_tilemap;
         self.playfield.main_screen = self.batch.registers.main_screen;
         self.playfield.colour_math = self.batch.playfield_colour_math;
         if let (Some(colours), Some(saved)) = (
@@ -156,10 +193,10 @@ impl Video {
 }
 
 impl DmaChannel {
-    /// One of the box's 700h-byte DMAs with `buffer` on the A bus. The box's `STZ $43x7` and
+    /// One of the box's DMAs of `bytes` with `buffer` on the A bus. The box's `STZ $43x7` and
     /// `STZ $43x9` also clear the indirect bank, the table address and the line counter.
-    fn box_transfer(&mut self, buffer: data::dma::BusAddress) {
-        self.transferred(buffer, usize::from(BOX_TILEMAP_BYTES));
+    fn box_transfer(&mut self, buffer: data::dma::BusAddress, bytes: u16) {
+        self.transferred(buffer, usize::from(bytes));
         self.indirect_bank = 0;
         self.table = 0;
         self.line_counter = 0;
@@ -287,6 +324,46 @@ mod tests {
                 indirect_bank: 0x7E,
                 table: 0,
                 line_counter: 0,
+            }
+        );
+    }
+
+    #[test]
+    fn the_backup_and_the_restore_round_trip_the_boxs_rows() {
+        let mut video = Video::default();
+        for (index, word) in video.memory.vram[0x5880..0x5C00].iter_mut().enumerate() {
+            *word = 0x2000 | u16::try_from(index).unwrap_or(0);
+        }
+        video.playfield.bg3_tilemap = TilemapBase(0x5A);
+        video.prepare_message_box();
+        video.back_up_message_box_tilemap();
+        assert_eq!(video.message_box.tilemap.len(), 0x380);
+        assert_eq!(video.message_box.tilemap[0x37F], 0x237F);
+        assert_eq!(video.playfield.bg3_tilemap, TilemapBase(0x58));
+        video.upload_blank_message_box();
+        assert_eq!(video.memory.vram[0x5880], 0x000E);
+        video.restore_message_box_tilemap();
+        video.restore_message_box_registers();
+        assert_eq!(video.memory.vram[0x5880], 0x2000);
+        assert_eq!(video.memory.vram[0x5BFF], 0x237F);
+        assert_eq!(video.playfield.bg3_tilemap, TilemapBase(0x5A));
+    }
+
+    #[test]
+    fn the_rows_upload_where_the_setup_puts_them() {
+        let mut video = Video::default();
+        video.upload_message_box(&[1, 2, 3], 0x1C0);
+        assert_eq!(video.memory.vram[0x59C0..0x59C3], [1, 2, 3]);
+        assert_eq!(video.memory.vram[0x59BF], 0);
+        assert_eq!(video.memory.vram[0x59C3], 0);
+        assert_eq!(
+            video.dma[1],
+            DmaChannel {
+                control: 0x01,
+                destination: 0x18,
+                source: 0x3206,
+                source_bank: 0x7E,
+                ..DmaChannel::default()
             }
         );
     }

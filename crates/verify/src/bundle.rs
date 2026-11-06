@@ -144,6 +144,8 @@ pub enum ContentError {
     AreaMaps(AddressError),
     /// The tile tables are outside the image or don't decompress.
     TileTables(TilesetError),
+    /// The message boxes' tables are outside the image or name an unknown routine.
+    MessageBoxes(data::message::MessageError),
 }
 
 impl fmt::Display for ContentError {
@@ -162,6 +164,7 @@ impl fmt::Display for ContentError {
             Self::Rooms(error) => write!(f, "the rooms: {error:?}"),
             Self::AreaMaps(error) => write!(f, "the area maps: {error:?}"),
             Self::TileTables(error) => write!(f, "the tile tables: {error:?}"),
+            Self::MessageBoxes(error) => write!(f, "the message boxes: {error:?}"),
         }
     }
 }
@@ -206,6 +209,8 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         room_plms,
         area_maps: data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
         tile_tables: TileTables::load(rom.lorom()).map_err(ContentError::TileTables)?,
+        message_boxes: data::message::MessageBoxes::load(rom.lorom())
+            .map_err(ContentError::MessageBoxes)?,
     })
 }
 

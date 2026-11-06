@@ -656,4 +656,28 @@ pub struct Video {
     pub batch: NmiBatch,
     /// Whether the main strand has requested that NMI.
     pub nmi_requested: bool,
+    /// What the message box set aside to put back when it closes.
+    pub message_box: MessageBoxSaved,
+}
+
+/// Words of BG3 tilemap the message box covers and backs up.
+pub const MESSAGE_BOX_BACKUP_WORDS: usize = 0x380;
+
+/// What the message box saves of the playfield: the BG3 tilemap rows it covers and BG3SC,
+/// which it points at its own tilemap while it is up.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct MessageBoxSaved {
+    /// The tilemap rows' words, as VRAM held them when the box opened.
+    pub tilemap: Vec<u16>,
+    /// The playfield's BG3SC when the box opened.
+    pub bg3_tilemap: TilemapBase,
+}
+
+impl Default for MessageBoxSaved {
+    fn default() -> Self {
+        Self {
+            tilemap: vec![0; MESSAGE_BOX_BACKUP_WORDS],
+            bg3_tilemap: TilemapBase::default(),
+        }
+    }
 }
