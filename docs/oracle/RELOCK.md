@@ -467,8 +467,8 @@ death:100,1500`), with sidecars.
   disagrees on `video` span 1 only, at exactly one frame: frame 1071 (lsnes
   frame 11234), a cut at the RTI (`R`), video `26ea2588f4177978` in A against
   `1859db1821bb61c8` in B, every other stream's digest equal on that frame.
-  So the emulation is the same and one screenshot differs. A third run (wave
-  C: `--only chain-any-0006-E0B5 --dump-frames chain-any-0006-E0B5:1070,1071`)
+  So the emulation is the same and one screenshot differs. A third run (D,
+  `--only chain-any-0006-E0B5 --dump-frames chain-any-0006-E0B5:1070,1071`)
   gave B's value, so A was the odd run; its picture of frame 1071 isn't kept
   (the dump is of the agreeing run, an ordinary frame of Samus jumping in a
   blue shaft). Next time, compare each wave with the third and dump the odd
@@ -480,7 +480,7 @@ death:100,1500`), with sidecars.
 - **Merge.** `relock-merge OUT A C B`: 3 entries, 0 rows without a pair
   (`death` from A and B, `chain-any-0006-E0B5` from C and B). `relock-merge
   OUT A C`: 1 entry, and `chain-any-0006-E0B5` and `death` listed (exit 1).
-  `relock-merge OUT A B C3` (the third run): 3 entries, `chain-any-0006-E0B5`
-  with B's and C3's span 1 (`4e82496a3475bafb`).
+  `relock-merge OUT A B D`: 3 entries, `chain-any-0006-E0B5`
+  with B's and D's span 1 (`4e82496a3475bafb`).
 - The two `.png` dumps decode as the expected pictures (the Crateria map at
   `death` frame 1500).
