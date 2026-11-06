@@ -678,6 +678,34 @@ pub const SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: WramByte = WramByte {
     offset: 0x0A27,
 };
 
+/// Bank $90 log, `$90:8000`: the frames Samus's animation frame still shows, a word that
+/// goes negative before the frame advances.
+pub const SAMUS_ANIM_FRAME_TIMER: WramWord = WramWord {
+    name: "SAMUS_ANIM_FRAME_TIMER",
+    offset: 0x0A94,
+};
+/// Bank $90 log, `$90:82DC`: Samus's animation frame, a byte offset into her pose's delay
+/// list.
+pub const SAMUS_ANIM_FRAME: WramWord = WramWord {
+    name: "SAMUS_ANIM_FRAME",
+    offset: 0x0A96,
+};
+/// Bank $91 log, `$91:FB08`: the frame a new pose's animation starts on, $8000 to keep it.
+pub const SAMUS_ANIM_FRAME_SKIP: WramWord = WramWord {
+    name: "SAMUS_ANIM_FRAME_SKIP",
+    offset: 0x0A9A,
+};
+/// Bank $91 log, `$91:EB88`: the super special prospective pose, $FFFF for none.
+pub const SAMUS_NEW_POSE_TRANSITIONAL: WramWord = WramWord {
+    name: "SAMUS_NEW_POSE_TRANSITIONAL",
+    offset: 0x0A2C,
+};
+/// Bank $91 log, `$91:EB88`: the super special prospective pose change command, 0 to 8.
+pub const SAMUS_HURT_SWITCH_INDEX: WramWord = WramWord {
+    name: "SAMUS_HURT_SWITCH_INDEX",
+    offset: 0x0A32,
+};
+
 /// Bank $80 log, NMI `$80:95ED`: the requested NMIs in eight bits, which the HUD's
 /// auto-cancel flash reads.
 pub const NMI_FRAME_COUNTER_BYTE: WramByte = WramByte {

@@ -13,8 +13,9 @@ use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{Camera, RoomScoped};
 use game::state::samus::{
-    Acceleration, Equipment, Facing, Fixed, Gauge, Horizontal, Item, Items, Movement, Point,
-    PoseId, PoseRecord, ReserveMode, Samus, Speed,
+    Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
+    Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus,
+    Speed, SuperSpecial, SuperSpecialCommand,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
@@ -309,6 +310,30 @@ pub struct Rules<'t> {
     pub message: WramWord,
     /// `room.enemies`.
     pub enemies: EnemySources,
+    /// `samus.animation`.
+    pub animation: AnimationSources,
+    /// `samus.super_special`.
+    pub super_special: SuperSpecialSources,
+}
+
+/// Where the original keeps Samus's animation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AnimationSources {
+    /// `.frame`.
+    pub frame: WramWord,
+    /// `.timer`.
+    pub timer: WramWord,
+    /// `.new_pose_frame`.
+    pub new_pose_frame: WramWord,
+}
+
+/// Where the original keeps the super special prospective pose request.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SuperSpecialSources {
+    /// `.pose`.
+    pub pose: WramWord,
+    /// `.command`.
+    pub command: WramWord,
 }
 
 /// Where the original keeps the HUD.
@@ -463,6 +488,15 @@ impl Rules<'_> {
         irq_next: source::IRQHANDLER_NEXT_HANDLER,
         message: source::MESSAGE_BOX_INDEX,
         enemies: EnemySources::ORIGINAL,
+        animation: AnimationSources {
+            frame: source::SAMUS_ANIM_FRAME,
+            timer: source::SAMUS_ANIM_FRAME_TIMER,
+            new_pose_frame: source::SAMUS_ANIM_FRAME_SKIP,
+        },
+        super_special: SuperSpecialSources {
+            pose: source::SAMUS_NEW_POSE_TRANSITIONAL,
+            command: source::SAMUS_HURT_SWITCH_INDEX,
+        },
         pose: PoseSources {
             pose: source::SAMUS_POSE,
             facing: source::SAMUS_POSE_X_DIR,
@@ -612,6 +646,8 @@ impl Rules<'_> {
             last_different: self.last_different_pose.read(wram)?,
             facing: pose.facing,
             movement,
+            animation: self.animation.read(wram)?,
+            super_special: self.super_special.read(wram)?,
             ..Samus::default()
         })
     }
@@ -1209,6 +1245,71 @@ impl HorizontalSources {
             acceleration,
             momentum,
         })
+    }
+}
+
+impl AnimationSources {
+    /// The animation in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a new pose frame with bit 15 set but $8000:
+    /// `$91:FB08` tests the bit alone, and no writer stores another.
+    fn read(self, wram: &[u8]) -> Result<Animation, DecodeError> {
+        let new_pose_frame = match self.new_pose_frame.read(wram)? {
+            PRESERVE_FRAME => NewPoseFrame::Preserve,
+            frame if frame & PRESERVE_FRAME == 0 => NewPoseFrame::From(AnimationFrame(frame)),
+            value => {
+                return Err(DecodeError::Unrepresentable {
+                    source: self.new_pose_frame.name,
+                    value,
+                });
+            }
+        };
+        Ok(Animation {
+            frame: AnimationFrame(self.frame.read(wram)?),
+            timer: AnimationTimer(self.timer.read(wram)?),
+            new_pose_frame,
+        })
+    }
+}
+
+/// The new pose frame that keeps the animation (`$91:FB08` tests bit 15).
+const PRESERVE_FRAME: u16 = 0x8000;
+
+/// The super special prospective pose word for none.
+const NO_POSE: u16 = 0xFFFF;
+
+impl SuperSpecialSources {
+    /// The request in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a pose past the definitions table but $FFFF,
+    /// or a command past the command table (`$91:EB88` jumps through it).
+    fn read(self, wram: &[u8]) -> Result<SuperSpecial, DecodeError> {
+        let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
+            source: source.name,
+            value,
+        };
+        let pose = match self.pose.read(wram)? {
+            NO_POSE => None,
+            pose if usize::from(pose) < POSE_COUNT => Some(PoseId(pose)),
+            value => return Err(unrepresentable(self.pose, value)),
+        };
+        let command = match self.command.read(wram)? {
+            0 => SuperSpecialCommand::None,
+            1 => SuperSpecialCommand::KnockbackFinished,
+            2 => SuperSpecialCommand::ShinesparkFinished,
+            3 => SuperSpecialCommand::TransitionAnimationFinished,
+            4 => SuperSpecialCommand::CentreOnScreen,
+            5 => SuperSpecialCommand::MoveDown,
+            6 => SuperSpecialCommand::StartGrappleWallJump,
+            7 => SuperSpecialCommand::StartReleaseFromGrappleSwing,
+            8 => SuperSpecialCommand::KnockbackAndTransitionAnimationFinished,
+            value => return Err(unrepresentable(self.command, value)),
+        };
+        Ok(SuperSpecial { pose, command })
     }
 }
 

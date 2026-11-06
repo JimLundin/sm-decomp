@@ -280,7 +280,20 @@ pub const FIELDS: &[Field] = &[
     ),
     wram("samus.equipment.reserve_mode", source::RESERVE_HEALTH_MODE),
     open("samus.invincibility"),
-    open("samus.animation"),
+    wram("samus.animation.frame", source::SAMUS_ANIM_FRAME),
+    wram("samus.animation.timer", source::SAMUS_ANIM_FRAME_TIMER),
+    wram(
+        "samus.animation.new_pose_frame",
+        source::SAMUS_ANIM_FRAME_SKIP,
+    ),
+    wram(
+        "samus.super_special.pose",
+        source::SAMUS_NEW_POSE_TRANSITIONAL,
+    ),
+    wram(
+        "samus.super_special.command",
+        source::SAMUS_HURT_SWITCH_INDEX,
+    ),
     Field {
         path: "room.room",
         status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
@@ -529,6 +542,11 @@ mod tests {
             rules.horizontal.extra_run_subpixels,
             rules.horizontal.acceleration,
             rules.horizontal.momentum,
+            rules.animation.frame,
+            rules.animation.timer,
+            rules.animation.new_pose_frame,
+            rules.super_special.pose,
+            rules.super_special.command,
             // The scroll row names the first mirror; the queue's tail bounds the queue block.
             rules.scroll[0][0],
             // An array of mirrors is named by its first; mode 7's centre by its own first.

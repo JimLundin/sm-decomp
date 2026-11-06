@@ -7,7 +7,8 @@ use data::enemy::SpeciesMap;
 use data::id::{Line, RoomId, SpeciesId};
 use game::state::room::{AiVariables, EnemyBody, EnemyCommon, PaletteIndex, TilesIndex};
 use game::state::samus::{
-    Acceleration, Facing, Horizontal, Movement, MovementType, PoseId, PoseRecord, Speed,
+    Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Movement,
+    MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial, SuperSpecialCommand,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Occupancy, Slot};
@@ -195,6 +196,11 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0A24, 0x0002); // SAMUS_LAST_DIFFERENT_POSE
     wram[0x0A26] = 0x04; // SAMUS_LAST_DIFFERENT_POSE_X_DIR: left
     wram[0x0A27] = 0x05; // SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: crouching
+    put(&mut wram, 0x0A2C, 0x0002); // SAMUS_NEW_POSE_TRANSITIONAL
+    put(&mut wram, 0x0A32, 0x0003); // SAMUS_HURT_SWITCH_INDEX: transition animation finished
+    put(&mut wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
+    put(&mut wram, 0x0A96, 0x0003); // SAMUS_ANIM_FRAME
+    put(&mut wram, 0x0A9A, 0x8000); // SAMUS_ANIM_FRAME_SKIP: preserve
     put(&mut wram, 0x0B3C, 0x0001); // SAMUS_HAS_MOMENTUM_FLAG
     put(&mut wram, 0x0B42, 0x0001); // SAMUS_X_EXTRA_RUN_SPEED
     put(&mut wram, 0x0B44, 0x2000); // SAMUS_X_EXTRA_RUN_SUBSPEED
@@ -251,6 +257,21 @@ fn record() -> FrameRecord {
         hits: Vec::new(),
         legacy_ppu_digest: 0,
     }
+}
+
+/// Samus's animation and super special request, as the synthetic record sets them.
+fn decodes_the_animation(state: &State) -> bool {
+    state.samus.animation
+        == Animation {
+            frame: AnimationFrame(3),
+            timer: AnimationTimer(7),
+            new_pose_frame: NewPoseFrame::Preserve,
+        }
+        && state.samus.super_special
+            == SuperSpecial {
+                pose: Some(PoseId(2)),
+                command: SuperSpecialCommand::TransitionAnimationFinished,
+            }
 }
 
 /// The fields the synthetic record sets, checked against the values it holds.
@@ -330,6 +351,7 @@ fn decodes_the_record(state: &State) -> bool {
                 facing: Facing::Left,
                 movement: MovementType::Crouching,
             }
+        && decodes_the_animation(state)
         && state.timing.last == NmiTiming::OnTime
         && state.video.nmi_requested
         && state.room.room == MORPH_BALL_ROOM_ID
@@ -391,7 +413,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 38] = [
+const WORD_RULES: [(&str, WordRule); 43] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -441,6 +463,15 @@ const WORD_RULES: [(&str, WordRule); 38] = [
     }),
     ("horizontal.momentum", |rules| {
         &mut rules.horizontal.momentum
+    }),
+    ("animation.frame", |rules| &mut rules.animation.frame),
+    ("animation.timer", |rules| &mut rules.animation.timer),
+    ("animation.new_pose_frame", |rules| {
+        &mut rules.animation.new_pose_frame
+    }),
+    ("super_special.pose", |rules| &mut rules.super_special.pose),
+    ("super_special.command", |rules| {
+        &mut rules.super_special.command
     }),
 ];
 
