@@ -9,6 +9,7 @@
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
 use data::enemy::eye::EyeLists;
+use data::enemy::face_block::FaceBlockLists;
 use data::enemy::program::EnemyPrograms;
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
@@ -45,6 +46,8 @@ pub struct Content {
     pub enemy_programs: EnemyPrograms,
     /// The Morph Ball Room eye's lists in them.
     pub eye_lists: EyeLists,
+    /// The Blue Brinstar face block's lists in them.
+    pub face_block_lists: FaceBlockLists,
     /// Samus's spritemaps by pose and frame.
     pub samus_spritemaps: SamusSpritemaps,
 }

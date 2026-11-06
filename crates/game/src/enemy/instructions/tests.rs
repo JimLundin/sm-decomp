@@ -29,9 +29,9 @@ fn slot_at(at: Target, delay: u16) -> Slot<EnemyCommon, EnemyBody> {
     let mut slot: Slot<EnemyCommon, EnemyBody> = Slot::default();
     slot.common.cursor.at = label(at);
     slot.common.cursor.delay = Frames(delay);
-    slot.occupancy = Occupancy::Live(EnemyBody::FaceBlock {
-        variables: crate::state::room::AiVariables::default(),
-    });
+    slot.occupancy = Occupancy::Live(EnemyBody::FaceBlock(
+        crate::state::room::FaceBlock::default(),
+    ));
     slot
 }
 

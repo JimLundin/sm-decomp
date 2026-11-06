@@ -3,14 +3,15 @@
 //! The spritemap and instruction pointers (`+16`, `+1A`) are in the slot's AI bank (`+2E`),
 //! which the species header also names; they decode through the content's programs.
 
+use canonical::Canonical;
 use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::enemy::{Behaviour, SpeciesKey, SpeciesMap};
 use data::id::SpeciesId;
 use data::rom::RomAddress;
 use game::enemy::instructions::label;
 use game::state::room::{
-    AiVariables, ENEMY_SLOTS, Elevator, EnemyBody, EnemyCommon, EyePhase, MorphBallEye,
-    PaletteIndex, TilesIndex,
+    ENEMY_SLOTS, Elevator, EnemyBody, EnemyCommon, EyePhase, FaceBlock, MorphBallEye, PaletteIndex,
+    TilesIndex,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot, SlotStore};
@@ -20,6 +21,24 @@ use crate::source::{self, SlotField, WramTable};
 
 /// The properties word's deleted bit (bank $A0 log): the next determine pass frees the slot.
 const DELETED: u16 = 0x0200;
+
+/// The six words the original gives each enemy's AI, in slot order (`+30` to `+3A`): each
+/// species' body names them, and these are its words byte-exact.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct AiVariables {
+    /// The slot's first AI word.
+    pub a: u16,
+    /// The second.
+    pub b: u16,
+    /// The third.
+    pub c: u16,
+    /// The fourth.
+    pub d: u16,
+    /// The fifth.
+    pub e: u16,
+    /// The sixth.
+    pub f: u16,
+}
 
 /// Where the original keeps each enemy slot's fields.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -293,7 +312,7 @@ pub fn body(behaviour: Behaviour, variables: AiVariables) -> Result<EnemyBody, U
     Ok(match behaviour {
         Behaviour::MorphBallEye => EnemyBody::MorphBallEye(eye(variables)?),
         Behaviour::Elevator => EnemyBody::Elevator(elevator(variables)),
-        Behaviour::FaceBlock => EnemyBody::FaceBlock { variables },
+        Behaviour::FaceBlock => EnemyBody::FaceBlock(face_block(variables)?),
     })
 }
 
@@ -376,6 +395,39 @@ pub const fn elevator_words(elevator: Elevator) -> AiVariables {
     AiVariables {
         a: elevator.target_y,
         b: second,
+        c: third,
+        d: fourth,
+        e: fifth,
+        f: sixth,
+    }
+}
+
+/// The face block's AI words (bank $A8 log, `$A8:E82E` to `$A8:E91B`): the first its
+/// activated flag, the second Samus's X offset.
+///
+/// # Errors
+///
+/// [`UnknownWord`] for an activated flag other than 0 or 1.
+pub const fn face_block(variables: AiVariables) -> Result<FaceBlock, UnknownWord> {
+    let activated = match variables.a {
+        0 => false,
+        1 => true,
+        value => return Err(UnknownWord { index: 0, value }),
+    };
+    Ok(FaceBlock {
+        activated,
+        samus_offset: variables.b,
+        unused: [variables.c, variables.d, variables.e, variables.f],
+    })
+}
+
+/// The words `block` holds, in slot order: [`face_block`]'s inverse.
+#[must_use]
+pub fn face_block_words(block: FaceBlock) -> AiVariables {
+    let [third, fourth, fifth, sixth] = block.unused;
+    AiVariables {
+        a: u16::from(block.activated),
+        b: block.samus_offset,
         c: third,
         d: fourth,
         e: fifth,

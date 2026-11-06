@@ -13,7 +13,7 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
-use game::state::room::{AiVariables, ENEMY_SLOTS, Elevator, EnemyBody, MorphBallEye};
+use game::state::room::{ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, MorphBallEye};
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
 use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, TickInput};
@@ -22,6 +22,7 @@ use oracle_record::{Cut, FrameRecord};
 use crate::cache::{Cache, CacheError, CutKind};
 use crate::coverage::{FIELDS, Status};
 use crate::decode::{DecodeError, Decoded, Quiescence, RoomHeader, RoomMap, Unsupported, decode};
+use crate::enemy::AiVariables;
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
 
@@ -93,9 +94,7 @@ fn occupant(state: &State) -> [Occupancy<EnemyBody>; ENEMY_SLOTS] {
     let quiet = |body: EnemyBody| match body {
         EnemyBody::MorphBallEye(_) => EnemyBody::MorphBallEye(MorphBallEye::default()),
         EnemyBody::Elevator(_) => EnemyBody::Elevator(Elevator::default()),
-        EnemyBody::FaceBlock { .. } => EnemyBody::FaceBlock {
-            variables: AiVariables::default(),
-        },
+        EnemyBody::FaceBlock(_) => EnemyBody::FaceBlock(FaceBlock::default()),
     };
     state.room.enemies.slots.map(|slot| match slot.occupancy {
         Occupancy::Free => Occupancy::Free,
@@ -110,7 +109,7 @@ fn variables(state: &State) -> [Option<AiVariables>; ENEMY_SLOTS] {
         Occupancy::Free => None,
         Occupancy::Live(body) | Occupancy::Deleting(body) => Some(match body {
             EnemyBody::MorphBallEye(eye) => crate::enemy::eye_words(eye),
-            EnemyBody::FaceBlock { variables } => variables,
+            EnemyBody::FaceBlock(block) => crate::enemy::face_block_words(block),
             EnemyBody::Elevator(elevator) => crate::enemy::elevator_words(elevator),
         }),
     })

@@ -10,6 +10,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 
 use data::enemy::eye::EyeLists;
+use data::enemy::face_block::FaceBlockLists;
 use data::enemy::program::{EnemyPrograms, ProgramError};
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
@@ -157,6 +158,8 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let enemy_programs =
         EnemyPrograms::slice_zero(rom.lorom()).map_err(ContentError::EnemyPrograms)?;
     let eye_lists = EyeLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
+    let face_block_lists =
+        FaceBlockLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
     Ok(Content {
         poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
@@ -166,6 +169,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
         enemy_programs,
         eye_lists,
+        face_block_lists,
         samus_spritemaps: SamusSpritemaps::load(rom.lorom())
             .map_err(ContentError::SamusSpritemaps)?,
     })

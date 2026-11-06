@@ -3,14 +3,15 @@
 //! The offsets here are written out again rather than taken from `source`, so a rule moved
 //! to the wrong address fails these tests.
 
+use crate::enemy::AiVariables;
 use data::enemy::SpeciesMap;
 use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::id::{Line, RoomId, SpeciesId};
 use data::rom::{Lorom, RomAddress};
 use game::enemy::instructions::label;
 use game::state::room::{
-    AiVariables, Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy,
-    EnemyBody, EnemyCommon, PaletteIndex, ScrollArea, TilesIndex,
+    Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy, EnemyBody,
+    EnemyCommon, PaletteIndex, ScrollArea, TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Jump, Movement,
@@ -1444,4 +1445,25 @@ fn the_cached_levels_are_the_contents_but_for_what_plms_write() {
     assert_eq!(differing[&SHOT_CELL], "item-morph-ball:1236");
     // A scroll PLM turns screen 13 green from frame 92 of both rows.
     assert_eq!(screens.into_iter().collect::<Vec<_>>(), [13]);
+}
+
+#[test]
+fn the_face_blocks_words_round_trip_and_an_activated_word_past_1_is_unknown() {
+    let words = AiVariables {
+        a: 1,
+        b: 0xffc1,
+        c: 3,
+        d: 4,
+        e: 5,
+        f: 6,
+    };
+    let block = crate::enemy::face_block(words).unwrap();
+    assert!(block.activated);
+    assert_eq!(block.samus_offset, 0xffc1);
+    assert_eq!(block.unused, [3, 4, 5, 6]);
+    assert_eq!(crate::enemy::face_block_words(block), words);
+    assert_eq!(
+        crate::enemy::face_block(AiVariables { a: 2, ..words }),
+        Err(crate::enemy::UnknownWord { index: 0, value: 2 })
+    );
 }

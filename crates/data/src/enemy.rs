@@ -7,6 +7,7 @@
 //! loaded species its dense [`SpeciesId`].
 
 pub mod eye;
+pub mod face_block;
 pub mod program;
 
 use crate::id::SpeciesId;

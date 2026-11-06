@@ -175,3 +175,37 @@ fn the_eyes_lists_resolve_as_the_bank_log_says() {
         Some(Instruction::Sleep)
     );
 }
+
+#[test]
+fn the_face_blocks_lists_resolve_as_the_bank_log_says() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let programs = EnemyPrograms::slice_zero(cartridge.lorom()).unwrap();
+    let lists = crate::enemy::face_block::FaceBlockLists::resolve(&programs).unwrap();
+    // Turning shows three frames, 30h, 10h and 10h, then sleeps; facing forward shows one.
+    for turning in [lists.turning_left, lists.turning_right] {
+        let delays: Vec<_> = (0..3)
+            .map(|step| programs.step(Target { step, ..turning }))
+            .collect();
+        assert!(matches!(
+            delays.as_slice(),
+            [
+                Some(Instruction::Show { delay: 0x30, .. }),
+                Some(Instruction::Show { delay: 0x10, .. }),
+                Some(Instruction::Show { delay: 0x10, .. }),
+            ]
+        ));
+        assert_eq!(
+            programs.step(Target { step: 3, ..turning }),
+            Some(Instruction::Sleep)
+        );
+    }
+    assert_eq!(
+        programs.step(Target {
+            step: 1,
+            ..lists.facing_forward
+        }),
+        Some(Instruction::Sleep)
+    );
+}

@@ -14,10 +14,10 @@ use crate::state::room::{
 use crate::state::samus::{Fixed, Samus, Speed};
 use crate::state::slots::{Frames, Occupancy, Slot};
 use crate::state::{Button, Controller, State};
-use data::enemy::eye::EyeLists;
 use data::id::SpeciesId;
 
 pub mod eye;
+pub mod face_block;
 pub mod instructions;
 
 /// The slots processing this frame, in table order (the original's active enemy indices).
@@ -134,7 +134,7 @@ pub fn run(state: &mut State, active: &Active, content: &Content) {
             &mut state.elevator,
             &mut state.samus,
             &state.controller,
-            &content.eye_lists,
+            content,
         );
         slot.common.frame_counter = slot.common.frame_counter.wrapping_add(1);
         if slot
@@ -162,14 +162,13 @@ fn count_flash(slot: &mut Slot<EnemyCommon, EnemyBody>) {
 }
 
 /// The species' AI for `routine` (`$A0:908E`), by its body.
-// open: the face block's AI joins with its lane.
 fn ai(
     slot: &mut Slot<EnemyCommon, EnemyBody>,
     routine: AiRoutine,
     ride: &mut ElevatorRide,
     samus: &mut Samus,
     controller: &Controller,
-    eye_lists: &EyeLists,
+    content: &Content,
 ) {
     let (Occupancy::Live(body) | Occupancy::Deleting(body)) = &mut slot.occupancy else {
         return;
@@ -184,11 +183,17 @@ fn ai(
             AiRoutine::Hurt => {}
         },
         EnemyBody::MorphBallEye(eye) => match routine {
-            AiRoutine::Main => eye::main_ai(&mut slot.common, eye, samus, eye_lists),
+            AiRoutine::Main => eye::main_ai(&mut slot.common, eye, samus, &content.eye_lists),
             // open: the eye's grapple, hurt and frozen AI, as its header names them.
             AiRoutine::Grapple | AiRoutine::Hurt | AiRoutine::Frozen => {}
         },
-        EnemyBody::FaceBlock { .. } => {}
+        EnemyBody::FaceBlock(block) => match routine {
+            AiRoutine::Main => {
+                face_block::main_ai(&mut slot.common, block, samus, &content.face_block_lists);
+            }
+            // open: the face block's grapple, hurt and frozen AI, as its header names them.
+            AiRoutine::Grapple | AiRoutine::Hurt | AiRoutine::Frozen => {}
+        },
     }
 }
 

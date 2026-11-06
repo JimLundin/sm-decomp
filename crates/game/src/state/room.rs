@@ -501,23 +501,18 @@ pub struct MorphBallEye {
     pub phase: EyePhase,
 }
 
-/// The six words the original gives each enemy's AI.
-// open: the face block's names for them come with its AI lane; until then they are the
-// original's words in slot order.
+/// The Blue Brinstar face block's AI words (bank $A8 log, `$A8:E82E` to `$A8:E91B`).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct AiVariables {
-    /// The slot's first AI word.
-    pub a: u16,
-    /// The second.
-    pub b: u16,
-    /// The third.
-    pub c: u16,
-    /// The fourth.
-    pub d: u16,
-    /// The fifth.
-    pub e: u16,
-    /// The sixth, which some species use for a pre-instruction.
-    pub f: u16,
+pub struct FaceBlock {
+    /// Whether it has turned to look at Samus: once it has, it never turns again
+    /// (`$A8:E8CD`, `$A8:E90F`).
+    pub activated: bool,
+    /// Samus's X less its X, as it last measured while she was within its range of rows
+    /// (`$A8:E8DF`): its sign is the way it turns.
+    pub samus_offset: u16,
+    /// The last four words, which its AI never reads or writes: they keep what the spawn
+    /// left, in slot order.
+    pub unused: [u16; 4],
 }
 
 /// A species' AI state (D14): one variant per species slice 0 runs.
@@ -528,10 +523,7 @@ pub enum EnemyBody {
     /// The elevator platform.
     Elevator(Elevator),
     /// A Blue Brinstar face block.
-    FaceBlock {
-        /// Its AI words.
-        variables: AiVariables,
-    },
+    FaceBlock(FaceBlock),
 }
 
 /// A room's width in blocks, 16 a screen.

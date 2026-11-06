@@ -66,7 +66,7 @@ const fn magnitude(value: u16) -> u16 {
 
 /// Whether Samus is within `distance` of `centre` on one axis: her offset's magnitude less
 /// the distance is negative (bank $A0 log, `$A0:AEED` rows, `$A0:AF0B` columns).
-const fn within(samus: u16, centre: u16, distance: u16) -> bool {
+pub(crate) const fn within(samus: u16, centre: u16, distance: u16) -> bool {
     negative(magnitude(samus.wrapping_sub(centre)).wrapping_sub(distance))
 }
 
