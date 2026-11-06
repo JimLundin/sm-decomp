@@ -466,6 +466,39 @@ parameters; `EnemyBody::{MorphBallEye, Elevator, FaceBlock}` each carry `AiVaria
 - the cache proof (every slot of both rows decodes, the occupied slots' species are the
   population's in order) and the lockstep table of first differences, C7/C8's worklist.
 
+**B7b status (`lane/slice0-b7b`), the enemy slots decoded.** B7a's remaining steps are done.
+`verify::enemy::EnemySources` (in `Rules` as `enemies`) reads all 32 slots of `enemy_data`
+(`source::ENEMY_DATA`, a `WramTable` at `$0F78`, stride `$40`, each field a `SlotField` at
+the offsets above) into `room.enemies`: species zero is `Occupancy::Free`, a species word
+`RoomMap::species` (`SpeciesMap::slice_zero()`) doesn't hold is `Unrepresentable`, the
+`Deleted` property makes the occupant `Deleting`, the body is the species' `Behaviour`
+with its six AI words, the flag words keep every bit. Coverage has a `WramSlots` source
+and a `room.enemies.slots.*` row per field (`generation` NoEquivalent, `cursor.at`,
+`.link`, `.timer` open), each with a per-slot comparator (`enemy!`, plus the occupancy
+without its AI words and the AI words); `tests.rs` puts a live eye in slot 0 and a deleting
+elevator in slot 1 and moves each of the 29 fields, the table and the stride. On A2's cache,
+2026-11-06: every slot of every record decodes (`area-brinstar` 477 records, 15,264
+slots; `item-morph-ball` 1,428, 45,696), and in every record the occupied slots are 0-6,
+eye, eye, elevator, four face blocks: `$A1:93AC`'s population in order, none deleting.
+Lockstep, Ticks differing and the first (values as the diff prints them, low byte first);
+every enemy field not listed is equal on every Tick, and none is a Tick's first difference
+(the video rows come first):
+
+| Field | `area-brinstar` (476) | `item-morph-ball` (1,427) |
+| --- | --- | --- |
+| `common.position.y` (pixels, subpixels) | 453, 1: slot 2 `1b00`/`0000` != `1c00`/`0080` | 453, 1: the same |
+| `common.extra_properties` | 476, 1: slot 2 bit 15 set != clear | 1,028, 1: the same |
+| `common.cursor.delay` | 476, 1: slot 0 `f1ff` != `f0ff` | 1,028, 1: the same |
+| `common.frame_counter` | 476, 1: slot 0 `1100` != `1200` | 1,028, 1: the same |
+| `occupancy.variables` | equal | 76, 1217: slot 1 `.e` `0000` != `2000` |
+
+C7's worklist is the elevator (slot 2: its Y and subpixel step, the extra properties bit 15
+it flips every frame), C8's the eye (slots 0 and 1: the instruction timer counting down,
+the frame counter, slot 1's fifth AI word from 1217); the 399 Ticks of `item-morph-ball`
+where those fields agree are, by their count, the message box's, which runs no enemies
+(not checked frame by frame). The `occupancy` row's 76 are its `variables` row's.
+Remaining: the spritemap and instruction pointers (`+16`, `+1A`) wait for B7's enemy program content.
+
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
 running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of
