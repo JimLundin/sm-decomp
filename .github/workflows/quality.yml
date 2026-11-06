@@ -41,7 +41,7 @@ jobs:
         run: cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record --all-targets --no-deps
       - name: Test the rebuild's crates
         run: cargo test --locked -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools --no-fail-fast
-      - name: Report the empty Tick rate (SLICE0 B1 target: 50k Ticks/s)
+      - name: "Report the empty Tick rate (SLICE0 B1 target: 50k Ticks/s)"
         run: cargo run --locked --release -p game --example empty_ticks
       - name: Hold the crate plan's dependency and source rules
         # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
