@@ -15,7 +15,7 @@ use data::pose::transition::Control;
 use crate::pose::{Content, PoseRequests, controls};
 use crate::state::Controller;
 use crate::state::samus::{
-    AnimationTimer, Movement, MovementType, Samus, SuperSpecial, SuperSpecialCommand,
+    AnimationTimer, Item, Items, Movement, MovementType, Samus, SuperSpecial, SuperSpecialCommand,
 };
 
 /// The poses the auto-jump transition gives way to: the jumps from the ground.
@@ -23,6 +23,14 @@ const JUMPS: [PoseId; 4] = [PoseId(0x4B), PoseId(0x4C), PoseId(0x19), PoseId(0x1
 
 /// The health at or above which the healthy loop goes back to the start (`$90:8346`).
 const HEALTHY: u16 = 30;
+
+/// How far on from the wall jump's instruction its sequences start: the spin's, the space
+/// jump's and the screw attack's (`$90:845C`, `$90:846E`, `$90:8482`).
+const WALL_JUMP_SPIN: u16 = 1;
+/// The space jump's.
+const WALL_JUMP_SPACE_JUMP: u16 = 0x0B;
+/// The screw attack's.
+const WALL_JUMP_SCREW_ATTACK: u16 = 0x15;
 
 /// What the frame buffer holds: the X speed divisor, which FX "none" copies in every frame
 /// (`$90:8000`).
@@ -153,16 +161,39 @@ fn run(instruction: Instruction, samus: &mut Samus, requests: PoseRequests) -> b
             finish(samus, by_speed(samus, poses));
             false
         }
+        Instruction::WallJump => {
+            *frame = AnimationFrame(
+                frame
+                    .0
+                    .wrapping_add(wall_jump_sequence(samus.equipment.equipped)),
+            );
+            true
+        }
         // open: the drained falling movement handler (`$90:8360`) joins with the metroid
-        // drain (C4); the wall jump's
-        // sequence (`$90:841D`) with the wall jump (C3b); the item-dependent transitions
-        // (`$90:839A`, `$90:848B`) with the equipment's item words (C3b). No list in the
-        // slice reaches them; they leave the frame and the timer as they are, as the no-ops do.
+        // drain (C4); the item-dependent transitions (`$90:839A`, `$90:848B`) with the
+        // equipment's item words (C3b). No list in the slice reaches them; they leave the
+        // frame and the timer as they are, as the no-ops do.
         Instruction::NoOp(_)
         | Instruction::DrainedFalling
-        | Instruction::WallJump
         | Instruction::ByItemsAndSpeed { .. }
         | Instruction::ByItems { .. } => false,
+    }
+}
+
+/// "Animation delay instruction Bh - select animation delay sequence for wall-jump"
+/// (`$90:841D`): out of liquids or in the gravity suit, the screw attack's sequence, else
+/// the space jump's, else the spin's; submerged without the gravity suit, the spin's.
+// open: the submerged check (her top boundary below the FX or lava/acid surface, with
+// liquid physics on, `$90:8425`) joins with the liquids (C10), and the sound each sequence
+// queues (spin $31, space jump $3E, screw attack $33, `$80:9049`) with the sound queues.
+// Out of liquids she is never submerged.
+const fn wall_jump_sequence(equipped: Items) -> u16 {
+    if equipped.contains(Item::ScrewAttack) {
+        WALL_JUMP_SCREW_ATTACK
+    } else if equipped.contains(Item::SpaceJump) {
+        WALL_JUMP_SPACE_JUMP
+    } else {
+        WALL_JUMP_SPIN
     }
 }
 

@@ -77,7 +77,8 @@ fn the_delay_lists_decode_as_the_bank_log_says() {
     let Some(cartridge) = rom() else {
         return;
     };
-    let delays = AnimationDelays::load(cartridge.lorom()).unwrap();
+    let poses = Poses::load(cartridge.lorom()).unwrap();
+    let delays = AnimationDelays::load(cartridge.lorom(), &poses).unwrap();
     let delay = |pose: u16, frame: u16| delays.of(PoseId(pose))?.at(AnimationFrame(frame));
     // $91:B298, poses 1 and 2: four 10-frame breaths, health check, four 8-frame, back 4.
     assert_eq!(delay(2, 0), Some(DelayItem::Delay(0x0A)));
@@ -110,4 +111,49 @@ fn the_delay_lists_decode_as_the_bank_log_says() {
         delays.running().at(AnimationFrame(10)),
         Some(DelayItem::Instruction(Instruction::Loop))
     );
+}
+
+#[test]
+fn a_spin_jumps_list_runs_on_to_its_wall_jump_frame() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let poses = Poses::load(cartridge.lorom()).unwrap();
+    let delays = AnimationDelays::load(cartridge.lorom(), &poses).unwrap();
+    let delay = |pose: u16, frame: u16| delays.of(PoseId(pose))?.at(AnimationFrame(frame));
+    // $91:B384, the spin jump's poses $19 and $1A, and $91:B391, the space jump's $1B and
+    // $1C: back 8 bytes at frame 9, then the wall jump eligible frame's 8-frame delay
+    // after the go-back's operand, which the wall jump check steps to.
+    for pose in [0x19, 0x1A, 0x1B, 0x1C] {
+        assert_eq!(
+            delay(pose, 9),
+            Some(DelayItem::Instruction(Instruction::GoBack(8)))
+        );
+        assert_eq!(delay(pose, 0x0B), Some(DelayItem::Delay(8)));
+    }
+    // $91:B39E, the screw attack's $81 and $82: back $18 bytes at frame $19, then its wall
+    // jump eligible frame $1B.
+    for pose in [0x81, 0x82] {
+        assert_eq!(
+            delay(pose, 0x19),
+            Some(DelayItem::Instruction(Instruction::GoBack(0x18)))
+        );
+        assert_eq!(delay(pose, 0x1B), Some(DelayItem::Delay(8)));
+    }
+    assert_eq!(reached(&poses, PoseId(0x1A)), Some(WALL_JUMP_FRAME));
+    assert_eq!(
+        reached(&poses, PoseId(0x81)),
+        Some(SCREW_ATTACK_WALL_JUMP_FRAME)
+    );
+    assert_eq!(reached(&poses, PoseId(1)), None);
+}
+
+#[test]
+fn a_list_decodes_through_the_frame_reached_past_its_end() {
+    let bytes = [0x04, 0xFE, 0x01, 0x08, 0xFF, 0x00];
+    let list = DelayList::decode(&bytes).unwrap();
+    assert_eq!(list.len(), 3);
+    let through = DelayList::decode_through(&bytes, Some(AnimationFrame(3))).unwrap();
+    assert_eq!(through.at(AnimationFrame(3)), Some(DelayItem::Delay(8)));
+    assert_eq!(through.byte(AnimationFrame(3)), Some(8));
 }

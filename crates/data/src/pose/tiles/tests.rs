@@ -79,8 +79,8 @@ fn the_tables_decode_as_the_bank_logs_say() {
     let Some(cartridge) = rom() else {
         return;
     };
-    let delays = AnimationDelays::load(cartridge.lorom()).unwrap();
     let poses = Poses::load(cartridge.lorom()).unwrap();
+    let delays = AnimationDelays::load(cartridge.lorom(), &poses).unwrap();
     let tiles = SamusTiles::load(cartridge.lorom(), &delays, &poses).unwrap();
     let definition = |pose, frame| {
         let frame = tiles.frame(PoseId(pose), AnimationFrame(frame)).unwrap();
@@ -122,8 +122,8 @@ fn the_tables_decode_as_the_bank_logs_say() {
             tile(0x9D, 0x8000, 0x80, 0x80)
         )
     );
-    // A spin jump's wall jump eligible frame, past its delay list: frame $B of the spin
-    // jumps, $1B of the screw attacks; facing right top $CD92 and bottom $D270, facing left
+    // A spin jump's wall jump eligible frame, which its delay list now reaches: frame $B
+    // of the spin jumps, $1B of the screw attacks; facing right top $CD92 and bottom $D270, facing left
     // $CD99 and $D277.
     let eligible = [
         (0x19, 0x0B, 0xCD92, 0xD270),
@@ -133,7 +133,7 @@ fn the_tables_decode_as_the_bank_logs_say() {
     ];
     for (pose, frame, top, bottom) in eligible {
         let listed = delays.of(PoseId(pose)).unwrap().len();
-        assert!(usize::from(frame) >= listed);
+        assert!(usize::from(frame) < listed);
         let reached = tiles.frame(PoseId(pose), AnimationFrame(frame)).unwrap();
         assert_eq!(tiles.pointer(reached.top), Some(top));
         assert_eq!(

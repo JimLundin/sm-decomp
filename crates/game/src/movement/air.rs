@@ -10,6 +10,7 @@
 //! every frame before the movement handler, so the State keeps none.
 
 use data::movement::{Speed, SpeedEntry, VerticalSpeeds};
+use data::pose::animation::wall_jump_frame;
 use data::pose::transition::Control;
 
 use super::{Mover, Rules, move_horizontally, over_cap};
@@ -35,14 +36,6 @@ const TERMINAL_DELAY: AnimationTimer = AnimationTimer(8);
 /// The wall jump check's reach from her side (`$90:9E9F`, "maximum distance from wall for
 /// wall-jump").
 const WALL_JUMP_REACH: u16 = 8;
-
-/// The screw attack's poses, whose spin takes longer to reach a wall jump (`$90:9D48`).
-const SCREW_ATTACK: [PoseId; 2] = [PoseId(0x81), PoseId(0x82)];
-
-/// The animation frame from which a spin can wall jump (`$90:9D55`), and the screw attack's.
-const WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x0B);
-/// The screw attack's.
-const SCREW_ATTACK_WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x1B);
 
 /// What the air movements read from the pad: the jump control, held and newly pressed, and
 /// the D-pad's left and right, which the original tests on the pad itself (`$90:9012`).
@@ -255,11 +248,7 @@ fn wall_jump_check(
     } else {
         return false;
     };
-    let threshold = if SCREW_ATTACK.contains(&spin.pose) {
-        SCREW_ATTACK_WALL_JUMP_FRAME
-    } else {
-        WALL_JUMP_FRAME
-    };
+    let threshold = wall_jump_frame(spin.pose);
     // The original compares the frame and branches on the difference's sign.
     let eligible = animation.frame.0.wrapping_sub(threshold.0).cast_signed() >= 0;
     let Some(wall) = mover.check_x(distance, position) else {

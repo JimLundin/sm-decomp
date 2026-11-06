@@ -14,7 +14,7 @@
 
 use canonical::Canonical;
 
-use super::{POSE_COUNT, PoseId};
+use super::{MovementType, POSE_COUNT, PoseId, Poses};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 /// An animation frame: the byte offset into the pose's delay list the original keeps.
@@ -96,6 +96,36 @@ impl Default for DelayItem {
 /// sequence starts $15 bytes on (`$90:8477`).
 const WALL_JUMP_REACH: usize = 0x16;
 
+/// The frame from which a spin jump can wall jump.
+///
+/// Bank `$90` log, wall jump check `$90:9D35`, which compares the frame with it (`$90:9D55`) and, while the spin hasn't
+/// reached it, sets the frame one before it (`$90:9DC8`), so the next tick reaches it
+/// whatever the delay list says.
+pub const WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x0B);
+/// The screw attack's (`$90:9D63`, set one before at `$90:9DD7`).
+pub const SCREW_ATTACK_WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x1B);
+/// The screw attack poses, facing right and left, which `$90:9D48` tells apart.
+const SCREW_ATTACK: [PoseId; 2] = [PoseId(0x81), PoseId(0x82)];
+
+/// The frame from which a spin jump in `pose` can wall jump: the screw attack's or the
+/// other spins'.
+#[must_use]
+pub fn wall_jump_frame(pose: PoseId) -> AnimationFrame {
+    if SCREW_ATTACK.contains(&pose) {
+        SCREW_ATTACK_WALL_JUMP_FRAME
+    } else {
+        WALL_JUMP_FRAME
+    }
+}
+
+/// The frame `pose`'s animation reaches whatever its delay list says, if any: a spin
+/// jump's wall jump frame, which its wall jump check steps the animation to.
+#[must_use]
+pub fn reached(poses: &Poses, pose: PoseId) -> Option<AnimationFrame> {
+    let spin_jump = matches!(poses.get(pose)?.movement, MovementType::SpinJumping);
+    spin_jump.then(|| wall_jump_frame(pose))
+}
+
 /// The longest list the decoder walks before it gives up on finding the end.
 const LIST_LIMIT: usize = 0x100;
 
@@ -147,7 +177,14 @@ impl DelayList {
     /// instruction ends it within [`LIST_LIMIT`] bytes.
     #[must_use]
     pub fn decode(bytes: &[u8]) -> Option<Self> {
-        let mut reach = 0_usize;
+        Self::decode_through(bytes, None)
+    }
+
+    /// [`Self::decode`], on through `reached` when the animation gets there past the end:
+    /// the original reads the bytes after the list as frames like the ones in it.
+    #[must_use]
+    pub fn decode_through(bytes: &[u8], reached: Option<AnimationFrame>) -> Option<Self> {
+        let mut reach = reached.map_or(0, |frame| usize::from(frame.0).wrapping_add(1));
         let mut at = 0_usize;
         let end = loop {
             if at >= LIST_LIMIT {
@@ -252,13 +289,14 @@ pub struct AnimationDelays {
 }
 
 impl AnimationDelays {
-    /// The table in `rom`, a list for each of the [`POSE_COUNT`] poses.
+    /// The table in `rom`, a list for each of the [`POSE_COUNT`] poses, a spin jump's on
+    /// through the frame its wall jump check reaches ([`reached`] from `poses`).
     ///
     /// # Errors
     ///
     /// [`AnimationError`] when a pointer or a list is outside the image or a list has no end.
-    pub fn load(rom: Lorom<'_>) -> Result<Self, AnimationError> {
-        let list_at = |pointer: RomAddress, pose: PoseId| {
+    pub fn load(rom: Lorom<'_>, poses: &Poses) -> Result<Self, AnimationError> {
+        let list_at = |pointer: RomAddress, pose: PoseId, reached: Option<AnimationFrame>| {
             let target = rom
                 .read(pointer, 2)
                 .map_err(AnimationError::Address)?
@@ -266,7 +304,7 @@ impl AnimationDelays {
                 .ok_or(AnimationError::Address(AddressError::PastEnd(pointer)))?;
             let target = RomAddress::new(LIST_BANK, u16::from_le_bytes(*target));
             let bytes = rom.from(target).map_err(AnimationError::Address)?;
-            DelayList::decode(bytes).ok_or(AnimationError::Unterminated(pose))
+            DelayList::decode_through(bytes, reached).ok_or(AnimationError::Unterminated(pose))
         };
         let poses = (0..POSE_COUNT)
             .map(|index| {
@@ -274,10 +312,10 @@ impl AnimationDelays {
                     AnimationError::Address(AddressError::PastEnd(ANIMATION_DELAYS)),
                 )?;
                 let pose = PoseId(u16::try_from(index).unwrap_or(u16::MAX));
-                list_at(pointer, pose)
+                list_at(pointer, pose, reached(poses, pose))
             })
             .collect::<Result<_, _>>()?;
-        let running = list_at(RUNNING_DELAYS, PoseId(u16::MAX))?;
+        let running = list_at(RUNNING_DELAYS, PoseId(u16::MAX), None)?;
         Ok(Self { poses, running })
     }
 
