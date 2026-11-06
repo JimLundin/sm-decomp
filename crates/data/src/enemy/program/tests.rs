@@ -134,8 +134,14 @@ fn slice_zeros_lists_decode_as_the_bank_logs_say() {
         assert_eq!(programs.address(target), Some(list));
     }
     for spritemap in SLICE_ZERO_SPRITEMAPS {
-        assert!(programs.spritemap_id(spritemap).is_some());
+        let id = programs.spritemap_id(spritemap).unwrap();
+        // The inits' empty spritemap draws nothing.
+        assert_eq!(programs.sprites(id).map(|map| map.entries.len()), Some(0));
     }
+    // Every shown spritemap's sprites are loaded with it: the elevator's first has four.
+    let first = programs.sprites(spritemap(0x962f)).unwrap();
+    assert_eq!(first.entries.len(), 4);
+    assert_eq!(programs.sprites(SpritemapId(u16::MAX)), None);
 }
 
 #[test]

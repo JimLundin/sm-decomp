@@ -434,6 +434,9 @@ pub const FIELDS: &[Field] = &[
         "room.enemies.slots.occupancy.variables",
         source::ENEMY_AI_VARIABLES[0],
     ),
+    // Empty at every Tick's end: the drawing loop empties what the main enemy routine queued.
+    open("room.drawing.queues"),
+    open("room.drawing.routine_count"),
     wram("elevator.status", source::ELEVATOR_STATUS),
     wram("elevator.armed", source::ELEVATOR_FLAGS),
     wram("elevator.direction", source::ELEVATOR_DIRECTION),

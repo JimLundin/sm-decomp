@@ -3,7 +3,29 @@
 
 use data::spritemap::{SpriteAttributes, SpriteSize, Spritemap};
 
+use crate::state::room::{PaletteIndex, TilesIndex};
 use crate::state::video::{NmiBatch, OAM_HIGH_BYTES, OAM_SPRITES, OamEntry, SpriteCount};
+
+/// What an enemy's spritemap adds to each sprite's tile and attributes word.
+///
+/// Bank `$81` log, add spritemap to OAM with base tile number `$81:8AB8`: the tiles index is
+/// added to the word and the palette bits are combined into the sum by OR, so a carry out of the tile
+/// number reaches the attributes, as in the original.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SpriteBase {
+    /// Added to the word.
+    pub tiles: TilesIndex,
+    /// Combined into the sum by OR.
+    pub palette: PaletteIndex,
+}
+
+impl SpriteBase {
+    /// `attributes` with the base applied.
+    #[must_use]
+    pub fn apply(self, attributes: SpriteAttributes) -> SpriteAttributes {
+        SpriteAttributes::from_word(attributes.word().wrapping_add(self.tiles.0) | self.palette.0)
+    }
+}
 
 /// The Y of a hidden sprite: line 240, below the picture. Only Y moves, so a hidden entry
 /// keeps the tile and attributes the buffer last held.
@@ -86,6 +108,20 @@ impl NmiBatch {
     /// offset to the origin's Y, of which only the low byte reaches OAM; there is no
     /// off-screen test.
     pub fn add_spritemap(&mut self, spritemap: &Spritemap, origin: (u16, u16)) {
+        self.add_spritemap_with_base(spritemap, origin, SpriteBase::default());
+    }
+
+    /// Write `spritemap`'s sprites in order, placed from `origin` on screen, with `base`
+    /// applied to each one's tile and attributes.
+    ///
+    /// Bank `$81` log, `$81:8AB8`: placed as `$81:89AE` places them, with no off-screen test,
+    /// and the OAM index wraps at `$200` bytes.
+    pub fn add_spritemap_with_base(
+        &mut self,
+        spritemap: &Spritemap,
+        origin: (u16, u16),
+        base: SpriteBase,
+    ) {
         let (x, y) = origin;
         let [y_low, _] = y.to_le_bytes();
         for entry in &spritemap.entries {
@@ -94,7 +130,7 @@ impl NmiBatch {
                 x.wrapping_add(offset),
                 y_low.wrapping_add(entry.y),
                 entry.size,
-                entry.attributes,
+                base.apply(entry.attributes),
             );
         }
     }
@@ -102,7 +138,8 @@ impl NmiBatch {
 
 #[cfg(test)]
 mod tests {
-    use super::HIDDEN_Y;
+    use super::{HIDDEN_Y, SpriteBase};
+    use crate::state::room::{PaletteIndex, TilesIndex};
     use crate::state::video::{NmiBatch, OAM_SPRITES, OamEntry, SpriteCount};
     use data::spritemap::Spritemap;
 
@@ -170,6 +207,31 @@ mod tests {
         assert_eq!(drawn.oam.high[0], 0b1100_0000);
         assert_eq!(drawn.oam.high[1], 0);
         assert_eq!(drawn.sprites, SpriteCount(5));
+    }
+
+    #[test]
+    fn an_enemy_base_adds_its_tiles_and_ors_its_palette() {
+        let mut drawn = NmiBatch::default();
+        let map = Spritemap::decode(&[
+            0x00, 0x00, 0x00, 0x10, 0x21, // small, tile $110, palette 0, priority 2
+            0x00, 0x00, 0x00, 0xFF, 0x21, // tile $1FF: the add carries into the palette bits
+        ]);
+        let base = SpriteBase {
+            tiles: TilesIndex(0x0100),
+            palette: PaletteIndex(0x0A00),
+        };
+        drawn.add_spritemap_with_base(&map, (0, 0), base);
+        // $2110 + $100 = $2210 (tile $010, palette 1), | $A00 = $2A10: palette 5.
+        assert_eq!(
+            (drawn.oam.low[0].tile, drawn.oam.low[0].attributes),
+            (0x10, 0x2A)
+        );
+        // $21FF + $100 = $22FF, | $A00 = $2AFF.
+        assert_eq!(
+            (drawn.oam.low[1].tile, drawn.oam.low[1].attributes),
+            (0xFF, 0x2A)
+        );
+        assert_eq!(drawn.sprites, SpriteCount(2));
     }
 
     #[test]

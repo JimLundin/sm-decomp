@@ -17,6 +17,7 @@ use canonical::Canonical;
 
 use crate::id::ProgramId;
 use crate::rom::{AddressError, Lorom, RomAddress};
+use crate::spritemap;
 
 /// `$A0:807C`: delete the enemy.
 const DELETE: u16 = 0x807c;
@@ -178,6 +179,19 @@ pub const SLICE_ZERO_SPRITEMAPS: [Spritemap; 2] = [
     Spritemap(RomAddress::new(0xa8, 0x804d)),
 ];
 
+/// The sprites of each of `spritemaps`, in the format bank $81's `$81:8AB8` reads.
+// open: the extended format (bank $A0 log, `$A0:944A` with extra property bit 2) joins with
+// the first species that has it.
+fn pictures(
+    rom: Lorom<'_>,
+    spritemaps: &[Spritemap],
+) -> Result<Vec<spritemap::Spritemap>, AddressError> {
+    spritemaps
+        .iter()
+        .map(|&Spritemap(at)| spritemap::Spritemap::load(rom, at))
+        .collect()
+}
+
 /// An instruction before its go-to targets and spritemap are resolved.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Raw {
@@ -257,6 +271,8 @@ pub struct EnemyPrograms {
     programs: Vec<Program>,
     places: BTreeMap<RomAddress, Target>,
     spritemaps: Vec<Spritemap>,
+    /// Each of `spritemaps`' sprites, in the same order.
+    pictures: Vec<spritemap::Spritemap>,
 }
 
 impl EnemyPrograms {
@@ -367,6 +383,7 @@ impl EnemyPrograms {
         let loaded = Self {
             programs,
             places,
+            pictures: pictures(rom, &spritemaps)?,
             spritemaps,
         };
         loaded.check_stops()?;
@@ -487,6 +504,12 @@ impl EnemyPrograms {
     #[must_use]
     pub fn spritemap(&self, id: SpritemapId) -> Option<Spritemap> {
         self.spritemaps.get(usize::from(id.0)).copied()
+    }
+
+    /// The sprites of the spritemap with `id`; `None` for one the content doesn't hold.
+    #[must_use]
+    pub fn sprites(&self, id: SpritemapId) -> Option<&spritemap::Spritemap> {
+        self.pictures.get(usize::from(id.0))
     }
 }
 

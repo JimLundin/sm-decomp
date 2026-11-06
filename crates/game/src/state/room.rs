@@ -11,13 +11,15 @@ pub use data::level::{
 };
 
 use super::samus::{Fixed, Point};
-use super::slots::{Cursor, Flag, FlagSet, Frames, SlotStore};
+use super::slots::{Cursor, Flag, FlagSet, Frames, SlotIndex, SlotStore};
 use super::video::Scroll;
 
 /// PLM slots (bank $84 log: the PLM tables hold 40 entries).
 pub const PLM_SLOTS: usize = 40;
 /// Enemy slots (bank $A0 log: the enemy table holds 32 entries).
 pub const ENEMY_SLOTS: usize = 32;
+/// Enemy layers: the drawing loop's eight, drawn from 0 up (bank $A0 log, `$A0:884D`).
+pub const ENEMY_LAYERS: usize = 8;
 
 /// A block's place in the room's level data, row-major from the top left.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -526,6 +528,21 @@ pub enum EnemyBody {
     FaceBlock(FaceBlock),
 }
 
+/// The enemies the main enemy routine queued to draw, and its frame count.
+///
+/// Bank $A0 log: the main enemy routine (`$A0:8FD4`) adds each enemy it processed that is
+/// on screen and visible to its layer's drawing queue (`$A0:9423`); the drawing loop
+/// (`$A0:884D`) empties the queues. The queues are full only between the two, within a
+/// frame's gameplay pass.
+#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
+pub struct EnemyDrawing {
+    /// Each layer's queue, first queued first.
+    pub queues: [Vec<SlotIndex<Enemy>>; ENEMY_LAYERS],
+    /// The main enemy routine's runs, wrapping: the hurt flash shows on frames with its bit 1
+    /// set (`$A0:949C`).
+    pub routine_count: u16,
+}
+
 /// A room's width in blocks, 16 a screen.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct BlockColumns(pub u16);
@@ -551,6 +568,10 @@ pub struct RoomScoped {
     pub plms: SlotStore<PlmCommon, PlmBody, PLM_SLOTS>,
     /// The enemies.
     pub enemies: SlotStore<EnemyCommon, EnemyBody, ENEMY_SLOTS>,
+    /// The enemies to draw this frame.
+    // open: the routine count lives with the room until a reader shows whether a room
+    // transition resets it.
+    pub drawing: EnemyDrawing,
 }
 
 impl RoomScoped {

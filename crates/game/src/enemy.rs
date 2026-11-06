@@ -16,6 +16,7 @@ use crate::state::slots::{Frames, Occupancy, Slot};
 use crate::state::{Button, Controller, State};
 use data::id::SpeciesId;
 
+pub mod drawing;
 pub mod eye;
 pub mod face_block;
 pub mod instructions;
@@ -107,23 +108,24 @@ pub fn select(state: &mut State) -> Active {
 /// The main enemy routine (`$A0:8FD4`) over the active slots.
 // open: the shake request, Samus's and projectiles' collisions (`$A0:9758`), time frozen
 // (the X-ray scope, which skips the frame count and the instructions), the grapple paralysis
-// death, drawing, the sprite objects and the solid-enemy collision reset join with their
-// lanes.
+// death, the sprite objects and the solid-enemy collision reset join with their lanes.
 pub fn run(state: &mut State, active: &Active, content: &Content) {
+    let camera = (state.room.camera.x.pixels, state.room.camera.y.pixels);
     for &index in active.slots.iter().filter(|&&index| index < ENEMY_SLOTS) {
         let Some(slot) = state.room.enemies.slots.get_mut(index) else {
             continue;
         };
-        if !slot.common.properties.contains(EnemyProperty::Intangible)
-            && slot.common.invincibility != Frames(0)
-        {
+        let intangible = slot.common.properties.contains(EnemyProperty::Intangible);
+        if !intangible && slot.common.invincibility != Frames(0) {
             slot.common.invincibility = Frames(slot.common.invincibility.0.wrapping_sub(1));
         } else if slot
             .common
             .extra_properties
             .contains(EnemyExtraProperty::Paralysed)
-            && !slot.common.properties.contains(EnemyProperty::Intangible)
+            && !intangible
         {
+            // A paralysed enemy runs no AI, but is still drawn.
+            drawing::queue(&mut state.room.drawing, index, &slot.common, camera);
             count_flash(slot);
             continue;
         }
@@ -144,8 +146,10 @@ pub fn run(state: &mut State, active: &Active, content: &Content) {
         {
             instructions::process(slot, &content.enemy_programs);
         }
+        drawing::queue(&mut state.room.drawing, index, &slot.common, camera);
         count_flash(slot);
     }
+    state.room.drawing.routine_count = state.room.drawing.routine_count.wrapping_add(1);
 }
 
 /// The hurt flash's countdown, which ends the hurt AI under 8 frames left (`$A0:9118`).
