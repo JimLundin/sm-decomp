@@ -4,5 +4,6 @@
 row area-brinstar ticks 476 equal 476
 row item-morph-ball ticks 1427 equal 1358
 diff item-morph-ball elevator 1 688
-diff item-morph-ball room 2 1236
+diff item-morph-ball projectiles 1 1217
+diff item-morph-ball room 1 1250
 diff item-morph-ball video 68 712
