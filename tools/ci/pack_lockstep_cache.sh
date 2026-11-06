@@ -9,7 +9,7 @@
 # deterministic, so its name is a hash of its contents: the same cache packs to
 # the same name. xz -9e because the records are snapshots of nearly the same
 # state: 627 MB pack to about 1 MB, and the runner unpacks them in seconds.
-# Encryption matches the seed bundles (tools/ci_seed_data.py): AES-256-CBC,
+# Encryption matches the seed bundles (docs/ORACLE.md): AES-256-CBC,
 # PBKDF2 with 200000 iterations and SHA-256, passphrase
 # sha256("sm-decomp-seeds-v1" + ROM). Prints the asset name and its ciphertext
 # SHA-256; the root uploads it and pins both in .github/workflows/verify.yml.

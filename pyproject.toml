@@ -2,9 +2,7 @@
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tools", ".github/scripts", "sm/src/verification"]
-# The scripts import each other by putting their directories on sys.path.
-mypy_path = ["tools", ".github/scripts", "sm/src/verification/player_detached"]
+files = ["tools/scenario_seeds.py", "tools/movie_inputs.py", "tools/lane/test_dll.py"]
+mypy_path = ["tools"]
 strict = true
 warn_unreachable = true
-# Verify's skip decision is owned by the workflow restructuring; type it there.

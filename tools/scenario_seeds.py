@@ -9,7 +9,7 @@ edits to its WRAM, and records the new region hashes in that capture's
 rooms.csv. The verifier then loads the scenario seed into both engines like
 any other seed, so the original game decides what follows from the edited
 state; a scenario starts from it with the `start` this tool prints and pins
-`seed=scenario-NAME:INDEX` (tools/scenario.py lock --pin).
+`seed=scenario-NAME:INDEX` (the old lock writer, git tag `archive/old-engine`).
 
 Edits stay within the seed's room: the room, its level data and its video
 memory come from the recording. The gameplay state, room and NMI words and
@@ -265,7 +265,7 @@ def write(name: str) -> None:
             writer.writerow({**row, "sha256": hashlib.sha256(data).hexdigest()})
     index = int(rows[0]["room_index"])
     print(f'start = "seed:{seed_digest(target, prefix)}"')
-    print(f"# python tools/scenario.py lock --pin ID seed=scenario-{name}:{index} inputs=FILE.inputs bundle=ASSET")
+    print(f"# old lock writer (archive/old-engine) scenario.py lock --pin ID seed=scenario-{name}:{index} inputs=FILE.inputs bundle=ASSET")
     print(f"# {len(words)} edited words; wram: {target / (prefix + '-wram.bin')}")
 
 

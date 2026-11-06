@@ -10,8 +10,5 @@ __pycache__/
 /movies/*.bk2
 /movies/*.lsmv
 /movies/*.inputs
-# Save states and logs written by the game.
-/saves/
-*.smvchk
+# Logs.
 *.log
-/movies/*.generated.toml
