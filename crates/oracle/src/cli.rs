@@ -1116,10 +1116,12 @@ fn measure_movie(arguments: &[String]) {
 /// their records are equal or which parts differ (`crate::cross`), then the
 /// first differing step of each part. `--ranges` lists the differing address
 /// ranges of each memory at its first differing step, `--ranges-at` at every
-/// differing step in its window.
+/// differing step in its window. `--right-from STATE STEP` resumes lsnes from
+/// its saved state (a ladder rung) at STEP, while LakeSnes runs from power-on
+/// through the steps before it uncompared.
 fn cross(arguments: &[String]) {
     use crate::cross::{Compare, Difference, Part, describe};
-    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams]";
+    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams] [--right-from STATE STEP]";
     let [rom, inputs, rest @ ..] = arguments else {
         fail(usage)
     };
@@ -1139,6 +1141,8 @@ fn cross(arguments: &[String]) {
     let mut first_ranges = false;
     let mut streams = false;
     let mut ranges_at: Option<std::ops::RangeInclusive<u64>> = None;
+    let mut right_start = Start::PowerOn { wram_fill: 0x55 };
+    let mut resume = 0u64;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -1146,6 +1150,15 @@ fn cross(arguments: &[String]) {
             "--ranges" => first_ranges = true,
             "--streams" => streams = true,
             "--ranges-at" => ranges_at = Some(steps(options.next())),
+            "--right-from" => {
+                let (Some(state), Some(step)) = (options.next(), options.next()) else {
+                    fail(usage)
+                };
+                right_start = Start::State(
+                    std::fs::read(state).unwrap_or_else(|error| fail(format!("{state}: {error}"))),
+                );
+                resume = step.parse().unwrap_or_else(|_| fail(usage));
+            }
             _ => fail(usage),
         }
     }
@@ -1158,7 +1171,8 @@ fn cross(arguments: &[String]) {
         ..Tiers::default()
     };
     left.set_tiers(tiers);
-    let mut right = crate::Backend::open("lsnes", &rom, start).unwrap_or_else(|error| fail(error));
+    let mut right =
+        crate::Backend::open("lsnes", &rom, right_start).unwrap_or_else(|error| fail(error));
     if streams && let crate::Backend::Lsnes(lsnes) = &mut right {
         lsnes
             .record_streams(tiers)
@@ -1183,6 +1197,11 @@ fn cross(arguments: &[String]) {
     let started = Instant::now();
     let mut lake_before: Option<crate::record::Picture> = None;
     for (step, &pad) in (0..=*range.end()).zip(&pads) {
+        if step < resume {
+            let a = left.step(pad).unwrap_or_else(|error| fail(error));
+            lake_before.clone_from(&a.picture);
+            continue;
+        }
         if let Some(&next) = usize::try_from(step + 1)
             .ok()
             .and_then(|next| pads.get(next))
