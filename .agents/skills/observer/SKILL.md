@@ -15,7 +15,7 @@ its template. This skill adds only how to do them.
 
 ## 1. The spec and its vectors
 
-- Start from `docs/behaviours/samus-ground.md`'s shape and MODEL §5's template. Put the baseline
+- Start from `docs/behaviours/samus-motion.md`'s shape and MODEL §5's template. Put the baseline
   lines and the budget in the header; give every quantity its **Read by**; put ROM codes and RAM
   layout in the decode notes, never in an entry.
 - Take every vector's numbers from an oracle record: name the row and frame. Find them with

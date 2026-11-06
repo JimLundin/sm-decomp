@@ -14,7 +14,7 @@ its "no fitting" rules. This skill adds only how to work inside them.
 
 Read only what MODEL §5 allows: MODEL.md, your domain's spec and vectors, the localiser's output,
 `data`'s public types and the model code; and for process, AGENTS.md and the lane skill. That
-excludes ARCHITECTURE, ORACLE and LEGACY too, because they cite bank addresses. Your brief cites
+excludes ARCHITECTURE, ORACLE and LEGACY too, because they cite bank addresses, and the `docs/behaviours/*.decode.md` files, which map quantities to RAM. Your brief cites
 spec entry ids only; if it carries an excerpt or an address, don't read it, and tell the root. If you
 open a forbidden file by accident, say so in your report: the clean room is part of the evidence.
 
