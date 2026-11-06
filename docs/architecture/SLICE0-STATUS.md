@@ -1,4 +1,32 @@
-# Slice 0: status at `rebuild/spine` `93fa4a4`
+# Slice 0: status at `rebuild/spine` `4c23c75`
+
+## Current: engine wave 1, 2026-11-06
+
+Lockstep, from `scenarios/locks/lockstep.ratchet.txt` (ratchet test, debug, about 250 Ticks/s):
+`area-brinstar` 476 / 476 Ticks fully equal; `item-morph-ball` 1,324 / 1,427 (was 1,291 at
+`05cc5ba`).
+
+| `item-morph-ball` group | Ticks differing | First frame | First difference, cause |
+| --- | --- | --- | --- |
+| samus | 42 | 682 | `position.y.pixels` 02A8 vs 02A9, the elevator ride |
+| room (camera, blocks, PLMs) | 54 | 683 | camera `y.subpixels`; shot block `blocks[5708]` and PLM slot 34 crumble from 1236; camera `x` from 1267 |
+| video | 101 | 682 | OAM `y` (Samus); BG3 `vram[22982]` at 823 (message tilemap, `$85:8324`); `dma[6].count` at 822 (HDMA run, B6); restore at 1213/1214; HDMA object on channel 2 at 1249 |
+| elevator | 1 | 688 | `elevator.armed` |
+| hud | 1 | 1294 | `tilemap.cells[28].tile` |
+
+Free-run gate at `4c23c75` (`lsnes.green.txt`: 7 pairs):
+
+| Stream | `area-brinstar` | `item-morph-ball` |
+| --- | --- | --- |
+| `vram`, `cgram`, `oam` | **equal** | differ from span 0 |
+| `sram`, `timing` | **equal** | **equal** |
+| `ppu`, `apu` | differ from span 0 | differ from span 0 |
+| `video`, `wram` | absent from the engine | absent from the engine |
+
+`area-brinstar`'s red streams wait on the seed re-cut with the PPU tier (`ppu`), sound (C11,
+`apu`) and the line program (B6, `video`); `wram` doesn't decide green.
+
+The sections below are the measurement at `93fa4a4` and are kept for history.
 
 Measurement lane `lane/slice0-status2`, 2026-11-06. Lockstep (`verify::lockstep::lockstep`,
 [SLICE0 §3](SLICE0.md#3-the-lockstep-loop)) over both rows' A2 caches, and the free-run gate
@@ -9,7 +37,7 @@ occupied slots and tile uploads decode). Each Tick starts from frame k's decoded
 
 Was, at `34b9c57`: Ticks fully equal 0 / 476 (`area-brinstar`), 389 / 1,427 (`item-morph-ball`).
 
-## Lockstep
+## Lockstep at `93fa4a4`
 
 | Row | Ticks compared | Ticks fully equal | Undecodable frames | Pairs skipped |
 | --- | --- | --- | --- | --- |
@@ -41,7 +69,7 @@ Ticks whose only differing group is DMA: 199 / 494; room blocks/scroll alone: 10
 HUD + video memory + DMA: 59 / 118; room blocks/scroll + DMA: 10 / 68. Enemy slots, which
 differed on every Tick, are equal on every Tick of both rows; OAM differs only from 414.
 
-## Free-run gate
+## Free-run gate at `93fa4a4`
 
 `tools gate` over both rows: `green no` for each, no stop, 477 and 1,428 frames. New green pair
 `area-brinstar cgram`, added to `scenarios/locks/lsnes.green.txt` with `--update`.
@@ -54,7 +82,7 @@ differed on every Tick, are equal on every Tick of both rows; OAM differs only f
 | `sram`, `video`, `wram` | absent from the engine | absent from the engine |
 | `input`, `samus`, `camera`, `room`, `progress`, `actors`, `effects`, `rng` | not locked | not locked |
 
-## Blockers, ranked by the Ticks they hold back
+## Blockers at `93fa4a4`, ranked by the Ticks they hold back
 
 1. **DMA channel 1** (C6e): `dma[1].source` from frame 1, 282 / 831 Ticks, the only
    difference on 199 / 494. C6e's open item: channel 1's registers from `$80:933A` and
