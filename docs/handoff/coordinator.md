@@ -1,6 +1,15 @@
-# Coordinator handoff (2026-11-06, afternoon)
+# Coordinator handoff (2026-11-06, evening)
 
-This is for the next coordinator session, and it replaces the version from the evening of 2026-11-05.
+This is for the next coordinator session, and it replaces the afternoon version.
+
+## Since the afternoon (read first)
+
+- **The rebuild is on `main`.** #285 landed by fast-forward through `land.sh` at `055ecc9` (253 commits), after the first fully green CI run. Draft PR #286 carries `rebuild/spine` onward; land it through `land.sh` each time CI is green, every 2-3 hours.
+- **CI is green.** The old pipeline skips rows owned by the lsnes lock: corpus key `lock = "lsnes"`, `LEGACY(old-verify)`.
+- **The lockstep ratchet** is `scenarios/locks/lockstep.ratchet.txt`, checked by `verify::ratchet` (a lib test, so `run_tests.sh verify` runs it locally). At `05cc5ba`, `area-brinstar` is 476/476 Ticks fully equal and `item-morph-ball` 1291/1427.
+- **The team.** The root is the orchestrator: Jim, priorities, `main`, ci-data, #177. An engine coordinator subagent (brief `$TEMP/collab/ENGINE_COORD_BRIEF.md`) launches and merges the slice-0 lanes in waves of about 90 minutes. A fresh one is started for each wave with the last wave report. An hourly reviewer (`$TEMP/collab/reviews/REVIEWER_BRIEF.md`) critiques both levels. The decision log is `$TEMP/collab/reviews/coord-log.md`.
+- **Models.** Lanes with pinned behaviour run on Sonnet; diagnosis and shape-setting lanes on Opus.
+- **Local runs.** Defender blocks fresh `.exe` files, so local runs go through DLLs and Python. That is local only; CI runs plain cargo.
 Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/oracle-harness.md` and
 `docs/oracle/MEASUREMENTS.md` (sections (a)-(r)) on `research/oracle-harness`.
 
@@ -11,7 +20,7 @@ Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/ora
 | `rebuild/spine` | **The working trunk.** It merges `research/architecture` and `research/oracle-harness`, and adds the new crates: `data`, `game`, `runtime`, `app`, `verify`, `tools`, `canonical`, `canonical_derive` and `oracle_record`, with `crates/README.md`. Also `tools/check_crate_rules.sh` (in CI), the `Canonical` codec with a structural `SCHEMA`, the slice-0 State skeleton (`game::state`) and the decoder's two first slices (`verify`; the next slice is listed in `ed3c6ae`'s lane report: wait-site table, stack walk, `UnknownYieldSite`, `Quiescence`, `irq`). Draft PR #285 exists only so CI runs: Quality passes; Verify fails only on the stale `file-copy-clear` lock entry, which the re-lock fixes. |
 | `research/oracle-harness` | The oracle (see below). Merge it into `rebuild/spine` after it moves. |
 | `research/architecture` | PRINCIPLES and ARCHITECTURE, merged into `rebuild/spine`. The newest decisions are D25 (which oracle locks which stream) and D26 (dedicated short trick movies, using [sm-json-data-rs](https://github.com/JimLundin/sm-json-data-rs)). |
-| `main` | Nothing from the rebuild has landed yet. It lands through `tools/lane/land.sh`, docs first. |
+| `main` | The rebuild landed at `055ecc9` (#285). Further landings go through `tools/lane/land.sh` (#286). |
 
 ## The oracle, as it stands
 
