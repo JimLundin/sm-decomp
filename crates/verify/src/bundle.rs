@@ -179,8 +179,8 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let eye_lists = EyeLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
     let face_block_lists =
         FaceBlockLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
-    let delays = AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?;
     let poses = Poses::load(rom.lorom()).map_err(ContentError::Poses)?;
+    let delays = AnimationDelays::load(rom.lorom(), &poses).map_err(ContentError::Delays)?;
     let samus_tiles =
         SamusTiles::load(rom.lorom(), &delays, &poses).map_err(ContentError::SamusTiles)?;
     Ok(Content {
