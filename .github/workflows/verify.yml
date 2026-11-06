@@ -384,3 +384,50 @@ jobs:
           # shellcheck disable=SC2086 # ROWS is a list of row ids.
           target/release/tools gate scenarios/locks/lsnes.toml "$RUNNER_TEMP/relock/relock-v2-lsnes" \
             rom/sm.smc scenarios/locks/lsnes.green.txt $ROWS
+
+  # The lockstep ratchet (scenarios/locks/lockstep.ratchet.txt): each row's record cache
+  # (A2) replays engine-only in lockstep, and the job fails when a row's fully equal Ticks
+  # fall or a group's differing Ticks rise. The cache is a ci-data asset packed by
+  # tools/ci/pack_lockstep_cache.sh and pinned here by name and ciphertext SHA-256; a new
+  # cache is a new asset and a commit that repins it.
+  lockstep-ratchet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CACHE_ASSET: lockstep-cache-19ca14d51ae1f67e.tar.xz.enc
+      CACHE_SHA256: UPLOAD-THEN-PIN-lockstep-cache-sha256
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the record cache and check its pin
+        run: |
+          if ! grep -qE '^[0-9a-f]{64}$' <<<"$CACHE_SHA256"; then
+            echo "::error::CACHE_SHA256 is not pinned: upload $CACHE_ASSET to ci-data and set its SHA-256"
+            exit 1
+          fi
+          if ! curl --fail --silent --show-error --location --retry 4 --retry-all-errors \
+            --output "$RUNNER_TEMP/cache.tar.xz.enc" \
+            "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$CACHE_ASSET"; then
+            echo "::error::$CACHE_ASSET is not on the ci-data release"
+            exit 1
+          fi
+          echo "$CACHE_SHA256  $RUNNER_TEMP/cache.tar.xz.enc" | sha256sum --check
+      - *rom
+      - *decrypt
+      - name: Decrypt and unpack the record cache
+        run: |
+          # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (tools/ci_seed_data.py).
+          SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
+          export SM_SEED_PASSPHRASE
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/cache"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
+            -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
+          rm "$RUNNER_TEMP/cache.tar.xz.enc"
+      - name: "Lockstep ratchet: the record cache against scenarios/locks/lockstep.ratchet.txt"
+        run: |
+          # A renamed test would filter to nothing and pass, so require its report.
+          set -o pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --release committed_ratchet_holds_against_the_cache -- --nocapture \
+            | tee "$RUNNER_TEMP/ratchet.txt"
+          grep -q '^ratchet holds: ' "$RUNNER_TEMP/ratchet.txt"

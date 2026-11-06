@@ -322,23 +322,38 @@ mod tests {
     }
 
     /// The committed ratchet holds against the record cache in `SM_CACHE` and the ROM in
-    /// `SM_ROM`; skipped where either isn't present. Run with `--nocapture` for the report.
+    /// `SM_ROM`. Skipped only where neither is set; with one set, or a path that isn't
+    /// there, it fails, so CI cannot pass by losing its inputs. Run with `--nocapture` for
+    /// the report.
     #[test]
     fn committed_ratchet_holds_against_the_cache() {
-        let (Some(cache), Some(rom)) = (std::env::var_os("SM_CACHE"), std::env::var_os("SM_ROM"))
-        else {
-            return;
+        use std::io::Write as _;
+        let (cache, rom) = match (std::env::var_os("SM_CACHE"), std::env::var_os("SM_ROM")) {
+            (Some(cache), Some(rom)) => (cache, rom),
+            (None, None) => {
+                let _ = writeln!(std::io::stdout(), "skipped: SM_CACHE/SM_ROM unset");
+                return;
+            }
+            (cache, rom) => {
+                panic!("SM_CACHE and SM_ROM go together: SM_CACHE {cache:?}, SM_ROM {rom:?}")
+            }
         };
+        let (cache, rom) = (Path::new(&cache), Path::new(&rom));
+        assert!(
+            cache.is_dir(),
+            "SM_CACHE {}: not a directory",
+            cache.display()
+        );
+        assert!(rom.is_file(), "SM_ROM {}: not a file", rom.display());
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks");
         let report = check(
             &root.join("lsnes.toml"),
-            Path::new(&cache),
-            Path::new(&rom),
+            cache,
+            rom,
             &root.join("lockstep.ratchet.txt"),
         );
         match report {
             Ok(report) => {
-                use std::io::Write as _;
                 let _ = writeln!(std::io::stdout(), "{report}");
             }
             Err(error) => panic!("{error}"),
