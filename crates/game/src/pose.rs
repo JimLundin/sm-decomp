@@ -15,6 +15,7 @@ use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
 use crate::animation;
+use crate::collision::{Contacts, Surroundings};
 use crate::movement::{cancel_speed_boosting, make_jump};
 use crate::state::samus::{
     Acceleration, AnimationTimer, Facing, Horizontal, Jump, Movement, NewPoseFrame, PoseRecord,
@@ -111,6 +112,8 @@ pub enum PoseCommand {
     KillXSpeed,
     /// Lose the extra run speed (`$91:EC8E`).
     KillRunSpeed,
+    /// The frame's solid vertical collision (`$91:EFC4`).
+    SolidVertical(SolidVertical),
 }
 
 /// The command a movement type's lookup failure gives (`$91:8332`); spin jumping has none.
@@ -214,15 +217,30 @@ pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseR
     }
 }
 
+/// What the pose update reads of the frame's moves: what they met, and where a running
+/// pose's check for a wall moves her.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Collisions<'a> {
+    /// What the movement handler's moves met.
+    pub contacts: Contacts,
+    /// Where they happened.
+    pub surroundings: Surroundings<'a>,
+}
+
 /// The pose change (`$91:EB88`): the super special prospective pose first, else the
-/// requested pose.
+/// requested pose, once the check for a wall has had its say.
 ///
 /// The pose takes the facing and movement type its definition gives when it differs from
 /// the last; then the update records the history.
 // open: the special prospective pose between them joins with the
 // knockback and the grapple (C4); the super special pose with command 3 gives way to it
 // when its command is 9.
-pub fn change(samus: &mut Samus, requests: PoseRequests, content: &Content) {
+pub fn change(
+    samus: &mut Samus,
+    requests: PoseRequests,
+    collisions: Collisions<'_>,
+    content: &Content,
+) {
     if let Some(pose) = samus.super_special.pose {
         let command = samus.super_special.command;
         if command != SuperSpecialCommand::KnockbackFinished {
@@ -234,7 +252,14 @@ pub fn change(samus: &mut Samus, requests: PoseRequests, content: &Content) {
         record_history(samus);
         return;
     }
-    let Some(pose) = requests.ordinary else {
+    let requested = runs_into_wall(
+        samus,
+        requests.ordinary,
+        collisions.contacts.wall,
+        collisions.surroundings,
+        content,
+    );
+    let Some(pose) = requested else {
         return;
     };
     samus.pose = pose;
@@ -245,11 +270,17 @@ pub fn change(samus: &mut Samus, requests: PoseRequests, content: &Content) {
         reset_animation(samus, content);
         samus.animation.new_pose_frame = NewPoseFrame::default();
     }
-    if let (Some(command), Some(speed)) = (requests.command, samus.movement.horizontal_mut()) {
-        apply(command, speed);
-        if command != PoseCommand::Stop {
-            kill_y_speed_if_started_falling(samus);
+    match requests.command {
+        Some(PoseCommand::SolidVertical(collision)) => solid_vertical(collision, samus),
+        Some(command) => {
+            if let Some(speed) = samus.movement.horizontal_mut() {
+                apply(command, speed);
+                if command != PoseCommand::Stop {
+                    kill_y_speed_if_started_falling(samus);
+                }
+            }
         }
+        None => {}
     }
     record_history(samus);
 }
@@ -519,6 +550,8 @@ const fn apply(command: PoseCommand, speed: &mut Horizontal) {
             kill_run_speed(speed);
         }
         PoseCommand::KillRunSpeed => kill_run_speed(speed),
+        // It reads more than her horizontal speeds, so `change` runs it on its own.
+        PoseCommand::SolidVertical(_) => {}
     }
 }
 
@@ -533,6 +566,11 @@ const fn kill_run_speed(speed: &mut Horizontal) {
     cancel_speed_boosting(speed);
     speed.extra_run = Speed::ZERO;
 }
+
+mod contact;
+
+pub use contact::{Fall, Grounding, SolidVertical, request as collision_request};
+use contact::{runs_into_wall, solid_vertical};
 
 #[cfg(test)]
 mod tests;

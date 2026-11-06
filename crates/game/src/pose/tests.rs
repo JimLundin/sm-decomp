@@ -64,7 +64,7 @@ fn holding_right_while_standing_runs() {
     };
     let requests = input(&samus, &controller, &content);
     assert_eq!(requests.ordinary, Some(PoseId(2)));
-    change(&mut samus, requests, &content);
+    change(&mut samus, requests, Collisions::default(), &content);
     assert_eq!(samus.pose, PoseId(2));
     assert_eq!(samus.movement.kind(), MovementType::Running);
     assert_eq!(samus.previous.pose, PoseId(2));
