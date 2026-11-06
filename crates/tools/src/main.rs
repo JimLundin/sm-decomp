@@ -3,8 +3,8 @@
 //!
 //! It has no comparison logic of its own; that lives in `verify` (ARCHITECTURE §4.1).
 //!
-//! `tools lockstep LOCK CACHE ROW [FROM [TICKS]]`: lockstep over a row's record cache
-//! (`verify::lockstep`), printing the report.
+//! `tools lockstep LOCK CACHE ROM ROW [FROM [TICKS]]`: lockstep over a row's record cache
+//! (`verify::lockstep`) on the content read from `ROM`, printing the report.
 //!
 //! `tools gate LOCK BUNDLE ROM GREEN [--update] ROW...`: the free-run gate ([`gate`]).
 
@@ -13,12 +13,14 @@ mod gate;
 use std::io::Write;
 use std::path::Path;
 use std::process::ExitCode;
+use std::sync::Arc;
 
+use verify::bundle::{content, rooms};
 use verify::cache::Cache;
 use verify::lock::{Lock, RowId};
-use verify::lockstep::{lockstep, slice_zero_rooms};
+use verify::lockstep::lockstep;
 
-const LOCKSTEP_USAGE: &str = "tools lockstep LOCK CACHE ROW [FROM [TICKS]]";
+const LOCKSTEP_USAGE: &str = "tools lockstep LOCK CACHE ROM ROW [FROM [TICKS]]";
 
 fn usage() -> String {
     format!("usage: {LOCKSTEP_USAGE}\n       {}", gate::USAGE)
@@ -33,7 +35,7 @@ fn run(args: &[String]) -> Result<String, String> {
 }
 
 fn run_lockstep(args: &[String]) -> Result<String, String> {
-    let [lock, cache, row, window @ ..] = args else {
+    let [lock, cache, rom, row, window @ ..] = args else {
         return Err(usage());
     };
     let number = |text: &String| {
@@ -52,11 +54,12 @@ fn run_lockstep(args: &[String]) -> Result<String, String> {
         .row(&RowId(row.clone()))
         .ok_or_else(|| format!("{row}: not in the lock"))?;
     let cache = Cache::open(Path::new(cache), row).map_err(|error| error.to_string())?;
+    let image = std::fs::read(rom).map_err(|error| format!("{rom}: {error}"))?;
+    let content = Arc::new(content(image).map_err(|error| format!("{rom}: {error}"))?);
     let report = lockstep(
         &cache,
-        &slice_zero_rooms(),
-        // open: the tool reads no ROM yet, so Samus's pose rules run on empty tables.
-        &std::sync::Arc::default(),
+        &rooms(&content),
+        &content,
         from..from.saturating_add(ticks),
     )
     .map_err(|error| error.to_string())?;
