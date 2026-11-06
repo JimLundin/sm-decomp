@@ -103,6 +103,18 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.position.x.subpixels", samus.position.x.subpixels),
     field!("samus.position.y.pixels", samus.position.y.pixels),
     field!("samus.position.y.subpixels", samus.position.y.subpixels),
+    field!("samus.pose", samus.pose),
+    field!("samus.previous.pose", samus.previous.pose),
+    field!("samus.previous.facing", samus.previous.facing),
+    field!("samus.previous.movement", samus.previous.movement),
+    field!("samus.last_different.pose", samus.last_different.pose),
+    field!("samus.last_different.facing", samus.last_different.facing),
+    field!(
+        "samus.last_different.movement",
+        samus.last_different.movement
+    ),
+    field!("samus.facing", samus.facing),
+    field!("samus.movement", samus.movement),
     field!("samus.equipment.collected", samus.equipment.collected),
     field!("samus.equipment.equipped", samus.equipment.equipped),
     field!(

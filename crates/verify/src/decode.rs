@@ -8,8 +8,11 @@
 use std::fmt;
 
 use data::id::{Line, RoomId};
+use data::pose::{MovementType, POSE_COUNT};
 use game::state::room::{Camera, RoomScoped};
-use game::state::samus::{Equipment, Fixed, Gauge, Item, Items, Point, Samus};
+use game::state::samus::{
+    Equipment, Facing, Fixed, Gauge, Item, Items, Movement, Point, PoseId, PoseRecord, Samus,
+};
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
@@ -269,6 +272,12 @@ pub struct Rules<'t> {
     pub irq_command: WramWord,
     /// The queued interrupt command, which the State has no place for yet.
     pub irq_next: WramWord,
+    /// `samus.pose`, `samus.facing`, `samus.movement`.
+    pub pose: PoseSources,
+    /// `samus.previous`.
+    pub previous_pose: PoseSources,
+    /// `samus.last_different`.
+    pub last_different_pose: PoseSources,
     /// `message`.
     pub message: WramWord,
 }
@@ -326,6 +335,21 @@ impl Rules<'_> {
         irq_command: source::CUR_IRQ_HANDLER,
         irq_next: source::IRQHANDLER_NEXT_HANDLER,
         message: source::MESSAGE_BOX_INDEX,
+        pose: PoseSources {
+            pose: source::SAMUS_POSE,
+            facing: source::SAMUS_POSE_X_DIR,
+            movement: source::SAMUS_MOVEMENT_TYPE,
+        },
+        previous_pose: PoseSources {
+            pose: source::SAMUS_PREV_POSE,
+            facing: source::SAMUS_PREV_POSE_X_DIR,
+            movement: source::SAMUS_PREV_MOVEMENT_TYPE2,
+        },
+        last_different_pose: PoseSources {
+            pose: source::SAMUS_LAST_DIFFERENT_POSE,
+            facing: source::SAMUS_LAST_DIFFERENT_POSE_X_DIR,
+            movement: source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE,
+        },
     };
 
     /// The State `record` shows, under these rules.
@@ -396,26 +420,7 @@ impl Rules<'_> {
                 ..Timing::default()
             },
             video: self.video(record)?,
-            samus: Samus {
-                position: Point {
-                    x: Fixed {
-                        pixels: self.samus_x.read(wram)?,
-                        subpixels: self.samus_x_subpixels.read(wram)?,
-                    },
-                    y: Fixed {
-                        pixels: self.samus_y.read(wram)?,
-                        subpixels: self.samus_y_subpixels.read(wram)?,
-                    },
-                },
-                equipment: Equipment {
-                    collected: items(self.collected, wram)?,
-                    equipped: items(self.equipped, wram)?,
-                    energy: gauge(self.energy, self.max_energy, wram)?,
-                    reserve: gauge(self.reserve, self.max_reserve, wram)?,
-                    missiles: gauge(self.missiles, self.max_missiles, wram)?,
-                },
-                ..Samus::default()
-            },
+            samus: self.samus(wram)?,
             room: RoomScoped {
                 room,
                 camera: Camera {
@@ -433,6 +438,36 @@ impl Rules<'_> {
             message: Message(self.message.read(wram)?),
         };
         Ok(Decoded { state, quiescence })
+    }
+
+    /// Samus: her position, pose and equipment.
+    fn samus(&self, wram: &[u8]) -> Result<Samus, DecodeError> {
+        let pose = self.pose.read(wram)?;
+        Ok(Samus {
+            position: Point {
+                x: Fixed {
+                    pixels: self.samus_x.read(wram)?,
+                    subpixels: self.samus_x_subpixels.read(wram)?,
+                },
+                y: Fixed {
+                    pixels: self.samus_y.read(wram)?,
+                    subpixels: self.samus_y_subpixels.read(wram)?,
+                },
+            },
+            equipment: Equipment {
+                collected: items(self.collected, wram)?,
+                equipped: items(self.equipped, wram)?,
+                energy: gauge(self.energy, self.max_energy, wram)?,
+                reserve: gauge(self.reserve, self.max_reserve, wram)?,
+                missiles: gauge(self.missiles, self.max_missiles, wram)?,
+            },
+            pose: pose.pose,
+            previous: self.previous_pose.read(wram)?,
+            last_different: self.last_different_pose.read(wram)?,
+            facing: pose.facing,
+            movement: Movement::from(pose.movement),
+            ..Samus::default()
+        })
     }
 
     /// Video: the PPU's memories and registers, the NMI request and the batch.
@@ -808,4 +843,46 @@ fn committed(ppu: &PpuRegisters) -> Result<Registers, DecodeError> {
         sub_screen: layers(sub, "ppu.screens[1]")?,
         scroll,
     })
+}
+
+/// Where one pose record is: the pose word and the X direction and movement type bytes the
+/// original keeps beside it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PoseSources {
+    /// The pose.
+    pub pose: WramWord,
+    /// Its X direction.
+    pub facing: WramByte,
+    /// Its movement type.
+    pub movement: WramByte,
+}
+
+impl PoseSources {
+    /// The record in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a pose past the definitions table (the
+    /// original would read another table as its definition) or a movement type past the
+    /// movement handler's table.
+    fn read(self, wram: &[u8]) -> Result<PoseRecord, DecodeError> {
+        let pose = self.pose.read(wram)?;
+        if usize::from(pose) >= POSE_COUNT {
+            return Err(DecodeError::Unrepresentable {
+                source: self.pose.name,
+                value: pose,
+            });
+        }
+        let movement = self.movement.read(wram)?;
+        Ok(PoseRecord {
+            pose: PoseId(pose),
+            facing: Facing::from(self.facing.read(wram)?),
+            movement: MovementType::try_from(movement).map_err(|value| {
+                DecodeError::Unrepresentable {
+                    source: self.movement.name,
+                    value: u16::from(value),
+                }
+            })?,
+        })
+    }
 }

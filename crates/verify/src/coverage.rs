@@ -149,9 +149,26 @@ pub const FIELDS: &[Field] = &[
     wram("samus.position.x.subpixels", source::SAMUS_X_SUBPOS),
     wram("samus.position.y.pixels", source::SAMUS_Y_POS),
     wram("samus.position.y.subpixels", source::SAMUS_Y_SUBPOS),
-    open("samus.facing"),
+    wram("samus.pose", source::SAMUS_POSE),
+    wram("samus.previous.pose", source::SAMUS_PREV_POSE),
+    wram_byte("samus.previous.facing", source::SAMUS_PREV_POSE_X_DIR),
+    wram_byte("samus.previous.movement", source::SAMUS_PREV_MOVEMENT_TYPE2),
+    wram(
+        "samus.last_different.pose",
+        source::SAMUS_LAST_DIFFERENT_POSE,
+    ),
+    wram_byte(
+        "samus.last_different.facing",
+        source::SAMUS_LAST_DIFFERENT_POSE_X_DIR,
+    ),
+    wram_byte(
+        "samus.last_different.movement",
+        source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE,
+    ),
+    wram_byte("samus.facing", source::SAMUS_POSE_X_DIR),
     open("samus.aim"),
-    open("samus.movement"),
+    // The variant decodes from the movement type; the data it carries is C3's.
+    wram_byte("samus.movement", source::SAMUS_MOVEMENT_TYPE),
     wram("samus.equipment.collected", source::COLLECTED_ITEMS),
     wram("samus.equipment.equipped", source::EQUIPPED_ITEMS),
     wram("samus.equipment.energy.current", source::SAMUS_HEALTH),
@@ -261,6 +278,9 @@ mod tests {
             rules.camera_y_subpixels,
             rules.irq_command,
             rules.message,
+            rules.pose.pose,
+            rules.previous_pose.pose,
+            rules.last_different_pose.pose,
             // The scroll row names the first mirror; the queue's tail bounds the queue block.
             rules.scroll[0][0],
         ];
@@ -271,6 +291,12 @@ mod tests {
             rules.inidisp,
             rules.main_screen,
             rules.sub_screen,
+            rules.pose.facing,
+            rules.pose.movement,
+            rules.previous_pose.facing,
+            rules.previous_pose.movement,
+            rules.last_different_pose.facing,
+            rules.last_different_pose.movement,
         ];
         let blocks = [rules.oam_buffer, rules.palette_buffer, rules.vram_queue];
         for field in FIELDS {

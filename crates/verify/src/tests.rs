@@ -4,6 +4,7 @@
 //! to the wrong address fails these tests.
 
 use data::id::{Line, RoomId};
+use game::state::samus::{Facing, MovementType, PoseId, PoseRecord};
 use game::state::slots::Frames;
 use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
@@ -71,6 +72,16 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x09C8, 0x0005); // SAMUS_MAX_MISSILES
     put(&mut wram, 0x09D4, 0x0064); // SAMUS_MAX_RESERVE_HEALTH
     put(&mut wram, 0x09D6, 0x0032); // SAMUS_RESERVE_HEALTH
+    // Each byte differs from the one after it, so a byte rule moved by one reads another value.
+    put(&mut wram, 0x0A1C, 0x0009); // SAMUS_POSE: facing right, moving, not aiming
+    wram[0x0A1E] = 0x08; // SAMUS_POSE_X_DIR: right
+    wram[0x0A1F] = 0x01; // SAMUS_MOVEMENT_TYPE: running
+    put(&mut wram, 0x0A20, 0x0003); // SAMUS_PREV_POSE
+    wram[0x0A22] = 0x08; // SAMUS_PREV_POSE_X_DIR: right
+    wram[0x0A23] = 0x00; // SAMUS_PREV_MOVEMENT_TYPE2: standing
+    put(&mut wram, 0x0A24, 0x0002); // SAMUS_LAST_DIFFERENT_POSE
+    wram[0x0A26] = 0x04; // SAMUS_LAST_DIFFERENT_POSE_X_DIR: left
+    wram[0x0A27] = 0x05; // SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: crouching
     put(&mut wram, 0x090F, 0x1111); // LAYER1_X_SUBPOS
     put(&mut wram, 0x0911, 0x0200); // LAYER1_X_POS
     put(&mut wram, 0x0913, 0x2222); // LAYER1_Y_SUBPOS
@@ -174,6 +185,21 @@ fn decodes_the_record(state: &State) -> bool {
         .iter()
         .all(|(decoded, expected)| decoded == expected)
         && state.mode == GameMode::Gameplay
+        && state.samus.pose == PoseId(9)
+        && state.samus.facing == Facing::Right
+        && state.samus.movement.kind() == MovementType::Running
+        && state.samus.previous
+            == PoseRecord {
+                pose: PoseId(3),
+                facing: Facing::Right,
+                movement: MovementType::Standing,
+            }
+        && state.samus.last_different
+            == PoseRecord {
+                pose: PoseId(2),
+                facing: Facing::Left,
+                movement: MovementType::Crouching,
+            }
         && state.timing.last == NmiTiming::OnTime
         && state.video.nmi_requested
         && state.room.room == MORPH_BALL_ROOM_ID
@@ -208,8 +234,7 @@ fn a_record_decodes_from_its_named_sources() {
 fn undecoded_fields_keep_their_defaults() {
     let state = decode(&record(), &rooms()).unwrap().state;
     let defaults = State::default();
-    assert_eq!(state.samus.movement, defaults.samus.movement);
-    assert_eq!(state.samus.facing, defaults.samus.facing);
+    assert_eq!(state.samus.aim, defaults.samus.aim);
     assert_eq!(state.timing.owed, defaults.timing.owed);
     assert_eq!(state.clock.tick, defaults.clock.tick);
     assert_eq!(state.rng.calls, defaults.rng.calls);
@@ -235,7 +260,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 29] = [
+const WORD_RULES: [(&str, WordRule); 32] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -265,14 +290,53 @@ const WORD_RULES: [(&str, WordRule); 29] = [
     ("camera_y", |rules| &mut rules.camera_y),
     ("camera_y_subpixels", |rules| &mut rules.camera_y_subpixels),
     ("irq_command", |rules| &mut rules.irq_command),
+    ("pose", |rules| &mut rules.pose.pose),
+    ("previous_pose", |rules| &mut rules.previous_pose.pose),
+    ("last_different_pose", |rules| {
+        &mut rules.last_different_pose.pose
+    }),
 ];
 
 /// Every byte rule.
-const BYTE_RULES: [(&str, ByteRule); 3] = [
+const BYTE_RULES: [(&str, ByteRule); 9] = [
     ("lag", |rules| &mut rules.lag),
     ("max_lag", |rules| &mut rules.max_lag),
     ("nmi_requested", |rules| &mut rules.nmi_requested),
+    ("facing", |rules| &mut rules.pose.facing),
+    ("movement", |rules| &mut rules.pose.movement),
+    ("previous_facing", |rules| &mut rules.previous_pose.facing),
+    ("previous_movement", |rules| {
+        &mut rules.previous_pose.movement
+    }),
+    ("last_different_facing", |rules| {
+        &mut rules.last_different_pose.facing
+    }),
+    ("last_different_movement", |rules| {
+        &mut rules.last_different_pose.movement
+    }),
 ];
+
+#[test]
+fn a_pose_past_the_table_or_a_movement_type_past_the_handler_is_an_error() {
+    let mut past_table = record();
+    put(&mut past_table.wram, 0x0A1C, 0x00FD);
+    assert_eq!(
+        decode(&past_table, &rooms()),
+        Err(DecodeError::Unrepresentable {
+            source: "SAMUS_POSE",
+            value: 0xFD
+        })
+    );
+    let mut past_handler = record();
+    past_handler.wram[0x0A1F] = 0x1C;
+    assert_eq!(
+        decode(&past_handler, &rooms()),
+        Err(DecodeError::Unrepresentable {
+            source: "SAMUS_MOVEMENT_TYPE",
+            value: 0x1C
+        })
+    );
+}
 
 fn survives(mutant: &Rules) -> bool {
     mutant

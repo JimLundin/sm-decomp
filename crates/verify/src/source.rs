@@ -385,3 +385,50 @@ pub const REG_BG_SCROLL: [[WramWord; 2]; 3] = [
         },
     ],
 ];
+
+/// Bank $90/$91 logs: Samus's pose, an index into the pose definitions (`$91:B629`).
+pub const SAMUS_POSE: WramWord = WramWord {
+    name: "SAMUS_POSE",
+    offset: 0x0A1C,
+};
+/// Bank $91 log: the pose's X direction, copied from its definition.
+pub const SAMUS_POSE_X_DIR: WramByte = WramByte {
+    name: "SAMUS_POSE_X_DIR",
+    offset: 0x0A1E,
+};
+/// Bank $91 log: the pose's movement type, copied from its definition; the movement
+/// handler dispatches on it.
+pub const SAMUS_MOVEMENT_TYPE: WramByte = WramByte {
+    name: "SAMUS_MOVEMENT_TYPE",
+    offset: 0x0A1F,
+};
+/// Bank $91 log: the pose before the last pose change.
+pub const SAMUS_PREV_POSE: WramWord = WramWord {
+    name: "SAMUS_PREV_POSE",
+    offset: 0x0A20,
+};
+/// Bank $91 log: the previous pose's X direction.
+pub const SAMUS_PREV_POSE_X_DIR: WramByte = WramByte {
+    name: "SAMUS_PREV_POSE_X_DIR",
+    offset: 0x0A22,
+};
+/// Bank $91 log: the previous pose's movement type.
+pub const SAMUS_PREV_MOVEMENT_TYPE2: WramByte = WramByte {
+    name: "SAMUS_PREV_MOVEMENT_TYPE2",
+    offset: 0x0A23,
+};
+/// Bank $91 log: the last pose that differed from the current one.
+pub const SAMUS_LAST_DIFFERENT_POSE: WramWord = WramWord {
+    name: "SAMUS_LAST_DIFFERENT_POSE",
+    offset: 0x0A24,
+};
+/// Bank $91 log: the last different pose's X direction.
+pub const SAMUS_LAST_DIFFERENT_POSE_X_DIR: WramByte = WramByte {
+    name: "SAMUS_LAST_DIFFERENT_POSE_X_DIR",
+    offset: 0x0A26,
+};
+/// Bank $91 log: the last different pose's movement type.
+pub const SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: WramByte = WramByte {
+    name: "SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE",
+    offset: 0x0A27,
+};
