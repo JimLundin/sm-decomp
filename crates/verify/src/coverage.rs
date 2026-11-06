@@ -261,9 +261,23 @@ mod tests {
             rules.camera_y_subpixels,
             rules.irq_command,
             rules.message,
+            rules.vram_queue_tail,
+            rules.scroll[0][0],
+            rules.scroll[0][1],
+            rules.scroll[1][0],
+            rules.scroll[1][1],
+            rules.scroll[2][0],
+            rules.scroll[2][1],
         ];
-        let bytes = [rules.lag, rules.max_lag, rules.nmi_requested];
-        let blocks = [rules.oam_buffer];
+        let bytes = [
+            rules.lag,
+            rules.max_lag,
+            rules.nmi_requested,
+            rules.inidisp,
+            rules.main_screen,
+            rules.sub_screen,
+        ];
+        let blocks = [rules.oam_buffer, rules.palette_buffer, rules.vram_queue];
         for field in FIELDS {
             match field.status {
                 Status::Decoded(Source::WramWord(word) | Source::WramPointer(word)) => {
