@@ -366,13 +366,34 @@ recorded twice (`a`, `b`) and as `--shard 0/3`, `1/3`, `2/3`:
   beside the entry and diff two runs, to see whether it is a few frames (a
   screenshot taken before lsnes has finished the frame, or after a resume)
   or the whole span. Until it is fixed, `video` can't be locked.
+- **Not reproduced since** (lane `relock-video`, 2026-11-06, a temporary
+  per-frame log of each frame's video digest, cut and video frame counter,
+  and a dump of each frame's PNG). In each of the two odd results one run
+  disagreed with the other four: `a`'s `chain-any-0006-E0B5` (`f326332c...`
+  against `25d56fe9...` in `b` and the shard) and the shard's `death`
+  (`5949bdfc...`, `c7cae79e...` against `2b496870...`, `39c63c69...`). Five
+  reruns, 2 or 5 processes at once beside the background seed cuts
+  (`death` alone twice with the PNG dump; the three rows with the dump; the
+  three rows with the log only; the three rows on the proof's own DLL), recorded 22 runs of
+  `death` and 15 of each chain row. All gave the majority values, with the
+  per-frame logs equal frame for frame: 2,137 frames of `death`, 1,778 of
+  `chain-any-0006-E0B5`, 532 of `chain-any-0001-DF45`. So the miss is rare
+  (2 of 15 row runs in the proof, 0 of 52 since) and the cause is still
+  open. Known about the odd runs: `death`'s odd spans are 0 and 1 (frames
+  0-1999) and span 2 is equal, so either one event changed more than a
+  single picture or two events happened; none of the three rows has a cut
+  with the NMI running, so every record comes from the RTI or the boundary.
 - Speed: 11-14 frames/s per process with 5 at once and the tiers on (the
   picture and the APU log; not split between them); 31-35 frames/s without
   the tiers, the same load.
 
 **What remains of step c.**
 
-0. Make `video` deterministic (above); then rerun the proof.
+0. Make `video` deterministic (above); then rerun the proof. It doesn't
+   reproduce on demand, so the next step is a record that localises it when
+   it happens: keep each frame's video digest with every recorded entry (a
+   sidecar beside `--record-v2`), so a run that disagrees names its frames
+   without a rerun; then dump those frames' pictures.
 1. Facts: every fact is written `"unevaluated"`; the room, state, area, item,
    boss and door facts need evaluating on the decoded State (`tools relock`,
    with `verify::decode`).
