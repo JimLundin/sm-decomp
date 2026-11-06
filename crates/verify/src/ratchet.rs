@@ -337,7 +337,10 @@ mod tests {
             &root.join("lockstep.ratchet.txt"),
         );
         match report {
-            Ok(report) => println!("{report}"),
+            Ok(report) => {
+                use std::io::Write as _;
+                let _ = writeln!(std::io::stdout(), "{report}");
+            }
             Err(error) => panic!("{error}"),
         }
     }
