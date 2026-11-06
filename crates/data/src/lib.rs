@@ -8,6 +8,7 @@ pub mod address_map;
 pub mod compression;
 pub mod digest;
 pub mod id;
+pub mod movement;
 pub mod pose;
 pub mod rom;
 pub mod room;
