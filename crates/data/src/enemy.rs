@@ -67,7 +67,10 @@ impl SpeciesMap {
     #[must_use]
     pub fn new(species: Vec<(SpeciesKey, Behaviour)>) -> Option<Self> {
         let distinct = species.iter().enumerate().all(|(index, (key, _))| {
-            !species.iter().take(index).any(|(earlier, _)| earlier == key)
+            !species
+                .iter()
+                .take(index)
+                .any(|(earlier, _)| earlier == key)
         });
         (distinct && u16::try_from(species.len()).is_ok()).then_some(Self { species })
     }
@@ -227,7 +230,10 @@ fn take<const N: usize>(rom: Lorom<'_>, at: RomAddress) -> Result<[u8; N], Enemy
 /// The little-endian words of `bytes`.
 fn words<const N: usize, const W: usize>(bytes: [u8; N]) -> [u16; W] {
     std::array::from_fn(|index| {
-        let low = bytes.get(index.wrapping_mul(2)).copied().unwrap_or_default();
+        let low = bytes
+            .get(index.wrapping_mul(2))
+            .copied()
+            .unwrap_or_default();
         let high = bytes
             .get(index.wrapping_mul(2).wrapping_add(1))
             .copied()
