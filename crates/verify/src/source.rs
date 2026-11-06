@@ -625,6 +625,21 @@ pub const REG_BG_SCROLL: [[WramWord; 2]; 4] = [
     ],
 ];
 
+/// Bank $90 log, `$90:90E2`: Samus's vertical speed's subpixels.
+pub const SAMUS_Y_SUBSPEED: WramWord = WramWord {
+    name: "SAMUS_Y_SUBSPEED",
+    offset: 0x0B2C,
+};
+/// Bank $90 log, `$90:90E2`: Samus's vertical speed's pixels a frame.
+pub const SAMUS_Y_SPEED: WramWord = WramWord {
+    name: "SAMUS_Y_SPEED",
+    offset: 0x0B2E,
+};
+/// Bank $90 log, `$90:90E2`: 0 none, 1 up, 2 down.
+pub const SAMUS_Y_DIR: WramWord = WramWord {
+    name: "SAMUS_Y_DIR",
+    offset: 0x0B36,
+};
 /// Bank $90 log, `$90:973E`: whether Samus kept her running momentum (the extra run speed
 /// survives leaving the running movement), 0 or 1.
 pub const SAMUS_HAS_MOMENTUM_FLAG: WramWord = WramWord {

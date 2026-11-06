@@ -1,4 +1,4 @@
-use data::movement::HorizontalSpeeds;
+use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::{AnimationDelays, DelayList};
 use data::pose::transition::PoseTransitions;
 use data::pose::{MovementType, PoseFacing, Poses};
@@ -44,6 +44,7 @@ fn content() -> Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(Vec::new()),
         speeds: HorizontalSpeeds::default(),
+        vertical: VerticalSpeeds::default(),
         delays: AnimationDelays::new(lists, list(&[0x01, 0xFF])),
     }
 }

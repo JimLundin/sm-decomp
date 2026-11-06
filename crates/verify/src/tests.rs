@@ -10,8 +10,9 @@ use game::state::room::{
     EnemyCommon, PaletteIndex, TilesIndex,
 };
 use game::state::samus::{
-    Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Movement,
+    Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Jump, Movement,
     MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial, SuperSpecialCommand,
+    Vertical, YDirection,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Occupancy, Slot};
@@ -1147,4 +1148,70 @@ fn a_countdown_outside_its_range_is_unrepresentable() {
             })
         );
     }
+}
+
+/// The synthetic record in a spin jump, rising: pose $19 (facing right, spin jump).
+fn jump_record() -> FrameRecord {
+    let mut record = record();
+    put(&mut record.wram, 0x0A1C, 0x0019); // SAMUS_POSE: facing right, spin jump
+    record.wram[0x0A1F] = 0x03; // SAMUS_MOVEMENT_TYPE: spin jumping
+    put(&mut record.wram, 0x0B2C, 0xE000); // SAMUS_Y_SUBSPEED
+    put(&mut record.wram, 0x0B2E, 0x0004); // SAMUS_Y_SPEED
+    put(&mut record.wram, 0x0B36, 0x0001); // SAMUS_Y_DIR: up
+    record
+}
+
+/// The jump's motion, as the jump record sets it: both speeds.
+fn decodes_the_jump(state: &State) -> bool {
+    state.samus.movement
+        == Movement::Jumping {
+            jump: Jump::Spin,
+            speed: Horizontal {
+                base: Speed::new(0x0002, 0xC000),
+                extra_run: Speed::new(0x0001, 0x2000),
+                acceleration: Acceleration::Decelerating,
+                momentum: true,
+            },
+            vertical: Vertical {
+                speed: Speed::new(0x0004, 0xE000),
+                direction: YDirection::Up,
+            },
+        }
+}
+
+#[test]
+fn a_jump_decodes_both_speeds() {
+    let state = decode(&jump_record(), &rooms()).unwrap().state;
+    assert!(decodes_the_jump(&state), "{:?}", state.samus.movement);
+}
+
+#[test]
+fn every_moved_vertical_rule_fails() {
+    let rules: [(&str, WordRule); 3] = [
+        ("vertical.speed", |rules| &mut rules.vertical.speed),
+        ("vertical.subpixels", |rules| &mut rules.vertical.subpixels),
+        ("vertical.direction", |rules| &mut rules.vertical.direction),
+    ];
+    for (name, rule) in rules {
+        let mut mutant = Rules::ORIGINAL;
+        let word = rule(&mut mutant);
+        word.offset = word.offset.wrapping_add(2);
+        let survives = mutant
+            .decode(&jump_record(), &rooms())
+            .is_ok_and(|decoded| decodes_the_jump(&decoded.state));
+        assert!(!survives, "{name}");
+    }
+}
+
+#[test]
+fn a_y_direction_past_2_is_an_error() {
+    let mut record = jump_record();
+    put(&mut record.wram, 0x0B36, 0x0003);
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::Unrepresentable {
+            source: "SAMUS_Y_DIR",
+            value: 3
+        })
+    );
 }

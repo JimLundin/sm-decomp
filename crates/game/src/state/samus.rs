@@ -69,6 +69,31 @@ pub enum Aim {
     Down,
 }
 
+/// Which way Samus's vertical speed moves her (bank $90 log, `$90:90E2` "Samus Y movement -
+/// with speed calculations": the original's Y direction word, 0 to 2).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum YDirection {
+    /// Neither: on the ground, or a pose that entered the air without a jump (the moonfall
+    /// glitch: the rise rule then runs with a speed that only grows downwards).
+    #[default]
+    None,
+    /// Rising: gravity takes from her speed.
+    Up,
+    /// Falling: gravity adds to her speed until its pixel word reaches 5.
+    Down,
+}
+
+/// Samus's vertical motion: the speed the Y movement routine (`$90:90E2`) moves her by and the
+/// way it moves her.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Vertical {
+    /// Pixels a frame. While rising, gravity can take it below zero for the rest of the
+    /// frame; the next frame's release check stops the rise then.
+    pub speed: Speed,
+    /// Which way it moves her.
+    pub direction: YDirection,
+}
+
 /// How a jump began, which decides its rise and what it can turn into.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Jump {
@@ -85,8 +110,7 @@ pub enum Jump {
 /// The landing frames are not a movement type: the landing poses (bank $91 log, poses $A4
 /// to $A7, $E0 to $E5) are standing ones, so behaviour that keys on landing reads
 /// [`Samus::pose`].
-// open: the jumps, falls and wall jumps keep `Horizontal` too, and the jump's rise; they
-// join with C3b.
+// open: turning around in the air keeps the vertical motion too; it joins with the air turns.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Movement {
     /// On the ground, still: a landing's extra run speed still moves her one frame.
@@ -105,15 +129,17 @@ pub enum Movement {
     Jumping {
         /// How it began.
         jump: Jump,
-        /// Vertical speed.
-        vertical: Fixed,
-        /// Whether the rise is still under the jump button's control.
-        rising: bool,
+        /// Horizontal motion.
+        speed: Horizontal,
+        /// Vertical motion.
+        vertical: Vertical,
     },
     /// In the air without a jump.
     Falling {
-        /// Vertical speed.
-        vertical: Fixed,
+        /// Horizontal motion.
+        speed: Horizontal,
+        /// Vertical motion.
+        vertical: Vertical,
     },
     /// Rolled into the morph ball.
     MorphBall {
@@ -141,7 +167,12 @@ pub enum Movement {
     /// Moonwalking.
     Moonwalking,
     /// Wall jumping.
-    WallJumping,
+    WallJumping {
+        /// Horizontal motion.
+        speed: Horizontal,
+        /// Vertical motion.
+        vertical: Vertical,
+    },
     /// Ran into a wall.
     RanIntoWall,
     /// Grappling.
@@ -209,8 +240,8 @@ impl From<MovementType> for Movement {
     fn from(kind: MovementType) -> Self {
         let jumping = |jump| Self::Jumping {
             jump,
-            vertical: Fixed::default(),
-            rising: false,
+            speed: Horizontal::default(),
+            vertical: Vertical::default(),
         };
         let turning = |place| Self::TurningAround {
             place,
@@ -231,7 +262,8 @@ impl From<MovementType> for Movement {
             MovementType::MorphBallFalling => morph_ball(true),
             MovementType::Crouching => Self::Crouching,
             MovementType::Falling => Self::Falling {
-                vertical: Fixed::default(),
+                speed: Horizontal::default(),
+                vertical: Vertical::default(),
             },
             MovementType::KnockbackOrCrystalFlashEnding => Self::KnockbackOrCrystalFlashEnding,
             MovementType::TurningAroundOnGround => turning(Turn::OnGround),
@@ -248,7 +280,10 @@ impl From<MovementType> for Movement {
             MovementType::SpringBallFalling => Self::SpringBall {
                 phase: SpringBall::Falling,
             },
-            MovementType::WallJumping => Self::WallJumping,
+            MovementType::WallJumping => Self::WallJumping {
+                speed: Horizontal::default(),
+                vertical: Vertical::default(),
+            },
             MovementType::RanIntoWall => Self::RanIntoWall,
             MovementType::Grappling => Self::Grappling,
             MovementType::DamageBoost => Self::DamageBoost,
@@ -270,16 +305,16 @@ impl Movement {
         match self {
             Self::Standing { speed }
             | Self::Running { speed }
-            | Self::TurningAround { speed, .. } => Some(speed),
+            | Self::TurningAround { speed, .. }
+            | Self::Jumping { speed, .. }
+            | Self::Falling { speed, .. }
+            | Self::WallJumping { speed, .. } => Some(speed),
             Self::Crouching
-            | Self::Jumping { .. }
-            | Self::Falling { .. }
             | Self::MorphBall { .. }
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
             | Self::Transition
             | Self::Moonwalking
-            | Self::WallJumping
             | Self::RanIntoWall
             | Self::Grappling
             | Self::DamageBoost
@@ -294,16 +329,65 @@ impl Movement {
         match self {
             Self::Standing { speed }
             | Self::Running { speed }
-            | Self::TurningAround { speed, .. } => Some(speed),
+            | Self::TurningAround { speed, .. }
+            | Self::Jumping { speed, .. }
+            | Self::Falling { speed, .. }
+            | Self::WallJumping { speed, .. } => Some(speed),
             Self::Crouching
-            | Self::Jumping { .. }
-            | Self::Falling { .. }
             | Self::MorphBall { .. }
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
             | Self::Transition
             | Self::Moonwalking
-            | Self::WallJumping
+            | Self::RanIntoWall
+            | Self::Grappling
+            | Self::DamageBoost
+            | Self::GrabbedByDraygon
+            | Self::Shinespark
+            | Self::Unused(_) => None,
+        }
+    }
+
+    /// The vertical motion this movement keeps, if it keeps one: the jumps and the fall.
+    #[must_use]
+    pub const fn vertical(self) -> Option<Vertical> {
+        match self {
+            Self::Jumping { vertical, .. }
+            | Self::Falling { vertical, .. }
+            | Self::WallJumping { vertical, .. } => Some(vertical),
+            Self::Standing { .. }
+            | Self::Running { .. }
+            | Self::Crouching
+            | Self::MorphBall { .. }
+            | Self::SpringBall { .. }
+            | Self::KnockbackOrCrystalFlashEnding
+            | Self::TurningAround { .. }
+            | Self::Transition
+            | Self::Moonwalking
+            | Self::RanIntoWall
+            | Self::Grappling
+            | Self::DamageBoost
+            | Self::GrabbedByDraygon
+            | Self::Shinespark
+            | Self::Unused(_) => None,
+        }
+    }
+
+    /// The vertical motion this movement keeps, to change, if it keeps one.
+    pub const fn vertical_mut(&mut self) -> Option<&mut Vertical> {
+        match self {
+            Self::Jumping { vertical, .. }
+            | Self::Falling { vertical, .. }
+            | Self::WallJumping { vertical, .. } => Some(vertical),
+            Self::Standing { .. }
+            | Self::Running { .. }
+            | Self::Crouching
+            | Self::MorphBall { .. }
+            | Self::SpringBall { .. }
+            | Self::KnockbackOrCrystalFlashEnding
+            | Self::TurningAround { .. }
+            | Self::Transition
+            | Self::Moonwalking
             | Self::RanIntoWall
             | Self::Grappling
             | Self::DamageBoost
@@ -355,7 +439,7 @@ impl Movement {
             } => MovementType::TurningAroundFalling,
             Self::Transition => MovementType::CrouchingTransition,
             Self::Moonwalking => MovementType::Moonwalking,
-            Self::WallJumping => MovementType::WallJumping,
+            Self::WallJumping { .. } => MovementType::WallJumping,
             Self::RanIntoWall => MovementType::RanIntoWall,
             Self::Grappling => MovementType::Grappling,
             Self::DamageBoost => MovementType::DamageBoost,

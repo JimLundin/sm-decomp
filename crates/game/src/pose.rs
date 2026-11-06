@@ -8,16 +8,16 @@
 //! transition handler (`$91:EB88`) then applies the request after the movement handler and
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
-use data::movement::HorizontalSpeeds;
+use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::AnimationDelays;
 use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
 use crate::animation;
-use crate::movement::cancel_speed_boosting;
+use crate::movement::{cancel_speed_boosting, make_jump};
 use crate::state::samus::{
-    Acceleration, AnimationTimer, Horizontal, Movement, NewPoseFrame, PoseRecord, Samus, Speed,
-    SuperSpecialCommand, Turn,
+    Acceleration, AnimationTimer, Facing, Horizontal, Jump, Movement, NewPoseFrame, PoseRecord,
+    Samus, Speed, SuperSpecialCommand, Turn, Vertical, YDirection,
 };
 use crate::state::{Button, Buttons, Controller};
 
@@ -30,6 +30,8 @@ pub struct Content {
     pub transitions: PoseTransitions,
     /// Samus's horizontal speed tables.
     pub speeds: HorizontalSpeeds,
+    /// Samus's gravity and jump speeds.
+    pub vertical: VerticalSpeeds,
     /// Samus's animation delay lists.
     pub delays: AnimationDelays,
 }
@@ -148,16 +150,15 @@ const fn has_base_speed(movement: Movement) -> bool {
         Movement::MorphBall { speed, .. } => speed.pixels != 0 || speed.subpixels != 0,
         Movement::Standing { speed }
         | Movement::Running { speed }
-        | Movement::TurningAround { speed, .. } => speed.base.0 != 0,
-        // open: the jumps' and falls' horizontal speed joins with C3b.
+        | Movement::TurningAround { speed, .. }
+        | Movement::Jumping { speed, .. }
+        | Movement::Falling { speed, .. }
+        | Movement::WallJumping { speed, .. } => speed.base.0 != 0,
         Movement::Crouching
-        | Movement::Jumping { .. }
-        | Movement::Falling { .. }
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
         | Movement::Transition
         | Movement::Moonwalking
-        | Movement::WallJumping
         | Movement::RanIntoWall
         | Movement::Grappling
         | Movement::DamageBoost
@@ -235,12 +236,17 @@ pub fn change(samus: &mut Samus, requests: PoseRequests, content: &Content) {
     };
     samus.pose = pose;
     if pose != samus.previous.pose {
+        // "Handle Samus pose change" (`$91:F404`): initialise the pose, then the jump.
         refresh(samus, content);
+        jump_transition(samus, content);
         reset_animation(samus, content);
         samus.animation.new_pose_frame = NewPoseFrame::default();
     }
     if let (Some(command), Some(speed)) = (requests.command, samus.movement.horizontal_mut()) {
         apply(command, speed);
+        if command != PoseCommand::Stop {
+            kill_y_speed_if_started_falling(samus);
+        }
     }
     record_history(samus);
 }
@@ -259,12 +265,106 @@ fn refresh(samus: &mut Samus, content: &Content) {
         // The original keeps her speeds in work RAM whatever the movement: a movement that
         // keeps them takes them over.
         let carried = samus.movement.horizontal();
+        let airborne = samus.movement.vertical();
         samus.movement = Movement::from(definition.movement);
         if let (Some(carried), Some(speed)) = (carried, samus.movement.horizontal_mut()) {
             *speed = carried;
         }
+        if let (Some(airborne), Some(vertical)) = (airborne, samus.movement.vertical_mut()) {
+            *vertical = airborne;
+        }
     }
-    initialise(&mut samus.movement);
+    initialise(samus.previous, samus.facing, &mut samus.movement);
+}
+
+/// The poses of the normal jump's take-off, the only normal jumping poses that start a jump
+/// (`$91:FC66`) and that move her without her speeds (`$90:8FB3`).
+pub(crate) const JUMP_TAKE_OFF: [PoseId; 8] = [
+    PoseId(0x4B),
+    PoseId(0x4C),
+    PoseId(0x55),
+    PoseId(0x56),
+    PoseId(0x57),
+    PoseId(0x58),
+    PoseId(0x59),
+    PoseId(0x5A),
+];
+
+/// The crouching poses a jump from which starts higher (`$91:FC7D`).
+const CROUCHING: [PoseId; 2] = [PoseId(0x27), PoseId(0x28)];
+
+/// The crouch jump's boost in pixels (`$91:FC8A`).
+const CROUCH_JUMP_BOOST: u16 = 10;
+
+/// "Handle jump transition" (`$91:FBBB`): a new jumping pose starts the jump.
+// open: the spring ball's jump (`$91:FC18`, poses $7F/$80 from the ground) joins with the
+// spring ball's vertical motion; type $D's (`$91:FC42`) has only unused poses.
+fn jump_transition(samus: &mut Samus, content: &Content) {
+    let old = samus.previous;
+    let takeoff = match samus.movement {
+        Movement::Jumping {
+            jump: Jump::Normal, ..
+        } => {
+            let take_off = JUMP_TAKE_OFF.contains(&samus.pose);
+            if take_off && CROUCHING.contains(&old.pose) {
+                let y = &mut samus.position.y.pixels;
+                *y = y.wrapping_sub(CROUCH_JUMP_BOOST);
+            }
+            take_off.then_some(Takeoff::Jump)
+        }
+        Movement::Jumping {
+            jump: Jump::Spin, ..
+        } => (!matches!(
+            old.movement,
+            MovementType::SpinJumping | MovementType::WallJumping
+        ))
+        .then_some(Takeoff::Jump),
+        Movement::WallJumping { .. } => {
+            (old.movement != MovementType::WallJumping).then_some(Takeoff::WallJump)
+        }
+        Movement::Standing { .. }
+        | Movement::Running { .. }
+        | Movement::Crouching
+        | Movement::Falling { .. }
+        | Movement::MorphBall { .. }
+        | Movement::SpringBall { .. }
+        | Movement::KnockbackOrCrystalFlashEnding
+        | Movement::TurningAround { .. }
+        | Movement::Transition
+        | Movement::Moonwalking
+        | Movement::RanIntoWall
+        | Movement::Grappling
+        | Movement::DamageBoost
+        | Movement::GrabbedByDraygon
+        | Movement::Shinespark
+        | Movement::Unused(_) => None,
+    };
+    if let Some(takeoff) = takeoff {
+        make_jump(samus, takeoff, &content.vertical);
+    }
+}
+
+/// Which initial speed a jump takes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Takeoff {
+    /// From the ground ("Make Samus jump", bank $90 log `$90:98BC`).
+    Jump,
+    /// From a wall ("Make Samus wall-jump", `$90:9949`).
+    WallJump,
+}
+
+/// "Kill Y speed if started falling" (`$91:FB8E`): a command that leaves her falling from
+/// another movement stops her vertical speed. The bank log notes no command reaches it.
+const fn kill_y_speed_if_started_falling(samus: &mut Samus) {
+    if matches!(samus.previous.movement, MovementType::Falling) {
+        return;
+    }
+    if let Movement::Falling { vertical, .. } = &mut samus.movement {
+        *vertical = Vertical {
+            speed: Speed::ZERO,
+            direction: YDirection::Down,
+        };
+    }
 }
 
 /// Start the new pose's animation on the new pose frame (`$91:FB08`), unless the pose is
@@ -322,27 +422,81 @@ const fn record_history(samus: &mut Samus) {
     };
 }
 
-/// "Initialise Samus pose" (`$91:F433`) for a new pose, the part that sets her speeds:
-/// turning on the ground starts the turn's momentum, her run speed joining her base speed
-/// (`$91:F8D3`).
-// open: the other movement types' initialisations (jumps, the morph ball, spin jumps'
-// momentum, the wall jump) join with C3b; the turning poses chosen from the old pose's shot
+/// "Initialise Samus pose" (`$91:F433`) for a new pose, the part that sets her speeds.
+///
+/// Turning on the ground starts the turn's momentum, her run speed joining her base speed
+/// (`$91:F8D3`); a normal jump or a fall decelerates while she keeps extra run speed
+/// (`$91:F59A`, `$91:F60D`); a spin jump from a spin or wall jump the other way turns her
+/// momentum around (`$91:F624`).
+// open: the shinespark windup from a normal jump (`$91:F543`, the special palette timer),
+// the animation skips (`$91:F5AF`, `$91:F634`), the spin jump's sounds, space jump and screw
+// attack poses (`$91:F67F`), the morph ball and the other types' initialisations join with
+// the speed booster, C6 and the items; the turning poses chosen from the old pose's shot
 // direction (`$91:F9C2`) match the transition table's in slice 0.
-const fn initialise(movement: &mut Movement) {
-    if let Movement::TurningAround {
-        place: Turn::OnGround,
-        speed,
-    } = movement
-    {
-        speed.base = Speed(speed.base.0.wrapping_add(speed.extra_run.0));
-        speed.extra_run = Speed::ZERO;
-        speed.acceleration = Acceleration::TurningAround;
+const fn initialise(old: PoseRecord, facing: Facing, movement: &mut Movement) {
+    match movement {
+        Movement::TurningAround {
+            place: Turn::OnGround,
+            speed,
+        } => {
+            speed.base = Speed(speed.base.0.wrapping_add(speed.extra_run.0));
+            speed.extra_run = Speed::ZERO;
+            speed.acceleration = Acceleration::TurningAround;
+        }
+        Movement::Jumping {
+            jump: Jump::Normal,
+            speed,
+            ..
+        }
+        | Movement::Falling { speed, .. } => {
+            speed.acceleration = if speed.extra_run.0 == 0 {
+                Acceleration::Accelerating
+            } else {
+                Acceleration::Decelerating
+            };
+        }
+        Movement::Jumping {
+            jump: Jump::Spin,
+            speed,
+            ..
+        } => {
+            let from_spin = matches!(
+                old.movement,
+                MovementType::SpinJumping | MovementType::WallJumping
+            );
+            let turned = matches!(
+                (old.facing, facing),
+                (Facing::Left, Facing::Right) | (Facing::Right, Facing::Left)
+            );
+            if from_spin && turned {
+                speed.base = Speed(speed.base.0.wrapping_add(speed.extra_run.0));
+                cancel_speed_boosting(speed);
+                speed.extra_run = Speed::ZERO;
+                speed.acceleration = Acceleration::TurningAround;
+            }
+        }
+        Movement::Standing { .. }
+        | Movement::Running { .. }
+        | Movement::Crouching
+        | Movement::MorphBall { .. }
+        | Movement::SpringBall { .. }
+        | Movement::KnockbackOrCrystalFlashEnding
+        | Movement::TurningAround { .. }
+        | Movement::Transition
+        | Movement::Moonwalking
+        | Movement::WallJumping { .. }
+        | Movement::RanIntoWall
+        | Movement::Grappling
+        | Movement::DamageBoost
+        | Movement::GrabbedByDraygon
+        | Movement::Shinespark
+        | Movement::Unused(_) => {}
     }
 }
 
 /// A prospective pose change command's effect on her speeds (`$91:EC16`'s table).
-// open: "Kill Y speed if started falling" (`$91:FB8E`) after decelerating or losing the run
-// speed joins with C3b; the movements without `Horizontal` yet ignore the commands.
+// open: the movements without `Horizontal` yet (the morph ball, the spring ball, grappling)
+// ignore the commands.
 const fn apply(command: PoseCommand, speed: &mut Horizontal) {
     match command {
         PoseCommand::Decelerate => {

@@ -223,7 +223,8 @@ pub const FIELDS: &[Field] = &[
     open("samus.aim"),
     // The variant decodes from the movement type; the data it carries is C3's.
     wram_byte("samus.movement", source::SAMUS_MOVEMENT_TYPE),
-    // The standing, running and turning movements' horizontal motion.
+    // The horizontal motion of the movements that keep one: standing, running, turning, the
+    // jumps and the fall.
     wram(
         "samus.movement.speed.base.pixels",
         source::SAMUS_X_BASE_SPEED,
@@ -248,6 +249,16 @@ pub const FIELDS: &[Field] = &[
         "samus.movement.speed.momentum",
         source::SAMUS_HAS_MOMENTUM_FLAG,
     ),
+    // The jumps' and the fall's vertical motion.
+    wram(
+        "samus.movement.vertical.speed.pixels",
+        source::SAMUS_Y_SPEED,
+    ),
+    wram(
+        "samus.movement.vertical.speed.subpixels",
+        source::SAMUS_Y_SUBSPEED,
+    ),
+    wram("samus.movement.vertical.direction", source::SAMUS_Y_DIR),
     wram("samus.equipment.collected", source::COLLECTED_ITEMS),
     wram("samus.equipment.equipped", source::EQUIPPED_ITEMS),
     wram("samus.equipment.energy.current", source::SAMUS_HEALTH),
@@ -546,6 +557,9 @@ mod tests {
             rules.horizontal.extra_run_subpixels,
             rules.horizontal.acceleration,
             rules.horizontal.momentum,
+            rules.vertical.speed,
+            rules.vertical.subpixels,
+            rules.vertical.direction,
             rules.animation.frame,
             rules.animation.timer,
             rules.animation.new_pose_frame,

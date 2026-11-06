@@ -168,29 +168,9 @@ fn run(instruction: Instruction, samus: &mut Samus, requests: PoseRequests) -> b
 
 /// The pose a transition by speed takes: still when her Y speed is zero.
 const fn by_speed(samus: &Samus, poses: BySpeed) -> PoseId {
-    let vertical = match samus.movement {
-        Movement::Jumping { vertical, .. } | Movement::Falling { vertical } => vertical,
-        Movement::Standing { .. }
-        | Movement::Running { .. }
-        | Movement::Crouching
-        | Movement::MorphBall { .. }
-        | Movement::SpringBall { .. }
-        | Movement::KnockbackOrCrystalFlashEnding
-        | Movement::TurningAround { .. }
-        | Movement::Transition
-        | Movement::Moonwalking
-        | Movement::WallJumping
-        | Movement::RanIntoWall
-        | Movement::Grappling
-        | Movement::DamageBoost
-        | Movement::GrabbedByDraygon
-        | Movement::Shinespark
-        | Movement::Unused(_) => return poses.still,
-    };
-    if vertical.pixels == 0 && vertical.subpixels == 0 {
-        poses.still
-    } else {
-        poses.moving
+    match samus.movement.vertical() {
+        Some(vertical) if vertical.speed.0 != 0 => poses.moving,
+        Some(_) | None => poses.still,
     }
 }
 

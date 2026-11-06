@@ -28,6 +28,7 @@ fn content() -> Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(vec![Vec::new(), vec![run_right], vec![run_right]]),
         speeds: HorizontalSpeeds::default(),
+        vertical: VerticalSpeeds::default(),
         delays: AnimationDelays::default(),
     }
 }
@@ -169,7 +170,7 @@ fn turning_on_the_ground_takes_the_run_speed_into_the_turn() {
             ..Horizontal::default()
         },
     };
-    initialise(&mut movement);
+    initialise(PoseRecord::default(), Facing::Left, &mut movement);
     assert_eq!(
         movement.horizontal(),
         Some(Horizontal {
@@ -195,5 +196,125 @@ fn a_crouching_transition_takes_no_input() {
     assert_eq!(
         input(&samus, &controller, &content),
         PoseRequests::default()
+    );
+}
+
+/// The log's initial jump speeds (`$90:9EB9` on, the air column).
+fn jump_content() -> Content {
+    Content {
+        vertical: VerticalSpeeds {
+            jump: Speed::new(4, 0xE000),
+            wall_jump: Speed::new(4, 0xA000),
+            ..VerticalSpeeds::default()
+        },
+        ..Content::default()
+    }
+}
+
+fn in_jump(pose: u16, jump: Jump, old: PoseRecord) -> Samus {
+    Samus {
+        pose: PoseId(pose),
+        movement: Movement::from(match jump {
+            Jump::Normal => MovementType::NormalJumping,
+            Jump::Spin => MovementType::SpinJumping,
+        }),
+        previous: old,
+        position: crate::state::samus::Point {
+            y: crate::state::samus::Fixed {
+                pixels: 0x0100,
+                subpixels: 0,
+            },
+            ..crate::state::samus::Point::default()
+        },
+        ..Samus::default()
+    }
+}
+
+const fn rising(speed: Speed) -> Vertical {
+    Vertical {
+        speed,
+        direction: YDirection::Up,
+    }
+}
+
+#[test]
+fn a_take_off_from_a_crouch_starts_the_jump_10_pixels_higher() {
+    let crouching = PoseRecord {
+        pose: PoseId(0x27),
+        movement: MovementType::Crouching,
+        ..PoseRecord::default()
+    };
+    let mut samus = in_jump(0x4B, Jump::Normal, crouching);
+    jump_transition(&mut samus, &jump_content());
+    assert_eq!(samus.position.y.pixels, 0x00F6);
+    assert_eq!(
+        samus.movement.vertical(),
+        Some(rising(Speed::new(4, 0xE000)))
+    );
+    // A normal jumping pose past the take-off starts nothing.
+    let mut samus = in_jump(0x4D, Jump::Normal, crouching);
+    jump_transition(&mut samus, &jump_content());
+    assert_eq!(samus.position.y.pixels, 0x0100);
+    assert_eq!(samus.movement.vertical(), Some(Vertical::default()));
+}
+
+#[test]
+fn a_spin_jump_starts_from_the_ground_but_not_from_a_spin_or_wall_jump() {
+    let running = PoseRecord {
+        movement: MovementType::Running,
+        ..PoseRecord::default()
+    };
+    let mut samus = in_jump(0x19, Jump::Spin, running);
+    jump_transition(&mut samus, &jump_content());
+    assert_eq!(
+        samus.movement.vertical(),
+        Some(rising(Speed::new(4, 0xE000)))
+    );
+    for movement in [MovementType::SpinJumping, MovementType::WallJumping] {
+        let old = PoseRecord {
+            movement,
+            ..PoseRecord::default()
+        };
+        let mut samus = in_jump(0x19, Jump::Spin, old);
+        jump_transition(&mut samus, &jump_content());
+        assert_eq!(samus.movement.vertical(), Some(Vertical::default()));
+    }
+}
+
+#[test]
+fn a_spin_jump_turned_around_from_a_spin_turns_its_momentum() {
+    let old = PoseRecord {
+        facing: Facing::Left,
+        movement: MovementType::SpinJumping,
+        ..PoseRecord::default()
+    };
+    let mut movement = Movement::from(MovementType::SpinJumping);
+    if let Some(speed) = movement.horizontal_mut() {
+        speed.base = Speed::new(1, 0);
+        speed.extra_run = Speed::new(0, 0x8000);
+        speed.momentum = true;
+    }
+    initialise(old, Facing::Right, &mut movement);
+    assert_eq!(
+        movement.horizontal(),
+        Some(Horizontal {
+            base: Speed::new(1, 0x8000),
+            extra_run: Speed::ZERO,
+            acceleration: Acceleration::TurningAround,
+            momentum: false,
+        })
+    );
+}
+
+#[test]
+fn a_normal_jump_with_run_speed_decelerates() {
+    let mut movement = Movement::from(MovementType::NormalJumping);
+    if let Some(speed) = movement.horizontal_mut() {
+        speed.extra_run = Speed::new(0, 0x1000);
+    }
+    initialise(PoseRecord::default(), Facing::Right, &mut movement);
+    assert_eq!(
+        movement.horizontal().map(|speed| speed.acceleration),
+        Some(Acceleration::Decelerating)
     );
 }

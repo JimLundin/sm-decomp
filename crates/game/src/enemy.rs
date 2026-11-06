@@ -10,7 +10,7 @@ use crate::state::room::{
     AiHandler, ENEMY_SLOTS, Elevator, ElevatorArming, ElevatorDirection, ElevatorRide,
     ElevatorStatus, EnemyBody, EnemyCommon, EnemyExtraProperty, EnemyProperty,
 };
-use crate::state::samus::{Fixed, Movement, Samus};
+use crate::state::samus::{Fixed, Samus, Speed};
 use crate::state::slots::{Frames, Occupancy, Slot};
 use crate::state::{Button, Controller, State};
 use data::id::SpeciesId;
@@ -290,15 +290,14 @@ fn enter(
 }
 
 /// Stand Samus on the platform, still (`$A3:9612`).
-fn place_samus(slot: &EnemyCommon, samus: &mut Samus) {
+const fn place_samus(slot: &EnemyCommon, samus: &mut Samus) {
     samus.position.y = Fixed {
         pixels: slot.position.y.pixels.wrapping_sub(SAMUS_ABOVE_PLATFORM),
         subpixels: 0,
     };
     samus.position.x.pixels = slot.position.x.pixels;
-    if let Movement::Jumping { vertical, .. } | Movement::Falling { vertical } = &mut samus.movement
-    {
-        *vertical = Fixed::default();
+    if let Some(vertical) = samus.movement.vertical_mut() {
+        vertical.speed = Speed::ZERO;
     }
 }
 

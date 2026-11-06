@@ -98,3 +98,40 @@ fn the_speed_tables_decode_as_the_bank_log_says() {
         }
     );
 }
+
+/// The bank $90 log's physics constants from `$90:9EA1` to `$90:9EE9`.
+const PHYSICS_WORDS: [u16; 36] = [
+    0x1C00, 0x0800, 0x0900, 0x0000, 0x0000, 0x0000, // gravity: subpixels, then pixels
+    0x0001, 0x0000, 0x0001, 0x0000, // the camera's turning offsets, not read
+    0x0001, 0x0000, // the morph ball's bounce, not read
+    0x0004, 0x0001, 0x0002, 0xE000, 0xC000, 0xC000, // jumping
+    0x0006, 0x0002, 0x0003, 0x0000, 0x8000, 0x8000, // with hi-jump
+    0x0004, 0x0000, 0x0002, 0xA000, 0x4000, 0xA000, // wall-jumping
+    0x0005, 0x0000, 0x0003, 0x8000, 0x8000, 0x8000, // with hi-jump
+];
+
+fn the_logs_vertical_speeds() -> VerticalSpeeds {
+    VerticalSpeeds {
+        gravity: Speed::new(0, 0x1C00),
+        jump: Speed::new(4, 0xE000),
+        hi_jump: Speed::new(6, 0),
+        wall_jump: Speed::new(4, 0xA000),
+        wall_hi_jump: Speed::new(5, 0x8000),
+    }
+}
+
+#[test]
+fn the_vertical_constants_take_the_air_column() {
+    let raw = bytes(&PHYSICS_WORDS);
+    let speeds = VerticalSpeeds::decode(raw.first_chunk().unwrap());
+    assert_eq!(speeds, the_logs_vertical_speeds());
+}
+
+#[test]
+fn the_vertical_constants_decode_as_the_bank_log_says() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let speeds = VerticalSpeeds::load(cartridge.lorom()).unwrap();
+    assert_eq!(speeds, the_logs_vertical_speeds());
+}

@@ -60,6 +60,19 @@ macro_rules! speed {
     };
 }
 
+/// A comparator for one part of the vertical motion Samus's movement keeps.
+macro_rules! vertical {
+    ($path:literal, $part:ident) => {
+        Comparator {
+            path: $path,
+            compare: |engine: &State, oracle: &State| {
+                let part = |state: &State| state.samus.movement.vertical().map(|v| v.$part);
+                part(engine).diff(&part(oracle))
+            },
+        }
+    };
+}
+
 /// A comparator for one common field of every enemy slot, compared slot by slot.
 macro_rules! enemy {
     ($path:literal, $($name:ident).+) => {
@@ -251,6 +264,9 @@ const COMPARATORS: &[Comparator] = &[
     speed!("samus.movement.speed.extra_run.subpixels", extra_run),
     speed!("samus.movement.speed.acceleration", acceleration),
     speed!("samus.movement.speed.momentum", momentum),
+    vertical!("samus.movement.vertical.speed.pixels", speed),
+    vertical!("samus.movement.vertical.speed.subpixels", speed),
+    vertical!("samus.movement.vertical.direction", direction),
     field!("samus.equipment.collected", samus.equipment.collected),
     field!("samus.animation.frame", samus.animation.frame),
     field!("samus.animation.timer", samus.animation.timer),

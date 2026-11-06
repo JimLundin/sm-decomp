@@ -9,7 +9,7 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-use data::movement::HorizontalSpeeds;
+use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::{AnimationDelays, AnimationError};
 use data::pose::transition::PoseTransitions;
 use data::pose::{PoseError, Poses};
@@ -145,6 +145,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
         speeds: HorizontalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
+        vertical: VerticalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
         delays: AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?,
     })
 }

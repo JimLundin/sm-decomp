@@ -17,7 +17,7 @@ use game::state::room::{
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
     Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus,
-    Speed, SuperSpecial, SuperSpecialCommand,
+    Speed, SuperSpecial, SuperSpecialCommand, Vertical, YDirection,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
@@ -308,6 +308,8 @@ pub struct Rules<'t> {
     pub last_different_pose: PoseSources,
     /// The horizontal motion of `samus.movement`.
     pub horizontal: HorizontalSources,
+    /// The vertical motion of `samus.movement`.
+    pub vertical: VerticalSources,
     /// `message`.
     pub message: WramWord,
     /// `room.enemies`.
@@ -540,6 +542,11 @@ impl Rules<'_> {
             acceleration: source::SAMUS_X_ACCEL_MODE,
             momentum: source::SAMUS_HAS_MOMENTUM_FLAG,
         },
+        vertical: VerticalSources {
+            speed: source::SAMUS_Y_SPEED,
+            subpixels: source::SAMUS_Y_SUBSPEED,
+            direction: source::SAMUS_Y_DIR,
+        },
     };
 
     /// The State `record` shows, under these rules.
@@ -640,6 +647,9 @@ impl Rules<'_> {
         let mut movement = Movement::from(pose.movement);
         if let Some(speed) = movement.horizontal_mut() {
             *speed = self.horizontal.read(wram)?;
+        }
+        if let Some(vertical) = movement.vertical_mut() {
+            *vertical = self.vertical.read(wram)?;
         }
         Ok(Samus {
             position: Point {
@@ -1215,6 +1225,45 @@ pub struct PoseSources {
     pub facing: WramByte,
     /// Its movement type.
     pub movement: WramByte,
+}
+
+/// Where the original keeps Samus's vertical motion (bank $90 log, `$90:90E2`).
+// Her Y acceleration (`SAMUS_Y_ACCEL`) is no State: `$90:9C5B` sets it every frame before the
+// movement handler reads it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct VerticalSources {
+    /// `.speed`'s pixels.
+    pub speed: WramWord,
+    /// `.speed`'s subpixels.
+    pub subpixels: WramWord,
+    /// `.direction`.
+    pub direction: WramWord,
+}
+
+impl VerticalSources {
+    /// The motion in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a direction past 2, which no routine of the
+    /// original writes.
+    fn read(self, wram: &[u8]) -> Result<Vertical, DecodeError> {
+        let direction = match self.direction.read(wram)? {
+            0 => YDirection::None,
+            1 => YDirection::Up,
+            2 => YDirection::Down,
+            value => {
+                return Err(DecodeError::Unrepresentable {
+                    source: self.direction.name,
+                    value,
+                });
+            }
+        };
+        Ok(Vertical {
+            speed: Speed::new(self.speed.read(wram)?, self.subpixels.read(wram)?),
+            direction,
+        })
+    }
 }
 
 /// Where the original keeps Samus's horizontal motion (bank $90 log, `$90:8E64`).

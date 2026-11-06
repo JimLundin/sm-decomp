@@ -1,5 +1,8 @@
-//! Samus's horizontal speed tables: how fast each movement type accelerates, its top speed
-//! and how fast it slows, and the extra run speed holding the run button adds.
+//! Samus's speed tables: her horizontal and vertical speeds.
+//!
+//! How fast each movement type accelerates, its top speed and how fast it slows, the extra
+//! run speed holding the run button adds, and the vertical constants (gravity and the jumps'
+//! initial speeds).
 //!
 //! Bank $90 log (<https://patrickjohnston.org/bank/90>): `$90:9F55` "Samus X speed table -
 //! normal", one twelve-byte entry a movement type (X acceleration, max X speed, X
@@ -13,8 +16,8 @@ use canonical::Canonical;
 use crate::pose::MovementType;
 use crate::rom::{AddressError, Lorom, RomAddress};
 
-/// A horizontal speed or acceleration: pixels a frame with a 1/65536 fraction, as the
-/// original keeps it in a pixel word and a subpixel word.
+/// A speed or acceleration, horizontal or vertical: pixels a frame with a 1/65536 fraction,
+/// as the original keeps it in a pixel word and a subpixel word.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Speed(pub u32);
 
@@ -166,6 +169,66 @@ impl HorizontalSpeeds {
             normal: SpeedTable::decode(normal),
             extra_run: ExtraRun::decode(extra),
         })
+    }
+}
+
+/// Samus's physics constants (bank $90 log, `$90:9E8B`): gravity from `$90:9EA1`, then the
+/// initial Y speeds from `$90:9EB9`, in rows of six words (pixels in air, water, lava/acid,
+/// then their subpixels).
+pub const PHYSICS_CONSTANTS: RomAddress = RomAddress::new(0x90, 0x9EA1);
+
+/// The constants' bytes from gravity to the end of the wall-jumping-with-hi-jump row
+/// (`$90:9EA1` to `$90:9EE9`).
+pub const PHYSICS_BYTES: usize = 0x48;
+
+/// The air column of the vertical constants; water and lava/acid wait for the liquids.
+///
+/// "Determine Samus Y acceleration" (`$90:9C5B`) sets gravity every frame before the
+/// movement handler; "Make Samus jump" (`$90:98BC`) and "Make Samus wall-jump" (`$90:9949`)
+/// take the initial speeds.
+// open: the water and lava/acid columns (X = 2, 4) join with liquids; no slice 0 room has one.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct VerticalSpeeds {
+    /// Taken from a rise, added to a fall, each frame (`$90:9EA1`, `$90:9EA7`).
+    pub gravity: Speed,
+    /// A jump's first speed (`$90:9EB9`).
+    pub jump: Speed,
+    /// With the hi-jump boots (`$90:9EC5`).
+    pub hi_jump: Speed,
+    /// A wall jump's (`$90:9ED1`).
+    pub wall_jump: Speed,
+    /// With the hi-jump boots (`$90:9EDD`).
+    pub wall_hi_jump: Speed,
+}
+
+impl VerticalSpeeds {
+    /// The constants from their bytes, `$90:9EA1` on.
+    #[must_use]
+    pub fn decode(bytes: &[u8; PHYSICS_BYTES]) -> Self {
+        // Gravity's subpixel word comes first, its pixel word three words on.
+        let gravity = Speed::new(word(bytes, 6), word(bytes, 0));
+        // A row's air pixels at its start, its air subpixels three words on.
+        let row = |at: usize| Speed::new(word(bytes, at), word(bytes, at.wrapping_add(6)));
+        Self {
+            gravity,
+            jump: row(0x18),
+            hi_jump: row(0x24),
+            wall_jump: row(0x30),
+            wall_hi_jump: row(0x3C),
+        }
+    }
+
+    /// The constants in `rom`.
+    ///
+    /// # Errors
+    ///
+    /// [`AddressError`] when they are outside the image.
+    pub fn load(rom: Lorom<'_>) -> Result<Self, AddressError> {
+        let bytes = rom
+            .read(PHYSICS_CONSTANTS, PHYSICS_BYTES)?
+            .first_chunk()
+            .ok_or(AddressError::PastEnd(PHYSICS_CONSTANTS))?;
+        Ok(Self::decode(bytes))
     }
 }
 

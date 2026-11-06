@@ -7,7 +7,11 @@
 //! on the ground (`$90:A67C`) both call "Samus X movement" (`$90:8E64`): the extra run speed
 //! (`$90:973E`), the base speed from the movement type's speed table entry (`$90:9BD1`,
 //! `$90:9A7E`), then the move (`$90:8EA9`). Standing (`$90:A383`) moves by the extra run speed
-//! alone (`$90:9348`) and then stops her.
+//! alone (`$90:9348`) and then stops her. The jumps and the fall are [`air`]'s.
+
+mod air;
+
+pub use air::make_jump;
 
 use data::movement::{HorizontalSpeeds, Speed, SpeedEntry};
 use data::pose::transition::Control;
@@ -24,10 +28,14 @@ use crate::state::samus::{
 const FACING_FORWARD: [PoseId; 2] = [PoseId(0), PoseId(0x9B)];
 
 /// The movement handler's horizontal part for the frame (`$90:A337`).
-// open: the vertical part ("Samus Y movement - no speed calculations", `$90:923F`), the
-// elevator's descent, the footsteps and the standing shot's animation reset join with C3b,
-// C4, C6 and C7; the other movement types join with C3b.
+// open: the ground's vertical part ("Samus Y movement - no speed calculations", `$90:923F`),
+// the elevator's descent, the footsteps and the standing shot's animation reset join with C4,
+// C6 and C7; the morph ball, the spring ball and the air turns join with their movements.
 pub fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
+    if samus.movement.vertical().is_some() {
+        air::run(samus, controller, content);
+        return;
+    }
     let facing = samus.facing;
     let pose = samus.pose;
     let equipped_booster = samus.equipment.equipped.contains(Item::SpeedBooster);
@@ -76,7 +84,7 @@ pub fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
         | Movement::KnockbackOrCrystalFlashEnding
         | Movement::Transition
         | Movement::Moonwalking
-        | Movement::WallJumping
+        | Movement::WallJumping { .. }
         | Movement::RanIntoWall
         | Movement::Grappling
         | Movement::DamageBoost
