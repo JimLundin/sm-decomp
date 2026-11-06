@@ -18,7 +18,7 @@ mod setup;
 mod sprites;
 
 use data::video::{DisplayFrame, LineWrite, MAX_LINES, NORMAL_LINES, VideoMemory};
-use setup::{Bg, Depth, LineSetup, Mode, Plane, RegisterFile};
+use setup::{Bg, Depth, LineSetup, Masks, Mode, Plane, RegisterFile};
 
 /// Dots per line.
 pub const WIDTH: usize = 256;
@@ -175,36 +175,48 @@ struct Winner {
     index: u16,
 }
 
+/// The mask of a plane its screen doesn't window.
+const OPEN: [bool; WIDTH] = [false; WIDTH];
+
 const BACKDROP_WINNER: Winner = Winner {
     plane: Plane::Colour,
     index: 0,
 };
 
 impl Planes {
-    /// One screen's winning plane per dot: the mode's order painted from back to front, so
-    /// the first opaque plane in the order is the last one written.
-    fn screen(&self, setup: &LineSetup, screen: setup::Screen) -> [Winner; WIDTH] {
+    /// One screen's winning plane per dot: the opaque, unmasked plane dot that comes first in
+    /// the mode's order. Each plane is read once; its priority gives its place in the order.
+    fn screen(&self, setup: &LineSetup, masks: &Masks, screen: setup::Screen) -> [Winner; WIDTH] {
+        let order = order(setup.mode);
         let mut winners = [BACKDROP_WINNER; WIDTH];
-        for &(plane, priority) in order(setup.mode).iter().rev() {
+        let mut places = [Place::BEHIND; WIDTH];
+        let layers = self
+            .backgrounds
+            .iter()
+            .zip(Bg::ALL)
+            .filter_map(|(dots, layer)| Some((Plane::Background(layer), dots.as_ref()?)))
+            .chain([(Plane::Sprites, &self.sprites)]);
+        for (plane, dots) in layers {
             if !screen.enables(plane) {
                 continue;
             }
-            let dots = match plane {
-                Plane::Background(layer) => {
-                    match self.backgrounds.get(layer.index()).and_then(Option::as_ref) {
-                        Some(dots) => dots,
-                        None => continue,
-                    }
-                }
-                Plane::Sprites => &self.sprites,
-                Plane::Colour => continue,
-            };
-            let windowed = screen.windows(plane);
-            for ((x, winner), dot) in (0_u8..=u8::MAX).zip(winners.iter_mut()).zip(dots) {
-                if dot.index != 0
-                    && dot.priority == priority
-                    && !(windowed && setup.windows.contains(plane, x))
-                {
+            let ranks = Place::of(order, plane);
+            let mask = masks
+                .get(plane.index())
+                .filter(|_| screen.windows(plane))
+                .unwrap_or(&OPEN);
+            let lanes = winners
+                .iter_mut()
+                .zip(places.iter_mut())
+                .zip(dots)
+                .zip(mask);
+            for (((winner, best), dot), &hidden) in lanes {
+                let place = ranks
+                    .get(usize::from(dot.priority))
+                    .copied()
+                    .unwrap_or(Place::BEHIND);
+                if dot.index != 0 && !hidden && place < *best {
+                    *best = place;
                     *winner = Winner {
                         plane,
                         index: dot.index,
@@ -216,9 +228,31 @@ impl Planes {
     }
 }
 
+/// A plane dot's place in its mode's front-to-back order: lower is nearer the front.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Place(u8);
+
+impl Place {
+    /// Behind every entry of the order: what a plane at a priority the mode doesn't draw takes.
+    const BEHIND: Self = Self(u8::MAX);
+
+    /// The place of `plane` at each priority 0-3.
+    fn of(order: &[Entry], plane: Plane) -> [Self; 4] {
+        let mut places = [Self::BEHIND; 4];
+        for (place, &(entry, priority)) in (0_u8..).zip(order) {
+            if entry == plane
+                && let Some(slot) = places.get_mut(usize::from(priority))
+            {
+                *slot = Self(place);
+            }
+        }
+        places
+    }
+}
+
 impl Winner {
     /// The winner's layer slot for colour math, and its colour.
-    fn shown(self, setup: &LineSetup, cgram: &[u16; 256]) -> Shown {
+    fn shown(self, setup: &LineSetup, palette: &Palette) -> Shown {
         let slot = self.plane.index();
         let direct = matches!(self.plane, Plane::Background(_))
             && setup.math.direct_colour
@@ -226,7 +260,7 @@ impl Winner {
         let colour = if direct {
             direct_colour(self.index)
         } else {
-            palette_colour(cgram, self.index)
+            palette_colour(palette, self.index)
         };
         // Sprites from palettes 0-3 never take colour math.
         let slot = if self.plane == Plane::Sprites && self.index < 0xc0 {
@@ -238,13 +272,20 @@ impl Winner {
     }
 }
 
+/// CGRAM's 256 colours split into red, green and blue once a frame: CGRAM doesn't change
+/// while the frame is shown.
+type Palette = [[i16; 3]; 256];
+
+fn split(cgram: &[u16; 256]) -> Palette {
+    cgram.map(components)
+}
+
 /// A CGRAM colour's red, green and blue.
-fn palette_colour(cgram: &[u16; 256], index: u16) -> [i16; 3] {
-    let word = cgram
+fn palette_colour(palette: &Palette, index: u16) -> [i16; 3] {
+    palette
         .get(usize::from(index & 0xff))
         .copied()
-        .unwrap_or_default();
-    components(word)
+        .unwrap_or_default()
 }
 
 fn components(word: u16) -> [i16; 3] {
@@ -261,10 +302,15 @@ fn direct_colour(index: u16) -> [i16; 3] {
 
 /// The colour math of one dot: the main screen's winner against the sub screen or the fixed
 /// colour, clamped to 5 bits.
-fn shade(setup: &LineSetup, cgram: &[u16; 256], main: Winner, sub: Option<&Winner>, x: u8) -> u16 {
+fn shade(
+    setup: &LineSetup,
+    palette: &Palette,
+    main: Winner,
+    sub: Option<&Winner>,
+    window: bool,
+) -> u16 {
     let math = &setup.math;
-    let main = main.shown(setup, cgram);
-    let window = setup.windows.contains(Plane::Colour, x);
+    let main = main.shown(setup, palette);
     let mut colour = if math.clip.contains(window) {
         [0; 3]
     } else {
@@ -276,7 +322,7 @@ fn shade(setup: &LineSetup, cgram: &[u16; 256], main: Winner, sub: Option<&Winne
         let subscreen = math.operand == setup::Operand::Subscreen;
         let sub = sub
             .filter(|_| subscreen)
-            .map(|sub| sub.shown(setup, cgram))
+            .map(|sub| sub.shown(setup, palette))
             .filter(|sub| sub.slot != BACKDROP);
         let operand = sub.map_or_else(|| math.fixed.map(i16::from), |sub| sub.colour);
         let half = math.half && (sub.is_some() || !subscreen);
@@ -318,10 +364,12 @@ pub fn compose_into(memory: &VideoMemory, frame: &DisplayFrame, picture: &mut Pi
     };
     let mut file = RegisterFile::new(frame.start);
     let mut setup = LineSetup::from(&file);
+    let mut masks = setup.windows.masks();
     // The PPU restarts mosaic blocks at line 1 each frame, and at a MOSAIC write's line.
     let mut mosaic_start: u16 = 1;
     let mut writes = frame.writes.iter().peekable();
     let table = sprites::Table::new(memory);
+    let palette = split(&memory.cgram);
     let mut planes = Planes {
         backgrounds: [None; 4],
         sprites: [Dot::default(); WIDTH],
@@ -353,6 +401,7 @@ pub fn compose_into(memory: &VideoMemory, frame: &DisplayFrame, picture: &mut Pi
         }
         if changed {
             setup = LineSetup::from(&file);
+            masks = setup.windows.masks();
         }
         *brightness = setup.brightness;
         *blank = setup.forced_blank;
@@ -378,13 +427,14 @@ pub fn compose_into(memory: &VideoMemory, frame: &DisplayFrame, picture: &mut Pi
         for (layer, slot) in Bg::ALL.iter().zip(planes.backgrounds.iter_mut()) {
             *slot = background::draw(&context, *layer);
         }
-        let main = planes.screen(&setup, setup.main);
+        let main = planes.screen(&setup, &masks, setup.main);
         let subscreen = (setup.math.operand == setup::Operand::Subscreen
             && setup.math.enabled.contains(&true))
-        .then(|| planes.screen(&setup, setup.sub));
-        for (x, (dot, main)) in (0_u8..=u8::MAX).zip(row.iter_mut().zip(main)) {
-            let sub = subscreen.as_ref().and_then(|line| line.get(usize::from(x)));
-            *dot = shade(&setup, &memory.cgram, main, sub, x);
+        .then(|| planes.screen(&setup, &masks, setup.sub));
+        let colour_window = masks.get(Plane::Colour.index()).unwrap_or(&OPEN);
+        for (x, ((dot, main), &window)) in row.iter_mut().zip(main).zip(colour_window).enumerate() {
+            let sub = subscreen.as_ref().and_then(|line| line.get(x));
+            *dot = shade(&setup, &palette, main, sub, window);
         }
     }
 }

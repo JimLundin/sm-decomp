@@ -69,6 +69,9 @@ pub fn draw(context: &LineContext<'_>, layer: Bg) -> Option<[Dot; WIDTH]> {
         return Some(dots);
     }
     let hires = setup.mode.hires();
+    if !(mosaic || hires || setup.mode.offset_per_tile()) {
+        return Some(slivers(context, &settings, depth, layer, y));
+    }
     // Dots of one tile row share its fetch.
     let mut cached: Option<((u16, u16), Sliver)> = None;
     for (x, dot) in (0_u16..).zip(dots.iter_mut()) {
@@ -104,6 +107,30 @@ pub fn draw(context: &LineContext<'_>, layer: Bg) -> Option<[Dot; WIDTH]> {
         *dot = sliver.dot(lx);
     }
     Some(dots)
+}
+
+/// A line with no mosaic, hires or offset-per-tile: the 33 tile slivers the line crosses,
+/// each decoded whole, shifted by the fine scroll.
+fn slivers(
+    context: &LineContext<'_>,
+    settings: &Background,
+    depth: Depth,
+    layer: Bg,
+    y: u16,
+) -> [Dot; WIDTH] {
+    let ly = y.wrapping_add(settings.vertical) & 0x3ff;
+    let first = settings.horizontal & !7;
+    let mut strip = [Dot::default(); WIDTH + 8];
+    for (column, chunk) in (0_u16..).zip(strip.as_chunks_mut::<8>().0) {
+        let lx = first.wrapping_add(column.wrapping_mul(8)) & 0x3ff;
+        *chunk = Sliver::fetch(context, settings, depth, layer, lx, ly).row();
+    }
+    let fine = usize::from(settings.horizontal & 7);
+    let mut dots = [Dot::default(); WIDTH];
+    if let Some(shown) = strip.get(fine..fine.wrapping_add(WIDTH)) {
+        dots.copy_from_slice(shown);
+    }
+    dots
 }
 
 /// The tile map word at a background position.
@@ -241,6 +268,11 @@ impl Sliver {
             priority: u8::from(tile & 0x2000 != 0),
             horizontal_flip,
         }
+    }
+
+    /// The row's eight dots, left to right.
+    fn row(&self) -> [Dot; 8] {
+        [0, 1, 2, 3, 4, 5, 6, 7].map(|x| self.dot(x))
     }
 
     /// The dot at column `x & 7` of the row.

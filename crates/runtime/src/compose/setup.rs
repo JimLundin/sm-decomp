@@ -1,5 +1,6 @@
 //! The register file a line is composed with, decoded once per change into typed settings.
 
+use super::WIDTH;
 use data::video::PpuRegisters;
 
 /// Whether bit `mask` of `value` is set.
@@ -283,12 +284,24 @@ pub struct Windows {
     pub layers: [LayerWindows; 6],
 }
 
+/// Each layer slot's window mask over the line's dots: backgrounds 1-4, sprites, the colour
+/// window.
+pub type Masks = [[bool; WIDTH]; 6];
+
 impl Windows {
-    /// Whether layer `layer`'s mask covers dot `x`.
-    pub fn contains(&self, layer: Plane, x: u8) -> bool {
-        let Some(mask) = self.layers.get(layer.index()) else {
-            return false;
-        };
+    /// Every layer's mask, worked out once per register change rather than once per dot.
+    pub fn masks(&self) -> Masks {
+        let mut masks = [[false; WIDTH]; 6];
+        for (mask, layer) in masks.iter_mut().zip(&self.layers) {
+            for (x, covered) in (0_u8..=u8::MAX).zip(mask.iter_mut()) {
+                *covered = self.covers(*layer, x);
+            }
+        }
+        masks
+    }
+
+    /// Whether the layer mask `mask` covers dot `x`.
+    fn covers(&self, mask: LayerWindows, x: u8) -> bool {
         let test = |use_: WindowUse, (left, right): (u8, u8)| match use_ {
             WindowUse::Off => None,
             WindowUse::Inside => Some((left..=right).contains(&x)),
