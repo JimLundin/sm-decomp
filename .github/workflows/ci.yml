@@ -2,14 +2,10 @@ name: CI
 
 # The only entry point. It holds the triggers and no steps: each event calls the reusable
 # workflows that own one responsibility each.
-#   quality.yml  formatting, lints, ratchets, type checks, tests, dependency direction,
-#                detached checks and the desktop type-check (no ROM).
-#   verify.yml   the replay pipeline: plan, build, replay, coverage, result, by scope.
-#   bench.yml    replay speed of this ref against a base ref on one runner.
-# Pull requests and pushes to main run quality; pull requests and verify/** pushes run the
-# verify gate. The nightly run is verify full with the faithful-oracle sample. Dispatch
-# runs one action: gate (quality and verify gate), full, rows, coverage or bench.
-# Called jobs report as "<caller job> / <job>", for example "verify / Verify result".
+#   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
+#   verify.yml   the ROM-reading checks: content decoders, free-run gate, lockstep ratchet.
+# Pull requests and pushes to main run quality; pull requests and verify/** pushes run verify.
+# Called jobs report as "<caller job> / <job>", for example "verify / content".
 on:
   pull_request:
   push:
@@ -17,87 +13,32 @@ on:
   schedule:
     - cron: '17 2 * * *'
   workflow_dispatch:
-    inputs:
-      action:
-        description: What to run
-        type: choice
-        options: [gate, full, rows, coverage, bench]
-        default: gate
-      segments:
-        description: Space-separated row ids (action rows, or action bench)
-        required: false
-        default: ''
-      oracle:
-        description: Oracle for lockstep (patched = snesrev compatibility patches, faithful = original game logic)
-        type: choice
-        options: [patched, faithful]
-        default: patched
-      audio_trace:
-        description: Check each lockstep row's ordered Cue/port trace against the physical-audio oracle
-        type: boolean
-        default: false
-      oracle_sample:
-        description: With action full, re-record a rotating sample of at least 30 faithful locks
-        type: boolean
-        default: false
-      cover_routes:
-        description: With action coverage, also replay both routes instrumented
-        type: boolean
-        default: false
-      base:
-        description: With action bench, the ref to time against (default main)
-        required: false
-        default: ''
 
 permissions:
   contents: read
 
 # A new commit replaces its branch's run; nightly and dispatched runs finish.
 concurrency:
-  group: ci-${{ github.ref }}-${{ inputs.action || github.event_name }}-${{ inputs.oracle || 'patched' }}
+  group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 jobs:
   quality:
-    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.action == 'gate')
     permissions:
       contents: read
-      # Quality dispatches the full corpus after a push to main retires a bank file.
-      actions: write
     uses: ./.github/workflows/quality.yml
 
   verify:
     # Replays are most of the runner time, so a Quality failure stops them before they start.
-    # Scheduled and most dispatched runs skip Quality, which doesn't block them.
+    # Scheduled and dispatched runs skip Quality, which doesn't block them.
     needs: quality
     if: >-
       !cancelled()
       && (needs.quality.result == 'success' || needs.quality.result == 'skipped')
       && (github.event_name != 'push' || startsWith(github.ref, 'refs/heads/verify/'))
-      && inputs.action != 'bench'
     permissions:
       contents: read
-      actions: read
-      # Verify's result reports a red nightly on its issue.
-      issues: write
     uses: ./.github/workflows/verify.yml
-    with:
-      scope: ${{ inputs.action || (github.event_name == 'schedule' && 'full' || 'gate') }}
-      segments: ${{ inputs.segments || '' }}
-      oracle: ${{ inputs.oracle || 'patched' }}
-      audio_trace: ${{ inputs.audio_trace == true }}
-      oracle_sample: ${{ github.event_name == 'schedule' || inputs.oracle_sample == true }}
-      cover_routes: ${{ inputs.cover_routes == true }}
-    secrets:
-      SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
-      SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
-
-  bench:
-    if: github.event_name == 'workflow_dispatch' && inputs.action == 'bench'
-    uses: ./.github/workflows/bench.yml
-    with:
-      base: ${{ inputs.base || '' }}
-      segments: ${{ inputs.segments || '' }}
     secrets:
       SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
       SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}

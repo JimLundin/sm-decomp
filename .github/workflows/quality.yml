@@ -1,9 +1,8 @@
 name: Quality
 
-# Quality: formatting, lints, ratchets, type checks, tests, dependency direction, the crate
-# plan's rules, the detached composition checks and a type-check of the Windows desktop. It
-# needs no ROM.
-# ci.yml calls it on every pull request and push to main, and with a dispatched gate.
+# Quality: formatting, line endings, lints, tests, the crate plan's rules and the doc links.
+# It needs no ROM.
+# ci.yml calls it on every pull request and push to main.
 on:
   workflow_call:
 
@@ -16,7 +15,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,125 +27,17 @@ jobs:
         run: |
           crlf=$(git ls-files --eol | awk '$1 == "i/crlf" || $1 == "i/mixed" { print $NF }')
           if [ -n "$crlf" ]; then echo "Committed with CRLF line endings:"; echo "$crlf"; exit 1; fi
-      - name: Lint target packages and the desktop
-        # sm_app is linted apart so its features don't unify into the target packages'.
-        # Its default features are the desktop (on sm); `slice` is the Gate 1 slice.
-        run: |
-          cargo clippy --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets --no-deps
-          cargo clippy --locked -p sm_app --all-targets --no-deps
-          cargo clippy --locked -p sm_app --no-default-features --features slice --all-targets --no-deps
       - name: Lint the rebuild's crates
         # Their lint set is the root Cargo.toml's [workspace.lints] (PRINCIPLES K8).
         run: cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record --all-targets --no-deps
       - name: Test the rebuild's crates
-        run: cargo test --locked -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools --no-fail-fast
-      - name: "Report the empty Tick rate (SLICE0 B1 target: 50k Ticks/s)"
+        run: cargo test --locked -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools -p oracle -p oracle_record --no-fail-fast
+      - name: "Report the empty Tick rate (B1 target: 50k Ticks/s)"
         run: cargo run --locked --release -p game --example empty_ticks
-      - name: "Report the compositor time per frame (SLICE0 A5 target: 0.3 ms)"
+      - name: "Report the compositor time per frame (A5 target: 0.3 ms)"
         run: cargo run --locked --release -p runtime --example compose_bench
       - name: Hold the crate plan's dependency and source rules
         # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
         run: bash tools/check_crate_rules.sh
-      - name: Progress
-        run: |
-          sh tools/progress.sh
-          python3 tools/cycle_report.py
-      # The pipeline tool (crates/sm_tools/src/bin/sm_pipeline) needs only the standard library.
-      - name: Build sm_pipeline
-        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs
-      - name: Code volume (advisory; docs/VERIFY_PIPELINE.md "Code volume")
-        run: |
-          "$RUNNER_TEMP/sm_pipeline" volume | tee "$RUNNER_TEMP/volume.txt"
-          { echo '```'; cat "$RUNNER_TEMP/volume.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - name: Hold the Phase 2 ratchets (RAM coupling, production lines and code volume)
-        env:
-          SM_PIPELINE: ${{ runner.temp }}/sm_pipeline
-        run: python3 tools/ram_ratchet.py
-      - name: Keep the oracle patch policy in step with its inventory
-        run: python3 tools/oracle_patch_policy.py --check
-      - name: Keep the authored corpus recipes and their input language
-        run: |
-          python3 tools/authored_inputs.py check
-          python3 tools/scenario_seeds.py check
-      - name: Keep every mutation anchor present
-        run: |
-          python3 sm/src/verification/player_detached/mutations.py --check-anchors
-          python3 sm/src/verification/session_mutations.py --check-anchors
-      - name: Type-check the Python tooling
-        # pyproject.toml's [tool.mypy] sets strict mode and the files.
-        run: pipx run --spec mypy==2.4.1 mypy
-      - name: Keep target packages independent of the emulator crate
-        # sm_game and sm_runtime may depend only on sm_data, never on sm.
-        run: |
-          for package in sm_game sm_runtime; do
-            deps=$(cargo tree -p $package -e normal --prefix none --format '{p}' | tail -n +2 | grep -v '^sm_data ' || true)
-            if [ -n "$deps" ]; then echo "$package has forbidden dependencies:"; echo "$deps"; exit 1; fi
-          done
-          # sm_data holds content records only and depends on nothing.
-          deps=$(cargo tree -p sm_data -e normal --prefix none --format '{p}' | tail -n +2 || true)
-          if [ -n "$deps" ]; then echo "sm_data has forbidden dependencies:"; echo "$deps"; exit 1; fi
-          # The verification tooling reads the target packages, never sm.
-          deps=$(cargo tree -p sm_tools -e normal --prefix none --format '{p}' | tail -n +2 | grep -Ev '^(sm_data|sm_game|sm_runtime) ' || true)
-          if [ -n "$deps" ]; then echo "sm_tools has forbidden dependencies:"; echo "$deps"; exit 1; fi
-          # The Gate 1 replay runs the legacy host (sm_host), never the emulator crate.
-          deps=$(cargo tree -p sm_tools --features replay -e normal --prefix none --format '{p}' | tail -n +2 | grep -Ev '^(sm_data|sm_game|sm_runtime|sm_host) ' || true)
-          if [ -n "$deps" ]; then echo "sm_tools (replay) has forbidden dependencies:"; echo "$deps"; exit 1; fi
-          # No target package depends on the verification tooling, the slice app included.
-          for package in sm_data sm_game sm_runtime sm_app; do
-            if cargo tree -p $package -e normal --prefix none --format '{p}' | grep -q '^sm_tools '; then
-              echo "$package depends on sm_tools"; exit 1
-            fi
-          done
-          if cargo tree -p sm_app --no-default-features --features slice -e normal --prefix none --format '{p}' | grep -Eq '^(sm_tools|sm) '; then
-            echo "sm_app (slice) depends on sm_tools or sm"; exit 1
-          fi
-      - name: Test target packages
-        # Unit, integration (tests/*.rs) and doc tests of all three packages.
-        # The summary lists every test binary and fails if one expected from
-        # the packages' sources did not run, so an unbuilt test file shows up.
-        run: |
-          if cargo test --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --no-fail-fast > test.log 2>&1; then status=0; else status=$?; fi
-          cat test.log
-          "$RUNNER_TEMP/sm_pipeline" test-summary test.log crates/sm_data crates/sm_game crates/sm_runtime crates/sm_tools || status=1
-          exit $status
-      - name: Run the full corpus after bank retirement
-        # A called workflow sees its caller's event, so this is ci.yml's push to main.
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          BEFORE: ${{ github.event.before }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          deleted=$(git diff --no-renames --diff-filter=D --name-only "$BEFORE" HEAD -- 'sm/src/game/sm_*.rs' 'crates/sm_host/src/game/sm_*.rs')
-          if [ -n "$deleted" ]; then
-            gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main -f action=full
-          fi
-
-  detached:
-    # Detached checks need no game backend, native libraries or ROM.
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install the repository toolchain
-        run: rustup toolchain install
-      - name: Verify composed projectile, animation and palette cores without the game backend
-        run: |
-          out="$RUNNER_TEMP"
-          rustc --edition=2024 -D warnings -O --crate-name sm_data --crate-type rlib crates/sm_data/src/lib.rs -o "$out/libsm_data.rlib"
-          rustc --edition=2024 -D warnings -O --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs --extern "sm_data=$out/libsm_data.rlib" -L "dependency=$out" -o "$out/libsm_game.rlib"
-          rustc --edition=2024 -D warnings -O --crate-name sm_runtime --crate-type rlib crates/sm_runtime/src/lib.rs --extern "sm_data=$out/libsm_data.rlib" -L "dependency=$out" -o "$out/libsm_runtime.rlib"
-          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs --extern "sm_data=$out/libsm_data.rlib" --extern "sm_game=$out/libsm_game.rlib" --extern "sm_runtime=$out/libsm_runtime.rlib" -L "dependency=$out" -o "$out/player-detached"
-          "$out/player-detached"
-
-  desktop-check:
-    # The desktop links only for Windows; this type-checks that target from Linux.
-    # It stays until the shell swap (#248) replaces this shell; linking and running it is #243.
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - name: Type-check the desktop for its Windows target
-        run: |
-          rustup toolchain install
-          rustup target add x86_64-pc-windows-gnu
-          cargo check --locked --target x86_64-pc-windows-gnu -p sm_app
+      - name: Keep every relative Markdown link and anchor valid
+        run: sh tools/check_doc_links.sh
