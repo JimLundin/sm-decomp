@@ -1057,6 +1057,35 @@ cell flashing between palettes 7 and 2. Remaining:
 - the HUD's initialisation (`$80:9A79`; the item icons on pickup, `$80:9A0E` to `$80:9A3E`) joins with room
   entry and item pickup (C12); the unit tests compiled but don't run on this machine.
 
+**C9b status (`lane/slice0-c9b`), the mini-map.** Done: `game::state::hud::MiniMap` holds the
+current area's explored cells (`data::map::MapBits`, the original's 64 by 32 one-bit layout),
+the area, the room's map cell, whether the area's map is collected and whether the mini-map is
+off; `data::map::AreaMaps` loads each area's map tilemap (`$82:964A`, bank `$B5`) and map
+station bitmap (`$82:9717`). `game::mini_map::update` runs after the movement handler, as every
+Samus new state handler does (`$90:E734`, `$90:E8F8`): it marks Samus's cell explored
+(`$90:A97E`), reads the window's explored and station bits with the spill onto the other map
+page (`$90:A9A2` to `$90:AA41`, `$90:AB75`), draws the 5 by 3 cells into HUD columns 26-30
+(`$90:AA43`: revealed cells in palette 3, blank until the map is collected, explored ones in
+palette 2, the diagonal tile's cell above, `$90:AB5F`) and gives Samus's cell palette 7 while
+the requested-NMI byte's bit 3 is clear (`$90:AB4A`). Decoded from `MAP_TILES_EXPLORED`,
+`AREA_INDEX`, `ROOM_X/Y_COORDINATE_ON_MAP`, `HAS_AREA_MAP` and `DEBUG_DISABLE_MINIMAP`, with
+mutants. Lockstep on A2's cache, 2026-11-06 ("before" `6d7c37b`, "after" this branch; Ticks
+differing, first frame):
+
+| Field | `area-brinstar` (476) before | after | `item-morph-ball` (1,427) before | after |
+| --- | --- | --- | --- | --- |
+| `hud.tilemap` | 61, 7 | equal | 131, 7 | 1, 1294 |
+| `video.memory.vram` | 73, 7 | 17, 244 | 197, 7 | 79, 244 |
+| `hud.mini_map.*` (new) | | equal | | equal |
+
+Remaining:
+- open: one `item-morph-ball` frame, 1294, where the window's top-centre cell is blank in the
+  engine and tile `CEh` in the record, not yet attributed;
+- the VRAM differences left start at 244 (B4, B3), the sprites (C6) and the message box (C13);
+- open: `$7E:060B`, where the update leaves Samus's tilemap index (`$90:AA4F`), the other
+  areas' explored cells and their copy on area change (`progress`), the boss rooms' disabling
+  (`$90:A7E2`), and the window's reads past the map's edges (docs/LEGACY.md).
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,
