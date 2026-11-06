@@ -7,6 +7,7 @@ use crate::state::CollectedItems;
 use crate::state::room::{
     BlockColumns, Crumble, ItemGfx, ItemGfxSlot, ItemStep, PlmChoice, Tile, TileNumber,
 };
+use crate::state::video::Video;
 
 /// A two-screen-wide, one-screen-high room of solid blocks, its screens red.
 fn room() -> RoomScoped {
@@ -107,6 +108,7 @@ fn spawns_take_the_highest_free_slot_and_extensions_free_theirs() {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1a,
             step: ItemStep::Spawned,
+            slot: ItemGfxSlot(0),
         })
     );
     assert_eq!(slots[38].generation.0, 3);
@@ -124,7 +126,7 @@ fn a_sleeping_scroll_plm_changes_nothing() {
     let mut room = loaded();
     let before = room.clone();
     for _ in 0..3 {
-        process(&mut room, &mut CollectedItems::default(), &population());
+        process_unseen(&mut room, &mut CollectedItems::default(), &population());
     }
     assert_eq!(room.scroll_areas, before.scroll_areas);
     // Only the item's draw writes a block.
@@ -140,7 +142,7 @@ fn a_sleeping_scroll_plm_changes_nothing() {
 #[test]
 fn touching_the_trigger_changes_the_scroll_areas_on_the_next_pass() {
     let mut room = loaded();
-    process(&mut room, &mut CollectedItems::default(), &population());
+    process_unseen(&mut room, &mut CollectedItems::default(), &population());
     touch_scroll_block(&mut room, TRIGGER).unwrap();
     let touch = &room.plms.slots[37];
     assert_eq!(touch.occupancy, Occupancy::Live(PlmBody::ScrollTouch));
@@ -153,7 +155,7 @@ fn touching_the_trigger_changes_the_scroll_areas_on_the_next_pass() {
     touch_scroll_block(&mut room, TRIGGER).unwrap();
     assert_eq!(scroll(&room, 39), Some(triggered));
 
-    process(&mut room, &mut CollectedItems::default(), &population());
+    process_unseen(&mut room, &mut CollectedItems::default(), &population());
     assert_eq!(room.scroll_areas, [ScrollArea::Red, ScrollArea::Green]);
     assert_eq!(
         scroll(&room, 39),
@@ -205,7 +207,7 @@ fn the_pass_deletes_an_item_collision_plm_and_holds_a_shot_block() {
         slot.occupancy = Occupancy::Live(body);
         slot.common.cursor.delay = Frames(1);
     }
-    process(&mut room, &mut CollectedItems::default(), &population());
+    process_unseen(&mut room, &mut CollectedItems::default(), &population());
     assert_eq!(room.plms.slots[30].occupancy, Occupancy::Free);
     assert_eq!(room.plms.slots[31].occupancy, Occupancy::Live(crumbling));
     assert_eq!(room.plms.slots[31].common.cursor.delay, Frames(1));
@@ -217,7 +219,7 @@ fn an_items_timer_shows_each_frame_for_4_passes() {
     assert_eq!(room.plms.slots[38].common.cursor.delay, Frames(1));
     let mut delays = Vec::new();
     for _ in 0..6 {
-        process(&mut room, &mut CollectedItems::default(), &population());
+        process_unseen(&mut room, &mut CollectedItems::default(), &population());
         delays.push(room.plms.slots[38].common.cursor.delay.0);
     }
     assert_eq!(delays, [4, 3, 2, 1, 4, 3]);
@@ -238,7 +240,7 @@ fn item_step(room: &RoomScoped) -> Option<ItemStep> {
 /// The room past the PLM pass after its load: the item's first run done.
 fn shown() -> RoomScoped {
     let mut room = loaded();
-    process(&mut room, &mut CollectedItems::default(), &population());
+    process_unseen(&mut room, &mut CollectedItems::default(), &population());
     room
 }
 
@@ -274,7 +276,7 @@ fn a_rooms_second_item_loads_into_the_second_slot() {
         .push(entry(PlmKind::Item(ItemPlm::MorphBall, 0x1b), 22, 5));
     let mut room = room();
     spawn_population(&mut room, &population);
-    process(&mut room, &mut CollectedItems::default(), &population);
+    process_unseen(&mut room, &mut CollectedItems::default(), &population);
     assert_eq!(room.item_gfx.next, ItemGfxSlot(2));
     assert_eq!(
         room.item_gfx.loaded,
@@ -294,13 +296,13 @@ fn a_collected_items_first_run_draws_the_empty_item_and_deletes_it() {
     let mut room = loaded();
     let mut collected = CollectedItems::default();
     collected.insert(0x1a);
-    process(&mut room, &mut collected, &population());
+    process_unseen(&mut room, &mut collected, &population());
     assert_eq!(room.item_gfx.next, ItemGfxSlot(1));
     assert_eq!(item_step(&room), Some(ItemStep::Emptied));
     let block = room.blocks[usize::from(ITEM.0)];
     assert_eq!(block.kind, BlockKind::Air(Bts(0x45)));
     assert_eq!(block.tile.number, TileNumber(0xff));
-    process(&mut room, &mut collected, &population());
+    process_unseen(&mut room, &mut collected, &population());
     assert_eq!(room.plms.slots[ITEM_SLOT].occupancy, Occupancy::Free);
 }
 
@@ -316,7 +318,7 @@ fn a_negative_room_argument_is_never_collected() {
 #[test]
 fn an_items_draw_makes_its_block_the_special_block_samus_touches() {
     let mut room = loaded();
-    process(&mut room, &mut CollectedItems::default(), &population());
+    process_unseen(&mut room, &mut CollectedItems::default(), &population());
     assert_eq!(
         room.blocks[usize::from(ITEM.0)].kind,
         BlockKind::Special(PlmChoice::Common(0x45))
@@ -330,7 +332,7 @@ fn an_items_draws_turn_its_block_between_its_two_frames_tiles() {
     let mut room = loaded();
     let mut tiles = Vec::new();
     for _ in 0..10 {
-        process(&mut room, &mut CollectedItems::default(), &population());
+        process_unseen(&mut room, &mut CollectedItems::default(), &population());
         tiles.push(room.blocks[usize::from(ITEM.0)].tile.number.0);
     }
     assert_eq!(
@@ -375,7 +377,7 @@ fn a_triggered_item_collects_its_bit_and_calls_out_of_the_pass() {
     room.plms.slots[ITEM_SLOT].common.cursor.delay = Frames(3);
     touch_item_block(&mut room, ITEM).unwrap();
     let mut collected = CollectedItems::default();
-    let callout = process(&mut room, &mut collected, &population());
+    let callout = process_unseen(&mut room, &mut collected, &population());
     assert_eq!(callout, Some(SlotIndex(38, PhantomData)));
     assert!(collected.contains(0x1a));
     assert_eq!(collected.0[1], 1 << 10);
@@ -386,4 +388,75 @@ fn a_triggered_item_collects_its_bit_and_calls_out_of_the_pass() {
         Occupancy::Live(PlmBody::ItemCollision)
     );
     assert_eq!(room.plms.slots[37].common.cursor.delay, Frames(1));
+}
+
+/// A second item draws its slot's blocks, `90h` and `91h` (`$84:A31B`, `$84:A321`), and keeps
+/// the slot its load took.
+#[test]
+fn a_rooms_second_item_draws_the_blocks_of_its_slot() {
+    let mut population = population();
+    population
+        .entries
+        .push(entry(PlmKind::Item(ItemPlm::MorphBall, 0x1b), 22, 5));
+    let mut room = room();
+    spawn_population(&mut room, &population);
+    let second = BlockIndex(5 * 32 + 22);
+    let tile = |room: &RoomScoped| room.blocks[usize::from(second.0)].tile.number.0;
+    let mut tiles = Vec::new();
+    for _ in 0..5 {
+        process_unseen(&mut room, &mut CollectedItems::default(), &population);
+        tiles.push(tile(&room));
+    }
+    assert_eq!(tiles, [0x90, 0x90, 0x90, 0x90, 0x91]);
+    let slots: Vec<_> = room
+        .plms
+        .slots
+        .iter()
+        .filter_map(|slot| {
+            if let Occupancy::Live(PlmBody::Item { slot, .. }) = slot.occupancy {
+                Some(slot)
+            } else {
+                None
+            }
+        })
+        .collect();
+    assert_eq!(slots, [ItemGfxSlot(1), ItemGfxSlot(0)]);
+}
+
+/// The draws of the pass queue the item's block into the tilemap while it is on screen: the
+/// first frame at the load, the second when its timer runs out.
+#[test]
+fn an_on_screen_items_draws_queue_its_blocks_tiles() {
+    let mut room = loaded();
+    // The item's column, 14h, is on screen once the camera is a screen across.
+    room.camera.x.pixels = 0x100;
+    let mut video = Video::default();
+    let tables = TileTables::default();
+    let pass = |room: &mut RoomScoped, video: &mut Video| {
+        process(
+            &mut Drawing::new(video, &tables),
+            room,
+            &mut CollectedItems::default(),
+            &population(),
+        );
+    };
+    pass(&mut room, &mut video);
+    let words = |video: &Video| -> Vec<Vec<u16>> {
+        video
+            .batch
+            .vram
+            .iter()
+            .filter_map(|transfer| match &transfer.source {
+                crate::state::video::VramSource::Words { words, .. } => Some(words.clone()),
+                crate::state::video::VramSource::Content(_) => None,
+            })
+            .collect()
+    };
+    assert_eq!(words(&video), [[0x3e0, 0x3e1], [0x3e2, 0x3e3]]);
+    for _ in 0..3 {
+        pass(&mut room, &mut video);
+    }
+    assert_eq!(video.batch.vram.len(), 2);
+    pass(&mut room, &mut video);
+    assert_eq!(words(&video)[2..], [[0x3e4, 0x3e5], [0x3e6, 0x3e7]]);
 }

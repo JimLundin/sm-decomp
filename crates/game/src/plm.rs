@@ -6,11 +6,12 @@ use std::marker::PhantomData;
 use data::id::RoomId;
 use data::level::{Tile, TileNumber};
 use data::plm::{Extension, ItemPlm, PlmEntry, PlmKind, PlmPopulation};
+use data::tileset::TileTables;
 
 use crate::message_box;
 use crate::state::room::{
-    Block, BlockIndex, BlockKind, Bts, ItemFrame, ItemStep, Offset, Plm, PlmBody, PlmChoice,
-    PlmCommon, RoomScoped, ScrollPlm, ScrollStep,
+    Block, BlockIndex, BlockKind, Bts, ItemFrame, ItemGfxSlot, ItemStep, Offset, Plm, PlmBody,
+    PlmChoice, PlmCommon, RoomScoped, ScrollPlm, ScrollStep,
 };
 use crate::state::samus::Item;
 use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
@@ -18,6 +19,9 @@ use crate::state::strand::Message;
 use crate::state::{CollectedItems, State};
 use crate::tick::Next;
 
+use self::draw::Drawing;
+
+pub mod draw;
 pub mod item_gfx;
 
 /// The scroll PLM's trigger block's BTS (`$84:B374`): special air whose inside reaction
@@ -32,16 +36,11 @@ const ITEM_FRAME: Frames = Frames(4);
 /// (`$84:887C`).
 const NEVER_COLLECTED: u16 = 0x8000;
 
-/// The tile an item's frame draws (`$84:A30F`, `$84:A315`): the first GFX slot's two tiles
-/// past the item tiles' start, `$8E`, through the frame tables `$84:E05F` and `$84:E077`.
-// open: the GFX slot its list's start loads (`$84:8764`), each later item in a room the next
-// one, two tiles on; slice 0's rooms place one item each.
-const fn item_frame_tile(frame: ItemFrame) -> Tile {
+/// The tile an item's frame draws (`$84:A30F` on): its GFX slot's block for the frame, through
+/// the frame tables `$84:E05F` and `$84:E077`.
+fn item_frame_tile(slot: ItemGfxSlot, frame: ItemFrame) -> Tile {
     Tile {
-        number: TileNumber(match frame {
-            ItemFrame::First => 0x8e,
-            ItemFrame::Second => 0x8f,
-        }),
+        number: TileNumber(item_gfx::frame_block(slot, frame)),
         x_flip: false,
         y_flip: false,
     }
@@ -205,6 +204,8 @@ fn spawn(room: &mut RoomScoped, entry: PlmEntry) {
                 item,
                 collected_bit,
                 step: ItemStep::Spawned,
+                // `$84:84B5`: a spawn zeroes it; the list's GFX load sets it.
+                slot: ItemGfxSlot::default(),
             }
         }
     };
@@ -258,14 +259,23 @@ fn is_collected(collected: &CollectedItems, bit: u16) -> bool {
 
 /// Draw item frame `frame` (`$84:E04F`, `$84:E067`) and wait: the block becomes the special
 /// block Samus collides with, with the frame's tile (`$84:A30F`, `$84:A315`: block type
-/// `Bh`), its BTS kept. The step goes on to the other frame.
-fn draw_frame(room: &mut RoomScoped, block: BlockIndex, frame: ItemFrame) -> ItemStep {
+/// `Bh`), its BTS kept, and the draw queues it into the tilemap if it is on screen. The step
+/// goes on to the other frame.
+fn draw_frame(
+    drawing: &mut Drawing,
+    room: &mut RoomScoped,
+    block: BlockIndex,
+    slot: ItemGfxSlot,
+    frame: ItemFrame,
+) -> ItemStep {
+    let tile = item_frame_tile(slot, frame);
     if let Some(cell) = room.blocks.get_mut(usize::from(block.0)) {
         *cell = Block {
             kind: BlockKind::Special(PlmChoice::Common(ITEM_BLOCK.0)),
-            tile: item_frame_tile(frame),
+            tile,
         };
     }
+    drawing.block(room, block, tile);
     ItemStep::Shown {
         next: match frame {
             ItemFrame::First => ItemFrame::Second,
@@ -276,13 +286,14 @@ fn draw_frame(room: &mut RoomScoped, block: BlockIndex, frame: ItemFrame) -> Ite
 
 /// Draw the empty item (`$84:DFA9`): air with tile `FFh`, its BTS kept, for a frame before its
 /// delete.
-fn draw_empty(room: &mut RoomScoped, block: BlockIndex) -> ItemStep {
+fn draw_empty(drawing: &mut Drawing, room: &mut RoomScoped, block: BlockIndex) -> ItemStep {
     if let Some(cell) = room.blocks.get_mut(usize::from(block.0)) {
         *cell = Block {
             kind: BlockKind::Air(Bts(cell.kind.bts())),
             tile: EMPTY_ITEM_TILE,
         };
     }
+    drawing.block(room, block, EMPTY_ITEM_TILE);
     ItemStep::Emptied
 }
 
@@ -350,15 +361,34 @@ fn update_scroll(
 ///
 /// An item's pickup calls out of the pass into the message box: the slot whose instruction
 /// does is returned, the rest of the pass waiting for [`resume`].
-// open: the PLMs-enabled flag (`$1C23`); the item's draws' tilemap writes; the shot block's
-// crumble, whose draws need its tiles and the same writes, its timer waits.
+// open: the PLMs-enabled flag (`$1C23`); the shot block's crumble, whose draws need its tiles
+// and the same writes, its timer waits.
 pub fn process(
+    drawing: &mut Drawing,
     room: &mut RoomScoped,
     collected: &mut CollectedItems,
     population: &PlmPopulation,
 ) -> Option<SlotIndex<Plm>> {
     let end = room.plms.slots.len();
-    run_below(room, collected, population, end)
+    run_below(drawing, room, collected, population, end)
+}
+
+/// The PLM pass with no video to draw into and no tile tables: its draws queue nothing, for
+/// tests of the PLMs' own state.
+#[cfg(test)]
+pub(crate) fn process_unseen(
+    room: &mut RoomScoped,
+    collected: &mut CollectedItems,
+    population: &PlmPopulation,
+) -> Option<SlotIndex<Plm>> {
+    let mut video = crate::state::video::Video::default();
+    let tables = TileTables::default();
+    process(
+        &mut Drawing::new(&mut video, &tables),
+        room,
+        collected,
+        population,
+    )
 }
 
 /// The rest of the PLM pass from an item's pickup.
@@ -368,12 +398,16 @@ pub fn process(
 /// runs its pickup instruction first (`$84:88F3`): equip and collect its equipment, then
 /// display its message box, the call this returns. Another item's pickup further down
 /// moves the pass to its slot.
+// open: the draw tilemap buffer's index (`$1C25`) restarts at 0 here instead of where the
+// pass left it; it matters only when another PLM drew earlier in the same pass.
 pub fn resume(
     state: &mut State,
+    tables: &TileTables,
     population: &PlmPopulation,
     at: SlotIndex<Plm>,
 ) -> (SlotIndex<Plm>, Next) {
     let index = usize::from(at.0);
+    let mut drawing = Drawing::new(&mut state.video, tables);
     let room = &mut state.room;
     if let Some(slot) = room.plms.slots.get_mut(index)
         && let Occupancy::Live(PlmBody::Item { item, step, .. }) = &mut slot.occupancy
@@ -392,7 +426,7 @@ pub fn resume(
                 slot.common.cursor.delay = Frames(1);
                 let block = slot.common.block;
                 *step = ItemStep::Emptied;
-                draw_empty(room, block);
+                draw_empty(&mut drawing, room, block);
             }
             ItemStep::Spawned
             | ItemStep::Shown { .. }
@@ -401,6 +435,7 @@ pub fn resume(
         }
     }
     run_below(
+        &mut drawing,
         &mut state.room,
         &mut state.collected_items,
         population,
@@ -410,26 +445,16 @@ pub fn resume(
 }
 
 /// Slot `index`'s item at `step`, its timer at `delay`.
-fn set_item(
-    room: &mut RoomScoped,
-    index: usize,
-    item: ItemPlm,
-    collected_bit: u16,
-    step: ItemStep,
-    delay: Frames,
-) {
+fn set_item(room: &mut RoomScoped, index: usize, body: PlmBody, delay: Frames) {
     if let Some(slot) = room.plms.slots.get_mut(index) {
         slot.common.cursor.delay = delay;
-        slot.occupancy = Occupancy::Live(PlmBody::Item {
-            item,
-            collected_bit,
-            step,
-        });
+        slot.occupancy = Occupancy::Live(body);
     }
 }
 
 /// The PLM pass over the slots below `end`, from the highest down.
 fn run_below(
+    drawing: &mut Drawing,
     room: &mut RoomScoped,
     collected: &mut CollectedItems,
     population: &PlmPopulation,
@@ -478,23 +503,38 @@ fn run_below(
                 item,
                 collected_bit,
                 step,
+                slot: gfx_slot,
             } => match step {
                 // The list's start (`$84:E3EF`): load its GFX, then the empty item if it is
                 // collected, else its link and pre-instruction and frame 0's draw.
                 ItemStep::Spawned => {
-                    item_gfx::load(&mut room.item_gfx, item);
+                    let gfx_slot = item_gfx::load(&mut room.item_gfx, item);
                     let (step, delay) = if is_collected(collected, collected_bit) {
-                        (draw_empty(room, block), Frames(1))
+                        (draw_empty(drawing, room, block), Frames(1))
                     } else {
-                        (draw_frame(room, block, ItemFrame::First), ITEM_FRAME)
+                        (
+                            draw_frame(drawing, room, block, gfx_slot, ItemFrame::First),
+                            ITEM_FRAME,
+                        )
                     };
-                    set_item(room, index, item, collected_bit, step, delay);
+                    let body = PlmBody::Item {
+                        item,
+                        collected_bit,
+                        step,
+                        slot: gfx_slot,
+                    };
+                    set_item(room, index, body, delay);
                 }
                 // The next frame's draw, then its wait (`$84:E407`, `$84:E40B`'s go-to back).
-                // open: the draw's tilemap write while the block is on screen (`$84:8DAA`).
                 ItemStep::Shown { next } => {
-                    let step = draw_frame(room, block, next);
-                    set_item(room, index, item, collected_bit, step, ITEM_FRAME);
+                    let step = draw_frame(drawing, room, block, gfx_slot, next);
+                    let body = PlmBody::Item {
+                        item,
+                        collected_bit,
+                        step,
+                        slot: gfx_slot,
+                    };
+                    set_item(room, index, body, ITEM_FRAME);
                 }
                 // `$84:E40F`: set the room argument item collected (`$84:8899`), then the
                 // pickup instruction calls out.
@@ -505,6 +545,7 @@ fn run_below(
                         item,
                         collected_bit,
                         step: ItemStep::PickingUp,
+                        slot: gfx_slot,
                     });
                     return Some(slot_index(index));
                 }

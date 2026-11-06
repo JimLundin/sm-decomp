@@ -203,7 +203,7 @@ fn step(
         // The PLM pass, called out of by an item's pickup.
         Frame::Plms { slot } => {
             let population = content.room_plms.of(state.room.room);
-            let (slot, next) = crate::plm::resume(state, population, slot);
+            let (slot, next) = crate::plm::resume(state, &content.tile_tables, population, slot);
             (Frame::Plms { slot }, next)
         }
     })
@@ -514,8 +514,14 @@ fn gameplay_phase(
         // `$84:85B4`.
         GameplayPhase::Plms => {
             let population = content.room_plms.of(state.room.room);
-            pass.callout =
-                crate::plm::process(&mut state.room, &mut state.collected_items, population);
+            let mut drawing =
+                crate::plm::draw::Drawing::new(&mut state.video, &content.tile_tables);
+            pass.callout = crate::plm::process(
+                &mut drawing,
+                &mut state.room,
+                &mut state.collected_items,
+                population,
+            );
         }
         GameplayPhase::Scrolling => {
             let room = &mut state.room;

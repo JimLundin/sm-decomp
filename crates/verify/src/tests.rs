@@ -1203,6 +1203,7 @@ const PLM_INSTRUCTION: usize = 0x1D27;
 const PLM_ARGUMENT: usize = 0x1DC7;
 const PLM_VARIABLE: usize = 0x1E17;
 const PLM_TIMER: usize = 0xDE1C;
+const PLM_ITEM_GFX: usize = 0xDF0C;
 
 /// The synthetic PLM slots: a sleeping scroll PLM in slot 39, a triggered one in 38, the
 /// Morph Ball in 37, a scroll block touch PLM in 36, an item collision detection PLM in 35 and
@@ -1218,6 +1219,8 @@ fn put_plms(wram: &mut [u8]) {
         );
         put(wram, plm_word(PLM_TIMER, slot), distinct.wrapping_add(0x40));
     }
+    // The Morph Ball's load took the third item GFX slot.
+    put(wram, plm_word(PLM_ITEM_GFX, 37), 4);
     for (slot, id, argument, variable, instruction) in [
         (39, 0xB703, 0x9F05, 0, 0xAF8A),
         (38, 0xB703, 0x9F08, 0x8000, 0xAF8C),
@@ -1249,6 +1252,7 @@ fn decodes_the_plms(state: &State) -> bool {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1A,
             step: ItemStep::Spawned,
+            slot: ItemGfxSlot(2),
         }),
         36 => Occupancy::Live(PlmBody::ScrollTouch),
         35 => Occupancy::Live(PlmBody::ItemCollision),
@@ -1318,6 +1322,9 @@ fn a_plm_word_outside_the_rooms_plms_is_unrepresentable() {
         (PLM_BLOCK, 3, 0x0201, "PLM_BLOCK_INDICES"),
         (PLM_ARGUMENT, 39, 0x9F0B, "PLM_ROOM_ARGUMENTS"),
         (PLM_VARIABLE, 39, 0x0001, "PLM_VARIABLE"),
+        // An item GFX index is an even number below 8.
+        (PLM_ITEM_GFX, 37, 0x0003, "PLM_ITEM_GFX_SLOT"),
+        (PLM_ITEM_GFX, 37, 0x0008, "PLM_ITEM_GFX_SLOT"),
         (PLM_INSTRUCTION, 39, 0xAF86, "PLM_INSTR_LIST_PTRS"),
         // An item collision detection PLM past its delete, a shot block inside a draw.
         (PLM_INSTRUCTION, 35, 0x86BC, "PLM_INSTR_LIST_PTRS"),

@@ -66,6 +66,13 @@ pub const BG1_ROW_BUFFER: BusAddress = BusAddress {
     offset: 0xC948,
 };
 
+/// The PLM draw's tilemap buffer: the top 8x8 row of the blocks a draw instruction draws, then
+/// the bottom row, which the draw (`$84:8DAA`) queues for the VRAM write table.
+pub const PLM_DRAW_TILEMAP: BusAddress = BusAddress {
+    bank: 0x7E,
+    offset: 0xC6C8,
+};
+
 /// The message box's backup of the BG3 tilemap it covers, which `$85:81B5` DMAs from VRAM and
 /// `$85:861F` back.
 pub const MESSAGE_BOX_BACKUP: BusAddress = BusAddress {

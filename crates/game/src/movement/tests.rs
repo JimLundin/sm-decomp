@@ -479,7 +479,7 @@ fn a_ride_step_into_a_scroll_trigger_changes_the_scroll_area_on_that_frames_plm_
 
     touches.apply(&mut room).unwrap();
     assert_eq!(room.scroll_areas, [ScrollArea::Red]);
-    crate::plm::process(
+    crate::plm::process_unseen(
         &mut room,
         &mut crate::state::CollectedItems::default(),
         &population,

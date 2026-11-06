@@ -19,8 +19,8 @@ use data::rom::Lorom;
 use data::room::{Progress, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
 use data::tileset::TilesetId;
 use game::state::room::{
-    Crumble, ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, MorphBallEye, PLM_SLOTS, PlmBody,
-    ScrollPlm,
+    Crumble, ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, ItemGfxSlot, ItemStep, MorphBallEye,
+    PLM_SLOTS, PlmBody, ScrollPlm, ScrollStep,
 };
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
@@ -187,10 +187,11 @@ fn plm_occupant(state: &State) -> [Occupancy<PlmBody>; PLM_SLOTS] {
     let quiet = |body: PlmBody| match body {
         PlmBody::Scroll(_) => PlmBody::Scroll(ScrollPlm::default()),
         PlmBody::ScrollTouch => PlmBody::ScrollTouch,
-        PlmBody::Item { item, step, .. } => PlmBody::Item {
+        PlmBody::Item { item, .. } => PlmBody::Item {
             item,
             collected_bit: 0,
-            step,
+            step: ItemStep::Spawned,
+            slot: ItemGfxSlot::default(),
         },
         PlmBody::ItemCollision => PlmBody::ItemCollision,
         PlmBody::ShotBlock { .. } => PlmBody::ShotBlock {
@@ -212,6 +213,24 @@ const fn scroll(body: PlmBody) -> Option<ScrollPlm> {
         | PlmBody::Item { .. }
         | PlmBody::ItemCollision
         | PlmBody::ShotBlock { .. } => None,
+    }
+}
+
+/// Where a PLM is in its instruction list, for the kinds that keep a step.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+enum PlmStep {
+    /// A scroll PLM's.
+    Scroll(ScrollStep),
+    /// An item's.
+    Item(ItemStep),
+}
+
+/// A PLM's step.
+const fn plm_step(body: PlmBody) -> Option<PlmStep> {
+    match body {
+        PlmBody::Scroll(scroll) => Some(PlmStep::Scroll(scroll.step)),
+        PlmBody::Item { step, .. } => Some(PlmStep::Item(step)),
+        PlmBody::ScrollTouch | PlmBody::ItemCollision | PlmBody::ShotBlock { .. } => None,
     }
 }
 
@@ -653,8 +672,14 @@ const COMPARATORS: &[Comparator] = &[
         .map(|scroll| scroll.changes)),
     plm_body!("room.plms.slots.occupancy.triggered", |body| scroll(body)
         .map(|scroll| scroll.triggered)),
-    plm_body!("room.plms.slots.occupancy.step", |body| scroll(body)
-        .map(|scroll| scroll.step)),
+    plm_body!("room.plms.slots.occupancy.step", plm_step),
+    plm_body!("room.plms.slots.occupancy.slot", |body| match body {
+        PlmBody::Item { slot, .. } => Some(slot),
+        PlmBody::Scroll(_)
+        | PlmBody::ScrollTouch
+        | PlmBody::ItemCollision
+        | PlmBody::ShotBlock { .. } => None,
+    }),
     plm_body!("room.plms.slots.occupancy.collected_bit", collected_bit),
     plm_body!("room.plms.slots.occupancy.crumble", crumble),
     field!("room.item_gfx.next", room.item_gfx.next),

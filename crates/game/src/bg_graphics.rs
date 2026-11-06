@@ -118,7 +118,11 @@ impl Level<'_> {
     /// reads stale RAM in the original; the engine draws tile 0's words or zero words there
     /// (docs/LEGACY.md).
     fn drawn(self, layer: Layer, index: u16) -> Drawn {
-        let tile = Tile::from_word(self.word(layer, index).unwrap_or_default());
+        self.drawn_tile(Tile::from_word(self.word(layer, index).unwrap_or_default()))
+    }
+
+    /// The four tilemap words `tile` draws, with its flips.
+    fn drawn_tile(self, tile: Tile) -> Drawn {
         let number = tile.number.0;
         let tiles = crate::plm::item_gfx::block(&self.room.item_gfx, number)
             .or_else(|| self.tables.block(self.room.area, self.room.tileset, number))
@@ -135,6 +139,18 @@ impl Level<'_> {
             .wrapping_mul(u16::from(width))
             .wrapping_add(block.x)
     }
+}
+
+/// The four tilemap words `tile` draws in `room` as the PLM draw copies them (`$84:8DAA`): top
+/// left, top right, bottom left, bottom right, with the tile's flips.
+pub(crate) fn tile_words(room: &RoomScoped, tables: &TileTables, tile: Tile) -> [u16; 4] {
+    let Drawn {
+        top_left,
+        top_right,
+        bottom_left,
+        bottom_right,
+    } = Level { room, tables }.drawn_tile(tile);
+    [top_left, top_right, bottom_left, bottom_right].map(TilemapEntry::word)
 }
 
 /// A block's four tilemap words as it draws: its tile table entry with its flips.

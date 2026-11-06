@@ -9,7 +9,8 @@
 use data::plm::{ItemPlm, PlmKind, PlmPopulation};
 use data::rom::RomAddress;
 use game::state::room::{
-    BlockIndex, Crumble, ItemFrame, ItemStep, PLM_SLOTS, PlmBody, PlmCommon, ScrollPlm, ScrollStep,
+    BlockIndex, Crumble, ITEM_GFX_SLOTS, ItemFrame, ItemGfxSlot, ItemStep, PLM_SLOTS, PlmBody,
+    PlmCommon, ScrollPlm, ScrollStep,
 };
 use game::state::slots::{Cursor, Frames, Generation, Occupancy, Slot, SlotStore};
 
@@ -63,6 +64,8 @@ const fn item_second_frame(item: ItemPlm) -> u16 {
 }
 /// An item's instruction pointer once the empty item is drawn: its delete (`$84:DFAD`).
 const EMPTY_ITEM_DELETE: u16 = 0xdfad;
+/// The bytes between one item GFX slot's index and the next's.
+const ITEM_GFX_STRIDE: u16 = 2;
 /// An item's triggered byte once touched (`$84:EEC4`).
 const ITEM_TRIGGERED: u16 = 0x00ff;
 
@@ -122,6 +125,8 @@ pub struct PlmSources {
     pub argument: WramArray,
     /// A scroll PLM's triggered flag.
     pub variable: WramArray,
+    /// An item's GFX slot, times two.
+    pub item_gfx: WramArray,
 }
 
 impl PlmSources {
@@ -133,6 +138,7 @@ impl PlmSources {
         instruction: source::PLM_INSTR_LIST_PTRS,
         argument: source::PLM_ROOM_ARGUMENTS,
         variable: source::PLM_VARIABLE,
+        item_gfx: source::PLM_ITEM_GFX_SLOT,
     };
 
     /// Every slot in `wram`, its ID resolved through the room's `population`.
@@ -185,6 +191,7 @@ impl PlmSources {
                     Known::Item(item) => PlmBody::Item {
                         item,
                         collected_bit: word(self.argument)?,
+                        slot: self.item_slot(wram, index)?,
                         step: match word(self.instruction)? {
                             at if at == item_list(item) => ItemStep::Spawned,
                             at if at == item_link(item) => ItemStep::InBox,
@@ -226,6 +233,21 @@ impl PlmSources {
             },
             occupancy,
         })
+    }
+
+    /// The GFX slot of the item in slot `index`: its index is the slot times two.
+    fn item_slot(&self, wram: &[u8], index: u16) -> Result<ItemGfxSlot, DecodeError> {
+        let value = self.item_gfx.word(index)?.read(wram)?;
+        let slot = value
+            .checked_div(ITEM_GFX_STRIDE)
+            .filter(|_| value % ITEM_GFX_STRIDE == 0)
+            .and_then(|slot| u8::try_from(slot).ok())
+            .filter(|&slot| usize::from(slot) < ITEM_GFX_SLOTS)
+            .ok_or(DecodeError::Unrepresentable {
+                source: self.item_gfx.name,
+                value,
+            })?;
+        Ok(ItemGfxSlot(slot))
     }
 
     /// The scroll PLM in slot `index`.

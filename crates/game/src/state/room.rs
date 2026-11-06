@@ -302,6 +302,9 @@ pub enum PlmBody {
         collected_bit: u16,
         /// Its place in its instruction list.
         step: ItemStep,
+        /// The GFX slot its load took (`$7E:DF0C`), which its draws' blocks lie in; 0 until
+        /// the load runs.
+        slot: ItemGfxSlot,
     },
     /// The item collision detection PLM, `$84:EED3`, which touching or shooting an item's
     /// block spawns: its setup moves its own block to 0 and triggers the item on the touched

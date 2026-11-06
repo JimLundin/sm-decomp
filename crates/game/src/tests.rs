@@ -515,16 +515,21 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     let block = BlockIndex(2 * 16 + 4);
     let item = |state: &State| state.room.plms.slots[39].occupancy;
     // The item's first run: its GFX load and frame 0's draw.
-    plm::process(&mut state.room, &mut state.collected_items, &population);
+    plm::process_unseen(&mut state.room, &mut state.collected_items, &population);
     plm::touch_item_block(&mut state.room, block).unwrap();
-    let callout = plm::process(&mut state.room, &mut state.collected_items, &population);
+    let callout = plm::process_unseen(&mut state.room, &mut state.collected_items, &population);
     let slot = SlotIndex(39, PhantomData);
     assert_eq!(callout, Some(slot));
     assert!(state.collected_items.contains(0x1a));
     assert!(state.samus.equipment.collected.is_empty());
 
     // The pickup instruction: equip and collect, then the box.
-    let (at, next) = plm::resume(&mut state, &population, slot);
+    let (at, next) = plm::resume(
+        &mut state,
+        &data::tileset::TileTables::default(),
+        &population,
+        slot,
+    );
     assert_eq!(at, slot);
     assert_eq!(next, Next::Call(Frame::MessageBox(MessageBoxAt::Start)));
     assert_eq!(state.message, Message::MORPH_BALL);
@@ -536,11 +541,17 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1a,
             step: ItemStep::InBox,
+            slot: crate::state::room::ItemGfxSlot(0),
         })
     );
 
     // Back from the box: the empty item drawn, the collision PLM deleted, the pass returns.
-    let (_, next) = plm::resume(&mut state, &population, slot);
+    let (_, next) = plm::resume(
+        &mut state,
+        &data::tileset::TileTables::default(),
+        &population,
+        slot,
+    );
     assert_eq!(next, Next::Return);
     let emptied = state.room.blocks[usize::from(block.0)];
     assert_eq!(
@@ -553,7 +564,7 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
 
     // The next pass deletes the item.
     assert_eq!(
-        plm::process(&mut state.room, &mut state.collected_items, &population),
+        plm::process_unseen(&mut state.room, &mut state.collected_items, &population),
         None
     );
     assert_eq!(item(&state), Occupancy::Free);

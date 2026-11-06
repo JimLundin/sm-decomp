@@ -1455,6 +1455,11 @@ pub const PLM_VARIABLE: WramArray = WramArray {
     name: "PLM_VARIABLE",
     offset: 0x1E17,
 };
+/// Bank $84 log, `$84:8767`: each item PLM's item GFX index, the slot its load took, times two.
+pub const PLM_ITEM_GFX_SLOT: WramArray = WramArray {
+    name: "PLM_ITEM_GFX_SLOT",
+    offset: 0xDF0C,
+};
 /// Bank $84 log: frames until each PLM's next instruction (`$84:84C8`, `$84:85E0`).
 pub const PLM_INSTRUCTION_TIMER: WramArray = WramArray {
     name: "PLM_INSTRUCTION_TIMER",

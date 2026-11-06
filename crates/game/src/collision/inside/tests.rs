@@ -3,7 +3,7 @@ use data::plm::{Extension, PlmEntry, PlmKind, PlmPopulation, ScrollChange, Scrol
 use data::rom::RomAddress;
 
 use super::*;
-use crate::plm::{process, spawn_population};
+use crate::plm::{process_unseen as process, spawn_population};
 use crate::state::CollectedItems;
 use crate::state::room::{Block, BlockColumns, PlmBody, ScrollPlm, ScrollStep, Tile, TileNumber};
 use crate::state::samus::Fixed;

@@ -10,7 +10,7 @@
 use data::plm::ItemPlm;
 use data::tileset::BlockTiles;
 
-use crate::state::room::{ITEM_GFX_SLOTS, ItemGfx, ItemGfxSlot};
+use crate::state::room::{ITEM_GFX_SLOTS, ItemFrame, ItemGfx, ItemGfxSlot};
 
 /// The first block the item GFX slots rewrite, slot 0's first.
 const FIRST_BLOCK: u16 = 0x8e;
@@ -32,6 +32,17 @@ const fn palettes(item: ItemPlm) -> [u8; SLOT_TILES] {
     match item {
         // `$84:E3EF`: every tile palette 0.
         ItemPlm::MorphBall => [0; SLOT_TILES],
+    }
+}
+
+/// The tile table block an item in `slot` draws in `frame` (`$84:A30F` on, through the draw
+/// instruction tables `$84:E05F` and `$84:E077`): the slot's first block, or its second.
+#[must_use]
+pub fn frame_block(slot: ItemGfxSlot, frame: ItemFrame) -> u16 {
+    let first = FIRST_BLOCK.wrapping_add(u16::from(slot.0).wrapping_mul(SLOT_BLOCKS));
+    match frame {
+        ItemFrame::First => first,
+        ItemFrame::Second => first.wrapping_add(1),
     }
 }
 

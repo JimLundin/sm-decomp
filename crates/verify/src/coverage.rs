@@ -558,6 +558,7 @@ pub const FIELDS: &[Field] = &[
         "room.plms.slots.occupancy.step",
         source::PLM_INSTR_LIST_PTRS,
     ),
+    plm("room.plms.slots.occupancy.slot", source::PLM_ITEM_GFX_SLOT),
     plm(
         "room.plms.slots.occupancy.collected_bit",
         source::PLM_ROOM_ARGUMENTS,
@@ -974,7 +975,7 @@ mod tests {
     }
 
     /// The per-slot arrays the decoder reads.
-    const fn array_sources(rules: &Rules<'_>) -> [WramArray; 6] {
+    const fn array_sources(rules: &Rules<'_>) -> [WramArray; 7] {
         let plms = &rules.plms;
         [
             plms.id,
@@ -983,6 +984,7 @@ mod tests {
             plms.instruction,
             plms.argument,
             plms.variable,
+            plms.item_gfx,
         ]
     }
 
