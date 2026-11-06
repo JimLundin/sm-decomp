@@ -198,6 +198,16 @@ pub const FIELDS: &[Field] = &[
         path: "video.batch.vram",
         status: Status::Decoded(Source::WramBlock(source::VRAM_WRITE_QUEUE)),
     },
+    // The halves' flags; each half's pointer is only meaningful with its flag set.
+    wram("video.batch.samus_tiles", source::NMI_COPY_SAMUS_HALVES),
+    wram(
+        "video.batch.samus_tiles.top",
+        source::NMI_COPY_SAMUS_TOP_HALF_SRC,
+    ),
+    wram(
+        "video.batch.samus_tiles.bottom",
+        source::NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
+    ),
     wram_byte("video.nmi_requested", source::WAITING_FOR_NMI),
     wram("samus.position.x.pixels", source::SAMUS_X_POS),
     wram("samus.position.x.subpixels", source::SAMUS_X_SUBPOS),
@@ -635,6 +645,9 @@ mod tests {
             rules.super_special.pose,
             rules.super_special.command,
             rules.visor,
+            rules.samus_tiles.halves,
+            rules.samus_tiles.top,
+            rules.samus_tiles.bottom,
             rules.layer_blending,
             rules.drawing,
             rules.drawn_hook.pointer,

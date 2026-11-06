@@ -16,6 +16,7 @@ use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::palette::VisorColours;
 use data::pose::animation::AnimationDelays;
 use data::pose::spritemap::SamusSpritemaps;
+use data::pose::tiles::{Graphics, SamusTiles};
 use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
@@ -51,6 +52,10 @@ pub struct Content {
     pub face_block_lists: FaceBlockLists,
     /// Samus's spritemaps by pose and frame.
     pub samus_spritemaps: SamusSpritemaps,
+    /// Samus's tile uploads by pose and frame.
+    pub samus_tiles: SamusTiles,
+    /// The ROM graphics uploads read.
+    pub graphics: Graphics,
     /// Her visor's colour cycle.
     pub visor_colours: VisorColours,
     /// The face block's glow colour sets.

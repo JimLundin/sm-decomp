@@ -17,6 +17,7 @@ use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::palette::VisorColours;
 use data::pose::animation::{AnimationDelays, AnimationError};
 use data::pose::spritemap::{SamusSpritemaps, SpritemapError};
+use data::pose::tiles::{GRAPHICS_BANKS, Graphics, SamusTiles};
 use data::pose::transition::PoseTransitions;
 use data::pose::{PoseError, Poses};
 use data::rom::{AddressError, Rom, RomError};
@@ -132,6 +133,8 @@ pub enum ContentError {
     SamusSpritemaps(SpritemapError),
     /// Samus's or the face block's palette tables are outside the image.
     Palettes(AddressError),
+    /// Samus's tiles definitions or graphics are outside the image.
+    SamusTiles(AddressError),
 }
 
 impl fmt::Display for ContentError {
@@ -146,6 +149,7 @@ impl fmt::Display for ContentError {
             Self::EnemyPrograms(error) => write!(f, "the enemy instruction lists: {error:?}"),
             Self::SamusSpritemaps(error) => write!(f, "Samus's spritemaps: {error:?}"),
             Self::Palettes(error) => write!(f, "the palette tables: {error:?}"),
+            Self::SamusTiles(error) => write!(f, "Samus's tiles: {error:?}"),
         }
     }
 }
@@ -164,18 +168,22 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let eye_lists = EyeLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
     let face_block_lists =
         FaceBlockLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
+    let delays = AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?;
+    let samus_tiles = SamusTiles::load(rom.lorom(), &delays).map_err(ContentError::SamusTiles)?;
     Ok(Content {
         poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
         speeds: HorizontalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
         vertical: VerticalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
-        delays: AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?,
+        delays,
         slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
         enemy_programs,
         eye_lists,
         face_block_lists,
         samus_spritemaps: SamusSpritemaps::load(rom.lorom())
             .map_err(ContentError::SamusSpritemaps)?,
+        samus_tiles,
+        graphics: Graphics::load(rom.lorom(), GRAPHICS_BANKS).map_err(ContentError::SamusTiles)?,
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
     })

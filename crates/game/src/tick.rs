@@ -14,6 +14,7 @@ use crate::scrolling;
 use crate::session::{Rules, SessionFault};
 use crate::state::samus::SuperSpecial;
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
+use crate::state::video::SamusTileUploads;
 use crate::state::{GameMode, NmiTiming, State};
 
 /// What a frame's step asks the dispatcher to do next.
@@ -274,8 +275,10 @@ fn main_loop_phase(phase: MainLoopPhase, state: &mut State, _rules: Rules) {
             state.rng.advance();
         }
         MainLoopPhase::ClearHighOam => state.video.batch.clear_high_oam(),
-        // open: the Samus tile transfer flags join with her drawing (C6).
-        MainLoopPhase::ResetOamAndSamusTransfers => state.video.batch.restart_sprites(),
+        MainLoopPhase::ResetOamAndSamusTransfers => {
+            state.video.batch.restart_sprites();
+            state.video.batch.samus_tiles = SamusTileUploads::default();
+        }
         MainLoopPhase::FinaliseOam => state.video.batch.finalise_oam(),
         // open: the HDMA objects and music queue (B6, C11), the sound effects (C11), and the
         // spare-CPU display with its previous-pad update.

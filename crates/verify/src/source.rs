@@ -859,6 +859,22 @@ pub const SAMUS_Y_RADIUS: WramWord = WramWord {
     name: "SAMUS_Y_RADIUS",
     offset: 0x0B00,
 };
+/// Bank $92 log, `$92:8000`: the Samus top and bottom half tile transfer flags, a byte each;
+/// the main loop clears them (`$82:8948`), `$80:9376` reads them.
+pub const NMI_COPY_SAMUS_HALVES: WramWord = WramWord {
+    name: "NMI_COPY_SAMUS_HALVES",
+    offset: 0x071D,
+};
+/// Bank $92 log, `$92:8000`: Samus's top half tiles definition, a bank $92 pointer.
+pub const NMI_COPY_SAMUS_TOP_HALF_SRC: WramWord = WramWord {
+    name: "NMI_COPY_SAMUS_TOP_HALF_SRC",
+    offset: 0x071F,
+};
+/// Bank $92 log, `$92:8000`: Samus's bottom half tiles definition, a bank $92 pointer.
+pub const NMI_COPY_SAMUS_BOTTOM_HALF_SRC: WramWord = WramWord {
+    name: "NMI_COPY_SAMUS_BOTTOM_HALF_SRC",
+    offset: 0x0721,
+};
 /// Bank $90 log, `$90:EB4B`: Samus's drawing handler, a bank $90 routine pointer.
 pub const SAMUS_DRAW_HANDLER: WramWord = WramWord {
     name: "SAMUS_DRAW_HANDLER",

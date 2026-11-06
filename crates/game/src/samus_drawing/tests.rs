@@ -1,9 +1,10 @@
 use super::*;
 use crate::state::slots::Frames;
-use crate::state::video::{OamEntry, SpriteCount};
+use crate::state::video::{OamEntry, SamusTileUploads, SpriteCount};
 use crate::state::{FrameCount, State};
 use data::pose::Poses;
 use data::pose::spritemap::{SamusSpritemaps, SpritemapIndex};
+use data::pose::tiles::{FrameTiles, SamusTiles, TileDefinition, TileDefinitionId};
 use data::spritemap::Spritemap;
 
 /// A pose definition: facing, movement type, Y offset.
@@ -35,6 +36,23 @@ fn content() -> Content {
                 map(&[sprite(0, 0, 3), sprite(8, 0, 4)]),
             ],
             PositionOffsets::default(),
+        ),
+        samus_tiles: SamusTiles::new(
+            vec![
+                Vec::new(),
+                vec![FrameTiles {
+                    top: TileDefinitionId(1),
+                    bottom: Some(TileDefinitionId(2)),
+                }],
+                vec![
+                    FrameTiles::default(),
+                    FrameTiles {
+                        top: TileDefinitionId(0),
+                        bottom: None,
+                    },
+                ],
+            ],
+            vec![TileDefinition::default(); 3],
         ),
         ..Content::default()
     }
@@ -185,4 +203,43 @@ fn the_inanimate_handler_draws_every_frame_and_the_hidden_one_never() {
         draw(&mut hidden, &content());
         assert_eq!(hidden.video.batch.sprites, SpriteCount(0));
     }
+}
+
+#[test]
+fn drawing_queues_the_frames_tile_uploads_flickering_or_not() {
+    let queued = |top, bottom: Option<u16>| SamusTileUploads {
+        top: Some(TileDefinitionId(top)),
+        bottom: bottom.map(TileDefinitionId),
+    };
+    let mut drawn = state(1);
+    drawn.samus.invincibility = Frames(30);
+    drawn.clock.counters.completed = FrameCount(1);
+    draw(&mut drawn, &content());
+    assert_eq!(tiles(&drawn), []);
+    assert_eq!(drawn.video.batch.samus_tiles, queued(1, Some(2)));
+    // A frame without bottom tiles leaves the bottom half's upload as it was.
+    let mut rolling = state(2);
+    rolling.samus.animation.frame = AnimationFrame(1);
+    rolling.video.batch.samus_tiles.bottom = Some(TileDefinitionId(2));
+    draw(&mut rolling, &content());
+    assert_eq!(rolling.video.batch.samus_tiles, queued(0, Some(2)));
+}
+
+#[test]
+fn the_elevator_queues_no_tiles_on_odd_frames_and_hidden_samus_none() {
+    let mut riding = state(1);
+    riding.samus.drawing = DrawingHandler::UsingElevator;
+    riding.clock.counters.completed = FrameCount(1);
+    draw(&mut riding, &content());
+    assert_eq!(riding.video.batch.samus_tiles, SamusTileUploads::default());
+    riding.clock.counters.completed = FrameCount(2);
+    draw(&mut riding, &content());
+    assert_eq!(
+        riding.video.batch.samus_tiles.top,
+        Some(TileDefinitionId(1))
+    );
+    let mut hidden = state(1);
+    hidden.samus.drawing = DrawingHandler::Hidden;
+    draw(&mut hidden, &content());
+    assert_eq!(hidden.video.batch.samus_tiles, SamusTileUploads::default());
 }

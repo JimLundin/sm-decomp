@@ -9,6 +9,7 @@
 //! counters. Otherwise increment the 8-bit lag counter and raise the maximum lag to it. Either
 //! way, increment the NMI counter.
 
+use crate::pose::Content;
 use crate::session::Rules;
 use crate::state::slots::Frames;
 use crate::state::{Buttons, Controller, Counters, FrameCount, NmiTiming, State};
@@ -64,7 +65,13 @@ pub enum NmiKind {
 }
 
 /// The NMI at the end of a Tick, arriving as `timing` says with the pad as auto-read.
-pub fn nmi(state: &mut State, rules: Rules, timing: NmiTiming, pad: Buttons) -> NmiKind {
+pub fn nmi(
+    state: &mut State,
+    rules: Rules,
+    content: &Content,
+    timing: NmiTiming,
+    pad: Buttons,
+) -> NmiKind {
     state.timing.last = timing;
     // The engine serialises the strands, so a strand that overran has already set its
     // request by the time its NMI runs; on the console that NMI found the flag clear.
@@ -72,7 +79,7 @@ pub fn nmi(state: &mut State, rules: Rules, timing: NmiTiming, pad: Buttons) -> 
         NmiTiming::Disabled => return NmiKind::Disabled,
         NmiTiming::OnTime if state.video.nmi_requested => {
             for command in COMMIT {
-                run(command, state, rules, pad);
+                run(command, state, rules, content, pad);
             }
             state.video.nmi_requested = false;
             commit_counters(&mut state.clock.counters);
@@ -90,15 +97,17 @@ pub fn nmi(state: &mut State, rules: Rules, timing: NmiTiming, pad: Buttons) -> 
 }
 
 /// One commit step.
-fn run(command: NmiCommand, state: &mut State, rules: Rules, pad: Buttons) {
+fn run(command: NmiCommand, state: &mut State, rules: Rules, content: &Content, pad: Buttons) {
     match command {
         NmiCommand::OamAndCgram => state.video.upload_oam_and_cgram(),
+        NmiCommand::SamusTiles => state
+            .video
+            .transfer_samus_tiles(&content.samus_tiles, &content.graphics),
         NmiCommand::IoRegisters => state.video.commit_registers(),
-        NmiCommand::VramWrites => state.video.process_vram_writes(),
-        // open: Samus's and the animated tiles join with their content (B3, C lanes); mode 7
-        // and the read table have no slice 0 user; HDMA is B6's.
-        NmiCommand::SamusTiles
-        | NmiCommand::AnimatedTiles
+        NmiCommand::VramWrites => state.video.process_vram_writes(&content.graphics),
+        // open: the animated tiles join with their content (B3, C lanes); mode 7 and the
+        // read table have no slice 0 user; HDMA is B6's.
+        NmiCommand::AnimatedTiles
         | NmiCommand::HdmaQueue
         | NmiCommand::Mode7
         | NmiCommand::VramReads

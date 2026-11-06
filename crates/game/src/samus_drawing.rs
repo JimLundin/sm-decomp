@@ -225,20 +225,42 @@ pub fn draw(state: &mut State, content: &Content) {
             if !flickers_off(&state.samus, odd_frame) {
                 draw_body(state, content);
             }
+            queue_tiles(state, content);
         }
         // `$90:EC14`: on odd frames of the frame counter the ride leaves her out.
         DrawingHandler::UsingElevator if odd_frame => {}
         // `$90:EC1D`, draw inanimate Samus `$90:8A00`: `$90:85E2` without the flicker.
-        DrawingHandler::UsingElevator | DrawingHandler::Inanimate => draw_body(state, content),
+        DrawingHandler::UsingElevator | DrawingHandler::Inanimate => {
+            draw_body(state, content);
+            queue_tiles(state, content);
+        }
         DrawingHandler::Hidden => {}
+    }
+}
+
+/// Bank `$92` log, set Samus tiles definitions for current animation `$92:8000`, which
+/// `$90:85E2` (flickering or not) and `$90:8A00` end with: her pose and frame's top half
+/// tiles, and her bottom half's when the frame has them, queue for the NMI's upload
+/// (`$80:9376`).
+///
+/// A frame past the pose's decoded frames queues nothing; the original would read the bytes
+/// after its list, and no animation reaches one.
+fn queue_tiles(state: &mut State, content: &Content) {
+    let samus = &state.samus;
+    let Some(frame) = content.samus_tiles.frame(samus.pose, samus.animation.frame) else {
+        return;
+    };
+    let queued = &mut state.video.batch.samus_tiles;
+    queued.top = Some(frame.top);
+    if let Some(bottom) = frame.bottom {
+        queued.bottom = Some(bottom);
     }
 }
 
 /// Draw Samus's body: her top half, then her bottom half if her movement type's handler
 /// says so (`$90:85E2` past the flicker, `$90:8A00`).
 // open: the half indices the original keeps (`$0AC8`, `$0ACA`, which `$90:8A00` leaves
-// alone) and the body position (`$0B04`, `$0B06`) join the State when a reader needs them;
-// the tile transfers (`$92:8000`) are C6b.
+// alone) and the body position (`$0B04`, `$0B06`) join the State when a reader needs them.
 fn draw_body(state: &mut State, content: &Content) {
     let samus = &state.samus;
     let Some(definition) = content.poses.get(samus.pose) else {

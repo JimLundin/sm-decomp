@@ -48,7 +48,9 @@ pub fn run(args: &[String]) -> Result<String, String> {
     };
     let image = std::fs::read(rom).map_err(|error| format!("{rom}: {error}"))?;
     let content = Arc::new(content(image).map_err(|error| format!("{rom}: {error}"))?);
-    let rooms = slice_zero_rooms().with_programs(content.enemy_programs.clone());
+    let rooms = slice_zero_rooms()
+        .with_programs(content.enemy_programs.clone())
+        .with_samus_tiles(content.samus_tiles.clone());
     let mut out = String::new();
     let mut reports = Vec::new();
     for id in rows {

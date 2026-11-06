@@ -117,6 +117,19 @@ pub struct DelayList {
 }
 
 impl DelayList {
+    /// How many bytes the list has: the frames her animation can reach and the instruction
+    /// bytes after them.
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.bytes.len()
+    }
+
+    /// Whether the list has no bytes.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.bytes.is_empty()
+    }
+
     /// The item at `frame`; `None` past the list's end.
     #[must_use]
     pub fn at(&self, frame: AnimationFrame) -> Option<DelayItem> {

@@ -10,6 +10,7 @@ use std::fmt;
 use data::enemy::SpeciesMap;
 use data::enemy::program::EnemyPrograms;
 use data::id::{Line, RoomId};
+use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{
@@ -27,10 +28,10 @@ use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
     BACKGROUNDS, BgMode, Brightness, CGRAM_COLOURS, Colour, ColourMath, ColourMathLayers,
-    ColourMathSelect, ColourWrite, DisplaySettings, DmaChannel, FixedColour, Layers, Mode7,
-    Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Registers, Scroll,
-    TileBases, TilemapBase, TilemapEntry, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep,
-    VramTransfer, VramWord, WindowSettings, Windows,
+    ColourMathSelect, ColourWrite, DisplaySettings, DmaChannel, FixedColour, GraphicsRef, Layers,
+    Mode7, Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Registers,
+    RomWords, SamusTileUploads, Scroll, TileBases, TilemapBase, TilemapEntry, VRAM_WORDS, Video,
+    VideoMemory, VramSource, VramStep, VramTransfer, VramWord, WindowSettings, Windows,
 };
 use game::state::{
     Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
@@ -63,6 +64,8 @@ pub struct RoomMap {
     pub species: SpeciesMap,
     /// Their instruction lists, by the pointers an enemy slot holds.
     pub programs: EnemyPrograms,
+    /// Samus's tiles definitions, by the pointers her tile uploads hold.
+    pub samus_tiles: SamusTiles,
 }
 
 impl RoomMap {
@@ -70,6 +73,15 @@ impl RoomMap {
     #[must_use]
     pub fn with_programs(self, programs: EnemyPrograms) -> Self {
         Self { programs, ..self }
+    }
+
+    /// The map with `samus_tiles` as Samus's tiles definitions.
+    #[must_use]
+    pub fn with_samus_tiles(self, samus_tiles: SamusTiles) -> Self {
+        Self {
+            samus_tiles,
+            ..self
+        }
     }
 
     /// The content's ID for the room whose header is at `header`.
@@ -258,6 +270,8 @@ pub struct Rules<'t> {
     pub vram_queue: WramBlock,
     /// `video.batch.vram`: the queue's end.
     pub vram_queue_tail: WramWord,
+    /// `video.batch.samus_tiles`.
+    pub samus_tiles: SamusTileSources,
     /// `video.batch.registers.forced_blank`, `.brightness`.
     pub inidisp: WramByte,
     /// `video.batch.registers.main_screen`.
@@ -607,6 +621,11 @@ impl Rules<'_> {
         palette_buffer: source::PALETTE_BUFFER,
         vram_queue: source::VRAM_WRITE_QUEUE,
         vram_queue_tail: source::VRAM_WRITE_QUEUE_TAIL,
+        samus_tiles: SamusTileSources {
+            halves: source::NMI_COPY_SAMUS_HALVES,
+            top: source::NMI_COPY_SAMUS_TOP_HALF_SRC,
+            bottom: source::NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
+        },
         inidisp: source::REG_INIDISP,
         main_screen: source::REG_TM,
         sub_screen: source::REG_TS,
@@ -816,7 +835,7 @@ impl Rules<'_> {
                 last,
                 ..Timing::default()
             },
-            video: self.video(record)?,
+            video: self.video(record, rooms)?,
             samus: self.samus(wram)?,
             room: RoomScoped {
                 room,
@@ -909,7 +928,7 @@ impl Rules<'_> {
     }
 
     /// Video: the PPU's memories and registers, the NMI request and the batch.
-    fn video(&self, record: &FrameRecord) -> Result<Video, DecodeError> {
+    fn video(&self, record: &FrameRecord, rooms: &RoomMap) -> Result<Video, DecodeError> {
         let wram = &*record.wram;
         Ok(Video {
             memory: video_memory(record)?,
@@ -922,6 +941,7 @@ impl Rules<'_> {
                 oam: oam(self.oam_buffer.read(wram)?)?,
                 cgram: colours(self.palette_buffer.read(wram)?),
                 vram: self.vram_queue(wram)?,
+                samus_tiles: self.samus_tiles.read(wram, &rooms.samus_tiles)?,
                 ..NmiBatch::default()
             },
         })
@@ -1352,7 +1372,12 @@ fn vram_source(wram: &[u8], bank: u8, from: u16, bytes: usize) -> VramSource {
     let start = match bank {
         0x7E => usize::from(from),
         0x7F => usize::from(from) | 0x1_0000,
-        _ => return VramSource::Content(u16::try_from(bytes / 2).unwrap_or(u16::MAX)),
+        _ => {
+            return VramSource::Content(RomWords {
+                from: GraphicsRef { bank, offset: from },
+                words: u16::try_from(bytes / 2).unwrap_or(u16::MAX),
+            });
+        }
     };
     let words = (0..bytes / 2)
         .map(|index| {
@@ -1638,6 +1663,50 @@ impl SuperSpecialSources {
             value => return Err(unrepresentable(self.command, value)),
         };
         Ok(SuperSpecial { pose, command })
+    }
+}
+
+/// Where Samus's tile uploads are: the two halves' flags, a byte each, then each half's
+/// tiles definition pointer in bank $92 (bank $92 log, `$92:8000`; bank $80 log, `$80:9376`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SamusTileSources {
+    /// The top half's flag, then the bottom half's.
+    pub halves: WramWord,
+    /// The top half's definition.
+    pub top: WramWord,
+    /// The bottom half's definition.
+    pub bottom: WramWord,
+}
+
+impl SamusTileSources {
+    /// The uploads: a half whose flag is 1 uploads the definition its pointer names; one
+    /// whose flag and pointer are 0 (as the main loop leaves them, `$82:8948`) none.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a flag other than 0 or 1, a pointer beside a
+    /// clear flag, or a pointer that names no definition the frames reach.
+    fn read(self, wram: &[u8], tiles: &SamusTiles) -> Result<SamusTileUploads, DecodeError> {
+        let halves = self.halves.read(wram)?;
+        let [top_flag, bottom_flag] = halves.to_le_bytes();
+        let half = |flag: u8, pointer: WramWord| {
+            let value = pointer.read(wram)?;
+            let unrepresentable =
+                |source: &'static str, value| DecodeError::Unrepresentable { source, value };
+            match flag {
+                0 if value == 0 => Ok(None),
+                0 => Err(unrepresentable(pointer.name, value)),
+                1 => tiles
+                    .at_pointer(value)
+                    .map(Some)
+                    .ok_or_else(|| unrepresentable(pointer.name, value)),
+                _ => Err(unrepresentable(self.halves.name, halves)),
+            }
+        };
+        Ok(SamusTileUploads {
+            top: half(top_flag, self.top)?,
+            bottom: half(bottom_flag, self.bottom)?,
+        })
     }
 }
 

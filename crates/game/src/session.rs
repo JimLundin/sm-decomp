@@ -267,7 +267,13 @@ impl Begun<'_> {
         if let Err(fault) = ran {
             return Err(session.poison(fault));
         }
-        let kind = nmi::nmi(&mut session.state, session.rules, input.timing, input.pad);
+        let kind = nmi::nmi(
+            &mut session.state,
+            session.rules,
+            &session.content,
+            input.timing,
+            input.pad,
+        );
         let clock = &mut session.state.clock;
         let tick = clock.tick;
         clock.tick = Tick(tick.0.wrapping_add(1));

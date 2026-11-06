@@ -30,7 +30,8 @@ use crate::source::{self, WramWord};
 ///
 /// The rooms have the IDs the content gives them (`data::room::RoomMap::slice_zero`, the
 /// Morph Ball Room at `$8F:9E9F`), the species theirs (`data::enemy::SpeciesMap::slice_zero`).
-/// It holds no enemy programs: [`RoomMap::with_programs`] adds the content's.
+/// It holds no enemy programs or tiles definitions: [`RoomMap::with_programs`] and
+/// [`RoomMap::with_samus_tiles`] add the content's.
 #[must_use]
 pub fn slice_zero_rooms() -> RoomMap {
     RoomMap {
@@ -40,6 +41,7 @@ pub fn slice_zero_rooms() -> RoomMap {
             .collect(),
         species: data::enemy::SpeciesMap::slice_zero(),
         programs: data::enemy::program::EnemyPrograms::default(),
+        samus_tiles: data::pose::tiles::SamusTiles::default(),
     }
 }
 
@@ -156,6 +158,12 @@ const COMPARATORS: &[Comparator] = &[
     field!("video.memory.oam", video.memory.oam),
     field!("video.committed", video.committed),
     field!("video.dma", video.dma),
+    field!("video.batch.samus_tiles", video.batch.samus_tiles),
+    field!("video.batch.samus_tiles.top", video.batch.samus_tiles.top),
+    field!(
+        "video.batch.samus_tiles.bottom",
+        video.batch.samus_tiles.bottom
+    ),
     field!(
         "video.batch.registers.forced_blank",
         video.batch.registers.forced_blank

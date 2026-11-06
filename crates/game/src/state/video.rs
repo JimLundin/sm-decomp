@@ -4,6 +4,7 @@
 //! image itself; meaning for widescreen and HD art travels in the intent output instead.
 
 use canonical::Canonical;
+pub use data::pose::tiles::{GraphicsRef, TileDefinitionId};
 
 use super::slots::FlagSet;
 
@@ -385,10 +386,27 @@ pub const DMA_CHANNELS: usize = 8;
 pub enum VramSource {
     /// Words from a State buffer, as the NMI's DMA reads them.
     Words(Vec<u16>),
-    /// ROM graphics that content doesn't decode yet, by length in words.
-    // open: B3's graphics content gives this a `data` reference; until then the upload
-    // writes nothing and lockstep shows it.
-    Content(u16),
+    /// ROM graphics, which the content's graphics resolve.
+    Content(RomWords),
+}
+
+/// Words of ROM graphics: where they start and how many.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RomWords {
+    /// The first word.
+    pub from: GraphicsRef,
+    /// How many.
+    pub words: u16,
+}
+
+/// Samus's tile uploads the next requested NMI makes: the tiles definition of each half her
+/// drawing queued this frame (bank `$92` log, `$92:8000`; bank `$80` log, `$80:9376`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SamusTileUploads {
+    /// The top half's.
+    pub top: Option<TileDefinitionId>,
+    /// The bottom half's.
+    pub bottom: Option<TileDefinitionId>,
 }
 
 impl Default for VramSource {
@@ -435,6 +453,8 @@ pub struct NmiBatch {
     pub cgram: [Colour; CGRAM_COLOURS],
     /// The VRAM uploads, in queue order.
     pub vram: Vec<VramTransfer>,
+    /// Samus's tile uploads.
+    pub samus_tiles: SamusTileUploads,
 }
 
 impl Default for NmiBatch {
@@ -446,6 +466,7 @@ impl Default for NmiBatch {
             sprites: SpriteCount::default(),
             cgram: [Colour::default(); CGRAM_COLOURS],
             vram: Vec::new(),
+            samus_tiles: SamusTileUploads::default(),
         }
     }
 }
@@ -458,7 +479,8 @@ pub struct Video {
     /// The registers the PPU holds now.
     pub committed: Registers,
     /// The DMA channels' registers as the last transfer left them.
-    // open: the NMI's DMAs and HDMA queue don't set them yet; only the decoder does.
+    // open: of the NMI's DMAs only Samus's tiles set them yet; OAM and CGRAM (`$80:933A`),
+    // the VRAM write table (`$80:8C83`) and the HDMA queue join with their channels.
     pub dma: [DmaChannel; DMA_CHANNELS],
     /// The batch for the next requested NMI.
     pub batch: NmiBatch,

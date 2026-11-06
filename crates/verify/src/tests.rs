@@ -7,6 +7,7 @@ use crate::enemy::AiVariables;
 use data::enemy::SpeciesMap;
 use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::id::{Line, RoomId, SpeciesId};
+use data::pose::tiles::{SamusTiles, TileDefinition, TileDefinitionId};
 use data::rom::{Lorom, RomAddress};
 use game::enemy::instructions::label;
 use game::state::room::{
@@ -25,7 +26,7 @@ use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
     MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
 };
-use game::state::video::{OamEntry, VRAM_WORDS};
+use game::state::video::{OamEntry, SamusTileUploads, VRAM_WORDS};
 use game::state::{GameMode, NmiTiming, State};
 use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 
@@ -50,7 +51,13 @@ fn rooms() -> RoomMap {
         ],
         species: SpeciesMap::slice_zero(),
         programs: programs(),
+        samus_tiles: samus_tiles(),
     }
+}
+
+/// Three tiles definitions, at pointers 0, 7 and 14.
+fn samus_tiles() -> SamusTiles {
+    SamusTiles::new(Vec::new(), vec![TileDefinition::default(); 3])
 }
 
 /// The synthetic slots' instruction lists: the eye's in bank $A8, one frame then sleep, and
@@ -248,7 +255,13 @@ fn put_enemies(wram: &mut [u8]) {
     put(wram, 0x0FC6, DELETED_PROPERTIES); // slot 1's properties
 }
 
-/// A record in main gameplay with a distinct value at every decoded source.
+/// Samus's tile uploads, both halves queued.
+fn put_samus_tiles(wram: &mut [u8]) {
+    put(wram, 0x071D, 0x0101); // NMI_COPY_SAMUS_HALVES: both flagged
+    put(wram, 0x071F, 0x0007); // NMI_COPY_SAMUS_TOP_HALF_SRC: definition 1
+    put(wram, 0x0721, 0x000E); // NMI_COPY_SAMUS_BOTTOM_HALF_SRC: definition 2
+}
+
 /// The elevator ride and the drawing handler that rides it, as the synthetic record sets them.
 fn put_ride(wram: &mut [u8]) {
     put(wram, 0x0A5C, 0xEC14); // SAMUS_DRAW_HANDLER: using elevator
@@ -258,6 +271,7 @@ fn put_ride(wram: &mut [u8]) {
     put(wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
 }
 
+/// A record in main gameplay with a distinct value at every decoded source.
 fn record() -> FrameRecord {
     let mut wram = vec![0; 0x20000];
     put(&mut wram, 0x05B8, 0x1201); // NMI_FRAME_COUNTER_INCLUDING_LAG
@@ -303,6 +317,7 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0A32, 0x0003); // SAMUS_HURT_SWITCH_INDEX: transition animation finished
     put_ride(&mut wram);
     put(&mut wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
+    put_samus_tiles(&mut wram);
     put(&mut wram, 0x0A72, 0x0803); // SAMUS_VISOR_PALETTE_TIMER_INDEX: dim, 3 frames
     put(&mut wram, 0x1982, 0x002A); // FX_LAYER_BLENDING_CONFIG_A
     put_glow(&mut wram);
@@ -378,6 +393,11 @@ fn decodes_the_animation(state: &State) -> bool {
                 command: SuperSpecialCommand::TransitionAnimationFinished,
             }
         && state.samus.drawing == DrawingHandler::UsingElevator
+        && state.video.batch.samus_tiles
+            == SamusTileUploads {
+                top: Some(TileDefinitionId(1)),
+                bottom: Some(TileDefinitionId(2)),
+            }
         && state.samus.y_radius == 0x15
 }
 
@@ -563,7 +583,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 54] = [
+const WORD_RULES: [(&str, WordRule); 57] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -624,6 +644,9 @@ const WORD_RULES: [(&str, WordRule); 54] = [
         &mut rules.super_special.command
     }),
     ("drawing", |rules| &mut rules.drawing),
+    ("samus_tiles.halves", |rules| &mut rules.samus_tiles.halves),
+    ("samus_tiles.top", |rules| &mut rules.samus_tiles.top),
+    ("samus_tiles.bottom", |rules| &mut rules.samus_tiles.bottom),
     ("y_radius", |rules| &mut rules.y_radius),
     ("elevator.status", |rules| &mut rules.elevator.status),
     ("elevator.armed", |rules| &mut rules.elevator.armed),
@@ -720,6 +743,35 @@ fn a_visor_word_outside_the_cycle_is_unrepresentable() {
             })
         );
     }
+}
+
+#[test]
+fn samus_tile_uploads_outside_the_queue_are_unrepresentable() {
+    // A flag other than 0 or 1, a pointer beside a clear flag, a pointer to no definition.
+    for (offset, value, source, reported) in [
+        (0x071D, 0x0102, "NMI_COPY_SAMUS_HALVES", 0x0102),
+        (0x071D, 0x0100, "NMI_COPY_SAMUS_TOP_HALF_SRC", 0x0007),
+        (0x071F, 0x0008, "NMI_COPY_SAMUS_TOP_HALF_SRC", 0x0008),
+    ] {
+        let mut record = record();
+        put(&mut record.wram, offset, value);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable {
+                source,
+                value: reported
+            })
+        );
+    }
+    let mut record = record();
+    put(&mut record.wram, 0x071D, 0x0000);
+    put(&mut record.wram, 0x071F, 0x0000);
+    put(&mut record.wram, 0x0721, 0x0000);
+    let decoded = decode(&record, &rooms()).unwrap();
+    assert_eq!(
+        decoded.state.video.batch.samus_tiles,
+        SamusTileUploads::default()
+    );
 }
 
 #[test]
