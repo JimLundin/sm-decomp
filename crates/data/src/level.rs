@@ -11,6 +11,8 @@ use canonical::Canonical;
 use crate::rom::{AddressError, Lorom, RomAddress};
 use crate::room::Screens;
 
+pub mod slope;
+
 /// A tile number's bits in a block word.
 const TILE_NUMBER: u16 = 0x03ff;
 /// The horizontal flip's bit.
