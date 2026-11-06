@@ -8,6 +8,7 @@
 use std::fmt;
 
 use data::enemy::SpeciesMap;
+use data::enemy::program::EnemyPrograms;
 use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
@@ -58,9 +59,17 @@ pub struct RoomMap {
     pub rooms: Vec<(RoomHeader, RoomId)>,
     /// The known species, by the header pointer an enemy slot holds.
     pub species: SpeciesMap,
+    /// Their instruction lists, by the pointers an enemy slot holds.
+    pub programs: EnemyPrograms,
 }
 
 impl RoomMap {
+    /// The map with `programs` as its species' instruction lists.
+    #[must_use]
+    pub fn with_programs(self, programs: EnemyPrograms) -> Self {
+        Self { programs, ..self }
+    }
+
     /// The content's ID for the room whose header is at `header`.
     #[must_use]
     pub fn get(&self, header: RoomHeader) -> Option<RoomId> {
@@ -778,7 +787,7 @@ impl Rules<'_> {
                     },
                     ..self.scrolling.read(wram)?
                 },
-                enemies: self.enemies.read(wram, &rooms.species)?,
+                enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
                 ..RoomScoped::default()
             },
             elevator: self.elevator.read(wram)?,

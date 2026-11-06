@@ -4,10 +4,13 @@
 //! to the wrong address fails these tests.
 
 use data::enemy::SpeciesMap;
+use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::id::{Line, RoomId, SpeciesId};
+use data::rom::{Lorom, RomAddress};
+use game::enemy::instructions::label;
 use game::state::room::{
-    AiVariables, Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
-    EnemyCommon, PaletteIndex, ScrollArea, TilesIndex,
+    AiVariables, Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy,
+    EnemyBody, EnemyCommon, PaletteIndex, ScrollArea, TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Jump, Movement,
@@ -15,7 +18,7 @@ use game::state::samus::{
     Vertical, YDirection,
 };
 use game::state::samus::{Fixed, Point};
-use game::state::slots::{Cursor, FlagSet, Frames, Occupancy, Slot};
+use game::state::slots::{Cursor, FlagSet, Frames, Label, Occupancy, Slot};
 use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
     MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
@@ -44,7 +47,49 @@ fn rooms() -> RoomMap {
             (MORPH_BALL_ROOM, MORPH_BALL_ROOM_ID),
         ],
         species: SpeciesMap::slice_zero(),
+        programs: programs(),
     }
+}
+
+/// The synthetic slots' instruction lists: the eye's in bank $A8, one frame then sleep, and
+/// the elevator's in bank $A3, a frame then back.
+fn programs() -> EnemyPrograms {
+    let mut image = vec![0; 0x15_0000];
+    let mut lists = |bank: u8, offset: u16, words: &[u16]| {
+        let start = (usize::from(bank & 0x7F) << 15) | usize::from(offset & 0x7FFF);
+        for (at, word) in (start..).step_by(2).zip(words) {
+            image[at..][..2].copy_from_slice(&word.to_le_bytes());
+        }
+    };
+    lists(0xA8, 0x9000, &[1, EYE_SPRITEMAP, 0x812F]);
+    lists(0xA3, 0x9400, &[2, ELEVATOR_SPRITEMAP, 0x80ED, 0x9400]);
+    EnemyPrograms::load(
+        Lorom::new(&image),
+        &[RomAddress::new(0xA8, 0x9000), RomAddress::new(0xA3, 0x9400)],
+        &[],
+    )
+    .unwrap()
+}
+
+/// Slot 0's AI bank, instruction pointer (its sleep) and spritemap.
+const EYE_BANK: u16 = 0x00A8;
+const EYE_INSTRUCTION: u16 = 0x9004;
+const EYE_SPRITEMAP: u16 = 0x9210;
+/// Slot 1's AI bank, instruction pointer (its go-to) and spritemap.
+const ELEVATOR_BANK: u16 = 0x00A3;
+const ELEVATOR_INSTRUCTION: u16 = 0x9404;
+const ELEVATOR_SPRITEMAP: u16 = 0x962F;
+
+/// The cursor place and spritemap the content gives a slot's pointers.
+fn pointers(bank: u16, instruction: u16, spritemap: u16) -> (Label<Enemy>, SpritemapId) {
+    let [bank, _] = bank.to_le_bytes();
+    let programs = programs();
+    (
+        label(programs.target(RomAddress::new(bank, instruction)).unwrap()),
+        programs
+            .spritemap_id(Spritemap(RomAddress::new(bank, spritemap)))
+            .unwrap(),
+    )
 }
 
 /// Enemy slot 0 in the synthetic record (bank $A0 log: `enemy_data` at $0F78, $40 a slot).
@@ -59,8 +104,9 @@ const ELEVATOR: u16 = 0xD73F;
 const DELETED_PROPERTIES: u16 = 0x8200;
 
 /// An enemy slot whose every word past the species is `base` plus its offset, so a field
-/// read from a neighbouring offset, or a neighbouring slot, reads another value.
-fn put_enemy(wram: &mut [u8], slot: usize, species: u16, base: u16) {
+/// read from a neighbouring offset, or a neighbouring slot, reads another value; but its
+/// spritemap, instruction pointer and AI bank (`+16`, `+1A`, `+2E`) are `pointers`.
+fn put_enemy(wram: &mut [u8], slot: usize, species: u16, base: u16, pointers: [u16; 3]) {
     put(wram, slot, species);
     for offset in (0x02..0x40_u16).step_by(2) {
         put(
@@ -69,17 +115,23 @@ fn put_enemy(wram: &mut [u8], slot: usize, species: u16, base: u16) {
             base.wrapping_add(offset),
         );
     }
+    for (offset, word) in [0x16_usize, 0x1A, 0x2E].into_iter().zip(pointers) {
+        put(wram, slot.wrapping_add(offset), word);
+    }
 }
 
-/// The slot `put_enemy` writes, decoded, with `properties` in place of its properties word.
+/// The slot `put_enemy` writes, decoded, with `properties` in place of its properties word
+/// and `pointers` its cursor place and spritemap.
 fn enemy_slot(
     species: SpeciesId,
     base: u16,
     properties: u16,
+    pointers: (Label<Enemy>, SpritemapId),
     occupancy: fn(EnemyBody) -> Occupancy<EnemyBody>,
     body: fn(AiVariables) -> EnemyBody,
 ) -> Slot<EnemyCommon, EnemyBody> {
     let at = |offset: u16| base.wrapping_add(offset);
+    let (place, spritemap) = pointers;
     Slot {
         common: EnemyCommon {
             species,
@@ -101,9 +153,11 @@ fn enemy_slot(
             health: at(0x14),
             timer: at(0x18),
             cursor: Cursor {
+                at: place,
                 delay: Frames(at(0x1C)),
                 ..Cursor::default()
             },
+            spritemap,
             palette: PaletteIndex(at(0x1E)),
             tiles: TilesIndex(at(0x20)),
             layer: at(0x22),
@@ -139,13 +193,19 @@ fn flags<E>(bits: u16) -> FlagSet<E> {
 /// slot 1, the rest free and zero.
 fn decodes_the_enemies(state: &State) -> bool {
     let slots = &state.room.enemies.slots;
-    let eye = enemy_slot(SpeciesId(0), 0x1000, 0x100E, Occupancy::Live, |variables| {
-        EnemyBody::MorphBallEye { variables }
-    });
+    let eye = enemy_slot(
+        SpeciesId(0),
+        0x1000,
+        0x100E,
+        pointers(EYE_BANK, EYE_INSTRUCTION, EYE_SPRITEMAP),
+        Occupancy::Live,
+        |variables| EnemyBody::MorphBallEye { variables },
+    );
     let elevator = enemy_slot(
         SpeciesId(1),
         0x2000,
         DELETED_PROPERTIES,
+        pointers(ELEVATOR_BANK, ELEVATOR_INSTRUCTION, ELEVATOR_SPRITEMAP),
         Occupancy::Deleting,
         |variables| crate::enemy::body(data::enemy::Behaviour::Elevator, variables),
     );
@@ -156,6 +216,15 @@ fn decodes_the_enemies(state: &State) -> bool {
 
 fn put(wram: &mut [u8], offset: usize, word: u16) {
     wram[offset..offset.wrapping_add(2)].copy_from_slice(&word.to_le_bytes());
+}
+
+/// The synthetic enemy slots: a live eye in slot 0 and a deleting elevator in slot 1.
+fn put_enemies(wram: &mut [u8]) {
+    let eye = [EYE_SPRITEMAP, EYE_INSTRUCTION, EYE_BANK];
+    put_enemy(wram, ENEMY_SLOT_0, EYE, 0x1000, eye);
+    let elevator = [ELEVATOR_SPRITEMAP, ELEVATOR_INSTRUCTION, ELEVATOR_BANK];
+    put_enemy(wram, ENEMY_SLOT_1, ELEVATOR, 0x2000, elevator);
+    put(wram, 0x0FC6, DELETED_PROPERTIES); // slot 1's properties
 }
 
 /// A record in main gameplay with a distinct value at every decoded source.
@@ -222,9 +291,7 @@ fn record() -> FrameRecord {
     // The main loop's stack at Wait for NMI ($80:8338 PHP, PHB): S = $1FF0, then $1FF1 P,
     // $1FF2 DB, $1FF3-$1FF5 the JSL at $82:897A's return ($82:897D), $1FF6 the loop's P.
     wram[0x1FF3..0x1FF6].copy_from_slice(&[0x7D, 0x89, 0x82]);
-    put_enemy(&mut wram, ENEMY_SLOT_0, EYE, 0x1000);
-    put_enemy(&mut wram, ENEMY_SLOT_1, ELEVATOR, 0x2000);
-    put(&mut wram, 0x0FC6, DELETED_PROPERTIES); // slot 1's properties
+    put_enemies(&mut wram);
 
     let vram: Vec<u16> = (0..=u16::MAX).step_by(2).collect();
     let cgram: Vec<u16> = (0..256_u16).map(|colour| colour.wrapping_mul(3)).collect();
@@ -594,7 +661,7 @@ fn every_moved_rule_fails() {
 type SlotRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut SlotField;
 
 /// Every enemy slot field the decoder reads.
-const SLOT_RULES: [(&str, SlotRule); 29] = [
+const SLOT_RULES: [(&str, SlotRule); 32] = [
     ("species", |rules| &mut rules.enemies.species),
     ("x", |rules| &mut rules.enemies.x),
     ("x_subpixels", |rules| &mut rules.enemies.x_subpixels),
@@ -609,9 +676,12 @@ const SLOT_RULES: [(&str, SlotRule); 29] = [
     ("ai_handlers", |rules| &mut rules.enemies.ai_handlers),
     ("health", |rules| &mut rules.enemies.health),
     ("timer", |rules| &mut rules.enemies.timer),
+    ("spritemap", |rules| &mut rules.enemies.spritemap),
+    ("instruction", |rules| &mut rules.enemies.instruction),
     ("instruction_timer", |rules| {
         &mut rules.enemies.instruction_timer
     }),
+    ("bank", |rules| &mut rules.enemies.bank),
     ("palette", |rules| &mut rules.enemies.palette),
     ("tiles", |rules| &mut rules.enemies.tiles),
     ("layer", |rules| &mut rules.enemies.layer),

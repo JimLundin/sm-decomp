@@ -382,14 +382,20 @@ pub const FIELDS: &[Field] = &[
     ),
     enemy("room.enemies.slots.common.health", source::ENEMY_HEALTH),
     enemy("room.enemies.slots.common.timer", source::ENEMY_TIMER),
-    // The instruction pointer waits for the enemy program content (B7).
-    open("room.enemies.slots.common.cursor.at"),
+    enemy(
+        "room.enemies.slots.common.cursor.at",
+        source::ENEMY_INSTRUCTION,
+    ),
     enemy(
         "room.enemies.slots.common.cursor.delay",
         source::ENEMY_INSTRUCTION_TIMER,
     ),
     open("room.enemies.slots.common.cursor.link"),
     open("room.enemies.slots.common.cursor.timer"),
+    enemy(
+        "room.enemies.slots.common.spritemap",
+        source::ENEMY_SPRITEMAP,
+    ),
     enemy(
         "room.enemies.slots.common.palette",
         source::ENEMY_PALETTE_INDEX,
@@ -636,6 +642,8 @@ mod tests {
             enemies.ai_handlers,
             enemies.health,
             enemies.timer,
+            enemies.spritemap,
+            enemies.instruction,
             enemies.instruction_timer,
             enemies.palette,
             enemies.tiles,

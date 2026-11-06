@@ -986,8 +986,12 @@ pub const ENEMY_EXTRA_PROPERTIES: SlotField = enemy("extra_properties", 0x10);
 pub const ENEMY_AI_HANDLER_BITS: SlotField = enemy("ai_handler_bits", 0x12);
 /// Health left.
 pub const ENEMY_HEALTH: SlotField = enemy("health", 0x14);
+/// The spritemap its instruction list shows, in its AI bank.
+pub const ENEMY_SPRITEMAP: SlotField = enemy("spritemap_pointer", 0x16);
 /// The general timer.
 pub const ENEMY_TIMER: SlotField = enemy("timer", 0x18);
+/// The instruction pointer, in its AI bank.
+pub const ENEMY_INSTRUCTION: SlotField = enemy("current_instruction", 0x1A);
 /// Frames until the next instruction.
 pub const ENEMY_INSTRUCTION_TIMER: SlotField = enemy("instruction_timer", 0x1C);
 /// The palette index.
@@ -1006,6 +1010,8 @@ pub const ENEMY_INVINCIBILITY_TIMER: SlotField = enemy("invincibility_timer", 0x
 pub const ENEMY_SHAKE_TIMER: SlotField = enemy("shake_timer", 0x2A);
 /// The frame counter.
 pub const ENEMY_FRAME_COUNTER: SlotField = enemy("frame_counter", 0x2C);
+/// The AI bank, the word's low byte: the bank its pointers are in.
+pub const ENEMY_BANK: SlotField = enemy("bank", 0x2E);
 /// The six AI words, `var_a` to `var_f`.
 pub const ENEMY_AI_VARIABLES: [SlotField; 6] = [
     enemy("var_a", 0x30),

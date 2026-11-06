@@ -1,15 +1,18 @@
 //! The enemy slots, decoded from the original's `enemy_data` table (bank $A0 log, `$0F78`).
 //!
-//! Not decoded: the spritemap and instruction pointers (`+16`, `+1A`) wait for the enemy
-//! program content, and the AI bank (`+2E`) is the species header's.
+//! The spritemap and instruction pointers (`+16`, `+1A`) are in the slot's AI bank (`+2E`),
+//! which the species header also names; they decode through the content's programs.
 
+use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::enemy::{Behaviour, SpeciesKey, SpeciesMap};
 use data::id::SpeciesId;
+use data::rom::RomAddress;
+use game::enemy::instructions::label;
 use game::state::room::{
     AiVariables, ENEMY_SLOTS, Elevator, EnemyBody, EnemyCommon, PaletteIndex, TilesIndex,
 };
 use game::state::samus::{Fixed, Point};
-use game::state::slots::{Cursor, FlagSet, Frames, Generation, Occupancy, Slot, SlotStore};
+use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot, SlotStore};
 
 use crate::decode::DecodeError;
 use crate::source::{self, SlotField, WramTable};
@@ -46,8 +49,14 @@ pub struct EnemySources {
     pub health: SlotField,
     /// `.common.timer`.
     pub timer: SlotField,
+    /// `.common.spritemap`.
+    pub spritemap: SlotField,
+    /// `.common.cursor.at`.
+    pub instruction: SlotField,
     /// `.common.cursor.delay`.
     pub instruction_timer: SlotField,
+    /// The AI bank the pointers are in.
+    pub bank: SlotField,
     /// `.common.palette`.
     pub palette: SlotField,
     /// `.common.tiles`.
@@ -88,7 +97,10 @@ impl EnemySources {
         ai_handlers: source::ENEMY_AI_HANDLER_BITS,
         health: source::ENEMY_HEALTH,
         timer: source::ENEMY_TIMER,
+        spritemap: source::ENEMY_SPRITEMAP,
+        instruction: source::ENEMY_INSTRUCTION,
         instruction_timer: source::ENEMY_INSTRUCTION_TIMER,
+        bank: source::ENEMY_BANK,
         palette: source::ENEMY_PALETTE_INDEX,
         tiles: source::ENEMY_VRAM_TILES_INDEX,
         layer: source::ENEMY_LAYER,
@@ -108,26 +120,32 @@ impl EnemySources {
     ///
     /// # Errors
     ///
-    /// [`DecodeError::Unrepresentable`] for a species word `species` doesn't hold, and
+    /// [`DecodeError::Unrepresentable`] for a species word `species` doesn't hold, or an
+    /// occupied slot's instruction or spritemap pointer `programs` doesn't, and
     /// [`DecodeError::WramTooShort`] when a slot lies past the record's work RAM.
     pub fn read(
         &self,
         wram: &[u8],
         species: &SpeciesMap,
+        programs: &EnemyPrograms,
     ) -> Result<SlotStore<EnemyCommon, EnemyBody, ENEMY_SLOTS>, DecodeError> {
         let mut store = SlotStore::default();
         for (slot, index) in store.slots.iter_mut().zip(0_u16..) {
-            *slot = self.slot(wram, index, species)?;
+            *slot = self.slot(wram, index, species, programs)?;
         }
         Ok(store)
     }
 
     /// Slot `index`.
+    ///
+    /// A free slot's pointers stay at their defaults: they are the last occupant's, which
+    /// the next spawn writes over, and its bank may name no program.
     fn slot(
         &self,
         wram: &[u8],
         index: u16,
         species: &SpeciesMap,
+        programs: &EnemyPrograms,
     ) -> Result<Slot<EnemyCommon, EnemyBody>, DecodeError> {
         let word = |field: SlotField| self.table.word(field, index)?.read(wram);
         let key = word(self.species)?;
@@ -166,6 +184,33 @@ impl EnemySources {
             })
         };
         let frames = |field: SlotField| word(field).map(Frames);
+        let [bank, _] = word(self.bank)?.to_le_bytes();
+        let pointer = |field: SlotField| -> Result<(RomAddress, SlotField, u16), DecodeError> {
+            let value = word(field)?;
+            Ok((RomAddress::new(bank, value), field, value))
+        };
+        let unrepresentable =
+            |(_, field, value): (RomAddress, SlotField, u16)| DecodeError::Unrepresentable {
+                source: field.name,
+                value,
+            };
+        let (at, spritemap) = if occupant.is_some() {
+            let at = pointer(self.instruction)?;
+            let shown = pointer(self.spritemap)?;
+            (
+                label(programs.target(at.0).ok_or_else(|| unrepresentable(at))?),
+                programs
+                    .spritemap_id(Spritemap(shown.0))
+                    .ok_or_else(|| unrepresentable(shown))?,
+            )
+        } else {
+            (Label::default(), SpritemapId::default())
+        };
+        let cursor = Cursor {
+            at,
+            delay: frames(self.instruction_timer)?,
+            ..Cursor::default()
+        };
         Ok(Slot {
             generation: Generation::default(),
             common: EnemyCommon {
@@ -181,10 +226,8 @@ impl EnemySources {
                 ai_handlers: flags(word(self.ai_handlers)?),
                 health: word(self.health)?,
                 timer: word(self.timer)?,
-                cursor: Cursor {
-                    delay: frames(self.instruction_timer)?,
-                    ..Cursor::default()
-                },
+                cursor,
+                spritemap,
                 palette: PaletteIndex(word(self.palette)?),
                 tiles: TilesIndex(word(self.tiles)?),
                 layer: word(self.layer)?,

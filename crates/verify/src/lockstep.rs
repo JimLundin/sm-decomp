@@ -29,6 +29,7 @@ use crate::source::{self, WramWord};
 ///
 /// The rooms have the IDs the content gives them (`data::room::RoomMap::slice_zero`, the
 /// Morph Ball Room at `$8F:9E9F`), the species theirs (`data::enemy::SpeciesMap::slice_zero`).
+/// It holds no enemy programs: [`RoomMap::with_programs`] adds the content's.
 #[must_use]
 pub fn slice_zero_rooms() -> RoomMap {
     RoomMap {
@@ -37,6 +38,7 @@ pub fn slice_zero_rooms() -> RoomMap {
             .filter_map(|(key, id)| key.room_pointer().map(|pointer| (RoomHeader(pointer), id)))
             .collect(),
         species: data::enemy::SpeciesMap::slice_zero(),
+        programs: data::enemy::program::EnemyPrograms::default(),
     }
 }
 
@@ -371,7 +373,9 @@ const COMPARATORS: &[Comparator] = &[
     enemy!("room.enemies.slots.common.ai_handlers", ai_handlers),
     enemy!("room.enemies.slots.common.health", health),
     enemy!("room.enemies.slots.common.timer", timer),
+    enemy!("room.enemies.slots.common.cursor.at", cursor.at),
     enemy!("room.enemies.slots.common.cursor.delay", cursor.delay),
+    enemy!("room.enemies.slots.common.spritemap", spritemap),
     enemy!("room.enemies.slots.common.palette", palette),
     enemy!("room.enemies.slots.common.tiles", tiles),
     enemy!("room.enemies.slots.common.layer", layer),
