@@ -122,6 +122,40 @@ run on the lane's machine (Defender blocks test executables). Remaining:
 - the proof over both rows (`Counters` and `Controller` after each step equal the next
   decoded record's) needs A2's cache and B2's loop.
 
+**B2 status (`lane/slice0-b2`).** Done as `verify::lockstep::lockstep(&Cache, &RoomMap,
+frames)` and `tools lockstep LOCK CACHE ROW [FROM [TICKS]]` (compiled, not run here: this
+machine runs it through a scratch DLL). For each pair of cached frames (k, k+1) that both
+decode, with k quiescent, a `Session` opens on decode(k), steps one Tick with frame k+1's
+pad and its cut's timing (`R` on time, `O` overrun, `V` disabled), and every field the
+coverage table marks `Decoded` is compared with decode(k+1) through `Canonical::diff`
+(`main` only at quiet cuts). The auto-repeat delays come from the first record's
+`JOYPAD_CTR_REPEAT_FIRST` and `JOYPAD_CTR_REPEAT_NEXT` (`$7E:0087`, `$7E:0089`): both rows
+hold 0 and 0 on every decoded frame. Run 2026-11-06 on A2's cache: `area-brinstar` 476
+Ticks compared, none skipped; `item-morph-ball` 1,051, 376 pairs skipped for the 373
+`UnknownYieldSite` frames. No Tick is equal yet, because game time and the RNG don't run.
+B1 holds: the counters, the controller, `main`, `irq`, `timing.last` and `video.nmi_requested`
+agree on every Tick except 24 of `item-morph-ball`'s, from frame 826, all inside the message
+box, where the original's strand waits on lag NMIs (`Wait::LagFrame`) and B1's stub
+`MessageBox` frame returns at once, so the engine commits instead (C13's). First differing
+frame per field, the domain lanes' worklist:
+
+| Field | `area-brinstar` | `item-morph-ball` | Owner |
+| --- | --- | --- | --- |
+| `clock.game_time.frames` (then `.seconds`) | 1 (27) | 1 (27) | gameplay `HealthAndTime` |
+| `rng.word` | 1 | 1 | C1 |
+| `video.memory.oam` | 1 | 1 | C1 (OAM clear and finalise), B5 |
+| `samus.position.y.pixels` (`.subpixels`) | 1 (316) | 1 (316) | C3 |
+| `video.memory.vram` | 7 | 7 | B5 |
+| `room.camera.y.subpixels`, `.pixels` | 72, 74 | 72, 74 | camera |
+| `video.memory.cgram` | 453 | 453 | palette FX |
+| `samus.position.x`, `room.camera.x` | equal | 683 | C3, camera |
+| counters, controller, `main` | equal | 826 | C13 (message box) |
+
+Equal on every Tick of both rows: `game_time.hours`, `.minutes`, `mode`, `irq`, `timing.last`,
+`samus.equipment.*`, `room.room`. Remaining: the "deliberately broken counter rule" proof
+(a mutant `Rules` or `nmi.rs` edit run through lockstep) needs a machine that runs the
+tests; `--stream S` filtering waits on the stream projections.
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,

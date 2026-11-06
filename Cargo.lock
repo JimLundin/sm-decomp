@@ -185,6 +185,7 @@ dependencies = [
 name = "verify"
 version = "0.1.0"
 dependencies = [
+ "canonical",
  "data",
  "game",
  "oracle_record",

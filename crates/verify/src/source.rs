@@ -256,3 +256,16 @@ pub const IRQHANDLER_NEXT_HANDLER: WramWord = WramWord {
     name: "IRQHANDLER_NEXT_HANDLER",
     offset: 0x00A7,
 };
+
+/// Bank $80 log: the frames a pad must stay held before its first auto-repeat, which boot
+/// sets and the controller read (`$80:9459`) reloads the repeat counter from.
+pub const JOYPAD_CTR_REPEAT_FIRST: WramWord = WramWord {
+    name: "JOYPAD_CTR_REPEAT_FIRST",
+    offset: 0x0087,
+};
+
+/// Bank $80 log: the frames between later auto-repeats, which boot sets.
+pub const JOYPAD_CTR_REPEAT_NEXT: WramWord = WramWord {
+    name: "JOYPAD_CTR_REPEAT_NEXT",
+    offset: 0x0089,
+};
