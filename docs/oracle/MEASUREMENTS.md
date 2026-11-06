@@ -734,3 +734,66 @@ and 1342 must stay unchanged. Check whether 18108 and 18587 move. Hardware
 also counts here: if Mesen or the timing documents (anomie, fullsnes) charge
 the overhead on lines after termination, the fix follows lsnes for the movies
 and is listed as such.
+
+## (l) Fix 0004: no HDMA overhead on lines after every channel terminated
+
+**Fix.** `crates/oracle/native/fixes/0004-hdma-overhead-only-while-a-channel-runs.patch`,
+after 0001 and 0002. LakeSnes's `dma_doHdma` (called from `dma_handleDma`
+and from `dma_waitCycle`, so both paths) now returns before the alignment,
+the 8-clock overhead and the re-alignment when every enabled channel has
+terminated for the frame; an enabled channel still cancels its general DMA
+there, as upstream does. A line with no channel enabled was already free.
+The source is anomie's SNES timing doc (revision 1126, section "HDMA"): "For
+each scanline during which HDMA is active (i.e. at least one channel has not
+yet terminated for the frame), there are ~18 master cycles overhead." So
+hardware and lsnes agree here, and the fix is not a movie-only setting.
+
+**Frame-start init: unchanged.** The same section describes the init as "For
+all active channels, the HDMA registers are initialized at about V=0 H=6",
+with ~18 clocks plus 8 per direct and 24 per indirect channel. LakeSnes's
+`dma_initHdma` already returns with no overhead when HDMAEN is `$00` and
+charges only for enabled channels, so it has no counterpart of the per-line
+issue. fullsnes and the nesdev wiki (Timing, DMA registers) give no HDMA
+clock counts.
+
+**Command.** (h)'s run, `oracle movie ROM any.inputs --frames 36000
+--no-picture --oracle lakesnes --lag-log any-boundary/lag.csv`, with the
+mismatch print limit lifted in a local, uncommitted build, once with
+0001+0002 and once with 0001+0002+0004 (same rlib, same session). Each step
+was then classified against lsnes's rows k-1, k and k+1.
+
+**Steps 0-17974: unchanged.** All seven lag-log words are identical between
+the two builds on every step before 17975: exact through 395, the same rows
+396, 397, 400, 1342 (`$05B6` one ahead, no lag flag), 8421 and 15235, and
+8465/8469 equal to lsnes as in (h). Only wait-entry dots move, on frames
+with display-line HDMA.
+
+**17985 passes.** From 17975 the fade-out passes take lsnes's 2 frames, and
+17985-18031 are exact in all seven words. 18108 and 18587 pass too.
+
+**State, room and position** now match lsnes through step 35199, but for 50
+single steps that match again on the next step: 34 door-transition samples
+(game state `$0B`) where Samus's position is taken while the game moves her
+into the next room, and 16 steps whose state or position equals lsnes's row
+k-1. The counters keep (g)'s pattern (one NMI ahead at the line-241 cut).
+
+| Steps | LakeSnes (0001+0002+0004) against lsnes |
+| --- | --- |
+| 0-395 | exact, all seven columns |
+| 396-35199 | state, room, position equal, but for the 50 single steps above |
+| 35175-35199 | `$05B8` one ahead with `$05B6` equal, in the door transition from room `9AD9` into `9CB3` |
+| 35200 | lsnes leaves the transition (state `$08`), LakeSnes a step later (35201) |
+| 35202- | Samus's X differs beyond a one-step shift (49 against 43 at 35202, 467 against 332 at 35300); by 35800 lsnes has left for room `9D19`, LakeSnes stays in `9CB3` |
+
+**The new divergence** is the same kind as 17985: the door transition from
+`9AD9` (Green Brinstar main shaft) into `9CB3`, after the load, with passes
+of the game loop that end around vblank start. LakeSnes's wait entries are on
+lines 222-229 from 35162, and at 35199 on 229/686, after vblank started, so
+its last pass takes one more frame and the room starts one step late. Then
+Samus's movement no longer lines up with the inputs. Not localized here: a
+`--trace` of both emulators over 35150-35200, as in (k), would show which
+phase of the pass is longer.
+
+**Speed.** 271 frames/s with 0004 (133.0 s for 36000), 260 frames/s for
+0001+0002 in the same session (138.5 s); the run with 0004 plays more of the
+game, so the two are not the same work after 18587.

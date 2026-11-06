@@ -285,6 +285,7 @@ counter `$05B8`, the lag flag, the game state, the room and Samus's position.
 | LakeSnes 9db90b8 | frame 352 | frame 352 | boot APU upload ends 12 lines early, frame 353 not lag |
 | + fix 0001 (APU clock) | frame 395 | frame 8566 | one-frame NMI shifts around NMI re-enable in loads (396, 8314); Ceres desync from 8567 |
 | + fix 0002 (bsnes v085 SPC rate, exact) | frame 395 | frame 17984 | one more lag frame on the door out of room 97B5 (17985); one frame behind from 18108, desync from 18587 |
+| + fix 0004 (no HDMA overhead after every channel terminated) | frame 395 | frame 35199 | one frame late out of the door transition into room 9CB3 (35200); desync from 35202 |
 
 Fixes live in `crates/oracle/native/fixes/NNNN-name.patch`. They are applied
 to a copy of the pinned sources by `tools/oracle/build_lakesnes.sh` and named
@@ -295,6 +296,10 @@ in `OracleId::fixes`. They are emulator fixes, not ROM patches.
 - `0002-apu-clock-bsnes-v085-exact`: the SPC at bsnes v085's 32040.5 Hz, the
   rate the movies were recorded at, stepped as an exact integer ratio
   (MEASUREMENTS (h)).
+- `0004-hdma-overhead-only-while-a-channel-runs`: no HDMA alignment or
+  overhead on a line where every enabled channel has terminated for the
+  frame, as anomie's timing doc and bsnes v085 have it (MEASUREMENTS (k),
+  (l)). Upstream charged 12-18 clocks on every display line HDMAEN was set.
 
 Tried and not applied: `native/candidates/0003-apu-ports-in-time-order.patch`
 orders the CPU-SPC port accesses in time, as bsnes v085 does. It changes no

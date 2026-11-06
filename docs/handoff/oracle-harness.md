@@ -13,6 +13,11 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
   - state, room and position match through 17984 (0001 alone: 8566), but for single-step samples at transitions; 8314 and 8567 pass;
   - at 17985, the door out of room 97B5, LakeSnes has one more lag frame; one frame behind from 18108, desync from 18587 (stays in room 9E9F).
   - The 17985 lag comes from HDMA overhead, not the room load (MEASUREMENTS.md (k), lane `lane/oracle-roomload`). In the fade-out before the door's load, LakeSnes charges 12-18 master clocks of HDMA overhead on every display line after the HUD's channel has terminated (lines 32-224), and lsnes charges none. Each palette-fade pass is about 6,500 clocks longer, and at 17975 LakeSnes's wait entry falls 3 lines after vblank (lsnes's 2 lines before), so its pass takes 3 frames instead of 2.
+- Fix 0004 (`native/fixes/`, lane `lane/oracle-hdma`, MEASUREMENTS.md (l)): no HDMA alignment or overhead on a line where every enabled channel has terminated (anomie's timing doc).
+  - Lag-log words through 17974 are unchanged by it (exact through 395; 1342, 8465/8469 as before); 17985, 18108 and 18587 pass.
+  - State, room and position match through 35199, but for 50 single steps (34 door-transition position samples, 16 one-step k-1).
+  - First lasting divergence: LakeSnes leaves the door transition into room 9CB3 one step late (35200, wait entry 229/686 after vblank start), then Samus's X drifts and it stays in 9CB3. Next: `--trace` both emulators over 35150-35200 as in (k).
+  - 271 frames/s for any% to 36000 without the picture.
 - Corpus against today's lock: 601 of 638 faithful rows ran (lsnes seeds, plus `options-menu-tour` from power-on); 27 stalled.
   - Equal: sram 600, cgram 162, vram 150, oam 150, wram 2.
   - ppu 0, because the old definition includes renderer scratch. video and apu are redefined.

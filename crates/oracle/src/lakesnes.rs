@@ -18,6 +18,7 @@ pub const IDENTITY: OracleId = OracleId {
     fixes: &[
         "0001-apu-clock-real-master-rate",
         "0002-apu-clock-bsnes-v085-exact",
+        "0004-hdma-overhead-only-while-a-channel-runs",
     ],
 };
 
