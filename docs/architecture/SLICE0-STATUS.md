@@ -1,30 +1,36 @@
-# Slice 0: status at `rebuild/spine` `4c23c75`
+# Slice 0: status at `rebuild/spine` `5622d9e`
 
-## Current: engine wave 1, 2026-11-06
+## Current: engine wave 2, 2026-11-06
 
-Lockstep, from `scenarios/locks/lockstep.ratchet.txt` (ratchet test, debug, about 250 Ticks/s):
-`area-brinstar` 476 / 476 Ticks fully equal; `item-morph-ball` 1,324 / 1,427 (was 1,291 at
-`05cc5ba`).
+Lockstep, from `scenarios/locks/lockstep.ratchet.txt` (ratchet test, debug, median of 3 about
+240 Ticks/s): `area-brinstar` 476 / 476 Ticks fully equal; `item-morph-ball` 1,372 / 1,427
+(was 1,324 at `4c23c75`). The samus, camera and hud groups no longer differ in lockstep.
 
 | `item-morph-ball` group | Ticks differing | First frame | First difference, cause |
 | --- | --- | --- | --- |
-| samus | 42 | 682 | `position.y.pixels` 02A8 vs 02A9, the elevator ride |
-| room (camera, blocks, PLMs) | 54 | 683 | camera `y.subpixels`; shot block `blocks[5708]` and PLM slot 34 crumble from 1236; camera `x` from 1267 |
-| video | 101 | 682 | OAM `y` (Samus); BG3 `vram[22982]` at 823 (message tilemap, `$85:8324`); `dma[6].count` at 822 (HDMA run, B6); restore at 1213/1214; HDMA object on channel 2 at 1249 |
-| elevator | 1 | 688 | `elevator.armed` |
-| hud | 1 | 1294 | `tilemap.cells[28].tile` |
+| video | 54 | 741 | `cgram[196]` (suit palette, single Ticks at 741, 767, 815, 1255, 1333); `dma[6].count` at 822 (HDMA run, B6); OAM `x` from 1216 (beam drawing); fixed colour red 1259-1304 |
+| elevator | 1 | 688 | `elevator.armed`: the elevator doorway's door reaction (`$94:93CE`) needs door headers in `Content` |
+| projectiles | 1 | 1217 | the beam's spawn: firing (`$90:B887`) isn't modelled |
+| room | 1 | 1250 | enemy slot 1 `variables.c`, probably the Morph Ball eye's HDMA object |
 
-Free-run gate at `4c23c75` (`lsnes.green.txt`: 7 pairs):
+Free run (`verify::localise`, seeded once, every frame compared with the lockstep comparators):
+`area-brinstar` 477 / 477 frames equal; `item-morph-ball` 811 / 1,428. First differing frame
+per group: elevator 688 (1 frame), video 741 (616), projectiles 1217 (211), room 1236 (192),
+samus 1273 (155: `MorphBall.speed.base` 0 vs 0x00400300), hud 1294 (134). The samus and hud
+divergences show only in the free run.
+
+Free-run gate at `5622d9e` (`lsnes.green.txt`: 8 pairs, bundle `relock-v2-lsnes-7e76e077`):
 
 | Stream | `area-brinstar` | `item-morph-ball` |
 | --- | --- | --- |
-| `vram`, `cgram`, `oam` | **equal** | differ from span 0 |
+| `vram`, `cgram`, `oam`, `ppu` | **equal** | `vram`, `oam` differ from span 1; `cgram`, `ppu` from span 0 |
 | `sram`, `timing` | **equal** | **equal** |
-| `ppu`, `apu` | differ from span 0 | differ from span 0 |
+| `apu` | differs from span 0 | differs from span 0 |
 | `video`, `wram` | absent from the engine | absent from the engine |
 
-`area-brinstar`'s red streams wait on the seed re-cut with the PPU tier (`ppu`), sound (C11,
-`apu`) and the line program (B6, `video`); `wram` doesn't decide green.
+Green pairs: behavioural 4 (`area-brinstar` vram, cgram, oam, ppu; none on `item-morph-ball`),
+timing 2, trivial 2 (sram, while no row saves). `area-brinstar`'s red streams wait on sound (C11, `apu`) and the line program
+(B6, `video`); `wram` doesn't decide green.
 
 The sections below are the measurement at `93fa4a4` and are kept for history.
 
