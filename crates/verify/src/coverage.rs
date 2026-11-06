@@ -261,13 +261,8 @@ mod tests {
             rules.camera_y_subpixels,
             rules.irq_command,
             rules.message,
-            rules.vram_queue_tail,
+            // The scroll row names the first mirror; the queue's tail bounds the queue block.
             rules.scroll[0][0],
-            rules.scroll[0][1],
-            rules.scroll[1][0],
-            rules.scroll[1][1],
-            rules.scroll[2][0],
-            rules.scroll[2][1],
         ];
         let bytes = [
             rules.lag,
