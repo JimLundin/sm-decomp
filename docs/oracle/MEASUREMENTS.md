@@ -1050,3 +1050,72 @@ timed separately; the `pget` loop (57,344 calls a frame) is the larger part.
 copying emulator code. The picture is exact at full brightness; fades and
 brightness below 15 lose per-line brightness and some components. The CPU's
 APU port accesses are complete; the SPC700 side is not.
+
+## (p) lsnes's HDMA pause on the HUD lines: one CPU cycle after the request, fitted on 90 of 90 lines
+
+**Command.** lsnes: `oracle movie ROM any.inputs --frames 35176 --no-picture
+--oracle lsnes --from 030000.lss 30000` (the any% ladder rung), with
+`OH_TRACE` set to every instruction start from `$82:DA02` to `$DAF6` (138
+addresses, the fade's colour loop and its division) plus `$80:8338`,
+`$82:E752`, `$82:E755`, and `OH_TRACE_FROM=35173` (2.3 min). LakeSnes: the
+same PCs with `--oracle lakesnes` from power-on, in a private build whose
+watch limit is 256 addresses (the crate caps it at 32, in `set_watch` and in
+`bridge.c`'s `OH_MAX_WATCH`) and whose hit limit is 262144 per step (3 min).
+The private tools are in `$TEMP/hfit/`.
+
+**Cycle table.** A per-address table of the loop's bus cycles (FastROM fetch
+6, internal 6, WRAM and stack 8, `$42xx` 6; a taken branch one internal
+cycle more) gives every lsnes instruction delta exactly: 61656 pairs away
+from HDMA, no mismatches except the DRAM refresh (+40). On LakeSnes, 38176
+pairs, the same. The pause is the delta minus the table.
+
+**lsnes's pauses.** HUD lines 1-30 of three frames, 90 lines (line 0 and 31
+hold the IRQ). Every pause is 108, 112, 114 or 120 clocks, and the work is
+104 on all of them, as on LakeSnes. With the trace's beam in master clocks
+(the hit position lsnes reports), this rule reproduces all 90 (the search
+covered request point, overhead, the two alignment ranges, the alignment
+reference and a one-cycle delay):
+
+| Step | lsnes (fitted, 90 of 90) | LakeSnes (fix 0004 base, 60 of 60) |
+| --- | --- | --- |
+| Request seen | at the first CPU cycle edge at or after 1106 | the same |
+| Pause starts | **one CPU cycle later**, at the next edge | at that edge |
+| Start alignment | 2-8 clocks to a multiple of 8 on a counter that runs on across lines (the fit needs the 4-clock phase flip of each 1364-clock line, so not the dot) | the same, since power-on |
+| Work | 104 (lines 1-30) | 104 |
+| End alignment | 1 to s clocks to a whole number of s since the pause start, s = speed of the next CPU cycle | the same |
+| Length | 108 (s = 6, start alignment 2), 114 (s = 6, 4-8), 112 (s = 8, 2-6), 120 (s = 8, 8) | the same table |
+
+The one difference is the delay. lsnes lets the CPU run one more bus cycle
+after it sees the request, so the pause lands one cycle later than on
+LakeSnes, and the next cycle's speed (6 or 8) and the start's mod-8 phase
+change with it. That is anomie's DMA rule ("the CPU gets one more CPU cycle
+before the pause") applied to HDMA as well. (n)'s observation that the same
+LakeSnes start state gives different lsnes lengths follows: lsnes's start is
+a cycle later, and that cycle is 6 or 8 clocks depending on the instruction.
+lsnes's trace reports an instruction after any pause before its opcode
+fetch, LakeSnes's before it; the fit accounts for both.
+
+**Variants.** On 0001+0002+0004, scored as in (n) (HUD pairs over 601
+samples and the whole fade, against (m)'s lsnes log):
+
+| Variant | HUD pairs: sum, nonzero | Fade total | 35175 wait, NMI |
+| --- | --- | --- | --- |
+| none ((m)) | +36, 65 | +36 | 224/1260, `Overrun` |
+| A: one-cycle delay, request at 1104 | -2, 128 | +62 | 224/1332, `Overrun` |
+| B: one-cycle delay, request at 1102 | +24, 39 | +18 | 224/1246, `Requested` |
+
+B matches lsnes on lines 1-14 of the first HUD frame (same instructions,
+same lengths, LakeSnes 2 clocks later), then lengths differ by 2-12 on about
+half the lines. The trace beam's offset from the true cycle start is not
+known on either side (lsnes's could be the opcode read, 2 clocks into the
+fetch), and the mod-8 phase of LakeSnes's counter against lsnes's is a
+second unknown; these two choose between A, B and a phase shift of 2, 4 or
+6. Not tried for lack of time: B and A with the alignment counter offset by
+2, 4 and 6 clocks. No fix 0005 yet; (h)'s classification was not run.
+
+**Next.** Build the 3 x 4 grid (request 1102, 1104, 1106; counter offset 0,
+2, 4, 6), each with the one-cycle delay, score it, and fit the residual of B
+line by line with `$TEMP/hfit/fit4.py` on the LakeSnes trace (`LAKE=1`) against
+the lsnes trace: the right variant fits both with the same rule and the same
+per-frame phase. Then (h)'s lag-log run with the print limit lifted. No GPL
+code was read; the rule is fitted from lsnes's traces and anomie's text.
