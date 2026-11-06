@@ -1,0 +1,405 @@
+//! The main strand's dispatcher (D10): it steps the innermost continuation frame until the
+//! strand reaches its beam-sync point (D7) or yields at a wait.
+//!
+//! Each frame's step runs its routine's phases from where the frame says it stopped and
+//! returns a [`Next`]. The phases are in the original's call order; slice 0's are empty until
+//! their domain lanes fill them.
+
+use crate::session::{Rules, SessionFault};
+use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
+use crate::state::{GameMode, NmiTiming, State};
+
+/// What a frame's step asks the dispatcher to do next.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Next {
+    /// Step the same frame again from its new position.
+    Continue,
+    /// Push this frame and step it; the caller resumes where its own position says.
+    Call(Frame),
+    /// The frame's routine has returned: pop it and resume its caller.
+    Return,
+    /// The beam-sync point: the scan-out of the previous picture runs here (D7).
+    Sync,
+    /// The strand yields at a wait until an NMI answers it.
+    Yield(Wait),
+}
+
+/// How far a run of the dispatcher goes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Until {
+    /// To the innermost frame's beam-sync point, or a yield before it.
+    BeamSync,
+    /// To the next yield.
+    Yield,
+}
+
+/// The most frame steps one Tick may take. A strand that hasn't yielded by then is an engine
+/// fault, not a hang: one main-loop iteration with slice 0's frames takes fewer than ten.
+pub const STEP_BUDGET: u16 = 256;
+
+/// Where the scan-out runs relative to a frame's per-Tick work (D7).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BeamSync {
+    /// The frame reports [`Next::Sync`] from inside its work.
+    Within,
+    /// Before the frame does any work this Tick.
+    BeforeWork,
+}
+
+/// The frame's beam-sync point.
+///
+/// The main loop's is after the HDMA object handler, because on
+/// the console that handler finishes in vblank before line 0; every other frame's is before
+/// its work until a measurement places it (D7).
+#[must_use]
+pub const fn beam_sync(frame: Frame) -> BeamSync {
+    match frame {
+        Frame::MainLoop(_) => BeamSync::Within,
+        Frame::Gameplay(_) | Frame::Plms { .. } | Frame::MessageBox(_) => BeamSync::BeforeWork,
+    }
+}
+
+/// Whether the main strand runs this Tick: it does unless it waits on a wait that the last
+/// vblank's NMI didn't answer (an overrun or a vblank with NMIs off, D8).
+#[must_use]
+pub const fn resumes(state: &State) -> bool {
+    match state.main.waiting {
+        None => true,
+        Some(_) => matches!(state.timing.last, NmiTiming::OnTime),
+    }
+}
+
+/// Resume the main strand after an answered wait.
+///
+/// A `Wait::Until` tests its condition first: while it is false the strand yields again
+/// without running a frame, as the original's "wait for NMI, then test" loops do.
+///
+/// Returns whether the strand is free to step.
+pub const fn resume(state: &mut State) -> bool {
+    if !resumes(state) {
+        return false;
+    }
+    match state.main.waiting.take() {
+        Some(Wait::Until(condition)) if !holds(condition, state) => {
+            yield_at(state, Wait::Until(condition));
+            false
+        }
+        Some(Wait::Nmi | Wait::LagFrame | Wait::Until(_)) | None => true,
+    }
+}
+
+/// Whether a test-each-Tick wait's condition holds.
+const fn holds(condition: Condition, _state: &State) -> bool {
+    match condition {
+        // open: the sound domain's music queue (C11); until it exists the queue is empty.
+        Condition::MusicQueueEmpty => true,
+    }
+}
+
+/// The strand stops at `wait`. A wait for a requested NMI sets the request, as the
+/// original's wait-for-NMI routine does before it spins.
+const fn yield_at(state: &mut State, wait: Wait) {
+    match wait {
+        Wait::Nmi | Wait::Until(_) => state.video.nmi_requested = true,
+        Wait::LagFrame => {}
+    }
+    state.main.waiting = Some(wait);
+}
+
+/// Step the main strand until `until`, charging each step to `budget`.
+///
+/// # Errors
+///
+/// A [`SessionFault`] when the strand empties, nests deeper than [`MAIN_STRAND_DEPTH`] or
+/// overruns [`STEP_BUDGET`].
+pub fn run(
+    state: &mut State,
+    rules: Rules,
+    until: Until,
+    budget: &mut u16,
+) -> Result<(), SessionFault> {
+    if state.main.waiting.is_some() {
+        return Ok(());
+    }
+    loop {
+        let top = *state.main.frames.last().ok_or(SessionFault::StrandEmpty)?;
+        if until == Until::BeamSync && beam_sync(top) == BeamSync::BeforeWork {
+            return Ok(());
+        }
+        *budget = budget
+            .checked_sub(1)
+            .ok_or(SessionFault::StepBudgetExceeded)?;
+        match step_once(state, rules)? {
+            Next::Sync if until == Until::BeamSync => return Ok(()),
+            Next::Yield(_) => return Ok(()),
+            Next::Continue | Next::Call(_) | Next::Return | Next::Sync => {}
+        }
+    }
+}
+
+/// Step the innermost frame once and apply its [`Next`] to the stack.
+///
+/// # Errors
+///
+/// A [`SessionFault`] when the strand is empty or a call would nest it too deep.
+pub fn step_once(state: &mut State, rules: Rules) -> Result<Next, SessionFault> {
+    let top = *state.main.frames.last().ok_or(SessionFault::StrandEmpty)?;
+    let (at, next) = step(top, state, rules);
+    if let Some(innermost) = state.main.frames.last_mut() {
+        *innermost = at;
+    }
+    match next {
+        Next::Continue | Next::Sync => {}
+        Next::Call(frame) => {
+            if state.main.frames.len() >= MAIN_STRAND_DEPTH {
+                return Err(SessionFault::StrandTooDeep);
+            }
+            state.main.frames.push(frame);
+        }
+        Next::Return => {
+            state.main.frames.pop();
+            if state.main.frames.is_empty() {
+                return Err(SessionFault::StrandEmpty);
+            }
+        }
+        Next::Yield(wait) => yield_at(state, wait),
+    }
+    Ok(next)
+}
+
+/// One step of `frame`: the frame's position afterwards and what comes next.
+fn step(frame: Frame, state: &mut State, rules: Rules) -> (Frame, Next) {
+    match frame {
+        Frame::MainLoop(at) => {
+            let (at, next) = main_loop(at, state, rules);
+            (Frame::MainLoop(at), next)
+        }
+        Frame::Gameplay(at) => {
+            let (at, next) = gameplay(at, state, rules);
+            (Frame::Gameplay(at), next)
+        }
+        // open: the PLM pass resumes at its slot once the interpreter exists (B7), and the
+        // message box runs its phases (C13); until then each returns as soon as it resumes.
+        Frame::Plms { .. } | Frame::MessageBox(_) => (frame, Next::Return),
+    }
+}
+
+/// A phase of the main game loop, in the original's order.
+///
+/// Bank `$82` log, main game loop `$82:8948`: the HDMA object handler (`$88:84B9`, which runs
+/// the music queue first), the RNG (`$80:8111`), the high-OAM clear (`$80:8B1A`), the OAM stack
+/// pointer and Samus tile transfer reset, the game state dispatch through the table at
+/// `$82:8981`, the sound effect handler (`$82:89EF`), the OAM finaliser (`$80:896E`), the spare
+/// CPU display and controller input update (`$82:8AB0`), then wait for NMI (`$80:8338`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MainLoopPhase {
+    /// The HDMA object handler and the music queue.
+    HdmaObjects,
+    /// One RNG call.
+    Rng,
+    /// Clear high OAM.
+    ClearHighOam,
+    /// Reset the OAM stack and the Samus tile transfer flags.
+    ResetOamAndSamusTransfers,
+    /// The sound effect handler.
+    SoundEffects,
+    /// Finalise OAM.
+    FinaliseOam,
+    /// The spare-CPU display and the controller input update.
+    SpareCpuAndInput,
+}
+
+/// The phases between the beam-sync point and the game state dispatch.
+const BEFORE_GAME_STATE: [MainLoopPhase; 3] = [
+    MainLoopPhase::Rng,
+    MainLoopPhase::ClearHighOam,
+    MainLoopPhase::ResetOamAndSamusTransfers,
+];
+
+/// The phases after the game state dispatch, before the wait for NMI.
+const AFTER_GAME_STATE: [MainLoopPhase; 3] = [
+    MainLoopPhase::SoundEffects,
+    MainLoopPhase::FinaliseOam,
+    MainLoopPhase::SpareCpuAndInput,
+];
+
+/// One step of the main loop from `at`.
+fn main_loop(at: MainLoopAt, state: &mut State, rules: Rules) -> (MainLoopAt, Next) {
+    match at {
+        MainLoopAt::Start => {
+            main_loop_phase(MainLoopPhase::HdmaObjects, state, rules);
+            (MainLoopAt::AfterHdmaObjects, Next::Sync)
+        }
+        MainLoopAt::AfterHdmaObjects => {
+            for phase in BEFORE_GAME_STATE {
+                main_loop_phase(phase, state, rules);
+            }
+            (
+                MainLoopAt::AfterGameState,
+                Next::Call(game_state(state.mode)),
+            )
+        }
+        MainLoopAt::AfterGameState => {
+            for phase in AFTER_GAME_STATE {
+                main_loop_phase(phase, state, rules);
+            }
+            (MainLoopAt::Start, Next::Yield(Wait::Nmi))
+        }
+    }
+}
+
+/// The frame the game state dispatch calls.
+const fn game_state(mode: GameMode) -> Frame {
+    match mode {
+        GameMode::Gameplay => Frame::Gameplay(GameplayAt::Start),
+    }
+}
+
+/// A main-loop phase's work.
+// open: every phase is C1's (RNG, OAM) or its domain's; each arm fills in with its lane.
+const fn main_loop_phase(phase: MainLoopPhase, _state: &mut State, _rules: Rules) {
+    match phase {
+        MainLoopPhase::HdmaObjects
+        | MainLoopPhase::Rng
+        | MainLoopPhase::ClearHighOam
+        | MainLoopPhase::ResetOamAndSamusTransfers
+        | MainLoopPhase::SoundEffects
+        | MainLoopPhase::FinaliseOam
+        | MainLoopPhase::SpareCpuAndInput => {}
+    }
+}
+
+/// A phase of game state 8's gameplay pass, in the original's order.
+///
+/// Bank `$82` log, main gameplay `$82:8B44`: enemy processing selection (`$A0:8EB6`), the
+/// debug handler (`$B4:9809`, dead in vanilla), palette FX (`$8D:C527`), Samus's current state
+/// (`$90:E692`), Samus and projectile interaction (`$A0:9785`), the enemies (`$A0:8FD4`),
+/// Samus's new state (`$90:E722`), enemy projectiles (`$86:8104`), PLMs (`$84:85B4`), animated
+/// tiles (`$87:8064`), enemy projectile and Samus collision (`$A0:9894`), enemy projectile and
+/// projectile collision (`$A0:996C`), enemy power bomb interaction (`$A0:A306`), scrolling
+/// (`$90:94EC`), drawing (`$A0:884D`), the enemy BG2 tilemap queue (`$A0:9726`), the HUD
+/// (`$80:9B44`), the layer 2 and BG scroll (`$80:A3AB`), the room's main code (`$8F:E8BD`),
+/// health and game time (`$82:DB69`), room shaking (`$A0:8687`) and the hurt timers
+/// (`$A0:9169`). The three interaction phases run only while sprite interactions are enabled.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GameplayPhase {
+    /// Choose which enemies process.
+    EnemySelection,
+    /// Palette FX.
+    PaletteFx,
+    /// Samus's current state.
+    SamusCurrentState,
+    /// Samus and projectile interaction with enemies.
+    SamusProjectileInteraction,
+    /// The enemies.
+    Enemies,
+    /// Samus's new state.
+    SamusNewState,
+    /// Enemy projectiles.
+    EnemyProjectiles,
+    /// The PLM pass.
+    Plms,
+    /// Animated tiles.
+    AnimatedTiles,
+    /// Enemy projectile and Samus collision.
+    EnemyProjectileSamus,
+    /// Enemy projectile and projectile collision.
+    EnemyProjectileProjectile,
+    /// Enemy power bomb interaction.
+    EnemyPowerBomb,
+    /// The main scrolling routine.
+    Scrolling,
+    /// Draw Samus, projectiles, enemies and enemy projectiles.
+    Draw,
+    /// The enemy BG2 tilemap transfer queue.
+    EnemyBg2Tilemap,
+    /// The HUD tilemap.
+    Hud,
+    /// Layer 2 position and BG scroll.
+    BgScroll,
+    /// The room's main code.
+    RoomMain,
+    /// Health depletion and game time.
+    HealthAndTime,
+    /// Room shaking.
+    RoomShaking,
+    /// Hurt timers and the active enemy index.
+    HurtTimers,
+}
+
+/// The gameplay pass up to and including the PLM pass, whose instructions can call out (the
+/// item's message box) and so end a step.
+const THROUGH_PLMS: [GameplayPhase; 8] = [
+    GameplayPhase::EnemySelection,
+    GameplayPhase::PaletteFx,
+    GameplayPhase::SamusCurrentState,
+    GameplayPhase::SamusProjectileInteraction,
+    GameplayPhase::Enemies,
+    GameplayPhase::SamusNewState,
+    GameplayPhase::EnemyProjectiles,
+    GameplayPhase::Plms,
+];
+
+/// The gameplay pass after the PLM pass.
+const AFTER_PLMS: [GameplayPhase; 13] = [
+    GameplayPhase::AnimatedTiles,
+    GameplayPhase::EnemyProjectileSamus,
+    GameplayPhase::EnemyProjectileProjectile,
+    GameplayPhase::EnemyPowerBomb,
+    GameplayPhase::Scrolling,
+    GameplayPhase::Draw,
+    GameplayPhase::EnemyBg2Tilemap,
+    GameplayPhase::Hud,
+    GameplayPhase::BgScroll,
+    GameplayPhase::RoomMain,
+    GameplayPhase::HealthAndTime,
+    GameplayPhase::RoomShaking,
+    GameplayPhase::HurtTimers,
+];
+
+/// One step of the gameplay pass from `at`.
+fn gameplay(at: GameplayAt, state: &mut State, rules: Rules) -> (GameplayAt, Next) {
+    match at {
+        GameplayAt::Start => {
+            for phase in THROUGH_PLMS {
+                gameplay_phase(phase, state, rules);
+            }
+            (GameplayAt::AfterPlms, Next::Continue)
+        }
+        GameplayAt::AfterPlms => {
+            for phase in AFTER_PLMS {
+                gameplay_phase(phase, state, rules);
+            }
+            (GameplayAt::Start, Next::Return)
+        }
+    }
+}
+
+/// A gameplay phase's work.
+// open: each arm fills in with its C lane; the PLM pass ends the step with
+// `Next::Call(Frame::Plms { .. })` once an instruction can call out (B7, C12).
+const fn gameplay_phase(phase: GameplayPhase, _state: &mut State, _rules: Rules) {
+    match phase {
+        GameplayPhase::EnemySelection
+        | GameplayPhase::PaletteFx
+        | GameplayPhase::SamusCurrentState
+        | GameplayPhase::SamusProjectileInteraction
+        | GameplayPhase::Enemies
+        | GameplayPhase::SamusNewState
+        | GameplayPhase::EnemyProjectiles
+        | GameplayPhase::Plms
+        | GameplayPhase::AnimatedTiles
+        | GameplayPhase::EnemyProjectileSamus
+        | GameplayPhase::EnemyProjectileProjectile
+        | GameplayPhase::EnemyPowerBomb
+        | GameplayPhase::Scrolling
+        | GameplayPhase::Draw
+        | GameplayPhase::EnemyBg2Tilemap
+        | GameplayPhase::Hud
+        | GameplayPhase::BgScroll
+        | GameplayPhase::RoomMain
+        | GameplayPhase::HealthAndTime
+        | GameplayPhase::RoomShaking
+        | GameplayPhase::HurtTimers => {}
+    }
+}

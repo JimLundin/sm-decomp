@@ -142,6 +142,8 @@ pub enum NmiTiming {
     OnTime,
     /// While the main strand was still working.
     Overrun,
+    /// No NMI: the game had NMIs disabled at that vblank, so no wait was answered.
+    Disabled,
 }
 
 /// The NMI timing state and the cost model's accumulator (D8, D9).
