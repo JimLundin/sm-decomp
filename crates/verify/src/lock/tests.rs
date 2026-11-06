@@ -310,3 +310,16 @@ fn a_lock_mutant_fails_exactly_its_stream() {
         }
     }
 }
+
+/// The committed lock is what the gate reads, so a recorder or reader change that
+/// the other side doesn't follow fails here, not at the first engine comparison.
+#[test]
+fn the_committed_lsnes_lock_reads() {
+    let lock = Lock::parse(include_str!("../../../../scenarios/locks/lsnes.toml"))
+        .expect("the committed lock parses");
+    assert_eq!(lock.header.oracle.emulator, "lsnes-bsnes");
+    assert_eq!(lock.header.bundles.len(), 1);
+    assert_eq!(lock.rows.len(), 635);
+    assert!(lock.row(&RowId("area-brinstar".to_owned())).is_some());
+    assert!(lock.row(&RowId("item-morph-ball".to_owned())).is_some());
+}
