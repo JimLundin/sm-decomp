@@ -1,0 +1,196 @@
+//! Every State field with its decode status: the base of §11.2's coverage report, in which
+//! each field has a decode rule or a named reason it has no equivalent.
+
+use crate::source::{self, WramByte, WramWord};
+
+/// Where a decoded field comes from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Source {
+    /// A byte of work RAM.
+    WramByte(WramByte),
+    /// A word of work RAM.
+    WramWord(WramWord),
+    /// A word of work RAM resolved through the content: a ROM pointer to an ID.
+    WramPointer(WramWord),
+    /// A field of the record itself, by its `FrameRecord` name.
+    Record(&'static str),
+}
+
+/// A State field's decode status.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Status {
+    /// The decoder reads it from its source.
+    Decoded(Source),
+    /// Not decoded yet: it keeps its default.
+    NotDecoded,
+}
+
+/// A State field, by its `Canonical::diff` path below `state`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Field {
+    /// The path, as `Canonical::diff` names it.
+    pub path: &'static str,
+    /// How it's decoded.
+    pub status: Status,
+}
+
+const fn wram(path: &'static str, word: WramWord) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramWord(word)),
+    }
+}
+
+const fn wram_byte(path: &'static str, byte: WramByte) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramByte(byte)),
+    }
+}
+
+const fn record(path: &'static str, name: &'static str) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::Record(name)),
+    }
+}
+
+const fn open(path: &'static str) -> Field {
+    Field {
+        path,
+        status: Status::NotDecoded,
+    }
+}
+
+/// The State's fields, in declaration order, at the depth the decoder covers them.
+pub const FIELDS: &[Field] = &[
+    open("clock.tick"),
+    wram(
+        "clock.counters.nmi",
+        source::NMI_FRAME_COUNTER_INCLUDING_LAG,
+    ),
+    wram("clock.counters.completed", source::NMI_FRAME_COUNTER_WORD),
+    wram_byte("clock.counters.lag", source::NMI_FRAMES_MISSED),
+    wram_byte("clock.counters.max_lag", source::NMI_FRAMES_MISSED_MAX),
+    wram("clock.game_time.hours", source::GAME_TIME_HOURS),
+    wram("clock.game_time.minutes", source::GAME_TIME_MINUTES),
+    wram("clock.game_time.seconds", source::GAME_TIME_SECONDS),
+    wram("clock.game_time.frames", source::GAME_TIME_FRAMES),
+    wram("rng.word", source::RANDOM_NUMBER),
+    open("rng.calls"),
+    record("controller.auto_read", "pad"),
+    wram("controller.held", source::JOYPAD1_LASTKEYS),
+    wram("controller.pressed", source::JOYPAD1_NEWKEYS),
+    wram("controller.previous", source::JOYPAD1_PREV),
+    wram("controller.repeat", source::JOYPAD1_NEWKEYS2_UNUSED),
+    wram("controller.repeat_delay", source::JOYPAD1_KEYREPEAT_CTR),
+    wram("mode", source::GAME_STATE),
+    open("main"),
+    open("irq"),
+    open("timing.last"),
+    open("timing.owed"),
+    record("video.memory.vram", "vram"),
+    record("video.memory.cgram", "cgram"),
+    record("video.memory.oam", "oam"),
+    open("video.committed"),
+    open("video.batch"),
+    open("video.nmi_requested"),
+    wram("samus.position.x.pixels", source::SAMUS_X_POS),
+    wram("samus.position.x.subpixels", source::SAMUS_X_SUBPOS),
+    wram("samus.position.y.pixels", source::SAMUS_Y_POS),
+    wram("samus.position.y.subpixels", source::SAMUS_Y_SUBPOS),
+    open("samus.facing"),
+    open("samus.aim"),
+    open("samus.movement"),
+    open("samus.equipment"),
+    open("samus.invincibility"),
+    open("samus.animation"),
+    Field {
+        path: "room.room",
+        status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
+    },
+    open("room.entered_by"),
+    open("room.blocks"),
+    open("room.scroll_areas"),
+    open("room.camera"),
+    open("room.plms"),
+    open("room.enemies"),
+];
+
+#[cfg(test)]
+mod tests {
+    use super::{FIELDS, Source, Status};
+    use crate::decode::Rules;
+
+    #[test]
+    fn paths_are_unique() {
+        for (index, field) in FIELDS.iter().enumerate() {
+            assert!(
+                FIELDS[..index].iter().all(|other| other.path != field.path),
+                "{} listed twice",
+                field.path
+            );
+        }
+    }
+
+    #[test]
+    fn every_state_field_is_listed() {
+        let top = [
+            "clock",
+            "rng",
+            "controller",
+            "mode",
+            "main",
+            "irq",
+            "timing",
+            "video",
+            "samus",
+            "room",
+        ];
+        for name in top {
+            assert!(
+                FIELDS
+                    .iter()
+                    .any(|field| field.path.split('.').next() == Some(name)),
+                "{name} has no row"
+            );
+        }
+    }
+
+    #[test]
+    fn every_wram_rule_is_a_decoder_source() {
+        let rules = Rules::ORIGINAL;
+        let words = [
+            rules.nmi,
+            rules.completed,
+            rules.hours,
+            rules.minutes,
+            rules.seconds,
+            rules.frames,
+            rules.rng,
+            rules.held,
+            rules.pressed,
+            rules.previous,
+            rules.repeat,
+            rules.repeat_delay,
+            rules.game_state,
+            rules.samus_x,
+            rules.samus_x_subpixels,
+            rules.samus_y,
+            rules.samus_y_subpixels,
+            rules.room,
+        ];
+        let bytes = [rules.lag, rules.max_lag];
+        for field in FIELDS {
+            match field.status {
+                Status::Decoded(Source::WramWord(word) | Source::WramPointer(word)) => {
+                    assert!(words.contains(&word), "{} isn't read", field.path);
+                }
+                Status::Decoded(Source::WramByte(byte)) => {
+                    assert!(bytes.contains(&byte), "{} isn't read", field.path);
+                }
+                Status::Decoded(Source::Record(_)) | Status::NotDecoded => {}
+            }
+        }
+    }
+}

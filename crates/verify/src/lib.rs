@@ -2,3 +2,12 @@
 //! projection per stream, facts, the stream digests, and free-run and lockstep comparison.
 //!
 //! No engine crate depends on it (ARCHITECTURE §4.1, §4.2).
+
+pub mod coverage;
+pub mod decode;
+pub mod source;
+
+#[cfg(test)]
+mod tests;
+
+pub use decode::{DecodeError, RoomHeader, RoomMap, Rules, decode};
