@@ -13,11 +13,18 @@
 //! first frame is information, the check compares the counts only.
 
 use std::collections::BTreeMap;
-use std::fmt;
+use std::fmt::{self, Write as _};
+use std::ops::Range;
+use std::path::Path;
+use std::sync::Arc;
+use std::time::Instant;
 
 use canonical::Segment;
 
-use crate::lockstep::Report;
+use crate::bundle::{content, rooms};
+use crate::cache::Cache;
+use crate::lock::{Lock, RowId};
+use crate::lockstep::{Report, lockstep};
 
 /// One group's differences over a run.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -204,10 +211,86 @@ pub fn parse(text: &str) -> Result<Vec<Summary>, ParseError> {
     Ok(rows)
 }
 
+/// Lockstep over one row's cache for the frames in `window`.
+///
+/// # Errors
+///
+/// The unreadable lock, cache or ROM, or a lockstep that cannot run.
+pub fn run_row(
+    lock: &Path,
+    cache: &Path,
+    rom: &Path,
+    row: &str,
+    window: Range<u64>,
+) -> Result<Report, String> {
+    let shown = |path: &Path| path.display().to_string();
+    let text =
+        std::fs::read_to_string(lock).map_err(|error| format!("{}: {error}", shown(lock)))?;
+    let lock = Lock::parse(&text).map_err(|error| format!("{}: {error:?}", shown(lock)))?;
+    let row = lock
+        .row(&RowId(row.to_owned()))
+        .ok_or_else(|| format!("{row}: not in the lock"))?;
+    let cache = Cache::open(cache, row).map_err(|error| error.to_string())?;
+    let image = std::fs::read(rom).map_err(|error| format!("{}: {error}", shown(rom)))?;
+    let content =
+        Arc::new(content(image.clone()).map_err(|error| format!("{}: {error}", shown(rom)))?);
+    let rooms = rooms(&content, &image).map_err(|error| format!("{}: {error:?}", shown(rom)))?;
+    lockstep(&cache, &rooms, &content, window).map_err(|error| error.to_string())
+}
+
+/// Runs every row the ratchet file names; the report when all hold their numbers, the
+/// regressions otherwise.
+///
+/// # Errors
+///
+/// The regressions, or whatever stopped a row from running.
+pub fn check(lock: &Path, cache: &Path, rom: &Path, ratchet: &Path) -> Result<String, String> {
+    let text = std::fs::read_to_string(ratchet)
+        .map_err(|error| format!("{}: {error}", ratchet.display()))?;
+    let baselines = parse(&text).map_err(|error| format!("{}: {error}", ratchet.display()))?;
+    let mut out = String::new();
+    let mut regressions = Vec::new();
+    let mut improved = String::new();
+    let (mut compared, mut seconds) = (0_u64, 0.0_f64);
+    for baseline in &baselines {
+        let started = Instant::now();
+        let report = run_row(lock, cache, rom, &baseline.row, 0..u64::MAX)?;
+        seconds += started.elapsed().as_secs_f64();
+        let now = Summary::of(&baseline.row, &report);
+        compared = compared.saturating_add(now.ticks);
+        let verdict = now.against(baseline);
+        regressions.extend(verdict.regressions);
+        if verdict.improved {
+            let _ = write!(improved, "{now}");
+        }
+        let _ = write!(out, "{now}");
+    }
+    if !regressions.is_empty() {
+        return Err(format!(
+            "lockstep ratchet broken:\n{}",
+            regressions.join("\n")
+        ));
+    }
+    if !improved.is_empty() {
+        let _ = write!(
+            out,
+            "improved; replace these rows in {}:\n{improved}",
+            ratchet.display()
+        );
+    }
+    let rate = f64::from(u32::try_from(compared).unwrap_or(u32::MAX)) / seconds.max(f64::EPSILON);
+    let _ = writeln!(
+        out,
+        "ratchet holds: {compared} Ticks in {seconds:.2} s ({rate:.0} Ticks/s)"
+    );
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Group, Summary, parse};
+    use super::{Group, Summary, check, parse};
     use std::collections::BTreeMap;
+    use std::path::Path;
 
     fn summary(equal: u64, video: Option<u64>) -> Summary {
         Summary {
@@ -236,5 +319,32 @@ mod tests {
         let better = summary(8, None).against(&baseline);
         assert_eq!(better.regressions.len(), 0);
         assert!(better.improved);
+    }
+
+    /// The committed ratchet holds against the record cache in `SM_CACHE` and the ROM in
+    /// `SM_ROM`; skipped where either isn't present. Run with `--nocapture` for the report.
+    #[test]
+    fn committed_ratchet_holds_against_the_cache() {
+        let (Some(cache), Some(rom)) = (std::env::var_os("SM_CACHE"), std::env::var_os("SM_ROM"))
+        else {
+            return;
+        };
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks");
+        let report = check(
+            &root.join("lsnes.toml"),
+            Path::new(&cache),
+            Path::new(&rom),
+            &root.join("lockstep.ratchet.txt"),
+        );
+        match report {
+            Ok(report) => println!("{report}"),
+            Err(error) => panic!("{error}"),
+        }
+    }
+
+    #[test]
+    fn a_missing_ratchet_file_is_an_error() {
+        let missing = Path::new("missing");
+        assert!(check(missing, missing, missing, missing).is_err());
     }
 }
