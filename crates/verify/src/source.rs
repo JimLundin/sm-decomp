@@ -351,9 +351,188 @@ pub const REG_TS: WramByte = WramByte {
     offset: 0x006B,
 };
 
-/// Bank $80 log, `$80:91EE`: the scroll mirrors of backgrounds 1 to 3, horizontal then
-/// vertical: `REG_BG1HOFS` to `REG_BG3VOFS`.
-pub const REG_BG_SCROLL: [[WramWord; 2]; 3] = [
+/// Bank $80 log, `$80:91EE`: OBSEL's mirror.
+pub const REG_OBSEL: WramByte = WramByte {
+    name: "REG_OBSEL",
+    offset: 0x0052,
+};
+
+/// Bank $80 log, `$80:91EE`: BGMODE's mirror.
+pub const REG_BGMODE: WramByte = WramByte {
+    name: "REG_BGMODE",
+    offset: 0x0055,
+};
+
+/// Bank $80 log, `$80:91EE`: MOSAIC's mirror.
+pub const REG_MOSAIC: WramByte = WramByte {
+    name: "REG_MOSAIC",
+    offset: 0x0057,
+};
+
+/// Bank $80 log, `$80:91EE`: the tilemap base mirrors, BG1SC to BG4SC (`$5B` between BG3's and BG4's is gameplay's
+/// saved BG3SC).
+pub const REG_BG_SC: [WramByte; 4] = [
+    WramByte {
+        name: "REG_BG1SC",
+        offset: 0x0058,
+    },
+    WramByte {
+        name: "REG_BG2SC",
+        offset: 0x0059,
+    },
+    WramByte {
+        name: "REG_BG3SC",
+        offset: 0x005A,
+    },
+    WramByte {
+        name: "REG_BG4SC",
+        offset: 0x005C,
+    },
+];
+
+/// Bank $80 log, `$80:91EE`: the tile base mirrors, BG12NBA and BG34NBA.
+pub const REG_BG_NBA: [WramByte; 2] = [
+    WramByte {
+        name: "REG_BG12NBA",
+        offset: 0x005D,
+    },
+    WramByte {
+        name: "REG_BG34NBA",
+        offset: 0x005E,
+    },
+];
+
+/// Bank $80 log, `$80:91EE`: M7SEL's mirror.
+pub const REG_M7SEL: WramByte = WramByte {
+    name: "REG_M7SEL",
+    offset: 0x005F,
+};
+
+/// Bank $80 log, `$80:91EE`: the window settings' mirrors, W12SEL, W34SEL, WOBJSEL.
+pub const REG_WINDOW_SELECT: [WramByte; 3] = [
+    WramByte {
+        name: "REG_W12SEL",
+        offset: 0x0060,
+    },
+    WramByte {
+        name: "REG_W34SEL",
+        offset: 0x0061,
+    },
+    WramByte {
+        name: "REG_WOBJSEL",
+        offset: 0x0062,
+    },
+];
+
+/// Bank $80 log, `$80:91EE`: the window edges' mirrors, WH0 to WH3.
+pub const REG_WINDOW_EDGES: [WramByte; 4] = [
+    WramByte {
+        name: "REG_WH0",
+        offset: 0x0063,
+    },
+    WramByte {
+        name: "REG_WH1",
+        offset: 0x0064,
+    },
+    WramByte {
+        name: "REG_WH2",
+        offset: 0x0065,
+    },
+    WramByte {
+        name: "REG_WH3",
+        offset: 0x0066,
+    },
+];
+
+/// Bank $80 log, `$80:91EE`: WBGLOG's mirror.
+pub const REG_WBGLOG: WramByte = WramByte {
+    name: "REG_WBGLOG",
+    offset: 0x0067,
+};
+
+/// Bank $80 log, `$80:91EE`: WOBJLOG's mirror.
+pub const REG_WOBJLOG: WramByte = WramByte {
+    name: "REG_WOBJLOG",
+    offset: 0x0068,
+};
+
+/// Bank $80 log, `$80:91EE`: TMW's mirror.
+pub const REG_TMW: WramByte = WramByte {
+    name: "REG_TMW",
+    offset: 0x006C,
+};
+
+/// Bank $80 log, `$80:91EE`: TSW's mirror.
+pub const REG_TSW: WramByte = WramByte {
+    name: "REG_TSW",
+    offset: 0x006D,
+};
+
+/// Bank $80 log, `$80:91EE`: CGWSEL's mirror.
+pub const REG_CGWSEL: WramByte = WramByte {
+    name: "REG_CGWSEL",
+    offset: 0x006F,
+};
+
+/// Bank $80 log, `$80:91EE`: CGADSUB's mirror.
+pub const REG_CGADSUB: WramByte = WramByte {
+    name: "REG_CGADSUB",
+    offset: 0x0072,
+};
+
+/// Bank $80 log, `$80:91EE`: the three bytes written to COLDATA in turn (`REG_COLDATA`).
+pub const REG_COLDATA: [WramByte; 3] = [
+    WramByte {
+        name: "REG_COLDATA",
+        offset: 0x0074,
+    },
+    WramByte {
+        name: "REG_COLDATA[1]",
+        offset: 0x0075,
+    },
+    WramByte {
+        name: "REG_COLDATA[2]",
+        offset: 0x0076,
+    },
+];
+
+/// Bank $80 log, `$80:91EE`: SETINI's mirror.
+pub const REG_SETINI: WramByte = WramByte {
+    name: "REG_SETINI",
+    offset: 0x0077,
+};
+
+/// Bank $80 log, `$80:91EE`: the mode 7 mirrors, M7A to M7Y, written only in mode 7.
+pub const REG_M7: [WramWord; 6] = [
+    WramWord {
+        name: "REG_M7A",
+        offset: 0x0078,
+    },
+    WramWord {
+        name: "REG_M7B",
+        offset: 0x007A,
+    },
+    WramWord {
+        name: "REG_M7C",
+        offset: 0x007C,
+    },
+    WramWord {
+        name: "REG_M7D",
+        offset: 0x007E,
+    },
+    WramWord {
+        name: "REG_M7X",
+        offset: 0x0080,
+    },
+    WramWord {
+        name: "REG_M7Y",
+        offset: 0x0082,
+    },
+];
+
+/// Bank $80 log, `$80:91EE`: the scroll mirrors of backgrounds 1 to 4, horizontal then
+/// vertical: `REG_BG1HOFS` to `REG_BG4VOFS`, written in pairs to `$210D`-`$2114`.
+pub const REG_BG_SCROLL: [[WramWord; 2]; 4] = [
     [
         WramWord {
             name: "REG_BG1HOFS",
@@ -382,6 +561,16 @@ pub const REG_BG_SCROLL: [[WramWord; 2]; 3] = [
         WramWord {
             name: "REG_BG3VOFS",
             offset: 0x00BB,
+        },
+    ],
+    [
+        WramWord {
+            name: "REG_BG4HOFS",
+            offset: 0x00BD,
+        },
+        WramWord {
+            name: "REG_BG4VOFS",
+            offset: 0x00BF,
         },
     ],
 ];

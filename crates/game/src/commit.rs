@@ -1,7 +1,9 @@
 //! The NMI's video commit points (D16, K4): the only places video memory and the committed
 //! registers change. Each copies a part of the batch the main strand built during the frame.
 
-use crate::state::video::{VRAM_WORDS, Video, VramSource, VramStep, VramTransfer};
+use crate::state::video::{
+    Mode7, SCROLL_BITS, Scroll, VRAM_WORDS, Video, VramSource, VramStep, VramTransfer,
+};
 
 /// VRAM's word address is 15 bits; the PPU ignores the top bit.
 const VRAM_ADDRESS_MASK: usize = VRAM_WORDS - 1;
@@ -15,8 +17,36 @@ impl Video {
     }
 
     /// Bank `$80` log, update IO registers `$80:91EE`: the register mirrors to the PPU.
-    pub const fn commit_registers(&mut self) {
-        self.committed = self.batch.registers;
+    ///
+    /// Each scroll register keeps the ten bits the PPU has of the mirror's word (the record's
+    /// BG1HOFS holds 0 where the mirror holds 400h), the three COLDATA writes each set the
+    /// components they select, and the mode 7 registers are written only in mode 7.
+    // open: `$80:91EE` also tests `REG_BGMODE_FAKE`'s mode for the mode 7 registers.
+    pub fn commit_registers(&mut self) {
+        let mirrors = self.batch.registers;
+        let fixed = self
+            .batch
+            .fixed_colour
+            .iter()
+            .fold(self.committed.colour_math.fixed, |colour, &write| {
+                colour.with(write)
+            });
+        let mode7 = if mirrors.mode.is_mode7() {
+            mirrors.mode7
+        } else {
+            Mode7 {
+                select: mirrors.mode7.select,
+                ..self.committed.mode7
+            }
+        };
+        let mut committed = mirrors;
+        committed.scroll = mirrors.scroll.map(|Scroll { x, y }| Scroll {
+            x: x & SCROLL_BITS,
+            y: y & SCROLL_BITS,
+        });
+        committed.colour_math.fixed = fixed;
+        committed.mode7 = mode7;
+        self.committed = committed;
     }
 
     /// Bank `$80` log, process VRAM write table `$80:8C83`: each queued upload DMAs to VRAM
@@ -51,8 +81,8 @@ fn write_vram(vram: &mut [u16], transfer: &VramTransfer) {
 #[cfg(test)]
 mod tests {
     use crate::state::video::{
-        Brightness, Colour, Registers, VRAM_WORDS, Video, VramSource, VramStep, VramTransfer,
-        VramWord,
+        Brightness, Colour, ColourWrite, FixedColour, Registers, Scroll, VRAM_WORDS, Video,
+        VramSource, VramStep, VramTransfer, VramWord,
     };
 
     fn transfer(to: u16, step: VramStep, source: VramSource) -> VramTransfer {
@@ -110,5 +140,25 @@ mod tests {
         video.commit_registers();
         assert_eq!(video.memory.cgram[5], Colour(0x7FFF));
         assert_eq!(video.committed.brightness, Brightness(15));
+    }
+
+    #[test]
+    fn the_scroll_keeps_ten_bits_and_coldata_sets_what_it_selects() {
+        let mut video = Video::default();
+        video.batch.registers.scroll[0] = Scroll {
+            x: 0x0400,
+            y: 0x1200,
+        };
+        video.batch.fixed_colour = [ColourWrite(0x26), ColourWrite(0x42), ColourWrite(0x00)];
+        video.commit_registers();
+        assert_eq!(video.committed.scroll[0], Scroll { x: 0, y: 0x200 });
+        assert_eq!(
+            video.committed.colour_math.fixed,
+            FixedColour {
+                red: 6,
+                green: 2,
+                blue: 0
+            }
+        );
     }
 }

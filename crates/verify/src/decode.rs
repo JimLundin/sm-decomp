@@ -16,9 +16,11 @@ use game::state::samus::{
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
-    Brightness, CGRAM_COLOURS, Colour, Layers, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, Registers,
-    SCROLLED_BACKGROUNDS, Scroll, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep,
-    VramTransfer, VramWord,
+    BACKGROUNDS, BgMode, Brightness, CGRAM_COLOURS, Colour, ColourMath, ColourMathLayers,
+    ColourMathSelect, ColourWrite, DisplaySettings, DmaChannel, FixedColour, Layers, Mode7,
+    Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Registers, Scroll,
+    TileBases, TilemapBase, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep, VramTransfer,
+    VramWord, WindowSettings, Windows,
 };
 use game::state::{
     Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
@@ -241,7 +243,9 @@ pub struct Rules<'t> {
     /// `video.batch.registers.sub_screen`.
     pub sub_screen: WramByte,
     /// `video.batch.registers.scroll`.
-    pub scroll: [[WramWord; 2]; SCROLLED_BACKGROUNDS],
+    pub scroll: [[WramWord; 2]; BACKGROUNDS],
+    /// The other register mirrors `$80:91EE` writes.
+    pub mirrors: MirrorSources,
     /// `samus.equipment.collected`.
     pub collected: WramWord,
     /// `samus.equipment.equipped`.
@@ -282,6 +286,45 @@ pub struct Rules<'t> {
     pub message: WramWord,
 }
 
+/// Where the original keeps the register mirrors beyond INIDISP, TM, TS and the scroll.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MirrorSources {
+    /// `.objects`.
+    pub objects: WramByte,
+    /// `.mode`.
+    pub mode: WramByte,
+    /// `.mosaic`.
+    pub mosaic: WramByte,
+    /// `.tilemaps`.
+    pub tilemaps: [WramByte; BACKGROUNDS],
+    /// `.tile_bases`.
+    pub tile_bases: [WramByte; BACKGROUNDS / 2],
+    /// `.mode7.select`.
+    pub mode7_select: WramByte,
+    /// `.mode7.matrix`, then `.mode7.centre`.
+    pub mode7: [WramWord; 6],
+    /// `.windows.select`.
+    pub window_select: [WramByte; 3],
+    /// `.windows.edges`.
+    pub window_edges: [WramByte; 4],
+    /// `.windows.background_logic`.
+    pub background_logic: WramByte,
+    /// `.windows.object_logic`.
+    pub object_logic: WramByte,
+    /// `.main_window_mask`.
+    pub main_window_mask: WramByte,
+    /// `.sub_window_mask`.
+    pub sub_window_mask: WramByte,
+    /// `.colour_math.select`.
+    pub colour_math_select: WramByte,
+    /// `.colour_math.layers`.
+    pub colour_math_layers: WramByte,
+    /// `video.batch.fixed_colour`.
+    pub fixed_colour: [WramByte; 3],
+    /// `.settings`.
+    pub settings: WramByte,
+}
+
 impl Rules<'_> {
     /// The original's layout.
     pub const ORIGINAL: Rules<'static> = Rules {
@@ -314,6 +357,25 @@ impl Rules<'_> {
         main_screen: source::REG_TM,
         sub_screen: source::REG_TS,
         scroll: source::REG_BG_SCROLL,
+        mirrors: MirrorSources {
+            objects: source::REG_OBSEL,
+            mode: source::REG_BGMODE,
+            mosaic: source::REG_MOSAIC,
+            tilemaps: source::REG_BG_SC,
+            tile_bases: source::REG_BG_NBA,
+            mode7_select: source::REG_M7SEL,
+            mode7: source::REG_M7,
+            window_select: source::REG_WINDOW_SELECT,
+            window_edges: source::REG_WINDOW_EDGES,
+            background_logic: source::REG_WBGLOG,
+            object_logic: source::REG_WOBJLOG,
+            main_window_mask: source::REG_TMW,
+            sub_window_mask: source::REG_TSW,
+            colour_math_select: source::REG_CGWSEL,
+            colour_math_layers: source::REG_CGADSUB,
+            fixed_colour: source::REG_COLDATA,
+            settings: source::REG_SETINI,
+        },
         collected: source::COLLECTED_ITEMS,
         equipped: source::EQUIPPED_ITEMS,
         energy: source::SAMUS_HEALTH,
@@ -476,9 +538,11 @@ impl Rules<'_> {
         Ok(Video {
             memory: video_memory(record)?,
             committed: committed(&record.ppu)?,
+            dma: record.ppu.dma.map(dma_channel),
             nmi_requested: flag(self.nmi_requested, wram)?,
             batch: NmiBatch {
                 registers: self.mirrors(wram)?,
+                fixed_colour: bytes(self.mirrors.fixed_colour, wram)?.map(ColourWrite),
                 oam: oam(self.oam_buffer.read(wram)?)?,
                 cgram: colours(self.palette_buffer.read(wram)?),
                 vram: self.vram_queue(wram)?,
@@ -487,22 +551,54 @@ impl Rules<'_> {
         })
     }
 
-    /// The register mirrors `$80:91EE` writes to the PPU.
+    /// The register mirrors `$80:91EE` writes to the PPU. The fixed colour is left at
+    /// black: the mirrors hold COLDATA's writes, which `fixed_colour` decodes.
     fn mirrors(&self, wram: &[u8]) -> Result<Registers, DecodeError> {
         let (forced_blank, brightness) = display(self.inidisp.read(wram)?);
-        let mut scroll = [Scroll::default(); SCROLLED_BACKGROUNDS];
+        let mut scroll = [Scroll::default(); BACKGROUNDS];
         for (layer, [x, y]) in scroll.iter_mut().zip(self.scroll) {
             *layer = Scroll {
                 x: x.read(wram)?,
                 y: y.read(wram)?,
             };
         }
+        let sources = &self.mirrors;
+        let mut mode7 = [0_i16; 6];
+        for (value, word) in mode7.iter_mut().zip(sources.mode7) {
+            *value = i16::from_le_bytes(word.read(wram)?.to_le_bytes());
+        }
+        let [m7a, m7b, m7c, m7d, m7x, m7y] = mode7;
+        let layers_at = |source: WramByte| layers(source.read(wram)?, source.name);
         Ok(Registers {
             forced_blank,
             brightness,
-            main_screen: layers(self.main_screen.read(wram)?, self.main_screen.name)?,
-            sub_screen: layers(self.sub_screen.read(wram)?, self.sub_screen.name)?,
+            objects: ObjectSelect(sources.objects.read(wram)?),
+            mode: BgMode(sources.mode.read(wram)?),
+            mosaic: Mosaic(sources.mosaic.read(wram)?),
+            tilemaps: bytes(sources.tilemaps, wram)?.map(TilemapBase),
+            tile_bases: bytes(sources.tile_bases, wram)?.map(TileBases),
             scroll,
+            mode7: Mode7 {
+                select: Mode7Select(sources.mode7_select.read(wram)?),
+                matrix: [m7a, m7b, m7c, m7d],
+                centre: [m7x, m7y],
+            },
+            windows: Windows {
+                select: bytes(sources.window_select, wram)?.map(WindowSettings),
+                edges: bytes(sources.window_edges, wram)?,
+                background_logic: WindowSettings(sources.background_logic.read(wram)?),
+                object_logic: WindowSettings(sources.object_logic.read(wram)?),
+            },
+            main_screen: layers_at(self.main_screen)?,
+            sub_screen: layers_at(self.sub_screen)?,
+            main_window_mask: layers_at(sources.main_window_mask)?,
+            sub_window_mask: layers_at(sources.sub_window_mask)?,
+            colour_math: ColourMath {
+                select: ColourMathSelect(sources.colour_math_select.read(wram)?),
+                layers: ColourMathLayers(sources.colour_math_layers.read(wram)?),
+                fixed: FixedColour::default(),
+            },
+            settings: DisplaySettings(sources.settings.read(wram)?),
         })
     }
 
@@ -828,20 +924,79 @@ fn vram_source(wram: &[u8], bank: u8, from: u16, bytes: usize) -> VramSource {
     VramSource::Words(words)
 }
 
+/// The bytes at `sources`.
+fn bytes<const N: usize>(sources: [WramByte; N], wram: &[u8]) -> Result<[u8; N], DecodeError> {
+    let mut values = [0; N];
+    for (value, source) in values.iter_mut().zip(sources) {
+        *value = source.read(wram)?;
+    }
+    Ok(values)
+}
+
+/// A DMA channel's registers, from the record's `$43x0`-`$43xA` bytes.
+const fn dma_channel(bytes: [u8; 11]) -> DmaChannel {
+    let [
+        control,
+        destination,
+        source_low,
+        source_high,
+        source_bank,
+        count_low,
+        count_high,
+        indirect_bank,
+        table_low,
+        table_high,
+        line_counter,
+    ] = bytes;
+    DmaChannel {
+        control,
+        destination,
+        source: u16::from_le_bytes([source_low, source_high]),
+        source_bank,
+        count: u16::from_le_bytes([count_low, count_high]),
+        indirect_bank,
+        table: u16::from_le_bytes([table_low, table_high]),
+        line_counter,
+    }
+}
+
 /// The registers the PPU holds at the cut, from the record's register struct.
 fn committed(ppu: &PpuRegisters) -> Result<Registers, DecodeError> {
-    let [main, sub, _, _] = ppu.screens;
+    let [main, sub, main_mask, sub_mask] = ppu.screens;
     let (forced_blank, brightness) = display(ppu.inidisp);
-    let mut scroll = [Scroll::default(); SCROLLED_BACKGROUNDS];
-    for (layer, &[x, y]) in scroll.iter_mut().zip(&ppu.bg_scroll) {
-        *layer = Scroll { x, y };
-    }
+    let scroll = ppu.bg_scroll.map(|[x, y]| Scroll { x, y });
+    let [m7a, m7b, m7c, m7d, m7x, m7y] = ppu.m7;
+    let [red, green, blue] = ppu.fixed_color;
     Ok(Registers {
         forced_blank,
         brightness,
+        objects: ObjectSelect(ppu.obsel),
+        mode: BgMode(ppu.bgmode),
+        mosaic: Mosaic(ppu.mosaic),
+        tilemaps: ppu.bg_sc.map(TilemapBase),
+        tile_bases: [TileBases(ppu.bg12nba), TileBases(ppu.bg34nba)],
+        scroll,
+        mode7: Mode7 {
+            select: Mode7Select(ppu.m7sel),
+            matrix: [m7a, m7b, m7c, m7d],
+            centre: [m7x, m7y],
+        },
+        windows: Windows {
+            select: ppu.window_select.map(WindowSettings),
+            edges: ppu.window_positions,
+            background_logic: WindowSettings(ppu.wbglog),
+            object_logic: WindowSettings(ppu.wobjlog),
+        },
         main_screen: layers(main, "ppu.screens[0]")?,
         sub_screen: layers(sub, "ppu.screens[1]")?,
-        scroll,
+        main_window_mask: layers(main_mask, "ppu.screens[2]")?,
+        sub_window_mask: layers(sub_mask, "ppu.screens[3]")?,
+        colour_math: ColourMath {
+            select: ColourMathSelect(ppu.cgwsel),
+            layers: ColourMathLayers(ppu.cgadsub),
+            fixed: FixedColour { red, green, blue },
+        },
+        settings: DisplaySettings(ppu.setini),
     })
 }
 

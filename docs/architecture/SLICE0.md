@@ -280,15 +280,31 @@ VRAM difference is word `$585C`, in the HUD tilemap the gameplay pass queues fro
 FX writing the buffer (the palette FX lane). The scroll mirrors are the camera's (BG1 and BG2
 from the layer positions). Remaining:
 
-- `video.committed.scroll[0].x` differs from the first Tick: the mirror holds 4 where the
-  record's BG1HOFS holds 0. Whether the NMI writes BG1's scroll from another source or the
-  record's scroll is a later write (the HUD IRQ) needs the `writes` log of one record (B5
-  follow-up, or B6 with the line program);
-- `Registers` holds five of the PPU's registers; the `ppu` encoder (`video.committed` to the
-  recorder's digest, `verify::cache::ppu_digest`: every architectural register but
-  `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel`, and with the DMA channel registers) needs
-  the full mirror set and the DMA channels' last settings, so it is not written; the fold's
-  `ppu` stays `None` (B5 follow-up);
+- done (`lane/slice0-b5b`): the BG1 scroll. The record holds each scroll register's ten
+  bits, the PPU's, and the mirror the whole word the game keeps: `REG_BG1HOFS` holds
+  `0400h` at frame 0 of both rows, the record's BG1HOFS 0 (likewise BG1VOFS `1200h` and
+  `200h`, BG2HOFS `FEC0h` and `2C0h`). `$80:91EE` writes the mirrors in low, high pairs, so
+  the PPU's latch rule leaves the word's low ten bits; the commit rule was wrong, not the
+  decoder, and `commit_registers` now masks. The cache has no `writes` (no write-log tier),
+  so this rests on the bank log and the frame-0 values;
+- done (`lane/slice0-b5b`): the `ppu` encoder. `Registers` holds every register
+  `$80:91EE` writes (OBSEL, BGMODE, MOSAIC, BGnSC, BGnmNBA, four scrolls, M7SEL and the
+  mode 7 matrix, the windows, TM, TS, TMW, TSW, CGWSEL, CGADSUB, the fixed colour,
+  SETINI), `NmiBatch.fixed_colour` the three COLDATA writes and `Video.dma` the eight DMA
+  channels; each has a decode rule (the mirrors from work RAM, `committed` and `dma` from
+  the record's `ppu`) and a lockstep comparator. `verify::ppu::encode` gives the record's
+  register struct and `verify::ppu::digest` the fold's `ppu` (in `verify`: the record's
+  layout is verification's, D6). Proof on A2's cache: encode(decode(record)) equals the
+  recorded `ppu` digest at all 477 and 1,428 quiescent cuts, and committing a cut's decoded
+  mirrors gives its decoded `committed` at all 477 and 1,029 of 1,428 (the 399 others are
+  the message box's lag NMIs, which don't commit). Lockstep (Ticks differing, first frame):
+  `video.committed` 342, 74 and 567, 74 (all the camera's scroll but, in
+  `item-morph-ball`, CGADSUB from 817, BG3SC from 818 and the fixed colour from 1260: the
+  message box); `video.dma` 64, 84 and 149, 84 (the NMI's DMAs don't set the channels
+  yet); the new batch mirrors equal in `area-brinstar`, and in `item-morph-ball` equal but
+  W34SEL, TSW (2, 1250) and the COLDATA writes (20, 1250). Open: the channels' settings
+  from the NMI's DMAs and the HDMA queue; `REG_BGMODE_FAKE`'s mode 7 test; the packed
+  registers' parts (newtypes over the PPU's byte for now);
 - Samus's tiles (`$80:9376`), the animated tiles (`$80:9416`), mode 7 (`$80:8BBA`) and the
   read table (`$80:8EA2`) are still named no-ops; Samus's and the animated tiles need B3's
   graphics content;

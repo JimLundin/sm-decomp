@@ -9,6 +9,7 @@ pub mod decode;
 pub mod fold;
 pub mod lock;
 pub mod lockstep;
+pub mod ppu;
 pub mod source;
 pub mod strand;
 

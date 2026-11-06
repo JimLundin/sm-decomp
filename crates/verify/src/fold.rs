@@ -6,7 +6,7 @@
 //!
 //! The engine doesn't emit frames yet; [`EngineFrame`] is the shape it will hand over
 //! per Tick: the cut its `Recorded` timing source gave, its video memory, SRAM, the
-//! PPU registers' digest once the `ppu` encoder exists (B5), its APU port accesses and
+//! PPU registers' digest from [`crate::ppu::digest`], its APU port accesses and
 //! the shown picture. A stream the engine doesn't give at a frame where it folds is
 //! absent from the row, which the comparison reports as `Absent(Side::Engine)`.
 
@@ -24,7 +24,7 @@ pub struct EngineFrame<'a> {
     pub video: &'a VideoMemory,
     /// Cartridge save RAM, `None` until the engine owns it.
     pub sram: Option<&'a [u8]>,
-    /// The `ppu` stream's digest, `None` until the engine has the encoder.
+    /// The `ppu` stream's digest, [`crate::ppu::digest`] of the State's video.
     pub ppu: Option<u64>,
     /// The CPU's APU port accesses in the frame, in order.
     pub ports: &'a [PortAccess],

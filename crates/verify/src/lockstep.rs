@@ -78,6 +78,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("video.memory.cgram", video.memory.cgram),
     field!("video.memory.oam", video.memory.oam),
     field!("video.committed", video.committed),
+    field!("video.dma", video.dma),
     field!(
         "video.batch.registers.forced_blank",
         video.batch.registers.forced_blank
@@ -95,6 +96,69 @@ const COMPARATORS: &[Comparator] = &[
         video.batch.registers.sub_screen
     ),
     field!("video.batch.registers.scroll", video.batch.registers.scroll),
+    field!(
+        "video.batch.registers.objects",
+        video.batch.registers.objects
+    ),
+    field!("video.batch.registers.mode", video.batch.registers.mode),
+    field!("video.batch.registers.mosaic", video.batch.registers.mosaic),
+    field!(
+        "video.batch.registers.tilemaps",
+        video.batch.registers.tilemaps
+    ),
+    field!(
+        "video.batch.registers.tile_bases",
+        video.batch.registers.tile_bases
+    ),
+    field!(
+        "video.batch.registers.mode7.select",
+        video.batch.registers.mode7.select
+    ),
+    field!(
+        "video.batch.registers.mode7.matrix",
+        video.batch.registers.mode7.matrix
+    ),
+    field!(
+        "video.batch.registers.mode7.centre",
+        video.batch.registers.mode7.centre
+    ),
+    field!(
+        "video.batch.registers.windows.select",
+        video.batch.registers.windows.select
+    ),
+    field!(
+        "video.batch.registers.windows.edges",
+        video.batch.registers.windows.edges
+    ),
+    field!(
+        "video.batch.registers.windows.background_logic",
+        video.batch.registers.windows.background_logic
+    ),
+    field!(
+        "video.batch.registers.windows.object_logic",
+        video.batch.registers.windows.object_logic
+    ),
+    field!(
+        "video.batch.registers.main_window_mask",
+        video.batch.registers.main_window_mask
+    ),
+    field!(
+        "video.batch.registers.sub_window_mask",
+        video.batch.registers.sub_window_mask
+    ),
+    field!(
+        "video.batch.registers.colour_math.select",
+        video.batch.registers.colour_math.select
+    ),
+    field!(
+        "video.batch.registers.colour_math.layers",
+        video.batch.registers.colour_math.layers
+    ),
+    field!(
+        "video.batch.registers.settings",
+        video.batch.registers.settings
+    ),
+    field!("video.batch.fixed_colour", video.batch.fixed_colour),
     field!("video.batch.oam", video.batch.oam),
     field!("video.batch.cgram", video.batch.cgram),
     field!("video.batch.vram", video.batch.vram),
