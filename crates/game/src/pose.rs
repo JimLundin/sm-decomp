@@ -187,17 +187,17 @@ const fn failed_lookup_command(movement: MovementType) -> Option<PoseCommand> {
 /// Whether Samus has base speed, which decides whether decelerating keeps her pose.
 const fn has_base_speed(movement: Movement) -> bool {
     match movement {
-        Movement::MorphBall { speed, .. } => speed.pixels != 0 || speed.subpixels != 0,
         Movement::Standing { speed }
         | Movement::Running { speed }
         | Movement::TurningAround { speed, .. }
         | Movement::Jumping { speed, .. }
         | Movement::Falling { speed, .. }
+        | Movement::MorphBall { speed, .. }
+        | Movement::Transition { speed, .. }
         | Movement::WallJumping { speed, .. } => speed.base.0 != 0,
         Movement::Crouching
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
-        | Movement::Transition { .. }
         | Movement::Moonwalking
         | Movement::RanIntoWall
         | Movement::Grappling
@@ -588,7 +588,7 @@ const fn initialise(old: PoseRecord, facing: Facing, movement: &mut Movement) {
 }
 
 /// A prospective pose change command's effect on her speeds (`$91:EC16`'s table).
-// open: the movements without `Horizontal` yet (the morph ball, the spring ball, grappling)
+// open: the movements without `Horizontal` yet (the spring ball, grappling)
 // ignore the commands.
 const fn apply(command: PoseCommand, speed: &mut Horizontal) {
     match command {

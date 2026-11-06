@@ -143,8 +143,8 @@ pub enum Movement {
     },
     /// Rolled into the morph ball.
     MorphBall {
-        /// Horizontal speed.
-        speed: Fixed,
+        /// Horizontal motion.
+        speed: Horizontal,
         /// Whether the ball is falling.
         airborne: bool,
     },
@@ -165,6 +165,8 @@ pub enum Movement {
     /// Crouching, standing, morphing or unmorphing. The fall she began it in carries on
     /// through it (`$90:A61C`).
     Transition {
+        /// Horizontal motion, which the transition leaves as it found it.
+        speed: Horizontal,
         /// Vertical motion.
         vertical: Vertical,
     },
@@ -252,7 +254,7 @@ impl From<MovementType> for Movement {
             speed: Horizontal::default(),
         };
         let morph_ball = |airborne| Self::MorphBall {
-            speed: Fixed::default(),
+            speed: Horizontal::default(),
             airborne,
         };
         match kind {
@@ -274,6 +276,7 @@ impl From<MovementType> for Movement {
             MovementType::TurningAroundJumping => turning(Turn::Jumping),
             MovementType::TurningAroundFalling => turning(Turn::Falling),
             MovementType::CrouchingTransition => Self::Transition {
+                speed: Horizontal::default(),
                 vertical: Vertical::default(),
             },
             MovementType::Moonwalking => Self::Moonwalking,
@@ -314,12 +317,12 @@ impl Movement {
             | Self::TurningAround { speed, .. }
             | Self::Jumping { speed, .. }
             | Self::Falling { speed, .. }
+            | Self::MorphBall { speed, .. }
+            | Self::Transition { speed, .. }
             | Self::WallJumping { speed, .. } => Some(speed),
             Self::Crouching
-            | Self::MorphBall { .. }
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
-            | Self::Transition { .. }
             | Self::Moonwalking
             | Self::RanIntoWall
             | Self::Grappling
@@ -338,12 +341,12 @@ impl Movement {
             | Self::TurningAround { speed, .. }
             | Self::Jumping { speed, .. }
             | Self::Falling { speed, .. }
+            | Self::MorphBall { speed, .. }
+            | Self::Transition { speed, .. }
             | Self::WallJumping { speed, .. } => Some(speed),
             Self::Crouching
-            | Self::MorphBall { .. }
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
-            | Self::Transition { .. }
             | Self::Moonwalking
             | Self::RanIntoWall
             | Self::Grappling
@@ -360,7 +363,7 @@ impl Movement {
         match self {
             Self::Jumping { vertical, .. }
             | Self::Falling { vertical, .. }
-            | Self::Transition { vertical }
+            | Self::Transition { vertical, .. }
             | Self::WallJumping { vertical, .. } => Some(vertical),
             Self::Standing { .. }
             | Self::Running { .. }
@@ -384,7 +387,7 @@ impl Movement {
         match self {
             Self::Jumping { vertical, .. }
             | Self::Falling { vertical, .. }
-            | Self::Transition { vertical }
+            | Self::Transition { vertical, .. }
             | Self::WallJumping { vertical, .. } => Some(vertical),
             Self::Standing { .. }
             | Self::Running { .. }

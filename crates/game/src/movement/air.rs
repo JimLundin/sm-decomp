@@ -164,7 +164,7 @@ pub(super) fn run(
                 animation.timer = TERMINAL_DELAY;
             }
         }
-        Movement::Transition { vertical } => {
+        Movement::Transition { vertical, .. } => {
             transition(vertical, gravity, pose, &mut position, mover);
         }
         Movement::Standing { .. }

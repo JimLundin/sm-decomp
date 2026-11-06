@@ -612,6 +612,7 @@ fn morphing(pose: u16, speed: Speed, direction: YDirection) -> Samus {
     Samus {
         pose: PoseId(pose),
         movement: Movement::Transition {
+            speed: Horizontal::default(),
             vertical: Vertical { speed, direction },
         },
         position: Point {

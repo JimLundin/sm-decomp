@@ -270,6 +270,7 @@ fn the_morphing_transition_picks_its_pose_by_items_then_y_speed() {
             samus.equipment.equipped.insert(item);
         }
         samus.movement = Movement::Transition {
+            speed: crate::state::samus::Horizontal::default(),
             vertical: crate::state::samus::Vertical {
                 speed,
                 direction: crate::state::samus::YDirection::Down,

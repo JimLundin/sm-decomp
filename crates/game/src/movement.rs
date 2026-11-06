@@ -187,7 +187,7 @@ impl Mover<'_> {
 /// The movement handler for the frame (`$90:A337`), through the room's blocks; what her
 /// moves met, for the pose update. The scroll triggers they reach join `touches`.
 // open: the footsteps and the standing shot's animation reset join with C4b, C6 and C7; the
-// morph ball, the spring ball and the air turns join with their movements.
+// spring ball and the air turns join with their movements.
 pub fn run(
     samus: &mut Samus,
     controller: &Controller,
@@ -248,6 +248,16 @@ fn on_ground(samus: &mut Samus, controller: &Controller, content: &Content, move
             speed.extra_run = Speed::ZERO;
             // The turn ignores what the step down met (`$90:A68F`).
             mover.contacts.vertical = VerticalContact::NoChange;
+        }
+        Movement::MorphBall {
+            airborne: false, ..
+        } => {
+            if rests_as_a_ball(speed, facing, pose) {
+                stand(speed, facing, &mut position, mover);
+            } else {
+                let total = rules.x_movement(speed, facing, &mut position, mover);
+                keep_to_ground(total, &mut position, mover);
+            }
         }
         // open: turning in the air moves her the same way, with her vertical motion (C3b).
         Movement::TurningAround { .. }
@@ -437,6 +447,17 @@ fn stand(speed: &mut Horizontal, facing: Facing, position: &mut Point, mover: &m
     keep_to_ground(total, position, mover);
     // Cancelling the speed boost drops her momentum; the speeds go with it.
     *speed = Horizontal::default();
+}
+
+/// The morph ball's resting poses, facing right and left (`$90:A521`).
+const BALL_AT_REST: [(Facing, PoseId); 2] =
+    [(Facing::Right, PoseId(0x1D)), (Facing::Left, PoseId(0x41))];
+
+/// Whether the ball on the ground is at rest: accelerating in its resting pose for the way
+/// it faces. Then only her extra run speed moves it, and its speeds end; any other ball
+/// moves like a runner (`$90:A521`).
+fn rests_as_a_ball(speed: &Horizontal, facing: Facing, pose: PoseId) -> bool {
+    speed.acceleration == Acceleration::Accelerating && BALL_AT_REST.contains(&(facing, pose))
 }
 
 /// "Cancel speed boosting" (bank $91 log, `$91:DE53`): she loses her running momentum.

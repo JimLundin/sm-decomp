@@ -7,12 +7,13 @@ use crate::state::samus::Fixed;
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Controller};
 
-/// The bank $90 log's normal speed table rows for running (1) and turning on the ground
+/// The bank $90 log's normal speed table rows for running (1), the morph ball on the ground (4) and turning on the ground
 /// ($E), the rest zero, and the air column of the extra run constants.
 fn content() -> Content {
     let mut words = vec![0_u16; MOVEMENT_TYPES * 6];
-    let rows: [(usize, [u16; 6]); 2] = [
+    let rows: [(usize, [u16; 6]); 3] = [
         (1, [0x0000, 0x3000, 0x0002, 0xC000, 0x0000, 0x8000]),
+        (4, [0x0000, 0x2000, 0x0001, 0x8000, 0x0000, 0x4000]),
         (0xE, [0x0000, 0xC000, 0x0000, 0x0000, 0x0000, 0x8000]),
     ];
     for (movement, row) in rows {
@@ -656,4 +657,93 @@ fn after_a_slope_the_step_down_is_a_pixel_alone_and_clears_the_flag() {
         subpixels: 0,
     };
     assert_eq!(step(true), (alone, false));
+}
+
+fn ball(pose: u16, facing: PoseFacing, speed: Horizontal) -> Samus {
+    Samus {
+        pose: PoseId(pose),
+        facing,
+        movement: Movement::MorphBall {
+            speed,
+            airborne: false,
+        },
+        ..running_left()
+    }
+}
+
+#[test]
+fn a_ball_in_motion_moves_like_a_runner_by_the_ball_row() {
+    let content = content();
+    // Pose $1E is the rolling ball, not the resting $1D.
+    let mut samus = ball(0x1E, PoseFacing::Right, Horizontal::default());
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
+    let speed = samus.movement.horizontal().unwrap();
+    // It gains the row's 0.2000 and moves right by it; the resting ball's speeds do not end.
+    assert_eq!(speed.base, Speed::new(0, 0x2000));
+    assert_eq!(
+        (samus.position.x.pixels, samus.position.x.subpixels),
+        (0x0500, 0x2000)
+    );
+}
+
+#[test]
+fn a_ball_at_rest_spends_its_extra_run_speed_then_ends_its_speeds() {
+    let content = content();
+    let moving = Horizontal {
+        extra_run: Speed::new(1, 0x2000),
+        momentum: true,
+        ..Horizontal::default()
+    };
+    // Resting in the pose for the way it faces: right in $1D, left in $41.
+    for (pose, facing) in [(0x1D, PoseFacing::Right), (0x41, PoseFacing::Left)] {
+        let mut samus = ball(pose, facing, moving);
+        run(
+            &mut samus,
+            &Controller::default(),
+            &content,
+            Surroundings::default(),
+            &mut Touches::default(),
+        );
+        assert_eq!(samus.movement.horizontal(), Some(Horizontal::default()));
+    }
+    // The wrong pose for its facing is not at rest, so it keeps accelerating.
+    let mut samus = ball(0x41, PoseFacing::Right, Horizontal::default());
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
+    let speed = samus.movement.horizontal().unwrap();
+    assert_eq!(speed.base, Speed::new(0, 0x2000));
+}
+
+#[test]
+fn a_decelerating_ball_in_its_resting_pose_still_decelerates() {
+    let content = content();
+    let mut samus = ball(
+        0x1D,
+        PoseFacing::Right,
+        Horizontal {
+            base: Speed::new(0, 0x5000),
+            acceleration: Acceleration::Decelerating,
+            ..Horizontal::default()
+        },
+    );
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
+    let speed = samus.movement.horizontal().unwrap();
+    assert_eq!(speed.base, Speed::new(0, 0x1000));
 }
