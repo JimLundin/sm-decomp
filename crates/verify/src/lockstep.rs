@@ -43,6 +43,19 @@ struct Comparator {
     compare: fn(&State, &State) -> Option<Difference>,
 }
 
+/// A comparator for one part of the horizontal motion Samus's movement keeps.
+macro_rules! speed {
+    ($path:literal, $part:ident) => {
+        Comparator {
+            path: $path,
+            compare: |engine: &State, oracle: &State| {
+                let part = |state: &State| state.samus.movement.horizontal().map(|h| h.$part);
+                part(engine).diff(&part(oracle))
+            },
+        }
+    };
+}
+
 macro_rules! field {
     ($path:literal, $($name:ident).+) => {
         Comparator {
@@ -184,6 +197,14 @@ const COMPARATORS: &[Comparator] = &[
     ),
     field!("samus.facing", samus.facing),
     field!("samus.movement", samus.movement),
+    // The speed words live inside the movement's variant; each row compares the part it names
+    // (a 16.16 speed's pixels and subpixels are one value), absent when the movement keeps none.
+    speed!("samus.movement.speed.base.pixels", base),
+    speed!("samus.movement.speed.base.subpixels", base),
+    speed!("samus.movement.speed.extra_run.pixels", extra_run),
+    speed!("samus.movement.speed.extra_run.subpixels", extra_run),
+    speed!("samus.movement.speed.acceleration", acceleration),
+    speed!("samus.movement.speed.momentum", momentum),
     field!("samus.equipment.collected", samus.equipment.collected),
     field!("samus.equipment.equipped", samus.equipment.equipped),
     field!(
