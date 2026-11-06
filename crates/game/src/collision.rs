@@ -11,9 +11,10 @@
 //! distance as the scan left it.
 
 use data::level::slope::{Shape, Slopes, Square, Surface};
-use data::level::{BlockKind, Offset, Slope};
+use data::level::{BlockKind, Bts, Offset, Slope};
 
-use crate::state::room::{Block, BlockColumns};
+use crate::plm::{self, ScrollTouchFault};
+use crate::state::room::{Block, BlockColumns, BlockIndex, RoomScoped};
 use crate::state::samus::{Fixed, Point, Speed};
 
 pub mod inside;
@@ -27,6 +28,38 @@ pub struct Room<'a> {
     pub width: BlockColumns,
     /// The slope shapes.
     pub slopes: Option<&'a Slopes>,
+}
+
+/// The special air BTS that triggers a scroll PLM: its collision reactions spawn the scroll
+/// block touch PLM (`$94:9139` + `$46` * 2 = `$84:B6FF`), and so does its inside reaction at
+/// Samus's centre (`$94:9956`).
+const SCROLL_TRIGGER: Bts = Bts(0x46);
+
+/// The scroll triggers a frame's moves reached, in the order their scans reached them.
+///
+/// The special air collision reactions spawn the touch PLM during the scan (`$94:906F`,
+/// `$94:909D`, through `$84:84E7`), but its setup (`$84:B393`) changes only PLM slots, which
+/// no move reads, so the touches apply after the moves in the same order.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Touches(Vec<BlockIndex>);
+
+impl Touches {
+    /// The blocks touched, in order.
+    #[must_use]
+    pub fn blocks(&self) -> &[BlockIndex] {
+        &self.0
+    }
+
+    /// Spawn each touch's PLM in order (`$84:B6FF`).
+    ///
+    /// # Errors
+    ///
+    /// [`ScrollTouchFault`] where a touch finds no scroll PLM on its block.
+    pub fn apply(self, room: &mut RoomScoped) -> Result<(), ScrollTouchFault> {
+        self.0
+            .into_iter()
+            .try_for_each(|block| plm::touch_scroll_block(room, block))
+    }
 }
 
 /// Which way a vertical scan crosses Samus's span (`$94:9775`: by the frame counter's parity).
@@ -134,8 +167,10 @@ enum Axis {
 }
 
 /// The scan's working values (`$12.$14`, `$18`, `$1A`, `$1C`, `$20`).
-struct Scan<'a> {
+struct Scan<'a, 't> {
     room: Room<'a>,
+    /// The scroll triggers reached so far.
+    touches: &'t mut Touches,
     body: Body,
     axis: Axis,
     /// She moves by this, as the reactions adjust it.
@@ -221,7 +256,7 @@ impl Room<'_> {
     }
 }
 
-impl Scan<'_> {
+impl Scan<'_, '_> {
     /// The reaction to the block at `index` (`$94:9515`, `$94:952C`): whether it stops her.
     fn react(&mut self, position: &mut Point, index: u16) -> bool {
         let mut current = index;
@@ -238,12 +273,19 @@ impl Scan<'_> {
                     let rows = i16::from(offset).cast_unsigned();
                     current = current.wrapping_add(rows.wrapping_mul(self.room.width.0));
                 }
-                // open: special air (`$94:906F`, `$94:909D`) and bombable air (`$94:92F9`,
-                // `$94:9313`) spawn their PLMs, which can stop her; the spike air reaction does
-                // nothing (`$94:901A`). Slice 0's room has no bombable air, and its special
-                // air is the scroll triggers, whose touch PLM (`$94:9139` at BTS `$46`,
-                // `$84:B6FF`) the elevator ride's step reaches with her bottom
+                // Special air with BTS `$46` spawns the scroll block touch PLM on the block
+                // the extensions led to (`$0DC4`) and lets her through (`$94:906F`,
+                // `$94:909D`): the elevator ride's step reaches one with her bottom
                 // (`area-brinstar` frame 92), when the inside handling doesn't run.
+                BlockKind::SpecialAir(SCROLL_TRIGGER) => {
+                    self.touches.0.push(BlockIndex(current));
+                    return false;
+                }
+                // open: the other area independent special air spawns its PLM from the same
+                // table and lets her through, area dependent special air (BTS bit 7) spawns
+                // its area's, whose setup can stop her (`$94:9087`), and bombable air
+                // (`$94:92F9`, `$94:9313`) its PLM; the spike air reaction does nothing
+                // (`$94:901A`). Slice 0's rooms have no other special air and no bombable air.
                 BlockKind::Air(_)
                 | BlockKind::SpikeAir(_)
                 | BlockKind::SpecialAir(_)
@@ -428,7 +470,15 @@ impl Scan<'_> {
 
 /// "Move Samus right by [$12].[$14], no solid enemy collision" (`$94:971E`): `distance`
 /// signed, through the blocks of her rows (`$94:9543`).
-pub fn move_x(room: Room<'_>, body: Body, position: &mut Point, distance: Speed) -> Moved {
+///
+/// The scroll triggers it reaches join `touches`.
+pub fn move_x(
+    room: Room<'_>,
+    body: Body,
+    position: &mut Point,
+    distance: Speed,
+    touches: &mut Touches,
+) -> Moved {
     if distance == Speed::ZERO {
         return Moved {
             distance,
@@ -442,6 +492,7 @@ pub fn move_x(room: Room<'_>, body: Body, position: &mut Point, distance: Speed)
     let breadth = block_span(y, body.y_radius);
     let mut scan = Scan {
         room,
+        touches,
         body,
         axis: Axis::X,
         distance,
@@ -472,6 +523,8 @@ pub fn move_x(room: Room<'_>, body: Body, position: &mut Point, distance: Speed)
 /// "Move Samus down by [$12].[$14], no solid enemy collision" (`$94:9763`): `distance`
 /// signed, through the blocks of her columns in the frame's `order` (`$94:959E`,
 /// `$94:95F5`).
+///
+/// The scroll triggers it reaches join `touches`.
 // open: the "position was adjusted by a slope" flag (`$0DBA`) and the quicksand flag
 // (`$1E71`) join with the slope alignment and quicksand.
 pub fn move_y(
@@ -481,6 +534,7 @@ pub fn move_y(
     distance: Speed,
     heading: Heading,
     order: ScanOrder,
+    touches: &mut Touches,
 ) -> Moved {
     if distance == Speed::ZERO {
         return Moved {
@@ -499,6 +553,7 @@ pub fn move_y(
     };
     let mut scan = Scan {
         room,
+        touches,
         body,
         axis: Axis::Y(heading),
         distance,

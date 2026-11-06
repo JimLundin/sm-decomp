@@ -2,7 +2,7 @@ use data::level::{BlockKind, Bts};
 use data::pose::Poses;
 
 use super::*;
-use crate::collision::{Contacts, Room};
+use crate::collision::{Contacts, Room, Touches};
 use crate::pose::{Collisions, change};
 use crate::state::room::{Block, BlockColumns};
 use crate::state::samus::{Fixed, Horizontal, Jump, Movement, PoseRecord};
@@ -115,7 +115,13 @@ fn a_spin_jump_lands_in_the_spin_landing_with_no_base_speed() {
             ))),
         }
     );
-    change(&mut samus, requests, collisions, &content);
+    change(
+        &mut samus,
+        requests,
+        collisions,
+        &mut Touches::default(),
+        &content,
+    );
     assert_eq!(samus.pose, PoseId(0xA7));
     // Standing carries her speeds over; the landing stops the base speed and keeps the
     // extra run speed, which moves her one more frame.
@@ -171,7 +177,13 @@ fn a_fall_landing_stops_her_vertically() {
         &content,
         PoseRequests::default(),
     );
-    change(&mut samus, requests, collisions, &content);
+    change(
+        &mut samus,
+        requests,
+        collisions,
+        &mut Touches::default(),
+        &content,
+    );
     assert_eq!(samus.pose, PoseId(0xA4));
     assert_eq!(samus.movement.kind(), MovementType::Standing);
     assert_eq!(
@@ -204,7 +216,13 @@ fn a_ceiling_keeps_the_pose_and_stops_the_rise() {
         PoseRequests::default(),
     );
     assert_eq!(requests.ordinary, Some(PoseId(0x4D)));
-    change(&mut samus, requests, collisions, &content);
+    change(
+        &mut samus,
+        requests,
+        collisions,
+        &mut Touches::default(),
+        &content,
+    );
     assert_eq!(samus.pose, PoseId(0x4D));
     assert_eq!(
         samus.movement.vertical(),
@@ -263,7 +281,13 @@ fn running_into_a_wall_takes_the_ran_into_a_wall_pose() {
         ..Collisions::default()
     };
     // No request from input: the wall alone changes the pose.
-    change(&mut samus, PoseRequests::default(), collisions, &content);
+    change(
+        &mut samus,
+        PoseRequests::default(),
+        collisions,
+        &mut Touches::default(),
+        &content,
+    );
     assert_eq!(samus.pose, PoseId(0x89));
     assert_eq!(samus.movement, Movement::RanIntoWall);
 }
@@ -306,7 +330,13 @@ fn a_running_pose_moves_her_a_pixel_forward_and_stops_at_a_block() {
             ordinary: Some(PoseId(0x0B)),
             command: None,
         };
-        change(&mut samus, requests, beside(&blocks), &content);
+        change(
+            &mut samus,
+            requests,
+            beside(&blocks),
+            &mut Touches::default(),
+            &content,
+        );
         (samus.pose, samus.position.x)
     };
     // Her right side, X + 5 - 1, is $1E from $1A: the pixel takes her to $1B.

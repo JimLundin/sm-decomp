@@ -10,13 +10,10 @@
 //! BTS (`$94:9B16`), and BTS `$46`, the scroll PLM trigger, spawns the scroll block touch PLM
 //! when the point is her centre (`$94:9956`).
 
-use super::Room;
+use super::{Room, SCROLL_TRIGGER};
 use crate::plm::{self, ScrollTouchFault};
 use crate::state::room::{BlockIndex, BlockKind, Bts, Offset, RoomScoped};
 use crate::state::samus::Samus;
-
-/// The special air BTS whose inside reaction triggers a scroll PLM (`$94:9956`).
-const SCROLL_TRIGGER: Bts = Bts(0x46);
 
 /// The block lookup gives up from this position on, as it does for a negative one
 /// (`$94:9C27`, `$94:9C3D`).

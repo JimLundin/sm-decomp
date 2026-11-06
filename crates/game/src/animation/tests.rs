@@ -4,6 +4,7 @@ use data::pose::transition::PoseTransitions;
 use data::pose::{MovementType, PoseFacing, Poses};
 
 use super::*;
+use crate::collision::Touches;
 use crate::pose;
 use crate::state::samus::{Animation, PoseRecord};
 
@@ -81,7 +82,13 @@ fn samus(pose: PoseId, movement: MovementType, frame: u16, timer: u16) -> Samus 
 fn frame(samus: &mut Samus, content: &Content) {
     let requests = PoseRequests::default();
     animate(samus, &Controller::default(), requests, content);
-    pose::change(samus, requests, pose::Collisions::default(), content);
+    pose::change(
+        samus,
+        requests,
+        pose::Collisions::default(),
+        &mut Touches::default(),
+        content,
+    );
 }
 
 #[test]

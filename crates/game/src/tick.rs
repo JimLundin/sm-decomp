@@ -6,7 +6,7 @@
 //! their domain lanes fill them.
 
 use crate::animation;
-use crate::collision::{Room, ScanOrder, Surroundings, inside};
+use crate::collision::{Room, ScanOrder, Surroundings, Touches, inside};
 use crate::message_box;
 use crate::movement;
 use crate::pose::{self, Content};
@@ -458,9 +458,15 @@ fn gameplay_phase(
                 },
                 order: ScanOrder::of(state.clock.counters.completed.0),
             };
-            let contacts =
-                movement::run(&mut state.samus, &state.controller, content, surroundings);
-            movement::ride(&mut state.samus, state.elevator, surroundings);
+            let mut touches = Touches::default();
+            let contacts = movement::run(
+                &mut state.samus,
+                &state.controller,
+                content,
+                surroundings,
+                &mut touches,
+            );
+            movement::ride(&mut state.samus, state.elevator, surroundings, &mut touches);
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             let requests = pose::collision_request(
                 &state.samus,
@@ -473,7 +479,15 @@ fn gameplay_phase(
                 contacts,
                 surroundings,
             };
-            pose::change(&mut state.samus, requests, collisions, content);
+            pose::change(
+                &mut state.samus,
+                requests,
+                collisions,
+                &mut touches,
+                content,
+            );
+            // The touch PLMs the moves spawned, which change nothing the moves read.
+            touches.apply(&mut state.room).map_err(SessionFault::Plm)?;
             crate::samus_palette::handle(state, &content.visor_colours);
         }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins

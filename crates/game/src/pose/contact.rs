@@ -12,7 +12,7 @@ use data::pose::transition::Control;
 use data::pose::{Shot, ShotDirection};
 
 use super::{Content, PoseCommand, PoseRequests, controls};
-use crate::collision::{self, Side, Surroundings, VerticalContact};
+use crate::collision::{self, Side, Surroundings, Touches, VerticalContact};
 use crate::state::Controller;
 use crate::state::samus::{
     Acceleration, Facing, MovementType, PoseId, Samus, Speed, Vertical, YDirection,
@@ -276,13 +276,15 @@ fn ran_into_wall(pose: PoseId, content: &Content) -> Option<PoseId> {
 /// Running when a wall stopped her this frame, her pose's ran-into-a-wall pose. Otherwise a
 /// running pose asked for moves her a pixel forward through the blocks, and a block there
 /// turns it into its ran-into-a-wall pose. The move happens whether or not the pose changes:
-/// the arm pump bug, a pure horizontal move that can lift her off a downwards slope.
+/// the arm pump bug, a pure horizontal move that can lift her off a downwards slope. A scroll
+/// trigger the pixel's move reaches joins `touches` (`$94:906F`).
 // open: the solid enemy check before the pixel's move (`$A0:A8F0`) joins with solid enemies.
 pub(super) fn runs_into_wall(
     samus: &mut Samus,
     requested: Option<PoseId>,
     wall: Option<Side>,
     surroundings: Surroundings<'_>,
+    touches: &mut Touches,
     content: &Content,
 ) -> Option<PoseId> {
     if wall.is_some() && samus.movement.kind() == MovementType::Running {
@@ -301,7 +303,7 @@ pub(super) fn runs_into_wall(
         Facing::Right | Facing::Forward | Facing::Unknown(_) => Speed::new(1, 0),
     };
     let body = crate::movement::body(samus);
-    let moved = collision::move_x(surroundings.room, body, &mut samus.position, pixel);
+    let moved = collision::move_x(surroundings.room, body, &mut samus.position, pixel, touches);
     if moved.collided {
         ran_into_wall(pose, content).or(requested)
     } else {

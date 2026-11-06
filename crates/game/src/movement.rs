@@ -16,7 +16,9 @@ pub use air::make_jump;
 use data::movement::{HorizontalSpeeds, Speed, SpeedEntry};
 use data::pose::transition::Control;
 
-use crate::collision::{self, Body, Contacts, Heading, Side, Surroundings, VerticalContact};
+use crate::collision::{
+    self, Body, Contacts, Heading, Side, Surroundings, Touches, VerticalContact,
+};
 use crate::pose::{Content, controls};
 use crate::state::Controller;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
@@ -58,6 +60,7 @@ struct Mover<'a> {
     surroundings: Surroundings<'a>,
     body: Body,
     contacts: Contacts,
+    touches: &'a mut Touches,
 }
 
 impl Mover<'_> {
@@ -74,7 +77,7 @@ impl Mover<'_> {
         position: &mut Point,
     ) {
         let room = self.surroundings.room;
-        if collision::move_x(room, self.body, position, displacement).collided {
+        if collision::move_x(room, self.body, position, displacement, self.touches).collided {
             self.contacts.wall = Some(if leftwards { Side::Left } else { Side::Right });
             cancel_speed_boosting(speed);
             *speed = Horizontal::default();
@@ -91,8 +94,16 @@ impl Mover<'_> {
     // open: the wall jump's result 5 joins with the wall jump check (`$90:9D35`).
     fn move_y(&mut self, displacement: Speed, heading: Heading, position: &mut Point) {
         let Surroundings { room, order } = self.surroundings;
-        let collided =
-            collision::move_y(room, self.body, position, displacement, heading, order).collided;
+        let collided = collision::move_y(
+            room,
+            self.body,
+            position,
+            displacement,
+            heading,
+            order,
+            self.touches,
+        )
+        .collided;
         self.contacts.vertical = match (heading, collided) {
             (Heading::Up, true) => VerticalContact::HitCeiling,
             (Heading::Up, false) => VerticalContact::NoChange,
@@ -103,7 +114,7 @@ impl Mover<'_> {
 }
 
 /// The movement handler for the frame (`$90:A337`), through the room's blocks; what her
-/// moves met, for the pose update.
+/// moves met, for the pose update. The scroll triggers they reach join `touches`.
 // open: the ground's vertical part ("Samus Y movement - no speed calculations", `$90:923F`),
 // the footsteps and the standing shot's animation reset join with C4b, C6 and C7; the morph
 // ball, the spring ball and the air turns join with their movements.
@@ -112,11 +123,13 @@ pub fn run(
     controller: &Controller,
     content: &Content,
     surroundings: Surroundings<'_>,
+    touches: &mut Touches,
 ) -> Contacts {
     let mut mover = Mover {
         surroundings,
         body: body(samus),
         contacts: Contacts::default(),
+        touches,
     };
     if samus.movement.vertical().is_some() {
         air::run(samus, controller, content, &mut mover);
@@ -358,13 +371,27 @@ pub fn carried(samus: &Samus, ride: ElevatorRide) -> bool {
 /// The next frame's placement takes it back. The step is a terrain-only move with the
 /// collision direction up (`$90:A397`, `$94:9763`), so a block under her stops it at the
 /// block's top with subpixels $FFFF. Her Y radius is the one the ride keeps (`$0B00`): the
-/// block that stops it is under her standing radius, not the facing-forward pose's.
-pub fn ride(samus: &mut Samus, ride: ElevatorRide, surroundings: Surroundings<'_>) {
+/// block that stops it is under her standing radius, not the facing-forward pose's. A scroll
+/// trigger the step reaches joins `touches` (`$94:909D`).
+pub fn ride(
+    samus: &mut Samus,
+    ride: ElevatorRide,
+    surroundings: Surroundings<'_>,
+    touches: &mut Touches,
+) {
     if carried(samus, ride) {
         let Surroundings { room, order } = surroundings;
         let body = body(samus);
         let step = Speed::new(1, 0);
-        collision::move_y(room, body, &mut samus.position, step, Heading::Up, order);
+        collision::move_y(
+            room,
+            body,
+            &mut samus.position,
+            step,
+            Heading::Up,
+            order,
+            touches,
+        );
     }
 }
 

@@ -21,7 +21,7 @@ use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
 use crate::animation;
-use crate::collision::{Contacts, Surroundings};
+use crate::collision::{Contacts, Surroundings, Touches};
 use crate::movement::{cancel_speed_boosting, make_jump};
 use crate::plm::RoomPlms;
 use crate::state::samus::{
@@ -256,7 +256,8 @@ pub struct Collisions<'a> {
 /// requested pose, once the check for a wall has had its say.
 ///
 /// The pose takes the facing and movement type its definition gives when it differs from
-/// the last; then the update records the history.
+/// the last; then the update records the history. The scroll triggers the wall check's move
+/// reaches join `touches`.
 // open: the special prospective pose between them joins with the
 // knockback and the grapple (C4); the super special pose with command 3 gives way to it
 // when its command is 9.
@@ -264,6 +265,7 @@ pub fn change(
     samus: &mut Samus,
     requests: PoseRequests,
     collisions: Collisions<'_>,
+    touches: &mut Touches,
     content: &Content,
 ) {
     if let Some(pose) = samus.super_special.pose {
@@ -282,6 +284,7 @@ pub fn change(
         requests.ordinary,
         collisions.contacts.wall,
         collisions.surroundings,
+        touches,
         content,
     );
     let Some(pose) = requested else {

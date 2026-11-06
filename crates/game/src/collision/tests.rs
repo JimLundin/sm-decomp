@@ -82,6 +82,7 @@ fn a_floor_lands_her_on_its_top_at_the_last_subpixel() {
         pixels(8),
         Heading::Down,
         ScanOrder::LeftToRight,
+        &mut Touches::default(),
     );
     // Her bottom, 20 + 8 - 1, stops at 31, above the floor's 32.
     assert_eq!(
@@ -107,6 +108,7 @@ fn a_ceiling_stops_her_at_its_bottom_at_subpixel_zero() {
         pixels(-8),
         Heading::Up,
         ScanOrder::RightToLeft,
+        &mut Touches::default(),
     );
     // Her top, 30 - 8, stops at 16, under the ceiling's 15.
     assert_eq!(moved.distance, pixels(-6));
@@ -120,13 +122,25 @@ fn a_wall_stops_her_either_way() {
     let slopes = slopes();
     let mut position = at(20, 20);
     // Rightwards: her right side, 20 + 5 - 1, stops at 31; the wall is in her lower row.
-    let moved = move_x(room(&blocks, &slopes), BODY, &mut position, pixels(10));
+    let moved = move_x(
+        room(&blocks, &slopes),
+        BODY,
+        &mut position,
+        pixels(10),
+        &mut Touches::default(),
+    );
     assert_eq!(moved.distance, pixels(7));
     assert!(moved.collided);
     assert_eq!((position.x.pixels, position.x.subpixels), (27, 0xffff));
     // Leftwards from 30: her left side stops at 16, beside the wall's 15.
     let mut position = at(30, 20);
-    let moved = move_x(room(&blocks, &slopes), BODY, &mut position, pixels(-10));
+    let moved = move_x(
+        room(&blocks, &slopes),
+        BODY,
+        &mut position,
+        pixels(-10),
+        &mut Touches::default(),
+    );
     assert_eq!(moved.distance, pixels(-9));
     assert_eq!((position.x.pixels, position.x.subpixels), (21, 0));
 }
@@ -137,7 +151,13 @@ fn air_lets_her_through_by_the_whole_distance() {
     let slopes = slopes();
     let mut position = at(20, 20);
     let distance = Speed::new(3, 0x8000);
-    let moved = move_x(room(&blocks, &slopes), BODY, &mut position, distance);
+    let moved = move_x(
+        room(&blocks, &slopes),
+        BODY,
+        &mut position,
+        distance,
+        &mut Touches::default(),
+    );
     assert_eq!(
         moved,
         Moved {
@@ -157,7 +177,13 @@ fn an_extension_stands_for_the_block_it_points_at() {
     ]);
     let slopes = slopes();
     let mut position = at(20, 20);
-    let moved = move_x(room(&blocks, &slopes), BODY, &mut position, pixels(10));
+    let moved = move_x(
+        room(&blocks, &slopes),
+        BODY,
+        &mut position,
+        pixels(10),
+        &mut Touches::default(),
+    );
     // The extension's own column stops her, not the solid block's.
     assert_eq!(moved.distance, pixels(7));
     assert!(moved.collided);
@@ -177,6 +203,7 @@ fn a_half_height_square_slope_lands_her_on_its_lower_half() {
             pixels(distance),
             Heading::Down,
             ScanOrder::LeftToRight,
+            &mut Touches::default(),
         )
     };
     // Into the empty top half: through.
@@ -201,6 +228,7 @@ fn a_triangle_slope_stops_her_on_its_surface_in_her_column() {
         pixels(4),
         Heading::Down,
         ScanOrder::RightToLeft,
+        &mut Touches::default(),
     );
     // Column 8's surface is 8 below the block's top, 40: her bottom stops at 39.
     assert_eq!(moved.distance, pixels(2));
@@ -215,6 +243,7 @@ fn a_triangle_slope_stops_her_on_its_surface_in_her_column() {
         pixels(4),
         Heading::Up,
         ScanOrder::RightToLeft,
+        &mut Touches::default(),
     );
     assert!(!moved.collided);
 }
@@ -224,11 +253,23 @@ fn walking_onto_a_triangle_scales_her_step_by_its_factor() {
     let blocks = level(&[((1, 1), slope(0x12))]);
     let slopes = slopes();
     let mut position = at(20, 20);
-    let moved = move_x(room(&blocks, &slopes), BODY, &mut position, pixels(1));
+    let moved = move_x(
+        room(&blocks, &slopes),
+        BODY,
+        &mut position,
+        pixels(1),
+        &mut Touches::default(),
+    );
     assert_eq!(moved.distance, Speed::new(0, 0xc000));
     assert!(!moved.collided);
     let mut position = at(28, 20);
-    let moved = move_x(room(&blocks, &slopes), BODY, &mut position, pixels(-1));
+    let moved = move_x(
+        room(&blocks, &slopes),
+        BODY,
+        &mut position,
+        pixels(-1),
+        &mut Touches::default(),
+    );
     assert_eq!(moved.distance, Speed(0x0000_c000_u32.wrapping_neg()));
     // In the air she keeps the whole step.
     let airborne = Body {
@@ -236,6 +277,72 @@ fn walking_onto_a_triangle_scales_her_step_by_its_factor() {
         ..BODY
     };
     let mut position = at(20, 20);
-    let moved = move_x(room(&blocks, &slopes), airborne, &mut position, pixels(1));
+    let moved = move_x(
+        room(&blocks, &slopes),
+        airborne,
+        &mut position,
+        pixels(1),
+        &mut Touches::default(),
+    );
     assert_eq!(moved.distance, pixels(1));
+}
+
+const fn trigger() -> BlockKind {
+    BlockKind::SpecialAir(SCROLL_TRIGGER)
+}
+
+#[test]
+fn scroll_triggers_join_the_touches_in_the_scans_order_and_let_her_through() {
+    let blocks = level(&[((0, 2), trigger()), ((1, 2), trigger())]);
+    let slopes = slopes();
+    let fall = |order| {
+        let mut position = at(16, 20);
+        let mut touches = Touches::default();
+        let moved = move_y(
+            room(&blocks, &slopes),
+            BODY,
+            &mut position,
+            pixels(8),
+            Heading::Down,
+            order,
+            &mut touches,
+        );
+        assert_eq!(
+            moved,
+            Moved {
+                distance: pixels(8),
+                collided: false
+            }
+        );
+        touches
+    };
+    assert_eq!(
+        fall(ScanOrder::LeftToRight).blocks(),
+        [BlockIndex(8), BlockIndex(9)]
+    );
+    assert_eq!(
+        fall(ScanOrder::RightToLeft).blocks(),
+        [BlockIndex(9), BlockIndex(8)]
+    );
+}
+
+#[test]
+fn an_extension_touches_the_trigger_it_points_at() {
+    let blocks = level(&[
+        ((2, 1), BlockKind::HorizontalExtension(Offset(1))),
+        ((3, 1), trigger()),
+    ]);
+    let slopes = slopes();
+    let mut position = at(24, 20);
+    let mut touches = Touches::default();
+    let moved = move_x(
+        room(&blocks, &slopes),
+        BODY,
+        &mut position,
+        pixels(10),
+        &mut touches,
+    );
+    assert!(!moved.collided);
+    assert_eq!(position.x.pixels, 34);
+    assert_eq!(touches.blocks(), [BlockIndex(7)]);
 }

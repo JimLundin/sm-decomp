@@ -2,7 +2,7 @@ use data::movement::{ExtraRun, MOVEMENT_TYPES, SpeedTable};
 use data::pose::{MovementType, PoseFacing};
 
 use super::*;
-use crate::collision::Surroundings;
+use crate::collision::{Surroundings, Touches};
 use crate::state::samus::Fixed;
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Controller};
@@ -67,7 +67,13 @@ fn running_accelerates_from_rest_to_the_cap() {
     let mut samus = running_left();
     // Worked by hand from the table: the base speed gains 0.3000 a frame and the extra run
     // speed 0.1000, and she moves left by their sum.
-    run(&mut samus, &controller, &content, Surroundings::default());
+    run(
+        &mut samus,
+        &controller,
+        &content,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
         (speed.base, speed.extra_run),
@@ -79,19 +85,37 @@ fn running_accelerates_from_rest_to_the_cap() {
         (0x04FF, 0xC000)
     );
     for _ in 1..10 {
-        run(&mut samus, &controller, &content, Surroundings::default());
+        run(
+            &mut samus,
+            &controller,
+            &content,
+            Surroundings::default(),
+            &mut Touches::default(),
+        );
     }
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(speed.base, Speed::new(1, 0xE000));
     // 0.3000 more would be 2.1000: its subpixel word compares above the cap's C000 (the
     // difference is $5000), so the cap holds her at 2.C000 a frame early.
-    run(&mut samus, &controller, &content, Surroundings::default());
+    run(
+        &mut samus,
+        &controller,
+        &content,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(speed.base, Speed::new(2, 0xC000));
     assert_eq!(speed.extra_run, Speed::new(0, 0xB000));
     // The extra run speed climbs on to its cap of 2.0 and stays.
     for _ in 0..30 {
-        run(&mut samus, &controller, &content, Surroundings::default());
+        run(
+            &mut samus,
+            &controller,
+            &content,
+            Surroundings::default(),
+            &mut Touches::default(),
+        );
     }
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
@@ -109,6 +133,7 @@ fn without_the_run_button_there_is_no_extra_run_speed() {
         &holding(&[Button::Left]),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
@@ -135,6 +160,7 @@ fn decelerating_slows_by_the_table_then_accelerates_again() {
         &Controller::default(),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     assert_eq!(
         samus.movement.horizontal().unwrap().base,
@@ -146,12 +172,14 @@ fn decelerating_slows_by_the_table_then_accelerates_again() {
         &Controller::default(),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     run(
         &mut samus,
         &Controller::default(),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
@@ -180,6 +208,7 @@ fn a_turn_from_rest_moves_on_alternate_frames_under_its_cap_of_zero() {
         &Controller::default(),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     assert_eq!(
         samus.movement.horizontal().unwrap().acceleration,
@@ -192,6 +221,7 @@ fn a_turn_from_rest_moves_on_alternate_frames_under_its_cap_of_zero() {
         &Controller::default(),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     assert_eq!(
         (samus.position.x.pixels, samus.position.x.subpixels),
@@ -202,6 +232,7 @@ fn a_turn_from_rest_moves_on_alternate_frames_under_its_cap_of_zero() {
         &Controller::default(),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     assert_eq!(samus.movement.horizontal().unwrap().base, Speed::ZERO);
     assert_eq!(samus.position.x.subpixels, 0x4000);
@@ -226,6 +257,7 @@ fn standing_spends_the_extra_run_speed_then_stops() {
         &Controller::default(),
         &content,
         Surroundings::default(),
+        &mut Touches::default(),
     );
     assert_eq!(
         (samus.position.x.pixels, samus.position.x.subpixels),
@@ -264,10 +296,20 @@ fn facing_forward_on_a_ride_steps_down_a_pixel_and_not_without_one() {
         pixels: 0x02,
         subpixels: 0,
     };
-    super::ride(&mut samus, ride, Surroundings::default());
+    super::ride(
+        &mut samus,
+        ride,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
     assert_eq!(samus.position.y.pixels, 0x03);
     ride.status = ElevatorStatus::Inactive;
-    super::ride(&mut samus, ride, Surroundings::default());
+    super::ride(
+        &mut samus,
+        ride,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
     assert_eq!(samus.position.y.pixels, 0x03);
 }
 
@@ -309,7 +351,13 @@ fn running_into_a_wall_stops_her_and_kills_her_speed() {
     }
     // The wall's right edge is 15; her left side, 21 - 5, may come to 16 and no further.
     let blocks = level(&[(0, 0)]);
-    let contacts = run(&mut samus, &controller, &content, surroundings(&blocks));
+    let contacts = run(
+        &mut samus,
+        &controller,
+        &content,
+        surroundings(&blocks),
+        &mut Touches::default(),
+    );
     assert_eq!(contacts.wall, Some(crate::collision::Side::Left));
     assert_eq!(
         (samus.position.x.pixels, samus.position.x.subpixels),
@@ -338,7 +386,12 @@ fn a_ride_steps_with_the_radius_she_called_it_with() {
         };
         samus.position.x.pixels = 0x0018;
         samus.position.y.pixels = 0x0058;
-        super::ride(&mut samus, ride, surroundings(&blocks));
+        super::ride(
+            &mut samus,
+            ride,
+            surroundings(&blocks),
+            &mut Touches::default(),
+        );
         (samus.position.y.pixels, samus.position.y.subpixels)
     };
     assert_eq!(step(0x15), (0x0059, 0));
@@ -362,9 +415,70 @@ fn a_ride_stops_its_step_on_a_block_under_her() {
     samus.position.x.pixels = 0x0018;
     samus.position.y.pixels = 0x0010;
     let blocks = level(&[(1, 1)]);
-    super::ride(&mut samus, ride, surroundings(&blocks));
+    super::ride(
+        &mut samus,
+        ride,
+        surroundings(&blocks),
+        &mut Touches::default(),
+    );
     assert_eq!(
         (samus.position.y.pixels, samus.position.y.subpixels),
         (0x0010, 0xFFFF)
     );
+}
+
+#[test]
+fn a_ride_step_into_a_scroll_trigger_changes_the_scroll_area_on_that_frames_plm_pass() {
+    use data::level::ScrollArea;
+    use data::plm::{PlmEntry, PlmKind, PlmPopulation, ScrollChange, ScrollChangesId};
+    use data::rom::RomAddress;
+
+    use crate::state::room::{BlockColumns, BlockIndex, RoomScoped};
+
+    // `area-brinstar` frame 92: the ride's step reaches a scroll PLM's trigger under her.
+    let population = PlmPopulation {
+        entries: vec![PlmEntry {
+            kind: PlmKind::Scroll(ScrollChangesId(0)),
+            x: 1,
+            y: 4,
+        }],
+        scroll_changes: vec![(
+            RomAddress::new(0x8f, 0x9f0b),
+            vec![ScrollChange {
+                screen: 0,
+                area: ScrollArea::Green,
+            }],
+        )],
+    };
+    let mut room = RoomScoped {
+        blocks: level(&[]),
+        width: BlockColumns(8),
+        scroll_areas: vec![ScrollArea::Red],
+        ..RoomScoped::default()
+    };
+    crate::plm::spawn_population(&mut room, &population);
+    let ride = ElevatorRide {
+        status: ElevatorStatus::EnteringRoom,
+        ..ElevatorRide::default()
+    };
+    let mut samus = Samus {
+        pose: PoseId(0),
+        movement: Movement::Standing {
+            speed: Horizontal::default(),
+        },
+        y_radius: 0x15,
+        ..Samus::default()
+    };
+    samus.position.x.pixels = 0x0018;
+    // Her bottom, 2Bh + 15h - 1, is the pixel above the trigger's row.
+    samus.position.y.pixels = 0x002B;
+    let mut touches = Touches::default();
+    super::ride(&mut samus, ride, surroundings(&room.blocks), &mut touches);
+    assert_eq!(samus.position.y.pixels, 0x002C);
+    assert_eq!(touches.blocks(), [BlockIndex(4 * 8 + 1)]);
+
+    touches.apply(&mut room).unwrap();
+    assert_eq!(room.scroll_areas, [ScrollArea::Red]);
+    crate::plm::process(&mut room, &population);
+    assert_eq!(room.scroll_areas, [ScrollArea::Green]);
 }
