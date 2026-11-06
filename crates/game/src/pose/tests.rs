@@ -32,6 +32,7 @@ fn content() -> Content {
         delays: AnimationDelays::default(),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
+        samus_spritemaps: data::pose::spritemap::SamusSpritemaps::default(),
     }
 }
 

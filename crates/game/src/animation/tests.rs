@@ -48,6 +48,7 @@ fn content() -> Content {
         delays: AnimationDelays::new(lists, list(&[0x01, 0xFF])),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
+        samus_spritemaps: data::pose::spritemap::SamusSpritemaps::default(),
     }
 }
 
