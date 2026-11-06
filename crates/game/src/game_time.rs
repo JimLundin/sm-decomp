@@ -77,10 +77,14 @@ mod tests {
     }
 
     #[test]
-    fn a_unit_past_the_signed_range_never_rolls() {
-        assert_eq!(ticked(time(0, 0, 0, 0x8000)), time(0, 0, 0, 0x8001));
-        // Out-of-range hours are signed too, so the cap doesn't catch them.
-        assert_eq!(ticked(time(0x8000, 0, 0, 0)), time(0x8000, 0, 0, 1));
+    fn a_unit_whose_difference_is_negative_never_rolls() {
+        // `CMP #60; BMI` tests the sign of the unit minus 60, not the unit: from 803Ch up the
+        // difference is negative, so the unit counts on, but 8001h minus 60 is positive and rolls.
+        assert_eq!(ticked(time(0, 0, 0, 0xFFF0)), time(0, 0, 0, 0xFFF1));
+        assert_eq!(ticked(time(0, 0, 0, 0x8000)), time(0, 0, 1, 0));
+        // The hours cap is the same signed test against 100.
+        assert_eq!(ticked(time(0xFFF0, 0, 0, 0)), time(0xFFF0, 0, 0, 1));
+        assert_eq!(ticked(time(0x8000, 0, 0, 0)), CAP);
     }
 
     #[test]
