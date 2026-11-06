@@ -7,10 +7,11 @@
 
 use std::fmt;
 
-use data::id::RoomId;
+use data::id::{Line, RoomId};
 use game::state::room::{Camera, RoomScoped};
 use game::state::samus::{Equipment, Fixed, Gauge, Item, Items, Point, Samus};
 use game::state::slots::{FlagSet, Frames};
+use game::state::strand::{IrqStrand, MainStrand};
 use game::state::video::{
     CGRAM_COLOURS, Colour, OAM_HIGH_BYTES, Oam, OamEntry, VRAM_WORDS, Video, VideoMemory,
 };
@@ -18,9 +19,10 @@ use game::state::{
     Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
     State, Timing,
 };
-use oracle_record::{Cut, FrameRecord, Nmi, NmiKind};
+use oracle_record::{Cut, FrameRecord, NmiKind};
 
 use crate::source::{self, WramByte, WramWord};
+use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
 
 /// Bank $82 log: game state 8 is main gameplay.
 const MAIN_GAMEPLAY: u16 = 8;
@@ -57,6 +59,13 @@ pub enum Unsupported {
     GameState(u16),
     /// A cut that isn't an NMI's return, so no NMI kind to decode the timing from.
     NoNmi(Cut),
+    /// An interrupt command the State has no value for yet, or a queued one.
+    IrqCommand {
+        /// `CUR_IRQ_HANDLER`'s value.
+        current: u16,
+        /// `IRQHANDLER_NEXT_HANDLER`'s value.
+        next: u16,
+    },
 }
 
 /// A video memory the decoder reads whole.
@@ -99,6 +108,12 @@ pub enum DecodeError {
         /// What the State can't hold: the unknown bits, or the whole value.
         value: u16,
     },
+    /// A requested NMI found the main thread at a PC no wait site holds, or its return chain
+    /// holds an address no call site knows.
+    UnknownYieldSite {
+        /// The interrupted PC, or the unknown return address, 24-bit.
+        pc: u32,
+    },
 }
 
 impl fmt::Display for DecodeError {
@@ -119,11 +134,20 @@ impl fmt::Display for DecodeError {
             Self::Unsupported(Unsupported::NoNmi(cut)) => {
                 write!(f, "a {cut:?} cut isn't decoded yet")
             }
+            Self::Unsupported(Unsupported::IrqCommand { current, next }) => {
+                write!(
+                    f,
+                    "interrupt command {current:#06X}, then {next:#06X}, isn't decoded yet"
+                )
+            }
             Self::Unrepresentable { source, value } => {
                 write!(
                     f,
                     "{source} holds {value:#06X}, which the State has no value for"
                 )
+            }
+            Self::UnknownYieldSite { pc } => {
+                write!(f, "the main thread waits at {pc:06X}, which no table knows")
             }
         }
     }
@@ -131,11 +155,30 @@ impl fmt::Display for DecodeError {
 
 impl std::error::Error for DecodeError {}
 
+/// Whether a cut has an engine equivalent (D21).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Quiescence {
+    /// The main thread was waiting at a known wait site: the typed streams compare here.
+    Quiet,
+    /// The NMI overran the main thread mid-routine: no engine State corresponds, so only
+    /// the logs and the picture compare, and the main strand keeps its default.
+    Busy,
+}
+
+/// A decoded record.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Decoded {
+    /// The State the record shows.
+    pub state: State,
+    /// Whether the typed streams compare at its cut.
+    pub quiescence: Quiescence,
+}
+
 /// Where each decoded field comes from: one named source per rule.
 ///
 /// [`Rules::ORIGINAL`] is the original's layout; a mutant is a copy with one source moved.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Rules {
+pub struct Rules<'t> {
     /// `clock.counters.nmi`.
     pub nmi: WramWord,
     /// `clock.counters.completed`.
@@ -202,11 +245,17 @@ pub struct Rules {
     pub camera_y: WramWord,
     /// `room.camera.y.subpixels`.
     pub camera_y_subpixels: WramWord,
+    /// `main`: the wait sites, the return chains and the sources they resume from.
+    pub strand: StrandRules<'t>,
+    /// `irq.command`.
+    pub irq_command: WramWord,
+    /// The queued interrupt command, which the State has no place for yet.
+    pub irq_next: WramWord,
 }
 
-impl Rules {
+impl Rules<'_> {
     /// The original's layout.
-    pub const ORIGINAL: Self = Self {
+    pub const ORIGINAL: Rules<'static> = Rules {
         nmi: source::NMI_FRAME_COUNTER_INCLUDING_LAG,
         completed: source::NMI_FRAME_COUNTER_WORD,
         lag: source::NMI_FRAMES_MISSED,
@@ -240,6 +289,14 @@ impl Rules {
         camera_x_subpixels: source::LAYER1_X_SUBPOS,
         camera_y: source::LAYER1_Y_POS,
         camera_y_subpixels: source::LAYER1_Y_SUBPOS,
+        strand: StrandRules {
+            sites: WAIT_SITES,
+            calls: CALL_SITES,
+            plm_index: source::PLM_ID,
+            radius: source::MESSAGE_BOX_ANIMATION_Y_RADIUS,
+        },
+        irq_command: source::CUR_IRQ_HANDLER,
+        irq_next: source::IRQHANDLER_NEXT_HANDLER,
     };
 
     /// The State `record` shows, under these rules.
@@ -247,8 +304,9 @@ impl Rules {
     /// # Errors
     ///
     /// A [`DecodeError`] when the record is short, names an unknown room or is in a state
-    /// not decoded yet.
-    pub fn decode(&self, record: &FrameRecord, rooms: &RoomMap) -> Result<State, DecodeError> {
+    /// not decoded yet, and [`DecodeError::UnknownYieldSite`] when a requested NMI found the
+    /// main thread somewhere the tables don't know.
+    pub fn decode(&self, record: &FrameRecord, rooms: &RoomMap) -> Result<Decoded, DecodeError> {
         let wram = &*record.wram;
         let game_state = self.game_state.read(wram)?;
         if game_state != MAIN_GAMEPLAY {
@@ -256,9 +314,25 @@ impl Rules {
         }
         let header = RoomHeader(self.room.read(wram)?);
         let room = rooms.get(header).ok_or(DecodeError::UnknownRoom(header))?;
-        let last = nmi_timing(record.cut)?;
+        let nmi = match record.cut {
+            Cut::NmiReturn(nmi) => nmi,
+            Cut::VblankWithoutNmi | Cut::NmiStillRunning { .. } => {
+                return Err(DecodeError::Unsupported(Unsupported::NoNmi(record.cut)));
+            }
+        };
+        let (last, main, quiescence) = match nmi.kind {
+            NmiKind::Requested => (
+                NmiTiming::OnTime,
+                self.strand.main(nmi.interrupted_pc, record.cpu.s, wram)?,
+                Quiescence::Quiet,
+            ),
+            NmiKind::Overrun => (NmiTiming::Overrun, MainStrand::default(), Quiescence::Busy),
+        };
+        let irq = self.irq(record)?;
 
-        Ok(State {
+        let state = State {
+            main,
+            irq,
             clock: Clock {
                 counters: Counters {
                     nmi: FrameCount(self.nmi.read(wram)?),
@@ -330,7 +404,24 @@ impl Rules {
                 },
                 ..RoomScoped::default()
             },
-            ..State::default()
+        };
+        Ok(Decoded { state, quiescence })
+    }
+
+    /// The interrupt strand: the IRQ handler's command, at the line VTIME holds.
+    fn irq(&self, record: &FrameRecord) -> Result<IrqStrand, DecodeError> {
+        let current = self.irq_command.read(&record.wram)?;
+        let next = self.irq_next.read(&record.wram)?;
+        let command =
+            strand::irq_command(current)
+                .filter(|_| next == 0)
+                .ok_or(DecodeError::Unsupported(Unsupported::IrqCommand {
+                    current,
+                    next,
+                }))?;
+        Ok(IrqStrand {
+            command,
+            line: Line(record.ppu.vtime),
         })
     }
 }
@@ -340,7 +431,7 @@ impl Rules {
 /// # Errors
 ///
 /// As [`Rules::decode`].
-pub fn decode(record: &FrameRecord, rooms: &RoomMap) -> Result<State, DecodeError> {
+pub fn decode(record: &FrameRecord, rooms: &RoomMap) -> Result<Decoded, DecodeError> {
     Rules::ORIGINAL.decode(record, rooms)
 }
 
@@ -388,23 +479,6 @@ fn buttons(word: u16) -> Buttons {
     FlagSet {
         bits,
         ..FlagSet::default()
-    }
-}
-
-/// How the cut's NMI found the main thread: waiting at a wait site, or still working.
-const fn nmi_timing(cut: Cut) -> Result<NmiTiming, DecodeError> {
-    match cut {
-        Cut::NmiReturn(Nmi {
-            kind: NmiKind::Requested,
-            ..
-        }) => Ok(NmiTiming::OnTime),
-        Cut::NmiReturn(Nmi {
-            kind: NmiKind::Overrun,
-            ..
-        }) => Ok(NmiTiming::Overrun),
-        Cut::VblankWithoutNmi | Cut::NmiStillRunning { .. } => {
-            Err(DecodeError::Unsupported(Unsupported::NoNmi(cut)))
-        }
     }
 }
 

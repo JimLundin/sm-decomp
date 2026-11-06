@@ -3,17 +3,26 @@
 //! The offsets here are written out again rather than taken from `source`, so a rule moved
 //! to the wrong address fails these tests.
 
-use data::id::RoomId;
+use data::id::{Line, RoomId};
+use game::state::strand::{
+    Frame, GameplayAt, IrqCommand, IrqStrand, MainLoopAt, MainStrand, MessageBoxAt, Wait,
+};
 use game::state::video::{OamEntry, VRAM_WORDS};
 use game::state::{GameMode, NmiTiming, State};
 use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 
-use crate::decode::{DecodeError, Memory, RoomHeader, RoomMap, Rules, Unsupported, decode};
+use crate::decode::{
+    DecodeError, Memory, Quiescence, RoomHeader, RoomMap, Rules, Unsupported, decode,
+};
 use crate::source::{WramByte, WramWord};
+use crate::strand::StrandRules;
 
 /// The Morph Ball Room's header in bank $8F (bank $8F log).
 const MORPH_BALL_ROOM: RoomHeader = RoomHeader(0x9E9F);
 const MORPH_BALL_ROOM_ID: RoomId = RoomId(7);
+
+/// The main thread's stack pointer in the synthetic record.
+const MAIN_LOOP_S: u16 = 0x1FF0;
 
 fn rooms() -> RoomMap {
     RoomMap {
@@ -64,6 +73,10 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0911, 0x0200); // LAYER1_X_POS
     put(&mut wram, 0x0913, 0x2222); // LAYER1_Y_SUBPOS
     put(&mut wram, 0x0915, 0x0100); // LAYER1_Y_POS
+    put(&mut wram, 0x00AB, 0x0004); // CUR_IRQ_HANDLER: main gameplay, begin HUD drawing
+    // The main loop's stack at Wait for NMI ($80:8338 PHP, PHB): S = $1FF0, then $1FF1 P,
+    // $1FF2 DB, $1FF3-$1FF5 the JSL at $82:897A's return ($82:897D), $1FF6 the loop's P.
+    wram[0x1FF3..0x1FF6].copy_from_slice(&[0x7D, 0x89, 0x82]);
 
     let vram: Vec<u16> = (0..=u16::MAX).step_by(2).collect();
     let cgram: Vec<u16> = (0..256_u16).map(|colour| colour.wrapping_mul(3)).collect();
@@ -82,13 +95,19 @@ fn record() -> FrameRecord {
         joypad_reads: 1,
         wait_entry: None,
         overscan: false,
-        cpu: CpuRegisters::default(),
+        cpu: CpuRegisters {
+            s: MAIN_LOOP_S,
+            ..CpuRegisters::default()
+        },
         wram: wram.into_boxed_slice(),
         vram: vram.into_boxed_slice(),
         cgram: cgram.into_boxed_slice(),
         oam: oam.into_boxed_slice(),
         sram: vec![0; 0x2000].into_boxed_slice(),
-        ppu: PpuRegisters::default(),
+        ppu: PpuRegisters {
+            vtime: 0x0021,
+            ..PpuRegisters::default()
+        },
         apu_log: Vec::new(),
         picture: None,
         spc: None,
@@ -165,19 +184,28 @@ fn decodes_the_record(state: &State) -> bool {
                 attributes: 40,
             }
         && memory.oam.high[31] == 0xA5
+        && state.main
+            == MainStrand {
+                frames: vec![Frame::MainLoop(MainLoopAt::Start)],
+                waiting: Some(Wait::Nmi),
+            }
+        && state.irq
+            == IrqStrand {
+                command: IrqCommand::GameplayHud,
+                line: Line(0x0021),
+            }
 }
 
 #[test]
 fn a_record_decodes_from_its_named_sources() {
-    let state = decode(&record(), &rooms()).unwrap();
+    let state = decode(&record(), &rooms()).unwrap().state;
     assert!(decodes_the_record(&state), "{state:?}");
 }
 
 #[test]
 fn undecoded_fields_keep_their_defaults() {
-    let state = decode(&record(), &rooms()).unwrap();
+    let state = decode(&record(), &rooms()).unwrap().state;
     let defaults = State::default();
-    assert_eq!(state.main, defaults.main);
     assert_eq!(state.samus.movement, defaults.samus.movement);
     assert_eq!(state.samus.facing, defaults.samus.facing);
     assert_eq!(state.timing.owed, defaults.timing.owed);
@@ -195,17 +223,17 @@ fn a_rule_at_the_wrong_address_fails() {
         },
         ..Rules::ORIGINAL
     };
-    let state = mutant.decode(&record(), &rooms()).unwrap();
+    let state = mutant.decode(&record(), &rooms()).unwrap().state;
     assert!(!decodes_the_record(&state));
 }
 
 /// A place in `Rules` holding a word rule.
-type WordRule = fn(&mut Rules) -> &mut WramWord;
+type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 /// A place in `Rules` holding a byte rule.
-type ByteRule = fn(&mut Rules) -> &mut WramByte;
+type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 28] = [
+const WORD_RULES: [(&str, WordRule); 29] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -234,6 +262,7 @@ const WORD_RULES: [(&str, WordRule); 28] = [
     ("camera_x_subpixels", |rules| &mut rules.camera_x_subpixels),
     ("camera_y", |rules| &mut rules.camera_y),
     ("camera_y_subpixels", |rules| &mut rules.camera_y_subpixels),
+    ("irq_command", |rules| &mut rules.irq_command),
 ];
 
 /// Every byte rule.
@@ -246,7 +275,7 @@ const BYTE_RULES: [(&str, ByteRule); 3] = [
 fn survives(mutant: &Rules) -> bool {
     mutant
         .decode(&record(), &rooms())
-        .is_ok_and(|state| decodes_the_record(&state))
+        .is_ok_and(|decoded| decodes_the_record(&decoded.state))
 }
 
 #[test]
@@ -273,7 +302,10 @@ fn an_overrun_nmi_decodes_as_overrun() {
         interrupted_pc: 0x82_8B44,
         polled: true,
     });
-    let state = decode(&record, &rooms()).unwrap();
+    let decoded = decode(&record, &rooms()).unwrap();
+    assert_eq!(decoded.quiescence, Quiescence::Busy);
+    assert_eq!(decoded.state.main, MainStrand::default());
+    let state = decoded.state;
     assert_eq!(state.timing.last, NmiTiming::Overrun);
 }
 
@@ -314,7 +346,7 @@ fn each_item_bit_is_its_own_item() {
         let mut record = record();
         put(&mut record.wram, 0x09A4, bit); // COLLECTED_ITEMS
         put(&mut record.wram, 0x09A2, bit); // EQUIPPED_ITEMS
-        let equipment = decode(&record, &rooms()).unwrap().samus.equipment;
+        let equipment = decode(&record, &rooms()).unwrap().state.samus.equipment;
         assert_eq!(equipment.collected.bits, 1 << index, "{bit:#06X}");
         assert_eq!(equipment.equipped.bits, 1 << index, "{bit:#06X}");
     }
@@ -385,4 +417,250 @@ fn short_memories_are_errors() {
             ..
         })
     ));
+}
+
+#[test]
+fn a_requested_nmi_at_the_main_loop_is_quiet() {
+    let decoded = decode(&record(), &rooms()).unwrap();
+    assert_eq!(decoded.quiescence, Quiescence::Quiet);
+}
+
+#[test]
+fn an_unknown_wait_pc_is_an_unknown_yield_site() {
+    let mut record = record();
+    record.cut = Cut::NmiReturn(Nmi {
+        kind: NmiKind::Requested,
+        interrupted_pc: 0x80_8348,
+        polled: true,
+    });
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::UnknownYieldSite { pc: 0x80_8348 })
+    );
+}
+
+#[test]
+fn an_unknown_return_address_is_an_unknown_yield_site() {
+    let mut record = record();
+    record.wram[0x1FF3] = 0x7E; // the JSL's pushed address one byte on: $82:897E
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::UnknownYieldSite { pc: 0x82_897F })
+    );
+}
+
+#[test]
+fn an_unknown_irq_command_is_unsupported() {
+    let mut door = record();
+    put(&mut door.wram, 0x00AB, 0x0008); // CUR_IRQ_HANDLER: door transition, begin HUD
+    assert_eq!(
+        decode(&door, &rooms()),
+        Err(DecodeError::Unsupported(Unsupported::IrqCommand {
+            current: 8,
+            next: 0,
+        }))
+    );
+    let mut queued = record();
+    put(&mut queued.wram, 0x00A7, 0x0010); // IRQHANDLER_NEXT_HANDLER: a queued command
+    assert_eq!(
+        decode(&queued, &rooms()),
+        Err(DecodeError::Unsupported(Unsupported::IrqCommand {
+            current: 4,
+            next: 0x10,
+        }))
+    );
+}
+
+/// A message box wait inside an item pickup, PLM slot 3, with the stack from S = $1FD0 up.
+///
+/// `inner` is the bytes from the wait up to the message box's own pushes, lowest first.
+/// Above them, from the bank logs: display message box's PHY, PHX, PHB, PHP; the JSL at
+/// $84:8912; process PLM's PEA $85ED; the JSR at $84:85CD; the PLM handler's PHB, PHP; the
+/// JSL at $82:8B71; main gameplay's PHP; the JSR at $82:896B; the main loop's PHP.
+fn message_box_record(pc: u32, inner: &[u8], radius: u16) -> FrameRecord {
+    let mut record = record();
+    let outer: [u8; 22] = [
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // PHY, PHX, PHB, PHP
+        0x15, 0x89, 0x84, // JSL at $84:8912 pushed $84:8915
+        0xED, 0x85, // PEA $85ED
+        0xCF, 0x85, // JSR at $84:85CD pushed $85CF
+        0x00, 0x00, // PHB, PHP
+        0x74, 0x8B, 0x82, // JSL at $82:8B71 pushed $82:8B74
+        0x00, // PHP
+        0x6D, 0x89, // JSR at $82:896B pushed $896D
+        0x00, // the main loop's PHP
+    ];
+    let start = 0x1FD1_usize;
+    let middle = start.wrapping_add(inner.len());
+    record.wram[start..middle].copy_from_slice(inner);
+    record.wram[middle..middle.wrapping_add(outer.len())].copy_from_slice(&outer);
+    put(&mut record.wram, 0x1C27, 0x0006); // PLM_ID: slot 3
+    put(&mut record.wram, 0x05A2, radius); // MESSAGE_BOX_ANIMATION_Y_RADIUS
+    record.cpu.s = 0x1FD0;
+    record.cut = Cut::NmiReturn(Nmi {
+        kind: NmiKind::Requested,
+        interrupted_pc: pc,
+        polled: true,
+    });
+    record
+}
+
+/// The input loop in $85:846D, called by the JSR at $85:80A4 (pushed $80A6).
+fn shown_record() -> FrameRecord {
+    message_box_record(0x85_84AA, &[0xA6, 0x80], 0x1800)
+}
+
+/// Wait for lag frame's PHP; the JSR at $85:859C (pushed $859E); $859B's PHP; then the
+/// caller's JSR into $859B, then display message box's JSR.
+fn animation_record(pc: u32, caller: [u8; 2], outer: [u8; 2], radius: u16) -> FrameRecord {
+    let [caller_low, caller_high] = caller;
+    let [outer_low, outer_high] = outer;
+    message_box_record(
+        pc,
+        &[
+            0x00,
+            0x9E,
+            0x85,
+            0x00,
+            caller_low,
+            caller_high,
+            outer_low,
+            outer_high,
+        ],
+        radius,
+    )
+}
+
+fn slot_3() -> game::state::slots::SlotIndex<game::state::room::Plm> {
+    game::state::slots::SlotIndex(3, std::marker::PhantomData)
+}
+
+fn pickup(message_box: MessageBoxAt) -> MainStrand {
+    MainStrand {
+        frames: vec![
+            Frame::MainLoop(MainLoopAt::AfterGameState),
+            Frame::Gameplay(GameplayAt::AfterPlms),
+            Frame::Plms { slot: slot_3() },
+            Frame::MessageBox(message_box),
+        ],
+        waiting: Some(Wait::LagFrame),
+    }
+}
+
+fn strand_cases() -> [(FrameRecord, MainStrand); 5] {
+    use game::state::slots::Frames;
+    [
+        (
+            record(),
+            MainStrand {
+                frames: vec![Frame::MainLoop(MainLoopAt::Start)],
+                waiting: Some(Wait::Nmi),
+            },
+        ),
+        (shown_record(), pickup(MessageBoxAt::Shown)),
+        (
+            // Open's JSR at $85:8451 (pushed $8453), from the JSR at $85:8099 (pushed $809B).
+            // From radius $400, nine more loop frames ($600-$1600) and the last at $1800.
+            animation_record(0x85_813C, [0x53, 0x84], [0x9B, 0x80], 0x0400),
+            pickup(MessageBoxAt::Opening { left: Frames(10) }),
+        ),
+        (
+            // Open's last JSR at $85:8469 (pushed $846B).
+            animation_record(0x85_813F, [0x6B, 0x84], [0x9B, 0x80], 0x1800),
+            pickup(MessageBoxAt::Opening { left: Frames(0) }),
+        ),
+        (
+            // Close's JSR at $85:858B (pushed $858D), from the JSR at $85:80A7 (pushed
+            // $80A9). From radius $600: $400, $200 and 0 to come.
+            animation_record(0x85_813F, [0x8D, 0x85], [0xA9, 0x80], 0x0600),
+            pickup(MessageBoxAt::Closing { left: Frames(3) }),
+        ),
+    ]
+}
+
+#[test]
+fn each_stack_shape_decodes_to_its_strand() {
+    for (record, strand) in strand_cases() {
+        let decoded = decode(&record, &rooms()).unwrap();
+        assert_eq!(decoded.state.main, strand);
+        assert_eq!(decoded.quiescence, Quiescence::Quiet);
+    }
+}
+
+fn strands_survive(mutant: &Rules) -> bool {
+    strand_cases().into_iter().all(|(record, strand)| {
+        mutant
+            .decode(&record, &rooms())
+            .is_ok_and(|decoded| decoded.state.main == strand)
+    })
+}
+
+#[test]
+fn every_moved_wait_site_or_call_fails() {
+    let original = Rules::ORIGINAL.strand;
+    for (index, site) in original.sites.iter().enumerate() {
+        let moved: Vec<u32> = site.loop_pcs.iter().map(|pc| pc.wrapping_add(1)).collect();
+        let mut sites = original.sites.to_vec();
+        sites[index].loop_pcs = moved.leak();
+        let mutant = Rules {
+            strand: StrandRules {
+                sites: &sites,
+                ..original
+            },
+            ..Rules::ORIGINAL
+        };
+        assert!(!strands_survive(&mutant), "{}", site.routine);
+    }
+    for (index, call) in original.calls.iter().enumerate() {
+        let mut calls = original.calls.to_vec();
+        calls[index].returns_to = call.returns_to.wrapping_add(1);
+        let mutant = Rules {
+            strand: StrandRules {
+                calls: &calls,
+                ..original
+            },
+            ..Rules::ORIGINAL
+        };
+        assert!(!strands_survive(&mutant), "{}", call.routine);
+    }
+}
+
+#[test]
+fn a_moved_plm_index_or_radius_fails() {
+    let original = Rules::ORIGINAL.strand;
+    let moved = [
+        StrandRules {
+            plm_index: WramWord {
+                offset: 0x1C29,
+                ..original.plm_index
+            },
+            ..original
+        },
+        StrandRules {
+            radius: WramWord {
+                offset: 0x05A4,
+                ..original.radius
+            },
+            ..original
+        },
+    ];
+    for strand in moved {
+        let mutant = Rules {
+            strand,
+            ..Rules::ORIGINAL
+        };
+        assert!(!strands_survive(&mutant));
+    }
+}
+
+#[test]
+fn a_radius_off_the_animation_is_unrepresentable() {
+    let record = animation_record(0x85_813C, [0x53, 0x84], [0x9B, 0x80], 0x0401);
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::Unrepresentable {
+            source: "MESSAGE_BOX_ANIMATION_Y_RADIUS",
+            value: 0x0401,
+        })
+    );
 }

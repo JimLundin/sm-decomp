@@ -7,6 +7,7 @@ pub mod coverage;
 pub mod decode;
 pub mod lock;
 pub mod source;
+pub mod strand;
 
 #[cfg(test)]
 mod tests;

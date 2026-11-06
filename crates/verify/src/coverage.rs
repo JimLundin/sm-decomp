@@ -12,6 +12,9 @@ pub enum Source {
     WramWord(WramWord),
     /// A word of work RAM resolved through the content: a ROM pointer to an ID.
     WramPointer(WramWord),
+    /// The main thread's wait site and return chain: the cut's interrupted PC and the stack
+    /// from `cpu.s`, through `strand::WAIT_SITES` and `strand::CALL_SITES`.
+    Stack,
     /// A field of the record itself, by its `FrameRecord` name.
     Record(&'static str),
 }
@@ -101,8 +104,13 @@ pub const FIELDS: &[Field] = &[
     wram("controller.repeat", source::JOYPAD1_NEWKEYS2_UNUSED),
     wram("controller.repeat_delay", source::JOYPAD1_KEYREPEAT_CTR),
     wram("mode", source::GAME_STATE),
-    open("main"),
-    open("irq"),
+    Field {
+        path: "main.frames",
+        status: Status::Decoded(Source::Stack),
+    },
+    record("main.waiting", "cut"),
+    wram("irq.command", source::CUR_IRQ_HANDLER),
+    record("irq.line", "ppu.vtime"),
     record("timing.last", "cut"),
     none(
         "timing.owed",
@@ -226,6 +234,7 @@ mod tests {
             rules.camera_x_subpixels,
             rules.camera_y,
             rules.camera_y_subpixels,
+            rules.irq_command,
         ];
         let bytes = [rules.lag, rules.max_lag, rules.nmi_requested];
         for field in FIELDS {
@@ -236,7 +245,7 @@ mod tests {
                 Status::Decoded(Source::WramByte(byte)) => {
                     assert!(bytes.contains(&byte), "{} isn't read", field.path);
                 }
-                Status::Decoded(Source::Record(_))
+                Status::Decoded(Source::Record(_) | Source::Stack)
                 | Status::NoEquivalent(_)
                 | Status::NotDecoded => {}
             }

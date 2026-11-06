@@ -231,3 +231,28 @@ pub const LAYER1_Y_POS: WramWord = WramWord {
     name: "LAYER1_Y_POS",
     offset: 0x0915,
 };
+
+/// Bank $84 log: the PLM handler keeps the slot it is processing here, times two
+/// (`$84:85C5 STX $1C27`).
+pub const PLM_ID: WramWord = WramWord {
+    name: "PLM_ID",
+    offset: 0x1C27,
+};
+
+/// Bank $85 log: the message box animation's Y radius, which open and close step by $200.
+pub const MESSAGE_BOX_ANIMATION_Y_RADIUS: WramWord = WramWord {
+    name: "MESSAGE_BOX_ANIMATION_Y_RADIUS",
+    offset: 0x05A2,
+};
+
+/// Bank $80 log: the interrupt command the IRQ handler runs next.
+pub const CUR_IRQ_HANDLER: WramWord = WramWord {
+    name: "CUR_IRQ_HANDLER",
+    offset: 0x00AB,
+};
+
+/// Bank $80 log: the interrupt command a door transition queues after the HUD's.
+pub const IRQHANDLER_NEXT_HANDLER: WramWord = WramWord {
+    name: "IRQHANDLER_NEXT_HANDLER",
+    offset: 0x00A7,
+};
