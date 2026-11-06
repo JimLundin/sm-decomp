@@ -1290,3 +1290,47 @@ steps are two short handshakes, 2 polls apart over the window.
 LakeSnes only in handshake poll counts. Records without streams are
 unchanged (the callbacks are registered only for a T request; `ladder-check`
 of the any% rung 20000 -> 30000 equal to the stored record).
+
+## (t) lsnes's joypad-read count: no bank gap; the one any% difference is a read outside the NMI
+
+**Question.** (s) left one joypad-reads difference over any% 20000-21000
+(step 20213, LakeSnes 2, lsnes 0) and suspected the server's `$4218-$421F`
+read callbacks, registered only in banks `$00` and `$80`, as the APU ones
+were before (s).
+
+**Cause.** Not the banks. The game reads the pads in the NMI handler's
+`$80:9459`, after the handler's `PHK PLB` set the data bank to `$80`. With
+the callbacks registered in every bank that maps the I/O page (`$00-$3F`,
+`$80-$BF`), both crosses stayed as they were, line for line apart from the
+timing summary. LakeSnes's profile (`movie --profile 20205 20220`) shows 0
+reads on every step of the window except 20213, and that step's NMI is
+`polled: false`: the 2 reads at 20213 are outside the NMI handler, in a frame
+of the message-box wait (`$85:8136`, about 15,200 instructions in bank `$85`).
+lsnes, with every bank hooked, saw no read at that step. So LakeSnes
+reads a joypad register at 20213 that bsnes does not: likely a CPU access
+that only one core makes (a dummy read), not a game read; a PC trace of
+the bridge's `$4218-$421F` reads would name it.
+
+**Command.** As (s): `oracle cross ROM any.inputs --frames 20000..21000
+--streams --right-from 020000.lss 20000`, and `--frames 0..1000 --streams`
+from power-on; private DLL with the all-banks joypad hooks.
+
+| Joypad reads | Steps differing, `$00`/`$80` hooks | All banks |
+| --- | --- | --- |
+| any% 20000-21000 resumed | 1 (20213, 2 / 0) | 1 (20213, 2 / 0) |
+| any% 0-1000 power-on | 1 (307, 2 / 0) | 1 (307, 2 / 0) |
+
+The power-on step 307 is a cut-kind difference, not a hook: LakeSnes's NMI
+there is a requested, polled one (`$80:8343`), lsnes's an overrun at
+`$8B:9C66`, before its handler's read.
+
+**Other hooks.** The server's other bus hooks are execution hooks at the
+game's own full addresses (the NMI vector target, its RTI, the wait sites,
+trace PCs), which see the code where it runs; the APU hooks have every bank
+since (s). LakeSnes logs the APU mirrors `$2144-$217F` as well; lsnes hooks
+`$2140-$2143`; no difference in (s) points at the mirrors.
+
+**Conclusion.** No change to the server: the joypad hooks have no bank gap
+the game reaches, and the stored records stand (`ladder-check` of the any%
+rung 20000 -> 30000 equal, with the all-banks hooks). The 20213 read is a
+LakeSnes/bsnes access difference left to a bridge PC trace.
