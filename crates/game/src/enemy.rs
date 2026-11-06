@@ -6,13 +6,15 @@
 //! routine (`$A0:8FD4`) walks it, choosing the AI from the slot's AI handler bits, then
 //! counts the frame, and counts the hurt flash down after drawing.
 
+use std::marker::PhantomData;
+
 use crate::pose::Content;
 use crate::state::room::{
     AiHandler, ENEMY_SLOTS, Elevator, ElevatorArming, ElevatorDirection, ElevatorRide,
-    ElevatorStatus, EnemyBody, EnemyCommon, EnemyExtraProperty, EnemyProperty,
+    ElevatorStatus, Enemy, EnemyBody, EnemyCommon, EnemyExtraProperty, EnemyProperty,
 };
 use crate::state::samus::{DrawingHandler, Fixed, Samus, Speed};
-use crate::state::slots::{Frames, Occupancy, Slot};
+use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
 use crate::state::{Button, Controller, State};
 use data::id::SpeciesId;
 
@@ -21,10 +23,23 @@ pub mod eye;
 pub mod face_block;
 pub mod instructions;
 
-/// The slots processing this frame, in table order (the original's active enemy indices).
+/// The slots processing this frame, in table order (the original's active enemy indices), and
+/// those of them Samus and projectiles can touch (its interactive enemy indices, `$17EC`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Active {
     slots: Vec<usize>,
+    interactive: Vec<SlotIndex<Enemy>>,
+}
+
+impl Active {
+    /// The interactive slots, in table order: the ones solid enemy collision walks.
+    ///
+    /// The hurt timers phase empties the original's list at the end of the frame (`$A0:9184`);
+    /// the engine's goes with the pass, from the selection on.
+    #[must_use]
+    pub fn interactive(&self) -> &[SlotIndex<Enemy>] {
+        &self.interactive
+    }
 }
 
 /// Which of the AI routines a species header names the main enemy routine runs.
@@ -75,9 +90,10 @@ fn on_screen(slot: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
 }
 
 /// The enemy selection phase (`$A0:8EB6`): free the deleted slots and list the live ones on
-/// screen, or processed off screen, or frozen.
-// open: global off-screen processing (the bosses' rooms), the respawning placeholder and
-// the interactive list join with their first rows.
+/// screen, or processed off screen, or frozen, then of those the tangible ones as the
+/// interactive list (`$A0:8F40`).
+// open: global off-screen processing (the bosses' rooms) and the respawning placeholder
+// join with their first rows.
 pub fn select(state: &mut State) -> Active {
     let camera_x = state.room.camera.x.pixels;
     let camera_y = state.room.camera.y.pixels;
@@ -98,6 +114,10 @@ pub fn select(state: &mut State) -> Active {
                     || on_screen(common, camera_x, camera_y)
                 {
                     active.slots.push(index);
+                    if !common.properties.contains(EnemyProperty::Intangible) {
+                        let slot = u8::try_from(index).map(|index| SlotIndex(index, PhantomData));
+                        active.interactive.extend(slot);
+                    }
                 }
             }
         }
@@ -349,10 +369,10 @@ const fn place_samus(slot: &EnemyCommon, samus: &mut Samus) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Active, elevator_ai, run, select};
+    use super::{elevator_ai, run, select};
     use crate::state::room::{
         Elevator, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
-        EnemyCommon, EnemyExtraProperty,
+        EnemyCommon, EnemyExtraProperty, EnemyProperty,
     };
     use crate::state::samus::{DrawingHandler, Fixed, Samus};
     use crate::state::slots::{Flag, Occupancy};
@@ -488,7 +508,7 @@ mod tests {
             slot.common.extra_properties.bits = EnemyExtraProperty::GraphicUpdated.bit();
         }
         let active = select(&mut state);
-        assert_eq!(active, Active { slots: vec![0] });
+        assert_eq!(active.slots, vec![0]);
         run(&mut state, &active, &crate::pose::Content::default());
         let counters: Vec<u16> = state
             .room
@@ -500,5 +520,22 @@ mod tests {
             .collect();
         assert_eq!(counters, [1, 0]);
         assert_eq!(state.samus.position.y, at(0x02, 0));
+    }
+
+    #[test]
+    fn the_interactive_list_is_the_active_slots_that_are_tangible() {
+        let mut state = State::default();
+        let (common, elevator, _) = arriving(at(0x1b, 0), 0x80);
+        for slot in state.room.enemies.slots.iter_mut().take(3) {
+            slot.common = common;
+            slot.occupancy = Occupancy::Live(EnemyBody::Elevator(elevator));
+        }
+        if let Some(slot) = state.room.enemies.slots.get_mut(1) {
+            slot.common.properties.insert(EnemyProperty::Intangible);
+        }
+        let active = select(&mut state);
+        assert_eq!(active.slots, vec![0, 1, 2]);
+        let interactive: Vec<u8> = active.interactive().iter().map(|slot| slot.0).collect();
+        assert_eq!(interactive, [0, 2]);
     }
 }

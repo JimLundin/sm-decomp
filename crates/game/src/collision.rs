@@ -18,6 +18,7 @@ use crate::state::room::{Block, BlockColumns, BlockIndex, RoomScoped};
 use crate::state::samus::{Fixed, Point, Speed};
 
 pub mod inside;
+pub mod solid_enemy;
 
 /// What a move went through.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
