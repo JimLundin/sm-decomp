@@ -678,7 +678,7 @@ def run_corpus(root: Path, args: argparse.Namespace) -> int:
         allowed = {"id", "inputs", "input_sha256", "start_frame", "frames", "require_hit",
                    "after_hits", "expect", "after_expectations", "observe", "pending", "seed",
                    "seed_sha256", "checkpoint", "checkpoint_sha256", "faithful_checkpoint",
-                   "faithful_checkpoint_sha256", "bundle", "tags", "unlocked", "regression", "chain"}
+                   "faithful_checkpoint_sha256", "bundle", "tags", "unlocked", "regression", "lock", "chain"}
         if not isinstance(segment, dict) or set(segment) - allowed:
             raise ValueError("corpus segment has unknown fields")
         # The faithful oracle starts checkpoint rows from its own original-game

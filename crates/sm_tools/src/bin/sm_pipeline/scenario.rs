@@ -12,7 +12,7 @@ pub const LOCK: &str = "scenarios/lock.toml";
 pub const DOMAINS: [&str; 8] = [
     "ram", "input", "samus", "camera", "room", "progress", "actors", "effects",
 ];
-const FIELDS: [&str; 11] = [
+const FIELDS: [&str; 12] = [
     "id",
     "start",
     "prefix",
@@ -24,7 +24,30 @@ const FIELDS: [&str; 11] = [
     "pending",
     "unlocked",
     "regression",
+    "lock",
 ];
+
+/// Which lock is a scenario's authority.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Authority {
+    /// scenarios/lock.toml and the old live-oracle lockstep.
+    #[default]
+    Old,
+    /// scenarios/locks/lsnes.toml, the free-run gate lock; the old path skips the row.
+    Lsnes,
+}
+
+impl Authority {
+    fn parse(id: &str, text: Option<String>) -> Result<Self, String> {
+        match text.as_deref() {
+            None | Some("old") => Ok(Self::Old),
+            Some("lsnes") => Ok(Self::Lsnes),
+            Some(other) => Err(format!(
+                "{id}: lock must be \"old\" or \"lsnes\", not {other:?}"
+            )),
+        }
+    }
+}
 
 /// A pin: a scenario's private files by name and SHA-256, and their bundle.
 pub type Pin = BTreeMap<String, String>;
@@ -43,6 +66,7 @@ struct Scenario {
     pending: Option<String>,
     unlocked: Option<String>,
     regression: Option<String>,
+    authority: Authority,
 }
 
 /// scenarios/lock.toml.
@@ -76,6 +100,7 @@ pub struct Row {
     pub after_hits: Option<i64>,
     pub unlocked: Option<String>,
     pub regression: Option<String>,
+    pub authority: Authority,
     pub bundle: Option<String>,
     pub tags: Vec<String>,
     /// The route a route room belongs to (its `route:R` tag).
@@ -104,9 +129,14 @@ impl Row {
         ]
     }
 
+    /// Whether the old Verify path (lock and live-oracle lockstep) covers the row.
+    pub fn on_old_path(&self) -> bool {
+        self.pending.is_none() && self.authority == Authority::Old
+    }
+
     /// A prefix start needs an oracle-side prefix first; a pending one has no data.
     fn lockable(&self) -> bool {
-        self.pending.is_none() && self.start_frame == 0 && self.checkpoint.is_none()
+        self.on_old_path() && self.start_frame == 0 && self.checkpoint.is_none()
     }
 }
 
@@ -291,6 +321,7 @@ fn load(root: &Path) -> Result<Vec<Scenario>, String> {
                 pending: optional_string("pending")?,
                 unlocked: optional_string("unlocked")?,
                 regression: optional_string("regression")?,
+                authority: Authority::parse(&id, optional_string("lock")?)?,
                 id,
             });
         }
@@ -397,6 +428,7 @@ pub fn rows(root: &Path, lock: &Lock) -> Result<Vec<Row>, String> {
             row.after_hits = entry.after_hits;
             row.unlocked = entry.unlocked;
             row.regression = entry.regression;
+            row.authority = entry.authority;
             row.bundle = pinned("bundle");
             row.chain = entry
                 .tags
