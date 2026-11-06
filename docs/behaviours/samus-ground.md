@@ -8,8 +8,9 @@ The observer's spec for MODEL §4, written to the MODEL §5 template. Its vector
 **Scope: ground motion.** Standing, running, turning, crouching, moonwalking, the
 crouch/stand/morph/unmorph transitions, running into a wall, the morph ball and the spring ball on
 the ground: the motion table's rows; the speed rules and both caps; momentum; the direction; the
-displacement clamp; the step-down request; the wall stop's effect on the speeds; the arm-pump step;
-and the contacts handed to other domains.
+displacement clamp; the step-down request; the wall stop's effect on the speeds; the arm-pump step
+(a second entry point, run by pose selection later in the frame: `ArmPumpStep`); and the contacts
+handed to other domains.
 
 **Out of scope.**
 - **Collision** is an interface (§5): motion asks for a move and gets the result back. How blocks
@@ -29,8 +30,9 @@ so the ground-motion share isn't measured; 516 is an upper bound for this narrow
 tables. Estimate: the row table and its enums ~50, the speed rules and both caps ~50, extra run
 and the clamp ~25, step down, elevator and the arm-pump step ~30, the collision interface (the
 request and result types) ~15, the contacts ~20. **`ArmPumpStep` counts** against this budget: it
-is a motion (a 1.0 px move through the collision interface) whose trigger comes from pose
-selection as an input, and whose result is a contact. Going over is a review stop (MODEL §4).
+is a motion (a 1.0 px move through the collision interface) with its own entry point, which pose
+selection calls once it has settled this frame's pose request; its result goes back to pose
+selection. Going over is a review stop (MODEL §4).
 
 **Notation.** A position or speed is `P.S`: a 16-bit pixel word and a 16-bit subpixel word, both
 hex, so `2.C000` is 2.75 px. A record N holds the state at the end of frame N; its pad is the pad
@@ -50,20 +52,33 @@ that frame N+1 reads.
 | `momentum` | | `bool` | `ExtraRunSpeed` |
 | `mode` | | `SpeedMode { Accelerating, TurningAround, Decelerating }` | `BaseSpeedAccelerate`, `BaseSpeedDecelerate`, `HorizontalDirection`, `BallAtRest` |
 
-**`mode` is shared with pose selection.** This domain writes it in two places: back to
+**One State for every movement.** These five fields are one State, kept whatever the
+locomotion, on the ground and in the air: every movement reads and writes the same speeds and
+mode, and nothing saves or restores them when the movement changes. A locomotion whose row doesn't
+use a field leaves it as it is.
+
+**The State is shared with pose selection.** This domain writes `mode` in two places: back to
 `Accelerating` when a deceleration reaches zero (`BaseSpeedDecelerate`), and in the `Stop` After
-(§3). Pose selection (out of scope) writes it when a new pose starts, between one frame's motion
-and the next. The events it writes are, in domain terms:
+(§3). Pose selection (out of scope) writes the State when a new pose starts, between one frame's
+motion and the next, and it writes it the same way whichever movement the pose belongs to. Its
+writes, in domain terms:
 - the on-ground turn starts: `TurningAround`; at the same moment extra_run is added into
   base_speed and extra_run becomes 0;
 - the morph ball starts rolling the other way: `TurningAround`, with the same fold and a
   `CancelSpeedBoost`;
 - the morph transition starts from a spin jump: `Decelerating`;
-- several air poses start (jumping, falling, the wall jump): `Decelerating` or `Accelerating`.
+- several air poses start (jumping, falling, the wall jump): `Decelerating` or `Accelerating`;
+- a pose change's command (pose selection picks it with the new pose):
+  - *decelerate*: if base_speed is 0, as *stop*; otherwise extra_run is added into base_speed,
+    extra_run = 0, mode = `Decelerating`, and `CancelSpeedBoost`;
+  - *stop*: mode = `Accelerating` and `CancelSpeedBoost`; the speeds are kept;
+  - *kill X speed*: base_speed = 0 and mode = `Accelerating`;
+  - *kill run speed*: extra_run = 0 and `CancelSpeedBoost`;
+- a landing (the air domain's) stops the speeds as its pose starts.
 
-So the model reads `mode` from its own State; a vector sets the mode pose selection would have
-left in `before`. Every vector here that starts in `TurningAround` or `Decelerating` stands for
-one of those events.
+So the model reads the State as the last writer left it; a vector sets in `before` what pose
+selection would have left. Every vector here that starts in `TurningAround` or `Decelerating`
+stands for one of those events.
 
 `on_square_slope` (an earlier draft's State field) belongs to the collision domain (§9). Motion
 only reads the answer to "was she placed by a slope" (`on_slope`, §1.2).
@@ -76,7 +91,7 @@ only reads the answer to "was she placed by a slope" (`on_slope`, §1.2).
 | `facing` | `Facing { Left, Right, Forward }` | the pose at the frame's start | `HorizontalDirection`, `ArmPumpStep` |
 | `radius` | x, y in px | the pose domain (in slice 0: x = 5; y = 0x15 standing, running and turning, 0x10 crouching and the ball transitions, 7 ball, 0x18 the elevator pose) | the collision requests (§5) |
 | `pad` | buttons held: run, shoot | the controller | `ExtraRunSpeed`, `StandingShotRestartsAnimation` |
-| `new_running_pose` | `bool`: pose selection asked for a pose change this frame, and the new pose runs | pose selection | `ArmPumpStep` |
+| `pose_request` | `PoseRequest { Forced, None, Pose { running: bool } }`: this frame's pose request as pose selection has settled it, after applying this frame's `vertical` (§6). `Forced` is a pose another system imposes (knockback, a finished transition) | pose selection | `ArmPumpStep` (the second entry point) |
 | `airborne` | `bool`: her vertical motion is not none | the air domain | the `StepDownUnlessAirborne` rows |
 | `air_vertical` | `Vertical` (§1.3): the air domain's result of its vertical move this frame | the air domain | the `StepDownUnlessAirborne` rows, when `airborne` |
 | `elevator_moving` | `bool` | the elevator | `ElevatorRide` |
@@ -90,13 +105,14 @@ are the only ones without a side). Where a rule picks a side, Forward counts as 
 
 ### 1.3 Results of the frame (Contacts, not State)
 
-`step` returns these the same frame. None of them is read on a later frame by this domain.
+`step` returns these the same frame, except `ran_into_wall`, which `arm_pump_step` (the second
+entry point, §6) returns later in the frame. None of them is read on a later frame by this domain.
 
 | Contact | Type | Read by |
 | --- | --- | --- |
-| `wall_stop` | `bool`: `WallStop` fired this frame | `ArmPumpStep` (same frame); pose selection |
-| `vertical` | `Vertical { None, Landed, Falling(FallKind), HitCeiling }`, after the row's After | pose selection |
-| `ran_into_wall` | `bool`: `ArmPumpStep` asks for the "ran into a wall" pose | pose selection |
+| `wall_stop` | `bool`: `WallStop` fired this frame | `ArmPumpStep` (same frame, later); pose selection |
+| `vertical` | `Vertical { None, Landed, Falling(FallKind), HitCeiling }`, after the row's After | pose selection (it settles `pose_request` from it before `ArmPumpStep`) |
+| `ran_into_wall` | `bool`, from `arm_pump_step`: it asks for the "ran into a wall" pose | pose selection |
 | `end_vertical_motion` | `bool`: the air domain's vertical speed, vertical direction and ball bounce reset to none (`TransitionLanding`) | the air domain |
 | `restart_standing_animation` | `bool`: the standing animation restarts (timer = `standing_shot_timer`, frame 0) (`StandingShotRestartsAnimation`) | animation |
 
@@ -187,6 +203,12 @@ enum After {
 | `Moonwalking` | Speed | StepDown | Keep |
 | `RanIntoWall` | Coast | StepDown | Stop { cancel: true } |
 
+Every row moves her, including `Crouching`, `Transition`, `Moonwalking`, the spring ball and
+`RanIntoWall`: each runs its horizontal step and its vertical step every frame (the coasting rows
+by extra_run, which is 0 unless momentum carried it in), and the rows whose After is `Keep` keep
+the speeds pose selection left (§1.1). Source: `$90:A573`, `$90:A61C`, `$90:A694`, `$90:A69F`,
+`$90:A75F`.
+
 The spring ball and the morph ball share their rows; they differ only in which poses are at rest
 and in their fall kind. `StandingShotRestartsAnimation` and `ArmPumpStep` are not row columns:
 each has its own condition.
@@ -240,8 +262,8 @@ These hold for every entry below.
   | RanIntoWall | 0.C000 | 0.0000 | 0.8000 |
 
   Only `Speed` rows read the table. The rows for Standing, FacingForward, Crouching, Transition and
-  RanIntoWall exist in the ROM but are never read, because those rows coast or don't move
-  (Transition's max 1.4000 never applies). They stay in the table for byte-exact data.
+  RanIntoWall exist in the ROM but are never read by ground motion, because those rows coast or
+  don't move (Transition's max 1.4000 never applies). They stay in the table for byte-exact data.
 - switch: Parameter. checked: oracle (V1-V6, V10).
 - Source: `$90:9BD1`.
 
@@ -326,10 +348,16 @@ These hold for every entry below.
 
 ### HorizontalStep
 - kind: Mechanic. summary: Samus moves sideways by her total speed.
-- Rule: total = (base_speed, or 0 on a `Coast` row) + extra_run. The displacement is +total
-  rightward or −total leftward (`HorizontalDirection`), then `DisplacementClamp`. Motion asks the
-  collision interface for a horizontal move by that displacement (§5) and applies the result.
-- Params: none. switch: Fixed. checked: oracle (V1-V10, V14).
+- Rule: total = (base_speed, or 0 on a `Coast` row) + extra_run. The heading is the side
+  `HorizontalDirection` picks; the displacement is +total heading right or −total heading left,
+  then `DisplacementClamp`. Motion asks the collision interface for a horizontal move with that
+  heading and displacement, testing solid enemies (§5), and applies the result.
+- A total of 0 still asks. No block can stop a zero move, but a solid enemy on the heading side
+  can, so a still Samus pressed against a solid enemy gets a `WallStop` every frame (and
+  `EnemyTouchZeroesYSubpixel`). The heading, not the displacement's sign, names the side: a
+  turning Samus with base_speed 0 tests the side she slides toward, against her facing (V26d).
+- Params: none. switch: Fixed. checked: oracle (V1-V10, V14); original only for a zero move
+  against an enemy (V26, V26b, V26c, V26d, constructed).
 - Source: `$90:8EA9`.
 
 ### HorizontalDirection
@@ -407,10 +435,21 @@ These hold for every entry below.
 ### ElevatorRide
 - kind: Mechanic. summary: on a moving elevator, Samus facing the screen rides it down.
 - Rule: no horizontal move and no speed change. If `elevator_moving`: one downward move by
-  `elevator_step` with no solid-enemy test (§5). If not, nothing moves. The row's After makes
-  vertical None either way.
+  `elevator_step` with heading `Up` and no solid-enemy test (§5, `ElevatorHeadsUp`). If not,
+  nothing moves. The row's After makes vertical None either way.
 - Params: `elevator_step` = 1.0 px. switch: Fixed. checked: original only (V23, constructed).
 - Source: `$90:A392`.
+
+### ElevatorHeadsUp
+- kind: Quirk. summary: (invisible in the slice) the elevator's step down tells the blocks it is going up.
+- Rule: `ElevatorRide`'s move goes down by `elevator_step` but its request's heading is `Up`
+  (§5). Where she moves and which blocks stop her follow the distance's sign (down); only the
+  reactions that ask for the heading (slopes and the special blocks, the collision domain's) react
+  as if she moved up. The elevator shafts the slice reaches hold only air, solid, door,
+  extension and scroll-trigger blocks, which don't ask (item-morph-ball:0-681), so no record
+  shows it.
+- Params: none. switch: Fixed. checked: original only.
+- Source: `$90:A397`.
 
 ### StandingShotRestartsAnimation
 - kind: Mechanic. summary: shooting while standing plainly restarts the standing animation.
@@ -423,25 +462,53 @@ These hold for every entry below.
 ### FloorFlushSubpixel
 - kind: Quirk. summary: (invisible) flush against a floor her vertical subpixel is FFFF; against a wall, FFFF or 0 by side.
 - Rule: part of the collision interface's contract (§5). A move stopped by a solid block leaves
-  the subpixel on that axis at FFFF when she moved right or down, 0 when she moved left or up.
+  the subpixel on that axis at FFFF when she moved right or down, 0 when she moved left or up
+  (`Blocker::Block { subpixel }`).
 - Params: none. switch: Fixed. checked: oracle (V7, V8); original only leftward (V20,
   constructed).
 - Source: `$94:8F82`.
 
+### EnemyTouchZeroesYSubpixel
+- kind: Quirk. summary: (invisible) pressing against a solid enemy, from any side, sets her vertical subpixel to 0.
+- Rule: part of the collision interface's contract (§5). When a solid-enemy test finds an enemy
+  she already touches on the tested side, her Y subpixel becomes 0, whatever the axis tested: a
+  horizontal move (`Blocker::Enemy { touching: true }`), a downward move, and the arm-pump's enemy
+  test (`EnemyHit { touching: true }`). Motion writes the 0; the distance is 0 in every touching
+  case. An enemy found further away (not touching) writes nothing.
+- Params: none. switch: Fixed. checked: oracle for a move onto an enemy (item-morph-ball:1228, the
+  air domain's landing on the solid enemy: y 029B.9400 becomes 029B.0000 with no pixel moved; the
+  ground rows on it, V1 and V2, keep 0); original only for the horizontal move and the arm-pump
+  test (V26, V26d, V27, constructed).
+- Source: `$A0:AAC8`.
+
 ### ArmPumpStep
 - kind: Quirk. summary: changing aim while running moves Samus an extra pixel forward.
-- Rule, after the row's After:
-  - if `wall_stop` and the frame-start locomotion is `Running`: `ran_into_wall` = true; no step;
-  - else if `new_running_pose`: forward is left when facing Left and right otherwise. If a solid
-    enemy is within `arm_pump_step` forward (§5, the enemy query), `ran_into_wall` = true and she
-    doesn't move. Otherwise one horizontal move by `arm_pump_step` forward, with no solid-enemy
-    test; a stop sets `ran_into_wall` = true (and leaves her flush, as every stop does). There is
-    no `WallStop`, no step down and no speed change.
+- Entry: `arm_pump_step`, the domain's second entry point, separate from `step`. Pose selection
+  calls it once per frame, after `step` and after it has settled `pose_request` from this
+  frame's `vertical` (§6), and before it starts the new pose. It reads the State's `position`,
+  the frame-start `locomotion` and `facing` (the pose hasn't changed yet), `radius`, this frame's
+  `wall_stop` contact and `pose_request`. It writes only `position` (x by the move, and the Y
+  subpixel through `EnemyTouchZeroesYSubpixel`), and returns `ran_into_wall`. It changes no speed
+  and no mode.
+- Rule:
+  - `pose_request` is `Forced`: nothing (no test, no move; `ran_into_wall` = false);
+  - else if `wall_stop` and the frame-start locomotion is `Running`: `ran_into_wall` = true; no
+    step. This holds whatever the request, `None` included;
+  - else if `pose_request` is `Pose { running: true }`: forward is left when facing Left and right
+    otherwise. Motion asks the enemy test for `arm_pump_step` forward (§5): a hit gives
+    `ran_into_wall` = true and she doesn't move (a touching hit zeroes her Y subpixel). Otherwise
+    one horizontal move by `arm_pump_step` forward, with no solid-enemy test and no slope seat
+    (§5, `SkipEnemies`); a stop sets `ran_into_wall` = true (and leaves her flush, as every stop
+    does). There is no `WallStop`, no step down and no speed change;
+  - otherwise nothing.
 
-  With no step down after it, it can lift her off a downward slope.
+  With no step down and no slope seat after it, it can lift her off a downward slope. Because the
+  request is settled after `vertical`, running off a ledge while the aim changes gives no step:
+  the fall replaces the running request with a falling one.
 - Params: `arm_pump_step` = 1.0 px. switch: Fixed. checked: oracle (V2-V4, V9, V14; V1 shows no
   step without a pose change; V8 the wall branch); original only for a block stop (V22b,
-  constructed) and Forward (V23).
+  constructed), Forward (V23), an enemy hit (V27, constructed), the `Forced` request and the
+  fall replacing the request.
 - Source: `$91:EADE`.
 
 ---
@@ -453,20 +520,37 @@ her position and her radius (x, y).
 
 | Request | Asks | Gets back |
 | --- | --- | --- |
-| `move_horizontal(body, d, enemies)` | a horizontal move by the signed P.S displacement `d` | `Moved { distance, stop: Option<Stop> }` |
-| `move_down(body, d, enemies)` | a downward move by the P.S distance `d` ≥ 0 | `Moved { distance, stop: Option<Stop> }` |
-| `enemy_blocks(body, side, d)` | is a solid enemy within `d` on that side? | `bool` |
+| `move_horizontal(body, heading, d, enemies)` | a horizontal move by the signed P.S displacement `d`, heading `Left` or `Right` | `Moved { distance, stop: Option<Stop> }` |
+| `move_down(body, heading, d, enemies)` | a downward move by the P.S distance `d` ≥ 0, heading `Down` or `Up` | `Moved { distance, stop: Option<Stop> }` |
+| `enemy_ahead(body, heading, d)` | is a solid enemy within `d` on the `Left` or `Right` heading? | `Option<EnemyHit { touching: bool }>` |
 
+- **The heading** is the side the request faces, given apart from the distance's sign. It names
+  the side the solid-enemy test looks at, and the side heading-aware block reactions (slopes,
+  special blocks; the collision domain's) react to. The distance's sign decides where she moves
+  and the block sweep's leading edge.
+  - Horizontal: the heading is the side `HorizontalDirection` picked (or the arm-pump's forward).
+    In this domain `d`'s sign agrees with it whenever `d` ≠ 0. A zero `d` tests no block but still
+    tests solid enemies on the heading (`HorizontalStep`).
+  - Down: `Down` for every step down; `Up` for `ElevatorRide`'s (`ElevatorHeadsUp`).
 - `enemies` is `TestEnemies` or `SkipEnemies`. Every move here tests solid enemies, except
-  `ElevatorRide`'s and `ArmPumpStep`'s (which asked `enemy_blocks` first).
+  `ElevatorRide`'s and `ArmPumpStep`'s (which asked `enemy_ahead` first). A horizontal
+  `TestEnemies` move ends with the slope seat (§9, it feeds `on_slope`); a `SkipEnemies` one
+  doesn't.
 - `distance` is the signed displacement actually made. Motion adds it to the position on that
   axis.
-- `Stop { side: Side, subpixel: Option<u16> }`, with `Side { Left, Right, Below }`, says she was
-  stopped and on which side. When `subpixel` is set, motion writes it to that axis's subpixel
-  before adding `distance`: FFFF for `Right` and `Below`, 0 for `Left`, against a solid block
-  (`FloorFlushSubpixel`). It is `None` when a slope or an enemy stopped her (the collision domain
-  defines those).
-- A horizontal stop is "the horizontal move stopped" for `WallStop`. A downward stop is `Landed`.
+- `Stop { side: Side, blocker: Blocker }`, with `Side { Left, Right, Below }`, says she was
+  stopped and on which side; `Blocker` says by what, and which subpixel motion writes before
+  adding `distance`:
+  - `Block { subpixel: u16 }`: a solid block; motion writes `subpixel` to that axis's subpixel:
+    FFFF for `Right` and `Below`, 0 for `Left` (`FloorFlushSubpixel`).
+  - `Enemy { touching: bool }`: a solid enemy. When `touching`, `distance` is 0 and motion writes
+    0 to the **Y** subpixel, on either axis (`EnemyTouchZeroesYSubpixel`). Otherwise she moves up
+    to the enemy and nothing is written.
+  - `Slope`: a slope; nothing is written (the collision domain defines it).
+- `EnemyHit { touching }` follows the same rule: when `touching`, motion writes 0 to the Y
+  subpixel.
+- A horizontal stop, by any blocker, is "the horizontal move stopped" for `WallStop`. A downward
+  stop is `Landed`.
 - `on_slope` (§1.2) comes from the same domain.
 
 The vectors use a flat stand-in for the collision domain: block-aligned solid floor, walls and
@@ -487,7 +571,18 @@ Everything else in the frame is free (MODEL §1). These orders are visible at th
    total (V21).
 5. The After runs after the step down: `Standing`, `Crouching` and `RanIntoWall` move by the old
    extra_run this frame, then zero it (V14).
-6. `ArmPumpStep` comes after all motion, and so after `WallStop`.
+6. `ArmPumpStep` is not part of `step`. The frame runs, in this order:
+   1. pose selection reads the pad and makes its first pose request (before motion);
+   2. `step`: the row's motion, `ElevatorRide` included, giving `wall_stop` and `vertical`;
+   3. animation and the hit check (other domains; a hit or a finished transition can force a pose);
+   4. pose selection applies `vertical` to its request: `Falling` replaces it with the falling
+      pose of its fall kind; `HitCeiling` replaces it with the current pose; `Landed` on the
+      ground leaves it. That settles `pose_request`;
+   5. `arm_pump_step` with this frame's `wall_stop` and the settled `pose_request`;
+   6. pose selection starts the requested pose (or "ran into a wall", if `ran_into_wall`).
+
+   So the arm-pump step sees this frame's motion, and its trigger depends on this frame's
+   vertical result. Source: `$90:E725`, `$91:E8B6`, `$91:EB88`.
 
 ---
 
@@ -506,6 +601,16 @@ Everything else in the frame is free (MODEL §1). These orders are visible at th
    word is above. The extra run's cap (`ExtraRunCap`) compares before the add, and still adds when
    the pixel word is above but the subpixel is below. `SpeedCap::Exact` doesn't change the extra
    run. V11 runs under both settings with the same result.
+4. **Crouching, Transition, Moonwalking, the spring ball and RanIntoWall have motion** (gap G5).
+   Each row in §3 runs every frame, as in the original; the oracle judges any change they cause.
+5. **One State across every movement** (gap G6). The speeds and mode are one State, written by
+   this domain and by pose selection's commands whichever movement is current (§1.1).
+6. **The arm-pump step's order** (gap G1): §6 item 6 and `ArmPumpStep`'s entry point.
+7. **A zero horizontal move** (gap G2) tests solid enemies on its heading (`HorizontalStep`, §5).
+8. **The Y subpixel** (gap G3): `EnemyTouchZeroesYSubpixel`, reported through `Blocker::Enemy`
+   and `EnemyHit`.
+9. **The elevator's heading** (gap G4): `Up` (`ElevatorHeadsUp`); it changes nothing the slice
+   reaches.
 
 ---
 
@@ -568,12 +673,26 @@ What is known, recorded for that domain's spec. Not checked further here.
   0xC0; 16, 17 → 0xD8; 1B, 1C → 0x80; E, F → 0xB0; others 0x100; over 256), done on d reduced to
   8.8. Vertically, only the column under her centre; A = surface(column) − (edge mod 16) − 1, and
   if A ≤ 0, d = max(0, d.pixel + A).0000 with y.sub unchanged.
-- **The slope seat** after every horizontal move: feet on a non-square slope raise her by A and
-  count as seated; an upside-down slope at her head pushes her down. It feeds `on_slope`.
+- **The slope seat** after every horizontal move that tests solid enemies (not after the
+  arm-pump's): feet on a non-square slope raise her by A and count as seated; an upside-down slope at her head pushes her down. It feeds `on_slope`.
 - **Square slopes:** quadrant tables, aligned to 8 px; a vertical stop on one sets
   `on_square_slope` (State of that domain), read by the next frame's `on_slope`. Each vertical
   move clears it.
-- **The elevator's request** tells slope reactions the move is upward although it goes down.
+- **The heading.** The vertical slope reactions (square and non-square) and the special blocks'
+  reactions branch on the request's heading, not on the distance's sign; the solid, door, spike
+  and bomb reactions use the sign. The elevator's request says `Up` while it moves down
+  (`ElevatorHeadsUp`).
+- **The solid-enemy test.** It looks on the heading only, with |d| (the magnitude). The target
+  pixel is the pixel word of her position moved |d| on the heading, then one pixel further on the
+  heading: rightward unless x.sub and |d|.sub are both 0; leftward when x.sub ≠ |d|.sub. So a zero
+  move finds an enemy she touches only when x.sub ≠ 0 (V26c). An enemy is found when the target,
+  with her current y, overlaps it on both axes (|centre difference| < radius sum, pixel words);
+  then, on the heading: her edge (x + rx right, x − rx left, from her current x) equal to the
+  enemy's near edge (its x ∓ its radius) is touching: distance 0 and Y subpixel 0; short of it,
+  the distance is the gap; past it (already inside), the enemy is skipped. A vertical test is the
+  same on y, with her current x.
+- **A horizontal move with no collision clears the vertical result** (before any step down). No
+  ground row reads it in between; the air domain's rows may.
 - Doors, spikes, special and bombable blocks: their own reactions. In the elevator room the floor
   row is a door-type block that behaved as solid (V7).
 - Out-of-room block lookups: not read.

@@ -13,8 +13,19 @@
 #   - wall_left: the x of a solid wall's right face, a multiple of 16; every column left of it is solid.
 #   - ceiling_bottom: the y of a solid ceiling's bottom face, a multiple of 16; every row above it
 #     is solid.
-#   - solid_enemy_floor = true: a solid enemy under her stops every downward move and leaves y
-#     unchanged; the vectors that use it don't compare y or `vertical`.
+#   - solid_enemy_floor = true: a solid enemy under her, touching, stops every downward move with
+#     distance 0 and sets y's subpixel to 0 (spec `EnemyTouchZeroesYSubpixel`); the vectors that
+#     use it don't compare y or `vertical`.
+#   - enemy_left = B: a solid enemy on her left, tall enough to span her rows, whose right edge
+#     (its x + its x radius) is B: she touches it when x - rx = B. enemy_right = B: one on her
+#     right whose left edge (its x - its x radius) is B: she touches it when x + rx = B. They answer
+#     the solid-enemy test of a horizontal move or of the arm-pump's query (spec §9, the
+#     solid-enemy test), on that side only, with pixel words: the target t is the pixel word of x
+#     moved |d| on the heading, then one more pixel on the heading (right: unless x.sub and
+#     |d|.sub are both 0; left: when x.sub != |d|.sub). Found when t - rx < B (left) or
+#     t + rx > B (right). Then touching (x - rx = B, or x + rx = B): distance 0 and y's subpixel
+#     set to 0; short of it: she moves to touching, subpixel unchanged; already past it: not
+#     found. A vertical move never meets them (she doesn't overlap them horizontally).
 #   The stand-in answers a move as the original's flat blocks do: the leading edge at the target is
 #   x + d + rx - 1 (right) or x + d - rx (left), y + d + ry - 1 (down), from the pixel words; if it
 #   is in a solid block, she stops flush against it (the edge on the block's near face), with the
@@ -31,12 +42,17 @@
 #       Ball { spring, at_rest } spelled out);
 #     facing: "Left", "Right" or "Forward"; radius = [x, y] in px;
 #     pad: the buttons held, from run, shoot, jump, left, right, aim_down;
-#     new_running_pose, airborne, elevator_moving, on_slope: default false;
+#     new_running_pose, forced_pose, airborne, elevator_moving, on_slope: default false;
+#       new_running_pose and forced_pose give the arm-pump's pose_request (spec §1.2):
+#       forced_pose = true is Forced; else new_running_pose = true is Pose { running: true };
+#       else None. The test runs `step`, then `arm_pump_step` with that request and the step's
+#       wall_stop (spec §6), and compares the State after both;
 #     air_vertical: the air domain's result when airborne (a `vertical` value), default "None".
 #     submerged and speed_booster are fixed false for the pilot and are not in the format.
 # - [vector.step.after]: the State expected at the end of that frame. Only the listed fields
 #   are compared; position = [x, y] compares both, position_x or position_y one.
-#   [vector.step.contacts]: the expected Contacts (spec §1.3): wall_stop, ran_into_wall,
+#   [vector.step.contacts]: the expected Contacts (spec §1.3): wall_stop, ran_into_wall (from
+#   `arm_pump_step`),
 #   end_vertical_motion, restart_standing_animation (bools); vertical = "None", "Landed",
 #   "Falling(Airborne)", "Falling(MorphBall)", "Falling(SpringBall)", "Falling(NoChange)" or
 #   "HitCeiling", after the row's After. Left out: not checked.
@@ -1094,4 +1110,125 @@ pad = ["run", "right"]
 [vector.step.after]
 position = ["053B.FFFF", "02BB.FFFF"]
 [vector.step.contacts]
+vertical = "Landed"
+
+# V26: a zero horizontal move still tests solid enemies on its heading. Standing still facing
+# left, x.sub 8000, touching a solid enemy on her left: the test finds it, so the move stops
+# (WallStop) and her y subpixel becomes 0. With no floor she then steps down the full 1.0.
+[[vector]]
+id = "V26"
+source = "constructed"
+entries = ["HorizontalStep", "WallStop", "EnemyTouchZeroesYSubpixel"]
+world = { enemy_left = 0xFB }
+before = { position = ["0100.8000", "0100.8000"] }
+[[vector.step]]
+locomotion = "Standing"
+facing = "Left"
+radius = [5, 0x15]
+[vector.step.after]
+position = ["0100.8000", "0101.0000"]
+[vector.step.contacts]
+wall_stop = true
+vertical = "Falling(Airborne)"
+
+# V26b: the same, facing right: the zero move tests the right side only, so the enemy on her
+# left is not found and the y subpixel is kept.
+[[vector]]
+id = "V26b"
+source = "constructed"
+entries = ["HorizontalStep", "EnemyTouchZeroesYSubpixel"]
+world = { enemy_left = 0xFB }
+before = { position = ["0100.8000", "0100.8000"] }
+[[vector.step]]
+locomotion = "Standing"
+facing = "Right"
+radius = [5, 0x15]
+[vector.step.after]
+position = ["0100.8000", "0101.8000"]
+[vector.step.contacts]
+wall_stop = false
+vertical = "Falling(Airborne)"
+
+# V26c: facing left again, but x.sub 0: a zero move's target is not pushed a pixel further, so
+# the touching enemy is not found (spec §9, the solid-enemy test).
+[[vector]]
+id = "V26c"
+source = "constructed"
+entries = ["HorizontalStep", "EnemyTouchZeroesYSubpixel"]
+world = { enemy_left = 0xFB }
+before = { position = ["0100.0000", "0100.8000"] }
+[[vector.step]]
+locomotion = "Standing"
+facing = "Left"
+radius = [5, 0x15]
+[vector.step.after]
+position = ["0100.0000", "0101.8000"]
+[vector.step.contacts]
+wall_stop = false
+vertical = "Falling(Airborne)"
+
+# V26d: turning, facing right, base 0.8000 brakes to exactly 0, so mode stays TurningAround and
+# the zero move heads left, against her facing. The enemy on her left stops it: WallStop sets
+# mode back to Accelerating (without the enemy it would stay TurningAround) and the y subpixel
+# becomes 0. The turn's After clears the fall.
+[[vector]]
+id = "V26d"
+source = "constructed"
+entries = ["HorizontalDirection", "HorizontalStep", "WallStop", "EnemyTouchZeroesYSubpixel", "TurnIgnoresFall"]
+world = { enemy_left = 0xFB }
+before = { position = ["0100.8000", "0100.8000"], base_speed = "0000.8000", mode = "TurningAround" }
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Right"
+radius = [5, 0x15]
+[vector.step.after]
+position = ["0100.8000", "0101.0000"]
+base_speed = "0000.0000"
+mode = "Accelerating"
+[vector.step.contacts]
+wall_stop = true
+vertical = "None"
+
+# V27: the arm-pump's enemy query. Standing on a floor facing right, x.sub 0, touching a solid
+# enemy on her right: the zero move doesn't find it (V26c), the step down lands flush (y.sub
+# FFFF). Then a running pose is requested: the 1.0 query finds the enemy, so she doesn't move,
+# asks for the ran-into-wall pose, and her y subpixel becomes 0.
+[[vector]]
+id = "V27"
+source = "constructed"
+entries = ["ArmPumpStep", "EnemyTouchZeroesYSubpixel"]
+world = { floor_top = 0x110, enemy_right = 0x105 }
+before = { position = ["0100.0000", "00FB.FFFF"] }
+[[vector.step]]
+locomotion = "Standing"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["right"]
+new_running_pose = true
+[vector.step.after]
+position = ["0100.0000", "00FB.0000"]
+[vector.step.contacts]
+wall_stop = false
+ran_into_wall = true
+vertical = "Landed"
+
+# V27b: a forced pose skips the arm-pump step entirely: V8's frame (running into the wall) with
+# a forced pose asks for no ran-into-wall pose.
+[[vector]]
+id = "V27b"
+source = "constructed"
+entries = ["ArmPumpStep", "WallStop"]
+world = { floor_top = 0x2D0, wall_right = 0x540 }
+before = { position = ["053B.BFFF", "02BB.FFFF"], base_speed = "0000.C000", extra_run = "0000.4000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+forced_pose = true
+[vector.step.after]
+position = ["053B.FFFF", "02BB.FFFF"]
+[vector.step.contacts]
+wall_stop = true
+ran_into_wall = false
 vertical = "Landed"
