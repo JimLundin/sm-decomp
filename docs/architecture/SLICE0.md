@@ -228,9 +228,25 @@ live slots are the loaded room's (slots 34 to 39, the item gone from `item-morph
 no touch PLM or triggered scroll PLM is live at a cut. Two PLMs no `PlmBody` holds yet make
 412 frames unrepresentable (1,896 decoded before, 1,484 now): the item collision detection PLM
 `$84:EED3` through the pickup's message box (399 from `item-morph-ball` 817) and the 1x1 shot
-block `$84:D074` (13 from 1,236). Remaining: those two bodies, the special air inside reaction
-calling `touch_scroll_block`, the PLM pass in the Tick (needs `Content` to hold the rooms'
-PLMs), and lockstep of both rows.
+block `$84:D074` (13 from 1,236).
+
+**Scroll PLM wiring (`lane/slice0-plm-wire`).** Done: `collision::inside::handle` is Samus
+block inside handling (`$94:9B60`), run in `SamusCurrentState` after the pose input as the
+normal current state handler calls it (`$90:E6BC`), not while the elevator carries her (the
+locked handler `$90:E713` doesn't): her bottom's block, her centre's when it is in another row,
+her top's past the chained XOR test (`$94:9BEB`), extensions standing for their block, and
+special air BTS `$46` calling `touch_scroll_block` at her centre only (`$94:9956`). A touch
+with no free slot runs no setup (`$84:84F9`). `GameplayPhase::Plms` runs `plm::process`
+(`$84:85B4`) over `Content::room_plms`, which `verify::bundle::content` loads. Lockstep on A2's
+cache with the decoded PLM table, 2026-11-06: `room.scroll_areas` still differs on 2 Ticks of
+each row from frame 92, and one `room.plms` slot's block there: at frame 92 Samus rides the
+elevator, so the touch comes from the vertical special air *collision* reaction (`$94:909D`,
+PLM `$94:9139` + BTS * 2 = `$B6FF` at `$46`) in the ride's one-pixel step, not the inside
+handling. `room.plms.slots.common.cursor.delay` differs on every Tick: the item's timer,
+which the pass holds until its list (C12). Remaining: the special air collision reactions (`$94:906F`,
+`$94:909D`) spawning the touch PLM from `collision::move_x`/`move_y` (their scans borrow the
+room; the touches can be applied after the moves, as they touch only PLM slots), the two
+bodies above, and the item's list.
 
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`

@@ -148,7 +148,7 @@ fn a_gameplay_pass_inside_the_trigger_changes_the_scroll_area() {
     // Pose 0 stands facing right with a Y radius of 15h.
     let content = Content {
         poses: Poses::decode(&[8, 0, 0xff, 2, 0, 0, 0x15, 0]).unwrap(),
-        room_plms: crate::plm::RoomPlms(vec![population()]),
+        room_plms: crate::plm::RoomPlms(vec![(data::id::RoomId(0), population())]),
         ..Content::default()
     };
     let state = State {

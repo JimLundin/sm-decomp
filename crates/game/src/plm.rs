@@ -24,18 +24,21 @@ static NO_PLMS: PlmPopulation = PlmPopulation {
     scroll_changes: Vec::new(),
 };
 
-/// Each loaded room's PLM population, by room ID: the one its state places, whose scroll
-/// change lists the PLM pass reads.
+/// Each loaded room's PLM population: the one its state places, whose scroll change lists
+/// the PLM pass reads.
 // open: a room whose states place different populations needs the loaded state in
-// `RoomScoped`; slice 0 loads only the Morph Ball Room's default state.
+// `RoomScoped`; slice 0 loads only the Morph Ball Room's state for a new game's progress.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct RoomPlms(pub Vec<PlmPopulation>);
+pub struct RoomPlms(pub Vec<(RoomId, PlmPopulation)>);
 
 impl RoomPlms {
     /// Room `room`'s population; none for a room the content doesn't hold.
     #[must_use]
     pub fn of(&self, room: RoomId) -> &PlmPopulation {
-        self.0.get(usize::from(room.0)).unwrap_or(&NO_PLMS)
+        self.0
+            .iter()
+            .find_map(|(id, population)| (*id == room).then_some(population))
+            .unwrap_or(&NO_PLMS)
     }
 }
 

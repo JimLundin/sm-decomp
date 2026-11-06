@@ -167,7 +167,10 @@ impl std::error::Error for ContentError {}
 ///
 /// A [`ContentError`] when the image isn't the release or a table doesn't decode.
 pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
+    // Decoded before the image moves into the ROM, reported after the ROM's own check.
+    let populations = crate::lockstep::slice_zero_plms(&image);
     let rom = Rom::new(image).map_err(ContentError::Rom)?;
+    let room_plms = RoomPlms(populations.map_err(ContentError::Rooms)?);
     let enemy_programs =
         EnemyPrograms::slice_zero(rom.lorom()).map_err(ContentError::EnemyPrograms)?;
     let eye_lists = EyeLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
@@ -175,18 +178,6 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         FaceBlockLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
     let delays = AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?;
     let samus_tiles = SamusTiles::load(rom.lorom(), &delays).map_err(ContentError::SamusTiles)?;
-    let (rooms, _) = data::room::Rooms::load(rom.lorom(), &data::room::SLICE_ZERO_ROOMS)
-        .map_err(ContentError::Rooms)?;
-    // Each room's population as its state for a new game's progress places it.
-    let room_plms = RoomPlms(
-        rooms
-            .map()
-            .iter()
-            .filter_map(|(_, id)| rooms.get(id))
-            .filter_map(|room| room.state(room.select(&data::room::Progress::default())))
-            .map(|state| state.plms.clone())
-            .collect(),
-    );
     Ok(Content {
         poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
