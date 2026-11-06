@@ -195,6 +195,14 @@ check needs it, when it becomes a named behaviour with the original's bytes as d
   table reads a pointer from the spritemaps after it. The engine draws nothing for either.
   The half tables plus a pose's animation frames select pointers the game draws; a pose
   and frame no animation reaches (a custom pose, a hand-set frame) could select another.
+- **The mini-map's edges** (`game::mini_map`, bank `$90` log `$90:A9A2`, `$90:AB75`,
+  `$90:AAA8`): the 3 by 5 window around Samus reads the explored bitmap (`$7E:07F7`), the
+  map station bitmap (`$82:9727` on) and the map tilemap (`$B5:8000` on) a row above, a
+  row below and two columns either side of her cell. On the map's top row or its bottom
+  rows, or in the spill onto the other page, those indices leave the area's 100h bytes or
+  800h words: the original reads the RAM or ROM after them (the next area's maps, the
+  variables around `$07F7`). The engine reads no cells and the blank tile there. Which
+  vanilla rooms reach the edges is not yet checked; slice 0's rooms are inside them.
 
 ## Tolerated values the content keeps as named variants
 

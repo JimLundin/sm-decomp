@@ -63,6 +63,8 @@ pub struct Content {
     pub face_block_glow: GlowColours,
     /// The rooms' PLM populations, with their scroll PLMs' change lists.
     pub room_plms: RoomPlms,
+    /// The area maps the mini-map draws.
+    pub area_maps: data::map::AreaMaps,
 }
 
 /// The pose a frame asks for, by the channel that asked.

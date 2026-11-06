@@ -5,6 +5,8 @@
 //! tilemap they were drawn into.
 
 use canonical::Canonical;
+use data::map::MapBits;
+use data::room::{Area, MapPosition};
 
 use super::video::{BgPalette, TilemapEntry};
 
@@ -126,4 +128,23 @@ pub struct Hud {
     pub drawn: Drawn,
     /// The palette the last item highlight wrote.
     pub item_palette: BgPalette,
+    /// The mini-map.
+    pub mini_map: MiniMap,
+}
+
+/// What the mini-map draws from (bank $90 log, update mini-map `$90:A91B`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct MiniMap {
+    /// The current area's explored cells, which the mini-map marks as Samus moves.
+    // open: the other areas' explored cells and the copy on area change join with `progress`.
+    pub explored: MapBits,
+    /// The current area.
+    pub area: Area,
+    /// The current room's top-left cell on the area map.
+    pub room: MapPosition,
+    /// Whether the current area's map has been collected, so the cells its station reveals
+    /// show.
+    pub map_collected: bool,
+    /// Whether a boss room has turned the mini-map off (`$90:A7E2`).
+    pub disabled: bool,
 }

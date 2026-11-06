@@ -11,6 +11,7 @@ pub mod dma;
 pub mod enemy;
 pub mod id;
 pub mod level;
+pub mod map;
 pub mod movement;
 pub mod palette;
 pub mod plm;

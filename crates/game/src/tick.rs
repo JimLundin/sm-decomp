@@ -476,6 +476,13 @@ fn gameplay_phase(
                 &mut touches,
             );
             movement::ride(&mut state.samus, state.elevator, surroundings, &mut touches);
+            mini_map(
+                &mut state.hud,
+                state.samus.position,
+                &state.room,
+                state.clock.counters.requested_byte,
+                content,
+            );
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             let requests = pose::collision_request(
                 &state.samus,
@@ -503,8 +510,6 @@ fn gameplay_phase(
         // with those game states. In game state 8 the clock still counts on that frame; it
         // stops only if an earlier phase this frame already left gameplay.
         GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
-        // open: the mini-map's update and its explored cells (bank $90) join with the map
-        // and `progress`; until then the HUD tilemap keeps the mini-map it was opened with.
         GameplayPhase::Hud => crate::hud::phase(state),
         GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
         GameplayPhase::Enemies => crate::enemy::run(state, &pass.active, content),
@@ -546,4 +551,28 @@ fn gameplay_phase(
         | GameplayPhase::HurtTimers => {}
     }
     Ok(())
+}
+
+/// The mini-map's update after the movement handler (`$90:E734`).
+fn mini_map(
+    hud: &mut crate::state::hud::Hud,
+    samus: crate::state::samus::Point,
+    room: &crate::state::room::RoomScoped,
+    requested: u8,
+    content: &Content,
+) {
+    let width = room.width.0;
+    let blocks = u16::try_from(room.blocks.len()).unwrap_or(u16::MAX);
+    let room = crate::mini_map::RoomBlocks {
+        width,
+        height: blocks.checked_div(width).unwrap_or(0),
+    };
+    crate::mini_map::update(
+        &mut hud.mini_map,
+        &mut hud.tilemap,
+        samus,
+        room,
+        requested,
+        &content.area_maps,
+    );
 }

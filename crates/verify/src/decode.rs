@@ -10,10 +10,12 @@ use std::fmt;
 use data::enemy::SpeciesMap;
 use data::enemy::program::EnemyPrograms;
 use data::id::{Line, RoomId};
+use data::map::{MAP_BIT_BYTES, MapBits};
 use data::plm::PlmPopulation;
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
-use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
+use data::room::{Area, MapPosition};
+use game::state::hud::{Drawn, Hud, HudItem, HudTilemap, MiniMap};
 use game::state::room::{
     Block, BlockColumns, Camera, CameraDistance, ElevatorArming, ElevatorDirection, ElevatorRide,
     ElevatorStatus, EnemyDrawing, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, Layer2Scroll,
@@ -593,6 +595,25 @@ pub struct HudSources {
     pub selection: WramWord,
     /// `.item_palette`.
     pub item_palette: WramWord,
+    /// `.mini_map`.
+    pub mini_map: MiniMapSources,
+}
+
+/// Where the original keeps what the mini-map draws from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MiniMapSources {
+    /// `.explored`.
+    pub explored: WramBlock,
+    /// `.area`.
+    pub area: WramWord,
+    /// `.room.x`.
+    pub room_x: WramWord,
+    /// `.room.y`.
+    pub room_y: WramWord,
+    /// `.map_collected`.
+    pub map_collected: WramWord,
+    /// `.disabled`.
+    pub disabled: WramWord,
 }
 
 /// Where the original keeps the register mirrors beyond INIDISP, TM, TS and the scroll.
@@ -714,6 +735,14 @@ impl Rules<'_> {
             power_bombs: source::SAMUS_PREV_POWER_BOMBS,
             selection: source::SAMUS_PREV_HUD_ITEM_INDEX,
             item_palette: source::HUD_ITEM_TILEMAP_PALETTE_BITS,
+            mini_map: MiniMapSources {
+                explored: source::MAP_TILES_EXPLORED,
+                area: source::AREA_INDEX,
+                room_x: source::ROOM_X_COORDINATE_ON_MAP,
+                room_y: source::ROOM_Y_COORDINATE_ON_MAP,
+                map_collected: source::HAS_AREA_MAP,
+                disabled: source::DEBUG_DISABLE_MINIMAP,
+            },
         },
         camera_x: source::LAYER1_X_POS,
         camera_x_subpixels: source::LAYER1_X_SUBPOS,
@@ -1303,6 +1332,59 @@ impl HudSources {
                 selection: hud_item(self.selection, wram)?,
             },
             item_palette: TilemapEntry::from_word(palette).palette,
+            mini_map: self.mini_map.read(wram)?,
+        })
+    }
+}
+
+/// A flag word the original sets to 0 or 1 only.
+fn flag_word(source: WramWord, wram: &[u8]) -> Result<bool, DecodeError> {
+    match source.read(wram)? {
+        0 => Ok(false),
+        1 => Ok(true),
+        value => Err(DecodeError::Unrepresentable {
+            source: source.name,
+            value,
+        }),
+    }
+}
+
+/// A map coordinate word: the area map is 64 cells by 32, so its high byte is clear.
+fn map_coordinate(source: WramWord, wram: &[u8]) -> Result<u8, DecodeError> {
+    let value = source.read(wram)?;
+    u8::try_from(value).map_err(|_| DecodeError::Unrepresentable {
+        source: source.name,
+        value,
+    })
+}
+
+impl MiniMapSources {
+    /// What the record's mini-map draws from.
+    fn read(&self, wram: &[u8]) -> Result<MiniMap, DecodeError> {
+        let explored: &[u8; MAP_BIT_BYTES] =
+            self.explored
+                .read(wram)?
+                .first_chunk()
+                .ok_or(DecodeError::WramTooShort {
+                    source: self.explored.name,
+                })?;
+        let area = self.area.read(wram)?;
+        let area = u8::try_from(area)
+            .ok()
+            .and_then(|area| Area::try_from(area).ok())
+            .ok_or(DecodeError::Unrepresentable {
+                source: self.area.name,
+                value: area,
+            })?;
+        Ok(MiniMap {
+            explored: MapBits(*explored),
+            area,
+            room: MapPosition {
+                x: map_coordinate(self.room_x, wram)?,
+                y: map_coordinate(self.room_y, wram)?,
+            },
+            map_collected: flag_word(self.map_collected, wram)?,
+            disabled: flag_word(self.disabled, wram)?,
         })
     }
 }

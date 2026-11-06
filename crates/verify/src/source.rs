@@ -983,6 +983,39 @@ pub const HUD_ITEM_TILEMAP_PALETTE_BITS: WramWord = WramWord {
     offset: 0x077C,
 };
 
+/// Bank $90 log, update mini-map `$90:A97E`: the current area's explored map cells, one bit
+/// per cell, 80h bytes per map page.
+pub const MAP_TILES_EXPLORED: WramBlock = WramBlock {
+    name: "MAP_TILES_EXPLORED",
+    offset: 0x07F7,
+    len: 0x0100,
+};
+/// Bank $90 log, `$90:A9BE`: the current area.
+pub const AREA_INDEX: WramWord = WramWord {
+    name: "AREA_INDEX",
+    offset: 0x079F,
+};
+/// Bank $90 log, `$90:A94B`: the room's left column on the area map.
+pub const ROOM_X_COORDINATE_ON_MAP: WramWord = WramWord {
+    name: "ROOM_X_COORDINATE_ON_MAP",
+    offset: 0x07A1,
+};
+/// Bank $90 log, `$90:A96D`: the room's top row on the area map.
+pub const ROOM_Y_COORDINATE_ON_MAP: WramWord = WramWord {
+    name: "ROOM_Y_COORDINATE_ON_MAP",
+    offset: 0x07A3,
+};
+/// Bank $90 log, `$90:AAA0`: whether the current area's map has been collected.
+pub const HAS_AREA_MAP: WramWord = WramWord {
+    name: "HAS_AREA_MAP",
+    offset: 0x0789,
+};
+/// Bank $90 log, `$90:A91E`: whether the mini-map is off (`$90:A7E2`, a boss room).
+pub const DEBUG_DISABLE_MINIMAP: WramWord = WramWord {
+    name: "DEBUG_DISABLE_MINIMAP",
+    offset: 0x05F7,
+};
+
 /// A table of equal-sized slots in work RAM, one per actor.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct WramTable {

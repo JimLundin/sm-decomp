@@ -10,6 +10,8 @@
 //! Outside the engine a room is named by its header's ROM address, a [`RoomKey`]; inside by
 //! the dense [`RoomId`] the [`RoomMap`] gives it.
 
+use canonical::Canonical;
+
 use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};
 use crate::id::RoomId;
@@ -103,9 +105,10 @@ impl RoomMap {
 }
 
 /// The map area a room is in.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Area {
     /// Area 0.
+    #[default]
     Crateria,
     /// Area 1.
     Brinstar,
@@ -157,7 +160,7 @@ impl From<Area> for u8 {
 }
 
 /// A position on the area map, in map cells.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct MapPosition {
     /// The room's left column.
     pub x: u8,

@@ -57,6 +57,7 @@ fn content() -> Content {
         visor_colours: data::palette::VisorColours::default(),
         face_block_glow: data::enemy::face_block::GlowColours::default(),
         room_plms: crate::plm::RoomPlms::default(),
+        area_maps: data::map::AreaMaps::default(),
     }
 }
 

@@ -139,6 +139,8 @@ pub enum ContentError {
     SamusTiles(AddressError),
     /// Slice 0's rooms don't decode.
     Rooms(data::room::RoomError),
+    /// The area maps are outside the image.
+    AreaMaps(AddressError),
 }
 
 impl fmt::Display for ContentError {
@@ -155,6 +157,7 @@ impl fmt::Display for ContentError {
             Self::Palettes(error) => write!(f, "the palette tables: {error:?}"),
             Self::SamusTiles(error) => write!(f, "Samus's tiles: {error:?}"),
             Self::Rooms(error) => write!(f, "the rooms: {error:?}"),
+            Self::AreaMaps(error) => write!(f, "the area maps: {error:?}"),
         }
     }
 }
@@ -197,6 +200,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         room_plms,
+        area_maps: data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
     })
 }
 

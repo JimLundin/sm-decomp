@@ -10,6 +10,7 @@ use data::id::{Line, RoomId, SpeciesId};
 use data::plm::{Extension, ItemPlm, PlmEntry, PlmKind, PlmPopulation, ScrollChangesId};
 use data::pose::tiles::{SamusTiles, TileDefinition, TileDefinitionId};
 use data::rom::{Lorom, RomAddress};
+use data::room::{Area, MapPosition};
 use game::enemy::instructions::label;
 use game::state::room::{
     Block, BlockIndex, Crumble, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
@@ -247,6 +248,36 @@ fn put(wram: &mut [u8], offset: usize, word: u16) {
     wram[offset..offset.wrapping_add(2)].copy_from_slice(&word.to_le_bytes());
 }
 
+/// The synthetic room and mini-map: the Morph Ball Room, in Brinstar at map cell (13, 4), the
+/// map collected, the mini-map off, and every explored byte distinct with its top bit set, so
+/// a word rule moved into the bitmap reads a value out of its range.
+fn put_room(wram: &mut [u8]) {
+    put(wram, 0x079B, MORPH_BALL_ROOM.0); // ROOM_PTR
+    put(wram, 0x079F, 0x0001); // AREA_INDEX: Brinstar
+    put(wram, 0x07A1, 0x000D); // ROOM_X_COORDINATE_ON_MAP
+    put(wram, 0x07A3, 0x0004); // ROOM_Y_COORDINATE_ON_MAP
+    put(wram, 0x0789, 0x0001); // HAS_AREA_MAP
+    put(wram, 0x05F7, 0x0001); // DEBUG_DISABLE_MINIMAP
+    for (byte, value) in wram[0x07F7..0x08F7].iter_mut().zip(0..=u8::MAX) {
+        *byte = value | 0x80; // MAP_TILES_EXPLORED
+    }
+}
+
+fn decodes_the_room(state: &State) -> bool {
+    let mini_map = state.hud.mini_map;
+    state.room.room == MORPH_BALL_ROOM_ID
+        && mini_map.area == Area::Brinstar
+        && mini_map.room == MapPosition { x: 13, y: 4 }
+        && mini_map.map_collected
+        && mini_map.disabled
+        && mini_map
+            .explored
+            .0
+            .iter()
+            .zip(0..=u8::MAX)
+            .all(|(&byte, value)| byte == value | 0x80)
+}
+
 /// The synthetic enemy slots, a live eye in slot 0 and a deleting elevator in slot 1, and
 /// the PLM slots.
 fn put_enemies(wram: &mut [u8]) {
@@ -298,7 +329,7 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0AF8, 0x4567); // SAMUS_X_SUBPOS
     put(&mut wram, 0x0AFA, 0x0089); // SAMUS_Y_POS
     put(&mut wram, 0x0AFC, 0xABCD); // SAMUS_Y_SUBPOS
-    put(&mut wram, 0x079B, MORPH_BALL_ROOM.0); // ROOM_PTR
+    put_room(&mut wram);
     wram[0x05B4] = 0x01; // WAITING_FOR_NMI
     put(&mut wram, 0x09A2, 0x1004); // EQUIPPED_ITEMS: morph ball, bombs
     put(&mut wram, 0x09A4, 0x9006); // COLLECTED_ITEMS: spring ball, morph ball, bombs, X-ray
@@ -529,7 +560,6 @@ fn decodes_the_record(state: &State) -> bool {
         && decodes_the_glow(state)
         && state.timing.last == NmiTiming::OnTime
         && state.video.nmi_requested
-        && state.room.room == MORPH_BALL_ROOM_ID
         && memory.vram.len() == VRAM_WORDS
         && memory.oam.low[1]
             == OamEntry {
@@ -551,6 +581,7 @@ fn decodes_the_record(state: &State) -> bool {
             }
         && decodes_the_enemies(state)
         && decodes_the_plms(state)
+        && decodes_the_room(state)
 }
 
 #[test]
@@ -589,7 +620,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 57] = [
+const WORD_RULES: [(&str, WordRule); 62] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -666,6 +697,19 @@ const WORD_RULES: [(&str, WordRule); 57] = [
     ("palette_cycle.set", |rules| &mut rules.palette_cycle.set),
     ("palette_cycle.timer", |rules| {
         &mut rules.palette_cycle.timer
+    }),
+    ("hud.mini_map.area", |rules| &mut rules.hud.mini_map.area),
+    ("hud.mini_map.room_x", |rules| {
+        &mut rules.hud.mini_map.room_x
+    }),
+    ("hud.mini_map.room_y", |rules| {
+        &mut rules.hud.mini_map.room_y
+    }),
+    ("hud.mini_map.map_collected", |rules| {
+        &mut rules.hud.mini_map.map_collected
+    }),
+    ("hud.mini_map.disabled", |rules| {
+        &mut rules.hud.mini_map.disabled
     }),
 ];
 
@@ -907,6 +951,13 @@ fn every_moved_enemy_field_fails() {
         field.offset = field.offset.wrapping_add(2);
         assert!(!survives(&mutant), "{name}");
     }
+}
+
+#[test]
+fn a_moved_explored_bitmap_fails() {
+    let mut moved = Rules::ORIGINAL;
+    moved.hud.mini_map.explored.offset = moved.hud.mini_map.explored.offset.wrapping_add(1);
+    assert!(!survives(&moved));
 }
 
 #[test]
