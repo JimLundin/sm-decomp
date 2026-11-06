@@ -132,7 +132,7 @@ impl FromIterator<(MovementType, SpeedEntry)> for SpeedTable {
 }
 
 /// The fixed distances of Samus's ground motion, declared from its behaviour spec
-/// (`docs/behaviours/samus-ground.md`), each named after the behaviour that reads it.
+/// (`docs/behaviours/samus-motion.md`), each named after the behaviour that reads it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct GroundMotion {
     /// Added to the step down beyond the frame's horizontal speed (`StepDown`).
@@ -152,6 +152,40 @@ impl GroundMotion {
         max_displacement: 15,
         elevator_step: Speed::new(1, 0),
         arm_pump_step: Speed::new(1, 0),
+    };
+}
+
+/// The fixed values of Samus's motion in the air, declared from its behaviour spec
+/// (`docs/behaviours/samus-motion.md`), each named after the behaviour that reads it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct AirMotion {
+    /// A fall stops gaining speed once its pixel word is exactly this (`FallCap`).
+    pub fall_cap_pixel: u16,
+    /// The first bounce's upward speed (`BallBounce`).
+    pub bounce: Speed,
+    /// How much slower the second bounce is (`BallBounce`).
+    pub bounce_decay: Speed,
+    /// A ball landing with a pixel word below this rests at once (`BallBounce`).
+    pub bounce_min_pixel: u16,
+    /// How far from a wall a spin jump can wall jump, in pixels (`WallJumpCheck`).
+    pub wall_jump_reach: u16,
+    /// The fall speeds, in 8.8 pixels, at which a space jump may jump again: from the first,
+    /// below the second (`SpaceJump`).
+    pub space_jump_window: (u16, u16),
+    /// How far a take-off from the plain crouch lifts her, in pixels (`PoseStartWrites`).
+    pub crouch_jump_lift: u16,
+}
+
+impl AirMotion {
+    /// The vanilla values.
+    pub const VANILLA: Self = Self {
+        fall_cap_pixel: 5,
+        bounce: Speed::new(1, 0),
+        bounce_decay: Speed::new(1, 0),
+        bounce_min_pixel: 3,
+        wall_jump_reach: 8,
+        space_jump_window: (0x0280, 0x0500),
+        crouch_jump_lift: 10,
     };
 }
 

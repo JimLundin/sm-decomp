@@ -31,6 +31,14 @@ impl Fixed {
     pub(crate) const fn minus(self, other: Self) -> Self {
         Self(self.0.wrapping_sub(other.0))
     }
+    /// The value with its subpixel word replaced.
+    pub(crate) const fn with_sub(self, sub: u16) -> Self {
+        Self::new(self.pixel(), sub)
+    }
+    /// Its pixel word's sign bit is set: every "negative" of the spec.
+    pub(crate) const fn negative(self) -> bool {
+        self.pixel().cast_signed().is_negative()
+    }
     /// `a` is below `b` when their difference mod 2^16 is negative; every "below" of the spec.
     pub(crate) const fn below(a: u16, b: u16) -> bool {
         a.wrapping_sub(b).cast_signed().is_negative()

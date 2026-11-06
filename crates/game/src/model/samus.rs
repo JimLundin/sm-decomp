@@ -1,3 +1,3 @@
 //! Samus: how she moves.
 
-pub mod ground;
+pub mod motion;

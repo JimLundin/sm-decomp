@@ -19,7 +19,6 @@ use crate::state::samus::{Fixed, Point, Speed};
 
 pub mod inside;
 pub mod solid_enemy;
-pub mod world;
 
 /// What a move went through.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
