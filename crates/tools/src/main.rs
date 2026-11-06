@@ -13,21 +13,29 @@
 //!
 //! `tools localise LOCK BUNDLE CACHE ROM ROW...`: the free run's first differing frame per
 //! field against the record cache ([`localise`]).
+//!
+//! `tools harness DOMAIN LOCK CACHE ROW...`: a domain's model against the oracle on every cached
+//! frame of each row (`verify::harness`); `DOMAIN` is `game-time`.
 
 mod gate;
 mod localise;
 mod ratchet;
 
+use std::fmt::Write as _;
 use std::io::Write;
 use std::process::ExitCode;
 
+use std::path::Path;
+
+use verify::harness::{self, game_time::Clock};
 use verify::ratchet::Summary;
 
 const LOCKSTEP_USAGE: &str = "tools lockstep LOCK CACHE ROM ROW [FROM [TICKS]]";
+const HARNESS_USAGE: &str = "tools harness game-time LOCK CACHE ROW...";
 
 fn usage() -> String {
     format!(
-        "usage: {LOCKSTEP_USAGE}\n       {}\n       {}",
+        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}",
         gate::USAGE,
         localise::USAGE
     )
@@ -38,6 +46,7 @@ fn run(args: &[String]) -> Result<String, String> {
         [command, rest @ ..] if command == "lockstep" => run_lockstep(rest),
         [command, rest @ ..] if command == "gate" => gate::run(rest),
         [command, rest @ ..] if command == "localise" => localise::run(rest),
+        [command, rest @ ..] if command == "harness" => run_harness(rest),
         _ => Err(usage()),
     }
 }
@@ -66,6 +75,22 @@ fn run_lockstep(args: &[String]) -> Result<String, String> {
         "{report}ratchet lines:\n{}",
         Summary::of(row, &report)
     ))
+}
+
+fn run_harness(args: &[String]) -> Result<String, String> {
+    let [domain, lock, cache, rows @ ..] = args else {
+        return Err(usage());
+    };
+    if domain != "game-time" || rows.is_empty() {
+        return Err(usage());
+    }
+    let mut out = String::new();
+    for row in rows {
+        let report = harness::run_cached(&Clock, Path::new(lock), Path::new(cache), row)
+            .map_err(|error| format!("{row}: {error}"))?;
+        let _ = write!(out, "{row}: {report}");
+    }
+    Ok(out)
 }
 
 fn main() -> ExitCode {

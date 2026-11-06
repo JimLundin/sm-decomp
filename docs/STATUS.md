@@ -33,6 +33,10 @@ target/release/tools gate scenarios/locks/lsnes.toml BUNDLE rom/sm.smc \
   scenarios/locks/lsnes.green.txt area-brinstar item-morph-ball
 # The free-run localiser: each field group's first differing frame in a free run.
 target/release/tools localise scenarios/locks/lsnes.toml BUNDLE CACHE rom/sm.smc item-morph-ball
+# The domain harness (MODEL §4): a domain's model against every cached oracle frame.
+target/release/tools harness game-time scenarios/locks/lsnes.toml CACHE area-brinstar item-morph-ball
+# The same as a test, held to its matched-frame floors.
+SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --release -p verify the_clock_holds_its_matched_frames
 ```
 
 Commit a ratchet file only with the change that moved its numbers, and never edit a line by hand
