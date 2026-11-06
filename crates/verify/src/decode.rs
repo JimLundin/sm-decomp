@@ -34,10 +34,10 @@ use game::state::slots::{FlagSet, Frames};
 use game::state::sram::{SAVE_RAM_BYTES, SaveRam};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
-    BACKGROUNDS, BgMode, Brightness, BusAddress, CGRAM_COLOURS, Colour, ColourMath,
+    BACKGROUNDS, BBusRegister, BgMode, Brightness, BusAddress, CGRAM_COLOURS, Colour, ColourMath,
     ColourMathLayers, ColourMathSelect, ColourWrite, ColumnUpload, DisplaySettings, DmaChannel,
-    FixedColour, GraphicsRef, LayerUploads, Layers, LevelUploads, MessageBoxSaved, Mode7,
-    Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Playfield,
+    DmaControl, FixedColour, GraphicsRef, LayerUploads, Layers, LevelUploads, MessageBoxSaved,
+    Mode7, Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Playfield,
     PlayfieldColourMath, Registers, RomWords, RowUpload, SamusTileUploads, Scroll, TileBases,
     TilemapBase, TilemapEntry, TilemapPart, UploadRequests, VRAM_WORDS, Video, VideoMemory,
     VramSource, VramStep, VramTransfer, VramWord, WindowSettings, Windows,
@@ -1947,8 +1947,8 @@ const fn dma_channel(bytes: [u8; 11]) -> DmaChannel {
         line_counter,
     ] = bytes;
     DmaChannel {
-        control,
-        destination,
+        control: DmaControl::from_byte(control),
+        destination: BBusRegister::from_byte(destination),
         source: u16::from_le_bytes([source_low, source_high]),
         source_bank,
         count: u16::from_le_bytes([count_low, count_high]),

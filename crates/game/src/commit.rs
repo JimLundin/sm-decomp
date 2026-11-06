@@ -6,8 +6,9 @@ use data::pose::tiles::{Graphics, GraphicsRef, SamusTiles, TileDefinitionId};
 use data::video::OAM_BYTES;
 
 use crate::state::video::{
-    BusAddress, CGRAM_COLOURS, ColourMathLayers, ColourMathSelect, DmaChannel, Layer, Layers,
-    Mode7, SCROLL_BITS, Scroll, TilemapBase, VRAM_WORDS, Video, VramSource, VramTransfer, VramWord,
+    BBusRegister, BusAddress, CGRAM_COLOURS, ColourMathLayers, ColourMathSelect, DmaChannel,
+    DmaControl, Layer, Layers, Mode7, SCROLL_BITS, Scroll, TilemapBase, VRAM_WORDS, Video,
+    VramSource, VramTransfer, VramWord,
 };
 
 /// VRAM's word address is 15 bits; the PPU ignores the top bit.
@@ -21,16 +22,6 @@ const OAM_CHANNEL: usize = 0;
 /// The DMA channel CGRAM, Samus's tiles and the VRAM write table go through (`$80:933A`,
 /// `$80:9376`, `$80:8C83`).
 pub(crate) const VRAM_CHANNEL: usize = 1;
-/// DMAP for byte writes to one register, the A-bus address incrementing.
-const DMA_ONE_REGISTER: u8 = 0x00;
-/// DMAP for word writes to a register pair, the A-bus address incrementing.
-pub(crate) const DMA_TWO_REGISTERS: u8 = 0x01;
-/// BBAD for OAMDATA, `$2104`.
-const DMA_TO_OAM: u8 = 0x04;
-/// BBAD for VMDATAL, `$2118`.
-pub(crate) const DMA_TO_VRAM: u8 = 0x18;
-/// BBAD for CGDATA, `$2122`.
-const DMA_TO_CGRAM: u8 = 0x22;
 /// BG3's index among the tilemap registers.
 const BG3: usize = 2;
 /// BG3SC above the playfield: the HUD's tilemap at `$5800`, 32x64 (`$80:968D`).
@@ -45,17 +36,17 @@ impl Video {
         self.memory.oam = self.batch.oam;
         self.memory.cgram = self.batch.cgram;
         let uploads = [
-            (OAM_CHANNEL, DMA_TO_OAM, OAM_BUFFER, OAM_BYTES),
+            (OAM_CHANNEL, BBusRegister::OamData, OAM_BUFFER, OAM_BYTES),
             (
                 VRAM_CHANNEL,
-                DMA_TO_CGRAM,
+                BBusRegister::ColourData,
                 PALETTE_BUFFER,
                 CGRAM_COLOURS * 2,
             ),
         ];
         for (channel, destination, from, bytes) in uploads {
             if let Some(channel) = self.dma.get_mut(channel) {
-                channel.control = DMA_ONE_REGISTER;
+                channel.control = DmaControl::TO_ONE_REGISTER;
                 channel.destination = destination;
                 channel.transferred(from, bytes);
             }
@@ -133,8 +124,8 @@ impl Video {
         for transfer in std::mem::take(&mut self.batch.vram) {
             let (from, bytes) = write_vram(&mut self.memory.vram, &transfer, graphics);
             if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
-                channel.control = DMA_TWO_REGISTERS;
-                channel.destination = DMA_TO_VRAM;
+                channel.control = DmaControl::TO_TWO_REGISTERS;
+                channel.destination = BBusRegister::VramData;
                 channel.transferred(from, bytes);
             }
         }
@@ -171,8 +162,8 @@ impl Video {
         let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) else {
             return;
         };
-        channel.control = DMA_TWO_REGISTERS;
-        channel.destination = DMA_TO_VRAM;
+        channel.control = DmaControl::TO_TWO_REGISTERS;
+        channel.destination = BBusRegister::VramData;
         let part_one = match definition.first {
             0 => FULL_COUNT,
             size => usize::from(size),
@@ -282,9 +273,10 @@ mod tests {
     };
 
     use crate::state::video::{
-        Brightness, BusAddress, Colour, ColourMathLayers, ColourMathSelect, ColourWrite,
-        DmaChannel, FixedColour, Layer, Registers, RomWords, SamusTileUploads, Scroll, TilemapBase,
-        VRAM_WORDS, Video, VramSource, VramStep, VramTransfer, VramWord,
+        BBusRegister, Brightness, BusAddress, Colour, ColourMathLayers, ColourMathSelect,
+        ColourWrite, DmaChannel, DmaControl, FixedColour, Layer, Registers, RomWords,
+        SamusTileUploads, Scroll, TilemapBase, VRAM_WORDS, Video, VramSource, VramStep,
+        VramTransfer, VramWord,
     };
 
     /// Words from a buffer at $7E:2000.
@@ -329,8 +321,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x01,
-                destination: 0x18,
+                control: DmaControl::TO_TWO_REGISTERS,
+                destination: BBusRegister::VramData,
                 source: 0x2002,
                 source_bank: 0x7E,
                 count: 0,
@@ -356,8 +348,8 @@ mod tests {
         assert_eq!(
             video.dma[0],
             DmaChannel {
-                control: 0x00,
-                destination: 0x04,
+                control: DmaControl::TO_ONE_REGISTER,
+                destination: BBusRegister::OamData,
                 source: 0x0590,
                 source_bank: 0x00,
                 ..DmaChannel::default()
@@ -366,8 +358,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x00,
-                destination: 0x22,
+                control: DmaControl::TO_ONE_REGISTER,
+                destination: BBusRegister::ColourData,
                 source: 0xC200,
                 source_bank: 0x7E,
                 table: 0x1234,
@@ -452,8 +444,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x01,
-                destination: 0x18,
+                control: DmaControl::TO_TWO_REGISTERS,
+                destination: BBusRegister::VramData,
                 source: 0x8008,
                 source_bank: 0x9E,
                 count: 0,

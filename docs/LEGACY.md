@@ -227,6 +227,11 @@ check needs it, when it becomes a named behaviour with the original's bytes as d
   `$91:B731`, `$91:B739`) hold X direction bytes 1 and 2, neither left (4), right (8)
   nor forward (0). The original's facing tests read the left and right bits, so it
   tolerates them; the byte is kept so it goes back out unchanged. No row reaches either pose.
+- `game::state::video::BBusRegister::Other(u8)`, `DmaControl::unused` and the mirror
+  encodings of `DmaPattern` and `DmaAddressStep`: a DMA channel nothing programmed holds
+  power-on bytes (BBAD $FF), and the hardware ignores DMAP bit 5 and repeats patterns 1 to 3
+  as 5 to 7. The registers are in the compared state, so every byte decodes and goes back out
+  unchanged.
 
 ## The oracle harness (`crates/oracle`)
 

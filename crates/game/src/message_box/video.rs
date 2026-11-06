@@ -5,10 +5,10 @@ use data::dma::{
     MESSAGE_BOX_BACKUP, MESSAGE_BOX_BLANK, MESSAGE_BOX_ROWS, MESSAGE_BOX_SCROLL_TABLE,
 };
 
-use crate::commit::{DMA_TO_VRAM, DMA_TWO_REGISTERS, VRAM_CHANNEL, write_words};
+use crate::commit::{VRAM_CHANNEL, write_words};
 use crate::state::video::{
-    ColourWrite, DmaChannel, Layer, Layers, MESSAGE_BOX_BACKUP_WORDS, Playfield,
-    PlayfieldColourMath, Scroll, TilemapBase, Video, VramWord,
+    BBusRegister, ColourWrite, DmaChannel, DmaControl, Layer, Layers, MESSAGE_BOX_BACKUP_WORDS,
+    Playfield, PlayfieldColourMath, Scroll, TilemapBase, Video, VramWord,
 };
 
 /// The BG3 tilemap rows the box covers: from `$5880`, 700h bytes (`$85:81B7`).
@@ -37,17 +37,8 @@ const BOX_MAIN_SCREEN: [Layer; 4] = [Layer::Bg1, Layer::Bg2, Layer::Bg3, Layer::
 /// The three COLDATA writes that make the sub screen's backdrop black (`$85:8181`).
 const BLACK_BACKDROP: [ColourWrite; 3] = [ColourWrite(0x20), ColourWrite(0x40), ColourWrite(0x80)];
 
-/// DMAP for a VRAM read: B bus to A bus, a register pair (`$85:81C0`).
-const DMA_FROM_TWO_REGISTERS: u8 = 0x81;
-/// BBAD for VMDATALREAD, `$2139`.
-const DMA_FROM_VRAM: u8 = 0x39;
-
 /// HDMA channel 6, the box's BG3 Y scroll (`$85:838F`).
 const SCROLL_CHANNEL: usize = 6;
-/// DMAP for indirect HDMA writing one register twice.
-const HDMA_INDIRECT_WRITE_TWICE: u8 = 0x42;
-/// BBAD for BG3VOFS, `$2112`.
-const DMA_TO_BG3_Y_SCROLL: u8 = 0x12;
 
 /// BG3's index among the backgrounds.
 const BG3: usize = 2;
@@ -99,8 +90,8 @@ impl Video {
             self.message_box.tilemap.extend_from_slice(rows);
         }
         if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
-            channel.control = DMA_FROM_TWO_REGISTERS;
-            channel.destination = DMA_FROM_VRAM;
+            channel.control = DmaControl::FROM_TWO_REGISTERS;
+            channel.destination = BBusRegister::VramDataRead;
             channel.box_transfer(MESSAGE_BOX_BACKUP, BOX_TILEMAP_BYTES);
         }
     }
@@ -116,8 +107,8 @@ impl Video {
             std::iter::repeat_n(BLANK_TILE, words),
         );
         if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
-            channel.control = DMA_TWO_REGISTERS;
-            channel.destination = DMA_TO_VRAM;
+            channel.control = DmaControl::TO_TWO_REGISTERS;
+            channel.destination = BBusRegister::VramData;
             channel.box_transfer(MESSAGE_BOX_BLANK, BOX_TILEMAP_BYTES);
         }
     }
@@ -132,8 +123,8 @@ impl Video {
             rows.iter().copied(),
         );
         if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
-            channel.control = DMA_TWO_REGISTERS;
-            channel.destination = DMA_TO_VRAM;
+            channel.control = DmaControl::TO_TWO_REGISTERS;
+            channel.destination = BBusRegister::VramData;
             let bytes = u16::try_from(rows.len().saturating_mul(2)).unwrap_or(u16::MAX);
             channel.box_transfer(MESSAGE_BOX_ROWS, bytes);
         }
@@ -146,8 +137,8 @@ impl Video {
         if let Some(channel) = self.dma.get_mut(SCROLL_CHANNEL) {
             let table = MESSAGE_BOX_SCROLL_TABLE;
             *channel = DmaChannel {
-                control: HDMA_INDIRECT_WRITE_TWICE,
-                destination: DMA_TO_BG3_Y_SCROLL,
+                control: DmaControl::HDMA_INDIRECT_WRITE_TWICE,
+                destination: BBusRegister::Bg3VerticalScroll,
                 source: table.offset,
                 source_bank: table.bank,
                 count: table.offset,
@@ -169,8 +160,8 @@ impl Video {
             self.message_box.tilemap.iter().copied(),
         );
         if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
-            channel.control = DMA_TWO_REGISTERS;
-            channel.destination = DMA_TO_VRAM;
+            channel.control = DmaControl::TO_TWO_REGISTERS;
+            channel.destination = BBusRegister::VramData;
             channel.box_transfer(MESSAGE_BOX_BACKUP, BOX_TILEMAP_BYTES);
         }
     }
@@ -206,7 +197,8 @@ impl DmaChannel {
 #[cfg(test)]
 mod tests {
     use crate::state::video::{
-        Colour, DmaChannel, FixedColour, Layer, Scroll, TilemapBase, VRAM_WORDS, Video,
+        BBusRegister, Colour, DmaChannel, DmaControl, FixedColour, Layer, Scroll, TilemapBase,
+        VRAM_WORDS, Video,
     };
 
     #[test]
@@ -244,8 +236,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x81,
-                destination: 0x39,
+                control: DmaControl::FROM_TWO_REGISTERS,
+                destination: BBusRegister::VramDataRead,
                 source: 0x4800,
                 source_bank: 0x7E,
                 ..DmaChannel::default()
@@ -268,8 +260,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x01,
-                destination: 0x18,
+                control: DmaControl::TO_TWO_REGISTERS,
+                destination: BBusRegister::VramData,
                 source: 0x3F00,
                 source_bank: 0x7E,
                 ..DmaChannel::default()
@@ -304,7 +296,7 @@ mod tests {
                 video.dma[1].destination,
                 video.dma[1].source
             ),
-            (0x01, 0x18, 0x4800)
+            (DmaControl::TO_TWO_REGISTERS, BBusRegister::VramData, 0x4800)
         );
     }
 
@@ -316,8 +308,8 @@ mod tests {
         assert_eq!(
             video.dma[6],
             DmaChannel {
-                control: 0x42,
-                destination: 0x12,
+                control: DmaControl::HDMA_INDIRECT_WRITE_TWICE,
+                destination: BBusRegister::Bg3VerticalScroll,
                 source: 0x3380,
                 source_bank: 0x7E,
                 count: 0x3380,
@@ -359,8 +351,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x01,
-                destination: 0x18,
+                control: DmaControl::TO_TWO_REGISTERS,
+                destination: BBusRegister::VramData,
                 source: 0x3206,
                 source_bank: 0x7E,
                 ..DmaChannel::default()

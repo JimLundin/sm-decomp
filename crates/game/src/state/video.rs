@@ -395,13 +395,237 @@ pub struct PlayfieldColourMath {
 /// A scroll register's ten bits; the PPU keeps no more of what the game writes.
 pub const SCROLL_BITS: u16 = 0x03FF;
 
+/// Which way a DMA moves its bytes (DMAP bit 7).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DmaDirection {
+    /// A bus to B bus: memory to a PPU register.
+    #[default]
+    ToRegister,
+    /// B bus to A bus: a PPU register to memory.
+    FromRegister,
+}
+
+/// How a DMA steps its A-bus address (DMAP bits 3-4). Both fixed encodings are kept: the
+/// hardware treats them alike and the registers hold whichever was written.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DmaAddressStep {
+    /// Up by one a byte.
+    #[default]
+    Increment,
+    /// Stays put (encoding 1).
+    Fixed,
+    /// Down by one a byte.
+    Decrement,
+    /// Stays put (encoding 3).
+    FixedAgain,
+}
+
+/// Which B-bus registers a DMA writes and in what order (DMAP bits 0-2). Encodings 5 to 7
+/// repeat 1 to 3 on the hardware and are kept as written.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DmaPattern {
+    /// One register a byte.
+    #[default]
+    OneRegister,
+    /// Two consecutive registers, a byte each.
+    TwoRegisters,
+    /// One register written twice.
+    WriteTwice,
+    /// Two consecutive registers, each written twice.
+    TwoRegistersTwice,
+    /// Four consecutive registers.
+    FourRegisters,
+    /// Encoding 5, which acts as [`Self::TwoRegisters`].
+    TwoRegistersMirror,
+    /// Encoding 6, which acts as [`Self::WriteTwice`].
+    WriteTwiceMirror,
+    /// Encoding 7, which acts as [`Self::TwoRegistersTwice`].
+    TwoRegistersTwiceMirror,
+}
+
+/// A DMA channel's control register, DMAP ($43x0).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct DmaControl {
+    /// Bit 7.
+    pub direction: DmaDirection,
+    /// Bit 6: HDMA reads its data through an indirect address.
+    pub indirect: bool,
+    /// Bit 5, which the hardware ignores; the registers keep what was written.
+    pub unused: bool,
+    /// Bits 3-4.
+    pub step: DmaAddressStep,
+    /// Bits 0-2.
+    pub pattern: DmaPattern,
+}
+
+impl DmaControl {
+    /// Memory to one register, a byte at a time.
+    pub const TO_ONE_REGISTER: Self = Self::to_register(DmaPattern::OneRegister);
+    /// Memory to a register pair, a word at a time.
+    pub const TO_TWO_REGISTERS: Self = Self::to_register(DmaPattern::TwoRegisters);
+    /// A register pair to memory, a word at a time.
+    pub const FROM_TWO_REGISTERS: Self = Self {
+        direction: DmaDirection::FromRegister,
+        ..Self::TO_TWO_REGISTERS
+    };
+    /// Indirect HDMA writing one register twice a line.
+    pub const HDMA_INDIRECT_WRITE_TWICE: Self = Self {
+        indirect: true,
+        ..Self::to_register(DmaPattern::WriteTwice)
+    };
+
+    const fn to_register(pattern: DmaPattern) -> Self {
+        Self {
+            direction: DmaDirection::ToRegister,
+            indirect: false,
+            unused: false,
+            step: DmaAddressStep::Increment,
+            pattern,
+        }
+    }
+
+    /// The control register's bits as the registers hold them: every byte is a control.
+    #[must_use]
+    pub const fn from_byte(byte: u8) -> Self {
+        Self {
+            direction: if byte & 0x80 == 0 {
+                DmaDirection::ToRegister
+            } else {
+                DmaDirection::FromRegister
+            },
+            indirect: byte & 0x40 != 0,
+            unused: byte & 0x20 != 0,
+            step: match (byte >> 3) & 0b11 {
+                0 => DmaAddressStep::Increment,
+                1 => DmaAddressStep::Fixed,
+                2 => DmaAddressStep::Decrement,
+                _ => DmaAddressStep::FixedAgain,
+            },
+            pattern: match byte & 0b111 {
+                0 => DmaPattern::OneRegister,
+                1 => DmaPattern::TwoRegisters,
+                2 => DmaPattern::WriteTwice,
+                3 => DmaPattern::TwoRegistersTwice,
+                4 => DmaPattern::FourRegisters,
+                5 => DmaPattern::TwoRegistersMirror,
+                6 => DmaPattern::WriteTwiceMirror,
+                _ => DmaPattern::TwoRegistersTwiceMirror,
+            },
+        }
+    }
+
+    /// The byte the register holds.
+    #[must_use]
+    pub const fn to_byte(self) -> u8 {
+        let direction = match self.direction {
+            DmaDirection::ToRegister => 0,
+            DmaDirection::FromRegister => 0x80,
+        };
+        let step = match self.step {
+            DmaAddressStep::Increment => 0,
+            DmaAddressStep::Fixed => 1,
+            DmaAddressStep::Decrement => 2,
+            DmaAddressStep::FixedAgain => 3,
+        };
+        let pattern = match self.pattern {
+            DmaPattern::OneRegister => 0,
+            DmaPattern::TwoRegisters => 1,
+            DmaPattern::WriteTwice => 2,
+            DmaPattern::TwoRegistersTwice => 3,
+            DmaPattern::FourRegisters => 4,
+            DmaPattern::TwoRegistersMirror => 5,
+            DmaPattern::WriteTwiceMirror => 6,
+            DmaPattern::TwoRegistersTwiceMirror => 7,
+        };
+        let indirect = if self.indirect { 0x40 } else { 0 };
+        let unused = if self.unused { 0x20 } else { 0 };
+        direction | indirect | unused | (step << 3) | pattern
+    }
+}
+
+impl From<u8> for DmaControl {
+    fn from(byte: u8) -> Self {
+        Self::from_byte(byte)
+    }
+}
+
+impl From<DmaControl> for u8 {
+    fn from(control: DmaControl) -> Self {
+        control.to_byte()
+    }
+}
+
+/// A DMA channel's B-bus register, BBAD ($43x1): the PPU register the transfer addresses.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BBusRegister {
+    /// OAMDATA, $2104.
+    OamData,
+    /// BG3VOFS, $2112, which HDMA writes twice a line.
+    Bg3VerticalScroll,
+    /// VMDATAL, $2118: VRAM word writes.
+    VramData,
+    /// CGDATA, $2122.
+    ColourData,
+    /// VMDATALREAD, $2139: VRAM word reads.
+    VramDataRead,
+    /// A register the engine doesn't use. A channel nothing programmed holds $FF (the
+    /// register $21FF), and the registers keep whatever was written.
+    Other(u8),
+}
+
+impl BBusRegister {
+    /// The register BBAD names: every byte is a register.
+    #[must_use]
+    pub const fn from_byte(byte: u8) -> Self {
+        match byte {
+            0x04 => Self::OamData,
+            0x12 => Self::Bg3VerticalScroll,
+            0x18 => Self::VramData,
+            0x22 => Self::ColourData,
+            0x39 => Self::VramDataRead,
+            other => Self::Other(other),
+        }
+    }
+
+    /// The byte BBAD holds, the register's offset from $2100.
+    #[must_use]
+    pub const fn to_byte(self) -> u8 {
+        match self {
+            Self::OamData => 0x04,
+            Self::Bg3VerticalScroll => 0x12,
+            Self::VramData => 0x18,
+            Self::ColourData => 0x22,
+            Self::VramDataRead => 0x39,
+            Self::Other(byte) => byte,
+        }
+    }
+}
+
+impl Default for BBusRegister {
+    fn default() -> Self {
+        Self::from_byte(0)
+    }
+}
+
+impl From<u8> for BBusRegister {
+    fn from(byte: u8) -> Self {
+        Self::from_byte(byte)
+    }
+}
+
+impl From<BBusRegister> for u8 {
+    fn from(register: BBusRegister) -> Self {
+        register.to_byte()
+    }
+}
+
 /// One DMA channel's registers as the last transfer left them ($43x0 to $43xA).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct DmaChannel {
     /// DMAP: the direction, the addressing and the transfer pattern.
-    pub control: u8,
+    pub control: DmaControl,
     /// BBAD: the B-bus register, $21xx.
-    pub destination: u8,
+    pub destination: BBusRegister,
     /// A1T: the A-bus address.
     pub source: u16,
     /// A1B: the A-bus bank.

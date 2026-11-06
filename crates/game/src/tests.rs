@@ -443,7 +443,8 @@ fn a_tick_inside_the_box_is_a_lag_frame() -> Result<(), String> {
 #[test]
 fn channel_1_keeps_the_last_nmi_transfer_through_it() {
     use crate::state::video::{
-        BusAddress, DmaChannel, VramSource, VramStep, VramTransfer, VramWord,
+        BBusRegister, BusAddress, DmaChannel, DmaControl, VramSource, VramStep, VramTransfer,
+        VramWord,
     };
     let mut state = State::default();
     state.video.nmi_requested = true;
@@ -457,7 +458,7 @@ fn channel_1_keeps_the_last_nmi_transfer_through_it() {
     // No Samus tiles and no VRAM writes: CGRAM's DMA was the last.
     assert_eq!(
         (state.video.dma[1].destination, state.video.dma[1].source),
-        (0x22, 0xC200)
+        (BBusRegister::ColourData, 0xC200)
     );
     state.video.nmi_requested = true;
     state.video.batch.vram = vec![VramTransfer {
@@ -481,8 +482,8 @@ fn channel_1_keeps_the_last_nmi_transfer_through_it() {
     assert_eq!(
         state.video.dma[1],
         DmaChannel {
-            control: 0x01,
-            destination: 0x18,
+            control: DmaControl::TO_TWO_REGISTERS,
+            destination: BBusRegister::VramData,
             source: 0xC6C8,
             source_bank: 0x7E,
             ..DmaChannel::default()

@@ -79,8 +79,8 @@ const fn channel_bytes(channel: DmaChannel) -> [u8; 11] {
     let [count_low, count_high] = channel.count.to_le_bytes();
     let [table_low, table_high] = channel.table.to_le_bytes();
     [
-        channel.control,
-        channel.destination,
+        channel.control.to_byte(),
+        channel.destination.to_byte(),
         source_low,
         source_high,
         channel.source_bank,
@@ -101,7 +101,7 @@ pub fn digest(video: &Video) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use game::state::video::{Brightness, DmaChannel, Scroll, Video};
+    use game::state::video::{Brightness, DmaChannel, DmaControl, Scroll, Video};
 
     use super::{digest, encode};
     use crate::cache::ppu_digest;
@@ -113,7 +113,7 @@ mod tests {
         video.committed.brightness = Brightness(15);
         video.committed.scroll[1] = Scroll { x: 0x2C0, y: 0xE0 };
         video.dma[7] = DmaChannel {
-            control: 0x43,
+            control: DmaControl::from_byte(0x43),
             source: 0xD86F,
             table: 0xD8D1,
             ..DmaChannel::default()

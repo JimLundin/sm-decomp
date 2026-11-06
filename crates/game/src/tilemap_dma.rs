@@ -8,10 +8,10 @@
 
 use data::dma::{BG1_COLUMN_BUFFER, BG1_ROW_BUFFER, BG2_BUFFER_OFFSET};
 
-use crate::commit::{DMA_TO_VRAM, DMA_TWO_REGISTERS, VRAM_CHANNEL, write_words};
+use crate::commit::{VRAM_CHANNEL, write_words};
 use crate::state::video::{
-    BusAddress, ColumnUpload, DmaChannel, RowUpload, TilemapEntry, TilemapPart, Video, VramStep,
-    VramWord,
+    BBusRegister, BusAddress, ColumnUpload, DmaChannel, DmaControl, RowUpload, TilemapEntry,
+    TilemapPart, Video, VramStep, VramWord,
 };
 
 /// The words between a tilemap row's two 8x8 rows: the row upload's bottom half lands
@@ -92,8 +92,8 @@ impl<'a> Upload<'a> {
     /// written to the wrapped part's first half before its size is tested, so a wrapped size of
     /// 0 leaves it holding that source.
     fn execute(&self, vram: &mut [u16], channel: &mut DmaChannel) {
-        channel.control = DMA_TWO_REGISTERS;
-        channel.destination = DMA_TO_VRAM;
+        channel.control = DmaControl::TO_TWO_REGISTERS;
+        channel.destination = BBusRegister::VramData;
         self.part(vram, channel, 0, self.first);
         channel.source = self.buffer.advanced(self.first.bytes).offset;
         if self.wrapped.bytes != 0 {
@@ -161,7 +161,7 @@ impl Video {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::video::UploadRequests;
+    use crate::state::video::{BBusRegister, DmaControl, UploadRequests};
 
     /// Where a column buffer's right half starts after its left (16 entries of 4 bytes).
     const RIGHT_HALF: u16 = 0x40;
@@ -242,8 +242,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x01,
-                destination: 0x18,
+                control: DmaControl::TO_TWO_REGISTERS,
+                destination: BBusRegister::VramData,
                 source: BG1_COLUMN_BUFFER.offset + RIGHT_HALF + 8 + 56,
                 source_bank: BG1_COLUMN_BUFFER.bank,
                 count: 0,
@@ -278,8 +278,8 @@ mod tests {
         assert_eq!(
             video.dma[1],
             DmaChannel {
-                control: 0x01,
-                destination: 0x18,
+                control: DmaControl::TO_TWO_REGISTERS,
+                destination: BBusRegister::VramData,
                 source: BG1_ROW_BUFFER.offset + RIGHT_HALF + 4 + 8 + 60,
                 source_bank: BG1_COLUMN_BUFFER.bank,
                 count: 0,
