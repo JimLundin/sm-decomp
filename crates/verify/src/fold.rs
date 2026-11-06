@@ -5,7 +5,7 @@
 //! from one set of rules.
 //!
 //! The engine doesn't emit frames yet; [`EngineFrame`] is the shape it will hand over
-//! per Tick: the cut its `Recorded` timing source gave, its video memory, SRAM, the
+//! per Tick: the cut its `Recorded` timing source gave, its video memory, its save RAM, the
 //! PPU registers' digest from [`crate::ppu::digest`], its APU port accesses and
 //! the shown picture. A stream the engine doesn't give at a frame where it folds is
 //! absent from the row, which the comparison reports as `Absent(Side::Engine)`.
@@ -13,6 +13,7 @@
 use crate::lock::{EngineRow, Stream};
 use data::digest::Digest;
 use data::span::{self, Cut, PortAccess, SpanFold};
+use game::state::sram::SAVE_RAM_BYTES;
 use game::state::video::{CGRAM_COLOURS, OAM_HIGH_BYTES, OamEntry, VideoMemory};
 
 /// One engine frame, as the engine will emit it per Tick.
@@ -22,8 +23,8 @@ pub struct EngineFrame<'a> {
     pub cut: Cut,
     /// The PPU's memories after the frame.
     pub video: &'a VideoMemory,
-    /// Cartridge save RAM, `None` until the engine owns it.
-    pub sram: Option<&'a [u8]>,
+    /// The cartridge's save RAM as its battery image, `None` when a run doesn't give it.
+    pub sram: Option<&'a [u8; SAVE_RAM_BYTES]>,
     /// The `ppu` stream's digest, [`crate::ppu::digest`] of the State's video.
     pub ppu: Option<u64>,
     /// The CPU's APU port accesses in the frame, in order.
@@ -58,7 +59,7 @@ impl span::Frame for EngineFrame<'_> {
                 let high: &[u8; OAM_HIGH_BYTES] = &self.video.oam.high;
                 Some(span::oam_digest(&oam_words(&self.video.oam.low), high))
             }
-            span::Stream::Sram => self.sram.map(span::bytes_digest),
+            span::Stream::Sram => self.sram.map(|image| span::bytes_digest(image)),
             span::Stream::Ppu => self.ppu,
             // Work RAM isn't the engine's: the State replaces it (D5), and `wram` decides
             // nothing (D22).
@@ -195,7 +196,7 @@ mod tests {
     #[test]
     fn an_engine_run_folds_to_an_engine_row() {
         let video = memory();
-        let sram = [5_u8; 16];
+        let sram = [5_u8; SAVE_RAM_BYTES];
         let shown = [9_u8; 12];
         let ports = [PortAccess {
             direction: PortDirection::Write,

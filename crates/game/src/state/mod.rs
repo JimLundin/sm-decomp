@@ -2,14 +2,15 @@
 //!
 //! Slice 0's domains only (ARCHITECTURE §15 step 4). Values are typed; the original's
 //! numbers appear only at the decoder, projections and encoders.
-// open: the sound domain (`SoundCpu`, the driver model, D18), `progress`, `menus` and
-// `sram` join with their first rows; slice 0's item pickup needs `progress` once the
-// decoder shows which collected-item bits its rows read.
+// open: the sound domain (`SoundCpu`, the driver model, D18), `progress` and `menus` join
+// with their first rows; slice 0's item pickup needs `progress` once the decoder shows
+// which collected-item bits its rows read.
 
 pub mod hud;
 pub mod room;
 pub mod samus;
 pub mod slots;
+pub mod sram;
 pub mod strand;
 pub mod video;
 
@@ -220,6 +221,8 @@ pub struct State {
     pub message: Message,
     /// The items picked up on the file, by their collected bit.
     pub collected_items: CollectedItems,
+    /// The cartridge's save RAM.
+    pub sram: sram::SaveRam,
 }
 
 /// Words of the collected item bits (`$7E:D870`, 64 bytes).

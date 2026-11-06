@@ -731,6 +731,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("hud.mini_map.disabled", hud.mini_map.disabled),
     field!("message", message),
     field!("collected_items", collected_items),
+    field!("sram", sram),
 ];
 
 /// Whether the coverage table marks `path` decoded.

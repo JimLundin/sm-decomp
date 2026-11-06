@@ -10,9 +10,9 @@
 //! are counted from the row's first, so the Tick that ends at frame f takes the schedule's
 //! entry for f.
 //!
-//! What the engine doesn't give yet: SRAM (the State has none) and the shown picture (the
-//! scan-out has no line program until B6) are left out, so the comparison reports them
-//! `Absent(Side::Engine)`. The CPU's APU port accesses are none yet (no sound domain until
+//! The `sram` stream is the State's save RAM encoded back to its battery image each frame.
+//! What the engine doesn't give yet: the shown picture (the scan-out has no line program
+//! until B6) is left out, so the comparison reports it `Absent(Side::Engine)`. The CPU's APU port accesses are none yet (no sound domain until
 //! C11), so `apu` folds an empty log on every busy span.
 
 use std::collections::BTreeSet;
@@ -21,6 +21,7 @@ use std::sync::Arc;
 
 use data::span::Cut;
 use game::nmi::NmiKind;
+use game::state::sram::SAVE_RAM_BYTES;
 use game::state::{Buttons, NmiTiming, State, Tick};
 use game::{Content, OpenError, Rules, Schedule, Session, SessionFault, TickInput, TimingSource};
 use oracle_record::{FrameRecord, Pad};
@@ -87,12 +88,17 @@ const fn cut(timing: NmiTiming, nmi: NmiKind) -> Cut {
     }
 }
 
-/// The engine frame a State at a cut gives.
-const fn engine_frame(state: &State, cut: Cut, ppu: u64) -> EngineFrame<'_> {
+/// The engine frame a State at a cut gives, with its save RAM's image.
+const fn engine_frame<'a>(
+    state: &'a State,
+    cut: Cut,
+    ppu: u64,
+    sram: &'a [u8; SAVE_RAM_BYTES],
+) -> EngineFrame<'a> {
     EngineFrame {
         cut,
         video: &state.video.memory,
-        sram: None,
+        sram: Some(sram),
         ppu: Some(ppu),
         ports: &[],
         shown: None,
@@ -101,7 +107,8 @@ const fn engine_frame(state: &State, cut: Cut, ppu: u64) -> EngineFrame<'_> {
 
 fn fold_state(fold: &mut EngineFold, state: &State, cut: Cut) {
     let ppu = crate::ppu::digest(&state.video);
-    fold.fold(&engine_frame(state, cut, ppu));
+    let sram = state.sram.to_bytes();
+    fold.fold(&engine_frame(state, cut, ppu, &sram));
 }
 
 /// The row's `Recorded` timing source: its overrun and NMI-off frames as Ticks keyed by the

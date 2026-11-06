@@ -31,6 +31,7 @@ use game::state::samus::{
     VisorTimer, YDirection,
 };
 use game::state::slots::{FlagSet, Frames};
+use game::state::sram::{SAVE_RAM_BYTES, SaveRam};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
     BACKGROUNDS, BgMode, Brightness, BusAddress, CGRAM_COLOURS, Colour, ColourMath,
@@ -170,7 +171,7 @@ pub enum Unsupported {
     },
 }
 
-/// A video memory the decoder reads whole.
+/// A memory the decoder reads whole.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Memory {
     /// VRAM, in words.
@@ -179,6 +180,8 @@ pub enum Memory {
     Cgram,
     /// OAM, in bytes.
     Oam,
+    /// The cartridge's save RAM, in bytes.
+    Sram,
 }
 
 /// Why a record has no State.
@@ -1199,6 +1202,7 @@ impl Rules<'_> {
             message: Message(self.message.read(wram)?),
             collected_items: collected_items(self.collected_items, wram)?,
             hud: self.hud.read(wram)?,
+            sram: save_ram(&record.sram)?,
         };
         Ok(Decoded { state, quiescence })
     }
@@ -1760,6 +1764,16 @@ fn video_memory(record: &FrameRecord) -> Result<VideoMemory, DecodeError> {
         cgram: cgram.map(Colour),
         oam: oam(&record.oam)?,
     })
+}
+
+/// The save RAM, straight from the record.
+fn save_ram(bytes: &[u8]) -> Result<SaveRam, DecodeError> {
+    let image = <&[u8; SAVE_RAM_BYTES]>::try_from(bytes).map_err(|_| DecodeError::WrongSize {
+        memory: Memory::Sram,
+        expected: SAVE_RAM_BYTES,
+        found: bytes.len(),
+    })?;
+    Ok(SaveRam::from_bytes(image))
 }
 
 /// OAM in the PPU's layout, from the record's OAM or the original's buffer for it.

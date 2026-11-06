@@ -704,6 +704,7 @@ pub const FIELDS: &[Field] = &[
         path: "collected_items",
         status: Status::Decoded(Source::WramBlock(source::ITEM_BIT_ARRAY)),
     },
+    record("sram", "sram"),
 ];
 
 #[cfg(test)]
@@ -741,6 +742,7 @@ mod tests {
             "hud",
             "message",
             "collected_items",
+            "sram",
         ];
         for name in top {
             assert!(
