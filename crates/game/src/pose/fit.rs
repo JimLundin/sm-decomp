@@ -296,6 +296,8 @@ fn block(samus: &mut Samus, checks: &mut Checks<'_, '_>, distance: u16) -> Found
         checks.surroundings.order,
         checks.touches,
     );
+    // The check doesn't clear the slope flag, but a square slope it meets sets it.
+    samus.slope_adjusted = moved.slope.apply(samus.slope_adjusted);
     Found {
         collided: moved.collided,
         space: Speed(moved.distance.0.cast_signed().unsigned_abs()).pixels(),

@@ -526,11 +526,134 @@ fn running_into_a_solid_enemy_cuts_the_move_and_kills_her_speed() {
         (samus.position.x.pixels, samus.position.x.subpixels),
         (0x04FD, 0)
     );
-    assert_eq!(samus.position.y.subpixels, 0x8000);
+    // The cut leaves her Y subpixels; the step down after it, her total X speed (the capped
+    // 2.C000 and the extra 0.1000) and a pixel, carries them from $8000 to $5000.
+    assert_eq!(samus.position.y.subpixels, 0x5000);
     assert_eq!(samus.movement.horizontal(), Some(Horizontal::default()));
-    // Already touching it she stays, and the touch zeroes her Y subpixels.
+    // Already touching it she stays, and the touch zeroes her Y subpixels before the step.
     let (wall, samus) = move_from(0x04FD, 0x8000);
     assert_eq!(wall, Some(crate::collision::Side::Left));
     assert_eq!(samus.position.x.pixels, 0x04FD);
-    assert_eq!(samus.position.y.subpixels, 0);
+    assert_eq!(samus.position.y.subpixels, 0xD000);
+}
+
+#[test]
+fn turning_on_the_ground_steps_down_by_its_x_speed_plus_a_pixel_and_reports_nothing() {
+    let content = content();
+    let mut samus = Samus {
+        pose: PoseId(0x25),
+        movement: Movement::TurningAround {
+            place: Turn::OnGround,
+            speed: Horizontal {
+                acceleration: Acceleration::TurningAround,
+                ..Horizontal::default()
+            },
+        },
+        ..running_left()
+    };
+    samus.position.y.pixels = 0x02A8;
+    let turn = |samus: &mut Samus| {
+        run(
+            samus,
+            &Controller::default(),
+            &content,
+            Surroundings::default(),
+            &mut Touches::default(),
+        )
+    };
+    // At rest her total X speed is 0.0: a pixel down, and the turn clears the result
+    // (`$90:A68F`).
+    let contacts = turn(&mut samus);
+    assert_eq!(contacts.vertical, VerticalContact::NoChange);
+    assert_eq!(
+        (samus.position.y.pixels, samus.position.y.subpixels),
+        (0x02A9, 0)
+    );
+    // Then 0.C000 sideways and 1.C000 down.
+    turn(&mut samus);
+    assert_eq!(
+        (samus.position.x.pixels, samus.position.x.subpixels),
+        (0x04FF, 0x4000)
+    );
+    assert_eq!(
+        (samus.position.y.pixels, samus.position.y.subpixels),
+        (0x02AA, 0xC000)
+    );
+}
+
+#[test]
+fn standing_keeps_to_the_floor_and_falls_off_its_edge() {
+    let content = content();
+    let mut samus = Samus {
+        pose: PoseId(0xA5),
+        movement: Movement::Standing {
+            speed: Horizontal::default(),
+        },
+        y_radius: 0x15,
+        ..running_left()
+    };
+    samus.position.x.pixels = 0x0018;
+    // Her bottom, 43 + 21 - 1, is on the floor's top, 64.
+    samus.position.y = Fixed {
+        pixels: 43,
+        subpixels: 0xFFFF,
+    };
+    let floor = level(&[(0, 4), (1, 4), (2, 4)]);
+    let contacts = run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        surroundings(&floor),
+        &mut Touches::default(),
+    );
+    assert_eq!(contacts.vertical, VerticalContact::Landed);
+    assert_eq!(
+        (samus.position.y.pixels, samus.position.y.subpixels),
+        (43, 0xFFFF)
+    );
+    let contacts = run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+        &mut Touches::default(),
+    );
+    assert_eq!(contacts.vertical, VerticalContact::Falling);
+    assert_eq!(
+        (samus.position.y.pixels, samus.position.y.subpixels),
+        (44, 0xFFFF)
+    );
+}
+
+#[test]
+fn after_a_slope_the_step_down_is_a_pixel_alone_and_clears_the_flag() {
+    let content = content();
+    let step = |slope_adjusted| {
+        let mut samus = Samus {
+            slope_adjusted,
+            ..running_left()
+        };
+        if let Some(speed) = samus.movement.horizontal_mut() {
+            speed.base = Speed::new(1, 0);
+        }
+        run(
+            &mut samus,
+            &Controller::default(),
+            &content,
+            Surroundings::default(),
+            &mut Touches::default(),
+        );
+        (samus.position.y, samus.slope_adjusted)
+    };
+    // The base speed accelerates to 1.3000 first: the step is 2.3000 without the flag.
+    let without = Fixed {
+        pixels: 2,
+        subpixels: 0x3000,
+    };
+    assert_eq!(step(false), (without, false));
+    let alone = Fixed {
+        pixels: 1,
+        subpixels: 0,
+    };
+    assert_eq!(step(true), (alone, false));
 }

@@ -431,6 +431,8 @@ pub struct Rules<'t> {
     pub drawing: WramWord,
     /// `samus.y_radius`.
     pub y_radius: WramWord,
+    /// `samus.slope_adjusted`.
+    pub slope_adjusted: WramWord,
     /// `elevator`.
     pub elevator: ElevatorSources,
     /// `room.drawing.hook`.
@@ -1056,6 +1058,7 @@ impl Rules<'_> {
         layer_blending: source::FX_LAYER_BLENDING_CONFIG_A,
         drawing: source::SAMUS_DRAW_HANDLER,
         y_radius: source::SAMUS_Y_RADIUS,
+        slope_adjusted: source::SAMUS_SLOPE_ADJUSTED,
         elevator: ElevatorSources {
             status: source::ELEVATOR_STATUS,
             armed: source::ELEVATOR_FLAGS,
@@ -1305,6 +1308,7 @@ impl Rules<'_> {
             visor: visor(self.visor, wram)?,
             drawing: drawing_handler(self.drawing, wram)?,
             y_radius: self.y_radius.read(wram)?,
+            slope_adjusted: flag_word(self.slope_adjusted, wram)?,
             ..Samus::default()
         })
     }

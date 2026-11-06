@@ -1132,6 +1132,12 @@ pub const SAMUS_Y_RADIUS: WramWord = WramWord {
     name: "SAMUS_Y_RADIUS",
     offset: 0x0B00,
 };
+/// Bank $94 log, `$94:976F` and `$94:8E38`: the "Samus position was adjusted by a slope"
+/// flag, 0 or 1, which the ground's vertical movement reads (`$90:924C`).
+pub const SAMUS_SLOPE_ADJUSTED: WramWord = WramWord {
+    name: "SAMUS_SLOPE_ADJUSTED",
+    offset: 0x0DBA,
+};
 /// Bank $92 log, `$92:8000`: the Samus top and bottom half tile transfer flags, a byte each;
 /// the main loop clears them (`$82:8948`), `$80:9376` reads them.
 pub const NMI_COPY_SAMUS_HALVES: WramWord = WramWord {

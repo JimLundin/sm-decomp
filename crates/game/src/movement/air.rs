@@ -187,11 +187,11 @@ pub(super) fn run(
 
 /// The transition movement's Y part (`$90:A61C`): the poses it moves in (all but the unused
 /// ones) take the simple Y movement (`$90:92C7`), which moves her only while she has a Y
-/// direction; landing then stops her. The ground's movement for a direction of none
-/// (`$90:923F`) is open with the other ground movements.
+/// direction; landing then stops her.
 // open: the morph ball bounce state (`$0B20`) the landing clears has no reader until the
 // morph ball's bounces; the transition's horizontal move with a zero base speed (`$90:9348`)
-// joins with her extra run speed.
+// and the ground's step down for a direction of none (`$90:923F`) join with her extra run
+// speed.
 fn transition(
     vertical: &mut Vertical,
     gravity: Speed,

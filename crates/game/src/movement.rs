@@ -62,6 +62,8 @@ struct Mover<'a> {
     body: Body,
     contacts: Contacts,
     touches: &'a mut Touches,
+    /// The "position was adjusted by a slope" flag as the moves leave it.
+    slope_adjusted: bool,
 }
 
 impl Mover<'_> {
@@ -168,7 +170,10 @@ impl Mover<'_> {
             true
         } else {
             let (body, touches) = (self.body, &mut *self.touches);
-            collision::move_y(room, body, position, displacement, heading, order, touches).collided
+            let moved =
+                collision::move_y(room, body, position, displacement, heading, order, touches);
+            self.slope_adjusted = moved.slope.apply(self.slope_adjusted);
+            moved.collided
         };
         self.contacts.vertical = match (heading, collided) {
             (Heading::Up, true) => VerticalContact::HitCeiling,
@@ -181,9 +186,8 @@ impl Mover<'_> {
 
 /// The movement handler for the frame (`$90:A337`), through the room's blocks; what her
 /// moves met, for the pose update. The scroll triggers they reach join `touches`.
-// open: the ground's vertical part ("Samus Y movement - no speed calculations", `$90:923F`),
-// the footsteps and the standing shot's animation reset join with C4b, C6 and C7; the morph
-// ball, the spring ball and the air turns join with their movements.
+// open: the footsteps and the standing shot's animation reset join with C4b, C6 and C7; the
+// morph ball, the spring ball and the air turns join with their movements.
 pub fn run(
     samus: &mut Samus,
     controller: &Controller,
@@ -196,48 +200,54 @@ pub fn run(
         body: body(samus),
         contacts: Contacts::default(),
         touches,
+        slope_adjusted: samus.slope_adjusted,
     };
     if samus.movement.vertical().is_some() {
         air::run(samus, controller, content, &mut mover);
-        return mover.contacts;
+    } else {
+        on_ground(samus, controller, content, &mut mover);
     }
+    samus.slope_adjusted = mover.slope_adjusted;
+    mover.contacts
+}
+
+/// The ground movements of the movement handler (`$90:A337`).
+fn on_ground(samus: &mut Samus, controller: &Controller, content: &Content, mover: &mut Mover<'_>) {
     let facing = samus.facing;
     let pose = samus.pose;
     let equipped_booster = samus.equipment.equipped.contains(Item::SpeedBooster);
     let run_held = controls(controller.held).contains(Control::Run);
     let movement = samus.movement;
     let Some(speed) = samus.movement.horizontal_mut() else {
-        return mover.contacts;
+        return;
     };
     let mut position = samus.position;
+    let rules = Rules {
+        speeds: &content.speeds,
+        movement,
+        run_held,
+        equipped_booster,
+    };
     match movement {
         Movement::Standing { .. } => {
             if !FACING_FORWARD.contains(&pose) {
-                stand(speed, facing, &mut position, &mut mover);
+                stand(speed, facing, &mut position, mover);
             }
         }
         Movement::Running { .. } => {
-            let rules = Rules {
-                speeds: &content.speeds,
-                movement,
-                run_held,
-                equipped_booster,
-            };
-            rules.x_movement(speed, facing, &mut position, &mut mover);
+            let total = rules.x_movement(speed, facing, &mut position, mover);
+            keep_to_ground(total, &mut position, mover);
         }
         Movement::TurningAround {
             place: Turn::OnGround,
             ..
         } => {
-            let rules = Rules {
-                speeds: &content.speeds,
-                movement,
-                run_held,
-                equipped_booster,
-            };
-            rules.x_movement(speed, facing, &mut position, &mut mover);
+            let total = rules.x_movement(speed, facing, &mut position, mover);
+            keep_to_ground(total, &mut position, mover);
             cancel_speed_boosting(speed);
             speed.extra_run = Speed::ZERO;
+            // The turn ignores what the step down met (`$90:A68F`).
+            mover.contacts.vertical = VerticalContact::NoChange;
         }
         // open: turning in the air moves her the same way, with her vertical motion (C3b).
         Movement::TurningAround { .. }
@@ -255,10 +265,24 @@ pub fn run(
         | Movement::DamageBoost
         | Movement::GrabbedByDraygon
         | Movement::Shinespark
-        | Movement::Unused(_) => return mover.contacts,
+        | Movement::Unused(_) => return,
     }
     samus.position = position;
-    mover.contacts
+}
+
+/// "Samus Y movement - no speed calculations" (`$90:923F`): on the ground she steps down by
+/// her total X speed plus a pixel, so she keeps to a floor that falls away no steeper than
+/// her pace; after a slope adjusted her, by the pixel alone. The floor under her stops the
+/// step at its top.
+// open: the extra Y displacement (`$0B5A`), which replaces the step, joins with the
+// movements that set it; slice 0's never do.
+fn keep_to_ground(total: Speed, position: &mut Point, mover: &mut Mover<'_>) {
+    let step = if mover.slope_adjusted {
+        Speed::new(1, 0)
+    } else {
+        Speed::new(total.pixels().wrapping_add(1), total.subpixels())
+    };
+    mover.move_y(step, Heading::Down, position);
 }
 
 /// What "Samus X movement" reads besides the motion itself.
@@ -270,20 +294,21 @@ struct Rules<'c> {
 }
 
 impl Rules<'_> {
-    /// "Samus X movement" (`$90:8E64`): the extra run speed, the base speed, then the move.
+    /// "Samus X movement" (`$90:8E64`): the extra run speed, the base speed, then the move;
+    /// her total X speed.
     fn x_movement(
         &self,
         speed: &mut Horizontal,
         facing: Facing,
         position: &mut Point,
         mover: &mut Mover<'_>,
-    ) {
+    ) -> Speed {
         self.extra_run(speed);
         // A movement type past the table moves her by her extra run speed alone.
         if let Some(entry) = self.speeds.normal.of(self.movement.kind()) {
             base_speed(speed, entry);
         }
-        move_horizontally(speed, speed.base, facing, position, mover);
+        move_horizontally(speed, speed.base, facing, position, mover)
     }
 
     /// "Handle Samus X extra run speed" (`$90:973E`): running with the run button held adds
@@ -365,7 +390,9 @@ const fn over_cap(base: Speed, max: Speed) -> bool {
 }
 
 /// "Move Samus horizontally" (`$90:8EA9`): she moves the way she faces, or against it while
-/// her turn's momentum lasts, by her base and extra run speed (`$90:E464`, `$90:E4AD`).
+/// her turn's momentum lasts, by her base and extra run speed (`$90:E464`, `$90:E4AD`). The
+/// sum, before its sign and clamp, is her total X speed (`$0DBC`, `$90:E500`), which the
+/// ground's step down reads.
 // open: the speed divisor (`SAMUS_X_SPEED_DIVISOR`) and the extra displacement
 // (`EXTRA_SAMUS_X_DISPLACEMENT`) are zero in slice 0's movements; they join with the
 // movements that set them.
@@ -375,7 +402,7 @@ fn move_horizontally(
     facing: Facing,
     position: &mut Point,
     mover: &mut Mover<'_>,
-) {
+) -> Speed {
     let leftwards = match speed.acceleration {
         Acceleration::Accelerating | Acceleration::Decelerating => facing == Facing::Left,
         Acceleration::TurningAround => facing == Facing::Right,
@@ -387,6 +414,7 @@ fn move_horizontally(
         total
     });
     mover.move_x(speed, Speed(displacement), leftwards, position);
+    Speed(total)
 }
 
 /// The displacement's pixel word, held to 15 pixels either way with its subpixels kept
@@ -403,9 +431,10 @@ fn clamp(displacement: u32) -> u32 {
 }
 
 /// "Samus movement - standing" (`$90:A383`): her extra run speed moves her a last frame,
-/// then she stops.
+/// she keeps to the ground, then she stops.
 fn stand(speed: &mut Horizontal, facing: Facing, position: &mut Point, mover: &mut Mover<'_>) {
-    move_horizontally(speed, Speed::ZERO, facing, position, mover);
+    let total = move_horizontally(speed, Speed::ZERO, facing, position, mover);
+    keep_to_ground(total, position, mover);
     // Cancelling the speed boost drops her momentum; the speeds go with it.
     *speed = Horizontal::default();
 }
@@ -449,7 +478,7 @@ pub fn ride(
         let Surroundings { room, order, .. } = surroundings;
         let body = body(samus);
         let step = Speed::new(1, 0);
-        collision::move_y(
+        let moved = collision::move_y(
             room,
             body,
             &mut samus.position,
@@ -458,6 +487,7 @@ pub fn ride(
             order,
             touches,
         );
+        samus.slope_adjusted = moved.slope.apply(samus.slope_adjusted);
     }
 }
 

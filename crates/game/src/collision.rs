@@ -144,6 +144,33 @@ pub struct Moved {
     pub distance: Speed,
     /// Whether a block stopped her (the routines' carry).
     pub collided: bool,
+    /// What the move did to the "position was adjusted by a slope" flag.
+    pub slope: SlopeFlag,
+}
+
+/// What a move does to the "Samus position was adjusted by a slope" flag (`$0DBA`), which
+/// the ground's vertical movement reads the next frame (`$90:924C`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SlopeFlag {
+    /// The move leaves it: a horizontal move, a check, or no distance.
+    #[default]
+    Kept,
+    /// A vertical move clears it as it starts (`$94:976F`), and no square slope stopped it.
+    Cleared,
+    /// A square slope stopped her moving down (`$94:8E38`).
+    Set,
+}
+
+impl SlopeFlag {
+    /// The flag after the move, from what it was.
+    #[must_use]
+    pub const fn apply(self, adjusted: bool) -> bool {
+        match self {
+            Self::Kept => adjusted,
+            Self::Cleared => false,
+            Self::Set => true,
+        }
+    }
 }
 
 /// The side a wall stopped her on: the X speed killed flag (`$0DCE`), 4 left and 8 right
@@ -207,6 +234,8 @@ struct Scan<'a, 't> {
     remaining: u16,
     /// Her span in blocks across the scan, less one.
     span: u16,
+    /// Whether a square slope stopped her moving down.
+    slope_stopped: bool,
 }
 
 /// Whether a signed word is negative, as `BMI` tests it.
@@ -437,6 +466,8 @@ impl Scan<'_, '_> {
         };
         fixed.subpixels = if backwards { 0 } else { 0xffff };
         self.distance = Speed::new(pixels, 0);
+        // Only the vertical reaction's downwards stop sets the flag (`$94:8E38`).
+        self.slope_stopped |= matches!(self.axis, Axis::Y(_)) && !backwards;
         true
     }
 
@@ -514,6 +545,7 @@ pub fn move_x(
         return Moved {
             distance,
             collided: false,
+            slope: SlopeFlag::Kept,
         };
     }
     let moved = scan_x(room, body, position, distance, touches);
@@ -548,6 +580,7 @@ pub fn scan_x(
         edge,
         remaining: breadth,
         span: breadth,
+        slope_stopped: false,
     };
     let mut offset = (edge >> 4).wrapping_add(first).wrapping_mul(2);
     let row = room.width.0.wrapping_mul(2);
@@ -564,6 +597,7 @@ pub fn scan_x(
     Moved {
         distance: scan.distance,
         collided,
+        slope: SlopeFlag::Kept,
     }
 }
 
@@ -572,8 +606,7 @@ pub fn scan_x(
 /// `$94:95F5`).
 ///
 /// The scroll triggers it reaches join `touches`.
-// open: the "position was adjusted by a slope" flag (`$0DBA`) and the quicksand flag
-// (`$1E71`) join with the slope alignment and quicksand.
+// open: the quicksand flag (`$1E71`) joins with quicksand.
 pub fn move_y(
     room: Room<'_>,
     body: Body,
@@ -587,11 +620,18 @@ pub fn move_y(
         return Moved {
             distance,
             collided: false,
+            slope: SlopeFlag::Kept,
         };
     }
     let moved = scan_y(room, body, position, distance, heading, order, touches);
     position.y = advance(position.y, moved.distance);
-    moved
+    Moved {
+        slope: match moved.slope {
+            SlopeFlag::Set => SlopeFlag::Set,
+            SlopeFlag::Kept | SlopeFlag::Cleared => SlopeFlag::Cleared,
+        },
+        ..moved
+    }
 }
 
 /// "Samus block collision handling - vertical" (`$94:959E` left to right, `$94:95F5` right
@@ -628,6 +668,7 @@ pub fn scan_y(
         edge,
         remaining,
         span: breadth,
+        slope_stopped: false,
     };
     let mut offset = first.wrapping_add(column).wrapping_mul(2);
     let collided = loop {
@@ -654,6 +695,11 @@ pub fn scan_y(
     Moved {
         distance: scan.distance,
         collided,
+        slope: if scan.slope_stopped {
+            SlopeFlag::Set
+        } else {
+            SlopeFlag::Kept
+        },
     }
 }
 

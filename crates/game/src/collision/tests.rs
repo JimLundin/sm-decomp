@@ -89,7 +89,8 @@ fn a_floor_lands_her_on_its_top_at_the_last_subpixel() {
         moved,
         Moved {
             distance: pixels(4),
-            collided: true
+            collided: true,
+            slope: SlopeFlag::Cleared,
         }
     );
     assert_eq!((position.y.pixels, position.y.subpixels), (24, 0xffff));
@@ -162,7 +163,8 @@ fn air_lets_her_through_by_the_whole_distance() {
         moved,
         Moved {
             distance,
-            collided: false
+            collided: false,
+            slope: SlopeFlag::Kept,
         }
     );
     assert_eq!((position.x.pixels, position.x.subpixels), (23, 0x8000));
@@ -206,13 +208,17 @@ fn a_half_height_square_slope_lands_her_on_its_lower_half() {
             &mut Touches::default(),
         )
     };
-    // Into the empty top half: through.
-    assert!(!down(&mut position, 10).collided);
+    // Into the empty top half: through, and the move clears the slope flag.
+    let through = down(&mut position, 10);
+    assert!(!through.collided);
+    assert_eq!(through.slope, SlopeFlag::Cleared);
     assert_eq!(position.y.pixels, 30);
-    // Into the solid bottom half: her bottom stops at 39, above its 40.
+    // Into the solid bottom half: her bottom stops at 39, above its 40, and the square
+    // slope sets the flag (`$94:8E38`).
     let moved = down(&mut position, 4);
     assert_eq!(moved.distance, pixels(2));
     assert!(moved.collided);
+    assert_eq!(moved.slope, SlopeFlag::Set);
     assert_eq!((position.y.pixels, position.y.subpixels), (32, 0xffff));
 }
 
@@ -230,9 +236,11 @@ fn a_triangle_slope_stops_her_on_its_surface_in_her_column() {
         ScanOrder::RightToLeft,
         &mut Touches::default(),
     );
-    // Column 8's surface is 8 below the block's top, 40: her bottom stops at 39.
+    // Column 8's surface is 8 below the block's top, 40: her bottom stops at 39. Only a
+    // square slope sets the slope flag.
     assert_eq!(moved.distance, pixels(2));
     assert!(moved.collided);
+    assert_eq!(moved.slope, SlopeFlag::Cleared);
     assert_eq!(position.y.pixels, 32);
     // A ceiling heading reads it as a floor slope: no collision.
     let mut position = at(24, 30);
@@ -311,7 +319,8 @@ fn scroll_triggers_join_the_touches_in_the_scans_order_and_let_her_through() {
             moved,
             Moved {
                 distance: pixels(8),
-                collided: false
+                collided: false,
+                slope: SlopeFlag::Cleared,
             }
         );
         touches

@@ -372,6 +372,7 @@ fn put_samus_tiles(wram: &mut [u8]) {
 fn put_ride(wram: &mut [u8]) {
     put(wram, 0x0A5C, 0xEC14); // SAMUS_DRAW_HANDLER: using elevator
     put(wram, 0x0B00, 0x0015); // SAMUS_Y_RADIUS: the standing radius she called the ride with
+    put(wram, 0x0DBA, 0x0001); // SAMUS_SLOPE_ADJUSTED: a square slope stopped her last step
     put(wram, 0x0E18, 0x0003); // ELEVATOR_STATUS: entering the room
     put(wram, 0x0E16, 0x0080); // ELEVATOR_FLAGS: armed
     put(wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
@@ -505,6 +506,7 @@ fn decodes_the_animation(state: &State) -> bool {
                 bottom: Some(TileDefinitionId(2)),
             }
         && state.samus.y_radius == 0x15
+        && state.samus.slope_adjusted
 }
 
 /// Samus's visor cycle and the room's layer blending, as the synthetic record sets them.
@@ -690,7 +692,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 89] = [
+const WORD_RULES: [(&str, WordRule); 90] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -755,6 +757,7 @@ const WORD_RULES: [(&str, WordRule); 89] = [
     ("samus_tiles.top", |rules| &mut rules.samus_tiles.top),
     ("samus_tiles.bottom", |rules| &mut rules.samus_tiles.bottom),
     ("y_radius", |rules| &mut rules.y_radius),
+    ("slope_adjusted", |rules| &mut rules.slope_adjusted),
     ("elevator.status", |rules| &mut rules.elevator.status),
     ("elevator.armed", |rules| &mut rules.elevator.armed),
     ("elevator.direction", |rules| &mut rules.elevator.direction),

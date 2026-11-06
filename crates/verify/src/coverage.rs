@@ -475,6 +475,7 @@ pub const FIELDS: &[Field] = &[
     wram("samus.visor.timer", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
     wram("samus.drawing", source::SAMUS_DRAW_HANDLER),
     wram("samus.y_radius", source::SAMUS_Y_RADIUS),
+    wram("samus.slope_adjusted", source::SAMUS_SLOPE_ADJUSTED),
     Field {
         path: "room.room",
         status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
@@ -865,18 +866,6 @@ mod tests {
             rules.previous_position[3],
             rules.irq_command,
             rules.message,
-            rules.pose.pose,
-            rules.previous_pose.pose,
-            rules.last_different_pose.pose,
-            rules.horizontal.base,
-            rules.horizontal.base_subpixels,
-            rules.horizontal.extra_run,
-            rules.horizontal.extra_run_subpixels,
-            rules.horizontal.acceleration,
-            rules.horizontal.momentum,
-            rules.vertical.speed,
-            rules.vertical.subpixels,
-            rules.vertical.direction,
             rules.animation.frame,
             rules.animation.timer,
             rules.animation.new_pose_frame,
@@ -893,6 +882,7 @@ mod tests {
             rules.palette_cycle.set,
             rules.palette_cycle.timer,
             rules.y_radius,
+            rules.slope_adjusted,
             rules.elevator.status,
             rules.elevator.armed,
             rules.elevator.direction,
@@ -901,6 +891,24 @@ mod tests {
             // An array of mirrors is named by its first; mode 7's centre by its own first.
             rules.mirrors.mode7[0],
             rules.mirrors.mode7[4],
+        ]
+    }
+
+    /// Samus's pose and motion word sources.
+    fn motion_word_sources(rules: &Rules<'_>) -> Vec<WramWord> {
+        vec![
+            rules.pose.pose,
+            rules.previous_pose.pose,
+            rules.last_different_pose.pose,
+            rules.horizontal.base,
+            rules.horizontal.base_subpixels,
+            rules.horizontal.extra_run,
+            rules.horizontal.extra_run_subpixels,
+            rules.horizontal.acceleration,
+            rules.horizontal.momentum,
+            rules.vertical.speed,
+            rules.vertical.subpixels,
+            rules.vertical.direction,
         ]
     }
 
@@ -992,6 +1000,7 @@ mod tests {
     fn every_wram_rule_is_a_decoder_source() {
         let rules = Rules::ORIGINAL;
         let mut words = word_sources(&rules);
+        words.extend(motion_word_sources(&rules));
         words.extend(scrolling_word_sources(&rules));
         let bytes = byte_sources(&rules);
         let slots = slot_sources(&rules);

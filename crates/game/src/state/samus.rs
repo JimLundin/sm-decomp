@@ -781,4 +781,9 @@ pub struct Samus {
     /// state handler last set it (`$90:EC22`). The locked handler that replaces it for an
     /// elevator ride doesn't, so the ride keeps the radius she called it with (`$91:E44D`).
     pub y_radius: u16,
+    /// Whether a slope adjusted her position (`$0DBA`): what her last vertical move left, so
+    /// the next frame's ground movement steps her down a pixel alone (`$90:924C`).
+    // open: the slope alignment after a horizontal move (`$94:87F4`) sets it too; it joins
+    // with the horizontal slope detection flag (`$0A46`).
+    pub slope_adjusted: bool,
 }
