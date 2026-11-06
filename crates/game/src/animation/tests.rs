@@ -72,7 +72,7 @@ fn samus(pose: PoseId, movement: MovementType, frame: u16, timer: u16) -> Samus 
 fn frame(samus: &mut Samus, content: &Content) {
     let requests = PoseRequests::default();
     animate(samus, &Controller::default(), requests, content);
-    pose::change(samus, requests, content);
+    pose::change(samus, requests, pose::Collisions::default(), content);
 }
 
 #[test]

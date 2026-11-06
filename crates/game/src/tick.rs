@@ -6,7 +6,7 @@
 //! their domain lanes fill them.
 
 use crate::animation;
-use crate::collision::{Contacts, Room, ScanOrder, Surroundings};
+use crate::collision::{Room, ScanOrder, Surroundings};
 use crate::message_box;
 use crate::movement;
 use crate::pose::{self, Content};
@@ -379,10 +379,6 @@ struct Pass {
     requests: pose::PoseRequests,
     /// The enemies processing this frame, from the selection to the main enemy routine.
     active: crate::enemy::Active,
-    /// What Samus's moves met, from the movement handler to the pose update.
-    // open: the pose update's collision handling (bank $91 log, `$91:E8B6`, `$91:EADE`,
-    // `$91:EFC4`) reads it: the landing and ran-into-a-wall pose requests (C4b).
-    contacts: Contacts,
 }
 
 /// One step of the gameplay pass from `at`.
@@ -423,7 +419,8 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
                 pose::input(&state.samus, &state.controller, content)
             };
         }
-        // The movement handler, the animation, then the pose update (`$90:E725`).
+        // The movement handler, the animation, the pose the moves ask for (`$91:E8B6`), then
+        // the pose update (`$90:E725`).
         // open: the movement types beyond standing, running and turning join with C3b and C4.
         GameplayPhase::SamusNewState => {
             let surroundings = Surroundings {
@@ -434,11 +431,22 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
                 },
                 order: ScanOrder::of(state.clock.counters.completed.0),
             };
-            pass.contacts =
+            let contacts =
                 movement::run(&mut state.samus, &state.controller, content, surroundings);
             movement::ride(&mut state.samus, state.elevator, content, surroundings);
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
-            pose::change(&mut state.samus, pass.requests, content);
+            let requests = pose::collision_request(
+                &state.samus,
+                contacts.vertical,
+                &state.controller,
+                content,
+                pass.requests,
+            );
+            let collisions = pose::Collisions {
+                contacts,
+                surroundings,
+            };
+            pose::change(&mut state.samus, requests, collisions, content);
         }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
         // with those game states. In game state 8 the clock still counts on that frame; it

@@ -33,7 +33,7 @@ const X_RADIUS: u16 = 5;
 
 /// Samus as her block collision sees her: her X radius, her pose's Y radius (`$0B00`) and
 /// whether she has no Y speed.
-fn body(samus: &Samus, content: &Content) -> Body {
+pub(crate) fn body(samus: &Samus, content: &Content) -> Body {
     Body {
         x_radius: X_RADIUS,
         y_radius: content
@@ -80,8 +80,9 @@ impl Mover<'_> {
     /// "Move Samus up" or "down" (`$90:93EC`, `$90:9440`) by a signed `displacement`
     /// through the blocks (`$94:9763`), then the solid vertical collision result
     /// (`$90:E606`, `$90:E61B`).
-    // open: the downwards result's per-movement-type pose input (`$0DC7`, `$90:E65A`,
-    // `$90:E676`) and the wall jump's result 5 join with the pose update's collision (C4b).
+    // The downwards result by movement type (`$90:E65A`, `$90:E676`) is `pose::contact`'s: no
+    // phase between the move and the pose update changes the movement type.
+    // open: the wall jump's result 5 joins with the wall jump check (`$90:9D35`).
     fn move_y(&mut self, displacement: Speed, heading: Heading, position: &mut Point) {
         let Surroundings { room, order } = self.surroundings;
         let collided =

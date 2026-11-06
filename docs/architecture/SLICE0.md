@@ -689,10 +689,19 @@ then `$90:E606`/`$90:E61B`: hit ceiling, landed, falling) and the elevator's ste
 a floor, a ceiling, a wall both ways, air, an extension, a half-height square slope, a
 triangle, the walk factor, running into a wall, a fall landing, the ride's step stopped.
 Remaining (C4b):
-- the pose update's collision: `$91:E8B6` (the prospective pose from `$0DC6`, with `$0DC7`'s
-  per-movement-type tables `$90:E65A`/`$90:E676`), `$91:EADE` (the prospective pose runs into
-  a wall) and `$91:EFC4..F31C` (solid vertical collision: landing); `Contacts` is in the pass
-  for them;
+- done on `lane/slice0-c4b`: `game::pose::contact` is the pose update's collision.
+  `collision_request` (`$91:E8B6`) turns the frame's vertical contact into a request: a fall
+  from the ground by `Fall` (`$90:E65A`; poses $29/$2A, $31/$32, $33/$34, $7D/$7E), a landing
+  by `Grounding` (`$90:E676`; on her feet `$91:E95D`: $A6/$A7 after a spin or wall jump, else
+  by the pose's shot direction `$91:E9F3`, $E6/$E7 firing sideways, $A4/$A5 without a shot), a
+  ceiling keeping the pose, each with `PoseCommand::SolidVertical`. `pose::change` runs
+  `$91:EADE` first (running into a wall takes `$91:EB74`'s pose; a running pose asked for
+  moves her a pixel forward through the blocks, the arm pump) and the command after the
+  change (`$91:EFC4`: ceiling and fall stop her Y speed, a landing on her feet zeroes the
+  base speed and the vertical motion, `$91:F010`). Seven unit tests. Still open: the morph
+  and spring ball landings and bounces (`$91:EA07`, `$91:EA63`, `$91:F1FC`, `$91:F25E`), the
+  landing's sounds and dust (`$91:F046`), the auto-jump hack it arms (`$91:F1EC`), the solid
+  enemy check before the pixel (`$A0:A8F0`), the wall jump's result 5;
 - the slope alignment after a horizontal move (`$94:87F4`, enabled by `$0A46` bit 1), the
   slope flag `$0DBA`, quicksand (`$1E71`), solid enemy collision (`$A0:A8F0`), the ground's
   Y movement (`$90:923F`), the wall jump check (`$90:9D35`) and the pose change's collision
