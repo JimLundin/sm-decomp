@@ -7,7 +7,9 @@ use canonical::{from_bytes, to_bytes};
 
 use crate::message_box::{self, ANIMATION_STEPS};
 use crate::nmi::NmiKind;
-use crate::session::{AutoRepeat, Rules, Schedule, Session, SessionFault, TickInput, TimingSource};
+use crate::session::{
+    AutoRepeat, Content, Rules, Schedule, Session, SessionFault, TickInput, TimingSource,
+};
 use crate::state::slots::{FlagSet, Frames, SlotIndex};
 use crate::state::strand::{
     Frame, GameplayAt, LagAt, MainLoopAt, Message, MessageBoxAt, MessageWrite, PpuPreparation,
@@ -26,7 +28,7 @@ const RULES: Rules = Rules {
 };
 
 fn session(state: State) -> Result<Session, String> {
-    Session::open(state, RULES).map_err(|error| format!("{error:?}"))
+    Session::open(state, RULES, std::sync::Arc::default()).map_err(|error| format!("{error:?}"))
 }
 
 fn ticks(numbers: &[u64]) -> Vec<Tick> {
@@ -170,7 +172,10 @@ fn the_main_loop_resumes_in_its_order() -> Result<(), String> {
     let mut state = State::default();
     let main_loop = |at| Frame::MainLoop(at);
     let steps = (0..5)
-        .map(|_| tick::step_once(&mut state, RULES).map(|next| (next, state.main.frames.clone())))
+        .map(|_| {
+            tick::step_once(&mut state, RULES, &Content::default())
+                .map(|next| (next, state.main.frames.clone()))
+        })
         .collect::<Result<Vec<_>, _>>()
         .map_err(|fault| format!("{fault:?}"))?;
     assert_eq!(
@@ -268,7 +273,7 @@ fn a_checkpoint_mid_run_round_trips_and_continues_alike() -> Result<(), String> 
 fn an_empty_strand_does_not_open() {
     let mut state = State::default();
     state.main.frames.clear();
-    assert!(Session::open(state, RULES).is_err());
+    assert!(Session::open(state, RULES, std::sync::Arc::default()).is_err());
 }
 
 /// One main-loop iteration with nothing drawn: the RNG steps once (0 becomes 0111h, bank `$80`

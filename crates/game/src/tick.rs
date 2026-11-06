@@ -6,6 +6,7 @@
 //! their domain lanes fill them.
 
 use crate::message_box;
+use crate::pose::{self, Content};
 use crate::session::{Rules, SessionFault};
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
 use crate::state::{GameMode, NmiTiming, State};
@@ -116,6 +117,7 @@ const fn yield_at(state: &mut State, wait: Wait) {
 pub fn run(
     state: &mut State,
     rules: Rules,
+    content: &Content,
     until: Until,
     budget: &mut u16,
 ) -> Result<(), SessionFault> {
@@ -130,7 +132,7 @@ pub fn run(
         *budget = budget
             .checked_sub(1)
             .ok_or(SessionFault::StepBudgetExceeded)?;
-        match step_once(state, rules)? {
+        match step_once(state, rules, content)? {
             Next::Sync if until == Until::BeamSync => return Ok(()),
             Next::Yield(_) => return Ok(()),
             Next::Continue | Next::Call(_) | Next::Return | Next::Sync => {}
@@ -143,9 +145,9 @@ pub fn run(
 /// # Errors
 ///
 /// A [`SessionFault`] when the strand is empty or a call would nest it too deep.
-pub fn step_once(state: &mut State, rules: Rules) -> Result<Next, SessionFault> {
+pub fn step_once(state: &mut State, rules: Rules, content: &Content) -> Result<Next, SessionFault> {
     let top = *state.main.frames.last().ok_or(SessionFault::StrandEmpty)?;
-    let (at, next) = step(top, state, rules);
+    let (at, next) = step(top, state, rules, content);
     if let Some(innermost) = state.main.frames.last_mut() {
         *innermost = at;
     }
@@ -169,14 +171,14 @@ pub fn step_once(state: &mut State, rules: Rules) -> Result<Next, SessionFault> 
 }
 
 /// One step of `frame`: the frame's position afterwards and what comes next.
-fn step(frame: Frame, state: &mut State, rules: Rules) -> (Frame, Next) {
+fn step(frame: Frame, state: &mut State, rules: Rules, content: &Content) -> (Frame, Next) {
     match frame {
         Frame::MainLoop(at) => {
             let (at, next) = main_loop(at, state, rules);
             (Frame::MainLoop(at), next)
         }
         Frame::Gameplay(at) => {
-            let (at, next) = gameplay(at, state, rules);
+            let (at, next) = gameplay(at, state, content);
             (Frame::Gameplay(at), next)
         }
         Frame::MessageBox(at) => {
@@ -367,17 +369,20 @@ const AFTER_PLMS: [GameplayPhase; 13] = [
 ];
 
 /// One step of the gameplay pass from `at`.
-fn gameplay(at: GameplayAt, state: &mut State, rules: Rules) -> (GameplayAt, Next) {
+fn gameplay(at: GameplayAt, state: &mut State, content: &Content) -> (GameplayAt, Next) {
     match at {
         GameplayAt::Start => {
+            let mut requests = pose::PoseRequests::default();
             for phase in THROUGH_PLMS {
-                gameplay_phase(phase, state, rules);
+                gameplay_phase(phase, state, content, &mut requests);
             }
             (GameplayAt::AfterPlms, Next::Continue)
         }
         GameplayAt::AfterPlms => {
+            // The pose requests are consumed before the PLM pass.
+            let mut requests = pose::PoseRequests::default();
             for phase in AFTER_PLMS {
-                gameplay_phase(phase, state, rules);
+                gameplay_phase(phase, state, content, &mut requests);
             }
             (GameplayAt::Start, Next::Return)
         }
@@ -387,18 +392,26 @@ fn gameplay(at: GameplayAt, state: &mut State, rules: Rules) -> (GameplayAt, Nex
 /// A gameplay phase's work.
 // open: each empty arm fills in with its C lane; the PLM pass ends the step with
 // `Next::Call(Frame::Plms { .. })` once an instruction can call out (B7, C12).
-const fn gameplay_phase(phase: GameplayPhase, state: &mut State, _rules: Rules) {
+fn gameplay_phase(
+    phase: GameplayPhase,
+    state: &mut State,
+    content: &Content,
+    requests: &mut pose::PoseRequests,
+) {
     match phase {
+        GameplayPhase::SamusCurrentState => {
+            *requests = pose::input(&state.samus, &state.controller, content);
+        }
+        // open: the movement handlers run before the pose change (C3b, C4).
+        GameplayPhase::SamusNewState => pose::change(&mut state.samus, *requests, content),
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
         // with those game states. In game state 8 the clock still counts on that frame; it
         // stops only if an earlier phase this frame already left gameplay.
         GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
         GameplayPhase::EnemySelection
         | GameplayPhase::PaletteFx
-        | GameplayPhase::SamusCurrentState
         | GameplayPhase::SamusProjectileInteraction
         | GameplayPhase::Enemies
-        | GameplayPhase::SamusNewState
         | GameplayPhase::EnemyProjectiles
         | GameplayPhase::Plms
         | GameplayPhase::AnimatedTiles

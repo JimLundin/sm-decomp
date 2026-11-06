@@ -8,7 +8,10 @@
 //! both.
 
 use crate::lines::{self, Picture};
+use std::sync::Arc;
+
 use crate::nmi::{self, NmiKind};
+pub use crate::pose::Content;
 use crate::state::slots::Frames;
 use crate::state::strand::MAIN_STRAND_DEPTH;
 use crate::state::{Buttons, NmiTiming, State, Tick};
@@ -141,6 +144,8 @@ pub enum OpenError {
 pub struct Session {
     state: State,
     rules: Rules,
+    /// The decoded tables the rules read, shared between Sessions.
+    content: Arc<Content>,
     /// Set by a fault; the Session runs no further Tick.
     fault: Option<SessionFault>,
     /// Between `begin` and `end`.
@@ -148,12 +153,12 @@ pub struct Session {
 }
 
 impl Session {
-    /// A Session at `state`, which sits at a cut, under `rules`.
+    /// A Session at `state`, which sits at a cut, under `rules`, reading `content`.
     ///
     /// # Errors
     ///
     /// An [`OpenError`] when the State's main strand is empty or too deep.
-    pub fn open(state: State, rules: Rules) -> Result<Self, OpenError> {
+    pub fn open(state: State, rules: Rules, content: Arc<Content>) -> Result<Self, OpenError> {
         if state.main.frames.is_empty() {
             return Err(OpenError::StrandEmpty);
         }
@@ -163,6 +168,7 @@ impl Session {
         Ok(Self {
             state,
             rules,
+            content,
             fault: None,
             begun: false,
         })
@@ -204,7 +210,13 @@ impl Session {
         self.begun = true;
         let mut budget = STEP_BUDGET;
         if tick::resume(&mut self.state) {
-            let ran = tick::run(&mut self.state, self.rules, Until::BeamSync, &mut budget);
+            let ran = tick::run(
+                &mut self.state,
+                self.rules,
+                &self.content,
+                Until::BeamSync,
+                &mut budget,
+            );
             if let Err(fault) = ran {
                 return Err(self.poison(fault));
             }
@@ -248,6 +260,7 @@ impl Begun<'_> {
         let ran = tick::run(
             &mut session.state,
             session.rules,
+            &session.content,
             Until::Yield,
             &mut self.budget,
         );

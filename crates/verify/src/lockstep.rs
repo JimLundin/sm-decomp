@@ -10,11 +10,12 @@
 use std::collections::BTreeMap;
 use std::fmt;
 use std::ops::Range;
+use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
 use game::state::slots::Frames;
 use game::state::{NmiTiming, State};
-use game::{AutoRepeat, OpenError, Rules, Session, SessionFault, TickInput};
+use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, TickInput};
 use oracle_record::{Cut, FrameRecord};
 
 use crate::cache::{Cache, CacheError, CutKind};
@@ -524,6 +525,7 @@ impl From<CacheError> for LockstepError {
 pub fn lockstep(
     cache: &Cache,
     rooms: &RoomMap,
+    content: &Arc<Content>,
     frames: Range<u64>,
 ) -> Result<Report, LockstepError> {
     let first = cache.entries().first().ok_or(LockstepError::Empty)?;
@@ -555,7 +557,7 @@ pub fn lockstep(
             continue;
         }
         let Some(from) = from else { continue };
-        match step(from, decoded, rules, CutKind::of(record.cut)) {
+        match step(from, decoded, rules, content, CutKind::of(record.cut)) {
             Ok(differences) => report.steps.push(Step { frame, differences }),
             Err(skip) => tally(&mut report.skipped, skip),
         }
@@ -580,6 +582,7 @@ fn step(
     from: Result<Decoded, ErrorKind>,
     to: Result<Decoded, ErrorKind>,
     rules: Rules,
+    content: &Arc<Content>,
     cut: CutKind,
 ) -> Result<Vec<Difference>, Skip> {
     let to = to.map_err(Skip::Undecodable)?;
@@ -588,7 +591,7 @@ fn step(
         return Err(Skip::BusyStart);
     }
     let timing = timing(cut).ok_or(Skip::NoTiming(cut))?;
-    let mut session = Session::open(from.state, rules).map_err(Skip::Open)?;
+    let mut session = Session::open(from.state, rules, Arc::clone(content)).map_err(Skip::Open)?;
     session
         .step(TickInput {
             pad: to.state.controller.auto_read,

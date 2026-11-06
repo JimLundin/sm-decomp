@@ -104,6 +104,28 @@ pub enum Button {
     R,
 }
 
+impl Button {
+    /// The button's bit in a [`Buttons`] set: its place in declaration order.
+    #[must_use]
+    pub const fn bit(self) -> u32 {
+        let place = match self {
+            Self::B => 0,
+            Self::Y => 1,
+            Self::Select => 2,
+            Self::Start => 3,
+            Self::Up => 4,
+            Self::Down => 5,
+            Self::Left => 6,
+            Self::Right => 7,
+            Self::A => 8,
+            Self::X => 9,
+            Self::L => 10,
+            Self::R => 11,
+        };
+        1 << place
+    }
+}
+
 /// A set of pad buttons.
 pub type Buttons = FlagSet<Button>;
 

@@ -119,8 +119,24 @@ pub enum Movement {
     GrabbedByDraygon,
     /// Shinesparking, crystal flashing, drained by a metroid or hit by Mother Brain.
     Shinespark,
-    /// A movement type only unused poses have (7, 9, $B, $C, $D).
-    Unused(MovementType),
+    /// A movement type only unused poses have.
+    Unused(UnusedMovement),
+}
+
+/// The movement types only unused poses have (7, 9, $B, $C, $D).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum UnusedMovement {
+    /// Type 7.
+    #[default]
+    Unused07,
+    /// Type 9.
+    Unused09,
+    /// Type $B.
+    Unused0B,
+    /// Type $C.
+    Unused0C,
+    /// Type $D.
+    Unused0D,
 }
 
 /// Where a spring ball is.
@@ -199,11 +215,11 @@ impl From<MovementType> for Movement {
             MovementType::DamageBoost => Self::DamageBoost,
             MovementType::GrabbedByDraygon => Self::GrabbedByDraygon,
             MovementType::Shinespark => Self::Shinespark,
-            MovementType::Unused07
-            | MovementType::Unused09
-            | MovementType::Unused0B
-            | MovementType::Unused0C
-            | MovementType::Unused0D => Self::Unused(kind),
+            MovementType::Unused07 => Self::Unused(UnusedMovement::Unused07),
+            MovementType::Unused09 => Self::Unused(UnusedMovement::Unused09),
+            MovementType::Unused0B => Self::Unused(UnusedMovement::Unused0B),
+            MovementType::Unused0C => Self::Unused(UnusedMovement::Unused0C),
+            MovementType::Unused0D => Self::Unused(UnusedMovement::Unused0D),
         }
     }
 }
@@ -254,7 +270,11 @@ impl Movement {
             Self::DamageBoost => MovementType::DamageBoost,
             Self::GrabbedByDraygon => MovementType::GrabbedByDraygon,
             Self::Shinespark => MovementType::Shinespark,
-            Self::Unused(kind) => kind,
+            Self::Unused(UnusedMovement::Unused07) => MovementType::Unused07,
+            Self::Unused(UnusedMovement::Unused09) => MovementType::Unused09,
+            Self::Unused(UnusedMovement::Unused0B) => MovementType::Unused0B,
+            Self::Unused(UnusedMovement::Unused0C) => MovementType::Unused0C,
+            Self::Unused(UnusedMovement::Unused0D) => MovementType::Unused0D,
         }
     }
 }

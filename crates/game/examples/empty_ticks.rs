@@ -18,7 +18,7 @@ fn main() -> ExitCode {
             subsequent: Frames(2),
         },
     };
-    let Ok(mut session) = Session::open(State::default(), rules) else {
+    let Ok(mut session) = Session::open(State::default(), rules, std::sync::Arc::default()) else {
         return ExitCode::FAILURE;
     };
     // One overrun in every hundred Ticks, so the lag path is in the measurement.

@@ -10,6 +10,8 @@ use canonical::Canonical;
 
 use crate::rom::{AddressError, Lorom, RomAddress};
 
+pub mod transition;
+
 /// A pose: the index into the pose definitions, the number the original keeps in its pose
 /// word, so it goes back out unchanged.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -123,12 +125,36 @@ impl TryFrom<u8> for MovementType {
 
 impl From<MovementType> for u8 {
     fn from(movement: MovementType) -> Self {
-        // The table lists every variant once, in declaration order.
-        MOVEMENT_TYPES
-            .iter()
-            .zip(0_u8..)
-            .find_map(|(&known, number)| (known == movement).then_some(number))
-            .unwrap_or_default()
+        match movement {
+            MovementType::Standing => 0x00,
+            MovementType::Running => 0x01,
+            MovementType::NormalJumping => 0x02,
+            MovementType::SpinJumping => 0x03,
+            MovementType::MorphBallOnGround => 0x04,
+            MovementType::Crouching => 0x05,
+            MovementType::Falling => 0x06,
+            MovementType::Unused07 => 0x07,
+            MovementType::MorphBallFalling => 0x08,
+            MovementType::Unused09 => 0x09,
+            MovementType::KnockbackOrCrystalFlashEnding => 0x0A,
+            MovementType::Unused0B => 0x0B,
+            MovementType::Unused0C => 0x0C,
+            MovementType::Unused0D => 0x0D,
+            MovementType::TurningAroundOnGround => 0x0E,
+            MovementType::CrouchingTransition => 0x0F,
+            MovementType::Moonwalking => 0x10,
+            MovementType::SpringBallOnGround => 0x11,
+            MovementType::SpringBallInAir => 0x12,
+            MovementType::SpringBallFalling => 0x13,
+            MovementType::WallJumping => 0x14,
+            MovementType::RanIntoWall => 0x15,
+            MovementType::Grappling => 0x16,
+            MovementType::TurningAroundJumping => 0x17,
+            MovementType::TurningAroundFalling => 0x18,
+            MovementType::DamageBoost => 0x19,
+            MovementType::GrabbedByDraygon => 0x1A,
+            MovementType::Shinespark => 0x1B,
+        }
     }
 }
 
@@ -245,11 +271,18 @@ impl TryFrom<u8> for Shot {
 impl From<Shot> for u8 {
     fn from(shot: Shot) -> Self {
         match shot {
-            Shot::Fires(direction) => SHOT_DIRECTIONS
-                .iter()
-                .zip(0_u8..)
-                .find_map(|(&known, number)| (known == direction).then_some(number))
-                .unwrap_or_default(),
+            Shot::Fires(direction) => match direction {
+                ShotDirection::UpFacingRight => 0,
+                ShotDirection::UpRight => 1,
+                ShotDirection::Right => 2,
+                ShotDirection::DownRight => 3,
+                ShotDirection::DownFacingRight => 4,
+                ShotDirection::DownFacingLeft => 5,
+                ShotDirection::DownLeft => 6,
+                ShotDirection::Left => 7,
+                ShotDirection::UpLeft => 8,
+                ShotDirection::UpFacingLeft => 9,
+            },
             Shot::Withheld(byte) => byte,
         }
     }
@@ -303,7 +336,7 @@ pub enum PoseError {
 }
 
 /// Every pose's definition, indexed by [`PoseId`].
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Poses {
     definitions: Vec<PoseDefinition>,
 }

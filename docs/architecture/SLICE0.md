@@ -354,6 +354,35 @@ data `Movement`'s variants carry (speeds); `samus.aim` stays open (it is the pos
 elevator ride in `area-brinstar` keeps pose 0 and moves Y; the verify and data unit tests
 compiled but only the data ones ran here (Defender).
 
+**C3a status (`lane/slice0-c3a`), Samus's pose from input.** Done: `data::pose::transition`
+decodes bank `$91`'s pose transition table (`$91:9EE2`, a bank `$91` pointer a pose to
+six-byte entries, newly pressed controls, held controls, new pose, ended by $FFFF) into
+`PoseTransitions` of `Transition { pressed: Controls, held: Controls, pose }`; the ROM test
+(scratch DLL, real ROM) passes. `game::pose` holds the `Content` the Session reads
+(`Poses`, `PoseTransitions`; `Session::open` takes an `Arc<Content>`), the input handler
+(`$91:8000`/`$91:81A9`: types 7, 9, $B and the crouching transitions take no input; the
+first entry whose controls match, under the default bindings; else `$91:82EC`'s next pose,
+or the same pose while running, normal jumping or falling as a ball with speed) and the
+pose change after movement (`$91:EB88`: the table's facing and movement type when the pose
+differs from the previous, then the history). `SAMUS_NEW_POSE` is a Tick-local
+`PoseRequests` (consumed in the same frame); `_INTERRUPTED` and `_TRANSITIONAL` are not
+modelled yet. `Movement::Unused` holds `UnusedMovement`; `u8::from` for `MovementType` and
+`Shot` are exhaustive matches. Lockstep `item-morph-ball` (1,427 Ticks; differing, first):
+
+| Field | before | after | Owner |
+| --- | --- | --- | --- |
+| `samus.pose`, `samus.previous.pose` | 173, 681 | 64, 687 | animation (turn end $25 to $02), C3b, C4 |
+| `samus.last_different.pose` | 172, 687 | 6, 687 | same |
+| `samus.movement` | 105, 681 | 63, 687 | same |
+| `samus.facing`, `.previous.facing` | 4, 681 | equal | |
+| `samus.position.x` | 215, 683 | 215, 683 | C3a-2 (running speed) |
+
+Remaining: the movement handlers' horizontal motion (standing and running: X speed, the
+acceleration and the running speed table, bank `$90`) was not reached; the pose animation's
+transition instructions (the turn ends at 687 by animation, not input); the elevator's
+"no input" case (C7); the controller bindings as State; the interrupted and transitional
+requests (hurt, blocks); the tools binary's lockstep runs on empty content (it reads no ROM).
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,

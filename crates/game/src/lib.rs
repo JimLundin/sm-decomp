@@ -11,6 +11,7 @@ pub mod lines;
 pub mod message_box;
 pub mod nmi;
 pub mod oam;
+pub mod pose;
 pub mod rng;
 pub mod session;
 pub mod state;
@@ -20,6 +21,6 @@ pub mod tick;
 mod tests;
 
 pub use session::{
-    AutoRepeat, Begun, OpenError, Rules, Schedule, Session, SessionFault, TickInput, TickOutput,
-    TimingSource,
+    AutoRepeat, Begun, Content, OpenError, Rules, Schedule, Session, SessionFault, TickInput,
+    TickOutput, TimingSource,
 };

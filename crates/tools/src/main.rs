@@ -42,6 +42,8 @@ fn run(args: &[String]) -> Result<String, String> {
     let report = lockstep(
         &cache,
         &slice_zero_rooms(),
+        // open: the tool reads no ROM yet, so Samus's pose rules run on empty tables.
+        &std::sync::Arc::default(),
         from..from.saturating_add(ticks),
     )
     .map_err(|error| error.to_string())?;
