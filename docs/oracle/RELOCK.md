@@ -329,15 +329,27 @@ bit for bit with `sm_data::digest`, which stays for the old verifier).
 `oracle` now depends on `data` and `oracle_record` only.
 
 **Proof** (`$TEMP/ohx/relock-record/proof.sh` and `compare.sh`, 2026-11-06,
-5 processes at once beside another lane's seed cuts): the three rows of §5
-recorded twice give byte-identical files; recorded as `--shard 0/3`, `1/3`,
-`2/3` they give byte-identical entries. The memory streams' row digests equal
-those of a run without the stream tiers, so asking for the tiers doesn't
-change the emulation. Speed: 12-16 frames/s per process with 5 at once and
-the tiers on; 31-35 frames/s without the tiers, the same load.
+5 processes at once beside another lane's seed cuts), the three rows of §5
+recorded twice (`a`, `b`) and as `--shard 0/3`, `1/3`, `2/3`:
+
+- Every stream but `video` is byte-identical in all five runs, on all three
+  rows, every span. The memory streams' row digests also equal those of a run
+  without the stream tiers, so asking for the tiers doesn't change the emulation.
+- **`video` is not deterministic.** `chain-any-0001-DF45` (1 span) agreed in
+  all runs. `chain-any-0006-E0B5`'s span 0 took two values over the five runs
+  (span 1 equal); `death`'s spans 0 and 1 took two values (span 2 equal). So
+  the whole files `a` and `b` differ, on `chain-any-0006-E0B5`'s `video` only.
+  Not localised yet: the next step is to write each frame's video digest
+  beside the entry and diff two runs, to see whether it is a few frames (a
+  screenshot taken before lsnes has finished the frame, or after a resume)
+  or the whole span. Until it is fixed, `video` can't be locked.
+- Speed: 11-14 frames/s per process with 5 at once and the tiers on (the
+  picture and the APU log; not split between them); 31-35 frames/s without
+  the tiers, the same load.
 
 **What remains of step c.**
 
+0. Make `video` deterministic (above); then rerun the proof.
 1. Facts: every fact is written `"unevaluated"`; the room, state, area, item,
    boss and door facts need evaluating on the decoded State (`tools relock`,
    with `verify::decode`).
