@@ -162,7 +162,12 @@ pub fn decode(bytes: &[u8]) -> Result<FrameRecord, CodecError> {
             let kind = match r.u8("nmi kind")? {
                 0 => NmiKind::Requested,
                 1 => NmiKind::Overrun,
-                tag => return Err(CodecError::BadTag { field: "nmi kind", tag }),
+                tag => {
+                    return Err(CodecError::BadTag {
+                        field: "nmi kind",
+                        tag,
+                    });
+                }
             };
             Cut::NmiReturn(Nmi {
                 kind,
@@ -193,7 +198,12 @@ pub fn decode(bytes: &[u8]) -> Result<FrameRecord, CodecError> {
             2 => ApuAccessKind::DmaWrite,
             3 => ApuAccessKind::DmaRead,
             4 => ApuAccessKind::SpcWrite,
-            tag => return Err(CodecError::BadTag { field: "apu kind", tag }),
+            tag => {
+                return Err(CodecError::BadTag {
+                    field: "apu kind",
+                    tag,
+                });
+            }
         };
         Ok(ApuAccess {
             kind,
@@ -338,7 +348,9 @@ impl Writer<'_> {
             p,
             emulation,
         } = *cpu;
-        [a, x, y, s, pc, d].into_iter().for_each(|word| self.u16(word));
+        [a, x, y, s, pc, d]
+            .into_iter()
+            .for_each(|word| self.u16(word));
         self.bytes(&[k, db, p]);
         self.bool(emulation);
     }
@@ -374,9 +386,13 @@ impl Writer<'_> {
         self.bytes(&[inidisp, obsel, bgmode, mosaic]);
         self.bytes(&bg_sc);
         self.bytes(&[bg12nba, bg34nba]);
-        bg_scroll.as_flattened().iter().for_each(|&scroll| self.u16(scroll));
+        bg_scroll
+            .as_flattened()
+            .iter()
+            .for_each(|&scroll| self.u16(scroll));
         self.u8(m7sel);
-        m7.iter().for_each(|&value| self.bytes(&value.to_le_bytes()));
+        m7.iter()
+            .for_each(|&value| self.bytes(&value.to_le_bytes()));
         self.bytes(&window_select);
         self.bytes(&window_positions);
         self.bytes(&[wbglog, wobjlog]);
@@ -685,12 +701,26 @@ mod tests {
     }
 
     fn same(a: &FrameRecord, b: &FrameRecord) -> bool {
-        (a.index, a.video_frame, a.pad, a.cut, a.joypad_reads, a.wait_entry)
-            == (b.index, b.video_frame, b.pad, b.cut, b.joypad_reads, b.wait_entry)
-            && (a.overscan, a.cpu, &a.wram, &a.vram, &a.cgram, &a.oam, &a.sram)
-                == (b.overscan, b.cpu, &b.wram, &b.vram, &b.cgram, &b.oam, &b.sram)
-            && (a.ppu, &a.apu_log, &a.picture, &a.spc, &a.bank_instructions)
-                == (b.ppu, &b.apu_log, &b.picture, &b.spc, &b.bank_instructions)
+        (
+            a.index,
+            a.video_frame,
+            a.pad,
+            a.cut,
+            a.joypad_reads,
+            a.wait_entry,
+        ) == (
+            b.index,
+            b.video_frame,
+            b.pad,
+            b.cut,
+            b.joypad_reads,
+            b.wait_entry,
+        ) && (
+            a.overscan, a.cpu, &a.wram, &a.vram, &a.cgram, &a.oam, &a.sram,
+        ) == (
+            b.overscan, b.cpu, &b.wram, &b.vram, &b.cgram, &b.oam, &b.sram,
+        ) && (a.ppu, &a.apu_log, &a.picture, &a.spc, &a.bank_instructions)
+            == (b.ppu, &b.apu_log, &b.picture, &b.spc, &b.bank_instructions)
             && (&a.writes, &a.hits, a.legacy_ppu_digest)
                 == (&b.writes, &b.hits, b.legacy_ppu_digest)
     }
@@ -700,7 +730,10 @@ mod tests {
         let record = sample();
         let mut bytes = Vec::new();
         encode(&record, PictureMode::Keep, &mut bytes);
-        assert_eq!(decode(&bytes).map(|decoded| same(&decoded, &record)), Ok(true));
+        assert_eq!(
+            decode(&bytes).map(|decoded| same(&decoded, &record)),
+            Ok(true)
+        );
     }
 
     #[test]
@@ -712,14 +745,19 @@ mod tests {
             picture: None,
             ..record
         };
-        assert_eq!(decode(&bytes).map(|decoded| same(&decoded, &expected)), Ok(true));
+        assert_eq!(
+            decode(&bytes).map(|decoded| same(&decoded, &expected)),
+            Ok(true)
+        );
     }
 
     #[test]
     fn short_and_long_bytes_are_refused() {
         let mut bytes = Vec::new();
         encode(&sample(), PictureMode::Keep, &mut bytes);
-        let short = bytes.get(..bytes.len().saturating_sub(1)).unwrap_or_default();
+        let short = bytes
+            .get(..bytes.len().saturating_sub(1))
+            .unwrap_or_default();
         assert!(matches!(decode(short), Err(CodecError::Truncated(_))));
         bytes.push(0);
         assert_eq!(decode(&bytes).map(|_| ()), Err(CodecError::Trailing(1)));

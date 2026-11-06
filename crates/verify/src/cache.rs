@@ -187,7 +187,9 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
     };
     let sha = |text: &str, line: usize| match text {
         "-" => Ok(None),
-        text => Sha256::try_from(text).map(Some).map_err(|_| malformed(line)),
+        text => Sha256::try_from(text)
+            .map(Some)
+            .map_err(|_| malformed(line)),
     };
     next("")?;
     let row = next("row")?;
