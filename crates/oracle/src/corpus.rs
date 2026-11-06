@@ -177,6 +177,10 @@ pub fn run_row_with(
     oracle.set_watch(observing.watch, observing.peek);
     if let Backend::Lsnes(lsnes) = &mut oracle {
         lsnes.memories = !observing.lean;
+        // lsnes takes its stream tiers by request, before the first step.
+        if observing.tiers.picture || observing.tiers.apu_log {
+            lsnes.record_streams(observing.tiers)?;
+        }
     }
     let started = Instant::now();
     let mut run = RowRun {

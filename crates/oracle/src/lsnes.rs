@@ -792,3 +792,9 @@ impl Drop for Lsnes {
         }
     }
 }
+
+/// The SHA-256 of the server script this build runs: part of the oracle
+/// version a format-2 lock entry is keyed by (RELOCK §2).
+pub fn server_sha256() -> String {
+    crate::ladder::hex(&crate::ladder::sha256(SERVER.as_bytes()))
+}

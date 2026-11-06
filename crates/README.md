@@ -11,7 +11,7 @@ no new crate depends on them.
 | `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical` |
 | `runtime` | the line compositor, presentation, sound backends, storage. Feeds nothing back into the Session. | `data` |
 | `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `game`, `runtime` |
-| `oracle` | the emulator adapters, `Oracle`, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` (and `sm_data` until the digest moves to `data`) |
+| `oracle` | the emulator adapters, `Oracle`, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |
 | `oracle_record` | `FrameRecord` and the types in it, with no emulator: linking `oracle` needs the emulator archive. | none |
 | `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `game`, `runtime`, `oracle_record` |
 | `tools` | the command line over the above and the importers. No comparison logic of its own. | `verify`, `oracle`, `runtime` |

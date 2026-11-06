@@ -8,7 +8,7 @@ use crate::record::{
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use core::ffi::c_int;
 use core::hash::{Hash, Hasher};
-use sm_data::digest::Digest;
+use data::digest::Digest;
 
 /// The backend's identity in records and locks.
 pub const IDENTITY: OracleId = OracleId {

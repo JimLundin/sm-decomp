@@ -7,10 +7,10 @@
 
 use crate::record::{ApuAccess, ApuAccessKind, FrameRecord};
 use core::hash::{Hash, Hasher};
-use sm_data::digest::{Digest, fold};
+use data::digest::{Digest, fold};
 
 /// The machine streams, in the lock's order.
-pub const NAMES: [&str; 8] = sm_data::digest::MACHINE;
+pub const NAMES: [&str; 8] = data::digest::MACHINE;
 
 /// Frames between the combined digest's marks.
 pub const MARK_FRAMES: u32 = 1000;
@@ -73,8 +73,9 @@ fn hashed(value: &impl Hash) -> u64 {
     digest.finish()
 }
 
-fn oam_digest(record: &FrameRecord) -> u64 {
-    let (low, high) = record.oam.split_at(0x200);
+/// The `oam` stream; `None` for a record without the memories.
+pub(crate) fn oam_digest(record: &FrameRecord) -> Option<u64> {
+    let (low, high) = record.oam.split_at_checked(0x200)?;
     let words: Vec<u16> = low
         .as_chunks::<2>()
         .0
@@ -84,12 +85,10 @@ fn oam_digest(record: &FrameRecord) -> u64 {
     let mut digest = Digest::default();
     // The old PPU's `(oam: [u16; 256], highOam: [u8; 32])` as Rust hashes it.
     <[u16; 256]>::try_from(words.as_slice())
-        .expect("256 OAM words")
+        .ok()?
         .hash(&mut digest);
-    <[u8; 32]>::try_from(high)
-        .expect("32 high OAM bytes")
-        .hash(&mut digest);
-    digest.finish()
+    <[u8; 32]>::try_from(high).ok()?.hash(&mut digest);
+    Some(digest.finish())
 }
 
 /// The v1 `apu` stream: the CPU side's port accesses as (kind, port, value).
@@ -125,7 +124,7 @@ pub fn legacy(record: &FrameRecord, scratch: &mut Vec<u8>) -> FrameDigests {
         Some(Digest::of(&record.sram)),
         Some(hashed(vram)),
         Some(hashed(cgram)),
-        Some(oam_digest(record)),
+        oam_digest(record),
         Some(record.legacy_ppu_digest),
         None,
         None,
@@ -151,7 +150,7 @@ pub fn v1(record: &FrameRecord) -> FrameDigests {
         Some(Digest::of(&record.sram)),
         Some(hashed(vram)),
         Some(hashed(cgram)),
-        Some(oam_digest(record)),
+        oam_digest(record),
         Some(hashed(&record.ppu)),
         video,
         Some(apu_digest(&record.apu_log)),

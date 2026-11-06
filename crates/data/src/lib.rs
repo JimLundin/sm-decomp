@@ -4,4 +4,5 @@
 //!
 //! It holds no mutable state and no rules (ARCHITECTURE §4.1).
 
+pub mod digest;
 pub mod id;
