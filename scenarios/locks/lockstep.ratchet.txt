@@ -6,6 +6,6 @@ diff area-brinstar room 119 2
 row item-morph-ball ticks 1427 equal 1112
 diff item-morph-ball elevator 1 688
 diff item-morph-ball hud 1 1294
-diff item-morph-ball room 267 2
+diff item-morph-ball room 265 2
 diff item-morph-ball samus 55 682
 diff item-morph-ball video 134 682
