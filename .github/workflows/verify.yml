@@ -343,3 +343,44 @@ jobs:
       - *decrypt
       - name: Test the rebuild's content decoders against the ROM
         run: cargo test --locked -p data --no-fail-fast
+
+  # The free-run gate (ARCHITECTURE D22) on the slice-0 rows: each row runs from its seed's
+  # record in the relock bundle on the content read from the ROM, and the job fails when a
+  # (row, stream) pair in scenarios/locks/lsnes.green.txt is no longer green. Never --update
+  # here: the ratchet grows by a commit. `tools` doesn't link the emulator.
+  free-run-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      ROWS: area-brinstar item-morph-ball
+    steps:
+      - uses: actions/checkout@v4
+      - *rom
+      - *decrypt
+      - name: Fetch the relock bundle and check its pin
+        run: |
+          # The lock's one bundles entry: its ci-data name and its ciphertext's SHA-256.
+          entry='^bundles = \[\{ name = "([^"]+)", sha256 = "([0-9a-f]{64})" \}\]$'
+          line=$(grep -E "$entry" scenarios/locks/lsnes.toml)
+          name=$(sed -E "s/$entry/\1/" <<<"$line")
+          sha=$(sed -E "s/$entry/\2/" <<<"$line")
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors \
+            --output "$RUNNER_TEMP/relock.tar.gz.enc" \
+            "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$name"
+          echo "$sha  $RUNNER_TEMP/relock.tar.gz.enc" | sha256sum --check
+      - name: Decrypt the relock bundle
+        run: |
+          # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (tools/ci_seed_data.py).
+          SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
+          export SM_SEED_PASSPHRASE
+          mkdir -p "$RUNNER_TEMP/relock"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
+            -in "$RUNNER_TEMP/relock.tar.gz.enc" | tar -xz -C "$RUNNER_TEMP/relock"
+          rm "$RUNNER_TEMP/relock.tar.gz.enc"
+      - name: Build tools
+        run: cargo build --locked --release -p tools
+      - name: "Free-run gate: slice-0 rows against the green ratchet"
+        run: |
+          # shellcheck disable=SC2086 # ROWS is a list of row ids.
+          target/release/tools gate scenarios/locks/lsnes.toml "$RUNNER_TEMP/relock/relock-v2-lsnes" \
+            rom/sm.smc scenarios/locks/lsnes.green.txt $ROWS

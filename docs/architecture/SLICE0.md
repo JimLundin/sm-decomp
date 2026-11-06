@@ -533,7 +533,7 @@ picture are absent (no SRAM in the State; no line program until B6, so `runtime:
 has no `DisplayFrame` to compose); the CPU's port accesses are none yet (C11), so `apu`
 folds an empty log. `verify::gate::Ratchet` is the ratchet of green (row, stream) pairs, one
 `ROW STREAM` line per pair in `scenarios/locks/lsnes.green.txt`. `tools gate LOCK CACHE PADS
-GREEN [--update] ROW...` runs the rows, checks each `PADS/ROW.pads` against the row's pin,
+GREEN [--update] ROW...` (now `LOCK BUNDLE ROM GREEN`, below) runs the rows, checks each pad file against the row's pin,
 prints every (row, stream) outcome, fails when a listed pair isn't green, and with
 `--update` adds new green pairs.
 
@@ -550,12 +550,38 @@ worklist: `oam` frame 1 (no sprite drawing), `vram` frame 7, `ppu` frame 74 (a B
 frame 453 (the first port accesses, 8 in `area-brinstar`, 293 in `item-morph-ball`), the
 same on both rows.
 
-Remaining: `tools gate` in CI's Verify job, which has the ROM and the ci-data bundle; the
-gate then needs the seed's first record in the bundle (pinned beside `seed_record`, decoded
-by `Seed::decode`) instead of A2's cache, the pad files, and `Content` read from the ROM
-(today `Arc::default()`, as `tools lockstep`); CI runs it without `--update` on every
-landing that touches the engine. The ratchet test in `gate.rs` and the cut test compile
-but didn't run here. A decoder mutant breaking a row (D1's proof row) is not done.
+**D1 in CI (`lane/slice0-d1ci`).** The gate reads no private cache. `tools gate LOCK BUNDLE
+ROM GREEN [--update] ROW...` takes the relock bundle's directory: `verify::bundle::RowInputs`
+reads the seed from `seeds/<capture>/NNNN.record` (the lsnes server's raw `OHR1` record,
+decoded by `oracle_record::lsnes`, which moved out of `oracle` with the wait sites and the
+pad file reader, so neither `verify` nor `tools` links the emulator) and the pads from
+`pads/<row>.pads`, checked against the lock's pin; the record is pinned through the bundle's
+ciphertext SHA-256 in the lock's `bundles` entry, which CI checks. `verify::bundle::content`
+reads `Content` from the ROM (poses, transitions, X speeds). `tools` no longer depends on
+`oracle` at all (its only uses were the pad reader and a file SHA-256, now
+`oracle_record::inputs` and `verify::lock::Sha256::of`), so the CLI split is the dependency
+cut, not a second binary or feature: the oracle's commands stay in the `oracle` binary.
+Verify's `free-run-gate` job (beside `content`) decrypts the ROM, downloads the bundle from
+the `ci-data` release, checks its pin, decrypts it with the seed passphrase, builds `tools`
+and runs the gate on `area-brinstar item-morph-ball` without `--update`.
+
+The seed record is one frame earlier than A2's cache frame 0: decoded locally, the record of
+`100-input-phase:17` is lsnes video frame 18110 and the cache's frame 0 is 18111 (NMI
+counter 8 against 9; VRAM and CGRAM equal). The seed cutter writes the record of the cut
+before the state's boundary, and the cache's frame 0 is the first step after the state
+loads. So the gate now starts from the record's State and every frame of the row is a Tick,
+frame 0's included, with pad 0. Stepping the engine from the record, its first frame
+matches the cache's frame 0 on the counters, VRAM and CGRAM, and the first differing frames
+are VRAM 7 and CGRAM 453 as before; OAM differs from frame 0 (no sprite drawing; before,
+frame 0 was the decoded cache record itself). The bundle's records are lean: they carry no
+PPU registers (the cutter asks for no streams), so the seed's PPU registers decode as the
+defaults and `ppu` now differs from frame 0 rather than 74. Fix: re-cut the seed records
+with the PPU tier (`T 0 0 1`) and re-upload the bundle (root). Neither stream was green, so
+no ratchet pair moved: the scratch-DLL run on the decrypted ci-data bundle gives `timing`
+equal on both rows and every other stream as before, 0.1 s for both. A row with
+`seed_words` is refused (its edits land after the record's cut). Still not done: a decoder
+mutant breaking a row; the ratchet and cut tests compile but didn't run here.
+
 
 ## 3. The lockstep loop
 
