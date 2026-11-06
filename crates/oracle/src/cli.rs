@@ -932,7 +932,7 @@ fn dump_frame(directory: &Path, id: &str, frame: u64, record: &FrameRecord) {
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
         fail(
-            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories]",
+            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories] [--cache DIR [--cache-pictures]]",
         )
     };
     let scenarios = Path::new(lock)
@@ -956,6 +956,8 @@ fn corpus(arguments: &[String]) {
     let mut watched: Vec<usize> = Vec::new();
     let mut pads: Option<FramePads> = None;
     let mut lean = false;
+    let mut cache: Option<PathBuf> = None;
+    let mut cache_pictures = crate::record::codec::PictureMode::Drop;
     let mut rom = rom;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
@@ -1063,6 +1065,13 @@ fn corpus(arguments: &[String]) {
                 pads = Some(FramePads::Play(PathBuf::from(directory)));
             }
             "--no-memories" => lean = true,
+            "--cache" => {
+                // Every frame's whole record, for lockstep (`oracle::cache`).
+                cache = Some(PathBuf::from(
+                    options.next().unwrap_or_else(|| fail("--cache DIR")),
+                ));
+            }
+            "--cache-pictures" => cache_pictures = crate::record::codec::PictureMode::Keep,
             other => fail(format!("unknown option {other}")),
         }
     }
@@ -1075,9 +1084,13 @@ fn corpus(arguments: &[String]) {
     if !dump_frames.is_empty() && sidecar.is_none() {
         fail("--dump-frames writes into the --sidecar DIR");
     }
+    if cache.is_some() && (lean || !matches!(pads, Some(FramePads::Play(_)))) {
+        fail("--cache records rows played --from-frame-pads, with their memories");
+    }
     let tiers = Tiers {
-        picture: record_v2.is_some(),
-        apu_log: record_v2.is_some(),
+        picture: record_v2.is_some()
+            || matches!(cache_pictures, crate::record::codec::PictureMode::Keep),
+        apu_log: record_v2.is_some() || cache.is_some(),
         ..Tiers::default()
     };
     let mut still_running = 0u64;
@@ -1138,7 +1151,16 @@ fn corpus(arguments: &[String]) {
             });
         let mut cuts: Vec<String> = Vec::new();
         let mut end: Vec<u8> = Vec::new();
+        let mut cached = cache.as_deref().map(|root| {
+            crate::cache::Writer::create(root, &entry.id, cache_pictures)
+                .unwrap_or_else(|error| fail(format!("{}: {error}", root.display())))
+        });
         let mut watch = |record: &FrameRecord| {
+            if let Some(writer) = cached.as_mut() {
+                writer
+                    .push(record)
+                    .unwrap_or_else(|error| fail(format!("{}: cache: {error}", entry.id)));
+            }
             for (address, last) in watched.iter().zip(last.iter_mut()) {
                 let value = word(&record.wram, *address);
                 if *last != Some(value) {
@@ -1167,6 +1189,17 @@ fn corpus(arguments: &[String]) {
                 println!("{}: {error}", entry.id);
             }
             Ok(run) => {
+                if let (Some(writer), Some(FramePads::Play(directory))) = (cached, &pads) {
+                    let pins = crate::cache::pins(
+                        pin.seed.as_deref(),
+                        native_seeds.as_deref(),
+                        &directory.join(format!("{}.pads", entry.id)),
+                    );
+                    let bytes = writer
+                        .finish(&entry.id, &pins)
+                        .unwrap_or_else(|error| fail(format!("{}: cache: {error}", entry.id)));
+                    println!("  {} cache: {} frames, {bytes} bytes", entry.id, run.frames);
+                }
                 match &pads {
                     Some(FramePads::Write(directory)) => {
                         write_frame_pads(directory, &entry.id, &run.pads, &cuts, &end);

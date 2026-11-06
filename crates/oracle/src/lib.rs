@@ -8,6 +8,7 @@
 //! happened in the interval. Nothing here knows the engine; the decoder from
 //! these observations to the engine's State lives with the comparison.
 
+pub mod cache;
 pub mod cli;
 pub mod corpus;
 pub mod cross;

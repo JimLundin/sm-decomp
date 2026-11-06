@@ -67,6 +67,22 @@ one-step localiser of §3. `(∥)` marks a lane that can run beside the spine.
 | A5 compositor (∥) | the `gate1/render` line compositor moved into `runtime` (D1's closed list), PPU-domain 15-bit output with per-line brightness and forced blank (D17) | `crates/runtime/src/compose/` | composing each cached record's VRAM, CGRAM, OAM and per-line registers (tier a) reproduces the record's picture on every frame of `area-brinstar`; time per frame reported | `game` |
 | A6 size report (∥) | `tools size`: authored lines per crate and per D24 domain, against FOUNDATION §9's table | `crates/tools` | a report on this branch; CI prints it on every landing | budgets themselves |
 
+**A2 status (`lane/slice0-a2`).** Done, as `oracle corpus ... --from-frame-pads DIR --cache
+OUT [--cache-pictures]` (the corpus runner already plays rows from frame pads on lsnes) and
+`verify::cache` (not `tools records` and `verify::source`: `source` holds the WRAM sources,
+and this machine can't run the `tools` executable). Each row's `OUT/<row>/` holds
+`records.bin`, every frame's whole `FrameRecord` in `oracle_record::codec`'s encoding, and
+`index.txt`, the row's lock pins (`seed_record`, `seed_words`, `pads`, `frames`) and one
+`frame offset length cut` line per frame, written last. `verify::cache::Cache::open` refuses
+a cache whose pins differ from the `verify::lock::Row`; `verify::cache::fold` folds the
+records through `data::span::SpanFold` under the recorder's rules. Proof (2026-11-06, both
+rows with pictures, 62 s on lsnes): every machine stream's marks, `video` included, equal
+`scenarios/locks/lsnes.toml`'s for both rows; a second read gives the same records;
+`verify::decode` decodes all 477 quiescent frames of `area-brinstar` and 1,055 of 1,428 of
+`item-morph-ball`, the other 373 `UnknownYieldSite` at ten `$85` message-box addresses
+(360 at `$85:8496`). 600 MB with pictures (330 KB a frame), read and decoded at about
+7,700 frames/s.
+
 ### B. The spine, by one lane at a time (Retro rule 25)
 
 | Lane | Delivers | Proof |
