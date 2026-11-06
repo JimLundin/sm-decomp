@@ -39,7 +39,34 @@ pub struct Rules {
     pub auto_repeat: AutoRepeat,
 }
 
-/// A recorded NMI schedule: the Ticks whose NMI arrived during the main strand's work, and
+/// The value of every switchable behaviour (MODEL §3): one field per `Switch::Toggle` entry of
+/// the catalogue.
+// open: joins `Rules` as its `switches` field when the integrator wires the ground model in.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct Switches {
+    /// How the base speed is held to its row's top speed (`BehaviourId::SpeedCap`).
+    pub speed_cap: SpeedCap,
+}
+
+impl Switches {
+    /// The Reference profile: every switch at its vanilla value, the one the oracle checks.
+    pub const REFERENCE: Self = Self {
+        speed_cap: SpeedCap::Wordwise,
+    };
+}
+
+/// How the base speed is held to its top speed after it accelerates (`BehaviourId::SpeedCap`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum SpeedCap {
+    /// Vanilla: the pixel and subpixel words are compared separately, so a speed can snap up
+    /// to the cap or stay above it for a frame.
+    #[default]
+    Wordwise,
+    /// The whole speed is compared: the base speed never exceeds the cap.
+    Exact,
+}
+
+/// A recorded NMI schedule:the Ticks whose NMI arrived during the main strand's work, and
 /// those whose vblank had NMIs disabled; every other Tick's NMI arrived on time.
 ///
 /// A lock row's `overruns` and `nmi_off` frames, counted from the row's first, are its

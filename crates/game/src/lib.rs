@@ -6,8 +6,8 @@
 #![deny(clippy::float_arithmetic)]
 
 pub mod animation;
-pub mod behaviours;
 pub mod atmospheric;
+pub mod behaviours;
 pub mod bg_graphics;
 pub mod collision;
 pub mod commit;
@@ -36,6 +36,6 @@ mod tilemap_dma;
 mod tests;
 
 pub use session::{
-    AutoRepeat, Begun, Content, OpenError, Rules, Schedule, Session, SessionFault, TickInput,
-    TickOutput, TimingSource,
+    AutoRepeat, Begun, Content, OpenError, Rules, Schedule, Session, SessionFault, SpeedCap,
+    Switches, TickInput, TickOutput, TimingSource,
 };
