@@ -5,6 +5,7 @@
 
 pub mod coverage;
 pub mod decode;
+pub mod fold;
 pub mod lock;
 pub mod source;
 pub mod strand;
