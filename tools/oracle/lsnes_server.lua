@@ -130,7 +130,7 @@ end
 --   APU log        u32 count, then (kind 0 write | 1 read, port, value) for
 --                  each CPU access to $2140-$2143 in the interval
 --   picture        u16 width, u16 height, then each dot's 8-bit R, G, B from
---                  gui.screenshot_bitmap() after the frame boundary
+--                  gui.screenshot_bitmap() once lsnes holds the frame (on_frame)
 -- Without a T request the record is unchanged.
 local streams = {picture = false, apu = false, ppu = false}
 local in_main, apu_registered = true, false
@@ -290,6 +290,8 @@ end
 -- The record of this step's cut, taken at the RTI and sent at the boundary;
 -- owed: the boundary passed inside the NMI, so the RTI sends it.
 local captured, owed = nil, false
+-- A record taken at the boundary, sent from on_frame.
+local boundary_send = false
 
 -- kind: 0 NMI return, 1 vblank without NMI, 2 NMI still running.
 -- r: the CPU registers, as memory.getregisters() returns them.
@@ -418,6 +420,17 @@ on_frame_emulated = guarded(function()
         local r = memory.getregisters()
         if in_nmi then capture(2, nmi_pc, r) else capture(1, 0, r) end
     end
+    boundary_send = true
+end)
+
+-- lsnes runs on_frame_emulated before it hands the frame just emulated to its
+-- screen buffer, and on_frame after it, before the next frame's on_input. So a
+-- record due at the boundary is sent here, where gui.screenshot_bitmap holds
+-- that frame's picture. A record owed to the RTI is sent there, inside the
+-- next lsnes frame and so after the hand-over: the same frame's picture.
+on_frame = guarded(function()
+    if not boundary_send then return end
+    boundary_send = false
     send()
 end)
 

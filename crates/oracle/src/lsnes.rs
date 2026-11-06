@@ -16,7 +16,7 @@
 //!
 //! With the picture or APU log tiers on ([`Oracle::set_tiers`] before the
 //! first step), each record also carries the picture (the screenshot taken
-//! after the frame boundary, mapped back from lsnes's 8-bit palette to BGR555
+//! once lsnes holds the video frame the step ends in, mapped back from lsnes's 8-bit palette to BGR555
 //! at the one brightness that produces it), the CPU's accesses to
 //! $2140-$2143 (no DMA or SPC700 side, no APU cycle) and the PPU registers
 //! (rebuilt from bsnes's decoded fields, with the DMA channels; `nmitimen`,
