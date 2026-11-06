@@ -26,7 +26,7 @@ use game::state::room::{
 };
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
-use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, TickInput};
+use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, Switches, TickInput};
 use oracle_record::{Cut, FrameRecord};
 
 use crate::cache::{Cache, CacheError, CutKind};
@@ -1217,6 +1217,7 @@ pub fn lockstep(
     let first = cache.entries().first().ok_or(LockstepError::Empty)?;
     let delays = auto_repeat(&cache.record(first)?).map_err(LockstepError::AutoRepeat)?;
     let rules = Rules {
+        switches: Switches::REFERENCE,
         auto_repeat: delays,
     };
     let mut report = Report {

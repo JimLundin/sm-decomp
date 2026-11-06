@@ -141,7 +141,7 @@ fn her_centre_in_her_bottoms_row_is_not_looked_up() {
 /// changes the scroll area.
 #[test]
 fn a_gameplay_pass_inside_the_trigger_changes_the_scroll_area() {
-    use crate::session::{AutoRepeat, Content, Rules, Session, TickInput};
+    use crate::session::{AutoRepeat, Content, Rules, Session, Switches, TickInput};
     use crate::state::State;
     use crate::state::slots::Frames;
     use data::pose::{PoseId, Poses};
@@ -161,6 +161,7 @@ fn a_gameplay_pass_inside_the_trigger_changes_the_scroll_area() {
         ..State::default()
     };
     let rules = Rules {
+        switches: Switches::REFERENCE,
         auto_repeat: AutoRepeat {
             initial: Frames(3),
             subsequent: Frames(2),

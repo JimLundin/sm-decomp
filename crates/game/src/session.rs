@@ -37,11 +37,12 @@ pub struct AutoRepeat {
 pub struct Rules {
     /// The pad's auto-repeat.
     pub auto_repeat: AutoRepeat,
+    /// The value of every switchable behaviour.
+    pub switches: Switches,
 }
 
 /// The value of every switchable behaviour (MODEL §3): one field per `Switch::Toggle` entry of
 /// the catalogue.
-// open: joins `Rules` as its `switches` field when the integrator wires the ground model in.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Switches {
     /// How the base speed is held to its row's top speed (`BehaviourId::SpeedCap`).

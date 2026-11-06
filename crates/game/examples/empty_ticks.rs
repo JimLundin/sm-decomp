@@ -6,7 +6,7 @@ use std::io::{self, Write};
 use std::process::ExitCode;
 use std::time::Instant;
 
-use game::session::{AutoRepeat, Rules, Schedule, Session, TickInput, TimingSource};
+use game::session::{AutoRepeat, Rules, Schedule, Session, Switches, TickInput, TimingSource};
 use game::state::slots::Frames;
 use game::state::{State, Tick};
 
@@ -14,6 +14,7 @@ const TICKS: u64 = 2_000_000;
 
 fn main() -> ExitCode {
     let rules = Rules {
+        switches: Switches::REFERENCE,
         auto_repeat: AutoRepeat {
             initial: Frames(12),
             subsequent: Frames(2),

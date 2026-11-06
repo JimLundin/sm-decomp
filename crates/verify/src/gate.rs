@@ -23,7 +23,9 @@ use data::span::Cut;
 use game::nmi::NmiKind;
 use game::state::sram::SAVE_RAM_BYTES;
 use game::state::{Buttons, NmiTiming, State, Tick};
-use game::{Content, OpenError, Rules, Schedule, Session, SessionFault, TickInput, TimingSource};
+use game::{
+    Content, OpenError, Rules, Schedule, Session, SessionFault, Switches, TickInput, TimingSource,
+};
 use oracle_record::{FrameRecord, Pad};
 
 use crate::decode::{DecodeError, RoomMap};
@@ -138,6 +140,7 @@ impl Seed {
     pub fn decode(record: &FrameRecord, rooms: &RoomMap) -> Result<Self, DecodeError> {
         let state = crate::decode(record, rooms)?.state;
         let rules = Rules {
+            switches: Switches::REFERENCE,
             auto_repeat: auto_repeat(record)?,
         };
         Ok(Self { state, rules })

@@ -9,7 +9,7 @@ use data::message::MessageBoxes;
 use crate::message_box::{self, ANIMATION_STEPS};
 use crate::nmi::NmiKind;
 use crate::session::{
-    AutoRepeat, Content, Rules, Schedule, Session, SessionFault, TickInput, TimingSource,
+    AutoRepeat, Content, Rules, Schedule, Session, SessionFault, Switches, TickInput, TimingSource,
 };
 use crate::state::slots::{FlagSet, Frames, SlotIndex};
 use crate::state::strand::{
@@ -22,6 +22,7 @@ use crate::state::{
 use crate::tick::{self, Next};
 
 const RULES: Rules = Rules {
+    switches: Switches::REFERENCE,
     auto_repeat: AutoRepeat {
         initial: Frames(3),
         subsequent: Frames(2),
