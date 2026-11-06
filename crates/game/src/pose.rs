@@ -23,6 +23,7 @@ use data::pose::{MovementType, PoseId, Poses};
 use crate::animation;
 use crate::collision::{Contacts, Surroundings};
 use crate::movement::{cancel_speed_boosting, make_jump};
+use crate::plm::RoomPlms;
 use crate::state::samus::{
     Acceleration, AnimationTimer, Facing, Horizontal, Jump, Movement, NewPoseFrame, PoseRecord,
     Samus, Speed, SuperSpecialCommand, Turn, Vertical, YDirection,
@@ -60,6 +61,8 @@ pub struct Content {
     pub visor_colours: VisorColours,
     /// The face block's glow colour sets.
     pub face_block_glow: GlowColours,
+    /// The rooms' PLM populations, with their scroll PLMs' change lists.
+    pub room_plms: RoomPlms,
 }
 
 /// The pose a frame asks for, by the channel that asked.

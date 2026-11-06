@@ -16,6 +16,8 @@ use data::level::{BlockKind, Offset, Slope};
 use crate::state::room::{Block, BlockColumns};
 use crate::state::samus::{Fixed, Point, Speed};
 
+pub mod inside;
+
 /// What a move went through.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Room<'a> {
@@ -238,7 +240,10 @@ impl Scan<'_> {
                 }
                 // open: special air (`$94:906F`, `$94:909D`) and bombable air (`$94:92F9`,
                 // `$94:9313`) spawn their PLMs, which can stop her; the spike air reaction does
-                // nothing (`$94:901A`). Slice 0's room has neither.
+                // nothing (`$94:901A`). Slice 0's room has no bombable air, and its special
+                // air is the scroll triggers, whose touch PLM (`$94:9139` at BTS `$46`,
+                // `$84:B6FF`) the elevator ride's step reaches with her bottom
+                // (`area-brinstar` frame 92), when the inside handling doesn't run.
                 BlockKind::Air(_)
                 | BlockKind::SpikeAir(_)
                 | BlockKind::SpecialAir(_)

@@ -39,6 +39,7 @@ fn content() -> Content {
         graphics: data::pose::tiles::Graphics::default(),
         visor_colours: data::palette::VisorColours::default(),
         face_block_glow: data::enemy::face_block::GlowColours::default(),
+        room_plms: crate::plm::RoomPlms::default(),
     }
 }
 

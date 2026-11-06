@@ -6,7 +6,7 @@
 //! their domain lanes fill them.
 
 use crate::animation;
-use crate::collision::{Room, ScanOrder, Surroundings};
+use crate::collision::{Room, ScanOrder, Surroundings, inside};
 use crate::message_box;
 use crate::movement;
 use crate::pose::{self, Content};
@@ -153,7 +153,7 @@ pub fn run(
 /// A [`SessionFault`] when the strand is empty or a call would nest it too deep.
 pub fn step_once(state: &mut State, rules: Rules, content: &Content) -> Result<Next, SessionFault> {
     let top = *state.main.frames.last().ok_or(SessionFault::StrandEmpty)?;
-    let (at, next) = step(top, state, rules, content);
+    let (at, next) = step(top, state, rules, content)?;
     if let Some(innermost) = state.main.frames.last_mut() {
         *innermost = at;
     }
@@ -177,14 +177,19 @@ pub fn step_once(state: &mut State, rules: Rules, content: &Content) -> Result<N
 }
 
 /// One step of `frame`: the frame's position afterwards and what comes next.
-fn step(frame: Frame, state: &mut State, rules: Rules, content: &Content) -> (Frame, Next) {
-    match frame {
+fn step(
+    frame: Frame,
+    state: &mut State,
+    rules: Rules,
+    content: &Content,
+) -> Result<(Frame, Next), SessionFault> {
+    Ok(match frame {
         Frame::MainLoop(at) => {
             let (at, next) = main_loop(at, state, rules);
             (Frame::MainLoop(at), next)
         }
         Frame::Gameplay(at) => {
-            let (at, next) = gameplay(at, state, content);
+            let (at, next) = gameplay(at, state, content)?;
             (Frame::Gameplay(at), next)
         }
         Frame::MessageBox(at) => {
@@ -194,7 +199,7 @@ fn step(frame: Frame, state: &mut State, rules: Rules, content: &Content) -> (Fr
         // open: the PLM pass resumes at its slot once the interpreter exists (B7); until then
         // it returns as soon as it resumes.
         Frame::Plms { .. } => (frame, Next::Return),
-    }
+    })
 }
 
 /// A phase of the main game loop, in the original's order.
@@ -389,12 +394,16 @@ struct Pass {
 }
 
 /// One step of the gameplay pass from `at`.
-fn gameplay(at: GameplayAt, state: &mut State, content: &Content) -> (GameplayAt, Next) {
-    match at {
+fn gameplay(
+    at: GameplayAt,
+    state: &mut State,
+    content: &Content,
+) -> Result<(GameplayAt, Next), SessionFault> {
+    Ok(match at {
         GameplayAt::Start => {
             let mut pass = Pass::default();
             for phase in THROUGH_PLMS {
-                gameplay_phase(phase, state, content, &mut pass);
+                gameplay_phase(phase, state, content, &mut pass)?;
             }
             (GameplayAt::AfterPlms, Next::Continue)
         }
@@ -403,17 +412,22 @@ fn gameplay(at: GameplayAt, state: &mut State, content: &Content) -> (GameplayAt
             // only the enemy phases before it read.
             let mut pass = Pass::default();
             for phase in AFTER_PLMS {
-                gameplay_phase(phase, state, content, &mut pass);
+                gameplay_phase(phase, state, content, &mut pass)?;
             }
             (GameplayAt::Start, Next::Return)
         }
-    }
+    })
 }
 
 /// A gameplay phase's work.
 // open: each empty arm fills in with its C lane; the PLM pass ends the step with
 // `Next::Call(Frame::Plms { .. })` once an instruction can call out (B7, C12).
-fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pass: &mut Pass) {
+fn gameplay_phase(
+    phase: GameplayPhase,
+    state: &mut State,
+    content: &Content,
+    pass: &mut Pass,
+) -> Result<(), SessionFault> {
     match phase {
         // The frame starts with no super special request (`$90:E695`).
         GameplayPhase::SamusCurrentState => {
@@ -425,7 +439,11 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
                 pose::PoseRequests::default()
             } else {
                 movement::set_radius(&mut state.samus, content);
-                pose::input(&state.samus, &state.controller, content)
+                let requests = pose::input(&state.samus, &state.controller, content);
+                // open: the suit palette index and the Y acceleration (`$90:E6B6`,
+                // `$90:E6B9`) run between the input handler and the inside handling.
+                inside::handle(&mut state.room, &state.samus).map_err(SessionFault::Plm)?;
+                requests
             };
         }
         // The movement handler, the animation, the pose the moves ask for (`$91:E8B6`), then
@@ -467,6 +485,11 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         GameplayPhase::Hud => crate::hud::phase(state),
         GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
         GameplayPhase::Enemies => crate::enemy::run(state, &pass.active, content),
+        // `$84:85B4`.
+        GameplayPhase::Plms => {
+            let population = content.room_plms.of(state.room.room);
+            crate::plm::process(&mut state.room, population);
+        }
         GameplayPhase::Scrolling => {
             let room = &mut state.room;
             let width = room.width.0 / SCREEN_BLOCKS;
@@ -488,7 +511,6 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         GameplayPhase::PaletteFx
         | GameplayPhase::SamusProjectileInteraction
         | GameplayPhase::EnemyProjectiles
-        | GameplayPhase::Plms
         | GameplayPhase::AnimatedTiles
         | GameplayPhase::EnemyProjectileSamus
         | GameplayPhase::EnemyProjectileProjectile
@@ -498,4 +520,5 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         | GameplayPhase::RoomShaking
         | GameplayPhase::HurtTimers => {}
     }
+    Ok(())
 }

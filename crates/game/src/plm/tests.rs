@@ -171,3 +171,16 @@ fn a_touch_with_no_plm_on_its_block_is_the_originals_hang() {
         Err(ScrollTouchFault::NoPlmOnBlock(BlockIndex(7)))
     );
 }
+
+#[test]
+fn a_touch_with_no_free_slot_spawns_nothing_and_triggers_nothing() {
+    let mut room = loaded();
+    for slot in &mut room.plms.slots {
+        if slot.occupancy == Occupancy::Free {
+            slot.occupancy = Occupancy::Live(PlmBody::ScrollTouch);
+        }
+    }
+    let before = room.clone();
+    touch_scroll_block(&mut room, TRIGGER).unwrap();
+    assert_eq!(room, before);
+}

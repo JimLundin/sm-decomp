@@ -22,6 +22,7 @@ use data::pose::transition::PoseTransitions;
 use data::pose::{PoseError, Poses};
 use data::rom::{AddressError, Rom, RomError};
 use game::Content;
+use game::plm::RoomPlms;
 use game::state::Buttons;
 use oracle_record::lsnes::RawError;
 
@@ -136,6 +137,8 @@ pub enum ContentError {
     Palettes(AddressError),
     /// Samus's tiles definitions or graphics are outside the image.
     SamusTiles(AddressError),
+    /// Slice 0's rooms don't decode.
+    Rooms(data::room::RoomError),
 }
 
 impl fmt::Display for ContentError {
@@ -151,6 +154,7 @@ impl fmt::Display for ContentError {
             Self::SamusSpritemaps(error) => write!(f, "Samus's spritemaps: {error:?}"),
             Self::Palettes(error) => write!(f, "the palette tables: {error:?}"),
             Self::SamusTiles(error) => write!(f, "Samus's tiles: {error:?}"),
+            Self::Rooms(error) => write!(f, "the rooms: {error:?}"),
         }
     }
 }
@@ -171,6 +175,18 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         FaceBlockLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
     let delays = AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?;
     let samus_tiles = SamusTiles::load(rom.lorom(), &delays).map_err(ContentError::SamusTiles)?;
+    let (rooms, _) = data::room::Rooms::load(rom.lorom(), &data::room::SLICE_ZERO_ROOMS)
+        .map_err(ContentError::Rooms)?;
+    // Each room's population as its state for a new game's progress places it.
+    let room_plms = RoomPlms(
+        rooms
+            .map()
+            .iter()
+            .filter_map(|(_, id)| rooms.get(id))
+            .filter_map(|room| room.state(room.select(&data::room::Progress::default())))
+            .map(|state| state.plms.clone())
+            .collect(),
+    );
     Ok(Content {
         poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
@@ -187,6 +203,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         graphics: Graphics::load(rom.lorom(), GRAPHICS_BANKS).map_err(ContentError::SamusTiles)?,
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
+        room_plms,
     })
 }
 

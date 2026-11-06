@@ -3,6 +3,7 @@
 
 use std::marker::PhantomData;
 
+use data::id::RoomId;
 use data::plm::{Extension, PlmEntry, PlmKind, PlmPopulation};
 
 use crate::state::room::{
@@ -16,6 +17,27 @@ use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
 const SCROLL_TRIGGER: Bts = Bts(0x46);
 /// The item PLMs' block's BTS (`$84:EE67`): air the item collision detection looks for.
 const ITEM_BLOCK: Bts = Bts(0x45);
+
+/// A room state with no PLMs.
+static NO_PLMS: PlmPopulation = PlmPopulation {
+    entries: Vec::new(),
+    scroll_changes: Vec::new(),
+};
+
+/// Each loaded room's PLM population, by room ID: the one its state places, whose scroll
+/// change lists the PLM pass reads.
+// open: a room whose states place different populations needs the loaded state in
+// `RoomScoped`; slice 0 loads only the Morph Ball Room's default state.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RoomPlms(pub Vec<PlmPopulation>);
+
+impl RoomPlms {
+    /// Room `room`'s population; none for a room the content doesn't hold.
+    #[must_use]
+    pub fn of(&self, room: RoomId) -> &PlmPopulation {
+        self.0.get(usize::from(room.0)).unwrap_or(&NO_PLMS)
+    }
+}
 
 /// Why touching a scroll block can't go on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -125,7 +147,7 @@ pub fn spawn_population(room: &mut RoomScoped, population: &PlmPopulation) {
 /// The special air inside reaction spawns the scroll block touch PLM there (`$84:B6FF`,
 /// through `$84:84E7`), whose setup (`$84:B393`) moves its own block to 0 and triggers the
 /// PLM on `block` unless it already is: the scroll PLM steps to its update and its timer
-/// is 1.
+/// is 1. With no slot free nothing spawns and no setup runs (`$84:84F9`).
 ///
 /// # Errors
 ///
@@ -134,11 +156,10 @@ pub fn touch_scroll_block(
     room: &mut RoomScoped,
     block: BlockIndex,
 ) -> Result<(), ScrollTouchFault> {
-    if let Some(index) = free_slot(room)
-        && let Some(slot) = room.plms.slots.get_mut(index)
-    {
-        fill(slot, BlockIndex(0), Occupancy::Live(PlmBody::ScrollTouch));
-    }
+    let Some(slot) = free_slot(room).and_then(|index| room.plms.slots.get_mut(index)) else {
+        return Ok(());
+    };
+    fill(slot, BlockIndex(0), Occupancy::Live(PlmBody::ScrollTouch));
     // `$84:B39D`: every slot's block, free or not, from the highest down.
     let found = room
         .plms

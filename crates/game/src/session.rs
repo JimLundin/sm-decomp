@@ -11,6 +11,7 @@ use crate::lines::{self, Picture};
 use std::sync::Arc;
 
 use crate::nmi::{self, NmiKind};
+use crate::plm::ScrollTouchFault;
 pub use crate::pose::Content;
 use crate::state::slots::Frames;
 use crate::state::strand::MAIN_STRAND_DEPTH;
@@ -128,6 +129,9 @@ pub enum SessionFault {
     StepBudgetExceeded,
     /// A Tick was begun and dropped before it ended.
     TickAbandoned,
+    /// A scroll trigger's touch PLM found no scroll PLM on its block, where the original
+    /// hangs.
+    Plm(ScrollTouchFault),
 }
 
 /// Why a State can't open as a Session.
