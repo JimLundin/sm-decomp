@@ -15,11 +15,16 @@ use data::pose::transition::Control;
 use crate::pose::{Content, PoseRequests, controls};
 use crate::state::Controller;
 use crate::state::samus::{
-    AnimationTimer, Item, Items, Movement, MovementType, Samus, SuperSpecial, SuperSpecialCommand,
+    AnimationTimer, Item, Items, Movement, MovementType, NewPoseFrame, Samus, SuperSpecial,
+    SuperSpecialCommand,
 };
 
 /// The poses the auto-jump transition gives way to: the jumps from the ground.
 const JUMPS: [PoseId; 4] = [PoseId(0x4B), PoseId(0x4C), PoseId(0x19), PoseId(0x1A)];
+
+/// The frame a spin jump from a spin or wall jump starts on, past the jump from the floor
+/// (`$91:F634`).
+const SPIN_FROM_SPIN: AnimationFrame = AnimationFrame(1);
 
 /// The health at or above which the healthy loop goes back to the start (`$90:8346`).
 const HEALTHY: u16 = 30;
@@ -214,28 +219,32 @@ const fn finish(samus: &mut Samus, pose: PoseId) {
     };
 }
 
-/// Whether the new pose frame keeps the animation going from the last pose: running from
-/// running, the morph ball from the morph ball, the spring ball from the spring ball
-/// (`$91:F50C`, `$91:F9F4`).
-// open: the spin jump from a spin or wall jump (`$91:F624`), $15/$16 from $55/$56
-// (`$91:F5AF`) and standing aiming up (`$91:F4EE`) start on frame 1; they join with C3b.
-pub(crate) const fn preserves(from: MovementType, to: MovementType) -> bool {
-    matches!(
-        (from, to),
+/// The frame a new pose's animation starts on when it is not the first: running from
+/// running, the morph ball from the morph ball and the spring ball from the spring ball keep
+/// the animation going (`$91:F50C`, `$91:F9F4`), and a spin jump from a spin or wall jump
+/// skips the jump from the floor (`$91:F624`).
+// open: $15/$16 from $55/$56 (`$91:F5AF`) and standing aiming up (`$91:F4EE`) start on
+// frame 1; they join with C3b.
+pub(crate) const fn new_pose_frame(from: MovementType, to: MovementType) -> Option<NewPoseFrame> {
+    match (from, to) {
         (MovementType::Running, MovementType::Running)
-            | (
-                MovementType::MorphBallOnGround | MovementType::MorphBallFalling,
-                MovementType::MorphBallOnGround | MovementType::MorphBallFalling
-            )
-            | (
-                MovementType::SpringBallOnGround
-                    | MovementType::SpringBallInAir
-                    | MovementType::SpringBallFalling,
-                MovementType::SpringBallOnGround
-                    | MovementType::SpringBallInAir
-                    | MovementType::SpringBallFalling
-            )
-    )
+        | (
+            MovementType::MorphBallOnGround | MovementType::MorphBallFalling,
+            MovementType::MorphBallOnGround | MovementType::MorphBallFalling,
+        )
+        | (
+            MovementType::SpringBallOnGround
+            | MovementType::SpringBallInAir
+            | MovementType::SpringBallFalling,
+            MovementType::SpringBallOnGround
+            | MovementType::SpringBallInAir
+            | MovementType::SpringBallFalling,
+        ) => Some(NewPoseFrame::Preserve),
+        (MovementType::SpinJumping | MovementType::WallJumping, MovementType::SpinJumping) => {
+            Some(NewPoseFrame::From(SPIN_FROM_SPIN))
+        }
+        _ => None,
+    }
 }
 
 #[cfg(test)]
