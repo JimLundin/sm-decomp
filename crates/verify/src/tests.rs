@@ -4,8 +4,10 @@
 //! to the wrong address fails these tests.
 
 use data::id::{Line, RoomId};
+use game::state::slots::Frames;
 use game::state::strand::{
-    Frame, GameplayAt, IrqCommand, IrqStrand, MainLoopAt, MainStrand, MessageBoxAt, Wait,
+    Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
+    MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
 };
 use game::state::video::{OamEntry, VRAM_WORDS};
 use game::state::{GameMode, NmiTiming, State};
@@ -547,9 +549,104 @@ fn pickup(message_box: MessageBoxAt) -> MainStrand {
     }
 }
 
-fn strand_cases() -> [(FrameRecord, MainStrand); 5] {
-    use game::state::slots::Frames;
-    [
+/// A wait for lag frame inside the message box: its PHP, then `chain`, the return addresses
+/// and pushes up to display message box's own, with X at `x`.
+fn lag_wait_record(chain: &[u8], x: u16) -> FrameRecord {
+    let mut inner = vec![0x00];
+    inner.extend_from_slice(chain);
+    let mut record = message_box_record(0x85_813C, &inner, 0);
+    record.cpu.x = x;
+    record
+}
+
+/// The waits around the box's animation, each with its chain from the bank $85 log: a JSR
+/// at $xxxx pushes $xxxx + 2, low byte first.
+fn message_box_step_cases() -> Vec<(FrameRecord, MainStrand)> {
+    let write = |step| pickup(MessageBoxAt::Writing(step));
+    let lag = |at, left| {
+        pickup(MessageBoxAt::Lag {
+            at,
+            left: Frames(left),
+        })
+    };
+    vec![
+        (
+            // $85:8148 (pushed $814A) in initialise PPU, from $85:808D (pushed $808F).
+            lag_wait_record(&[0x4A, 0x81, 0x8F, 0x80], 0),
+            pickup(MessageBoxAt::PreparingPpu(PpuPreparation::Registers)),
+        ),
+        (
+            // $85:81B2 (pushed $81B4).
+            lag_wait_record(&[0xB4, 0x81, 0x8F, 0x80], 0),
+            pickup(MessageBoxAt::PreparingPpu(PpuPreparation::TilemapBackup)),
+        ),
+        (
+            // $85:8203 (pushed $8205) in clear tilemap, from $85:8090 (pushed $8092).
+            lag_wait_record(&[0x05, 0x82, 0x92, 0x80], 0),
+            pickup(MessageBoxAt::ClearingTilemap(Side::BeforeOpen)),
+        ),
+        (
+            // The same, from $85:80AA (pushed $80AC).
+            lag_wait_record(&[0x05, 0x82, 0xAC, 0x80], 0),
+            pickup(MessageBoxAt::ClearingTilemap(Side::AfterClose)),
+        ),
+        (
+            // $85:82B8 (pushed $82BA) in write message tilemap; $85:829D (pushed $829F);
+            // $85:8250 (pushed $8252); initialise message box's PHX before it; $85:8093.
+            lag_wait_record(
+                &[0xBA, 0x82, 0x9F, 0x82, 0x52, 0x82, 0x34, 0x12, 0x95, 0x80],
+                0,
+            ),
+            write(MessageWrite::Tilemap),
+        ),
+        (
+            // $85:8321 (pushed $8323); $85:843D (pushed $843F); $85:8254 (pushed $8256).
+            lag_wait_record(&[0x23, 0x83, 0x3F, 0x84, 0x56, 0x82, 0x95, 0x80], 0),
+            write(MessageWrite::TilemapUpload),
+        ),
+        (
+            // $85:859C (pushed $859E); $859B's PHP; $85:83BA (pushed $83BC); $85:831E (pushed
+            // $8320); then as above.
+            lag_wait_record(
+                &[
+                    0x9E, 0x85, 0x00, 0xBC, 0x83, 0x20, 0x83, 0x3F, 0x84, 0x56, 0x82, 0x95, 0x80,
+                ],
+                0,
+            ),
+            write(MessageWrite::ScrollHdma),
+        ),
+        (
+            // $85:8578 (pushed $857A) in play 2 lag frames, from $85:8096 (pushed $8098):
+            // X = 2 is the first of two.
+            lag_wait_record(&[0x7A, 0x85, 0x98, 0x80], 2),
+            lag(LagAt::BeforeOpen, 1),
+        ),
+        (
+            // The same, from $85:80B4 (pushed $80B6): X = 1 is the last.
+            lag_wait_record(&[0x7A, 0x85, 0xB6, 0x80], 1),
+            lag(LagAt::AfterClose, 0),
+        ),
+        (
+            // $85:8493 (pushed $8495) in the interaction, from $85:80A4 (pushed $80A6): the
+            // first of 360.
+            lag_wait_record(&[0x95, 0x84, 0xA6, 0x80], 360),
+            lag(LagAt::Shown, 359),
+        ),
+        (
+            // $85:861C (pushed $861E) in restore PPU, from $85:80AD (pushed $80AF).
+            lag_wait_record(&[0x1E, 0x86, 0xAF, 0x80], 0),
+            pickup(MessageBoxAt::RestoringPpu(PpuRestoration::Tilemap)),
+        ),
+        (
+            // $85:8651 (pushed $8653).
+            lag_wait_record(&[0x53, 0x86, 0xAF, 0x80], 0),
+            pickup(MessageBoxAt::RestoringPpu(PpuRestoration::Registers)),
+        ),
+    ]
+}
+
+fn strand_cases() -> Vec<(FrameRecord, MainStrand)> {
+    let mut cases = vec![
         (
             record(),
             MainStrand {
@@ -575,7 +672,9 @@ fn strand_cases() -> [(FrameRecord, MainStrand); 5] {
             animation_record(0x85_813F, [0x8D, 0x85], [0xA9, 0x80], 0x0600),
             pickup(MessageBoxAt::Closing { left: Frames(3) }),
         ),
-    ]
+    ];
+    cases.extend(message_box_step_cases());
+    cases
 }
 
 #[test]
@@ -663,4 +762,23 @@ fn a_radius_off_the_animation_is_unrepresentable() {
             value: 0x0401,
         })
     );
+}
+
+#[test]
+fn a_countdown_outside_its_range_is_unrepresentable() {
+    // X = 0 would count 65,536 frames and X = 361 more than the interaction's 360: no count
+    // the original starts.
+    for (chain, x) in [
+        ([0x95, 0x84, 0xA6, 0x80], 0),
+        ([0x95, 0x84, 0xA6, 0x80], 361),
+        ([0x7A, 0x85, 0x98, 0x80], 3),
+    ] {
+        assert_eq!(
+            decode(&lag_wait_record(&chain, x), &rooms()),
+            Err(DecodeError::Unrepresentable {
+                source: "cpu.x",
+                value: x,
+            })
+        );
+    }
 }
