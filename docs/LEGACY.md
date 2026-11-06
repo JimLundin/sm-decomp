@@ -166,6 +166,13 @@ To retire a row: prove the index in range (then use the typed owner and delete
 the fallback) or give the Session an owner for the RAM the overflow reaches;
 remove the calls, their tags and the row together.
 
+## Tolerated values the content keeps as named variants
+
+- `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (bank $91 log,
+  `$91:B731`, `$91:B739`) hold X direction bytes 1 and 2, neither left (4), right (8)
+  nor forward (0). The original's facing tests read the left and right bits, so it
+  tolerates them; the byte is kept so it goes back out unchanged. No row reaches either pose.
+
 ## The oracle harness (`crates/oracle`)
 
 `LEGACY(verifier)` in `crates/oracle/src/streams.rs` copies the frozen
