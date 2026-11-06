@@ -901,9 +901,13 @@ fn compare_frame_pads(directory: &Path, id: &str, cuts: &[String], end: &[u8]) -
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
         fail(
-            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories]",
+            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories]",
         )
     };
+    let scenarios = Path::new(lock)
+        .parent()
+        .map(Path::to_path_buf)
+        .unwrap_or_default();
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
     let lock =
         std::fs::read_to_string(lock).unwrap_or_else(|error| fail(format!("{lock}: {error}")));
@@ -913,6 +917,7 @@ fn corpus(arguments: &[String]) {
     let mut limit = usize::MAX;
     let mut shard: (usize, usize) = (0, 1);
     let mut record: Option<std::fs::File> = None;
+    let mut record_v2: Option<std::fs::File> = None;
     let mut backend = String::new();
     let mut native_seeds: Option<PathBuf> = None;
     let mut watched: Vec<usize> = Vec::new();
@@ -952,6 +957,16 @@ fn corpus(arguments: &[String]) {
                     std::fs::File::create(path)
                         .unwrap_or_else(|error| fail(format!("{path}: {error}"))),
                 );
+            }
+            "--record-v2" => {
+                let path = options.next().unwrap_or_else(|| fail("--record-v2 FILE"));
+                let mut file = std::fs::File::create(path)
+                    .unwrap_or_else(|error| fail(format!("{path}: {error}")));
+                let header =
+                    crate::relock::header(crate::lsnes::IDENTITY, &crate::lsnes::server_sha256());
+                std::io::Write::write_all(&mut file, header.as_bytes())
+                    .unwrap_or_else(|error| fail(error));
+                record_v2 = Some(file);
             }
             "--oracle" => {
                 backend = options
@@ -999,6 +1014,14 @@ fn corpus(arguments: &[String]) {
             other => fail(format!("unknown option {other}")),
         }
     }
+    if record_v2.is_some() && (backend != "lsnes" || !matches!(pads, Some(FramePads::Play(_)))) {
+        fail("--record-v2 records lsnes rows played --from-frame-pads");
+    }
+    let tiers = Tiers {
+        picture: record_v2.is_some(),
+        apu_log: record_v2.is_some(),
+        ..Tiers::default()
+    };
     let mut still_running = 0u64;
     let names = crate::streams::NAMES;
     let mut matched = [0u32; 8];
@@ -1040,10 +1063,14 @@ fn corpus(arguments: &[String]) {
                 .as_deref()
                 .map_or(crate::corpus::Pads::Ticks, crate::corpus::Pads::Frames),
             lean,
+            tiers,
             ..crate::corpus::Observe::default()
         };
         let mut last: Vec<Option<u16>> = vec![None; watched.len()];
         let mut frame = 0u64;
+        let mut recorder = record_v2
+            .as_ref()
+            .map(|_| crate::relock::Recorder::default());
         let mut cuts: Vec<String> = Vec::new();
         let mut end: Vec<u8> = Vec::new();
         let mut watch = |record: &FrameRecord| {
@@ -1058,6 +1085,9 @@ fn corpus(arguments: &[String]) {
                 cuts.push(cut_line(record));
                 end.clear();
                 end.extend_from_slice(&record.wram);
+            }
+            if let Some(recorder) = recorder.as_mut() {
+                recorder.fold(record);
             }
             frame += 1;
         };
@@ -1093,6 +1123,33 @@ fn corpus(arguments: &[String]) {
                     };
                     let text = crate::corpus::lock_entry(entry, oracle, &run);
                     writeln!(file, "{text}").unwrap_or_else(|error| fail(error));
+                }
+                if let (Some(file), Some(recorder), Some(FramePads::Play(directory))) =
+                    (record_v2.as_mut(), recorder, &pads)
+                {
+                    use std::io::Write as _;
+                    let pad_file = directory.join(format!("{}.pads", entry.id));
+                    let sources = crate::relock::Sources {
+                        pads: &pad_file,
+                        native_seeds: native_seeds.as_deref(),
+                        scenarios: &scenarios,
+                    };
+                    let written =
+                        crate::relock::entry(pin, entry, run.ticks, recorder.finish(), sources);
+                    let rows: Vec<String> = written
+                        .recorded
+                        .streams
+                        .iter()
+                        .map(|(name, marks)| match marks {
+                            Some(marks) => format!(
+                                "{name}={:016x}",
+                                data::digest::fold_all(marks.iter().copied())
+                            ),
+                            None => format!("{name}=absent"),
+                        })
+                        .collect();
+                    println!("  {} v2: {}", entry.id, rows.join(" "));
+                    write!(file, "\n{}", written.to_toml()).unwrap_or_else(|error| fail(error));
                 }
                 let verdicts = crate::corpus::compare(entry, &run);
                 let mut line = String::new();

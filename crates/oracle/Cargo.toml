@@ -6,10 +6,10 @@ license = "MIT"
 publish = false
 description = "The oracle harness: the unmodified ROM on an emulator, recorded per video frame"
 
-# The digest is the only shared code: no dependency on sm, sm_host or sm_game.
+# The digest is the only shared code (`data::digest`): no dependency on sm or sm_*.
 [dependencies]
+data = { path = "../data" }
 oracle_record = { path = "../oracle_record" }
-sm_data = { path = "../sm_data" }
 
 [[bin]]
 name = "oracle"

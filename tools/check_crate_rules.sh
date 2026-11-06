@@ -20,7 +20,7 @@ allowed() {
     game) echo "data canonical" ;;
     runtime) echo "data" ;;
     app) echo "data game runtime" ;;
-    oracle) echo "data oracle_record sm_data" ;; # sm_data until the digest moves to data (crates/README.md)
+    oracle) echo "data oracle_record" ;;
     oracle_record) echo "" ;;
     verify) echo "data game runtime oracle_record" ;;
     tools) echo "verify oracle runtime" ;;
