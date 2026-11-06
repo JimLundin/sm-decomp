@@ -875,6 +875,32 @@ pub const FX_LAYER_BLENDING_CONFIG_A: WramWord = WramWord {
     name: "FX_LAYER_BLENDING_CONFIG_A",
     offset: 0x1982,
 };
+/// Bank $A0 log, `$A0:88C4`: the enemy graphics drawn hook's long pointer, its address.
+pub const ENEMY_GFX_DRAWN_HOOK: WramWord = WramWord {
+    name: "enemy_gfx_drawn_hook",
+    offset: 0x178C,
+};
+/// The hook's bank, the long pointer's third byte.
+pub const ENEMY_GFX_DRAWN_HOOK_BANK: WramByte = WramByte {
+    name: "enemy_gfx_drawn_hook",
+    offset: 0x178E,
+};
+/// Bank $A8 log, `$A8:E86E`: the hook's first variable, the face block's palette cycle's
+/// byte offset of its sprite palette (its palette index / 10h).
+pub const ENEMY_PALETTE_CYCLE_PALETTE: WramWord = WramWord {
+    name: "VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[0]",
+    offset: 0x1794,
+};
+/// The second: the cycle's colour set index.
+pub const ENEMY_PALETTE_CYCLE_SET: WramWord = WramWord {
+    name: "VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[1]",
+    offset: 0x1796,
+};
+/// The third: the cycle's timer.
+pub const ENEMY_PALETTE_CYCLE_TIMER: WramWord = WramWord {
+    name: "VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[2]",
+    offset: 0x1798,
+};
 
 /// Bank $80 log, NMI `$80:95ED`: the requested NMIs in eight bits, which the HUD's
 /// auto-cancel flash reads.

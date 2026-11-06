@@ -212,6 +212,8 @@ pub struct State {
     pub room: RoomScoped,
     /// The elevator ride, which carries over from room to room.
     pub elevator: room::ElevatorRide,
+    /// The enemy palette cycle, which carries over from room to room.
+    pub enemy_palette_cycle: room::EnemyPaletteCycle,
     /// The HUD.
     pub hud: Hud,
     /// The message the message box shows, or showed last.

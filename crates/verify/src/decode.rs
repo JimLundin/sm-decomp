@@ -14,7 +14,8 @@ use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{
     Block, BlockColumns, Camera, CameraDistance, ElevatorArming, ElevatorDirection, ElevatorRide,
-    ElevatorStatus, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers,
+    ElevatorStatus, EnemyDrawing, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, Layer2Scroll,
+    Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers, SpritePalette,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing,
@@ -341,6 +342,10 @@ pub struct Rules<'t> {
     pub drawing: WramWord,
     /// `elevator`.
     pub elevator: ElevatorSources,
+    /// `room.drawing.hook`.
+    pub drawn_hook: DrawnHookSources,
+    /// `enemy_palette_cycle`.
+    pub palette_cycle: PaletteCycleSources,
     /// `room.blocks` and `room.scroll_areas`.
     pub level: LevelSources,
 }
@@ -457,6 +462,26 @@ impl ScrollingSources {
             ..Camera::default()
         })
     }
+}
+
+/// Where the original keeps the enemy graphics drawn hook: a long pointer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DrawnHookSources {
+    /// Its address.
+    pub pointer: WramWord,
+    /// Its bank.
+    pub bank: WramByte,
+}
+
+/// Where the original keeps the enemy palette cycle: the hook's variables.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PaletteCycleSources {
+    /// `.palette`.
+    pub palette: WramWord,
+    /// `.set`.
+    pub set: WramWord,
+    /// `.timer`.
+    pub timer: WramWord,
 }
 
 /// Where the original keeps the elevator ride.
@@ -673,6 +698,15 @@ impl Rules<'_> {
             armed: source::ELEVATOR_FLAGS,
             direction: source::ELEVATOR_DIRECTION,
         },
+        drawn_hook: DrawnHookSources {
+            pointer: source::ENEMY_GFX_DRAWN_HOOK,
+            bank: source::ENEMY_GFX_DRAWN_HOOK_BANK,
+        },
+        palette_cycle: PaletteCycleSources {
+            palette: source::ENEMY_PALETTE_CYCLE_PALETTE,
+            set: source::ENEMY_PALETTE_CYCLE_SET,
+            timer: source::ENEMY_PALETTE_CYCLE_TIMER,
+        },
         level: LevelSources {
             width: source::ROOM_WIDTH_IN_BLOCKS,
             height: source::ROOM_HEIGHT_IN_BLOCKS,
@@ -799,9 +833,14 @@ impl Rules<'_> {
                     ..self.scrolling.read(wram)?
                 },
                 enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
+                drawing: EnemyDrawing {
+                    hook: self.drawn_hook.read(wram)?,
+                    ..EnemyDrawing::default()
+                },
                 ..RoomScoped::default()
             },
             elevator: self.elevator.read(wram)?,
+            enemy_palette_cycle: self.palette_cycle.read(wram)?,
             message: Message(self.message.read(wram)?),
             hud: self.hud.read(wram)?,
         };
@@ -1630,6 +1669,79 @@ const ELEVATOR_DOOR: u16 = 0x80;
 
 /// The elevator direction word for a departure upwards (bank $A3 log, `$A3:9581`).
 const UPWARDS: u16 = 0x8000;
+
+/// The address of an `RTL` in each enemy AI bank, which loading the enemies and the face
+/// block's init without the morph ball set as the hook (`$A0:8A37`, `$A8:E842`).
+const RTL: u16 = 0x804C;
+/// The face block's glow (bank $A8 log, `$A8:E86E`).
+const FACE_BLOCK_GLOW: u16 = 0xE86E;
+/// The face block's AI bank.
+const FACE_BLOCK_BANK: u8 = 0xA8;
+/// The banks whose `RTL` the rows set: loading the enemies' and the face block's.
+const RTL_BANKS: [u8; 2] = [0xA0, 0xA8];
+
+impl DrawnHookSources {
+    /// The hook in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a hook other than those banks' `RTL` or the
+    /// face block's glow.
+    fn read(self, wram: &[u8]) -> Result<GraphicsDrawnHook, DecodeError> {
+        let pointer = self.pointer.read(wram)?;
+        let bank = self.bank.read(wram)?;
+        match (bank, pointer) {
+            (bank, RTL) if RTL_BANKS.contains(&bank) => Ok(GraphicsDrawnHook::None),
+            (FACE_BLOCK_BANK, FACE_BLOCK_GLOW) => Ok(GraphicsDrawnHook::FaceBlockGlow),
+            (bank, RTL | FACE_BLOCK_GLOW) => Err(DecodeError::Unrepresentable {
+                source: self.bank.name,
+                value: u16::from(bank),
+            }),
+            _ => Err(DecodeError::Unrepresentable {
+                source: self.pointer.name,
+                value: pointer,
+            }),
+        }
+    }
+}
+
+/// The bytes between sprite palettes in the cycle's palette word.
+const SPRITE_PALETTE_BYTES: u16 = 0x20;
+/// Sprite palettes, and the glow's colour sets.
+const EIGHT: u8 = 8;
+
+impl PaletteCycleSources {
+    /// The cycle in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a palette offset that isn't a sprite palette's
+    /// first colour, or a colour set past 7 (a magdollite's cycle leaves one, bank $A8 log,
+    /// `$A8:E86E`).
+    fn read(self, wram: &[u8]) -> Result<EnemyPaletteCycle, DecodeError> {
+        let offset = self.palette.read(wram)?;
+        let palette = u8::try_from(offset / SPRITE_PALETTE_BYTES)
+            .ok()
+            .filter(|&palette| offset % SPRITE_PALETTE_BYTES == 0 && palette < EIGHT)
+            .ok_or(DecodeError::Unrepresentable {
+                source: self.palette.name,
+                value: offset,
+            })?;
+        let set = self.set.read(wram)?;
+        let set_index = u8::try_from(set)
+            .ok()
+            .filter(|&index| index < EIGHT)
+            .ok_or(DecodeError::Unrepresentable {
+                source: self.set.name,
+                value: set,
+            })?;
+        Ok(EnemyPaletteCycle {
+            palette: SpritePalette(palette),
+            set: GlowSet(set_index),
+            timer: Frames(self.timer.read(wram)?),
+        })
+    }
+}
 
 impl ElevatorSources {
     /// The ride in `wram`.

@@ -9,7 +9,7 @@
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
 use data::enemy::eye::EyeLists;
-use data::enemy::face_block::FaceBlockLists;
+use data::enemy::face_block::{FaceBlockLists, GlowColours};
 use data::enemy::program::EnemyPrograms;
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
@@ -53,6 +53,8 @@ pub struct Content {
     pub samus_spritemaps: SamusSpritemaps,
     /// Her visor's colour cycle.
     pub visor_colours: VisorColours,
+    /// The face block's glow colour sets.
+    pub face_block_glow: GlowColours,
 }
 
 /// The pose a frame asks for, by the channel that asked.

@@ -10,7 +10,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 
 use data::enemy::eye::EyeLists;
-use data::enemy::face_block::FaceBlockLists;
+use data::enemy::face_block::{FaceBlockLists, GlowColours};
 use data::enemy::program::{EnemyPrograms, ProgramError};
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
@@ -130,7 +130,7 @@ pub enum ContentError {
     EnemyPrograms(ProgramError),
     /// Samus's spritemaps don't decode.
     SamusSpritemaps(SpritemapError),
-    /// Samus's palette tables are outside the image.
+    /// Samus's or the face block's palette tables are outside the image.
     Palettes(AddressError),
 }
 
@@ -145,7 +145,7 @@ impl fmt::Display for ContentError {
             Self::Slopes(error) => write!(f, "the slope shapes: {error:?}"),
             Self::EnemyPrograms(error) => write!(f, "the enemy instruction lists: {error:?}"),
             Self::SamusSpritemaps(error) => write!(f, "Samus's spritemaps: {error:?}"),
-            Self::Palettes(error) => write!(f, "Samus's palette tables: {error:?}"),
+            Self::Palettes(error) => write!(f, "the palette tables: {error:?}"),
         }
     }
 }
@@ -177,5 +177,6 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         samus_spritemaps: SamusSpritemaps::load(rom.lorom())
             .map_err(ContentError::SamusSpritemaps)?,
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
+        face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
     })
 }

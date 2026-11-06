@@ -11,7 +11,8 @@ use data::rom::{Lorom, RomAddress};
 use game::enemy::instructions::label;
 use game::state::room::{
     Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy, EnemyBody,
-    EnemyCommon, LayerBlending, PaletteIndex, ScrollArea, TilesIndex,
+    EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, LayerBlending, PaletteIndex,
+    ScrollArea, SpritePalette, TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, Horizontal,
@@ -303,6 +304,7 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
     put(&mut wram, 0x0A72, 0x0803); // SAMUS_VISOR_PALETTE_TIMER_INDEX: dim, 3 frames
     put(&mut wram, 0x1982, 0x002A); // FX_LAYER_BLENDING_CONFIG_A
+    put_glow(&mut wram);
     put(&mut wram, 0x0A96, 0x0003); // SAMUS_ANIM_FRAME
     put(&mut wram, 0x0A9A, 0x8000); // SAMUS_ANIM_FRAME_SKIP: preserve
     put(&mut wram, 0x0B3C, 0x0001); // SAMUS_HAS_MOMENTUM_FLAG
@@ -385,6 +387,26 @@ fn decodes_the_visor(state: &State) -> bool {
             timer: VisorTimer(3),
         }
         && state.room.layer_blending == LayerBlending(0x2a)
+}
+
+/// The face block's glow: the hook on, sprite palette 7, colour set 3 in 7 frames.
+fn put_glow(wram: &mut [u8]) {
+    put(wram, 0x178C, 0xE86E); // enemy_gfx_drawn_hook: the face block's glow
+    put(wram, 0x178E, 0x00A8); // its bank
+    put(wram, 0x1794, 0x00E0); // VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK
+    put(wram, 0x1796, 0x0003);
+    put(wram, 0x1798, 0x0007);
+}
+
+/// The enemy graphics drawn hook and the palette cycle, as the synthetic record sets them.
+fn decodes_the_glow(state: &State) -> bool {
+    state.room.drawing.hook == GraphicsDrawnHook::FaceBlockGlow
+        && state.enemy_palette_cycle
+            == EnemyPaletteCycle {
+                palette: SpritePalette(7),
+                set: GlowSet(3),
+                timer: Frames(7),
+            }
 }
 
 /// The elevator ride, as the synthetic record sets it.
@@ -477,6 +499,7 @@ fn decodes_the_record(state: &State) -> bool {
         && decodes_the_animation(state)
         && decodes_the_ride(state)
         && decodes_the_visor(state)
+        && decodes_the_glow(state)
         && state.timing.last == NmiTiming::OnTime
         && state.video.nmi_requested
         && state.room.room == MORPH_BALL_ROOM_ID
@@ -538,7 +561,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 49] = [
+const WORD_RULES: [(&str, WordRule); 53] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -604,10 +627,18 @@ const WORD_RULES: [(&str, WordRule); 49] = [
     ("elevator.direction", |rules| &mut rules.elevator.direction),
     ("visor", |rules| &mut rules.visor),
     ("layer_blending", |rules| &mut rules.layer_blending),
+    ("drawn_hook.pointer", |rules| &mut rules.drawn_hook.pointer),
+    ("palette_cycle.palette", |rules| {
+        &mut rules.palette_cycle.palette
+    }),
+    ("palette_cycle.set", |rules| &mut rules.palette_cycle.set),
+    ("palette_cycle.timer", |rules| {
+        &mut rules.palette_cycle.timer
+    }),
 ];
 
 /// Every byte rule.
-const BYTE_RULES: [(&str, ByteRule); 9] = [
+const BYTE_RULES: [(&str, ByteRule); 10] = [
     ("lag", |rules| &mut rules.lag),
     ("max_lag", |rules| &mut rules.max_lag),
     ("nmi_requested", |rules| &mut rules.nmi_requested),
@@ -623,6 +654,7 @@ const BYTE_RULES: [(&str, ByteRule); 9] = [
     ("last_different_movement", |rules| {
         &mut rules.last_different_pose.movement
     }),
+    ("drawn_hook.bank", |rules| &mut rules.drawn_hook.bank),
 ];
 
 #[test]
@@ -637,6 +669,37 @@ fn an_acceleration_mode_past_2_or_a_momentum_flag_past_1_is_an_error() {
             decode(&record, &rooms()),
             Err(DecodeError::Unrepresentable { source, value: 3 })
         );
+    }
+}
+
+#[test]
+fn a_hook_or_cycle_word_outside_the_glow_is_unrepresentable() {
+    // Another hook, the glow's address in another bank, half a palette, a colour set past 7.
+    for (offset, value, source) in [
+        (0x178C, 0x8000, "enemy_gfx_drawn_hook"),
+        (0x178E, 0x00A0, "enemy_gfx_drawn_hook"),
+        (0x1794, 0x00F0, "VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[0]"),
+        (0x1794, 0x0100, "VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[0]"),
+        (0x1796, 0x0008, "VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[1]"),
+    ] {
+        let mut record = record();
+        put(&mut record.wram, offset, value);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable { source, value }),
+            "{offset:04X}"
+        );
+    }
+}
+
+#[test]
+fn either_banks_rtl_is_no_hook() {
+    for bank in [0x00A0, 0x00A8] {
+        let mut record = record();
+        put(&mut record.wram, 0x178C, 0x804C);
+        put(&mut record.wram, 0x178E, bank);
+        let state = decode(&record, &rooms()).unwrap().state;
+        assert_eq!(state.room.drawing.hook, GraphicsDrawnHook::None);
     }
 }
 

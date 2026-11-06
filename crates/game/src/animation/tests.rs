@@ -52,6 +52,7 @@ fn content() -> Content {
         face_block_lists: data::enemy::face_block::FaceBlockLists::default(),
         samus_spritemaps: data::pose::spritemap::SamusSpritemaps::default(),
         visor_colours: data::palette::VisorColours::default(),
+        face_block_glow: data::enemy::face_block::GlowColours::default(),
     }
 }
 

@@ -130,6 +130,10 @@ pub fn run(state: &mut State, active: &Active, content: &Content) {
             continue;
         }
         let routine = AiRoutine::of(&slot.common);
+        let mut glow = face_block::Glow {
+            hook: &mut state.room.drawing.hook,
+            cycle: &mut state.enemy_palette_cycle,
+        };
         ai(
             slot,
             routine,
@@ -137,6 +141,7 @@ pub fn run(state: &mut State, active: &Active, content: &Content) {
             &mut state.samus,
             &state.controller,
             content,
+            &mut glow,
         );
         slot.common.frame_counter = slot.common.frame_counter.wrapping_add(1);
         if slot
@@ -173,6 +178,7 @@ fn ai(
     samus: &mut Samus,
     controller: &Controller,
     content: &Content,
+    glow: &mut face_block::Glow<'_>,
 ) {
     let (Occupancy::Live(body) | Occupancy::Deleting(body)) = &mut slot.occupancy else {
         return;
@@ -193,7 +199,13 @@ fn ai(
         },
         EnemyBody::FaceBlock(block) => match routine {
             AiRoutine::Main => {
-                face_block::main_ai(&mut slot.common, block, samus, &content.face_block_lists);
+                face_block::main_ai(
+                    &mut slot.common,
+                    block,
+                    samus,
+                    &content.face_block_lists,
+                    glow,
+                );
             }
             // open: the face block's grapple, hurt and frozen AI, as its header names them.
             AiRoutine::Grapple | AiRoutine::Hurt | AiRoutine::Frozen => {}

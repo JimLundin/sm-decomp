@@ -1,7 +1,8 @@
-//! The Blue Brinstar face block's instruction lists, by what its AI starts them for (bank $A8
-//! log, <https://patrickjohnston.org/bank/A8>, `$A8:E80C` to `$A8:E828`).
+//! The Blue Brinstar face block's instruction lists, by what its AI starts them for, and its
+//! glow colours (bank $A8 log, <https://patrickjohnston.org/bank/A8>, `$A8:E7CC` to
+//! `$A8:E828`).
 
-use crate::rom::RomAddress;
+use crate::rom::{AddressError, Lorom, RomAddress};
 
 use super::program::{EnemyPrograms, ProgramError, Target};
 
@@ -35,5 +36,75 @@ impl FaceBlockLists {
             turning_right: place(0xe81a)?,
             facing_forward: place(0xe828)?,
         })
+    }
+}
+
+/// The face block's glow colours (`$A8:E7CC`): eight sets of four, which its palette cycle
+/// copies to colours 9 to 12 of its sprite palette in turn (`$A8:E86E`).
+pub const GLOW_COLOURS: RomAddress = RomAddress::new(BANK, 0xe7cc);
+
+/// Sets in the glow's cycle.
+pub const GLOW_SETS: usize = 8;
+
+/// Colours in a set.
+pub const GLOW_SET_COLOURS: usize = 4;
+
+/// The table's bytes: a word per colour.
+const GLOW_BYTES: usize = GLOW_SETS * GLOW_SET_COLOURS * 2;
+
+/// The face block's glow: each set's four colours, in the order its palette cycle shows them.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct GlowColours(pub [[u16; GLOW_SET_COLOURS]; GLOW_SETS]);
+
+impl GlowColours {
+    /// The glow's colours from the ROM.
+    ///
+    /// # Errors
+    ///
+    /// [`AddressError`] when the table is outside the image.
+    pub fn load(rom: Lorom<'_>) -> Result<Self, AddressError> {
+        let bytes = rom.read(GLOW_COLOURS, GLOW_BYTES)?;
+        let mut sets = [[0; GLOW_SET_COLOURS]; GLOW_SETS];
+        let words = bytes.as_chunks::<2>().0.iter();
+        for (colour, &[low, high]) in sets.iter_mut().flatten().zip(words) {
+            *colour = u16::from_le_bytes([low, high]);
+        }
+        Ok(Self(sets))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GlowColours;
+    use crate::rom::Rom;
+
+    /// The ROM, from `SM_ROM` or the checkout's `rom/sm.smc`; `None` where it isn't present.
+    fn rom() -> Option<Rom> {
+        let path = std::env::var_os("SM_ROM").map_or_else(
+            || std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../rom/sm.smc"),
+            std::path::PathBuf::from,
+        );
+        let image = std::fs::read(path).ok()?;
+        Rom::new(image).ok()
+    }
+
+    #[test]
+    fn the_glow_rises_and_falls_as_the_bank_log_says() {
+        let Some(cartridge) = rom() else {
+            return;
+        };
+        let GlowColours(sets) = GlowColours::load(cartridge.lorom()).unwrap();
+        // $A8:E7CC: the first set is the dimmest, the middle two the brightest, and the
+        // second half mirrors the first.
+        assert_eq!(sets[0], [0x001f, 0x0012, 0x000a, 0x002b]);
+        assert_eq!(sets[3], [0x0f3f, 0x01bf, 0x001f, 0x0012]);
+        for (rising, falling) in sets.iter().zip(sets.iter().rev()) {
+            assert_eq!(rising, falling);
+        }
+    }
+
+    #[test]
+    fn a_short_image_has_no_glow() {
+        assert!(GlowColours::load(crate::rom::Lorom::new(&[0; 0x100])).is_err());
     }
 }

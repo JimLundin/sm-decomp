@@ -441,6 +441,16 @@ pub const FIELDS: &[Field] = &[
     // Empty at every Tick's end: the drawing loop empties what the main enemy routine queued.
     open("room.drawing.queues"),
     open("room.drawing.routine_count"),
+    wram("room.drawing.hook", source::ENEMY_GFX_DRAWN_HOOK),
+    wram(
+        "enemy_palette_cycle.palette",
+        source::ENEMY_PALETTE_CYCLE_PALETTE,
+    ),
+    wram("enemy_palette_cycle.set", source::ENEMY_PALETTE_CYCLE_SET),
+    wram(
+        "enemy_palette_cycle.timer",
+        source::ENEMY_PALETTE_CYCLE_TIMER,
+    ),
     wram("elevator.status", source::ELEVATOR_STATUS),
     wram("elevator.armed", source::ELEVATOR_FLAGS),
     wram("elevator.direction", source::ELEVATOR_DIRECTION),
@@ -493,6 +503,7 @@ mod tests {
             "samus",
             "room",
             "elevator",
+            "enemy_palette_cycle",
             "hud",
             "message",
         ];
@@ -625,6 +636,10 @@ mod tests {
             rules.visor,
             rules.layer_blending,
             rules.drawing,
+            rules.drawn_hook.pointer,
+            rules.palette_cycle.palette,
+            rules.palette_cycle.set,
+            rules.palette_cycle.timer,
             rules.elevator.status,
             rules.elevator.armed,
             rules.elevator.direction,

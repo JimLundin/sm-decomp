@@ -541,6 +541,79 @@ pub struct EnemyDrawing {
     /// The main enemy routine's runs, wrapping: the hurt flash shows on frames with its bit 1
     /// set (`$A0:949C`).
     pub routine_count: u16,
+    /// What runs once the enemies are drawn.
+    pub hook: GraphicsDrawnHook,
+}
+
+/// The enemy graphics drawn hook (bank $A0 log): the routine the Draw phase runs after the
+/// enemies' layers (`$A0:88BD`, through `$A0:88C4`). Loading the enemies sets an `RTL`
+/// (`$A0:8A37`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum GraphicsDrawnHook {
+    /// An `RTL`: nothing runs.
+    #[default]
+    None,
+    /// The Blue Brinstar face block's glow, its palette cycle (bank $A8 log, `$A8:E86E`).
+    FaceBlockGlow,
+}
+
+/// A sprite palette, 0 to 7: CGRAM's second half, sixteen colours each.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SpritePalette(pub u8);
+
+impl SpritePalette {
+    /// The sprite palettes' first colour in CGRAM.
+    const FIRST_COLOUR: usize = 0x80;
+    /// Colours in a palette.
+    const COLOURS: usize = 16;
+
+    /// The palette an enemy's palette index ORs into its sprites: bits 9 to 11.
+    #[must_use]
+    pub const fn of(index: PaletteIndex) -> Self {
+        let [_, high] = index.0.to_le_bytes();
+        Self((high >> 1) & 7)
+    }
+
+    /// The CGRAM index of the palette's colour `colour`.
+    #[must_use]
+    pub fn colour(self, colour: usize) -> usize {
+        Self::FIRST_COLOUR
+            .wrapping_add(usize::from(self.0).wrapping_mul(Self::COLOURS))
+            .wrapping_add(colour)
+    }
+}
+
+/// Which of the face block's eight glow colour sets its palette cycle shows next (bank $A8
+/// log, `$A8:E8A3`): it counts 0 to 7 and round again.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct GlowSet(pub u8);
+
+impl GlowSet {
+    /// The set after this one.
+    #[must_use]
+    pub const fn next(self) -> Self {
+        Self(self.0.wrapping_add(1) & 7)
+    }
+
+    /// The set's place in the glow colours.
+    #[must_use]
+    pub fn index(self) -> usize {
+        usize::from(self.0)
+    }
+}
+
+/// The enemy palette cycle the face block's glow runs (bank $A8 log, `$A8:E86E`).
+///
+/// They are the enemy graphics drawn hook's variables. Loading the enemies doesn't reset
+/// them, so the colour set carries over from room to room.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct EnemyPaletteCycle {
+    /// The sprite palette it writes, the face block's own.
+    pub palette: SpritePalette,
+    /// The colour set it writes next.
+    pub set: GlowSet,
+    /// Frames until it does.
+    pub timer: Frames,
 }
 
 /// A room's width in blocks, 16 a screen.

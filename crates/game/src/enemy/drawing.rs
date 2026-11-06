@@ -14,7 +14,7 @@ use crate::oam::SpriteBase;
 use crate::pose::Content;
 use crate::state::State;
 use crate::state::room::{
-    EnemyCommon, EnemyDrawing, EnemyExtraProperty, EnemyProperty, PaletteIndex,
+    EnemyCommon, EnemyDrawing, EnemyExtraProperty, EnemyProperty, GraphicsDrawnHook, PaletteIndex,
 };
 use crate::state::slots::{Frames, SlotIndex};
 use crate::state::video::NmiBatch;
@@ -57,11 +57,12 @@ pub fn queue(drawing: &mut EnemyDrawing, index: usize, common: &EnemyCommon, cam
     queue.push(SlotIndex(slot, PhantomData));
 }
 
-/// The Draw phase (`$A0:884D`): each layer's queued enemies, Samus with layer 3.
+/// The Draw phase (`$A0:884D`): each layer's queued enemies, Samus with layer 3, then the
+/// enemy graphics drawn hook (`$A0:88BD`).
 // open: the sprite objects (`$B4:BD32`), bombs and projectile explosions (`$93:834D`) and
 // the high-priority enemy projectiles (`$86:8390`) before the layers, Samus's projectiles
-// with her, the low-priority enemy projectiles at layer 6 (`$86:83B2`) and the enemy
-// graphics drawn hook (`$178C`) join with their domains.
+// with her and the low-priority enemy projectiles at layer 6 (`$86:83B2`) join with their
+// domains.
 pub fn draw(state: &mut State, content: &Content) {
     let queues = std::mem::take(&mut state.room.drawing.queues);
     let camera = (state.room.camera.x.pixels, state.room.camera.y.pixels);
@@ -81,6 +82,19 @@ pub fn draw(state: &mut State, content: &Content) {
                 );
             }
         }
+    }
+    graphics_drawn(state, content);
+}
+
+/// The enemy graphics drawn hook (`$A0:88C4`).
+fn graphics_drawn(state: &mut State, content: &Content) {
+    match state.room.drawing.hook {
+        GraphicsDrawnHook::None => {}
+        GraphicsDrawnHook::FaceBlockGlow => super::face_block::glow(
+            &mut state.enemy_palette_cycle,
+            &mut state.video.batch.cgram,
+            &content.face_block_glow,
+        ),
     }
 }
 

@@ -626,6 +626,24 @@ cache, 2026-11-06: `item-morph-ball` enemies differ on 2 Ticks (from 38): `eleva
 (the enemy graphics drawn hook `$A8:E86E`, its palette index and timer), the face block's
 grapple/hurt/frozen AI, and its shot reaction (`$A8:E91D`, which undeletes the projectile).
 
+**C10b status (`lane/slice0-c10b`), the face block's glow.** Done: the enemy graphics drawn
+hook as `RoomScoped::drawing.hook`, a `GraphicsDrawnHook` (`None` for an `RTL`, which loading
+the enemies sets at `$A0:8A37`; `FaceBlockGlow` for `$A8:E86E`), run at the end of the Draw
+phase (`$A0:88BD`); `State::enemy_palette_cycle`, an `EnemyPaletteCycle` of `SpritePalette`
+(`$1794`), `GlowSet` (`$1796`, 0 to 7) and timer `Frames` (`$1798`), outside the room because
+loading the enemies doesn't reset it; `data::enemy::face_block::GlowColours` (`$A8:E7CC`,
+ROM test) in `Content`; the face block's init (`$A8:E82E`) and main AI (`$A8:E8AE`) setting
+the hook and palette, the init and the turn restarting the 16-frame wait; verify decodes the
+hook from its long pointer (either bank's `RTL` at `$804C`, or `$A8:E86E`) and the three
+words (coverage rows, comparators, mutants, six unit tests). Lockstep on A2's cache,
+2026-11-06: `item-morph-ball` `video.batch.cgram` 5 / 1427 Ticks differing (from 15) and
+`video.memory.cgram` 7 (from 17), first still at 741 (the suit palette load); the hook and
+the cycle's three words equal on every Tick of both rows; `area-brinstar` CGRAM still equal
+on all 476. Open: the hook's door transition check (`$A8:E86E` reads `$0797`; slice 0's
+Draw phase is never in one), a colour set past 7 (a magdollite's cycle leaves one; the
+decoder rejects it), and palette indices with bits 4 to 8 set, which the original turns into
+an offset inside a palette (no species does).
+
 **C10a status (`lane/slice0-c10`), the palette buffer's writers.** Found (A2's cache, the
 palette buffer diffed frame to frame): palette FX objects are off in both rows (the flag
 `$1E7B` and every object's ID are 0). Two writers run. Samus's visor (bank $91 log, handle
