@@ -6,6 +6,7 @@
 //! their domain lanes fill them.
 
 use crate::animation;
+use crate::collision::{Contacts, Room, ScanOrder, Surroundings};
 use crate::message_box;
 use crate::movement;
 use crate::pose::{self, Content};
@@ -378,6 +379,10 @@ struct Pass {
     requests: pose::PoseRequests,
     /// The enemies processing this frame, from the selection to the main enemy routine.
     active: crate::enemy::Active,
+    /// What Samus's moves met, from the movement handler to the pose update.
+    // open: the pose update's collision handling (bank $91 log, `$91:E8B6`, `$91:EADE`,
+    // `$91:EFC4`) reads it: the landing and ran-into-a-wall pose requests (C4b).
+    contacts: Contacts,
 }
 
 /// One step of the gameplay pass from `at`.
@@ -421,8 +426,17 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         // The movement handler, the animation, then the pose update (`$90:E725`).
         // open: the movement types beyond standing, running and turning join with C3b and C4.
         GameplayPhase::SamusNewState => {
-            movement::run(&mut state.samus, &state.controller, content);
-            movement::ride(&mut state.samus, state.elevator);
+            let surroundings = Surroundings {
+                room: Room {
+                    blocks: &state.room.blocks,
+                    width: state.room.width,
+                    slopes: Some(&content.slopes),
+                },
+                order: ScanOrder::of(state.clock.counters.completed.0),
+            };
+            pass.contacts =
+                movement::run(&mut state.samus, &state.controller, content, surroundings);
+            movement::ride(&mut state.samus, state.elevator, content, surroundings);
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             pose::change(&mut state.samus, pass.requests, content);
         }

@@ -12,10 +12,11 @@
 use data::movement::{Speed, SpeedEntry, VerticalSpeeds};
 use data::pose::transition::Control;
 
-use super::{Rules, move_horizontally, over_cap};
+use super::{Mover, Rules, move_horizontally, over_cap};
+use crate::collision::Heading;
 use crate::pose::{Content, JUMP_TAKE_OFF, Takeoff, controls};
 use crate::state::samus::{
-    Acceleration, AnimationFrame, AnimationTimer, Facing, Fixed, Horizontal, Item, Jump, Movement,
+    Acceleration, AnimationFrame, AnimationTimer, Facing, Horizontal, Item, Jump, Movement, Point,
     PoseId, Samus, Vertical, YDirection,
 };
 use crate::state::{Button, Controller};
@@ -59,7 +60,12 @@ impl Pad {
 // open: the extra Y displacement (`EXTRA_SAMUS_Y_DISPLACEMENT`) is zero in slice 0; the space
 // jump and screw attack (`$90:A436`), the contact damage index (`$90:A734`) and the spin
 // jump's wall jump check (`$90:9D35`, block and enemy collision) join with the items and C4.
-pub(super) fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
+pub(super) fn run(
+    samus: &mut Samus,
+    controller: &Controller,
+    content: &Content,
+    mover: &mut Mover<'_>,
+) {
     let pad = Pad::of(controller);
     let rules = Rules {
         speeds: &content.speeds,
@@ -81,12 +87,12 @@ pub(super) fn run(samus: &mut Samus, controller: &Controller, content: &Content)
             if JUMP_TAKE_OFF.contains(&pose) {
                 // The take-off moves her by her extra run speed alone.
                 speed.acceleration = Acceleration::Accelerating;
-                move_horizontally(speed, Speed::ZERO, facing, &mut position.x);
+                move_horizontally(speed, Speed::ZERO, facing, &mut position, mover);
             } else {
                 release(vertical, pad);
                 air_base_speed(speed, entry);
-                drift(speed, pad, facing, &mut position.x);
-                move_vertically(vertical, gravity, &mut position.y);
+                drift(speed, pad, facing, &mut position, mover);
+                move_vertically(vertical, gravity, &mut position, mover);
             }
         }
         Movement::WallJumping { speed, vertical } => {
@@ -96,8 +102,8 @@ pub(super) fn run(samus: &mut Samus, controller: &Controller, content: &Content)
             if speed.acceleration == Acceleration::Accelerating {
                 speed.acceleration = Acceleration::Decelerating;
             }
-            move_horizontally(speed, speed.base, facing, &mut position.x);
-            move_vertically(vertical, gravity, &mut position.y);
+            move_horizontally(speed, speed.base, facing, &mut position, mover);
+            move_vertically(vertical, gravity, &mut position, mover);
         }
         Movement::Jumping {
             jump: Jump::Spin,
@@ -120,15 +126,15 @@ pub(super) fn run(samus: &mut Samus, controller: &Controller, content: &Content)
                 speed.base = Speed::ZERO;
                 speed.acceleration = Acceleration::Accelerating;
             }
-            move_horizontally(speed, speed.base, facing, &mut position.x);
-            move_vertically(vertical, gravity, &mut position.y);
+            move_horizontally(speed, speed.base, facing, &mut position, mover);
+            move_vertically(vertical, gravity, &mut position, mover);
         }
         Movement::Falling { speed, vertical } => {
             rules.extra_run(speed);
             air_base_speed(speed, entry);
-            drift(speed, pad, facing, &mut position.x);
+            drift(speed, pad, facing, &mut position, mover);
             started_falling(vertical);
-            move_vertically(vertical, gravity, &mut position.y);
+            move_vertically(vertical, gravity, &mut position, mover);
             let terminal = vertical.speed.pixels().cast_signed() >= TERMINAL_PIXELS.cast_signed();
             let animation = &mut samus.animation;
             if FALLING.contains(&pose)
@@ -160,9 +166,15 @@ pub(super) fn run(samus: &mut Samus, controller: &Controller, content: &Content)
 
 /// Move her by her base speed while she keeps momentum or steers; else she loses it and
 /// stays where she is (`$90:900D`, `$90:9174`).
-fn drift(speed: &mut Horizontal, pad: Pad, facing: Facing, x: &mut Fixed) {
+fn drift(
+    speed: &mut Horizontal,
+    pad: Pad,
+    facing: Facing,
+    position: &mut Point,
+    mover: &mut Mover<'_>,
+) {
     if speed.acceleration != Acceleration::Accelerating || pad.sideways() {
-        move_horizontally(speed, speed.base, facing, x);
+        move_horizontally(speed, speed.base, facing, position, mover);
     } else {
         speed.base = Speed::ZERO;
     }
@@ -221,32 +233,28 @@ const fn fall_from_rest(vertical: &mut Vertical) {
 
 /// "Samus Y movement - with speed calculations" (`$90:90E2`): she moves by the frame's
 /// starting speed, up unless falling; gravity then takes from a rise or adds to a fall whose
-/// pixel word isn't 5 yet.
-// open: the move goes through block and solid enemy collision (`$90:93EC`, `$90:9440`), which
-// lands her on the floor and stops her at ceilings (C4).
-const fn move_vertically(vertical: &mut Vertical, gravity: Speed, y: &mut Fixed) {
+/// pixel word isn't 5 yet. The move goes through her block collision (`$90:93EC` up,
+/// `$90:9440` down), which lands her on floors and stops her at ceilings.
+fn move_vertically(
+    vertical: &mut Vertical,
+    gravity: Speed,
+    position: &mut Point,
+    mover: &mut Mover<'_>,
+) {
     let amount = vertical.speed;
-    let displacement = match vertical.direction {
+    let (displacement, heading) = match vertical.direction {
         YDirection::Down => {
             if amount.pixels() != TERMINAL_PIXELS {
                 vertical.speed = Speed(amount.0.wrapping_add(gravity.0));
             }
-            amount.0
+            (amount.0, Heading::Down)
         }
         YDirection::Up | YDirection::None => {
             vertical.speed = Speed(amount.0.wrapping_sub(gravity.0));
-            amount.0.wrapping_neg()
+            (amount.0.wrapping_neg(), Heading::Up)
         }
     };
-    let moved = Speed(
-        Speed::new(y.pixels, y.subpixels)
-            .0
-            .wrapping_add(displacement),
-    );
-    *y = Fixed {
-        pixels: moved.pixels(),
-        subpixels: moved.subpixels(),
-    };
+    mover.move_y(Speed(displacement), heading, position);
 }
 
 /// "Make Samus jump" (`$90:98BC`) and "Make Samus wall-jump" (`$90:9949`): she rises.

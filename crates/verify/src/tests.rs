@@ -1295,7 +1295,7 @@ fn cached_rows() -> Option<(game::state::room::RoomScoped, Vec<(String, State)>)
     let state = morph_ball_room
         .state(morph_ball_room.select(&Progress::default()))
         .unwrap();
-    let loaded = game::state::room::RoomScoped::load(id, state);
+    let loaded = game::state::room::RoomScoped::load(id, morph_ball_room.size, state);
     let lock_path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
     let lock = crate::lock::Lock::parse(&std::fs::read_to_string(lock_path).unwrap()).unwrap();

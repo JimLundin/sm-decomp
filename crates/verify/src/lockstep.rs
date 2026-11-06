@@ -311,6 +311,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.equipment.reserve_mode", samus.equipment.reserve_mode),
     field!("room.room", room.room),
     field!("room.blocks", room.blocks),
+    field!("room.width", room.width),
     field!("room.scroll_areas", room.scroll_areas),
     field!("room.camera.x.pixels", room.camera.x.pixels),
     field!("room.camera.x.subpixels", room.camera.x.subpixels),

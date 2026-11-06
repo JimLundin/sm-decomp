@@ -8,6 +8,7 @@
 //! transition handler (`$91:EB88`) then applies the request after the movement handler and
 //! records the pose history (<https://patrickjohnston.org/bank/91>).
 
+use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::AnimationDelays;
 use data::pose::transition::{Control, Controls, PoseTransitions};
@@ -34,6 +35,8 @@ pub struct Content {
     pub vertical: VerticalSpeeds,
     /// Samus's animation delay lists.
     pub delays: AnimationDelays,
+    /// The slope shapes her block collision reads.
+    pub slopes: Slopes,
 }
 
 /// The pose a frame asks for, by the channel that asked.

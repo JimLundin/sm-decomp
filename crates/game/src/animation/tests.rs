@@ -46,6 +46,7 @@ fn content() -> Content {
         speeds: HorizontalSpeeds::default(),
         vertical: VerticalSpeeds::default(),
         delays: AnimationDelays::new(lists, list(&[0x01, 0xFF])),
+        slopes: data::level::slope::Slopes::default(),
     }
 }
 

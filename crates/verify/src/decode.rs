@@ -12,8 +12,8 @@ use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{
-    Block, Camera, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, RoomScoped,
-    ScrollArea,
+    Block, BlockColumns, Camera, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
+    RoomScoped, ScrollArea,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
@@ -695,6 +695,7 @@ impl Rules<'_> {
             room: RoomScoped {
                 room,
                 blocks,
+                width: BlockColumns(self.level.width.read(wram)?),
                 scroll_areas,
                 camera: Camera {
                     x: Fixed {

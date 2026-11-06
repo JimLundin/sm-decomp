@@ -4,7 +4,9 @@ use data::movement::{MOVEMENT_TYPES, SpeedTable};
 use data::pose::MovementType;
 
 use super::*;
+use crate::collision::Surroundings;
 use crate::movement::run;
+use crate::state::samus::Fixed;
 use crate::state::samus::Point;
 use crate::state::slots::FlagSet;
 
@@ -108,11 +110,11 @@ fn a_rise_moves_by_the_frames_speed_then_gravity_slows_it() {
     let content = content();
     let jump = holding(&[Button::A]);
     let mut samus = jumping(Speed::new(4, 0xE000), YDirection::Up);
-    run(&mut samus, &jump, &content);
+    run(&mut samus, &jump, &content, Surroundings::default());
     // $100.0000 - 4.E000 = $FB.2000; 4.E000 - 0.1C00 = 4.C400.
     assert_eq!(samus.position.y, at(0x00FB, 0x2000));
     assert_eq!(vertical(&samus).speed, Speed::new(4, 0xC400));
-    run(&mut samus, &jump, &content);
+    run(&mut samus, &jump, &content, Surroundings::default());
     assert_eq!(samus.position.y, at(0x00F6, 0x5C00));
     assert_eq!(vertical(&samus).speed, Speed::new(4, 0xA800));
 }
@@ -121,7 +123,12 @@ fn a_rise_moves_by_the_frames_speed_then_gravity_slows_it() {
 fn letting_go_of_jump_ends_the_rise() {
     let content = content();
     let mut samus = jumping(Speed::new(4, 0xE000), YDirection::Up);
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     // She falls from rest: no move this frame, then gravity's 0.1C00.
     assert_eq!(samus.position.y, at(0x0100, 0));
     assert_eq!(
@@ -131,7 +138,12 @@ fn letting_go_of_jump_ends_the_rise() {
             direction: YDirection::Down,
         }
     );
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(samus.position.y, at(0x0100, 0x1C00));
 }
 
@@ -140,12 +152,12 @@ fn the_rise_ends_at_its_apex() {
     let content = content();
     let jump = holding(&[Button::A]);
     let mut samus = jumping(Speed::new(0, 0x1000), YDirection::Up);
-    run(&mut samus, &jump, &content);
+    run(&mut samus, &jump, &content, Surroundings::default());
     // 0.1000 - 0.1C00 goes below zero for the rest of the frame...
     assert_eq!(vertical(&samus).speed, Speed(0xFFFF_F400));
     assert_eq!(samus.position.y, at(0x00FF, 0xF000));
     // ... and the next frame's check starts the fall from rest.
-    run(&mut samus, &jump, &content);
+    run(&mut samus, &jump, &content, Surroundings::default());
     assert_eq!(
         vertical(&samus),
         Vertical {
@@ -169,14 +181,24 @@ fn gravity_stops_adding_once_the_pixel_word_is_5() {
         },
         ..jumping(Speed::ZERO, YDirection::None)
     };
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     // 4.F000 + 0.1C00 = 5.0C00: past 5, as the original tests the pixel word alone.
     assert_eq!(samus.position.y, at(0x0104, 0xF000));
     assert_eq!(vertical(&samus).speed, Speed::new(5, 0x0C00));
     // At terminal speed the falling pose's animation goes to its frame 5.
     assert_eq!(samus.animation.frame, TERMINAL_FRAME);
     assert_eq!(samus.animation.timer, TERMINAL_DELAY);
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(vertical(&samus).speed, Speed::new(5, 0x0C00));
     assert_eq!(samus.position.y, at(0x0109, 0xFC00));
 }
@@ -202,7 +224,12 @@ fn a_spin_jump_keeps_its_speed_only_forwards_or_at_the_cap() {
     let content = content();
     // Not steering: she loses her base speed and stays where she is.
     let mut samus = spinning(Speed::new(0, 0x8000));
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     let speed = samus.movement.horizontal().unwrap_or_default();
     assert_eq!(
         (speed.base, speed.acceleration),
@@ -211,7 +238,12 @@ fn a_spin_jump_keeps_its_speed_only_forwards_or_at_the_cap() {
     assert_eq!(samus.position.x, at(0x0080, 0));
     // Steering forwards: 0.8000 + 0.1000, and the mode turns to decelerating.
     let mut samus = spinning(Speed::new(0, 0x8000));
-    run(&mut samus, &holding(&[Button::Right]), &content);
+    run(
+        &mut samus,
+        &holding(&[Button::Right]),
+        &content,
+        Surroundings::default(),
+    );
     let speed = samus.movement.horizontal().unwrap_or_default();
     assert_eq!(
         (speed.base, speed.acceleration),
@@ -220,7 +252,12 @@ fn a_spin_jump_keeps_its_speed_only_forwards_or_at_the_cap() {
     assert_eq!(samus.position.x, at(0x0080, 0x9000));
     // At the cap she keeps moving without steering: 0.F800 + 0.1000 caps to 1.0000.
     let mut samus = spinning(Speed::new(0, 0xF800));
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(samus.position.x, at(0x0081, 0));
     // With no direction the rise rule runs: it moves her by nothing and gravity takes from
     // it (the moonfall glitch's start).
@@ -239,7 +276,12 @@ fn the_take_off_moves_her_by_her_run_speed_alone() {
         speed.extra_run = Speed::new(0, 0x4000);
         speed.momentum = true;
     }
-    run(&mut samus, &holding(&[Button::A]), &content);
+    run(
+        &mut samus,
+        &holding(&[Button::A]),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(
         samus.position,
         Point {
@@ -249,4 +291,43 @@ fn the_take_off_moves_her_by_her_run_speed_alone() {
     );
     assert_eq!(vertical(&samus).speed, Speed::new(4, 0xE000));
     assert_eq!(samus.movement.kind(), MovementType::NormalJumping);
+}
+
+#[test]
+fn a_fall_lands_her_on_the_floor() {
+    use data::level::{BlockKind, Bts};
+    let content = content();
+    let mut blocks = vec![crate::state::room::Block::default(); 16 * 32];
+    // The floor is row $11 under her column 8: its top is $110.
+    if let Some(block) = blocks.get_mut(0x11 * 16 + 8) {
+        block.kind = BlockKind::Solid(Bts(0));
+    }
+    let surroundings = Surroundings {
+        room: crate::collision::Room {
+            blocks: &blocks,
+            width: crate::state::room::BlockColumns(16),
+            slopes: None,
+        },
+        ..Surroundings::default()
+    };
+    let mut samus = jumping(Speed::new(4, 0), YDirection::Down);
+    samus.movement = Movement::Falling {
+        speed: Horizontal::default(),
+        vertical: vertical(&samus),
+    };
+    samus.position.y = at(0x010D, 0);
+    let contacts = run(&mut samus, &Controller::default(), &content, surroundings);
+    // With no Y radius her bottom is her Y less one: she stops at $110, on the floor's top.
+    assert_eq!(contacts.vertical, crate::collision::VerticalContact::Landed);
+    assert_eq!(samus.position.y, at(0x0110, 0xFFFF));
+    let contacts = run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
+    assert_eq!(
+        contacts.vertical,
+        crate::collision::VerticalContact::Falling
+    );
 }

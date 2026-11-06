@@ -2,7 +2,7 @@
 
 use canonical::Canonical;
 use data::id::{DoorwayId, RoomId, SpeciesId};
-use data::room::RoomState;
+use data::room::{RoomState, Screens};
 
 pub use data::level::{
     Block, BlockKind, BombableBts, Bts, DoorIndex, Offset, PlmChoice, ScrollArea, Slope, Tile,
@@ -369,6 +369,10 @@ pub enum EnemyBody {
     },
 }
 
+/// A room's width in blocks, 16 a screen.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BlockColumns(pub u16);
+
 /// Everything room-scoped.
 // open: FX, enemy projectiles, sprite objects, Samus's projectiles and the visual effects
 // (HDMA objects, palette FX, animated tiles, layer blending) join with their domains.
@@ -380,6 +384,8 @@ pub struct RoomScoped {
     pub entered_by: Option<DoorwayId>,
     /// The level data, as PLMs and collisions have changed it.
     pub blocks: Vec<Block>,
+    /// How many blocks across the room is: the level's row length.
+    pub width: BlockColumns,
     /// One per screen, row-major.
     pub scroll_areas: Vec<ScrollArea>,
     /// The camera.
@@ -391,15 +397,16 @@ pub struct RoomScoped {
 }
 
 impl RoomScoped {
-    /// Room `room` as it loads in `state`: its level's layer 1 blocks and its scroll areas,
-    /// with no PLMs or enemies yet and the camera at the top left.
+    /// Room `room`, `size` screens, as it loads in `state`: its level's layer 1 blocks, its width
+    /// in blocks and its scroll areas, with no PLMs or enemies yet and the camera at the top left.
     // open: the door's arrival, the PLM and enemy populations and the camera's start join with
     // the room transition (bank $82 log, `$82:E7D3`).
     #[must_use]
-    pub fn load(room: RoomId, state: &RoomState) -> Self {
+    pub fn load(room: RoomId, size: Screens, state: &RoomState) -> Self {
         Self {
             room,
             blocks: state.layers.layer1.clone(),
+            width: BlockColumns(u16::from(size.width).wrapping_mul(16)),
             scroll_areas: state.scroll_areas.clone(),
             ..Self::default()
         }

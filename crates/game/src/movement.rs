@@ -16,25 +16,104 @@ pub use air::make_jump;
 use data::movement::{HorizontalSpeeds, Speed, SpeedEntry};
 use data::pose::transition::Control;
 
+use crate::collision::{self, Body, Contacts, Heading, Side, Surroundings, VerticalContact};
 use crate::pose::{Content, controls};
 use crate::state::Controller;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
 use crate::state::samus::{
-    Acceleration, Facing, Fixed, Horizontal, Item, Movement, PoseId, Samus, Turn,
+    Acceleration, Facing, Horizontal, Item, Movement, Point, PoseId, Samus, Turn,
 };
 
 /// The poses that face the screen: standing in them is the elevator's, which takes no
 /// horizontal motion (`$90:A383`).
 const FACING_FORWARD: [PoseId; 2] = [PoseId(0), PoseId(0x9B)];
 
-/// The movement handler's horizontal part for the frame (`$90:A337`).
+/// Samus's X radius, which only her initialisation sets (`$90:EC39`).
+const X_RADIUS: u16 = 5;
+
+/// Samus as her block collision sees her: her X radius, her pose's Y radius (`$0B00`) and
+/// whether she has no Y speed.
+fn body(samus: &Samus, content: &Content) -> Body {
+    Body {
+        x_radius: X_RADIUS,
+        y_radius: content
+            .poses
+            .get(samus.pose)
+            .map_or(0, |pose| u16::from(pose.y_radius)),
+        still_vertically: samus
+            .movement
+            .vertical()
+            .is_none_or(|vertical| vertical.speed == Speed::ZERO),
+    }
+}
+
+/// A frame's moves: where they happen, Samus as they see her, and what they met.
+struct Mover<'a> {
+    surroundings: Surroundings<'a>,
+    body: Body,
+    contacts: Contacts,
+}
+
+impl Mover<'_> {
+    /// "Move Samus left" or "right" (`$90:9350`, `$90:93B1`) by a signed `displacement`
+    /// through the blocks (`$94:971E`), then "Kill Samus X speed if collision detected"
+    /// (`$90:E5CE`): a wall cancels her speed boost and zeroes her speeds.
+    // open: solid enemy collision (`$A0:A8F0`) and the slope alignment after the move
+    // (`$94:87F4`, which `$0A46` enables) join with solid enemies and the slopes' flags.
+    fn move_x(
+        &mut self,
+        speed: &mut Horizontal,
+        displacement: Speed,
+        leftwards: bool,
+        position: &mut Point,
+    ) {
+        let room = self.surroundings.room;
+        if collision::move_x(room, self.body, position, displacement).collided {
+            self.contacts.wall = Some(if leftwards { Side::Left } else { Side::Right });
+            cancel_speed_boosting(speed);
+            *speed = Horizontal::default();
+        } else {
+            self.contacts = Contacts::default();
+        }
+    }
+
+    /// "Move Samus up" or "down" (`$90:93EC`, `$90:9440`) by a signed `displacement`
+    /// through the blocks (`$94:9763`), then the solid vertical collision result
+    /// (`$90:E606`, `$90:E61B`).
+    // open: the downwards result's per-movement-type pose input (`$0DC7`, `$90:E65A`,
+    // `$90:E676`) and the wall jump's result 5 join with the pose update's collision (C4b).
+    fn move_y(&mut self, displacement: Speed, heading: Heading, position: &mut Point) {
+        let Surroundings { room, order } = self.surroundings;
+        let collided =
+            collision::move_y(room, self.body, position, displacement, heading, order).collided;
+        self.contacts.vertical = match (heading, collided) {
+            (Heading::Up, true) => VerticalContact::HitCeiling,
+            (Heading::Up, false) => VerticalContact::NoChange,
+            (Heading::Down, true) => VerticalContact::Landed,
+            (Heading::Down, false) => VerticalContact::Falling,
+        };
+    }
+}
+
+/// The movement handler for the frame (`$90:A337`), through the room's blocks; what her
+/// moves met, for the pose update.
 // open: the ground's vertical part ("Samus Y movement - no speed calculations", `$90:923F`),
-// the elevator's descent, the footsteps and the standing shot's animation reset join with C4,
-// C6 and C7; the morph ball, the spring ball and the air turns join with their movements.
-pub fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
+// the footsteps and the standing shot's animation reset join with C4b, C6 and C7; the morph
+// ball, the spring ball and the air turns join with their movements.
+pub fn run(
+    samus: &mut Samus,
+    controller: &Controller,
+    content: &Content,
+    surroundings: Surroundings<'_>,
+) -> Contacts {
+    let mut mover = Mover {
+        surroundings,
+        body: body(samus, content),
+        contacts: Contacts::default(),
+    };
     if samus.movement.vertical().is_some() {
-        air::run(samus, controller, content);
-        return;
+        air::run(samus, controller, content, &mut mover);
+        return mover.contacts;
     }
     let facing = samus.facing;
     let pose = samus.pose;
@@ -42,13 +121,13 @@ pub fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
     let run_held = controls(controller.held).contains(Control::Run);
     let movement = samus.movement;
     let Some(speed) = samus.movement.horizontal_mut() else {
-        return;
+        return mover.contacts;
     };
-    let mut position = samus.position.x;
+    let mut position = samus.position;
     match movement {
         Movement::Standing { .. } => {
             if !FACING_FORWARD.contains(&pose) {
-                stand(speed, facing, &mut position);
+                stand(speed, facing, &mut position, &mut mover);
             }
         }
         Movement::Running { .. } => {
@@ -58,7 +137,7 @@ pub fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
                 run_held,
                 equipped_booster,
             };
-            rules.x_movement(speed, facing, &mut position);
+            rules.x_movement(speed, facing, &mut position, &mut mover);
         }
         Movement::TurningAround {
             place: Turn::OnGround,
@@ -70,7 +149,7 @@ pub fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
                 run_held,
                 equipped_booster,
             };
-            rules.x_movement(speed, facing, &mut position);
+            rules.x_movement(speed, facing, &mut position, &mut mover);
             cancel_speed_boosting(speed);
             speed.extra_run = Speed::ZERO;
         }
@@ -90,9 +169,10 @@ pub fn run(samus: &mut Samus, controller: &Controller, content: &Content) {
         | Movement::DamageBoost
         | Movement::GrabbedByDraygon
         | Movement::Shinespark
-        | Movement::Unused(_) => return,
+        | Movement::Unused(_) => return mover.contacts,
     }
-    samus.position.x = position;
+    samus.position = position;
+    mover.contacts
 }
 
 /// What "Samus X movement" reads besides the motion itself.
@@ -105,13 +185,19 @@ struct Rules<'c> {
 
 impl Rules<'_> {
     /// "Samus X movement" (`$90:8E64`): the extra run speed, the base speed, then the move.
-    fn x_movement(&self, speed: &mut Horizontal, facing: Facing, x: &mut Fixed) {
+    fn x_movement(
+        &self,
+        speed: &mut Horizontal,
+        facing: Facing,
+        position: &mut Point,
+        mover: &mut Mover<'_>,
+    ) {
         self.extra_run(speed);
         // A movement type past the table moves her by her extra run speed alone.
         if let Some(entry) = self.speeds.normal.of(self.movement.kind()) {
             base_speed(speed, entry);
         }
-        move_horizontally(speed, speed.base, facing, x);
+        move_horizontally(speed, speed.base, facing, position, mover);
     }
 
     /// "Handle Samus X extra run speed" (`$90:973E`): running with the run button held adds
@@ -196,9 +282,14 @@ const fn over_cap(base: Speed, max: Speed) -> bool {
 /// her turn's momentum lasts, by her base and extra run speed (`$90:E464`, `$90:E4AD`).
 // open: the speed divisor (`SAMUS_X_SPEED_DIVISOR`) and the extra displacement
 // (`EXTRA_SAMUS_X_DISPLACEMENT`) are zero in slice 0's movements; they join with the
-// movements that set them. The move itself goes through block and solid enemy collision
-// (`$90:9350`, `$90:93B1`), which can stop her and kill her speed (C4).
-fn move_horizontally(speed: &Horizontal, base: Speed, facing: Facing, x: &mut Fixed) {
+// movements that set them.
+fn move_horizontally(
+    speed: &mut Horizontal,
+    base: Speed,
+    facing: Facing,
+    position: &mut Point,
+    mover: &mut Mover<'_>,
+) {
     let leftwards = match speed.acceleration {
         Acceleration::Accelerating | Acceleration::Decelerating => facing == Facing::Left,
         Acceleration::TurningAround => facing == Facing::Right,
@@ -209,10 +300,7 @@ fn move_horizontally(speed: &Horizontal, base: Speed, facing: Facing, x: &mut Fi
     } else {
         total
     });
-    let position = Speed::new(x.pixels, x.subpixels);
-    let moved = Speed(position.0.wrapping_add(displacement));
-    x.pixels = moved.pixels();
-    x.subpixels = moved.subpixels();
+    mover.move_x(speed, Speed(displacement), leftwards, position);
 }
 
 /// The displacement's pixel word, held to 15 pixels either way with its subpixels kept
@@ -230,8 +318,8 @@ fn clamp(displacement: u32) -> u32 {
 
 /// "Samus movement - standing" (`$90:A383`): her extra run speed moves her a last frame,
 /// then she stops.
-fn stand(speed: &mut Horizontal, facing: Facing, x: &mut Fixed) {
-    move_horizontally(speed, Speed::ZERO, facing, x);
+fn stand(speed: &mut Horizontal, facing: Facing, position: &mut Point, mover: &mut Mover<'_>) {
+    move_horizontally(speed, Speed::ZERO, facing, position, mover);
     // Cancelling the speed boost drops her momentum; the speeds go with it.
     *speed = Horizontal::default();
 }
@@ -258,13 +346,22 @@ pub fn carried(samus: &Samus, ride: ElevatorRide) -> bool {
 }
 
 /// Standing on a ride steps her a pixel down (`$90:A383`), after the platform has stood her
-/// on it this frame: the next frame's placement takes it back.
-// open: the step is a terrain-only collision, so a block under her stops it at the block's
-// top with subpixels $FFFF (the Brinstar descent's frames 316-326 and 348-358); it joins
-// with Samus's block collision.
-pub fn ride(samus: &mut Samus, ride: ElevatorRide) {
+/// on it this frame.
+///
+/// The next frame's placement takes it back. The step is a terrain-only
+/// move with the collision direction up (`$90:A397`, `$94:9763`), so a block under her stops
+/// it at the block's top with subpixels $FFFF.
+pub fn ride(
+    samus: &mut Samus,
+    ride: ElevatorRide,
+    content: &Content,
+    surroundings: Surroundings<'_>,
+) {
     if carried(samus, ride) {
-        samus.position.y.pixels = samus.position.y.pixels.wrapping_add(1);
+        let Surroundings { room, order } = surroundings;
+        let body = body(samus, content);
+        let step = Speed::new(1, 0);
+        collision::move_y(room, body, &mut samus.position, step, Heading::Up, order);
     }
 }
 

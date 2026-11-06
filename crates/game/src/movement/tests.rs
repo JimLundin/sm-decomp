@@ -2,6 +2,8 @@ use data::movement::{ExtraRun, MOVEMENT_TYPES, SpeedTable};
 use data::pose::{MovementType, PoseFacing};
 
 use super::*;
+use crate::collision::Surroundings;
+use crate::state::samus::Fixed;
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Controller};
 
@@ -65,7 +67,7 @@ fn running_accelerates_from_rest_to_the_cap() {
     let mut samus = running_left();
     // Worked by hand from the table: the base speed gains 0.3000 a frame and the extra run
     // speed 0.1000, and she moves left by their sum.
-    run(&mut samus, &controller, &content);
+    run(&mut samus, &controller, &content, Surroundings::default());
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
         (speed.base, speed.extra_run),
@@ -77,19 +79,19 @@ fn running_accelerates_from_rest_to_the_cap() {
         (0x04FF, 0xC000)
     );
     for _ in 1..10 {
-        run(&mut samus, &controller, &content);
+        run(&mut samus, &controller, &content, Surroundings::default());
     }
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(speed.base, Speed::new(1, 0xE000));
     // 0.3000 more would be 2.1000: its subpixel word compares above the cap's C000 (the
     // difference is $5000), so the cap holds her at 2.C000 a frame early.
-    run(&mut samus, &controller, &content);
+    run(&mut samus, &controller, &content, Surroundings::default());
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(speed.base, Speed::new(2, 0xC000));
     assert_eq!(speed.extra_run, Speed::new(0, 0xB000));
     // The extra run speed climbs on to its cap of 2.0 and stays.
     for _ in 0..30 {
-        run(&mut samus, &controller, &content);
+        run(&mut samus, &controller, &content, Surroundings::default());
     }
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
@@ -102,7 +104,12 @@ fn running_accelerates_from_rest_to_the_cap() {
 fn without_the_run_button_there_is_no_extra_run_speed() {
     let content = content();
     let mut samus = running_left();
-    run(&mut samus, &holding(&[Button::Left]), &content);
+    run(
+        &mut samus,
+        &holding(&[Button::Left]),
+        &content,
+        Surroundings::default(),
+    );
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
         (speed.base, speed.extra_run, speed.momentum),
@@ -123,14 +130,29 @@ fn decelerating_slows_by_the_table_then_accelerates_again() {
         },
         ..running_left()
     };
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(
         samus.movement.horizontal().unwrap().base,
         Speed::new(0, 0x8000)
     );
     assert_eq!(samus.position.x.pixels, 0x04FF);
-    run(&mut samus, &Controller::default(), &content);
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     let speed = samus.movement.horizontal().unwrap();
     assert_eq!(
         (speed.base, speed.acceleration),
@@ -153,19 +175,34 @@ fn a_turn_from_rest_moves_on_alternate_frames_under_its_cap_of_zero() {
         ..running_left()
     };
     // Turning at rest: the deceleration takes her below zero, so she accelerates again.
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(
         samus.movement.horizontal().unwrap().acceleration,
         Acceleration::Accelerating
     );
     // 0.C000 compares below the cap of 0.0 (the difference is $C000, negative); 1.8000
     // doesn't, so the cap takes her back to zero.
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(
         (samus.position.x.pixels, samus.position.x.subpixels),
         (0x04FF, 0x4000)
     );
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(samus.movement.horizontal().unwrap().base, Speed::ZERO);
     assert_eq!(samus.position.x.subpixels, 0x4000);
 }
@@ -184,7 +221,12 @@ fn standing_spends_the_extra_run_speed_then_stops() {
         },
         ..running_left()
     };
-    run(&mut samus, &Controller::default(), &content);
+    run(
+        &mut samus,
+        &Controller::default(),
+        &content,
+        Surroundings::default(),
+    );
     assert_eq!(
         (samus.position.x.pixels, samus.position.x.subpixels),
         (0x04FE, 0xE000)
@@ -222,9 +264,81 @@ fn facing_forward_on_a_ride_steps_down_a_pixel_and_not_without_one() {
         pixels: 0x02,
         subpixels: 0,
     };
-    super::ride(&mut samus, ride);
+    super::ride(&mut samus, ride, &content(), Surroundings::default());
     assert_eq!(samus.position.y.pixels, 0x03);
     ride.status = ElevatorStatus::Inactive;
-    super::ride(&mut samus, ride);
+    super::ride(&mut samus, ride, &content(), Surroundings::default());
     assert_eq!(samus.position.y.pixels, 0x03);
+}
+
+/// A level eight blocks across of air, with `solid` blocks at their (column, row).
+fn level(solid: &[(u16, u16)]) -> Vec<crate::state::room::Block> {
+    use data::level::{BlockKind, Bts};
+    let mut blocks = vec![crate::state::room::Block::default(); 64];
+    for &(column, row) in solid {
+        if let Some(block) = blocks.get_mut(usize::from(row.wrapping_mul(8).wrapping_add(column))) {
+            block.kind = BlockKind::Solid(Bts(0));
+        }
+    }
+    blocks
+}
+
+fn surroundings(blocks: &[crate::state::room::Block]) -> Surroundings<'_> {
+    Surroundings {
+        room: crate::collision::Room {
+            blocks,
+            width: crate::state::room::BlockColumns(8),
+            slopes: None,
+        },
+        ..Surroundings::default()
+    }
+}
+
+#[test]
+fn running_into_a_wall_stops_her_and_kills_her_speed() {
+    let content = content();
+    let controller = holding(&[Button::Left, Button::B]);
+    let mut samus = running_left();
+    samus.position.x = Fixed {
+        pixels: 0x0015,
+        subpixels: 0,
+    };
+    samus.position.y.pixels = 0x0008;
+    if let Some(speed) = samus.movement.horizontal_mut() {
+        speed.base = Speed::new(1, 0);
+    }
+    // The wall's right edge is 15; her left side, 21 - 5, may come to 16 and no further.
+    let blocks = level(&[(0, 0)]);
+    let contacts = run(&mut samus, &controller, &content, surroundings(&blocks));
+    assert_eq!(contacts.wall, Some(crate::collision::Side::Left));
+    assert_eq!(
+        (samus.position.x.pixels, samus.position.x.subpixels),
+        (0x0015, 0)
+    );
+    assert_eq!(samus.movement.horizontal(), Some(Horizontal::default()));
+}
+
+#[test]
+fn a_ride_stops_its_step_on_a_block_under_her() {
+    let content = content();
+    let ride = ElevatorRide {
+        status: ElevatorStatus::EnteringRoom,
+        ..ElevatorRide::default()
+    };
+    let mut samus = Samus {
+        pose: PoseId(0),
+        movement: Movement::Standing {
+            speed: Horizontal::default(),
+        },
+        ..Samus::default()
+    };
+    // With no Y radius her bottom is her Y less one: at 0x10 she stands on the floor at 0x10.
+    samus.position.x.pixels = 0x0018;
+    samus.position.y.pixels = 0x0010;
+    let blocks = level(&[(1, 1)]);
+    super::ride(&mut samus, ride, &content, surroundings(&blocks));
+    assert_eq!(
+        (samus.position.y.pixels, samus.position.y.subpixels),
+        (0x0010, 0xFFFF)
+    );
 }

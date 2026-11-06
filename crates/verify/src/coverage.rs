@@ -314,6 +314,7 @@ pub const FIELDS: &[Field] = &[
         path: "room.blocks",
         status: Status::Decoded(Source::WramBlock(source::LEVEL_DATA)),
     },
+    wram("room.width", source::ROOM_WIDTH_IN_BLOCKS),
     Field {
         path: "room.scroll_areas",
         status: Status::Decoded(Source::WramBlock(source::SCROLLS)),
@@ -527,6 +528,7 @@ mod tests {
             rules.samus_y,
             rules.samus_y_subpixels,
             rules.room,
+            rules.level.width,
             rules.collected,
             rules.equipped,
             rules.energy,

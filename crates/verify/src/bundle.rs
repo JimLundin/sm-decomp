@@ -9,6 +9,7 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 
+use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::{AnimationDelays, AnimationError};
 use data::pose::transition::PoseTransitions;
@@ -118,6 +119,8 @@ pub enum ContentError {
     Speeds(AddressError),
     /// Samus's animation delay lists don't decode.
     Delays(AnimationError),
+    /// The slope shapes aren't in the image.
+    Slopes(AddressError),
 }
 
 impl fmt::Display for ContentError {
@@ -128,6 +131,7 @@ impl fmt::Display for ContentError {
             Self::Transitions(error) => write!(f, "the pose transitions: {error:?}"),
             Self::Speeds(error) => write!(f, "the speed tables: {error:?}"),
             Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
+            Self::Slopes(error) => write!(f, "the slope shapes: {error:?}"),
         }
     }
 }
@@ -147,5 +151,6 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         speeds: HorizontalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
         vertical: VerticalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
         delays: AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?,
+        slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
     })
 }

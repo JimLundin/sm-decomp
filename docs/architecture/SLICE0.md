@@ -668,6 +668,42 @@ Remaining:
   lava/acid speeds (liquids), the extra Y displacement, the space jump and screw attack,
   the shinespark windup from a normal jump and the animation skips of `$91:F543`/`$91:F624`.
 
+**C4a status (`lane/slice0-c4a`), Samus's block collision.** Done: `data::level::slope`
+decodes the slope shapes (`Slopes`: the square quadrants of `$94:8E54`, the surface heights of
+`$94:8B2B` and the walk factors of `$94:8588`; ROM test). `game::collision` is "Move Samus
+right" and "Move Samus down", no solid enemy collision (`$94:971E`, `$94:9763`): the scan of
+her rows (`$94:9543`) or columns (`$94:959E` left to right on even frames, `$94:95F5` right to
+left on odd ones, by `clock.counters.completed`), the reactions by block type (`$94:94D5`,
+`$94:94F5`): air types pass, extensions resolve their offset (`$94:9411`, `$94:9447`), solid,
+shootable, grapple, door, spike, special and bomb blocks stop her at the block's edge with the
+subpixel next to it (`$94:8F49`, `$94:8F82`), square slopes by quadrant and half (`$94:8D2B`,
+`$94:8DBD`), non-square slopes scale a walk on the ground (`$94:84D6`) and stop a vertical
+move at the surface in her own column, read by the collision direction (`$94:86FE`). It
+returns the distance moved and whether a block stopped her. `RoomScoped.width` is the room's
+width in blocks (`ROOM_WIDTH_IN_BLOCKS`, decoded, compared). `movement` moves through it where
+the original does: the ground and air X moves (`$90:9350`, `$90:93B1`, then `$90:E5CE`: a
+wall cancels the speed boost and zeroes her speeds), the air Y moves (`$90:93EC`, `$90:9440`,
+then `$90:E606`/`$90:E61B`: hit ceiling, landed, falling) and the elevator's step down
+(`$90:A383`, direction up). `movement::run` returns the frame's `Contacts` (the wall's side,
+`$0DCE`; the vertical result, `$0DC6`) into the gameplay pass. Unit tests on synthetic levels:
+a floor, a ceiling, a wall both ways, air, an extension, a half-height square slope, a
+triangle, the walk factor, running into a wall, a fall landing, the ride's step stopped.
+Remaining (C4b):
+- the pose update's collision: `$91:E8B6` (the prospective pose from `$0DC6`, with `$0DC7`'s
+  per-movement-type tables `$90:E65A`/`$90:E676`), `$91:EADE` (the prospective pose runs into
+  a wall) and `$91:EFC4..F31C` (solid vertical collision: landing); `Contacts` is in the pass
+  for them;
+- the slope alignment after a horizontal move (`$94:87F4`, enabled by `$0A46` bit 1), the
+  slope flag `$0DBA`, quicksand (`$1E71`), solid enemy collision (`$A0:A8F0`), the ground's
+  Y movement (`$90:923F`), the wall jump check (`$90:9D35`) and the pose change's collision
+  (`$94:96AB`);
+- doors (`$94:938B`: a door to a room starts the transition, one to none arms the elevator
+  while standing), spikes' damage, special and bombable blocks' PLMs: all solid here. The
+  17 cells B4's PLMs write at load are scroll and item special air (BTS `$46`, `$45`) and
+  vertical extensions above them; special air passes in this module, so none changes a
+  collision in slice 0 until the special air PLMs are built;
+- lockstep of both rows (Samus Y/X/pose/movement before and after): not reached.
+
 **C9 status (`lane/slice0-c9`), the HUD.** Done: `game::state::hud::Hud` holds the HUD
 tilemap's three rows as typed cells (`video::TilemapEntry`: tile, palette, priority, flips;
 `from_word` and `word` round-trip every word), the selected and auto-cancel items
