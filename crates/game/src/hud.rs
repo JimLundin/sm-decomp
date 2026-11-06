@@ -6,6 +6,8 @@
 //! item's highlight, the auto-cancel item's flash, then the queued transfer of the tilemap
 //! to VRAM.
 
+use data::dma::HUD_TILEMAP_BUFFER;
+
 use crate::state::State;
 use crate::state::hud::{Cell, Hud, HudItem, HudTilemap};
 use crate::state::samus::{Equipment, Gauge, ReserveMode};
@@ -148,7 +150,10 @@ pub fn phase(state: &mut State) {
     state.video.batch.vram.push(VramTransfer {
         to: HUD_TILEMAP_VRAM,
         step: VramStep::Row,
-        source: VramSource::Words(state.hud.tilemap.words()),
+        source: VramSource::Words {
+            from: HUD_TILEMAP_BUFFER,
+            words: state.hud.tilemap.words(),
+        },
     });
 }
 

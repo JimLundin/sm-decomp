@@ -12,7 +12,7 @@
 use canonical::Canonical;
 
 use super::animation::{AnimationDelays, AnimationFrame};
-use super::{POSE_COUNT, PoseId};
+use super::{MovementType, POSE_COUNT, PoseId, Poses};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 /// Bank `$92`, which holds the tables and the definitions.
@@ -29,6 +29,14 @@ const FRAME_BYTES: usize = 4;
 const DEFINITION_BYTES: usize = 7;
 /// The bottom half's list byte for a frame without bottom tiles; vanilla has none.
 const NO_BOTTOM: u8 = 0xFF;
+/// The frame a spin jump's wall jump check steps her animation to, the byte after her
+/// delay list's end: bank `$90` log, wall jump check `$90:9D35`, which sets the frame one
+/// before it (`$90:9DC8`).
+const WALL_JUMP_ELIGIBLE: usize = 0x0B;
+/// The screw attack's, which `$90:9DD7` sets one before.
+const SCREW_ATTACK_WALL_JUMP_ELIGIBLE: usize = 0x1B;
+/// The screw attack poses, facing right and left, which `$90:9D48` tells apart.
+const SCREW_ATTACK: [PoseId; 2] = [PoseId(0x81), PoseId(0x82)];
 /// The banks Samus's graphics are in.
 pub const GRAPHICS_BANKS: std::ops::RangeInclusive<u8> = 0x9B..=0x9F;
 
@@ -162,8 +170,21 @@ fn frame_pointers(
     Ok((top, bottom))
 }
 
+/// The frame past `pose`'s delay list its animation reaches, if any: a spin jump's wall
+/// jump check sets it whatever the list says.
+fn reached(poses: &Poses, pose: PoseId) -> Option<usize> {
+    let spin_jump = matches!(poses.get(pose)?.movement, MovementType::SpinJumping);
+    let frame = if SCREW_ATTACK.contains(&pose) {
+        SCREW_ATTACK_WALL_JUMP_ELIGIBLE
+    } else {
+        WALL_JUMP_ELIGIBLE
+    };
+    spin_jump.then_some(frame)
+}
+
 impl SamusTiles {
-    /// The tables from the ROM, for as many frames of each pose as its delay list has.
+    /// The tables from the ROM, for as many frames of each pose as its delay list has, and
+    /// for a spin jump through the frame its wall jump check reaches past the list.
     ///
     /// A pose's frames end early at the first whose definition isn't in the image: past
     /// the frames her animation reaches, the lists run into other data.
@@ -171,12 +192,17 @@ impl SamusTiles {
     /// # Errors
     ///
     /// [`AddressError`] if the pose table isn't in the image.
-    pub fn load(rom: Lorom<'_>, delays: &AnimationDelays) -> Result<Self, AddressError> {
+    pub fn load(
+        rom: Lorom<'_>,
+        delays: &AnimationDelays,
+        poses: &Poses,
+    ) -> Result<Self, AddressError> {
         let mut by_pose = Vec::with_capacity(POSE_COUNT);
         for index in 0..POSE_COUNT {
             let first = word(rom, at(ANIMATION_DEFINITIONS, index.wrapping_mul(2))?)?;
             let pose = PoseId(u16::try_from(index).unwrap_or(u16::MAX));
-            let count = delays.of(pose).map_or(0, super::animation::DelayList::len);
+            let listed = delays.of(pose).map_or(0, super::animation::DelayList::len);
+            let count = listed.max(reached(poses, pose).map_or(0, |frame| frame.wrapping_add(1)));
             let frames: Vec<(u16, Option<u16>)> = (0..count)
                 .map_while(|frame| {
                     let pointers = frame_pointers(rom, first, frame).ok()?;

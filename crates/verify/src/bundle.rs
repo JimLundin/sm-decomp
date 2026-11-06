@@ -177,9 +177,11 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let face_block_lists =
         FaceBlockLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
     let delays = AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?;
-    let samus_tiles = SamusTiles::load(rom.lorom(), &delays).map_err(ContentError::SamusTiles)?;
+    let poses = Poses::load(rom.lorom()).map_err(ContentError::Poses)?;
+    let samus_tiles =
+        SamusTiles::load(rom.lorom(), &delays, &poses).map_err(ContentError::SamusTiles)?;
     Ok(Content {
-        poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
+        poses,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
         speeds: HorizontalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
         vertical: VerticalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,

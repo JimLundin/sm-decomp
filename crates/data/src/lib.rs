@@ -7,6 +7,7 @@
 pub mod address_map;
 pub mod compression;
 pub mod digest;
+pub mod dma;
 pub mod enemy;
 pub mod id;
 pub mod level;

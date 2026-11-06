@@ -28,11 +28,12 @@ use game::state::samus::{
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
 use game::state::video::{
-    BACKGROUNDS, BgMode, Brightness, CGRAM_COLOURS, Colour, ColourMath, ColourMathLayers,
-    ColourMathSelect, ColourWrite, DisplaySettings, DmaChannel, FixedColour, GraphicsRef, Layers,
-    Mode7, Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, ObjectSelect, Registers,
-    RomWords, SamusTileUploads, Scroll, TileBases, TilemapBase, TilemapEntry, VRAM_WORDS, Video,
-    VideoMemory, VramSource, VramStep, VramTransfer, VramWord, WindowSettings, Windows,
+    BACKGROUNDS, BgMode, Brightness, BusAddress, CGRAM_COLOURS, Colour, ColourMath,
+    ColourMathLayers, ColourMathSelect, ColourWrite, DisplaySettings, DmaChannel, FixedColour,
+    GraphicsRef, Layers, Mode7, Mode7Select, Mosaic, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry,
+    ObjectSelect, Registers, RomWords, SamusTileUploads, Scroll, TileBases, TilemapBase,
+    TilemapEntry, VRAM_WORDS, Video, VideoMemory, VramSource, VramStep, VramTransfer, VramWord,
+    WindowSettings, Windows,
 };
 use game::state::{
     Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
@@ -1414,7 +1415,10 @@ fn vram_source(wram: &[u8], bank: u8, from: u16, bytes: usize) -> VramSource {
             u16::from_le_bytes([byte(0), byte(1)])
         })
         .collect();
-    VramSource::Words(words)
+    VramSource::Words {
+        from: BusAddress { bank, offset: from },
+        words,
+    }
 }
 
 /// The bytes at `sources`.
