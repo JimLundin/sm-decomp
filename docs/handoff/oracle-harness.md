@@ -139,3 +139,9 @@ Orphaned lsnes processes remain from hung or killed runs: PIDs 6176 and 14972 fr
 - `$TEMP/ohx/data` (1.3 GB, ROM-derived) and `$TEMP/ohx/bundles` (328 MB): keep them for the next lane.
 - `$TEMP/oracle-harness-target`: the build target; keep it while lanes build. `$TEMP/ohx/data/lsnes-native` (2 MB) and `$TEMP/ohx/nm`: keep.
 - Kept lsnes run directories `%TEMP%/oracle-lsnes-*` (about 5 MB each, a ROM copy inside): delete them when done.
+
+## Frame pads (RELOCK b1, lane `lane/relock-pads`)
+
+- `corpus --frame-pads DIR` writes each row's per-video-frame pads (`<row>.pads`, the `.inputs` format, N + 1 lines) from a Tick-rule run; `--from-frame-pads DIR` plays them with `preview`, so no frame is cut with its NMI running; `--no-memories` for pads-only runs. Proof, format and the b2 command: docs/oracle/RELOCK.md §5.
+- The DLL is `$TEMP/ohx/relock/oracle_pads3.dll` (wrapper `$TEMP/ohx/relock/oh`, `OH_DLL=oracle_pads3`; build `$TEMP/ohx/relock/build-pads.sh NAME`, target `/tmp/relock-pads-target`). A DLL in use can't be relinked: build under a new NAME.
+- Pads of 3 rows are in `$TEMP/ohx/relock/pads` (with `.cuts`, `.end`, `.played`); `pads-lean` holds the `--no-memories` check.

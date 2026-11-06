@@ -7,9 +7,15 @@
 //! k+1 until the k-th requested NMI has read it, and folds the existing lock's
 //! streams on requested frames only. The oracle contract's streams fold on
 //! every video frame.
+//!
+//! The new lock gives a pad per video frame instead (ARCHITECTURE D20,
+//! docs/oracle/RELOCK.md step b). A run under the Tick rule records the pad
+//! it presented at each frame ([`RowRun::pads`]) once; a run from those pads
+//! ([`Pads::Frames`]) knows every next pad, so it previews it and lsnes cuts
+//! every frame at its NMI's RTI, also where the NMI outlasts the frame.
 
 use crate::lock::{Entry, Pin};
-use crate::record::{FrameRecord, NmiKind, Pad};
+use crate::record::{Cut, FrameRecord, NmiKind, Pad};
 use crate::seed::Capture;
 use crate::streams::{self, NAMES, Running};
 use crate::{Backend, OracleError, Start, Tiers};
@@ -27,6 +33,12 @@ pub struct RowRun {
     pub overrun: u64,
     /// Frames without an NMI (NMI disabled).
     pub without_nmi: u64,
+    /// Frames cut at lsnes's boundary with their NMI still running: the
+    /// steps a run without the next pad cannot cut at the RTI.
+    pub still_running: u64,
+    /// The pad presented at each video frame, then the pad of the frame
+    /// after the row, which the last frame's NMI reads if it outlasts it.
+    pub pads: Vec<Pad>,
     /// How often an overrun NMI interrupted each address.
     pub interrupted: std::collections::BTreeMap<u32, u32>,
     /// The frames (from 0) whose NMI overran.
@@ -82,6 +94,18 @@ pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowR
     run_row_with(rom, pin, entry, data, &Observe::default(), &mut |_| ())
 }
 
+/// Where a row's pads come from.
+#[derive(Clone, Copy, Debug, Default)]
+pub enum Pads<'a> {
+    /// The lock's inputs: one word per Tick, word k+1 presented until the
+    /// k-th requested NMI has read it.
+    #[default]
+    Ticks,
+    /// One pad per video frame and the pad of the frame after the row
+    /// ([`RowRun::pads`]); the run is one frame shorter than the list.
+    Frames(&'a [Pad]),
+}
+
 /// What a run records beyond its streams, and on which oracle.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Observe<'a> {
@@ -96,6 +120,10 @@ pub struct Observe<'a> {
     pub watch: &'a [u32],
     /// The WRAM address a watch hit peeks.
     pub peek: u32,
+    pub pads: Pads<'a>,
+    /// Records without the memories (lsnes), for runs that need only the
+    /// pads and the cuts.
+    pub lean: bool,
 }
 
 /// `run_row` with chosen tiers and watched addresses, showing `observe` every frame.
@@ -147,12 +175,17 @@ pub fn run_row_with(
     }
     oracle.set_tiers(observing.tiers);
     oracle.set_watch(observing.watch, observing.peek);
+    if let Backend::Lsnes(lsnes) = &mut oracle {
+        lsnes.memories = !observing.lean;
+    }
     let started = Instant::now();
     let mut run = RowRun {
         ticks: 0,
         frames: 0,
         overrun: 0,
         without_nmi: 0,
+        still_running: 0,
+        pads: Vec::new(),
         interrupted: std::collections::BTreeMap::new(),
         overrun_frames: Vec::new(),
         legacy: Running::default(),
@@ -162,13 +195,35 @@ pub fn run_row_with(
     let mut scratch = Vec::with_capacity(0x2_0000);
     // A stall (the game never requesting a frame) ends the row.
     let limit = u64::from(entry.ticks) * 4 + 600;
-    let index = |tick: u32| usize::try_from(tick).unwrap_or(usize::MAX);
-    while run.ticks < entry.ticks {
-        let pad = inputs
-            .get(index(run.ticks) + 1)
-            .or_else(|| inputs.get(index(run.ticks)))
+    let index = |count: u64| usize::try_from(count).unwrap_or(usize::MAX);
+    // Word k+1 until the k-th requested NMI has read it.
+    let tick_pad = |ticks: u32| {
+        let tick = u64::from(ticks);
+        inputs
+            .get(index(tick + 1))
+            .or_else(|| inputs.get(index(tick)))
             .copied()
-            .unwrap_or(Pad(0));
+            .unwrap_or(Pad(0))
+    };
+    loop {
+        let pad = match observing.pads {
+            Pads::Ticks if run.ticks >= entry.ticks => {
+                run.pads.push(tick_pad(run.ticks));
+                break;
+            }
+            Pads::Ticks => tick_pad(run.ticks),
+            Pads::Frames(pads) => {
+                let (Some(&pad), Some(&next)) =
+                    (pads.get(index(run.frames)), pads.get(index(run.frames + 1)))
+                else {
+                    run.pads.extend(pads.last());
+                    break;
+                };
+                oracle.preview(next);
+                pad
+            }
+        };
+        run.pads.push(pad);
         let record = oracle.step(pad)?;
         run.frames += 1;
         observe(record);
@@ -185,9 +240,10 @@ pub fn run_row_with(
                     *run.interrupted.entry(nmi.interrupted_pc).or_default() += 1;
                 }
             }
+            None if matches!(record.cut, Cut::NmiStillRunning { .. }) => run.still_running += 1,
             None => run.without_nmi += 1,
         }
-        if run.frames > limit {
+        if matches!(observing.pads, Pads::Ticks) && run.frames > limit {
             let mut common: Vec<(u32, u32)> = run
                 .interrupted
                 .iter()

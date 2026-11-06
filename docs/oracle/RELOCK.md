@@ -209,3 +209,67 @@ typed streams when the decoder version changes (§4 Q3).
 
 **Questions for Jim:** none. Every choice above keeps the goal and decisions as
 given; Q5 changes one row's start, which its facts must still prove.
+
+## 5. Step b1 done; how to run b2
+
+Lane `lane/relock-pads`. `oracle corpus ... --frame-pads DIR` runs each row
+under the Tick rule and writes `DIR/<row>.pads`; `--from-frame-pads DIR` plays
+the rows from those files, previewing every next pad. `--no-memories` drops
+the memories from lsnes's records (pads only, no comparison).
+
+**Format.** Text, the `.inputs` format (one hexadecimal JOY1 word per line,
+LF), read and written by `oracle::inputs`: one line per video frame, then one
+line for the frame after the row, which the last frame's NMI reads when it
+outlasts the frame. So a row of N frames has N + 1 lines. Text rather than
+binary because it is the format the corpus's inputs already have (one reader,
+`diff`-able), and the largest row is about 16,000 lines, 80 KB. A run with
+memories also writes `<row>.cuts` (each frame's cut kind, `R`/`O`/`V`/`S`, and a
+hash of WRAM, VRAM, CGRAM and OAM) and `<row>.end` (the last frame's WRAM), for
+`--from-frame-pads` to compare against. All three are ROM-derived and private.
+
+**Why the two runs emulate the same.** Each step is one lsnes frame's input in
+both runs, and frame k + 1 takes pad k in both: without a preview the client
+sends it with the next step; with one, the server commits the previewed pad.
+They differ only in where they cut. A Tick-run step cut at the boundary with
+its NMI running (`S`) is followed by a step cut at that NMI's late RTI, which
+then misses the RTI of the NMI that began in its own frame. The run from pads
+cuts every frame at its RTI, so its cuts are the Tick run's cuts without the
+`S` ones, plus those missed RTIs (all overrun NMIs).
+
+**Proof** (`$TEMP/ohx/relock/pads`, 2026-11-06, 3 rows in parallel, native seeds):
+
+| Row | Ticks | Frames | Tick run: `S` cuts | From pads: `S` cuts | Tick run's RTI cuts found in order, same memories | Tick run's last cut is frame |
+| --- | --- | --- | --- | --- | --- | --- |
+| `chain-any-0001-DF45` (door) | 412 | 532 | 27 | 0 | 505 of 505 | 530 of 532 |
+| `death` | 1800 | 2137 | 27 | 0 | 2110 of 2110 | 2135 of 2137 |
+| `chain-any-0006-E0B5` | 1777 | 1778 | 1 | 0 | 1777 of 1777 | 1776 of 1778 |
+
+The end state is the same: the Tick run's last cut is among the cuts from
+pads with equal memories (frame N - 2). The run from pads cuts once more
+after it, at the RTI of the last frame's NMI (the row's seed resumes inside
+an NMI, whose `S` cut shifts the Tick run's cuts by one), so the two runs'
+last records differ by 107, 264 and 134 WRAM bytes: that frame's NMI. Pads
+from `--no-memories` are byte-identical to those from the run with memories.
+
+**Speed.** With memories, 3 processes at once: 32-36 frames/s each, both
+modes. `--no-memories`: 61-65 frames/s for one process. So b2 (about 445,000
+frames) is about 2 core-hours: 12 jobs of about 10 minutes, the long rows
+(credits-ending 15,967 frames, about 4 minutes) inside them.
+
+**b2** (root job, after a2's native seeds). `$TEMP/ohx/relock/oh` runs the
+lane's DLL (`OH_DLL=oracle_pads3`, built by `$TEMP/ohx/relock/build-pads.sh NAME`):
+
+```bash
+OHX=$(cygpath -m "$TEMP/ohx"); ROM=C:/Users/Jim.Lundin/Documents/Projects/sm-decomp/rom/sm.smc
+for i in $(seq 0 11); do
+  OH_DLL=oracle_pads3 "$OHX/relock/oh" corpus "$ROM" scenarios/lock.toml "$OHX/data" \
+    --oracle lsnes --native-seeds "$OHX/data/lsnes-native" \
+    --frame-pads "$OHX/relock/pads" --no-memories --shard $i/12 \
+    > "$OHX/relock/log/b2-$i.log" 2>&1 &
+done; wait
+```
+
+Each row's line gives its frames (`N frames`); the frame count is also the
+`.pads` line count less one. A row without a native seed reports `not run`.
+Proves b2 when 638 `.pads` files exist; `--from-frame-pads` with memories on a
+sample re-checks rows (without `.cuts` it prints `no <row>.cuts`).
