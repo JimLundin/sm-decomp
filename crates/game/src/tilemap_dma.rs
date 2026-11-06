@@ -163,6 +163,9 @@ mod tests {
     use super::*;
     use crate::state::video::UploadRequests;
 
+    /// Where a column buffer's right half starts after its left (16 entries of 4 bytes).
+    const RIGHT_HALF: u16 = 0x40;
+
     /// An entry whose word is `word`.
     fn entry(word: u16) -> TilemapEntry {
         TilemapEntry::from_word(word)
@@ -241,8 +244,8 @@ mod tests {
             DmaChannel {
                 control: 0x01,
                 destination: 0x18,
-                source: 0xC908 + 8 + 56,
-                source_bank: 0x7E,
+                source: BG1_COLUMN_BUFFER.offset + RIGHT_HALF + 8 + 56,
+                source_bank: BG1_COLUMN_BUFFER.bank,
                 count: 0,
                 ..DmaChannel::default()
             }
@@ -255,9 +258,9 @@ mod tests {
         let mut video = Video::default();
         video.batch.level.bg1.column = column(64, 0);
         video.execute_scrolling_dmas();
-        assert_eq!(video.dma[1].source, 0xC8C8 + 64);
+        assert_eq!(video.dma[1].source, BG1_COLUMN_BUFFER.offset + 64);
         assert_eq!(video.dma[1].count, 0);
-        assert_eq!(video.dma[1].source_bank, 0x7E);
+        assert_eq!(video.dma[1].source_bank, BG1_COLUMN_BUFFER.bank);
         // Nothing was written at the wrapped target.
         assert_eq!(vram(&video, 0x5000, 1), [0]);
     }
@@ -277,8 +280,8 @@ mod tests {
             DmaChannel {
                 control: 0x01,
                 destination: 0x18,
-                source: 0xC98C + 8 + 60,
-                source_bank: 0x7E,
+                source: BG1_ROW_BUFFER.offset + RIGHT_HALF + 4 + 8 + 60,
+                source_bank: BG1_COLUMN_BUFFER.bank,
                 count: 0,
                 ..DmaChannel::default()
             }
@@ -294,11 +297,17 @@ mod tests {
         video.batch.level.bg2.row = row(68, 0);
         video.execute_scrolling_dmas();
         // The row's wrapped size of 0 ends the last DMA: BG2's row buffer + 68.
-        assert_eq!(video.dma[1].source, 0xC948 + BG2_BUFFER_OFFSET + 68);
+        assert_eq!(
+            video.dma[1].source,
+            BG1_ROW_BUFFER.offset + BG2_BUFFER_OFFSET + 68
+        );
         let mut video = Video::default();
         video.batch.level.bg2.column = column(60, 4);
         video.execute_scrolling_dmas();
-        assert_eq!(video.dma[1].source, 0xC908 + BG2_BUFFER_OFFSET + 60 + 4);
+        assert_eq!(
+            video.dma[1].source,
+            BG1_COLUMN_BUFFER.offset + RIGHT_HALF + BG2_BUFFER_OFFSET + 60 + 4
+        );
         assert_eq!(video.batch.level.bg2.column.requests, UploadRequests(0));
     }
 
