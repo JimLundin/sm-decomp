@@ -29,11 +29,13 @@ fn content() -> Content {
         (MORPH, 7),
         (SHORT, 8),
         (TALL, 0x10),
+        (PoseId(0x37), 7),
+        (PoseId(0xF3), CROUCH),
         (CROUCH_RIGHT, CROUCH),
         (CROUCH_LEFT, CROUCH),
         (PoseId(0), 0x18),
     ];
-    let bytes: Vec<u8> = (0..0xB0_u16)
+    let bytes: Vec<u8> = (0..0x100_u16)
         .flat_map(|pose| {
             let radius = radii
                 .iter()
@@ -264,4 +266,67 @@ fn an_enemy_below_and_a_ceiling_squeeze_her() {
     run(&mut samus, &level(&[1]), &enemies(&[(0x18, 0x38)]));
     assert_eq!(samus.pose, CROUCH_RIGHT);
     assert_eq!(samus.position.y.pixels, 0x26);
+}
+
+/// Samus at the start of a transition animation in `pose`, as the command finds her: at the
+/// old pose's radius, her previous Y still behind.
+fn transitioning(pose: PoseId) -> Samus {
+    let mut samus = changing(FALLING, pose, at(0x488, 0x2B1, 0x1234), Facing::Right);
+    samus.previous_position = at(0x488, 0x2B0, 0);
+    samus
+}
+
+fn start(samus: &mut Samus) {
+    let blocks = level(&[]);
+    let surroundings = Surroundings {
+        room: Room {
+            blocks: &blocks,
+            width: BlockColumns(WIDTH),
+            slopes: None,
+        },
+        order: ScanOrder::LeftToRight,
+        enemies: SolidEnemies {
+            interactive: &[],
+            slots: &[],
+        },
+    };
+    start_transition(samus, surroundings, &mut Touches::default(), &content());
+}
+
+#[test]
+fn morphing_moves_her_down_by_nine_with_the_new_radius() {
+    // `item-morph-ball` frame 1259: radius $0A before, 7 after, and 9 pixels down.
+    let mut samus = transitioning(PoseId(0x37));
+    start(&mut samus);
+    assert_eq!(samus.y_radius, 7);
+    assert_eq!(samus.position, at(0x488, 0x2BA, 0x1234));
+    assert_eq!(samus.previous_position.y.pixels, 0x2BA);
+}
+
+#[test]
+fn the_aiming_crouch_transitions_move_her_down_by_five() {
+    let mut samus = transitioning(PoseId(0xF3));
+    start(&mut samus);
+    assert_eq!(samus.y_radius, u16::from(CROUCH));
+    assert_eq!(samus.position.y.pixels, 0x2B6);
+}
+
+#[test]
+fn a_transition_that_does_not_shrink_her_only_records_her_position() {
+    let mut samus = transitioning(PoseId(0x3B));
+    start(&mut samus);
+    assert_eq!(samus.y_radius, 0x99);
+    assert_eq!(samus.position.y.pixels, 0x2B1);
+    assert_eq!(samus.previous_position.y.pixels, 0x2B1);
+}
+
+#[test]
+fn the_unused_poses_and_those_past_the_aiming_ones_are_left_alone() {
+    for pose in [PoseId(0xDB), PoseId(0xF7), PoseId(0x34)] {
+        let mut samus = transitioning(pose);
+        start(&mut samus);
+        assert_eq!(samus.y_radius, 0x99);
+        assert_eq!(samus.position.y.pixels, 0x2B1);
+        assert_eq!(samus.previous_position.y.pixels, 0x2B0);
+    }
 }

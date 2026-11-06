@@ -6,6 +6,8 @@
 //! The checks leave her Y radius (`$0B00`) at the old pose's: the next frame's "set Samus
 //! radius" gives her the new one.
 
+use std::ops::RangeInclusive;
+
 use data::pose::PoseId;
 
 use super::Content;
@@ -26,6 +28,21 @@ pub(super) const CROUCH_LEFT: PoseId = PoseId(0x28);
 /// The smallest old Y radius a squeeze crouches from; below it, a morph ball's, the new pose
 /// is refused (`$91:FFAA`).
 const CROUCH_FROM: u16 = 8;
+
+/// The first pose whose transition animation moves her (`$91:ED36`'s table starts here): the
+/// crouching transition facing right.
+const TRANSITIONS_FROM: u16 = 0x35;
+
+/// How far each transition pose's start moves her down, from pose `$35` on (`$91:ED36`):
+/// crouching and morphing, which shrink her, and the poses that do not.
+const TRANSITION_DISTANCES: [u16; 12] = [5, 5, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0];
+
+/// The crouching transitions with aiming (poses `$F1` to `$F6`) move her down by as much as
+/// the plain crouching transition.
+const AIMING_TRANSITIONS: RangeInclusive<u16> = 0xF1..=0xF6;
+
+/// The first of the unused poses `$DB` on, which the table does not cover.
+const UNUSED_POSES: u16 = 0xDB;
 
 /// Half a block: the block check takes the nearer 8 pixels first when the distance reaches
 /// them (`$94:96AB`).
@@ -309,4 +326,46 @@ const fn shift(samus: &mut Samus, pixels: u16) {
     let y = samus.position.y.pixels.wrapping_add(pixels);
     samus.position.y.pixels = y;
     samus.previous_position.y.pixels = y;
+}
+
+/// How far the start of a transition animation moves her down (`$91:ECDA`): the table's
+/// distance for the poses it covers and 5 for the aiming crouching transitions. Every other
+/// pose, the unused ones among them, is left alone.
+fn transition_distance(pose: PoseId) -> Option<u16> {
+    if AIMING_TRANSITIONS.contains(&pose.0) {
+        return Some(5);
+    }
+    if pose.0 >= UNUSED_POSES {
+        return None;
+    }
+    let index = pose.0.checked_sub(TRANSITIONS_FROM)?;
+    TRANSITION_DISTANCES.get(usize::from(index)).copied()
+}
+
+/// "Prospective pose change command 7 - start transition animation" (`$91:ECDA`): the
+/// crouching or morphing transition shrinks her, so her Y radius becomes the new pose's, the
+/// block check (`$94:96AB`) looks the distance down, and she moves down by it so that the
+/// shorter pose ends on the ground.
+// open: the morph ball bounce state (`$0B20`), which the command ends along with her Y speed,
+// joins with the morph ball; the quicksand flag `block` clears joins with quicksand.
+pub(super) fn start_transition(
+    samus: &mut Samus,
+    surroundings: Surroundings<'_>,
+    touches: &mut Touches,
+    content: &Content,
+) {
+    let Some(distance) = transition_distance(samus.pose) else {
+        return;
+    };
+    if distance != 0 {
+        samus.y_radius = radius(samus.pose, content);
+        let mut checks = Checks {
+            surroundings,
+            touches,
+            difference: distance,
+        };
+        // Only the check's side effects on the touches matter; the command ignores its result.
+        blocks(samus, &mut checks, distance);
+    }
+    shift(samus, distance);
 }

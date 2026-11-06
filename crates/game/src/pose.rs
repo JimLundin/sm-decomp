@@ -143,6 +143,9 @@ pub enum PoseCommand {
     KillRunSpeed,
     /// The frame's solid vertical collision (`$91:EFC4`).
     SolidVertical(SolidVertical),
+    /// The start of a crouching or morphing transition animation (`$91:ECDA`), which the pose
+    /// sets itself when it is initialised.
+    StartTransitionAnimation,
 }
 
 /// The command a movement type's lookup failure gives (`$91:8332`); spin jumping has none.
@@ -295,6 +298,7 @@ pub fn change(
         return;
     };
     samus.pose = pose;
+    let mut command = requests.command;
     if pose != samus.previous.pose {
         // "Handle Samus pose change" (`$91:F404`): fit the new pose's height, then initialise
         // the pose, whichever it is now, and the jump.
@@ -303,20 +307,39 @@ pub fn change(
         jump_transition(samus, content);
         reset_animation(samus, content);
         samus.animation.new_pose_frame = NewPoseFrame::default();
+        command = start_transition_command(samus).or(command);
     }
-    match requests.command {
-        Some(PoseCommand::SolidVertical(collision)) => solid_vertical(collision, samus),
-        Some(command) => {
-            if let Some(speed) = samus.movement.horizontal_mut() {
-                apply(command, speed);
-                if command != PoseCommand::Stop {
-                    kill_y_speed_if_started_falling(samus);
+    // The commands run only while the pose stands as it was asked for: a pose the handler
+    // changed, by crouching her or refusing the change, skips them (`$91:EBEE`).
+    if samus.pose == pose {
+        match command {
+            Some(PoseCommand::SolidVertical(collision)) => solid_vertical(collision, samus),
+            Some(PoseCommand::StartTransitionAnimation) => {
+                fit::start_transition(samus, collisions.surroundings, touches, content);
+            }
+            Some(command) => {
+                if let Some(speed) = samus.movement.horizontal_mut() {
+                    apply(command, speed);
+                    if command != PoseCommand::Stop {
+                        kill_y_speed_if_started_falling(samus);
+                    }
                 }
             }
+            None => {}
         }
-        None => {}
     }
     record_history(samus);
+}
+
+/// The unused poses $DB to $F0, whose initialisation sets no command (`$91:F775`).
+const UNUSED_TRANSITIONS: std::ops::Range<u16> = 0xDB..0xF1;
+
+/// The command the transition poses' initialisation sets (`$91:F758`): the start of the
+/// animation, for every transition pose but the unused `$DB` to `$F0`.
+fn start_transition_command(samus: &Samus) -> Option<PoseCommand> {
+    let unused = UNUSED_TRANSITIONS.contains(&samus.pose.0);
+    (samus.movement.kind() == MovementType::CrouchingTransition && !unused)
+        .then_some(PoseCommand::StartTransitionAnimation)
 }
 
 /// Copy the pose's facing and movement type from its definition and initialise the pose
@@ -584,8 +607,8 @@ const fn apply(command: PoseCommand, speed: &mut Horizontal) {
             kill_run_speed(speed);
         }
         PoseCommand::KillRunSpeed => kill_run_speed(speed),
-        // It reads more than her horizontal speeds, so `change` runs it on its own.
-        PoseCommand::SolidVertical(_) => {}
+        // They read more than her horizontal speeds, so `change` runs them on its own.
+        PoseCommand::SolidVertical(_) | PoseCommand::StartTransitionAnimation => {}
     }
 }
 
