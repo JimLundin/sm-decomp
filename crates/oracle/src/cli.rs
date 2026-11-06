@@ -1102,7 +1102,7 @@ fn measure_movie(arguments: &[String]) {
 /// differing step in its window.
 fn cross(arguments: &[String]) {
     use crate::cross::{Compare, Difference, Part, describe};
-    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B]";
+    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams]";
     let [rom, inputs, rest @ ..] = arguments else {
         fail(usage)
     };
@@ -1120,12 +1120,14 @@ fn cross(arguments: &[String]) {
     };
     let mut range = 0..=last;
     let mut first_ranges = false;
+    let mut streams = false;
     let mut ranges_at: Option<std::ops::RangeInclusive<u64>> = None;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
         match option.as_str() {
             "--frames" => range = steps(options.next()),
             "--ranges" => first_ranges = true,
+            "--streams" => streams = true,
             "--ranges-at" => ranges_at = Some(steps(options.next())),
             _ => fail(usage),
         }
@@ -1133,12 +1135,18 @@ fn cross(arguments: &[String]) {
     let start = Start::PowerOn { wram_fill: 0x55 };
     let mut left =
         crate::Backend::open("lakesnes", &rom, start.clone()).unwrap_or_else(|error| fail(error));
-    left.set_tiers(Tiers {
-        picture: false,
-        apu_log: false,
+    let tiers = Tiers {
+        picture: streams,
+        apu_log: streams,
         ..Tiers::default()
-    });
+    };
+    left.set_tiers(tiers);
     let mut right = crate::Backend::open("lsnes", &rom, start).unwrap_or_else(|error| fail(error));
+    if streams && let crate::Backend::Lsnes(lsnes) = &mut right {
+        lsnes
+            .record_streams(tiers)
+            .unwrap_or_else(|error| fail(error));
+    }
     println!(
         "cross: left {} {}, right {} {}, steps {}..={}",
         left.identity().emulator,
@@ -1149,12 +1157,14 @@ fn cross(arguments: &[String]) {
         range.end()
     );
     let mut compare = Compare::default();
+    compare.streams = streams;
     let mut first: std::collections::BTreeMap<Part, (u64, Difference)> =
         std::collections::BTreeMap::new();
     let mut frames_differing: std::collections::BTreeMap<Part, u64> =
         std::collections::BTreeMap::new();
     let mut equal = 0u64;
     let started = Instant::now();
+    let mut lake_before: Option<crate::record::Picture> = None;
     for (step, &pad) in (0..=*range.end()).zip(&pads) {
         if let Some(&next) = usize::try_from(step + 1)
             .ok()
@@ -1165,6 +1175,39 @@ fn cross(arguments: &[String]) {
         let a = left.step(pad).unwrap_or_else(|error| fail(error)).clone();
         let b = right.step(pad).unwrap_or_else(|error| fail(error));
         let differences = compare.frame(&a, b);
+        if streams
+            && range.contains(&step)
+            && let (Some(lake), Some(lsnes)) = (&a.picture, &b.picture)
+        {
+            let equal_dots = |left: &crate::record::Picture| {
+                left.rows()
+                    .flatten()
+                    .zip(lsnes.rows().flatten())
+                    .filter(|(x, y)| x == y)
+                    .count()
+            };
+            let cpu_accesses = a
+                .apu_log
+                .iter()
+                .filter(|access| {
+                    matches!(
+                        access.kind,
+                        crate::record::ApuAccessKind::CpuWrite
+                            | crate::record::ApuAccessKind::CpuRead
+                    )
+                })
+                .count();
+            println!(
+                "{step} picture {} of {} dots equal, {} against left's previous; brightness {}/{}; apu log {cpu_accesses}/{}",
+                equal_dots(lake),
+                lake.rows().flatten().count(),
+                lake_before.as_ref().map_or(0, equal_dots),
+                lake.brightness[0],
+                lsnes.brightness[0],
+                b.apu_log.len()
+            );
+        }
+        lake_before.clone_from(&a.picture);
         if !range.contains(&step) {
             continue;
         }

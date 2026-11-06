@@ -14,10 +14,18 @@
 //! still running ([`Cut::NmiStillRunning`]), before the NMI's counter writes
 //! and joypad read.
 //!
-//! Not recorded by this backend: the picture, the APU port log, the SPC state
-//! (lsnes exposes SPC700 and DSP only as raw core structs), the instruction
-//! profile, the PPU register write log, watched-PC hits, `PpuRegisters` (left
-//! at their defaults), `overscan` and the old lock's `legacy_ppu_digest`.
+//! With the picture or APU log tiers on ([`Oracle::set_tiers`] before the
+//! first step), each record also carries the picture (the screenshot taken
+//! after the frame boundary, mapped back from lsnes's 8-bit palette to BGR555
+//! at the one brightness that produces it), the CPU's accesses to
+//! $2140-$2143 (no DMA or SPC700 side, no APU cycle) and the PPU registers
+//! (rebuilt from bsnes's decoded fields, with the DMA channels; `nmitimen`,
+//! `htime`, `vtime`, `hdmaen` and `memsel` stay at their defaults).
+//!
+//! Not recorded by this backend: the SPC state (lsnes exposes SPC700 and DSP
+//! only as raw core structs), the instruction profile, the PPU register write
+//! log, watched-PC hits, the per-line forced blank, `overscan` and the old
+//! lock's `legacy_ppu_digest`.
 //!
 //! A saved state is lsnes's own, taken at the frame boundary that ends the
 //! step it was requested before: after that step's cut, or inside its NMI
@@ -26,7 +34,10 @@
 //! counts restart where the straight run's do (at the RTI of an NMI the
 //! state was saved inside).
 
-use crate::record::{Beam, CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
+use crate::record::{
+    ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, MAX_LINES, Nmi, NmiKind, Pad,
+    Picture, PpuRegisters, WIDTH,
+};
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -253,6 +264,114 @@ pub const IDENTITY: OracleId = OracleId {
 /// The memories after the header, when the record carries them.
 const MEMORIES: usize = WRAM + VRAM + CGRAM + OAM + SRAM;
 
+/// The record's optional streams, appended after the memories when a `T`
+/// request asked for any (`tools/oracle/lsnes_server.lua`).
+const STREAMS_MAGIC: &[u8; 4] = b"OHS1";
+/// The PPU block: `PpuRegisters` from `inidisp` to `setini` as the bytes the
+/// game wrote (scroll and mode 7 words little-endian), then `$43x0-$43xA`.
+const PPU_BYTES: usize = 58 + 88;
+
+/// One master-brightness level's 8-bit channel values (lsnes's lrgb
+/// palette: `l * c * 255 / 496` rounded, `l` brightness plus one) mapped
+/// back to the 5-bit component; ambiguous values keep the smallest.
+fn channel_inverse(level: u32) -> [Option<u8>; 256] {
+    let mut inverse = [None; 256];
+    for component in (0..32u8).rev() {
+        let scaled = level * u32::from(component);
+        let value = ((scaled << 8) - scaled + 248) / 496;
+        if let Some(slot) = usize::try_from(value)
+            .ok()
+            .and_then(|at| inverse.get_mut(at))
+        {
+            *slot = Some(component);
+        }
+    }
+    inverse
+}
+
+/// The picture from lsnes's decoded screenshot: the brightest level whose
+/// palette produces every channel value, its inverse as BGR555 dots. A
+/// hires or interlaced screenshot keeps its even dots and lines.
+fn decode_picture(width: usize, height: usize, rgb: &[u8]) -> Picture {
+    let mut picture = Picture::default();
+    let (step_x, step_y) = (width / WIDTH.max(1), if height > MAX_LINES { 2 } else { 1 });
+    picture.lines = (height / step_y).min(MAX_LINES);
+    let level = (1..=16u32)
+        .rev()
+        .map(|level| (level, channel_inverse(level)))
+        .find(|(_, inverse)| {
+            rgb.iter()
+                .all(|&value| inverse[usize::from(value)].is_some())
+        });
+    let Some((level, inverse)) = level else {
+        return picture;
+    };
+    let brightness = u8::try_from(level - 1).unwrap_or(0);
+    picture.brightness.fill(brightness);
+    for (line, row) in picture
+        .dots
+        .chunks_mut(WIDTH)
+        .take(picture.lines)
+        .enumerate()
+    {
+        for (x, dot) in row.iter_mut().enumerate() {
+            let at = 3 * ((line * step_y * width) + (x * step_x.max(1)));
+            let Some([r, g, b]) = rgb
+                .get(at..at + 3)
+                .and_then(|part| <[u8; 3]>::try_from(part).ok())
+            else {
+                continue;
+            };
+            let component = |value: u8| u16::from(inverse[usize::from(value)].unwrap_or(0));
+            *dot = component(r) | (component(g) << 5) | (component(b) << 10);
+        }
+    }
+    picture
+}
+
+fn decode_ppu(bytes: &[u8]) -> PpuRegisters {
+    let mut at = 0;
+    let mut byte = || {
+        let value = bytes[at];
+        at += 1;
+        value
+    };
+    let mut ppu = PpuRegisters {
+        inidisp: byte(),
+        obsel: byte(),
+        bgmode: byte(),
+        mosaic: byte(),
+        ..PpuRegisters::default()
+    };
+    ppu.bg_sc = [byte(), byte(), byte(), byte()];
+    ppu.bg12nba = byte();
+    ppu.bg34nba = byte();
+    for layer in &mut ppu.bg_scroll {
+        for value in layer.iter_mut() {
+            *value = u16::from_le_bytes([byte(), byte()]);
+        }
+    }
+    ppu.m7sel = byte();
+    for value in &mut ppu.m7 {
+        *value = i16::from_le_bytes([byte(), byte()]);
+    }
+    ppu.window_select = [byte(), byte(), byte()];
+    ppu.window_positions = [byte(), byte(), byte(), byte()];
+    ppu.wbglog = byte();
+    ppu.wobjlog = byte();
+    ppu.screens = [byte(), byte(), byte(), byte()];
+    ppu.cgwsel = byte();
+    ppu.cgadsub = byte();
+    ppu.fixed_color = [byte(), byte(), byte()];
+    ppu.setini = byte();
+    for channel in &mut ppu.dma {
+        for value in channel.iter_mut() {
+            *value = byte();
+        }
+    }
+    ppu
+}
+
 fn le16(bytes: &[u8], at: usize) -> u16 {
     u16::from_le_bytes([bytes[at], bytes[at + 1]])
 }
@@ -310,6 +429,18 @@ impl Lsnes {
     /// The step after must then bring this pad, and no reset before it.
     pub fn preview(&mut self, next: Pad) {
         self.next_pad = Some(next);
+    }
+
+    /// Record the picture and the APU port log as `tiers` asks, and the PPU
+    /// registers with them, from the next step on. Ask before the first
+    /// step: the server registers the port callbacks only then.
+    pub fn record_streams(&mut self, tiers: Tiers) -> Result<(), OracleError> {
+        let request = format!(
+            "T {} {} 1",
+            u8::from(tiers.picture),
+            u8::from(tiers.apu_log)
+        );
+        self.send(&request)
     }
 
     /// Ask for the state at the frame boundary that ends the coming step,
@@ -419,24 +550,77 @@ impl Lsnes {
             p: bytes[40],
             emulation: bytes[41] != 0,
         };
-        if !dumped {
+        let mut at = HEADER;
+        if dumped {
+            let mut take = |size: usize| {
+                let part = &bytes[at..at + size];
+                at += size;
+                part
+            };
+            record.wram.copy_from_slice(take(WRAM));
+            for (word, pair) in record.vram.iter_mut().zip(take(VRAM).as_chunks::<2>().0) {
+                *word = u16::from_le_bytes(*pair);
+            }
+            for (word, pair) in record.cgram.iter_mut().zip(take(CGRAM).as_chunks::<2>().0) {
+                *word = u16::from_le_bytes(*pair);
+            }
+            record.oam.copy_from_slice(take(OAM));
+            record.sram.copy_from_slice(take(SRAM));
+        }
+        Self::decode_streams(record, &bytes[at..])
+    }
+
+    /// The optional streams after the memories (`STREAMS_MAGIC`).
+    fn decode_streams(record: &mut FrameRecord, bytes: &[u8]) -> Result<(), Cause> {
+        record.apu_log.clear();
+        record.picture = None;
+        if bytes.is_empty() {
             return Ok(());
         }
-        let mut at = HEADER;
-        let mut take = |size: usize| {
-            let part = &bytes[at..at + size];
-            at += size;
-            part
+        let short = || Cause::Record(format!("streams cut short at {} bytes", bytes.len()));
+        let Some((STREAMS_MAGIC, rest)) = bytes.split_first_chunk::<4>() else {
+            return Err(Cause::Record("no streams header".into()));
         };
-        record.wram.copy_from_slice(take(WRAM));
-        for (word, pair) in record.vram.iter_mut().zip(take(VRAM).as_chunks::<2>().0) {
-            *word = u16::from_le_bytes(*pair);
+        let (&flags, mut rest) = rest.split_first().ok_or_else(short)?;
+        if flags & 4 != 0 {
+            let (ppu, after) = rest.split_at_checked(PPU_BYTES).ok_or_else(short)?;
+            record.ppu = decode_ppu(ppu);
+            rest = after;
         }
-        for (word, pair) in record.cgram.iter_mut().zip(take(CGRAM).as_chunks::<2>().0) {
-            *word = u16::from_le_bytes(*pair);
+        if flags & 2 != 0 {
+            let (count, after) = rest.split_first_chunk::<4>().ok_or_else(short)?;
+            let count = usize::try_from(u32::from_le_bytes(*count)).map_err(|_| short())?;
+            let (log, after) = after
+                .split_at_checked(count.saturating_mul(3))
+                .ok_or_else(short)?;
+            record
+                .apu_log
+                .extend(
+                    log.as_chunks::<3>()
+                        .0
+                        .iter()
+                        .map(|&[kind, port, value]| ApuAccess {
+                            kind: if kind == 0 {
+                                ApuAccessKind::CpuWrite
+                            } else {
+                                ApuAccessKind::CpuRead
+                            },
+                            port,
+                            value,
+                            apu_cycle: 0,
+                        }),
+                );
+            rest = after;
         }
-        record.oam.copy_from_slice(take(OAM));
-        record.sram.copy_from_slice(take(SRAM));
+        if flags & 1 != 0 {
+            let (size, rgb) = rest.split_first_chunk::<4>().ok_or_else(short)?;
+            let width = usize::from(u16::from_le_bytes([size[0], size[1]]));
+            let height = usize::from(u16::from_le_bytes([size[2], size[3]]));
+            if rgb.len() != width * height * 3 {
+                return Err(short());
+            }
+            record.picture = Some(decode_picture(width, height, rgb));
+        }
         Ok(())
     }
 }
@@ -577,6 +761,8 @@ impl Oracle for Lsnes {
         std::fs::read(path).unwrap_or_default()
     }
 
+    /// Records stay lean whatever the tiers: the streams cost speed, and
+    /// ladders compare raw records. [`Lsnes::record_streams`] asks for them.
     fn set_tiers(&mut self, _tiers: Tiers) {}
 
     fn reset(&mut self) {

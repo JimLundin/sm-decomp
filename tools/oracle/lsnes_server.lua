@@ -122,6 +122,131 @@ local function abort(message)
     exec("quit-emulator")
 end
 
+-- The record's optional streams (request `T <picture> <apu log> <ppu>`, each
+-- 0|1), appended after the memories as "OHS1", a flag byte (bit 0 picture,
+-- 1 APU log, 2 PPU registers) and the parts in that order, PPU first:
+--   PPU registers  the record's PpuRegisters bytes up to `setini`, rebuilt
+--                  from memory.getregisters() at the cut, then $43x0-$43xA
+--   APU log        u32 count, then (kind 0 write | 1 read, port, value) for
+--                  each CPU access to $2140-$2143 in the interval
+--   picture        u16 width, u16 height, then each dot's 8-bit R, G, B from
+--                  gui.screenshot_bitmap() after the frame boundary
+-- Without a T request the record is unchanged.
+local streams = {picture = false, apu = false, ppu = false}
+local in_main, apu_registered = true, false
+local apu_log, apu_cut, ppu_cut = {}, {}, ""
+
+local function set_streams(rest)
+    local p, a, q = rest:match("^(%d) (%d) (%d)$")
+    if p == nil then abort("bad streams request: " .. rest); return end
+    streams.picture, streams.apu, streams.ppu = p == "1", a == "1", q == "1"
+    if streams.apu and not apu_registered then
+        -- Registered from the main chunk only, as with every callback here.
+        if not in_main then abort("APU log asked for after the first step"); return end
+        apu_registered = true
+        for _, bank in ipairs({0x00, 0x80}) do
+            for port = 0, 3 do
+                local address = BUS + bank * 0x10000 + 0x2140 + port
+                memory.registerwrite(address, function(_, value)
+                    if streams.apu then apu_log[#apu_log + 1] = string.char(0, port, value) end
+                end)
+                memory.registerread(address, function(_, value)
+                    if streams.apu then apu_log[#apu_log + 1] = string.char(1, port, value) end
+                end)
+            end
+        end
+    end
+end
+
+local function bit(value) return (value == true or value == 1) and 1 or 0 end
+
+-- The registers as the game wrote them, rebuilt from bsnes's decoded fields.
+local function ppu_bytes(r)
+    local function g(name) return r["ppu_" .. name] end
+    local function bits(name, order)
+        local value = 0
+        for shift, index in ipairs(order) do
+            if index then value = value + bit(g(name .. "[" .. index .. "]")) * 2 ^ (shift - 1) end
+        end
+        return value
+    end
+    local out = {}
+    local function byte(v) out[#out + 1] = u8(v) end
+    local function word(v) out[#out + 1] = u16(v) end
+    byte(bit(g("display_disabled")) * 128 + g("display_brightness"))
+    byte(g("oam_basesize") * 32 + g("oam_nameselect") * 8 + math.floor(g("oam_tdaddr") / 16384))
+    byte(bits("bg_tilesize", {0, 1, 2, 3}) * 16 + bit(g("bg3_priority")) * 8 + g("bg_mode"))
+    byte(g("mosaic_size") * 16 + bits("mosaic_enabled", {0, 1, 2, 3}))
+    for layer = 0, 3 do
+        byte(math.floor(g("bg_scaddr[" .. layer .. "]") / 512) + g("bg_scsize[" .. layer .. "]"))
+    end
+    byte(math.floor(g("bg_tdaddr[0]") / 8192) + math.floor(g("bg_tdaddr[1]") / 512))
+    byte(math.floor(g("bg_tdaddr[2]") / 8192) + math.floor(g("bg_tdaddr[3]") / 512))
+    for layer = 0, 3 do
+        word(g("bg_hofs[" .. layer .. "]") % 1024)
+        word(g("bg_vofs[" .. layer .. "]") % 1024)
+    end
+    byte(g("mode7_repeat") * 64 + bit(g("mode7_vflip")) * 2 + bit(g("mode7_hflip")))
+    for _, name in ipairs({"m7a", "m7b", "m7c", "m7d", "m7x", "m7y"}) do word(g(name)) end
+    local function window_pair(low, high)
+        local function nibble(index)
+            return bit(g("window1_invert[" .. index .. "]")) + bit(g("window1_enabled[" .. index .. "]")) * 2
+                + bit(g("window2_invert[" .. index .. "]")) * 4 + bit(g("window2_enabled[" .. index .. "]")) * 8
+        end
+        return nibble(low) + nibble(high) * 16
+    end
+    byte(window_pair(0, 1)); byte(window_pair(2, 3)); byte(window_pair(4, 5))
+    for _, name in ipairs({"window1_left", "window1_right", "window2_left", "window2_right"}) do byte(g(name)) end
+    byte(g("window_mask[0]") + g("window_mask[1]") * 4 + g("window_mask[2]") * 16 + g("window_mask[3]") * 64)
+    byte(g("window_mask[4]") + g("window_mask[5]") * 4)
+    local layers = {0, 1, 2, 3, 4}
+    byte(bits("bg_enabled", layers)); byte(bits("bgsub_enabled", layers))
+    byte(bits("window_enabled", layers)); byte(bits("sub_window_enabled", layers))
+    byte(g("color_mask") * 64 + g("colorsub_mask") * 16 + bit(g("addsub_mode")) * 2 + bit(g("direct_color")))
+    byte(bit(g("color_mode")) * 128 + bit(g("color_halve")) * 64 + bits("color_enabled", {0, 1, 2, 3, 4, 5}))
+    byte(g("color_r")); byte(g("color_g")); byte(g("color_b"))
+    byte(bit(g("mode7_extbg")) * 64 + bit(g("pseudo_hires")) * 8 + bit(g("overscan")) * 4
+        + bit(g("oam_interlace")) * 2 + bit(g("interlace")))
+    for channel = 0, 7 do
+        for offset = 0, 10 do byte(memory.readbyte(BUS + 0x4300 + channel * 16 + offset)) end
+    end
+    return table.concat(out)
+end
+
+-- At the cut: the PPU registers, and the APU accesses up to it.
+local function cut_streams(r)
+    if streams.ppu then ppu_cut = ppu_bytes(r) end
+    apu_cut, apu_log = apu_log, {}
+end
+
+local function picture_bytes()
+    local bitmap = gui.screenshot_bitmap()
+    local width, height = bitmap:size()
+    local rows = {u16(width), u16(height)}
+    for y = 0, height - 1 do
+        local row = {}
+        for x = 0, width - 1 do
+            local color = bitmap:pget(x, y)
+            row[#row + 1] = string.char(math.floor(color / 65536) % 256, math.floor(color / 256) % 256, color % 256)
+        end
+        rows[#rows + 1] = table.concat(row)
+    end
+    return table.concat(rows)
+end
+
+local function send_streams()
+    if not (streams.picture or streams.apu or streams.ppu) then return "" end
+    local flags = (streams.picture and 1 or 0) + (streams.apu and 2 or 0) + (streams.ppu and 4 or 0)
+    local parts = {"OHS1", u8(flags)}
+    if streams.ppu then parts[#parts + 1] = ppu_cut end
+    if streams.apu then
+        parts[#parts + 1] = u32(#apu_cut)
+        parts[#parts + 1] = table.concat(apu_cut)
+    end
+    if streams.picture then parts[#parts + 1] = picture_bytes() end
+    return table.concat(parts)
+end
+
 local function read_request()
     while true do
         local line = io.stdin:read("*l")
@@ -139,6 +264,8 @@ local function read_request()
             return
         elseif op == "V" then
             save_path = rest
+        elseif op == "T" then
+            set_streams(rest)
         elseif op == "R" then
             if committed ~= nil then
                 abort("reset asked for after its frame's input was committed")
@@ -183,6 +310,7 @@ local function capture(kind, pc, r)
         parts[#parts + 1] = region(0x10000000, 0x2000)
     end
     captured = table.concat(parts)
+    cut_streams(r)
 end
 
 -- One record per step; then the next requests.
@@ -204,7 +332,7 @@ end
 
 local function send()
     trace_cut()
-    local data = captured
+    local data = captured .. send_streams()
     local file = assert(io.open(record_path, "wb"))
     assert(file:write(data))
     assert(file:close())
@@ -325,3 +453,4 @@ exec("set-speed turbo")
 local start = os.getenv("OH_START")
 if start then exec("load-state " .. start) end
 read_request()
+in_main = false
