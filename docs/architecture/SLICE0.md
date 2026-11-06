@@ -776,8 +776,13 @@ and part 2 to `$6100`/`$6180` and leaves channel 1's registers (DMAP 01h, BBAD 1
 source past the bytes read, a zero count) in `video.dma[1]`. Verify decodes
 `NMI_COPY_SAMUS_HALVES` (`$071D`/`$071E`) and the two definition pointers (`$071F`,
 `$0721`) through `RoomMap::samus_tiles`, with coverage rows, comparators and moved-source
-mutants. Open: channel 1's registers from `$80:933A` and `$80:8C83`, lockstep of
-`video.memory.vram` and `video.dma`.
+mutants. `lane/slice0-c6f`: `$80:933A` leaves channel 0 past the OAM buffer and channel 1
+past the palette buffer (DMAP 00h, BBAD 04h and 22h), and each VRAM write table entry
+(`$80:8C83`) leaves channel 1 past its source (DMAP 01h, BBAD 18h, its bank); a queued
+upload's words name their buffer's address (`data::dma`), so the last of the NMI's users
+holds the channel. `video.dma` then differs on 32 / 80 Ticks (from 282 / 831), all but the
+message box and HDMA ones the scrolling DMAs (`$80:8CD8`, `$80:8DAC`), which the room's
+tilemap uploads bring. Open: those, and lockstep of `video.memory.vram`.
 
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the

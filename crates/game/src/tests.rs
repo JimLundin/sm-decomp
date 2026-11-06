@@ -438,3 +438,53 @@ fn a_tick_inside_the_box_is_a_lag_frame() -> Result<(), String> {
     assert_eq!(after.main.waiting, Some(Wait::LagFrame));
     Ok(())
 }
+
+#[test]
+fn channel_1_keeps_the_last_nmi_transfer_through_it() {
+    use crate::state::video::{
+        BusAddress, DmaChannel, VramSource, VramStep, VramTransfer, VramWord,
+    };
+    let mut state = State::default();
+    state.video.nmi_requested = true;
+    crate::nmi::nmi(
+        &mut state,
+        RULES,
+        &Content::default(),
+        NmiTiming::OnTime,
+        Buttons::default(),
+    );
+    // No Samus tiles and no VRAM writes: CGRAM's DMA was the last.
+    assert_eq!(
+        (state.video.dma[1].destination, state.video.dma[1].source),
+        (0x22, 0xC200)
+    );
+    state.video.nmi_requested = true;
+    state.video.batch.vram = vec![VramTransfer {
+        to: VramWord(0x5820),
+        step: VramStep::Row,
+        source: VramSource::Words {
+            from: BusAddress {
+                bank: 0x7E,
+                offset: 0xC608,
+            },
+            words: vec![0; 0x60],
+        },
+    }];
+    crate::nmi::nmi(
+        &mut state,
+        RULES,
+        &Content::default(),
+        NmiTiming::OnTime,
+        Buttons::default(),
+    );
+    assert_eq!(
+        state.video.dma[1],
+        DmaChannel {
+            control: 0x01,
+            destination: 0x18,
+            source: 0xC6C8,
+            source_bank: 0x7E,
+            ..DmaChannel::default()
+        }
+    );
+}

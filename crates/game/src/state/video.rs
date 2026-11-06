@@ -4,6 +4,7 @@
 //! image itself; meaning for widescreen and HD art travels in the intent output instead.
 
 use canonical::Canonical;
+pub use data::dma::BusAddress;
 pub use data::pose::tiles::{GraphicsRef, TileDefinitionId};
 
 use super::slots::FlagSet;
@@ -385,7 +386,12 @@ pub const DMA_CHANNELS: usize = 8;
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub enum VramSource {
     /// Words from a State buffer, as the NMI's DMA reads them.
-    Words(Vec<u16>),
+    Words {
+        /// Where the original's DMA reads them, which the channel's registers keep.
+        from: BusAddress,
+        /// The words.
+        words: Vec<u16>,
+    },
     /// ROM graphics, which the content's graphics resolve.
     Content(RomWords),
 }
@@ -411,7 +417,10 @@ pub struct SamusTileUploads {
 
 impl Default for VramSource {
     fn default() -> Self {
-        Self::Words(Vec::new())
+        Self::Words {
+            from: BusAddress::default(),
+            words: Vec::new(),
+        }
     }
 }
 
@@ -479,8 +488,8 @@ pub struct Video {
     /// The registers the PPU holds now.
     pub committed: Registers,
     /// The DMA channels' registers as the last transfer left them.
-    // open: of the NMI's DMAs only Samus's tiles set them yet; OAM and CGRAM (`$80:933A`),
-    // the VRAM write table (`$80:8C83`) and the HDMA queue join with their channels.
+    // open: the animated tiles (`$80:9416`, channel 0), the scrolling DMAs (`$80:8CD8`,
+    // `$80:8DAC`, channel 1) and the HDMA queue join with their transfers.
     pub dma: [DmaChannel; DMA_CHANNELS],
     /// The batch for the next requested NMI.
     pub batch: NmiBatch,
