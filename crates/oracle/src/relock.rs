@@ -264,9 +264,39 @@ pub struct Recorder {
     overruns: Vec<u64>,
     nmi_off: Vec<u64>,
     still_running: Vec<u64>,
+    /// The row's sidecar text when asked for ([`Recorder::logging`]).
+    frame_log: Option<String>,
+}
+
+/// The sidecar's first line: what each frame's line holds.
+pub fn sidecar_head() -> String {
+    let names: Vec<&str> = Stream::ALL.iter().map(|stream| stream.name()).collect();
+    format!("# frame lsnes_frame cut {}\n", names.join(" "))
+}
+
+/// A cut's kind as the frame pads' `.cuts` files write it.
+pub fn cut_letter(record: &FrameRecord) -> char {
+    match record.cut {
+        Cut::NmiReturn(nmi) => match nmi.kind {
+            NmiKind::Requested => 'R',
+            NmiKind::Overrun => 'O',
+        },
+        Cut::VblankWithoutNmi => 'V',
+        Cut::NmiStillRunning { .. } => 'S',
+    }
 }
 
 impl Recorder {
+    /// The same recorder, also writing the per-frame sidecar: one line per
+    /// frame with its index, lsnes's frame counter, the cut kind and the
+    /// digest each stream folded at it (`-` where the stream didn't fold,
+    /// `absent` where the record lacked it), so two runs diff frame by frame.
+    #[must_use]
+    pub fn logging(mut self) -> Self {
+        self.frame_log = Some(sidecar_head());
+        self
+    }
+
     /// A recorder that also folds `typed` streams.
     pub fn with_typed(typed: Vec<Box<dyn TypedStream>>) -> Self {
         Self {
@@ -288,10 +318,29 @@ impl Recorder {
         }
         self.apu_busy.extend(port_log(record));
         let quiescent = is_quiescent(record);
+        let mut line = self
+            .frame_log
+            .as_ref()
+            .map(|_| format!("{frame} {} {}", record.video_frame, cut_letter(record)));
         for (stream, spans) in Stream::ALL.iter().zip(&mut self.spans) {
-            if quiescent || stream.folding() == Folding::EveryFrame {
-                spans.fold(stream.digest(record, &self.apu_busy));
+            let folded = (quiescent || stream.folding() == Folding::EveryFrame)
+                .then(|| stream.digest(record, &self.apu_busy));
+            if let Some(digest) = folded {
+                spans.fold(digest);
             }
+            if let Some(line) = line.as_mut() {
+                match folded {
+                    Some(Some(digest)) => {
+                        let _ = write!(line, " {digest:016x}");
+                    }
+                    Some(None) => line.push_str(" absent"),
+                    None => line.push_str(" -"),
+                }
+            }
+        }
+        if let (Some(log), Some(line)) = (self.frame_log.as_mut(), line) {
+            log.push_str(&line);
+            log.push('\n');
         }
         if quiescent {
             self.apu_busy.clear();
@@ -331,6 +380,7 @@ impl Recorder {
             nmi_off: self.nmi_off,
             still_running: self.still_running,
             streams,
+            frame_log: self.frame_log,
         }
     }
 }
@@ -345,6 +395,8 @@ pub struct Recorded {
     pub still_running: Vec<u64>,
     /// Each stream's marks, `None` where some frame lacked it.
     pub streams: Vec<(&'static str, Option<Vec<u64>>)>,
+    /// The per-frame sidecar, when the recorder was [`Recorder::logging`].
+    pub frame_log: Option<String>,
 }
 
 /// A fact's result on the oracle.

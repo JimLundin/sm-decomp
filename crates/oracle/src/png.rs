@@ -323,9 +323,77 @@ fn block(
     }
 }
 
+/// 8-bit RGB dots, row by row, as a PNG: one IDAT of stored deflate blocks,
+/// unfiltered, so a dumped frame holds exactly the compared dots
+/// (docs/oracle/RELOCK.md §6, `--dump-frames`).
+pub fn encode_rgb(width: usize, height: usize, rgb: &[u8]) -> Option<Vec<u8>> {
+    let stride = width.checked_mul(3)?;
+    if rgb.len() != stride.checked_mul(height)? {
+        return None;
+    }
+    let rows: Vec<u8> = rgb
+        .chunks_exact(stride)
+        .flat_map(|row| core::iter::once(0).chain(row.iter().copied()))
+        .collect();
+    let mut stream = vec![0x78, 0x01];
+    let blocks: Vec<&[u8]> = rows.chunks(usize::from(u16::MAX)).collect();
+    for (number, block) in blocks.iter().enumerate() {
+        let length = u16::try_from(block.len()).ok()?;
+        stream.push(u8::from(number + 1 == blocks.len()));
+        stream.extend_from_slice(&length.to_le_bytes());
+        stream.extend_from_slice(&(!length).to_le_bytes());
+        stream.extend_from_slice(block);
+    }
+    stream.extend_from_slice(&adler32(&rows).to_be_bytes());
+    let mut header = Vec::with_capacity(13);
+    header.extend_from_slice(&u32::try_from(width).ok()?.to_be_bytes());
+    header.extend_from_slice(&u32::try_from(height).ok()?.to_be_bytes());
+    header.extend_from_slice(&[8, 2, 0, 0, 0]);
+    let mut png = b"\x89PNG\r\n\x1a\n".to_vec();
+    let chunks: [(&[u8; 4], &[u8]); 3] = [(b"IHDR", &header), (b"IDAT", &stream), (b"IEND", &[])];
+    for (kind, data) in chunks {
+        png.extend_from_slice(&u32::try_from(data.len()).ok()?.to_be_bytes());
+        let start = png.len();
+        png.extend_from_slice(kind);
+        png.extend_from_slice(data);
+        let crc = crc32(&png[start..]);
+        png.extend_from_slice(&crc.to_be_bytes());
+    }
+    Some(png)
+}
+
+fn adler32(bytes: &[u8]) -> u32 {
+    const MODULUS: u32 = 65521;
+    let (low, high) = bytes.iter().fold((1u32, 0u32), |(low, high), &byte| {
+        let low = (low + u32::from(byte)) % MODULUS;
+        (low, (high + low) % MODULUS)
+    });
+    (high << 16) | low
+}
+
+fn crc32(bytes: &[u8]) -> u32 {
+    !bytes.iter().fold(u32::MAX, |crc, &byte| {
+        (0..8).fold(crc ^ u32::from(byte), |crc, _| {
+            if crc & 1 == 1 {
+                (crc >> 1) ^ 0xEDB8_8320
+            } else {
+                crc >> 1
+            }
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn encoded_rgb_decodes_to_itself() {
+        let dots: Vec<u8> = (0..=255u8).cycle().take(300 * 250 * 3).collect();
+        let png = encode_rgb(300, 250, &dots).unwrap_or_default();
+        assert_eq!(rgb(&png), Some((300, 250, dots)));
+        assert_eq!(crc32(b"123456789"), 0xCBF4_3926);
+    }
 
     #[test]
     fn base64_round_trips_rfc_4648_vectors() {
