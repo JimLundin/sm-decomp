@@ -4,7 +4,11 @@
 //!
 //! It holds no mutable state and no rules (ARCHITECTURE §4.1).
 
+pub mod address_map;
+pub mod compression;
 pub mod digest;
 pub mod id;
+pub mod rom;
+pub mod room;
 pub mod span;
 pub mod video;

@@ -156,6 +156,33 @@ Equal on every Tick of both rows: `game_time.hours`, `.minutes`, `mode`, `irq`, 
 (a mutant `Rules` or `nmi.rs` edit run through lockstep) needs a machine that runs the
 tests; `--stream S` filtering waits on the stream projections.
 
+**B3 status (`lane/slice0-b3`).** Done: `data::rom` (`Rom::new` checks the 3 MiB size and
+the SHA-256 `12b77c4b...` with `RomError`; `RomAddress { bank, offset }`; `Lorom` maps an
+address to its file offset for any image, so synthetic images test the decoders);
+`data::compression::decompress` (bank `$80`'s `$80:B0FF`/`$80:B119` format, all eight
+commands and the extended header, `DecompressError::{Truncated, UnwrittenReference,
+TooLong}`); `data::room` (`decode` of a header and its state list into `Room`, `Area`,
+`Condition` for each routine `$8F:E5E6`-`$E678`, `RoomState` with the level data
+decompressed at load, `Room::select(&Progress)`, `RoomKey` as the stable key and
+`RoomMap` giving dense `RoomId`s in load order, `Rooms::load`); `data::address_map`
+(`AddressMap` of `Location::{RoomHeader, DoorList, State(_, _, StatePart)}`).
+`verify::lockstep::slice_zero_rooms` now comes from `RoomMap::slice_zero()`, so the Morph
+Ball Room's ID is 0, not the placeholder 7. Tests: synthetic ones for every command, the
+hash, the mapping, header decode, selection and each condition (Quality); the ROM test
+`the_morph_ball_room_decodes_as_the_bank_log_says` reads `SM_ROM` or `rom/sm.smc` and
+returns early without it, so it proves something only in CI's Verify job. All 28 ran on
+the lane's machine through a scratch DLL against the real ROM: `$9EB1` for the seed, level
+data `$C5:DED5` decompressing to 18,434 bytes (`2 + 0x3000 + 0x1800`, no layer 2), PLMs
+`$8F:867E`, enemies `$A1:93AC`. Remaining for B4:
+
+- turn `LevelData.bytes` into typed layer 1 blocks, BTS and (where present) layer 2; the
+  length tells which: `2 + 3n` without layer 2, `2 + 5n` with it, `n` the blocks;
+- the scroll table (`RoomState.scroll`, `$8F:9EED`) as scroll areas;
+- typed decoders for the referenced records (PLM and enemy populations, FX, library
+  background), which today are `RomAddress`es; `layer2_scroll`, `cre` and the scrollers
+  stay raw bytes until a rule reads them;
+- `Content`: `Rooms` is its first member, and `Session::open` should take it.
+
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
 (bank `$82` log, `$82:DB69`: signed compares against 60, the 99:59:59.59 cap from 100 hours),
