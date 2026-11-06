@@ -191,6 +191,29 @@ pub const ROOM_PTR: WramWord = WramWord {
     offset: 0x079B,
 };
 
+/// Bank $A3 log, `$A3:9581`: the way the last elevator departure went, 0 down or $8000 up,
+/// which the door transition reads.
+pub const ELEVATOR_DIRECTION: WramWord = WramWord {
+    name: "ELEVATOR_DIRECTION",
+    offset: 0x0799,
+};
+
+/// Bank $A3 log, `$A3:952A`: nonzero while the elevator AI runs with no ride on.
+///
+/// Door loading sets it to the door's elevator property bit $80, and an idle frame without the
+/// call button clears it (`$A3:9575`).
+pub const ELEVATOR_FLAGS: WramWord = WramWord {
+    name: "ELEVATOR_FLAGS",
+    offset: 0x0E16,
+};
+
+/// Bank $A3 log, `$A3:9540`: the elevator status, 0 inactive, 1 leaving the room, 2 the door
+/// transition, 3 entering the room.
+pub const ELEVATOR_STATUS: WramWord = WramWord {
+    name: "ELEVATOR_STATUS",
+    offset: 0x0E18,
+};
+
 /// Bank $80 log: the NMI request flag. The main thread sets it to 1 when it waits for NMI
 /// and the NMI handler clears it; a set flag is what makes an NMI a requested one.
 pub const WAITING_FOR_NMI: WramByte = WramByte {

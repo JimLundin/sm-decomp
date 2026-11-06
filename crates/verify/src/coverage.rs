@@ -389,9 +389,9 @@ pub const FIELDS: &[Field] = &[
         "room.enemies.slots.occupancy.variables",
         source::ENEMY_AI_VARIABLES[0],
     ),
-    open("elevator.status"),
-    open("elevator.armed"),
-    open("elevator.direction"),
+    wram("elevator.status", source::ELEVATOR_STATUS),
+    wram("elevator.armed", source::ELEVATOR_FLAGS),
+    wram("elevator.direction", source::ELEVATOR_DIRECTION),
     Field {
         path: "hud.tilemap",
         status: Status::Decoded(Source::WramBlock(source::HUD_TILEMAP)),
@@ -551,6 +551,9 @@ mod tests {
             rules.animation.new_pose_frame,
             rules.super_special.pose,
             rules.super_special.command,
+            rules.elevator.status,
+            rules.elevator.armed,
+            rules.elevator.direction,
             // The scroll row names the first mirror; the queue's tail bounds the queue block.
             rules.scroll[0][0],
             // An array of mirrors is named by its first; mode 7's centre by its own first.

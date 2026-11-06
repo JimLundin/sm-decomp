@@ -11,7 +11,7 @@ use data::enemy::SpeciesMap;
 use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
-use game::state::room::{Camera, RoomScoped};
+use game::state::room::{Camera, ElevatorDirection, ElevatorRide, ElevatorStatus, RoomScoped};
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
     Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus,
@@ -314,6 +314,19 @@ pub struct Rules<'t> {
     pub animation: AnimationSources,
     /// `samus.super_special`.
     pub super_special: SuperSpecialSources,
+    /// `elevator`.
+    pub elevator: ElevatorSources,
+}
+
+/// Where the original keeps the elevator ride.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ElevatorSources {
+    /// `.status`.
+    pub status: WramWord,
+    /// `.armed`.
+    pub armed: WramWord,
+    /// `.direction`.
+    pub direction: WramWord,
 }
 
 /// Where the original keeps Samus's animation.
@@ -497,6 +510,11 @@ impl Rules<'_> {
             pose: source::SAMUS_NEW_POSE_TRANSITIONAL,
             command: source::SAMUS_HURT_SWITCH_INDEX,
         },
+        elevator: ElevatorSources {
+            status: source::ELEVATOR_STATUS,
+            armed: source::ELEVATOR_FLAGS,
+            direction: source::ELEVATOR_DIRECTION,
+        },
         pose: PoseSources {
             pose: source::SAMUS_POSE,
             facing: source::SAMUS_POSE_X_DIR,
@@ -607,8 +625,7 @@ impl Rules<'_> {
                 enemies: self.enemies.read(wram, &rooms.species)?,
                 ..RoomScoped::default()
             },
-            // open: the elevator ride (`$0E16`, `$0E18`, `$0799`) decodes with its rows.
-            elevator: game::state::room::ElevatorRide::default(),
+            elevator: self.elevator.read(wram)?,
             message: Message(self.message.read(wram)?),
             hud: self.hud.read(wram)?,
         };
@@ -1312,6 +1329,51 @@ impl SuperSpecialSources {
             value => return Err(unrepresentable(self.command, value)),
         };
         Ok(SuperSpecial { pose, command })
+    }
+}
+
+/// The elevator flags word while the elevator AI runs with no ride on: the door's elevator
+/// property bit (bank $82 log, door loading).
+const ARMED: u16 = 0x80;
+
+/// The elevator direction word for a departure upwards (bank $A3 log, `$A3:9581`).
+const UPWARDS: u16 = 0x8000;
+
+impl ElevatorSources {
+    /// The ride in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a status past 3 (`$A3:952A` jumps through a
+    /// table of four), a flags word other than 0 or $80, or a direction other than 0 or
+    /// $8000.
+    fn read(self, wram: &[u8]) -> Result<ElevatorRide, DecodeError> {
+        let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
+            source: source.name,
+            value,
+        };
+        let status = match self.status.read(wram)? {
+            0 => ElevatorStatus::Inactive,
+            1 => ElevatorStatus::LeavingRoom,
+            2 => ElevatorStatus::DoorTransition,
+            3 => ElevatorStatus::EnteringRoom,
+            value => return Err(unrepresentable(self.status, value)),
+        };
+        let armed = match self.armed.read(wram)? {
+            0 => false,
+            ARMED => true,
+            value => return Err(unrepresentable(self.armed, value)),
+        };
+        let direction = match self.direction.read(wram)? {
+            0 => ElevatorDirection::Down,
+            UPWARDS => ElevatorDirection::Up,
+            value => return Err(unrepresentable(self.direction, value)),
+        };
+        Ok(ElevatorRide {
+            status,
+            armed,
+            direction,
+        })
     }
 }
 

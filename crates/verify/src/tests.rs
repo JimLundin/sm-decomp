@@ -5,7 +5,10 @@
 
 use data::enemy::SpeciesMap;
 use data::id::{Line, RoomId, SpeciesId};
-use game::state::room::{AiVariables, EnemyBody, EnemyCommon, PaletteIndex, TilesIndex};
+use game::state::room::{
+    AiVariables, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody, EnemyCommon,
+    PaletteIndex, TilesIndex,
+};
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Movement,
     MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial, SuperSpecialCommand,
@@ -198,6 +201,9 @@ fn record() -> FrameRecord {
     wram[0x0A27] = 0x05; // SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: crouching
     put(&mut wram, 0x0A2C, 0x0002); // SAMUS_NEW_POSE_TRANSITIONAL
     put(&mut wram, 0x0A32, 0x0003); // SAMUS_HURT_SWITCH_INDEX: transition animation finished
+    put(&mut wram, 0x0E18, 0x0003); // ELEVATOR_STATUS: entering the room
+    put(&mut wram, 0x0E16, 0x0080); // ELEVATOR_FLAGS: armed
+    put(&mut wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
     put(&mut wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
     put(&mut wram, 0x0A96, 0x0003); // SAMUS_ANIM_FRAME
     put(&mut wram, 0x0A9A, 0x8000); // SAMUS_ANIM_FRAME_SKIP: preserve
@@ -272,6 +278,16 @@ fn decodes_the_animation(state: &State) -> bool {
                 pose: Some(PoseId(2)),
                 command: SuperSpecialCommand::TransitionAnimationFinished,
             }
+}
+
+/// The elevator ride, as the synthetic record sets it.
+fn decodes_the_ride(state: &State) -> bool {
+    state.elevator
+        == ElevatorRide {
+            status: ElevatorStatus::EnteringRoom,
+            armed: true,
+            direction: ElevatorDirection::Up,
+        }
 }
 
 /// The fields the synthetic record sets, checked against the values it holds.
@@ -352,6 +368,7 @@ fn decodes_the_record(state: &State) -> bool {
                 movement: MovementType::Crouching,
             }
         && decodes_the_animation(state)
+        && decodes_the_ride(state)
         && state.timing.last == NmiTiming::OnTime
         && state.video.nmi_requested
         && state.room.room == MORPH_BALL_ROOM_ID
@@ -413,7 +430,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 43] = [
+const WORD_RULES: [(&str, WordRule); 46] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -473,6 +490,9 @@ const WORD_RULES: [(&str, WordRule); 43] = [
     ("super_special.command", |rules| {
         &mut rules.super_special.command
     }),
+    ("elevator.status", |rules| &mut rules.elevator.status),
+    ("elevator.armed", |rules| &mut rules.elevator.armed),
+    ("elevator.direction", |rules| &mut rules.elevator.direction),
 ];
 
 /// Every byte rule.
@@ -505,6 +525,22 @@ fn an_acceleration_mode_past_2_or_a_momentum_flag_past_1_is_an_error() {
         assert_eq!(
             decode(&record, &rooms()),
             Err(DecodeError::Unrepresentable { source, value: 3 })
+        );
+    }
+}
+
+#[test]
+fn a_ride_word_outside_its_values_is_unrepresentable() {
+    for (offset, value, source) in [
+        (0x0E18, 0x0004, "ELEVATOR_STATUS"),
+        (0x0E16, 0x0001, "ELEVATOR_FLAGS"),
+        (0x0799, 0x0001, "ELEVATOR_DIRECTION"),
+    ] {
+        let mut record = record();
+        put(&mut record.wram, offset, value);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable { source, value })
         );
     }
 }
