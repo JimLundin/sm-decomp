@@ -1,7 +1,7 @@
 # Samus on the ground: behaviour spec
 
 The observer's spec for MODEL §4, written to the MODEL §5 template. Its vectors are in
-[`scenarios/vectors/samus-ground.toml`](../../scenarios/vectors/samus-ground.toml).
+[`scenarios/vectors/samus-motion.toml`](../../scenarios/vectors/samus-motion.toml).
 
 ## Header
 

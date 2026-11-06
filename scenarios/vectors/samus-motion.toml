@@ -1,4 +1,4 @@
-# Test vectors for docs/behaviours/samus-ground.md (MODEL §5), read by a `game` test.
+# Test vectors for docs/behaviours/samus-motion.md (MODEL §5), read by a `game` test.
 #
 # Format
 # - Each [[vector]] has: id; source ("item-morph-ball:<frame>" for an oracle record, or
