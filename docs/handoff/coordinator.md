@@ -1,95 +1,52 @@
-# Coordinator handoff (2026-11-05, evening)
+# Coordinator handoff (2026-11-06, night)
 
-For the next coordinator session. This replaces [rebuild-foundation.md](rebuild-foundation.md):
-its first task, the question list, was done and then superseded by Jim's direction below.
+This is for the next coordinator session, and it replaces the version from the evening of 2026-11-05.
+Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/oracle-harness.md` and
+`docs/oracle/MEASUREMENTS.md` (sections (a)-(r)) on `research/oracle-harness`.
 
-## Where the rebuild stands
+## Branches
 
-Jim's order of work is (1) a functional oracle, (2) the engine's architecture, (3)
-implementation against the oracle. (1) is in progress and (2) is designed. No engine code
-has been written, and nothing from today is on `main` yet.
+| Branch | What it holds |
+| --- | --- |
+| `rebuild/spine` | **The working trunk.** It merges `research/architecture` and `research/oracle-harness`, and adds the new crates: `data`, `game`, `runtime`, `app`, `verify`, `tools`, `canonical`, `canonical_derive` and `oracle_record`, with `crates/README.md`. Also `tools/check_crate_rules.sh` (in CI), the `Canonical` codec with a structural `SCHEMA`, the slice-0 State skeleton (`game::state`) and the decoder's two first slices (`verify`; the next slice is listed in `ed3c6ae`'s lane report: wait-site table, stack walk, `UnknownYieldSite`, `Quiescence`, `irq`). Draft PR #285 exists only so CI runs: Quality passes; Verify fails only on the stale `file-copy-clear` lock entry, which the re-lock fixes. |
+| `research/oracle-harness` | The oracle (see below). Merge it into `rebuild/spine` after it moves. |
+| `research/architecture` | PRINCIPLES and ARCHITECTURE, merged into `rebuild/spine`. The newest decisions are D25 (which oracle locks which stream) and D26 (dedicated short trick movies, using [sm-json-data-rs](https://github.com/JimLundin/sm-json-data-rs)). |
+| `main` | Nothing from the rebuild has landed yet. It lands through `tools/lane/land.sh`, docs first. |
 
-| Branch | Head | What it holds |
-| --- | --- | --- |
-| `research/architecture` | `fcf6344` | **The design.** `docs/architecture/`: PRINCIPLES (the thesis, P1-P20, K1-K10), ARCHITECTURE (D1-D24), ROBUSTNESS, QUESTIONS (answered), RETROSPECTIVE (a copy), plus `scratch/architecture_sketch` and `scratch/lint_cost` |
-| `research/retrospective` | `bcc9e48` | the evidence-based retrospective of both attempts (510 lines) |
-| `research/oracle-harness` | `ae33140` | `crates/oracle` (the unmodified ROM on upstream LakeSnes, no patches), `docs/oracle/HARNESS.md`, `MEASUREMENTS.md`, `docs/handoff/oracle-harness.md` |
-| `research/foundation-design` | `1600c4c` | FOUNDATION.md (superseded by the architecture; kept as its input) and the superseded QUESTIONS list |
-| `gate1/render` | `615e3b2` | the paused renderer. ARCHITECTURE decides: don't land it; the compositor moves into the new `runtime` in slice 0 |
-| `main` | `52c2117` | Jim's rebuild decision (REVIEW). The old docs (PLAN, target-architecture) don't know about today's work |
+## The oracle, as it stands
 
-Worktrees are under `sm-decomp-experiments/20261105/`, one per branch above, plus `handoff`.
+- **lsnes** (bsnes v085, run as a separate process) keeps sync with every movie, so it is the single locking oracle.
+  - **Cut:** always at the NMI's RTI (MEASUREMENTS (i)).
+  - **Streams:** opt-in, and records without them stay byte-identical (MEASUREMENTS (o), (r)):
+    - the picture, as lsnes's PNG decoded in Rust and compared as it shows. Over any% 0-1000 it equals LakeSnes on 1001 of 1001 frames;
+    - the PPU registers;
+    - the CPU-side APU port log. A resumed run's APU log is empty; a lane is fixing this.
+  - **Ladders:** rungs every 10000 frames in `$TEMP/ohx/data/lsnes-ladder/{100,low,any}`; all 47 rungs check equal.
+  - **Native seeds:** in `$TEMP/ohx/data/lsnes-native/`. `$TEMP/ohx/oh` runs `oracle_rti2.dll`.
+- **LakeSnes** with fixes 0001 (APU clock), 0002 (exactly 32040.5 Hz) and 0004 (no HDMA overhead once every channel has terminated, after anomie) follows any% exactly to step 35199. It is the fast lockstep oracle.
+  - **Paused on purpose:** the step-35175 HDMA question (MEASUREMENTS (m), (n), (p), (q)). lsnes's HDMA rule is fitted, but the residual starts at the line-0 IRQ. The next step is written in (q). Pick it up only if LakeSnes ever has to run whole movies.
+- **MesenCE 2.2.1** works as a third vote, run as a released binary in a separate process (MEASUREMENTS (g)). The accuracy research, scoped to Super Metroid, is in `docs/oracle/ACCURACY.md`.
 
-## Jim's decisions today (binding; recorded in the docs above)
+## In flight at hand-off
 
-- **The thesis:** we model Super Metroid's behaviour in its entirety, as named behaviours, so
-  each can be reproduced exactly, adjusted (for example the space jump timing window), added
-  (respin, QoL) or removed (lag). A behaviour hidden in structure is a modelling failure.
-- **The principles are approved.** The newest stable Rust, the strictest lints (no
-  `unwrap`/`expect`/`panic`/indexing panics in engine code), idiomatic and readable to modern
-  developers, and comments that say why, never what.
-- **Crate names have no `sm_` prefix:** `data`, `game`, `runtime`, `app`, `oracle`, `verify`,
-  `tools`, `canonical`. The old `sm_*` crates keep their names until deleted, and new crates
-  may not depend on them.
-- **Slowdown** (load times and busy-room lag) is reproduced in vanilla play, and can be
-  toggled off. Every TAS movie trick must be executable in play.
-- **Widescreen** isn't built now. Later, it means wide gameplay, after vanilla is solid.
-- **Map Rando** is an aspiration with no roadmap. The architecture must not rule it out.
-- **Oracles:** emulators, possibly several. GPL emulators are allowed only as separate binaries,
-  never linked or copied, and one may be the primary oracle if necessary.
-- **Questions for Jim** are goal trade-offs only, each with full context and examples.
-  Engineering choices are the coordinator's, recorded with their reasons. Jim vetoes.
+- `lane/oracle-apu-resume`: the lsnes APU log after a resume.
+- `lane/relock-plan`: `docs/oracle/RELOCK.md`, the re-lock plan (inventory, lock format, steps).
 
-## The last lane's result (no lane is running)
+Merge each one by fast-forward or a rebase onto its base branch, then remove its worktree and delete its remote branch.
 
-The lsnes backend works: `research/oracle-harness` at `97ae09a`, GATE OK, with next steps in
-order in `docs/handoff/oracle-harness.md`.
+## Next, in order
 
-- **How it runs.** `crates/oracle/src/lsnes.rs` and `tools/oracle/lsnes_server.lua` drive
-  `lsnes-bsnes.exe` as a separate process (`movie --oracle lsnes`), with no emulator code in
-  the repo. It produces one FrameRecord per frame, cut at the NMI's RTI.
-- **Sync.** any% syncs from power-on through frame 17829. All 16 any% room-boundary seeds
-  match the old capture with 0 WRAM bytes differing. LakeSnes desyncs at about 8567.
-- **Speed.** 45 frames/s, recording full memories.
-- **Missing fields:** picture, APU log, SPC state (lsnes exposes the SMP and DSP only as raw
-  structs), the write log, PpuRegisters and overscan. So lsnes is the sync and seed authority,
-  and LakeSnes stays the full-record oracle.
-- **Native seeds.** 16 seeds (the `.lss` state plus the raw record) are in
-  `$TEMP/ohx/data/lsnes-native/any-boundary`, not in git.
-- **Not done:**
-  - lsnes exited at step 18068, cause unknown. Capture its stderr first.
-  - `corpus` doesn't yet accept `--oracle lsnes` or native seeds, so none of the 27 stalled
-    rows has been re-run.
-  - Door lengths haven't been measured.
+1. **The re-lock**, following RELOCK.md: cut the missing native seeds from the ladders, then `corpus --record` in the new format with lsnes streams, then record every row in parallel shards, then bundle and upload to ci-data (root only), then the reader in `verify`. Doing this clears #285's Verify failure.
+2. **Slice 0 on the new engine** (ARCHITECTURE §15): the decoder's PC/stack slice, the Tick spine, then `area-brinstar` and `item-morph-ball` green at ≥1,000 Ticks/s.
+3. **Land on main:** the design docs first, then the oracle crate, through `land.sh`. Retire the PLAN/REVIEW lines that contradict PRINCIPLES/ARCHITECTURE (#252).
 
-## Next steps, in order
+## Working rules learned (also in memory)
 
-1. **The oracle (finish (1)).** First the lsnes lane's leftovers (the exit at 18068, `corpus --oracle lsnes` with native seeds, the 27 stalled rows, door lengths), then:
-   - The cross-oracle disagreement report between LakeSnes and lsnes.
-   - The re-lock, recorded oracle-side by `corpus --record`, keyed by (row, oracle, version), with
-     the new stream definitions (D20-D23).
-   - The measurements ARCHITECTURE still waits on: the beam-sync point (D7), the IRQ dots
-     (D11), the H9 load-cost hypothesis (D9) and the driver echo (D18). Some are already in
-     MEASUREMENTS.md, and door lengths need the syncing core.
-   - Decide which oracle is the gate's primary from these results.
-2. **Land the design.** Open one PR per branch to `main` (docs only, no engine code), through
-   `tools/lane/land.sh`. Retire the superseded rules: PLAN/REVIEW lines and target-architecture
-   that contradict PRINCIPLES/ARCHITECTURE. This is also #252's "one current-rules file". The
-   `crates/oracle` PR needs CI to build it; the zig/native toolchain question is in HARNESS.md.
-3. **Slice 0** (ARCHITECTURE §15): the crate plan, then the spine built by one lane, then
-   `area-brinstar` and `item-morph-ball` green on the new engine, at ≥1,000 Ticks/s.
-
-## Working rules learned today
-
-- **Lanes are short-lived:** one spawn = one milestone, about an hour, then a handoff in
-  `docs/handoff/` and a fresh spawn. Don't relay follow-on work into a running lane. Jim
-  flagged a 2-hour lane.
-- Watch the context size, your own included. Brief lanes with pointers, not pasted text, and
-  read excerpts.
-- Defender randomly blocks built executables here (exit 126). The harness lane's workaround
-  is described in its handoff and isn't committed.
-- Private ROM-derived data: `$TEMP/ohx/data` (1.3 GB). Never in git.
-- Keep pinned issue #177's first paragraph current, and keep `MEMORY.md` updated.
-- Open from #252/#253/#242 (tier 3 of the superseded list, not yet put to Jim): one
-  current-rules file, the README's "no game data" wording, the data-boundary rule, the
-  mutation nightly. Bring them to Jim with context when the design lands.
+- **Lanes:** one item each, about 30 minutes and 300k tokens at most. That ceiling is a scoping test: if a lane is heading past it, stop it with a handoff and split what remains. Set a one-shot `CronCreate` check about 32 minutes after each spawn.
+- **Long emulator runs** are the root's background jobs (`run_in_background` plus a Monitor), never a lane's. Use ladders and parallel segments, and keep each process under about 5 minutes.
+- **Oracle accuracy** means accuracy for Super Metroid only.
+- **Strats** come from sm-json-data-rs (the `sm-logic` crate and its packs), never raw JSON.
+- **Defender** blocks fresh test executables here at random. CI's Quality job runs the rebuild crates' tests.
+- **#177 edits:** run `gh` with `-R JimLundin/sm-decomp` and check the saved body isn't empty before editing (one edit wiped it; recovered from `userContentEdits`).
+- **Pushes:** don't chain cleanup after a push with `;`. One push hit a GitHub error, and the commit was lost after the branch removal.
+- **Orphans:** five lsnes processes (6176, 14972, 24536, 22000, 25512) can't be killed; a reboot clears them.
