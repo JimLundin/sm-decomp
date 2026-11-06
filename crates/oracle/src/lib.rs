@@ -21,6 +21,7 @@ pub mod lsnes;
 pub mod measure;
 pub mod png;
 pub mod relock;
+pub mod relock_check;
 pub use oracle_record as record;
 pub mod seed;
 pub mod streams;

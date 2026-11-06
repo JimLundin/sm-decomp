@@ -626,6 +626,12 @@ pub fn main(arguments: &[String]) -> i32 {
         Some((command, rest)) if command == "ladder-check" => return ladder_check(rest),
         Some((command, rest)) if command == "ladder-rung" => ladder_rung(rest),
         Some((command, rest)) if command == "cross" => cross(rest),
+        Some((command, rest)) if command == "relock-compare" => {
+            return crate::relock_check::compare_command(rest);
+        }
+        Some((command, rest)) if command == "relock-merge" => {
+            return crate::relock_check::merge_command(rest);
+        }
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0
@@ -905,10 +911,25 @@ fn compare_frame_pads(directory: &Path, id: &str, cuts: &[String], end: &[u8]) -
     report
 }
 
+/// Frame `frame` of row `id`'s picture as `DIR/<id>.<frame>.png`: the dots the
+/// `video` stream digests (`Picture::shown`).
+fn dump_frame(directory: &Path, id: &str, frame: u64, record: &FrameRecord) {
+    let path = directory.join(format!("{id}.{frame}.png"));
+    let Some(picture) = record.picture.as_ref() else {
+        println!("  {id} frame {frame}: no picture to dump");
+        return;
+    };
+    let dots = picture.shown();
+    let png = crate::png::encode_rgb(crate::record::WIDTH, picture.lines, dots.as_flattened())
+        .unwrap_or_else(|| fail(format!("{}: the picture's size", path.display())));
+    std::fs::write(&path, png).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
+    println!("  {id} frame {frame}: {}", path.display());
+}
+
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
         fail(
-            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories]",
+            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories]",
         )
     };
     let scenarios = Path::new(lock)
@@ -925,6 +946,8 @@ fn corpus(arguments: &[String]) {
     let mut shard: (usize, usize) = (0, 1);
     let mut record: Option<std::fs::File> = None;
     let mut record_v2: Option<std::fs::File> = None;
+    let mut sidecar: Option<PathBuf> = None;
+    let mut dump_frames: Vec<(String, u64)> = Vec::new();
     let mut backend = String::new();
     let mut native_seeds: Option<PathBuf> = None;
     let mut watched: Vec<usize> = Vec::new();
@@ -975,6 +998,25 @@ fn corpus(arguments: &[String]) {
                     .unwrap_or_else(|error| fail(error));
                 record_v2 = Some(file);
             }
+            "--sidecar" => {
+                // Each row's per-frame stream digests, `DIR/<row>.frames`,
+                // so two recordings that disagree name their first frame.
+                let directory = options.next().unwrap_or_else(|| fail("--sidecar DIR"));
+                std::fs::create_dir_all(directory)
+                    .unwrap_or_else(|error| fail(format!("{directory}: {error}")));
+                sidecar = Some(PathBuf::from(directory));
+            }
+            "--dump-frames" => {
+                // The pictures of named frames, `DIR/<row>.<frame>.png` in
+                // the sidecar directory, to look at a frame a sidecar named.
+                let usage = "--dump-frames ROW:F,...";
+                let text = options.next().unwrap_or_else(|| fail(usage));
+                let (row, list) = text.rsplit_once(':').unwrap_or_else(|| fail(usage));
+                for number in list.split(',') {
+                    let number: u64 = number.parse().unwrap_or_else(|_| fail(usage));
+                    dump_frames.push((row.to_owned(), number));
+                }
+            }
             "--oracle" => {
                 backend = options
                     .next()
@@ -1023,6 +1065,12 @@ fn corpus(arguments: &[String]) {
     }
     if record_v2.is_some() && (backend != "lsnes" || !matches!(pads, Some(FramePads::Play(_)))) {
         fail("--record-v2 records lsnes rows played --from-frame-pads");
+    }
+    if (sidecar.is_some() || !dump_frames.is_empty()) && record_v2.is_none() {
+        fail("--sidecar and --dump-frames go with --record-v2");
+    }
+    if !dump_frames.is_empty() && sidecar.is_none() {
+        fail("--dump-frames writes into the --sidecar DIR");
     }
     let tiers = Tiers {
         picture: record_v2.is_some(),
@@ -1077,7 +1125,14 @@ fn corpus(arguments: &[String]) {
         let mut frame = 0u64;
         let mut recorder = record_v2
             .as_ref()
-            .map(|_| crate::relock::Recorder::default());
+            .map(|_| crate::relock::Recorder::default())
+            .map(|recorder| {
+                if sidecar.is_some() {
+                    recorder.logging()
+                } else {
+                    recorder
+                }
+            });
         let mut cuts: Vec<String> = Vec::new();
         let mut end: Vec<u8> = Vec::new();
         let mut watch = |record: &FrameRecord| {
@@ -1095,6 +1150,11 @@ fn corpus(arguments: &[String]) {
             }
             if let Some(recorder) = recorder.as_mut() {
                 recorder.fold(record);
+            }
+            if let Some(directory) = sidecar.as_deref()
+                && dump_frames.contains(&(entry.id.clone(), frame))
+            {
+                dump_frame(directory, &entry.id, frame, record);
             }
             frame += 1;
         };
@@ -1156,6 +1216,13 @@ fn corpus(arguments: &[String]) {
                         })
                         .collect();
                     println!("  {} v2: {}", entry.id, rows.join(" "));
+                    if let (Some(directory), Some(log)) =
+                        (sidecar.as_deref(), &written.recorded.frame_log)
+                    {
+                        let path = crate::relock_check::sidecar_path(directory, &entry.id);
+                        std::fs::write(&path, log)
+                            .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
+                    }
                     write!(file, "\n{}", written.to_toml()).unwrap_or_else(|error| fail(error));
                 }
                 let verdicts = crate::corpus::compare(entry, &run);
