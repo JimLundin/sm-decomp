@@ -13,6 +13,7 @@
 use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};
 use crate::id::RoomId;
+use crate::level::{Level, LevelError, ScrollArea, ScrollError, scroll_areas};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 /// Room headers, state headers, door lists, scroll tables and PLM populations.
@@ -320,6 +321,8 @@ pub struct RoomState {
     pub at: RomAddress,
     /// The level data, decompressed at load.
     pub level: LevelData,
+    /// The level data's blocks.
+    pub layers: Level,
     /// The tileset's index.
     pub tileset: u8,
     /// The music.
@@ -334,6 +337,8 @@ pub struct RoomState {
     pub layer2_scroll: [u8; 2],
     /// The scroll table.
     pub scroll: RomAddress,
+    /// The scroll areas it gives, a screen each, row-major.
+    pub scroll_areas: Vec<ScrollArea>,
     /// The special x-ray blocks.
     pub special_xray_blocks: RomAddress,
     /// The room's main code.
@@ -443,6 +448,20 @@ pub enum RoomError {
         /// Why.
         error: DecompressError,
     },
+    /// A state's level data doesn't decode into blocks.
+    Level {
+        /// Where the stream is.
+        at: RomAddress,
+        /// Why.
+        error: LevelError,
+    },
+    /// A state's scroll table doesn't decode.
+    Scroll {
+        /// The state header.
+        state: RomAddress,
+        /// Why.
+        error: ScrollError,
+    },
     /// The load list repeats a key or is too long.
     RoomList,
 }
@@ -551,6 +570,7 @@ impl Reader<'_> {
 pub fn decode(rom: Lorom<'_>, key: RoomKey) -> Result<Room, RoomError> {
     let mut reader = Reader { rom, at: key.0 };
     let [index, area, x, y, width, height, up, down, cre] = reader.take()?;
+    let size = Screens { width, height };
     let area = Area::try_from(area).map_err(|value| RoomError::Area { room: key, value })?;
     let doors = reader.pointer(ROOM_BANK)?;
     let mut conditional = Vec::new();
@@ -558,7 +578,7 @@ pub fn decode(rom: Lorom<'_>, key: RoomKey) -> Result<Room, RoomError> {
         let at = reader.pointer(ROOM_BANK)?;
         conditional.push(ConditionalState {
             condition,
-            state: state(rom, at)?,
+            state: state(rom, at, size)?,
         });
     }
     if u8::try_from(conditional.len()).is_err() {
@@ -569,12 +589,12 @@ pub fn decode(rom: Lorom<'_>, key: RoomKey) -> Result<Room, RoomError> {
         index,
         area,
         map_position: MapPosition { x, y },
-        size: Screens { width, height },
+        size,
         scrollers: Scrollers { up, down },
         cre,
         doors,
         conditional,
-        default: state(rom, reader.at)?,
+        default: state(rom, reader.at, size)?,
     })
 }
 
@@ -596,8 +616,8 @@ fn condition(reader: &mut Reader<'_>) -> Result<Option<Condition>, RoomError> {
     Ok(Some(condition))
 }
 
-/// The state header at `at`, its level data decompressed.
-fn state(rom: Lorom<'_>, at: RomAddress) -> Result<RoomState, RoomError> {
+/// The state header at `at` of a room of `size`, its level data decompressed and decoded.
+fn state(rom: Lorom<'_>, at: RomAddress, size: Screens) -> Result<RoomState, RoomError> {
     let mut reader = Reader { rom, at };
     let [
         level_low,
@@ -627,9 +647,16 @@ fn state(rom: Lorom<'_>, at: RomAddress) -> Result<RoomState, RoomError> {
             at: level_at,
             error,
         })?;
+    let layers = Level::decode(&level.bytes).map_err(|error| RoomError::Level {
+        at: level_at,
+        error,
+    })?;
+    let scroll_areas =
+        scroll_areas(rom, scroll, size).map_err(|error| RoomError::Scroll { state: at, error })?;
     Ok(RoomState {
         at,
         level,
+        layers,
         tileset,
         music: Music {
             data: music_data,
@@ -640,6 +667,7 @@ fn state(rom: Lorom<'_>, at: RomAddress) -> Result<RoomState, RoomError> {
         enemy_set,
         layer2_scroll,
         scroll,
+        scroll_areas,
         special_xray_blocks,
         main_code,
         plm_population,

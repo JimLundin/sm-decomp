@@ -1,0 +1,160 @@
+use super::*;
+
+#[test]
+fn every_block_word_and_bts_goes_back_out_exact() {
+    for word in (0..=u16::MAX).step_by(7) {
+        for bts in 0..=u8::MAX {
+            let block = Block::new(word, bts);
+            assert_eq!(block.word(), word, "{word:04x}");
+            assert_eq!(block.kind.bts(), bts, "{word:04x} {bts:02x}");
+        }
+    }
+    for nybble in 0..16_u8 {
+        assert_eq!(BlockKind::new(nybble, 0).nybble(), nybble);
+    }
+}
+
+#[test]
+fn each_bts_is_typed_for_its_block_type() {
+    assert_eq!(
+        BlockKind::new(0x1, 0xc5),
+        BlockKind::Slope(Slope {
+            shape: 5,
+            bit5: false,
+            x_flip: true,
+            y_flip: true,
+        })
+    );
+    assert_eq!(
+        BlockKind::new(0x5, 0xff),
+        BlockKind::HorizontalExtension(Offset(-1))
+    );
+    assert_eq!(
+        BlockKind::new(0xd, 0xf0),
+        BlockKind::VerticalExtension(Offset(-16))
+    );
+    assert_eq!(BlockKind::new(0x9, 3), BlockKind::Door(DoorIndex(3)));
+    assert_eq!(
+        BlockKind::new(0xc, 0x04),
+        BlockKind::Shootable(PlmChoice::Common(4))
+    );
+    assert_eq!(
+        BlockKind::new(0xc, 0x82),
+        BlockKind::Shootable(PlmChoice::Area(2))
+    );
+    assert_eq!(
+        BlockKind::new(0xb, 0x0e),
+        BlockKind::Special(PlmChoice::Common(0x0e))
+    );
+    assert_eq!(
+        BlockKind::new(0xf, 0x01),
+        BlockKind::Bombable(BombableBts::Plm(1))
+    );
+    assert_eq!(
+        BlockKind::new(0x7, 0x80),
+        BlockKind::BombableAir(BombableBts::Inert(0))
+    );
+    assert_eq!(BlockKind::new(0x8, 0x12), BlockKind::Solid(Bts(0x12)));
+}
+
+/// Level data of `blocks` blocks, each word `word` and BTS `bts`, and layer 2's words.
+fn level(blocks: u16, word: u16, bts: u8, layer2: Option<u16>) -> Vec<u8> {
+    let mut bytes = blocks.wrapping_mul(2).to_le_bytes().to_vec();
+    for _ in 0..blocks {
+        bytes.extend(word.to_le_bytes());
+    }
+    bytes.extend(std::iter::repeat_n(bts, usize::from(blocks)));
+    if let Some(layer2) = layer2 {
+        for _ in 0..blocks {
+            bytes.extend(layer2.to_le_bytes());
+        }
+    }
+    bytes
+}
+
+#[test]
+fn the_length_says_whether_layer_2_is_there() {
+    let without = Level::decode(&level(3, 0x8123, 0, None)).unwrap();
+    assert_eq!(without.layer1.len(), 3);
+    assert_eq!(without.layer1[0].kind, BlockKind::Solid(Bts(0)));
+    assert_eq!(without.layer2, None);
+
+    let with = Level::decode(&level(3, 0x8123, 0, Some(0x7c45))).unwrap();
+    let layer2 = with.layer2.unwrap();
+    assert_eq!(layer2.len(), 3);
+    assert_eq!(
+        layer2[0],
+        Layer2Block {
+            tile: Tile::from_word(0x0c45),
+            unread: 7,
+        }
+    );
+}
+
+#[test]
+fn level_data_of_another_length_is_an_error() {
+    assert_eq!(Level::decode(&[4]), Err(LevelError::NoSize));
+    assert_eq!(Level::decode(&[3, 0, 0, 0, 0]), Err(LevelError::OddSize(3)));
+    let mut long = level(2, 0, 0, None);
+    long.push(0);
+    assert_eq!(
+        Level::decode(&long),
+        Err(LevelError::Length { blocks: 2, len: 9 })
+    );
+    assert_eq!(
+        Level::decode(&[4, 0, 0, 0]),
+        Err(LevelError::Length { blocks: 2, len: 4 })
+    );
+}
+
+#[test]
+fn scroll_tables_give_an_area_a_screen() {
+    let mut image = vec![0; 0x8000];
+    image[0x10..0x16].copy_from_slice(&[0, 1, 2, 2, 1, 0]);
+    let size = Screens {
+        width: 3,
+        height: 2,
+    };
+    let table = scroll_areas(Lorom::new(&image), RomAddress::new(0x80, 0x8010), size).unwrap();
+    assert_eq!(
+        table,
+        [
+            ScrollArea::Red,
+            ScrollArea::Blue,
+            ScrollArea::Green,
+            ScrollArea::Green,
+            ScrollArea::Blue,
+            ScrollArea::Red
+        ]
+    );
+    image[0x12] = 3;
+    assert_eq!(
+        scroll_areas(Lorom::new(&image), RomAddress::new(0x80, 0x8010), size),
+        Err(ScrollError::Area {
+            screen: 2,
+            value: 3
+        })
+    );
+}
+
+#[test]
+fn a_pointer_below_8000_generates_the_areas() {
+    let image = vec![0; 0x8000];
+    let rom = Lorom::new(&image);
+    let size = Screens {
+        width: 2,
+        height: 2,
+    };
+    let generated = |offset| scroll_areas(rom, RomAddress::new(0x8f, offset), size);
+    let green = ScrollArea::Green;
+    let blue = ScrollArea::Blue;
+    assert_eq!(generated(0), Ok(vec![green, green, blue, blue]));
+    assert_eq!(generated(1), Ok(vec![green; 4]));
+    assert_eq!(
+        generated(2),
+        Err(ScrollError::Area {
+            screen: 2,
+            value: 3
+        })
+    );
+}

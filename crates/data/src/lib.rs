@@ -9,6 +9,7 @@ pub mod compression;
 pub mod digest;
 pub mod enemy;
 pub mod id;
+pub mod level;
 pub mod movement;
 pub mod pose;
 pub mod rom;

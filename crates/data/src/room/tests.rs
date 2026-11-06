@@ -1,4 +1,5 @@
 use super::*;
+use crate::level::ScrollArea;
 use crate::rom::Rom;
 
 /// The file offset of `$8F:offset`.
@@ -40,13 +41,18 @@ fn synthetic() -> Vec<u8> {
     );
     put(&mut image, room_bank(0x8012), &state_bytes(0x9000, 6));
     put(&mut image, room_bank(0x8100), &state_bytes(0x9010, 7));
-    // Level data: a layer 1 size word of 4, then 6 fill bytes; and three direct bytes.
+    // Level data: a layer 1 size word of 4, then 6 fill bytes; and a one-block level of
+    // five direct bytes.
     put(
         &mut image,
         room_bank(0x9000),
         &[0x01, 0x04, 0x00, 0x25, 0x0a, 0xff],
     );
-    put(&mut image, room_bank(0x9010), &[0x02, 1, 2, 3, 0xff]);
+    put(
+        &mut image,
+        room_bank(0x9010),
+        &[0x04, 0x02, 0x00, 0x11, 0x22, 0x33, 0xff],
+    );
     image
 }
 
@@ -78,7 +84,15 @@ fn a_header_and_its_states_decode() {
     assert_eq!(room.conditional[0].condition, Condition::Event(Event(0)));
     assert_eq!(room.conditional[0].state.at, RomAddress::new(0x8f, 0x8100));
     assert_eq!(room.conditional[0].state.tileset, 7);
-    assert_eq!(room.conditional[0].state.level.bytes, [1, 2, 3]);
+    assert_eq!(
+        room.conditional[0].state.level.bytes,
+        [0x02, 0x00, 0x11, 0x22, 0x33]
+    );
+    let spike_air = crate::level::Block {
+        kind: crate::level::BlockKind::SpikeAir(crate::level::Bts(0x33)),
+        tile: crate::level::Tile::from_word(0x0211),
+    };
+    assert_eq!(room.conditional[0].state.layers.layer1, [spike_air]);
 
     let default = &room.default;
     assert_eq!(default.at, RomAddress::new(0x8f, 0x8012));
@@ -95,6 +109,17 @@ fn a_header_and_its_states_decode() {
     assert_eq!(default.level.at, RomAddress::new(0x8f, 0x9000));
     assert_eq!(default.level.layer1_bytes(), Some(4));
     assert_eq!(default.level.bytes.len(), 8);
+    // Two blocks of 0x0A0A: air, tile 0x20A flipped top to bottom, BTS 0x0A.
+    let air = crate::level::Block::new(0x0a0a, 0x0a);
+    assert_eq!(
+        air.kind,
+        crate::level::BlockKind::Air(crate::level::Bts(0x0a))
+    );
+    assert!(air.tile.y_flip && !air.tile.x_flip);
+    assert_eq!(default.layers.layer1, [air, air]);
+    assert_eq!(default.layers.layer2, None);
+    // The image holds zeros at the scroll table: every screen red.
+    assert_eq!(default.scroll_areas, vec![ScrollArea::Red; 24]);
 }
 
 #[test]
@@ -251,6 +276,28 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
         state.level.bytes.len(),
         layer1.wrapping_add(bts).wrapping_add(2)
     );
+
+    // 6,144 blocks, which go back out as the level data's own bytes.
+    let blocks = &state.layers.layer1;
+    assert_eq!(blocks.len(), room.size.blocks());
+    assert_eq!(state.layers.layer2, None);
+    let (words, bts) = state.level.bytes[2..].split_at(layer1);
+    for ((block, word), bts) in blocks.iter().zip(words.as_chunks::<2>().0).zip(bts) {
+        assert_eq!(&block.word().to_le_bytes(), word);
+        assert_eq!(block.kind.bts(), *bts);
+    }
+    // The scroll table at $8F:9EED gives each of the 24 screens an area.
+    assert_eq!(state.scroll_areas.len(), 24);
+    let mut kinds: Vec<u8> = blocks.iter().map(|block| block.kind.nybble()).collect();
+    kinds.sort_unstable();
+    kinds.dedup();
+    // Air, slopes, solid, doors, shot blocks, vertical extensions and bomb blocks.
+    assert_eq!(kinds, [0x0, 0x1, 0x8, 0x9, 0xc, 0xd, 0xf]);
+    let (red, blue, green) = (ScrollArea::Red, ScrollArea::Blue, ScrollArea::Green);
+    let mut areas = vec![red; 16];
+    areas[5] = green;
+    areas.extend([blue; 8]);
+    assert_eq!(state.scroll_areas, areas);
 
     assert_eq!(
         addresses.get(Location::State(id, index, StatePart::PlmPopulation)),
