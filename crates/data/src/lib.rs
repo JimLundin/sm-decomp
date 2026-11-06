@@ -11,6 +11,7 @@ pub mod enemy;
 pub mod id;
 pub mod level;
 pub mod movement;
+pub mod palette;
 pub mod pose;
 pub mod rom;
 pub mod room;

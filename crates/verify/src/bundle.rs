@@ -14,6 +14,7 @@ use data::enemy::face_block::FaceBlockLists;
 use data::enemy::program::{EnemyPrograms, ProgramError};
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
+use data::palette::VisorColours;
 use data::pose::animation::{AnimationDelays, AnimationError};
 use data::pose::spritemap::{SamusSpritemaps, SpritemapError};
 use data::pose::transition::PoseTransitions;
@@ -129,6 +130,8 @@ pub enum ContentError {
     EnemyPrograms(ProgramError),
     /// Samus's spritemaps don't decode.
     SamusSpritemaps(SpritemapError),
+    /// Samus's palette tables are outside the image.
+    Palettes(AddressError),
 }
 
 impl fmt::Display for ContentError {
@@ -142,6 +145,7 @@ impl fmt::Display for ContentError {
             Self::Slopes(error) => write!(f, "the slope shapes: {error:?}"),
             Self::EnemyPrograms(error) => write!(f, "the enemy instruction lists: {error:?}"),
             Self::SamusSpritemaps(error) => write!(f, "Samus's spritemaps: {error:?}"),
+            Self::Palettes(error) => write!(f, "Samus's palette tables: {error:?}"),
         }
     }
 }
@@ -172,5 +176,6 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         face_block_lists,
         samus_spritemaps: SamusSpritemaps::load(rom.lorom())
             .map_err(ContentError::SamusSpritemaps)?,
+        visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
     })
 }

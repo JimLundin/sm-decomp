@@ -315,6 +315,8 @@ pub const FIELDS: &[Field] = &[
         "samus.super_special.command",
         source::SAMUS_HURT_SWITCH_INDEX,
     ),
+    wram("samus.visor.shade", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
+    wram("samus.visor.timer", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
     Field {
         path: "room.room",
         status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
@@ -325,6 +327,7 @@ pub const FIELDS: &[Field] = &[
         status: Status::Decoded(Source::WramBlock(source::LEVEL_DATA)),
     },
     wram("room.width", source::ROOM_WIDTH_IN_BLOCKS),
+    wram("room.layer_blending", source::FX_LAYER_BLENDING_CONFIG_A),
     Field {
         path: "room.scroll_areas",
         status: Status::Decoded(Source::WramBlock(source::SCROLLS)),
@@ -618,6 +621,8 @@ mod tests {
             rules.animation.new_pose_frame,
             rules.super_special.pose,
             rules.super_special.command,
+            rules.visor,
+            rules.layer_blending,
             rules.elevator.status,
             rules.elevator.armed,
             rules.elevator.direction,

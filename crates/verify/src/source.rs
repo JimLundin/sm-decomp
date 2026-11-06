@@ -859,6 +859,17 @@ pub const SAMUS_HURT_SWITCH_INDEX: WramWord = WramWord {
     name: "SAMUS_HURT_SWITCH_INDEX",
     offset: 0x0A32,
 };
+/// Bank $91 log, `$91:D83F`: the visor palette timer in the low byte, the index into the
+/// visor colours `$9B:A3C0` in the high byte (6, 8 or $A in the cycle).
+pub const SAMUS_VISOR_PALETTE_TIMER_INDEX: WramWord = WramWord {
+    name: "SAMUS_VISOR_PALETTE_TIMER_INDEX",
+    offset: 0x0A72,
+};
+/// Bank $91 log, `$91:D849`: the default layer blending configuration, from the room's FX.
+pub const FX_LAYER_BLENDING_CONFIG_A: WramWord = WramWord {
+    name: "FX_LAYER_BLENDING_CONFIG_A",
+    offset: 0x1982,
+};
 
 /// Bank $80 log, NMI `$80:95ED`: the requested NMIs in eight bits, which the HUD's
 /// auto-cancel flash reads.

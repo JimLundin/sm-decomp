@@ -626,6 +626,26 @@ cache, 2026-11-06: `item-morph-ball` enemies differ on 2 Ticks (from 38): `eleva
 (the enemy graphics drawn hook `$A8:E86E`, its palette index and timer), the face block's
 grapple/hurt/frozen AI, and its shot reaction (`$A8:E91D`, which undeletes the projectile).
 
+**C10a status (`lane/slice0-c10`), the palette buffer's writers.** Found (A2's cache, the
+palette buffer diffed frame to frame): palette FX objects are off in both rows (the flag
+`$1E7B` and every object's ID are 0). Two writers run. Samus's visor (bank $91 log, handle
+Samus palette `$91:D6F7` from the normal new state handler `$90:E725`, visor `$91:D83F`):
+sprite palette 4 colour 4 from `$9B:A3C6`, a colour every five frames from 453 in both rows,
+the first frame of the normal handler after the elevator's arrival (the ride's handler
+`$90:E8EC` doesn't call it), in a room with layer blending 2Ah. The face block's palette
+cycle (the enemy graphics drawn hook `$A8:E86E`, run at the end of `$A0:884D`): sprite
+palette 7 colours 9 to 12 from `$A8:E7CC`, every 16 frames from 1232 of `item-morph-ball`,
+once the Morph Ball is collected. Done: the visor, `game::samus_palette` (`Samus::visor`, a
+`VisorShade` and `VisorTimer` decoded from `SAMUS_VISOR_PALETTE_TIMER_INDEX`;
+`RoomScoped::layer_blending` from `FX_LAYER_BLENDING_CONFIG_A`; `data::palette::VisorColours`
+in `Content`; coverage rows, comparators, mutants, four unit tests). Lockstep on A2's cache,
+2026-11-06: `area-brinstar` `video.batch.cgram` and `video.memory.cgram` equal on all 476
+Ticks (from 5 differing); `item-morph-ball` 15 / 17 Ticks (from 130), first at 741, where the
+oracle loads the whole suit palette (`$91:DD5B`, a caller among `$91:DE53`'s not yet traced,
+on a pose change from standing to running). Remaining: that suit palette load, the face
+block's cycle (its hook, `$1794`/`$1796`/`$1798`, the colour sets), and the visor's other
+paths (charge, x-ray, hurt flash; none in slice 0).
+
 **C6c status (`lane/slice0-c6c`), drawing Samus.** Done: `data::spritemap` (the entry
 format of bank `$81`'s `$81:8A5F`: size, nine-bit X, Y, tile, palette, priority, flips) and
 `data::pose::spritemap::SamusSpritemaps` (`$92:9263`/`$92:945D` half indices by pose,

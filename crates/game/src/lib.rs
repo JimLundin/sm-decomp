@@ -19,6 +19,7 @@ pub mod oam;
 pub mod pose;
 pub mod rng;
 pub mod samus_drawing;
+pub mod samus_palette;
 pub mod scrolling;
 pub mod session;
 pub mod state;

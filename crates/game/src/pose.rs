@@ -13,6 +13,7 @@ use data::enemy::face_block::FaceBlockLists;
 use data::enemy::program::EnemyPrograms;
 use data::level::slope::Slopes;
 use data::movement::{HorizontalSpeeds, VerticalSpeeds};
+use data::palette::VisorColours;
 use data::pose::animation::AnimationDelays;
 use data::pose::spritemap::SamusSpritemaps;
 use data::pose::transition::{Control, Controls, PoseTransitions};
@@ -50,6 +51,8 @@ pub struct Content {
     pub face_block_lists: FaceBlockLists,
     /// Samus's spritemaps by pose and frame.
     pub samus_spritemaps: SamusSpritemaps,
+    /// Her visor's colour cycle.
+    pub visor_colours: VisorColours,
 }
 
 /// The pose a frame asks for, by the channel that asked.

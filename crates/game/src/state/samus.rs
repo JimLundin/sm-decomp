@@ -650,6 +650,61 @@ pub struct SuperSpecial {
     pub command: SuperSpecialCommand,
 }
 
+/// Which of the visor's cycle colours shows next (bank $91 log, handle visor palette
+/// `$91:D83F`): the cycle steps bright, dim, dark, then back to bright.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum VisorShade {
+    /// The cycle's first colour, where a new game starts it (`$91:E0BF`).
+    #[default]
+    Bright,
+    /// The second.
+    Dim,
+    /// The third.
+    Dark,
+}
+
+impl VisorShade {
+    /// The shade after this one.
+    #[must_use]
+    pub const fn next(self) -> Self {
+        match self {
+            Self::Bright => Self::Dim,
+            Self::Dim => Self::Dark,
+            Self::Dark => Self::Bright,
+        }
+    }
+
+    /// The shade's place in the cycle's colours.
+    #[must_use]
+    pub const fn index(self) -> usize {
+        match self {
+            Self::Bright => 0,
+            Self::Dim => 1,
+            Self::Dark => 2,
+        }
+    }
+}
+
+/// Frames until the visor's next colour, a byte that counts down to 0.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct VisorTimer(pub u8);
+
+impl Default for VisorTimer {
+    /// A new game shows the first colour on its first frame (`$91:E0BF`).
+    fn default() -> Self {
+        Self(1)
+    }
+}
+
+/// The visor's colour cycle in rooms whose colour math adds the backdrop.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Visor {
+    /// The colour it shows next.
+    pub shade: VisorShade,
+    /// Frames until it does.
+    pub timer: VisorTimer,
+}
+
 /// Samus.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Samus {
@@ -683,4 +738,6 @@ pub struct Samus {
     pub animation: Animation,
     /// The super special prospective pose request.
     pub super_special: SuperSpecial,
+    /// Her visor's colour cycle.
+    pub visor: Visor,
 }

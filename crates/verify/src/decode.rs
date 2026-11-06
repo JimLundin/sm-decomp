@@ -14,12 +14,12 @@ use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use game::state::room::{
     Block, BlockColumns, Camera, CameraDistance, ElevatorArming, ElevatorDirection, ElevatorRide,
-    ElevatorStatus, Layer2Scroll, Layer2Scrolls, RoomScoped, ScrollArea, Scrollers,
+    ElevatorStatus, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
     Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus,
-    Speed, SuperSpecial, SuperSpecialCommand, Vertical, YDirection,
+    Speed, SuperSpecial, SuperSpecialCommand, Vertical, Visor, VisorShade, VisorTimer, YDirection,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
@@ -332,6 +332,10 @@ pub struct Rules<'t> {
     pub animation: AnimationSources,
     /// `samus.super_special`.
     pub super_special: SuperSpecialSources,
+    /// `samus.visor`: its timer and shade, a byte each.
+    pub visor: WramWord,
+    /// `room.layer_blending`.
+    pub layer_blending: WramWord,
     /// `elevator`.
     pub elevator: ElevatorSources,
     /// `room.blocks` and `room.scroll_areas`.
@@ -658,6 +662,8 @@ impl Rules<'_> {
             pose: source::SAMUS_NEW_POSE_TRANSITIONAL,
             command: source::SAMUS_HURT_SWITCH_INDEX,
         },
+        visor: source::SAMUS_VISOR_PALETTE_TIMER_INDEX,
+        layer_blending: source::FX_LAYER_BLENDING_CONFIG_A,
         elevator: ElevatorSources {
             status: source::ELEVATOR_STATUS,
             armed: source::ELEVATOR_FLAGS,
@@ -775,6 +781,7 @@ impl Rules<'_> {
                 room,
                 blocks,
                 width: BlockColumns(self.level.width.read(wram)?),
+                layer_blending: LayerBlending(self.layer_blending.read(wram)?),
                 scroll_areas,
                 camera: Camera {
                     x: Fixed {
@@ -848,6 +855,7 @@ impl Rules<'_> {
             movement,
             animation: self.animation.read(wram)?,
             super_special: self.super_special.read(wram)?,
+            visor: visor(self.visor, wram)?,
             ..Samus::default()
         })
     }
@@ -1515,6 +1523,39 @@ impl AnimationSources {
 
 /// The new pose frame that keeps the animation (`$91:FB08` tests bit 15).
 const PRESERVE_FRAME: u16 = 0x8000;
+
+/// Samus's visor cycle from its word: the timer in the low byte, in the high byte the byte
+/// offset of the next colour in the visor colours (`$9B:A3C0`), whose cycle is the last three.
+///
+/// # Errors
+///
+/// [`DecodeError::Unrepresentable`] for a timer of 0, which `$91:D83F` never leaves, or an
+/// offset outside the cycle.
+fn visor(source: WramWord, wram: &[u8]) -> Result<Visor, DecodeError> {
+    let word = source.read(wram)?;
+    let [timer, offset] = word.to_le_bytes();
+    let shade = match offset {
+        6 => VisorShade::Bright,
+        8 => VisorShade::Dim,
+        0x0a => VisorShade::Dark,
+        _ => {
+            return Err(DecodeError::Unrepresentable {
+                source: source.name,
+                value: word,
+            });
+        }
+    };
+    if timer == 0 {
+        return Err(DecodeError::Unrepresentable {
+            source: source.name,
+            value: word,
+        });
+    }
+    Ok(Visor {
+        shade,
+        timer: VisorTimer(timer),
+    })
+}
 
 /// The super special prospective pose word for none.
 const NO_POSE: u16 = 0xFFFF;

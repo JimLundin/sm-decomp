@@ -292,6 +292,8 @@ const COMPARATORS: &[Comparator] = &[
     ),
     field!("samus.super_special.pose", samus.super_special.pose),
     field!("samus.super_special.command", samus.super_special.command),
+    field!("samus.visor.shade", samus.visor.shade),
+    field!("samus.visor.timer", samus.visor.timer),
     field!("samus.equipment.equipped", samus.equipment.equipped),
     field!(
         "samus.equipment.energy.current",
@@ -328,6 +330,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.room", room.room),
     field!("room.blocks", room.blocks),
     field!("room.width", room.width),
+    field!("room.layer_blending", room.layer_blending),
     field!("room.scroll_areas", room.scroll_areas),
     field!("room.camera.x.pixels", room.camera.x.pixels),
     field!("room.camera.x.subpixels", room.camera.x.subpixels),

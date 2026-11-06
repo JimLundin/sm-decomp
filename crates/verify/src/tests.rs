@@ -11,12 +11,12 @@ use data::rom::{Lorom, RomAddress};
 use game::enemy::instructions::label;
 use game::state::room::{
     Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy, EnemyBody,
-    EnemyCommon, PaletteIndex, ScrollArea, TilesIndex,
+    EnemyCommon, LayerBlending, PaletteIndex, ScrollArea, TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Jump, Movement,
     MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial, SuperSpecialCommand,
-    Vertical, YDirection,
+    Vertical, Visor, VisorShade, VisorTimer, YDirection,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Label, Occupancy, Slot};
@@ -295,6 +295,8 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0E16, 0x0080); // ELEVATOR_FLAGS: armed
     put(&mut wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
     put(&mut wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
+    put(&mut wram, 0x0A72, 0x0803); // SAMUS_VISOR_PALETTE_TIMER_INDEX: dim, 3 frames
+    put(&mut wram, 0x1982, 0x002A); // FX_LAYER_BLENDING_CONFIG_A
     put(&mut wram, 0x0A96, 0x0003); // SAMUS_ANIM_FRAME
     put(&mut wram, 0x0A9A, 0x8000); // SAMUS_ANIM_FRAME_SKIP: preserve
     put(&mut wram, 0x0B3C, 0x0001); // SAMUS_HAS_MOMENTUM_FLAG
@@ -366,6 +368,16 @@ fn decodes_the_animation(state: &State) -> bool {
                 pose: Some(PoseId(2)),
                 command: SuperSpecialCommand::TransitionAnimationFinished,
             }
+}
+
+/// Samus's visor cycle and the room's layer blending, as the synthetic record sets them.
+fn decodes_the_visor(state: &State) -> bool {
+    state.samus.visor
+        == Visor {
+            shade: VisorShade::Dim,
+            timer: VisorTimer(3),
+        }
+        && state.room.layer_blending == LayerBlending(0x2a)
 }
 
 /// The elevator ride, as the synthetic record sets it.
@@ -457,6 +469,7 @@ fn decodes_the_record(state: &State) -> bool {
             }
         && decodes_the_animation(state)
         && decodes_the_ride(state)
+        && decodes_the_visor(state)
         && state.timing.last == NmiTiming::OnTime
         && state.video.nmi_requested
         && state.room.room == MORPH_BALL_ROOM_ID
@@ -518,7 +531,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 46] = [
+const WORD_RULES: [(&str, WordRule); 48] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -581,6 +594,8 @@ const WORD_RULES: [(&str, WordRule); 46] = [
     ("elevator.status", |rules| &mut rules.elevator.status),
     ("elevator.armed", |rules| &mut rules.elevator.armed),
     ("elevator.direction", |rules| &mut rules.elevator.direction),
+    ("visor", |rules| &mut rules.visor),
+    ("layer_blending", |rules| &mut rules.layer_blending),
 ];
 
 /// Every byte rule.
@@ -613,6 +628,22 @@ fn an_acceleration_mode_past_2_or_a_momentum_flag_past_1_is_an_error() {
         assert_eq!(
             decode(&record, &rooms()),
             Err(DecodeError::Unrepresentable { source, value: 3 })
+        );
+    }
+}
+
+#[test]
+fn a_visor_word_outside_the_cycle_is_unrepresentable() {
+    // A zero timer, then the x-ray's widening colours and an odd offset.
+    for value in [0x0800, 0x0405, 0x0705] {
+        let mut record = record();
+        put(&mut record.wram, 0x0A72, value);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable {
+                source: "SAMUS_VISOR_PALETTE_TIMER_INDEX",
+                value
+            })
         );
     }
 }

@@ -451,6 +451,7 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
                 surroundings,
             };
             pose::change(&mut state.samus, requests, collisions, content);
+            crate::samus_palette::handle(state, &content.visor_colours);
         }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
         // with those game states. In game state 8 the clock still counts on that frame; it

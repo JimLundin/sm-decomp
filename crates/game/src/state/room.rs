@@ -547,6 +547,23 @@ pub struct EnemyDrawing {
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct BlockColumns(pub u16);
 
+/// A layer blending configuration (`FX_LAYER_BLENDING_CONFIG_A`, the bank logs' default layer
+/// blending configuration): the room's FX sets it as the room loads.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LayerBlending(pub u16);
+
+impl LayerBlending {
+    /// The configurations whose colour math adds the backdrop colour to the backgrounds
+    /// (28h and 2Ah), in which Samus's visor cycles (bank $91 log, `$91:D83F`).
+    const BACKDROP_COLOUR_MATH: [Self; 2] = [Self(0x28), Self(0x2a)];
+
+    /// Whether colour math adds the backdrop colour.
+    #[must_use]
+    pub fn adds_backdrop(self) -> bool {
+        Self::BACKDROP_COLOUR_MATH.contains(&self)
+    }
+}
+
 /// Everything room-scoped.
 // open: FX, enemy projectiles, sprite objects, Samus's projectiles and the visual effects
 // (HDMA objects, palette FX, animated tiles, layer blending) join with their domains.
@@ -560,6 +577,8 @@ pub struct RoomScoped {
     pub blocks: Vec<Block>,
     /// How many blocks across the room is: the level's row length.
     pub width: BlockColumns,
+    /// The room's default layer blending configuration.
+    pub layer_blending: LayerBlending,
     /// One per screen, row-major.
     pub scroll_areas: Vec<ScrollArea>,
     /// The camera.
@@ -578,8 +597,8 @@ impl RoomScoped {
     /// Room `room`, as it loads in `state`: its level's layer 1 blocks, its width in blocks,
     /// its scroll areas and the camera's scroll settings, with no PLMs or enemies yet and the
     /// camera at the top left.
-    // open: the door's arrival, the PLM and enemy populations and the camera's start join with
-    // the room transition (bank $82 log, `$82:E7D3`).
+    // open: the door's arrival, the PLM and enemy populations, the FX's layer blending and the
+    // camera's start join with the room transition (bank $82 log, `$82:E7D3`).
     #[must_use]
     pub fn load(room: RoomId, header: &Room, state: &RoomState) -> Self {
         let [x, y] = state.layer2_scroll.map(Layer2Scroll::from);
