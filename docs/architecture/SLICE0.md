@@ -662,6 +662,31 @@ enemy layer below 3, `$A0:884D`, or the elevator's drawing handler), none on 398
 drawing handlers, the knockback and special palette timers, `$0AC8`/`$0ACA`/`$0B04`/`$0B06`,
 Samus's tile DMA (`$92:8000`).
 
+**C6d status (`lane/slice0-c6d`), Samus's drawing handlers.** Done: `samus.drawing` is
+`DrawingHandler::{Default, FiringGrapple, ShinesparkCrashEchoCircle, UsingElevator,
+Inanimate, Hidden}` (bank $90 log, draw Samus sprites `$90:EB4B` jumps through it), decoded
+from `SAMUS_DRAW_HANDLER` (`$0A5C`: `$EB52`, `$EB86`, `$EBF3`, `$EC14`, `$EC1D`, `$E90E`;
+any other word, the RTS `$EBF2` only unused `$90:E35A` stores included, is
+`Unrepresentable`), with a coverage row, a comparator and a moved-source mutant.
+`samus_drawing::draw` dispatches on it: the default, grapple and crash-echo handlers draw her
+body through `$90:85E2` with the invincibility flicker; using elevator (`$90:EC14`) leaves
+her out on odd frames of the frame counter and otherwise, like inanimate (`$90:EC1D`), draws
+her through `$90:8A00`, `$90:85E2` without the flicker; hidden draws nothing. The elevator
+AI sets using elevator on the call (Samus command 7, `$90:F1D8`) and default on arrival
+(command Bh, `$90:F295`). The bottom-half handlers (`$90:864E`) were already right for slice
+0: the entry-8 difference from Tick 294 was the elevator parity. Lockstep on A2's cache,
+2026-11-06, OAM-equal Ticks: `area-brinstar` 246 to 467 of 476, `item-morph-ball` 1093 to
+1314 of 1427. Every remaining `area-brinstar` OAM difference (9) comes with a Samus position
+or camera difference (from 314). Of `item-morph-ball`'s 113, 40 have Samus, camera and
+enemies equal: 713-725, one sprite drawn between the enemies and Samus (tile $48/$49,
+palette 5), which matches the atmospheric graphics `$90:8A4C` runs before `$90:85E2`; and
+1216-1253, entry 0 ahead of the face blocks (tile $51, palette 6), which is an enemy's
+sprite. The other 73 follow State differences upstream: Samus position (from 314), the
+pose and animation frame (711-712), enemies. Open: the arm cannon, flare, echoes and grapple
+parts of the handlers, the atmospheric graphics, `$0AC8`/`$0ACA`/`$0B04`/`$0B06`, and the
+rest of commands 7 and Bh (the new state handler `$90:E8EC` while riding, which C10's
+visor reads as status not Inactive).
+
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
 running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of
