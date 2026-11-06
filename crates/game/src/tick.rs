@@ -433,6 +433,29 @@ fn gameplay(
     })
 }
 
+/// Samus's current state handler: the pose requests her input makes this frame, and her
+/// projectiles' pass. The frame starts with no super special request (`$90:E695`).
+fn samus_current_state(
+    state: &mut State,
+    content: &Content,
+) -> Result<pose::PoseRequests, SessionFault> {
+    state.samus.super_special = SuperSpecial::default();
+    // While the elevator carries her, the locked current state handler (`$90:E713`, from
+    // `$91:E44D`) neither sets her radius nor runs the pose input handler, which would
+    // return at once anyway (`$91:805C`).
+    if movement::carried(&state.samus, state.elevator) {
+        crate::projectile::handle(state).map_err(SessionFault::Projectile)?;
+        return Ok(pose::PoseRequests::default());
+    }
+    movement::set_radius(&mut state.samus, content);
+    let requests = pose::input(&state.samus, &state.controller, content);
+    // open: the suit palette index and the Y acceleration (`$90:E6B6`, `$90:E6B9`) run
+    // between the input handler and the inside handling.
+    inside::handle(&mut state.room, &state.samus).map_err(SessionFault::Plm)?;
+    crate::projectile::current_state(state).map_err(SessionFault::Projectile)?;
+    Ok(requests)
+}
+
 /// A gameplay phase's work.
 // open: each empty arm fills in with its C lane; the PLM pass ends the step with
 // `Next::Call(Frame::Plms { .. })` once an instruction can call out (B7, C12).
@@ -444,24 +467,7 @@ fn gameplay_phase(
 ) -> Result<(), SessionFault> {
     match phase {
         // The frame starts with no super special request (`$90:E695`).
-        GameplayPhase::SamusCurrentState => {
-            state.samus.super_special = SuperSpecial::default();
-            // While the elevator carries her, the locked current state handler (`$90:E713`,
-            // from `$91:E44D`) neither sets her radius nor runs the pose input handler, which
-            // would return at once anyway (`$91:805C`).
-            pass.requests = if movement::carried(&state.samus, state.elevator) {
-                crate::projectile::handle(state).map_err(SessionFault::Projectile)?;
-                pose::PoseRequests::default()
-            } else {
-                movement::set_radius(&mut state.samus, content);
-                let requests = pose::input(&state.samus, &state.controller, content);
-                // open: the suit palette index and the Y acceleration (`$90:E6B6`,
-                // `$90:E6B9`) run between the input handler and the inside handling.
-                inside::handle(&mut state.room, &state.samus).map_err(SessionFault::Plm)?;
-                crate::projectile::current_state(state).map_err(SessionFault::Projectile)?;
-                requests
-            };
-        }
+        GameplayPhase::SamusCurrentState => pass.requests = samus_current_state(state, content)?,
         // The movement handler, the animation, the pose the moves ask for (`$91:E8B6`), then
         // the pose update (`$90:E725`).
         // open: the movement types beyond standing, running and turning join with C3b and C4.
