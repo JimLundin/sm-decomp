@@ -87,6 +87,25 @@ Files: `crates/game/src/{session,tick,nmi,lines,interpret}.rs` and their `state/
 B1 must land before B2 and C; B3-B7 follow in that order but B3 and B4 may go beside B5
 and B6 once B1 has landed, because they touch `data` and room state only.
 
+**B1 status (`lane/slice0-b1`).** Done: `Session::{open, step, begin, Begun::end}` in D6's
+order; the dispatcher over `Frame` with `Next::{Continue, Call, Return, Sync, Yield}`, the
+step budget and the depth check; the main loop's and gameplay pass's phases in the bank `$82`
+order, empty; the NMI's commit as the ordered `NmiCommand` list (only the pad latch does
+anything), the lag path and the counters as the bank `$80` handler keeps them (8-bit lag and
+maximum); `TimingSource::{Recorded(Schedule), Modeled}` with no trait; `NmiTiming::Disabled`
+for a vblank with NMIs off. Its unit tests and the `empty_ticks` example compile but did not
+run on the lane's machine (Defender blocks test executables). Remaining:
+
+- run the unit tests and `cargo run --release -p game --example empty_ticks` in CI, and
+  record the Ticks/s;
+- `open(State, &Content)`: there is no `Content` yet, so `open` takes `Rules`;
+- the auto-repeat delays (the original's two work-RAM words) are `Rules.auto_repeat` until
+  a row shows them change; then they join `Controller` with their decode;
+- `verify`'s decoder: map a `VblankWithoutNmi` cut to `NmiTiming::Disabled`, and decide what
+  a `NmiStillRunning` cut's timing is;
+- the proof over both rows (`Counters` and `Controller` after each step equal the next
+  decoded record's) needs A2's cache and B2's loop.
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,

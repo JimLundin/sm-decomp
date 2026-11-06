@@ -5,4 +5,16 @@
 //! It touches no pixels, samples, files, devices or SNES addresses (ARCHITECTURE §4.1, K1).
 #![deny(clippy::float_arithmetic)]
 
+pub mod lines;
+pub mod nmi;
+pub mod session;
 pub mod state;
+pub mod tick;
+
+#[cfg(test)]
+mod tests;
+
+pub use session::{
+    AutoRepeat, Begun, OpenError, Rules, Schedule, Session, SessionFault, TickInput, TickOutput,
+    TimingSource,
+};

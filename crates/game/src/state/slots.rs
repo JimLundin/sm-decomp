@@ -133,3 +133,20 @@ impl<E> Default for FlagSet<E> {
         }
     }
 }
+
+impl<E> FlagSet<E> {
+    /// Whether the set has no members.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.bits == 0
+    }
+
+    /// The members of `self` that aren't in `other`.
+    #[must_use]
+    pub const fn difference(&self, other: &Self) -> Self {
+        Self {
+            bits: self.bits & !other.bits,
+            members: PhantomData,
+        }
+    }
+}
