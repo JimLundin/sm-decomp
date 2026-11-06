@@ -466,6 +466,48 @@ parameters; `EnemyBody::{MorphBallEye, Elevator, FaceBlock}` each carry `AiVaria
 - the cache proof (every slot of both rows decodes, the occupied slots' species are the
   population's in order) and the lockstep table of first differences, C7/C8's worklist.
 
+**C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
+decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
+running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of
+`DelayList`, the `DelayItem` at every byte offset (`AnimationFrame` is the offset the
+original keeps, and it reads whatever byte the frame points at, operands included):
+`Delay(u8)` or `Instruction`, one variant a low nybble (`$90:8324`): `NoOp(u8)` (0-5),
+`LoopIfHealthy` (6), `DrainedFalling` (7), `AutoJumpTransition(PoseId)` (8),
+`ByItemsAndSpeed { items: ItemBits, without, with: BySpeed { still, moving } }` (9),
+`BySpeed` ($A), `WallJump` ($B), `ByItems { items, without, with }` ($C), `Transition(PoseId)`
+($D), `GoBack(u8)` ($E), `Loop` ($F). A list ends at its first ending instruction (8, 9, $A,
+$C-$F) past every byte a wall jump reaches ($15 on). The synthetic tests and the ROM test
+(scratch DLL, real ROM: every pose's list decodes; pose 2's breath loop, pose $25's
+`F8 02`, the running list) pass. Not reached in the lane's 30 minutes, the behaviour as
+read from the bank logs, for the next lane:
+- State and decode: `samus.animation`'s cursor, `at.step` from `SAMUS_ANIM_FRAME` (`$0A96`),
+  `delay` from `SAMUS_ANIM_FRAME_TIMER` (`$0A94`, a word that goes negative: DEC from 0 gives
+  $FFFF, and `BPL` then advances the frame); coverage rows, comparators
+  (`every_decoded_field_has_a_comparator`) and moved-source mutants.
+- "Animate Samus" (`$90:8000`, between the movement handler and `$91:EB88` in `$90:E725`):
+  FX "none" sets the frame buffer (`$0A9C`) to the X speed divisor (0 in slice 0); then
+  timer -= 1, and while it is above zero (signed) nothing more; else frame += 1 and
+  "Handle Samus animation delay" (`$90:82DC`): a delay byte runs `$90:84E3` (with running
+  momentum while running, the running list instead of the pose's; the speed booster's
+  table `$91:B5DE` is open), timer = byte + buffer. An instruction byte first passes
+  `$90:852C` (with momentum, run held and running, no speed booster: frame 0 and timer from
+  the running list, the instruction ignored), then runs; the carry-set ones (6, 7, $B, $E,
+  $F) set the timer from the byte at the new frame, the carry-clear ones leave it at 0.
+  8 (`$90:8370`): not in the demos, and the prospective pose not $4B/$4C/$19/$1A, sets the
+  auto-jump hack input handler and runs $D. $D (`$90:84B6`) and 9/$A/$C set the super
+  special prospective pose (`$0A2C`) with command 3, "transition animation finished".
+  Poses $4D/$4E (neutral jump) hold the timer at 4 on frame 1 unless moving down.
+- The pose update (`$91:EB88`) takes the super special pose first: `$91:F433` (facing and
+  movement type from the table), `$91:FB08` (frame = the new pose's frame, timer = its byte
+  + the divisor, unless the pose is unchanged or the new pose frame has bit 15), then
+  `$91:F36E` (timer += buffer); the ordinary path (`$91:F404`) also runs `$91:FB08` then
+  zeroes the new pose frame. The new pose frame (`$0A9A`): preserved (8000h) running from
+  running (`$91:F50C`), morph ball from morph ball (`$91:F9F4`), spring ball from spring
+  ball; 1 for a spin jump from a spin or wall jump (`$91:F624`), for $15/$16 from $55/$56
+  (`$91:F5AF`) and at `$91:F4EE`; else 0.
+- At frame 687 pose $25's list (`$91:B3BB`: 02, 02, 02, `F8 02`) reaches its `F8 02` and the
+  pose update takes pose 2.
+
 **C9 status (`lane/slice0-c9`), the HUD.** Done: `game::state::hud::Hud` holds the HUD
 tilemap's three rows as typed cells (`video::TilemapEntry`: tile, palette, priority, flips;
 `from_word` and `word` round-trip every word), the selected and auto-cancel items
