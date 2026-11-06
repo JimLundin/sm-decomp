@@ -219,6 +219,11 @@ One record per video frame, lag or not. Record k is the closed interval
   watched instruction address reached. The APU log also carries the SPC700's
   own port writes and an SPC700 cycle stamp on each access, which the
   latency measurement uses. These extras are not digested.
+  Up to 32 watched addresses and 16384 hits a step; with a watch set, each
+  `$420B` write is a hit too (`0x01000000 | MDMAEN`, the first channel's DMAP,
+  B-bus address and size in the peek). `oracle movie --trace FROM TO PC,...`
+  prints them; on lsnes the server logs the same PCs to `OH_TRACE_LOG` when
+  `OH_TRACE` is set (MEASUREMENTS.md (k)).
 - **Profile (on request):** instructions executed per program bank.
 
 ## Inputs and starts
@@ -280,6 +285,7 @@ counter `$05B8`, the lag flag, the game state, the room and Samus's position.
 | LakeSnes 9db90b8 | frame 352 | frame 352 | boot APU upload ends 12 lines early, frame 353 not lag |
 | + fix 0001 (APU clock) | frame 395 | frame 8566 | one-frame NMI shifts around NMI re-enable in loads (396, 8314); Ceres desync from 8567 |
 | + fix 0002 (bsnes v085 SPC rate, exact) | frame 395 | frame 17984 | one more lag frame on the door out of room 97B5 (17985); one frame behind from 18108, desync from 18587 |
+| + fix 0004 (no HDMA overhead after every channel terminated) | frame 395 | frame 35199 | one frame late out of the door transition into room 9CB3 (35200); desync from 35202 |
 
 Fixes live in `crates/oracle/native/fixes/NNNN-name.patch`. They are applied
 to a copy of the pinned sources by `tools/oracle/build_lakesnes.sh` and named
@@ -290,6 +296,10 @@ in `OracleId::fixes`. They are emulator fixes, not ROM patches.
 - `0002-apu-clock-bsnes-v085-exact`: the SPC at bsnes v085's 32040.5 Hz, the
   rate the movies were recorded at, stepped as an exact integer ratio
   (MEASUREMENTS (h)).
+- `0004-hdma-overhead-only-while-a-channel-runs`: no HDMA alignment or
+  overhead on a line where every enabled channel has terminated for the
+  frame, as anomie's timing doc and bsnes v085 have it (MEASUREMENTS (k),
+  (l)). Upstream charged 12-18 clocks on every display line HDMAEN was set.
 
 Tried and not applied: `native/candidates/0003-apu-ports-in-time-order.patch`
 orders the CPU-SPC port accesses in time, as bsnes v085 does. It changes no

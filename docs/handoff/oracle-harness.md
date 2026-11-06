@@ -12,6 +12,13 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
   - the any% movie matches the lsnes lag log exactly through frame 395, as with 0001 alone;
   - state, room and position match through 17984 (0001 alone: 8566), but for single-step samples at transitions; 8314 and 8567 pass;
   - at 17985, the door out of room 97B5, LakeSnes has one more lag frame; one frame behind from 18108, desync from 18587 (stays in room 9E9F).
+  - The 17985 lag comes from HDMA overhead, not the room load (MEASUREMENTS.md (k), lane `lane/oracle-roomload`). In the fade-out before the door's load, LakeSnes charges 12-18 master clocks of HDMA overhead on every display line after the HUD's channel has terminated (lines 32-224), and lsnes charges none. Each palette-fade pass is about 6,500 clocks longer, and at 17975 LakeSnes's wait entry falls 3 lines after vblank (lsnes's 2 lines before), so its pass takes 3 frames instead of 2.
+- Fix 0004 (`native/fixes/`, lane `lane/oracle-hdma`, MEASUREMENTS.md (l)): no HDMA alignment or overhead on a line where every enabled channel has terminated (anomie's timing doc).
+  - Lag-log words through 17974 are unchanged by it (exact through 395; 1342, 8465/8469 as before); 17985, 18108 and 18587 pass.
+  - State, room and position match through 35199, but for 50 single steps (34 door-transition position samples, 16 one-step k-1).
+  - First lasting divergence: LakeSnes leaves the door transition into room 9CB3 one step late (35200), then Samus's X drifts and it stays in 9CB3.
+  - Its cause is at 35175 (MEASUREMENTS.md (m), lane `lane/oracle-trace35k`). Both emulators run the fade-in passes at the same beam. At 35175 LakeSnes enters its wait at 224/1260 and lsnes at 224/1230. The line-225 NMI then comes before LakeSnes's `STA $05B4` (`$80:8340`), so it counts a lag frame. The 30 clocks come from the HUD lines 0-32, where channel 7 transfers: 2-8 clocks of HDMA-pause rounding noise a line, net +0.7. Lines 33-224 match exactly.
+  - 271 frames/s for any% to 36000 without the picture.
 - Corpus against today's lock: 601 of 638 faithful rows ran (lsnes seeds, plus `options-menu-tour` from power-on); 27 stalled.
   - Equal: sram 600, cgram 162, vram 150, oam 150, wram 2.
   - ppu 0, because the old definition includes renderer scratch. video and apu are redefined.
@@ -109,8 +116,9 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
    - align by game frame (`$05B8`) as well as by step, so that after 1342 the report measures content and not the lag;
    - resume both backends at a ladder rung (`--from` per backend; LakeSnes needs its own state at the rung), to cover 8314 (LakeSnes behind) and 8567 (the Ceres desync) within the 3-minute run limit;
    - then the re-lock (the root's call).
-5. LakeSnes past 17985: the rate is lsnes's now, so try a sub-opcode SPC catch-up at port accesses (LakeSnes runs whole opcodes; bsnes v085 syncs per access) as fix 0003, measured on the same movie run (`$TEMP/olr/dump.rs` dumps the seven lag-log words per step; `$TEMP/olr/tail.py` classifies steps as equal, one behind, one ahead or other).
-6. Speed: dump only the memories a step needs (the `memories` flag), or hash them in Lua.
+5. LakeSnes past 17985: fix 0004. In `dma_doHdma` and the HDMA run in `dma_waitCycle`, skip the 8-clock alignment, the overhead and the re-alignment when every enabled channel has terminated (MEASUREMENTS.md (k)). Measure it on (h)'s any% run (`$TEMP/olr/dump.rs` dumps the seven lag-log words per step; `$TEMP/olr/tail.py` classifies steps as equal, one behind, one ahead or other). 17985 should become equal; 0-395, 1342 and 8465/8469 must not move. Then see whether 18108 and 18587 move. Port order (candidate 0003) is ruled out ((j)). `oracle movie --trace FROM TO PC,...` with `OH_TRACE`/`OH_TRACE_LOG`/`OH_TRACE_FROM` times phases on both backends. Analysis scripts are in `$TEMP/orl/` (private): `phases.py`, `pairs3.py`, `extras.py`.
+6. LakeSnes past 35175 (MEASUREMENTS.md (m)). Log each HDMA pause on lines 0-32 on LakeSnes over the 35173-35175 fade: start clock, mod 8 since power-on, the triggering access's speed, the work, the end. Then try one variant at a time, scored by the HUD-line pair sum against lsnes (target 0): a line overhead of 18 instead of 8 (anomie), the request at 1112 (dot 278) instead of 1104, the H/V-IRQ point per anomie. Keep the one that zeroes the HUD lines. Then 35175 must be `Requested`, and 0-17974 and 17985 must not move. Scripts: `$TEMP/t35k/phases.py` and `pairs.py` (private).
+7. Speed: dump only the memories a step needs (the `memories` flag), or hash them in Lua.
 
 Orphaned lsnes processes remain from hung or killed runs: PIDs 6176 and 14972 from the previous lane, 24536, 22000 and 25512 from this one. Stop-Process and taskkill could not end them from this shell.
 

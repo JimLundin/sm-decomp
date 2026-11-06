@@ -186,7 +186,24 @@ local function capture(kind, pc, r)
 end
 
 -- One record per step; then the next requests.
+-- A measurement trace (OH_TRACE: hex addresses, comma-separated; OH_TRACE_LOG;
+-- `oracle movie --trace` is the LakeSnes side): the beam at each watched
+-- address, and a "cut" line after each record, so the client's steps delimit
+-- the trace. lsnes fires exec callbacks on operand fetches too, so watch
+-- instruction starts only. A write callback on $420B never fired here.
+local trace_path = os.getenv("OH_TRACE_LOG")
+local trace = {}
+
+local function trace_cut()
+    if trace_path == nil then return end
+    trace[#trace + 1] = "cut " .. tostring(movie.currentframe())
+    local file = io.open(trace_path, "a")
+    if file then file:write(table.concat(trace, "\n"), "\n"); file:close() end
+    trace = {}
+end
+
 local function send()
+    trace_cut()
     local data = captured
     local file = assert(io.open(record_path, "wb"))
     assert(file:write(data))
@@ -286,6 +303,19 @@ on_post_load = guarded(function()
     for _, write in ipairs(pending_writes) do write_word(write[1], write[2]) end
     pending_writes = {}
 end)
+
+if trace_path ~= nil then
+    -- Hits from this lsnes frame on (OH_TRACE_FROM); cut lines always.
+    local trace_from = tonumber(os.getenv("OH_TRACE_FROM") or "0")
+    for hex in string.gmatch(os.getenv("OH_TRACE") or "", "%x+") do
+        local address = tonumber(hex, 16)
+        memory.registerexec(BUS + address, function()
+            if movie.currentframe() < trace_from then return end
+            local r = memory.getregisters()
+            trace[#trace + 1] = string.format("pc %06x %d %d", address, r.vcounter, r.hcounter)
+        end)
+    end
+end
 
 exec("set-speed turbo")
 -- A resumed run. On the command line a state's core type (snes_ntsc) does not

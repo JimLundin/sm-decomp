@@ -1,0 +1,39 @@
+diff --git a/snes/dma.c b/snes/dma.c
+--- a/snes/dma.c
++++ b/snes/dma.c
+@@ -271,15 +271,31 @@
+ 
+ static void dma_doHdma(Dma* dma, bool doSync, int cpuCycles) {
+   dma->hdmaRunRequested = false;
+-  bool hdmaActive = false;
++  bool hdmaEnabled = false;
++  bool hdmaRunning = false;
+   int lastActive = 0;
+   for(int i = 0; i < 8; i++) {
+     if(dma->channel[i].hdmaActive) {
+-      hdmaActive = true;
+-      if(!dma->channel[i].terminated) lastActive = i;
++      hdmaEnabled = true;
++      if(!dma->channel[i].terminated) {
++        hdmaRunning = true;
++        lastActive = i;
++      }
+     }
+   }
+-  if(!hdmaActive) return;
++  if(!hdmaEnabled) return;
++  // sm-decomp fix 0004: a line costs HDMA time only while an enabled channel
++  // has not terminated for the frame (anomie's SNES timing doc, "HDMA": "For
++  // each scanline during which HDMA is active (i.e. at least one channel has
++  // not yet terminated for the frame), there are ~18 master cycles overhead").
++  // Upstream charged the alignment and overhead on every line HDMAEN is set.
++  // An enabled channel still cancels its general DMA, as below.
++  if(!hdmaRunning) {
++    for(int i = 0; i < 8; i++) {
++      if(dma->channel[i].hdmaActive) dma->channel[i].dmaActive = false;
++    }
++    return;
++  }
+   if(doSync) snes_syncCycles(dma->snes, true, 8);
+   // full transfer overhead
+   snes_runCycles(dma->snes, 8);

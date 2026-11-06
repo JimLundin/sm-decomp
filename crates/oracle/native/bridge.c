@@ -63,7 +63,7 @@ typedef struct OhFacts {
 // The source of a register write, as the Rust side names it.
 enum { OH_SOURCE_MAIN = 0, OH_SOURCE_NMI = 1, OH_SOURCE_IRQ = 2, OH_SOURCE_DMA = 3, OH_SOURCE_HDMA = 4 };
 
-enum { OH_MAX_HITS = 64 };
+enum { OH_MAX_HITS = 16384, OH_MAX_WATCH = 32 };
 
 typedef struct OhWrite {
   uint16_t v;
@@ -120,7 +120,7 @@ typedef struct OhMachine {
   uint32_t writes_len;
   uint32_t writes_cap;
   // Watched instruction addresses and the step's hits (pc, beam).
-  uint32_t watch[8];
+  uint32_t watch[OH_MAX_WATCH];
   uint32_t watch_count;
   uint32_t watch_peek;
   OhHit hits[OH_MAX_HITS];
@@ -192,6 +192,17 @@ static void oh_cpu_write(void* mem, uint32_t adr, uint8_t value) {
       oh_log_apu(m, OH_APU_CPU_WRITE, low & 3, value);
     } else if(low >= 0x4200 && low < 0x4220) {
       m->io_written[low - 0x4200] = value;
+      // A watched run also logs each general DMA start as a hit at the
+      // pseudo address 0x01000000 | MDMAEN, with its first channel's DMAP,
+      // B-bus address and byte count in the peek.
+      if(low == 0x420b && value != 0 && m->watch_count != 0 && m->hit_count < OH_MAX_HITS) {
+        int c = 0;
+        while(!(value & (1 << c))) c++;
+        DmaChannel* ch = &m->snes->dma->channel[c];
+        uint8_t dmap = (ch->fromB << 7) | (ch->indirect << 6) | (ch->decrement << 4) | (ch->fixed << 3) | ch->mode;
+        m->hits[m->hit_count++] = (OhHit){0x01000000u | value, m->snes->vPos, m->snes->hPos,
+          {dmap, ch->bAdr, ch->size & 0xff, ch->size >> 8}};
+      }
     }
   }
 }
@@ -711,7 +722,7 @@ void oh_set_write_log(OhMachine* m, bool on) { m->record_writes = on; }
 const OhWrite* oh_write_log(OhMachine* m, uint32_t* length) { *length = m->writes_len; return m->writes; }
 void oh_set_watch(OhMachine* m, const uint32_t* pcs, uint32_t count, uint32_t peek) {
   m->watch_peek = peek;
-  m->watch_count = count < 8 ? count : 8;
+  m->watch_count = count < OH_MAX_WATCH ? count : OH_MAX_WATCH;
   memcpy(m->watch, pcs, m->watch_count * sizeof(uint32_t));
 }
 const OhHit* oh_hits(OhMachine* m, uint32_t* length) { *length = m->hit_count; return m->hits; }

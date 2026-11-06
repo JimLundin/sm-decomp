@@ -18,6 +18,7 @@ pub const IDENTITY: OracleId = OracleId {
     fixes: &[
         "0001-apu-clock-real-master-rate",
         "0002-apu-clock-bsnes-v085-exact",
+        "0004-hdma-overhead-only-while-a-channel-runs",
     ],
 };
 
@@ -812,8 +813,8 @@ impl Oracle for LakeSnes {
     }
 
     fn set_watch(&mut self, addresses: &[u32], peek: u32) {
-        let count = u32::try_from(addresses.len().min(8)).unwrap_or(8);
-        // SAFETY: the machine is live; the bridge copies at most 8 addresses.
+        let count = u32::try_from(addresses.len().min(32)).unwrap_or(32);
+        // SAFETY: the machine is live; the bridge copies at most 32 addresses.
         unsafe { ffi::oh_set_watch(self.machine, addresses.as_ptr(), count, peek) };
     }
 }
