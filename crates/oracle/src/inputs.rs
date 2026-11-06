@@ -1,4 +1,5 @@
-//! Scenario input files: one hexadecimal JOY1 word per line.
+//! Scenario input files: one hexadecimal JOY1 word per line, per Tick in
+//! the lock's inputs and per video frame in a frame-pad file (RELOCK b1).
 
 use crate::record::Pad;
 use std::path::Path;
@@ -16,4 +17,10 @@ pub fn read(path: &Path) -> Result<Vec<Pad>, String> {
                 .map_err(|error| format!("{}:{}: {error}", path.display(), number + 1))
         })
         .collect()
+}
+
+/// Write `pads` in the `.inputs` format, one word per line.
+pub fn write(path: &Path, pads: &[Pad]) -> Result<(), String> {
+    let text: String = pads.iter().map(|pad| format!("{:04x}\n", pad.0)).collect();
+    std::fs::write(path, text).map_err(|error| format!("{}: {error}", path.display()))
 }

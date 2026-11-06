@@ -10,7 +10,7 @@
 //!   same pads from power-on and reports where their records differ.
 
 use crate::lakesnes::LakeSnes;
-use crate::{FrameRecord, NmiKind, Oracle, Start, Tiers};
+use crate::{Cut, FrameRecord, NmiKind, Oracle, Pad, Start, Tiers};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -796,10 +796,112 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
 /// `corpus ROM LOCK DATA [--only ID]... [--limit N]`: run the lock's rows
 /// whose private data is restored under DATA (one directory per bundle) and
 /// compare each with its `faithful` entry.
+/// Frame-pad files (docs/oracle/RELOCK.md step b1), one set per row in a
+/// directory: `ROW.pads` (the `.inputs` format, one pad per video frame),
+/// and from a run with memories `ROW.cuts` (each frame's cut and memory hash)
+/// and `ROW.end` (the last frame's work RAM).
+enum FramePads {
+    /// Run the rows under the Tick rule and write their files.
+    Write(PathBuf),
+    /// Run the rows from their pads and compare with the files written.
+    Play(PathBuf),
+}
+
+/// A frame's cut and a hash of its memories, as a `.cuts` line.
+fn cut_line(record: &FrameRecord) -> String {
+    use std::hash::{Hash as _, Hasher as _};
+    let kind = match record.cut {
+        Cut::NmiReturn(nmi) => match nmi.kind {
+            NmiKind::Requested => 'R',
+            NmiKind::Overrun => 'O',
+        },
+        Cut::VblankWithoutNmi => 'V',
+        Cut::NmiStillRunning { .. } => 'S',
+    };
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    record.wram.hash(&mut hasher);
+    record.vram.hash(&mut hasher);
+    record.cgram.hash(&mut hasher);
+    record.oam.hash(&mut hasher);
+    format!("{kind} {:016x}", hasher.finish())
+}
+
+fn write_frame_pads(directory: &Path, id: &str, pads: &[Pad], cuts: &[String], end: &[u8]) {
+    let path = |extension: &str| directory.join(format!("{id}.{extension}"));
+    crate::inputs::write(&path("pads"), pads).unwrap_or_else(|error| fail(error));
+    if !cuts.is_empty() {
+        let text: String = cuts.iter().map(|line| format!("{line}\n")).collect();
+        std::fs::write(path("cuts"), text).unwrap_or_else(|error| fail(error));
+        std::fs::write(path("end"), end).unwrap_or_else(|error| fail(error));
+    }
+}
+
+/// How a run from frame pads compares with the Tick run that wrote them.
+/// Both present the same pad to every lsnes frame, so they emulate the
+/// same; they differ only in where they cut. Every cut the Tick run made at
+/// an RTI must come, in order and with the same memories, among the cuts
+/// from pads; the cuts from pads add the RTIs of the NMIs that outlasted
+/// their frame, which the Tick run cut at the boundary instead.
+fn compare_frame_pads(directory: &Path, id: &str, cuts: &[String], end: &[u8]) -> String {
+    let path = |extension: &str| directory.join(format!("{id}.{extension}"));
+    let Ok(written) = std::fs::read_to_string(path("cuts")) else {
+        return format!("  {id}: no {id}.cuts to compare with");
+    };
+    let at_rti: Vec<&str> = written
+        .lines()
+        .filter(|line| !line.starts_with('S'))
+        .collect();
+    let mut played = cuts.iter().enumerate();
+    let mut matched = None;
+    let mut missing = None;
+    for (number, cut) in at_rti.iter().enumerate() {
+        match played.by_ref().find(|(_, line)| line == cut) {
+            Some((frame, _)) => matched = Some(frame),
+            None => {
+                missing = Some(number);
+                break;
+            }
+        }
+    }
+    let mut report = format!(
+        "  {id}: {} frames from pads; the Tick run's {} of {} cuts at an RTI ",
+        cuts.len(),
+        at_rti.len(),
+        written.lines().count()
+    );
+    match (missing, matched) {
+        (Some(number), _) => report.push_str(&format!("NOT all found: cut {number} is missing")),
+        (None, Some(frame)) => report.push_str(&format!(
+            "all found in order, the last at frame {frame}, with the same memories"
+        )),
+        (None, None) => report.push_str("none to find"),
+    }
+    if let Ok(locked) = std::fs::read(path("end")) {
+        let bytes: Vec<usize> = locked
+            .iter()
+            .zip(end)
+            .enumerate()
+            .filter(|(_, (left, right))| left != right)
+            .map(|(address, _)| address)
+            .collect();
+        let first: Vec<String> = bytes
+            .iter()
+            .take(8)
+            .map(|address| format!("${address:05x}"))
+            .collect();
+        report.push_str(&format!(
+            "; the last frames' WRAM: {} bytes differ {}",
+            bytes.len(),
+            first.join(" ")
+        ));
+    }
+    report
+}
+
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
         fail(
-            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...]",
+            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories]",
         )
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
@@ -814,6 +916,8 @@ fn corpus(arguments: &[String]) {
     let mut backend = String::new();
     let mut native_seeds: Option<PathBuf> = None;
     let mut watched: Vec<usize> = Vec::new();
+    let mut pads: Option<FramePads> = None;
+    let mut lean = false;
     let mut rom = rom;
     let mut options = rest.iter();
     while let Some(option) = options.next() {
@@ -879,9 +983,23 @@ fn corpus(arguments: &[String]) {
                     .and_then(|value| value.parse().ok())
                     .unwrap_or_else(|| fail("--limit N"));
             }
+            "--frame-pads" => {
+                let directory = options.next().unwrap_or_else(|| fail("--frame-pads DIR"));
+                std::fs::create_dir_all(directory)
+                    .unwrap_or_else(|error| fail(format!("{directory}: {error}")));
+                pads = Some(FramePads::Write(PathBuf::from(directory)));
+            }
+            "--from-frame-pads" => {
+                let directory = options
+                    .next()
+                    .unwrap_or_else(|| fail("--from-frame-pads DIR"));
+                pads = Some(FramePads::Play(PathBuf::from(directory)));
+            }
+            "--no-memories" => lean = true,
             other => fail(format!("unknown option {other}")),
         }
     }
+    let mut still_running = 0u64;
     let names = crate::streams::NAMES;
     let mut matched = [0u32; 8];
     let mut compared = [0u32; 8];
@@ -901,13 +1019,33 @@ fn corpus(arguments: &[String]) {
             println!("{}: no pin", entry.id);
             continue;
         };
+        let played = match &pads {
+            Some(FramePads::Play(directory)) => {
+                let path = directory.join(format!("{}.pads", entry.id));
+                match crate::inputs::read(&path) {
+                    Ok(pads) => Some(pads),
+                    Err(error) => {
+                        failed += 1;
+                        println!("{}: not run: {error}", entry.id);
+                        continue;
+                    }
+                }
+            }
+            Some(FramePads::Write(_)) | None => None,
+        };
         let observing = crate::corpus::Observe {
             backend: &backend,
             native_seeds: native_seeds.as_deref(),
+            pads: played
+                .as_deref()
+                .map_or(crate::corpus::Pads::Ticks, crate::corpus::Pads::Frames),
+            lean,
             ..crate::corpus::Observe::default()
         };
         let mut last: Vec<Option<u16>> = vec![None; watched.len()];
         let mut frame = 0u64;
+        let mut cuts: Vec<String> = Vec::new();
+        let mut end: Vec<u8> = Vec::new();
         let mut watch = |record: &FrameRecord| {
             for (address, last) in watched.iter().zip(last.iter_mut()) {
                 let value = word(&record.wram, *address);
@@ -915,6 +1053,11 @@ fn corpus(arguments: &[String]) {
                     println!("  {} frame {frame}: ${address:04x}={value:#06x}", entry.id);
                     *last = Some(value);
                 }
+            }
+            if pads.is_some() && !lean {
+                cuts.push(cut_line(record));
+                end.clear();
+                end.extend_from_slice(&record.wram);
             }
             frame += 1;
         };
@@ -924,7 +1067,20 @@ fn corpus(arguments: &[String]) {
                 println!("{}: {error}", entry.id);
             }
             Ok(run) => {
+                match &pads {
+                    Some(FramePads::Write(directory)) => {
+                        write_frame_pads(directory, &entry.id, &run.pads, &cuts, &end);
+                    }
+                    Some(FramePads::Play(directory)) if !lean => {
+                        println!("{}", compare_frame_pads(directory, &entry.id, &cuts, &end));
+                        let text: String = cuts.iter().map(|line| format!("{line}\n")).collect();
+                        std::fs::write(directory.join(format!("{}.played", entry.id)), text)
+                            .unwrap_or_else(|error| fail(error));
+                    }
+                    Some(FramePads::Play(_)) | None => {}
+                }
                 rows += 1;
+                still_running += run.still_running;
                 ticks += u64::from(run.ticks);
                 frames += run.frames;
                 seconds += run.seconds;
@@ -953,19 +1109,20 @@ fn corpus(arguments: &[String]) {
                 }
                 all_six += u32::from(verdicts.iter().flatten().all(|&same| same));
                 println!(
-                    "{}: {} ticks, {} frames, {} overrun, {} without NMI, {:.0} frames/s;{line}",
+                    "{}: {} ticks, {} frames, {} overrun, {} without NMI, {} cut with the NMI running, {:.0} frames/s;{line}",
                     entry.id,
                     run.ticks,
                     run.frames,
                     run.overrun,
                     run.without_nmi,
+                    run.still_running,
                     run.frames as f64 / run.seconds
                 );
             }
         }
     }
     println!(
-        "rows run {rows}, failed or not run {failed}; all comparable streams equal on {all_six}"
+        "rows run {rows}, failed or not run {failed}; all comparable streams equal on {all_six}; {still_running} frames cut with the NMI running"
     );
     for (stream, name) in names.iter().enumerate() {
         if compared[stream] > 0 {
