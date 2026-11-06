@@ -245,3 +245,11 @@ so a migration seed resumes:
 In some rows the resumed driver then answers no sound request, so music
 uploads, door transitions and message boxes that wait on it stall. Harness-native
 seeds (the emulator's own state blob, cut by the harness) retire this entry.
+
+## `LEGACY(old-verify)`: rows the old Verify path no longer covers
+
+`file-copy-clear` (scenarios/corpus.toml) is marked `unlocked` and has no entry
+in the old `scenarios/lock.toml`. Its inputs changed in the rebuild's re-lock and
+its authority is the free-run gate's lock, `scenarios/locks/lsnes.toml`. The old
+`sm_pipeline` lock check would otherwise report a stale entry. Remove the
+`unlocked` tag and this entry when the old Verify path is retired.
