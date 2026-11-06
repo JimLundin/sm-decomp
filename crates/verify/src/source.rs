@@ -854,6 +854,11 @@ pub const SAMUS_NEW_POSE_TRANSITIONAL: WramWord = WramWord {
     name: "SAMUS_NEW_POSE_TRANSITIONAL",
     offset: 0x0A2C,
 };
+/// Bank $90 log, `$90:EB4B`: Samus's drawing handler, a bank $90 routine pointer.
+pub const SAMUS_DRAW_HANDLER: WramWord = WramWord {
+    name: "SAMUS_DRAW_HANDLER",
+    offset: 0x0A5C,
+};
 /// Bank $91 log, `$91:EB88`: the super special prospective pose change command, 0 to 8.
 pub const SAMUS_HURT_SWITCH_INDEX: WramWord = WramWord {
     name: "SAMUS_HURT_SWITCH_INDEX",

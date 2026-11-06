@@ -14,9 +14,9 @@ use game::state::room::{
     EnemyCommon, LayerBlending, PaletteIndex, ScrollArea, TilesIndex,
 };
 use game::state::samus::{
-    Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Jump, Movement,
-    MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial, SuperSpecialCommand,
-    Vertical, Visor, VisorShade, VisorTimer, YDirection,
+    Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, Horizontal,
+    Jump, Movement, MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial,
+    SuperSpecialCommand, Vertical, Visor, VisorShade, VisorTimer, YDirection,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Label, Occupancy, Slot};
@@ -248,6 +248,14 @@ fn put_enemies(wram: &mut [u8]) {
 }
 
 /// A record in main gameplay with a distinct value at every decoded source.
+/// The elevator ride and the drawing handler that rides it, as the synthetic record sets them.
+fn put_ride(wram: &mut [u8]) {
+    put(wram, 0x0A5C, 0xEC14); // SAMUS_DRAW_HANDLER: using elevator
+    put(wram, 0x0E18, 0x0003); // ELEVATOR_STATUS: entering the room
+    put(wram, 0x0E16, 0x0080); // ELEVATOR_FLAGS: armed
+    put(wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
+}
+
 fn record() -> FrameRecord {
     let mut wram = vec![0; 0x20000];
     put(&mut wram, 0x05B8, 0x1201); // NMI_FRAME_COUNTER_INCLUDING_LAG
@@ -291,9 +299,7 @@ fn record() -> FrameRecord {
     wram[0x0A27] = 0x05; // SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: crouching
     put(&mut wram, 0x0A2C, 0x0002); // SAMUS_NEW_POSE_TRANSITIONAL
     put(&mut wram, 0x0A32, 0x0003); // SAMUS_HURT_SWITCH_INDEX: transition animation finished
-    put(&mut wram, 0x0E18, 0x0003); // ELEVATOR_STATUS: entering the room
-    put(&mut wram, 0x0E16, 0x0080); // ELEVATOR_FLAGS: armed
-    put(&mut wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
+    put_ride(&mut wram);
     put(&mut wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
     put(&mut wram, 0x0A72, 0x0803); // SAMUS_VISOR_PALETTE_TIMER_INDEX: dim, 3 frames
     put(&mut wram, 0x1982, 0x002A); // FX_LAYER_BLENDING_CONFIG_A
@@ -368,6 +374,7 @@ fn decodes_the_animation(state: &State) -> bool {
                 pose: Some(PoseId(2)),
                 command: SuperSpecialCommand::TransitionAnimationFinished,
             }
+        && state.samus.drawing == DrawingHandler::UsingElevator
 }
 
 /// Samus's visor cycle and the room's layer blending, as the synthetic record sets them.
@@ -531,7 +538,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 48] = [
+const WORD_RULES: [(&str, WordRule); 49] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -591,6 +598,7 @@ const WORD_RULES: [(&str, WordRule); 48] = [
     ("super_special.command", |rules| {
         &mut rules.super_special.command
     }),
+    ("drawing", |rules| &mut rules.drawing),
     ("elevator.status", |rules| &mut rules.elevator.status),
     ("elevator.armed", |rules| &mut rules.elevator.armed),
     ("elevator.direction", |rules| &mut rules.elevator.direction),
@@ -642,6 +650,22 @@ fn a_visor_word_outside_the_cycle_is_unrepresentable() {
             decode(&record, &rooms()),
             Err(DecodeError::Unrepresentable {
                 source: "SAMUS_VISOR_PALETTE_TIMER_INDEX",
+                value
+            })
+        );
+    }
+}
+
+#[test]
+fn a_drawing_handler_outside_the_handlers_is_unrepresentable() {
+    // $EBF2 is an RTS only unused code stores; $EB53 is inside the default handler.
+    for value in [0xEBF2, 0xEB53, 0x0000] {
+        let mut record = record();
+        put(&mut record.wram, 0x0A5C, value);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable {
+                source: "SAMUS_DRAW_HANDLER",
                 value
             })
         );

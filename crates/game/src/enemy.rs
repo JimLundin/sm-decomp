@@ -11,7 +11,7 @@ use crate::state::room::{
     AiHandler, ENEMY_SLOTS, Elevator, ElevatorArming, ElevatorDirection, ElevatorRide,
     ElevatorStatus, EnemyBody, EnemyCommon, EnemyExtraProperty, EnemyProperty,
 };
-use crate::state::samus::{Fixed, Samus, Speed};
+use crate::state::samus::{DrawingHandler, Fixed, Samus, Speed};
 use crate::state::slots::{Frames, Occupancy, Slot};
 use crate::state::{Button, Controller, State};
 use data::id::SpeciesId;
@@ -254,8 +254,10 @@ const fn call_button(direction: ElevatorDirection) -> Button {
 
 /// The elevator's main AI (`$A3:952A`), by the ride's status.
 // open: the door transition check (`$A3:952A`; slice 0's gameplay pass is never in one),
-// the sounds (C11), the Samus commands that set her up for the ride and unlock her facing
-// (bank $90, `$90:F084`) and the projectile reset (`$90:AD22`) join with their lanes.
+// the sounds (C11), the rest of the Samus commands that set her up for the ride and unlock
+// her facing (bank $90, `$90:F1C8`: facing forward, the state, movement and pose input
+// handlers, the bomb jump direction; `$90:F117`) and the projectile reset (`$90:AD22`) join
+// with their lanes; of them, only the drawing handler is here.
 pub fn elevator_ai(
     slot: &mut EnemyCommon,
     elevator: Elevator,
@@ -268,6 +270,8 @@ pub fn elevator_ai(
         ElevatorStatus::Inactive if matches!(ride.armed, ElevatorArming::Disarmed) => {}
         ElevatorStatus::Inactive => {
             if controller.pressed.contains(call_button(way)) {
+                // Samus command 7 (`$90:F1D8`).
+                samus.drawing = DrawingHandler::UsingElevator;
                 place_samus(slot, samus);
                 ride.status = ElevatorStatus::LeavingRoom;
             } else {
@@ -313,6 +317,8 @@ fn enter(
         ride.status = ElevatorStatus::Inactive;
         ride.armed = ElevatorArming::Disarmed;
         slot.position.y.pixels = elevator.target_y;
+        // Samus command Bh (`$90:F295`).
+        samus.drawing = DrawingHandler::Default;
     }
     place_samus(slot, samus);
 }
@@ -336,7 +342,7 @@ mod tests {
         Elevator, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
         EnemyCommon, EnemyExtraProperty,
     };
-    use crate::state::samus::{Fixed, Samus};
+    use crate::state::samus::{DrawingHandler, Fixed, Samus};
     use crate::state::slots::{Flag, Occupancy};
     use crate::state::{Button, Controller, State};
 
@@ -396,7 +402,10 @@ mod tests {
     fn reaching_the_target_ends_the_ride_on_the_target() {
         // $7F.0000 + 1.8000 = $80.8000, at or past $80: it snaps to $80.8000's pixel, $80.
         let (mut slot, elevator, mut ride) = arriving(at(0x7f, 0), 0x80);
-        let mut samus = Samus::default();
+        let mut samus = Samus {
+            drawing: DrawingHandler::UsingElevator,
+            ..Samus::default()
+        };
         elevator_ai(
             &mut slot,
             elevator,
@@ -408,6 +417,7 @@ mod tests {
         assert_eq!(ride.status, ElevatorStatus::Inactive);
         assert_eq!(ride.armed, ElevatorArming::Disarmed);
         assert_eq!(samus.position.y, at(0x66, 0));
+        assert_eq!(samus.drawing, DrawingHandler::Default);
     }
 
     #[test]
@@ -437,12 +447,14 @@ mod tests {
         // Down doesn't call an up elevator: it disarms and stays.
         assert_eq!(ride.armed, ElevatorArming::Disarmed);
         assert_eq!(ride.status, ElevatorStatus::Inactive);
+        assert_eq!(samus.drawing, DrawingHandler::Default);
         ride.armed = ElevatorArming::InDoorway;
         controller.pressed.remove(Button::Down);
         controller.pressed.insert(Button::Up);
         elevator_ai(&mut slot, elevator, &mut ride, &mut samus, &controller);
         assert_eq!(ride.status, ElevatorStatus::LeavingRoom);
         assert_eq!(samus.position.y, at(0x66, 0));
+        assert_eq!(samus.drawing, DrawingHandler::UsingElevator);
         // Leaving upward: $80.0000 - 1.8000 = $7E.8000.
         elevator_ai(&mut slot, elevator, &mut ride, &mut samus, &controller);
         assert_eq!(slot.position.y, at(0x7e, 0x8000));

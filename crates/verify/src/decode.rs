@@ -17,9 +17,10 @@ use game::state::room::{
     ElevatorStatus, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers,
 };
 use game::state::samus::{
-    Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
-    Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus,
-    Speed, SuperSpecial, SuperSpecialCommand, Vertical, Visor, VisorShade, VisorTimer, YDirection,
+    Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing,
+    Fixed, Gauge, Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord,
+    ReserveMode, Samus, Speed, SuperSpecial, SuperSpecialCommand, Vertical, Visor, VisorShade,
+    VisorTimer, YDirection,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand, Message};
@@ -336,6 +337,8 @@ pub struct Rules<'t> {
     pub visor: WramWord,
     /// `room.layer_blending`.
     pub layer_blending: WramWord,
+    /// `samus.drawing`.
+    pub drawing: WramWord,
     /// `elevator`.
     pub elevator: ElevatorSources,
     /// `room.blocks` and `room.scroll_areas`.
@@ -664,6 +667,7 @@ impl Rules<'_> {
         },
         visor: source::SAMUS_VISOR_PALETTE_TIMER_INDEX,
         layer_blending: source::FX_LAYER_BLENDING_CONFIG_A,
+        drawing: source::SAMUS_DRAW_HANDLER,
         elevator: ElevatorSources {
             status: source::ELEVATOR_STATUS,
             armed: source::ELEVATOR_FLAGS,
@@ -856,6 +860,7 @@ impl Rules<'_> {
             animation: self.animation.read(wram)?,
             super_special: self.super_special.read(wram)?,
             visor: visor(self.visor, wram)?,
+            drawing: drawing_handler(self.drawing, wram)?,
             ..Samus::default()
         })
     }
@@ -1591,6 +1596,29 @@ impl SuperSpecialSources {
         };
         Ok(SuperSpecial { pose, command })
     }
+}
+
+/// Samus's drawing handler from its bank $90 routine pointer (bank $90 log, `$90:EB4B`).
+///
+/// # Errors
+///
+/// [`DecodeError::Unrepresentable`] for any other word, the RTS `$90:EBF2` included: only
+/// unused code (`$90:E35A`) stores it.
+fn drawing_handler(source: WramWord, wram: &[u8]) -> Result<DrawingHandler, DecodeError> {
+    Ok(match source.read(wram)? {
+        0xEB52 => DrawingHandler::Default,
+        0xEB86 => DrawingHandler::FiringGrapple,
+        0xEBF3 => DrawingHandler::ShinesparkCrashEchoCircle,
+        0xEC14 => DrawingHandler::UsingElevator,
+        0xEC1D => DrawingHandler::Inanimate,
+        0xE90E => DrawingHandler::Hidden,
+        value => {
+            return Err(DecodeError::Unrepresentable {
+                source: source.name,
+                value,
+            });
+        }
+    })
 }
 
 /// The elevator properties word for Samus in the elevator's doorway (bank $82 log).

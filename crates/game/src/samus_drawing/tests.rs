@@ -154,3 +154,35 @@ fn the_bottom_half_handlers_follow_the_movement_type() {
         BottomHalf::Drawn
     );
 }
+
+#[test]
+fn the_elevator_handler_draws_her_on_even_frames_without_the_flicker() {
+    let mut riding = state(1);
+    riding.samus.drawing = DrawingHandler::UsingElevator;
+    riding.samus.invincibility = Frames(30);
+    riding.clock.counters.completed = FrameCount(7);
+    draw(&mut riding, &content());
+    assert_eq!(riding.video.batch.sprites, SpriteCount(0));
+    // An even frame draws her though she is invincible: `$90:8A00` has no flicker.
+    riding.clock.counters.completed = FrameCount(8);
+    draw(&mut riding, &content());
+    assert_eq!(tiles(&riding), [1, 3, 4]);
+}
+
+#[test]
+fn the_inanimate_handler_draws_every_frame_and_the_hidden_one_never() {
+    for completed in [7, 8] {
+        let mut inanimate = state(1);
+        inanimate.samus.drawing = DrawingHandler::Inanimate;
+        inanimate.samus.invincibility = Frames(30);
+        inanimate.clock.counters.completed = FrameCount(completed);
+        draw(&mut inanimate, &content());
+        assert_eq!(tiles(&inanimate), [1, 3, 4]);
+
+        let mut hidden = state(1);
+        hidden.samus.drawing = DrawingHandler::Hidden;
+        hidden.clock.counters.completed = FrameCount(completed);
+        draw(&mut hidden, &content());
+        assert_eq!(hidden.video.batch.sprites, SpriteCount(0));
+    }
+}

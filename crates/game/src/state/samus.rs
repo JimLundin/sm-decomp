@@ -705,6 +705,30 @@ pub struct Visor {
     pub timer: VisorTimer,
 }
 
+/// What draws Samus each frame: her drawing handler, which draw Samus sprites jumps through
+/// after the arm cannon's open state (bank $90 log, `$90:EB4B`).
+///
+/// The handler only RTS unused code sets (`$90:E35A`) has no variant.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DrawingHandler {
+    /// Her body, arm cannon and echoes (`$90:EB52`); the Samus commands that end a special
+    /// state set it back (`$90:F295`, `$90:F4FF`).
+    #[default]
+    Default,
+    /// While the grapple beam fires: its flare and beam with her (`$90:EB86`).
+    FiringGrapple,
+    /// The shinespark crash's echoes circling her (`$90:EBF3`, set by `$90:D315`).
+    ShinesparkCrashEchoCircle,
+    /// Riding an elevator: she is drawn inanimate on even frames only (`$90:EC14`, set by
+    /// Samus command 7, `$90:F1C8`).
+    UsingElevator,
+    /// Inanimate Samus every frame (`$90:EC1D`, set by `$90:F308`).
+    Inanimate,
+    /// Not drawn: Samus command Ah stops drawing her (`$90:F28D`), as does the placement
+    /// mode toggle (`$90:E795`).
+    Hidden,
+}
+
 /// Samus.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Samus {
@@ -740,4 +764,6 @@ pub struct Samus {
     pub super_special: SuperSpecial,
     /// Her visor's colour cycle.
     pub visor: Visor,
+    /// What draws her each frame.
+    pub drawing: DrawingHandler,
 }

@@ -14,7 +14,7 @@ use data::spritemap::SpriteAttributes;
 
 use crate::pose::Content;
 use crate::state::State;
-use crate::state::samus::Samus;
+use crate::state::samus::{DrawingHandler, Samus};
 use crate::state::video::NmiBatch;
 
 /// The facing-forward poses, power suit and the other suits.
@@ -42,8 +42,8 @@ const fn signed(frame: AnimationFrame) -> i16 {
 /// special palette timer runs; otherwise only on even frames of the frame counter.
 // open: the knockback timer and the special palette timer join with damage and the speed
 // booster; until then both are zero, as in slice 0's rows.
-const fn flickers_off(samus: &Samus, frame_counter: u16) -> bool {
-    samus.invincibility.0 != 0 && frame_counter & 1 != 0
+const fn flickers_off(samus: &Samus, odd_frame: bool) -> bool {
+    samus.invincibility.0 != 0 && odd_frame
 }
 
 /// The spritemaps' origin on screen: her position less the camera's, moved up by the
@@ -209,19 +209,38 @@ fn bottom_half(movement: MovementType, pose: PoseId, frame: AnimationFrame) -> B
     }
 }
 
-/// Draw Samus's body into the sprite buffer, for the Draw gameplay phase.
-///
-/// `$90:85E2` with the default drawing handler.
-// open: the arm cannon (`$90:C663`, drawn only once it opens), the charge flare, the speed
-// echoes, the grapple beam and the other drawing handlers (the elevator's, frozen, the
-// shinespark's end) join with those lanes; slice 0's power beam keeps the cannon closed.
-// The half indices the original keeps (`$0AC8`, `$0ACA`) and the body position (`$0B04`,
-// `$0B06`) join the State when a reader needs them; the tile transfers (`$92:8000`) are C6b.
+/// Draw Samus into the sprite buffer through her drawing handler, for the Draw gameplay
+/// phase (`$90:EB4B`).
+// open: the arm cannon (`$90:C663`, drawn only once it opens; `$90:C5C4` before the
+// handler), the charge flare (`$90:BAFC`), the speed echoes (`$90:87BD`), the grapple
+// beam's flare, tiles and beam (`$9B:C036`, `$9B:BFA5`, `$94:AFBA`) and the shinespark
+// crash's echoes (`$90:88BA`) join with those lanes; slice 0's power beam keeps the cannon
+// closed and those handlers draw her body alone.
 pub fn draw(state: &mut State, content: &Content) {
-    let samus = &state.samus;
-    if flickers_off(samus, state.clock.counters.completed.0) {
-        return;
+    let odd_frame = state.clock.counters.completed.0 & 1 != 0;
+    match state.samus.drawing {
+        DrawingHandler::Default
+        | DrawingHandler::FiringGrapple
+        | DrawingHandler::ShinesparkCrashEchoCircle => {
+            if !flickers_off(&state.samus, odd_frame) {
+                draw_body(state, content);
+            }
+        }
+        // `$90:EC14`: on odd frames of the frame counter the ride leaves her out.
+        DrawingHandler::UsingElevator if odd_frame => {}
+        // `$90:EC1D`, draw inanimate Samus `$90:8A00`: `$90:85E2` without the flicker.
+        DrawingHandler::UsingElevator | DrawingHandler::Inanimate => draw_body(state, content),
+        DrawingHandler::Hidden => {}
     }
+}
+
+/// Draw Samus's body: her top half, then her bottom half if her movement type's handler
+/// says so (`$90:85E2` past the flicker, `$90:8A00`).
+// open: the half indices the original keeps (`$0AC8`, `$0ACA`, which `$90:8A00` leaves
+// alone) and the body position (`$0B04`, `$0B06`) join the State when a reader needs them;
+// the tile transfers (`$92:8000`) are C6b.
+fn draw_body(state: &mut State, content: &Content) {
+    let samus = &state.samus;
     let Some(definition) = content.poses.get(samus.pose) else {
         return;
     };

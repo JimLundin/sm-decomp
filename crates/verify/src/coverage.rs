@@ -317,6 +317,7 @@ pub const FIELDS: &[Field] = &[
     ),
     wram("samus.visor.shade", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
     wram("samus.visor.timer", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
+    wram("samus.drawing", source::SAMUS_DRAW_HANDLER),
     Field {
         path: "room.room",
         status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
@@ -623,6 +624,7 @@ mod tests {
             rules.super_special.command,
             rules.visor,
             rules.layer_blending,
+            rules.drawing,
             rules.elevator.status,
             rules.elevator.armed,
             rules.elevator.direction,
