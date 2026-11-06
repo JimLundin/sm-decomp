@@ -143,7 +143,7 @@ fn decodes_the_enemies(state: &State) -> bool {
         0x2000,
         DELETED_PROPERTIES,
         Occupancy::Deleting,
-        |variables| EnemyBody::Elevator { variables },
+        |variables| crate::enemy::body(data::enemy::Behaviour::Elevator, variables),
     );
     slots.first() == Some(&eye)
         && slots.get(1) == Some(&elevator)

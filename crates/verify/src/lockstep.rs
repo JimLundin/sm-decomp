@@ -13,7 +13,7 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
-use game::state::room::{AiVariables, ENEMY_SLOTS, EnemyBody};
+use game::state::room::{AiVariables, ENEMY_SLOTS, Elevator, EnemyBody};
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
 use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, TickInput};
@@ -79,9 +79,7 @@ fn occupant(state: &State) -> [Occupancy<EnemyBody>; ENEMY_SLOTS] {
         EnemyBody::MorphBallEye { .. } => EnemyBody::MorphBallEye {
             variables: AiVariables::default(),
         },
-        EnemyBody::Elevator { .. } => EnemyBody::Elevator {
-            variables: AiVariables::default(),
-        },
+        EnemyBody::Elevator(_) => EnemyBody::Elevator(Elevator::default()),
         EnemyBody::FaceBlock { .. } => EnemyBody::FaceBlock {
             variables: AiVariables::default(),
         },
@@ -98,9 +96,8 @@ fn variables(state: &State) -> [Option<AiVariables>; ENEMY_SLOTS] {
     state.room.enemies.slots.map(|slot| match slot.occupancy {
         Occupancy::Free => None,
         Occupancy::Live(body) | Occupancy::Deleting(body) => Some(match body {
-            EnemyBody::MorphBallEye { variables }
-            | EnemyBody::Elevator { variables }
-            | EnemyBody::FaceBlock { variables } => variables,
+            EnemyBody::MorphBallEye { variables } | EnemyBody::FaceBlock { variables } => variables,
+            EnemyBody::Elevator(elevator) => crate::enemy::elevator_words(elevator),
         }),
     })
 }

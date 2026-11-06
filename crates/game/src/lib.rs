@@ -7,6 +7,7 @@
 
 pub mod animation;
 pub mod commit;
+pub mod enemy;
 pub mod game_time;
 pub mod hud;
 pub mod lines;

@@ -607,6 +607,8 @@ impl Rules<'_> {
                 enemies: self.enemies.read(wram, &rooms.species)?,
                 ..RoomScoped::default()
             },
+            // open: the elevator ride (`$0E16`, `$0E18`, `$0799`) decodes with its rows.
+            elevator: game::state::room::ElevatorRide::default(),
             message: Message(self.message.read(wram)?),
             hud: self.hud.read(wram)?,
         };

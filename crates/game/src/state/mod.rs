@@ -131,6 +131,11 @@ impl Button {
     }
 }
 
+impl slots::Flag for Button {
+    fn bit(self) -> u32 {
+        Self::bit(self)
+    }
+}
 /// A set of pad buttons.
 pub type Buttons = FlagSet<Button>;
 
@@ -205,6 +210,8 @@ pub struct State {
     pub samus: Samus,
     /// The current room.
     pub room: RoomScoped,
+    /// The elevator ride, which carries over from room to room.
+    pub elevator: room::ElevatorRide,
     /// The HUD.
     pub hud: Hud,
     /// The message the message box shows, or showed last.

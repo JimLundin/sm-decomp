@@ -499,6 +499,38 @@ where those fields agree are, by their count, the message box's, which runs no e
 (not checked frame by frame). The `occupancy` row's 76 are its `variables` row's.
 Remaining: the spritemap and instruction pointers (`+16`, `+1A`) wait for B7's enemy program content.
 
+**C7 status (`lane/slice0-c7`), the enemy phases and the elevator's ride.** Done, in
+`game::enemy`: the selection phase (`$A0:8EB6`: a deleted slot is freed, a live one is
+active if processed off screen, frozen, or its centre is in the camera's window: its radius
+past either side, 8 above and `$F8` below the top, each a signed 16-bit compare) and the
+main enemy routine over the active slots (`$A0:8FD4`: the invincibility countdown unless
+intangible, a paralysed slot runs no AI and counts no frame, the routine from the lowest AI
+handler bit, the species' AI by `EnemyBody`, the frame counter, the hurt flash countdown
+that drops the hurt handler under 8 frames). `tick.rs` hands the active list from the
+selection to the routine in a `Pass` with the pose requests. Extra properties bit 0 is
+`Paralysed` (`$A0:904F`), bit 15 `GraphicUpdated`: processing the instructions sets it when
+the instruction timer runs out and clears it otherwise (`$A0:C26A`, `$A0:C2A6`, `$A0:C2B1`).
+`EnemyBody::Elevator(Elevator { target_y, unused })` (target Y is the first AI word,
+`$A3:9501`; verify's `enemy::elevator`/`elevator_words` keep the six words byte-exact) and
+`State.elevator: ElevatorRide { status, armed, direction }` (`$0E18`, `$0E16`, `$0799`).
+The elevator AI (`$A3:952A`): idle and armed, its call button (`$A3:94E2`, Down for a down
+elevator) starts the departure, otherwise disarms; leaving moves it 1.8000h a frame its way
+and records the direction; the door transition status enters on the same frame; entering
+moves an up elevator down (a down one up) to the target, where the ride ends on the target
+pixel; every step stands Samus `$1A` above its centre on a whole pixel, at its X, with no
+vertical speed (`$A3:9612`). Five hand-worked unit tests. Remaining:
+- verify decodes the ride (`elevator.*` rows are open, so lockstep's engine starts every
+  Tick with no ride and the elevator doesn't move): `$0E18` status 0-3, `$0E16` 0 or `$80`,
+  `$0799` 0 or `$8000`, each other value `Unrepresentable`; then lockstep both rows
+  (`area-brinstar` slot 2's Y and Samus's Y), not reached in the lane's time;
+- the instruction lists (`$A0:C26A`, the timer, `GraphicUpdated`) wait for B7's enemy
+  program content, so `cursor.delay` and bit 15 still differ;
+- standing in pose 0 or `$9B` takes no input while the ride's status isn't inactive
+  (`$91:805C`): `pose::input` needs `State.elevator`, left to the pose lane's files;
+- the door transition check (`$A3:952A`), the sounds, the Samus commands 7 and `$B`
+  (`$90:F084`), the projectile reset (`$90:AD22`), the elevator's hurt AI, time frozen,
+  collisions, the shake request and global off-screen processing.
+
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the
 running list without the speed booster (`$91:B5D1` to `$91:B5D3`) into `AnimationDelays` of

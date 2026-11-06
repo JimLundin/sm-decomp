@@ -389,6 +389,9 @@ pub const FIELDS: &[Field] = &[
         "room.enemies.slots.occupancy.variables",
         source::ENEMY_AI_VARIABLES[0],
     ),
+    open("elevator.status"),
+    open("elevator.armed"),
+    open("elevator.direction"),
     Field {
         path: "hud.tilemap",
         status: Status::Decoded(Source::WramBlock(source::HUD_TILEMAP)),
@@ -437,6 +440,7 @@ mod tests {
             "video",
             "samus",
             "room",
+            "elevator",
             "hud",
             "message",
         ];

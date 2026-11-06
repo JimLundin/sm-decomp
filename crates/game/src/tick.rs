@@ -371,21 +371,31 @@ const AFTER_PLMS: [GameplayPhase; 13] = [
     GameplayPhase::HurtTimers,
 ];
 
+/// What one gameplay pass hands from phase to phase: nothing outlives the step.
+#[derive(Default)]
+struct Pass {
+    /// Samus's pose requests, from her current state to her new state.
+    requests: pose::PoseRequests,
+    /// The enemies processing this frame, from the selection to the main enemy routine.
+    active: crate::enemy::Active,
+}
+
 /// One step of the gameplay pass from `at`.
 fn gameplay(at: GameplayAt, state: &mut State, content: &Content) -> (GameplayAt, Next) {
     match at {
         GameplayAt::Start => {
-            let mut requests = pose::PoseRequests::default();
+            let mut pass = Pass::default();
             for phase in THROUGH_PLMS {
-                gameplay_phase(phase, state, content, &mut requests);
+                gameplay_phase(phase, state, content, &mut pass);
             }
             (GameplayAt::AfterPlms, Next::Continue)
         }
         GameplayAt::AfterPlms => {
-            // The pose requests are consumed before the PLM pass.
-            let mut requests = pose::PoseRequests::default();
+            // The pose requests are consumed before the PLM pass, and the active enemy list
+            // only the enemy phases before it read.
+            let mut pass = Pass::default();
             for phase in AFTER_PLMS {
-                gameplay_phase(phase, state, content, &mut requests);
+                gameplay_phase(phase, state, content, &mut pass);
             }
             (GameplayAt::Start, Next::Return)
         }
@@ -395,24 +405,19 @@ fn gameplay(at: GameplayAt, state: &mut State, content: &Content) -> (GameplayAt
 /// A gameplay phase's work.
 // open: each empty arm fills in with its C lane; the PLM pass ends the step with
 // `Next::Call(Frame::Plms { .. })` once an instruction can call out (B7, C12).
-fn gameplay_phase(
-    phase: GameplayPhase,
-    state: &mut State,
-    content: &Content,
-    requests: &mut pose::PoseRequests,
-) {
+fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pass: &mut Pass) {
     match phase {
         // The frame starts with no super special request (`$90:E695`).
         GameplayPhase::SamusCurrentState => {
             state.samus.super_special = SuperSpecial::default();
-            *requests = pose::input(&state.samus, &state.controller, content);
+            pass.requests = pose::input(&state.samus, &state.controller, content);
         }
         // The movement handler, the animation, then the pose update (`$90:E725`).
         // open: the movement types beyond standing, running and turning join with C3b and C4.
         GameplayPhase::SamusNewState => {
             movement::run(&mut state.samus, &state.controller, content);
-            animation::animate(&mut state.samus, &state.controller, *requests, content);
-            pose::change(&mut state.samus, *requests, content);
+            animation::animate(&mut state.samus, &state.controller, pass.requests, content);
+            pose::change(&mut state.samus, pass.requests, content);
         }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
         // with those game states. In game state 8 the clock still counts on that frame; it
@@ -421,10 +426,10 @@ fn gameplay_phase(
         // open: the mini-map's update and its explored cells (bank $90) join with the map
         // and `progress`; until then the HUD tilemap keeps the mini-map it was opened with.
         GameplayPhase::Hud => crate::hud::phase(state),
-        GameplayPhase::EnemySelection
-        | GameplayPhase::PaletteFx
+        GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
+        GameplayPhase::Enemies => crate::enemy::run(state, &pass.active),
+        GameplayPhase::PaletteFx
         | GameplayPhase::SamusProjectileInteraction
-        | GameplayPhase::Enemies
         | GameplayPhase::EnemyProjectiles
         | GameplayPhase::Plms
         | GameplayPhase::AnimatedTiles

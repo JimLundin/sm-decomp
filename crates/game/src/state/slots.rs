@@ -113,9 +113,14 @@ pub struct Cursor<F> {
     pub timer: u16,
 }
 
+/// A member of a [`FlagSet`]: its bit is its place in declaration order.
+pub trait Flag: Copy {
+    /// The member's bit in a set.
+    fn bit(self) -> u32;
+}
+
 /// A set of `E`s: bit `n` holds `E`'s `n`th variant in declaration order.
-// open: the queries (`contains`, `insert`) arrive with the first rule that reads a set; the
-// decoder maps the original's bit layout onto declaration order at the edge.
+// The decoder maps the original's bit layout onto declaration order at the edge.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FlagSet<E> {
     /// The members, one bit per variant.
@@ -148,5 +153,23 @@ impl<E> FlagSet<E> {
             bits: self.bits & !other.bits,
             members: PhantomData,
         }
+    }
+}
+
+impl<E: Flag> FlagSet<E> {
+    /// Whether `member` is in the set.
+    #[must_use]
+    pub fn contains(&self, member: E) -> bool {
+        (self.bits & member.bit()) != 0
+    }
+
+    /// Add `member`.
+    pub fn insert(&mut self, member: E) {
+        self.bits |= member.bit();
+    }
+
+    /// Take `member` out.
+    pub fn remove(&mut self, member: E) {
+        self.bits &= !member.bit();
     }
 }

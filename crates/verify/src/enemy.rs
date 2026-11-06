@@ -6,7 +6,7 @@
 use data::enemy::{Behaviour, SpeciesKey, SpeciesMap};
 use data::id::SpeciesId;
 use game::state::room::{
-    AiVariables, ENEMY_SLOTS, EnemyBody, EnemyCommon, PaletteIndex, TilesIndex,
+    AiVariables, ENEMY_SLOTS, Elevator, EnemyBody, EnemyCommon, PaletteIndex, TilesIndex,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Generation, Occupancy, Slot, SlotStore};
@@ -211,10 +211,40 @@ fn flags<E>(word: u16) -> FlagSet<E> {
 }
 
 /// The body a species with `behaviour` runs, holding its AI words.
-const fn body(behaviour: Behaviour, variables: AiVariables) -> EnemyBody {
+#[must_use]
+pub const fn body(behaviour: Behaviour, variables: AiVariables) -> EnemyBody {
     match behaviour {
         Behaviour::MorphBallEye => EnemyBody::MorphBallEye { variables },
-        Behaviour::Elevator => EnemyBody::Elevator { variables },
+        Behaviour::Elevator => EnemyBody::Elevator(elevator(variables)),
         Behaviour::FaceBlock => EnemyBody::FaceBlock { variables },
+    }
+}
+
+/// The elevator's AI words (bank $A3 log): the first is its target Y.
+#[must_use]
+pub const fn elevator(variables: AiVariables) -> Elevator {
+    Elevator {
+        target_y: variables.a,
+        unused: [
+            variables.b,
+            variables.c,
+            variables.d,
+            variables.e,
+            variables.f,
+        ],
+    }
+}
+
+/// The words `elevator` holds, in slot order: [`elevator`]'s inverse.
+#[must_use]
+pub const fn elevator_words(elevator: Elevator) -> AiVariables {
+    let [second, third, fourth, fifth, sixth] = elevator.unused;
+    AiVariables {
+        a: elevator.target_y,
+        b: second,
+        c: third,
+        d: fourth,
+        e: fifth,
+        f: sixth,
     }
 }
