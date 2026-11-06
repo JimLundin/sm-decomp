@@ -39,8 +39,10 @@ The 505 captures to cut, by movie and ladder rung (rungs every 10000 frames,
 The 17 derived seeds (coverage-metroid, -ice, -botwoon, crystal-flash, dachora,
 draygon-repel, etecoon-tunnel-jump, kihunter-wings, lower-norfair-hand, oum-roll,
 ridley-swoop, the 4 special-beam seeds, tatori-touch, wrecked-ship-hand) need
-`oracle derive-seed` from a base capture. Every base is itself used by a row, so
-it is cut anyway. Deriving is word edits on the base state, with no emulation
+`oracle derive-seed` from a base capture. Six bases (those of dachora,
+etecoon-tunnel-jump, kihunter-wings, lower-norfair-hand, oum-roll and
+wrecked-ship-hand) no row starts from, so the plan adds every base as a `cut`
+line of its own. Deriving is word edits on the base state, with no emulation
 (the crocomire seed is the model: `0142.lss` + `0142.words`).
 
 **Recording time.** The rows hold 418,259 Ticks. Overrun and NMI-off frames add
@@ -186,9 +188,20 @@ room and frame counter equal its CSV row's, and its WRAM equals its lsnes
 capture's in the old bundles outside the stack page. Proved on 100% windows
 90000 and 200000 and any% window 110000 (39 seeds, 47-52 frames/s with 3 at
 once, 114-169 s a window): 39 of 39 equal after `realign`; derived
-`coverage-metroid` and `-metroid-ice` keep their words, `lower-norfair-hand`
-fails `derive-seed`'s one-step check (Samus's X `$0AF6` written `0x68` reads
-`0x67`: she moves in that step).
+`coverage-metroid` and `-metroid-ice` keep their words.
+
+**Step a2 notes.** All 532 movie cuts equal their lsnes captures (0 WRAM bytes
+differing). The first plan missed the six derive bases above: `relock_plan.sh`
+cut a seed only when a row starts from it; it now adds each derivation's base
+(deduplicated). `derive-seed` first checked each word one step after the load,
+and six good derivations failed it: physics moves Samus's position
+(`$0AF6`/`$0AFA`, e.g. written `0x04a8`, read `0x04af`) in that step. What a
+run relies on is the word at the load (`NativeSeed::apply` writes it there),
+and the server reads memory only at a step's cut, so the check is now that a
+word stuck: one step on it reads the written value, or other than the plain
+base's step (it landed, then the game moved it). A word reading the plain
+base's value and not the written one was lost. The bytes differing from the
+plain base after one step stay reported, as information.
 
 Background afterwards: the nightly full-movie runs (D26), and re-recording the
 typed streams when the decoder version changes (§4 Q3).

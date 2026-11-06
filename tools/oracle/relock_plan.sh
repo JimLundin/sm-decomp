@@ -8,8 +8,9 @@
 # Environment: PYTHON (default python), to run tools/scenario_seeds.py.
 #
 # It reads scenarios/lock.toml (each row's seed, by its pin), the room-seed
-# CSVs movies/room-seeds-<capture>.csv and the scenario definitions. One line a
-# seed, sorted so that each window's captures are adjacent and in frame order:
+# CSVs movies/room-seeds-<capture>.csv and the scenario definitions, and adds
+# each derivation's base seed. One line a seed, sorted so that each window's
+# captures are adjacent and in frame order:
 #   cut MOVIE RUNG CAPTURE INDEX ROOM FRAME
 #       a movie capture: its row of the capture's CSV, cut from ladder rung
 #       RUNG of MOVIE (the latest at or before step FRAME-1; 0 is power-on).
@@ -69,27 +70,46 @@ derivations=$(
     done
 )
 
+# Whether NATIVE holds seed CAPTURE INDEX.
+held() { [ -f "$(printf '%s/%s/%04d.lss' "$native" "$1" "$2")" ]; }
+
+# A scenario capture's derivation: "BASE_CAPTURE BASE_INDEX WORDS..."; empty
+# without a scenario definition.
+derivation_of() {
+    # "@/BASE/IIII.lss @/scenario-NAME/IIII.lss --word ..."
+    local line base base_index words
+    line=$(printf '%s\n' "$derivations" | grep -F " @/$1/" || true)
+    if [ -z "$line" ]; then return; fi
+    read -r base _ words <<<"$line"
+    base=${base#@/}
+    base_index=${base##*/}
+    echo "${base%/*} $((10#${base_index%.lss})) $words"
+}
+
+# A derive's base is cut too, also when no row starts from it directly.
+bases=$(for seed in $seeds; do
+    capture=${seed%:*}
+    case $capture in scenario-*) ;; *) continue ;; esac
+    if held "$capture" "${seed#*:}"; then continue; fi
+    read -r base_capture base_index _ <<<"$(derivation_of "$capture")" || true
+    if [ -n "${base_capture:-}" ]; then echo "$base_capture:$base_index"; fi
+done)
+seeds=$(printf '%s\n' $seeds $bases | sort -u)
+
 for seed in $seeds; do
     capture=${seed%:*}
     index=${seed#*:}
-    file=$(printf '%s/%s/%04d.lss' "$native" "$capture" "$index")
-    if [ -f "$file" ]; then
+    if held "$capture" "$index"; then
         continue
     fi
     case $capture in
         scenario-*)
-            # "@/BASE/IIII.lss @/scenario-NAME/IIII.lss --word ..."
-            line=$(printf '%s\n' "$derivations" | grep -F " @/$capture/" || true)
-            if [ -z "$line" ]; then
+            derivation=$(derivation_of "$capture")
+            if [ -z "$derivation" ]; then
                 echo "skip $capture $index no-scenario-definition"
-                continue
+            else
+                echo "derive $capture $index $derivation"
             fi
-            read -r base _ words <<<"$line"
-            base=${base#@/}
-            base_capture=${base%/*}
-            base_index=${base##*/}
-            base_index=$((10#${base_index%.lss}))
-            echo "derive $capture $index $base_capture $base_index $words"
             continue
             ;;
     esac

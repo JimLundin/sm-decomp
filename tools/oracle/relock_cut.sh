@@ -27,7 +27,9 @@
 # memories (`movie` dumps them on save steps); its room word ($7E:079B) and
 # frame counter ($7E:05B6) equal the CSV row's `room` and `nmi`, and its work RAM equals the lsnes room capture's
 # byte for byte outside the stack page $1F00-$1FFF, as `movie --seeds` counts.
-# A derived seed has its .words and derive-seed confirmed every word. Exit 1
+# A derived seed has its .words and derive-seed confirmed every word stuck at
+# the load (it reads the written value, or other than the plain base, one step
+# on: physics moves some words in that step). Exit 1
 # when any seed fails.
 set -euo pipefail
 
@@ -225,7 +227,7 @@ check_phase() {
         local stem
         stem=$(printf '%s/%s/%04d' "$out" "$capture" "$index")
         if [ -f "$stem.lss" ] && [ -f "$stem.words" ] && grep -q "^relock_cut derive $capture exit 0" "$logs/derive-$capture.log" 2>/dev/null; then
-            echo "ok   $capture:$index derived, every word kept" >> "$report"
+            echo "ok   $capture:$index derived, every word kept at load" >> "$report"
         else
             echo "FAIL $capture:$index not derived" >> "$report"
             failures=$((failures + 1))
