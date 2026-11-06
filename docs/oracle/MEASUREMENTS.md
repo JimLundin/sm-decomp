@@ -1119,3 +1119,72 @@ line by line with `$TEMP/hfit/fit4.py` on the LakeSnes trace (`LAKE=1`) against
 the lsnes trace: the right variant fits both with the same rule and the same
 per-frame phase. Then (h)'s lag-log run with the print limit lifted. No GPL
 code was read; the rule is fitted from lsnes's traces and anomie's text.
+
+## (q) The 3 x 4 grid of request point and alignment phase: none zeroes the HUD lines, no fix 0005
+
+**Command.** As (n) and (p): each variant is a private DLL on top of
+0001+0002+0004 plus (p)'s one-cycle delay (the run request is seen at one
+CPU cycle edge and served at the next), with the request at `hPos` 1102,
+1104 or 1106 and the HDMA run's start alignment taken on the master-clock
+counter plus K (K = 0, 2, 4, 6; `8 - (cycles + K) % 8`, the run only, not
+DMA or the HDMA init). LakeSnes from power-on to 35176 with (m)'s 18 PCs
+traced over 35173-35175 (3-4.5 min, ten in parallel), scored as in (n)
+against (m)'s lsnes log. Private tools in `$TEMP/hgrid/` (`mk.sh`, `run.sh`,
+`score.py`, `mkw.sh`, `runlk.sh`, `fit5.py`, `ph.py`).
+
+**Grid.** HUD pairs over the 601 samples (sum, nonzero), the whole fade, the
+35175 wait and NMI, and the fade's first `$E752` dot (lsnes: 63/262, the
+35175 wait 224/1230):
+
+| Request | K | HUD sum, nonzero | Fade total | 35175 wait, NMI | `$E752` at |
+| --- | --- | --- | --- | --- | --- |
+| 1102 | 0 ((p) B) | +24, 39 | +18 | 224/1246, `Requested` | 63/260 |
+| 1102 | 2 | -6, 99 | +56 | 224/1292, `Overrun` | 63/268 |
+| 1102 | 4 | -2, 74 | -2 | 224/1252, `Requested` | 63/286 |
+| 1102 | 6 | +14, 99 | +84 | 224/1318, `Overrun` | 63/266 |
+| 1104 | 0 ((p) A) | -2, 128 | +62 | 224/1332, `Overrun` | 63/302 |
+| 1104 | 2 | +4, 63 | -2 | 224/1254, `Requested` | 63/288 |
+| 1104 | 4 | +18, 136 | +78 | 224/1358, `Overrun` | 63/312 |
+| 1104 | 6 | +2, 132 | +66 | 224/1338, `Overrun` | 63/304 |
+| 1106 | 0 | -30, 123 | +30 | 224/1312, `Overrun` | 63/314 |
+| 1106 | 2 | +18, 109 | +78 | 224/1316, `Overrun` | 63/270 |
+| 1106 | 4 | +18, 44 | +18 | 224/1250, `Requested` | 63/264 |
+| 1106 | 6 | -20, 144 | +44 | 224/1334, `Overrun` | 63/322 |
+
+No cell is 0. Every cell has residuals of 2-6 clocks (and the 114-clock
+pairs where a pause falls in the neighbouring instruction), besides the ±40
+pairs that are the DRAM refresh landing in a different instruction on the
+two emulators and cancel.
+
+**The fit.** `fit5.py` is (p)'s `fit4.py` with LakeSnes's trace convention
+(`LAKE=1`: a pause at an opcode fetch shows in that instruction's pair, not
+the one before). On LakeSnes's own all-instruction trace of the fade, every
+delayed variant obeys the lsnes rule on 60 of 60 HUD lines, with the request
+2 clocks after the code's `hPos` in trace clocks (1102 fits at 1104, 1106 at
+1108) and the phase c = 4 + K. lsnes fits at 1106 with c = 6, 2, 2 on its
+three frames; its last two are LakeSnes's two (both phases constant across
+them). 1102/K=0 and 1106/K=4 give the same pause length on all 60 lines,
+4 trace clocks apart: the same rule under the two readings of the trace
+origin (LakeSnes's trace 2 clocks before lsnes's, or 2 after); 1104/K=6, the
+reading with equal origins, is not in the family and is far off (+66). So
+the rule is fitted, but the two remaining unknowns cannot be told apart by
+the HUD lines alone, and neither member zeroes them.
+
+**Where the residual starts.** In both family members the first nonzero
+pair of the first HUD frame is the one spanning line 0 (from 0/628 to
+1/338): LakeSnes +6. Line 0 holds the IRQ, which (p)'s fit leaves out. On
+lines 1-7 LakeSnes's instructions then sit a constant 2 trace clocks after
+lsnes's (1102/K=0) with the same pause lengths, and on line 8 (`$DA24`, six
+cycles 6-6-6-6-8-8) the request falls on the other side of a cycle edge:
+lsnes serves the pause at an 8-clock cycle (112), LakeSnes at a 6-clock one
+(114). From there the offset grows and about half the lines differ. The HUD
+residual is the CPU's phase on entry to line 1, not the pause rule.
+
+**Not run.** (h)'s lag-log classification needs a zero cell, so it was not
+run, and there is no fix 0005.
+
+**Next.** Fit the line-0 pause (the IRQ entry against the HDMA run, and the
+refresh at 536 on LakeSnes against anomie's 538 / nearest multiple of 8 to
+536) with an all-instruction trace of line 0 on both emulators, then rescore
+1102/K=0 and 1106/K=4 and take whichever zeroes; then (h)'s run with the
+print limit lifted, then fix 0005.
