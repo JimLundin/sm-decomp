@@ -182,7 +182,7 @@ mod tests {
     fn image() -> [u8; SAVE_RAM_BYTES] {
         let mut bytes = [0; SAVE_RAM_BYTES];
         bytes.iter_mut().zip(0_u32..).for_each(|(byte, index)| {
-            *byte = (index.wrapping_mul(7) ^ (index >> 8)).to_le_bytes()[0]
+            *byte = (index.wrapping_mul(7) ^ (index >> 8)).to_le_bytes()[0];
         });
         bytes
     }
