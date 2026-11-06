@@ -11,7 +11,9 @@ use data::enemy::SpeciesMap;
 use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
-use game::state::room::{Camera, ElevatorDirection, ElevatorRide, ElevatorStatus, RoomScoped};
+use game::state::room::{
+    Camera, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, RoomScoped,
+};
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Equipment, Facing, Fixed, Gauge,
     Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus,
@@ -1332,9 +1334,12 @@ impl SuperSpecialSources {
     }
 }
 
-/// The elevator flags word while the elevator AI runs with no ride on: the door's elevator
-/// property bit (bank $82 log, door loading).
-const ARMED: u16 = 0x80;
+/// The elevator properties word for Samus in the elevator's doorway (bank $82 log).
+const IN_DOORWAY: u16 = 1;
+
+/// The elevator properties word after an elevator door: the door's elevator property bit
+/// (bank $82 log, door loading).
+const ELEVATOR_DOOR: u16 = 0x80;
 
 /// The elevator direction word for a departure upwards (bank $A3 log, `$A3:9581`).
 const UPWARDS: u16 = 0x8000;
@@ -1345,7 +1350,7 @@ impl ElevatorSources {
     /// # Errors
     ///
     /// [`DecodeError::Unrepresentable`] for a status past 3 (`$A3:952A` jumps through a
-    /// table of four), a flags word other than 0 or $80, or a direction other than 0 or
+    /// table of four), a flags word other than 0, 1 or $80, or a direction other than 0 or
     /// $8000.
     fn read(self, wram: &[u8]) -> Result<ElevatorRide, DecodeError> {
         let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
@@ -1360,8 +1365,9 @@ impl ElevatorSources {
             value => return Err(unrepresentable(self.status, value)),
         };
         let armed = match self.armed.read(wram)? {
-            0 => false,
-            ARMED => true,
+            0 => ElevatorArming::Disarmed,
+            IN_DOORWAY => ElevatorArming::InDoorway,
+            ELEVATOR_DOOR => ElevatorArming::ElevatorDoor,
             value => return Err(unrepresentable(self.armed, value)),
         };
         let direction = match self.direction.read(wram)? {

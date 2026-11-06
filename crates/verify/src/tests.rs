@@ -6,8 +6,8 @@
 use data::enemy::SpeciesMap;
 use data::id::{Line, RoomId, SpeciesId};
 use game::state::room::{
-    AiVariables, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody, EnemyCommon,
-    PaletteIndex, TilesIndex,
+    AiVariables, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
+    EnemyCommon, PaletteIndex, TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Movement,
@@ -285,7 +285,7 @@ fn decodes_the_ride(state: &State) -> bool {
     state.elevator
         == ElevatorRide {
             status: ElevatorStatus::EnteringRoom,
-            armed: true,
+            armed: ElevatorArming::ElevatorDoor,
             direction: ElevatorDirection::Up,
         }
 }
@@ -533,7 +533,7 @@ fn an_acceleration_mode_past_2_or_a_momentum_flag_past_1_is_an_error() {
 fn a_ride_word_outside_its_values_is_unrepresentable() {
     for (offset, value, source) in [
         (0x0E18, 0x0004, "ELEVATOR_STATUS"),
-        (0x0E16, 0x0001, "ELEVATOR_FLAGS"),
+        (0x0E16, 0x0002, "ELEVATOR_FLAGS"),
         (0x0799, 0x0001, "ELEVATOR_DIRECTION"),
     ] {
         let mut record = record();

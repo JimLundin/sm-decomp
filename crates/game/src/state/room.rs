@@ -340,15 +340,30 @@ pub enum ElevatorStatus {
     EnteringRoom,
 }
 
+/// What lets the elevator AI run while no ride is on: the elevator properties word (bank $A3
+/// log, `$A3:952A`, which tests it for zero).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ElevatorArming {
+    /// Nothing: the platform waits.
+    #[default]
+    Disarmed,
+    /// Samus stands in the elevator's doorway, a door with no destination, which sets it to 1
+    /// while her pose is one of the first nine (bank $82 log, the door transition check).
+    InDoorway,
+    /// Samus came in by an elevator door: door loading keeps the door's elevator property
+    /// bit, $80.
+    ElevatorDoor,
+}
+
 /// The elevator ride, which outlives a room: the next room's elevator reads it (bank $A3
 /// log, `$A3:9507`).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ElevatorRide {
     /// Where the ride is.
     pub status: ElevatorStatus,
-    /// Whether the elevator AI runs while no ride is on: room loading arms it in an
-    /// elevator room, and an idle frame without the call button disarms it (`$A3:9575`).
-    pub armed: bool,
+    /// What lets the elevator AI run while no ride is on; an idle frame without the call
+    /// button disarms it (`$A3:9575`), and so does the ride's end (`$A3:95FB`).
+    pub armed: ElevatorArming,
     /// The way the last departure went, which the door transition reads (`$A3:9581`).
     pub direction: ElevatorDirection,
 }

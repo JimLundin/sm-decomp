@@ -198,10 +198,12 @@ pub const ELEVATOR_DIRECTION: WramWord = WramWord {
     offset: 0x0799,
 };
 
-/// Bank $A3 log, `$A3:952A`: nonzero while the elevator AI runs with no ride on.
+/// Bank $A3 log, `$A3:952A`: the elevator properties, nonzero while the elevator AI runs
+/// with no ride on.
 ///
-/// Door loading sets it to the door's elevator property bit $80, and an idle frame without the
-/// call button clears it (`$A3:9575`).
+/// Door loading sets it to the door's elevator property bit $80, standing in the elevator's
+/// doorway to 1 (bank $82 log), and an idle frame without the call button clears it
+/// (`$A3:9575`).
 pub const ELEVATOR_FLAGS: WramWord = WramWord {
     name: "ELEVATOR_FLAGS",
     offset: 0x0E16,

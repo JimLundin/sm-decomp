@@ -7,8 +7,8 @@
 //! counts the frame, and counts the hurt flash down after drawing.
 
 use crate::state::room::{
-    AiHandler, ENEMY_SLOTS, Elevator, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
-    EnemyCommon, EnemyExtraProperty, EnemyProperty,
+    AiHandler, ENEMY_SLOTS, Elevator, ElevatorArming, ElevatorDirection, ElevatorRide,
+    ElevatorStatus, EnemyBody, EnemyCommon, EnemyExtraProperty, EnemyProperty,
 };
 use crate::state::samus::{Fixed, Movement, Samus};
 use crate::state::slots::{Frames, Occupancy, Slot};
@@ -237,13 +237,13 @@ pub fn elevator_ai(
 ) {
     let way = direction(slot);
     match ride.status {
-        ElevatorStatus::Inactive if !ride.armed => {}
+        ElevatorStatus::Inactive if matches!(ride.armed, ElevatorArming::Disarmed) => {}
         ElevatorStatus::Inactive => {
             if controller.pressed.contains(call_button(way)) {
                 place_samus(slot, samus);
                 ride.status = ElevatorStatus::LeavingRoom;
             } else {
-                ride.armed = false;
+                ride.armed = ElevatorArming::Disarmed;
             }
         }
         ElevatorStatus::LeavingRoom => {
@@ -283,7 +283,7 @@ fn enter(
     slot.position.y = y;
     if arrived {
         ride.status = ElevatorStatus::Inactive;
-        ride.armed = false;
+        ride.armed = ElevatorArming::Disarmed;
         slot.position.y.pixels = elevator.target_y;
     }
     place_samus(slot, samus);
@@ -306,8 +306,8 @@ fn place_samus(slot: &EnemyCommon, samus: &mut Samus) {
 mod tests {
     use super::{Active, elevator_ai, run, select};
     use crate::state::room::{
-        Elevator, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody, EnemyCommon,
-        EnemyExtraProperty,
+        Elevator, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
+        EnemyCommon, EnemyExtraProperty,
     };
     use crate::state::samus::{Fixed, Samus};
     use crate::state::slots::{Flag, Occupancy};
@@ -331,7 +331,7 @@ mod tests {
         };
         let ride = ElevatorRide {
             status: ElevatorStatus::EnteringRoom,
-            armed: false,
+            armed: ElevatorArming::Disarmed,
             direction: ElevatorDirection::Up,
         };
         (slot, elevator, ride)
@@ -379,7 +379,7 @@ mod tests {
         );
         assert_eq!(slot.position.y, at(0x80, 0x8000));
         assert_eq!(ride.status, ElevatorStatus::Inactive);
-        assert!(!ride.armed);
+        assert_eq!(ride.armed, ElevatorArming::Disarmed);
         assert_eq!(samus.position.y, at(0x66, 0));
     }
 
@@ -402,15 +402,15 @@ mod tests {
     fn an_idle_armed_elevator_leaves_on_its_button_and_disarms_without_it() {
         let (mut slot, elevator, mut ride) = arriving(at(0x80, 0), 0x80);
         ride.status = ElevatorStatus::Inactive;
-        ride.armed = true;
+        ride.armed = ElevatorArming::InDoorway;
         let mut samus = Samus::default();
         let mut controller = Controller::default();
         controller.pressed.insert(Button::Down);
         elevator_ai(&mut slot, elevator, &mut ride, &mut samus, &controller);
         // Down doesn't call an up elevator: it disarms and stays.
-        assert!(!ride.armed);
+        assert_eq!(ride.armed, ElevatorArming::Disarmed);
         assert_eq!(ride.status, ElevatorStatus::Inactive);
-        ride.armed = true;
+        ride.armed = ElevatorArming::InDoorway;
         controller.pressed.remove(Button::Down);
         controller.pressed.insert(Button::Up);
         elevator_ai(&mut slot, elevator, &mut ride, &mut samus, &controller);
