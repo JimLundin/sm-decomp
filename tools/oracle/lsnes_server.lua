@@ -123,14 +123,17 @@ local function abort(message)
 end
 
 -- The record's optional streams (request `T <picture> <apu log> <ppu>`, each
--- 0|1), appended after the memories as "OHS1", a flag byte (bit 0 picture,
--- 1 APU log, 2 PPU registers) and the parts in that order, PPU first:
+-- 0|1), appended after the memories as "OHS1", a flag byte (bit 0 picture as
+-- dots, 1 APU log, 2 PPU registers, 3 picture as PNG) and the parts in that
+-- order, PPU first:
 --   PPU registers  the record's PpuRegisters bytes up to `setini`, rebuilt
 --                  from memory.getregisters() at the cut, then $43x0-$43xA
 --   APU log        u32 count, then (kind 0 write | 1 read, port, value) for
 --                  each CPU access to $2140-$2143 in the interval
---   picture        u16 width, u16 height, then each dot's 8-bit R, G, B from
---                  gui.screenshot_bitmap() once lsnes holds the frame (on_frame)
+--   picture        gui.screenshot_bitmap() once lsnes holds the frame
+--                  (on_frame): as PNG, u32 length then the base64 text of
+--                  save_png(); as dots, u16 width, u16 height, then each
+--                  dot's 8-bit R, G, B
 -- Without a T request the record is unchanged.
 local streams = {picture = false, apu = false, ppu = false}
 local in_main, apu_registered = true, false
@@ -219,8 +222,17 @@ local function cut_streams(r)
     apu_cut, apu_log = apu_log, {}
 end
 
+-- The picture as lsnes's own PNG of the screenshot, base64 (one C++ call),
+-- or with OH_PICTURE_DOTS set as each dot read by pget (the slow reference
+-- the PNG was checked against).
+local picture_dots = os.getenv("OH_PICTURE_DOTS") ~= nil
+
 local function picture_bytes()
     local bitmap = gui.screenshot_bitmap()
+    if not picture_dots then
+        local text = bitmap:save_png()
+        return u32(#text) .. text
+    end
     local width, height = bitmap:size()
     local rows = {u16(width), u16(height)}
     for y = 0, height - 1 do
@@ -236,7 +248,8 @@ end
 
 local function send_streams()
     if not (streams.picture or streams.apu or streams.ppu) then return "" end
-    local flags = (streams.picture and 1 or 0) + (streams.apu and 2 or 0) + (streams.ppu and 4 or 0)
+    local picture = streams.picture and (picture_dots and 1 or 8) or 0
+    local flags = picture + (streams.apu and 2 or 0) + (streams.ppu and 4 or 0)
     local parts = {"OHS1", u8(flags)}
     if streams.ppu then parts[#parts + 1] = ppu_cut end
     if streams.apu then

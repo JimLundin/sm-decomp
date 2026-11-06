@@ -19,6 +19,7 @@ pub mod lakesnes;
 pub mod lock;
 pub mod lsnes;
 pub mod measure;
+pub mod png;
 pub mod record;
 pub mod seed;
 pub mod streams;

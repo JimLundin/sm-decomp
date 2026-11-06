@@ -15,9 +15,10 @@
 //! and joypad read.
 //!
 //! With the picture or APU log tiers on ([`Oracle::set_tiers`] before the
-//! first step), each record also carries the picture (the screenshot taken
-//! once lsnes holds the video frame the step ends in, mapped back from lsnes's 8-bit palette to BGR555
-//! at the one brightness that produces it), the CPU's accesses to
+//! first step), each record also carries the picture (the screenshot of the
+//! video frame the step ends in, sent as lsnes's PNG and mapped back from its
+//! 8-bit palette to BGR555 at the one brightness that produces it), the CPU's
+//! accesses to
 //! $2140-$2143 (no DMA or SPC700 side, no APU cycle) and the PPU registers
 //! (rebuilt from bsnes's decoded fields, with the DMA channels; `nmitimen`,
 //! `htime`, `vtime`, `hdmaen` and `memsel` stay at their defaults).
@@ -612,7 +613,16 @@ impl Lsnes {
                 );
             rest = after;
         }
-        if flags & 1 != 0 {
+        if flags & 8 != 0 {
+            let (length, after) = rest.split_first_chunk::<4>().ok_or_else(short)?;
+            let length = usize::try_from(u32::from_le_bytes(*length)).map_err(|_| short())?;
+            let text = after.get(..length).ok_or_else(short)?;
+            let (width, height, rgb) = crate::png::base64(text)
+                .as_deref()
+                .and_then(crate::png::rgb)
+                .ok_or_else(|| Cause::Record("picture: not a PNG this decoder reads".into()))?;
+            record.picture = Some(decode_picture(width, height, &rgb));
+        } else if flags & 1 != 0 {
             let (size, rgb) = rest.split_first_chunk::<4>().ok_or_else(short)?;
             let width = usize::from(u16::from_le_bytes([size[0], size[1]]));
             let height = usize::from(u16::from_le_bytes([size[2], size[3]]));
