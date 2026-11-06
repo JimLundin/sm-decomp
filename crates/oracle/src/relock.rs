@@ -3,7 +3,8 @@
 //! A [`Recorder`] folds one row's video frames into span marks: each stream's
 //! digest of every 1000-frame span, folded from empty (Q1), the last span
 //! partial. A row's digest per stream is the fold of its marks
-//! ([`data::digest::fold_all`]); the engine's verifier computes the same.
+//! ([`data::digest::fold_all`]). The rules live in `data::span::SpanFold`, which the
+//! engine's verifier folds through too, so both sides compute marks the same way.
 //!
 //! A cut is quiescent when it is the RTI of an NMI that found the main thread
 //! at one of [`crate::game::WAIT_SITES`] ([`NmiKind::Requested`]). The memory,
@@ -13,107 +14,70 @@
 
 use crate::record::{ApuAccessKind, Cut, FrameRecord, NmiKind, PpuRegisters};
 use core::hash::{Hash, Hasher};
-use data::digest::{Digest, fold};
+use data::digest::Digest;
+use data::span::{self, Folded, Marks, PortAccess, PortDirection, SpanFold};
 use std::fmt::Write as _;
 use std::path::Path;
+
+pub use data::span::{MARK_FRAMES, Stream};
 
 /// The record format this module writes.
 pub const FORMAT: u32 = 2;
 
-/// Video frames per span mark.
-pub const MARK_FRAMES: u64 = 1000;
+/// A frame record as the shared span fold reads it.
+struct RecordFrame<'a>(&'a FrameRecord);
 
-/// A stream of the format-2 lock.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Stream {
-    Vram,
-    Cgram,
-    Oam,
-    Sram,
-    Ppu,
-    Apu,
-    Video,
-    Timing,
-    Wram,
-}
-
-/// When a stream folds a frame.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Folding {
-    Quiescent,
-    EveryFrame,
-}
-
-impl Stream {
-    /// Every stream, in the order an entry lists them.
-    pub const ALL: [Self; 9] = [
-        Self::Vram,
-        Self::Cgram,
-        Self::Oam,
-        Self::Sram,
-        Self::Ppu,
-        Self::Apu,
-        Self::Video,
-        Self::Timing,
-        Self::Wram,
-    ];
-
-    pub const fn name(self) -> &'static str {
-        match self {
-            Self::Vram => "vram",
-            Self::Cgram => "cgram",
-            Self::Oam => "oam",
-            Self::Sram => "sram",
-            Self::Ppu => "ppu",
-            Self::Apu => "apu",
-            Self::Video => "video",
-            Self::Timing => "timing",
-            Self::Wram => "wram",
+impl span::Frame for RecordFrame<'_> {
+    fn cut(&self) -> span::Cut {
+        match self.0.cut {
+            Cut::NmiReturn(nmi) => match nmi.kind {
+                NmiKind::Requested => span::Cut::Requested,
+                NmiKind::Overrun => span::Cut::Overrun,
+            },
+            Cut::VblankWithoutNmi => span::Cut::VblankWithoutNmi,
+            Cut::NmiStillRunning { .. } => span::Cut::NmiStillRunning,
         }
     }
 
-    const fn folding(self) -> Folding {
-        match self {
-            Self::Vram
-            | Self::Cgram
-            | Self::Oam
-            | Self::Sram
-            | Self::Ppu
-            | Self::Apu
-            | Self::Wram => Folding::Quiescent,
-            Self::Video | Self::Timing => Folding::EveryFrame,
+    fn memory(&self, stream: Stream) -> Option<u64> {
+        let record = self.0;
+        match stream {
+            Stream::Vram => (record.vram.len() == 0x8000).then(|| span::vram_digest(&record.vram)),
+            Stream::Cgram => {
+                (record.cgram.len() == 0x100).then(|| span::cgram_digest(&record.cgram))
+            }
+            Stream::Oam => crate::streams::oam_digest(record),
+            Stream::Sram => Some(span::bytes_digest(&record.sram)),
+            Stream::Ppu => Some(ppu_digest(&record.ppu)),
+            Stream::Wram => Some(span::bytes_digest(&record.wram)),
+            Stream::Apu | Stream::Video | Stream::Timing => None,
         }
     }
 
-    /// This stream's digest of `record`; `apu_busy` is the port log since
-    /// the last quiescent cut, this frame's included. `None` where the record
-    /// lacks the stream.
-    fn digest(self, record: &FrameRecord, apu_busy: &[u8]) -> Option<u64> {
-        match self {
-            Self::Vram => <&[u16; 0x8000]>::try_from(&record.vram[..])
-                .ok()
-                .map(hashed),
-            Self::Cgram => <&[u16; 0x100]>::try_from(&record.cgram[..])
-                .ok()
-                .map(hashed),
-            Self::Oam => crate::streams::oam_digest(record),
-            Self::Sram => Some(Digest::of(&record.sram)),
-            Self::Ppu => Some(ppu_digest(&record.ppu)),
-            Self::Apu => Some(Digest::of(apu_busy)),
-            Self::Video => record
-                .picture
-                .as_ref()
-                .map(|picture| Digest::of(picture.shown().as_flattened())),
-            Self::Timing => Some(Digest::of(&timing(record))),
-            Self::Wram => Some(Digest::of(&record.wram)),
-        }
+    /// lsnes's bus hook sees no DMA side, so DMA entries are dropped on both sides.
+    fn ports(&self) -> impl Iterator<Item = PortAccess> {
+        self.0.apu_log.iter().filter_map(|access| {
+            let direction = match access.kind {
+                ApuAccessKind::CpuWrite => PortDirection::Write,
+                ApuAccessKind::CpuRead => PortDirection::Read,
+                ApuAccessKind::DmaWrite | ApuAccessKind::DmaRead | ApuAccessKind::SpcWrite => {
+                    return None;
+                }
+            };
+            Some(PortAccess {
+                direction,
+                port: access.port,
+                value: access.value,
+            })
+        })
     }
-}
 
-fn hashed(value: &impl Hash) -> u64 {
-    let mut digest = Digest::default();
-    value.hash(&mut digest);
-    digest.finish()
+    fn video(&self) -> Option<u64> {
+        self.0
+            .picture
+            .as_ref()
+            .map(|picture| span::bytes_digest(picture.shown().as_flattened()))
+    }
 }
 
 /// The architectural PPU registers without the five lsnes doesn't expose
@@ -164,41 +128,6 @@ fn ppu_digest(ppu: &PpuRegisters) -> u64 {
     digest.finish()
 }
 
-/// The `timing` stream's frame: the cut kind, the NMI kind and the overrun flag.
-fn timing(record: &FrameRecord) -> [u8; 3] {
-    let cut = match record.cut {
-        Cut::NmiReturn(_) => 0,
-        Cut::VblankWithoutNmi => 1,
-        Cut::NmiStillRunning { .. } => 2,
-    };
-    let kind = record.nmi().map(|nmi| nmi.kind);
-    let nmi = match kind {
-        None => 0,
-        Some(NmiKind::Requested) => 1,
-        Some(NmiKind::Overrun) => 2,
-    };
-    [cut, nmi, u8::from(kind == Some(NmiKind::Overrun))]
-}
-
-/// The CPU's `$2140-$2143` accesses of a frame as `(kind, port, value)`.
-/// lsnes's bus hook sees no DMA side, so DMA entries are dropped on both sides.
-fn port_log(record: &FrameRecord) -> impl Iterator<Item = u8> + '_ {
-    record
-        .apu_log
-        .iter()
-        .filter_map(|access| {
-            let kind = match access.kind {
-                ApuAccessKind::CpuWrite => 0,
-                ApuAccessKind::CpuRead => 1,
-                ApuAccessKind::DmaWrite | ApuAccessKind::DmaRead | ApuAccessKind::SpcWrite => {
-                    return None;
-                }
-            };
-            Some([kind, access.port, access.value])
-        })
-        .flatten()
-}
-
 /// Whether `record`'s cut is quiescent: the RTI of an NMI that interrupted a wait site.
 pub fn is_quiescent(record: &FrameRecord) -> bool {
     record
@@ -216,51 +145,12 @@ pub trait TypedStream {
     fn digest(&mut self, record: &FrameRecord) -> Option<u64>;
 }
 
-/// One stream's marks.
-#[derive(Clone, Debug)]
-struct Spans {
-    current: u64,
-    marks: Vec<u64>,
-    absent: bool,
-}
-
-impl Default for Spans {
-    fn default() -> Self {
-        Self {
-            current: Digest::default().finish(),
-            marks: Vec::new(),
-            absent: false,
-        }
-    }
-}
-
-impl Spans {
-    fn fold(&mut self, digest: Option<u64>) {
-        match digest {
-            Some(digest) => self.current = fold(self.current, digest),
-            None => self.absent = true,
-        }
-    }
-
-    fn close(&mut self) {
-        self.marks.push(core::mem::replace(
-            &mut self.current,
-            Digest::default().finish(),
-        ));
-    }
-
-    fn marks(&self) -> Option<&[u64]> {
-        (!self.absent).then_some(&self.marks)
-    }
-}
-
-/// One row's fold, fed every frame record in order.
+/// One row's fold, fed every frame record in order: the shared span fold
+/// (`data::span`) plus the schedules, the typed streams and the sidecar.
 #[derive(Default)]
 pub struct Recorder {
-    frames: u64,
-    spans: [Spans; 9],
-    typed: Vec<(Box<dyn TypedStream>, Spans)>,
-    apu_busy: Vec<u8>,
+    spans: SpanFold,
+    typed: Vec<(Box<dyn TypedStream>, Marks)>,
     overruns: Vec<u64>,
     nmi_off: Vec<u64>,
     still_running: Vec<u64>,
@@ -302,80 +192,63 @@ impl Recorder {
         Self {
             typed: typed
                 .into_iter()
-                .map(|stream| (stream, Spans::default()))
+                .map(|stream| (stream, Marks::default()))
                 .collect(),
             ..Self::default()
         }
     }
 
     pub fn fold(&mut self, record: &FrameRecord) {
-        let frame = self.frames;
+        let frame = self.spans.frames();
         match record.cut {
             Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Overrun => self.overruns.push(frame),
             Cut::NmiReturn(_) => {}
             Cut::VblankWithoutNmi => self.nmi_off.push(frame),
             Cut::NmiStillRunning { .. } => self.still_running.push(frame),
         }
-        self.apu_busy.extend(port_log(record));
-        let quiescent = is_quiescent(record);
-        let mut line = self
-            .frame_log
-            .as_ref()
-            .map(|_| format!("{frame} {} {}", record.video_frame, cut_letter(record)));
-        for (stream, spans) in Stream::ALL.iter().zip(&mut self.spans) {
-            let folded = (quiescent || stream.folding() == Folding::EveryFrame)
-                .then(|| stream.digest(record, &self.apu_busy));
-            if let Some(digest) = folded {
-                spans.fold(digest);
-            }
-            if let Some(line) = line.as_mut() {
-                match folded {
-                    Some(Some(digest)) => {
-                        let _ = write!(line, " {digest:016x}");
+        let folded = self.spans.fold(&RecordFrame(record));
+        if let Some(log) = self.frame_log.as_mut() {
+            let _ = write!(log, "{frame} {} {}", record.video_frame, cut_letter(record));
+            for stream in folded.streams {
+                match stream {
+                    Folded::Digest(digest) => {
+                        let _ = write!(log, " {digest:016x}");
                     }
-                    Some(None) => line.push_str(" absent"),
-                    None => line.push_str(" -"),
+                    Folded::Absent => log.push_str(" absent"),
+                    Folded::Skipped => log.push_str(" -"),
                 }
             }
-        }
-        if let (Some(log), Some(line)) = (self.frame_log.as_mut(), line) {
-            log.push_str(&line);
             log.push('\n');
         }
-        if quiescent {
-            self.apu_busy.clear();
-            for (stream, spans) in &mut self.typed {
-                spans.fold(stream.digest(record));
+        if folded.quiescent {
+            for (stream, marks) in &mut self.typed {
+                marks.fold(stream.digest(record));
             }
         }
-        self.frames += 1;
-        if self.frames.is_multiple_of(MARK_FRAMES) {
-            self.close_spans();
+        if folded.closed {
+            self.typed.iter_mut().for_each(|(_, marks)| marks.close());
         }
-    }
-
-    fn close_spans(&mut self) {
-        self.spans.iter_mut().for_each(Spans::close);
-        self.typed.iter_mut().for_each(|(_, spans)| spans.close());
     }
 
     /// The row's marks per stream, closing the partial last span.
     pub fn finish(mut self) -> Recorded {
-        if !self.frames.is_multiple_of(MARK_FRAMES) {
-            self.close_spans();
+        if self.spans.partial() {
+            self.typed.iter_mut().for_each(|(_, marks)| marks.close());
         }
-        let streams = Stream::ALL
-            .iter()
-            .zip(&self.spans)
-            .map(|(stream, spans)| (stream.name(), spans.marks().map(<[u64]>::to_vec)))
+        let frames = self.spans.frames();
+        let streams = self
+            .spans
+            .finish()
+            .into_iter()
+            .map(|(stream, marks)| (stream.name(), marks))
             .chain(
                 self.typed
                     .iter()
-                    .map(|(stream, spans)| (stream.name(), spans.marks().map(<[u64]>::to_vec))),
+                    .map(|(stream, marks)| (stream.name(), marks.marks().map(<[u64]>::to_vec))),
             )
             .collect();
         Recorded {
-            frames: self.frames,
+            frames,
             overruns: self.overruns,
             nmi_off: self.nmi_off,
             still_running: self.still_running,

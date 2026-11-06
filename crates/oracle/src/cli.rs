@@ -632,6 +632,9 @@ pub fn main(arguments: &[String]) -> i32 {
         Some((command, rest)) if command == "relock-merge" => {
             return crate::relock_check::merge_command(rest);
         }
+        Some((command, rest)) if command == "relock-refold" => {
+            return crate::relock_check::refold_command(rest);
+        }
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0

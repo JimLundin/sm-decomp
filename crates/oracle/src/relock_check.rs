@@ -364,6 +364,185 @@ pub fn merge_command(arguments: &[String]) -> i32 {
     }
 }
 
+/// One sidecar line's cut and stream columns, `None` for a malformed line.
+fn sidecar_frame(line: &str) -> Option<(data::span::Cut, Vec<&str>)> {
+    let mut fields = line.split(' ');
+    let (_frame, _lsnes) = (fields.next()?, fields.next()?);
+    let cut = match fields.next()? {
+        "R" => data::span::Cut::Requested,
+        "O" => data::span::Cut::Overrun,
+        "V" => data::span::Cut::VblankWithoutNmi,
+        "S" => data::span::Cut::NmiStillRunning,
+        _ => return None,
+    };
+    let columns: Vec<&str> = fields.collect();
+    (columns.len() == data::span::Stream::ALL.len()).then_some((cut, columns))
+}
+
+/// Re-fold one row's sidecar through the shared span fold and compare the marks with
+/// the row's entry: the proof that `data::span::SpanFold` folds as the recorder did.
+/// Each line's digests are what the recorder folded at that frame, so the fold must
+/// ask for exactly the streams the line has a value for, and its marks must equal the
+/// entry's, stream by stream. Returns the report's lines and the mismatch count.
+pub fn refold(row: &Row, sidecar: &str) -> (String, usize) {
+    use data::span::{Folded, SpanFold, Stream};
+    let mut report = String::new();
+    let mut bad = 0;
+    let mut fold = SpanFold::default();
+    for (number, line) in sidecar.lines().skip(1).enumerate() {
+        let Some((cut, columns)) = sidecar_frame(line) else {
+            let _ = writeln!(report, "{}: line {} malformed", row.id, number + 2);
+            return (report, bad + 1);
+        };
+        let value = |stream: Stream| {
+            let index = Stream::ALL.iter().position(|each| *each == stream)?;
+            u64::from_str_radix(columns.get(index)?, 16).ok()
+        };
+        let folded = fold.fold_digests(cut, value);
+        let asked: Vec<&str> = folded
+            .streams
+            .iter()
+            .map(|stream| match stream {
+                Folded::Skipped => "-",
+                Folded::Absent => "absent",
+                Folded::Digest(_) => "digest",
+            })
+            .collect();
+        let logged: Vec<&str> = columns
+            .iter()
+            .map(|column| match *column {
+                "-" | "absent" => column,
+                _ => "digest",
+            })
+            .collect();
+        if asked != logged {
+            bad += 1;
+            let _ = writeln!(
+                report,
+                "{}: frame {number}: the fold's rule differs",
+                row.id
+            );
+        }
+    }
+    let frames = fold.frames();
+    for (stream, marks) in fold.finish() {
+        let ours: Option<Vec<String>> =
+            marks.map(|marks| marks.iter().map(|mark| format!("{mark:016x}")).collect());
+        let theirs = row.marks(stream.name()).map(<[String]>::to_vec);
+        let verdict = if ours == theirs { "equal" } else { "DIFFERS" };
+        if ours != theirs {
+            bad += 1;
+        }
+        let spans = ours.as_ref().map_or(0, Vec::len);
+        let _ = writeln!(
+            report,
+            "{} {} frames={frames} spans={spans}: {verdict}",
+            row.id,
+            stream.name()
+        );
+    }
+    (report, bad)
+}
+
+/// The shared fold's cost per frame over `frames` frames shaped like a format-2
+/// record's (32K VRAM words, 256 colours, OAM, 8 KiB SRAM, the PPU digest, 128 KiB
+/// WRAM, a 256x224 picture, a few port writes), every cut quiescent, the worst case.
+/// Digesting the memories is the cost, so a side that keeps an incremental digest
+/// pays less. Returns nanoseconds per frame, with and without `wram`.
+pub fn fold_cost(frames: u32) -> (u128, u128) {
+    use data::span::{self, Cut, Frame, PortAccess, PortDirection, SpanFold, Stream};
+    struct Shaped {
+        vram: Vec<u16>,
+        cgram: Vec<u16>,
+        low: [u16; 256],
+        high: [u8; 32],
+        sram: Vec<u8>,
+        wram: Option<Vec<u8>>,
+        picture: Vec<u8>,
+    }
+    impl Frame for Shaped {
+        fn cut(&self) -> Cut {
+            Cut::Requested
+        }
+        fn memory(&self, stream: Stream) -> Option<u64> {
+            match stream {
+                Stream::Vram => Some(span::vram_digest(&self.vram)),
+                Stream::Cgram => Some(span::cgram_digest(&self.cgram)),
+                Stream::Oam => Some(span::oam_digest(&self.low, &self.high)),
+                Stream::Sram => Some(span::bytes_digest(&self.sram)),
+                Stream::Ppu => Some(7),
+                Stream::Wram => self.wram.as_deref().map(span::bytes_digest),
+                Stream::Apu | Stream::Video | Stream::Timing => None,
+            }
+        }
+        fn ports(&self) -> impl Iterator<Item = PortAccess> {
+            (0..4).map(|port| PortAccess {
+                direction: PortDirection::Write,
+                port,
+                value: port,
+            })
+        }
+        fn video(&self) -> Option<u64> {
+            Some(span::bytes_digest(&self.picture))
+        }
+    }
+    let mut frame = Shaped {
+        vram: (0..0x8000_u16).collect(),
+        cgram: (0..0x100_u16).collect(),
+        low: [3; 256],
+        high: [5; 32],
+        sram: vec![1; 0x2000],
+        wram: Some(vec![2; 0x2_0000]),
+        picture: vec![9; 256 * 224 * 3],
+    };
+    let time = |frame: &Shaped| {
+        let mut fold = SpanFold::default();
+        let start = std::time::Instant::now();
+        for _ in 0..frames {
+            fold.fold(frame);
+        }
+        let marks = fold.finish();
+        let elapsed = start.elapsed().as_nanos() / u128::from(frames.max(1));
+        std::hint::black_box(marks);
+        elapsed
+    };
+    let with_wram = time(&frame);
+    frame.wram = None;
+    (with_wram, time(&frame))
+}
+
+/// `relock-refold A[,A2...] SIDECAR_DIR`: [`refold`] for every row of recording A
+/// whose sidecar is in the directory, then [`fold_cost`]; exits 1 on any mismatch.
+pub fn refold_command(arguments: &[String]) -> i32 {
+    let [files, directory] = arguments else {
+        eprintln!("relock-refold A[,A2...] SIDECAR_DIR");
+        return 2;
+    };
+    let recording = match Recording::read(files) {
+        Ok(recording) => recording,
+        Err(error) => {
+            eprintln!("{error}");
+            return 2;
+        }
+    };
+    let mut bad = 0;
+    for row in &recording.rows {
+        let path = sidecar_path(Path::new(directory), &row.id);
+        let Ok(sidecar) = std::fs::read_to_string(&path) else {
+            println!("{}: no sidecar at {}", row.id, path.display());
+            bad += 1;
+            continue;
+        };
+        let (report, mismatches) = refold(row, &sidecar);
+        print!("{report}");
+        bad += mismatches;
+    }
+    let (with_wram, without) = fold_cost(2000);
+    println!("fold cost: {with_wram} ns/frame with wram, {without} ns/frame without");
+    println!("{} rows, {bad} mismatches", recording.rows.len());
+    i32::from(bad > 0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
