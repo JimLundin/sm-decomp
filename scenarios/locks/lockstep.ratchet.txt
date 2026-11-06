@@ -2,9 +2,9 @@
 # Check: tools lockstep --check-ratchet scenarios/locks/lsnes.toml CACHE ROM scenarios/locks/lockstep.ratchet.txt
 # Format: row ROW ticks N equal N / diff ROW GROUP TICKS FIRST_FRAME. A group with no line never differs.
 row area-brinstar ticks 476 equal 476
-row item-morph-ball ticks 1427 equal 1291
+row item-morph-ball ticks 1427 equal 1297
 diff item-morph-ball elevator 1 688
 diff item-morph-ball hud 1 1294
 diff item-morph-ball room 61 683
-diff item-morph-ball samus 55 682
-diff item-morph-ball video 134 682
+diff item-morph-ball samus 49 682
+diff item-morph-ball video 128 682
