@@ -400,9 +400,11 @@ impl Ground {
         motion: &GroundMotion,
         world: &mut impl Collision,
     ) -> Result<Contacts, MissingSpeeds> {
+        // LocomotionAtFrameStart: the row comes from the pose before this frame's pose update.
         let Row(horizontal, vertical, after) = row(input.locomotion, self.mode);
         let mut contacts = Contacts::default();
         let total = match horizontal {
+            // ExtraRunSpeed comes before the base speed; the step reads both (SpeedTableRow).
             Horizontal::Speed => {
                 let movement = input.locomotion.movement();
                 let entry = speeds.normal.of(movement).ok_or(MissingSpeeds(movement))?;
@@ -410,14 +412,17 @@ impl Ground {
                 self.change_base_speed(entry, switches.speed_cap);
                 Some(self.base_speed.plus(self.extra_run))
             }
+            // HorizontalStep with the base speed taken as 0.
             Horizontal::Coast => Some(self.extra_run),
             Horizontal::None => None,
         };
         if let Some(total) = total {
             contacts.wall_stop = self.step_sideways(total, input, motion, world);
         }
+        // StepDown reads this frame's total even after a WallStop zeroed the speeds.
         let total = total.unwrap_or(Fixed::ZERO);
         contacts.vertical = match (vertical, input.air) {
+            // StepDownUnlessAirborne: in the air, the air domain's result stands.
             (VerticalStep::StepDownUnlessAirborne, Some(air)) => air,
             (VerticalStep::StepDown | VerticalStep::StepDownUnlessAirborne, _) => {
                 self.step_down(total, input, motion, world)
@@ -435,6 +440,7 @@ impl Ground {
                 Vertical::None
             }
         };
+        // ArmPumpStep comes after the After, and so after WallStop.
         self.after(after, input, &mut contacts);
         contacts.ran_into_wall = self.arm_pump(contacts, input, motion, world);
         // StandingShotRestartsAnimation
