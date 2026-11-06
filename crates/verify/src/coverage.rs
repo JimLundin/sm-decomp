@@ -13,7 +13,8 @@ pub enum Source {
     /// A word of work RAM resolved through the content: a ROM pointer to an ID.
     WramPointer(WramWord),
     /// The main thread's wait site and return chain: the cut's interrupted PC and the stack
-    /// from `cpu.s`, through `strand::WAIT_SITES` and `strand::CALL_SITES`.
+    /// from `cpu.s`, through `strand::WAIT_SITES` and `strand::CALL_SITES`, with a message box
+    /// lag countdown from `cpu.x`.
     Stack,
     /// A field of the record itself, by its `FrameRecord` name.
     Record(&'static str),

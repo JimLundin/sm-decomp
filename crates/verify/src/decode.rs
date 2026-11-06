@@ -323,7 +323,8 @@ impl Rules<'_> {
         let (last, main, quiescence) = match nmi.kind {
             NmiKind::Requested => (
                 NmiTiming::OnTime,
-                self.strand.main(nmi.interrupted_pc, record.cpu.s, wram)?,
+                self.strand
+                    .main(nmi.interrupted_pc, record.cpu.s, record.cpu.x, wram)?,
                 Quiescence::Quiet,
             ),
             NmiKind::Overrun => (NmiTiming::Overrun, MainStrand::default(), Quiescence::Busy),

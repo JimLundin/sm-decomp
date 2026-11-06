@@ -9,7 +9,8 @@
 
 use game::state::slots::{Frames, SlotIndex};
 use game::state::strand::{
-    Frame, GameplayAt, IrqCommand, MAIN_STRAND_DEPTH, MainLoopAt, MainStrand, MessageBoxAt, Wait,
+    Frame, GameplayAt, IrqCommand, LagAt, MAIN_STRAND_DEPTH, MainLoopAt, MainStrand, MessageBoxAt,
+    MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
 };
 
 use crate::decode::DecodeError;
@@ -54,6 +55,13 @@ pub enum Resume {
     MessageBoxOpening,
     /// The message box shrinking closed, its frames left from the animation radius.
     MessageBoxClosing,
+    /// A message box lag countdown, its frames left from X: the count, from 1 up to `from`.
+    MessageBoxLag {
+        /// Which countdown.
+        at: LagAt,
+        /// The most it counts from.
+        from: u16,
+    },
     /// No frame of its own: a step inside a frame further out or further in.
     Within,
 }
@@ -219,12 +227,219 @@ pub const CALL_SITES: &[CallSite] = &[
         pushed: 1,
         returns: Return::Rts,
     },
+    // Bank $85 log, display message box: $808D JSR $8143 initialise PPU, $8090 JSR $81F3
+    // clear tilemap, $8093 JSR $8241 initialise message box, $8096 JSR $8574 two lag frames;
+    // after the close, $80AA JSR $81F3, $80AD JSR $861A restore PPU, $80B4 JSR $8574.
+    CallSite {
+        routine: "$85:808D display message box, JSR initialise PPU",
+        returns_to: 0x85_8090,
+        resume: Resume::Within,
+        pushed: 6,
+        returns: Return::Rtl,
+    },
+    CallSite {
+        routine: "$85:8090 display message box, JSR clear tilemap",
+        returns_to: 0x85_8093,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::ClearingTilemap(
+            Side::BeforeOpen,
+        ))),
+        pushed: 6,
+        returns: Return::Rtl,
+    },
+    CallSite {
+        routine: "$85:8093 display message box, JSR initialise message box",
+        returns_to: 0x85_8096,
+        resume: Resume::Within,
+        pushed: 6,
+        returns: Return::Rtl,
+    },
+    CallSite {
+        routine: "$85:8096 display message box, JSR play 2 lag frames",
+        returns_to: 0x85_8099,
+        resume: Resume::MessageBoxLag {
+            at: LagAt::BeforeOpen,
+            from: 2,
+        },
+        pushed: 6,
+        returns: Return::Rtl,
+    },
+    CallSite {
+        routine: "$85:80AA display message box, JSR clear tilemap",
+        returns_to: 0x85_80AD,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::ClearingTilemap(
+            Side::AfterClose,
+        ))),
+        pushed: 6,
+        returns: Return::Rtl,
+    },
+    CallSite {
+        routine: "$85:80AD display message box, JSR restore PPU",
+        returns_to: 0x85_80B0,
+        resume: Resume::Within,
+        pushed: 6,
+        returns: Return::Rtl,
+    },
+    CallSite {
+        routine: "$85:80B4 display message box, JSR play 2 lag frames",
+        returns_to: 0x85_80B7,
+        resume: Resume::MessageBoxLag {
+            at: LagAt::AfterClose,
+            from: 2,
+        },
+        pushed: 6,
+        returns: Return::Rtl,
+    },
+    // Bank $85 log, initialise PPU for message boxes: $8143 REP #$20, STZ $05F9, $8148 JSR
+    // $8136, $814B SEP #$20 (the registers), ..., $81B2 JSR $8136, $81B5 REP #$20 (the
+    // tilemap backup), ..., RTS.
+    CallSite {
+        routine: "$85:8148 initialise PPU, JSR wait for lag frame",
+        returns_to: 0x85_814B,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::PreparingPpu(
+            PpuPreparation::Registers,
+        ))),
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    CallSite {
+        routine: "$85:81B2 initialise PPU, JSR wait for lag frame",
+        returns_to: 0x85_81B5,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::PreparingPpu(
+            PpuPreparation::TilemapBackup,
+        ))),
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, clear message box BG3 tilemap: $81F3 REP #$30, ..., $8203 JSR $8136,
+    // $8206 LDA #$5880 (the upload), ..., RTS. Its caller says which side it is on.
+    CallSite {
+        routine: "$85:8203 clear tilemap, JSR wait for lag frame",
+        returns_to: 0x85_8206,
+        resume: Resume::Within,
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, initialise message box: $8241 REP #$30, ..., $824F PHX (16-bit),
+    // $8250 JSR ($869D,x) write tilemap, $8253 PLX, $8254 JSR ($869B,x) set up PPU, RTS.
+    CallSite {
+        routine: "$85:8250 initialise message box, JSR write tilemap",
+        returns_to: 0x85_8253,
+        resume: Resume::Within,
+        pushed: 2,
+        returns: Return::Rts,
+    },
+    CallSite {
+        routine: "$85:8254 initialise message box, JSR set up PPU",
+        returns_to: 0x85_8257,
+        resume: Resume::Within,
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, write small message box tilemap: $8289 LDY, LDX, ..., $829D JSR $82B8.
+    CallSite {
+        routine: "$85:829D write small message box tilemap, JSR write message tilemap",
+        returns_to: 0x85_82A0,
+        resume: Resume::Within,
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, write message tilemap: $82B8 JSR $8136, $82BB JSL $808F0C, ..., RTS.
+    CallSite {
+        routine: "$85:82B8 write message tilemap, JSR wait for lag frame",
+        returns_to: 0x85_82BB,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::Writing(
+            MessageWrite::Tilemap,
+        ))),
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, $8436: REP #$30, LDA #$01C0, STA $34, $843D JSR $831E, RTS.
+    CallSite {
+        routine: "$85:843D message box PPU set-up, JSR set up PPU for active message box",
+        returns_to: 0x85_8440,
+        resume: Resume::Within,
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, set up PPU for active message box: $831E JSR $8363 scroll HDMA, $8321
+    // JSR $8136, $8324 REP #$20 (the tilemap upload), ..., RTS.
+    CallSite {
+        routine: "$85:831E set up PPU for active message box, JSR set up scroll HDMA",
+        returns_to: 0x85_8321,
+        resume: Resume::Within,
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    CallSite {
+        routine: "$85:8321 set up PPU for active message box, JSR wait for lag frame",
+        returns_to: 0x85_8324,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::Writing(
+            MessageWrite::TilemapUpload,
+        ))),
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, set up message box BG3 Y scroll HDMA: $8363 SEP #$20, ..., $83BA JSR
+    // $859B write HDMA table, $83BD SEP #$20 (enable channel 6), RTS.
+    CallSite {
+        routine: "$85:83BA set up scroll HDMA, JSR write HDMA table",
+        returns_to: 0x85_83BD,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::Writing(
+            MessageWrite::ScrollHdma,
+        ))),
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, handle message box interaction: $846D SEP #$20, ..., LDX #$000A or
+    // $8490 LDX #$0168, $8493 JSR $8136, $8496 PHX, ..., $84A0 DEX, $84A1 BNE $8493.
+    CallSite {
+        routine: "$85:8493 handle message box interaction, JSR wait for lag frame",
+        returns_to: 0x85_8496,
+        resume: Resume::MessageBoxLag {
+            at: LagAt::Shown,
+            from: 360,
+        },
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, play 2 lag frames: $8574 SEP #$30, LDX #$02, $8578 JSR $8136, $857B PHX,
+    // ..., DEX, BNE $8578, RTS. Its caller says which side it is on.
+    CallSite {
+        routine: "$85:8578 play 2 lag frames, JSR wait for lag frame",
+        returns_to: 0x85_857B,
+        resume: Resume::Within,
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    // Bank $85 log, restore PPU: $861A REP #$20, $861C JSR $8136, $861F REP #$20 (the tilemap
+    // restore), ..., $8651 JSR $8136, $8654 SEP #$20 (the registers), ..., RTS.
+    CallSite {
+        routine: "$85:861C restore PPU, JSR wait for lag frame",
+        returns_to: 0x85_861F,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::RestoringPpu(
+            PpuRestoration::Tilemap,
+        ))),
+        pushed: 0,
+        returns: Return::Rts,
+    },
+    CallSite {
+        routine: "$85:8651 restore PPU, JSR wait for lag frame",
+        returns_to: 0x85_8654,
+        resume: Resume::Frame(Frame::MessageBox(MessageBoxAt::RestoringPpu(
+            PpuRestoration::Registers,
+        ))),
+        pushed: 0,
+        returns: Return::Rts,
+    },
 ];
 
 /// Bank $85 log: open and close move the animation radius by $200 a frame, between 0 and
 /// $1800.
 const RADIUS_STEP: u16 = 0x0200;
 const RADIUS_OPEN: u16 = 0x1800;
+
+/// Where a message box lag countdown is: X, the record's `cpu.x`.
+pub const COUNTDOWN: &str = "cpu.x";
 
 /// The sources and tables the strand decode reads.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -252,13 +467,14 @@ fn stack_byte(wram: &[u8], address: u16) -> Result<u8, DecodeError> {
 }
 
 impl StrandRules<'_> {
-    /// The main strand waiting at `pc`, its return chain read from the stack at `s`.
+    /// The main strand waiting at `pc`, its return chain read from the stack at `s`, and a
+    /// countdown on it read from `x`.
     ///
     /// # Errors
     ///
     /// [`DecodeError::UnknownYieldSite`] when `pc`, or a return address on the chain, is in
     /// none of the tables, or the chain is deeper than `MAIN_STRAND_DEPTH`.
-    pub fn main(&self, pc: u32, s: u16, wram: &[u8]) -> Result<MainStrand, DecodeError> {
+    pub fn main(&self, pc: u32, s: u16, x: u16, wram: &[u8]) -> Result<MainStrand, DecodeError> {
         let site = self
             .sites
             .iter()
@@ -296,7 +512,7 @@ impl StrandRules<'_> {
                 // A chain longer than the table repeats a call: no stack the original builds.
                 .filter(|_| steps <= self.calls.len())
                 .ok_or(DecodeError::UnknownYieldSite { pc: returns_to })?;
-            if let Some(frame) = self.resume(call.resume, wram)? {
+            if let Some(frame) = self.resume(call.resume, x, wram)? {
                 frames.push(frame);
             }
             if frames.len() > MAIN_STRAND_DEPTH {
@@ -314,7 +530,7 @@ impl StrandRules<'_> {
     }
 
     /// The frame a caller resumes as.
-    fn resume(&self, resume: Resume, wram: &[u8]) -> Result<Option<Frame>, DecodeError> {
+    fn resume(&self, resume: Resume, x: u16, wram: &[u8]) -> Result<Option<Frame>, DecodeError> {
         match resume {
             Resume::Frame(frame) => Ok(Some(frame)),
             Resume::Within => Ok(None),
@@ -338,6 +554,20 @@ impl StrandRules<'_> {
             Resume::MessageBoxClosing => {
                 let left = self.radius_steps(wram, Some)?;
                 Ok(Some(Frame::MessageBox(MessageBoxAt::Closing { left })))
+            }
+            Resume::MessageBoxLag { at, from } => {
+                // X counts the frame being waited for too: DEX and BNE follow the wait.
+                let left =
+                    x.checked_sub(1)
+                        .filter(|_| x <= from)
+                        .ok_or(DecodeError::Unrepresentable {
+                            source: COUNTDOWN,
+                            value: x,
+                        })?;
+                Ok(Some(Frame::MessageBox(MessageBoxAt::Lag {
+                    at,
+                    left: Frames(left),
+                })))
             }
         }
     }

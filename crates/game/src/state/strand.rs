@@ -37,10 +37,26 @@ pub enum GameplayAt {
 }
 
 /// The message box, opened from inside a PLM instruction (the item's pickup).
-// open: the phases and their counters. The bank $85 message box routines decide them (the
-// open and close animations, the button wait, the music queue wait).
+///
+/// Bank $85 log, $85:8080 display message box: it sets up the PPU, clears the BG3 tilemap,
+/// writes the message, plays two lag frames, opens the box, handles the interaction, closes
+/// it, clears the tilemap again, restores the PPU and plays two more lag frames. Each variant
+/// is a wait inside one of those steps, in that order.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MessageBoxAt {
+    /// Setting up the PPU for the box ($85:8143).
+    PreparingPpu(PpuPreparation),
+    /// Clearing the box's BG3 tilemap ($85:81F3): its upload to VRAM comes next.
+    ClearingTilemap(Side),
+    /// Writing the message into the box ($85:8241).
+    Writing(MessageWrite),
+    /// Playing lag frames of music and sound effects, counted down.
+    Lag {
+        /// Which countdown.
+        at: LagAt,
+        /// Lag frames still to come after this one.
+        left: Frames,
+    },
     /// Growing open.
     Opening {
         /// Frames of the animation left.
@@ -53,6 +69,58 @@ pub enum MessageBoxAt {
         /// Frames of the animation left.
         left: Frames,
     },
+    /// Restoring the PPU after the box ($85:861A).
+    RestoringPpu(PpuRestoration),
+}
+
+/// Which side of the box's animation a step shared by both sides is on.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Side {
+    /// Before the box opens.
+    BeforeOpen,
+    /// After it has closed.
+    AfterClose,
+}
+
+/// A message box lag countdown.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LagAt {
+    /// Bank $85 log, $85:8574 play 2 lag frames, before the box opens.
+    BeforeOpen,
+    /// Bank $85 log, $85:846D's countdown at $8493 before the button wait: 360 frames, or 10
+    /// for the station and save messages.
+    Shown,
+    /// $85:8574 play 2 lag frames, after the box has closed.
+    AfterClose,
+}
+
+/// Where setting up the PPU for the box resumes (bank $85 log, $85:8143).
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PpuPreparation {
+    /// At the registers: HDMA off, the BG3 colours, layers and scroll.
+    Registers,
+    /// At the backup of the BG3 tilemap the box covers.
+    TilemapBackup,
+}
+
+/// Where writing the message resumes (bank $85 log, $85:8241 initialise message box).
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MessageWrite {
+    /// At the message's tilemap ($85:82B8).
+    Tilemap,
+    /// At enabling the BG3 Y scroll HDMA, its table written ($85:8363).
+    ScrollHdma,
+    /// At the tilemap's upload to VRAM ($85:831E).
+    TilemapUpload,
+}
+
+/// Where restoring the PPU resumes (bank $85 log, $85:861A).
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PpuRestoration {
+    /// At the BG3 tilemap's restore from its backup.
+    Tilemap,
+    /// At the registers: HDMA, BG3 tilemap base, layers, colour math and BG3 colours.
+    Registers,
 }
 
 /// A resumable routine on the main strand.
