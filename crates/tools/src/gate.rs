@@ -12,7 +12,7 @@ use std::sync::Arc;
 use verify::bundle::{RowInputs, content};
 use verify::gate::{Ratchet, free_run};
 use verify::lock::{Lock, Outcome, RowId, Side};
-use verify::lockstep::slice_zero_rooms;
+use verify::lockstep::{slice_zero_plms, slice_zero_rooms};
 
 pub const USAGE: &str = "tools gate LOCK BUNDLE ROM GREEN [--update] ROW...";
 
@@ -47,10 +47,12 @@ pub fn run(args: &[String]) -> Result<String, String> {
         Err(error) => return Err(format!("{green}: {error}")),
     };
     let image = std::fs::read(rom).map_err(|error| format!("{rom}: {error}"))?;
+    let plms = slice_zero_plms(&image).map_err(|error| format!("{rom}: {error:?}"))?;
     let content = Arc::new(content(image).map_err(|error| format!("{rom}: {error}"))?);
     let rooms = slice_zero_rooms()
         .with_programs(content.enemy_programs.clone())
-        .with_samus_tiles(content.samus_tiles.clone());
+        .with_samus_tiles(content.samus_tiles.clone())
+        .with_plms(plms);
     let mut out = String::new();
     let mut reports = Vec::new();
     for id in rows {

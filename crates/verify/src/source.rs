@@ -1088,3 +1088,63 @@ pub const ENEMY_AI_VARIABLES: [SlotField; 6] = [
 pub const ENEMY_PARAMETER_1: SlotField = enemy("parameter_1", 0x3C);
 /// The population's second parameter.
 pub const ENEMY_PARAMETER_2: SlotField = enemy("parameter_2", 0x3E);
+
+/// A table of one word per slot: the original keeps each field of a slot family in its own
+/// array, so a slot's fields are `slot * 2` into each.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WramArray {
+    /// The `ram_map.rs` name.
+    pub name: &'static str,
+    /// The offset of slot 0's word from $7E:0000.
+    pub offset: u16,
+}
+
+impl WramArray {
+    /// Where slot `slot`'s word is.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::WramTooShort`] when the word lies past bank $7E.
+    pub fn word(self, slot: u16) -> Result<WramWord, DecodeError> {
+        slot.checked_mul(2)
+            .and_then(|start| start.checked_add(self.offset))
+            .map(|offset| WramWord {
+                name: self.name,
+                offset,
+            })
+            .ok_or(DecodeError::WramTooShort { source: self.name })
+    }
+}
+
+/// Bank $84 log: each PLM's ID, its header's pointer in bank $84 (`$84:84AD`), zero
+/// in a free slot.
+pub const PLM_HEADER_PTR: WramArray = WramArray {
+    name: "PLM_HEADER_PTR",
+    offset: 0x1C37,
+};
+/// Bank $84 log: the block each PLM sits on, times two (`$84:849F`).
+pub const PLM_BLOCK_INDICES: WramArray = WramArray {
+    name: "PLM_BLOCK_INDICES",
+    offset: 0x1C87,
+};
+/// Bank $84 log: each PLM's instruction pointer in bank $84 (`$84:84C2`).
+pub const PLM_INSTR_LIST_PTRS: WramArray = WramArray {
+    name: "PLM_INSTR_LIST_PTRS",
+    offset: 0x1D27,
+};
+/// Bank $84 log: each PLM's room argument (`$84:84A6`).
+pub const PLM_ROOM_ARGUMENTS: WramArray = WramArray {
+    name: "PLM_ROOM_ARGUMENTS",
+    offset: 0x1DC7,
+};
+/// Bank $84 log: each PLM's own word; a scroll PLM's triggered flag, bit 15
+/// (`$84:B393`).
+pub const PLM_VARIABLE: WramArray = WramArray {
+    name: "PLM_VARIABLE",
+    offset: 0x1E17,
+};
+/// Bank $84 log: frames until each PLM's next instruction (`$84:84C8`, `$84:85E0`).
+pub const PLM_INSTRUCTION_TIMER: WramArray = WramArray {
+    name: "PLM_INSTRUCTION_TIMER",
+    offset: 0xDE1C,
+};
