@@ -198,7 +198,7 @@ pub fn shards(
         .iter()
         .filter(|row| wanted.is_empty() || wanted.contains(&row.id))
     {
-        if row.pending.is_some() {
+        if !row.on_old_path() {
             continue;
         }
         let kind = if row.checkpoint.is_some() {

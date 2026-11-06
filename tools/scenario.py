@@ -16,6 +16,7 @@ stay in the encrypted ci-data bundles.
   tags = [...]      required (the coverage scope), route:100, ...
   pending = "why"   not runnable yet
   unlocked = "why"  stays on patched lockstep, with its docs/LEGACY.md entry
+  lock = "lsnes"    authority is scenarios/locks/lsnes.toml; the old lock and lockstep skip it
   regression = "why"  a divergence it once exposed; it must keep passing
 A file's top-level `tags` apply to each of its scenarios; its `domains` name
 the observation domains they compare.
@@ -57,7 +58,7 @@ LOCK = "scenarios/lock.toml"
 # be a tolerance (REVIEW lane S, decision (a)), so every file names them all.
 DOMAINS = ("ram", "input", "samus", "camera", "room", "progress", "actors", "effects")
 FIELDS = {"id", "start", "prefix", "ticks", "facts", "after_expectations", "after_hits",
-          "tags", "pending", "unlocked", "regression"}
+          "tags", "pending", "unlocked", "regression", "lock"}
 PIN_FIELDS = ("id", "bundle", "seed", "inputs", "input_sha256", "checkpoint", "checkpoint_sha256",
               "faithful_checkpoint", "faithful_checkpoint_sha256", "movie_map", "movie_map_sha256")
 SEED_REGIONS = (("wram", 131072), ("sram", 8192), ("vram", 65536),
@@ -201,7 +202,7 @@ def rows(root: Path = ROOT, require_movie_maps: bool = False, pins: dict[str, Ro
         row["expect"] = [fact for fact in facts if not fact.startswith(("probe:", "observe:"))]
         row["require_hit"] = [fact.removeprefix("probe:") for fact in facts if fact.startswith("probe:")]
         row["observe"] = [fact for fact in facts if fact.startswith("observe:")]
-        row.update((key, entry[key]) for key in ("after_expectations", "after_hits", "unlocked", "regression")
+        row.update((key, entry[key]) for key in ("after_expectations", "after_hits", "unlocked", "regression", "lock")
                    if key in entry)
         if "bundle" in pin:
             row["bundle"] = pin["bundle"]
@@ -259,7 +260,8 @@ def lock_key(row: Row) -> Row:
 
 def lockable(row: Row) -> bool:
     # A prefix start needs an oracle-side prefix first; a pending one has no data.
-    return "pending" not in row and not row["start_frame"] and "checkpoint" not in row
+    return ("pending" not in row and row.get("lock") != "lsnes"
+            and not row["start_frame"] and "checkpoint" not in row)
 
 
 def captured_seeds(root: Path, capture: str) -> dict[str, str | None] | None:

@@ -154,7 +154,7 @@ impl Planner<'_> {
     ) -> Result<Option<Object>, String> {
         let mut ids = Vec::new();
         for id in &job.ids {
-            if self.packing.get(id)?.pending.is_none() && keep(id) {
+            if self.packing.get(id)?.on_old_path() && keep(id) {
                 ids.push(id.as_str());
             }
         }
@@ -315,11 +315,7 @@ impl Planner<'_> {
     }
 
     fn gate(&self) -> Result<Vec<Object>, String> {
-        let runnable: Vec<&Row> = self
-            .rows
-            .iter()
-            .filter(|row| row.pending.is_none())
-            .collect();
+        let runnable: Vec<&Row> = self.rows.iter().filter(|row| row.on_old_path()).collect();
         let corpus: Vec<&str> = runnable
             .iter()
             .filter(|row| row.chain.is_none())
@@ -558,7 +554,7 @@ pub fn plan(root: &Path, settings: &Settings) -> Result<Plan, String> {
     }
     let long_rows: Vec<String> = rows
         .iter()
-        .filter(|row| row.chain.is_none() && row.pending.is_none() && row.start_frame > LONG_PREFIX)
+        .filter(|row| row.chain.is_none() && row.on_old_path() && row.start_frame > LONG_PREFIX)
         .map(|row| row.id.clone())
         .collect();
     let planner = Planner {

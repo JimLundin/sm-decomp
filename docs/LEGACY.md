@@ -248,8 +248,9 @@ seeds (the emulator's own state blob, cut by the harness) retire this entry.
 
 ## `LEGACY(old-verify)`: rows the old Verify path no longer covers
 
-`file-copy-clear` (scenarios/corpus.toml) is marked `unlocked` and has no entry
-in the old `scenarios/lock.toml`. Its inputs changed in the rebuild's re-lock and
-its authority is the free-run gate's lock, `scenarios/locks/lsnes.toml`. The old
-`sm_pipeline` lock check would otherwise report a stale entry. Remove the
-`unlocked` tag and this entry when the old Verify path is retired.
+`file-copy-clear` (scenarios/corpus.toml) carries `lock = "lsnes"` and has no
+entry in the old `scenarios/lock.toml`. Its inputs changed in the rebuild's
+re-lock and its authority is the free-run gate's lock,
+`scenarios/locks/lsnes.toml`. The old `sm_pipeline` planner leaves such rows out
+of its lock and lockstep jobs, and the old lock check does not expect an entry.
+Remove the `lock` key and this entry when the old Verify path is retired.

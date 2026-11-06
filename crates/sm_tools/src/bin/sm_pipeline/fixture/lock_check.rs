@@ -97,4 +97,19 @@ area-ceres: pinned, but no such scenario
 area-ceres: locked, but no such lockable scenario
 "#),
     },
+    LockCase {
+        label: "lsnes-row-with-old-entry",
+        edits: &[("scenarios/corpus.toml", r#"id = "boss-phantoon"
+start = "seed:14710aef93ab5d7de5be17122739391b7922bb5a5a9480e9e37755f28800bf3e"
+ticks = 2062
+"#, r#"id = "boss-phantoon"
+start = "seed:14710aef93ab5d7de5be17122739391b7922bb5a5a9480e9e37755f28800bf3e"
+ticks = 2062
+lock = "lsnes"
+"#)],
+        passes: false,
+        message: Some(r#"Scenarios or their lock are not current:
+boss-phantoon: locked, but no such lockable scenario
+"#),
+    },
 ];
