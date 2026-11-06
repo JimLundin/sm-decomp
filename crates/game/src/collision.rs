@@ -11,9 +11,9 @@
 //! distance as the scan left it.
 
 use data::level::slope::{Shape, Slopes, Square, Surface};
-use data::level::{BlockKind, Bts, Offset, Slope};
+use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
 
-use crate::plm::{self, ScrollTouchFault};
+use crate::plm::{self, TouchFault};
 use crate::state::room::{Block, BlockColumns, BlockIndex, RoomScoped};
 use crate::state::samus::{Fixed, Point, Speed};
 
@@ -30,35 +30,52 @@ pub struct Room<'a> {
     pub slopes: Option<&'a Slopes>,
 }
 
+/// The special block PLM choice of an item's block, BTS `$45`: its collision reactions spawn
+/// the item collision detection PLM (`$94:9139` + `$45` * 2 = `$84:EED3`), whose setup lets
+/// her through.
+const ITEM_BLOCK: PlmChoice = PlmChoice::Common(0x45);
+
 /// The special air BTS that triggers a scroll PLM: its collision reactions spawn the scroll
 /// block touch PLM (`$94:9139` + `$46` * 2 = `$84:B6FF`), and so does its inside reaction at
 /// Samus's centre (`$94:9956`).
 const SCROLL_TRIGGER: Bts = Bts(0x46);
 
-/// The scroll triggers a frame's moves reached, in the order their scans reached them.
+/// A block whose collision reaction spawns a PLM.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Touch {
+    /// A scroll trigger: the scroll block touch PLM (`$84:B6FF`).
+    Scroll(BlockIndex),
+    /// An item's block: the item collision detection PLM (`$84:EED3`).
+    Item(BlockIndex),
+}
+
+/// The blocks a frame's moves reached whose reactions spawn a PLM, in the order their scans
+/// reached them.
 ///
-/// The special air collision reactions spawn the touch PLM during the scan (`$94:906F`,
-/// `$94:909D`, through `$84:84E7`), but its setup (`$84:B393`) changes only PLM slots, which
-/// no move reads, so the touches apply after the moves in the same order.
+/// The collision reactions spawn the PLM during the scan (`$94:906F`, `$94:909D` for special
+/// air, `$94:90CB`, `$94:9102` for special blocks, through `$84:84E7`), but the setups
+/// (`$84:B393`, `$84:EEAB`) change only PLM slots, which no move reads, and the item's lets
+/// her through (carry clear), so the touches apply after the moves in the same order.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Touches(Vec<BlockIndex>);
+pub struct Touches(Vec<Touch>);
 
 impl Touches {
-    /// The blocks touched, in order.
+    /// The touches, in order.
     #[must_use]
-    pub fn blocks(&self) -> &[BlockIndex] {
+    pub fn touched(&self) -> &[Touch] {
         &self.0
     }
 
-    /// Spawn each touch's PLM in order (`$84:B6FF`).
+    /// Spawn each touch's PLM in order.
     ///
     /// # Errors
     ///
-    /// [`ScrollTouchFault`] where a touch finds no scroll PLM on its block.
-    pub fn apply(self, room: &mut RoomScoped) -> Result<(), ScrollTouchFault> {
-        self.0
-            .into_iter()
-            .try_for_each(|block| plm::touch_scroll_block(room, block))
+    /// [`TouchFault`] where a touch finds no PLM of its kind on its block.
+    pub fn apply(self, room: &mut RoomScoped) -> Result<(), TouchFault> {
+        self.0.into_iter().try_for_each(|touch| match touch {
+            Touch::Scroll(block) => plm::touch_scroll_block(room, block),
+            Touch::Item(block) => plm::touch_item_block(room, block),
+        })
     }
 }
 
@@ -278,7 +295,14 @@ impl Scan<'_, '_> {
                 // `$94:909D`): the elevator ride's step reaches one with her bottom
                 // (`area-brinstar` frame 92), when the inside handling doesn't run.
                 BlockKind::SpecialAir(SCROLL_TRIGGER) => {
-                    self.touches.0.push(BlockIndex(current));
+                    self.touches.0.push(Touch::Scroll(BlockIndex(current)));
+                    return false;
+                }
+                // A special block with BTS `$45`, an item's drawn block, spawns the item
+                // collision detection PLM on it and lets her through (`$94:90CB`, `$94:9102`):
+                // `item-morph-ball` frame 817.
+                BlockKind::Special(ITEM_BLOCK) => {
+                    self.touches.0.push(Touch::Item(BlockIndex(current)));
                     return false;
                 }
                 // open: the other area independent special air spawns its PLM from the same

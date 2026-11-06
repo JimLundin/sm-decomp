@@ -3,7 +3,8 @@ use data::plm::{ItemPlm, ScrollChange, ScrollChangesId};
 use data::rom::RomAddress;
 
 use super::*;
-use crate::state::room::{BlockColumns, Crumble, Tile, TileNumber};
+use crate::state::CollectedItems;
+use crate::state::room::{BlockColumns, Crumble, ItemStep, PlmChoice, Tile, TileNumber};
 
 /// A two-screen-wide, one-screen-high room of solid blocks, its screens red.
 fn room() -> RoomScoped {
@@ -102,7 +103,8 @@ fn spawns_take_the_highest_free_slot_and_extensions_free_theirs() {
         slots[38].occupancy,
         Occupancy::Live(PlmBody::Item {
             item: ItemPlm::MorphBall,
-            collected_bit: 0x1a
+            collected_bit: 0x1a,
+            step: ItemStep::Shown,
         })
     );
     assert_eq!(slots[38].generation.0, 3);
@@ -120,10 +122,15 @@ fn a_sleeping_scroll_plm_changes_nothing() {
     let mut room = loaded();
     let before = room.clone();
     for _ in 0..3 {
-        process(&mut room, &population());
+        process(&mut room, &mut CollectedItems::default(), &population());
     }
     assert_eq!(room.scroll_areas, before.scroll_areas);
-    assert_eq!(room.blocks, before.blocks);
+    // Only the item's draw writes a block.
+    let written: Vec<_> = (0_u16..)
+        .zip(room.blocks.iter().zip(&before.blocks))
+        .filter_map(|(index, (after, before))| (after != before).then_some(index))
+        .collect();
+    assert_eq!(written, [5 * 32 + 20]);
     // The sleep leaves the timer at 0, and it wraps.
     assert_eq!(room.plms.slots[39].common.cursor.delay, Frames(0xfffe));
 }
@@ -131,7 +138,7 @@ fn a_sleeping_scroll_plm_changes_nothing() {
 #[test]
 fn touching_the_trigger_changes_the_scroll_areas_on_the_next_pass() {
     let mut room = loaded();
-    process(&mut room, &population());
+    process(&mut room, &mut CollectedItems::default(), &population());
     touch_scroll_block(&mut room, TRIGGER).unwrap();
     let touch = &room.plms.slots[37];
     assert_eq!(touch.occupancy, Occupancy::Live(PlmBody::ScrollTouch));
@@ -144,7 +151,7 @@ fn touching_the_trigger_changes_the_scroll_areas_on_the_next_pass() {
     touch_scroll_block(&mut room, TRIGGER).unwrap();
     assert_eq!(scroll(&room, 39), Some(triggered));
 
-    process(&mut room, &population());
+    process(&mut room, &mut CollectedItems::default(), &population());
     assert_eq!(room.scroll_areas, [ScrollArea::Red, ScrollArea::Green]);
     assert_eq!(
         scroll(&room, 39),
@@ -168,7 +175,7 @@ fn a_touch_with_no_plm_on_its_block_is_the_originals_hang() {
     let mut room = loaded();
     assert_eq!(
         touch_scroll_block(&mut room, BlockIndex(7)),
-        Err(ScrollTouchFault::NoPlmOnBlock(BlockIndex(7)))
+        Err(TouchFault::NoPlmOnBlock(BlockIndex(7)))
     );
 }
 
@@ -196,7 +203,7 @@ fn the_pass_deletes_an_item_collision_plm_and_holds_a_shot_block() {
         slot.occupancy = Occupancy::Live(body);
         slot.common.cursor.delay = Frames(1);
     }
-    process(&mut room, &population());
+    process(&mut room, &mut CollectedItems::default(), &population());
     assert_eq!(room.plms.slots[30].occupancy, Occupancy::Free);
     assert_eq!(room.plms.slots[31].occupancy, Occupancy::Live(crumbling));
     assert_eq!(room.plms.slots[31].common.cursor.delay, Frames(1));
@@ -208,8 +215,73 @@ fn an_items_timer_shows_each_frame_for_4_passes() {
     assert_eq!(room.plms.slots[38].common.cursor.delay, Frames(1));
     let mut delays = Vec::new();
     for _ in 0..6 {
-        process(&mut room, &population());
+        process(&mut room, &mut CollectedItems::default(), &population());
         delays.push(room.plms.slots[38].common.cursor.delay.0);
     }
     assert_eq!(delays, [4, 3, 2, 1, 4, 3]);
+}
+
+/// The Morph Ball's block and slot in [`loaded`].
+const ITEM: BlockIndex = BlockIndex(5 * 32 + 20);
+const ITEM_SLOT: usize = 38;
+
+fn item_step(room: &RoomScoped) -> Option<ItemStep> {
+    if let Occupancy::Live(PlmBody::Item { step, .. }) = room.plms.slots[ITEM_SLOT].occupancy {
+        Some(step)
+    } else {
+        None
+    }
+}
+
+#[test]
+fn an_items_draw_makes_its_block_the_special_block_samus_touches() {
+    let mut room = loaded();
+    process(&mut room, &mut CollectedItems::default(), &population());
+    assert_eq!(
+        room.blocks[usize::from(ITEM.0)].kind,
+        BlockKind::Special(PlmChoice::Common(0x45))
+    );
+}
+
+#[test]
+fn touching_an_item_spawns_the_collision_plm_and_triggers_the_item() {
+    let mut room = loaded();
+    touch_item_block(&mut room, ITEM).unwrap();
+    // The collision PLM takes the highest free slot, its block moved to 0, its timer 1.
+    let collision = &room.plms.slots[37];
+    assert_eq!(collision.occupancy, Occupancy::Live(PlmBody::ItemCollision));
+    assert_eq!(collision.common.block, BlockIndex(0));
+    assert_eq!(collision.common.cursor.delay, Frames(1));
+    assert_eq!(item_step(&room), Some(ItemStep::Triggered));
+}
+
+#[test]
+fn an_item_touch_with_no_plm_on_its_block_is_the_originals_crash() {
+    let mut room = loaded();
+    assert_eq!(
+        touch_item_block(&mut room, BlockIndex(7)),
+        Err(TouchFault::NoPlmOnBlock(BlockIndex(7)))
+    );
+}
+
+/// A touch, then the pass: the item's pre-instruction goes to its link, its list sets the
+/// collected bit and the pickup calls out of the pass before the lower slots run.
+#[test]
+fn a_triggered_item_collects_its_bit_and_calls_out_of_the_pass() {
+    let mut room = loaded();
+    // The item's timer mid-wait: the pre-instruction resets it to 1 all the same.
+    room.plms.slots[ITEM_SLOT].common.cursor.delay = Frames(3);
+    touch_item_block(&mut room, ITEM).unwrap();
+    let mut collected = CollectedItems::default();
+    let callout = process(&mut room, &mut collected, &population());
+    assert_eq!(callout, Some(SlotIndex(38, PhantomData)));
+    assert!(collected.contains(0x1a));
+    assert_eq!(collected.0[1], 1 << 10);
+    assert_eq!(item_step(&room), Some(ItemStep::PickingUp));
+    // The collision PLM below waits for the rest of the pass.
+    assert_eq!(
+        room.plms.slots[37].occupancy,
+        Occupancy::Live(PlmBody::ItemCollision)
+    );
+    assert_eq!(room.plms.slots[37].common.cursor.delay, Frames(1));
 }

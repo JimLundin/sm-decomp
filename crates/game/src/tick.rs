@@ -196,9 +196,12 @@ fn step(
             let (at, next) = message_box::step(at, state);
             (Frame::MessageBox(at), next)
         }
-        // open: the PLM pass resumes at its slot once the interpreter exists (B7); until then
-        // it returns as soon as it resumes.
-        Frame::Plms { .. } => (frame, Next::Return),
+        // The PLM pass, called out of by an item's pickup.
+        Frame::Plms { slot } => {
+            let population = content.room_plms.of(state.room.room);
+            let (slot, next) = crate::plm::resume(state, population, slot);
+            (Frame::Plms { slot }, next)
+        }
     })
 }
 
@@ -391,6 +394,8 @@ struct Pass {
     requests: pose::PoseRequests,
     /// The enemies processing this frame, from the selection to the main enemy routine.
     active: crate::enemy::Active,
+    /// The PLM whose instruction called out of the PLM pass, which ends the step.
+    callout: Option<crate::state::slots::SlotIndex<crate::state::room::Plm>>,
 }
 
 /// One step of the gameplay pass from `at`.
@@ -405,7 +410,11 @@ fn gameplay(
             for phase in THROUGH_PLMS {
                 gameplay_phase(phase, state, content, &mut pass)?;
             }
-            (GameplayAt::AfterPlms, Next::Continue)
+            // An item's pickup called out of the PLM pass.
+            let next = pass
+                .callout
+                .map_or(Next::Continue, |slot| Next::Call(Frame::Plms { slot }));
+            (GameplayAt::AfterPlms, next)
         }
         GameplayAt::AfterPlms => {
             // The pose requests are consumed before the PLM pass, and the active enemy list
@@ -502,7 +511,8 @@ fn gameplay_phase(
         // `$84:85B4`.
         GameplayPhase::Plms => {
             let population = content.room_plms.of(state.room.room);
-            crate::plm::process(&mut state.room, population);
+            pass.callout =
+                crate::plm::process(&mut state.room, &mut state.collected_items, population);
         }
         GameplayPhase::Scrolling => {
             let room = &mut state.room;

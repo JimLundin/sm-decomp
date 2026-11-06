@@ -155,9 +155,10 @@ fn plm_occupant(state: &State) -> [Occupancy<PlmBody>; PLM_SLOTS] {
     let quiet = |body: PlmBody| match body {
         PlmBody::Scroll(_) => PlmBody::Scroll(ScrollPlm::default()),
         PlmBody::ScrollTouch => PlmBody::ScrollTouch,
-        PlmBody::Item { item, .. } => PlmBody::Item {
+        PlmBody::Item { item, step, .. } => PlmBody::Item {
             item,
             collected_bit: 0,
+            step,
         },
         PlmBody::ItemCollision => PlmBody::ItemCollision,
         PlmBody::ShotBlock { .. } => PlmBody::ShotBlock {
@@ -550,6 +551,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("hud.drawn.selection", hud.drawn.selection),
     field!("hud.item_palette", hud.item_palette),
     field!("message", message),
+    field!("collected_items", collected_items),
 ];
 
 /// Whether the coverage table marks `path` decoded.

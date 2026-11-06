@@ -2,7 +2,7 @@ use data::movement::{ExtraRun, MOVEMENT_TYPES, SpeedTable};
 use data::pose::{MovementType, PoseFacing};
 
 use super::*;
-use crate::collision::{Surroundings, Touches};
+use crate::collision::{Surroundings, Touch, Touches};
 use crate::state::samus::Fixed;
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Controller};
@@ -475,10 +475,14 @@ fn a_ride_step_into_a_scroll_trigger_changes_the_scroll_area_on_that_frames_plm_
     let mut touches = Touches::default();
     super::ride(&mut samus, ride, surroundings(&room.blocks), &mut touches);
     assert_eq!(samus.position.y.pixels, 0x002C);
-    assert_eq!(touches.blocks(), [BlockIndex(4 * 8 + 1)]);
+    assert_eq!(touches.touched(), [Touch::Scroll(BlockIndex(4 * 8 + 1))]);
 
     touches.apply(&mut room).unwrap();
     assert_eq!(room.scroll_areas, [ScrollArea::Red]);
-    crate::plm::process(&mut room, &population);
+    crate::plm::process(
+        &mut room,
+        &mut crate::state::CollectedItems::default(),
+        &population,
+    );
     assert_eq!(room.scroll_areas, [ScrollArea::Green]);
 }

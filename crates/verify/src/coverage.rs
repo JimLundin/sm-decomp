@@ -525,6 +525,10 @@ pub const FIELDS: &[Field] = &[
     wram("hud.drawn.selection", source::SAMUS_PREV_HUD_ITEM_INDEX),
     wram("hud.item_palette", source::HUD_ITEM_TILEMAP_PALETTE_BITS),
     wram("message", source::MESSAGE_BOX_INDEX),
+    Field {
+        path: "collected_items",
+        status: Status::Decoded(Source::WramBlock(source::ITEM_BIT_ARRAY)),
+    },
 ];
 
 #[cfg(test)]
@@ -561,6 +565,7 @@ mod tests {
             "enemy_palette_cycle",
             "hud",
             "message",
+            "collected_items",
         ];
         for name in top {
             assert!(
@@ -774,6 +779,7 @@ mod tests {
             // The BTS and the room's size, in blocks, go with layer 1.
             rules.level.blocks,
             rules.level.scrolls,
+            rules.collected_items,
         ];
         for field in FIELDS {
             match field.status {

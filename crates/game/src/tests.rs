@@ -488,3 +488,71 @@ fn channel_1_keeps_the_last_nmi_transfer_through_it() {
         }
     );
 }
+
+/// Samus's touch to the message box and back: the item collision PLM triggers the Morph Ball,
+/// the PLM pass collects it and calls out, the pickup equips it and opens message 9's box, and
+/// after the box the item empties, the pass deletes the collision PLM, then the item.
+#[test]
+fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
+    use crate::plm;
+    use crate::state::room::{BlockIndex, ItemStep, PlmBody};
+    use crate::state::samus::Item;
+    use crate::state::slots::Occupancy;
+    use data::plm::{ItemPlm, PlmEntry, PlmKind, PlmPopulation};
+
+    let population = PlmPopulation {
+        entries: vec![PlmEntry {
+            kind: PlmKind::Item(ItemPlm::MorphBall, 0x1a),
+            x: 4,
+            y: 2,
+        }],
+        scroll_changes: Vec::new(),
+    };
+    let mut state = State::default();
+    state.room.width = crate::state::room::BlockColumns(16);
+    state.room.blocks = vec![crate::state::room::Block::default(); 64];
+    plm::spawn_population(&mut state.room, &population);
+    let block = BlockIndex(2 * 16 + 4);
+    let item = |state: &State| state.room.plms.slots[39].occupancy;
+    plm::touch_item_block(&mut state.room, block).unwrap();
+    let callout = plm::process(&mut state.room, &mut state.collected_items, &population);
+    let slot = SlotIndex(39, PhantomData);
+    assert_eq!(callout, Some(slot));
+    assert!(state.collected_items.contains(0x1a));
+    assert!(state.samus.equipment.collected.is_empty());
+
+    // The pickup instruction: equip and collect, then the box.
+    let (at, next) = plm::resume(&mut state, &population, slot);
+    assert_eq!(at, slot);
+    assert_eq!(next, Next::Call(Frame::MessageBox(MessageBoxAt::Start)));
+    assert_eq!(state.message, Message::MORPH_BALL);
+    assert!(state.samus.equipment.equipped.contains(Item::MorphBall));
+    assert!(state.samus.equipment.collected.contains(Item::MorphBall));
+    assert_eq!(
+        item(&state),
+        Occupancy::Live(PlmBody::Item {
+            item: ItemPlm::MorphBall,
+            collected_bit: 0x1a,
+            step: ItemStep::InBox,
+        })
+    );
+
+    // Back from the box: the empty item drawn, the collision PLM deleted, the pass returns.
+    let (_, next) = plm::resume(&mut state, &population, slot);
+    assert_eq!(next, Next::Return);
+    let emptied = state.room.blocks[usize::from(block.0)];
+    assert_eq!(
+        emptied.kind,
+        data::level::BlockKind::Air(data::level::Bts(0x45))
+    );
+    assert_eq!(emptied.tile.number, data::level::TileNumber(0xff));
+    assert_eq!(state.room.plms.slots[38].occupancy, Occupancy::Free);
+    assert_eq!(state.room.plms.slots[39].common.cursor.delay, Frames(1));
+
+    // The next pass deletes the item.
+    assert_eq!(
+        plm::process(&mut state.room, &mut state.collected_items, &population),
+        None
+    );
+    assert_eq!(item(&state), Occupancy::Free);
+}

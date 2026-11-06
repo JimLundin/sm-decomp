@@ -929,6 +929,12 @@ pub const NMI_FRAME_COUNTER_BYTE: WramByte = WramByte {
     name: "NMI_FRAME_COUNTER_BYTE",
     offset: 0x05B5,
 };
+/// Bank $84 log: the items picked up, one bit per room argument (`$84:8899`).
+pub const ITEM_BIT_ARRAY: WramBlock = WramBlock {
+    name: "ITEM_BIT_ARRAY",
+    offset: 0xD870,
+    len: 0x0040,
+};
 /// Bank $80 log, `$80:9CAA`: the HUD tilemap, three rows of 32 words, queued to VRAM `$5820`
 /// every gameplay frame.
 pub const HUD_TILEMAP: WramBlock = WramBlock {

@@ -4,6 +4,7 @@ use data::rom::RomAddress;
 
 use super::*;
 use crate::plm::{process, spawn_population};
+use crate::state::CollectedItems;
 use crate::state::room::{Block, BlockColumns, PlmBody, ScrollPlm, ScrollStep, Tile, TileNumber};
 use crate::state::samus::Fixed;
 use crate::state::slots::Occupancy;
@@ -91,13 +92,13 @@ fn walking_into_the_trigger_changes_the_scroll_area_on_the_plm_pass() {
     let y = 2 * 16 + 8;
     for x in (0x10..0x30).step_by(4) {
         handle(&mut room, &samus(x, y)).unwrap();
-        process(&mut room, &population());
+        process(&mut room, &mut CollectedItems::default(), &population());
         assert!(!triggered(&room), "x {x:#x}");
         assert_eq!(room.scroll_areas, [ScrollArea::Red; 2], "x {x:#x}");
     }
     handle(&mut room, &samus(0x30, y)).unwrap();
     assert!(triggered(&room));
-    process(&mut room, &population());
+    process(&mut room, &mut CollectedItems::default(), &population());
     assert_eq!(room.scroll_areas, [ScrollArea::Red, ScrollArea::Green]);
     assert!(!triggered(&room));
 }

@@ -11,7 +11,7 @@
 //! when the point is her centre (`$94:9956`).
 
 use super::{Room, SCROLL_TRIGGER};
-use crate::plm::{self, ScrollTouchFault};
+use crate::plm::{self, TouchFault};
 use crate::state::room::{BlockIndex, BlockKind, Bts, Offset, RoomScoped};
 use crate::state::samus::Samus;
 
@@ -76,12 +76,7 @@ fn resolve(room: Room<'_>, index: u16) -> (u16, BlockKind) {
 }
 
 /// The inside reaction of the block at `x`, `y` for `point` (`$94:9B8E` and its repeats).
-fn react(
-    room: &mut RoomScoped,
-    point: ReactionPoint,
-    x: u16,
-    y: u16,
-) -> Result<(), ScrollTouchFault> {
+fn react(room: &mut RoomScoped, point: ReactionPoint, x: u16, y: u16) -> Result<(), TouchFault> {
     let view = Room {
         blocks: &room.blocks,
         width: room.width,
@@ -130,8 +125,8 @@ fn react(
 ///
 /// # Errors
 ///
-/// [`ScrollTouchFault`] where a scroll trigger's touch PLM finds no scroll PLM on its block.
-pub fn handle(room: &mut RoomScoped, samus: &Samus) -> Result<(), ScrollTouchFault> {
+/// [`TouchFault`] where a scroll trigger's touch PLM finds no scroll PLM on its block.
+pub fn handle(room: &mut RoomScoped, samus: &Samus) -> Result<(), TouchFault> {
     let x = samus.position.x.pixels;
     let y = samus.position.y.pixels;
     let bottom = y.wrapping_add(samus.y_radius).wrapping_sub(1);

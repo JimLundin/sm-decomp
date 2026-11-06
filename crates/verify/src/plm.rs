@@ -9,7 +9,7 @@
 use data::plm::{ItemPlm, PlmKind, PlmPopulation};
 use data::rom::RomAddress;
 use game::state::room::{
-    BlockIndex, Crumble, PLM_SLOTS, PlmBody, PlmCommon, ScrollPlm, ScrollStep,
+    BlockIndex, Crumble, ItemStep, PLM_SLOTS, PlmBody, PlmCommon, ScrollPlm, ScrollStep,
 };
 use game::state::slots::{Cursor, Frames, Generation, Occupancy, Slot, SlotStore};
 
@@ -40,6 +40,18 @@ const ROOM_BANK: u8 = 0x8f;
 const SCROLL_SLEEP: u16 = 0xaf8a;
 /// Touched: the air scroll update (`$84:AF8C`), where the touch PLM's setup steps it.
 const SCROLL_UPDATE: u16 = 0xaf8c;
+/// An item's instruction pointer inside its pickup's message box: its link (`$84:DF89`
+/// leaves it there and the pickup's instructions run from `Y`).
+const fn item_link(item: ItemPlm) -> u16 {
+    match item {
+        ItemPlm::MorphBall => 0xe40f,
+    }
+}
+/// An item's instruction pointer once the empty item is drawn: its delete (`$84:DFAD`).
+const EMPTY_ITEM_DELETE: u16 = 0xdfad;
+/// An item's triggered byte once touched (`$84:EEC4`).
+const ITEM_TRIGGERED: u16 = 0x00ff;
+
 /// A scroll PLM's triggered word once touched (`$84:B393`); its update clears it.
 const TRIGGERED: u16 = 0x8000;
 
@@ -159,6 +171,14 @@ impl PlmSources {
                     Known::Item(item) => PlmBody::Item {
                         item,
                         collected_bit: word(self.argument)?,
+                        step: match word(self.instruction)? {
+                            at if at == item_link(item) => ItemStep::InBox,
+                            EMPTY_ITEM_DELETE => ItemStep::Emptied,
+                            _ if word(self.variable)? & 0x00ff == ITEM_TRIGGERED => {
+                                ItemStep::Triggered
+                            }
+                            _ => ItemStep::Shown,
+                        },
                     },
                     Known::ItemCollision => match word(self.instruction)? {
                         DELETE_LIST => PlmBody::ItemCollision,

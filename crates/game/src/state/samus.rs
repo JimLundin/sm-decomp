@@ -520,6 +520,11 @@ impl Item {
 }
 
 impl Items {
+    /// Add `item` to the set.
+    pub const fn insert(&mut self, item: Item) {
+        self.bits |= item.bit();
+    }
+
     /// Whether the set holds `item`.
     #[must_use]
     pub const fn contains(&self, item: Item) -> bool {

@@ -81,6 +81,8 @@ pub enum MessageBoxAt {
 pub struct Message(pub u16);
 
 impl Message {
+    /// The Morph Ball's pickup (bank $84 log, `$84:E414`).
+    pub const MORPH_BALL: Self = Self(9);
     /// Map data access completed.
     pub const MAP_DATA_ACCESS: Self = Self(0x14);
     /// Energy recharge completed.

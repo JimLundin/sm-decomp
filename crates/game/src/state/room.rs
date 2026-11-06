@@ -190,6 +190,24 @@ pub enum ScrollStep {
     Update,
 }
 
+/// Where an item is in its instruction list (bank $84 log, the Morph Ball's `$84:E3EF`).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ItemStep {
+    /// Drawing its two frames in turn (`$84:E407`).
+    #[default]
+    Shown,
+    /// Touched (`$1D77` = `FFh`, from `$84:EEAB`): its pre-instruction (`$84:DF89`) goes to
+    /// the pickup when the PLM pass next reaches it. Never at a cut.
+    Triggered,
+    /// Collected (`$84:8899`), its pickup instruction (`$84:88F3`) next. Never at a cut.
+    PickingUp,
+    /// Inside its pickup's message box, the instruction pointer still at its link
+    /// (`$84:E40F`).
+    InBox,
+    /// The empty item drawn (`$84:DFA9`), its delete next.
+    Emptied,
+}
+
 /// A scroll PLM: the block that changes scroll areas when Samus touches it.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScrollPlm {
@@ -228,12 +246,14 @@ pub enum PlmBody {
     /// touched block, and its list deletes it (`$84:AAE3`).
     ScrollTouch,
     /// An item.
-    // open: its instruction list, the collected check, drawing and the pickup (C12).
+    // open: its GFX load and the collected check at its list's start.
     Item {
         /// Which item.
         item: ItemPlm,
         /// Its collected bit's index, the room argument.
         collected_bit: u16,
+        /// Its place in its instruction list.
+        step: ItemStep,
     },
     /// The item collision detection PLM, `$84:EED3`, which touching or shooting an item's
     /// block spawns: its setup moves its own block to 0 and triggers the item on the touched

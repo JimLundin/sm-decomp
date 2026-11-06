@@ -13,9 +13,9 @@ use data::rom::{Lorom, RomAddress};
 use game::enemy::instructions::label;
 use game::state::room::{
     Block, BlockIndex, Crumble, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
-    Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, LayerBlending,
-    PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep, SpritePalette,
-    TilesIndex,
+    Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemStep,
+    LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep,
+    SpritePalette, TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, Horizontal,
@@ -995,6 +995,7 @@ fn decodes_the_plms(state: &State) -> bool {
         37 => Occupancy::Live(PlmBody::Item {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1A,
+            step: ItemStep::Shown,
         }),
         36 => Occupancy::Live(PlmBody::ScrollTouch),
         35 => Occupancy::Live(PlmBody::ItemCollision),
@@ -1920,8 +1921,18 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
     let mut first_collected = None;
     let mut touches = Vec::new();
     let mut crumbles = Vec::new();
+    let mut picked_up = Vec::new();
     for (frame, state) in &rows.frames {
         let mut live = live_plms(&state.room.plms);
+        // The item's place in its list past its pickup, compared below.
+        for (_, _, body) in &mut live {
+            if let PlmBody::Item { step, .. } = body
+                && *step != ItemStep::Shown
+            {
+                picked_up.push((frame.as_str(), *step));
+                *step = ItemStep::Shown;
+            }
+        }
         if let Some(at) = live
             .iter()
             .position(|plm| *plm == (33, BlockIndex(0), PlmBody::ItemCollision))
@@ -1942,6 +1953,23 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
         }
     }
     assert_eq!(first_collected, Some("item-morph-ball:1217"));
+    // Inside the box from Samus's touch, the empty item for the frame after it.
+    assert_eq!(
+        picked_up.first(),
+        Some(&("item-morph-ball:817", ItemStep::InBox))
+    );
+    assert_eq!(picked_up.len(), 1217 - 817);
+    assert_eq!(
+        picked_up.last(),
+        Some(&("item-morph-ball:1216", ItemStep::Emptied))
+    );
+    assert_eq!(
+        picked_up
+            .iter()
+            .filter(|(_, step)| *step == ItemStep::Emptied)
+            .count(),
+        1
+    );
     assert_eq!(
         (touches.first().copied(), touches.len()),
         (Some("item-morph-ball:817"), 399)

@@ -317,12 +317,12 @@ fn scroll_triggers_join_the_touches_in_the_scans_order_and_let_her_through() {
         touches
     };
     assert_eq!(
-        fall(ScanOrder::LeftToRight).blocks(),
-        [BlockIndex(8), BlockIndex(9)]
+        fall(ScanOrder::LeftToRight).touched(),
+        [Touch::Scroll(BlockIndex(8)), Touch::Scroll(BlockIndex(9))]
     );
     assert_eq!(
-        fall(ScanOrder::RightToLeft).blocks(),
-        [BlockIndex(9), BlockIndex(8)]
+        fall(ScanOrder::RightToLeft).touched(),
+        [Touch::Scroll(BlockIndex(9)), Touch::Scroll(BlockIndex(8))]
     );
 }
 
@@ -344,5 +344,5 @@ fn an_extension_touches_the_trigger_it_points_at() {
     );
     assert!(!moved.collided);
     assert_eq!(position.x.pixels, 34);
-    assert_eq!(touches.blocks(), [BlockIndex(7)]);
+    assert_eq!(touches.touched(), [Touch::Scroll(BlockIndex(7))]);
 }

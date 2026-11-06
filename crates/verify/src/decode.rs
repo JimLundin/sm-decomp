@@ -36,8 +36,8 @@ use game::state::video::{
     WindowSettings, Windows,
 };
 use game::state::{
-    Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
-    State, Timing,
+    Button, Buttons, Clock, CollectedItems, Controller, Counters, FrameCount, GameMode, GameTime,
+    NmiTiming, Rng, State, Timing,
 };
 use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
 
@@ -367,6 +367,8 @@ pub struct Rules<'t> {
     pub vertical: VerticalSources,
     /// `message`.
     pub message: WramWord,
+    /// `collected_items`.
+    pub collected_items: WramBlock,
     /// `room.plms`.
     pub plms: PlmSources,
     /// `room.enemies`.
@@ -740,6 +742,7 @@ impl Rules<'_> {
         irq_command: source::CUR_IRQ_HANDLER,
         irq_next: source::IRQHANDLER_NEXT_HANDLER,
         message: source::MESSAGE_BOX_INDEX,
+        collected_items: source::ITEM_BIT_ARRAY,
         plms: PlmSources::ORIGINAL,
         enemies: EnemySources::ORIGINAL,
         animation: AnimationSources {
@@ -910,6 +913,7 @@ impl Rules<'_> {
             elevator: self.elevator.read(wram)?,
             enemy_palette_cycle: self.palette_cycle.read(wram)?,
             message: Message(self.message.read(wram)?),
+            collected_items: collected_items(self.collected_items, wram)?,
             hud: self.hud.read(wram)?,
         };
         Ok(Decoded { state, quiescence })
@@ -1257,6 +1261,16 @@ fn hud_item(source: WramWord, wram: &[u8]) -> Result<Option<HudItem>, DecodeErro
             value,
         }),
     }
+}
+
+/// The collected item bits, a word per 16.
+fn collected_items(block: WramBlock, wram: &[u8]) -> Result<CollectedItems, DecodeError> {
+    let mut items = CollectedItems::default();
+    let (words, _) = block.read(wram)?.as_chunks::<2>();
+    for (item, word) in items.0.iter_mut().zip(words) {
+        *item = u16::from_le_bytes(*word);
+    }
+    Ok(items)
 }
 
 /// A tilemap palette field's bits within a word.
