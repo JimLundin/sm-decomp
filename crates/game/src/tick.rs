@@ -410,12 +410,19 @@ fn gameplay_phase(phase: GameplayPhase, state: &mut State, content: &Content, pa
         // The frame starts with no super special request (`$90:E695`).
         GameplayPhase::SamusCurrentState => {
             state.samus.super_special = SuperSpecial::default();
-            pass.requests = pose::input(&state.samus, &state.controller, content);
+            // The pose input handler returns at once while the elevator carries her
+            // (`$91:805C`), before it reads the controls.
+            pass.requests = if movement::carried(&state.samus, state.elevator) {
+                pose::PoseRequests::default()
+            } else {
+                pose::input(&state.samus, &state.controller, content)
+            };
         }
         // The movement handler, the animation, then the pose update (`$90:E725`).
         // open: the movement types beyond standing, running and turning join with C3b and C4.
         GameplayPhase::SamusNewState => {
             movement::run(&mut state.samus, &state.controller, content);
+            movement::ride(&mut state.samus, state.elevator);
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             pose::change(&mut state.samus, pass.requests, content);
         }

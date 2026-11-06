@@ -204,3 +204,27 @@ fn the_displacement_is_held_to_fifteen_pixels() {
     );
     assert_eq!(clamp(Speed::new(0x0003, 0).0), Speed::new(0x0003, 0).0);
 }
+
+#[test]
+fn facing_forward_on_a_ride_steps_down_a_pixel_and_not_without_one() {
+    let mut ride = ElevatorRide {
+        status: ElevatorStatus::EnteringRoom,
+        ..ElevatorRide::default()
+    };
+    let mut samus = Samus {
+        pose: PoseId(0),
+        movement: Movement::Standing {
+            speed: Horizontal::default(),
+        },
+        ..Samus::default()
+    };
+    samus.position.y = Fixed {
+        pixels: 0x02,
+        subpixels: 0,
+    };
+    super::ride(&mut samus, ride);
+    assert_eq!(samus.position.y.pixels, 0x03);
+    ride.status = ElevatorStatus::Inactive;
+    super::ride(&mut samus, ride);
+    assert_eq!(samus.position.y.pixels, 0x03);
+}

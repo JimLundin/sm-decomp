@@ -14,6 +14,7 @@ use data::pose::transition::Control;
 
 use crate::pose::{Content, controls};
 use crate::state::Controller;
+use crate::state::room::{ElevatorRide, ElevatorStatus};
 use crate::state::samus::{
     Acceleration, Facing, Fixed, Horizontal, Item, Movement, PoseId, Samus, Turn,
 };
@@ -231,6 +232,32 @@ fn stand(speed: &mut Horizontal, facing: Facing, x: &mut Fixed) {
 // open: the speed boost counter, timer and palettes join with the speed booster.
 pub const fn cancel_speed_boosting(speed: &mut Horizontal) {
     speed.momentum = false;
+}
+
+/// Whether the elevator carries her: standing facing the screen while a ride is on. The pose
+/// input handler takes no input then (`$91:805C`), and standing steps her down (`$90:A383`).
+#[must_use]
+pub fn carried(samus: &Samus, ride: ElevatorRide) -> bool {
+    let riding = match ride.status {
+        ElevatorStatus::Inactive => false,
+        ElevatorStatus::LeavingRoom
+        | ElevatorStatus::DoorTransition
+        | ElevatorStatus::EnteringRoom => true,
+    };
+    riding
+        && FACING_FORWARD.contains(&samus.pose)
+        && matches!(samus.movement, Movement::Standing { .. })
+}
+
+/// Standing on a ride steps her a pixel down (`$90:A383`), after the platform has stood her
+/// on it this frame: the next frame's placement takes it back.
+// open: the step is a terrain-only collision, so a block under her stops it at the block's
+// top with subpixels $FFFF (the Brinstar descent's frames 316-326 and 348-358); it joins
+// with Samus's block collision.
+pub fn ride(samus: &mut Samus, ride: ElevatorRide) {
+    if carried(samus, ride) {
+        samus.position.y.pixels = samus.position.y.pixels.wrapping_add(1);
+    }
 }
 
 #[cfg(test)]
