@@ -10,6 +10,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 
 use data::movement::HorizontalSpeeds;
+use data::pose::animation::{AnimationDelays, AnimationError};
 use data::pose::transition::PoseTransitions;
 use data::pose::{PoseError, Poses};
 use data::rom::{AddressError, Rom, RomError};
@@ -115,6 +116,8 @@ pub enum ContentError {
     Transitions(AddressError),
     /// Samus's horizontal speed tables aren't in the image.
     Speeds(AddressError),
+    /// Samus's animation delay lists don't decode.
+    Delays(AnimationError),
 }
 
 impl fmt::Display for ContentError {
@@ -124,6 +127,7 @@ impl fmt::Display for ContentError {
             Self::Poses(error) => write!(f, "the pose table: {error:?}"),
             Self::Transitions(error) => write!(f, "the pose transitions: {error:?}"),
             Self::Speeds(error) => write!(f, "the speed tables: {error:?}"),
+            Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
         }
     }
 }
@@ -141,5 +145,6 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         poses: Poses::load(rom.lorom()).map_err(ContentError::Poses)?,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
         speeds: HorizontalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
+        delays: AnimationDelays::load(rom.lorom()).map_err(ContentError::Delays)?,
     })
 }

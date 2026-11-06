@@ -1,3 +1,4 @@
+use data::pose::animation::AnimationDelays;
 use data::pose::transition::{Control, Controls, PoseTransitions, Transition};
 use data::pose::{MovementType, PoseFacing, PoseId, Poses};
 
@@ -27,6 +28,7 @@ fn content() -> Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(vec![Vec::new(), vec![run_right], vec![run_right]]),
         speeds: HorizontalSpeeds::default(),
+        delays: AnimationDelays::default(),
     }
 }
 
