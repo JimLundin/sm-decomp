@@ -50,6 +50,7 @@ use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
 
 use crate::enemy::EnemySources;
 use crate::plm::PlmSources;
+use crate::projectile::ProjectileSources;
 use crate::source::{self, TilemapUpload, WramBlock, WramByte, WramWord};
 use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
 
@@ -419,6 +420,8 @@ pub struct Rules<'t> {
     pub collected_items: WramBlock,
     /// `room.plms`.
     pub plms: PlmSources,
+    /// `projectiles`.
+    pub projectiles: ProjectileSources,
     /// `room.enemies`.
     pub enemies: EnemySources,
     /// `samus.animation`.
@@ -1060,6 +1063,7 @@ impl Rules<'_> {
         message: source::MESSAGE_BOX_INDEX,
         collected_items: source::ITEM_BIT_ARRAY,
         plms: PlmSources::ORIGINAL,
+        projectiles: ProjectileSources::ORIGINAL,
         enemies: EnemySources::ORIGINAL,
         animation: AnimationSources {
             frame: source::SAMUS_ANIM_FRAME,
@@ -1222,6 +1226,7 @@ impl Rules<'_> {
             collected_items: collected_items(self.collected_items, wram)?,
             hud: self.hud.read(wram)?,
             sram: save_ram(&record.sram)?,
+            projectiles: self.projectiles.read(wram)?,
         };
         Ok(Decoded { state, quiescence })
     }

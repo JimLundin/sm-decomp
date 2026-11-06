@@ -1484,3 +1484,84 @@ pub const MESSAGE_BOX_SAVED_BG3SC: WramByte = WramByte {
     name: "MESSAGE_BOX_SAVED_BG3SC",
     offset: 0x33EB,
 };
+/// Bank $90 log: each projectile's X position (`$90:ADBA`); slots 5 to 9 are bombs'.
+pub const PROJECTILE_X_POS: WramArray = WramArray {
+    name: "PROJECTILE_X_POS",
+    offset: 0x0B64,
+};
+/// Bank $90 log: each projectile's Y position.
+pub const PROJECTILE_Y_POS: WramArray = WramArray {
+    name: "PROJECTILE_Y_POS",
+    offset: 0x0B78,
+};
+/// Bank $90 log: each projectile's X subposition.
+pub const PROJECTILE_X_SUBPOS: WramArray = WramArray {
+    name: "PROJECTILE_BOMB_X_SUBPOS",
+    offset: 0x0B8C,
+};
+/// Bank $90 log: each projectile's Y subposition.
+pub const PROJECTILE_Y_SUBPOS: WramArray = WramArray {
+    name: "PROJECTILE_BOMB_Y_SUBPOS",
+    offset: 0x0BA0,
+};
+/// Bank $90 log: each projectile's X radius.
+pub const PROJECTILE_X_RADIUS: WramArray = WramArray {
+    name: "PROJECTILE_X_RADIUS",
+    offset: 0x0BB4,
+};
+/// Bank $90 log: each projectile's Y radius.
+pub const PROJECTILE_Y_RADIUS: WramArray = WramArray {
+    name: "PROJECTILE_Y_RADIUS",
+    offset: 0x0BC8,
+};
+/// Bank $90 log: each projectile's X speed, signed, in 1/256 pixels.
+pub const PROJECTILE_X_SPEED: WramArray = WramArray {
+    name: "PROJECTILE_BOMB_X_SPEED",
+    offset: 0x0BDC,
+};
+/// Bank $90 log: each projectile's Y speed.
+pub const PROJECTILE_Y_SPEED: WramArray = WramArray {
+    name: "PROJECTILE_BOMB_Y_SPEED",
+    offset: 0x0BF0,
+};
+/// Bank $90 log: each projectile's direction, with the deleted bit.
+pub const PROJECTILE_DIR: WramArray = WramArray {
+    name: "PROJECTILE_DIR",
+    offset: 0x0C04,
+};
+/// Bank $90 log: each projectile's type.
+pub const PROJECTILE_TYPE: WramArray = WramArray {
+    name: "PROJECTILE_TYPE",
+    offset: 0x0C18,
+};
+/// Bank $90 log: each projectile's damage.
+pub const PROJECTILE_DAMAGE: WramArray = WramArray {
+    name: "PROJECTILE_DAMAGE",
+    offset: 0x0C2C,
+};
+/// Bank $90 log: each projectile's instruction pointer, zero in a free slot (`$90:AED8`).
+pub const PROJECTILE_INSTRUCTION_PTR: WramArray = WramArray {
+    name: "PROJECTILE_BOMB_INSTRUCTION_PTR",
+    offset: 0x0C40,
+};
+/// Bank $93 log: frames until each projectile's instruction list shows its next frame
+/// (`$93:81F2`).
+pub const PROJECTILE_INSTRUCTION_TIMERS: WramArray = WramArray {
+    name: "PROJECTILE_BOMB_INSTRUCTION_TIMERS",
+    offset: 0x0C54,
+};
+/// Bank $90 log: each beam's trail timer (`$90:AF00`).
+pub const PROJECTILE_TIMERS: WramArray = WramArray {
+    name: "PROJECTILE_TIMERS",
+    offset: 0x0C90,
+};
+/// Bank $90 log: frames until Samus can fire again (`$90:AC1C`).
+pub const COOLDOWN_TIMER: WramWord = WramWord {
+    name: "COOLDOWN_TIMER",
+    offset: 0x0CCC,
+};
+/// Bank $90 log: beams and missiles in flight (`$90:AC39`).
+pub const PROJECTILE_COUNTER: WramWord = WramWord {
+    name: "PROJECTILE_COUNTER",
+    offset: 0x0CCE,
+};

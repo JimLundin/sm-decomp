@@ -82,6 +82,13 @@ const fn plm(path: &'static str, array: WramArray) -> Field {
     }
 }
 
+const fn projectile(path: &'static str, array: WramArray) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramArray(array)),
+    }
+}
+
 const fn record(path: &'static str, name: &'static str) -> Field {
     Field {
         path,
@@ -715,6 +722,66 @@ pub const FIELDS: &[Field] = &[
         status: Status::Decoded(Source::WramBlock(source::ITEM_BIT_ARRAY)),
     },
     record("sram", "sram"),
+    wram("projectiles.count", source::PROJECTILE_COUNTER),
+    wram("projectiles.cooldown", source::COOLDOWN_TIMER),
+    none(
+        "projectiles.slots.generation",
+        "the original keeps no count of a slot's fills; its instruction pointer is the occupant",
+    ),
+    projectile(
+        "projectiles.slots.common.trail_timer",
+        source::PROJECTILE_TIMERS,
+    ),
+    // Occupied while the instruction pointer is set.
+    projectile(
+        "projectiles.slots.occupancy",
+        source::PROJECTILE_INSTRUCTION_PTR,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.position.x.pixels",
+        source::PROJECTILE_X_POS,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.position.x.subpixels",
+        source::PROJECTILE_X_SUBPOS,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.position.y.pixels",
+        source::PROJECTILE_Y_POS,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.position.y.subpixels",
+        source::PROJECTILE_Y_SUBPOS,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.radius.x",
+        source::PROJECTILE_X_RADIUS,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.radius.y",
+        source::PROJECTILE_Y_RADIUS,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.velocity.x",
+        source::PROJECTILE_X_SPEED,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.velocity.y",
+        source::PROJECTILE_Y_SPEED,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.heading",
+        source::PROJECTILE_DIR,
+    ),
+    projectile("projectiles.slots.occupancy.kind", source::PROJECTILE_TYPE),
+    projectile(
+        "projectiles.slots.occupancy.damage",
+        source::PROJECTILE_DAMAGE,
+    ),
+    projectile(
+        "projectiles.slots.occupancy.frame_timer",
+        source::PROJECTILE_INSTRUCTION_TIMERS,
+    ),
 ];
 
 #[cfg(test)]
@@ -753,6 +820,7 @@ mod tests {
             "message",
             "collected_items",
             "sram",
+            "projectiles",
         ];
         for name in top {
             assert!(
@@ -992,9 +1060,24 @@ mod tests {
     }
 
     /// The per-slot arrays the decoder reads.
-    const fn array_sources(rules: &Rules<'_>) -> [WramArray; 7] {
+    const fn array_sources(rules: &Rules<'_>) -> [WramArray; 21] {
         let plms = &rules.plms;
+        let projectiles = &rules.projectiles;
         [
+            projectiles.x,
+            projectiles.y,
+            projectiles.x_subpixels,
+            projectiles.y_subpixels,
+            projectiles.radius_x,
+            projectiles.radius_y,
+            projectiles.speed_x,
+            projectiles.speed_y,
+            projectiles.direction,
+            projectiles.kind,
+            projectiles.damage,
+            projectiles.instruction,
+            projectiles.frame_timer,
+            projectiles.trail,
             plms.id,
             plms.block,
             plms.timer,
@@ -1011,6 +1094,7 @@ mod tests {
         let mut words = word_sources(&rules);
         words.extend(motion_word_sources(&rules));
         words.extend(scrolling_word_sources(&rules));
+        words.extend([rules.projectiles.count, rules.projectiles.cooldown]);
         let bytes = byte_sources(&rules);
         let slots = slot_sources(&rules);
         let arrays = array_sources(&rules);

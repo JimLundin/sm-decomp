@@ -7,6 +7,7 @@
 // which collected-item bits its rows read.
 
 pub mod hud;
+pub mod projectile;
 pub mod room;
 pub mod samus;
 pub mod slots;
@@ -223,6 +224,8 @@ pub struct State {
     pub collected_items: CollectedItems,
     /// The cartridge's save RAM.
     pub sram: sram::SaveRam,
+    /// Samus's projectiles.
+    pub projectiles: projectile::Projectiles,
 }
 
 /// Words of the collected item bits (`$7E:D870`, 64 bytes).

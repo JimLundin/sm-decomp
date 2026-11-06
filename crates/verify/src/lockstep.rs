@@ -18,6 +18,7 @@ use data::plm::PlmPopulation;
 use data::rom::Lorom;
 use data::room::{Progress, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
 use data::tileset::TilesetId;
+use game::state::projectile::ProjectileBody;
 use game::state::room::{
     Crumble, ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, ItemGfxSlot, ItemStep, MorphBallEye,
     PLM_SLOTS, PlmBody, ScrollPlm, ScrollStep,
@@ -175,6 +176,28 @@ macro_rules! plm_body {
                         Occupancy::Free => None,
                         Occupancy::Live(body) | Occupancy::Deleting(body) => $part(body),
                     })
+                };
+                part(engine).diff(&part(oracle))
+            },
+        }
+    };
+}
+
+/// A comparator for one part of every projectile slot's body, absent in a free slot.
+macro_rules! projectile {
+    ($path:literal, $part:expr) => {
+        Comparator {
+            path: $path,
+            compare: |engine: &State, oracle: &State| {
+                let part = |state: &State| {
+                    state
+                        .projectiles
+                        .slots
+                        .slots
+                        .map(|slot| match slot.occupancy {
+                            Occupancy::Free => None,
+                            Occupancy::Live(body) | Occupancy::Deleting(body) => Some($part(body)),
+                        })
                 };
                 part(engine).diff(&part(oracle))
             },
@@ -763,6 +786,70 @@ const COMPARATORS: &[Comparator] = &[
     field!("message", message),
     field!("collected_items", collected_items),
     field!("sram", sram),
+    field!("projectiles.count", projectiles.count),
+    field!("projectiles.cooldown", projectiles.cooldown),
+    Comparator {
+        path: "projectiles.slots.common.trail_timer",
+        compare: |engine: &State, oracle: &State| {
+            let part = |state: &State| {
+                state
+                    .projectiles
+                    .slots
+                    .slots
+                    .map(|slot| slot.common.trail_timer)
+            };
+            part(engine).diff(&part(oracle))
+        },
+    },
+    projectile!("projectiles.slots.occupancy", |_: ProjectileBody| true),
+    projectile!(
+        "projectiles.slots.occupancy.position.x.pixels",
+        |body: ProjectileBody| body.position.x.pixels
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.position.x.subpixels",
+        |body: ProjectileBody| body.position.x.subpixels
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.position.y.pixels",
+        |body: ProjectileBody| body.position.y.pixels
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.position.y.subpixels",
+        |body: ProjectileBody| body.position.y.subpixels
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.radius.x",
+        |body: ProjectileBody| body.radius.x
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.radius.y",
+        |body: ProjectileBody| body.radius.y
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.velocity.x",
+        |body: ProjectileBody| body.velocity.x
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.velocity.y",
+        |body: ProjectileBody| body.velocity.y
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.heading",
+        |body: ProjectileBody| body.heading
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.kind",
+        |body: ProjectileBody| body.kind
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.damage",
+        |body: ProjectileBody| body.damage
+    ),
+    projectile!(
+        "projectiles.slots.occupancy.frame_timer",
+        |body: ProjectileBody| body.frame_timer
+    ),
 ];
 
 /// Whether the coverage table marks `path` decoded.

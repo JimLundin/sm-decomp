@@ -449,6 +449,7 @@ fn gameplay_phase(
             // from `$91:E44D`) neither sets her radius nor runs the pose input handler, which
             // would return at once anyway (`$91:805C`).
             pass.requests = if movement::carried(&state.samus, state.elevator) {
+                crate::projectile::handle(state).map_err(SessionFault::Projectile)?;
                 pose::PoseRequests::default()
             } else {
                 movement::set_radius(&mut state.samus, content);
@@ -456,6 +457,7 @@ fn gameplay_phase(
                 // open: the suit palette index and the Y acceleration (`$90:E6B6`,
                 // `$90:E6B9`) run between the input handler and the inside handling.
                 inside::handle(&mut state.room, &state.samus).map_err(SessionFault::Plm)?;
+                crate::projectile::current_state(state).map_err(SessionFault::Projectile)?;
                 requests
             };
         }

@@ -132,6 +132,8 @@ pub enum SessionFault {
     /// A scroll trigger's touch PLM found no scroll PLM on its block, where the original
     /// hangs.
     Plm(TouchFault),
+    /// A projectile reached a block whose reaction isn't modelled.
+    Projectile(crate::projectile::ProjectileFault),
 }
 
 /// Why a State can't open as a Session.

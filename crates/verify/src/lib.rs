@@ -15,6 +15,7 @@ pub mod lock;
 pub mod lockstep;
 pub mod plm;
 pub mod ppu;
+pub mod projectile;
 pub mod ratchet;
 pub mod source;
 pub mod strand;
