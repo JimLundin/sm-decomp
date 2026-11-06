@@ -395,7 +395,7 @@ jobs:
     timeout-minutes: 20
     env:
       CACHE_ASSET: lockstep-cache-19ca14d51ae1f67e.tar.xz.enc
-      CACHE_SHA256: UPLOAD-THEN-PIN-lockstep-cache-sha256
+      CACHE_SHA256: 46e9eeab8e9c1ec61b7c6c056d4a8af27dee2daa31f3cc997fcdd81637d03620
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the record cache and check its pin
