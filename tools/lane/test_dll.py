@@ -19,6 +19,9 @@ from pathlib import Path
 
 
 def run_dll(dll: str, args: list[str]) -> int:
+    # The harness only exists for Windows; the guard also tells mypy on Linux that WinDLL exists.
+    if sys.platform != "win32":
+        sys.exit("test_dll: --run is for Windows; run cargo test instead")
     kernel32 = ctypes.WinDLL("kernel32")
     kernel32.GetCommandLineW.restype = ctypes.c_void_p
     line = kernel32.GetCommandLineW()
@@ -30,7 +33,8 @@ def run_dll(dll: str, args: list[str]) -> int:
     harness = ctypes.CDLL(dll)
     argv = (ctypes.c_char_p * 2)(dll.encode(), None)
     sys.stdout.flush()
-    return harness.main(1, argv)
+    status: int = harness.main(1, argv)
+    return status
 
 
 def targets(cargo: str, crates: list[str]) -> list[tuple[str, str, str, Path]]:
