@@ -262,7 +262,7 @@ The size report adds lines per layer, so the routine-port share is visible and f
 
 ## 7. Amendments to ARCHITECTURE
 
-1. **§2 and SLICE0 §5.5:** phases run in the original's order (§6.3). Inside a domain, structure
+1. **§2:** phases run in the original's order (§6.3). Inside a domain, structure
    follows the model, and an order that can be observed at a cut is a named behaviour.
 2. **§4.1 and §9.1:** add `game::exact`. Producers never write video State.
 3. **D16:** intents are the model's primary per-Tick output. `describe` returns them rather than
