@@ -197,20 +197,84 @@ fn a_touch_with_no_free_slot_spawns_nothing_and_triggers_nothing() {
 }
 
 #[test]
-fn the_pass_deletes_an_item_collision_plm_and_holds_a_shot_block() {
+fn the_pass_deletes_an_item_collision_plm() {
     let mut room = loaded();
-    let crumbling = PlmBody::ShotBlock {
-        crumble: Crumble::First,
-    };
-    for (index, body) in [(30, PlmBody::ItemCollision), (31, crumbling)] {
-        let slot = &mut room.plms.slots[index];
-        slot.occupancy = Occupancy::Live(body);
-        slot.common.cursor.delay = Frames(1);
-    }
+    let slot = &mut room.plms.slots[30];
+    slot.occupancy = Occupancy::Live(PlmBody::ItemCollision);
+    slot.common.cursor.delay = Frames(1);
     process_unseen(&mut room, &mut CollectedItems::default(), &population());
     assert_eq!(room.plms.slots[30].occupancy, Occupancy::Free);
-    assert_eq!(room.plms.slots[31].occupancy, Occupancy::Live(crumbling));
-    assert_eq!(room.plms.slots[31].common.cursor.delay, Frames(1));
+}
+
+/// A shootable block with BTS 4 at (10, 4) in [`loaded`].
+const SHOT: BlockIndex = BlockIndex(4 * 32 + 10);
+
+fn with_shot_block() -> RoomScoped {
+    let mut room = loaded();
+    room.blocks[usize::from(SHOT.0)].kind = BlockKind::Shootable(PlmChoice::Common(4));
+    room
+}
+
+#[test]
+fn shooting_a_bts_4_block_spawns_the_shot_block_and_makes_it_solid() {
+    let mut room = with_shot_block();
+    crumble::shoot_block(&mut room, SHOT).unwrap();
+    // 39 and 38 hold the scroll PLM and the item.
+    let slot = &room.plms.slots[37];
+    assert_eq!(
+        slot.occupancy,
+        Occupancy::Live(PlmBody::ShotBlock {
+            crumble: Crumble::Spawned
+        })
+    );
+    assert_eq!(slot.common.block, SHOT);
+    assert_eq!(slot.common.cursor.delay, Frames(1));
+    let block = room.blocks[usize::from(SHOT.0)];
+    assert_eq!(block.kind, BlockKind::Solid(Bts(4)));
+    assert_eq!(block.tile.number, TileNumber(0x55));
+}
+
+#[test]
+fn shooting_another_block_is_unmodelled() {
+    let mut room = with_shot_block();
+    let before = room.clone();
+    assert_eq!(
+        crumble::shoot_block(&mut room, BlockIndex(0)),
+        Err(crumble::ShotFault::Unmodelled(BlockKind::Solid(Bts(0))))
+    );
+    assert_eq!(room, before);
+}
+
+/// The oracle's crumble from the shot (item-morph-ball frames 1,236 to 1,249): its first run
+/// in the shot's frame, three crumble tiles for 4 frames each, the empty tile for 1, then
+/// the delete, the block left air with its BTS.
+#[test]
+fn the_shot_block_crumbles_through_its_list_and_deletes_itself() {
+    let mut room = with_shot_block();
+    crumble::shoot_block(&mut room, SHOT).unwrap();
+    let mut passes = Vec::new();
+    for _ in 0..14 {
+        process_unseen(&mut room, &mut CollectedItems::default(), &population());
+        let slot = &room.plms.slots[37];
+        let crumble = if let Occupancy::Live(PlmBody::ShotBlock { crumble }) = slot.occupancy {
+            Some(crumble)
+        } else {
+            None
+        };
+        let block = room.blocks[usize::from(SHOT.0)];
+        passes.push((crumble, slot.common.cursor.delay.0, block.tile.number.0));
+    }
+    let shown = |crumble, tile| (1..=4).rev().map(move |delay| (Some(crumble), delay, tile));
+    let expected: Vec<_> = shown(Crumble::First, 0x53)
+        .chain(shown(Crumble::Second, 0x54))
+        .chain(shown(Crumble::Third, 0x55))
+        .chain([(Some(Crumble::Cleared), 1, 0xff), (None, 0, 0xff)])
+        .collect();
+    assert_eq!(passes, expected);
+    assert_eq!(
+        room.blocks[usize::from(SHOT.0)].kind,
+        BlockKind::Air(Bts(4))
+    );
 }
 
 #[test]

@@ -21,6 +21,7 @@ use crate::tick::Next;
 
 use self::draw::Drawing;
 
+pub mod crumble;
 pub mod draw;
 pub mod item_gfx;
 
@@ -361,8 +362,7 @@ fn update_scroll(
 ///
 /// An item's pickup calls out of the pass into the message box: the slot whose instruction
 /// does is returned, the rest of the pass waiting for [`resume`].
-// open: the PLMs-enabled flag (`$1C23`); the shot block's crumble, whose draws need its tiles
-// and the same writes, its timer waits.
+// open: the PLMs-enabled flag (`$1C23`).
 pub fn process(
     drawing: &mut Drawing,
     room: &mut RoomScoped,
@@ -468,7 +468,6 @@ fn run_below(
             continue;
         };
         match body {
-            PlmBody::ShotBlock { .. } => continue,
             // `$84:DF89`: triggered, the pre-instruction goes to the link with a timer of 1.
             PlmBody::Item {
                 step: ItemStep::Triggered,
@@ -477,7 +476,8 @@ fn run_below(
             PlmBody::Item { .. }
             | PlmBody::Scroll(_)
             | PlmBody::ScrollTouch
-            | PlmBody::ItemCollision => {}
+            | PlmBody::ItemCollision
+            | PlmBody::ShotBlock { .. } => {}
         }
         // `$84:85E0`: the timer counts down, wrapping from 0 after a sleep.
         slot.common.cursor.delay = Frames(slot.common.cursor.delay.0.wrapping_sub(1));
@@ -554,7 +554,7 @@ fn run_below(
                 // Only [`resume`] runs these, the pass waiting on their message box.
                 ItemStep::PickingUp | ItemStep::InBox => {}
             },
-            PlmBody::ShotBlock { .. } => {}
+            PlmBody::ShotBlock { crumble } => crumble::run(drawing, room, index, block, crumble),
         }
     }
     None
