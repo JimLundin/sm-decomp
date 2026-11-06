@@ -305,6 +305,11 @@ Tried and not applied: `native/candidates/0003-apu-ports-in-time-order.patch`
 orders the CPU-SPC port accesses in time, as bsnes v085 does. It changes no
 lag-log word in any% steps 0-18999 (MEASUREMENTS (j)), so it is not in
 `fixes/`.
+No `0005` either: none of the HDMA variants for the 35175 lag (line overhead
+18, the request at dot 278, the alignment rules, the H/V-IRQ point per anomie)
+zeroes the HUD-line pairs against lsnes, and the request at dot 278, the one
+that turns 35175 into `Requested`, moves the boot from step 472
+(MEASUREMENTS (n)).
 
 ## Proving it against the lock
 
@@ -334,6 +339,40 @@ Expected, explainable mismatches:
   answers no request, so the CPU's sound state differs, and uploads and door
   transitions stall.
 - **`ppu`.** The old struct includes renderer scratch and latch fields.
+
+### lsnes streams
+
+lsnes records the picture, the CPU's APU port accesses and `PpuRegisters`
+when asked (`Lsnes::record_streams`, the server's `T` request, before the
+first step); otherwise its records are unchanged. The picture is lsnes's
+screenshot of the video frame the step ends in (taken in `on_frame`, once
+lsnes has handed that frame to its screen buffer), sent as lsnes's own PNG
+(`save_png()`, base64) and mapped back from its 8-bit palette to BGR555:
+exact at brightness 15, without per-line brightness or forced blank.
+The port log has the CPU side only. The PPU registers are rebuilt from bsnes's
+decoded fields in `memory.getregisters()`, without `nmitimen`, `htime`,
+`vtime`, `hdmaen` and `memsel`. Against LakeSnes on any% 0-1000:
+MEASUREMENTS.md (o), (r).
+
+### The picture compared
+
+Two pictures are equal when every dot shows the same 8-bit colour
+(`Picture::shown`, the `picture` part of `oracle cross`):
+
+- a dot's 5-bit components `c` at its line's master brightness `b` (0-15)
+  show as `round((b + 1) * c * 255 / 496)` each (`record::shown_channel`,
+  lsnes's lrgb palette for bsnes's dots);
+- a dot on a forced-blank line shows black.
+
+At brightness 15 this map is one-to-one, so equality is BGR555 equality.
+Below 15 it is not: lsnes's screenshot cannot tell some components apart,
+nor brightness 0 from 1 (level 1's values are all level 2's). The stored
+BGR555 dots and brightness are kept as each backend has them (LakeSnes:
+exact, per line; lsnes: the brightest level that produces the screenshot,
+the smallest component for each value), and both show the same 8-bit
+colours as the screenshot, so the comparison is exact where the picture is
+observable and blind only where no screenshot could tell. The BGR555 dots
+still differ there; `cross` prints both counts.
 
 ## Speed
 
