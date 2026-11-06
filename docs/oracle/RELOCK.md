@@ -273,3 +273,81 @@ Each row's line gives its frames (`N frames`); the frame count is also the
 `.pads` line count less one. A row without a native seed reports `not run`.
 Proves b2 when 638 `.pads` files exist; `--from-frame-pads` with memories on a
 sample re-checks rows (without `.cuts` it prints `no <row>.cuts`).
+
+## 6. Step c, first part done: the recorder
+
+Lane `lane/relock-record`. `oracle corpus ... --oracle lsnes --native-seeds DIR
+--from-frame-pads DIR --record-v2 FILE` plays each selected row from its frame
+pads with the picture and APU port tiers on and writes the file header and one
+format-2 `[[row]]` per row (`oracle::relock`). `--record-v2` refuses any other
+backend or pad source. It prints each row's digest per stream (the fold of its
+marks) on stdout.
+
+**What it writes.** The header: `format = 2`, `mark_frames = 1000` and
+`oracle = { emulator, version, server, fixes }`, where `server` is the SHA-256
+of the `lsnes_server.lua` compiled into the build (`lsnes::server_sha256`).
+No `decoder` or `bundles` yet (no typed stream; step e). Per row:
+
+```toml
+[[row]]
+id = "chain-any-0001-DF45"
+start = "any-boundary:1"
+seed_record = "<sha256 of the native seed's .lss>"
+pads = "<sha256 of the .pads file>"
+frames = 532
+ticks = 414
+overruns = ["254", "256-257", "...", "408-409"]
+nmi_off = []
+facts = { "room:DF8D" = "unevaluated" }
+streams.vram = ["<span 0>"]
+streams.cgram = ["..."]
+# oam, sram, ppu, apu, video, timing, wram the same
+```
+
+`seed_words` (the SHA-256 of the seed's `.words`) follows `seed_record` for a
+derived seed; `still_running` (frames cut with their NMI running) appears only
+if nonzero, which a run from pads never gives; `absent = [...]` names a stream
+some frame lacked. `ticks` is the run's requested NMIs, not the old lock's
+Ticks (414 against 412 on `chain-any-0001-DF45`: the cuts from pads add the
+RTIs the Tick run missed, §5).
+
+**Definitions as built.** Quiescent: the cut is `Cut::NmiReturn` with
+`NmiKind::Requested`, the NMI having interrupted one of `game::WAIT_SITES`'
+loop instructions (`relock::is_quiescent`). `vram`, `cgram`, `oam`, `sram`,
+`wram` and `ppu` fold at quiescent cuts, hashed as `streams::v1` does; `ppu`
+hashes every `PpuRegisters` field but the five, in declaration order. `apu`
+concatenates `(kind, port, value)` of the CPU's reads and writes (DMA and SPC
+entries dropped) and folds the bytes since the last quiescent cut at each
+quiescent cut; accesses after the row's last quiescent cut are not folded.
+`video` folds `Picture::shown()`'s bytes every frame; `timing` folds
+`[cut, nmi, overrun]` every frame (cut 0 RTI, 1 vblank without NMI, 2 still
+running; NMI 0 none, 1 requested, 2 overrun). Each span starts from the empty
+digest; the last, partial span is closed at the row's end.
+
+**The digest moved** to `data::digest` (`Digest`, `fold`, the new `fold_all`,
+bit for bit with `sm_data::digest`, which stays for the old verifier).
+`oracle` now depends on `data` and `oracle_record` only.
+
+**Proof** (`$TEMP/ohx/relock-record/proof.sh` and `compare.sh`, 2026-11-06,
+5 processes at once beside another lane's seed cuts): the three rows of §5
+recorded twice give byte-identical files; recorded as `--shard 0/3`, `1/3`,
+`2/3` they give byte-identical entries. The memory streams' row digests equal
+those of a run without the stream tiers, so asking for the tiers doesn't
+change the emulation. Speed: 12-16 frames/s per process with 5 at once and
+the tiers on; 31-35 frames/s without the tiers, the same load.
+
+**What remains of step c.**
+
+1. Facts: every fact is written `"unevaluated"`; the room, state, area, item,
+   boss and door facts need evaluating on the decoded State (`tools relock`,
+   with `verify::decode`).
+2. Typed streams: the hook is `relock::TypedStream` and
+   `Recorder::with_typed`; nothing implements it, and the header has no
+   `decoder` key until something does.
+3. Row rungs for the long rows (a native state every 5000 frames) are not
+   saved; no `rungs` key.
+4. `--shard I/N` is still round-robin by row position, not packed by frame
+   count.
+5. The step's mutant proof: a mutated pad changes only the spans from its
+   frame on. Not run.
+6. A reader for format 2 (step f retypes `lock.rs`); entries are only written.
