@@ -1,0 +1,44 @@
+format = 2
+mark_frames = 1000
+oracle = { emulator = "synthetic", version = "test 1", server = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff", fixes = ["fix-a"] }
+
+[[row]]
+id = "row-alpha"
+start = "capture-a:3"
+seed_record = "1111111111111111111111111111111111111111111111111111111111111111"
+seed_words = "2222222222222222222222222222222222222222222222222222222222222222"
+pads = "3333333333333333333333333333333333333333333333333333333333333333"
+frames = 1500
+ticks = 1490
+overruns = ["254", "256-257"]
+nmi_off = []
+facts = { "room:91F8" = true, "probe:example" = "unevaluated" }
+streams.vram = ["0000000000000101", "0000000000000102"]
+streams.cgram = ["0000000000000201", "0000000000000202"]
+streams.oam = ["0000000000000301", "0000000000000302"]
+streams.sram = ["0000000000000401", "0000000000000402"]
+streams.ppu = ["0000000000000501", "0000000000000502"]
+streams.apu = ["0000000000000601", "0000000000000602"]
+streams.video = ["0000000000000701", "0000000000000702"]
+streams.timing = ["0000000000000801", "0000000000000802"]
+streams.wram = ["0000000000000901", "0000000000000902"]
+
+[[row]]
+id = "row-beta"
+start = "power-on"
+pads = "4444444444444444444444444444444444444444444444444444444444444444"
+frames = 1000
+ticks = 1000
+overruns = []
+nmi_off = ["5-9"]
+still_running = ["12"]
+facts = {  }
+absent = ["video"]
+streams.vram = ["00000000000a0101"]
+streams.cgram = ["00000000000a0201"]
+streams.oam = ["00000000000a0301"]
+streams.sram = ["00000000000a0401"]
+streams.ppu = ["00000000000a0501"]
+streams.apu = ["00000000000a0601"]
+streams.timing = ["00000000000a0801"]
+streams.wram = ["00000000000a0901"]

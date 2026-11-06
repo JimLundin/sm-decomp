@@ -629,4 +629,78 @@ mod tests {
         assert_eq!(ranges(&[118, 119, 120, 121, 200]), "[\"118-121\", \"200\"]");
         assert_eq!(ranges(&[]), "[]");
     }
+
+    fn marks(base: u64, count: u64) -> Option<Vec<u64>> {
+        Some((1..=count).map(|span| base + span).collect())
+    }
+
+    /// The writer writes `verify`'s reader fixture byte for byte, so the reader's tests
+    /// read exactly what this module writes (RELOCK step f). `oracle` can't depend on
+    /// `verify`, so the two share this file rather than a type.
+    #[test]
+    fn the_writer_writes_the_readers_fixture() {
+        const ORACLE: crate::OracleId = crate::OracleId {
+            emulator: "synthetic",
+            version: "test 1",
+            patches: &[],
+            fixes: &["fix-a"],
+        };
+        let sha = |digit: &str| digit.repeat(64);
+        let streams = |base: u64, count: u64, absent: Option<Stream>| {
+            Stream::ALL
+                .iter()
+                .zip(1..)
+                .map(|(stream, index)| {
+                    let marks =
+                        (absent != Some(*stream)).then(|| marks(base + index * 0x100, count));
+                    (stream.name(), marks.flatten())
+                })
+                .collect()
+        };
+        let alpha = Entry {
+            id: "row-alpha".to_owned(),
+            start: "capture-a:3".to_owned(),
+            seed_record: Some(sha("1")),
+            seed_words: Some(sha("2")),
+            pads: sha("3"),
+            ticks: 1490,
+            facts: vec![
+                ("room:91F8".to_owned(), FactResult::Holds(true)),
+                ("probe:example".to_owned(), FactResult::Unevaluated),
+            ],
+            recorded: Recorded {
+                frames: 1500,
+                overruns: vec![254, 256, 257],
+                nmi_off: Vec::new(),
+                still_running: Vec::new(),
+                streams: streams(0, 2, None),
+                frame_log: None,
+            },
+        };
+        let beta = Entry {
+            id: "row-beta".to_owned(),
+            start: "power-on".to_owned(),
+            seed_record: None,
+            seed_words: None,
+            pads: sha("4"),
+            ticks: 1000,
+            facts: Vec::new(),
+            recorded: Recorded {
+                frames: 1000,
+                overruns: Vec::new(),
+                nmi_off: vec![5, 6, 7, 8, 9],
+                still_running: vec![12],
+                streams: streams(0xa_0000, 1, Some(Stream::Video)),
+                frame_log: None,
+            },
+        };
+        let server = "00112233445566778899aabbccddeeff".repeat(2);
+        let written = format!(
+            "{}\n{}\n{}",
+            header(ORACLE, &server),
+            alpha.to_toml(),
+            beta.to_toml()
+        );
+        assert_eq!(written, include_str!("../../verify/src/lock/format2.toml"));
+    }
 }

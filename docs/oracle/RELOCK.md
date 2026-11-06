@@ -417,7 +417,7 @@ recorded twice (`a`, `b`) and as `--shard 0/3`, `1/3`, `2/3`:
    count.
 5. The step's mutant proof: a mutated pad changes only the spans from its
    frame on. Not run.
-6. A reader for format 2 (step f retypes `lock.rs`); entries are only written.
+6. ~~A reader for format 2~~: done, §8.
 
 ## 7. Recordings check themselves
 
@@ -497,3 +497,71 @@ death:100,1500`), with sidecars.
   with B's and D's span 1 (`4e82496a3475bafb`).
 - The two `.png` dumps decode as the expected pictures (the Crateria map at
   `death` frame 1500).
+
+## 8. Step f, first part done: the reader and the comparison
+
+Lane `lane/relock-reader`. `verify::lock` reads a format-2 file and compares an
+engine run with it; wiring it to the bundle, the pads, the seed and the engine
+run is step g.
+
+**The reader.** `Lock::parse(text)` gives the `Header` (`mark_frames`, the
+`Oracle` `{ emulator, version, server, fixes }`, and the optional `decoder`
+and `bundles`) and the `Row`s: `RowId`, `Start` (`PowerOn` or `Seed {
+capture, index }`), the `Sha256` pins, `FrameCount`, `Ticks`, the schedules
+expanded to `Frame`s (`overruns`, `nmi_off`, `still_running`, `rungs`), the
+facts as `FactResult::Holds(bool)` or `Unevaluated`, and per `Stream` a
+`StreamLock::Marks(Vec<Digest>)` or `StreamLock::Absent` (named in
+`absent`). `Lock::parse_for(text, &oracle)` also rejects a lock of another
+oracle or version (`ErrorKind::OracleMismatch`). The TOML subset is a small
+line parser in `verify` (`lock/text.rs`), no new dependency: the writer emits
+only strings without escapes, unsigned integers, booleans, arrays, inline
+tables, `[[row]]` heads and comments. It is strict: an unknown key, section
+or stream name, a duplicate key, stream or row, a machine stream neither
+marked nor `absent`, a mark count other than the row's spans (frames over
+`mark_frames`, rounded up), a schedule that isn't ascending runs inside the
+row, or a fact other than a boolean or `"unevaluated"` is a `LockError` with
+its line. A typed stream (`input`, `samus`, ...) is optional: an entry has it
+once a decoder recorded it.
+
+**One format, two crates.** `verify` doesn't depend on `oracle` and `oracle`
+depends on `data` only, so the format isn't a shared type: moving the text
+types into `data` would put verification-only text into an engine crate.
+They share a fixture instead: `crates/verify/src/lock/format2.toml`
+(synthetic pins and marks, two rows covering seeds, derived seeds,
+schedules, `still_running`, both fact kinds, an `absent` stream and a partial
+span). `oracle::relock`'s test writes it byte for byte through `header` and
+`Entry::to_toml`; `verify::lock`'s tests read it. A writer change that the
+reader doesn't follow fails one of the two.
+
+**The comparison.** `Row::compare(&EngineRow)`, where `EngineRow` holds the
+engine's marks per stream (folded as the recorder folds them, `data::digest`)
+and its fact results, gives a `RowReport`: per stream an `Outcome` (`Equal`,
+`Differs { span }` with the first differing span, or the first one the
+shorter side lacks, `Absent(Side::Lock | Side::Engine)`, or `NotLocked` for
+a typed stream the entry lacks), and per fact a `FactOutcome` (`Agrees`,
+`Disagrees`, `Unevaluated`, `NotEvaluated`). `RowReport::green()` is D22's
+green: every compared stream (all but `wram`) the entry has is `Equal`, and
+no fact blocks. An `Unevaluated` fact doesn't block yet; every fact is
+unevaluated until `tools relock` evaluates them (§6, what remains 1), so
+until then green is decided by the streams alone. A locked fact the engine
+doesn't evaluate blocks. `green_streams()` names the green (row, stream)
+pairs, the unit step g ratchets.
+
+**Tests** (`crates/verify/src/lock/tests.rs`; this machine can't run test
+executables, CI does): the fixture reads field by field; decoder, bundles,
+rungs and comments read; twelve strict rejections, one per error kind; a lock
+of another oracle version is rejected; a faithful run is green; an absent
+stream is reported and blocks; a broken or unevaluated-by-engine fact blocks;
+a short run differs at its first missing span; and the lock mutants: for each
+machine stream and each of its spans, flipping that one mark fails exactly
+that (row, stream) pair at that span, every other stream staying `Equal`,
+and the row stays green only for `wram`.
+
+**What step g needs.** The gate's engine side: a span folder over the
+engine's per-frame records with the recorder's rules (quiescent cuts from the
+`Recorded` timing source, which replays `overruns` and `nmi_off`; `apu`
+concatenated over busy spans; `video` and `timing` every frame) producing
+`EngineRow`; the lock file (`scenarios/locks/lsnes.toml`, step e) and the
+bundle's pads and seed records, checked against the row's `Sha256` pins; the
+`Oracle` the gate expects (the `ReferenceProfile`'s); and the ratchet file of
+green (row, stream) pairs.
