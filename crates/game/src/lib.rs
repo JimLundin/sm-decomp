@@ -27,6 +27,7 @@ pub mod scrolling;
 pub mod session;
 pub mod state;
 pub mod tick;
+mod tilemap_dma;
 
 #[cfg(test)]
 mod tests;

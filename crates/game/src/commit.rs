@@ -7,7 +7,7 @@ use data::video::OAM_BYTES;
 
 use crate::state::video::{
     BusAddress, CGRAM_COLOURS, DmaChannel, Mode7, SCROLL_BITS, Scroll, VRAM_WORDS, Video,
-    VramSource, VramStep, VramTransfer, VramWord,
+    VramSource, VramTransfer, VramWord,
 };
 
 /// VRAM's word address is 15 bits; the PPU ignores the top bit.
@@ -20,15 +20,15 @@ const SAMUS_BOTTOM_TILES: [VramWord; 2] = [VramWord(0x6080), VramWord(0x6180)];
 const OAM_CHANNEL: usize = 0;
 /// The DMA channel CGRAM, Samus's tiles and the VRAM write table go through (`$80:933A`,
 /// `$80:9376`, `$80:8C83`).
-const VRAM_CHANNEL: usize = 1;
+pub(crate) const VRAM_CHANNEL: usize = 1;
 /// DMAP for byte writes to one register, the A-bus address incrementing.
 const DMA_ONE_REGISTER: u8 = 0x00;
 /// DMAP for word writes to a register pair, the A-bus address incrementing.
-const DMA_TWO_REGISTERS: u8 = 0x01;
+pub(crate) const DMA_TWO_REGISTERS: u8 = 0x01;
 /// BBAD for OAMDATA, `$2104`.
 const DMA_TO_OAM: u8 = 0x04;
 /// BBAD for VMDATAL, `$2118`.
-const DMA_TO_VRAM: u8 = 0x18;
+pub(crate) const DMA_TO_VRAM: u8 = 0x18;
 /// BBAD for CGDATA, `$2122`.
 const DMA_TO_CGRAM: u8 = 0x22;
 /// The bytes a DMA with a zero count transfers.
@@ -176,7 +176,7 @@ fn rom_words(
 impl DmaChannel {
     /// The registers a finished transfer of `bytes` from `from` leaves: the source on by the
     /// bytes, within its bank, and the count spent.
-    const fn transferred(&mut self, from: BusAddress, bytes: usize) {
+    pub(crate) const fn transferred(&mut self, from: BusAddress, bytes: usize) {
         // The A-bus address counts 16 bits: a 64 KiB transfer comes back to its start.
         let [low, high, ..] = bytes.to_le_bytes();
         let past = from.advanced(u16::from_le_bytes([low, high]));
@@ -207,10 +207,7 @@ fn write_vram(
     transfer: &VramTransfer,
     graphics: &Graphics,
 ) -> (BusAddress, usize) {
-    let stride = match transfer.step {
-        VramStep::Row => 1,
-        VramStep::Column => 32,
-    };
+    let stride = transfer.step.words();
     match &transfer.source {
         VramSource::Words { from, words } => {
             write_words(vram, transfer.to, stride, words.iter().copied());
@@ -228,7 +225,12 @@ fn write_vram(
 
 /// `words` into VRAM from `to`, `stride` words apart. The address wraps within VRAM as the
 /// PPU's does.
-fn write_words(vram: &mut [u16], to: VramWord, stride: usize, words: impl Iterator<Item = u16>) {
+pub(crate) fn write_words(
+    vram: &mut [u16],
+    to: VramWord,
+    stride: usize,
+    words: impl Iterator<Item = u16>,
+) {
     let start = usize::from(to.0);
     for (index, word) in words.enumerate() {
         let address = start.wrapping_add(index.wrapping_mul(stride)) & VRAM_ADDRESS_MASK;
