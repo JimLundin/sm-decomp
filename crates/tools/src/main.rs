@@ -10,8 +10,12 @@
 //! numbers.
 //!
 //! `tools gate LOCK BUNDLE ROM GREEN [--update] ROW...`: the free-run gate ([`gate`]).
+//!
+//! `tools localise LOCK BUNDLE CACHE ROM ROW...`: the free run's first differing frame per
+//! field against the record cache ([`localise`]).
 
 mod gate;
+mod localise;
 mod ratchet;
 
 use std::io::Write;
@@ -22,13 +26,18 @@ use verify::ratchet::Summary;
 const LOCKSTEP_USAGE: &str = "tools lockstep LOCK CACHE ROM ROW [FROM [TICKS]]";
 
 fn usage() -> String {
-    format!("usage: {LOCKSTEP_USAGE}\n       {}", gate::USAGE)
+    format!(
+        "usage: {LOCKSTEP_USAGE}\n       {}\n       {}",
+        gate::USAGE,
+        localise::USAGE
+    )
 }
 
 fn run(args: &[String]) -> Result<String, String> {
     match args {
         [command, rest @ ..] if command == "lockstep" => run_lockstep(rest),
         [command, rest @ ..] if command == "gate" => gate::run(rest),
+        [command, rest @ ..] if command == "localise" => localise::run(rest),
         _ => Err(usage()),
     }
 }

@@ -10,6 +10,7 @@ pub mod decode;
 pub mod enemy;
 pub mod fold;
 pub mod gate;
+pub mod localise;
 pub mod lock;
 pub mod lockstep;
 pub mod plm;

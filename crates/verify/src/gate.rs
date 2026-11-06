@@ -144,17 +144,27 @@ impl Seed {
     }
 }
 
-/// Runs `row` from `seed` for its frames with `pads` (one per frame, from frame 0) and
-/// the row's `Recorded` timing, folds the engine's outputs and compares them with the lock.
-#[must_use]
-pub fn free_run(row: &Row, seed: Seed, pads: &[Buttons], content: &Arc<Content>) -> FreeRun {
+/// Steps `row` freely from `seed`, giving `visit` each frame's State and cut.
+///
+/// The run has the row's frames, `pads` (one per frame, from frame 0) and the row's
+/// `Recorded` timing; `visit` sees the State the Tick ending at a frame left and the cut it
+/// ended at. The result is why the run stopped early, if it did.
+///
+/// The free-run gate folds what it visits; the localiser ([`crate::localise`]) compares it
+/// with the oracle's State at the same frame.
+pub fn step_freely(
+    row: &Row,
+    seed: Seed,
+    pads: &[Buttons],
+    content: &Arc<Content>,
+    mut visit: impl FnMut(Frame, &State, Cut),
+) -> Option<Stop> {
     let Seed {
         state: start,
         rules,
     } = seed;
     let timing = recorded(row);
-    let mut fold = EngineFold::default();
-    let stop = match Session::open(start, rules, Arc::clone(content)) {
+    match Session::open(start, rules, Arc::clone(content)) {
         Ok(mut session) => (0..row.frames.0).find_map(|index| {
             let frame = Frame(index);
             let pad = usize::try_from(index)
@@ -170,14 +180,24 @@ pub fn free_run(row: &Row, seed: Seed, pads: &[Buttons], content: &Arc<Content>)
                 timing: nmi_timing,
             }) {
                 Ok(output) => {
-                    fold_state(&mut fold, session.state(), cut(nmi_timing, output.nmi));
+                    visit(frame, session.state(), cut(nmi_timing, output.nmi));
                     None
                 }
                 Err(fault) => Some(Stop::Fault { frame, fault }),
             }
         }),
         Err(error) => Some(Stop::Open(error)),
-    };
+    }
+}
+
+/// Runs `row` from `seed` for its frames with `pads` (one per frame, from frame 0) and
+/// the row's `Recorded` timing, folds the engine's outputs and compares them with the lock.
+#[must_use]
+pub fn free_run(row: &Row, seed: Seed, pads: &[Buttons], content: &Arc<Content>) -> FreeRun {
+    let mut fold = EngineFold::default();
+    let stop = step_freely(row, seed, pads, content, |_, state, cut| {
+        fold_state(&mut fold, state, cut);
+    });
     let frames = FrameCount(fold.frames());
     FreeRun {
         report: row.compare(&fold.finish()),

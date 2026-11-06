@@ -784,7 +784,11 @@ fn compared_at(path: &str, quiescence: Quiescence) -> bool {
 
 /// The compared fields where `engine` and `oracle` differ, each as a difference whose path
 /// starts at the State, in the coverage table's order.
-fn differences(engine: &State, oracle: &State, quiescence: Quiescence) -> Vec<Difference> {
+pub(crate) fn differences(
+    engine: &State,
+    oracle: &State,
+    quiescence: Quiescence,
+) -> Vec<Difference> {
     COMPARATORS
         .iter()
         .filter(|comparator| decoded(comparator.path) && compared_at(comparator.path, quiescence))
