@@ -1188,3 +1188,63 @@ refresh at 536 on LakeSnes against anomie's 538 / nearest multiple of 8 to
 536) with an all-instruction trace of line 0 on both emulators, then rescore
 1102/K=0 and 1106/K=4 and take whichever zeroes; then (h)'s run with the
 print limit lifted, then fix 0005.
+
+## (r) lsnes's picture: the right frame, a PNG transport, compared as it shows
+
+**Question.** (o) left 53 lsnes pictures equal to LakeSnes's previous one, 6
+other, a 2.8x cost from the per-dot `pget` loop, and brightness below 15
+lossy. Which frame does the screenshot hold at the cut, what does a bulk read
+cost, how are fades compared, and do the streams hold past 17829?
+
+**Which frame.** lsnes calls `on_frame_emulated` from its frame output before
+it hands that frame to its screen buffer, and `on_frame` after the core
+returns (lsnes `mainloop.cpp` `output_frame`, read for the order only). So
+the screenshot in `on_frame_emulated` is the previous video frame; a record
+owed to the RTI (an NMI past line 241) is sent after the hand-over and so
+already held the right one. The server now sends boundary records from
+`on_frame` (`c2ab6e5eb`); the record's content is taken at the same points as
+before and non-stream records are unchanged.
+
+**Transport.** `bitmap:save_png()` (base64 PNG, one C++ call) replaces the
+`pget` loop; `crate::png` decodes it (base64, zlib inflate, PNG filters).
+`OH_PICTURE_DOTS=1` keeps the `pget` path; over any% 0-1000 the decoded RGB
+of all 1001 steps hashed equal to it (`01b2997f7`, a temporary hash print).
+
+**Comparison.** The picture is compared as the 8-bit colour each dot shows
+(HARNESS.md "The picture compared", `8f28a9a62`): exact at brightness 15,
+and below it equal exactly when no screenshot could tell the two apart.
+
+**Command.** `oracle cross ROM any.inputs --frames 0..1000 --streams`, private
+DLL from `8f28a9a62`; `oracle movie ROM any.inputs --frames 1001 --oracle lsnes
+[--streams]` (memories on) for lsnes alone.
+
+| Picture, any% 0-1000 | Steps equal of 1001 |
+| --- | --- |
+| (o): screenshot at `on_frame_emulated`, BGR555 | 942 |
+| screenshot at `on_frame`, BGR555 | 996 (401-403, 680, 681: brightness 0 or 3, read back as 1 or 4) |
+| screenshot at `on_frame`, as shown | 1001 (57,401,344 of 57,401,344 dots) |
+
+| Speed, 1001 steps | Seconds | Frames/s |
+| --- | --- | --- |
+| lsnes alone, no streams | 22.9 | 44 |
+| lsnes alone, streams, PNG | 28.8 | 35 |
+| lsnes alone, streams, `pget` | 72.0 | 14 |
+| cross, no streams ((o)) | 27.4 | |
+| cross, streams, `pget` | 82.6 | |
+| cross, streams, PNG | 32.3-33.3 | |
+
+**Past 17829.** `cross --frames 20000..21000 --streams --right-from
+020000.lss 20000` (`b755626ee`: lsnes from the any% ladder rung, LakeSnes
+from power-on through 19999 uncompared; 107 s): picture equal on 1001 of
+1001 steps, ppu equal throughout, vram, cgram, oam, frame and pad equal
+throughout; wram differs on 1-2 bytes and the cut on 509 steps (wait-loop
+NMI position, as in (i)). The APU log is empty on the resumed lsnes (0 CPU
+accesses against LakeSnes's 404 over the window), so it differs on 211 steps:
+the port callbacks, registered in the server's main chunk after its
+`load-state`, record nothing after a resume. Not fixed here; from power-on
+(0-1000) lsnes logs 845,053 accesses against LakeSnes's 845,048.
+
+**Conclusion.** The 53 late pictures were the callback order, not overrun or
+fade behaviour: each lsnes record now carries the picture scanned out in its
+video frame, dot-identical as shown to LakeSnes on 1001 of 1001 steps at
+0-1000 and 20000-21000. The streams cost lsnes 26% (was 3.1x).

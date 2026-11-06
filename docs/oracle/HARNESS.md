@@ -345,12 +345,34 @@ Expected, explainable mismatches:
 lsnes records the picture, the CPU's APU port accesses and `PpuRegisters`
 when asked (`Lsnes::record_streams`, the server's `T` request, before the
 first step); otherwise its records are unchanged. The picture is lsnes's
-screenshot after the frame boundary, mapped back from its 8-bit palette to
-BGR555: exact at brightness 15, without per-line brightness or forced blank.
+screenshot of the video frame the step ends in (taken in `on_frame`, once
+lsnes has handed that frame to its screen buffer), sent as lsnes's own PNG
+(`save_png()`, base64) and mapped back from its 8-bit palette to BGR555:
+exact at brightness 15, without per-line brightness or forced blank.
 The port log has the CPU side only. The PPU registers are rebuilt from bsnes's
 decoded fields in `memory.getregisters()`, without `nmitimen`, `htime`,
 `vtime`, `hdmaen` and `memsel`. Against LakeSnes on any% 0-1000:
-MEASUREMENTS.md (o).
+MEASUREMENTS.md (o), (r).
+
+### The picture compared
+
+Two pictures are equal when every dot shows the same 8-bit colour
+(`Picture::shown`, the `picture` part of `oracle cross`):
+
+- a dot's 5-bit components `c` at its line's master brightness `b` (0-15)
+  show as `round((b + 1) * c * 255 / 496)` each (`record::shown_channel`,
+  lsnes's lrgb palette for bsnes's dots);
+- a dot on a forced-blank line shows black.
+
+At brightness 15 this map is one-to-one, so equality is BGR555 equality.
+Below 15 it is not: lsnes's screenshot cannot tell some components apart,
+nor brightness 0 from 1 (level 1's values are all level 2's). The stored
+BGR555 dots and brightness are kept as each backend has them (LakeSnes:
+exact, per line; lsnes: the brightest level that produces the screenshot,
+the smallest component for each value), and both show the same 8-bit
+colours as the screenshot, so the comparison is exact where the picture is
+observable and blind only where no screenshot could tell. The BGR555 dots
+still differ there; `cross` prints both counts.
 
 ## Speed
 
