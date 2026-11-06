@@ -147,15 +147,20 @@ local function set_streams(rest)
         -- Registered from the main chunk only, as with every callback here.
         if not in_main then abort("APU log asked for after the first step"); return end
         apu_registered = true
-        for _, bank in ipairs({0x00, 0x80}) do
+        -- In every bank that maps the I/O page ($00-$3F, $80-$BF): the game
+        -- reaches the ports through its data bank too ($82, $85), not only
+        -- through $00 and $80.
+        for bank = 0x00, 0xBF do
             for port = 0, 3 do
-                local address = BUS + bank * 0x10000 + 0x2140 + port
-                memory.registerwrite(address, function(_, value)
-                    if streams.apu then apu_log[#apu_log + 1] = string.char(0, port, value) end
-                end)
-                memory.registerread(address, function(_, value)
-                    if streams.apu then apu_log[#apu_log + 1] = string.char(1, port, value) end
-                end)
+                if bank < 0x40 or bank >= 0x80 then
+                    local address = BUS + bank * 0x10000 + 0x2140 + port
+                    memory.registerwrite(address, function(_, value)
+                        if streams.apu then apu_log[#apu_log + 1] = string.char(0, port, value) end
+                    end)
+                    memory.registerread(address, function(_, value)
+                        if streams.apu then apu_log[#apu_log + 1] = string.char(1, port, value) end
+                    end)
+                end
             end
         end
     end
