@@ -565,3 +565,19 @@ concatenated over busy spans; `video` and `timing` every frame) producing
 bundle's pads and seed records, checked against the row's `Sha256` pins; the
 `Oracle` the gate expects (the `ReferenceProfile`'s); and the ratchet file of
 green (row, stream) pairs.
+
+**The span fold is shared** (lane `slice0-a3`, SLICE0 A3). The fold rules live in
+`data::span::SpanFold`: the `Stream` list, quiescence (`Cut::Requested`), the `timing`
+triple, the `apu` busy-span log of `PortAccess`es and the 1000-frame marks with the
+partial last span. `oracle::relock::Recorder` folds each `FrameRecord` through it (the
+schedules, typed streams and sidecar stay in the recorder), and `verify::fold::EngineFold`
+folds the engine's `EngineFrame`s (video memory, SRAM, the `ppu` digest once B5 has the
+encoder, port accesses, the shown picture) into an `EngineRow`; `wram` is not the
+engine's, so it is left out. `oracle relock-refold A SIDECAR_DIR` re-folds a recording's
+sidecars through `SpanFold::fold_digests` and checks the fold asks for exactly the
+streams each line folded and that every mark equals the entry's. On 2026-11-06 it gave
+0 mismatches on the section 7 proof's waves A and B (3 rows each) and on 618 rows, 413,120
+frames, of step d's wave A in progress; the section 7 altered copy C is caught (`death video
+DIFFERS`). The fold's cost on a record-shaped frame with every cut quiescent, the worst
+case, release build beside an 11-process recording: about 0.07 ms per frame without
+`wram`, 0.11 ms with it.
