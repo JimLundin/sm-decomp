@@ -59,7 +59,7 @@ local WAIT_ENTRIES = {0x808338, 0x858136, 0x8584A3}
 -- `REP #$30; JML handler`, then the handler's one epilogue, which pops what its
 -- prologue pushed (PLY PLX PLA PLD PLB RTI). A callback that stays registered
 -- there takes the cut. Unregistering a callback from inside lsnes's dispatcher
--- made lsnes call the freed entry (docs/oracle/HARNESS.md, "lsnes crashes").
+-- made lsnes call the freed entry (docs/ORACLE.md, Pitfalls: "lsnes crashes").
 local function find_rti()
     local function byte(address) return memory.readbyte(BUS + address) end
     assert(byte(NMI) == 0xC2 and byte(NMI + 1) == 0x30 and byte(NMI + 2) == 0x5C,

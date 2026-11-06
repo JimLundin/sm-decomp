@@ -325,7 +325,7 @@ fn block(
 
 /// 8-bit RGB dots, row by row, as a PNG: one IDAT of stored deflate blocks,
 /// unfiltered, so a dumped frame holds exactly the compared dots
-/// (docs/oracle/RELOCK.md §6, `--dump-frames`).
+/// (docs/ORACLE.md, RELOCK §6, `--dump-frames`).
 pub fn encode_rgb(width: usize, height: usize, rgb: &[u8]) -> Option<Vec<u8>> {
     let stride = width.checked_mul(3)?;
     if rgb.len() != stride.checked_mul(height)? {

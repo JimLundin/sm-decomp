@@ -1,5 +1,5 @@
 //! The digest of the verification streams, shared by the oracle's recorder and
-//! the engine's verifier so both sides compute the same marks (RELOCK §2).
+//! the engine's verifier so both sides compute the same marks (docs/ORACLE.md, RELOCK §2).
 //!
 //! Every committed lock digest depends on these constants. They were moved
 //! bit for bit from the old engine (git tag `archive/old-engine`).
@@ -57,7 +57,7 @@ pub fn fold(running: u64, value: u64) -> u64 {
 }
 
 /// The fold of `values` from the empty digest: a span's mark from its
-/// cuts' digests, and a row's digest from its marks (RELOCK Q1).
+/// cuts' digests, and a row's digest from its marks (docs/ORACLE.md, Q1).
 #[must_use]
 pub fn fold_all(values: impl IntoIterator<Item = u64>) -> u64 {
     values.into_iter().fold(Digest::default().0, fold)

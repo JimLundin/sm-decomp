@@ -1,10 +1,10 @@
-# Corpus scenarios (docs/SCENARIO_HARNESS.md, Formats). Candidate checks,
+# Corpus scenarios (relock inputs only, docs/ORACLE.md §6). Candidate checks,
 # not pass records: coverage stays incomplete while any `required` one is pending.
 # Inputs, seeds and checkpoints are private; scenarios/lock.toml pins them.
 version = 1
 domains = ["ram", "input", "samus", "camera", "room", "progress", "actors", "effects"]
 
-# Measured published-any% wait-entry inputs; regeneration: movies/README.md.
+# Measured published-any% wait-entry inputs; regeneration: docs/ORACLE.md, "Movies".
 # Before the fix, step330 wrote 0000 instead of the final highlighted tile0458.
 [[scenario]]
 id = "options-menu-return-parameter"
@@ -204,7 +204,7 @@ after_expectations = 120
 tags = ["required"]
 
 # Mother Brain's room by phase, each from its original-emulator phase seed
-# (movies/README.md, Mother Brain phase observations) through the next form change.
+# (docs/ORACLE.md, "Movies": the Mother Brain phase captures) through the next form change.
 [[scenario]]
 id = "mother-brain-glass"
 start = "seed:7f9ca83538b709b2c9e33a6546c06144711b731583646caab506fb9067abae8d"

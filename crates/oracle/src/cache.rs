@@ -1,4 +1,4 @@
-//! The lockstep cache's writing side (docs/architecture/SLICE0.md, lane A2).
+//! The lockstep cache's writing side (docs/ORACLE.md, the record cache).
 //!
 //! `corpus --cache DIR` plays each row from its frame pads and writes every frame's record
 //! to `DIR/<row>/`: `records.bin`, the records one after another in their own encoding

@@ -9,7 +9,7 @@
 //! every video frame.
 //!
 //! The new lock gives a pad per video frame instead (ARCHITECTURE D20,
-//! docs/oracle/RELOCK.md step b). A run under the Tick rule records the pad
+//! docs/ORACLE.md, RELOCK b1). A run under the Tick rule records the pad
 //! it presented at each frame ([`RowRun::pads`]) once; a run from those pads
 //! ([`Pads::Frames`]) knows every next pad, so it previews it and lsnes cuts
 //! every frame at its NMI's RTI, also where the NMI outlasts the frame.

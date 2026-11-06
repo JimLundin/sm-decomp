@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Re-cut the relock bundle's seed records with the PPU tier (`movie --ppu`) and
-# repack the bundle (docs/oracle/RELOCK.md §9). A lean record decodes its PPU
+# repack the bundle (docs/ORACLE.md, RELOCK §9). A lean record decodes its PPU
 # registers as the defaults, so the free-run gate's `ppu` stream differed from
 # frame 0.
 #

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The seed-cut plan of the lsnes re-lock (docs/oracle/RELOCK.md, step a1): every
+# The seed-cut plan of the lsnes re-lock (docs/ORACLE.md, RELOCK step a1): every
 # seed the lock's rows start from that NATIVE doesn't hold yet.
 #
 # Usage: tools/oracle/relock_plan.sh NATIVE LADDERS > PLAN

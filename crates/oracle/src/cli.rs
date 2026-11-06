@@ -232,7 +232,7 @@ fn movie(arguments: &[String]) {
             }
             "--no-picture" => picture = false,
             // lsnes only: the picture, the APU port log and the PPU registers
-            // with each record (MEASUREMENTS.md (o)).
+            // with each record (docs/ORACLE.md, MEASUREMENTS (o)).
             "--streams" => {
                 streams = Some(Tiers {
                     picture: true,
@@ -824,7 +824,7 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
 /// `corpus ROM LOCK DATA [--only ID]... [--limit N]`: run the lock's rows
 /// whose private data is restored under DATA (one directory per bundle) and
 /// compare each with its `faithful` entry.
-/// Frame-pad files (docs/oracle/RELOCK.md step b1), one set per row in a
+/// Frame-pad files (docs/ORACLE.md, RELOCK b1), one set per row in a
 /// directory: `ROW.pads` (the `.inputs` format, one pad per video frame),
 /// and from a run with memories `ROW.cuts` (each frame's cut and memory hash)
 /// and `ROW.end` (the last frame's work RAM).

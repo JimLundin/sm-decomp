@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build liboracle_lakesnes.a, the native half of crates/oracle: the pinned
 # upstream LakeSnes sources, unmodified, and the crate's bridge, compiled with
-# the project's pinned Zig 0.15.2 (docs/NATIVE_DEPENDENCIES.md).
+# the project's pinned Zig 0.15.2 (docs/ORACLE.md, "Toolchain").
 #
 # Usage: tools/oracle/build_lakesnes.sh [--target x86_64-windows-gnu|x86_64-linux-gnu]
 # Environment: ZIG (default: the sm-decomp-tools Zig, else zig on PATH),

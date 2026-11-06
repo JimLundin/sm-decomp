@@ -4,7 +4,7 @@
 -- Needs --debug.scriptWindow.allowIoOsAccess=true for io/os, and
 -- --snes.port1.type=SnesController (an empty settings.json has no pad).
 -- Delete the portable folder's Saves/ first: Mesen keeps SRAM between runs,
--- and a kept save changes the boot. See docs/oracle/MEASUREMENTS.md (g).
+-- and a kept save changes the boot. See docs/ORACLE.md, MEASUREMENTS (g).
 -- SM_MESEN_INPUTS: the pad file; SM_MESEN_LOG: a new output path;
 -- SM_MESEN_FRAMES: how many frames to log. Rows are cut at Mesen's
 -- startFrame (line 0); counter_line is the line of the frame's last $05B8

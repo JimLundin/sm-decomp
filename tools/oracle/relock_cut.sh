@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run a re-lock seed-cut plan (tools/oracle/relock_plan.sh; docs/oracle/RELOCK.md,
+# Run a re-lock seed-cut plan (tools/oracle/relock_plan.sh; docs/ORACLE.md, RELOCK
 # step a2): one lsnes `movie` run a window, a few at a time, then the
 # derivations, then the check.
 #

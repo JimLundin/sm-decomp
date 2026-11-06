@@ -1,4 +1,4 @@
-//! The engine's side of the span fold (RELOCK §8, step g).
+//! The engine's side of the span fold (docs/ORACLE.md, RELOCK §8).
 //!
 //! An engine run's per-frame outputs fold into an [`EngineRow`] through
 //! `data::span::SpanFold`, the fold the oracle's recorder uses, so both rows' marks come

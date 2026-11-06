@@ -1,4 +1,4 @@
-//! The format-2 lock (docs/oracle/RELOCK.md §2, step f): its reader and the comparison of
+//! The format-2 lock (docs/ORACLE.md, RELOCK §2 and §8): its reader and the comparison of
 //! an engine run's span marks with it, per (row, stream), with the row's green status (D22).
 //!
 //! `oracle::relock` writes the text; this reads exactly that. `verify` doesn't depend on
@@ -24,7 +24,7 @@ use text::{Line, Value};
 /// The record format this reader reads.
 pub const FORMAT: u64 = 2;
 
-/// A stream of the format-2 lock (RELOCK §2 "Streams").
+/// A stream of the format-2 lock (docs/ORACLE.md, RELOCK §2 "Streams").
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Stream {
     /// Video RAM at quiescent cuts.
@@ -281,7 +281,7 @@ pub enum FactResult {
     /// Evaluated on the decoded oracle State: whether it held.
     Holds(bool),
     /// Not evaluated on the oracle: `probe:` facts, and every fact until `tools relock`
-    /// evaluates them on the decoded State (RELOCK §6, what remains 1).
+    /// evaluates them on the decoded State (docs/ORACLE.md, RELOCK §6, what remains 1).
     Unevaluated,
 }
 

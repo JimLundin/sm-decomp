@@ -1,5 +1,6 @@
-//! Milliseconds per composed frame on a synthetic busy screen, against SLICE0's A5 target of
-//! at most 0.3. Run with `cargo run --release -p runtime --example compose_bench`.
+//! Milliseconds per composed frame on a synthetic busy screen, against ARCHITECTURE §12's
+//! compositor target of at most 0.3.
+//! Run with `cargo run --release -p runtime --example compose_bench`.
 //!
 //! The screen needs no ROM: pseudo-random tiles, maps and colours under the settings a
 //! Super Metroid room uses (Mode 1 with BG3 in front, BG1 and BG2 4bpp, BG3 2bpp, 64 sprites

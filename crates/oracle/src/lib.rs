@@ -1,5 +1,5 @@
 //! The oracle harness: the original, unmodified ROM on an emulator, recorded
-//! one video frame at a time (docs/oracle/HARNESS.md).
+//! one video frame at a time (docs/ORACLE.md).
 //!
 //! An [`Oracle`] is one emulator backend. Each [`Oracle::step`] runs one video
 //! frame with one pad word and returns the [`FrameRecord`] of the closed

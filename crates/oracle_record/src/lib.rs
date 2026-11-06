@@ -218,7 +218,7 @@ impl Picture {
     }
 
     /// Each scanned-out dot as the 8-bit R, G, B it shows, the picture's
-    /// compared form (docs/oracle/HARNESS.md, "The picture compared"): each
+    /// compared form (docs/ORACLE.md, "The picture compared"): each
     /// component at its line's brightness through [`shown_channel`], black on
     /// a forced-blank line.
     pub fn shown(&self) -> Vec<[u8; 3]> {

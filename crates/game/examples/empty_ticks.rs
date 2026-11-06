@@ -1,5 +1,6 @@
-//! Empty Ticks per second: the Session's fixed cost with no gameplay, against SLICE0's target
-//! of at least 50 000. Run with `cargo run --release -p game --example empty_ticks`.
+//! Empty Ticks per second: the Session's fixed cost with no gameplay, against ARCHITECTURE
+//! §12's target of at least 50 000.
+//! Run with `cargo run --release -p game --example empty_ticks`.
 
 use std::io::{self, Write};
 use std::process::ExitCode;

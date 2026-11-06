@@ -4,7 +4,7 @@
 //! **Contract.** For a frame whose register changes all fall between lines, the picture
 //! equals the oracle's `video` stream picture dot for dot: each dot is the PPU-domain
 //! 15-bit BGR after colour math and before the master brightness, and each line carries its
-//! master brightness and forced blank (docs/oracle/HARNESS.md, "The picture compared").
+//! master brightness and forced blank (docs/ORACLE.md, "The picture compared").
 //! The rules are the PPU's as `LakeSnes` (MIT, revision `9db90b8`) draws them: per dot, each
 //! mode's layer order front to back, the first opaque plane wins; sprites are evaluated on
 //! the line before; colour math, clip and the windows follow CGWSEL and CGADSUB.

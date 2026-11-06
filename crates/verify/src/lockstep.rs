@@ -1147,7 +1147,7 @@ impl fmt::Display for Report {
 }
 
 /// How a Tick's NMI arrived, from the cut it ran to. A cut with the NMI still running has no
-/// timing yet (SLICE0 B1 status).
+/// timing yet.
 const fn timing(cut: CutKind) -> Option<NmiTiming> {
     match cut {
         CutKind::Requested => Some(NmiTiming::OnTime),

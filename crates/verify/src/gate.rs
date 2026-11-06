@@ -1,4 +1,4 @@
-//! The free-run gate (ARCHITECTURE D22, RELOCK §8 step g).
+//! The free-run gate (ARCHITECTURE D22, docs/ORACLE.md, RELOCK §8).
 //!
 //! A row's free run from its start State under the `Recorded` timing source is folded as the
 //! recorder folds the oracle's records and compared with the row's lock; green (row, stream)

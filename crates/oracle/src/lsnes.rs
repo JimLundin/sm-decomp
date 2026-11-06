@@ -1,7 +1,7 @@
 //! The lsnes backend: lsnes rr2-beta23 (the bsnes v085 core that recorded the
 //! movies and seeds) as a separate process, driven by
 //! `tools/oracle/lsnes_server.lua` over its standard input and a record file.
-//! No emulator code is linked or copied (docs/oracle/HARNESS.md).
+//! No emulator code is linked or copied (docs/ORACLE.md).
 //!
 //! The cut is the instruction the NMI interrupted, reached again with the
 //! stack back where the NMI found it: the RTI has just completed. A frame in
@@ -588,7 +588,7 @@ impl Drop for Lsnes {
 }
 
 /// The SHA-256 of the server script this build runs: part of the oracle
-/// version a format-2 lock entry is keyed by (RELOCK §2).
+/// version a format-2 lock entry is keyed by (docs/ORACLE.md, RELOCK §2).
 pub fn server_sha256() -> String {
     crate::ladder::hex(&crate::ladder::sha256(SERVER.as_bytes()))
 }

@@ -1,4 +1,4 @@
-//! Lock format 2, the recording side (docs/oracle/RELOCK.md §2, step c).
+//! Lock format 2, the recording side (docs/ORACLE.md, RELOCK §2 and step c).
 //!
 //! A [`Recorder`] folds one row's video frames into span marks: each stream's
 //! digest of every 1000-frame span, folded from empty (Q1), the last span
@@ -81,7 +81,7 @@ impl span::Frame for RecordFrame<'_> {
 }
 
 /// The architectural PPU registers without the five lsnes doesn't expose
-/// (MEASUREMENTS (o); `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel` are not
+/// (docs/ORACLE.md, MEASUREMENTS (o); `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel` are not
 /// compared, RELOCK Q4), in declaration order.
 fn ppu_digest(ppu: &PpuRegisters) -> u64 {
     let PpuRegisters {
@@ -508,8 +508,8 @@ mod tests {
     }
 
     /// The writer writes `verify`'s reader fixture byte for byte, so the reader's tests
-    /// read exactly what this module writes (RELOCK step f). `oracle` can't depend on
-    /// `verify`, so the two share this file rather than a type.
+    /// read exactly what this module writes (docs/ORACLE.md, RELOCK step f). `oracle` can't
+    /// depend on `verify`, so the two share this file rather than a type.
     #[test]
     fn the_writer_writes_the_readers_fixture() {
         const ORACLE: crate::OracleId = crate::OracleId {

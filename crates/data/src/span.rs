@@ -1,4 +1,4 @@
-//! The span fold of the format-2 lock (RELOCK §2, §6).
+//! The span fold of the format-2 lock (docs/ORACLE.md, RELOCK §2 and §6).
 //!
 //! Which streams fold at which cuts, how the APU port log is joined over a busy span,
 //! and where a span's mark closes. The oracle's recorder and the engine's verifier both

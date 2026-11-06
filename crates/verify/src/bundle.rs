@@ -1,7 +1,7 @@
 //! What the free-run gate reads instead of a record cache: a row's seed and pads from the
 //! relock bundle's directory, and the engine's [`Content`] from the ROM.
 //!
-//! The bundle (`relock-v2-lsnes/`, RELOCK §7) holds `seeds/<capture>/NNNN.record`, the raw
+//! The bundle (`relock-v2-lsnes/`, docs/ORACLE.md §7) holds `seeds/<capture>/NNNN.record`, the raw
 //! lsnes record of the cut before the seed's first step, and `pads/<row>.pads`, the row's
 //! pad per frame. The lock pins the pads; the record is pinned through the bundle's
 //! ciphertext, whose SHA-256 the lock's `bundles` entry holds and CI checks on download.

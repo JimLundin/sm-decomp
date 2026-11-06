@@ -1,4 +1,4 @@
-//! Measurements for the architecture lane (docs/oracle/MEASUREMENTS.md): busy
+//! Measurements for the architecture lane (docs/ORACLE.md, appendix A): busy
 //! spans, door transitions, decompression calls, line timing of the IRQ and
 //! HDMA-object handlers, and the sound driver's port latency. Each reads a
 //! run's frame records; the few game addresses come from the bank logs

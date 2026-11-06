@@ -1,4 +1,4 @@
-//! The lockstep cache's reading side (docs/architecture/SLICE0.md, lane A2).
+//! The lockstep cache's reading side (docs/ORACLE.md, the record cache).
 //!
 //! `oracle corpus --cache DIR` writes each row's frame records to `DIR/<row>/`:
 //! `records.bin`, the records in `oracle_record::codec`'s encoding one after another, and

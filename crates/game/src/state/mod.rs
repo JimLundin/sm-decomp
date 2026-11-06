@@ -274,7 +274,7 @@ pub type StateSchema = Schema<State>;
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Fingerprint(pub u64);
 
-/// A saved State (FOUNDATION §4.6), encoded canonically.
+/// A saved State (ARCHITECTURE §14), encoded canonically.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Checkpoint {
     /// The schema that wrote it, always this build's.

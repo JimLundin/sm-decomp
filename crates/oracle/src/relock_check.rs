@@ -1,4 +1,4 @@
-//! Checking format-2 recordings against each other (docs/oracle/RELOCK.md §6,
+//! Checking format-2 recordings against each other (docs/ORACLE.md, RELOCK §7,
 //! step d). lsnes's `video` stream rarely differs between two runs of a row,
 //! so a lock is recorded at least twice and an entry is kept only where two
 //! recordings agree byte for byte.
