@@ -13,7 +13,13 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
-use game::state::room::{ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, MorphBallEye};
+use data::id::RoomId;
+use data::plm::PlmPopulation;
+use data::rom::Lorom;
+use data::room::{Progress, RoomError, Rooms, SLICE_ZERO_ROOMS};
+use game::state::room::{
+    ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, MorphBallEye, PLM_SLOTS, PlmBody, ScrollPlm,
+};
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
 use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, TickInput};
@@ -30,8 +36,9 @@ use crate::source::{self, WramWord};
 ///
 /// The rooms have the IDs the content gives them (`data::room::RoomMap::slice_zero`, the
 /// Morph Ball Room at `$8F:9E9F`), the species theirs (`data::enemy::SpeciesMap::slice_zero`).
-/// It holds no enemy programs or tiles definitions: [`RoomMap::with_programs`] and
-/// [`RoomMap::with_samus_tiles`] add the content's.
+/// It holds no enemy programs, tiles definitions or PLM populations:
+/// [`RoomMap::with_programs`], [`RoomMap::with_samus_tiles`] and [`RoomMap::with_plms`] add
+/// them.
 #[must_use]
 pub fn slice_zero_rooms() -> RoomMap {
     RoomMap {
@@ -42,7 +49,27 @@ pub fn slice_zero_rooms() -> RoomMap {
         species: data::enemy::SpeciesMap::slice_zero(),
         programs: data::enemy::program::EnemyPrograms::default(),
         samus_tiles: data::pose::tiles::SamusTiles::default(),
+        plms: Vec::new(),
     }
+}
+
+/// The PLM population of each room [`slice_zero_rooms`] holds, as it loads with no events
+/// set: the state slice 0's rows play in.
+///
+/// # Errors
+///
+/// [`RoomError`] if a room doesn't decode from `image`.
+pub fn slice_zero_plms(image: &[u8]) -> Result<Vec<(RoomId, PlmPopulation)>, RoomError> {
+    let (rooms, _) = Rooms::load(Lorom::new(image), &SLICE_ZERO_ROOMS)?;
+    Ok(rooms
+        .map()
+        .iter()
+        .filter_map(|(_, id)| {
+            let room = rooms.get(id)?;
+            let state = room.state(room.select(&Progress::default()))?;
+            Some((id, state.plms.clone()))
+        })
+        .collect())
 }
 
 /// One compared field: its coverage path and how to compare it.
@@ -89,6 +116,70 @@ macro_rules! enemy {
             },
         }
     };
+}
+
+/// A comparator for one common field of every PLM slot, compared slot by slot.
+macro_rules! plm {
+    ($path:literal, $($name:ident).+) => {
+        Comparator {
+            path: $path,
+            compare: |engine: &State, oracle: &State| {
+                let part = |state: &State| state.room.plms.slots.map(|slot| slot.common.$($name).+);
+                part(engine).diff(&part(oracle))
+            },
+        }
+    };
+}
+
+/// A comparator for one part of every PLM slot's body, absent where `$part` finds none.
+macro_rules! plm_body {
+    ($path:literal, $part:expr) => {
+        Comparator {
+            path: $path,
+            compare: |engine: &State, oracle: &State| {
+                let part = |state: &State| {
+                    state.room.plms.slots.map(|slot| match slot.occupancy {
+                        Occupancy::Free => None,
+                        Occupancy::Live(body) | Occupancy::Deleting(body) => $part(body),
+                    })
+                };
+                part(engine).diff(&part(oracle))
+            },
+        }
+    };
+}
+
+/// Each PLM slot's occupancy and its body's kind, without the parts their own rows compare.
+fn plm_occupant(state: &State) -> [Occupancy<PlmBody>; PLM_SLOTS] {
+    let quiet = |body: PlmBody| match body {
+        PlmBody::Scroll(_) => PlmBody::Scroll(ScrollPlm::default()),
+        PlmBody::ScrollTouch => PlmBody::ScrollTouch,
+        PlmBody::Item { item, .. } => PlmBody::Item {
+            item,
+            collected_bit: 0,
+        },
+    };
+    state.room.plms.slots.map(|slot| match slot.occupancy {
+        Occupancy::Free => Occupancy::Free,
+        Occupancy::Live(body) => Occupancy::Live(quiet(body)),
+        Occupancy::Deleting(body) => Occupancy::Deleting(quiet(body)),
+    })
+}
+
+/// A scroll PLM's own part.
+const fn scroll(body: PlmBody) -> Option<ScrollPlm> {
+    match body {
+        PlmBody::Scroll(scroll) => Some(scroll),
+        PlmBody::ScrollTouch | PlmBody::Item { .. } => None,
+    }
+}
+
+/// An item's collected bit.
+const fn collected_bit(body: PlmBody) -> Option<u16> {
+    match body {
+        PlmBody::Item { collected_bit, .. } => Some(collected_bit),
+        PlmBody::Scroll(_) | PlmBody::ScrollTouch => None,
+    }
 }
 
 /// Each enemy slot's occupancy without its AI words, which their own row compares.
@@ -357,6 +448,19 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.camera.scrollers.down", room.camera.scrollers.down),
     field!("room.camera.layer2_scroll.x", room.camera.layer2_scroll.x),
     field!("room.camera.layer2_scroll.y", room.camera.layer2_scroll.y),
+    plm!("room.plms.slots.common.block", block),
+    plm!("room.plms.slots.common.cursor.delay", cursor.delay),
+    Comparator {
+        path: "room.plms.slots.occupancy",
+        compare: |engine: &State, oracle: &State| plm_occupant(engine).diff(&plm_occupant(oracle)),
+    },
+    plm_body!("room.plms.slots.occupancy.changes", |body| scroll(body)
+        .map(|scroll| scroll.changes)),
+    plm_body!("room.plms.slots.occupancy.triggered", |body| scroll(body)
+        .map(|scroll| scroll.triggered)),
+    plm_body!("room.plms.slots.occupancy.step", |body| scroll(body)
+        .map(|scroll| scroll.step)),
+    plm_body!("room.plms.slots.occupancy.collected_bit", collected_bit),
     enemy!("room.enemies.slots.common.species", species),
     enemy!(
         "room.enemies.slots.common.position.x.pixels",

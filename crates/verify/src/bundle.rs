@@ -28,7 +28,7 @@ use oracle_record::lsnes::RawError;
 use crate::decode::{DecodeError, RoomMap};
 use crate::gate::{Seed, buttons};
 use crate::lock::{Row, RowId, Sha256, Start};
-use crate::lockstep::slice_zero_rooms;
+use crate::lockstep::{slice_zero_plms, slice_zero_rooms};
 
 /// Why a row's inputs can't be read from the bundle.
 #[derive(Debug)]
@@ -190,11 +190,18 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     })
 }
 
-/// The rooms the decoder knows, with the content's instruction lists and Samus's tiles
-/// definitions, so that occupied enemy slots and Samus's tile uploads decode.
-#[must_use]
-pub fn rooms(content: &Content) -> RoomMap {
-    slice_zero_rooms()
+/// The rooms the decoder knows, with what it needs to read every slot.
+///
+/// That is the content's instruction lists, Samus's tiles definitions and the rooms' PLM
+/// populations (read from the ROM `image`), so occupied enemy and PLM slots and Samus's tile
+/// uploads decode. `tools gate` and `tools lockstep` both build their map here, so the two
+/// can't drift.
+///
+/// # Errors
+/// When a room's header or state doesn't decode from the image.
+pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, data::room::RoomError> {
+    Ok(slice_zero_rooms()
         .with_programs(content.enemy_programs.clone())
         .with_samus_tiles(content.samus_tiles.clone())
+        .with_plms(slice_zero_plms(image)?))
 }

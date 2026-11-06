@@ -55,14 +55,10 @@ fn run_lockstep(args: &[String]) -> Result<String, String> {
         .ok_or_else(|| format!("{row}: not in the lock"))?;
     let cache = Cache::open(Path::new(cache), row).map_err(|error| error.to_string())?;
     let image = std::fs::read(rom).map_err(|error| format!("{rom}: {error}"))?;
-    let content = Arc::new(content(image).map_err(|error| format!("{rom}: {error}"))?);
-    let report = lockstep(
-        &cache,
-        &rooms(&content),
-        &content,
-        from..from.saturating_add(ticks),
-    )
-    .map_err(|error| error.to_string())?;
+    let content = Arc::new(content(image.clone()).map_err(|error| format!("{rom}: {error}"))?);
+    let rooms = rooms(&content, &image).map_err(|error| format!("{rom}: {error:?}"))?;
+    let report = lockstep(&cache, &rooms, &content, from..from.saturating_add(ticks))
+        .map_err(|error| error.to_string())?;
     Ok(report.to_string())
 }
 

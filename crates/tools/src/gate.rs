@@ -46,8 +46,8 @@ pub fn run(args: &[String]) -> Result<String, String> {
         Err(error) => return Err(format!("{green}: {error}")),
     };
     let image = std::fs::read(rom).map_err(|error| format!("{rom}: {error}"))?;
-    let content = Arc::new(content(image).map_err(|error| format!("{rom}: {error}"))?);
-    let rooms = rooms(&content);
+    let content = Arc::new(content(image.clone()).map_err(|error| format!("{rom}: {error}"))?);
+    let rooms = rooms(&content, &image).map_err(|error| format!("{rom}: {error:?}"))?;
     let mut out = String::new();
     let mut reports = Vec::new();
     for id in rows {

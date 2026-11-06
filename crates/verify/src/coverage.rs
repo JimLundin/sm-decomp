@@ -1,7 +1,7 @@
 //! Every State field with its decode status: the base of §11.2's coverage report, in which
 //! each field has a decode rule or a named reason it has no equivalent.
 
-use crate::source::{self, SlotField, WramBlock, WramByte, WramTable, WramWord};
+use crate::source::{self, SlotField, WramArray, WramBlock, WramByte, WramTable, WramWord};
 
 /// Where a decoded field comes from.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -16,6 +16,8 @@ pub enum Source {
     WramPointer(WramWord),
     /// A word of every slot in a work RAM table.
     WramSlots(WramTable, SlotField),
+    /// A word of every slot in a work RAM array of one word per slot.
+    WramArray(WramArray),
     /// The main thread's wait site and return chain: the cut's interrupted PC and the stack
     /// from `cpu.s`, through `strand::WAIT_SITES` and `strand::CALL_SITES`, with a message box
     /// lag countdown from `cpu.x`.
@@ -63,6 +65,13 @@ const fn enemy(path: &'static str, field: SlotField) -> Field {
     Field {
         path,
         status: Status::Decoded(Source::WramSlots(source::ENEMY_DATA, field)),
+    }
+}
+
+const fn plm(path: &'static str, array: WramArray) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramArray(array)),
     }
 }
 
@@ -359,7 +368,34 @@ pub const FIELDS: &[Field] = &[
     wram("room.camera.scrollers.down", source::DOWN_SCROLLER),
     wram_byte("room.camera.layer2_scroll.x", source::LAYER2_SCROLL_X),
     wram_byte("room.camera.layer2_scroll.y", source::LAYER2_SCROLL_Y),
-    open("room.plms"),
+    none(
+        "room.plms.slots.generation",
+        "the original keeps no count of a slot's fills; its ID word is the occupant",
+    ),
+    plm("room.plms.slots.common.block", source::PLM_BLOCK_INDICES),
+    // open: the label stays at its default until the PLM programs decode (B7).
+    open("room.plms.slots.common.cursor.at"),
+    plm(
+        "room.plms.slots.common.cursor.delay",
+        source::PLM_INSTRUCTION_TIMER,
+    ),
+    open("room.plms.slots.common.cursor.link"),
+    open("room.plms.slots.common.cursor.timer"),
+    // The variant and the item from the ID word, through the room's population.
+    plm("room.plms.slots.occupancy", source::PLM_HEADER_PTR),
+    plm(
+        "room.plms.slots.occupancy.changes",
+        source::PLM_ROOM_ARGUMENTS,
+    ),
+    plm("room.plms.slots.occupancy.triggered", source::PLM_VARIABLE),
+    plm(
+        "room.plms.slots.occupancy.step",
+        source::PLM_INSTR_LIST_PTRS,
+    ),
+    plm(
+        "room.plms.slots.occupancy.collected_bit",
+        source::PLM_ROOM_ARGUMENTS,
+    ),
     none(
         "room.enemies.slots.generation",
         "the original keeps no count of a slot's fills; its species word is the occupant",
@@ -487,7 +523,7 @@ pub const FIELDS: &[Field] = &[
 mod tests {
     use super::{FIELDS, Source, Status};
     use crate::decode::Rules;
-    use crate::source::{SlotField, WramByte, WramTable, WramWord};
+    use crate::source::{SlotField, WramArray, WramByte, WramTable, WramWord};
 
     #[test]
     fn paths_are_unique() {
@@ -702,12 +738,26 @@ mod tests {
         .collect()
     }
 
+    /// The per-slot arrays the decoder reads.
+    const fn array_sources(rules: &Rules<'_>) -> [WramArray; 6] {
+        let plms = &rules.plms;
+        [
+            plms.id,
+            plms.block,
+            plms.timer,
+            plms.instruction,
+            plms.argument,
+            plms.variable,
+        ]
+    }
+
     #[test]
     fn every_wram_rule_is_a_decoder_source() {
         let rules = Rules::ORIGINAL;
         let words = word_sources(&rules);
         let bytes = byte_sources(&rules);
         let slots = slot_sources(&rules);
+        let arrays = array_sources(&rules);
         let blocks = [
             rules.oam_buffer,
             rules.palette_buffer,
@@ -730,6 +780,9 @@ mod tests {
                 }
                 Status::Decoded(Source::WramSlots(table, slot)) => {
                     assert!(slots.contains(&(table, slot)), "{} isn't read", field.path);
+                }
+                Status::Decoded(Source::WramArray(array)) => {
+                    assert!(arrays.contains(&array), "{} isn't read", field.path);
                 }
                 Status::Decoded(Source::Record(_) | Source::Stack)
                 | Status::NoEquivalent(_)
@@ -757,6 +810,13 @@ mod tests {
                 "{}.{} has no row",
                 table.name,
                 field.name
+            );
+        }
+        for array in arrays {
+            assert!(
+                listed(Source::WramArray(array)),
+                "{} has no row",
+                array.name
             );
         }
         for block in blocks {

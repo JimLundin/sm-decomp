@@ -10,6 +10,7 @@ use std::fmt;
 use data::enemy::SpeciesMap;
 use data::enemy::program::EnemyPrograms;
 use data::id::{Line, RoomId};
+use data::plm::PlmPopulation;
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
@@ -40,6 +41,7 @@ use game::state::{
 use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
 
 use crate::enemy::EnemySources;
+use crate::plm::PlmSources;
 use crate::source::{self, WramBlock, WramByte, WramWord};
 use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
 
@@ -66,6 +68,8 @@ pub struct RoomMap {
     pub programs: EnemyPrograms,
     /// Samus's tiles definitions, by the pointers her tile uploads hold.
     pub samus_tiles: SamusTiles,
+    /// Each room's PLM population, which names the PLMs its slots hold.
+    pub plms: Vec<(RoomId, PlmPopulation)>,
 }
 
 impl RoomMap {
@@ -82,6 +86,26 @@ impl RoomMap {
             samus_tiles,
             ..self
         }
+    }
+
+    /// The map with `plms` as its rooms' PLM populations.
+    #[must_use]
+    pub fn with_plms(self, plms: Vec<(RoomId, PlmPopulation)>) -> Self {
+        Self { plms, ..self }
+    }
+
+    /// Room `room`'s PLM population: empty for a room the map has none for, so no PLM
+    /// decodes there.
+    #[must_use]
+    pub fn population(&self, room: RoomId) -> &PlmPopulation {
+        static EMPTY: PlmPopulation = PlmPopulation {
+            entries: Vec::new(),
+            scroll_changes: Vec::new(),
+        };
+        self.plms
+            .iter()
+            .find_map(|(known, population)| (*known == room).then_some(population))
+            .unwrap_or(&EMPTY)
     }
 
     /// The content's ID for the room whose header is at `header`.
@@ -342,6 +366,8 @@ pub struct Rules<'t> {
     pub vertical: VerticalSources,
     /// `message`.
     pub message: WramWord,
+    /// `room.plms`.
+    pub plms: PlmSources,
     /// `room.enemies`.
     pub enemies: EnemySources,
     /// `samus.animation`.
@@ -701,6 +727,7 @@ impl Rules<'_> {
         irq_command: source::CUR_IRQ_HANDLER,
         irq_next: source::IRQHANDLER_NEXT_HANDLER,
         message: source::MESSAGE_BOX_INDEX,
+        plms: PlmSources::ORIGINAL,
         enemies: EnemySources::ORIGINAL,
         animation: AnimationSources {
             frame: source::SAMUS_ANIM_FRAME,
@@ -854,6 +881,7 @@ impl Rules<'_> {
                     },
                     ..self.scrolling.read(wram)?
                 },
+                plms: self.plms.read(wram, rooms.population(room))?,
                 enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
                 drawing: EnemyDrawing {
                     hook: self.drawn_hook.read(wram)?,

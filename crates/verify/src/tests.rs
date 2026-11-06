@@ -7,13 +7,15 @@ use crate::enemy::AiVariables;
 use data::enemy::SpeciesMap;
 use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::id::{Line, RoomId, SpeciesId};
+use data::plm::{Extension, ItemPlm, PlmEntry, PlmKind, PlmPopulation, ScrollChangesId};
 use data::pose::tiles::{SamusTiles, TileDefinition, TileDefinitionId};
 use data::rom::{Lorom, RomAddress};
 use game::enemy::instructions::label;
 use game::state::room::{
-    Block, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy, EnemyBody,
-    EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, LayerBlending, PaletteIndex,
-    ScrollArea, SpritePalette, TilesIndex,
+    Block, BlockIndex, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy,
+    EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, LayerBlending,
+    PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep, SpritePalette,
+    TilesIndex,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, Horizontal,
@@ -21,7 +23,7 @@ use game::state::samus::{
     SuperSpecialCommand, Vertical, Visor, VisorShade, VisorTimer, YDirection,
 };
 use game::state::samus::{Fixed, Point};
-use game::state::slots::{Cursor, FlagSet, Frames, Label, Occupancy, Slot};
+use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot};
 use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
     MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
@@ -33,7 +35,7 @@ use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegist
 use crate::decode::{
     DecodeError, Memory, Quiescence, RoomHeader, RoomMap, Rules, Unsupported, decode,
 };
-use crate::source::{SlotField, WramByte, WramWord};
+use crate::source::{SlotField, WramArray, WramByte, WramWord};
 use crate::strand::StrandRules;
 
 /// The Morph Ball Room's header in bank $8F (bank $8F log).
@@ -52,6 +54,7 @@ fn rooms() -> RoomMap {
         species: SpeciesMap::slice_zero(),
         programs: programs(),
         samus_tiles: samus_tiles(),
+        plms: vec![(MORPH_BALL_ROOM_ID, population())],
     }
 }
 
@@ -244,7 +247,8 @@ fn put(wram: &mut [u8], offset: usize, word: u16) {
     wram[offset..offset.wrapping_add(2)].copy_from_slice(&word.to_le_bytes());
 }
 
-/// The synthetic enemy slots: a live eye in slot 0 and a deleting elevator in slot 1.
+/// The synthetic enemy slots, a live eye in slot 0 and a deleting elevator in slot 1, and
+/// the PLM slots.
 fn put_enemies(wram: &mut [u8]) {
     let eye = [EYE_SPRITEMAP, EYE_INSTRUCTION, EYE_BANK];
     put_enemy(wram, ENEMY_SLOT_0, EYE, 0x1000, eye);
@@ -253,6 +257,7 @@ fn put_enemies(wram: &mut [u8]) {
     let elevator = [ELEVATOR_SPRITEMAP, ELEVATOR_INSTRUCTION, ELEVATOR_BANK];
     put_enemy(wram, ENEMY_SLOT_1, ELEVATOR, 0x2000, elevator);
     put(wram, 0x0FC6, DELETED_PROPERTIES); // slot 1's properties
+    put_plms(wram);
 }
 
 /// Samus's tile uploads, both halves queued.
@@ -545,6 +550,7 @@ fn decodes_the_record(state: &State) -> bool {
                 line: Line(0x0021),
             }
         && decodes_the_enemies(state)
+        && decodes_the_plms(state)
 }
 
 #[test]
@@ -911,6 +917,183 @@ fn a_moved_or_restrided_enemy_table_fails() {
     let mut restrided = Rules::ORIGINAL;
     restrided.enemies.table.stride = restrided.enemies.table.stride.wrapping_add(2);
     assert!(!survives(&restrided));
+}
+
+/// The synthetic room's population: two scroll PLMs over lists `$8F:9F05` and `$8F:9F08`, an
+/// extension and the Morph Ball, whose collected bit is `$1A`.
+fn population() -> PlmPopulation {
+    let entry = |kind| PlmEntry { kind, x: 1, y: 2 };
+    PlmPopulation {
+        entries: vec![
+            entry(PlmKind::Scroll(ScrollChangesId(0))),
+            entry(PlmKind::Extension(Extension::Up)),
+            entry(PlmKind::Scroll(ScrollChangesId(1))),
+            entry(PlmKind::Item(ItemPlm::MorphBall, 0x1A)),
+        ],
+        scroll_changes: vec![
+            (RomAddress::new(0x8F, 0x9F05), Vec::new()),
+            (RomAddress::new(0x8F, 0x9F08), Vec::new()),
+        ],
+    }
+}
+
+/// Slot `slot`'s word in the PLM array at `array` (bank $84 log: one word per slot).
+fn plm_word(array: usize, slot: usize) -> usize {
+    array.wrapping_add(slot.wrapping_mul(2))
+}
+
+/// The PLM arrays: `PLM_HEADER_PTR`, `PLM_BLOCK_INDICES`, `PLM_INSTR_LIST_PTRS`,
+/// `PLM_ROOM_ARGUMENTS`, `PLM_VARIABLE` and `PLM_INSTRUCTION_TIMER`.
+const PLM_ID: usize = 0x1C37;
+const PLM_BLOCK: usize = 0x1C87;
+const PLM_INSTRUCTION: usize = 0x1D27;
+const PLM_ARGUMENT: usize = 0x1DC7;
+const PLM_VARIABLE: usize = 0x1E17;
+const PLM_TIMER: usize = 0xDE1C;
+
+/// The synthetic PLM slots: a sleeping scroll PLM in slot 39, a triggered one in 38, the
+/// Morph Ball in 37 and a scroll block touch PLM in 36; every slot's block and timer distinct,
+/// as a free slot keeps its last occupant's.
+fn put_plms(wram: &mut [u8]) {
+    for slot in 0..PLM_SLOTS {
+        let distinct = u16::try_from(slot).unwrap();
+        put(
+            wram,
+            plm_word(PLM_BLOCK, slot),
+            distinct.wrapping_add(0x100).wrapping_mul(2),
+        );
+        put(wram, plm_word(PLM_TIMER, slot), distinct.wrapping_add(0x40));
+    }
+    for (slot, id, argument, variable, instruction) in [
+        (39, 0xB703, 0x9F05, 0, 0xAF8A),
+        (38, 0xB703, 0x9F08, 0x8000, 0xAF8C),
+        (37, 0xEF23, 0x001A, 0, 0xE3EF),
+        (36, 0xB6FF, 0, 0, 0xAAE3),
+    ] {
+        put(wram, plm_word(PLM_ID, slot), id);
+        put(wram, plm_word(PLM_ARGUMENT, slot), argument);
+        put(wram, plm_word(PLM_VARIABLE, slot), variable);
+        put(wram, plm_word(PLM_INSTRUCTION, slot), instruction);
+    }
+}
+
+/// The PLM slots `put_plms` writes, decoded.
+fn decodes_the_plms(state: &State) -> bool {
+    let scroll = |changes, triggered, step| {
+        Occupancy::Live(PlmBody::Scroll(ScrollPlm {
+            changes: ScrollChangesId(changes),
+            triggered,
+            step,
+        }))
+    };
+    let occupancy = |slot: usize| match slot {
+        39 => scroll(0, false, ScrollStep::Sleep),
+        38 => scroll(1, true, ScrollStep::Update),
+        37 => Occupancy::Live(PlmBody::Item {
+            item: ItemPlm::MorphBall,
+            collected_bit: 0x1A,
+        }),
+        36 => Occupancy::Live(PlmBody::ScrollTouch),
+        _ => Occupancy::Free,
+    };
+    state
+        .room
+        .plms
+        .slots
+        .iter()
+        .enumerate()
+        .all(|(slot, decoded)| {
+            let distinct = u16::try_from(slot).unwrap();
+            *decoded
+                == Slot {
+                    generation: Generation::default(),
+                    common: PlmCommon {
+                        block: BlockIndex(distinct.wrapping_add(0x100)),
+                        cursor: Cursor {
+                            delay: Frames(distinct.wrapping_add(0x40)),
+                            ..Cursor::default()
+                        },
+                    },
+                    occupancy: occupancy(slot),
+                }
+        })
+}
+
+/// A place in `Rules` holding a PLM array.
+type ArrayRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramArray;
+
+/// Every PLM array the decoder reads.
+const ARRAY_RULES: [(&str, ArrayRule); 6] = [
+    ("id", |rules| &mut rules.plms.id),
+    ("block", |rules| &mut rules.plms.block),
+    ("timer", |rules| &mut rules.plms.timer),
+    ("instruction", |rules| &mut rules.plms.instruction),
+    ("argument", |rules| &mut rules.plms.argument),
+    ("variable", |rules| &mut rules.plms.variable),
+];
+
+#[test]
+fn every_moved_plm_array_fails() {
+    for (name, rule) in ARRAY_RULES {
+        // By a slot, so each slot reads the next one's word.
+        let mut moved = Rules::ORIGINAL;
+        let array = rule(&mut moved);
+        array.offset = array.offset.wrapping_add(2);
+        assert!(!survives(&moved), "{name}");
+        // Onto the next array of the table, `$50` bytes on.
+        let mut next = Rules::ORIGINAL;
+        let array = rule(&mut next);
+        array.offset = array.offset.wrapping_add(0x50);
+        assert!(!survives(&next), "{name} at the next array");
+    }
+}
+
+#[test]
+fn a_plm_word_outside_the_rooms_plms_is_unrepresentable() {
+    for (array, slot, value, source) in [
+        // An ID the room's population doesn't place: an extension, which deletes itself.
+        (PLM_ID, 30, 0xB647, "PLM_HEADER_PTR"),
+        (PLM_ID, 30, 0xC848, "PLM_HEADER_PTR"),
+        (PLM_BLOCK, 3, 0x0201, "PLM_BLOCK_INDICES"),
+        (PLM_ARGUMENT, 39, 0x9F0B, "PLM_ROOM_ARGUMENTS"),
+        (PLM_VARIABLE, 39, 0x0001, "PLM_VARIABLE"),
+        (PLM_INSTRUCTION, 39, 0xAF86, "PLM_INSTR_LIST_PTRS"),
+    ] {
+        let mut record = record();
+        put(&mut record.wram, plm_word(array, slot), value);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable { source, value }),
+            "{source}"
+        );
+    }
+}
+
+#[test]
+fn a_room_without_scroll_plms_runs_no_scroll_block_touch_plm() {
+    let mut rooms = rooms();
+    rooms.plms = vec![(
+        MORPH_BALL_ROOM_ID,
+        PlmPopulation {
+            entries: vec![PlmEntry {
+                kind: PlmKind::Item(ItemPlm::MorphBall, 0x1A),
+                x: 1,
+                y: 2,
+            }],
+            scroll_changes: Vec::new(),
+        },
+    )];
+    let mut record = record();
+    for slot in [39, 38] {
+        put(&mut record.wram, plm_word(PLM_ID, slot), 0);
+    }
+    assert_eq!(
+        decode(&record, &rooms),
+        Err(DecodeError::Unrepresentable {
+            source: "PLM_HEADER_PTR",
+            value: 0xB6FF
+        })
+    );
 }
 
 #[test]
@@ -1545,16 +1728,27 @@ fn a_scroll_byte_no_area_has_is_unrepresentable() {
     );
 }
 
+/// Both rows' frames from `SM_CACHE`, and the Morph Ball Room as content loads it.
+struct CachedRows {
+    /// The room as `RoomScoped::load` loads it.
+    loaded: game::state::room::RoomScoped,
+    /// Each frame that decodes, by row and frame.
+    frames: Vec<(String, State)>,
+    /// Each frame that doesn't, with why.
+    undecodable: Vec<(String, DecodeError)>,
+}
+
 /// Each row's frames decoded from `SM_CACHE`, with the Morph Ball Room's level as content
 /// loads it from `SM_ROM`; `None` where either isn't present (CI's Verify job has neither).
-fn cached_rows() -> Option<(game::state::room::RoomScoped, Vec<(String, State)>)> {
+fn cached_rows() -> Option<CachedRows> {
     use data::room::{Progress, RoomKey, Rooms, SLICE_ZERO_ROOMS};
     let cache = std::path::PathBuf::from(std::env::var_os("SM_CACHE")?);
     let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
     let content = crate::bundle::content(image.clone()).unwrap();
     let rooms = crate::lockstep::slice_zero_rooms()
         .with_programs(content.enemy_programs)
-        .with_samus_tiles(content.samus_tiles);
+        .with_samus_tiles(content.samus_tiles)
+        .with_plms(crate::lockstep::slice_zero_plms(&image).unwrap());
     let rom = data::rom::Rom::new(image).unwrap();
     let (loaded_rooms, _) = Rooms::load(rom.lorom(), &SLICE_ZERO_ROOMS).unwrap();
     let id = loaded_rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
@@ -1567,17 +1761,24 @@ fn cached_rows() -> Option<(game::state::room::RoomScoped, Vec<(String, State)>)
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
     let lock = crate::lock::Lock::parse(&std::fs::read_to_string(lock_path).unwrap()).unwrap();
     let mut frames = Vec::new();
+    let mut undecodable = Vec::new();
     for row in ["area-brinstar", "item-morph-ball"] {
         let row = lock.row(&crate::lock::RowId(row.to_owned())).unwrap();
         let cache = crate::cache::Cache::open(&cache, row).unwrap();
         for item in cache.records() {
             let (frame, record) = item.unwrap();
-            if let Ok(decoded) = decode(&record, &rooms) {
-                frames.push((format!("{}:{}", row.id.0, frame.0), decoded.state));
+            let name = format!("{}:{}", row.id.0, frame.0);
+            match decode(&record, &rooms) {
+                Ok(decoded) => frames.push((name, decoded.state)),
+                Err(error) => undecodable.push((name, error)),
             }
         }
     }
-    Some((loaded, frames))
+    Some(CachedRows {
+        loaded,
+        frames,
+        undecodable,
+    })
 }
 
 /// The shot block Samus shoots in `item-morph-ball`, a 1x1 block that doesn't reform.
@@ -1593,11 +1794,12 @@ const ITEM_CELL: usize = 5317;
 /// content's once `game::plm` spawns its population.
 #[test]
 fn the_cached_levels_are_the_loaded_rooms_but_for_the_item_shot_block_and_screen_13() {
-    let Some((loaded, frames)) = cached_rows() else {
+    let Some(CachedRows { loaded, frames, .. }) = cached_rows() else {
         return;
     };
-    // The frames the decoder represents: 1,896 of both rows since C6e's Samus tile rules.
-    assert_eq!(frames.len(), 1896);
+    // The frames the decoder represents: 1,484 of both rows since the PLM slots decode (the
+    // PLMs the engine doesn't run yet are unrepresentable).
+    assert_eq!(frames.len(), 1484);
     let mut differing = std::collections::BTreeMap::new();
     let mut screens = std::collections::BTreeSet::new();
     for (frame, state) in &frames {
@@ -1619,7 +1821,8 @@ fn the_cached_levels_are_the_loaded_rooms_but_for_the_item_shot_block_and_screen
         [ITEM_CELL, SHOT_CELL]
     );
     assert_eq!(differing[&ITEM_CELL], "area-brinstar:0");
-    assert_eq!(differing[&SHOT_CELL], "item-morph-ball:1236");
+    // The shot block PLM's 13 frames from 1,236 don't decode: the first after them.
+    assert_eq!(differing[&SHOT_CELL], "item-morph-ball:1249");
     // A scroll PLM turns screen 13 green from frame 92 of both rows: Samus touches its
     // trigger, which the special air inside reaction doesn't run yet.
     assert_eq!(screens.into_iter().collect::<Vec<_>>(), [13]);
@@ -1644,4 +1847,72 @@ fn the_face_blocks_words_round_trip_and_an_activated_word_past_1_is_unknown() {
         crate::enemy::face_block(AiVariables { a: 2, ..words }),
         Err(crate::enemy::UnknownWord { index: 0, value: 2 })
     );
+}
+
+/// The live PLMs in `plms`: each slot's index, block and body.
+fn live_plms(
+    plms: &game::state::slots::SlotStore<PlmCommon, PlmBody, PLM_SLOTS>,
+) -> Vec<(usize, BlockIndex, PlmBody)> {
+    plms.slots
+        .iter()
+        .enumerate()
+        .filter_map(|(slot, plm)| match plm.occupancy {
+            Occupancy::Free => None,
+            Occupancy::Live(body) | Occupancy::Deleting(body) => {
+                Some((slot, plm.common.block, body))
+            }
+        })
+        .collect()
+}
+
+/// Every frame of both rows decodes its PLM slots but where a PLM the engine doesn't run yet
+/// is live: the item collision detection PLM (`$84:EED3`, its list `$84:AAE3` a delete),
+/// spawned when Samus touches the Morph Ball and left live while the pickup's message box
+/// holds the PLM pass (C13), and the 1x1 shot block (`$84:D074`) Samus shoots. The live
+/// slots are the loaded room's: five scroll PLMs asleep and the item, once the extensions
+/// have freed theirs, until the item is collected.
+#[test]
+fn the_cached_plm_slots_are_the_loaded_rooms_population() {
+    let Some(rows) = cached_rows() else {
+        return;
+    };
+    let mut unrun = std::collections::BTreeMap::new();
+    for (frame, error) in &rows.undecodable {
+        if let DecodeError::Unrepresentable { source, value } = *error {
+            assert!(
+                !source.starts_with("PLM_") || source == "PLM_HEADER_PTR",
+                "{frame}"
+            );
+            if source == "PLM_HEADER_PTR" {
+                unrun
+                    .entry(value)
+                    .or_insert_with(Vec::new)
+                    .push(frame.as_str());
+            }
+        }
+    }
+    let first_and_count = |id| {
+        unrun
+            .get(&id)
+            .map(|frames: &Vec<&str>| (frames[0], frames.len()))
+    };
+    assert_eq!(unrun.len(), 2);
+    assert_eq!(first_and_count(0xEED3), Some(("item-morph-ball:817", 399)));
+    assert_eq!(first_and_count(0xD074), Some(("item-morph-ball:1236", 13)));
+
+    let loaded = live_plms(&rows.loaded.plms);
+    let item = |(_, _, body): &(usize, BlockIndex, PlmBody)| matches!(body, PlmBody::Item { .. });
+    assert_eq!(loaded.len(), 6);
+    assert_eq!(loaded.iter().filter(|plm| item(plm)).count(), 1);
+    let collected: Vec<_> = loaded.iter().filter(|plm| !item(plm)).copied().collect();
+    let mut first_collected = None;
+    for (frame, state) in &rows.frames {
+        let live = live_plms(&state.room.plms);
+        if live == collected {
+            first_collected.get_or_insert(frame.as_str());
+        } else {
+            assert_eq!(live, loaded, "{frame}");
+        }
+    }
+    assert_eq!(first_collected, Some("item-morph-ball:1217"));
 }

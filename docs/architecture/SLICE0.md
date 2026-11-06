@@ -219,9 +219,18 @@ the scroll block touch PLM (`$84:B6FF`, setup `$84:B393`) and `process` the PLM 
 them (`$84:85B4`, the timer, sleep `$84:86B4`, the air scroll update `$84:8B55`, delete
 `$84:AAE3`). On A2's cache the loaded room's blocks now equal every frame's but for the
 item's cell 5,317 (its list's draw, `$84:E407`, C12) and the shot block; screen 13 still
-differs from frame 92. Remaining: the special air inside reaction calling
-`touch_scroll_block`, the PLM pass in the Tick (needs `Content` to hold the rooms' PLMs),
-verify's decode of the PLM table (`room.plms` is `open`), and lockstep of both rows.
+differs from frame 92. `verify::plm` decodes the PLM table into `room.plms`: the 40-word
+arrays `PLM_HEADER_PTR` (`$1C37`, the ID through the room's population), `PLM_BLOCK_INDICES`
+(`$1C87`, halved), `PLM_INSTRUCTION_TIMER` (`$7E:DE1C`), and a scroll PLM's step, changes and
+triggered flag from `PLM_INSTR_LIST_PTRS` (`$AF8A` asleep, `$AF8C` update),
+`PLM_ROOM_ARGUMENTS` and `PLM_VARIABLE` (0 or `$8000`). On A2's cache every decoded frame's
+live slots are the loaded room's (slots 34 to 39, the item gone from `item-morph-ball` 1,217);
+no touch PLM or triggered scroll PLM is live at a cut. Two PLMs no `PlmBody` holds yet make
+412 frames unrepresentable (1,896 decoded before, 1,484 now): the item collision detection PLM
+`$84:EED3` through the pickup's message box (399 from `item-morph-ball` 817) and the 1x1 shot
+block `$84:D074` (13 from 1,236). Remaining: those two bodies, the special air inside reaction
+calling `touch_scroll_block`, the PLM pass in the Tick (needs `Content` to hold the rooms'
+PLMs), and lockstep of both rows.
 
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
