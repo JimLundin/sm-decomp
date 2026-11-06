@@ -34,8 +34,8 @@ const OAM_LOW_BYTES: usize = 0x200;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RoomHeader(pub u16);
 
-/// The rooms the decoder knows: each room header with the content's ID for it.
-// open: data's address map replaces this once the ROM decoder lists the rooms.
+/// The rooms the decoder knows: each room header with the content's ID for it, from
+/// `data::room::RoomMap` (see `lockstep::slice_zero_rooms`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct RoomMap {
     /// The known rooms.

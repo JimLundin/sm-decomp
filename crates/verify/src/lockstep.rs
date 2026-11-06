@@ -23,12 +23,15 @@ use crate::decode::{DecodeError, Decoded, Quiescence, RoomHeader, RoomMap, Unsup
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
 
-/// The rooms slice 0's rows play in: the Morph Ball Room (bank $8F log, header `$8F:9E9F`).
-// open: data's address map replaces this with the ROM's room list (SLICE0 B3).
+/// The rooms slice 0's rows play in, with the IDs the content gives them
+/// (`data::room::RoomMap::slice_zero`, the Morph Ball Room at `$8F:9E9F`).
 #[must_use]
 pub fn slice_zero_rooms() -> RoomMap {
     RoomMap {
-        rooms: vec![(RoomHeader(0x9E9F), data::id::RoomId(7))],
+        rooms: data::room::RoomMap::slice_zero()
+            .iter()
+            .filter_map(|(key, id)| key.room_pointer().map(|pointer| (RoomHeader(pointer), id)))
+            .collect(),
     }
 }
 
