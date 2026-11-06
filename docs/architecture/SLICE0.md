@@ -284,6 +284,18 @@ the item's block (the special collision reaction, BTS `$45`) and the shot reacti
 shootable BTS 4; the shot block's crumble in `process` (its draws write the block and the
 tilemap; its timer waits); the item's list (C12).
 
+**Item timer (`lane/slice0-plm-bodies`).** Done: `plm::process` counts an item's instruction
+timer and, when it runs out, reloads it to 4: whether the list is at its start (`$84:E3EF`,
+whose instructions run on to the first draw) or past either frame's draw (`$84:E407`), an
+untriggered item comes to a draw that draws the PLM and waits 4 frames (`$84:E04F`,
+`$84:E067`, `$84:E07F`), so the timer needs no place in the list. Open (C12): the GFX load,
+the collected check, the triggered pre-instruction (`$84:DF89`) and the pickup, and the draws'
+block and tilemap writes. Lockstep on A2's cache at `457ce4d` plus this lane, before and after
+(Ticks fully equal): `area-brinstar` 0 and 285 of 476; `item-morph-ball` 500 and 968 of 1,427.
+`room.plms.slots.common.cursor.delay` now differs on 0 Ticks of `area-brinstar` (476 before)
+and 16 of `item-morph-ball` (832), the first at 817: slot 33, the item collision PLM the
+engine doesn't spawn yet.
+
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
 (bank `$82` log, `$82:DB69`: signed compares against 60, the 99:59:59.59 cap from 100 hours),

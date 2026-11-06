@@ -201,3 +201,15 @@ fn the_pass_deletes_an_item_collision_plm_and_holds_a_shot_block() {
     assert_eq!(room.plms.slots[31].occupancy, Occupancy::Live(crumbling));
     assert_eq!(room.plms.slots[31].common.cursor.delay, Frames(1));
 }
+
+#[test]
+fn an_items_timer_shows_each_frame_for_4_passes() {
+    let mut room = loaded();
+    assert_eq!(room.plms.slots[38].common.cursor.delay, Frames(1));
+    let mut delays = Vec::new();
+    for _ in 0..6 {
+        process(&mut room, &population());
+        delays.push(room.plms.slots[38].common.cursor.delay.0);
+    }
+    assert_eq!(delays, [4, 3, 2, 1, 4, 3]);
+}

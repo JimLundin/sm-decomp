@@ -17,6 +17,9 @@ use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
 const SCROLL_TRIGGER: Bts = Bts(0x46);
 /// The item PLMs' block's BTS (`$84:EE67`): air the item collision detection looks for.
 const ITEM_BLOCK: Bts = Bts(0x45);
+/// How long an item shows each of its two frames: each draw instruction draws the PLM and
+/// waits 4 frames (`$84:E04F`, `$84:E067`, through `$84:E07F`).
+const ITEM_FRAME: Frames = Frames(4);
 
 /// A room state with no PLMs.
 static NO_PLMS: PlmPopulation = PlmPopulation {
@@ -212,8 +215,11 @@ fn update_scroll(
 
 /// The PLM pass (`$84:85B4`): each live PLM from the highest slot down. Its pre-instruction
 /// (an `RTS` for these) runs, its timer counts down, and when it runs out its list runs.
-// open: the PLMs-enabled flag (`$1C23`), the item's list (C12) and the shot block's crumble,
-// whose draws need the block and tilemap writes; their timers wait.
+// open: the PLMs-enabled flag (`$1C23`); the item's list past its timer (C12): the GFX load,
+// the collected check, the triggered pre-instruction and the pickup, and its draws' block and
+// tilemap writes; the shot block's crumble, whose draws need the same writes, its timer waits.
+// An untriggered item's list from its start or either frame comes to a draw, so its timer
+// counts without the list's place.
 pub fn process(room: &mut RoomScoped, population: &PlmPopulation) {
     for index in (0..room.plms.slots.len()).rev() {
         let Some(slot) = room.plms.slots.get_mut(index) else {
@@ -222,7 +228,7 @@ pub fn process(room: &mut RoomScoped, population: &PlmPopulation) {
         let Occupancy::Live(body) = slot.occupancy else {
             continue;
         };
-        if matches!(body, PlmBody::Item { .. } | PlmBody::ShotBlock { .. }) {
+        if matches!(body, PlmBody::ShotBlock { .. }) {
             continue;
         }
         // `$84:85E0`: the timer counts down, wrapping from 0 after a sleep.
@@ -245,7 +251,9 @@ pub fn process(room: &mut RoomScoped, population: &PlmPopulation) {
             }
             // `$84:AAE3`: delete.
             PlmBody::ScrollTouch | PlmBody::ItemCollision => slot.occupancy = Occupancy::Free,
-            PlmBody::Item { .. } | PlmBody::ShotBlock { .. } => {}
+            // The next frame's draw, then its wait (`$84:E407`, `$84:E40B`'s go-to back).
+            PlmBody::Item { .. } => slot.common.cursor.delay = ITEM_FRAME,
+            PlmBody::ShotBlock { .. } => {}
         }
     }
 }
