@@ -3,11 +3,14 @@
 //! The offsets here are written out again rather than taken from `source`, so a rule moved
 //! to the wrong address fails these tests.
 
-use data::id::{Line, RoomId};
+use data::enemy::SpeciesMap;
+use data::id::{Line, RoomId, SpeciesId};
+use game::state::room::{AiVariables, EnemyBody, EnemyCommon, PaletteIndex, TilesIndex};
 use game::state::samus::{
     Acceleration, Facing, Horizontal, Movement, MovementType, PoseId, PoseRecord, Speed,
 };
-use game::state::slots::Frames;
+use game::state::samus::{Fixed, Point};
+use game::state::slots::{Cursor, FlagSet, Frames, Occupancy, Slot};
 use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
     MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
@@ -19,7 +22,7 @@ use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegist
 use crate::decode::{
     DecodeError, Memory, Quiescence, RoomHeader, RoomMap, Rules, Unsupported, decode,
 };
-use crate::source::{WramByte, WramWord};
+use crate::source::{SlotField, WramByte, WramWord};
 use crate::strand::StrandRules;
 
 /// The Morph Ball Room's header in bank $8F (bank $8F log).
@@ -35,7 +38,115 @@ fn rooms() -> RoomMap {
             (RoomHeader(0x91F8), RoomId(1)),
             (MORPH_BALL_ROOM, MORPH_BALL_ROOM_ID),
         ],
+        species: SpeciesMap::slice_zero(),
     }
+}
+
+/// Enemy slot 0 in the synthetic record (bank $A0 log: `enemy_data` at $0F78, $40 a slot).
+const ENEMY_SLOT_0: usize = 0x0F78;
+/// Enemy slot 1.
+const ENEMY_SLOT_1: usize = 0x0FB8;
+/// The Morph Ball Room eye's header, `SpeciesMap::slice_zero`'s species 0.
+const EYE: u16 = 0xE6BF;
+/// The elevator's header, species 1.
+const ELEVATOR: u16 = 0xD73F;
+/// Slot 1's properties: deleted ($0200) and solid to Samus ($8000).
+const DELETED_PROPERTIES: u16 = 0x8200;
+
+/// An enemy slot whose every word past the species is `base` plus its offset, so a field
+/// read from a neighbouring offset, or a neighbouring slot, reads another value.
+fn put_enemy(wram: &mut [u8], slot: usize, species: u16, base: u16) {
+    put(wram, slot, species);
+    for offset in (0x02..0x40_u16).step_by(2) {
+        put(
+            wram,
+            slot.wrapping_add(usize::from(offset)),
+            base.wrapping_add(offset),
+        );
+    }
+}
+
+/// The slot `put_enemy` writes, decoded, with `properties` in place of its properties word.
+fn enemy_slot(
+    species: SpeciesId,
+    base: u16,
+    properties: u16,
+    occupancy: fn(EnemyBody) -> Occupancy<EnemyBody>,
+    body: fn(AiVariables) -> EnemyBody,
+) -> Slot<EnemyCommon, EnemyBody> {
+    let at = |offset: u16| base.wrapping_add(offset);
+    Slot {
+        common: EnemyCommon {
+            species,
+            position: Point {
+                x: Fixed {
+                    pixels: at(0x02),
+                    subpixels: at(0x04),
+                },
+                y: Fixed {
+                    pixels: at(0x06),
+                    subpixels: at(0x08),
+                },
+            },
+            radius_x: at(0x0A),
+            radius_y: at(0x0C),
+            properties: flags(properties),
+            extra_properties: flags(at(0x10)),
+            ai_handlers: flags(at(0x12)),
+            health: at(0x14),
+            timer: at(0x18),
+            cursor: Cursor {
+                delay: Frames(at(0x1C)),
+                ..Cursor::default()
+            },
+            palette: PaletteIndex(at(0x1E)),
+            tiles: TilesIndex(at(0x20)),
+            layer: at(0x22),
+            flash: Frames(at(0x24)),
+            frozen: Frames(at(0x26)),
+            invincibility: Frames(at(0x28)),
+            shake: Frames(at(0x2A)),
+            frame_counter: at(0x2C),
+            parameter_1: at(0x3C),
+            parameter_2: at(0x3E),
+        },
+        occupancy: occupancy(body(AiVariables {
+            a: at(0x30),
+            b: at(0x32),
+            c: at(0x34),
+            d: at(0x36),
+            e: at(0x38),
+            f: at(0x3A),
+        })),
+        ..Slot::default()
+    }
+}
+
+/// The set a slot's flag word holds: its bits in the enum's order.
+fn flags<E>(bits: u16) -> FlagSet<E> {
+    FlagSet {
+        bits: u32::from(bits),
+        ..FlagSet::default()
+    }
+}
+
+/// The enemy slots the synthetic record sets: a live eye in slot 0, a deleting elevator in
+/// slot 1, the rest free and zero.
+fn decodes_the_enemies(state: &State) -> bool {
+    let slots = &state.room.enemies.slots;
+    let eye = enemy_slot(SpeciesId(0), 0x1000, 0x100E, Occupancy::Live, |variables| {
+        EnemyBody::MorphBallEye { variables }
+    });
+    let elevator = enemy_slot(
+        SpeciesId(1),
+        0x2000,
+        DELETED_PROPERTIES,
+        Occupancy::Deleting,
+        |variables| EnemyBody::Elevator { variables },
+    );
+    slots.first() == Some(&eye)
+        && slots.get(1) == Some(&elevator)
+        && slots.iter().skip(2).all(|slot| *slot == Slot::default())
 }
 
 fn put(wram: &mut [u8], offset: usize, word: u16) {
@@ -98,6 +209,9 @@ fn record() -> FrameRecord {
     // The main loop's stack at Wait for NMI ($80:8338 PHP, PHB): S = $1FF0, then $1FF1 P,
     // $1FF2 DB, $1FF3-$1FF5 the JSL at $82:897A's return ($82:897D), $1FF6 the loop's P.
     wram[0x1FF3..0x1FF6].copy_from_slice(&[0x7D, 0x89, 0x82]);
+    put_enemy(&mut wram, ENEMY_SLOT_0, EYE, 0x1000);
+    put_enemy(&mut wram, ENEMY_SLOT_1, ELEVATOR, 0x2000);
+    put(&mut wram, 0x0FC6, DELETED_PROPERTIES); // slot 1's properties
 
     let vram: Vec<u16> = (0..=u16::MAX).step_by(2).collect();
     let cgram: Vec<u16> = (0..256_u16).map(|colour| colour.wrapping_mul(3)).collect();
@@ -238,6 +352,7 @@ fn decodes_the_record(state: &State) -> bool {
                 command: IrqCommand::GameplayHud,
                 line: Line(0x0021),
             }
+        && decodes_the_enemies(state)
 }
 
 #[test]
@@ -405,6 +520,79 @@ fn every_moved_rule_fails() {
         byte.offset = byte.offset.wrapping_add(1);
         assert!(!survives(&mutant), "{name}");
     }
+}
+
+/// A place in `Rules` holding an enemy slot field.
+type SlotRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut SlotField;
+
+/// Every enemy slot field the decoder reads.
+const SLOT_RULES: [(&str, SlotRule); 29] = [
+    ("species", |rules| &mut rules.enemies.species),
+    ("x", |rules| &mut rules.enemies.x),
+    ("x_subpixels", |rules| &mut rules.enemies.x_subpixels),
+    ("y", |rules| &mut rules.enemies.y),
+    ("y_subpixels", |rules| &mut rules.enemies.y_subpixels),
+    ("radius_x", |rules| &mut rules.enemies.radius_x),
+    ("radius_y", |rules| &mut rules.enemies.radius_y),
+    ("properties", |rules| &mut rules.enemies.properties),
+    ("extra_properties", |rules| {
+        &mut rules.enemies.extra_properties
+    }),
+    ("ai_handlers", |rules| &mut rules.enemies.ai_handlers),
+    ("health", |rules| &mut rules.enemies.health),
+    ("timer", |rules| &mut rules.enemies.timer),
+    ("instruction_timer", |rules| {
+        &mut rules.enemies.instruction_timer
+    }),
+    ("palette", |rules| &mut rules.enemies.palette),
+    ("tiles", |rules| &mut rules.enemies.tiles),
+    ("layer", |rules| &mut rules.enemies.layer),
+    ("flash", |rules| &mut rules.enemies.flash),
+    ("frozen", |rules| &mut rules.enemies.frozen),
+    ("invincibility", |rules| &mut rules.enemies.invincibility),
+    ("shake", |rules| &mut rules.enemies.shake),
+    ("frame_counter", |rules| &mut rules.enemies.frame_counter),
+    ("variables[0]", |rules| &mut rules.enemies.variables[0]),
+    ("variables[1]", |rules| &mut rules.enemies.variables[1]),
+    ("variables[2]", |rules| &mut rules.enemies.variables[2]),
+    ("variables[3]", |rules| &mut rules.enemies.variables[3]),
+    ("variables[4]", |rules| &mut rules.enemies.variables[4]),
+    ("variables[5]", |rules| &mut rules.enemies.variables[5]),
+    ("parameter_1", |rules| &mut rules.enemies.parameter_1),
+    ("parameter_2", |rules| &mut rules.enemies.parameter_2),
+];
+
+#[test]
+fn every_moved_enemy_field_fails() {
+    for (name, rule) in SLOT_RULES {
+        let mut mutant = Rules::ORIGINAL;
+        let field = rule(&mut mutant);
+        field.offset = field.offset.wrapping_add(2);
+        assert!(!survives(&mutant), "{name}");
+    }
+}
+
+#[test]
+fn a_moved_or_restrided_enemy_table_fails() {
+    let mut moved = Rules::ORIGINAL;
+    moved.enemies.table.offset = moved.enemies.table.offset.wrapping_add(2);
+    assert!(!survives(&moved));
+    let mut restrided = Rules::ORIGINAL;
+    restrided.enemies.table.stride = restrided.enemies.table.stride.wrapping_add(2);
+    assert!(!survives(&restrided));
+}
+
+#[test]
+fn an_unknown_species_is_unrepresentable() {
+    let mut record = record();
+    put(&mut record.wram, ENEMY_SLOT_1, 0xCEBF);
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::Unrepresentable {
+            source: "enemy_ptr",
+            value: 0xCEBF
+        })
+    );
 }
 
 #[test]

@@ -7,6 +7,7 @@
 
 use std::fmt;
 
+use data::enemy::SpeciesMap;
 use data::id::{Line, RoomId};
 use data::pose::{MovementType, POSE_COUNT};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap};
@@ -30,6 +31,7 @@ use game::state::{
 };
 use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
 
+use crate::enemy::EnemySources;
 use crate::source::{self, WramBlock, WramByte, WramWord};
 use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
 
@@ -44,11 +46,14 @@ const OAM_LOW_BYTES: usize = 0x200;
 pub struct RoomHeader(pub u16);
 
 /// The rooms the decoder knows: each room header with the content's ID for it, from
-/// `data::room::RoomMap` (see `lockstep::slice_zero_rooms`).
+/// `data::room::RoomMap`, and the species their enemies are (see
+/// `lockstep::slice_zero_rooms`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct RoomMap {
     /// The known rooms.
     pub rooms: Vec<(RoomHeader, RoomId)>,
+    /// The known species, by the header pointer an enemy slot holds.
+    pub species: SpeciesMap,
 }
 
 impl RoomMap {
@@ -302,6 +307,8 @@ pub struct Rules<'t> {
     pub horizontal: HorizontalSources,
     /// `message`.
     pub message: WramWord,
+    /// `room.enemies`.
+    pub enemies: EnemySources,
 }
 
 /// Where the original keeps the HUD.
@@ -455,6 +462,7 @@ impl Rules<'_> {
         irq_command: source::CUR_IRQ_HANDLER,
         irq_next: source::IRQHANDLER_NEXT_HANDLER,
         message: source::MESSAGE_BOX_INDEX,
+        enemies: EnemySources::ORIGINAL,
         pose: PoseSources {
             pose: source::SAMUS_POSE,
             facing: source::SAMUS_POSE_X_DIR,
@@ -562,6 +570,7 @@ impl Rules<'_> {
                         subpixels: self.camera_y_subpixels.read(wram)?,
                     },
                 },
+                enemies: self.enemies.read(wram, &rooms.species)?,
                 ..RoomScoped::default()
             },
             message: Message(self.message.read(wram)?),

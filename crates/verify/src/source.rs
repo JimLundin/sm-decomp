@@ -731,3 +731,109 @@ pub const HUD_ITEM_TILEMAP_PALETTE_BITS: WramWord = WramWord {
     name: "HUD_ITEM_TILEMAP_PALETTE_BITS",
     offset: 0x077C,
 };
+
+/// A table of equal-sized slots in work RAM, one per actor.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WramTable {
+    /// The `ram_map.rs` name.
+    pub name: &'static str,
+    /// The offset of slot 0 from $7E:0000.
+    pub offset: u16,
+    /// The bytes from one slot to the next.
+    pub stride: u16,
+}
+
+/// A word every slot of a table holds, at the same place in each.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SlotField {
+    /// The field's name in `sm_host`'s slot layout.
+    pub name: &'static str,
+    /// Its offset from the slot's start.
+    pub offset: u16,
+}
+
+impl WramTable {
+    /// Where `field` of slot `slot` is.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::WramTooShort`] when the word lies past bank $7E.
+    pub fn word(self, field: SlotField, slot: u16) -> Result<WramWord, DecodeError> {
+        slot.checked_mul(self.stride)
+            .and_then(|start| start.checked_add(self.offset))
+            .and_then(|start| start.checked_add(field.offset))
+            .map(|offset| WramWord {
+                name: field.name,
+                offset,
+            })
+            .ok_or(DecodeError::WramTooShort { source: field.name })
+    }
+}
+
+/// Bank $A0 log: the enemy slots, `$40` bytes each from `$0F78`.
+pub const ENEMY_DATA: WramTable = WramTable {
+    name: "enemy_data",
+    offset: 0x0F78,
+    stride: 0x40,
+};
+
+/// A field of an enemy slot (bank $A0 log, `$0F78` onward).
+const fn enemy(name: &'static str, offset: u16) -> SlotField {
+    SlotField { name, offset }
+}
+
+/// The species: the pointer to its header in bank $A0, zero in a free slot.
+pub const ENEMY_SPECIES: SlotField = enemy("enemy_ptr", 0x00);
+/// The centre's X, whole pixels.
+pub const ENEMY_X_POS: SlotField = enemy("x_pos", 0x02);
+/// The centre's X, subpixels.
+pub const ENEMY_X_SUBPOS: SlotField = enemy("x_subpos", 0x04);
+/// The centre's Y, whole pixels.
+pub const ENEMY_Y_POS: SlotField = enemy("y_pos", 0x06);
+/// The centre's Y, subpixels.
+pub const ENEMY_Y_SUBPOS: SlotField = enemy("y_subpos", 0x08);
+/// Half the width.
+pub const ENEMY_X_RADIUS: SlotField = enemy("x_width", 0x0A);
+/// Half the height.
+pub const ENEMY_Y_RADIUS: SlotField = enemy("y_height", 0x0C);
+/// The properties word.
+pub const ENEMY_PROPERTIES: SlotField = enemy("properties", 0x0E);
+/// The extra properties word.
+pub const ENEMY_EXTRA_PROPERTIES: SlotField = enemy("extra_properties", 0x10);
+/// The AI handler bits: 1 grapple, 2 hurt, 4 frozen.
+pub const ENEMY_AI_HANDLER_BITS: SlotField = enemy("ai_handler_bits", 0x12);
+/// Health left.
+pub const ENEMY_HEALTH: SlotField = enemy("health", 0x14);
+/// The general timer.
+pub const ENEMY_TIMER: SlotField = enemy("timer", 0x18);
+/// Frames until the next instruction.
+pub const ENEMY_INSTRUCTION_TIMER: SlotField = enemy("instruction_timer", 0x1C);
+/// The palette index.
+pub const ENEMY_PALETTE_INDEX: SlotField = enemy("palette_index", 0x1E);
+/// The VRAM tiles index.
+pub const ENEMY_VRAM_TILES_INDEX: SlotField = enemy("vram_tiles_index", 0x20);
+/// The layer it draws on.
+pub const ENEMY_LAYER: SlotField = enemy("layer", 0x22);
+/// The hurt flash timer.
+pub const ENEMY_FLASH_TIMER: SlotField = enemy("flash_timer", 0x24);
+/// The frozen timer.
+pub const ENEMY_FROZEN_TIMER: SlotField = enemy("frozen_timer", 0x26);
+/// The invincibility timer.
+pub const ENEMY_INVINCIBILITY_TIMER: SlotField = enemy("invincibility_timer", 0x28);
+/// The shake timer.
+pub const ENEMY_SHAKE_TIMER: SlotField = enemy("shake_timer", 0x2A);
+/// The frame counter.
+pub const ENEMY_FRAME_COUNTER: SlotField = enemy("frame_counter", 0x2C);
+/// The six AI words, `var_a` to `var_f`.
+pub const ENEMY_AI_VARIABLES: [SlotField; 6] = [
+    enemy("var_a", 0x30),
+    enemy("var_b", 0x32),
+    enemy("var_c", 0x34),
+    enemy("var_d", 0x36),
+    enemy("var_e", 0x38),
+    enemy("var_f", 0x3A),
+];
+/// The population's first parameter.
+pub const ENEMY_PARAMETER_1: SlotField = enemy("parameter_1", 0x3C);
+/// The population's second parameter.
+pub const ENEMY_PARAMETER_2: SlotField = enemy("parameter_2", 0x3E);

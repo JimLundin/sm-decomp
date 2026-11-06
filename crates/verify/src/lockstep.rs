@@ -13,7 +13,8 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
-use game::state::slots::Frames;
+use game::state::room::{AiVariables, ENEMY_SLOTS, EnemyBody};
+use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
 use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, TickInput};
 use oracle_record::{Cut, FrameRecord};
@@ -24,8 +25,10 @@ use crate::decode::{DecodeError, Decoded, Quiescence, RoomHeader, RoomMap, Unsup
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
 
-/// The rooms slice 0's rows play in, with the IDs the content gives them
-/// (`data::room::RoomMap::slice_zero`, the Morph Ball Room at `$8F:9E9F`).
+/// The rooms slice 0's rows play in and the species their enemies are.
+///
+/// The rooms have the IDs the content gives them (`data::room::RoomMap::slice_zero`, the
+/// Morph Ball Room at `$8F:9E9F`), the species theirs (`data::enemy::SpeciesMap::slice_zero`).
 #[must_use]
 pub fn slice_zero_rooms() -> RoomMap {
     RoomMap {
@@ -33,6 +36,7 @@ pub fn slice_zero_rooms() -> RoomMap {
             .iter()
             .filter_map(|(key, id)| key.room_pointer().map(|pointer| (RoomHeader(pointer), id)))
             .collect(),
+        species: data::enemy::SpeciesMap::slice_zero(),
     }
 }
 
@@ -54,6 +58,51 @@ macro_rules! speed {
             },
         }
     };
+}
+
+/// A comparator for one common field of every enemy slot, compared slot by slot.
+macro_rules! enemy {
+    ($path:literal, $($name:ident).+) => {
+        Comparator {
+            path: $path,
+            compare: |engine: &State, oracle: &State| {
+                let part = |state: &State| state.room.enemies.slots.map(|slot| slot.common.$($name).+);
+                part(engine).diff(&part(oracle))
+            },
+        }
+    };
+}
+
+/// Each enemy slot's occupancy without its AI words, which their own row compares.
+fn occupant(state: &State) -> [Occupancy<EnemyBody>; ENEMY_SLOTS] {
+    let quiet = |body: EnemyBody| match body {
+        EnemyBody::MorphBallEye { .. } => EnemyBody::MorphBallEye {
+            variables: AiVariables::default(),
+        },
+        EnemyBody::Elevator { .. } => EnemyBody::Elevator {
+            variables: AiVariables::default(),
+        },
+        EnemyBody::FaceBlock { .. } => EnemyBody::FaceBlock {
+            variables: AiVariables::default(),
+        },
+    };
+    state.room.enemies.slots.map(|slot| match slot.occupancy {
+        Occupancy::Free => Occupancy::Free,
+        Occupancy::Live(body) => Occupancy::Live(quiet(body)),
+        Occupancy::Deleting(body) => Occupancy::Deleting(quiet(body)),
+    })
+}
+
+/// Each enemy slot's AI words, absent in a free slot.
+fn variables(state: &State) -> [Option<AiVariables>; ENEMY_SLOTS] {
+    state.room.enemies.slots.map(|slot| match slot.occupancy {
+        Occupancy::Free => None,
+        Occupancy::Live(body) | Occupancy::Deleting(body) => Some(match body {
+            EnemyBody::MorphBallEye { variables }
+            | EnemyBody::Elevator { variables }
+            | EnemyBody::FaceBlock { variables } => variables,
+        }),
+    })
 }
 
 macro_rules! field {
@@ -244,6 +293,52 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.camera.x.subpixels", room.camera.x.subpixels),
     field!("room.camera.y.pixels", room.camera.y.pixels),
     field!("room.camera.y.subpixels", room.camera.y.subpixels),
+    enemy!("room.enemies.slots.common.species", species),
+    enemy!(
+        "room.enemies.slots.common.position.x.pixels",
+        position.x.pixels
+    ),
+    enemy!(
+        "room.enemies.slots.common.position.x.subpixels",
+        position.x.subpixels
+    ),
+    enemy!(
+        "room.enemies.slots.common.position.y.pixels",
+        position.y.pixels
+    ),
+    enemy!(
+        "room.enemies.slots.common.position.y.subpixels",
+        position.y.subpixels
+    ),
+    enemy!("room.enemies.slots.common.radius_x", radius_x),
+    enemy!("room.enemies.slots.common.radius_y", radius_y),
+    enemy!("room.enemies.slots.common.properties", properties),
+    enemy!(
+        "room.enemies.slots.common.extra_properties",
+        extra_properties
+    ),
+    enemy!("room.enemies.slots.common.ai_handlers", ai_handlers),
+    enemy!("room.enemies.slots.common.health", health),
+    enemy!("room.enemies.slots.common.timer", timer),
+    enemy!("room.enemies.slots.common.cursor.delay", cursor.delay),
+    enemy!("room.enemies.slots.common.palette", palette),
+    enemy!("room.enemies.slots.common.tiles", tiles),
+    enemy!("room.enemies.slots.common.layer", layer),
+    enemy!("room.enemies.slots.common.flash", flash),
+    enemy!("room.enemies.slots.common.frozen", frozen),
+    enemy!("room.enemies.slots.common.invincibility", invincibility),
+    enemy!("room.enemies.slots.common.shake", shake),
+    enemy!("room.enemies.slots.common.frame_counter", frame_counter),
+    enemy!("room.enemies.slots.common.parameter_1", parameter_1),
+    enemy!("room.enemies.slots.common.parameter_2", parameter_2),
+    Comparator {
+        path: "room.enemies.slots.occupancy",
+        compare: |engine: &State, oracle: &State| occupant(engine).diff(&occupant(oracle)),
+    },
+    Comparator {
+        path: "room.enemies.slots.occupancy.variables",
+        compare: |engine: &State, oracle: &State| variables(engine).diff(&variables(oracle)),
+    },
     field!("hud.tilemap", hud.tilemap),
     field!("hud.selected", hud.selected),
     field!("hud.auto_cancel", hud.auto_cancel),

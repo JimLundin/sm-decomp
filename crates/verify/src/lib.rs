@@ -7,6 +7,7 @@ pub mod bundle;
 pub mod cache;
 pub mod coverage;
 pub mod decode;
+pub mod enemy;
 pub mod fold;
 pub mod gate;
 pub mod lock;

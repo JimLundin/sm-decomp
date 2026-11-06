@@ -1,7 +1,7 @@
 //! Every State field with its decode status: the base of §11.2's coverage report, in which
 //! each field has a decode rule or a named reason it has no equivalent.
 
-use crate::source::{self, WramBlock, WramByte, WramWord};
+use crate::source::{self, SlotField, WramBlock, WramByte, WramTable, WramWord};
 
 /// Where a decoded field comes from.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -14,6 +14,8 @@ pub enum Source {
     WramBlock(WramBlock),
     /// A word of work RAM resolved through the content: a ROM pointer to an ID.
     WramPointer(WramWord),
+    /// A word of every slot in a work RAM table.
+    WramSlots(WramTable, SlotField),
     /// The main thread's wait site and return chain: the cut's interrupted PC and the stack
     /// from `cpu.s`, through `strand::WAIT_SITES` and `strand::CALL_SITES`, with a message box
     /// lag countdown from `cpu.x`.
@@ -54,6 +56,13 @@ const fn wram_byte(path: &'static str, byte: WramByte) -> Field {
     Field {
         path,
         status: Status::Decoded(Source::WramByte(byte)),
+    }
+}
+
+const fn enemy(path: &'static str, field: SlotField) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramSlots(source::ENEMY_DATA, field)),
     }
 }
 
@@ -284,7 +293,89 @@ pub const FIELDS: &[Field] = &[
     wram("room.camera.y.pixels", source::LAYER1_Y_POS),
     wram("room.camera.y.subpixels", source::LAYER1_Y_SUBPOS),
     open("room.plms"),
-    open("room.enemies"),
+    none(
+        "room.enemies.slots.generation",
+        "the original keeps no count of a slot's fills; its species word is the occupant",
+    ),
+    enemy("room.enemies.slots.common.species", source::ENEMY_SPECIES),
+    enemy(
+        "room.enemies.slots.common.position.x.pixels",
+        source::ENEMY_X_POS,
+    ),
+    enemy(
+        "room.enemies.slots.common.position.x.subpixels",
+        source::ENEMY_X_SUBPOS,
+    ),
+    enemy(
+        "room.enemies.slots.common.position.y.pixels",
+        source::ENEMY_Y_POS,
+    ),
+    enemy(
+        "room.enemies.slots.common.position.y.subpixels",
+        source::ENEMY_Y_SUBPOS,
+    ),
+    enemy("room.enemies.slots.common.radius_x", source::ENEMY_X_RADIUS),
+    enemy("room.enemies.slots.common.radius_y", source::ENEMY_Y_RADIUS),
+    enemy(
+        "room.enemies.slots.common.properties",
+        source::ENEMY_PROPERTIES,
+    ),
+    enemy(
+        "room.enemies.slots.common.extra_properties",
+        source::ENEMY_EXTRA_PROPERTIES,
+    ),
+    enemy(
+        "room.enemies.slots.common.ai_handlers",
+        source::ENEMY_AI_HANDLER_BITS,
+    ),
+    enemy("room.enemies.slots.common.health", source::ENEMY_HEALTH),
+    enemy("room.enemies.slots.common.timer", source::ENEMY_TIMER),
+    // The instruction pointer waits for the enemy program content (B7).
+    open("room.enemies.slots.common.cursor.at"),
+    enemy(
+        "room.enemies.slots.common.cursor.delay",
+        source::ENEMY_INSTRUCTION_TIMER,
+    ),
+    open("room.enemies.slots.common.cursor.link"),
+    open("room.enemies.slots.common.cursor.timer"),
+    enemy(
+        "room.enemies.slots.common.palette",
+        source::ENEMY_PALETTE_INDEX,
+    ),
+    enemy(
+        "room.enemies.slots.common.tiles",
+        source::ENEMY_VRAM_TILES_INDEX,
+    ),
+    enemy("room.enemies.slots.common.layer", source::ENEMY_LAYER),
+    enemy("room.enemies.slots.common.flash", source::ENEMY_FLASH_TIMER),
+    enemy(
+        "room.enemies.slots.common.frozen",
+        source::ENEMY_FROZEN_TIMER,
+    ),
+    enemy(
+        "room.enemies.slots.common.invincibility",
+        source::ENEMY_INVINCIBILITY_TIMER,
+    ),
+    enemy("room.enemies.slots.common.shake", source::ENEMY_SHAKE_TIMER),
+    enemy(
+        "room.enemies.slots.common.frame_counter",
+        source::ENEMY_FRAME_COUNTER,
+    ),
+    enemy(
+        "room.enemies.slots.common.parameter_1",
+        source::ENEMY_PARAMETER_1,
+    ),
+    enemy(
+        "room.enemies.slots.common.parameter_2",
+        source::ENEMY_PARAMETER_2,
+    ),
+    // The variant from the species word, `Deleting` from the properties' deleted bit.
+    enemy("room.enemies.slots.occupancy", source::ENEMY_SPECIES),
+    // The AI words, named by the first.
+    enemy(
+        "room.enemies.slots.occupancy.variables",
+        source::ENEMY_AI_VARIABLES[0],
+    ),
     Field {
         path: "hud.tilemap",
         status: Status::Decoded(Source::WramBlock(source::HUD_TILEMAP)),
@@ -307,7 +398,7 @@ pub const FIELDS: &[Field] = &[
 mod tests {
     use super::{FIELDS, Source, Status};
     use crate::decode::Rules;
-    use crate::source::{WramByte, WramWord};
+    use crate::source::{SlotField, WramByte, WramTable, WramWord};
 
     #[test]
     fn paths_are_unique() {
@@ -446,11 +537,46 @@ mod tests {
         ]
     }
 
+    /// The slot sources the decoder reads; an array of words is named by its first.
+    fn slot_sources(rules: &Rules<'_>) -> Vec<(WramTable, SlotField)> {
+        let enemies = &rules.enemies;
+        [
+            enemies.species,
+            enemies.x,
+            enemies.x_subpixels,
+            enemies.y,
+            enemies.y_subpixels,
+            enemies.radius_x,
+            enemies.radius_y,
+            enemies.properties,
+            enemies.extra_properties,
+            enemies.ai_handlers,
+            enemies.health,
+            enemies.timer,
+            enemies.instruction_timer,
+            enemies.palette,
+            enemies.tiles,
+            enemies.layer,
+            enemies.flash,
+            enemies.frozen,
+            enemies.invincibility,
+            enemies.shake,
+            enemies.frame_counter,
+            enemies.variables[0],
+            enemies.parameter_1,
+            enemies.parameter_2,
+        ]
+        .into_iter()
+        .map(|field| (enemies.table, field))
+        .collect()
+    }
+
     #[test]
     fn every_wram_rule_is_a_decoder_source() {
         let rules = Rules::ORIGINAL;
         let words = word_sources(&rules);
         let bytes = byte_sources(&rules);
+        let slots = slot_sources(&rules);
         let blocks = [
             rules.oam_buffer,
             rules.palette_buffer,
@@ -467,6 +593,9 @@ mod tests {
                 }
                 Status::Decoded(Source::WramBlock(block)) => {
                     assert!(blocks.contains(&block), "{} isn't read", field.path);
+                }
+                Status::Decoded(Source::WramSlots(table, slot)) => {
+                    assert!(slots.contains(&(table, slot)), "{} isn't read", field.path);
                 }
                 Status::Decoded(Source::Record(_) | Source::Stack)
                 | Status::NoEquivalent(_)
@@ -487,6 +616,14 @@ mod tests {
         }
         for byte in bytes {
             assert!(listed(Source::WramByte(byte)), "{} has no row", byte.name);
+        }
+        for (table, field) in slots {
+            assert!(
+                listed(Source::WramSlots(table, field)),
+                "{}.{} has no row",
+                table.name,
+                field.name
+            );
         }
         for block in blocks {
             assert!(
