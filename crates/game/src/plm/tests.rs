@@ -4,7 +4,9 @@ use data::rom::RomAddress;
 
 use super::*;
 use crate::state::CollectedItems;
-use crate::state::room::{BlockColumns, Crumble, ItemStep, PlmChoice, Tile, TileNumber};
+use crate::state::room::{
+    BlockColumns, Crumble, ItemGfx, ItemGfxSlot, ItemStep, PlmChoice, Tile, TileNumber,
+};
 
 /// A two-screen-wide, one-screen-high room of solid blocks, its screens red.
 fn room() -> RoomScoped {
@@ -104,9 +106,7 @@ fn spawns_take_the_highest_free_slot_and_extensions_free_theirs() {
         Occupancy::Live(PlmBody::Item {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1a,
-            step: ItemStep::Shown {
-                next: ItemFrame::First,
-            },
+            step: ItemStep::Spawned,
         })
     );
     assert_eq!(slots[38].generation.0, 3);
@@ -235,6 +235,84 @@ fn item_step(room: &RoomScoped) -> Option<ItemStep> {
     }
 }
 
+/// The room past the PLM pass after its load: the item's first run done.
+fn shown() -> RoomScoped {
+    let mut room = loaded();
+    process(&mut room, &mut CollectedItems::default(), &population());
+    room
+}
+
+/// The item's first run loads its GFX into the first slot, its blocks' entries now the
+/// Morph Ball's tiles, and the next load would take the second.
+#[test]
+fn an_items_first_run_loads_its_gfx_into_the_next_slot() {
+    let room = loaded();
+    assert_eq!(room.item_gfx, ItemGfx::default());
+    let room = shown();
+    assert_eq!(
+        room.item_gfx,
+        ItemGfx {
+            next: ItemGfxSlot(1),
+            loaded: [Some(ItemPlm::MorphBall), None, None, None],
+        }
+    );
+    assert_eq!(
+        item_step(&room),
+        Some(ItemStep::Shown {
+            next: ItemFrame::Second
+        })
+    );
+    assert_eq!(room.plms.slots[ITEM_SLOT].common.cursor.delay, Frames(4));
+}
+
+/// A second item in the room takes the second slot (`$1C2D` steps by 2).
+#[test]
+fn a_rooms_second_item_loads_into_the_second_slot() {
+    let mut population = population();
+    population
+        .entries
+        .push(entry(PlmKind::Item(ItemPlm::MorphBall, 0x1b), 22, 5));
+    let mut room = room();
+    spawn_population(&mut room, &population);
+    process(&mut room, &mut CollectedItems::default(), &population);
+    assert_eq!(room.item_gfx.next, ItemGfxSlot(2));
+    assert_eq!(
+        room.item_gfx.loaded,
+        [
+            Some(ItemPlm::MorphBall),
+            Some(ItemPlm::MorphBall),
+            None,
+            None
+        ]
+    );
+}
+
+/// A collected item's first run still loads its GFX, then goes to the empty item: air with
+/// tile `FFh` for a frame, then the delete (`$84:887C`, `$84:DFA9`).
+#[test]
+fn a_collected_items_first_run_draws_the_empty_item_and_deletes_it() {
+    let mut room = loaded();
+    let mut collected = CollectedItems::default();
+    collected.insert(0x1a);
+    process(&mut room, &mut collected, &population());
+    assert_eq!(room.item_gfx.next, ItemGfxSlot(1));
+    assert_eq!(item_step(&room), Some(ItemStep::Emptied));
+    let block = room.blocks[usize::from(ITEM.0)];
+    assert_eq!(block.kind, BlockKind::Air(Bts(0x45)));
+    assert_eq!(block.tile.number, TileNumber(0xff));
+    process(&mut room, &mut collected, &population());
+    assert_eq!(room.plms.slots[ITEM_SLOT].occupancy, Occupancy::Free);
+}
+
+/// A room argument with its sign bit set is never collected.
+#[test]
+fn a_negative_room_argument_is_never_collected() {
+    let mut collected = CollectedItems::default();
+    collected.insert(0x1a);
+    assert!(is_collected(&collected, 0x1a));
+    assert!(!is_collected(&collected, 0x801a));
+}
+
 #[test]
 fn an_items_draw_makes_its_block_the_special_block_samus_touches() {
     let mut room = loaded();
@@ -269,7 +347,7 @@ fn an_items_draws_turn_its_block_between_its_two_frames_tiles() {
 
 #[test]
 fn touching_an_item_spawns_the_collision_plm_and_triggers_the_item() {
-    let mut room = loaded();
+    let mut room = shown();
     touch_item_block(&mut room, ITEM).unwrap();
     // The collision PLM takes the highest free slot, its block moved to 0, its timer 1.
     let collision = &room.plms.slots[37];
@@ -292,7 +370,7 @@ fn an_item_touch_with_no_plm_on_its_block_is_the_originals_crash() {
 /// collected bit and the pickup calls out of the pass before the lower slots run.
 #[test]
 fn a_triggered_item_collects_its_bit_and_calls_out_of_the_pass() {
-    let mut room = loaded();
+    let mut room = shown();
     // The item's timer mid-wait: the pre-instruction resets it to 1 all the same.
     room.plms.slots[ITEM_SLOT].common.cursor.delay = Frames(3);
     touch_item_block(&mut room, ITEM).unwrap();

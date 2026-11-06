@@ -11,17 +11,18 @@ use data::enemy::SpeciesMap;
 use data::enemy::program::EnemyPrograms;
 use data::id::{Line, RoomId};
 use data::map::{MAP_BIT_BYTES, MapCells};
-use data::plm::PlmPopulation;
+use data::plm::{ItemPlm, PlmPopulation};
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
-use data::tileset::TilesetId;
+use data::tileset::{BlockTiles, TilesetId};
+use game::plm::item_gfx;
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap, MiniMap};
 use game::state::room::{
     Block, BlockColumns, BlockPoint, Camera, CameraDistance, DrawnBlocks, ElevatorArming,
     ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyDrawing, EnemyPaletteCycle, GlowSet,
-    GraphicsDrawnHook, Layer2Block, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped,
-    ScrollArea, Scrollers, SpritePalette, StaleScroll,
+    GraphicsDrawnHook, ITEM_GFX_SLOTS, ItemGfx, ItemGfxSlot, Layer2Block, Layer2Scroll,
+    Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers, SpritePalette, StaleScroll,
 };
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing,
@@ -439,8 +440,80 @@ pub struct Rules<'t> {
     pub area: WramWord,
     /// `room.tilemap_gap`.
     pub tilemap_gap: WramWord,
+    /// `room.item_gfx`.
+    pub item_gfx: ItemGfxSources,
     /// `video.batch.level`: BG1's, then BG2's.
     pub uploads: [LayerUploadSources; 2],
+}
+
+/// Where the original keeps the item GFX slots.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ItemGfxSources {
+    /// The slot the next load takes, times two.
+    pub next: WramWord,
+    /// Each slot's last load's arguments.
+    pub pointers: WramBlock,
+    /// The tile table entries the slots rewrite.
+    pub entries: WramBlock,
+}
+
+/// The bank $84 pointer to an item's GFX load's arguments in its list (`$84:8764`'s `Y`).
+const fn item_gfx_arguments(item: ItemPlm) -> u16 {
+    match item {
+        ItemPlm::MorphBall => 0xe3f1,
+    }
+}
+
+/// The items whose GFX loads the decoder names.
+const ITEM_GFX_ITEMS: [ItemPlm; 1] = [ItemPlm::MorphBall];
+
+impl ItemGfxSources {
+    /// The slots: a slot holds the item its pointer names while the tile table still holds
+    /// the entries that item's load wrote there. A room's load leaves the pointers and
+    /// restores the entries, so a stale pointer reads as nothing loaded.
+    fn read(self, wram: &[u8]) -> Result<ItemGfx, DecodeError> {
+        let doubled = self.next.read(wram)?;
+        let next = u8::try_from(doubled / 2)
+            .ok()
+            .filter(|&slot| doubled % 2 == 0 && usize::from(slot) < ITEM_GFX_SLOTS)
+            .ok_or(DecodeError::Unrepresentable {
+                source: self.next.name,
+                value: doubled,
+            })?;
+        let pointers = self.pointers.read(wram)?.as_chunks::<2>().0;
+        let entries = self.entries.read(wram)?.as_chunks::<16>().0;
+        let mut loaded = [None; ITEM_GFX_SLOTS];
+        for (((slot, held), pointer), written) in
+            (0..).zip(loaded.iter_mut()).zip(pointers).zip(entries)
+        {
+            let pointer = u16::from_le_bytes(*pointer);
+            *held = ITEM_GFX_ITEMS.into_iter().find(|&item| {
+                item_gfx_arguments(item) == pointer
+                    && block_bytes(item_gfx::entries(ItemGfxSlot(slot), item)) == *written
+            });
+        }
+        Ok(ItemGfx {
+            next: ItemGfxSlot(next),
+            loaded,
+        })
+    }
+}
+
+/// Two blocks' tile table entries as the table's bytes hold them.
+fn block_bytes(blocks: [BlockTiles; 2]) -> [u8; 16] {
+    let mut bytes = [0; 16];
+    let words = blocks.iter().flat_map(|tiles| {
+        [
+            tiles.top_left,
+            tiles.top_right,
+            tiles.bottom_left,
+            tiles.bottom_right,
+        ]
+    });
+    for (pair, word) in bytes.as_chunks_mut::<2>().0.iter_mut().zip(words) {
+        *pair = word.to_le_bytes();
+    }
+    bytes
 }
 
 /// Where the original keeps one background's level tilemap uploads.
@@ -1005,6 +1078,11 @@ impl Rules<'_> {
         },
         area: source::AREA_INDEX,
         tilemap_gap: source::SIZE_OF_BG2,
+        item_gfx: ItemGfxSources {
+            next: source::PLM_ITEM_GFX_INDEX,
+            pointers: source::PLM_ITEM_GFX_PTRS,
+            entries: source::ITEM_GFX_TILE_TABLE,
+        },
         uploads: [
             LayerUploadSources {
                 column: source::BG1_COLUMN_UPDATE,
@@ -1159,6 +1237,7 @@ impl Rules<'_> {
                 ..self.scrolling.read(wram)?
             },
             plms: self.plms.read(wram, rooms.population(room))?,
+            item_gfx: self.item_gfx.read(wram)?,
             enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
             drawing: EnemyDrawing {
                 hook: self.drawn_hook.read(wram)?,

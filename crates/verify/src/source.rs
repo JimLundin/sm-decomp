@@ -648,6 +648,28 @@ pub const PLM_ID: WramWord = WramWord {
     offset: 0x1C27,
 };
 
+/// Bank $84 log, `$84:8764`: the item GFX slot the next item's load takes, times two.
+pub const PLM_ITEM_GFX_INDEX: WramWord = WramWord {
+    name: "PLM_ITEM_GFX_INDEX",
+    offset: 0x1C2D,
+};
+
+/// Bank $84 log, `$84:8784`: each item GFX slot's last load's arguments, a bank $84 pointer
+/// each. A room's load leaves them; unpausing reloads them (`$84:8232`).
+pub const PLM_ITEM_GFX_PTRS: WramBlock = WramBlock {
+    name: "PLM_ITEM_GFX_PTRS",
+    offset: 0x1C2F,
+    len: 8,
+};
+
+/// Bank $84 log, `$84:87BC`: the tile table entries the item GFX slots rewrite, blocks `8Eh`
+/// to `95h` of `tile_table` (`$7E:A000`), eight bytes each.
+pub const ITEM_GFX_TILE_TABLE: WramBlock = WramBlock {
+    name: "tile_table",
+    offset: 0xA470,
+    len: 0x40,
+};
+
 /// Bank $85 log: the message box animation's Y radius, which open and close step by $200.
 pub const MESSAGE_BOX_ANIMATION_Y_RADIUS: WramWord = WramWord {
     name: "MESSAGE_BOX_ANIMATION_Y_RADIUS",

@@ -237,6 +237,9 @@ pub enum ItemFrame {
 /// Where an item is in its instruction list (bank $84 log, the Morph Ball's `$84:E3EF`).
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ItemStep {
+    /// Spawned, at its list's start: its first run loads its GFX (`$84:8764`), checks whether
+    /// it is collected (`$84:887C`) and draws frame 0 or the empty item.
+    Spawned,
     /// Drawing its two frames in turn (`$84:E407`), `next` the one its timer waits for.
     Shown {
         /// The frame its next draw draws.
@@ -292,7 +295,6 @@ pub enum PlmBody {
     /// touched block, and its list deletes it (`$84:AAE3`).
     ScrollTouch,
     /// An item.
-    // open: its GFX load and the collected check at its list's start.
     Item {
         /// Which item.
         item: ItemPlm,
@@ -793,6 +795,27 @@ impl From<StaleScroll> for u8 {
     }
 }
 
+/// The item GFX slots an item's load takes in turn (bank $84 log, `$84:8764`).
+pub const ITEM_GFX_SLOTS: usize = 4;
+
+/// One of the item GFX slots: each holds an item's tiles and two blocks' tile table entries.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ItemGfxSlot(pub u8);
+
+/// The item GFX slots (`$84:8764`): the one the next item's load takes, and each one's item.
+///
+/// A room's load clears them (`$84:83C3`), and its tile table's decompression restores the
+/// blocks the loads rewrote.
+// open: unpausing reloads every slot's last item, from earlier rooms too (`$84:8232`);
+// slice 0 never pauses.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ItemGfx {
+    /// The slot the next load takes.
+    pub next: ItemGfxSlot,
+    /// The item each slot holds since the room loaded.
+    pub loaded: [Option<ItemPlm>; ITEM_GFX_SLOTS],
+}
+
 /// Everything room-scoped.
 // open: FX, enemy projectiles, sprite objects, Samus's projectiles and the visual effects
 // (HDMA objects, palette FX, animated tiles, layer blending) join with their domains.
@@ -830,6 +853,8 @@ pub struct RoomScoped {
     pub camera: Camera,
     /// The PLMs.
     pub plms: SlotStore<PlmCommon, PlmBody, PLM_SLOTS>,
+    /// The item GFX slots the room's items loaded.
+    pub item_gfx: ItemGfx,
     /// The enemies.
     pub enemies: SlotStore<EnemyCommon, EnemyBody, ENEMY_SLOTS>,
     /// The enemies to draw this frame.

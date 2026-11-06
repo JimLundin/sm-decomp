@@ -514,6 +514,8 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     plm::spawn_population(&mut state.room, &population);
     let block = BlockIndex(2 * 16 + 4);
     let item = |state: &State| state.room.plms.slots[39].occupancy;
+    // The item's first run: its GFX load and frame 0's draw.
+    plm::process(&mut state.room, &mut state.collected_items, &population);
     plm::touch_item_block(&mut state.room, block).unwrap();
     let callout = plm::process(&mut state.room, &mut state.collected_items, &population);
     let slot = SlotIndex(39, PhantomData);

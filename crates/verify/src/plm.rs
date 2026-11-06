@@ -40,6 +40,13 @@ const ROOM_BANK: u8 = 0x8f;
 const SCROLL_SLEEP: u16 = 0xaf8a;
 /// Touched: the air scroll update (`$84:AF8C`), where the touch PLM's setup steps it.
 const SCROLL_UPDATE: u16 = 0xaf8c;
+/// An item's instruction pointer from its spawn to its first run: its list's start, the GFX
+/// load (`$84:8764`).
+const fn item_list(item: ItemPlm) -> u16 {
+    match item {
+        ItemPlm::MorphBall => 0xe3ef,
+    }
+}
 /// An item's instruction pointer inside its pickup's message box: its link (`$84:DF89`
 /// leaves it there and the pickup's instructions run from `Y`).
 const fn item_link(item: ItemPlm) -> u16 {
@@ -179,6 +186,7 @@ impl PlmSources {
                         item,
                         collected_bit: word(self.argument)?,
                         step: match word(self.instruction)? {
+                            at if at == item_list(item) => ItemStep::Spawned,
                             at if at == item_link(item) => ItemStep::InBox,
                             EMPTY_ITEM_DELETE => ItemStep::Emptied,
                             _ if word(self.variable)? & 0x00ff == ITEM_TRIGGERED => {

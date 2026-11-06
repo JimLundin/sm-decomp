@@ -111,16 +111,17 @@ impl Level<'_> {
         }
     }
 
-    /// The four tilemap words the block at `index` draws, with its flips.
+    /// The four tilemap words the block at `index` draws, with its flips: the entry an item's
+    /// GFX load rewrote in the original's tile table, else the tileset's.
     ///
     /// A block word past the level data, or a tile number past what the tile tables fill,
     /// reads stale RAM in the original; the engine draws tile 0's words or zero words there
     /// (docs/LEGACY.md).
     fn drawn(self, layer: Layer, index: u16) -> Drawn {
         let tile = Tile::from_word(self.word(layer, index).unwrap_or_default());
-        let tiles = self
-            .tables
-            .block(self.room.area, self.room.tileset, tile.number.0)
+        let number = tile.number.0;
+        let tiles = crate::plm::item_gfx::block(&self.room.item_gfx, number)
+            .or_else(|| self.tables.block(self.room.area, self.room.tileset, number))
             .unwrap_or_default();
         Drawn::of(tiles, tile)
     }

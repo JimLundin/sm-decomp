@@ -18,7 +18,7 @@ use game::state::room::{
     ItemStep, LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm,
     ScrollStep, SpritePalette, TilesIndex,
 };
-use game::state::room::{BlockPoint, DrawnBlocks};
+use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, Horizontal,
     Jump, Movement, MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial,
@@ -885,6 +885,40 @@ fn an_acceleration_mode_past_2_or_a_momentum_flag_past_1_is_an_error() {
     }
 }
 
+/// The item GFX slots decode from the next slot word, each slot's pointer and the tile table
+/// entries the slots rewrite (`$84:8764`): slot 0 holds the Morph Ball, its entries the
+/// load's; slot 1's pointer names it too, but its entries are another room's tile table's.
+#[test]
+fn an_item_gfx_slot_holds_its_item_while_the_tile_table_holds_its_entries() {
+    let mut record = record();
+    put(&mut record.wram, 0x1C2D, 0x0004); // PLM_ITEM_GFX_INDEX: slot 2 next
+    put(&mut record.wram, 0x1C2F, 0xE3F1); // PLM_ITEM_GFX_PTRS: the Morph Ball's arguments
+    put(&mut record.wram, 0x1C31, 0xE3F1);
+    for (tile, offset) in (0x03E0..0x03E8).zip((0xA470..).step_by(2)) {
+        put(&mut record.wram, offset, tile); // tile_table, block 8Eh on
+    }
+    put(&mut record.wram, 0xA480, 0x0338);
+    let state = decode(&record, &rooms()).unwrap().state;
+    assert_eq!(
+        state.room.item_gfx,
+        ItemGfx {
+            next: ItemGfxSlot(2),
+            loaded: [Some(ItemPlm::MorphBall), None, None, None],
+        }
+    );
+    // An odd slot word or one past the fourth slot is no slot.
+    for value in [0x0003, 0x0008] {
+        put(&mut record.wram, 0x1C2D, value);
+        assert_eq!(
+            decode(&record, &rooms()),
+            Err(DecodeError::Unrepresentable {
+                source: "PLM_ITEM_GFX_INDEX",
+                value
+            })
+        );
+    }
+}
+
 #[test]
 fn a_hook_or_cycle_word_outside_the_glow_is_unrepresentable() {
     // Another hook, the glow's address in another bank, half a palette, a colour set past 7.
@@ -1214,9 +1248,7 @@ fn decodes_the_plms(state: &State) -> bool {
         37 => Occupancy::Live(PlmBody::Item {
             item: ItemPlm::MorphBall,
             collected_bit: 0x1A,
-            step: ItemStep::Shown {
-                next: ItemFrame::First,
-            },
+            step: ItemStep::Spawned,
         }),
         36 => Occupancy::Live(PlmBody::ScrollTouch),
         35 => Occupancy::Live(PlmBody::ItemCollision),
@@ -2135,7 +2167,15 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
     assert_eq!(rows.undecodable, Vec::new());
     assert_eq!(rows.frames.len(), 1905);
 
-    let loaded = live_plms(&rows.loaded.plms);
+    let mut loaded = live_plms(&rows.loaded.plms);
+    // Both rows start past the item's first run.
+    for (_, _, body) in &mut loaded {
+        if let PlmBody::Item { step, .. } = body {
+            *step = ItemStep::Shown {
+                next: ItemFrame::First,
+            };
+        }
+    }
     let item = |(_, _, body): &(usize, BlockIndex, PlmBody)| matches!(body, PlmBody::Item { .. });
     assert_eq!(loaded.len(), 6);
     assert_eq!(loaded.iter().filter(|plm| item(plm)).count(), 1);

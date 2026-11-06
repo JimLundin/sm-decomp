@@ -18,6 +18,8 @@ use crate::state::strand::Message;
 use crate::state::{CollectedItems, State};
 use crate::tick::Next;
 
+pub mod item_gfx;
+
 /// The scroll PLM's trigger block's BTS (`$84:B374`): special air whose inside reaction
 /// spawns the scroll block touch PLM.
 const SCROLL_TRIGGER: Bts = Bts(0x46);
@@ -26,6 +28,9 @@ const ITEM_BLOCK: Bts = Bts(0x45);
 /// How long an item shows each of its two frames: each draw instruction draws the PLM and
 /// waits 4 frames (`$84:E04F`, `$84:E067`, through `$84:E07F`).
 const ITEM_FRAME: Frames = Frames(4);
+/// A room argument with its sign bit set names no collected bit: its item is never collected
+/// (`$84:887C`).
+const NEVER_COLLECTED: u16 = 0x8000;
 
 /// The tile an item's frame draws (`$84:A30F`, `$84:A315`): the first GFX slot's two tiles
 /// past the item tiles' start, `$8E`, through the frame tables `$84:E05F` and `$84:E077`.
@@ -199,9 +204,7 @@ fn spawn(room: &mut RoomScoped, entry: PlmEntry) {
             PlmBody::Item {
                 item,
                 collected_bit,
-                step: ItemStep::Shown {
-                    next: ItemFrame::First,
-                },
+                step: ItemStep::Spawned,
             }
         }
     };
@@ -248,6 +251,41 @@ pub fn touch_scroll_block(room: &mut RoomScoped, block: BlockIndex) -> Result<()
     Ok(())
 }
 
+/// Whether the item with collected bit `bit` is collected (`$84:887C`).
+fn is_collected(collected: &CollectedItems, bit: u16) -> bool {
+    bit & NEVER_COLLECTED == 0 && collected.contains(bit)
+}
+
+/// Draw item frame `frame` (`$84:E04F`, `$84:E067`) and wait: the block becomes the special
+/// block Samus collides with, with the frame's tile (`$84:A30F`, `$84:A315`: block type
+/// `Bh`), its BTS kept. The step goes on to the other frame.
+fn draw_frame(room: &mut RoomScoped, block: BlockIndex, frame: ItemFrame) -> ItemStep {
+    if let Some(cell) = room.blocks.get_mut(usize::from(block.0)) {
+        *cell = Block {
+            kind: BlockKind::Special(PlmChoice::Common(ITEM_BLOCK.0)),
+            tile: item_frame_tile(frame),
+        };
+    }
+    ItemStep::Shown {
+        next: match frame {
+            ItemFrame::First => ItemFrame::Second,
+            ItemFrame::Second => ItemFrame::First,
+        },
+    }
+}
+
+/// Draw the empty item (`$84:DFA9`): air with tile `FFh`, its BTS kept, for a frame before its
+/// delete.
+fn draw_empty(room: &mut RoomScoped, block: BlockIndex) -> ItemStep {
+    if let Some(cell) = room.blocks.get_mut(usize::from(block.0)) {
+        *cell = Block {
+            kind: BlockKind::Air(Bts(cell.kind.bts())),
+            tile: EMPTY_ITEM_TILE,
+        };
+    }
+    ItemStep::Emptied
+}
+
 /// Samus touches item block `block`.
 ///
 /// The special block collision reaction for BTS `$45` spawns the item collision detection PLM
@@ -274,6 +312,8 @@ pub fn touch_item_block(room: &mut RoomScoped, block: BlockIndex) -> Result<(), 
         return Err(TouchFault::NotAnItem(index));
     };
     // Once its pre-instruction has gone to the pickup, the trigger no longer matters.
+    // open: before its first run its pre-instruction isn't set, and its first run's would see
+    // the trigger; its block is air until that run draws it, which no slice 0 touch reaches.
     if let ItemStep::Shown { .. } = *step {
         *step = ItemStep::Triggered;
     }
@@ -310,10 +350,8 @@ fn update_scroll(
 ///
 /// An item's pickup calls out of the pass into the message box: the slot whose instruction
 /// does is returned, the rest of the pass waiting for [`resume`].
-// open: the PLMs-enabled flag (`$1C23`); the item's GFX load and collected check at its
-// list's start, and its draws' tilemap writes; the shot block's crumble, whose draws need its
-// tiles and the same writes, its timer waits. An untriggered item's list from its start or past
-// frame 1 comes to frame 0's draw.
+// open: the PLMs-enabled flag (`$1C23`); the item's draws' tilemap writes; the shot block's
+// crumble, whose draws need its tiles and the same writes, its timer waits.
 pub fn process(
     room: &mut RoomScoped,
     collected: &mut CollectedItems,
@@ -351,17 +389,15 @@ pub fn resume(
                 return (at, message_box::display(state, message));
             }
             ItemStep::InBox => {
-                *step = ItemStep::Emptied;
                 slot.common.cursor.delay = Frames(1);
                 let block = slot.common.block;
-                if let Some(cell) = room.blocks.get_mut(usize::from(block.0)) {
-                    *cell = Block {
-                        kind: BlockKind::Air(Bts(cell.kind.bts())),
-                        tile: EMPTY_ITEM_TILE,
-                    };
-                }
+                *step = ItemStep::Emptied;
+                draw_empty(room, block);
             }
-            ItemStep::Shown { .. } | ItemStep::Triggered | ItemStep::Emptied => {}
+            ItemStep::Spawned
+            | ItemStep::Shown { .. }
+            | ItemStep::Triggered
+            | ItemStep::Emptied => {}
         }
     }
     run_below(
@@ -371,6 +407,25 @@ pub fn resume(
         index,
     )
     .map_or((at, Next::Return), |next| (next, Next::Continue))
+}
+
+/// Slot `index`'s item at `step`, its timer at `delay`.
+fn set_item(
+    room: &mut RoomScoped,
+    index: usize,
+    item: ItemPlm,
+    collected_bit: u16,
+    step: ItemStep,
+    delay: Frames,
+) {
+    if let Some(slot) = room.plms.slots.get_mut(index) {
+        slot.common.cursor.delay = delay;
+        slot.occupancy = Occupancy::Live(PlmBody::Item {
+            item,
+            collected_bit,
+            step,
+        });
+    }
 }
 
 /// The PLM pass over the slots below `end`, from the highest down.
@@ -424,28 +479,22 @@ fn run_below(
                 collected_bit,
                 step,
             } => match step {
-                // The next frame's draw, then its wait (`$84:E407`, `$84:E40B`'s go-to back):
-                // the block becomes the special block Samus collides with, with the frame's
-                // tile (`$84:A30F`, `$84:A315`: block type `Bh`), its BTS kept.
+                // The list's start (`$84:E3EF`): load its GFX, then the empty item if it is
+                // collected, else its link and pre-instruction and frame 0's draw.
+                ItemStep::Spawned => {
+                    item_gfx::load(&mut room.item_gfx, item);
+                    let (step, delay) = if is_collected(collected, collected_bit) {
+                        (draw_empty(room, block), Frames(1))
+                    } else {
+                        (draw_frame(room, block, ItemFrame::First), ITEM_FRAME)
+                    };
+                    set_item(room, index, item, collected_bit, step, delay);
+                }
+                // The next frame's draw, then its wait (`$84:E407`, `$84:E40B`'s go-to back).
                 // open: the draw's tilemap write while the block is on screen (`$84:8DAA`).
                 ItemStep::Shown { next } => {
-                    slot.common.cursor.delay = ITEM_FRAME;
-                    slot.occupancy = Occupancy::Live(PlmBody::Item {
-                        item,
-                        collected_bit,
-                        step: ItemStep::Shown {
-                            next: match next {
-                                ItemFrame::First => ItemFrame::Second,
-                                ItemFrame::Second => ItemFrame::First,
-                            },
-                        },
-                    });
-                    if let Some(cell) = room.blocks.get_mut(usize::from(block.0)) {
-                        *cell = Block {
-                            kind: BlockKind::Special(PlmChoice::Common(ITEM_BLOCK.0)),
-                            tile: item_frame_tile(next),
-                        };
-                    }
+                    let step = draw_frame(room, block, next);
+                    set_item(room, index, item, collected_bit, step, ITEM_FRAME);
                 }
                 // `$84:E40F`: set the room argument item collected (`$84:8899`), then the
                 // pickup instruction calls out.

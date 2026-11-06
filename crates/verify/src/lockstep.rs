@@ -657,6 +657,8 @@ const COMPARATORS: &[Comparator] = &[
         .map(|scroll| scroll.step)),
     plm_body!("room.plms.slots.occupancy.collected_bit", collected_bit),
     plm_body!("room.plms.slots.occupancy.crumble", crumble),
+    field!("room.item_gfx.next", room.item_gfx.next),
+    field!("room.item_gfx.loaded", room.item_gfx.loaded),
     enemy!("room.enemies.slots.common.species", species),
     enemy!(
         "room.enemies.slots.common.position.x.pixels",

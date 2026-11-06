@@ -566,6 +566,10 @@ pub const FIELDS: &[Field] = &[
         "room.plms.slots.occupancy.crumble",
         source::PLM_INSTR_LIST_PTRS,
     ),
+    wram("room.item_gfx.next", source::PLM_ITEM_GFX_INDEX),
+    // Each slot's pointer names its item while the tile table's entries for the slot are
+    // the ones that item's load wrote.
+    block("room.item_gfx.loaded", source::PLM_ITEM_GFX_PTRS),
     none(
         "room.enemies.slots.generation",
         "the original keeps no count of a slot's fills; its species word is the occupant",
@@ -903,6 +907,7 @@ mod tests {
             rules.level.state,
             rules.area,
             rules.tilemap_gap,
+            rules.item_gfx.next,
             rules.scrolling.drawn[0][0],
             rules.scrolling.drawn[0][1],
             rules.scrolling.drawn[1][0],
@@ -998,6 +1003,7 @@ mod tests {
             rules.level.scrolls,
             rules.level.layer2,
             rules.collected_items,
+            rules.item_gfx.pointers,
             rules.uploads[0].column.first_halves,
             rules.uploads[0].column.second_halves,
             rules.uploads[0].row.first_halves,

@@ -318,3 +318,27 @@ fn a_layer_still_in_its_blocks_builds_nothing() {
     assert_eq!(uploads, LevelUploads::default());
     assert_eq!(room.camera.drawn.layer1, point(1, 2));
 }
+
+/// A block an item's GFX load rewrote draws the load's entry, not the tile table's
+/// (`$84:8764`); with no item loaded it draws the table's.
+#[test]
+fn a_column_draws_an_item_gfx_slots_blocks_through_its_loaded_entries() {
+    let mut room = room();
+    // Block column 17's top block draws the first slot's first block.
+    room.blocks[17] = air(0x8e, 0);
+    let (_, uploads) = updated(room.clone(), camera(0x10, 0, point(0, 0)));
+    let static_tiles = tiles(0x8e);
+    assert_eq!(uploads.bg1.column.left[0], entry(static_tiles.top_left));
+    crate::plm::item_gfx::load(&mut room.item_gfx, data::plm::ItemPlm::MorphBall);
+    let (_, uploads) = updated(room, camera(0x10, 0, point(0, 0)));
+    let column = uploads.bg1.column;
+    assert_eq!(
+        [
+            column.left[0],
+            column.left[1],
+            column.right[0],
+            column.right[1]
+        ],
+        [entry(0x3e0), entry(0x3e2), entry(0x3e1), entry(0x3e3)]
+    );
+}
