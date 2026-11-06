@@ -75,6 +75,13 @@ const fn enemy(path: &'static str, field: SlotField) -> Field {
     }
 }
 
+const fn array(path: &'static str, array: WramArray) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramArray(array)),
+    }
+}
+
 const fn plm(path: &'static str, array: WramArray) -> Field {
     Field {
         path,
@@ -689,6 +696,18 @@ pub const FIELDS: &[Field] = &[
         "enemy_palette_cycle.timer",
         source::ENEMY_PALETTE_CYCLE_TIMER,
     ),
+    // The kind from the type byte, `None` where the word is zero; the frame from the low byte.
+    array("atmospherics.slots", source::ATMOSPHERIC_GFX_FRAME_AND_TYPE),
+    array(
+        "atmospherics.slots.frame",
+        source::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
+    ),
+    array(
+        "atmospherics.slots.timer",
+        source::ATMOSPHERIC_GFX_ANIM_TIMER,
+    ),
+    array("atmospherics.slots.x", source::ATMOSPHERIC_GFX_X_POS),
+    array("atmospherics.slots.y", source::ATMOSPHERIC_GFX_Y_POS),
     wram("elevator.status", source::ELEVATOR_STATUS),
     wram("elevator.armed", source::ELEVATOR_FLAGS),
     wram("elevator.direction", source::ELEVATOR_DIRECTION),
@@ -813,6 +832,7 @@ mod tests {
             "timing",
             "video",
             "samus",
+            "atmospherics",
             "room",
             "elevator",
             "enemy_palette_cycle",
@@ -1060,9 +1080,10 @@ mod tests {
     }
 
     /// The per-slot arrays the decoder reads.
-    const fn array_sources(rules: &Rules<'_>) -> [WramArray; 21] {
+    const fn array_sources(rules: &Rules<'_>) -> [WramArray; 25] {
         let plms = &rules.plms;
         let projectiles = &rules.projectiles;
+        let atmospherics = &rules.atmospherics;
         [
             projectiles.x,
             projectiles.y,
@@ -1078,6 +1099,10 @@ mod tests {
             projectiles.instruction,
             projectiles.frame_timer,
             projectiles.trail,
+            atmospherics.frame_and_type,
+            atmospherics.timer,
+            atmospherics.x,
+            atmospherics.y,
             plms.id,
             plms.block,
             plms.timer,

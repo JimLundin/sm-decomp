@@ -97,6 +97,44 @@ fn the_top_half_then_the_bottom_half_draw_from_her_screen_position() {
 }
 
 #[test]
+fn the_atmospheric_graphics_draw_before_her_body() {
+    use crate::state::atmospheric::{
+        AtmosphericFrame, AtmosphericGraphic, AtmosphericKind, AtmosphericTimer, LANDING_SLOT,
+    };
+    let mut drawn = state(1);
+    drawn.atmospherics.slots[LANDING_SLOT] = Some(AtmosphericGraphic {
+        kind: AtmosphericKind::LandingDust,
+        frame: AtmosphericFrame(0),
+        timer: AtmosphericTimer(3),
+        x: 0x150,
+        y: 0x90,
+    });
+    draw(&mut drawn, &content());
+    // `$90:EB7C`: the dust, then her top and bottom halves.
+    assert_eq!(tiles(&drawn), [0x48, 1, 3, 4]);
+}
+
+#[test]
+fn a_hidden_samus_leaves_the_atmospheric_graphics_alone() {
+    use crate::state::atmospheric::{
+        AtmosphericFrame, AtmosphericGraphic, AtmosphericKind, AtmosphericTimer,
+    };
+    let mut hidden = state(1);
+    hidden.samus.drawing = DrawingHandler::Hidden;
+    let dust = Some(AtmosphericGraphic {
+        kind: AtmosphericKind::LandingDust,
+        frame: AtmosphericFrame(0),
+        timer: AtmosphericTimer(3),
+        x: 0x150,
+        y: 0x90,
+    });
+    hidden.atmospherics.slots[0] = dust;
+    draw(&mut hidden, &content());
+    assert_eq!(hidden.atmospherics.slots[0], dust);
+    assert_eq!(tiles(&hidden), [0_u8; 0]);
+}
+
+#[test]
 fn the_frame_picks_the_spritemap_and_the_morph_ball_has_no_bottom_half() {
     let mut rolling = state(2);
     rolling.samus.animation.frame = AnimationFrame(1);

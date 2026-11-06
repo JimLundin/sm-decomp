@@ -6,6 +6,7 @@
 // with their first rows; slice 0's item pickup needs `progress` once the decoder shows
 // which collected-item bits its rows read.
 
+pub mod atmospheric;
 pub mod hud;
 pub mod projectile;
 pub mod room;
@@ -19,6 +20,7 @@ use canonical::{Canonical, Schema};
 use data::id::Cycles;
 use slots::FlagSet;
 
+use atmospheric::Atmospherics;
 use hud::Hud;
 use room::RoomScoped;
 use samus::Samus;
@@ -210,6 +212,8 @@ pub struct State {
     pub video: Video,
     /// Samus.
     pub samus: Samus,
+    /// The splashes, bubbles and dust around her.
+    pub atmospherics: Atmospherics,
     /// The current room.
     pub room: RoomScoped,
     /// The elevator ride, which carries over from room to room.

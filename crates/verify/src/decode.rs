@@ -17,6 +17,9 @@ use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
 use data::tileset::{BlockTiles, TilesetId};
 use game::plm::item_gfx;
+use game::state::atmospheric::{
+    AtmosphericFrame, AtmosphericGraphic, AtmosphericKind, AtmosphericTimer, Atmospherics,
+};
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap, MiniMap};
 use game::state::room::{
     Block, BlockColumns, BlockPoint, Camera, CameraDistance, DrawnBlocks, ElevatorArming,
@@ -51,7 +54,7 @@ use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
 use crate::enemy::EnemySources;
 use crate::plm::PlmSources;
 use crate::projectile::ProjectileSources;
-use crate::source::{self, TilemapUpload, WramBlock, WramByte, WramWord};
+use crate::source::{self, TilemapUpload, WramArray, WramBlock, WramByte, WramWord};
 use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
 
 /// Bank $82 log: game state 8 is main gameplay.
@@ -444,6 +447,8 @@ pub struct Rules<'t> {
     pub drawn_hook: DrawnHookSources,
     /// `enemy_palette_cycle`.
     pub palette_cycle: PaletteCycleSources,
+    /// `atmospherics`.
+    pub atmospherics: AtmosphericSources,
     /// `room.blocks` and `room.scroll_areas`.
     pub level: LevelSources,
     /// `room.area`.
@@ -790,6 +795,19 @@ pub struct PaletteCycleSources {
     pub timer: WramWord,
 }
 
+/// Where the original keeps the atmospheric graphics: one word array per field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AtmosphericSources {
+    /// Whether a slot is live, `.kind` and `.frame`.
+    pub frame_and_type: WramArray,
+    /// `.timer`.
+    pub timer: WramArray,
+    /// `.x`.
+    pub x: WramArray,
+    /// `.y`.
+    pub y: WramArray,
+}
+
 /// Where the original keeps the elevator ride.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ElevatorSources {
@@ -1093,6 +1111,12 @@ impl Rules<'_> {
             set: source::ENEMY_PALETTE_CYCLE_SET,
             timer: source::ENEMY_PALETTE_CYCLE_TIMER,
         },
+        atmospherics: AtmosphericSources {
+            frame_and_type: source::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
+            timer: source::ATMOSPHERIC_GFX_ANIM_TIMER,
+            x: source::ATMOSPHERIC_GFX_X_POS,
+            y: source::ATMOSPHERIC_GFX_Y_POS,
+        },
         level: LevelSources {
             width: source::ROOM_WIDTH_IN_BLOCKS,
             height: source::ROOM_HEIGHT_IN_BLOCKS,
@@ -1219,6 +1243,7 @@ impl Rules<'_> {
             },
             video: self.video(record, rooms)?,
             samus: self.samus(wram)?,
+            atmospherics: self.atmospherics.read(wram)?,
             room: self.room(wram, rooms, room)?,
             elevator: self.elevator.read(wram)?,
             enemy_palette_cycle: self.palette_cycle.read(wram)?,
@@ -2315,6 +2340,49 @@ impl DrawnHookSources {
 const SPRITE_PALETTE_BYTES: u16 = 0x20;
 /// Sprite palettes, and the glow's colour sets.
 const EIGHT: u8 = 8;
+
+impl AtmosphericSources {
+    /// The slots in `wram`.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::Unrepresentable`] for a type byte nothing spawns (2, past 7) or a
+    /// frame in a free slot, which the handler would dispatch through its null entry
+    /// (bank $90 log, `$90:8AB5`).
+    fn read(self, wram: &[u8]) -> Result<Atmospherics, DecodeError> {
+        let mut atmospherics = Atmospherics::default();
+        for (index, slot) in (0_u16..).zip(&mut atmospherics.slots) {
+            let field = |array: WramArray| array.word(index).and_then(|word| word.read(wram));
+            let word = field(self.frame_and_type)?;
+            if word == 0 {
+                continue;
+            }
+            let [frame, kind] = word.to_le_bytes();
+            let kind = match kind {
+                1 => AtmosphericKind::FootstepSplash,
+                3 => AtmosphericKind::DivingSplash,
+                4 => AtmosphericKind::LavaSurfaceDamage,
+                5 => AtmosphericKind::Bubbles,
+                6 => AtmosphericKind::LandingDust,
+                7 => AtmosphericKind::SpeedBoostDust,
+                _ => {
+                    return Err(DecodeError::Unrepresentable {
+                        source: self.frame_and_type.name,
+                        value: word,
+                    });
+                }
+            };
+            *slot = Some(AtmosphericGraphic {
+                kind,
+                frame: AtmosphericFrame(frame),
+                timer: AtmosphericTimer(field(self.timer)?),
+                x: field(self.x)?,
+                y: field(self.y)?,
+            });
+        }
+        Ok(atmospherics)
+    }
+}
 
 impl PaletteCycleSources {
     /// The cycle in `wram`.

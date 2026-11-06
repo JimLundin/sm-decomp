@@ -219,9 +219,15 @@ fn bottom_half(movement: MovementType, pose: PoseId, frame: AnimationFrame) -> B
 pub fn draw(state: &mut State, content: &Content) {
     let odd_frame = state.clock.counters.completed.0 & 1 != 0;
     match state.samus.drawing {
-        DrawingHandler::Default
-        | DrawingHandler::FiringGrapple
-        | DrawingHandler::ShinesparkCrashEchoCircle => {
+        // `$90:EB55` and `$90:EB86`: the atmospheric graphics go first.
+        DrawingHandler::Default | DrawingHandler::FiringGrapple => {
+            crate::atmospheric::handle(state, content);
+            if !flickers_off(&state.samus, odd_frame) {
+                draw_body(state, content);
+            }
+            queue_tiles(state, content);
+        }
+        DrawingHandler::ShinesparkCrashEchoCircle => {
             if !flickers_off(&state.samus, odd_frame) {
                 draw_body(state, content);
             }

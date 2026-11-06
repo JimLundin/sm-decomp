@@ -13,8 +13,9 @@ use crate::movement;
 use crate::pose::{self, Content};
 use crate::scrolling;
 use crate::session::{Rules, SessionFault};
+use crate::state::atmospheric::Atmospherics;
 use crate::state::room::RoomScoped;
-use crate::state::samus::SuperSpecial;
+use crate::state::samus::{Samus, SuperSpecial};
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
 use crate::state::video::SamusTileUploads;
 use crate::state::{GameMode, NmiTiming, State};
@@ -495,8 +496,9 @@ fn gameplay_phase(
                 contacts,
                 surroundings,
             };
-            pose::change(
+            change_pose(
                 &mut state.samus,
+                &mut state.atmospherics,
                 requests,
                 collisions,
                 &mut touches,
@@ -555,6 +557,20 @@ fn gameplay_phase(
         | GameplayPhase::HurtTimers => {}
     }
     Ok(())
+}
+
+/// The pose change, then the atmospheric graphics its pose initialisation starts.
+fn change_pose(
+    samus: &mut Samus,
+    atmospherics: &mut Atmospherics,
+    requests: pose::PoseRequests,
+    collisions: pose::Collisions<'_>,
+    touches: &mut Touches,
+    content: &Content,
+) {
+    let history = samus.previous;
+    pose::change(samus, requests, collisions, touches, content);
+    crate::atmospheric::initialise_pose(atmospherics, history, samus, content);
 }
 
 /// Where Samus's moves happen this frame: the room's blocks, the vertical scans' order by the

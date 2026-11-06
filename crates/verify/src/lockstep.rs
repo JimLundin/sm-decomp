@@ -18,6 +18,7 @@ use data::plm::PlmPopulation;
 use data::rom::Lorom;
 use data::room::{Progress, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
 use data::tileset::TilesetId;
+use game::state::atmospheric::AtmosphericGraphic;
 use game::state::projectile::ProjectileBody;
 use game::state::room::{
     Crumble, ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, ItemGfxSlot, ItemStep, MorphBallEye,
@@ -159,6 +160,19 @@ macro_rules! plm {
             path: $path,
             compare: |engine: &State, oracle: &State| {
                 let part = |state: &State| state.room.plms.slots.map(|slot| slot.common.$($name).+);
+                part(engine).diff(&part(oracle))
+            },
+        }
+    };
+}
+
+/// A comparator for one field of every atmospheric graphic slot, absent in a free slot.
+macro_rules! atmospheric {
+    ($path:literal, $part:expr) => {
+        Comparator {
+            path: $path,
+            compare: |engine: &State, oracle: &State| {
+                let part = |state: &State| state.atmospherics.slots.map(|slot| slot.map($part));
                 part(engine).diff(&part(oracle))
             },
         }
@@ -761,6 +775,20 @@ const COMPARATORS: &[Comparator] = &[
         path: "room.enemies.slots.occupancy.variables",
         compare: |engine: &State, oracle: &State| variables(engine).diff(&variables(oracle)),
     },
+    atmospheric!("atmospherics.slots", |graphic: AtmosphericGraphic| graphic
+        .kind),
+    atmospheric!("atmospherics.slots.frame", |graphic: AtmosphericGraphic| {
+        graphic.frame
+    }),
+    atmospheric!("atmospherics.slots.timer", |graphic: AtmosphericGraphic| {
+        graphic.timer
+    }),
+    atmospheric!("atmospherics.slots.x", |graphic: AtmosphericGraphic| {
+        graphic.x
+    }),
+    atmospheric!("atmospherics.slots.y", |graphic: AtmosphericGraphic| {
+        graphic.y
+    }),
     field!("elevator.status", elevator.status),
     field!("elevator.armed", elevator.armed),
     field!("elevator.direction", elevator.direction),

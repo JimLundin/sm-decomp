@@ -1472,6 +1472,28 @@ pub const PLM_INSTRUCTION_TIMER: WramArray = WramArray {
     offset: 0xDE1C,
 };
 
+/// Bank $90 log, `$90:8A4C`: each atmospheric graphic's animation frame (low byte) and type
+/// (high byte), zero in a free slot.
+pub const ATMOSPHERIC_GFX_FRAME_AND_TYPE: WramArray = WramArray {
+    name: "ATMOSPHERIC_GFX_FRAME_AND_TYPE",
+    offset: 0x0AEC,
+};
+/// Bank $90 log, `$90:8A65`: each atmospheric graphic's animation timer.
+pub const ATMOSPHERIC_GFX_ANIM_TIMER: WramArray = WramArray {
+    name: "ATMOSPHERIC_GFX_ANIM_TIMER",
+    offset: 0x0AD4,
+};
+/// Bank $90 log, `$90:8AD3`: each atmospheric graphic's X position in the room.
+pub const ATMOSPHERIC_GFX_X_POS: WramArray = WramArray {
+    name: "ATMOSPHERIC_GFX_X_POS",
+    offset: 0x0ADC,
+};
+/// Bank $90 log, `$90:8AE7`: each atmospheric graphic's Y position in the room.
+pub const ATMOSPHERIC_GFX_Y_POS: WramArray = WramArray {
+    name: "ATMOSPHERIC_GFX_Y_POS",
+    offset: 0x0AE4,
+};
+
 /// Bank $85 log, `$85:81B5`: the BG3 tilemap rows the message box covers, which it reads out
 /// of VRAM when it opens and writes back when it closes.
 pub const MESSAGE_BOX_TILEMAP_BACKUP: WramBlock = WramBlock {
