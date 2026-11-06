@@ -74,10 +74,28 @@ differed on every Tick, are equal on every Tick of both rows; OAM differs only f
 
 ## Reproduce
 
-Runners outside the repository (ROM-derived inputs stay in `$TEMP`): a cdylib over `verify`
-including `crates/tools/src/gate.rs`, built with `$TEMP/ohx/b7a/build.sh`, loaded by
-`$TEMP/ohx/run.py` under the cached Python; `lock LOCK CACHE ROM ROW` prints the `Report`
-with the per-group union and the undecodable frames, `gate` runs `gate::run` with
-`LOCK $TEMP/ohx/relock-e/stage/relock-v2-lsnes ROM scenarios/locks/lsnes.green.txt
-area-brinstar item-morph-ball`. In the repository, `tools lockstep LOCK CACHE ROM ROW` runs
-the same lockstep. ROM sha256 prefix `12b77c4bc9c1832c`. Lockstep runs in 0.3 s and 0.7 s.
+Lockstep needs the ROM (`rom/sm.smc`, sha256 prefix `12b77c4bc9c1832c`) and the two rows' A2
+record caches (`CACHE/area-brinstar`, `CACHE/item-morph-ball`; ROM-derived, so never committed).
+
+```sh
+cargo build --release -p tools
+# One row: the report, then the ratchet lines (Ticks fully equal, differing Ticks per group).
+target/release/tools lockstep scenarios/locks/lsnes.toml CACHE ROM area-brinstar
+# Every ratchet row against scenarios/locks/lockstep.ratchet.txt: exit 1 when a fully-equal
+# count falls or a group's differing count rises; prints the lines to commit when counts improve.
+target/release/tools lockstep --check-ratchet scenarios/locks/lsnes.toml CACHE ROM \
+  scenarios/locks/lockstep.ratchet.txt
+```
+
+Both rows run in about 1 s together (about 1,800 Ticks/s, release build). Where Defender blocks
+executables, build the cdylib as `tools/lane/test_dll.py` does. `verify::ratchet` holds the
+summary and the file format; `crates/tools/src/ratchet.rs` the command, whose test
+`committed_ratchet_holds_against_the_cache` runs the check when `SM_CACHE` and `SM_ROM` are set.
+The free-run gate is `tools gate LOCK BUNDLE ROM scenarios/locks/lsnes.green.txt area-brinstar
+item-morph-ball`.
+
+## Lockstep at `1d6a2da`
+
+From `lockstep.ratchet.txt`: `area-brinstar` 335 / 476 Ticks fully equal (room 119 from frame 2,
+video 32 from 84); `item-morph-ball` 1,075 / 1,427 (room 267 from 2, video 183 from 84, samus 55
+from 682, elevator 1 at 688, hud 1 at 1294). The tables above are from `93fa4a4` and stale.

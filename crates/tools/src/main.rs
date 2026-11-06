@@ -6,19 +6,18 @@
 //! `tools lockstep LOCK CACHE ROM ROW [FROM [TICKS]]`: lockstep over a row's record cache
 //! (`verify::lockstep`) on the content read from `ROM`, printing the report.
 //!
+//! `tools lockstep --check-ratchet LOCK CACHE ROM RATCHET`: every ratchet row, held to its
+//! numbers.
+//!
 //! `tools gate LOCK BUNDLE ROM GREEN [--update] ROW...`: the free-run gate ([`gate`]).
 
 mod gate;
+mod ratchet;
 
 use std::io::Write;
-use std::path::Path;
 use std::process::ExitCode;
-use std::sync::Arc;
 
-use verify::bundle::{content, rooms};
-use verify::cache::Cache;
-use verify::lock::{Lock, RowId};
-use verify::lockstep::lockstep;
+use verify::ratchet::Summary;
 
 const LOCKSTEP_USAGE: &str = "tools lockstep LOCK CACHE ROM ROW [FROM [TICKS]]";
 
@@ -35,6 +34,11 @@ fn run(args: &[String]) -> Result<String, String> {
 }
 
 fn run_lockstep(args: &[String]) -> Result<String, String> {
+    if let [flag, rest @ ..] = args
+        && flag == "--check-ratchet"
+    {
+        return ratchet::check(rest);
+    }
     let [lock, cache, rom, row, window @ ..] = args else {
         return Err(usage());
     };
@@ -48,18 +52,11 @@ fn run_lockstep(args: &[String]) -> Result<String, String> {
         [from, ticks] => (number(from)?, number(ticks)?),
         [_, _, ..] => return Err(usage()),
     };
-    let text = std::fs::read_to_string(lock).map_err(|error| format!("{lock}: {error}"))?;
-    let lock = Lock::parse(&text).map_err(|error| format!("{lock}: {error:?}"))?;
-    let row = lock
-        .row(&RowId(row.clone()))
-        .ok_or_else(|| format!("{row}: not in the lock"))?;
-    let cache = Cache::open(Path::new(cache), row).map_err(|error| error.to_string())?;
-    let image = std::fs::read(rom).map_err(|error| format!("{rom}: {error}"))?;
-    let content = Arc::new(content(image.clone()).map_err(|error| format!("{rom}: {error}"))?);
-    let rooms = rooms(&content, &image).map_err(|error| format!("{rom}: {error:?}"))?;
-    let report = lockstep(&cache, &rooms, &content, from..from.saturating_add(ticks))
-        .map_err(|error| error.to_string())?;
-    Ok(report.to_string())
+    let report = ratchet::run_row(lock, cache, rom, row, from..from.saturating_add(ticks))?;
+    Ok(format!(
+        "{report}ratchet lines:\n{}",
+        Summary::of(row, &report)
+    ))
 }
 
 fn main() -> ExitCode {
