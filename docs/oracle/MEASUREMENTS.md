@@ -939,3 +939,68 @@ at a time and keeps 0-17974 unchanged ((l)'s check):
 
 The margin here is about 30 clocks after a 2-frame pass. Any per-line error
 left near vblank shows up as a one-step lag.
+
+## (n) HDMA variants on the HUD lines: none zeroes them, no fix 0005
+
+**Command.** (m)'s third round, LakeSnes only: `oracle movie ROM any.inputs
+--frames 35176 --no-picture --oracle lakesnes --trace 35173 35175 PC,...`
+from power-on (2.2-2.7 min), the 18 PCs of (m) (`$80:8338`, the fade's
+colour routines `$82:DA24`-`$DAED`, `$82:E752`, `$82:E755`). Each variant is
+a private DLL on top of 0001+0002+0004, built from `f25eb13f5`, scored against
+(m)'s lsnes log of the same steps. A logging build (no behaviour change)
+wrote every HDMA pause on lines 0-40 from frame 34900: line, start dot, master
+clock mod 8, the triggering access's speed, the alignment, the work and the
+re-alignment.
+
+**Score.** All watched-PC pairs from `$E752` to `$E755` whose first hit is on
+lines 0-32 of the fade's two HUD frames (601 pairs), LakeSnes minus lsnes;
+and the whole fade (`$E752` to `$E755`, the +36 of (m)). The target is 0.
+
+| Variant (on 0001+0002+0004) | HUD pairs: sum, nonzero | Fade total | 35175 wait, NMI |
+| --- | --- | --- | --- |
+| none ((m)) | +36, 65 | +36 | 224/1260, `Overrun` |
+| (a) line overhead 18 instead of 8 | - | - | desynced before 35173 (state `$08` at 35173) |
+| (b) HDMA request at 1112 (dot 278) instead of 1104 | +16, 60 | +14 | 224/1246, `Requested` |
+| (c) both alignments allow 0 (pre, or post), all DMA | - | - | desynced before 35173 |
+| (c) re-align from after the 8-clock alignment, all DMA | - | - | desynced before 35173 |
+| (b) + post-HDMA re-alignment allows 0, HDMA only | -62, 91 | -62 | 224/1162, `Requested` |
+| (b) + re-align from after the 8-clock alignment, HDMA only | - | - | desynced before 35173 |
+| (d) IRQ at H*4+14 (H-IRQ) and dot 10 (V-only), anomie | +14, 138 | +80 | 224/1354, `Overrun`; the fade starts 44 clocks late |
+| (b) + (d) | +18, 77 | +18 | 224/1276, `Overrun` |
+
+lsnes enters the 35175 wait at 224/1230. The lsnes side is (m)'s log in
+every row; it was not rerun.
+
+**(b) is not a fix.** It turns 35175 into `Requested`, but the HUD lines keep
+almost the same residuals (+16), and it moves the boot: (h)'s lag-log run
+with (b) (36000 frames, 129 s, 280 frames/s) is one frame ahead from step
+472 on (`$05B6`/`$05B8` +1, wait entries on line 16-26 of the title or
+intro), a row the 0001+0002+0004 build does not have ((l): exact through
+395, then only 396, 397, 400 before 1342). The print limit of 40 hid the
+rest; with 472 moved, (l)'s check fails already.
+
+**What the pause log shows.** During the fade HDMA runs on lines 0-31 only
+(channels 2 and 7 terminate at line 32 each frame), so (m)'s 351 exact pairs
+on lines 33-224 had no HDMA in them and do not confirm the alignment. The
+pause on lines 0-30 is 104 clocks of work (8 overhead, 6 bytes, the channel
+updates and channel 7's table reloads), 96 on line 31, plus the alignment.
+LakeSnes's pause is 108, 112, 114 or 120 clocks; the lsnes pause implied by
+the pair difference (LakeSnes pause minus the difference, on pairs that hold
+one pause on both sides) is 108, 112 or 114, never 120. LakeSnes reaches 120
+only from a start already on the 8-clock grid followed by an 8-clock access
+(8 + 104 + 8); lsnes takes 112 there on the first lines of the frame, where
+the two emulators are within 8 clocks of each other (lines 3, 8, 12 of the
+first HUD frame). Otherwise the same LakeSnes state (start dot, mod 8,
+speed) gives different lsnes lengths on different lines (line 2 and line 10:
+start dot 1106, mod 6, 6-clock access; lsnes 114 and 108), so lsnes's pause
+also depends on something LakeSnes's state does not show, most likely where
+lsnes's own CPU is when its pause starts (the running offset grows to +24 by
+line 20). lsnes cannot log its pause, so the lsnes rule is not pinned here.
+
+**Next.** Take lsnes's pause apart without its source: an `OH_TRACE` of
+every instruction's PC in the fade's inner loop, on HUD lines 0-12 only,
+brackets each lsnes pause by the instructions before and after it, and so
+gives its start and end. Fit the pause rule on those lines, where the offsets
+are under 8 clocks, then rerun this table. The "allow 0" end alignment
+(row 6) is the one variant that moves the 120 cases the right way; it
+overshoots because it also drops 6-8 clocks on lines lsnes keeps.

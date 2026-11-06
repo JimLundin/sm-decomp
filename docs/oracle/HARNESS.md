@@ -305,6 +305,11 @@ Tried and not applied: `native/candidates/0003-apu-ports-in-time-order.patch`
 orders the CPU-SPC port accesses in time, as bsnes v085 does. It changes no
 lag-log word in any% steps 0-18999 (MEASUREMENTS (j)), so it is not in
 `fixes/`.
+No `0005` either: none of the HDMA variants for the 35175 lag (line overhead
+18, the request at dot 278, the alignment rules, the H/V-IRQ point per anomie)
+zeroes the HUD-line pairs against lsnes, and the request at dot 278, the one
+that turns 35175 into `Requested`, moves the boot from step 472
+(MEASUREMENTS (n)).
 
 ## Proving it against the lock
 
