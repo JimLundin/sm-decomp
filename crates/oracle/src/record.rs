@@ -209,6 +209,38 @@ impl Picture {
             .map(|row| &row[..])
             .take(self.lines)
     }
+
+    /// Each scanned-out dot as the 8-bit R, G, B it shows, the picture's
+    /// compared form (docs/oracle/HARNESS.md, "The picture compared"): each
+    /// component at its line's brightness through [`shown_channel`], black on
+    /// a forced-blank line.
+    pub fn shown(&self) -> Vec<[u8; 3]> {
+        self.rows()
+            .zip(self.brightness.iter().zip(&self.forced_blank))
+            .flat_map(|(row, (&brightness, &blank))| {
+                row.iter().map(move |&dot| {
+                    let channel = |shift: u16| {
+                        let component = u8::try_from((dot >> shift) & 0x1F).unwrap_or(0);
+                        if blank {
+                            0
+                        } else {
+                            shown_channel(brightness, component)
+                        }
+                    };
+                    [channel(0), channel(5), channel(10)]
+                })
+            })
+            .collect()
+    }
+}
+
+/// A 5-bit colour component's 8-bit value at a master brightness (0-15):
+/// `l * c * 255 / 496` rounded to nearest, `l` the brightness plus one, as
+/// lsnes's lrgb palette expands bsnes's dots. A bijection at brightness 15;
+/// below it some components share a value.
+pub fn shown_channel(brightness: u8, component: u8) -> u8 {
+    let scaled = (u32::from(brightness.min(15)) + 1) * u32::from(component.min(31));
+    u8::try_from(((scaled * 255) + 248) / 496).unwrap_or(u8::MAX)
 }
 
 /// The APU side at the cut (tier b).

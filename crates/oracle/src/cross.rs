@@ -30,7 +30,7 @@ pub enum Part {
     Ppu,
     /// The CPU's APU port accesses in the interval, in order.
     ApuLog,
-    /// The picture's BGR555 dots.
+    /// The picture as it shows: 8-bit R, G, B per dot (`Picture::shown`).
     Picture,
 }
 
@@ -93,7 +93,10 @@ impl Part {
                     .flatten()
                     .collect(),
             ),
-            Self::Picture => record.picture.as_ref().map(|picture| words(&picture.dots)),
+            Self::Picture => record
+                .picture
+                .as_ref()
+                .map(|picture| picture.shown().into_iter().flatten().collect()),
             Self::Cut | Self::Frame | Self::Pad | Self::JoypadReads | Self::Cpu => None,
         }
     }

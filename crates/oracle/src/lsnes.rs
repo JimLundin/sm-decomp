@@ -37,7 +37,7 @@
 
 use crate::record::{
     ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, MAX_LINES, Nmi, NmiKind, Pad,
-    Picture, PpuRegisters, WIDTH,
+    Picture, PpuRegisters, WIDTH, shown_channel,
 };
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use std::io::{BufRead, BufReader, Write};
@@ -272,42 +272,35 @@ const STREAMS_MAGIC: &[u8; 4] = b"OHS1";
 /// game wrote (scroll and mode 7 words little-endian), then `$43x0-$43xA`.
 const PPU_BYTES: usize = 58 + 88;
 
-/// One master-brightness level's 8-bit channel values (lsnes's lrgb
-/// palette: `l * c * 255 / 496` rounded, `l` brightness plus one) mapped
-/// back to the 5-bit component; ambiguous values keep the smallest.
-fn channel_inverse(level: u32) -> [Option<u8>; 256] {
+/// One master brightness's 8-bit channel values ([`shown_channel`], lsnes's
+/// lrgb palette) mapped back to the 5-bit component; ambiguous values keep
+/// the smallest, which shows the same value.
+fn channel_inverse(brightness: u8) -> [Option<u8>; 256] {
     let mut inverse = [None; 256];
     for component in (0..32u8).rev() {
-        let scaled = level * u32::from(component);
-        let value = ((scaled << 8) - scaled + 248) / 496;
-        if let Some(slot) = usize::try_from(value)
-            .ok()
-            .and_then(|at| inverse.get_mut(at))
-        {
-            *slot = Some(component);
-        }
+        inverse[usize::from(shown_channel(brightness, component))] = Some(component);
     }
     inverse
 }
 
 /// The picture from lsnes's decoded screenshot: the brightest level whose
-/// palette produces every channel value, its inverse as BGR555 dots. A
-/// hires or interlaced screenshot keeps its even dots and lines.
+/// palette produces every channel value, its inverse as BGR555 dots. Its
+/// [`Picture::shown`] is the screenshot again, dot for dot, whichever level
+/// it picked. A hires or interlaced screenshot keeps its even dots and lines.
 fn decode_picture(width: usize, height: usize, rgb: &[u8]) -> Picture {
     let mut picture = Picture::default();
     let (step_x, step_y) = (width / WIDTH.max(1), if height > MAX_LINES { 2 } else { 1 });
     picture.lines = (height / step_y).min(MAX_LINES);
-    let level = (1..=16u32)
+    let level = (0..=15u8)
         .rev()
-        .map(|level| (level, channel_inverse(level)))
+        .map(|brightness| (brightness, channel_inverse(brightness)))
         .find(|(_, inverse)| {
             rgb.iter()
                 .all(|&value| inverse[usize::from(value)].is_some())
         });
-    let Some((level, inverse)) = level else {
+    let Some((brightness, inverse)) = level else {
         return picture;
     };
-    let brightness = u8::try_from(level - 1).unwrap_or(0);
     picture.brightness.fill(brightness);
     for (line, row) in picture
         .dots

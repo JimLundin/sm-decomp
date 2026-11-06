@@ -1196,13 +1196,22 @@ fn cross(arguments: &[String]) {
             && range.contains(&step)
             && let (Some(lake), Some(lsnes)) = (&a.picture, &b.picture)
         {
+            // Dots compared as they show (`Picture::shown`), and as the
+            // BGR555 the two hold, which differ only below brightness 15.
+            let shown = lsnes.shown();
             let equal_dots = |left: &crate::record::Picture| {
-                left.rows()
-                    .flatten()
-                    .zip(lsnes.rows().flatten())
+                left.shown()
+                    .iter()
+                    .zip(&shown)
                     .filter(|(x, y)| x == y)
                     .count()
             };
+            let equal_words = lake
+                .rows()
+                .flatten()
+                .zip(lsnes.rows().flatten())
+                .filter(|(x, y)| x == y)
+                .count();
             let cpu_accesses = a
                 .apu_log
                 .iter()
@@ -1215,7 +1224,7 @@ fn cross(arguments: &[String]) {
                 })
                 .count();
             println!(
-                "{step} picture {} of {} dots equal, {} against left's previous; brightness {}/{}; apu log {cpu_accesses}/{}",
+                "{step} picture {} of {} dots equal as shown ({equal_words} as BGR555), {} against left's previous; brightness {}/{}; apu log {cpu_accesses}/{}",
                 equal_dots(lake),
                 lake.rows().flatten().count(),
                 lake_before.as_ref().map_or(0, equal_dots),
