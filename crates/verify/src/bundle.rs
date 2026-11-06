@@ -28,6 +28,7 @@ use oracle_record::lsnes::RawError;
 use crate::decode::{DecodeError, RoomMap};
 use crate::gate::{Seed, buttons};
 use crate::lock::{Row, RowId, Sha256, Start};
+use crate::lockstep::slice_zero_rooms;
 
 /// Why a row's inputs can't be read from the bundle.
 #[derive(Debug)]
@@ -187,4 +188,13 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
     })
+}
+
+/// The rooms the decoder knows, with the content's instruction lists and Samus's tiles
+/// definitions, so that occupied enemy slots and Samus's tile uploads decode.
+#[must_use]
+pub fn rooms(content: &Content) -> RoomMap {
+    slice_zero_rooms()
+        .with_programs(content.enemy_programs.clone())
+        .with_samus_tiles(content.samus_tiles.clone())
 }
