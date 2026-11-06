@@ -589,6 +589,26 @@ pub fn move_y(
             collided: false,
         };
     }
+    let moved = scan_y(room, body, position, distance, heading, order, touches);
+    position.y = advance(position.y, moved.distance);
+    moved
+}
+
+/// "Samus block collision handling - vertical" (`$94:959E` left to right, `$94:95F5` right
+/// to left): the blocks of her columns at her leading edge `distance` (signed) away, in the
+/// frame's `order`.
+///
+/// The move and the pose change's check (`$94:96E3`) share it. She doesn't move, but a solid
+/// block puts her Y subpixels next to it. The touches it reaches join `touches`.
+pub fn scan_y(
+    room: Room<'_>,
+    body: Body,
+    position: &mut Point,
+    distance: Speed,
+    heading: Heading,
+    order: ScanOrder,
+    touches: &mut Touches,
+) -> Moved {
     let x = position.x.pixels;
     let target = advance(position.y, distance).pixels;
     let edge = leading_edge(target, body.y_radius, distance);
@@ -631,7 +651,6 @@ pub fn move_y(
             }
         }
     };
-    position.y = advance(position.y, scan.distance);
     Moved {
         distance: scan.distance,
         collided,

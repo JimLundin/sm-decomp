@@ -28,8 +28,8 @@ use crate::state::samus::{
 };
 
 /// The poses that face the screen: standing in them is the elevator's, which takes no
-/// horizontal motion (`$90:A383`).
-const FACING_FORWARD: [PoseId; 2] = [PoseId(0), PoseId(0x9B)];
+/// horizontal motion (`$90:A383`), and a change to them checks nothing (`$91:FDAE`).
+pub(crate) const FACING_FORWARD: [PoseId; 2] = [PoseId(0), PoseId(0x9B)];
 
 /// Samus's X radius, which only her initialisation sets (`$90:EC39`).
 const X_RADIUS: u16 = 5;
