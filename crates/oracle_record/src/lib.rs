@@ -2,6 +2,8 @@
 //!
 //! Its own crate so `verify` can read records without linking an emulator (ARCHITECTURE §4.1).
 
+pub mod codec;
+
 /// The picture's width in dots.
 pub const WIDTH: usize = 256;
 /// The most lines a picture holds (an overscan frame).
