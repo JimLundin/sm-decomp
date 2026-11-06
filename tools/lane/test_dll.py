@@ -19,10 +19,12 @@ from pathlib import Path
 
 
 def run_dll(dll: str, args: list[str]) -> int:
-    # The harness only exists for Windows; the guard also tells mypy on Linux that WinDLL exists.
-    if sys.platform != "win32":
+    # The harness is for Windows only. WinDLL is looked up at run time, because mypy checks this
+    # file against Linux's ctypes, which has no WinDLL.
+    win_dll = getattr(ctypes, "WinDLL", None)
+    if win_dll is None:
         sys.exit("test_dll: --run is for Windows; run cargo test instead")
-    kernel32 = ctypes.WinDLL("kernel32")
+    kernel32 = win_dll("kernel32")
     kernel32.GetCommandLineW.restype = ctypes.c_void_p
     line = kernel32.GetCommandLineW()
     new = subprocess.list2cmdline([dll, *args])
