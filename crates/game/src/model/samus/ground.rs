@@ -4,73 +4,11 @@
 //! spring ball. Each way of moving is a row of the motion table; the speeds
 //! come from `data`, the switches from `Switches`, and every move goes through [`Collision`].
 
+use crate::model::collision::{Body, Collision, Enemies, Side};
+use crate::model::num::Fixed;
 use crate::session::{SpeedCap, Switches};
-use data::movement::{ExtraRun, GroundMotion, HorizontalSpeeds, Speed, SpeedEntry};
+use data::movement::{ExtraRun, GroundMotion, HorizontalSpeeds, SpeedEntry};
 use data::pose::MovementType;
-
-/// A coordinate, speed or displacement: a pixel word and a subpixel word, wrapping mod 2^32.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Fixed(pub u32);
-
-impl Fixed {
-    const ZERO: Self = Self(0);
-    /// The value of `pixel` and `sub`.
-    #[must_use]
-    pub const fn new(pixel: u16, sub: u16) -> Self {
-        Self(Speed::new(pixel, sub).0)
-    }
-    /// The pixel word.
-    #[must_use]
-    pub const fn pixel(self) -> u16 {
-        Speed(self.0).pixels()
-    }
-    /// The subpixel word.
-    #[must_use]
-    pub const fn sub(self) -> u16 {
-        Speed(self.0).subpixels()
-    }
-    const fn plus(self, other: Self) -> Self {
-        Self(self.0.wrapping_add(other.0))
-    }
-    const fn minus(self, other: Self) -> Self {
-        Self(self.0.wrapping_sub(other.0))
-    }
-    /// `a` is below `b` when their difference mod 2^16 is negative; every "below" of the spec.
-    const fn below(a: u16, b: u16) -> bool {
-        a.wrapping_sub(b).cast_signed().is_negative()
-    }
-    // SpeedCap: the base speed held to `max` after its add.
-    const fn capped(self, max: Self, rule: SpeedCap) -> Self {
-        let (pixel, sub, max_pixel, max_sub) = (self.pixel(), self.sub(), max.pixel(), max.sub());
-        let keep = match rule {
-            SpeedCap::Wordwise => {
-                Self::below(pixel, max_pixel)
-                    || (pixel == max_pixel && (sub == max_sub || Self::below(sub, max_sub)))
-            }
-            SpeedCap::Exact => self.0 <= max.0,
-        };
-        if keep { self } else { max }
-    }
-    // DisplacementClamp: at most `max` whole pixels either way; the subpixel is kept.
-    const fn clamped(self, max: u16) -> Self {
-        let pixel = self.pixel();
-        let leftward = pixel.cast_signed().is_negative();
-        let pixel = if !leftward && !Self::below(pixel, max.wrapping_add(1)) {
-            max
-        } else if leftward && Self::below(pixel, max.wrapping_neg()) {
-            max.wrapping_neg()
-        } else {
-            pixel
-        };
-        Self::new(pixel, self.sub())
-    }
-}
-
-impl From<Speed> for Fixed {
-    fn from(speed: Speed) -> Self {
-        Self(speed.0)
-    }
-}
 
 /// Where Samus's centre is.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -267,72 +205,6 @@ pub struct Requests {
     pub end_vertical_motion: bool,
     /// The standing animation restarts (`StandingShotRestartsAnimation`).
     pub restart_standing_animation: bool,
-}
-
-/// Her extent for a collision request.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Body {
-    /// Her centre.
-    pub position: Position,
-    /// Her radius.
-    pub radius: Radius,
-}
-
-/// Whether a move tests solid enemies.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Enemies {
-    /// Solid enemies stop her.
-    Test,
-    /// They don't.
-    Skip,
-}
-
-/// The side she was stopped on.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Side {
-    /// Her left.
-    Left,
-    /// Her right.
-    Right,
-    /// Below her.
-    Below,
-}
-
-/// Why a move ended short.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Stop {
-    /// The side.
-    pub side: Side,
-    /// The subpixel the move's axis takes before the distance is added (`FloorFlushSubpixel`).
-    pub subpixel: Option<u16>,
-}
-
-/// A move's result.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Moved {
-    /// The signed displacement made.
-    pub distance: Fixed,
-    /// Set when she was stopped.
-    pub stop: Option<Stop>,
-}
-
-impl Moved {
-    fn applied(self, coordinate: Fixed) -> Fixed {
-        let flush = self.stop.and_then(|stop| stop.subpixel);
-        flush
-            .map_or(coordinate, |sub| Fixed::new(coordinate.pixel(), sub))
-            .plus(self.distance)
-    }
-}
-
-/// The collision domain, as motion asks it.
-pub trait Collision {
-    /// Moves `body` sideways by the signed `distance`.
-    fn move_horizontal(&mut self, body: Body, distance: Fixed, enemies: Enemies) -> Moved;
-    /// Moves `body` down by `distance`.
-    fn move_down(&mut self, body: Body, distance: Fixed, enemies: Enemies) -> Moved;
-    /// Whether a solid enemy is within `distance` on `side` of `body`.
-    fn enemy_blocks(&self, body: Body, side: Side, distance: Fixed) -> bool;
 }
 
 /// The speed table has no entry for this movement type.

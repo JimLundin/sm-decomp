@@ -2,9 +2,10 @@
 //! flat collision stand-in its header defines.
 
 use super::{
-    Body, Collision, Contacts, Enemies, Facing, FallKind, Fixed, Ground, Inputs, Locomotion, Moved,
-    Pad, Position, Radius, Side, SpeedMode, Stop, Vertical,
+    Body, Collision, Contacts, Enemies, Facing, FallKind, Fixed, Ground, Inputs, Locomotion, Pad,
+    Position, Radius, Side, SpeedMode, Vertical,
 };
+use crate::model::collision::{Moved, Stop};
 use crate::session::{SpeedCap, Switches};
 use data::movement::{ExtraRun, GroundMotion, HorizontalSpeeds, Speed, SpeedEntry, SpeedTable};
 use data::pose::MovementType;
