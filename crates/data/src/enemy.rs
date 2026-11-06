@@ -6,6 +6,8 @@
 //! in bank `$A0`; that pointer is the species' stable key, and [`SpeciesMap`] gives each
 //! loaded species its dense [`SpeciesId`].
 
+pub mod program;
+
 use crate::id::SpeciesId;
 use crate::rom::{AddressError, Lorom, RomAddress};
 
