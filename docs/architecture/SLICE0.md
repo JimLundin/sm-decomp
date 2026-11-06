@@ -156,6 +156,38 @@ Equal on every Tick of both rows: `game_time.hours`, `.minutes`, `mode`, `irq`, 
 (a mutant `Rules` or `nmi.rs` edit run through lockstep) needs a machine that runs the
 tests; `--stream S` filtering waits on the stream projections.
 
+**C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
+once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
+(bank `$82` log, `$82:DB69`: signed compares against 60, the 99:59:59.59 cap from 100 hours),
+the gameplay pass's `HealthAndTime` phase; and the sprite buffer's frame on `NmiBatch`:
+`clear_high_oam` (`$80:8B1A`), `restart_sprites` (`$82:8957`) and `finalise_oam` (`$80:896E`:
+Y = 240 from the drawn count on, nothing at 128 or more), with the NMI's OAM half of
+`OamAndCgram` (`$80:933A`) copying the buffer to `video.memory.oam`. The decoder now reads
+`video.batch.oam` from the original's buffer (`source::OAM`), so hidden entries keep the
+stale tiles the original leaves; `video.batch.sprites` stays open (always 0 at a quiet cut).
+Lockstep on A2's cache, 2026-11-06, before and after (Ticks differing, first frame):
+
+| Field | `area-brinstar` (476) before | after | `item-morph-ball` (1,427) before | after |
+| --- | --- | --- | --- | --- |
+| `rng.word` | 476, 1 | equal | 1,028, 1 | equal |
+| `clock.game_time.frames` | 476, 1 | equal | 1,028, 1 | 399, 817 |
+| `clock.game_time.seconds` | 8, 27 | equal | 17, 27 | equal |
+| `video.memory.oam` | 465, 1 | 476, 1 | 903, 1 | 1,427, 1 |
+| `video.batch.oam` (new) | | 476, 1 | | 1,427, 1 |
+
+`item-morph-ball`'s 399 game-time Ticks from 817 are the message box's lag frames, where the
+original's strand waits and the engine's stub box returns at once (C13), the same Ticks as the
+counters'. OAM now differs on every Tick (before, a stale copy of the previous frame's matched
+where Samus's sprites didn't change), but only inside the drawn prefix: on every compared
+Tick of both rows, every entry from the last non-hidden one on is equal (Y, the stale X, tile
+and attributes, and the high table's bits), and the differing entries are Samus's (at most
+23 and 27 sprites). The rest is C6's drawing. Remaining: the other RNG call sites join with
+their domains (enemy AI, enemy projectiles, PLMs and Samus's effects; none runs in slice 0's
+phases yet); the out-of-health branches of `HealthAndTime` join with the reserve-tank and
+death game states; the Samus tile transfer flags reset with C6; the unit tests compiled but
+did not run here (Defender), so they need CI. Lockstep time is unchanged (0.11 s and 0.17 s
+for the two rows, decode included).
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,

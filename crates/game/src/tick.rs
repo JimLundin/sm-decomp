@@ -256,15 +256,19 @@ const fn game_state(mode: GameMode) -> Frame {
 }
 
 /// A main-loop phase's work.
-// open: every phase is C1's (RNG, OAM) or its domain's; each arm fills in with its lane.
-const fn main_loop_phase(phase: MainLoopPhase, _state: &mut State, _rules: Rules) {
+fn main_loop_phase(phase: MainLoopPhase, state: &mut State, _rules: Rules) {
     match phase {
+        MainLoopPhase::Rng => {
+            state.rng.advance();
+        }
+        MainLoopPhase::ClearHighOam => state.video.batch.clear_high_oam(),
+        // open: the Samus tile transfer flags join with her drawing (C6).
+        MainLoopPhase::ResetOamAndSamusTransfers => state.video.batch.restart_sprites(),
+        MainLoopPhase::FinaliseOam => state.video.batch.finalise_oam(),
+        // open: the HDMA objects and music queue (B6, C11), the sound effects (C11), and the
+        // spare-CPU display with its previous-pad update.
         MainLoopPhase::HdmaObjects
-        | MainLoopPhase::Rng
-        | MainLoopPhase::ClearHighOam
-        | MainLoopPhase::ResetOamAndSamusTransfers
         | MainLoopPhase::SoundEffects
-        | MainLoopPhase::FinaliseOam
         | MainLoopPhase::SpareCpuAndInput => {}
     }
 }
@@ -376,10 +380,14 @@ fn gameplay(at: GameplayAt, state: &mut State, rules: Rules) -> (GameplayAt, Nex
 }
 
 /// A gameplay phase's work.
-// open: each arm fills in with its C lane; the PLM pass ends the step with
+// open: each empty arm fills in with its C lane; the PLM pass ends the step with
 // `Next::Call(Frame::Plms { .. })` once an instruction can call out (B7, C12).
-const fn gameplay_phase(phase: GameplayPhase, _state: &mut State, _rules: Rules) {
+const fn gameplay_phase(phase: GameplayPhase, state: &mut State, _rules: Rules) {
     match phase {
+        // open: running out of health (the reserve tanks' refill and the death sequence) joins
+        // with those game states. In game state 8 the clock still counts on that frame; it
+        // stops only if an earlier phase this frame already left gameplay.
+        GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
         GameplayPhase::EnemySelection
         | GameplayPhase::PaletteFx
         | GameplayPhase::SamusCurrentState
@@ -398,7 +406,6 @@ const fn gameplay_phase(phase: GameplayPhase, _state: &mut State, _rules: Rules)
         | GameplayPhase::Hud
         | GameplayPhase::BgScroll
         | GameplayPhase::RoomMain
-        | GameplayPhase::HealthAndTime
         | GameplayPhase::RoomShaking
         | GameplayPhase::HurtTimers => {}
     }

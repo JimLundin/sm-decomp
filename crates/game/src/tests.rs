@@ -262,3 +262,22 @@ fn an_empty_strand_does_not_open() {
     state.main.frames.clear();
     assert!(Session::open(state, RULES).is_err());
 }
+
+/// One main-loop iteration with nothing drawn: the RNG steps once (0 becomes 0111h, bank `$80`
+/// log `$80:8111`), the game time counts a frame, and the committed OAM has every sprite
+/// hidden with the high table cleared.
+#[test]
+fn an_iteration_steps_the_rng_and_the_clock_and_commits_an_empty_oam() -> Result<(), String> {
+    let mut state = State::default();
+    state.video.batch.oam.high = [0xFF; _];
+    let mut session = session(state)?;
+    run(&mut session, &TimingSource::Modeled, 1).map_err(|fault| format!("{fault:?}"))?;
+    let after = session.state();
+    assert_eq!((after.rng.word, after.rng.calls), (0x0111, 1));
+    assert_eq!(after.clock.game_time.frames, 1);
+    let oam = &after.video.memory.oam;
+    assert!(oam.low.iter().all(|entry| entry.y == crate::oam::HIDDEN_Y));
+    assert_eq!(oam.high, [0; _]);
+    assert_eq!(after.video.batch.sprites.0, 0);
+    Ok(())
+}

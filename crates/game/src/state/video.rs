@@ -18,6 +18,10 @@ pub const OAM_HIGH_BYTES: usize = OAM_SPRITES / 4;
 /// The backgrounds the game scrolls.
 pub const SCROLLED_BACKGROUNDS: usize = 3;
 
+/// A count of sprites.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SpriteCount(pub u16);
+
 /// A BGR555 colour as CGRAM holds it.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Colour(pub u16);
@@ -143,6 +147,8 @@ pub struct NmiBatch {
     pub registers: Registers,
     /// The OAM buffer.
     pub oam: Oam,
+    /// The entries drawn into the OAM buffer so far this frame, from the first.
+    pub sprites: SpriteCount,
     /// The VRAM uploads, in queue order.
     pub vram: Vec<VramTransfer>,
 }

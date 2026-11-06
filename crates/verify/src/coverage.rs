@@ -1,7 +1,7 @@
 //! Every State field with its decode status: the base of §11.2's coverage report, in which
 //! each field has a decode rule or a named reason it has no equivalent.
 
-use crate::source::{self, WramByte, WramWord};
+use crate::source::{self, WramBlock, WramByte, WramWord};
 
 /// Where a decoded field comes from.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -10,6 +10,8 @@ pub enum Source {
     WramByte(WramByte),
     /// A word of work RAM.
     WramWord(WramWord),
+    /// A run of work RAM bytes.
+    WramBlock(WramBlock),
     /// A word of work RAM resolved through the content: a ROM pointer to an ID.
     WramPointer(WramWord),
     /// The main thread's wait site and return chain: the cut's interrupted PC and the stack
@@ -121,7 +123,13 @@ pub const FIELDS: &[Field] = &[
     record("video.memory.cgram", "cgram"),
     record("video.memory.oam", "oam"),
     open("video.committed"),
-    open("video.batch"),
+    open("video.batch.registers"),
+    Field {
+        path: "video.batch.oam",
+        status: Status::Decoded(Source::WramBlock(source::OAM)),
+    },
+    open("video.batch.sprites"),
+    open("video.batch.vram"),
     wram_byte("video.nmi_requested", source::WAITING_FOR_NMI),
     wram("samus.position.x.pixels", source::SAMUS_X_POS),
     wram("samus.position.x.subpixels", source::SAMUS_X_SUBPOS),
@@ -238,6 +246,7 @@ mod tests {
             rules.irq_command,
         ];
         let bytes = [rules.lag, rules.max_lag, rules.nmi_requested];
+        let blocks = [rules.oam_buffer];
         for field in FIELDS {
             match field.status {
                 Status::Decoded(Source::WramWord(word) | Source::WramPointer(word)) => {
@@ -245,6 +254,9 @@ mod tests {
                 }
                 Status::Decoded(Source::WramByte(byte)) => {
                     assert!(bytes.contains(&byte), "{} isn't read", field.path);
+                }
+                Status::Decoded(Source::WramBlock(block)) => {
+                    assert!(blocks.contains(&block), "{} isn't read", field.path);
                 }
                 Status::Decoded(Source::Record(_) | Source::Stack)
                 | Status::NoEquivalent(_)
@@ -265,6 +277,13 @@ mod tests {
         }
         for byte in bytes {
             assert!(listed(Source::WramByte(byte)), "{} has no row", byte.name);
+        }
+        for block in blocks {
+            assert!(
+                listed(Source::WramBlock(block)),
+                "{} has no row",
+                block.name
+            );
         }
     }
 

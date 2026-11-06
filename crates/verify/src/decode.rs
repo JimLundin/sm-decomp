@@ -13,7 +13,7 @@ use game::state::samus::{Equipment, Fixed, Gauge, Item, Items, Point, Samus};
 use game::state::slots::{FlagSet, Frames};
 use game::state::strand::{IrqStrand, MainStrand};
 use game::state::video::{
-    CGRAM_COLOURS, Colour, OAM_HIGH_BYTES, Oam, OamEntry, VRAM_WORDS, Video, VideoMemory,
+    CGRAM_COLOURS, Colour, NmiBatch, OAM_HIGH_BYTES, Oam, OamEntry, VRAM_WORDS, Video, VideoMemory,
 };
 use game::state::{
     Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
@@ -21,7 +21,7 @@ use game::state::{
 };
 use oracle_record::{Cut, FrameRecord, NmiKind};
 
-use crate::source::{self, WramByte, WramWord};
+use crate::source::{self, WramBlock, WramByte, WramWord};
 use crate::strand::{self, CALL_SITES, StrandRules, WAIT_SITES};
 
 /// Bank $82 log: game state 8 is main gameplay.
@@ -221,6 +221,8 @@ pub struct Rules<'t> {
     pub room: WramWord,
     /// `video.nmi_requested`.
     pub nmi_requested: WramByte,
+    /// `video.batch.oam`.
+    pub oam_buffer: WramBlock,
     /// `samus.equipment.collected`.
     pub collected: WramWord,
     /// `samus.equipment.equipped`.
@@ -277,6 +279,7 @@ impl Rules<'_> {
         samus_y_subpixels: source::SAMUS_Y_SUBPOS,
         room: source::ROOM_PTR,
         nmi_requested: source::WAITING_FOR_NMI,
+        oam_buffer: source::OAM,
         collected: source::COLLECTED_ITEMS,
         equipped: source::EQUIPPED_ITEMS,
         energy: source::SAMUS_HEALTH,
@@ -366,11 +369,7 @@ impl Rules<'_> {
                 last,
                 ..Timing::default()
             },
-            video: Video {
-                memory: video_memory(record)?,
-                nmi_requested: flag(self.nmi_requested, wram)?,
-                ..Video::default()
-            },
+            video: self.video(record)?,
             samus: Samus {
                 position: Point {
                     x: Fixed {
@@ -407,6 +406,19 @@ impl Rules<'_> {
             },
         };
         Ok(Decoded { state, quiescence })
+    }
+
+    /// Video: the PPU's memories, the NMI request and the OAM buffer.
+    fn video(&self, record: &FrameRecord) -> Result<Video, DecodeError> {
+        Ok(Video {
+            memory: video_memory(record)?,
+            nmi_requested: flag(self.nmi_requested, &record.wram)?,
+            batch: NmiBatch {
+                oam: oam(self.oam_buffer.read(&record.wram)?)?,
+                ..NmiBatch::default()
+            },
+            ..Video::default()
+        })
     }
 
     /// The interrupt strand: the IRQ handler's command, at the line VTIME holds.
@@ -577,15 +589,21 @@ fn video_memory(record: &FrameRecord) -> Result<VideoMemory, DecodeError> {
             expected: CGRAM_COLOURS,
             found: record.cgram.len(),
         })?;
+    Ok(VideoMemory {
+        vram: record.vram.to_vec(),
+        cgram: cgram.map(Colour),
+        oam: oam(&record.oam)?,
+    })
+}
+
+/// OAM in the PPU's layout, from the record's OAM or the original's buffer for it.
+fn oam(bytes: &[u8]) -> Result<Oam, DecodeError> {
     let oam_size = DecodeError::WrongSize {
         memory: Memory::Oam,
         expected: OAM_LOW_BYTES.wrapping_add(OAM_HIGH_BYTES),
-        found: record.oam.len(),
+        found: bytes.len(),
     };
-    let (low, high) = record
-        .oam
-        .split_first_chunk::<OAM_LOW_BYTES>()
-        .ok_or(oam_size)?;
+    let (low, high) = bytes.split_first_chunk::<OAM_LOW_BYTES>().ok_or(oam_size)?;
     let high = <[u8; OAM_HIGH_BYTES]>::try_from(high).map_err(|_| oam_size)?;
     let mut oam = Oam {
         high,
@@ -599,9 +617,5 @@ fn video_memory(record: &FrameRecord) -> Result<VideoMemory, DecodeError> {
             attributes,
         };
     }
-    Ok(VideoMemory {
-        vram: record.vram.to_vec(),
-        cgram: cgram.map(Colour),
-        oam,
-    })
+    Ok(oam)
 }
