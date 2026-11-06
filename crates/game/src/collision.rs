@@ -102,13 +102,16 @@ impl ScanOrder {
     }
 }
 
-/// Where the frame's moves happen: the room and the vertical scans' order.
+/// Where the frame's moves happen: the room, the vertical scans' order and the enemies she
+/// can't pass.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Surroundings<'a> {
     /// The room's blocks.
     pub room: Room<'a>,
     /// The frame's vertical scan order.
     pub order: ScanOrder,
+    /// The interactive enemies, which solid enemy collision checks before the blocks.
+    pub enemies: solid_enemy::SolidEnemies<'a>,
 }
 
 /// The way the collision direction (`$0B02`) says she moves vertically.
@@ -222,7 +225,7 @@ const fn at_most_zero(word: u16) -> u16 {
 }
 
 /// A position plus a distance, carried from the subpixels.
-const fn advance(position: Fixed, distance: Speed) -> Fixed {
+pub(crate) const fn advance(position: Fixed, distance: Speed) -> Fixed {
     let moved = Speed(
         Speed::new(position.pixels, position.subpixels)
             .0

@@ -14,7 +14,7 @@
 //! the zebetite skip's frozen rinka.
 
 use crate::collision::Body;
-use crate::state::room::{Enemy, EnemyCommon, EnemyProperty};
+use crate::state::room::{Enemy, EnemyBody, EnemyCommon, EnemyProperty};
 use crate::state::samus::{Point, Speed};
 use crate::state::slots::{Frames, Slot, SlotIndex};
 
@@ -81,6 +81,40 @@ pub fn obstacles<'a, B>(
             .get(usize::from(slot.0))
             .map(|enemy| (slot, Obstacle::from(&enemy.common)))
     })
+}
+
+/// The enemies a move can run into: the frame's interactive list (`$17EC`) and the enemies'
+/// table it indexes.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SolidEnemies<'a> {
+    /// The interactive slots, in list order.
+    pub interactive: &'a [SlotIndex<Enemy>],
+    /// The enemies' table.
+    pub slots: &'a [Slot<EnemyCommon, EnemyBody>],
+}
+
+impl SolidEnemies<'_> {
+    /// The check (`$A0:A8F0`) for Samus at `position` moving `distance` the `direction` way,
+    /// with what it does to her: [`Contact::Touching`] zeroes her Y subposition.
+    pub fn check(
+        &self,
+        direction: Direction,
+        body: Body,
+        distance: Speed,
+        position: &mut Point,
+    ) -> Contact {
+        let movement = Move {
+            direction,
+            position: *position,
+            body,
+            distance,
+        };
+        let contact = detect(&movement, obstacles(self.interactive, self.slots));
+        if let Contact::Touching { .. } = contact {
+            position.y.subpixels = 0;
+        }
+        contact
+    }
 }
 
 /// What the check found.
@@ -208,7 +242,8 @@ const fn gap(movement: &Move, enemy: &Obstacle) -> u16 {
 /// list order.
 ///
 /// The caller applies the result: a stopped move goes on by [`Contact::distance`] with no
-/// block collision, and [`Contact::Touching`] zeroes her Y subposition first.
+/// block collision, and [`Contact::Touching`] zeroes her Y subposition first
+/// ([`SolidEnemies::check`] does both of the check's own parts).
 // open: the per-direction enemy and distance words (`$182C`, `$1834`) and the debug copies
 // (`$184A` to `$185A`) the original writes on a hit have no reader in the engine yet.
 pub fn detect(
@@ -266,6 +301,30 @@ pub fn detect(
     }
     Contact::Clear
 }
+
+/// A table of one slot, 0, holding an enemy 8 pixels each way around (`x`, `y`), solid to
+/// Samus when `solid`.
+#[cfg(test)]
+pub(crate) fn one_enemy(x: u16, y: u16, solid: bool) -> Vec<Slot<EnemyCommon, EnemyBody>> {
+    let mut enemy = EnemyCommon {
+        radius_x: 8,
+        radius_y: 8,
+        ..EnemyCommon::default()
+    };
+    enemy.position.x.pixels = x;
+    enemy.position.y.pixels = y;
+    if solid {
+        enemy.properties.insert(EnemyProperty::SolidToSamus);
+    }
+    vec![Slot {
+        common: enemy,
+        ..Slot::default()
+    }]
+}
+
+/// The interactive list naming slot 0 alone.
+#[cfg(test)]
+pub(crate) const FIRST: [SlotIndex<Enemy>; 1] = [SlotIndex(0, core::marker::PhantomData)];
 
 #[cfg(test)]
 mod tests;

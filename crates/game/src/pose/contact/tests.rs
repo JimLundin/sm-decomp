@@ -363,3 +363,45 @@ fn a_running_pose_moves_her_a_pixel_forward_and_stops_at_a_block() {
         )
     );
 }
+
+#[test]
+fn a_solid_enemy_a_pixel_ahead_runs_the_pose_into_the_wall_without_the_move() {
+    use crate::collision::solid_enemy::{FIRST, SolidEnemies, one_enemy};
+    let content = content();
+    // Facing right, her right side is X + 5; the enemy's left edge is $50 - 8 = $48.
+    let slots = one_enemy(0x50, 0x40, true);
+    let collisions = Collisions {
+        surroundings: Surroundings {
+            enemies: SolidEnemies {
+                interactive: &FIRST,
+                slots: &slots,
+            },
+            ..Surroundings::default()
+        },
+        ..Collisions::default()
+    };
+    let run_to = |x: u16| {
+        let mut samus = in_pose(0x09, Movement::from(MovementType::Running), &content);
+        samus.position.x = Fixed {
+            pixels: x,
+            subpixels: 0,
+        };
+        samus.position.y.pixels = 0x40;
+        let requests = PoseRequests {
+            ordinary: Some(PoseId(0x0B)),
+            command: None,
+        };
+        change(
+            &mut samus,
+            requests,
+            collisions,
+            &mut Touches::default(),
+            &content,
+        );
+        (samus.pose, samus.position.x.pixels)
+    };
+    // From $42 the pixel's target, $43, is clear of the enemy, and the pixel moves her.
+    assert_eq!(run_to(0x42), (PoseId(0x0B), 0x43));
+    // From $43 she touches it: the pose runs into it and she stays.
+    assert_eq!(run_to(0x43), (PoseId(0x89), 0x43));
+}

@@ -486,3 +486,51 @@ fn a_ride_step_into_a_scroll_trigger_changes_the_scroll_area_on_that_frames_plm_
     );
     assert_eq!(room.scroll_areas, [ScrollArea::Green]);
 }
+
+#[test]
+fn running_into_a_solid_enemy_cuts_the_move_and_kills_her_speed() {
+    use crate::collision::solid_enemy::{FIRST, SolidEnemies, one_enemy};
+    let content = content();
+    let controller = holding(&[Button::Left, Button::B]);
+    // The enemy's right edge, $4F0 + 8 = $4F8, is 3 pixels from her left side at $500 - 5.
+    let slots = one_enemy(0x04F0, 0x0010, true);
+    let surroundings = Surroundings {
+        enemies: SolidEnemies {
+            interactive: &FIRST,
+            slots: &slots,
+        },
+        ..Surroundings::default()
+    };
+    let move_from = |x: u16, y_subpixels: u16| {
+        let mut samus = running_left();
+        samus.position.x.pixels = x;
+        samus.position.y = Fixed {
+            pixels: 0x0010,
+            subpixels: y_subpixels,
+        };
+        if let Some(speed) = samus.movement.horizontal_mut() {
+            speed.base = Speed::new(5, 0);
+        }
+        let contacts = run(
+            &mut samus,
+            &controller,
+            &content,
+            surroundings,
+            &mut Touches::default(),
+        );
+        (contacts.wall, samus)
+    };
+    let (wall, samus) = move_from(0x0500, 0x8000);
+    assert_eq!(wall, Some(crate::collision::Side::Left));
+    assert_eq!(
+        (samus.position.x.pixels, samus.position.x.subpixels),
+        (0x04FD, 0)
+    );
+    assert_eq!(samus.position.y.subpixels, 0x8000);
+    assert_eq!(samus.movement.horizontal(), Some(Horizontal::default()));
+    // Already touching it she stays, and the touch zeroes her Y subpixels.
+    let (wall, samus) = move_from(0x04FD, 0x8000);
+    assert_eq!(wall, Some(crate::collision::Side::Left));
+    assert_eq!(samus.position.x.pixels, 0x04FD);
+    assert_eq!(samus.position.y.subpixels, 0);
+}
