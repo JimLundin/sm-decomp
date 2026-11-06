@@ -257,7 +257,8 @@ measurement resumes from the nearest rung and runs for minutes
   (the state before step F, as for native seeds) and `FFFFFF.record` (the raw
   record of step F-1). `DIR/NAME/ladder.txt` lists each rung's frame and the
   SHA-256 of its record. It works with `--from` and `--no-memories`; a rung's
-  record always carries the memories.
+  record always carries the memories, and so does a native seed's (so it can
+  be compared with its lsnes room capture).
 - `oracle ladder-check ROM INPUTS DIR [--rungs A..B]` resumes each rung whose
   frame lies in A..B, runs to the next rung and prints `equal` or the parts
   that differ, with byte counts. It exits 1 if any rung differs or fails.
