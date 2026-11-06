@@ -194,13 +194,13 @@ check, its gate and CI lines, and the banners in AGENTS.md and MODEL.md.
 
 | Item | Status | Reasoning or commit |
 | --- | --- | --- |
-| R1 | pending | |
-| R2 | pending | |
-| R3 | pending | |
-| R4 | pending | |
-| R5 | pending | |
-| R6 | pending | |
-| R7 | pending | |
-| R8 | pending | |
-| R9 | pending | |
-| R10 | pending | |
+| R1 | accepted | MODEL §4: exact = gate pairs + localiser + lockstep on the declared fields only (Read by ≠ none); `coverage` checked against the spec's list in the decode lane |
+| R2 | accepted | MODEL §5 steps 1-5: observer spec → implementer types → observer decode; the RAM-shape report in §5 and §6 |
+| R3 | accepted | MODEL §5: empty module, the old module deleted in the same commit, the implementer's read limits, briefs by entry IDs only, Source lines in the catalogue, the address check as a report then an error per domain; AGENTS.md and the observer/implementer skills in lane/cleanup-docs; the running implementer lane was paused |
+| R4 | accepted | MODEL §5 spec template (Read by, domain types, checked, no routine headings) and a spec reviewer before any implementer; samus-ground is revised to the template before its implementer restarts |
+| R5 | accepted | MODEL §5 step 1: `scenarios/vectors/<domain>.toml`, run by a `game` test; samus-ground's vectors in the observer revision |
+| R6 | accepted | MODEL §5: `<domain>.gaps.md`, every literal traced to a BehaviourId, catalogue entries only in `Role: observer` commits (trailer check comes with the address check) |
+| R7 | accepted | MODEL §3: SpeedCap is the one Toggle; ArmPumpStep and VerticalScanAlternates are Fixed; Parameters may stay |
+| R8 | accepted | MODEL §4: baseline and budget in the spec header, and over budget is a review stop |
+| R9 | accepted | MODEL §6: domains done, oracle-checked out of total per domain, the RAM-shape list and size against budget |
+| R10 | accepted | MODEL §4: the pilot's six exit criteria, with item 3 (RAM shape) as the clean-room test |

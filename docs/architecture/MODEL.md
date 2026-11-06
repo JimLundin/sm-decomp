@@ -68,6 +68,11 @@ pub struct Behaviour {
 - **Timing** covers slowdown and loading time.
 - **Encoding** covers the output's own quirks, which live in `exact`.
 
+**Switches are Fixed unless there is a named use (review R7).** Every Toggle is a second code path
+that needs its own tests. `SpeedCap` is a Toggle, as the proof of the thesis. Other entries stay
+Fixed until a consumer asks for them: a Map Rando option, respin, the QoL list. A `Parameter`, a
+value in `Rules`, is cheap and may stay.
+
 `Rules` (the Session's options, ARCHITECTURE §10) carries one value for each switchable behaviour.
 The Reference profile holds the vanilla values, and those are what the oracle checks. A different
 value is an adjusted game. The engine runs it the same way; it just isn't compared.
@@ -118,22 +123,41 @@ pub fn step(samus: &mut Samus, pad: Controls, rules: &MotionRules, world: &World
 ```
 
 **What the reshape proves:**
-- It is byte-identical. The lockstep ratchet's equal Ticks are unchanged and no group rises, the
-  free-run localiser's first differing frames are unchanged, and the gate's green pairs hold.
+- It is exact (review R1). Three checks:
+  - the free-run gate's green pairs hold;
+  - the free-run localiser's first differing frames are unchanged;
+  - the lockstep ratchet holds **on the domain's declared fields**.
+
+  The declared fields are the spec's quantities whose **Read by** is not "none" (§5). Lockstep
+  compares State field by field, so comparing every decoded field would pull the State back to the
+  RAM layout. A quantity that no later rule reads and that never reaches output is not State, not
+  decoded and not compared.
 - The thesis holds in code. `SpeedCap` is a switchable quirk:
   - `SpeedCap::Wordwise` is vanilla, the oracle-checked value. The original compares the pixel
     and subpixel words separately, so 2.1000 counts as past a cap of 2.C000.
   - `SpeedCap::Exact` is the corrected rule.
   - A unit test shows the two differ on exactly that case, and the Reference profile stays
     exact.
-- It's smaller. The aim is fewer lines than `movement.rs` plus the ground half of `collision.rs`
-  today, with no local signed-compare helpers and every constant in `MotionRules` or the
-  catalogue.
+- It's smaller (review R8). The spec header holds the baseline (today's lines for the domain) and
+  a budget, written before the build. The size report shows the domain against its budget, and
+  going over is a review stop.
 
 **Done means:**
 - A movement kind is a row, a parameter is a table entry or a rule, and collision is one sweep.
-- Nothing in `model::samus` names a video type.
-- Module docs describe the domain, with at most one `Source:` line per item.
+- Nothing in `model::samus` names a video type or an address. Source lines live in the catalogue
+  only (review R3).
+
+**The pilot passes (review R10) when all of these hold:**
+1. The three exactness checks above hold.
+2. No asm address appears in `game::model::samus`.
+3. The domain's RAM-shape list (§5) is short and every item on it is justified.
+4. The vector tests pass, and the domain is under its budget.
+5. At least one gap went from the implementer to the observer and back, and was fixed by amending
+   the spec, not by patching the code.
+6. The implementer never read the bank logs, `verify`'s address files or the old module.
+
+If the other items hold but item 3 doesn't, the clean room failed, however well the code reads.
+That is fixed before the second domain.
 
 ## 5. How the work is planned
 
@@ -147,23 +171,63 @@ that covers a family of behaviours:
 Lockstep and the free-run localiser are the acceptance check, and they tell *which behaviour* is
 wrong. They don't decide *what code to write*.
 
-**Two roles: the observer and the implementer.**
-- The **observer** reads the original: the bank logs and the oracle's records. It writes a
-  **behaviour spec** for a domain, in domain terms. The spec covers each behaviour and its
-  parameters, each quirk as a named entry, and test vectors with concrete numbers taken from
-  oracle records. Each entry gets one `Source:` line.
-- The specs are the catalogue entries and the domain design notes. They live in
-  `docs/behaviours/<domain>.md`, and Jim can read them as a description of what Super Metroid
-  does.
-- The **implementer** gets the spec and this note, never the bank logs or the asm. It builds the
-  model and proves it against the oracle. It has nothing it could transliterate.
-- When the oracle disagrees, the observer goes back to the original and amends the spec. The
-  implementer never patches from the asm.
-- The knowledge is written down once, so no lane rediscovers it.
+**Two roles, always separate sessions: the observer and the implementer.** One agent never
+switches between them. A domain goes in this order (review R2):
+1. **The observer** reads the original (the bank logs, the ROM, the oracle's records) and writes
+   the **behaviour spec**, `docs/behaviours/<domain>.md`, to the template below. It also commits
+   the spec's test vectors as data in `scenarios/vectors/<domain>.toml`: before, pad and after, in
+   domain terms, the constructed ones and the `Exact` variants included (review R5). The specs are
+   the catalogue's source and the domain's design note, and Jim can read them as a description of
+   what Super Metroid does.
+2. **A spec reviewer** checks the spec before any implementer starts. That is Jim, or an agent that
+   hasn't seen the asm. The question: could someone who never saw the asm implement this, and
+   would the code be shaped by the domain? (review R4)
+3. **The implementer** designs the State types and the model from the spec alone. It writes into
+   an **empty module**, `game::model::<domain>`, never opens the old module, and deletes it in the
+   same commit (review R3). A test in `game` runs the vector file, so it iterates locally and
+   reaches the oracle only to confirm.
+4. **The observer writes `verify`'s decode for the implementer's types.** Decode is an abstraction
+   from RAM to the State, not a copy. If a State value can't be decoded, the observer either names
+   the hidden quantity as a new spec entry, in domain terms, or shows that the value is derived,
+   so the model computes it and doesn't store it. The implementer never adds a field because the
+   decoder has one.
+5. **Gaps go back to the observer** (review R6). The implementer doesn't fix a difference it can't
+   explain. It writes an entry in `docs/behaviours/<domain>.gaps.md` with the frame, the field, the
+   expected and actual values and the entry it suspects, then moves on. The observer answers from
+   the original and amends the spec.
 
-**A brief names behaviours and the mechanism** (for example, "the morph ball at rest coasts like
-standing: a `BallAtRest` row; source `$90:A521`"). It includes the relevant bank-log excerpt, so
-the lane doesn't rediscover it. A new free function named after a routine is a review stop.
+**What the implementer may read:** this note, its domain's spec and vectors, the localiser's
+output, `data`'s public types, and the model code. **Not:** the bank logs or the asm,
+`verify/src/{decode,source,strand}.rs` (they hold WRAM addresses), the old module it replaces, and
+history before the tag `archive/old-engine`.
+
+**No fitting to the oracle (review R6).**
+- Every literal and every branch in `game::model` traces to a `BehaviourId`, and values come from
+  `Rules` or `data`.
+- Catalogue entries are added only in observer commits, with the trailer `Role: observer`.
+- No conditions on frame numbers, positions or room IDs that no spec entry names.
+
+**The spec template (review R4).**
+- **Header:** the domain's scope, its baseline lines and its budget (R8).
+- **Each quantity:** its units, a domain type (an enum, never ROM codes), and **Read by**: the
+  behaviour IDs that read it on a later frame, or "output" if it reaches bytes, or "none". "None"
+  means it isn't State (decision 3). ROM codes belong in the decode notes.
+- **Each entry:** id, kind, summary, rule, params, switch, **checked** (`oracle (V3, V4)` or
+  `original only`), and one `Source:` line.
+- **Not allowed:** headings named after routines; RAM addresses outside the Source line; step lists
+  that follow a routine. Order is stated only in "Order that matters", and only where it is
+  visible at a cut.
+
+**The RAM-shape report (review R2).** The size report lists, for each domain, the State fields whose
+decode is one WRAM word copied as-is. Each needs a one-line reason in the spec.
+
+**Address check (review R3).** `tools/check_crate_rules.sh` reports `$XX:XXXX` and `$XXXX` anywhere
+in `game` outside `behaviours.rs`. It starts as a report, because 881 lines cite addresses today,
+and becomes an error domain by domain as each one is reshaped.
+
+**A brief names behaviours and the mechanism** by spec entry IDs (for example: "`BallAtRest`
+coasts like standing; add its row"). It carries no bank-log excerpt and no address. A new free
+function named after a routine is a review stop.
 
 **Order** (each step is byte-identical unless it says otherwise):
 1. **Groundwork:**
@@ -187,10 +251,11 @@ the lane doesn't rediscover it. A new free function named after a routine is a r
 
 ## 6. How progress is measured
 
-Measured first:
-- the behaviours in the catalogue;
-- how many of those are proven exact by the oracle;
-- how many are switchable.
+Measured first (review R9; a raw behaviour count is easy to inflate by splitting entries, so it
+isn't a goal):
+- the domains that meet §4's definition of done;
+- for each domain, its oracle-checked entries out of its total;
+- for each domain, the RAM-shape list (§5) and its size against budget.
 
 Then, as checks that must not regress:
 - the lockstep ratchet and the free-run gate's green pairs;
