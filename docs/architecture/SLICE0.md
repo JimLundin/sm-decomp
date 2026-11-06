@@ -782,7 +782,10 @@ past the palette buffer (DMAP 00h, BBAD 04h and 22h), and each VRAM write table 
 upload's words name their buffer's address (`data::dma`), so the last of the NMI's users
 holds the channel. `video.dma` then differs on 32 / 80 Ticks (from 282 / 831), all but the
 message box and HDMA ones the scrolling DMAs (`$80:8CD8`, `$80:8DAC`), which the room's
-tilemap uploads bring. Open: those, and lockstep of `video.memory.vram`.
+tilemap uploads bring. A spin jump's frames run on past its delay list to the wall jump
+eligible frame `$90:9D35` reaches (Bh, the screw attack's 1Bh), so `$CD99` (pose 1Ah frame
+Bh) decodes and `item-morph-ball` has no undecodable frame. Open: the scrolling DMAs, the
+wall jump check itself (the animation differs from 711) and lockstep of `video.memory.vram`.
 
 **C6a status (`lane/slice0-c6a`), Samus's animation timing.** Done: `data::pose::animation`
 decodes bank `$91`'s animation delay table (`$91:B010`, a bank `$91` pointer a pose) and the

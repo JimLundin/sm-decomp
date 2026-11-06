@@ -1797,9 +1797,10 @@ fn the_cached_levels_are_the_loaded_rooms_but_for_the_item_shot_block_and_screen
     let Some(CachedRows { loaded, frames, .. }) = cached_rows() else {
         return;
     };
-    // The frames the decoder represents: 1,484 of both rows since the PLM slots decode (the
-    // PLMs the engine doesn't run yet are unrepresentable).
-    assert_eq!(frames.len(), 1484);
+    // The frames the decoder represents: 1,493 of both rows since the PLM slots decode (the
+    // PLMs the engine doesn't run yet are unrepresentable) and a spin jump's wall jump
+    // eligible frame has its tiles.
+    assert_eq!(frames.len(), 1493);
     let mut differing = std::collections::BTreeMap::new();
     let mut screens = std::collections::BTreeSet::new();
     for (frame, state) in &frames {
