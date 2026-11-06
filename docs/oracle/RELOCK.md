@@ -389,11 +389,9 @@ recorded twice (`a`, `b`) and as `--shard 0/3`, `1/3`, `2/3`:
 
 **What remains of step c.**
 
-0. Make `video` deterministic (above); then rerun the proof. It doesn't
-   reproduce on demand, so the next step is a record that localises it when
-   it happens: keep each frame's video digest with every recorded entry (a
-   sidecar beside `--record-v2`), so a run that disagrees names its frames
-   without a rerun; then dump those frames' pictures.
+0. `video` is still rarely nondeterministic and the cause is open. The
+   recording now checks itself (§7): every row is recorded at least twice,
+   and only entries that two runs agree on are locked.
 1. Facts: every fact is written `"unevaluated"`; the room, state, area, item,
    boss and door facts need evaluating on the decoded State (`tools relock`,
    with `verify::decode`).
@@ -407,3 +405,82 @@ recorded twice (`a`, `b`) and as `--shard 0/3`, `1/3`, `2/3`:
 5. The step's mutant proof: a mutated pad changes only the spans from its
    frame on. Not run.
 6. A reader for format 2 (step f retypes `lock.rs`); entries are only written.
+
+## 7. Recordings check themselves
+
+Lane `lane/relock-verify`. lsnes's `video` stream rarely differs between two
+runs of a row (2 of 67 row runs, never on demand; §6), so a lock entry is
+kept only where two recordings agree byte for byte.
+
+**The sidecar.** `--record-v2 FILE --sidecar DIR` also writes `DIR/<row>.frames`,
+text, one line per video frame after a head line naming the columns:
+
+```text
+# frame lsnes_frame cut vram cgram oam sram ppu apu video timing wram
+0 8539 R c2285235399f697b f7d7cb48d9441224 ... 2493486742244426
+```
+
+The frame index in the row, lsnes's frame counter, the cut kind (`R`, `O`,
+`V`, `S`, as `.cuts`) and the digest each stream folded at that frame (`-`
+where a quiescent stream didn't fold, `absent` where the record lacked it).
+About 140 bytes a frame: 75 KB for `chain-any-0001-DF45`, about 62 MB for the
+corpus. ROM-derived; it stays in `$TEMP`. `--dump-frames ROW:F,...` (with
+`--sidecar`, repeatable) writes those frames' shown pictures, the dots
+`video` digests, as `DIR/<row>.<F>.png`, for a frame a sidecar named.
+
+**Compare and merge** are `oracle` subcommands (`oracle::relock_check`), so
+they run through the same DLL runner as the recording: this machine can't run
+the `tools` executable. A recording is one file or its shards' files joined by
+commas, whose headers must be equal.
+
+- `relock-compare A B [--sidecars DA DB]` prints each row `agree` or
+  `DISAGREE`, with the differing non-stream lines and per stream the first
+  differing span; with sidecars, the two lines of the first frame whose column
+  differs. `only in A`/`only in B` for a row one lacks. Exits 1 on any
+  disagreement (the header included), 2 on bad arguments.
+- `relock-merge OUT A B [C]` writes the header and each row's entry that at
+  least two recordings share byte for byte, in the order rows first appear,
+  and prints the rows with no agreeing pair; exits 1 when there are any.
+
+**Step d's procedure.**
+
+1. Record every row (wave A), sharded as planned, with `--sidecar side-a`.
+2. Record every row again (wave B) in a different shard layout (another `N`
+   in `--shard I/N`, so rows meet different neighbours and load), with
+   `--sidecar side-b`.
+3. `relock-compare A B --sidecars side-a side-b > compare.txt`. Exit 0: the
+   lock is `relock-merge lock.toml A B`.
+4. Otherwise re-record the disagreeing rows (`--only ID ...`) as wave C
+   with `--sidecar side-c`, and, for the frames compare named, `--dump-frames
+   ROW:F,...` to keep their pictures.
+5. `relock-merge lock.toml A B C`. Rows it lists have no agreeing pair: keep
+   them out of the lock and record them again; keep `compare.txt` and the
+   sidecars of the odd runs as the localisation for the cause.
+
+**Proof** (`$TEMP/ohx/relock-verify/proof.sh` and `check.sh`, 2026-11-06, 5
+processes beside the background job): the three rows recorded as wave A
+(`--shard 0/3`, `1/3`, `2/3`) and wave B (`0/2`, `1/2`, `--dump-frames
+death:100,1500`), with sidecars.
+
+- **The miss happened, and the sidecar localised it.** `relock-compare A B`
+  (exit 1): `chain-any-0001-DF45` and `death` agree; `chain-any-0006-E0B5`
+  disagrees on `video` span 1 only, at exactly one frame: frame 1071 (lsnes
+  frame 11234), a cut at the RTI (`R`), video `26ea2588f4177978` in A against
+  `1859db1821bb61c8` in B, every other stream's digest equal on that frame.
+  So the emulation is the same and one screenshot differs. A third run (wave
+  C: `--only chain-any-0006-E0B5 --dump-frames chain-any-0006-E0B5:1070,1071`)
+  gave B's value, so A was the odd run; its picture of frame 1071 isn't kept
+  (the dump is of the agreeing run, an ordinary frame of Samus jumping in a
+  blue shaft). Next time, compare each wave with the third and dump the odd
+  run's frames too.
+- **An altered entry is caught.** C, a copy of B with `death`'s `video` span 1
+  and its frame 1234 in the sidecar changed: `relock-compare A C` reports
+  `death: video: span 1 differs` with the two lines of frame 1234, beside the
+  natural miss.
+- **Merge.** `relock-merge OUT A C B`: 3 entries, 0 rows without a pair
+  (`death` from A and B, `chain-any-0006-E0B5` from C and B). `relock-merge
+  OUT A C`: 1 entry, and `chain-any-0006-E0B5` and `death` listed (exit 1).
+  `relock-merge OUT A B C3` (the third run): 3 entries, `chain-any-0006-E0B5`
+  with B's and C3's span 1 (`4e82496a3475bafb`).
+- The two `.png` dumps decode as the expected pictures (the Crateria map at
+  `death` frame 1500).
