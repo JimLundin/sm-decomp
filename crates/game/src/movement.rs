@@ -86,12 +86,33 @@ impl Mover<'_> {
         }
     }
 
+    /// "Wall jump block collision detection" (`$94:967F`): whether a block stops her within a
+    /// signed `distance` of where she is, and how far it is.
+    ///
+    /// The scan sets the collision direction to none of the four (`$0B02` = `$F`), which only
+    /// the PLM setups that test the direction read; the item's and the scroll trigger's
+    /// don't, so their touches count as the move's do.
+    // open: the direction-testing setups (the stations' access, the save station and Chozo
+    // hand triggers, crumble blocks, quicksand's surface) and the quicksand flag (`$1E71`)
+    // join with those blocks; slice 0's rooms have none.
+    fn check_x(&mut self, distance: Speed, position: &mut Point) -> Option<u16> {
+        let room = self.surroundings.room;
+        let checked = collision::scan_x(room, self.body, position, distance, self.touches);
+        checked.collided.then(|| {
+            let reach = checked.distance;
+            if reach.pixels().cast_signed() < 0 {
+                Speed(reach.0.wrapping_neg()).pixels()
+            } else {
+                reach.pixels()
+            }
+        })
+    }
+
     /// "Move Samus up" or "down" (`$90:93EC`, `$90:9440`) by a signed `displacement`
     /// through the blocks (`$94:9763`), then the solid vertical collision result
     /// (`$90:E606`, `$90:E61B`).
     // The downwards result by movement type (`$90:E65A`, `$90:E676`) is `pose::contact`'s: no
     // phase between the move and the pose update changes the movement type.
-    // open: the wall jump's result 5 joins with the wall jump check (`$90:9D35`).
     fn move_y(&mut self, displacement: Speed, heading: Heading, position: &mut Point) {
         let Surroundings { room, order } = self.surroundings;
         let collided = collision::move_y(

@@ -164,6 +164,9 @@ pub enum VerticalContact {
     Falling,
     /// 4: an upwards move was stopped.
     HitCeiling,
+    /// 5: the spin jump's wall jump check found a wall to jump from (`$90:9E7F`), and she
+    /// didn't move vertically.
+    WallJumpTriggered,
 }
 
 /// What the frame's moves met, for the pose update to read (bank $91 log, `$91:E8B6` and
@@ -509,6 +512,23 @@ pub fn move_x(
             collided: false,
         };
     }
+    let moved = scan_x(room, body, position, distance, touches);
+    position.x = advance(position.x, moved.distance);
+    moved
+}
+
+/// "Samus block collision detection - horizontal" (`$94:9543`): the blocks of her rows at
+/// her leading edge `distance` (signed) away.
+///
+/// The move and the wall jump check (`$94:967F`) share it. She doesn't move, but a solid
+/// block puts her X subpixels next to it. The touches it reaches join `touches`.
+pub fn scan_x(
+    room: Room<'_>,
+    body: Body,
+    position: &mut Point,
+    distance: Speed,
+    touches: &mut Touches,
+) -> Moved {
     let y = position.y.pixels;
     let first = row_start(y.wrapping_sub(body.y_radius) >> 4, room.width);
     let target = advance(position.x, distance).pixels;
@@ -537,7 +557,6 @@ pub fn move_x(
             break false;
         }
     };
-    position.x = advance(position.x, scan.distance);
     Moved {
         distance: scan.distance,
         collided,

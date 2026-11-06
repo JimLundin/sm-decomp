@@ -143,6 +143,8 @@ pub enum SolidVertical {
     Falling,
     /// A downwards move was stopped.
     Landed(Grounding),
+    /// The wall jump check triggered a wall jump.
+    WallJumpTriggered,
 }
 
 /// Which of a pair of poses, right then left, `facing` takes: the original tests for
@@ -159,8 +161,7 @@ const fn by_facing(facing: Facing, [right, left]: [PoseId; 2]) -> PoseId {
 /// A landing or a fall replaces the input's request with its pose and the solid vertical
 /// collision command; a ceiling keeps the pose with the command.
 // open: the morph ball's and the spring ball's landings (`$91:EA07`, `$91:EA63`) read the
-// bounce state, and the wall jump's result 5 (`$91:EABE`) joins with the wall jump check;
-// until then they leave the input's request.
+// bounce state; until then they leave the input's request.
 #[must_use]
 pub fn request(
     samus: &Samus,
@@ -173,6 +174,11 @@ pub fn request(
     let (pose, collision) = match vertical {
         VerticalContact::NoChange => return requests,
         VerticalContact::HitCeiling => (Some(samus.pose), SolidVertical::HitCeiling),
+        // The wall jump's pose by her facing (`$91:EABE`).
+        VerticalContact::WallJumpTriggered => (
+            Some(by_facing(samus.facing, [PoseId(0x83), PoseId(0x84)])),
+            SolidVertical::WallJumpTriggered,
+        ),
         VerticalContact::Falling => match Fall::of(movement) {
             Some(fall) => (
                 Some(by_facing(samus.facing, fall.poses())),
@@ -315,9 +321,11 @@ pub(super) fn runs_into_wall(
 /// change.
 ///
 /// A ceiling stops her rise; a fall from the ground starts with no Y speed unless she was
-/// rising; a landing on her feet stops her base speed and her vertical motion.
-// open: the landing's sounds and dust (`$91:F046`), the auto-jump hack the landing arms
-// (`$91:F1EC`, its input handler joins with the jumps), the falling flag, the unused type's
+/// rising; a landing on her feet stops her base speed and her vertical motion; a wall jump
+/// stops her base speed.
+// open: the landing's and the wall jump's sounds (`$91:F2E8`) and dust (`$91:F046`), the
+// auto-jump hack the landing arms (`$91:F1EC`, its input handler joins with the jumps), the
+// falling flag, the unused type's
 // horizontal slope detection (`$91:F253`) and the bounces join with the sounds, the
 // atmospheric graphics, the slopes' flags and the morph ball.
 pub(super) const fn solid_vertical(collision: SolidVertical, samus: &mut Samus) {
@@ -343,6 +351,13 @@ pub(super) const fn solid_vertical(collision: SolidVertical, samus: &mut Samus) 
             stop_vertically(samus, YDirection::None);
         }
         SolidVertical::Landed(Grounding::MorphBall | Grounding::SpringBall) => {}
+        // `$91:F2D3`: she pushes off from rest.
+        SolidVertical::WallJumpTriggered => {
+            if let Some(speed) = samus.movement.horizontal_mut() {
+                speed.acceleration = Acceleration::Accelerating;
+                speed.base = Speed::ZERO;
+            }
+        }
     }
 }
 

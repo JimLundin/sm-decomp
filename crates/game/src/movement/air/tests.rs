@@ -370,3 +370,125 @@ fn a_fall_lands_her_on_the_floor() {
         crate::collision::VerticalContact::Falling
     );
 }
+
+/// A level eight blocks across and 24 down of air, with `kind` at column 7 of row 16.
+fn level_with(kind: data::level::BlockKind) -> Vec<crate::state::room::Block> {
+    let mut blocks = vec![crate::state::room::Block::default(); 8 * 24];
+    if let Some(block) = blocks.get_mut(16 * 8 + 7) {
+        block.kind = kind;
+    }
+    blocks
+}
+
+fn room(blocks: &[crate::state::room::Block]) -> Surroundings<'_> {
+    Surroundings {
+        room: crate::collision::Room {
+            blocks,
+            width: crate::state::room::BlockColumns(8),
+            slopes: None,
+        },
+        ..Surroundings::default()
+    }
+}
+
+/// [`spinning`] with no base speed, rows 15 and 16 tall, from a spin jump's pose, its
+/// animation on `frame`.
+fn spun(frame: u16) -> Samus {
+    let mut samus = spinning(Speed::ZERO);
+    samus.y_radius = 0x0C;
+    samus.last_different.movement = MovementType::SpinJumping;
+    samus.animation.frame = AnimationFrame(frame);
+    samus
+}
+
+#[test]
+fn the_wall_jump_check_touches_an_item_eight_pixels_behind_her() {
+    use crate::collision::Touch;
+    use crate::state::room::BlockIndex;
+    use data::level::{BlockKind, PlmChoice};
+    let content = content();
+    let blocks = level_with(BlockKind::Special(PlmChoice::Common(0x45)));
+    // Holding right she moves to $80.1000; the check looks left from $80 - 8 - 5 = $73, in
+    // column 7, which her move didn't reach.
+    let mut samus = spun(3);
+    let mut touches = Touches::default();
+    let contacts = run(
+        &mut samus,
+        &holding(&[Button::Right]),
+        &content,
+        room(&blocks),
+        &mut touches,
+    );
+    assert_eq!(touches.touched(), [Touch::Item(BlockIndex(16 * 8 + 7))]);
+    assert_eq!(samus.position.x, at(0x0080, 0x1000));
+    assert_eq!(samus.animation.frame, AnimationFrame(3));
+    assert_ne!(contacts.vertical, VerticalContact::WallJumpTriggered);
+    // Not from a spin, or holding no direction, she doesn't look.
+    for (mut samus, controller) in [
+        (
+            Samus {
+                last_different: Samus::default().last_different,
+                ..spun(3)
+            },
+            holding(&[Button::Right]),
+        ),
+        (spun(3), Controller::default()),
+    ] {
+        let mut touches = Touches::default();
+        run(
+            &mut samus,
+            &controller,
+            &content,
+            room(&blocks),
+            &mut touches,
+        );
+        assert_eq!(touches.touched(), []);
+    }
+}
+
+#[test]
+fn a_wall_behind_her_readies_the_spin_then_triggers_the_wall_jump() {
+    use data::level::{BlockKind, Bts};
+    let content = content();
+    let blocks = level_with(BlockKind::Solid(Bts(0)));
+    // Still spinning: the animation goes to the frame before the wall jump's.
+    let mut samus = spun(3);
+    run(
+        &mut samus,
+        &holding(&[Button::Right]),
+        &content,
+        room(&blocks),
+        &mut Touches::default(),
+    );
+    assert_eq!(
+        (samus.animation.frame, samus.animation.timer),
+        (AnimationFrame(0x0A), AnimationTimer(1))
+    );
+    // Eligible and newly pressing jump: the wall, 0 pixels away once the check puts her X
+    // subpixels at the block's edge, triggers the wall jump and she doesn't move vertically.
+    let mut samus = spun(0x0B);
+    if let Some(vertical) = samus.movement.vertical_mut() {
+        vertical.speed = Speed::new(1, 0);
+    }
+    let mut jump = holding(&[Button::Right, Button::A]);
+    jump.pressed.bits = Button::A.bit();
+    let contacts = run(
+        &mut samus,
+        &jump,
+        &content,
+        room(&blocks),
+        &mut Touches::default(),
+    );
+    assert_eq!(contacts.vertical, VerticalContact::WallJumpTriggered);
+    assert_eq!(samus.position.y, at(0x0100, 0));
+    // Without the press she only moves on.
+    let mut samus = spun(0x0B);
+    let contacts = run(
+        &mut samus,
+        &holding(&[Button::Right]),
+        &content,
+        room(&blocks),
+        &mut Touches::default(),
+    );
+    assert_ne!(contacts.vertical, VerticalContact::WallJumpTriggered);
+}

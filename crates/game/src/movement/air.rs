@@ -13,11 +13,11 @@ use data::movement::{Speed, SpeedEntry, VerticalSpeeds};
 use data::pose::transition::Control;
 
 use super::{Mover, Rules, move_horizontally, over_cap};
-use crate::collision::Heading;
+use crate::collision::{Heading, VerticalContact};
 use crate::pose::{Content, JUMP_TAKE_OFF, Takeoff, controls};
 use crate::state::samus::{
-    Acceleration, AnimationFrame, AnimationTimer, Facing, Horizontal, Item, Jump, Movement, Point,
-    PoseId, Samus, Vertical, YDirection,
+    Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Item, Jump,
+    Movement, MovementType, Point, PoseId, PoseRecord, Samus, Vertical, YDirection,
 };
 use crate::state::{Button, Controller};
 
@@ -32,20 +32,43 @@ const TERMINAL_FRAME: AnimationFrame = AnimationFrame(5);
 /// The terminal velocity frame's delay.
 const TERMINAL_DELAY: AnimationTimer = AnimationTimer(8);
 
-/// What the air movements read from the pad: the jump control and the D-pad's left and right,
-/// which the original tests on the pad itself (`$90:9012`).
+/// The wall jump check's reach from her side (`$90:9E9F`, "maximum distance from wall for
+/// wall-jump").
+const WALL_JUMP_REACH: u16 = 8;
+
+/// The screw attack's poses, whose spin takes longer to reach a wall jump (`$90:9D48`).
+const SCREW_ATTACK: [PoseId; 2] = [PoseId(0x81), PoseId(0x82)];
+
+/// The animation frame from which a spin can wall jump (`$90:9D55`), and the screw attack's.
+const WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x0B);
+/// The screw attack's.
+const SCREW_ATTACK_WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x1B);
+
+/// What the air movements read from the pad: the jump control, held and newly pressed, and
+/// the D-pad's left and right, which the original tests on the pad itself (`$90:9012`).
 #[derive(Clone, Copy)]
 struct Pad {
-    jump: bool,
+    jump: JumpControl,
     left: bool,
     right: bool,
+}
+
+/// The jump control on the pad.
+#[derive(Clone, Copy)]
+struct JumpControl {
+    held: bool,
+    /// Newly pressed this frame.
+    pressed: bool,
 }
 
 impl Pad {
     fn of(controller: &Controller) -> Self {
         let held = |button: Button| (controller.held.bits & button.bit()) != 0;
         Self {
-            jump: controls(controller.held).contains(Control::Jump),
+            jump: JumpControl {
+                held: controls(controller.held).contains(Control::Jump),
+                pressed: controls(controller.pressed).contains(Control::Jump),
+            },
             left: held(Button::Left),
             right: held(Button::Right),
         }
@@ -58,8 +81,8 @@ impl Pad {
 
 /// The movement handler's air movements for the frame; the other movements are not here.
 // open: the extra Y displacement (`EXTRA_SAMUS_Y_DISPLACEMENT`) is zero in slice 0; the space
-// jump and screw attack (`$90:A436`), the contact damage index (`$90:A734`) and the spin
-// jump's wall jump check (`$90:9D35`, block and enemy collision) join with the items and C4.
+// jump and screw attack (`$90:A436`) and the contact damage index (`$90:A734`) join with the
+// items and C4.
 pub(super) fn run(
     samus: &mut Samus,
     controller: &Controller,
@@ -127,7 +150,9 @@ pub(super) fn run(
                 speed.acceleration = Acceleration::Accelerating;
             }
             move_horizontally(speed, speed.base, facing, &mut position, mover);
-            move_vertically(vertical, gravity, &mut position, mover);
+            let spin = Spin::of(samus.last_different, pose, pad);
+            let animation = &mut samus.animation;
+            spin_vertically(spin, vertical, gravity, animation, &mut position, mover);
         }
         Movement::Falling { speed, vertical } => {
             rules.extra_run(speed);
@@ -162,6 +187,91 @@ pub(super) fn run(
         | Movement::Unused(_) => return,
     }
     samus.position = position;
+}
+
+/// What the wall jump check reads of a spin jump.
+#[derive(Clone, Copy)]
+struct Spin {
+    /// Whether the last different pose's movement type spun: a spin or wall jump.
+    spinning: bool,
+    pose: PoseId,
+    pad: Pad,
+}
+
+impl Spin {
+    const fn of(last_different: PoseRecord, pose: PoseId, pad: Pad) -> Self {
+        Self {
+            spinning: matches!(
+                last_different.movement,
+                MovementType::SpinJumping | MovementType::WallJumping
+            ),
+            pose,
+            pad,
+        }
+    }
+}
+
+/// The spin jump after its horizontal move (`$90:90B3`): the wall jump check, and unless it
+/// triggers a wall jump, her vertical motion.
+fn spin_vertically(
+    spin: Spin,
+    vertical: &mut Vertical,
+    gravity: Speed,
+    animation: &mut Animation,
+    position: &mut Point,
+    mover: &mut Mover<'_>,
+) {
+    if wall_jump_check(spin, animation, position, mover) {
+        mover.contacts.vertical = VerticalContact::WallJumpTriggered;
+    } else {
+        move_vertically(vertical, gravity, position, mover);
+    }
+}
+
+/// "Wall jump check" (`$90:9D35`), after the spin jump's horizontal move: holding a
+/// direction, she looks [`WALL_JUMP_REACH`] pixels the other way for a wall. Still spinning,
+/// a wall moves her animation to the frame before the wall jump's; past it, newly pressing
+/// jump with the wall nearer than the reach triggers the wall jump, and she doesn't move
+/// vertically this frame. Left is checked before right.
+///
+/// The look reaches blocks her move didn't, so it touches them as well: `item-morph-ball`
+/// frame 817 takes the Morph Ball's item 8 pixels to her left.
+// open: the solid enemy collision checked first (`$A0:A8F0`) and the enemy to shake
+// (`$0E1C`) join with solid enemies.
+fn wall_jump_check(
+    spin: Spin,
+    animation: &mut Animation,
+    position: &mut Point,
+    mover: &mut Mover<'_>,
+) -> bool {
+    if !spin.spinning {
+        return false;
+    }
+    let reach = Speed::new(WALL_JUMP_REACH, 0);
+    let distance = if spin.pad.left {
+        reach
+    } else if spin.pad.right {
+        Speed(reach.0.wrapping_neg())
+    } else {
+        return false;
+    };
+    let threshold = if SCREW_ATTACK.contains(&spin.pose) {
+        SCREW_ATTACK_WALL_JUMP_FRAME
+    } else {
+        WALL_JUMP_FRAME
+    };
+    // The original compares the frame and branches on the difference's sign.
+    let eligible = animation.frame.0.wrapping_sub(threshold.0).cast_signed() >= 0;
+    let Some(wall) = mover.check_x(distance, position) else {
+        return false;
+    };
+    if eligible {
+        spin.pad.jump.pressed && wall.cast_signed() < WALL_JUMP_REACH.cast_signed()
+    } else {
+        animation.timer = AnimationTimer(1);
+        animation.frame = AnimationFrame(threshold.0.wrapping_sub(1));
+        false
+    }
 }
 
 /// Move her by her base speed while she keeps momentum or steers; else she loses it and
@@ -206,7 +316,8 @@ fn air_base_speed(speed: &mut Horizontal, entry: Option<&SpeedEntry>) -> Option<
 /// The rise's release check (`$90:8FDC`): letting go of jump, or a speed gravity took below
 /// zero, ends the rise; she then falls from rest.
 fn release(vertical: &mut Vertical, pad: Pad) {
-    if vertical.direction == YDirection::Up && (!pad.jump || rising_past_apex(vertical.speed)) {
+    if vertical.direction == YDirection::Up && (!pad.jump.held || rising_past_apex(vertical.speed))
+    {
         fall_from_rest(vertical);
     }
 }
