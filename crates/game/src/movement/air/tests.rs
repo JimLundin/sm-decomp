@@ -607,3 +607,80 @@ fn a_solid_enemy_behind_her_is_the_wall_the_wall_jump_check_finds() {
     );
     assert_eq!(contacts.vertical, VerticalContact::WallJumpTriggered);
 }
+
+fn morphing(pose: u16, speed: Speed, direction: YDirection) -> Samus {
+    Samus {
+        pose: PoseId(pose),
+        movement: Movement::Transition {
+            vertical: Vertical { speed, direction },
+        },
+        position: Point {
+            x: at(0x0080, 0),
+            y: at(0x0100, 0),
+        },
+        ..Samus::default()
+    }
+}
+
+fn step(samus: &mut Samus, surroundings: Surroundings<'_>) -> crate::collision::Contacts {
+    run(
+        samus,
+        &Controller::default(),
+        &content(),
+        surroundings,
+        &mut Touches::default(),
+    )
+}
+
+#[test]
+fn a_transition_keeps_falling_by_its_y_speed() {
+    // `$90:A61C`: the morphing transition (pose $37) runs the simple Y movement, so the fall
+    // goes on: this frame's speed moves her, then gravity adds to it.
+    let mut samus = morphing(0x37, Speed::new(2, 0x4C00), YDirection::Down);
+    step(&mut samus, Surroundings::default());
+    assert_eq!(samus.position.y, at(0x0102, 0x4C00));
+    assert_eq!(
+        vertical(&samus),
+        Vertical {
+            speed: Speed::new(2, 0x6800),
+            direction: YDirection::Down,
+        }
+    );
+}
+
+#[test]
+fn a_transition_with_no_y_direction_does_not_move_vertically() {
+    let mut samus = morphing(0x37, Speed::new(2, 0), YDirection::None);
+    step(&mut samus, Surroundings::default());
+    assert_eq!(samus.position.y, at(0x0100, 0));
+}
+
+#[test]
+fn the_unused_transition_poses_have_no_y_movement() {
+    let mut samus = morphing(0xDB, Speed::new(2, 0), YDirection::Down);
+    step(&mut samus, Surroundings::default());
+    assert_eq!(samus.position.y, at(0x0100, 0));
+    assert_eq!(vertical(&samus).speed, Speed::new(2, 0));
+}
+
+#[test]
+fn landing_in_a_transition_stops_the_y_speed() {
+    use data::level::{BlockKind, Bts};
+    let mut blocks = vec![crate::state::room::Block::default(); 16 * 32];
+    if let Some(block) = blocks.get_mut(0x11 * 16 + 8) {
+        block.kind = BlockKind::Solid(Bts(0));
+    }
+    let surroundings = Surroundings {
+        room: crate::collision::Room {
+            blocks: &blocks,
+            width: crate::state::room::BlockColumns(16),
+            slopes: None,
+        },
+        ..Surroundings::default()
+    };
+    let mut samus = morphing(0x37, Speed::new(4, 0), YDirection::Down);
+    samus.position.y = at(0x010D, 0);
+    let contacts = step(&mut samus, surroundings);
+    assert_eq!(contacts.vertical, crate::collision::VerticalContact::Landed);
+    assert_eq!(vertical(&samus), Vertical::default());
+}

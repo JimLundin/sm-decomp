@@ -195,7 +195,7 @@ const fn has_base_speed(movement: Movement) -> bool {
         Movement::Crouching
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
-        | Movement::Transition
+        | Movement::Transition { .. }
         | Movement::Moonwalking
         | Movement::RanIntoWall
         | Movement::Grappling
@@ -332,7 +332,7 @@ pub fn change(
 }
 
 /// The unused poses $DB to $F0, whose initialisation sets no command (`$91:F775`).
-const UNUSED_TRANSITIONS: std::ops::Range<u16> = 0xDB..0xF1;
+pub(crate) const UNUSED_TRANSITIONS: std::ops::Range<u16> = 0xDB..0xF1;
 
 /// The command the transition poses' initialisation sets (`$91:F758`): the start of the
 /// animation, for every transition pose but the unused `$DB` to `$F0`.
@@ -421,7 +421,7 @@ fn jump_transition(samus: &mut Samus, content: &Content) {
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
         | Movement::TurningAround { .. }
-        | Movement::Transition
+        | Movement::Transition { .. }
         | Movement::Moonwalking
         | Movement::RanIntoWall
         | Movement::Grappling
@@ -573,7 +573,7 @@ const fn initialise(old: PoseRecord, facing: Facing, movement: &mut Movement) {
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
         | Movement::TurningAround { .. }
-        | Movement::Transition
+        | Movement::Transition { .. }
         | Movement::Moonwalking
         | Movement::WallJumping { .. }
         | Movement::RanIntoWall

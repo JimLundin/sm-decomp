@@ -162,8 +162,12 @@ pub enum Movement {
         /// Horizontal motion.
         speed: Horizontal,
     },
-    /// Crouching, standing, morphing or unmorphing.
-    Transition,
+    /// Crouching, standing, morphing or unmorphing. The fall she began it in carries on
+    /// through it (`$90:A61C`).
+    Transition {
+        /// Vertical motion.
+        vertical: Vertical,
+    },
     /// Moonwalking.
     Moonwalking,
     /// Wall jumping.
@@ -269,7 +273,9 @@ impl From<MovementType> for Movement {
             MovementType::TurningAroundOnGround => turning(Turn::OnGround),
             MovementType::TurningAroundJumping => turning(Turn::Jumping),
             MovementType::TurningAroundFalling => turning(Turn::Falling),
-            MovementType::CrouchingTransition => Self::Transition,
+            MovementType::CrouchingTransition => Self::Transition {
+                vertical: Vertical::default(),
+            },
             MovementType::Moonwalking => Self::Moonwalking,
             MovementType::SpringBallOnGround => Self::SpringBall {
                 phase: SpringBall::OnGround,
@@ -313,7 +319,7 @@ impl Movement {
             | Self::MorphBall { .. }
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
-            | Self::Transition
+            | Self::Transition { .. }
             | Self::Moonwalking
             | Self::RanIntoWall
             | Self::Grappling
@@ -337,7 +343,7 @@ impl Movement {
             | Self::MorphBall { .. }
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
-            | Self::Transition
+            | Self::Transition { .. }
             | Self::Moonwalking
             | Self::RanIntoWall
             | Self::Grappling
@@ -348,12 +354,13 @@ impl Movement {
         }
     }
 
-    /// The vertical motion this movement keeps, if it keeps one: the jumps and the fall.
+    /// The vertical motion this movement keeps, if it keeps one: the jumps, the fall and the transitions.
     #[must_use]
     pub const fn vertical(self) -> Option<Vertical> {
         match self {
             Self::Jumping { vertical, .. }
             | Self::Falling { vertical, .. }
+            | Self::Transition { vertical }
             | Self::WallJumping { vertical, .. } => Some(vertical),
             Self::Standing { .. }
             | Self::Running { .. }
@@ -362,7 +369,6 @@ impl Movement {
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
             | Self::TurningAround { .. }
-            | Self::Transition
             | Self::Moonwalking
             | Self::RanIntoWall
             | Self::Grappling
@@ -378,6 +384,7 @@ impl Movement {
         match self {
             Self::Jumping { vertical, .. }
             | Self::Falling { vertical, .. }
+            | Self::Transition { vertical }
             | Self::WallJumping { vertical, .. } => Some(vertical),
             Self::Standing { .. }
             | Self::Running { .. }
@@ -386,7 +393,6 @@ impl Movement {
             | Self::SpringBall { .. }
             | Self::KnockbackOrCrystalFlashEnding
             | Self::TurningAround { .. }
-            | Self::Transition
             | Self::Moonwalking
             | Self::RanIntoWall
             | Self::Grappling
@@ -437,7 +443,7 @@ impl Movement {
                 place: Turn::Falling,
                 ..
             } => MovementType::TurningAroundFalling,
-            Self::Transition => MovementType::CrouchingTransition,
+            Self::Transition { .. } => MovementType::CrouchingTransition,
             Self::Moonwalking => MovementType::Moonwalking,
             Self::WallJumping { .. } => MovementType::WallJumping,
             Self::RanIntoWall => MovementType::RanIntoWall,

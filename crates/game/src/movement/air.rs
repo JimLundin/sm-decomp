@@ -16,7 +16,7 @@ use data::pose::transition::Control;
 use super::{Mover, Rules, move_horizontally, over_cap};
 use crate::collision::solid_enemy::Direction;
 use crate::collision::{Heading, VerticalContact};
-use crate::pose::{Content, JUMP_TAKE_OFF, Takeoff, controls};
+use crate::pose::{Content, JUMP_TAKE_OFF, Takeoff, UNUSED_TRANSITIONS, controls};
 use crate::state::samus::{
     Acceleration, Animation, AnimationFrame, AnimationTimer, Facing, Horizontal, Item, Jump,
     Movement, MovementType, Point, PoseId, PoseRecord, Samus, Vertical, YDirection,
@@ -164,6 +164,9 @@ pub(super) fn run(
                 animation.timer = TERMINAL_DELAY;
             }
         }
+        Movement::Transition { vertical } => {
+            transition(vertical, gravity, pose, &mut position, mover);
+        }
         Movement::Standing { .. }
         | Movement::Running { .. }
         | Movement::Crouching
@@ -171,7 +174,6 @@ pub(super) fn run(
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
         | Movement::TurningAround { .. }
-        | Movement::Transition
         | Movement::Moonwalking
         | Movement::RanIntoWall
         | Movement::Grappling
@@ -181,6 +183,31 @@ pub(super) fn run(
         | Movement::Unused(_) => return,
     }
     samus.position = position;
+}
+
+/// The transition movement's Y part (`$90:A61C`): the poses it moves in (all but the unused
+/// ones) take the simple Y movement (`$90:92C7`), which moves her only while she has a Y
+/// direction; landing then stops her. The ground's movement for a direction of none
+/// (`$90:923F`) is open with the other ground movements.
+// open: the morph ball bounce state (`$0B20`) the landing clears has no reader until the
+// morph ball's bounces; the transition's horizontal move with a zero base speed (`$90:9348`)
+// joins with her extra run speed.
+fn transition(
+    vertical: &mut Vertical,
+    gravity: Speed,
+    pose: PoseId,
+    position: &mut Point,
+    mover: &mut Mover<'_>,
+) {
+    if UNUSED_TRANSITIONS.contains(&pose.0) || vertical.direction == YDirection::None {
+        return;
+    }
+    started_falling(vertical);
+    move_vertically(vertical, gravity, position, mover);
+    // The movement type has no grounding of its own, so a landing is only this.
+    if mover.contacts.vertical == VerticalContact::Landed {
+        *vertical = Vertical::default();
+    }
 }
 
 /// What the wall jump check reads of a spin jump.

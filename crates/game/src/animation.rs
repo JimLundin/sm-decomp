@@ -9,7 +9,7 @@
 //! the running momentum check (`$90:852C`) and then runs, its table at `$90:8324`.
 
 use data::pose::PoseId;
-use data::pose::animation::{AnimationFrame, BySpeed, DelayItem, DelayList, Instruction};
+use data::pose::animation::{AnimationFrame, BySpeed, DelayItem, DelayList, Instruction, ItemBits};
 use data::pose::transition::Control;
 
 use crate::pose::{Content, PoseRequests, controls};
@@ -174,14 +174,25 @@ fn run(instruction: Instruction, samus: &mut Samus, requests: PoseRequests) -> b
             );
             true
         }
+        // `$90:839A`: holding any of the items picks the pair of poses by her Y speed.
+        Instruction::ByItemsAndSpeed {
+            items,
+            without,
+            with,
+        } => {
+            let poses = if holds_any(samus.equipment.equipped, items) {
+                with
+            } else {
+                without
+            };
+            finish(samus, by_speed(samus, poses));
+            false
+        }
         // open: the drained falling movement handler (`$90:8360`) joins with the metroid
-        // drain (C4); the item-dependent transitions (`$90:839A`, `$90:848B`) with the
-        // equipment's item words (C3b). No list in the slice reaches them; they leave the
-        // frame and the timer as they are, as the no-ops do.
-        Instruction::NoOp(_)
-        | Instruction::DrainedFalling
-        | Instruction::ByItemsAndSpeed { .. }
-        | Instruction::ByItems { .. } => false,
+        // drain (C4); the item-dependent transition (`$90:848B`) with the equipment's item
+        // words (C3b). No list in the slice reaches them; they leave the frame and the
+        // timer as they are, as the no-ops do.
+        Instruction::NoOp(_) | Instruction::DrainedFalling | Instruction::ByItems { .. } => false,
     }
 }
 
@@ -200,6 +211,29 @@ const fn wall_jump_sequence(equipped: Items) -> u16 {
     } else {
         WALL_JUMP_SPIN
     }
+}
+
+/// The items' bits in the original's equipped items word, the form the delay lists' operands
+/// are in (bank $84 log: the item PLMs' equipment instruction).
+const ITEM_WORD_BITS: [(Item, u16); 11] = [
+    (Item::VariaSuit, 0x0001),
+    (Item::SpringBall, 0x0002),
+    (Item::MorphBall, 0x0004),
+    (Item::ScrewAttack, 0x0008),
+    (Item::GravitySuit, 0x0020),
+    (Item::HiJumpBoots, 0x0100),
+    (Item::SpaceJump, 0x0200),
+    (Item::Bombs, 0x1000),
+    (Item::SpeedBooster, 0x2000),
+    (Item::GrappleBeam, 0x4000),
+    (Item::XRayScope, 0x8000),
+];
+
+/// Whether `equipped` holds any of the items an operand names.
+fn holds_any(equipped: Items, named: ItemBits) -> bool {
+    ITEM_WORD_BITS
+        .iter()
+        .any(|&(item, bit)| (named.0 & bit) != 0 && equipped.contains(item))
 }
 
 /// The pose a transition by speed takes: still when her Y speed is zero.

@@ -247,7 +247,7 @@ pub fn run(
         | Movement::MorphBall { .. }
         | Movement::SpringBall { .. }
         | Movement::KnockbackOrCrystalFlashEnding
-        | Movement::Transition
+        | Movement::Transition { .. }
         | Movement::Moonwalking
         | Movement::WallJumping { .. }
         | Movement::RanIntoWall

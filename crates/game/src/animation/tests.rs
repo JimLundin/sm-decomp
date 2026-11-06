@@ -6,7 +6,7 @@ use data::pose::{MovementType, PoseFacing, Poses};
 use super::*;
 use crate::collision::Touches;
 use crate::pose;
-use crate::state::samus::{Animation, PoseRecord};
+use crate::state::samus::{Animation, PoseRecord, Speed};
 
 /// The turn's pose: turning on the ground, its list ending in an auto-jump transition.
 const TURN: PoseId = PoseId(0x25);
@@ -248,4 +248,44 @@ fn a_spin_jump_from_a_spin_or_wall_jump_starts_past_the_jump_from_the_floor() {
         assert_eq!(samus.animation.frame, AnimationFrame(frame));
         assert_eq!(samus.animation.timer, AnimationTimer(timer));
     }
+}
+
+#[test]
+fn the_morphing_transition_picks_its_pose_by_items_then_y_speed() {
+    // `$90:839A`: with the morph ball (bit $0004 of the items word) the pair `with` is read,
+    // else `without`; each pair's `still` is read when her Y speed is zero.
+    let pair = |still, moving| BySpeed {
+        still: PoseId(still),
+        moving: PoseId(moving),
+    };
+    let instruction = Instruction::ByItemsAndSpeed {
+        items: ItemBits(0x0004),
+        without: pair(0x10, 0x11),
+        with: pair(0x1D, 0x31),
+    };
+    let chosen = |item: Option<Item>, speed: Speed| {
+        let mut samus = Samus::default();
+        if let Some(item) = item {
+            samus.equipment.equipped.insert(item);
+        }
+        samus.movement = Movement::Transition {
+            vertical: crate::state::samus::Vertical {
+                speed,
+                direction: crate::state::samus::YDirection::Down,
+            },
+        };
+        run(instruction, &mut samus, PoseRequests::default());
+        samus.super_special
+    };
+    let finished = |pose| SuperSpecial {
+        pose: Some(PoseId(pose)),
+        command: SuperSpecialCommand::TransitionAnimationFinished,
+    };
+    assert_eq!(chosen(Some(Item::MorphBall), Speed::ZERO), finished(0x1D));
+    assert_eq!(
+        chosen(Some(Item::MorphBall), Speed::new(0, 1)),
+        finished(0x31)
+    );
+    assert_eq!(chosen(Some(Item::Bombs), Speed::ZERO), finished(0x10));
+    assert_eq!(chosen(None, Speed::new(1, 0)), finished(0x11));
 }
