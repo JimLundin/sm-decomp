@@ -17,6 +17,7 @@ pub mod hud;
 pub mod lines;
 pub mod message_box;
 pub mod mini_map;
+pub mod model;
 pub mod movement;
 pub mod nmi;
 pub mod oam;

@@ -12,3 +12,6 @@ data = { path = "../data" }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+toml = { version = "0.8", default-features = false, features = ["parse"] }
