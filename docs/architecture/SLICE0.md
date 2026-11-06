@@ -433,6 +433,39 @@ Her X through the turn (681-687) now matches the record. Remaining:
   water and lava tables; block and solid enemy collision on the move (C4); "kill Y speed if
   started falling" after a command (C3b).
 
+**B7a status (`lane/slice0-b7a`), enemies as slots.** Done: `data::enemy` decodes a room
+state's enemy population (bank `$A1`: 16-byte `Placement`s to `$FFFF` and the kill quota)
+and the species headers it names (bank `$A0`, 64 bytes: `Species` with palette, tile data,
+health, damage, radii, AI bank, hurt flash and cry, boss value, parts, layer, drops,
+vulnerabilities, name, and `Routines` as `Routine` content references);
+`SpeciesKey` (the header pointer) is the stable key, `SpeciesMap::slice_zero()` the dense
+`SpeciesId`s with each species' `Behaviour` (D14), `SpeciesTable::load` the headers. The
+Morph Ball Room's `$A1:93AC` holds the eye twice, the elevator and four face blocks, quota
+0 (ROM test, run through a scratch DLL with `SM_ROM`). `game::state::room::EnemyCommon`
+holds the slot's common fields (`enemy_data` in `ram_map.rs`): species, position with
+subpixels, radii, `properties`/`extra_properties`/`ai_handlers` as `FlagSet`s of
+`EnemyProperty`/`EnemyExtraProperty`/`AiHandler` (bit order, so the word round-trips),
+health, timer, `cursor` (instruction timer as its delay), `PaletteIndex`, `TilesIndex`,
+layer, the flash/frozen/invincibility/shake `Frames`, frame counter and the two
+parameters; `EnemyBody::{MorphBallEye, Elevator, FaceBlock}` each carry `AiVariables`
+(`// open:` until C7/C8 name them). Remaining (the lane hit its time ceiling):
+
+- the decoder: an `EnemySources` in `Rules` over `enemy_data` at `$0F78`, stride `$40`
+  (bank `$A0` log): `+00` species (header pointer through `SpeciesMap`; zero is a free
+  slot, `Deleted` makes it `Occupancy::Deleting`), `+02/+04` X, `+06/+08` Y, `+0A/+0C`
+  radii, `+0E` properties, `+10` extra properties, `+12` AI handler bits, `+14` health,
+  `+18` timer, `+1C` instruction timer, `+1E` palette, `+20` tiles, `+22` layer, `+24`
+  flash, `+26` frozen, `+28` invincibility, `+2A` shake, `+2C` frame counter, `+30-+3A`
+  the AI words, `+3C/+3E` the parameters; not decoded: `+16` spritemap and `+1A`
+  instruction pointer (need the enemy program content, B7), `+2E` AI bank (the species'
+  header has it), `generation` (no equivalent). verify's `RoomMap` would carry the
+  `SpeciesMap`;
+- coverage rows `room.enemies.slots.*` with a comparator for each (the lockstep test pairs
+  rows and comparators both ways; a per-slot comparator macro like `speed!`), synthetic
+  values for slots 0 and 1 in `tests.rs` and the moved-rule mutants (offset and stride);
+- the cache proof (every slot of both rows decodes, the occupied slots' species are the
+  population's in order) and the lockstep table of first differences, C7/C8's worklist.
+
 **C9 status (`lane/slice0-c9`), the HUD.** Done: `game::state::hud::Hud` holds the HUD
 tilemap's three rows as typed cells (`video::TilemapEntry`: tile, palette, priority, flips;
 `from_word` and `word` round-trip every word), the selected and auto-cancel items
