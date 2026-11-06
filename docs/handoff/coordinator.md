@@ -1,4 +1,4 @@
-# Coordinator handoff (2026-11-06, morning)
+# Coordinator handoff (2026-11-06, afternoon)
 
 This is for the next coordinator session, and it replaces the version from the evening of 2026-11-05.
 Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/oracle-harness.md` and
@@ -34,23 +34,49 @@ Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/ora
   - Bundle: `relock-v2-lsnes-5db3282dbb5aaf7a.tar.gz.enc` in ci-data, pinned by its ciphertext SHA-256. It holds the seeds, the pads, the ladders and the new `file-copy-clear` inputs.
   - Left out: the three Golden Torizo rows. Their source is a snes9x movie, and the fix is a dedicated movie (D26).
   - The working files are private, under `$TEMP/ohx/relock-d/`: waves a, b and c, their sidecars, `compare.txt`, `merge.txt`, and the wave C PNG dumps for diagnosing the race.
-- **Engine:**
-  - the decoder's three slices;
-  - the lock reader (`verify::lock`);
-  - the shared span fold (`data::span`);
-  - B1, the Session and Tick: 18.2M empty Ticks/s in CI. `Quality` runs the `empty_ticks` example.
+- **Engine (slice 0, `rebuild/spine` `ab118cd`; plan in `docs/architecture/SLICE0.md`, a measured snapshot in `SLICE0-STATUS.md`):**
+  - **Spine:**
+    - the Session and Tick (B1);
+    - the lockstep tool (B2) and the record cache (A2);
+    - ROM content (B3): rooms, the decompressor, the address map;
+    - the video commit and the ppu encoder (B5/B5b);
+    - the level blocks (B4);
+    - enemy slots and their instruction lists (B7a/b, C8a);
+    - the free-run gate (D1), which runs in CI (`verify / free-run-gate`) from the bundle and the ROM, with the green ratchet `scenarios/locks/lsnes.green.txt`.
+  - **Behaviours:**
+    - RNG, game time, OAM clear (C1);
+    - the message box (C13);
+    - the HUD (C9);
+    - Samus: poses (C2), transitions (C3a), ground motion (C3a-2), jumps (C3b), animation (C6a/b), collision (C4a), landing and wall poses (C4b), sprite drawing (C6c);
+    - the camera (C5);
+    - the elevator (C7/C7b);
+    - the Morph Ball eye (C8b).
+  - **Status (lockstep):**
+    - `area-brinstar`: enemies, the elevator and the camera are equal.
+    - `item-morph-ball`: enemies differ on 38 Ticks, the camera on 60.
+    - OAM is the main remaining difference: the enemies' sprites aren't drawn yet.
+    - The gate: only `timing` is green.
+  - **Local tests:** `tools/lane/run_tests.sh <crate>` runs the real test suites despite Defender, through a DLL harness. Lanes must run it before pushing.
+
+## In flight
+
+- `lane/slice0-c7c`: enemy sprite drawing.
+- `lane/slice0-c8c`: the face blocks' AI.
 
 ## Next, in order
 
-1. **Slice 0** (`docs/architecture/SLICE0.md`):
-   - B2, lockstep, with A2, the record cache;
-   - B3-B7: content, blocks, video, the line program, the interpreter;
-   - the C domain lanes;
-   - D1, the gate on the lsnes lock.
+1. **Slice 0:** the rest of SLICE0.md's lanes, in the order SLICE0-STATUS ranks the blockers:
+   - enemy drawing (OAM);
+   - Samus's tile DMA and the VRAM uploads;
+   - palette FX (CGRAM from 453);
+   - the line program (B6, the HUD IRQ split);
+   - the item pickup (C12), which links into C13;
+   - sound (C11, the APU stream);
+   - the ground Y movement, the wall jump and slope alignment (C4c).
 
-   A1 (census), A4 (typed facts), A5 (the compositor from `gate1/render`) and A6 (size) can run alongside.
-2. **The video race:** find it with the wave-C dumps against the odd runs' sidecars. It looks load-dependent: watch lsnes's frame hand-off.
-3. **Land on main:** the design docs first, then the oracle crate, through `land.sh`. Retire the old lock's Verify path and the PLAN/REVIEW lines that contradict the design (#252).
+   Re-cut the bundle's seed records with the PPU tier (`T 0 0 1`) when the PPU stream gets close to green (root job).
+2. **The video race:** find it with the wave-C dumps against the odd runs' sidecars.
+3. **Land on main:** the design docs first, then the oracle crate, then the engine, through `land.sh`. Retire the old lock's Verify path, which is the only red check on #285, and the PLAN/REVIEW lines that contradict the design (#252).
 
 ## Working rules learned (also in memory)
 
@@ -62,5 +88,6 @@ Live status is in pinned issue #177. The oracle's detail is in `docs/handoff/ora
 - **#177 edits:** run `gh` with `-R JimLundin/sm-decomp` and check the saved body isn't empty before editing (one edit wiped it; recovered from `userContentEdits`).
 - **YAML step names:** quote any step name with `: ` in it. One broke the workflow file.
 - **Encoding:** some lanes write Latin-1 (`§`, `×`). Check edited docs with `file`.
+- **Merges:** a lane that finishes after its base moved has to rebase. When two lanes add `Content` fields, keep both sides. Never chain worktree or branch cleanup after a merge that can conflict.
 - **Pushes:** don't chain cleanup after a push with `;`. One push hit a GitHub error, and the commit was lost after the branch removal.
 - **Orphans:** five lsnes processes (6176, 14972, 24536, 22000, 25512) can't be killed; a reboot clears them.
