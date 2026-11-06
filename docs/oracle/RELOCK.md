@@ -171,6 +171,25 @@ Each is one lane of ≤ 30 min or one root background job. Order and dependencie
 | f | lane | `verify::lock`: the carried-over reader, retyped; the comparison of an engine run's spans with the lock per (row, stream); green (row, stream) pairs reported. `verify` reads the lock, the pads and the seed record from the bundle; the engine starts from the seed's record through the decoder. | e | a lock mutant per stream (one flipped span) fails exactly that pair; the reader rejects a lock of another oracle version |
 | g | lane | Wire it into the gate: `tools verify` free-runs slice 0's rows (`area-brinstar`, `item-morph-ball`) with `Recorded` timing against the lock and ratchets the green pairs. | f | the ratchet file exists; a decoder mutant breaks a row |
 
+**Step a1: done** (lane `lane/relock-cut`). `tools/oracle/relock_plan.sh NATIVE
+LADDERS > PLAN` writes the plan: 504 `cut` lines (325 100%, 176 any%, 2 low%, 1
+Spore) in 38 windows (23 + 12 + 2 ladder windows, Spore from power-on), 17
+`derive` lines and `skip golden-input-phase 1` (Q5). `tools/oracle/relock_cut.sh
+PLAN OUT LOGS [cut|realign|derive|check|all] [MOVIE-RUNG...]` runs it: one
+`movie --from RUNG --native-seeds ... --no-memories` job a window, longest
+first, `JOBS` (8) at a time `STAGGER` (4) s apart, a log a job. A seed's record
+now carries the memories also under `--no-memories`, for the check. `realign`:
+a capture usually follows step F-1 of its movie, but 2 of the 39 proved
+follow step F (the record's frame counter `$05B6` is one short of the CSV's
+`nmi`), so those are re-cut one step on from the seed. The check: each seed's
+room and frame counter equal its CSV row's, and its WRAM equals its lsnes
+capture's in the old bundles outside the stack page. Proved on 100% windows
+90000 and 200000 and any% window 110000 (39 seeds, 47-52 frames/s with 3 at
+once, 114-169 s a window): 39 of 39 equal after `realign`; derived
+`coverage-metroid` and `-metroid-ice` keep their words, `lower-norfair-hand`
+fails `derive-seed`'s one-step check (Samus's X `$0AF6` written `0x68` reads
+`0x67`: she moves in that step).
+
 Background afterwards: the nightly full-movie runs (D26), and re-recording the
 typed streams when the decoder version changes (§4 Q3).
 
@@ -196,7 +215,11 @@ typed streams when the decoder version changes (§4 Q3).
   can't replay on lsnes. Rebase the row on the 100% movie's own visit to room
   B283 (`100-input-phase:132`, frame 93568) with that movie's pads; it is
   accepted only if its boss facts hold on the oracle, else it waits for a D26
-  trick movie.
+  trick movie. Measured (step a1): they don't hold. At 93568 enemy slot 0
+  (`$0F78`) holds the same enemy with the same health (`$0F8C` = 13500) as the
+  golden capture; the movie takes one hit off it (13350 by 94400) and leaves
+  for B1E5 by 95000 with Golden Torizo alive. Its defeat flag (`$D82A` bit 2,
+  the `boss:golden-torizo` fact) stays clear through frame 209664.
 - **Q6. Determinism proof cost?** A 10% re-record (64 rows, every long row) in
   a different shard layout, rather than doubling the 3.5 core-hours.
 - **Q7. Seeds without tier b?** lsnes gives no SPC700 state. The engine's

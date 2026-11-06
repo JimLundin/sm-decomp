@@ -348,13 +348,12 @@ fn movie(arguments: &[String]) {
         let step = u64::try_from(frame).unwrap_or(u64::MAX);
         let mut requested = None;
         if let crate::Backend::Lsnes(lsnes) = &mut oracle {
-            // A rung's record always carries the memories, so that resuming
-            // the rung before can be checked against all of them.
-            lsnes.memories = memories
-                || cutting
-                    .as_ref()
-                    .is_some_and(|cutting| cutting.rung_after(step, run));
-            if save_due(&native, cutting.as_ref(), (step, run)) {
+            // The record of a step a native seed or a rung follows always
+            // carries the memories: a rung's is checked against the run from
+            // the rung before, a seed's against its lsnes room capture.
+            let save = save_due(&native, cutting.as_ref(), (step, run));
+            lsnes.memories = memories || save;
+            if save {
                 requested = Some(lsnes.request_save().unwrap_or_else(|error| fail(error)));
             }
         }

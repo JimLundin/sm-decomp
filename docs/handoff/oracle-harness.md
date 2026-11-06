@@ -80,7 +80,7 @@ Branch `research/oracle-harness` from main `52c21178d`; GATE OK `dc1b687ca`. Pla
 - Resume: `Start::State` loads the state from the script (`OH_START`, `load-state`). On the command line lsnes rejects it (core type snes_ntsc against ROM type SNES) and hangs.
   - From seed 16 (frame 17829) the lag log matches in every column but `lagged`, which the log samples differently.
 - `movie --from STATE FRAME` resumes there. `--native-seeds CSV DIR` can be repeated, with one save serving captures that share a frame. `--no-memories` drops the memories (lsnes only).
-- Native seeds: `NNNN.lss` (the state before step N) and `NNNN.record` (the raw record of step N-1).
+- Native seeds: `NNNN.lss` (the state before step N) and `NNNN.record` (the raw record of step N-1, with the memories also under `--no-memories`).
   - 16 are in `$TEMP/ohx/data/lsnes-native/any-boundary/` (private).
   - 17 to 19 (frames 18109, 19514, 19809) are in `$TEMP/ohx/nm/`, cut in a run that later hung; check them before use.
 - `corpus --oracle lsnes --native-seeds DIR` maps `CAPTURE:INDEX` to `DIR/CAPTURE/INDEX.lss` (`Start::State`); `run_row_with` goes through `Backend` (`Observe::backend`, `Observe::native_seeds`).
