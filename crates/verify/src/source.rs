@@ -308,3 +308,80 @@ pub const JOYPAD_CTR_REPEAT_NEXT: WramWord = WramWord {
     name: "JOYPAD_CTR_REPEAT_NEXT",
     offset: 0x0089,
 };
+
+/// Bank $80 log, update OAM and CGRAM `$80:933A`: the palette buffer every requested NMI
+/// uploads to CGRAM whole, 256 little-endian colours.
+pub const PALETTE_BUFFER: WramBlock = WramBlock {
+    name: "PALETTE_BUFFER",
+    offset: 0xC000,
+    len: 0x0200,
+};
+
+/// Bank $80 log, process VRAM write table `$80:8C83`: the uploads game code queues.
+///
+/// Seven bytes each: the size in bytes, the 24-bit source and the VRAM
+/// word address, whose top bit selects the 32-word step.
+pub const VRAM_WRITE_QUEUE: WramBlock = WramBlock {
+    name: "vram_write_queue",
+    offset: 0x00D0,
+    len: 0x0200,
+};
+
+/// Bank $80 log: the VRAM write queue's end, in bytes; the NMI clears it.
+pub const VRAM_WRITE_QUEUE_TAIL: WramWord = WramWord {
+    name: "VRAM_WRITE_QUEUE_TAIL",
+    offset: 0x0330,
+};
+
+/// Bank $80 log, update IO registers `$80:91EE`: INIDISP's mirror.
+pub const REG_INIDISP: WramByte = WramByte {
+    name: "REG_INIDISP",
+    offset: 0x0051,
+};
+
+/// Bank $80 log, `$80:91EE`: TM's mirror, the main screen's layers.
+pub const REG_TM: WramByte = WramByte {
+    name: "REG_TM",
+    offset: 0x0069,
+};
+
+/// Bank $80 log, `$80:91EE`: TS's mirror, the sub screen's layers.
+pub const REG_TS: WramByte = WramByte {
+    name: "REG_TS",
+    offset: 0x006B,
+};
+
+/// Bank $80 log, `$80:91EE`: the scroll mirrors of backgrounds 1 to 3, horizontal then
+/// vertical: `REG_BG1HOFS` to `REG_BG3VOFS`.
+pub const REG_BG_SCROLL: [[WramWord; 2]; 3] = [
+    [
+        WramWord {
+            name: "REG_BG1HOFS",
+            offset: 0x00B1,
+        },
+        WramWord {
+            name: "REG_BG1VOFS",
+            offset: 0x00B3,
+        },
+    ],
+    [
+        WramWord {
+            name: "REG_BG2HOFS",
+            offset: 0x00B5,
+        },
+        WramWord {
+            name: "REG_BG2VOFS",
+            offset: 0x00B7,
+        },
+    ],
+    [
+        WramWord {
+            name: "REG_BG3HOFS",
+            offset: 0x00B9,
+        },
+        WramWord {
+            name: "REG_BG3VOFS",
+            offset: 0x00BB,
+        },
+    ],
+];

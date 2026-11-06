@@ -247,6 +247,53 @@ pickup op (C12) sets the message and calls the box. Remaining: the entry from C1
 graphics (B5, B6); the save confirmation's Yes/No loop (messages `$17`, `$1C`) and the gunship
 branch with saving; the unit tests compiled but did not run here (Defender).
 
+**B5 status (`lane/slice0-b5`), the NMI's video commit points.** Done: `game::commit` holds the
+three commit points the NMI's `COMMIT` list runs, the only writers of `video.memory` and
+`video.committed`: `upload_oam_and_cgram` (bank `$80` log, `$80:933A`: the OAM buffer to OAM
+and the whole palette buffer, the new `NmiBatch::cgram`, to CGRAM), `commit_registers`
+(`$80:91EE`: the mirrors to `video.committed`) and `process_vram_writes` (`$80:8C83`: each
+queued `VramTransfer` in order, then the queue empties). A transfer carries `VramStep::{Row,
+Column}` (the destination's top bit) and `VramSource::{Words, Content}`: words read from a
+State buffer, or ROM graphics by length that content (B3) doesn't decode yet, which write
+nothing (`// open:`). The decoder reads `video.batch.cgram` from `PALETTE_BUFFER` (`$7E:C000`),
+`video.batch.vram` from `vram_write_queue` (`$7E:00D0`, seven bytes an entry) up to
+`VRAM_WRITE_QUEUE_TAIL` (`$7E:0330`), `video.batch.registers` from `REG_INIDISP` (`$51`),
+`REG_TM` (`$69`), `REG_TS` (`$6B`) and `REG_BG1HOFS`-`REG_BG3VOFS` (`$B1`-`$BB`), and
+`video.committed` from the record's `ppu`. Lockstep on A2's cache, 2026-11-06 (Ticks
+differing, first frame):
+
+| Field | `area-brinstar` (476) before | after | `item-morph-ball` (1,427) before | after |
+| --- | --- | --- | --- | --- |
+| `video.memory.vram` | 73, 7 | 73, 7 | 345, 7 | 345, 7 |
+| `video.memory.cgram` | 5, 453 | 5, 453 | 130, 453 | 130, 453 |
+| `video.committed` (new) | | 476, 1 | | 1,031, 1 |
+| `video.batch.registers` `.forced_blank`, `.brightness`, `.main_screen`, `.sub_screen` (new) | | equal | | equal |
+| `video.batch.registers.scroll` (new) | | 342, 74 | | 557, 74 |
+| `video.batch.cgram` (new) | | 5, 453 | | 128, 453 |
+| `video.batch.vram` (new) | | equal | | equal |
+
+Why nothing moved: at every quiet cut the NMI has just emptied the queue and uploaded the
+palette buffer, so the engine's commit of decode(k)'s batch reproduces what was already there.
+What changes VRAM and CGRAM within a Tick is the main strand filling the batch: frame 7's first
+VRAM difference is word `$585C`, in the HUD tilemap the gameplay pass queues from
+`HUD_TILEMAP` (`$7E:C608`) to `$5820` every frame (the HUD lane), and CGRAM's at 453 is palette
+FX writing the buffer (the palette FX lane). The scroll mirrors are the camera's (BG1 and BG2
+from the layer positions). Remaining:
+
+- `video.committed.scroll[0].x` differs from the first Tick: the mirror holds 4 where the
+  record's BG1HOFS holds 0. Whether the NMI writes BG1's scroll from another source or the
+  record's scroll is a later write (the HUD IRQ) needs the `writes` log of one record (B5
+  follow-up, or B6 with the line program);
+- `Registers` holds five of the PPU's registers; the `ppu` encoder (`video.committed` to the
+  recorder's digest, `verify::cache::ppu_digest`: every architectural register but
+  `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel`, and with the DMA channel registers) needs
+  the full mirror set and the DMA channels' last settings, so it is not written; the fold's
+  `ppu` stays `None` (B5 follow-up);
+- Samus's tiles (`$80:9376`), the animated tiles (`$80:9416`), mode 7 (`$80:8BBA`) and the
+  read table (`$80:8EA2`) are still named no-ops; Samus's and the animated tiles need B3's
+  graphics content;
+- the unit tests in `game::commit` compiled but did not run here (Defender).
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,
