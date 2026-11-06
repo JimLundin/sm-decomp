@@ -66,6 +66,25 @@ pub const BG1_ROW_BUFFER: BusAddress = BusAddress {
     offset: 0xC948,
 };
 
+/// The message box's backup of the BG3 tilemap it covers, which `$85:81B5` DMAs from VRAM and
+/// `$85:861F` back.
+pub const MESSAGE_BOX_BACKUP: BusAddress = BusAddress {
+    bank: 0x7E,
+    offset: 0x4100,
+};
+
+/// The message box's blank tilemap, which `$85:81F3` fills and DMAs to VRAM.
+pub const MESSAGE_BOX_BLANK: BusAddress = BusAddress {
+    bank: 0x7E,
+    offset: 0x3800,
+};
+
+/// The message box's BG3 Y scroll HDMA table, which `$85:8363` points HDMA channel 6 at.
+pub const MESSAGE_BOX_SCROLL_TABLE: BusAddress = BusAddress {
+    bank: 0x7E,
+    offset: 0x3380,
+};
+
 /// How far BG2's column and row buffers lie after BG1's.
 pub const BG2_BUFFER_OFFSET: u16 = 0x0108;
 

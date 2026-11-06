@@ -9,6 +9,8 @@
 //! video lanes; the music and sound effect handlers the lag frames call are the sound
 //! domain's.
 
+mod video;
+
 use crate::state::State;
 use crate::state::slots::Frames;
 use crate::state::strand::{
@@ -29,7 +31,7 @@ pub const fn display(state: &mut State, message: Message) -> Next {
     Next::Call(Frame::MessageBox(MessageBoxAt::Start))
 }
 
-/// A piece of the box's work that isn't modelled yet, in the original's order.
+/// A piece of the box's work, in the original's order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Work {
     /// $85:8080: cancel the sound effects.
@@ -42,6 +44,8 @@ pub enum Work {
     UploadClearedTilemap,
     /// $85:82BB: write the message into the box's tilemap.
     WriteMessageTilemap,
+    /// $85:8363: point HDMA channel 6 at the BG3 Y scroll table.
+    SetUpScrollHdma,
     /// $85:859F: the music queue and sound effects, then the BG3 Y scroll HDMA table for the
     /// current radius.
     WriteScrollTable,
@@ -60,22 +64,23 @@ pub enum Work {
 }
 
 /// Do a piece of the box's work.
-// open: the PPU registers, tilemaps, VRAM uploads and HDMA are video work: B5 (the VRAM
-// transfers and register mirrors) and B6 (the scroll HDMA table and channel). The music queue
-// and sound effects are C11's.
-const fn work(work: Work, _state: &mut State) {
+// open: the message tilemap, its upload, the scroll table, HDMA's enable and the tilemap
+// backup's words are video work still to come (B5, B6); the music queue and sound effects are
+// C11's.
+fn work(work: Work, state: &mut State) {
     match work {
+        Work::PrepareRegisters => state.video.prepare_message_box(),
+        Work::BackUpTilemap => state.video.back_up_message_box_tilemap(),
+        Work::UploadClearedTilemap => state.video.upload_blank_message_box(),
+        Work::SetUpScrollHdma => state.video.set_up_message_box_scroll(),
+        Work::RestoreTilemap => state.video.restore_message_box_tilemap(),
+        Work::RestoreRegisters => state.video.restore_message_box_registers(),
         Work::CancelSoundEffects
-        | Work::PrepareRegisters
-        | Work::BackUpTilemap
-        | Work::UploadClearedTilemap
         | Work::WriteMessageTilemap
         | Work::WriteScrollTable
         | Work::EnableScrollHdma
         | Work::UploadMessageTilemap
         | Work::LagFrameSound
-        | Work::RestoreTilemap
-        | Work::RestoreRegisters
         | Work::QueueSamusMovementSound => {}
     }
 }
@@ -126,6 +131,7 @@ pub fn step(at: MessageBoxAt, state: &mut State) -> (MessageBoxAt, Next) {
         }
         MessageBoxAt::Writing(MessageWrite::Tilemap) => {
             work(Work::WriteMessageTilemap, state);
+            work(Work::SetUpScrollHdma, state);
             // The PPU set-up's $831E JSR $8363 scroll HDMA: $83BA JSR $859B, whose $859C JSR
             // $8136 waits before the table is written.
             wait(MessageBoxAt::Writing(MessageWrite::ScrollHdma))
