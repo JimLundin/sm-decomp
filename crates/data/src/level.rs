@@ -323,6 +323,16 @@ pub struct Layer2Block {
 }
 
 impl Layer2Block {
+    /// The block a level data word holds.
+    #[must_use]
+    pub const fn from_word(word: u16) -> Self {
+        let [unread, _] = (word >> TYPE_SHIFT).to_le_bytes();
+        Self {
+            tile: Tile::from_word(word),
+            unread,
+        }
+    }
+
     /// The level data word, as the original stores it.
     #[must_use]
     pub fn word(self) -> u16 {
@@ -387,13 +397,7 @@ impl Level {
             len if len == usize::from(size) => Some(
                 words(layer2)
                     .into_iter()
-                    .map(|word| Layer2Block {
-                        tile: Tile::from_word(word),
-                        unread: {
-                            let [type_bits, _] = (word >> TYPE_SHIFT).to_le_bytes();
-                            type_bits
-                        },
-                    })
+                    .map(Layer2Block::from_word)
                     .collect(),
             ),
             _ => return Err(length),

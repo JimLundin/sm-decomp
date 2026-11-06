@@ -30,7 +30,7 @@ use oracle_record::lsnes::RawError;
 use crate::decode::{DecodeError, RoomMap};
 use crate::gate::{Seed, buttons};
 use crate::lock::{Row, RowId, Sha256, Start};
-use crate::lockstep::{slice_zero_plms, slice_zero_rooms};
+use crate::lockstep::{slice_zero_plms, slice_zero_rooms, slice_zero_states};
 
 /// Why a row's inputs can't be read from the bundle.
 #[derive(Debug)]
@@ -222,5 +222,6 @@ pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, data::room::Roo
     Ok(slice_zero_rooms()
         .with_programs(content.enemy_programs.clone())
         .with_samus_tiles(content.samus_tiles.clone())
-        .with_plms(slice_zero_plms(image)?))
+        .with_plms(slice_zero_plms(image)?)
+        .with_states(slice_zero_states(image)?))
 }
