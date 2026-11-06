@@ -325,6 +325,25 @@ pub struct Equipment {
     pub reserve: Gauge,
     /// Missiles.
     pub missiles: Gauge,
+    /// Super missiles.
+    pub super_missiles: Gauge,
+    /// Power bombs.
+    pub power_bombs: Gauge,
+    /// How the reserve tanks refill energy.
+    pub reserve_mode: ReserveMode,
+}
+
+/// How the reserve tanks refill energy (bank `$80` log, `$80:9B4E`: the HUD draws AUTO only
+/// in the automatic mode).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ReserveMode {
+    /// No reserve tank collected yet.
+    #[default]
+    None,
+    /// They refill energy when it runs out.
+    Automatic,
+    /// The player refills from the equipment screen.
+    Manual,
 }
 
 /// The family marker for Samus's animation delay lists, a single-cursor consumer (J14).

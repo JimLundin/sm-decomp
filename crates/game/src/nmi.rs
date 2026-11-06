@@ -111,6 +111,7 @@ fn run(command: NmiCommand, state: &mut State, rules: Rules, pad: Buttons) {
 const fn commit_counters(counters: &mut Counters) {
     counters.lag = FrameCount(0);
     counters.completed = FrameCount(counters.completed.0.wrapping_add(1));
+    counters.requested_byte = counters.requested_byte.wrapping_add(1);
 }
 
 /// A lag NMI's counters. The lag counter and its maximum are bytes in the original, so the

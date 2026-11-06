@@ -387,12 +387,15 @@ fn gameplay(at: GameplayAt, state: &mut State, rules: Rules) -> (GameplayAt, Nex
 /// A gameplay phase's work.
 // open: each empty arm fills in with its C lane; the PLM pass ends the step with
 // `Next::Call(Frame::Plms { .. })` once an instruction can call out (B7, C12).
-const fn gameplay_phase(phase: GameplayPhase, state: &mut State, _rules: Rules) {
+fn gameplay_phase(phase: GameplayPhase, state: &mut State, _rules: Rules) {
     match phase {
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
         // with those game states. In game state 8 the clock still counts on that frame; it
         // stops only if an earlier phase this frame already left gameplay.
         GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
+        // open: the mini-map's update and its explored cells (bank $90) join with the map
+        // and `progress`; until then the HUD tilemap keeps the mini-map it was opened with.
+        GameplayPhase::Hud => crate::hud::phase(state),
         GameplayPhase::EnemySelection
         | GameplayPhase::PaletteFx
         | GameplayPhase::SamusCurrentState
@@ -408,7 +411,6 @@ const fn gameplay_phase(phase: GameplayPhase, state: &mut State, _rules: Rules) 
         | GameplayPhase::Scrolling
         | GameplayPhase::Draw
         | GameplayPhase::EnemyBg2Tilemap
-        | GameplayPhase::Hud
         | GameplayPhase::BgScroll
         | GameplayPhase::RoomMain
         | GameplayPhase::RoomShaking

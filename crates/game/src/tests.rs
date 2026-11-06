@@ -58,6 +58,8 @@ const fn counters(nmi: u16, completed: u16, lag: u16, max_lag: u16) -> Counters 
         completed: FrameCount(completed),
         lag: FrameCount(lag),
         max_lag: FrameCount(max_lag),
+        // From a fresh State both count the requested NMIs.
+        requested_byte: completed.to_le_bytes()[0],
     }
 }
 

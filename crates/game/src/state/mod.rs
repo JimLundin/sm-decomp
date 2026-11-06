@@ -6,6 +6,7 @@
 // `sram` join with their first rows; slice 0's item pickup needs `progress` once the
 // decoder shows which collected-item bits its rows read.
 
+pub mod hud;
 pub mod room;
 pub mod samus;
 pub mod slots;
@@ -16,6 +17,7 @@ use canonical::{Canonical, Schema};
 use data::id::Cycles;
 use slots::FlagSet;
 
+use hud::Hud;
 use room::RoomScoped;
 use samus::Samus;
 use strand::{IrqStrand, MainStrand, Message};
@@ -40,6 +42,9 @@ pub struct Counters {
     pub lag: FrameCount,
     /// The longest lag run seen.
     pub max_lag: FrameCount,
+    /// Requested NMIs in eight bits, which door transitions reset; the HUD's auto-cancel
+    /// flash reads it.
+    pub requested_byte: u8,
 }
 
 /// The in-game time on the file.
@@ -178,6 +183,8 @@ pub struct State {
     pub samus: Samus,
     /// The current room.
     pub room: RoomScoped,
+    /// The HUD.
+    pub hud: Hud,
     /// The message the message box shows, or showed last.
     pub message: Message,
 }

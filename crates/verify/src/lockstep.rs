@@ -57,6 +57,10 @@ const COMPARATORS: &[Comparator] = &[
     field!("clock.counters.completed", clock.counters.completed),
     field!("clock.counters.lag", clock.counters.lag),
     field!("clock.counters.max_lag", clock.counters.max_lag),
+    field!(
+        "clock.counters.requested_byte",
+        clock.counters.requested_byte
+    ),
     field!("clock.game_time.hours", clock.game_time.hours),
     field!("clock.game_time.minutes", clock.game_time.minutes),
     field!("clock.game_time.seconds", clock.game_time.seconds),
@@ -196,11 +200,37 @@ const COMPARATORS: &[Comparator] = &[
         samus.equipment.missiles.current
     ),
     field!("samus.equipment.missiles.max", samus.equipment.missiles.max),
+    field!(
+        "samus.equipment.super_missiles.current",
+        samus.equipment.super_missiles.current
+    ),
+    field!(
+        "samus.equipment.super_missiles.max",
+        samus.equipment.super_missiles.max
+    ),
+    field!(
+        "samus.equipment.power_bombs.current",
+        samus.equipment.power_bombs.current
+    ),
+    field!(
+        "samus.equipment.power_bombs.max",
+        samus.equipment.power_bombs.max
+    ),
+    field!("samus.equipment.reserve_mode", samus.equipment.reserve_mode),
     field!("room.room", room.room),
     field!("room.camera.x.pixels", room.camera.x.pixels),
     field!("room.camera.x.subpixels", room.camera.x.subpixels),
     field!("room.camera.y.pixels", room.camera.y.pixels),
     field!("room.camera.y.subpixels", room.camera.y.subpixels),
+    field!("hud.tilemap", hud.tilemap),
+    field!("hud.selected", hud.selected),
+    field!("hud.auto_cancel", hud.auto_cancel),
+    field!("hud.drawn.energy", hud.drawn.energy),
+    field!("hud.drawn.missiles", hud.drawn.missiles),
+    field!("hud.drawn.super_missiles", hud.drawn.super_missiles),
+    field!("hud.drawn.power_bombs", hud.drawn.power_bombs),
+    field!("hud.drawn.selection", hud.drawn.selection),
+    field!("hud.item_palette", hud.item_palette),
     field!("message", message),
 ];
 

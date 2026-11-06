@@ -91,6 +91,10 @@ pub const FIELDS: &[Field] = &[
     wram("clock.counters.completed", source::NMI_FRAME_COUNTER_WORD),
     wram_byte("clock.counters.lag", source::NMI_FRAMES_MISSED),
     wram_byte("clock.counters.max_lag", source::NMI_FRAMES_MISSED_MAX),
+    wram_byte(
+        "clock.counters.requested_byte",
+        source::NMI_FRAME_COUNTER_BYTE,
+    ),
     wram("clock.game_time.hours", source::GAME_TIME_HOURS),
     wram("clock.game_time.minutes", source::GAME_TIME_MINUTES),
     wram("clock.game_time.seconds", source::GAME_TIME_SECONDS),
@@ -224,6 +228,23 @@ pub const FIELDS: &[Field] = &[
     ),
     wram("samus.equipment.missiles.current", source::SAMUS_MISSILES),
     wram("samus.equipment.missiles.max", source::SAMUS_MAX_MISSILES),
+    wram(
+        "samus.equipment.super_missiles.current",
+        source::SAMUS_SUPER_MISSILES,
+    ),
+    wram(
+        "samus.equipment.super_missiles.max",
+        source::SAMUS_MAX_SUPER_MISSILES,
+    ),
+    wram(
+        "samus.equipment.power_bombs.current",
+        source::SAMUS_POWER_BOMBS,
+    ),
+    wram(
+        "samus.equipment.power_bombs.max",
+        source::SAMUS_MAX_POWER_BOMBS,
+    ),
+    wram("samus.equipment.reserve_mode", source::RESERVE_HEALTH_MODE),
     open("samus.invincibility"),
     open("samus.animation"),
     Field {
@@ -239,6 +260,21 @@ pub const FIELDS: &[Field] = &[
     wram("room.camera.y.subpixels", source::LAYER1_Y_SUBPOS),
     open("room.plms"),
     open("room.enemies"),
+    Field {
+        path: "hud.tilemap",
+        status: Status::Decoded(Source::WramBlock(source::HUD_TILEMAP)),
+    },
+    wram("hud.selected", source::HUD_ITEM_INDEX),
+    wram("hud.auto_cancel", source::SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX),
+    wram("hud.drawn.energy", source::SAMUS_PREV_HEALTH),
+    wram("hud.drawn.missiles", source::SAMUS_PREV_MISSILES),
+    wram(
+        "hud.drawn.super_missiles",
+        source::SAMUS_PREV_SUPER_MISSILES,
+    ),
+    wram("hud.drawn.power_bombs", source::SAMUS_PREV_POWER_BOMBS),
+    wram("hud.drawn.selection", source::SAMUS_PREV_HUD_ITEM_INDEX),
+    wram("hud.item_palette", source::HUD_ITEM_TILEMAP_PALETTE_BITS),
     wram("message", source::MESSAGE_BOX_INDEX),
 ];
 
@@ -272,6 +308,7 @@ mod tests {
             "video",
             "samus",
             "room",
+            "hud",
             "message",
         ];
         for name in top {
@@ -285,10 +322,11 @@ mod tests {
     }
 
     /// The byte sources the decoder reads.
-    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 28] {
+    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 29] {
         [
             rules.lag,
             rules.max_lag,
+            rules.requested_byte,
             rules.nmi_requested,
             rules.inidisp,
             rules.main_screen,
@@ -348,6 +386,19 @@ mod tests {
             rules.max_reserve,
             rules.missiles,
             rules.max_missiles,
+            rules.super_missiles,
+            rules.max_super_missiles,
+            rules.power_bombs,
+            rules.max_power_bombs,
+            rules.reserve_mode,
+            rules.hud.selected,
+            rules.hud.auto_cancel,
+            rules.hud.energy,
+            rules.hud.missiles,
+            rules.hud.super_missiles,
+            rules.hud.power_bombs,
+            rules.hud.selection,
+            rules.hud.item_palette,
             rules.camera_x,
             rules.camera_x_subpixels,
             rules.camera_y,
@@ -364,7 +415,12 @@ mod tests {
             rules.mirrors.mode7[4],
         ];
         let bytes = byte_sources(&rules);
-        let blocks = [rules.oam_buffer, rules.palette_buffer, rules.vram_queue];
+        let blocks = [
+            rules.oam_buffer,
+            rules.palette_buffer,
+            rules.vram_queue,
+            rules.hud.tilemap,
+        ];
         for field in FIELDS {
             match field.status {
                 Status::Decoded(Source::WramWord(word) | Source::WramPointer(word)) => {

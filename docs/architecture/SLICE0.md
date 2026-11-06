@@ -354,6 +354,54 @@ data `Movement`'s variants carry (speeds); `samus.aim` stays open (it is the pos
 elevator ride in `area-brinstar` keeps pose 0 and moves Y; the verify and data unit tests
 compiled but only the data ones ran here (Defender).
 
+**C9 status (`lane/slice0-c9`), the HUD.** Done: `game::state::hud::Hud` holds the HUD
+tilemap's three rows as typed cells (`video::TilemapEntry`: tile, palette, priority, flips;
+`from_word` and `word` round-trip every word), the selected and auto-cancel items
+(`HudItem`), the values it last drew (`Drawn`: energy, missiles, super missiles, power bombs,
+the highlighted item) and the last highlight's palette; `Equipment` gains the super missile
+and power bomb gauges and `ReserveMode`, `Counters` the 8-bit requested-NMI count
+(`$80:95ED`). `game::hud::phase` is the gameplay pass's HUD phase, as `$80:9B44` runs it: the
+AUTO reserve sign, the tanks and energy digits when energy differs from the drawn value, each
+count with a ceiling when it differs, the selection's highlight and the auto-cancel flash,
+then the queued upload of the State's tilemap to VRAM `$5820` in `video.batch.vram`, which the
+NMI commits. Decoded from `HUD_TILEMAP` (`$7E:C608`), `HUD_ITEM_INDEX`,
+`SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX`, `SAMUS_PREV_HEALTH` to `SAMUS_PREV_HUD_ITEM_INDEX`,
+`HUD_ITEM_TILEMAP_PALETTE_BITS`, `SAMUS_(MAX_)SUPER_MISSILES`, `SAMUS_(MAX_)POWER_BOMBS`,
+`RESERVE_HEALTH_MODE` and `NMI_FRAME_COUNTER_BYTE`. Lockstep on A2's cache, 2026-11-06 (Ticks
+differing, first frame):
+
+| Field | `area-brinstar` (476) before | after | `item-morph-ball` (1,427) before | after |
+| --- | --- | --- | --- | --- |
+| `video.memory.vram` | 73, 7 | 73, 7 | 345, 7 | 345, 7 |
+| of which the HUD rows outside the mini-map | 0 | 0 | 0 | 0 |
+| of which the mini-map (columns 26-31) | 61, 7 | 61, 7 | 131, 7 | 131, 7 |
+| of which BG1/BG2 and tiles (B4, B3) | 17, 244 | 17, 244 | 63, 244 | 63, 244 |
+| of which sprites (C6) | | | 209, 681 | 209, 681 |
+| of which BG3 below the HUD (C13's box) | | | 4, 820 | 4, 820 |
+| `video.batch.vram` | equal | equal | equal | equal |
+| `hud.tilemap` (new) | | 61, 7 (mini-map cells only) | | 131, 7 (mini-map cells only) |
+| `hud.drawn.*`, `.selected`, `.auto_cancel`, `.item_palette` (new) | | equal | | equal |
+| `samus.equipment.super_missiles`, `.power_bombs`, `.reserve_mode` (new) | | equal | | equal |
+| `clock.counters.requested_byte` (new) | | equal | | 1, 817 (C13's box) |
+
+Why VRAM's count didn't move: at a quiet cut the HUD rows in VRAM already hold the tilemap the
+last NMI uploaded, so the engine's upload rewrites what was there. Proof that the engine's
+upload is what writes them: with VRAM `$5820`-`$587F` zeroed in decode(k) before each Tick,
+`area-brinstar` gives the same table (the engine restores every HUD word but the mini-map's);
+`item-morph-ball` too until 818, after which the message box's lag frames run no gameplay pass
+in either. Frame 7's first VRAM difference (`$585C`, row 1 column 28) is the mini-map's Samus
+cell flashing between palettes 7 and 2. Remaining:
+
+- open: the mini-map (bank `$90`'s update and its explored cells, with `progress`), which owns
+  every remaining HUD difference: C9's next step, or the map lane's;
+- open: the switch click (sound `39h`, C11) and the debug options' three-digit super missile
+  count (vanilla never sets them);
+- open: a count past what its cells hold (two digits past 99, three past 999) indexes past the
+  digit table into the timer code (`$80:9DE7`); no vanilla count gets there, and the engine leaves the
+  cell's tile;
+- the HUD's initialisation (`$80:9A79`; the item icons on pickup, `$80:9A0E` to `$80:9A3E`) joins with room
+  entry and item pickup (C12); the unit tests compiled but don't run on this machine.
+
 ### C. Domains, built against the oracle (lockstep first)
 
 Each lane adds its State fields, their decode rules and coverage entries, and the rules,
