@@ -2,7 +2,7 @@
 
 use canonical::Canonical;
 
-use super::slots::{Cursor, Frames};
+use super::slots::{Cursor, FlagSet, Frames};
 
 /// A pixel position or speed with its subpixel fraction, as the original keeps them.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -103,16 +103,37 @@ pub enum Movement {
     },
 }
 
-/// The items Samus can collect and equip, as a typed flag set.
-// open: the full set (the original's equipment and beam words); slice 0 needs only the
-// morph ball. Charge beam, beams and their combination rules join with weapons.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Items {
+/// An item Samus can collect and equip.
+// open: the beams and the charge beam (the original's beam words), with their combination
+// rules, join with weapons.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Item {
+    /// The Varia suit.
+    VariaSuit,
+    /// The spring ball.
+    SpringBall,
     /// The morph ball.
-    pub morph_ball: bool,
+    MorphBall,
+    /// The screw attack.
+    ScrewAttack,
+    /// The gravity suit.
+    GravitySuit,
+    /// The hi-jump boots.
+    HiJumpBoots,
+    /// The space jump.
+    SpaceJump,
     /// Bombs.
-    pub bombs: bool,
+    Bombs,
+    /// The speed booster.
+    SpeedBooster,
+    /// The grapple beam.
+    GrappleBeam,
+    /// The X-ray scope.
+    XRayScope,
 }
+
+/// A set of items.
+pub type Items = FlagSet<Item>;
 
 /// A quantity with a ceiling: energy, a reserve, an ammunition type.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -132,6 +153,8 @@ pub struct Equipment {
     pub equipped: Items,
     /// Energy.
     pub energy: Gauge,
+    /// The reserve tanks' energy.
+    pub reserve: Gauge,
     /// Missiles.
     pub missiles: Gauge,
 }

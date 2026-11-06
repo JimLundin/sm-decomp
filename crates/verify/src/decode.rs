@@ -1,22 +1,24 @@
 //! The one decoder from an oracle record to the engine's State (D21).
 //!
-//! Slice one decodes what a record shows directly: the NMI counters, the in-game time, the
-//! RNG word, the controller, the game state, Samus's position, video memory and the room.
+//! The decoder reads what a record shows directly: the NMI counters and timing, the in-game
+//! time, the RNG word, the controller, the game state, the NMI request, Samus's position and
+//! equipment, video memory, the room and its camera.
 //! The rest of the State stays at its default; [`crate::coverage::FIELDS`] says which.
 
 use std::fmt;
 
 use data::id::RoomId;
-use game::state::room::RoomScoped;
-use game::state::samus::{Fixed, Point, Samus};
+use game::state::room::{Camera, RoomScoped};
+use game::state::samus::{Equipment, Fixed, Gauge, Item, Items, Point, Samus};
 use game::state::slots::{FlagSet, Frames};
 use game::state::video::{
     CGRAM_COLOURS, Colour, OAM_HIGH_BYTES, Oam, OamEntry, VRAM_WORDS, Video, VideoMemory,
 };
 use game::state::{
-    Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, Rng, State,
+    Button, Buttons, Clock, Controller, Counters, FrameCount, GameMode, GameTime, NmiTiming, Rng,
+    State, Timing,
 };
-use oracle_record::FrameRecord;
+use oracle_record::{Cut, FrameRecord, Nmi, NmiKind};
 
 use crate::source::{self, WramByte, WramWord};
 
@@ -53,6 +55,8 @@ impl RoomMap {
 pub enum Unsupported {
     /// A game state other than main gameplay, with `GAME_STATE`'s value.
     GameState(u16),
+    /// A cut that isn't an NMI's return, so no NMI kind to decode the timing from.
+    NoNmi(Cut),
 }
 
 /// A video memory the decoder reads whole.
@@ -87,6 +91,14 @@ pub enum DecodeError {
     UnknownRoom(RoomHeader),
     /// The record is in a state the decoder doesn't cover yet.
     Unsupported(Unsupported),
+    /// A source holds a value no routine of the original writes, which the State has no
+    /// value for: unknown item bits, or an NMI request flag other than 0 or 1.
+    Unrepresentable {
+        /// The source's `ram_map.rs` name.
+        source: &'static str,
+        /// What the State can't hold: the unknown bits, or the whole value.
+        value: u16,
+    },
 }
 
 impl fmt::Display for DecodeError {
@@ -103,6 +115,15 @@ impl fmt::Display for DecodeError {
             }
             Self::Unsupported(Unsupported::GameState(state)) => {
                 write!(f, "game state {state:#06X} isn't decoded yet")
+            }
+            Self::Unsupported(Unsupported::NoNmi(cut)) => {
+                write!(f, "a {cut:?} cut isn't decoded yet")
+            }
+            Self::Unrepresentable { source, value } => {
+                write!(
+                    f,
+                    "{source} holds {value:#06X}, which the State has no value for"
+                )
             }
         }
     }
@@ -155,6 +176,32 @@ pub struct Rules {
     pub samus_y_subpixels: WramWord,
     /// `room.room`.
     pub room: WramWord,
+    /// `video.nmi_requested`.
+    pub nmi_requested: WramByte,
+    /// `samus.equipment.collected`.
+    pub collected: WramWord,
+    /// `samus.equipment.equipped`.
+    pub equipped: WramWord,
+    /// `samus.equipment.energy.current`.
+    pub energy: WramWord,
+    /// `samus.equipment.energy.max`.
+    pub max_energy: WramWord,
+    /// `samus.equipment.reserve.current`.
+    pub reserve: WramWord,
+    /// `samus.equipment.reserve.max`.
+    pub max_reserve: WramWord,
+    /// `samus.equipment.missiles.current`.
+    pub missiles: WramWord,
+    /// `samus.equipment.missiles.max`.
+    pub max_missiles: WramWord,
+    /// `room.camera.x.pixels`.
+    pub camera_x: WramWord,
+    /// `room.camera.x.subpixels`.
+    pub camera_x_subpixels: WramWord,
+    /// `room.camera.y.pixels`.
+    pub camera_y: WramWord,
+    /// `room.camera.y.subpixels`.
+    pub camera_y_subpixels: WramWord,
 }
 
 impl Rules {
@@ -180,6 +227,19 @@ impl Rules {
         samus_y: source::SAMUS_Y_POS,
         samus_y_subpixels: source::SAMUS_Y_SUBPOS,
         room: source::ROOM_PTR,
+        nmi_requested: source::WAITING_FOR_NMI,
+        collected: source::COLLECTED_ITEMS,
+        equipped: source::EQUIPPED_ITEMS,
+        energy: source::SAMUS_HEALTH,
+        max_energy: source::SAMUS_MAX_HEALTH,
+        reserve: source::SAMUS_RESERVE_HEALTH,
+        max_reserve: source::SAMUS_MAX_RESERVE_HEALTH,
+        missiles: source::SAMUS_MISSILES,
+        max_missiles: source::SAMUS_MAX_MISSILES,
+        camera_x: source::LAYER1_X_POS,
+        camera_x_subpixels: source::LAYER1_X_SUBPOS,
+        camera_y: source::LAYER1_Y_POS,
+        camera_y_subpixels: source::LAYER1_Y_SUBPOS,
     };
 
     /// The State `record` shows, under these rules.
@@ -196,6 +256,7 @@ impl Rules {
         }
         let header = RoomHeader(self.room.read(wram)?);
         let room = rooms.get(header).ok_or(DecodeError::UnknownRoom(header))?;
+        let last = nmi_timing(record.cut)?;
 
         Ok(State {
             clock: Clock {
@@ -226,8 +287,13 @@ impl Rules {
                 repeat_delay: Frames(self.repeat_delay.read(wram)?),
             },
             mode: GameMode::Gameplay,
+            timing: Timing {
+                last,
+                ..Timing::default()
+            },
             video: Video {
                 memory: video_memory(record)?,
+                nmi_requested: flag(self.nmi_requested, wram)?,
                 ..Video::default()
             },
             samus: Samus {
@@ -241,10 +307,27 @@ impl Rules {
                         subpixels: self.samus_y_subpixels.read(wram)?,
                     },
                 },
+                equipment: Equipment {
+                    collected: items(self.collected, wram)?,
+                    equipped: items(self.equipped, wram)?,
+                    energy: gauge(self.energy, self.max_energy, wram)?,
+                    reserve: gauge(self.reserve, self.max_reserve, wram)?,
+                    missiles: gauge(self.missiles, self.max_missiles, wram)?,
+                },
                 ..Samus::default()
             },
             room: RoomScoped {
                 room,
+                camera: Camera {
+                    x: Fixed {
+                        pixels: self.camera_x.read(wram)?,
+                        subpixels: self.camera_x_subpixels.read(wram)?,
+                    },
+                    y: Fixed {
+                        pixels: self.camera_y.read(wram)?,
+                        subpixels: self.camera_y_subpixels.read(wram)?,
+                    },
+                },
                 ..RoomScoped::default()
             },
             ..State::default()
@@ -306,6 +389,102 @@ fn buttons(word: u16) -> Buttons {
         bits,
         ..FlagSet::default()
     }
+}
+
+/// How the cut's NMI found the main thread: waiting at a wait site, or still working.
+const fn nmi_timing(cut: Cut) -> Result<NmiTiming, DecodeError> {
+    match cut {
+        Cut::NmiReturn(Nmi {
+            kind: NmiKind::Requested,
+            ..
+        }) => Ok(NmiTiming::OnTime),
+        Cut::NmiReturn(Nmi {
+            kind: NmiKind::Overrun,
+            ..
+        }) => Ok(NmiTiming::Overrun),
+        Cut::VblankWithoutNmi | Cut::NmiStillRunning { .. } => {
+            Err(DecodeError::Unsupported(Unsupported::NoNmi(cut)))
+        }
+    }
+}
+
+/// A flag the original keeps as a byte it only ever sets to 1 and clears to 0.
+fn flag(source: WramByte, wram: &[u8]) -> Result<bool, DecodeError> {
+    match source.read(wram)? {
+        0 => Ok(false),
+        1 => Ok(true),
+        value => Err(DecodeError::Unrepresentable {
+            source: source.name,
+            value: u16::from(value),
+        }),
+    }
+}
+
+/// A gauge from its current and ceiling words.
+fn gauge(current: WramWord, max: WramWord, wram: &[u8]) -> Result<Gauge, DecodeError> {
+    Ok(Gauge {
+        current: current.read(wram)?,
+        max: max.read(wram)?,
+    })
+}
+
+/// The items in declaration order, which is `FlagSet`'s bit order.
+const ITEMS: [Item; 11] = [
+    Item::VariaSuit,
+    Item::SpringBall,
+    Item::MorphBall,
+    Item::ScrewAttack,
+    Item::GravitySuit,
+    Item::HiJumpBoots,
+    Item::SpaceJump,
+    Item::Bombs,
+    Item::SpeedBooster,
+    Item::GrappleBeam,
+    Item::XRayScope,
+];
+
+/// An item's bit in `EQUIPPED_ITEMS` and `COLLECTED_ITEMS` (bank $84 log: the item PLMs'
+/// equipment instruction).
+const fn item_bit(item: Item) -> u16 {
+    match item {
+        Item::VariaSuit => 0x0001,
+        Item::SpringBall => 0x0002,
+        Item::MorphBall => 0x0004,
+        Item::ScrewAttack => 0x0008,
+        Item::GravitySuit => 0x0020,
+        Item::HiJumpBoots => 0x0100,
+        Item::SpaceJump => 0x0200,
+        Item::Bombs => 0x1000,
+        Item::SpeedBooster => 0x2000,
+        Item::GrappleBeam => 0x4000,
+        Item::XRayScope => 0x8000,
+    }
+}
+
+/// The items an equipment word holds.
+///
+/// No routine of the original sets the word's five unused bits, and the State has no place to
+/// keep them, so a word with any of them set is [`DecodeError::Unrepresentable`] rather than
+/// decoded without them.
+fn items(source: WramWord, wram: &[u8]) -> Result<Items, DecodeError> {
+    let word = source.read(wram)?;
+    let unknown = ITEMS
+        .iter()
+        .fold(word, |unknown, &item| unknown & !item_bit(item));
+    if unknown != 0 {
+        return Err(DecodeError::Unrepresentable {
+            source: source.name,
+            value: unknown,
+        });
+    }
+    // Fold from the last item, so each shift moves the earlier ones toward their bits.
+    let bits = ITEMS.iter().rev().fold(0_u32, |bits, &item| {
+        bits.wrapping_shl(1) | u32::from((word & item_bit(item)) != 0)
+    });
+    Ok(FlagSet {
+        bits,
+        ..FlagSet::default()
+    })
 }
 
 /// VRAM, CGRAM and OAM, straight from the record.

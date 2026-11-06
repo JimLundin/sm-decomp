@@ -158,3 +158,76 @@ pub const ROOM_PTR: WramWord = WramWord {
     name: "ROOM_PTR",
     offset: 0x079B,
 };
+
+/// Bank $80 log: the NMI request flag. The main thread sets it to 1 when it waits for NMI
+/// and the NMI handler clears it; a set flag is what makes an NMI a requested one.
+pub const WAITING_FOR_NMI: WramByte = WramByte {
+    name: "WAITING_FOR_NMI",
+    offset: 0x05B4,
+};
+
+/// Bank $84 log: the items switched on, one bit each.
+///
+/// The item PLMs' equipment instruction sets them: Varia $0001, spring ball $0002, morph
+/// ball $0004, screw attack $0008, gravity $0020, hi-jump $0100, space jump $0200, bombs
+/// $1000, speed booster $2000, grapple $4000, X-ray $8000. The other five bits are unused.
+pub const EQUIPPED_ITEMS: WramWord = WramWord {
+    name: "EQUIPPED_ITEMS",
+    offset: 0x09A2,
+};
+/// Bank $84 log: the items collected, in `EQUIPPED_ITEMS`'s bit layout.
+pub const COLLECTED_ITEMS: WramWord = WramWord {
+    name: "COLLECTED_ITEMS",
+    offset: 0x09A4,
+};
+/// Bank $90 log: Samus's energy.
+pub const SAMUS_HEALTH: WramWord = WramWord {
+    name: "SAMUS_HEALTH",
+    offset: 0x09C2,
+};
+/// Bank $90 log: Samus's energy ceiling, raised by energy tanks.
+pub const SAMUS_MAX_HEALTH: WramWord = WramWord {
+    name: "SAMUS_MAX_HEALTH",
+    offset: 0x09C4,
+};
+/// Bank $90 log: Samus's missiles.
+pub const SAMUS_MISSILES: WramWord = WramWord {
+    name: "SAMUS_MISSILES",
+    offset: 0x09C6,
+};
+/// Bank $90 log: Samus's missile ceiling, raised by missile tanks.
+pub const SAMUS_MAX_MISSILES: WramWord = WramWord {
+    name: "SAMUS_MAX_MISSILES",
+    offset: 0x09C8,
+};
+/// Bank $84 log: the reserve tanks' ceiling, raised by each reserve tank.
+pub const SAMUS_MAX_RESERVE_HEALTH: WramWord = WramWord {
+    name: "SAMUS_MAX_RESERVE_HEALTH",
+    offset: 0x09D4,
+};
+/// Bank $90 log: the energy held in the reserve tanks.
+pub const SAMUS_RESERVE_HEALTH: WramWord = WramWord {
+    name: "SAMUS_RESERVE_HEALTH",
+    offset: 0x09D6,
+};
+
+/// Bank $80 log: layer 1's X scroll in the room, subpixels.
+pub const LAYER1_X_SUBPOS: WramWord = WramWord {
+    name: "LAYER1_X_SUBPOS",
+    offset: 0x090F,
+};
+/// Bank $80 log: layer 1's X scroll in the room, whole pixels: the camera's left edge.
+pub const LAYER1_X_POS: WramWord = WramWord {
+    name: "LAYER1_X_POS",
+    offset: 0x0911,
+};
+/// Bank $80 log: layer 1's Y scroll in the room, subpixels.
+pub const LAYER1_Y_SUBPOS: WramWord = WramWord {
+    name: "LAYER1_Y_SUBPOS",
+    offset: 0x0913,
+};
+/// Bank $80 log: layer 1's Y scroll in the room, whole pixels: the camera's top edge.
+pub const LAYER1_Y_POS: WramWord = WramWord {
+    name: "LAYER1_Y_POS",
+    offset: 0x0915,
+};
