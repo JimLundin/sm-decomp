@@ -40,12 +40,7 @@ const FILL: [u8; 2] = [0x00, 0x80];
 
 /// A layer position in blocks, signed as the original's shift sign-extends it from bit 11.
 const fn layer_block(position: u16) -> u16 {
-    let block = position >> 4;
-    if block & 0x0800 == 0 {
-        block
-    } else {
-        block | 0xF000
-    }
+    (position.cast_signed() >> 4).cast_unsigned()
 }
 
 /// A layer's top-left corner in blocks.
@@ -66,7 +61,7 @@ const fn bg_blocks(scroll: Scroll) -> BlockPoint {
 
 /// Whether `now` is before `then`, as the sign of their difference says.
 const fn before(now: u16, then: u16) -> bool {
-    now.wrapping_sub(then) & 0x8000 != 0
+    now.wrapping_sub(then).cast_signed() < 0
 }
 
 /// Which level data a builder reads.
@@ -377,8 +372,8 @@ fn layer_uploads(
 ///
 /// The original runs the four checks in that order; each builds into its own buffers, so
 /// building a layer's column and row together gives the same uploads.
-// open: the NMI's scrolling DMAs (`$80:8CD8`, `$80:8DAC`) make the uploads and clear their
-// requests; until they join, the requests count up.
+///
+/// The NMI's scrolling DMAs (`$80:8CD8`, `$80:8DAC`) make the uploads and clear their requests.
 pub fn update(
     room: &mut RoomScoped,
     mirrors: &Registers,
