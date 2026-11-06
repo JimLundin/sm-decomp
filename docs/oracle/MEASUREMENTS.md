@@ -1004,3 +1004,49 @@ gives its start and end. Fit the pause rule on those lines, where the offsets
 are under 8 clocks, then rerun this table. The "allow 0" end alignment
 (row 6) is the one variant that moves the 120 cases the right way; it
 overshoots because it also drops 6-8 clocks on lines lsnes keeps.
+
+## (o) lsnes gives the picture, the APU port accesses and the PPU registers
+
+**Question.** lsnes keeps sync with every movie but gave only the memories,
+CPU and cut; the picture, the APU port log and `PpuRegisters` came from
+LakeSnes (D25). Can lsnes rr2-beta23's Lua give them too?
+
+**How** (`a38bdc896`, lane `lane/oracle-lsnes-picture`; `T <picture> <apu>
+<ppu>` request in `tools/oracle/lsnes_server.lua`, `Lsnes::record_streams`,
+opt-in so ladders, seeds and corpus records are unchanged):
+
+- Picture: `gui.screenshot_bitmap()` in `send()`, after the frame boundary,
+  read with `pget`. lsnes decodes bsnes's 19-bit lrgb dots (brightness << 15 |
+  BGR555) to 8-bit RGB as `l*c*255/496` rounded (`l` = brightness + 1). The
+  client maps it back to BGR555 at the brightest `l` whose palette produces
+  every channel value. Exact at brightness 15; at lower levels ambiguous
+  values keep the smallest component, and an all-black picture reads as
+  brightness 15. Per-line brightness and forced blank are not visible.
+- APU port log: `memory.registerwrite`/`registerread` on `BUS + $00/$80:2140-2143`
+  fire for every CPU access (bsnes's `Bus::read`/`write` debug hook), with the
+  value. Registered from the main chunk only. No DMA or SPC700 side, no APU
+  cycle.
+- PPU registers: `memory.getregisters()` (already called at the cut) holds
+  bsnes's decoded PPU fields (`ppu_bg_hofs[0]`, `ppu_window1_enabled[5]`, ...);
+  the server rebuilds the written bytes from them (`ppu_bytes`), and reads
+  `$43x0-$43xA` on the bus. `nmitimen`, `htime`, `vtime`, `hdmaen` and
+  `memsel` are not exposed; the game mirrors `$4200` in `$84` and `$420C` in
+  `$85`.
+
+**Command.** `oracle cross ROM any.inputs --frames 0..1000 --streams` (LakeSnes
+left, lsnes right, from power-on), private DLL from `a38bdc896`.
+
+| Stream | Steps equal of 1001 | Detail |
+| --- | --- | --- |
+| picture | 942 | 876 static and 66 changing frames dot-identical; 53 where lsnes shows LakeSnes's previous picture exactly (fade and overrun frames: 19, 168, 355-358, ...); 6 other. 57,194,741 of 57,401,344 dots equal (99.64%) |
+| ppu (all but the CPU I/O words) | 993 | 2 fields at steps 0-4 (start-up), 3-8 fields at 303-307 (the one-frame lag of (f)) |
+| apu-log (CPU accesses only) | 727 | first differs at 168 (the SPC upload): same count of accesses (4405 both), different read values and order, as the two SPC700s answer at different times |
+
+**Speed.** The same 1001 steps, both backends: 27.4 s without `--streams`,
+76.0 s with (LakeSnes's picture and APU log included). lsnes alone was not
+timed separately; the `pget` loop (57,344 calls a frame) is the larger part.
+
+**Conclusion.** All three are feasible from lsnes's Lua without linking or
+copying emulator code. The picture is exact at full brightness; fades and
+brightness below 15 lose per-line brightness and some components. The CPU's
+APU port accesses are complete; the SPC700 side is not.

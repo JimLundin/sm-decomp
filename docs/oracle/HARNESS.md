@@ -340,6 +340,18 @@ Expected, explainable mismatches:
   transitions stall.
 - **`ppu`.** The old struct includes renderer scratch and latch fields.
 
+### lsnes streams
+
+lsnes records the picture, the CPU's APU port accesses and `PpuRegisters`
+when asked (`Lsnes::record_streams`, the server's `T` request, before the
+first step); otherwise its records are unchanged. The picture is lsnes's
+screenshot after the frame boundary, mapped back from its 8-bit palette to
+BGR555: exact at brightness 15, without per-line brightness or forced blank.
+The port log has the CPU side only. The PPU registers are rebuilt from bsnes's
+decoded fields in `memory.getregisters()`, without `nmitimen`, `htime`,
+`vtime`, `hdmaen` and `memsel`. Against LakeSnes on any% 0-1000:
+MEASUREMENTS.md (o).
+
 ## Speed
 
 One process with the picture on runs 236-366 frames/s (about 300) on the
