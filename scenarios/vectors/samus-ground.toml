@@ -1,0 +1,577 @@
+# Test vectors for docs/behaviours/samus-ground.md (MODEL §5), read by a `game` test.
+#
+# Format
+# - Each [[vector]] has: id; source ("item-morph-ball:<frame>" for an oracle record, or
+#   "constructed"); entries (the spec's behaviour IDs it exercises); rules (optional:
+#   speed_cap = "Wordwise", the default, or "Exact"); world; before; one or more [[vector.step]].
+# - A P.S quantity is a string "PPPP.SSSS": the pixel word and the subpixel word, both hex.
+#   Pixel coordinates are integers.
+# - world: floor_top = the y of a flat solid floor's top surface, a multiple of 16; every block
+#   row from it down is solid. wall_right = the x of a solid wall's left face, a multiple of 16;
+#   every block column from it rightward is solid. solid_enemy_floor = true: a solid enemy under
+#   her stops every downward step and leaves y unchanged (the enemy domain; these vectors don't
+#   compare y). Anything not listed is air.
+# - before: the State at the start (spec §1.1). Defaults: base_speed and extra_run "0000.0000",
+#   momentum false, mode "Accelerating", on_square_slope false.
+# - [[vector.step]]: the inputs for one frame (spec §1.2):
+#     locomotion: "FacingForward", "Standing", "Running", "BallAtRest", "BallRolling",
+#       "SpringBallAtRest", "SpringBallRolling", "Crouching", "TurningOnGround", "Transition",
+#       "Moonwalking" or "RanIntoWall" (spec §2; Ball { spring, at_rest } spelled out);
+#     facing: "Left" or "Right"; radius = [x, y] in px;
+#     pad: the buttons held, from run, shoot, jump, left, right, aim_down;
+#     new_running_pose, airborne, submerged, gravity_suit, speed_booster, elevator_moving:
+#       default false; frame_parity: "Even" (default) or "Odd".
+# - [vector.step.after]: the State expected at the end of that frame. Only the listed fields
+#   are compared; position = [x, y] compares both, position_x or position_y one. The State
+#   names are spec §1.1's. [vector.step.contacts]: the expected Contacts (wall_stop; vertical = "None",
+#   "Landed", "Falling" or "HitCeiling"), after the row's After. Left out: not checked.
+# - Steps chain: the test carries the model's whole State from one step to the next.
+# - The record pads are from item-morph-ball: frame N reads record N-1's pad.
+
+# V1: running right, no pose change, so no arm-pump step.
+[[vector]]
+id = "V1"
+source = "item-morph-ball:1230"
+entries = ["ExtraRunSpeed", "BaseSpeedAccelerate", "HorizontalStep"]
+world = { solid_enemy_floor = true }
+before = { position = ["047D.3FFF", "029B.0000"] }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position_x = "047D.7FFF"
+base_speed = "0000.3000"
+extra_run = "0000.1000"
+momentum = true
+[vector.step.contacts]
+wall_stop = false
+
+# V2: running right, the aim changes, so the arm-pump step adds 1.0.
+[[vector]]
+id = "V2"
+source = "item-morph-ball:1231"
+entries = ["ExtraRunSpeed", "BaseSpeedAccelerate", "ArmPumpStep"]
+world = { solid_enemy_floor = true }
+before = { position = ["047D.7FFF", "029B.0000"], base_speed = "0000.3000", extra_run = "0000.1000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right", "aim_down"]
+new_running_pose = true
+[vector.step.after]
+position_x = "047E.FFFF"
+base_speed = "0000.6000"
+extra_run = "0000.2000"
+
+# V3: the speed-cap quirk. 1.E000 + 0.3000 = 2.1000 counts as past 2.C000 and snaps up.
+[[vector]]
+id = "V3"
+source = "item-morph-ball:752"
+entries = ["SpeedCap", "ExtraRunSpeed", "ArmPumpStep"]
+world = { floor_top = 0x250 }
+before = { position = ["04D6.7FFF", "023B.FFFF"], base_speed = "0001.E000", extra_run = "0000.A000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+new_running_pose = true
+[vector.step.after]
+position = ["04D2.0FFF", "023B.FFFF"]
+base_speed = "0002.C000"
+extra_run = "0000.B000"
+[vector.step.contacts]
+vertical = "Landed"
+
+[[vector]]
+id = "V3-exact"
+source = "constructed"
+entries = ["SpeedCap"]
+rules = { speed_cap = "Exact" }
+world = { floor_top = 0x250 }
+before = { position = ["04D6.7FFF", "023B.FFFF"], base_speed = "0001.E000", extra_run = "0000.A000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+new_running_pose = true
+[vector.step.after]
+position = ["04D2.BFFF", "023B.FFFF"]
+base_speed = "0002.1000"
+extra_run = "0000.B000"
+
+# V4: at the cap, running left; 2.F000 caps to 2.C000 under both settings.
+[[vector]]
+id = "V4"
+source = "item-morph-ball:753"
+entries = ["SpeedCap", "ArmPumpStep"]
+world = { floor_top = 0x250 }
+before = { position = ["04D2.0FFF", "023B.FFFF"], base_speed = "0002.C000", extra_run = "0000.B000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left", "aim_down"]
+new_running_pose = true
+[vector.step.after]
+position_x = "04CD.8FFF"
+base_speed = "0002.C000"
+extra_run = "0000.C000"
+
+[[vector]]
+id = "V4-exact"
+source = "constructed"
+entries = ["SpeedCap"]
+rules = { speed_cap = "Exact" }
+world = { floor_top = 0x250 }
+before = { position = ["04D2.0FFF", "023B.FFFF"], base_speed = "0002.C000", extra_run = "0000.B000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left", "aim_down"]
+new_running_pose = true
+[vector.step.after]
+position_x = "04CD.8FFF"
+base_speed = "0002.C000"
+extra_run = "0000.C000"
+
+# V5: the ball's overshoot. 3.C000 is kept one frame above the max 3.4000.
+[[vector]]
+id = "V5"
+source = "item-morph-ball:1271"
+entries = ["SpeedCap", "StepDown"]
+world = { floor_top = 0x2D0 }
+before = { position = ["04B4.3FFF", "02C9.FFFF"], base_speed = "0003.0000" }
+[[vector.step]]
+locomotion = "BallRolling"
+facing = "Right"
+radius = [5, 7]
+pad = ["right"]
+[vector.step.after]
+position = ["04B7.FFFF", "02C9.FFFF"]
+base_speed = "0003.C000"
+[[vector.step]]
+locomotion = "BallRolling"
+facing = "Right"
+radius = [5, 7]
+pad = ["right"]
+[vector.step.after]
+position = ["04BB.3FFF", "02C9.FFFF"]
+base_speed = "0003.4000"
+
+[[vector]]
+id = "V5-exact"
+source = "constructed"
+entries = ["SpeedCap"]
+rules = { speed_cap = "Exact" }
+world = { floor_top = 0x2D0 }
+before = { position = ["04B4.3FFF", "02C9.FFFF"], base_speed = "0003.0000" }
+[[vector.step]]
+locomotion = "BallRolling"
+facing = "Right"
+radius = [5, 7]
+pad = ["right"]
+[vector.step.after]
+position_x = "04B7.7FFF"
+base_speed = "0003.4000"
+[[vector.step]]
+locomotion = "BallRolling"
+facing = "Right"
+radius = [5, 7]
+pad = ["right"]
+[vector.step.after]
+position_x = "04BA.BFFF"
+base_speed = "0003.4000"
+
+# V6: the turn creep, turning left on the ground. Frame 687 ends standing but ran the turn row.
+# The steps are frames 682 to 687; V7 checks y over the same frames.
+[[vector]]
+id = "V6"
+source = "item-morph-ball:682"
+entries = ["TurnCreep", "BaseSpeedDecelerate", "HorizontalDirection", "LocomotionAtFrameStart"]
+world = { floor_top = 0x2C0 }
+before = { position = ["0580.1000", "02A8.0000"], mode = "TurningAround" }
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_x = "0580.1000"
+base_speed = "0000.0000"
+mode = "Accelerating"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_x = "057F.5000"
+base_speed = "0000.C000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_x = "057F.5000"
+base_speed = "0000.0000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_x = "057E.9000"
+base_speed = "0000.C000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_x = "057E.9000"
+base_speed = "0000.0000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_x = "057D.D000"
+base_speed = "0000.C000"
+
+# V6-exact: under the exact cap the turn has no creep. The y path is the step down of 1.0 a frame.
+[[vector]]
+id = "V6-exact"
+source = "constructed"
+entries = ["TurnCreep", "SpeedCap", "StepDown"]
+rules = { speed_cap = "Exact" }
+world = { floor_top = 0x2C0 }
+before = { position = ["0580.1000", "02A8.0000"], mode = "TurningAround" }
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position = ["0580.1000", "02A9.0000"]
+base_speed = "0000.0000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position = ["0580.1000", "02AA.0000"]
+base_speed = "0000.0000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position = ["0580.1000", "02AB.0000"]
+base_speed = "0000.0000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position = ["0580.1000", "02AB.FFFF"]
+base_speed = "0000.0000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position = ["0580.1000", "02AB.FFFF"]
+base_speed = "0000.0000"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position = ["0580.1000", "02AB.FFFF"]
+base_speed = "0000.0000"
+
+# V7: the step down onto the floor after the radius shrinks from 0x18 to 0x15; the turn row
+# discards the falls (TurnIgnoresFall). Frame 685 lands flush, with the subpixel FFFF.
+[[vector]]
+id = "V7"
+source = "item-morph-ball:682"
+entries = ["StepDown", "TurnIgnoresFall", "FloorFlushSubpixel"]
+world = { floor_top = 0x2C0 }
+before = { position = ["0580.1000", "02A8.0000"], mode = "TurningAround" }
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_y = "02A9.0000"
+[vector.step.contacts]
+vertical = "None"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_y = "02AA.C000"
+[vector.step.contacts]
+vertical = "None"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_y = "02AB.C000"
+[vector.step.contacts]
+vertical = "None"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_y = "02AB.FFFF"
+[vector.step.contacts]
+vertical = "None"
+[[vector.step]]
+locomotion = "TurningOnGround"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left"]
+[vector.step.after]
+position_y = "02AB.FFFF"
+
+# V8: running right into a wall at x 0x540. The target 053C.FFFF puts her right edge at 0x540,
+# so she moves 0.0000 with the subpixel set to FFFF, and every speed is killed.
+[[vector]]
+id = "V8"
+source = "item-morph-ball:1333"
+entries = ["WallStop", "CancelSpeedBoost", "FloorFlushSubpixel", "ArmPumpStep"]
+world = { floor_top = 0x2D0, wall_right = 0x540 }
+before = { position = ["053B.BFFF", "02BB.FFFF"], base_speed = "0000.C000", extra_run = "0000.4000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position = ["053B.FFFF", "02BB.FFFF"]
+base_speed = "0000.0000"
+extra_run = "0000.0000"
+momentum = false
+mode = "Accelerating"
+[vector.step.contacts]
+wall_stop = true
+
+# V9: the standing row moves by extra_run only (0 here), zeroes the speeds, then the pose update
+# picks a running pose and the arm-pump step moves her 1.0 left.
+[[vector]]
+id = "V9"
+source = "item-morph-ball:688"
+entries = ["LocomotionAtFrameStart", "ArmPumpStep", "StepDown"]
+world = { floor_top = 0x2C0 }
+before = { position = ["057D.D000", "02AB.FFFF"], base_speed = "0000.C000" }
+[[vector.step]]
+locomotion = "Standing"
+facing = "Left"
+radius = [5, 0x15]
+pad = ["run", "left", "aim_down"]
+new_running_pose = true
+[vector.step.after]
+position = ["057C.D000", "02AB.FFFF"]
+base_speed = "0000.0000"
+extra_run = "0000.0000"
+mode = "Accelerating"
+[vector.step.contacts]
+vertical = "Landed"
+
+# V10: the ball at rest holds and zeroes the speed, then rolling accelerates.
+[[vector]]
+id = "V10"
+source = "item-morph-ball:1266"
+entries = ["StepDown", "BaseSpeedAccelerate"]
+world = { floor_top = 0x2D0 }
+before = { position = ["04AC.BFFF", "02C9.FFFF"], base_speed = "0000.C000" }
+[[vector.step]]
+locomotion = "BallAtRest"
+facing = "Right"
+radius = [5, 7]
+pad = ["right"]
+[vector.step.after]
+position = ["04AC.BFFF", "02C9.FFFF"]
+base_speed = "0000.0000"
+[vector.step.contacts]
+vertical = "Landed"
+[[vector.step]]
+locomotion = "BallRolling"
+facing = "Right"
+radius = [5, 7]
+pad = ["right"]
+[vector.step.after]
+position = ["04AD.7FFF", "02C9.FFFF"]
+base_speed = "0000.C000"
+
+# V11: the extra-run cap, tested before the add and word by word. Fixed: the same under both
+# SpeedCap settings, so each runs twice.
+[[vector]]
+id = "V11a"
+source = "constructed"
+entries = ["ExtraRunCap"]
+world = { floor_top = 0x110 }
+before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.8000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position = ["0102.C000", "00FB.FFFF"]
+base_speed = "0000.3000"
+extra_run = "0002.9000"
+
+[[vector]]
+id = "V11a-exact"
+source = "constructed"
+entries = ["ExtraRunCap"]
+rules = { speed_cap = "Exact" }
+world = { floor_top = 0x110 }
+before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.8000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position = ["0102.C000", "00FB.FFFF"]
+base_speed = "0000.3000"
+extra_run = "0002.9000"
+
+[[vector]]
+id = "V11b"
+source = "constructed"
+entries = ["ExtraRunCap"]
+world = { floor_top = 0x110 }
+before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.F000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position_x = "0103.3000"
+base_speed = "0000.3000"
+extra_run = "0003.0000"
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position_x = "0105.9000"
+base_speed = "0000.6000"
+extra_run = "0002.0000"
+
+[[vector]]
+id = "V11b-exact"
+source = "constructed"
+entries = ["ExtraRunCap"]
+rules = { speed_cap = "Exact" }
+world = { floor_top = 0x110 }
+before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.F000", momentum = true }
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position_x = "0103.3000"
+base_speed = "0000.3000"
+extra_run = "0003.0000"
+[[vector.step]]
+locomotion = "Running"
+facing = "Right"
+radius = [5, 0x15]
+pad = ["run", "right"]
+[vector.step.after]
+position_x = "0105.9000"
+base_speed = "0000.6000"
+extra_run = "0002.0000"
+
+# V12: the displacement clamp. Standing holds, so extra_run alone moves her: 10.4000 right
+# clamps to 0F.4000; left, -10.4000 clamps to FFF1.C000 (-0E.4000). y is not compared: a
+# 11.4000 step down reaches past the floor's first row.
+[[vector]]
+id = "V12"
+source = "constructed"
+entries = ["DisplacementClamp", "CancelSpeedBoost"]
+world = { floor_top = 0x110 }
+before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0010.4000", momentum = true }
+[[vector.step]]
+locomotion = "Standing"
+facing = "Right"
+radius = [5, 0x15]
+pad = []
+[vector.step.after]
+position_x = "010F.4000"
+base_speed = "0000.0000"
+extra_run = "0000.0000"
+momentum = false
+
+[[vector]]
+id = "V12-left"
+source = "constructed"
+entries = ["DisplacementClamp"]
+world = { floor_top = 0x110 }
+before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0010.4000", momentum = true }
+[[vector.step]]
+locomotion = "Standing"
+facing = "Left"
+radius = [5, 0x15]
+pad = []
+[vector.step.after]
+position_x = "00F1.C000"
+extra_run = "0000.0000"
+
+# V13: the transition row holds (base_speed untouched), then the crouching row zeroes it.
+# Frame 1310 ends crouching; frame 1311 ran the crouching row (its pose update starts a jump,
+# which moves y: not compared).
+[[vector]]
+id = "V13"
+source = "item-morph-ball:1310"
+entries = ["LocomotionAtFrameStart", "TransitionLanding", "StepDown"]
+world = { floor_top = 0x2D0 }
+before = { position = ["0523.3FFF", "02C0.FFFF"], base_speed = "0003.4000" }
+[[vector.step]]
+locomotion = "Transition"
+facing = "Right"
+radius = [5, 0x10]
+pad = ["right"]
+[vector.step.after]
+position = ["0523.3FFF", "02C0.FFFF"]
+base_speed = "0003.4000"
+[vector.step.contacts]
+vertical = "None"
+[[vector.step]]
+locomotion = "Crouching"
+facing = "Right"
+radius = [5, 0x10]
+pad = ["run", "right", "jump"]
+[vector.step.after]
+position_x = "0523.3FFF"
+base_speed = "0000.0000"
+extra_run = "0000.0000"
+mode = "Accelerating"
