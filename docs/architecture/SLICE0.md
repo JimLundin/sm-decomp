@@ -1141,8 +1141,8 @@ itself; each later frame f is one Tick with pad f and the `Recorded` schedule's 
 (the lock's `overruns` and `nmi_off` count frames from the row's first). The frame's cut
 comes from the timing source, not the handler's path, because the record's cut says where
 the NMI found the main thread: a message-box lag NMI is a requested cut. Each frame folds
-video memory, `verify::ppu::digest` and the cut through `EngineFold`; SRAM and the shown
-picture are absent (no SRAM in the State; no line program until B6, so `runtime::compose`
+video memory, `verify::ppu::digest`, the State's typed `SaveRam` and the cut through
+`EngineFold`; the shown picture is absent (no line program until B6, so `runtime::compose`
 has no `DisplayFrame` to compose); the CPU's port accesses are none yet (C11), so `apu`
 folds an empty log. `verify::gate::Ratchet` is the ratchet of green (row, stream) pairs, one
 `ROW STREAM` line per pair in `scenarios/locks/lsnes.green.txt`. `tools gate LOCK CACHE PADS
@@ -1154,8 +1154,8 @@ Run 2026-11-06 through a scratch DLL (the `tools` executable doesn't link on thi
 `oracle_lakesnes` is missing), 0.3 s for both rows: neither row is green. `timing` is
 equal on both rows (the only green pairs, committed): under `Recorded` timing it holds
 whenever no Tick faults, so it guards against faults and early stops, not the cost model.
-`vram`, `cgram`, `oam`, `ppu` and `apu` differ from span 0; `sram`, `video` and `wram` are
-absent from the engine. Against the cache frame by frame (a diagnostic, not the gate), frame
+`vram`, `cgram`, `oam`, `ppu` and `apu` differ from span 0; `video` and `wram` are
+absent from the engine (`sram` has folded since lane sram, and is green on both rows). Against the cache frame by frame (a diagnostic, not the gate), frame
 0 is equal on every memory stream, which checks the decoder at the seed, and the pads equal
 every decoded frame's auto-read pad. The first differing frame per stream, the D2…Dn
 worklist: `oam` frame 1 (no sprite drawing), `vram` frame 7, `ppu` frame 74 (a BG scroll
