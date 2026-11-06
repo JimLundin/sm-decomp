@@ -547,10 +547,15 @@ fn movie(arguments: &[String]) {
 
 /// Derive an lsnes native seed: the state of `BASE` with the words written
 /// right after it loads (`NativeSeed`), saved as `OUT` and `OUT`'s `.words`.
-/// Then prove it: one step from `OUT` as read back must show every word
-/// written, and the work-RAM bytes differing from one step of the plain base
-/// are reported. `tools/scenario_seeds.py native-args` gives a scenario's
-/// arguments.
+/// Then prove that every word stuck at the load, which is what a run from the
+/// seed relies on (`NativeSeed::apply`). The server reads memory only at a
+/// step's cut, so the proof is one step from `OUT` as read back beside one
+/// step from the plain base: a word kept its write when it reads the value
+/// written, or when it reads other than the plain run (the write landed and
+/// the game moved it on, as physics moves Samus's position). It was lost when
+/// it reads the plain run's value and not the written one. The work-RAM bytes
+/// differing from the plain run are reported. `tools/scenario_seeds.py
+/// native-args` gives a scenario's arguments.
 fn derive_seed(arguments: &[String]) {
     use crate::lsnes::{Lsnes, NativeSeed};
     let [rom, base, out, rest @ ..] = arguments else {
@@ -591,16 +596,19 @@ fn derive_seed(arguments: &[String]) {
     let derived = step(&NativeSeed::read(out).unwrap_or_else(|error| fail(error)));
     for word in &seed.words {
         let (before, after) = (word.read(&plain), word.read(&derived));
+        let kept = after == word.value || after != before;
         println!(
-            "${:05X}: {before:#06x} -> {after:#06x} after one step (written {:#06x})",
-            word.offset, word.value
+            "${:05X}: written {:#06x}; after one step {after:#06x}, plain base {before:#06x}: {}",
+            word.offset,
+            word.value,
+            if kept { "kept at load" } else { "LOST" }
         );
-        if after != word.value {
+        if !kept {
             fail(format!("${:05X} did not keep its write", word.offset));
         }
     }
     println!(
-        "derived {}: {} work-RAM bytes differ from the base after one step",
+        "derived {}: every word kept at load; {} work-RAM bytes differ from the base after one step",
         out.display(),
         differing(&derived, &plain)
     );
