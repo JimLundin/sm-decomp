@@ -2,11 +2,15 @@
 //! words per field, from `$1C37` on in bank $7E and the instruction timers' at `$DE1C`.
 //!
 //! A slot's ID word names its PLM through the room's population: the PLMs it places, and
-//! the scroll block touch PLM its scroll PLMs' trigger blocks spawn.
+//! the scroll block touch PLM its scroll PLMs' trigger blocks spawn. The item collision
+//! detection PLM and the 1x1 shot block, which Samus's touches and shots spawn wherever
+//! the blocks for them are, the ID names directly.
 
 use data::plm::{ItemPlm, PlmKind, PlmPopulation};
 use data::rom::RomAddress;
-use game::state::room::{BlockIndex, PLM_SLOTS, PlmBody, PlmCommon, ScrollPlm, ScrollStep};
+use game::state::room::{
+    BlockIndex, Crumble, PLM_SLOTS, PlmBody, PlmCommon, ScrollPlm, ScrollStep,
+};
 use game::state::slots::{Cursor, Frames, Generation, Occupancy, Slot, SlotStore};
 
 use crate::decode::DecodeError;
@@ -14,6 +18,21 @@ use crate::source::{self, WramArray};
 
 /// `$84:B6FF`, the scroll block touch PLM: setup `$84:B393`.
 const SCROLL_TOUCH: u16 = 0xb6ff;
+/// `$84:EED3`, the item collision detection PLM: setup `$84:EEAB`.
+const ITEM_COLLISION: u16 = 0xeed3;
+/// `$84:D074`, the 1x1 shot block: setup `$84:B3C1`, list `$84:CBB7`.
+const SHOT_BLOCK: u16 = 0xd074;
+/// The delete a touch PLM's list is (`$84:AAE3`): its pointer until its first run deletes it.
+const DELETE_LIST: u16 = 0xaae3;
+/// The 1x1 shot block's instruction pointer at each place in its crumble (`$84:CBB7`): its
+/// list's start, then past each draw.
+const CRUMBLE: [(u16, Crumble); 5] = [
+    (0xcbb7, Crumble::Spawned),
+    (0xcbbe, Crumble::First),
+    (0xcbc2, Crumble::Second),
+    (0xcbc6, Crumble::Third),
+    (0xcbca, Crumble::Cleared),
+];
 /// The bank a scroll PLM's room argument points into, at its scroll changes.
 const ROOM_BANK: u8 = 0x8f;
 /// A scroll PLM's instruction pointer asleep: its list's sleep (`$84:AF8A`), where its setup
@@ -33,24 +52,33 @@ enum Known {
     ScrollTouch,
     /// An item PLM.
     Item(ItemPlm),
+    /// The item collision detection PLM.
+    ItemCollision,
+    /// The 1x1 shot block.
+    ShotBlock,
 }
 
 /// The PLM `id` names in a room with `population`, if the room runs one with it: an
-/// extension deletes itself in its setup, so no slot keeps one.
+/// extension deletes itself in its setup, so no slot keeps one. A touch PLM runs only in a
+/// room whose population places the PLMs it touches.
 fn known(population: &PlmPopulation, id: u16) -> Option<Known> {
     let mut placed = population.entries.iter().map(|entry| entry.kind);
-    if id == SCROLL_TOUCH {
-        return placed
+    match id {
+        SCROLL_TOUCH => placed
             .any(|kind| matches!(kind, PlmKind::Scroll(_)))
-            .then_some(Known::ScrollTouch);
+            .then_some(Known::ScrollTouch),
+        ITEM_COLLISION => placed
+            .any(|kind| matches!(kind, PlmKind::Item(..)))
+            .then_some(Known::ItemCollision),
+        SHOT_BLOCK => Some(Known::ShotBlock),
+        _ => placed
+            .find(|kind| kind.id() == id)
+            .and_then(|kind| match kind {
+                PlmKind::Scroll(_) => Some(Known::Scroll),
+                PlmKind::Item(item, _) => Some(Known::Item(item)),
+                PlmKind::Extension(_) | PlmKind::Unmodelled(_) => None,
+            }),
     }
-    placed
-        .find(|kind| kind.id() == id)
-        .and_then(|kind| match kind {
-            PlmKind::Scroll(_) => Some(Known::Scroll),
-            PlmKind::Item(item, _) => Some(Known::Item(item)),
-            PlmKind::Extension(_) | PlmKind::Unmodelled(_) => None,
-        })
 }
 
 /// Where the original keeps each PLM slot's fields.
@@ -62,7 +90,7 @@ pub struct PlmSources {
     pub block: WramArray,
     /// `.common.cursor.delay`.
     pub timer: WramArray,
-    /// A scroll PLM's step: its instruction pointer.
+    /// A scroll PLM's step and the shot block's crumble: the instruction pointer.
     pub instruction: WramArray,
     /// A scroll PLM's changes and an item's collected bit: the room argument.
     pub argument: WramArray,
@@ -89,9 +117,10 @@ impl PlmSources {
     /// # Errors
     ///
     /// [`DecodeError::Unrepresentable`] for an ID the room runs no PLM with, an odd block
-    /// index, or a scroll PLM whose argument names no list of the population's, whose
+    /// index, a scroll PLM whose argument names no list of the population's, whose
     /// triggered word is neither 0 nor `$8000`, or whose instruction pointer is neither its
-    /// sleep nor its update; [`DecodeError::WramTooShort`] when a table lies past the
+    /// sleep nor its update, an item collision detection PLM past its delete, or a shot block
+    /// whose instruction pointer is no place in its crumble; [`DecodeError::WramTooShort`] when a table lies past the
     /// record's work RAM.
     pub fn read(
         &self,
@@ -131,6 +160,18 @@ impl PlmSources {
                         item,
                         collected_bit: word(self.argument)?,
                     },
+                    Known::ItemCollision => match word(self.instruction)? {
+                        DELETE_LIST => PlmBody::ItemCollision,
+                        value => return Err(unrepresentable(self.instruction, value)),
+                    },
+                    Known::ShotBlock => {
+                        let at = word(self.instruction)?;
+                        let crumble = CRUMBLE
+                            .iter()
+                            .find_map(|&(pointer, crumble)| (pointer == at).then_some(crumble))
+                            .ok_or_else(|| unrepresentable(self.instruction, at))?;
+                        PlmBody::ShotBlock { crumble }
+                    }
                 },
             ),
         };

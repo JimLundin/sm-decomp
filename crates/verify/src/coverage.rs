@@ -396,6 +396,10 @@ pub const FIELDS: &[Field] = &[
         "room.plms.slots.occupancy.collected_bit",
         source::PLM_ROOM_ARGUMENTS,
     ),
+    plm(
+        "room.plms.slots.occupancy.crumble",
+        source::PLM_INSTR_LIST_PTRS,
+    ),
     none(
         "room.enemies.slots.generation",
         "the original keeps no count of a slot's fills; its species word is the occupant",

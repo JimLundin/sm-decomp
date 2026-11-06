@@ -212,7 +212,8 @@ fn update_scroll(
 
 /// The PLM pass (`$84:85B4`): each live PLM from the highest slot down. Its pre-instruction
 /// (an `RTS` for these) runs, its timer counts down, and when it runs out its list runs.
-// open: the PLMs-enabled flag (`$1C23`) and the item's list (C12); an item's timer waits.
+// open: the PLMs-enabled flag (`$1C23`), the item's list (C12) and the shot block's crumble,
+// whose draws need the block and tilemap writes; their timers wait.
 pub fn process(room: &mut RoomScoped, population: &PlmPopulation) {
     for index in (0..room.plms.slots.len()).rev() {
         let Some(slot) = room.plms.slots.get_mut(index) else {
@@ -221,7 +222,7 @@ pub fn process(room: &mut RoomScoped, population: &PlmPopulation) {
         let Occupancy::Live(body) = slot.occupancy else {
             continue;
         };
-        if matches!(body, PlmBody::Item { .. }) {
+        if matches!(body, PlmBody::Item { .. } | PlmBody::ShotBlock { .. }) {
             continue;
         }
         // `$84:85E0`: the timer counts down, wrapping from 0 after a sleep.
@@ -243,8 +244,8 @@ pub fn process(room: &mut RoomScoped, population: &PlmPopulation) {
                 }
             }
             // `$84:AAE3`: delete.
-            PlmBody::ScrollTouch => slot.occupancy = Occupancy::Free,
-            PlmBody::Item { .. } => {}
+            PlmBody::ScrollTouch | PlmBody::ItemCollision => slot.occupancy = Occupancy::Free,
+            PlmBody::Item { .. } | PlmBody::ShotBlock { .. } => {}
         }
     }
 }

@@ -201,6 +201,23 @@ pub struct ScrollPlm {
     pub step: ScrollStep,
 }
 
+/// Where the 1x1 shot block is in its crumble (bank $84 log, its list `$84:CBB7`): each of
+/// its draws holds for its frames, the last one before the delete.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Crumble {
+    /// Spawned: its first run queues the crumble sound and draws the first frame.
+    #[default]
+    Spawned,
+    /// The first frame drawn, air with tile `$53`, for 4 frames (`$84:A345`).
+    First,
+    /// The second, tile `$54`, for 4 frames (`$84:A34B`).
+    Second,
+    /// The third, tile `$55`, for 4 frames (`$84:A351`).
+    Third,
+    /// The block drawn empty, tile `$FF`, for 1 frame (`$84:A357`); its next run deletes it.
+    Cleared,
+}
+
 /// A PLM's typed body: one variant per PLM slice 0's rooms run. An extension PLM deletes
 /// itself in its setup, so no body holds one.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -217,6 +234,17 @@ pub enum PlmBody {
         item: ItemPlm,
         /// Its collected bit's index, the room argument.
         collected_bit: u16,
+    },
+    /// The item collision detection PLM, `$84:EED3`, which touching or shooting an item's
+    /// block spawns: its setup moves its own block to 0 and triggers the item on the touched
+    /// block (`$84:EEAB`), and its list deletes it (`$84:AAE3`). It stays live while the
+    /// item's pickup holds the PLM pass in its message box.
+    ItemCollision,
+    /// The 1x1 shot block, `$84:D074`, which shooting a shootable block with BTS 4 spawns:
+    /// its setup makes the block solid (`$84:B3C1`), and its list crumbles it.
+    ShotBlock {
+        /// Its place in the crumble.
+        crumble: Crumble,
     },
 }
 

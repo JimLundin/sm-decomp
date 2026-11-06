@@ -258,6 +258,32 @@ areas equal: a camera difference, not a scroll PLM one. Remaining: the other spe
 (the area-dependent PLMs, whose setup can stop her, `$94:9087`), bombable air (`$94:92F9`),
 the two bodies above, and the item's list.
 
+**PLM bodies status (`lane/slice0-plm-bodies`).** Done: `PlmBody::ItemCollision`, the item
+collision detection PLM `$84:EED3` (setup `$84:EEAB`: its own block to 0, the item on the
+touched block triggered; list `$84:AAE3`, a delete, which `plm::process` runs), and
+`PlmBody::ShotBlock { crumble }`, the 1x1 shot block `$84:D074` (setup `$84:B3C1`; list
+`$84:CBB7`: the crumble sound, then the 1x1 air crumble's draws `$84:A345`, `$A34B`, `$A351`
+for 4 frames each and `$A357` for 1, then delete), its `Crumble` the place in that list.
+`verify::plm` names both by their IDs, not through the population (the item collision PLM
+only in a room that places an item, as the touch PLM only where scroll PLMs are): the item
+collision PLM with its instruction pointer at its delete, the shot block's pointer at its
+list's start or past one of its draws; the coverage row `room.plms.slots.occupancy.crumble`
+(`PLM_INSTR_LIST_PTRS`) has a comparator. On A2's cache all 1,905 frames of both rows decode
+(1,493 before): the item collision PLM in slot 33 on block 0 for 399 frames from
+`item-morph-ball` 817, its timer 1; the shot block in slot 34 on cell 5,708 for 13 from 1,236,
+pointers `$CBBE`, `$CBC2`, `$CBC6` (timers 4 to 1) and `$CBCA` (timer 1). Lockstep, before and
+after (Ticks compared, fully equal): `area-brinstar` 476, 0 and 476, 0; `item-morph-ball`
+1,013, 111 and 1,427, 500 (on `1b1acb3` and on `457ce4d`). `room.plms` after, Ticks differing
+and the first:
+`common.block` 0 and 1, frame 1,236 (slot 34: the shot block's cell 5,708, the item's 5,317 left);
+`common.cursor.delay` 476 and 832, frame 1 (slot 34, the item's timer, `0200` != `0100` as the diff prints it);
+`occupancy` 0 and 8, from 817 (slot 33: the engine spawns no item collision PLM yet);
+`occupancy.collected_bit` 0 and 1, 1,217 (the pickup); `occupancy.crumble` 0 and 5, 1,236 (the
+engine spawns no shot block); the scroll rows equal. Remaining: the spawns, Samus's touch of
+the item's block (the special collision reaction, BTS `$45`) and the shot reaction for
+shootable BTS 4; the shot block's crumble in `process` (its draws write the block and the
+tilemap; its timer waits); the item's list (C12).
+
 **C1 status (`lane/slice0-c1`).** Done: `Rng::advance` (bank `$80` log, `$80:8111`), called
 once per main-loop iteration, the only call slice 0's phases make so far; `GameTime::tick`
 (bank `$82` log, `$82:DB69`: signed compares against 60, the 99:59:59.59 cap from 100 hours),

@@ -12,8 +12,8 @@ use data::pose::tiles::{SamusTiles, TileDefinition, TileDefinitionId};
 use data::rom::{Lorom, RomAddress};
 use game::enemy::instructions::label;
 use game::state::room::{
-    Block, BlockIndex, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy,
-    EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, LayerBlending,
+    Block, BlockIndex, Crumble, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
+    Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, LayerBlending,
     PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep, SpritePalette,
     TilesIndex,
 };
@@ -952,8 +952,9 @@ const PLM_VARIABLE: usize = 0x1E17;
 const PLM_TIMER: usize = 0xDE1C;
 
 /// The synthetic PLM slots: a sleeping scroll PLM in slot 39, a triggered one in 38, the
-/// Morph Ball in 37 and a scroll block touch PLM in 36; every slot's block and timer distinct,
-/// as a free slot keeps its last occupant's.
+/// Morph Ball in 37, a scroll block touch PLM in 36, an item collision detection PLM in 35 and
+/// a 1x1 shot block past its second draw in 34; every slot's block and timer distinct, as a
+/// free slot keeps its last occupant's.
 fn put_plms(wram: &mut [u8]) {
     for slot in 0..PLM_SLOTS {
         let distinct = u16::try_from(slot).unwrap();
@@ -969,6 +970,8 @@ fn put_plms(wram: &mut [u8]) {
         (38, 0xB703, 0x9F08, 0x8000, 0xAF8C),
         (37, 0xEF23, 0x001A, 0, 0xE3EF),
         (36, 0xB6FF, 0, 0, 0xAAE3),
+        (35, 0xEED3, 0, 0, 0xAAE3),
+        (34, 0xD074, 0, 0, 0xCBC6),
     ] {
         put(wram, plm_word(PLM_ID, slot), id);
         put(wram, plm_word(PLM_ARGUMENT, slot), argument);
@@ -994,6 +997,10 @@ fn decodes_the_plms(state: &State) -> bool {
             collected_bit: 0x1A,
         }),
         36 => Occupancy::Live(PlmBody::ScrollTouch),
+        35 => Occupancy::Live(PlmBody::ItemCollision),
+        34 => Occupancy::Live(PlmBody::ShotBlock {
+            crumble: Crumble::Third,
+        }),
         _ => Occupancy::Free,
     };
     state
@@ -1058,6 +1065,9 @@ fn a_plm_word_outside_the_rooms_plms_is_unrepresentable() {
         (PLM_ARGUMENT, 39, 0x9F0B, "PLM_ROOM_ARGUMENTS"),
         (PLM_VARIABLE, 39, 0x0001, "PLM_VARIABLE"),
         (PLM_INSTRUCTION, 39, 0xAF86, "PLM_INSTR_LIST_PTRS"),
+        // An item collision detection PLM past its delete, a shot block inside a draw.
+        (PLM_INSTRUCTION, 35, 0x86BC, "PLM_INSTR_LIST_PTRS"),
+        (PLM_INSTRUCTION, 34, 0xCBBA, "PLM_INSTR_LIST_PTRS"),
     ] {
         let mut record = record();
         put(&mut record.wram, plm_word(array, slot), value);
@@ -1092,6 +1102,31 @@ fn a_room_without_scroll_plms_runs_no_scroll_block_touch_plm() {
         Err(DecodeError::Unrepresentable {
             source: "PLM_HEADER_PTR",
             value: 0xB6FF
+        })
+    );
+}
+
+#[test]
+fn a_room_without_items_runs_no_item_collision_detection_plm() {
+    let mut rooms = rooms();
+    rooms.plms = vec![(
+        MORPH_BALL_ROOM_ID,
+        PlmPopulation {
+            entries: vec![PlmEntry {
+                kind: PlmKind::Scroll(ScrollChangesId(0)),
+                x: 1,
+                y: 2,
+            }],
+            scroll_changes: vec![(RomAddress::new(0x8F, 0x9F05), Vec::new())],
+        },
+    )];
+    let mut record = record();
+    put(&mut record.wram, plm_word(PLM_ID, 37), 0);
+    assert_eq!(
+        decode(&record, &rooms),
+        Err(DecodeError::Unrepresentable {
+            source: "PLM_HEADER_PTR",
+            value: 0xEED3
         })
     );
 }
@@ -1797,10 +1832,9 @@ fn the_cached_levels_are_the_loaded_rooms_but_for_the_item_shot_block_and_screen
     let Some(CachedRows { loaded, frames, .. }) = cached_rows() else {
         return;
     };
-    // The frames the decoder represents: 1,493 of both rows since the PLM slots decode (the
-    // PLMs the engine doesn't run yet are unrepresentable) and a spin jump's wall jump
-    // eligible frame has its tiles.
-    assert_eq!(frames.len(), 1493);
+    // Every frame of both rows, now the PLM slots decode whatever PLM is live and a spin
+    // jump's wall jump eligible frame has its tiles.
+    assert_eq!(frames.len(), 1905);
     let mut differing = std::collections::BTreeMap::new();
     let mut screens = std::collections::BTreeSet::new();
     for (frame, state) in &frames {
@@ -1821,9 +1855,8 @@ fn the_cached_levels_are_the_loaded_rooms_but_for_the_item_shot_block_and_screen
         differing.keys().copied().collect::<Vec<_>>(),
         [ITEM_CELL, SHOT_CELL]
     );
-    assert_eq!(differing[&ITEM_CELL], "area-brinstar:0");
-    // The shot block PLM's 13 frames from 1,236 don't decode: the first after them.
-    assert_eq!(differing[&SHOT_CELL], "item-morph-ball:1249");
+    // Shot at frame 1,236: the shot block crumbles there.
+    assert_eq!(differing[&SHOT_CELL], "item-morph-ball:1236");
     // A scroll PLM turns screen 13 green from frame 92 of both rows: Samus touches its
     // trigger, which the special air inside reaction doesn't run yet.
     assert_eq!(screens.into_iter().collect::<Vec<_>>(), [13]);
@@ -1866,40 +1899,18 @@ fn live_plms(
         .collect()
 }
 
-/// Every frame of both rows decodes its PLM slots but where a PLM the engine doesn't run yet
-/// is live: the item collision detection PLM (`$84:EED3`, its list `$84:AAE3` a delete),
-/// spawned when Samus touches the Morph Ball and left live while the pickup's message box
-/// holds the PLM pass (C13), and the 1x1 shot block (`$84:D074`) Samus shoots. The live
-/// slots are the loaded room's: five scroll PLMs asleep and the item, once the extensions
-/// have freed theirs, until the item is collected.
+/// Every frame of both rows decodes, its PLM slots too. The live slots are the loaded room's:
+/// five scroll PLMs asleep and the item, once the extensions have freed theirs, until the
+/// item is collected; beside them the item collision detection PLM (`$84:EED3`) Samus's touch
+/// of the Morph Ball spawns, left live while the pickup's message box holds the PLM pass
+/// (C13), and the 1x1 shot block (`$84:D074`) Samus shoots, through its crumble.
 #[test]
 fn the_cached_plm_slots_are_the_loaded_rooms_population() {
     let Some(rows) = cached_rows() else {
         return;
     };
-    let mut unrun = std::collections::BTreeMap::new();
-    for (frame, error) in &rows.undecodable {
-        if let DecodeError::Unrepresentable { source, value } = *error {
-            assert!(
-                !source.starts_with("PLM_") || source == "PLM_HEADER_PTR",
-                "{frame}"
-            );
-            if source == "PLM_HEADER_PTR" {
-                unrun
-                    .entry(value)
-                    .or_insert_with(Vec::new)
-                    .push(frame.as_str());
-            }
-        }
-    }
-    let first_and_count = |id| {
-        unrun
-            .get(&id)
-            .map(|frames: &Vec<&str>| (frames[0], frames.len()))
-    };
-    assert_eq!(unrun.len(), 2);
-    assert_eq!(first_and_count(0xEED3), Some(("item-morph-ball:817", 399)));
-    assert_eq!(first_and_count(0xD074), Some(("item-morph-ball:1236", 13)));
+    assert_eq!(rows.undecodable, Vec::new());
+    assert_eq!(rows.frames.len(), 1905);
 
     let loaded = live_plms(&rows.loaded.plms);
     let item = |(_, _, body): &(usize, BlockIndex, PlmBody)| matches!(body, PlmBody::Item { .. });
@@ -1907,8 +1918,23 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
     assert_eq!(loaded.iter().filter(|plm| item(plm)).count(), 1);
     let collected: Vec<_> = loaded.iter().filter(|plm| !item(plm)).copied().collect();
     let mut first_collected = None;
+    let mut touches = Vec::new();
+    let mut crumbles = Vec::new();
     for (frame, state) in &rows.frames {
-        let live = live_plms(&state.room.plms);
+        let mut live = live_plms(&state.room.plms);
+        if let Some(at) = live
+            .iter()
+            .position(|plm| *plm == (33, BlockIndex(0), PlmBody::ItemCollision))
+        {
+            live.remove(at);
+            touches.push(frame.as_str());
+        }
+        if let Some(at) = live.iter().position(|(slot, block, body)| {
+            (*slot, *block) == (34, BlockIndex(5708)) && matches!(body, PlmBody::ShotBlock { .. })
+        }) {
+            live.remove(at);
+            crumbles.push(frame.as_str());
+        }
         if live == collected {
             first_collected.get_or_insert(frame.as_str());
         } else {
@@ -1916,4 +1942,12 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
         }
     }
     assert_eq!(first_collected, Some("item-morph-ball:1217"));
+    assert_eq!(
+        (touches.first().copied(), touches.len()),
+        (Some("item-morph-ball:817"), 399)
+    );
+    assert_eq!(
+        (crumbles.first().copied(), crumbles.len()),
+        (Some("item-morph-ball:1236"), 13)
+    );
 }

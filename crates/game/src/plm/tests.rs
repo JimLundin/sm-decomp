@@ -3,7 +3,7 @@ use data::plm::{ItemPlm, ScrollChange, ScrollChangesId};
 use data::rom::RomAddress;
 
 use super::*;
-use crate::state::room::{BlockColumns, Tile, TileNumber};
+use crate::state::room::{BlockColumns, Crumble, Tile, TileNumber};
 
 /// A two-screen-wide, one-screen-high room of solid blocks, its screens red.
 fn room() -> RoomScoped {
@@ -183,4 +183,21 @@ fn a_touch_with_no_free_slot_spawns_nothing_and_triggers_nothing() {
     let before = room.clone();
     touch_scroll_block(&mut room, TRIGGER).unwrap();
     assert_eq!(room, before);
+}
+
+#[test]
+fn the_pass_deletes_an_item_collision_plm_and_holds_a_shot_block() {
+    let mut room = loaded();
+    let crumbling = PlmBody::ShotBlock {
+        crumble: Crumble::First,
+    };
+    for (index, body) in [(30, PlmBody::ItemCollision), (31, crumbling)] {
+        let slot = &mut room.plms.slots[index];
+        slot.occupancy = Occupancy::Live(body);
+        slot.common.cursor.delay = Frames(1);
+    }
+    process(&mut room, &population());
+    assert_eq!(room.plms.slots[30].occupancy, Occupancy::Free);
+    assert_eq!(room.plms.slots[31].occupancy, Occupancy::Live(crumbling));
+    assert_eq!(room.plms.slots[31].common.cursor.delay, Frames(1));
 }

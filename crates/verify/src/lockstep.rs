@@ -18,7 +18,8 @@ use data::plm::PlmPopulation;
 use data::rom::Lorom;
 use data::room::{Progress, RoomError, Rooms, SLICE_ZERO_ROOMS};
 use game::state::room::{
-    ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, MorphBallEye, PLM_SLOTS, PlmBody, ScrollPlm,
+    Crumble, ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, MorphBallEye, PLM_SLOTS, PlmBody,
+    ScrollPlm,
 };
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
@@ -158,6 +159,10 @@ fn plm_occupant(state: &State) -> [Occupancy<PlmBody>; PLM_SLOTS] {
             item,
             collected_bit: 0,
         },
+        PlmBody::ItemCollision => PlmBody::ItemCollision,
+        PlmBody::ShotBlock { .. } => PlmBody::ShotBlock {
+            crumble: Crumble::default(),
+        },
     };
     state.room.plms.slots.map(|slot| match slot.occupancy {
         Occupancy::Free => Occupancy::Free,
@@ -170,7 +175,10 @@ fn plm_occupant(state: &State) -> [Occupancy<PlmBody>; PLM_SLOTS] {
 const fn scroll(body: PlmBody) -> Option<ScrollPlm> {
     match body {
         PlmBody::Scroll(scroll) => Some(scroll),
-        PlmBody::ScrollTouch | PlmBody::Item { .. } => None,
+        PlmBody::ScrollTouch
+        | PlmBody::Item { .. }
+        | PlmBody::ItemCollision
+        | PlmBody::ShotBlock { .. } => None,
     }
 }
 
@@ -178,7 +186,21 @@ const fn scroll(body: PlmBody) -> Option<ScrollPlm> {
 const fn collected_bit(body: PlmBody) -> Option<u16> {
     match body {
         PlmBody::Item { collected_bit, .. } => Some(collected_bit),
-        PlmBody::Scroll(_) | PlmBody::ScrollTouch => None,
+        PlmBody::Scroll(_)
+        | PlmBody::ScrollTouch
+        | PlmBody::ItemCollision
+        | PlmBody::ShotBlock { .. } => None,
+    }
+}
+
+/// The 1x1 shot block's place in its crumble.
+const fn crumble(body: PlmBody) -> Option<Crumble> {
+    match body {
+        PlmBody::ShotBlock { crumble } => Some(crumble),
+        PlmBody::Scroll(_)
+        | PlmBody::ScrollTouch
+        | PlmBody::Item { .. }
+        | PlmBody::ItemCollision => None,
     }
 }
 
@@ -461,6 +483,7 @@ const COMPARATORS: &[Comparator] = &[
     plm_body!("room.plms.slots.occupancy.step", |body| scroll(body)
         .map(|scroll| scroll.step)),
     plm_body!("room.plms.slots.occupancy.collected_bit", collected_bit),
+    plm_body!("room.plms.slots.occupancy.crumble", crumble),
     enemy!("room.enemies.slots.common.species", species),
     enemy!(
         "room.enemies.slots.common.position.x.pixels",
