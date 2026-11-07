@@ -2313,3 +2313,25 @@ pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21
 pad = ["right"]
 jump_pressed = false
 after = { position = ["010C.C000", "010B.FFFF"], speed_x = "+0002.C000" }
+
+[[pose_step]]
+id = "C-chart-g"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Moonwalking", facing = "Right", aim = "Forward" }
+pad = ["right", "shoot", "aim_up", "aim_down"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Moonwalking", facing = "Right", aim = "DownForward" } }
+
+[[pose_step]]
+id = "C-chart-h"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Moonwalking", facing = "Left", aim = "Forward" }
+pad = ["left", "shoot", "aim_up", "aim_down"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Moonwalking", facing = "Left", aim = "UpForward" } }

@@ -341,13 +341,15 @@ rows); inside the header's 450 for the chart.
   and between two rows of the same kind, the one that names more buttons wins. Where that
   leaves two rows tied, or where her situation goes against it, the Pad cell says which wins
   ("beats ..."). The rows' order in the table carries no meaning. "Aim" in a next pose means
-  the aim the `Aiming` rule gives. "kept" means nothing changes: no effect, and no
-  let-go outcome.
+  the aim the `Aiming` rule gives. "kept" means her pose stays as it is, apart from an aim
+  the cell names; the Effect cell says whatever else happens, and a fitting row that keeps her
+  pose leaves the last row unused.
 - Forward and back are by her facing at the frame's start (a turn already faces its new way).
   The chart covers pads with at most one of left and right, and at most one of up and down, held:
   the pad can't hold both, and no record does.
 - Rows are listed by rank (just pressed first, then by how many buttons they name), and inside a
-  rank by next pose (action, then aim, alphabetically; "kept" last). Each situation's last row
+  rank by next pose (action, then the first aim the cell names, alphabetically; "kept" last);
+  where two rows still tie, the one that beats the other comes first. Each situation's last row
   is what happens when no other row fits: its pose and its effect are her let-go outcome.
 
 | She is | Pad | Next pose | Effect |
@@ -405,8 +407,8 @@ rows); inside the header's 450 for the chart.
 | | back pressed; beats down pressed and jump pressed | crouched `Turning` | none |
 | | forward and an aim button held | upright `Still`, `Forward` | she stands at once: 5 px up |
 | | both aim buttons held; beats forward and an aim button held | crouched `Still`, `Up` | none |
-| | aim up or aim down held | crouched `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | forward held | upright `Still`, `Forward` | she stands at once: 5 px up |
+| | aim up or aim down held | crouched `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
 | a ball, on the ground or in the air | jump pressed, with the spring ball, on the ground | the ball off the ground, rising | `Jumping`'s spring-ball hop |
 | | up pressed, or without the spring ball jump pressed; beats the spring ball's hop | crouched `Unmorphing` | none |
@@ -424,8 +426,7 @@ rows); inside the header's 450 for the chart.
 | changing body: `Crouching`, `StandingUp`, `Morphing`, `Unmorphing` | anything, or nothing held | kept | none: the pad has no say until the animation ends |
 | moonwalking | down pressed; beats jump pressed | crouched `Crouching`, facing the way she looks, `Forward` | none |
 | | jump pressed | `Turning`, `Forward`, then a spin the way she walks (`AnimationEnds`) | `TurningRound` |
-| | the way she walks, shoot and aim down held | `Moonwalking`, `DownForward` | none |
-| | the way she walks, shoot and aim up held; beats the way she walks, shoot and aim down held | `Moonwalking`, `UpForward` | none |
+| | the way she walks, shoot and an aim button held | `Moonwalking`, `UpForward` with aim up, else `DownForward`; with both aim buttons held, `UpForward` facing left and `DownForward` facing right | none |
 | | the way she walks and shoot held | `Moonwalking`, `Forward` | none |
 | | the way she looks held | `Running` that way, `Forward` | none |
 | | the way she walks held | `Turning` | `TurningRound` |
@@ -456,8 +457,8 @@ rows); inside the header's 450 for the chart.
 - The let-go outcomes "as running" mean: the dash joins her horizontal speed (dash 0) and she
   carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the
   pad again.
-- checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25 to P27, and R133 and R141 of
-  `TurningRound`); constructed (C-chart-a to C-chart-f).
+- checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, and R133 and R141 of
+  `TurningRound`); constructed (C-chart-a to C-chart-h).
 
 ### Aiming
 - Mechanic. The aim a next pose takes from the held buttons, by the rule its row names:
