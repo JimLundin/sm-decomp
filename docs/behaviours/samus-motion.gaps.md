@@ -4,14 +4,7 @@ Where wiring [the spec](samus-motion.md)'s model into the engine found something
 fit (MODEL §5). Each gap names the frame, the field, the expected and actual values and the
 suspected entry. The integrator files them; the observer answers them in the spec.
 
-| # | Frame | Field | Expected (today's engine) | Model | Suspected entry |
-| --- | --- | --- | --- | --- | --- |
-| G8 | none recorded | `position.y` sub at a wall-jump probe | the solid-enemy check of the probe zeroes the Y subpixel when she already touches the enemy (`EnemyTouchZeroesYSubpixel`) | `WallHit` carries no touch, so the bridge can't pass it | `probe_wall` (§6), `EnemyTouchZeroesYSubpixel` |
-| G9 | none recorded | `position` | the arm-pump check ran for any movement type, the knockback, grapple, damage boost and shinespark types among them | `Locomotion` has no variant for them, so neither `step` nor `arm_pump_step` runs | `Locomotion` (§2), `ArmPumpStep` |
-| G10 | samus-walljump-16:58, -22:64, -28:70; samus-grapple-walljump:115 | `base_speed`, `mode` | 0001.6000, Decelerating (wall jump, type 14, pose 83, to spin jump pose 81 with command 6) | 0000.0000, Accelerating (`KillXSpeed`) | `PoseCommandWrites` (`KillXSpeed`), `PoseWriteOrder`: the spin start after a wall jump may replace the pose and skip the command |
-| G11 | samus-walljump-16/22/28:44 | `position.y` | 044C.37FF | 044B.37FF (spin jump, pose 82, left held, jump pressed) | `WallJumpCheck`, `VerticalStep`: 1 px |
-| G12 | chain-0014-96BA:11, samus-input-poses:125, chain-0232-D5A7:24 | `vertical`, `vertical_speed` | None, 0 (turn on the ground, type E, to a spin pose 19/82 with command 2) | Up, the jump speed (`SpinStart`) | `PoseStart` for a turn-to-spin: is it `SpinStart`? |
-| G13 | samus-input-poses:116, chain-0057-9FBA:9, 499, chain-0224-D0B9:188, chain-0232-D5A7:363, chain-0106-AD5E:167 | `vertical`, `vertical_speed`, `base_speed`, `mode` | Down with a small speed (spin pose to normal-jump pose 6B/6C/13, type 3 → 2) | None, 0 | the decode at N (`vertical` None in a spin jump) or `JumpOrFall`: not read yet |
+No gap is open.
 
 Not model gaps, still open in the harness (decode notes, "Open"): the arm-pump step's 1 px move on
 a slope (chain-0097-ACF0, chain-0012-91F8, samus-input-poses:476-520; x subpixel), and the crouch
@@ -24,6 +17,35 @@ the lockstep ratchet where they were; G8 and G9 are cases no recorded frame reac
 ## Answered
 
 Each answer is in the spec; the gap's row is gone.
+
+- **G10** (wall jump to spin, `KillXSpeed` applied): a decode gap, fixed in the harness. With the
+  screw attack the spin start substitutes pose 81 for the proposed 19 (`$91:F6E3`), so
+  `$91:F404` reports the pose replaced and the command is skipped. The harness now marks a pose
+  replaced whenever it differs from the proposal. Spec §7 "Order" states it; P13. Fixes
+  samus-walljump-16:58, -22:64, -28:70 and samus-grapple-walljump:115 (all match now).
+- **G12** (turn to spin jumps): the turn's animation ends with "transition to pose", taken as the
+  super special proposal (`$91:EBAF`). That runs the pose's initialisation (`$91:F433`) but not
+  the jump transition (`$91:FBBB`, which makes the jump), and its command is "animation finished"
+  (bounce = None, `$91:F36E`), not the prospective one. Spec §7 "How the pose arrives",
+  `PoseCommand::AnimationEnd`, `AnimationEndPose`; `VerticalStep` (the moonfall that follows).
+  P14, P14b, A24. Fixes chain-0014-96BA:11, samus-input-poses:125, chain-0232-D5A7:24 once the
+  model and the harness's `AnimationEnd` decode (decode notes) land.
+- **G13** (spin to normal-jump pose over the floor): a bridge gap, fixed in the harness. The new
+  pose's Y radius is larger, so pose fit (`$91:FDAE`) pushes her up in the same frame; the
+  record's radius shows it a frame later, and the bridge read the push as a landing. The
+  harness skips the frame as `PoseFit` (decode notes). samus-input-poses:116, chain-0057-9FBA:9,
+  331, 499, chain-0224-D0B9:188, chain-0232-D5A7:363 and chain-0106-AD5E:167 are now skipped.
+- **G11** (1 px down in a spin jump): the horizontal move ends with the slope seat
+  (`$90:9376`, `$94:87F4`), which moves her down under a sloped ceiling (`0DBA` = 1 at
+  record 44). Spec §6 `Moved.seat`, `SlopeSeat`; A25. Fixes samus-walljump-16/22/28:44 once the
+  model applies `seat` and the bridge answers it (decode notes, "Open").
+- **G8** (the probe's enemy touch): the wall probe's solid-enemy test (`$90:9D80`, `$90:9DF8`)
+  is the same test as a move's, so a touch zeroes y's subpixel. Spec §6 `WallHit.touching`,
+  `EnemyTouchZeroesYSubpixel`; A26 (constructed: no record reaches it).
+- **G9** (the arm-pump step for other movement types): those types belong to deferred behaviours
+  (spec §10): knockback (0A), grapple (16), damage boost (19), shinespark (1B). The harness now
+  skips them by name (`Deferred::Knockback`, `Grapple`, `DamageBoost`, `Shinespark`); their
+  arm-pump step comes with them.
 
 - **G1** (the arm-pump step's order): spec §8 item 7, `ArmPumpStep` (a second entry point,
   `arm_pump_step`, after pose selection has applied `vertical_result`) and the `pose_request` input.

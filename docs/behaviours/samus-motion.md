@@ -290,8 +290,15 @@ All **Fixed** except `SpeedCap` (Toggle). For every entry:
 ### FloorFlushSubpixel, EnemyTouchZeroesYSubpixel
 - Quirks of §6's contract. A block stop leaves that axis's subpixel FFFF moving right or down, 0
   moving left or up. A solid enemy already touched on the tested side sets the **Y** subpixel to 0,
-  on either axis, with distance 0. checked: oracle (V7, V8, A11, A14); original only (V20, V26,
-  V27). Source: `$94:8F82`, `$A0:AAC8`.
+  on either axis, with distance 0; the wall probe's enemy test too (`WallHit.touching`).
+  checked: oracle (V7, V8, A11, A14); original only (V20, V26, V27, A26). Source: `$94:8F82`,
+  `$A0:AAC8`, `$90:9D80`.
+
+### SlopeSeat
+- Mechanic. A horizontal move that tests enemies ends seated on the slope or under the sloped
+  ceiling it reached: y's pixel word += the move's `seat` (§6), after the horizontal step and
+  before the vertical step, on the ground and in the air. checked: oracle (A25).
+- Source: `$90:9376`, `$94:87F4`.
 
 ### ArmPumpStep
 - Quirk. Changing aim while running moves her 1 px forward. Second entry point, `arm_pump_step`,
@@ -315,9 +322,12 @@ All **Fixed** except `SpeedCap` (Toggle). For every entry:
 ### VerticalStep
 - Mechanic. She rises and falls under gravity, moving by the speed she had before it.
 - Rule: d = vertical_speed. Then if vertical is Down, vertical_speed += gravity unless its pixel
-  word is exactly `fall_cap_pixel` (`FallCap`); otherwise vertical_speed −= gravity. Then
-  `move_down` by d if vertical is Down, else `move_up` by d (None counts as up).
-- checked: oracle (A1, A4-A7, A9-A11, A13, A14, A16). Source: `$90:90E2`.
+  word is exactly `fall_cap_pixel` (`FallCap`); otherwise vertical_speed −= gravity. The move is
+  d downward if vertical is Down, else −d (None counts as up), as a signed P.S: not negative,
+  `move_down` by it; negative, `move_up` by its magnitude. So a speed below 0 with vertical not
+  Down moves her **down**, faster each frame (the moonfall: a spin jump reached by an animation's
+  end, §7, has vertical None; A24, chain-0014-96BA:13).
+- checked: oracle (A1, A4-A7, A9-A11, A13, A14, A16, A24). Source: `$90:90E2`, `$90:913A`.
 
 ### FallCap
 - Quirk. The fall speed stops growing when its pixel word is exactly 5 (5.1400 in vanilla: 4.F800
@@ -388,14 +398,21 @@ of the distance decides where she moves.
 
 | Request | Gets back |
 | --- | --- |
-| `move_horizontal(body, heading Left/Right, d, enemies)` | `Moved { distance, stop: Option<Stop> }` |
+| `move_horizontal(body, heading Left/Right, d, enemies)` | `Moved { distance, stop: Option<Stop>, seat }` |
 | `move_down(body, heading Down/Up, d ≥ 0, enemies)` | `Moved { .. }` |
 | `move_up(body, d ≥ 0, TestEnemies)` | `Moved { .. }`, distance ≤ 0 |
 | `enemy_ahead(body, heading, d)` | `Option<EnemyHit { touching }>` |
-| `probe_wall(body, heading, d)` | `Option<WallHit { distance_px, subpixel: Option<u16> }>`: solid enemies first, then blocks (`subpixel` from a block: `WallProbeSubpixel`); nothing moves |
+| `probe_wall(body, heading, d)` | `Option<WallHit { distance_px, subpixel: Option<u16>, touching: bool }>`: solid enemies first, then blocks (`subpixel` from a block: `WallProbeSubpixel`; `touching`: a solid enemy already touched on that side) |
 
 - `enemies` is `TestEnemies` except for `ElevatorRide` and `ArmPumpStep`'s move. A horizontal
-  `TestEnemies` move ends with the slope seat, which feeds `on_slope`.
+  `TestEnemies` move ends with the slope seat, which feeds `on_slope`. **`seat`** (whole pixels,
+  signed, 0 almost always) is the seat's shift of y: under a sloped ceiling it moves her down so
+  she is under it, on a floor slope up onto it. The model adds it to y's pixel word right after
+  the horizontal move, in the air as on the ground, before the vertical step (`SlopeSeat`; A25,
+  samus-walljump-16:44, the spin jump moving left under a sloped ceiling: +1 px with a zero
+  vertical move).
+- A `WallHit` with `touching` sets y's subpixel to 0 (`EnemyTouchZeroesYSubpixel`), armed or
+  fired alike; nothing else moves (A26).
 - `Stop { side, blocker }`: `Block { subpixel }`, written to that axis; `Enemy { touching }`,
   touching: distance 0 and Y sub = 0; `Slope`. Any horizontal stop is `WallStop`'s trigger.
 - The vectors' flat stand-in is described in the vector file's header.
@@ -409,7 +426,18 @@ new pose starts (§8). It writes the State only.
 
 **Order:** the start's writes, then the command, **unless** the start replaced the pose with
 another (every turn start does, and the space-jump and screw-attack substitutions): then the
-command is skipped.
+command is skipped. A substitution replaces the pose even when the start writes nothing: a spin
+jump after a wall jump with the screw attack becomes the screw-attack pose, so its `KillXSpeed`
+is skipped and she keeps her speed and Decelerating (P13; samus-walljump-16:58).
+
+**How the pose arrives.** Either pose selection requests it, with one of the commands below, or
+an animation ends and names the next pose (the turn's end hands over to the spin jump): then the
+command is `AnimationEnd`, and
+- only the starts' pose writes run (`Turn`, `BallReverse`, `SpinReverse`, `JumpOrFall`); the jump
+  starts (`TakeOff`, `SpinStart`, `SpringLaunch`, `WallJumpStart`) write nothing, so a spin jump
+  reached this way keeps vertical None and speed 0 (P14; chain-0014-96BA:11);
+- then bounce = None, whether or not the start replaced the pose (P14b);
+- the arm-pump step sees `Forced`.
 
 **`PoseStart`**:
 - `Turn` (on the ground or in the air): `Fold` (base += extra_run, extra_run = 0), mode
@@ -438,6 +466,7 @@ command is skipped.
   - `Landed(Grounded)`: `LandingStop`, `EndVertical` (P1, P3).
   - `Landed(MorphBall | SpringBall)`: `SpringBallJump` if spring and jump held, else `BallBounce`.
   - `WallJump`: base = 0, mode Accelerating (P2).
+- `AnimationEnd`: bounce = None (above).
 - `None`: nothing.
 
 `EndVertical`: vertical_speed = 0, vertical = None, bounce = None. `LandingStop`: base = 0, mode
@@ -452,8 +481,12 @@ Catalogue entries, all Mechanic and Fixed:
   (P6, P9). Source: `$91:EC50`, `$91:FB8E`.
 - `VerticalResultWrites` (`Vertical`, `LandingStop`, `EndVertical`). checked: oracle (P1, P2,
   P3, A14, A15); original only (P7, P8, P10, P11). Source: `$91:EFC4`, `$91:F010`.
-- `PoseWriteOrder` (Timing: start before command; a replaced pose skips the command). checked:
-  oracle (P2); original only (P12). Source: `$91:EB88`, `$91:F404`.
+- `PoseWriteOrder` (Timing: start before command; a replaced pose skips the command, a
+  substitution included). checked: oracle (P2, P13); original only (P12). Source: `$91:EB88`,
+  `$91:F404`, `$91:F6E3`.
+- `AnimationEndPose` (Mechanic: a pose an animation hands over to runs no jump start and its
+  command is `AnimationEnd`). checked: oracle (P14); original only (P14b). Source: `$91:EBAF`,
+  `$91:F36E`.
 
 ---
 

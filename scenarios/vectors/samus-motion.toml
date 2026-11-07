@@ -15,6 +15,8 @@
 #     is solid.
 #   - ledge_right = { x = X, bottom = Y }: solid where x >= X and y < Y (an overhang on her
 #     right; it answers the wall probe and horizontal moves like wall_right).
+#   - slope_seat = N: every horizontal move that tests enemies answers with a slope seat of N
+#     whole pixels on y (spec §6 `seat`; positive is down, under a sloped ceiling).
 #   - solid_enemy_floor = true: a solid enemy under her, touching, stops every downward move with
 #     distance 0 and sets y's subpixel to 0 (spec `EnemyTouchZeroesYSubpixel`); the vectors that
 #     use it don't compare y or `vertical`.
@@ -22,7 +24,8 @@
 #     (its x + its x radius) is B: she touches it when x - rx = B. enemy_right = B: one on her
 #     right whose left edge (its x - its x radius) is B: she touches it when x + rx = B. They answer
 #     the solid-enemy test of a horizontal move or of the arm-pump's query (spec §9, the
-#     solid-enemy test), on that side only, with pixel words: the target t is the pixel word of x
+#     solid-enemy test) and the wall probe (spec §6 `probe_wall`, `touching`), on that side
+#     only, with pixel words: the target t is the pixel word of x
 #     moved |d| on the heading, then one more pixel on the heading (right: unless x.sub and
 #     |d|.sub are both 0; left: when x.sub != |d|.sub). Found when t - rx < B (left) or
 #     t + rx > B (right). Then touching (x - rx = B, or x + rx = B): distance 0 and y's subpixel
@@ -57,8 +60,9 @@
 #       `arm_pump_step`. pose_start is "Turn", "BallReverse", "SpinReverse", "JumpOrFall",
 #       "TakeOff", "TakeOffFromPlainCrouch", "SpinStart", "SpringLaunch" or "WallJumpStart";
 #       pose_replaced = true marks a start that replaced the pose (a "Turn" always does), so the
-#       command is skipped. pose_command is "Decelerate", "Stop", "KillXSpeed", "KillRunSpeed" or
-#       "Vertical" (the step's own vertical_result; a step with no locomotion gives it as
+#       command is skipped. pose_command is "Decelerate", "Stop", "KillXSpeed", "KillRunSpeed",
+#       "AnimationEnd" (spec §7: the pose an animation's end hands over to) or "Vertical" (the
+#       step's own vertical_result; a step with no locomotion gives it as
 #       vertical_result = "..."). new_pose_falling and old_pose_falling (default false) feed
 #       KillYIfStartedFalling. A step with no locomotion runs only `pose_writes`.
 #     submerged and speed_booster are fixed false for the pilot and are not in the format.
@@ -1940,3 +1944,109 @@ base_speed = "0001.4000"
 extra_run = "0000.0000"
 momentum = true
 mode = "TurningAround"
+
+# P13: a spin jump after a wall jump with the screw attack: the start substitutes the screw-attack
+# pose and writes nothing, so the pose is replaced and its KillXSpeed is skipped (gap G10).
+[[vector]]
+id = "P13"
+source = "samus-walljump-16:58"
+entries = ["PoseWriteOrder"]
+world = {}
+before = { position = ["0047.2000", "0457.CFFF"], base_speed = "0001.6000", mode = "Decelerating", vertical = "Down", vertical_speed = "0000.FC00" }
+[[vector.step]]
+pose_command = "KillXSpeed"
+pose_replaced = true
+[vector.step.after]
+base_speed = "0001.6000"
+mode = "Decelerating"
+vertical = "Down"
+vertical_speed = "0000.FC00"
+
+# P14: the turn's animation ends and hands over to the spin jump: SpinStart's jump isn't made
+# (gap G12). P14b: the hand-over also ends a bounce.
+[[vector]]
+id = "P14"
+source = "chain-0014-96BA:11"
+entries = ["AnimationEndPose"]
+world = {}
+before = { position = ["019E.4000", "005B.FFFF"], base_speed = "0000.C000" }
+[[vector.step]]
+pose_start = "SpinStart"
+pose_command = "AnimationEnd"
+[vector.step.after]
+base_speed = "0000.C000"
+mode = "Accelerating"
+vertical = "None"
+vertical_speed = "0000.0000"
+bounce = "None"
+[[vector]]
+id = "P14b"
+source = "constructed"
+entries = ["AnimationEndPose"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", mode = "TurningAround", bounce = "First" }
+[[vector.step]]
+pose_start = "Turn"
+pose_command = "AnimationEnd"
+[vector.step.after]
+bounce = "None"
+vertical = "None"
+vertical_speed = "0000.0000"
+
+# A24: the moonfall: a spin jump with vertical None and a speed below 0 moves down by its
+# magnitude, and the speed keeps falling (gap G12's next frame).
+[[vector]]
+id = "A24"
+source = "chain-0014-96BA:13"
+entries = ["VerticalStep"]
+world = {}
+before = { position = ["019F.A000", "005B.FFFF"], base_speed = "0001.6000", mode = "Decelerating", vertical_speed = "FFFF.E400" }
+[[vector.step]]
+locomotion = "SpinJumping"
+facing = "Right"
+radius = [5, 12]
+pad = []
+was_spinning = true
+[vector.step.after]
+position_y = "005C.1BFF"
+vertical = "None"
+vertical_speed = "FFFF.C800"
+
+# A25: a spin jump moving left under a sloped ceiling: the slope seat moves her down 1 px though
+# the vertical move is 0 (gap G11).
+[[vector]]
+id = "A25"
+source = "samus-walljump-16:44"
+entries = ["SlopeSeat", "VerticalStep"]
+world = { slope_seat = 1 }
+before = { position = ["0040.7FFF", "044B.37FF"], base_speed = "0001.6000", mode = "Decelerating", vertical = "Down", vertical_speed = "0000.0000" }
+[[vector.step]]
+locomotion = "SpinJumping"
+facing = "Left"
+radius = [5, 12]
+pad = ["left", "jump"]
+was_spinning = true
+[vector.step.after]
+position = ["003F.1FFF", "044C.37FF"]
+vertical = "Down"
+vertical_speed = "0000.1C00"
+
+# A26: the wall probe meets a solid enemy she already touches: y's subpixel goes to 0 (gap G8).
+# Facing right with only left held, she doesn't drift, so she still touches it when it probes.
+[[vector]]
+id = "A26"
+source = "constructed"
+entries = ["WallJumpCheck", "EnemyTouchZeroesYSubpixel"]
+world = { enemy_right = 261 }
+before = { position = ["0100.8000", "0100.8000"], vertical = "Down" }
+[[vector.step]]
+locomotion = "SpinJumping"
+facing = "Right"
+radius = [5, 12]
+pad = ["left"]
+was_spinning = true
+[vector.step.after]
+position = ["0100.8000", "0100.0000"]
+base_speed = "0000.0000"
+[vector.step.contacts]
+wall_jump_armed = true

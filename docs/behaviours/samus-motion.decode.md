@@ -50,7 +50,16 @@ N+1; the harness compares the State with record N+1.
   kind); else record N+1's prospective pose change command `0A2E`: 1 Decelerate, 2 Stop, 6
   KillXSpeed, 8 KillRunSpeed; 0, 3, 4, 5 and 7 give None. With no new pose, `pose_writes` runs
   only for a passed result. `arm_pump_step`'s request is `Pose { running: type 1 }` for a new
-  pose, else None; Forced isn't decoded.
+  pose, else None.
+- **The proposal.** The pose update takes the first set (bit 15 clear) of record N+1's super
+  special `0A2C`, special `0A2A` and prospective `0A28` poses (`$91:EB88`). A super special or
+  special proposal is `Forced` for the arm-pump step (`$91:EADE` runs only for `0A28`) and gives
+  command None: its own commands (`0A32`, `0A30`) aren't the prospective `0A2E`. A new pose
+  that differs from the proposal was replaced (`$91:F404`'s carry), so its command is skipped
+  (G10).
+- **`AnimationEnd`, once the model has it (G12):** a super special proposal with `0A32` = 3
+  ("transition animation finished") gives `PoseCommand::AnimationEnd`, with the start decoded
+  as now.
 - **A proposed pose equal to hers.** Record N+1's prospective pose `0A28` with bit 15 clear is a
   new pose even when it equals the current one: `$91:EBE7` stores it and `$91:F404` finds no
   change, so nothing starts (`start: None`), but its command `0A2E` runs and the arm-pump step
@@ -71,7 +80,10 @@ N+1; the harness compares the State with record N+1.
   decode; this settles open question 5: item-morph-ball's 399 message-box frames);
 - the elevator moving (`0E18` ≠ 0): the elevator writes y beyond `ElevatorRide`'s step (the
   first 453 frames of both rows; every other field matched on them before this skip);
-- the y radius changing between records N and N+1 (pose fit).
+- the y radius changing between records N and N+1 (pose fit), or pose fit in the frame itself:
+  the pose changes to one whose Y radius (pose definitions, `$91:B62F`) is larger, her
+  vertical direction is the same at N and N+1 and not None, and y at N+1 isn't y at N moved by
+  her vertical speed (G13: `$91:FDAE` runs before the record's radius changes);
 - Samus's handlers at record N not running this domain's motion: the new state handler `0A44`
   other than E725 (normal), E8AA (Ceres) or E8EC (elevator), each of which runs the movement
   handler; or the movement handler `0A58` other than A337 (normal). E8DC (locked: the gunship
@@ -88,7 +100,13 @@ N+1; the harness compares the State with record N+1.
   - the speed booster (`09A2` 2000): extra_run's pixel ≥ 2 at N (its cap is 7.0, `$90:9789`), or
     extra_run ≠ 0 at N or N+1 on a frame she rises faster than before (`$90:9919` adds it to
     the jump; running, it grows by 0.1000 in the same frame: chain-0106-AD5E:254);
-  - a knockback start: movement type 0A at N+1 and not at N.
+  - a knockback start: movement type 0A at N+1 and not at N;
+  - the movement types of deferred behaviours at N (G9): 0A knockback, 16 grapple, 19 damage
+    boost, 1B shinespark.
+- Open (G11): once `Moved.seat` exists, `Replay` answers a horizontal `TestEnemies` move with
+  a seat when record N+1's slope flag `0DBA` is not 0 and she is airborne: the whole-pixel part
+  of y at N+1 less y at N moved by the vertical step. Until then samus-walljump-16/22/28:44
+  mismatch in y.
 - Open: item-morph-ball:1311, the crouch take-off: the model's y is 10 px above the oracle's.
   The model applies `crouch_jump_lift` on the frame the pose changes in the record; the
   oracle's lift falls on a pose-fit frame the radius rule skips. The pose and the radius are a

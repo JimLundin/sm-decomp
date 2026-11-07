@@ -11,6 +11,7 @@
 use core::fmt;
 
 use data::movement::{AirMotion, GroundMotion, HorizontalSpeeds, VerticalSpeeds};
+use data::pose::{POSE_COUNT, POSE_DEFINITIONS};
 use data::rom::{AddressError, Lorom};
 use game::model::collision::{
     Blocker, Body, Collision, Enemies, EnemyHit, Heading, Moved, Stop, WallHit,
@@ -96,6 +97,8 @@ pub enum Deferred {
     BombJump,
     /// The shinespark's or the crystal flash's movement.
     Shinespark,
+    /// The damage boost's movement.
+    DamageBoost,
 }
 
 impl fmt::Display for Deferred {
@@ -108,6 +111,7 @@ impl fmt::Display for Deferred {
             Self::Knockback => "knockback",
             Self::BombJump => "the bomb jump's movement",
             Self::Shinespark => "the shinespark or crystal flash movement",
+            Self::DamageBoost => "the damage boost's movement",
         })
     }
 }
@@ -182,6 +186,19 @@ const LIQUID_PHYSICS_OFF: u16 = 0x0004;
 const SAMUS_PROSPECTIVE_POSE: WramWord = WramWord {
     name: "SAMUS_NEW_POSE",
     offset: 0x0A28,
+};
+/// Bank $91 log: the special prospective pose, which the pose update takes before the
+/// prospective one and without the arm-pump step ($91:EBC5).
+const SAMUS_SPECIAL_PROSPECTIVE_POSE: WramWord = WramWord {
+    name: "SAMUS_SPECIAL_NEW_POSE",
+    offset: 0x0A2A,
+};
+/// Bank $91 log: the super special prospective pose (an animation's "transition to pose"
+/// instruction, the turn's end among them), which the pose update takes first, without the
+/// pose change handling's jump transition and without the arm-pump step ($91:EB8E).
+const SAMUS_SUPER_SPECIAL_PROSPECTIVE_POSE: WramWord = WramWord {
+    name: "SAMUS_SUPER_SPECIAL_NEW_POSE",
+    offset: 0x0A2C,
 };
 const NO_POSE: u16 = 0x8000;
 /// The knockback's movement type.
@@ -473,6 +490,12 @@ impl Pose {
             0x14 => Locomotion::WallJumping,
             0x15 => Locomotion::RanIntoWall,
             0x17 | 0x18 => Locomotion::TurningInAir,
+            // The movement types of deferred behaviours (spec §10): their motion and their
+            // arm-pump step ($91:EADE runs for every type) come with them (gaps file, G9).
+            0x0A => return Err(Skip::Deferred(Deferred::Knockback)),
+            0x16 => return Err(Skip::Deferred(Deferred::Grapple)),
+            0x19 => return Err(Skip::Deferred(Deferred::DamageBoost)),
+            0x1B => return Err(Skip::Deferred(Deferred::Shinespark)),
             code => return Err(Skip::MovementType(code)),
         })
     }
@@ -542,7 +565,48 @@ struct NewPose {
     replaced: bool,
     command: Command,
     started_falling: bool,
-    running: bool,
+    /// What the arm-pump step reads: `Forced` for a special or super special proposal, which
+    /// skips it ($91:EBC5).
+    request: PoseRequest,
+}
+
+/// Which of the three proposals the pose update took.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ProposalSource {
+    /// An animation's transition (the turn's end): taken first ($91:EB8E).
+    SuperSpecial,
+    /// The special proposal ($91:EBC5).
+    Special,
+    /// Pose selection's own proposal, with its prospective command and the arm-pump step.
+    Selection,
+}
+
+/// The pose proposed in a frame, as its record holds it: the pose update takes the first of
+/// the three that is set.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct Proposal {
+    pose: u16,
+    source: ProposalSource,
+}
+
+impl Proposal {
+    fn of(record: &FrameRecord) -> Result<Option<Self>, Skip> {
+        let sources = [
+            (
+                SAMUS_SUPER_SPECIAL_PROSPECTIVE_POSE,
+                ProposalSource::SuperSpecial,
+            ),
+            (SAMUS_SPECIAL_PROSPECTIVE_POSE, ProposalSource::Special),
+            (SAMUS_PROSPECTIVE_POSE, ProposalSource::Selection),
+        ];
+        for (address, source) in sources {
+            let pose = word(record, address)?;
+            if pose & NO_POSE == 0 {
+                return Ok(Some(Self { pose, source }));
+            }
+        }
+        Ok(None)
+    }
 }
 
 /// The harness's stand-in for collision and pose selection over one frame.
@@ -702,11 +766,18 @@ impl From<&State> for Declared {
     }
 }
 
-/// Samus's motion domain, with the speed tables from the ROM.
+/// The pose definition's Y radius byte (`data::pose`: eight bytes a pose, the radius seventh).
+const Y_RADIUS_BYTE: usize = 6;
+/// Bytes a pose definition.
+const POSE_DEFINITION_BYTES: usize = 8;
+
+/// Samus's motion domain, with the speed tables and the poses' Y radii from the ROM.
 #[derive(Clone, Debug)]
 pub struct SamusMotion {
     speeds: HorizontalSpeeds,
     vertical: VerticalSpeeds,
+    /// Each pose's Y radius, by pose: pose fit ($91:FDAE) moves y when a new pose's is larger.
+    y_radii: Vec<u8>,
 }
 
 impl SamusMotion {
@@ -716,10 +787,40 @@ impl SamusMotion {
     ///
     /// [`AddressError`] when a table is outside the image.
     pub fn load(rom: Lorom<'_>) -> Result<Self, AddressError> {
+        let definitions = rom.read(
+            POSE_DEFINITIONS,
+            POSE_COUNT.wrapping_mul(POSE_DEFINITION_BYTES),
+        )?;
+        let (entries, _) = definitions.as_chunks::<POSE_DEFINITION_BYTES>();
         Ok(Self {
             speeds: HorizontalSpeeds::load(rom)?,
             vertical: VerticalSpeeds::load(rom)?,
+            y_radii: entries.iter().map(|entry| entry[Y_RADIUS_BYTE]).collect(),
         })
+    }
+
+    /// Whether pose fit moved her in the air in the frame from `from` to `next` ($91:FDAE):
+    /// the pose changes to one with a larger Y radius, she moves the same way at both ends
+    /// (no landing, no ceiling), and she doesn't end where her vertical speed alone takes her.
+    /// The record's radius shows the change a frame later, so the radius test alone misses
+    /// this frame, and the bridge would read the push as a block (samus-input-poses:116, a
+    /// spin jump into a normal-jump pose just over the floor).
+    fn pose_fit(&self, from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
+        let (old, new) = (Pose::of(from)?, Pose::of(next)?);
+        let radius = |pose: Pose| self.y_radii.get(usize::from(pose.code)).copied();
+        if new.code == old.code || radius(new) <= radius(old) {
+            return Ok(false);
+        }
+        let (before, after) = (state(from)?, state(next)?);
+        if after.vertical != before.vertical {
+            return Ok(false);
+        }
+        let unblocked = match before.vertical {
+            VerticalMotion::None => return Ok(false),
+            VerticalMotion::Down => before.position.y.0.wrapping_add(before.vertical_speed.0),
+            VerticalMotion::Up => before.position.y.0.wrapping_sub(before.vertical_speed.0),
+        };
+        Ok(after.position.y.0 != unblocked)
     }
 
     const fn rules(&self) -> MotionRules<'_> {
@@ -865,25 +966,47 @@ impl Domain for SamusMotion {
         if new.movement == KNOCKBACK && old.movement != KNOCKBACK {
             return Err(Skip::Deferred(Deferred::Knockback));
         }
+        if self.pose_fit(from, next)? {
+            return Err(Skip::PoseFit);
+        }
         // Pose selection proposes a pose, which may be the one she has: then nothing starts,
-        // but its command still runs and the arm-pump step still reads it.
-        let proposed = word(next, SAMUS_PROSPECTIVE_POSE)? & NO_POSE == 0;
-        let pose = if new == old {
-            proposed.then_some(NewPose {
-                start: None,
-                replaced: false,
-                command: Command::try_from(word(next, source::SAMUS_POSE_CHANGE_COMMAND)?)?,
-                started_falling: false,
+        // but its command still runs and the arm-pump step still reads it. A start that leaves
+        // another pose than the proposed one (the space jump's and screw attack's spin poses)
+        // replaced it, and the command is skipped ($91:F404).
+        let proposal = Proposal::of(next)?;
+        let replaced =
+            |by_start: bool| by_start || proposal.is_some_and(|proposal| proposal.pose != new.code);
+        let forced = proposal.is_some_and(|proposal| proposal.source != ProposalSource::Selection);
+        // Only pose selection's own proposal runs the prospective command; the special ones
+        // run commands of their own, which the model has no value for yet (gaps file, G12).
+        let command = if forced {
+            Command::None
+        } else {
+            Command::try_from(word(next, source::SAMUS_POSE_CHANGE_COMMAND)?)?
+        };
+        let request = if forced {
+            PoseRequest::Forced
+        } else {
+            PoseRequest::Pose {
                 running: new.movement == 0x01,
+            }
+        };
+        let pose = if new == old {
+            proposal.map(|_| NewPose {
+                start: None,
+                replaced: replaced(false),
+                command,
+                started_falling: false,
+                request,
             })
         } else {
-            let (start, replaced) = new.start_after(old);
+            let (start, by_start) = new.start_after(old);
             Some(NewPose {
                 start,
-                replaced,
-                command: Command::try_from(word(next, source::SAMUS_POSE_CHANGE_COMMAND)?)?,
+                replaced: replaced(by_start),
+                command,
                 started_falling: new.movement == 0x06 && old.movement != 0x06,
-                running: new.movement == 0x01,
+                request,
             })
         };
         Ok(Replay {
@@ -903,11 +1026,7 @@ impl Domain for SamusMotion {
         let Ok(contacts) = state.step(&inputs, &rules, world) else {
             return;
         };
-        let request = world
-            .pose
-            .map_or(PoseRequest::None, |pose| PoseRequest::Pose {
-                running: pose.running,
-            });
+        let request = world.pose.map_or(PoseRequest::None, |pose| pose.request);
         state.arm_pump_step(&inputs, contacts.wall_stop, request, &rules, world);
         let vertical = contacts.vertical;
         let passed = !matches!(
