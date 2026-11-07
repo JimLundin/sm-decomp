@@ -1726,6 +1726,17 @@ jump_pressed = false
 after = { position = ["0100.0000", "010A.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 
 [[vector]]
+id = "C-enemy-overlap"
+source = "constructed"
+entries = ["SolidEnemies", "BlocksStopFlush", "Landing"]
+world = { solid_block = [256, 288], enemy = { centre = [256, 288], radius = [8, 8] } }
+before = { position = ["0100.0000", "010A.0000"], speed_y = "+0005.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
 id = "C-step-far"
 source = "constructed"
 entries = ["BlocksStopFlush", "WallsAndCeilings", "DriftInTheAir"]

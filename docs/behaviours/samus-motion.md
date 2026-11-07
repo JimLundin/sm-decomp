@@ -221,6 +221,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   start of the frame after it is spent, and in a normal or spin jump or the spring ball's hop at
   the start of any frame with jump not held: vertical speed 0, falling, and she doesn't move
   vertically that frame; the pull then acts as in a fall, so the frame ends at +0.1C00.
+- A frame's vertical move of exactly 0 (a fall from rest, a rise at 0) is never tested against
+  blocks, even with her bottom or top edge already inside one (`BlocksStopFlush`): it never lands
+  her or ends her rise.
 - An upward speed of exactly one pull is never met from a jump: no rise speed in `Jumping` is a
   whole number of pulls. The ball rises at exactly 0 when it bounces the second time, so it
   rises by 0 for one frame before the rise ends.
@@ -243,8 +246,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 ### Moonfall
 - Quirk. A spin she enters when a turn ends, with jump not just pressed, starts with no rise: her
   vertical speed is 0 and she drops under gravity (`RisingAndFalling`), but her fall speed keeps
-  growing by 0.1C00 past the falling limit, and pressing jump does nothing (not even with space
-  jump), until she lands. checked: oracle (r03: M1); constructed (C-moonfall-jump,
+  growing by 0.1C00 past the falling limit, and pressing jump starts no rise (not even with space
+  jump), until she lands. A wall jump is not blocked: the spin readies and kicks off a wall near
+  her as any spin carried on does (`WallJump`), and the kick, rising at the wall-jump speed, ends
+  the moonfall. checked: oracle (r03: M1); constructed (C-moonfall-jump,
   C-moonfall-nolimit, both from r03's start, with its vertical motion).
 
 ---
@@ -316,7 +321,13 @@ as below. These rules are Samus's; other actors get their own when their domains
   reaching the far half of a block with both halves solid, she stops at the far half's face, her
   body overlapping the near half.
 - A stop never moves her backwards: when her edge at the start is already past the face it stops
-  at, she moves 0 px, and only the subpixel is written (FFFF or 0), which is forward.
+  at, she moves 0 px, and only the subpixel is written (FFFF or 0), which is forward. So a move of
+  any length above 0, even 0.0001, whose leading edge starts inside a solid block or quarter is
+  stopped there: a downward one lands her.
+- A move of exactly 0.0000 is not tested against blocks, on either axis: blocks never stop it,
+  nothing is written, and it doesn't end her seat on a slope (`SlopesCarry`). This holds also with
+  her leading edge already inside a solid block, quarter or sloped surface, as in the first frame
+  of a fall from rest (C-step-far, C-step-noback, C-span-step: she falls on, ending at +0.1C00).
 - When blocks across her body would stop a move at different places, one of them decides, and it
   need not be the nearest: for a horizontal move, the topmost of them; for a vertical move, the
   leftmost on an `Even` frame and the rightmost on an `Odd` one. Air, and a sloped surface whose
@@ -339,19 +350,23 @@ as below. These rules are Samus's; other actors get their own when their domains
 - An enemy she reaches is judged from where she starts, by the gap between the boxes on that
   side (the enemy's near side less her near side, less 1): a gap of 0 is touching: she doesn't
   move, and her **y** subpixel is set to 0, on either axis; a larger gap stops her by that many
-  whole pixels, her subpixel kept; a negative one (already overlapping) doesn't stop her. So a move
-  of 0 is never stopped by one.
+  whole pixels, her subpixel kept; a negative one (already overlapping) doesn't stop her and is
+  passed over: the next solid enemy she reaches is judged the same way, and with none left to stop
+  her, blocks decide the move (`BlocksStopFlush`; C-enemy-overlap). So a move of 0 is never
+  stopped by one.
 - A stop against an enemy is a wall, a ceiling or a floor as the move's direction says: sideways it
   halts her (`WallsAndCeilings`), upward it ends the rise, downward she lands (`Landing`).
 - A solid enemy in a move's path decides that move alone: she stops against it and no block
   stops her, even a nearer one, so the move can end with her edge overlapping a block. Blocks
   stop her only on a path free of solid enemies (`BlocksStopFlush`).
-- checked: constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-aim-enemy).
+- checked: constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-enemy-overlap,
+  C-aim-enemy).
 
 ### SlopesCarry
 - Mechanic. On a slope the ground pull is 1 px instead of her speed plus 1 px.
 - She is on a slope from the moment something seats her on one until her next vertical move
-  starts. Two things seat her: the check after every horizontal move (below), and a downward move
+  of more than 0 starts (a move of exactly 0 leaves her seated, `BlocksStopFlush`). Two things
+  seat her: the check after every horizontal move (below), and a downward move
   stopped by a stepped block. So a frame's pull is 1 px when that frame's horizontal move seated
   her, or the previous frame's pull stopped on a stepped block.
 - After every horizontal move, whether or not it met solid enemies, two checks run, each asking just
@@ -370,9 +385,11 @@ as below. These rules are Samus's; other actors get their own when their domains
 - A downward move meets a sloped floor only in the block at her centre column; one in the other
   columns her body spans doesn't stop her. When her bottom edge at the target reaches the last air
   row above the surface's top there, or lower, the move stops with her bottom edge on that last
-  air row: so a move that would end exactly on it already stops and lands her there. She moves by
-  whole pixels only: the move's subpixel part is lost and her y subpixel is kept, not set to
-  FFFF, whatever the surface's shape. With a solid or stepped block in another column of that
+  air row: so a move that would end exactly on it already stops and lands her there. The stop
+  never moves her up: with her bottom edge already below that last air row (inside the surface's
+  solid part), she moves 0 px, her y subpixel kept, and lands. She moves by whole pixels only:
+  the move's subpixel part is lost and her y subpixel is kept, not set to FFFF, whatever the
+  surface's shape. With a solid or stepped block in another column of that
   row, which of the two decides is the order of `BlocksStopFlush`. This stop
   doesn't seat her; it lands her as any floor does (`Landing`). A stepped block, like a solid one,
   is met in every column her body spans and stops her flush with subpixel FFFF
@@ -419,7 +436,11 @@ as below. These rules are Samus's; other actors get their own when their domains
 ## 11. Open questions
 
 - With more than one solid enemy in a move's reach, which one decides is not yet specified (the
-  vectors have one).
+  vectors have one). From the original: each is judged in turn in an order the game keeps for the
+  enemies in the room, not by distance; one she overlaps is passed over (`SolidEnemies`), and
+  the first that touches her or that she reaches across a gap decides, even when another is nearer.
+  That order is not something a player sees, so the rule stays open until the enemies' spec gives
+  enemies an order a player can observe.
 
 - Whether a pose change the chart makes at an animation's end moves her the extra pixel of
   `AimingAndShooting`: for the pose-chart spec.
