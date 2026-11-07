@@ -283,8 +283,9 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     trait. That is a bag of one call's arguments, which a parameter-count rule would reward;
     the values are passed as they are, or the concept gets a role. It flags the bag rewrite's
     `Go` and nothing in round 7 or the trunk.
-- **k is re-derived under this score** (decision 7): the old code's density times 0.55, so
-  12,723 / 271 units × 0.55 = 25.8 weighted tokens per unit.
+- **k is computed under this score** (decision 7): the old code's score (12,723 for
+  samus-motion) per unit of the official `tools spec-units` count, times 0.55. The spec header
+  states the value and its inputs; it is then frozen.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once
