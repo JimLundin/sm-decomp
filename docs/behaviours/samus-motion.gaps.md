@@ -187,6 +187,25 @@ Most match (mockball's x, 19 of 19 compared before, is 87 of 87 now). These don'
     model 010C.53FF and 010D.17FF, game 010B.FFFF both times, above where she started. The
     knockback mask takes her speeds, not y. Asked: whether the hit's y is this domain's.
 
+23. **The run with a kept vertical speed, on slopes (`FollowingTheGround`, gap 17's answer, not
+    yet in the model).** y, newly compared: samus-mockball 10-14 and 16-23; samus-shinespark-left,
+    -right, -up and -up-left 10-14, 16-23, 79-81, 95-96, 99-100, 104-105, 110-120, 141-142,
+    146-147 and 151-152 (39 frames each; with the two each row failed before, the shinespark
+    start and one later frame, 41). She runs (09h) with +0.E000 kept, over slopes. Model: it moves
+    her down by the kept speed as a fall (growing it to +0.FC00) instead of the ground's pull,
+    and once that move meets the floor it lands her and halts her (base speed 0, vertical none).
+    Down a slope she is left above the floor (mockball 11: model 048E.DFFF, game 0493.FFFF), up
+    one she rises less than the floor lifts her (shinespark-left 96: model 04B5.FFFF, game
+    04B0.FFFF). Game: the ground's pull, `|speed| + dash + 1` with the slope carrying her (§8),
+    puts her on the floor, and the +0.E000 is kept unchanged. **Answered** by gap 17 (the spec
+    already says it, HV1-HV3, AS3): for the implementer, no spec change.
+24. **The spring ball's roll 1 px past the floor (`FollowingTheGround`, `SlopesCarry`?).**
+    samus-mockball 91 → 92 and 92 → 93: the spring ball on the ground (7Bh), base speed 3.4000,
+    dash 5.0000, no vertical speed. y: model 04BE.FFFF and 04C6.FFFF, game 04BD.FFFF and
+    04C5.FFFF (1 px higher, from 04B9.FFFF and 04BD.FFFF); the next frame, on the level floor,
+    both are at 04C9.FFFF. Like item 20, a ground pull 1 px lower than the game where the floor
+    falls away. Asked: the pull's stop on that floor.
+
 area-maridia 190 → 191 (x 1 px short) is gap 19's step: answered.
 
 ## Open: the engine's pose at the edge (integrator, 2026-11-07, after `c44e48c`)

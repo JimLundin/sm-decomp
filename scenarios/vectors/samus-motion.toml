@@ -99,7 +99,7 @@
 [[vector]]
 id = "C-cap"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "BlocksStopFlush"]
+entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "BlocksStopFlush", "AimingAndShooting"]
 world = { floor_top = 288 }
 before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.E000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
@@ -3314,6 +3314,23 @@ pose = { body = "Crouched", action = "Crouching", facing = "Right", radius = [5,
 pad = ["run", "right", "down"]
 jump_pressed = false
 after = { position = ["0554.7FFF", "04AE.DFFF"], speed_x = "+0002.C000", dash = "0007.0000", speed_y = "+0000.FC00" }
+
+# BG1 (constructed): the ball on the ground moves by a vertical speed as the change of shape does,
+# under the pull and not pulled onto the floor. At rest and following the pad, it moves by its dash
+# only and keeps both speeds: no halt. The floor under it stops the 0.E000 move flush without
+# landing it, so the speed grows to 0.FC00. No record has the ball on the ground with a vertical
+# speed.
+
+[[vector]]
+id = "BG1"
+source = "constructed"
+entries = ["FollowingTheGround", "SpeedBuildsAndBrakes", "Landing", "RisingAndFalling", "BlocksStopFlush"]
+world = { floor_top = 1232 }
+before = { position = ["0318.0000", "04C9.FFFF"], speed_x = "+0001.0000", dash = "0001.0000", speed_y = "+0000.E000" }
+pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0319.0000", "04C9.FFFF"], speed_x = "+0001.0000", dash = "0001.0000", speed_y = "+0000.FC00" }
 
 # AS1-AS3 (gap 19): running with no pad row fitting, while her horizontal speed at the frame's
 # start isn't 0, the let-go row keeps her running pose. That kept pose brings the aim change's

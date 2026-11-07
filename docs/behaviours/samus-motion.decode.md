@@ -49,7 +49,8 @@ or `0B42` = 0; `0B4A` = 0, or 1 with `0B46` > 0; `0B36` = 1 only with a non-zero
 with a non-zero magnitude is plain: it is the speed she keeps on the ground (`FollowingTheGround`), which the
 vertical speed shows (the ground handlers' vertical move `$90:923F` reads no speed, and a ground
 movement type landing is "no change" in `$90:E676`). `0B36` = 2 with magnitude 0 on the ground is
-not plain: a change of shape then moves her under the pull (`$90:92C7` tests the direction alone),
+not plain: a change of shape or the ball on the ground then moves her under the pull (`$90:92C7` and
+`$90:92B8` test the direction alone),
 where with `0B36` = 0 it doesn't; no record has one outside a bomb jump
 (samus-bomb-jump-vertical 1036). From the checked frame
 `lead.pl` walks back while each frame passes the selection test above, with radii free to change
@@ -105,7 +106,7 @@ and `scan.sh --mirror` agrees.
 | AimingAndShooting | `$91:EADE` (the step: any prospective pose `0A28` of the running movement type, her own included), `$91:82E4` (the failed lookup's decelerate command keeps her pose as the prospective pose, so a running pose braking steps every frame), `$91:81E4` (a found row naming her own pose sets no prospective pose: no step), `$94:971E` (its block stop), `$90:A3AD` (the shot) |
 | RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
 | Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump) |
-| FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing), `$91:EFEF` (walking off: speed 0), `$90:98BC` (a jump sets it) |
+| FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing); the ball on the ground: `$90:A521` (morph ball) and `$90:A69F` (spring ball) call `$90:92B8`, the clone of `$92C7`, on both branches (`A549`/`A569`, `A6C7`/`A6E7`): with `0B36` ≠ 0 it runs `$90:90C4` and `$90:90E2` (moves by the speed, then the pull grows it) and returns carry set, which skips `$90:923F` (no ground pull) and, at rest, the halt at `A551`-`A561`; `$90:E676` gives 04 for movement types 4 and 11h, so `$91:E931` returns and the floor doesn't land it (BG1), `$91:EFEF` (walking off: speed 0), `$90:98BC` (a jump sets it) |
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
 | RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0) |
 | DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` and `$90:9093` (spin; its stop still calls `$90:8EA9`, which adds the extra run speed) |
