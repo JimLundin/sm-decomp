@@ -231,7 +231,7 @@ deferred behaviours) and the bridge's answers are in git history at `1dc3a12`
 
 | Question | Answer | Source |
 | --- | --- | --- |
-| Moonfall's vector | M1 r03:12, lead-in r03:10-11 (turn pose C0, mt Eh, into pose 19 with `0B36` = 0); C-moonfall-jump and C-moonfall-nolimit start from r03:10 and match r03's `0AFA`.`0AFC` and `0B2E`.`0B2C` frame by frame to 58 (checked by script); their x is the rule's, r03's own x meets the room at 50-51 | `$91:F36E`, `$90:913A` |
+| Moonfall's vector | M1 r03:13 (records 12 → 13), lead-in records 10 → 11 → 12 (turn pose C0, mt Eh, turn `MoonwalkJump`, into pose 19 with `0B36` = 0); C-moonfall-jump and C-moonfall-nolimit start from r03:10 and match r03's `0AFA`.`0AFC` and `0B2E`.`0B2C` frame by frame to 58 (checked by script); their x is the rule's, r03's own x meets the room at 50-51 | `$91:F36E`, `$90:913A` |
 | The elevator | `0E18` ≠ 0 facing forward: move down 1.0 through block collision (`0B02` = 2, so a non-square slope takes the up branch), then return without the pull | `$90:A392`..`$90:A3AB` |
 | Solid enemies | target = position ± `$12`.`$14`, then one more pixel unless (right, down) start and move subpixels are both 0, or (left, up) the target subpixel is 0 (the zebetite-skip increment); hit when \|enemy − target\| − enemy radius < Samus radius on both axes (`0F7A`/`0F7E` centre, `0F82`/`0F84` radius); gap from the current position: 0 touching (`0AFC` = 0, distance 0), > 0 distance with `$14` = 0, < 0 skipped; on a hit the callers kill x speed (`$90:E5CE`) or set the vertical result (`$90:E606`, `$90:E61B`) | `$A0:A8F0`..`$A0:AB7A`, `$90:93B1`, `$90:93EC`, `$90:9440` |
 | Stepped blocks | the square slope kinds (BTS & 1Fh < 5, table `$94:8E54`, flips from BTS bits 6-7): horizontal picks the column half from the target edge (`$20` & 8) and the row halves from the top and bottom blocks of her span; vertical the reverse; distance `max(0, ($20` & FFF8h) − edge)` with FFFF, or the `+8` form with 0; the vertical down stop sets `0DBA` | `$94:8D2B`, `$94:8DBD` |
@@ -266,3 +266,40 @@ transition table is non-empty and nothing in it matches. The ground turns' table
 empty, so there a held button returns without a command. Gaps v4's reading of R141 holds for the
 air only. On record: samus-input-poses 119 → 120 (pose C0h, `8B` = 8000, `0B4A` 1 → 0 at base
 speed 0), then 120 → 121 moves 0.C000 (R11, R12).
+
+## The vector-format round (2026-11-07)
+
+**The turn a `Turning` pose is in** (spec §2 `turn`), from the pose's name: 25h/26h, 43h/44h,
+8Bh-8Eh, 97h-9Ah, 9Ch/9Dh, A2h/A3h are `Ground` (standing or crouching in the name); 2Fh/30h,
+8Fh-92h, 9Eh/9Fh are `Jump` ("jumping" or "in air"); 87h/88h, 93h-96h, A0h/A1h are `Fall`; BFh-C4h are
+`MoonwalkJump` (movement type Eh, as 25h/26h; C0h's table at `$91:AFAC` has 26h's rows, so the pad chart
+reads them as ground turns). The turn's end hands over by the transition `$91:F36E` picks per pose: C0h
+→ 19h with no rise (`Moonfall`). The take-off's and the straight jumps' back rows go to 2Fh/30h;
+the falls' to 87h/88h; 4Ah's jump press to BFh.
+
+**Start poses checked against the records** (`$TEMP/vec-fix/chk.pl`: each recorded vector's start,
+lead-in, next and after pose against record N's `0A1C`, with aim, gun and turn from the pose's
+name). Fixed: R14 (11h) and R135 (12h) are aimed `DownForward`, so aim down held changes nothing
+and no aim step runs; R78 (70h), R126 (6Ch), R131 (08h), R146 (E4h) `DownForward`; R116 (6Eh) and
+R140 (69h) `UpForward`; R46 (0Bh) has the gun `Drawn`; every recorded `Turning` pose has its turn
+(M1, R1, R11, R12, R16, R17, R42, R64, R71, R72, R80-R83, R85, R87, R93, R94, R113, R114,
+R132-R134, R141, R142, P11, P14, P18, P19, S1). M1's source was the start record (r03:12); the
+header's is the after record, now r03:13. After the fixes the script reports no difference.
+
+**Crouched, down and jump pressed together.** 27h's table (`$91:9EE2` + 2 × 27h) lists press down
+(→ 37h) before press jump (→ 4Bh), and the lookup takes the first match. No record presses both.
+
+**PF1** is item-morph-ball record 1310 → 1311: 27h (y radius 16) with run and jump pressed → 4Bh;
+y 02C0.FFFF → 02B3.FFFF, 13 px: pose fit `$91:FDAE` keeps her feet for the new radius 19 (3 px),
+then `$91:FC8A` lifts 10 px. The dumped radius `0B00` still reads 16 at 1311 and 19 at 1312: the
+word lags the pose by a frame in the dump; y shows the push and the lift in the same frame. x is unchanged
+(crouched: dash 0, so no move) and the base speed 3.4000 goes to 0.
+
+**TouchedCells and OtherBlockKinds vectors** are constructed from the spec's rules: no dump
+records the cells touched. World key `cells`: `DoorToRoom` / `DoorToNowhere` a door block whose
+destination does / doesn't start a room change; `Spikes` / `AirWithSpikes` the spike block and spike
+air; `BreaksToShots`, `HoldsGrapple`, `BreaksToBombs` the shot, grapple and bomb blocks;
+`AirShotsActOn`, `AirBombsActOn` the shot and bomb air;
+`ReactingBlock` / `ReactingAir` the special block and special air; `StandIn` the horizontal or
+vertical extension block, `names` its target's corner. The unused air type behaves as plain air
+and has no key (spec `OtherBlockKinds`).
