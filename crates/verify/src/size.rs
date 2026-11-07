@@ -220,11 +220,14 @@ const TEST_ATTRIBUTE: [Token<'static>; 7] = [
     Token::Close,
 ];
 
-/// A source's size, split between logic and data.
+/// A source's size, split between logic, declarations and data.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
 pub struct Size {
-    /// Every counted token outside a constant's or a static's value.
+    /// Every counted token that is neither a declaration nor a constant's or a static's value.
     pub logic: usize,
+    /// The tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes:
+    /// what the code's types say, reported apart so typing is visible on its own.
+    pub types: usize,
     /// The tokens of `const` and `static` values: tables and parameters, the game's data, which
     /// the old engine read from the ROM instead (Jim, 2026-11-07).
     pub data: usize,
@@ -234,9 +237,44 @@ impl Size {
     const fn add(self, other: Self) -> Self {
         Self {
             logic: self.logic.saturating_add(other.logic),
+            types: self.types.saturating_add(other.types),
             data: self.data.saturating_add(other.data),
         }
     }
+}
+
+/// The tokens after the bracket group that `tokens` starts with.
+const fn after_group<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
+    let mut depth = 0usize;
+    let mut rest = tokens;
+    while let Some((&token, tail)) = rest.split_first() {
+        rest = tail;
+        match token {
+            Token::Open(_) => depth = depth.saturating_add(1),
+            Token::Close => {
+                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    return rest;
+                }
+            }
+            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+        }
+    }
+    rest
+}
+
+/// The tokens after an attribute, `#[...]` or `#![...]`, if `tokens` starts with one.
+fn after_attribute<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    let body = tokens.strip_prefix(&[Token::Punct("#")][..])?;
+    let body = body.strip_prefix(&[Token::Punct("!")][..]).unwrap_or(body);
+    matches!(body.first(), Some(Token::Open('['))).then(|| after_group(body))
+}
+
+/// The part of `tokens` before its suffix `after`.
+fn before<'a, 'b>(tokens: &'a [Token<'b>], after: &[Token<'b>]) -> &'a [Token<'b>] {
+    tokens
+        .get(..tokens.len().saturating_sub(after.len()))
+        .unwrap_or_default()
 }
 
 /// Whether a token can end the item before it, so a `const` or `static` after it starts an item
@@ -267,9 +305,24 @@ fn count(tokens: &[Token<'_>]) -> Size {
         if constant && let Some((head, value, after)) = split_value(rest) {
             size = size.add(Size {
                 logic: counted(head),
+                types: 0,
                 data: counted(value),
             });
             previous = head.last().copied();
+            rest = after;
+            continue;
+        }
+        let declaration = matches!(token, Token::Word("struct" | "enum" | "union" | "type"))
+            && ends_item(previous);
+        let after = if declaration {
+            Some(after_item(rest))
+        } else {
+            after_attribute(rest)
+        };
+        if let Some(after) = after {
+            let item = before(rest, after);
+            size.types = size.types.saturating_add(counted(item));
+            previous = item.last().copied();
             rest = after;
             continue;
         }
@@ -377,15 +430,26 @@ pub fn run(args: &[String]) -> Result<String, String> {
     for arg in args {
         sources(Path::new(arg), &mut files)?;
     }
-    let mut out = String::from("  logic    data file\n");
+    let mut out = String::from("  logic   types    data file\n");
     let mut total = Size::default();
     for file in &files {
         let src = fs::read_to_string(file).map_err(|e| format!("{}: {e}", file.display()))?;
         let size = of(&src);
         total = total.add(size);
-        let _ = writeln!(out, "{:>7} {:>7} {}", size.logic, size.data, file.display());
+        let _ = writeln!(
+            out,
+            "{:>7} {:>7} {:>7} {}",
+            size.logic,
+            size.types,
+            size.data,
+            file.display()
+        );
     }
-    let _ = writeln!(out, "{:>7} {:>7} total", total.logic, total.data);
+    let _ = writeln!(
+        out,
+        "{:>7} {:>7} {:>7} total",
+        total.logic, total.types, total.data
+    );
     Ok(out)
 }
 
@@ -395,7 +459,9 @@ mod tests {
 
     fn tokens(src: &str) -> usize {
         let size = of(src);
-        size.logic.saturating_add(size.data)
+        size.logic
+            .saturating_add(size.types)
+            .saturating_add(size.data)
     }
 
     #[test]
@@ -436,8 +502,37 @@ mod tests {
     fn a_constants_value_is_data() {
         // pub const ROWS : [] u8 ; 2 = ; is logic; [] 1 , 2 is data.
         let table = "pub const ROWS: [u8; 2] = [1, 2];";
-        assert_eq!(of(table), Size { logic: 10, data: 4 });
-        assert_eq!(of("static mut N: u8 = 3;"), Size { logic: 7, data: 1 });
+        assert_eq!(
+            of(table),
+            Size {
+                logic: 10,
+                types: 0,
+                data: 4
+            }
+        );
+        assert_eq!(
+            of("static mut N: u8 = 3;"),
+            Size {
+                logic: 7,
+                types: 0,
+                data: 1
+            }
+        );
+    }
+
+    #[test]
+    fn declarations_and_attributes_are_types() {
+        // #[derive(Debug)] is 5 (# [ derive ( Debug), struct S { a : u8 } is 6; pub fn f ( { is logic.
+        let src = "#[derive(Debug)]\npub struct S { a: u8 }\nfn f() {}";
+        assert_eq!(
+            of(src),
+            Size {
+                logic: 5,
+                types: 11,
+                data: 0
+            }
+        );
+        assert_eq!(of("fn f() -> S { S { a: 1 } }").types, 0);
     }
 
     #[test]
