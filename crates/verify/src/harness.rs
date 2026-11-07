@@ -11,6 +11,7 @@
 //! The harness never consults today's engine: the oracle is the yardstick (MODEL §4).
 
 pub mod game_time;
+pub mod samus_motion;
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -74,9 +75,9 @@ macro_rules! domain_field {
 
 /// A domain of the engine as the harness checks it.
 ///
-/// `decode` and `expected` are the observer's (MODEL §5, step 4); `step` is the model under
-/// test; `fields` projects the model's State onto the declared fields, the spec's quantities
-/// whose "Read by" isn't "none".
+/// `decode`, `world` and `expected` are the observer's (MODEL §5, step 4); `step` is the model
+/// under test; `fields` projects the model's State onto the declared fields, the spec's
+/// quantities whose "Read by" isn't "none".
 pub trait Domain {
     /// The domain's name in the report.
     const NAME: &'static str;
@@ -84,6 +85,10 @@ pub trait Domain {
     type State;
     /// What the domain reads each frame from outside its State.
     type Inputs;
+    /// The harness's stand-in for the neighbouring domains the model asks during its frame
+    /// (collision, pose selection), which aren't under test. Unlike the inputs it may answer
+    /// from record N+1.
+    type World;
     /// The declared fields, as both the model and the oracle give them.
     type Fields: 'static;
     /// Why a record isn't decoded for this domain: a frame the domain doesn't cover.
@@ -102,8 +107,15 @@ pub trait Domain {
         interval: Interval,
     ) -> Result<(Self::State, Self::Inputs), Self::Skip>;
 
-    /// The model: one frame of `state` under `inputs`.
-    fn step(&self, state: &mut Self::State, inputs: &Self::Inputs);
+    /// The neighbours' answers for the frame from record `from` to record `next`.
+    ///
+    /// # Errors
+    ///
+    /// The reason the frame isn't one the domain covers.
+    fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Self::World, Self::Skip>;
+
+    /// The model: one frame of `state` under `inputs`, asking `world`.
+    fn step(&self, state: &mut Self::State, inputs: &Self::Inputs, world: &mut Self::World);
 
     /// The declared fields of the model's `state`.
     fn fields(&self, state: &Self::State) -> Self::Fields;
@@ -280,10 +292,11 @@ pub fn run<D: Domain, E>(
         report.frames = report.frames.saturating_add(1);
         let compared = domain
             .decode(&from, Interval::ending_at(&next))
+            .and_then(|decoded| Ok((decoded, domain.world(&from, &next)?)))
             .and_then(|decoded| Ok((decoded, domain.expected(&next)?)));
         match compared {
-            Ok(((mut state, inputs), oracle)) => {
-                domain.step(&mut state, &inputs);
+            Ok((((mut state, inputs), mut world), oracle)) => {
+                domain.step(&mut state, &inputs, &mut world);
                 let model = domain.fields(&state);
                 report.compare::<D>(Frame(next.index), &model, &oracle);
             }

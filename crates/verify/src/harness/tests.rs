@@ -147,3 +147,43 @@ fn the_clock_holds_its_matched_frames_against_the_cache() {
         "{frames} frames in {seconds:.2} s ({rate:.0} frames/s)"
     );
 }
+
+/// The frames on which Samus's motion matches the oracle on every declared field, per cached
+/// row: a floor, as [`CLOCK_MATCHED`] is.
+const MOTION_MATCHED: [(&str, u64); 2] = [("area-brinstar", 22), ("item-morph-ball", 553)];
+
+/// Samus's motion over every cached row, held to [`MOTION_MATCHED`]; `SM_CACHE` and `SM_ROM`
+/// as the clock's test reads them.
+#[test]
+fn samus_motion_holds_its_matched_frames_against_the_cache() {
+    use std::io::Write as _;
+    let (cache, rom) = match (std::env::var_os("SM_CACHE"), std::env::var_os("SM_ROM")) {
+        (Some(cache), Some(rom)) => (cache, rom),
+        (None, None) => {
+            let _ = writeln!(std::io::stdout(), "skipped: SM_CACHE/SM_ROM unset");
+            return;
+        }
+        (cache, rom) => panic!("SM_CACHE and SM_ROM go together: {cache:?}, {rom:?}"),
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {rom:?}: {error}"),
+    };
+    let rom = match data::rom::Rom::new(image) {
+        Ok(rom) => rom,
+        Err(error) => panic!("SM_ROM: {error:?}"),
+    };
+    let domain = match super::samus_motion::SamusMotion::load(rom.lorom()) {
+        Ok(domain) => domain,
+        Err(error) => panic!("speeds: {error:?}"),
+    };
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    for (row, floor) in MOTION_MATCHED {
+        let report = match run_cached(&domain, &lock, Path::new(&cache), row) {
+            Ok(report) => report,
+            Err(error) => panic!("{row}: {error}"),
+        };
+        let _ = write!(std::io::stdout(), "{row}: {report}");
+        assert!(report.matched >= floor, "{row}: {report}");
+    }
+}

@@ -63,6 +63,7 @@ impl Domain for Clock {
     const NAME: &'static str = "game time";
     type State = GameTime;
     type Inputs = Mode;
+    type World = ();
     type Fields = GameTime;
     type Skip = Unreadable;
     const FIELDS: &'static [Field<GameTime>] = &[
@@ -80,7 +81,11 @@ impl Domain for Clock {
         Ok((time(from)?, Mode::from(word(from, source::GAME_STATE)?)))
     }
 
-    fn step(&self, state: &mut GameTime, mode: &Mode) {
+    fn world(&self, _from: &FrameRecord, _next: &FrameRecord) -> Result<(), Unreadable> {
+        Ok(())
+    }
+
+    fn step(&self, state: &mut GameTime, mode: &Mode, (): &mut ()) {
         match mode {
             Mode::Gameplay => state.tick(),
             Mode::Other(_) => {}

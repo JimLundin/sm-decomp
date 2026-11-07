@@ -7,7 +7,8 @@ suspected entry. The integrator files them; the observer answers them in the spe
 | # | Frame | Field | Expected (today's engine) | Model | Suspected entry |
 | --- | --- | --- | --- | --- | --- |
 
-No gap is open.
+No gap is open. The domain harness (item-morph-ball, area-brinstar) found none in the model: every
+mismatch it showed was the decode or the bridge (see the decode notes).
 
 ## Answered
 

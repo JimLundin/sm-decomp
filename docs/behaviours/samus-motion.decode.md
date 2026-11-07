@@ -37,15 +37,51 @@ N+1; the harness compares the State with record N+1.
 - elevator_moving; on_slope (`0DBA` ≠ 0 or the square-slope flag); submerged is false.
 - vertical result `0DC6`: 0 None, 1 Landed, 2 Falling, 4 HitCeiling, 5 WallJump; kind `0DC7`.
 
-**Frames the harness skips or masks.**
+**The domain harness** (`verify::harness::samus_motion`) decodes as above, with these choices:
+- elevator_moving: elevator status `0E18` ≠ 0. on_slope: `0DBA` ≠ 0 only; the square-slope
+  flag isn't decoded.
+- The new pose of a frame is record N+1's pose when it differs from record N's. Its start: a
+  turn type (E, 17, 18) after none: `Turn` (replaced); ball to ball with the X direction
+  changed: `BallReverse`; type 3 after 3 or 14: `SpinReverse` if the direction changed; type 3
+  otherwise: `SpinStart`; a take-off pose after none: `TakeOff` (`from_plain_crouch` after
+  poses 27, 28); type 2 or 6 otherwise: `JumpOrFall`; 12 after 11: `SpringLaunch`; 14 after
+  another: `WallJumpStart`. `started_falling`: type 6 after another type.
+- Its command: `Vertical(result)` when the model's result is passed (not None, not a NoChange
+  kind); else record N+1's prospective pose change command `0A2E`: 1 Decelerate, 2 Stop, 6
+  KillXSpeed, 8 KillRunSpeed; 0, 3, 4, 5 and 7 give None. With no new pose, `pose_writes` runs
+  only for a passed result. `arm_pump_step`'s request is `Pose { running: type 1 }` for a new
+  pose, else None; Forced isn't decoded.
+- **The bridge** (`Replay`, the harness's collision): each move is answered on its axis from
+  record N+1's position. A move landing on the target's pixel is unblocked. A move the target
+  falls short of in the asked direction, or lies behind, is stopped by a `Block` whose subpixel
+  is the target's and whose distance is the whole-pixel difference. A move the target lies
+  beyond is made unblocked, so a wrong speed shows. A zero move is never stopped.
+  `enemy_ahead` finds nothing. `probe_wall` finds a wall when record N+1 starts a wall jump
+  (distance 0, so it fires) or her X subpixel at N+1 differs from the body's (distance = reach;
+  the subpixel is written, `WallProbeSubpixel`).
+
+**Frames the harness skips.** The harness skips whole frames (it has no per-field mask):
+- record N not in gameplay (`0998` ≠ 8), its cut not a requested NMI (a lag frame), or the
+  main strand at N waiting inside the gameplay pass, a PLM or the message box (the strand
+  decode; this settles open question 5: item-morph-ball's 399 message-box frames);
+- the elevator moving (`0E18` ≠ 0): the elevator writes y beyond `ElevatorRide`'s step (the
+  first 453 frames of both rows; every other field matched on them before this skip);
+- the y radius changing between records N and N+1 (pose fit).
+- Open: item-morph-ball:1311, the crouch take-off: the model's y is 10 px above the oracle's.
+  The model applies `crouch_jump_lift` on the frame the pose changes in the record; the
+  oracle's lift falls on a pose-fit frame the radius rule skips. The pose and the radius are a
+  frame apart in the record: a decode question, not a model gap.
+
+The notes from before the harness:
 - Frames where Samus didn't run: item-morph-ball:818-1216 repeat one record while the pad changes
   (the item's message box). Test the game state, not record identity (open question 5).
 - A frame whose y radius changes between records N and N+1 has a pose-fit shift in y
   (item-morph-ball:739, 1259, 1304, 1311, 1327): don't compare y there until pose fit is an input.
 
-**RAM shape** (copied as-is): position, base_speed, extra_run and vertical_speed are P.S
-quantities (the cap quirks need both words); momentum is a bool. mode, vertical and bounce are
-enums.
+**RAM shape** (State fields decoded as one WRAM word copied as-is): none. position, base_speed,
+extra_run and vertical_speed are each two words joined into one P.S quantity (the cap quirks need
+both words); momentum is a word tested ≠ 0; mode, vertical and bounce are enums from codes (bounce
+from the low byte only).
 
 ---
 
