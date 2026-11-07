@@ -167,6 +167,8 @@ impl Collision for World<'_, '_> {
         let moved = move_x(room, body, &mut at, Speed(distance.0), self.touches);
         // A block counts only when the move goes the way the request tests (`$90:93A0`).
         let blocked = moved.collided && backwards == (heading == Heading::Left);
+        // open: today's block collision has no slope seat (`SlopeSeat`, G11), so `seat` stays
+        // 0 until the collision domain models it.
         between(extent.position.x, at.x.into(), heading, blocked)
     }
 
@@ -204,9 +206,9 @@ impl Collision for World<'_, '_> {
 
     fn probe_wall(&mut self, extent: Extent, heading: Heading, reach: u16) -> Option<WallHit> {
         let ahead = Fixed::new(reach, 0);
-        if let Some((cut, _)) = self.enemy(extent, heading, ahead) {
+        if let Some((cut, touching)) = self.enemy(extent, heading, ahead) {
             return Some(WallHit {
-                touching: false,
+                touching,
                 distance_px: cut.pixel(),
                 subpixel: None,
             });

@@ -173,5 +173,28 @@ pub(super) fn runs_into_wall(
     ran_into_wall(from, content).or(requested)
 }
 
+/// The arm-pump step under a pose an animation hands over to: it sees
+/// [`PoseRequest::Forced`], so she never runs into a wall then (`AnimationEndPose`).
+pub(super) fn forced_arm_pump(
+    samus: &mut Samus,
+    collisions: Collisions<'_>,
+    touches: &mut Touches,
+) {
+    let motion = collisions.motion;
+    let Some(inputs) = motion.inputs else {
+        return;
+    };
+    let mut world = World::new(collisions.surroundings, touches, samus);
+    let wall_stop = motion.contacts.wall_stop;
+    // A forced pose keeps its pose whatever the step answers.
+    let _ = samus.motion.arm_pump_step(
+        &inputs,
+        wall_stop,
+        PoseRequest::Forced,
+        &motion.rules,
+        &mut world,
+    );
+}
+
 #[cfg(test)]
 mod tests;

@@ -279,10 +279,23 @@ pub fn change(
 ) {
     if let Some(pose) = samus.super_special.pose {
         let command = samus.super_special.command;
+        if command == SuperSpecialCommand::TransitionAnimationFinished {
+            contact::forced_arm_pump(samus, collisions, touches);
+        }
         if command != SuperSpecialCommand::KnockbackFinished {
+            let old = samus.previous;
             samus.pose = pose;
             refresh(samus, content);
+            let start = if samus.pose == old.pose {
+                None
+            } else {
+                pose_start(old, samus)
+            };
             reset_animation(samus, content);
+            if command == SuperSpecialCommand::TransitionAnimationFinished {
+                let command = motion::PoseCommand::AnimationEnd;
+                pose_writes(samus, old, pose, start, command, collisions.motion);
+            }
         }
         run_super_special(command, samus);
         record_history(samus);
@@ -310,7 +323,6 @@ pub fn change(
     }
     // The commands run only while the pose stands as it was asked for: a pose the handler
     // changed, by crouching her or refusing the change, skips them (`$91:EBEE`).
-    let replaced = samus.pose != pose;
     let motion_command = match command {
         Some(PoseCommand::Decelerate) => motion::PoseCommand::Decelerate,
         Some(PoseCommand::Stop) => motion::PoseCommand::Stop,
@@ -319,24 +331,37 @@ pub fn change(
         Some(PoseCommand::Vertical(result)) => motion::PoseCommand::Vertical(result),
         Some(PoseCommand::StartTransitionAnimation) | None => motion::PoseCommand::None,
     };
-    if let Some(inputs) = collisions.motion.inputs {
-        let change = PoseChange {
-            start,
-            replaced,
-            command: motion_command,
-            started_falling: samus.movement == MovementType::Falling
-                && old.movement != MovementType::Falling,
-        };
-        let jump_held = !matches!(inputs.pad.jump, motion::JumpButton::Released);
-        let rules = &collisions.motion.rules;
-        samus
-            .motion
-            .pose_writes(change, jump_held, inputs.equipment, rules);
-    }
-    if !replaced && command == Some(PoseCommand::StartTransitionAnimation) {
+    pose_writes(samus, old, pose, start, motion_command, collisions.motion);
+    if samus.pose == pose && command == Some(PoseCommand::StartTransitionAnimation) {
         fit::start_transition(samus, collisions.surroundings, touches, content);
     }
     record_history(samus);
+}
+
+/// Motion's writes as the pose asked for starts after `old`: `start`, then `command`
+/// (spec §7). The pose was replaced when the change left her in another one.
+fn pose_writes(
+    samus: &mut Samus,
+    old: PoseRecord,
+    asked: PoseId,
+    start: Option<PoseStart>,
+    command: motion::PoseCommand,
+    frame: Motion<'_>,
+) {
+    let Some(inputs) = frame.inputs else {
+        return;
+    };
+    let change = PoseChange {
+        start,
+        replaced: samus.pose != asked,
+        command,
+        started_falling: samus.movement == MovementType::Falling
+            && old.movement != MovementType::Falling,
+    };
+    let jump_held = !matches!(inputs.pad.jump, motion::JumpButton::Released);
+    samus
+        .motion
+        .pose_writes(change, jump_held, inputs.equipment, &frame.rules);
 }
 
 /// What the new pose's start writes to motion, after `old` (spec §7's `PoseStart`).
