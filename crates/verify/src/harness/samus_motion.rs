@@ -277,7 +277,9 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
 /// the frame's movement ($91:EB88), so she doesn't move by the boosted speed until the next
 /// frame, which starts from the speed record N+1 holds: y stays the domain's. The space jump
 /// starts inside the falling spin's movement ($90:A4C4) and moves her by the boosted speed in
-/// the same frame ($90:A50F), so a rise from a falling spin takes y too.
+/// the same frame ($90:A50F), so a rise from a falling spin that is still a spin takes y too. A
+/// wall jump kicked from a falling spin (a wall jump's movement type next) starts after the
+/// movement, which didn't move her by it ($90:9D35 skips $90:90E2).
 fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
     if word(from, source::EQUIPPED_ITEMS)? & SPEED_BOOSTER == 0 {
         return Ok(FieldSet::EMPTY);
@@ -293,7 +295,9 @@ fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
     }
     if rise_starts(&before, &after) && (before.extra_run.0 != 0 || after.extra_run.0 != 0) {
         fields = fields.union(Quantity::VerticalSpeed.set());
-        if byte(from, source::SAMUS_MOVEMENT_TYPE)? == SPIN_JUMPING
+        let movement = |record| byte(record, source::SAMUS_MOVEMENT_TYPE);
+        if movement(from)? == SPIN_JUMPING
+            && movement(next)? == SPIN_JUMPING
             && before.vertical == VerticalMotion::Down
         {
             fields = fields.union(Quantity::Y.set());
