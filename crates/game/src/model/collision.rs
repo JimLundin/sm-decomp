@@ -88,8 +88,8 @@ pub struct WallHit {
 }
 
 impl Moved {
-    /// Applies the move on `heading`'s axis to `position`.
-    pub(crate) fn apply(self, position: &mut Position, heading: Heading) {
+    /// Applies the move on `heading`'s axis to `position`; true when she was stopped.
+    pub(crate) fn apply(self, position: &mut Position, heading: Heading) -> bool {
         let axis = match heading {
             Heading::Left | Heading::Right => &mut position.x,
             Heading::Up | Heading::Down => &mut position.y,
@@ -102,6 +102,7 @@ impl Moved {
         if blocker == Some(Blocker::Enemy { touching: true }) {
             position.y = position.y.with_sub(0);
         }
+        blocker.is_some()
     }
 }
 

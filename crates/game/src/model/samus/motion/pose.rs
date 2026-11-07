@@ -85,22 +85,14 @@ impl State {
             Some(PoseStart::TakeOff { from_plain_crouch }) => {
                 self.jump(rules, equipment);
                 if from_plain_crouch {
-                    self.position.y = self
-                        .position
-                        .y
-                        .minus(Fixed::new(rules.air.crouch_jump_lift, 0));
+                    let lift = Fixed::new(rules.air.crouch_jump_lift, 0);
+                    self.position.y = self.position.y.minus(lift);
                 }
             }
             Some(PoseStart::SpinStart | PoseStart::SpringLaunch) => self.jump(rules, equipment),
             Some(PoseStart::WallJumpStart) => {
                 let speeds = rules.vertical;
-                self.vertical_speed = (if equipment.hi_jump {
-                    speeds.wall_hi_jump
-                } else {
-                    speeds.wall_jump
-                })
-                .into();
-                self.vertical = VerticalMotion::Up;
+                self.rise((speeds.wall_jump, speeds.wall_hi_jump), equipment);
             }
         }
         if change.replaced || matches!(change.start, Some(PoseStart::Turn)) {
@@ -119,20 +111,18 @@ impl State {
                 self.momentum = false;
             }
             PoseCommand::KillXSpeed => {
-                self.base_speed = Fixed::ZERO;
-                self.mode = SpeedMode::Accelerating;
+                self.halt();
                 self.kill_y(change.started_falling);
             }
             PoseCommand::KillRunSpeed => {
-                self.extra_run = Fixed::ZERO;
-                self.momentum = false;
+                self.stop_running();
                 self.kill_y(change.started_falling);
             }
             PoseCommand::Vertical(VerticalResult::HitCeiling) => self.fall(),
             PoseCommand::Vertical(VerticalResult::Falling(
                 FallKind::Airborne | FallKind::MorphBall | FallKind::SpringBall,
             )) => {
-                if !matches!(self.vertical, VerticalMotion::Up) {
+                if self.vertical != VerticalMotion::Up {
                     self.bounce = Bounce::None;
                     self.fall();
                 }
@@ -161,10 +151,7 @@ impl State {
                 self.vertical_speed = speed;
                 self.vertical = VerticalMotion::Up;
             }
-            PoseCommand::Vertical(VerticalResult::WallJump) => {
-                self.base_speed = Fixed::ZERO;
-                self.mode = SpeedMode::Accelerating;
-            }
+            PoseCommand::Vertical(VerticalResult::WallJump) => self.halt(),
             PoseCommand::Vertical(
                 VerticalResult::None
                 | VerticalResult::Falling(FallKind::NoChange)
@@ -196,8 +183,7 @@ impl State {
 
     // LandingStop, then EndVertical; extra_run is kept.
     const fn land(&mut self) {
-        self.base_speed = Fixed::ZERO;
-        self.mode = SpeedMode::Accelerating;
+        self.halt();
         self.end_vertical();
     }
 }

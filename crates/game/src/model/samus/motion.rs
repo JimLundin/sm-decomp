@@ -13,7 +13,9 @@ pub use pose::{PoseChange, PoseCommand, PoseStart};
 use crate::model::collision::{Body, Collision, Enemies, Heading};
 use crate::model::num::Fixed;
 use crate::session::SpeedCap;
-use data::movement::{AirMotion, GroundMotion, HorizontalSpeeds, SpeedEntry, VerticalSpeeds};
+use data::movement::{
+    AirMotion, GroundMotion, HorizontalSpeeds, Speed, SpeedEntry, VerticalSpeeds,
+};
 use data::pose::MovementType;
 
 /// Where Samus's centre is.
@@ -179,36 +181,28 @@ pub enum LandKind {
     NoChange,
 }
 
-impl Locomotion {
-    // SpeedTable and LandingContact: whose speeds the row reads, and which fall and landing it
-    // starts (spec §2).
-    const fn kinds(self) -> (MovementType, FallKind, LandKind) {
-        use {FallKind as F, LandKind as L, MovementType as M};
-        match self {
-            Self::FacingForward | Self::Standing { .. } => (M::Standing, F::Airborne, L::NoChange),
-            Self::Running => (M::Running, F::Airborne, L::NoChange),
-            Self::Ball { spring: false, .. } => (M::MorphBallOnGround, F::MorphBall, L::NoChange),
-            Self::Ball { spring: true, .. } => (M::SpringBallOnGround, F::SpringBall, L::NoChange),
-            Self::Crouching => (M::Crouching, F::Airborne, L::NoChange),
-            Self::TurningOnGround => (M::TurningAroundOnGround, F::NoChange, L::NoChange),
-            Self::Transition => (M::CrouchingTransition, F::NoChange, L::NoChange),
-            Self::Moonwalking => (M::Moonwalking, F::Airborne, L::NoChange),
-            Self::RanIntoWall => (M::RanIntoWall, F::Airborne, L::NoChange),
-            Self::Jumping { .. } => (M::NormalJumping, F::NoChange, L::Grounded),
-            Self::SpinJumping => (M::SpinJumping, F::NoChange, L::Grounded),
-            Self::Falling => (M::Falling, F::NoChange, L::Grounded),
-            Self::BallInAir { spring: false, .. } => {
-                (M::MorphBallFalling, F::NoChange, L::MorphBall)
-            }
-            Self::BallInAir { falling: true, .. } => {
-                (M::SpringBallFalling, F::NoChange, L::SpringBall)
-            }
-            Self::BallInAir { falling: false, .. } => {
-                (M::SpringBallInAir, F::NoChange, L::SpringBall)
-            }
-            Self::WallJumping => (M::WallJumping, F::NoChange, L::Grounded),
-            Self::TurningInAir => (M::TurningAroundJumping, F::NoChange, L::NoChange),
-        }
+// SpeedTable and LandingContact: whose speeds the row reads, and which fall and landing it
+// starts (spec §2).
+const fn kinds(locomotion: Locomotion) -> (MovementType, FallKind, LandKind) {
+    use {FallKind as F, LandKind as K, Locomotion as L, MovementType as M};
+    match locomotion {
+        L::FacingForward | L::Standing { .. } => (M::Standing, F::Airborne, K::NoChange),
+        L::Running => (M::Running, F::Airborne, K::NoChange),
+        L::Ball { spring: false, .. } => (M::MorphBallOnGround, F::MorphBall, K::NoChange),
+        L::Ball { spring: true, .. } => (M::SpringBallOnGround, F::SpringBall, K::NoChange),
+        L::Crouching => (M::Crouching, F::Airborne, K::NoChange),
+        L::TurningOnGround => (M::TurningAroundOnGround, F::NoChange, K::NoChange),
+        L::Transition => (M::CrouchingTransition, F::NoChange, K::NoChange),
+        L::Moonwalking => (M::Moonwalking, F::Airborne, K::NoChange),
+        L::RanIntoWall => (M::RanIntoWall, F::Airborne, K::NoChange),
+        L::Jumping { .. } => (M::NormalJumping, F::NoChange, K::Grounded),
+        L::SpinJumping => (M::SpinJumping, F::NoChange, K::Grounded),
+        L::Falling => (M::Falling, F::NoChange, K::Grounded),
+        L::BallInAir { spring: false, .. } => (M::MorphBallFalling, F::NoChange, K::MorphBall),
+        L::BallInAir { falling: true, .. } => (M::SpringBallFalling, F::NoChange, K::SpringBall),
+        L::BallInAir { falling: false, .. } => (M::SpringBallInAir, F::NoChange, K::SpringBall),
+        L::WallJumping => (M::WallJumping, F::NoChange, K::Grounded),
+        L::TurningInAir => (M::TurningAroundJumping, F::NoChange, K::NoChange),
     }
 }
 
@@ -347,77 +341,72 @@ pub struct MotionRules<'a> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct MissingSpeeds(pub MovementType);
 
-#[derive(Clone, Copy)]
+// What moves her sideways.
 enum Horizontal {
+    // HorizontalStep.
     Ground,
+    // HorizontalStep with the base speed taken as 0.
     Coast,
     None,
+    // ExtraRunSpeed, then the run speed alone.
     TakeOff,
-    Air(Air),
+    Air(Drift),
 }
 
-#[derive(Clone, Copy)]
-struct Air {
-    release: bool,
-    run: bool,
-    drop_stops: bool,
-    drift: Drift,
-}
-
+// How the air moves her sideways.
 #[derive(Clone, Copy)]
 enum Drift {
-    StopWithoutInput { still_moves: bool },
+    // NoInputStops halts her; ExtraRunSpeed runs.
+    Halts,
+    // NoInputStops zeroes the base speed but she still moves; no ExtraRunSpeed.
+    Rolls,
+    // Rolls, after BallDropStops.
+    Drops,
+    // SpinJumpDrift, SpaceJump and WallJumpCheck.
     Spin,
+    // WallJumpDrift.
     WallJump,
 }
 
+// What moves her up or down.
 #[derive(Clone, Copy)]
 enum Vertical {
     StepDown,
+    // The air step when airborne (with StartedFalling), else StepDown.
     AirOrStepDown,
     Elevator,
-    Air { started_falling: bool },
+    Air(Rise),
     Nothing,
 }
 
+// What ends a rise in the air.
 #[derive(Clone, Copy)]
-enum After {
-    Keep,
-    Stop { cancel: bool },
-    StopUnlessAirborne,
-    EndTurn,
-    EndTransition,
-    NoVertical,
+enum Rise {
+    // JumpRelease, in the drift.
+    Released,
+    // StartedFalling, in the air step.
+    Spent,
 }
 
-#[derive(Clone, Copy)]
+// What happens after both steps.
+enum After {
+    Keep,
+    // The speeds stop; `cancel` is CancelSpeedBoost.
+    Stop { cancel: bool },
+    StopUnlessAirborne,
+    // CancelSpeedBoost, the run speed lost, and TurnIgnoresFall.
+    EndTurn,
+    // TransitionLanding.
+    EndTransition,
+}
+
 struct Row(Horizontal, Vertical, After);
 
 /// The motion table (spec §4).
 const fn row(locomotion: Locomotion, mode: SpeedMode, bounce: Bounce) -> Row {
-    use {After as A, Horizontal as H, Locomotion as L, Vertical as V};
-    const fn air(release: bool, run: bool, drop_stops: bool, drift: Drift) -> H {
-        H::Air(Air {
-            release,
-            run,
-            drop_stops,
-            drift,
-        })
-    }
-    let (halts, coasts) = (
-        Drift::StopWithoutInput { still_moves: false },
-        Drift::StopWithoutInput { still_moves: true },
-    );
-    let (rising, falling) = (
-        V::Air {
-            started_falling: false,
-        },
-        V::Air {
-            started_falling: true,
-        },
-    );
+    use {After as A, Drift as D, Horizontal as H, Locomotion as L, Rise as R, Vertical as V};
     match locomotion {
-        L::FacingForward => Row(H::None, V::Elevator, A::NoVertical),
+        L::FacingForward => Row(H::None, V::Elevator, A::Keep),
         L::Standing { .. } | L::RanIntoWall => Row(H::Coast, V::StepDown, A::Stop { cancel: true }),
         L::Running | L::Moonwalking => Row(H::Ground, V::StepDown, A::Keep),
         // BallAtRest: only an accelerating ball holds still.
@@ -429,20 +418,32 @@ const fn row(locomotion: Locomotion, mode: SpeedMode, bounce: Bounce) -> Row {
         L::TurningOnGround => Row(H::Ground, V::StepDown, A::EndTurn),
         L::Transition => Row(H::Coast, V::AirOrStepDown, A::EndTransition),
         L::Jumping { take_off: true } => Row(H::TakeOff, V::Nothing, A::Keep),
-        L::Jumping { take_off: false } => Row(air(true, true, false, halts), rising, A::Keep),
+        L::Jumping { take_off: false } => Row(H::Air(D::Halts), V::Air(R::Released), A::Keep),
         L::BallInAir { falling: false, .. } if matches!(bounce, Bounce::None) => {
-            Row(air(true, true, false, halts), rising, A::Keep)
+            Row(H::Air(D::Halts), V::Air(R::Released), A::Keep)
         }
-        L::WallJumping => Row(air(true, true, false, Drift::WallJump), rising, A::Keep),
-        L::SpinJumping => Row(air(true, true, false, Drift::Spin), rising, A::Keep),
-        L::Falling => Row(air(false, true, false, halts), falling, A::Keep),
-        L::BallInAir { falling: true, .. } => {
-            Row(air(false, false, true, coasts), falling, A::Keep)
-        }
-        L::BallInAir { falling: false, .. } => {
-            Row(air(false, false, false, coasts), falling, A::Keep)
-        }
+        L::WallJumping => Row(H::Air(D::WallJump), V::Air(R::Released), A::Keep),
+        L::SpinJumping => Row(H::Air(D::Spin), V::Air(R::Released), A::Keep),
+        L::Falling => Row(H::Air(D::Halts), V::Air(R::Spent), A::Keep),
+        L::BallInAir { falling: true, .. } => Row(H::Air(D::Drops), V::Air(R::Spent), A::Keep),
+        L::BallInAir { falling: false, .. } => Row(H::Air(D::Rolls), V::Air(R::Spent), A::Keep),
         L::TurningInAir => Row(H::Ground, V::AirOrStepDown, A::EndTurn),
+    }
+}
+
+// One frame's inputs, values and collision, as every step reads them.
+struct Frame<'a, W> {
+    input: &'a Inputs,
+    rules: &'a MotionRules<'a>,
+    world: &'a mut W,
+}
+
+// HorizontalDirection: the heading and signed distance for `distance` one way or the other.
+const fn sideways(leftward: bool, distance: Fixed) -> (Heading, Fixed) {
+    if leftward {
+        (Heading::Left, Fixed::ZERO.minus(distance))
+    } else {
+        (Heading::Right, distance)
     }
 }
 
@@ -459,104 +460,83 @@ impl State {
         world: &mut impl Collision,
     ) -> Result<Contacts, MissingSpeeds> {
         // LocomotionAtFrameStart: the row, entry and kinds come from the frame-start pose.
-        let (movement, fall, land) = input.locomotion.kinds();
-        let entry = rules
-            .speeds
-            .normal
-            .of(movement)
-            .ok_or(MissingSpeeds(movement))?;
+        let (kind, fall, land) = kinds(input.locomotion);
+        let entry = rules.speeds.normal.of(kind).ok_or(MissingSpeeds(kind))?;
         let Row(horizontal, vertical, after) = row(input.locomotion, self.mode, self.bounce);
-        let mut contacts = Contacts::default();
+        let f = &mut Frame {
+            input,
+            rules,
+            world,
+        };
         let total = match horizontal {
             Horizontal::None => None,
-            // HorizontalStep with the base speed taken as 0.
             Horizontal::Coast => Some(self.extra_run),
             Horizontal::TakeOff => {
-                self.extra_run_speed(input, rules);
+                self.extra_run_speed(f);
                 self.mode = SpeedMode::Accelerating;
                 Some(self.extra_run)
             }
             Horizontal::Ground => {
-                self.extra_run_speed(input, rules);
+                self.extra_run_speed(f);
                 self.base_speed(entry, true, rules.speed_cap);
                 Some(self.base_speed.plus(self.extra_run))
             }
-            Horizontal::Air(air) => self.drift(air, entry, input, rules),
+            Horizontal::Air(drift) => self.drift(f, drift, vertical, entry),
         };
-        if let Some(total) = total {
-            contacts.wall_stop = self.slide(total, input, rules, world);
-        }
-        let wall_jump = matches!(
-            horizontal,
-            Horizontal::Air(Air {
-                drift: Drift::Spin,
-                ..
-            })
-        ) && self.wall_jump_check(input, rules, world, &mut contacts);
-        let airborne = !matches!(self.vertical, VerticalMotion::None);
-        let contact = |(down, stopped): (bool, bool)| match (down, stopped) {
+        let wall_stop = total.is_some_and(|total| self.slide(f, total));
+        let (wall_jump_armed, wall_jump) = self.wall_jump_check(f, &horizontal);
+        let airborne = self.vertical != VerticalMotion::None;
+        let contact = |(down, stopped)| match (down, stopped) {
             (true, true) => VerticalResult::Landed(land),
             (true, false) => VerticalResult::Falling(fall),
             (false, true) => VerticalResult::HitCeiling,
             (false, false) => VerticalResult::None,
         };
-        contacts.vertical = match vertical {
+        let body = self.body(input);
+        let mut vertical = match vertical {
             // LandingContact: a fired wall jump skips the vertical step.
             _ if wall_jump => VerticalResult::WallJump,
-            Vertical::Nothing => VerticalResult::None,
-            Vertical::Elevator => {
-                // ElevatorRide, ElevatorHeadsUp
-                if input.elevator_moving {
-                    let step = rules.ground.elevator_step.into();
-                    let moved = world.move_down(self.body(input), Heading::Up, step, Enemies::Skip);
-                    moved.apply(&mut self.position, Heading::Up);
-                }
+            // ElevatorRide, ElevatorHeadsUp
+            Vertical::Elevator if input.elevator_moving => {
+                let step = rules.ground.elevator_step.into();
+                let moved = f.world.move_down(body, Heading::Up, step, Enemies::Skip);
+                moved.apply(&mut self.position, Heading::Up);
                 VerticalResult::None
             }
-            Vertical::AirOrStepDown if airborne => {
-                contact(self.air_step(true, input, rules, world))
-            }
+            Vertical::Nothing | Vertical::Elevator => VerticalResult::None,
+            Vertical::AirOrStepDown if airborne => contact(self.air_step(f, Rise::Spent)),
             Vertical::StepDown | Vertical::AirOrStepDown => {
                 // StepDown reads this frame's total, from before any WallStop.
                 let extra = Fixed::from(rules.ground.step_down_extra);
-                let distance = match (input.on_slope, total) {
+                let depth = match (input.on_slope, total) {
                     (false, Some(total)) => total.plus(extra),
                     (true, _) | (_, None) => extra,
                 };
-                let moved =
-                    world.move_down(self.body(input), Heading::Down, distance, Enemies::Test);
-                moved.apply(&mut self.position, Heading::Down);
-                contact((true, moved.stop.is_some()))
+                let moved = f.world.move_down(body, Heading::Down, depth, Enemies::Test);
+                contact((true, moved.apply(&mut self.position, Heading::Down)))
             }
-            Vertical::Air { started_falling } => {
-                contact(self.air_step(started_falling, input, rules, world))
-            }
+            Vertical::Air(rise) => contact(self.air_step(f, rise)),
         };
         match after {
-            After::Keep => {}
             After::Stop { cancel } => self.stop(cancel),
-            After::StopUnlessAirborne => {
-                if !airborne {
-                    self.stop(true);
-                }
+            After::StopUnlessAirborne if !airborne => self.stop(true),
+            After::EndTurn => self.stop_running(),
+            After::EndTransition if matches!(vertical, VerticalResult::Landed(_)) => {
+                self.end_vertical();
             }
-            After::EndTurn => {
-                self.momentum = false; // CancelSpeedBoost
-                self.extra_run = Fixed::ZERO;
-                contacts.vertical = VerticalResult::None; // TurnIgnoresFall
-            }
-            After::EndTransition => {
-                // TransitionLanding
-                if matches!(contacts.vertical, VerticalResult::Landed(_)) {
-                    self.end_vertical();
-                }
-                contacts.vertical = VerticalResult::None;
-            }
-            After::NoVertical => contacts.vertical = VerticalResult::None,
+            After::Keep | After::StopUnlessAirborne | After::EndTransition => {}
         }
-        contacts.restart_standing_animation =
-            matches!(input.locomotion, Locomotion::Standing { plain: true }) && input.pad.shoot;
-        Ok(contacts)
+        // TurnIgnoresFall, TransitionLanding
+        if matches!(after, After::EndTurn | After::EndTransition) {
+            vertical = VerticalResult::None;
+        }
+        Ok(Contacts {
+            wall_stop,
+            vertical,
+            wall_jump_armed,
+            restart_standing_animation: input.pad.shoot
+                && input.locomotion == Locomotion::Standing { plain: true },
+        })
     }
 
     /// The arm-pump step (`ArmPumpStep`), after `step` once pose selection has settled
@@ -569,16 +549,12 @@ impl State {
         rules: &MotionRules,
         world: &mut impl Collision,
     ) -> bool {
-        let running = matches!(input.locomotion, Locomotion::Running);
         match request {
             PoseRequest::Forced => false,
-            _ if wall_stop && running => true,
+            _ if wall_stop && input.locomotion == Locomotion::Running => true,
             PoseRequest::Pose { running: true } => {
                 let step = Fixed::from(rules.ground.arm_pump_step);
-                let (heading, signed) = match input.facing {
-                    Facing::Left => (Heading::Left, Fixed::ZERO.minus(step)),
-                    Facing::Right | Facing::Forward => (Heading::Right, step),
-                };
+                let (heading, signed) = sideways(input.facing == Facing::Left, step);
                 if let Some(hit) = world.enemy_ahead(self.body(input), heading, step) {
                     if hit.touching {
                         self.position.y = self.position.y.with_sub(0); // EnemyTouchZeroesYSubpixel
@@ -586,8 +562,7 @@ impl State {
                     return true;
                 }
                 let moved = world.move_horizontal(self.body(input), heading, signed, Enemies::Skip);
-                moved.apply(&mut self.position, heading);
-                moved.stop.is_some()
+                moved.apply(&mut self.position, heading)
             }
             PoseRequest::None | PoseRequest::Pose { running: false } => false,
         }
@@ -601,18 +576,15 @@ impl State {
     }
 
     // ExtraRunSpeed, with ExtraRunCap tested on the old value before the add.
-    fn extra_run_speed(&mut self, input: &Inputs, rules: &MotionRules) {
-        let extra = rules.speeds.extra_run;
-        if matches!(input.locomotion, Locomotion::Running) && input.pad.run {
+    fn extra_run_speed<W>(&mut self, f: &Frame<W>) {
+        let extra = f.rules.speeds.extra_run;
+        if f.input.locomotion == Locomotion::Running && f.input.pad.run {
             self.momentum = true;
             let (old, cap) = (self.extra_run, Fixed::from(extra.max));
             let grows =
                 Fixed::below(old.pixel(), cap.pixel()) || Fixed::below(old.sub(), cap.sub());
-            self.extra_run = if grows {
-                old.plus(extra.acceleration.into())
-            } else {
-                cap
-            };
+            let raised = old.plus(extra.acceleration.into());
+            self.extra_run = if grows { raised } else { cap };
         } else if !self.momentum {
             self.extra_run = Fixed::ZERO;
         }
@@ -628,8 +600,7 @@ impl State {
         if braking {
             self.base_speed = self.base_speed.minus(entry.deceleration.into());
             if self.base_speed.negative() {
-                self.base_speed = Fixed::ZERO;
-                self.mode = SpeedMode::Accelerating;
+                self.halt();
             }
             return false;
         }
@@ -639,69 +610,59 @@ impl State {
     }
 
     // The air's horizontal part: the total to move by, or None when the drift stops her.
-    fn drift(
+    fn drift<W>(
         &mut self,
-        air: Air,
+        f: &Frame<W>,
+        drift: Drift,
+        vertical: Vertical,
         entry: &SpeedEntry,
-        input: &Inputs,
-        rules: &MotionRules,
     ) -> Option<Fixed> {
-        let pad = input.pad;
-        let accelerating = |mode| matches!(mode, SpeedMode::Accelerating);
+        let (pad, equipment) = (f.input.pad, f.input.equipment);
         let still = !pad.sideways.left && !pad.sideways.right;
-        if air.drop_stops && still && accelerating(self.mode) {
+        if matches!(drift, Drift::Drops) && still && self.mode == SpeedMode::Accelerating {
             self.stop(true); // BallDropStops
         }
-        if matches!(air.drift, Drift::Spin) {
-            // SpaceJump: the speed's middle bytes, as 8.8 pixels.
-            let [_, sub_high, pixel_low, _] = self.vertical_speed.0.to_le_bytes();
-            let (from, below) = rules.air.space_jump_window;
-            let window = (from..below).contains(&u16::from_le_bytes([sub_high, pixel_low]));
-            let falling = matches!(self.vertical, VerticalMotion::Down);
-            if input.equipment.space_jump
-                && falling
-                && window
-                && matches!(pad.jump, JumpButton::Pressed)
-            {
-                self.jump(rules, input.equipment);
-            }
+        // SpaceJump: the speed's middle bytes, as 8.8 pixels.
+        let [_, sub_high, pixel_low, _] = self.vertical_speed.0.to_le_bytes();
+        let (from, below) = f.rules.air.space_jump_window;
+        if matches!(drift, Drift::Spin)
+            && equipment.space_jump
+            && self.vertical == VerticalMotion::Down
+            && (from..below).contains(&u16::from_le_bytes([sub_high, pixel_low]))
+            && pad.jump == JumpButton::Pressed
+        {
+            self.jump(f.rules, equipment);
         }
-        if air.run {
-            self.extra_run_speed(input, rules);
+        if !matches!(drift, Drift::Rolls | Drift::Drops) {
+            self.extra_run_speed(f);
         }
-        if air.release
-            && matches!(self.vertical, VerticalMotion::Up)
-            && (matches!(pad.jump, JumpButton::Released) || self.vertical_speed.negative())
+        if matches!(vertical, Vertical::Air(Rise::Released))
+            && self.vertical == VerticalMotion::Up
+            && (pad.jump == JumpButton::Released || self.vertical_speed.negative())
         {
             self.fall(); // JumpRelease
         }
-        let capped = self.base_speed(entry, false, rules.speed_cap);
-        let moves = match air.drift {
+        let capped = self.base_speed(entry, false, f.rules.speed_cap);
+        let accelerating = self.mode == SpeedMode::Accelerating;
+        let facing_held = match f.input.facing {
+            Facing::Left => pad.sideways.left,
+            Facing::Right | Facing::Forward => pad.sideways.right,
+        };
+        let moves = match drift {
             // NoInputStops
-            Drift::StopWithoutInput { still_moves } if still && accelerating(self.mode) => {
+            Drift::Halts | Drift::Rolls | Drift::Drops if still && accelerating => {
                 self.base_speed = Fixed::ZERO;
-                still_moves
+                !matches!(drift, Drift::Halts)
             }
-            Drift::StopWithoutInput { .. } => true,
+            Drift::Halts | Drift::Rolls | Drift::Drops => true,
             // SpinJumpDrift
-            Drift::Spin => {
-                let facing_held = if matches!(input.facing, Facing::Left) {
-                    pad.sideways.left
-                } else {
-                    pad.sideways.right
-                };
-                let drifts = capped || matches!(self.mode, SpeedMode::TurningAround) || facing_held;
-                if !drifts {
-                    self.base_speed = Fixed::ZERO;
-                    self.mode = SpeedMode::Accelerating;
-                } else if accelerating(self.mode) {
-                    self.mode = SpeedMode::Decelerating;
-                }
-                drifts
+            Drift::Spin if !(capped || self.mode == SpeedMode::TurningAround || facing_held) => {
+                self.halt();
+                false
             }
-            // WallJumpDrift
-            Drift::WallJump => {
-                if accelerating(self.mode) {
+            // SpinJumpDrift and WallJumpDrift: a drift that carries on brakes.
+            Drift::Spin | Drift::WallJump => {
+                if accelerating {
                     self.mode = SpeedMode::Decelerating;
                 }
                 true
@@ -711,94 +672,84 @@ impl State {
     }
 
     // HorizontalStep in the HorizontalDirection, then DisplacementClamp; true on a WallStop.
-    fn slide(
-        &mut self,
-        total: Fixed,
-        input: &Inputs,
-        rules: &MotionRules,
-        world: &mut impl Collision,
-    ) -> bool {
-        let leftward =
-            matches!(self.mode, SpeedMode::TurningAround) != matches!(input.facing, Facing::Left);
-        let (heading, signed) = if leftward {
-            (Heading::Left, Fixed::ZERO.minus(total))
-        } else {
-            (Heading::Right, total)
-        };
-        let distance = signed.clamped(rules.ground.max_displacement);
-        let moved = world.move_horizontal(self.body(input), heading, distance, Enemies::Test);
-        moved.apply(&mut self.position, heading);
-        let stopped = moved.stop.is_some();
+    fn slide(&mut self, f: &mut Frame<impl Collision>, total: Fixed) -> bool {
+        let leftward = (self.mode == SpeedMode::TurningAround) != (f.input.facing == Facing::Left);
+        let (heading, signed) = sideways(leftward, total);
+        let by = signed.clamped(f.rules.ground.max_displacement);
+        let body = self.body(f.input);
+        let moved = f.world.move_horizontal(body, heading, by, Enemies::Test);
+        let stopped = moved.apply(&mut self.position, heading);
         if stopped {
             self.stop(true); // WallStop
         }
         stopped
     }
 
-    // WallJumpCheck and WallProbeSubpixel: true when the wall jump fires.
-    fn wall_jump_check(
-        &mut self,
-        input: &Inputs,
-        rules: &MotionRules,
-        world: &mut impl Collision,
-        contacts: &mut Contacts,
-    ) -> bool {
-        let pad = input.pad;
-        let heading = match (pad.sideways.left, pad.sideways.right) {
-            _ if !input.spin.was_spinning => return false,
+    // WallJumpCheck, in the spin jump's row, and WallProbeSubpixel: whether the wall jump is
+    // armed, and whether it fires.
+    fn wall_jump_check(&mut self, f: &mut Frame<impl Collision>, row: &Horizontal) -> (bool, bool) {
+        let (input, reach) = (f.input, f.rules.air.wall_jump_reach);
+        let heading = match (input.pad.sideways.left, input.pad.sideways.right) {
+            _ if !matches!(row, Horizontal::Air(Drift::Spin)) || !input.spin.was_spinning => {
+                return (false, false);
+            }
             (true, _) => Heading::Right,
             (false, true) => Heading::Left,
-            (false, false) => return false,
+            (false, false) => return (false, false),
         };
-        let reach = rules.air.wall_jump_reach;
-        let Some(hit) = world.probe_wall(self.body(input), heading, reach) else {
-            return false;
+        let Some(hit) = f.world.probe_wall(self.body(input), heading, reach) else {
+            return (false, false);
         };
         if let Some(sub) = hit.subpixel {
             self.position.x = self.position.x.with_sub(sub);
         }
-        contacts.wall_jump_armed = !input.spin.ready;
-        input.spin.ready
-            && Fixed::below(hit.distance_px, reach)
-            && matches!(pad.jump, JumpButton::Pressed)
+        let ready = input.spin.ready;
+        let fires =
+            ready && Fixed::below(hit.distance_px, reach) && input.pad.jump == JumpButton::Pressed;
+        (!ready, fires)
     }
 
-    // StartedFalling if asked, then VerticalStep with FallCap: whether she moved down, and whether she was stopped.
-    fn air_step(
-        &mut self,
-        started_falling: bool,
-        input: &Inputs,
-        rules: &MotionRules,
-        world: &mut impl Collision,
-    ) -> (bool, bool) {
-        if started_falling
-            && matches!(self.vertical, VerticalMotion::Up)
+    // The Rise's end, then VerticalStep with FallCap: whether she moved down, and whether she
+    // was stopped.
+    fn air_step(&mut self, f: &mut Frame<impl Collision>, rise: Rise) -> (bool, bool) {
+        if matches!(rise, Rise::Spent)
+            && self.vertical == VerticalMotion::Up
             && self.vertical_speed.negative()
         {
-            self.fall();
+            self.fall(); // StartedFalling
         }
-        let distance = self.vertical_speed;
-        let gravity = Fixed::from(rules.vertical.gravity);
-        let down = matches!(self.vertical, VerticalMotion::Down);
+        let (speed, body) = (self.vertical_speed, self.body(f.input));
+        let gravity = Fixed::from(f.rules.vertical.gravity);
+        let down = self.vertical == VerticalMotion::Down;
         let moved = if down {
-            if self.vertical_speed.pixel() != rules.air.fall_cap_pixel {
+            if self.vertical_speed.pixel() != f.rules.air.fall_cap_pixel {
                 self.vertical_speed = self.vertical_speed.plus(gravity);
             }
-            world.move_down(self.body(input), Heading::Down, distance, Enemies::Test)
+            f.world.move_down(body, Heading::Down, speed, Enemies::Test)
         } else {
             self.vertical_speed = self.vertical_speed.minus(gravity);
-            world.move_up(self.body(input), distance)
+            f.world.move_up(body, speed)
         };
-        moved.apply(&mut self.position, Heading::Down);
-        (down, moved.stop.is_some())
+        (down, moved.apply(&mut self.position, Heading::Down))
+    }
+
+    // The base speed stops; the next frame accelerates.
+    const fn halt(&mut self) {
+        self.base_speed = Fixed::ZERO;
+        self.mode = SpeedMode::Accelerating;
+    }
+
+    // CancelSpeedBoost, and the run speed is lost.
+    const fn stop_running(&mut self) {
+        self.momentum = false;
+        self.extra_run = Fixed::ZERO;
     }
 
     // The speeds stop; `cancel` is CancelSpeedBoost.
     const fn stop(&mut self, cancel: bool) {
         self.momentum &= !cancel;
         self.extra_run = Fixed::ZERO;
-        self.base_speed = Fixed::ZERO;
-        self.mode = SpeedMode::Accelerating;
+        self.halt();
     }
 
     // The rise ends: she falls from a standstill.
@@ -807,15 +758,14 @@ impl State {
         self.vertical = VerticalMotion::Down;
     }
 
-    // Jump, with the hi-jump's speed if equipped.
+    // Jump.
     fn jump(&mut self, rules: &MotionRules, equipment: Equipment) {
-        let speeds = rules.vertical;
-        self.vertical_speed = (if equipment.hi_jump {
-            speeds.hi_jump
-        } else {
-            speeds.jump
-        })
-        .into();
+        self.rise((rules.vertical.jump, rules.vertical.hi_jump), equipment);
+    }
+
+    // A rise at the first speed, or the second with the hi-jump boots.
+    fn rise(&mut self, (normal, hi): (Speed, Speed), equipment: Equipment) {
+        self.vertical_speed = Fixed::from(if equipment.hi_jump { hi } else { normal });
         self.vertical = VerticalMotion::Up;
     }
 
