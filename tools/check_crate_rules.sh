@@ -94,7 +94,7 @@ hits=$(
 # when cargo runs it (tools/cleanroom/code_check.sh), and the check itself still catches its
 # fixtures.
 if [ -d crates/clean_types ] || [ -d crates/clean_model ]; then
-  out=$(bash tools/cleanroom/code_check.sh . 2>&1) || fail "$out"
+  out=$(bash tools/cleanroom/code_check.sh crates/clean_types crates/clean_model/* 2>&1) || fail "$out"
 fi
 out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
 
