@@ -35,6 +35,7 @@ fn content() -> Content {
         eye_lists: data::enemy::eye::EyeLists::default(),
         face_block_lists: data::enemy::face_block::FaceBlockLists::default(),
         samus_spritemaps: data::pose::spritemap::SamusSpritemaps::default(),
+        samus_assets: data::assets::samus::SamusAssets::default(),
         samus_tiles: data::pose::tiles::SamusTiles::default(),
         graphics: data::pose::tiles::Graphics::default(),
         visor_colours: data::palette::VisorColours::default(),

@@ -234,6 +234,19 @@ pub fn key_of(id: PoseId) -> Option<Pose> {
         .map(|entry| entry.key)
 }
 
+/// The pose the original's `id` shows and a dress it is shown in; `None` for the poses
+/// outside her domain.
+#[must_use]
+pub fn shown(id: PoseId) -> Option<(Pose, Dress)> {
+    let entry = MAP.iter().find(|entry| entry.id == id)?;
+    let (spin, suit) = match entry.worn {
+        Worn::Always => (SpinSprite::Plain, Suit::First),
+        Worn::Spin(spin) => (spin, Suit::First),
+        Worn::Suit(suit) => (SpinSprite::Plain, suit),
+    };
+    Some((entry.key, Dress { spin, suit }))
+}
+
 /// The original's pose that shows `key` in `dress`, by its nearest sprite where it has none
 /// of its own; `None` for a pose no sprite shows.
 #[must_use]

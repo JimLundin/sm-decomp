@@ -181,3 +181,28 @@ fn a_pose_no_sprite_of_its_own_shows_is_shown_by_its_nearest() {
     let running = pose(Body::Upright, Action::Running, Facing::Left, Aim::Down);
     assert_eq!(id_of(running, PLAIN), None);
 }
+
+#[test]
+fn the_bottom_half_handlers_follow_the_movement_type() {
+    let frame = AnimationFrame;
+    assert_eq!(
+        bottom_half(MovementType::SpinJumping, PoseId(0x19), frame(1)),
+        BottomHalf::Hidden
+    );
+    assert_eq!(
+        bottom_half(MovementType::SpinJumping, PoseId(0x19), frame(0)),
+        BottomHalf::Drawn
+    );
+    assert_eq!(
+        bottom_half(MovementType::CrouchingTransition, PoseId(0x37), frame(0)),
+        BottomHalf::Hidden
+    );
+    assert_eq!(
+        bottom_half(MovementType::CrouchingTransition, PoseId(0x35), frame(0)),
+        BottomHalf::Drawn
+    );
+    assert_eq!(
+        bottom_half(MovementType::Standing, PoseId(0x9B), frame(0)),
+        BottomHalf::Drawn
+    );
+}
