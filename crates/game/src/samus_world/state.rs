@@ -3,7 +3,7 @@
 //!
 //! The engine keeps her motion as the game keeps it, so the model's Samus is rebuilt from it
 //! each frame and written back after the step. What she remembers maps to the game's own
-//! words: carrying on and skidding to the speed mode, the dash to lose to the momentum flag,
+//! words: carrying on and skidding to the speed mode, a dash to lose to the momentum flag clear,
 //! a spent rise to an upward speed past zero, the moonfall to no vertical direction in the
 //! air, a spin carried on to the pose history, the seat to the slope flag.
 
@@ -114,7 +114,9 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     motion.position.y = exact(model.position.y);
     motion.base_speed = exact(model.speed);
     motion.extra_run = exact(model.dash);
-    motion.momentum = !model.losing_dash;
+    // The game's momentum flag holds while she has a dash: set as the dash grows, kept through
+    // a landing that leaves the dash to lose, cleared when the dash is gone.
+    motion.momentum = !model.dash.is_zero() && (motion.momentum || !model.losing_dash);
     motion.mode = if !model.carry {
         SpeedMode::Accelerating
     } else if model.way == model.pose.facing.side() {

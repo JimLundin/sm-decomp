@@ -7,11 +7,10 @@
 
 use crate::animation;
 use crate::collision::solid_enemy::SolidEnemies;
-use crate::collision::world::World;
 use crate::collision::{Room, ScanOrder, Surroundings, Touches, inside};
 use crate::message_box;
-use crate::motion;
 use crate::pose::{self, Content};
+use crate::samus_world;
 use crate::scrolling;
 use crate::session::{Rules, SessionFault};
 use crate::state::atmospheric::Atmospherics;
@@ -477,13 +476,17 @@ fn gameplay_phase(
             let completed = state.clock.counters.completed.0;
             let surroundings = surroundings(&state.room, completed, content, &pass.active);
             let mut touches = Touches::default();
-            let samus = &mut state.samus;
-            let inputs = motion::inputs(samus, &state.controller, state.elevator);
-            let values = motion::rules(content, rules.switches.speed_cap);
-            let mut world = World::new(surroundings, &mut touches, samus);
-            let frame =
-                motion::step(samus, inputs, values, &mut world).map_err(SessionFault::Motion)?;
-            animation::after_motion(samus, frame.contacts);
+            let inputs = samus_world::step::Inputs {
+                controller: &state.controller,
+                ride: state.elevator,
+                completed,
+                requests: pass.requests,
+                surroundings,
+                speed_cap: rules.switches.speed_cap,
+                content,
+            };
+            let stepped = samus_world::step::step(&mut state.samus, inputs, &mut touches);
+            animation::after_motion(&mut state.samus, stepped.is_some_and(|s| s.armed));
             mini_map(
                 &mut state.hud,
                 state.samus.motion.position.into(),
@@ -492,22 +495,12 @@ fn gameplay_phase(
                 content,
             );
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
-            let requests = pose::collision_request(
-                &state.samus,
-                frame.contacts.vertical,
-                &state.controller,
-                content,
-                pass.requests,
-            );
-            let collisions = pose::Collisions {
-                motion: frame,
-                surroundings,
-            };
+            let next = samus_world::step::next(&state.samus, stepped, pass.requests);
             change_pose(
                 &mut state.samus,
                 &mut state.atmospherics,
-                requests,
-                collisions,
+                next,
+                surroundings,
                 &mut touches,
                 content,
             );
@@ -570,13 +563,13 @@ fn gameplay_phase(
 fn change_pose(
     samus: &mut Samus,
     atmospherics: &mut Atmospherics,
-    requests: pose::PoseRequests,
-    collisions: pose::Collisions<'_>,
+    asked: Option<crate::state::samus::PoseId>,
+    surroundings: Surroundings<'_>,
     touches: &mut Touches,
     content: &Content,
 ) {
     let history = samus.previous;
-    pose::change(samus, requests, collisions, touches, content);
+    pose::change(samus, asked, surroundings, touches, content);
     crate::atmospheric::initialise_pose(atmospherics, history, samus, content);
 }
 

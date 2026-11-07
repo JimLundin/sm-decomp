@@ -81,6 +81,12 @@ impl Touches {
     }
 }
 
+impl Extend<Touch> for Touches {
+    fn extend<I: IntoIterator<Item = Touch>>(&mut self, touches: I) {
+        self.0.extend(touches);
+    }
+}
+
 impl FromIterator<Touch> for Touches {
     fn from_iter<I: IntoIterator<Item = Touch>>(touches: I) -> Self {
         Self(touches.into_iter().collect())

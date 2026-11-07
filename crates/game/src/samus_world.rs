@@ -231,6 +231,7 @@ impl World for SamusWorld<'_> {
 
 pub mod frame;
 pub mod state;
+pub mod step;
 
 #[cfg(test)]
 mod tests;

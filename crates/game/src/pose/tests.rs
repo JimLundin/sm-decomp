@@ -3,7 +3,7 @@ use data::pose::transition::{Control, Controls, PoseTransitions, Transition};
 use data::pose::{MovementType, PoseFacing as Facing, PoseId, Poses};
 
 use super::*;
-use crate::collision::Touches;
+use crate::collision::{Surroundings, Touches};
 use crate::state::slots::FlagSet;
 
 /// Pose definition bytes: facing, movement type, next pose, shot, then four more.
@@ -79,8 +79,8 @@ fn holding_right_while_standing_runs() {
     assert_eq!(requests.ordinary, Some(PoseId(2)));
     change(
         &mut samus,
-        requests,
-        still(&content),
+        requests.ordinary,
+        Surroundings::default(),
         &mut Touches::default(),
         &content,
     );
@@ -174,99 +174,4 @@ fn a_crouching_transition_takes_no_input() {
         input(&samus, &controller, &content),
         PoseRequests::default()
     );
-}
-
-/// A pose record in `pose` with `movement`, facing `facing`.
-const fn record(pose: u16, movement: MovementType, facing: Facing) -> PoseRecord {
-    PoseRecord {
-        pose: PoseId(pose),
-        facing,
-        movement,
-    }
-}
-
-#[test]
-fn a_new_pose_starts_motion_by_its_movement_type_and_the_old_pose() {
-    use MovementType as M;
-    let right = Facing::Right;
-    let cases = [
-        // A take-off from the crouch without aim, then one from standing.
-        (
-            record(0x27, M::Crouching, right),
-            record(0x4B, M::NormalJumping, right),
-            Some(PoseStart::TakeOff {
-                from_plain_crouch: true,
-            }),
-        ),
-        (
-            record(0x01, M::Standing, right),
-            record(0x4B, M::NormalJumping, right),
-            Some(PoseStart::TakeOff {
-                from_plain_crouch: false,
-            }),
-        ),
-        // A normal jumping pose past the take-off, and a fall.
-        (
-            record(0x4B, M::NormalJumping, right),
-            record(0x4D, M::NormalJumping, right),
-            Some(PoseStart::JumpOrFall),
-        ),
-        (
-            record(0x01, M::Standing, right),
-            record(0x29, M::Falling, right),
-            Some(PoseStart::JumpOrFall),
-        ),
-        // A spin jump from the ground starts one; from a spin it doesn't, unless turned.
-        (
-            record(0x09, M::Running, right),
-            record(0x19, M::SpinJumping, right),
-            Some(PoseStart::SpinStart),
-        ),
-        (
-            record(0x19, M::SpinJumping, right),
-            record(0x1B, M::SpinJumping, right),
-            None,
-        ),
-        (
-            record(0x1A, M::SpinJumping, Facing::Left),
-            record(0x19, M::SpinJumping, right),
-            Some(PoseStart::SpinReverse),
-        ),
-        (
-            record(0x01, M::Standing, right),
-            record(0x25, M::TurningAroundOnGround, right),
-            Some(PoseStart::Turn),
-        ),
-        (
-            record(0x19, M::SpinJumping, right),
-            record(0x83, M::WallJumping, right),
-            Some(PoseStart::WallJumpStart),
-        ),
-        (
-            record(0x01, M::Standing, right),
-            record(0x09, M::Running, right),
-            None,
-        ),
-    ];
-    for (old, new, start) in cases {
-        let samus = Samus {
-            pose: new.pose,
-            facing: new.facing,
-            movement: new.movement,
-            ..Samus::default()
-        };
-        assert_eq!(pose_start(old, &samus), start, "{old:?} to {new:?}");
-    }
-}
-
-/// A frame whose motion didn't run.
-fn still(content: &Content) -> Collisions<'_> {
-    Collisions {
-        motion: Motion {
-            inputs: None,
-            rules: crate::motion::rules(content, crate::session::SpeedCap::Wordwise),
-            contacts: crate::model::samus::motion::Contacts::default(),
-        },
-        surroundings: Surroundings::default(),
-    }
 }

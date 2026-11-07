@@ -23,8 +23,7 @@ use data::pose::{MovementType, PoseId, Poses};
 use crate::animation;
 use crate::collision::{Surroundings, Touches};
 use crate::model::num::Fixed;
-use crate::model::samus::motion::{self, PoseChange, PoseStart, VerticalResult};
-use crate::motion::Motion;
+use crate::model::samus::motion::VerticalResult;
 use crate::plm::RoomPlms;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
 use crate::state::samus::{AnimationTimer, NewPoseFrame, PoseRecord, Samus, SuperSpecialCommand};
@@ -231,16 +230,6 @@ pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseR
     }
 }
 
-/// What the pose update reads of the frame: motion's step, and where the arm-pump step and
-/// pose fit move her.
-#[derive(Clone, Copy, Debug)]
-pub struct Collisions<'a> {
-    /// The frame's motion.
-    pub motion: Motion<'a>,
-    /// Where the moves happen.
-    pub surroundings: Surroundings<'a>,
-}
-
 /// The poses that face the screen: standing in them is the elevator's, which takes no
 /// horizontal motion (`$90:A383`), and a change to them checks nothing (`$91:FDAE`).
 pub(crate) const FACING_FORWARD: [PoseId; 2] = [PoseId(0), PoseId(0x9B)];
@@ -263,181 +252,63 @@ pub fn carried(samus: &Samus, ride: ElevatorRide) -> bool {
         && samus.movement == MovementType::Standing
 }
 
-/// The pose change (`$91:EB88`): the super special prospective pose first, else the
-/// requested pose, once the check for a wall has had its say.
+/// The pose change (`$91:EB88`): the super special prospective pose first, else the pose
+/// asked for.
 ///
 /// The pose takes the facing and movement type its definition gives when it differs from
-/// the last; motion takes the new pose's start and the command; then the update records the
-/// history. The scroll triggers the wall check's move reaches join `touches`.
+/// the last, after pose fit has had its say; then the update records the history. The motion
+/// model has made the change's writes to her speeds. The scroll triggers pose fit's checks
+/// reach join `touches`.
 // open: the special prospective pose between them joins with the
 // knockback and the grapple (C4); the super special pose with command 3 gives way to it
 // when its command is 9.
 pub fn change(
     samus: &mut Samus,
-    requests: PoseRequests,
-    collisions: Collisions<'_>,
+    asked: Option<PoseId>,
+    surroundings: Surroundings<'_>,
     touches: &mut Touches,
     content: &Content,
 ) {
     if let Some(pose) = samus.super_special.pose {
         let command = samus.super_special.command;
-        if command == SuperSpecialCommand::TransitionAnimationFinished {
-            contact::forced_arm_pump(samus, collisions, touches);
-        }
         if command != SuperSpecialCommand::KnockbackFinished {
-            let old = samus.previous;
-            samus.pose = pose;
+            samus.pose = asked.unwrap_or(pose);
             refresh(samus, content);
-            let start = if samus.pose == old.pose {
-                None
-            } else {
-                pose_start(old, samus)
-            };
             reset_animation(samus, content);
-            if command == SuperSpecialCommand::TransitionAnimationFinished {
-                let command = motion::PoseCommand::AnimationEnd;
-                pose_writes(samus, old, pose, start, command, collisions.motion);
-            }
         }
         run_super_special(command, samus);
         record_history(samus);
         return;
     }
-    let requested = runs_into_wall(samus, requests.ordinary, collisions, touches, content);
-    let Some(pose) = requested else {
+    let Some(pose) = asked else {
         return;
     };
     let old = samus.previous;
     samus.pose = pose;
-    let mut command = requests.command;
-    let mut start = None;
     if pose != old.pose {
         // "Handle Samus pose change" (`$91:F404`): fit the new pose's height, then initialise
         // the pose, whichever it is now.
-        fit::fit(samus, collisions.surroundings, touches, content);
+        fit::fit(samus, surroundings, touches, content);
         refresh(samus, content);
-        if samus.pose != old.pose {
-            start = pose_start(old, samus);
-        }
         reset_animation(samus, content);
         samus.animation.new_pose_frame = NewPoseFrame::default();
-        command = start_transition_command(samus).or(command);
-    }
-    // The commands run only while the pose stands as it was asked for: a pose the handler
-    // changed, by crouching her or refusing the change, skips them (`$91:EBEE`).
-    let motion_command = match command {
-        Some(PoseCommand::Decelerate) => motion::PoseCommand::Decelerate,
-        Some(PoseCommand::Stop) => motion::PoseCommand::Stop,
-        Some(PoseCommand::KillXSpeed) => motion::PoseCommand::KillXSpeed,
-        Some(PoseCommand::KillRunSpeed) => motion::PoseCommand::KillRunSpeed,
-        Some(PoseCommand::Vertical(result)) => motion::PoseCommand::Vertical(result),
-        Some(PoseCommand::StartTransitionAnimation) | None => motion::PoseCommand::None,
-    };
-    pose_writes(samus, old, pose, start, motion_command, collisions.motion);
-    if samus.pose == pose && command == Some(PoseCommand::StartTransitionAnimation) {
-        fit::start_transition(samus, collisions.surroundings, touches, content);
+        // The transition poses' initialisation starts their animation (`$91:F758`), unless
+        // pose fit replaced the pose (`$91:EBEE`).
+        if samus.pose == pose && starts_transition(samus) {
+            fit::start_transition(samus, surroundings, touches, content);
+        }
     }
     record_history(samus);
 }
 
-/// Motion's writes as the pose asked for starts after `old`: `start`, then `command`
-/// (spec §7). The pose was replaced when the change left her in another one.
-fn pose_writes(
-    samus: &mut Samus,
-    old: PoseRecord,
-    asked: PoseId,
-    start: Option<PoseStart>,
-    command: motion::PoseCommand,
-    frame: Motion<'_>,
-) {
-    let Some(inputs) = frame.inputs else {
-        return;
-    };
-    let change = PoseChange {
-        start,
-        replaced: samus.pose != asked,
-        command,
-        started_falling: samus.movement == MovementType::Falling
-            && old.movement != MovementType::Falling,
-    };
-    let jump_held = !matches!(inputs.pad.jump, motion::JumpButton::Released);
-    samus
-        .motion
-        .pose_writes(change, jump_held, inputs.equipment, &frame.rules);
-}
-
-/// What the new pose's start writes to motion, after `old` (spec §7's `PoseStart`).
-fn pose_start(old: PoseRecord, samus: &Samus) -> Option<PoseStart> {
-    use MovementType as M;
-    let turn = |movement| {
-        matches!(
-            movement,
-            M::TurningAroundOnGround | M::TurningAroundJumping | M::TurningAroundFalling
-        )
-    };
-    let ball = |movement| {
-        matches!(
-            movement,
-            M::MorphBallOnGround
-                | M::MorphBallFalling
-                | M::SpringBallOnGround
-                | M::SpringBallInAir
-                | M::SpringBallFalling
-        )
-    };
-    let spun = matches!(old.movement, M::SpinJumping | M::WallJumping);
-    let reversed = samus.facing != old.facing;
-    let take_off = |pose| JUMP_TAKE_OFF.contains(&pose);
-    match samus.movement {
-        new if turn(new) => (!turn(old.movement)).then_some(PoseStart::Turn),
-        new if ball(new) && ball(old.movement) && reversed => Some(PoseStart::BallReverse),
-        M::SpinJumping if spun => reversed.then_some(PoseStart::SpinReverse),
-        M::SpinJumping => Some(PoseStart::SpinStart),
-        M::NormalJumping if take_off(samus.pose) && !take_off(old.pose) => {
-            Some(PoseStart::TakeOff {
-                from_plain_crouch: CROUCHING.contains(&old.pose),
-            })
-        }
-        M::NormalJumping | M::Falling => Some(PoseStart::JumpOrFall),
-        M::SpringBallInAir => {
-            (old.movement == M::SpringBallOnGround).then_some(PoseStart::SpringLaunch)
-        }
-        M::WallJumping => (old.movement != M::WallJumping).then_some(PoseStart::WallJumpStart),
-        M::Standing
-        | M::Running
-        | M::MorphBallOnGround
-        | M::Crouching
-        | M::Unused07
-        | M::MorphBallFalling
-        | M::Unused09
-        | M::KnockbackOrCrystalFlashEnding
-        | M::Unused0B
-        | M::Unused0C
-        | M::Unused0D
-        | M::TurningAroundOnGround
-        | M::CrouchingTransition
-        | M::Moonwalking
-        | M::SpringBallOnGround
-        | M::SpringBallFalling
-        | M::RanIntoWall
-        | M::Grappling
-        | M::TurningAroundJumping
-        | M::TurningAroundFalling
-        | M::DamageBoost
-        | M::GrabbedByDraygon
-        | M::Shinespark => None,
-    }
-}
-
-/// The unused poses $DB to $F0, whose initialisation sets no command (`$91:F775`).
+/// The unused poses $DB to $F0, whose initialisation starts no animation (`$91:F775`).
 pub(crate) const UNUSED_TRANSITIONS: std::ops::Range<u16> = 0xDB..0xF1;
 
-/// The command the transition poses' initialisation sets (`$91:F758`): the start of the
-/// animation, for every transition pose but the unused `$DB` to `$F0`.
-fn start_transition_command(samus: &Samus) -> Option<PoseCommand> {
-    let unused = UNUSED_TRANSITIONS.contains(&samus.pose.0);
-    (samus.movement == MovementType::CrouchingTransition && !unused)
-        .then_some(PoseCommand::StartTransitionAnimation)
+/// Whether the pose's initialisation starts its transition animation (`$91:F758`): every
+/// transition pose but the unused `$DB` to `$F0`.
+fn starts_transition(samus: &Samus) -> bool {
+    samus.movement == MovementType::CrouchingTransition
+        && !UNUSED_TRANSITIONS.contains(&samus.pose.0)
 }
 
 /// Copy the pose's facing and movement type from its definition (`$91:F433`).
@@ -464,9 +335,6 @@ pub(crate) const JUMP_TAKE_OFF: [PoseId; 8] = [
     PoseId(0x59),
     PoseId(0x5A),
 ];
-
-/// The crouching poses a jump from which starts higher (`$91:FC7D`).
-const CROUCHING: [PoseId; 2] = [fit::CROUCH_RIGHT, fit::CROUCH_LEFT];
 
 /// Start the new pose's animation on the new pose frame (`$91:FB08`), unless the pose is
 /// unchanged or the frame is preserved.
@@ -523,11 +391,7 @@ const fn record_history(samus: &mut Samus) {
     };
 }
 
-mod contact;
 mod fit;
-
-pub use contact::request as collision_request;
-use contact::runs_into_wall;
 
 #[cfg(test)]
 mod tests;
