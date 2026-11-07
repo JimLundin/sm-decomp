@@ -285,9 +285,10 @@ disk or on the web is out of reach. So:
 - **No addresses where an implementer can see them.** `Source:` lines live only in the observer's
   `docs/behaviours/<domain>.decode.md`. The spec carries behaviour ids, rules, parameters and
   vectors. The catalogue carries ids, summaries, kinds and switches.
-- **Implementer worktrees are sparse checkouts** (`tools/lane/clean_room.sh`). They hold only the
-  clean crates, this note, the domain's spec and vectors, and the implementer skill. There is
-  nothing else on disk to open.
+- **Implementers work in an export** (`tools/cleanroom/export.sh`, see above). It holds only the
+  clean crates, this note's clean-room sections, the domain's spec and vectors, and the implementer
+  skill. There is nothing else in it to open, and `tools/cleanroom/canary.sh` checks afterwards what
+  was read.
 - **Only implementer commits change the clean crates.** A check rejects any commit to them that lacks
   the trailer `Role: implementer`. An integrator who needs a model change asks for it.
 
