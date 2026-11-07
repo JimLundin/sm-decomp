@@ -1,4 +1,4 @@
-# Tests may unwrap, expect, panic and index (PRINCIPLES K5). These only loosen lints that the
+# Tests may unwrap, expect, panic and index (the project's testing principle). These only loosen lints that the
 # new crates deny through [workspace.lints].
 allow-expect-in-tests = true
 allow-unwrap-in-tests = true

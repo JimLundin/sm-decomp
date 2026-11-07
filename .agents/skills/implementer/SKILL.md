@@ -13,7 +13,7 @@ that is the point: the code is shaped by what the player sees, not by any other 
 Your workspace is an export: a standalone repository with one commit, made for your domain. Read
 `CLEANROOM.md` at its root first. Everything you may read is in the export:
 - `CLEANROOM.md`: the rules and the commands;
-- `docs/MODEL-cleanroom.md`: the design you build to;
+- `docs/cleanroom/DESIGN.md`: the design you build to;
 - your domain's spec in `docs/behaviours/` and its vectors in `scenarios/vectors/`;
 - the clean crates, which you write.
 

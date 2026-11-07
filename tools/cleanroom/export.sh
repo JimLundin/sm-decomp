@@ -14,7 +14,6 @@
 #   crates/clean_model/DOMAIN/         package `clean_model_<domain>`: the domain's model,
 #                                      depending only on clean_types and std
 #   docs/behaviours/DOMAIN.md          the spec;  scenarios/vectors/DOMAIN.toml  its vectors
-#   docs/MODEL-cleanroom.md            the clean-room sections of MODEL.md, extracted
 #   CLEANROOM.md                       how to work and commit in the export
 # A clean crate absent from COMMIT is created empty. Nothing of today's model is copied.
 #
@@ -91,37 +90,22 @@ scaffold "crates/clean_model/$domain" "$(model_package "$domain")" \
 } >"$dest/Cargo.toml"
 printf '/target\n/Cargo.lock\n' >"$dest/.gitignore"
 
-# MODEL.md's clean-room parts.
-mkdir -p "$dest/docs"
-allowlist_section model "$domain" >"$dest/.model-parts"
-git show "$sha:docs/architecture/MODEL.md" | awk -v parts="$dest/.model-parts" '
-  BEGIN { while ((getline p < parts) > 0) {
-    if (p ~ /^section /) sec[++ns] = "## " substr(p, 9)
-    else if (p ~ /^para /) par[++np] = "**" substr(p, 6) } }
-  function starts(s, list, n,   i) { for (i = 1; i <= n; i++) if (index(s, list[i]) == 1) return 1; return 0 }
-  /^## / { insec = starts($0, sec, ns); inpar = 0; if (insec) { print ""; print } ; next }
-  /^\*\*/ && !insec { inpar = starts($0, par, np); if (inpar) print "" }
-  insec || inpar { print }
-' | { printf '# The clean room\n\nExtracted from the behaviour model note for the implementer.\n'; cat; } \
-  >"$dest/docs/MODEL-cleanroom.md"
-rm -f "$dest/.model-parts"
 
 cat >"$dest/CLEANROOM.md" <<EOF
 # Clean room: $domain
 
 This repository is everything you may read. Build the $domain model from
 \`docs/behaviours/$domain.md\` and \`scenarios/vectors/$domain.toml\` alone; the rules are in
-\`docs/MODEL-cleanroom.md\` and \`.agents/skills/implementer/SKILL.md\`. Read nothing outside this
+\`docs/cleanroom/DESIGN.md\` and \`.agents/skills/implementer/SKILL.md\`. Read nothing outside this
 directory: no other repository, worktree, temporary folder or web page about the original.
 
 - Write the model in \`crates/clean_model/$domain\` and the types it shares in
-  \`crates/clean_types\`. They depend on nothing but each other and std. Where the skill says
-  \`game::model::<domain>\`, read \`crates/clean_model/$domain\`.
+  \`crates/clean_types\`. They depend on nothing but each other and std.
 - Every commit touches only those two directories, and its message ends with the trailer
   \`Role: implementer\`. Commits that touch anything else are refused on import.
 - Check with \`cargo check\`, \`cargo clippy --all-targets -- -D warnings\` and \`cargo fmt --check\`.
-- File a gap you can't explain in your report, with the frame, the field, the expected and actual
-  values and the spec entry you suspect.
+- Report a gap you can't explain, with the vector, the field, the expected and actual values and
+  the spec entry you suspect.
 EOF
 
 # One commit, no remote, no template hooks.
