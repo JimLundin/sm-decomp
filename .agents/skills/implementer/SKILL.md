@@ -33,8 +33,9 @@ your report and don't use it.
 2. Write the model in `crates/clean_model/<domain>`, with shared domain types in
    `crates/clean_types`. These are the only directories you change.
 3. Write a test that runs every vector in the vector file through the model, and iterate until they
-   pass. Check with the commands in `CLEANROOM.md`: `cargo check`, `cargo clippy --all-targets -- -D
-   warnings` and `cargo fmt --check`.
+   pass. Run the tests with the one runner command your brief gives, exactly: `cargo test` builds
+   them but can't run them here. Check with `cargo check`, `cargo clippy --all-targets -- -D
+   warnings` and `cargo fmt --check`, each as its own command.
 4. Every literal and branch names its behaviour id. Values come from the rules or the spec's
    numbers, never from a constant you invented.
 5. Watch the size target in the spec's header as you go. Going over it is a stop; report the number.

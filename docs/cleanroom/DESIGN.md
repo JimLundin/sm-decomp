@@ -58,7 +58,8 @@ behaviour exact. Use enums with data and newtypes, never raw numbers for a mode 
   each other and the standard library.
 - End every commit message with the trailer `Role: implementer`, and use the spec's words and entry
   ids in it.
-- Check with `cargo check`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`.
+- Check with `cargo check`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`. Run the
+  tests with the one runner command your brief gives.
 - What you read is checked after the lane. Read only this repository.
 - **Use nothing you remember about how the original game is programmed:** its code, its memory
   layout, disassemblies or annotated listings of it. Build only from the spec. If you notice you
