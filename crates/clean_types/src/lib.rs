@@ -1,7 +1,8 @@
 //! The domain types the clean models share: quantities, poses and the world, in player terms.
 
-/// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16. A
+/// signed one is held in two's complement: `-4.E000` is `FFFB.2000`.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Default, Debug)]
 pub struct Fixed(pub u32);
 
 impl Fixed {
@@ -54,34 +55,51 @@ impl Fixed {
     pub const fn is_zero(self) -> bool {
         self.0 == 0
     }
+    /// Read signed: whether this points upward or leftward (below zero).
+    #[must_use]
+    pub const fn negative(self) -> bool {
+        self.0.cast_signed() < 0
+    }
+    /// The same size the other way, `0 − self`.
+    #[must_use]
+    pub const fn negated(self) -> Self {
+        Self(self.0.wrapping_neg())
+    }
 }
 
 /// `below(a, b)` on 16-bit parts (§9): bit 15 of `(a − b) mod 2^16` is set.
 #[must_use]
 pub const fn below(a: u16, b: u16) -> bool {
-    a.wrapping_sub(b) > 0x7FFF
+    a.wrapping_sub(b).cast_signed() < 0
+}
+
+/// A value for each axis: x rightward, y downward.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub struct Pair<T> {
+    /// Rightward.
+    pub x: T,
+    /// Downward.
+    pub y: T,
 }
 
 /// Her position: the centre of her body.
-#[derive(Clone, Copy)]
-pub struct Position {
-    /// Rightward.
-    pub x: Fixed,
-    /// Downward.
-    pub y: Fixed,
-}
+pub type Position = Pair<Fixed>;
 
-/// A direction: the way a move goes (`TouchedCells`), or the way a speed points.
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// A body's half-width and half-height, in pixels.
+pub type Radius = Pair<u16>;
+
+/// A direction: the way a move goes (`TouchedCells`), or the way a speed points. Listed
+/// alphabetically, as the spec lists them; the order means nothing.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Heading {
+    /// Downward.
+    Down,
     /// Leftward.
     Left,
     /// Rightward.
     Right,
     /// Upward.
     Up,
-    /// Downward.
-    Down,
 }
 
 /// Which way she faces (§2).
@@ -238,49 +256,73 @@ pub struct Pose {
     pub legs: Legs,
 }
 
-/// A body's half-width and half-height, in pixels.
-#[derive(Clone, Copy, Debug)]
-pub struct Radius {
-    /// Half-width.
-    pub x: u16,
-    /// Half-height.
-    pub y: u16,
-}
+/// The pad (§1.3): a set of its buttons, the ones held or the ones just pressed.
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+pub struct Buttons(pub u16);
 
-/// The pad's buttons (§1.3), held or just pressed.
-#[derive(Clone, Copy, Default)]
-#[expect(clippy::struct_excessive_bools)]
-pub struct Pad {
+/// The pad's buttons, each a set of one; `.and` joins sets.
+pub mod button {
+    use super::Buttons;
     /// Run.
-    pub run: bool,
+    pub const RUN: Buttons = Buttons(1);
     /// Jump.
-    pub jump: bool,
+    pub const JUMP: Buttons = Buttons(2);
     /// Shoot.
-    pub shoot: bool,
+    pub const SHOOT: Buttons = Buttons(4);
     /// Left.
-    pub left: bool,
-    /// Right.
-    pub right: bool,
+    pub const LEFT: Buttons = Buttons(8);
+    /// Right: the bit after left's.
+    pub const RIGHT: Buttons = Buttons(16);
     /// Up.
-    pub up: bool,
+    pub const UP: Buttons = Buttons(32);
     /// Down.
-    pub down: bool,
+    pub const DOWN: Buttons = Buttons(64);
     /// Aim up.
-    pub aim_up: bool,
+    pub const AIM_UP: Buttons = Buttons(128);
     /// Aim down.
-    pub aim_down: bool,
+    pub const AIM_DOWN: Buttons = Buttons(256);
 }
 
-/// Her equipment (§1.3) that her motion reads. Screw attack and the other suits change only the
-/// sprite (§2's last paragraph), which is drawn by someone else from her pose and those.
+impl Buttons {
+    /// Both sets.
+    #[must_use]
+    pub const fn and(self, other: Self) -> Self {
+        Self(self.0 | other.0)
+    }
+    /// Whether any of `these` is in the set.
+    #[must_use]
+    pub const fn any(self, these: Self) -> bool {
+        self.0 & these.0 != 0
+    }
+    /// The set as seen facing `facing` (§7: forward and back are by her facing): facing left,
+    /// left and right trade places, so that right stands for forward and left for back.
+    #[must_use]
+    pub const fn seen(self, facing: Facing) -> Self {
+        let (left, right) = (self.0 & button::LEFT.0, self.0 & button::RIGHT.0);
+        match facing {
+            Facing::Left => Self(self.0 ^ left ^ right | left << 1 | right >> 1),
+            Facing::Right | Facing::Screen => self,
+        }
+    }
+}
+
+/// Her equipment (§1.3).
 #[derive(Clone, Copy, Default)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "each is an item she has or hasn't, read on its own (§1.3)"
+)]
 pub struct Equipment {
     /// Hi-jump boots (`Jumping`).
     pub hi_jump: bool,
-    /// Space jump (`Jumping`).
+    /// Space jump (`Jumping`, `HowSheIsDrawn`).
     pub space_jump: bool,
     /// Spring ball (`AnimationEnds`).
     pub spring_ball: bool,
+    /// Screw attack, seen only in the sprite (`HowSheIsDrawn`).
+    pub screw_attack: bool,
+    /// A suit other than the first, varia or gravity, seen only in the sprite (`HowSheIsDrawn`).
+    pub other_suit: bool,
 }
 
 /// A 16 px cell of the room, by column and row.
@@ -375,10 +417,8 @@ pub struct Slope {
 
 /// A solid enemy's box: its centre and half-sizes, in pixels.
 pub struct Hitbox {
-    /// Its centre's x.
-    pub x: u16,
-    /// Its centre's y.
-    pub y: u16,
+    /// Its centre.
+    pub centre: Pair<u16>,
     /// Its half-sizes.
     pub radius: Radius,
 }

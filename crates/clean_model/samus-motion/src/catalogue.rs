@@ -5,6 +5,8 @@ use clean_types::{Kind, Switch};
 /// A spec entry's id.
 #[derive(Clone, Copy, Debug)]
 pub enum BehaviourId {
+    /// §2.
+    HowSheIsDrawn,
     /// §3.
     SpeedBuildsAndBrakes,
     /// §3.
@@ -77,7 +79,13 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 28] = [
+pub const CATALOGUE: [Behaviour; 29] = [
+    Behaviour {
+        id: BehaviourId::HowSheIsDrawn,
+        summary: "Her spin is drawn as the screw attack or the space jump, and facing the screen she wears her suit",
+        kind: Kind::Encoding,
+        switch: Switch::Fixed,
+    },
     Behaviour {
         id: BehaviourId::SpeedBuildsAndBrakes,
         summary: "Her speed builds to a top by what she is doing, and brakes when she carries on along the ground",
@@ -98,7 +106,7 @@ pub const CATALOGUE: [Behaviour; 28] = [
     },
     Behaviour {
         id: BehaviourId::AimingAndShooting,
-        summary: "Changing aim while running moves her 1 px forward; shooting standing restarts the animation",
+        summary: "Changing into another running pose, or running on let go, moves her 1 px forward; shooting standing restarts the animation",
         kind: Kind::Quirk,
         switch: Switch::Fixed,
     },
@@ -116,7 +124,7 @@ pub const CATALOGUE: [Behaviour; 28] = [
     },
     Behaviour {
         id: BehaviourId::FollowingTheGround,
-        summary: "On the ground she is pulled down onto the floor, and walks off a ledge into a fall",
+        summary: "On the ground she is pulled down onto the floor, keeps a vertical speed she brought, and walks off a ledge into a fall",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },

@@ -1,6 +1,5 @@
 //! The tuning parameters the model reads. `Rules::REFERENCE` holds the spec's vanilla numbers.
 
-use crate::situation::Gait;
 use clean_types::{Fixed, below};
 use core::ops::Range;
 
@@ -13,9 +12,31 @@ pub enum SpeedCap {
     Exact,
 }
 
+/// `SpeedBuildsAndBrakes`: what she is doing, as its table's "She is" names it.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub enum Gait {
+    /// Running.
+    #[default]
+    Running,
+    /// Rolling as a ball.
+    Rolling,
+    /// Moonwalking.
+    Moonwalking,
+    /// In a straight jump or the spring ball's hop.
+    StraightJump,
+    /// In a spin jump or a wall jump.
+    SpinJump,
+    /// Falling, upright or as a ball.
+    Falling,
+    /// Turning round.
+    Turning,
+}
+
 /// One row of `SpeedBuildsAndBrakes`'s table.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Limits {
+    /// What she is doing.
+    pub gait: Gait,
     /// What she speeds up by a frame.
     pub step: Fixed,
     /// Her top speed.
@@ -40,24 +61,11 @@ impl Boots {
 }
 
 /// The values the model reads.
-#[derive(Clone)]
 pub struct Rules {
     /// `WordwiseTopSpeed`.
     pub speed_cap: SpeedCap,
-    /// `SpeedBuildsAndBrakes`: running.
-    pub running: Limits,
-    /// `SpeedBuildsAndBrakes`: rolling as a ball.
-    pub rolling: Limits,
-    /// `SpeedBuildsAndBrakes`: moonwalking.
-    pub moonwalking: Limits,
-    /// `SpeedBuildsAndBrakes`: a straight jump or the spring ball's hop.
-    pub straight_jump: Limits,
-    /// `SpeedBuildsAndBrakes`: a spin jump or a wall jump.
-    pub spin_jump: Limits,
-    /// `SpeedBuildsAndBrakes`: falling, upright or as a ball.
-    pub falling: Limits,
-    /// `SpeedBuildsAndBrakes`: turning round.
-    pub turning: Limits,
+    /// `SpeedBuildsAndBrakes`: its table, a row for each thing she can be doing.
+    pub speeds: [Limits; 7],
     /// `SpeedBuildsAndBrakes`: lost a frame carrying on along the ground.
     pub brake: Fixed,
     /// `Dash`: gained a frame.
@@ -84,8 +92,12 @@ pub struct Rules {
     pub second_bounce_less: Fixed,
     /// `FollowingTheGround` and `SlopesCarry`: the pull beyond her speed, and on a slope.
     pub ground_pull: Fixed,
-    /// `WallJump`: how near a wall must be, in px.
-    pub wall_reach: u16,
+    /// `WallJump`: the near-wall test's reach.
+    pub wall_reach: Fixed,
+    /// `ShrinkingLowersHer`: the crouch's look down, in px.
+    pub crouch_lower: u16,
+    /// `ShrinkingLowersHer`: the morph's look down, in px.
+    pub morph_lower: u16,
     /// `BlocksStopFlush`: the longest horizontal move, in px.
     pub move_limit_px: u16,
     /// `AimingAndShooting`: the step forward.
@@ -102,34 +114,43 @@ impl Rules {
     /// The vanilla game, with the spec's numbers.
     pub const REFERENCE: Self = Self {
         speed_cap: SpeedCap::Wordwise,
-        running: Limits {
-            step: Fixed(0x3000),
-            top: Fixed(0x2_C000),
-        },
-        rolling: Limits {
-            step: Fixed(0xC000),
-            top: Fixed(0x3_4000),
-        },
-        moonwalking: Limits {
-            step: Fixed(0xC000),
-            top: Fixed(0x8000),
-        },
-        straight_jump: Limits {
-            step: Fixed(0xC000),
-            top: Fixed(0x1_4000),
-        },
-        spin_jump: Limits {
-            step: Fixed(0xC000),
-            top: Fixed(0x1_6000),
-        },
-        falling: Limits {
-            step: Fixed(0xC000),
-            top: Fixed(0x1_0000),
-        },
-        turning: Limits {
-            step: Fixed(0xC000),
-            top: Fixed(0),
-        },
+        speeds: [
+            Limits {
+                gait: Gait::Running,
+                step: Fixed(0x3000),
+                top: Fixed(0x2_C000),
+            },
+            Limits {
+                gait: Gait::Rolling,
+                step: Fixed(0xC000),
+                top: Fixed(0x3_4000),
+            },
+            Limits {
+                gait: Gait::Moonwalking,
+                step: Fixed(0xC000),
+                top: Fixed(0x8000),
+            },
+            Limits {
+                gait: Gait::StraightJump,
+                step: Fixed(0xC000),
+                top: Fixed(0x1_4000),
+            },
+            Limits {
+                gait: Gait::SpinJump,
+                step: Fixed(0xC000),
+                top: Fixed(0x1_6000),
+            },
+            Limits {
+                gait: Gait::Falling,
+                step: Fixed(0xC000),
+                top: Fixed(0x1_0000),
+            },
+            Limits {
+                gait: Gait::Turning,
+                step: Fixed(0xC000),
+                top: Fixed(0),
+            },
+        ],
         brake: Fixed(0x8000),
         dash_step: Fixed(0x1000),
         dash_cap: Fixed(0x2_0000),
@@ -149,7 +170,9 @@ impl Rules {
         bounce_from_px: 3,
         second_bounce_less: Fixed(0x1_0000),
         ground_pull: Fixed(0x1_0000),
-        wall_reach: 8,
+        wall_reach: Fixed(0x8_0000),
+        crouch_lower: 5,
+        morph_lower: 9,
         move_limit_px: 15,
         aim_step: Fixed(0x1_0000),
         elevator: Fixed(0x1_0000),
@@ -157,18 +180,13 @@ impl Rules {
         small_body_px: 8,
     };
 
-    /// `SpeedBuildsAndBrakes`: the row for a gait.
+    /// `SpeedBuildsAndBrakes`: the table's row for what she is doing.
     #[must_use]
-    pub const fn limits(&self, gait: Gait) -> Limits {
-        match gait {
-            Gait::Running => self.running,
-            Gait::Rolling => self.rolling,
-            Gait::Moonwalking => self.moonwalking,
-            Gait::StraightJump => self.straight_jump,
-            Gait::SpinJump => self.spin_jump,
-            Gait::Falling => self.falling,
-            Gait::Turning => self.turning,
-        }
+    pub fn limits(&self, gait: Gait) -> Limits {
+        self.speeds
+            .into_iter()
+            .find(|l| l.gait == gait)
+            .unwrap_or_default()
     }
 
     /// `WordwiseTopSpeed`: the speed after the top is tested.
