@@ -6,7 +6,7 @@
 #   behaviours it exercises); rules (optional: speed_cap = "Wordwise", the default, or "Exact");
 #   equipment (optional: hi_jump, space_jump, default false; screw_attack, spring_ball and
 #   other_suit change only the sprite, spec §2, and no vector sets them); world; before; lead_in (optional);
-#   pose; next_pose (optional); pad; jump_pressed; after.
+#   pose; next_pose (optional); pad; jump_pressed; pressed (optional); after.
 # - A P.S quantity is "PPPP.SSSS": the pixel part and the subpixel part, both hex. A signed one
 #   starts with "+" or "-": speed_x is rightward positive, speed_y downward positive.
 # - world: a stand-in for the room. Anything not listed is air.
@@ -41,14 +41,16 @@
 #     this frame (default "Solid"). A "StandIn" gives names = [x, y], the top-left corner of the
 #     cell it stands for.
 #   A recorded vector's world answers its frames as the room did: open air where she met nothing,
-#   the floor she stood on where she was on flat ground.
+#   the floor she stood on where she was on flat ground, and the wall she stood flush against
+#   where she was against the wall (a solid_block beside her feet stands for a wall on her left).
 # - before: what the player can tell about Samus at the start (spec §1): position = [x, y],
 #   speed_x, dash, speed_y, bounces. A missing quantity is 0. The start is always a moment where
 #   she remembers nothing the quantities don't show (spec §1.2).
 # - lead_in: the frames before the checked one, oldest first, when the checked frame depends on
-#   something she remembers. Each gives the pose at its start (as pose below), the
-#   pad and jump_pressed. A lead-in frame's pose is the one the next frame starts in, so where the
-#   pose changes, the change happens in the frame before. Nothing is compared during the lead-in.
+#   something she remembers. Each gives the pose at its start (as pose below), the pad,
+#   jump_pressed and pressed (optional, as below). A lead-in frame's pose is the one the next frame
+#   starts in, so where the pose changes, the change happens in the frame before. Nothing is
+#   compared during the lead-in.
 # - pose: the pose at the checked frame's start (spec §2): body, action, facing, radius = [x, y]
 #   in px; aim (optional, default Forward: Forward, Up, UpForward, DownForward, Down); gun
 #   (optional, default "Stowed": "Drawn" or "Stowed"); and turn (optional, `Turning` only,
@@ -59,7 +61,11 @@
 #   during it, when it changes; its radius is her body's size after the change.
 # - frame (optional): "Even" or "Odd", the parity of the checked frame (spec §1.3); default "Even".
 #   The lead-in's frames alternate back from it.
-# - pad: the buttons held; jump_pressed: jump just pressed this frame.
+# - pad: the buttons held; jump_pressed: jump just pressed this frame; pressed (optional, default
+#   none): the other buttons just pressed this frame (held now and not the frame before), named as
+#   in pad. A recorded frame gives the record's presses, so a lead-in's first frame and a vector
+#   with no lead-in carry presses too. Presses are given, never inferred from the pads: a button
+#   held and not in pressed was already held the frame before.
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
 #   position_x compares x alone. pose: the pose the frame ends in (as `pose` gives it),
 #   given where pose fit refuses the change or makes her crouch instead (spec `PoseFitAfterMoves`), so
@@ -323,6 +329,7 @@ before = { position = ["008F.E000", "004B.FFFF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }
 pad = ["run", "right"]
 jump_pressed = false
+pressed = ["right"]
 after = { position = ["0090.A000", "004B.FFFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0000.0000" }
 
 [[vector]]
@@ -345,6 +352,7 @@ before = { position = ["0065.17FF", "00AE.D7FF"], speed_x = "+0001.0000", dash =
 pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }
 pad = ["run", "shoot", "right"]
 jump_pressed = false
+pressed = ["shoot"]
 after = { position = ["0065.97FF", "00B1.3FFF"], speed_x = "+0000.8000", dash = "0000.0000", speed_y = "+0002.8400" }
 
 [[vector]]
@@ -356,13 +364,14 @@ before = { position = ["0065.97FF", "00B6.63FF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["0064.D7FF", "00B9.1FFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0002.D800" }
 
 [[vector]]
 id = "R18"
 source = "samus-input-poses:539"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
-world = { floor_top = 208 }
+world = { floor_top = 208, wall_right = 176 }
 before = { position = ["00AB.FFFF", "00BB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }
 pad = ["run", "right"]
@@ -705,7 +714,7 @@ entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["003E.CFFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.5000", speed_y = "-0006.5000" }
 lead_in = [
-  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = false, pressed = ["run"] },
 ]
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["run", "jump", "right"]
@@ -732,6 +741,7 @@ before = { position = ["06D9.BFFF", "006E.D3FF"], speed_x = "-0000.C000", dash =
 pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
 pad = ["left"]
 jump_pressed = false
+pressed = ["left"]
 after = { position = ["06D8.3FFF", "006F.97FF"], speed_x = "-0001.8000", dash = "0000.0000", speed_y = "+0000.E000" }
 
 [[vector]]
@@ -856,6 +866,7 @@ before = { position = ["0193.2400", "04A9.27FF"], speed_x = "-0000.C000", dash =
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Jump" }
 pad = ["run", "left"]
 jump_pressed = false
+pressed = ["left"]
 after = { position = ["0192.E400", "04A4.B7FF"], speed_x = "-0000.4000", dash = "0000.0000", speed_y = "-0004.5400" }
 
 [[vector]]
@@ -867,6 +878,7 @@ before = { position = ["0192.E400", "04A0.63FF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Jump" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["0193.A400", "049C.2BFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "-0004.1C00" }
 
 [[vector]]
@@ -900,6 +912,7 @@ before = { position = ["0446.0C00", "00AC.C3FF"], speed_x = "-0001.0000", dash =
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Fall" }
 pad = ["run", "left"]
 jump_pressed = false
+pressed = ["left"]
 after = { position = ["0445.8C00", "00AD.F7FF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0001.5000" }
 
 [[vector]]
@@ -917,7 +930,7 @@ after = { position = ["0447.CC00", "00AB.FFFF"], speed_x = "-0000.C000", dash = 
 id = "R88"
 source = "r02:86"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
-world = { floor_top = 192 }
+world = { floor_top = 192, solid_block = [1056, 176] }
 before = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "AgainstWall", facing = "Left", radius = [5, 21] }
 pad = ["run", "left"]
@@ -1085,6 +1098,7 @@ before = { position = ["0566.3FFF", "00A7.1FFF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["run", "jump", "left", "right"]
 jump_pressed = false
+pressed = ["left", "right"]
 after = { position = ["0567.1FFF", "00A2.5BFF"], speed_x = "+0000.C000", dash = "0000.2000", speed_y = "-0004.A800" }
 
 [[vector]]
@@ -1190,7 +1204,7 @@ after = { position = ["0754.8FFF", "0073.4FFF"], speed_x = "-0001.C000", dash = 
 id = "R117"
 source = "r05:268"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
-world = { floor_top = 192 }
+world = { floor_top = 192, solid_block = [1760, 176] }
 before = { position = ["06F5.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "AgainstWall", facing = "Left", radius = [5, 21] }
 pad = ["run", "left"]
@@ -1250,6 +1264,7 @@ before = { position = ["00AD.2000", "0079.0400"], speed_x = "-0001.4000", dash =
 pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], aim = "DownForward" }
 pad = ["shoot", "left", "aim_down"]
 jump_pressed = false
+pressed = ["shoot"]
 after = { position = ["00AB.E000", "007A.3800"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0001.5000" }
 
 [[vector]]
@@ -1283,6 +1298,7 @@ before = { position = ["0099.F000", "0090.FFFF"], speed_x = "-0000.F000", dash =
 pose = { body = "Crouched", action = "Crouching", facing = "Left", radius = [5, 16] }
 pad = ["shoot", "left", "down"]
 jump_pressed = false
+pressed = ["shoot", "left"]
 after = { position = ["0099.F000", "0090.FFFF"], speed_x = "-0000.F000", dash = "0000.0000", speed_y = "+0000.0000" }
 
 [[vector]]
@@ -1305,6 +1321,7 @@ before = { position = ["0085.9000", "008B.FFFF"], speed_x = "-0001.9000", dash =
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
 pad = ["run", "right"]
 jump_pressed = false
+pressed = ["run"]
 after = { position = ["0084.8000", "008B.FFFF"], speed_x = "-0001.1000", dash = "0000.0000", speed_y = "+0000.0000" }
 
 [[vector]]
@@ -1374,6 +1391,7 @@ before = { position = ["0039.2C00", "0230.BBFF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["run", "jump", "right"]
 jump_pressed = false
+pressed = ["right"]
 after = { position = ["0039.EC00", "022C.B3FF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "-0003.EC00" }
 
 [[vector]]
@@ -1482,7 +1500,7 @@ after = { position = ["002D.4FFF", "018F.DBFF"], speed_x = "+0001.C000", dash = 
 id = "R149"
 source = "area-norfair:328"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
-world = { floor_top = 464 }
+world = { floor_top = 464, wall_right = 80 }
 before = { position = ["004B.FFFF", "01BB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }
 pad = ["right"]
@@ -1538,6 +1556,7 @@ pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21]
 next_pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], aim = "DownForward" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["00CA.D000", "008B.FFFF"], speed_x = "-0002.C000", dash = "0000.B000", speed_y = "+0000.0000" }
 
 [[vector]]
@@ -1974,17 +1993,39 @@ pad = ["right", "aim_down"]
 jump_pressed = false
 after = { position = ["010B.FFFF", "010B.FFFF"] }
 
+# C-aim-enemy: running at 1.0000 (0.D000 grown by 0.3000, below the top speed), she runs free to a
+# solid enemy: her right side 273 meets its left side 273, and the move ends no closer than the
+# half-sizes (centres 268 and 281, 13 apart). The aim change's step reaches it with no move, and
+# touching it (a gap of 0) clears her y subpixel.
+
 [[vector]]
 id = "C-aim-enemy"
 source = "constructed"
-entries = ["AimingAndShooting", "SolidEnemies", "MovesAsShePosed"]
+entries = ["AimingAndShooting", "SolidEnemies", "MovesAsShePosed", "WordwiseTopSpeed"]
 world = { floor_top = 288, enemy = { centre = [281, 256], radius = [8, 16] } }
-before = { position = ["010A.0000", "010B.FFFF"], speed_x = "+0001.D000" }
+before = { position = ["010B.0000", "010B.FFFF"], speed_x = "+0000.D000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21], aim = "DownForward" }
 pad = ["right", "aim_down"]
 jump_pressed = false
 after = { position = ["010C.0000", "010B.0000"] }
+
+# C-aim-enemy-stop: the same enemy 2 px ahead, but the run is 2.C000 (1.D000 grown to 2.0000, which
+# the top speed's part-by-part test snaps up to 2.C000), so the run itself reaches the enemy and
+# stops 2 px on, her subpixel kept: a wall stop while running. She is put against the wall with
+# the aim she ran with (`Forward`), and no step comes.
+
+[[vector]]
+id = "C-aim-enemy-stop"
+source = "constructed"
+entries = ["AimingAndShooting", "SolidEnemies", "WhatHerMovesMet", "WordwiseTopSpeed"]
+world = { floor_top = 288, enemy = { centre = [281, 256], radius = [8, 16] } }
+before = { position = ["010A.0000", "010B.FFFF"], speed_x = "+0001.D000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }
+pad = ["right", "aim_down"]
+jump_pressed = false
+after = { position = ["010C.0000", "010B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000" }
 
 [[vector]]
 id = "C-aim-slope"
@@ -2111,6 +2152,7 @@ pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16]
 next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
 pad = ["run", "right", "jump"]
 jump_pressed = true
+pressed = ["run"]
 after = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
 
 # Pose fit (PoseFitAfterMoves): her body grows, and the push follows from the pose chosen. PF2 and
@@ -2622,8 +2664,9 @@ entries = ["SlopesSlowTheWalk", "TurningRound", "WordwiseTopSpeed", "FollowingTh
 world = { slope_floor = { block = [96, 192], surface = [9, 10, 11, 12, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16], factor = "0.C0" } }
 before = { position = ["0062.97FF", "00B6.1FFF"] }
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
-pad = ["run", "right"]
+pad = ["run", "right", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["0063.27FF", "00B7.1FFF"], speed_x = "+0000.C000", dash = "0000.0000" }
 
 [[vector]]
@@ -2635,6 +2678,7 @@ before = { position = ["034C.BC00", "049E.4FFF"], speed_x = "-0000.C000" }
 pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
 pad = ["run", "left"]
 jump_pressed = false
+pressed = ["run"]
 after = { position = ["034B.9C00", "049E.4FFF"], speed_x = "-0001.8000", speed_y = "+0000.1C00" }
 
 [[vector]]
@@ -2926,6 +2970,7 @@ lead_in = [
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Fall" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["0445.8C00", "00AD.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0001.8800" }
 
 [[vector]]
@@ -2962,6 +3007,7 @@ pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16] 
 next_pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
 pad = ["left"]
 jump_pressed = false
+pressed = ["left"]
 after = { position = ["009D.C000", "008B.FFFF"] }
 
 # Starting to crouch or morph lowers her (ShrinkingLowersHer): 5 px into a crouch, 9 px into the
@@ -2979,6 +3025,7 @@ pose = { body = "Upright", action = "Still", facing = "Left", aim = "DownForward
 next_pose = { body = "Crouched", action = "Crouching", facing = "Left", radius = [5, 16] }
 pad = ["run", "down"]
 jump_pressed = false
+pressed = ["down"]
 after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 
 [[vector]]
@@ -2991,6 +3038,7 @@ pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16]
 next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
 pad = ["down"]
 jump_pressed = false
+pressed = ["down"]
 after = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 
 [[vector]]
@@ -3003,6 +3051,7 @@ pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", r
 next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
 pad = ["run", "right", "down"]
 jump_pressed = false
+pressed = ["right", "down"]
 after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00" }
 
 # C-shrink-floor: SH3 with a floor 2 px under her feet (her bottom pixel 157, the floor's top 160).
@@ -3036,6 +3085,7 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 2
 next_pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
 pad = ["left", "jump"]
 jump_pressed = false
+pressed = ["left"]
 after = { position = ["06C7.2000", "00A7.1FFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "-0004.C400" }
 
 # A wall jump readied: the near-wall test runs in a spin carried on with a side held, and finding
@@ -3052,7 +3102,7 @@ world = { solid_block = [32, 1088] }
 before = { position = ["003F.1FFF", "044C.37FF"], speed_x = "-0001.6000", dash = "0000.0000", speed_y = "+0000.1C00" }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["left", "jump"], jump_pressed = false },
-  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
 ]
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["right"]
@@ -3088,6 +3138,7 @@ pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
 next_pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], aim = "DownForward" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["057C.D000", "02AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000" }
 
 [[vector]]
@@ -3100,6 +3151,7 @@ pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21]
 next_pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], aim = "DownForward" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["04EE.3FFF", "023B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000" }
 
 [[vector]]
@@ -3112,6 +3164,7 @@ pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21
 next_pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["0535.3FFF", "02BB.FFFF"] }
 
 [[vector]]
@@ -3167,6 +3220,7 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 next_pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
 pad = ["left"]
 jump_pressed = false
+pressed = ["left"]
 after = { position = ["04AB.DFFF", "0245.F3FF"], speed_x = "+0001.B000", dash = "0000.0000", speed_y = "+0001.8800" }
 
 # W15: in a spin carried on with right held, the near-wall test looks 8 px left and reaches the
@@ -3181,7 +3235,7 @@ entries = ["TouchedCells", "WallJump", "TurningRound", "DriftInTheAir"]
 world = { solid_block = [1104, 672], cells = [{ block = [1104, 656], kind = "ReactingAir" }] }
 before = { position = ["0471.3FFF", "028D.0800"], speed_x = "-0001.6000", dash = "0000.A000", speed_y = "+0000.5400" }
 lead_in = [
-  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["right"], jump_pressed = false },
 ]
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
@@ -3189,6 +3243,7 @@ next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [
 frame = "Even"
 pad = ["right", "aim_down"]
 jump_pressed = false
+pressed = ["aim_down"]
 after = { position = ["046C.BFFF", "028E.5800"], speed_y = "+0000.A800", wall_test = "Neither", reached = [{ cell = [1120, 640], way = "Left" }, { cell = [1120, 656], way = "Left" }, { cell = [1104, 640], way = "Look" }, { cell = [1104, 656], way = "Look" }, { cell = [1120, 656], way = "Down" }, { cell = [1136, 656], way = "Down" }, { cell = [1120, 624], way = "Look" }, { cell = [1136, 624], way = "Look" }, { cell = [1120, 672], way = "Look" }, { cell = [1136, 672], way = "Look" }] }
 
 # W16: a take-off from a crouch with run and right held gains no dash and doesn't move; the

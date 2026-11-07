@@ -87,7 +87,7 @@ except in a jump, a spin, a fall or a wall jump, where it means she has just sta
 
 | Input | Type | Read by |
 | --- | --- | --- |
-| pad | held: run, jump, shoot, left, right, up, down, aim up, aim down; just pressed: jump | most behaviours |
+| pad | held: run, jump, shoot, left, right, up, down, aim up, aim down; just pressed: each of them, held this frame and not the frame before | most behaviours |
 | equipment | hi-jump, space jump: `bool` | `Jumping` |
 | equipment seen only in the sprite | screw attack, spring ball, a suit other than the first (varia or gravity): `bool` | output (§2's last paragraph); spring ball also `AnimationEnds` |
 | world | the room's blocks and solid enemies, answered as §8 says | §8 |
@@ -219,9 +219,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   replaces the pad's running pose brings no step, and an animation's end handing over a pose
   neither brings nor cancels it. A block or a solid enemy in the way of the step puts her against
   the wall instead (`WhatHerMovesMet`), so a standing start next to a wall with the pad asking to
-  run leaves her against it. A wall stop that frame while running puts her against the wall too,
-  without a step. Standing, unaimed and not landing, holding shoot restarts the standing
-  animation.
+  run leaves her against it. Against the wall with forward held is the same: the row into running
+  brings the step, the wall she is against stops it, and she stays against the wall where she is.
+  A wall stop that frame while running puts her against the wall too, without a step. Standing,
+  unaimed and not landing, holding shoot restarts the standing animation.
 - The step comes after that frame's moves and the ground pull. A solid enemy within its reach
   (`SolidEnemies`) stops it with no move at all; one she already touches still clears her y
   subpixel. A block in the way stops it as any horizontal move (`BlocksStopFlush`): by whole pixels
@@ -229,8 +230,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   pixel ahead moves her that part of a pixel. The floor and ceiling checks of `SlopesCarry` don't
   run after the step, so it can leave her bottom edge in a sloped floor's solid part.
 - checked: oracle (A1, the step; W12 standing into running, W17 and W18 a landing into
-  running, W19 standing into running against a wall); constructed (C-aim-short, C-aim-enemy,
-  C-aim-slope; the shot).
+  running, W19 standing into running against a wall; R18, R88, R117 and R149 against the wall
+  with forward held); constructed (C-aim-short, C-aim-enemy, C-aim-enemy-stop, C-aim-slope; the
+  shot).
 
 ### RidingTheElevator
 - Mechanic. Facing the screen on a moving elevator, she moves down 1 px a frame, a move a solid or
@@ -810,7 +812,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   stop her only on a path free of solid enemies (`BlocksStopFlush`).
 - checked: oracle (W13, a landing on one 2 px below and the fit's look touching it; W20,
   running on one); constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-enemy-overlap,
-  C-aim-enemy).
+  C-aim-enemy, C-aim-enemy-stop).
 
 ### SlopesCarry
 - Mechanic. On a slope the ground pull is 1 px instead of her speed plus 1 px.
@@ -980,9 +982,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - Quirk, **Toggle**. The top speed is tested part by part, on the speed's size. `Wordwise`
   (vanilla): she keeps her speed if its pixel part is `below` the top's; else if the pixel parts
   differ she takes the top speed; else she keeps it if the subpixels are equal or hers is `below`,
-  else takes the top. So 2.1000 snaps up to 2.C000, 3.C000 is kept over 3.4000, 0.C000 is kept
-  over 0, and 2.2000 snaps down to 1.4000. `Exact`: the smaller of the two. checked: oracle
-  (`Wordwise`, the running vectors); constructed (C-cap, C-cap-exact).
+  else takes the top. So 2.1000 and 2.0000 snap up to 2.C000, 3.C000 is kept over 3.4000, 0.C000
+  is kept over 0, and 2.2000 snaps down to 1.4000. `Exact`: the smaller of the two. checked: oracle
+  (`Wordwise`, the running vectors); constructed (C-cap, C-cap-exact, C-aim-enemy-stop).
 
 ## 10. Out of scope, and what remains
 

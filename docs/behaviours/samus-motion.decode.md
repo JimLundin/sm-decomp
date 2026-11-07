@@ -844,6 +844,51 @@ is pushed 0 px and seated (`0DBA` = 1). Vectors: C-slope-ceiling-empty (target t
 stopped), C-slope-ceiling-empty-on (row 1: moves on), C-slope-floor-empty (target bottom on row
 15: lands), all constructed.
 
+## Round 7's gaps (2026-11-07)
+
+The round-7 model failed 9 of 203 vectors. Each is settled from the records
+(`$TEMP/respec-motion/out`) and the bank logs; the scripts are `$TEMP/r7v-scripts/press.pl` and
+`apply.pl`.
+
+**Presses (SH1, SH2, SH3, C-shrink-floor).** The pad chart reads newly pressed buttons for every
+button, not only jump: the transition-table lookup `$91:81A9` matches each row's required newly pressed
+input (`$8F`) as well as its held input. The vector format gave only `jump_pressed`, so
+these four, whose crouch or morph needs down newly pressed, could not be stated. New key
+`pressed`: record N's pad AND NOT record N − 1's, jump left to `jump_pressed`, bits outside the
+format's buttons (Select `2000`, item cancel Y `4000`) dropped. SH1 r02:94 8220 → 8400 (down), SH2
+samus-bomb-jump-vertical:848 (down), SH3 r04:311 (right, down); C-shrink-floor is SH3's frame, so
+down too. `press.pl` over every recorded vector: 30 frames press a non-jump button, written by
+`apply.pl` on the checked frame and on lead-in frames (R62's and W15's first lead-in frames press
+run and right, which no inference from the pads can give). It also found S1's pad short of aim
+down (samus-input-poses:511 is 8120): fixed; a ground turn with forward held keeps the turn either
+way. r04:307 holds left and right together (8380, R102), against the spec's "no record does"
+(`PadChart`); left for the caller.
+
+**Against the wall with forward held (R18, R88, R117, R149).** `$91:EADE` runs for any prospective
+pose of movement type 1: it moves her 1 px forward with block collision (`$94:971E`) after the
+solid-enemy test (`$A0:A8F0`), and on a collision sets the prospective pose to ran into a wall by
+the aim (`$91:EB74`). Pose 89h/8Ah's row for forward held gives 09h/0Ah, so the step comes and the
+wall stops it. Records: samus-input-poses:537-539 (89h, pad 8100/8120, x 00AB.FFFF kept),
+r02:84-88 (8Ah), r05:267-270 (8Ah), area-norfair:327-330 (89h with right held four frames, x
+004B.FFFF kept). Each arrived by a run that stopped flush (538 from 00A9.C7FF at 4.0000; 327 from
+004A.6FFF), so a block stood in her rows at x + 5 (right) or x − 5 (left). The worlds lacked it:
+R18 `wall_right = 176`, R149 `wall_right = 80`; R88 and R117 face left, which the format has no
+wall key for, so a `solid_block` beside her feet ([1056, 176], [1760, 176]) stands for it. The
+row it was in is not in the dump; any row of her body stops the step the same way. The spec was
+right; `AimingAndShooting` now says so for this case.
+
+**C-aim-enemy.** 1.D000 + 0.3000 = 2.0000; the wordwise cap (`$90:9A99`) against 2.C000: pixel
+parts equal, 0000 not equal to C000 and not below it, so the top is taken: 2.C000. The run reaches
+the enemy (end 268.C000, pushed 1 px: centre 269 against 281, closer than 13) and stops 2 px on at
+010C.0000, subpixel kept: a wall stop while running (`$90:E5CE` sets `0DCE` for any solid
+collision, enemy or block), so `$91:EADE` takes the ran-into-wall pose from the current pose's
+aim (Forward, 89h) and no step comes. The implementer's result was right. The vector's values fit a
+2.0000 run, which running can't keep. C-aim-enemy now starts at 010B.0000 with 0.D000 (grown to
+1.0000, kept): the run ends at 010C.0000 touching the enemy without reaching it (centres 268 and
+281, both subpixels 0 so no push), and the step reaches it: no move, y subpixel cleared, aim
+`DownForward`. The old frame is kept as C-aim-enemy-stop with the right outcome (AgainstWall
+`Forward`, 010C.0000, 010B.FFFF, speed and dash 0).
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
