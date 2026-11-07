@@ -806,7 +806,8 @@ constants and statics). The old code the domain replaces:
 | `game/src/collision.rs`, the block scans (`SlopeFlag` to `scan_y`) | 2,499 | 0 |
 | `game/src/pose.rs`, the pad's pose requests (`PoseRequests` to `input`) | 572 | 91 |
 | `game/src/collision/solid_enemy.rs` | 1,220 | 0 |
-| Total | 13,365 | 116 |
+| `game/src/pose/fit.rs` (pose fit, in the domain from 4d34fe9ae) | 1,758 | 37 |
+| Total | 15,123 | 153 |
 
 `collision/inside.rs` (696) is not counted: the engine keeps its touch handling. The old engine
 read the pose chart and the sprite list from the ROM, so its data column is near zero.

@@ -21,11 +21,12 @@ so is each bracket pair; comments, layout and tests are free. The values of cons
 (tables of the game's data, such as the chart's rows) are counted apart as data and reported;
 the target is on everything else, the logic.
 
-**Baseline: about 13,400 tokens of logic** in the old code this domain replaces, tests excluded.
+**Baseline: about 15,100 tokens of logic** in the old code this domain replaces, tests excluded
+(pose fit, now in the domain, included).
 
-**Target: 6,500 tokens of logic** for the new model: motion, landings and turns about 2,000, the
+**Target: 7,300 tokens of logic** for the new model: motion, landings and turns about 2,000, the
 pose chart's reader and effects about 1,500, collision with blocks and solid enemies about 1,500,
-the shared types and slack 1,500. Over the target, the implementer keeps reshaping and reports
+pose fit about 800, the shared types and slack 1,500. Over the target, the implementer keeps reshaping and reports
 why the rest can't go, and the root reviews that report; over the baseline is a strict failure.
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
