@@ -58,6 +58,7 @@ a catalogue entry or a field that the spec doesn't give.
 
 ## Done
 
-Every vector passes, the checks are clean, and the model is within the spec's size target. Your
-report gives the gaps you found, the size, and one line confirming you read nothing outside the
+Every vector passes, the checks are clean, and the model is within the spec's size target, or as
+near as you can bring it with the reason the rest can't go. Your report gives the gaps you found,
+the size, and one line confirming you read nothing outside the
 export.

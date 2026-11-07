@@ -13,6 +13,9 @@ need is in this repository; read nothing outside it.
   The finished model is later checked against the real game, frame by frame.
 - **Small and data-driven.** One kind of movement or situation is one row of a table, where it can
   be. One rule lives in one place. The spec's header gives a size target; work until you reach it.
+  A table's values are counted apart from the logic, as data. A row states something the spec
+  gives as a fact (a speed, a cell, a row of a chart); a row that encodes a decision the code would
+  otherwise make, such as which branch to take, is logic and counts as such.
 
 ## What a modern developer would expect
 
@@ -23,15 +26,15 @@ behaviour fits them:
 - **A character controller** for the player: her motion as velocity and position in fixed-point
   subpixels, stepped at a fixed 60 Hz timestep, with gravity, acceleration and caps as tuning
   parameters in `Rules`.
-- **A state machine** for what she is doing: her states and the moves between them as rows, each with
-  what entering a state does. The pose chart is these rows.
+- **A state machine** for what she is doing: her states and the moves between them as rows, each
+  move with its effects. The pose chart is these rows.
 - **Input as actions** (jump, shoot, aim up, run), not raw buttons; the binding to buttons is the
   caller's.
 - **Tilemap collision:** move and collide one axis at a time against a grid of tiles, each with a
   collision shape (solid, a slope with its surface heights, air of a kind); actors against actors
   as axis-aligned boxes.
-- **Animation as clips:** named sequences of frames with durations, and what happens at a clip's
-  end. Drawing is someone else's: the model says which clip and pose, never which sprite.
+- **Animation as clips:** named sequences of frames, with the durations a spec gives, and what
+  happens at a clip's end; where a spec leaves timing out, so does the model. Drawing is someone else's: the model says which clip and pose, never which sprite.
 - **Events out, not side effects:** what she touched or met is returned for the caller to act on.
 
 Where the spec's exact behaviour departs from what these shapes would do on their own (a quirk),
