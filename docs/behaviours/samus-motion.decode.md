@@ -161,10 +161,12 @@ spec, and the take-off below), and the gun 7,438. What the run found:
 - The take-off facing left (4Ch, 56h, 58h, 5Ah) has a row hold right → 30h (turn) that its
   right-facing mirror (4Bh, 55h, 57h, 59h) lacks, placed before hold shoot: spec row "facing left:
   back held; beats shoot held". No record reaches it (every recorded take-off ends by its
-  animation the next frame); C-chart-i, C-chart-j.
+  animation the next frame). A take-off lasts one frame and its animation's end always decides
+  the next pose, so the pad never decides during it in play: the row is unreachable, left out of
+  the spec, and the checker reports it as known.
 - The straight jump aiming down facing right (17h) has hold right + jump + shoot → 13h after the
   diagonal rows; 18h has a second left + jump + aim-down row in its place. Spec row "aiming `Down`,
-  facing right: forward, jump and shoot held"; C-chart-k, C-chart-l.
+  facing right: forward, jump and shoot held"; C-chart-i, C-chart-j.
 - The gun: every row naming shoot whose pose is `Forward` running, jumping or falling goes to
   0Bh, 13h or 67h. 0Bh's and 67h's hold-forward rows go to themselves, 09h's and 29h's to
   themselves (spec "gun as it was"); 13h's hold right goes to 51h (stowed). 13h lacks 4Dh's and

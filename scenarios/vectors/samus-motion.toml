@@ -2444,28 +2444,6 @@ after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim =
 id = "C-chart-i"
 source = "constructed"
 entries = ["PadChart"]
-pose = { body = "Upright", action = "TakingOff", facing = "Left", aim = "Forward" }
-pad = ["right"]
-jump_pressed = false
-pressed = []
-met = "nothing"
-after = { pose = { body = "Upright", action = "Turning", facing = "Right", aim = "Forward" } }
-
-[[pose_step]]
-id = "C-chart-j"
-source = "constructed"
-entries = ["PadChart"]
-pose = { body = "Upright", action = "TakingOff", facing = "Right", aim = "Forward" }
-pad = ["left"]
-jump_pressed = false
-pressed = []
-met = "nothing"
-after = { pose = { body = "Upright", action = "TakingOff", facing = "Right", aim = "Forward" } }
-
-[[pose_step]]
-id = "C-chart-k"
-source = "constructed"
-entries = ["PadChart"]
 pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down" }
 pad = ["right", "jump", "shoot"]
 jump_pressed = false
@@ -2474,7 +2452,7 @@ met = "nothing"
 after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" } }
 
 [[pose_step]]
-id = "C-chart-l"
+id = "C-chart-j"
 source = "constructed"
 entries = ["PadChart"]
 pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Down" }

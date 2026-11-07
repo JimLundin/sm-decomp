@@ -94,7 +94,7 @@ except in a jump, a spin, a fall or a wall jump, where it means she has just sta
 | action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
 | facing | `Left`, `Right`, `Screen` (facing the player; counts as `Right` wherever a side is needed) |
 | aim | the arm's direction: `Forward`, `Up`, `UpForward`, `DownForward`, `Down`; it changes only the sprite, except for `AimingAndShooting` |
-| gun | `Stowed`, `Drawn` (her gun held out in front, a sprite of its own); only `Running`, `Jumping` and `Falling` aimed `Forward` show it `Drawn`, every other pose has it `Stowed`. It changes only the sprite and the pad chart's rows (`PadChart` says what draws and stows it) |
+| gun | `Drawn` (her gun held out in front, a sprite of its own), `Stowed`; only upright `Running`, `Jumping` and `Falling` aimed `Forward` show it `Drawn`, every other pose has it `Stowed`. It changes only the sprite and the pad chart's rows (`PadChart` says what draws and stows it) |
 
 **Forward** is the side she faces, **back** the other side; holding forward means holding the pad
 towards her facing. The sprite has more variants than these parts tell apart (the landing
@@ -350,9 +350,10 @@ rows); inside the header's 450 for the chart.
   the pad can't hold both, and no record does.
 - The gun. A next pose has the gun `Stowed` unless its cell says "gun drawn" (she draws it) or
   "gun as it was" (drawn if it was drawn); "kept" keeps it as it was. So she draws it by holding
-  shoot while running forward, taking off, jumping, falling or wall jumping, or by pressing shoot
-  in a spin, where the ranks make that row the winner; any other outcome stows it: an aim, a
-  turn, holding forward in a jump, a landing, walking off a ledge, the end of an animation. A Pad
+  shoot while running forward, jumping, falling or wall jumping, or by pressing shoot in a spin,
+  where the ranks make that row the winner; any other outcome stows it: an aim, a turn, holding
+  forward in a jump, a landing, walking off a ledge, the end of an animation (a take-off ends in a
+  jump with the gun stowed, whatever she holds). A Pad
   cell that starts "gun stowed:" fits only while her gun is stowed.
 - Rows are listed by rank (just pressed first, then by how many buttons they name), and inside a
   rank by next pose (action, then the first aim the cell names, alphabetically; "kept" last);
@@ -388,8 +389,7 @@ rows); inside the header's 450 for the chart.
 | | jump with up, down or an aim button held; beats jump and forward held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
 | | jump and back held; beats jump with up, down or an aim button held | `Turning` in the air | `TurningRound` |
 | | shoot held | `Jumping`, `Forward`, gun drawn | none |
-| | she faces `Left`: back held; beats shoot held | `Turning` in the air | `TurningRound` |
-| | anything else, or nothing held (jump alone too, and back alone when she faces `Right`) | kept | as running |
+| | anything else, or nothing held (jump alone too) | kept | as running |
 | in a straight jump | aiming `Down`: down pressed | ball `Morphing` | none |
 | | aiming `Down`, she faces `Right`: forward, jump and shoot held; forward with up, down or an aim button held beats it | `Jumping`, `Forward`, gun drawn | none |
 | | forward with up, down or an aim button held | `Jumping`, air aim | none |
@@ -471,7 +471,7 @@ rows); inside the header's 450 for the chart.
   carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the
   pad again.
 - checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, U1, and R133 and R141 of
-  `TurningRound`); constructed (C-chart-a to C-chart-l).
+  `TurningRound`); constructed (C-chart-a to C-chart-j).
 
 ### Aiming
 - Mechanic. The aim a next pose takes from the held buttons, by the rule its row names:
