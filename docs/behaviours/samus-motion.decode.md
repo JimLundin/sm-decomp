@@ -303,3 +303,404 @@ air; `BreaksToShots`, `HoldsGrapple`, `BreaksToBombs` the shot, grapple and bomb
 `ReactingBlock` / `ReactingAir` the special block and special air; `StandIn` the horizontal or
 vertical extension block, `names` its target's corner. The unused air type behaves as plain air
 and has no key (spec `OtherBlockKinds`).
+
+## The pose map (gaps 6 and 7, 2026-11-07)
+
+**What changed in the spec.** §2 gains the action `Landing` with the part `landed from` (`Jump`,
+`Spin`), the part `legs` (`Together`, `Striding`), the gun `Drawn` on the landing that fires, the
+turn's aim, the body during a change of shape, and the equipment seen only in the sprite (screw
+attack, spring ball, the suit). With these, every sprite id the domain reaches is one §2 Pose,
+except the spin and facing the screen, which the equipment decides.
+
+**Sources.**
+
+| Fact | Source |
+| --- | --- |
+| facing, movement type, the pose with no buttons | pose definitions `$91:B629` (bytes 0, 1, 2); a turn's byte 0 is the new facing, a moonwalk's the way she walks |
+| landing poses: spin or wall jump (old movement type 3, 14h) → A6h/A7h; else by the shot direction (`$91:B62C`): up/up-forward/down-forward → E0h-E5h, forward with shoot held → E6h/E7h, forward or down → A4h/A5h | `$91:E95D`, table `$91:E9F3` |
+| a landing ends into the standing pose of its aim (A4h, A6h, E6h → 01h; E0h → 03h; E2h → 05h; E4h → 07h) | `$91:B22D`..`$91:B253` (instruction F8) |
+| a landing pose has no pose with no buttons (FFh), so the let-go row keeps it, aim included; a standing pose's is 01h/02h | `$91:82D9` (FFh: retain), `$91:B629` byte 2 |
+| the spin: in a liquid without the gravity suit, 19h/1Ah; else screw attack → 81h/82h, space jump → 1Bh/1Ch, else 19h/1Ah; run on every change into movement type 3 (a jump, a spin reversed, a wall jump's end, the moonwalk turn's end) | `$91:F624`, `$91:F67F`..`$91:F74A` |
+| the wall jump's spin is drawn by equipment too (one pose, three sequences) | `$91:B491` (instruction FB) |
+| facing the screen: 9Bh with varia or gravity, else 00h; re-picked when equipment changes | `$91:E3F6`, `$91:E733` |
+| a turn takes its pose from the shot direction of the pose before: standing `$91:F9C2`, crouching `$91:F9CC`, jumping `$91:F9D6`, falling `$91:F9E0`, the moonwalk with jump held `$91:F9EA`; the chart's rows only ever name the unaimed turns (25h, 2Fh, 87h, 43h, BFh) | `$91:F8D3`, `$91:F952`, `$91:F98A` |
+| the air turns aimed down-forward and down are one sprite (91h, 95h) and end aimed down (18h, 2Eh); the crouched one (99h) ends down-forward (74h) | `$91:B401`, `$91:B415`, `$91:B429` |
+| a jump turn's end: 2Fh → 52h (moving forward), 8Fh → 16h, 9Eh → 6Ah; a take-off's end: 4Bh → 4Dh, 55h → 15h, 57h → 69h, 59h → 6Bh | `$91:B3C5`, `$91:B3F7`, `$91:B43D`, `$91:B308`..`$91:B322` |
+| legs: hold forward → 51h (moving forward), hold jump alone → 4Dh, hold shoot → 13h, in 4Bh, 4Dh, 51h, 13h, 15h, 69h's rows | transition table `$91:9EE2` |
+| the morph's end: spring ball → 79h (ground) / 7Dh (air), else 1Dh / 31h | `$91:B4C8`, `$91:B4D1` (instruction F9, item 0002) |
+| the body while changing shape: y radius 10h for 35h, 3Dh, F1h-F6h; 7 for 37h; 15h for 3Bh, F7h-FCh | `$91:B629` byte 6 |
+| the crouched aimed turns (97h-9Ah, A2h, A3h) have the jump turn's movement type 17h; their tables are empty, so the chart's "crouched turning" row covers them | `$91:B629` byte 1 |
+
+Records: 51h → E6h with shoot held (pad 8140, 8040, 0140) and 51h → A4h without, 13h → A4h with
+the pad let go, 81h → A6h, 2Fh → 52h, 92h → 17h, 9Ah → 73h, 9Eh → 6Ah, 8Dh → 1Ah
+(`$TEMP/pose-chart/all.txt`). No record has a turn in the air meeting the floor (spec §11 item 12):
+`$91:E95D` would index `$91:E9F3` by the turn's shot direction (FAh-FCh), past the table.
+
+**Vectors changed.** Start pose `Landing` from `Jump`: R54, R56, R69 (A4h/A5h), R118, R143 (A5h),
+R146 (E4h). After pose `Landing`: P4 (A4h, from `Jump`), P5 (A6h, from `Spin`). Legs `Striding`:
+R8, R40, R41, R66, R110, R115, P9, P18 (start, 51h/52h), P19, G7 (after). Body `Crouched` while
+`Crouching`: R48, R89, R128, R129 (35h/36h, radius 16). `$TEMP/pose-map/edit.pl` made the edits;
+the ids come from `$TEMP/vec-fix/chk.pl`'s records.
+
+**From a §2 Pose to the id the game shows.** The Pose decides the id alone, except:
+- `Spinning`: 81h/82h with screw attack, else 1Bh/1Ch with space jump, else 19h/1Ah (and 19h/1Ah in
+  a liquid without the gravity suit);
+- upright `Still` facing `Screen`: 9Bh with varia or gravity, else 00h.
+
+A turn's facing is its new facing; a moonwalk's is the way she walks. A Pose the spec never
+produces maps to its nearest sprite: an air turn aimed `DownForward` as `Down` (91h/92h, 95h/96h),
+a crouched turn aimed `Down` as `DownForward` (99h/9Ah).
+
+| Body | Action | Aim | Other parts | Right | Left | Screen |
+| --- | --- | --- | --- | --- | --- | --- |
+| Ball | Falling | Forward |  | 31h | 32h | - |
+| Ball | Morphing | Forward |  | 37h | 38h | - |
+| Ball | Rolling | Forward |  | 1Eh | 1Fh | - |
+| Ball | Still | Forward |  | 1Dh | 41h | - |
+| Crouched | Crouching | DownForward |  | F5h | F6h | - |
+| Crouched | Crouching | Forward |  | 35h | 36h | - |
+| Crouched | Crouching | Up |  | F1h | F2h | - |
+| Crouched | Crouching | UpForward |  | F3h | F4h | - |
+| Crouched | Still | DownForward |  | 73h | 74h | - |
+| Crouched | Still | Forward |  | 27h | 28h | - |
+| Crouched | Still | Up |  | 85h | 86h | - |
+| Crouched | Still | UpForward |  | 71h | 72h | - |
+| Crouched | Turning | DownForward | turn Ground | 9Ah | 99h | - |
+| Crouched | Turning | Forward | turn Ground | 44h | 43h | - |
+| Crouched | Turning | Up | turn Ground | 98h | 97h | - |
+| Crouched | Turning | UpForward | turn Ground | A3h | A2h | - |
+| Crouched | Unmorphing | Forward |  | 3Dh | 3Eh | - |
+| SpringBall | Falling | Forward |  | 7Dh | 7Eh | - |
+| SpringBall | Jumping | Forward |  | 7Fh | 80h | - |
+| SpringBall | Rolling | Forward |  | 7Bh | 7Ch | - |
+| SpringBall | Still | Forward |  | 79h | 7Ah | - |
+| Upright | AgainstWall | DownForward |  | D1h | D2h | - |
+| Upright | AgainstWall | Forward |  | 89h | 8Ah | - |
+| Upright | AgainstWall | UpForward |  | CFh | D0h | - |
+| Upright | Falling | Down |  | 2Dh | 2Eh | - |
+| Upright | Falling | DownForward |  | 6Fh | 70h | - |
+| Upright | Falling | Forward |  | 29h | 2Ah | - |
+| Upright | Falling | Forward | gun Drawn | 67h | 68h | - |
+| Upright | Falling | Up |  | 2Bh | 2Ch | - |
+| Upright | Falling | UpForward |  | 6Dh | 6Eh | - |
+| Upright | Jumping | Down |  | 17h | 18h | - |
+| Upright | Jumping | DownForward |  | 6Bh | 6Ch | - |
+| Upright | Jumping | Forward |  | 4Dh | 4Eh | - |
+| Upright | Jumping | Forward | gun Drawn | 13h | 14h | - |
+| Upright | Jumping | Forward | legs Striding | 51h | 52h | - |
+| Upright | Jumping | Up |  | 15h | 16h | - |
+| Upright | Jumping | UpForward |  | 69h | 6Ah | - |
+| Upright | Landing | DownForward | landed from Jump | E4h | E5h | - |
+| Upright | Landing | Forward | landed from Jump | A4h | A5h | - |
+| Upright | Landing | Forward | landed from Jump, gun Drawn | E6h | E7h | - |
+| Upright | Landing | Forward | landed from Spin | A6h | A7h | - |
+| Upright | Landing | Up | landed from Jump | E0h | E1h | - |
+| Upright | Landing | UpForward | landed from Jump | E2h | E3h | - |
+| Upright | Moonwalking | DownForward |  | 77h | 78h | - |
+| Upright | Moonwalking | Forward |  | 49h | 4Ah | - |
+| Upright | Moonwalking | UpForward |  | 75h | 76h | - |
+| Upright | Running | DownForward |  | 11h | 12h | - |
+| Upright | Running | Forward |  | 09h | 0Ah | - |
+| Upright | Running | Forward | gun Drawn | 0Bh | 0Ch | - |
+| Upright | Running | UpForward |  | 0Fh | 10h | - |
+| Upright | Spinning | Forward |  | 19h (neither (or in a liquid without the gravity suit)); 1Bh (space jump, no screw attack); 81h (screw attack) | 1Ah (neither (or in a liquid without the gravity suit)); 1Ch (space jump, no screw attack); 82h (screw attack) | - |
+| Upright | StandingUp | DownForward |  | FBh | FCh | - |
+| Upright | StandingUp | Forward |  | 3Bh | 3Ch | - |
+| Upright | StandingUp | Up |  | F7h | F8h | - |
+| Upright | StandingUp | UpForward |  | F9h | FAh | - |
+| Upright | Still | DownForward |  | 07h | 08h | - |
+| Upright | Still | Forward |  | 01h | 02h | 00h (first suit); 9Bh (varia or gravity) |
+| Upright | Still | Up |  | 03h | 04h | - |
+| Upright | Still | UpForward |  | 05h | 06h | - |
+| Upright | TakingOff | DownForward |  | 59h | 5Ah | - |
+| Upright | TakingOff | Forward |  | 4Bh | 4Ch | - |
+| Upright | TakingOff | Up |  | 55h | 56h | - |
+| Upright | TakingOff | UpForward |  | 57h | 58h | - |
+| Upright | Turning | Down | turn Fall | 96h | 95h | - |
+| Upright | Turning | Down | turn Jump | 92h | 91h | - |
+| Upright | Turning | DownForward | turn Ground | 8Eh | 8Dh | - |
+| Upright | Turning | DownForward | turn MoonwalkJump | C4h | C3h | - |
+| Upright | Turning | Forward | turn Fall | 88h | 87h | - |
+| Upright | Turning | Forward | turn Ground | 26h | 25h | - |
+| Upright | Turning | Forward | turn Jump | 30h | 2Fh | - |
+| Upright | Turning | Forward | turn MoonwalkJump | C0h | BFh | - |
+| Upright | Turning | Up | turn Fall | 94h | 93h | - |
+| Upright | Turning | Up | turn Ground | 8Ch | 8Bh | - |
+| Upright | Turning | Up | turn Jump | 90h | 8Fh | - |
+| Upright | Turning | UpForward | turn Fall | A1h | A0h | - |
+| Upright | Turning | UpForward | turn Ground | 9Dh | 9Ch | - |
+| Upright | Turning | UpForward | turn Jump | 9Fh | 9Eh | - |
+| Upright | Turning | UpForward | turn MoonwalkJump | C2h | C1h | - |
+| Upright | WallJumping | Forward |  | 83h | 84h | - |
+
+**From an id to its §2 Pose.** Every one of the 253 ids: 164 map to a Pose, 89 are unreachable in
+this domain (unused, or another domain's: grapple, knockback, damage boost, shinespark, crystal
+flash, x-ray, drained, Draygon). Aim is `Forward` and the gun `Stowed` and the legs `Together`
+unless the row says otherwise. Generated by `$TEMP/pose-map/map.pl` from `$TEMP/pose-chart/names.tsv`
+and the pose definitions.
+
+| Id | Original name | Body | Action | Facing | Aim | Other parts | Shown when |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 00h | Facing forward - power suit | Upright | Still | Screen | Forward |  | first suit |
+| 01h | Facing right - normal | Upright | Still | Right | Forward |  |  |
+| 02h | Facing left - normal | Upright | Still | Left | Forward |  |  |
+| 03h | Facing right - aiming up | Upright | Still | Right | Up |  |  |
+| 04h | Facing left - aiming up | Upright | Still | Left | Up |  |  |
+| 05h | Facing right - aiming up-right | Upright | Still | Right | UpForward |  |  |
+| 06h | Facing left - aiming up-left | Upright | Still | Left | UpForward |  |  |
+| 07h | Facing right - aiming down-right | Upright | Still | Right | DownForward |  |  |
+| 08h | Facing left - aiming down-left | Upright | Still | Left | DownForward |  |  |
+| 09h | Moving right - not aiming | Upright | Running | Right | Forward |  |  |
+| 0Ah | Moving left - not aiming | Upright | Running | Left | Forward |  |  |
+| 0Bh | Moving right - gun extended | Upright | Running | Right | Forward | gun Drawn |  |
+| 0Ch | Moving left - gun extended | Upright | Running | Left | Forward | gun Drawn |  |
+| 0Dh | Unused. Moving right - aiming up | (unreachable) | | | | | unused: the running sprite aimed up; the chart sends running with up held to standing aimed `Up` |
+| 0Eh | Unused. Moving left - aiming up | (unreachable) | | | | | unused: the running sprite aimed up; the chart sends running with up held to standing aimed `Up` |
+| 0Fh | Moving right - aiming up-right | Upright | Running | Right | UpForward |  |  |
+| 10h | Moving left - aiming up-left | Upright | Running | Left | UpForward |  |  |
+| 11h | Moving right - aiming down-right | Upright | Running | Right | DownForward |  |  |
+| 12h | Moving left - aiming down-left | Upright | Running | Left | DownForward |  |  |
+| 13h | Facing right - normal jump - not aiming - not moving - gun extended | Upright | Jumping | Right | Forward | gun Drawn |  |
+| 14h | Facing left - normal jump - not aiming - not moving - gun extended | Upright | Jumping | Left | Forward | gun Drawn |  |
+| 15h | Facing right - normal jump - aiming up | Upright | Jumping | Right | Up |  |  |
+| 16h | Facing left - normal jump - aiming up | Upright | Jumping | Left | Up |  |  |
+| 17h | Facing right - normal jump - aiming down | Upright | Jumping | Right | Down |  |  |
+| 18h | Facing left - normal jump - aiming down | Upright | Jumping | Left | Down |  |  |
+| 19h | Facing right - spin jump | Upright | Spinning | Right | Forward |  | neither (or in a liquid without the gravity suit) |
+| 1Ah | Facing left - spin jump | Upright | Spinning | Left | Forward |  | neither (or in a liquid without the gravity suit) |
+| 1Bh | Facing right - space jump | Upright | Spinning | Right | Forward |  | space jump, no screw attack |
+| 1Ch | Facing left - space jump | Upright | Spinning | Left | Forward |  | space jump, no screw attack |
+| 1Dh | Facing right - morph ball - no springball - on ground | Ball | Still | Right | Forward |  |  |
+| 1Eh | Moving right - morph ball - no springball - on ground | Ball | Rolling | Right | Forward |  |  |
+| 1Fh | Moving left - morph ball - no springball - on ground | Ball | Rolling | Left | Forward |  |  |
+| 20h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 21h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 22h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 23h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 24h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 25h | Facing right - turning - standing | Upright | Turning | Left | Forward | turn Ground |  |
+| 26h | Facing left - turning - standing | Upright | Turning | Right | Forward | turn Ground |  |
+| 27h | Facing right - crouching | Crouched | Still | Right | Forward |  |  |
+| 28h | Facing left - crouching | Crouched | Still | Left | Forward |  |  |
+| 29h | Facing right - falling | Upright | Falling | Right | Forward |  |  |
+| 2Ah | Facing left - falling | Upright | Falling | Left | Forward |  |  |
+| 2Bh | Facing right - falling - aiming up | Upright | Falling | Right | Up |  |  |
+| 2Ch | Facing left - falling - aiming up | Upright | Falling | Left | Up |  |  |
+| 2Dh | Facing right - falling - aiming down | Upright | Falling | Right | Down |  |  |
+| 2Eh | Facing left - falling - aiming down | Upright | Falling | Left | Down |  |  |
+| 2Fh | Facing right - turning - jumping | Upright | Turning | Left | Forward | turn Jump |  |
+| 30h | Facing left - turning - jumping | Upright | Turning | Right | Forward | turn Jump |  |
+| 31h | Facing right - morph ball - no springball - in air | Ball | Falling | Right | Forward |  |  |
+| 32h | Facing left - morph ball - no springball - in air | Ball | Falling | Left | Forward |  |  |
+| 33h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 34h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 35h | Facing right - crouching transition | Crouched | Crouching | Right | Forward |  |  |
+| 36h | Facing left - crouching transition | Crouched | Crouching | Left | Forward |  |  |
+| 37h | Facing right - morphing transition | Ball | Morphing | Right | Forward |  |  |
+| 38h | Facing left - morphing transition | Ball | Morphing | Left | Forward |  |  |
+| 39h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 3Ah | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 3Bh | Facing right - standing transition | Upright | StandingUp | Right | Forward |  |  |
+| 3Ch | Facing left - standing transition | Upright | StandingUp | Left | Forward |  |  |
+| 3Dh | Facing right - unmorphing transition | Crouched | Unmorphing | Right | Forward |  |  |
+| 3Eh | Facing left - unmorphing transition | Crouched | Unmorphing | Left | Forward |  |  |
+| 3Fh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 40h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 41h | Facing left - morph ball - no springball - on ground | Ball | Still | Left | Forward |  |  |
+| 42h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 43h | Facing right - turning - crouching | Crouched | Turning | Left | Forward | turn Ground |  |
+| 44h | Facing left - turning - crouching | Crouched | Turning | Right | Forward | turn Ground |  |
+| 45h | Unused | (unreachable) | | | | | unused: a running pose the game turns straight into the ground turn when it is set |
+| 46h | Unused | (unreachable) | | | | | unused: a running pose the game turns straight into the ground turn when it is set |
+| 47h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 48h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 49h | Facing left - moonwalk | Upright | Moonwalking | Right | Forward |  |  |
+| 4Ah | Facing right - moonwalk | Upright | Moonwalking | Left | Forward |  |  |
+| 4Bh | Facing right - normal jump transition | Upright | TakingOff | Right | Forward |  |  |
+| 4Ch | Facing left - normal jump transition | Upright | TakingOff | Left | Forward |  |  |
+| 4Dh | Facing right - normal jump - not aiming - not moving - gun not extended | Upright | Jumping | Right | Forward |  |  |
+| 4Eh | Facing left - normal jump - not aiming - not moving - gun not extended | Upright | Jumping | Left | Forward |  |  |
+| 4Fh | Facing left - damage boost | (unreachable) | | | | | out of scope: damage boost |
+| 50h | Facing right - damage boost | (unreachable) | | | | | out of scope: damage boost |
+| 51h | Facing right - normal jump - not aiming - moving forward | Upright | Jumping | Right | Forward | legs Striding |  |
+| 52h | Facing left - normal jump - not aiming - moving forward | Upright | Jumping | Left | Forward | legs Striding |  |
+| 53h | Facing right - knockback | (unreachable) | | | | | out of scope: knockback |
+| 54h | Facing left - knockback | (unreachable) | | | | | out of scope: knockback |
+| 55h | Facing right - normal jump transition - aiming up | Upright | TakingOff | Right | Up |  |  |
+| 56h | Facing left - normal jump transition - aiming up | Upright | TakingOff | Left | Up |  |  |
+| 57h | Facing right - normal jump transition - aiming up-right | Upright | TakingOff | Right | UpForward |  |  |
+| 58h | Facing left - normal jump transition - aiming up-left | Upright | TakingOff | Left | UpForward |  |  |
+| 59h | Facing right - normal jump transition - aiming down-right | Upright | TakingOff | Right | DownForward |  |  |
+| 5Ah | Facing left - normal jump transition - aiming down-left | Upright | TakingOff | Left | DownForward |  |  |
+| 5Bh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 5Ch | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 5Dh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 5Eh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 5Fh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 60h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 61h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 62h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 63h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 64h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 65h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 66h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| 67h | Facing right - falling - gun extended | Upright | Falling | Right | Forward | gun Drawn |  |
+| 68h | Facing left - falling - gun extended | Upright | Falling | Left | Forward | gun Drawn |  |
+| 69h | Facing right - normal jump - aiming up-right | Upright | Jumping | Right | UpForward |  |  |
+| 6Ah | Facing left - normal jump - aiming up-left | Upright | Jumping | Left | UpForward |  |  |
+| 6Bh | Facing right - normal jump - aiming down-right | Upright | Jumping | Right | DownForward |  |  |
+| 6Ch | Facing left - normal jump - aiming down-left | Upright | Jumping | Left | DownForward |  |  |
+| 6Dh | Facing right - falling - aiming up-right | Upright | Falling | Right | UpForward |  |  |
+| 6Eh | Facing left - falling - aiming up-left | Upright | Falling | Left | UpForward |  |  |
+| 6Fh | Facing right - falling - aiming down-right | Upright | Falling | Right | DownForward |  |  |
+| 70h | Facing left - falling - aiming down-left | Upright | Falling | Left | DownForward |  |  |
+| 71h | Facing right - crouching - aiming up-right | Crouched | Still | Right | UpForward |  |  |
+| 72h | Facing left - crouching - aiming up-left | Crouched | Still | Left | UpForward |  |  |
+| 73h | Facing right - crouching - aiming down-right | Crouched | Still | Right | DownForward |  |  |
+| 74h | Facing left - crouching - aiming down-left | Crouched | Still | Left | DownForward |  |  |
+| 75h | Facing left - moonwalk - aiming up-left | Upright | Moonwalking | Right | UpForward |  |  |
+| 76h | Facing right - moonwalk - aiming up-right | Upright | Moonwalking | Left | UpForward |  |  |
+| 77h | Facing left - moonwalk - aiming down-left | Upright | Moonwalking | Right | DownForward |  |  |
+| 78h | Facing right - moonwalk - aiming down-right | Upright | Moonwalking | Left | DownForward |  |  |
+| 79h | Facing right - morph ball - spring ball - on ground | SpringBall | Still | Right | Forward |  |  |
+| 7Ah | Facing left - morph ball - spring ball - on ground | SpringBall | Still | Left | Forward |  |  |
+| 7Bh | Moving right - morph ball - spring ball - on ground | SpringBall | Rolling | Right | Forward |  |  |
+| 7Ch | Moving left - morph ball - spring ball - on ground | SpringBall | Rolling | Left | Forward |  |  |
+| 7Dh | Facing right - morph ball - spring ball - falling | SpringBall | Falling | Right | Forward |  |  |
+| 7Eh | Facing left - morph ball - spring ball - falling | SpringBall | Falling | Left | Forward |  |  |
+| 7Fh | Facing right - morph ball - spring ball - in air | SpringBall | Jumping | Right | Forward |  |  |
+| 80h | Facing left - morph ball - spring ball - in air | SpringBall | Jumping | Left | Forward |  |  |
+| 81h | Facing right - screw attack | Upright | Spinning | Right | Forward |  | screw attack |
+| 82h | Facing left - screw attack | Upright | Spinning | Left | Forward |  | screw attack |
+| 83h | Facing right - wall jump | Upright | WallJumping | Right | Forward |  |  |
+| 84h | Facing left - wall jump | Upright | WallJumping | Left | Forward |  |  |
+| 85h | Facing right - crouching - aiming up | Crouched | Still | Right | Up |  |  |
+| 86h | Facing left - crouching - aiming up | Crouched | Still | Left | Up |  |  |
+| 87h | Facing right - turning - falling | Upright | Turning | Left | Forward | turn Fall |  |
+| 88h | Facing left - turning - falling | Upright | Turning | Right | Forward | turn Fall |  |
+| 89h | Facing right - ran into a wall | Upright | AgainstWall | Right | Forward |  |  |
+| 8Ah | Facing left - ran into a wall | Upright | AgainstWall | Left | Forward |  |  |
+| 8Bh | Facing right - turning - standing - aiming up | Upright | Turning | Left | Up | turn Ground |  |
+| 8Ch | Facing left - turning - standing - aiming up | Upright | Turning | Right | Up | turn Ground |  |
+| 8Dh | Facing right - turning - standing - aiming down-right | Upright | Turning | Left | DownForward | turn Ground |  |
+| 8Eh | Facing left - turning - standing - aiming down-left | Upright | Turning | Right | DownForward | turn Ground |  |
+| 8Fh | Facing right - turning - in air - aiming up | Upright | Turning | Left | Up | turn Jump |  |
+| 90h | Facing left - turning - in air - aiming up | Upright | Turning | Right | Up | turn Jump |  |
+| 91h | Facing right - turning - in air - aiming down/down-right | Upright | Turning | Left | Down | turn Jump |  |
+| 92h | Facing left - turning - in air - aiming down/down-left | Upright | Turning | Right | Down | turn Jump |  |
+| 93h | Facing right - turning - falling - aiming up | Upright | Turning | Left | Up | turn Fall |  |
+| 94h | Facing left - turning - falling - aiming up | Upright | Turning | Right | Up | turn Fall |  |
+| 95h | Facing right - turning - falling - aiming down/down-right | Upright | Turning | Left | Down | turn Fall |  |
+| 96h | Facing left - turning - falling - aiming down/down-left | Upright | Turning | Right | Down | turn Fall |  |
+| 97h | Facing right - turning - crouching - aiming up | Crouched | Turning | Left | Up | turn Ground |  |
+| 98h | Facing left - turning - crouching - aiming up | Crouched | Turning | Right | Up | turn Ground |  |
+| 99h | Facing right - turning - crouching - aiming down/down-right | Crouched | Turning | Left | DownForward | turn Ground |  |
+| 9Ah | Facing left - turning - crouching - aiming down/down-left | Crouched | Turning | Right | DownForward | turn Ground |  |
+| 9Bh | Facing forward - varia/gravity suit | Upright | Still | Screen | Forward |  | varia or gravity |
+| 9Ch | Facing right - turning - standing - aiming up-right | Upright | Turning | Left | UpForward | turn Ground |  |
+| 9Dh | Facing left - turning - standing - aiming up-left | Upright | Turning | Right | UpForward | turn Ground |  |
+| 9Eh | Facing right - turning - in air - aiming up-right | Upright | Turning | Left | UpForward | turn Jump |  |
+| 9Fh | Facing left - turning - in air - aiming up-left | Upright | Turning | Right | UpForward | turn Jump |  |
+| A0h | Facing right - turning - falling - aiming up-right | Upright | Turning | Left | UpForward | turn Fall |  |
+| A1h | Facing left - turning - falling - aiming up-left | Upright | Turning | Right | UpForward | turn Fall |  |
+| A2h | Facing right - turning - crouching - aiming up-right | Crouched | Turning | Left | UpForward | turn Ground |  |
+| A3h | Facing left - turning - crouching - aiming up-left | Crouched | Turning | Right | UpForward | turn Ground |  |
+| A4h | Facing right - landing from normal jump | Upright | Landing | Right | Forward | landed from Jump |  |
+| A5h | Facing left - landing from normal jump | Upright | Landing | Left | Forward | landed from Jump |  |
+| A6h | Facing right - landing from spin jump | Upright | Landing | Right | Forward | landed from Spin |  |
+| A7h | Facing left - landing from spin jump | Upright | Landing | Left | Forward | landed from Spin |  |
+| A8h | Facing right - grappling | (unreachable) | | | | | out of scope: grapple |
+| A9h | Facing left - grappling | (unreachable) | | | | | out of scope: grapple |
+| AAh | Facing right - grappling - aiming down-right | (unreachable) | | | | | out of scope: grapple |
+| ABh | Facing left - grappling - aiming down-left | (unreachable) | | | | | out of scope: grapple |
+| ACh | Unused. Facing right - grappling - in air | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| ADh | Unused. Facing left - grappling - in air | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| AEh | Unused. Facing right - grappling - in air - aiming down | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| AFh | Unused. Facing left - grappling - in air - aiming down | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| B0h | Unused. Facing right - grappling - in air - aiming down-right | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| B1h | Unused. Facing left - grappling - in air - aiming down-left | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| B2h | Facing anticlockwise - grapple swinging | (unreachable) | | | | | out of scope: grapple |
+| B3h | Facing clockwise - grapple swinging | (unreachable) | | | | | out of scope: grapple |
+| B4h | Facing right - grappling - crouching | (unreachable) | | | | | out of scope: grapple |
+| B5h | Facing left - grappling - crouching | (unreachable) | | | | | out of scope: grapple |
+| B6h | Facing right - grappling - crouching - aiming down-right | (unreachable) | | | | | out of scope: grapple |
+| B7h | Facing left - grappling - crouching - aiming down-left | (unreachable) | | | | | out of scope: grapple |
+| B8h | Facing left - grapple wall jump pose | (unreachable) | | | | | out of scope: grapple |
+| B9h | Facing right - grapple wall jump pose | (unreachable) | | | | | out of scope: grapple |
+| BAh | Facing left - grabbed by Draygon - not moving - not aiming | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| BBh | Facing left - grabbed by Draygon - not moving - aiming up-left | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| BCh | Facing left - grabbed by Draygon - firing | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| BDh | Facing left - grabbed by Draygon - not moving - aiming down-left | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| BEh | Facing left - grabbed by Draygon - moving | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| BFh | Facing right - moonwalking - turn/jump left | Upright | Turning | Left | Forward | turn MoonwalkJump |  |
+| C0h | Facing left - moonwalking - turn/jump right | Upright | Turning | Right | Forward | turn MoonwalkJump |  |
+| C1h | Facing right - moonwalking - turn/jump left - aiming up-right | Upright | Turning | Left | UpForward | turn MoonwalkJump |  |
+| C2h | Facing left - moonwalking - turn/jump right - aiming up-left | Upright | Turning | Right | UpForward | turn MoonwalkJump |  |
+| C3h | Facing right - moonwalking - turn/jump left - aiming down-right | Upright | Turning | Left | DownForward | turn MoonwalkJump |  |
+| C4h | Facing left - moonwalking - turn/jump right - aiming down-left | Upright | Turning | Right | DownForward | turn MoonwalkJump |  |
+| C5h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| C6h | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| C7h | Facing right - vertical shinespark windup | (unreachable) | | | | | out of scope: shinespark |
+| C8h | Facing left - vertical shinespark windup | (unreachable) | | | | | out of scope: shinespark |
+| C9h | Facing right - shinespark - horizontal | (unreachable) | | | | | out of scope: shinespark |
+| CAh | Facing left - shinespark - horizontal | (unreachable) | | | | | out of scope: shinespark |
+| CBh | Facing right - shinespark - vertical | (unreachable) | | | | | out of scope: shinespark |
+| CCh | Facing left - shinespark - vertical | (unreachable) | | | | | out of scope: shinespark |
+| CDh | Facing right - shinespark - diagonal | (unreachable) | | | | | out of scope: shinespark |
+| CEh | Facing left - shinespark - diagonal | (unreachable) | | | | | out of scope: shinespark |
+| CFh | Facing right - ran into a wall - aiming up-right | Upright | AgainstWall | Right | UpForward |  |  |
+| D0h | Facing left - ran into a wall - aiming up-left | Upright | AgainstWall | Left | UpForward |  |  |
+| D1h | Facing right - ran into a wall - aiming down-right | Upright | AgainstWall | Right | DownForward |  |  |
+| D2h | Facing left - ran into a wall - aiming down-left | Upright | AgainstWall | Left | DownForward |  |  |
+| D3h | Facing right - crystal flash | (unreachable) | | | | | out of scope: crystal flash |
+| D4h | Facing left - crystal flash | (unreachable) | | | | | out of scope: crystal flash |
+| D5h | Facing right - x-ray - standing | (unreachable) | | | | | out of scope: x-ray |
+| D6h | Facing left - x-ray - standing | (unreachable) | | | | | out of scope: x-ray |
+| D7h | Facing right - crystal flash ending | (unreachable) | | | | | out of scope: crystal flash |
+| D8h | Facing left - crystal flash ending | (unreachable) | | | | | out of scope: crystal flash |
+| D9h | Facing right - x-ray - crouching | (unreachable) | | | | | out of scope: x-ray |
+| DAh | Facing left - x-ray - crouching | (unreachable) | | | | | out of scope: x-ray |
+| DBh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| DCh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| DDh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| DEh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| DFh | Unused | (unreachable) | | | | | unused: no transition, landing, fall or animation leads to it in the domain |
+| E0h | Facing right - landing from normal jump - aiming up | Upright | Landing | Right | Up | landed from Jump |  |
+| E1h | Facing left - landing from normal jump - aiming up | Upright | Landing | Left | Up | landed from Jump |  |
+| E2h | Facing right - landing from normal jump - aiming up-right | Upright | Landing | Right | UpForward | landed from Jump |  |
+| E3h | Facing left - landing from normal jump - aiming up-left | Upright | Landing | Left | UpForward | landed from Jump |  |
+| E4h | Facing right - landing from normal jump - aiming down-right | Upright | Landing | Right | DownForward | landed from Jump |  |
+| E5h | Facing left - landing from normal jump - aiming down-left | Upright | Landing | Left | DownForward | landed from Jump |  |
+| E6h | Facing right - landing from normal jump - firing | Upright | Landing | Right | Forward | landed from Jump, gun Drawn |  |
+| E7h | Facing left - landing from normal jump - firing | Upright | Landing | Left | Forward | landed from Jump, gun Drawn |  |
+| E8h | Facing right - Samus drained - crouching/falling | (unreachable) | | | | | out of scope: drained by a metroid or Mother Brain |
+| E9h | Facing left - Samus drained - crouching/falling | (unreachable) | | | | | out of scope: drained by a metroid or Mother Brain |
+| EAh | Facing right - Samus drained - standing | (unreachable) | | | | | out of scope: drained by a metroid or Mother Brain |
+| EBh | Facing left - Samus drained - standing | (unreachable) | | | | | out of scope: drained by a metroid or Mother Brain |
+| ECh | Facing right - grabbed by Draygon - not moving - not aiming | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| EDh | Facing right - grabbed by Draygon - not moving - aiming up-right | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| EEh | Facing right - grabbed by Draygon - firing | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| EFh | Facing right - grabbed by Draygon - not moving - aiming down-right | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| F0h | Facing right - grabbed by Draygon - moving | (unreachable) | | | | | out of scope: grabbed by Draygon |
+| F1h | Facing right - crouching transition - aiming up | Crouched | Crouching | Right | Up |  |  |
+| F2h | Facing left - crouching transition - aiming up | Crouched | Crouching | Left | Up |  |  |
+| F3h | Facing right - crouching transition - aiming up-right | Crouched | Crouching | Right | UpForward |  |  |
+| F4h | Facing left - crouching transition - aiming up-left | Crouched | Crouching | Left | UpForward |  |  |
+| F5h | Facing right - crouching transition - aiming down-right | Crouched | Crouching | Right | DownForward |  |  |
+| F6h | Facing left - crouching transition - aiming down-left | Crouched | Crouching | Left | DownForward |  |  |
+| F7h | Facing right - standing transition - aiming up | Upright | StandingUp | Right | Up |  |  |
+| F8h | Facing left - standing transition - aiming up | Upright | StandingUp | Left | Up |  |  |
+| F9h | Facing right - standing transition - aiming up-right | Upright | StandingUp | Right | UpForward |  |  |
+| FAh | Facing left - standing transition - aiming up-left | Upright | StandingUp | Left | UpForward |  |  |
+| FBh | Facing right - standing transition - aiming down-right | Upright | StandingUp | Right | DownForward |  |  |
+| FCh | Facing left - standing transition - aiming down-left | Upright | StandingUp | Left | DownForward |  |  |
+
+**The empty column (gap 7).** `$94:8B2B`'s offset 10h. Vertical move, down (`$94:8780`): A =
+10h − (target bottom % 16) − 1, stop when A ≤ 0, so only a target bottom on row 15 stops, with
+`$12` = `$12` + 0 and `$14` = 0 (a landing on row 15; the integrator's "never stops her" holds for
+the check after a horizontal move only). Up (`$94:8707`): A = 10h − (15 − target top % 16) − 1 =
+target top % 16, so only a target top on row 0 stops. After a horizontal move (`$94:87F4`): the
+floor's A = 15 − bottom % 16 ≥ 0, never lifted; the ceiling's A = top % 16, so a top edge on row 0
+is pushed 0 px and seated (`0DBA` = 1). Vectors: C-slope-ceiling-empty (target top on row 0:
+stopped), C-slope-ceiling-empty-on (row 1: moves on), C-slope-floor-empty (target bottom on row
+15: lands), all constructed.

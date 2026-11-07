@@ -79,6 +79,7 @@ except in a jump, a spin, a fall or a wall jump, where it means she has just sta
 | --- | --- | --- |
 | pad | held: run, jump, shoot, left, right, up, down, aim up, aim down; just pressed: jump | most behaviours |
 | equipment | hi-jump, space jump: `bool` | `Jumping` |
+| equipment seen only in the sprite | screw attack, spring ball, a suit other than the first (varia or gravity): `bool` | output (§2's last paragraph); spring ball also `AnimationEnds` |
 | world | the room's blocks and solid enemies, answered as §8 says | §8 |
 | spin turned far | `bool`: the spin's sprite has turned far enough to kick off a wall | `WallJump` |
 | elevator moving | `bool` | `RidingTheElevator` |
@@ -91,16 +92,33 @@ except in a jump, a spin, a fall or a wall jump, where it means she has just sta
 | Part | Values |
 | --- | --- |
 | body | `Upright`, `Crouched`, `Ball`, `SpringBall` |
-| action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
+| action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Landing` (the moment she touches down from a jump, a fall or a spin, before she stands still), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
 | facing | `Left`, `Right`, `Screen` (facing the player; counts as `Right` wherever a side is needed) |
 | aim | the arm's direction: `Forward`, `Up`, `UpForward`, `DownForward`, `Down`; it changes only the sprite, except for `AimingAndShooting` |
 | turn | for `Turning` only, the turn she is in: `Ground` (on the ground, upright or crouched), `Jump` (in a take-off or a straight jump), `Fall` (in a fall), `MoonwalkJump` (the moonwalk's jump, still on the ground). The player sees it as what she was doing when she turned; `AnimationEnds` hands over a pose by it, and the pad chart reads `MoonwalkJump` as a turn on the ground |
-| gun | `Drawn` (her gun held out in front, a sprite of its own), `Stowed`; only upright `Running`, `Jumping` and `Falling` aimed `Forward` show it `Drawn`, every other pose has it `Stowed`. It changes only the sprite and the pad chart's rows (`PadChart` says what draws and stows it) |
+| landed from | for `Landing` only, what she touched down from: `Jump` (a straight jump or a fall, upright), `Spin` (a spin or a wall jump). The two look different, and one lasts longer than the other; both move her as standing still |
+| gun | `Drawn` (her gun held out in front, a sprite of its own), `Stowed`; only upright `Running`, `Jumping` and `Falling` aimed `Forward`, and `Landing` from `Jump` aimed `Forward` (drawn firing), show it `Drawn`; every other pose has it `Stowed`. It changes only the sprite and the pad chart's rows (`PadChart` says what draws and stows it) |
+| legs | `Together`, `Striding` (drawn moving forward); only an upright `Jumping` aimed `Forward` with the gun `Stowed` can be `Striding`, every other pose has them `Together`. It changes only the sprite (`PadChart` and `AnimationEnds` say which) |
 
 **Forward** is the side she faces, **back** the other side; holding forward means holding the pad
-towards her facing. The sprite has more variants than these parts tell apart (the landing
-sprites, the spin drawn as the space jump or the screw attack); they move her the same, so the
-chart (§7) doesn't tell them apart either.
+towards her facing.
+
+**Aim in a turn.** While `Turning` she keeps the aim she had just before. A turn in a jump or
+a fall has one sprite for `DownForward` and `Down`, and it is `Down`: a turn begun aimed
+`DownForward` in the air is aimed `Down`, and ends so (`AnimationEnds`). Crouched, the same sprite
+is `DownForward`; no grounded pose aims `Down`.
+
+**Her body while it changes shape** is the body she changes into: crouched while `Crouching` or
+`Unmorphing`, a ball while `Morphing` (whether it is the spring ball is decided when the animation
+ends, `AnimationEnds`), upright while `StandingUp`.
+
+**What the sprite shows beyond these parts** follows from the inputs, and moves her the same:
+- the spin (`Spinning`, and the spin of `WallJumping`) is drawn as the screw attack with screw
+  attack, else as the space jump with space jump, else plain (in a liquid without the gravity suit
+  it is always plain; liquids are out of scope, §10);
+- facing the screen, she is drawn in her first suit, or in the other suit's sprite with varia or
+  gravity;
+- how far her animation has run (out of scope, §10).
 
 The ball `Still` is the ball at rest. While her body grows or shrinks, she moves as
 `SpeedBuildsAndBrakes` says.
@@ -355,9 +373,12 @@ rows); inside the header's 450 for the chart.
   "gun as it was" (drawn if it was drawn); "kept" keeps it as it was. So she draws it by holding
   shoot while running forward, jumping, falling or wall jumping, or by pressing shoot in a spin,
   where the ranks make that row the winner; any other outcome stows it: an aim, a turn, holding
-  forward in a jump, a landing, walking off a ledge, the end of an animation (a take-off ends in a
-  jump with the gun stowed, whatever she holds). A Pad
-  cell that starts "gun stowed:" fits only while her gun is stowed.
+  forward in a jump, a landing (except one that lands firing, `WhatHerMovesMet`), walking off a
+  ledge, the end of an animation (a take-off ends in a jump with the gun stowed, whatever she
+  holds). A Pad cell that starts "gun stowed:" fits only while her gun is stowed.
+- The legs. A next pose has its legs `Together` unless its cell says "striding"; "kept" keeps them
+  as they were. So she strides by holding forward in a take-off or a straight jump, and holding
+  jump alone, or shoot, brings her legs together again.
 - Rows are listed by rank (just pressed first, then by how many buttons they name), and inside a
   rank by next pose (action, then the first aim the cell names, alphabetically; "kept" last);
   where two rows still tie, the one that beats the other comes first. Each situation's last row
@@ -365,7 +386,7 @@ rows); inside the header's 450 for the chart.
 
 | She is | Pad | Next pose | Effect |
 | --- | --- | --- | --- |
-| standing still (upright, or just landed) | down pressed | crouched `Crouching`, crouch aim | none |
+| standing still, or landing | down pressed | crouched `Crouching`, crouch aim | none |
 | | jump pressed; beats down pressed | upright `TakingOff`, take-off aim | `Jumping`'s take-off |
 | | back, shoot and an aim button held; beats back and both aim buttons held | `Moonwalking` facing back, `DownForward` with aim down, else `UpForward` | none |
 | | back and both aim buttons held | `Turning` | `TurningRound` |
@@ -377,7 +398,7 @@ rows); inside the header's 450 for the chart.
 | | up held; beats aim up or aim down held | `Still`, `Up` | none |
 | | aim up or aim down held | `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | back held; beats up held and aim up or aim down held | `Turning` | `TurningRound` |
-| | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
+| | anything else, or nothing held | kept, aim `Forward`; landing, kept as she is | she follows the pad again (a skid ends) |
 | running | down pressed; beats jump pressed | crouched `Crouching`, `Forward` | none |
 | | jump pressed | `Spinning` | `Jumping`'s spin start |
 | | forward and shoot held | `Running`, `Forward`, gun drawn | none |
@@ -388,7 +409,7 @@ rows); inside the header's 450 for the chart.
 | | aim up or aim down held | upright `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | back held; beats up held and aim up or aim down held | `Turning` | `TurningRound` |
 | | anything else, or nothing held | upright `Still`, `Forward` | the dash joins her horizontal speed (dash 0) and she carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the pad again |
-| taking off | jump and forward held | `Jumping`, `Forward` | none |
+| taking off | jump and forward held | `Jumping`, `Forward`, striding | none |
 | | jump with up, down or an aim button held; beats jump and forward held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
 | | jump and back held; beats jump with up, down or an aim button held | `Turning` in a jump | `TurningRound` |
 | | shoot held | `Jumping`, `Forward`, gun drawn | none |
@@ -396,7 +417,7 @@ rows); inside the header's 450 for the chart.
 | in a straight jump | aiming `Down`: down pressed | ball `Morphing` | none |
 | | aiming `Down`, she faces `Right`: forward, jump and shoot held; forward with up, down or an aim button held beats it | `Jumping`, `Forward`, gun drawn | none |
 | | forward with up, down or an aim button held | `Jumping`, air aim | none |
-| | forward held; beats shoot held | `Jumping`, `Forward` | none |
+| | forward held; beats shoot held | `Jumping`, `Forward`, striding | none |
 | | shoot held; beats jump held | `Jumping`, `Forward`, gun drawn | none |
 | | gun stowed: jump held | `Jumping`, `Forward` | none |
 | | up, down or an aim button held; beats forward held, shoot held and jump held | `Jumping`, air aim | none |
@@ -465,12 +486,13 @@ rows); inside the header's 450 for the chart.
 
 - A `Turning` cell gives the turn she is in (§2): `Ground` unless it says "in a jump", "in a
   fall" or "from the moonwalk's jump". Facing is kept unless the row says otherwise; `Turning`
-  faces back (the turn shows her new facing, and `TurningRound` turns her). A moonwalk faces the
+  faces back (the turn shows her new facing, and `TurningRound` turns her), and keeps the aim she
+  had (§2, aim in a turn). A moonwalk faces the
   way she walks, which is backwards: her sprite looks the other way.
 - Body follows the action: `Running`, `Moonwalking`, `TakingOff`, `Jumping`, `Spinning`, `Falling`,
-  `WallJumping`, `AgainstWall` and `StandingUp` are upright; `Crouching` and `Unmorphing` end
-  crouched; `Morphing` ends a ball.
-- A moonwalk's jump turns unaimed, whatever aim button is held.
+  `WallJumping`, `AgainstWall`, `Landing` and `StandingUp` are upright; `Crouching` and `Unmorphing`
+  are crouched; `Morphing` is a ball (§2).
+- A moonwalk's jump turns with the moonwalk's own aim, whatever aim button is held.
 - The let-go outcomes "as running" mean: the dash joins her horizontal speed (dash 0) and she
   carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the
   pad again.
@@ -499,8 +521,8 @@ rows); inside the header's 450 for the chart.
 | a wall (a wall stop) | running | `AgainstWall`, facing kept; aim `UpForward` or `DownForward` kept, else `Forward` (`Up` stays `Still`, `Up`) | `WallsAndCeilings` |
 | a block or solid enemy in the way of the aim change's step | running into another running pose | `AgainstWall`, with the aim of the running pose chosen | `AimingAndShooting` |
 | a wall near her as she presses jump (`WallJump`) | spinning | `WallJumping`, facing kept | `WallJump`'s kick |
-| a floor (landing) | upright, in a straight jump or falling | upright `Still`, facing kept, aim kept (`Down` becomes `Forward`) | `Landing` |
-| | spinning or wall jumping | upright `Still`, facing kept, `Forward` | `Landing` |
+| a floor (landing) | upright, in a straight jump or falling | `Landing` from `Jump`, facing kept, aim kept (`Down` becomes `Forward`); aimed `Forward`, not `Down`, with shoot held, gun drawn (she lands firing) | `Landing` |
+| | spinning or wall jumping | `Landing` from `Spin`, facing kept, `Forward` | `Landing` |
 | | a ball, bouncing (`Landing`) | kept | `Landing`'s bounce |
 | | a ball, coming to rest | ball `Still`, facing kept | `Landing` |
 | no floor (walking off a ledge, `FollowingTheGround`) | upright on the ground | upright `Falling`, facing kept, `Forward` | `FollowingTheGround`'s fall |
@@ -520,13 +542,14 @@ rows); inside the header's 450 for the chart.
 | --- | --- | --- |
 | `TakingOff` | `Jumping`, aim kept | none: her rise speed came with the take-off (`Jumping`) |
 | `Turning` on the ground (turn `Ground`) | upright `Still`, the new facing, aim kept | dash 0 (`Dash`) |
-| `Turning` in a jump (turn `Jump`) | `Jumping`, the new facing | dash 0 |
-| `Turning` in a fall (turn `Fall`) | `Falling`, the new facing | dash 0 |
-| crouched `Turning` | crouched `Still`, the new facing | dash 0 |
+| `Turning` in a jump (turn `Jump`) | `Jumping`, the new facing, aim kept; aimed `Forward`, striding | dash 0 |
+| `Turning` in a fall (turn `Fall`) | `Falling`, the new facing, aim kept | dash 0 |
+| crouched `Turning` | crouched `Still`, the new facing, aim kept | dash 0 |
 | `Turning` from the moonwalk's jump (turn `MoonwalkJump`) | `Spinning`, the new facing | `Moonfall` |
 | `Crouching` | crouched `Still` | none |
 | `StandingUp` | upright `Still` | none |
-| `Morphing` | ball `Still` on the ground, ball `Falling` in the air | none |
+| `Morphing` | ball `Still` on the ground, ball `Falling` in the air; with the spring ball, the spring ball's | none |
+| `Landing` | upright `Still`, aim kept, gun stowed | none |
 | `Unmorphing` | crouched `Still` on the ground, upright `Falling` in the air | none |
 
 - checked: oracle (P10, P11, P12, P19, P23, M1).
@@ -643,11 +666,22 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   kept), and the rise ends as at a flat ceiling (`WallsAndCeilings`).
 - The surface's height at each column is world data; the vectors give it as `world.slope_floor`
   and `world.slope_ceiling`.
+- **An empty column.** A column of a sloped surface can hold none of the surface: the whole
+  column is air in that block. It counts as a surface just past the block's far edge:
+  - as a floor, the last air row above it is the block's bottom row. A downward move whose bottom
+    edge at the target is on that row stops and lands her there, as above; one that ends higher
+    passes. The check after a horizontal move never lifts her.
+  - as a ceiling, the first air row under it is the block's top row. A rise whose top edge at the
+    target is on that row doesn't move her and ends the rise, as above; one whose top edge ends
+    on any lower row of the block moves on. The check after a horizontal move, with her top
+    edge on that row, pushes her 0 px and seats her.
+  - The vectors write such a column as 16, for a floor and a ceiling alike.
 - checked: oracle (samus-walljump-16/22/28 frame 44; samus-walljump-28:62 and
   samus-screw-attack:66 for the sloped ceiling; chain r01:677, samus-walljump-22:93 and
   samus-input-poses:426 for the landing that keeps the subpixel); constructed (C-slope-land,
   C-slope-edge, C-slope-ceiling-edge, C-seat-lift, C-seat-none, C-step-down, C-down-odd,
-  C-aim-slope).
+  C-aim-slope, and for the empty column C-slope-ceiling-empty, C-slope-ceiling-empty-on,
+  C-slope-floor-empty).
 
 ### SlopesSlowTheWalk
 - Mechanic. A horizontal move made while her vertical speed is exactly 0 (standing, running,
@@ -786,3 +820,15 @@ acts on her motion as below. These rules are Samus's; other actors get their own
    323), both out of scope (§10).
 11. Crouched, with down and jump both just pressed in one frame, the morph wins (`PadChart`): the
    original's chart puts it first. No record presses both in one frame; open until one does.
+12. A turn in a jump or a fall that meets the floor before its animation ends: no record has one,
+   and what she lands as is open. Until one is recorded, the spec has no row for it in
+   `WhatHerMovesMet`.
+13. A moonwalk's jump turn with the moonwalk aimed (§7, the moonwalk's own aim): no record has one,
+   and the chart's rows for that turn (`PadChart`, "turning ... from the moonwalk's jump") are
+   checked for the unaimed turn only.
+14. The let-go row while `Landing` (kept as she is, an aimed landing included) is original only:
+   no vector checks it yet. Landing firing is on record (landings with shoot held) but has no
+   vector.
+15. The empty column (`SlopesCarry`) has constructed vectors only. A floor's empty column stops a
+   downward move that ends on the block's bottom row; whether any room's floor meets her that way
+   is not measured.
