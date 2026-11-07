@@ -11,8 +11,8 @@ ceilings stop her. Written behaviour first, from the oracle's records over time.
 the world. It covers her speeds and position, how her pose follows from input and the world where
 that changes her speeds, and her collision with blocks, slopes and solid enemies.
 
-**Not in this spec yet** (each an input where it feeds us; §10): which exact sprite pose follows
-which input (the pose chart), pose fit (the push when her body grows), animation timing, liquids,
+**Not in this spec yet** (each an input where it feeds us; §10): pose fit (the push when her
+body grows; its place in the frame is `PoseFitAfterMoves`), animation timing, liquids,
 the speed booster's extra speed, knockback, bomb jumps, grapple, shinespark, pushes from the room
 (Ceres, conveyors, quicksand), and what a cell she reaches then does (`TouchedCells` says which
 she reaches; `OtherBlockKinds` how each kind meets her motion).
@@ -152,16 +152,18 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   she loses her dash.
 - Turning from a standstill slides her 0.C000 every other frame the new way: the speed goes 0,
   0.C000, 0, because turning's top speed is 0 and `WordwiseTopSpeed` keeps 0.C000 over 0 once.
-- Turning, on the ground or in the air, with no button held at all, her skid ends after that
+- Turning with no button held at all, on the ground or in the air, her skid ends after that
   frame's move: she keeps her horizontal speed, which now follows the pad and points along her new
-  facing. So a skid braked to exactly 0 ends there too. Holding any button that brings no pose
-  change (run, shoot, jump), on the ground or in the air, she keeps skidding: the speed still
-  points the old way, and the skid ends only as `SpeedBuildsAndBrakes` says, when braking would
-  take it below zero.
+  facing. So a skid braked to exactly 0 ends there too. On the ground the same happens when she
+  holds only buttons that bring no pose change (run, shoot or jump alone): no row of the pad chart
+  fits, and her let-go outcome ends the skid (`LettingGo`). In the air, holding any such button, she
+  keeps skidding: the speed still points the old way, and the skid ends only as
+  `SpeedBuildsAndBrakes` says, when braking would take it below zero.
 - Turning on the ground over a drop, she sinks by her whole speed plus 1 px a frame instead of
   falling. In the air she turns under gravity (`RisingAndFalling`).
-- checked: oracle (samus-input-poses turns, samus-screw-attack; R133 and samus-input-poses:120 for
-  letting go, R141 for run held in the air); constructed (the sinking).
+- checked: oracle (samus-input-poses turns, samus-screw-attack; R133 for letting go, R11 and R12
+  (samus-input-poses:120-121) for run held on the ground: braked to 0 at 120, she creeps 0.C000 at
+  121, which a skid kept at 0 would not; R141 for run held in the air); constructed (the sinking).
 
 ### AimingAndShooting
 - Quirk and output. Changing aim while running moves her 1 px forward on top of that frame's move,
@@ -483,9 +485,6 @@ rows); inside the header's 450 for the chart.
   crystal flash, the drain, liquids, and equipment that changes mid-pose.
 - Whether her arm's step of `AimingAndShooting` also comes with a running sprite that an
   animation's end hands over.
-- A turn on the ground with only run, shoot or jump held: the chart has no row for it, so its
-  let-go outcome ends the skid, where `TurningRound` says she keeps skidding. To be settled against
-  a record (§11).
 
 ---
 
@@ -693,9 +692,6 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 
 ## 10. Out of scope, and what remains
 
-- **The pose chart:** which pose follows which pad and world event, and what each change does to
-  her speeds (§7). It needs its own observer lane, written as records keyed by what the player
-  does.
 - **Slopes:** the corners of steep blocks.
 - **Liquids and the speed booster:** other speeds and gravity in water and lava; the booster's dash
   cap of 7 and its higher jump.
@@ -708,18 +704,18 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   (`SolidEnemies`).
 
 - Whether a pose change the chart makes at an animation's end moves her the extra pixel of
-  `AimingAndShooting`: for the pose-chart spec.
+  `AimingAndShooting`: open, listed in §7's scope.
 - The elevator's descent: in area-brinstar she moves down 1 px and 2 px on alternate frames while
   she faces the screen, so the elevator carries her on top of `RidingTheElevator`'s 1 px. That
   carry belongs to the elevator's own lane; C-elevator checks her own 1 px alone.
 
 1. "A spin she was already in two frames earlier" (§1.2) is not yet traced against a record: it
    may count pose changes rather than frames.
-2. The pose chart's vectors (take-offs, turns' ends, landings other than the changing body) wait
-   for its lane; the vectors so far change pose only by a jump, a fall or a turn from the ground.
+2. Answered: the pose chart's steps are §7's `pose_step` vectors. The motion vectors still change
+   pose only by a jump, a fall or a turn from the ground.
 3. `SolidEnemies`, `RidingTheElevator`, stepped blocks and most of `SlopesCarry` have constructed
    vectors only: no recorded frame is clean for them. The slope landings in r01 and samus-walljump-22 need lead-ins through a
-   spin's drift and a sloped surface's effect on a move's length (§10).
+   spin's drift and a sloped floor's effect on a move's length (`SlopesSlowTheWalk`).
 4. The water rows, terrain-quicksand and samus-ceres-push gave no vectors: their liquid and push
    rules are out of scope.
 5. Answered: landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel
@@ -727,10 +723,10 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 6. The crouch take-off's lift appears a frame apart from pose fit (item-morph-ball 1311). The
    order within a frame is `PoseFitAfterMoves`; a recorded vector for it waits for pose fit's own
    lane.
-7. Answered: holding no button during a turn ends the skid; holding one that changes nothing
-   keeps it (`TurningRound`).
+7. Answered: holding no button during a turn ends the skid; holding only buttons that change
+   nothing ends it on the ground and keeps it in the air (`TurningRound`, R11, R12, R141).
 8. `Moonfall` has M1 (r03), whose lead-in runs through the turn's end. Whether a turn's end into a
-   straight jump's pose also starts one is for the pose chart.
+   straight jump's pose (§7) also starts one is not yet traced against a record.
 9. 31 of the 149 recorded frames were dropped because no lead-in from a plain start reaches them
    through frames the spec covers (mostly after a wall jump's kick or a body change in the air).
 10. Dropped after the first implementation: two frames that rise into a sloped ceiling

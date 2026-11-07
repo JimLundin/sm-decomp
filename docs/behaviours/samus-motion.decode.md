@@ -209,3 +209,11 @@ Recorded vectors: S1 is samus-input-poses record 511 → 512 (block at column 6,
 14h x-flipped); S2 is r01 record 716 → 717 (BTS 12h, first frame of a fall, `0B2E`.`0B2C` = 0).
 The surfaces are `$94:8B2B` rows 14h (flipped) and 12h; 10h in that table is a column with no solid
 pixel, written 16 in the vectors.
+
+**Turning with only run, shoot or jump held (root's question, 2026-11-07).** `$91:81A9` runs the
+lookup failure `$91:82D9` (command 2, which ends the skid) when `8B` = 0, or when the pose's
+transition table is non-empty and nothing in it matches. The ground turns' tables are non-empty
+(25h at `$91:ACF4`, C0h at `$91:AFAC`); the air turns' (2Fh, 30h, 87h, 88h, 8Fh, 93h, ...) are
+empty, so there a held button returns without a command. Gaps v4's reading of R141 holds for the
+air only. On record: samus-input-poses 119 → 120 (pose C0h, `8B` = 8000, `0B4A` 1 → 0 at base
+speed 0), then 120 → 121 moves 0.C000 (R11, R12).
