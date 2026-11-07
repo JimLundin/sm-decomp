@@ -14,6 +14,30 @@ need is in this repository; read nothing outside it.
 - **Small and data-driven.** One kind of movement or situation is one row of a table, where it can
   be. One rule lives in one place. The spec's header gives a size target; going over it is a stop.
 
+## What a modern developer would expect
+
+Write the code a developer of a 2D pixel-art game today would expect to find, and would know
+their way around without being told. Use the field's common shapes and names wherever the spec's
+behaviour fits them:
+
+- **A character controller** for the player: her motion as velocity and position in fixed-point
+  subpixels, stepped at a fixed 60 Hz timestep, with gravity, acceleration and caps as tuning
+  parameters in `Rules`.
+- **A state machine** for what she is doing: states and their transitions as a table, each with
+  what entering it does. The pose chart is this table.
+- **Input as actions** (jump, shoot, aim up, run), not raw buttons; the binding to buttons is the
+  caller's.
+- **Tilemap collision:** move and collide one axis at a time against a grid of tiles, each with a
+  collision shape (solid, a slope with its surface heights, air of a kind); actors against actors
+  as axis-aligned boxes.
+- **Animation as clips:** named sequences of frames with durations, and what happens at a clip's
+  end. Drawing is someone else's: the model says which clip and pose, never which sprite.
+- **Events out, not side effects:** what she touched or met is returned for the caller to act on.
+
+Where the spec's exact behaviour departs from what these shapes would do on their own (a quirk),
+keep the shape and state the quirk as its own named behaviour, rather than bending the shape to
+hide it.
+
 ## Behaviours are named and switchable
 
 Every behaviour in the spec has an id, and the model has a catalogue with one entry per spec entry:
