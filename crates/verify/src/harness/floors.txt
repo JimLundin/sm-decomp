@@ -50,7 +50,7 @@ samus-motion chain-0232-D5A7 562
 samus-motion item-morph-ball 1028
 samus-motion samus-bomb-jump-vertical 285
 samus-motion samus-ceres-push 1687
-samus-motion samus-grapple-release 241
+samus-motion samus-grapple-release 242
 samus-motion samus-grapple-walljump 104
 samus-motion samus-input-poses 283
 samus-motion samus-mockball 85

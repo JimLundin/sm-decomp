@@ -162,6 +162,11 @@ const LIQUID_PHYSICS_OFF: u16 = 0x0004;
 const KNOCKBACK: u8 = 0x0A;
 /// The running movement type, the only one whose dash the speed booster grows.
 const RUNNING: u8 = 0x01;
+/// The spin jump's movement type, whose falling spin the space jump restarts.
+const SPIN_JUMPING: u8 = 0x03;
+/// Bank $90 log: the shinespark windup's movement handler, which the windup's start sets
+/// ($90:CFFA).
+const SHINESPARK_WINDUP: u16 = 0xD068;
 /// Bank $94 log: the pushes the block-inside reactions (quicksand, treadmills) set at the start
 /// of each frame, before the motion ($94:9B60): the extra displacements and the X deceleration
 /// multiplier.
@@ -268,8 +273,11 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
 /// Its dash grows past 2.0 only while she runs with run held ($90:9789): from a dash of 2.0 or
 /// more there, the dash and x are its. A dash of any size elsewhere is only a value, which the
 /// domain's moves carry. A rise she starts with a dash gets half the dash added to its speed
-/// ($90:9919, $90:99A9): the vertical speed of that frame alone. She doesn't move vertically on
-/// it, and later frames start from the speed record N+1 holds, so y stays the domain's.
+/// ($90:9919, $90:99A9): the vertical speed of that frame. A jump or a wall jump starts after
+/// the frame's movement ($91:EB88), so she doesn't move by the boosted speed until the next
+/// frame, which starts from the speed record N+1 holds: y stays the domain's. The space jump
+/// starts inside the falling spin's movement ($90:A4C4) and moves her by the boosted speed in
+/// the same frame ($90:A50F), so a rise from a falling spin takes y too.
 fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
     if word(from, source::EQUIPPED_ITEMS)? & SPEED_BOOSTER == 0 {
         return Ok(FieldSet::EMPTY);
@@ -285,6 +293,11 @@ fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
     }
     if rise_starts(&before, &after) && (before.extra_run.0 != 0 || after.extra_run.0 != 0) {
         fields = fields.union(Quantity::VerticalSpeed.set());
+        if byte(from, source::SAMUS_MOVEMENT_TYPE)? == SPIN_JUMPING
+            && before.vertical == VerticalMotion::Down
+        {
+            fields = fields.union(Quantity::Y.set());
+        }
     }
     Ok(fields)
 }
@@ -632,6 +645,14 @@ impl Domain for SamusMotion {
             mask(
                 "deferred: the speed booster (its dash past 2.0 running with run held, or a boosted rise's speed)",
                 boost,
+            );
+        }
+        // The windup's start runs in the frame's pose change, after the motion, and writes the
+        // shinespark's own speeds ($90:CFFA): dash 8.0, base speed 0, vertical speed 0, rising.
+        if word(next, SAMUS_MOVEMENT_HANDLER)? == SHINESPARK_WINDUP {
+            mask(
+                "deferred: the shinespark's start sets her dash, base and vertical speeds",
+                Q::all(&[Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed, Q::Vertical]),
             );
         }
         let movement = |record| byte(record, source::SAMUS_MOVEMENT_TYPE);
