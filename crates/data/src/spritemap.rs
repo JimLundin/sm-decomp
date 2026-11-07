@@ -1,8 +1,7 @@
 //! Spritemaps: the lists of sprites a picture is drawn from, in the format every bank's
 //! spritemap routines read.
 //!
-//! Bank `$81` log, add spritemap to OAM `$81:8A5F` (<https://patrickjohnston.org/bank/81>):
-//! a spritemap is a word count, then five bytes an entry,
+//! A spritemap is a word count, then five bytes an entry,
 //! `s000000x xxxxxxxx  yyyyyyyy  YXppPPPt tttttttt`: the size bit and a nine-bit X offset,
 //! the Y offset, then the sprite's tile and attributes as OAM holds them (the Y and X flips,
 //! the priority, the palette and a nine-bit tile).
@@ -183,3 +182,7 @@ mod tests {
         );
     }
 }
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank `$81` log, add spritemap to OAM `$81:8A5F` (<https://patrickjohnston.org/bank/81>):

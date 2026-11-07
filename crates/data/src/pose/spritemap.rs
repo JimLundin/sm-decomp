@@ -1,13 +1,10 @@
 //! Samus's spritemaps: for each pose and animation frame, the spritemap of her top half and
 //! of her bottom half, and the offsets that place them.
 //!
-//! Bank `$90` log, draw Samus `$90:85E2` (<https://patrickjohnston.org/bank/90>): the top
-//! half's spritemap index is `[$92:9263 + pose * 2]` plus the animation frame, the bottom
-//! half's `[$92:945D + pose * 2]` plus the frame. Bank `$81` log, add Samus spritemap to OAM
-//! `$81:89AE`: the index selects a pointer from `$92:808D`, a spritemap in bank `$92`.
-//! Calculate Samus spritemap position `$90:8C1F`'s tables: landing `$90:8D28`, the crouching,
-//! standing, morphing and unmorphing transitions `$90:8D80`, and drained by a metroid
-//! `$90:8DEF`.
+//! The top half's spritemap index is a per-pose base plus the animation frame, the bottom
+//! half's likewise from its own table; the index selects a spritemap pointer. The position
+//! offsets come from three tables: landing, the crouching, standing, morphing and unmorphing
+//! transitions, and being drained by a metroid.
 
 use super::animation::AnimationFrame;
 use super::{POSE_COUNT, PoseId};
@@ -17,23 +14,23 @@ use crate::spritemap::Spritemap;
 /// Bank `$92`, which holds Samus's spritemaps and their tables.
 const BANK: u8 = 0x92;
 /// The spritemap pointers by spritemap index.
-pub const SPRITEMAP_POINTERS: RomAddress = RomAddress::new(BANK, 0x808D);
-/// The spritemap pointers the half tables can name: the table runs up to `$92:90ED`, the
-/// first spritemap.
+const SPRITEMAP_POINTERS: RomAddress = RomAddress::new(BANK, 0x808D);
+/// The spritemap pointers the half tables can name: the pointer table runs up to the first
+/// spritemap.
 pub const SPRITEMAP_COUNT: usize = 0x830;
 /// The top half's first spritemap index by pose.
-pub const TOP_HALVES: RomAddress = RomAddress::new(BANK, 0x9263);
+const TOP_HALVES: RomAddress = RomAddress::new(BANK, 0x9263);
 /// The bottom half's first spritemap index by pose.
-pub const BOTTOM_HALVES: RomAddress = RomAddress::new(BANK, 0x945D);
-/// The landing poses' Y offsets, four frames a pose from pose $A4.
-pub const LANDING_OFFSETS: RomAddress = RomAddress::new(0x90, 0x8D28);
-/// The transition poses' Y offsets, two frames a pose from pose $35.
-pub const TRANSITION_OFFSETS: RomAddress = RomAddress::new(0x90, 0x8D80);
+const BOTTOM_HALVES: RomAddress = RomAddress::new(BANK, 0x945D);
+/// The landing poses' Y offsets, four frames a pose from pose 0xA4.
+const LANDING_OFFSETS: RomAddress = RomAddress::new(0x90, 0x8D28);
+/// The transition poses' Y offsets, two frames a pose from pose 0x35.
+const TRANSITION_OFFSETS: RomAddress = RomAddress::new(0x90, 0x8D80);
 /// The drained poses' Y offsets by animation frame.
-pub const DRAINED_OFFSETS: RomAddress = RomAddress::new(0x90, 0x8DEF);
-/// Landing offsets: poses $A4 to $A7, four frames each.
+const DRAINED_OFFSETS: RomAddress = RomAddress::new(0x90, 0x8DEF);
+/// Landing offsets: poses 0xA4 to 0xA7, four frames each.
 pub const LANDING_FRAMES: usize = 16;
-/// Transition offsets: poses $35 to $40, two frames each.
+/// Transition offsets: poses 0x35 to 0x40, two frames each.
 pub const TRANSITION_FRAMES: usize = 24;
 /// Drained offsets: one per frame.
 pub const DRAINED_FRAMES: usize = 32;
@@ -48,17 +45,17 @@ pub enum Half {
 }
 
 /// An index into the spritemap pointer table: a half's first index for her pose plus her
-/// animation frame. The original keeps it in `$0AC8` and `$0ACA`, so it goes out unchanged.
+/// animation frame. The original keeps it as a plain word, so it goes out unchanged.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SpritemapIndex(pub u16);
 
 /// The offsets that move a spritemap's origin up or down from her position for some poses.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PositionOffsets {
-    /// Landing, subtracted: `(pose - $A4) * 4 + frame`. The original reads a word and keeps
+    /// Landing, subtracted: `(pose - 0xA4) * 4 + frame`. The original reads a word and keeps
     /// only its low byte's effect on OAM, so the byte is kept.
     pub landing: [u8; LANDING_FRAMES],
-    /// The transitions, added: `(pose - $35) * 2 + frame`.
+    /// The transitions, added: `(pose - 0x35) * 2 + frame`.
     pub transition: [i8; TRANSITION_FRAMES],
     /// Drained by a metroid, added, by frame.
     pub drained: [i8; DRAINED_FRAMES],
@@ -204,7 +201,7 @@ impl SamusSpritemaps {
 
     /// The spritemap `index` draws, or `None` for a zero pointer or an index past the table.
     ///
-    /// The original reads a zero pointer's count from `$92:0000`, low work RAM, and an
+    /// The original reads a zero pointer's count from low work RAM, and an
     /// index past the table from the spritemaps after it; here neither draws
     /// (docs/LEGACY.md).
     #[must_use]
@@ -216,3 +213,16 @@ impl SamusSpritemaps {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank `$90` log, draw Samus `$90:85E2` (<https://patrickjohnston.org/bank/90>): the top
+// half's spritemap index is `[$92:9263 + pose * 2]` plus the animation frame, the bottom
+// half's `[$92:945D + pose * 2]` plus the frame. Bank `$81` log, add Samus spritemap to OAM
+// `$81:89AE`: the index selects a pointer from `$92:808D`, a spritemap in bank `$92`.
+// Calculate Samus spritemap position `$90:8C1F`'s tables: landing `$90:8D28`, the crouching,
+// standing, morphing and unmorphing transitions `$90:8D80`, and drained by a metroid
+// `$90:8DEF`.
+// The spritemap pointers the half tables can name: the table runs up to `$92:90ED`, the
+// animation frame. The original keeps it in `$0AC8` and `$0ACA`, so it goes out unchanged.
+// The original reads a zero pointer's count from `$92:0000`, low work RAM, and an

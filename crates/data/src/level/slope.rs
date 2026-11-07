@@ -1,18 +1,18 @@
 //! The slope shapes a slope block's BTS names, as Samus's block collision reads them.
 //!
-//! Bank `$94` log (<https://patrickjohnston.org/bank/94>): shapes 0-4 are the square slopes,
-//! a block of four solid or empty quadrants (`$94:8E54`); shapes 5-1F the non-square ones,
-//! a surface height for each pixel column (`$94:8B2B`, "slope top Y offset by X pixel") and a
-//! factor that scales a walk along them (`$94:8586`, the second word of each entry).
+//! Shapes 0-4 are the square slopes, a block of four solid or empty quadrants; shapes 5-0x1F
+//! the non-square ones,
+//! a surface height for each pixel column and a
+//! factor that scales a walk along them.
 
 use crate::rom::{AddressError, Lorom, RomAddress};
 
-/// "Slope definitions (slope top Y offset by X pixel)": 32 shapes of 16 bytes.
-pub const SURFACES: RomAddress = RomAddress::new(0x94, 0x8B2B);
-/// The slope X speed modifiers: 32 entries of two words, the factor second (`$94:8588`).
-pub const FACTORS: RomAddress = RomAddress::new(0x94, 0x8586);
-/// "Square slope definitions": five shapes of four quadrant bytes.
-pub const SQUARES: RomAddress = RomAddress::new(0x94, 0x8E54);
+/// The surface heights: 32 shapes of 16 bytes, one per pixel column.
+const SURFACES: RomAddress = RomAddress::new(0x94, 0x8B2B);
+/// The slope X speed modifiers: 32 entries of two words, the factor second.
+const FACTORS: RomAddress = RomAddress::new(0x94, 0x8586);
+/// The square slopes: five shapes of four quadrant bytes.
+const SQUARES: RomAddress = RomAddress::new(0x94, 0x8E54);
 
 /// Slope shapes a BTS can name: its low five bits.
 pub const SHAPES: usize = 32;
@@ -72,8 +72,7 @@ pub struct Slopes {
     surfaces: Vec<Surface>,
 }
 
-/// A slope shape as the collision dispatches on it (`$94:8FBB`, `$94:8FDA`: shapes below 5
-/// are square).
+/// A slope shape as the collision dispatches on it (shapes below 5 are square).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Shape {
     /// A square slope.
@@ -134,3 +133,12 @@ impl Slopes {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank `$94` log (<https://patrickjohnston.org/bank/94>): shapes 0-4 are the square slopes,
+// a block of four solid or empty quadrants (`$94:8E54`); shapes 5-1F the non-square ones,
+// a surface height for each pixel column (`$94:8B2B`, "slope top Y offset by X pixel") and a
+// factor that scales a walk along them (`$94:8586`, the second word of each entry).
+// The slope X speed modifiers: 32 entries of two words, the factor second (`$94:8588`).
+// A slope shape as the collision dispatches on it (`$94:8FBB`, `$94:8FDA`: shapes below 5

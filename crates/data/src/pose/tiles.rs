@@ -1,13 +1,10 @@
 //! Samus's tile uploads: for each pose and animation frame, the graphics her top and bottom
 //! halves upload to VRAM, and those graphics.
 //!
-//! Bank `$92` log (<https://patrickjohnston.org/bank/92>), set Samus tiles definitions for
-//! current animation `$92:8000`: the pose's first animation definition is
-//! `[$92:D94E + pose * 2]`, four bytes a frame. Bytes 0 and 1 pick the top half's tiles
-//! definition, `[$92:D91E + byte 0 * 2] + byte 1 * 7`; bytes 2 and 3 the bottom half's from
-//! `$92:D938`, none when byte 2 is `FFh`. Bank `$80` log, transfer Samus tiles to VRAM
-//! `$80:9376`: a tiles definition is a long source address, part 1's size and part 2's
-//! size; part 2 follows part 1 in the source.
+//! The pose's first animation definition is found by pose, four bytes a frame. Bytes 0 and 1
+//! pick the top half's tiles definition from a list of lists; bytes 2 and 3 pick the bottom
+//! half's, none when byte 2 is 0xFF. A tiles definition is a long source address, part 1's
+//! size and part 2's size; part 2 follows part 1 in the source.
 
 use canonical::Canonical;
 
@@ -18,11 +15,11 @@ use crate::rom::{AddressError, Lorom, RomAddress};
 /// Bank `$92`, which holds the tables and the definitions.
 const BANK: u8 = 0x92;
 /// Each pose's first animation definition.
-pub const ANIMATION_DEFINITIONS: RomAddress = RomAddress::new(BANK, 0xD94E);
+const ANIMATION_DEFINITIONS: RomAddress = RomAddress::new(BANK, 0xD94E);
 /// The top half's tiles definition lists.
-pub const TOP_LISTS: RomAddress = RomAddress::new(BANK, 0xD91E);
+const TOP_LISTS: RomAddress = RomAddress::new(BANK, 0xD91E);
 /// The bottom half's tiles definition lists.
-pub const BOTTOM_LISTS: RomAddress = RomAddress::new(BANK, 0xD938);
+const BOTTOM_LISTS: RomAddress = RomAddress::new(BANK, 0xD938);
 /// An animation definition's bytes: the top half's list and entry, then the bottom half's.
 const FRAME_BYTES: usize = 4;
 /// A tiles definition's bytes: the long source, then the two parts' sizes.
@@ -267,14 +264,14 @@ impl SamusTiles {
         self.definitions.get(usize::from(id.0))
     }
 
-    /// The definition the original keeps at `pointer` in bank `$92`.
+    /// The definition the original keeps at the 16-bit `pointer`.
     #[must_use]
     pub fn at_pointer(&self, pointer: u16) -> Option<TileDefinitionId> {
         let index = self.pointers.binary_search(&pointer).ok()?;
         u16::try_from(index).ok().map(TileDefinitionId)
     }
 
-    /// The bank `$92` pointer the original keeps for `id`.
+    /// The 16-bit pointer the original keeps for `id`.
     #[must_use]
     pub fn pointer(&self, id: TileDefinitionId) -> Option<u16> {
         self.pointers.get(usize::from(id.0)).copied()
@@ -314,7 +311,7 @@ impl Graphics {
         Ok(Self { banks })
     }
 
-    /// Graphics from parts, for tests: each bank's ROM half, from `$8000`.
+    /// Graphics from parts, for tests: each bank's ROM half, from offset 0x8000.
     #[must_use]
     pub const fn new(banks: Vec<(u8, Vec<u8>)>) -> Self {
         Self { banks }
@@ -332,3 +329,15 @@ impl Graphics {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank `$92` log (<https://patrickjohnston.org/bank/92>), set Samus tiles definitions for
+// current animation `$92:8000`: the pose's first animation definition is
+// `[$92:D94E + pose * 2]`, four bytes a frame. Bytes 0 and 1 pick the top half's tiles
+// definition, `[$92:D91E + byte 0 * 2] + byte 1 * 7`; bytes 2 and 3 the bottom half's from
+// `$92:D938`, none when byte 2 is `FFh`. Bank `$80` log, transfer Samus tiles to VRAM
+// `$80:9376`: a tiles definition is a long source address, part 1's size and part 2's
+// The definition the original keeps at `pointer` in bank `$92`.
+// The bank `$92` pointer the original keeps for `id`.
+// Graphics from parts, for tests: each bank's ROM half, from `$8000`.

@@ -1,11 +1,10 @@
-//! Room headers and their states, decoded from bank `$8F` (D15).
+//! Room headers and their states, decoded from ROM (D15).
 //!
 //! A room header is 11 bytes: index, area, map position, size in screens, the up and down
 //! scrollers, the CRE bits and the door list. The state conditions follow: each is a
 //! condition's code, its operands and a state header's pointer, and the list ends with the
 //! default condition, whose state header follows it directly. The original checks the
-//! conditions in order and loads the first state whose condition holds (`$8F:E5E6` to
-//! `$8F:E678` are the condition routines).
+//! conditions in order and loads the first state whose condition holds.
 //!
 //! Outside the engine a room is named by its header's ROM address, a [`RoomKey`]; inside by
 //! the dense [`RoomId`] the [`RoomMap`] gives it.
@@ -35,7 +34,7 @@ const ENEMY_SET_BANK: u8 = 0xb4;
 pub struct RoomKey(pub RomAddress);
 
 impl RoomKey {
-    /// The Morph Ball Room, `$8F:9E9F`.
+    /// The Morph Ball Room.
     pub const MORPH_BALL_ROOM: Self = Self::from_room_pointer(0x9e9f);
 
     /// The room whose header the original's 16-bit room pointer names.
@@ -44,7 +43,7 @@ impl RoomKey {
         Self(RomAddress::new(ROOM_BANK, pointer))
     }
 
-    /// The original's 16-bit room pointer for this room, if its header is in bank `$8F`.
+    /// The original's 16-bit room pointer for this room, if its header is in the room bank.
     #[must_use]
     pub fn room_pointer(self) -> Option<u16> {
         (self.0.bank == ROOM_BANK).then_some(self.0.offset)
@@ -236,21 +235,21 @@ pub enum Item {
 /// A state condition other than the default.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Condition {
-    /// `$E5EB` (unused): the room was entered through this door.
+    /// The room was entered through this door.
     Door(RomAddress),
-    /// `$E5FF`: the area's main boss is dead.
+    /// The area's main boss is dead.
     MainAreaBossDead,
-    /// `$E612`: the event is set.
+    /// The event is set.
     Event(Event),
-    /// `$E629`: one of these boss bits is set for the area.
+    /// One of these boss bits is set for the area.
     BossDead(BossBits),
-    /// `$E640` (unused): the Morph Ball is collected.
+    /// The Morph Ball is collected.
     MorphBall,
-    /// `$E652`: the Morph Ball and missiles are collected.
+    /// The Morph Ball and missiles are collected.
     MorphBallAndMissiles,
-    /// `$E669`: power bombs are collected.
+    /// Power bombs are collected.
     PowerBombs,
-    /// `$E678` (unused): the Speed Booster is collected.
+    /// The Speed Booster is collected.
     SpeedBooster,
 }
 
@@ -694,3 +693,19 @@ fn state(rom: Lorom<'_>, at: RomAddress, size: Screens) -> Result<RoomState, Roo
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Room headers and their states, decoded from bank `$8F` (D15).
+// conditions in order and loads the first state whose condition holds (`$8F:E5E6` to
+// `$8F:E678` are the condition routines).
+// The Morph Ball Room, `$8F:9E9F`.
+// The original's 16-bit room pointer for this room, if its header is in bank `$8F`.
+// `$E5EB` (unused): the room was entered through this door.
+// `$E5FF`: the area's main boss is dead.
+// `$E612`: the event is set.
+// `$E629`: one of these boss bits is set for the area.
+// `$E640` (unused): the Morph Ball is collected.
+// `$E652`: the Morph Ball and missiles are collected.
+// `$E669`: power bombs are collected.
+// `$E678` (unused): the Speed Booster is collected.

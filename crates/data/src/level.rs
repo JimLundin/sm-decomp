@@ -1,10 +1,9 @@
 //! A room's level: its blocks, what each does when touched, and the camera's scroll areas.
 //!
-//! The decompressed level data (bank `$82` log, `$82:E7D3`, into `$7F:0000`) is layer 1's
+//! The decompressed level data is layer 1's
 //! size in bytes, then layer 1, a word a block, then the BTS, a byte a block, then layer 2,
 //! a word a block, when the room has one. A block word is the tile number in bits 0-9, the
-//! flips in bits 10 and 11 and the block type in bits 12-15; the BTS is the type's argument
-//! (bank `$94` log, the block reaction tables).
+//! flips in bits 10 and 11 and the block type in bits 12-15; the BTS is the type's argument.
 
 use canonical::Canonical;
 
@@ -62,7 +61,7 @@ impl Tile {
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Bts(pub u8);
 
-/// A slope's shape and flips (bank `$94` log, the slope collision routines `$94:8D2B` on).
+/// A slope's shape and flips.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Slope {
     /// The slope definition, BTS bits 0-4: shapes below 5 are the square slopes.
@@ -101,29 +100,28 @@ impl Slope {
 }
 
 /// The block an extension block stands for: this many blocks on, signed, along its axis.
-/// Zero acts as air (bank `$94` log, `$94:9411`, `$94:9447`).
+/// Zero acts as air.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Offset(pub i8);
 
-/// A door block's door: its index in the room's door list (bank `$94` log, the door
-/// collision reaction).
+/// A door block's door: its index in the room's door list.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct DoorIndex(pub u8);
 
-/// The PLM a shootable or special block spawns when it reacts (bank `$94` log, `$94:9E73`).
+/// The PLM a shootable or special block spawns when it reacts.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PlmChoice {
-    /// BTS bit 7 clear: entry `n` of the block type's PLM table (`$94:9EA6` shootable,
-    /// `$94:9139` special).
+    /// BTS bit 7 clear: entry `n` of the block type's PLM table (one for shootable
+    /// blocks, one for special).
     Common(u8),
-    /// BTS bit 7 set: entry `n` (bits 0-6) of the current area's table (`$94:9FC6` shootable).
+    /// BTS bit 7 set: entry `n` (bits 0-6) of the current area's table (shootable blocks).
     Area(u8),
 }
 
-/// What a bombable block does when bombed (bank `$94` log, `$94:9FD6`, `$94:9FF4`).
+/// What a bombable block does when bombed.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum BombableBts {
-    /// BTS bit 7 clear: spawns entry `n` of `$94:A012`.
+    /// BTS bit 7 clear: spawns entry `n` of the bombable blocks' PLM table.
     Plm(u8),
     /// BTS bit 7 set: spawns nothing; bits 0-6 as stored.
     Inert(u8),
@@ -411,7 +409,7 @@ impl Level {
     }
 }
 
-/// A screen's scroll permission (bank `$80` log, the camera's scroll limits).
+/// A screen's scroll permission.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ScrollArea {
     /// 0: the camera may not enter.
@@ -467,9 +465,9 @@ impl From<AddressError> for ScrollError {
 }
 
 /// The scroll areas a state's scroll pointer gives a room of `size`, a screen each,
-/// row-major (bank `$82` log, `$82:EA73`, on loading a room from a save).
+/// row-major.
 ///
-/// A pointer in `$8F:8000`-`$FFFF` names a table of a byte a screen; one below `$8000` has
+/// A pointer of 0x8000 or more names a table of a byte a screen; one below 0x8000 has
 /// no table: every screen is green but the bottom row, which is the pointer's low byte plus
 /// one.
 ///
@@ -508,3 +506,20 @@ pub fn scroll_areas(
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// The decompressed level data (bank `$82` log, `$82:E7D3`, into `$7F:0000`) is layer 1's
+// (bank `$94` log, the block reaction tables).
+// A slope's shape and flips (bank `$94` log, the slope collision routines `$94:8D2B` on).
+// Zero acts as air (bank `$94` log, `$94:9411`, `$94:9447`).
+// A door block's door: its index in the room's door list (bank `$94` log, the door
+// The PLM a shootable or special block spawns when it reacts (bank `$94` log, `$94:9E73`).
+// BTS bit 7 clear: entry `n` of the block type's PLM table (`$94:9EA6` shootable,
+// `$94:9139` special).
+// BTS bit 7 set: entry `n` (bits 0-6) of the current area's table (`$94:9FC6` shootable).
+// What a bombable block does when bombed (bank `$94` log, `$94:9FD6`, `$94:9FF4`).
+// BTS bit 7 clear: spawns entry `n` of `$94:A012`.
+// A screen's scroll permission (bank `$80` log, the camera's scroll limits).
+// row-major (bank `$82` log, `$82:EA73`, on loading a room from a save).
+// A pointer in `$8F:8000`-`$FFFF` names a table of a byte a screen; one below `$8000` has

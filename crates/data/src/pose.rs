@@ -1,10 +1,9 @@
-//! Samus's poses: the bank $91 pose definitions table, decoded into typed records.
+//! Samus's poses: the pose definitions table, decoded into typed records.
 //!
-//! Bank $91 log, `$91:B629` "Pose definitions": eight bytes a pose, for poses 0 to $FC:
+//! Eight bytes a pose, for poses 0 to 0xFC:
 //! the X direction, the movement type, the pose to take when no button changes it, the
 //! direction shots are fired in, the Y offset of the graphics and projectile origin, an
-//! unused byte, the Y radius and another unused byte
-//! (<https://patrickjohnston.org/bank/91#fB629>).
+//! unused byte, the Y radius and another unused byte.
 
 use canonical::Canonical;
 
@@ -20,9 +19,9 @@ pub mod transition;
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PoseId(pub u16);
 
-/// How a pose moves Samus: the movement type the bank $90 movement handler dispatches on.
+/// How a pose moves Samus: the movement type the movement handler dispatches on.
 ///
-/// The names follow the bank $90 log's movement type list.
+/// The names follow the original's movement type list.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum MovementType {
     /// Standing.
@@ -164,14 +163,14 @@ impl From<MovementType> for u8 {
 /// Which way a pose faces: the pose X direction byte.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum PoseFacing {
-    /// Toward the screen: the two facing-forward poses (0 and $9B), byte 0.
+    /// Toward the screen: the two facing-forward poses (0 and 0x9B), byte 0.
     Forward,
     /// Toward the left edge, byte 4.
     Left,
     /// Toward the right edge, byte 8.
     #[default]
     Right,
-    /// Another byte: the unused poses $21 and $22 hold 1 and 2. The original's facing
+    /// Another byte: the unused poses 0x21 and 0x22 hold 1 and 2. The original's facing
     /// tests read the left and right bits, so it tolerates them (docs/LEGACY.md).
     Unknown(u8),
 }
@@ -245,7 +244,7 @@ pub enum Shot {
     /// Shots leave in this direction.
     Fires(ShotDirection),
     /// The high nybble is set: no shot, and the grapple beam is cancelled. The byte is
-    /// kept whole ($FA, $FB, $FC or $FF in the table) so it goes back out unchanged.
+    /// kept whole (0xFA, 0xFB, 0xFC or 0xFF in the table) so it goes back out unchanged.
     Withheld(u8),
 }
 
@@ -298,7 +297,7 @@ pub struct PoseDefinition {
     pub facing: PoseFacing,
     /// How it moves Samus.
     pub movement: MovementType,
-    /// The pose to take when no button changes it; `None` keeps this one ($FF).
+    /// The pose to take when no button changes it; `None` keeps this one (0xFF).
     pub next: Option<PoseId>,
     /// Whether and where it fires.
     pub shot: Shot,
@@ -308,10 +307,10 @@ pub struct PoseDefinition {
     pub y_radius: u8,
 }
 
-/// The table's first entry (bank $91 log).
-pub const POSE_DEFINITIONS: RomAddress = RomAddress::new(0x91, 0xB629);
+/// The table's first entry.
+const POSE_DEFINITIONS: RomAddress = RomAddress::new(0x91, 0xB629);
 
-/// The poses the table defines: 0 to $FC, ending where the next table begins (`$91:BE11`).
+/// The poses the table defines: 0 to 0xFC, ending where the next table begins.
 pub const POSE_COUNT: usize = 0xFD;
 
 /// Bytes a definition.
@@ -409,3 +408,13 @@ fn definition(
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Samus's poses: the bank $91 pose definitions table, decoded into typed records.
+// Bank $91 log, `$91:B629` "Pose definitions": eight bytes a pose, for poses 0 to $FC:
+// (<https://patrickjohnston.org/bank/91#fB629>).
+// How a pose moves Samus: the movement type the bank $90 movement handler dispatches on.
+// The names follow the bank $90 log's movement type list.
+// The table's first entry (bank $91 log).
+// The poses the table defines: 0 to $FC, ending where the next table begins (`$91:BE11`).

@@ -1,8 +1,7 @@
 //! The original's compression format, used for level data, tiles and tilemaps.
 //!
-//! Decoded as bank `$80`'s decompression routines do (`$80:B0FF` with a 24-bit source,
-//! `$80:B119` to memory; `$80:B271` writes the same stream to VRAM). The stream is a list
-//! of commands, each a header byte and its operands, ended by `$FF`:
+//! The stream is a list of commands, each a header byte and its operands, ended by the byte
+//! 0xFF:
 //!
 //! - `cccLLLLL`: command `ccc`, length `LLLLL + 1`;
 //! - `111cccLL LLLLLLLL`: the extended header, command `ccc`, a 10-bit length plus one.
@@ -211,3 +210,8 @@ fn copy(
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Decoded as bank `$80`'s decompression routines do (`$80:B0FF` with a 24-bit source,
+// `$80:B119` to memory; `$80:B271` writes the same stream to VRAM). The stream is a list

@@ -1,13 +1,10 @@
 //! The tilesets' tile tables: the four 8x8 tilemap words each 16x16 block draws.
 //!
-//! Bank $82 log, load state header `$82:DEF2`: the room state's tileset byte indexes the
-//! tileset pointers (`$8F:E7A7`, a bank $8F word each) to a tileset's three long pointers
-//! (tile table, tiles, palette; `$07C0`, `$07C3`, `$07C6`). Loading the level data
-//! (`$82:E7D3`) decompresses the tile table into `$7E:A000`: outside Ceres, the common room
-//! elements' table (`$B9:A09D`) there first and the tileset's after it at `$7E:A800`, so the
-//! tileset's blocks start at block 100h. A block's table entry is four words, top left, top
-//! right, bottom left, bottom right; the BG graphics updates (bank $80 log, `$80:A3DF` and
-//! the column and row builders it calls) read them by the block's ten-bit tile number.
+//! The room state's tileset byte indexes the tileset pointers to a tileset's three long
+//! pointers. Loading the level data decompresses the tile table: outside Ceres, the common
+//! room elements' table first and the tileset's after it, so the tileset's blocks start at
+//! block 100h. A block's table entry is four words, top left, top right, bottom left, bottom
+//! right; the BG graphics updates read them by the block's ten-bit tile number.
 
 use canonical::Canonical;
 
@@ -15,14 +12,13 @@ use crate::compression::{DecompressError, decompress};
 use crate::rom::{AddressError, Lorom, RomAddress};
 use crate::room::Area;
 
-/// The tileset pointers: a bank $8F word per tileset.
-pub const TILESET_POINTERS: RomAddress = RomAddress::new(0x8f, 0xe7a7);
+/// The tileset pointers: a word per tileset.
+const TILESET_POINTERS: RomAddress = RomAddress::new(0x8f, 0xe7a7);
 /// The common room elements' compressed tile table.
-pub const CRE_TILE_TABLE: RomAddress = RomAddress::new(0xb9, 0xa09d);
+const CRE_TILE_TABLE: RomAddress = RomAddress::new(0xb9, 0xa09d);
 /// The tilesets the pointer table holds.
 pub const TILESETS: usize = 29;
-/// The blocks the CRE's table fills before the tileset's (`$7E:A800 - $7E:A000`, eight bytes
-/// a block).
+/// The blocks the CRE's table fills before the tileset's (eight bytes a block).
 pub const CRE_BLOCKS: u16 = 0x100;
 /// The blocks a tile number reaches: ten bits.
 pub const BLOCKS: usize = 0x400;
@@ -119,7 +115,7 @@ impl TileTables {
     }
 
     /// What block `number` draws in a room of `area` with tileset `tileset`, as the
-    /// original's `$7E:A000` holds it after the room loads; `None` past what the tables
+    /// original's tile table holds it after the room loads; `None` past what the tables
     /// fill, where the RAM holds what an earlier room or the boot left (docs/LEGACY.md).
     #[must_use]
     pub fn block(&self, area: Area, tileset: TilesetId, number: u16) -> Option<BlockTiles> {
@@ -159,3 +155,15 @@ fn read_array<const N: usize>(
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank $82 log, load state header `$82:DEF2`: the room state's tileset byte indexes the
+// tileset pointers (`$8F:E7A7`, a bank $8F word each) to a tileset's three long pointers
+// (tile table, tiles, palette; `$07C0`, `$07C3`, `$07C6`). Loading the level data
+// (`$82:E7D3`) decompresses the tile table into `$7E:A000`: outside Ceres, the common room
+// elements' table (`$B9:A09D`) there first and the tileset's after it at `$7E:A800`, so the
+// right, bottom left, bottom right; the BG graphics updates (bank $80 log, `$80:A3DF` and
+// The tileset pointers: a bank $8F word per tileset.
+// The blocks the CRE's table fills before the tileset's (`$7E:A800 - $7E:A000`, eight bytes
+// original's `$7E:A000` holds it after the room loads; `None` past what the tables

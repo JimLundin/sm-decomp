@@ -34,66 +34,64 @@ impl From<GraphicsRef> for BusAddress {
     }
 }
 
-/// The OAM buffer, which `$80:933A` DMAs to OAM through channel 0.
+/// The OAM buffer, which the frame's DMA copies to OAM through channel 0.
 pub const OAM_BUFFER: BusAddress = BusAddress {
     bank: 0x00,
     offset: 0x0370,
 };
 
-/// The palette buffer, which `$80:933A` DMAs to CGRAM through channel 1.
+/// The palette buffer, which the frame's DMA copies to CGRAM through channel 1.
 pub const PALETTE_BUFFER: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0xC000,
 };
 
-/// The HUD tilemap, rows 1 to 3, which `$80:9CAD` queues for the VRAM write table.
+/// The HUD tilemap, rows 1 to 3, which the HUD update queues for the VRAM write table.
 pub const HUD_TILEMAP_BUFFER: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0xC608,
 };
 
-/// BG1's block column buffer, the left 8x8 column then the right, which `$80:8CD8` DMAs from
-/// (bank `$80` log, the column builder `$80:A9DE`).
+/// BG1's block column buffer, the left 8x8 column then the right, which the column upload DMAs from.
 pub const BG1_COLUMN_BUFFER: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0xC8C8,
 };
 
-/// BG1's block row buffer, the top 8x8 row then the bottom, which `$80:8DAC` DMAs from (the
-/// row builder `$80:AB78`).
+/// BG1's block row buffer, the top 8x8 row then the bottom, which the row upload DMAs from.
 pub const BG1_ROW_BUFFER: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0xC948,
 };
 
 /// The PLM draw's tilemap buffer: the top 8x8 row of the blocks a draw instruction draws, then
-/// the bottom row, which the draw (`$84:8DAA`) queues for the VRAM write table.
+/// the bottom row, which the PLM draw queues for the VRAM write table.
 pub const PLM_DRAW_TILEMAP: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0xC6C8,
 };
 
-/// The message box's backup of the BG3 tilemap it covers, which `$85:81B5` DMAs from VRAM and
-/// `$85:861F` back.
+/// The message box's backup of the BG3 tilemap it covers, which is copied from VRAM when the box opens and
+/// back when it closes.
 pub const MESSAGE_BOX_BACKUP: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0x4100,
 };
 
-/// The message box's rows, the borders and the message, which `$85:8324` uploads to BG3's
+/// The message box's rows, the borders and the message, which are uploaded to BG3's
 /// tilemap.
 pub const MESSAGE_BOX_ROWS: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0x3200,
 };
 
-/// The message box's blank tilemap, which `$85:81F3` fills and DMAs to VRAM.
+/// The message box's blank tilemap, which is filled and copied to VRAM.
 pub const MESSAGE_BOX_BLANK: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0x3800,
 };
 
-/// The message box's BG3 Y scroll HDMA table, which `$85:8363` points HDMA channel 6 at.
+/// The message box's BG3 Y scroll HDMA table, which HDMA channel 6 is pointed at.
 pub const MESSAGE_BOX_SCROLL_TABLE: BusAddress = BusAddress {
     bank: 0x7E,
     offset: 0x3380,
@@ -128,3 +126,19 @@ mod tests {
         );
     }
 }
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// The OAM buffer, which `$80:933A` DMAs to OAM through channel 0.
+// The palette buffer, which `$80:933A` DMAs to CGRAM through channel 1.
+// The HUD tilemap, rows 1 to 3, which `$80:9CAD` queues for the VRAM write table.
+// BG1's block column buffer, the left 8x8 column then the right, which `$80:8CD8` DMAs from
+// (bank `$80` log, the column builder `$80:A9DE`).
+// BG1's block row buffer, the top 8x8 row then the bottom, which `$80:8DAC` DMAs from (the
+// row builder `$80:AB78`).
+// the bottom row, which the draw (`$84:8DAA`) queues for the VRAM write table.
+// The message box's backup of the BG3 tilemap it covers, which `$85:81B5` DMAs from VRAM and
+// `$85:861F` back.
+// The message box's rows, the borders and the message, which `$85:8324` uploads to BG3's
+// The message box's blank tilemap, which `$85:81F3` fills and DMAs to VRAM.
+// The message box's BG3 Y scroll HDMA table, which `$85:8363` points HDMA channel 6 at.

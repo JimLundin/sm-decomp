@@ -1,13 +1,10 @@
 //! Samus's animation delay lists: how long each animation frame of a pose shows, and the
 //! instructions that end, loop or leave the animation.
 //!
-//! Bank $91 log, `$91:B010` "Animation delay table": a bank $91 pointer a pose to a list of
-//! bytes. A byte below $80 is a frame's delay; a byte with its high bit set is an
-//! instruction, dispatched on its low nybble by bank $90's "Handle Samus animation delay"
-//! (`$90:82DC`, its table at `$90:8324`), some of them with operand bytes after it. The
-//! running list for when Samus has running momentum without the speed booster is at
-//! `$91:B5D1` (<https://patrickjohnston.org/bank/91#fB010>,
-//! <https://patrickjohnston.org/bank/90#f82DC>).
+//! A pointer a pose names a list of bytes. A byte below 0x80 is a frame's delay; a byte with
+//! its high bit set is an instruction, dispatched on its low nybble, some of them with
+//! operand bytes after it. The running list for when Samus has running momentum without the
+//! speed booster is a separate list.
 //!
 //! The animation frame is a byte offset into the list, and the original reads whatever byte
 //! it points at, an operand included, so every offset of a list decodes as an item.
@@ -35,19 +32,19 @@ pub struct BySpeed {
     pub moving: PoseId,
 }
 
-/// A delay list instruction, by the low nybble of its byte (`$90:8324`).
+/// A delay list instruction, by the low nybble of its byte.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Instruction {
-    /// Nybbles 0 to 5 (`$90:8344`): nothing, the frame stays; the byte is kept.
+    /// Nybbles 0 to 5: nothing, the frame stays; the byte is kept.
     NoOp(u8),
-    /// 6 (`$90:8346`): back to the start if Samus's health is at least 30, else on.
+    /// 6: back to the start if Samus's health is at least 30, else on.
     LoopIfHealthy,
-    /// 7 (`$90:8360`): the drained Samus falling movement handler, then on.
+    /// 7: the drained Samus falling movement handler, then on.
     DrainedFalling,
-    /// 8 (`$90:8370`): outside the demos, unless the prospective pose is a jump, enable the
+    /// 8: outside the demos, unless the prospective pose is a jump, enable the
     /// auto-jump hack and transition to the pose.
     AutoJumpTransition(PoseId),
-    /// 9 (`$90:839A`): transition by whether any of the items is equipped, then by Y speed.
+    /// 9: transition by whether any of the items is equipped, then by Y speed.
     ByItemsAndSpeed {
         /// The items.
         items: ItemBits,
@@ -56,11 +53,11 @@ pub enum Instruction {
         /// With one of them.
         with: BySpeed,
     },
-    /// $A (`$90:83F6`, unused): transition by Y speed.
+    /// 0xA (unused): transition by Y speed.
     BySpeed(BySpeed),
-    /// $B (`$90:841D`): the wall jump's delay sequence for her items and the liquid.
+    /// 0xB: the wall jump's delay sequence for her items and the liquid.
     WallJump,
-    /// $C (`$90:848B`, unused): transition by whether any of the items is equipped.
+    /// 0xC (unused): transition by whether any of the items is equipped.
     ByItems {
         /// The items.
         items: ItemBits,
@@ -69,11 +66,11 @@ pub enum Instruction {
         /// The pose with one of them.
         with: PoseId,
     },
-    /// $D (`$90:84B6`): transition to the pose, the animation finished.
+    /// 0xD: transition to the pose, the animation finished.
     Transition(PoseId),
-    /// $E (`$90:84C7`): back this many bytes.
+    /// 0xE: back this many bytes.
     GoBack(u8),
-    /// $F (`$90:84DB`): back to the start.
+    /// 0xF: back to the start.
     Loop,
 }
 
@@ -98,13 +95,12 @@ const WALL_JUMP_REACH: usize = 0x16;
 
 /// The frame from which a spin jump can wall jump.
 ///
-/// Bank `$90` log, wall jump check `$90:9D35`, which compares the frame with it (`$90:9D55`) and, while the spin hasn't
-/// reached it, sets the frame one before it (`$90:9DC8`), so the next tick reaches it
-/// whatever the delay list says.
+/// The wall jump check compares the frame with it and, while the spin hasn't reached it,
+/// sets the frame one before it, so the next tick reaches it whatever the delay list says.
 pub const WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x0B);
-/// The screw attack's (`$90:9D63`, set one before at `$90:9DD7`).
+/// The screw attack's wall jump frame.
 pub const SCREW_ATTACK_WALL_JUMP_FRAME: AnimationFrame = AnimationFrame(0x1B);
-/// The screw attack poses, facing right and left, which `$90:9D48` tells apart.
+/// The screw attack poses, facing right and left.
 const SCREW_ATTACK: [PoseId; 2] = [PoseId(0x81), PoseId(0x82)];
 
 /// The frame from which a spin jump in `pose` can wall jump: the screw attack's or the
@@ -139,7 +135,7 @@ pub enum AnimationError {
 }
 
 /// One delay list: the item at each frame, and the byte it is, which the original adds to
-/// the frame timer whatever the item (`$90:84E3`, `$90:8315`).
+/// the frame timer whatever the item.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DelayList {
     bytes: Vec<u8>,
@@ -272,11 +268,11 @@ fn item(bytes: &[u8]) -> Option<DelayItem> {
     Some(DelayItem::Instruction(instruction))
 }
 
-/// The table's first pointer (bank $91 log).
-pub const ANIMATION_DELAYS: RomAddress = RomAddress::new(0x91, 0xB010);
+/// The table's first pointer.
+const ANIMATION_DELAYS: RomAddress = RomAddress::new(0x91, 0xB010);
 
-/// The pointer to the running list without the speed booster (bank $91 log).
-pub const RUNNING_DELAYS: RomAddress = RomAddress::new(0x91, 0xB5D1);
+/// The pointer to the running list without the speed booster.
+const RUNNING_DELAYS: RomAddress = RomAddress::new(0x91, 0xB5D1);
 
 /// The bank every list is in.
 const LIST_BANK: u8 = 0x91;
@@ -340,3 +336,30 @@ impl AnimationDelays {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank $91 log, `$91:B010` "Animation delay table": a bank $91 pointer a pose to a list of
+// instruction, dispatched on its low nybble by bank $90's "Handle Samus animation delay"
+// (`$90:82DC`, its table at `$90:8324`), some of them with operand bytes after it. The
+// `$91:B5D1` (<https://patrickjohnston.org/bank/91#fB010>,
+// <https://patrickjohnston.org/bank/90#f82DC>).
+// A delay list instruction, by the low nybble of its byte (`$90:8324`).
+// Nybbles 0 to 5 (`$90:8344`): nothing, the frame stays; the byte is kept.
+// 6 (`$90:8346`): back to the start if Samus's health is at least 30, else on.
+// 7 (`$90:8360`): the drained Samus falling movement handler, then on.
+// 8 (`$90:8370`): outside the demos, unless the prospective pose is a jump, enable the
+// 9 (`$90:839A`): transition by whether any of the items is equipped, then by Y speed.
+// $A (`$90:83F6`, unused): transition by Y speed.
+// $B (`$90:841D`): the wall jump's delay sequence for her items and the liquid.
+// $C (`$90:848B`, unused): transition by whether any of the items is equipped.
+// $D (`$90:84B6`): transition to the pose, the animation finished.
+// $E (`$90:84C7`): back this many bytes.
+// $F (`$90:84DB`): back to the start.
+// Bank `$90` log, wall jump check `$90:9D35`, which compares the frame with it (`$90:9D55`) and, while the spin hasn't
+// reached it, sets the frame one before it (`$90:9DC8`), so the next tick reaches it
+// The screw attack's (`$90:9D63`, set one before at `$90:9DD7`).
+// The screw attack poses, facing right and left, which `$90:9D48` tells apart.
+// the frame timer whatever the item (`$90:84E3`, `$90:8315`).
+// The table's first pointer (bank $91 log).
+// The pointer to the running list without the speed booster (bank $91 log).

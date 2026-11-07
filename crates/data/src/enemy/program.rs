@@ -1,11 +1,10 @@
 //! Enemy instruction lists, decoded into typed programs (D13).
 //!
-//! Bank $A0 log (<https://patrickjohnston.org/bank/A0>): an enemy's instruction pointer
-//! (`$0F92`) names a list of words in its AI bank. A word below `$8000` is a frame: that many
-//! frames of the spritemap the next word points to. A word with its high bit set is an
-//! instruction routine; each AI bank keeps a copy of the common instructions at the offsets
-//! bank $A0 has them (`$A0:807C` to `$A0:817D`), and its operands follow it. Processing the
-//! instructions (`$A0:C26A`) runs routines until a frame.
+//! An enemy's instruction pointer names a list of words in its AI bank. A word below
+//! 0x8000 is a frame: that many frames of the spritemap the next word points to. A word with
+//! its high bit set is an instruction routine, and its operands follow it; each AI bank
+//! keeps a copy of the common instructions. Processing the instructions runs routines until
+//! a frame.
 //!
 //! The decoder walks every list the loaded species' AI names, follows each go-to, and cuts
 //! the words into programs: a program is a run of steps that fall through to each other, so
@@ -55,7 +54,7 @@ pub struct Target {
     pub step: u16,
 }
 
-/// A species function an instruction list calls (`$A0:808A`). None of the lists slice 0's
+/// A species function an instruction list calls. None of the lists slice 0's
 /// species run calls one; each joins as a variant with the species whose list calls it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Function {}
@@ -63,30 +62,30 @@ pub enum Function {}
 /// One step of an enemy program.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Instruction {
-    /// Show the spritemap for `delay` frames: a word below `$8000` and the spritemap's.
+    /// Show the spritemap for `delay` frames: a word below 0x8000 and the spritemap's.
     Show {
         /// The instruction timer it sets.
         delay: u16,
         /// The spritemap.
         spritemap: SpritemapId,
     },
-    /// `$A0:807C`: mark the enemy deleted and stop.
+    /// Mark the enemy deleted and stop.
     Delete,
-    /// `$A0:808A`: call the species function, then on.
+    /// Call the species function, then on.
     Call(Function),
-    /// `$A0:80ED`: go to the target.
+    /// Go to the target.
     Goto(Target),
-    /// `$A0:8110`: decrement the timer; go to the target unless it reached zero, else on.
+    /// Decrement the timer; go to the target unless it reached zero, else on.
     DecrementTimerGoto(Target),
-    /// `$A0:8123`: set the timer, then on.
+    /// Set the timer, then on.
     SetTimer(u16),
-    /// `$A0:812F`: stop here; the next run starts at this step again.
+    /// Stop here; the next run starts at this step again.
     Sleep,
-    /// `$A0:813A`: set the instruction timer and stop; the next run starts at the next step.
+    /// Set the instruction timer and stop; the next run starts at the next step.
     Wait(u16),
-    /// `$A0:8173`: set the processed-off-screen property, then on.
+    /// Set the processed-off-screen property, then on.
     EnableOffScreen,
-    /// `$A0:817D`: clear the processed-off-screen property, then on.
+    /// Clear the processed-off-screen property, then on.
     DisableOffScreen,
 }
 
@@ -172,8 +171,8 @@ pub const SLICE_ZERO_LISTS: [RomAddress; 15] = [
     RomAddress::new(0xa8, 0xe828),
 ];
 
-/// The spritemaps slice 0's species set outside a list: the empty spritemap their inits set
-/// (`$A3:804D`, the elevator's init at `$A3:94E6`; `$A8:804D`, the eye's).
+/// The spritemaps slice 0's species set outside a list: the empty spritemap their inits set:
+/// the elevator's copy and the eye's.
 pub const SLICE_ZERO_SPRITEMAPS: [Spritemap; 2] = [
     Spritemap(RomAddress::new(0xa3, 0x804d)),
     Spritemap(RomAddress::new(0xa8, 0x804d)),
@@ -515,3 +514,22 @@ impl EnemyPrograms {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank $A0 log (<https://patrickjohnston.org/bank/A0>): an enemy's instruction pointer
+// (`$0F92`) names a list of words in its AI bank. A word below `$8000` is a frame: that many
+// bank $A0 has them (`$A0:807C` to `$A0:817D`), and its operands follow it. Processing the
+// instructions (`$A0:C26A`) runs routines until a frame.
+// A species function an instruction list calls (`$A0:808A`). None of the lists slice 0's
+// Show the spritemap for `delay` frames: a word below `$8000` and the spritemap's.
+// `$A0:807C`: mark the enemy deleted and stop.
+// `$A0:808A`: call the species function, then on.
+// `$A0:80ED`: go to the target.
+// `$A0:8110`: decrement the timer; go to the target unless it reached zero, else on.
+// `$A0:8123`: set the timer, then on.
+// `$A0:812F`: stop here; the next run starts at this step again.
+// `$A0:813A`: set the instruction timer and stop; the next run starts at the next step.
+// `$A0:8173`: set the processed-off-screen property, then on.
+// `$A0:817D`: clear the processed-off-screen property, then on.
+// (`$A3:804D`, the elevator's init at `$A3:94E6`; `$A8:804D`, the eye's).

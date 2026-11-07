@@ -1,10 +1,10 @@
-//! Samus's palette tables (bank $9B log, <https://patrickjohnston.org/bank/9B>).
+//! Samus's palette tables.
 
 use crate::rom::{AddressError, Lorom, RomAddress};
 
-/// The visor's cycle (bank $9B log, the visor colours `$9B:A3C0`): the last three of the
+/// The visor's cycle: the last three of the
 /// table's six colours, after the x-ray beam's widening three.
-pub const VISOR_CYCLE: RomAddress = RomAddress::new(0x9b, 0xa3c6);
+const VISOR_CYCLE: RomAddress = RomAddress::new(0x9b, 0xa3c6);
 
 /// Colours in the visor's cycle.
 pub const VISOR_SHADES: usize = 3;
@@ -13,7 +13,7 @@ pub const VISOR_SHADES: usize = 3;
 const VISOR_BYTES: usize = 6;
 
 /// The visor's colours in rooms whose colour math adds the backdrop, in the order the cycle
-/// shows them (bank $91 log, handle visor palette `$91:D83F`).
+/// shows them.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct VisorColours(pub [u16; VISOR_SHADES]);
 
@@ -35,3 +35,9 @@ impl VisorColours {
         Ok(Self(colours))
     }
 }
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Samus's palette tables (bank $9B log, <https://patrickjohnston.org/bank/9B>).
+// The visor's cycle (bank $9B log, the visor colours `$9B:A3C0`): the last three of the
+// shows them (bank $91 log, handle visor palette `$91:D83F`).

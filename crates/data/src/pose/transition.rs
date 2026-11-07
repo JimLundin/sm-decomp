@@ -1,10 +1,8 @@
-//! Samus's pose transitions from input: the bank $91 transition table, decoded per pose.
+//! Samus's pose transitions from input: the transition table, decoded per pose.
 //!
-//! Bank $91 log, `$91:9EE2` "Pose transition table": one bank $91 pointer a pose, to a list
-//! of six-byte entries (the newly pressed controls, the held controls, the new pose) ended
-//! by $FFFF. The input handler (`$91:8000`, through `$91:81A9` "determine new pose from
-//! input") takes the first entry whose pressed controls were all newly pressed and whose
-//! held controls are all held (<https://patrickjohnston.org/bank/91#f9EE2>).
+//! One pointer a pose names a list of six-byte entries (the newly pressed controls, the held
+//! controls, the new pose) ended by the word 0xFFFF. The input handler takes the first entry
+//! whose pressed controls were all newly pressed and whose held controls are all held.
 
 use canonical::Canonical;
 
@@ -121,8 +119,8 @@ impl Transition {
     }
 }
 
-/// The table's first pointer (bank $91 log).
-pub const POSE_TRANSITIONS: RomAddress = RomAddress::new(0x91, 0x9EE2);
+/// The table's first pointer.
+const POSE_TRANSITIONS: RomAddress = RomAddress::new(0x91, 0x9EE2);
 
 /// The bank every list is in.
 const LIST_BANK: u8 = 0x91;
@@ -198,3 +196,11 @@ fn list(bytes: &[u8]) -> Result<Vec<Transition>, AddressError> {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Samus's pose transitions from input: the bank $91 transition table, decoded per pose.
+// Bank $91 log, `$91:9EE2` "Pose transition table": one bank $91 pointer a pose, to a list
+// by $FFFF. The input handler (`$91:8000`, through `$91:81A9` "determine new pose from
+// held controls are all held (<https://patrickjohnston.org/bank/91#f9EE2>).
+// The table's first pointer (bank $91 log).

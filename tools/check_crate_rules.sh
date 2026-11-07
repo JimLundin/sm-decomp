@@ -90,5 +90,40 @@ hits=$(
 )
 [ -n "$hits" ] && fail "$hits"
 
+# Rule 6: the public surface of `data` describes data in domain terms. A doc-comment line
+# (`///` or `//!`) holding a bank:address pair, a bare four-digit `$XXXX` address or a
+# "bank $XX" reference fails when it is part of a `//!` module doc, or is in a run of doc
+# lines whose next line is a `pub` item or an enum variant (a capitalised name). The
+# addresses belong in a `//` comment in the decoder or on a private item. This approximates
+# visibility by the next line: it misses a field of a struct-like enum variant and a `pub`
+# item hidden behind attributes other than `#[...]`, and it flags `pub(crate)` items too.
+doc_addresses() {
+  find crates/data/src -name '*.rs' | sort | while IFS= read -r file; do
+    awk -v file="$file" '
+      function flush() {
+        if (n > 0 && bad && (inner || next_line ~ /^[ \t]*pub[ (]/ \
+            || next_line ~ /^[ \t]*[A-Z][A-Za-z0-9_]*[ \t]*([({,=]|$)/))
+          print "rule 6 (no address in a public doc): " file ":" first ": " first_line
+        n = 0; bad = 0
+      }
+      /^[ \t]*\/\/[\/!]/ && !/^[ \t]*\/\/\/\// {
+        if (n == 0) { inner = ($0 ~ /^[ \t]*\/\/!/) }
+        n++
+        if ($0 ~ /\$[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]|\$[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]([^0-9A-Fa-f]|$)|[Bb]ank `?\$[0-9A-Fa-f][0-9A-Fa-f]([^0-9A-Fa-f]|$)/ && !bad) {
+          bad = 1; first = FNR; first_line = $0
+        }
+        next
+      }
+      n > 0 {
+        if ($0 ~ /^[ \t]*#\[/) next
+        next_line = $0; flush()
+      }
+      END { if (n > 0) { next_line = ""; flush() } }
+    ' "$file"
+  done
+}
+addr_hits=$(doc_addresses)
+[ -n "$addr_hits" ] && fail "$addr_hits"
+
 [ "$bad" -eq 0 ] && echo "CRATE RULES OK"
 exit $bad

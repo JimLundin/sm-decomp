@@ -1,12 +1,11 @@
-//! Room PLM populations, decoded from bank `$8F` into typed entries.
+//! Room PLM populations, decoded into typed entries.
 //!
-//! Bank $84 log (<https://patrickjohnston.org/bank/84>), spawn room PLM (`$84:846A`): a
-//! population entry is six bytes, the PLM ID (its header's offset in bank `$84`), the block's
+//! A population entry is six bytes, the PLM ID, the block's
 //! X and Y and the room argument; a zero ID ends the list. A header is the setup routine's
 //! pointer and the instruction list's.
 //!
-//! The scroll PLM's room argument points into bank `$8F` at its scroll changes: byte pairs,
-//! a screen and its new scroll area, ended by a byte with bit 7 set (`$84:8B55`).
+//! The scroll PLM's room argument points at its scroll changes: byte pairs,
+//! a screen and its new scroll area, ended by a byte with bit 7 set.
 
 use canonical::Canonical;
 
@@ -35,14 +34,14 @@ const MORPH_BALL: u16 = 0xef23;
 /// writes: a horizontal extension (`$5`) or a vertical one (`$D`), offset 1 or -1.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Extension {
-    /// `$B63B`: horizontal, BTS `$FF`, the block to the left.
+    /// Horizontal, BTS 0xFF, the block to the left.
     #[default]
     Right,
-    /// `$B63F`: horizontal, BTS 1.
+    /// Horizontal, BTS 1, the block to the right.
     Left,
-    /// `$B643`: vertical, BTS `$FF`, the block above.
+    /// Vertical, BTS 0xFF, the block above.
     Down,
-    /// `$B647`: vertical, BTS 1, the block below.
+    /// Vertical, BTS 1, the block below.
     Up,
 }
 
@@ -50,7 +49,7 @@ pub enum Extension {
 // open: the other items join with the rooms that place them; the Morph Ball's pickup is C12.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ItemPlm {
-    /// `$EF23`.
+    /// The Morph Ball's pickup.
     #[default]
     MorphBall,
 }
@@ -59,7 +58,7 @@ pub enum ItemPlm {
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ScrollChangesId(pub u16);
 
-/// One scroll change: screen `screen`'s scroll area becomes `area` (`$84:8B71`).
+/// One scroll change: screen `screen`'s scroll area becomes `area`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ScrollChange {
     /// The screen, row-major.
@@ -84,7 +83,7 @@ pub enum PlmKind {
 }
 
 impl PlmKind {
-    /// The PLM ID the original keeps in the slot (`$84:84AD`).
+    /// The PLM ID the original keeps in the slot.
     #[must_use]
     pub const fn id(self) -> u16 {
         match self {
@@ -235,3 +234,18 @@ pub fn population(rom: Lorom<'_>, at: RomAddress) -> Result<PlmPopulation, PlmEr
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Room PLM populations, decoded from bank `$8F` into typed entries.
+// Bank $84 log (<https://patrickjohnston.org/bank/84>), spawn room PLM (`$84:846A`): a
+// population entry is six bytes, the PLM ID (its header's offset in bank `$84`), the block's
+// The scroll PLM's room argument points into bank `$8F` at its scroll changes: byte pairs,
+// a screen and its new scroll area, ended by a byte with bit 7 set (`$84:8B55`).
+// `$B63B`: horizontal, BTS `$FF`, the block to the left.
+// `$B63F`: horizontal, BTS 1.
+// `$B643`: vertical, BTS `$FF`, the block above.
+// `$B647`: vertical, BTS 1, the block below.
+// `$EF23`.
+// One scroll change: screen `screen`'s scroll area becomes `area` (`$84:8B71`).
+// The PLM ID the original keeps in the slot (`$84:84AD`).

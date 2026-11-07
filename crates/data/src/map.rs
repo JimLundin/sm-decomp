@@ -1,8 +1,7 @@
 //! The area maps: each area's map tilemap and the cells its map station reveals, and the
 //! bitmap layout the explored cells share with them.
 //!
-//! Bank $90 log, update mini-map `$90:A91B`, and its RAM map note on `$7E:07F7`: an area's
-//! map is 64 by 32 cells, two pages of 32 by 32 side by side. A bitmap of it keeps one bit per
+//! An area's map is 64 by 32 cells, two pages of 32 by 32 side by side. A bitmap of it keeps one bit per
 //! cell, four bytes per row and 80h bytes per page, the most significant bit leftmost; the
 //! map tilemap keeps one tilemap word per cell, 20h words per row and 400h words per page.
 
@@ -11,11 +10,10 @@ use canonical::Canonical;
 use crate::rom::{AddressError, Lorom, RomAddress};
 use crate::room::Area;
 
-/// The map tilemaps' long pointers, one per area (`$90:AA7C`: `$82:964A + [area] * 3`).
-pub const MAP_TILEMAP_POINTERS: RomAddress = RomAddress::new(0x82, 0x964a);
-/// The map station bitmaps' pointers into bank $82, one per area (`$90:A9C8`:
-/// `$82:9717 + [area] * 2`).
-pub const MAP_STATION_POINTERS: RomAddress = RomAddress::new(0x82, 0x9717);
+/// The map tilemaps' long pointers, one per area.
+const MAP_TILEMAP_POINTERS: RomAddress = RomAddress::new(0x82, 0x964a);
+/// The map station bitmaps' pointers, one per area.
+const MAP_STATION_POINTERS: RomAddress = RomAddress::new(0x82, 0x9717);
 /// The areas with a map: the debug area's pointers name no map.
 pub const MAPPED_AREAS: [Area; 7] = [
     Area::Crateria,
@@ -362,3 +360,10 @@ mod tests {
         assert!(brinstar.tiles.iter().any(|&word| word & 0x03ff != 0x001f));
     }
 }
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank $90 log, update mini-map `$90:A91B`, and its RAM map note on `$7E:07F7`: an area's
+// The map tilemaps' long pointers, one per area (`$90:AA7C`: `$82:964A + [area] * 3`).
+// The map station bitmaps' pointers into bank $82, one per area (`$90:A9C8`:
+// `$82:9717 + [area] * 2`).

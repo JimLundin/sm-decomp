@@ -4,12 +4,9 @@
 //! run speed holding the run button adds, and the vertical constants (gravity and the jumps'
 //! initial speeds).
 //!
-//! Bank $90 log (<https://patrickjohnston.org/bank/90>): `$90:9F55` "Samus X speed table -
-//! normal", one twelve-byte entry a movement type (X acceleration, max X speed, X
-//! deceleration, each a pixel word then a subpixel word), read by `$90:9BD1` "Determine
-//! Samus X speed table entry pointer" at the table pointer plus 12 times the movement type;
-//! `$90:9F01`, the extra run speed's acceleration and caps, read by `$90:973E` "Handle Samus X
-//! extra run speed".
+//! The speed table has one twelve-byte entry a movement type (X acceleration, max X speed, X
+//! deceleration, each a pixel word then a subpixel word), found at the table's start plus 12
+//! times the movement type; the extra run speed has its own acceleration and caps.
 
 use canonical::Canonical;
 
@@ -53,7 +50,7 @@ impl Speed {
     }
 }
 
-/// One movement type's horizontal speeds (`$90:9F55`).
+/// One movement type's horizontal speeds.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct SpeedEntry {
     /// Added to the base speed each frame while accelerating.
@@ -64,15 +61,15 @@ pub struct SpeedEntry {
     pub deceleration: Speed,
 }
 
-/// The speed table's first entry, for neither water nor lava (bank $90 log).
-pub const NORMAL_SPEEDS: RomAddress = RomAddress::new(0x90, 0x9F55);
+/// The speed table's first entry, for neither water nor lava.
+const NORMAL_SPEEDS: RomAddress = RomAddress::new(0x90, 0x9F55);
 
-/// The extra run speed's constants (bank $90 log, `$90:9F01`).
-pub const EXTRA_RUN_SPEEDS: RomAddress = RomAddress::new(0x90, 0x9F01);
+/// The extra run speed's constants.
+const EXTRA_RUN_SPEEDS: RomAddress = RomAddress::new(0x90, 0x9F01);
 
-/// The movement types the handler indexes the table with: 0 to $1B.
+/// The movement types the handler indexes the table with: 0 to 0x1B.
 ///
-/// The normal table holds 26 entries (`$90:9F55` to `$90:A08D`); types $1A and $1B read on
+/// The normal table holds 26 entries; types 0x1A and 0x1B read on
 /// into the water table's first two, as the original does.
 pub const MOVEMENT_TYPES: usize = 0x1C;
 
@@ -196,7 +193,7 @@ impl AirMotion {
     };
 }
 
-/// The extra run speed holding the run button adds while running in air (`$90:9F01`; the
+/// The extra run speed holding the run button adds while running in air (the
 /// handler reads the water and lava columns only after its own liquid test sends it away).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct ExtraRun {
@@ -251,37 +248,35 @@ impl HorizontalSpeeds {
     }
 }
 
-/// Samus's physics constants (bank $90 log, `$90:9E8B`): gravity from `$90:9EA1`, then the
-/// initial Y speeds from `$90:9EB9`, in rows of six words (pixels in air, water, lava/acid,
+/// Samus's physics constants: gravity, then the
+/// initial Y speeds, in rows of six words (pixels in air, water, lava/acid,
 /// then their subpixels).
-pub const PHYSICS_CONSTANTS: RomAddress = RomAddress::new(0x90, 0x9EA1);
+const PHYSICS_CONSTANTS: RomAddress = RomAddress::new(0x90, 0x9EA1);
 
-/// The constants' bytes from gravity to the end of the wall-jumping-with-hi-jump row
-/// (`$90:9EA1` to `$90:9EE9`).
+/// The constants' bytes from gravity to the end of the wall-jumping-with-hi-jump row.
 pub const PHYSICS_BYTES: usize = 0x48;
 
 /// The air column of the vertical constants; water and lava/acid wait for the liquids.
 ///
-/// "Determine Samus Y acceleration" (`$90:9C5B`) sets gravity every frame before the
-/// movement handler; "Make Samus jump" (`$90:98BC`) and "Make Samus wall-jump" (`$90:9949`)
-/// take the initial speeds.
+/// Gravity is set every frame before the movement handler; a jump and a wall jump take the
+/// initial speeds.
 // open: the water and lava/acid columns (X = 2, 4) join with liquids; no slice 0 room has one.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct VerticalSpeeds {
-    /// Taken from a rise, added to a fall, each frame (`$90:9EA1`, `$90:9EA7`).
+    /// Taken from a rise, added to a fall, each frame.
     pub gravity: Speed,
-    /// A jump's first speed (`$90:9EB9`).
+    /// A jump's first speed.
     pub jump: Speed,
-    /// With the hi-jump boots (`$90:9EC5`).
+    /// With the hi-jump boots.
     pub hi_jump: Speed,
-    /// A wall jump's (`$90:9ED1`).
+    /// A wall jump's.
     pub wall_jump: Speed,
-    /// With the hi-jump boots (`$90:9EDD`).
+    /// With the hi-jump boots.
     pub wall_hi_jump: Speed,
 }
 
 impl VerticalSpeeds {
-    /// The constants from their bytes, `$90:9EA1` on.
+    /// The constants from their bytes, gravity first.
     #[must_use]
     pub fn decode(bytes: &[u8; PHYSICS_BYTES]) -> Self {
         // Gravity's subpixel word comes first, its pixel word three words on.
@@ -321,3 +316,25 @@ fn word(bytes: &[u8], at: usize) -> u16 {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Bank $90 log (<https://patrickjohnston.org/bank/90>): `$90:9F55` "Samus X speed table -
+// deceleration, each a pixel word then a subpixel word), read by `$90:9BD1` "Determine
+// `$90:9F01`, the extra run speed's acceleration and caps, read by `$90:973E` "Handle Samus X
+// One movement type's horizontal speeds (`$90:9F55`).
+// The speed table's first entry, for neither water nor lava (bank $90 log).
+// The extra run speed's constants (bank $90 log, `$90:9F01`).
+// The normal table holds 26 entries (`$90:9F55` to `$90:A08D`); types $1A and $1B read on
+// The extra run speed holding the run button adds while running in air (`$90:9F01`; the
+// Samus's physics constants (bank $90 log, `$90:9E8B`): gravity from `$90:9EA1`, then the
+// initial Y speeds from `$90:9EB9`, in rows of six words (pixels in air, water, lava/acid,
+// (`$90:9EA1` to `$90:9EE9`).
+// "Determine Samus Y acceleration" (`$90:9C5B`) sets gravity every frame before the
+// movement handler; "Make Samus jump" (`$90:98BC`) and "Make Samus wall-jump" (`$90:9949`)
+// Taken from a rise, added to a fall, each frame (`$90:9EA1`, `$90:9EA7`).
+// A jump's first speed (`$90:9EB9`).
+// With the hi-jump boots (`$90:9EC5`).
+// A wall jump's (`$90:9ED1`).
+// With the hi-jump boots (`$90:9EDD`).
+// The constants from their bytes, `$90:9EA1` on.

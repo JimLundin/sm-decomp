@@ -14,9 +14,9 @@ const BANK_BYTES: usize = 0x8000;
 /// A SNES address in the cartridge's ROM: a bank and the 16-bit offset inside it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RomAddress {
-    /// The bank, `$80-$FF` as the original's pointers name them (or the `$00-$7D` mirror).
+    /// The bank, 0x80-0xFF as the original's pointers name them (or the 0x00-0x7D mirror).
     pub bank: u8,
-    /// The offset inside the bank; ROM is at `$8000-$FFFF`.
+    /// The offset inside the bank; ROM is at 0x8000-0xFFFF.
     pub offset: u16,
 }
 
@@ -56,7 +56,7 @@ impl RomAddress {
 /// An address that names no byte of the image.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AddressError {
-    /// The offset is below `$8000`, outside a `LoROM` bank's ROM half.
+    /// The offset is below 0x8000, outside a `LoROM` bank's ROM half.
     NotRom(RomAddress),
     /// The address maps past the image's end.
     PastEnd(RomAddress),
@@ -120,8 +120,8 @@ impl Rom {
     }
 }
 
-/// A byte image read through the `LoROM` mapping: bank `b` offset `$8000+n` is file offset
-/// `(b & $7F) * $8000 + n`, so the banks follow one another in the file.
+/// A byte image read through the `LoROM` mapping: bank `b` offset `0x8000 + n` is file offset
+/// `(b & 0x7F) * 0x8000 + n`, so the banks follow one another in the file.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Lorom<'a> {
     image: &'a [u8],
@@ -180,3 +180,10 @@ impl<'a> Lorom<'a> {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// The offset inside the bank; ROM is at `$8000-$FFFF`.
+// The offset is below `$8000`, outside a `LoROM` bank's ROM half.
+// A byte image read through the `LoROM` mapping: bank `b` offset `$8000+n` is file offset
+// `(b & $7F) * $8000 + n`, so the banks follow one another in the file.

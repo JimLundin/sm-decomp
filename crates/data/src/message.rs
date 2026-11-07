@@ -1,4 +1,4 @@
-//! The message boxes' tables (bank $85 log, <https://patrickjohnston.org/bank/85>): the box
+//! The message boxes' tables: the box
 //! borders, each message's definition and tilemap, the special button letters and where they
 //! are drawn.
 
@@ -262,3 +262,7 @@ fn words(rom: Lorom<'_>, at: RomAddress, count: usize) -> Result<Vec<u16>, Addre
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// The message boxes' tables (bank $85 log, <https://patrickjohnston.org/bank/85>): the box

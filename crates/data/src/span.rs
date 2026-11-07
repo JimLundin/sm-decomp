@@ -144,7 +144,7 @@ pub enum PortDirection {
     Read,
 }
 
-/// One CPU access to `$2140-$2143`. DMA accesses aren't in the stream: lsnes's bus hook
+/// One CPU access to the four APU ports. DMA accesses aren't in the stream: lsnes's bus hook
 /// can't see them, so neither side folds them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PortAccess {
@@ -376,3 +376,7 @@ impl SpanFold {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// One CPU access to `$2140-$2143`. DMA accesses aren't in the stream: lsnes's bus hook

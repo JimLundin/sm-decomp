@@ -1,6 +1,5 @@
 //! The Blue Brinstar face block's instruction lists, by what its AI starts them for, and its
-//! glow colours (bank $A8 log, <https://patrickjohnston.org/bank/A8>, `$A8:E7CC` to
-//! `$A8:E828`).
+//! glow colours.
 
 use crate::rom::{AddressError, Lorom, RomAddress};
 
@@ -12,11 +11,11 @@ const BANK: u8 = 0xa8;
 /// The face block's lists as places in the loaded programs.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct FaceBlockLists {
-    /// Turning to look left, then sleeping (`$A8:E80C`).
+    /// Turning to look left, then sleeping.
     pub turning_left: Target,
-    /// Turning to look right, then sleeping (`$A8:E81A`).
+    /// Turning to look right, then sleeping.
     pub turning_right: Target,
-    /// Facing forward, sleeping (`$A8:E828`), which its init starts.
+    /// Facing forward, sleeping, which its init starts.
     pub facing_forward: Target,
 }
 
@@ -39,9 +38,9 @@ impl FaceBlockLists {
     }
 }
 
-/// The face block's glow colours (`$A8:E7CC`): eight sets of four, which its palette cycle
-/// copies to colours 9 to 12 of its sprite palette in turn (`$A8:E86E`).
-pub const GLOW_COLOURS: RomAddress = RomAddress::new(BANK, 0xe7cc);
+/// The face block's glow colours: eight sets of four, which its palette cycle
+/// copies to colours 9 to 12 of its sprite palette in turn.
+const GLOW_COLOURS: RomAddress = RomAddress::new(BANK, 0xe7cc);
 
 /// Sets in the glow's cycle.
 pub const GLOW_SETS: usize = 8;
@@ -108,3 +107,13 @@ mod tests {
         assert!(GlowColours::load(crate::rom::Lorom::new(&[0; 0x100])).is_err());
     }
 }
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// glow colours (bank $A8 log, <https://patrickjohnston.org/bank/A8>, `$A8:E7CC` to
+// `$A8:E828`).
+// Turning to look left, then sleeping (`$A8:E80C`).
+// Turning to look right, then sleeping (`$A8:E81A`).
+// Facing forward, sleeping (`$A8:E828`), which its init starts.
+// The face block's glow colours (`$A8:E7CC`): eight sets of four, which its palette cycle
+// copies to colours 9 to 12 of its sprite palette in turn (`$A8:E86E`).

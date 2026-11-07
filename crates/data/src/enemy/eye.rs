@@ -1,5 +1,4 @@
-//! The Morph Ball Room eye's instruction lists, by what its AI starts them for (bank $A8
-//! log, <https://patrickjohnston.org/bank/A8>, `$A8:8FAC` to `$A8:904A` and `$A8:90DA`).
+//! The Morph Ball Room eye's instruction lists, by what its AI starts them for.
 
 use crate::rom::RomAddress;
 
@@ -16,7 +15,7 @@ pub const ACTIVE_FRAMES: usize = 16;
 /// The empty spritemap the init sets (`$A8:9058`).
 const EMPTY: u16 = 0x804d;
 
-/// Which way the eye faces: the first parameter's bit 0 (`$A8:90F1`).
+/// Which way the eye faces: the first parameter's bit 0.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Facing {
     /// Bit 0 clear.
@@ -46,7 +45,7 @@ impl ByFacing {
 }
 
 /// Which side of the eye a mount is on: the second parameter's low nybble, in the order of
-/// the init's tables (`$A8:90CA`, `$A8:90D2`, `$A8:90DA`).
+/// the init's tables.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MountSide {
     /// 0: 8 pixels left.
@@ -62,13 +61,13 @@ pub enum MountSide {
 /// A list for each mount side.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ByMountSide {
-    /// Left (`$A8:9044`).
+    /// Looking left.
     pub left: Target,
-    /// Right (`$A8:9038`).
+    /// Looking right.
     pub right: Target,
-    /// Up (`$A8:904A`).
+    /// Looking up.
     pub up: Target,
-    /// Down (`$A8:903E`).
+    /// Looking down.
     pub down: Target,
 }
 
@@ -88,16 +87,15 @@ impl ByMountSide {
 /// The eye's lists as places in the loaded programs.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct EyeLists {
-    /// The active frames, by the angle's high nybble (`$A8:8FAC`, "indexed by [enemy angle]
-    /// / 10h * 4, set every frame").
+    /// The active frames, by the angle's high nybble, chosen every frame.
     pub active: [Target; ACTIVE_FRAMES],
-    /// Closed (`$A8:8FFC`, `$A8:900E`).
+    /// Closed, by facing.
     pub closed: ByFacing,
-    /// Activating (`$A8:9014`, `$A8:9026`).
+    /// Opening, by facing.
     pub activating: ByFacing,
-    /// Deactivating (`$A8:8FF0`, `$A8:9002`).
+    /// Closing, by facing.
     pub deactivating: ByFacing,
-    /// A mount's, by its side (`$A8:90DA`).
+    /// A mounted eye's, by its side.
     pub mount: ByMountSide,
     /// The empty spritemap its init sets.
     pub empty: SpritemapId,
@@ -161,3 +159,19 @@ impl TryFrom<u16> for MountSide {
         }
     }
 }
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// The Morph Ball Room eye's instruction lists, by what its AI starts them for (bank $A8
+// log, <https://patrickjohnston.org/bank/A8>, `$A8:8FAC` to `$A8:904A` and `$A8:90DA`).
+// Which way the eye faces: the first parameter's bit 0 (`$A8:90F1`).
+// the init's tables (`$A8:90CA`, `$A8:90D2`, `$A8:90DA`).
+// Left (`$A8:9044`).
+// Right (`$A8:9038`).
+// Up (`$A8:904A`).
+// Down (`$A8:903E`).
+// The active frames, by the angle's high nybble (`$A8:8FAC`, "indexed by [enemy angle]
+// Closed (`$A8:8FFC`, `$A8:900E`).
+// Activating (`$A8:9014`, `$A8:9026`).
+// Deactivating (`$A8:8FF0`, `$A8:9002`).
+// A mount's, by its side (`$A8:90DA`).

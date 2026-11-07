@@ -14,17 +14,17 @@ pub enum StatePart {
     Header,
     /// The compressed level data.
     LevelData,
-    /// The FX list in bank `$83`.
+    /// The FX list.
     Fx,
-    /// The enemy population in bank `$A1`.
+    /// The enemy population.
     EnemyPopulation,
-    /// The enemy graphics set in bank `$B4`.
+    /// The enemy graphics set.
     EnemySet,
-    /// The scroll table in bank `$8F`.
+    /// The scroll table.
     Scroll,
-    /// The PLM population in bank `$8F`.
+    /// The PLM population.
     PlmPopulation,
-    /// The library background in bank `$8F`.
+    /// The library background.
     LibraryBackground,
 }
 
@@ -64,3 +64,12 @@ impl AddressMap {
         self.entries.iter().copied()
     }
 }
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// The FX list in bank `$83`.
+// The enemy population in bank `$A1`.
+// The enemy graphics set in bank `$B4`.
+// The scroll table in bank `$8F`.
+// The PLM population in bank `$8F`.
+// The library background in bank `$8F`.

@@ -1,9 +1,9 @@
-//! Enemy populations (bank `$A1`) and the species headers they name (bank `$A0`), decoded
-//! into typed records (bank `$A0` log: "enemy headers", "load enemies").
+//! Enemy populations and the species headers they name, decoded
+//! into typed records.
 //!
-//! A population is a list of 16-byte placements ended by `$FFFF` and the room's kill quota
-//! byte. A placement names its species by the 16-bit pointer to the species' 64-byte header
-//! in bank `$A0`; that pointer is the species' stable key, and [`SpeciesMap`] gives each
+//! A population is a list of 16-byte placements ended by the word 0xFFFF and the room's kill
+//! quota byte. A placement names its species by the 16-bit pointer to the species' 64-byte
+//! header; that pointer is the species' stable key, and [`SpeciesMap`] gives each
 //! loaded species its dense [`SpeciesId`].
 
 pub mod eye;
@@ -22,17 +22,17 @@ const PLACEMENT_BYTES: usize = 0x10;
 /// The word that ends a population in place of a species.
 const END_OF_POPULATION: u16 = 0xffff;
 
-/// A species' stable key: the pointer to its header in bank `$A0`, as an enemy slot's
-/// species word holds it.
+/// A species' stable key: the pointer to its header, as an enemy slot's species word holds
+/// it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SpeciesKey(pub u16);
 
 impl SpeciesKey {
-    /// The Morph Ball Room's eye (`$A0:E6BF`), placed as two parts.
+    /// The Morph Ball Room's eye, placed as two parts.
     pub const MORPH_BALL_EYE: Self = Self(0xe6bf);
-    /// The elevator platform (`$A0:D73F`).
+    /// The elevator platform.
     pub const ELEVATOR: Self = Self(0xd73f);
-    /// The Blue Brinstar face block (`$A0:EA7F`).
+    /// The Blue Brinstar face block.
     pub const BLUE_BRINSTAR_FACE_BLOCK: Self = Self(0xea7f);
 
     /// Where the header is.
@@ -136,7 +136,7 @@ pub struct Routines {
     pub shot: Routine,
 }
 
-/// A species header (bank `$A0` log: "enemy headers", 64 bytes).
+/// A species header.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Species {
     /// Its key.
@@ -171,15 +171,15 @@ pub struct Species {
     pub tiles: RomAddress,
     /// The layer it draws on.
     pub layer: u8,
-    /// Its item drop chances, in bank `$B4`.
+    /// Its item drop chances, as a pointer into the enemy tables.
     pub drops: u16,
-    /// Its vulnerabilities, in bank `$B4`.
+    /// Its vulnerabilities, as a pointer into the enemy tables.
     pub vulnerabilities: u16,
-    /// Its debug name, in bank `$B4`.
+    /// Its debug name, as a pointer into the enemy tables.
     pub name: u16,
 }
 
-/// One enemy a population places (bank `$A1`, 16 bytes).
+/// One enemy a population places.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Placement {
     /// Its species.
@@ -372,3 +372,19 @@ impl SpeciesTable {
 
 #[cfg(test)]
 mod tests;
+
+// ROM sources for the data above, kept out of the public docs (the original's bank and
+// RAM addresses, as the decoders use them):
+// Enemy populations (bank `$A1`) and the species headers they name (bank `$A0`), decoded
+// into typed records (bank `$A0` log: "enemy headers", "load enemies").
+// A population is a list of 16-byte placements ended by `$FFFF` and the room's kill quota
+// in bank `$A0`; that pointer is the species' stable key, and [`SpeciesMap`] gives each
+// A species' stable key: the pointer to its header in bank `$A0`, as an enemy slot's
+// The Morph Ball Room's eye (`$A0:E6BF`), placed as two parts.
+// The elevator platform (`$A0:D73F`).
+// The Blue Brinstar face block (`$A0:EA7F`).
+// A species header (bank `$A0` log: "enemy headers", 64 bytes).
+// Its item drop chances, in bank `$B4`.
+// Its vulnerabilities, in bank `$B4`.
+// Its debug name, in bank `$B4`.
+// One enemy a population places (bank `$A1`, 16 bytes).
