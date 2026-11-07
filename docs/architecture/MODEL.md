@@ -74,7 +74,9 @@ The Reference profile holds the vanilla values, and those are what the oracle ch
 value is an adjusted game. The engine runs it the same way; it just isn't compared.
 
 A behaviour's code reads its parameter from `Rules` and its vanilla data from the `data` tables,
-never from a constant buried in a routine. Adding a behaviour means adding a catalogue entry, a
+never from a constant buried in a routine. **The catalogue must have teeth:** the model's values come
+from `Rules` (the Reference profile holds the vanilla ones), and a test checks that every
+`BehaviourId` is exercised by at least one vector or recorded frame. Adding a behaviour means adding a catalogue entry, a
 rule value and its model code (a table row, a variant, an encoder rule). It never means editing a
 port.
 
@@ -134,6 +136,21 @@ recorded frame of every scenario. For each frame N it:
 It reports **N of M oracle frames matched**, per behaviour. That is the domain's progress
 measure. Gaps come from frames that don't match, not from reading old code. The spec's vectors stay,
 for cases no recorded frame reaches.
+
+**The measure must be honest (Jim, 2026-11-07, after the second pilot review):**
+- Report over **all recorded frames** of every row, beside a **null model's** score (a step that
+  does nothing) on the same frames. A match rate means only what it gains over that baseline.
+- **Mask a field; don't skip a frame.** A frame is skipped only when the domain doesn't run in it,
+  and for a named reason. A skip may never depend on the outcome being tested, such as next-frame
+  values or "y isn't where the prediction puts it".
+- A value the harness's stand-in copies from the oracle's next frame is **unverified**, not
+  matched. It is reported separately.
+- A frame that fails to decode is a **harness defect**, counted, not a skip.
+- **Every row has a floor**, so a regression anywhere fails.
+- **Per-behaviour attribution:** each entry reports the frames that exercised it and the frames
+  that matched. Entries no recorded frame exercises are listed as "vectors only".
+- Size is measured **like for like**: the same counter on the old code and the new, with the wiring
+  and the bridge included.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once
@@ -210,6 +227,36 @@ switches between them. A domain goes in this order (review R2):
    explain. It writes an entry in `docs/behaviours/<domain>.gaps.md` with the frame, the field, the
    expected and actual values and the entry it suspects, then moves on. The observer answers from
    the original and amends the spec.
+
+**The clean room is enforced by construction, not by trust (Jim, 2026-11-07).** Every leak in the
+pilot came from implementers having the whole repository and being trusted not to open files.
+- **The clean crates.** The model, the catalogue and the domain types an implementer needs (speeds,
+  poses as enums, tables as typed records) live in their own crates. Those crates depend on nothing
+  but each other and the standard library. They contain **no address, bank, RAM, ROM-code or
+  original routine name anywhere, comments included.** `data` stays on the observer side and turns
+  ROM bytes into the clean types at the edge. `tools/check_crate_rules.sh` enforces both rules in CI.
+- **No addresses where an implementer can see them.** `Source:` lines live only in the observer's
+  `docs/behaviours/<domain>.decode.md`. The spec carries behaviour ids, rules, parameters and
+  vectors. The catalogue carries ids, summaries, kinds and switches.
+- **Implementer worktrees are sparse checkouts** (`tools/lane/clean_room.sh`). They hold only the
+  clean crates, this note, the domain's spec and vectors, and the implementer skill. There is
+  nothing else on disk to open.
+- **Only implementer commits change the clean crates.** A check rejects any commit to them that lacks
+  the trailer `Role: implementer`. An integrator who needs a model change asks for it.
+
+**The observer works behaviour first (Jim, 2026-11-07).** An observer who reads routines writes a
+spec shaped like them: in the pilot, three entry points that were three routines, a command enum
+that was a RAM word, and a result type that existed only because the original split the work.
+- The spec describes **what the player sees** and what the oracle's records show over time, in
+  player terms: speeds and positions as they change, how each input changes them, how the world
+  stops them.
+- The original's code is consulted only to pin down **exact arithmetic and edge cases** that the
+  records can't settle. Its routine boundaries, call order, internal flags and RAM layout never shape
+  the spec.
+- A domain's boundary is a boundary the player sees. Where the original splits one player-visible
+  behaviour across systems (motion and pose selection), the domain spans both.
+- **The spec review is a gate.** An entry named after its one routine, an entry point that matches a
+  routine, or a type that mirrors a RAM word stops the spec until it is regrouped.
 
 **What the implementer may read:** this note, its domain's spec and vectors, the localiser's
 output, `data`'s public types, and the model code. **Not:** the bank logs or the asm,
