@@ -1,14 +1,15 @@
 //! The Tick's one contact with the samus-motion model.
 //!
-//! Her frame is stepped by the model over the engine's world; the cells her moves reached
-//! become the engine's touches, and the engine's animation and pose change read the rest.
+//! Her frame is stepped by the model over the engine's world; the cells her moves and looks
+//! reached become the engine's touches, and the engine's animation and pose change read the
+//! rest.
 
-use clean_model_samus_motion::{Met, Rules, Samus as Model, SpeedCap, Spin};
-use clean_types::{Action, Pose};
+use clean_model_samus_motion::{Change, Met, Rules, Samus as Model, SpeedCap, WallTest};
+use clean_types::{Action, Aim, Body, Fixed, Pose, Radius};
 
 use super::SamusWorld;
-use super::frame::FrameSource;
-use super::state::{clean_of, pose_id, write_back};
+use super::frame::{FrameSource, body};
+use super::state::{clean_of, dress, pose_id, write_back};
 use crate::collision::{Surroundings, Touches};
 use crate::pose::{Content, PoseRequests};
 use crate::session;
@@ -19,7 +20,7 @@ use crate::state::samus::{PoseId, Samus};
 /// What the model's frame leaves for the engine's animation and pose change.
 #[derive(Clone, Copy, Debug)]
 pub struct Stepped {
-    /// The pose the model chose.
+    /// The pose the frame ends in.
     pub pose: Pose,
     /// What her moves met.
     pub met: Option<Met>,
@@ -50,6 +51,9 @@ pub struct Inputs<'a> {
 /// Her frame through the model; `None`, moving her not at all, when her pose is outside it.
 pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Option<Stepped> {
     let mut model = clean_of(samus)?;
+    let start = (model.pose, model.radius);
+    let worn = dress(samus);
+    let body = |pose| body(inputs.content, worn, pose);
     let frame = FrameSource {
         samus,
         controller: inputs.controller,
@@ -58,7 +62,7 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
         requests: inputs.requests,
         content: inputs.content,
     }
-    .frame();
+    .frame(&body);
     let world = SamusWorld::new(inputs.surroundings.room, inputs.surroundings.enemies);
     let rules = Rules {
         speed_cap: match inputs.speed_cap {
@@ -67,42 +71,53 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
         },
         ..Rules::REFERENCE
     };
-    let armed = armed(&model, frame, samus, &world, &rules);
     let outcome = model.step(&frame, &world, &rules);
     touches.extend(world.touches(&outcome.reached).touched().iter().copied());
     write_back(&model, samus);
+    settle(samus, start, &model, outcome.change, rules.crouch_lift);
     Some(Stepped {
         pose: model.pose,
         met: outcome.met,
-        armed,
+        armed: outcome.wall_test == WallTest::Readied,
     })
 }
 
-/// `WallJump`'s test without the kick: spinning carried on with a side held and the spin not
-/// yet turned far, whether the kick would fire were it turned far and jump pressed. The model
-/// reports only the kick (gaps, item 10), so the test runs on a copy of her.
-fn armed(
+/// The words the pose change leaves that the model doesn't hold.
+///
+/// Her radius word keeps the pose she had until the next frame sets it, but the shrink gives
+/// it the new pose's at once. Where pose fit pushes her, the crouch taken instead raises her
+/// or the shrink lowers her, the camera's previous y pixel becomes hers as that left her
+/// (before a crouch take-off's lift), so the camera doesn't follow the move.
+fn settle(
+    samus: &mut Samus,
+    (pose, radius): (Pose, Radius),
     model: &Model,
-    frame: clean_model_samus_motion::Frame,
-    samus: &Samus,
-    world: &SamusWorld,
-    rules: &Rules,
-) -> bool {
-    let testing = model.pose.action == Action::Spinning
-        && model.spin == Spin::CarriedOn
-        && (frame.pad.left || frame.pad.right)
-        && !frame.spin_turned_far;
-    let Some(mut copy) = clean_of(samus).filter(|_| testing) else {
-        return false;
+    change: Change,
+    crouch_lift: Fixed,
+) {
+    let changed = model.pose != pose;
+    let shrinks = changed && matches!(model.pose.action, Action::Crouching | Action::Morphing);
+    let lifted = changed
+        && pose.body == Body::Crouched
+        && pose.aim == Aim::Forward
+        && model.pose.action == Action::TakingOff;
+    let placed = match change {
+        Change::Chosen(Some(_)) => true,
+        Change::Chosen(None) => shrinks,
+        Change::Crouched => radius.y < model.radius.y,
+        Change::Refused => false,
     };
-    let mut pressed = frame.pressed;
-    pressed.jump = true;
-    let kick = clean_model_samus_motion::Frame {
-        spin_turned_far: true,
-        pressed,
-        ..frame
-    };
-    copy.step(&kick, world, rules).met == Some(Met::WallKick)
+    if change == Change::Chosen(None) && shrinks {
+        samus.y_radius = model.radius.y;
+    }
+    if placed {
+        let lift = if lifted && matches!(change, Change::Chosen(_)) {
+            crouch_lift
+        } else {
+            Fixed(0)
+        };
+        samus.previous_position.y.pixels = model.position.y.plus(lift).pixel();
+    }
 }
 
 /// The pose the frame's pose change is asked for, as the engine's pose id.

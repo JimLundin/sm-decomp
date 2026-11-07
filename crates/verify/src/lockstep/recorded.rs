@@ -9,8 +9,8 @@ use game::collision::Room;
 use game::collision::solid_enemy::SolidEnemies;
 use game::pose::PoseRequests;
 use game::samus_world::SamusWorld;
-use game::samus_world::frame::FrameSource;
-use game::samus_world::state::{clean_of, write_back};
+use game::samus_world::frame::{FrameSource, body};
+use game::samus_world::state::{clean_of, dress, write_back};
 use game::state::State;
 
 use crate::bundle::{content, rooms};
@@ -40,6 +40,8 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
         slopes: Some(&content.slopes),
     };
     let world = SamusWorld::new(room, SolidEnemies::default());
+    let worn = dress(&samus);
+    let sized = |pose| body(content, worn, pose);
     let frame = FrameSource {
         samus: &samus,
         controller: &to.controller,
@@ -48,7 +50,7 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
         requests: PoseRequests::default(),
         content,
     }
-    .frame();
+    .frame(&sized);
     model.step(&frame, &world, &Rules::REFERENCE);
     write_back(&model, &mut samus);
     Some(State {

@@ -302,25 +302,5 @@ pub fn detect(
     Contact::Clear
 }
 
-/// A table of one slot, 0, holding an enemy 8 pixels each way around (`x`, `y`), solid to
-/// Samus when `solid`.
-#[cfg(test)]
-pub(crate) fn one_enemy(x: u16, y: u16, solid: bool) -> Vec<Slot<EnemyCommon, EnemyBody>> {
-    let mut enemy = EnemyCommon {
-        radius_x: 8,
-        radius_y: 8,
-        ..EnemyCommon::default()
-    };
-    enemy.position.x.pixels = x;
-    enemy.position.y.pixels = y;
-    if solid {
-        enemy.properties.insert(EnemyProperty::SolidToSamus);
-    }
-    vec![Slot {
-        common: enemy,
-        ..Slot::default()
-    }]
-}
-
 #[cfg(test)]
 mod tests;

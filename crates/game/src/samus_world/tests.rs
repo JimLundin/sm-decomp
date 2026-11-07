@@ -1,7 +1,4 @@
-use clean_types::{
-    AirKind, AnsweredKind, Block, Cell, Fixed, Heading, Position, Radius, SlopeFaces, SolidKind,
-    Surface, World,
-};
+use clean_types::{Block, Cell, Fixed, Heading, Position, Radius, SlopeFaces, Surface, Way, World};
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
 
@@ -74,20 +71,13 @@ fn each_kind_meets_her_as_its_block_kind_says() {
         ((1, 1), BlockKind::VerticalExtension(Offset(2))),
     ]);
     let world = world(&blocks, &slopes);
-    assert!(matches!(
-        world.block(at(0, 0)),
-        Block::Solid(SolidKind::Plain)
-    ));
-    assert!(matches!(
-        world.block(at(1, 0)),
-        Block::Air(AirKind::Reacting)
-    ));
-    assert!(matches!(
-        world.block(at(2, 0)),
-        Block::Answered(AnsweredKind::Reacting)
-    ));
-    assert!(world.lets_through(at(2, 0), Heading::Down));
-    assert!(!world.lets_through(at(3, 0), Heading::Down));
+    assert!(matches!(world.block(at(0, 0)), Block::Solid));
+    assert!(matches!(world.block(at(1, 0)), Block::Air));
+    assert!(matches!(world.block(at(2, 0)), Block::Answered));
+    // An item's block lets a move and a look through alike.
+    assert!(world.lets_through(at(2, 0), Way::Move(Heading::Down)));
+    assert!(world.lets_through(at(2, 0), Way::Look));
+    assert!(!world.lets_through(at(3, 0), Way::Move(Heading::Down)));
     // One block back along the level from (0, 1) is the row above's last.
     assert!(matches!(
         world.block(at(0, 1)),
@@ -97,9 +87,9 @@ fn each_kind_meets_her_as_its_block_kind_says() {
         world.block(at(1, 1)),
         Block::StandsFor(Some(Cell { column: 1, row: 3 }))
     ));
-    assert!(matches!(world.block(at(3, 3)), Block::Air(AirKind::Plain)));
+    assert!(matches!(world.block(at(3, 3)), Block::Air));
     // Past the level: air.
-    assert!(matches!(world.block(at(0, 9)), Block::Air(AirKind::Plain)));
+    assert!(matches!(world.block(at(0, 9)), Block::Air));
     assert_eq!(world.reaction(at(1, 0)), Some(Touch::Scroll(BlockIndex(1))));
     assert_eq!(world.reaction(at(2, 0)), Some(Touch::Item(BlockIndex(2))));
     assert_eq!(world.reaction(at(3, 0)), None);
@@ -181,14 +171,15 @@ fn the_cells_her_moves_reached_become_the_touches_in_order() {
         ((2, 0), BlockKind::Special(PlmChoice::Common(0x45))),
     ]);
     let world = world(&blocks, &slopes);
-    let reached = |column, heading| clean_types::Touch {
+    let reached = |column, way| clean_types::Touch {
         cell: at(column, 0),
-        heading,
+        way,
     };
+    // A look's cells react as a move's do.
     let touches = world.touches(&[
-        reached(2, Heading::Right),
-        reached(0, Heading::Right),
-        reached(1, Heading::Up),
+        reached(2, Way::Move(Heading::Right)),
+        reached(0, Way::Move(Heading::Right)),
+        reached(1, Way::Look),
     ]);
     assert_eq!(
         touches.touched(),

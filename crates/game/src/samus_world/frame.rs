@@ -1,9 +1,12 @@
-//! What one frame brings the samus-motion model (`clean_model_samus_motion::Frame`), read from
-//! the engine's State: the pad under the bindings, her items, her animation, the elevator and
-//! the frame count.
+//! What one frame brings the samus-motion model (`clean_model_samus_motion::Frame`).
+//!
+//! It is read from the engine's State: the pad under the bindings, her items, her animation,
+//! the elevator and the frame count, and each pose's body size from the pose table.
 
 use clean_model_samus_motion::Frame;
-use clean_types::{Equipment, Fixed, Pad, Parity, Radius, Signed};
+use clean_types::{Equipment, Pad, Parity, Pose, Radius};
+use data::assets::samus::import::map;
+use data::assets::samus::key::Dress;
 use data::pose::transition::{Control, Controls};
 
 use super::state::X_RADIUS;
@@ -46,10 +49,22 @@ pub struct FrameSource<'a> {
     pub content: &'a Content,
 }
 
+/// §1.3 body size: a pose's half-height is the pose table's for the original's pose that shows
+/// it in her dress; a pose the table doesn't hold has none, as the engine's radius has none.
+#[must_use]
+pub fn body(content: &Content, dress: Dress, pose: Pose) -> Radius {
+    Radius {
+        x: X_RADIUS,
+        y: map::id_of(pose, dress)
+            .and_then(|id| content.poses.get(id))
+            .map_or(0, |definition| u16::from(definition.y_radius)),
+    }
+}
+
 impl FrameSource<'_> {
-    /// The model's frame.
+    /// The model's frame, with `body` its body sizes.
     #[must_use]
-    pub fn frame(&self) -> Frame {
+    pub fn frame<'b>(&self, body: &'b dyn Fn(Pose) -> Radius) -> Frame<'b> {
         let samus = self.samus;
         let equipped = samus.equipment.equipped;
         Frame {
@@ -59,9 +74,6 @@ impl FrameSource<'_> {
                 hi_jump: equipped.contains(Item::HiJumpBoots),
                 space_jump: equipped.contains(Item::SpaceJump),
                 spring_ball: equipped.contains(Item::SpringBall),
-                screw_attack: equipped.contains(Item::ScrewAttack),
-                other_suit: equipped.contains(Item::VariaSuit)
-                    || equipped.contains(Item::GravitySuit),
             },
             spin_turned_far: animation::spin_turned_far(samus),
             elevator_moving: self.ride.status != ElevatorStatus::Inactive,
@@ -75,15 +87,7 @@ impl FrameSource<'_> {
                 self.requests,
                 self.content,
             ),
-            radius: Radius {
-                x: X_RADIUS,
-                y: samus.y_radius,
-            },
-            // The engine's pose fit runs after the model's step (gaps, item 5).
-            push: Signed {
-                negative: false,
-                size: Fixed(0),
-            },
+            body,
         }
     }
 }

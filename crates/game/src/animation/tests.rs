@@ -4,7 +4,6 @@ use data::pose::transition::PoseTransitions;
 use data::pose::{MovementType, PoseFacing, Poses};
 
 use super::*;
-use crate::collision::Touches;
 use crate::pose;
 use crate::state::samus::{Animation, PoseRecord, Speed};
 
@@ -86,13 +85,7 @@ fn samus(pose: PoseId, movement: MovementType, frame: u16, timer: u16) -> Samus 
 fn frame(samus: &mut Samus, content: &Content) {
     let requests = PoseRequests::default();
     animate(samus, &Controller::default(), requests, content);
-    pose::change(
-        samus,
-        requests.ordinary,
-        crate::collision::Surroundings::default(),
-        &mut Touches::default(),
-        content,
-    );
+    pose::change(samus, requests.ordinary, content);
 }
 
 #[test]
@@ -236,13 +229,7 @@ fn a_spin_jump_from_a_spin_or_wall_jump_starts_past_the_jump_from_the_floor() {
         (STANDING, MovementType::Standing, 0, 4),
     ] {
         let mut samus = samus(from, movement, 0, 8);
-        pose::change(
-            &mut samus,
-            Some(SPIN_LEFT),
-            crate::collision::Surroundings::default(),
-            &mut Touches::default(),
-            &content,
-        );
+        pose::change(&mut samus, Some(SPIN_LEFT), &content);
         assert_eq!(samus.pose, SPIN_LEFT);
         assert_eq!(samus.animation.frame, AnimationFrame(frame));
         assert_eq!(samus.animation.timer, AnimationTimer(timer));

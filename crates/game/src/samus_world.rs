@@ -5,10 +5,7 @@
 //! reactions a reached cell then starts (a scroll trigger, an item's block) aren't the
 //! world's: the model reports the cells it reached and the caller applies them.
 
-use clean_types::{
-    AirKind, AnsweredKind, Block, Cell, Heading, Hitbox, Position, Radius, Slope, SlopeFaces,
-    SolidKind, Surface, World,
-};
+use clean_types::{Block, Cell, Hitbox, Position, Radius, Slope, SlopeFaces, Surface, Way, World};
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
 
@@ -30,7 +27,6 @@ const LAST_ROW: u8 = 15;
 const ROWS: u8 = 16;
 
 /// The room and the frame's solid enemies.
-#[derive(Clone)]
 pub struct SamusWorld<'a> {
     room: Room<'a>,
     enemies: Vec<Hitbox>,
@@ -191,19 +187,19 @@ fn surface_of(surface: Tops, slope: data::level::Slope) -> Slope {
 impl World for SamusWorld<'_> {
     fn block(&self, cell: Cell) -> Block {
         match self.kind(cell) {
-            BlockKind::Air(_) | BlockKind::UnusedAir(_) => Block::Air(AirKind::Plain),
-            BlockKind::SpikeAir(_) => Block::Air(AirKind::Spiked),
-            BlockKind::ShootableAir(_) => Block::Air(AirKind::ShotAir),
-            BlockKind::BombableAir(_) => Block::Air(AirKind::BombAir),
-            BlockKind::SpecialAir(_) => Block::Air(AirKind::Reacting),
-            BlockKind::Solid(_) => Block::Solid(SolidKind::Plain),
+            BlockKind::Air(_)
+            | BlockKind::UnusedAir(_)
+            | BlockKind::SpikeAir(_)
+            | BlockKind::ShootableAir(_)
+            | BlockKind::BombableAir(_)
+            | BlockKind::SpecialAir(_) => Block::Air,
             // The engine starts no door transition from her moves yet: every door is solid.
-            BlockKind::Door(_) => Block::Solid(SolidKind::DoorToNowhere),
-            BlockKind::Spike(_) => Block::Solid(SolidKind::Spikes),
-            BlockKind::Shootable(_) => Block::Solid(SolidKind::ShotBlock),
-            BlockKind::Grapple(_) => Block::Solid(SolidKind::GrappleBlock),
-            BlockKind::Bombable(_) => Block::Answered(AnsweredKind::BombBlock),
-            BlockKind::Special(_) => Block::Answered(AnsweredKind::Reacting),
+            BlockKind::Solid(_)
+            | BlockKind::Door(_)
+            | BlockKind::Spike(_)
+            | BlockKind::Shootable(_)
+            | BlockKind::Grapple(_) => Block::Solid,
+            BlockKind::Bombable(_) | BlockKind::Special(_) => Block::Answered,
             BlockKind::HorizontalExtension(Offset(by)) => {
                 Block::StandsFor(self.extended(cell, by, false))
             }
@@ -214,13 +210,13 @@ impl World for SamusWorld<'_> {
                 .room
                 .slopes
                 .and_then(|slopes| slope(slopes, shape))
-                .unwrap_or(Block::Air(AirKind::Plain)),
+                .unwrap_or(Block::Air),
         }
     }
 
     /// Of the answered kinds only an item's block lets her through: a bomb block, a crumble
     /// block and a speed block are solid to the touch.
-    fn lets_through(&self, cell: Cell, _: Heading) -> bool {
+    fn lets_through(&self, cell: Cell, _: Way) -> bool {
         matches!(self.kind(cell), BlockKind::Special(ITEM_BLOCK))
     }
 

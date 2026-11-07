@@ -1,5 +1,5 @@
-use clean_model_samus_motion::{Rules, Spin, Vertical};
-use clean_types::{Action, Fixed as Model, Heading};
+use clean_model_samus_motion::{Carry, DashIs, Rules, Spin, Vertical};
+use clean_types::{Action, Fixed as Model, Heading, Radius};
 use data::level::{BlockKind, Bts};
 
 use super::{X_RADIUS, clean_of, pose_id, write_back};
@@ -129,15 +129,8 @@ fn the_games_words_come_back_as_they_went() {
 #[test]
 fn what_she_remembers_reads_from_the_games_words() {
     let read = |pose, mode, vertical, speed| {
-        clean_of(&samus(pose, motion(mode, vertical, speed))).map(|model| {
-            (
-                model.carry,
-                model.way,
-                model.vertical,
-                model.moonfall,
-                model.losing_dash,
-            )
-        })
+        clean_of(&samus(pose, motion(mode, vertical, speed)))
+            .map(|model| (model.carry, model.way, model.vertical, model.dash_is))
     };
     let skid = read(
         RUNNING_RIGHT,
@@ -145,16 +138,18 @@ fn what_she_remembers_reads_from_the_games_words() {
         VerticalMotion::None,
         0,
     );
-    assert!(skid.is_some_and(|(carry, way, vertical, ..)| carry
-        && way == Heading::Left
-        && vertical == Vertical::Ground));
+    assert!(
+        skid.is_some_and(|(carry, way, vertical, _)| carry == Carry::CarriesOn
+            && way == Heading::Left
+            && vertical == Vertical::Ground)
+    );
     let spent = read(
         SPIN_RIGHT,
         SpeedMode::Accelerating,
         VerticalMotion::Up,
         0xFFFF_E400,
     );
-    assert!(spent.is_some_and(|(.., vertical, _, _)| vertical == Vertical::Spent(Model(0x1C00))));
+    assert!(spent.is_some_and(|(.., vertical, _)| vertical == Vertical::Spent(Model(0x1C00))));
     let moonfall = read(
         SPIN_RIGHT,
         SpeedMode::Accelerating,
@@ -162,9 +157,8 @@ fn what_she_remembers_reads_from_the_games_words() {
         0x1_3800,
     );
     assert!(
-        moonfall.is_some_and(|(.., vertical, moonfall, losing)| moonfall
-            && losing
-            && vertical == Vertical::Falls(Model(0x1_3800)))
+        moonfall.is_some_and(|(.., vertical, dash)| dash == DashIs::ToLose
+            && vertical == Vertical::Moonfall(Model(0x1_3800)))
     );
     // A pose outside her domain has no model.
     assert!(clean_of(&samus(PoseId(0xD3), Motion::default())).is_none());
@@ -250,7 +244,10 @@ fn a_frame_on_the_floor_runs_her_right() {
         requests: PoseRequests::default(),
         content: &content,
     }
-    .frame();
+    .frame(&|_| Radius {
+        x: X_RADIUS,
+        y: 0x15,
+    });
     let Some(mut model) = clean_of(&engine) else {
         panic!("running is hers");
     };
@@ -262,5 +259,4 @@ fn a_frame_on_the_floor_runs_her_right() {
     assert_eq!(engine.motion.position.x, Fixed::new(0x21, 0x3000));
     assert_eq!(engine.motion.position.y, Fixed::new(0x30 - 0x15, 0xFFFF));
     assert_eq!(engine.motion.vertical, VerticalMotion::None);
-    assert_eq!(X_RADIUS, frame.radius.x);
 }

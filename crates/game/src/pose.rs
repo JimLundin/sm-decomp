@@ -21,7 +21,6 @@ use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::pose::{MovementType, PoseId, Poses};
 
 use crate::animation;
-use crate::collision::{Surroundings, Touches};
 use crate::model::num::Fixed;
 use crate::model::samus::motion::VerticalResult;
 use crate::plm::RoomPlms;
@@ -256,19 +255,12 @@ pub fn carried(samus: &Samus, ride: ElevatorRide) -> bool {
 /// asked for.
 ///
 /// The pose takes the facing and movement type its definition gives when it differs from
-/// the last, after pose fit has had its say; then the update records the history. The motion
-/// model has made the change's writes to her speeds. The scroll triggers pose fit's checks
-/// reach join `touches`.
+/// the last; then the update records the history. The motion model has made the change's
+/// writes to her speeds and placed her: pose fit and the shrink are its.
 // open: the special prospective pose between them joins with the
 // knockback and the grapple (C4); the super special pose with command 3 gives way to it
 // when its command is 9.
-pub fn change(
-    samus: &mut Samus,
-    asked: Option<PoseId>,
-    surroundings: Surroundings<'_>,
-    touches: &mut Touches,
-    content: &Content,
-) {
+pub fn change(samus: &mut Samus, asked: Option<PoseId>, content: &Content) {
     if let Some(pose) = samus.super_special.pose {
         let command = samus.super_special.command;
         if command != SuperSpecialCommand::KnockbackFinished {
@@ -286,29 +278,11 @@ pub fn change(
     let old = samus.previous;
     samus.pose = pose;
     if pose != old.pose {
-        // "Handle Samus pose change" (`$91:F404`): fit the new pose's height, then initialise
-        // the pose, whichever it is now.
-        fit::fit(samus, surroundings, touches, content);
         refresh(samus, content);
         reset_animation(samus, content);
         samus.animation.new_pose_frame = NewPoseFrame::default();
-        // The transition poses' initialisation starts their animation (`$91:F758`), unless
-        // pose fit replaced the pose (`$91:EBEE`).
-        if samus.pose == pose && starts_transition(samus) {
-            fit::start_transition(samus, surroundings, touches, content);
-        }
     }
     record_history(samus);
-}
-
-/// The unused poses $DB to $F0, whose initialisation starts no animation (`$91:F775`).
-pub(crate) const UNUSED_TRANSITIONS: std::ops::Range<u16> = 0xDB..0xF1;
-
-/// Whether the pose's initialisation starts its transition animation (`$91:F758`): every
-/// transition pose but the unused `$DB` to `$F0`.
-fn starts_transition(samus: &Samus) -> bool {
-    samus.movement == MovementType::CrouchingTransition
-        && !UNUSED_TRANSITIONS.contains(&samus.pose.0)
 }
 
 /// Copy the pose's facing and movement type from its definition (`$91:F433`).
@@ -390,8 +364,6 @@ const fn record_history(samus: &mut Samus) {
         movement: samus.movement,
     };
 }
-
-mod fit;
 
 #[cfg(test)]
 mod tests;

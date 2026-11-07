@@ -496,14 +496,7 @@ fn gameplay_phase(
             );
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             let next = samus_world::step::next(&state.samus, stepped, pass.requests);
-            change_pose(
-                &mut state.samus,
-                &mut state.atmospherics,
-                next,
-                surroundings,
-                &mut touches,
-                content,
-            );
+            change_pose(&mut state.samus, &mut state.atmospherics, next, content);
             // The touch PLMs the moves spawned, which change nothing the moves read.
             touches.apply(&mut state.room).map_err(SessionFault::Plm)?;
             crate::samus_palette::handle(state, &content.visor_colours);
@@ -564,12 +557,10 @@ fn change_pose(
     samus: &mut Samus,
     atmospherics: &mut Atmospherics,
     asked: Option<crate::state::samus::PoseId>,
-    surroundings: Surroundings<'_>,
-    touches: &mut Touches,
     content: &Content,
 ) {
     let history = samus.previous;
-    pose::change(samus, asked, surroundings, touches, content);
+    pose::change(samus, asked, content);
     crate::atmospheric::initialise_pose(atmospherics, history, samus, content);
 }
 

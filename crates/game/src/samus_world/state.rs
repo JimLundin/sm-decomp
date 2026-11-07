@@ -7,7 +7,7 @@
 //! a spent rise to an upward speed past zero, the moonfall to no vertical direction in the
 //! air, a spin carried on to the pose history, the seat to the slope flag.
 
-use clean_model_samus_motion::{Bounces, Samus as Model, Spin, Vertical};
+use clean_model_samus_motion::{Bounces, Carry, DashIs, Samus as Model, Seat, Spin, Vertical};
 use clean_types::{Action, Fixed, Heading, Pose, Position, Radius};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
@@ -54,14 +54,13 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
     let motion = &samus.motion;
     let side = pose.facing.side();
     let (carry, way) = match motion.mode {
-        SpeedMode::Accelerating => (false, side),
-        SpeedMode::Decelerating => (true, side),
-        SpeedMode::TurningAround => (true, opposite(side)),
+        SpeedMode::Accelerating => (Carry::FollowsPad, side),
+        SpeedMode::Decelerating => (Carry::CarriesOn, side),
+        SpeedMode::TurningAround => (Carry::CarriesOn, opposite(side)),
     };
     let speed = quantity(motion.vertical_speed);
-    let moonfall = motion.vertical == VerticalMotion::None && in_the_air(pose);
     let vertical = match motion.vertical {
-        VerticalMotion::None if moonfall => Vertical::Falls(speed),
+        VerticalMotion::None if in_the_air(pose) => Vertical::Moonfall(speed),
         VerticalMotion::None => Vertical::Ground,
         // A rise the pull took past zero points downward by what it took past.
         VerticalMotion::Up if motion.vertical_speed.negative() => {
@@ -85,7 +84,11 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         way,
         carry,
         dash: quantity(motion.extra_run),
-        losing_dash: !motion.momentum,
+        dash_is: if motion.momentum {
+            DashIs::Hers
+        } else {
+            DashIs::ToLose
+        },
         vertical,
         bounces: match motion.bounce {
             Bounce::None => Bounces::None,
@@ -102,8 +105,11 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         } else {
             Spin::Off
         },
-        moonfall,
-        seated: samus.slope_adjusted,
+        seat: if samus.slope_adjusted {
+            Seat::Seated
+        } else {
+            Seat::Unseated
+        },
     })
 }
 
@@ -116,8 +122,8 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     motion.extra_run = exact(model.dash);
     // The game's momentum flag holds while she has a dash: set as the dash grows, kept through
     // a landing that leaves the dash to lose, cleared when the dash is gone.
-    motion.momentum = !model.dash.is_zero() && (motion.momentum || !model.losing_dash);
-    motion.mode = if !model.carry {
+    motion.momentum = !model.dash.is_zero() && (motion.momentum || model.dash_is == DashIs::Hers);
+    motion.mode = if model.carry == Carry::FollowsPad {
         SpeedMode::Accelerating
     } else if model.way == model.pose.facing.side() {
         SpeedMode::Decelerating
@@ -125,7 +131,7 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
         SpeedMode::TurningAround
     };
     (motion.vertical, motion.vertical_speed) = match model.vertical {
-        Vertical::Falls(v) if model.moonfall => (VerticalMotion::None, exact(v)),
+        Vertical::Moonfall(v) => (VerticalMotion::None, exact(v)),
         Vertical::Ground => (VerticalMotion::None, Exact(0)),
         Vertical::Rises(v) => (VerticalMotion::Up, exact(v)),
         Vertical::Spent(v) => (VerticalMotion::Up, Exact(0u32.wrapping_sub(v.0))),
@@ -136,7 +142,7 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
         Bounces::Once => Bounce::First,
         Bounces::Twice => Bounce::Second,
     };
-    samus.slope_adjusted = model.seated;
+    samus.slope_adjusted = model.seat == Seat::Seated;
 }
 
 /// What her sprite shows that her pose doesn't decide, from her equipment; never in a liquid,
