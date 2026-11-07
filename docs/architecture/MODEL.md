@@ -31,8 +31,11 @@ Jim's decisions, 2026-11-07:
    rebuilding the game; reading them through the ROM's layout was a shortcut. The assets come
    from the player's ROM and are never committed. The importer, which has to know the original,
    is outside the clean room. The format and its importer: [assets.md](assets.md).
-5. **Size is counted in logical tokens, held on logic.** The game's data (the values of constants
-   and statics, and imported assets) is reported beside the logic, not counted against it (§4).
+5. **Size is counted in logical tokens, held on the model's logic.** The game's data (the values
+   of constants and statics, and imported assets) is reported beside the logic, not counted
+   against it (§4). So are type declarations: defining shapes is to be promoted, not taxed. The
+   integrator's bridge is reported apart and not counted against the model, which its
+   implementer didn't write (Jim, 2026-11-07).
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
    of a 2D pixel-art game today expects: a character controller stepped at a fixed timestep,
    state machines whose moves are table rows, input as actions, tilemap collision with per-tile
@@ -184,8 +187,9 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
 - **Every row has a floor**, so a regression anywhere fails.
 - **Per-behaviour attribution:** each entry reports the frames that exercised it and the frames
   that matched. Entries no recorded frame exercises are listed as "vectors only".
-- Size is measured **like for like**: the same counter on the old code and the new, with the wiring
-  and the bridge included.
+- Size is measured **like for like**: the same counter on the old code and the new model. The
+  bridge that wires the model into the engine is the integrator's, reported apart and kept small
+  by review, not counted against the model (Jim, 2026-11-07).
 - Size is counted in **logical tokens** (Jim, 2026-11-07), with `tools size PATH...`
   (`verify::size`): every identifier, keyword, literal, lifetime and operator is one, and so is
   each bracket pair. Comments, doc comments, layout and tests (`#[cfg(test)]` items, `tests`
@@ -197,9 +201,10 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   and so never paid for them; loading them is part of rebuilding the game, so the new engine
   stating them is not extra logic. A data row must state the game's data. A row that encodes a
   decision the code would otherwise make is logic, and a review moves it back.
-- `tools size` also reports declarations apart (the tokens of item-level `struct`, `enum`,
-  `union` and `type` items and of attributes), so typing is visible on its own. The rule is held
-  on logic and declarations together, as the baselines were set.
+- **Declarations are not counted against the rule** (Jim, 2026-11-07): `tools size` reports the
+  tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as
+  types, on both sides. Defining shapes is what decision 6 asks for. A declaration holds no
+  behaviour; anything that does (an `impl`, a function, a match) is logic.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once

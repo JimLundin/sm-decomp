@@ -17,16 +17,18 @@ speed booster's extra speed, knockback, bomb jumps, grapple, shinespark, pushes 
 she reaches; `OtherBlockKinds` how each kind meets her motion).
 
 Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and
-so is each bracket pair; comments, layout and tests are free. The values of constants and statics
-(tables of the game's data, such as the chart's rows) are counted apart as data and reported;
-the target is on everything else, the logic.
+so is each bracket pair; comments, layout and tests are free. Two kinds of token are counted
+apart and reported, not held against the target: the values of constants and statics (tables of
+the game's data, such as the chart's rows), and declarations (the `struct`, `enum` and `type`
+items and attributes that define the model's shapes; define as many as the behaviour needs). The
+target is on everything else, the logic.
 
-**Baseline: about 15,100 tokens of logic** in the old code this domain replaces, tests excluded
+**Baseline: about 13,300 tokens of logic** in the old code this domain replaces, tests excluded
 (pose fit, now in the domain, included).
 
-**Target: 7,300 tokens of logic** for the new model: motion, landings and turns about 2,000, the
-pose chart's reader and effects about 1,500, collision with blocks and solid enemies about 1,500,
-pose fit about 800, the shared types and slack 1,500. Over the target, the implementer keeps reshaping and reports
+**Target: 6,400 tokens of logic** for the new model: motion, landings and turns about 2,000, the
+pose chart's reader and effects about 1,300, collision with blocks and solid enemies about 1,500,
+pose fit about 700, slack 900. Over the target, the implementer keeps reshaping and reports
 why the rest can't go, and the root reviews that report; over the baseline is a strict failure.
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:

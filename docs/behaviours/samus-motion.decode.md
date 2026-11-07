@@ -846,6 +846,12 @@ stopped), C-slope-ceiling-empty-on (row 1: moves on), C-slope-floor-empty (targe
 
 ## Size baseline (tokens, 2026-11-07)
 
+Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
+counted against the model). Old code, the files below: logic 13,342, types 1,781, data 153. The
+round-7 model: logic 9,265, types 2,090, data 7,386. The bridge (`game/src/samus_world*`, the
+integrator's): logic 3,272, types 192, data 11. The tables below are the earlier logic-and-types
+counts.
+
 Counted with `tools size` at 29c4d0876, tests excluded, as logic and data (the values of
 constants and statics). The old code the domain replaces:
 
