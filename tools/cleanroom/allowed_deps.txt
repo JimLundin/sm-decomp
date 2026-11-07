@@ -2,7 +2,7 @@
 # git or out-of-tree dependency. Columns: package, the exact version string the crate's
 # Cargo.toml must carry, kind (dev or normal).
 #
-# toml: a vector test parses scenarios/vectors/<domain>.toml, which it include_str!s (the one
-#   include code_check.sh lets through). Pinned with `=` to the version in the root Cargo.lock,
-#   dev only, so no model code depends on it.
-toml =0.8.23 dev
+# None. A clean crate runs no third-party code: a vector test parses its vector file by hand from
+# the include_str!ed text. Third-party crates bring build scripts, macros and floating transitive
+# versions into the export, and Defender blocks their build scripts on the development machine.
+

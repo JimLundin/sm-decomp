@@ -10,8 +10,6 @@ publish = false
 clean_types = { path = "../../clean_types" }
 
 
-[dev-dependencies]
-toml = "=0.8.23"
 
 
 [lints]

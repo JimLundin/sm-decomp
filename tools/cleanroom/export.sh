@@ -77,8 +77,7 @@ scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE [DEV_DEPENDENCY_LINE
   } >"$dest/$1/Cargo.toml"
   printf '//! %s\n' "$4" >"$dest/$1/src/lib.rs"
 }
-# The one dev-dependency code_check.sh allows (allowed_deps.txt), so a vector test can parse the
-# vector file and nobody has to edit a Cargo.toml.
+# A dev-dependency for each line of allowed_deps.txt (none today: vector tests parse by hand).
 vector_parser=$(awk '$1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
 scaffold crates/clean_types clean_types "The domain types the clean models share" \
   "The domain types the clean models share: quantities, poses and tables in player terms."
