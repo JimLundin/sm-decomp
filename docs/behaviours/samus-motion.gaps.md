@@ -11,6 +11,15 @@ a slope (chain-0097-ACF0, chain-0012-91F8, samus-input-poses:476-520; x subpixel
 take-off's 10 px lift on a pose-fit frame the radius test misses (item-morph-ball:1311,
 samus-shinespark-*:184/197).
 
+Not a model gap, open in the engine's bridge (`collision/world.rs`): `Moved.seat` (G11,
+`SlopeSeat`) is always 0 there, because today's block collision has no slope alignment after a
+horizontal move (the old engine left it open too); it comes with the collision domain (spec §10).
+No locked row reaches it; the engine misses the 1 px down at samus-walljump-16/22/28:44.
+
+The bridge (lane bridge-gaps) answers `WallHit.touching` from the probe's solid-enemy check, and
+the animation's hand-over passes `AnimationEnd` and `Forced`; the free-run gate, the localiser's
+first differing frames and the lockstep ratchet stayed where they were.
+
 The wiring (lane wire-motion) left the free-run gate, the localiser's first differing frames and
 the lockstep ratchet where they were; G8 and G9 are cases no recorded frame reaches.
 
