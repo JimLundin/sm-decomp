@@ -65,8 +65,9 @@ frames (the vectors' format), never by a value in its start.
   skids. It follows the pad again once she stops braking, halts, lands, hits a wall or ceiling, or
   takes off, or stops steering during a turn (`TurningRound`).
 - **Skidding.** A skid is her moving against her facing: she turned round, or reversed a spin, and
-  still travels the old way. A turn from a standstill is a skid of zero: its first frame brakes, so
-  she doesn't creep until the frame after (`TurningRound`).
+  travels against her new facing (the old way, unless she was already skidding, `TurningRound`). A
+  turn from a standstill is a skid of zero: its first frame brakes, so she doesn't creep until the
+  frame after (`TurningRound`).
 - **Her dash.** The dash she builds running stays hers, through jumps and into the ball, until a
   halt takes it. Where a pose change halts her but leaves the dash's value on her, the next frame
   she moves the dash is gone.
@@ -170,7 +171,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Mechanic. Running with run held she gains 0.1000 dash a frame up to 2.0000. The cap tests the
   dash from before the step: it grows if its pixel part is `below` 2 or its subpixel part is
   `below` 0 (§9), else it becomes 2.0000, so 2.F000 grows to 3.0000 and then snaps to 2.0000
-  (invisible in vanilla). In any other moving activity a dash she is to lose (§1.2) is gone (0).
+  (invisible in vanilla). In any other moving activity a dash she is to lose (§1.2) is gone (0),
+  and none is gained, taking off included (`Jumping`).
   Standing, against the wall, a wall stop, a turn's end, the falling ball letting go and a spin
   reversed each take it (0).
 - checked: oracle (running vectors with run held; samus-mockball for the carry); original only
@@ -182,6 +184,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   travelling the old way, now against her new facing: a skid. She brakes until the speed is spent,
   then builds the new way (turning's top speed is 0, so only the creep below). When the turn ends
   she loses her dash.
+- Every turn and every spin reversed leaves her skidding, whatever she was doing before: her
+  speed, the dash added, then points against her new facing. So a spin reversed while she is
+  already skidding (travelling against her old facing, which is the way she now faces) turns her
+  travel round: that frame she moves the old way, as `MovesAsShePosed` says, and from the next
+  frame the same speed points the other way, back along her old facing, and goes on braking as a
+  skid.
 - Turning from a standstill slides her 0.C000 every other frame the new way: the speed goes 0,
   0.C000, 0, because turning's top speed is 0 and `WordwiseTopSpeed` keeps 0.C000 over 0 once.
 - Turning with no button held at all, on the ground or in the air, her skid ends after that
@@ -191,25 +199,36 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   chart fits, and the chart's last row for turning on the ground ends the skid (`PadChart`). In the
   air, holding any such button, she keeps skidding: the speed still points the old way, and the skid ends only as
   `SpeedBuildsAndBrakes` says, when braking would take it below zero.
-- Turning on the ground over a drop, she sinks by her whole speed plus 1 px a frame instead of
-  falling. In the air she turns under gravity (`RisingAndFalling`).
+- Turning on the ground over a drop, she sinks by the ground pull (`FollowingTheGround`: her
+  speed, subpixel part included, plus 1 px) a frame instead of falling. In the air she turns under
+  gravity (`RisingAndFalling`).
 - checked: oracle (samus-input-poses turns, samus-screw-attack; R133 for letting go, R11 and R12
   (samus-input-poses:120-121) for run held on the ground: braked to 0 at 120, she creeps 0.C000 at
   121, which a skid kept at 0 would not; R141 for run held in the air; SR1 for a spin reversed in
-  its first frame, which skids; TL4 for the sinking onto a floor); constructed (the sinking).
+  its first frame, which skids; TL4 for the sinking onto a floor; W11 for the sinking over air,
+  subpixel and all; W14 for a spin reversed while skidding); constructed (the sinking).
 
 ### AimingAndShooting
-- Quirk and output. Changing aim while running moves her 1 px forward on top of that frame's move,
-  without a speed change; a block or a solid enemy in the way, or a wall stop that frame, puts her
-  against the wall instead. Standing, unaimed
-  and not landing, holding shoot restarts the standing animation.
+- Quirk and output. A frame whose pose is chosen as a running pose other than the one she is in
+  moves her 1 px forward on top of that frame's move, without a speed change: running with another
+  aim, but also from standing, from a landing, or from any pose whose pad chart row leads into
+  running. Forward is the facing she had at the frame's start. The choice that counts is the one
+  the pad chart and what her moves met make (`PoseFollows` items 2 and 3): a landing or a fall that
+  replaces the pad's running pose brings no step, and an animation's end handing over a pose
+  neither brings nor cancels it. A block or a solid enemy in the way of the step puts her against
+  the wall instead (`WhatHerMovesMet`), so a standing start next to a wall with the pad asking to
+  run leaves her against it. A wall stop that frame while running puts her against the wall too,
+  without a step. Standing, unaimed and not landing, holding shoot restarts the standing
+  animation.
 - The step comes after that frame's moves and the ground pull. A solid enemy within its reach
   (`SolidEnemies`) stops it with no move at all; one she already touches still clears her y
   subpixel. A block in the way stops it as any horizontal move (`BlocksStopFlush`): by whole pixels
   up to the face, at most the 1 px, with her x subpixel written FFFF or 0, so a face less than a
   pixel ahead moves her that part of a pixel. The floor and ceiling checks of `SlopesCarry` don't
   run after the step, so it can leave her bottom edge in a sloped floor's solid part.
-- checked: oracle (A1, the step); constructed (C-aim-short, C-aim-enemy, C-aim-slope; the shot).
+- checked: oracle (A1, the step; W12 standing into running, W17 and W18 a landing into
+  running, W19 standing into running against a wall); constructed (C-aim-short, C-aim-enemy,
+  C-aim-slope; the shot).
 
 ### RidingTheElevator
 - Mechanic. Facing the screen on a moving elevator, she moves down 1 px a frame, a move a solid or
@@ -224,8 +243,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 ### Jumping
 - Parameter and mechanic. Jump 4.E000 upward (hi-jump 6.0000); wall jump 4.A000 (hi-jump 5.8000);
   ball bounce 1.0000; the crouch lift 10 px.
-- The first poses of a straight jump (taking off) don't steer: she moves by her dash only, follows
-  the pad and still gains dash (`Dash`); she doesn't move vertically and the pull doesn't act. The
+- The first poses of a straight jump (taking off) don't steer: she moves by her dash only and
+  follows the pad; she gains no dash (only running does, `Dash`), and a dash she is to lose (§1.2)
+  is gone (0) before that move, so taking off from a crouch she doesn't move at all and the jump
+  that follows follows the pad. She doesn't move vertically and the pull doesn't act. The
   frame she changes into them she starts rising at the jump speed, without moving vertically that
   frame; from a crouch without aim she is also lifted 10 px.
 - Starting a spin jump, or the spring ball's hop from the ground, she rises at the jump speed.
@@ -234,14 +255,17 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - With space jump, pressing jump while falling in a spin jumps again, when her fall speed read as
   8.8 (its pixel part's low byte and subpixel's high byte) is from 2.80 up to, not including, 5.00.
   She rises at the new speed that same frame.
-- checked: oracle (J1, J2, J3, and the take-off and spin vectors; the crouch lift open: question
-  6); constructed (space jump).
+- checked: oracle (J1, J2, J3, and the take-off and spin vectors; W16, a take-off from a crouch
+  with run held; the crouch lift open: question 6); constructed (space jump).
 
 ### FollowingTheGround
-- Mechanic. On the ground she is pulled down after her horizontal move, by that frame's whole speed
-  plus 1 px (1 px on a slope), and the floor stops her flush (§8). Walking off a ledge the pull
-  finds no floor: unless she is rising, turning or her body is changing shape, she falls from
-  rest (vertical speed 0, falling, bounces 0). checked: oracle (every ground vector).
+- Mechanic. On the ground she is pulled down after her horizontal move, by that frame's speed
+  (her horizontal speed plus her dash, subpixel part included) plus 1 px, or by 1 px on a slope,
+  and the floor stops her flush (§8). So 0.C000 pulls her 1.C000: with no floor in reach she
+  moves all of it, her y subpixel included (02A9.0000 becomes 02AA.C000); on a floor the flush stop
+  hides the subpixel part. Walking off a ledge the pull finds no floor: unless she is rising,
+  turning or her body is changing shape, she falls from rest (vertical speed 0, falling, bounces
+  0). checked: oracle (every ground vector; W11, a turn on the ground over air).
 
 ### MovesAsShePosed
 - Timing. On the frame she changes pose she still moves as the pose at the frame's start says: what she is doing,
@@ -387,8 +411,13 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   wall on her right; otherwise right held: on her left) readies the wall jump. Readying is not a
   part of her pose (§2): the pose stays the spin it was. Only the spin's animation shows it,
   skipping ahead to the point where the spin has turned far enough, so the input "spin turned far"
-  (§1.3) holds from the next frame. How far an animation has run is out of scope (§10), so
-  readying adds no output beyond the near-wall test's writes (below).
+  (§1.3) holds from the next frame. How far an animation has run is out of scope (§10), so the
+  step reports the readying for the animation to show.
+- Output. Each frame reports one of three outcomes of the near-wall test: readied (a wall near her
+  while the spin hasn't turned far: the spin's animation skips ahead), kicked (the kick below, also
+  `WhatHerMovesMet`'s wall jump), or neither (no test that frame, no wall found, or a wall near
+  her once the spin has turned far without jump pressed). A wall found by its block test and one
+  found by its solid enemy test ready her alike.
 - A wall is near her when a test move of 8 px towards it, from where her x is after this frame's
   move, would be stopped (`BlocksStopFlush`, `SolidEnemies`): fewer than 8 px of air between her
   edge and the wall. Readying and the kick use this same test.
@@ -406,10 +435,14 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   meets solid enemies first. Finding a solid enemy instead, it writes her x nothing: an enemy she
   already touches on that side clears her y subpixel to 0, as any test against one does
   (`SolidEnemies`), and one ahead of her writes nothing.
+- The test reaches cells as a move of 8 px would (`TouchedCells`), and cells that react when she
+  reaches them react to it: in item-morph-ball the test reaches an item's cell 8 px past her edge
+  and she picks the item up.
 - checked: oracle (samus-walljump-16, -22, -28, samus-grapple-walljump, item-morph-ball's leftward
   spin jumps; samus-walljump-16:46-47: readied in one frame, kicked off in the next; RW1: the
   readying frame writes her x subpixel 0 against the wall on her left, in the frame after the
-  spin is reversed); original only (no test without a spin carried on or without a
+  spin is reversed, and the frame reports the readying; W15, the test's cells reached); original
+  only (no test without a spin carried on or without a
   side held: no vector checks a spin near a wall lacking either).
 
 ### Landing
@@ -627,7 +660,7 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | Her moves met | She was | Next pose | Effect |
 | --- | --- | --- | --- |
 | a wall (a wall stop) | running | `AgainstWall`, facing kept; aim `UpForward` or `DownForward` kept, else `Forward` (`Up` stays `Still`, `Up`) | `WallsAndCeilings` |
-| a block or solid enemy in the way of the aim change's step | running into another running pose | `AgainstWall`, with the aim of the running pose chosen | `AimingAndShooting` |
+| a block or solid enemy in the way of the aim change's step | in any pose, a running pose other than hers chosen (`AimingAndShooting`) | `AgainstWall`, facing kept, with the aim of the running pose chosen | `AimingAndShooting` |
 | a wall near her as she presses jump (`WallJump`) | spinning | `WallJumping`, facing kept | `WallJump`'s kick |
 | a floor (landing) | upright, in a straight jump or falling | `Landing` from `Jump`, facing kept, aim kept (`Down` becomes `Forward`); aimed `Forward`, not `Down`, with shoot held, gun drawn (she lands firing) | `Landing` |
 | | spinning or wall jumping | `Landing` from `Spin`, facing kept, `Forward` | `Landing` |
@@ -639,9 +672,11 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | | a ball | ball `Falling`, facing kept | `FollowingTheGround`'s fall |
 | a ceiling | rising | kept | `WallsAndCeilings` |
 
-- Where two of these meet in one frame: a wall stop, or the aim step's block, while running wins
-  over walking off a ledge. The wall-jump kick, a landing, walking off a ledge and a ceiling each
-  come from her one vertical move or her kick, so no two of them meet her in the same frame.
+- Where two of these meet in one frame: a wall stop while running wins over walking off a ledge.
+  The aim change's step comes only when the pose chosen is a running one, so a landing or walking
+  off a ledge, which choose a pose of their own, leave no step to block. The wall-jump kick, a
+  landing, walking off a ledge and a ceiling each come from her one vertical move or her kick, so
+  no two of them meet her in the same frame.
 - A landing while her body changes shape leaves the change to run on: its animation's end hands over
   the next pose (`AnimationEnds`, on the ground now), and when that end comes in the landing's own
   frame it decides the pose, as `PoseFollows` says. A landing while turning leaves the turn to run
@@ -676,8 +711,6 @@ effects. The tables below are data records (about 120 rows), counted as data.
 ### Out of the chart's scope
 - The spring ball's rows, the grapple, knockback, the boost after damage, x-ray, shinespark, the
   crystal flash, the drain, liquids, and equipment that changes mid-pose.
-- Whether her arm's step of `AimingAndShooting` also comes with a running sprite that an
-  animation's end hands over.
 
 ---
 
@@ -734,17 +767,26 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   down unless both her start's subpixel and the move's are 0. She reaches an enemy when, there,
   the centres are closer than the two half-sizes summed on both axes.
 - An enemy she reaches is judged from where she starts, by the gap between the boxes on that
-  side (the enemy's near side less her near side, less 1): a gap of 0 is touching: she doesn't
-  move, and her **y** subpixel is set to 0, on either axis; a larger gap stops her by that many
-  whole pixels, her subpixel kept; a negative one (already overlapping) never stops her: the move
-  goes as if that enemy were not there, so another solid enemy in its path decides it, or with
-  none, blocks do (`BlocksStopFlush`; C-enemy-overlap). So a move of 0 is never stopped by one.
+  side: the enemy's near side less her near side, the sides being the boxes' edges at centre ±
+  half-size, so boxes whose pixels are next to each other have a gap of 0 (downward, her bottom
+  side `y + ry` against the enemy's top side `ey − ery`; rightward, her right side `x + rx`
+  against its left side `ex − erx`). A gap of 0 is touching: she doesn't move, and her **y**
+  subpixel is set to 0, on either axis; a larger gap stops her by that many whole pixels, her
+  subpixel kept; a negative one (already overlapping) never stops her: the move goes as if that
+  enemy were not there, so another solid enemy in its path decides it, or with none, blocks do
+  (`BlocksStopFlush`; C-enemy-overlap). So a move of 0 is never shortened by one.
+- Standing on a solid enemy, with no gap between them, each frame's ground pull reaches it and
+  stops at once, so she stays on it (a landing, `Landing`), her y subpixel 0. A landing on one stops her
+  with her subpixel kept, and when the landing pose's taller body is then fitted
+  (`PoseFitAfterMoves`), its look down is a test like any move's, so it finds no gap below her,
+  and her y subpixel becomes 0 before the push.
 - A stop against an enemy is a wall, a ceiling or a floor as the move's direction says: sideways it
   halts her (`WallsAndCeilings`), upward it ends the rise, downward she lands (`Landing`).
 - A solid enemy in a move's path decides that move alone: she stops against it and no block
   stops her, even a nearer one, so the move can end with her edge overlapping a block. Blocks
   stop her only on a path free of solid enemies (`BlocksStopFlush`).
-- checked: constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-enemy-overlap,
+- checked: oracle (W13, a landing on one 2 px below and the fit's look touching it; W20,
+  running on one); constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-enemy-overlap,
   C-aim-enemy).
 
 ### SlopesCarry
@@ -839,8 +881,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - Output. Some cells react when she reaches them (one that changes the scrolling, an item, a door,
   a floor that crumbles); what they then do belongs to their own domains. Motion reports which cells she reaches,
   in order, so the world can raise those reactions. Two reports come out of a frame.
-- **The cells her moves reach.** For each move of the frame (the horizontal move, the ground pull
-  or her vertical move, the aim change's step, the elevator's 1 px), in the order they happen: the
+- **The cells her moves reach.** For each move of the frame (the horizontal move, the near-wall
+  test of `WallJump`, the ground pull or her vertical move, the aim change's step, the elevator's
+  1 px), in the order they happen: the
   cells of her leading edge's line at the move's target, the line `BlocksStopFlush` names. For a
   horizontal move that is the column of her leading edge at the target, in each row her body
   spans where she stands before the move, top row first. For a vertical move it is the row of her
@@ -848,10 +891,16 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   to right on an `Even` frame and right to left on an `Odd` one. Each cell comes with the move's
   direction, one of four ways: down, left, right or up (listed alphabetically; the order means
   nothing), because some reactions depend on it.
+- The near-wall test is a look, not a move: its cells are those of a horizontal move of 8 px
+  towards the wall from where her horizontal move left her, and they come with the way `Look`
+  instead of a direction. A reaction that depends on the way she moves (a floor that crumbles, a
+  station she enters from one side) doesn't answer a look; the others (an item, a cell that
+  changes the scrolling) do, as for a move. The world answers a reacting cell's solid-or-air for
+  a look as for a move (`OtherBlockKinds`).
 - The report ends at the first cell that stops her: the cells after it on the line are not
-  reached. A move of exactly 0 reaches no cells (`BlocksStopFlush`), and neither does a move that
-  a solid enemy decides (`SolidEnemies`). The wall-jump test (`WallJump`), pose fit's looks and
-  the look of `ShrinkingLowersHer` reach cells of their own, which belong to them, not to these
+  reached. A move of exactly 0 reaches no cells (`BlocksStopFlush`), and neither does a move or a
+  look that a solid enemy decides (`SolidEnemies`). Pose fit's looks (`PoseFitAfterMoves`) and the
+  look of `ShrinkingLowersHer` reach cells of their own, which belong to them, not to these
   reports.
 - A cell that stands for another (`OtherBlockKinds`) is reported as the cell it stands for.
 - **The cells she is inside.** Once each frame, before her moves, from her position at the frame's
@@ -859,7 +908,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   differs from her bottom edge's row; then at her top edge's row, when it differs from her bottom
   edge's row and the three rows' numbers combined by exclusive-or are not 0. So when the rows of
   her top edge and her centre are one, and her bottom edge's another, that cell is reported twice.
-- checked: original only (area-brinstar's scrolling cells, item-morph-ball's pickup); constructed
+- checked: oracle (W15: the near-wall test reaches item-morph-ball's item cell, and the game picks
+  the item up); original only (area-brinstar's scrolling cells); constructed
   (C-touch-run, C-touch-wall, C-touch-fall-odd, C-touch-inside-twice, and the C-kind vectors).
 
 ### OtherBlockKinds
@@ -923,8 +973,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   vectors have one). It is not always the nearest, and one she already overlaps never decides
   (`SolidEnemies`).
 
-- Whether a pose change the chart makes at an animation's end moves her the extra pixel of
-  `AimingAndShooting`: open, listed in §7's scope.
+- Answered: an animation's end neither brings nor cancels the extra pixel of
+  `AimingAndShooting`; the step follows the pose the pad chart and her moves chose.
 - The elevator's descent: in area-brinstar she moves down 1 px and 2 px on alternate frames while
   she faces the screen, so the elevator carries her on top of `RidingTheElevator`'s 1 px. That
   carry belongs to the elevator's own lane; C-elevator checks her own 1 px alone.
@@ -935,13 +985,15 @@ acts on her motion as below. These rules are Samus's; other actors get their own
    changes by a jump, a fall, a turn from the ground or a spin reversed; for pose fit, by a
    landing, a take-off, standing up and unmorphing (PF1-PF3, U1, the C-fit vectors); and for
    `ShrinkingLowersHer`, by starting to crouch or morph (SH1-SH3).
-3. `SolidEnemies`, `RidingTheElevator`, stepped blocks and most of `SlopesCarry` have constructed
-   vectors only: no recorded frame is clean for them. The slope landings in r01 and samus-walljump-22 need lead-ins through a
+3. `RidingTheElevator`, stepped blocks and most of `SlopesCarry` have constructed vectors only:
+   no recorded frame is clean for them (`SolidEnemies` now has W13 and W20). The slope landings in r01 and samus-walljump-22 need lead-ins through a
    spin's drift and a sloped floor's effect on a move's length (`SlopesSlowTheWalk`).
 4. The water rows, terrain-quicksand and samus-ceres-push gave no vectors: their liquid and push
    rules are out of scope.
-5. Answered: landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel
-   because she reaches the enemy a pixel early and is touching it (`SolidEnemies`).
+5. Answered again: landing on a solid enemy's top (item-morph-ball frame 797) clears the y
+   subpixel because the landing pose's fit looks down and finds her touching the enemy
+   (`SolidEnemies`, W13). The earlier reading (the gap less 1, so she touches a pixel early) was
+   wrong: a gap of 0 is boxes whose pixels are next to each other.
 6. Answered: the crouch take-off's push and lift come in one frame (PF1, `PoseFitAfterMoves`).
    Which comes first shows only with a block within 10 px above her, which no record has.
 7. Answered: holding no button during a turn ends the skid; holding only buttons that change
