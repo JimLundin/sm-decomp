@@ -14,6 +14,10 @@
 #     rightward is solid.
 #   - ceiling_bottom: the y of a solid ceiling's bottom face, a multiple of 16; every row above it is
 #     solid.
+#   - slope_floor: one sloped floor block: block = [x, y], its top-left corner (multiples of 16);
+#     surface = 16 numbers, one per column of pixels from the left, the row (0 to 15) of the surface's
+#     top pixel in the block: that pixel and every one below it in the block are solid, those above
+#     are air.
 #   A recorded vector's world answers its frames as the room did: open air where she met nothing,
 #   the floor she stood on where she was on flat ground.
 # - before: what the player can tell about Samus at the start (spec §1): position = [x, y],
@@ -1541,3 +1545,14 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 pad = ["jump"]
 jump_pressed = false
 after = { position = ["0100.0000", "004C.0000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-slope-land"
+source = "constructed"
+entries = ["SlopesCarry", "Landing", "RisingAndFalling"]
+world = { slope_floor = { block = [256, 272], surface = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0] } }
+before = { position = ["0108.0000", "0101.4000"], speed_y = "+0002.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0108.0000", "0102.4000"], speed_y = "+0000.0000", speed_x = "+0000.0000" }
