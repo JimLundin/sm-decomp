@@ -197,5 +197,7 @@ impl World for SamusWorld<'_> {
     }
 }
 
+pub mod frame;
+
 #[cfg(test)]
 mod tests;

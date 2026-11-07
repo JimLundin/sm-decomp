@@ -2,7 +2,6 @@
 //! elevator, and its values from the content and the Session's switches.
 
 use data::movement::{AirMotion, GroundMotion};
-use data::pose::animation::wall_jump_frame;
 use data::pose::transition::Control;
 
 use crate::collision::world::{World, X_RADIUS};
@@ -111,15 +110,7 @@ pub fn inputs(samus: &Samus, controller: &Controller, ride: ElevatorRide) -> Opt
     let (held, pressed) = (controls(controller.held), controls(controller.pressed));
     let pad_holds = |button: Button| (controller.held.bits & button.bit()) != 0;
     let equipped = samus.equipment.equipped;
-    // The original compares the frame and branches on the difference's sign.
-    let threshold = wall_jump_frame(samus.pose);
-    let ready = samus
-        .animation
-        .frame
-        .0
-        .wrapping_sub(threshold.0)
-        .cast_signed()
-        >= 0;
+    let ready = crate::animation::spin_turned_far(samus);
     Some(Inputs {
         locomotion: locomotion(samus.movement, samus.pose)?,
         facing: match samus.facing {
