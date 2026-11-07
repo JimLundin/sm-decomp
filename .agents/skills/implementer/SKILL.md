@@ -37,7 +37,8 @@ your report and don't use it.
    them but can't run them here. Check with `cargo check`, `cargo clippy --all-targets -- -D
    warnings` and `cargo fmt --check`, each as its own command.
 4. Every literal and branch names its behaviour id. Values come from the rules or the spec's
-   numbers, never from a constant you invented.
+   numbers, never from a constant you invented. A named constant that holds a number the spec gives is a
+   fact of the spec, and is how a number gets into the logic (DESIGN, "How your code is measured").
 5. Watch the size target in the spec's header as you go. Being over it is not a reason to stop
    early: keep reshaping until you reach it, or until you can say why the rest can't go, and report
    both.

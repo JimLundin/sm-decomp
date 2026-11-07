@@ -17,6 +17,33 @@ need is in this repository; read nothing outside it.
   gives as a fact (a speed, a cell, a row of a chart); a row that encodes a decision the code would
   otherwise make, such as which branch to take, is logic and counts as such.
 
+## How your code is measured
+
+- **The score** is one weighted count of your model's logic tokens. Free: type declarations
+  (`struct`, `enum`, `type` items and attributes), the values of constants and statics (data),
+  constant names, `use` and `mod` lines, trailing commas, the `const` of `const fn`, comments and
+  tests. A function's signature counts half; `true` and `false` count double; each level of
+  nesting adds a quarter to every token inside it (a flat `match` doesn't nest). A pair of
+  parameter types that recurs in three or more signatures, or a pair of arguments at three or
+  more call sites, costs more: group values that travel together into a concept with a name.
+  Define as many shapes as the behaviour needs.
+- **The budget** comes from the spec: its header gives it by area. Over it, keep reshaping and say
+  where the rest goes and why; it isn't a reason to stop early.
+- **The lints.** Clippy here enforces at most one bool parameter, nesting at most five deep (test
+  code included) and cognitive complexity at most 15. The rest are checked when your work is
+  imported, so keep to them as you go:
+  - No bare number other than 0 and 1 in the model's logic. Name it, or put it in `Rules` or a
+    named constant. A constant that holds a number the spec gives is a fact of the spec, not one
+    you invented.
+  - No `allow` attribute at all; every `expect` gives a `reason`. Outside tests, no `expect` names
+    a lint the workspace denies by name, a denied group or `warnings`; a lint denied only through
+    a group (such as `struct_excessive_bools`) may be expected with its reason.
+  - No struct that only wraps one call's arguments (taken by one function, built only at its
+    calls, with no methods).
+  - Modules import in one direction only: a module and its parent, or two siblings, may not each
+    import from the other.
+  - A constant's value that holds control flow, a closure or a function call is logic, not data.
+
 ## What a modern developer would expect
 
 Write the code a developer of a 2D pixel-art game today would expect to find, and would know
