@@ -301,3 +301,25 @@ fn the_morphing_transition_picks_its_pose_by_items_then_y_speed() {
     assert_eq!(chosen(Some(Item::Bombs), Speed::ZERO), finished(0x10));
     assert_eq!(chosen(None, Speed::new(1, 0)), finished(0x11));
 }
+
+#[test]
+fn the_end_is_read_on_the_frame_animate_ends_the_turn() {
+    let content = content();
+    let mut turn = samus(TURN, MovementType::TurningAroundOnGround, 0, 2);
+    let controller = Controller::default();
+    let none = PoseRequests::default();
+    for _ in 0..5 {
+        assert!(!ends_this_frame(&turn, &controller, none, &content));
+        frame(&mut turn, &content);
+    }
+    assert!(ends_this_frame(&turn, &controller, none, &content));
+    // A jump asked for holds the auto-jump transition back.
+    let jump = PoseRequests {
+        ordinary: Some(PoseId(0x4B)),
+        ..PoseRequests::default()
+    };
+    assert!(!ends_this_frame(&turn, &controller, jump, &content));
+    // A looping list never ends.
+    let looping = samus(LOOPING, MovementType::Standing, 1, 1);
+    assert!(!ends_this_frame(&looping, &controller, none, &content));
+}

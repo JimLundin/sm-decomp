@@ -107,6 +107,64 @@ pub fn animate(
     handle_delay(samus, controller, requests, content);
 }
 
+/// Whether her spin's sprite has turned far enough to kick off a wall (`WallJump`): its frame
+/// is at or past the wall jump's. The original compares the frame and branches on the
+/// difference's sign.
+#[must_use]
+pub fn spin_turned_far(samus: &Samus) -> bool {
+    samus
+        .animation
+        .frame
+        .0
+        .wrapping_sub(wall_jump_frame(samus.pose).0)
+        .cast_signed()
+        >= 0
+}
+
+/// Whether `animate` ends her pose's animation this frame (`AnimationEnds`).
+///
+/// The timer runs out and the next item is an instruction that hands over a pose, which the
+/// running list doesn't take over and the auto-jump hack doesn't hold back. Read before the
+/// moves, so a
+/// frame the moves change (an armed wall jump, a fast fall: `after_motion`) is read as it
+/// stood.
+#[must_use]
+pub fn ends_this_frame(
+    samus: &Samus,
+    controller: &Controller,
+    requests: PoseRequests,
+    content: &Content,
+) -> bool {
+    let animation = &samus.animation;
+    if AnimationTimer(animation.timer.0.wrapping_sub(1)).running() {
+        return false;
+    }
+    let next = AnimationFrame(animation.frame.0.wrapping_add(1));
+    let Some(DelayItem::Instruction(instruction)) =
+        content.delays.of(samus.pose).and_then(|list| list.at(next))
+    else {
+        return false;
+    };
+    if running_momentum(samus) && controls(controller.held).contains(Control::Run) {
+        return false;
+    }
+    match instruction {
+        Instruction::Transition(_)
+        | Instruction::BySpeed(_)
+        | Instruction::ByItemsAndSpeed { .. } => true,
+        Instruction::AutoJumpTransition(_) => !requests
+            .ordinary
+            .is_some_and(|asked| JUMPS.contains(&asked)),
+        Instruction::NoOp(_)
+        | Instruction::LoopIfHealthy
+        | Instruction::DrainedFalling
+        | Instruction::WallJump
+        | Instruction::ByItems { .. }
+        | Instruction::GoBack(_)
+        | Instruction::Loop => false,
+    }
+}
+
 /// "Handle Samus animation delay" (`$90:82DC`): the item at the frame.
 fn handle_delay(
     samus: &mut Samus,
