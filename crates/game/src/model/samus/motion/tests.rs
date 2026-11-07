@@ -1,4 +1,4 @@
-//! The spec's vectors (`scenarios/vectors/samus-motion.toml`) run through the model, over the
+//! The spec's vectors (`scenarios/vectors/samus-motion-v1.toml`) run through the model, over the
 //! flat collision stand-in its header defines.
 
 use super::{
@@ -20,7 +20,7 @@ use toml::Value;
 
 const VECTORS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/../../scenarios/vectors/samus-motion.toml"
+    "/../../scenarios/vectors/samus-motion-v1.toml"
 ));
 
 fn fixed(value: &Value) -> Fixed {
