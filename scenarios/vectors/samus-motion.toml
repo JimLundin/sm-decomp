@@ -1,2052 +1,1791 @@
-# Test vectors for docs/behaviours/samus-motion.md (MODEL §5), read by a `game` test.
+# Test vectors for docs/behaviours/samus-motion.md, read by a `game` test.
 #
 # Format
-# - Each [[vector]] has: id; source ("item-morph-ball:<frame>" for an oracle record, or
-#   "constructed"); entries (the spec's behaviour IDs it exercises); rules (optional:
-#   speed_cap = "Wordwise", the default, or "Exact"); world; before; one or more [[vector.step]].
-# - A P.S quantity is a string "PPPP.SSSS": the pixel word and the subpixel word, both hex.
-#   Pixel coordinates are integers.
-# - world: the flat stand-in for the collision domain (spec §5). Anything not listed is air.
+# - Each [[vector]] is one frame: id; source ("<row>:<frame>" for the oracle record holding the
+#   frame's result, or "constructed"); entries (the spec's behaviours it exercises); rules
+#   (optional: speed_cap = "Wordwise", the default, or "Exact"); equipment (optional: hi_jump,
+#   space_jump, default false); world; before; pose; next_pose (optional); pad; jump_pressed; after.
+# - A P.S quantity is "PPPP.SSSS": the pixel part and the subpixel part, both hex. A signed one
+#   starts with "+" or "-" (vertical_velocity: down positive).
+# - world: a stand-in for the room. Anything not listed is air.
 #   - floor_top: the y of a solid floor's top face, a multiple of 16; every row from it down is solid.
 #   - wall_right: the x of a solid wall's left face, a multiple of 16; every column from it
 #     rightward is solid.
-#   - wall_left: the x of a solid wall's right face, a multiple of 16; every column left of it is solid.
-#   - ceiling_bottom: the y of a solid ceiling's bottom face, a multiple of 16; every row above it
-#     is solid.
-#   - ledge_right = { x = X, bottom = Y }: solid where x >= X and y < Y (an overhang on her
-#     right; it answers the wall probe and horizontal moves like wall_right).
-#   - slope_seat = N: every horizontal move that tests enemies answers with a slope seat of N
-#     whole pixels on y (spec §6 `seat`; positive is down, under a sloped ceiling).
-#   - solid_enemy_floor = true: a solid enemy under her, touching, stops every downward move with
-#     distance 0 and sets y's subpixel to 0 (spec `EnemyTouchZeroesYSubpixel`); the vectors that
-#     use it don't compare y or `vertical`.
-#   - enemy_left = B: a solid enemy on her left, tall enough to span her rows, whose right edge
-#     (its x + its x radius) is B: she touches it when x - rx = B. enemy_right = B: one on her
-#     right whose left edge (its x - its x radius) is B: she touches it when x + rx = B. They answer
-#     the solid-enemy test of a horizontal move or of the arm-pump's query (spec §9, the
-#     solid-enemy test) and the wall probe (spec §6 `probe_wall`, `touching`), on that side
-#     only, with pixel words: the target t is the pixel word of x
-#     moved |d| on the heading, then one more pixel on the heading (right: unless x.sub and
-#     |d|.sub are both 0; left: when x.sub != |d|.sub). Found when t - rx < B (left) or
-#     t + rx > B (right). Then touching (x - rx = B, or x + rx = B): distance 0 and y's subpixel
-#     set to 0; short of it: she moves to touching, subpixel unchanged; already past it: not
-#     found. A vertical move never meets them (she doesn't overlap them horizontally).
-#   The stand-in answers a move as the original's flat blocks do: the leading edge at the target is
-#   x + d + rx - 1 (right) or x + d - rx (left), y + d + ry - 1 (down), from the pixel words; if it
-#   is in a solid block, she stops flush against it (the edge on the block's near face), with the
-#   subpixel FFFF moving right or down and 0 moving left (spec `FloorFlushSubpixel`). Horizontal
-#   moves test the rows from her top edge to her bottom edge. The stand-in never tunnels;
-#   where the original would (a step of 16 px or more), the vector doesn't compare y.
-# - before: the State at the start (spec §1.1). Defaults: base_speed and extra_run "0000.0000",
-#   momentum false, mode "Accelerating", vertical "None" ("Up", "Down"), vertical_speed
-#   "0000.0000", bounce "None" ("First", "Second"). A mode or vertical other than the default
-#   stands for what pose selection left when the pose started (spec §7).
-# - [[vector.step]]: the inputs for one frame (spec §1.2):
-#     locomotion: "FacingForward", "Standing", "StandingPlain", "Running", "BallAtRest",
-#       "BallRolling", "SpringBallAtRest", "SpringBallRolling", "Crouching", "TurningOnGround",
-#       "Transition", "Moonwalking", "RanIntoWall", "Jumping", "JumpTakeOff", "SpinJumping",
-#       "Falling", "BallFalling", "SpringBallFalling", "SpringBallInAir", "WallJumping" or
-#       "TurningInAir" (spec §2's fields spelled out);
-#     facing: "Left", "Right" or "Forward"; radius = [x, y] in px;
-#     pad: the buttons held, from run, shoot, jump, left, right, aim_down; jump_pressed = true
-#       when jump is newly pressed;
-#     new_running_pose, forced_pose, elevator_moving, on_slope, spin_ready, was_spinning,
-#       hi_jump, space_jump: default false;
-#       new_running_pose and forced_pose give the arm-pump's pose_request (spec §1.2):
-#       forced_pose = true is Forced; else new_running_pose = true is Pose { running: true };
-#       else None. The test runs `step`, then `arm_pump_step` with that request and the step's
-#       wall_stop (spec §8), and compares the State after both;
-#     pose_start, pose_command (spec §7): when present, the test runs `pose_writes` after
-#       `arm_pump_step`. pose_start is "Turn", "BallReverse", "SpinReverse", "JumpOrFall",
-#       "TakeOff", "TakeOffFromPlainCrouch", "SpinStart", "SpringLaunch" or "WallJumpStart";
-#       pose_replaced = true marks a start that replaced the pose (a "Turn" always does), so the
-#       command is skipped. pose_command is "Decelerate", "Stop", "KillXSpeed", "KillRunSpeed",
-#       "AnimationEnd" (spec §7: the pose an animation's end hands over to) or "Vertical" (the
-#       step's own vertical_result; a step with no locomotion gives it as
-#       vertical_result = "..."). new_pose_falling and old_pose_falling (default false) feed
-#       KillYIfStartedFalling. A step with no locomotion runs only `pose_writes`.
-#     submerged and speed_booster are fixed false for the pilot and are not in the format.
-# - [vector.step.after]: the State expected at the end of that frame. Only the listed fields
-#   are compared; position = [x, y] compares both, position_x or position_y one.
-#   [vector.step.contacts]: the expected Contacts (spec §1.3): wall_stop, ran_into_wall (from
-#   `arm_pump_step`), wall_jump_armed, restart_standing_animation (bools); vertical_result =
-#   "None", "Landed(<LandKind>)", "Falling(<FallKind>)", "HitCeiling" or "WallJump", after the
-#   row's After. Left out: not checked.
-# - Steps chain: the test carries the model's whole State from one step to the next.
-# - The record pads are from item-morph-ball: frame N reads record N-1's pad. The radius of frame
-#   N is record N's (spec §8).
+#   A recorded vector's world is chosen so that it answers the frame as the room did: open air
+#   where she met nothing, the floor she stood on where she was on flat ground.
+# - before / after: Samus's State (spec §1): position = [x, y], run_speed, dash, dash_kept, drive
+#   ("Driven", "Coasting", "Skidding" for Coasting(Behind)), vertical ("Rising", "Falling",
+#   "Settled"), vertical_velocity, bounces (default 0). In `after`, only the listed fields are
+#   compared; position_x compares x alone.
+# - pose: the pose at the frame's start (spec §2): body, action, facing, radius = [x, y] in px.
+#   next_pose: the pose chosen during the frame, when it changes (the pose chart is not in the spec
+#   yet, so the vector gives it).
+# - pad: the buttons held; jump_pressed: jump newly pressed this frame.
+# - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
+#   landed), her horizontal move was her whole speed, and she met no slope.
 
-# V1: running right, no pose change, so no arm-pump step.
-[[vector]]
-id = "V1"
-source = "item-morph-ball:1230"
-entries = ["ExtraRunSpeed", "BaseSpeed", "HorizontalStep"]
-world = { solid_enemy_floor = true }
-before = { position = ["047D.3FFF", "029B.0000"] }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position_x = "047D.7FFF"
-base_speed = "0000.3000"
-extra_run = "0000.1000"
-momentum = true
-[vector.step.contacts]
-wall_stop = false
-
-# V2: running right, the aim changes, so the arm-pump step adds 1.0.
-[[vector]]
-id = "V2"
-source = "item-morph-ball:1231"
-entries = ["ExtraRunSpeed", "BaseSpeed", "ArmPumpStep"]
-world = { solid_enemy_floor = true }
-before = { position = ["047D.7FFF", "029B.0000"], base_speed = "0000.3000", extra_run = "0000.1000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right", "aim_down"]
-new_running_pose = true
-[vector.step.after]
-position_x = "047E.FFFF"
-base_speed = "0000.6000"
-extra_run = "0000.2000"
-
-# V3: the speed-cap quirk. 1.E000 + 0.3000 = 2.1000 counts as past 2.C000 and snaps up.
-[[vector]]
-id = "V3"
-source = "item-morph-ball:752"
-entries = ["SpeedCap", "ExtraRunSpeed", "ArmPumpStep"]
-world = { floor_top = 0x250 }
-before = { position = ["04D6.7FFF", "023B.FFFF"], base_speed = "0001.E000", extra_run = "0000.A000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-new_running_pose = true
-[vector.step.after]
-position = ["04D2.0FFF", "023B.FFFF"]
-base_speed = "0002.C000"
-extra_run = "0000.B000"
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
+# Constructed vectors: cases no record reaches, and the Exact variant.
 
 [[vector]]
-id = "V3-exact"
+id = "C-cap"
 source = "constructed"
-entries = ["SpeedCap"]
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "FloorsStopFlush"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], run_speed = "0001.E000", drive = "Driven" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0102.C000", "010B.FFFF"], run_speed = "0002.C000", dash = "0000.0000", drive = "Driven" }
+
+[[vector]]
+id = "C-cap-exact"
+source = "constructed"
+entries = ["SpeedingUp", "WordwiseTopSpeed"]
 rules = { speed_cap = "Exact" }
-world = { floor_top = 0x250 }
-before = { position = ["04D6.7FFF", "023B.FFFF"], base_speed = "0001.E000", extra_run = "0000.A000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-new_running_pose = true
-[vector.step.after]
-position = ["04D2.BFFF", "023B.FFFF"]
-base_speed = "0002.1000"
-extra_run = "0000.B000"
-
-# V4: at the cap, running left; 2.F000 caps to 2.C000 under both settings.
-[[vector]]
-id = "V4"
-source = "item-morph-ball:753"
-entries = ["SpeedCap", "ArmPumpStep"]
-world = { floor_top = 0x250 }
-before = { position = ["04D2.0FFF", "023B.FFFF"], base_speed = "0002.C000", extra_run = "0000.B000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left", "aim_down"]
-new_running_pose = true
-[vector.step.after]
-position_x = "04CD.8FFF"
-base_speed = "0002.C000"
-extra_run = "0000.C000"
-
-[[vector]]
-id = "V4-exact"
-source = "constructed"
-entries = ["SpeedCap"]
-rules = { speed_cap = "Exact" }
-world = { floor_top = 0x250 }
-before = { position = ["04D2.0FFF", "023B.FFFF"], base_speed = "0002.C000", extra_run = "0000.B000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left", "aim_down"]
-new_running_pose = true
-[vector.step.after]
-position_x = "04CD.8FFF"
-base_speed = "0002.C000"
-extra_run = "0000.C000"
-
-# V5: the ball's overshoot. 3.C000 is kept one frame above the max 3.4000.
-[[vector]]
-id = "V5"
-source = "item-morph-ball:1271"
-entries = ["SpeedCap", "StepDown"]
-world = { floor_top = 0x2D0 }
-before = { position = ["04B4.3FFF", "02C9.FFFF"], base_speed = "0003.0000" }
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Right"
-radius = [5, 7]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], run_speed = "0001.E000", drive = "Driven" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
-[vector.step.after]
-position = ["04B7.FFFF", "02C9.FFFF"]
-base_speed = "0003.C000"
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Right"
-radius = [5, 7]
+jump_pressed = false
+after = { position = ["0102.1000", "010B.FFFF"], run_speed = "0002.1000", drive = "Driven" }
+
+[[vector]]
+id = "C-dashcap-a"
+source = "constructed"
+entries = ["Dash", "DashCap", "WordwiseTopSpeed"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], run_speed = "0002.C000", dash = "0002.F000", dash_kept = true, drive = "Driven" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0105.C000", "010B.FFFF"], run_speed = "0002.C000", dash = "0003.0000", dash_kept = true }
+
+[[vector]]
+id = "C-dashcap-b"
+source = "constructed"
+entries = ["Dash", "DashCap"]
+world = { floor_top = 288 }
+before = { position = ["0105.C000", "010B.FFFF"], run_speed = "0002.C000", dash = "0003.0000", dash_kept = true, drive = "Driven" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["010A.8000", "010B.FFFF"], run_speed = "0002.C000", dash = "0002.0000", dash_kept = true }
+
+[[vector]]
+id = "C-wall"
+source = "constructed"
+entries = ["WallStop", "LosingTheDash", "FloorsStopFlush", "FollowingTheGround"]
+world = { floor_top = 288, wall_right = 256 }
+before = { position = ["00FA.0000", "010B.FFFF"], run_speed = "0002.0000", drive = "Driven" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
-[vector.step.after]
-position = ["04BB.3FFF", "02C9.FFFF"]
-base_speed = "0003.4000"
+jump_pressed = false
+after = { position = ["00FB.FFFF", "010B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven" }
 
 [[vector]]
-id = "V5-exact"
+id = "C-fallcap-a"
 source = "constructed"
-entries = ["SpeedCap"]
-rules = { speed_cap = "Exact" }
-world = { floor_top = 0x2D0 }
-before = { position = ["04B4.3FFF", "02C9.FFFF"], base_speed = "0003.0000" }
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Right"
-radius = [5, 7]
-pad = ["right"]
-[vector.step.after]
-position_x = "04B7.7FFF"
-base_speed = "0003.4000"
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Right"
-radius = [5, 7]
-pad = ["right"]
-[vector.step.after]
-position_x = "04BA.BFFF"
-base_speed = "0003.4000"
-
-# V6: the turn creep, turning left on the ground. Frame 687 ends standing but ran the turn row.
-# The steps are frames 682 to 687; V7 checks y over the same frames.
-[[vector]]
-id = "V6"
-source = "item-morph-ball:682"
-entries = ["TurnCreep", "BaseSpeed", "HorizontalDirection", "LocomotionAtFrameStart"]
-world = { floor_top = 0x2C0 }
-before = { position = ["0580.1000", "02A8.0000"], mode = "TurningAround" }
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_x = "0580.1000"
-base_speed = "0000.0000"
-mode = "Accelerating"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_x = "057F.5000"
-base_speed = "0000.C000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_x = "057F.5000"
-base_speed = "0000.0000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_x = "057E.9000"
-base_speed = "0000.C000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_x = "057E.9000"
-base_speed = "0000.0000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_x = "057D.D000"
-base_speed = "0000.C000"
-
-# V6-exact: under the exact cap the turn has no creep. The y path is the step down of 1.0 a frame.
-[[vector]]
-id = "V6-exact"
-source = "constructed"
-entries = ["TurnCreep", "SpeedCap", "StepDown"]
-rules = { speed_cap = "Exact" }
-world = { floor_top = 0x2C0 }
-before = { position = ["0580.1000", "02A8.0000"], mode = "TurningAround" }
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["0580.1000", "02A9.0000"]
-base_speed = "0000.0000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["0580.1000", "02AA.0000"]
-base_speed = "0000.0000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["0580.1000", "02AB.0000"]
-base_speed = "0000.0000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["0580.1000", "02AB.FFFF"]
-base_speed = "0000.0000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["0580.1000", "02AB.FFFF"]
-base_speed = "0000.0000"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["0580.1000", "02AB.FFFF"]
-base_speed = "0000.0000"
-
-# V7: the step down onto the floor after the radius shrinks from 0x18 to 0x15; the turn row
-# discards the falls (TurnIgnoresFall). Frame 685 lands flush, with the subpixel FFFF.
-[[vector]]
-id = "V7"
-source = "item-morph-ball:682"
-entries = ["StepDown", "TurnIgnoresFall", "FloorFlushSubpixel"]
-world = { floor_top = 0x2C0 }
-before = { position = ["0580.1000", "02A8.0000"], mode = "TurningAround" }
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_y = "02A9.0000"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_y = "02AA.C000"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_y = "02AB.C000"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_y = "02AB.FFFF"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position_y = "02AB.FFFF"
-
-# V8: running right into a wall at x 0x540. The target 053C.FFFF puts her right edge at 0x540,
-# so she moves 0.0000 with the subpixel set to FFFF, and every speed is killed.
-[[vector]]
-id = "V8"
-source = "item-morph-ball:1333"
-entries = ["WallStop", "CancelSpeedBoost", "FloorFlushSubpixel", "ArmPumpStep", "StepDown"]
-world = { floor_top = 0x2D0, wall_right = 0x540 }
-before = { position = ["053B.BFFF", "02BB.FFFF"], base_speed = "0000.C000", extra_run = "0000.4000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position = ["053B.FFFF", "02BB.FFFF"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-mode = "Accelerating"
-[vector.step.contacts]
-wall_stop = true
-ran_into_wall = true
-vertical_result = "Landed(NoChange)"
-
-# V9: the standing row moves by extra_run only (0 here), zeroes the speeds, then the pose update
-# picks a running pose and the arm-pump step moves her 1.0 left.
-[[vector]]
-id = "V9"
-source = "item-morph-ball:688"
-entries = ["LocomotionAtFrameStart", "ArmPumpStep", "StepDown"]
-world = { floor_top = 0x2C0 }
-before = { position = ["057D.D000", "02AB.FFFF"], base_speed = "0000.C000" }
-[[vector.step]]
-locomotion = "StandingPlain"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left", "aim_down"]
-new_running_pose = true
-[vector.step.after]
-position = ["057C.D000", "02AB.FFFF"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-mode = "Accelerating"
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-
-# V10: the ball at rest holds and zeroes the speed, then rolling accelerates.
-[[vector]]
-id = "V10"
-source = "item-morph-ball:1266"
-entries = ["StepDown", "BaseSpeed"]
-world = { floor_top = 0x2D0 }
-before = { position = ["04AC.BFFF", "02C9.FFFF"], base_speed = "0000.C000" }
-[[vector.step]]
-locomotion = "BallAtRest"
-facing = "Right"
-radius = [5, 7]
-pad = ["right"]
-[vector.step.after]
-position = ["04AC.BFFF", "02C9.FFFF"]
-base_speed = "0000.0000"
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Right"
-radius = [5, 7]
-pad = ["right"]
-[vector.step.after]
-position = ["04AD.7FFF", "02C9.FFFF"]
-base_speed = "0000.C000"
-
-# V11: the extra-run cap, tested before the add and word by word. Fixed: the same under both
-# SpeedCap settings, so each runs twice.
-[[vector]]
-id = "V11a"
-source = "constructed"
-entries = ["ExtraRunCap"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.8000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position = ["0102.C000", "00FB.FFFF"]
-base_speed = "0000.3000"
-extra_run = "0002.9000"
-
-[[vector]]
-id = "V11a-exact"
-source = "constructed"
-entries = ["ExtraRunCap"]
-rules = { speed_cap = "Exact" }
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.8000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position = ["0102.C000", "00FB.FFFF"]
-base_speed = "0000.3000"
-extra_run = "0002.9000"
-
-[[vector]]
-id = "V11b"
-source = "constructed"
-entries = ["ExtraRunCap"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.F000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position_x = "0103.3000"
-base_speed = "0000.3000"
-extra_run = "0003.0000"
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position_x = "0105.9000"
-base_speed = "0000.6000"
-extra_run = "0002.0000"
-
-[[vector]]
-id = "V11b-exact"
-source = "constructed"
-entries = ["ExtraRunCap"]
-rules = { speed_cap = "Exact" }
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0002.F000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position_x = "0103.3000"
-base_speed = "0000.3000"
-extra_run = "0003.0000"
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position_x = "0105.9000"
-base_speed = "0000.6000"
-extra_run = "0002.0000"
-
-# V12: the displacement clamp. Standing holds, so extra_run alone moves her: 10.4000 right
-# clamps to 0F.4000; left, -10.4000 clamps to FFF1.C000 (-0E.4000). y is not compared: a
-# 11.4000 step down reaches past the floor's first row.
-[[vector]]
-id = "V12"
-source = "constructed"
-entries = ["DisplacementClamp", "CancelSpeedBoost"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0010.4000", momentum = true }
-[[vector.step]]
-locomotion = "Standing"
-facing = "Right"
-radius = [5, 0x15]
-pad = []
-[vector.step.after]
-position_x = "010F.4000"
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-
-[[vector]]
-id = "V12-left"
-source = "constructed"
-entries = ["DisplacementClamp"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], extra_run = "0010.4000", momentum = true }
-[[vector.step]]
-locomotion = "Standing"
-facing = "Left"
-radius = [5, 0x15]
-pad = []
-[vector.step.after]
-position_x = "00F1.C000"
-extra_run = "0000.0000"
-
-# V13: the transition row holds (base_speed untouched), then the crouching row zeroes it.
-# Frame 1310 ends crouching; frame 1311 ran the crouching row (its pose update starts a jump,
-# which moves y: not compared).
-[[vector]]
-id = "V13"
-source = "item-morph-ball:1310"
-entries = ["LocomotionAtFrameStart", "TransitionLanding", "StepDown"]
-world = { floor_top = 0x2D0 }
-before = { position = ["0523.3FFF", "02C0.FFFF"], base_speed = "0003.4000" }
-[[vector.step]]
-locomotion = "Transition"
-facing = "Right"
-radius = [5, 0x10]
-pad = ["right"]
-[vector.step.after]
-position = ["0523.3FFF", "02C0.FFFF"]
-base_speed = "0003.4000"
-vertical = "None"
-vertical_speed = "0000.0000"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "Crouching"
-facing = "Right"
-radius = [5, 0x10]
-pad = ["run", "right", "jump"]
-[vector.step.after]
-position_x = "0523.3FFF"
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-mode = "Accelerating"
-
-# V13b: an airborne transition falls under gravity; landing ends the vertical motion, and the
-# coasting row leaves base_speed alone.
-[[vector]]
-id = "V13b"
-source = "constructed"
-entries = ["TransitionLanding", "VerticalStep", "FloorFlushSubpixel"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FF.0000"], base_speed = "0001.4000", vertical = "Down", vertical_speed = "0001.0000" }
-[[vector.step]]
-locomotion = "Transition"
-facing = "Right"
-radius = [5, 0x10]
-pad = []
-[vector.step.after]
-position = ["0100.0000", "0100.0000"]
-base_speed = "0001.4000"
-vertical = "Down"
-vertical_speed = "0001.1C00"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "Transition"
-facing = "Right"
-radius = [5, 0x10]
-pad = []
-[vector.step.after]
-position = ["0100.0000", "0100.FFFF"]
-base_speed = "0001.4000"
-vertical = "None"
-vertical_speed = "0000.0000"
-[vector.step.contacts]
-vertical_result = "None"
-
-# V14: the standing (landing) row coasts by the old extra_run 1.2000 leftward, then stops and
-# cancels momentum; the pose update picks a running pose and the arm-pump step adds 1.0 left.
-[[vector]]
-id = "V14"
-source = "item-morph-ball:741"
-entries = ["LocomotionAtFrameStart", "HorizontalStep", "CancelSpeedBoost", "ArmPumpStep", "StepDown"]
-world = { floor_top = 0x250 }
-before = { position = ["04F0.5FFF", "023B.FFFF"], extra_run = "0001.2000", momentum = true }
-[[vector.step]]
-locomotion = "Standing"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left", "aim_down"]
-new_running_pose = true
-[vector.step.after]
-position = ["04EE.3FFF", "023B.FFFF"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-mode = "Accelerating"
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-wall_stop = false
-
-# V15: a turn that moves. Pose selection folded the run speed into base_speed (1.6000) when the
-# turn started. TurningAround: she slides against her new facing (rightward) as base brakes by
-# 0.8000; on the third frame it passes 0 and mode returns to Accelerating.
-[[vector]]
-id = "V15"
-source = "constructed"
-entries = ["HorizontalDirection", "BaseSpeed", "CancelSpeedBoost", "TurnIgnoresFall"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], base_speed = "0001.6000", momentum = true, mode = "TurningAround" }
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["left"]
-[vector.step.after]
-position = ["0100.E000", "00FB.FFFF"]
-base_speed = "0000.E000"
-extra_run = "0000.0000"
-momentum = false
-mode = "TurningAround"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["left"]
-[vector.step.after]
-position_x = "0101.4000"
-base_speed = "0000.6000"
-mode = "TurningAround"
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["left"]
-[vector.step.after]
-position_x = "0101.4000"
-base_speed = "0000.0000"
-mode = "Accelerating"
-
-# V15b: the direction is read after the decelerate. Base 0.4000 brakes past 0, so mode is
-# Accelerating when the step is taken, and extra_run 0.1000 moves her along her facing (left).
-# Read before the decelerate, she would move right to 0100.1000.
-[[vector]]
-id = "V15b"
-source = "constructed"
-entries = ["HorizontalDirection", "BaseSpeed", "ExtraRunSpeed"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"], base_speed = "0000.4000", extra_run = "0000.1000", momentum = true, mode = "TurningAround" }
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["left"]
-[vector.step.after]
-position = ["00FF.F000", "00FB.FFFF"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-mode = "Accelerating"
-[vector.step.contacts]
-vertical_result = "None"
-
-# V16: a braking ball in its at-rest pose (mode Decelerating, as after a morph from a spin jump)
-# takes the rolling row and brakes 1.4000 -> 0.C000 -> 0.4000 -> 0; only then, back in
-# Accelerating, the at-rest row holds it still.
-[[vector]]
-id = "V16"
-source = "constructed"
-entries = ["BallAtRest", "BaseSpeed", "HorizontalDirection"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "0109.FFFF"], base_speed = "0001.4000", mode = "Decelerating" }
-[[vector.step]]
-locomotion = "BallAtRest"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position = ["0100.C000", "0109.FFFF"]
-base_speed = "0000.C000"
-mode = "Decelerating"
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-[[vector.step]]
-locomotion = "BallAtRest"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position_x = "0101.0000"
-base_speed = "0000.4000"
-mode = "Decelerating"
-[[vector.step]]
-locomotion = "BallAtRest"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position_x = "0101.0000"
-base_speed = "0000.0000"
-mode = "Accelerating"
-[[vector.step]]
-locomotion = "BallAtRest"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position = ["0101.0000", "0109.FFFF"]
-base_speed = "0000.0000"
-mode = "Accelerating"
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-
-# V17: momentum kept on a non-running row: the rolling ball keeps extra_run 0.8000.
-[[vector]]
-id = "V17"
-source = "constructed"
-entries = ["ExtraRunSpeed", "BaseSpeed"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "0109.FFFF"], extra_run = "0000.8000", momentum = true }
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position = ["0101.4000", "0109.FFFF"]
-base_speed = "0000.C000"
-extra_run = "0000.8000"
-momentum = true
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-
-# V17-off: the same without momentum: extra_run is dropped.
-[[vector]]
-id = "V17-off"
-source = "constructed"
-entries = ["ExtraRunSpeed"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "0109.FFFF"], extra_run = "0000.8000" }
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position_x = "0100.C000"
-base_speed = "0000.C000"
-extra_run = "0000.0000"
-
-# V18: moonwalking. 0 + 0.C000 caps to the max 0.8000 at once (0xC000 is not below 0x8000), and
-# 0.8000 + 0.C000 = 1.4000 caps again. The direction follows the facing here (open question 2).
-[[vector]]
-id = "V18"
-source = "constructed"
-entries = ["SpeedTable", "SpeedCap"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"] }
-[[vector.step]]
-locomotion = "Moonwalking"
-facing = "Right"
-radius = [5, 0x15]
-pad = []
-[vector.step.after]
-position = ["0100.8000", "00FB.FFFF"]
-base_speed = "0000.8000"
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-[[vector.step]]
-locomotion = "Moonwalking"
-facing = "Right"
-radius = [5, 0x15]
-pad = []
-[vector.step.after]
-position_x = "0101.0000"
-base_speed = "0000.8000"
-
-# V19: the morph ball rolls left with no floor: the step down of 1.C000 misses, and the fall
-# names the morph ball.
-[[vector]]
-id = "V19"
-source = "constructed"
-entries = ["LandingContact", "StepDown"]
+entries = ["Gravity", "FallingSpeedLimit"]
 world = {}
-before = { position = ["0100.0000", "0100.0000"] }
-[[vector.step]]
-locomotion = "BallRolling"
-facing = "Left"
-radius = [5, 7]
+before = { position = ["0100.0000", "0080.0000"], vertical = "Falling", vertical_velocity = "+0004.F800" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = []
-[vector.step.after]
-position = ["00FF.4000", "0101.C000"]
-base_speed = "0000.C000"
-[vector.step.contacts]
-vertical_result = "Falling(MorphBall)"
+jump_pressed = false
+after = { position = ["0100.0000", "0084.F800"], vertical = "Falling", vertical_velocity = "+0005.1400" }
 
 [[vector]]
-id = "V19-spring"
+id = "C-fallcap-b"
 source = "constructed"
-entries = ["LandingContact"]
+entries = ["Gravity", "FallingSpeedLimit"]
 world = {}
-before = { position = ["0100.0000", "0100.0000"] }
-[[vector.step]]
-locomotion = "SpringBallRolling"
-facing = "Left"
-radius = [5, 7]
+before = { position = ["0100.0000", "0084.F800"], vertical = "Falling", vertical_velocity = "+0005.1400" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = []
-[vector.step.after]
-position = ["00FF.4000", "0101.C000"]
-base_speed = "0000.C000"
-[vector.step.contacts]
-vertical_result = "Falling(SpringBall)"
+jump_pressed = false
+after = { position = ["0100.0000", "008A.0C00"], vertical = "Falling", vertical_velocity = "+0005.1400" }
 
-# V19b: an airborne ball at rest: no step down and no stop, so base_speed survives; it rises into
-# a ceiling (flush, subpixel 0) and gravity still slows it.
 [[vector]]
-id = "V19b"
+id = "C-limit"
 source = "constructed"
-entries = ["BallAtRest", "VerticalStep", "LandingContact"]
-world = { ceiling_bottom = 0x120 }
-before = { position = ["0100.0000", "0128.0000"], base_speed = "0000.C000", vertical = "Up", vertical_speed = "0002.0000" }
-[[vector.step]]
-locomotion = "BallAtRest"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position = ["0100.0000", "0127.0000"]
-base_speed = "0000.C000"
-vertical = "Up"
-vertical_speed = "0001.E400"
-[vector.step.contacts]
-vertical_result = "HitCeiling"
-
-# V20: running left into a wall whose right face is at 0xF0. Her left edge stops at 0xF0 with the
-# subpixel 0; the wall stop kills every speed, and the arm-pump check asks for the wall pose.
-[[vector]]
-id = "V20"
-source = "constructed"
-entries = ["WallStop", "FloorFlushSubpixel", "ArmPumpStep"]
-world = { floor_top = 0x110, wall_left = 0xF0 }
-before = { position = ["00F5.4000", "00FB.FFFF"], base_speed = "0000.C000", extra_run = "0000.4000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Left"
-radius = [5, 0x15]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["00F5.0000", "00FB.FFFF"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-mode = "Accelerating"
-[vector.step.contacts]
-wall_stop = true
-ran_into_wall = true
-vertical_result = "Landed(NoChange)"
-
-# V21: the step down after a wall stop uses this frame's total (1.4000), not the zeroed speeds.
-# She starts 1 px above the floor: 2.4000 reaches it (Landed, flush); 1.0 would not.
-[[vector]]
-id = "V21"
-source = "constructed"
-entries = ["StepDown", "WallStop"]
-world = { floor_top = 0x110, wall_right = 0x140 }
-before = { position = ["013B.BFFF", "00FA.0000"], base_speed = "0000.C000", extra_run = "0000.4000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position = ["013B.FFFF", "00FB.FFFF"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-[vector.step.contacts]
-wall_stop = true
-ran_into_wall = true
-vertical_result = "Landed(NoChange)"
-
-# V21b: running off a ledge: the step down of 1.4000 misses and the fall is the plain airborne one.
-[[vector]]
-id = "V21b"
-source = "constructed"
-entries = ["LandingContact", "StepDown"]
+entries = ["MoveLimit", "CarriedDrift"]
 world = {}
-before = { position = ["0100.0000", "0100.0000"] }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position = ["0100.4000", "0101.4000"]
-base_speed = "0000.3000"
-extra_run = "0000.1000"
-momentum = true
-[vector.step.contacts]
-vertical_result = "Falling(Airborne)"
-
-# V22: a ceiling above her head (bottom face 0xE0, her top edge 0xE6) does not touch ground motion.
-[[vector]]
-id = "V22"
-source = "constructed"
-entries = ["HorizontalStep"]
-world = { floor_top = 0x110, ceiling_bottom = 0xE0 }
-before = { position = ["0100.0000", "00FB.FFFF"] }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position = ["0100.4000", "00FB.FFFF"]
-base_speed = "0000.3000"
-extra_run = "0000.1000"
-[vector.step.contacts]
-wall_stop = false
-vertical_result = "Landed(NoChange)"
-
-# V22b: the arm-pump step hits a block. The run step (0.4000) stops short of the wall at 0x140;
-# the 1.0 step reaches it, stops flush (subpixel FFFF) and asks for the wall pose. No wall stop,
-# so the speeds survive.
-[[vector]]
-id = "V22b"
-source = "constructed"
-entries = ["ArmPumpStep", "FloorFlushSubpixel"]
-world = { floor_top = 0x110, wall_right = 0x140 }
-before = { position = ["013A.E000", "00FB.FFFF"] }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right", "aim_down"]
-new_running_pose = true
-[vector.step.after]
-position = ["013B.FFFF", "00FB.FFFF"]
-base_speed = "0000.3000"
-extra_run = "0000.1000"
-momentum = true
-[vector.step.contacts]
-wall_stop = false
-ran_into_wall = true
-
-# V23: facing the screen. A moving elevator carries her down 1.0 with no speed change; a still one
-# does not. Then, with facing Forward, the arm-pump step goes right.
-[[vector]]
-id = "V23"
-source = "constructed"
-entries = ["ElevatorRide", "ArmPumpStep"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0000.C000" }
-[[vector.step]]
-locomotion = "FacingForward"
-facing = "Forward"
-radius = [5, 0x18]
-pad = []
-elevator_moving = true
-[vector.step.after]
-position = ["0100.0000", "0101.0000"]
-base_speed = "0000.C000"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "FacingForward"
-facing = "Forward"
-radius = [5, 0x18]
-pad = []
-[vector.step.after]
-position = ["0100.0000", "0101.0000"]
-base_speed = "0000.C000"
-[vector.step.contacts]
-vertical_result = "None"
-[[vector.step]]
-locomotion = "FacingForward"
-facing = "Forward"
-radius = [5, 0x18]
+before = { position = ["0100.0000", "0080.0000"], dash = "0011.0000", dash_kept = true, drive = "Coasting", vertical = "Falling" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["right"]
-new_running_pose = true
-[vector.step.after]
-position = ["0101.0000", "0101.0000"]
-[vector.step.contacts]
-ran_into_wall = false
+jump_pressed = false
+after = { position_x = "010F.C000", run_speed = "0000.C000", dash = "0011.0000" }
 
-# V24: shooting in the plain standing pose restarts its animation; in another standing pose it
-# does not.
 [[vector]]
-id = "V24"
+id = "C-moonfall-a"
 source = "constructed"
-entries = ["StandingShotRestartsAnimation"]
-world = { floor_top = 0x110 }
-before = { position = ["0100.0000", "00FB.FFFF"] }
-[[vector.step]]
-locomotion = "StandingPlain"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["shoot"]
-[vector.step.after]
-position = ["0100.0000", "00FB.FFFF"]
-[vector.step.contacts]
-restart_standing_animation = true
-vertical_result = "Landed(NoChange)"
-[[vector.step]]
-locomotion = "Standing"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["shoot"]
-[vector.step.contacts]
-restart_standing_animation = false
-
-# V25: the ran-into-wall row, then a standing row, flush against the wall at 0x540 after V8:
-# both coast by 0 and land flush; nothing moves.
-[[vector]]
-id = "V25"
-source = "item-morph-ball:1334"
-entries = ["LocomotionAtFrameStart", "StepDown", "CancelSpeedBoost"]
-world = { floor_top = 0x2D0, wall_right = 0x540 }
-before = { position = ["053B.FFFF", "02BB.FFFF"] }
-[[vector.step]]
-locomotion = "RanIntoWall"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right", "aim_down"]
-[vector.step.after]
-position = ["053B.FFFF", "02BB.FFFF"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-[vector.step.contacts]
-wall_stop = false
-vertical_result = "Landed(NoChange)"
-[[vector.step]]
-locomotion = "Standing"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-[vector.step.after]
-position = ["053B.FFFF", "02BB.FFFF"]
-[vector.step.contacts]
-vertical_result = "Landed(NoChange)"
-
-# V26: a zero horizontal move still tests solid enemies on its heading. Standing still facing
-# left, x.sub 8000, touching a solid enemy on her left: the test finds it, so the move stops
-# (WallStop) and her y subpixel becomes 0. With no floor she then steps down the full 1.0.
-[[vector]]
-id = "V26"
-source = "constructed"
-entries = ["HorizontalStep", "WallStop", "EnemyTouchZeroesYSubpixel"]
-world = { enemy_left = 0xFB }
-before = { position = ["0100.8000", "0100.8000"] }
-[[vector.step]]
-locomotion = "Standing"
-facing = "Left"
-radius = [5, 0x15]
-[vector.step.after]
-position = ["0100.8000", "0101.0000"]
-[vector.step.contacts]
-wall_stop = true
-vertical_result = "Falling(Airborne)"
-
-# V26b: the same, facing right: the zero move tests the right side only, so the enemy on her
-# left is not found and the y subpixel is kept.
-[[vector]]
-id = "V26b"
-source = "constructed"
-entries = ["HorizontalStep", "EnemyTouchZeroesYSubpixel"]
-world = { enemy_left = 0xFB }
-before = { position = ["0100.8000", "0100.8000"] }
-[[vector.step]]
-locomotion = "Standing"
-facing = "Right"
-radius = [5, 0x15]
-[vector.step.after]
-position = ["0100.8000", "0101.8000"]
-[vector.step.contacts]
-wall_stop = false
-vertical_result = "Falling(Airborne)"
-
-# V26c: facing left again, but x.sub 0: a zero move's target is not pushed a pixel further, so
-# the touching enemy is not found (spec §9, the solid-enemy test).
-[[vector]]
-id = "V26c"
-source = "constructed"
-entries = ["HorizontalStep", "EnemyTouchZeroesYSubpixel"]
-world = { enemy_left = 0xFB }
-before = { position = ["0100.0000", "0100.8000"] }
-[[vector.step]]
-locomotion = "Standing"
-facing = "Left"
-radius = [5, 0x15]
-[vector.step.after]
-position = ["0100.0000", "0101.8000"]
-[vector.step.contacts]
-wall_stop = false
-vertical_result = "Falling(Airborne)"
-
-# V26d: turning, facing right, base 0.8000 brakes to exactly 0, so mode stays TurningAround and
-# the zero move heads left, against her facing. The enemy on her left stops it: WallStop sets
-# mode back to Accelerating (without the enemy it would stay TurningAround) and the y subpixel
-# becomes 0. The turn's After clears the fall.
-[[vector]]
-id = "V26d"
-source = "constructed"
-entries = ["HorizontalDirection", "HorizontalStep", "WallStop", "EnemyTouchZeroesYSubpixel", "TurnIgnoresFall"]
-world = { enemy_left = 0xFB }
-before = { position = ["0100.8000", "0100.8000"], base_speed = "0000.8000", mode = "TurningAround" }
-[[vector.step]]
-locomotion = "TurningOnGround"
-facing = "Right"
-radius = [5, 0x15]
-[vector.step.after]
-position = ["0100.8000", "0101.0000"]
-base_speed = "0000.0000"
-mode = "Accelerating"
-[vector.step.contacts]
-wall_stop = true
-vertical_result = "None"
-
-# V27: the arm-pump's enemy query. Standing on a floor facing right, x.sub 0, touching a solid
-# enemy on her right: the zero move doesn't find it (V26c), the step down lands flush (y.sub
-# FFFF). Then a running pose is requested: the 1.0 query finds the enemy, so she doesn't move,
-# asks for the ran-into-wall pose, and her y subpixel becomes 0.
-[[vector]]
-id = "V27"
-source = "constructed"
-entries = ["ArmPumpStep", "EnemyTouchZeroesYSubpixel"]
-world = { floor_top = 0x110, enemy_right = 0x105 }
-before = { position = ["0100.0000", "00FB.FFFF"] }
-[[vector.step]]
-locomotion = "Standing"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["right"]
-new_running_pose = true
-[vector.step.after]
-position = ["0100.0000", "00FB.0000"]
-[vector.step.contacts]
-wall_stop = false
-ran_into_wall = true
-vertical_result = "Landed(NoChange)"
-
-# V27b: a forced pose skips the arm-pump step entirely: V8's frame (running into the wall) with
-# a forced pose asks for no ran-into-wall pose.
-[[vector]]
-id = "V27b"
-source = "constructed"
-entries = ["ArmPumpStep", "WallStop"]
-world = { floor_top = 0x2D0, wall_right = 0x540 }
-before = { position = ["053B.BFFF", "02BB.FFFF"], base_speed = "0000.C000", extra_run = "0000.4000", momentum = true }
-[[vector.step]]
-locomotion = "Running"
-facing = "Right"
-radius = [5, 0x15]
-pad = ["run", "right"]
-forced_pose = true
-[vector.step.after]
-position = ["053B.FFFF", "02BB.FFFF"]
-[vector.step.contacts]
-wall_stop = true
-ran_into_wall = false
-vertical_result = "Landed(NoChange)"
-
-# ---------------------------------------------------------------------------------------------
-# The air (A) and pose selection's writes (P).
-
-# A1: the spin jump's first rising frame. Ground speed 2.C000 + 0.C000 snaps down to the spin
-# jump's max 1.6000 (capped), so mode becomes Decelerating; she rises by the take-off 4.E000.
-[[vector]]
-id = "A1"
-source = "item-morph-ball:707"
-entries = ["BaseSpeed", "SpeedCap", "SpinJumpDrift", "ExtraRunSpeed", "VerticalStep"]
+entries = ["Moonfall", "Gravity", "SpinDrift"]
 world = {}
-before = { position = ["0542.D000", "02AB.FFFF"], base_speed = "0002.C000", extra_run = "0001.2000", momentum = true, vertical = "Up", vertical_speed = "0004.E000" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Left"
-radius = [5, 0x12]
+before = { position = ["0100.0000", "0080.0000"], vertical = "Settled" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0080.0000"], vertical = "Settled", vertical_velocity = "+0000.1C00", run_speed = "0000.0000" }
+
+[[vector]]
+id = "C-moonfall-b"
+source = "constructed"
+entries = ["Moonfall", "Gravity"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], vertical = "Settled", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
-[vector.step.after]
-position = ["0540.5000", "02A7.1FFF"]
-base_speed = "0001.6000"
-extra_run = "0001.2000"
-mode = "Decelerating"
-vertical = "Up"
-vertical_speed = "0004.C400"
-[vector.step.contacts]
-vertical_result = "None"
-
-# A2: jump let go while rising: the rise ends at once (no y move this frame). Pressing left
-# probes the right side; the overhang within 8 px arms the wall jump, and the probe sets x.sub
-# to FFFF without moving her.
-[[vector]]
-id = "A2"
-source = "item-morph-ball:711"
-entries = ["JumpRelease", "WallJumpCheck", "WallProbeSubpixel", "SpinJumpDrift", "VerticalStep"]
-world = { ledge_right = { x = 0x540, bottom = 0x290 } }
-before = { position = ["0538.D000", "0299.27FF"], base_speed = "0001.6000", extra_run = "0001.2000", momentum = true, mode = "Decelerating", vertical = "Up", vertical_speed = "0004.7000" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Left"
-radius = [5, 0x12]
-pad = ["left"]
-was_spinning = true
-[vector.step.after]
-position = ["0536.FFFF", "0299.27FF"]
-base_speed = "0001.6000"
-mode = "Decelerating"
-vertical = "Down"
-vertical_speed = "0000.1C00"
-[vector.step.contacts]
-wall_jump_armed = true
-vertical_result = "Falling(NoChange)"
-
-# A3: the wall jump fires: the probe finds the overhang 7 px away, jump is newly pressed and the
-# spin animation is ready. No vertical step this frame; pose selection then stops the drift and
-# the wall jump starts at 4.A000.
-[[vector]]
-id = "A3"
-source = "item-morph-ball:712"
-entries = ["WallJumpCheck", "WallProbeSubpixel", "LandingContact"]
-world = { ledge_right = { x = 0x540, bottom = 0x290 } }
-before = { position = ["0536.FFFF", "0299.27FF"], base_speed = "0001.6000", extra_run = "0001.2000", momentum = true, mode = "Decelerating", vertical = "Down", vertical_speed = "0000.1C00" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Left"
-radius = [5, 0x12]
-pad = ["left", "jump"]
 jump_pressed = true
-was_spinning = true
-spin_ready = true
-pose_start = "WallJumpStart"
-pose_command = "Vertical"
-[vector.step.after]
-position = ["0534.FFFF", "0299.27FF"]
-base_speed = "0000.0000"
-extra_run = "0001.2000"
-mode = "Accelerating"
-vertical = "Up"
-vertical_speed = "0004.A000"
-[vector.step.contacts]
-vertical_result = "WallJump"
+after = { position = ["0100.0000", "0080.1C00"], vertical = "Settled", vertical_velocity = "+0000.3800" }
 
-# A4: the wall jump's first frame: it always drifts, and Accelerating becomes Decelerating.
 [[vector]]
-id = "A4"
-source = "item-morph-ball:713"
-entries = ["WallJumpDrift", "BaseSpeed", "VerticalStep"]
+id = "C-bounce"
+source = "constructed"
+entries = ["BallBounce", "FloorsStopFlush", "AirDrift"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0117.0000"], vertical = "Falling", vertical_velocity = "+0003.4000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [7, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0119.FFFF"], vertical = "Rising", vertical_velocity = "-0001.0000", bounces = 1, run_speed = "0000.0000" }
+
+# Recorded vectors, from the oracle's records (149 frames from 25 rows).
+
+[[vector]]
+id = "R1"
+source = "item-morph-ball:686"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 704 }
+before = { position = ["057E.9000", "02AB.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["057E.9000", "02AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R2"
+source = "item-morph-ball:704"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 704 }
+before = { position = ["054E.4000", "02AB.FFFF"], run_speed = "0002.C000", dash = "0000.F000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["054A.8000", "02AB.FFFF"], run_speed = "0002.C000", dash = "0001.0000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R3"
+source = "item-morph-ball:708"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
 world = {}
-before = { position = ["0534.FFFF", "0299.27FF"], extra_run = "0001.2000", momentum = true, vertical = "Up", vertical_speed = "0004.A000" }
-[[vector.step]]
-locomotion = "WallJumping"
-facing = "Left"
-radius = [5, 0x19]
+before = { position = ["0540.5000", "02A7.1FFF"], run_speed = "0001.6000", dash = "0001.2000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.C400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
 pad = ["jump"]
-[vector.step.after]
-position = ["0533.1FFF", "0294.87FF"]
-base_speed = "0000.C000"
-mode = "Decelerating"
-vertical_speed = "0004.8400"
+jump_pressed = false
+after = { position = ["053D.D000", "02A2.5BFF"], run_speed = "0001.6000", dash = "0001.2000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.A800" }
 
-# A5: in the air Decelerating accelerates: 1.6000 + 0.C000 = 2.2000 snaps to the jump's 1.4000.
 [[vector]]
-id = "A5"
+id = "R4"
+source = "item-morph-ball:714"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
+world = {}
+before = { position = ["0533.1FFF", "0294.87FF"], run_speed = "0000.C000", dash = "0001.2000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.8400" }
+pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0530.9FFF", "0290.03FF"], run_speed = "0001.6000", dash = "0001.2000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.6800" }
+
+[[vector]]
+id = "R5"
 source = "item-morph-ball:735"
-entries = ["BaseSpeed", "SpeedCap", "NoInputStops"]
+entries = ["Gravity", "RiseEnds", "AirDrift", "CarriedDrift"]
 world = {}
-before = { position = ["04FE.9FFF", "024C.ABFF"], base_speed = "0001.6000", extra_run = "0001.2000", momentum = true, mode = "Decelerating", vertical = "Up", vertical_speed = "0002.3800" }
-[[vector.step]]
-locomotion = "Jumping"
-facing = "Left"
-radius = [5, 0x19]
+before = { position = ["04FE.9FFF", "024C.ABFF"], run_speed = "0001.6000", dash = "0001.2000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0002.3800" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
 pad = ["jump", "aim_down"]
-[vector.step.after]
-position = ["04FC.3FFF", "024A.73FF"]
-base_speed = "0001.4000"
-mode = "Decelerating"
-vertical_speed = "0002.1C00"
+jump_pressed = false
+after = { position = ["04FC.3FFF", "024A.73FF"], run_speed = "0001.4000", dash = "0001.2000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0002.1C00" }
 
-# A6: a spin jump let go on its first frame: no rise at all; the ground speed snaps to 1.6000.
 [[vector]]
-id = "A6"
-source = "item-morph-ball:755"
-entries = ["JumpRelease", "SpinJumpDrift", "SpeedCap"]
-world = {}
-before = { position = ["04C9.FFFF", "023B.FFFF"], base_speed = "0002.C000", extra_run = "0000.D000", momentum = true, vertical = "Up", vertical_speed = "0004.E000" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Left"
-radius = [5, 0x12]
-pad = ["run", "left"]
-[vector.step.after]
-position = ["04C7.CFFF", "023B.FFFF"]
-base_speed = "0001.6000"
-mode = "Decelerating"
-vertical = "Down"
-vertical_speed = "0000.1C00"
-
-# A7: falling moves by the speed from before this frame's gravity.
-[[vector]]
-id = "A7"
+id = "R6"
 source = "item-morph-ball:756"
-entries = ["VerticalStep", "WallJumpCheck"]
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
 world = {}
-before = { position = ["04C7.CFFF", "023B.FFFF"], base_speed = "0001.6000", extra_run = "0000.D000", momentum = true, mode = "Decelerating", vertical = "Down", vertical_speed = "0000.1C00" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Left"
-radius = [5, 0x12]
+before = { position = ["04C7.CFFF", "023B.FFFF"], run_speed = "0001.6000", dash = "0000.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
 pad = ["run", "left"]
-was_spinning = true
-[vector.step.after]
-position = ["04C5.9FFF", "023C.1BFF"]
-vertical_speed = "0000.3800"
-[vector.step.contacts]
-wall_jump_armed = false
-vertical_result = "Falling(NoChange)"
+jump_pressed = false
+after = { position = ["04C5.9FFF", "023C.1BFF"], run_speed = "0001.6000", dash = "0000.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
 
-# A8: pressing right during a left spin jump: the frame still drifts left (capped), then the
-# reversed spin jump folds 1.6000 + 0.A000 into the base, cancels momentum and turns around.
 [[vector]]
-id = "A8"
-source = "item-morph-ball:815"
-entries = ["LocomotionAtFrameStart", "SpinJumpDrift", "CancelSpeedBoost"]
+id = "R7"
+source = "item-morph-ball:770"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
 world = {}
-before = { position = ["0471.3FFF", "028D.0800"], base_speed = "0001.6000", extra_run = "0000.A000", momentum = true, mode = "Decelerating", vertical = "Down", vertical_speed = "0000.5400" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Left"
-radius = [5, 0x12]
-pad = ["right"]
-was_spinning = true
-pose_start = "SpinReverse"
-[vector.step.after]
-position = ["046F.3FFF", "028D.5C00"]
-base_speed = "0002.0000"
-extra_run = "0000.0000"
-momentum = false
-mode = "TurningAround"
-vertical_speed = "0000.7000"
+before = { position = ["04AB.FFFF", "0247.7BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0001.A400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["04AB.FFFF", "0249.1FFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0001.C000" }
 
-# A9: turning in the spin jump brakes by 0.8000 and keeps sliding the old way (left).
 [[vector]]
-id = "A9"
+id = "R8"
+source = "item-morph-ball:796"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["0497.7FFF", "0295.AFFF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0004.7C00" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0496.3FFF", "029A.2BFF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0004.9800" }
+
+[[vector]]
+id = "R9"
 source = "item-morph-ball:816"
-entries = ["BaseSpeed", "HorizontalDirection", "SpinJumpDrift"]
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
 world = {}
-before = { position = ["046F.3FFF", "028D.5C00"], base_speed = "0002.0000", mode = "TurningAround", vertical = "Down", vertical_speed = "0000.7000" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Right"
-radius = [5, 0x12]
+before = { position = ["046F.3FFF", "028D.5C00"], run_speed = "0002.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.7000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["right"]
-was_spinning = true
-[vector.step.after]
-position = ["046D.BFFF", "028D.CC00"]
-base_speed = "0001.8000"
-mode = "TurningAround"
-vertical_speed = "0000.8C00"
+jump_pressed = false
+after = { position = ["046D.BFFF", "028D.CC00"], run_speed = "0001.8000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.8C00" }
 
-# A10: the cap's overshoot in the air: 1.0000 + 0.C000 = 1.C000 is kept over the max 1.4000.
 [[vector]]
-id = "A10"
-source = "item-morph-ball:1217"
-entries = ["SpeedCap", "NoInputStops", "VerticalStep"]
+id = "R10"
+source = "samus-input-poses:106"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
 world = {}
-before = { position = ["046C.BFFF", "028E.5800"], base_speed = "0001.0000", vertical = "Down", vertical_speed = "0000.A800" }
-[[vector.step]]
-locomotion = "Jumping"
-facing = "Right"
-radius = [5, 0x19]
-pad = ["right", "shoot", "aim_down"]
-[vector.step.after]
-position = ["046E.7FFF", "028F.0000"]
-base_speed = "0001.C000"
-mode = "Accelerating"
-vertical_speed = "0000.C400"
-
-# A11: a wall stop in the air kills the speeds and momentum; the fall goes on.
-[[vector]]
-id = "A11"
-source = "item-morph-ball:1255"
-entries = ["WallStop", "FloorFlushSubpixel", "CancelSpeedBoost", "VerticalStep"]
-world = { wall_right = 0x4B0 }
-before = { position = ["04AB.9FFF", "02A8.2000"], base_speed = "0001.4000", extra_run = "0000.9000", momentum = true, mode = "Decelerating", vertical = "Down", vertical_speed = "0001.C000" }
-[[vector.step]]
-locomotion = "Jumping"
-facing = "Right"
-radius = [5, 0x10]
-pad = ["jump"]
-[vector.step.after]
-position = ["04AB.FFFF", "02A9.E000"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-mode = "Accelerating"
-vertical_speed = "0001.DC00"
-[vector.step.contacts]
-wall_stop = true
-
-# A12: the normal jump's take-off pose: the jump speed is set but she doesn't rise yet.
-[[vector]]
-id = "A12"
-source = "item-morph-ball:1312"
-entries = ["LocomotionAtFrameStart"]
-world = {}
-before = { position = ["0523.3FFF", "02B3.FFFF"], vertical = "Up", vertical_speed = "0004.E000" }
-[[vector.step]]
-locomotion = "JumpTakeOff"
-facing = "Right"
-radius = [5, 0x19]
+before = { position = ["0080.C000", "0049.0000"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["run", "right"]
-[vector.step.after]
-position = ["0523.3FFF", "02B3.FFFF"]
-mode = "Accelerating"
-vertical = "Up"
-vertical_speed = "0004.E000"
+jump_pressed = false
+after = { position = ["0082.2000", "0049.1C00"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
 
-# A12b (frames 1313, 1314): jump let go on the first rising frame (no rise), and left and right
-# too (no drift); then pressing right drifts again.
 [[vector]]
-id = "A12b"
-source = "item-morph-ball:1313"
-entries = ["JumpRelease", "NoInputStops", "VerticalStep"]
-world = {}
-before = { position = ["0523.3FFF", "02B3.FFFF"], vertical = "Up", vertical_speed = "0004.E000" }
-[[vector.step]]
-locomotion = "Jumping"
-facing = "Right"
-radius = [5, 0x19]
+id = "R11"
+source = "samus-input-poses:120"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 96 }
+before = { position = ["008F.E000", "004B.FFFF"], run_speed = "0000.8000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
 pad = ["run"]
-[vector.step.after]
-position = ["0523.3FFF", "02B3.FFFF"]
-base_speed = "0000.0000"
-vertical = "Down"
-vertical_speed = "0000.1C00"
-[[vector.step]]
-locomotion = "Jumping"
-facing = "Right"
-radius = [5, 0x10]
+jump_pressed = false
+after = { position = ["008F.E000", "004B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R12"
+source = "samus-input-poses:121"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 96 }
+before = { position = ["008F.E000", "004B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
 pad = ["run", "right"]
-[vector.step.after]
-position = ["0523.FFFF", "02B4.1BFF"]
-base_speed = "0000.C000"
-vertical_speed = "0000.3800"
+jump_pressed = false
+after = { position = ["0090.A000", "004B.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
 
-# A14: landing on a solid enemy she touches: no pixel moved, y.sub 0; then the landing stop.
 [[vector]]
-id = "A14"
-source = "item-morph-ball:1228"
-entries = ["LandingContact", "EnemyTouchZeroesYSubpixel", "SpeedCap"]
-world = { solid_enemy_floor = true }
-before = { position = ["047A.FFFF", "029B.9400"], base_speed = "0001.4000", vertical = "Down", vertical_speed = "0001.DC00" }
-[[vector.step]]
-locomotion = "Jumping"
-facing = "Right"
-radius = [5, 0x19]
+id = "R13"
+source = "samus-input-poses:233"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 672 }
+before = { position = ["00BD.BFFF", "028B.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["00BE.0FFF", "028B.FFFF"], run_speed = "0000.4000", dash = "0000.1000", dash_kept = true, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R14"
+source = "samus-input-poses:235"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 672 }
+before = { position = ["00BF.2FFF", "028B.FFFF"], run_speed = "0000.0000", dash = "0000.2000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["run", "right", "aim_down"]
-pose_command = "Vertical"
-[vector.step.after]
-position = ["047C.3FFF", "029B.0000"]
-base_speed = "0000.0000"
-mode = "Accelerating"
-vertical = "None"
-vertical_speed = "0000.0000"
-[vector.step.contacts]
-vertical_result = "Landed(Grounded)"
+jump_pressed = false
+after = { position = ["00BF.8FFF", "028B.FFFF"], run_speed = "0000.3000", dash = "0000.3000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
 
-# A15: the landing on the face block. y is not compared (spec open question 4).
 [[vector]]
-id = "A15"
-source = "item-morph-ball:797"
-entries = ["LandingContact"]
-world = { solid_enemy_floor = true }
-before = { position = ["0496.3FFF", "029A.2BFF"], base_speed = "0001.4000", vertical = "Down", vertical_speed = "0004.9800" }
-[[vector.step]]
-locomotion = "Jumping"
-facing = "Left"
-radius = [5, 0x19]
-pad = ["run", "left"]
-pose_command = "Vertical"
-[vector.step.after]
-position_x = "0494.FFFF"
-base_speed = "0000.0000"
-mode = "Accelerating"
-vertical = "None"
-vertical_speed = "0000.0000"
-[vector.step.contacts]
-vertical_result = "Landed(Grounded)"
+id = "R15"
+source = "samus-input-poses:500"
+entries = ["Gravity", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0060.D7FF", "00A8.47FF"], run_speed = "0001.C000", dash = "0000.4000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0002.1400" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19] }
+pad = ["run", "jump", "right"]
+jump_pressed = true
+after = { position = ["0062.17FF", "00AA.5BFF"], run_speed = "0001.0000", dash = "0000.4000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0002.3000" }
 
-# A16: the morph transition falls under gravity and lands flush; the landing ends the vertical
-# motion and the coasting row keeps base_speed.
 [[vector]]
-id = "A16"
-source = "item-morph-ball:1265"
-entries = ["TransitionLanding", "VerticalStep", "FloorFlushSubpixel"]
-world = { floor_top = 0x2D0 }
-before = { position = ["04AC.BFFF", "02C7.8C00"], base_speed = "0000.C000", vertical = "Down", vertical_speed = "0002.D800" }
-[[vector.step]]
-locomotion = "Transition"
-facing = "Right"
-radius = [5, 7]
+id = "R16"
+source = "samus-input-poses:503"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0065.17FF", "00AE.D7FF"], run_speed = "0001.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0002.6800" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["run", "shoot", "right"]
+jump_pressed = false
+after = { position = ["0065.97FF", "00B1.3FFF"], run_speed = "0000.8000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0002.8400" }
+
+[[vector]]
+id = "R17"
+source = "samus-input-poses:506"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0065.97FF", "00B6.63FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0002.BC00" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["run", "right", "aim_down"]
+jump_pressed = false
+after = { position = ["0064.D7FF", "00B9.1FFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0002.D800" }
+
+[[vector]]
+id = "R18"
+source = "samus-input-poses:539"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 208 }
+before = { position = ["00AB.FFFF", "00BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "RanIntoWall", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["00AB.FFFF", "00BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R19"
+source = "samus-walljump-16:32"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0050.FFFF", "0485.FFFF"], run_speed = "0000.F000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["004F.9FFF", "0480.1BFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R20"
+source = "samus-walljump-16:50"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
+world = {}
+before = { position = ["003A.C000", "0453.DFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+pad = ["jump", "right"]
+jump_pressed = false
+after = { position = ["003C.2000", "0453.DFFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+
+[[vector]]
+id = "R21"
+source = "samus-walljump-16:60"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0048.8000", "0458.CBFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.1800" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["0049.E000", "0459.E3FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.3400" }
+
+[[vector]]
+id = "R22"
+source = "samus-walljump-22:32"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0050.FFFF", "0485.FFFF"], run_speed = "0000.F000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["004F.9FFF", "0480.1BFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R23"
+source = "samus-walljump-22:46"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["003D.BFFF", "044C.53FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["003C.5FFF", "044C.8BFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.5400" }
+
+[[vector]]
+id = "R24"
+source = "samus-walljump-22:53"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
+world = {}
+before = { position = ["0035.0000", "0450.27FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.FC00" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["right"]
-[vector.step.after]
-position = ["04AC.BFFF", "02C9.FFFF"]
-base_speed = "0000.C000"
-vertical = "None"
-vertical_speed = "0000.0000"
-[vector.step.contacts]
-vertical_result = "None"
+jump_pressed = false
+after = { position = ["0035.0000", "0451.23FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.1800" }
 
-# A20: rising with a negative speed turns into a fall at once.
 [[vector]]
-id = "A20"
-source = "constructed"
-entries = ["StartedFalling", "NoInputStops"]
+id = "R25"
+source = "samus-walljump-22:56"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
 world = {}
-before = { position = ["0100.0000", "0100.0000"], vertical = "Up", vertical_speed = "FFFF.C000" }
-[[vector.step]]
-locomotion = "Falling"
-facing = "Right"
-radius = [5, 0x15]
-pad = []
-[vector.step.after]
-position = ["0100.0000", "0100.0000"]
-vertical = "Down"
-vertical_speed = "0000.1C00"
-[vector.step.contacts]
-vertical_result = "Falling(NoChange)"
-
-# A21: the fall cap: 4.F800 grows to 5.1400 and stops there (pixel word exactly 5).
-[[vector]]
-id = "A21"
-source = "constructed"
-entries = ["FallCap", "VerticalStep"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], vertical = "Down", vertical_speed = "0004.F800" }
-[[vector.step]]
-locomotion = "Falling"
-facing = "Right"
-radius = [5, 0x15]
-pad = []
-[vector.step.after]
-position_y = "0104.F800"
-vertical_speed = "0005.1400"
-[[vector.step]]
-locomotion = "Falling"
-facing = "Right"
-radius = [5, 0x15]
-pad = []
-[vector.step.after]
-position_y = "010A.0C00"
-vertical_speed = "0005.1400"
-
-# A22: a falling ball with no left or right stops dead and loses momentum.
-[[vector]]
-id = "A22"
-source = "constructed"
-entries = ["BallDropStops", "NoInputStops", "CancelSpeedBoost"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0000.8000", extra_run = "0000.4000", momentum = true, vertical = "Down", vertical_speed = "0001.0000" }
-[[vector.step]]
-locomotion = "BallFalling"
-facing = "Right"
-radius = [5, 7]
-pad = []
-[vector.step.after]
-position = ["0100.0000", "0101.0000"]
-base_speed = "0000.0000"
-extra_run = "0000.0000"
-momentum = false
-vertical_speed = "0001.1C00"
-
-# A23: space jump: falling at 3.0000 (0x0300 in 8.8, inside [0x0280, 0x0500)) with a new jump
-# press jumps again; A23b: at 2.7000 (0x0270) it doesn't.
-[[vector]]
-id = "A23"
-source = "constructed"
-entries = ["SpaceJump", "Jump", "SpinJumpDrift"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], vertical = "Down", vertical_speed = "0003.0000" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Right"
-radius = [5, 0x12]
+before = { position = ["0035.C000", "0453.23FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
 pad = ["jump", "right"]
-jump_pressed = true
-space_jump = true
-[vector.step.after]
-position = ["0100.C000", "00FB.2000"]
-base_speed = "0000.C000"
-mode = "Decelerating"
-vertical = "Up"
-vertical_speed = "0004.C400"
+jump_pressed = false
+after = { position = ["0037.2000", "0453.23FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+
 [[vector]]
-id = "A23b"
-source = "constructed"
-entries = ["SpaceJump"]
+id = "R26"
+source = "samus-walljump-28:32"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
 world = {}
-before = { position = ["0100.0000", "0100.0000"], vertical = "Down", vertical_speed = "0002.7000" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Right"
-radius = [5, 0x12]
+before = { position = ["0050.FFFF", "0485.FFFF"], run_speed = "0000.F000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["004F.9FFF", "0480.1BFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R27"
+source = "samus-walljump-28:46"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["003D.BFFF", "044C.53FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["003C.5FFF", "044C.8BFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.5400" }
+
+[[vector]]
+id = "R28"
+source = "samus-walljump-28:59"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
+world = {}
+before = { position = ["0035.0000", "0457.B3FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0001.A400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0035.0000", "0459.57FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.C000" }
+
+[[vector]]
+id = "R29"
+source = "samus-walljump-28:62"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
+world = {}
+before = { position = ["0035.C000", "0453.D7FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.6400" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
 pad = ["jump", "right"]
-jump_pressed = true
-space_jump = true
-[vector.step.after]
-position_y = "0102.7000"
-vertical = "Down"
-vertical_speed = "0002.8C00"
+jump_pressed = false
+after = { position = ["0037.2000", "0453.D7FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.0000" }
 
-# P1: the landing stop (frame 1228's pose half, after its motion).
 [[vector]]
-id = "P1"
-source = "item-morph-ball:1228"
-entries = ["LandingContact"]
+id = "R30"
+source = "samus-walljump-28:63"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
 world = {}
-before = { position = ["047C.3FFF", "029B.0000"], base_speed = "0001.4000", vertical = "Down", vertical_speed = "0001.F800" }
-[[vector.step]]
-vertical_result = "Landed(Grounded)"
-pose_command = "Vertical"
-[vector.step.after]
-base_speed = "0000.0000"
-mode = "Accelerating"
-vertical = "None"
-vertical_speed = "0000.0000"
-bounce = "None"
+before = { position = ["0037.2000", "0453.D7FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+pad = ["jump", "right"]
+jump_pressed = false
+after = { position = ["0038.8000", "0453.D7FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
 
-# P2: the wall jump's result, then its start (frame 712's pose half): the start, then the command.
 [[vector]]
-id = "P2"
-source = "item-morph-ball:712"
-entries = ["WallJumpCheck"]
+id = "R31"
+source = "samus-space-jump-chain:32"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
 world = {}
-before = { position = ["0534.FFFF", "0299.27FF"], base_speed = "0001.6000", extra_run = "0001.2000", momentum = true, mode = "Decelerating", vertical = "Down", vertical_speed = "0000.1C00" }
-[[vector.step]]
-vertical_result = "WallJump"
-pose_start = "WallJumpStart"
-pose_command = "Vertical"
-[vector.step.after]
-base_speed = "0000.0000"
-extra_run = "0001.2000"
-mode = "Accelerating"
-vertical = "Up"
-vertical_speed = "0004.A000"
+before = { position = ["005E.7FFF", "0485.FFFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump", "right"]
+jump_pressed = false
+after = { position = ["005F.DFFF", "0480.1BFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.C800" }
 
-# P3: landing from a normal jump keeps extra_run (the standing row zeroes it next frame, V14).
 [[vector]]
-id = "P3"
-source = "item-morph-ball:740"
-entries = ["LandingContact"]
+id = "R32"
+source = "samus-space-jump-chain:47"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
 world = {}
-before = { position = ["04F0.5FFF", "023B.FFFF"], base_speed = "0001.4000", extra_run = "0001.2000", momentum = true, mode = "Decelerating", vertical = "Down", vertical_speed = "0000.3800" }
-[[vector.step]]
-vertical_result = "Landed(Grounded)"
-pose_command = "Vertical"
-[vector.step.after]
-base_speed = "0000.0000"
-extra_run = "0001.2000"
-mode = "Accelerating"
-vertical = "None"
+before = { position = ["006B.FFFF", "045C.3BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.C400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["006C.BFFF", "045C.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.E000" }
 
-# P4: a normal-jump pose starting with no run speed sets Accelerating (frame 817: it was turning).
 [[vector]]
-id = "P4"
-source = "item-morph-ball:817"
-entries = []
+id = "R33"
+source = "samus-space-jump-chain:48"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
 world = {}
-before = { position = ["046C.BFFF", "028E.5800"], base_speed = "0001.0000", mode = "TurningAround", vertical = "Down", vertical_speed = "0000.A800" }
-[[vector.step]]
-pose_start = "JumpOrFall"
-[vector.step.after]
-base_speed = "0001.0000"
-mode = "Accelerating"
+before = { position = ["006C.BFFF", "045C.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.E000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["006E.1FFF", "045D.DFFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.FC00" }
 
-# P5: the take-off from the crouch sets the jump speed; y is not compared (spec open question 6).
 [[vector]]
-id = "P5"
-source = "item-morph-ball:1311"
-entries = ["Jump"]
+id = "R34"
+source = "samus-screw-attack:23"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
 world = {}
-before = { position = ["0523.3FFF", "02C0.FFFF"] }
-[[vector.step]]
-pose_start = "TakeOffFromPlainCrouch"
-[vector.step.after]
-vertical = "Up"
-vertical_speed = "0004.E000"
-
-# P6: decelerate folds the run speed into the base; P6b: with base 0 it is a plain stop.
-[[vector]]
-id = "P6"
-source = "constructed"
-entries = ["CancelSpeedBoost"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", extra_run = "0000.8000", momentum = true }
-[[vector.step]]
-pose_command = "Decelerate"
-[vector.step.after]
-base_speed = "0001.8000"
-extra_run = "0000.0000"
-momentum = false
-mode = "Decelerating"
-[[vector]]
-id = "P6b"
-source = "constructed"
-entries = ["CancelSpeedBoost"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], extra_run = "0000.8000", momentum = true, mode = "TurningAround" }
-[[vector.step]]
-pose_command = "Decelerate"
-[vector.step.after]
-base_speed = "0000.0000"
-extra_run = "0000.8000"
-momentum = false
-mode = "Accelerating"
-
-# P7: the morph ball bounces twice (1.0000, then 0.0000 up), then rests and stops; P7b: landing
-# slower than 3 rests at once.
-[[vector]]
-id = "P7"
-source = "constructed"
-entries = ["BallBounce"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", vertical = "Down", vertical_speed = "0003.0000" }
-[[vector.step]]
-vertical_result = "Landed(MorphBall)"
-pose_command = "Vertical"
-[vector.step.after]
-base_speed = "0001.0000"
-bounce = "First"
-vertical = "Up"
-vertical_speed = "0001.0000"
-[[vector.step]]
-vertical_result = "Landed(MorphBall)"
-pose_command = "Vertical"
-[vector.step.after]
-bounce = "Second"
-vertical = "Up"
-vertical_speed = "0000.0000"
-[[vector.step]]
-vertical_result = "Landed(MorphBall)"
-pose_command = "Vertical"
-[vector.step.after]
-base_speed = "0000.0000"
-mode = "Accelerating"
-bounce = "None"
-vertical = "None"
-vertical_speed = "0000.0000"
-[[vector]]
-id = "P7b"
-source = "constructed"
-entries = ["BallBounce"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", vertical = "Down", vertical_speed = "0002.F000" }
-[[vector.step]]
-vertical_result = "Landed(MorphBall)"
-pose_command = "Vertical"
-[vector.step.after]
-base_speed = "0000.0000"
-bounce = "None"
-vertical = "None"
-vertical_speed = "0000.0000"
-
-# P8: the spring ball landing with jump held jumps again and keeps its speed.
-[[vector]]
-id = "P8"
-source = "constructed"
-entries = ["SpringBallJump", "Jump"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", bounce = "First", vertical = "Down", vertical_speed = "0001.0000" }
-[[vector.step]]
-pad = ["jump"]
-vertical_result = "Landed(SpringBall)"
-pose_command = "Vertical"
-[vector.step.after]
-base_speed = "0001.0000"
-bounce = "None"
-vertical = "Up"
-vertical_speed = "0004.E000"
-
-# P9: kill X speed; then kill run speed, which on a new falling pose also ends a rise.
-[[vector]]
-id = "P9"
-source = "constructed"
-entries = ["CancelSpeedBoost"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", extra_run = "0001.0000", momentum = true, mode = "Decelerating", vertical = "Up", vertical_speed = "0002.0000" }
-[[vector.step]]
-pose_command = "KillXSpeed"
-[vector.step.after]
-base_speed = "0000.0000"
-extra_run = "0001.0000"
-mode = "Accelerating"
-vertical = "Up"
-[[vector.step]]
-pose_command = "KillRunSpeed"
-new_pose_falling = true
-[vector.step.after]
-extra_run = "0000.0000"
-momentum = false
-vertical = "Down"
-vertical_speed = "0000.0000"
-
-# P10: the ceiling ends a rise. P11: a fall result starts a fall; P11b: not while rising.
-[[vector]]
-id = "P10"
-source = "constructed"
-entries = ["LandingContact"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], vertical = "Up", vertical_speed = "0003.0000" }
-[[vector.step]]
-vertical_result = "HitCeiling"
-pose_command = "Vertical"
-[vector.step.after]
-vertical = "Down"
-vertical_speed = "0000.0000"
-[[vector]]
-id = "P11"
-source = "constructed"
-entries = ["LandingContact"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], bounce = "Second" }
-[[vector.step]]
-vertical_result = "Falling(Airborne)"
-pose_command = "Vertical"
-[vector.step.after]
-bounce = "None"
-vertical = "Down"
-vertical_speed = "0000.0000"
-[[vector]]
-id = "P11b"
-source = "constructed"
-entries = ["LandingContact"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], vertical = "Up", vertical_speed = "0002.0000" }
-[[vector.step]]
-vertical_result = "Falling(Airborne)"
-pose_command = "Vertical"
-[vector.step.after]
-vertical = "Up"
-vertical_speed = "0002.0000"
-
-# P12: a turn start replaces the pose, so the command after it is skipped: the fold and
-# TurningAround stand, and momentum survives (Decelerate would have cancelled it).
-[[vector]]
-id = "P12"
-source = "constructed"
-entries = []
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", extra_run = "0000.4000", momentum = true }
-[[vector.step]]
-pose_start = "Turn"
-pose_command = "Decelerate"
-[vector.step.after]
-base_speed = "0001.4000"
-extra_run = "0000.0000"
-momentum = true
-mode = "TurningAround"
-
-# P13: a spin jump after a wall jump with the screw attack: the start substitutes the screw-attack
-# pose and writes nothing, so the pose is replaced and its KillXSpeed is skipped (gap G10).
-[[vector]]
-id = "P13"
-source = "samus-walljump-16:58"
-entries = ["PoseWriteOrder"]
-world = {}
-before = { position = ["0047.2000", "0457.CFFF"], base_speed = "0001.6000", mode = "Decelerating", vertical = "Down", vertical_speed = "0000.FC00" }
-[[vector.step]]
-pose_command = "KillXSpeed"
-pose_replaced = true
-[vector.step.after]
-base_speed = "0001.6000"
-mode = "Decelerating"
-vertical = "Down"
-vertical_speed = "0000.FC00"
-
-# P14: the turn's animation ends and hands over to the spin jump: SpinStart's jump isn't made
-# (gap G12). P14b: the hand-over also ends a bounce.
-[[vector]]
-id = "P14"
-source = "chain-0014-96BA:11"
-entries = ["AnimationEndPose"]
-world = {}
-before = { position = ["019E.4000", "005B.FFFF"], base_speed = "0000.C000" }
-[[vector.step]]
-pose_start = "SpinStart"
-pose_command = "AnimationEnd"
-[vector.step.after]
-base_speed = "0000.C000"
-mode = "Accelerating"
-vertical = "None"
-vertical_speed = "0000.0000"
-bounce = "None"
-[[vector]]
-id = "P14b"
-source = "constructed"
-entries = ["AnimationEndPose"]
-world = {}
-before = { position = ["0100.0000", "0100.0000"], base_speed = "0001.0000", mode = "TurningAround", bounce = "First" }
-[[vector.step]]
-pose_start = "Turn"
-pose_command = "AnimationEnd"
-[vector.step.after]
-bounce = "None"
-vertical = "None"
-vertical_speed = "0000.0000"
-
-# A24: the moonfall: a spin jump with vertical None and a speed below 0 moves down by its
-# magnitude, and the speed keeps falling (gap G12's next frame).
-[[vector]]
-id = "A24"
-source = "chain-0014-96BA:13"
-entries = ["VerticalStep"]
-world = {}
-before = { position = ["019F.A000", "005B.FFFF"], base_speed = "0001.6000", mode = "Decelerating", vertical_speed = "FFFF.E400" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Right"
-radius = [5, 12]
-pad = []
-was_spinning = true
-[vector.step.after]
-position_y = "005C.1BFF"
-vertical = "None"
-vertical_speed = "FFFF.C800"
-
-# A25: a spin jump moving left under a sloped ceiling: the slope seat moves her down 1 px though
-# the vertical move is 0 (gap G11).
-[[vector]]
-id = "A25"
-source = "samus-walljump-16:44"
-entries = ["SlopeSeat", "VerticalStep"]
-world = { slope_seat = 1 }
-before = { position = ["0040.7FFF", "044B.37FF"], base_speed = "0001.6000", mode = "Decelerating", vertical = "Down", vertical_speed = "0000.0000" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Left"
-radius = [5, 12]
-pad = ["left", "jump"]
-was_spinning = true
-[vector.step.after]
-position = ["003F.1FFF", "044C.37FF"]
-vertical = "Down"
-vertical_speed = "0000.1C00"
-
-# A26: the wall probe meets a solid enemy she already touches: y's subpixel goes to 0 (gap G8).
-# Facing right with only left held, she doesn't drift, so she still touches it when it probes.
-[[vector]]
-id = "A26"
-source = "constructed"
-entries = ["WallJumpCheck", "EnemyTouchZeroesYSubpixel"]
-world = { enemy_right = 261 }
-before = { position = ["0100.8000", "0100.8000"], vertical = "Down" }
-[[vector.step]]
-locomotion = "SpinJumping"
-facing = "Right"
-radius = [5, 12]
+before = { position = ["00BA.93FF", "0085.EBFF"], run_speed = "0006.6000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0002.6800" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
 pad = ["left"]
-was_spinning = true
-[vector.step.after]
-position = ["0100.8000", "0100.0000"]
-base_speed = "0000.0000"
-[vector.step.contacts]
-wall_jump_armed = true
+jump_pressed = false
+after = { position = ["00C0.73FF", "0088.53FF"], run_speed = "0005.E000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0002.8400" }
+
+[[vector]]
+id = "R35"
+source = "samus-screw-attack:29"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
+world = {}
+before = { position = ["00D6.53FF", "008D.0BFF"], run_speed = "0003.6000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["00D9.33FF", "0087.27FF"], run_speed = "0002.E000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R36"
+source = "samus-screw-attack:36"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["00E0.13FF", "0066.1BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.2000" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["00DF.53FF", "0060.FBFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.0400" }
+
+[[vector]]
+id = "R37"
+source = "samus-screw-attack:66"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
+world = {}
+before = { position = ["00D9.C000", "0053.CFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.6400" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+pad = ["jump", "right"]
+jump_pressed = false
+after = { position = ["00DB.2000", "0053.CFFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R38"
+source = "samus-screw-attack:67"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
+world = {}
+before = { position = ["00DB.2000", "0053.CFFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+pad = ["jump", "right"]
+jump_pressed = false
+after = { position = ["00DC.8000", "0053.CFFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+
+[[vector]]
+id = "R39"
+source = "samus-screw-attack:98"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0102.E000", "0086.ABFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0003.6400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0102.2000", "008A.0FFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0003.8000" }
+
+[[vector]]
+id = "R40"
+source = "samus-screw-attack:168"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["013F.7FFF", "0087.A3FF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0002.F400" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["013E.3FFF", "008A.97FF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0003.1000" }
+
+[[vector]]
+id = "R41"
+source = "samus-screw-attack:178"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["0135.FFFF", "0095.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["0134.BFFF", "0090.1BFF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R42"
+source = "samus-screw-attack:203"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0116.BFFF", "0083.BC00"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0001.F800" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0115.FFFF", "0085.B400"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0002.1400" }
+
+[[vector]]
+id = "R43"
+source = "samus-mockball:111"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 1232 }
+before = { position = ["0318.DFFF", "04C9.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "SpringBall", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0318.DFFF", "04C9.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R44"
+source = "samus-bomb-jump-vertical:2"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["002E.73FF", "0086.9FFF"], run_speed = "0001.6000", dash = "0001.F000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.1800" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["0031.C3FF", "0087.B7FF"], run_speed = "0001.6000", dash = "0001.F000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.3400" }
+
+[[vector]]
+id = "R45"
+source = "samus-bomb-jump-vertical:13"
+entries = ["Gravity", "RiseEnds", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0052.C3FF", "0098.ABFF"], run_speed = "0001.4000", dash = "0001.F000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0002.4C00" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = ["shoot", "right"]
+jump_pressed = false
+after = { position = ["0055.F3FF", "009A.F7FF"], run_speed = "0001.4000", dash = "0001.F000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0002.6800" }
+
+[[vector]]
+id = "R46"
+source = "samus-bomb-jump-vertical:28"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround"]
+world = { floor_top = 208 }
+before = { position = ["0080.53FF", "00BB.FFFF"], run_speed = "0000.3000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["shoot", "right"]
+jump_pressed = false
+after = { position = ["0080.B3FF", "00BB.FFFF"], run_speed = "0000.6000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R47"
+source = "samus-bomb-jump-vertical:800"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 208 }
+before = { position = ["00BB.FFFF", "00BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "RanIntoWall", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["00BB.FFFF", "00BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R48"
+source = "samus-bomb-jump-vertical:844"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 208 }
+before = { position = ["00BB.FFFF", "00C0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Changing", facing = "Right", radius = [5, 16] }
+pad = ["down"]
+jump_pressed = false
+after = { position = ["00BB.FFFF", "00C0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R49"
+source = "samus-bomb-jump-vertical:847"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 208 }
+before = { position = ["00BB.FFFF", "00C0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["00BB.FFFF", "00C0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R50"
+source = "samus-bomb-jump-vertical:1009"
+entries = ["Gravity"]
+world = {}
+before = { position = ["00BB.FFFF", "00C9.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["00BB.FFFF", "00C9.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0002.C000" }
+
+[[vector]]
+id = "R51"
+source = "samus-bomb-jump-vertical:1010"
+entries = ["Gravity"]
+world = {}
+before = { position = ["00BB.FFFF", "00C9.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0002.C000" }
+pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["00BB.FFFF", "00C7.3FFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0002.A400" }
+
+[[vector]]
+id = "R52"
+source = "samus-bomb-jump-vertical:1038"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["00BB.FFFF", "00A6.0BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.0000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["00BB.FFFF", "00A6.0BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+
+[[vector]]
+id = "R53"
+source = "samus-shinespark-right:299"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["067B.FFFF", "04A1.F3FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["067B.FFFF", "04A2.0FFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R54"
+source = "samus-shinespark-right:323"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 1232 }
+before = { position = ["067B.FFFF", "04BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["067B.FFFF", "04BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R55"
+source = "samus-shinespark-left:302"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["04C5.0000", "049C.F3FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["04C5.0000", "049D.0FFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R56"
+source = "samus-shinespark-left:328"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 1232 }
+before = { position = ["04C5.0000", "04BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["04C5.0000", "04BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R57"
+source = "samus-shinespark-up:368"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["0569.7FFF", "0032.0000"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0569.7FFF", "0032.1C00"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R58"
+source = "samus-shinespark-up-left:351"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["0247.BFFF", "00D2.0000"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0247.BFFF", "00D2.1C00"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R59"
+source = "samus-square-slope-reserve:7"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["01B8.D000", "0085.FFFF"], run_speed = "0001.6000", dash = "0001.D000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["run", "jump", "left"]
+jump_pressed = false
+after = { position = ["01B5.A000", "0080.1BFF"], run_speed = "0001.6000", dash = "0001.D000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R60"
+source = "samus-square-slope-reserve:9"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["01B2.7000", "0080.1BFF"], run_speed = "0001.6000", dash = "0001.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["01AF.4000", "0080.37FF"], run_speed = "0001.6000", dash = "0001.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R61"
+source = "samus-grapple-release:2"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 160 }
+before = { position = ["0031.AFFF", "008B.FFFF"], run_speed = "0002.C000", dash = "0001.3000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0035.AFFF", "008B.FFFF"], run_speed = "0002.C000", dash = "0001.4000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R62"
+source = "samus-grapple-release:6"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0041.7FFF", "0085.AFFF"], run_speed = "0001.6000", dash = "0001.5000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0006.3400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "right"]
+jump_pressed = false
+after = { position = ["0044.2FFF", "007F.7BFF"], run_speed = "0001.6000", dash = "0001.5000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0006.1800" }
+
+[[vector]]
+id = "R63"
+source = "samus-grapple-release:211"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["06DB.FFFF", "006C.87FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["06DB.FFFF", "006C.A3FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R64"
+source = "samus-grapple-release:212"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["06DB.FFFF", "006C.A3FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["06DB.3FFF", "006C.DBFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.5400" }
+
+[[vector]]
+id = "R65"
+source = "samus-grapple-release:217"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["06D9.BFFF", "006E.D3FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.C400" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["06D8.3FFF", "006F.97FF"], run_speed = "0001.8000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.E000" }
+
+[[vector]]
+id = "R66"
+source = "samus-grapple-release:277"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["0671.7FFF", "0113.BD2F"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0001.5FB8" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0672.BFFF", "0115.1CE7"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0001.7BB8" }
+
+[[vector]]
+id = "R67"
+source = "samus-grapple-release:322"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["06A7.E0CB", "017C.627B"], run_speed = "0001.F0CC", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Rising", vertical_velocity = "-0000.5564" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["06A9.C197", "017C.0D17"], run_speed = "0001.E0CC", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0000.3964" }
+
+[[vector]]
+id = "R68"
+source = "samus-grapple-release:323"
+entries = ["Gravity", "AirTurn", "CarriedDrift"]
+world = {}
+before = { position = ["06A9.C197", "017C.0D17"], run_speed = "0001.E0CC", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0000.3964" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["06AB.9263", "017B.D3B3"], run_speed = "0001.D0CC", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0000.1D64" }
+
+[[vector]]
+id = "R69"
+source = "samus-grapple-release:346"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 416 }
+before = { position = ["06B0.A4C7", "018B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["06B0.A4C7", "018B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R70"
+source = "samus-grapple-walljump:11"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["0045.BFFF", "008C.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0045.BFFF", "008D.1BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R71"
+source = "samus-grapple-walljump:45"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0059.3FFF", "00CE.13FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0003.D400" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0059.7FFF", "00D1.E7FF"], run_speed = "0000.4000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0003.F000" }
+
+[[vector]]
+id = "R72"
+source = "samus-grapple-walljump:47"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0059.7FFF", "00D5.D7FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0004.0C00" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0058.BFFF", "00D9.E3FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0004.2800" }
+
+[[vector]]
+id = "R73"
+source = "samus-grapple-walljump:114"
+entries = ["Gravity", "WallJumpKick", "CarriedDrift"]
+world = {}
+before = { position = ["0050.C000", "00F2.F7FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.6400" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0052.2000", "00ED.93FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.4800" }
+
+[[vector]]
+id = "R74"
+source = "samus-grapple-walljump:117"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0054.E000", "00ED.AFFF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["0056.4000", "00ED.E7FF"], run_speed = "0001.6000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.5400" }
+
+[[vector]]
+id = "R75"
+source = "chain-0012-91F8:650"
+entries = ["Gravity", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0413.B800", "046C.FFFF"], run_speed = "0001.0000", dash = "0001.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0410.2800", "046D.1BFF"], run_speed = "0001.C000", dash = "0001.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R76"
+source = "chain-0012-91F8:832"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround"]
+world = { floor_top = 1216 }
+before = { position = ["021C.4C00", "04AB.FFFF"], run_speed = "0002.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0219.8C00", "04AB.FFFF"], run_speed = "0002.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R77"
+source = "chain-0012-91F8:866"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 1216 }
+before = { position = ["01B8.9C00", "04AB.FFFF"], run_speed = "0000.3000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["01B8.9C00", "04AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R78"
+source = "chain-0012-91F8:982"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["019C.2400", "04B7.EFFF"], run_speed = "0001.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.E000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = ["left", "aim_down"]
+jump_pressed = false
+after = { position = ["019B.2400", "04B8.CFFF"], run_speed = "0001.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.FC00" }
+
+[[vector]]
+id = "R79"
+source = "chain-0012-91F8:990"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["0193.E400", "04BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.E000" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = ["run", "jump"]
+jump_pressed = false
+after = { position = ["0193.E400", "04B7.1FFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.C400" }
+
+[[vector]]
+id = "R80"
+source = "chain-0012-91F8:994"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0193.2400", "04A9.27FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Rising", vertical_velocity = "-0004.7000" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0192.E400", "04A4.B7FF"], run_speed = "0000.4000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Rising", vertical_velocity = "-0004.5400" }
+
+[[vector]]
+id = "R81"
+source = "chain-0012-91F8:996"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0192.E400", "04A0.63FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.3800" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["run", "left", "aim_down"]
+jump_pressed = false
+after = { position = ["0193.A400", "049C.2BFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.1C00" }
+
+[[vector]]
+id = "R82"
+source = "chain-0012-91F8:1001"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0195.2400", "0490.2BFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0195.6400", "0490.47FF"], run_speed = "0000.4000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R83"
+source = "chain-0012-91F8:1003"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0195.6400", "0490.7FFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.5400" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0194.A400", "0490.D3FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.7000" }
+
+[[vector]]
+id = "R84"
+source = "chain-0013-92FD:29"
+entries = ["Gravity", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0449.CC00", "00A9.CFFF"], run_speed = "0001.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.E000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = ["run", "jump"]
+jump_pressed = false
+after = { position = ["0448.CC00", "00AA.AFFF"], run_speed = "0001.0000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.FC00" }
+
+[[vector]]
+id = "R85"
+source = "chain-0013-92FD:32"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0446.0C00", "00AC.C3FF"], run_speed = "0001.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0001.3400" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0445.8C00", "00AD.F7FF"], run_speed = "0000.8000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0001.5000" }
+
+[[vector]]
+id = "R86"
+source = "chain-0013-92FD:40"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0448.8C00", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21] }
+pad = ["run", "left", "aim_down"]
+jump_pressed = false
+after = { position = ["0448.8C00", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R87"
+source = "chain-0013-92FD:41"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0448.8C00", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0447.CC00", "00AB.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R88"
+source = "chain-0013-92FD:86"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0435.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "RanIntoWall", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["0435.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R89"
+source = "chain-0013-92FD:96"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0435.0000", "00B0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Changing", facing = "Left", radius = [5, 16] }
+pad = ["run", "down"]
+jump_pressed = false
+after = { position = ["0435.0000", "00B0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R90"
+source = "chain-0013-92FD:99"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0435.0000", "00B0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16] }
+pad = ["run", "down"]
+jump_pressed = false
+after = { position = ["0435.0000", "00B0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R91"
+source = "chain-0013-92FD:173"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["0435.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.E000" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0435.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+
+[[vector]]
+id = "R92"
+source = "chain-0013-92FD:174"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["0435.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0435.0000", "00AC.1BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R93"
+source = "chain-0014-96BA:6"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 112 }
+before = { position = ["019C.0000", "005B.FFFF"], run_speed = "0000.8000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["019C.0000", "005B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R94"
+source = "chain-0014-96BA:7"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 112 }
+before = { position = ["019C.0000", "005B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["019C.C000", "005B.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R95"
+source = "chain-0014-96BA:210"
+entries = ["SpeedingUp", "FollowingTheGround"]
+world = { floor_top = 2208 }
+before = { position = ["01DB.3FFF", "088B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Moonwalking", facing = "Left", radius = [5, 21] }
+pad = ["shoot", "left"]
+jump_pressed = false
+after = { position = ["01DA.BFFF", "088B.FFFF"], run_speed = "0000.8000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R96"
+source = "chain-0014-96BA:213"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 2208 }
+before = { position = ["01DA.FFFF", "088B.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["01DB.4FFF", "088B.FFFF"], run_speed = "0000.4000", dash = "0000.1000", dash_kept = true, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R97"
+source = "chain-0014-96BA:215"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 2208 }
+before = { position = ["01DB.6FFF", "088B.FFFF"], run_speed = "0000.0000", dash = "0000.2000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["01DB.CFFF", "088B.FFFF"], run_speed = "0000.3000", dash = "0000.3000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R98"
+source = "chain-0014-96BA:393"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0034.2FFF", "008B.FFFF"], run_speed = "0000.3000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0034.2FFF", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R99"
+source = "chain-0014-96BA:472"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["008D.4FFF", "0087.1FFF"], run_speed = "0001.6000", dash = "0001.7000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.C400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "right"]
+jump_pressed = false
+after = { position = ["0090.1FFF", "0082.5BFF"], run_speed = "0001.6000", dash = "0001.7000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.A800" }
+
+[[vector]]
+id = "R100"
+source = "chain-0014-96BA:483"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["00AC.3FFF", "005C.63FF"], run_speed = "0001.6000", dash = "0001.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["00AF.0FFF", "005C.7FFF"], run_speed = "0001.6000", dash = "0001.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R101"
+source = "chain-0057-9FBA:39"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["00B8.3FFF", "00A7.1FFF"], run_speed = "0001.6000", dash = "0001.A000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.C400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["shoot", "jump"]
+jump_pressed = false
+after = { position = ["00BB.3FFF", "00A2.5BFF"], run_speed = "0001.6000", dash = "0001.A000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.A800" }
+
+[[vector]]
+id = "R102"
+source = "chain-0057-9FBA:308"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
+world = {}
+before = { position = ["0566.3FFF", "00A7.1FFF"], run_speed = "0000.0000", dash = "0000.2000", dash_kept = true, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.C400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "left", "right"]
+jump_pressed = false
+after = { position = ["0567.1FFF", "00A2.5BFF"], run_speed = "0000.C000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.A800" }
+
+[[vector]]
+id = "R103"
+source = "chain-0057-9FBA:313"
+entries = ["Gravity", "CarriedDrift"]
+world = {}
+before = { position = ["056C.DFFF", "009D.B7FF"], run_speed = "0001.4000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Changing", facing = "Right", radius = [5, 7] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["056C.FFFF", "009D.D3FF"], run_speed = "0001.4000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R104"
+source = "chain-0057-9FBA:319"
+entries = ["Gravity", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["056D.9FFF", "00A0.03FF"], run_speed = "0001.4000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.C400" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["056E.BFFF", "00A0.C7FF"], run_speed = "0001.0000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.E000" }
+
+[[vector]]
+id = "R105"
+source = "chain-0057-9FBA:333"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0580.DFFF", "00B0.FFFF"], run_speed = "0001.0000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Changing", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["0580.FFFF", "00B0.FFFF"], run_speed = "0001.0000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R106"
+source = "chain-0057-9FBA:338"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0581.7FFF", "00B0.FFFF"], run_speed = "0001.0000", dash = "0000.2000", dash_kept = true, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["0581.9FFF", "00B0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R107"
+source = "chain-0057-9FBA:339"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0581.9FFF", "00B0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["0581.9FFF", "00B0.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R108"
+source = "chain-0057-9FBA:476"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["056E.9FFF", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.E000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["056E.9FFF", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+
+[[vector]]
+id = "R109"
+source = "chain-0057-9FBA:477"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["056E.9FFF", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["056E.9FFF", "00AC.1BFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R110"
+source = "chain-0059-A293:2"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["07D5.DFFF", "0087.43FF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0003.F000" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["07D4.9FFF", "008B.33FF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0004.0C00" }
+
+[[vector]]
+id = "R111"
+source = "chain-0059-A293:6"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 160 }
+before = { position = ["07D2.5FFF", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["07D2.1FFF", "008B.FFFF"], run_speed = "0000.3000", dash = "0000.1000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R112"
+source = "chain-0059-A293:28"
+entries = ["Gravity", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0799.0FFF", "0091.0FFF"], run_speed = "0001.0000", dash = "0001.5000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = ["run", "jump", "left"]
+jump_pressed = false
+after = { position = ["0795.FFFF", "0091.2BFF"], run_speed = "0001.C000", dash = "0001.5000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R113"
+source = "chain-0059-A293:94"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0763.0FFF", "0094.0BFF"], run_speed = "0001.0000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0001.DC00" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["jump", "right"]
+jump_pressed = false
+after = { position = ["0762.8FFF", "0095.E7FF"], run_speed = "0000.8000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0001.F800" }
+
+[[vector]]
+id = "R114"
+source = "chain-0059-A293:97"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["0762.8FFF", "0099.F3FF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0002.3000" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0763.4FFF", "009C.23FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0002.4C00" }
+
+[[vector]]
+id = "R115"
+source = "chain-0059-A293:111"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["0764.CFFF", "00A7.1FFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.C400" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = ["run", "jump", "left"]
+jump_pressed = false
+after = { position = ["0763.8FFF", "00A2.5BFF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.A800" }
+
+[[vector]]
+id = "R116"
+source = "chain-0059-A293:147"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["0756.4FFF", "0073.33FF"], run_speed = "0001.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = ["run", "left", "aim_up"]
+jump_pressed = false
+after = { position = ["0754.8FFF", "0073.4FFF"], run_speed = "0001.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R117"
+source = "chain-0059-A293:268"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["06F5.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "RanIntoWall", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["06F5.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R118"
+source = "chain-0059-A293:446"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["06C5.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pad = ["run"]
+jump_pressed = false
+after = { position = ["06C5.0000", "00AB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R119"
+source = "chain-0097-ACF0:2"
+entries = ["Gravity", "RiseEnds", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["002A.BFFF", "0075.4FFF"], run_speed = "0001.4000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.7000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 10] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["002C.6FFF", "0075.BFFF"], run_speed = "0001.4000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.8C00" }
+
+[[vector]]
+id = "R120"
+source = "chain-0097-ACF0:4"
+entries = ["Gravity", "CarriedDrift"]
+world = {}
+before = { position = ["002E.1FFF", "007F.4BFF"], run_speed = "0001.4000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.A800" }
+pose = { body = "Upright", action = "Changing", facing = "Right", radius = [5, 7] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["002E.8FFF", "007F.F3FF"], run_speed = "0001.4000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.C400" }
+
+[[vector]]
+id = "R121"
+source = "chain-0097-ACF0:10"
+entries = ["Gravity", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["0030.BFFF", "0084.DFFF"], run_speed = "0001.4000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.5000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0032.2FFF", "0086.2FFF"], run_speed = "0001.0000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0001.6C00" }
+
+[[vector]]
+id = "R122"
+source = "chain-0097-ACF0:17"
+entries = ["Landing", "FloorsStopFlush"]
+world = { floor_top = 160 }
+before = { position = ["0036.8FFF", "0090.5BFF"], run_speed = "0001.C000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0002.1400" }
+pose = { body = "Upright", action = "Changing", facing = "Right", radius = [5, 16] }
+next_pose = { body = "Crouched", action = "Still", facing = "Right" }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0036.FFFF", "0090.FFFF"], run_speed = "0001.C000", dash = "0000.7000", dash_kept = true, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R123"
+source = "chain-0097-ACF0:564"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 416 }
+before = { position = ["0BE2.39FF", "018B.FFFF"], run_speed = "0000.3000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0BE2.39FF", "018B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R124"
+source = "chain-0097-ACF0:656"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 416 }
+before = { position = ["0BE3.39FF", "018B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0BE3.79FF", "018B.FFFF"], run_speed = "0000.3000", dash = "0000.1000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R125"
+source = "chain-0097-ACF0:663"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
+world = {}
+before = { position = ["0BEB.D9FF", "0185.FFFF"], run_speed = "0000.0000", dash = "0000.6000", dash_kept = true, drive = "Driven", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump"]
+jump_pressed = false
+after = { position = ["0BEC.39FF", "0180.1BFF"], run_speed = "0000.0000", dash = "0000.6000", dash_kept = true, drive = "Driven", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R126"
+source = "chain-0100-B07A:7"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["00AD.2000", "0079.0400"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0001.3400" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pad = ["shoot", "left", "aim_down"]
+jump_pressed = false
+after = { position = ["00AB.E000", "007A.3800"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0001.5000" }
+
+[[vector]]
+id = "R127"
+source = "chain-0100-B07A:25"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["009F.A000", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["009F.7000", "008B.FFFF"], run_speed = "0000.3000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R128"
+source = "chain-0100-B07A:29"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["009D.C000", "0090.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Changing", facing = "Left", radius = [5, 16] }
+pad = ["down"]
+jump_pressed = false
+after = { position = ["009D.C000", "0090.FFFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R129"
+source = "chain-0100-B07A:39"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0099.F000", "0090.FFFF"], run_speed = "0000.F000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Changing", facing = "Left", radius = [5, 16] }
+pad = ["shoot", "left", "down"]
+jump_pressed = false
+after = { position = ["0099.F000", "0090.FFFF"], run_speed = "0000.F000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R130"
+source = "chain-0100-B07A:51"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0092.B000", "008B.FFFF"], run_speed = "0001.5000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0091.E000", "008B.FFFF"], run_speed = "0000.D000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R131"
+source = "chain-0100-B07A:54"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0090.9000", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pad = ["aim_down"]
+jump_pressed = false
+after = { position = ["0090.9000", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R132"
+source = "chain-0100-B07A:73"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0085.9000", "008B.FFFF"], run_speed = "0001.9000", dash = "0000.0000", dash_kept = true, drive = "Skidding", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0084.8000", "008B.FFFF"], run_speed = "0001.1000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R133"
+source = "chain-0100-B07A:74"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0084.8000", "008B.FFFF"], run_speed = "0001.1000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0083.F000", "008B.FFFF"], run_speed = "0000.9000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R134"
+source = "chain-0100-B07A:75"
+entries = ["TurnSkid", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0083.F000", "008B.FFFF"], run_speed = "0000.9000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0083.F000", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R135"
+source = "chain-0106-AD5E:2"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 672 }
+before = { position = ["00CE.2C00", "028B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["run", "left", "aim_down"]
+jump_pressed = false
+after = { position = ["00CD.EC00", "028B.FFFF"], run_speed = "0000.3000", dash = "0000.1000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R136"
+source = "chain-0106-AD5E:18"
+entries = ["Gravity", "AirDrift", "CarriedDrift"]
+world = {}
+before = { position = ["00A4.BC00", "0290.E3FF"], run_speed = "0001.0000", dash = "0000.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.5400" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["00A2.2C00", "0291.37FF"], run_speed = "0001.C000", dash = "0000.D000", dash_kept = true, drive = "Coasting", vertical = "Falling", vertical_velocity = "+0000.7000" }
+
+[[vector]]
+id = "R137"
+source = "chain-0106-AD5E:45"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["005A.2C00", "0285.FFFF"], run_speed = "0001.6000", dash = "0001.0000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["run", "jump", "left"]
+jump_pressed = false
+after = { position = ["0057.CC00", "0280.1BFF"], run_speed = "0001.6000", dash = "0001.0000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0005.C800" }
+
+[[vector]]
+id = "R138"
+source = "chain-0106-AD5E:58"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
+world = {}
+before = { position = ["003D.AC00", "0246.87FF"], run_speed = "0002.6000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Rising", vertical_velocity = "-0004.9400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump"]
+jump_pressed = false
+after = { position = ["003B.CC00", "0241.F3FF"], run_speed = "0001.E000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Rising", vertical_velocity = "-0004.7800" }
+
+[[vector]]
+id = "R139"
+source = "chain-0106-AD5E:63"
+entries = ["Gravity", "RiseEnds", "SpinDrift"]
+world = {}
+before = { position = ["0039.2C00", "0230.BBFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Rising", vertical_velocity = "-0004.0800" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "right"]
+jump_pressed = false
+after = { position = ["0039.EC00", "022C.B3FF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0003.EC00" }
+
+[[vector]]
+id = "R140"
+source = "chain-0106-AD5E:111"
+entries = ["Gravity", "RiseEnds", "AirDrift"]
+world = {}
+before = { position = ["00C3.3C00", "0207.1BFF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = ["run", "right", "aim_up"]
+jump_pressed = false
+after = { position = ["00C4.7C00", "0207.53FF"], run_speed = "0001.4000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.5400" }
+
+[[vector]]
+id = "R141"
+source = "chain-0106-AD5E:116"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["00C5.FC00", "0207.FBFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.5400" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["run"]
+jump_pressed = false
+after = { position = ["00C6.3C00", "0208.4FFF"], run_speed = "0000.4000", dash = "0000.0000", dash_kept = false, drive = "Skidding", vertical = "Falling", vertical_velocity = "+0000.7000" }
+
+[[vector]]
+id = "R142"
+source = "chain-0106-AD5E:118"
+entries = ["Gravity", "AirTurn"]
+world = {}
+before = { position = ["00C6.3C00", "0208.BFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.8C00" }
+pose = { body = "Upright", action = "TurningInAir", facing = "Left", radius = [5, 19] }
+pad = ["run"]
+jump_pressed = false
+after = { position = ["00C5.7C00", "0209.4BFF"], run_speed = "0000.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.A800" }
+
+[[vector]]
+id = "R143"
+source = "chain-0106-AD5E:126"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 544 }
+before = { position = ["00C4.BC00", "020B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pad = ["run"]
+jump_pressed = false
+after = { position = ["00C4.BC00", "020B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R144"
+source = "area-norfair:2"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+world = { floor_top = 160 }
+before = { position = ["00D1.C000", "008B.FFFF"], run_speed = "0001.B000", dash = "0000.9000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["00CF.4000", "008B.FFFF"], run_speed = "0001.E000", dash = "0000.A000", dash_kept = true, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R145"
+source = "area-norfair:9"
+entries = ["Gravity", "RiseEnds", "SpinDrift", "CarriedDrift"]
+world = {}
+before = { position = ["00B7.2000", "0087.1FFF"], run_speed = "0001.6000", dash = "0000.F000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.C400" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["00B4.D000", "0082.5BFF"], run_speed = "0001.6000", dash = "0000.F000", dash_kept = true, drive = "Coasting", vertical = "Rising", vertical_velocity = "-0004.A800" }
+
+[[vector]]
+id = "R146"
+source = "area-norfair:72"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0097.4000", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0097.4000", "008B.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R147"
+source = "area-norfair:78"
+entries = ["SpeedingUp", "WordwiseTopSpeed", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0095.C000", "008B.FFFF"], run_speed = "0000.8000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0096.7000", "008B.FFFF"], run_speed = "0000.B000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+
+[[vector]]
+id = "R148"
+source = "area-norfair:288"
+entries = ["Gravity", "AirDrift"]
+world = {}
+before = { position = ["002B.8FFF", "018F.BFFF"], run_speed = "0001.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["002D.4FFF", "018F.DBFF"], run_speed = "0001.C000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Falling", vertical_velocity = "+0000.3800" }
+
+[[vector]]
+id = "R149"
+source = "area-norfair:328"
+entries = ["StandingStill", "FollowingTheGround"]
+world = { floor_top = 464 }
+before = { position = ["004B.FFFF", "01BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
+pose = { body = "Upright", action = "RanIntoWall", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["004B.FFFF", "01BB.FFFF"], run_speed = "0000.0000", dash = "0000.0000", dash_kept = false, drive = "Driven", vertical = "Settled", vertical_velocity = "+0000.0000" }
