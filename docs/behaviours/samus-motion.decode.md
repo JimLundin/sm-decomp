@@ -715,22 +715,32 @@ stopped), C-slope-ceiling-empty-on (row 1: moves on), C-slope-floor-empty (targe
 
 ## Size baseline (tokens, 2026-11-07)
 
-Counted with `tools size` at 3a1ed3d4a, tests excluded. The old code the domain replaces:
+Counted with `tools size` at 29c4d0876, tests excluded, as logic and data (the values of
+constants and statics). The old code the domain replaces:
 
-| Old code | Tokens |
-| --- | ---: |
-| `game/src/model/samus.rs`, `model/samus/` (motion, its pose) | 5,160 |
-| `game/src/motion.rs` | 1,024 |
-| `game/src/collision/world.rs` | 1,336 |
-| `game/src/model/collision.rs` | 543 |
-| `game/src/pose/contact.rs` | 1,065 |
-| `game/src/collision.rs`, the block scans (`SlopeFlag` to `scan_y`) | 2,499 |
-| `game/src/pose.rs`, the pad's pose requests (`PoseRequests` to `input`) | 663 |
-| `game/src/collision/solid_enemy.rs` | 1,220 |
-| Total | 13,510 |
+| Old code | Logic | Data |
+| --- | ---: | ---: |
+| `game/src/model/samus.rs`, `model/samus/` (motion, its pose) | 5,160 | 0 |
+| `game/src/motion.rs` | 971 | 24 |
+| `game/src/collision/world.rs` | 1,335 | 1 |
+| `game/src/model/collision.rs` | 543 | 0 |
+| `game/src/pose/contact.rs` | 1,065 | 0 |
+| `game/src/collision.rs`, the block scans (`SlopeFlag` to `scan_y`) | 2,499 | 0 |
+| `game/src/pose.rs`, the pad's pose requests (`PoseRequests` to `input`) | 572 | 91 |
+| `game/src/collision/solid_enemy.rs` | 1,220 | 0 |
+| Total | 13,365 | 116 |
 
 `collision/inside.rs` (696) is not counted: the engine keeps its touch handling. The old engine
-read the pose chart from the ROM; the new model holds it as rows, inside its target.
+read the pose chart and the sprite list from the ROM, so its data column is near zero.
 
-The new code at the same commit: the clean crates 17,456 (the chart's rows 3,252), the bridge
-`game/src/samus_world*` 5,951 (the pose map's rows 4,334): 23,407 in all.
+The new code at the same commit, round 5:
+
+| New code | Logic | Data |
+| --- | ---: | ---: |
+| `clean_types` | 1,764 | 3 |
+| `clean_model/samus-motion` (catalogue, chart and its rows, collide, lib, rules) | 12,320 | 3,369 |
+| `game/src/samus_world*` (the world, the frame, the pose map) | 2,250 | 3,701 |
+| Total | 16,334 | 7,073 |
+
+The pose map (`samus_world/pose.rs`, 3,610 of data) is which sprite shows each pose: the drawing
+domain's data, held in the bridge until the engine draws from the pose itself.

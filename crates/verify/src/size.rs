@@ -3,7 +3,12 @@
 //! Lines reward cramming and punish types and tables laid out one field to a line; tokens count
 //! what the code says. A logical token is an identifier or keyword, a literal, a lifetime, an
 //! operator (`::`, `->` and `..=` are one each) or a bracket pair. Comments, doc comments,
-//! whitespace and `#[cfg(test)]` items are not counted, nor is a `tests` directory or a `tests.rs` file.
+//! whitespace and `#[cfg(test)]` items are not counted, nor is a `tests` directory or a `tests.rs`
+//! file.
+//!
+//! The values of `const` and `static` items are reported apart, as data: the game's tables and
+//! parameters, which the old engine read from the ROM and the new one states (Jim, 2026-11-07).
+//! The size rule is held on logic.
 
 use std::fmt::Write as _;
 use std::fs;
@@ -215,21 +220,96 @@ const TEST_ATTRIBUTE: [Token<'static>; 7] = [
     Token::Close,
 ];
 
-/// The count, without `#[cfg(test)]` items and with each bracket pair once.
-fn count(tokens: &[Token<'_>]) -> usize {
-    let mut total = 0usize;
+/// A source's size, split between logic and data.
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
+pub struct Size {
+    /// Every counted token outside a constant's or a static's value.
+    pub logic: usize,
+    /// The tokens of `const` and `static` values: tables and parameters, the game's data, which
+    /// the old engine read from the ROM instead (Jim, 2026-11-07).
+    pub data: usize,
+}
+
+impl Size {
+    const fn add(self, other: Self) -> Self {
+        Self {
+            logic: self.logic.saturating_add(other.logic),
+            data: self.data.saturating_add(other.data),
+        }
+    }
+}
+
+/// Whether a token can end the item before it, so a `const` or `static` after it starts an item
+/// rather than a generic parameter (`<const N: usize>`).
+fn ends_item(previous: Option<Token<'_>>) -> bool {
+    matches!(
+        previous,
+        None | Some(
+            Token::Punct(";") | Token::Open('{') | Token::Close | Token::Word("pub" | "mut")
+        )
+    )
+}
+
+/// The count, without `#[cfg(test)]` items, with each bracket pair once, and with the values of
+/// item-level constants and statics as data.
+fn count(tokens: &[Token<'_>]) -> Size {
+    let mut size = Size::default();
     let mut rest = tokens;
+    let mut previous = None;
     while let Some((&token, tail)) = rest.split_first() {
         if let Some(item) = rest.strip_prefix(&TEST_ATTRIBUTE[..]) {
             rest = after_item(item);
             continue;
         }
-        if token != Token::Close {
-            total = total.saturating_add(1);
+        let constant = matches!(token, Token::Word("const" | "static"))
+            && ends_item(previous)
+            && !matches!(tail.first(), Some(Token::Word("fn" | "unsafe" | "extern")));
+        if constant && let Some((head, value, after)) = split_value(rest) {
+            size = size.add(Size {
+                logic: counted(head),
+                data: counted(value),
+            });
+            previous = head.last().copied();
+            rest = after;
+            continue;
         }
+        if token != Token::Close {
+            size.logic = size.logic.saturating_add(1);
+        }
+        previous = Some(token);
         rest = tail;
     }
-    total
+    size
+}
+
+/// The counted tokens of a run: all but closing brackets.
+fn counted(tokens: &[Token<'_>]) -> usize {
+    tokens.iter().filter(|t| **t != Token::Close).count()
+}
+
+/// A constant item split into its declaration up to `=`, its value, and the tokens after its `;`
+/// (the `;` goes with the declaration's count by being left out of both).
+fn split_value<'a, 'b>(
+    tokens: &'a [Token<'b>],
+) -> Option<(&'a [Token<'b>], &'a [Token<'b>], &'a [Token<'b>])> {
+    let mut open = 0usize;
+    let mut equals = None;
+    for (at, token) in tokens.iter().enumerate() {
+        match token {
+            Token::Open(_) => open = open.saturating_add(1),
+            Token::Close => open = open.saturating_sub(1),
+            Token::Punct("=") if open == 0 && equals.is_none() => equals = Some(at),
+            Token::Punct(";") if open == 0 => {
+                let eq = equals?;
+                let head = tokens.get(..=eq)?;
+                let value = tokens.get(eq.checked_add(1)?..at)?;
+                let after = tokens.get(at..)?;
+                return Some((head, value, after));
+            }
+            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+        }
+    }
+    None
 }
 
 /// The tokens after the item at the start of `tokens`: past its `;`, or past the brace that
@@ -253,7 +333,7 @@ fn after_item<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
     rest
 }
 
-/// The `.rs` files under `path`, skipping `tests` directories, sorted.
+/// The `.rs` files under `path`, skipping `tests` directories and `tests.rs` files, sorted.
 fn sources(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
     if path.is_file() {
         if path.extension().is_some_and(|e| e == "rs") {
@@ -278,7 +358,13 @@ fn sources(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
     Ok(())
 }
 
-/// The token count of each `.rs` file under the paths, one line each, then the total.
+/// The size of one source text.
+#[must_use]
+pub fn of(src: &str) -> Size {
+    count(&lex(src))
+}
+
+/// Each `.rs` file's logic and data tokens under the paths, one line each, then the totals.
 ///
 /// # Errors
 ///
@@ -291,24 +377,25 @@ pub fn run(args: &[String]) -> Result<String, String> {
     for arg in args {
         sources(Path::new(arg), &mut files)?;
     }
-    let mut out = String::new();
-    let mut total = 0usize;
+    let mut out = String::from("  logic    data file\n");
+    let mut total = Size::default();
     for file in &files {
         let src = fs::read_to_string(file).map_err(|e| format!("{}: {e}", file.display()))?;
-        let tokens = count(&lex(&src));
-        total = total.saturating_add(tokens);
-        let _ = writeln!(out, "{tokens:>7} {}", file.display());
+        let size = of(&src);
+        total = total.add(size);
+        let _ = writeln!(out, "{:>7} {:>7} {}", size.logic, size.data, file.display());
     }
-    let _ = writeln!(out, "{total:>7} total");
+    let _ = writeln!(out, "{:>7} {:>7} total", total.logic, total.data);
     Ok(out)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{count, lex};
+    use super::{Size, of};
 
     fn tokens(src: &str) -> usize {
-        count(&lex(src))
+        let size = of(src);
+        size.logic.saturating_add(size.data)
     }
 
     #[test]
@@ -343,5 +430,22 @@ mod tests {
     fn test_items_are_not_counted() {
         let src = "fn a() {}\n#[cfg(test)]\nmod tests { fn b() { c(); } }\n#[cfg(test)]\nuse x::y;\nfn d() {}";
         assert_eq!(tokens(src), tokens("fn a() {} fn d() {}"));
+    }
+
+    #[test]
+    fn a_constants_value_is_data() {
+        // pub const ROWS : [] u8 ; 2 = ; is logic; [] 1 , 2 is data.
+        let table = "pub const ROWS: [u8; 2] = [1, 2];";
+        assert_eq!(of(table), Size { logic: 10, data: 4 });
+        assert_eq!(of("static mut N: u8 = 3;"), Size { logic: 7, data: 1 });
+    }
+
+    #[test]
+    fn const_fns_generics_and_locals_are_logic() {
+        assert_eq!(of("const fn f() {}").data, 0);
+        assert_eq!(of("fn f<const N: usize>() {}").data, 0);
+        assert_eq!(of("fn f() { let a = 1; }").data, 0);
+        // A constant inside a function body is still a constant's value.
+        assert_eq!(of("fn f() { const A: u8 = 1; }").data, 1);
     }
 }

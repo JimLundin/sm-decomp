@@ -18,15 +18,16 @@ the speed booster's extra speed, knockback, bomb jumps, grapple, shinespark, pus
 she reaches; `OtherBlockKinds` how each kind meets her motion).
 
 Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and
-so is each bracket pair; comments, layout and tests are free. A data table's rows count like code:
-each field value, name and bracket pair in a row is a token.
+so is each bracket pair; comments, layout and tests are free. The values of constants and statics
+(tables of the game's data, such as the chart's rows) are counted apart as data and reported;
+the target is on everything else, the logic.
 
-**Baseline: about 13,500 tokens** of the old code this domain replaces, tests excluded.
+**Baseline: about 13,400 tokens of logic** in the old code this domain replaces, tests excluded.
 
-**Target: 6,500 tokens** for the new model, its data tables included: motion, landings and turns
-about 2,000, the pose chart about 2,500 (its rows included), collision with blocks and solid
-enemies about 1,500, the shared types and slack 500. Over the target is a review stop; over the
-baseline a strict failure.
+**Target: 6,500 tokens of logic** for the new model: motion, landings and turns about 2,000, the
+pose chart's reader and effects about 1,500, collision with blocks and solid enemies about 1,500,
+the shared types and slack 1,500. Over the target is a review stop; over the baseline a strict
+failure.
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
@@ -343,8 +344,8 @@ Which pose she shows next, from the pad, her equipment and what her moves met, a
 does to her speeds. Written as data: a few tables keyed by what she is doing and what the player
 holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector file.
 
-**Size.** Inside the header's 2,500 tokens for the chart: the chart's reader and the effects,
-plus the tables below as data records (about 120 rows).
+**Size.** Inside the header's 1,500 tokens of logic for the chart: the chart's reader and the
+effects. The tables below are data records (about 120 rows), counted as data.
 
 ### PoseFollows
 - Mechanic and timing. Her pose changes at most once a frame. What decides, the first that applies:

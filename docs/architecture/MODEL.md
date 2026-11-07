@@ -170,8 +170,13 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   (`verify::size`): every identifier, keyword, literal, lifetime and operator is one, and so is
   each bracket pair. Comments, doc comments, layout and tests (`#[cfg(test)]` items, `tests`
   directories and `tests.rs` files) are free. Lines rewarded cramming and punished types and
-  tables laid out one field to a line; tokens count what the code says. Data tables count, at
-  what their rows say, so a behaviour moved into a table costs its row and no more.
+  tables laid out one field to a line; tokens count what the code says.
+- **The rule is held on logic; data is reported beside it** (Jim, 2026-11-07). The values of
+  `const` and `static` items count as data: the game's tables and parameters, such as the pose
+  chart's rows and which sprite shows a pose. The old engine read those from the ROM's layout
+  and so never paid for them; loading them is part of rebuilding the game, so the new engine
+  stating them is not extra logic. A data row must state the game's data. A row that encodes a
+  decision the code would otherwise make is logic, and a review moves it back.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once
