@@ -21,6 +21,19 @@ Jim's decisions, 2026-11-06:
    as DMA registers after a transfer, are not compared. They leave the State and the decoder and
    are listed by name in §11.6 of ARCHITECTURE.
 
+Jim's decisions, 2026-11-07:
+
+4. **Assets in our own layout, imported from the ROM.** Sprites, poses, palettes, animations
+   and the rest of the game's content get a format of our own that names things by what they
+   are: a pose by its parts (body, action, aim, gun), not by the original's pose id. An importer
+   at the edge reads the ROM's layout once and writes our format; it is the only code that knows
+   that layout. The clean room defining a new layout is desirable. Loading assets is part of
+   rebuilding the game; reading them through the ROM's layout was a shortcut. The assets come
+   from the player's ROM and are never committed. The importer, which has to know the original,
+   is outside the clean room.
+5. **Size is counted in logical tokens, held on logic.** The game's data (the values of constants
+   and statics, and imported assets) is reported beside the logic, not counted against it (§4).
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our
