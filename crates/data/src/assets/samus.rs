@@ -1,8 +1,9 @@
-//! Samus's pose assets, by her pose as the player sees it.
+//! Samus's sprite sheet and animation clips, a clip for each pose as the player sees it.
 //!
-//! Each pose has the frames it draws: how long each holds, the sprites of her top and bottom
-//! halves, where they sit and the graphics they upload (docs/architecture/assets.md).
+//! A clip's frames each hold for a time and draw sprites of the sheet: her top and bottom
+//! halves, placed from her position, and the graphics they upload (docs/architecture/assets.md).
 
+pub mod import;
 pub mod key;
 
 use crate::spritemap::{SpriteAttributes, Spritemap};
@@ -72,15 +73,33 @@ pub struct Frame {
     pub tiles: Option<FrameTiles>,
 }
 
-/// A pose's asset.
+/// A frame of a clip, by its place in the clip.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct FrameNumber(pub u16);
+
+/// What a clip does after its last shown frame.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ClipEnd {
+    /// Plays on from this frame.
+    Loop {
+        /// The frame it plays on from; the first is a whole loop.
+        from: FrameNumber,
+    },
+    /// Hands over to another pose, which her motion picks.
+    HandOver,
+}
+
+/// A pose's animation clip, shown in a dress.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct PoseAsset {
+pub struct Clip {
     /// The pose it shows.
     pub key: PoseKey,
-    /// When it is the one shown.
+    /// The dress variant it is.
     pub worn: Worn,
-    /// Its frames, by animation frame number.
+    /// Its frames, in order; the animation's frame number indexes them.
     pub frames: Vec<Frame>,
+    /// What it does after its last shown frame.
+    pub end: ClipEnd,
 }
 
 /// The single sprite her first suit's facing-the-screen pose adds before her bottom half.
@@ -94,32 +113,17 @@ pub struct Chest {
     pub attributes: SpriteAttributes,
 }
 
-/// Samus's pose assets.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct SamusAssets {
-    /// One asset per pose and dress that has its own sprite.
-    pub poses: Vec<PoseAsset>,
-    /// The holds a run uses instead of its own while she has running momentum.
-    pub running: Vec<Hold>,
-    /// The chest sprite.
-    pub chest: Chest,
-    /// The sprite lists frames name.
+/// Her sprite sheet: every sprite list and every graphics upload, once, for the clips to
+/// name.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+pub struct SpriteSheet {
+    /// The sprite lists, each sprite with its offset, size, tile, palette, priority and flips.
     pub sprites: Vec<Spritemap>,
-    /// The tile uploads frames name.
-    pub tiles: Vec<TileUpload>,
+    /// The graphics uploads.
+    pub uploads: Vec<TileUpload>,
 }
 
-impl SamusAssets {
-    /// The asset that shows `key` in `dress`, by its nearest sprite where it has none of its
-    /// own; `None` for a pose no sprite shows.
-    #[must_use]
-    pub fn pose(&self, key: PoseKey, dress: Dress) -> Option<&PoseAsset> {
-        let shown = key.shown_as();
-        self.poses
-            .iter()
-            .find(|asset| asset.key == shown && asset.worn.holds(dress))
-    }
-
+impl SpriteSheet {
     /// The sprite list `id` names.
     #[must_use]
     pub fn sprite(&self, id: SpriteId) -> Option<&Spritemap> {
@@ -129,7 +133,32 @@ impl SamusAssets {
     /// The upload `id` names.
     #[must_use]
     pub fn upload(&self, id: TilesId) -> Option<&TileUpload> {
-        self.tiles.get(usize::from(id.0))
+        self.uploads.get(usize::from(id.0))
+    }
+}
+
+/// Samus's sprite sheet and animation clips.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct SamusAssets {
+    /// The sheet the clips draw from.
+    pub sheet: SpriteSheet,
+    /// One clip per pose and dress that has its own sprites.
+    pub clips: Vec<Clip>,
+    /// The holds a run uses instead of its clip's while she has running momentum.
+    pub running: Vec<Hold>,
+    /// The chest sprite.
+    pub chest: Chest,
+}
+
+impl SamusAssets {
+    /// The clip that shows `key` in `dress`, by its nearest pose's where it has none of its
+    /// own; `None` for a pose no sprite shows.
+    #[must_use]
+    pub fn clip(&self, key: PoseKey, dress: Dress) -> Option<&Clip> {
+        let shown = key.shown_as();
+        self.clips
+            .iter()
+            .find(|clip| clip.key == shown && clip.worn.holds(dress))
     }
 }
 

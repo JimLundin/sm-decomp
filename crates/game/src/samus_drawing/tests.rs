@@ -281,3 +281,147 @@ fn the_elevator_queues_no_tiles_on_odd_frames_and_hidden_samus_none() {
     draw(&mut hidden, &content());
     assert_eq!(hidden.video.batch.samus_tiles, SamusTileUploads::default());
 }
+
+/// The ROM's content for drawing her, from `SM_ROM` or the checkout's `rom/sm.smc`; `None`
+/// where it isn't present.
+fn rom_content() -> Option<Content> {
+    let path = std::env::var_os("SM_ROM").map_or_else(
+        || std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../rom/sm.smc"),
+        std::path::PathBuf::from,
+    );
+    let rom = data::rom::Rom::new(std::fs::read(path).ok()?).unwrap();
+    let lorom = rom.lorom();
+    let poses = Poses::load(lorom).unwrap();
+    let delays = data::pose::animation::AnimationDelays::load(lorom, &poses).unwrap();
+    Some(Content {
+        samus_tiles: SamusTiles::load(lorom, &delays, &poses).unwrap(),
+        samus_spritemaps: SamusSpritemaps::load(lorom).unwrap(),
+        graphics: data::pose::tiles::Graphics::load(lorom, data::pose::tiles::GRAPHICS_BANKS)
+            .unwrap(),
+        poses,
+        delays,
+        ..Content::default()
+    })
+}
+
+/// The bytes a tiles definition uploads, as the commit reads them.
+fn uploaded(content: &Content, id: TileDefinitionId) -> data::assets::samus::TileUpload {
+    let definition = content.samus_tiles.definition(id).unwrap();
+    let first = match definition.first {
+        0 => 0x1_0000,
+        size => usize::from(size),
+    };
+    let second = usize::from(definition.second);
+    let bytes = |from, count| content.graphics.bytes(from, count).unwrap().to_vec();
+    data::assets::samus::TileUpload {
+        first: bytes(definition.source, first),
+        second: if second == 0 {
+            Vec::new()
+        } else {
+            bytes(definition.second_source(), second)
+        },
+    }
+}
+
+/// For every pose id of hers, in every dress that shows it, every frame of the imported
+/// asset draws, holds and uploads what the engine does for that id and frame today.
+#[test]
+fn the_imported_assets_draw_what_the_engine_draws() {
+    use data::assets::samus::import::{self, map};
+    use data::assets::samus::key::{Dress, SpinSprite, Suit};
+    use data::pose::animation::{AnimationFrame, DelayItem};
+
+    let Some(content) = rom_content() else {
+        return;
+    };
+    let assets = import::from_tables(import::Tables {
+        poses: &content.poses,
+        delays: &content.delays,
+        spritemaps: &content.samus_spritemaps,
+        tiles: &content.samus_tiles,
+        graphics: &content.graphics,
+    })
+    .unwrap();
+    assert_eq!(assets.chest.attributes, CHEST);
+    assert_eq!((assets.chest.left, assets.chest.up), CHEST_OFFSET);
+    let running = content.delays.running();
+    assert_eq!(assets.running.len(), running.len());
+    for (at, hold) in assets.running.iter().enumerate() {
+        let frame = AnimationFrame(u16::try_from(at).unwrap());
+        assert_eq!(Some(hold.timer_byte()), running.byte(frame));
+    }
+    let dresses = [
+        SpinSprite::Plain,
+        SpinSprite::SpaceJump,
+        SpinSprite::ScrewAttack,
+    ]
+    .into_iter()
+    .flat_map(|spin| {
+        [Suit::First, Suit::VariaOrGravity]
+            .into_iter()
+            .map(move |suit| Dress { spin, suit })
+    });
+    let mut compared = 0_usize;
+    for dress in dresses {
+        for entry in map::MAP {
+            if map::id_of(entry.key, dress) != Some(entry.id) {
+                continue;
+            }
+            let asset = assets.clip(entry.key, dress).unwrap();
+            let list = content.delays.of(entry.id).unwrap();
+            assert_eq!(asset.frames.len(), list.len(), "{:?}", entry.id);
+            for (at, frame) in asset.frames.iter().enumerate() {
+                let number = AnimationFrame(u16::try_from(at).unwrap());
+                let id = entry.id;
+                // How long it holds.
+                assert_eq!(Some(frame.hold.timer_byte()), list.byte(number));
+                assert_eq!(
+                    matches!(frame.hold, data::assets::samus::Hold::Shows(_)),
+                    matches!(list.at(number), Some(DelayItem::Delay(_))),
+                );
+                // What it draws.
+                let mut engine = state(id.0);
+                engine.samus.animation.frame = number;
+                draw_body(&mut engine, &content);
+                let mut ours = State::default();
+                let (x, y) = (0x150_u16 - 0x100, 0x90_u16 - 0x20);
+                let origin = (x, y.wrapping_add_signed(frame.origin_y));
+                let batch = &mut ours.video.batch;
+                if let Some(top) = frame.top {
+                    batch.add_spritemap(assets.sheet.sprite(top).unwrap(), origin);
+                }
+                if frame.chest {
+                    let chest = assets.chest;
+                    let [y_low, _] = y.wrapping_sub(chest.up).to_le_bytes();
+                    batch.add_low_sprite(x.wrapping_sub(chest.left), y_low, chest.attributes);
+                }
+                if let Some(bottom) = frame.bottom {
+                    batch.add_spritemap(assets.sheet.sprite(bottom).unwrap(), origin);
+                }
+                assert_eq!(ours.video.batch.oam, engine.video.batch.oam, "{id:?} {at}");
+                assert_eq!(
+                    ours.video.batch.sprites, engine.video.batch.sprites,
+                    "{id:?} {at}"
+                );
+                // What it uploads.
+                let engine_tiles = content.samus_tiles.frame(id, number);
+                assert_eq!(frame.tiles.is_some(), engine_tiles.is_some(), "{id:?} {at}");
+                if let (Some(tiles), Some(engine_tiles)) = (frame.tiles, engine_tiles) {
+                    assert_eq!(
+                        assets.sheet.upload(tiles.top),
+                        Some(&uploaded(&content, engine_tiles.top))
+                    );
+                    assert_eq!(
+                        tiles
+                            .bottom
+                            .and_then(|bottom| assets.sheet.upload(bottom))
+                            .cloned(),
+                        engine_tiles.bottom.map(|bottom| uploaded(&content, bottom))
+                    );
+                }
+                compared += 1;
+            }
+        }
+    }
+    assert!(compared > 164, "{compared}");
+}

@@ -168,3 +168,61 @@ fn a_pose_the_spec_never_produces_is_shown_by_its_nearest_sprite() {
     };
     assert_eq!(id_of(running, plain), None);
 }
+
+/// The importer's pose map is this one: the same Pose for every id, and the same id for
+/// every Pose in every dress, part by part.
+#[test]
+fn the_importers_map_is_the_bridges() {
+    use data::assets::samus::import::map;
+    use data::assets::samus::key;
+    let parts = |pose: Pose| {
+        format!(
+            "{:?}",
+            (
+                pose.body,
+                pose.action,
+                pose.facing,
+                pose.aim,
+                pose.gun,
+                pose.legs
+            )
+        )
+    };
+    let key_parts = |pose: key::PoseKey| {
+        format!(
+            "{:?}",
+            (
+                pose.body,
+                pose.action,
+                pose.facing,
+                pose.aim,
+                pose.gun,
+                pose.legs
+            )
+        )
+    };
+    let dress = |dress: Dress| key::Dress {
+        spin: match dress.spin {
+            SpinSprite::Plain => key::SpinSprite::Plain,
+            SpinSprite::SpaceJump => key::SpinSprite::SpaceJump,
+            SpinSprite::ScrewAttack => key::SpinSprite::ScrewAttack,
+        },
+        suit: match dress.suit {
+            Suit::First => key::Suit::First,
+            Suit::VariaOrGravity => key::Suit::VariaOrGravity,
+        },
+    };
+    for id in (0..IDS).map(PoseId) {
+        let ours = pose_of(id);
+        assert_eq!(ours.map(parts), map::key_of(id).map(key_parts), "{id:?}");
+        if let (Some(pose), Some(imported)) = (ours, map::key_of(id)) {
+            for worn in DRESSES {
+                assert_eq!(
+                    id_of(pose, worn),
+                    map::id_of(imported, dress(worn)),
+                    "{id:?}"
+                );
+            }
+        }
+    }
+}
