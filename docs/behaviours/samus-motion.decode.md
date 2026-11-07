@@ -8,10 +8,25 @@ codes. Addresses are the bank logs' (`$TEMP/c4a/logs*`, https://patrickjohnston.
 
 Behaviour first: the 32 rows in `tools/oracle/samus_motion_rows.txt`, cached in
 `$TEMP/collab/more-caches/cache`, were dumped per frame (`$TEMP/obs-ground/dump`, driven by
-`$TEMP/respec-motion/one.ps1`) and read over time. The previous spec's arithmetic, which was pinned
-from the bank logs, was reused only for exact values and edge cases. Vectors come from
-`$TEMP/respec-motion/scripts/vec.pl` (frame selection) and `tag.pl` (entries); the constructed ones
-were worked by hand from the rules.
+`$TEMP/respec-motion/one.ps1`, output in `$TEMP/respec-motion/out`) and read over time. The
+previous spec's arithmetic, which was pinned from the bank logs, was reused only for exact values
+and edge cases. Vectors come from `$TEMP/respec-motion/scripts/vec.pl` (frame selection), `tag.pl`
+(entries) and `lead.pl` (perceivable quantities and lead-ins); the constructed ones were worked by
+hand from the rules, and `cons.pl` rewrote them to perceivable quantities.
+
+**Row names.** The vectors and the spec name the chain rows by opaque ids, because a chain row's
+name carries a room header's address:
+
+| Id | Row |
+| --- | --- |
+| r01 | chain-0012-91F8 (Landing Site) |
+| r02 | chain-0013-92FD |
+| r03 | chain-0014-96BA |
+| r04 | chain-0057-9FBA |
+| r05 | chain-0059-A293 |
+| r06 | chain-0097-ACF0 |
+| r07 | chain-0100-B07A |
+| r08 | chain-0106-AD5E |
 
 **Frame selection for recorded vectors.** Record N is the State before, record N+1 after; the pad
 is record N's. Taken when: the frame counter `05B6` advances by one (no lag); `0A66` is 0; the
@@ -27,91 +42,80 @@ and samus-square-slope-reserve give few or none (elevator, slopes). At most one 
 as the defaults (jump A `0080`, run B `8000`, shoot X `0040`); a row with other bindings would be
 misread (not checked: `09B2`-`09B6` are not in the dump).
 
+**Lead-ins (`lead.pl`).** A vector's start must be *plain* (spec §1.2's last paragraph): `0B3C` ≠ 0
+or `0B42` = 0; `0B4A` = 0, or 1 with `0B46` > 0; `0B36` = 1 only with a non-zero magnitude;
+`0B36` = 2 with magnitude 0 only in an airborne movement type (2 outside the take-off poses, 3, 6,
+8, 12h, 13h, 14h); `0B36` = 0 only with magnitude 0 outside those types. From the checked frame
+`lead.pl` walks back while each frame passes the selection test above, with radii free to change
+(a pose may change only from movement type 0, 1 or 10h on the ground into a jump, spin, fall or
+turn, from a take-off pose into a jump, or by aim alone, which the x-move test keeps clear of the
+arm-pump step), to the nearest plain start, at most 120 frames. A world of open air takes the floor
+of a ground frame met on the way if every later airborne frame stays above it. A start with a bounce
+in play drops the vector. Of 149 recorded frames, 118 are kept, 23 of them with a lead-in of 1 to
+12 frames; 31 are dropped (no plain start reachable). The two constructed moonfall vectors were
+dropped: they set the moonfall as a start value, and no lead-in through a turn's end is worked yet.
+
 ## State
 
 | Quantity | RAM | Decode |
 | --- | --- | --- |
 | position | x `0AF6`.`0AF8`, y `0AFA`.`0AFC` | as is |
-| run_speed | `0B46`.`0B48` | as is |
+| horizontal speed | `0B46`.`0B48`, facing `0A1E`, `0B4A` | magnitude `0B46`.`0B48`; leftward when facing left (`0A1E` low byte 4) with `0B4A` ≠ 1, or facing right or the screen with `0B4A` = 1 |
 | dash | `0B42`.`0B44` | as is |
-| dash_kept | `0B3C` | ≠ 0 |
-| drive | `0B4A` | 0 Driven, 1 Coasting(Behind), 2 Coasting(Facing) |
-| vertical | `0B36` | 0 Settled, 1 Rising, 2 Falling |
-| vertical_velocity | `0B2E`.`0B2C` (a magnitude) | `0B36` = 2: + magnitude; else − magnitude (two's complement over 32 bits) |
+| vertical speed | `0B2E`.`0B2C` (a magnitude), `0B36` | `0B36` = 2: + magnitude; else − magnitude (two's complement over 32 bits) |
 | bounces | `0B20` low byte | 0, 1, 2 |
 | pose | `0A1C`, `0A1E` | body and action from the movement type `0A1F` (below); facing `0A1E` low byte 4 Left, 8 Right, 0 Screen |
 
+What she remembers (spec §1.2), for the decoder and the adversary only: carrying on and skidding
+are `0B4A` (0 follows the pad, 2 carries on, 1 skids; a skid of zero is `0B4A` = 1 with `0B46` =
+0); a dash to lose is `0B3C` = 0 with `0B42` ≠ 0; the moonfall is `0B36` = 0 in the air; a spin
+carried on is `0A27` ∈ {3, 14h}. None is in the spec's State. The horizontal speed's sign is exact
+except for the skid of zero, which the spec states as a behaviour.
+
 Pose decode by movement type: 0 Upright Still (poses 00, 9B face the screen); 1 Running; 2
 Jumping (TakingOff for 4B, 4C, 55-5A); 3 Spinning; 4 Ball, Still for 1D, 41, else Rolling; 5
-Crouched Still; 6 Falling; 8 Ball Falling; E Turning; F Changing; 10 Moonwalking; 11 SpringBall
-(Still for 79, 7A); 12 SpringBall Rising; 13 SpringBall Falling; 14 WallJumping; 15 RanIntoWall;
-17, 18 TurningInAir. Other types are outside the domain (0A knockback, 16 grapple, 19 damage boost,
-1B shinespark).
+Crouched Still; 6 Falling; 8 Ball Falling; E, 17, 18 Turning; F by pose: 35, 36, F3 Crouching, 37,
+38 Morphing, 3B, 3C StandingUp, 3D, 3E Unmorphing; 10 Moonwalking; 11 SpringBall (Still for 79,
+7A, else Rolling); 12 SpringBall Jumping; 13 SpringBall Falling; 14 WallJumping; 15 AgainstWall.
+Other types are outside the domain (0A knockback, 16 grapple, 19 damage boost, 1B shinespark).
 
-**RAM shape** (fields decoded as one word copied as-is): none. Positions and speeds join two words;
-dash_kept is a test; drive, vertical and bounces are mapped; vertical_velocity combines two words
-and the direction.
+**RAM shape** (fields decoded as one word copied as-is): none. Positions, speeds and the dash join
+two words; the two speeds are signed from a magnitude and a direction; bounces are mapped.
 
 **Inputs.** pad held `8B`, newly pressed `8F`; equipment `09A2` (0100 hi-jump, 0200 space jump);
-`was_spinning`: `0A27` is 3 or 14; `spin_turned_far`: animation frame `0A96` ≥ 0B (≥ 1B in poses 81,
-82); `elevator_moving`: `0E18` ≠ 0.
+spin turned far: animation frame `0A96` ≥ 0B (≥ 1B in poses 81, 82); elevator moving: `0E18` ≠ 0.
 
 ## Sources per entry
 
-The single-routine share: 11 of 46 entries (24 %), marked *.
+Each entry lists only the routines or branches that carry its content, not the helpers it shares
+with others (adversary-2 §1's count): 2 of 18 entries (11 %) are single-routine, marked *,
+and `scan.sh --mirror` agrees.
 
 | Entry | Source |
 | --- | --- |
-| ActivitySpeeds* | `$90:9BD1` and the normal speed table it indexes by movement type |
-| SpeedingUp | `$90:9A7E`, `$90:9A99`, `$90:8EA9` |
-| Braking | `$90:9A7E`, `$90:9B1F` |
-| StandingStill | the standing, crouching, transition, ran-into-wall and facing-forward handlers of `$90:A337`'s table; `$90:8EA9` with base 0; the stop at their end; `$91:DE53` |
-| Dash | `$90:973E`, `$90:97D5` |
-| DashCap* | `$90:97D5` |
-| LosingTheDash | `$91:DE53`, `$90:E5CE`, `$90:A68F`, `$90:A5CD`, `$91:EC50` |
-| TurnSkid | `$91:F543` (turn start), `$90:9B1F`, `$90:8EA9` (heading when turning around), `$90:A68F` |
-| TurnCreep | `$90:A67C`, `$90:9A99` |
-| TurnIgnoresFall* | `$90:A68F` |
-| ArmPumpStep* | `$91:EADE` |
-| StandingShotRestartsAnimation* | `$90:A3AD` |
-| RidingTheElevator | `$90:A392`, `$90:A397` |
-| BallRolls | `$90:A521`, `$90:9BD1` |
-| JumpSpeeds | `$90:98BC`, `$91:FA0F`, `$91:F1FC`, `$90:90E2` (table values) |
-| TakingOff | `$91:FBBB`, `$90:973E`, the take-off rows of `$90:A337`'s table |
-| JumpStarts | `$91:F624`, `$91:F8D3`, `$90:98BC` |
-| FollowingTheGround | `$90:923F`, `$90:E61B`, `$94:8F82` |
-| StartingToFall | `$90:E61B`, `$91:EFC4` |
-| MovesAsShePosed | `$90:A337`, `$91:EB88` |
-| Gravity | `$90:90E2`, `$90:913A` |
-| FallingSpeedLimit* | `$90:910C` |
-| RiseEnds | `$90:8FDC`, `$90:90C4` |
-| AirDrift | `$90:900D`, `$90:9174`, `$90:91A8`, `$90:A5CD` |
-| CarriedDrift | `$90:9A7E` (no braking in the air), `$90:9174` |
-| SpinDrift* | `$90:906C` |
-| SpinReverse | `$91:F543`, `$91:DE53` |
-| AirTurn | `$90:A68F`, `$90:90E2` |
-| SpaceJump | `$90:A488`, `$90:98BC` |
-| Moonfall | `$91:EBAF`, `$91:F36E`, `$90:913A` |
-| WallJumpArming* | `$90:9D35` |
-| WallJumpKick | `$90:9D35`, `$91:FA0F`, `$91:EFC4`, `$90:902D` |
-| WallProbeSubpixel | `$94:967F`, `$94:8F49` |
-| Landing | `$90:E61B`, `$91:EFC4`, `$91:F010`, `$90:A640` |
-| BallBounce | `$91:F1FC`, `$91:F25E` |
-| HitCeiling | `$90:E606`, `$91:EFC4` |
-| PoseChangeEffects | `$91:EC50`, `$91:FB8E`, `$91:EB88`, `$91:F404`, `$91:F6E3`, `$91:EBAF` |
-| FloorsStopFlush | `$94:8F49`, `$94:8F82` |
-| WallStop* | `$90:E5CE` |
-| CeilingsStop | `$90:E606`, `$94:8F82` |
-| FastMovesTunnel | `$94:8F49`, `$94:8F82` |
-| MoveLimit* | `$90:E4AD` |
-| ZeroMovesStillTouch | `$90:8EA9`, `$A0:AAC8` |
-| SolidEnemyTouch | `$A0:AAC8`, `$90:9D80`, `$90:9DF8` |
-| SlopesCarry | `$90:923F`, `$90:9376`, `$94:87F4` |
+| SpeedBuildsAndBrakes | `$90:9BD1` and its table (the speeds by situation), `$90:9A7E` (speed-up), `$90:9B1F` (braking), the standing, crouching, transition, ran-into-wall and facing-forward handlers' tail stops in `$90:A337`'s table, `$90:A521` (the ball) |
+| Dash | `$90:973E`, `$90:97D5` (the cap), `$91:DE53` (losing it), `$90:E5CE` (the wall stop's share) |
+| TurningRound | `$91:F543` (turn start and spin reverse), `$90:A68F` (turning handler, its sink and its end), `$90:A67C` (the creep) |
+| AimingAndShooting | `$91:EADE` (the step), `$90:A3AD` (the shot) |
+| RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
+| Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump) |
+| FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off) |
+| MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
+| RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC` and `$90:90C4` (the rise's end) |
+| DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` (spin) |
+| Moonfall | `$91:EBAF`, `$91:F36E` (the hand-over), `$90:913A` (no limit with direction 0) |
+| WallJump | `$90:9D35` (arming and kick test), `$91:FA0F` (kick), `$94:967F` (the probe) |
+| Landing | `$91:F010`, `$90:A640` (upright and changing), `$91:F1FC`, `$91:F25E` (the ball) |
+| BlocksStopFlush | `$94:8F49`, `$94:8F82` (horizontal and vertical block collision), `$90:E4AD` (the limit) |
+| WallsAndCeilings | `$90:E5CE` (wall), `$90:E606` (ceiling) |
+| SolidEnemies | `$A0:AAC8`, `$90:9D80`, `$90:9DF8` |
+| SlopesCarry | `$90:9376`, `$94:87F4` |
 | WordwiseTopSpeed* | `$90:9A99` |
 
-`PoseChangeEffects`' four effects are the prospective pose-change commands `0A2E` 1, 2, 6 and 8
-(`$91:EC50`). This is the spec's known one-to-one risk (open question 2): the next lane should key
-them to the pose chart's records by what the player does, so the command word disappears.
+**The pose chart's effects** (spec §7) are the prospective pose-change commands `0A2E` 1, 2, 6 and
+8 (`$91:EC50`..`$91:ECD7`). The spec no longer names them; the pose-chart lane gives each
+transition its outcome as data. Command 6 has no RTS and falls through into command 8, so a change
+that kills the run speed also zeroes and cancels the dash: spec §7's one fact.
 
 ## Harness notes kept from the previous spec
 
