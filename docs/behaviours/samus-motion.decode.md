@@ -862,7 +862,7 @@ down too. `press.pl` over every recorded vector: 30 frames press a non-jump butt
 run and right, which no inference from the pads can give). It also found S1's pad short of aim
 down (samus-input-poses:511 is 8120): fixed; a ground turn with forward held keeps the turn either
 way. r04:307 holds left and right together (8380, R102), against the spec's "no record does"
-(`PadChart`); left for the caller.
+(`PadChart`): answered below (left and right held together).
 
 **Against the wall with forward held (R18, R88, R117, R149).** `$91:EADE` runs for any prospective
 pose of movement type 1: it moves her 1 px forward with block collision (`$94:971E`) after the
@@ -888,6 +888,25 @@ aim (Forward, 89h) and no step comes. The implementer's result was right. The ve
 281, both subpixels 0 so no push), and the step reaches it: no move, y subpixel cleared, aim
 `DownForward`. The old frame is kept as C-aim-enemy-stop with the right outcome (AgainstWall
 `Forward`, 010C.0000, 010B.FFFF, speed and dash 0).
+
+**Left and right held together (round 8's queue, 2026-11-07).** r04:307-308 holds 8380 (R102: a
+spin facing right, both just pressed): the spin drifts on, `x` +0.E000 (0.C000 built, the 0.2000
+dash), so her motion reads the side she faces as held. The chart: `$91:81F4` passes the d-pad bits
+through unmasked and `$91:81A9` takes the first row of the pose's list (`$91:9EE2` + 2 × pose) whose
+masks fit, so with both held a row naming forward and one naming back both fit and the list's order
+decides. `$TEMP/arms/lrtab2.pl` runs every pose of `spec.pl`'s situations, both facings, every other
+button held or pressed, with both sides held: the outcome is always the one of a single side held
+alone (never a third), forward's or back's by situation. `$TEMP/arms/lr.pl` adds the spec's
+both-held ranks to `$TEMP/adv16/spec.pl`; `$TEMP/arms/chk_lr3.pl` (adv16's strict checker on the
+both-held pads) then leaves 2,160 mismatches, all the take-off's facing-left back row (30h), the
+row adv16 left out as unreachable, which with both held behaves as for right held; adv16's
+single-side check with the added ranks is unchanged at 1,080. The situations where the list's order
+departs from the ranks: standing, landing and against the wall (left/right turn row before forward;
+forward with up or down before the moonwalk's two-button row); running and the spin (forward
+first); the take-off (jump + back first); the straight jump, aimed down and gun drawn included (back before forward, and before
+forward + aim without jump: the forward + aim rows name jump); the moonwalk (the way she looks
+first); the ball on the ground (right first); the spring ball falling (7Dh/7Eh: the other side first)
+and hopping (7Fh/80h: right first).
 
 ## Size baseline (tokens, 2026-11-07)
 
