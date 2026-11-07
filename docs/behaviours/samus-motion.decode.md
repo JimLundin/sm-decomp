@@ -712,3 +712,25 @@ floor's A = 15 − bottom % 16 ≥ 0, never lifted; the ceiling's A = top % 16, 
 is pushed 0 px and seated (`0DBA` = 1). Vectors: C-slope-ceiling-empty (target top on row 0:
 stopped), C-slope-ceiling-empty-on (row 1: moves on), C-slope-floor-empty (target bottom on row
 15: lands), all constructed.
+
+## Size baseline (tokens, 2026-11-07)
+
+Counted with `tools size` at 3a1ed3d4a, tests excluded. The old code the domain replaces:
+
+| Old code | Tokens |
+| --- | ---: |
+| `game/src/model/samus.rs`, `model/samus/` (motion, its pose) | 5,160 |
+| `game/src/motion.rs` | 1,024 |
+| `game/src/collision/world.rs` | 1,336 |
+| `game/src/model/collision.rs` | 543 |
+| `game/src/pose/contact.rs` | 1,065 |
+| `game/src/collision.rs`, the block scans (`SlopeFlag` to `scan_y`) | 2,499 |
+| `game/src/pose.rs`, the pad's pose requests (`PoseRequests` to `input`) | 663 |
+| `game/src/collision/solid_enemy.rs` | 1,220 |
+| Total | 13,510 |
+
+`collision/inside.rs` (696) is not counted: the engine keeps its touch handling. The old engine
+read the pose chart from the ROM; the new model holds it as rows, inside its target.
+
+The new code at the same commit: the clean crates 17,456 (the chart's rows 3,252), the bridge
+`game/src/samus_world*` 5,951 (the pose map's rows 4,334): 23,407 in all.

@@ -166,6 +166,12 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   that matched. Entries no recorded frame exercises are listed as "vectors only".
 - Size is measured **like for like**: the same counter on the old code and the new, with the wiring
   and the bridge included.
+- Size is counted in **logical tokens** (Jim, 2026-11-07), with `tools size PATH...`
+  (`verify::size`): every identifier, keyword, literal, lifetime and operator is one, and so is
+  each bracket pair. Comments, doc comments, layout and tests (`#[cfg(test)]` items, `tests`
+  directories and `tests.rs` files) are free. Lines rewarded cramming and punished types and
+  tables laid out one field to a line; tokens count what the code says. Data tables count, at
+  what their rows say, so a behaviour moved into a table costs its row and no more.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once
@@ -180,7 +186,7 @@ localiser show any change against today's engine. Each change is either a fix or
 - It's smaller (Jim, 2026-11-06). **A domain that is larger than the old code it replaces is a
   strict failure.** A domain must save significantly over the old code, unless the spec gives a
   clear, substantiated reason why this domain can't. The spec header holds the baseline (the old
-  code's lines) and a target. A target over the baseline, or a scope change, goes to Jim with the
+  code's tokens, by file) and a target. A target over the baseline, or a scope change, goes to Jim with the
   numbers, and the lane stops until he answers.
 
 **Done means:**
@@ -318,7 +324,7 @@ history before the tag `archive/old-engine`.
 - No conditions on frame numbers, positions or room IDs that no spec entry names.
 
 **The spec template (review R4).**
-- **Header:** the domain's scope, its baseline lines and its budget (R8).
+- **Header:** the domain's scope, its baseline in tokens and its budget (R8).
 - **Each quantity:** its units, a domain type (an enum, never ROM codes), and **Read by**: the
   behaviour IDs that read it on a later frame, or "output" if it reaches bytes, or "none". "None"
   means it isn't State (decision 3). ROM codes belong in the decode notes.
@@ -373,7 +379,7 @@ Then, as checks that must not regress:
 - the free-run localiser's first differing frames;
 - Ticks/s.
 
-The size report adds lines per layer, so the routine-port share is visible and falls.
+The size report adds tokens per layer, so the routine-port share is visible and falls.
 
 ## 7. Amendments to ARCHITECTURE
 

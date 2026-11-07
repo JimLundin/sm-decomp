@@ -16,6 +16,8 @@
 //!
 //! `tools harness DOMAIN LOCK CACHE ROW...`: a domain's model against the oracle on every cached
 //! frame of each row (`verify::harness`); `DOMAIN` is `game-time`.
+//!
+//! `tools size PATH...`: code volume in logical tokens, per file and in total (`verify::size`).
 
 mod gate;
 mod localise;
@@ -35,9 +37,10 @@ const HARNESS_USAGE: &str = "tools harness game-time LOCK CACHE ROW...";
 
 fn usage() -> String {
     format!(
-        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}",
+        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}\n       {}",
         gate::USAGE,
-        localise::USAGE
+        localise::USAGE,
+        verify::size::USAGE
     )
 }
 
@@ -47,6 +50,7 @@ fn run(args: &[String]) -> Result<String, String> {
         [command, rest @ ..] if command == "gate" => gate::run(rest),
         [command, rest @ ..] if command == "localise" => localise::run(rest),
         [command, rest @ ..] if command == "harness" => run_harness(rest),
+        [command, rest @ ..] if command == "size" => verify::size::run(rest),
         _ => Err(usage()),
     }
 }
