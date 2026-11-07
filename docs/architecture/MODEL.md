@@ -43,6 +43,17 @@ Jim's decisions, 2026-11-07:
    Where the original's exact behaviour departs from those shapes, the shape stays and the
    departure is a named quirk. The clean room's version is in
    [docs/cleanroom/DESIGN.md](../cleanroom/DESIGN.md).
+7. **The budget comes from the spec.** A domain's size budget is k weighted tokens per spec
+   unit, k = 24 (the old code's density times 0.55; frozen, and tested out of sample on the next
+   domain), with each area capped at 70% of its old code. A spec unit is one condition→outcome
+   rule ("arm"), plus a third for each term a data table makes the code interpret and a third for
+   each operator in an exact formula; table rows, parameters, enum values, prose and vectors
+   don't count. The budget moves by k per unit when the spec gains or loses behaviour, and is
+   frozen at each implementer export. Over the budget is a review stop that names the areas and
+   entries over; over the old code is a strict failure. The study is
+   [size-budget.md](size-budget.md), and the weights' is [size-weights.md](size-weights.md); the
+   template convention that makes the count exact is
+   in §5.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
@@ -357,7 +368,15 @@ history before the tag `archive/old-engine`.
 - No conditions on frame numbers, positions or room IDs that no spec entry names.
 
 **The spec template (review R4).**
-- **Header:** the domain's scope, its baseline in tokens and its budget (R8).
+- **Header:** the domain's scope, its baseline in tokens and its budget (R8). The budget line is
+  the tool's, from the spec's units (§1 decision 7), with its split by area.
+- **Rules are arms** (§1 decision 7). Each rule is one bullet of the form
+  `<conditions> → <outcome> [vectors]`; only bullets with `→` count, so explanation, rewording or
+  splitting a rule doesn't move the count. Two arms of one entry with the same outcome are one
+  arm. An arm counts only if the vectors or recorded frames it cites exist. Each data table has a
+  `Cells:` line naming the terms its cells use. Exact formulas are in backticks. `checked` is its
+  own bullet. A cross-reference to another entry's rule counts nothing. The adversary gate
+  samples arms against the original: a padded arm stops the spec as a leak does.
 - **Each quantity:** its units, a domain type (an enum, never ROM codes), and **Read by**: the
   behaviour IDs that read it on a later frame, or "output" if it reaches bytes, or "none". "None"
   means it isn't State (decision 3). ROM codes belong in the decode notes.
