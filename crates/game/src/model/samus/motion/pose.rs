@@ -70,6 +70,7 @@ impl State {
         equipment: Equipment,
         rules: &MotionRules,
     ) {
+        use {FallKind as F, LandKind as K, PoseCommand as C, VerticalResult as V};
         // PoseStartWrites
         match change.start {
             None => {}
@@ -100,64 +101,52 @@ impl State {
         }
         // PoseCommandWrites and VerticalResultWrites
         match change.command {
-            PoseCommand::Decelerate if self.base_speed != Fixed::ZERO => {
+            C::Decelerate if self.base_speed != Fixed::ZERO => {
                 self.fold();
                 self.mode = SpeedMode::Decelerating;
                 self.momentum = false;
                 self.kill_y(change.started_falling);
             }
-            PoseCommand::Decelerate | PoseCommand::Stop => {
+            C::Decelerate | C::Stop => {
                 self.mode = SpeedMode::Accelerating;
                 self.momentum = false;
             }
-            PoseCommand::KillXSpeed => {
+            C::KillXSpeed => {
                 self.halt();
                 self.kill_y(change.started_falling);
             }
-            PoseCommand::KillRunSpeed => {
+            C::KillRunSpeed => {
                 self.stop_running();
                 self.kill_y(change.started_falling);
             }
-            PoseCommand::Vertical(VerticalResult::HitCeiling) => self.fall(),
-            PoseCommand::Vertical(VerticalResult::Falling(
-                FallKind::Airborne | FallKind::MorphBall | FallKind::SpringBall,
-            )) => {
+            C::Vertical(V::HitCeiling) => self.fall(),
+            C::Vertical(V::Falling(F::Airborne | F::MorphBall | F::SpringBall)) => {
                 if self.vertical != VerticalMotion::Up {
                     self.bounce = Bounce::None;
                     self.fall();
                 }
             }
-            PoseCommand::Vertical(VerticalResult::Landed(LandKind::Grounded)) => self.land(),
+            C::Vertical(V::Landed(K::Grounded)) => self.land(),
             // SpringBallJump
-            PoseCommand::Vertical(VerticalResult::Landed(LandKind::SpringBall)) if jump_held => {
+            C::Vertical(V::Landed(K::SpringBall)) if jump_held => {
                 self.bounce = Bounce::None;
                 self.jump(rules, equipment);
             }
             // BallBounce
-            PoseCommand::Vertical(VerticalResult::Landed(
-                LandKind::MorphBall | LandKind::SpringBall,
-            )) => {
-                let air = rules.air;
+            C::Vertical(V::Landed(K::MorphBall | K::SpringBall)) => {
+                let (air, first) = (rules.air, Fixed::from(rules.air.bounce));
                 let fast = !Fixed::below(self.vertical_speed.pixel(), air.bounce_min_pixel);
                 let (bounce, speed) = match self.bounce {
-                    Bounce::None if fast => (Bounce::First, Fixed::from(air.bounce)),
-                    Bounce::First => (
-                        Bounce::Second,
-                        Fixed::from(air.bounce).minus(air.bounce_decay.into()),
-                    ),
+                    Bounce::None if fast => (Bounce::First, first),
+                    Bounce::First => (Bounce::Second, first.minus(air.bounce_decay.into())),
                     Bounce::None | Bounce::Second => return self.land(),
                 };
                 self.bounce = bounce;
                 self.vertical_speed = speed;
                 self.vertical = VerticalMotion::Up;
             }
-            PoseCommand::Vertical(VerticalResult::WallJump) => self.halt(),
-            PoseCommand::Vertical(
-                VerticalResult::None
-                | VerticalResult::Falling(FallKind::NoChange)
-                | VerticalResult::Landed(LandKind::NoChange),
-            )
-            | PoseCommand::None => {}
+            C::Vertical(V::WallJump) => self.halt(),
+            C::Vertical(V::None | V::Falling(F::NoChange) | V::Landed(K::NoChange)) | C::None => {}
         }
     }
 
