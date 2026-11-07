@@ -1309,3 +1309,6 @@ mod tests {
         assert_eq!(differences(&engine, &oracle, Quiescence::Quiet).len(), 1);
     }
 }
+
+#[cfg(test)]
+mod recorded;

@@ -8,6 +8,8 @@ description = "The oracle record to State decoder, the stream projections, facts
 
 [dependencies]
 canonical = { path = "../canonical" }
+clean_model_samus_motion = { path = "../clean_model/samus-motion" }
+clean_types = { path = "../clean_types" }
 data = { path = "../data" }
 game = { path = "../game" }
 oracle_record = { path = "../oracle_record" }

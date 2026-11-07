@@ -6,9 +6,9 @@ use clean_model_samus_motion::Frame;
 use clean_types::{Equipment, Fixed, Pad, Parity, Radius, Signed};
 use data::pose::transition::{Control, Controls};
 
+use super::state::X_RADIUS;
 use crate::animation;
 use crate::collision::ScanOrder;
-use crate::collision::world::X_RADIUS;
 use crate::pose::{Content, PoseRequests, controls};
 use crate::state::Controller;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
