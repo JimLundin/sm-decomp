@@ -24,7 +24,7 @@
 # - pose: the pose at the checked frame's start (spec §2): body, action, facing, radius = [x, y]
 #   in px. next_pose: the pose chosen during it, when it changes (the pose chart is not in the
 #   spec yet, so the vector gives it).
-# - pad: the buttons held; jump_pressed: jump newly pressed this frame.
+# - pad: the buttons held; jump_pressed: jump just pressed this frame.
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
 #   position_x compares x alone.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she

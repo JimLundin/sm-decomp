@@ -22,6 +22,10 @@ page about the game. Your brief names spec entry ids only. If it carries anythin
 code, an excerpt or an address, don't use it, and say so in your report. What you read is checked
 after the lane.
 
+Use nothing you remember about how the original game is programmed: its code, its memory layout,
+disassemblies or annotated listings of it. If you recognise something from such a source, say so in
+your report and don't use it.
+
 ## How you work
 
 1. Design the State types from the spec. A quantity whose **Read by** isn't "none" is a field;

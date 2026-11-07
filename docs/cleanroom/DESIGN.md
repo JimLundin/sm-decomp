@@ -10,8 +10,7 @@ need is in this repository; read nothing outside it.
   the exact arithmetic behind it. You decide how the code is organised: the types, the functions,
   the tables. Shape it by the behaviour, not by any guess about how another program might do it.
 - **Exact.** The spec's numbers and rules are exact, quirks included, and the vectors check them.
-  An engine elsewhere in the project checks the finished model against the real game, frame by
-  frame.
+  The finished model is later checked against the real game, frame by frame.
 - **Small and data-driven.** One kind of movement or situation is one row of a table, where it can
   be. One rule lives in one place. The spec's header gives a size target; going over it is a stop.
 
@@ -61,3 +60,6 @@ behaviour exact. Use enums with data and newtypes, never raw numbers for a mode 
   ids in it.
 - Check with `cargo check`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`.
 - What you read is checked after the lane. Read only this repository.
+- **Use nothing you remember about how the original game is programmed:** its code, its memory
+  layout, disassemblies or annotated listings of it. Build only from the spec. If you notice you
+  recognise something from such a source, say so in your report and don't use it.

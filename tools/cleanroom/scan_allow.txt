@@ -123,3 +123,25 @@ suit
 game time            # the in-game clock on the pause and save screens
 mini map             # the HUD's map
 message box          # the item pickup message
+
+# Ruled player vocabulary by the third adversary gate (2026-11-07).
+pose change          # what the player sees: Samus changes pose
+riding elevator      # the player rides an elevator
+stand up             # Samus stands up from a crouch
+solid enemy          # an enemy she can stand on or bump into
+solid block          # a block she can't pass
+px frame             # pixels per frame, the speed unit
+two frames           # a count of frames
+row down             # a block row below
+target x             # where a move would take her
+data table           # a table of values
+far enough           # plain English
+moving left          # plain English
+moving right         # plain English
+left nor right       # plain English
+last frame           # plain English
+one row              # plain English
+entry name           # the spec's own term
+not including        # plain English
+morph                # rolling into the ball
+unmorph              # rolling out of the ball

@@ -98,6 +98,8 @@ This repository is everything you may read. Build the $domain model from
 \`docs/behaviours/$domain.md\` and \`scenarios/vectors/$domain.toml\` alone; the rules are in
 \`docs/cleanroom/DESIGN.md\` and \`.agents/skills/implementer/SKILL.md\`. Read nothing outside this
 directory: no other repository, worktree, temporary folder or web page about the original.
+Use nothing you remember about how the original game is programmed (its code, memory layout,
+disassemblies or annotated listings); if you recognise something from such a source, report it.
 
 - Write the model in \`crates/clean_model/$domain\` and the types it shares in
   \`crates/clean_types\`. They depend on nothing but each other and std.
