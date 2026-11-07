@@ -4,7 +4,30 @@ Where wiring [the spec](samus-motion.md)'s model into the engine finds something
 (MODEL §5). Each gap names the frame, the field, the expected and actual values and the suspected
 entry. The integrator files them; the observer answers them in the spec.
 
-No gap is open. The previous spec's gaps and answers are in git history (`1dc3a12`).
+The previous spec's gaps and answers are in git history (`1dc3a12`).
+
+## Open: the engine's pose at the edge (integrator, 2026-11-07, after `c44e48c`)
+
+Items 1-3 below are answered by `c44e48c` (the pose chart, `Outcome::reached`, `World`'s kinds).
+`game::samus_world` (`78dc21a`) answers `World`. What stops the next step, the State swap:
+
+6. **The engine's pose from the model's (§2).** Animation, drawing, the body's size and pose fit
+   read the engine's pose, one of 253 sprites; the model chooses a §2 pose, which §2 says has
+   fewer parts than the sprites (the gun, the landing sprites, the spin drawn as the space jump or
+   the screw attack). Asked of the observer: the decode both ways at the edge, as data:
+   - each sprite's §2 pose (body, action, facing, aim, gun), above all the crouch and morph
+     transitions' four actions and the take-off's poses;
+   - for a chosen §2 pose, which sprite the game shows: by the sprite she was in, her equipment,
+     and whether she landed, as the records say.
+   Without it the edge map guesses, and every guess is a free-run gate pair at risk.
+7. **A ceiling's surface where a column has no solid pixel.** The ROM's surface offsets reach 16
+   (a column with nothing solid in the block). A floor's `surface` row 16 is past the block and
+   never stops her, as in the game. A ceiling's lowest solid row is then -1, which `Slope::surface`
+   (`u8`) can't hold; the adapter answers 0, so a rise whose top edge is on the block's row 1
+   stops where the game lets it on. Asked: the spec's surface for such a column.
+8. **A door to a room is air (`OtherBlockKinds`), but the level alone can't tell it from a door to
+   nowhere.** The adapter answers every door solid (`DoorToNowhere`), as the engine's collision
+   does today; the door's destination is in the room's door list, not the block.
 
 ## Open: what wiring the model into the engine needs (integrator, 2026-11-07)
 
