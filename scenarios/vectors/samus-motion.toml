@@ -3071,6 +3071,7 @@ pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", r
 next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
 pad = ["run", "right", "down"]
 jump_pressed = false
+pressed = ["right", "down"]
 after = { position = ["056C.DFFF", "0099.FFFF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", reached = [{ cell = [1392, 128], way = "Right" }, { cell = [1392, 144], way = "Right" }, { cell = [1376, 160], way = "Look" }] }
 
 # A spin reversed in its first frame skids: she keeps travelling the old way against her new facing.
