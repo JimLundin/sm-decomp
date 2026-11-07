@@ -223,6 +223,42 @@ the vector had them together.
   leaves `0A1C` alone: it is animation progress, not a pose. The next frame the spin counts as
   turned far (`$90:9D55`, frame ≥ Bh). Record: samus-walljump-16:46 (81h readied, `an` 1Bh at 47),
   47 (jump pressed, 83h at 48).
+- Landing while turning (adversary-17 fix 1). `$90:E676` gives 4 (no change) for Eh, 17h and 18h
+  too, so no landing pose is set. Unlike Fh's handler (`$90:A61C`, which on landed + no change
+  zeroes `0B2C`/`0B2E`, `0B36` and `0B20`), the turn handlers `$90:A67C`, `$90:A790` and `$90:A7AD`
+  zero only `0DC6`: `0B2E`.`0B2C` keeps growing by the pull while y stays at the floor (FFFF), and
+  the pad lookup still runs (only Fh skips it, `$91:8146`). Records (`$TEMP/adv17s/turnfloor.pl`
+  over `$TEMP/respec-motion/out`): r02:33-36 (88h), r05:104-105 (87h), r07:258-262 (2Fh),
+  area-norfair:64-67 (92h), terrain-quicksand:253-257 (2Fh), samus-ceres-push:322 (30h), the
+  ground turn item-morph-ball:685 (25h; r01:615 is on a slope). Ends: r02:37 (29h) lands at 38
+  (A4h, `0B2E` 0), r07:263 (52h) at 264 (A5h). Vectors TL1 (r02:33), TL2 (r02:34, lead-in 33),
+  TL3 (r07:258), TL4 (item-morph-ball:685); pose steps TP1 (r02:32), TP2 (item-morph-ball:684),
+  TP3 (r07:257).
+- The near-wall test's gate (adversary-17 fix 2). `$90:9D35` returns before anything unless
+  `0A27` is 3 or 14h; both the readying branch (`$90:9D6B`) and the eligible branch (`$90:9DDD`)
+  return with neither left nor right held; with a side held both run `$A0:A8F0` and `$94:967F`,
+  whose writes happen whether or not jump is newly pressed (`$90:9E05`). RW1
+  (samus-walljump-16:47, lead-in 44, 45): at 45→46 (82h → 81h, right held) the test writes `0AF8`
+  0 (003C.5FFF → 003C.0000) and the reversal restarts the animation; at 46→47 it readies (`an`
+  1Bh) and writes 0 again (003B.2000 → 003B.0000). The wall's face is x 30h (samus-walljump-28's
+  flush x 0035.0000 less radius 5); the stand-in is one block at (20h, 440h).
+- Pose fit (integrator gap 9). `$91:F404` runs `$91:FDAE` before `$91:F433` (pose init) and
+  `$91:FBBB` (jump transitions; the crouch lift `$91:FC8A` is there, only from 27h/28h), so the
+  push precedes the speeds and the lift. `$91:FDAE`: nothing for poses 0 and 9Bh or when the new
+  y radius (`$91:B62F` + pose × 8) isn't larger; `0B00` = the old radius; g = new − old. Enemy
+  looks `$A0:A8F0` up then down by g (`0A3E`, `0A40`), the one-side handlers `$91:FE9E`/`$91:FEDF`
+  re-test the far side at the new radius (enemy hit: revert); block looks `$94:96AB` (8 first when
+  g ≥ 8, `$94:96E3` with direction Fh, frame-parity order `$94:959E`/`$94:95F5`; `$12` returned as
+  |distance|) up then down (`0A38`, `0A3C`); `$91:FF20` (above: y += g − room, after a down
+  re-test), `$91:FF49` (below: y −= g − room, after an up re-test), `$91:FF89`/`$91:FF98` (enemy
+  only), `$91:FFA7` (both: radius < 8 refuses; else pose 27h/28h by `0A1E`, y raised when the old
+  radius is under 10h). A refusal writes `0A20` back to `0A1C` (`$91:FE82`). `0AFA` only, so the
+  subpixel is kept. Records (`$TEMP/adv17s/fit2.pl` over `$TEMP/respec-motion/out`, ROM radii):
+  every flat landing rises by g after the floor stop (r02:38, 179, 549; r04:10, 63, 500; ...),
+  crouch to stand 5 px (r02:392), PF1; open-air growth has none (area-norfair:38, 49, 62). No clean
+  record meets a ceiling or a solid enemy in pose fit. Vectors PF2 (r02:179), PF3 (r02:549), U1
+  gains the entry; C-fit-ceiling, C-fit-tunnel, C-fit-ball-tunnel constructed. The chart's "5 px
+  up" on crouch to stand is this push, not an effect of the row.
 
 **The crouch-to-stand 5 px (chart-left).** The bank log calls `$91:8087`'s y − 5 dead, and it is:
 it reads the movement type `0A1F` after `$91:81A9`, which only writes the prospective pose, so it
@@ -296,7 +332,7 @@ a type 8 block; `slope_ceiling` a non-square slope with BTS bit 7; `frame` the p
 | SlopesSlowTheWalk | `$94:84D6` and its table `$94:8586` (second word: the factor × 100h; the first word's speed modifier is computed and discarded), `$94:8FBB` (non-square kinds, BTS & 1Fh ≥ 5), `$94:9543` (the column scan, `$20` from the unscaled distance), `$80:82D6` (the 16 × 16 multiply) | only when BTS bit 7 is clear and `0B2C`/`0B2E` = 0; `$12`.`$14` is cut to `$12` low byte : `$15`, negated for leftward, multiplied, negated back over 32 bits. Measured by the dumper's `R`/`L` field (`0DAA`..`0DB0`): r01:625-630 BTS 55h/12h at C0, r06:123-126 BTS 56h/57h at D8, samus-input-poses:418 1.7000 → 1.1400, aim steps 1.0 → 0.C000 (r01) and 0.D800 (r06) |
 | TouchedCells | `$94:9543`, `$94:959E`, `$94:95F5` (the scans, stop at the first carry set), `$94:9515`/`$94:952C` and the reaction tables `$94:94D5`/`$94:94F5`; `$94:9B60` (inside points bottom, centre, top at `0AF6`; the chained XOR at `$94:9BEB`), called from `$90:E6BC` in the current state handler, which game state 8 runs (`$82:8B58`) before the new state handler's movement (`$82:8B69`) | the collision direction `0B02` is what the reactions read |
 | OtherBlockKinds | `$94:938B`/`$94:93CE` (door: destination ≥ 8000h starts game state 9 and returns carry clear, else solid), `$94:904B`/`$94:905D` (spike: its BTS table, then solid), `$94:9018`/`$94:901A` (spike air), `$94:906F`/`$94:909D` (special air: PLM, carry clear), `$94:90CB`/`$94:9102` (special block: the PLM's carry decides), `$94:92F9`/`$94:9313` (bombable air), `$94:932D`/`$94:934C` (bomb block: the PLM's carry, area-dependent BTS solid), `$94:9411`/`$94:9447` (extensions: block index ± BTS, re-dispatch; BTS 0 air) | the item's block is BTS 45h (`$84:EE64`, `$84:EE8E`, setup `$84:EEAB` returns carry clear); scroll cells BTS 46h (`$84:B393`) |
-| PoseFitAfterMoves | `$90:E725` (movement `$90:E94B`, then `$91:E8B6`, then `$91:EB88`), `$91:F404` (`$91:FDAE` pose fit, then `$91:F433` initialise, then `$91:FBBB` the jump transition with `$91:FC8A` the 10 px lift) | `$91:EADE` (the aim step) runs before `$91:F404` |
+| PoseFitAfterMoves | `$90:E725` (movement `$90:E94B`, then `$91:E8B6`, then `$91:EB88`), `$91:F404` (`$91:FDAE` pose fit, then `$91:F433` initialise, then `$91:FBBB` the jump transition with `$91:FC8A` the 10 px lift); the push itself `$91:FDAE`..`$91:FFED` with `$94:96AB` and `$A0:A8F0` | `$91:EADE` (the aim step) runs before `$91:F404` |
 
 Recorded vectors: S1 is samus-input-poses record 511 → 512 (block at column 6, row 12, BTS 54h:
 14h x-flipped); S2 is r01 record 716 → 717 (BTS 12h, first frame of a fall, `0B2E`.`0B2C` = 0).
