@@ -112,7 +112,7 @@ and `scan.sh --mirror` agrees.
 | SlopesCarry | `$90:9376`, `$94:87F4` (seat after every horizontal move, sets `0DBA`), `$90:924C` (the pull reads `0DBA`), `$94:976B` (a 0.0 vertical move skips block collision), `$94:976F` (cleared by a non-zero vertical move), `$94:8E38` (square slope stop sets it), `$94:86FE` (rising into a non-square ceiling slope: `$12 = max(0, ...)` and `$14 = 0`, so no move), `$94:87E4` (the floor slope stop is `max(0, ...)` too: never upward) |
 | WordwiseTopSpeed* | `$90:9A99` |
 | PoseFollows | `$91:EB88` (one change a frame: super special `0A2C`, then special `0A2A`, then `0A28`), `$91:E8B6` (the vertical collision result `0DC6` overwrites the pad's `0A28` and sets command 5), `$91:EADE` (the wall stop overrides both); the spec's three items fold the wall stop into `WhatHerMovesMet` and the lookup failure into the chart's last rows, `$91:EC85` falling into `$91:EC8E` (the dash goes with the speed) |
-| PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:8087` (crouched into standing: y − 5); the last rows: `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E`; `$91:8146` (movement type Fh: no lookup at all, the changing-body row) |
+| PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:F404` (crouched into standing: the bottom edge kept, y − 5; `$91:8087`'s own y − 5 is dead); the last rows: `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E`; `$91:8146` (movement type Fh: no lookup at all, the changing-body row) |
 | Aiming | the table's aim rows per pose, `$91:E9F3` (landing keeps the aim, down becomes forward), `$91:EB74` (the wall stop keeps the aim) |
 | WhatHerMovesMet | `$91:E8F2` (falling poses, `$91:E921`), `$91:E95D`..`$91:EA47` (landing poses, ball bounces), `$91:EABE` (wall-jump pose), `$91:EADE` (ran-into-wall poses, the aim step's block) |
 | AnimationEnds | the animation delay table `$91:B010` (its go-to-pose instructions), `$91:EB88` (the super special pose wins) |
@@ -145,12 +145,46 @@ over every pad (each of 8 buttons not held, held or newly pressed; left with rig
 down skipped) for the right-facing poses 01h, 03h, 05h, 07h, A4h, A6h, E0h-E6h, 09h, 0Bh, 0Fh, 11h,
 4Bh, 55h-59h, 4Dh, 51h, 15h, 17h, 69h, 6Bh, 19h, 1Bh, 81h, 29h, 2Bh, 2Dh, 6Dh, 6Fh, 27h, 71h, 73h,
 85h, 1Dh, 1Eh, 31h, 79h, 7Bh, 7Dh, 7Fh, 25h, BFh, 8Bh, 8Dh, 9Ch, 2Fh, 87h, 8Fh-A0h, 43h, 97h, 99h,
-A2h, 35h-3Dh, F1h-FBh, 4Ah, 76h, 78h, 83h, 89h: 0 mismatches. Not covered: the gun-extended
-poses 13h (jump alone: no row, the lookup failure) and 67h (up or down beats back, as 2Dh) share
-the spec's `Jumping`/`Falling` `Forward` with 4Dh and 29h, so the spec can't tell them apart
-(open); C1h and C3h (aimed moonwalk turns) are unreachable from the moonwalk rows (4Ah's unaimed
-jump row comes first). The ground turns aimed up or down-right (8Bh, 8Dh) have only
-press-jump rows, and 9Ch's table is empty, so it turns as in the air.
+A2h, 35h-3Dh, F1h-FBh, 4Ah, 76h, 78h, 83h, 89h: 0 mismatches. C1h and C3h (aimed moonwalk
+turns) are unreachable from the moonwalk rows (4Ah's unaimed jump row comes first). The ground
+turns aimed up or down-right (8Bh, 8Dh) have only press-jump rows, and 9Ch's table is empty, so
+it turns as in the air.
+
+**Both facings and the drawn gun (chart-left, 2026-11-07).** `chk.pl` now also runs every pose's
+mirror (`mirror.pl` pairs each pose with the one whose name swaps right and left: 02h, 04h, ...,
+0Ah, 0Ch, ..., 49h, 75h, 77h, ..., 84h, 8Ah; `FACE=R`, `L` or both), sets the facing per pose for
+facing-dependent rows, and tells the gun-extended poses (0Bh/0Ch, 13h/14h, 67h/68h, by name) apart
+as their own pose, with 13h/14h and 67h/68h added as situations. Every pad, both facings:
+**0 mismatches** (`FACE=R` and `FACE=L` each print `mismatches 0`). Before the fixes the left
+facing gave 1,464 (the moonwalk's both-aims row as `spec.pl` still had it, already right in the
+spec, and the take-off below), and the gun 7,438. What the run found:
+- The take-off facing left (4Ch, 56h, 58h, 5Ah) has a row hold right → 30h (turn) that its
+  right-facing mirror (4Bh, 55h, 57h, 59h) lacks, placed before hold shoot: spec row "facing left:
+  back held; beats shoot held". No record reaches it (every recorded take-off ends by its
+  animation the next frame); C-chart-i, C-chart-j.
+- The straight jump aiming down facing right (17h) has hold right + jump + shoot → 13h after the
+  diagonal rows; 18h has a second left + jump + aim-down row in its place. Spec row "aiming `Down`,
+  facing right: forward, jump and shoot held"; C-chart-k, C-chart-l.
+- The gun: every row naming shoot whose pose is `Forward` running, jumping or falling goes to
+  0Bh, 13h or 67h. 0Bh's and 67h's hold-forward rows go to themselves, 09h's and 29h's to
+  themselves (spec "gun as it was"); 13h's hold right goes to 51h (stowed). 13h lacks 4Dh's and
+  51h's hold jump → 4Dh, so jump alone is the lookup failure; 67h lacks 29h's up + back and
+  down + back → 87h, so up or down wins. Landing (`$91:E95D`: E6h/E7h with shoot held, else
+  A4h/A5h or the aimed landing poses), walking off a ledge (`$90:E3E0` 29h/2Ah) and the take-off's
+  animation end (4Bh → 4Dh) all give stowed poses.
+- Records: G1 r08:394 (09h → 0Bh), G2 samus-ceres-push:858 (0Bh kept, pad 8100), G3 r04:262
+  (29h → 67h), G4 r04:263 (67h kept, pad 8100), G5 samus-ceres-push:828 (4Dh → 13h), G6
+  samus-ceres-push:829 (13h kept, pad 0080, handler `$90:A337`), G7 r08:243 (13h → 51h), G8
+  samus-grapple-release:231 (68h → 2Eh, pad 0500, handler `$90:A337`), G9 r04:498 (19h → 13h).
+  samus-ceres-push:524-529 hold 0Ch with pad 0 (the pose input isn't run there; not used).
+
+**The crouch-to-stand 5 px (chart-left).** The bank log calls `$91:8087`'s y − 5 dead, and it is:
+it reads the movement type `0A1F` after `$91:81A9`, which only writes the prospective pose, so it
+still reads crouching. But the 5 px happens: r02:391 → 392 (27h → 01h, pad 0100, y 00B0 → 00AB),
+r06:17 → 18, r07:31 → 32 and r07:41 → 42 (28h → 02h, y 0090 → 008B) all lift her 5 px in the
+frame of the change, with the radius 16 → 21: the pose change itself keeps her bottom edge
+where it was (`$91:F404` and the collision on a pose change, `$91:FDAE`; not traced to the
+instruction). The chart keeps the effect, worded as her feet staying put; U1 is r07:31.
 
 **A finding for `TurningRound`.** The ground turning poses (25h, 26h) have table rows, so with only
 run, shoot or jump held none fits and `$91:81DB` runs the lookup failure: command 2 ends the skid.

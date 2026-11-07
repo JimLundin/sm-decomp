@@ -94,11 +94,12 @@ except in a jump, a spin, a fall or a wall jump, where it means she has just sta
 | action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
 | facing | `Left`, `Right`, `Screen` (facing the player; counts as `Right` wherever a side is needed) |
 | aim | the arm's direction: `Forward`, `Up`, `UpForward`, `DownForward`, `Down`; it changes only the sprite, except for `AimingAndShooting` |
+| gun | `Stowed`, `Drawn` (her gun held out in front, a sprite of its own); only `Running`, `Jumping` and `Falling` aimed `Forward` show it `Drawn`, every other pose has it `Stowed`. It changes only the sprite and the pad chart's rows (`PadChart` says what draws and stows it) |
 
 **Forward** is the side she faces, **back** the other side; holding forward means holding the pad
-towards her facing. The sprite has more variants than these parts tell apart (the arm drawn out
-while shoot is held, the landing sprites, the spin drawn as the space jump or the screw attack);
-they move her the same, so the chart (§7) doesn't tell them apart either.
+towards her facing. The sprite has more variants than these parts tell apart (the landing
+sprites, the spin drawn as the space jump or the screw attack); they move her the same, so the
+chart (§7) doesn't tell them apart either.
 
 The ball `Still` is the ball at rest. While her body grows or shrinks, she moves as
 `SpeedBuildsAndBrakes` says.
@@ -347,6 +348,12 @@ rows); inside the header's 450 for the chart.
 - Forward and back are by her facing at the frame's start (a turn already faces its new way).
   The chart covers pads with at most one of left and right, and at most one of up and down, held:
   the pad can't hold both, and no record does.
+- The gun. A next pose has the gun `Stowed` unless its cell says "gun drawn" (she draws it) or
+  "gun as it was" (drawn if it was drawn); "kept" keeps it as it was. So she draws it by holding
+  shoot while running forward, taking off, jumping, falling or wall jumping, or by pressing shoot
+  in a spin, where the ranks make that row the winner; any other outcome stows it: an aim, a
+  turn, holding forward in a jump, a landing, walking off a ledge, the end of an animation. A Pad
+  cell that starts "gun stowed:" fits only while her gun is stowed.
 - Rows are listed by rank (just pressed first, then by how many buttons they name), and inside a
   rank by next pose (action, then the first aim the cell names, alphabetically; "kept" last);
   where two rows still tie, the one that beats the other comes first. Each situation's last row
@@ -369,9 +376,10 @@ rows); inside the header's 450 for the chart.
 | | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
 | running | down pressed; beats jump pressed | crouched `Crouching`, `Forward` | none |
 | | jump pressed | `Spinning` | `Jumping`'s spin start |
-| | forward and an aim button held; beats forward with up or down held | `Running`, `UpForward` with aim up, else `DownForward` | none |
-| | forward with up or down held | `Running`, `UpForward` with up, else `DownForward` | none |
-| | forward held | `Running`, `Forward` | none |
+| | forward and shoot held | `Running`, `Forward`, gun drawn | none |
+| | forward and an aim button held; beats forward with up or down held, and forward and shoot held | `Running`, `UpForward` with aim up, else `DownForward` | none |
+| | forward with up or down held; beats forward and shoot held | `Running`, `UpForward` with up, else `DownForward` | none |
+| | forward held | `Running`, `Forward`, gun as it was | none |
 | | up held; beats aim up or aim down held | upright `Still`, `Up` | none |
 | | aim up or aim down held | upright `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | back held; beats up held and aim up or aim down held | `Turning` | `TurningRound` |
@@ -379,16 +387,20 @@ rows); inside the header's 450 for the chart.
 | taking off | jump and forward held | `Jumping`, `Forward` | none |
 | | jump with up, down or an aim button held; beats jump and forward held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
 | | jump and back held; beats jump with up, down or an aim button held | `Turning` in the air | `TurningRound` |
-| | shoot held | `Jumping`, `Forward` | none |
-| | anything else, or nothing held (jump alone too) | kept | as running |
+| | shoot held | `Jumping`, `Forward`, gun drawn | none |
+| | she faces `Left`: back held; beats shoot held | `Turning` in the air | `TurningRound` |
+| | anything else, or nothing held (jump alone too, and back alone when she faces `Right`) | kept | as running |
 | in a straight jump | aiming `Down`: down pressed | ball `Morphing` | none |
+| | aiming `Down`, she faces `Right`: forward, jump and shoot held; forward with up, down or an aim button held beats it | `Jumping`, `Forward`, gun drawn | none |
 | | forward with up, down or an aim button held | `Jumping`, air aim | none |
-| | forward, jump or shoot held | `Jumping`, `Forward` | none |
-| | up, down or an aim button held; beats forward, jump or shoot held | `Jumping`, air aim | none |
+| | forward held; beats shoot held | `Jumping`, `Forward` | none |
+| | shoot held; beats jump held | `Jumping`, `Forward`, gun drawn | none |
+| | gun stowed: jump held | `Jumping`, `Forward` | none |
+| | up, down or an aim button held; beats forward held, shoot held and jump held | `Jumping`, air aim | none |
 | | back held; beats every other row naming one button | `Turning` in the air | `TurningRound` |
-| | aiming `Down`: jump held, and no other button a row names; beats forward, jump or shoot held | kept | none |
-| | anything else, or nothing held | kept | as running |
-| spinning | shoot pressed | `Jumping`, `Forward` | none |
+| | aiming `Down`: jump held, and no other button a row names; beats jump held | kept | none |
+| | anything else, or nothing held (with the gun drawn, jump alone too) | kept | as running |
+| spinning | shoot pressed | `Jumping`, `Forward`, gun drawn | none |
 | | shoot with up, down or an aim button held; beats forward and jump held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
 | | forward and jump held | kept | none |
 | | up, down or an aim button held; beats forward held and back held | `Jumping`, aim `Up` with up, else `UpForward` with aim up, else `DownForward` with aim down, else `Down` | none |
@@ -397,17 +409,18 @@ rows); inside the header's 450 for the chart.
 | | anything else, or nothing held | kept | none |
 | falling (upright) | aiming `Down`: down pressed | ball `Morphing` | none |
 | | forward with up or down held | `Falling`, `UpForward` with up, else `DownForward` | none |
-| | forward or shoot held | `Falling`, `Forward` | none |
-| | up, down or an aim button held; beats forward or shoot held | `Falling`, air aim | none |
-| | back held; beats forward or shoot held, and up, down or an aim button held; aiming `Down`, up or down held beats it | `Turning` in the air | `TurningRound` |
+| | shoot held; beats forward held | `Falling`, `Forward`, gun drawn | none |
+| | forward held | `Falling`, `Forward`, gun as it was | none |
+| | up, down or an aim button held; beats shoot held and forward held | `Falling`, air aim | none |
+| | back held; beats shoot held, forward held, and up, down or an aim button held; aiming `Down` or with the gun drawn, up or down held beats it | `Turning` in the air | `TurningRound` |
 | | anything else, or nothing held | kept, aim `Forward` | dash 0 |
 | crouched | down pressed | ball `Morphing` | none |
 | | up pressed; beats every other row naming a pressed button | `StandingUp`, crouch aim | none |
 | | jump pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
 | | back pressed; beats down pressed and jump pressed | crouched `Turning` | none |
-| | forward and an aim button held | upright `Still`, `Forward` | she stands at once: 5 px up |
+| | forward and an aim button held | upright `Still`, `Forward` | she stands at once, her feet where they were: 5 px up |
 | | both aim buttons held; beats forward and an aim button held | crouched `Still`, `Up` | none |
-| | forward held | upright `Still`, `Forward` | she stands at once: 5 px up |
+| | forward held | upright `Still`, `Forward` | she stands at once, her feet where they were: 5 px up |
 | | aim up or aim down held | crouched `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
 | a ball, on the ground or in the air | jump pressed, with the spring ball, on the ground | the ball off the ground, rising | `Jumping`'s spring-ball hop |
@@ -432,7 +445,7 @@ rows); inside the header's 450 for the chart.
 | | the way she walks held | `Turning` | `TurningRound` |
 | | anything else, or nothing held | upright `Still`, facing the way she looks | she follows the pad again |
 | wall jumping | down pressed | ball `Morphing` | none |
-| | shoot held; beats jump held | `Jumping`, `Forward` | none |
+| | shoot held; beats jump held | `Jumping`, `Forward`, gun drawn | none |
 | | aim up or aim down held; beats shoot held and jump held | `Jumping`, `UpForward` with aim up, else `DownForward` | none |
 | | back held; beats every other row naming one button | `Spinning`, facing back | `TurningRound` |
 | | jump held | kept | none |
@@ -457,8 +470,8 @@ rows); inside the header's 450 for the chart.
 - The let-go outcomes "as running" mean: the dash joins her horizontal speed (dash 0) and she
   carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the
   pad again.
-- checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, and R133 and R141 of
-  `TurningRound`); constructed (C-chart-a to C-chart-h).
+- checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, U1, and R133 and R141 of
+  `TurningRound`); constructed (C-chart-a to C-chart-l).
 
 ### Aiming
 - Mechanic. The aim a next pose takes from the held buttons, by the rule its row names:

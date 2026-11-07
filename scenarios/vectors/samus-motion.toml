@@ -1909,7 +1909,8 @@ jump_pressed = false
 after = { position = ["0110.0000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000" }
 
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
-# - pose: the pose at the frame's start (body, action, facing, aim); pad: the buttons held;
+# - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
+#   default "Stowed"); pad: the buttons held;
 #   jump_pressed: jump just pressed; pressed: the other buttons just pressed this frame.
 # - met: what this frame's moves met: "nothing", "floor" (a landing), "no_floor" (walking off a
 #   ledge), "wall" (a wall stop), "wall_kick" (the wall-jump kick), or "animation_end" (the pose's
@@ -2335,3 +2336,164 @@ jump_pressed = false
 pressed = []
 met = "nothing"
 after = { pose = { body = "Upright", action = "Moonwalking", facing = "Left", aim = "UpForward" } }
+
+# The drawn gun (spec section 2's gun, PadChart's gun rows), from records.
+
+[[pose_step]]
+id = "G1"
+source = "r08:394"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" }
+pad = ["run", "right", "shoot"]
+jump_pressed = false
+pressed = ["shoot"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "G2"
+source = "samus-ceres-push:858"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward", gun = "Drawn" }
+pad = ["run", "right"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "G3"
+source = "r04:262"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward" }
+pad = ["run", "right", "shoot"]
+jump_pressed = false
+pressed = ["shoot"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "G4"
+source = "r04:263"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward", gun = "Drawn" }
+pad = ["run", "right"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "G5"
+source = "samus-ceres-push:828"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" }
+pad = ["jump", "shoot"]
+jump_pressed = false
+pressed = ["shoot"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "G6"
+source = "samus-ceres-push:829"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" }
+pad = ["jump"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "G7"
+source = "r08:243"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" }
+pad = ["right", "shoot"]
+jump_pressed = false
+pressed = ["right"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "G8"
+source = "samus-grapple-release:231"
+entries = ["PadChart", "Aiming"]
+pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Forward", gun = "Drawn" }
+pad = ["right", "down"]
+jump_pressed = false
+pressed = ["right", "down"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Down" } }
+
+[[pose_step]]
+id = "G9"
+source = "r04:498"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Spinning", facing = "Right", aim = "Forward" }
+pad = ["left", "shoot"]
+jump_pressed = false
+pressed = ["left", "shoot"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+# Rows that hold for one facing only; no record reaches them.
+
+[[pose_step]]
+id = "C-chart-i"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "TakingOff", facing = "Left", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Turning", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "C-chart-j"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "TakingOff", facing = "Right", aim = "Forward" }
+pad = ["left"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "TakingOff", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "C-chart-k"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down" }
+pad = ["right", "jump", "shoot"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "C-chart-l"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Down" }
+pad = ["left", "jump", "shoot"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Forward" } }
+
+# Standing from a crouch by holding forward: her feet stay where they were.
+
+[[vector]]
+id = "U1"
+source = "r07:31"
+entries = ["PadChart", "PoseFollows"]
+world = { floor_top = 160 }
+before = { position = ["009D.C000", "0090.FFFF"], speed_x = "-0000.C000" }
+pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16] }
+next_pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["009D.C000", "008B.FFFF"] }
