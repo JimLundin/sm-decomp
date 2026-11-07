@@ -197,6 +197,9 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   and so never paid for them; loading them is part of rebuilding the game, so the new engine
   stating them is not extra logic. A data row must state the game's data. A row that encodes a
   decision the code would otherwise make is logic, and a review moves it back.
+- `tools size` also reports declarations apart (the tokens of item-level `struct`, `enum`,
+  `union` and `type` items and of attributes), so typing is visible on its own. The rule is held
+  on logic and declarations together, as the baselines were set.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once
