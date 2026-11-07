@@ -38,7 +38,11 @@ your report and don't use it.
    warnings` and `cargo fmt --check`, each as its own command.
 4. Every literal and branch names its behaviour id. Values come from the rules or the spec's
    numbers, never from a constant you invented.
-5. Watch the size target in the spec's header as you go. Going over it is a stop; report the number.
+5. Watch the size target in the spec's header as you go. Being over it is not a reason to stop
+   early: keep reshaping until you reach it, or until you can say why the rest can't go, and report
+   both.
+6. Take the time and the context the work needs. There is no time limit and no limit on how much
+   you read of this repository; finish the task rather than hand back part of it.
 
 ## Commits
 

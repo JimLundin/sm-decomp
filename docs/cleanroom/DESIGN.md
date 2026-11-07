@@ -12,7 +12,7 @@ need is in this repository; read nothing outside it.
 - **Exact.** The spec's numbers and rules are exact, quirks included, and the vectors check them.
   The finished model is later checked against the real game, frame by frame.
 - **Small and data-driven.** One kind of movement or situation is one row of a table, where it can
-  be. One rule lives in one place. The spec's header gives a size target; going over it is a stop.
+  be. One rule lives in one place. The spec's header gives a size target; work until you reach it.
 
 ## What a modern developer would expect
 
