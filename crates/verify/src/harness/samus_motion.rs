@@ -12,18 +12,18 @@
 use core::fmt;
 
 use clean_model_samus_motion::{
-    Behaviour, BehaviourId, CATALOGUE, Change, Frame as Step, Met, Outcome, Rules as Reference,
-    Samus as Model, Seat, Vertical, WallTest,
+    Behaviour, BehaviourId, CATALOGUE, Rules as Reference, Samus as Model, Seat, Standing,
+    Vertical, WallTest,
 };
-use clean_types::{Action, Pose as Shape, World};
+use clean_types::{Action, Block as Kind, Heading, Pose as Shape, Way, World};
 use game::Content;
 use game::collision::Room;
 use game::collision::solid_enemy::Obstacle;
 use game::model::num::Fixed;
 use game::pose::{self, PoseRequests};
 use game::samus_world::SamusWorld;
-use game::samus_world::frame::{FrameSource, body};
-use game::samus_world::state::{clean_of, dress, write_back};
+use game::samus_world::state::clean_of;
+use game::samus_world::step::{Ran, Reads, run};
 use game::state::Controller;
 use game::state::room::{Block, BlockColumns, ElevatorRide};
 use game::state::samus::{Bounce, Motion, Position, Samus, SpeedMode, VerticalMotion};
@@ -555,7 +555,7 @@ impl Inputs {
 
 /// The catalogue entries the step exercised, which the attribution reads.
 #[derive(Default)]
-pub struct Exercised(Vec<BehaviourId>);
+pub struct Exercised(Vec<&'static BehaviourId>);
 
 /// Whether Samus's motion runs in the frame after `record`: gameplay, and the main thread
 /// waiting at the main loop's end, not inside a routine that waits mid-pass.
@@ -690,34 +690,25 @@ impl Domain for SamusMotion {
             pose::set_radius(samus, content);
             pose::input(samus, &inputs.controller, content)
         };
-        let Some(mut model) = clean_of(samus) else {
-            return;
-        };
-        let worn = dress(samus);
-        let sized = |pose| body(content, worn, pose);
-        let frame = FrameSource {
-            samus,
-            controller: &inputs.controller,
-            ride: inputs.ride,
-            completed: inputs.completed,
-            requests,
-            content,
-        }
-        .frame(&sized);
         let room = Room {
             blocks: &inputs.blocks,
             width: inputs.width,
             slopes: Some(&content.slopes),
         };
         let level = SamusWorld::of(room, inputs.enemies.iter().copied());
-        let before = model;
-        let outcome = model.step(&frame, &level, &Reference::REFERENCE);
-        let solid = !level.solid_enemies().is_empty();
-        write_back(&model, samus);
-        world.0 = exercised(&before, &model, &frame, &outcome, solid);
+        let reads = Reads {
+            controller: &inputs.controller,
+            ride: inputs.ride,
+            completed: inputs.completed,
+            requests,
+            content,
+        };
+        if let Some(ran) = run(samus, reads, &level, &Reference::REFERENCE) {
+            world.0 = exercised(&ran, &level);
+        }
     }
 
-    fn exercised(&self, _: &Samus, _: &Inputs, world: &Exercised) -> Vec<BehaviourId> {
+    fn exercised(&self, _: &Samus, _: &Inputs, world: &Exercised) -> Vec<&'static BehaviourId> {
         world.0.clone()
     }
 
@@ -750,19 +741,31 @@ const fn turning(pose: Shape) -> bool {
 
 /// The catalogue entries a frame exercised, from her before and after the step, its frame and
 /// what it showed: each entry whose rule the frame's situation or outcome brings into play.
-fn exercised(
-    before: &Model,
-    after: &Model,
-    frame: &Step,
-    outcome: &Outcome,
-    solid: bool,
-) -> Vec<BehaviourId> {
+/// What her moves met is read from her phases and the cells her moves reached: she landed when
+/// she was in the air and isn't, and a move met a block when it reached one that isn't air.
+fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<&'static BehaviourId> {
     use BehaviourId as B;
+    let Ran {
+        before,
+        after,
+        outcome,
+        ..
+    } = ran;
     let airborne = before.vertical != Vertical::Ground;
+    let landed = airborne && after.vertical == Vertical::Ground;
+    let walked_off = !airborne && after.vertical != Vertical::Ground;
+    let met = |ways: &[Heading]| {
+        outcome.reached.iter().any(|touch| {
+            matches!(touch.way, Way::Move(heading) if ways.contains(&heading))
+                && !matches!(level.block(touch.cell), Kind::Air)
+        })
+    };
+    let wall_or_ceiling = met(&[Heading::Left, Heading::Right, Heading::Up]);
+    let blocked = wall_or_ceiling || met(&[Heading::Down]);
     let changed = after.pose != before.pose;
-    let met = outcome.met;
     let aimed = after.pose.aim != before.pose.aim;
-    let moonfall = |samus: &Model| matches!(samus.vertical, Vertical::Moonfall(_));
+    let stepped = changed && matches!(after.pose.action, Action::Running | Action::AgainstWall);
+    let moonfall = |samus: &Model| samus.vertical == Vertical::Moonfall;
     [
         (B::MovesAsShePosed, true),
         (B::PoseFollows, true),
@@ -777,18 +780,15 @@ fn exercised(
             B::Jumping,
             changed && matches!(after.pose.action, Action::TakingOff | Action::Spinning),
         ),
-        (B::Landing, met == Some(Met::Floor)),
-        (B::WhatHerMovesMet, met.is_some()),
-        (
-            B::WallsAndCeilings,
-            matches!(met, Some(Met::Wall | Met::Ceiling)),
-        ),
-        (
-            B::BlocksStopFlush,
-            matches!(met, Some(Met::Wall | Met::Ceiling | Met::Floor)),
-        ),
+        (B::Landing, landed),
+        (B::WhatHerMovesMet, landed || walked_off || wall_or_ceiling),
+        (B::WallsAndCeilings, wall_or_ceiling),
+        (B::BlocksStopFlush, blocked),
         (B::Aiming, aimed),
-        (B::AimingAndShooting, aimed || met == Some(Met::AimStep)),
+        (
+            B::AimingAndShooting,
+            aimed || stepped || matches!(outcome.standing, Standing::Restarts),
+        ),
         (
             B::WallJump,
             outcome.wall_test != WallTest::Neither || after.pose.action == Action::WallJumping,
@@ -796,15 +796,15 @@ fn exercised(
         (B::Moonfall, moonfall(before) || moonfall(after)),
         (
             B::PoseFitAfterMoves,
-            outcome.change != Change::Chosen(None) || (changed && after.radius.y > before.radius.y),
+            changed && after.radius.y > before.radius.y,
         ),
         (
             B::ShrinkingLowersHer,
             changed && matches!(after.pose.action, Action::Crouching | Action::Morphing),
         ),
-        (B::AnimationEnds, frame.animation_ends),
-        (B::RidingTheElevator, frame.elevator_moving),
-        (B::SolidEnemies, solid),
+        (B::AnimationEnds, ran.animation_ends),
+        (B::RidingTheElevator, ran.elevator_moving),
+        (B::SolidEnemies, !level.solid_enemies().is_empty()),
         (
             B::SlopesCarry,
             before.seat == Seat::Seated || after.seat == Seat::Seated,
@@ -812,7 +812,13 @@ fn exercised(
         (B::TouchedCells, !outcome.reached.is_empty()),
     ]
     .into_iter()
-    .filter_map(|(id, exercised)| exercised.then_some(id))
+    .filter(|&(_, exercised)| exercised)
+    .filter_map(|(id, _)| {
+        SamusMotion::BEHAVIOURS
+            .iter()
+            .map(|entry| &entry.id)
+            .find(|entry| core::mem::discriminant(*entry) == core::mem::discriminant(&id))
+    })
     .collect()
 }
 

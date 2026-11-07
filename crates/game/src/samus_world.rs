@@ -5,7 +5,9 @@
 //! reactions a reached cell then starts (a scroll trigger, an item's block) aren't the
 //! world's: the model reports the cells it reached and the caller applies them.
 
-use clean_types::{Block, Cell, Hitbox, Position, Radius, Slope, SlopeFaces, Surface, Way, World};
+use clean_types::{
+    Block, Cell, Hitbox, Pair, Position, Radius, Slope, SlopeFaces, Surface, Way, World,
+};
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
 
@@ -49,8 +51,10 @@ impl<'a> SamusWorld<'a> {
             .into_iter()
             .filter(|enemy| enemy.solid || enemy.frozen)
             .map(|enemy| Hitbox {
-                x: enemy.position.x.pixels,
-                y: enemy.position.y.pixels,
+                centre: Pair {
+                    x: enemy.position.x.pixels,
+                    y: enemy.position.y.pixels,
+                },
                 radius: Radius {
                     x: enemy.radius_x,
                     y: enemy.radius_y,

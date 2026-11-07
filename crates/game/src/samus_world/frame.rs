@@ -4,7 +4,7 @@
 //! the elevator and the frame count, and each pose's body size from the pose table.
 
 use clean_model_samus_motion::Frame;
-use clean_types::{Equipment, Pad, Parity, Pose, Radius};
+use clean_types::{Buttons, Equipment, Parity, Pose, Radius, button};
 use data::assets::samus::import::map;
 use data::assets::samus::key::Dress;
 use data::pose::transition::{Control, Controls};
@@ -18,18 +18,21 @@ use crate::state::room::{ElevatorRide, ElevatorStatus};
 use crate::state::samus::{Item, Samus};
 
 /// The model's pad from the controls the buttons work; item cancel moves nothing.
-const fn pad(held: Controls) -> Pad {
-    Pad {
-        run: held.contains(Control::Run),
-        jump: held.contains(Control::Jump),
-        shoot: held.contains(Control::Shoot),
-        left: held.contains(Control::Left),
-        right: held.contains(Control::Right),
-        up: held.contains(Control::Up),
-        down: held.contains(Control::Down),
-        aim_up: held.contains(Control::AimUp),
-        aim_down: held.contains(Control::AimDown),
-    }
+fn pad(held: Controls) -> Buttons {
+    [
+        (Control::Run, button::RUN),
+        (Control::Jump, button::JUMP),
+        (Control::Shoot, button::SHOOT),
+        (Control::Left, button::LEFT),
+        (Control::Right, button::RIGHT),
+        (Control::Up, button::UP),
+        (Control::Down, button::DOWN),
+        (Control::AimUp, button::AIM_UP),
+        (Control::AimDown, button::AIM_DOWN),
+    ]
+    .into_iter()
+    .filter(|&(control, _)| held.contains(control))
+    .fold(Buttons::default(), |pad, (_, set)| pad.and(set))
 }
 
 /// The engine's frame, as the model reads it at the start of the movement handler.
@@ -74,6 +77,9 @@ impl FrameSource<'_> {
                 hi_jump: equipped.contains(Item::HiJumpBoots),
                 space_jump: equipped.contains(Item::SpaceJump),
                 spring_ball: equipped.contains(Item::SpringBall),
+                screw_attack: equipped.contains(Item::ScrewAttack),
+                other_suit: equipped.contains(Item::VariaSuit)
+                    || equipped.contains(Item::GravitySuit),
             },
             spin_turned_far: animation::spin_turned_far(samus),
             elevator_moving: self.ride.status != ElevatorStatus::Inactive,

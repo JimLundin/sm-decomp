@@ -1,4 +1,5 @@
 use clean_types::Parity;
+use clean_types::button::{AIM_DOWN, AIM_UP, DOWN, JUMP, LEFT, RIGHT, RUN, SHOOT, UP};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -47,16 +48,12 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
     let sized = |pose| body(&content, plain, pose);
     let frame = source.frame(&sized);
     let pad = frame.pad;
-    assert_eq!(
-        [pad.jump, pad.run, pad.right, pad.aim_up],
-        [true, true, true, true]
-    );
-    assert_eq!(
-        [pad.shoot, pad.left, pad.up, pad.down, pad.aim_down],
-        [false; 5]
-    );
+    let held = [JUMP, RUN, RIGHT, AIM_UP];
+    assert!(held.iter().all(|&set| pad.any(set)));
+    let free = [SHOOT, LEFT, UP, DOWN, AIM_DOWN];
+    assert!(free.iter().all(|&set| !pad.any(set)));
     let pressed = frame.pressed;
-    assert!(pressed.jump && !pressed.run && !pressed.right && !pressed.aim_up);
+    assert!(pressed.any(JUMP) && !pressed.any(RUN.and(RIGHT).and(AIM_UP)));
     assert!(frame.equipment.hi_jump);
     assert!(!frame.equipment.space_jump);
     assert!(frame.elevator_moving);

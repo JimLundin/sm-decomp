@@ -1,5 +1,5 @@
 use clean_model_samus_motion::{Carry, DashIs, Rules, Spin, Vertical};
-use clean_types::{Action, Fixed as Model, Heading, Radius};
+use clean_types::{Action, Block as Kind, Fixed as Model, Heading, Radius, Way, World};
 use data::level::{BlockKind, Bts};
 
 use super::{X_RADIUS, clean_of, pose_id, write_back};
@@ -96,6 +96,12 @@ fn the_games_words_come_back_as_they_went() {
             0x1_3800,
         ),
         (SPIN_RIGHT, SpeedMode::Accelerating, VerticalMotion::Down, 0),
+        (
+            RUNNING_RIGHT,
+            SpeedMode::Accelerating,
+            VerticalMotion::Down,
+            0xE000,
+        ),
     ];
     for (pose, mode, vertical, speed) in cases {
         for (momentum, seated) in [(false, false), (true, true)] {
@@ -127,12 +133,19 @@ fn the_games_words_come_back_as_they_went() {
 }
 
 /// The game's words mean what the decode notes say: a skid points against her facing, a rise
-/// past zero is spent, no direction in a spin is a moonfall, its word the speed upward.
+/// past zero points downward, no direction in a spin is a moonfall, its word the speed upward,
+/// and a downward speed on the ground is kept.
 #[test]
 fn what_she_remembers_reads_from_the_games_words() {
     let read = |pose, mode, vertical, speed| {
-        clean_of(&samus(pose, motion(mode, vertical, speed)))
-            .map(|model| (model.carry, model.way, model.vertical, model.dash_is))
+        clean_of(&samus(pose, motion(mode, vertical, speed))).map(|model| {
+            (
+                model.carry,
+                model.way,
+                (model.vertical, model.vy),
+                model.dash_is,
+            )
+        })
     };
     let skid = read(
         RUNNING_RIGHT,
@@ -143,7 +156,7 @@ fn what_she_remembers_reads_from_the_games_words() {
     assert!(
         skid.is_some_and(|(carry, way, vertical, _)| carry == Carry::CarriesOn
             && way == Heading::Left
-            && vertical == Vertical::Ground)
+            && vertical == (Vertical::Ground, Model(0)))
     );
     let spent = read(
         SPIN_RIGHT,
@@ -151,7 +164,7 @@ fn what_she_remembers_reads_from_the_games_words() {
         VerticalMotion::Up,
         0xFFFF_E400,
     );
-    assert!(spent.is_some_and(|(.., vertical, _)| vertical == Vertical::Spent(Model(0x1C00))));
+    assert!(spent.is_some_and(|(.., vertical, _)| vertical == (Vertical::Rising, Model(0x1C00))));
     let moonfall = read(
         SPIN_RIGHT,
         SpeedMode::Accelerating,
@@ -160,8 +173,16 @@ fn what_she_remembers_reads_from_the_games_words() {
     );
     assert!(
         moonfall.is_some_and(|(.., vertical, dash)| dash == DashIs::ToLose
-            && vertical == Vertical::Moonfall(Model(0x1_3800)))
+            && vertical == (Vertical::Moonfall, Model(0x1_3800)))
     );
+    // Running with a downward speed, she keeps it on the ground.
+    let kept = read(
+        RUNNING_RIGHT,
+        SpeedMode::Accelerating,
+        VerticalMotion::Down,
+        0xE000,
+    );
+    assert!(kept.is_some_and(|(.., vertical, _)| vertical == (Vertical::Ground, Model(0xE000))));
     // A pose outside her domain has no model.
     assert!(clean_of(&samus(PoseId(0xD3), Motion::default())).is_none());
 }
@@ -253,9 +274,16 @@ fn a_frame_on_the_floor_runs_her_right() {
     let Some(mut model) = clean_of(&engine) else {
         panic!("running is hers");
     };
+    let start = model;
     let outcome = model.step(&frame, &world, &Rules::REFERENCE);
     write_back(&model, &mut engine);
-    assert!(outcome.met.is_none());
+    // Her moves met nothing but the floor the pull holds her to: she stays on the ground, and
+    // no sideways move reached a block that isn't air.
+    assert!(start.vertical == Vertical::Ground && model.vertical == Vertical::Ground);
+    assert!(outcome.reached.iter().all(|touch| {
+        !matches!(touch.way, Way::Move(Heading::Left | Heading::Right))
+            || matches!(world.block(touch.cell), Kind::Air)
+    }));
     assert_eq!(model.pose.action, Action::Running);
     assert_eq!(engine.motion.base_speed, Fixed::new(1, 0x3000));
     assert_eq!(engine.motion.position.x, Fixed::new(0x21, 0x3000));

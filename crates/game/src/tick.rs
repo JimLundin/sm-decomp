@@ -477,13 +477,15 @@ fn gameplay_phase(
             let surroundings = surroundings(&state.room, content, &pass.active);
             let mut touches = Touches::default();
             let inputs = samus_world::step::Inputs {
-                controller: &state.controller,
-                ride: state.elevator,
-                completed,
-                requests: pass.requests,
+                reads: samus_world::step::Reads {
+                    controller: &state.controller,
+                    ride: state.elevator,
+                    completed,
+                    requests: pass.requests,
+                    content,
+                },
                 surroundings,
                 speed_cap: rules.switches.speed_cap,
-                content,
             };
             let stepped = samus_world::step::step(&mut state.samus, inputs, &mut touches);
             animation::after_motion(&mut state.samus, stepped.is_some_and(|s| s.armed));

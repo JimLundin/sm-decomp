@@ -209,7 +209,7 @@ pub trait Domain {
         _state: &Self::State,
         _inputs: &Self::Inputs,
         _world: &Self::World,
-    ) -> Vec<BehaviourId> {
+    ) -> Vec<&'static BehaviourId> {
         Vec::new()
     }
 
@@ -293,7 +293,7 @@ pub struct Run {
 #[derive(Clone, Copy, Debug)]
 pub struct BehaviourReport {
     /// The entry.
-    pub id: BehaviourId,
+    pub id: &'static BehaviourId,
     /// The compared frames that exercised it.
     pub exercised: u64,
     /// Those of them that matched and were verified on every unmasked field.
@@ -356,7 +356,7 @@ impl Report {
             behaviours: D::BEHAVIOURS
                 .iter()
                 .map(|behaviour| BehaviourReport {
-                    id: behaviour.id,
+                    id: &behaviour.id,
                     exercised: 0,
                     matched: 0,
                 })
@@ -386,7 +386,11 @@ impl Report {
         self.defects.values().sum()
     }
 
-    fn compare<D: Domain>(&mut self, frame: &Compared<'_, D::Fields>, exercised: &[BehaviourId]) {
+    fn compare<D: Domain>(
+        &mut self,
+        frame: &Compared<'_, D::Fields>,
+        exercised: &[&'static BehaviourId],
+    ) {
         self.compared = self.compared.saturating_add(1);
         let (mut all, mut verified, mut null_all, mut any) = (true, true, true, false);
         for (index, (field, report)) in D::FIELDS.iter().zip(&mut self.fields).enumerate() {
@@ -443,7 +447,7 @@ impl Report {
             self.null_matched = self.null_matched.saturating_add(1);
         }
         for id in exercised {
-            if let Some(report) = self.behaviours.iter_mut().find(|entry| same(entry.id, *id)) {
+            if let Some(report) = self.behaviours.iter_mut().find(|entry| same(entry.id, id)) {
                 report.exercised = report.exercised.saturating_add(1);
                 if all && verified {
                     report.matched = report.matched.saturating_add(1);
@@ -578,8 +582,8 @@ impl fmt::Display for Behaviours<'_> {
 }
 
 /// Whether `a` and `b` are the same catalogue entry.
-fn same(a: BehaviourId, b: BehaviourId) -> bool {
-    std::mem::discriminant(&a) == std::mem::discriminant(&b)
+fn same(a: &BehaviourId, b: &BehaviourId) -> bool {
+    std::mem::discriminant(a) == std::mem::discriminant(b)
 }
 
 /// The fields on which two projections differ.

@@ -4,11 +4,11 @@
 //! The engine keeps her motion as the game keeps it, so the model's Samus is rebuilt from it
 //! each frame and written back after the step. What she remembers maps to the game's own
 //! words: carrying on and skidding to the speed mode, a dash to lose to the momentum flag clear,
-//! a spent rise to an upward speed past zero, the moonfall to no vertical direction in the
-//! air, a spin carried on to the pose history, the seat to the slope flag.
+//! her signed vertical speed to a magnitude and a direction, the moonfall to no vertical
+//! direction in the air, a spin carried on to the pose history, the seat to the slope flag.
 
 use clean_model_samus_motion::{Bounces, Carry, DashIs, Samus as Model, Seat, Spin, Vertical};
-use clean_types::{Action, Fixed, Heading, Pose, Position, Radius};
+use clean_types::{Action, Fixed, Heading, Pose, Position, Radius, Turn};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -38,11 +38,16 @@ const fn opposite(heading: Heading) -> Heading {
     }
 }
 
-/// Whether `pose` is one she is in the air in, where no vertical direction is a moonfall.
+/// Whether `pose` is one she is in the air in: a jump, a spin, a fall or a wall jump, a turn in
+/// a jump or a fall included. Elsewhere she is on the ground, keeping any vertical speed.
 const fn in_the_air(pose: Pose) -> bool {
     matches!(
         pose.action,
-        Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
+        Action::Jumping
+            | Action::Spinning
+            | Action::Falling
+            | Action::WallJumping
+            | Action::Turning(Turn::Jump | Turn::Fall)
     )
 }
 
@@ -57,19 +62,15 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         SpeedMode::Decelerating => (Carry::CarriesOn, side),
         SpeedMode::TurningAround => (Carry::CarriesOn, opposite(side)),
     };
-    let speed = quantity(motion.vertical_speed);
-    let vertical = match motion.vertical {
-        // With no direction the word is the speed upward: a moonfall's is negative.
-        VerticalMotion::None if in_the_air(pose) => {
-            Vertical::Moonfall(Fixed(0u32.wrapping_sub(speed.0)))
-        }
-        VerticalMotion::None => Vertical::Ground,
-        // A rise the pull took past zero points downward by what it took past.
-        VerticalMotion::Up if motion.vertical_speed.negative() => {
-            Vertical::Spent(Fixed(0u32.wrapping_sub(speed.0)))
-        }
-        VerticalMotion::Up => Vertical::Rises(speed),
-        VerticalMotion::Down => Vertical::Falls(speed),
+    // The word is a magnitude, downward with direction down and upward otherwise; a rise the
+    // pull took past zero is then downward by what it took past.
+    let magnitude = quantity(motion.vertical_speed);
+    let (vertical, vy) = match motion.vertical {
+        VerticalMotion::None if in_the_air(pose) => (Vertical::Moonfall, magnitude.negated()),
+        VerticalMotion::None => (Vertical::Ground, magnitude.negated()),
+        VerticalMotion::Up => (Vertical::Rising, magnitude.negated()),
+        VerticalMotion::Down if in_the_air(pose) => (Vertical::Falling, magnitude),
+        VerticalMotion::Down => (Vertical::Ground, magnitude),
     };
     // The game's spin is carried on when the pose before the last spin pose was a spin or a
     // wall jump; the model's First and Second both mean it isn't yet.
@@ -91,6 +92,7 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         } else {
             DashIs::ToLose
         },
+        vy,
         vertical,
         bounces: match motion.bounce {
             Bounce::None => Bounces::None,
@@ -132,12 +134,14 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     } else {
         SpeedMode::TurningAround
     };
+    // On the ground a speed she keeps is downward or upward by its sign; none is no direction.
+    let vy = model.vy;
     (motion.vertical, motion.vertical_speed) = match model.vertical {
-        Vertical::Moonfall(v) => (VerticalMotion::None, Exact(0u32.wrapping_sub(v.0))),
-        Vertical::Ground => (VerticalMotion::None, Exact(0)),
-        Vertical::Rises(v) => (VerticalMotion::Up, exact(v)),
-        Vertical::Spent(v) => (VerticalMotion::Up, Exact(0u32.wrapping_sub(v.0))),
-        Vertical::Falls(v) => (VerticalMotion::Down, exact(v)),
+        Vertical::Moonfall => (VerticalMotion::None, exact(vy.negated())),
+        Vertical::Ground if vy.is_zero() => (VerticalMotion::None, Exact(0)),
+        Vertical::Rising => (VerticalMotion::Up, exact(vy.negated())),
+        Vertical::Ground if vy.negative() => (VerticalMotion::Up, exact(vy.negated())),
+        Vertical::Falling | Vertical::Ground => (VerticalMotion::Down, exact(vy)),
     };
     motion.bounce = match model.bounces {
         Bounces::None => Bounce::None,

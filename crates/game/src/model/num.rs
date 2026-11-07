@@ -26,10 +26,6 @@ impl Fixed {
     pub const fn sub(self) -> u16 {
         Speed(self.0).subpixels()
     }
-    /// Its pixel word's sign bit is set: every "negative" of the spec.
-    pub(crate) const fn negative(self) -> bool {
-        self.pixel().cast_signed().is_negative()
-    }
 }
 
 impl From<Speed> for Fixed {
