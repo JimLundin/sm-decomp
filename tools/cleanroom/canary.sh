@@ -109,12 +109,14 @@ fingerprints() {
     ':(exclude)crates/verify/src/source.rs' ':(exclude)crates/verify/src/strand.rs' \
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | LC_ALL=C sort -u >"$work/common"
   # Distinctive lines: 40+ characters, printable ASCII without quotes or backslashes, so they
-  # read the same raw and inside a JSON transcript.
+  # read the same raw and inside a JSON transcript, and 12+ letters or digits: a table rule such
+  # as "| --- | --- |" is in every Markdown file and a substring of any wider one.
   : >"$work/map"
   while IFS=$'\t' read -r blob path; do
     git -C "$top" cat-file blob "$blob" | tr -d '\r' \
       | LC_ALL=C awk -v b="$blob" -v p="$path" '{ sub(/^[ \t]+/, ""); sub(/[ \t]+$/, "") }
-          length($0) >= 40 && $0 !~ /[^ -~]/ && $0 !~ /["\\]/ { print $0 "\t" b "\t" p }' >>"$work/map"
+          length($0) >= 40 && $0 !~ /[^ -~]/ && $0 !~ /["\\]/ {
+            words = $0; if (gsub(/[A-Za-z0-9]/, "", words) >= 12) print $0 "\t" b "\t" p }' >>"$work/map"
   done <"$work/blobs"
   LC_ALL=C sort -u -t$'\t' -k1,1 "$work/map" >"$work/map.sorted"
   LC_ALL=C join -t$'\t' -v1 "$work/map.sorted" "$work/common" >"$private/fingerprints.tsv"
