@@ -4,18 +4,49 @@
 //! A domain's budget is k = 24 weighted tokens per spec unit, per area, each area capped at 70% of
 //! its old code where that figure is given. The units are counted from the spec's structure, so
 //! rewording or explaining a rule moves nothing:
-//! - an **arm** is a bullet holding `→` (outside backticks): `<conditions> → <outcome> [vectors]`.
-//!   It is one unit. Arms of one entry with the same outcome count once. An arm counts only if it
-//!   cites vectors and each of them exists in the vector file; a recorded frame, `row:frame` or
-//!   `row:first-last`, exists when a vector comes from that row. An arm whose outcome is only a
-//!   reference to other entries (`` as `Landing` ``) is a cross-reference and counts nothing;
+//! - an **arm** is a bullet holding `→` (outside backticks): `<conditions> → <outcome> [vectors]`,
+//!   under a `### Entry` heading. It is one unit. Arms of one entry with the same outcome count
+//!   once. An arm counts only if it cites vectors and each of them exists in the vector file. A
+//!   recorded frame, `row:frame` or `row:first-last`, exists when a vector's `source` is that
+//!   frame or, for a range, a frame inside it; another vector from the same row doesn't make it
+//!   exist. The labels `[original only]` and `[record only: row:frame, ...]` say an arm has no
+//!   vector: it counts 0 and is listed. An arm whose outcome is only a reference to other entries
+//!   (`` as `Landing` ``) is a cross-reference and counts nothing;
 //! - a **cell term** is one term a `Cells:` line names, a third of a unit, counted once per spec;
-//! - an **operator** in a backticked formula is a third of a unit, each distinct formula counted
-//!   once per entry. A formula spaces its operators (`x + d − rx`): a span with no space is a
-//!   name, a value or a path and counts nothing. A `+`, `-` or `−` with no operand before it is a
-//!   sign; an ASCII `-` between two letters or digits is part of a name (`C-wall`).
+//! - an **operator** in a backticked formula is a third of a unit. A formula spaces its operators
+//!   (`x + d − rx`): a span with no space is a name, a value or a path and counts nothing. A `+`,
+//!   `-` or `−` with no operand before it is a sign; an ASCII `-` between two letters or digits
+//!   is part of a name (`C-wall`).
+//!
+//! **Where formulas count.** Only in an entry's counted arms (an arm merged into an earlier one
+//! with the same outcome is part of it, so its formulas count) and its **definition bullets**:
+//! bullets with no `→` that aren't fields (`kind:`, `summary:`, `params:`, `switch:`,
+//! `checked:`) and don't start with an explanation word (`So`, `Thus`, `Hence`, `As`, `E.g.`,
+//! `For example`, `That is`, `I.e.`). An arm that counts 0, an explanation bullet and a
+//! paragraph count no operator. Within an entry:
+//! - a formula **mirrored** to the other axis or side counts once. Two formulas are mirrors when
+//!   one becomes the other by swapping `x` and `y` in every name of up to three letters (`rx`,
+//!   `ery`), by swapping `+` with `−`, `<` with `>`, `≤` with `≥`, `min` with `max`, `left` with
+//!   `right`, `top` with `bottom` and `up` with `down` throughout, or by both. So the four leading
+//!   edges `x + d + rx − 1`, `x + d − rx`, `y + d + ry − 1`, `y + d − ry` are two formulas;
+//! - a formula that **restates** part of another of the entry's counted formulas counts 0, in
+//!   either order in the text: its tokens, or a mirror's, are a whole operand of the longer one, a
+//!   run of its tokens bounded by its ends, brackets, commas or operators that bind more loosely
+//!   (on the left) or no more tightly (on the right) than the run's loosest. So `y + ry` restates
+//!   `gap = (ey − ery) − (y + ry)` and `top − 1` restates `bottom ≥ top − 1`, but `bottom ≥ top`
+//!   doesn't. Precedence, loosest first: `|| && | &`; comparisons; shifts; `+ − ±`;
+//!   `× ÷ · * / % mod`; `^`.
+//!
+//! The limits: these are textual. Two formulas that differ only in every `+` and `−` count once
+//! even when they aren't mirrors, a mirror written with different names (`w` for `rx`) counts
+//! twice, and an explanation that doesn't start with an explanation word counts its formulas;
+//! the spec review catches all three.
 //!
 //! Table rows, parameters, `checked:` bullets, prose and the vector file don't count.
+//!
+//! **Outside an entry** (MODEL §5's template puts every arm and formula under one), an arm or a
+//! definition bullet's formula counts 0 and fails: it is a finding, and `run` returns the report
+//! as an error.
 //!
 //! **Areas.** A line `Area <name> (old <tokens>): <item>, <item>, ...`, as a paragraph or a
 //! bullet, in the spec's header or in the `--areas` file, which replaces the spec's. An item names
@@ -25,15 +56,22 @@
 //! unassigned.
 //!
 //! **Findings**, for the spec review: arms with an earlier arm's outcome, arms that cite no vector
-//! or one the file doesn't hold, cross-references, an arm whose condition is an earlier one's with
-//! `not` in front (still counted: the review decides), a bullet with two `→`, entries without a
-//! `checked` bullet, and area items that name no heading.
+//! or one the file doesn't hold, original-only and record-only arms, cross-references, arms and
+//! formulas outside any entry, a bullet with two `→`, entries without a `checked` bullet, area
+//! items that name no heading, and the else-lint (still counted: the review decides):
+//! - a **complement arm** whose outcome repeats another arm's. An arm is a complement when its
+//!   condition is an earlier arm's with `not`, `no` or `unless` in front, or says `otherwise`,
+//!   `else` or `any`/`every`/`all other`. A complement with an outcome of its own is a rule;
+//!   one that repeats an outcome is the other arm's explanation;
+//! - a **null outcome**: an outcome whose first clause starts `nothing`, `none` or `no `, or says
+//!   something doesn't change. It belongs in an explanation bullet, with no `→`.
 //!
 //! **A spec commit's change.** With the parent's spec beside it,
 //! `git show HEAD~1:docs/behaviours/D.md > old.md`, the command line
 //! `tools spec-units docs/behaviours/D.md scenarios/vectors/D.toml --against old.md` prints the
 //! units and the budget before and after; the header's `Budget:` line is the report's.
 
+use std::collections::hash_map::Entry;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fmt::{self, Write as _};
 use std::fs;
@@ -60,6 +98,27 @@ const OPERATORS: &[&str] = &[
 const SIGNS: &[&str] = &["+", "-", "−", "±"];
 /// Named operators a formula may use.
 const WORD_OPERATORS: &[&str] = &["abs", "max", "min", "mod"];
+/// The swaps that mirror a formula to the other side.
+const SIDE_SWAPS: &[(&str, &str)] = &[
+    ("+", "−"),
+    ("<", ">"),
+    ("≤", "≥"),
+    ("<=", ">="),
+    ("min", "max"),
+    ("left", "right"),
+    ("top", "bottom"),
+    ("up", "down"),
+];
+/// Words that open an explanation bullet, whose formulas count nothing.
+const EXPLANATION_WORDS: &[&str] = &["so", "thus", "hence", "as", "e.g.", "i.e."];
+/// Phrases that open an explanation bullet.
+const EXPLANATION_PHRASES: &[&str] = &["for example", "that is"];
+/// The label of an arm only the original shows.
+const ORIGINAL_ONLY: &str = "original only";
+/// The label of an arm only recorded frames no vector holds show.
+const RECORD_ONLY: &str = "record only";
+/// Entry fields, whose formulas count nothing.
+const FIELDS: &[&str] = &["kind:", "summary:", "params:", "switch:", "checked"];
 
 /// A quantity of spec units, held in thirds so that a cell term or an operator is exact.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
@@ -100,12 +159,12 @@ impl fmt::Display for Units {
     }
 }
 
-/// What a vector file holds that an arm can cite: vector ids, and the rows recorded vectors come
-/// from.
+/// What a vector file holds that an arm can cite: vector ids, and the recorded frames vectors
+/// come from, by row.
 #[derive(Debug, Default)]
 pub struct Vectors {
     ids: HashSet<String>,
-    rows: HashSet<String>,
+    frames: HashMap<String, BTreeSet<u32>>,
 }
 
 impl Vectors {
@@ -116,10 +175,15 @@ impl Vectors {
         for line in toml.lines() {
             if let Some(id) = string_field(line, "id") {
                 vectors.ids.insert(id.to_owned());
-            } else if let Some((row, _)) =
-                string_field(line, "source").and_then(|source| source.split_once(':'))
+            } else if let Some((row, frame)) = string_field(line, "source")
+                .and_then(|source| source.rsplit_once(':'))
+                .and_then(|(row, frame)| Some((row, frame.parse::<u32>().ok()?)))
             {
-                vectors.rows.insert(row.to_owned());
+                vectors
+                    .frames
+                    .entry(row.to_owned())
+                    .or_default()
+                    .insert(frame);
             }
         }
         vectors
@@ -137,19 +201,29 @@ impl Vectors {
         self.ids.is_empty()
     }
 
-    /// Whether `cite` is a vector id, or a frame (`row:N` or `row:N-M`) of a recorded row.
+    /// Whether `cite` is a vector id, or a recorded frame (`row:N`, or `row:N-M` holding one) that
+    /// a vector's `source` is.
     fn holds(&self, cite: &str) -> bool {
         if self.ids.contains(cite) {
             return true;
         }
-        cite.rsplit_once(':').is_some_and(|(row, frames)| {
-            let digits = |part: &str| !part.is_empty() && part.chars().all(|c| c.is_ascii_digit());
-            let frames_ok = match frames.split_once('-') {
-                Some((first, last)) => digits(first) && digits(last),
-                None => digits(frames),
-            };
-            frames_ok && self.rows.contains(row)
-        })
+        let Some((row, frames)) = cite.rsplit_once(':') else {
+            return false;
+        };
+        let frame = |part: &str| {
+            part.chars()
+                .all(|c| c.is_ascii_digit())
+                .then(|| part.parse::<u32>().ok())
+                .flatten()
+        };
+        let range = match frames.split_once('-') {
+            Some((first, last)) => frame(first).zip(frame(last)),
+            None => frame(frames).map(|only| (only, only)),
+        };
+        range
+            .filter(|(first, last)| first <= last)
+            .zip(self.frames.get(row))
+            .is_some_and(|((first, last), recorded)| recorded.range(first..=last).next().is_some())
     }
 }
 
@@ -372,6 +446,180 @@ fn word_end(text: &str) -> usize {
     text.len()
 }
 
+/// A formula as tokens: names and numbers, operators (an ASCII `-` read as `−`) and the other
+/// marks, spaces dropped.
+fn tokens(formula: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut rest = formula;
+    while let Some(c) = rest.chars().next() {
+        let end = if c.is_alphanumeric() || c == '_' || c == '.' {
+            word_end(rest)
+        } else if let Some(op) = OPERATORS.iter().find(|op| rest.starts_with(**op)) {
+            op.len()
+        } else {
+            c.len_utf8()
+        };
+        let (token, tail) = rest.split_at(end.max(c.len_utf8()));
+        if !c.is_whitespace() {
+            out.push(if token == "-" { "−" } else { token }.to_owned());
+        }
+        rest = tail;
+    }
+    out
+}
+
+/// A token mirrored to the other axis: `x` and `y` swapped in a name of up to three letters.
+fn axis_mirror(token: &str) -> String {
+    let short = token.chars().count() <= 3
+        && token.chars().all(|c| c.is_ascii_alphabetic())
+        && !WORD_OPERATORS.contains(&token);
+    if !short {
+        return token.to_owned();
+    }
+    token
+        .chars()
+        .map(|c| match c {
+            'x' => 'y',
+            'y' => 'x',
+            'X' => 'Y',
+            'Y' => 'X',
+            other => other,
+        })
+        .collect()
+}
+
+/// A token mirrored to the other side (`SIDE_SWAPS`).
+fn side_mirror(token: &str) -> String {
+    SIDE_SWAPS
+        .iter()
+        .find_map(|(a, b)| {
+            if token == *a {
+                Some(*b)
+            } else if token == *b {
+                Some(*a)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(token)
+        .to_owned()
+}
+
+/// A formula's tokens and its mirrors': as written, to the other axis, the other side, and both.
+fn mirrors(tokens: &[String]) -> [Vec<String>; 4] {
+    let axis: Vec<String> = tokens.iter().map(|token| axis_mirror(token)).collect();
+    let side = |from: &[String]| from.iter().map(|token| side_mirror(token)).collect();
+    [tokens.to_vec(), side(&axis), side(tokens), axis]
+}
+
+/// The operators an entry's counted formulas hold: each formula once with its mirrors, and none
+/// for a formula that restates a run of a longer one.
+fn entry_operators(formulas: &[String]) -> u64 {
+    let mut distinct: Vec<(&str, [Vec<String>; 4])> = Vec::new();
+    for formula in formulas {
+        let variants = mirrors(&tokens(formula));
+        let [written, ..] = &variants;
+        let seen = distinct
+            .iter()
+            .any(|(_, other)| other.iter().any(|variant| variant == written));
+        if !seen {
+            distinct.push((formula, variants));
+        }
+    }
+    distinct
+        .iter()
+        .filter(|(_, variants)| {
+            !distinct
+                .iter()
+                .any(|(_, [longer, ..])| variants.iter().any(|variant| restates(longer, variant)))
+        })
+        .fold(0_u64, |sum, (formula, _)| {
+            sum.saturating_add(operators(formula))
+        })
+}
+
+/// How tightly an operator token binds, loosest 1; `None` for any other token.
+fn precedence(token: &str) -> Option<u8> {
+    match token {
+        "||" | "&&" | "|" | "&" => Some(1),
+        "=" | "==" | "!=" | "≠" | "<" | ">" | "<=" | ">=" | "≤" | "≥" => Some(2),
+        "<<" | ">>" => Some(3),
+        "+" | "−" | "±" => Some(4),
+        "×" | "÷" | "·" | "*" | "/" | "%" | "mod" => Some(5),
+        "^" => Some(6),
+        _ => None,
+    }
+}
+
+/// Whether `run` restates a subexpression of the longer formula `longer`: its tokens appear
+/// there whole, bounded on the left by the start, an opening mark, a comma or a looser
+/// operator, and on the right by the end, a closing mark, a comma or an operator no tighter
+/// than the run's loosest. So `top − 1` is part of `bottom ≥ top − 1`, and `bottom ≥ top` isn't.
+fn restates(longer: &[String], run: &[String]) -> bool {
+    if run.is_empty() || run.len() >= longer.len() {
+        return false;
+    }
+    let mut depth = 0_i32;
+    let loosest = run
+        .iter()
+        .filter_map(|token| {
+            match token.as_str() {
+                "(" | "[" => depth = depth.saturating_add(1),
+                ")" | "]" => depth = depth.saturating_sub(1),
+                _ => {}
+            }
+            // An absolute value's bars group, so they don't set the run's binding.
+            (depth == 0 && token != "|")
+                .then(|| precedence(token))
+                .flatten()
+        })
+        .min()
+        .unwrap_or(u8::MAX);
+    longer.windows(run.len()).enumerate().any(|(at, window)| {
+        let before = at.checked_sub(1).and_then(|left| longer.get(left));
+        let after = longer.get(at.saturating_add(run.len()));
+        let left_ok = before.is_none_or(|token| {
+            matches!(token.as_str(), "(" | "[" | ",")
+                || precedence(token).is_some_and(|binding| binding < loosest)
+        });
+        let right_ok = after.is_none_or(|token| {
+            matches!(token.as_str(), ")" | "]" | ",")
+                || precedence(token).is_some_and(|binding| binding <= loosest)
+        });
+        window == run && left_ok && right_ok
+    })
+}
+
+/// Whether a bullet with no `→` explains rather than defines: it starts with an explanation
+/// word or phrase.
+fn explains(text: &str) -> bool {
+    let lower = text
+        .trim_start_matches(|c: char| !c.is_alphanumeric())
+        .to_lowercase();
+    let first = lower
+        .split(|c: char| c.is_whitespace() || c == ',')
+        .next()
+        .unwrap_or_default();
+    EXPLANATION_WORDS.contains(&first)
+        || EXPLANATION_PHRASES
+            .iter()
+            .any(|phrase| lower.starts_with(phrase))
+}
+
+/// Whether a bullet is an entry field.
+fn field(text: &str) -> bool {
+    let lower = text.trim_start_matches('*').to_lowercase();
+    FIELDS.iter().any(|name| lower.starts_with(name))
+}
+
+/// The formulas of a text: its backticked spans holding a space, single-spaced.
+fn formulas(text: &str) -> impl Iterator<Item = String> + '_ {
+    spans(text)
+        .filter(|(outside, _)| !outside)
+        .map(|(_, span)| span.split_whitespace().collect::<Vec<_>>().join(" "))
+        .filter(|formula| formula.contains(' '))
+}
+
 /// How an arm was counted.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Verdict {
@@ -379,12 +627,35 @@ pub enum Verdict {
     Counts,
     /// The same outcome as an earlier counted arm of the entry, at that line: nothing.
     SameOutcome(usize),
-    /// It cites no vector: nothing.
-    Uncited,
+    /// It cites no vector, as it says: nothing.
+    Uncited(Unchecked),
     /// It cites these, which the vector file doesn't hold: nothing.
     Missing(Vec<String>),
     /// Its outcome only names other entries: nothing.
     CrossReference,
+    /// It is under no `### Entry` heading: nothing, and the spec fails.
+    OutsideEntry,
+}
+
+/// Why an arm cites no vector.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Unchecked {
+    /// It has no bracket of cites.
+    NoCite,
+    /// `[original only]`: only the original shows it.
+    OriginalOnly,
+    /// `[record only: row:frame, ...]`: recorded frames no vector holds.
+    RecordOnly(Vec<String>),
+}
+
+/// The else-lint's finding on a complement arm: its condition is the complement of the arm at
+/// `of`, and its outcome repeats the arm at `repeats`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Complement {
+    /// The arm whose condition it complements.
+    pub of: usize,
+    /// The arm whose outcome it repeats.
+    pub repeats: usize,
 }
 
 /// One arm as the spec states it.
@@ -398,8 +669,10 @@ pub struct Arm {
     outcome: String,
     /// How it counted.
     pub verdict: Verdict,
-    /// The line of an earlier arm of its entry whose condition this one negates.
-    pub negates: Option<usize>,
+    /// A complement arm repeating another arm's outcome.
+    pub complement: Option<Complement>,
+    /// Whether its outcome is nothing happening, which belongs in an explanation bullet.
+    pub null_outcome: bool,
     /// Whether its bullet holds more than one `→`.
     pub chained: bool,
 }
@@ -408,8 +681,47 @@ pub struct Arm {
 struct Stated<'a> {
     condition: &'a str,
     outcome: &'a str,
-    cites: Vec<&'a str>,
+    cites: Cites<'a>,
     chained: bool,
+}
+
+/// What an arm's trailing bracket cites.
+#[derive(Default)]
+struct Cites<'a> {
+    /// Vector ids and recorded frames, which must exist.
+    vectors: Vec<&'a str>,
+    /// `original only` is among them.
+    original_only: bool,
+    /// The frames after `record only:`.
+    record_only: Vec<&'a str>,
+}
+
+impl<'a> Cites<'a> {
+    /// A bracket's text, its parts split at `;`.
+    fn parse(bracket: &'a str) -> Self {
+        let mut cites = Self::default();
+        for part in bracket.split(';').map(str::trim) {
+            let lower = part.to_lowercase();
+            if lower.starts_with(ORIGINAL_ONLY) {
+                cites.original_only = true;
+            } else if lower.starts_with(RECORD_ONLY) {
+                let frames = part.get(RECORD_ONLY.len()..).unwrap_or_default();
+                cites
+                    .record_only
+                    .extend(split_cites(frames.trim_start_matches([':', ' '])));
+            } else {
+                cites.vectors.extend(split_cites(part));
+            }
+        }
+        cites
+    }
+}
+
+/// The cites of a list, split at commas and spaces.
+fn split_cites(text: &str) -> impl Iterator<Item = &str> {
+    text.split([',', ' '])
+        .map(|cite| cite.trim_matches(['(', ')', '`']))
+        .filter(|cite| !cite.is_empty())
 }
 
 /// Splits an arm bullet at its first `→` outside backticks, and takes its trailing `[...]`.
@@ -432,15 +744,9 @@ fn stated(text: &str) -> Option<Stated<'_>> {
     let (outcome, cites) = match trimmed.strip_suffix(']').zip(trimmed.rfind('[')) {
         Some((inner, open)) => {
             let (outcome, bracket) = inner.split_at(open);
-            let cites = bracket
-                .trim_start_matches('[')
-                .split([',', ';', ' '])
-                .map(|cite| cite.trim_matches(['(', ')', '`']))
-                .filter(|cite| !cite.is_empty())
-                .collect();
-            (outcome, cites)
+            (outcome, Cites::parse(bracket.trim_start_matches('[')))
         }
-        None => (trimmed, Vec::new()),
+        None => (trimmed, Cites::default()),
     };
     Some(Stated {
         condition: condition.trim(),
@@ -561,6 +867,8 @@ pub struct Count {
     pub unknown_items: Vec<(String, String)>,
     /// The "unassigned" area's index, when an entry or a heading with units has no area.
     pub unassigned: Option<usize>,
+    /// Formulas outside any entry.
+    pub strays: Vec<StrayFormula>,
 }
 
 impl Count {
@@ -594,11 +902,18 @@ impl Count {
             .collect();
         let mut seen_cells = BTreeSet::new();
         let mut arms = Vec::new();
+        let mut strays = Vec::new();
         let mut counts: Vec<BlockCount> = blocks
             .iter()
             .map(|block| {
-                let (tally, checked) =
-                    count_block(block, vectors, &entries, &mut seen_cells, &mut arms);
+                let (tally, checked) = count_block(
+                    block,
+                    vectors,
+                    &entries,
+                    &mut seen_cells,
+                    &mut arms,
+                    &mut strays,
+                );
                 BlockCount {
                     heading: block.heading.clone(),
                     entry: block.entry,
@@ -652,7 +967,18 @@ impl Count {
             arms,
             unknown_items,
             unassigned,
+            strays,
         }
+    }
+
+    /// Whether the spec fails the template: an arm or a formula outside any entry.
+    #[must_use]
+    pub fn fails(&self) -> bool {
+        !self.strays.is_empty()
+            || self
+                .arms
+                .iter()
+                .any(|arm| arm.verdict == Verdict::OutsideEntry)
     }
 
     /// Everything the spec holds.
@@ -775,8 +1101,17 @@ impl Count {
                         arm.outcome
                     );
                 }
-                Verdict::Uncited => {
+                Verdict::Uncited(Unchecked::NoCite) => {
                     let _ = writeln!(out, "{at}: cites no vector, counts 0");
+                }
+                Verdict::Uncited(Unchecked::OriginalOnly) => {
+                    let _ = writeln!(out, "{at}: original only, counts 0");
+                }
+                Verdict::Uncited(Unchecked::RecordOnly(frames)) => {
+                    let _ = writeln!(out, "{at}: record only ({}), counts 0", frames.join(", "));
+                }
+                Verdict::OutsideEntry => {
+                    let _ = writeln!(out, "{at}: an arm outside any entry, counts 0 and fails");
                 }
                 Verdict::Missing(cites) => {
                     let _ = writeln!(
@@ -789,8 +1124,18 @@ impl Count {
                     let _ = writeln!(out, "{at}: a cross-reference, counts 0");
                 }
             }
-            if let Some(earlier) = arm.negates {
-                let _ = writeln!(out, "{at}: negates the arm at line {earlier}");
+            if let Some(Complement { of, repeats }) = arm.complement {
+                let _ = writeln!(
+                    out,
+                    "{at}: the complement of line {of} with line {repeats}'s outcome, an                      explanation"
+                );
+            }
+            if arm.null_outcome {
+                let _ = writeln!(
+                    out,
+                    "{at}: a null outcome (\"{}\"), an explanation bullet with no →",
+                    arm.outcome
+                );
             }
             if arm.chained {
                 let _ = writeln!(
@@ -806,6 +1151,13 @@ impl Count {
             if block.entry && !block.checked {
                 let _ = writeln!(out, "  {}: no `checked` bullet", block.heading);
             }
+        }
+        for stray in &self.strays {
+            let _ = writeln!(
+                out,
+                "  {}:{} `{}`: a formula outside any entry, counts 0 and fails",
+                stray.block, stray.line, stray.formula
+            );
         }
         for (area, item) in &self.unknown_items {
             let _ = writeln!(out, "  area {area}: {item} names no heading");
@@ -826,21 +1178,35 @@ fn area_defs(blocks: &[Block]) -> Vec<AreaDef> {
         .collect()
 }
 
-/// One block's tally and whether it has a `checked` bullet; its arms go to `arms`.
+/// A formula outside any entry, which counts nothing and fails the spec.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct StrayFormula {
+    /// Its heading.
+    pub block: String,
+    /// The spec line its bullet starts on.
+    pub line: usize,
+    /// The formula.
+    pub formula: String,
+}
+
+/// One block's tally and whether it has a `checked` bullet; its arms go to `arms`, and formulas
+/// outside an entry to `strays`.
 fn count_block(
     block: &Block,
     vectors: &Vectors,
     entries: &HashSet<&str>,
     seen_cells: &mut BTreeSet<String>,
     arms: &mut Vec<Arm>,
+    strays: &mut Vec<StrayFormula>,
 ) -> (Tally, bool) {
     let mut tally = Tally::default();
     let mut checked = false;
-    let mut formulas = HashSet::new();
+    let mut counted_formulas = Vec::new();
     let mut outcomes: HashMap<String, usize> = HashMap::new();
     let mut conditions: Vec<(String, usize)> = Vec::new();
+    let first_arm = arms.len();
     for piece in &block.pieces {
-        let text = piece.text.trim_start_matches("**");
+        let text = unlabelled(&piece.text);
         if AreaDef::parse(text).is_some() || text.starts_with("Budget:") {
             continue;
         }
@@ -853,60 +1219,138 @@ fn count_block(
             }
             continue;
         }
-        if piece.bullet && text.to_lowercase().starts_with("checked") {
+        if !piece.bullet {
+            continue;
+        }
+        if text.to_lowercase().starts_with("checked") {
             checked = true;
             continue;
         }
-        for (outside, formula) in spans(text) {
-            let formula = formula.split_whitespace().collect::<Vec<_>>().join(" ");
-            // A span without a space is a name, a value or a path, never a formula.
-            if !outside && formula.contains(' ') && formulas.insert(formula.clone()) {
-                tally.ops = tally.ops.saturating_add(operators(&formula));
+        let Some(arm) = stated(text) else {
+            if field(text) || explains(text) {
+                continue;
             }
-        }
-        let Some(arm) = piece.bullet.then(|| stated(text)).flatten() else {
+            if block.entry {
+                counted_formulas.extend(formulas(text));
+            } else {
+                strays.extend(formulas(text).filter(|formula| operators(formula) > 0).map(
+                    |formula| StrayFormula {
+                        block: block.heading.clone(),
+                        line: piece.line,
+                        formula,
+                    },
+                ));
+            }
             continue;
         };
         let condition = normal(arm.condition);
         let outcome = normal(arm.outcome);
-        let missing: Vec<String> = arm
-            .cites
-            .iter()
-            .filter(|cite| !vectors.holds(cite))
-            .map(|cite| (*cite).to_owned())
-            .collect();
-        let verdict = if cross_reference(arm.outcome, entries) {
-            Verdict::CrossReference
-        } else if arm.cites.is_empty() {
-            Verdict::Uncited
-        } else if !missing.is_empty() {
-            Verdict::Missing(missing)
-        } else if let Some(first) = outcomes.get(&outcome) {
-            Verdict::SameOutcome(*first)
-        } else {
-            outcomes.insert(outcome.clone(), piece.line);
-            tally.arms = tally.arms.saturating_add(1);
-            Verdict::Counts
-        };
-        let negates = conditions
+        let verdict = judge(&arm, block.entry, vectors, entries, || {
+            match outcomes.entry(outcome.clone()) {
+                Entry::Occupied(first) => Verdict::SameOutcome(*first.get()),
+                Entry::Vacant(slot) => {
+                    slot.insert(piece.line);
+                    tally.arms = tally.arms.saturating_add(1);
+                    Verdict::Counts
+                }
+            }
+        });
+        if matches!(verdict, Verdict::Counts | Verdict::SameOutcome(_)) {
+            counted_formulas.extend(formulas(text));
+        }
+        let complements = conditions
             .iter()
             .find(|(earlier, _)| negation(&condition, earlier))
+            .or_else(|| conditions.first().filter(|_| otherwise(&condition)))
             .map(|(_, line)| *line);
         conditions.push((condition.clone(), piece.line));
         arms.push(Arm {
             block: block.heading.clone(),
             line: piece.line,
+            null_outcome: null_outcome(&outcome),
             condition,
             outcome,
             verdict,
-            negates,
+            complement: complements.map(|of| Complement { of, repeats: of }),
             chained: arm.chained,
         });
     }
+    else_lint(arms.get_mut(first_arm..).unwrap_or_default());
+    tally.ops = entry_operators(&counted_formulas);
     (tally, checked)
 }
 
-/// Whether one condition is the other with `not` or `no` in front.
+/// An arm's verdict; `cited` judges an entry's arm whose cites all exist, by its outcome.
+fn judge(
+    arm: &Stated<'_>,
+    in_entry: bool,
+    vectors: &Vectors,
+    entries: &HashSet<&str>,
+    cited: impl FnOnce() -> Verdict,
+) -> Verdict {
+    let missing: Vec<String> = arm
+        .cites
+        .vectors
+        .iter()
+        .filter(|cite| !vectors.holds(cite))
+        .map(|cite| (*cite).to_owned())
+        .collect();
+    if !in_entry {
+        Verdict::OutsideEntry
+    } else if cross_reference(arm.outcome, entries) {
+        Verdict::CrossReference
+    } else if !arm.cites.vectors.is_empty() {
+        if missing.is_empty() {
+            cited()
+        } else {
+            Verdict::Missing(missing)
+        }
+    } else if !arm.cites.record_only.is_empty() {
+        Verdict::Uncited(Unchecked::RecordOnly(
+            arm.cites
+                .record_only
+                .iter()
+                .map(|&frame| frame.to_owned())
+                .collect(),
+        ))
+    } else if arm.cites.original_only {
+        Verdict::Uncited(Unchecked::OriginalOnly)
+    } else {
+        Verdict::Uncited(Unchecked::NoCite)
+    }
+}
+
+/// The else-lint, once an entry's arms are all known (a complement can repeat a later arm's
+/// outcome): a complement keeps its finding only when its outcome repeats another arm's.
+fn else_lint(block_arms: &mut [Arm]) {
+    let stated_outcomes: Vec<(String, usize)> = block_arms
+        .iter()
+        .map(|arm| (arm.outcome.clone(), arm.line))
+        .collect();
+    for arm in block_arms {
+        arm.complement = arm.complement.and_then(|complement| {
+            stated_outcomes
+                .iter()
+                .find(|(outcome, line)| *line != arm.line && *outcome == arm.outcome)
+                .map(|(_, repeats)| Complement {
+                    of: complement.of,
+                    repeats: *repeats,
+                })
+        });
+    }
+}
+
+/// A piece's text without a leading bold label (`**Ceiling.** Then, ...`) or bold marks.
+fn unlabelled(text: &str) -> &str {
+    let Some(bold) = text.strip_prefix("**") else {
+        return text;
+    };
+    bold.split_once("**")
+        .filter(|(label, _)| label.ends_with(['.', ':']))
+        .map_or(bold, |(_, rest)| rest.trim_start())
+}
+
+/// Whether one condition is the other with `not`, `no` or `unless` in front.
 fn negation(a: &str, b: &str) -> bool {
     let negated = |x: &str, y: &str| {
         ["not ", "no ", "otherwise not ", "unless "]
@@ -914,6 +1358,37 @@ fn negation(a: &str, b: &str) -> bool {
             .any(|word| x.strip_prefix(word) == Some(y))
     };
     negated(a, b) || negated(b, a)
+}
+
+/// Whether a condition is every case the entry's other arms leave: `otherwise`, `else`, or
+/// `any`, `every` or `all` before `other`.
+fn otherwise(condition: &str) -> bool {
+    let words: Vec<&str> = condition
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|word| !word.is_empty())
+        .collect();
+    words
+        .iter()
+        .any(|word| matches!(*word, "otherwise" | "else"))
+        || words
+            .windows(2)
+            .any(|pair| matches!(pair, ["any" | "every" | "all", "other"]))
+}
+
+/// Whether an outcome is nothing happening: its first clause starts `nothing`, `none` or `no `,
+/// or says something doesn't change.
+fn null_outcome(outcome: &str) -> bool {
+    let clause = outcome
+        .split([':', ';', ','])
+        .next()
+        .unwrap_or_default()
+        .trim();
+    ["nothing", "none", "no "]
+        .iter()
+        .any(|start| clause.starts_with(start))
+        || ["n't change", "not change", "unchanged"]
+            .iter()
+            .any(|phrase| clause.contains(phrase))
 }
 
 /// `n` with a comma between each three digits.
@@ -980,7 +1455,8 @@ fn delta<T: fmt::Display>(old: u64, new: u64, show: impl Fn(u64) -> T) -> String
 ///
 /// # Errors
 ///
-/// The usage on a wrong command line, or the path and the error when a file can't be read.
+/// The usage on a wrong command line, the path and the error when a file can't be read, or the
+/// whole report when the spec fails (an arm or a formula outside any entry).
 pub fn run(args: &[String]) -> Result<String, String> {
     let [spec, vectors, rest @ ..] = args else {
         return Err(USAGE.to_owned());
@@ -1010,12 +1486,23 @@ pub fn run(args: &[String]) -> Result<String, String> {
             delta(before.budget(), count.budget(), thousands)
         );
     }
+    if count.fails() {
+        out.push_str(
+            "
+fails: an arm or a formula is outside any entry (see the findings)
+",
+        );
+        return Err(out);
+    }
     Ok(out)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Count, Units, Vectors, Verdict, delta, operators, thousands};
+    use super::{
+        Complement, Count, StrayFormula, Unchecked, Units, Vectors, Verdict, delta,
+        entry_operators, operators, thousands,
+    };
 
     const VECTORS: &str = r#"
 [[vector]]
@@ -1058,7 +1545,7 @@ Area falling: `Fall`
 Cells: kept, gun drawn, `kept`
 
 ### Fall
-- in the air → gravity adds `0.5 × t` [rec:12]
+- in the air → gravity adds `0.5 × t` [rec:10]
 - not in the air → she stays put [V2]
 - checked: constructed
 
@@ -1082,17 +1569,19 @@ Cells: kept, gun drawn, `kept`
         };
         assert_eq!(
             (moving.tally.arms, moving.tally.cells, moving.tally.ops),
-            (2, 2, 3)
+            (1, 2, 3)
         );
-        assert_eq!(moving.tally.units().thirds(), 11);
-        assert_eq!(moving.uncapped(), 88);
+        // `1.2 Memory` is no entry: its arm counts 0 and fails the spec.
+        assert!(count.fails());
+        assert_eq!(moving.tally.units().thirds(), 8);
+        assert_eq!(moving.uncapped(), 64);
         assert_eq!(moving.cap(), Some(700));
         assert_eq!(moving.entries, 1);
         assert_eq!((falling.tally.arms, falling.tally.ops), (2, 1));
         assert_eq!(falling.budget(), 56);
         assert_eq!(unassigned.tally.arms, 1);
         assert_eq!(count.unassigned, Some(2));
-        assert_eq!(count.budget(), 88 + 56 + 24);
+        assert_eq!(count.budget(), 64 + 56 + 24);
     }
 
     #[test]
@@ -1110,12 +1599,13 @@ Cells: kept, gun drawn, `kept`
                 Verdict::Counts,
                 Verdict::SameOutcome(13),
                 Verdict::Missing(vec![String::from("Nope")]),
-                Verdict::Uncited,
+                Verdict::Uncited(Unchecked::NoCite),
                 Verdict::CrossReference,
             ]
         );
         let negation = count.arms.iter().find(|arm| arm.line == 29);
-        assert_eq!(negation.and_then(|arm| arm.negates), Some(28));
+        // A complement with an outcome of its own is a rule: no lint.
+        assert_eq!(negation.and_then(|arm| arm.complement), None);
         assert_eq!(negation.map(|arm| &arm.verdict), Some(&Verdict::Counts));
     }
 
@@ -1132,9 +1622,219 @@ Cells: kept, gun drawn, `kept`
     }
 
     #[test]
-    fn recorded_frames_count_when_their_row_is_recorded() {
-        let spec = "### A\n- a → b [rec:3-9]\n- c → d [rec:7]\n- e → f [other:7]\n- g → h [rec]\n";
-        assert_eq!(count(spec).total().arms, 2);
+    fn a_recorded_frame_counts_only_when_a_vector_comes_from_it() {
+        // V2 comes from rec:10: another frame of the row, or a range missing it, holds nothing.
+        let spec = "### A\n- a → b [rec:10]\n- c → d [rec:7-12]\n- e → f [rec:11]\n- g → h \
+                    [rec:3-9]\n- i → j [other:10]\n- k → l [rec]\n- m → n [rec:12-7]\n";
+        let count = count(spec);
+        assert_eq!(count.total().arms, 2);
+        let missing: Vec<_> = count
+            .arms
+            .iter()
+            .filter_map(|arm| {
+                if let Verdict::Missing(cites) = &arm.verdict {
+                    Some(cites.join(","))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        assert_eq!(
+            missing,
+            ["rec:11", "rec:3-9", "other:10", "rec", "rec:12-7"]
+        );
+    }
+
+    #[test]
+    fn original_only_and_record_only_are_uncited_and_listed() {
+        let spec = "### A\n- a → b [original only]\n- c → d [record only: r02:37-38, \
+                    r07:263]\n- e → f [V1; original only]\n";
+        let count = count(spec);
+        let verdicts: Vec<_> = count.arms.iter().map(|arm| arm.verdict.clone()).collect();
+        assert_eq!(
+            verdicts,
+            [
+                Verdict::Uncited(Unchecked::OriginalOnly),
+                Verdict::Uncited(Unchecked::RecordOnly(vec![
+                    String::from("r02:37-38"),
+                    String::from("r07:263")
+                ])),
+                Verdict::Counts,
+            ]
+        );
+        let findings = count.findings();
+        assert!(
+            findings.contains("A:2 `a`: original only, counts 0"),
+            "{findings}"
+        );
+        assert!(
+            findings.contains("A:3 `c`: record only (r02:37-38, r07:263), counts 0"),
+            "{findings}"
+        );
+        assert_eq!(count.total().arms, 1);
+    }
+
+    #[test]
+    fn operators_count_only_in_counted_arms_and_definitions() {
+        assert_eq!(count("### A\n- `v < 5` → b [V1]\n").total().ops, 1);
+        // An arm that counts 0, for any reason, counts no operator.
+        for zero in [
+            "### A\n- `v < 5` → b [original only]\n",
+            "### A\n- `v < 5` → b\n",
+            "### A\n- `v < 5` → b [Nope]\n",
+            "### A\n- `v < 5` → as `B`\n### B\n",
+        ] {
+            assert_eq!(count(zero).total().ops, 0, "{zero}");
+        }
+        // An arm merged into one with the same outcome is part of it: its formulas count.
+        let merged = "### A\n- `v < 5` → b [V1]\n- `w > 6` → b [V2]\n";
+        assert_eq!(count(merged).total().ops, 2);
+        // A definition bullet counts; an explanation, a field or a paragraph doesn't.
+        assert_eq!(count("### A\n- Her edge is `x + rx`.\n").total().ops, 1);
+        for explanation in [
+            "### A\n- So her edge is `x + rx`.\n",
+            "### A\n- As in `x + rx`.\n",
+            "### A\n- For example `x + rx`.\n",
+            "### A\n- params: `x + rx`.\n",
+            "### A\n\nHer edge is `x + rx`.\n",
+        ] {
+            assert_eq!(count(explanation).total().ops, 0, "{explanation}");
+        }
+    }
+
+    #[test]
+    fn a_mirrored_formula_counts_once() {
+        let edges = [
+            "x + d + rx − 1",
+            "x + d − rx",
+            "y + d + ry − 1",
+            "y + d - ry",
+        ]
+        .map(String::from);
+        // Right and down are one, left and up the other.
+        assert_eq!(entry_operators(&edges), 3 + 2);
+        // The bars count as operators, as `operators` reads them.
+        let axes = ["|x − ex| < rx + erx", "|y − ey| < ry + ery"].map(String::from);
+        assert_eq!(entry_operators(&axes), 5);
+        let sides = ["a + b ≤ top", "a − b ≥ bottom"].map(String::from);
+        assert_eq!(entry_operators(&sides), 2);
+        let different = ["x + 1", "x × 2"].map(String::from);
+        assert_eq!(entry_operators(&different), 2);
+        // `max` is an operator, not a name to mirror.
+        let named = ["max(x, y) + 1", "min(y, x) − 1"].map(String::from);
+        assert_eq!(entry_operators(&named), 2);
+    }
+
+    #[test]
+    fn a_restated_subexpression_counts_nothing() {
+        // Before or after the formula it restates, and also as a mirror (`x + rx`).
+        let gap = [
+            "y + ry",
+            "ey − ery",
+            "gap = (ey − ery) − (y + ry)",
+            "x + rx",
+            "ex − erx",
+        ]
+        .map(String::from);
+        assert_eq!(entry_operators(&gap), 4);
+        let after = ["gap = (ey − ery) − (y + ry)", "y + ry"].map(String::from);
+        assert_eq!(entry_operators(&after), 4);
+        // Only within one entry.
+        let spec = "### A\n- `gap = (ey − ery) − (y + ry)` → b [V1]\n### B\n- `y + ry` → c [V1]\n";
+        assert_eq!(count(spec).total().ops, 5);
+        // Tokens, not text: `x + 10` doesn't restate `x + 1`.
+        let digits = ["x + 1", "x + 10"].map(String::from);
+        assert_eq!(entry_operators(&digits), 2);
+        // Only a whole operand restates: `bottom ≥ top` is no part of `bottom ≥ top − 1`, and
+        // `a + b` no part of `a + b × c`, but `a − b` is part of `a − b + c`.
+        let partial = ["bottom ≥ top", "bottom ≥ top − 1", "top − 1"].map(String::from);
+        assert_eq!(entry_operators(&partial), 3);
+        let tighter = ["a + b", "a + b × c"].map(String::from);
+        assert_eq!(entry_operators(&tighter), 3);
+        let looser = ["a − b", "b + c", "a − b + c"].map(String::from);
+        assert_eq!(entry_operators(&looser), 3);
+    }
+
+    #[test]
+    fn arms_and_formulas_outside_an_entry_fail() {
+        let spec = "# Spec\n## 1. Intro\n- a frame → `speed + dash × way` [V1]\n- So `a + b`.\n\
+                    ### 1.2 Memory\n- `p − 1` is her last.\n### A\n- c → d [V1]\n";
+        let count = count(spec);
+        assert!(count.fails());
+        assert_eq!(count.total().units().thirds(), 3);
+        assert_eq!(
+            count.arms.first().map(|arm| &arm.verdict),
+            Some(&Verdict::OutsideEntry)
+        );
+        assert_eq!(
+            count.strays,
+            [StrayFormula {
+                block: String::from("1.2 Memory"),
+                line: 6,
+                formula: String::from("p − 1"),
+            }]
+        );
+        let findings = count.findings();
+        assert!(findings.contains("an arm outside any entry"), "{findings}");
+        assert!(
+            findings.contains("1.2 Memory:6 `p − 1`: a formula outside"),
+            "{findings}"
+        );
+        assert!(!self::count("### A\n- c → d [V1]\n").fails());
+    }
+
+    #[test]
+    fn the_else_lint_flags_repeated_complements_and_null_outcomes() {
+        let spec = "### A\n- running → she gains [V1]\n- not running → she keeps [V2]\n- any \
+                    other speed → she gains [V3]\n- standing → nothing happens [V1]\n- sloped \
+                    → no slope shortens the move [V1]\n- shortened → her speeds don't change \
+                    [V2]\n- landing → no push: she grows [V3]\n";
+        let count = count(spec);
+        let complements: Vec<_> = count.arms.iter().map(|arm| arm.complement).collect();
+        assert_eq!(
+            complements,
+            [
+                None,
+                None,
+                Some(Complement { of: 2, repeats: 2 }),
+                None,
+                None,
+                None,
+                None
+            ]
+        );
+        let nulls: Vec<_> = count.arms.iter().map(|arm| arm.null_outcome).collect();
+        assert_eq!(nulls, [false, false, false, true, true, true, true]);
+        let findings = count.findings();
+        assert!(
+            findings.contains("the complement of line 2 with line 2's outcome"),
+            "{findings}"
+        );
+        assert!(
+            findings.contains("a null outcome (\"nothing happens\")"),
+            "{findings}"
+        );
+        // A complement with an outcome of its own is a rule (`WordwiseTopSpeed`'s "any other
+        // speed"), as is a negation with its own outcome.
+        let own = self::count(
+            "### A\n- `wordwise`, small → keeps [V1]\n- any other speed → takes the top [V2]\n",
+        );
+        assert!(own.arms.iter().all(|arm| arm.complement.is_none()));
+    }
+
+    #[test]
+    fn a_bold_label_is_not_part_of_the_condition() {
+        let count = count(
+            "### A
+- **Ceiling.** Then, her top edge → she is pushed down [V1]
+",
+        );
+        let conditions: Vec<_> = count
+            .arms
+            .iter()
+            .map(|arm| arm.condition.as_str())
+            .collect();
+        assert_eq!(conditions, ["then, her top edge"]);
     }
 
     #[test]
@@ -1217,7 +1917,7 @@ Cells: kept, gun drawn, `kept`
     fn the_budget_line_splits_by_area() {
         assert_eq!(
             count(SPEC).budget_line(),
-            "Budget: 24 × 7.0 units = 168 (moving 88, falling 56, unassigned 24)"
+            "Budget: 24 × 6.0 units = 144 (moving 64, falling 56, unassigned 24)"
         );
     }
 

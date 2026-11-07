@@ -160,6 +160,33 @@ other heading, by its text or its leading number; `(old N)` sets the 70 % cap. A
 its change with `git show HEAD~1:docs/behaviours/D.md > old.md` and `--against old.md`, which adds
 `change: units 4.7 → 7.7 (+3.0), budget 112 → 184 (+72)` to the report.
 
+What it counts, after adversary-22's rulings (§5, T2):
+- **Cites.** A `row:frame` cite holds only when a vector's `source` is that frame, and
+  `row:N-M` only when one is inside the range: another vector from the row doesn't do. The labels
+  `[original only]` and `[record only: row:frame, ...]` count 0 and are listed, not reported as
+  missing vectors.
+- **Formulas** count only in an entry's counted arms (a same-outcome arm is part of the arm it
+  merges into) and its definition bullets: bullets with no `→` that aren't fields and don't open
+  with an explanation word (`So`, `Thus`, `Hence`, `As`, `E.g.`, `For example`, `That is`,
+  `I.e.`). Operators in an arm that counts 0, in an explanation bullet or in a paragraph count 0.
+- **Mirrors** count once: formulas equal after swapping `x` and `y` in short names (`rx`, `ery`),
+  or `+`/`−`, `<`/`>`, `≤`/`≥`, `min`/`max`, `left`/`right`, `top`/`bottom`, `up`/`down`, or
+  both. `BlocksStopFlush`'s four leading edges are two.
+- **Restatements** count 0: a formula that is a whole operand of a longer one in the same entry,
+  by token runs bounded by brackets, commas or looser operators (`y + ry` in
+  `gap = (ey − ery) − (y + ry)`, `top − 1` in `bottom ≥ top − 1`, but not `bottom ≥ top`).
+- **Outside an entry**, an arm or a definition's formula counts 0 and fails: it is a finding and
+  the command exits with an error, the report included.
+- **The else-lint** flags a complement arm (an earlier condition negated, or `otherwise`, `else`,
+  `any other`) only when its outcome repeats another arm's, and flags a null outcome (`nothing`,
+  `no X`, "doesn't change") as belonging in an explanation bullet. Both still count; the spec
+  review decides.
+
+The limits are textual: formulas differing only in every `+` and `−` count once even when they
+aren't mirrors, a mirror written with other names counts twice, an explanation that opens with
+another word counts its formulas, and a null outcome phrased otherwise isn't flagged. The spec
+review catches these.
+
 **How far samus-motion follows it today:**
 
 | Part of the convention | Today |
