@@ -34,6 +34,8 @@ shine spark          # move
 crystal flash        # move
 moon walk            # move
 turn around          # what a player sees her do
+aim up               # the pad's aim, as a player holds it
+aim down             # the pad's aim, as a player holds it
 
 # Single words of play: directions, the body, the room, the pad and plain motion.
 left
