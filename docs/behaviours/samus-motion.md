@@ -23,13 +23,23 @@ the game's data, such as the chart's rows), and declarations (the `struct`, `enu
 items and attributes that define the model's shapes; define as many as the behaviour needs). The
 target is on everything else, the logic.
 
-**Baseline: about 13,300 tokens of logic** in the old code this domain replaces, tests excluded
-(pose fit, now in the domain, included).
+**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen: the old code's
+score, 12,723 (`tools size` at spine `bc6f74f9c`, over the old code at `c7f927ab6` and its two
+cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`), times
+0.55 is 36.2. An area's budget is k × its units, capped at 70% of its old code (`old`, the score
+of the old files that area replaces). Over the budget is a review stop that names the areas and
+entries over; over an area's old code is a strict failure.
 
-**Target: 6,400 tokens of logic** for the new model: motion, landings and turns about 2,000, the
-pose chart's reader and effects about 1,300, collision with blocks and solid enemies about 1,500,
-pose fit about 700, slack 900. Over the target, the implementer keeps reshaping and reports
-why the rest can't go, and the root reviews that report; over the baseline is a strict failure.
+- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, TurningRound, AimingAndShooting,
+  RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
+  DriftInTheAir, Moonfall, WallJump, Landing, WordwiseTopSpeed, 1.2, 9
+- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
+- Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
+  AnimationEnds
+- Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
+  SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
+
+Budget: 36 × 193.3 units, capped at 70% of old = 6,600 (motion 2,460, pose fit 516, pose chart 1,584 capped, collision 2,040)
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
