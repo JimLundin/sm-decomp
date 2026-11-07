@@ -63,7 +63,8 @@
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
 #   position_x compares x alone. reached: the cells her moves reach this frame (spec `TouchedCells`), in
 #   order, each { cell = [x, y], way }, the cell's top-left corner in px and the move's direction
-#   ("Left", "Right", "Up", "Down"); a cell that stands for another is listed as the one it names.
+#   ("Down", "Left", "Right" or "Up", listed alphabetically; the order means nothing); a cell
+#   that stands for another is listed as the one it names.
 #   inside: the cells she is inside this frame, in order, each [x, y], the cell's top-left corner.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
@@ -2677,6 +2678,31 @@ pressed = []
 met = "nothing"
 after = { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Forward", legs = "Striding" } }
 
+# Landing while her body changes shape: the landing keeps the pose, and the change runs on until
+# its animation ends.
+
+[[pose_step]]
+id = "LB1"
+source = "samus-mockball:70"
+entries = ["WhatHerMovesMet", "PoseFollows"]
+pose = { body = "Ball", action = "Morphing", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "floor"
+after = { pose = { body = "Ball", action = "Morphing", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "LB2"
+source = "r04:331"
+entries = ["WhatHerMovesMet", "PoseFollows"]
+pose = { body = "Crouched", action = "Unmorphing", facing = "Right", aim = "Forward" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "floor"
+after = { pose = { body = "Crouched", action = "Unmorphing", facing = "Right", aim = "Forward" } }
+
 # Standing from a crouch by holding forward: her feet stay where they were.
 
 [[vector]]
@@ -2690,3 +2716,17 @@ next_pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 
 pad = ["left"]
 jump_pressed = false
 after = { position = ["009D.C000", "008B.FFFF"] }
+
+# A spin reversed in its first frame skids: she keeps travelling the old way against her new facing.
+
+[[vector]]
+id = "SR1"
+source = "r05:538"
+entries = ["TurningRound", "DriftInTheAir", "RisingAndFalling", "PadChart"]
+world = {}
+before = { position = ["06C5.C000", "00AB.FFFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "-0004.E000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["left", "jump"]
+jump_pressed = false
+after = { position = ["06C7.2000", "00A7.1FFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "-0004.C400" }

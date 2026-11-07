@@ -72,7 +72,8 @@ frames (the vectors' format), never by a value in its start.
   she moves the dash is gone.
 - **The moonfall** (`Moonfall`).
 - **A spin carried on.** A spin she was already in two frames earlier, or that followed a wall
-  jump, can ready a wall jump or be reversed (`WallJump`, `TurningRound`).
+  jump, can ready a wall jump (`WallJump`). Reversing needs no such memory: any spin can be
+  reversed from its first frame, and the reversal always skids (`TurningRound`).
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
 is skidding, any dash she has is hers to keep, and a vertical speed of 0 means she stands on the ground,
@@ -174,7 +175,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 
 ### TurningRound
 - Mechanic. Turning round, on the ground or in the air, or reversing a spin (a spin facing the
-  other way, §1.2), or the ball turning round, she adds her dash to her horizontal speed (dash 0) and keeps
+  other way: any spin, from its first frame on, §1.2), or the ball turning round, she adds her dash to her horizontal speed (dash 0) and keeps
   travelling the old way, now against her new facing: a skid. She brakes until the speed is spent,
   then builds the new way (turning's top speed is 0, so only the creep below). When the turn ends
   she loses her dash.
@@ -191,7 +192,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   falling. In the air she turns under gravity (`RisingAndFalling`).
 - checked: oracle (samus-input-poses turns, samus-screw-attack; R133 for letting go, R11 and R12
   (samus-input-poses:120-121) for run held on the ground: braked to 0 at 120, she creeps 0.C000 at
-  121, which a skid kept at 0 would not; R141 for run held in the air); constructed (the sinking).
+  121, which a skid kept at 0 would not; R141 for run held in the air; SR1 for a spin reversed in
+  its first frame, which skids); constructed (the sinking).
 
 ### AimingAndShooting
 - Quirk and output. Changing aim while running moves her 1 px forward on top of that frame's move,
@@ -310,8 +312,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 
 ### WallJump
 - Mechanic. Spinning in a spin carried on (§1.2), holding away from a wall near her (left held: a
-  wall on her right; otherwise right held: on her left) readies the wall jump, which the sprite
-  shows.
+  wall on her right; otherwise right held: on her left) readies the wall jump. Readying is not a
+  part of her pose (§2): the pose stays the spin it was. Only the spin's animation shows it,
+  skipping ahead to the point where the spin has turned far enough, so the input "spin turned far"
+  (§1.3) holds from the next frame. How far an animation has run is out of scope (§10), so
+  readying is no output of its own.
 - A wall is near her when a test move of 8 px towards it, from where her x is after this frame's
   move, would be stopped (`BlocksStopFlush`, `SolidEnemies`): fewer than 8 px of air between her
   edge and the wall. Readying and the kick use this same test.
@@ -323,7 +328,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   instead, it writes her x nothing: an enemy she already touches on that side clears her y subpixel
   to 0, as any test against one does (`SolidEnemies`), and one ahead of her writes nothing.
 - checked: oracle (samus-walljump-16, -22, -28, samus-grapple-walljump, item-morph-ball's leftward
-  spin jumps).
+  spin jumps; samus-walljump-16:46-47: readied in one frame, kicked off in the next).
 
 ### Landing
 - Mechanic. Falling onto a floor upright she lands: vertical speed 0, bounces 0, horizontal speed 0, following the
@@ -334,7 +339,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   the bounce speed (bounces 1); after bounce 1 it rises at the bounce speed less 1 px (bounces 2);
   after bounce 2, or slower than 3 px, it lands as above. The spring ball landing with jump held
   hops again at the jump speed instead, bounces 0.
-- checked: oracle (r06 for the changing body); constructed (C-bounce).
+- checked: oracle (r06 for the changing body, LB1, LB2); constructed (C-bounce).
 
 ---
 
@@ -491,6 +496,10 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | | back held | `Turning` | `TurningRound` |
 | | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
 
+- In a straight jump aimed `Down`, the row for forward, jump and shoot held fits only when she
+  faces `Right`, and nothing takes its place the other way: there those three held are decided as
+  in any straight jump, forward held winning (`Jumping`, `Forward`, striding; C-chart-j against
+  C-chart-i).
 - A `Turning` cell gives the turn she is in (§2): `Ground` unless it says "in a jump", "in a
   fall" or "from the moonwalk's jump". Facing is kept unless the row says otherwise; `Turning`
   faces back (the turn shows her new facing, and `TurningRound` turns her), and keeps the aim she
@@ -532,6 +541,7 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | | spinning or wall jumping | `Landing` from `Spin`, facing kept, `Forward` | `Landing` |
 | | a ball, bouncing (`Landing`) | kept | `Landing`'s bounce |
 | | a ball, coming to rest | ball `Still`, facing kept | `Landing` |
+| | changing body: `Crouching`, `StandingUp`, `Morphing` or `Unmorphing` | kept: the ball rows above are not for `Morphing`, and the pad has no say (`PadChart`) | `Landing`: only her vertical motion stops |
 | no floor (walking off a ledge, `FollowingTheGround`) | upright on the ground | upright `Falling`, facing kept, `Forward` | `FollowingTheGround`'s fall |
 | | a ball | ball `Falling`, facing kept | `FollowingTheGround`'s fall |
 | a ceiling | rising | kept | `WallsAndCeilings` |
@@ -539,7 +549,12 @@ effects. The tables below are data records (about 120 rows), counted as data.
 - Where two of these meet in one frame: a wall stop, or the aim step's block, while running wins
   over walking off a ledge. The wall-jump kick, a landing, walking off a ledge and a ceiling each
   come from her one vertical move or her kick, so no two of them meet her in the same frame.
-- checked: oracle (P4, P5, P6, P7, P8).
+- A landing while her body changes shape leaves the change to run on: its animation's end hands over
+  the next pose (`AnimationEnds`, on the ground now), and when that end comes in the landing's own
+  frame it decides the pose, as `PoseFollows` says.
+- checked: oracle (P4, P5, P6, P7, P8; LB1 landing while `Morphing`, LB2 while `Unmorphing`;
+  item-morph-ball:1264 and r06:16, where the landing and the animation's end share a frame);
+  original only (`Crouching` and `StandingUp`: she never lands in them in a record).
 
 ### AnimationEnds
 - Mechanic. Some poses last only as long as their animation, and its end hands over the next pose
@@ -733,7 +748,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   spans where she stands before the move, top row first. For a vertical move it is the row of her
   leading edge at the target, in each column her body spans where she stands before the move, left
   to right on an `Even` frame and right to left on an `Odd` one. Each cell comes with the move's
-  direction (left, right, up, down), because some reactions depend on it.
+  direction, one of four ways: down, left, right or up (listed alphabetically; the order means
+  nothing), because some reactions depend on it.
 - The report ends at the first cell that stops her: the cells after it on the line are not
   reached. A move of exactly 0 reaches no cells (`BlocksStopFlush`), and neither does a move that
   a solid enemy decides (`SolidEnemies`). The wall-jump test (`WallJump`) and pose fit's push
@@ -798,6 +814,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - **Liquids and the speed booster:** other speeds and gravity in water and lava; the booster's dash
   cap of 7 and its higher jump.
 - **Pushes:** room pushes, quicksand, knockback, bomb jumps, grapple, shinespark.
+- **Animation timing:** how far an animation has run and on which frame it ends (a vector says,
+  `AnimationEnds`); its frames are drawn by the sprite, and readying a wall jump shows only there
+  (`WallJump`).
 
 ## 11. Open questions
 

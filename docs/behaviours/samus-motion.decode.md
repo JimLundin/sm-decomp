@@ -196,6 +196,34 @@ the same), L2 samus-ceres-push:772 (4Dh → 51h, pad 0180, nothing new). C-chart
 jump + shoot) takes 18h's left + jump → 52h, the first fit, so its after has the legs striding;
 the vector had them together.
 
+**Adversary-16's spec items (adv16, 2026-11-07).**
+- The aimed-down straight jump facing left (§5b). 18h's table has no left + jump + shoot row: in
+  17h's right + jump + shoot → 13h slot it repeats left + jump + aim-down → 6Ch, so left + jump +
+  shoot falls to left + jump → 52h (`tt.pl 17 18`). The spec's general rows give the same (forward
+  held beats shoot and jump held), so no facing-left row is missing; the spec now says so beside the
+  table. C-chart-i (17h → 13h) and C-chart-j (18h → 52h, striding) agree with the table.
+- The strict checker. `$TEMP/adv16/chk.pl` (every pad, both facings) and `$TEMP/adv16/pstep.pl`
+  (every `pose_step`) decide by rank and "beats" alone and fail when more than one row survives,
+  whatever the rows' results; `desc` now carries the legs (51h/52h "moving forward" → `/S`).
+  Every pad: 0 ties; the only mismatches (1,080) are the take-off's facing-left hold right → 30h
+  row above, left out as unreachable. Pose steps: 36 decided by the chart, 0 ties, 0 mismatches
+  against the vectors or the table; 12 are decided by `AnimationEnds` or `WhatHerMovesMet`.
+- A spin reversed early. `$91:F624` skids (base += extra, extra 0, `0B4A` = 1) when the old
+  movement type `0A23` is 3 or 14h. `$91:EB88` writes the old pose after every pose it sets
+  (`$91:EBF8`), so `0A20` is the spin itself from the spin's first frame: every reversal skids. Only
+  the wall-jump check reads the old-old type `0A27` (`$90:9D38`). Record: r05:537 (19h from 26h at
+  536; left + jump → 1Ah, `0B4A` 0 → 1, x +1.6000 the old way): SR1. Others: r07:92, r08:231,
+  samus-ceres-push:868 (the spin's third or fourth frame).
+- Landing while the body changes shape. `$90:E61B` takes the landed result from `$90:E676` by
+  movement type: Fh (and Eh, 17h, 18h) give 4, no change, so `$91:E931` sets no pose, and
+  `$91:8146` runs no lookup for Fh. The pose runs on to its animation's end. Records:
+  samus-mockball:70 (37h lands, kept to 74, 79h at 75): LB1; r04:331 (3Dh lands, kept to 336, 27h
+  at 337): LB2; item-morph-ball:1264 and r06:16 land on the animation's last frame (1Dh, 27h).
+- Wall jump readied. `$90:9DB2` sets the animation frame to Ah (1Ah screw attack) with timer 1 and
+  leaves `0A1C` alone: it is animation progress, not a pose. The next frame the spin counts as
+  turned far (`$90:9D55`, frame ≥ Bh). Record: samus-walljump-16:46 (81h readied, `an` 1Bh at 47),
+  47 (jump pressed, 83h at 48).
+
 **The crouch-to-stand 5 px (chart-left).** The bank log calls `$91:8087`'s y − 5 dead, and it is:
 it reads the movement type `0A1F` after `$91:81A9`, which only writes the prospective pose, so it
 still reads crouching. But the 5 px happens: r02:391 → 392 (27h → 01h, pad 0100, y 00B0 → 00AB),
