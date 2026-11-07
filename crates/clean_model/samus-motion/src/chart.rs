@@ -1,39 +1,151 @@
-//! §7: the pose chart. Which pose she shows next, from her pose at the frame's start, the pad and
-//! what her moves met, and what the change does (`PoseFollows`). The pad chart is data, the rows
-//! of `table`, read by `PadChart`'s one rule that picks the winning row.
+//! §7: the pose chart, a state machine.
+//!
+//! Her situation (`situation`) is its state; its moves are rows (`table`): what a row needs held,
+//! pressed or of her situation, the pose it leads to and its effects. `PadChart`'s rule picks the
+//! one winning row of her situation; the rows of `WhatHerMovesMet` and `AnimationEnds` are read
+//! in their tables' order, the first that fits.
 
 pub mod table;
 #[cfg(test)]
 mod tests;
 
-use clean_types::Action::{
-    self, AgainstWall, Crouching, Falling, Jumping, Landing, Morphing, Running, Spinning,
-    StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
-};
-use clean_types::Aim::{Down, DownForward, Forward, Up, UpForward};
-use clean_types::Body::{Ball, Crouched, SpringBall, Upright};
-use clean_types::{Equipment, Facing, Gun, LandedFrom, Legs, Pad, Pose, Turn};
-use table::{
-    ASWAS, BACK, DRAW, LOSEDASH, MOONFALL, NAMED, PRESSED, Row, STANDUP, STRIDE, keys, rows,
-};
+use crate::situation::{Doing, Situation};
+use clean_types::{Action, Aim, Body, Equipment, Facing, Gun, Heading, Legs, Pad, Pose};
 
-/// What the chart reads: her pose at the frame's start, whether she is off the ground once her
-/// moves are made, the pad held and just pressed, and her equipment.
+/// A button by what it does; forward and back are by her facing at the frame's start.
 #[derive(Clone, Copy)]
-pub struct Situation {
-    /// Her pose at the frame's start.
-    pub pose: Pose,
-    /// Off the ground once her moves are made.
-    pub airborne: bool,
-    /// The buttons held.
-    pub pad: Pad,
-    /// The buttons just pressed.
-    pub pressed: Pad,
-    /// Her equipment.
-    pub equipment: Equipment,
+pub enum Key {
+    /// Towards her facing.
+    Forward,
+    /// Away from her facing.
+    Back,
+    /// Jump.
+    Jump,
+    /// Shoot.
+    Shoot,
+    /// Run.
+    Run,
+    /// Up.
+    Up,
+    /// Down.
+    Down,
+    /// Aim up.
+    AimUp,
+    /// Aim down.
+    AimDown,
 }
 
-/// `WhatHerMovesMet`: what this frame's moves met, in its table's order.
+/// One thing a row needs. `Held` and `Pressed` are the buttons a row names (`PadChart`'s rank);
+/// the rest are conditions on her situation.
+#[derive(Clone, Copy)]
+pub enum Test {
+    /// One of these held.
+    Held(&'static [Key]),
+    /// This just pressed.
+    Pressed(Key),
+    /// The test failing.
+    Not(&'static Self),
+    /// Any of these passing.
+    Any(&'static [Self]),
+    /// Her aim one of these.
+    Aimed(&'static [Aim]),
+    /// Her gun so.
+    Gun(Gun),
+    /// Facing this side (the screen counts as right).
+    Faces(Heading),
+    /// Her body one of these.
+    Body(&'static [Body]),
+    /// Her action one of these.
+    Action(&'static [Action]),
+    /// Doing one of these.
+    Doing(&'static [Doing]),
+    /// Off the ground once her moves are made.
+    Airborne,
+    /// With the spring ball.
+    SpringBall,
+    /// Her moves met this (`WhatHerMovesMet`).
+    Met(Met),
+}
+
+/// `Aiming`: the aim a next pose takes when the tests pass.
+#[derive(Clone, Copy)]
+pub struct Aiming {
+    /// What it needs.
+    pub when: &'static [Test],
+    /// The aim.
+    pub aim: Aim,
+}
+
+/// The way a next pose faces.
+#[derive(Clone, Copy)]
+pub enum Side {
+    /// As she faced.
+    Kept,
+    /// Back.
+    Back,
+}
+
+/// The pose a row leads to; `None` keeps that part of her pose as it was.
+#[derive(Clone, Copy)]
+pub struct Next {
+    /// The body.
+    pub body: Option<Body>,
+    /// The action.
+    pub action: Option<Action>,
+    /// The facing.
+    pub facing: Side,
+    /// The first aim whose tests pass; where none does, the aim is kept.
+    pub aim: &'static [Aiming],
+    /// The gun.
+    pub gun: Option<Gun>,
+    /// The legs.
+    pub legs: Option<Legs>,
+}
+
+/// What a change does to her speeds, dash and position, in order.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Effect {
+    /// `Jumping`'s take-off: she rises, follows the pad, and from a crouch unaimed is lifted.
+    TakeOff,
+    /// `Jumping`'s spin start or the spring ball's hop: she rises.
+    Rise,
+    /// `TurningRound`.
+    TurnRound,
+    /// She follows the pad again: a skid ends, along her new facing.
+    EndSkid,
+    /// As running: the dash joins her speed and she carries on, braking.
+    AsRunning,
+    /// Dash 0.
+    LoseDash,
+    /// Horizontal speed 0, dash 0, following the pad.
+    Halt,
+    /// `Moonfall`.
+    Moonfall,
+    /// `ShrinkingLowersHer`: she is lowered this many px.
+    Lower(u16),
+    /// `Jumping`: starting a straight jump or a fall, she carries on along her facing if she
+    /// has a dash, else follows the pad.
+    StartDrift,
+    /// §1.2: a spin that followed a wall jump is carried on.
+    CarrySpin,
+}
+
+/// A move of the state machine: a row of one of §7's tables.
+#[derive(Clone, Copy)]
+pub struct Row {
+    /// Its Pad cell, which a beats clause names.
+    pub name: &'static str,
+    /// What it needs, all of it.
+    pub needs: &'static [Test],
+    /// The pose it leads to.
+    pub next: Next,
+    /// What it does.
+    pub effects: &'static [Effect],
+    /// `PadChart`: the rows of its situation it beats, by name.
+    pub beats: &'static [&'static str],
+}
+
+/// `WhatHerMovesMet`: what this frame's moves met.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Met {
     /// A wall stop (`WallsAndCeilings`).
@@ -50,189 +162,168 @@ pub enum Met {
     Ceiling,
 }
 
-/// A next pose, and the change's effects on her speeds and dash (`table`'s effect flags).
-pub type Choice = (Pose, u16);
+/// What the chart reads: her situation and pose at the frame's start, whether she is off the
+/// ground once her moves are made, the pad held and just pressed, her equipment and what her
+/// moves met.
+#[derive(Clone, Copy)]
+pub struct Moment {
+    /// Her situation.
+    pub situation: &'static Situation,
+    /// Her pose.
+    pub pose: Pose,
+    /// Off the ground once her moves are made.
+    pub airborne: bool,
+    /// The buttons held.
+    pub pad: Pad,
+    /// The buttons just pressed.
+    pub pressed: Pad,
+    /// Her equipment.
+    pub equipment: Equipment,
+    /// What her moves met.
+    pub met: Option<Met>,
+}
 
-/// Whether her body is changing shape.
-#[must_use]
-pub const fn changes_shape(a: Action) -> bool {
-    matches!(a, Crouching | StandingUp | Morphing | Unmorphing)
+/// A chosen pose and the change's effects.
+#[derive(Clone, Copy)]
+pub struct Choice {
+    /// The pose.
+    pub pose: Pose,
+    /// Its effects.
+    pub effects: &'static [Effect],
 }
 
 /// `PadChart`: a row that needs a just-pressed button outranks one that doesn't; then the one that
 /// names more buttons.
-const fn rank(r: &Row) -> (bool, u32) {
-    (r.0 & PRESSED != 0, (r.0 & NAMED).count_ones())
+fn rank(row: &Row) -> (bool, usize) {
+    let pressed = |t: &&Test| matches!(t, Test::Pressed(_));
+    let named = |t: &&Test| matches!(t, Test::Held(_) | Test::Pressed(_));
+    (
+        row.needs.iter().any(|t| pressed(&t)),
+        row.needs.iter().filter(named).count(),
+    )
 }
 
-/// `PadChart`: whether row `a`, at `i` in its situation, beats row `b`, at `j`: as `a`'s Pad cell
-/// says, else by rank unless `b`'s says it beats `a`.
-fn beats((a, i): (&Row, u32), (b, j): (&Row, u32)) -> bool {
-    let says = |r: &Row, n: u32| r.4.checked_shr(n).is_some_and(|m| m & 1 != 0);
-    says(a, j) || !says(b, i) && rank(a) > rank(b)
+/// `PadChart`: whether row `a` beats row `b`: as `a`'s beats clause says, else by rank unless
+/// `b`'s says it beats `a`.
+fn beats(a: &Row, b: &Row) -> bool {
+    a.beats.contains(&b.name) || !b.beats.contains(&a.name) && rank(a) > rank(b)
 }
 
-/// `PadChart`: the rows of her situation that fit and no other fitting row beats.
-fn winners(s: &Situation) -> (Vec<&'static Row>, u32) {
-    let k = keys(s);
-    let fit: Vec<(&Row, u32)> = rows(s.pose)
-        .iter()
-        .zip(0..)
-        .filter(|(r, _)| r.0 & !k == 0)
-        .collect();
-    let won = fit.iter().filter(|&&a| !fit.iter().any(|&b| beats(b, a)));
-    (won.map(|w| w.0).collect(), k)
-}
-
-/// `PadChart`: the pad chart's outcome, from her pose and the pad at the frame's start; where no
-/// row fits she keeps her pose.
-#[must_use]
-pub fn pad_chart(s: &Situation) -> Choice {
-    let (won, k) = winners(s);
-    won.first()
-        .map_or((s.pose, 0), |r| (outcome(r, s.pose, k), r.3))
-}
-
-/// `PadChart`: the next pose a row names, from `p` with keys `k`. "Kept" (no action) keeps her
-/// pose, gun and legs; else the gun is stowed unless drawn or as it was, the legs together unless
-/// striding, and the body follows the action. Facing is kept unless back; the aim is the first
-/// of the row's `Aiming` rule whose keys are all there, kept where none is; a turn in the air
-/// shows `DownForward` as `Down` (§2).
-fn outcome(&(_, act, aims, fx, _): &Row, p: Pose, k: u32) -> Pose {
-    let on = |f: u16| fx & f != 0;
-    let action = act.unwrap_or(p.action);
-    let aim = aims.iter().find(|a| a.0 & !k == 0).map_or(p.aim, |a| a.1);
-    Pose {
-        body: if on(STANDUP) || matches!(action, StandingUp | TakingOff) {
-            Upright
-        } else if matches!(action, Crouching | Unmorphing) {
-            Crouched
-        } else if action == Morphing {
-            Ball
-        } else {
-            p.body
-        },
-        action,
-        facing: match p.facing {
-            Facing::Left if on(BACK) => Facing::Right,
-            Facing::Right | Facing::Screen if on(BACK) => Facing::Left,
-            f @ (Facing::Left | Facing::Right | Facing::Screen) => f,
-        },
-        aim: if matches!(action, Turning(Turn::Jump | Turn::Fall)) && aim == DownForward {
-            Down
-        } else {
-            aim
-        },
-        gun: if on(DRAW) || (on(ASWAS) || act.is_none()) && p.gun == Gun::Drawn {
-            Gun::Drawn
-        } else {
-            Gun::Stowed
-        },
-        legs: if on(STRIDE) || act.is_none() && p.legs == Legs::Striding {
-            Legs::Striding
-        } else {
-            Legs::Together
-        },
-    }
-}
-
-/// `WhatHerMovesMet`: the pose what her moves met chooses over the pad; `chosen` is the pad
-/// chart's, whose aim a blocked aim step keeps. Body and facing are kept, the legs together.
-fn met_pose(s: &Situation, met: Met, chosen: Pose) -> Option<Pose> {
-    let p = s.pose;
-    let ball = matches!(p.body, Ball | SpringBall);
-    let (action, aim, gun) = match met {
-        Met::Wall if p.aim == Up => (Still, Up, Gun::Stowed),
-        Met::Wall if matches!(p.aim, UpForward | DownForward) => (AgainstWall, p.aim, Gun::Stowed),
-        Met::Wall => (AgainstWall, Forward, Gun::Stowed),
-        Met::AimStep => (AgainstWall, chosen.aim, Gun::Stowed),
-        Met::WallKick => (WallJumping, Forward, Gun::Stowed),
-        // The ball bouncing (now off the ground again) is kept; coming to rest it is still.
-        Met::Floor if ball && s.airborne => return Some(p),
-        Met::Floor if ball => (Still, Forward, Gun::Stowed),
-        // Aimed `Forward` with shoot held, she lands firing.
-        Met::Floor if p.body == Upright && matches!(p.action, Jumping | Falling) => (
-            Landing(LandedFrom::Jump),
-            if p.aim == Down { Forward } else { p.aim },
-            if p.aim == Forward && s.pad.shoot {
-                Gun::Drawn
-            } else {
-                Gun::Stowed
-            },
-        ),
-        Met::Floor if matches!(p.action, Spinning | WallJumping) => {
-            (Landing(LandedFrom::Spin), Forward, Gun::Stowed)
+impl Moment {
+    /// Whether `pad` holds `key`.
+    const fn holds(&self, pad: Pad, key: Key) -> bool {
+        let left = matches!(self.pose.facing, Facing::Left);
+        match key {
+            Key::Forward => (left && pad.left) || (!left && pad.right),
+            Key::Back => (left && pad.right) || (!left && pad.left),
+            Key::Jump => pad.jump,
+            Key::Shoot => pad.shoot,
+            Key::Run => pad.run,
+            Key::Up => pad.up,
+            Key::Down => pad.down,
+            Key::AimUp => pad.aim_up,
+            Key::AimDown => pad.aim_down,
         }
-        Met::NoFloor if ball || p.body == Upright => (Falling, Forward, Gun::Stowed),
-        Met::Ceiling => return Some(p),
-        Met::Floor | Met::NoFloor => return None,
-    };
-    Some(Pose {
-        action,
-        aim,
-        gun,
-        legs: Legs::Together,
-        ..p
-    })
-}
+    }
 
-/// `AnimationEnds`: the pose an ending animation hands over, whatever the pad, and its effect.
-/// The gun is stowed; the aim kept where the table says so, else `Forward`.
-fn handed_over(s: &Situation) -> Option<Choice> {
-    let p = s.pose;
-    let ball = if s.equipment.spring_ball {
-        SpringBall
-    } else {
-        Ball
-    };
-    let (action, body, kept, fx) = match p.action {
-        TakingOff => (Jumping, Upright, true, 0),
-        Turning(_) if p.body == Crouched => (Still, Crouched, true, LOSEDASH),
-        Turning(Turn::Ground) => (Still, Upright, true, LOSEDASH),
-        Turning(Turn::Jump) => (Jumping, Upright, true, LOSEDASH),
-        Turning(Turn::Fall) => (Falling, Upright, true, LOSEDASH),
-        Turning(Turn::MoonwalkJump) => (Spinning, Upright, false, MOONFALL),
-        StandingUp => (Still, Upright, false, 0),
-        Morphing if s.airborne => (Falling, ball, false, 0),
-        Morphing => (Still, ball, false, 0),
-        Landing(_) => (Still, Upright, true, 0),
-        Unmorphing if s.airborne => (Falling, Upright, false, 0),
-        Crouching | Unmorphing => (Still, Crouched, false, 0),
-        AgainstWall
-        | Falling
-        | Jumping
-        | Action::Moonwalking
-        | Action::Rolling
-        | Running
-        | Spinning
-        | Still
-        | WallJumping => return None,
-    };
-    // A turn in a jump aimed `Forward` ends striding.
-    let striding = p.action == Turning(Turn::Jump) && p.aim == Forward;
-    let pose = Pose {
-        body,
-        action,
-        aim: if kept { p.aim } else { Forward },
-        gun: Gun::Stowed,
-        legs: if striding {
-            Legs::Striding
-        } else {
-            Legs::Together
-        },
-        ..p
-    };
-    Some((pose, fx))
-}
+    /// Whether one test passes.
+    fn passes(&self, test: &Test) -> bool {
+        let p = self.pose;
+        match *test {
+            Test::Held(keys) => keys.iter().any(|k| self.holds(self.pad, *k)),
+            Test::Pressed(key) => self.holds(self.pressed, key),
+            Test::Not(t) => !self.passes(t),
+            Test::Any(tests) => tests.iter().any(|t| self.passes(t)),
+            Test::Aimed(aims) => aims.contains(&p.aim),
+            Test::Gun(gun) => p.gun == gun,
+            Test::Faces(side) => p.facing.side() == side,
+            Test::Body(bodies) => bodies.contains(&p.body),
+            Test::Action(actions) => actions.contains(&p.action),
+            Test::Doing(doings) => doings.contains(&self.situation.doing),
+            Test::Airborne => self.airborne,
+            Test::SpringBall => self.equipment.spring_ball,
+            Test::Met(met) => self.met == Some(met),
+        }
+    }
 
-/// `PoseFollows`: the pose a frame ends in, and its effects: an animation ending hands over its
-/// pose, else what her moves met chooses (its effects acted in the moves), else `chart`, the pad
-/// chart's outcome.
-#[must_use]
-pub fn next_pose(s: &Situation, chart: Choice, met: Option<Met>, animation_ends: bool) -> Choice {
-    animation_ends
-        .then(|| handed_over(s))
-        .flatten()
-        .or_else(|| met.and_then(|m| met_pose(s, m, chart.0)).map(|p| (p, 0)))
-        .unwrap_or(chart)
+    /// Whether every test passes.
+    fn fits(&self, tests: &[Test]) -> bool {
+        tests.iter().all(|t| self.passes(t))
+    }
+
+    /// A row's choice: the pose it leads to from hers, and its effects.
+    fn choice(&self, row: &Row) -> Choice {
+        let (p, n) = (self.pose, row.next);
+        let pose = Pose {
+            body: n.body.unwrap_or(p.body),
+            action: n.action.unwrap_or(p.action),
+            facing: match n.facing {
+                Side::Kept => p.facing,
+                Side::Back => p.facing.back(),
+            },
+            aim: n
+                .aim
+                .iter()
+                .find(|a| self.fits(a.when))
+                .map_or(p.aim, |a| a.aim),
+            gun: n.gun.unwrap_or(p.gun),
+            legs: n.legs.unwrap_or(p.legs),
+        };
+        Choice {
+            pose,
+            effects: row.effects,
+        }
+    }
+
+    /// The first row of a table that fits.
+    fn first(&self, rows: &'static [Row]) -> Option<&'static Row> {
+        rows.iter().find(|r| self.fits(r.needs))
+    }
+
+    /// `PadChart`: the one row of her situation that fits and no other fitting row beats (the
+    /// chart's test proves there is exactly one).
+    #[must_use]
+    pub fn pad_chart(&self) -> Option<&'static Row> {
+        let fit: Vec<&Row> = self
+            .situation
+            .rows
+            .iter()
+            .filter(|r| self.fits(r.needs))
+            .collect();
+        fit.iter()
+            .find(|a| !fit.iter().any(|b| beats(b, a)))
+            .copied()
+    }
+
+    /// `PoseFollows` items 2 and 3: what her moves met chooses (`WhatHerMovesMet`), else the pad
+    /// chart. Where no row fits she keeps her pose.
+    #[must_use]
+    pub fn by_moves(&self) -> Choice {
+        self.first(table::MOVES_MET)
+            .or_else(|| self.pad_chart())
+            .map_or(
+                Choice {
+                    pose: self.pose,
+                    effects: &[],
+                },
+                |row| self.choice(row),
+            )
+    }
+
+    /// `AnimationEnds`: the pose an ending animation hands over, whatever the pad.
+    #[must_use]
+    pub fn handed_over(&self) -> Option<Choice> {
+        self.first(table::ANIMATION_ENDS)
+            .map(|row| self.choice(row))
+    }
+
+    /// `PoseFollows`: an animation ending hands over its pose, else what her moves met chooses,
+    /// else the pad chart.
+    #[must_use]
+    pub fn choose(&self, animation_ends: bool) -> Choice {
+        animation_ends
+            .then(|| self.handed_over())
+            .flatten()
+            .unwrap_or_else(|| self.by_moves())
+    }
 }

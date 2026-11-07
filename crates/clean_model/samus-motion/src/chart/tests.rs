@@ -1,17 +1,18 @@
 //! `PadChart`: every situation and pad the chart can meet is decided. Where rows of her
-//! situation both fit, the one that loses to the other by rank or by a "beats" clause drops out;
-//! the rows no fitting row beats must be at least one, and must all give the same outcome (the
-//! same next pose and the same effect). So no two fitting rows are left tied with different
-//! outcomes, and no "beats" clause goes round in a circle.
+//! situation both fit, the one that loses to the other by rank or by a beats clause drops out;
+//! exactly one fitting row must be left, beaten by no other, so the chart never meets a tie and
+//! needs no rule for one. No two rows beat each other, and every beats clause names a row of its
+//! own situation.
 
-use super::{Situation, outcome, rows, winners};
+use super::{Moment, Row, beats};
+use crate::situation::classify;
 use clean_types::Action::{
-    AgainstWall, Falling, Jumping, Landing, Moonwalking, Rolling, Running, Spinning, Still,
-    TakingOff, Turning, WallJumping,
+    AgainstWall, Crouching, Falling, Jumping, Landing, Moonwalking, Morphing, Rolling, Running,
+    Spinning, StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
 };
 use clean_types::{Aim, Body, Equipment, Facing, Gun, LandedFrom, Legs, Pad, Pose, Turn};
 
-/// Every body and action that has rows, each pose part the rows read, both sides of the ground.
+/// Every body and action, each pose part the rows read, both sides of the ground.
 fn situations() -> Vec<(Pose, bool)> {
     let upright = [
         Still,
@@ -34,10 +35,15 @@ fn situations() -> Vec<(Pose, bool)> {
     let other = [
         (Body::Crouched, Still),
         (Body::Crouched, Turning(Turn::Ground)),
+        (Body::Crouched, Crouching),
+        (Body::Crouched, Unmorphing),
+        (Body::Upright, StandingUp),
+        (Body::Ball, Morphing),
         (Body::Ball, Still),
         (Body::Ball, Rolling),
         (Body::Ball, Falling),
         (Body::SpringBall, Still),
+        (Body::SpringBall, Rolling),
         (Body::SpringBall, Jumping),
     ];
     let mut all = Vec::new();
@@ -87,13 +93,45 @@ fn pad(bits: u32) -> Pad {
     }
 }
 
+/// The fitting rows that no other fitting row beats.
+fn unbeaten<'a>(fit: &[&'a Row]) -> Vec<&'a Row> {
+    fit.iter()
+        .copied()
+        .filter(|a| !fit.iter().any(|b| beats(b, a)))
+        .collect()
+}
+
+#[test]
+fn beats_clauses_name_rows_of_their_situation_and_go_one_way() {
+    for (pose, airborne) in situations() {
+        let rows = classify(pose, !airborne).rows;
+        for a in rows {
+            for name in a.beats {
+                assert!(
+                    rows.iter().any(|b| b.name == *name),
+                    "{:?}: {:?} beats {name:?}, which is not a row of its situation",
+                    pose.action,
+                    a.name
+                );
+            }
+            for b in rows {
+                assert!(
+                    !(a.beats.contains(&b.name) && b.beats.contains(&a.name)),
+                    "{:?}: {:?} and {:?} beat each other",
+                    pose.action,
+                    a.name,
+                    b.name
+                );
+            }
+        }
+    }
+}
+
 #[test]
 fn every_tie_is_decided() {
     let mut failures = Vec::new();
     for (pose, airborne) in situations() {
-        if rows(pose).is_empty() {
-            continue;
-        }
+        let situation = classify(pose, !airborne);
         for held in 0..512_u32 {
             let h = pad(held);
             // The pad can't hold both of left and right, or of up and down.
@@ -107,23 +145,30 @@ fn every_tie_is_decided() {
                 if pressed & !pressable != 0 {
                     continue;
                 }
-                let s = Situation {
+                let moment = Moment {
+                    situation,
                     pose,
                     airborne,
                     pad: h,
                     pressed: pad(pressed),
                     equipment: Equipment::default(),
+                    met: None,
                 };
-                let (won, k) = winners(&s);
-                let outcomes: Vec<_> = won.iter().map(|r| (outcome(r, pose, k), r.3)).collect();
-                if outcomes.is_empty() || outcomes.iter().any(|o| *o != outcomes[0]) {
+                let fit: Vec<&Row> = situation
+                    .rows
+                    .iter()
+                    .filter(|r| moment.fits(r.needs))
+                    .collect();
+                let won = unbeaten(&fit);
+                if won.len() != 1 {
                     // One line per situation's rows left tied, with a first pad that ties them.
-                    let tied: Vec<u32> = won.iter().map(|r| r.0).collect();
+                    let tied: Vec<&str> = won.iter().map(|r| r.name).collect();
                     let line = format!(
-                        "{:?} rows needing keys {tied:#x?} tie, e.g. {pose:?} airborne {airborne} held {held:09b} pressed {pressed:07b}: {outcomes:?}",
-                        pose.action
+                        "{:?} rows {tied:?} are left of {:?}, e.g. {pose:?} airborne {airborne} held {held:09b} pressed {pressed:07b}",
+                        pose.action,
+                        fit.iter().map(|r| r.name).collect::<Vec<_>>()
                     );
-                    if !failures.iter().any(|f: &(Vec<u32>, String)| f.0 == tied) {
+                    if !failures.iter().any(|f: &(Vec<&str>, String)| f.0 == tied) {
                         failures.push((tied, line));
                     }
                 }

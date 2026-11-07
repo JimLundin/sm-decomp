@@ -3,12 +3,13 @@
 #[cfg(test)]
 mod vectors {
     use clean_model_samus_motion::{
-        Bounces, CATALOGUE, Frame, Met, Rules, Samus, Situation, SpeedCap, next_pose, pad_chart,
+        Bounces, CATALOGUE, Carry, DashIs, Frame, Met, Moment, Outcome, Rules, Samus, Seat,
+        SpeedCap, Spin, Vertical, WallTest, classify,
     };
     use clean_types::{
-        Action, Aim, AirKind, AnsweredKind, Block, Body, Cell, Equipment, Facing, Fixed, Gun,
-        Heading, Hitbox, LandedFrom, Legs, Pad, Parity, Pose, Position, Radius, Signed, Slope,
-        SlopeFaces, SolidKind, Surface, Touch, Turn, World,
+        Action, Aim, Block, Body, Cell, Equipment, Facing, Fixed, Gun, Heading, Hitbox, LandedFrom,
+        Legs, Pad, Parity, Pose, Position, Radius, Signed, Slope, SlopeFaces, Surface, Touch, Turn,
+        Way, World,
     };
     use std::iter::Peekable;
     use std::str::Chars;
@@ -256,6 +257,21 @@ mod vectors {
     /// (default `Stowed`), turn (`Turning` only, default `Ground`), `landed_from` (`Landing` only)
     /// and legs (default `Together`).
     fn pose(value: &Value) -> Pose {
+        known_keys(
+            value,
+            "pose",
+            &[
+                "body",
+                "action",
+                "facing",
+                "radius",
+                "aim",
+                "gun",
+                "turn",
+                "landed_from",
+                "legs",
+            ],
+        );
         let field = |k: &str| value.get(k).unwrap_or_else(|| panic!("pose.{k}")).str();
         let optional = |k: &str, default: &'static str| value.get(k).map_or(default, Value::str);
         let turn = match optional("turn", "Ground") {
@@ -352,12 +368,12 @@ mod vectors {
                 || from(column, self.wall_right)
                 || above(row, self.ceiling_bottom)
             {
-                Block::Solid(SolidKind::Plain)
+                Block::Solid
             } else {
-                Block::Air(AirKind::Plain)
+                Block::Air
             }
         }
-        fn lets_through(&self, cell: Cell, _: Heading) -> bool {
+        fn lets_through(&self, cell: Cell, _: Way) -> bool {
             self.through.contains(&(cell.column, cell.row))
         }
         fn solid_enemies(&self) -> &[Hitbox] {
@@ -381,6 +397,7 @@ mod vectors {
     /// A sloped block: its corner and its surface at its 16 columns; 16 is an empty column (the
     /// surface just past the far edge), 17 a column far past (spec `SlopesCarry`).
     fn slope(value: &Value, faces: SlopeFaces) -> ((u16, u16), Block) {
+        known_keys(value, "slope", &["block", "surface", "factor"]);
         let mut surface = [Surface::Row(0); 16];
         let rows = value.get("surface").expect("slope surface").array();
         assert_eq!(rows.len(), surface.len(), "slope surface");
@@ -410,6 +427,7 @@ mod vectors {
 
     /// A stepped block: its corner and its quarters, upper row then lower, "#" solid.
     fn stepped(value: &Value) -> ((u16, u16), Block) {
+        known_keys(value, "stepped", &["block", "quarters"]);
         let rows = value.get("quarters").expect("stepped quarters").array();
         let row = |v: &Value| {
             let solid: Vec<bool> = v.str().chars().map(|c| c == '#').collect();
@@ -423,19 +441,15 @@ mod vectors {
     /// One of the other kinds of cell (spec `OtherBlockKinds`): its corner, its kind, and
     /// whether the world's answer lets her through this frame.
     fn other_cell(value: &Value) -> ((u16, u16), Block, bool) {
+        known_keys(value, "cell", &["block", "kind", "answer", "names"]);
         let through = value.get("answer").map_or("Solid", Value::str) == "Air";
+        // OtherBlockKinds: each kind meets her motion as solid, as air, or as it answers.
         let block = match value.get("kind").expect("cell kind").str() {
-            "DoorToRoom" => Block::Air(AirKind::DoorToRoom),
-            "DoorToNowhere" => Block::Solid(SolidKind::DoorToNowhere),
-            "Spikes" => Block::Solid(SolidKind::Spikes),
-            "AirWithSpikes" => Block::Air(AirKind::Spiked),
-            "BreaksToShots" => Block::Solid(SolidKind::ShotBlock),
-            "HoldsGrapple" => Block::Solid(SolidKind::GrappleBlock),
-            "AirShotsActOn" => Block::Air(AirKind::ShotAir),
-            "BreaksToBombs" => Block::Answered(AnsweredKind::BombBlock),
-            "AirBombsActOn" => Block::Air(AirKind::BombAir),
-            "ReactingBlock" => Block::Answered(AnsweredKind::Reacting),
-            "ReactingAir" => Block::Air(AirKind::Reacting),
+            "DoorToRoom" | "AirWithSpikes" | "AirShotsActOn" | "AirBombsActOn" | "ReactingAir" => {
+                Block::Air
+            }
+            "DoorToNowhere" | "Spikes" | "BreaksToShots" | "HoldsGrapple" => Block::Solid,
+            "BreaksToBombs" | "ReactingBlock" => Block::Answered,
             "StandIn" => Block::StandsFor(value.get("names").map(|n| {
                 let (column, row) = corner(n);
                 Cell { column, row }
@@ -451,6 +465,22 @@ mod vectors {
 
     /// The world's room.
     fn room(world: &Value) -> Room {
+        known_keys(
+            world,
+            "world",
+            &[
+                "floor_top",
+                "wall_right",
+                "ceiling_bottom",
+                "slope_floor",
+                "slope_ceiling",
+                "solid_block",
+                "stepped",
+                "enemy",
+                "elevator_moving",
+                "cells",
+            ],
+        );
         let face = |k: &str| world.get(k).map(|v| u32::try_from(v.int()).expect("face"));
         let mut blocks = Vec::new();
         let mut through = Vec::new();
@@ -468,7 +498,7 @@ mod vectors {
             blocks.push(slope(v, SlopeFaces::Ceiling));
         }
         if let Some(v) = world.get("solid_block") {
-            blocks.push((corner(v), Block::Solid(SolidKind::Plain)));
+            blocks.push((corner(v), Block::Solid));
         }
         if let Some(v) = world.get("stepped") {
             blocks.push(stepped(v));
@@ -476,6 +506,7 @@ mod vectors {
         let enemies = world
             .get("enemy")
             .map(|e| {
+                known_keys(e, "enemy", &["centre", "radius"]);
                 let (x, y) = pair(e.get("centre").expect("enemy centre"));
                 let (rx, ry) = pair(e.get("radius").expect("enemy radius"));
                 let radius = Radius { x: rx, y: ry };
@@ -493,54 +524,84 @@ mod vectors {
         }
     }
 
-    /// One frame's inputs: `base` with the frame's pad, body size and push (pose fit's, out of
-    /// scope) and whether its pose's animation ends. Animation timing is out of scope too: a
-    /// vector says an animation ends by the pose that follows one that lasts only as long as its
-    /// animation (spec `AnimationEnds`). Pose fit's push, where the pose changes (not to facing
-    /// the screen) to a taller body: every vector's world has nothing above her there, so the
-    /// push keeps her feet where they were, raising her by the growth (spec
-    /// `PoseFitAfterMoves`).
-    fn frame_inputs(
-        base: Frame,
-        (start, radius, pad, jump_pressed): (Pose, Radius, Pad, bool),
-        end: Option<(Pose, Radius)>,
-    ) -> Frame {
-        let push = match end {
-            Some((next, grown))
-                if next != start && next.facing != Facing::Screen && grown.y > radius.y =>
-            {
-                Signed {
-                    negative: true,
-                    size: Fixed::px(grown.y.wrapping_sub(radius.y)),
-                }
-            }
-            _ => Signed {
-                negative: false,
-                size: Fixed(0),
-            },
+    /// Animation timing is out of scope: a vector says an animation ends by the pose that
+    /// follows one that lasts only as long as its animation, where it is the pose that end
+    /// hands over (spec `AnimationEnds`'s table); any other pose that follows is the pad's or
+    /// her moves' (a landing into running, W17).
+    fn animation_ends(start: Pose, end: Option<Pose>) -> bool {
+        use Action::{
+            Crouching, Falling, Jumping, Landing, Morphing, Spinning, StandingUp, Still, TakingOff,
+            Turning, Unmorphing,
         };
-        let end = end.map(|e| e.0);
-        let animated = matches!(
-            start.action,
-            Action::TakingOff
-                | Action::Turning(_)
-                | Action::Crouching
-                | Action::StandingUp
-                | Action::Morphing
-                | Action::Unmorphing
-                | Action::Landing(_)
-        );
-        let pressed = Pad {
+        end.is_some_and(|end| {
+            matches!(
+                (start.action, end.action),
+                (TakingOff | Turning(Turn::Jump), Jumping)
+                    | (
+                        Turning(Turn::Ground) | Crouching | StandingUp | Landing(_),
+                        Still
+                    )
+                    | (Turning(Turn::Fall), Falling)
+                    | (Turning(Turn::MoonwalkJump), Spinning)
+                    | (Morphing | Unmorphing, Still | Falling)
+            )
+        })
+    }
+
+    /// The buttons just pressed in a frame: jump as `jump_pressed` says; any other button held
+    /// now and not in the frame before. The format gives no frame before a vector's first, so
+    /// there no button but jump is just pressed.
+    fn pressed(pad: Pad, before: Option<Pad>, jump_pressed: bool) -> Pad {
+        let new =
+            |now: bool, then: fn(&Pad) -> bool| now && before.as_ref().is_some_and(|b| !then(b));
+        Pad {
+            run: new(pad.run, |b| b.run),
             jump: jump_pressed,
-            ..Pad::default()
-        };
-        Frame {
-            pad,
-            pressed,
-            animation_ends: animated && end.is_some_and(|e| e.action != start.action),
-            radius,
-            push,
-            ..base
+            shoot: new(pad.shoot, |b| b.shoot),
+            left: new(pad.left, |b| b.left),
+            right: new(pad.right, |b| b.right),
+            up: new(pad.up, |b| b.up),
+            down: new(pad.down, |b| b.down),
+            aim_up: new(pad.aim_up, |b| b.aim_up),
+            aim_down: new(pad.aim_down, |b| b.aim_down),
+        }
+    }
+
+    /// The keys of a `[[vector]]` (the header's format).
+    const VECTOR_KEYS: &[&str] = &[
+        "id",
+        "source",
+        "entries",
+        "rules",
+        "equipment",
+        "world",
+        "before",
+        "lead_in",
+        "pose",
+        "next_pose",
+        "frame",
+        "pad",
+        "jump_pressed",
+        "after",
+    ];
+
+    /// The keys of a `[[pose_step]]`.
+    const POSE_STEP_KEYS: &[&str] = &[
+        "id",
+        "source",
+        "entries",
+        "pose",
+        "pad",
+        "jump_pressed",
+        "pressed",
+        "met",
+        "after",
+    ];
+
+    /// Fails on a key the format doesn't give for this table, rather than skipping it.
+    fn known_keys(table: &Value, what: &str, keys: &[&str]) {
+        for (key, _) in table.pairs() {
+            assert!(keys.contains(&key.as_str()), "{what}: unknown key {key:?}");
         }
     }
 
@@ -563,32 +624,101 @@ mod vectors {
             },
             Some(other) => panic!("speed_cap {other:?}"),
         };
+        if let Some(rules) = vector.get("rules") {
+            known_keys(rules, "rules", &["speed_cap"]);
+        }
         let equipment = vector.get("equipment");
+        if let Some(e) = equipment {
+            known_keys(
+                e,
+                "equipment",
+                &[
+                    "hi_jump",
+                    "space_jump",
+                    "spring_ball",
+                    "screw_attack",
+                    "other_suit",
+                ],
+            );
+        }
+        // Screw attack and the other suit change only the sprite (spec §2).
         let equipment = Equipment {
             hi_jump: flag(equipment, "hi_jump"),
             space_jump: flag(equipment, "space_jump"),
             spring_ball: flag(equipment, "spring_ball"),
-            screw_attack: flag(equipment, "screw_attack"),
-            other_suit: flag(equipment, "other_suit"),
         };
         (rules, equipment)
     }
 
-    /// Runs one vector; returns its mismatches.
-    fn run(vector: &Value) -> Vec<String> {
-        let id = vector.get("id").expect("id").str();
-        let (rules, equipment) = settings(vector);
-        let world = vector.get("world").expect("world");
-        let room = room(world);
-        let elevator_moving = flag(Some(world), "elevator_moving");
-        let checked_parity = match vector.get("frame").map_or("Even", Value::str) {
-            "Even" => Parity::Even,
-            "Odd" => Parity::Odd,
-            other => panic!("{id}: frame {other:?}"),
+    /// Samus at a vector's start (spec §1.2): her motion follows the pad unless she is skidding,
+    /// her dash is hers to keep, she remembers no spin and no seat, and a vertical speed of 0
+    /// means she stands on the ground, except in a jump, a spin, a fall or a wall jump, where it
+    /// means she has just started to fall.
+    fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
+        known_keys(
+            before,
+            "before",
+            &["position", "speed_x", "dash", "speed_y", "bounces"],
+        );
+        // A missing quantity is 0.
+        let quantity = |k: &str| signed(before.get(k).map_or("+0000.0000", Value::str));
+        let (speed_x, dash, speed_y) = (
+            quantity("speed_x"),
+            quantity("dash").size,
+            quantity("speed_y"),
+        );
+        let xy = before.get("position").expect("before.position").array();
+        let position = Position {
+            x: fixed(xy[0].str()),
+            y: fixed(xy[1].str()),
         };
+        let bounces = match before.get("bounces").map_or(0, Value::int) {
+            0 => Bounces::None,
+            1 => Bounces::Once,
+            _ => Bounces::Twice,
+        };
+        let facing = pose.facing.side();
+        let way = if speed_x.size.is_zero() {
+            facing
+        } else if speed_x.negative {
+            Heading::Left
+        } else {
+            Heading::Right
+        };
+        let v = speed_y.size;
+        let airborne = matches!(
+            pose.action,
+            Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
+        );
+        let vertical = match (v.is_zero(), speed_y.negative) {
+            (true, _) if airborne => Vertical::Falls(v),
+            (true, _) => Vertical::Ground,
+            (false, true) => Vertical::Rises(v),
+            (false, false) => Vertical::Falls(v),
+        };
+        Samus {
+            position,
+            speed: speed_x.size,
+            way,
+            carry: if way == facing {
+                Carry::FollowsPad
+            } else {
+                Carry::CarriesOn
+            },
+            dash,
+            dash_is: DashIs::Hers,
+            vertical,
+            bounces,
+            pose,
+            radius,
+            spin: Spin::Off,
+            seat: Seat::Unseated,
+        }
+    }
 
-        // The frames: the lead-in's, then the checked one, each with the pose it starts in, its
-        // body size (pose fit's, out of scope) and the pad.
+    /// A vector's frames: the lead-in's, then the checked one, each with the pose it starts in,
+    /// its body size there, the pad and whether jump was just pressed.
+    fn frames(vector: &Value) -> Vec<(Pose, Radius, Pad, bool)> {
         let frame_of = |f: &Value| {
             let start = f.get("pose").expect("pose");
             (
@@ -603,29 +733,33 @@ mod vectors {
             .map(Value::array)
             .unwrap_or_default()
             .iter()
-            .map(frame_of)
+            .map(|f| {
+                known_keys(f, "lead_in", &["pose", "pad", "jump_pressed"]);
+                frame_of(f)
+            })
             .collect();
         frames.push(frame_of(vector));
+        frames
+    }
 
-        let before = vector.get("before").expect("before");
-        // A missing quantity is 0.
-        let quantity = |k: &str| signed(before.get(k).map_or("+0000.0000", Value::str));
-        let position = before.get("position").expect("before.position").array();
-        let bounces = match before.get("bounces").map_or(0, Value::int) {
-            0 => Bounces::None,
-            1 => Bounces::Once,
-            _ => Bounces::Twice,
+    /// Runs one vector; returns its mismatches.
+    fn run(vector: &Value) -> Vec<String> {
+        let id = vector.get("id").expect("id").str();
+        known_keys(vector, id, VECTOR_KEYS);
+        let (rules, equipment) = settings(vector);
+        let world = vector.get("world").expect("world");
+        let room = room(world);
+        let elevator_moving = flag(Some(world), "elevator_moving");
+        let checked_parity = match vector.get("frame").map_or("Even", Value::str) {
+            "Even" => Parity::Even,
+            "Odd" => Parity::Odd,
+            other => panic!("{id}: frame {other:?}"),
         };
+
+        let frames = frames(vector);
         let (first_pose, first_radius, _, _) = frames[0];
-        let mut samus = Samus::start(
-            Position {
-                x: fixed(position[0].str()),
-                y: fixed(position[1].str()),
-            },
-            quantity("speed_x"),
-            quantity("dash").size,
-            quantity("speed_y"),
-            bounces,
+        let mut samus = start(
+            vector.get("before").expect("before"),
             first_pose,
             first_radius,
         );
@@ -651,27 +785,46 @@ mod vectors {
         } else {
             other(checked_parity)
         };
-        let base = Frame {
-            pad: Pad::default(),
-            pressed: Pad::default(),
-            equipment,
-            spin_turned_far: false,
-            elevator_moving,
-            parity,
-            animation_ends: false,
-            radius: first_radius,
-            push: quantity("none"),
-        };
+        // Every pose the vector gives a body size for (spec §1.3: the game's data): each
+        // frame's start, the checked frame's next_pose, and the pose it ends in.
+        let after = vector.get("after").expect("after");
+        let mut known: Vec<(Pose, Radius)> = frames.iter().map(|f| (f.0, f.1)).collect();
+        known.extend(last_next);
+        known.extend(after.get("pose").map(|p| (pose(p), radius(p))));
         let mut misses = Vec::new();
         let mut outcome = None;
-        for (n, (&inputs, end)) in frames.iter().zip(&ends).enumerate() {
-            let frame = frame_inputs(Frame { parity, ..base }, inputs, *end);
+        let mut held_before = None;
+        for (n, (&(start, radius, held, jump_pressed), end)) in frames.iter().zip(&ends).enumerate()
+        {
+            // A pose's body size: the frame's own end where it names that pose (a record's body
+            // can lag its pose, so the same pose may come with two sizes), else the frame's start,
+            // else any the vector gives.
+            let body = |p: Pose| {
+                end.filter(|e| e.0 == p)
+                    .or_else(|| (start == p).then_some((start, radius)))
+                    .or_else(|| known.iter().find(|k| k.0 == p).copied())
+                    .map_or(radius, |k| k.1)
+            };
+            let frame = Frame {
+                pad: held,
+                pressed: pressed(held, held_before, jump_pressed),
+                equipment,
+                spin_turned_far: false,
+                elevator_moving,
+                parity,
+                animation_ends: animation_ends(start, end.map(|e| e.0)),
+                body: &body,
+            };
+            held_before = Some(held);
             parity = other(parity);
             outcome = Some(samus.step(&frame, &room, &rules));
-            // The first pose that differs; the later ones follow from it.
+            // The first pose that differs; the later ones follow from it. The checked frame's
+            // after.pose, where given, is the pose it ends in instead of next_pose.
+            let checked = n.wrapping_add(1) == frames.len();
             if let Some((expected, _)) = end
                 && samus.pose != *expected
                 && misses.is_empty()
+                && !(checked && after.get("pose").is_some())
             {
                 misses.push(format!(
                     "{id}: frame {n} ends in pose {:?}, expected {expected:?}",
@@ -680,7 +833,6 @@ mod vectors {
             }
         }
         let outcome = outcome.expect("a checked frame");
-        let after = vector.get("after").expect("after");
         misses.extend(compare(id, after, &samus, &outcome));
         misses
     }
@@ -688,6 +840,7 @@ mod vectors {
     /// Runs one pose step through the chart; returns its mismatch.
     fn run_pose_step(step: &Value) -> Option<String> {
         let id = step.get("id").expect("id").str();
+        known_keys(step, id, POSE_STEP_KEYS);
         let start = pose(step.get("pose").expect("pose"));
         let held = pad(step.get("pad").expect("pad"));
         let mut pressed = pad(step.get("pressed").expect("pressed"));
@@ -709,16 +862,18 @@ mod vectors {
                     start.action,
                     Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
                 ));
-        let situation = Situation {
+        let moment = Moment {
+            situation: classify(start, !airborne),
             pose: start,
             airborne,
             pad: held,
             pressed,
             equipment: Equipment::default(),
+            met,
         };
-        let chart = pad_chart(&situation);
-        let chosen = next_pose(&situation, chart, met, animation_ends).0;
+        let chosen = moment.choose(animation_ends).pose;
         let after = step.get("after").expect("after");
+        known_keys(after, "after", &["pose"]);
         let expected = pose(after.get("pose").expect("after.pose"));
         (chosen != expected).then(|| format!("{id}: pose expected {expected:?}, actual {chosen:?}"))
     }
@@ -734,22 +889,33 @@ mod vectors {
 
     /// A reached cell as the vectors write it.
     fn show_touch(touch: Touch) -> String {
-        let way = match touch.heading {
-            Heading::Left => "Left",
-            Heading::Right => "Right",
-            Heading::Up => "Up",
-            Heading::Down => "Down",
+        let way = match touch.way {
+            Way::Move(Heading::Left) => "Left",
+            Way::Move(Heading::Right) => "Right",
+            Way::Move(Heading::Up) => "Up",
+            Way::Move(Heading::Down) => "Down",
+            Way::Look => "Look",
         };
         format!("{} {way}", show_cell(touch.cell))
     }
 
+    /// The reached cells a vector lists, as `show_touch` writes them.
+    fn listed_touches(value: &Value) -> String {
+        let listed: Vec<String> = value
+            .array()
+            .iter()
+            .map(|t| {
+                known_keys(t, "reached", &["cell", "way"]);
+                let (x, y) = pair(t.get("cell").expect("reached cell"));
+                let way = t.get("way").expect("reached way").str();
+                format!("[{x}, {y}] {way}")
+            })
+            .collect();
+        listed.join("; ")
+    }
+
     /// The listed `after` quantities that differ.
-    fn compare(
-        id: &str,
-        after: &Value,
-        samus: &Samus,
-        outcome: &clean_model_samus_motion::Outcome,
-    ) -> Vec<String> {
+    fn compare(id: &str, after: &Value, samus: &Samus, outcome: &Outcome) -> Vec<String> {
         let mut misses = Vec::new();
         let mut check = |field: &str, expected: String, actual: String| {
             if expected != actual {
@@ -799,18 +965,9 @@ mod vectors {
                 ),
                 "dash" => check("dash", show(fixed(value.str())), show(samus.dash)),
                 "reached" => {
-                    let expected: Vec<String> = value
-                        .array()
-                        .iter()
-                        .map(|t| {
-                            let (x, y) = pair(t.get("cell").expect("reached cell"));
-                            let way = t.get("way").expect("reached way").str();
-                            format!("[{x}, {y}] {way}")
-                        })
-                        .collect();
                     let actual: Vec<String> =
                         outcome.reached.iter().copied().map(show_touch).collect();
-                    check("reached", expected.join("; "), actual.join("; "));
+                    check("reached", listed_touches(value), actual.join("; "));
                 }
                 "inside" => {
                     let expected: Vec<String> = value
@@ -833,7 +990,21 @@ mod vectors {
                     };
                     check("bounces", value.int().to_string(), actual.to_string());
                 }
-                other => panic!("{id}: after.{other}"),
+                // The pose the frame ends in, its body size included.
+                "pose" => check(
+                    "pose",
+                    format!("{:?} {:?}", pose(value), radius(value)),
+                    format!("{:?} {:?}", samus.pose, samus.radius),
+                ),
+                "wall_test" => {
+                    let actual = match outcome.wall_test {
+                        WallTest::Kicked => "Kicked",
+                        WallTest::Neither => "Neither",
+                        WallTest::Readied => "Readied",
+                    };
+                    check("wall_test", value.str().to_owned(), actual.to_owned());
+                }
+                other => panic!("{id}: after.{other} is not a key the format gives"),
             }
         }
         misses

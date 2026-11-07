@@ -1,38 +1,43 @@
-//! The samus-motion model, built from its behaviour spec alone.
+//! The samus-motion model, built from its behaviour spec alone: a character controller for
+//! Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels.
 //!
-//! Every rule names the spec entry it comes from. A frame (`PoseFitAfterMoves`) moves her
-//! horizontally, then by the ground pull or her vertical move, then by the aim change's step;
-//! then comes what those moves met, the pose chart (§7) and the pose change's effects.
+//! Every rule names the spec entry it comes from. A frame (`PoseFitAfterMoves`): she moves as
+//! the pose at its start says (`MovesAsShePosed`), horizontally, then by the ground pull or her
+//! vertical move, then by the aim change's step; what those moves met is known; the pose is
+//! chosen (`PoseFollows`); pose fit or the shrink places her; then the change's effects act.
 
 pub mod catalogue;
-mod chart;
+pub mod chart;
 mod collide;
 pub mod rules;
+pub mod situation;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
-pub use chart::{Choice, Met, Situation, next_pose, pad_chart};
-pub use rules::{Limits, Rules, SpeedCap};
+pub use chart::{Choice, Effect, Met, Moment};
+pub use rules::{Boots, Limits, Rules, SpeedCap};
+pub use situation::{Doing, Situation, classify};
 
-use Vertical::{Falls, Ground, Rises, Spent};
-use chart::changes_shape;
-use chart::table::{ASRUN, ENDSKID, HALT, LOSEDASH, MOONFALL, RISE, TAKEOFF, TURN};
-use clean_types::Action::{
-    AgainstWall, Falling, Jumping, Landing, Moonwalking, Rolling, Running, Spinning, Still,
-    TakingOff, Turning, WallJumping,
-};
-use clean_types::Body::{Ball, Crouched, SpringBall, Upright};
-use clean_types::Heading::{self, Down, Left, Right, Up};
+use Carry::{CarriesOn, FollowsPad};
+use Met::{AimStep, Ceiling, Floor, NoFloor, Wall, WallKick};
+use Probe::{Blocks, Enemies, Look};
+use Seat::{Seated, Unseated};
+use Spin::{CarriedOn, First, Off, Second};
+use Stride::{Both, Dash, DashThenHalt, Nothing};
+use Vertical::{Falls, Ground, Moonfall, Rises, Spent};
+use WallTest::{Kicked, Neither, Readied};
+use clean_types::Action::{AgainstWall, Running, Still};
+use clean_types::Body::{Crouched, SpringBall, Upright};
+use clean_types::Heading::{Down, Left, Right, Up};
 use clean_types::{
-    Aim, Cell, Equipment, Facing, Fixed, Pad, Parity, Pose, Position, Radius, Signed, Touch, World,
-    below,
+    Aim, Cell, Equipment, Facing, Fixed, Gun, Heading, Legs, Pad, Parity, Pose, Position, Radius,
+    Signed, Touch, World, below,
 };
-use collide::{Mover, Stop};
+use collide::{Moved, Mover, Probe, Stop};
+use situation::{Drift, Gait, Moves};
 
 /// Her vertical motion.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Vertical {
-    /// Falling at this speed; 0 is a fall just started.
-    Falls(Fixed),
     /// On the ground.
     Ground,
     /// Rising at this upward speed; at 0 she rises by 0 for one more frame.
@@ -40,6 +45,10 @@ pub enum Vertical {
     /// `RisingAndFalling`: the pull took the upward speed past zero, so it points downward by
     /// this; the rise ends at the start of the next frame.
     Spent(Fixed),
+    /// Falling at this speed; 0 is a fall just started.
+    Falls(Fixed),
+    /// `Moonfall`: falling at this speed with no falling limit and no jump, until she lands.
+    Moonfall(Fixed),
 }
 
 /// `Landing`: how many times the ball has bounced since it last rested.
@@ -66,10 +75,39 @@ pub enum Spin {
     CarriedOn,
 }
 
+/// §1.2 carrying on: how her horizontal motion goes.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Carry {
+    /// It follows the pad.
+    FollowsPad,
+    /// It carries on by itself: it brakes on the ground and keeps building in the air; against
+    /// her facing, a skid.
+    CarriesOn,
+}
+
+/// §1.2 her dash.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum DashIs {
+    /// Hers to keep.
+    Hers,
+    /// Left on her by a landing: gone the next frame she moves.
+    ToLose,
+}
+
+/// `SlopesCarry`: whether she is seated on a slope, until her next vertical move of more than 0
+/// starts.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Seat {
+    /// Not seated.
+    Unseated,
+    /// Seated on a slope: her ground pull is 1 px.
+    Seated,
+}
+
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
-/// and feeds us (the header): her body's size from pose fit, an animation's end from its timing.
+/// and feeds us (the header): an animation's end from its timing.
 #[derive(Clone, Copy)]
-pub struct Frame {
+pub struct Frame<'a> {
     /// The buttons held as the frame starts.
     pub pad: Pad,
     /// The buttons just pressed this frame.
@@ -84,29 +122,69 @@ pub struct Frame {
     pub parity: Parity,
     /// `AnimationEnds`: her pose's animation ends this frame.
     pub animation_ends: bool,
-    /// Her body's half-width and half-height this frame.
-    pub radius: Radius,
-    /// `PoseFitAfterMoves`: pose fit's push this frame (out of scope, an input; negative is
-    /// upward): when the new pose's body is taller, it pushes her clear of what is above or
-    /// below her. On a floor with nothing above her it keeps her feet where they were, as when
-    /// she stands at once from a crouch (`PadChart`).
-    pub push: Signed,
+    /// §1.3 body size: each pose's half-width and half-height, the game's data.
+    pub body: &'a dyn Fn(Pose) -> Radius,
 }
 
-/// What a frame shows beyond her quantities.
+/// `WallJump`'s output: the near-wall test's outcome this frame.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum WallTest {
+    /// No test, no wall found, or a wall near her once the spin has turned far, without jump
+    /// pressed.
+    Neither,
+    /// A wall near her while the spin hasn't turned far: the spin's animation skips ahead.
+    Readied,
+    /// She kicked off the wall.
+    Kicked,
+}
+
+/// `PoseFitAfterMoves`: a push, in whole pixels.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct Push {
+    /// The way she is pushed.
+    pub way: Heading,
+    /// How far.
+    pub px: u16,
+}
+
+/// `PoseFitAfterMoves`: how the pose the frame ends in came about.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Change {
+    /// The chosen pose, with pose fit's push, if any.
+    Chosen(Option<Push>),
+    /// The change refused: she keeps the pose she had.
+    Refused,
+    /// Crouched `Still` taken instead.
+    Crouched,
+}
+
+/// `AimingAndShooting`: the standing animation.
+#[derive(Clone, Copy)]
+pub enum Standing {
+    /// It plays on.
+    Plays,
+    /// It restarts.
+    Restarts,
+}
+
+/// What a frame shows beyond her quantities: events for the caller to act on.
 pub struct Outcome {
-    /// `AimingAndShooting`: the standing animation restarts.
-    pub standing_restarts: bool,
+    /// `PoseFitAfterMoves`: how her pose came about.
+    pub change: Change,
     /// `WhatHerMovesMet`: what her moves met.
     pub met: Option<Met>,
-    /// `TouchedCells`: the cells her moves reached, in the order they happen.
+    /// `WallJump`: the near-wall test's outcome.
+    pub wall_test: WallTest,
+    /// `AimingAndShooting`: the standing animation.
+    pub standing: Standing,
+    /// `TouchedCells`: the cells her moves and looks reached, in the order they happen.
     pub reached: Vec<Touch>,
     /// `TouchedCells`: the cells she was inside at the frame's start.
     pub inside: Vec<Cell>,
 }
 
 /// Samus as the player can tell her, and what she remembers.
-#[expect(clippy::struct_excessive_bools)]
+#[derive(Clone, Copy)]
 pub struct Samus {
     /// Her body's centre.
     pub position: Position,
@@ -114,13 +192,12 @@ pub struct Samus {
     pub speed: Fixed,
     /// The way her horizontal speed points, left or right.
     pub way: Heading,
-    /// §1.2 carrying on: her horizontal motion carries on by itself (it brakes on the ground and
-    /// keeps building in the air; against her facing, a skid), rather than following the pad.
-    pub carry: bool,
+    /// §1.2 carrying on.
+    pub carry: Carry,
     /// Her dash, added the way she moves.
     pub dash: Fixed,
-    /// §1.2 her dash: left on her by a halt, it is gone the next frame she moves.
-    pub losing_dash: bool,
+    /// §1.2 her dash.
+    pub dash_is: DashIs,
     /// Her vertical motion.
     pub vertical: Vertical,
     /// The ball's bounces.
@@ -131,77 +208,45 @@ pub struct Samus {
     pub radius: Radius,
     /// How long she has been in a spin.
     pub spin: Spin,
-    /// `Moonfall`: in one, until she lands.
-    pub moonfall: bool,
-    /// `SlopesCarry`: seated on a slope, until her next vertical move of more than 0 starts.
-    pub seated: bool,
+    /// `SlopesCarry`: seated on a slope.
+    pub seat: Seat,
 }
 
-/// How a pose builds her horizontal speed.
+/// What a frame's horizontal move is made of (`SpeedBuildsAndBrakes`).
 #[derive(Clone, Copy)]
-enum Style {
-    /// `SpeedBuildsAndBrakes`: following the pad she builds; carrying on she brakes.
-    Ground,
-    /// `DriftInTheAir`: a straight jump, a fall, the ball in the air.
-    Air,
-    /// `DriftInTheAir`: a spin jump.
-    Spin,
-    /// `DriftInTheAir`: a wall jump.
-    WallJump,
+enum Stride {
+    /// No move.
+    Nothing,
+    /// Her dash alone.
+    Dash,
+    /// Her dash alone, then a halt.
+    DashThenHalt,
+    /// Her speed and her dash.
+    Both,
 }
 
-/// `Jumping`: a jump speed, without or with hi-jump.
-const fn hi(speeds: (Fixed, Fixed), hi_jump: bool) -> Fixed {
-    if hi_jump { speeds.1 } else { speeds.0 }
+/// What a walk did: the speed the ground pull reads (`FollowingTheGround`), and what stopped
+/// her.
+struct Walk {
+    /// Her horizontal speed and dash, from before any stop.
+    pull: Fixed,
+    /// What stopped the move.
+    stop: Option<Stop>,
+}
+
+/// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing as before the change.
+const fn crouched(p: Pose) -> Pose {
+    Pose {
+        body: Crouched,
+        action: Still,
+        aim: Aim::Forward,
+        gun: Gun::Stowed,
+        legs: Legs::Together,
+        ..p
+    }
 }
 
 impl Samus {
-    /// Samus at a vector's start (§1.2): her motion follows the pad unless she is skidding, her
-    /// dash is hers, and a vertical speed of 0 means she stands on the ground, except in a jump, a
-    /// spin, a fall or a wall jump, where it means she has just started to fall.
-    #[must_use]
-    pub const fn start(
-        position: Position,
-        speed_x: Signed,
-        dash: Fixed,
-        speed_y: Signed,
-        bounces: Bounces,
-        pose: Pose,
-        radius: Radius,
-    ) -> Self {
-        let facing = pose.facing.side();
-        let way = if speed_x.size.is_zero() {
-            facing
-        } else if speed_x.negative {
-            Left
-        } else {
-            Right
-        };
-        let v = speed_y.size;
-        let vertical = if !v.is_zero() {
-            if speed_y.negative { Rises(v) } else { Falls(v) }
-        } else if matches!(pose.action, Jumping | Spinning | Falling | WallJumping) {
-            Falls(v)
-        } else {
-            Ground
-        };
-        Self {
-            position,
-            speed: speed_x.size,
-            way,
-            carry: !matches!((way, facing), (Left, Left) | (Right, Right)),
-            dash,
-            losing_dash: false,
-            vertical,
-            bounces,
-            pose,
-            radius,
-            spin: Spin::Off,
-            moonfall: false,
-            seated: false,
-        }
-    }
-
     /// Her horizontal speed as the player reads it, rightward positive.
     #[must_use]
     pub const fn speed_x_signed(&self) -> Signed {
@@ -217,13 +262,14 @@ impl Samus {
         let (negative, size) = match self.vertical {
             Ground => (false, Fixed(0)),
             Rises(v) => (true, v),
-            Falls(v) | Spent(v) => (false, v),
+            Falls(v) | Spent(v) | Moonfall(v) => (false, v),
         };
         Signed { negative, size }
     }
 
     /// One frame (`PoseFitAfterMoves`): her moves as the pose at its start says
-    /// (`MovesAsShePosed`), what they met, then the pose chosen (`PoseFollows`) and its effects.
+    /// (`MovesAsShePosed`) and what they met; the pose chosen (`PoseFollows`); pose fit or the
+    /// shrink; then the change's effects.
     pub fn step(&mut self, frame: &Frame, world: &dyn World, rules: &Rules) -> Outcome {
         let mut m = Mover {
             world,
@@ -231,226 +277,215 @@ impl Samus {
             parity: frame.parity,
             reached: Vec::new(),
         };
-        self.radius = frame.radius;
         // TouchedCells: the cells she is inside, before her moves.
         let inside = m.inside(self.position, self.radius);
-        let (pose, pad) = (self.pose, frame.pad);
-        self.spin = if pose.action != Spinning {
-            Spin::Off
-        } else if self.spin == Spin::Off {
-            Spin::First
-        } else if self.spin == Spin::First {
-            Spin::Second
-        } else {
-            Spin::CarriedOn
-        };
-        // RisingAndFalling: the rise ends at the start of the frame after it is spent, and in a
-        // jump, a spin or the hop at the start of any frame with jump not held (not in a
-        // moonfall, which has no rise).
-        let ended = matches!(self.vertical, Spent(_))
-            || matches!(self.vertical, Rises(_))
-                && matches!(pose.action, Jumping | Spinning)
-                && !pad.jump
-                && !self.moonfall;
-        if ended {
-            self.vertical = Falls(Fixed(0));
-        }
-        let (mut met, mut walled) = (None, false);
-        if pose.facing == Facing::Screen {
-            // SpeedBuildsAndBrakes: facing the screen she doesn't move; RidingTheElevator: on a
-            // moving elevator she moves down 1 px, as any downward move.
-            if frame.elevator_moving {
-                self.position = m.go(self.position, self.radius, Down, rules.elevator).0;
-            }
-        } else {
-            let speed;
-            (speed, walled) = self.walk(pose, pad, &mut m);
-            met = if self.wall_kick(pose, frame, &mut m) {
-                Some(Met::WallKick)
-            } else if self.vertical == Ground {
-                self.pull(pose, speed, &mut m)
-            } else if pose.action == TakingOff {
-                // Jumping: taking off she doesn't move vertically and the pull doesn't act.
-                None
+        let start = self.pose;
+        let situation = classify(start, self.vertical == Ground);
+        self.begin(situation.doing, frame.pad);
+        let (met, wall_test) = self.moves(situation, frame, &mut m);
+        // PoseFitAfterMoves: her speeds as her moves left them, for a change that doesn't come.
+        let moved = Self {
+            vertical: if met == Some(Floor) {
+                self.pulled(rules)
             } else {
-                self.rise_or_fall(pose, frame, ended, &mut m)
-            };
-        }
-        let s = Situation {
-            pose,
+                self.vertical
+            },
+            ..*self
+        };
+        self.meet(met, situation.doing, frame, rules);
+        let mut moment = Moment {
+            situation,
+            pose: start,
             airborne: self.vertical != Ground,
-            pad,
+            pad: frame.pad,
             pressed: frame.pressed,
             equipment: frame.equipment,
+            met,
         };
-        let chart = pad_chart(&s);
-        // AimingAndShooting: changing aim while running steps her forward after the frame's
-        // moves; a block or solid enemy in the way puts her against the wall.
-        if pose.action == Running
-            && chart.0.action == Running
-            && chart.0.aim != pose.aim
-            && self.aim_step(pose, &mut m)
-        {
-            met = Some(Met::AimStep);
+        let by_moves = self.aim_step(&mut moment, &mut m);
+        let chosen = if frame.animation_ends {
+            moment.handed_over()
+        } else {
+            None
         }
-        // WhatHerMovesMet: a wall stop while running wins over the rest.
-        if walled && pose.action == Running {
-            met = Some(Met::Wall);
-        }
+        .unwrap_or(by_moves);
+        let change = self.fit(chosen.pose, frame, &mut m);
+        self.take(change, chosen, moved, frame, &mut m);
         // AimingAndShooting: standing, unaimed and not landing, holding shoot restarts the
         // standing animation.
-        let standing_restarts =
-            pose.body == Upright && pose.action == Still && pose.aim == Aim::Forward && pad.shoot;
-        let (next, fx) = next_pose(&s, chart, met, frame.animation_ends);
-        self.take(pose, next, fx, frame, rules);
+        let restarts = start.body == Upright
+            && start.action == Still
+            && start.aim == Aim::Forward
+            && frame.pad.shoot;
         Outcome {
-            standing_restarts,
-            met,
+            change,
+            met: moment.met,
+            wall_test,
+            standing: if restarts {
+                Standing::Restarts
+            } else {
+                Standing::Plays
+            },
             reached: m.reached,
             inside,
         }
     }
 
-    /// `SpeedBuildsAndBrakes`, `Dash`, `DriftInTheAir`, `WallsAndCeilings`: her move by her speed
-    /// and dash. Returns the speed from before a stop (the ground pull's) and whether a wall
-    /// stopped her.
-    fn walk(&mut self, pose: Pose, pad: Pad, m: &mut Mover) -> (Fixed, bool) {
-        let r = m.rules;
-        let ball = matches!(pose.body, Ball | SpringBall);
-        let build = match pose.action {
-            Running => Some((r.running, Style::Ground)),
-            Rolling | Still if ball && self.vertical != Ground => Some((r.falling, Style::Air)),
-            Rolling => Some((r.rolling, Style::Ground)),
-            Moonwalking => Some((r.moonwalking, Style::Ground)),
-            Turning(_) => Some((r.turning, Style::Ground)),
-            Jumping => Some((r.straight_jump, Style::Air)),
-            Falling => Some((r.falling, Style::Air)),
-            Spinning => Some((r.spin_jump, Style::Spin)),
-            WallJumping => Some((r.spin_jump, Style::WallJump)),
-            Still
-            | AgainstWall
-            | Landing(_)
-            | TakingOff
-            | clean_types::Action::Crouching
-            | clean_types::Action::StandingUp
-            | clean_types::Action::Morphing
-            | clean_types::Action::Unmorphing => None,
+    /// The frame's start: §1.2's spin count, and `RisingAndFalling`: the rise ends at the start
+    /// of the frame after it is spent, and in a straight jump, a spin or the hop at the start of
+    /// any frame with jump not held.
+    fn begin(&mut self, doing: Doing, pad: Pad) {
+        self.spin = if doing == Doing::Spinning {
+            match self.spin {
+                Off => First,
+                First => Second,
+                Second | CarriedOn => CarriedOn,
+            }
+        } else {
+            Off
         };
-        // What she moves by (her speed and dash, her dash alone, or nothing), and whether she
-        // halts after the move.
-        let (moves, halts) = match build {
-            Some((limits, style)) => {
+        let lets_go =
+            !pad.jump && matches!(doing, Doing::StraightJump | Doing::Spinning | Doing::Hop);
+        if matches!(self.vertical, Spent(_)) || lets_go && matches!(self.vertical, Rises(_)) {
+            self.vertical = Falls(Fixed(0));
+        }
+    }
+
+    /// Her moves, as the pose at the frame's start says: what they met, and the near-wall
+    /// test's outcome.
+    fn moves(&mut self, s: &Situation, frame: &Frame, m: &mut Mover) -> (Option<Met>, WallTest) {
+        if self.pose.facing == Facing::Screen {
+            // SpeedBuildsAndBrakes: facing the screen she doesn't move; RidingTheElevator: on a
+            // moving elevator she moves down 1 px, a move stopped as any downward move.
+            if frame.elevator_moving {
+                let elevator = m.rules.elevator;
+                self.position = m
+                    .go(self.position, self.radius, Down, elevator, Probe::Move)
+                    .to;
+            }
+            return (None, Neither);
+        }
+        let walk = self.walk(s.moves, frame.pad, m);
+        let test = self.wall_test(frame, m);
+        let met = if test == Kicked {
+            // WallJump: kicking off she doesn't move vertically that frame.
+            Some(WallKick)
+        } else if s.doing == Doing::TakingOff {
+            // Jumping: taking off she doesn't move vertically and the pull doesn't act.
+            None
+        } else if self.vertical == Ground {
+            self.pull(s.doing, walk.pull, m)
+        } else {
+            self.rise_or_fall(s.doing, frame, m)
+        };
+        // WhatHerMovesMet: a wall stop while running wins over walking off a ledge.
+        if walk.stop.is_some() && s.doing == Doing::Running {
+            return (Some(Wall), test);
+        }
+        (met, test)
+    }
+
+    /// `SpeedBuildsAndBrakes`, `Dash`, `DriftInTheAir`, `WallsAndCeilings`: her horizontal move
+    /// by her speed and dash, as her situation moves her.
+    fn walk(&mut self, moves: Moves, pad: Pad, m: &mut Mover) -> Walk {
+        let r = m.rules;
+        let stride = match moves {
+            Moves::Build(gait, drift) => {
                 // Dash: running with run held she gains dash; in any other moving activity a
                 // dash she is to lose is gone.
-                if pose.action == Running && pad.run {
+                if gait == Gait::Running && pad.run {
                     self.grow_dash(r);
-                } else if self.losing_dash {
-                    self.dash = Fixed(0);
+                } else {
+                    self.lose_dash();
                 }
-                self.build_or_brake(limits, style, pose, pad, r)
+                self.drift(r.limits(gait), drift, pad, r)
             }
             // SpeedBuildsAndBrakes: the ball at rest braking or skidding rolls like running, and
             // keeps its dash.
-            None if pose.action == Still && ball && self.carry => {
+            Moves::Rest if self.carry == CarriesOn => {
                 self.brake(r);
-                (Some(true), false)
+                Both
             }
-            // SpeedBuildsAndBrakes: standing, crouched, against the wall and the ball at rest
-            // move by their dash only, then halt.
-            None if matches!(pose.action, Still | AgainstWall | Landing(_)) => (Some(false), true),
-            // Jumping: taking off she moves by her dash only, follows the pad and still gains
-            // dash; SpeedBuildsAndBrakes: while her body changes shape she keeps both speeds.
-            None => {
-                if pose.action == TakingOff {
-                    self.carry = false;
-                    if pad.run {
-                        self.grow_dash(r);
-                    }
-                }
-                (Some(false), false)
+            Moves::Rest | Moves::DashThenHalt => DashThenHalt,
+            // Jumping: taking off she moves by her dash only, a dash she is to lose gone first,
+            // and follows the pad.
+            Moves::TakeOff => {
+                self.lose_dash();
+                self.carry = FollowsPad;
+                Dash
             }
+            Moves::Dash => Dash,
         };
-        let speed = self.speed;
-        // §1: the dash taken the way the speed points, her facing when it is 0.
-        let way = if speed.is_zero() {
-            pose.facing.side()
+        // §1: the dash is taken the way the speed points, her facing when it is 0.
+        let way = if self.speed.is_zero() {
+            self.pose.facing.side()
         } else {
             self.way
         };
-        let d = moves.map(|both| {
-            if both {
-                speed.plus(self.dash)
-            } else {
-                self.dash
-            }
-        });
-        let walled = d.is_some_and(|d| self.walk_and_seat(way, d, m));
+        let (dash, pull) = (self.dash, self.speed.plus(self.dash));
+        let stop = match stride {
+            Nothing => None,
+            Dash | DashThenHalt => self.walk_and_seat(way, dash, m),
+            Both => self.walk_and_seat(way, pull, m),
+        };
         // WallsAndCeilings, SpeedBuildsAndBrakes: a halt.
-        if walled || halts {
+        if stop.is_some() || matches!(stride, DashThenHalt) {
             self.halt();
         }
-        (speed, walled)
+        Walk { pull, stop }
     }
 
-    /// `SpeedBuildsAndBrakes`, `DriftInTheAir`: builds or brakes a building pose's speed; returns
-    /// what she moves by (`Some(true)` her speed and dash, `Some(false)` her dash alone) and
-    /// whether she halts after.
-    fn build_or_brake(
-        &mut self,
-        limits: Limits,
-        style: Style,
-        pose: Pose,
-        pad: Pad,
-        r: &Rules,
-    ) -> (Option<bool>, bool) {
-        let facing = pose.facing.side();
-        let carry = self.carry;
-        match style {
+    /// `SpeedBuildsAndBrakes`, `DriftInTheAir`: builds or brakes her speed as she drifts; returns
+    /// what she moves by.
+    fn drift(&mut self, limits: Limits, drift: Drift, pad: Pad, r: &Rules) -> Stride {
+        let facing = self.pose.facing.side();
+        let carries = self.carry == CarriesOn;
+        let skids = carries && self.way != facing;
+        let side = pad.left || pad.right;
+        match drift {
             // SpeedBuildsAndBrakes: carrying on along the ground she brakes.
-            Style::Ground if carry => self.brake(r),
-            // DriftInTheAir: a skid in the air brakes, as on the ground; a spin's skid moves.
-            Style::Air | Style::Spin if carry && self.way != facing => self.brake(r),
+            Drift::Ground if carries => self.brake(r),
+            // DriftInTheAir: a skid in the air brakes, as on the ground.
+            Drift::Air | Drift::BallAir | Drift::Spin if skids => self.brake(r),
             // DriftInTheAir: following the pad with neither side held she stops drifting; the
             // falling ball instead halts, but still moves by its dash.
-            Style::Air if !carry && !pad.left && !pad.right => {
-                if matches!(pose.body, Ball | SpringBall) {
-                    return (Some(false), true);
-                }
+            Drift::Air if !carries && !side => {
                 self.speed = Fixed(0);
-                return (None, false);
+                return Nothing;
             }
+            Drift::BallAir if !carries && !side => return DashThenHalt,
             // SpeedBuildsAndBrakes: following the pad she builds; DriftInTheAir: carrying on in
             // the air doesn't brake.
-            Style::Ground | Style::Air => {
+            Drift::Ground | Drift::Air | Drift::BallAir => {
                 self.build(limits, facing, r);
             }
             // DriftInTheAir: a spin drifts only while she holds the side she faces or reached
             // her top speed this frame; else she stops drifting and moves by her dash alone.
-            Style::Spin => {
-                let topped = self.build(limits, facing, r);
-                if !(topped || if facing == Left { pad.left } else { pad.right }) {
+            Drift::Spin => {
+                let forward = if facing == Left { pad.left } else { pad.right };
+                if !(self.build(limits, facing, r) || forward) {
                     self.speed = Fixed(0);
-                    self.carry = false;
-                    return (Some(false), false);
+                    self.carry = FollowsPad;
+                    return Dash;
                 }
-                self.carry = true;
+                self.carry = CarriesOn;
             }
             // DriftInTheAir: through a wall jump she always drifts, carrying on along her facing.
-            Style::WallJump => {
+            Drift::WallJump => {
                 self.build(limits, facing, r);
-                self.carry = true;
+                self.carry = CarriesOn;
             }
         }
-        (Some(true), false)
+        Both
     }
 
     /// `SpeedBuildsAndBrakes`: gains the step up to the top (`WordwiseTopSpeed`), along her
     /// facing. Returns whether she took the top speed.
-    fn build(&mut self, (step, top): Limits, facing: Heading, r: &Rules) -> bool {
-        let topped;
-        (self.speed, topped) = r.cap(self.speed.plus(step), top);
+    fn build(&mut self, limits: Limits, facing: Heading, r: &Rules) -> bool {
+        let sum = self.speed.plus(limits.step);
+        self.speed = r.cap(sum, limits.top);
         self.way = facing;
-        topped
+        self.speed != sum
     }
 
     /// `SpeedBuildsAndBrakes`: carrying on she loses the brake; below zero she stops and follows
@@ -458,7 +493,7 @@ impl Samus {
     fn brake(&mut self, r: &Rules) {
         if self.speed < r.brake {
             self.speed = Fixed(0);
-            self.carry = false;
+            self.carry = FollowsPad;
         } else {
             self.speed = self.speed.minus(r.brake);
         }
@@ -473,19 +508,26 @@ impl Samus {
         } else {
             cap
         };
-        self.losing_dash = false;
+        self.dash_is = DashIs::Hers;
+    }
+
+    /// §1.2 her dash: a dash she is to lose is gone the next frame she moves.
+    fn lose_dash(&mut self) {
+        if self.dash_is == DashIs::ToLose {
+            self.dash = Fixed(0);
+        }
     }
 
     /// A halt: horizontal speed 0, dash 0, following the pad.
     const fn halt(&mut self) {
         self.speed = Fixed(0);
         self.dash = Fixed(0);
-        self.carry = false;
+        self.carry = FollowsPad;
     }
 
     /// `SlopesSlowTheWalk`: a horizontal move made while her vertical speed is exactly 0 is
     /// shortened by the sloped floors at her leading edge.
-    fn shorten(&self, way: Heading, d: Fixed, m: &Mover) -> Fixed {
+    fn shortened(&self, way: Heading, d: Fixed, m: &Mover) -> Fixed {
         if self.speed_y_signed().size.is_zero() {
             m.walk_shortened(self.position, self.radius, way, d)
         } else {
@@ -494,25 +536,31 @@ impl Samus {
     }
 
     /// A horizontal move, then `SlopesCarry`'s checks, which run after every horizontal move,
-    /// whether or not it met solid enemies, and whose lift or push seats her. Returns whether
-    /// the move was stopped.
-    fn walk_and_seat(&mut self, way: Heading, d: Fixed, m: &mut Mover) -> bool {
-        let d = self.shorten(way, d, m);
-        let (to, stop) = m.go(self.position, self.radius, way, d);
-        self.position = m.seat(to, self.radius).map_or(to, |at| {
-            self.seated = true;
+    /// whether or not it met solid enemies, and whose lift or push seats her. Returns what
+    /// stopped the move.
+    fn walk_and_seat(&mut self, way: Heading, d: Fixed, m: &mut Mover) -> Option<Stop> {
+        let d = self.shortened(way, d, m);
+        let moved = m.go(self.position, self.radius, way, d, Probe::Move);
+        self.position = m.seat(moved.to, self.radius).map_or(moved.to, |at| {
+            self.seat = Seated;
             at
         });
-        stop.is_some()
+        moved.stop
     }
 
-    /// `AimingAndShooting`: the step forward, a horizontal move with no `SlopesCarry` checks
-    /// after it; a solid enemy within its reach stops it with no move at all, one she touches
-    /// still clearing her y subpixel. Returns whether something was in the way.
-    fn aim_step(&mut self, pose: Pose, m: &mut Mover) -> bool {
-        let side = pose.facing.side();
-        let d = self.shorten(side, m.rules.aim_step, m);
-        let (to, stop) = m.go(self.position, self.radius, side, d);
+    /// `AimingAndShooting`: a frame whose pose is chosen as a running pose other than hers (by
+    /// what her moves met or the pad) steps her 1 px forward after her moves: a horizontal move
+    /// with no `SlopesCarry` checks after it. A solid enemy within its reach stops it with no
+    /// move at all, one she touches still clearing her y subpixel. Something in the way puts
+    /// her against the wall instead, with the running pose's aim (`WhatHerMovesMet`).
+    fn aim_step(&mut self, moment: &mut Moment, m: &mut Mover) -> Choice {
+        let chosen = moment.by_moves();
+        if chosen.pose.action != Running || chosen.pose == moment.pose {
+            return chosen;
+        }
+        let side = moment.pose.facing.side();
+        let d = self.shortened(side, m.rules.aim_step, m);
+        let Moved { to, stop } = m.go(self.position, self.radius, side, d, Probe::Move);
         self.position = if stop == Some(Stop::Enemy) {
             Position {
                 y: to.y,
@@ -521,112 +569,115 @@ impl Samus {
         } else {
             to
         };
-        stop.is_some()
+        if stop.is_none() {
+            return chosen;
+        }
+        moment.met = Some(AimStep);
+        Choice {
+            pose: Pose {
+                action: AgainstWall,
+                gun: Gun::Stowed,
+                ..chosen.pose
+            },
+            effects: &[],
+        }
     }
 
-    /// `WallJump`: in a spin carried on, holding away from a wall near her (left held: a wall on
-    /// her right; else right held: on her left), the test for it, which can write her subpixels;
-    /// with the spin turned far, pressing jump kicks her off: she doesn't move vertically that
-    /// frame, and starts rising at the wall-jump speed, x speed 0, following the pad. The kick
-    /// ends a moonfall (`Moonfall`). Returns whether she kicked.
-    fn wall_kick(&mut self, pose: Pose, frame: &Frame, m: &mut Mover) -> bool {
+    /// `WallJump`: the near-wall test, in a spin carried on with a side held, looking 8 px away
+    /// from it (left held: a wall on her right; else right held: on her left) from where her
+    /// move left her. What stops it writes to her as a stop would, without moving her: a block
+    /// her x subpixel, a solid enemy she touches her y subpixel. A wall near her readies the
+    /// wall jump; once the spin has turned far, pressing jump kicks her off.
+    fn wall_test(&mut self, frame: &Frame, m: &mut Mover) -> WallTest {
         let pad = frame.pad;
-        if pose.action != Spinning || self.spin != Spin::CarriedOn || !(pad.left || pad.right) {
-            return false;
+        if self.spin != CarriedOn || !(pad.left || pad.right) {
+            return Neither;
         }
+        let (at, reach) = (self.position, m.rules.wall_reach);
         let wall = if pad.left { Right } else { Left };
-        let (to, near) = m.wall_test(self.position, self.radius, wall, m.rules.wall_reach);
-        self.position = to;
-        if !(near && frame.spin_turned_far && frame.pressed.jump) {
-            return false;
+        let seen = m.look(at, self.radius, wall, reach, Look);
+        self.position = Position {
+            x: at.x.with_sub(seen.to.x.sub()),
+            y: seen.to.y,
+        };
+        match (seen.stop, frame.spin_turned_far, frame.pressed.jump) {
+            (None, ..) | (Some(_), true, false) => Neither,
+            (Some(_), false, _) => Readied,
+            (Some(_), true, true) => Kicked,
         }
-        self.vertical = Rises(hi(m.rules.wall_jump, frame.equipment.hi_jump));
-        self.speed = Fixed(0);
-        self.carry = false;
-        self.moonfall = false;
-        true
     }
 
     /// Where a vertical move would leave her. `SlopesCarry`: as a move of more than 0 starts she
     /// leaves any slope.
-    fn vmove(&mut self, h: Heading, d: Fixed, m: &mut Mover) -> (Position, Option<Stop>) {
+    fn vmove(&mut self, heading: Heading, d: Fixed, m: &mut Mover) -> Moved {
         if !d.is_zero() {
-            self.seated = false;
+            self.seat = Unseated;
         }
-        m.go(self.position, self.radius, h, d)
+        m.go(self.position, self.radius, heading, d, Probe::Move)
     }
 
-    /// Takes a downward move; returns whether it was stopped. `SlopesCarry`: a stop on a stepped
-    /// block seats her.
-    fn take_down(&mut self, (to, stop): (Position, Option<Stop>)) -> bool {
-        self.position = to;
+    /// `SlopesCarry`: a downward move or look that a stepped block stops seats her.
+    fn seat_on(&mut self, stop: Option<Stop>) {
         if stop == Some(Stop::Stepped) {
-            self.seated = true;
+            self.seat = Seated;
         }
-        stop.is_some()
     }
 
-    /// `FollowingTheGround`: the pull down after her horizontal move, by that frame's whole speed
-    /// plus 1 px (`SlopesCarry`: 1 px on a slope); the floor stops her flush. Walking off a
-    /// ledge, unless turning (`TurningRound`: she sinks instead) or changing shape, she falls
-    /// from rest.
-    fn pull(&mut self, pose: Pose, speed: Fixed, m: &mut Mover) -> Option<Met> {
+    /// Takes a downward move; returns whether it was stopped.
+    fn take_down(&mut self, moved: Moved) -> bool {
+        self.position = moved.to;
+        self.seat_on(moved.stop);
+        moved.stop.is_some()
+    }
+
+    /// `FollowingTheGround`: the pull down after her horizontal move, by that frame's speed (her
+    /// horizontal speed plus her dash, subpixel part included) plus 1 px (`SlopesCarry`: 1 px on
+    /// a slope); the floor stops her flush. Walking off a ledge, unless turning (`TurningRound`:
+    /// she sinks instead) or changing shape, she falls from rest.
+    fn pull(&mut self, doing: Doing, speed: Fixed, m: &mut Mover) -> Option<Met> {
         let r = m.rules;
-        let pull = if self.seated {
+        let pull = if self.seat == Seated {
             r.ground_pull
         } else {
-            Fixed::px(speed.pixel()).plus(r.ground_pull)
+            speed.plus(r.ground_pull)
         };
         let moved = self.vmove(Down, pull, m);
-        if moved.1.is_some() || matches!(pose.action, Turning(_)) {
+        if moved.stop.is_some() || doing == Doing::Turning {
             self.take_down(moved);
-            None
-        } else if changes_shape(pose.action) {
-            None
-        } else {
-            self.vertical = Falls(Fixed(0));
-            self.bounces = Bounces::None;
-            self.start_drift(pose.facing.side());
-            Some(Met::NoFloor)
-        }
-    }
-
-    /// `RisingAndFalling`, `Jumping`'s space jump, `Landing`, `WallsAndCeilings`'s ceiling: her
-    /// vertical move in the air, and what it met.
-    fn rise_or_fall(
-        &mut self,
-        pose: Pose,
-        frame: &Frame,
-        ended: bool,
-        m: &mut Mover,
-    ) -> Option<Met> {
-        let r = m.rules;
-        // RisingAndFalling: no vertical move the frame a rise ends; the pull acts as in a fall.
-        if ended {
-            self.vertical = self.fall_pull(Fixed(0), r);
             return None;
         }
-        let jump = hi(r.jump, frame.equipment.hi_jump);
-        let (from, to) = r.space_jump_window;
+        if doing == Doing::Shaping {
+            return None;
+        }
+        self.vertical = Falls(Fixed(0));
+        self.bounces = Bounces::None;
+        self.start_drift();
+        Some(NoFloor)
+    }
+
+    /// `RisingAndFalling`, `Jumping`'s space jump, `WallsAndCeilings`'s ceiling: her vertical
+    /// move in the air, and what it met. A floor met leaves her speed as it was, for the landing
+    /// (`meet`) to read.
+    fn rise_or_fall(&mut self, doing: Doing, frame: &Frame, m: &mut Mover) -> Option<Met> {
+        let r = m.rules;
         // Jumping: with space jump, pressing jump while falling in a spin with her fall speed in
         // the window jumps again, rising that same frame; not in a moonfall (`Moonfall`).
         if let Falls(v) = self.vertical
-            && pose.action == Spinning
+            && doing == Doing::Spinning
             && frame.pressed.jump
             && frame.equipment.space_jump
-            && !self.moonfall
-            && (from..to).contains(&v.as_8_8())
+            && r.space_jump.contains(&v.as_8_8())
         {
-            self.vertical = Rises(jump);
+            self.vertical = Rises(r.jump.of(frame.equipment.hi_jump));
         }
         match self.vertical {
             Rises(v) => {
-                let (at, stop) = self.vmove(Up, v, m);
-                self.position = at;
+                let moved = self.vmove(Up, v, m);
+                self.position = moved.to;
                 // WallsAndCeilings: a ceiling ends the rise: falling, with no pull that frame.
-                if stop.is_some() {
+                if moved.stop.is_some() {
                     self.vertical = Falls(Fixed(0));
-                    return Some(Met::Ceiling);
+                    return Some(Ceiling);
                 }
                 // RisingAndFalling: the pull takes 0.1C00 off; past zero the speed is spent, and
                 // exactly 0 is not.
@@ -637,168 +688,276 @@ impl Samus {
                 };
                 None
             }
-            Falls(v) => {
+            Falls(v) | Moonfall(v) => {
                 let moved = self.vmove(Down, v, m);
                 if self.take_down(moved) {
-                    self.land(pose, v, frame.pad.jump.then_some(jump), r);
-                    return Some(Met::Floor);
+                    return Some(Floor);
                 }
-                self.vertical = self.fall_pull(v, r);
+                self.vertical = self.pulled(r);
                 None
             }
             Ground | Spent(_) => None,
         }
     }
 
-    /// `RisingAndFalling`: a fall's speed after the pull, which stops growing only at pixel part
-    /// 5; `Moonfall`: with no limit.
-    const fn fall_pull(&self, v: Fixed, r: &Rules) -> Vertical {
-        Falls(if v.pixel() == r.fall_settle_px && !self.moonfall {
-            v
-        } else {
-            v.plus(r.gravity)
-        })
+    /// `RisingAndFalling`: her fall's speed after the pull, which stops growing only at pixel
+    /// part 5; `Moonfall`: with no limit.
+    const fn pulled(&self, r: &Rules) -> Vertical {
+        match self.vertical {
+            Falls(v) if v.pixel() == r.fall_settle_px => Falls(v),
+            Falls(v) => Falls(v.plus(r.gravity)),
+            Moonfall(v) => Moonfall(v.plus(r.gravity)),
+            v @ (Ground | Rises(_) | Spent(_)) => v,
+        }
     }
 
-    /// `Landing`: falling onto a floor at `v`; `hop` is the jump speed when jump is held.
-    fn land(&mut self, pose: Pose, v: Fixed, hop: Option<Fixed>, r: &Rules) {
-        // Moonfall: until she lands.
-        self.moonfall = false;
-        self.vertical = Ground;
-        // Landing: while her body changes shape it stops only her vertical motion.
-        if changes_shape(pose.action) {
+    /// What her moves met acts on her (`Landing`, `WallJump`'s kick).
+    fn meet(&mut self, met: Option<Met>, doing: Doing, frame: &Frame, r: &Rules) {
+        match met {
+            Some(Floor) => self.land(doing, frame, r),
+            // WallJump: the kick starts the wall jump rising at the wall-jump speed, x speed 0,
+            // following the pad; it ends a moonfall (`Moonfall`).
+            Some(WallKick) => {
+                self.vertical = Rises(r.wall_jump.of(frame.equipment.hi_jump));
+                self.speed = Fixed(0);
+                self.carry = FollowsPad;
+            }
+            Some(Wall | AimStep | NoFloor | Ceiling) | None => {}
+        }
+    }
+
+    /// `Landing`: her fall met a floor. Turning, only the move stops: her speed goes on growing
+    /// by the pull. While her body changes shape only her vertical motion stops. The ball lands
+    /// at 3 px or more bouncing, twice before it rests, the second time 1 px slower, and the
+    /// spring ball with jump held hops again. Else she lands: vertical speed 0, bounces 0,
+    /// horizontal speed 0, following the pad; the dash keeps its value, to lose (§1.2).
+    fn land(&mut self, doing: Doing, frame: &Frame, r: &Rules) {
+        let (Falls(v) | Moonfall(v)) = self.vertical else {
+            return;
+        };
+        if doing == Doing::Turning {
+            self.vertical = self.pulled(r);
             return;
         }
-        // Landing: the spring ball landing with jump held hops again, bounces 0; the ball
-        // landing at 3 px or more bounces twice before it rests, the second time 1 px slower.
-        let bounce = match (hop, self.bounces) {
-            (Some(jump), _) if pose.body == SpringBall => Some((jump, Bounces::None)),
-            _ if pose.body != Ball && pose.body != SpringBall || v.pixel() < r.bounce_from_px => {
-                None
+        self.vertical = Ground;
+        if doing == Doing::Shaping {
+            return;
+        }
+        let ball = matches!(doing, Doing::Ball | Doing::Hop);
+        let bounce = if ball && self.pose.body == SpringBall && frame.pad.jump {
+            Some((r.jump.of(frame.equipment.hi_jump), Bounces::None))
+        } else if ball && v.pixel() >= r.bounce_from_px {
+            match self.bounces {
+                Bounces::None => Some((r.bounce, Bounces::Once)),
+                Bounces::Once => Some((r.bounce.minus(r.second_bounce_less), Bounces::Twice)),
+                Bounces::Twice => None,
             }
-            (_, Bounces::None) => Some((r.bounce, Bounces::Once)),
-            (_, Bounces::Once) => Some((r.bounce.minus(r.second_bounce_less), Bounces::Twice)),
-            (_, Bounces::Twice) => None,
+        } else {
+            None
         };
         if let Some((rise, bounces)) = bounce {
             self.vertical = Rises(rise);
             self.bounces = bounces;
             return;
         }
-        // Landing: bounces 0, horizontal speed 0, following the pad; the dash keeps its value,
-        // to lose (§1.2).
         self.bounces = Bounces::None;
         self.speed = Fixed(0);
-        self.carry = false;
-        self.losing_dash = true;
+        self.carry = FollowsPad;
+        self.dash_is = DashIs::ToLose;
     }
 
     /// `Jumping`: starting a straight jump or a fall she carries on along her facing if she has a
     /// dash, else she follows the pad.
-    const fn start_drift(&mut self, facing: Heading) {
+    const fn start_drift(&mut self) {
         if self.dash.is_zero() {
-            self.carry = false;
+            self.carry = FollowsPad;
         } else {
-            self.carry = true;
-            self.way = facing;
+            self.carry = CarriesOn;
+            self.way = self.pose.facing.side();
         }
     }
 
     /// `Jumping`: she starts rising at the jump speed, if she is on the ground.
-    const fn rise(&mut self, v: Fixed) {
-        if matches!(self.vertical, Ground) {
+    fn rise(&mut self, v: Fixed) {
+        if self.vertical == Ground {
             self.vertical = Rises(v);
         }
     }
 
-    /// `PoseFollows`: she takes the chosen pose, and its effects act on her speeds and dash after
-    /// the frame's moves (`PoseFitAfterMoves`: the new pose's speeds, then the crouch lift).
-    fn take(&mut self, prev: Pose, next: Pose, fx: u16, frame: &Frame, r: &Rules) {
-        let on = |f: u16| fx & f != 0;
-        let jump = hi(r.jump, frame.equipment.hi_jump);
-        let side = next.facing.side();
-        // PoseFitAfterMoves: pose fit's push comes first, from where her moves left her.
-        let (y, push) = (self.position.y, frame.push);
-        self.position.y = if push.negative {
-            y.minus(push.size)
-        } else {
-            y.plus(push.size)
+    /// `PoseFitAfterMoves`: when the chosen pose differs from hers, doesn't face the screen and
+    /// has a body taller by g px, she looks g px up and down at her old size, from where her
+    /// moves left her: solid enemies up and down, then the enemy's far-side look; blocks up and
+    /// down, then the block's far-side look. A far-side look stopped refuses the change. With
+    /// something on one side only she is pushed away from it by g less the room there (a
+    /// block's room before an enemy's on the same side); with something on both, a ball's change
+    /// is refused, and any other body takes crouched `Still` instead, rising by the crouch's
+    /// growth over her old body, her feet where they were.
+    fn fit(&mut self, chosen: Pose, frame: &Frame, m: &mut Mover) -> Change {
+        let old = self.radius;
+        let fits = chosen != self.pose && chosen.facing != Facing::Screen;
+        let Some(g) = (frame.body)(chosen)
+            .y
+            .checked_sub(old.y)
+            .filter(|g| fits && *g > 0)
+        else {
+            return Change::Chosen(None);
         };
-        // Jumping: changing into a take-off, a spin start or the hop she starts rising.
-        if on(TAKEOFF | RISE) {
-            self.rise(jump);
+        let new = (frame.body)(chosen);
+        let enemies = (
+            self.look(m, Up, g, old, Enemies),
+            self.look(m, Down, g, old, Enemies),
+        );
+        if self.far_side(m, enemies, g, new, Enemies) {
+            return Change::Refused;
         }
-        // Jumping: the take-off follows the pad, and from a crouch without aim lifts her 10 px.
-        if on(TAKEOFF) {
-            self.carry = false;
-            if prev.body == Crouched && prev.aim == Aim::Forward {
-                self.position.y = self.position.y.minus(r.crouch_lift);
+        let blocks = (
+            self.look(m, Up, g, old, Blocks),
+            self.look(m, Down, g, old, Blocks),
+        );
+        if self.far_side(m, blocks, g, old, Blocks) {
+            return Change::Refused;
+        }
+        match (blocks.0.or(enemies.0), blocks.1.or(enemies.1)) {
+            (Some(_), Some(_)) if old.y < m.rules.small_body_px => Change::Refused,
+            (Some(_), Some(_)) => {
+                let crouch = (frame.body)(crouched(self.pose));
+                let rise = Fixed::px(crouch.y.saturating_sub(old.y));
+                self.position.y = self.position.y.minus(rise);
+                Change::Crouched
             }
+            (Some(room), None) => self.push(Down, g.wrapping_sub(room)),
+            (None, Some(room)) => self.push(Up, g.wrapping_sub(room)),
+            (None, None) => Change::Chosen(None),
         }
-        if on(TURN) {
-            self.turn_round(prev, next);
-        }
-        // TurningRound, PadChart: she follows the pad again; a skid goes on along her new facing.
-        if on(ENDSKID) && self.carry {
-            self.carry = false;
-            self.way = side;
-        }
-        // PadChart's "as running": the dash joins her speed and she carries on, braking; with a
-        // speed of 0 she only follows the pad again.
-        if on(ASRUN) {
-            if self.speed.is_zero() {
-                self.carry = false;
-            } else {
-                self.speed = self.speed.plus(self.dash);
-                self.dash = Fixed(0);
-                self.carry = true;
-            }
-        }
-        // Dash: a turn's end takes it.
-        if on(LOSEDASH) {
-            self.dash = Fixed(0);
-        }
-        if on(HALT) {
-            self.halt();
-        }
-        // Moonfall: a spin she enters when a turn ends, with jump not just pressed, starts with no
-        // rise: she drops under gravity.
-        if on(MOONFALL) {
-            if frame.pressed.jump {
-                self.rise(jump);
-            } else {
-                self.moonfall = true;
-                if self.vertical == Ground {
-                    self.vertical = Falls(Fixed(0));
-                }
-            }
-        }
-        if prev.action != next.action {
-            // Jumping: starting a straight jump or a fall she carries on along her facing if she
-            // has a dash (not the hop).
-            if matches!(next.action, Jumping | Falling) && !on(RISE) {
-                self.start_drift(side);
-            }
-            // §1.2: a spin that followed a wall jump is carried on.
-            if next.action == Spinning && prev.action == WallJumping {
-                self.spin = Spin::CarriedOn;
-            }
-        }
-        self.pose = next;
     }
 
-    /// `TurningRound`: turning round, reversing a spin carried on, or the ball turning round, she
-    /// adds her dash to her speed (dash 0) and keeps travelling the old way: a skid.
-    fn turn_round(&mut self, prev: Pose, next: Pose) {
-        let reversed = prev.action == Spinning && next.action == Spinning;
-        if prev.facing.side() == next.facing.side() || reversed && self.spin != Spin::CarriedOn {
+    /// `PoseFitAfterMoves`: one look of `px` at size `r`. It doesn't move her, but what stops it
+    /// writes her y subpixel as a stop would, and a stepped block below seats her. Returns the
+    /// room it found where something stopped it: how far it got, in whole px.
+    fn look(
+        &mut self,
+        m: &mut Mover,
+        heading: Heading,
+        px: u16,
+        r: Radius,
+        probe: Probe,
+    ) -> Option<u16> {
+        let at = self.position;
+        let seen = m.look(at, r, heading, px, probe);
+        self.position.y = at.y.with_sub(seen.to.y.sub());
+        if heading == Down {
+            self.seat_on(seen.stop);
+        }
+        seen.stop.map(|_| seen.to.y.pixel().abs_diff(at.y.pixel()))
+    }
+
+    /// `PoseFitAfterMoves`: with something on one side alone, the far side is looked at once
+    /// more for the push's distance. Returns whether that look is stopped.
+    fn far_side(
+        &mut self,
+        m: &mut Mover,
+        sides: (Option<u16>, Option<u16>),
+        g: u16,
+        r: Radius,
+        probe: Probe,
+    ) -> bool {
+        let (heading, room) = match sides {
+            (Some(room), None) => (Down, room),
+            (None, Some(room)) => (Up, room),
+            _ => return false,
+        };
+        self.look(m, heading, g.wrapping_sub(room), r, probe)
+            .is_some()
+    }
+
+    /// `PoseFitAfterMoves`: she is pushed `px` whole pixels, keeping the subpixel her looks left.
+    fn push(&mut self, way: Heading, px: u16) -> Change {
+        let (y, by) = (self.position.y, Fixed::px(px));
+        self.position.y = if way == Up { y.minus(by) } else { y.plus(by) };
+        Change::Chosen(Some(Push { way, px }))
+    }
+
+    /// `ShrinkingLowersHer`: before she is lowered she looks down `px` at her new size, a block
+    /// look (solid enemies don't stop it), and she is lowered as far as it got; what stops it
+    /// writes to her as a stop would.
+    fn lower(&mut self, px: u16, m: &mut Mover) {
+        let seen = m.look(self.position, self.radius, Down, px, Blocks);
+        self.position = seen.to;
+        self.seat_on(seen.stop);
+    }
+
+    /// `PoseFitAfterMoves`: she takes the pose the change gives. Only the chosen pose brings its
+    /// effects; a change refused, or crouched `Still` taken instead, leaves her speeds and dash
+    /// as her moves left them (`moved`), with her position and seat as her looks left them.
+    fn take(&mut self, change: Change, chosen: Choice, moved: Self, frame: &Frame, m: &mut Mover) {
+        let start = self.pose;
+        if matches!(change, Change::Chosen(_)) {
+            self.pose = chosen.pose;
+            self.radius = (frame.body)(chosen.pose);
+            self.apply(chosen.effects, start, frame, m);
             return;
         }
-        if self.speed.is_zero() {
-            self.way = prev.facing.side();
+        *self = Self {
+            position: self.position,
+            seat: self.seat,
+            ..moved
+        };
+        if change == Change::Crouched {
+            self.pose = crouched(start);
+            self.radius = (frame.body)(self.pose);
         }
+    }
+
+    /// The chosen pose's effects, in order: after pose fit's push, the new pose's speeds, then
+    /// the crouch take-off's lift (`PoseFitAfterMoves`).
+    fn apply(&mut self, effects: &[Effect], start: Pose, frame: &Frame, m: &mut Mover) {
+        let r = m.rules;
+        let jump = r.jump.of(frame.equipment.hi_jump);
+        for effect in effects {
+            match *effect {
+                // Jumping: changing into a take-off she starts rising and follows the pad; from
+                // a crouch without aim she is lifted.
+                Effect::TakeOff => {
+                    self.rise(jump);
+                    self.carry = FollowsPad;
+                    if start.body == Crouched && start.aim == Aim::Forward {
+                        self.position.y = self.position.y.minus(r.crouch_lift);
+                    }
+                }
+                Effect::Rise => self.rise(jump),
+                Effect::TurnRound => self.turn_round(start),
+                Effect::EndSkid if self.carry == CarriesOn => {
+                    self.carry = FollowsPad;
+                    self.way = self.pose.facing.side();
+                }
+                // PadChart: with a horizontal speed of 0 she only follows the pad again.
+                Effect::AsRunning if self.speed.is_zero() => self.carry = FollowsPad,
+                Effect::AsRunning => {
+                    self.speed = self.speed.plus(self.dash);
+                    self.dash = Fixed(0);
+                    self.carry = CarriesOn;
+                }
+                Effect::LoseDash => self.dash = Fixed(0),
+                Effect::Halt => self.halt(),
+                // Moonfall: a spin she enters when a turn ends, with jump not just pressed,
+                // starts with no rise: her vertical speed is 0 and she drops under gravity.
+                Effect::Moonfall if frame.pressed.jump => self.rise(jump),
+                Effect::Moonfall => self.vertical = Moonfall(Fixed(0)),
+                Effect::Lower(px) => self.lower(px, m),
+                Effect::StartDrift => self.start_drift(),
+                Effect::CarrySpin => self.spin = CarriedOn,
+                Effect::EndSkid => {}
+            }
+        }
+    }
+
+    /// `TurningRound`: turning round, reversing a spin, or the ball turning round, she adds her
+    /// dash to her speed (dash 0) and travels the old way, against her new facing: a skid. A
+    /// spin reversed while skidding turns her travel round, back along her old facing.
+    const fn turn_round(&mut self, start: Pose) {
         self.speed = self.speed.plus(self.dash);
         self.dash = Fixed(0);
-        self.carry = true;
+        self.way = start.facing.side();
+        self.carry = CarriesOn;
     }
 }

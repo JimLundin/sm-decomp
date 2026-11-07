@@ -81,7 +81,7 @@ pub struct Position {
 }
 
 /// A direction: the way a move goes (`TouchedCells`), or the way a speed points.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Heading {
     /// Leftward.
     Left,
@@ -112,6 +112,15 @@ impl Facing {
             Heading::Left
         } else {
             Heading::Right
+        }
+    }
+    /// The other side: back, as she faces.
+    #[must_use]
+    pub const fn back(self) -> Self {
+        if matches!(self, Self::Left) {
+            Self::Right
+        } else {
+            Self::Left
         }
     }
 }
@@ -239,7 +248,7 @@ pub struct Pose {
 }
 
 /// A body's half-width and half-height, in pixels.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Radius {
     /// Half-width.
     pub x: u16,
@@ -271,10 +280,9 @@ pub struct Pad {
     pub aim_down: bool,
 }
 
-/// Her equipment (§1.3). Screw attack and the other suit change only the sprite, which follows
-/// from the pose and these (§2's last paragraph).
+/// Her equipment (§1.3) that her motion reads. Screw attack and the other suits change only the
+/// sprite (§2's last paragraph), which is drawn by someone else from her pose and those.
 #[derive(Clone, Copy, Default)]
-#[expect(clippy::struct_excessive_bools)]
 pub struct Equipment {
     /// Hi-jump boots (`Jumping`).
     pub hi_jump: bool,
@@ -282,10 +290,6 @@ pub struct Equipment {
     pub space_jump: bool,
     /// Spring ball (`AnimationEnds`).
     pub spring_ball: bool,
-    /// Screw attack.
-    pub screw_attack: bool,
-    /// A suit other than the first: varia or gravity.
-    pub other_suit: bool,
 }
 
 /// A 16 px cell of the room, by column and row.
@@ -297,65 +301,38 @@ pub struct Cell {
     pub row: u16,
 }
 
-/// `TouchedCells`: a cell a move reached, and the move's direction.
+/// `TouchedCells`: the way a cell is reached: a move's direction, or a look (the near-wall test,
+/// pose fit's block looks, the shrink's look), which doesn't move her.
 #[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Way {
+    /// A move, heading this way.
+    Move(Heading),
+    /// A look.
+    Look,
+}
+
+/// `TouchedCells`: a cell a move or a look reached, and the way it did.
+#[derive(Clone, Copy)]
 pub struct Touch {
     /// The cell, as the cell it stands for where it stands for another.
     pub cell: Cell,
-    /// The move's direction.
-    pub heading: Heading,
+    /// The way it was reached.
+    pub way: Way,
 }
 
-/// `OtherBlockKinds`: the kinds of cell that are air to her motion.
-#[derive(Clone, Copy)]
-pub enum AirKind {
-    /// Plain air.
-    Plain,
-    /// A door that leads to a room: her passage to that room starts.
-    DoorToRoom,
-    /// Air with spikes in it.
-    Spiked,
-    /// Air her shots act on.
-    ShotAir,
-    /// Air her bombs act on.
-    BombAir,
-    /// Reacting air: a cell that changes the scrolling, a moving floor, an item.
-    Reacting,
-}
-
-/// `OtherBlockKinds`: the kinds of cell that are solid to her motion.
-#[derive(Clone, Copy)]
-pub enum SolidKind {
-    /// A plain solid block.
-    Plain,
-    /// A door that leads nowhere (an elevator's).
-    DoorToNowhere,
-    /// Spikes.
-    Spikes,
-    /// A block her shots break.
-    ShotBlock,
-    /// A block her grapple holds.
-    GrappleBlock,
-}
-
-/// `OtherBlockKinds`: the kinds of cell whose reaction answers, each touch, solid or air.
-#[derive(Clone, Copy)]
-pub enum AnsweredKind {
-    /// A block her bombs break.
-    BombBlock,
-    /// A reacting block: one that crumbles, one only speed breaks, an item's.
-    Reacting,
-}
-
-/// The kind of a 16 px cell (§8).
+/// The kind of a 16 px cell (§8) as it meets her motion. `OtherBlockKinds`: the world answers
+/// each kind of cell as one of these; what the kind then does is its own domain's.
 #[derive(Clone, Copy)]
 pub enum Block {
-    /// Air to her motion.
-    Air(AirKind),
-    /// Solid to her motion.
-    Solid(SolidKind),
-    /// Solid or air, as its reaction answers this touch (`World::lets_through`).
-    Answered(AnsweredKind),
+    /// Air to her motion: air, a door to a room, air with spikes, air her shots or bombs act on,
+    /// reacting air.
+    Air,
+    /// Solid to her motion: a solid block, a door that leads nowhere, spikes, a block her shots
+    /// break or her grapple holds.
+    Solid,
+    /// Solid or air, as its reaction answers this touch (`World::lets_through`): a block her
+    /// bombs break, a reacting block.
+    Answered,
     /// A sloped surface, with its shape.
     Slope(Slope),
     /// A stepped block: its 8 px quarters, upper row then lower, each left then right, `true`
@@ -406,7 +383,6 @@ pub struct Slope {
 }
 
 /// A solid enemy's box: its centre and half-sizes, in pixels.
-#[derive(Clone, Copy)]
 pub struct Hitbox {
     /// Its centre's x.
     pub x: u16,
@@ -420,9 +396,9 @@ pub struct Hitbox {
 pub trait World {
     /// The kind of a 16 px cell.
     fn block(&self, cell: Cell) -> Block;
-    /// `OtherBlockKinds`: whether an answered cell lets her through on this touch; the answer
-    /// may change from one touch to the next.
-    fn lets_through(&self, cell: Cell, heading: Heading) -> bool;
+    /// `OtherBlockKinds`: whether an answered cell lets her through on this touch, a move's or a
+    /// look's; the answer may change from one touch to the next.
+    fn lets_through(&self, cell: Cell, way: Way) -> bool;
     /// The solid enemies.
     fn solid_enemies(&self) -> &[Hitbox];
 }
