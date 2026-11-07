@@ -111,11 +111,38 @@ and `scan.sh --mirror` agrees.
 | SolidEnemies | `$A0:AAC8`, `$A0:AA53`, `$A0:AABC` (overlapped: next enemy, then 0 so blocks run), `$90:9D80`, `$90:9DF8`, `$90:93B1`, `$90:93EC` and `$90:9440` (enemy test first; on a hit the move skips block collision, as the bank log's zebetite-skip note says) |
 | SlopesCarry | `$90:9376`, `$94:87F4` (seat after every horizontal move, sets `0DBA`), `$90:924C` (the pull reads `0DBA`), `$94:976B` (a 0.0 vertical move skips block collision), `$94:976F` (cleared by a non-zero vertical move), `$94:8E38` (square slope stop sets it), `$94:86FE` (rising into a non-square ceiling slope: `$12 = max(0, ...)` and `$14 = 0`, so no move), `$94:87E4` (the floor slope stop is `max(0, ...)` too: never upward) |
 | WordwiseTopSpeed* | `$90:9A99` |
+| PoseFollows | `$91:EB88` (one change a frame: super special `0A2C`, then special `0A2A`, then `0A28`), `$91:E8B6` (the vertical collision result `0DC6` overwrites the pad's `0A28` and sets command 5), `$91:EADE` (the wall stop overrides both), `$91:EC85` falling into `$91:EC8E` (the dash goes with the speed) |
+| PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:8087` (crouched into standing: y − 5) |
+| Aiming | the table's aim rows per pose, `$91:E9F3` (landing keeps the aim, down becomes forward), `$91:EB74` (the wall stop keeps the aim) |
+| LettingGo | `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E` |
+| WhatHerMovesMet | `$91:E8F2` (falling poses, `$91:E921`), `$91:E95D`..`$91:EA47` (landing poses, ball bounces), `$91:EABE` (wall-jump pose), `$91:EADE` (ran-into-wall poses, the aim step's block) |
+| AnimationEnds | the animation delay table `$91:B010` (its go-to-pose instructions), `$91:EB88` (the super special pose wins) |
 
-**The pose chart's effects** (spec §7) are the prospective pose-change commands `0A2E` 1, 2, 6 and
-8 (`$91:EC50`..`$91:ECD7`). The spec no longer names them; the pose-chart lane gives each
-transition its outcome as data. Command 6 has no RTS and falls through into command 8, so a change
-that kills the run speed also zeroes and cancels the dash: spec §7's one fact.
+**The pose chart (spec §7).** The pad chart is the transition table regrouped by situation, with
+facing made relative (forward, back) and aim moved into one rule, so neither the table's layout,
+its pose numbers nor its row order appear. Situations map to movement types `0A1F`: standing 0
+(and the landing poses A4h-A7h, E0h-E7h), running 1, taking off 2 (4Bh, 4Ch, 55h-5Ah), straight jump 2,
+spinning 3, ball 4 and 8, crouched 5, falling 6, turning Eh, 17h, 18h (crouched: 43h, 44h, 97h-9Ah,
+A2h, A3h), moonwalking 10h, wall jumping 14h, against the wall 15h. A moonwalk pose's `0A1E` is
+the way she walks (4Ah: 04), so its spec facing is that way. The effects are the commands `0A2E` 1
+(decelerate), 2 (stop), 6 (kill x speed, falls through into 8) and 8 (kill run speed); command 5
+(vertical collision) is the `Landing`, `FollowingTheGround`, `WallsAndCeilings` and `WallJump`
+entries. Command 6 has no RTS and falls through into command 8, so a change that kills the run
+speed also zeroes and cancels the dash: `PoseFollows`'s last fact.
+
+**Pose-chart vectors.** `$TEMP/pose-chart/tr.pl` lists every recorded pose change in the
+`$TEMP/gaps-v3/out` dumps (2,651 changes, 343 kinds: most are aim changes while running);
+`$TEMP/pose-chart/tt.pl` prints the transition table and pose definitions from the ROM by pose;
+`$TEMP/pose-chart/gen.pl` turns the list in `$TEMP/pose-chart/list.txt` into the `[[pose_step]]`
+entries, with the pose decode above and aim from the pose's name. The record is N, the pad N's,
+just pressed N's pad less N−1's, the after pose N+1's. `met` was set by hand from the movement
+types (airborne to ground: floor; ground to falling: no_floor; to 15h: wall; to 14h: wall_kick;
+from 0Fh, Eh, 17h, 18h or a take-off pose: animation_end).
+
+**A finding for `TurningRound`.** The ground turning poses (25h, 26h) have table rows, so with only
+run, shoot or jump held none fits and `$91:81DB` runs the lookup failure: command 2 ends the skid.
+The air turning poses (2Fh, 30h, 87h, 88h) have empty tables, which return before the failure (R141).
+So "she keeps skidding with a button held" holds in the air; on the ground it needs a record.
 
 ## Gaps v3 (the first implementation's nine)
 

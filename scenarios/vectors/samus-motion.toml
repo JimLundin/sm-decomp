@@ -1905,3 +1905,275 @@ next_pose = { body = "Upright", action = "Running", facing = "Right", radius = [
 pad = ["right", "aim_down"]
 jump_pressed = false
 after = { position = ["0110.0000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000" }
+
+# Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
+# - pose: the pose at the frame's start (body, action, facing, aim); pad: the buttons held;
+#   jump_pressed: jump just pressed; pressed: the other buttons just pressed this frame.
+# - met: what this frame's moves met: "nothing", "floor" (a landing), "no_floor" (walking off a
+#   ledge), "wall" (a wall stop), "wall_kick" (the wall-jump kick), or "animation_end" (the pose's
+#   animation ends this frame).
+# - after.pose: the pose the frame ends in. Only the pose is compared.
+
+[[pose_step]]
+id = "P1"
+source = "r02:208"
+entries = ["PadChart", "PoseFollows"]
+pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["run", "right"]
+jump_pressed = false
+pressed = ["run", "right"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P2"
+source = "r04:278"
+entries = ["PadChart", "Aiming"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" }
+pad = ["run", "right", "aim_up"]
+jump_pressed = false
+pressed = ["aim_up"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Running", facing = "Right", aim = "UpForward" } }
+
+[[pose_step]]
+id = "P3"
+source = "r01:864"
+entries = ["LettingGo", "PoseFollows"]
+pose = { body = "Upright", action = "Running", facing = "Left", aim = "Forward" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Still", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P4"
+source = "area-norfair:315"
+entries = ["WhatHerMovesMet", "Landing"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "floor"
+after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P5"
+source = "r02:548"
+entries = ["WhatHerMovesMet", "Landing"]
+pose = { body = "Upright", action = "Spinning", facing = "Right", aim = "Forward" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "floor"
+after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P6"
+source = "area-norfair:285"
+entries = ["WhatHerMovesMet", "FollowingTheGround"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "no_floor"
+after = { pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P7"
+source = "area-norfair:106"
+entries = ["WhatHerMovesMet", "WallsAndCeilings"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "wall"
+after = { pose = { body = "Upright", action = "AgainstWall", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P8"
+source = "samus-walljump-16:47"
+entries = ["WhatHerMovesMet", "WallJump"]
+pose = { body = "Upright", action = "Spinning", facing = "Right", aim = "Forward" }
+pad = ["right", "jump"]
+jump_pressed = true
+pressed = []
+met = "wall_kick"
+after = { pose = { body = "Upright", action = "WallJumping", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P9"
+source = "item-morph-ball:1315"
+entries = ["PadChart", "Aiming"]
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" }
+pad = ["run", "right", "aim_down"]
+jump_pressed = false
+pressed = ["aim_down"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "DownForward" } }
+
+[[pose_step]]
+id = "P10"
+source = "r04:474"
+entries = ["AnimationEnds", "PoseFollows"]
+pose = { body = "Upright", action = "TakingOff", facing = "Right", aim = "Forward" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "animation_end"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P11"
+source = "r01:617"
+entries = ["AnimationEnds"]
+pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" }
+pad = ["run", "left"]
+jump_pressed = false
+pressed = []
+met = "animation_end"
+after = { pose = { body = "Upright", action = "Still", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P12"
+source = "r02:390"
+entries = ["AnimationEnds"]
+pose = { body = "Crouched", action = "Crouching", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "animation_end"
+after = { pose = { body = "Crouched", action = "Still", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P13"
+source = "r03:469"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" }
+pad = ["run", "right", "jump"]
+jump_pressed = true
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Spinning", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P14"
+source = "r02:211"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" }
+pad = ["run", "left"]
+jump_pressed = false
+pressed = ["left"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P15"
+source = "r03:20"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Spinning", facing = "Right", aim = "Forward" }
+pad = ["left"]
+jump_pressed = false
+pressed = ["left"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Spinning", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P16"
+source = "r02:391"
+entries = ["PadChart"]
+pose = { body = "Crouched", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P17"
+source = "r02:387"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "Forward" }
+pad = ["down"]
+jump_pressed = false
+pressed = ["down"]
+met = "nothing"
+after = { pose = { body = "Crouched", action = "Crouching", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P18"
+source = "r01:999"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" }
+pad = ["run", "left", "aim_down"]
+jump_pressed = false
+pressed = ["aim_down"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P19"
+source = "r01:1005"
+entries = ["AnimationEnds"]
+pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" }
+pad = ["run", "left", "aim_down"]
+jump_pressed = false
+pressed = ["aim_down"]
+met = "animation_end"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P20"
+source = "r04:311"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down" }
+pad = ["run", "down", "right"]
+jump_pressed = false
+pressed = ["down", "right"]
+met = "nothing"
+after = { pose = { body = "Ball", action = "Morphing", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P21"
+source = "r04:473"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["jump"]
+jump_pressed = true
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "TakingOff", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P22"
+source = "r07:79"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["left", "shoot"]
+jump_pressed = false
+pressed = ["left", "shoot"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Moonwalking", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P23"
+source = "item-morph-ball:1264"
+entries = ["AnimationEnds"]
+pose = { body = "Ball", action = "Morphing", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+met = "animation_end"
+after = { pose = { body = "Ball", action = "Still", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "P24"
+source = "r08:254"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Spinning", facing = "Right", aim = "Forward" }
+pad = ["up", "shoot"]
+jump_pressed = false
+pressed = ["up"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Up" } }
