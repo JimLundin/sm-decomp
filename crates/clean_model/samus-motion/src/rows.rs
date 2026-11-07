@@ -13,7 +13,7 @@ pub const FORWARD: Buttons = button::RIGHT;
 pub const BACK: Buttons = button::LEFT;
 
 /// What she is doing, as the spec's tables name it ("She is", "She was").
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Doing {
     /// Standing still, or landing.
     Standing,
@@ -61,7 +61,7 @@ pub enum Drift {
 }
 
 /// `SpeedBuildsAndBrakes`: how she moves horizontally in her situation.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub enum Moves {
     /// Her speed builds by the table's row for what she is doing, as the drift says, and she
     /// moves by it and her dash.
@@ -139,7 +139,6 @@ pub enum Test {
 }
 
 /// `Aiming`: the aim a next pose takes when the tests pass.
-#[derive(Clone, Copy)]
 pub struct Aiming {
     /// What it needs.
     pub when: &'static [Test],
@@ -174,9 +173,9 @@ pub struct Next {
 }
 
 /// What a change does to her speeds, dash and position, in order.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub enum Effect {
-    /// `Jumping`'s take-off: she rises, follows the pad, and from a crouch unaimed is lifted.
+    /// `Jumping`'s take-off: she rises and follows the pad.
     TakeOff,
     /// `Jumping`'s spin start or the spring ball's hop: she rises.
     Rise,
@@ -195,7 +194,6 @@ pub enum Effect {
 }
 
 /// A move of the state machine: a row of one of §7's tables.
-#[derive(Clone, Copy)]
 pub struct Row {
     /// Its Pad cell, which a beats clause names.
     pub name: &'static str,
@@ -326,7 +324,7 @@ pub const DOWN_TO_FORWARD: &[Aiming] = &[Aiming {
 }];
 
 /// `WhatHerMovesMet`: what this frame's moves met.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Met {
     /// A wall stop (`WallsAndCeilings`).
     Wall,

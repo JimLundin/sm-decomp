@@ -13,7 +13,7 @@ use clean_types::Action::{AgainstWall, Running};
 use clean_types::Body::SpringBall;
 use clean_types::Heading::{self, Down, Left, Right, Up};
 use clean_types::button::{JUMP, LEFT, RIGHT, RUN};
-use clean_types::{Buttons, Facing, Fixed, Gun, Pose, Position, below};
+use clean_types::{Buttons, Facing, Fixed, Gun, Position, below};
 
 /// `DriftInTheAir`, `WallJump`: left or right.
 const SIDES: Buttons = LEFT.and(RIGHT);
@@ -40,24 +40,13 @@ struct Walk {
     stop: Option<Stop>,
 }
 
-/// `WhatHerMovesMet`: what a frame's moves met, the near-wall test's outcome (`WallJump`), and
-/// the vertical speed a move met the floor at (`Landing`).
-#[derive(Clone, Copy, Default)]
+/// `WhatHerMovesMet`: what a frame's moves met, and the near-wall test's outcome (`WallJump`).
+#[derive(Default)]
 pub struct Meeting {
     /// What her moves met.
     pub met: Option<Met>,
     /// The near-wall test's outcome.
     pub wall_test: WallTest,
-    /// The speed she met the floor at, before that frame's pull.
-    fell_at: Fixed,
-}
-
-/// `Landing`: the ball's bounce, the speed it rises at and its bounces after.
-struct Bounce {
-    /// The rise.
-    rise: Fixed,
-    /// Bounces after it.
-    then: Bounces,
 }
 
 impl Samus {
@@ -65,12 +54,13 @@ impl Samus {
     /// `RisingAndFalling`: the rise ends at the start of the frame after it is spent, and in a
     /// straight jump, a spin or the hop at the start of any frame with jump not held.
     pub(crate) fn begin(&mut self, doing: Doing, pad: Buttons) {
+        let next = match self.spin {
+            Spin::Off => Spin::First,
+            Spin::First => Spin::Second,
+            Spin::Second | Spin::CarriedOn => Spin::CarriedOn,
+        };
         self.spin = if doing == Doing::Spinning {
-            match self.spin {
-                Spin::Off => Spin::First,
-                Spin::First => Spin::Second,
-                Spin::Second | Spin::CarriedOn => Spin::CarriedOn,
-            }
+            next
         } else {
             Spin::Off
         };
@@ -92,69 +82,33 @@ impl Samus {
             }
             return Meeting::default();
         }
-        let walk = self.walk(s.moves, frame.pad, m);
+        let (walk, doing) = (self.walk(s.moves, frame.pad, m), s.doing);
         let wall_test = self.wall_test(frame, m);
         // FollowingTheGround: on the ground she is pulled onto the floor, unless as the ball or
         // while her body changes shape she has a vertical speed to move by.
         let pulled = self.vertical == Vertical::Ground
-            && (self.vy.is_zero() || !matches!(s.doing, Doing::Shaping | Doing::Ball));
-        let mut meeting = if wall_test == WallTest::Kicked {
+            && (self.vy.is_zero() || !matches!(doing, Doing::Shaping | Doing::Ball));
+        let met = if wall_test == WallTest::Kicked {
             // WallJump: kicking off she doesn't move vertically that frame.
-            Meeting {
-                met: Some(WallKick),
-                ..Meeting::default()
-            }
-        } else if s.doing == Doing::TakingOff {
+            Some(WallKick)
+        } else if doing == Doing::TakingOff {
             // Jumping: taking off she doesn't move vertically and the pull doesn't act.
-            Meeting::default()
+            None
         } else if pulled {
-            Meeting {
-                met: self.pull(s.doing, walk.pull, m),
-                ..Meeting::default()
-            }
+            self.pull(doing, walk.pull, m)
         } else {
-            self.fall(s.doing, frame, m)
+            self.fall(doing, frame, m)
         };
         // WhatHerMovesMet: a wall stop while running wins over walking off a ledge.
-        if walk.stop.is_some() && s.doing == Doing::Running {
-            meeting.met = Some(Wall);
-        }
-        meeting.wall_test = wall_test;
-        meeting
+        let stopped = walk.stop.is_some() && doing == Doing::Running;
+        let met = if stopped { Some(Wall) } else { met };
+        Meeting { met, wall_test }
     }
 
     /// `SpeedBuildsAndBrakes`, `Dash`, `DriftInTheAir`, `WallsAndCeilings`: her horizontal move
     /// by her speed and dash, as her situation moves her.
     fn walk(&mut self, moves: Moves, pad: Buttons, m: &mut Mover) -> Walk {
-        let r = m.rules;
-        let stride = match moves {
-            Moves::Build(gait, drift) => {
-                // Dash: running with run held she gains dash; in any other moving activity a
-                // dash she is to lose is gone.
-                if gait == Gait::Running && pad.any(RUN) {
-                    self.grow_dash(r);
-                } else {
-                    self.lose_dash();
-                }
-                self.drift(r.limits(gait), drift, pad, r)
-            }
-            // The ball at rest braking or skidding rolls like running, and keeps its dash.
-            Moves::Rest if self.carry == CarriesOn => {
-                self.brake(r);
-                Both
-            }
-            // The ball at rest with a vertical speed moves by its dash only, keeping both speeds.
-            Moves::Rest if !self.vy.is_zero() => Dash,
-            Moves::Rest | Moves::DashThenHalt => DashThenHalt,
-            // Jumping: taking off she moves by her dash only, a dash she is to lose gone first,
-            // and follows the pad.
-            Moves::TakeOff => {
-                self.lose_dash();
-                self.carry = FollowsPad;
-                Dash
-            }
-            Moves::Dash => Dash,
-        };
+        let stride = self.stride(moves, pad, m.rules);
         // §1: the dash is taken the way the speed points, her facing when it is 0.
         let way = if self.speed.is_zero() {
             self.pose.facing.side()
@@ -162,10 +116,11 @@ impl Samus {
             self.way
         };
         let pull = self.speed.plus(self.dash);
-        let stop = match stride {
-            Nothing => None,
-            Dash | DashThenHalt => self.walk_and_seat(way, self.dash, m),
-            Both => self.walk_and_seat(way, pull, m),
+        let by = if stride == Both { pull } else { self.dash };
+        let stop = if stride == Nothing {
+            None
+        } else {
+            self.walk_and_seat(way, by, m)
         };
         // WallsAndCeilings, SpeedBuildsAndBrakes: a halt.
         if stop.is_some() || stride == DashThenHalt {
@@ -174,44 +129,68 @@ impl Samus {
         Walk { pull, stop }
     }
 
-    /// `SpeedBuildsAndBrakes`, `DriftInTheAir`: builds or brakes her speed as she drifts; returns
-    /// what she moves by. Left and right held together read as the side she faces held.
-    fn drift(&mut self, limits: Limits, drift: Drift, pad: Buttons, r: &Rules) -> Stride {
-        let facing = self.pose.facing.side();
+    /// `SpeedBuildsAndBrakes`, `Dash`, `DriftInTheAir`, `Jumping`: what her speed and dash
+    /// become as her situation moves her, and what she moves by. Left and right held together
+    /// read as the side she faces held.
+    fn stride(&mut self, moves: Moves, pad: Buttons, r: &Rules) -> Stride {
         let carries = self.carry == CarriesOn;
+        let (gait, drift) = match moves {
+            Moves::Build(gait, drift) => (gait, drift),
+            // The ball at rest braking or skidding rolls like running, and keeps its dash.
+            Moves::Rest if carries => {
+                self.brake(r);
+                return Both;
+            }
+            // The ball at rest with a vertical speed moves by its dash only, keeping both speeds.
+            Moves::Rest if !self.vy.is_zero() => return Dash,
+            Moves::Rest | Moves::DashThenHalt => return DashThenHalt,
+            // Jumping: taking off she moves by her dash only, a dash she is to lose gone first,
+            // and follows the pad.
+            Moves::TakeOff => {
+                self.lose_dash();
+                self.carry = FollowsPad;
+                return Dash;
+            }
+            Moves::Dash => return Dash,
+        };
+        // Dash: running with run held she gains dash; in any other moving activity a dash she is
+        // to lose is gone.
+        if gait == Gait::Running && pad.any(RUN) {
+            self.grow_dash(r);
+        } else {
+            self.lose_dash();
+        }
         // SpeedBuildsAndBrakes: carrying on along the ground she brakes; DriftInTheAir: a skid in
         // the air brakes, as on the ground, but not through a wall jump.
+        let facing = self.pose.facing.side();
         if carries && (drift == Drift::Ground || self.way != facing && drift != Drift::WallJump) {
             self.brake(r);
             return Both;
         }
         // DriftInTheAir: following the pad with neither side held she stops drifting; the
         // falling ball instead halts, but still moves by its dash.
-        if !carries && !pad.any(SIDES) && drift == Drift::Air {
+        let let_go = !carries && !pad.any(SIDES);
+        if let_go && drift == Drift::Air {
             self.speed = Fixed(0);
             return Nothing;
         }
-        if !carries && !pad.any(SIDES) && drift == Drift::BallAir {
+        if let_go && drift == Drift::BallAir {
             return DashThenHalt;
         }
         // SpeedBuildsAndBrakes: following the pad she builds; DriftInTheAir: carrying on in the
-        // air she doesn't brake.
-        let topped = self.build(limits, facing, r);
-        match drift {
-            // DriftInTheAir: a spin drifts only while she holds the side she faces or reached
-            // her top speed this frame; else she stops drifting and moves by her dash alone.
-            Drift::Spin if !topped && !pad.seen(self.pose.facing).any(FORWARD) => {
-                self.speed = Fixed(0);
-                self.carry = FollowsPad;
-                Dash
-            }
-            // DriftInTheAir: a spin drifting, and a wall jump always, carry on along her facing.
-            Drift::Spin | Drift::WallJump => {
-                self.carry = CarriesOn;
-                Both
-            }
-            Drift::Ground | Drift::Air | Drift::BallAir => Both,
+        // air she doesn't brake. A spin drifts only while she holds the side she faces or reached
+        // her top speed this frame, else she stops drifting and moves by her dash alone; a spin
+        // drifting, and a wall jump always, carry on along her facing.
+        let topped = self.build(r.limits(gait), facing, r);
+        if drift == Drift::Spin && !topped && !pad.seen(self.pose.facing).any(FORWARD) {
+            self.speed = Fixed(0);
+            self.carry = FollowsPad;
+            return Dash;
         }
+        if matches!(drift, Drift::Spin | Drift::WallJump) {
+            self.carry = CarriesOn;
+        }
+        Both
     }
 
     /// `SpeedBuildsAndBrakes`: gains the step up to the top (`WordwiseTopSpeed`), along her
@@ -253,21 +232,22 @@ impl Samus {
         }
     }
 
-    /// `SlopesSlowTheWalk`: a horizontal move made while her vertical speed is exactly 0 is
-    /// shortened by the sloped floors at her leading edge.
-    fn shortened(&self, way: Heading, d: Fixed, m: &Mover) -> Fixed {
-        if self.vy.is_zero() {
+    /// `BlocksStopFlush`, `SlopesSlowTheWalk`: a horizontal move, which a sloped floor at her
+    /// leading edge shortens when it is made with her vertical speed exactly 0.
+    fn hmove(&self, way: Heading, d: Fixed, m: &mut Mover) -> Moved {
+        let d = if self.vy.is_zero() {
             m.walk_shortened(self.bounds(), way, d)
         } else {
             d
-        }
+        };
+        m.go(self.bounds(), way, d, Probe::Move)
     }
 
     /// `SpeedBuildsAndBrakes`, `SlopesCarry`: a horizontal move, then the checks that run after
     /// every horizontal move, whether or not it met solid enemies, and whose lift or push seats
     /// her. Returns what stopped the move.
     fn walk_and_seat(&mut self, way: Heading, d: Fixed, m: &mut Mover) -> Option<Stop> {
-        let moved = m.go(self.bounds(), way, self.shortened(way, d, m), Probe::Move);
+        let moved = self.hmove(way, d, m);
         self.position = moved.to;
         if let Some(at) = m.seat(self.bounds()) {
             self.position = at;
@@ -281,33 +261,18 @@ impl Samus {
     /// checks after it. A solid enemy within its reach stops it with no move at all, one she
     /// touches still clearing her y subpixel. Something in the way puts her against the wall
     /// instead, with the running pose's aim (`WhatHerMovesMet`), unless an animation's end
-    /// handed over another pose. Returns whether it did.
-    pub(crate) fn aim_step(&mut self, chosen: &mut Choice, m: &mut Mover) -> bool {
-        let side = self.pose.facing.side();
-        let moved = m.go(
-            self.bounds(),
-            side,
-            self.shortened(side, m.rules.aim_step, m),
-            Probe::Move,
-        );
-        self.position = if moved.stop == Some(Stop::Enemy) {
-            Position {
-                x: self.position.x,
-                ..moved.to
-            }
-        } else {
-            moved.to
-        };
-        let blocked = moved.stop.is_some() && chosen.pose.action == Running;
-        if blocked {
-            chosen.pose = Pose {
-                action: AgainstWall,
-                gun: Gun::Stowed,
-                ..chosen.pose
-            };
+    /// handed over another pose.
+    pub(crate) fn aim_step(&mut self, chosen: &mut Choice, m: &mut Mover) {
+        let moved = self.hmove(self.pose.facing.side(), m.rules.aim_step, m);
+        self.position.y = moved.to.y;
+        if moved.stop != Some(Stop::Enemy) {
+            self.position.x = moved.to.x;
+        }
+        if moved.stop.is_some() && chosen.pose.action == Running {
+            chosen.pose.action = AgainstWall;
+            chosen.pose.gun = Gun::Stowed;
             chosen.effects = &[];
         }
-        blocked
     }
 
     /// `WallJump`: the near-wall test, in a spin carried on with a side held, looking 8 px away
@@ -336,13 +301,14 @@ impl Samus {
         }
     }
 
-    /// `BlocksStopFlush`: a vertical move. `SlopesCarry`: as a move of more than 0 starts she
-    /// leaves any slope.
-    fn vmove(&mut self, heading: Heading, d: Fixed, m: &mut Mover) -> Moved {
-        if !d.is_zero() {
+    /// `BlocksStopFlush`: a vertical move by `v`, signed, downward positive. `SlopesCarry`: as a
+    /// move of more than 0 starts she leaves any slope.
+    fn vmove(&mut self, v: Fixed, m: &mut Mover) -> Moved {
+        if !v.is_zero() {
             self.seat = Seat::Unseated;
         }
-        m.go(self.bounds(), heading, d, Probe::Move)
+        let way = if v.negative() { Up } else { Down };
+        m.go(self.bounds(), way, v.size(), Probe::Move)
     }
 
     /// `SlopesCarry`: a downward move or look that a stepped block stops seats her.
@@ -363,7 +329,7 @@ impl Samus {
         } else {
             speed.plus(r.ground_pull)
         };
-        let moved = self.vmove(Down, by, m);
+        let moved = self.vmove(by, m);
         if moved.stop.is_some() || doing == Doing::Turning {
             self.position = moved.to;
             self.seat_on(moved.stop);
@@ -387,7 +353,7 @@ impl Samus {
     /// ceiling: the rise ends with no pull that frame. A downward one stopped is a floor, but
     /// the ball on the ground meets it without landing, and a move of hers by its speed that
     /// finds no floor is a walk off a ledge.
-    fn fall(&mut self, doing: Doing, frame: &Frame, m: &mut Mover) -> Meeting {
+    fn fall(&mut self, doing: Doing, frame: &Frame, m: &mut Mover) -> Option<Met> {
         let r = m.rules;
         // Jumping: with space jump, pressing jump while falling in a spin with her fall speed in
         // the window jumps again, rising that same frame; not in a moonfall (`Moonfall`).
@@ -399,36 +365,21 @@ impl Samus {
         {
             self.rise(r.jump.of(frame.equipment.hi_jump));
         }
-        let (fell_at, up) = (self.vy, self.vy.negative());
-        let moved = if up {
-            self.vmove(Up, self.vy.negated(), m)
-        } else {
-            self.vmove(Down, self.vy, m)
-        };
+        let up = self.vy.negative();
+        let moved = self.vmove(self.vy, m);
         self.position = moved.to;
         if up && moved.stop.is_some() {
             self.fall_from_rest();
-            return Meeting {
-                met: Some(Ceiling),
-                ..Meeting::default()
-            };
+            return Some(Ceiling);
         }
         self.seat_on(moved.stop);
         self.vy = self.pulled(r);
         let on_ground = self.vertical == Vertical::Ground && doing == Doing::Ball;
-        let met = match (moved.stop, on_ground) {
-            (Some(_), false) => Some(Floor),
-            (None, true) => {
-                self.walk_off();
-                Some(NoFloor)
-            }
-            (Some(_), true) | (None, false) => None,
-        };
-        Meeting {
-            met,
-            fell_at,
-            ..Meeting::default()
+        if on_ground && moved.stop.is_none() {
+            self.walk_off();
+            return Some(NoFloor);
         }
+        moved.stop.filter(|_| !on_ground).map(|_| Floor)
     }
 
     /// `RisingAndFalling`: her vertical speed after the pull, which stops growing at pixel part
@@ -442,9 +393,9 @@ impl Samus {
     }
 
     /// `Landing`, `WallJump`'s kick: what her moves met acts on her.
-    pub(crate) fn meet(&mut self, meeting: Meeting, doing: Doing, frame: &Frame, r: &Rules) {
-        match meeting.met {
-            Some(Floor) => self.land(meeting.fell_at, doing, frame, r),
+    pub(crate) fn meet(&mut self, met: Option<Met>, doing: Doing, frame: &Frame, r: &Rules) {
+        match met {
+            Some(Floor) => self.land(doing, frame, r),
             // WallJump: the kick starts the wall jump rising at the wall-jump speed, x speed 0,
             // following the pad; it ends a moonfall (`Moonfall`).
             Some(WallKick) => {
@@ -456,41 +407,32 @@ impl Samus {
         }
     }
 
-    /// `Landing`: a move by her vertical speed met a floor at `at`. Turning, only the move
-    /// stops: her speed goes on growing by the pull. The ball lands at 3 px or more bouncing,
-    /// twice before it rests, the second time 1 px slower, and the spring ball with jump held
-    /// hops again. While her body changes shape only her vertical motion stops. Else she lands:
-    /// vertical speed 0, bounces 0, horizontal speed 0, following the pad; the dash keeps its
-    /// value, to lose (§1.2).
-    fn land(&mut self, at: Fixed, doing: Doing, frame: &Frame, r: &Rules) {
+    /// `Landing`: a move by her vertical speed met a floor. Turning, only the move stops: her
+    /// speed goes on growing by the pull. The spring ball with jump held hops again. The ball
+    /// landing at 3 px or more bounces, twice before it rests, the second time 1 px slower: the
+    /// speed it met the floor at is hers less this frame's pull (§9), or held at the fall's limit,
+    /// which is past 3 px either way. While her body changes shape only her vertical motion
+    /// stops. Else she lands: vertical speed 0, bounces 0, horizontal speed 0, following the
+    /// pad; the dash keeps its value, to lose (§1.2).
+    fn land(&mut self, doing: Doing, frame: &Frame, r: &Rules) {
+        let ball = matches!(doing, Doing::Ball | Doing::Hop);
+        let fast = self.vy.minus(r.gravity).pixel() >= r.bounce_from_px;
         if doing == Doing::Turning {
             return;
         }
-        let bounce = if !matches!(doing, Doing::Ball | Doing::Hop) {
-            None
-        } else if self.pose.body == SpringBall && frame.pad.any(JUMP) {
-            Some(Bounce {
-                rise: r.jump.of(frame.equipment.hi_jump),
-                then: Bounces::None,
-            })
-        } else if at.pixel() < r.bounce_from_px {
-            None
-        } else {
-            match self.bounces {
-                Bounces::None => Some(Bounce {
-                    rise: r.bounce,
-                    then: Bounces::Once,
-                }),
-                Bounces::Once => Some(Bounce {
-                    rise: r.bounce.minus(r.second_bounce_less),
-                    then: Bounces::Twice,
-                }),
-                Bounces::Twice => None,
-            }
-        };
-        if let Some(b) = bounce {
-            self.rise(b.rise);
-            self.bounces = b.then;
+        if ball && self.pose.body == SpringBall && frame.pad.any(JUMP) {
+            self.rise(r.jump.of(frame.equipment.hi_jump));
+            self.bounces = Bounces::None;
+            return;
+        }
+        if ball && fast && self.bounces == Bounces::None {
+            self.rise(r.bounce);
+            self.bounces = Bounces::Once;
+            return;
+        }
+        if ball && fast && self.bounces == Bounces::Once {
+            self.rise(r.bounce.minus(r.second_bounce_less));
+            self.bounces = Bounces::Twice;
             return;
         }
         self.vertical = Vertical::Ground;

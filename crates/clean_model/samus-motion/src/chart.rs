@@ -18,7 +18,6 @@ use clean_types::{Action, Buttons, Equipment, Pose};
 /// Her situation and pose at the frame's start, whether her horizontal speed then isn't 0,
 /// whether she is off the ground once her moves are made, the pad held and just pressed, her
 /// equipment and what her moves met.
-#[derive(Clone, Copy)]
 pub struct Moment {
     /// Her situation.
     pub situation: &'static Situation,

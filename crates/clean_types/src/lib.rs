@@ -2,7 +2,7 @@
 
 /// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16. A
 /// signed one is held in two's complement: `-4.E000` is `FFFB.2000`.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Default, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Default)]
 pub struct Fixed(pub u32);
 
 impl Fixed {
@@ -65,6 +65,15 @@ impl Fixed {
     pub const fn negated(self) -> Self {
         Self(self.0.wrapping_neg())
     }
+    /// Read signed, its size.
+    #[must_use]
+    pub const fn size(self) -> Self {
+        if self.negative() {
+            self.negated()
+        } else {
+            self
+        }
+    }
 }
 
 /// `below(a, b)` on 16-bit parts (§9): bit 15 of `(a − b) mod 2^16` is set.
@@ -74,7 +83,7 @@ pub const fn below(a: u16, b: u16) -> bool {
 }
 
 /// A value for each axis: x rightward, y downward.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 pub struct Pair<T> {
     /// Rightward.
     pub x: T,
@@ -90,7 +99,7 @@ pub type Radius = Pair<u16>;
 
 /// A direction: the way a move goes (`TouchedCells`), or the way a speed points. Listed
 /// alphabetically, as the spec lists them; the order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Heading {
     /// Downward.
     Down,
@@ -257,7 +266,7 @@ pub struct Pose {
 }
 
 /// The pad (§1.3): a set of its buttons, the ones held or the ones just pressed.
-#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+#[derive(Clone, Copy, Default)]
 pub struct Buttons(pub u16);
 
 /// The pad's buttons, each a set of one; `.and` joins sets.
@@ -326,7 +335,7 @@ pub struct Equipment {
 }
 
 /// A 16 px cell of the room, by column and row.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub struct Cell {
     /// The column.
     pub column: u16,
@@ -435,7 +444,6 @@ pub trait World {
 }
 
 /// What kind of behaviour a catalogue entry is.
-#[derive(Clone, Copy)]
 pub enum Kind {
     /// A deliberate game rule.
     Mechanic,
@@ -448,7 +456,6 @@ pub enum Kind {
 }
 
 /// How a catalogue entry can be adjusted.
-#[derive(Clone, Copy)]
 pub enum Switch {
     /// Always on.
     Fixed,

@@ -6,8 +6,8 @@
 use crate::rules::Rules;
 use clean_types::Heading::{self, Down, Right, Up};
 use clean_types::{
-    Block, Cell, Fixed, Pair, Parity, Position, Radius, Slope, SlopeFaces, Surface, Touch, Way,
-    World,
+    Block, Cell, Fixed, Hitbox, Pair, Parity, Position, Radius, Slope, SlopeFaces, Surface, Touch,
+    Way, World,
 };
 
 /// §8: a cell is 16 px, `1 << CELL_BITS`.
@@ -66,7 +66,6 @@ pub enum Probe {
 }
 
 /// Where a move leaves her, and what stopped it.
-#[derive(Clone, Copy)]
 pub struct Moved {
     /// Her position.
     pub to: Position,
@@ -238,6 +237,55 @@ impl Axis {
         }
     }
 
+    /// `SolidEnemies`: an enemy she reaches is judged by the gap between the boxes from where
+    /// she starts, its near side less hers: 0 is touching (no move, her y subpixel 0), a larger
+    /// gap stops her that many whole pixels on, her subpixel kept, and a negative one never
+    /// stops her. The centres must be closer than the half-sizes summed on both axes, along the
+    /// move at her reach.
+    const fn enemy(&self, e: &Hitbox, reach: u16) -> Option<Moved> {
+        let ((ea, ec), (era, erc)) = (along(e.centre, self.heading), along(e.radius, self.heading));
+        let start = self.from.pixel();
+        let gap =
+            ahead(ea, start, self.heading).wrapping_sub(era.wrapping_add(self.ra).cast_signed());
+        let reached = gap >= 0
+            && closer(reach, ea, self.ra.wrapping_add(era))
+            && closer(self.across, ec, self.rc.wrapping_add(erc));
+        if !reached {
+            return None;
+        }
+        let touching = Position {
+            y: self.at.y.with_sub(0),
+            ..self.at
+        };
+        let stopped = self.put(
+            shift(start, gap.cast_unsigned(), self.heading),
+            self.from.sub(),
+        );
+        Some(Moved {
+            to: if gap == 0 { touching } else { stopped },
+            stop: Some(Stop::Enemy),
+        })
+    }
+
+    /// `BlocksStopFlush`, `SlopesCarry`: what a block on her leading edge's line, the `k`th
+    /// cell across the move, does to it: a solid one stops her against its face, a stepped one
+    /// against its quarter's, and a sloped surface at her centre column as `slope` says.
+    fn stop(&self, block: Block, k: u16, way: Way) -> Option<Moved> {
+        let lead = self.lead();
+        match block {
+            Block::Solid | Block::Answered => {
+                Some(self.flush(lead & !IN_CELL, CELL_PX, Stop::Flat))
+            }
+            Block::Stepped(q) if self.stepped(q, k) => {
+                Some(self.flush(lead & !IN_QUARTER, QUARTER_PX, Stop::Stepped))
+            }
+            Block::Slope(s) if vertical(self.heading) && k == cell(self.at.x.pixel()) => {
+                self.slope(s, way)
+            }
+            Block::Stepped(_) | Block::Slope(_) | Block::Air | Block::StandsFor(_) => None,
+        }
+    }
+
     /// `BlocksStopFlush`: whether a stepped block, the `k`th cell across the move, stops it: a
     /// solid quarter in the half her leading edge reaches, among those her body overlaps across
     /// it (its near half is quarter `2k` across, its far half `2k + 1`).
@@ -287,13 +335,33 @@ impl Mover<'_> {
     /// air.
     fn resolve(&self, at: Cell) -> (Block, Cell) {
         let block = self.world.block(at);
-        match block {
-            Block::StandsFor(Some(next)) => self.resolve(next),
-            Block::StandsFor(None) => (Block::Air, at),
-            Block::Air | Block::Solid | Block::Answered | Block::Slope(_) | Block::Stepped(_) => {
-                (block, at)
-            }
+        if let Block::StandsFor(names) = block {
+            return names.map_or((Block::Air, at), |next| self.resolve(next));
         }
+        (block, at)
+    }
+
+    /// `TouchedCells`, `BlocksStopFlush`: the cells of her leading edge's line at a move's
+    /// target, in every cell her body spans across it, each with its place across the move: left
+    /// to right or top row first, right to left on an `Odd` frame's vertical move.
+    fn line(&self, a: &Axis) -> Vec<(u16, Cell)> {
+        let (lo, hi) = extent(a.across, a.rc);
+        let mut line: Vec<u16> = (cell(lo)..=cell(hi)).collect();
+        if vertical(a.heading) && self.parity == Parity::Odd {
+            line.reverse();
+        }
+        line.into_iter()
+            .map(|k| {
+                let (column, row) = along(
+                    Pair {
+                        x: cell(a.lead()),
+                        y: k,
+                    },
+                    a.heading,
+                );
+                (k, Cell { column, row })
+            })
+            .collect()
     }
 
     /// `SlopesCarry`: how far pixel row `y` at column `x` is into its cell's surface, where that
@@ -334,10 +402,9 @@ impl Mover<'_> {
     /// infinity (read as 8.8 from the signed move), its pixel part kept mod 256, multiplied by
     /// the factor exactly, its direction put back.
     pub fn walk_shortened(&self, b: Bounds, heading: Heading, d: Fixed) -> Fixed {
-        let column = cell(Axis::new(b, heading, d).lead());
-        let (top, bottom) = extent(b.at.y.pixel(), b.r.y);
-        (cell(top)..=cell(bottom)).fold(d, |d, row| {
-            if let (Block::Slope(s), _) = self.resolve(Cell { column, row })
+        let line = self.line(&Axis::new(b, heading, d));
+        line.into_iter().fold(d, |d, (_, at)| {
+            if let (Block::Slope(s), _) = self.resolve(at)
                 && s.faces == SlopeFaces::Floor
             {
                 let cut = if grows(heading) {
@@ -379,104 +446,60 @@ impl Mover<'_> {
         };
         // SolidEnemies: a solid enemy in the move's path decides it alone; blocks stop her only
         // on a path free of them.
-        (probe != Probe::Blocks)
-            .then(|| self.enemy(&a, dist))
-            .flatten()
-            .or_else(|| {
-                (probe != Probe::Enemies)
-                    .then(|| self.blocks(&a, way))
-                    .flatten()
-            })
-            .unwrap_or_else(|| Moved {
-                to: a.put(a.to.pixel(), a.to.sub()),
-                stop: None,
-            })
+        let enemy = if probe == Probe::Blocks {
+            None
+        } else {
+            self.enemy(&a, dist)
+        };
+        let stopped = if enemy.is_some() || probe == Probe::Enemies {
+            enemy
+        } else {
+            self.blocks(&a, way)
+        };
+        let to = a.put(a.to.pixel(), a.to.sub());
+        stopped.unwrap_or(Moved { to, stop: None })
     }
 
-    /// `PoseFitAfterMoves`, `ShrinkingLowersHer`: a look of `px` whole pixels, a test move. A
-    /// block look of 8 px or more is stopped by whatever a look of 8 px the same way would
-    /// stop; only when nothing stops that is it the look of its own distance.
-    pub fn look(&mut self, b: Bounds, heading: Heading, px: u16, probe: Probe) -> Moved {
-        let short = self.rules.look_px;
-        if probe == Probe::Blocks && px >= short {
-            let first = self.go(b, heading, Fixed::px(short), probe);
+    /// `PoseFitAfterMoves`, `ShrinkingLowersHer`: a vertical look by `by`, signed, downward
+    /// positive: a test move. A block look of 8 px or more is stopped by whatever a look of 8 px
+    /// the same way would stop; only when nothing stops that is it the look of its own distance.
+    pub fn look(&mut self, b: Bounds, by: Fixed, probe: Probe) -> Moved {
+        let (heading, short) = (if by.negative() { Up } else { Down }, self.rules.look);
+        if probe == Probe::Blocks && by.size() >= short {
+            let first = self.go(b, heading, short, probe);
             if first.stop.is_some() {
                 return first;
             }
         }
-        self.go(b, heading, Fixed::px(px), probe)
+        self.go(b, heading, by.size(), probe)
     }
 
     /// `SolidEnemies`: her reach is her box at the move's end pushed 1 px on: moving left or up
     /// unless the end's subpixel is 0, right or down unless both her start's and the move's are
-    /// 0. An enemy she reaches is judged by the gap between the boxes from where she starts, its
-    /// near side less hers: 0 is touching (no move, her y subpixel 0), a larger gap stops her
-    /// that many whole pixels on, her subpixel kept, and a negative one never stops her.
+    /// 0. The first enemy she reaches decides the move.
     fn enemy(&self, a: &Axis, dist: Fixed) -> Option<Moved> {
         let push = if grows(a.heading) {
             a.from.sub() | dist.sub()
         } else {
             a.to.sub()
         } != 0;
-        let (reach, start) = (
-            shift(a.to.pixel(), u16::from(push), a.heading),
-            a.from.pixel(),
-        );
-        self.world.solid_enemies().iter().find_map(|e| {
-            let ((ea, ec), (era, erc)) = (along(e.centre, a.heading), along(e.radius, a.heading));
-            let gap =
-                ahead(ea, start, a.heading).wrapping_sub(era.wrapping_add(a.ra).cast_signed());
-            let reached = gap >= 0
-                && closer(reach, ea, a.ra.wrapping_add(era))
-                && closer(a.across, ec, a.rc.wrapping_add(erc));
-            reached.then(|| Moved {
-                to: if gap == 0 {
-                    Position {
-                        y: a.at.y.with_sub(0),
-                        ..a.at
-                    }
-                } else {
-                    a.put(shift(start, gap.cast_unsigned(), a.heading), a.from.sub())
-                },
-                stop: Some(Stop::Enemy),
-            })
-        })
+        let reach = shift(a.to.pixel(), u16::from(push), a.heading);
+        self.world
+            .solid_enemies()
+            .iter()
+            .find_map(|e| a.enemy(e, reach))
     }
 
-    /// `BlocksStopFlush`: the line of her leading edge at the target, in every cell her body
-    /// spans across it, left to right (right to left on an Odd frame's vertical move); the first
-    /// that stops her decides. `TouchedCells`: the cells it reaches, up to the one that stops it,
-    /// with the way it reached them.
+    /// `BlocksStopFlush`: the cells of her leading edge's line at the target; the first that
+    /// stops her decides. `TouchedCells`: the cells it reaches, up to the one that stops it, with
+    /// the way it reached them. `OtherBlockKinds`: an answered cell is air on a touch its reaction
+    /// lets through.
     fn blocks(&mut self, a: &Axis, way: Way) -> Option<Moved> {
-        let (lead, (lo, hi)) = (a.lead(), extent(a.across, a.rc));
-        let mut line: Vec<u16> = (cell(lo)..=cell(hi)).collect();
-        if vertical(a.heading) && self.parity == Parity::Odd {
-            line.reverse();
-        }
-        line.into_iter().find_map(|k| {
-            let (column, row) = along(
-                Pair {
-                    x: cell(lead),
-                    y: k,
-                },
-                a.heading,
-            );
-            let (block, at) = self.resolve(Cell { column, row });
+        self.line(a).into_iter().find_map(|(k, at)| {
+            let (block, at) = self.resolve(at);
             self.reached.push(Touch { cell: at, way });
-            match block {
-                // OtherBlockKinds: an answered cell is air on a touch its reaction lets through.
-                Block::Answered if self.world.lets_through(at, way) => None,
-                Block::Solid | Block::Answered => {
-                    Some(a.flush(lead & !IN_CELL, CELL_PX, Stop::Flat))
-                }
-                Block::Stepped(q) if a.stepped(q, k) => {
-                    Some(a.flush(lead & !IN_QUARTER, QUARTER_PX, Stop::Stepped))
-                }
-                Block::Slope(s) if vertical(a.heading) && k == cell(a.at.x.pixel()) => {
-                    a.slope(s, way)
-                }
-                Block::Stepped(_) | Block::Slope(_) | Block::Air | Block::StandsFor(_) => None,
-            }
+            let through = matches!(block, Block::Answered) && self.world.lets_through(at, way);
+            a.stop(block, k, way).filter(|_| !through)
         })
     }
 

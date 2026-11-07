@@ -23,7 +23,9 @@ pub use situation::classify;
 
 use Carry::{CarriesOn, FollowsPad};
 use Effect::{AsRunning, EndSkid, Halt, LoseDash, Rise, TakeOff, TurnRound};
-use clean_types::Action::{Crouching, Falling, Jumping, Morphing, Spinning, Still, WallJumping};
+use clean_types::Action::{
+    Crouching, Falling, Jumping, Morphing, Spinning, Still, TakingOff, WallJumping,
+};
 use clean_types::Body::{Crouched, Upright};
 use clean_types::button::{JUMP, SHOOT};
 use clean_types::{
@@ -33,7 +35,7 @@ use clean_types::{
 use collide::{Bounds, Mover};
 
 /// Her vertical motion's phase; her vertical speed itself is `Samus::vy`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Vertical {
     /// On the ground, keeping the vertical speed she brought with her (`FollowingTheGround`).
     Ground,
@@ -47,7 +49,7 @@ pub enum Vertical {
 }
 
 /// `Landing`: how many times the ball has bounced since it last rested.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Bounces {
     /// None.
     None,
@@ -101,7 +103,6 @@ pub enum Seat {
 
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
 /// and feeds us (the header): an animation's end from its timing.
-#[derive(Clone, Copy)]
 pub struct Frame<'a> {
     /// The buttons held as the frame starts.
     pub pad: Buttons,
@@ -122,7 +123,7 @@ pub struct Frame<'a> {
 }
 
 /// `WallJump`'s output: the near-wall test's outcome this frame.
-#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum WallTest {
     /// No test, no wall found, or a wall near her once the spin has turned far, without jump
     /// pressed.
@@ -134,20 +135,11 @@ pub enum WallTest {
     Kicked,
 }
 
-/// `PoseFitAfterMoves`: a whole number of pixels one way: a look's reach, or a push.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Offset {
-    /// The way.
-    pub way: Heading,
-    /// How far, in px.
-    pub px: u16,
-}
-
 /// `PoseFitAfterMoves`: how the pose the frame ends in came about.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Change {
-    /// The chosen pose, with pose fit's push, if any.
-    Chosen(Option<Offset>),
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Change {
+    /// The chosen pose.
+    Chosen,
     /// The change refused: she keeps the pose she had.
     Refused,
     /// Crouched `Still` taken instead.
@@ -155,7 +147,6 @@ pub enum Change {
 }
 
 /// `AimingAndShooting`: the standing animation.
-#[derive(Clone, Copy, Debug)]
 pub enum Standing {
     /// It plays on.
     Plays,
@@ -164,7 +155,6 @@ pub enum Standing {
 }
 
 /// `HowSheIsDrawn`: what her sprite shows beyond her pose's parts.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Drawn {
     /// Plain, in her first suit.
     Plain,
@@ -176,12 +166,8 @@ pub enum Drawn {
     OtherSuit,
 }
 
-/// What a frame shows beyond her quantities: events and outputs for the caller to act on.
+/// What a frame shows beyond her quantities: its outputs, for the caller to act on.
 pub struct Outcome {
-    /// `PoseFitAfterMoves`: how her pose came about.
-    pub change: Change,
-    /// `WhatHerMovesMet`: what her moves met.
-    pub met: Option<Met>,
     /// `WallJump`: the near-wall test's outcome.
     pub wall_test: WallTest,
     /// `AimingAndShooting`: the standing animation.
@@ -271,8 +257,8 @@ impl Samus {
         let meeting = self.moves(situation, frame, &mut m);
         // PoseFitAfterMoves: the speeds her moves left her, for a change that doesn't come.
         let moved = *self;
-        self.meet(meeting, situation.doing, frame, rules);
-        let moment = Moment {
+        self.meet(meeting.met, situation.doing, frame, rules);
+        let mut chosen = Moment {
             situation,
             pose: start.pose,
             moving: !start.speed.is_zero(),
@@ -281,28 +267,25 @@ impl Samus {
             pressed: frame.pressed,
             equipment: frame.equipment,
             met: meeting.met,
-        };
-        let mut chosen = moment.choose(frame.animation_ends);
-        let blocked = chosen.steps && self.aim_step(&mut chosen, &mut m);
+        }
+        .choose(frame.animation_ends);
+        if chosen.steps {
+            self.aim_step(&mut chosen, &mut m);
+        }
         let change = self.fit(chosen.pose, frame, &mut m);
         self.take(change, chosen, moved, frame, &mut m);
         // AimingAndShooting: standing, unaimed and not landing, holding shoot restarts the
         // standing animation.
         let p = start.pose;
         let restarts = matches!((p.body, p.action, p.aim), (Upright, Still, Aim::Forward));
+        let standing = if restarts && frame.pad.any(SHOOT) {
+            Standing::Restarts
+        } else {
+            Standing::Plays
+        };
         Outcome {
-            change,
-            met: if blocked {
-                Some(Met::AimStep)
-            } else {
-                meeting.met
-            },
             wall_test: meeting.wall_test,
-            standing: if restarts && frame.pad.any(SHOOT) {
-                Standing::Restarts
-            } else {
-                Standing::Plays
-            },
+            standing,
             drawn: drawn(self.pose, frame.equipment),
             reached: m.reached,
             inside,
@@ -336,41 +319,58 @@ impl Samus {
         self.carry = FollowsPad;
     }
 
+    /// `TurningRound`, `PadChart`'s "as running": the dash joins her speed (dash 0) and she
+    /// carries on.
+    const fn join_dash(&mut self) {
+        self.speed = self.speed.plus(self.dash);
+        self.dash = Fixed(0);
+        self.carry = CarriesOn;
+    }
+
     /// `PoseFitAfterMoves`: she takes the pose the change gives. A change refused, or crouched
     /// `Still` taken instead, leaves her speeds and dash as her moves left them (`moved`), with
     /// her position and seat as her looks left them. Only the chosen pose brings its effects, in
     /// order: after pose fit's push, the new pose's speeds, then the crouch take-off's lift.
     fn take(&mut self, change: Change, chosen: Choice, moved: Self, frame: &Frame, m: &mut Mover) {
-        let start = self.pose;
-        if !matches!(change, Change::Chosen(_)) {
+        let (start, r) = (self.pose, m.rules);
+        let pose = match change {
+            Change::Chosen => chosen.pose,
+            Change::Refused => start,
+            Change::Crouched => crouched(start),
+        };
+        if change != Change::Chosen {
             *self = Self {
                 position: self.position,
                 seat: self.seat,
                 ..moved
             };
-            if change == Change::Crouched {
-                self.pose = crouched(start);
-                self.radius = (frame.body)(self.pose);
-            }
-            return;
         }
-        let pose = chosen.pose;
         self.pose = pose;
         self.radius = (frame.body)(pose);
+        if change != Change::Chosen {
+            return;
+        }
         for effect in chosen.effects {
-            self.apply(*effect, start, frame, m.rules);
+            self.apply(*effect, start, frame, r);
         }
-        let changed = pose.action != start.action;
-        // ShrinkingLowersHer: the frame she starts to crouch or to morph she is lowered.
-        if changed && pose.action == Crouching {
-            self.lower(m.rules.crouch_lower, m);
+        // The change of action's own effects: ShrinkingLowersHer, the frame she starts to crouch
+        // or to morph she is lowered; Jumping, the frame she changes into a take-off from a
+        // crouch without aim she is lifted, and starting a straight jump or a fall she carries on
+        // along her facing if she has a dash, else she follows the pad; WallJump (§1.2), a spin
+        // that followed a wall jump is carried on.
+        if pose.action == start.action {
+            return;
         }
-        if changed && pose.action == Morphing {
-            self.lower(m.rules.morph_lower, m);
+        if pose.action == Crouching {
+            self.lower(r.crouch_lower, m);
         }
-        // Jumping: starting a straight jump or a fall she carries on along her facing if she
-        // has a dash, else she follows the pad.
-        if changed && (pose.action == Falling || pose.action == Jumping && pose.body == Upright) {
+        if pose.action == Morphing {
+            self.lower(r.morph_lower, m);
+        }
+        if pose.action == TakingOff && start.body == Crouched && start.aim == Aim::Forward {
+            self.position.y = self.position.y.minus(r.crouch_lift);
+        }
+        if pose.action == Falling || pose.action == Jumping && pose.body == Upright {
             self.carry = if self.dash.is_zero() {
                 FollowsPad
             } else {
@@ -378,7 +378,6 @@ impl Samus {
                 CarriesOn
             };
         }
-        // WallJump (§1.2): a spin that followed a wall jump is carried on.
         if start.action == WallJumping && pose.action == Spinning {
             self.spin = Spin::CarriedOn;
         }
@@ -388,23 +387,17 @@ impl Samus {
     fn apply(&mut self, effect: Effect, start: Pose, frame: &Frame, r: &Rules) {
         let jump = r.jump.of(frame.equipment.hi_jump);
         match effect {
-            // Jumping: changing into a take-off she starts rising and follows the pad; from a
-            // crouch without aim she is lifted.
+            // Jumping: changing into a take-off she starts rising and follows the pad.
             TakeOff => {
                 self.rise(jump);
                 self.carry = FollowsPad;
-                if start.body == Crouched && start.aim == Aim::Forward {
-                    self.position.y = self.position.y.minus(r.crouch_lift);
-                }
             }
             Rise => self.rise(jump),
             // TurningRound: her dash joins her speed and she travels the old way, against her
             // new facing: a skid. A spin reversed while skidding turns her travel round.
             TurnRound => {
-                self.speed = self.speed.plus(self.dash);
-                self.dash = Fixed(0);
                 self.way = start.facing.side();
-                self.carry = CarriesOn;
+                self.join_dash();
             }
             EndSkid if self.carry == CarriesOn => {
                 self.carry = FollowsPad;
@@ -412,11 +405,7 @@ impl Samus {
             }
             // PadChart: as running, with a horizontal speed of 0 she only follows the pad again.
             AsRunning if self.speed.is_zero() => self.carry = FollowsPad,
-            AsRunning => {
-                self.speed = self.speed.plus(self.dash);
-                self.dash = Fixed(0);
-                self.carry = CarriesOn;
-            }
+            AsRunning => self.join_dash(),
             LoseDash => self.dash = Fixed(0),
             Halt => self.halt(),
             // Moonfall: a spin she enters when a turn ends, with jump not just pressed, starts

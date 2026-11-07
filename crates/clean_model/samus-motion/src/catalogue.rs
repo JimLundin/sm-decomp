@@ -3,7 +3,7 @@
 use clean_types::{Kind, Switch};
 
 /// A spec entry's id.
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 pub enum BehaviourId {
     /// §2.
     HowSheIsDrawn,
@@ -66,7 +66,6 @@ pub enum BehaviourId {
 }
 
 /// A catalogue entry.
-#[derive(Clone, Copy)]
 pub struct Behaviour {
     /// Its id.
     pub id: BehaviourId,

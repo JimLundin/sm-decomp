@@ -4,7 +4,6 @@ use clean_types::{Fixed, below};
 use core::ops::Range;
 
 /// `WordwiseTopSpeed`: how the top speed is tested.
-#[derive(Clone, Copy)]
 pub enum SpeedCap {
     /// Vanilla: part by part, on the speed's size.
     Wordwise,
@@ -94,10 +93,10 @@ pub struct Rules {
     pub ground_pull: Fixed,
     /// `WallJump`: the near-wall test's reach.
     pub wall_reach: Fixed,
-    /// `ShrinkingLowersHer`: the crouch's look down, in px.
-    pub crouch_lower: u16,
-    /// `ShrinkingLowersHer`: the morph's look down, in px.
-    pub morph_lower: u16,
+    /// `ShrinkingLowersHer`: the crouch's look down.
+    pub crouch_lower: Fixed,
+    /// `ShrinkingLowersHer`: the morph's look down.
+    pub morph_lower: Fixed,
     /// `BlocksStopFlush`: the longest horizontal move, in px.
     pub move_limit_px: u16,
     /// `AimingAndShooting`: the step forward.
@@ -105,7 +104,7 @@ pub struct Rules {
     /// `RidingTheElevator`: the descent a frame.
     pub elevator: Fixed,
     /// `PoseFitAfterMoves`: a block look this long or longer is stopped as this long a look is.
-    pub look_px: u16,
+    pub look: Fixed,
     /// `PoseFitAfterMoves`: an old body under this half-height can't crouch instead.
     pub small_body_px: u16,
 }
@@ -171,12 +170,12 @@ impl Rules {
         second_bounce_less: Fixed(0x1_0000),
         ground_pull: Fixed(0x1_0000),
         wall_reach: Fixed(0x8_0000),
-        crouch_lower: 5,
-        morph_lower: 9,
+        crouch_lower: Fixed(0x5_0000),
+        morph_lower: Fixed(0x9_0000),
         move_limit_px: 15,
         aim_step: Fixed(0x1_0000),
         elevator: Fixed(0x1_0000),
-        look_px: 8,
+        look: Fixed(0x8_0000),
         small_body_px: 8,
     };
 
