@@ -155,9 +155,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Turning with no button held at all, on the ground or in the air, her skid ends after that
   frame's move: she keeps her horizontal speed, which now follows the pad and points along her new
   facing. So a skid braked to exactly 0 ends there too. On the ground the same happens when she
-  holds only buttons that bring no pose change (run, shoot or jump alone): no row of the pad chart
-  fits, and her let-go outcome ends the skid (`LettingGo`). In the air, holding any such button, she
-  keeps skidding: the speed still points the old way, and the skid ends only as
+  holds only buttons that bring no pose change (run, shoot or jump alone): no other row of the pad
+  chart fits, and the chart's last row for turning on the ground ends the skid (`PadChart`). In the
+  air, holding any such button, she keeps skidding: the speed still points the old way, and the skid ends only as
   `SpeedBuildsAndBrakes` says, when braking would take it below zero.
 - Turning on the ground over a drop, she sinks by her whole speed plus 1 px a frame instead of
   falling. In the air she turns under gravity (`RisingAndFalling`).
@@ -321,85 +321,130 @@ rows); inside the header's 450 for the chart.
 ### PoseFollows
 - Mechanic and timing. Her pose changes at most once a frame. What decides, the first that applies:
   1. an animation ending hands over its pose (`AnimationEnds`);
-  2. a wall stop while she runs puts her against the wall (`WhatHerMovesMet`);
-  3. what her moves met: a landing, walking off a ledge, the wall-jump kick (`WhatHerMovesMet`);
-  4. the pad (`PadChart`), from the pose at the frame's start and the pad at the frame's start;
-  5. when no row of the pad chart fits, her let-go outcome (`LettingGo`).
+  2. what her moves met (`WhatHerMovesMet`, which says which wins when several apply);
+  3. the pad chart (`PadChart`), from the pose and the pad at the frame's start; its last row
+     for her situation covers nothing fitting.
 - The frame runs in this order, and this is what the player can tell apart at its end: she moves as
   the pose at the frame's start says (`MovesAsShePosed`); what those moves met is known; the pose
   is chosen as above; then the change's effects act on her speeds and dash. So a change's effects
   never alter that frame's moves, and the frame ends in the pose chosen, with its effects applied.
 - One that comes lower in the list loses its pose and its effects to a higher one: a landing
-  replaces a let-go outcome's effect, and an animation's end replaces a landing's pose (the landing
-  still stops her as `Landing` says).
+  replaces the pad chart's outcome and its effect, and an animation's end replaces a landing's pose
+  (the landing still stops her as `Landing` says).
 - Where a change stops her horizontal speed dead, it takes her dash with it (dash 0).
 - checked: oracle (the `[[pose_step]]` vectors).
 
 ### PadChart
-- Mechanic. A row fits when every button it names as just pressed was just pressed this frame and
-  every button it names as held is held; other buttons don't matter. Where two rows of her situation
-  fit, the higher one wins. "Aim" in a next pose means the aim the `Aiming` rule gives. A row whose
-  next pose is the one she already has leaves her as she is.
+- Mechanic. A row fits when every button it names as just pressed was just pressed this
+  frame and every button it names as held is held; other buttons don't matter. Where several
+  rows of her situation fit: a row that needs a just-pressed button beats one that doesn't,
+  and between two rows of the same kind, the one that names more buttons wins. Where that
+  leaves two rows tied, or where her situation goes against it, the Pad cell says which wins
+  ("beats ..."). The rows' order in the table carries no meaning. "Aim" in a next pose means
+  the aim the `Aiming` rule gives. "kept" means nothing changes: no effect, and no
+  let-go outcome.
+- Forward and back are by her facing at the frame's start (a turn already faces its new way).
+  The chart covers pads with at most one of left and right, and at most one of up and down, held:
+  the pad can't hold both, and no record does.
+- Rows are listed by rank (just pressed first, then by how many buttons they name), and inside a
+  rank by next pose (action, then aim, alphabetically; "kept" last). Each situation's last row
+  is what happens when no other row fits: its pose and its effect are her let-go outcome.
 
 | She is | Pad | Next pose | Effect |
 | --- | --- | --- | --- |
-| standing still (upright, or just landed) | jump pressed | upright `TakingOff`, take-off aim | `Jumping`'s take-off |
-| | down pressed | crouched `Crouching`, crouch aim | none |
-| | back, shoot, an aim button held | `Moonwalking` facing back, `DownForward` with aim down, else `UpForward` | none |
+| standing still (upright, or just landed) | down pressed | crouched `Crouching`, crouch aim | none |
+| | jump pressed; beats down pressed | upright `TakingOff`, take-off aim | `Jumping`'s take-off |
+| | back, shoot and an aim button held; beats back and both aim buttons held | `Moonwalking` facing back, `DownForward` with aim down, else `UpForward` | none |
 | | back and both aim buttons held | `Turning` | `TurningRound` |
-| | both aim buttons held | `Still`, `Up` | none |
-| | forward with aim up or up held | `Running`, `UpForward` | none |
-| | forward with aim down or down held | `Running`, `DownForward` | none |
 | | back and shoot held | `Moonwalking` facing back, `Forward` | none |
-| | back held | `Turning` | `TurningRound` |
-| | up, aim up or aim down held | `Still`, standing aim | none |
+| | forward and an aim button held; beats forward with up or down held | `Running`, `UpForward` with aim up, else `DownForward` | none |
+| | forward with up or down held | `Running`, `UpForward` with up, else `DownForward` | none |
+| | both aim buttons held; beats every other row naming two buttons | `Still`, `Up` | none |
 | | forward held | `Running`, `Forward` | none |
-| running | down pressed | crouched `Crouching`, `Forward` | none |
+| | up held; beats aim up or aim down held | `Still`, `Up` | none |
+| | aim up or aim down held | `Still`, `UpForward` with aim up, else `DownForward` | none |
+| | back held; beats up held and aim up or aim down held | `Turning` | `TurningRound` |
+| | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
+| running | down pressed; beats jump pressed | crouched `Crouching`, `Forward` | none |
 | | jump pressed | `Spinning` | `Jumping`'s spin start |
-| | forward with aim up or up held | `Running`, `UpForward` | none |
-| | forward with aim down or down held | `Running`, `DownForward` | none |
+| | forward and an aim button held; beats forward with up or down held | `Running`, `UpForward` with aim up, else `DownForward` | none |
+| | forward with up or down held | `Running`, `UpForward` with up, else `DownForward` | none |
 | | forward held | `Running`, `Forward` | none |
-| | back held | `Turning` | `TurningRound` |
-| | up, aim up or aim down held | upright `Still`, standing aim | none |
-| taking off | jump and back held | `Turning` in the air | `TurningRound` |
-| | jump held, or shoot held | `Jumping`, air aim | none |
-| in a straight jump | aiming `Down`, down pressed | ball `Morphing` | none |
-| | back held | `Turning` in the air | `TurningRound` |
-| | anything else held | `Jumping`, air aim | none |
+| | up held; beats aim up or aim down held | upright `Still`, `Up` | none |
+| | aim up or aim down held | upright `Still`, `UpForward` with aim up, else `DownForward` | none |
+| | back held; beats up held and aim up or aim down held | `Turning` | `TurningRound` |
+| | anything else, or nothing held | upright `Still`, `Forward` | the dash joins her horizontal speed (dash 0) and she carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the pad again |
+| taking off | jump and forward held | `Jumping`, `Forward` | none |
+| | jump with up, down or an aim button held; beats jump and forward held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
+| | jump and back held; beats jump with up, down or an aim button held | `Turning` in the air | `TurningRound` |
+| | shoot held | `Jumping`, `Forward` | none |
+| | anything else, or nothing held (jump alone too) | kept | as running |
+| in a straight jump | aiming `Down`: down pressed | ball `Morphing` | none |
+| | forward with up, down or an aim button held | `Jumping`, air aim | none |
+| | forward, jump or shoot held | `Jumping`, `Forward` | none |
+| | up, down or an aim button held; beats forward, jump or shoot held | `Jumping`, air aim | none |
+| | back held; beats every other row naming one button | `Turning` in the air | `TurningRound` |
+| | aiming `Down`: jump held, and no other button a row names; beats forward, jump or shoot held | kept | none |
+| | anything else, or nothing held | kept | as running |
 | spinning | shoot pressed | `Jumping`, `Forward` | none |
-| | forward and jump held | `Spinning` | none |
-| | shoot with up, down or an aim button held, or up, down or an aim button held | `Jumping`, air aim | none |
-| | forward held | `Spinning` | none |
+| | shoot with up, down or an aim button held; beats forward and jump held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
+| | forward and jump held | kept | none |
+| | up, down or an aim button held; beats forward held and back held | `Jumping`, aim `Up` with up, else `UpForward` with aim up, else `DownForward` with aim down, else `Down` | none |
 | | back held | `Spinning`, facing back: the spin reversed | `TurningRound` |
-| falling (upright) | back held | `Turning` in the air | `TurningRound` |
-| | anything else held | `Falling`, air aim | none |
-| crouched | up pressed | `StandingUp`, crouch aim | none |
-| | back pressed | crouched `Turning` | none |
-| | down pressed | ball `Morphing` | none |
+| | forward held | kept | none |
+| | anything else, or nothing held | kept | none |
+| falling (upright) | aiming `Down`: down pressed | ball `Morphing` | none |
+| | forward with up or down held | `Falling`, `UpForward` with up, else `DownForward` | none |
+| | forward or shoot held | `Falling`, `Forward` | none |
+| | up, down or an aim button held; beats forward or shoot held | `Falling`, air aim | none |
+| | back held; beats forward or shoot held, and up, down or an aim button held; aiming `Down`, up or down held beats it | `Turning` in the air | `TurningRound` |
+| | anything else, or nothing held | kept, aim `Forward` | dash 0 |
+| crouched | down pressed | ball `Morphing` | none |
+| | up pressed; beats every other row naming a pressed button | `StandingUp`, crouch aim | none |
 | | jump pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
-| | both aim buttons held | `Still`, `Up` | none |
+| | back pressed; beats down pressed and jump pressed | crouched `Turning` | none |
+| | forward and an aim button held | upright `Still`, `Forward` | she stands at once: 5 px up |
+| | both aim buttons held; beats forward and an aim button held | crouched `Still`, `Up` | none |
+| | aim up or aim down held | crouched `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | forward held | upright `Still`, `Forward` | she stands at once: 5 px up |
-| | aim up or aim down held | `Still`, crouch aim | none |
-| a ball, on the ground or in the air | up or jump pressed | crouched `Unmorphing` | none |
+| | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
+| a ball, on the ground or in the air | jump pressed, with the spring ball, on the ground | the ball off the ground, rising | `Jumping`'s spring-ball hop |
+| | up pressed, or without the spring ball jump pressed; beats the spring ball's hop | crouched `Unmorphing` | none |
 | | left or right held | the same ball facing that side, `Rolling` on the ground | none |
-| turning on the ground | the new forward and jump held | `Spinning`, the new facing | `Jumping`'s spin start |
+| | anything else, or nothing held: on the ground | ball `Still` | horizontal speed 0, dash 0, following the pad |
+| | in the air, without the spring ball | kept | as running |
+| | off the ground, with the spring ball | kept | horizontal speed 0, dash 0, following the pad |
+| turning on the ground (not aimed `UpForward`) | aimed `Up` or `DownForward`: forward held and jump pressed | `Spinning`, the new facing | `Jumping`'s spin start |
 | | jump pressed | upright `TakingOff`, the new facing | `Jumping`'s take-off |
-| | the new forward held | `Turning` (kept) | none |
-| turning in the air | any button held | `Turning` (kept) | none |
-| moonwalking | down pressed | crouched `Crouching`, facing the way she looks, `Forward` | none |
-| | jump pressed | `Turning`, then a spin the way she walks (`AnimationEnds`), aimed by aim up or aim down | `TurningRound` |
-| | the way she walks, shoot and an aim button held | `Moonwalking`, `UpForward` with aim up, else `DownForward` | none |
+| | aimed `Forward`: forward and jump held; beats jump pressed | `Spinning`, the new facing | `Jumping`'s spin start |
+| | forward held | kept | none |
+| | anything else, or nothing held | kept | she follows the pad again (`TurningRound`) |
+| turning in the air, crouched turning, or turning on the ground aimed `UpForward` | any button held | kept | none: she keeps turning (`TurningRound`) |
+| | nothing held | kept | she follows the pad again (`TurningRound`) |
+| changing body: `Crouching`, `StandingUp`, `Morphing`, `Unmorphing` | anything, or nothing held | kept | none: the pad has no say until the animation ends |
+| moonwalking | down pressed; beats jump pressed | crouched `Crouching`, facing the way she looks, `Forward` | none |
+| | jump pressed | `Turning`, `Forward`, then a spin the way she walks (`AnimationEnds`) | `TurningRound` |
+| | the way she walks, shoot and aim down held | `Moonwalking`, `DownForward` | none |
+| | the way she walks, shoot and aim up held; beats the way she walks, shoot and aim down held | `Moonwalking`, `UpForward` | none |
 | | the way she walks and shoot held | `Moonwalking`, `Forward` | none |
 | | the way she looks held | `Running` that way, `Forward` | none |
 | | the way she walks held | `Turning` | `TurningRound` |
+| | anything else, or nothing held | upright `Still`, facing the way she looks | she follows the pad again |
 | wall jumping | down pressed | ball `Morphing` | none |
-| | back held | `Spinning`, facing back | `TurningRound` |
-| | jump held | `WallJumping` (kept) | none |
-| against the wall | jump pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
-| | down pressed | crouched `Crouching`, `Forward` | none |
+| | shoot held; beats jump held | `Jumping`, `Forward` | none |
+| | aim up or aim down held; beats shoot held and jump held | `Jumping`, `UpForward` with aim up, else `DownForward` | none |
+| | back held; beats every other row naming one button | `Spinning`, facing back | `TurningRound` |
+| | jump held | kept | none |
+| | anything else, or nothing held | `Spinning` | horizontal speed 0, dash 0, following the pad |
+| against the wall | down pressed | crouched `Crouching`, `Forward` | none |
+| | jump pressed; beats down pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
 | | back and an aim button held | `Moonwalking` facing back, `DownForward` with aim down, else `UpForward` | none |
-| | back held | `Turning` | `TurningRound` |
+| | forward with up or down held; beats down pressed | `Running`, `UpForward` with up, else `DownForward` | none |
 | | forward held | `Running`, `Forward` | none |
+| | up held; beats aim up or aim down held, and back held | upright `Still`, `Up` | none |
+| | aim up or aim down held; beats forward held and back held | upright `Still`, `UpForward` with aim up, else `DownForward` | none |
+| | back held | `Turning` | `TurningRound` |
+| | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
 
 - Facing is kept unless the row says otherwise; `Turning` faces back (the turn shows her new
   facing, and `TurningRound` turns her). A moonwalk faces the way she walks, which is backwards:
@@ -407,7 +452,12 @@ rows); inside the header's 450 for the chart.
 - Body follows the action: `Running`, `Moonwalking`, `TakingOff`, `Jumping`, `Spinning`, `Falling`,
   `WallJumping`, `AgainstWall` and `StandingUp` are upright; `Crouching` and `Unmorphing` end
   crouched; `Morphing` ends a ball.
-- checked: oracle (P1, P13 to P18, P20 to P22, P24).
+- A moonwalk's jump turns unaimed, whatever aim button is held.
+- The let-go outcomes "as running" mean: the dash joins her horizontal speed (dash 0) and she
+  carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the
+  pad again.
+- checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25 to P27, and R133 and R141 of
+  `TurningRound`); constructed (C-chart-a to C-chart-f).
 
 ### Aiming
 - Mechanic. The aim a next pose takes from the held buttons, by the rule its row names:
@@ -419,34 +469,18 @@ rows); inside the header's 450 for the chart.
 | crouch | `Up` | (stands) | `Forward` | `UpForward` | `DownForward` | (stands) | `Forward` |
 | air | `UpForward` | `Up` | `Down` | `UpForward` | `DownForward` | `UpForward` / `DownForward` | `Forward` |
 
-- Where up and an aim button are both held, up wins; where up or down and forward are held, the
-  forward diagonal wins. checked: oracle (P2, P9, P24).
-
-### LettingGo
-- Mechanic. With no row of the pad chart fitting, and also with no button held at all, her pose and
-  speeds change as her situation says. Turning in the air is the one exception: there it happens
-  only with no button held at all, and with any button held she keeps turning as she is
-  (`TurningRound`).
-
-| She is | Next pose | Effect |
-| --- | --- | --- |
-| standing, crouched, against the wall | kept, aim `Forward` | she follows the pad again (a skid ends) |
-| running | upright `Still`, `Forward` | the dash joins her horizontal speed (dash 0) and she carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the pad again |
-| in a straight jump or taking off, a ball in the air | kept | as running |
-| moonwalking | upright `Still`, facing the way she looks | she follows the pad again |
-| turning, on the ground or in the air | kept | she follows the pad again (`TurningRound`) |
-| spinning | kept | none |
-| falling (upright) | kept, aim `Forward` | dash 0 |
-| a ball on the ground | `Still` | horizontal speed 0, dash 0, following the pad |
-| wall jumping | `Spinning` | horizontal speed 0, dash 0, following the pad |
-
-- checked: oracle (P3, and R133 and R141 of `TurningRound`).
+- Where up and an aim button are both held, up wins; in the air rule down wins over an aim button
+  too; where up or down and forward are held, the forward diagonal wins. checked: oracle (P2, P9,
+  P24).
 
 ### WhatHerMovesMet
 - Mechanic. What this frame's moves met chooses her pose over the pad:
 
 | Her moves met | She was | Next pose | Effect |
 | --- | --- | --- | --- |
+| a wall (a wall stop) | running | `AgainstWall`, facing kept; aim `UpForward` or `DownForward` kept, else `Forward` (`Up` stays `Still`, `Up`) | `WallsAndCeilings` |
+| a block or solid enemy in the way of the aim change's step | running into another running pose | `AgainstWall`, with the aim of the running pose chosen | `AimingAndShooting` |
+| a wall near her as she presses jump (`WallJump`) | spinning | `WallJumping`, facing kept | `WallJump`'s kick |
 | a floor (landing) | upright, in a straight jump or falling | upright `Still`, facing kept, aim kept (`Down` becomes `Forward`) | `Landing` |
 | | spinning or wall jumping | upright `Still`, facing kept, `Forward` | `Landing` |
 | | a ball, bouncing (`Landing`) | kept | `Landing`'s bounce |
@@ -454,11 +488,10 @@ rows); inside the header's 450 for the chart.
 | no floor (walking off a ledge, `FollowingTheGround`) | upright on the ground | upright `Falling`, facing kept, `Forward` | `FollowingTheGround`'s fall |
 | | a ball | ball `Falling`, facing kept | `FollowingTheGround`'s fall |
 | a ceiling | rising | kept | `WallsAndCeilings` |
-| a wall near her as she presses jump (`WallJump`) | spinning | `WallJumping`, facing kept | `WallJump`'s kick |
-| a wall (a wall stop) | running | `AgainstWall`, facing kept; aim `UpForward` or `DownForward` kept, else `Forward` (`Up` stays `Still`, `Up`) | `WallsAndCeilings` |
-| a block or solid enemy in the way of the aim change's step | running into another running pose | `AgainstWall`, with the aim of the running pose chosen | `AimingAndShooting` |
 
-- A wall stop while running wins over walking off a ledge in the same frame.
+- Where two of these meet in one frame: a wall stop, or the aim step's block, while running wins
+  over walking off a ledge. A floor, no floor, a ceiling and the wall-jump kick come from her one
+  vertical move or her kick, so at most one of them meets her in a frame.
 - checked: oracle (P4, P5, P6, P7, P8).
 
 ### AnimationEnds
@@ -607,10 +640,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   the move's unshortened target, in each row her body spans. Each sloped floor among them
   shortens it again, top row first. A solid block below it in that column still stops her as
   `BlocksStopFlush` says.
-- The walk factor is world data, a multiple of 1/256 for each shape: 1.00 (a flat-topped shape),
-  0.F0, 0.D8 (a half-height triangle), 0.C0 (a triangle, a quarter or a three-quarter triangle),
-  0.B0 (a bumpy triangle), 0.80 (a half-width triangle), 0.50. Vectors give it as
-  `world.slope_floor.factor`.
+- The walk factor is world data, a multiple of 1/256 for each sloped floor: one of 1.00, 0.F0,
+  0.D8, 0.C0, 0.B0, 0.80 and 0.50. Vectors give it
+  as `world.slope_floor.factor`.
 - The arithmetic, exactly. The move is first cut to a multiple of 0.0100 (1/256 px), rounding
   towards minus infinity, so a leftward move's length rounds up; only the pixel part's value mod
   256 is kept. Its length is then multiplied by the factor exactly (no bits are lost), and the

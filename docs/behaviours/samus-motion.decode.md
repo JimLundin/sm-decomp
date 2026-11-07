@@ -111,10 +111,9 @@ and `scan.sh --mirror` agrees.
 | SolidEnemies | `$A0:AAC8`, `$A0:AA53`, `$A0:AABC` (overlapped: next enemy, then 0 so blocks run), `$90:9D80`, `$90:9DF8`, `$90:93B1`, `$90:93EC` and `$90:9440` (enemy test first; on a hit the move skips block collision, as the bank log's zebetite-skip note says) |
 | SlopesCarry | `$90:9376`, `$94:87F4` (seat after every horizontal move, sets `0DBA`), `$90:924C` (the pull reads `0DBA`), `$94:976B` (a 0.0 vertical move skips block collision), `$94:976F` (cleared by a non-zero vertical move), `$94:8E38` (square slope stop sets it), `$94:86FE` (rising into a non-square ceiling slope: `$12 = max(0, ...)` and `$14 = 0`, so no move), `$94:87E4` (the floor slope stop is `max(0, ...)` too: never upward) |
 | WordwiseTopSpeed* | `$90:9A99` |
-| PoseFollows | `$91:EB88` (one change a frame: super special `0A2C`, then special `0A2A`, then `0A28`), `$91:E8B6` (the vertical collision result `0DC6` overwrites the pad's `0A28` and sets command 5), `$91:EADE` (the wall stop overrides both), `$91:EC85` falling into `$91:EC8E` (the dash goes with the speed) |
-| PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:8087` (crouched into standing: y − 5) |
+| PoseFollows | `$91:EB88` (one change a frame: super special `0A2C`, then special `0A2A`, then `0A28`), `$91:E8B6` (the vertical collision result `0DC6` overwrites the pad's `0A28` and sets command 5), `$91:EADE` (the wall stop overrides both); the spec's three items fold the wall stop into `WhatHerMovesMet` and the lookup failure into the chart's last rows, `$91:EC85` falling into `$91:EC8E` (the dash goes with the speed) |
+| PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:8087` (crouched into standing: y − 5); the last rows: `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E`; `$91:8146` (movement type Fh: no lookup at all, the changing-body row) |
 | Aiming | the table's aim rows per pose, `$91:E9F3` (landing keeps the aim, down becomes forward), `$91:EB74` (the wall stop keeps the aim) |
-| LettingGo | `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E` |
 | WhatHerMovesMet | `$91:E8F2` (falling poses, `$91:E921`), `$91:E95D`..`$91:EA47` (landing poses, ball bounces), `$91:EABE` (wall-jump pose), `$91:EADE` (ran-into-wall poses, the aim step's block) |
 | AnimationEnds | the animation delay table `$91:B010` (its go-to-pose instructions), `$91:EB88` (the super special pose wins) |
 
@@ -138,6 +137,20 @@ entries, with the pose decode above and aim from the pose's name. The record is 
 just pressed N's pad less N−1's, the after pose N+1's. `met` was set by hand from the movement
 types (airborne to ground: floor; ground to falling: no_floor; to 15h: wall; to 14h: wall_kick;
 from 0Fh, Eh, 17h, 18h or a take-off pose: animation_end).
+
+**The chart's ranks.** The spec's rows are ranked (pressed first, more buttons
+first, "beats" for the rest) rather than listed in the table's order. `$TEMP/pose-chart/chk.pl`
+with the rows in `$TEMP/pose-chart/spec.pl` compares the ranked chart with `$91:81A9`'s first fit
+over every pad (each of 8 buttons not held, held or newly pressed; left with right and up with
+down skipped) for the right-facing poses 01h, 03h, 05h, 07h, A4h, A6h, E0h-E6h, 09h, 0Bh, 0Fh, 11h,
+4Bh, 55h-59h, 4Dh, 51h, 15h, 17h, 69h, 6Bh, 19h, 1Bh, 81h, 29h, 2Bh, 2Dh, 6Dh, 6Fh, 27h, 71h, 73h,
+85h, 1Dh, 1Eh, 31h, 79h, 7Bh, 7Dh, 7Fh, 25h, BFh, 8Bh, 8Dh, 9Ch, 2Fh, 87h, 8Fh-A0h, 43h, 97h, 99h,
+A2h, 35h-3Dh, F1h-FBh, 4Ah, 76h, 78h, 83h, 89h: 0 mismatches. Not covered: the gun-extended
+poses 13h (jump alone: no row, the lookup failure) and 67h (up or down beats back, as 2Dh) share
+the spec's `Jumping`/`Falling` `Forward` with 4Dh and 29h, so the spec can't tell them apart
+(open); C1h and C3h (aimed moonwalk turns) are unreachable from the moonwalk rows (4Ah's unaimed
+jump row comes first). The ground turns aimed up or down-right (8Bh, 8Dh) have only
+press-jump rows, and 9Ch's table is empty, so it turns as in the air.
 
 **A finding for `TurningRound`.** The ground turning poses (25h, 26h) have table rows, so with only
 run, shoot or jump held none fits and `$91:81DB` runs the lookup failure: command 2 ends the skid.

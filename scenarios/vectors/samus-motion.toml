@@ -1941,7 +1941,7 @@ after = { pose = { body = "Upright", action = "Running", facing = "Right", aim =
 [[pose_step]]
 id = "P3"
 source = "r01:864"
-entries = ["LettingGo", "PoseFollows"]
+entries = ["PadChart", "PoseFollows"]
 pose = { body = "Upright", action = "Running", facing = "Left", aim = "Forward" }
 pad = []
 jump_pressed = false
@@ -2179,6 +2179,83 @@ jump_pressed = false
 pressed = ["up"]
 met = "nothing"
 after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Up" } }
+
+[[pose_step]]
+id = "P25"
+source = "item-morph-ball:1335"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "AgainstWall", facing = "Right", aim = "Forward" }
+pad = ["run", "right", "aim_down"]
+jump_pressed = false
+pressed = ["aim_down"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "DownForward" } }
+
+[[pose_step]]
+id = "C-chart-a"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["right", "up", "aim_down"]
+jump_pressed = false
+pressed = ["right", "up", "aim_down"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Running", facing = "Right", aim = "DownForward" } }
+
+[[pose_step]]
+id = "C-chart-b"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Spinning", facing = "Right", aim = "Forward" }
+pad = ["right", "jump", "shoot", "up"]
+jump_pressed = false
+pressed = ["up"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Up" } }
+
+[[pose_step]]
+id = "C-chart-c"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "AgainstWall", facing = "Right", aim = "Forward" }
+pad = ["right", "down"]
+jump_pressed = false
+pressed = ["down"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Running", facing = "Right", aim = "DownForward" } }
+
+[[pose_step]]
+id = "C-chart-d"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "AgainstWall", facing = "Right", aim = "Forward" }
+pad = ["left", "up"]
+jump_pressed = false
+pressed = ["up"]
+met = "nothing"
+after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "Up" } }
+
+[[pose_step]]
+id = "C-chart-e"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Crouched", action = "Turning", facing = "Left", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = ["right"]
+met = "nothing"
+after = { pose = { body = "Crouched", action = "Turning", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "C-chart-f"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Crouched", action = "Crouching", facing = "Right", aim = "Forward" }
+pad = ["jump"]
+jump_pressed = true
+pressed = []
+met = "nothing"
+after = { pose = { body = "Crouched", action = "Crouching", facing = "Right", aim = "Forward" } }
 
 # Walking along a sloped floor (SlopesSlowTheWalk): two recorded frames and three constructed.
 
