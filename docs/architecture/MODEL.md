@@ -31,11 +31,14 @@ Jim's decisions, 2026-11-07:
    rebuilding the game; reading them through the ROM's layout was a shortcut. The assets come
    from the player's ROM and are never committed. The importer, which has to know the original,
    is outside the clean room. The format and its importer: [assets.md](assets.md).
-5. **Size is counted in logical tokens, held on the model's logic.** The game's data (the values
-   of constants and statics, and imported assets) is reported beside the logic, not counted
-   against it (§4). So are type declarations: defining shapes is to be promoted, not taxed. The
-   integrator's bridge is reported apart and not counted against the model, which its
-   implementer didn't write (Jim, 2026-11-07).
+5. **Size is counted in logical tokens, held on one weighted score of the model's logic.** The
+   game's data (the values of constants and statics, and imported assets) is reported beside the
+   logic, not counted against it (§4). So are type declarations: defining shapes is to be
+   promoted, not taxed. The score weighs each logic token by what the code's priorities make of
+   it, so that a lower score means better code, not churn: forms that hold no behaviour are
+   free, a function signature is half, a `true` or `false` is double (§4). The integrator's
+   bridge is reported apart and not counted against the model, which its implementer didn't
+   write (Jim, 2026-11-07).
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
    of a 2D pixel-art game today expects: a character controller stepped at a fixed timestep,
    state machines whose moves are table rows, input as actions, tilemap collision with per-tile
@@ -212,10 +215,33 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   and so never paid for them; loading them is part of rebuilding the game, so the new engine
   stating them is not extra logic. A data row must state the game's data. A row that encodes a
   decision the code would otherwise make is logic, and a review moves it back.
+- **A value that holds behaviour is logic** (Jim, 2026-11-07; rule L3 in the counter). A
+  constant's or static's value that holds control flow (`if`, `match`, `loop`, `while`, `for`), a
+  binding (`let`, `fn`), a closure (`|..|`, `move`), a macro or a call is counted as logic. A call
+  is a snake-case name followed by its arguments: `f(..)`, `T::new(..)`, `x.get(..)`,
+  `size_of::<T>()`. Constructors are camel case, so a chart row built from enum variants and
+  struct literals (`Held(Key::Jump)`, `Not(&Airborne)`, `Some(Fixed(3))`) stays data, and so do
+  operators on constants (`A | B << 4`). Chart rows are data while they state the spec's chart;
+  L3 and review guard the line.
 - **Declarations are not counted against the rule** (Jim, 2026-11-07): `tools size` reports the
   tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as
   types, on both sides. Defining shapes is what decision 6 asks for. A declaration holds no
-  behaviour; anything that does (an `impl`, a function, a match) is logic.
+  behaviour; anything that does (an `impl`, a function, a match) is logic. A constant's head
+  (`const NAME: T =` and its `;`) is a declaration too.
+- **The rule is held on one weighted score** (Jim, 2026-11-07). `tools size` prints it per file
+  and in total, with the plain logic, types and data columns beside it. Weights, on both sides:
+  - **0** for forms that hold no behaviour: `use` items, `mod` declarations, a trailing comma
+    before a closing bracket (rustfmt places it), and the `const` of a `const fn`
+    (`missing_const_for_fn` forces it).
+  - **0.5** for a function signature, from `fn` to its body's `{` (or its `;`), so a named step
+    costs less than its body inlined twice. `too_many_arguments` and the bool-parameter lints
+    keep signatures honest.
+  - **2** for `true` and `false` in logic, so a typed state beats a flag; `bool_comparison`,
+    `needless_bool` and `nonminimal_bool` stop the swap to `!x` forms.
+  - **1** for every other logic token.
+
+  A target is set under the same weights as the baseline it is compared with; a reweighted model
+  against an old-weight target would be a rule change hidden in a tool change.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once

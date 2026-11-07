@@ -8,8 +8,17 @@
 //!
 //! The values of `const` and `static` items are reported apart, as data: the game's tables and
 //! parameters, which the old engine read from the ROM and the new one states (Jim, 2026-11-07).
-//! The size rule is held on logic.
+//! A value that holds behaviour (control flow, a closure, a call) is logic all the same.
+//!
+//! The size rule is held on one weighted score of the logic (Jim, 2026-11-07), so that a lower
+//! score means better code. Forms that hold no behaviour weigh nothing: `use` items, `mod`
+//! declarations, a trailing comma before a closing bracket and the forced `const` of a
+//! `const fn`; a constant's head (`const NAME: T =` and its `;`) is counted with the types. A
+//! function signature weighs half, so a named step costs less than its body inlined twice.
+//! `true` and `false` weigh double: flag-style code that a typed state replaces. Every other
+//! logic token weighs one.
 
+use std::fmt;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -220,13 +229,75 @@ const TEST_ATTRIBUTE: [Token<'static>; 7] = [
     Token::Close,
 ];
 
-/// A source's size, split between logic, declarations and data.
+/// What one logic token weighs in the score (Jim, 2026-11-07).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum Weight {
+    /// A form that holds no behaviour, so trading it costs nothing: a `use` item, a `mod`
+    /// declaration, a trailing comma before a closing bracket (rustfmt's), the `const` of a
+    /// `const fn` (`missing_const_for_fn` forces it).
+    Free,
+    /// A function signature, from `fn` to its body's `{`: a named step's price.
+    Half,
+    /// Every other logic token.
+    Single,
+    /// `true` or `false` in logic, so a typed state beats a flag.
+    Double,
+}
+
+impl Weight {
+    /// The weight in half tokens, which keeps a signature's half whole.
+    const fn halves(self) -> usize {
+        match self {
+            Self::Free => 0,
+            Self::Half => 1,
+            Self::Single => 2,
+            Self::Double => 4,
+        }
+    }
+}
+
+/// The weighted score of a source's logic, the number the size rule holds, kept in half tokens.
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct Score(usize);
+
+impl Score {
+    /// The score in half tokens.
+    #[must_use]
+    pub const fn halves(self) -> usize {
+        self.0
+    }
+
+    const fn add(self, other: Self) -> Self {
+        Self(self.0.saturating_add(other.0))
+    }
+
+    const fn weigh(self, weight: Weight) -> Self {
+        Self(self.0.saturating_add(weight.halves()))
+    }
+}
+
+impl fmt::Display for Score {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let whole = self.0 / 2;
+        let text = if self.0.is_multiple_of(2) {
+            whole.to_string()
+        } else {
+            format!("{whole}.5")
+        };
+        f.pad(&text)
+    }
+}
+
+/// A source's size, split between logic, declarations and data, and its logic's score.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
 pub struct Size {
+    /// The weighted logic, which the size rule holds.
+    pub score: Score,
     /// Every counted token that is neither a declaration nor a constant's or a static's value.
     pub logic: usize,
-    /// The tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes:
-    /// what the code's types say, reported apart so typing is visible on its own.
+    /// The tokens of item-level `struct`, `enum`, `union` and `type` items, of attributes and of
+    /// constants' heads (`const NAME: T =` and the `;`): what the code's types say, reported
+    /// apart so typing is visible on its own.
     pub types: usize,
     /// The tokens of `const` and `static` values: tables and parameters, the game's data, which
     /// the old engine read from the ROM instead (Jim, 2026-11-07).
@@ -236,9 +307,29 @@ pub struct Size {
 impl Size {
     const fn add(self, other: Self) -> Self {
         Self {
+            score: self.score.add(other.score),
             logic: self.logic.saturating_add(other.logic),
             types: self.types.saturating_add(other.types),
             data: self.data.saturating_add(other.data),
+        }
+    }
+
+    /// One more logic token of `weight`.
+    const fn weigh(self, weight: Weight) -> Self {
+        Self {
+            score: self.score.weigh(weight),
+            logic: self.logic.saturating_add(1),
+            ..self
+        }
+    }
+
+    /// That many counted tokens, all types.
+    const fn typed(tokens: usize) -> Self {
+        Self {
+            score: Score(0),
+            logic: 0,
+            types: tokens,
+            data: 0,
         }
     }
 }
@@ -288,27 +379,23 @@ fn ends_item(previous: Option<Token<'_>>) -> bool {
     )
 }
 
-/// The count, without `#[cfg(test)]` items, with each bracket pair once, and with the values of
-/// item-level constants and statics as data.
+/// The count, without `#[cfg(test)]` items, with each bracket pair once, with the values of
+/// item-level constants and statics as data unless they hold behaviour, and with each logic
+/// token weighed.
 fn count(tokens: &[Token<'_>]) -> Size {
     let mut size = Size::default();
     let mut rest = tokens;
     let mut previous = None;
+    // How many tokens are left once the last signature reaches its body or its `;`.
+    let mut signature_end = None;
     while let Some((&token, tail)) = rest.split_first() {
         if let Some(item) = rest.strip_prefix(&TEST_ATTRIBUTE[..]) {
             rest = after_item(item);
             continue;
         }
-        let constant = matches!(token, Token::Word("const" | "static"))
-            && ends_item(previous)
-            && !matches!(tail.first(), Some(Token::Word("fn" | "unsafe" | "extern")));
-        if constant && let Some((head, value, after)) = split_value(rest) {
-            size = size.add(Size {
-                logic: counted(head),
-                types: 0,
-                data: counted(value),
-            });
-            previous = head.last().copied();
+        if let Some((item, after)) = free_item(rest, previous) {
+            size = size.add(item);
+            previous = before(rest, after).last().copied();
             rest = after;
             continue;
         }
@@ -321,13 +408,17 @@ fn count(tokens: &[Token<'_>]) -> Size {
         };
         if let Some(after) = after {
             let item = before(rest, after);
-            size.types = size.types.saturating_add(counted(item));
+            size = size.add(Size::typed(counted(item)));
             previous = item.last().copied();
             rest = after;
             continue;
         }
+        if token == Token::Word("fn") && matches!(tail.first(), Some(Token::Word(_))) {
+            signature_end = Some(signature_body(tail).len());
+        }
         if token != Token::Close {
-            size.logic = size.logic.saturating_add(1);
+            let in_signature = signature_end.is_some_and(|end| rest.len() > end);
+            size = size.weigh(weight(token, tail.first(), in_signature));
         }
         previous = Some(token);
         rest = tail;
@@ -335,16 +426,170 @@ fn count(tokens: &[Token<'_>]) -> Size {
     size
 }
 
+/// The size of the constant, `use` item or `mod` declaration at the start of `tokens`, whose
+/// item `previous` ended, and the tokens after it.
+fn free_item<'a, 'b>(
+    tokens: &'a [Token<'b>],
+    previous: Option<Token<'b>>,
+) -> Option<(Size, &'a [Token<'b>])> {
+    if !ends_item(previous) {
+        return None;
+    }
+    let (&token, tail) = tokens.split_first()?;
+    match token {
+        Token::Word("const" | "static")
+            if !matches!(tail.first(), Some(Token::Word("fn" | "unsafe" | "extern"))) =>
+        {
+            let (head, value, after) = split_value(tokens)?;
+            let value = if holds_behaviour(value) {
+                count(value)
+            } else {
+                Size {
+                    data: counted(value),
+                    ..Size::default()
+                }
+            };
+            Some((Size::typed(head).add(value), after))
+        }
+        Token::Word("use") => {
+            let after = after_semicolon(tokens);
+            let logic = counted(before(tokens, after));
+            Some((
+                Size {
+                    logic,
+                    ..Size::default()
+                },
+                after,
+            ))
+        }
+        Token::Word("mod") => match tail {
+            [
+                Token::Word(_),
+                Token::Punct(";") | Token::Open('{'),
+                after @ ..,
+            ] => Some((
+                Size {
+                    logic: 3,
+                    ..Size::default()
+                },
+                after,
+            )),
+            _ => None,
+        },
+        Token::Open(_) | Token::Close | Token::Word(_) | Token::Punct(_) | Token::Literal => None,
+    }
+}
+
+/// The tokens after the depth-0 `;` that ends the item at the start of `tokens`, past any
+/// braces it holds (`use a::{b, c};`).
+fn after_semicolon<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
+    let mut depth = 0usize;
+    let mut rest = tokens;
+    while let Some((&token, tail)) = rest.split_first() {
+        rest = tail;
+        match token {
+            Token::Punct(";") if depth == 0 => return rest,
+            Token::Open(_) => depth = depth.saturating_add(1),
+            Token::Close => depth = depth.saturating_sub(1),
+            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+        }
+    }
+    rest
+}
+
+/// What a logic token weighs, given the token after it and whether it is in a signature.
+fn weight(token: Token<'_>, next: Option<&Token<'_>>, in_signature: bool) -> Weight {
+    let free = matches!(
+        (token, next),
+        (Token::Punct(","), Some(Token::Close)) | (Token::Word("const"), Some(Token::Word("fn")))
+    );
+    if free {
+        Weight::Free
+    } else if in_signature {
+        Weight::Half
+    } else if matches!(token, Token::Word("true" | "false")) {
+        Weight::Double
+    } else {
+        Weight::Single
+    }
+}
+
+/// The tokens from a signature's body `{` or its `;` on; `tokens` follows its `fn`. Brackets
+/// inside the signature (parameters, generics, a `where` clause's bounds) are passed over.
+fn signature_body<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
+    let mut depth = 0usize;
+    let mut rest = tokens;
+    while let Some((&token, tail)) = rest.split_first() {
+        match token {
+            Token::Open('{') | Token::Punct(";") if depth == 0 => return rest,
+            Token::Open(_) => depth = depth.saturating_add(1),
+            Token::Close => depth = depth.saturating_sub(1),
+            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+        }
+        rest = tail;
+    }
+    rest
+}
+
+/// Keywords that start control flow or a binding, which a value that is data doesn't hold.
+const BEHAVIOUR_KEYWORDS: &[&str] = &["if", "match", "loop", "while", "for", "let", "fn", "move"];
+
+/// Lower-case keywords that can stand before a `(` without calling anything.
+const NOT_CALLS: &[&str] = &[
+    "mut", "as", "in", "return", "ref", "dyn", "impl", "const", "unsafe", "crate", "super", "self",
+];
+
+/// Whether a constant's value holds behaviour, so it counts as logic (review L3): control flow,
+/// a binding, a closure, a macro, or a call to a function or a method.
+///
+/// A call is a lower-case name followed by its arguments, `f(..)`, `T::new(..)`, `x.get(..)` or
+/// `size_of::<T>()`. Rust names functions and methods in snake case and tuple structs and enum
+/// variants in camel case (the `non_snake_case` and `non_camel_case_types` lints hold it), so a
+/// table row built from constructors, `Held(Key::Jump)`, `Not(&Airborne)` or `Some(3)`, and
+/// struct literals stay data.
+fn holds_behaviour(value: &[Token<'_>]) -> bool {
+    let mut previous = None;
+    let mut rest = value;
+    while let Some((&token, tail)) = rest.split_first() {
+        let next = tail.first().copied();
+        let behaviour = match token {
+            Token::Word(word) if BEHAVIOUR_KEYWORDS.contains(&word) => true,
+            Token::Word(word) => {
+                let function = word.starts_with(|c: char| c.is_lowercase() || c == '_')
+                    && !NOT_CALLS.contains(&word);
+                function
+                    && matches!(
+                        (next, tail.get(1)),
+                        (Some(Token::Open('(')), _)
+                            | (Some(Token::Punct("::")), Some(Token::Punct("<")))
+                    )
+            }
+            Token::Punct("!") => matches!(previous, Some(Token::Word(_))),
+            Token::Punct("|" | "||") => matches!(
+                previous,
+                None | Some(Token::Open(_) | Token::Punct("," | ";" | ":" | "=>"))
+            ),
+            Token::Open(_) | Token::Close | Token::Punct(_) | Token::Literal => false,
+        };
+        if behaviour {
+            return true;
+        }
+        previous = Some(token);
+        rest = tail;
+    }
+    false
+}
+
 /// The counted tokens of a run: all but closing brackets.
 fn counted(tokens: &[Token<'_>]) -> usize {
     tokens.iter().filter(|t| **t != Token::Close).count()
 }
 
-/// A constant item split into its declaration up to `=`, its value, and the tokens after its `;`
-/// (the `;` goes with the declaration's count by being left out of both).
+/// A constant item split into its head's count (from `const` to `=`, and the `;`), its value
+/// (none in a trait's `const X: T;`), and the tokens after its `;`.
 fn split_value<'a, 'b>(
     tokens: &'a [Token<'b>],
-) -> Option<(&'a [Token<'b>], &'a [Token<'b>], &'a [Token<'b>])> {
+) -> Option<(usize, &'a [Token<'b>], &'a [Token<'b>])> {
     let mut open = 0usize;
     let mut equals = None;
     for (at, token) in tokens.iter().enumerate() {
@@ -353,10 +598,12 @@ fn split_value<'a, 'b>(
             Token::Close => open = open.saturating_sub(1),
             Token::Punct("=") if open == 0 && equals.is_none() => equals = Some(at),
             Token::Punct(";") if open == 0 => {
-                let eq = equals?;
-                let head = tokens.get(..=eq)?;
+                let after = tokens.get(at.checked_add(1)?..)?;
+                let Some(eq) = equals else {
+                    return Some((counted(tokens.get(..=at)?), &[], after));
+                };
+                let head = counted(tokens.get(..=eq)?).saturating_add(1);
                 let value = tokens.get(eq.checked_add(1)?..at)?;
-                let after = tokens.get(at..)?;
                 return Some((head, value, after));
             }
             Token::Word(_) | Token::Punct(_) | Token::Literal => {}
@@ -417,7 +664,8 @@ pub fn of(src: &str) -> Size {
     count(&lex(src))
 }
 
-/// Each `.rs` file's logic and data tokens under the paths, one line each, then the totals.
+/// Each `.rs` file's score, then its logic, types and data tokens, under the paths, one line
+/// each, then the totals.
 ///
 /// # Errors
 ///
@@ -430,38 +678,40 @@ pub fn run(args: &[String]) -> Result<String, String> {
     for arg in args {
         sources(Path::new(arg), &mut files)?;
     }
-    let mut out = String::from("  logic   types    data file\n");
+    let mut out = String::from("    score   logic   types    data file\n");
     let mut total = Size::default();
     for file in &files {
         let src = fs::read_to_string(file).map_err(|e| format!("{}: {e}", file.display()))?;
         let size = of(&src);
         total = total.add(size);
-        let _ = writeln!(
-            out,
-            "{:>7} {:>7} {:>7} {}",
-            size.logic,
-            size.types,
-            size.data,
-            file.display()
-        );
+        let _ = writeln!(out, "{} {}", columns(size), file.display());
     }
-    let _ = writeln!(
-        out,
-        "{:>7} {:>7} {:>7} total",
-        total.logic, total.types, total.data
-    );
+    let _ = writeln!(out, "{} total", columns(total));
     Ok(out)
+}
+
+/// A size's report columns: score, logic, types, data.
+fn columns(size: Size) -> String {
+    format!(
+        "{:>9} {:>7} {:>7} {:>7}",
+        size.score, size.logic, size.types, size.data
+    )
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Size, of};
+    use super::{Score, Size, of};
 
     fn tokens(src: &str) -> usize {
         let size = of(src);
         size.logic
             .saturating_add(size.types)
             .saturating_add(size.data)
+    }
+
+    /// The score in half tokens.
+    fn halves(src: &str) -> usize {
+        of(src).score.halves()
     }
 
     #[test]
@@ -471,8 +721,9 @@ mod tests {
         let spread =
             "/// Adds one.\nfn f(\n    a: u8, // the input\n) -> u8 {\n    a + 1 /* sum */\n}\n";
         assert_eq!(tokens(tight), 12);
-        // The same, plus the trailing comma.
+        // The same, plus the trailing comma, which weighs nothing.
         assert_eq!(tokens(spread), 13);
+        assert_eq!(halves(spread), halves(tight));
     }
 
     #[test]
@@ -499,25 +750,29 @@ mod tests {
     }
 
     #[test]
-    fn a_constants_value_is_data() {
-        // pub const ROWS : [] u8 ; 2 = ; is logic; [] 1 , 2 is data.
+    fn a_constants_value_is_data_and_its_head_a_type() {
+        // const ROWS : [] u8 ; 2 = and the ; are types; [] 1 , 2 is data; pub is logic.
         let table = "pub const ROWS: [u8; 2] = [1, 2];";
         assert_eq!(
             of(table),
             Size {
-                logic: 10,
-                types: 0,
+                score: Score(2),
+                logic: 1,
+                types: 9,
                 data: 4
             }
         );
         assert_eq!(
             of("static mut N: u8 = 3;"),
             Size {
-                logic: 7,
-                types: 0,
+                score: Score(0),
+                logic: 0,
+                types: 7,
                 data: 1
             }
         );
+        // A trait's constant without a value is a declaration too.
+        assert_eq!(of("trait T { const X: u8; }").types, 5);
     }
 
     #[test]
@@ -527,6 +782,8 @@ mod tests {
         assert_eq!(
             of(src),
             Size {
+                // pub 1, then fn f ( at half each, then { 1.
+                score: Score(7),
                 logic: 5,
                 types: 11,
                 data: 0
@@ -542,5 +799,81 @@ mod tests {
         assert_eq!(of("fn f() { let a = 1; }").data, 0);
         // A constant inside a function body is still a constant's value.
         assert_eq!(of("fn f() { const A: u8 = 1; }").data, 1);
+    }
+
+    #[test]
+    fn imports_and_module_declarations_weigh_nothing() {
+        let src = "use a::{b, c};\nmod m;\nmod n { fn f() {} }";
+        // f's body brace alone weighs one; fn f ( weigh half each.
+        assert_eq!(of(src).logic, 18);
+        assert_eq!(halves(src), halves("fn f() {}"));
+        // A `use` inside a body is an import too.
+        assert_eq!(halves("{ use E::A; }"), 2);
+    }
+
+    #[test]
+    fn a_const_fns_const_weighs_nothing() {
+        assert_eq!(halves("const fn f() {}"), halves("fn f() {}"));
+        assert_eq!(of("const fn f() {}").logic, 5);
+    }
+
+    #[test]
+    fn a_signature_weighs_half() {
+        // fn f ( a : u8 -> u8 is eight tokens at half, the body's { a + 1 four at one.
+        assert_eq!(halves("fn f(a: u8) -> u8 { a + 1 }"), 8 + 2 * 4);
+        // Up to a declaration's `;`, with generics and bounds; the `;` is the item's, at one.
+        assert_eq!(halves("fn g<T: Into<u8>>(t: T) where T: Copy;"), 17 + 2);
+        // A function-pointer type is not a signature.
+        assert_eq!(halves("let p: fn(u8) = q;"), 2 * 9);
+    }
+
+    #[test]
+    fn true_and_false_weigh_double_in_logic() {
+        assert_eq!(halves("x = true;"), 2 + 2 + 4 + 2);
+        assert_eq!(halves("x = y;"), 2 * 4);
+        // In a constant's value they are data.
+        assert_eq!(halves("const A: bool = true;"), 0);
+        assert_eq!(of("const A: bool = true;").data, 1);
+    }
+
+    #[test]
+    fn a_table_of_constructors_stays_data() {
+        let rows = "const ROWS: &[Row] = &[Row { needs: &[Held(Key::Jump), Not(&Airborne)], \
+                    aim: AIM_UP_ELSE_DOWN, at: Some(Fixed(3)) }, Row { needs: &[], ..BASE }];";
+        let size = of(rows);
+        assert_eq!((size.logic, size.score), (0, Score(0)));
+        assert!(size.data > 0);
+        // Arithmetic and bit operators on constants are a stated value, not behaviour.
+        assert_eq!(of("const M: u16 = A | B << 4;").logic, 0);
+    }
+
+    #[test]
+    fn a_constant_holding_behaviour_is_logic() {
+        for value in [
+            "if A { 1 } else { 2 }",
+            "match A { B => 1, C => 2 }",
+            "{ let a = 3; a }",
+            "|a: u8| a",
+            "&[(1, |a| a)]",
+            "move || 0",
+            "Fixed::new(3)",
+            "A.wrapping_add(B)",
+            "size_of::<u8>()",
+            "build()",
+            "[f(1), f(2)]",
+            "concat!(1)",
+        ] {
+            let size = of(&format!("const A: T = {value};"));
+            assert_eq!(size.data, 0, "{value}");
+            assert!(size.logic > 0, "{value}");
+            // The head is still a declaration.
+            assert_eq!(size.types, 6, "{value}");
+        }
+    }
+
+    #[test]
+    fn a_score_prints_its_half() {
+        assert_eq!(format!("{:>6}", Score(15)), "   7.5");
+        assert_eq!(Score(14).to_string(), "7");
     }
 }
