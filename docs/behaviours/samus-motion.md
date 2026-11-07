@@ -39,7 +39,7 @@ entries over; over an area's old code is a strict failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 193.3 units, capped at 70% of old = 6,600 (motion 2,460, pose fit 516, pose chart 1,584 capped, collision 2,040)
+Budget: 36 × 192.3 units, capped at 70% of old = 6,564 (motion 2,424, pose fit 516, pose chart 1,584 capped, collision 2,040)
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
