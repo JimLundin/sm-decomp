@@ -1,0 +1,8 @@
+# The registry dependencies a clean crate may have. code_check.sh refuses any other registry,
+# git or out-of-tree dependency. Columns: package, the exact version string the crate's
+# Cargo.toml must carry, kind (dev or normal).
+#
+# toml: a vector test parses scenarios/vectors/<domain>.toml, which it include_str!s (the one
+#   include code_check.sh lets through). Pinned with `=` to the version in the root Cargo.lock,
+#   dev only, so no model code depends on it.
+toml =0.8.23 dev

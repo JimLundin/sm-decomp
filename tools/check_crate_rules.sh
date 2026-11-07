@@ -90,6 +90,14 @@ hits=$(
 )
 [ -n "$hits" ] && fail "$hits"
 
+# The clean-room crates, where the spine has them: nothing in them reaches outside the process
+# when cargo runs it (tools/cleanroom/code_check.sh), and the check itself still catches its
+# fixtures.
+if [ -d crates/clean_types ] || [ -d crates/clean_model ]; then
+  out=$(bash tools/cleanroom/code_check.sh . 2>&1) || fail "$out"
+fi
+out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
+
 # Rule 6: the public surface of `data` describes data in domain terms. A doc-comment line
 # (`///` or `//!`) holding a bank:address pair, a bare four-digit `$XXXX` address or a
 # "bank $XX" reference fails when it is part of a `//!` module doc, or is in a run of doc

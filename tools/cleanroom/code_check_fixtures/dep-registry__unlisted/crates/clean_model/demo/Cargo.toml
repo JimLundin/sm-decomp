@@ -1,0 +1,19 @@
+[package]
+name = "clean_model_demo"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+
+[dependencies]
+clean_types = { path = "../../clean_types" }
+rand = "0.8"
+
+[dev-dependencies]
+toml = "=0.8.23"
+
+
+[lints]
+workspace = true
+

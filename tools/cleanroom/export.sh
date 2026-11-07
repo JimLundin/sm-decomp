@@ -65,23 +65,27 @@ done
 [ ${#present[@]} -gt 0 ] && git archive --format=tar "$sha" -- "${present[@]}" | tar -x -m -C "$dest"
 
 # The empty clean crates, where COMMIT has none. Their lints are the workspace's.
-scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE]
+scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE [DEV_DEPENDENCY_LINE]]
   [ -e "$dest/$1/Cargo.toml" ] && return 0
   mkdir -p "$dest/$1/src"
   {
     printf '[package]\nname = "%s"\nversion = "0.1.0"\nedition = "2024"\nlicense = "MIT"\n' "$2"
     printf 'publish = false\ndescription = "%s"\n\n[dependencies]\n' "$3"
     [ -n "${5:-}" ] && printf '%s\n' "$5"
+    [ -n "${6:-}" ] && printf '\n[dev-dependencies]\n%s\n' "$6"
     printf '\n[lints]\nworkspace = true\n'
   } >"$dest/$1/Cargo.toml"
   printf '//! %s\n' "$4" >"$dest/$1/src/lib.rs"
 }
+# The one dev-dependency code_check.sh allows (allowed_deps.txt), so a vector test can parse the
+# vector file and nobody has to edit a Cargo.toml.
+vector_parser=$(awk '$1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
 scaffold crates/clean_types clean_types "The domain types the clean models share" \
   "The domain types the clean models share: quantities, poses and tables in player terms."
 scaffold "crates/clean_model/$domain" "$(model_package "$domain")" \
   "The $domain model, built from its behaviour spec" \
   "The $domain model, built from its behaviour spec alone." \
-  'clean_types = { path = "../../clean_types" }'
+  'clean_types = { path = "../../clean_types" }' "$vector_parser"
 
 # The workspace manifest: the clean crates and the root manifest's lint set, unchanged.
 {

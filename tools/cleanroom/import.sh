@@ -5,8 +5,10 @@
 # The commits after the export's one commit go across as `git format-patch` patches, applied with
 # `git am`, authorship and messages kept. Each must touch only the [import] paths of
 # allowlist.txt (the domain's clean crates), add no symlink or submodule, and carry the trailer
-# `Role: implementer`; otherwise nothing is applied. If BRANCH lacks a clean crate the export
-# started with, its empty scaffold is committed first (trailer `Role: integrator`), so the patches
+# `Role: implementer`; otherwise nothing is applied. The export's crates must also pass
+# code_check.sh (no file, network, process or build-time reach), or nothing is applied. If BRANCH
+# lacks a clean crate the export started with, its empty scaffold is committed first (trailer
+# `Role: integrator`), so the patches
 # apply as they were made. Wiring the crates into the workspace is the integrator's next commit.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
@@ -42,6 +44,14 @@ for c in "${commits[@]}"; do
   [ "$role" = implementer ] || { echo "refused ${c:0:9} $subject: no 'Role: implementer' trailer"; refused=1; }
 done
 [ "$refused" -eq 0 ] || die "nothing applied"
+
+# The code the patches leave behind is checked before anything is applied: cargo test and build
+# run it with this user's full access, which launch.sh cannot confine. The check runs on the
+# committed tree of the export's HEAD, which is what the patches add up to.
+checked=$(mktemp -d)
+trap 'rm -rf "$checked"' EXIT
+git_isolated "$dest" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
+bash "$cleanroom_dir/code_check.sh" "$checked" || die "code_check.sh refused the export's crates; nothing applied"
 
 before=$(git rev-parse HEAD)
 missing=()

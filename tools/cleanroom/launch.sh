@@ -43,8 +43,12 @@
 # Limits the CLI cannot confine: cargo runs code the implementer writes (tests, build scripts,
 # macros) as an ordinary process, which can read any file this user can. Build scripts and cargo
 # configuration are not writable here, but a test body is. The canary check after the session is
-# what catches a test that read a forbidden file and printed it. CLI 2.1.316 offers only Read, Edit
-# and Bash (Edit creates files; Glob, Grep and Write don't exist); their rules stay for later CLIs.
+# what catches a test that read a forbidden file and printed it, and code_check.sh, which import.sh
+# runs before applying anything, refuses the source that could (std::fs, net, process, env,
+# unsafe, include_*! outside the vector file, build scripts, dependencies beyond allowed_deps.txt).
+# The clean crates' Cargo.toml is not writable here: export.sh gives the model crate the one
+# dev-dependency code_check.sh allows, so a manifest edit is never needed. CLI 2.1.316 offers only
+# Read, Edit and Bash (Edit creates files; Glob, Grep and Write don't exist); their rules stay for later CLIs.
 #
 # Overrides: CLAUDE_BIN (default ~/.local/bin/claude.exe), CLEANROOM_MODEL (default opus),
 # CLEANROOM_MAX_BUDGET_USD (passed as --max-budget-usd), CLEANROOM_AUTH (a file of top-level
@@ -153,6 +157,7 @@ deny=(
   "Edit($ex/.git/**)" "Write($ex/.git/**)" "Edit($ex/.claude/**)" "Write($ex/.claude/**)"
   "Edit($ex/**/.cargo/**)" "Write($ex/**/.cargo/**)" "Edit($ex/.cargo/**)" "Write($ex/.cargo/**)"
   "Edit($ex/**/build.rs)" "Write($ex/**/build.rs)"
+  "Edit($ex/crates/**/Cargo.toml)" "Write($ex/crates/**/Cargo.toml)"
   "Edit($ex/rust-toolchain.toml)" "Write($ex/rust-toolchain.toml)"
   # Shell: readers, movers, interpreters, network, and the git forms that escape the export.
   "Bash(cat *)" "Bash(head *)" "Bash(tail *)" "Bash(less *)" "Bash(more *)" "Bash(ls)" "Bash(ls *)"
