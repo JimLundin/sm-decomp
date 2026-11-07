@@ -30,7 +30,7 @@ Jim's decisions, 2026-11-07:
    that layout. The clean room defining a new layout is desirable. Loading assets is part of
    rebuilding the game; reading them through the ROM's layout was a shortcut. The assets come
    from the player's ROM and are never committed. The importer, which has to know the original,
-   is outside the clean room.
+   is outside the clean room. The format and its importer: [assets.md](assets.md).
 5. **Size is counted in logical tokens, held on logic.** The game's data (the values of constants
    and statics, and imported assets) is reported beside the logic, not counted against it (§4).
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
