@@ -47,8 +47,11 @@ Jim's decisions, 2026-11-07:
    departure is a named quirk. The clean room's version is in
    [docs/cleanroom/DESIGN.md](../cleanroom/DESIGN.md).
 7. **The budget comes from the spec.** A domain's size budget is k weighted tokens per spec
-   unit, k = 24 (the old code's density times 0.55; frozen, and tested out of sample on the next
-   domain), with each area capped at 70% of its old code. A spec unit is one condition→outcome
+   unit. k is defined as the old code's score per unit times 0.55, computed once, on the first
+   domain, with the official counters (`tools spec-units`, `tools size`), then frozen and tested
+   out of sample on the next domain (Jim, 2026-11-07: re-derived under this definition when the
+   official count replaced the study's hand estimate of 24). Each area is capped at 70% of its old
+   code. A spec unit is one condition→outcome
    rule ("arm"), plus a third for each term a data table makes the code interpret and a third for
    each operator in an exact formula; table rows, parameters, enum values, prose and vectors
    don't count. The budget moves by k per unit when the spec gains or loses behaviour, and is
