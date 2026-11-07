@@ -1,44 +1,54 @@
 ---
 name: implementer
-description: The sm-decomp implementer role. Build a domain's model in game from its behaviour spec alone, in an empty module, proven by the vector tests and the oracle; never read the original. Load after the lane skill when your brief names you the implementer.
+description: The sm-decomp implementer role. Build a domain's model from its behaviour spec alone, inside an isolated export, proven by the spec's vectors. Load it when your brief names you the implementer.
 ---
 
 # Implement a domain
 
 You build the model from what the observer wrote. You have nothing you could transliterate, and
-that is the point: the code is shaped by the domain. Your step is 3 of
-[MODEL §5](../../../docs/architecture/MODEL.md#5-how-the-work-is-planned), with its read limits and
-its "no fitting" rules. This skill adds only how to work inside them.
+that is the point: the code is shaped by what the player sees, not by any other program.
 
-## The clean room
+## Your workspace
 
-Read only what MODEL §5 allows: MODEL.md, your domain's spec and vectors, the localiser's output,
-`data`'s public types and the model code; and for process, AGENTS.md and the lane skill. That
-excludes ARCHITECTURE, ORACLE and LEGACY too, because they cite bank addresses, and the `docs/behaviours/*.decode.md` files, which map quantities to RAM. Your brief cites
-spec entry ids only; if it carries an excerpt or an address, don't read it, and tell the root. If you
-open a forbidden file by accident, say so in your report: the clean room is part of the evidence.
+Your workspace is an export: a standalone repository with one commit, made for your domain. Read
+`CLEANROOM.md` at its root first. Everything you may read is in the export:
+- `CLEANROOM.md`: the rules and the commands;
+- `docs/MODEL-cleanroom.md`: the design you build to;
+- your domain's spec in `docs/behaviours/` and its vectors in `scenarios/vectors/`;
+- the clean crates, which you write.
+
+Read nothing outside the export: no other directory, repository, worktree, temporary folder or web
+page about the game. Your brief names spec entry ids only. If it carries anything else, such as
+code, an excerpt or an address, don't use it, and say so in your report. What you read is checked
+after the lane.
 
 ## How you work
 
-1. Design the State types from the spec: a quantity whose **Read by** isn't "none" is a field;
-   nothing else is. Enums and newtypes, never ROM codes.
-2. Write the domain into the empty module `game::model::<domain>`, and delete the old module in the
-   same commit without opening it.
-3. Run the vector test in `game` on `scenarios/vectors/<domain>.toml` with
-   `bash tools/lane/run_tests.sh game` until it passes. Then confirm on the oracle: the lane skill's
-   "Prove it".
-4. Every literal and branch names its `BehaviourId`; values come from `Rules` or `data`. Model code
-   never names an address.
-5. Watch the size budget in the spec header as you go; going over is a review stop.
+1. Design the State types from the spec. A quantity whose **Read by** isn't "none" is a field;
+   nothing else is. Use enums and newtypes.
+2. Write the model in `crates/clean_model/<domain>`, with shared domain types in
+   `crates/clean_types`. These are the only directories you change.
+3. Write a test that runs every vector in the vector file through the model, and iterate until they
+   pass. Check with the commands in `CLEANROOM.md`: `cargo check`, `cargo clippy --all-targets -- -D
+   warnings` and `cargo fmt --check`.
+4. Every literal and branch names its behaviour id. Values come from the rules or the spec's
+   numbers, never from a constant you invented.
+5. Watch the size target in the spec's header as you go. Going over it is a stop; report the number.
+
+## Commits
+
+Commit only under the two clean crates. End every commit message with the trailer
+`Role: implementer`. Commit messages use the spec's words and entry ids only.
 
 ## When something disagrees
 
-Don't tune. Add an entry to `docs/behaviours/<domain>.gaps.md`: the frame, the field, the expected
-and actual values, and the entry you suspect. Move on to the next behaviour. When the observer has
-amended the spec, implement the amended entry. You never add catalogue entries, and never add a
-field because the decoder has one.
+Don't tune. If a vector won't pass and the spec doesn't say why, write a gap in your final report:
+the vector, the field, the expected and actual values, and the entry you suspect. Then move on. The
+observer answers it in the spec, and you implement the amended entry in a later lane. You never add
+a catalogue entry or a field that the spec doesn't give.
 
 ## Done
 
-The lane skill's "Done means" and MODEL §4's pilot criteria. Your report adds the gaps you filed,
-which came back answered, and a line confirming you read nothing outside the clean room.
+Every vector passes, the checks are clean, and the model is within the spec's size target. Your
+report gives the gaps you found, the size, and one line confirming you read nothing outside the
+export.
