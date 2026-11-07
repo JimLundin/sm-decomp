@@ -114,6 +114,7 @@ struct Flat {
     solid_enemy_floor: bool,
     enemy_left: Option<u16>,
     enemy_right: Option<u16>,
+    slope_seat: i16,
 }
 
 fn signed(pixels: u16) -> i32 {
@@ -139,6 +140,9 @@ impl Flat {
             solid_enemy_floor: flag(world, "solid_enemy_floor"),
             enemy_left: get("enemy_left"),
             enemy_right: get("enemy_right"),
+            slope_seat: world
+                .get("slope_seat")
+                .map_or(0, |seat| i16::try_from(seat.as_integer().unwrap()).unwrap()),
         }
     }
 
@@ -209,6 +213,7 @@ const fn block(side: Heading, pixels: u16, subpixel: u16) -> Moved {
             side,
             blocker: Blocker::Block { subpixel },
         }),
+        seat: 0,
     }
 }
 
@@ -216,17 +221,12 @@ const fn full(distance: Fixed) -> Moved {
     Moved {
         distance,
         stop: None,
+        seat: 0,
     }
 }
 
-impl Collision for Flat {
-    fn move_horizontal(
-        &mut self,
-        body: Body,
-        heading: Heading,
-        distance: Fixed,
-        enemies: Enemies,
-    ) -> Moved {
+impl Flat {
+    fn sideways(&self, body: Body, heading: Heading, distance: Fixed, enemies: Enemies) -> Moved {
         let magnitude = if matches!(heading, Heading::Left) {
             Fixed::ZERO.minus(distance)
         } else {
@@ -246,6 +246,7 @@ impl Collision for Flat {
                     side: heading,
                     blocker: Blocker::Enemy { touching },
                 }),
+                seat: 0,
             };
         }
         let (x, r) = (body.position.x.pixel(), body.radius.x);
@@ -271,6 +272,25 @@ impl Collision for Flat {
             )
         }
     }
+}
+
+impl Collision for Flat {
+    fn move_horizontal(
+        &mut self,
+        body: Body,
+        heading: Heading,
+        distance: Fixed,
+        enemies: Enemies,
+    ) -> Moved {
+        let seat = match enemies {
+            Enemies::Test => self.slope_seat,
+            Enemies::Skip => 0,
+        };
+        Moved {
+            seat,
+            ..self.sideways(body, heading, distance, enemies)
+        }
+    }
 
     fn move_down(&mut self, body: Body, _: Heading, distance: Fixed, enemies: Enemies) -> Moved {
         if self.solid_enemy_floor && matches!(enemies, Enemies::Test) {
@@ -280,6 +300,7 @@ impl Collision for Flat {
                     side: Heading::Down,
                     blocker: Blocker::Enemy { touching: true },
                 }),
+                seat: 0,
             };
         }
         let (y, r) = (body.position.y.pixel(), body.radius.y);
@@ -317,18 +338,28 @@ impl Collision for Flat {
     }
 
     fn probe_wall(&mut self, body: Body, heading: Heading, reach: u16) -> Option<WallHit> {
+        // Solid enemies first: the move's own enemy test, over the reach.
+        if let Some((touching, gap)) = self.enemy(body, heading, Fixed::new(reach, 0)) {
+            return Some(WallHit {
+                distance_px: gap.pixel(),
+                subpixel: None,
+                touching,
+            });
+        }
         let (x, r) = (body.position.x.pixel(), body.radius.x);
         if matches!(heading, Heading::Right) {
             let edge = x.wrapping_add(reach).wrapping_add(r).wrapping_sub(1);
             self.column_solid(edge, body).then(|| WallHit {
                 distance_px: (edge & !0xF).wrapping_sub(r).wrapping_sub(x),
                 subpixel: Some(0xFFFF),
+                touching: false,
             })
         } else {
             let edge = x.wrapping_sub(reach).wrapping_sub(r);
             self.column_solid(edge, body).then(|| WallHit {
                 distance_px: x.wrapping_sub(r).wrapping_sub((edge | 0xF).wrapping_add(1)),
                 subpixel: Some(0),
+                touching: false,
             })
         }
     }
@@ -502,10 +533,11 @@ fn pose_change(step: &Value, vertical_result: VerticalResult) -> Option<PoseChan
         "Stop" => PoseCommand::Stop,
         "KillXSpeed" => PoseCommand::KillXSpeed,
         "KillRunSpeed" => PoseCommand::KillRunSpeed,
+        "AnimationEnd" => PoseCommand::AnimationEnd,
         "Vertical" => PoseCommand::Vertical(vertical_result),
         other => panic!("unknown pose command {other}"),
     });
-    (start.is_some() || command.is_some()).then(|| PoseChange {
+    (start.is_some() || command.is_some() || flag(step, "pose_replaced")).then(|| PoseChange {
         start,
         replaced: flag(step, "pose_replaced"),
         command: command.unwrap_or(PoseCommand::None),
@@ -639,7 +671,10 @@ fn run(step: &Value, samus: &mut State, rules: &MotionRules, world: &mut Flat) -
     let moves = |name| {
         let input = inputs(step, name);
         let contacts = samus.step(&input, rules, world).unwrap();
-        let request = if flag(step, "forced_pose") {
+        // AnimationEndPose: the hand-over is a forced pose to the arm-pump step.
+        let forced =
+            flag(step, "forced_pose") || text(step, "pose_command") == Some("AnimationEnd");
+        let request = if forced {
             PoseRequest::Forced
         } else if flag(step, "new_running_pose") {
             PoseRequest::Pose { running: true }

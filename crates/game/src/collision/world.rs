@@ -42,11 +42,13 @@ const fn negated(value: Fixed) -> Fixed {
 const fn between(from: Fixed, to: Fixed, side: Heading, blocked: bool) -> Moved {
     if !blocked {
         return Moved {
+            seat: 0,
             distance: Fixed(to.0.wrapping_sub(from.0)),
             stop: None,
         };
     }
     Moved {
+        seat: 0,
         distance: Fixed::new(to.pixel().wrapping_sub(from.pixel()), 0),
         stop: Some(Stop {
             side,
@@ -108,6 +110,7 @@ impl World<'_, '_> {
     /// A move cut by a solid enemy: `cut` pixels the way the distance goes.
     const fn cut(cut: Fixed, touching: bool, backwards: bool, side: Heading) -> Moved {
         Moved {
+            seat: 0,
             distance: if backwards { negated(cut) } else { cut },
             stop: Some(Stop {
                 side,
@@ -203,6 +206,7 @@ impl Collision for World<'_, '_> {
         let ahead = Fixed::new(reach, 0);
         if let Some((cut, _)) = self.enemy(extent, heading, ahead) {
             return Some(WallHit {
+                touching: false,
                 distance_px: cut.pixel(),
                 subpixel: None,
             });
@@ -217,6 +221,7 @@ impl Collision for World<'_, '_> {
         let scanned = scan_x(room, body, &mut at, Speed(signed.0), self.touches);
         let distance = Fixed(scanned.distance.0);
         scanned.collided.then(|| WallHit {
+            touching: false,
             distance_px: if distance.negative() {
                 negated(distance).pixel()
             } else {

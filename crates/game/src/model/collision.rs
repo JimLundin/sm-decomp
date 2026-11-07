@@ -69,6 +69,9 @@ pub struct Moved {
     pub distance: Fixed,
     /// Set when she was stopped.
     pub stop: Option<Stop>,
+    /// A sideways move's shift of y onto a slope or under a sloped ceiling, in whole pixels;
+    /// 0 for every other move (`SlopeSeat`).
+    pub seat: i16,
 }
 
 /// A solid enemy found ahead.
@@ -85,6 +88,9 @@ pub struct WallHit {
     pub distance_px: u16,
     /// The X subpixel a block writes without moving her (`WallProbeSubpixel`).
     pub subpixel: Option<u16>,
+    /// A solid enemy she already touches on that side; it clears her Y subpixel
+    /// (`EnemyTouchZeroesYSubpixel`).
+    pub touching: bool,
 }
 
 impl Moved {
@@ -99,6 +105,7 @@ impl Moved {
             *axis = axis.with_sub(subpixel);
         }
         *axis = axis.plus(self.distance);
+        position.y = position.y.plus(Fixed::new(self.seat.cast_unsigned(), 0)); // SlopeSeat
         if blocker == Some(Blocker::Enemy { touching: true }) {
             position.y = position.y.with_sub(0);
         }

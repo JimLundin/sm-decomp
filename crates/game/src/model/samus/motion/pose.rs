@@ -41,6 +41,9 @@ pub enum PoseCommand {
     KillXSpeed,
     /// Lose the run speed.
     KillRunSpeed,
+    /// An animation ended and handed over to this pose (`AnimationEndPose`); the arm-pump step
+    /// sees [`PoseRequest::Forced`](super::PoseRequest::Forced).
+    AnimationEnd,
     /// The frame's vertical result, passed back.
     Vertical(VerticalResult),
     /// Nothing.
@@ -83,6 +86,13 @@ impl State {
                     SpeedMode::Decelerating
                 };
             }
+            // AnimationEndPose: a hand-over makes no jump.
+            Some(
+                PoseStart::TakeOff { .. }
+                | PoseStart::SpinStart
+                | PoseStart::SpringLaunch
+                | PoseStart::WallJumpStart,
+            ) if change.command == C::AnimationEnd => {}
             Some(PoseStart::TakeOff { from_plain_crouch }) => {
                 self.jump(rules, equipment);
                 if from_plain_crouch {
@@ -95,6 +105,11 @@ impl State {
                 let speeds = rules.vertical;
                 self.rise((speeds.wall_jump, speeds.wall_hi_jump), equipment);
             }
+        }
+        // AnimationEndPose: its command runs over a replaced pose too.
+        if change.command == C::AnimationEnd {
+            self.bounce = Bounce::None;
+            return;
         }
         if change.replaced || matches!(change.start, Some(PoseStart::Turn)) {
             return;
@@ -146,7 +161,9 @@ impl State {
                 self.vertical = VerticalMotion::Up;
             }
             C::Vertical(V::WallJump) => self.halt(),
-            C::Vertical(V::None | V::Falling(F::NoChange) | V::Landed(K::NoChange)) | C::None => {}
+            C::Vertical(V::None | V::Falling(F::NoChange) | V::Landed(K::NoChange))
+            | C::AnimationEnd
+            | C::None => {}
         }
     }
 

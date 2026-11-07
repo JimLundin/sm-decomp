@@ -705,6 +705,9 @@ impl State {
         if let Some(sub) = hit.subpixel {
             self.position.x = self.position.x.with_sub(sub);
         }
+        if hit.touching {
+            self.position.y = self.position.y.with_sub(0); // EnemyTouchZeroesYSubpixel
+        }
         let ready = input.spin.ready;
         let fires =
             ready && Fixed::below(hit.distance_px, reach) && input.pad.jump == JumpButton::Pressed;
@@ -722,15 +725,21 @@ impl State {
         }
         let (speed, body) = (self.vertical_speed, self.body(f.input));
         let gravity = Fixed::from(f.rules.vertical.gravity);
-        let down = self.vertical == VerticalMotion::Down;
-        let moved = if down {
+        let by = if self.vertical == VerticalMotion::Down {
             if self.vertical_speed.pixel() != f.rules.air.fall_cap_pixel {
                 self.vertical_speed = self.vertical_speed.plus(gravity);
             }
-            f.world.move_down(body, Heading::Down, speed, Enemies::Test)
+            speed
         } else {
             self.vertical_speed = self.vertical_speed.minus(gravity);
-            f.world.move_up(body, speed)
+            Fixed::ZERO.minus(speed)
+        };
+        // The move is signed: a rise whose speed went below 0 still moves her down.
+        let down = !by.negative();
+        let moved = if down {
+            f.world.move_down(body, Heading::Down, by, Enemies::Test)
+        } else {
+            f.world.move_up(body, Fixed::ZERO.minus(by))
         };
         (down, moved.apply(&mut self.position, Heading::Down))
     }
