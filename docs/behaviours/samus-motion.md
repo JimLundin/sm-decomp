@@ -47,7 +47,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball) | `Dash`, `TurningRound`, `Jumping` |
-| vertical speed | signed `P.S`, downward positive | how fast she rises or falls | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall` |
+| vertical speed | signed `P.S`, downward positive | how fast she rises or falls; on the ground, a speed she keeps without moving by it, seen when her body next changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
 | pose | §2 | the sprite | every behaviour; output |
 
@@ -76,7 +76,9 @@ frames (the vectors' format), never by a value in its start.
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
 is skidding, any dash she has is hers to keep, and a vertical speed of 0 means she stands on the ground,
-except in a jump, a spin, a fall or a wall jump, where it means she has just started to fall.
+except in a jump, a spin, a fall or a wall jump, where it means she has just started to fall. On the
+ground a vertical speed other than 0 is one she keeps there (`FollowingTheGround`): the speed
+itself shows it, so a start may have one.
 
 ### 1.3 What she reads from the world and the player (Inputs)
 
@@ -261,6 +263,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   another aim, but also from standing, from a landing, or from any pose whose pad chart row leads
   into running) → she moves 1 px forward, by the facing she had at the frame's start, after that
   frame's moves and the ground pull, without a speed change [A1, W12, W17, W18]
+- Running, the pad chart's let-go row keeping her running pose (no other row fits and her
+  horizontal speed at the frame's start isn't 0, `PadChart`) → the kept pose counts as chosen: she
+  moves the 1 px forward on top of the braking move, every frame she brakes so, the frame her dash
+  joins her speed and the frame braking takes the speed to 0 included [AS1, AS2, AS3]
+- A row whose next pose is the one she is in already (forward held, running forward) → no step
+  [C-cap]
 - So a landing or a fall that replaces the pad's running pose brings no step, and an animation's
   end handing over a pose neither brings nor cancels it.
 - A block or a solid enemy in the way of the step puts her against the wall instead
@@ -282,8 +290,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   only]
 - checked: oracle (A1, the step; W12 standing into running, W17 and W18 a landing into
   running, W19 standing into running against a wall; R18, R88, R117 and R149 against the wall
-  with forward held); constructed (C-aim-short, C-aim-enemy, C-aim-enemy-stop, C-aim-slope);
-  original only (the shot).
+  with forward held; AS1 the let-go frame her dash joins her speed, AS2 the next, braking, AS3 the
+  frame braking takes her speed to 0); constructed (C-aim-short, C-aim-enemy, C-aim-enemy-stop,
+  C-aim-slope, C-cap); original only (the shot).
 
 ### RidingTheElevator
 - kind: mechanic.
@@ -339,7 +348,24 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   (02A9.0000 becomes 02AA.C000, W11); on a floor the flush stop hides the subpixel part.
 - Walking off a ledge (the pull finds no floor), unless she is rising, turning or her body is
   changing shape → she falls from rest: vertical speed 0, falling, bounces 0 [P6]
-- checked: oracle (every ground vector; W11, a turn on the ground over air).
+- On the ground (standing, running, crouched, in the ball (the spring ball too), turning on the
+  ground, moonwalking, against the wall) → her vertical speed is kept as it is, whatever it is:
+  she doesn't move by it (the pull above is her only vertical move), the pull of
+  `RisingAndFalling` doesn't grow it, and the floor under her doesn't land her, so it never halts
+  her [HV1, HV2, HV3, AS3]
+- Her body changing shape with a vertical speed she keeps on the ground → the change moves her by
+  it under the pull (`RisingAndFalling`); ending before a floor stops it (`Landing`), it leaves
+  her the speed it reached [HV4, HV3]
+- So crouching from a run she comes to keep a downward speed: +0.E000 grows to +1.3400 in the
+  crouch (samus-shinespark-left 151-155), and she keeps it crouched, through a turn on the ground
+  and into the take-off at 196 (HV3). The kept speed ends when she leaves the ground: a jump or a
+  spin start sets the jump speed (`Jumping`), and walking off a ledge she falls from rest, as
+  above.
+- checked: oracle (every ground vector; W11, a turn on the ground over air; the kept speed: HV1
+  standing, HV2 turning on the ground, HV3 crouched, HV4 the crouch moving her by it, AS3 running
+  and braking; samus-mockball and
+  the four shinespark rows run with +0.E000 from their first frame, and samus-space-jump-chain
+  and the three wall-jump rows run, brake, stand and turn with it).
 
 ### MovesAsShePosed
 - kind: timing.
@@ -602,6 +628,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Falling onto a floor upright, or the ball landing after bounce 2, or with no bounce
   yet at `vy < 3.0000` → she lands: vertical speed 0, bounces 0, horizontal speed 0, following
   the pad; the dash keeps its value [PF2, PF3, W13, C-enemy-down, C-slope-land]
+- Only a move by her vertical speed lands her, in the air or while her body changes shape. On the
+  ground the floor under her never lands her, whatever vertical speed she keeps
+  (`FollowingTheGround`).
 - Landing while her body changes shape → only her vertical motion stops (vertical speed 0); both
   speeds, and whether she carries on, are kept [LB1, LB2]
 - Landing while turning (any `Turning`: in a jump, in a fall, or on the ground as she sinks over a
@@ -742,7 +771,7 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | | up held; beats aim up or aim down held | upright `Still`, `Up` | none |
 | | aim up or aim down held | upright `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | back held; beats up held and aim up or aim down held | `Turning` | `TurningRound` |
-| | anything else, or nothing held | upright `Still`, `Forward` | the dash joins her horizontal speed (dash 0) and she carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the pad again |
+| | anything else, or nothing held | kept while her horizontal speed at the frame's start isn't 0, a choice that brings `AimingAndShooting`'s step; upright `Still`, `Forward` when it is 0 | the dash joins her horizontal speed (dash 0) and she carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the pad again |
 | taking off | jump and forward held | `Jumping`, `Forward`, striding | none |
 | | jump with up, down or an aim button held; beats jump and forward held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
 | | jump and back held; beats jump with up, down or an aim button held | `Turning` in a jump | `TurningRound` |
@@ -827,8 +856,9 @@ effects. The tables below are data records (about 120 rows), counted as data.
   button; both aim buttons; up or down; aiming `Down`:; she faces `Right`:; aimed `Up` or
   `DownForward`:; aimed `Forward`:; gun stowed:; and no other button a row names; with the spring
   ball; on the ground; in the air; off the ground; the way she walks; the way she looks; any
-  button held; kept; kept, aim `Forward`; landing, kept as she is; gun drawn; gun as it was;
-  striding; facing back; the new facing; facing the way she looks; crouch aim; take-off
+  button held; kept; kept while her horizontal speed at the frame's start isn't 0; kept, aim
+  `Forward`; landing, kept as she is; gun drawn; gun as it was; striding; facing back; the new
+  facing; facing the way she looks; crouch aim; take-off
   aim; air aim; with, else; then a spin the way she walks; aim kept; the same ball facing that
   side; the ball off the ground, rising; she is lowered (`ShrinkingLowersHer`); `Jumping`'s
   take-off; `Jumping`'s spin start; `Jumping`'s spring-ball hop; `TurningRound`; none; she follows

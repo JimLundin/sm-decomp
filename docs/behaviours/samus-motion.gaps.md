@@ -110,7 +110,7 @@ radius 10h → 13h): y 02C0.FFFF → engine 02B6.FFFF, game 02B3.FFFF. The game 
 lift and finds no floor to push from. Round 7's push (`PoseFitAfterMoves`) answers it: the
 frame is equal on lane/wire-r7.
 
-## Open: the domain harness on round 7 (integrator, 2026-11-07, lane/wire-r7)
+## Answered: the domain harness on round 7 (integrator, 2026-11-07, lane/wire-r7; observer, lane/gaps-harness)
 
 With round 7 the Tick steps her through the model with pose fit and the shrink inside the step
 (`game::samus_world::step`), and the proof holds: the free-run gate's eight green pairs, and the
@@ -121,6 +121,9 @@ with nothing copied from record N+1: 11,559 of 12,782 compared frames match over
 rows, against 5,660 for the null model. The rows below the null model or the old model's floor
 come from these frames. The pad of a frame N to N+1 is record N's.
 
+Items 17-19 are answered in the spec (lane/gaps-harness). All three are this domain's: none is the
+speed booster's, and no grapple runs in gap 19's frames. Vectors HV1-HV4 and AS1-AS3.
+
 17. **Running on the speed booster's run with a downward vertical speed (`MovesAsShePosed`,
     `FollowingTheGround`).** samus-shinespark-up 0 → 1: running (09h), base speed 2.C000, dash
     2.7000, `0B3C` set, `0B36` = 2 with `0B2E`.`0B2C` 0.E000, on the floor. Model: base speed
@@ -130,13 +133,32 @@ come from these frames. The pad of a frame N to N+1 is record N's.
     from frame 1, and samus-mockball frames 1-42. The decode notes call a running pose with
     `0B36` = 2 and a magnitude not plain. Asked: what this State is in the spec's terms, and its
     rule.
+    **Answered** (`FollowingTheGround`, the speed she keeps on the ground; `Landing`): on the
+    ground her vertical speed is kept as it is. She doesn't move by it, the pull doesn't grow it,
+    and the floor under her doesn't land her, so nothing halts her. Only her next change of shape
+    shows it. The speed booster plays no part: samus-space-jump-chain and the three wall-jump rows
+    run, brake, stand and turn with the same +0.E000, and their dash is 0 from frame 1. The decode
+    notes now call such a start plain.
 18. **After that run, a vertical speed of 1.3400 on the ground.** samus-shinespark-left 157 → 158
     (to 183) and samus-shinespark-right the same frames: model vertical speed 0.0000, game 1.3400,
     held. Asked: the same.
+    **Answered** (the same entry): the crouch from the run (151-155) is a change of shape. It
+    moves her by her kept +0.E000 under the pull, which takes it to +1.3400, and it ends before it
+    meets the floor. Crouched, she keeps that speed through the turn on the ground to the
+    take-off at 196 (HV3).
 19. **A dash merged on the ground moves her a pixel further (`Dash`, `SpeedBuildsAndBrakes`).**
     samus-grapple-walljump 0 → 1: running (11h), x 002C.BFFF, base speed 2.C000, dash 1.2000,
     `0B3C` set. Both end with base speed 3.E000, no dash, `0B4A` = 2; x: model 0030.9FFF (by
     3.E000), game 0031.9FFF (by 4.E000), and 1 px behind to frame 8. Asked: the frame's move.
+    **Answered** (`AimingAndShooting`, `PadChart`'s running let-go row): the merge doesn't cause it.
+    With no row fitting (only select is held), running with a horizontal speed at the frame's start
+    that isn't 0, the let-go row keeps her running pose. That kept pose is chosen as a running pose,
+    so the aim change's step moves her 1 px on top of the braking move every frame she brakes so:
+    frames 0-7 here, and samus-space-jump-chain 0-11, where the frame braking takes 0.2000 to 0
+    moves her only the step. When the speed at the frame's start is 0 (space-jump-chain 12) she
+    stands, and there is no step. A row naming her own pose brings no step (forward held,
+    running). Grapple doesn't hand this frame over: the grapple beam is inactive, her movement
+    handler is the normal one and the grapple wall-jump timer is 0 in records 0-9 (AS1-AS3).
 
 Two things the edge now keeps that the model doesn't hold, neither the model's: the camera's
 previous y pixel (`0B14`) becomes hers as pose fit, the crouch taken instead or the shrink left

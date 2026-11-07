@@ -45,7 +45,13 @@ misread (not checked: `09B2`-`09B6` are not in the dump).
 **Lead-ins (`lead.pl`).** A vector's start must be *plain* (spec §1.2's last paragraph): `0B3C` ≠ 0
 or `0B42` = 0; `0B4A` = 0, or 1 with `0B46` > 0; `0B36` = 1 only with a non-zero magnitude;
 `0B36` = 2 with magnitude 0 only in an airborne movement type (2 outside the take-off poses, 3, 6,
-8, 12h, 13h, 14h); `0B36` = 0 only with magnitude 0 outside those types. From the checked frame
+8, 12h, 13h, 14h); `0B36` = 0 only with magnitude 0 outside those types. On the ground `0B36` = 2
+with a non-zero magnitude is plain: it is the speed she keeps on the ground (`FollowingTheGround`), which the
+vertical speed shows (the ground handlers' vertical move `$90:923F` reads no speed, and a ground
+movement type landing is "no change" in `$90:E676`). `0B36` = 2 with magnitude 0 on the ground is
+not plain: a change of shape then moves her under the pull (`$90:92C7` tests the direction alone),
+where with `0B36` = 0 it doesn't; no record has one outside a bomb jump
+(samus-bomb-jump-vertical 1036). From the checked frame
 `lead.pl` walks back while each frame passes the selection test above, with radii free to change
 (a pose may change only from movement type 0, 1 or 10h on the ground into a jump, spin, fall or
 turn, from a take-off pose into a jump, or by aim alone, which the x-move test keeps clear of the
@@ -96,10 +102,10 @@ and `scan.sh --mirror` agrees.
 | SpeedBuildsAndBrakes | `$90:9BD1` and its table (the speeds by situation), `$90:9A7E` (speed-up), `$90:9B1F` (braking), the standing, crouching, transition, ran-into-wall and facing-forward handlers' tail stops in `$90:A337`'s table, `$90:A521` (the ball) |
 | Dash | `$90:973E`, `$90:97D5` (the cap), `$91:DE53` (losing it), `$90:E5CE` (the wall stop's share) |
 | TurningRound | `$91:F543` (turn start and spin reverse), `$90:A68F` (turning handler, its sink and its end), `$90:A67C` (the creep), `$91:81A9` with `$91:82D9`, `$91:8304` and `$91:ECD0` (letting go: the failed transition lookup's stop command clears `0B4A` after the move) |
-| AimingAndShooting | `$91:EADE` (the step), `$94:971E` (its block stop), `$90:A3AD` (the shot) |
+| AimingAndShooting | `$91:EADE` (the step: any prospective pose `0A28` of the running movement type, her own included), `$91:82E4` (the failed lookup's decelerate command keeps her pose as the prospective pose, so a running pose braking steps every frame), `$91:81E4` (a found row naming her own pose sets no prospective pose: no step), `$94:971E` (its block stop), `$90:A3AD` (the shot) |
 | RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
 | Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump) |
-| FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off) |
+| FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing), `$91:EFEF` (walking off: speed 0), `$90:98BC` (a jump sets it) |
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
 | RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0) |
 | DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` and `$90:9093` (spin; its stop still calls `$90:8EA9`, which adds the extra run speed) |

@@ -3260,3 +3260,114 @@ next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [
 pad = ["run", "right"]
 jump_pressed = false
 after = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+
+# HV1-HV3 (gaps 17 and 18): the vertical speed she keeps on the ground. Standing, turning on the
+# ground and crouched she keeps it as it is: no vertical move by it, no pull added, no landing.
+# samus-space-jump-chain and samus-walljump-16 start with +0.E000 on the ground; in
+# samus-shinespark-left the crouch from her run took it to +1.3400. HV3's position isn't compared:
+# she crouches on a slope the floor stands in for.
+
+[[vector]]
+id = "HV1"
+source = "samus-space-jump-chain:15"
+entries = ["FollowingTheGround", "Landing", "SpeedBuildsAndBrakes"]
+world = { floor_top = 1184 }
+before = { position = ["0055.5FFF", "048B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0055.5FFF", "048B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.E000" }
+
+[[vector]]
+id = "HV2"
+source = "samus-walljump-16:24"
+entries = ["FollowingTheGround", "TurningRound", "Landing"]
+world = { floor_top = 1184 }
+before = { position = ["0055.5FFF", "048B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0054.9FFF", "048B.FFFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.E000" }
+
+[[vector]]
+id = "HV3"
+source = "samus-shinespark-left:158"
+entries = ["FollowingTheGround", "Landing", "SpeedBuildsAndBrakes"]
+world = { floor_top = 1216 }
+before = { position = ["0569.7FFF", "04B0.F3FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0001.3400" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0001.3400" }
+
+# HV4: the crouch from her run is a change of shape: it moves her by the speed she kept on the
+# ground, +0.E000, and the pull grows it to +0.FC00. Nothing stops the move (open air stands in
+# for the room); she moves by her dash alone and keeps both speeds, whatever the pad holds.
+
+[[vector]]
+id = "HV4"
+source = "samus-shinespark-left:153"
+entries = ["FollowingTheGround", "RisingAndFalling", "SpeedBuildsAndBrakes"]
+world = {}
+before = { position = ["054D.7FFF", "04AD.FFFF"], speed_x = "+0002.C000", dash = "0007.0000", speed_y = "+0000.E000" }
+pose = { body = "Crouched", action = "Crouching", facing = "Right", radius = [5, 16] }
+pad = ["run", "right", "down"]
+jump_pressed = false
+after = { position = ["0554.7FFF", "04AE.DFFF"], speed_x = "+0002.C000", dash = "0007.0000", speed_y = "+0000.FC00" }
+
+# AS1-AS3 (gap 19): running with no pad row fitting, while her horizontal speed at the frame's
+# start isn't 0, the let-go row keeps her running pose. That kept pose brings the aim change's
+# 1 px step on top of the braking move every frame. AS1 is the frame her dash joins her speed:
+# 2.C000 + 1.2000 = 3.E000, and 3.E000 + 1 px. In it she holds only select, which the pad doesn't
+# name. AS2 is the next frame, braking to 3.6000, and 3.6000 + 1 px. AS3 runs samus-space-jump-chain
+# from its first frame, which keeps +0.E000 on the ground throughout. Its checked frame brakes
+# 0.2000 to 0, and she moves only the step.
+
+[[vector]]
+id = "AS1"
+source = "samus-grapple-walljump:1"
+entries = ["AimingAndShooting", "PadChart", "Dash", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["002C.BFFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.2000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pad = []
+jump_pressed = false
+after = { position = ["0031.9FFF", "008B.FFFF"], speed_x = "+0003.E000", dash = "0000.0000" }
+
+[[vector]]
+id = "AS2"
+source = "samus-grapple-walljump:2"
+entries = ["AimingAndShooting", "PadChart", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["002C.BFFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.2000", speed_y = "+0000.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pad = []
+jump_pressed = false
+after = { position = ["0035.FFFF", "008B.FFFF"], speed_x = "+0003.6000", dash = "0000.0000" }
+
+[[vector]]
+id = "AS3"
+source = "samus-space-jump-chain:12"
+entries = ["AimingAndShooting", "PadChart", "SpeedBuildsAndBrakes", "FollowingTheGround", "Landing"]
+world = { floor_top = 1184 }
+before = { position = ["002C.4FFF", "048B.FFFF"], speed_x = "+0002.C000", dash = "0002.6000", speed_y = "+0000.E000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0055.2FFF", "048B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.E000" }
