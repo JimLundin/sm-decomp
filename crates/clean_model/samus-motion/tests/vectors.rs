@@ -8,9 +8,36 @@ mod vectors {
     };
     use clean_types::{
         Action, Aim, Block, Body, Cell, Equipment, Facing, Fixed, Gun, Heading, Hitbox, LandedFrom,
-        Legs, Pad, Parity, Pose, Position, Radius, Signed, Slope, SlopeFaces, Surface, Touch, Turn,
-        Way, World,
+        Legs, Pad, Parity, Pose, Position, Radius, Slope, SlopeFaces, Surface, Touch, Turn, Way,
+        World,
     };
+
+    /// A signed `P.S` quantity as the vectors write it (the header's notation): a size and a sign.
+    #[derive(Clone, Copy)]
+    struct Signed {
+        /// Leftward or upward.
+        negative: bool,
+        /// The size.
+        size: Fixed,
+    }
+
+    /// Her horizontal speed as the player reads it, rightward positive.
+    const fn speed_x(samus: &Samus) -> Signed {
+        Signed {
+            negative: matches!(samus.way, Heading::Left),
+            size: samus.speed,
+        }
+    }
+
+    /// Her vertical speed as the player reads it, downward positive.
+    const fn speed_y(samus: &Samus) -> Signed {
+        let (negative, size) = match samus.vertical {
+            Vertical::Ground => (false, Fixed(0)),
+            Vertical::Rises(v) => (true, v),
+            Vertical::Falls(v) | Vertical::Spent(v) | Vertical::Moonfall(v) => (false, v),
+        };
+        Signed { negative, size }
+    }
     use std::iter::Peekable;
     use std::str::Chars;
 
@@ -956,12 +983,12 @@ mod vectors {
                 "speed_x" => check(
                     "speed_x",
                     show_signed(signed(value.str())),
-                    show_signed(samus.speed_x_signed()),
+                    show_signed(speed_x(samus)),
                 ),
                 "speed_y" => check(
                     "speed_y",
                     show_signed(signed(value.str())),
-                    show_signed(samus.speed_y_signed()),
+                    show_signed(speed_y(samus)),
                 ),
                 "dash" => check("dash", show(fixed(value.str())), show(samus.dash)),
                 "reached" => {

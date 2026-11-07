@@ -18,6 +18,9 @@ pub use rules::{Boots, Limits, Rules, SpeedCap};
 pub use situation::{Doing, Situation, classify};
 
 use Carry::{CarriesOn, FollowsPad};
+use Effect::{
+    AsRunning, CarrySpin, EndSkid, Halt, LoseDash, Lower, Rise, StartDrift, TakeOff, TurnRound,
+};
 use Met::{AimStep, Ceiling, Floor, NoFloor, Wall, WallKick};
 use Probe::{Blocks, Enemies, Look};
 use Seat::{Seated, Unseated};
@@ -30,7 +33,7 @@ use clean_types::Body::{Crouched, SpringBall, Upright};
 use clean_types::Heading::{Down, Left, Right, Up};
 use clean_types::{
     Aim, Cell, Equipment, Facing, Fixed, Gun, Heading, Legs, Pad, Parity, Pose, Position, Radius,
-    Signed, Touch, World, below,
+    Touch, World, below,
 };
 use collide::{Moved, Mover, Probe, Stop};
 use situation::{Drift, Gait, Moves};
@@ -234,6 +237,16 @@ struct Walk {
     stop: Option<Stop>,
 }
 
+/// `PoseFitAfterMoves`: with something found above her alone (up, down), the way she is pushed
+/// away from it and the room on its side; with something below alone, the same upward.
+const fn alone(found: (Option<u16>, Option<u16>)) -> Option<(Heading, u16)> {
+    match found {
+        (Some(room), None) => Some((Down, room)),
+        (None, Some(room)) => Some((Up, room)),
+        _ => None,
+    }
+}
+
 /// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing as before the change.
 const fn crouched(p: Pose) -> Pose {
     Pose {
@@ -247,26 +260,6 @@ const fn crouched(p: Pose) -> Pose {
 }
 
 impl Samus {
-    /// Her horizontal speed as the player reads it, rightward positive.
-    #[must_use]
-    pub const fn speed_x_signed(&self) -> Signed {
-        Signed {
-            negative: matches!(self.way, Left),
-            size: self.speed,
-        }
-    }
-
-    /// Her vertical speed as the player reads it, downward positive.
-    #[must_use]
-    pub const fn speed_y_signed(&self) -> Signed {
-        let (negative, size) = match self.vertical {
-            Ground => (false, Fixed(0)),
-            Rises(v) => (true, v),
-            Falls(v) | Spent(v) | Moonfall(v) => (false, v),
-        };
-        Signed { negative, size }
-    }
-
     /// One frame (`PoseFitAfterMoves`): her moves as the pose at its start says
     /// (`MovesAsShePosed`) and what they met; the pose chosen (`PoseFollows`); pose fit or the
     /// shrink; then the change's effects.
@@ -528,7 +521,10 @@ impl Samus {
     /// `SlopesSlowTheWalk`: a horizontal move made while her vertical speed is exactly 0 is
     /// shortened by the sloped floors at her leading edge.
     fn shortened(&self, way: Heading, d: Fixed, m: &Mover) -> Fixed {
-        if self.speed_y_signed().size.is_zero() {
+        if matches!(
+            self.vertical,
+            Ground | Rises(Fixed(0)) | Spent(Fixed(0)) | Falls(Fixed(0)) | Moonfall(Fixed(0))
+        ) {
             m.walk_shortened(self.position, self.radius, way, d)
         } else {
             d
@@ -817,18 +813,24 @@ impl Samus {
         if self.far_side(m, blocks, g, old, Blocks) {
             return Change::Refused;
         }
-        match (blocks.0.or(enemies.0), blocks.1.or(enemies.1)) {
-            (Some(_), Some(_)) if old.y < m.rules.small_body_px => Change::Refused,
-            (Some(_), Some(_)) => {
-                let crouch = (frame.body)(crouched(self.pose));
-                let rise = Fixed::px(crouch.y.saturating_sub(old.y));
-                self.position.y = self.position.y.minus(rise);
-                Change::Crouched
-            }
-            (Some(room), None) => self.push(Down, g.wrapping_sub(room)),
-            (None, Some(room)) => self.push(Up, g.wrapping_sub(room)),
-            (None, None) => Change::Chosen(None),
+        let found = (blocks.0.or(enemies.0), blocks.1.or(enemies.1));
+        if let Some((way, room)) = alone(found) {
+            // Pushed away by g less the room, in whole px, keeping the subpixel her looks left.
+            let px = g.wrapping_sub(room);
+            let (y, by) = (self.position.y, Fixed::px(px));
+            self.position.y = if way == Up { y.minus(by) } else { y.plus(by) };
+            return Change::Chosen(Some(Push { way, px }));
         }
+        if found.0.is_none() {
+            return Change::Chosen(None);
+        }
+        if old.y < m.rules.small_body_px {
+            return Change::Refused;
+        }
+        let crouch = (frame.body)(crouched(self.pose));
+        let rise = Fixed::px(crouch.y.saturating_sub(old.y));
+        self.position.y = self.position.y.minus(rise);
+        Change::Crouched
     }
 
     /// `PoseFitAfterMoves`: one look of `px` at size `r`. It doesn't move her, but what stops it
@@ -861,20 +863,8 @@ impl Samus {
         r: Radius,
         probe: Probe,
     ) -> bool {
-        let (heading, room) = match sides {
-            (Some(room), None) => (Down, room),
-            (None, Some(room)) => (Up, room),
-            _ => return false,
-        };
-        self.look(m, heading, g.wrapping_sub(room), r, probe)
-            .is_some()
-    }
-
-    /// `PoseFitAfterMoves`: she is pushed `px` whole pixels, keeping the subpixel her looks left.
-    fn push(&mut self, way: Heading, px: u16) -> Change {
-        let (y, by) = (self.position.y, Fixed::px(px));
-        self.position.y = if way == Up { y.minus(by) } else { y.plus(by) };
-        Change::Chosen(Some(Push { way, px }))
+        alone(sides)
+            .is_some_and(|(way, room)| self.look(m, way, g.wrapping_sub(room), r, probe).is_some())
     }
 
     /// `ShrinkingLowersHer`: before she is lowered she looks down `px` at her new size, a block
@@ -886,67 +876,61 @@ impl Samus {
         self.seat_on(seen.stop);
     }
 
-    /// `PoseFitAfterMoves`: she takes the pose the change gives. Only the chosen pose brings its
-    /// effects; a change refused, or crouched `Still` taken instead, leaves her speeds and dash
-    /// as her moves left them (`moved`), with her position and seat as her looks left them.
+    /// `PoseFitAfterMoves`: she takes the pose the change gives. A change refused, or crouched
+    /// `Still` taken instead, leaves her speeds and dash as her moves left them (`moved`), with
+    /// her position and seat as her looks left them. Only the chosen pose brings its effects, in
+    /// order: after pose fit's push, the new pose's speeds, then the crouch take-off's lift.
     fn take(&mut self, change: Change, chosen: Choice, moved: Self, frame: &Frame, m: &mut Mover) {
-        let start = self.pose;
-        if matches!(change, Change::Chosen(_)) {
-            self.pose = chosen.pose;
-            self.radius = (frame.body)(chosen.pose);
-            self.apply(chosen.effects, start, frame, m);
+        let (start, r) = (self.pose, m.rules);
+        if !matches!(change, Change::Chosen(_)) {
+            *self = Self {
+                position: self.position,
+                seat: self.seat,
+                ..moved
+            };
+            if change == Change::Crouched {
+                self.pose = crouched(start);
+                self.radius = (frame.body)(self.pose);
+            }
             return;
         }
-        *self = Self {
-            position: self.position,
-            seat: self.seat,
-            ..moved
-        };
-        if change == Change::Crouched {
-            self.pose = crouched(start);
-            self.radius = (frame.body)(self.pose);
-        }
-    }
-
-    /// The chosen pose's effects, in order: after pose fit's push, the new pose's speeds, then
-    /// the crouch take-off's lift (`PoseFitAfterMoves`).
-    fn apply(&mut self, effects: &[Effect], start: Pose, frame: &Frame, m: &mut Mover) {
-        let r = m.rules;
+        self.pose = chosen.pose;
+        self.radius = (frame.body)(chosen.pose);
         let jump = r.jump.of(frame.equipment.hi_jump);
-        for effect in effects {
+        for effect in chosen.effects {
             match *effect {
                 // Jumping: changing into a take-off she starts rising and follows the pad; from
                 // a crouch without aim she is lifted.
-                Effect::TakeOff => {
+                TakeOff => {
                     self.rise(jump);
                     self.carry = FollowsPad;
                     if start.body == Crouched && start.aim == Aim::Forward {
                         self.position.y = self.position.y.minus(r.crouch_lift);
                     }
                 }
-                Effect::Rise => self.rise(jump),
-                Effect::TurnRound => self.turn_round(start),
-                Effect::EndSkid if self.carry == CarriesOn => {
+                Rise => self.rise(jump),
+                TurnRound => self.turn_round(start),
+                EndSkid if self.carry == CarriesOn => {
                     self.carry = FollowsPad;
                     self.way = self.pose.facing.side();
                 }
                 // PadChart: with a horizontal speed of 0 she only follows the pad again.
-                Effect::AsRunning if self.speed.is_zero() => self.carry = FollowsPad,
-                Effect::AsRunning => {
+                AsRunning if self.speed.is_zero() => self.carry = FollowsPad,
+                AsRunning => {
                     self.speed = self.speed.plus(self.dash);
                     self.dash = Fixed(0);
                     self.carry = CarriesOn;
                 }
-                Effect::LoseDash => self.dash = Fixed(0),
-                Effect::Halt => self.halt(),
+                LoseDash => self.dash = Fixed(0),
+                Halt => self.halt(),
                 // Moonfall: a spin she enters when a turn ends, with jump not just pressed,
                 // starts with no rise: her vertical speed is 0 and she drops under gravity.
                 Effect::Moonfall if frame.pressed.jump => self.rise(jump),
                 Effect::Moonfall => self.vertical = Moonfall(Fixed(0)),
-                Effect::Lower(px) => self.lower(px, m),
-                Effect::StartDrift => self.start_drift(),
-                Effect::CarrySpin => self.spin = CarriedOn,
-                Effect::EndSkid => {}
+                Lower(px) => self.lower(px, m),
+                StartDrift => self.start_drift(),
+                CarrySpin => self.spin = CarriedOn,
+                EndSkid => {}
             }
         }
     }

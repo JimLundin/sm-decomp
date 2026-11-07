@@ -62,15 +62,6 @@ pub const fn below(a: u16, b: u16) -> bool {
     a.wrapping_sub(b) > 0x7FFF
 }
 
-/// A signed `P.S` quantity as the player reads it: a size and a sign.
-#[derive(Clone, Copy)]
-pub struct Signed {
-    /// Leftward or upward.
-    pub negative: bool,
-    /// The size.
-    pub size: Fixed,
-}
-
 /// Her position: the centre of her body.
 #[derive(Clone, Copy)]
 pub struct Position {

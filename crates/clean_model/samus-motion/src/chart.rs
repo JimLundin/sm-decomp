@@ -10,6 +10,8 @@ pub mod table;
 mod tests;
 
 use crate::situation::{Doing, Situation};
+use Key::{AimDown, AimUp, Back, Down, Forward, Jump, Run, Shoot, Up};
+use Test::{Aimed, Airborne, Any, Faces, Held, Not, Pressed, SpringBall};
 use clean_types::{Action, Aim, Body, Equipment, Facing, Gun, Heading, Legs, Pad, Pose};
 
 /// A button by what it does; forward and back are by her facing at the frame's start.
@@ -195,11 +197,10 @@ pub struct Choice {
 /// `PadChart`: a row that needs a just-pressed button outranks one that doesn't; then the one that
 /// names more buttons.
 fn rank(row: &Row) -> (bool, usize) {
-    let pressed = |t: &&Test| matches!(t, Test::Pressed(_));
-    let named = |t: &&Test| matches!(t, Test::Held(_) | Test::Pressed(_));
+    let needs = row.needs.iter();
     (
-        row.needs.iter().any(|t| pressed(&t)),
-        row.needs.iter().filter(named).count(),
+        needs.clone().any(|t| matches!(t, Pressed(_))),
+        needs.filter(|t| matches!(t, Held(_) | Pressed(_))).count(),
     )
 }
 
@@ -212,17 +213,21 @@ fn beats(a: &Row, b: &Row) -> bool {
 impl Moment {
     /// Whether `pad` holds `key`.
     const fn holds(&self, pad: Pad, key: Key) -> bool {
-        let left = matches!(self.pose.facing, Facing::Left);
+        let (forward, back) = if matches!(self.pose.facing, Facing::Left) {
+            (pad.left, pad.right)
+        } else {
+            (pad.right, pad.left)
+        };
         match key {
-            Key::Forward => (left && pad.left) || (!left && pad.right),
-            Key::Back => (left && pad.right) || (!left && pad.left),
-            Key::Jump => pad.jump,
-            Key::Shoot => pad.shoot,
-            Key::Run => pad.run,
-            Key::Up => pad.up,
-            Key::Down => pad.down,
-            Key::AimUp => pad.aim_up,
-            Key::AimDown => pad.aim_down,
+            Forward => forward,
+            Back => back,
+            Jump => pad.jump,
+            Shoot => pad.shoot,
+            Run => pad.run,
+            Up => pad.up,
+            Down => pad.down,
+            AimUp => pad.aim_up,
+            AimDown => pad.aim_down,
         }
     }
 
@@ -230,18 +235,18 @@ impl Moment {
     fn passes(&self, test: &Test) -> bool {
         let p = self.pose;
         match *test {
-            Test::Held(keys) => keys.iter().any(|k| self.holds(self.pad, *k)),
-            Test::Pressed(key) => self.holds(self.pressed, key),
-            Test::Not(t) => !self.passes(t),
-            Test::Any(tests) => tests.iter().any(|t| self.passes(t)),
-            Test::Aimed(aims) => aims.contains(&p.aim),
+            Held(keys) => keys.iter().any(|k| self.holds(self.pad, *k)),
+            Pressed(key) => self.holds(self.pressed, key),
+            Not(t) => !self.passes(t),
+            Any(tests) => tests.iter().any(|t| self.passes(t)),
+            Aimed(aims) => aims.contains(&p.aim),
             Test::Gun(gun) => p.gun == gun,
-            Test::Faces(side) => p.facing.side() == side,
+            Faces(side) => p.facing.side() == side,
             Test::Body(bodies) => bodies.contains(&p.body),
             Test::Action(actions) => actions.contains(&p.action),
             Test::Doing(doings) => doings.contains(&self.situation.doing),
-            Test::Airborne => self.airborne,
-            Test::SpringBall => self.equipment.spring_ball,
+            Airborne => self.airborne,
+            SpringBall => self.equipment.spring_ball,
             Test::Met(met) => self.met == Some(met),
         }
     }
