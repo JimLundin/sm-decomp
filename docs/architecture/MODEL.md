@@ -35,7 +35,7 @@ Jim's decisions, 2026-11-07:
    and statics, and imported assets) is reported beside the logic, not counted against it (§4).
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
    of a 2D pixel-art game today expects: a character controller stepped at a fixed timestep,
-   state machines with transition tables, input as actions, tilemap collision with per-tile
+   state machines whose moves are table rows, input as actions, tilemap collision with per-tile
    shapes, sprite sheets and animation clips, and events returned rather than side effects.
    Where the original's exact behaviour departs from those shapes, the shape stays and the
    departure is a named quirk. The clean room's version is in

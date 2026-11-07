@@ -23,8 +23,8 @@ behaviour fits them:
 - **A character controller** for the player: her motion as velocity and position in fixed-point
   subpixels, stepped at a fixed 60 Hz timestep, with gravity, acceleration and caps as tuning
   parameters in `Rules`.
-- **A state machine** for what she is doing: states and their transitions as a table, each with
-  what entering it does. The pose chart is this table.
+- **A state machine** for what she is doing: her states and the moves between them as rows, each with
+  what entering a state does. The pose chart is these rows.
 - **Input as actions** (jump, shoot, aim up, run), not raw buttons; the binding to buttons is the
   caller's.
 - **Tilemap collision:** move and collide one axis at a time against a grid of tiles, each with a
