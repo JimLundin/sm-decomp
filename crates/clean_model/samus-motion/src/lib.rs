@@ -11,10 +11,10 @@ pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use rules::{Activity, JumpKind, Limits, Rules, SpeedCap};
 
 use clean_types::{
-    Action, Aim, Body, Button, Equipment, Facing, Fixed, Pad, Pose, Position, Side, Signed,
-    SlopeHeight, World, below,
+    Action, Aim, Body, Button, Equipment, Facing, Fixed, Pad, Pose, Position, Radius, Side, Signed,
+    World, below,
 };
-use collide::{Axis, Stop, Toward, travel};
+use collide::{Axis, Moved, Stop, Toward, travel};
 
 /// Her horizontal speed: a size and the way it points.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -324,16 +324,18 @@ impl Samus {
         let pose = self.pose;
         let was_grounded = self.vertical == Vertical::Ground;
         self.spin = self.spin.advance(pose.action == Action::Spinning);
-        let pose_changes = frame.next_pose.is_some_and(|next| next != pose);
         let mut against_wall = false;
         if pose.facing == Facing::Screen {
             // SpeedBuildsAndBrakes: facing the screen she doesn't move and keeps her speeds.
             if frame.elevator_moving {
                 // RidingTheElevator: down 1 px a frame.
-                self.position.y = self.position.y.plus(rules.elevator);
+                self.go(Position {
+                    y: self.position.y.plus(rules.elevator),
+                    ..self.position
+                });
             }
         } else {
-            let moved = self.horizontal(pose, frame, pose_changes, world, rules);
+            let moved = self.horizontal(pose, frame, world, rules);
             if let Some(next) = frame.next_pose {
                 against_wall = self.aim_nudge(pose, next, moved.walled, world, rules);
             }
@@ -372,7 +374,6 @@ impl Samus {
         &mut self,
         pose: Pose,
         frame: &Frame,
-        pose_changes: bool,
         world: &impl World,
         rules: &Rules,
     ) -> Horizontal {
@@ -420,30 +421,77 @@ impl Samus {
         } else {
             self.speed_x.way
         };
-        let mut walled = false;
-        if let Some(distance) = distance {
-            let way = (Axis::X, Toward::side(heading));
-            let stop = travel(&mut self.position, pose.radius, way, distance, world, rules);
-            walled = stop.is_some();
-            // SlopesCarry: after every horizontal move, whether or not it met solid enemies.
-            if collide::seat(&mut self.position, pose.radius, world, rules) {
-                self.footing = Footing::Slope;
-            }
-        }
+        let walled = distance.is_some_and(|d| self.move_x(pose.radius, heading, d, world, rules));
         if walled || how == Move::DashThenHalt {
             // WallsAndCeilings, SpeedBuildsAndBrakes: a halt.
             self.halt();
         } else if pose.action == Action::Turning
-            && frame.pad.steers_neither_way()
-            && !pose_changes
+            && frame.pad.none_held()
             && self.drive == Drive::CarryOn
         {
-            // TurningRound: steering neither way her skid ends after the move: her speed now
-            // follows the pad and points along her new facing.
+            // TurningRound: with no button held at all her skid ends after the move: her speed
+            // now follows the pad and points along her new facing. Holding any button she keeps
+            // skidding until braking would take her below zero.
             self.drive = Drive::FollowPad;
             self.speed_x.way = facing;
         }
         Horizontal { speed, walled }
+    }
+
+    /// Every move ends here: she takes the position it leaves her at.
+    const fn go(&mut self, to: Position) {
+        self.position = to;
+    }
+
+    /// A horizontal move towards `side`, then `SlopesCarry`'s two checks, which run after every
+    /// horizontal move whether or not it met solid enemies. Returns whether the move was stopped.
+    fn move_x(
+        &mut self,
+        radius: Radius,
+        side: Side,
+        distance: Fixed,
+        world: &impl World,
+        rules: &Rules,
+    ) -> bool {
+        let way = (Axis::X, Toward::side(side));
+        let moved = travel(self.position, radius, way, distance, world, rules);
+        self.go(moved.to);
+        if let Some(seated) = collide::seat(self.position, radius, world, rules) {
+            // SlopesCarry: the lift or the push seats her.
+            self.go(seated);
+            self.footing = Footing::Slope;
+        }
+        moved.stop.is_some()
+    }
+
+    /// Where a vertical move would leave her. `SlopesCarry`: as it starts she leaves any slope.
+    fn test_y(
+        &mut self,
+        radius: Radius,
+        toward: Toward,
+        distance: Fixed,
+        world: &impl World,
+        rules: &Rules,
+    ) -> Moved {
+        self.footing = Footing::Free;
+        travel(
+            self.position,
+            radius,
+            (Axis::Y, toward),
+            distance,
+            world,
+            rules,
+        )
+    }
+
+    /// Takes a downward move. `SlopesCarry`: one stopped by a stepped block seats her; a sloped
+    /// floor's stop doesn't.
+    const fn settle(&mut self, moved: Moved) -> Option<Stop> {
+        self.go(moved.to);
+        if matches!(moved.stop, Some(Stop::Stepped)) {
+            self.footing = Footing::Slope;
+        }
+        moved.stop
     }
 
     /// `SpeedBuildsAndBrakes` and `DriftInTheAir`: builds or brakes the speed of a building
@@ -561,14 +609,9 @@ impl Samus {
         if next.aim == pose.aim || pose.action != Action::Running {
             return false;
         }
-        let mut nudged = self.position;
-        let way = (Axis::X, Toward::side(pose.facing.side()));
-        let stop = travel(&mut nudged, pose.radius, way, rules.aim_nudge, world, rules);
-        if walled || stop.is_some() {
-            return true;
-        }
-        self.position = nudged;
-        false
+        let side = pose.facing.side();
+        let stopped = self.move_x(pose.radius, side, rules.aim_nudge, world, rules);
+        walled || stopped
     }
 
     /// `WallJump`: a spin carried on, holding away from a wall near her, readies the wall jump;
@@ -584,14 +627,10 @@ impl Samus {
         } else {
             return false;
         };
-        let near = collide::wall_near(
-            &mut self.position,
-            pose.radius,
-            wall,
-            rules.wall_reach,
-            world,
-            rules,
-        );
+        let reach = rules.wall_reach;
+        let test = collide::wall_test(self.position, pose.radius, wall, reach, world, rules);
+        self.go(test.to);
+        let near = test.stop.is_some();
         if !(near && frame.spin_turned_far && frame.jump_pressed) {
             return false;
         }
@@ -609,12 +648,11 @@ impl Samus {
             Footing::Slope => rules.ground_pull,
             Footing::Free => Fixed::px(speed.pixel()).plus(rules.ground_pull),
         };
-        let mut pulled = self.position;
-        let stop = self.move_down(&mut pulled, pose, pull, world, rules);
-        if stop.is_some() || pose.action == Action::Turning {
+        let pulled = self.test_y(pose.radius, Toward::More, pull, world, rules);
+        if pulled.stop.is_some() || pose.action == Action::Turning {
             // FollowingTheGround: the floor stops her flush; TurningRound: over a drop she sinks
             // instead of falling.
-            self.position = pulled;
+            self.settle(pulled);
         } else if !pose.action.changes_shape() {
             // FollowingTheGround: she falls from rest.
             self.vertical = Vertical::Falling(Fixed::ZERO);
@@ -632,25 +670,6 @@ impl Samus {
             self.drive = Drive::CarryOn;
             self.speed_x.way = facing;
         }
-    }
-
-    /// A downward move from `at`. `SlopesCarry`: as it starts she leaves any slope; a half-block
-    /// slope that stops it seats her.
-    fn move_down(
-        &mut self,
-        at: &mut Position,
-        pose: Pose,
-        distance: Fixed,
-        world: &impl World,
-        rules: &Rules,
-    ) -> Option<Stop> {
-        self.footing = Footing::Free;
-        let down = (Axis::Y, Toward::More);
-        let stop = travel(at, pose.radius, down, distance, world, rules);
-        if stop == Some(Stop::Slope(SlopeHeight::Half)) {
-            self.footing = Footing::Slope;
-        }
-        stop
     }
 
     /// `RisingAndFalling`: a fall's speed after the pull, which stops growing only at pixel part
@@ -687,10 +706,9 @@ impl Samus {
             Vertical::Spent(_) => self.vertical = self.fall_pull(Fixed::ZERO, rules),
             Vertical::Rising(_) if lets_go => self.vertical = self.fall_pull(Fixed::ZERO, rules),
             Vertical::Rising(speed) => {
-                self.footing = Footing::Free;
-                let up = (Axis::Y, Toward::Less);
-                let stop = travel(&mut self.position, pose.radius, up, speed, world, rules);
-                self.vertical = if stop.is_some() {
+                let rise = self.test_y(pose.radius, Toward::Less, speed, world, rules);
+                self.go(rise.to);
+                self.vertical = if rise.stop.is_some() {
                     // WallsAndCeilings, SlopesCarry: a ceiling ends the rise, with no pull.
                     Vertical::Falling(Fixed::ZERO)
                 } else if speed < rules.gravity {
@@ -702,10 +720,8 @@ impl Samus {
                 };
             }
             Vertical::Falling(speed) => {
-                let mut at = self.position;
-                let stop = self.move_down(&mut at, pose, speed, world, rules);
-                self.position = at;
-                if stop.is_some() {
+                let fall = self.test_y(pose.radius, Toward::More, speed, world, rules);
+                if self.settle(fall).is_some() {
                     self.land(pose, speed, held.then_some(jump), rules);
                 } else {
                     self.vertical = self.fall_pull(speed, rules);
@@ -809,7 +825,10 @@ impl Samus {
                     self.vertical = Vertical::Rising(jump);
                 }
                 if prev.body == Body::Crouched && prev.aim == Aim::Forward {
-                    self.position.y = self.position.y.minus(rules.crouch_lift);
+                    self.go(Position {
+                        y: self.position.y.minus(rules.crouch_lift),
+                        ..self.position
+                    });
                 }
                 self.drive = Drive::FollowPad;
             }

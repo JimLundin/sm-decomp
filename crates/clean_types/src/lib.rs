@@ -312,6 +312,12 @@ impl Pad {
     pub const fn steers_neither_way(self) -> bool {
         !self.holds(Side::Left) && !self.holds(Side::Right)
     }
+
+    /// Whether no button at all is held.
+    #[must_use]
+    pub const fn none_held(self) -> bool {
+        self.0 == 0
+    }
 }
 
 /// The equipment that changes her motion.
@@ -328,13 +334,44 @@ pub struct Equipment {
 pub enum Block {
     /// Nothing.
     Air,
-    /// A slope, with its shape.
+    /// A sloped surface, with its shape.
     Slope(Slope),
+    /// A stepped block: solid in some of its four 8 px quarters.
+    Stepped(Quarters),
     /// Solid.
     Solid,
 }
 
-/// Which way a slope's solid part lies.
+/// One half of a block along an axis: its first 8 px (left or top) or its second.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Half {
+    /// The left or top half.
+    First,
+    /// The right or bottom half.
+    Second,
+}
+
+/// A stepped block's solid quarters, by row half then column half.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Quarters(pub [[bool; 2]; 2]);
+
+impl Quarters {
+    /// Whether the quarter in this row half and column half is solid.
+    #[must_use]
+    pub const fn solid(self, row: Half, column: Half) -> bool {
+        let [top, bottom] = self.0;
+        let [left, right] = match row {
+            Half::First => top,
+            Half::Second => bottom,
+        };
+        match column {
+            Half::First => left,
+            Half::Second => right,
+        }
+    }
+}
+
+/// Which way a sloped surface's solid part lies.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SlopeFaces {
     /// A sloped ceiling: solid above its surface.
@@ -343,22 +380,11 @@ pub enum SlopeFaces {
     Floor,
 }
 
-/// How much of its block a slope fills.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum SlopeHeight {
-    /// A half-block slope.
-    Half,
-    /// A whole-block slope.
-    Whole,
-}
-
-/// A slope's shape: world data the slope lane brings.
+/// A sloped surface's shape: world data.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Slope {
     /// Floor or ceiling.
     pub faces: SlopeFaces,
-    /// Half or whole block.
-    pub height: SlopeHeight,
     /// At each of the block's pixel columns, the row within the block of the surface's solid
     /// pixel: a floor's topmost, a ceiling's lowest.
     pub surface: [u8; 16],

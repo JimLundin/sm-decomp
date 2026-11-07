@@ -5,7 +5,7 @@ mod vectors {
     use clean_model_samus_motion::{Bounces, CATALOGUE, Frame, Rules, Samus, SpeedCap};
     use clean_types::{
         Action, Aim, Block, Body, Button, Equipment, Facing, Fixed, Hitbox, Pad, Pose, Position,
-        Radius, Signed, World,
+        Radius, Signed, Slope, SlopeFaces, World,
     };
     use std::iter::Peekable;
     use std::str::Chars;
@@ -13,15 +13,10 @@ mod vectors {
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-motion.toml");
 
     /// The vectors in the file.
-    const VECTOR_COUNT: usize = 129;
+    const VECTOR_COUNT: usize = 130;
 
     /// Entries no vector names: a coverage gap in the report (spec §11, question 3).
-    const UNEXERCISED: [&str; 4] = [
-        "RidingTheElevator",
-        "Moonfall",
-        "SolidEnemies",
-        "SlopesCarry",
-    ];
+    const UNEXERCISED: [&str; 3] = ["RidingTheElevator", "Moonfall", "SolidEnemies"];
 
     // ---- A parser for the subset of TOML the vector file uses.
 
@@ -275,15 +270,22 @@ mod vectors {
     }
 
     /// The vectors' stand-in room: a floor from `floor_top` down, a wall from `wall_right`
-    /// rightward, a ceiling above `ceiling_bottom`, air elsewhere.
+    /// rightward, a ceiling above `ceiling_bottom`, one sloped floor block at a cell, air
+    /// elsewhere.
     struct Room {
         floor_top: Option<u32>,
         wall_right: Option<u32>,
         ceiling_bottom: Option<u32>,
+        slope_floor: Option<((u16, u16), Slope)>,
     }
 
     impl World for Room {
         fn block(&self, column: u16, row: u16) -> Block {
+            if let Some((cell, slope)) = self.slope_floor
+                && cell == (column, row)
+            {
+                return Block::Slope(slope);
+            }
             let from = |cell: u16, face: Option<u32>| {
                 face.is_some_and(|face| u32::from(cell).wrapping_mul(16) >= face)
             };
@@ -328,10 +330,26 @@ mod vectors {
         };
         let world = vector.get("world").expect("world");
         let face = |k: &str| world.get(k).map(|v| u32::try_from(v.int()).expect("face"));
+        let slope_floor = world.get("slope_floor").map(|slope| {
+            let corner = slope.get("block").expect("slope_floor.block").array();
+            let cell = |v: &Value| u16::try_from(v.int() / 16).expect("slope_floor cell");
+            let mut surface = [0_u8; 16];
+            let rows = slope.get("surface").expect("slope_floor.surface").array();
+            assert_eq!(rows.len(), surface.len(), "{id}: slope_floor.surface");
+            for (to, row) in surface.iter_mut().zip(rows) {
+                *to = u8::try_from(row.int()).expect("surface row");
+            }
+            let faces = SlopeFaces::Floor;
+            (
+                (cell(&corner[0]), cell(&corner[1])),
+                Slope { faces, surface },
+            )
+        });
         let room = Room {
             floor_top: face("floor_top"),
             wall_right: face("wall_right"),
             ceiling_bottom: face("ceiling_bottom"),
+            slope_floor,
         };
 
         // The frames: the lead-in's, then the checked one, each with the pose it starts in.

@@ -121,6 +121,8 @@ pub struct Rules {
     pub move_limit_px: u16,
     /// §8: a block's size, in px.
     pub block_px: u16,
+    /// §8: a stepped block's quarter's size, in px.
+    pub quarter_px: u16,
     /// `AimingAndShooting`: the step forward.
     pub aim_nudge: Fixed,
     /// `RidingTheElevator`: the descent a frame.
@@ -163,6 +165,7 @@ impl Rules {
         wall_reach: Fixed::px(8),
         move_limit_px: 15,
         block_px: 16,
+        quarter_px: 8,
         aim_nudge: Fixed::px(1),
         elevator: Fixed::px(1),
     };
