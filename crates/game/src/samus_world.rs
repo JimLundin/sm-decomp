@@ -230,6 +230,7 @@ impl World for SamusWorld<'_> {
 }
 
 pub mod frame;
+pub mod state;
 
 #[cfg(test)]
 mod tests;

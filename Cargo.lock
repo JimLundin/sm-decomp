@@ -219,6 +219,8 @@ name = "verify"
 version = "0.1.0"
 dependencies = [
  "canonical",
+ "clean_model_samus_motion",
+ "clean_types",
  "data",
  "game",
  "oracle_record",
