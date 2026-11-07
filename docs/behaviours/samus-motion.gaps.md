@@ -8,6 +8,9 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
 
 ## Open: the engine's pose at the edge (integrator, 2026-11-07, after `c44e48c`)
 
+Items 6 and 7 are answered by the observer (lane/pose-map): §2's new parts, the map both ways
+in the decode notes, and `SlopesCarry`'s empty column.
+
 Items 1-3 below are answered by `c44e48c` (the pose chart, `Outcome::reached`, `World`'s kinds).
 `game::samus_world` (`78dc21a`) answers `World`. What stops the next step, the State swap:
 

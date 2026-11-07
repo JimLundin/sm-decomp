@@ -4,7 +4,8 @@
 # - Each [[vector]] is a short run of frames ending in the frame it checks: id; source ("<row>:<frame>"
 #   for the record holding the last frame's result, or "constructed"); entries (the spec's
 #   behaviours it exercises); rules (optional: speed_cap = "Wordwise", the default, or "Exact");
-#   equipment (optional: hi_jump, space_jump, default false); world; before; lead_in (optional);
+#   equipment (optional: hi_jump, space_jump, default false; screw_attack, spring_ball and
+#   other_suit change only the sprite, spec §2, and no vector sets them); world; before; lead_in (optional);
 #   pose; next_pose (optional); pad; jump_pressed; after.
 # - A P.S quantity is "PPPP.SSSS": the pixel part and the subpixel part, both hex. A signed one
 #   starts with "+" or "-": speed_x is rightward positive, speed_y downward positive.
@@ -20,7 +21,8 @@
 #     are air; 16 means the column has no solid pixel in the block. factor (optional, default
 #     "1.00"): the shape's walk factor in hex, a pixel and 1/256ths (spec `SlopesSlowTheWalk`).
 #   - slope_ceiling: one sloped ceiling block, as slope_floor, but each number is the row of the
-#     surface's bottom pixel: that pixel and every one above it in the block are solid. Its factor,
+#     surface's bottom pixel: that pixel and every one above it in the block are solid. 16 means the
+#     column holds none of the surface, as for slope_floor (spec `SlopesCarry`, an empty column). Its factor,
 #     when given, is the shape's and never applies to her moves.
 #   - solid_block: [x, y], the top-left corner of one solid 16 px block.
 #   - stepped: one stepped block: block = [x, y], its top-left corner; quarters = two strings, its
@@ -48,7 +50,9 @@
 # - pose: the pose at the checked frame's start (spec §2): body, action, facing, radius = [x, y]
 #   in px; aim (optional, default Forward: Forward, Up, UpForward, DownForward, Down); gun
 #   (optional, default "Stowed": "Drawn" or "Stowed"); and turn (optional, `Turning` only,
-#   default "Ground": "Ground", "Jump", "Fall" or "MoonwalkJump", the turn she is in, spec §2).
+#   default "Ground": "Ground", "Jump", "Fall" or "MoonwalkJump", the turn she is in, spec §2);
+#   landed_from (`Landing` only: "Jump" or "Spin"); and legs (optional, default "Together":
+#   "Together" or "Striding").
 #   A recorded pose gives the aim, gun and turn the record shows. next_pose: the pose chosen
 #   during it, when it changes; its radius is her body's size after the change.
 # - frame (optional): "Even" or "Odd", the parity of the checked frame (spec §1.3); default "Even".
@@ -252,7 +256,7 @@ source = "item-morph-ball:796"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["0497.7FFF", "0295.AFFF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0004.7C00" }
-pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], legs = "Striding" }
 pad = ["run", "left"]
 jump_pressed = false
 after = { position = ["0496.3FFF", "029A.2BFF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0004.9800" }
@@ -507,7 +511,7 @@ source = "samus-screw-attack:168"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["013F.7FFF", "0087.A3FF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0002.F400" }
-pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], legs = "Striding" }
 pad = ["left"]
 jump_pressed = false
 after = { position = ["013E.3FFF", "008A.97FF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0003.1000" }
@@ -518,7 +522,7 @@ source = "samus-screw-attack:178"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["0135.FFFF", "0095.FFFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "-0005.E400" }
-pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], legs = "Striding" }
 pad = ["jump", "left"]
 jump_pressed = false
 after = { position = ["0134.BFFF", "0090.1BFF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "-0005.C800" }
@@ -573,7 +577,7 @@ source = "samus-bomb-jump-vertical:844"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 208 }
 before = { position = ["00BB.FFFF", "00C0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Crouching", facing = "Right", radius = [5, 16] }
+pose = { body = "Crouched", action = "Crouching", facing = "Right", radius = [5, 16] }
 pad = ["down"]
 jump_pressed = false
 after = { position = ["00BB.FFFF", "00C0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -617,7 +621,7 @@ source = "samus-shinespark-right:323"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 1232 }
 before = { position = ["067B.FFFF", "04BB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
 pad = []
 jump_pressed = false
 after = { position = ["067B.FFFF", "04BB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -639,7 +643,7 @@ source = "samus-shinespark-left:328"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 1232 }
 before = { position = ["04C5.0000", "04BB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Jump" }
 pad = []
 jump_pressed = false
 after = { position = ["04C5.0000", "04BB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -719,7 +723,7 @@ source = "samus-grapple-release:277"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["0671.7FFF", "0113.BD2F"], speed_x = "+0001.4000", dash = "0000.0000", speed_y = "+0001.5FB8" }
-pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
 pad = ["right"]
 jump_pressed = false
 after = { position = ["0672.BFFF", "0115.1CE7"], speed_x = "+0001.4000", dash = "0000.0000", speed_y = "+0001.7BB8" }
@@ -730,7 +734,7 @@ source = "samus-grapple-release:346"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 416 }
 before = { position = ["06B0.A4C7", "018B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
 pad = []
 jump_pressed = false
 after = { position = ["06B0.A4C7", "018B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -909,7 +913,7 @@ source = "r02:96"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 192 }
 before = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Crouching", facing = "Left", radius = [5, 16] }
+pose = { body = "Crouched", action = "Crouching", facing = "Left", radius = [5, 16] }
 pad = ["run", "down"]
 jump_pressed = false
 after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1105,7 +1109,7 @@ source = "r05:2"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["07D5.DFFF", "0087.43FF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0003.F000" }
-pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], legs = "Striding" }
 pad = ["left"]
 jump_pressed = false
 after = { position = ["07D4.9FFF", "008B.33FF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0004.0C00" }
@@ -1149,7 +1153,7 @@ source = "r05:111"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["0764.CFFF", "00A7.1FFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "-0004.C400" }
-pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], legs = "Striding" }
 pad = ["run", "jump", "left"]
 jump_pressed = false
 after = { position = ["0763.8FFF", "00A2.5BFF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "-0004.A800" }
@@ -1182,7 +1186,7 @@ source = "r05:446"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 192 }
 before = { position = ["06C5.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Jump" }
 pad = ["run"]
 jump_pressed = false
 after = { position = ["06C5.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1248,7 +1252,7 @@ source = "r07:29"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["009D.C000", "0090.FFFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Crouching", facing = "Left", radius = [5, 16] }
+pose = { body = "Crouched", action = "Crouching", facing = "Left", radius = [5, 16] }
 pad = ["down"]
 jump_pressed = false
 after = { position = ["009D.C000", "0090.FFFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1259,7 +1263,7 @@ source = "r07:39"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["0099.F000", "0090.FFFF"], speed_x = "-0000.F000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Crouching", facing = "Left", radius = [5, 16] }
+pose = { body = "Crouched", action = "Crouching", facing = "Left", radius = [5, 16] }
 pad = ["shoot", "left", "down"]
 jump_pressed = false
 after = { position = ["0099.F000", "0090.FFFF"], speed_x = "-0000.F000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1394,7 +1398,7 @@ source = "r08:126"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 544 }
 before = { position = ["00C4.BC00", "020B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Jump" }
 pad = ["run"]
 jump_pressed = false
 after = { position = ["00C4.BC00", "020B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1430,7 +1434,7 @@ source = "area-norfair:72"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["0097.4000", "008B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump", aim = "DownForward" }
 pad = []
 jump_pressed = false
 after = { position = ["0097.4000", "008B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1864,6 +1868,40 @@ jump_pressed = false
 after = { position = ["0108.0000", "0048.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 
 [[vector]]
+id = "C-slope-ceiling-empty"
+source = "constructed"
+entries = ["SlopesCarry", "WallsAndCeilings", "RisingAndFalling"]
+world = { slope_ceiling = { block = [256, 48], surface = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16] } }
+before = { position = ["0108.0000", "0048.8000"], speed_y = "-000C.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0108.0000", "0048.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-slope-ceiling-empty-on"
+source = "constructed"
+entries = ["SlopesCarry", "RisingAndFalling"]
+world = { slope_ceiling = { block = [256, 48], surface = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16] } }
+before = { position = ["0108.0000", "0048.8000"], speed_y = "-000B.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0108.0000", "003D.8000"], speed_y = "-000A.E400" }
+
+[[vector]]
+id = "C-slope-floor-empty"
+source = "constructed"
+entries = ["SlopesCarry", "Landing"]
+world = { slope_floor = { block = [256, 272], surface = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16] } }
+before = { position = ["0108.0000", "0108.2000"], speed_y = "+0003.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0108.0000", "010B.2000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+
+[[vector]]
 id = "C-seat-lift"
 source = "constructed"
 entries = ["SlopesCarry", "FollowingTheGround"]
@@ -2088,7 +2126,7 @@ pad = ["right"]
 jump_pressed = false
 pressed = []
 met = "floor"
-after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" } }
+after = { pose = { body = "Upright", action = "Landing", facing = "Right", aim = "Forward", landed_from = "Jump" } }
 
 [[pose_step]]
 id = "P5"
@@ -2099,7 +2137,7 @@ pad = []
 jump_pressed = false
 pressed = []
 met = "floor"
-after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" } }
+after = { pose = { body = "Upright", action = "Landing", facing = "Right", aim = "Forward", landed_from = "Spin" } }
 
 [[pose_step]]
 id = "P6"
@@ -2138,7 +2176,7 @@ after = { pose = { body = "Upright", action = "WallJumping", facing = "Right", a
 id = "P9"
 source = "item-morph-ball:1315"
 entries = ["PadChart", "Aiming"]
-pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", legs = "Striding" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
@@ -2237,7 +2275,7 @@ after = { pose = { body = "Crouched", action = "Crouching", facing = "Right", ai
 id = "P18"
 source = "r01:999"
 entries = ["PadChart"]
-pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", legs = "Striding" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
@@ -2253,7 +2291,7 @@ pad = ["run", "left", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
 met = "animation_end"
-after = { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Forward" } }
+after = { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Forward", legs = "Striding" } }
 
 [[pose_step]]
 id = "P20"
@@ -2543,7 +2581,7 @@ pad = ["right", "shoot"]
 jump_pressed = false
 pressed = ["right"]
 met = "nothing"
-after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward" } }
+after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", legs = "Striding" } }
 
 [[pose_step]]
 id = "G8"
