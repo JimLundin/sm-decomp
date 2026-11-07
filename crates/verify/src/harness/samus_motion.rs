@@ -40,6 +40,8 @@ const PAD_RIGHT: u16 = 0x0100;
 /// The equipment bits motion reads.
 const HI_JUMP: u16 = 0x0100;
 const SPACE_JUMP: u16 = 0x0200;
+const GRAVITY_SUIT: u16 = 0x0020;
+const SPEED_BOOSTER: u16 = 0x2000;
 
 /// Why a frame isn't one Samus's motion is checked on.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -64,6 +66,50 @@ pub enum Skip {
     Elevator,
     /// A pose change command the original never writes.
     Command(u16),
+    /// Samus's per-frame handler at the frame's start runs no motion: she is locked (the
+    /// gunship, a station, a cutscene) or time is frozen (the x-ray scope).
+    NotRunning(u16),
+    /// Her movement handler at the frame's start isn't the normal one and is no deferred
+    /// behaviour this harness names.
+    MovementHandler(u16),
+    /// A behaviour the spec defers (§10) runs in the frame.
+    Deferred(Deferred),
+}
+
+/// A behaviour the spec defers (§10, "Out of scope") that a frame runs, so the frame isn't
+/// one the motion model is checked on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Deferred {
+    /// She is submerged in water, lava or acid at either end of the frame: the liquid tables.
+    Liquid,
+    /// The speed booster: `extra_run` beyond the plain 2.0 cap, or a jump that adds `extra_run`
+    /// to the jump speed.
+    SpeedBooster,
+    /// The grapple beam's movement (the swing release).
+    Grapple,
+    /// A block-inside push (quicksand, a treadmill): extra displacement, the deceleration
+    /// multiplier, or the quicksand's speed writes.
+    Push,
+    /// Knockback from a hit.
+    Knockback,
+    /// The bomb jump's movement.
+    BombJump,
+    /// The shinespark's or the crystal flash's movement.
+    Shinespark,
+}
+
+impl fmt::Display for Deferred {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Liquid => "liquid physics (submerged)",
+            Self::SpeedBooster => "the speed booster (extra run past 2.0, or a boosted jump)",
+            Self::Grapple => "grapple (the swing release's movement)",
+            Self::Push => "a block-inside push (quicksand, treadmill)",
+            Self::Knockback => "knockback",
+            Self::BombJump => "the bomb jump's movement",
+            Self::Shinespark => "the shinespark or crystal flash movement",
+        })
+    }
 }
 
 impl fmt::Display for Skip {
@@ -78,6 +124,15 @@ impl fmt::Display for Skip {
             Self::PoseFit => write!(f, "the y radius changes: pose fit moves y"),
             Self::Elevator => write!(f, "the elevator moves her: another domain writes y"),
             Self::Command(code) => write!(f, "pose change command {code:#06X}"),
+            Self::NotRunning(code) => {
+                write!(
+                    f,
+                    "her frame handler {code:#06X} runs no motion: {}",
+                    stopped(*code)
+                )
+            }
+            Self::MovementHandler(code) => write!(f, "movement handler {code:#06X}"),
+            Self::Deferred(behaviour) => write!(f, "deferred: {behaviour}"),
         }
     }
 }
@@ -94,6 +149,157 @@ fn word(record: &FrameRecord, source: WramWord) -> Result<u16, Skip> {
 
 fn byte(record: &FrameRecord, source: WramByte) -> Result<u8, Skip> {
     Ok(source.read(&record.wram)?)
+}
+
+/// Bank $90 log: the handler gameplay runs for Samus once a frame ($90:E722).
+const SAMUS_NEW_STATE_HANDLER: WramWord = WramWord {
+    name: "FRAME_HANDLER_BETA",
+    offset: 0x0A44,
+};
+/// Bank $90 log: the movement handler the normal state handler runs ($90:E94B).
+const SAMUS_MOVEMENT_HANDLER: WramWord = WramWord {
+    name: "SAMUS_MOVEMENT_HANDLER",
+    offset: 0x0A58,
+};
+/// Bank $90 log: the water's surface, negative when the room has none ($90:9741).
+const FX_Y_POS: WramWord = WramWord {
+    name: "FX_Y_POS",
+    offset: 0x195E,
+};
+/// Bank $90 log: the lava's or acid's surface, read when the water's is negative.
+const LAVA_ACID_Y_POS: WramWord = WramWord {
+    name: "LAVA_ACID_Y_POS",
+    offset: 0x1962,
+};
+/// Bank $90 log: bit 2 turns the water's physics off.
+const FX_LIQUID_OPTIONS: WramWord = WramWord {
+    name: "FX_LIQUID_OPTIONS",
+    offset: 0x197E,
+};
+const LIQUID_PHYSICS_OFF: u16 = 0x0004;
+/// Bank $91 log: the pose pose selection proposes this frame, reset to FFFF (none) at the
+/// frame's start ($90:E69E) and read by the pose update ($91:EBCD).
+const SAMUS_PROSPECTIVE_POSE: WramWord = WramWord {
+    name: "SAMUS_NEW_POSE",
+    offset: 0x0A28,
+};
+const NO_POSE: u16 = 0x8000;
+/// The knockback's movement type.
+const KNOCKBACK: u8 = 0x0A;
+/// Bank $94 log: the pushes the block-inside reactions (quicksand, treadmills) set at the start
+/// of each frame, before the motion ($94:9B60): the extra displacements and the X deceleration
+/// multiplier.
+const EXTRA_X_DISPLACEMENT: WramWord = WramWord {
+    name: "EXTRA_SAMUS_X_DISPLACEMENT",
+    offset: 0x0B58,
+};
+const EXTRA_X_SUBDISPLACEMENT: WramWord = WramWord {
+    name: "EXTRA_SAMUS_X_SUBDISPLACEMENT",
+    offset: 0x0B56,
+};
+const EXTRA_Y_DISPLACEMENT: WramWord = WramWord {
+    name: "EXTRA_SAMUS_Y_DISPLACEMENT",
+    offset: 0x0B5C,
+};
+const EXTRA_Y_SUBDISPLACEMENT: WramWord = WramWord {
+    name: "EXTRA_SAMUS_Y_SUBDISPLACEMENT",
+    offset: 0x0B5A,
+};
+const X_DECEL_MULTIPLIER: WramByte = WramByte {
+    name: "SAMUS_X_DECEL_MULT",
+    offset: 0x0B4C,
+};
+/// Bank $84 log: the quicksand's reactions set this, and zero her speeds.
+const IN_QUICKSAND: WramWord = WramWord {
+    name: "SAMUS_IN_QUICKSAND",
+    offset: 0x1E71,
+};
+
+/// Whether frame `next` (its record: the pushes stay until the next frame's start) ran a
+/// block-inside push.
+fn pushed(next: &FrameRecord) -> Result<bool, Skip> {
+    let words = [
+        EXTRA_X_DISPLACEMENT,
+        EXTRA_X_SUBDISPLACEMENT,
+        EXTRA_Y_DISPLACEMENT,
+        EXTRA_Y_SUBDISPLACEMENT,
+        IN_QUICKSAND,
+    ];
+    for source in words {
+        if word(next, source)? != 0 {
+            return Ok(true);
+        }
+    }
+    Ok(byte(next, X_DECEL_MULTIPLIER)? != 0)
+}
+
+/// What the handler `code`, one that runs no motion, is.
+const fn stopped(code: u16) -> &'static str {
+    match code {
+        0xE8DC => "she is locked",
+        0xE8D6 => "she is locked into a station",
+        0xE8D9 => "she is being drained",
+        0xE902 => "she enters or leaves the gunship",
+        0xE8CD => "none",
+        0xE94F => "the x-ray scope freezes time",
+        0xE90E => "no movement",
+        _ => "an unnamed handler",
+    }
+}
+
+/// Whether Samus's handlers in `record` run the motion of this domain in the next frame: the
+/// normal, Ceres or elevator state handler (each runs the movement handler), and the normal
+/// movement handler.
+fn motion_runs(record: &FrameRecord) -> Result<(), Skip> {
+    match word(record, SAMUS_NEW_STATE_HANDLER)? {
+        0xE725 | 0xE8AA | 0xE8EC => {}
+        code => return Err(Skip::NotRunning(code)),
+    }
+    let deferred = match word(record, SAMUS_MOVEMENT_HANDLER)? {
+        0xA337 => return Ok(()),
+        0x946E => Deferred::Grapple,
+        0xDF38 => Deferred::Knockback,
+        0xE025 | 0xE032 | 0xE04C | 0xE066 => Deferred::BombJump,
+        0xD068 | 0xD0AB | 0xD0D7 | 0xD106 | 0xD346 | 0xD383 | 0xD396 | 0xD3CC | 0xD3F3 | 0xD40D
+        | 0xD678 | 0xD6CE | 0xD75B => Deferred::Shinespark,
+        code @ (0xE94F | 0xE90E) => return Err(Skip::NotRunning(code)),
+        code => return Err(Skip::MovementHandler(code)),
+    };
+    Err(Skip::Deferred(deferred))
+}
+
+/// Whether she is in a liquid in `record` with the y radius `radius`, as the speed tables and
+/// the jump test it: her bottom boundary below the water's surface (unless its physics are
+/// off), or, with no water, below the lava's or acid's. The gravity suit ignores both.
+fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
+    if word(record, source::EQUIPPED_ITEMS)? & GRAVITY_SUIT != 0 {
+        return Ok(false);
+    }
+    let bottom = word(record, source::SAMUS_Y_POS)?
+        .wrapping_add(radius)
+        .wrapping_sub(1);
+    let above = |surface: u16| surface.wrapping_sub(bottom).cast_signed() < 0;
+    let water = word(record, FX_Y_POS)?;
+    Ok(if water.cast_signed() >= 0 {
+        above(water) && word(record, FX_LIQUID_OPTIONS)? & LIQUID_PHYSICS_OFF == 0
+    } else {
+        let lava = word(record, LAVA_ACID_Y_POS)?;
+        lava.cast_signed() >= 0 && above(lava)
+    })
+}
+
+/// Whether the speed booster changes the frame from `from` to `next`: with it equipped, extra
+/// run speed at 2.0 or more (its cap is 7.0, not 2.0), or any extra run speed on a frame that
+/// jumps (rises, faster than before), since a jump adds half of it to the jump speed.
+fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
+    if word(from, source::EQUIPPED_ITEMS)? & SPEED_BOOSTER == 0 {
+        return Ok(false);
+    }
+    let (before, after) = (state(from)?, state(next)?);
+    let jumped = after.vertical == VerticalMotion::Up
+        && (before.vertical != VerticalMotion::Up
+            || after.vertical_speed.0 > before.vertical_speed.0);
+    Ok(before.extra_run.pixel() >= 2 || (before.extra_run.0 != 0 && jumped))
 }
 
 fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, DecodeError> {
@@ -588,6 +794,7 @@ impl Domain for SamusMotion {
 
     fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(State, Inputs), Skip> {
         runs_after(from)?;
+        motion_runs(from)?;
         let pose = Pose::of(from)?;
         // The pad the frame's gameplay reads is the one the NMI ending record N's interval
         // stored, which record N holds.
@@ -644,9 +851,30 @@ impl Domain for SamusMotion {
         if before.y != after.y {
             return Err(Skip::PoseFit);
         }
+        if pushed(next)? {
+            return Err(Skip::Deferred(Deferred::Push));
+        }
+        if submerged(from, after.y)? || submerged(next, after.y)? {
+            return Err(Skip::Deferred(Deferred::Liquid));
+        }
+        if boosted(from, next)? {
+            return Err(Skip::Deferred(Deferred::SpeedBooster));
+        }
         let (old, new) = (Pose::of(from)?, Pose::of(next)?);
+        if new.movement == KNOCKBACK && old.movement != KNOCKBACK {
+            return Err(Skip::Deferred(Deferred::Knockback));
+        }
+        // Pose selection proposes a pose, which may be the one she has: then nothing starts,
+        // but its command still runs and the arm-pump step still reads it.
+        let proposed = word(next, SAMUS_PROSPECTIVE_POSE)? & NO_POSE == 0;
         let pose = if new == old {
-            None
+            proposed.then_some(NewPose {
+                start: None,
+                replaced: false,
+                command: Command::try_from(word(next, source::SAMUS_POSE_CHANGE_COMMAND)?)?,
+                started_falling: false,
+                running: new.movement == 0x01,
+            })
         } else {
             let (start, replaced) = new.start_after(old);
             Some(NewPose {
