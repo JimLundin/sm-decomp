@@ -190,8 +190,13 @@ switches between them. A domain goes in this order (review R2):
    the catalogue's source and the domain's design note, and Jim can read them as a description of
    what Super Metroid does.
 2. **A spec reviewer** checks the spec before any implementer starts. That is Jim, or an agent that
-   hasn't seen the asm. The question: could someone who never saw the asm implement this, and
-   would the code be shaped by the domain? (review R4)
+   hasn't seen the asm. The questions:
+   - Could someone who never saw the asm implement this, and would the code be shaped by the domain?
+     (review R4)
+   - Is each entry a behaviour a player would recognise, or a routine of the original renamed?
+     Entries that follow the original's routine boundaries, or use its internal concepts, are
+     regrouped by behaviour before the implementer starts. The clean room stops transliteration.
+     This question stops the implementer inheriting the observer's breakdown of the original.
 3. **The implementer** designs the State types and the model from the spec alone. It writes into
    an **empty module**, `game::model::<domain>`, never opens the old module, and deletes it in the
    same commit (review R3). A test in `game` runs the vector file, so it iterates locally and

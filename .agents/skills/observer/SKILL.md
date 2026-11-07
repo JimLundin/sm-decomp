@@ -26,7 +26,10 @@ its template. This skill adds only how to do them.
 - Commit the vectors as `scenarios/vectors/<domain>.toml`: before, pad and after, in domain terms.
   Once the implementer's types exist, check that the file reads into them.
 - Before handing over, reread the spec as the reviewer will: no routine-named headings, no address
-  outside a `Source:` line, no step list that follows a routine.
+  outside a `Source:` line, no step list that follows a routine. Group the entries by what a player
+  sees, not by the routines you read, and use domain words in the rules, not the original's internal
+  concepts. For example, write "a pose handed over when an animation ends", not "a super special
+  proposal".
 
 ## 2. The decoder
 
