@@ -152,8 +152,26 @@ fn the_clock_holds_its_matched_frames_against_the_cache() {
 /// row: a floor, as [`CLOCK_MATCHED`] is.
 const MOTION_MATCHED: [(&str, u64); 2] = [("area-brinstar", 22), ("item-morph-ball", 553)];
 
+/// The rows cached under `cache` (a directory with an `index.txt`), sorted, less `held`.
+fn other_cached_rows(cache: &Path, held: &[(&str, u64)]) -> Vec<String> {
+    let entries = match std::fs::read_dir(cache) {
+        Ok(entries) => entries,
+        Err(error) => panic!("SM_CACHE {}: {error}", cache.display()),
+    };
+    let mut rows: Vec<String> = entries
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().join("index.txt").is_file())
+        .filter_map(|entry| entry.file_name().into_string().ok())
+        .filter(|row| held.iter().all(|(name, _)| name != row))
+        .collect();
+    rows.sort();
+    rows
+}
+
 /// Samus's motion over every cached row, held to [`MOTION_MATCHED`]; `SM_CACHE` and `SM_ROM`
-/// as the clock's test reads them.
+/// as the clock's test reads them. Any other row cached there (`tools/oracle/record_caches.sh`)
+/// is run and reported without a floor, since CI's cache holds only the held rows; the last
+/// lines total each field over every row.
 #[test]
 fn samus_motion_holds_its_matched_frames_against_the_cache() {
     use std::io::Write as _;
@@ -178,12 +196,42 @@ fn samus_motion_holds_its_matched_frames_against_the_cache() {
         Err(error) => panic!("speeds: {error:?}"),
     };
     let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
-    for (row, floor) in MOTION_MATCHED {
-        let report = match run_cached(&domain, &lock, Path::new(&cache), row) {
+    let cache = Path::new(&cache);
+    let others = other_cached_rows(cache, &MOTION_MATCHED);
+    let rows = MOTION_MATCHED
+        .iter()
+        .map(|&(row, floor)| (row, Some(floor)))
+        .chain(others.iter().map(|row| (row.as_str(), None)));
+    let mut totals: Vec<(&'static str, u64, u64)> = Vec::new();
+    let (mut matched, mut compared, mut frames) = (0_u64, 0_u64, 0_u64);
+    for (row, floor) in rows {
+        let report = match run_cached(&domain, &lock, cache, row) {
             Ok(report) => report,
             Err(error) => panic!("{row}: {error}"),
         };
         let _ = write!(std::io::stdout(), "{row}: {report}");
-        assert!(report.matched >= floor, "{row}: {report}");
+        if let Some(floor) = floor {
+            assert!(report.matched >= floor, "{row}: {report}");
+        }
+        matched = matched.saturating_add(report.matched);
+        compared = compared.saturating_add(report.compared);
+        frames = frames.saturating_add(report.frames);
+        for field in &report.fields {
+            let checked = field.matched.saturating_add(field.mismatched);
+            match totals.iter_mut().find(|(name, ..)| *name == field.name) {
+                Some((_, total_matched, total_checked)) => {
+                    *total_matched = total_matched.saturating_add(field.matched);
+                    *total_checked = total_checked.saturating_add(checked);
+                }
+                None => totals.push((field.name, field.matched, checked)),
+            }
+        }
+    }
+    let _ = writeln!(
+        std::io::stdout(),
+        "all rows: {matched} of {frames} frames matched ({compared} compared)"
+    );
+    for (name, field_matched, checked) in totals {
+        let _ = writeln!(std::io::stdout(), "  {name} {field_matched} of {checked}");
     }
 }
