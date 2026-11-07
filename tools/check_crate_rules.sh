@@ -22,7 +22,7 @@ allowed() {
     app) echo "data game runtime" ;;
     oracle) echo "data oracle_record" ;;
     oracle_record) echo "" ;;
-    verify) echo "data game runtime oracle_record canonical" ;;
+    verify) echo "data game runtime oracle_record canonical clean_types clean_model_samus_motion" ;;
     tools) echo "verify oracle runtime" ;;
     canonical) echo "canonical_derive" ;;
     canonical_derive) echo "" ;;
