@@ -20,6 +20,7 @@ pub mod projectile;
 pub mod ratchet;
 pub mod size;
 pub mod source;
+pub mod spec_units;
 pub mod strand;
 
 #[cfg(test)]

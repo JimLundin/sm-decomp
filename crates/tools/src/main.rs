@@ -11,6 +11,9 @@
 //!
 //! `tools gate LOCK BUNDLE ROM GREEN [--update] ROW...`: the free-run gate ([`gate`]).
 //!
+//! `tools spec-units SPEC VECTORS [--areas FILE] [--baseline AREA=TOKENS]... [--against OLD]`:
+//! a behaviour spec's units and the size budget they set, by area (`verify::spec_units`).
+//!
 //! `tools localise LOCK BUNDLE CACHE ROM ROW...`: the free run's first differing frame per
 //! field against the record cache ([`localise`]).
 //!
@@ -37,7 +40,8 @@ const HARNESS_USAGE: &str = "tools harness game-time LOCK CACHE ROW...";
 
 fn usage() -> String {
     format!(
-        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}\n       {}",
+        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}\n       {}\n       {}",
+        verify::spec_units::USAGE,
         gate::USAGE,
         localise::USAGE,
         verify::size::USAGE
@@ -46,6 +50,7 @@ fn usage() -> String {
 
 fn run(args: &[String]) -> Result<String, String> {
     match args {
+        [command, rest @ ..] if command == "spec-units" => verify::spec_units::run(rest),
         [command, rest @ ..] if command == "lockstep" => run_lockstep(rest),
         [command, rest @ ..] if command == "gate" => gate::run(rest),
         [command, rest @ ..] if command == "localise" => localise::run(rest),

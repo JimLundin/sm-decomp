@@ -152,6 +152,14 @@ and the minimality review catches that (§6).
 6. **The header's budget line is generated:** `Budget: 24 × 271 = 6,500 (motion 2,500, fit 670, …)`.
    The tool prints Δunits and Δbudget for every spec commit.
 
+**The tool** is `tools spec-units SPEC VECTORS [--areas FILE] [--baseline AREA=N] [--against OLD]`
+([`verify::spec_units`](../../crates/verify/src/spec_units.rs), whose module note states every
+rule it applies). Areas are header lines, one per area, as a paragraph or a bullet:
+`Area motion (old 3,818): SpeedBuildsAndBrakes, Dash, …, 1.2, 9`. An item names an entry or any
+other heading, by its text or its leading number; `(old N)` sets the 70 % cap. A spec commit shows
+its change with `git show HEAD~1:docs/behaviours/D.md > old.md` and `--against old.md`, which adds
+`change: units 4.7 → 7.7 (+3.0), budget 112 → 184 (+72)` to the report.
+
 **How far samus-motion follows it today:**
 
 | Part of the convention | Today |
