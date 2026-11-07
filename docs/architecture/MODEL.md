@@ -36,9 +36,11 @@ Jim's decisions, 2026-11-07:
    logic, not counted against it (§4). So are type declarations: defining shapes is to be
    promoted, not taxed. The score weighs each logic token by what the code's priorities make of
    it, so that a lower score means better code, not churn: forms that hold no behaviour are
-   free, a function signature is half, a `true` or `false` is double (§4). The integrator's
-   bridge is reported apart and not counted against the model, which its implementer didn't
-   write (Jim, 2026-11-07).
+   free, a function signature is half, a `true` or `false` is double (§4). Two quality terms
+   compose with those weights: depth (Q1), so nested decisions cost more than a flat dispatch,
+   and clumps (Q2), so values that travel together without a type pay where they recur (§4).
+   The integrator's bridge is reported apart and not counted against the model, which its
+   implementer didn't write (Jim, 2026-11-07).
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
    of a 2D pixel-art game today expects: a character controller stepped at a fixed timestep,
    state machines whose moves are table rows, input as actions, tilemap collision with per-tile
@@ -245,6 +247,34 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
 
   A target is set under the same weights as the baseline it is compared with; a reweighted model
   against an old-weight target would be a rule change hidden in a tool change.
+- **Two quality terms compose with the weights** (Jim, 2026-11-07, on the quality-score review).
+  Size-like metrics (Halstead, ABC, cyclomatic, fan-out) track the token count and would count
+  size twice; these two measure what tokens miss. `tools size` prints each term's part of the
+  score in its own column, so every number stays auditable.
+  - **Q1, depth.** A logic token weighs `1 + 0.25 × d` times its weight, `d` the number of blocks
+    around it inside a function body that nest: the block of an `if`, an `else`, a loop or a
+    let-else, a closure's body (a block or an expression) and a `match` arm written as a block
+    (`=> {`). A `match`'s own braces, its expression arms and a guard's `if` don't nest, so a flat
+    dispatch stays at depth 0. Helpers, early returns and let-else are the cheaper forms, and they
+    are the better ones.
+  - **Q2, clumps.** A pair of parameter types other than `bool` that is in three or more
+    signatures loses the signature's half on those parameters: they weigh one a token. A
+    parameter's type is the first name it holds (`&mut Mover` is `Mover`), primitives included,
+    so downgrading a type to `u16` doesn't dodge it. A pair of argument expressions (call
+    arguments or a struct literal's field values) that recurs at three or more sites pays the
+    shorter expression's tokens again at every site after the second; an expression holding a
+    call, a literal and `..base` are left out. Clumps are counted over all the files measured
+    together. A concept that removes a recurring pair pays for itself; a struct built only to
+    carry one call's arguments pays as the arguments did.
+  - **The parameter count is not a term.** A struct of the arguments would game any count, and
+    the base and Q2 already price an interface's width.
+  - Measured on round 7 (`tools size`, both sides the same counter): the old code scores 12,723
+    (base 11,557.5, depth +828.5, clumps +337) and round 7 8,401.75 (7,465, +700.25, +236.5).
+    Of four rewrites of round 7, the argument struct scores worse (+59.5) and her body box as a
+    concept (−34.75), the box without methods (−33.75) and a split of `Samus::take` (−20)
+    better.
+- **k is re-derived under this score** (decision 7): the old code's density times 0.55, so
+  12,723 / 271 units × 0.55 = 25.8 weighted tokens per unit.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once

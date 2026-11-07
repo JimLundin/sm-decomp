@@ -17,11 +17,20 @@
 //! function signature weighs half, so a named step costs less than its body inlined twice.
 //! `true` and `false` weigh double: flag-style code that a typed state replaces. Every other
 //! logic token weighs one.
+//!
+//! Two quality terms compose with the weights (Jim, 2026-11-07; `quality` states them). Depth
+//! (Q1): a token `d` blocks deep weighs `1 + 0.25 × d` times its weight, so nested decisions cost
+//! more than a flat dispatch. Clumps (Q2): values that travel together and want a type pay where
+//! they recur, in signatures and at call sites, over all the paths of one run.
+
+mod quality;
 
 use std::fmt;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use quality::Context;
 
 /// The command line `run` takes.
 pub const USAGE: &str = "tools size PATH...";
@@ -33,14 +42,14 @@ const OPERATORS: &[&str] = &[
 ];
 
 /// A lexed token. A closing bracket is kept so the test filter can track depth, but a pair counts
-/// once.
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// once. A literal keeps its text, so clumps (Q2) can tell argument expressions apart.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 enum Token<'a> {
     Open(char),
     Close,
     Word(&'a str),
     Punct(&'a str),
-    Literal,
+    Literal(&'a str),
 }
 
 /// What a piece of source starts with, and the text after it.
@@ -89,11 +98,13 @@ fn next(rest: &str, c: char) -> (Lexeme<'_>, &str) {
     } else if rest.starts_with("/*") {
         (Lexeme::Skip, after_block_comment(rest))
     } else if let Some(after) = after_string(rest) {
-        (Lexeme::Token(Token::Literal), after)
+        (Lexeme::Token(Token::Literal(consumed(rest, after))), after)
     } else if c == '\'' {
-        (Lexeme::Token(Token::Literal), after_quote(rest))
+        let after = after_quote(rest);
+        (Lexeme::Token(Token::Literal(consumed(rest, after))), after)
     } else if c.is_ascii_digit() {
-        (Lexeme::Token(Token::Literal), after_number(rest))
+        let after = after_number(rest);
+        (Lexeme::Token(Token::Literal(consumed(rest, after))), after)
     } else if is_word_char(c) {
         let body = rest.strip_prefix("r#").unwrap_or(rest);
         let after = after_while(body, is_word_char);
@@ -229,7 +240,7 @@ const TEST_ATTRIBUTE: [Token<'static>; 7] = [
     Token::Close,
 ];
 
-/// What one logic token weighs in the score (Jim, 2026-11-07).
+/// What one logic token weighs in the score (Jim, 2026-11-07), before depth (Q1).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Weight {
     /// A form that holds no behaviour, so trading it costs nothing: a `use` item, a `mod`
@@ -245,7 +256,7 @@ enum Weight {
 }
 
 impl Weight {
-    /// The weight in half tokens, which keeps a signature's half whole.
+    /// The weight in half tokens.
     const fn halves(self) -> usize {
         match self {
             Self::Free => 0,
@@ -256,14 +267,15 @@ impl Weight {
     }
 }
 
-/// The weighted score of a source's logic, the number the size rule holds, kept in half tokens.
+/// A weighted score, the number the size rule holds, kept in eighths of a token: a signature's
+/// half at a depth's quarter steps stays whole.
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Score(usize);
 
 impl Score {
-    /// The score in half tokens.
+    /// The score in eighths of a token.
     #[must_use]
-    pub const fn halves(self) -> usize {
+    pub const fn eighths(self) -> usize {
         self.0
     }
 
@@ -271,18 +283,21 @@ impl Score {
         Self(self.0.saturating_add(other.0))
     }
 
-    const fn weigh(self, weight: Weight) -> Self {
-        Self(self.0.saturating_add(weight.halves()))
+    /// `halves` half tokens, each `quarters` quarters of its weight.
+    const fn of(halves: usize, quarters: usize) -> Self {
+        Self(halves.saturating_mul(quarters))
     }
 }
 
 impl fmt::Display for Score {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let whole = self.0 / 2;
-        let text = if self.0.is_multiple_of(2) {
+        let whole = self.0 / 8;
+        let thousandths = (self.0 % 8).saturating_mul(125);
+        let text = if thousandths == 0 {
             whole.to_string()
         } else {
-            format!("{whole}.5")
+            let fraction = format!("{thousandths:03}");
+            format!("{whole}.{}", fraction.trim_end_matches('0'))
         };
         f.pad(&text)
     }
@@ -291,8 +306,12 @@ impl fmt::Display for Score {
 /// A source's size, split between logic, declarations and data, and its logic's score.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
 pub struct Size {
-    /// The weighted logic, which the size rule holds.
+    /// The weighted logic, which the size rule holds, its quality terms included.
     pub score: Score,
+    /// The part of the score that depth adds (Q1).
+    pub depth: Score,
+    /// The part of the score that clumps add (Q2).
+    pub clumps: Score,
     /// Every counted token that is neither a declaration nor a constant's or a static's value.
     pub logic: usize,
     /// The tokens of item-level `struct`, `enum`, `union` and `type` items, of attributes and of
@@ -308,30 +327,81 @@ impl Size {
     const fn add(self, other: Self) -> Self {
         Self {
             score: self.score.add(other.score),
+            depth: self.depth.add(other.depth),
+            clumps: self.clumps.add(other.clumps),
             logic: self.logic.saturating_add(other.logic),
             types: self.types.saturating_add(other.types),
             data: self.data.saturating_add(other.data),
         }
     }
 
-    /// One more logic token of `weight`.
-    const fn weigh(self, weight: Weight) -> Self {
-        Self {
-            score: self.score.weigh(weight),
-            logic: self.logic.saturating_add(1),
-            ..self
+    /// One more token of `class`, in `context`.
+    fn with(self, class: Class, context: Context) -> Self {
+        match class {
+            Class::Logic(weight) => {
+                let quarters = context.depth.saturating_add(4);
+                // A parameter in a clump (Q2) loses the signature's half.
+                let clump = if context.clump && weight == Weight::Half {
+                    Score::of(
+                        Weight::Single
+                            .halves()
+                            .saturating_sub(Weight::Half.halves()),
+                        quarters,
+                    )
+                } else {
+                    Score::default()
+                };
+                Self {
+                    score: self
+                        .score
+                        .add(Score::of(weight.halves(), quarters))
+                        .add(clump),
+                    depth: self.depth.add(Score::of(weight.halves(), context.depth)),
+                    clumps: self.clumps.add(clump),
+                    logic: self.logic.saturating_add(1),
+                    ..self
+                }
+            }
+            Class::Type => Self {
+                types: self.types.saturating_add(1),
+                ..self
+            },
+            Class::Data => Self {
+                data: self.data.saturating_add(1),
+                ..self
+            },
+            Class::Uncounted => self,
         }
     }
 
-    /// That many counted tokens, all types.
-    const fn typed(tokens: usize) -> Self {
+    /// The size with `tokens` more paid again for a repeated argument pair (Q2), at one each.
+    const fn repeated(self, tokens: usize) -> Self {
+        let again = Score::of(Weight::Single.halves().saturating_mul(tokens), 4);
         Self {
-            score: Score(0),
-            logic: 0,
-            types: tokens,
-            data: 0,
+            score: self.score.add(again),
+            clumps: self.clumps.add(again),
+            ..self
         }
     }
+}
+
+/// How one token is reported.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum Class {
+    /// Logic, of a weight.
+    Logic(Weight),
+    /// A declaration, an attribute or a constant's head.
+    Type,
+    /// A constant's or a static's value that holds no behaviour.
+    Data,
+    /// A closing bracket: its pair is counted at the opening one.
+    Uncounted,
+}
+
+/// The index just past the bracket group that opens at `open`, or the end.
+fn group_end(tokens: &[Token<'_>], open: usize) -> usize {
+    let rest = tokens.get(open..).unwrap_or_default();
+    tokens.len().saturating_sub(after_group(rest).len())
 }
 
 /// The tokens after the bracket group that `tokens` starts with.
@@ -348,7 +418,7 @@ const fn after_group<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
                     return rest;
                 }
             }
-            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+            Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {}
         }
     }
     rest
@@ -379,22 +449,31 @@ fn ends_item(previous: Option<Token<'_>>) -> bool {
     )
 }
 
-/// The count, without `#[cfg(test)]` items, with each bracket pair once, with the values of
-/// item-level constants and statics as data unless they hold behaviour, and with each logic
-/// token weighed.
-fn count(tokens: &[Token<'_>]) -> Size {
-    let mut size = Size::default();
+/// The tokens without their `#[cfg(test)]` items.
+fn without_tests<'a>(tokens: &[Token<'a>]) -> Vec<Token<'a>> {
+    let mut out = Vec::with_capacity(tokens.len());
     let mut rest = tokens;
-    let mut previous = None;
-    // How many tokens are left once the last signature reaches its body or its `;`.
-    let mut signature_end = None;
     while let Some((&token, tail)) = rest.split_first() {
         if let Some(item) = rest.strip_prefix(&TEST_ATTRIBUTE[..]) {
             rest = after_item(item);
             continue;
         }
-        if let Some((item, after)) = free_item(rest, previous) {
-            size = size.add(item);
+        out.push(token);
+        rest = tail;
+    }
+    out
+}
+
+/// One class for each token: the values of item-level constants and statics as data unless
+/// they hold behaviour, declarations as types, each logic token weighed and each closing bracket
+/// uncounted.
+fn classify(tokens: &[Token<'_>], out: &mut Vec<Class>) {
+    let mut rest = tokens;
+    let mut previous = None;
+    // How many tokens are left once the last signature reaches its body or its `;`.
+    let mut signature_end = None;
+    while let Some((&token, tail)) = rest.split_first() {
+        if let Some(after) = free_item(rest, previous, out) {
             previous = before(rest, after).last().copied();
             rest = after;
             continue;
@@ -408,7 +487,7 @@ fn count(tokens: &[Token<'_>]) -> Size {
         };
         if let Some(after) = after {
             let item = before(rest, after);
-            size = size.add(Size::typed(counted(item)));
+            mark(out, item, Class::Type);
             previous = item.last().copied();
             rest = after;
             continue;
@@ -416,22 +495,35 @@ fn count(tokens: &[Token<'_>]) -> Size {
         if token == Token::Word("fn") && matches!(tail.first(), Some(Token::Word(_))) {
             signature_end = Some(signature_body(tail).len());
         }
-        if token != Token::Close {
+        out.push(if token == Token::Close {
+            Class::Uncounted
+        } else {
             let in_signature = signature_end.is_some_and(|end| rest.len() > end);
-            size = size.weigh(weight(token, tail.first(), in_signature));
-        }
+            Class::Logic(weight(token, tail.first(), in_signature))
+        });
         previous = Some(token);
         rest = tail;
     }
-    size
 }
 
-/// The size of the constant, `use` item or `mod` declaration at the start of `tokens`, whose
-/// item `previous` ended, and the tokens after it.
+/// One `class` for each of `tokens`, closing brackets uncounted.
+fn mark(out: &mut Vec<Class>, tokens: &[Token<'_>], class: Class) {
+    out.extend(tokens.iter().map(|&token| {
+        if token == Token::Close {
+            Class::Uncounted
+        } else {
+            class
+        }
+    }));
+}
+
+/// The classes of the constant, `use` item or `mod` declaration at the start of `tokens`, whose
+/// item `previous` ended, pushed onto `out`, and the tokens after it.
 fn free_item<'a, 'b>(
     tokens: &'a [Token<'b>],
     previous: Option<Token<'b>>,
-) -> Option<(Size, &'a [Token<'b>])> {
+    out: &mut Vec<Class>,
+) -> Option<&'a [Token<'b>]> {
     if !ends_item(previous) {
         return None;
     }
@@ -441,42 +533,37 @@ fn free_item<'a, 'b>(
             if !matches!(tail.first(), Some(Token::Word("fn" | "unsafe" | "extern"))) =>
         {
             let (head, value, after) = split_value(tokens)?;
-            let value = if holds_behaviour(value) {
-                count(value)
-            } else {
-                Size {
-                    data: counted(value),
-                    ..Size::default()
+            mark(out, head, Class::Type);
+            if head.last() == Some(&Token::Punct("=")) {
+                if holds_behaviour(value) {
+                    classify(value, out);
+                } else {
+                    mark(out, value, Class::Data);
                 }
-            };
-            Some((Size::typed(head).add(value), after))
+                // Its `;`.
+                out.push(Class::Type);
+            }
+            Some(after)
         }
         Token::Word("use") => {
             let after = after_semicolon(tokens);
-            let logic = counted(before(tokens, after));
-            Some((
-                Size {
-                    logic,
-                    ..Size::default()
-                },
-                after,
-            ))
+            mark(out, before(tokens, after), Class::Logic(Weight::Free));
+            Some(after)
         }
         Token::Word("mod") => match tail {
             [
                 Token::Word(_),
                 Token::Punct(";") | Token::Open('{'),
                 after @ ..,
-            ] => Some((
-                Size {
-                    logic: 3,
-                    ..Size::default()
-                },
-                after,
-            )),
+            ] => {
+                mark(out, before(tokens, after), Class::Logic(Weight::Free));
+                Some(after)
+            }
             _ => None,
         },
-        Token::Open(_) | Token::Close | Token::Word(_) | Token::Punct(_) | Token::Literal => None,
+        Token::Open(_) | Token::Close | Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {
+            None
+        }
     }
 }
 
@@ -491,7 +578,7 @@ fn after_semicolon<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
             Token::Punct(";") if depth == 0 => return rest,
             Token::Open(_) => depth = depth.saturating_add(1),
             Token::Close => depth = depth.saturating_sub(1),
-            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+            Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {}
         }
     }
     rest
@@ -524,7 +611,7 @@ fn signature_body<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
             Token::Open('{') | Token::Punct(";") if depth == 0 => return rest,
             Token::Open(_) => depth = depth.saturating_add(1),
             Token::Close => depth = depth.saturating_sub(1),
-            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+            Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {}
         }
         rest = tail;
     }
@@ -545,8 +632,8 @@ const NOT_CALLS: &[&str] = &[
 /// A call is a lower-case name followed by its arguments, `f(..)`, `T::new(..)`, `x.get(..)` or
 /// `size_of::<T>()`. Rust names functions and methods in snake case and tuple structs and enum
 /// variants in camel case (the `non_snake_case` and `non_camel_case_types` lints hold it), so a
-/// table row built from constructors, `Held(Key::Jump)`, `Not(&Airborne)` or `Some(3)`, and
-/// struct literals stay data.
+/// table row built from constructors, `Held(Key::Jump)`, `Not(&Airborne)` or `Some(3)`, struct
+/// literals and a column of plain enum values per situation (`ledge: Falls`) stay data.
 fn holds_behaviour(value: &[Token<'_>]) -> bool {
     let mut previous = None;
     let mut rest = value;
@@ -569,7 +656,7 @@ fn holds_behaviour(value: &[Token<'_>]) -> bool {
                 previous,
                 None | Some(Token::Open(_) | Token::Punct("," | ";" | ":" | "=>"))
             ),
-            Token::Open(_) | Token::Close | Token::Punct(_) | Token::Literal => false,
+            Token::Open(_) | Token::Close | Token::Punct(_) | Token::Literal(_) => false,
         };
         if behaviour {
             return true;
@@ -585,11 +672,11 @@ fn counted(tokens: &[Token<'_>]) -> usize {
     tokens.iter().filter(|t| **t != Token::Close).count()
 }
 
-/// A constant item split into its head's count (from `const` to `=`, and the `;`), its value
-/// (none in a trait's `const X: T;`), and the tokens after its `;`.
+/// A constant item split into its head, its value and the tokens after its `;`. The head runs
+/// from `const` to the `=`; a trait's `const X: T;` has no value, and its head is the whole item.
 fn split_value<'a, 'b>(
     tokens: &'a [Token<'b>],
-) -> Option<(usize, &'a [Token<'b>], &'a [Token<'b>])> {
+) -> Option<(&'a [Token<'b>], &'a [Token<'b>], &'a [Token<'b>])> {
     let mut open = 0usize;
     let mut equals = None;
     for (at, token) in tokens.iter().enumerate() {
@@ -600,13 +687,12 @@ fn split_value<'a, 'b>(
             Token::Punct(";") if open == 0 => {
                 let after = tokens.get(at.checked_add(1)?..)?;
                 let Some(eq) = equals else {
-                    return Some((counted(tokens.get(..=at)?), &[], after));
+                    return Some((tokens.get(..=at)?, &[], after));
                 };
-                let head = counted(tokens.get(..=eq)?).saturating_add(1);
                 let value = tokens.get(eq.checked_add(1)?..at)?;
-                return Some((head, value, after));
+                return Some((tokens.get(..=eq)?, value, after));
             }
-            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+            Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {}
         }
     }
     None
@@ -627,7 +713,7 @@ fn after_item<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
                 }
             }
             Token::Punct(";") if open.is_empty() => return rest,
-            Token::Word(_) | Token::Punct(_) | Token::Literal => {}
+            Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {}
         }
     }
     rest
@@ -658,14 +744,36 @@ fn sources(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
     Ok(())
 }
 
+/// The size of each source text, measured together: a clump (Q2) recurs across them.
+fn sizes(srcs: &[&str]) -> Vec<Size> {
+    let lexed: Vec<Vec<Token<'_>>> = srcs.iter().map(|src| without_tests(&lex(src))).collect();
+    let quality = quality::of(&lexed);
+    lexed
+        .iter()
+        .zip(quality)
+        .map(|(tokens, (contexts, repeated))| {
+            let mut classes = Vec::with_capacity(tokens.len());
+            classify(tokens, &mut classes);
+            classes
+                .into_iter()
+                .zip(contexts)
+                .fold(Size::default(), |size, (class, context)| {
+                    size.with(class, context)
+                })
+                .repeated(repeated)
+        })
+        .collect()
+}
+
 /// The size of one source text.
 #[must_use]
 pub fn of(src: &str) -> Size {
-    count(&lex(src))
+    sizes(&[src]).into_iter().next().unwrap_or_default()
 }
 
-/// Each `.rs` file's score, then its logic, types and data tokens, under the paths, one line
-/// each, then the totals.
+/// Each `.rs` file's score, then its logic, types and data tokens and the score's depth and
+/// clump parts, under the paths, one line each, then the totals. Clumps are found over all the
+/// files together.
 ///
 /// # Errors
 ///
@@ -678,11 +786,14 @@ pub fn run(args: &[String]) -> Result<String, String> {
     for arg in args {
         sources(Path::new(arg), &mut files)?;
     }
-    let mut out = String::from("    score   logic   types    data file\n");
+    let texts = files
+        .iter()
+        .map(|file| fs::read_to_string(file).map_err(|e| format!("{}: {e}", file.display())))
+        .collect::<Result<Vec<_>, _>>()?;
+    let srcs: Vec<&str> = texts.iter().map(String::as_str).collect();
+    let mut out = String::from("      score   logic   types    data     depth    clumps file\n");
     let mut total = Size::default();
-    for file in &files {
-        let src = fs::read_to_string(file).map_err(|e| format!("{}: {e}", file.display()))?;
-        let size = of(&src);
+    for (file, size) in files.iter().zip(sizes(&srcs)) {
         total = total.add(size);
         let _ = writeln!(out, "{} {}", columns(size), file.display());
     }
@@ -690,190 +801,13 @@ pub fn run(args: &[String]) -> Result<String, String> {
     Ok(out)
 }
 
-/// A size's report columns: score, logic, types, data.
+/// A size's report columns: score, logic, types, data, depth, clumps.
 fn columns(size: Size) -> String {
     format!(
-        "{:>9} {:>7} {:>7} {:>7}",
-        size.score, size.logic, size.types, size.data
+        "{:>11} {:>7} {:>7} {:>7} {:>9} {:>9}",
+        size.score, size.logic, size.types, size.data, size.depth, size.clumps
     )
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{Score, Size, of};
-
-    fn tokens(src: &str) -> usize {
-        let size = of(src);
-        size.logic
-            .saturating_add(size.types)
-            .saturating_add(size.data)
-    }
-
-    /// The score in half tokens.
-    fn halves(src: &str) -> usize {
-        of(src).score.halves()
-    }
-
-    #[test]
-    fn layout_and_comments_cost_nothing() {
-        // fn f () a : u8 -> u8 {} a + 1: twelve, each bracket pair once.
-        let tight = "fn f(a: u8) -> u8 { a + 1 }";
-        let spread =
-            "/// Adds one.\nfn f(\n    a: u8, // the input\n) -> u8 {\n    a + 1 /* sum */\n}\n";
-        assert_eq!(tokens(tight), 12);
-        // The same, plus the trailing comma, which weighs nothing.
-        assert_eq!(tokens(spread), 13);
-        assert_eq!(halves(spread), halves(tight));
-    }
-
-    #[test]
-    fn literals_lifetimes_and_operators_are_one_each() {
-        assert_eq!(tokens(r##"r#"a "b" c"#"##), 1);
-        assert_eq!(tokens(r#"b"x\"y""#), 1);
-        assert_eq!(tokens("b'x'"), 1);
-        assert_eq!(tokens("'a'"), 1);
-        assert_eq!(tokens("'\\n'"), 1);
-        assert_eq!(tokens("'\\''"), 1);
-        assert_eq!(tokens("&'a str"), 3);
-        assert_eq!(tokens("0..=0x1F"), 3);
-        assert_eq!(tokens("1.5e-3"), 1);
-        assert_eq!(tokens("x.0.max(1)"), 7);
-        assert_eq!(tokens("a::b"), 3);
-        assert_eq!(tokens("r#type"), 1);
-        assert_eq!(tokens("/* a /* nested */ b */ x"), 1);
-    }
-
-    #[test]
-    fn test_items_are_not_counted() {
-        let src = "fn a() {}\n#[cfg(test)]\nmod tests { fn b() { c(); } }\n#[cfg(test)]\nuse x::y;\nfn d() {}";
-        assert_eq!(tokens(src), tokens("fn a() {} fn d() {}"));
-    }
-
-    #[test]
-    fn a_constants_value_is_data_and_its_head_a_type() {
-        // const ROWS : [] u8 ; 2 = and the ; are types; [] 1 , 2 is data; pub is logic.
-        let table = "pub const ROWS: [u8; 2] = [1, 2];";
-        assert_eq!(
-            of(table),
-            Size {
-                score: Score(2),
-                logic: 1,
-                types: 9,
-                data: 4
-            }
-        );
-        assert_eq!(
-            of("static mut N: u8 = 3;"),
-            Size {
-                score: Score(0),
-                logic: 0,
-                types: 7,
-                data: 1
-            }
-        );
-        // A trait's constant without a value is a declaration too.
-        assert_eq!(of("trait T { const X: u8; }").types, 5);
-    }
-
-    #[test]
-    fn declarations_and_attributes_are_types() {
-        // #[derive(Debug)] is 5 (# [ derive ( Debug), struct S { a : u8 } is 6; pub fn f ( { is logic.
-        let src = "#[derive(Debug)]\npub struct S { a: u8 }\nfn f() {}";
-        assert_eq!(
-            of(src),
-            Size {
-                // pub 1, then fn f ( at half each, then { 1.
-                score: Score(7),
-                logic: 5,
-                types: 11,
-                data: 0
-            }
-        );
-        assert_eq!(of("fn f() -> S { S { a: 1 } }").types, 0);
-    }
-
-    #[test]
-    fn const_fns_generics_and_locals_are_logic() {
-        assert_eq!(of("const fn f() {}").data, 0);
-        assert_eq!(of("fn f<const N: usize>() {}").data, 0);
-        assert_eq!(of("fn f() { let a = 1; }").data, 0);
-        // A constant inside a function body is still a constant's value.
-        assert_eq!(of("fn f() { const A: u8 = 1; }").data, 1);
-    }
-
-    #[test]
-    fn imports_and_module_declarations_weigh_nothing() {
-        let src = "use a::{b, c};\nmod m;\nmod n { fn f() {} }";
-        // f's body brace alone weighs one; fn f ( weigh half each.
-        assert_eq!(of(src).logic, 18);
-        assert_eq!(halves(src), halves("fn f() {}"));
-        // A `use` inside a body is an import too.
-        assert_eq!(halves("{ use E::A; }"), 2);
-    }
-
-    #[test]
-    fn a_const_fns_const_weighs_nothing() {
-        assert_eq!(halves("const fn f() {}"), halves("fn f() {}"));
-        assert_eq!(of("const fn f() {}").logic, 5);
-    }
-
-    #[test]
-    fn a_signature_weighs_half() {
-        // fn f ( a : u8 -> u8 is eight tokens at half, the body's { a + 1 four at one.
-        assert_eq!(halves("fn f(a: u8) -> u8 { a + 1 }"), 8 + 2 * 4);
-        // Up to a declaration's `;`, with generics and bounds; the `;` is the item's, at one.
-        assert_eq!(halves("fn g<T: Into<u8>>(t: T) where T: Copy;"), 17 + 2);
-        // A function-pointer type is not a signature.
-        assert_eq!(halves("let p: fn(u8) = q;"), 2 * 9);
-    }
-
-    #[test]
-    fn true_and_false_weigh_double_in_logic() {
-        assert_eq!(halves("x = true;"), 2 + 2 + 4 + 2);
-        assert_eq!(halves("x = y;"), 2 * 4);
-        // In a constant's value they are data.
-        assert_eq!(halves("const A: bool = true;"), 0);
-        assert_eq!(of("const A: bool = true;").data, 1);
-    }
-
-    #[test]
-    fn a_table_of_constructors_stays_data() {
-        let rows = "const ROWS: &[Row] = &[Row { needs: &[Held(Key::Jump), Not(&Airborne)], \
-                    aim: AIM_UP_ELSE_DOWN, at: Some(Fixed(3)) }, Row { needs: &[], ..BASE }];";
-        let size = of(rows);
-        assert_eq!((size.logic, size.score), (0, Score(0)));
-        assert!(size.data > 0);
-        // Arithmetic and bit operators on constants are a stated value, not behaviour.
-        assert_eq!(of("const M: u16 = A | B << 4;").logic, 0);
-    }
-
-    #[test]
-    fn a_constant_holding_behaviour_is_logic() {
-        for value in [
-            "if A { 1 } else { 2 }",
-            "match A { B => 1, C => 2 }",
-            "{ let a = 3; a }",
-            "|a: u8| a",
-            "&[(1, |a| a)]",
-            "move || 0",
-            "Fixed::new(3)",
-            "A.wrapping_add(B)",
-            "size_of::<u8>()",
-            "build()",
-            "[f(1), f(2)]",
-            "concat!(1)",
-        ] {
-            let size = of(&format!("const A: T = {value};"));
-            assert_eq!(size.data, 0, "{value}");
-            assert!(size.logic > 0, "{value}");
-            // The head is still a declaration.
-            assert_eq!(size.types, 6, "{value}");
-        }
-    }
-
-    #[test]
-    fn a_score_prints_its_half() {
-        assert_eq!(format!("{:>6}", Score(15)), "   7.5");
-        assert_eq!(Score(14).to_string(), "7");
-    }
-}
+mod tests;
