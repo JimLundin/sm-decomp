@@ -221,7 +221,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   start of the frame after it is spent, and in a normal or spin jump or the spring ball's hop at
   the start of any frame with jump not held: vertical speed 0, falling, and she doesn't move
   vertically that frame; the pull then acts as in a fall, so the frame ends at +0.1C00.
-- A frame's vertical move of exactly 0 (a fall from rest, a rise at 0) is never tested against
+- A frame's vertical move of exactly 0 (a fall from rest, a rise at 0) is never stopped by
   blocks, even with her bottom or top edge already inside one (`BlocksStopFlush`): it never lands
   her or ends her rise.
 - An upward speed of exactly one pull is never met from a jump: no rise speed in `Jumping` is a
@@ -324,8 +324,8 @@ as below. These rules are Samus's; other actors get their own when their domains
   at, she moves 0 px, and only the subpixel is written (FFFF or 0), which is forward. So a move of
   any length above 0, even 0.0001, whose leading edge starts inside a solid block or quarter is
   stopped there: a downward one lands her.
-- A move of exactly 0.0000 is not tested against blocks, on either axis: blocks never stop it,
-  nothing is written, and it doesn't end her seat on a slope (`SlopesCarry`). This holds also with
+- Blocks never stop a move of exactly 0.0000, on either axis: her position, subpixel included,
+  is unchanged, and it doesn't end her seat on a slope (`SlopesCarry`). This holds also with
   her leading edge already inside a solid block, quarter or sloped surface, as in the first frame
   of a fall from rest (C-step-far, C-step-noback, C-span-step: she falls on, ending at +0.1C00).
 - When blocks across her body would stop a move at different places, one of them decides, and it
@@ -350,10 +350,9 @@ as below. These rules are Samus's; other actors get their own when their domains
 - An enemy she reaches is judged from where she starts, by the gap between the boxes on that
   side (the enemy's near side less her near side, less 1): a gap of 0 is touching: she doesn't
   move, and her **y** subpixel is set to 0, on either axis; a larger gap stops her by that many
-  whole pixels, her subpixel kept; a negative one (already overlapping) doesn't stop her and is
-  passed over: the next solid enemy she reaches is judged the same way, and with none left to stop
-  her, blocks decide the move (`BlocksStopFlush`; C-enemy-overlap). So a move of 0 is never
-  stopped by one.
+  whole pixels, her subpixel kept; a negative one (already overlapping) never stops her: the move
+  goes as if that enemy were not there, so another solid enemy in its path decides it, or with
+  none, blocks do (`BlocksStopFlush`; C-enemy-overlap). So a move of 0 is never stopped by one.
 - A stop against an enemy is a wall, a ceiling or a floor as the move's direction says: sideways it
   halts her (`WallsAndCeilings`), upward it ends the rise, downward she lands (`Landing`).
 - A solid enemy in a move's path decides that move alone: she stops against it and no block
@@ -436,11 +435,8 @@ as below. These rules are Samus's; other actors get their own when their domains
 ## 11. Open questions
 
 - With more than one solid enemy in a move's reach, which one decides is not yet specified (the
-  vectors have one). From the original: each is judged in turn in an order the game keeps for the
-  enemies in the room, not by distance; one she overlaps is passed over (`SolidEnemies`), and
-  the first that touches her or that she reaches across a gap decides, even when another is nearer.
-  That order is not something a player sees, so the rule stays open until the enemies' spec gives
-  enemies an order a player can observe.
+  vectors have one). It is not always the nearest, and one she already overlaps never decides
+  (`SolidEnemies`).
 
 - Whether a pose change the chart makes at an animation's end moves her the extra pixel of
   `AimingAndShooting`: for the pose-chart spec.
