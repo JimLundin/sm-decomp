@@ -51,6 +51,8 @@ pub enum BehaviourId {
     FloorFlushSubpixel,
     /// (invisible) a solid enemy she already touches clears her vertical subpixel.
     EnemyTouchZeroesYSubpixel,
+    /// A sideways move ends seated on the slope or under the sloped ceiling it reached.
+    SlopeSeat,
     /// Changing aim while running moves her 1 px forward.
     ArmPumpStep,
     /// Letting go of jump ends the rise at once.
@@ -89,6 +91,8 @@ pub enum BehaviourId {
     VerticalResultWrites,
     /// A new pose's start comes before its command, and a replaced pose skips the command.
     PoseWriteOrder,
+    /// A pose an animation hands over to makes no jump, and its command ends the bounce.
+    AnimationEndPose,
 }
 /// What sort of behaviour an entry is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -149,7 +153,7 @@ pub struct Behaviour {
 }
 
 /// Samus's motion (`docs/behaviours/samus-motion.md`).
-pub const SAMUS_MOTION: [Behaviour; 41] = [
+pub const SAMUS_MOTION: [Behaviour; 43] = [
     Behaviour {
         id: BehaviourId::LocomotionAtFrameStart,
         summary: "on the frame she changes pose she still moves as her old pose did.",
@@ -305,6 +309,13 @@ pub const SAMUS_MOTION: [Behaviour; 41] = [
         switch: Switch::Fixed,
     },
     Behaviour {
+        id: BehaviourId::SlopeSeat,
+        summary: "a sideways move ends seated on the slope or under the sloped ceiling it reached.",
+        source: Source::bank(0x90, 0x9376),
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
         id: BehaviourId::ArmPumpStep,
         summary: "changing aim while running moves her 1 px forward.",
         source: Source::bank(0x91, 0xEADE),
@@ -435,6 +446,13 @@ pub const SAMUS_MOTION: [Behaviour; 41] = [
         summary: "a new pose's start comes before its command, and a replaced pose skips the command.",
         source: Source::bank(0x91, 0xEB88),
         kind: Kind::Timing,
+        switch: Switch::Fixed,
+    },
+    Behaviour {
+        id: BehaviourId::AnimationEndPose,
+        summary: "a pose an animation hands over to makes no jump, and its command ends the bounce.",
+        source: Source::bank(0x91, 0xEBAF),
+        kind: Kind::Mechanic,
         switch: Switch::Fixed,
     },
 ];
