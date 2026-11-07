@@ -361,16 +361,16 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   fall aimed `Down`, whose body is shorter than the crouch, lowers her 9 px all the same, so in the
   air her feet drop below where they were (unless the look below stops sooner).
 - Before she is lowered, she looks down that distance at her new size, from where her moves left
-  her: a look as pose fit's are (`PoseFitAfterMoves`), the 8 px rule included, and she is lowered
-  by the room it finds. Where nothing stops it, that is the whole distance. Where a block is
-  within reach of her new feet, she is lowered only as far as the block's face, and the look
+  her: a block look as pose fit's are (`PoseFitAfterMoves`), the 8 px rule included (solid enemies
+  don't stop it), and she is lowered by the room it finds. Where nothing stops it, that is the
+  whole distance. Where a block is within reach of her new feet, she is lowered only as far as the block's face, and the look
   writes as a stop would: her y subpixel FFFF, or a seat on a stepped block. On the ground the
   look reaches only the row her feet are in, which is air, so she is lowered the whole distance.
   In the air, from a body shorter than the crouch, a floor close under her feet can stop it
   (C-shrink-floor).
 - The look reaches cells as pose fit's do, reported in `TouchedCells` with the way `Look` after
-  the frame's moves. A frame has either this look or pose fit's, never both: one body shrinks, the
-  other grows.
+  the frame's moves. A frame has either this look or pose fit's, never both (original only): one
+  body shrinks, the other grows.
 - Her speeds and dash don't change: the rows into `Crouching` and `Morphing` have no other effect.
 - checked: oracle (SH1, r02:95, standing to crouching, 5 px; SH2, samus-bomb-jump-vertical:849,
   crouched to morphing, 9 px; SH3, r04:312, a straight jump aimed `Down` to morphing in the air,
