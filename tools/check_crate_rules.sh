@@ -16,7 +16,7 @@ engine="data game runtime app"
 # `canonical` holds the codec trait so `data` can derive it; `canonical_derive` is its macro.
 allowed() {
   case $1 in
-    data) echo "canonical" ;;
+    data) echo "canonical clean_types" ;;
     game) echo "data canonical clean_types clean_model_samus_motion" ;;
     runtime) echo "data" ;;
     app) echo "data game runtime" ;;

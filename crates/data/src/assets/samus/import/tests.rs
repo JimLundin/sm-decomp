@@ -1,7 +1,9 @@
 use super::map::{MAP, id_of, key_of};
 use super::*;
 use crate::assets::samus::ClipEnd;
-use crate::assets::samus::key::{Dress, SpinSprite, Suit};
+use crate::assets::samus::key::{
+    Action, Aim, Body, Dress, Facing, Gun, LandedFrom, Legs, Pose, SpinSprite, Suit, Turn,
+};
 use crate::rom::Rom;
 
 /// The ROM, from `SM_ROM` or the checkout's `rom/sm.smc`; `None` where it isn't present.
@@ -77,4 +79,105 @@ fn every_pose_of_hers_imports_with_its_frames() {
         .position(|entry| entry.id == PoseId(0xA4))
         .unwrap();
     assert_eq!(assets.clips[landing].end, ClipEnd::HandOver);
+}
+
+/// The original's pose ids: `00h` to `FCh`.
+const IDS: u16 = 0xFD;
+
+const PLAIN: Dress = Dress {
+    spin: SpinSprite::Plain,
+    suit: Suit::First,
+};
+
+/// A pose facing `facing`, gun stowed and legs together.
+const fn pose(body: Body, action: Action, facing: Facing, aim: Aim) -> Pose {
+    Pose {
+        body,
+        action,
+        facing,
+        aim,
+        gun: Gun::Stowed,
+        legs: Legs::Together,
+    }
+}
+
+#[test]
+fn the_ids_are_in_order_and_164_of_253_are_hers() {
+    assert!(MAP.windows(2).all(|pair| pair[0].id.0 < pair[1].id.0));
+    let mapped = (0..IDS).filter(|&id| key_of(PoseId(id)).is_some()).count();
+    assert_eq!((mapped, usize::from(IDS) - mapped), (164, 89));
+    // Another domain's and the unused ids have no pose.
+    for id in [0x0D, 0x20, 0x4F, 0x53, 0xA8, 0xBA, 0xC9, 0xD5, 0xE8, 0xF0] {
+        assert_eq!(key_of(PoseId(id)), None, "{id:#04X}");
+    }
+}
+
+#[test]
+fn the_equipment_draws_the_spin_and_the_suit_facing_the_screen() {
+    let spin = key_of(PoseId(0x19)).unwrap();
+    let dressed = |spin| Dress {
+        spin,
+        suit: Suit::First,
+    };
+    assert_eq!(id_of(spin, dressed(SpinSprite::Plain)), Some(PoseId(0x19)));
+    assert_eq!(
+        id_of(spin, dressed(SpinSprite::SpaceJump)),
+        Some(PoseId(0x1B))
+    );
+    assert_eq!(
+        id_of(spin, dressed(SpinSprite::ScrewAttack)),
+        Some(PoseId(0x81))
+    );
+    let screen = key_of(PoseId(0x00)).unwrap();
+    let suited = Dress {
+        spin: SpinSprite::Plain,
+        suit: Suit::VariaOrGravity,
+    };
+    assert_eq!(id_of(screen, suited), Some(PoseId(0x9B)));
+}
+
+#[test]
+fn the_landing_turn_gun_and_legs_tell_apart_the_sprites_one_action_shares() {
+    let jump = pose(Body::Upright, Action::Jumping, Facing::Right, Aim::Forward);
+    let landing = |from| {
+        pose(
+            Body::Upright,
+            Action::Landing(from),
+            Facing::Right,
+            Aim::Forward,
+        )
+    };
+    let firing = Pose {
+        gun: Gun::Drawn,
+        ..landing(LandedFrom::Jump)
+    };
+    let striding = Pose {
+        legs: Legs::Striding,
+        ..jump
+    };
+    assert_eq!(id_of(jump, PLAIN), Some(PoseId(0x4D)));
+    assert_eq!(id_of(striding, PLAIN), Some(PoseId(0x51)));
+    assert_eq!(id_of(firing, PLAIN), Some(PoseId(0xE6)));
+    assert_eq!(id_of(landing(LandedFrom::Spin), PLAIN), Some(PoseId(0xA6)));
+    let moonwalk_turn = pose(
+        Body::Upright,
+        Action::Turning(Turn::MoonwalkJump),
+        Facing::Right,
+        Aim::Forward,
+    );
+    assert_eq!(id_of(moonwalk_turn, PLAIN), Some(PoseId(0xC0)));
+}
+
+#[test]
+fn a_pose_no_sprite_of_its_own_shows_is_shown_by_its_nearest() {
+    let turn = |body, kind, aim| pose(body, Action::Turning(kind), Facing::Left, aim);
+    let air = turn(Body::Upright, Turn::Jump, Aim::DownForward);
+    assert_eq!(id_of(air, PLAIN), Some(PoseId(0x91)));
+    let fall = turn(Body::Upright, Turn::Fall, Aim::DownForward);
+    assert_eq!(id_of(fall, PLAIN), Some(PoseId(0x95)));
+    let crouched = turn(Body::Crouched, Turn::Ground, Aim::Down);
+    assert_eq!(id_of(crouched, PLAIN), Some(PoseId(0x99)));
+    // No sprite aims a running pose down.
+    let running = pose(Body::Upright, Action::Running, Facing::Left, Aim::Down);
+    assert_eq!(id_of(running, PLAIN), None);
 }

@@ -35,14 +35,13 @@ adds and where it sits from her position.
 
 | Record | Holds |
 | --- | --- |
-| `PoseKey` | body, action (with the turn's kind and what a landing touched down from), facing, aim, gun, legs |
+| `Pose` | body, action (with the turn's kind and what a landing touched down from), facing, aim, gun, legs |
 | `Dress` | what the sprite shows that the pose doesn't decide: how her spin is drawn (`SpinSprite`), her suit facing the screen (`Suit`) |
 | `Worn` | which dress a clip is the variant for: any, one spin sprite, or one suit |
 
-`PoseKey` is defined once, in `data::assets::samus::key`, mirroring §2. It is replaced by
-`clean_types::Pose` when the clean room's round 6 lands. `data` depends on `canonical` alone
-today (`tools/check_crate_rules.sh`), so that switch needs the crate rule to let `data`
-depend on `clean_types`; it is not made yet.
+The key is the clean room's `clean_types::Pose`, which carries every part §2 lists;
+`data::assets::samus::key` re-exports it beside the dress, so `data` depends on `clean_types`
+(`tools/check_crate_rules.sh`).
 
 `SamusAssets::clip(key, dress)` finds a pose's clip. A pose that has no sprites of its own is
 shown by its nearest (the air turns' one sprite for down-forward and down is the down one,

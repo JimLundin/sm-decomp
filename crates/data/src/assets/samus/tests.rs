@@ -1,8 +1,8 @@
-use super::key::{Action, Aim, Body, Facing, Gun, Legs, SpinSprite, Suit, TurnKind};
+use super::key::{Action, Aim, Body, Facing, Gun, Legs, SpinSprite, Suit, Turn};
 use super::*;
 
-fn key(body: Body, action: Action, aim: Aim) -> PoseKey {
-    PoseKey {
+fn key(body: Body, action: Action, aim: Aim) -> Pose {
+    Pose {
         body,
         action,
         facing: Facing::Right,
@@ -12,7 +12,7 @@ fn key(body: Body, action: Action, aim: Aim) -> PoseKey {
     }
 }
 
-fn asset(key: PoseKey, worn: Worn) -> Clip {
+fn asset(key: Pose, worn: Worn) -> Clip {
     Clip {
         key,
         worn,
@@ -41,8 +41,8 @@ const PLAIN: Dress = Dress {
 
 #[test]
 fn a_turn_without_a_sprite_of_its_own_shows_its_nearest() {
-    let air = Action::Turning(TurnKind::Fall);
-    let ground = Action::Turning(TurnKind::Ground);
+    let air = Action::Turning(Turn::Fall);
+    let ground = Action::Turning(Turn::Ground);
     let assets = assets(vec![
         asset(key(Body::Upright, air, Aim::Down), Worn::Always),
         asset(key(Body::Crouched, ground, Aim::DownForward), Worn::Always),

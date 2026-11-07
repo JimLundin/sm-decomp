@@ -163,7 +163,8 @@ fn quarters(square: Square, slope: data::level::Slope) -> [[bool; 2]; 2] {
 }
 
 /// A sloped surface: a floor's surface row is its offset from the block's top; a ceiling
-/// (flipped top to bottom) counts its offset up from the block's bottom row.
+/// (flipped top to bottom) counts its offset up from the block's bottom row. An offset of 16
+/// is a column with nothing solid, just past the block; a greater one lies far past it.
 fn surface_of(surface: Tops, slope: data::level::Slope) -> Slope {
     let faces = if slope.y_flip {
         SlopeFaces::Ceiling
@@ -176,9 +177,9 @@ fn surface_of(surface: Tops, slope: data::level::Slope) -> Slope {
     }
     let column = |top: u8| match (faces, top.checked_sub(ROWS)) {
         (SlopeFaces::Floor, None) => Surface::Row(top),
-        (SlopeFaces::Floor, Some(0)) => Surface::JustPast,
-        (SlopeFaces::Floor, Some(_)) => Surface::FarPast,
-        (SlopeFaces::Ceiling, _) => Surface::Row(LAST_ROW.saturating_sub(top)),
+        (SlopeFaces::Ceiling, None) => Surface::Row(LAST_ROW.saturating_sub(top)),
+        (_, Some(0)) => Surface::JustPast,
+        (_, Some(_)) => Surface::FarPast,
     };
     Slope {
         faces,
@@ -229,7 +230,6 @@ impl World for SamusWorld<'_> {
 }
 
 pub mod frame;
-pub mod pose;
 
 #[cfg(test)]
 mod tests;
