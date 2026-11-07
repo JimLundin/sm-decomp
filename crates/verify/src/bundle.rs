@@ -138,6 +138,8 @@ pub enum ContentError {
     Palettes(AddressError),
     /// Samus's tiles definitions or graphics are outside the image.
     SamusTiles(AddressError),
+    /// Samus's assets don't import.
+    SamusAssets(data::assets::samus::import::ImportError),
     /// Slice 0's rooms don't decode.
     Rooms(data::room::RoomError),
     /// The area maps are outside the image.
@@ -153,6 +155,7 @@ impl fmt::Display for ContentError {
         match self {
             Self::Rom(error) => write!(f, "not the ROM: {error:?}"),
             Self::Poses(error) => write!(f, "the pose table: {error:?}"),
+            Self::SamusAssets(error) => write!(f, "Samus's assets: {error:?}"),
             Self::Transitions(error) => write!(f, "the pose transitions: {error:?}"),
             Self::Speeds(error) => write!(f, "the speed tables: {error:?}"),
             Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
@@ -190,6 +193,18 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let delays = AnimationDelays::load(rom.lorom(), &poses).map_err(ContentError::Delays)?;
     let samus_tiles =
         SamusTiles::load(rom.lorom(), &delays, &poses).map_err(ContentError::SamusTiles)?;
+    let samus_spritemaps =
+        SamusSpritemaps::load(rom.lorom()).map_err(ContentError::SamusSpritemaps)?;
+    let graphics = Graphics::load(rom.lorom(), GRAPHICS_BANKS).map_err(ContentError::SamusTiles)?;
+    let samus_assets =
+        data::assets::samus::import::from_tables(data::assets::samus::import::Tables {
+            poses: &poses,
+            delays: &delays,
+            spritemaps: &samus_spritemaps,
+            tiles: &samus_tiles,
+            graphics: &graphics,
+        })
+        .map_err(ContentError::SamusAssets)?;
     Ok(Content {
         poses,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
@@ -200,10 +215,10 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         enemy_programs,
         eye_lists,
         face_block_lists,
-        samus_spritemaps: SamusSpritemaps::load(rom.lorom())
-            .map_err(ContentError::SamusSpritemaps)?,
+        samus_spritemaps,
+        samus_assets,
         samus_tiles,
-        graphics: Graphics::load(rom.lorom(), GRAPHICS_BANKS).map_err(ContentError::SamusTiles)?,
+        graphics,
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         room_plms,

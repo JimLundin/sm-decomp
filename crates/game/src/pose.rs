@@ -51,8 +51,10 @@ pub struct Content {
     pub eye_lists: EyeLists,
     /// The Blue Brinstar face block's lists in them.
     pub face_block_lists: FaceBlockLists,
-    /// Samus's spritemaps by pose and frame.
+    /// Samus's spritemaps by pose and frame, which the importer reads.
     pub samus_spritemaps: SamusSpritemaps,
+    /// Samus's sprite sheet and animation clips, which she is drawn from.
+    pub samus_assets: data::assets::samus::SamusAssets,
     /// Samus's tile uploads by pose and frame.
     pub samus_tiles: SamusTiles,
     /// The ROM graphics uploads read.
