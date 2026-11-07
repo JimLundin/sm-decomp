@@ -42,3 +42,19 @@ SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --release -p verify the_clock_holds_
 Commit a ratchet file only with the change that moved its numbers, and never edit a line by hand
 to make a check pass. Speed: `cargo run --release -p game --example empty_ticks` and
 `cargo run --release -p runtime --example compose_bench`, against ARCHITECTURE §12.
+
+## Making the record cache
+
+`CACHE` is made by `oracle corpus ROM scenarios/lock.toml DATA --oracle lsnes --native-seeds
+BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE §6): lsnes plays the row's
+frame pads from its native seed and writes `CACHE/ROW/records.bin` and, last, `index.txt` with
+the lock pins `verify::cache` checks. `DATA` is the old lock's decrypted bundles (corpus still
+reads each row's seed and movie name there); `--cache-pictures` adds the pictures, which only
+the compositor's checks read. The two CI rows were made this way, with pictures (330 KB a
+frame); without them a frame is about 206 KB.
+
+`tools/oracle/record_caches.sh ROWS BUNDLE DATA ROM CACHE [JOBS]` does it for a list of rows,
+8 lsnes at a time, skipping rows already cached, one log line per row. `ORACLE` names the oracle
+command (the Python DLL runner where Defender blocks executables). `tools/oracle/samus_motion_rows.txt`
+lists 32 rows (18,331 frames, about 3.8 GB, about 2 minutes on 14 cores) for the Samus-motion
+harness, whose test runs every row cached in `SM_CACHE` and holds the CI rows to their floors.
