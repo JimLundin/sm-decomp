@@ -436,7 +436,8 @@ as below. These rules are Samus's; other actors get their own when their domains
    spin's drift and a sloped surface's effect on a move's length (§10).
 4. The water rows, terrain-quicksand and samus-ceres-push gave no vectors: their liquid and push
    rules are out of scope.
-5. Answered: landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel   because she reaches the enemy a pixel early and is touching it (`SolidEnemies`).
+5. Answered: landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel
+   because she reaches the enemy a pixel early and is touching it (`SolidEnemies`).
 6. The crouch take-off's lift appears a frame apart from pose fit (item-morph-ball 1311).
 7. Answered: holding no button during a turn ends the skid; holding one that changes nothing
    keeps it (`TurningRound`).
