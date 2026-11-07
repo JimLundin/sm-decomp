@@ -1,8 +1,10 @@
 //! Spec units and the size budget they set, for `tools spec-units` (MODEL §1 decision 7, §5's
 //! "Rules are arms").
 //!
-//! A domain's budget is k = 24 weighted tokens per spec unit, per area, each area capped at 70% of
-//! its old code where that figure is given. The units are counted from the spec's structure, so
+//! A domain's budget is k weighted tokens per spec unit, per area, each area capped at 70% of
+//! its old code where that figure is given. k is the spec's own: its header states it as
+//! "k = N weighted tokens per spec unit" (MODEL §1 decision 7: computed once, then frozen). A spec
+//! that states no k still has its units counted; its budget is "-" and the findings say so. The units are counted from the spec's structure, so
 //! rewording or explaining a rule moves nothing:
 //! - an **arm** is a bullet holding `→` (outside backticks): `<conditions> → <outcome> [vectors]`,
 //!   under a `### Entry` heading. It is one unit. Arms of one entry with the same outcome count
@@ -80,8 +82,6 @@ use std::fs;
 pub const USAGE: &str =
     "tools spec-units SPEC VECTORS [--areas FILE] [--baseline AREA=TOKENS]... [--against OLD_SPEC]";
 
-/// Weighted tokens per unit (MODEL §1 decision 7; frozen).
-const K: u64 = 24;
 /// The cap on an area's budget, in tenths of its old code.
 const CAP_TENTHS: u64 = 7;
 /// Words an outcome may hold beside entry names and still be only a cross-reference.
@@ -144,10 +144,10 @@ impl Units {
         self.thirds
     }
 
-    /// k × the units, in weighted tokens: k per unit is k / 3 per third.
+    /// k × the units, in weighted tokens, rounded down.
     #[must_use]
-    pub const fn budget(self) -> u64 {
-        self.thirds.saturating_mul(K / 3)
+    pub const fn budget(self, k: u64) -> u64 {
+        self.thirds.saturating_mul(k) / 3
     }
 }
 
@@ -830,13 +830,15 @@ pub struct AreaCount {
     pub entries: usize,
     /// What it holds.
     pub tally: Tally,
+    /// The spec's k, if its header states one.
+    pub k: Option<u64>,
 }
 
 impl AreaCount {
-    /// k × its units, before the cap.
+    /// k × its units, before the cap, if the spec states k.
     #[must_use]
-    pub const fn uncapped(&self) -> u64 {
-        self.tally.units().budget()
+    pub fn uncapped(&self) -> Option<u64> {
+        self.k.map(|k| self.tally.units().budget(k))
     }
 
     /// 70% of its old code, if given.
@@ -845,11 +847,16 @@ impl AreaCount {
         self.old.map(|old| old.saturating_mul(CAP_TENTHS) / 10)
     }
 
-    /// Its budget: k × its units, capped.
+    /// Its budget: k × its units, capped, if the spec states k.
     #[must_use]
-    pub fn budget(&self) -> u64 {
-        let uncapped = self.uncapped();
-        self.cap().map_or(uncapped, |cap| cap.min(uncapped))
+    pub fn budget(&self) -> Option<u64> {
+        let uncapped = self.uncapped()?;
+        Some(self.cap().map_or(uncapped, |cap| cap.min(uncapped)))
+    }
+
+    /// Whether the cap binds.
+    fn capped(&self) -> bool {
+        self.budget() < self.uncapped()
     }
 }
 
@@ -869,6 +876,8 @@ pub struct Count {
     pub unassigned: Option<usize>,
     /// Formulas outside any entry.
     pub strays: Vec<StrayFormula>,
+    /// The spec's k, from its header's "k = N weighted tokens per spec unit".
+    pub k: Option<u64>,
 }
 
 impl Count {
@@ -882,6 +891,7 @@ impl Count {
         baselines: &[(String, u64)],
     ) -> Self {
         let blocks = split_blocks(spec);
+        let k = stated_k(&blocks);
         let mut defs =
             areas.map_or_else(|| area_defs(&blocks), |file| area_defs(&split_blocks(file)));
         for (name, old) in baselines {
@@ -939,6 +949,7 @@ impl Count {
                 old: def.old,
                 entries: 0,
                 tally: Tally::default(),
+                k,
             })
             .collect();
         let mut unassigned = None;
@@ -950,6 +961,7 @@ impl Count {
                         old: None,
                         entries: 0,
                         tally: Tally::default(),
+                        k,
                     });
                     areas.len().saturating_sub(1)
                 }));
@@ -968,6 +980,7 @@ impl Count {
             unknown_items,
             unassigned,
             strays,
+            k,
         }
     }
 
@@ -989,38 +1002,37 @@ impl Count {
             .fold(Tally::default(), |sum, area| sum.add(area.tally))
     }
 
-    /// The domain's budget: each area's, summed.
+    /// The domain's budget, each area's summed, if the spec states k.
     #[must_use]
-    pub fn budget(&self) -> u64 {
-        self.areas
-            .iter()
-            .fold(0, |sum, area| sum.saturating_add(area.budget()))
+    pub fn budget(&self) -> Option<u64> {
+        self.areas.iter().try_fold(0_u64, |sum, area| {
+            area.budget().map(|budget| sum.saturating_add(budget))
+        })
     }
 
     /// The header's budget line.
     #[must_use]
     pub fn budget_line(&self) -> String {
-        let capped = self
-            .areas
-            .iter()
-            .any(|area| area.budget() < area.uncapped());
+        let (Some(k), Some(budget)) = (self.k, self.budget()) else {
+            return format!(
+                "Budget: no k in the header (MODEL §1 decision 7), {} units",
+                self.total().units()
+            );
+        };
+        let capped = self.areas.iter().any(AreaCount::capped);
         let split: Vec<String> = self
             .areas
             .iter()
             .map(|area| {
-                let cap = if area.budget() < area.uncapped() {
-                    " capped"
-                } else {
-                    ""
-                };
-                format!("{} {}{cap}", area.name, thousands(area.budget()))
+                let cap = if area.capped() { " capped" } else { "" };
+                format!("{} {}{cap}", area.name, or_dash(area.budget()))
             })
             .collect();
         format!(
-            "Budget: {K} × {} units{} = {} ({})",
+            "Budget: {k} × {} units{} = {} ({})",
             self.total().units(),
             if capped { ", capped at 70% of old" } else { "" },
-            thousands(self.budget()),
+            thousands(budget),
             split.join(", ")
         )
     }
@@ -1043,9 +1055,9 @@ impl Count {
                 area.tally.cells,
                 area.tally.ops,
                 area.tally.units().to_string(),
-                thousands(area.uncapped()),
+                or_dash(area.uncapped()),
                 cap,
-                thousands(area.budget())
+                or_dash(area.budget())
             );
         }
         let total = self.total();
@@ -1059,9 +1071,9 @@ impl Count {
             total.cells,
             total.ops,
             total.units().to_string(),
-            thousands(total.units().budget()),
+            or_dash(self.k.map(|k| total.units().budget(k))),
             "",
-            thousands(self.budget()),
+            or_dash(self.budget()),
             self.budget_line()
         );
         out.push_str(&self.findings());
@@ -1090,6 +1102,11 @@ impl Count {
     pub fn findings(&self) -> String {
         let mut out = String::from("findings\n");
         let start = out.len();
+        if self.k.is_none() {
+            out.push_str(
+                "  the header states no k (\"k = N weighted tokens per spec unit\"), so no budget\n",
+            );
+        }
         for arm in &self.arms {
             let at = format!("  {}:{} `{}`", arm.block, arm.line, arm.condition);
             match &arm.verdict {
@@ -1167,6 +1184,31 @@ impl Count {
         }
         out
     }
+}
+
+/// The k a spec's text states, "k = N weighted tokens per spec unit", the first one found.
+fn stated_k(blocks: &[Block]) -> Option<u64> {
+    const AFTER: &str = " weighted tokens per spec unit";
+    blocks
+        .iter()
+        .flat_map(|block| &block.pieces)
+        .find_map(|piece| {
+            piece.text.match_indices("k = ").find_map(|(at, start)| {
+                let rest = piece.text.get(at.saturating_add(start.len())..)?;
+                let digits = rest
+                    .find(|c: char| !c.is_ascii_digit())
+                    .unwrap_or(rest.len());
+                let after = rest.get(digits..)?;
+                after
+                    .starts_with(AFTER)
+                    .then(|| rest.get(..digits)?.parse().ok())?
+            })
+        })
+}
+
+/// A budget figure, or "-" when the spec states no k.
+fn or_dash(figure: Option<u64>) -> String {
+    figure.map_or_else(|| String::from("-"), thousands)
 }
 
 /// The `Area` lines among the blocks' pieces.
@@ -1470,8 +1512,9 @@ pub fn run(args: &[String]) -> Result<String, String> {
         &options.baselines,
     );
     let mut out = format!(
-        "spec units: {spec}, {} vectors (k = {K}, cap 70% of old)\n\n{}",
+        "spec units: {spec}, {} vectors (k = {}, cap 70% of old)\n\n{}",
         vectors.len(),
+        or_dash(count.k),
         count.report()
     );
     if let Some(old) = options.against {
@@ -1481,9 +1524,12 @@ pub fn run(args: &[String]) -> Result<String, String> {
         let _ = writeln!(
             out,
             "\nchange: units {was} → {now} ({units}), budget {} → {} ({})",
-            thousands(before.budget()),
-            thousands(count.budget()),
-            delta(before.budget(), count.budget(), thousands)
+            or_dash(before.budget()),
+            or_dash(count.budget()),
+            match (before.budget(), count.budget()) {
+                (Some(was), Some(now)) => delta(was, now, thousands),
+                _ => String::from("-"),
+            }
         );
     }
     if count.fails() {
@@ -1521,6 +1567,8 @@ source = "constructed"
     const SPEC: &str = "# Demo
 
 ## Header
+
+k = 24 weighted tokens per spec unit, frozen.
 
 Area moving (old 1,000): Walk, 1.2
 Area falling: `Fall`
@@ -1574,14 +1622,14 @@ Cells: kept, gun drawn, `kept`
         // `1.2 Memory` is no entry: its arm counts 0 and fails the spec.
         assert!(count.fails());
         assert_eq!(moving.tally.units().thirds(), 8);
-        assert_eq!(moving.uncapped(), 64);
+        assert_eq!(moving.uncapped(), Some(64));
         assert_eq!(moving.cap(), Some(700));
         assert_eq!(moving.entries, 1);
         assert_eq!((falling.tally.arms, falling.tally.ops), (2, 1));
-        assert_eq!(falling.budget(), 56);
+        assert_eq!(falling.budget(), Some(56));
         assert_eq!(unassigned.tally.arms, 1);
         assert_eq!(count.unassigned, Some(2));
-        assert_eq!(count.budget(), 64 + 56 + 24);
+        assert_eq!(count.budget(), Some(64 + 56 + 24));
     }
 
     #[test]
@@ -1597,13 +1645,13 @@ Cells: kept, gun drawn, `kept`
             verdicts,
             [
                 Verdict::Counts,
-                Verdict::SameOutcome(13),
+                Verdict::SameOutcome(15),
                 Verdict::Missing(vec![String::from("Nope")]),
                 Verdict::Uncited(Unchecked::NoCite),
                 Verdict::CrossReference,
             ]
         );
-        let negation = count.arms.iter().find(|arm| arm.line == 29);
+        let negation = count.arms.iter().find(|arm| arm.line == 31);
         // A complement with an outcome of its own is a rule: no lint.
         assert_eq!(negation.and_then(|arm| arm.complement), None);
         assert_eq!(negation.map(|arm| &arm.verdict), Some(&Verdict::Counts));
@@ -1891,14 +1939,14 @@ Cells: kept, gun drawn, `kept`
 
     #[test]
     fn an_areas_file_replaces_the_spec_areas_and_baselines_cap() {
-        let spec = "Area one: A\n### A\n- a → b [V1]\n### B\n- c → d [V1]\n";
+        let spec = "k = 24 weighted tokens per spec unit\nArea one: A\n### A\n- a → b [V1]\n### B\n- c → d [V1]\n";
         let vectors = Vectors::parse(VECTORS);
         let areas = "- Area left (old 20): A, B\n";
         let baselines = [(String::from("left"), 30)];
         let count = Count::of(spec, &vectors, Some(areas), &baselines);
         let names: Vec<_> = count.areas.iter().map(|area| area.name.as_str()).collect();
         assert_eq!(names, ["left"]);
-        assert_eq!(count.budget(), 21);
+        assert_eq!(count.budget(), Some(21));
         assert_eq!(
             count.budget_line(),
             "Budget: 24 × 2.0 units, capped at 70% of old = 21 (left 21 capped)"
@@ -1910,7 +1958,40 @@ Cells: kept, gun drawn, `kept`
         assert_eq!(Units::of(0, 1, 0).to_string(), "0.3");
         assert_eq!(Units::of(1, 1, 1).to_string(), "1.7");
         assert_eq!(Units::of(271, 0, 0).to_string(), "271.0");
-        assert_eq!(Units::of(271, 0, 0).budget(), 6504);
+        assert_eq!(Units::of(271, 0, 0).budget(24), 6504);
+        assert_eq!(Units::of(193, 1, 0).budget(36), 6960);
+    }
+
+    #[test]
+    fn k_is_read_from_the_header() {
+        let spec = "## Header\n\nk = 36 weighted tokens per spec unit, frozen.\n\nArea a: A\n### A\n- x → y [V1]\n";
+        let count = count(spec);
+        assert_eq!(count.k, Some(36));
+        assert_eq!(count.budget(), Some(36));
+        assert_eq!(count.budget_line(), "Budget: 36 × 1.0 units = 36 (a 36)");
+        // Another number written as "k = " is not the budget's k.
+        assert_eq!(
+            super::Count::of(
+                "k = 3 cells\n### A\n- x → y [V1]\n",
+                &Vectors::parse(VECTORS),
+                None,
+                &[]
+            )
+            .k,
+            None
+        );
+    }
+
+    #[test]
+    fn without_k_the_units_count_and_the_budget_is_a_dash() {
+        let count = count("Area a: A\n### A\n- x → y [V1]\n");
+        assert_eq!(count.k, None);
+        assert_eq!(count.budget(), None);
+        assert_eq!(count.areas.first().and_then(super::AreaCount::budget), None);
+        assert_eq!(
+            count.budget_line(),
+            "Budget: no k in the header (MODEL §1 decision 7), 1.0 units"
+        );
     }
 
     #[test]
