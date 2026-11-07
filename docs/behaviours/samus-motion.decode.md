@@ -51,6 +51,11 @@ N+1; the harness compares the State with record N+1.
   KillXSpeed, 8 KillRunSpeed; 0, 3, 4, 5 and 7 give None. With no new pose, `pose_writes` runs
   only for a passed result. `arm_pump_step`'s request is `Pose { running: type 1 }` for a new
   pose, else None; Forced isn't decoded.
+- **A proposed pose equal to hers.** Record N+1's prospective pose `0A28` with bit 15 clear is a
+  new pose even when it equals the current one: `$91:EBE7` stores it and `$91:F404` finds no
+  change, so nothing starts (`start: None`), but its command `0A2E` runs and the arm-pump step
+  (`$91:EADE`) reads it. Before this, Decelerate, Stop and KillRunSpeed without a pose change
+  were lost (area-maridia:192-207, chain-0012-91F8:858-864, chain-0097-ACF0:552-559, ...).
 - **The bridge** (`Replay`, the harness's collision): each move is answered on its axis from
   record N+1's position. A move landing on the target's pixel is unblocked. A move the target
   falls short of in the asked direction, or lies behind, is stopped by a `Block` whose subpixel
@@ -67,6 +72,23 @@ N+1; the harness compares the State with record N+1.
 - the elevator moving (`0E18` ≠ 0): the elevator writes y beyond `ElevatorRide`'s step (the
   first 453 frames of both rows; every other field matched on them before this skip);
 - the y radius changing between records N and N+1 (pose fit).
+- Samus's handlers at record N not running this domain's motion: the new state handler `0A44`
+  other than E725 (normal), E8AA (Ceres) or E8EC (elevator), each of which runs the movement
+  handler; or the movement handler `0A58` other than A337 (normal). E8DC (locked: the gunship
+  landing, chain-0012-91F8:1-470), E94F (x-ray, time frozen) and E90E (none) are "runs no
+  motion"; 946E grapple release, DF38 knockback, E025-E066 bomb jump, D068-D40D shinespark and
+  D678-D75B crystal flash are named deferred behaviours.
+- A deferred behaviour (spec §10), counted by name:
+  - a block-inside push: record N+1's extra displacement `0B56`-`0B5C`, decel multiplier `0B4C`
+    or quicksand flag `1E71` ≠ 0 (set at the frame's start by `$94:9B60`, before the motion, and
+    kept to the next frame's start; terrain-quicksand);
+  - liquids: her bottom (y + y radius − 1) below the water's surface `195E` (≥ 0, physics on:
+    `197E` bit 2 clear) or, without water, the lava/acid surface `1962`, at N or N+1, without the
+    gravity suit (`09A2` 0020), as `$90:9741` and `$90:98BC` test it;
+  - the speed booster (`09A2` 2000): extra_run's pixel ≥ 2 at N (its cap is 7.0, `$90:9789`), or
+    extra_run ≠ 0 at N or N+1 on a frame she rises faster than before (`$90:9919` adds it to
+    the jump; running, it grows by 0.1000 in the same frame: chain-0106-AD5E:254);
+  - a knockback start: movement type 0A at N+1 and not at N.
 - Open: item-morph-ball:1311, the crouch take-off: the model's y is 10 px above the oracle's.
   The model applies `crouch_jump_lift` on the frame the pose changes in the record; the
   oracle's lift falls on a pose-fit frame the radius rule skips. The pose and the radius are a

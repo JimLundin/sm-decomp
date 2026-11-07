@@ -289,8 +289,8 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
 }
 
 /// Whether the speed booster changes the frame from `from` to `next`: with it equipped, extra
-/// run speed at 2.0 or more (its cap is 7.0, not 2.0), or any extra run speed on a frame that
-/// jumps (rises, faster than before), since a jump adds half of it to the jump speed.
+/// run speed at 2.0 or more (its cap is 7.0, not 2.0), or extra run speed at either end of a
+/// frame that jumps (rises, faster than before), since a jump adds half of it to the speed.
 fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
     if word(from, source::EQUIPPED_ITEMS)? & SPEED_BOOSTER == 0 {
         return Ok(false);
@@ -299,7 +299,8 @@ fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
     let jumped = after.vertical == VerticalMotion::Up
         && (before.vertical != VerticalMotion::Up
             || after.vertical_speed.0 > before.vertical_speed.0);
-    Ok(before.extra_run.pixel() >= 2 || (before.extra_run.0 != 0 && jumped))
+    Ok(before.extra_run.pixel() >= 2
+        || ((before.extra_run.0 != 0 || after.extra_run.0 != 0) && jumped))
 }
 
 fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, DecodeError> {
