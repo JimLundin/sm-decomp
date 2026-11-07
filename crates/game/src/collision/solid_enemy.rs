@@ -322,9 +322,5 @@ pub(crate) fn one_enemy(x: u16, y: u16, solid: bool) -> Vec<Slot<EnemyCommon, En
     }]
 }
 
-/// The interactive list naming slot 0 alone.
-#[cfg(test)]
-pub(crate) const FIRST: [SlotIndex<Enemy>; 1] = [SlotIndex(0, core::marker::PhantomData)];
-
 #[cfg(test)]
 mod tests;

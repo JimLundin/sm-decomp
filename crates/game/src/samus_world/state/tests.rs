@@ -111,7 +111,10 @@ fn the_games_words_come_back_as_they_went() {
                 panic!("pose {pose:?} is hers");
             };
             let mut after = Samus {
-                motion: Motion::default(),
+                motion: Motion {
+                    momentum,
+                    ..Motion::default()
+                },
                 slope_adjusted: !seated,
                 ..before
             };

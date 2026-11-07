@@ -14,7 +14,6 @@ use data::pose::animation::{
 };
 use data::pose::transition::Control;
 
-use crate::model::samus::motion::Contacts;
 use crate::pose::{Content, PoseRequests, controls};
 use crate::state::Controller;
 use crate::state::samus::{
@@ -69,11 +68,11 @@ const TERMINAL_DELAY: AnimationTimer = AnimationTimer(8);
 
 /// The animation's part of the movement handler, after motion's step.
 ///
-/// An armed wall jump holds the spin on the frame before the wall jump's (`$90:9D35`), and a
+/// An `armed` wall jump holds the spin on the frame before the wall jump's (`$90:9D35`), and a
 /// fast fall shows the terminal velocity frame (`$90:A58D`).
-pub fn after_motion(samus: &mut Samus, contacts: Contacts) {
+pub fn after_motion(samus: &mut Samus, armed: bool) {
     let animation = &mut samus.animation;
-    if contacts.wall_jump_armed {
+    if armed {
         animation.timer = AnimationTimer(1);
         animation.frame = AnimationFrame(wall_jump_frame(samus.pose).0.wrapping_sub(1));
     }

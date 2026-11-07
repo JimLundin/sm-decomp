@@ -88,15 +88,8 @@ fn frame(samus: &mut Samus, content: &Content) {
     animate(samus, &Controller::default(), requests, content);
     pose::change(
         samus,
-        requests,
-        pose::Collisions {
-            motion: crate::motion::Motion {
-                inputs: None,
-                rules: crate::motion::rules(content, crate::session::SpeedCap::Wordwise),
-                contacts: crate::model::samus::motion::Contacts::default(),
-            },
-            surroundings: crate::collision::Surroundings::default(),
-        },
+        requests.ordinary,
+        crate::collision::Surroundings::default(),
         &mut Touches::default(),
         content,
     );
@@ -245,18 +238,8 @@ fn a_spin_jump_from_a_spin_or_wall_jump_starts_past_the_jump_from_the_floor() {
         let mut samus = samus(from, movement, 0, 8);
         pose::change(
             &mut samus,
-            PoseRequests {
-                ordinary: Some(SPIN_LEFT),
-                command: None,
-            },
-            pose::Collisions {
-                motion: crate::motion::Motion {
-                    inputs: None,
-                    rules: crate::motion::rules(&content, crate::session::SpeedCap::Wordwise),
-                    contacts: crate::model::samus::motion::Contacts::default(),
-                },
-                surroundings: crate::collision::Surroundings::default(),
-            },
+            Some(SPIN_LEFT),
+            crate::collision::Surroundings::default(),
             &mut Touches::default(),
             &content,
         );
