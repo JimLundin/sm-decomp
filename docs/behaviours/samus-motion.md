@@ -171,9 +171,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - checked: oracle (A1, the step); constructed (C-aim-short, C-aim-enemy, C-aim-slope; the shot).
 
 ### RidingTheElevator
-- Mechanic. Facing the screen on a moving elevator, she moves down 1 px a frame, a move a block
-  stops as any downward move does (`BlocksStopFlush`); nothing else of hers changes, her speeds
-  and dash included. checked: constructed (C-elevator).
+- Mechanic. Facing the screen on a moving elevator, she moves down 1 px a frame, a move a solid or
+  stepped block stops as any downward move does (`BlocksStopFlush`); a sloped surface under her
+  there is out of scope. Nothing else of hers changes, her speeds and dash included. checked:
+  constructed (C-elevator).
 
 ---
 
@@ -310,17 +311,16 @@ as below. These rules are Samus's; other actors get their own when their domains
   motion).
 - A stepped block stops a move on either axis the same way, with the same subpixels (FFFF or 0),
   but against the face of the 8 px quarter her leading edge reaches, not the block's face. The
-  quarters asked are those in the half her leading edge reaches (a side's half for a sideways
+  quarters that count are those in the half her leading edge reaches (a side's half for a sideways
   move, an upper or lower half for a vertical one) that her body overlaps across it. So
   reaching the far half of a block with both halves solid, she stops at the far half's face, her
   body overlapping the near half.
 - A stop never moves her backwards: when her edge at the start is already past the face it stops
   at, she moves 0 px, and only the subpixel is written (FFFF or 0), which is forward.
-- A move asks the blocks across her body in order, and the first that stops her decides the stop,
-  even when a later one would stop her sooner: a horizontal move asks the rows of her body top to
-  bottom; a vertical move asks the columns from the leftmost on an `Even` frame and from the rightmost on
-  an `Odd` one. A block that doesn't stop her (air, or a sloped surface that isn't reached) passes the
-  question to the next.
+- When blocks across her body would stop a move at different places, one of them decides, and it
+  need not be the nearest: for a horizontal move, the topmost of them; for a vertical move, the
+  leftmost on an `Even` frame and the rightmost on an `Odd` one. Air, and a sloped surface whose
+  stop she doesn't reach, never decide.
 - checked: oracle (every ground vector's floor); constructed (C-limit, C-step-far, C-step-noback,
   C-step-left, C-step-down, C-step-up, C-span-step, C-down-even, C-down-odd).
 
@@ -332,20 +332,19 @@ as below. These rules are Samus's; other actors get their own when their domains
 - checked: constructed (C-wall, C-ceiling).
 
 ### SolidEnemies
-- Quirk. Her box and an enemy's are each centre ± half-size. A move asks every solid enemy before
-  the blocks. It tests her box at the move's end pushed 1 px further on: moving left or up unless
-  the end's subpixel is 0, moving right or down unless both her start's subpixel and the move's
-  are 0. The test meets an enemy when, there, the centres are closer than the two half-sizes summed
-  on both axes.
-- An enemy the test meets is judged from where she starts, by the gap between the boxes on that
+- Quirk. Her box and an enemy's are each centre ± half-size. Her reach is her box at the move's
+  end pushed 1 px further on: moving left or up unless the end's subpixel is 0, moving right or
+  down unless both her start's subpixel and the move's are 0. She reaches an enemy when, there,
+  the centres are closer than the two half-sizes summed on both axes.
+- An enemy she reaches is judged from where she starts, by the gap between the boxes on that
   side (the enemy's near side less her near side, less 1): a gap of 0 is touching: she doesn't
   move, and her **y** subpixel is set to 0, on either axis; a larger gap stops her by that many
-  whole pixels, her subpixel kept; a negative one (already overlapping) is passed over. So a move
+  whole pixels, her subpixel kept; a negative one (already overlapping) doesn't stop her. So a move
   of 0 is never stopped by one.
 - A stop against an enemy is a wall, a ceiling or a floor as the move's direction says: sideways it
   halts her (`WallsAndCeilings`), upward it ends the rise, downward she lands (`Landing`).
-- A solid enemy in a move's path decides that move alone: she stops against it and the blocks
-  aren't asked, even a nearer one, so the move can end with her edge overlapping a block. Blocks
+- A solid enemy in a move's path decides that move alone: she stops against it and no block
+  stops her, even a nearer one, so the move can end with her edge overlapping a block. Blocks
   stop her only on a path free of solid enemies (`BlocksStopFlush`).
 - checked: constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-aim-enemy).
 
@@ -419,6 +418,9 @@ as below. These rules are Samus's; other actors get their own when their domains
 
 ## 11. Open questions
 
+- With more than one solid enemy in a move's reach, which one decides is not yet specified (the
+  vectors have one).
+
 - Whether a pose change the chart makes at an animation's end moves her the extra pixel of
   `AimingAndShooting`: for the pose-chart spec.
 - The elevator's descent: in area-brinstar she moves down 1 px and 2 px on alternate frames while
@@ -434,8 +436,7 @@ as below. These rules are Samus's; other actors get their own when their domains
    spin's drift and a sloped surface's effect on a move's length (§10).
 4. The water rows, terrain-quicksand and samus-ceres-push gave no vectors: their liquid and push
    rules are out of scope.
-5. Landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel before she
-   touches it: a collision question.
+5. Answered: landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel   because she reaches the enemy a pixel early and is touching it (`SolidEnemies`).
 6. The crouch take-off's lift appears a frame apart from pose fit (item-morph-ball 1311).
 7. Answered: holding no button during a turn ends the skid; holding one that changes nothing
    keeps it (`TurningRound`).
