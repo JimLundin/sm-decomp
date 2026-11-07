@@ -29,30 +29,43 @@
 #   - enemy: one solid enemy: centre = [x, y] in px; radius = [x, y], its half-width and half-height
 #     in px (its box is centre - radius to centre + radius, measured as her body's box is, spec §8).
 #   - elevator_moving: true when she stands on an elevator that is moving (spec §1.3).
+#   - cells: the other kinds of cell (spec `OtherBlockKinds`), a list of { block = [x, y], kind }, the
+#     block's top-left corner and its kind: "DoorToRoom", "DoorToNowhere", "Spikes",
+#     "AirWithSpikes", "BreaksToShots", "HoldsGrapple", "AirShotsActOn", "BreaksToBombs",
+#     "AirBombsActOn", "ReactingBlock", "ReactingAir" or "StandIn". A "BreaksToBombs" or
+#     "ReactingBlock" also gives answer = "Solid" or "Air", the world's answer for every touch
+#     this frame (default "Solid"). A "StandIn" gives names = [x, y], the top-left corner of the
+#     cell it stands for.
 #   A recorded vector's world answers its frames as the room did: open air where she met nothing,
 #   the floor she stood on where she was on flat ground.
 # - before: what the player can tell about Samus at the start (spec §1): position = [x, y],
 #   speed_x, dash, speed_y, bounces. A missing quantity is 0. The start is always a moment where
 #   she remembers nothing the quantities don't show (spec §1.2).
 # - lead_in: the frames before the checked one, oldest first, when the checked frame depends on
-#   something she remembers. Each gives the pose at its start (body, action, facing, radius), the
+#   something she remembers. Each gives the pose at its start (as pose below), the
 #   pad and jump_pressed. A lead-in frame's pose is the one the next frame starts in, so where the
 #   pose changes, the change happens in the frame before. Nothing is compared during the lead-in.
 # - pose: the pose at the checked frame's start (spec §2): body, action, facing, radius = [x, y]
-#   in px, and aim (optional, default Forward: Forward, Up, UpForward, DownForward, Down). next_pose:
-#   the pose chosen during it, when it changes (the pose chart is not in the
-#   spec yet, so the vector gives it).
+#   in px; aim (optional, default Forward: Forward, Up, UpForward, DownForward, Down); gun
+#   (optional, default "Stowed": "Drawn" or "Stowed"); and turn (optional, `Turning` only,
+#   default "Ground": "Ground", "Jump", "Fall" or "MoonwalkJump", the turn she is in, spec §2).
+#   A recorded pose gives the aim, gun and turn the record shows. next_pose: the pose chosen
+#   during it, when it changes; its radius is her body's size after the change.
 # - frame (optional): "Even" or "Odd", the parity of the checked frame (spec §1.3); default "Even".
 #   The lead-in's frames alternate back from it.
 # - pad: the buttons held; jump_pressed: jump just pressed this frame.
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
-#   position_x compares x alone.
+#   position_x compares x alone. reached: the cells her moves reach this frame (spec `TouchedCells`), in
+#   order, each { cell = [x, y], way }, the cell's top-left corner in px and the move's direction
+#   ("Left", "Right", "Up", "Down"); a cell that stands for another is listed as the one it names.
+#   inside: the cells she is inside this frame, in order, each [x, y], the cell's top-left corner.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
 #   standing, running or moonwalking, a take-off becoming a jump, and (M1) a turn's end into a spin.
 #   J1-J3 and A1 check a frame whose pose changes (a jump start, a take-off, an aim change) and give
-#   its next_pose. No recorded vector comes from a frame run by a bomb jump or a grapple release.
+#   its next_pose; PF1 checks a crouch take-off, whose body grows. No recorded vector comes from
+#   a frame run by a bomb jump or a grapple release.
 
 # Constructed vectors: cases no record reaches, and the Exact variant.
 
@@ -164,7 +177,7 @@ source = "item-morph-ball:686"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 704 }
 before = { position = ["057E.9000", "02AB.FFFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
 pad = ["run", "left"]
 jump_pressed = false
 after = { position = ["057E.9000", "02AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -275,7 +288,7 @@ source = "samus-input-poses:120"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 96 }
 before = { position = ["008F.E000", "004B.FFFF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }
 pad = ["run"]
 jump_pressed = false
 after = { position = ["008F.E000", "004B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -286,7 +299,7 @@ source = "samus-input-poses:121"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 96 }
 before = { position = ["008F.E000", "004B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }
 pad = ["run", "right"]
 jump_pressed = false
 after = { position = ["0090.A000", "004B.FFFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -297,7 +310,7 @@ source = "samus-input-poses:235"
 entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
 world = { floor_top = 672 }
 before = { position = ["00BF.2FFF", "028B.FFFF"], speed_x = "+0000.0000", dash = "0000.2000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
 after = { position = ["00BF.8FFF", "028B.FFFF"], speed_x = "+0000.3000", dash = "0000.3000", speed_y = "+0000.0000" }
@@ -308,7 +321,7 @@ source = "samus-input-poses:503"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0065.17FF", "00AE.D7FF"], speed_x = "+0001.0000", dash = "0000.0000", speed_y = "+0002.6800" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }
 pad = ["run", "shoot", "right"]
 jump_pressed = false
 after = { position = ["0065.97FF", "00B1.3FFF"], speed_x = "+0000.8000", dash = "0000.0000", speed_y = "+0002.8400" }
@@ -319,7 +332,7 @@ source = "samus-input-poses:506"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0065.97FF", "00B6.63FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0002.BC00" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
 after = { position = ["0064.D7FF", "00B9.1FFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0002.D800" }
@@ -516,7 +529,7 @@ source = "samus-screw-attack:203"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0116.BFFF", "0083.BC00"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0001.F800" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Jump" }
 pad = ["right"]
 jump_pressed = false
 after = { position = ["0115.FFFF", "0085.B400"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0002.1400" }
@@ -538,7 +551,7 @@ source = "samus-bomb-jump-vertical:28"
 entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround"]
 world = { floor_top = 208 }
 before = { position = ["0080.53FF", "00BB.FFFF"], speed_x = "+0000.3000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], gun = "Drawn" }
 pad = ["shoot", "right"]
 jump_pressed = false
 after = { position = ["0080.B3FF", "00BB.FFFF"], speed_x = "+0000.6000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -684,7 +697,7 @@ source = "samus-grapple-release:212"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["06DB.FFFF", "006C.A3FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.3800" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }
 pad = []
 jump_pressed = false
 after = { position = ["06DB.3FFF", "006C.DBFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.5400" }
@@ -739,7 +752,7 @@ source = "samus-grapple-walljump:45"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0059.3FFF", "00CE.13FF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0003.D400" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }
 pad = ["left"]
 jump_pressed = false
 after = { position = ["0059.7FFF", "00D1.E7FF"], speed_x = "+0000.4000", dash = "0000.0000", speed_y = "+0003.F000" }
@@ -750,7 +763,7 @@ source = "samus-grapple-walljump:47"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0059.7FFF", "00D5.D7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0004.0C00" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }
 pad = ["left"]
 jump_pressed = false
 after = { position = ["0058.BFFF", "00D9.E3FF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0004.2800" }
@@ -797,7 +810,7 @@ source = "r01:982"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["019C.2400", "04B7.EFFF"], speed_x = "-0001.C000", dash = "0000.0000", speed_y = "+0000.E000" }
-pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19], aim = "DownForward" }
 pad = ["left", "aim_down"]
 jump_pressed = false
 after = { position = ["019B.2400", "04B8.CFFF"], speed_x = "-0001.0000", dash = "0000.0000", speed_y = "+0000.FC00" }
@@ -819,7 +832,7 @@ source = "r01:994"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0193.2400", "04A9.27FF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "-0004.7000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Jump" }
 pad = ["run", "left"]
 jump_pressed = false
 after = { position = ["0192.E400", "04A4.B7FF"], speed_x = "-0000.4000", dash = "0000.0000", speed_y = "-0004.5400" }
@@ -830,7 +843,7 @@ source = "r01:996"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0192.E400", "04A0.63FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.3800" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Jump" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
 after = { position = ["0193.A400", "049C.2BFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "-0004.1C00" }
@@ -841,7 +854,7 @@ source = "r01:1001"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0195.2400", "0490.2BFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0000.1C00" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Jump" }
 pad = ["run", "left"]
 jump_pressed = false
 after = { position = ["0195.6400", "0490.47FF"], speed_x = "+0000.4000", dash = "0000.0000", speed_y = "+0000.3800" }
@@ -852,7 +865,7 @@ source = "r01:1003"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0195.6400", "0490.7FFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.5400" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Jump" }
 pad = ["run", "left"]
 jump_pressed = false
 after = { position = ["0194.A400", "0490.D3FF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.7000" }
@@ -863,7 +876,7 @@ source = "r02:32"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0446.0C00", "00AC.C3FF"], speed_x = "-0001.0000", dash = "0000.0000", speed_y = "+0001.3400" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Fall" }
 pad = ["run", "left"]
 jump_pressed = false
 after = { position = ["0445.8C00", "00AD.F7FF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0001.5000" }
@@ -874,7 +887,7 @@ source = "r02:41"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 192 }
 before = { position = ["0448.8C00", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
 pad = ["run", "left"]
 jump_pressed = false
 after = { position = ["0447.CC00", "00AB.FFFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -940,7 +953,7 @@ source = "r03:6"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 112 }
 before = { position = ["019C.0000", "005B.FFFF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }
 pad = []
 jump_pressed = false
 after = { position = ["019C.0000", "005B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -951,7 +964,7 @@ source = "r03:7"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 112 }
 before = { position = ["019C.0000", "005B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }
 pad = []
 jump_pressed = false
 after = { position = ["019C.C000", "005B.FFFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1114,7 +1127,7 @@ source = "r05:94"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0763.0FFF", "0094.0BFF"], speed_x = "-0001.0000", dash = "0000.0000", speed_y = "+0001.DC00" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Fall" }
 pad = ["jump", "right"]
 jump_pressed = false
 after = { position = ["0762.8FFF", "0095.E7FF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0001.F800" }
@@ -1125,7 +1138,7 @@ source = "r05:97"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["0762.8FFF", "0099.F3FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0002.3000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Fall" }
 pad = ["jump"]
 jump_pressed = true
 after = { position = ["0763.4FFF", "009C.23FF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0002.4C00" }
@@ -1147,7 +1160,7 @@ source = "r05:147"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["0756.4FFF", "0073.33FF"], speed_x = "-0001.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
-pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19], aim = "UpForward" }
 pad = ["run", "left", "aim_up"]
 jump_pressed = false
 after = { position = ["0754.8FFF", "0073.4FFF"], speed_x = "-0001.C000", dash = "0000.0000", speed_y = "+0000.3800" }
@@ -1213,7 +1226,7 @@ source = "r07:7"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["00AD.2000", "0079.0400"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0001.3400" }
-pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], aim = "DownForward" }
 pad = ["shoot", "left", "aim_down"]
 jump_pressed = false
 after = { position = ["00AB.E000", "007A.3800"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0001.5000" }
@@ -1257,7 +1270,7 @@ source = "r07:54"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["0090.9000", "008B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21], aim = "DownForward" }
 pad = ["aim_down"]
 jump_pressed = false
 after = { position = ["0090.9000", "008B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1268,7 +1281,7 @@ source = "r07:73"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["0085.9000", "008B.FFFF"], speed_x = "-0001.9000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
 pad = ["run", "right"]
 jump_pressed = false
 after = { position = ["0084.8000", "008B.FFFF"], speed_x = "-0001.1000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1279,7 +1292,7 @@ source = "r07:74"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["0084.8000", "008B.FFFF"], speed_x = "-0001.1000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
 pad = []
 jump_pressed = false
 after = { position = ["0083.F000", "008B.FFFF"], speed_x = "+0000.9000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1290,7 +1303,7 @@ source = "r07:75"
 entries = ["TurningRound", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["0083.F000", "008B.FFFF"], speed_x = "+0000.9000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
 pad = []
 jump_pressed = false
 after = { position = ["0083.F000", "008B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1301,7 +1314,7 @@ source = "r08:2"
 entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
 world = { floor_top = 672 }
 before = { position = ["00CE.2C00", "028B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], aim = "DownForward" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
 after = { position = ["00CD.EC00", "028B.FFFF"], speed_x = "-0000.3000", dash = "0000.1000", speed_y = "+0000.0000" }
@@ -1348,7 +1361,7 @@ source = "r08:111"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
 before = { position = ["00C3.3C00", "0207.1BFF"], speed_x = "+0001.4000", dash = "0000.0000", speed_y = "+0000.3800" }
-pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], aim = "UpForward" }
 pad = ["run", "right", "aim_up"]
 jump_pressed = false
 after = { position = ["00C4.7C00", "0207.53FF"], speed_x = "+0001.4000", dash = "0000.0000", speed_y = "+0000.5400" }
@@ -1359,7 +1372,7 @@ source = "r08:116"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["00C5.FC00", "0207.FBFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0000.5400" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Jump" }
 pad = ["run"]
 jump_pressed = false
 after = { position = ["00C6.3C00", "0208.4FFF"], speed_x = "+0000.4000", dash = "0000.0000", speed_y = "+0000.7000" }
@@ -1370,7 +1383,7 @@ source = "r08:118"
 entries = ["RisingAndFalling", "TurningRound"]
 world = {}
 before = { position = ["00C6.3C00", "0208.BFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.8C00" }
-pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Jump" }
 pad = ["run"]
 jump_pressed = false
 after = { position = ["00C5.7C00", "0209.4BFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.A800" }
@@ -1417,7 +1430,7 @@ source = "area-norfair:72"
 entries = ["SpeedBuildsAndBrakes", "FollowingTheGround"]
 world = { floor_top = 160 }
 before = { position = ["0097.4000", "008B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21], aim = "DownForward" }
 pad = []
 jump_pressed = false
 after = { position = ["0097.4000", "008B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -1572,12 +1585,12 @@ after = { position = ["0108.0000", "0102.4000"], speed_y = "+0000.0000", speed_x
 
 [[vector]]
 id = "M1"
-source = "r03:12"
+source = "r03:13"
 entries = ["Moonfall", "TurningRound", "RisingAndFalling", "DriftInTheAir"]
 world = { floor_top = 112 }
 before = { position = ["019D.8000", "005B.FFFF"] }
 lead_in = [
-  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
 ]
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
@@ -1593,7 +1606,7 @@ equipment = { space_jump = true }
 world = { solid_block = [400, 112] }
 before = { position = ["019D.8000", "005B.FFFF"] }
 lead_in = [
-  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
@@ -1630,7 +1643,7 @@ entries = ["Moonfall", "RisingAndFalling"]
 world = { solid_block = [400, 112] }
 before = { position = ["019D.8000", "005B.FFFF"] }
 lead_in = [
-  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
@@ -1908,9 +1921,125 @@ pad = ["right", "aim_down"]
 jump_pressed = false
 after = { position = ["0110.0000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000" }
 
+# The cells her moves reach and the cells she is inside (TouchedCells), the other kinds of cell
+# (OtherBlockKinds), and the order of pose fit and the crouch lift (PoseFitAfterMoves).
+
+[[vector]]
+id = "C-touch-run"
+source = "constructed"
+entries = ["TouchedCells", "FollowingTheGround"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.E000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0102.C000", "010B.FFFF"], reached = [{ cell = [256, 240], way = "Right" }, { cell = [256, 256], way = "Right" }, { cell = [256, 272], way = "Right" }, { cell = [240, 288], way = "Down" }], inside = [[256, 272], [256, 256], [256, 240]] }
+
+[[vector]]
+id = "C-touch-wall"
+source = "constructed"
+entries = ["TouchedCells", "WallsAndCeilings", "FollowingTheGround"]
+world = { floor_top = 288, wall_right = 256 }
+before = { position = ["00FA.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00FB.FFFF", "010B.FFFF"], reached = [{ cell = [256, 240], way = "Right" }, { cell = [240, 288], way = "Down" }], inside = [[240, 272], [240, 256], [240, 240]] }
+
+[[vector]]
+id = "C-touch-fall-odd"
+source = "constructed"
+entries = ["TouchedCells", "RisingAndFalling"]
+world = {}
+before = { position = ["0100.0000", "00FA.0000"], speed_y = "+0002.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+frame = "Odd"
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "00FC.0000"], reached = [{ cell = [256, 272], way = "Down" }, { cell = [240, 272], way = "Down" }], inside = [[256, 256], [256, 240], [256, 224]] }
+
+[[vector]]
+id = "C-touch-inside-twice"
+source = "constructed"
+entries = ["TouchedCells"]
+world = {}
+before = { position = ["0100.0000", "010D.0000"] }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [7, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "010D.0000"], reached = [], inside = [[256, 272], [256, 256], [256, 256]] }
+
+[[vector]]
+id = "C-kind-spikes"
+source = "constructed"
+entries = ["OtherBlockKinds", "TouchedCells", "BlocksStopFlush"]
+world = { floor_top = 288, cells = [{ block = [256, 256], kind = "Spikes" }] }
+before = { position = ["00FA.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00FB.FFFF", "010B.FFFF"], speed_x = "+0000.0000", reached = [{ cell = [256, 240], way = "Right" }, { cell = [256, 256], way = "Right" }, { cell = [240, 288], way = "Down" }] }
+
+[[vector]]
+id = "C-kind-door"
+source = "constructed"
+entries = ["OtherBlockKinds", "TouchedCells", "WordwiseTopSpeed"]
+world = { floor_top = 288, cells = [{ block = [256, 256], kind = "DoorToRoom" }] }
+before = { position = ["00FA.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00FC.C000", "010B.FFFF"], speed_x = "+0002.C000", reached = [{ cell = [256, 240], way = "Right" }, { cell = [256, 256], way = "Right" }, { cell = [256, 272], way = "Right" }, { cell = [240, 288], way = "Down" }] }
+
+[[vector]]
+id = "C-kind-reacting-air"
+source = "constructed"
+entries = ["OtherBlockKinds", "TouchedCells"]
+world = { floor_top = 288, cells = [{ block = [256, 256], kind = "ReactingBlock", answer = "Air" }] }
+before = { position = ["00FA.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00FC.C000", "010B.FFFF"], speed_x = "+0002.C000", reached = [{ cell = [256, 240], way = "Right" }, { cell = [256, 256], way = "Right" }, { cell = [256, 272], way = "Right" }, { cell = [240, 288], way = "Down" }] }
+
+[[vector]]
+id = "C-kind-reacting-solid"
+source = "constructed"
+entries = ["OtherBlockKinds", "TouchedCells", "BlocksStopFlush"]
+world = { floor_top = 288, cells = [{ block = [256, 256], kind = "ReactingBlock", answer = "Solid" }] }
+before = { position = ["00FA.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00FB.FFFF", "010B.FFFF"], speed_x = "+0000.0000", reached = [{ cell = [256, 240], way = "Right" }, { cell = [256, 256], way = "Right" }, { cell = [240, 288], way = "Down" }] }
+
+[[vector]]
+id = "C-kind-stand-in"
+source = "constructed"
+entries = ["OtherBlockKinds", "TouchedCells", "BlocksStopFlush"]
+world = { floor_top = 288, solid_block = [288, 256], cells = [{ block = [256, 256], kind = "StandIn", names = [288, 256] }] }
+before = { position = ["00FA.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00FB.FFFF", "010B.FFFF"], speed_x = "+0000.0000", reached = [{ cell = [256, 240], way = "Right" }, { cell = [288, 256], way = "Right" }, { cell = [240, 288], way = "Down" }] }
+
+[[vector]]
+id = "PF1"
+source = "item-morph-ball:1311"
+entries = ["PoseFitAfterMoves", "Jumping", "PadChart", "SpeedBuildsAndBrakes"]
+world = { floor_top = 720 }
+before = { position = ["0523.3FFF", "02C0.FFFF"], speed_x = "+0003.4000" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+pad = ["run", "right", "jump"]
+jump_pressed = true
+after = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
-#   default "Stowed"); pad: the buttons held;
+#   default "Stowed"; and turn, `Turning` only, as a vector's pose gives it); pad: the
+#   buttons held;
 #   jump_pressed: jump just pressed; pressed: the other buttons just pressed this frame.
 # - met: what this frame's moves met: "nothing", "floor" (a landing), "no_floor" (walking off a
 #   ledge), "wall" (a wall stop), "wall_kick" (the wall-jump kick), or "animation_end" (the pose's
@@ -2031,7 +2160,7 @@ after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim =
 id = "P11"
 source = "r01:617"
 entries = ["AnimationEnds"]
-pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" }
+pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward", turn = "Ground" }
 pad = ["run", "left"]
 jump_pressed = false
 pressed = []
@@ -2069,7 +2198,7 @@ pad = ["run", "left"]
 jump_pressed = false
 pressed = ["left"]
 met = "nothing"
-after = { pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" } }
+after = { pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward", turn = "Ground" } }
 
 [[pose_step]]
 id = "P15"
@@ -2113,13 +2242,13 @@ pad = ["run", "left", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
 met = "nothing"
-after = { pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" } }
+after = { pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward", turn = "Jump" } }
 
 [[pose_step]]
 id = "P19"
 source = "r01:1005"
 entries = ["AnimationEnds"]
-pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward" }
+pose = { body = "Upright", action = "Turning", facing = "Left", aim = "Forward", turn = "Jump" }
 pad = ["run", "left", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
@@ -2266,7 +2395,7 @@ source = "samus-input-poses:512"
 entries = ["SlopesSlowTheWalk", "TurningRound", "WordwiseTopSpeed", "FollowingTheGround", "SlopesCarry"]
 world = { slope_floor = { block = [96, 192], surface = [9, 10, 11, 12, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16], factor = "0.C0" } }
 before = { position = ["0062.97FF", "00B6.1FFF"] }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
 pad = ["run", "right"]
 jump_pressed = false
 after = { position = ["0063.27FF", "00B7.1FFF"], speed_x = "+0000.C000", dash = "0000.0000" }
