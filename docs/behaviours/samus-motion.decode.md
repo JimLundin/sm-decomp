@@ -51,7 +51,7 @@ or `0B42` = 0; `0B4A` = 0, or 1 with `0B46` > 0; `0B36` = 1 only with a non-zero
 turn, from a take-off pose into a jump, or by aim alone, which the x-move test keeps clear of the
 arm-pump step), to the nearest plain start, at most 120 frames. A world of open air takes the floor
 of a ground frame met on the way if every later airborne frame stays above it. A start with a bounce
-in play drops the vector. Of 149 recorded frames, 118 are kept, 23 of them with a lead-in of 1 to
+in play drops the vector. Of 149 recorded frames, 118 were kept (gaps-v3 dropped six, below), 23 of them with a lead-in of 1 to
 12 frames; 31 are dropped (no plain start reachable). The two constructed moonfall vectors were
 dropped: they set the moonfall as a start value, and no lead-in through a turn's end is worked yet.
 
@@ -95,27 +95,44 @@ and `scan.sh --mirror` agrees.
 | --- | --- |
 | SpeedBuildsAndBrakes | `$90:9BD1` and its table (the speeds by situation), `$90:9A7E` (speed-up), `$90:9B1F` (braking), the standing, crouching, transition, ran-into-wall and facing-forward handlers' tail stops in `$90:A337`'s table, `$90:A521` (the ball) |
 | Dash | `$90:973E`, `$90:97D5` (the cap), `$91:DE53` (losing it), `$90:E5CE` (the wall stop's share) |
-| TurningRound | `$91:F543` (turn start and spin reverse), `$90:A68F` (turning handler, its sink and its end), `$90:A67C` (the creep) |
+| TurningRound | `$91:F543` (turn start and spin reverse), `$90:A68F` (turning handler, its sink and its end), `$90:A67C` (the creep), `$91:81A9` with `$91:82D9`, `$91:8304` and `$91:ECD0` (letting go: the failed transition lookup's stop command clears `0B4A` after the move) |
 | AimingAndShooting | `$91:EADE` (the step), `$90:A3AD` (the shot) |
 | RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
 | Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump) |
 | FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off) |
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
-| RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC` and `$90:90C4` (the rise's end) |
-| DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` (spin) |
+| RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0) |
+| DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` and `$90:9093` (spin; its stop still calls `$90:8EA9`, which adds the extra run speed) |
 | Moonfall | `$91:EBAF`, `$91:F36E` (the hand-over), `$90:913A` (no limit with direction 0) |
-| WallJump | `$90:9D35` (arming and kick test), `$91:FA0F` (kick), `$94:967F` (the probe) |
+| WallJump | `$90:9D35` (arming and kick test), `$90:90B3` (one distance, `$90:9E9F` = 8, for both), `$91:FA0F` (kick), `$94:967F` (the probe) |
 | Landing | `$91:F010`, `$90:A640` (upright and changing), `$91:F1FC`, `$91:F25E` (the ball) |
 | BlocksStopFlush | `$94:8F49`, `$94:8F82` (horizontal and vertical block collision), `$90:E4AD` (the limit) |
-| WallsAndCeilings | `$90:E5CE` (wall), `$90:E606` (ceiling) |
-| SolidEnemies | `$A0:AAC8`, `$90:9D80`, `$90:9DF8` |
-| SlopesCarry | `$90:9376`, `$94:87F4` |
+| WallsAndCeilings | `$90:E5CE` (wall), `$90:E606` and `$91:EFDF` (ceiling) |
+| SolidEnemies | `$A0:AAC8`, `$90:9D80`, `$90:9DF8`, `$90:93B1`, `$90:93EC` and `$90:9440` (enemy test first; on a hit the move skips block collision, as the bank log's zebetite-skip note says) |
+| SlopesCarry | `$90:9376`, `$94:87F4` (seat after every horizontal move, sets `0DBA`), `$90:924C` (the pull reads `0DBA`), `$94:976F` (cleared by a non-zero vertical move), `$94:8E38` (square slope stop sets it), `$94:86FE` (rising into a non-square ceiling slope: `$12 = max(0, ...)` and `$14 = 0`, so no move) |
 | WordwiseTopSpeed* | `$90:9A99` |
 
 **The pose chart's effects** (spec §7) are the prospective pose-change commands `0A2E` 1, 2, 6 and
 8 (`$91:EC50`..`$91:ECD7`). The spec no longer names them; the pose-chart lane gives each
 transition its outcome as data. Command 6 has no RTS and falls through into command 8, so a change
 that kills the run speed also zeroes and cancels the dash: spec §7's one fact.
+
+## Gaps v3 (the first implementation's nine)
+
+| Vectors | Answer | Cause |
+| --- | --- | --- |
+| R29, R37 | dropped | she rises into a non-square ceiling slope (block type 1, BTS 93h above her at samus-walljump-28:61); `0DBA` stays 0 there, so the selection missed it |
+| R30, R38 | restarted after the hit | the same frames, now from a plain falling start |
+| R50, R51 | dropped | `0A58` = `$90:E025`/`$90:E032`: bomb jump |
+| R67, R68 | dropped | `0A58` = `$90:946E`: released from grapple swing |
+| R125 | spec | `DriftInTheAir`: the spin's stop moves by the dash |
+| R133 | spec | `TurningRound`: lookup failure (pad 0000), command 2 |
+
+Frame selection now also needs `0A58` = `$90:A337` at record N. New: J1 r03:470, J2 r04:474, J3
+r04:475, A1 area-norfair:3 (poses 0Ah to 12h, +1 px), E1 samus-ceres-push:989 (`0A58` normal; the
+row's push is elsewhere); constructed E2 (y from samus-ceres-push:990), E3, C-ceiling. The dumper
+used is `$TEMP/gaps-v3/dump` (the ground dumper without its under-block probe, which overflows on
+rows whose position wraps, plus the blocks above, below and beside her).
 
 ## Harness notes kept from the previous spec
 

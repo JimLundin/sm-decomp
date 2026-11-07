@@ -57,7 +57,7 @@ frames (the vectors' format), never by a value in its start.
   keeps building in the air with the pad let go). It carries on after a jump or a fall she started
   with a dash, while a spin jump drifts (`DriftInTheAir`), through a wall jump, and while she
   skids. It follows the pad again once she stops braking, halts, lands, hits a wall or ceiling, or
-  takes off.
+  takes off, or stops steering during a turn (`TurningRound`).
 - **Skidding.** A skid is her moving against her facing: she turned round, or reversed a spin, and
   still travels the old way. A turn from a standstill is a skid of zero: its first frame brakes, so
   she doesn't creep until the frame after (`TurningRound`).
@@ -145,16 +145,20 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   she loses her dash.
 - Turning from a standstill slides her 0.C000 every other frame the new way: the speed goes 0,
   0.C000, 0, because turning's top speed is 0 and `WordwiseTopSpeed` keeps 0.C000 over 0 once.
+- Turning, on the ground or in the air, steering neither way and with no pose change from the
+  pad, her skid ends after that frame's move: she keeps her horizontal speed, which now follows
+  the pad and points along her new facing. So a skid braked to exactly 0 ends there too.
 - Turning on the ground over a drop, she sinks by her whole speed plus 1 px a frame instead of
   falling. In the air she turns under gravity (`RisingAndFalling`).
-- checked: oracle (samus-input-poses turns, samus-screw-attack); constructed (the sinking).
+- checked: oracle (samus-input-poses turns, samus-screw-attack; R133 and samus-input-poses:120 for
+  letting go); constructed (the sinking).
 
 ### AimingAndShooting
 - Quirk and output. Changing aim while running moves her 1 px forward on top of that frame's move,
   without a speed change; a block or a solid enemy in the way, or a wall stop that frame, puts her
   against the wall instead. Standing, unaimed
   and not landing, holding shoot restarts the standing animation.
-- checked: constructed (open question 3).
+- checked: oracle (A1, the step); constructed (the rest).
 
 ### RidingTheElevator
 - Mechanic. Facing the screen on a moving elevator, she moves down 1 px a frame; nothing else of
@@ -168,15 +172,17 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Parameter and mechanic. Jump 4.E000 upward (hi-jump 6.0000); wall jump 4.A000 (hi-jump 5.8000);
   ball bounce 1.0000; the crouch lift 10 px.
 - The first poses of a straight jump (taking off) don't steer: she moves by her dash only, follows
-  the pad and still gains dash (`Dash`); she doesn't move vertically. On the first of them she
-  starts rising at the jump speed; from a crouch without aim she is also lifted 10 px.
+  the pad and still gains dash (`Dash`); she doesn't move vertically and the pull doesn't act. The
+  frame she changes into them she starts rising at the jump speed, without moving vertically that
+  frame; from a crouch without aim she is also lifted 10 px.
 - Starting a spin jump, or the spring ball's hop from the ground, she rises at the jump speed.
   Starting a straight jump or a fall she carries on along her facing if she has a dash, else she
   follows the pad, so a running jump keeps its drift.
 - With space jump, pressing jump while falling in a spin jumps again, when her fall speed read as
   8.8 (its pixel part's low byte and subpixel's high byte) is from 2.80 up to, not including, 5.00.
   She rises at the new speed that same frame.
-- checked: oracle (take-off and spin vectors; y open: question 6); constructed (space jump).
+- checked: oracle (J1, J2, J3, and the take-off and spin vectors; the crouch lift open: question
+  6); constructed (space jump).
 
 ### FollowingTheGround
 - Mechanic. On the ground she is pulled down after her horizontal move, by that frame's whole speed
@@ -187,7 +193,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 ### MovesAsShePosed
 - Timing. On the frame she changes pose she still moves as the pose at the frame's start says: what she is doing,
   her speeds, and what a landing or a fall does, come from the pose at the frame's start. checked:
-  oracle.
+  oracle (J1, J2, A1).
 
 ---
 
@@ -197,10 +203,17 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Mechanic. Each frame she moves vertically by her vertical speed, then it grows by 0.1C00 downward.
 - Falling, her speed stops growing only when its pixel part is exactly 5, so it settles at 5.1400
   (4.F800 + 0.1C00); a speed set above that keeps its value.
-- Rising, she starts to fall (vertical speed 0) once the upward speed is spent, and in a normal or spin
-  jump or the spring ball's hop as soon as jump is let go. The frame it ends she doesn't move
-  vertically.
-- checked: oracle (every air vector); constructed (C-fallcap-a, C-fallcap-b).
+- Rising, she moves by her upward speed and then the pull takes 0.1C00 off it. The upward speed is
+  spent once the pull has taken it past zero, so that it points downward by even a subpixel; a
+  speed of exactly 0 is not spent, and she rises by 0 for one more frame. The rise ends at the
+  start of the frame after it is spent, and in a normal or spin jump or the spring ball's hop at
+  the start of any frame with jump not held: vertical speed 0, falling, and she doesn't move
+  vertically that frame; the pull then acts as in a fall, so the frame ends at +0.1C00.
+- An upward speed of exactly one pull is never met from a jump: no rise speed in `Jumping` is a
+  whole number of pulls. The ball rises at exactly 0 when it bounces the second time, so it
+  rises by 0 for one frame before the rise ends.
+- checked: oracle (every air vector; E1 for the speed past zero); constructed (C-fallcap-a,
+  C-fallcap-b, E2, E3).
 
 ### DriftInTheAir
 - Mechanic. In a straight jump, falling and in the ball in the air, she builds towards the top speed
@@ -211,7 +224,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   its drift with the pad let go. A skid in the air brakes, as on the ground.
 - A spin jump drifts only while she holds the side she faces, or is skidding, or reached her top
   speed this frame: then she carries on (a skid stays a skid) and moves. Otherwise she stops
-  drifting: horizontal speed 0, following the pad, no move.
+  drifting: horizontal speed 0, following the pad, and she moves by her dash alone.
 - Through a wall jump she always drifts, carrying on along her facing.
 - checked: oracle.
 
@@ -225,14 +238,17 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 ## 6. Wall jumps and landings
 
 ### WallJump
-- Mechanic. Spinning in a spin carried on (§1.2), holding away from a wall within 8 px (left held: a
+- Mechanic. Spinning in a spin carried on (§1.2), holding away from a wall near her (left held: a
   wall on her right; otherwise right held: on her left) readies the wall jump, which the sprite
-  shows. The wall is looked for where her x is after this frame's move.
-- Once the spin has turned far enough, pressing jump with the wall closer than 8 px kicks her off:
+  shows.
+- A wall is near her when a test move of 8 px towards it, from where her x is after this frame's
+  move, would be stopped (`BlocksStopFlush`, `SolidEnemies`): fewer than 8 px of air between her
+  edge and the wall. Readying and the kick use this same test.
+- Once the spin has turned far enough, pressing jump with a wall near her kicks her off:
   she doesn't move vertically that frame; she starts the wall jump rising at the wall-jump speed, x
   speed 0, following the pad.
-- Looking for a wall writes her x subpixel as a stop against it would (FFFF looking right, 0
-  looking left), without moving her. It meets solid enemies first.
+- Finding a block wall writes her x subpixel as a stop against it would (FFFF looking right, 0
+  looking left), without moving her. The test meets solid enemies first.
 - checked: oracle (samus-walljump-16, -22, -28, samus-grapple-walljump, item-morph-ball's leftward
   spin jumps).
 
@@ -280,18 +296,35 @@ as below. These rules are Samus's; other actors get their own when their domains
 ### WallsAndCeilings
 - Mechanic. A horizontal move stopped by a wall, on the ground or in the air, halts her: horizontal speed 0,
   dash 0, following the pad. The ground pull that frame still uses the speed from before
-  the stop. An upward move into a block stops flush and ends the rise: vertical speed 0, falling.
-- checked: constructed (C-wall).
+  the stop. An upward move into a block stops flush and ends the rise: vertical speed 0, falling,
+  with no pull that frame.
+- checked: constructed (C-wall, C-ceiling).
 
 ### SolidEnemies
 - Quirk. A horizontal move of 0 still meets solid enemies on her heading. A solid enemy she
   already touches on the tested side stops a move with no distance and sets her **y** subpixel to
-  0, on either axis; one ahead stops her flush against it. checked: constructed.
+  0, on either axis; one ahead stops her by whole pixels at its face, her subpixel kept.
+- A solid enemy in a move's path decides that move alone: she stops against it and the blocks
+  aren't asked, even a nearer one, so the move can end with her edge overlapping a block. Blocks
+  stop her only on a path free of solid enemies (`BlocksStopFlush`).
+- checked: constructed; no vector yet (the vectors' world has no enemies).
 
 ### SlopesCarry
-- Mechanic. On a slope the ground pull is 1 px. A horizontal move that meets solid enemies ends by
-  seating her on the slope, or under the sloped ceiling, she reached: a whole-pixel shift of y
-  before the vertical move. checked: oracle (samus-walljump-16/22/28 frame 44); no vector yet.
+- Mechanic. On a slope the ground pull is 1 px instead of her speed plus 1 px.
+- She is on a slope from the moment something seats her on one until her next vertical move
+  starts. Two things seat her: the check after every horizontal move (below), and a downward move
+  stopped by a half-block slope. So a frame's pull is 1 px when that frame's horizontal move seated
+  her, or the previous frame's pull stopped on a half-block slope.
+- After every horizontal move, whether or not it met solid enemies, the block at her centre column
+  and her bottom edge's row is asked for a sloped floor: if her bottom edge is below its surface
+  there, she is lifted onto it by whole pixels. Otherwise the block at her centre column and her
+  top edge's row is asked for a sloped ceiling, which pushes her down under it the same way.
+- Rising into a sloped ceiling's solid part at her centre column, she doesn't move up at all that
+  frame (her subpixel kept), and the rise ends as at a flat ceiling (`WallsAndCeilings`).
+- The slope's surface height at each column is world data the slope lane brings (§10); the
+  vectors' world has no slopes, so none checks this entry.
+- checked: oracle (samus-walljump-16/22/28 frame 44; samus-walljump-28:62 and
+  samus-screw-attack:66 for the sloped ceiling); no vector yet.
 
 ---
 
@@ -325,23 +358,28 @@ as below. These rules are Samus's; other actors get their own when their domains
 
 - Whether a pose change the chart makes at an animation's end moves her the extra pixel of
   `AimingAndShooting`: for the pose-chart spec.
-- Whether the elevator's descent differs from an ordinary 1 px move anywhere she can see it.
+- The elevator's descent: in area-brinstar she moves down 1 px and 2 px on alternate frames while
+  she faces the screen, so the elevator carries her on top of `RidingTheElevator`'s 1 px. That
+  carry belongs to the elevator's own lane.
 
 1. "A spin she was already in two frames earlier" (§1.2) is not yet traced against a record: it
    may count pose changes rather than frames.
 2. The pose chart's vectors (take-offs, turns' ends, landings other than the changing body) wait
    for its lane; the vectors so far change pose only by a jump, a fall or a turn from the ground.
-3. `AimingAndShooting`, `SlopesCarry`, `SolidEnemies` and the ceiling half of `WallsAndCeilings`
-   have no vectors yet.
+3. `SlopesCarry`, `SolidEnemies`, `RidingTheElevator` and `Moonfall` have no vectors yet: the
+   vectors' world has no slopes, enemies or elevators, and no lead-in through a turn's end is
+   worked.
 4. The water rows, terrain-quicksand and samus-ceres-push gave no vectors: their liquid and push
    rules are out of scope.
 5. Landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel before she
    touches it: a collision question.
 6. The crouch take-off's lift appears a frame apart from pose fit (item-morph-ball 1311).
-7. A skid at exactly 0.8000 ends following the pad in the records (samus-input-poses:120), though
-   braking by 0.8000 lands on 0, not below. Either the turn's slide is larger than 0.8000 or
-   something else ends the skid; not yet traced.
+7. Answered: steering neither way during a turn ends the skid (`TurningRound`).
 8. `Moonfall` needs a vector with a lead-in through the turn's end; r03 shows one in a straight jump's
    pose as well as a spin, so the entry's "a spin" may be too narrow.
 9. 31 of the 149 recorded frames were dropped because no lead-in from a plain start reaches them
    through frames the spec covers (mostly after a wall jump's kick or a body change in the air).
+10. Dropped after the first implementation: two frames that rise into a sloped ceiling
+   (samus-walljump-28:62, samus-screw-attack:66; `SlopesCarry`), two from a bomb jump
+   (samus-bomb-jump-vertical:1009, 1010) and two from a grapple release (samus-grapple-release:322,
+   323), both out of scope (§10).

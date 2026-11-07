@@ -12,6 +12,8 @@
 #   - floor_top: the y of a solid floor's top face, a multiple of 16; every row from it down is solid.
 #   - wall_right: the x of a solid wall's left face, a multiple of 16; every column from it
 #     rightward is solid.
+#   - ceiling_bottom: the y of a solid ceiling's bottom face, a multiple of 16; every row above it is
+#     solid.
 #   A recorded vector's world answers its frames as the room did: open air where she met nothing,
 #   the floor she stood on where she was on flat ground.
 # - before: what the player can tell about Samus at the start (spec §1): position = [x, y],
@@ -22,7 +24,8 @@
 #   pad and jump_pressed. A lead-in frame's pose is the one the next frame starts in, so where the
 #   pose changes, the change happens in the frame before. Nothing is compared during the lead-in.
 # - pose: the pose at the checked frame's start (spec §2): body, action, facing, radius = [x, y]
-#   in px. next_pose: the pose chosen during it, when it changes (the pose chart is not in the
+#   in px, and aim (optional, default Forward: Forward, Up, UpForward, DownForward, Down). next_pose:
+#   the pose chosen during it, when it changes (the pose chart is not in the
 #   spec yet, so the vector gives it).
 # - pad: the buttons held; jump_pressed: jump just pressed this frame.
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
@@ -31,6 +34,8 @@
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
 #   standing, running or moonwalking, and a take-off becoming a jump.
+#   J1-J3 and A1 check a frame whose pose changes (a jump start, a take-off, an aim change) and give
+#   its next_pose. No recorded vector comes from a frame run by a bomb jump or a grapple release.
 
 # Constructed vectors: cases no record reaches, and the Exact variant.
 
@@ -356,29 +361,11 @@ jump_pressed = false
 after = { position = ["004F.9FFF", "0480.1BFF"], speed_x = "-0001.6000", dash = "0000.0000", speed_y = "-0005.C800" }
 
 [[vector]]
-id = "R29"
-source = "samus-walljump-28:62"
-entries = ["RisingAndFalling", "WallJump", "DriftInTheAir"]
-world = {}
-before = { position = ["0035.0000", "0459.57FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0005.8000" }
-lead_in = [
-  { pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 12] }, pad = ["jump", "right"], jump_pressed = false },
-]
-pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
-pad = ["jump", "right"]
-jump_pressed = false
-after = { position = ["0037.2000", "0453.D7FF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.0000" }
-
-[[vector]]
 id = "R30"
 source = "samus-walljump-28:63"
 entries = ["RisingAndFalling", "WallJump", "DriftInTheAir"]
 world = {}
-before = { position = ["0035.0000", "0459.57FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0005.8000" }
-lead_in = [
-  { pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 12] }, pad = ["jump", "right"], jump_pressed = false },
-  { pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }, pad = ["jump", "right"], jump_pressed = false },
-]
+before = { position = ["0037.2000", "0453.D7FF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
 pad = ["jump", "right"]
 jump_pressed = false
@@ -460,29 +447,11 @@ jump_pressed = false
 after = { position = ["00DF.53FF", "0060.FBFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "-0005.0400" }
 
 [[vector]]
-id = "R37"
-source = "samus-screw-attack:66"
-entries = ["RisingAndFalling", "WallJump", "DriftInTheAir"]
-world = {}
-before = { position = ["00D9.0000", "0059.4FFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0005.8000" }
-lead_in = [
-  { pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 12] }, pad = ["jump", "right"], jump_pressed = false },
-]
-pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
-pad = ["jump", "right"]
-jump_pressed = false
-after = { position = ["00DB.2000", "0053.CFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.0000" }
-
-[[vector]]
 id = "R38"
 source = "samus-screw-attack:67"
 entries = ["RisingAndFalling", "WallJump", "DriftInTheAir"]
 world = {}
-before = { position = ["00D9.0000", "0059.4FFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0005.8000" }
-lead_in = [
-  { pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 12] }, pad = ["jump", "right"], jump_pressed = false },
-  { pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }, pad = ["jump", "right"], jump_pressed = false },
-]
+before = { position = ["00DB.2000", "0053.CFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
 pad = ["jump", "right"]
 jump_pressed = false
@@ -589,28 +558,6 @@ pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16]
 pad = []
 jump_pressed = false
 after = { position = ["00BB.FFFF", "00C0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-
-[[vector]]
-id = "R50"
-source = "samus-bomb-jump-vertical:1009"
-entries = ["RisingAndFalling"]
-world = {}
-before = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
-pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
-pad = []
-jump_pressed = false
-after = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0002.C000" }
-
-[[vector]]
-id = "R51"
-source = "samus-bomb-jump-vertical:1010"
-entries = ["RisingAndFalling"]
-world = {}
-before = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0002.C000" }
-pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
-pad = []
-jump_pressed = false
-after = { position = ["00BB.FFFF", "00C7.3FFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0002.A400" }
 
 [[vector]]
 id = "R52"
@@ -746,31 +693,6 @@ pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19
 pad = ["right"]
 jump_pressed = false
 after = { position = ["0672.BFFF", "0115.1CE7"], speed_x = "+0001.4000", dash = "0000.0000", speed_y = "+0001.7BB8" }
-
-[[vector]]
-id = "R67"
-source = "samus-grapple-release:322"
-entries = ["RisingAndFalling", "TurningRound"]
-world = {}
-before = { position = ["06A7.E0CB", "017C.627B"], speed_x = "-0001.F0CC", dash = "0000.0000", speed_y = "-0000.5564" }
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
-pad = ["right"]
-jump_pressed = false
-after = { position = ["06A9.C197", "017C.0D17"], speed_x = "+0001.E0CC", dash = "0000.0000", speed_y = "-0000.3964" }
-
-[[vector]]
-id = "R68"
-source = "samus-grapple-release:323"
-entries = ["RisingAndFalling", "TurningRound", "DriftInTheAir"]
-world = {}
-before = { position = ["06A7.E0CB", "017C.627B"], speed_x = "-0001.F0CC", dash = "0000.0000", speed_y = "-0000.5564" }
-lead_in = [
-  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }, pad = ["right"], jump_pressed = false },
-]
-pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19] }
-pad = ["right"]
-jump_pressed = false
-after = { position = ["06AB.9263", "017B.D3B3"], speed_x = "+0001.D0CC", dash = "0000.0000", speed_y = "-0000.1D64" }
 
 [[vector]]
 id = "R69"
@@ -1515,3 +1437,107 @@ pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5
 pad = ["right"]
 jump_pressed = false
 after = { position = ["004B.FFFF", "01BB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+
+# Added for the integration gaps (gaps-v3): jump starts, an aim change, the end of a rise and a
+# flat ceiling.
+
+[[vector]]
+id = "J1"
+source = "r03:470"
+entries = ["Jumping", "MovesAsShePosed", "SpeedBuildsAndBrakes", "Dash", "FollowingTheGround"]
+world = { floor_top = 160 }
+before = { position = ["0086.4FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.6000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }
+pad = ["run", "jump", "right"]
+jump_pressed = true
+after = { position = ["008A.7FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.7000", speed_y = "-0004.E000" }
+
+[[vector]]
+id = "J2"
+source = "r04:474"
+entries = ["Jumping", "MovesAsShePosed", "SpeedBuildsAndBrakes"]
+world = { floor_top = 192 }
+before = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+
+[[vector]]
+id = "J3"
+source = "r04:475"
+entries = ["Jumping"]
+world = { floor_top = 192 }
+before = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+
+[[vector]]
+id = "A1"
+source = "area-norfair:3"
+entries = ["AimingAndShooting", "MovesAsShePosed", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "Dash"]
+world = { floor_top = 160 }
+before = { position = ["00CF.4000", "008B.FFFF"], speed_x = "-0001.E000", dash = "0000.A000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], aim = "DownForward" }
+pad = ["run", "left", "aim_down"]
+jump_pressed = false
+after = { position = ["00CA.D000", "008B.FFFF"], speed_x = "-0002.C000", dash = "0000.B000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "E1"
+source = "samus-ceres-push:989"
+entries = ["RisingAndFalling", "DriftInTheAir"]
+world = { wall_right = 240 }
+before = { position = ["00EB.FFFF", "004C.F7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0000.1000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0C00" }
+
+# E2 continues E1 with the pad of E1 (the record's next frame also holds right, against a wall); its
+# vertical outcome is the record's (samus-ceres-push:990).
+[[vector]]
+id = "E2"
+source = "constructed"
+entries = ["RisingAndFalling", "DriftInTheAir"]
+world = {}
+before = { position = ["00EB.FFFF", "004C.F7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0000.1000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
+
+# E3: a rise whose upward speed is exactly the pull rises one more frame at 0 before it ends.
+[[vector]]
+id = "E3"
+source = "constructed"
+entries = ["RisingAndFalling"]
+world = {}
+before = { position = ["0100.0000", "0080.8000"], speed_y = "-0000.1C00" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "0080.6400"], speed_y = "+0000.1C00" }
+
+[[vector]]
+id = "C-ceiling"
+source = "constructed"
+entries = ["WallsAndCeilings", "BlocksStopFlush", "RisingAndFalling"]
+world = { ceiling_bottom = 64 }
+before = { position = ["0100.0000", "0050.8000"], speed_y = "-0005.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "004C.0000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
