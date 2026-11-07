@@ -31,6 +31,12 @@ Beside them, `SamusAssets` holds `running`, the holds a run uses instead of its 
 she has running momentum, and `chest`, the one sprite the first suit's facing-the-screen pose
 adds and where it sits from her position.
 
+`unkeyed` holds the frames of the poses outside her domain (shinespark, grapple, knockback,
+drained, the elevator's: every pose of the original's with a definition and a delay list that
+the map doesn't name), as `Unkeyed { id, frames }`. It is the one record that names the
+original's pose id, so that the engine draws every pose from this format; an entry leaves it
+for a clip when its domain gives the pose a key.
+
 **The key** is the pose as the player sees it (`docs/behaviours/samus-motion.md` §2):
 
 | Record | Holds |
@@ -84,6 +90,6 @@ Assets come from the player's ROM at load and are never committed.
 - Other sprites: enemies, projectiles, the HUD, PLMs. Their assets reuse `SpriteSheet`,
   `Clip`'s shape and `Hold`; each gets its own key type.
 - Rooms, tilesets, palettes and sound.
-- The poses outside the domain (shinespark, grapple, knockback, drained, elevator): no key
-  yet, so no clip.
+- A key for the poses outside the domain (shinespark, grapple, knockback, drained,
+  elevator): their frames are `unkeyed`, by the original's id.
 - The arm cannon, the charge flare and the speed echoes drawn with her.

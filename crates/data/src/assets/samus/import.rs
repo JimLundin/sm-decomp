@@ -12,14 +12,14 @@ use std::collections::HashMap;
 
 use super::{
     Chest, Clip, ClipEnd, Frame, FrameNumber, FrameTiles, Hold, SamusAssets, SpriteId, SpriteSheet,
-    TileUpload, TilesId,
+    TileUpload, TilesId, Unkeyed,
 };
 use crate::pose::animation::{
     AnimationDelays, AnimationError, AnimationFrame, DelayItem, DelayList, Instruction,
 };
 use crate::pose::spritemap::{Half, PositionOffsets, SamusSpritemaps, SpritemapError};
 use crate::pose::tiles::{GRAPHICS_BANKS, Graphics, SamusTiles, TileDefinitionId};
-use crate::pose::{MovementType, PoseError, PoseId, Poses};
+use crate::pose::{MovementType, POSE_COUNT, PoseError, PoseId, Poses};
 use crate::rom::{AddressError, Lorom};
 use crate::spritemap::{SpriteAttributes, Spritemap};
 
@@ -120,12 +120,28 @@ pub fn from_tables(tables: Tables<'_>) -> Result<SamusAssets, ImportError> {
             })
         })
         .collect::<Result<_, ImportError>>()?;
+    // The poses outside her domain that have a definition and a delay list to draw from.
+    let unkeyed = (0..POSE_COUNT)
+        .filter_map(|id| u16::try_from(id).ok().map(PoseId))
+        .filter(|&id| {
+            map::key_of(id).is_none()
+                && tables.poses.get(id).is_some()
+                && tables.delays.of(id).is_some()
+        })
+        .map(|id| {
+            Ok(Unkeyed {
+                id,
+                frames: frames(tables, id, &mut pools)?,
+            })
+        })
+        .collect::<Result<_, ImportError>>()?;
     Ok(SamusAssets {
         sheet: SpriteSheet {
             sprites: pools.sprites,
             uploads: pools.uploads,
         },
         clips,
+        unkeyed,
         running: holds(tables.delays.running()).collect(),
         chest: CHEST,
     })

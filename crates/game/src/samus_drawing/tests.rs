@@ -329,7 +329,7 @@ fn uploaded(content: &Content, id: TileDefinitionId) -> data::assets::samus::Til
 fn the_imported_assets_draw_what_the_engine_draws() {
     use data::assets::samus::import::{self, map};
     use data::assets::samus::key::{Dress, SpinSprite, Suit};
-    use data::pose::animation::{AnimationFrame, DelayItem};
+    use data::pose::animation::AnimationFrame;
 
     let Some(content) = rom_content() else {
         return;
@@ -361,67 +361,90 @@ fn the_imported_assets_draw_what_the_engine_draws() {
             .into_iter()
             .map(move |suit| Dress { spin, suit })
     });
-    let mut compared = 0_usize;
-    for dress in dresses {
-        for entry in map::MAP {
-            if map::id_of(entry.key, dress) != Some(entry.id) {
-                continue;
-            }
-            let asset = assets.clip(entry.key, dress).unwrap();
-            let list = content.delays.of(entry.id).unwrap();
-            assert_eq!(asset.frames.len(), list.len(), "{:?}", entry.id);
-            for (at, frame) in asset.frames.iter().enumerate() {
-                let number = AnimationFrame(u16::try_from(at).unwrap());
-                let id = entry.id;
-                // How long it holds.
-                assert_eq!(Some(frame.hold.timer_byte()), list.byte(number));
-                assert_eq!(
-                    matches!(frame.hold, data::assets::samus::Hold::Shows(_)),
-                    matches!(list.at(number), Some(DelayItem::Delay(_))),
-                );
-                // What it draws.
-                let mut engine = state(id.0);
-                engine.samus.animation.frame = number;
-                draw_body(&mut engine, &content);
-                let mut ours = State::default();
-                let (x, y) = (0x150_u16 - 0x100, 0x90_u16 - 0x20);
-                let origin = (x, y.wrapping_add_signed(frame.origin_y));
-                let batch = &mut ours.video.batch;
-                if let Some(top) = frame.top {
-                    batch.add_spritemap(assets.sheet.sprite(top).unwrap(), origin);
-                }
-                if frame.chest {
-                    let chest = assets.chest;
-                    let [y_low, _] = y.wrapping_sub(chest.up).to_le_bytes();
-                    batch.add_low_sprite(x.wrapping_sub(chest.left), y_low, chest.attributes);
-                }
-                if let Some(bottom) = frame.bottom {
-                    batch.add_spritemap(assets.sheet.sprite(bottom).unwrap(), origin);
-                }
-                assert_eq!(ours.video.batch.oam, engine.video.batch.oam, "{id:?} {at}");
-                assert_eq!(
-                    ours.video.batch.sprites, engine.video.batch.sprites,
-                    "{id:?} {at}"
-                );
-                // What it uploads.
-                let engine_tiles = content.samus_tiles.frame(id, number);
-                assert_eq!(frame.tiles.is_some(), engine_tiles.is_some(), "{id:?} {at}");
-                if let (Some(tiles), Some(engine_tiles)) = (frame.tiles, engine_tiles) {
-                    assert_eq!(
-                        assets.sheet.upload(tiles.top),
-                        Some(&uploaded(&content, engine_tiles.top))
-                    );
-                    assert_eq!(
-                        tiles
-                            .bottom
-                            .and_then(|bottom| assets.sheet.upload(bottom))
-                            .cloned(),
-                        engine_tiles.bottom.map(|bottom| uploaded(&content, bottom))
-                    );
-                }
-                compared += 1;
-            }
+    let assets = &assets;
+    let keyed = dresses.flat_map(|dress| {
+        map::MAP
+            .iter()
+            .filter(move |entry| map::id_of(entry.key, dress) == Some(entry.id))
+            .map(move |entry| (entry.id, &assets.clip(entry.key, dress).unwrap().frames))
+    });
+    let unkeyed = assets.unkeyed.iter().map(|pose| (pose.id, &pose.frames));
+    let shown: Vec<_> = keyed.chain(unkeyed).collect();
+    // Every id with a definition and a delay list is drawn from one of them.
+    let drawable = (0..0xFD_u16)
+        .map(PoseId)
+        .filter(|&id| content.poses.get(id).is_some() && content.delays.of(id).is_some())
+        .count();
+    let mut ids: Vec<_> = shown.iter().map(|&(id, _)| id).collect();
+    ids.sort_unstable();
+    ids.dedup();
+    assert_eq!(ids.len(), drawable);
+    let compared: usize = shown
+        .into_iter()
+        .map(|(id, frames)| draws_as_the_engine(&content, assets, id, frames))
+        .sum();
+    assert!(compared > 253, "{compared}");
+}
+
+/// Each of `frames`, the asset's frames of `id`, holds, draws and uploads what the engine
+/// does for that id and frame; the count of frames compared.
+fn draws_as_the_engine(
+    content: &Content,
+    assets: &data::assets::samus::SamusAssets,
+    id: PoseId,
+    frames: &[data::assets::samus::Frame],
+) -> usize {
+    use data::pose::animation::DelayItem;
+    let list = content.delays.of(id).unwrap();
+    assert_eq!(frames.len(), list.len(), "{id:?}");
+    for (at, frame) in frames.iter().enumerate() {
+        let number = AnimationFrame(u16::try_from(at).unwrap());
+        // How long it holds.
+        assert_eq!(Some(frame.hold.timer_byte()), list.byte(number));
+        assert_eq!(
+            matches!(frame.hold, data::assets::samus::Hold::Shows(_)),
+            matches!(list.at(number), Some(DelayItem::Delay(_))),
+        );
+        // What it draws.
+        let mut engine = state(id.0);
+        engine.samus.animation.frame = number;
+        draw_body(&mut engine, content);
+        let mut ours = State::default();
+        let (x, y) = (0x150_u16 - 0x100, 0x90_u16 - 0x20);
+        let origin = (x, y.wrapping_add_signed(frame.origin_y));
+        let batch = &mut ours.video.batch;
+        if let Some(top) = frame.top {
+            batch.add_spritemap(assets.sheet.sprite(top).unwrap(), origin);
+        }
+        if frame.chest {
+            let chest = assets.chest;
+            let [y_low, _] = y.wrapping_sub(chest.up).to_le_bytes();
+            batch.add_low_sprite(x.wrapping_sub(chest.left), y_low, chest.attributes);
+        }
+        if let Some(bottom) = frame.bottom {
+            batch.add_spritemap(assets.sheet.sprite(bottom).unwrap(), origin);
+        }
+        assert_eq!(ours.video.batch.oam, engine.video.batch.oam, "{id:?} {at}");
+        assert_eq!(
+            ours.video.batch.sprites, engine.video.batch.sprites,
+            "{id:?} {at}"
+        );
+        // What it uploads.
+        let engine_tiles = content.samus_tiles.frame(id, number);
+        assert_eq!(frame.tiles.is_some(), engine_tiles.is_some(), "{id:?} {at}");
+        if let (Some(tiles), Some(engine_tiles)) = (frame.tiles, engine_tiles) {
+            assert_eq!(
+                assets.sheet.upload(tiles.top),
+                Some(&uploaded(content, engine_tiles.top))
+            );
+            assert_eq!(
+                tiles
+                    .bottom
+                    .and_then(|bottom| assets.sheet.upload(bottom))
+                    .cloned(),
+                engine_tiles.bottom.map(|bottom| uploaded(content, bottom))
+            );
         }
     }
-    assert!(compared > 164, "{compared}");
+    frames.len()
 }

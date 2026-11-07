@@ -6,6 +6,7 @@
 pub mod import;
 pub mod key;
 
+use crate::pose::PoseId;
 use crate::spritemap::{SpriteAttributes, Spritemap};
 use key::{Dress, Pose, Worn, shown_as};
 
@@ -103,7 +104,7 @@ pub struct Clip {
 }
 
 /// The single sprite her first suit's facing-the-screen pose adds before her bottom half.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Chest {
     /// Pixels left of her position.
     pub left: u16,
@@ -137,13 +138,25 @@ impl SpriteSheet {
     }
 }
 
-/// Samus's sprite sheet and animation clips.
+/// The frames of a pose outside her domain (shinespark, grapple, knockback, drained, the
+/// elevator's), by the original's pose id until that pose's domain gives it a key.
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Unkeyed {
+    /// The original's pose.
+    pub id: PoseId,
+    /// Its frames, as a clip's.
+    pub frames: Vec<Frame>,
+}
+
+/// Samus's sprite sheet and animation clips.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SamusAssets {
     /// The sheet the clips draw from.
     pub sheet: SpriteSheet,
     /// One clip per pose and dress that has its own sprites.
     pub clips: Vec<Clip>,
+    /// The poses outside her domain.
+    pub unkeyed: Vec<Unkeyed>,
     /// The holds a run uses instead of its clip's while she has running momentum.
     pub running: Vec<Hold>,
     /// The chest sprite.
@@ -159,6 +172,12 @@ impl SamusAssets {
         self.clips
             .iter()
             .find(|clip| clip.key == shown && clip.worn.holds(dress))
+    }
+
+    /// The frames of `id`, a pose outside her domain.
+    #[must_use]
+    pub fn unkeyed(&self, id: PoseId) -> Option<&Unkeyed> {
+        self.unkeyed.iter().find(|pose| pose.id == id)
     }
 }
 

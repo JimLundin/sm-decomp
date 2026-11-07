@@ -25,6 +25,7 @@ fn assets(clips: Vec<Clip>) -> SamusAssets {
     SamusAssets {
         sheet: SpriteSheet::default(),
         clips,
+        unkeyed: Vec::new(),
         running: Vec::new(),
         chest: Chest {
             left: 0,
