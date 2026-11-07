@@ -51,11 +51,13 @@ code is organised.
 pub struct Behaviour {
     pub id: BehaviourId,          // enum variant, e.g. BehaviourId::WordwiseSpeedCap
     pub summary: &'static str,    // what the player sees
-    pub source: Source,           // one bank-log reference, e.g. Source::bank(0x90, 0x8F0C)
     pub kind: Kind,               // Mechanic | Quirk | Timing (lag, loading) | Encoding
     pub switch: Switch,           // Fixed | Toggle | Parameter(range)
 }
 ```
+
+The catalogue carries no source. Where each behaviour comes from in the original is recorded only in
+the observer's `docs/behaviours/<domain>.decode.md`, which implementers never see.
 
 - A **mechanic** is a deliberate game rule: running speed, the wall jump's reach, the space
   jump's window.
@@ -228,8 +230,40 @@ switches between them. A domain goes in this order (review R2):
    expected and actual values and the entry it suspects, then moves on. The observer answers from
    the original and amends the spec.
 
+**What counts as a leak (Jim, 2026-11-07).** Structure leaks; perceivable quantities don't.
+- **Allowed:** quantities a player can perceive or measure (positions, speeds, timers, counts) and
+  the exact arithmetic on them.
+- **A leak:** the original's routine boundaries, entry points and call order; its internal flags and
+  modes; its command and result words; enum orders that match its RAM codes; how its tables are
+  indexed; its routine and variable names; and its addresses, in any form.
+
+**An adversary gates the clean room (Jim, 2026-11-07).** An adversary agent reads both the original
+and everything an implementer will see, and tries to prove a leak. It succeeds by finding one. It
+runs before any implementer starts (on the spec, the vectors and the export) and before any model
+change merges. A leak it finds stops the work until it is removed; a reduced leak is not a fixed one.
+
 **The clean room is enforced by construction, not by trust (Jim, 2026-11-07).** Every leak in the
-pilot came from implementers having the whole repository and being trusted not to open files.
+pilot came from implementers having the whole repository and being trusted not to open files. A
+sparse checkout is not enough: every worktree shares one object store and every ref, and nothing on
+disk or on the web is out of reach. So:
+- **The implementer works in an export,** not a worktree. It is a fresh repository built by
+  `git archive` from an allowlist (the clean crates, this note's clean-room sections, the domain's
+  spec and vectors, the implementer skill). It has no history, no other refs, no remote and no
+  alternates, and lives outside the project's directories. Results come back as patches, applied by
+  the integrator.
+- **Canaries prove what was read.** Unique tokens are planted in every forbidden source (the bank-log
+  copies, the decode notes, `verify`'s address files, the old code). The implementer's transcript and
+  commits are searched for them after each lane. A canary found is a breach.
+- **Scans run on everything that enters the export or the clean crates**, briefs and commit
+  messages included:
+  - addresses in every form: `$XX:XXXX`, split bank/offset pairs, `RomAddress`/`Source::bank`, and
+    a hashed set of the original's known WRAM and ROM addresses;
+  - names, against a lexicon drawn from the bank logs, with a reviewed allowlist of player vocabulary;
+  - shape: enums whose variant order equals a RAM code's values, fields decoded as one word copied
+    as-is;
+  - routine mirroring: the share of entries with a single routine as source (gated at 30 % or
+    less), and entry points that map to one routine.
+- **Briefs are saved and scanned before the spawn.** The root and the observer are relays too.
 - **The clean crates.** The model, the catalogue and the domain types an implementer needs (speeds,
   poses as enums, tables as typed records) live in their own crates. Those crates depend on nothing
   but each other and the standard library. They contain **no address, bank, RAM, ROM-code or
@@ -274,8 +308,9 @@ history before the tag `archive/old-engine`.
 - **Each quantity:** its units, a domain type (an enum, never ROM codes), and **Read by**: the
   behaviour IDs that read it on a later frame, or "output" if it reaches bytes, or "none". "None"
   means it isn't State (decision 3). ROM codes belong in the decode notes.
-- **Each entry:** id, kind, summary, rule, params, switch, **checked** (`oracle (V3, V4)` or
-  `original only`), and one `Source:` line.
+- **Each entry:** id, kind, summary, rule, params, switch, and **checked** (`oracle (V3, V4)` or
+  `original only`). Its source in the original goes in the observer's
+  `docs/behaviours/<domain>.decode.md`, never in the spec.
 - **Not allowed:** headings named after routines; RAM addresses outside the Source line; step lists
   that follow a routine. Order is stated only in "Order that matters", and only where it is
   visible at a cut.
@@ -338,7 +373,7 @@ The size report adds lines per layer, so the routine-port share is visible and f
 5. **D13:** a family whose behaviour is a ROM instruction list runs it through the interpreter.
    Hand-coding a list as an enum of positions is a review stop.
 6. **P20:** the catalogue (§3) is its artifact, and D24 reports it.
-7. **K9:** a bank reference is one `Source:` line on an item; module docs describe the domain.
+7. **K9:** a bank reference lives only in the observer's decode notes, never in code, the spec or the catalogue; module docs describe the domain.
 
 ## 8. Lessons
 
