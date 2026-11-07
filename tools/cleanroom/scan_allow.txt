@@ -1,0 +1,123 @@
+# The player vocabulary the name scan lets through (tools/cleanroom/scan.sh, check 2).
+#
+# A line with one word allows that word in prose: an n-gram passes when every word in it is
+# allowed. A line with several words allows that phrase anywhere, identifiers included; a
+# compound identifier (OpenDoor, open_door) passes only as an allowed phrase.
+# Words are normalised like the scanned text (lowercased, stemmed). Every entry is something a
+# player says about the game; review an addition against that, with its reason.
+
+# Items and abilities, as the game's own menus and manual name them.
+morph ball           # item
+spring ball          # item
+speed booster        # item
+space jump           # item
+screw attack         # item
+hi jump              # item (hi-jump boots)
+hi jump boots        # item
+varia suit           # item
+gravity suit         # item
+grapple beam         # item
+x ray                # item
+charge beam          # item
+ice beam             # item
+wave beam            # item
+plasma beam          # item
+power bomb           # item
+super missile        # item
+energy tank          # item
+reserve tank         # item
+
+# Moves a player names.
+wall jump            # move
+spin jump            # move
+shine spark          # move
+crystal flash        # move
+moon walk            # move
+turn around          # what a player sees her do
+
+# Single words of play: directions, the body, the room, the pad and plain motion.
+left
+right
+up
+down
+forward
+back
+edge
+side
+top
+bottom
+ground
+floor
+ceiling
+wall
+ledge
+slope
+water
+lava
+acid
+air
+block
+tile
+door
+room
+screen
+pixel
+frame
+button
+pad
+press
+hold
+held
+release
+let
+go
+jump
+run
+walk
+fall
+land
+turn
+around
+roll
+ball
+bounce
+spin
+stand
+crouch
+rise
+slide
+stop
+start
+hit
+move
+speed
+fast
+faster
+slow
+high
+higher
+low
+twice
+gap
+x                    # the horizontal axis
+y                    # the vertical axis
+horizontal
+horizontally
+vertical
+vertically
+enemy
+damage
+shoot
+aim
+item
+health
+energy
+missile
+bomb
+beam
+suit
+
+# What the screen shows.
+game time            # the in-game clock on the pause and save screens
+mini map             # the HUD's map
+message box          # the item pickup message
