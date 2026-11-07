@@ -13,7 +13,6 @@ use data::rom::{Lorom, RomAddress};
 use data::room::{Area, MapPosition};
 use game::enemy::instructions::label;
 use game::model::num::Fixed as Exact;
-use game::model::samus::motion::{SpeedMode, VerticalMotion};
 use game::state::room::{
     Block, BlockIndex, Crumble, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
     Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemFrame,
@@ -26,6 +25,7 @@ use game::state::samus::{
     PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor, VisorShade, VisorTimer,
 };
 use game::state::samus::{Fixed, Point};
+use game::state::samus::{SpeedMode, VerticalMotion};
 use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot};
 use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,

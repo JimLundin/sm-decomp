@@ -4,7 +4,72 @@ use canonical::Canonical;
 
 use super::slots::{FlagSet, Frames};
 use crate::model::num::Fixed as Exact;
-use crate::model::samus::motion::{Position, State as Motion};
+
+/// Where Samus's centre is.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct Position {
+    /// Rightward.
+    pub x: Exact,
+    /// Downward.
+    pub y: Exact,
+}
+
+/// What the base speed is doing; pose selection sets it when a pose starts.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum SpeedMode {
+    /// Speeding up to the row's top speed.
+    #[default]
+    Accelerating,
+    /// Braking through a turn, still sliding the old way.
+    TurningAround,
+    /// Braking (on the ground; in the air it still speeds up).
+    Decelerating,
+}
+
+/// Which way she moves vertically; anything but `None` is airborne.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum VerticalMotion {
+    /// On the ground.
+    #[default]
+    None,
+    /// Rising.
+    Up,
+    /// Falling.
+    Down,
+}
+
+/// How many times the ball has bounced since it landed.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Bounce {
+    /// Not bouncing.
+    #[default]
+    None,
+    /// In the first bounce.
+    First,
+    /// In the second.
+    Second,
+}
+
+/// Her motion as the game keeps it: the quantities a later frame reads.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct Motion {
+    /// Her centre.
+    pub position: Position,
+    /// The row's own speed, never negative.
+    pub base_speed: Exact,
+    /// The speed running adds, never negative.
+    pub extra_run: Exact,
+    /// Whether the run speed carries into rows that don't run.
+    pub momentum: bool,
+    /// What the base speed is doing.
+    pub mode: SpeedMode,
+    /// The vertical speed's magnitude.
+    pub vertical_speed: Exact,
+    /// Its direction.
+    pub vertical: VerticalMotion,
+    /// The ball's bounces.
+    pub bounce: Bounce,
+}
 
 /// A pixel position or speed with its subpixel fraction, as the original keeps them.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -379,7 +444,7 @@ pub struct Samus {
     pub aim: Aim,
     /// Her pose's movement type, as the pose change copies it from the definition.
     pub movement: MovementType,
-    /// Her motion: where she is and how she moves (`model::samus::motion`).
+    /// Her motion: where she is and how she moves.
     pub motion: Motion,
     /// What she has.
     pub equipment: Equipment,

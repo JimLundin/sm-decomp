@@ -1,4 +1,3 @@
-use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::pose::animation::{AnimationDelays, DelayList};
 use data::pose::transition::PoseTransitions;
 use data::pose::{MovementType, PoseFacing, Poses};
@@ -43,8 +42,6 @@ fn content() -> Content {
     Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(Vec::new()),
-        speeds: HorizontalSpeeds::default(),
-        vertical: VerticalSpeeds::default(),
         delays: AnimationDelays::new(lists, list(&[0x01, 0xFF])),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
@@ -256,7 +253,7 @@ fn the_morphing_transition_picks_its_pose_by_items_then_y_speed() {
         }
         samus.movement = MovementType::CrouchingTransition;
         samus.motion.vertical_speed = speed.into();
-        samus.motion.vertical = crate::model::samus::motion::VerticalMotion::Down;
+        samus.motion.vertical = crate::state::samus::VerticalMotion::Down;
         run(instruction, &mut samus, PoseRequests::default());
         samus.super_special
     };
@@ -287,7 +284,6 @@ fn the_end_is_read_on_the_frame_animate_ends_the_turn() {
     // A jump asked for holds the auto-jump transition back.
     let jump = PoseRequests {
         ordinary: Some(PoseId(0x4B)),
-        ..PoseRequests::default()
     };
     assert!(!ends_this_frame(&turn, &controller, jump, &content));
     // A looping list never ends.

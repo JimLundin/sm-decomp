@@ -11,7 +11,7 @@ fn samus(previous: Point, now: Point) -> Samus {
     Samus {
         previous_position: previous,
         facing: Facing::Right,
-        motion: crate::model::samus::motion::State {
+        motion: crate::state::samus::Motion {
             position: now.into(),
             ..Default::default()
         },

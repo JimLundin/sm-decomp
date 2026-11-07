@@ -26,8 +26,6 @@ fn content() -> Content {
     Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(vec![Vec::new(), vec![run_right], vec![run_right]]),
-        speeds: HorizontalSpeeds::default(),
-        vertical: VerticalSpeeds::default(),
         delays: AnimationDelays::default(),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
@@ -122,7 +120,7 @@ fn running_with_speed_keeps_its_pose_when_released() {
     let samus = Samus {
         pose: PoseId(2),
         movement: MovementType::Running,
-        motion: crate::model::samus::motion::State {
+        motion: crate::state::samus::Motion {
             base_speed: Fixed::new(1, 0),
             ..Default::default()
         },
@@ -132,7 +130,6 @@ fn running_with_speed_keeps_its_pose_when_released() {
         input(&samus, &Controller::default(), &content),
         PoseRequests {
             ordinary: Some(PoseId(2)),
-            command: Some(PoseCommand::Decelerate),
         }
     );
 }
@@ -145,10 +142,11 @@ fn running_without_base_speed_stops_when_released() {
         movement: MovementType::Running,
         ..standing()
     };
-    // Pose 2's definition names no next pose, so she keeps it; the command is a stop.
+    // With no base speed she asks for the pose's next; pose 2's definition names none, so she
+    // keeps it.
     assert_eq!(
-        input(&samus, &Controller::default(), &content).command,
-        Some(PoseCommand::Stop)
+        input(&samus, &Controller::default(), &content).ordinary,
+        Some(PoseId(2))
     );
 }
 

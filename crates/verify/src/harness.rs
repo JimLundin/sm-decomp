@@ -26,7 +26,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
 
-use game::behaviours::{Behaviour, BehaviourId};
+use clean_model_samus_motion::{Behaviour, BehaviourId};
 use oracle_record::{FrameRecord, Pad};
 
 use crate::cache::{Cache, CacheError, CutKind};
@@ -290,7 +290,7 @@ pub struct Run {
 }
 
 /// One catalogue entry over a run.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug)]
 pub struct BehaviourReport {
     /// The entry.
     pub id: BehaviourId,
@@ -301,7 +301,7 @@ pub struct BehaviourReport {
 }
 
 /// A domain's run over one scenario's records.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default)]
 pub struct Report {
     /// The domain.
     pub domain: &'static str,
@@ -443,7 +443,7 @@ impl Report {
             self.null_matched = self.null_matched.saturating_add(1);
         }
         for id in exercised {
-            if let Some(report) = self.behaviours.iter_mut().find(|entry| entry.id == *id) {
+            if let Some(report) = self.behaviours.iter_mut().find(|entry| same(entry.id, *id)) {
                 report.exercised = report.exercised.saturating_add(1);
                 if all && verified {
                     report.matched = report.matched.saturating_add(1);
@@ -485,7 +485,11 @@ impl Report {
             }
         }
         for entry in &other.behaviours {
-            match self.behaviours.iter_mut().find(|mine| mine.id == entry.id) {
+            match self
+                .behaviours
+                .iter_mut()
+                .find(|mine| same(mine.id, entry.id))
+            {
                 Some(mine) => {
                     mine.exercised = mine.exercised.saturating_add(entry.exercised);
                     mine.matched = mine.matched.saturating_add(entry.matched);
@@ -571,6 +575,11 @@ impl fmt::Display for Behaviours<'_> {
             .collect();
         writeln!(f, "  vectors only: {}", names.join(", "))
     }
+}
+
+/// Whether `a` and `b` are the same catalogue entry.
+fn same(a: BehaviourId, b: BehaviourId) -> bool {
+    std::mem::discriminant(&a) == std::mem::discriminant(&b)
 }
 
 /// The fields on which two projections differ.

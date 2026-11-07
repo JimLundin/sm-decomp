@@ -162,8 +162,6 @@ pub enum SessionFault {
     Plm(TouchFault),
     /// A projectile reached a block whose reaction isn't modelled.
     Projectile(crate::projectile::ProjectileFault),
-    /// Samus's way of moving has no speed table entry.
-    Motion(crate::model::samus::motion::MissingSpeeds),
 }
 
 /// Why a State can't open as a Session.

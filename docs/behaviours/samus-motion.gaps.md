@@ -107,7 +107,43 @@ record N's.
 Item 9 above now has a frame: item-morph-ball 1310 → 1311, the crouch's take-off (27h → 4Bh,
 radius 10h → 13h): y 02C0.FFFF → engine 02B6.FFFF, game 02B3.FFFF. The game pushes her up the
 3 px the taller body needs, then lifts her 10 px; the engine's pose fit runs after the model's
-lift and finds no floor to push from. Round 7's push (`PoseFitAfterMoves`) answers it.
+lift and finds no floor to push from. Round 7's push (`PoseFitAfterMoves`) answers it: the
+frame is equal on lane/wire-r7.
+
+## Open: the domain harness on round 7 (integrator, 2026-11-07, lane/wire-r7)
+
+With round 7 the Tick steps her through the model with pose fit and the shrink inside the step
+(`game::samus_world::step`), and the proof holds: the free-run gate's eight green pairs, and the
+lockstep ratchet at the spine's numbers (item-morph-ball 1372 of 1427 Ticks fully equal, the same
+Ticks and fields differing as on the spine). The old model is gone, and the domain harness
+(`verify::harness::samus_motion`) steps the model over each record's own level and solid enemies,
+with nothing copied from record N+1: 11,559 of 12,782 compared frames match over the 32 cached
+rows, against 5,660 for the null model. The rows below the null model or the old model's floor
+come from these frames. The pad of a frame N to N+1 is record N's.
+
+17. **Running on the speed booster's run with a downward vertical speed (`MovesAsShePosed`,
+    `FollowingTheGround`).** samus-shinespark-up 0 → 1: running (09h), base speed 2.C000, dash
+    2.7000, `0B3C` set, `0B36` = 2 with `0B2E`.`0B2C` 0.E000, on the floor. Model: base speed
+    0.0000, vertical none (she lands, and the landing halts her); game: base speed 2.C000,
+    vertical down 0.E000, both unchanged every frame of the run (frames 1-151; the speed booster's
+    mask takes x and the dash, not these). The same on samus-shinespark-left, -right and -up-left
+    from frame 1, and samus-mockball frames 1-42. The decode notes call a running pose with
+    `0B36` = 2 and a magnitude not plain. Asked: what this State is in the spec's terms, and its
+    rule.
+18. **After that run, a vertical speed of 1.3400 on the ground.** samus-shinespark-left 157 → 158
+    (to 183) and samus-shinespark-right the same frames: model vertical speed 0.0000, game 1.3400,
+    held. Asked: the same.
+19. **A dash merged on the ground moves her a pixel further (`Dash`, `SpeedBuildsAndBrakes`).**
+    samus-grapple-walljump 0 → 1: running (11h), x 002C.BFFF, base speed 2.C000, dash 1.2000,
+    `0B3C` set. Both end with base speed 3.E000, no dash, `0B4A` = 2; x: model 0030.9FFF (by
+    3.E000), game 0031.9FFF (by 4.E000), and 1 px behind to frame 8. Asked: the frame's move.
+
+Two things the edge now keeps that the model doesn't hold, neither the model's: the camera's
+previous y pixel (`0B14`) becomes hers as pose fit, the crouch taken instead or the shrink left
+her (before the crouch take-off's lift), so the camera doesn't follow those moves
+(item-morph-ball 796 → 797 and 1227 → 1228, which moved the camera's subpixel otherwise); and a
+moonfall's vertical speed word is her speed upward (`0B36` = 0: the decode's "− magnitude"), which
+the round-6 edge had the wrong way (chain-0014-96BA 11 → 12 onward).
 
 ## Open: the engine's pose at the edge (integrator, 2026-11-07, after `c44e48c`)
 

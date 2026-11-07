@@ -7,7 +7,7 @@
 
 use crate::animation;
 use crate::collision::solid_enemy::SolidEnemies;
-use crate::collision::{Room, ScanOrder, Surroundings, Touches, inside};
+use crate::collision::{Room, Surroundings, Touches, inside};
 use crate::message_box;
 use crate::pose::{self, Content};
 use crate::samus_world;
@@ -474,7 +474,7 @@ fn gameplay_phase(
         // the pose update (`$90:E725`).
         GameplayPhase::SamusNewState => {
             let completed = state.clock.counters.completed.0;
-            let surroundings = surroundings(&state.room, completed, content, &pass.active);
+            let surroundings = surroundings(&state.room, content, &pass.active);
             let mut touches = Touches::default();
             let inputs = samus_world::step::Inputs {
                 controller: &state.controller,
@@ -564,12 +564,10 @@ fn change_pose(
     crate::atmospheric::initialise_pose(atmospherics, history, samus, content);
 }
 
-/// Where Samus's moves happen this frame: the room's blocks, the vertical scans' order by the
-/// `completed` frame count, and the interactive enemies the selection earlier in the pass
-/// chose.
+/// Where Samus's moves happen this frame: the room's blocks and the interactive enemies the
+/// selection earlier in the pass chose.
 fn surroundings<'a>(
     room: &'a RoomScoped,
-    completed: u16,
     content: &'a Content,
     active: &'a crate::enemy::Active,
 ) -> Surroundings<'a> {
@@ -579,7 +577,6 @@ fn surroundings<'a>(
             width: room.width,
             slopes: Some(&content.slopes),
         },
-        order: ScanOrder::of(completed),
         enemies: SolidEnemies {
             interactive: active.interactive(),
             slots: &room.enemies.slots,

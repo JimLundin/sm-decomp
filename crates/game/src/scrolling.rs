@@ -10,9 +10,9 @@
 //! pixels a frame faster than Samus moves, and a blue screen at the room's bottom hides the
 //! two rows the HUD would otherwise cover.
 
-use crate::model::samus::motion::{SpeedMode, VerticalMotion};
 use crate::state::room::{Camera, Layer2Scroll, ScrollArea, StaleScroll};
 use crate::state::samus::{Facing, Fixed, MovementType, Samus, Speed};
+use crate::state::samus::{SpeedMode, VerticalMotion};
 use crate::state::video::{Registers, Scroll};
 
 /// The room's scroll areas, as the scrolling reads them.

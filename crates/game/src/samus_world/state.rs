@@ -13,8 +13,7 @@ use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
 use crate::model::num::Fixed as Exact;
-use crate::model::samus::motion::{Bounce, SpeedMode, VerticalMotion};
-use crate::state::samus::{Item, MovementType, PoseId, Samus};
+use crate::state::samus::{Bounce, Item, MovementType, PoseId, Samus, SpeedMode, VerticalMotion};
 
 /// Her body's half-width, the same in every pose.
 pub const X_RADIUS: u16 = 5;
@@ -60,7 +59,10 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
     };
     let speed = quantity(motion.vertical_speed);
     let vertical = match motion.vertical {
-        VerticalMotion::None if in_the_air(pose) => Vertical::Moonfall(speed),
+        // With no direction the word is the speed upward: a moonfall's is negative.
+        VerticalMotion::None if in_the_air(pose) => {
+            Vertical::Moonfall(Fixed(0u32.wrapping_sub(speed.0)))
+        }
         VerticalMotion::None => Vertical::Ground,
         // A rise the pull took past zero points downward by what it took past.
         VerticalMotion::Up if motion.vertical_speed.negative() => {
@@ -131,7 +133,7 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
         SpeedMode::TurningAround
     };
     (motion.vertical, motion.vertical_speed) = match model.vertical {
-        Vertical::Moonfall(v) => (VerticalMotion::None, exact(v)),
+        Vertical::Moonfall(v) => (VerticalMotion::None, Exact(0u32.wrapping_sub(v.0))),
         Vertical::Ground => (VerticalMotion::None, Exact(0)),
         Vertical::Rises(v) => (VerticalMotion::Up, exact(v)),
         Vertical::Spent(v) => (VerticalMotion::Up, Exact(0u32.wrapping_sub(v.0))),

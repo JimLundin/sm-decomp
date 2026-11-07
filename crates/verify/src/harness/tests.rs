@@ -311,13 +311,9 @@ fn samus_motion_holds_its_floors_against_the_cache() {
         Ok(image) => image,
         Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
     };
-    let rom = match data::rom::Rom::new(image) {
-        Ok(rom) => rom,
-        Err(error) => panic!("SM_ROM: {error:?}"),
-    };
-    let domain = match super::samus_motion::SamusMotion::load(rom.lorom()) {
+    let domain = match super::samus_motion::SamusMotion::load(&image) {
         Ok(domain) => domain,
-        Err(error) => panic!("speeds: {error:?}"),
+        Err(error) => panic!("content: {error:?}"),
     };
     hold_floors(&domain, "samus-motion", &cache);
 }

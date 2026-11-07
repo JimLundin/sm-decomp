@@ -13,7 +13,6 @@ use data::enemy::eye::EyeLists;
 use data::enemy::face_block::{FaceBlockLists, GlowColours};
 use data::enemy::program::{EnemyPrograms, ProgramError};
 use data::level::slope::Slopes;
-use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::palette::VisorColours;
 use data::pose::animation::{AnimationDelays, AnimationError};
 use data::pose::spritemap::{SamusSpritemaps, SpritemapError};
@@ -124,8 +123,6 @@ pub enum ContentError {
     Poses(PoseError),
     /// Samus's pose transition lists aren't in the image.
     Transitions(AddressError),
-    /// Samus's horizontal speed tables aren't in the image.
-    Speeds(AddressError),
     /// Samus's animation delay lists don't decode.
     Delays(AnimationError),
     /// The slope shapes aren't in the image.
@@ -157,7 +154,6 @@ impl fmt::Display for ContentError {
             Self::Poses(error) => write!(f, "the pose table: {error:?}"),
             Self::SamusAssets(error) => write!(f, "Samus's assets: {error:?}"),
             Self::Transitions(error) => write!(f, "the pose transitions: {error:?}"),
-            Self::Speeds(error) => write!(f, "the speed tables: {error:?}"),
             Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
             Self::Slopes(error) => write!(f, "the slope shapes: {error:?}"),
             Self::EnemyPrograms(error) => write!(f, "the enemy instruction lists: {error:?}"),
@@ -208,8 +204,6 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     Ok(Content {
         poses,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
-        speeds: HorizontalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
-        vertical: VerticalSpeeds::load(rom.lorom()).map_err(ContentError::Speeds)?,
         delays,
         slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
         enemy_programs,

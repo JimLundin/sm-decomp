@@ -189,6 +189,60 @@ impl EnemySources {
         })
     }
 
+    /// Each live slot's common words, its species, cursor and spritemap left at their
+    /// defaults (a free or deleting slot is `None`): what solid enemy collision and the
+    /// selection read, for any room, with no species or program map.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::WramTooShort`] when a slot lies past the record's work RAM.
+    pub fn commons(&self, wram: &[u8]) -> Result<Vec<Option<EnemyCommon>>, DecodeError> {
+        (0_u16..)
+            .take(ENEMY_SLOTS)
+            .map(|index| {
+                let word = |field: SlotField| self.table.word(field, index)?.read(wram);
+                let live = word(self.species)? != 0 && word(self.properties)? & DELETED == 0;
+                Ok(live.then_some(self.common(wram, index)?))
+            })
+            .collect()
+    }
+
+    /// Slot `index`'s common words but its species, cursor and spritemap.
+    fn common(&self, wram: &[u8], index: u16) -> Result<EnemyCommon, DecodeError> {
+        let word = |field: SlotField| self.table.word(field, index)?.read(wram);
+        let fixed = |pixels: SlotField, subpixels: SlotField| -> Result<_, DecodeError> {
+            Ok(Fixed {
+                pixels: word(pixels)?,
+                subpixels: word(subpixels)?,
+            })
+        };
+        let frames = |field: SlotField| word(field).map(Frames);
+        Ok(EnemyCommon {
+            position: Point {
+                x: fixed(self.x, self.x_subpixels)?,
+                y: fixed(self.y, self.y_subpixels)?,
+            },
+            radius_x: word(self.radius_x)?,
+            radius_y: word(self.radius_y)?,
+            properties: flags(word(self.properties)?),
+            extra_properties: flags(word(self.extra_properties)?),
+            ai_handlers: flags(word(self.ai_handlers)?),
+            health: word(self.health)?,
+            timer: word(self.timer)?,
+            palette: PaletteIndex(word(self.palette)?),
+            tiles: TilesIndex(word(self.tiles)?),
+            layer: word(self.layer)?,
+            flash: frames(self.flash)?,
+            frozen: frames(self.frozen)?,
+            invincibility: frames(self.invincibility)?,
+            shake: frames(self.shake)?,
+            frame_counter: word(self.frame_counter)?,
+            parameter_1: word(self.parameter_1)?,
+            parameter_2: word(self.parameter_2)?,
+            ..EnemyCommon::default()
+        })
+    }
+
     /// Slot `index`.
     ///
     /// A free slot's pointers stay at their defaults: they are the last occupant's, which
@@ -217,12 +271,6 @@ impl EnemySources {
         let occupancy = match occupant {
             None => Occupancy::Free,
             Some((_, behaviour)) => self.occupant(wram, index, behaviour, properties)?,
-        };
-        let fixed = |pixels: SlotField, subpixels: SlotField| -> Result<_, DecodeError> {
-            Ok(Fixed {
-                pixels: word(pixels)?,
-                subpixels: word(subpixels)?,
-            })
         };
         let frames = |field: SlotField| word(field).map(Frames);
         let [bank, _] = word(self.bank)?.to_le_bytes();
@@ -256,29 +304,9 @@ impl EnemySources {
             generation: Generation::default(),
             common: EnemyCommon {
                 species: occupant.map_or_else(SpeciesId::default, |(id, _)| id),
-                position: Point {
-                    x: fixed(self.x, self.x_subpixels)?,
-                    y: fixed(self.y, self.y_subpixels)?,
-                },
-                radius_x: word(self.radius_x)?,
-                radius_y: word(self.radius_y)?,
-                properties: flags(properties),
-                extra_properties: flags(word(self.extra_properties)?),
-                ai_handlers: flags(word(self.ai_handlers)?),
-                health: word(self.health)?,
-                timer: word(self.timer)?,
                 cursor,
                 spritemap,
-                palette: PaletteIndex(word(self.palette)?),
-                tiles: TilesIndex(word(self.tiles)?),
-                layer: word(self.layer)?,
-                flash: frames(self.flash)?,
-                frozen: frames(self.frozen)?,
-                invincibility: frames(self.invincibility)?,
-                shake: frames(self.shake)?,
-                frame_counter: word(self.frame_counter)?,
-                parameter_1: word(self.parameter_1)?,
-                parameter_2: word(self.parameter_2)?,
+                ..self.common(wram, index)?
             },
             occupancy,
         })

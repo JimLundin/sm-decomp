@@ -90,6 +90,22 @@ fn on_screen(slot: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
     ![left, right, top, bottom].into_iter().any(negative)
 }
 
+/// Whether a live enemy runs this frame: it is processed off screen, frozen, or on screen.
+fn processes(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
+    common
+        .properties
+        .contains(EnemyProperty::ProcessedOffScreen)
+        || common.ai_handlers.contains(AiHandler::Frozen)
+        || on_screen(common, camera_x, camera_y)
+}
+
+/// Whether a live enemy is one Samus and projectiles can touch this frame (the interactive
+/// list, `$17EC`): it runs, and isn't intangible.
+#[must_use]
+pub fn touchable(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
+    processes(common, camera_x, camera_y) && !common.properties.contains(EnemyProperty::Intangible)
+}
+
 /// The enemy selection phase (`$A0:8EB6`): free the deleted slots and list the live ones on
 /// screen, or processed off screen, or frozen, then of those the tangible ones as the
 /// interactive list (`$A0:8F40`).
@@ -108,17 +124,12 @@ pub fn select(state: &mut State) -> Active {
             }
             Occupancy::Live(_) => {
                 let common = &slot.common;
-                if common
-                    .properties
-                    .contains(EnemyProperty::ProcessedOffScreen)
-                    || common.ai_handlers.contains(AiHandler::Frozen)
-                    || on_screen(common, camera_x, camera_y)
-                {
+                if processes(common, camera_x, camera_y) {
                     active.slots.push(index);
-                    if !common.properties.contains(EnemyProperty::Intangible) {
-                        let slot = u8::try_from(index).map(|index| SlotIndex(index, PhantomData));
-                        active.interactive.extend(slot);
-                    }
+                }
+                if touchable(common, camera_x, camera_y) {
+                    let slot = u8::try_from(index).map(|index| SlotIndex(index, PhantomData));
+                    active.interactive.extend(slot);
                 }
             }
         }

@@ -7,7 +7,6 @@
 
 pub mod animation;
 pub mod atmospheric;
-pub mod behaviours;
 pub mod bg_graphics;
 pub mod collision;
 pub mod commit;
@@ -18,7 +17,6 @@ pub mod lines;
 pub mod message_box;
 pub mod mini_map;
 pub mod model;
-pub mod motion;
 pub mod nmi;
 pub mod oam;
 pub mod plm;

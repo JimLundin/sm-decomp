@@ -6,12 +6,14 @@ use super::{X_RADIUS, clean_of, pose_id, write_back};
 use crate::collision::Room;
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::model::num::Fixed;
-use crate::model::samus::motion::{Bounce, Position, SpeedMode, State as Motion, VerticalMotion};
 use crate::pose::{Content, PoseRequests};
 use crate::samus_world::SamusWorld;
 use crate::samus_world::frame::FrameSource;
 use crate::state::room::{Block, BlockColumns, ElevatorRide};
-use crate::state::samus::{Item, MovementType, PoseId, PoseRecord, Samus};
+use crate::state::samus::{
+    Bounce, Item, Motion, MovementType, PoseId, PoseRecord, Position, Samus, SpeedMode,
+    VerticalMotion,
+};
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Controller};
 
@@ -125,7 +127,7 @@ fn the_games_words_come_back_as_they_went() {
 }
 
 /// The game's words mean what the decode notes say: a skid points against her facing, a rise
-/// past zero is spent, no direction in a spin is a moonfall.
+/// past zero is spent, no direction in a spin is a moonfall, its word the speed upward.
 #[test]
 fn what_she_remembers_reads_from_the_games_words() {
     let read = |pose, mode, vertical, speed| {
@@ -154,7 +156,7 @@ fn what_she_remembers_reads_from_the_games_words() {
         SPIN_RIGHT,
         SpeedMode::Accelerating,
         VerticalMotion::None,
-        0x1_3800,
+        0xFFFE_C800,
     );
     assert!(
         moonfall.is_some_and(|(.., vertical, dash)| dash == DashIs::ToLose

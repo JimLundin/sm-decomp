@@ -9,7 +9,7 @@ use clean_types::{Block, Cell, Hitbox, Position, Radius, Slope, SlopeFaces, Surf
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
 
-use crate::collision::solid_enemy::{SolidEnemies, obstacles};
+use crate::collision::solid_enemy::{Obstacle, SolidEnemies, obstacles};
 use crate::collision::{Room, Touch, Touches};
 use crate::state::room::BlockIndex;
 
@@ -36,9 +36,19 @@ impl<'a> SamusWorld<'a> {
     /// The room's blocks and the interactive enemies that are solid to her or frozen.
     #[must_use]
     pub fn new(room: Room<'a>, enemies: SolidEnemies<'_>) -> Self {
-        let enemies = obstacles(enemies.interactive, enemies.slots)
-            .filter(|(_, enemy)| enemy.solid || enemy.frozen)
-            .map(|(_, enemy)| Hitbox {
+        Self::of(
+            room,
+            obstacles(enemies.interactive, enemies.slots).map(|(_, enemy)| enemy),
+        )
+    }
+
+    /// The room's blocks and those of `enemies` that are solid to her or frozen.
+    #[must_use]
+    pub fn of(room: Room<'a>, enemies: impl IntoIterator<Item = Obstacle>) -> Self {
+        let enemies = enemies
+            .into_iter()
+            .filter(|enemy| enemy.solid || enemy.frozen)
+            .map(|enemy| Hitbox {
                 x: enemy.position.x.pixels,
                 y: enemy.position.y.pixels,
                 radius: Radius {

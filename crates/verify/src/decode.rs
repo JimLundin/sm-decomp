@@ -611,23 +611,7 @@ impl LevelSources {
         let height = self.height.read(wram)?;
         let blocks = usize::from(width).saturating_mul(usize::from(height));
         let short = |block: WramBlock| DecodeError::WramTooShort { source: block.name };
-        let words = self
-            .blocks
-            .read(wram)?
-            .get(..blocks.saturating_mul(2))
-            .ok_or_else(|| short(self.blocks))?;
-        let bts = self
-            .bts
-            .read(wram)?
-            .get(..blocks)
-            .ok_or_else(|| short(self.bts))?;
-        let layer1 = words
-            .as_chunks::<2>()
-            .0
-            .iter()
-            .zip(bts)
-            .map(|(word, &bts)| Block::new(u16::from_le_bytes(*word), bts))
-            .collect();
+        let layer1 = self.layer1(wram)?;
         let header = StateHeader(self.state.read(wram)?);
         let loaded = rooms
             .state(header)
@@ -684,6 +668,38 @@ impl LevelSources {
             scroll_areas,
             stale_scrolls: stale.iter().copied().map(StaleScroll::from).collect(),
         })
+    }
+}
+
+impl LevelSources {
+    /// Layer 1's blocks, as many as the width and height say the room fills: the level any
+    /// room's moves read, which needs no room map.
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::WramTooShort`] when the buffers end before the room does.
+    pub fn layer1(self, wram: &[u8]) -> Result<Vec<Block>, DecodeError> {
+        let width = self.width.read(wram)?;
+        let height = self.height.read(wram)?;
+        let blocks = usize::from(width).saturating_mul(usize::from(height));
+        let short = |block: WramBlock| DecodeError::WramTooShort { source: block.name };
+        let words = self
+            .blocks
+            .read(wram)?
+            .get(..blocks.saturating_mul(2))
+            .ok_or_else(|| short(self.blocks))?;
+        let bts = self
+            .bts
+            .read(wram)?
+            .get(..blocks)
+            .ok_or_else(|| short(self.bts))?;
+        Ok(words
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .zip(bts)
+            .map(|(word, &bts)| Block::new(u16::from_le_bytes(*word), bts))
+            .collect())
     }
 }
 
@@ -1271,7 +1287,12 @@ impl Rules<'_> {
     }
 
     /// Samus: her position, pose and equipment.
-    fn samus(&self, wram: &[u8]) -> Result<Samus, DecodeError> {
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError`] when a word is outside `wram` or holds a code the State has no value
+    /// for.
+    pub fn samus(&self, wram: &[u8]) -> Result<Samus, DecodeError> {
         let pose = self.pose.read(wram)?;
         Ok(Samus {
             motion: crate::harness::samus_motion::decode(wram)?,
@@ -2288,7 +2309,7 @@ impl ElevatorSources {
     /// [`DecodeError::Unrepresentable`] for a status past 3 (`$A3:952A` jumps through a
     /// table of four), a flags word other than 0, 1 or $80, or a direction other than 0 or
     /// $8000.
-    fn read(self, wram: &[u8]) -> Result<ElevatorRide, DecodeError> {
+    pub fn read(self, wram: &[u8]) -> Result<ElevatorRide, DecodeError> {
         let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
             source: source.name,
             value,

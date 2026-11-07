@@ -12,7 +12,6 @@ use data::enemy::eye::EyeLists;
 use data::enemy::face_block::{FaceBlockLists, GlowColours};
 use data::enemy::program::EnemyPrograms;
 use data::level::slope::Slopes;
-use data::movement::{HorizontalSpeeds, VerticalSpeeds};
 use data::palette::VisorColours;
 use data::pose::animation::AnimationDelays;
 use data::pose::spritemap::SamusSpritemaps;
@@ -22,7 +21,6 @@ use data::pose::{MovementType, PoseId, Poses};
 
 use crate::animation;
 use crate::model::num::Fixed;
-use crate::model::samus::motion::VerticalResult;
 use crate::plm::RoomPlms;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
 use crate::state::samus::{AnimationTimer, NewPoseFrame, PoseRecord, Samus, SuperSpecialCommand};
@@ -35,10 +33,6 @@ pub struct Content {
     pub poses: Poses,
     /// Samus's pose transitions from input.
     pub transitions: PoseTransitions,
-    /// Samus's horizontal speed tables.
-    pub speeds: HorizontalSpeeds,
-    /// Samus's gravity and jump speeds.
-    pub vertical: VerticalSpeeds,
     /// Samus's animation delay lists.
     pub delays: AnimationDelays,
     /// The slope shapes her block collision reads.
@@ -79,9 +73,6 @@ pub struct Content {
 pub struct PoseRequests {
     /// From input or the pose's own next pose.
     pub ordinary: Option<PoseId>,
-    /// What the update does to her speeds after it (`SAMUS_MOMENTUM_ROUTINE_INDEX`, reset at
-    /// the start of every frame by `$90:E695`).
-    pub command: Option<PoseCommand>,
 }
 
 /// The pad buttons each control is on: the controller settings' defaults.
@@ -129,61 +120,6 @@ const fn ignores_input(movement: MovementType) -> bool {
     )
 }
 
-/// What the pose update does to Samus's speeds when no transition matched her controls.
-///
-/// Bank $91 log: `$91:8304` "Set prospective pose change command" and its table at
-/// `$91:8332`, one command a movement type.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PoseCommand {
-    /// Slow down and keep the pose while she still has base speed (`$91:EC50`).
-    Decelerate,
-    /// Stop accelerating (`$91:ECD0`).
-    Stop,
-    /// Lose the base speed, then the run speed (`$91:EC85`, which runs on into `$91:EC8E`).
-    KillXSpeed,
-    /// Lose the extra run speed (`$91:EC8E`).
-    KillRunSpeed,
-    /// The frame's vertical result, passed back (`$91:EFC4`).
-    Vertical(VerticalResult),
-    /// The start of a crouching or morphing transition animation (`$91:ECDA`), which the pose
-    /// sets itself when it is initialised.
-    StartTransitionAnimation,
-}
-
-/// The command a movement type's lookup failure gives (`$91:8332`); spin jumping has none.
-const fn failed_lookup_command(movement: MovementType) -> Option<PoseCommand> {
-    match movement {
-        MovementType::SpinJumping => None,
-        MovementType::Running | MovementType::NormalJumping | MovementType::MorphBallFalling => {
-            Some(PoseCommand::Decelerate)
-        }
-        MovementType::MorphBallOnGround
-        | MovementType::Unused09
-        | MovementType::Unused0D
-        | MovementType::SpringBallOnGround
-        | MovementType::SpringBallInAir
-        | MovementType::SpringBallFalling
-        | MovementType::WallJumping
-        | MovementType::Grappling => Some(PoseCommand::KillXSpeed),
-        MovementType::Falling => Some(PoseCommand::KillRunSpeed),
-        MovementType::Standing
-        | MovementType::Crouching
-        | MovementType::Unused07
-        | MovementType::KnockbackOrCrystalFlashEnding
-        | MovementType::Unused0B
-        | MovementType::Unused0C
-        | MovementType::TurningAroundOnGround
-        | MovementType::CrouchingTransition
-        | MovementType::Moonwalking
-        | MovementType::RanIntoWall
-        | MovementType::TurningAroundJumping
-        | MovementType::TurningAroundFalling
-        | MovementType::DamageBoost
-        | MovementType::GrabbedByDraygon
-        | MovementType::Shinespark => Some(PoseCommand::Stop),
-    }
-}
-
 /// The pose input handler: the request this frame's controls make (`$91:8000`).
 #[must_use]
 pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseRequests {
@@ -202,19 +138,17 @@ pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseR
         if let Some(transition) = list.iter().find(|entry| entry.matches(pressed, held)) {
             return PoseRequests {
                 ordinary: (transition.pose != samus.pose).then_some(transition.pose),
-                command: None,
             };
         }
     }
-    // "Handle transition table lookup failure" (`$91:82D9`): decelerating keeps the pose,
-    // and with no base speed left it is a stop.
-    let command = match failed_lookup_command(kind) {
-        Some(PoseCommand::Decelerate) if samus.motion.base_speed == Fixed::default() => {
-            Some(PoseCommand::Stop)
-        }
-        other => other,
-    };
-    let unaffected = if command == Some(PoseCommand::Decelerate) {
+    // "Handle transition table lookup failure" (`$91:82D9`): running, a straight jump and the
+    // ball's fall decelerate, keeping the pose while she has base speed; every other way of
+    // moving asks for the pose's next.
+    let decelerates = matches!(
+        kind,
+        MovementType::Running | MovementType::NormalJumping | MovementType::MorphBallFalling
+    ) && samus.motion.base_speed != Fixed::default();
+    let unaffected = if decelerates {
         samus.pose
     } else {
         content
@@ -225,7 +159,6 @@ pub fn input(samus: &Samus, controller: &Controller, content: &Content) -> PoseR
     };
     PoseRequests {
         ordinary: Some(unaffected),
-        command,
     }
 }
 
@@ -296,19 +229,6 @@ fn refresh(samus: &mut Samus, content: &Content) {
     }
     samus.movement = definition.movement;
 }
-
-/// The poses of the normal jump's take-off, the only normal jumping poses that start a jump
-/// (`$91:FC66`) and that move her without her speeds (`$90:8FB3`).
-pub(crate) const JUMP_TAKE_OFF: [PoseId; 8] = [
-    PoseId(0x4B),
-    PoseId(0x4C),
-    PoseId(0x55),
-    PoseId(0x56),
-    PoseId(0x57),
-    PoseId(0x58),
-    PoseId(0x59),
-    PoseId(0x5A),
-];
 
 /// Start the new pose's animation on the new pose frame (`$91:FB08`), unless the pose is
 /// unchanged or the frame is preserved.
