@@ -81,6 +81,12 @@ impl Touches {
     }
 }
 
+impl FromIterator<Touch> for Touches {
+    fn from_iter<I: IntoIterator<Item = Touch>>(touches: I) -> Self {
+        Self(touches.into_iter().collect())
+    }
+}
+
 /// Which way a vertical scan crosses Samus's span (`$94:9775`: by the frame counter's parity).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ScanOrder {

@@ -6,14 +6,14 @@
 //! world's: the model reports the cells it reached and the caller applies them.
 
 use clean_types::{
-    AirKind, AnsweredKind, Axis, Block, Cell, Heading, Hitbox, Quarters, Radius, Slope, SlopeFaces,
-    SolidKind, World,
+    AirKind, AnsweredKind, Axis, Block, Cell, Heading, Hitbox, Position, Quarters, Radius, Slope,
+    SlopeFaces, SolidKind, World,
 };
 use data::level::slope::{Shape, Slopes, Square, Surface};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
 
-use crate::collision::Room;
 use crate::collision::solid_enemy::{SolidEnemies, obstacles};
+use crate::collision::{Room, Touch, Touches};
 use crate::state::room::BlockIndex;
 
 /// An item's drawn block: a special block whose reaction lets her through.
@@ -30,15 +30,6 @@ const LAST_ROW: u8 = 15;
 pub struct SamusWorld<'a> {
     room: Room<'a>,
     enemies: Vec<Hitbox>,
-}
-
-/// A cell the model reached whose reaction the caller starts.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Reaction {
-    /// A scroll trigger.
-    Scroll(BlockIndex),
-    /// An item's block.
-    Item(BlockIndex),
 }
 
 impl<'a> SamusWorld<'a> {
@@ -81,16 +72,47 @@ impl<'a> SamusWorld<'a> {
 
     /// What reaching `cell` starts, if anything.
     #[must_use]
-    pub fn reaction(&self, cell: Cell) -> Option<Reaction> {
+    pub fn reaction(&self, cell: Cell) -> Option<Touch> {
         let at = self.index(cell);
         let kind = self.kind(cell);
         if kind == BlockKind::SpecialAir(SCROLL_TRIGGER) {
-            Some(Reaction::Scroll(at))
+            Some(Touch::Scroll(at))
         } else if kind == BlockKind::Special(ITEM_BLOCK) {
-            Some(Reaction::Item(at))
+            Some(Touch::Item(at))
         } else {
             None
         }
+    }
+
+    /// The touches a frame's moves start: each reacting cell of `Outcome::reached`, in the
+    /// order the moves reached them, whichever way the move went.
+    #[must_use]
+    pub fn touches(&self, reached: &[clean_types::Touch]) -> Touches {
+        reached
+            .iter()
+            .filter_map(|touch| self.reaction(touch.cell))
+            .collect()
+    }
+
+    /// The touch the cells she was inside at the frame's start start (`Outcome::inside`): only
+    /// her centre's cell reacts, and only a scroll trigger (`$94:9956`). Her centre's cell is
+    /// listed second, after her bottom edge's, when it is in another row; in the same row it
+    /// isn't listed and nothing reacts.
+    #[must_use]
+    pub fn inside_touch(
+        &self,
+        inside: &[Cell],
+        position: Position,
+        radius: Radius,
+    ) -> Option<Touch> {
+        let y = position.y.pixel();
+        let bottom = y.wrapping_add(radius.y).wrapping_sub(1);
+        if (y >> 4) == (bottom >> 4) {
+            return None;
+        }
+        let centre = *inside.get(1)?;
+        self.reaction(centre)
+            .filter(|touch| matches!(touch, Touch::Scroll(_)))
     }
 }
 
