@@ -18,8 +18,8 @@ the speed booster's extra speed, knockback, bomb jumps, grapple, shinespark, pus
 she reaches; `OtherBlockKinds` how each kind meets her motion).
 
 Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and
-so is each bracket pair; comments, layout and tests are free, and data tables count at what their
-rows say.
+so is each bracket pair; comments, layout and tests are free. A data table's rows count like code:
+each field value, name and bracket pair in a row is a token.
 
 **Baseline: about 13,500 tokens** of the old code this domain replaces, tests excluded.
 
@@ -687,7 +687,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   direction: as a floor it never stops a downward move, whatever row of the block her bottom edge
   reaches, and the check after a horizontal move never lifts her; as a ceiling it never stops a
   rise, whatever row of the block her top edge reaches, and the check after a horizontal move
-  never pushes her. It never seats her, so the next frame's pull is her speed plus 1 px. A sloped
+  never pushes her. It never seats her, so that frame's pull is her speed plus 1 px, unless something else
+  seated her. A sloped
   shape that rooms use has such columns across half its width. The vectors write such a column as
   17, for a floor and a ceiling alike.
 - checked: oracle (samus-walljump-16/22/28 frame 44; samus-walljump-28:62 and
@@ -846,3 +847,6 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 15. The empty column and the column far past (`SlopesCarry`) have constructed vectors only. A floor's empty column stops a
    downward move that ends on the block's bottom row; whether any room's floor meets her that way
    is not measured.
+16. No vector yet covers the check after a horizontal move on a column far past: a ceiling column
+    just past pushes her 0 px and seats her, one far past does neither. Constructed vectors would
+    settle it; until then it rests on the original.
