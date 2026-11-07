@@ -108,7 +108,17 @@ disassemblies or annotated listings); if you recognise something from such a sou
   \`crates/clean_types\`. They depend on nothing but each other and std.
 - Every commit touches only those two directories, and its message ends with the trailer
   \`Role: implementer\`. Commits that touch anything else are refused on import.
-- Check with \`cargo check\`, \`cargo clippy --all-targets -- -D warnings\` and \`cargo fmt --check\`.
+- Commit with one \`-m\` per paragraph, the trailer the last:
+  \`git commit -m "Subject" -m "Body paragraph." -m "Role: implementer"\`. The shell rules refuse
+  a command holding any of \`; & | < > \$ ~\`, \`..\`, a space or colon before \`/\`, or \`-F\`, so
+  write the message without them (no heredoc, no message file).
+- Check with \`cargo check\`, \`cargo clippy --all-targets -- -D warnings\` and \`cargo fmt --check\`,
+  each as its own command.
+- \`cargo test\` builds the tests but cannot run them: this machine blocks the test executables.
+  Run the tests with the one command your brief gives, a Python interpreter on a fixed runner
+  outside this directory, exactly as written and with nothing added. It links each test target
+  of the clean crates as a library, runs it and prints libtest's output. No other Python is
+  allowed.
 - Report a gap you can't explain, with the vector, the field, the expected and actual values and
   the spec entry you suspect.
 EOF

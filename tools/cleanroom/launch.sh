@@ -17,21 +17,30 @@
 #   - refuses to start unless scan_brief.sh passes on BRIEF, EXPORT is an export (one root commit,
 #     no remote) and TRANSCRIPT is outside EXPORT;
 #   - makes a lane directory, $CLEANROOM_PRIVATE/lanes/<timestamp>/ (default ~/.cleanroom), outside
-#     every repository, holding: brief.txt, settings.json (the permission configuration), argv.txt
-#     and env.txt (the exact launch), home/ (the session's empty home and config directory) and
-#     tmp/ (its TEMP);
+#     every repository, holding: brief.txt (the brief, ending with the test command),
+#     settings.json (the permission configuration), vector_runner.py and its vector_runner.sha256
+#     (the test runner), argv.txt and env.txt (the exact launch), home/ (the session's empty home
+#     and config directory) and tmp/ (its TEMP);
 #   - runs the CLI with an emptied environment, HOME, USERPROFILE and CLAUDE_CONFIG_DIR pointing at
 #     home/, so no user settings, memory, CLAUDE.md, plugins, skills, hooks, MCP servers or session
 #     history exist for it to load; and with --bare, --restricted, --setting-sources '' and
 #     --strict-mcp-config besides;
 #   - confines it with settings.json, which lives in the lane directory and so out of its reach:
 #     mode dontAsk (anything not allowed is refused, nothing prompts), the tool set Read, Glob,
-#     Grep, Edit, Write and Bash only (no web, agent, notebook, skill or MCP tool exists), Read under EXPORT, Edit and Write under the [import] paths
-#     of allowlist.txt, Bash for `cargo check|clippy|fmt|test|build` and
-#     `git add|commit|status|diff|log`, and explicit deny rules for everything the adversary named;
+#     Grep, Edit, Write and Bash only (no web, agent, notebook, skill or MCP tool exists), Read
+#     under EXPORT, Edit and Write under the [import] paths of allowlist.txt, Bash for
+#     `cargo check|clippy|fmt|test|build`, `git add|commit|status|diff|log` and the one Python
+#     command `"<python>" -I "<lane>\vector_runner.py"` (Defender blocks the executables
+#     `cargo test` links; the runner links the clean crates' tests as DLLs and takes no
+#     arguments), and explicit deny rules for everything the adversary named;
 #   - writes the stream-json transcript to TRANSCRIPT and a copy into the lane directory, then
-#     exits 1 if settings.json changed during the session, or if canary.sh check finds a token or
-#     fingerprint in the transcript or the export's history.
+#     exits 1 if settings.json or vector_runner.py changed during the session, or if canary.sh
+#     check finds a token or fingerprint in the transcript or the export's history.
+#
+# A commit message passes the deny rules when each paragraph is its own `-m` and holds none of
+# ; & | < > $ ~ `..` ` /` `:/` (`git commit -m "Subject" -m "Body." -m "Role: implementer"`).
+# The samus-motion session's commits were refused for a `;` in the body and for `-F -` with a
+# heredoc; CLEANROOM.md tells the implementer the form.
 #
 # Before the first real lane on a new CLI version, prove the confinement again:
 #   CLEANROOM_ALLOW_MISSING=1 bash tools/cleanroom/export.sh launch-probe C:/cleanroom/launch-probe
@@ -53,7 +62,9 @@
 # Overrides: CLAUDE_BIN (default ~/.local/bin/claude.exe), CLEANROOM_MODEL (default opus),
 # CLEANROOM_MAX_BUDGET_USD (passed as --max-budget-usd), CLEANROOM_AUTH (a file of top-level
 # settings JSON members, `"apiKeyHelper": ..., "env": {...}`; default: the apiKeyHelper and the
-# ANTHROPIC_* lines of ~/.claude/settings.json), CLEANROOM_PRIVATE, CARGO_HOME, RUSTUP_HOME.
+# ANTHROPIC_* lines of ~/.claude/settings.json), CLEANROOM_PY (the runner's interpreter, default
+# %LOCALAPPDATA%/sm-decomp-tools/python-3.13.7/python.exe), CLEANROOM_PRIVATE, CARGO_HOME,
+# RUSTUP_HOME.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 . "$here/lib.sh"
@@ -104,6 +115,21 @@ lane=$(cd "$lane" && pwd -P)
 if git -C "$lane" rev-parse --git-dir >/dev/null 2>&1; then die "$lane is inside a repository"; fi
 cp "$brief" "$lane/brief.txt"
 
+# The test runner: Defender blocks the test executables `cargo test` links, so the session runs
+# the clean crates' tests through one fixed Python script, copied here out of its reach. The one
+# command it may run is that interpreter on that copy, both by absolute Windows path in double
+# quotes (a forward-slash path would meet the `:/` and ` /` deny rules below, which win).
+python=${CLEANROOM_PY:-${LOCALAPPDATA:-$USERPROFILE/AppData/Local}/sm-decomp-tools/python-3.13.7/python.exe}
+[ -f "$python" ] || die "no Python at $python; set CLEANROOM_PY"
+cp "$here/vector_runner.py" "$lane/vector_runner.py"
+sha256sum <"$lane/vector_runner.py" >"$lane/vector_runner.sha256"
+runner_sum=$(cat "$lane/vector_runner.sha256")
+run_tests="\"$(cygpath -w "$python")\" -I \"$(cygpath -w "$lane/vector_runner.py")\""
+# The brief ends with the command, as the export cannot know the lane directory; CLEANROOM.md
+# says the brief gives it.
+printf '\nRun the tests with exactly this Bash command, from the working directory:\n\n    %s\n' \
+  "$run_tests" >>"$lane/brief.txt"
+
 # Paths as the CLI matches them on Windows: `//c/dir/**` is the absolute path C:/dir.
 rule_path() { # DIR -> //c/dir
   p=$(cygpath -u "$1" 2>/dev/null || echo "$1")
@@ -127,7 +153,11 @@ auth() {
   printf '  },\n'
 }
 
-q() { printf '"%s"' "$1"; } # a JSON string; the rules below hold no quote or backslash
+q() { # a JSON string: backslashes and quotes escaped
+  local bs='\' dq='"' s
+  s=${1//"$bs"/"$bs$bs"}
+  printf '"%s"' "${s//"$dq"/"$bs$dq"}"
+}
 rules() { # each argument a rule; prints a JSON array body
   first=1
   for r in "$@"; do
@@ -141,6 +171,9 @@ allow=( "Read($ex/**)" "Glob($ex/**)" "Grep($ex/**)" )
 for w in "${writable[@]}"; do allow+=("Edit($ex/$w**)" "Write($ex/$w**)"); done
 for c in check clippy fmt test build; do allow+=("Bash(cargo $c)" "Bash(cargo $c *)"); done
 for g in add commit status diff log; do allow+=("Bash(git $g)" "Bash(git $g *)"); done
+# The CLI reads a backslash in a rule as an escape, so the rule doubles each one.
+bs='\'
+allow+=("Bash(${run_tests//"$bs"/"$bs$bs"})")
 
 deny=(
   # Tools that reach outside: the web, agents, notebooks, MCP, skills, background work.
@@ -167,7 +200,14 @@ deny=(
   "Bash(ln *)" "Bash(tar *)" "Bash(echo *)" "Bash(printf *)" "Bash(tee *)" "Bash(xargs *)"
   "Bash(curl *)" "Bash(wget *)" "Bash(nc *)" "Bash(ssh *)" "Bash(scp *)" "Bash(gh *)"
   "Bash(powershell *)" "Bash(powershell.exe *)" "Bash(pwsh *)" "Bash(cmd *)" "Bash(cmd.exe *)"
-  "Bash(python *)" "Bash(python3 *)" "Bash(py *)" "Bash(node *)" "Bash(perl *)" "Bash(ruby *)"
+  "Bash(python3 *)" "Bash(py *)" "Bash(node *)" "Bash(perl *)" "Bash(ruby *)"
+  # The CLI matches a command's program by its name, so `python *` would also deny the runner's
+  # full-path interpreter; every Python command but the runner's is refused for not being
+  # allowed, and these name the forms an implementer would try.
+  "Bash(python)" "Bash(python3)" "Bash(py)" "Bash(python -c*)" "Bash(python -m*)"
+  "Bash(python -E*)" "Bash(python -X*)" "Bash(python -)" "Bash(python -I -*)"
+  "Bash(python.exe *)" "Bash(python3.exe *)" "Bash(py.exe *)" "Bash(*python* -c*)"
+  "Bash(*python* -m *)" "Bash(*python* -E*)"
   "Bash(bash *)" "Bash(sh *)" "Bash(env *)" "Bash(export *)" "Bash(source *)" "Bash(eval *)"
   "Bash(exec *)" "Bash(start *)" "Bash(claude *)" "Bash(rustc *)" "Bash(rustup *)"
   "Bash(git -C *)" "Bash(git -c *)" "Bash(git --git-dir*)" "Bash(git --work-tree*)"
@@ -245,6 +285,7 @@ echo "launch: session exited $status; transcript $transcript ($(wc -l <"$transcr
 
 # The configuration is as it was launched.
 [ "$(sha256sum <"$settings")" = "$settings_sum" ] || { echo "LAUNCH BREACH $domain: $settings changed during the session" >&2; exit 1; }
+[ "$(sha256sum <"$lane/vector_runner.py")" = "$runner_sum" ] || { echo "LAUNCH BREACH $domain: $lane/vector_runner.py changed during the session" >&2; exit 1; }
 
 # 4. The canary check, on the transcript and on the export's history.
 if ! bash "$here/canary.sh" check "$transcript" "$export_dir"; then
