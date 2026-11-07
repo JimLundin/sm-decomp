@@ -288,15 +288,24 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   half-height); otherwise there is no push.
 - Mechanic. From where her moves left her, at her old size, she looks g px up and g px down: each
   look is a vertical test move of g whole px from her position, subpixel included, stopped as a
-  move is, solid enemies first (`SolidEnemies`), then blocks (`BlocksStopFlush`, its `Even`/`Odd`
-  rule included, and the sloped floors of `SlopesCarry` for a look down). A look up passes every
-  sloped ceiling; what a sloped floor does to a look up is open (§11, question 18).
-  Against blocks, a look of g = 8 px or more is stopped by whatever a look of 8 px would stop, with
-  the room that look found; only when nothing stops the 8 px look is it the look of g px. So a
-  stepped block decides by the half that 8 px reaches: a ball unmorphing (g = 9) with her top
-  edge against a stepped block's solid lower half finds no room above, though 9 px would reach
-  its air upper half (C-fit-step-ceiling, C-fit-step-floor, C-fit-step-enemy). The room on a
-  side is how far its look got: g where nothing stopped it.
+  move is, against solid enemies (`SolidEnemies`) or against blocks (`BlocksStopFlush`, its
+  `Even`/`Odd` rule included, and the sloped floors of `SlopesCarry` for a look down). A look up
+  passes every sloped ceiling; what a sloped floor does to a look up is open (§11, question 18).
+- Order of the looks. They run one after another, each seeing what the ones before it wrote:
+  solid enemies up, solid enemies down, then the enemy's far-side look (below; only with an enemy
+  on one side alone); then blocks up, blocks down, then the block's far-side look (only with a
+  block on one side alone). A look that refuses the change ends pose fit: the looks after it don't
+  run. So the block look up writes her y subpixel before the block look down does (C-fit-tunnel,
+  C-fit-land-tunnel), and the enemy looks all run before a block look writes it.
+- Against blocks, any look of 8 px or more (the far-side look and `ShrinkingLowersHer`'s
+  included) is stopped by whatever a look of 8 px the same way would stop, with the room that
+  look found; only when nothing stops the 8 px look is it the look of its own distance. A look of
+  under 8 px is that look alone, however much her body grows. So a stepped block decides by the
+  half that 8 px reaches: a ball unmorphing (g = 9) with her top edge against a stepped block's
+  solid lower half finds no room above, though 9 px would reach its air upper half
+  (C-fit-step-ceiling, C-fit-step-floor, C-fit-step-enemy); and in C-fit-ceiling the far-side
+  look of 6 px is one look, with no 8 px look before it. The room on a side is how far its look
+  got: its whole distance where nothing stopped it.
 - A look doesn't move her, but what stops it writes to her as a stop would: a block writes her
   y subpixel (FFFF looking down, 0 looking up), a solid enemy right against her clears it to 0,
   and a sloped floor leaves it. A look down that a stepped block stops seats her on a slope
@@ -322,40 +331,52 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
     not its pad chart row's (a rise, a halt, a brake, the dash joining her speed), and not what
     her moves met (a landing's stop of her speeds: her horizontal and vertical speeds stay as her
     moves left them, C-fit-land-tunnel). The crouch has no take-off: no rise and no 10 px lift.
-- The cells the looks reach are their own, not `TouchedCells`' reports. What those cells then do
-  belongs to their own domains (§10). In the original a door to a room still starts her passage
-  and spikes still hurt her, as when a move reaches them, while a cell whose reaction depends on
-  the way she moves (a floor that crumbles, a station's or a save point's access) does nothing
-  (§11, question 17).
+- The block looks reach cells as a vertical move of their distance would, and `TouchedCells`
+  reports them with the way `Look`, in the order the looks run: the look up, the look down, then
+  the far-side look, each 8 px look's cells before its own look's. Solid enemies decide their
+  looks and leave no cells. A reaction that depends on the way she moves (a floor that crumbles,
+  a station's or a save point's access) doesn't answer a look; the others (an item, a cell that
+  changes the scrolling, a door to a room, spikes) do, as for a move (§11, question 17).
 - checked: oracle (PF1, item-morph-ball:1311: crouched to the take-off, the body grows 3 px and
   she rises 3 px, then the 10 px lift, in one frame; U1, crouched to standing, 5 px; PF2, a
   landing from a jump, 2 px; PF3, a landing from a spin, 9 px; the push up from a floor in every
   recorded landing on a flat floor; area-norfair:38, a body growing 9 px in open air, no push);
-  constructed (C-fit-ceiling, pushed down from a ceiling, the look's subpixel write kept;
-  C-fit-tunnel, a take-off between a floor and a ceiling crouches instead; C-fit-ball-tunnel,
-  unmorphing there is refused; C-fit-step-ceiling and C-fit-step-floor, the 8 px look against a
-  stepped block; C-fit-step-enemy, a stepped block above and a solid enemy below; C-fit-land-tunnel,
-  a landing crouched instead keeps her speeds); original only (the second look's refusal, the
-  mixed and same-side cases beyond C-fit-step-enemy, a look up passing a sloped ceiling, the
-  seat, and the cells' reactions).
+  constructed (C-fit-ceiling, pushed down from a ceiling, the look's subpixel write kept, and the
+  looks' cells with a far-side look under 8 px; C-fit-tunnel, a take-off between a floor and a
+  ceiling crouches instead; C-fit-ball-tunnel, unmorphing there is refused; C-fit-step-ceiling and
+  C-fit-step-floor, the 8 px look against a stepped block, and in C-fit-step-ceiling the cells of
+  a 9 px far-side look and its 8 px look; C-fit-step-enemy, a stepped block above and a solid
+  enemy below; C-fit-land-tunnel, a landing crouched instead keeps her speeds); original only
+  (W15's looks' cells, a body growing 7 px in open air, which the record doesn't show; the second
+  look's refusal, the mixed and same-side cases beyond C-fit-step-enemy, a look up passing a sloped
+  ceiling, the seat, and the cells' reactions).
 
 ### ShrinkingLowersHer
 - Mechanic. The frame she starts to crouch (`Crouching`, aimed or not) she moves down 5 px, and
-  the frame she starts to morph (`Morphing`) 9 px: whole pixels, her subpixel as it is, as the
-  pose change's effect, after her moves. On the ground this keeps her feet where they were (an
+  the frame she starts to morph (`Morphing`) 9 px, unless a floor under her new feet stops her
+  sooner (below): whole pixels, her subpixel as it is, as the pose change's effect, after her
+  moves. On the ground this keeps her feet where they were (an
   upright body of half-height 21 becomes a crouched one of 16; a crouched one of 16 becomes the
   ball's 7). The distance is the pose's own, not the shrink: morphing from a straight jump or a
   fall aimed `Down`, whose body is shorter than the crouch, lowers her 9 px all the same, so in the
-  air her feet drop below where they were.
-- Nothing stops it: the move ignores what is below her. A look down of that distance at her new
-  size goes with it and only writes as pose fit's looks do (`PoseFitAfterMoves`): a block within
-  reach of her new feet leaves her y subpixel FFFF, a stepped block seats her, and she is still
-  lowered the whole distance (original only; on the ground the look reaches only the row her feet
-  are in, which is air).
+  air her feet drop below where they were (unless the look below stops sooner).
+- Before she is lowered, she looks down that distance at her new size, from where her moves left
+  her: a look as pose fit's are (`PoseFitAfterMoves`), the 8 px rule included, and she is lowered
+  by the room it finds. Where nothing stops it, that is the whole distance. Where a block is
+  within reach of her new feet, she is lowered only as far as the block's face, and the look
+  writes as a stop would: her y subpixel FFFF, or a seat on a stepped block. On the ground the
+  look reaches only the row her feet are in, which is air, so she is lowered the whole distance.
+  In the air, from a body shorter than the crouch, a floor close under her feet can stop it
+  (C-shrink-floor).
+- The look reaches cells as pose fit's do, reported in `TouchedCells` with the way `Look` after
+  the frame's moves. A frame has either this look or pose fit's, never both: one body shrinks, the
+  other grows.
 - Her speeds and dash don't change: the rows into `Crouching` and `Morphing` have no other effect.
 - checked: oracle (SH1, r02:95, standing to crouching, 5 px; SH2, samus-bomb-jump-vertical:849,
   crouched to morphing, 9 px; SH3, r04:312, a straight jump aimed `Down` to morphing in the air,
-  9 px on top of her fall, her speeds and dash kept); original only (the look's writes).
+  9 px on top of her fall, her speeds and dash kept); constructed (C-shrink-floor, a morph in the
+  air 2 px above a floor: the 8 px look stops on it, she is lowered 5 px, her y subpixel FFFF,
+  and the look's one cell); original only (a seat on a stepped block).
 
 ---
 
@@ -881,27 +902,30 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - Output. Some cells react when she reaches them (one that changes the scrolling, an item, a door,
   a floor that crumbles); what they then do belongs to their own domains. Motion reports which cells she reaches,
   in order, so the world can raise those reactions. Two reports come out of a frame.
-- **The cells her moves reach.** For each move of the frame (the horizontal move, the near-wall
-  test of `WallJump`, the ground pull or her vertical move, the aim change's step, the elevator's
-  1 px), in the order they happen: the
-  cells of her leading edge's line at the move's target, the line `BlocksStopFlush` names. For a
+- **The cells her moves and looks reach.** For each move of the frame (the horizontal move, the
+  near-wall test of `WallJump`, the ground pull or her vertical move, the aim change's step, the
+  elevator's 1 px), then each look of the pose change (pose fit's block looks,
+  `PoseFitAfterMoves`, in the order given there, or the look of `ShrinkingLowersHer`), in the
+  order they happen: the cells of her leading edge's line at the move's target, the line
+  `BlocksStopFlush` names. For a
   horizontal move that is the column of her leading edge at the target, in each row her body
   spans where she stands before the move, top row first. For a vertical move it is the row of her
   leading edge at the target, in each column her body spans where she stands before the move, left
-  to right on an `Even` frame and right to left on an `Odd` one. Each cell comes with the move's
-  direction, one of four ways: down, left, right or up (listed alphabetically; the order means
-  nothing), because some reactions depend on it.
-- The near-wall test is a look, not a move: its cells are those of a horizontal move of 8 px
-  towards the wall from where her horizontal move left her, and they come with the way `Look`
+  to right on an `Even` frame and right to left on an `Odd` one. Each cell comes with its way:
+  one of four directions for a move (down, left, right or up), or `Look` for a look (listed
+  alphabetically; the order means nothing), because some reactions depend on it.
+- The near-wall test, pose fit's looks and the shrink's look are looks, not moves: they don't
+  move her. The near-wall test's cells are those of a horizontal move of 8 px towards the wall
+  from where her horizontal move left her; a vertical look's are those of a vertical move of its
+  distance, an 8 px look's cells before its own look's where the 8 px rule applies
+  (`PoseFitAfterMoves`). Every look's cells come with the way `Look`
   instead of a direction. A reaction that depends on the way she moves (a floor that crumbles, a
   station she enters from one side) doesn't answer a look; the others (an item, a cell that
-  changes the scrolling) do, as for a move. The world answers a reacting cell's solid-or-air for
-  a look as for a move (`OtherBlockKinds`).
+  changes the scrolling, a door to a room, spikes) do, as for a move. The world answers a
+  reacting cell's solid-or-air for a look as for a move (`OtherBlockKinds`).
 - The report ends at the first cell that stops her: the cells after it on the line are not
   reached. A move of exactly 0 reaches no cells (`BlocksStopFlush`), and neither does a move or a
-  look that a solid enemy decides (`SolidEnemies`). Pose fit's looks (`PoseFitAfterMoves`) and the
-  look of `ShrinkingLowersHer` reach cells of their own, which belong to them, not to these
-  reports.
+  look that a solid enemy decides (`SolidEnemies`): pose fit's enemy looks reach none.
 - A cell that stands for another (`OtherBlockKinds`) is reported as the cell it stands for.
 - **The cells she is inside.** Once each frame, before her moves, from her position at the frame's
   start: the cell in her centre column at her bottom edge's row; then at her centre's row, when it
@@ -909,8 +933,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   edge's row and the three rows' numbers combined by exclusive-or are not 0. So when the rows of
   her top edge and her centre are one, and her bottom edge's another, that cell is reported twice.
 - checked: oracle (W15: the near-wall test reaches item-morph-ball's item cell, and the game picks
-  the item up); original only (area-brinstar's scrolling cells); constructed
-  (C-touch-run, C-touch-wall, C-touch-fall-odd, C-touch-inside-twice, and the C-kind vectors).
+  the item up); original only (area-brinstar's scrolling cells; W15's pose-fit looks); constructed
+  (C-touch-run, C-touch-wall, C-touch-fall-odd, C-touch-inside-twice, the C-kind vectors, and
+  the looks' cells in C-fit-ceiling, C-fit-step-ceiling and C-shrink-floor).
 
 ### OtherBlockKinds
 - Mechanic. How the remaining kinds of cell meet her motion. Each is solid (it stops her as a
@@ -984,7 +1009,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 2. Answered: the pose chart's steps are §7's `pose_step` vectors. In the motion vectors her pose
    changes by a jump, a fall, a turn from the ground or a spin reversed; for pose fit, by a
    landing, a take-off, standing up and unmorphing (PF1-PF3, U1, the C-fit vectors); and for
-   `ShrinkingLowersHer`, by starting to crouch or morph (SH1-SH3).
+   `ShrinkingLowersHer`, by starting to crouch or morph (SH1-SH3, C-shrink-floor).
 3. `RidingTheElevator`, stepped blocks and most of `SlopesCarry` have constructed vectors only:
    no recorded frame is clean for them (`SolidEnemies` now has W13 and W20). The slope landings in r01 and samus-walljump-22 need lead-ins through a
    spin's drift and a sloped floor's effect on a move's length (`SlopesSlowTheWalk`).
@@ -1023,10 +1048,12 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 16. No vector yet covers the check after a horizontal move on a column far past: a ceiling column
     just past pushes her 0 px and seats her, one far past does neither. Constructed vectors would
     settle it; until then it rests on the original.
-17. The cells that pose fit's looks and the look of `ShrinkingLowersHer` reach: in the original a
-    door to a room starts her passage and spikes hurt her from them, while reactions that depend
-    on the way she moves do nothing (`PoseFitAfterMoves`). How motion hands those cells to the
-    doors' and damage's domains is open; no vector checks them.
+17. The looks' cells (the near-wall test's, pose fit's and the look of `ShrinkingLowersHer`) are
+    reported in `TouchedCells` with the way `Look`. Open is only how the doors' and damage's
+    domains answer a `Look` cell: in the original a door to a room starts her passage and spikes
+    hurt her from one, as from a move, she takes an item and a scrolling cell acts, while
+    reactions that depend on the way she moves do nothing. The motion vectors check the cells
+    (W15, C-fit-ceiling, C-fit-step-ceiling, C-shrink-floor), not what the doors and damage do.
 18. A look up of pose fit whose row holds a sloped floor (a ledge's slope above her head): the
     original tests it as it tests a sloped floor below her, which can give a room no look down
     would. No record or vector meets one; open.

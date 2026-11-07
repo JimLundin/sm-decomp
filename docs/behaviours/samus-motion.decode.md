@@ -280,14 +280,33 @@ the vector had them together.
   C-fit-tunnel can't show it with a speed: the crouched handler halts her in the move
   (`$90:A337`), so C-fit-land-tunnel (a spin landing crouched instead) carries it.
 - The shrink (`ShrinkingLowersHer`): `$91:F433`'s init sets command 7 for the transition poses
-  (`$91:F758`), and `$91:ECDA` adds `$91:ED36`'s distance (35h/36h 5, 37h/38h 9; F1h-F6h 5) to
-  `0AFA` after `$94:96AB` at the new radius, whose result it ignores; it clears the bounce state
+  (`$91:F758`), and `$91:ECDA` runs `$94:96AB` at the new radius for `$91:ED36`'s distance (35h/36h
+  5, 37h/38h 9; F1h-F6h 5) and adds the `$12` it returns to `0AFA` (adversary 19: the room on a
+  stop, the distance otherwise); it clears the bounce state
   and Y speed only if bouncing (unreachable from the poses that start a morph). Runs only when
   the pose stands (`$91:EBEE`). Records (`$TEMP/adv18s/shrink.pl` over `$TEMP/respec-motion/out`):
   every start of 35h-38h moves y by the table's distance on top of the frame's move: r02:95, 105,
   115, 388, 405, 425; r07:28, 38, 59; samus-bomb-jump-vertical:843, 849; r04:312 and
   item-morph-ball:1259, samus-mockball:69 (17h → 37h in the air, radius 10 → 7, still 9 px).
   Vectors SH1 (r02:95), SH2 (samus-bomb-jump-vertical:849), SH3 (r04:312).
+- Adversary 19. Order (`$91:FDAE`): `$A0:A8F0` up (`$91:FDFD`), down (`$91:FE1F`), the enemy table
+  `$91:FE8A` (`$91:FE3C`; carry set goes straight to the revert at `$91:FE82`, so no block look
+  runs), then `$94:96AB` up (`$91:FE4C`), down (`$91:FE64`), then the block table `$91:FE92`, whose
+  `$91:FF20`/`$91:FF49` call `$94:96AB` again. The 8 px rule is `$94:96AB`'s own test on each
+  call's `$12` (`|$12| & FFF8h` non-zero), so it covers the far-side look and `$91:ECDA`'s look;
+  the 8 px look's `$12` is `($12 & FFF8h) | 8`, ±8 for every |distance| under 10h. Within pose fit
+  the g-keyed reading gives the same position (every look shares her position, and a far-side
+  look's 8 px look repeats the first look's on that side), so only the cells tell it apart:
+  C-fit-ceiling (a 6 px far-side look, one look) and C-fit-step-ceiling (a 9 px one, after its
+  8 px look). Cells: `$94:96E3` runs `$94:959E`/`$94:95F5` with `0B02` |= Fh, the same per-block
+  reactions (`$94:952C`) as a move, so every look's blocks are touched in look order; the old
+  engine passes `checks.touches` to `scan_y` in `block()` and `start_transition`. The shrink:
+  `$91:ED05` adds `$12` as `$94:96AB` returns it, which on a stop is the room (`$94:8F82`:
+  max(0, (target bottom & FFF0h) − radius − y)), so she is lowered by the room, not the table's
+  distance; the old engine's `start_transition` shifts by the distance (a divergence of the old
+  engine, unrecorded: no record meets a floor within reach). C-shrink-floor: SH3's frame with a
+  floor at 160, room 5, `0AFC` FFFFh. The ball's x radius is 5 like every pose's (`$90:EC39`
+  is the only write of `0AFE`), so the five constructed `[7, 7]` balls became `[5, 7]`.
 - RW1 (adversary 18, G): the second lead-in frame's write (003C.5FFF → 003C.0000) is not
   observable at the checked frame (003C.5FFF − 0.E000 = 003B.7FFF → 003B.0000 either way), and a
   vector starting at record 44 has no spin carried on at frame 45, so the claim was dropped rather

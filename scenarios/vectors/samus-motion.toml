@@ -63,14 +63,16 @@
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
 #   position_x compares x alone. pose: the pose the frame ends in (as `pose` gives it),
 #   given where pose fit refuses the change or makes her crouch instead (spec `PoseFitAfterMoves`), so
-#   it differs from next_pose. reached: the cells her moves reach this frame (spec `TouchedCells`), in
-#   order, each { cell = [x, y], way }, the cell's top-left corner in px and the move's direction
-#   ("Down", "Left", "Right" or "Up", listed alphabetically; the order means nothing), or "Look"
-#   for a cell the near-wall test reaches (spec `WallJump`, `TouchedCells`); a cell
-#   that stands for another is listed as the one it names.
+#   it differs from next_pose. reached: the cells her moves and looks reach this frame (spec
+#   `TouchedCells`), in order, each { cell = [x, y], way }, the cell's top-left corner in px and the
+#   move's direction ("Down", "Left", "Right" or "Up"), or "Look" for a cell a look reaches: the
+#   near-wall test (spec `WallJump`), pose fit's block looks (spec `PoseFitAfterMoves`) or the
+#   shrink's look (spec `ShrinkingLowersHer`); these values are listed alphabetically and their
+#   order means nothing. A cell that stands for another is listed as the one it names.
 #   inside: the cells she is inside this frame, in order, each [x, y], the cell's top-left corner.
-#   readied: true when the frame readies a wall jump, false when it doesn't (spec `WallJump`'s
-#   output); compared only where given.
+#   wall_test: the frame's outcome of the near-wall test (spec `WallJump`'s output), one of
+#   "Kicked", "Neither" or "Readied" (listed alphabetically; the order means nothing); compared
+#   only where given. A kick also shows in next_pose, whose action is then `WallJumping`.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
@@ -81,8 +83,10 @@
 #   its next_pose; PF1 checks a crouch take-off, whose body grows; SH1-SH3 check the frame a
 #   crouch or a morph begins, whose body shrinks. No recorded vector comes from a frame run by
 #   a bomb jump or a grapple release. The W vectors (item-morph-ball, the integration gaps 10-16)
-#   check frames whose pose changes or whose body grows: their next_pose and radius are the
-#   record's, the radius being the chosen pose's own (spec §1.3).
+#   check frames the Tick met there. Most end in a pose other than the one they start in, or grow
+#   her body, and there their
+#   next_pose and radius are the record's, the radius being the chosen pose's own (spec §1.3);
+#   W11 (a turn on the ground over air) and W20 (running on a solid enemy) change neither.
 
 # Constructed vectors: cases no record reaches, and the Exact variant.
 
@@ -181,7 +185,7 @@ source = "constructed"
 entries = ["Landing", "BlocksStopFlush", "DriftInTheAir"]
 world = { floor_top = 288 }
 before = { position = ["0100.0000", "0117.0000"], speed_y = "+0003.4000" }
-pose = { body = "Ball", action = "Falling", facing = "Right", radius = [7, 7] }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 pad = []
 jump_pressed = false
 after = { position = ["0100.0000", "0119.FFFF"], speed_y = "-0001.0000", bounces = 1, speed_x = "+0000.0000" }
@@ -2037,7 +2041,7 @@ source = "constructed"
 entries = ["TouchedCells"]
 world = {}
 before = { position = ["0100.0000", "010D.0000"] }
-pose = { body = "Ball", action = "Falling", facing = "Right", radius = [7, 7] }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 pad = []
 jump_pressed = false
 after = { position = ["0100.0000", "010D.0000"], reached = [], inside = [[256, 272], [256, 256], [256, 256]] }
@@ -2139,19 +2143,23 @@ after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = 
 
 # The ball unmorphs in the air 3 px below a ceiling: the body grows 9 px, the look up finds 3 px of
 # room, so she is pushed down 6 px. The look up, stopped by the ceiling, writes her y subpixel 0
-# (8000 before), and the push moves her by whole pixels from there.
+# (8000 before), and the push moves her by whole pixels from there. Her moves are 0, so only the
+# looks reach cells, left to right on this Even frame (TouchedCells): the look up's 8 px look
+# stops on the ceiling's first cell (row 224); the look down's 8 px look and its 9 px look each
+# reach row 256; the far-side look down of 6 px, under 8 px, is one look and reaches row 256 once
+# more. An 8 px look before it would add two cells.
 
 [[vector]]
 id = "C-fit-ceiling"
 source = "constructed"
-entries = ["PoseFitAfterMoves", "PadChart", "RisingAndFalling"]
+entries = ["PoseFitAfterMoves", "TouchedCells", "PadChart", "RisingAndFalling"]
 world = { ceiling_bottom = 240 }
 before = { position = ["0100.0000", "00FA.8000"], speed_y = "+0000.0000" }
-pose = { body = "Ball", action = "Falling", facing = "Right", radius = [7, 7] }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.1C00" }
+after = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.1C00", reached = [{ cell = [240, 224], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }] }
 
 # Crouched on a floor with a ceiling at her head, a take-off finds no room on either side: she
 # stays crouched (crouched Still), with no rise, no lift and no push.
@@ -2177,35 +2185,40 @@ source = "constructed"
 entries = ["PoseFitAfterMoves", "PadChart"]
 world = { floor_top = 288, ceiling_bottom = 272 }
 before = { position = ["0100.0000", "0119.FFFF"] }
-pose = { body = "Ball", action = "Still", facing = "Right", radius = [7, 7] }
+pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", pose = { body = "Ball", action = "Still", facing = "Right", radius = [7, 7] } }
+after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] } }
 
-# The 8 px look (PoseFitAfterMoves): a ball unmorphing grows 9 px, so each look is stopped by what
-# a look of 8 px would stop. The stepped block's lower half is solid and its upper half air.
+# The 8 px look (PoseFitAfterMoves): a ball unmorphing grows 9 px, so each look of 8 px or more is
+# stopped by what a look of 8 px would stop. The stepped block's lower half is solid and its upper
+# half air.
 # - C-fit-step-ceiling: her top edge is against the solid lower half. The 8 px look up stops
 #   there (room 0, her y subpixel written 0), so she is pushed down 9 px. A 9 px look alone would
-#   reach the air upper half and find room: no push, y 00F7.8000.
+#   reach the air upper half and find room: no push, y 00F7.8000. Her body lies within the column at 256, so
+#   the looks' cells (TouchedCells) are the step (the 8 px look up stops on it), then row 256
+#   four times: the look down's 8 px and 9 px looks, then the far-side look down of 9 px, which
+#   is 8 px or more and so also comes after an 8 px look.
 # - C-fit-step-floor: the ball rests on the solid lower half, with air under the step. The 8 px
 #   look down stops on it (room 0), so she is pushed up 9 px and her feet stay on the step. A 9 px
 #   look alone would reach the air under the step: no push, y 0111.FFFF.
-# - C-fit-step-enemy: as C-fit-step-ceiling, with a solid enemy right under her. A block
-#   above and an enemy below: the ball is refused. Her y subpixel stays as the looks wrote it (0).
-#   A 9 px look alone would find room above, and the enemy would push her up 9 px instead.
+# - C-fit-step-enemy: as C-fit-step-ceiling, with a solid enemy 1 px under her (her bottom side
+#   254, its top side 255). A block above and an enemy below: the ball is refused. Her y subpixel
+#   stays as the looks wrote it (0). A 9 px look alone would find room above, and the enemy would
+#   push her up 8 px instead (9 less the 1 px gap), to 00EF.8000.
 
 [[vector]]
 id = "C-fit-step-ceiling"
 source = "constructed"
-entries = ["PoseFitAfterMoves", "BlocksStopFlush", "PadChart", "RisingAndFalling"]
+entries = ["PoseFitAfterMoves", "BlocksStopFlush", "TouchedCells", "PadChart", "RisingAndFalling"]
 world = { stepped = { block = [256, 224], quarters = ["..", "##"] } }
 before = { position = ["0108.0000", "00F7.8000"], speed_y = "+0000.0000" }
 pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["0108.0000", "0100.0000"], speed_y = "+0000.1C00" }
+after = { position = ["0108.0000", "0100.0000"], speed_y = "+0000.1C00", reached = [{ cell = [256, 224], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [256, 256], way = "Look" }] }
 
 [[vector]]
 id = "C-fit-step-floor"
@@ -2992,6 +3005,25 @@ pad = ["run", "right", "down"]
 jump_pressed = false
 after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00" }
 
+# C-shrink-floor: SH3 with a floor 2 px under her feet (her bottom pixel 157, the floor's top 160).
+# The morph's look down of 9 px at the ball's size is 8 px or more, so its 8 px look comes first;
+# it reaches the floor (the ball's bottom pixel 154, 8 px on: 162) and stops 5 px on. She is
+# lowered 5 px, not 9, to stand flush on the floor, and her y subpixel is written FFFF. Cells
+# (TouchedCells): the horizontal move's column at rows 128 and 144, top row first; then the look's
+# row 160, left to right on this Even frame, which ends at its first cell, the floor.
+
+[[vector]]
+id = "C-shrink-floor"
+source = "constructed"
+entries = ["ShrinkingLowersHer", "TouchedCells", "PadChart", "DriftInTheAir", "RisingAndFalling"]
+world = { floor_top = 160 }
+before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
+next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+pad = ["run", "right", "down"]
+jump_pressed = false
+after = { position = ["056C.DFFF", "0099.FFFF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", reached = [{ cell = [1392, 128], way = "Right" }, { cell = [1392, 144], way = "Right" }, { cell = [1376, 160], way = "Look" }] }
+
 # A spin reversed in its first frame skids: she keeps travelling the old way against her new facing.
 
 [[vector]]
@@ -3025,7 +3057,7 @@ lead_in = [
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["003B.0000", "044C.DFFF"], speed_x = "-0000.E000", dash = "0000.0000", speed_y = "+0000.7000", readied = true }
+after = { position = ["003B.0000", "044C.DFFF"], speed_x = "-0000.E000", dash = "0000.0000", speed_y = "+0000.7000", wall_test = "Readied" }
 
 # The integration gaps 10-16 (lane/wire-tick, the Tick on the model): item-morph-ball's frames, the
 # record N before, N's pad, N+1 after (source names N+1).
@@ -3138,7 +3170,9 @@ jump_pressed = false
 after = { position = ["04AB.DFFF", "0245.F3FF"], speed_x = "+0001.B000", dash = "0000.0000", speed_y = "+0001.8800" }
 
 # W15: in a spin carried on with right held, the near-wall test looks 8 px left and reaches the
-# item's cell (column 45h), which lets it through; the game picks the item up.
+# item's cell (column 45h), which lets it through; the game picks the item up. The jump's body is
+# 7 px taller, so pose fit then looks 7 px up (row 624) and 7 px down (row 672), one look each way
+# (under 8 px), left to right on this Even frame: four more `Look` cells, all air, and no push.
 
 [[vector]]
 id = "W15"
@@ -3155,7 +3189,7 @@ next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [
 frame = "Even"
 pad = ["right", "aim_down"]
 jump_pressed = false
-after = { position = ["046C.BFFF", "028E.5800"], speed_y = "+0000.A800", readied = false, reached = [{ cell = [1120, 640], way = "Left" }, { cell = [1120, 656], way = "Left" }, { cell = [1104, 640], way = "Look" }, { cell = [1104, 656], way = "Look" }, { cell = [1120, 656], way = "Down" }, { cell = [1136, 656], way = "Down" }] }
+after = { position = ["046C.BFFF", "028E.5800"], speed_y = "+0000.A800", wall_test = "Neither", reached = [{ cell = [1120, 640], way = "Left" }, { cell = [1120, 656], way = "Left" }, { cell = [1104, 640], way = "Look" }, { cell = [1104, 656], way = "Look" }, { cell = [1120, 656], way = "Down" }, { cell = [1136, 656], way = "Down" }, { cell = [1120, 624], way = "Look" }, { cell = [1136, 624], way = "Look" }, { cell = [1120, 672], way = "Look" }, { cell = [1136, 672], way = "Look" }] }
 
 # W16: a take-off from a crouch with run and right held gains no dash and doesn't move; the
 # take-off's end hands over the jump.
