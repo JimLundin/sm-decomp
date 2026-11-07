@@ -167,6 +167,28 @@ her (before the crouch take-off's lift), so the camera doesn't follow those move
 moonfall's vertical speed word is her speed upward (`0B36` = 0: the decode's "− magnitude"), which
 the round-6 edge had the wrong way (chain-0014-96BA 11 → 12 onward).
 
+## Open: frames the narrowed speed-booster mask shows (observer, 2026-11-07, lane/gaps-harness)
+
+The harness's speed-booster mask took y and the vertical speed on every frame she had any dash,
+and x and the dash on every frame the dash was 2.0 or more. It now takes only what the booster
+writes: x and the dash while she runs with run held and a dash of 2.0 or more, and the vertical
+speed of a frame on which she starts a rise with a dash. The frames this uncovers are this domain's.
+Most match (mockball's x, 19 of 19 compared before, is 87 of 87 now). These don't:
+
+20. **The aim change's step every frame down a slope (`AimingAndShooting`, `SlopesCarry`).**
+    chain-0220-D017 39 → 40 to 42 → 43: running down a slope with dash 0.C000 to 0.F000. Her aim
+    changes every frame (the step every frame). y: model 1 px lower than the game (40: 006E.FFFF
+    against 006D.FFFF). At 43 → 44 she leaves the slope: model 0078.FFFF, game 007D.CFFF, falling.
+21. **A fall from the ground's edge that the model doesn't move (`FollowingTheGround`).**
+    chain-0106-AD5E 13 → 14: running with run held (base speed 2.C000, dash 0.C000), into a fall.
+    y: model 028B.FFFF (no move), game 0290.8FFF (the whole pull, 4.9000).
+22. **The frame a hit starts knockback, falling (`SolidEnemies`?).** chain-0106-AD5E 256 → 257 and
+    293 → 294: falling in a straight jump (at 0.3800 and 0.7000), the frame knockback starts. y:
+    model 010C.53FF and 010D.17FF, game 010B.FFFF both times, above where she started. The
+    knockback mask takes her speeds, not y. Asked: whether the hit's y is this domain's.
+
+area-maridia 190 → 191 (x 1 px short) is gap 19's step: answered.
+
 ## Open: the engine's pose at the edge (integrator, 2026-11-07, after `c44e48c`)
 
 Items 6 and 7 are answered by the observer (lane/pose-map): §2's new parts, the map both ways

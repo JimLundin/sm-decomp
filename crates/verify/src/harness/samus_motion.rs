@@ -160,6 +160,8 @@ const FX_LIQUID_OPTIONS: WramWord = WramWord {
 const LIQUID_PHYSICS_OFF: u16 = 0x0004;
 /// The knockback's movement type.
 const KNOCKBACK: u8 = 0x0A;
+/// The running movement type, the only one whose dash the speed booster grows.
+const RUNNING: u8 = 0x01;
 /// Bank $94 log: the pushes the block-inside reactions (quicksand, treadmills) set at the start
 /// of each frame, before the motion ($94:9B60): the extra displacements and the X deceleration
 /// multiplier.
@@ -262,23 +264,38 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
     })
 }
 
-/// The fields the speed booster takes out of the domain on the frame from `from`, read from
-/// record N alone. With it equipped and extra run speed at 2.0 or more, its cap is 7.0, not
-/// 2.0: the extra run speed and x. With any extra run speed, a jump adds half of it to the jump
-/// speed: the vertical speed and y.
-fn boosted(from: &FrameRecord) -> Result<FieldSet, Skip> {
+/// The fields the speed booster writes in the frame from `from` to `next`, with it equipped.
+/// Its dash grows past 2.0 only while she runs with run held ($90:9789): from a dash of 2.0 or
+/// more there, the dash and x are its. A dash of any size elsewhere is only a value, which the
+/// domain's moves carry. A rise she starts with a dash gets half the dash added to its speed
+/// ($90:9919, $90:99A9): the vertical speed of that frame alone. She doesn't move vertically on
+/// it, and later frames start from the speed record N+1 holds, so y stays the domain's.
+fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
     if word(from, source::EQUIPPED_ITEMS)? & SPEED_BOOSTER == 0 {
         return Ok(FieldSet::EMPTY);
     }
-    let extra_run = state(from)?.extra_run;
+    let (before, after) = (state(from)?, state(next)?);
     let mut fields = FieldSet::EMPTY;
-    if extra_run.pixel() >= 2 {
+    let run_held = word(from, source::JOYPAD1_LASTKEYS)? & word(from, source::BINDING_RUN)? != 0;
+    if byte(from, source::SAMUS_MOVEMENT_TYPE)? == RUNNING
+        && run_held
+        && before.extra_run.pixel() >= 2
+    {
         fields = fields.union(Quantity::ExtraRun.set().union(Quantity::X.set()));
     }
-    if extra_run.0 != 0 {
-        fields = fields.union(Quantity::VerticalSpeed.set().union(Quantity::Y.set()));
+    if rise_starts(&before, &after) && (before.extra_run.0 != 0 || after.extra_run.0 != 0) {
+        fields = fields.union(Quantity::VerticalSpeed.set());
     }
     Ok(fields)
+}
+
+/// Whether a jump, a spin's jump or a wall jump's kick starts a rise from `before` to `after`:
+/// she rises after it and didn't before, or rises faster than before, which the pull never
+/// does.
+fn rise_starts(before: &Motion, after: &Motion) -> bool {
+    after.vertical == VerticalMotion::Up
+        && (before.vertical != VerticalMotion::Up
+            || after.vertical_speed.0 > before.vertical_speed.0)
 }
 
 fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, DecodeError> {
@@ -610,10 +627,10 @@ impl Domain for SamusMotion {
         if submerged(from, radius(from)?)? {
             mask("deferred: liquid physics (submerged)", FieldSet::ALL);
         }
-        let boost = boosted(from)?;
+        let boost = boosted(from, next)?;
         if boost != FieldSet::EMPTY {
             mask(
-                "deferred: the speed booster (extra run past 2.0, or a boosted jump)",
+                "deferred: the speed booster (its dash past 2.0 running with run held, or a boosted rise's speed)",
                 boost,
             );
         }
