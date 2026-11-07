@@ -12,7 +12,7 @@ fail() { echo "$1"; ok=0; }
 "$R/cargo" fmt --all --check >/dev/null 2>&1 || fail "FMT FAIL"
 
 # Check mode doesn't link, so oracle needs no native archive.
-if ! "$R/cargo" clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record -p oracle --all-targets --no-deps -- -D warnings >"$O/check.log" 2>&1; then
+if ! "$R/cargo" clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record -p oracle -p clean_types -p clean_model_samus_motion --all-targets --no-deps -- -D warnings >"$O/check.log" 2>&1; then
   fail "CLIPPY FAIL"
   grep -E '^(error|warning)|-->' "$O/check.log" | head -10
 fi

@@ -23,6 +23,17 @@ name = "canonical_derive"
 version = "0.1.0"
 
 [[package]]
+name = "clean_model_samus_motion"
+version = "0.1.0"
+dependencies = [
+ "clean_types",
+]
+
+[[package]]
+name = "clean_types"
+version = "0.1.0"
+
+[[package]]
 name = "data"
 version = "0.1.0"
 dependencies = [

@@ -17,7 +17,7 @@ engine="data game runtime app"
 allowed() {
   case $1 in
     data) echo "canonical" ;;
-    game) echo "data canonical" ;;
+    game) echo "data canonical clean_types clean_model_samus_motion" ;;
     runtime) echo "data" ;;
     app) echo "data game runtime" ;;
     oracle) echo "data oracle_record" ;;
@@ -26,9 +26,12 @@ allowed() {
     tools) echo "verify oracle runtime" ;;
     canonical) echo "canonical_derive" ;;
     canonical_derive) echo "" ;;
+    # The clean-room crates depend only on each other (MODEL §5).
+    clean_types) echo "" ;;
+    clean_model_samus_motion) echo "clean_types" ;;
   esac
 }
-new_crates="data game runtime app oracle oracle_record verify tools canonical canonical_derive"
+new_crates="data game runtime app oracle oracle_record verify tools canonical canonical_derive clean_types clean_model_samus_motion"
 
 # Name the rule a forbidden edge breaks, for the message.
 rule() {
