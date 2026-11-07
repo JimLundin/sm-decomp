@@ -18,6 +18,15 @@
 #     surface = 16 numbers, one per column of pixels from the left, the row (0 to 15) of the surface's
 #     top pixel in the block: that pixel and every one below it in the block are solid, those above
 #     are air.
+#   - slope_ceiling: one sloped ceiling block, as slope_floor, but each number is the row of the
+#     surface's bottom pixel: that pixel and every one above it in the block are solid.
+#   - solid_block: [x, y], the top-left corner of one solid 16 px block.
+#   - stepped: one stepped block: block = [x, y], its top-left corner; quarters = two strings, its
+#     upper 8 px row of quarters then its lower one, each two characters from the left: "#" a solid
+#     8 px quarter, "." air.
+#   - enemy: one solid enemy: centre = [x, y] in px; radius = [x, y], its half-width and half-height
+#     in px (its box is centre - radius to centre + radius, measured as her body's box is, spec §8).
+#   - elevator_moving: true when she stands on an elevator that is moving (spec §1.3).
 #   A recorded vector's world answers its frames as the room did: open air where she met nothing,
 #   the floor she stood on where she was on flat ground.
 # - before: what the player can tell about Samus at the start (spec §1): position = [x, y],
@@ -31,13 +40,15 @@
 #   in px, and aim (optional, default Forward: Forward, Up, UpForward, DownForward, Down). next_pose:
 #   the pose chosen during it, when it changes (the pose chart is not in the
 #   spec yet, so the vector gives it).
+# - frame (optional): "Even" or "Odd", the parity of the checked frame (spec §1.3); default "Even".
+#   The lead-in's frames alternate back from it.
 # - pad: the buttons held; jump_pressed: jump just pressed this frame.
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
 #   position_x compares x alone.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
-#   standing, running or moonwalking, and a take-off becoming a jump.
+#   standing, running or moonwalking, a take-off becoming a jump, and (M1) a turn's end into a spin.
 #   J1-J3 and A1 check a frame whose pose changes (a jump start, a take-off, an aim change) and give
 #   its next_pose. No recorded vector comes from a frame run by a bomb jump or a grapple release.
 
@@ -1556,3 +1567,330 @@ pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21
 pad = []
 jump_pressed = false
 after = { position = ["0108.0000", "0102.4000"], speed_y = "+0000.0000", speed_x = "+0000.0000" }
+
+[[vector]]
+id = "M1"
+source = "r03:12"
+entries = ["Moonfall", "TurningRound", "RisingAndFalling", "DriftInTheAir"]
+world = { floor_top = 112 }
+before = { position = ["019D.8000", "005B.FFFF"] }
+lead_in = [
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["01A1.0000", "005C.1BFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.3800" }
+
+[[vector]]
+id = "C-moonfall-jump"
+source = "constructed"
+entries = ["Moonfall", "Jumping", "RisingAndFalling"]
+equipment = { space_jump = true }
+world = { solid_block = [400, 112] }
+before = { position = ["019D.8000", "005B.FFFF"] }
+lead_in = [
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["01BF.4000", "007A.2FFF"], speed_x = "+0001.6000", speed_y = "+0002.A000" }
+
+[[vector]]
+id = "C-moonfall-nolimit"
+source = "constructed"
+entries = ["Moonfall", "RisingAndFalling"]
+world = { solid_block = [400, 112] }
+before = { position = ["019D.8000", "005B.FFFF"] }
+lead_in = [
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = []
+jump_pressed = false
+after = { position = ["01DE.E000", "00D2.3BFF"], speed_x = "+0001.6000", speed_y = "+0005.2400" }
+
+[[vector]]
+id = "C-elevator"
+source = "constructed"
+entries = ["RidingTheElevator"]
+world = { elevator_moving = true }
+before = { position = ["0100.0000", "0100.4000"], dash = "0001.0000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-enemy-ahead"
+source = "constructed"
+entries = ["SolidEnemies", "WallsAndCeilings", "FollowingTheGround"]
+world = { floor_top = 288, enemy = { centre = [271, 256], radius = [8, 16] } }
+before = { position = ["0100.4000", "010B.FFFF"], speed_x = "+0002.C000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0101.4000", "010B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000" }
+
+[[vector]]
+id = "C-enemy-adjacent"
+source = "constructed"
+entries = ["SolidEnemies", "WallsAndCeilings", "DriftInTheAir", "RisingAndFalling"]
+world = { enemy = { centre = [270, 256], radius = [8, 16] } }
+before = { position = ["0100.4000", "0100.8000"], speed_y = "+0001.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0100.4000", "0101.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0001.1C00" }
+
+[[vector]]
+id = "C-enemy-down"
+source = "constructed"
+entries = ["SolidEnemies", "Landing"]
+world = { enemy = { centre = [256, 296], radius = [8, 8] } }
+before = { position = ["0100.0000", "0108.8000"], speed_y = "+0003.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "010A.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-step-far"
+source = "constructed"
+entries = ["BlocksStopFlush", "WallsAndCeilings", "DriftInTheAir"]
+world = { stepped = { block = [256, 272], quarters = ["..", "##"] } }
+before = { position = ["00FB.0000", "0109.0000"], dash = "0009.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0103.FFFF", "0109.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
+
+[[vector]]
+id = "C-step-noback"
+source = "constructed"
+entries = ["BlocksStopFlush", "WallsAndCeilings"]
+world = { stepped = { block = [256, 272], quarters = ["..", "##"] } }
+before = { position = ["0104.4000", "0109.0000"] }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0104.FFFF", "0109.0000"], speed_x = "+0000.0000", speed_y = "+0000.1C00" }
+
+[[vector]]
+id = "C-step-left"
+source = "constructed"
+entries = ["BlocksStopFlush", "WallsAndCeilings", "DriftInTheAir"]
+world = { stepped = { block = [256, 272], quarters = ["..", ".#"] } }
+before = { position = ["0117.4000", "0109.0000"], dash = "0002.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0115.0000", "0109.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
+
+[[vector]]
+id = "C-step-down"
+source = "constructed"
+entries = ["BlocksStopFlush", "SlopesCarry", "Landing"]
+world = { stepped = { block = [256, 272], quarters = ["..", "##"] } }
+before = { position = ["0108.0000", "0100.8000"], speed_y = "+0005.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0108.0000", "0103.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-step-up"
+source = "constructed"
+entries = ["BlocksStopFlush", "WallsAndCeilings", "RisingAndFalling"]
+world = { stepped = { block = [256, 48], quarters = ["##", ".."] } }
+before = { position = ["0108.0000", "0045.8000"], speed_y = "-0005.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0108.0000", "0044.0000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-span-step"
+source = "constructed"
+entries = ["BlocksStopFlush", "WallsAndCeilings", "DriftInTheAir"]
+world = { stepped = { block = [272, 240], quarters = [".#", ".#"] }, solid_block = [272, 272] }
+before = { position = ["010B.0000", "0109.0000"], dash = "0009.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0113.FFFF", "0109.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
+
+[[vector]]
+id = "C-down-even"
+source = "constructed"
+entries = ["BlocksStopFlush", "SlopesCarry", "Landing"]
+frame = "Even"
+world = { solid_block = [256, 272], slope_floor = { block = [272, 272], surface = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4] } }
+before = { position = ["0110.0000", "00F8.4000"], speed_y = "+0007.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0110.0000", "00FB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-down-odd"
+source = "constructed"
+entries = ["BlocksStopFlush", "SlopesCarry", "Landing"]
+frame = "Odd"
+world = { solid_block = [256, 272], slope_floor = { block = [272, 272], surface = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4] } }
+before = { position = ["0110.0000", "00F8.4000"], speed_y = "+0007.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0110.0000", "00FF.4000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-slope-edge"
+source = "constructed"
+entries = ["SlopesCarry", "Landing"]
+world = { slope_floor = { block = [256, 272], surface = [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8] } }
+before = { position = ["0108.0000", "0100.2000"], speed_y = "+0003.8000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0108.0000", "0103.2000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-slope-ceiling-edge"
+source = "constructed"
+entries = ["SlopesCarry", "WallsAndCeilings", "RisingAndFalling"]
+world = { slope_ceiling = { block = [256, 48], surface = [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7] } }
+before = { position = ["0108.0000", "0048.8000"], speed_y = "-0004.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0108.0000", "0048.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-seat-lift"
+source = "constructed"
+entries = ["SlopesCarry", "FollowingTheGround"]
+world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14] } }
+before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0103.C000", "0109.FFFF"], speed_x = "+0002.C000" }
+
+[[vector]]
+id = "C-seat-none"
+source = "constructed"
+entries = ["SlopesCarry", "FollowingTheGround", "BlocksStopFlush"]
+world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14] } }
+before = { position = ["0101.0000", "0109.FFFF"], speed_x = "+0002.C000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0103.C000", "010B.FFFF"], speed_x = "+0002.C000" }
+
+[[vector]]
+id = "C-aim-short"
+source = "constructed"
+entries = ["AimingAndShooting", "BlocksStopFlush", "MovesAsShePosed"]
+world = { floor_top = 288, wall_right = 272 }
+before = { position = ["0108.C000", "010B.FFFF"], speed_x = "+0002.C000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pad = ["right", "aim_down"]
+jump_pressed = false
+after = { position = ["010B.FFFF", "010B.FFFF"] }
+
+[[vector]]
+id = "C-aim-enemy"
+source = "constructed"
+entries = ["AimingAndShooting", "SolidEnemies", "MovesAsShePosed"]
+world = { floor_top = 288, enemy = { centre = [281, 256], radius = [8, 16] } }
+before = { position = ["0108.C000", "010B.FFFF"], speed_x = "+0002.C000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pad = ["right", "aim_down"]
+jump_pressed = false
+after = { position = ["010B.8000", "010B.0000"] }
+
+[[vector]]
+id = "C-aim-slope"
+source = "constructed"
+entries = ["AimingAndShooting", "SlopesCarry", "MovesAsShePosed"]
+world = { floor_top = 288, slope_floor = { block = [272, 272], surface = [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8] } }
+before = { position = ["010C.4000", "010B.FFFF"], speed_x = "+0002.C000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pad = ["right", "aim_down"]
+jump_pressed = false
+after = { position = ["0110.0000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000" }

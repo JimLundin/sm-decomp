@@ -81,6 +81,7 @@ except in a jump, a spin, a fall or a wall jump, where it means she has just sta
 | world | the room's blocks and solid enemies, answered as §8 says | §8 |
 | spin turned far | `bool`: the spin's sprite has turned far enough to kick off a wall | `WallJump` |
 | elevator moving | `bool` | `RidingTheElevator` |
+| frame parity | `Even` or `Odd`: the game's frame count, alternating every frame | `BlocksStopFlush` |
 
 ---
 
@@ -161,11 +162,18 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   without a speed change; a block or a solid enemy in the way, or a wall stop that frame, puts her
   against the wall instead. Standing, unaimed
   and not landing, holding shoot restarts the standing animation.
-- checked: oracle (A1, the step); constructed (the rest).
+- The step comes after that frame's moves and the ground pull. A solid enemy within its reach
+  (`SolidEnemies`) stops it with no move at all; one she already touches still clears her y
+  subpixel. A block in the way stops it as any horizontal move (`BlocksStopFlush`): by whole pixels
+  up to the face, at most the 1 px, with her x subpixel written FFFF or 0, so a face less than a
+  pixel ahead moves her that part of a pixel. The floor and ceiling checks of `SlopesCarry` don't
+  run after the step, so it can leave her bottom edge in a sloped floor's solid part.
+- checked: oracle (A1, the step); constructed (C-aim-short, C-aim-enemy, C-aim-slope; the shot).
 
 ### RidingTheElevator
-- Mechanic. Facing the screen on a moving elevator, she moves down 1 px a frame; nothing else of
-  hers changes. checked: constructed.
+- Mechanic. Facing the screen on a moving elevator, she moves down 1 px a frame, a move a block
+  stops as any downward move does (`BlocksStopFlush`); nothing else of hers changes, her speeds
+  and dash included. checked: constructed (C-elevator).
 
 ---
 
@@ -232,9 +240,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - checked: oracle.
 
 ### Moonfall
-- Quirk. A spin she enters when a turn ends, with jump not just pressed, starts with no rise: she
-  drops under gravity with no falling limit and jump does nothing, until she lands. checked: oracle
-  (r03); no vector yet (open question 8).
+- Quirk. A spin she enters when a turn ends, with jump not just pressed, starts with no rise: her
+  vertical speed is 0 and she drops under gravity (`RisingAndFalling`), but her fall speed keeps
+  growing by 0.1C00 past the falling limit, and pressing jump does nothing (not even with space
+  jump), until she lands. checked: oracle (r03: M1); constructed (C-moonfall-jump,
+  C-moonfall-nolimit, both from r03's start, with its vertical motion).
 
 ---
 
@@ -298,9 +308,21 @@ as below. These rules are Samus's; other actors get their own when their domains
   more can pass a floor.
 - A horizontal move is limited to 15 px either way, its subpixel kept (unreachable in vanilla
   motion).
-- A stepped block stops a move on either axis the same way, against the face of its solid
-  quarter that her leading edge reaches, with the same subpixels (FFFF or 0).
-- checked: oracle (every ground vector's floor); constructed (C-limit).
+- A stepped block stops a move on either axis the same way, with the same subpixels (FFFF or 0),
+  but against the face of the 8 px quarter her leading edge reaches, not the block's face. The
+  quarters asked are those in the half her leading edge reaches (a side's half for a sideways
+  move, an upper or lower half for a vertical one) that her body overlaps across it. So
+  reaching the far half of a block with both halves solid, she stops at the far half's face, her
+  body overlapping the near half.
+- A stop never moves her backwards: when her edge at the start is already past the face it stops
+  at, she moves 0 px, and only the subpixel is written (FFFF or 0), which is forward.
+- A move asks the blocks across her body in order, and the first that stops her decides the stop,
+  even when a later one would stop her sooner: a horizontal move asks the rows of her body top to
+  bottom; a vertical move asks the columns from the leftmost on an `Even` frame and from the rightmost on
+  an `Odd` one. A block that doesn't stop her (air, or a sloped surface that isn't reached) passes the
+  question to the next.
+- checked: oracle (every ground vector's floor); constructed (C-limit, C-step-far, C-step-noback,
+  C-step-left, C-step-down, C-step-up, C-span-step, C-down-even, C-down-odd).
 
 ### WallsAndCeilings
 - Mechanic. A horizontal move stopped by a wall, on the ground or in the air, halts her: horizontal speed 0,
@@ -310,13 +332,22 @@ as below. These rules are Samus's; other actors get their own when their domains
 - checked: constructed (C-wall, C-ceiling).
 
 ### SolidEnemies
-- Quirk. A horizontal move of 0 still meets solid enemies on her heading. A solid enemy she
-  already touches on the tested side stops a move with no distance and sets her **y** subpixel to
-  0, on either axis; one ahead stops her by whole pixels at its face, her subpixel kept.
+- Quirk. Her box and an enemy's are each centre ± half-size. A move asks every solid enemy before
+  the blocks. It tests her box at the move's end pushed 1 px further on: moving left or up unless
+  the end's subpixel is 0, moving right or down unless both her start's subpixel and the move's
+  are 0. The test meets an enemy when, there, the centres are closer than the two half-sizes summed
+  on both axes.
+- An enemy the test meets is judged from where she starts, by the gap between the boxes on that
+  side (the enemy's near side less her near side, less 1): a gap of 0 is touching: she doesn't
+  move, and her **y** subpixel is set to 0, on either axis; a larger gap stops her by that many
+  whole pixels, her subpixel kept; a negative one (already overlapping) is passed over. So a move
+  of 0 is never stopped by one.
+- A stop against an enemy is a wall, a ceiling or a floor as the move's direction says: sideways it
+  halts her (`WallsAndCeilings`), upward it ends the rise, downward she lands (`Landing`).
 - A solid enemy in a move's path decides that move alone: she stops against it and the blocks
   aren't asked, even a nearer one, so the move can end with her edge overlapping a block. Blocks
   stop her only on a path free of solid enemies (`BlocksStopFlush`).
-- checked: constructed; no vector yet (the vectors' world has no enemies).
+- checked: constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-aim-enemy).
 
 ### SlopesCarry
 - Mechanic. On a slope the ground pull is 1 px instead of her speed plus 1 px.
@@ -330,26 +361,33 @@ as below. These rules are Samus's; other actors get their own when their domains
     Her bottom edge is in its solid part when its row there is the surface's top row at her
     centre column or lower. Then she is lifted by whole pixels until her bottom edge is on
     the last air row above the surface, and that lift seats her. With her bottom edge already on
-    that last air row, or higher, nothing happens and she is not seated.
+    that last air row, or higher, nothing happens and she is not seated, so that frame's pull is
+    her speed plus 1 px (C-seat-lift against C-seat-none).
   - **Ceiling.** Then the block at her centre column and her top edge's row, if it is a sloped
     ceiling. When her top edge is in its solid part, or on the first air row under it, she is
     pushed down by whole pixels until her top edge is on that first air row, and the push seats
     her, also when it moves her 0 px because her top edge was already there.
 - A sloped surface never stops a horizontal move (how it changes the move's length is §10).
 - A downward move meets a sloped floor only in the block at her centre column; one in the other
-  columns her body spans doesn't stop her. When her bottom edge at the target reaches the
-  surface's top row there, the move stops with her bottom edge on the last air row above it, by
-  whole pixels: her y subpixel is kept, not set to FFFF, whatever the surface's shape. This stop
+  columns her body spans doesn't stop her. When her bottom edge at the target reaches the last air
+  row above the surface's top there, or lower, the move stops with her bottom edge on that last
+  air row: so a move that would end exactly on it already stops and lands her there. She moves by
+  whole pixels only: the move's subpixel part is lost and her y subpixel is kept, not set to
+  FFFF, whatever the surface's shape. With a solid or stepped block in another column of that
+  row, which of the two decides is the order of `BlocksStopFlush`. This stop
   doesn't seat her; it lands her as any floor does (`Landing`). A stepped block, like a solid one,
   is met in every column her body spans and stops her flush with subpixel FFFF
   (`BlocksStopFlush`), and that stop seats her.
-- Rising into a sloped ceiling's solid part at her centre column, she doesn't move up at all that
-  frame (her subpixel kept), and the rise ends as at a flat ceiling (`WallsAndCeilings`).
-- The surface's height at each column is world data; the vectors give it as `world.slope_floor`.
-  C-slope-land checks the stop on a sloped floor; the rest of this entry has no vector yet.
+- Rising so that her top edge at the target reaches a sloped ceiling's solid part at her centre
+  column, or the first air row under it, she doesn't move up at all that frame (her subpixel
+  kept), and the rise ends as at a flat ceiling (`WallsAndCeilings`).
+- The surface's height at each column is world data; the vectors give it as `world.slope_floor`
+  and `world.slope_ceiling`.
 - checked: oracle (samus-walljump-16/22/28 frame 44; samus-walljump-28:62 and
   samus-screw-attack:66 for the sloped ceiling; chain r01:677, samus-walljump-22:93 and
-  samus-input-poses:426 for the landing that keeps the subpixel); constructed (C-slope-land).
+  samus-input-poses:426 for the landing that keeps the subpixel); constructed (C-slope-land,
+  C-slope-edge, C-slope-ceiling-edge, C-seat-lift, C-seat-none, C-step-down, C-down-odd,
+  C-aim-slope).
 
 ---
 
@@ -385,15 +423,14 @@ as below. These rules are Samus's; other actors get their own when their domains
   `AimingAndShooting`: for the pose-chart spec.
 - The elevator's descent: in area-brinstar she moves down 1 px and 2 px on alternate frames while
   she faces the screen, so the elevator carries her on top of `RidingTheElevator`'s 1 px. That
-  carry belongs to the elevator's own lane.
+  carry belongs to the elevator's own lane; C-elevator checks her own 1 px alone.
 
 1. "A spin she was already in two frames earlier" (§1.2) is not yet traced against a record: it
    may count pose changes rather than frames.
 2. The pose chart's vectors (take-offs, turns' ends, landings other than the changing body) wait
    for its lane; the vectors so far change pose only by a jump, a fall or a turn from the ground.
-3. `SolidEnemies`, `RidingTheElevator` and `Moonfall` have no vectors yet, and `SlopesCarry`
-   only C-slope-land: the vectors' world has no enemies or elevators, and no lead-in through a
-   turn's end is worked. The slope landings in r01 and samus-walljump-22 need lead-ins through a
+3. `SolidEnemies`, `RidingTheElevator`, stepped blocks and most of `SlopesCarry` have constructed
+   vectors only: no recorded frame is clean for them. The slope landings in r01 and samus-walljump-22 need lead-ins through a
    spin's drift and a sloped surface's effect on a move's length (§10).
 4. The water rows, terrain-quicksand and samus-ceres-push gave no vectors: their liquid and push
    rules are out of scope.
@@ -402,8 +439,8 @@ as below. These rules are Samus's; other actors get their own when their domains
 6. The crouch take-off's lift appears a frame apart from pose fit (item-morph-ball 1311).
 7. Answered: holding no button during a turn ends the skid; holding one that changes nothing
    keeps it (`TurningRound`).
-8. `Moonfall` needs a vector with a lead-in through the turn's end; r03 shows one in a straight jump's
-   pose as well as a spin, so the entry's "a spin" may be too narrow.
+8. `Moonfall` has M1 (r03), whose lead-in runs through the turn's end. Whether a turn's end into a
+   straight jump's pose also starts one is for the pose chart.
 9. 31 of the 149 recorded frames were dropped because no lead-in from a plain start reaches them
    through frames the spec covers (mostly after a wall jump's kick or a body change in the air).
 10. Dropped after the first implementation: two frames that rise into a sloped ceiling
