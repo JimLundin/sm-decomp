@@ -12,6 +12,8 @@ use data::pose::tiles::{SamusTiles, TileDefinition, TileDefinitionId};
 use data::rom::{Lorom, RomAddress};
 use data::room::{Area, MapPosition};
 use game::enemy::instructions::label;
+use game::model::num::Fixed as Exact;
+use game::model::samus::motion::{SpeedMode, VerticalMotion};
 use game::state::room::{
     Block, BlockIndex, Crumble, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
     Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemFrame,
@@ -20,9 +22,8 @@ use game::state::room::{
 };
 use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
-    Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, Horizontal,
-    Jump, Movement, MovementType, NewPoseFrame, PoseId, PoseRecord, Speed, SuperSpecial,
-    SuperSpecialCommand, Vertical, Visor, VisorShade, VisorTimer, YDirection,
+    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, MovementType, NewPoseFrame,
+    PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor, VisorShade, VisorTimer,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot};
@@ -554,7 +555,7 @@ fn decodes_the_record(state: &State) -> bool {
     let counters = state.clock.counters;
     let time = state.clock.game_time;
     let controller = state.controller;
-    let position = state.samus.position;
+    let position = state.samus.motion.position;
     let memory = &state.video.memory;
     let equipment = state.samus.equipment;
     let camera = state.room.camera;
@@ -569,10 +570,10 @@ fn decodes_the_record(state: &State) -> bool {
         (time.hours, 8),
         (state.rng.word, 0xBEEF),
         (controller.repeat_delay.0, 9),
-        (position.x.pixels, 0x0123),
-        (position.x.subpixels, 0x4567),
-        (position.y.pixels, 0x0089),
-        (position.y.subpixels, 0xABCD),
+        (position.x.pixel(), 0x0123),
+        (position.x.sub(), 0x4567),
+        (position.y.pixel(), 0x0089),
+        (position.y.sub(), 0xABCD),
         (memory.vram[1], 2),
         (memory.cgram[5].0, 15),
         (equipment.energy.current, 0x0063),
@@ -605,15 +606,8 @@ fn decodes_the_record(state: &State) -> bool {
         && state.mode == GameMode::Gameplay
         && state.samus.pose == PoseId(9)
         && state.samus.facing == Facing::Right
-        && state.samus.movement
-            == Movement::Running {
-                speed: Horizontal {
-                    base: Speed::new(0x0002, 0xC000),
-                    extra_run: Speed::new(0x0001, 0x2000),
-                    acceleration: Acceleration::Decelerating,
-                    momentum: true,
-                },
-            }
+        && state.samus.movement == MovementType::Running
+        && decodes_the_speeds(state)
         && state.samus.previous
             == PoseRecord {
                 pose: PoseId(3),
@@ -674,11 +668,11 @@ fn undecoded_fields_keep_their_defaults() {
 
 #[test]
 fn a_rule_at_the_wrong_address_fails() {
-    // The mutant reads Samus's X from the word after it: her subpixels.
+    // The mutant reads the camera's X from the word after it.
     let mutant = Rules {
-        samus_x: WramWord {
-            offset: 0x0AF8,
-            ..Rules::ORIGINAL.samus_x
+        camera_x: WramWord {
+            offset: Rules::ORIGINAL.camera_x.offset.wrapping_add(2),
+            ..Rules::ORIGINAL.camera_x
         },
         ..Rules::ORIGINAL
     };
@@ -692,7 +686,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 90] = [
+const WORD_RULES: [(&str, WordRule); 80] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -705,10 +699,6 @@ const WORD_RULES: [(&str, WordRule); 90] = [
     ("previous", |rules| &mut rules.previous),
     ("repeat", |rules| &mut rules.repeat),
     ("repeat_delay", |rules| &mut rules.repeat_delay),
-    ("samus_x", |rules| &mut rules.samus_x),
-    ("samus_x_subpixels", |rules| &mut rules.samus_x_subpixels),
-    ("samus_y", |rules| &mut rules.samus_y),
-    ("samus_y_subpixels", |rules| &mut rules.samus_y_subpixels),
     ("collected", |rules| &mut rules.collected),
     ("equipped", |rules| &mut rules.equipped),
     ("energy", |rules| &mut rules.energy),
@@ -726,22 +716,6 @@ const WORD_RULES: [(&str, WordRule); 90] = [
     ("previous_pose", |rules| &mut rules.previous_pose.pose),
     ("last_different_pose", |rules| {
         &mut rules.last_different_pose.pose
-    }),
-    ("horizontal.base", |rules| &mut rules.horizontal.base),
-    ("horizontal.base_subpixels", |rules| {
-        &mut rules.horizontal.base_subpixels
-    }),
-    ("horizontal.extra_run", |rules| {
-        &mut rules.horizontal.extra_run
-    }),
-    ("horizontal.extra_run_subpixels", |rules| {
-        &mut rules.horizontal.extra_run_subpixels
-    }),
-    ("horizontal.acceleration", |rules| {
-        &mut rules.horizontal.acceleration
-    }),
-    ("horizontal.momentum", |rules| {
-        &mut rules.horizontal.momentum
     }),
     ("animation.frame", |rules| &mut rules.animation.frame),
     ("animation.timer", |rules| &mut rules.animation.timer),
@@ -874,18 +848,16 @@ const BYTE_RULES: [(&str, ByteRule); 10] = [
 ];
 
 #[test]
-fn an_acceleration_mode_past_2_or_a_momentum_flag_past_1_is_an_error() {
-    for (offset, source) in [
-        (0x0B4A, "SAMUS_X_ACCEL_MODE"),
-        (0x0B3C, "SAMUS_HAS_MOMENTUM_FLAG"),
-    ] {
-        let mut record = record();
-        put(&mut record.wram, offset, 0x0003);
-        assert_eq!(
-            decode(&record, &rooms()),
-            Err(DecodeError::Unrepresentable { source, value: 3 })
-        );
-    }
+fn an_acceleration_mode_past_2_is_an_error() {
+    let mut record = record();
+    put(&mut record.wram, 0x0B4A, 0x0003); // SAMUS_X_ACCEL_MODE
+    assert_eq!(
+        decode(&record, &rooms()),
+        Err(DecodeError::Unrepresentable {
+            source: "SAMUS_X_ACCEL_MODE",
+            value: 3
+        })
+    );
 }
 
 /// The item GFX slots decode from the next slot word, each slot's pointer and the tile table
@@ -1906,46 +1878,35 @@ fn jump_record() -> FrameRecord {
     record
 }
 
+/// The horizontal motion the synthetic record sets.
+fn decodes_the_speeds(state: &State) -> bool {
+    let motion = state.samus.motion;
+    (
+        motion.base_speed,
+        motion.extra_run,
+        motion.mode,
+        motion.momentum,
+    ) == (
+        Exact::new(0x0002, 0xC000),
+        Exact::new(0x0001, 0x2000),
+        SpeedMode::Decelerating,
+        true,
+    )
+}
+
 /// The jump's motion, as the jump record sets it: both speeds.
 fn decodes_the_jump(state: &State) -> bool {
-    state.samus.movement
-        == Movement::Jumping {
-            jump: Jump::Spin,
-            speed: Horizontal {
-                base: Speed::new(0x0002, 0xC000),
-                extra_run: Speed::new(0x0001, 0x2000),
-                acceleration: Acceleration::Decelerating,
-                momentum: true,
-            },
-            vertical: Vertical {
-                speed: Speed::new(0x0004, 0xE000),
-                direction: YDirection::Up,
-            },
-        }
+    let motion = state.samus.motion;
+    state.samus.movement == MovementType::SpinJumping
+        && decodes_the_speeds(state)
+        && (motion.vertical_speed, motion.vertical)
+            == (Exact::new(0x0004, 0xE000), VerticalMotion::Up)
 }
 
 #[test]
 fn a_jump_decodes_both_speeds() {
     let state = decode(&jump_record(), &rooms()).unwrap().state;
-    assert!(decodes_the_jump(&state), "{:?}", state.samus.movement);
-}
-
-#[test]
-fn every_moved_vertical_rule_fails() {
-    let rules: [(&str, WordRule); 3] = [
-        ("vertical.speed", |rules| &mut rules.vertical.speed),
-        ("vertical.subpixels", |rules| &mut rules.vertical.subpixels),
-        ("vertical.direction", |rules| &mut rules.vertical.direction),
-    ];
-    for (name, rule) in rules {
-        let mut mutant = Rules::ORIGINAL;
-        let word = rule(&mut mutant);
-        word.offset = word.offset.wrapping_add(2);
-        let survives = mutant
-            .decode(&jump_record(), &rooms())
-            .is_ok_and(|decoded| decodes_the_jump(&decoded.state));
-        assert!(!survives, "{name}");
-    }
+    assert!(decodes_the_jump(&state), "{:?}", state.samus.motion);
 }
 
 #[test]

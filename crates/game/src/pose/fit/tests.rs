@@ -66,7 +66,10 @@ fn at(x: u16, y: u16, y_subpixels: u16) -> Point {
 /// Samus changing from `old` to `new` at `position`, facing `facing`.
 fn changing(old: PoseId, new: PoseId, position: Point, facing: Facing) -> Samus {
     Samus {
-        position,
+        motion: crate::model::samus::motion::State {
+            position: position.into(),
+            ..Default::default()
+        },
         pose: new,
         facing,
         previous: PoseRecord {
@@ -129,7 +132,7 @@ fn landing_on_the_face_block_lifts_her_by_the_radius_gained() {
     let mut samus = changing(FALLING, LANDING, at(0x488, 0x29D, 0x2BFF), Facing::Right);
     run(&mut samus, &[], &enemies(&[(0x488, 0x2B8)]));
     assert_eq!(
-        samus.position.y,
+        Fixed::from(samus.motion.position.y),
         Fixed {
             pixels: 0x29B,
             subpixels: 0,
@@ -144,7 +147,7 @@ fn landing_on_the_face_block_lifts_her_by_the_radius_gained() {
 fn a_shorter_pose_checks_nothing() {
     let mut samus = changing(LANDING, FALLING, at(0x488, 0x29D, 0x2BFF), Facing::Right);
     run(&mut samus, &[], &enemies(&[(0x488, 0x2B8)]));
-    assert_eq!(samus.position, at(0x488, 0x29D, 0x2BFF));
+    assert_eq!(Point::from(samus.motion.position), at(0x488, 0x29D, 0x2BFF));
     assert_eq!(samus.y_radius, 0x99);
     assert_eq!(samus.pose, FALLING);
 }
@@ -153,7 +156,7 @@ fn a_shorter_pose_checks_nothing() {
 fn a_pose_facing_the_screen_checks_nothing() {
     let mut samus = changing(SHORT, PoseId(0), at(0x18, 0x18, 0), Facing::Forward);
     run(&mut samus, &level(&[0, 2]), &[]);
-    assert_eq!(samus.position, at(0x18, 0x18, 0));
+    assert_eq!(Point::from(samus.motion.position), at(0x18, 0x18, 0));
     assert_eq!(samus.y_radius, 0x99);
     assert_eq!(samus.pose, PoseId(0));
 }
@@ -162,7 +165,7 @@ fn a_pose_facing_the_screen_checks_nothing() {
 fn with_room_both_ways_she_stays_and_keeps_the_old_radius() {
     let mut samus = changing(SHORT, TALL, at(0x18, 0x18, 0x1234), Facing::Right);
     run(&mut samus, &[], &[]);
-    assert_eq!(samus.position, at(0x18, 0x18, 0x1234));
+    assert_eq!(Point::from(samus.motion.position), at(0x18, 0x18, 0x1234));
     assert_eq!(samus.y_radius, 8);
     assert_eq!(samus.pose, TALL);
 }
@@ -173,7 +176,7 @@ fn an_enemy_touching_her_top_pushes_her_down() {
     // Her top is at $100 - $13 = $ED: the enemy's bottom.
     run(&mut samus, &[], &enemies(&[(0x100, 0xE5)]));
     assert_eq!(
-        samus.position.y,
+        Fixed::from(samus.motion.position.y),
         Fixed {
             pixels: 0x102,
             subpixels: 0,
@@ -187,7 +190,7 @@ fn an_enemy_a_pixel_above_her_cuts_the_push() {
     // A gap of 1 leaves 1 pixel up; the other pixel gained pushes her down.
     let mut samus = changing(FALLING, LANDING, at(0x100, 0x100, 0), Facing::Right);
     run(&mut samus, &[], &enemies(&[(0x100, 0xE4)]));
-    assert_eq!(samus.position.y.pixels, 0x101);
+    assert_eq!(samus.motion.position.y.pixel(), 0x101);
     assert_eq!(samus.pose, LANDING);
 }
 
@@ -198,7 +201,7 @@ fn an_enemy_pushing_her_into_another_keeps_the_old_pose() {
     // Above: bottom at $ED. Below: out of reach at the old radius, touching at the new.
     run(&mut samus, &[], &enemies(&[(0x100, 0xE5), (0x100, 0x11D)]));
     assert_eq!(samus.pose, FALLING);
-    assert_eq!(samus.position.y.pixels, 0x100);
+    assert_eq!(samus.motion.position.y.pixel(), 0x100);
 }
 
 #[test]
@@ -207,12 +210,12 @@ fn a_floor_lifts_her_flush_with_it() {
     // when it touches her bottom at $28.
     let mut samus = changing(SHORT, TALL, at(0x18, 0x18, 0), Facing::Right);
     run(&mut samus, &level(&[3]), &[]);
-    assert_eq!(samus.position.y.pixels, 0x18);
+    assert_eq!(samus.motion.position.y.pixel(), 0x18);
     let mut samus = changing(SHORT, TALL, at(0x18, 0x28, 0), Facing::Right);
     run(&mut samus, &level(&[3]), &[]);
     // The check down puts her subpixels next to the floor.
     assert_eq!(
-        samus.position.y,
+        Fixed::from(samus.motion.position.y),
         Fixed {
             pixels: 0x20,
             subpixels: 0xFFFF,
@@ -228,7 +231,7 @@ fn a_ceiling_pushes_her_down_flush_with_it() {
     let mut samus = changing(SHORT, TALL, at(0x18, 0x28, 0x4000), Facing::Right);
     run(&mut samus, &level(&[1]), &[]);
     assert_eq!(
-        samus.position.y,
+        Fixed::from(samus.motion.position.y),
         Fixed {
             pixels: 0x30,
             subpixels: 0,
@@ -244,7 +247,7 @@ fn squeezed_between_blocks_she_crouches_her_bottom_kept() {
     let mut samus = changing(SHORT, TALL, at(0x18, 0x18, 0), Facing::Left);
     run(&mut samus, &level(&[0, 2]), &[]);
     assert_eq!(samus.pose, CROUCH_LEFT);
-    assert_eq!(samus.position.y.pixels, 0x16);
+    assert_eq!(samus.motion.position.y.pixel(), 0x16);
     let mut samus = changing(SHORT, TALL, at(0x18, 0x18, 0), Facing::Right);
     run(&mut samus, &level(&[0, 2]), &[]);
     assert_eq!(samus.pose, CROUCH_RIGHT);
@@ -256,7 +259,7 @@ fn a_morph_ball_squeezed_keeps_the_old_pose() {
     let mut samus = changing(MORPH, TALL, at(0x18, 0x18, 0), Facing::Left);
     run(&mut samus, &level(&[0, 2]), &[]);
     assert_eq!(samus.pose, MORPH);
-    assert_eq!(samus.position.y.pixels, 0x18);
+    assert_eq!(samus.motion.position.y.pixel(), 0x18);
 }
 
 #[test]
@@ -265,7 +268,7 @@ fn an_enemy_below_and_a_ceiling_squeeze_her() {
     let mut samus = changing(SHORT, TALL, at(0x18, 0x28, 0), Facing::Right);
     run(&mut samus, &level(&[1]), &enemies(&[(0x18, 0x38)]));
     assert_eq!(samus.pose, CROUCH_RIGHT);
-    assert_eq!(samus.position.y.pixels, 0x26);
+    assert_eq!(samus.motion.position.y.pixel(), 0x26);
 }
 
 /// Samus at the start of a transition animation in `pose`, as the command finds her: at the
@@ -299,7 +302,7 @@ fn morphing_moves_her_down_by_nine_with_the_new_radius() {
     let mut samus = transitioning(PoseId(0x37));
     start(&mut samus);
     assert_eq!(samus.y_radius, 7);
-    assert_eq!(samus.position, at(0x488, 0x2BA, 0x1234));
+    assert_eq!(Point::from(samus.motion.position), at(0x488, 0x2BA, 0x1234));
     assert_eq!(samus.previous_position.y.pixels, 0x2BA);
 }
 
@@ -308,7 +311,7 @@ fn the_aiming_crouch_transitions_move_her_down_by_five() {
     let mut samus = transitioning(PoseId(0xF3));
     start(&mut samus);
     assert_eq!(samus.y_radius, u16::from(CROUCH));
-    assert_eq!(samus.position.y.pixels, 0x2B6);
+    assert_eq!(samus.motion.position.y.pixel(), 0x2B6);
 }
 
 #[test]
@@ -316,7 +319,7 @@ fn a_transition_that_does_not_shrink_her_only_records_her_position() {
     let mut samus = transitioning(PoseId(0x3B));
     start(&mut samus);
     assert_eq!(samus.y_radius, 0x99);
-    assert_eq!(samus.position.y.pixels, 0x2B1);
+    assert_eq!(samus.motion.position.y.pixel(), 0x2B1);
     assert_eq!(samus.previous_position.y.pixels, 0x2B1);
 }
 
@@ -326,7 +329,7 @@ fn the_unused_poses_and_those_past_the_aiming_ones_are_left_alone() {
         let mut samus = transitioning(pose);
         start(&mut samus);
         assert_eq!(samus.y_radius, 0x99);
-        assert_eq!(samus.position.y.pixels, 0x2B1);
+        assert_eq!(samus.motion.position.y.pixel(), 0x2B1);
         assert_eq!(samus.previous_position.y.pixels, 0x2B0);
     }
 }

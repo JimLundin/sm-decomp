@@ -1,11 +1,13 @@
 //! The numbers motion counts in: a pixel word and a subpixel word, and the rules for
 //! comparing, adding and holding them.
 
+use canonical::Canonical;
+
 use crate::session::SpeedCap;
 use data::movement::Speed;
 
 /// A coordinate, speed or displacement: a pixel word and a subpixel word, wrapping mod 2^32.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Fixed(pub u32);
 
 impl Fixed {

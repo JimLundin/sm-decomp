@@ -6,7 +6,6 @@ use super::*;
 use crate::plm::{process_unseen as process, spawn_population};
 use crate::state::CollectedItems;
 use crate::state::room::{Block, BlockColumns, PlmBody, ScrollPlm, ScrollStep, Tile, TileNumber};
-use crate::state::samus::Fixed;
 use crate::state::slots::Occupancy;
 
 /// The scroll PLM's slot: the first spawn takes the highest.
@@ -60,14 +59,8 @@ fn room() -> RoomScoped {
 /// Samus standing at `x`, `y` with a Y radius of 15h.
 fn samus(x: u16, y: u16) -> Samus {
     let mut samus = Samus::default();
-    samus.position.x = Fixed {
-        pixels: x,
-        subpixels: 0,
-    };
-    samus.position.y = Fixed {
-        pixels: y,
-        subpixels: 0,
-    };
+    samus.motion.position.x = crate::model::num::Fixed::new(x, 0);
+    samus.motion.position.y = crate::model::num::Fixed::new(y, 0);
     samus.y_radius = 0x15;
     samus
 }

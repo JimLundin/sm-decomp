@@ -124,11 +124,12 @@ fn origin(
         | MovementType::Shinespark => usual,
     };
     let (camera_x, camera_y) = camera;
-    let x = samus.position.x.pixels.wrapping_sub(camera_x);
+    let x = samus.motion.position.x.pixel().wrapping_sub(camera_x);
     let y = samus
+        .motion
         .position
         .y
-        .pixels
+        .pixel()
         .wrapping_add_signed(down)
         .wrapping_sub(camera_y);
     (x, y)
@@ -299,15 +300,17 @@ fn draw_body(state: &mut State, content: &Content) {
             let (camera_x, camera_y) = camera;
             let (left, up) = CHEST_OFFSET;
             let x = samus
+                .motion
                 .position
                 .x
-                .pixels
+                .pixel()
                 .wrapping_sub(left)
                 .wrapping_sub(camera_x);
             let y = samus
+                .motion
                 .position
                 .y
-                .pixels
+                .pixel()
                 .wrapping_sub(up)
                 .wrapping_sub(camera_y);
             let [y_low, _] = y.to_le_bytes();

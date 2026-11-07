@@ -71,7 +71,7 @@ fn samus(pose: PoseId, movement: MovementType, frame: u16, timer: u16) -> Samus 
             facing: PoseFacing::Left,
             movement,
         },
-        movement: Movement::from(movement),
+        movement,
         animation: Animation {
             frame: AnimationFrame(frame),
             timer: AnimationTimer(timer),
@@ -88,7 +88,14 @@ fn frame(samus: &mut Samus, content: &Content) {
     pose::change(
         samus,
         requests,
-        pose::Collisions::default(),
+        pose::Collisions {
+            motion: crate::motion::Motion {
+                inputs: None,
+                rules: crate::motion::rules(content, crate::session::SpeedCap::Wordwise),
+                contacts: crate::model::samus::motion::Contacts::default(),
+            },
+            surroundings: crate::collision::Surroundings::default(),
+        },
         &mut Touches::default(),
         content,
     );
@@ -116,7 +123,7 @@ fn the_turns_list_ends_it_in_standing_on_its_last_frame() {
         }
     );
     assert_eq!(samus.pose, STANDING_LEFT);
-    assert_eq!(samus.movement.kind(), MovementType::Standing);
+    assert_eq!(samus.movement, MovementType::Standing);
     assert_eq!(samus.animation.frame, AnimationFrame(0));
     assert_eq!(samus.animation.timer, AnimationTimer(5));
     assert_eq!(samus.previous.pose, STANDING_LEFT);
@@ -241,7 +248,14 @@ fn a_spin_jump_from_a_spin_or_wall_jump_starts_past_the_jump_from_the_floor() {
                 ordinary: Some(SPIN_LEFT),
                 command: None,
             },
-            pose::Collisions::default(),
+            pose::Collisions {
+                motion: crate::motion::Motion {
+                    inputs: None,
+                    rules: crate::motion::rules(&content, crate::session::SpeedCap::Wordwise),
+                    contacts: crate::model::samus::motion::Contacts::default(),
+                },
+                surroundings: crate::collision::Surroundings::default(),
+            },
             &mut Touches::default(),
             &content,
         );
@@ -269,13 +283,9 @@ fn the_morphing_transition_picks_its_pose_by_items_then_y_speed() {
         if let Some(item) = item {
             samus.equipment.equipped.insert(item);
         }
-        samus.movement = Movement::Transition {
-            speed: crate::state::samus::Horizontal::default(),
-            vertical: crate::state::samus::Vertical {
-                speed,
-                direction: crate::state::samus::YDirection::Down,
-            },
-        };
+        samus.movement = MovementType::CrouchingTransition;
+        samus.motion.vertical_speed = speed.into();
+        samus.motion.vertical = crate::model::samus::motion::VerticalMotion::Down;
         run(instruction, &mut samus, PoseRequests::default());
         samus.super_special
     };

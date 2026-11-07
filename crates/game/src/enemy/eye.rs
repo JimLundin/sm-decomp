@@ -73,11 +73,11 @@ pub(crate) const fn within(samus: u16, centre: u16, distance: u16) -> bool {
 /// Whether Samus is within `proximity` of the eye, rows then columns.
 const fn near(common: &EnemyCommon, samus: &Samus, proximity: Proximity) -> bool {
     within(
-        samus.position.y.pixels,
+        samus.motion.position.y.pixel(),
         common.position.y.pixels,
         proximity.rows,
     ) && within(
-        samus.position.x.pixels,
+        samus.motion.position.x.pixel(),
         common.position.x.pixels,
         proximity.columns,
     )
@@ -113,14 +113,16 @@ pub fn angle(x: u16, y: u16) -> u8 {
 fn aim(common: &EnemyCommon, samus: &Samus) -> u16 {
     u16::from(angle(
         samus
+            .motion
             .position
             .x
-            .pixels
+            .pixel()
             .wrapping_sub(common.position.x.pixels),
         samus
+            .motion
             .position
             .y
-            .pixels
+            .pixel()
             .wrapping_sub(common.position.y.pixels),
     ))
 }

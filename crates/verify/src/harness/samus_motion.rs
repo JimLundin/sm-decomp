@@ -96,34 +96,60 @@ fn byte(record: &FrameRecord, source: WramByte) -> Result<u8, Skip> {
     Ok(source.read(&record.wram)?)
 }
 
-fn fixed(record: &FrameRecord, pixel: WramWord, sub: WramWord) -> Result<Fixed, Skip> {
-    Ok(Fixed::new(word(record, pixel)?, word(record, sub)?))
+fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, DecodeError> {
+    Ok(Fixed::new(pixel.read(wram)?, sub.read(wram)?))
 }
 
 /// A code the State has no value for.
-const fn unrepresentable(source: WramWord, value: u16) -> Skip {
-    Skip::Unreadable(DecodeError::Unrepresentable {
+const fn unrepresentable(source: WramWord, value: u16) -> DecodeError {
+    DecodeError::Unrepresentable {
         source: source.name,
         value,
-    })
+    }
 }
 
-/// Samus's motion State in record `record`.
+/// The work RAM words Samus's motion State decodes from.
+pub const SOURCES: [WramWord; 14] = [
+    source::SAMUS_X_POS,
+    source::SAMUS_X_SUBPOS,
+    source::SAMUS_Y_POS,
+    source::SAMUS_Y_SUBPOS,
+    source::SAMUS_X_BASE_SPEED,
+    source::SAMUS_X_BASE_SUBSPEED,
+    source::SAMUS_X_EXTRA_RUN_SPEED,
+    source::SAMUS_X_EXTRA_RUN_SUBSPEED,
+    source::SAMUS_HAS_MOMENTUM_FLAG,
+    source::SAMUS_X_ACCEL_MODE,
+    source::SAMUS_Y_SPEED,
+    source::SAMUS_Y_SUBSPEED,
+    source::SAMUS_Y_DIR,
+    source::SAMUS_BOUNCE_STATE,
+];
+
 fn state(record: &FrameRecord) -> Result<State, Skip> {
-    let mode = match word(record, source::SAMUS_X_ACCEL_MODE)? {
+    Ok(decode(&record.wram)?)
+}
+
+/// Samus's motion State in `wram`: the decode the Session decoder and this domain share.
+///
+/// # Errors
+///
+/// [`DecodeError`] when a word is outside `wram` or holds a code the State has no value for.
+pub fn decode(wram: &[u8]) -> Result<State, DecodeError> {
+    let mode = match source::SAMUS_X_ACCEL_MODE.read(wram)? {
         0 => SpeedMode::Accelerating,
         1 => SpeedMode::TurningAround,
         2 => SpeedMode::Decelerating,
         code => return Err(unrepresentable(source::SAMUS_X_ACCEL_MODE, code)),
     };
-    let vertical = match word(record, source::SAMUS_Y_DIR)? {
+    let vertical = match source::SAMUS_Y_DIR.read(wram)? {
         0 => VerticalMotion::None,
         1 => VerticalMotion::Up,
         2 => VerticalMotion::Down,
         code => return Err(unrepresentable(source::SAMUS_Y_DIR, code)),
     };
     // The high byte marks the spring ball, which nothing in the domain reads.
-    let [count, _spring] = word(record, source::SAMUS_BOUNCE_STATE)?.to_le_bytes();
+    let [count, _spring] = source::SAMUS_BOUNCE_STATE.read(wram)?.to_le_bytes();
     let bounce = match count {
         0 => Bounce::None,
         1 => Bounce::First,
@@ -133,29 +159,29 @@ fn state(record: &FrameRecord) -> Result<State, Skip> {
         }
     };
     Ok(State {
-        position: position(record)?,
+        position: position(wram)?,
         base_speed: fixed(
-            record,
+            wram,
             source::SAMUS_X_BASE_SPEED,
             source::SAMUS_X_BASE_SUBSPEED,
         )?,
         extra_run: fixed(
-            record,
+            wram,
             source::SAMUS_X_EXTRA_RUN_SPEED,
             source::SAMUS_X_EXTRA_RUN_SUBSPEED,
         )?,
-        momentum: word(record, source::SAMUS_HAS_MOMENTUM_FLAG)? != 0,
+        momentum: source::SAMUS_HAS_MOMENTUM_FLAG.read(wram)? != 0,
         mode,
-        vertical_speed: fixed(record, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?,
+        vertical_speed: fixed(wram, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?,
         vertical,
         bounce,
     })
 }
 
-fn position(record: &FrameRecord) -> Result<Position, Skip> {
+fn position(wram: &[u8]) -> Result<Position, DecodeError> {
     Ok(Position {
-        x: fixed(record, source::SAMUS_X_POS, source::SAMUS_X_SUBPOS)?,
-        y: fixed(record, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?,
+        x: fixed(wram, source::SAMUS_X_POS, source::SAMUS_X_SUBPOS)?,
+        y: fixed(wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?,
     })
 }
 
@@ -632,7 +658,7 @@ impl Domain for SamusMotion {
             })
         };
         Ok(Replay {
-            target: position(next)?,
+            target: position(&next.wram)?,
             radius: after,
             pose,
         })

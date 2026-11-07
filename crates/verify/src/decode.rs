@@ -28,10 +28,9 @@ use game::state::room::{
     Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers, SpritePalette, StaleScroll,
 };
 use game::state::samus::{
-    Acceleration, Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing,
-    Fixed, Gauge, Horizontal, Item, Items, Movement, NewPoseFrame, Point, PoseId, PoseRecord,
-    ReserveMode, Samus, Speed, SuperSpecial, SuperSpecialCommand, Vertical, Visor, VisorShade,
-    VisorTimer, YDirection,
+    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing, Fixed, Gauge,
+    Item, Items, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus, SuperSpecial,
+    SuperSpecialCommand, Visor, VisorShade, VisorTimer,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::sram::{SAVE_RAM_BYTES, SaveRam};
@@ -323,14 +322,6 @@ pub struct Rules<'t> {
     pub repeat_delay: WramWord,
     /// `mode`.
     pub game_state: WramWord,
-    /// `samus.position.x.pixels`.
-    pub samus_x: WramWord,
-    /// `samus.position.x.subpixels`.
-    pub samus_x_subpixels: WramWord,
-    /// `samus.position.y.pixels`.
-    pub samus_y: WramWord,
-    /// `samus.position.y.subpixels`.
-    pub samus_y_subpixels: WramWord,
     /// `room.room`.
     pub room: WramWord,
     /// `video.nmi_requested`.
@@ -413,10 +404,6 @@ pub struct Rules<'t> {
     pub previous_pose: PoseSources,
     /// `samus.last_different`.
     pub last_different_pose: PoseSources,
-    /// The horizontal motion of `samus.movement`.
-    pub horizontal: HorizontalSources,
-    /// The vertical motion of `samus.movement`.
-    pub vertical: VerticalSources,
     /// `message`.
     pub message: WramWord,
     /// `collected_items`.
@@ -961,10 +948,6 @@ impl Rules<'_> {
         repeat: source::JOYPAD1_NEWKEYS2_UNUSED,
         repeat_delay: source::JOYPAD1_KEYREPEAT_CTR,
         game_state: source::GAME_STATE,
-        samus_x: source::SAMUS_X_POS,
-        samus_x_subpixels: source::SAMUS_X_SUBPOS,
-        samus_y: source::SAMUS_Y_POS,
-        samus_y_subpixels: source::SAMUS_Y_SUBPOS,
         room: source::ROOM_PTR,
         nmi_requested: source::WAITING_FOR_NMI,
         oam_buffer: source::OAM,
@@ -1158,19 +1141,6 @@ impl Rules<'_> {
             facing: source::SAMUS_LAST_DIFFERENT_POSE_X_DIR,
             movement: source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE,
         },
-        horizontal: HorizontalSources {
-            base: source::SAMUS_X_BASE_SPEED,
-            base_subpixels: source::SAMUS_X_BASE_SUBSPEED,
-            extra_run: source::SAMUS_X_EXTRA_RUN_SPEED,
-            extra_run_subpixels: source::SAMUS_X_EXTRA_RUN_SUBSPEED,
-            acceleration: source::SAMUS_X_ACCEL_MODE,
-            momentum: source::SAMUS_HAS_MOMENTUM_FLAG,
-        },
-        vertical: VerticalSources {
-            speed: source::SAMUS_Y_SPEED,
-            subpixels: source::SAMUS_Y_SUBSPEED,
-            direction: source::SAMUS_Y_DIR,
-        },
     };
 
     /// The State `record` shows, under these rules.
@@ -1303,24 +1273,8 @@ impl Rules<'_> {
     /// Samus: her position, pose and equipment.
     fn samus(&self, wram: &[u8]) -> Result<Samus, DecodeError> {
         let pose = self.pose.read(wram)?;
-        let mut movement = Movement::from(pose.movement);
-        if let Some(speed) = movement.horizontal_mut() {
-            *speed = self.horizontal.read(wram)?;
-        }
-        if let Some(vertical) = movement.vertical_mut() {
-            *vertical = self.vertical.read(wram)?;
-        }
         Ok(Samus {
-            position: Point {
-                x: Fixed {
-                    pixels: self.samus_x.read(wram)?,
-                    subpixels: self.samus_x_subpixels.read(wram)?,
-                },
-                y: Fixed {
-                    pixels: self.samus_y.read(wram)?,
-                    subpixels: self.samus_y_subpixels.read(wram)?,
-                },
-            },
+            motion: crate::harness::samus_motion::decode(wram)?,
             equipment: Equipment {
                 collected: items(self.collected, wram)?,
                 equipped: items(self.equipped, wram)?,
@@ -1348,7 +1302,7 @@ impl Rules<'_> {
             previous: self.previous_pose.read(wram)?,
             last_different: self.last_different_pose.read(wram)?,
             facing: pose.facing,
-            movement,
+            movement: pose.movement,
             animation: self.animation.read(wram)?,
             super_special: self.super_special.read(wram)?,
             visor: visor(self.visor, wram)?,
@@ -2033,97 +1987,6 @@ pub struct PoseSources {
     pub facing: WramByte,
     /// Its movement type.
     pub movement: WramByte,
-}
-
-/// Where the original keeps Samus's vertical motion (bank $90 log, `$90:90E2`).
-// Her Y acceleration (`SAMUS_Y_ACCEL`) is no State: `$90:9C5B` sets it every frame before the
-// movement handler reads it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct VerticalSources {
-    /// `.speed`'s pixels.
-    pub speed: WramWord,
-    /// `.speed`'s subpixels.
-    pub subpixels: WramWord,
-    /// `.direction`.
-    pub direction: WramWord,
-}
-
-impl VerticalSources {
-    /// The motion in `wram`.
-    ///
-    /// # Errors
-    ///
-    /// [`DecodeError::Unrepresentable`] for a direction past 2, which no routine of the
-    /// original writes.
-    fn read(self, wram: &[u8]) -> Result<Vertical, DecodeError> {
-        let direction = match self.direction.read(wram)? {
-            0 => YDirection::None,
-            1 => YDirection::Up,
-            2 => YDirection::Down,
-            value => {
-                return Err(DecodeError::Unrepresentable {
-                    source: self.direction.name,
-                    value,
-                });
-            }
-        };
-        Ok(Vertical {
-            speed: Speed::new(self.speed.read(wram)?, self.subpixels.read(wram)?),
-            direction,
-        })
-    }
-}
-
-/// Where the original keeps Samus's horizontal motion (bank $90 log, `$90:8E64`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct HorizontalSources {
-    /// `.base`'s pixels.
-    pub base: WramWord,
-    /// `.base`'s subpixels.
-    pub base_subpixels: WramWord,
-    /// `.extra_run`'s pixels.
-    pub extra_run: WramWord,
-    /// `.extra_run`'s subpixels.
-    pub extra_run_subpixels: WramWord,
-    /// `.acceleration`.
-    pub acceleration: WramWord,
-    /// `.momentum`.
-    pub momentum: WramWord,
-}
-
-impl HorizontalSources {
-    /// The motion in `wram`.
-    ///
-    /// # Errors
-    ///
-    /// [`DecodeError::Unrepresentable`] for an acceleration mode past 2 or a momentum flag
-    /// past 1, which no routine of the original writes.
-    fn read(self, wram: &[u8]) -> Result<Horizontal, DecodeError> {
-        let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
-            source: source.name,
-            value,
-        };
-        let acceleration = match self.acceleration.read(wram)? {
-            0 => Acceleration::Accelerating,
-            1 => Acceleration::TurningAround,
-            2 => Acceleration::Decelerating,
-            other => return Err(unrepresentable(self.acceleration, other)),
-        };
-        let momentum = match self.momentum.read(wram)? {
-            0 => false,
-            1 => true,
-            other => return Err(unrepresentable(self.momentum, other)),
-        };
-        Ok(Horizontal {
-            base: Speed::new(self.base.read(wram)?, self.base_subpixels.read(wram)?),
-            extra_run: Speed::new(
-                self.extra_run.read(wram)?,
-                self.extra_run_subpixels.read(wram)?,
-            ),
-            acceleration,
-            momentum,
-        })
-    }
 }
 
 impl AnimationSources {

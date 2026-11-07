@@ -2,10 +2,14 @@ use data::level::{BlockKind, Bts};
 use data::pose::Poses;
 
 use super::*;
-use crate::collision::{Contacts, Room, Touches};
+use crate::collision::{Room, Surroundings, Touches};
+use crate::model::num::Fixed;
+use crate::model::samus::motion::{Contacts, SpeedMode, State, VerticalMotion};
+use crate::motion::Motion;
 use crate::pose::{Collisions, change};
+use crate::state::room::ElevatorRide;
 use crate::state::room::{Block, BlockColumns};
-use crate::state::samus::{Fixed, Horizontal, Jump, Movement, PoseRecord};
+use crate::state::samus::PoseRecord;
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Buttons};
 
@@ -46,62 +50,68 @@ fn pad(buttons: &[Button]) -> Buttons {
         ..FlagSet::default()
     }
 }
-
 /// Samus in `pose`, as its definition gives, having been in it last frame too.
-fn in_pose(pose: u16, movement: Movement, content: &Content) -> Samus {
-    let facing = content.poses.get(PoseId(pose)).unwrap().facing;
+fn in_pose(pose: u16, motion: State, content: &Content) -> Samus {
+    let definition = content.poses.get(PoseId(pose)).unwrap();
     Samus {
         pose: PoseId(pose),
-        facing,
+        facing: definition.facing,
         previous: PoseRecord {
             pose: PoseId(pose),
-            facing,
-            movement: movement.kind(),
+            facing: definition.facing,
+            movement: definition.movement,
         },
-        movement,
+        movement: definition.movement,
+        motion,
         ..Samus::default()
     }
 }
 
 /// Falling, a frame's speeds: a base speed, an extra run speed and a fall.
-fn falling(jump: Option<Jump>) -> Movement {
-    let speed = Horizontal {
-        base: Speed::new(1, 0x8000),
-        extra_run: Speed::new(0, 0x4000),
-        acceleration: Acceleration::Decelerating,
-        momentum: false,
-    };
-    let vertical = Vertical {
-        speed: Speed::new(4, 0x2000),
-        direction: YDirection::Down,
-    };
-    jump.map_or(Movement::Falling { speed, vertical }, |jump| {
-        Movement::Jumping {
-            jump,
-            speed,
-            vertical,
-        }
-    })
+fn falling() -> State {
+    State {
+        base_speed: Fixed::new(1, 0x8000),
+        extra_run: Fixed::new(0, 0x4000),
+        mode: SpeedMode::Decelerating,
+        vertical_speed: Fixed::new(4, 0x2000),
+        vertical: VerticalMotion::Down,
+        ..State::default()
+    }
 }
 
-fn landed() -> Collisions<'static> {
+/// The pose update's view of a frame in which motion met `contacts` in `surroundings`.
+fn frame<'a>(
+    samus: &Samus,
+    contacts: Contacts,
+    surroundings: Surroundings<'a>,
+    content: &'a Content,
+) -> Collisions<'a> {
     Collisions {
-        contacts: Contacts {
-            vertical: VerticalContact::Landed,
-            ..Contacts::default()
+        motion: Motion {
+            inputs: crate::motion::inputs(samus, &Controller::default(), ElevatorRide::default()),
+            rules: crate::motion::rules(content, crate::session::SpeedCap::Wordwise),
+            contacts,
         },
-        ..Collisions::default()
+        surroundings,
     }
+}
+
+fn landed<'a>(samus: &Samus, content: &'a Content) -> Collisions<'a> {
+    let contacts = Contacts {
+        vertical: VerticalResult::Landed(LandKind::Grounded),
+        ..Contacts::default()
+    };
+    frame(samus, contacts, Surroundings::default(), content)
 }
 
 #[test]
 fn a_spin_jump_lands_in_the_spin_landing_with_no_base_speed() {
     let content = content();
-    let mut samus = in_pose(0x1A, falling(Some(Jump::Spin)), &content);
-    let collisions = landed();
+    let mut samus = in_pose(0x1A, falling(), &content);
+    let collisions = landed(&samus, &content);
     let requests = request(
         &samus,
-        collisions.contacts.vertical,
+        collisions.motion.contacts.vertical,
         &Controller::default(),
         &content,
         PoseRequests::default(),
@@ -110,8 +120,8 @@ fn a_spin_jump_lands_in_the_spin_landing_with_no_base_speed() {
         requests,
         PoseRequests {
             ordinary: Some(PoseId(0xA7)),
-            command: Some(PoseCommand::SolidVertical(SolidVertical::Landed(
-                Grounding::Grounded
+            command: Some(PoseCommand::Vertical(VerticalResult::Landed(
+                LandKind::Grounded
             ))),
         }
     );
@@ -123,17 +133,13 @@ fn a_spin_jump_lands_in_the_spin_landing_with_no_base_speed() {
         &content,
     );
     assert_eq!(samus.pose, PoseId(0xA7));
-    // Standing carries her speeds over; the landing stops the base speed and keeps the
-    // extra run speed, which moves her one more frame.
+    // The landing stops the base speed and the fall and keeps the extra run speed, which
+    // moves her one more frame.
     assert_eq!(
-        samus.movement,
-        Movement::Standing {
-            speed: Horizontal {
-                base: Speed::ZERO,
-                extra_run: Speed::new(0, 0x4000),
-                acceleration: Acceleration::Accelerating,
-                momentum: false,
-            },
+        samus.motion,
+        State {
+            extra_run: Fixed::new(0, 0x4000),
+            ..State::default()
         }
     );
 }
@@ -142,11 +148,11 @@ fn a_spin_jump_lands_in_the_spin_landing_with_no_base_speed() {
 fn a_fall_lands_by_the_direction_its_pose_aims() {
     let content = content();
     let controller = Controller::default();
-    let samus = in_pose(0x29, falling(None), &content);
+    let samus = in_pose(0x29, falling(), &content);
     let landing = |samus: &Samus, controller: &Controller| {
         request(
             samus,
-            VerticalContact::Landed,
+            VerticalResult::Landed(LandKind::Grounded),
             controller,
             &content,
             PoseRequests::default(),
@@ -161,56 +167,26 @@ fn a_fall_lands_by_the_direction_its_pose_aims() {
     };
     assert_eq!(landing(&samus, &shooting), Some(PoseId(0xE6)));
     // Pose $6F aims down-right, and shooting doesn't change that.
-    let aiming = in_pose(0x6F, falling(None), &content);
+    let aiming = in_pose(0x6F, falling(), &content);
     assert_eq!(landing(&aiming, &shooting), Some(PoseId(0xE4)));
-}
-
-#[test]
-fn a_fall_landing_stops_her_vertically() {
-    let content = content();
-    let mut samus = in_pose(0x29, falling(None), &content);
-    let collisions = landed();
-    let requests = request(
-        &samus,
-        VerticalContact::Landed,
-        &Controller::default(),
-        &content,
-        PoseRequests::default(),
-    );
-    change(
-        &mut samus,
-        requests,
-        collisions,
-        &mut Touches::default(),
-        &content,
-    );
-    assert_eq!(samus.pose, PoseId(0xA4));
-    assert_eq!(samus.movement.kind(), MovementType::Standing);
-    assert_eq!(
-        samus.movement.horizontal().map(|speed| speed.base),
-        Some(Speed::ZERO)
-    );
-    assert_eq!(samus.previous.pose, PoseId(0xA4));
 }
 
 #[test]
 fn a_ceiling_keeps_the_pose_and_stops_the_rise() {
     let content = content();
-    let mut movement = falling(Some(Jump::Normal));
-    if let Some(vertical) = movement.vertical_mut() {
-        vertical.direction = YDirection::Up;
-    }
-    let mut samus = in_pose(0x4D, movement, &content);
-    let collisions = Collisions {
-        contacts: Contacts {
-            vertical: VerticalContact::HitCeiling,
-            ..Contacts::default()
-        },
-        ..Collisions::default()
+    let rising = State {
+        vertical: VerticalMotion::Up,
+        ..falling()
     };
+    let mut samus = in_pose(0x4D, rising, &content);
+    let contacts = Contacts {
+        vertical: VerticalResult::HitCeiling,
+        ..Contacts::default()
+    };
+    let collisions = frame(&samus, contacts, Surroundings::default(), &content);
     let requests = request(
         &samus,
-        VerticalContact::HitCeiling,
+        VerticalResult::HitCeiling,
         &Controller::default(),
         &content,
         PoseRequests::default(),
@@ -225,21 +201,19 @@ fn a_ceiling_keeps_the_pose_and_stops_the_rise() {
     );
     assert_eq!(samus.pose, PoseId(0x4D));
     assert_eq!(
-        samus.movement.vertical(),
-        Some(Vertical {
-            speed: Speed::ZERO,
-            direction: YDirection::Down,
-        })
+        (samus.motion.vertical_speed, samus.motion.vertical),
+        (Fixed::default(), VerticalMotion::Down)
     );
 }
 
 #[test]
 fn walking_off_a_ledge_falls_from_rest() {
     let content = content();
-    let samus = in_pose(0x01, Movement::default(), &content);
+    let samus = in_pose(0x01, State::default(), &content);
+    let off = VerticalResult::Falling(FallKind::Airborne);
     let requests = request(
         &samus,
-        VerticalContact::Falling,
+        off,
         &Controller::default(),
         &content,
         PoseRequests::default(),
@@ -248,19 +222,20 @@ fn walking_off_a_ledge_falls_from_rest() {
         requests,
         PoseRequests {
             ordinary: Some(PoseId(0x29)),
-            command: Some(PoseCommand::SolidVertical(SolidVertical::Falling)),
+            command: Some(PoseCommand::Vertical(off)),
         }
     );
     // A jump already falling keeps the input's request.
-    let jumping = in_pose(0x4D, falling(Some(Jump::Normal)), &content);
+    let jumping = in_pose(0x4D, falling(), &content);
     let input = PoseRequests {
         ordinary: Some(PoseId(0x15)),
         command: None,
     };
+    let still_falling = VerticalResult::Falling(FallKind::NoChange);
     assert_eq!(
         request(
             &jumping,
-            VerticalContact::Falling,
+            still_falling,
             &Controller::default(),
             &content,
             input
@@ -272,14 +247,12 @@ fn walking_off_a_ledge_falls_from_rest() {
 #[test]
 fn running_into_a_wall_takes_the_ran_into_a_wall_pose() {
     let content = content();
-    let mut samus = in_pose(0x09, Movement::from(MovementType::Running), &content);
-    let collisions = Collisions {
-        contacts: Contacts {
-            wall: Some(Side::Right),
-            ..Contacts::default()
-        },
-        ..Collisions::default()
+    let mut samus = in_pose(0x09, State::default(), &content);
+    let contacts = Contacts {
+        wall_stop: true,
+        ..Contacts::default()
     };
+    let collisions = frame(&samus, contacts, Surroundings::default(), &content);
     // No request from input: the wall alone changes the pose.
     change(
         &mut samus,
@@ -289,7 +262,7 @@ fn running_into_a_wall_takes_the_ran_into_a_wall_pose() {
         &content,
     );
     assert_eq!(samus.pose, PoseId(0x89));
-    assert_eq!(samus.movement, Movement::RanIntoWall);
+    assert_eq!(samus.movement, MovementType::RanIntoWall);
 }
 
 /// Eight blocks across and down, column 2 solid: its left edge is at X $20.
@@ -301,66 +274,49 @@ fn wall() -> Vec<Block> {
     blocks
 }
 
-fn beside(blocks: &[Block]) -> Collisions<'_> {
-    Collisions {
-        surroundings: Surroundings {
-            room: Room {
-                blocks,
-                width: BlockColumns(8),
-                slopes: None,
-            },
-            ..Surroundings::default()
-        },
-        ..Collisions::default()
-    }
+/// Running at `x`, $40 down, asking for the running pose $0B in `surroundings`: her pose
+/// and X afterwards.
+fn run_to(x: u16, surroundings: Surroundings<'_>, content: &Content) -> (PoseId, Fixed) {
+    let mut samus = in_pose(0x09, State::default(), content);
+    samus.motion.position.x = Fixed::new(x, 0);
+    samus.motion.position.y = Fixed::new(0x40, 0);
+    let requests = PoseRequests {
+        ordinary: Some(PoseId(0x0B)),
+        command: None,
+    };
+    let collisions = frame(&samus, Contacts::default(), surroundings, content);
+    change(
+        &mut samus,
+        requests,
+        collisions,
+        &mut Touches::default(),
+        content,
+    );
+    (samus.pose, samus.motion.position.x)
 }
 
 #[test]
 fn a_running_pose_moves_her_a_pixel_forward_and_stops_at_a_block() {
     let content = content();
     let blocks = wall();
-    let run_to = |x: u16| {
-        let mut samus = in_pose(0x09, Movement::from(MovementType::Running), &content);
-        samus.position.x = Fixed {
-            pixels: x,
-            subpixels: 0,
-        };
-        samus.position.y.pixels = 0x40;
-        let requests = PoseRequests {
-            ordinary: Some(PoseId(0x0B)),
-            command: None,
-        };
-        change(
-            &mut samus,
-            requests,
-            beside(&blocks),
-            &mut Touches::default(),
-            &content,
-        );
-        (samus.pose, samus.position.x)
+    let beside = Surroundings {
+        room: Room {
+            blocks: &blocks,
+            width: BlockColumns(8),
+            slopes: None,
+        },
+        ..Surroundings::default()
     };
     // Her right side, X + 5 - 1, is $1E from $1A: the pixel takes her to $1B.
     assert_eq!(
-        run_to(0x1A),
-        (
-            PoseId(0x0B),
-            Fixed {
-                pixels: 0x1B,
-                subpixels: 0
-            }
-        )
+        run_to(0x1A, beside, &content),
+        (PoseId(0x0B), Fixed::new(0x1B, 0))
     );
     // From $1B the pixel reaches the block: she stays beside it and the pose she asked for
     // runs into the wall.
     assert_eq!(
-        run_to(0x1B),
-        (
-            PoseId(0x89),
-            Fixed {
-                pixels: 0x1B,
-                subpixels: 0xFFFF
-            }
-        )
+        run_to(0x1B, beside, &content),
+        (PoseId(0x89), Fixed::new(0x1B, 0xFFFF))
     );
 }
 
@@ -370,38 +326,21 @@ fn a_solid_enemy_a_pixel_ahead_runs_the_pose_into_the_wall_without_the_move() {
     let content = content();
     // Facing right, her right side is X + 5; the enemy's left edge is $50 - 8 = $48.
     let slots = one_enemy(0x50, 0x40, true);
-    let collisions = Collisions {
-        surroundings: Surroundings {
-            enemies: SolidEnemies {
-                interactive: &FIRST,
-                slots: &slots,
-            },
-            ..Surroundings::default()
+    let ahead = Surroundings {
+        enemies: SolidEnemies {
+            interactive: &FIRST,
+            slots: &slots,
         },
-        ..Collisions::default()
-    };
-    let run_to = |x: u16| {
-        let mut samus = in_pose(0x09, Movement::from(MovementType::Running), &content);
-        samus.position.x = Fixed {
-            pixels: x,
-            subpixels: 0,
-        };
-        samus.position.y.pixels = 0x40;
-        let requests = PoseRequests {
-            ordinary: Some(PoseId(0x0B)),
-            command: None,
-        };
-        change(
-            &mut samus,
-            requests,
-            collisions,
-            &mut Touches::default(),
-            &content,
-        );
-        (samus.pose, samus.position.x.pixels)
+        ..Surroundings::default()
     };
     // From $42 the pixel's target, $43, is clear of the enemy, and the pixel moves her.
-    assert_eq!(run_to(0x42), (PoseId(0x0B), 0x43));
+    assert_eq!(
+        run_to(0x42, ahead, &content),
+        (PoseId(0x0B), Fixed::new(0x43, 0))
+    );
     // From $43 she touches it: the pose runs into it and she stays.
-    assert_eq!(run_to(0x43), (PoseId(0x89), 0x43));
+    assert_eq!(
+        run_to(0x43, ahead, &content),
+        (PoseId(0x89), Fixed::new(0x43, 0))
+    );
 }

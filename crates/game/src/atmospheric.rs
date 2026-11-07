@@ -247,7 +247,7 @@ pub fn initialise_pose(
 // open: the dust is skipped when her feet are in liquid with liquid physics (`$91:FA7A`);
 // that joins with FX, and slice 0's rooms have no liquid.
 fn wall_jump_dust(atmospherics: &mut Atmospherics, samus: &Samus, y_radius: u8) {
-    let at = samus.position.x.pixels;
+    let at = samus.motion.position.x.pixel();
     let x = match samus.facing {
         Facing::Right => at.wrapping_sub(WALL_JUMP_DUST_OFFSET),
         Facing::Left | Facing::Forward | Facing::Unknown(_) => {
@@ -256,9 +256,10 @@ fn wall_jump_dust(atmospherics: &mut Atmospherics, samus: &Samus, y_radius: u8) 
     };
     // `$90:EC3E`: her bottom boundary, the last pixel row she covers.
     let y = samus
+        .motion
         .position
         .y
-        .pixels
+        .pixel()
         .wrapping_add(u16::from(y_radius))
         .wrapping_sub(1);
     if let Some(slot) = atmospherics.slots.get_mut(LANDING_SLOT) {

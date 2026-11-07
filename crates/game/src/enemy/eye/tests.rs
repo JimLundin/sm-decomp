@@ -48,8 +48,8 @@ fn scene(x: u16, y: u16) -> (EnemyCommon, Samus) {
     common.position.x.pixels = 0x100;
     common.position.y.pixels = 0x80;
     let mut samus = Samus::default();
-    samus.position.x.pixels = 0x100_u16.wrapping_add(x);
-    samus.position.y.pixels = 0x80_u16.wrapping_add(y);
+    samus.motion.position.x = crate::model::num::Fixed::new(0x100_u16.wrapping_add(x), 0);
+    samus.motion.position.y = crate::model::num::Fixed::new(0x80_u16.wrapping_add(y), 0);
     samus.equipment.collected.bits = Item::MorphBall.bit();
     (common, samus)
 }

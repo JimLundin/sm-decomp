@@ -9,9 +9,12 @@ const fn at(pixels: u16, subpixels: u16) -> Fixed {
 /// Samus at `now`, having been at `previous`, facing right and standing.
 fn samus(previous: Point, now: Point) -> Samus {
     Samus {
-        position: now,
         previous_position: previous,
         facing: Facing::Right,
+        motion: crate::model::samus::motion::State {
+            position: now.into(),
+            ..Default::default()
+        },
         ..Samus::default()
     }
 }
@@ -67,7 +70,7 @@ fn the_camera_follows_samus_right_at_her_speed_plus_a_pixel() {
     );
     assert_eq!(camera.x, at(2, 0x8000));
     assert_eq!(camera.y, at(0, 0));
-    assert_eq!(samus.previous_position, samus.position);
+    assert_eq!(samus.previous_position, samus.motion.position.into());
 }
 
 #[test]

@@ -11,9 +11,11 @@ use std::ops::RangeInclusive;
 use data::pose::PoseId;
 
 use super::Content;
+use super::FACING_FORWARD;
 use crate::collision::solid_enemy::{Contact, Direction, SolidEnemies};
+use crate::collision::world::body;
 use crate::collision::{self, Body, Heading, Surroundings, Touches};
-use crate::movement::{FACING_FORWARD, body};
+use crate::model::num::Fixed as Exact;
 use crate::state::samus::{Facing, Point, Samus, Speed};
 
 #[cfg(test)]
@@ -156,8 +158,13 @@ fn settle(samus: &mut Samus, checks: &mut Checks<'_, '_>, content: &Content) -> 
     let difference = checks.difference;
     let enemies = checks.surroundings.enemies;
     let gained = Speed::new(difference, 0);
-    let above = enemies.check(Direction::Up, body(samus), gained, &mut samus.position);
-    let below = enemies.check(Direction::Down, body(samus), gained, &mut samus.position);
+    let standing = body(samus);
+    let above = at(samus, |point| {
+        enemies.check(Direction::Up, standing, gained, point)
+    });
+    let below = at(samus, |point| {
+        enemies.check(Direction::Down, standing, gained, point)
+    });
     let enemy = Sides::of(above != Contact::Clear, below != Contact::Clear);
     let mut enemy_space = Space {
         up: left_by(above, difference),
@@ -175,7 +182,9 @@ fn settle(samus: &mut Samus, checks: &mut Checks<'_, '_>, content: &Content) -> 
         // `$91:FE9E`.
         Sides::Above => {
             let away = difference.wrapping_sub(enemy_space.up);
-            match recheck(enemies, Direction::Down, tall, away, &mut samus.position) {
+            match at(samus, |point| {
+                recheck(enemies, Direction::Down, tall, away, point)
+            }) {
                 Some(away) => enemy_space.up = away,
                 None => return Fit::NoSpace,
             }
@@ -183,7 +192,9 @@ fn settle(samus: &mut Samus, checks: &mut Checks<'_, '_>, content: &Content) -> 
         // `$91:FEDF`.
         Sides::Below => {
             let away = difference.wrapping_sub(enemy_space.down);
-            match recheck(enemies, Direction::Up, tall, away, &mut samus.position) {
+            match at(samus, |point| {
+                recheck(enemies, Direction::Up, tall, away, point)
+            }) {
                 Some(away) => enemy_space.down = away,
                 None => return Fit::NoSpace,
             }
@@ -287,15 +298,18 @@ fn blocks(samus: &mut Samus, checks: &mut Checks<'_, '_>, distance: u16) -> Foun
 /// special air and special block setups that test it do nothing.
 // open: the quicksand flag (`$1E71`) it clears joins with quicksand.
 fn block(samus: &mut Samus, checks: &mut Checks<'_, '_>, distance: u16) -> Found {
-    let moved = collision::scan_y(
-        checks.surroundings.room,
-        body(samus),
-        &mut samus.position,
-        Speed::new(distance, 0),
-        Heading::Down,
-        checks.surroundings.order,
-        checks.touches,
-    );
+    let standing = body(samus);
+    let moved = at(samus, |point| {
+        collision::scan_y(
+            checks.surroundings.room,
+            standing,
+            point,
+            Speed::new(distance, 0),
+            Heading::Down,
+            checks.surroundings.order,
+            checks.touches,
+        )
+    });
     // The check doesn't clear the slope flag, but a square slope it meets sets it.
     samus.slope_adjusted = moved.slope.apply(samus.slope_adjusted);
     Found {
@@ -323,10 +337,18 @@ fn squeeze(samus: &mut Samus, content: &Content) -> Fit {
     Fit::Fits
 }
 
+/// Runs `check` on her position as block and enemy collision keep it.
+fn at<T>(samus: &mut Samus, check: impl FnOnce(&mut Point) -> T) -> T {
+    let mut point = Point::from(samus.motion.position);
+    let found = check(&mut point);
+    samus.motion.position = point.into();
+    found
+}
+
 /// Move her down by `pixels` (signed), her previous Y position (`$0B14`) with her.
 const fn shift(samus: &mut Samus, pixels: u16) {
-    let y = samus.position.y.pixels.wrapping_add(pixels);
-    samus.position.y.pixels = y;
+    let y = samus.motion.position.y.pixel().wrapping_add(pixels);
+    samus.motion.position.y = Exact::new(y, samus.motion.position.y.sub());
     samus.previous_position.y.pixels = y;
 }
 

@@ -6,8 +6,8 @@
 
 use data::level::BlockKind;
 
-use crate::movement::FACING_FORWARD;
 use crate::plm::crumble::{self, ShotFault};
+use crate::pose::FACING_FORWARD;
 use crate::state::State;
 use crate::state::projectile::{
     Beam, BeamShot, Direction, ExplosionStep, ProjectileBody, ProjectileType, Projectiles, Radius,

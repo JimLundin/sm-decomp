@@ -124,15 +124,24 @@ pub const fn main_ai(
         return;
     }
     let range = common.parameter_1;
-    if !within(samus.position.y.pixels, common.position.y.pixels, range) {
+    if !within(
+        samus.motion.position.y.pixel(),
+        common.position.y.pixels,
+        range,
+    ) {
         return;
     }
     block.samus_offset = samus
+        .motion
         .position
         .x
-        .pixels
+        .pixel()
         .wrapping_sub(common.position.x.pixels);
-    if !within(samus.position.x.pixels, common.position.x.pixels, range) {
+    if !within(
+        samus.motion.position.x.pixel(),
+        common.position.x.pixels,
+        range,
+    ) {
         return;
     }
     let side = Side::of(block.samus_offset);

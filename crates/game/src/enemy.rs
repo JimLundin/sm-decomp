@@ -8,12 +8,13 @@
 
 use std::marker::PhantomData;
 
+use crate::model::num::Fixed as Exact;
 use crate::pose::Content;
 use crate::state::room::{
     AiHandler, ENEMY_SLOTS, Elevator, ElevatorArming, ElevatorDirection, ElevatorRide,
     ElevatorStatus, Enemy, EnemyBody, EnemyCommon, EnemyExtraProperty, EnemyProperty,
 };
-use crate::state::samus::{DrawingHandler, Fixed, Samus, Speed};
+use crate::state::samus::{DrawingHandler, Fixed, Samus};
 use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
 use crate::state::{Button, Controller, State};
 use data::id::SpeciesId;
@@ -357,19 +358,16 @@ fn enter(
 
 /// Stand Samus on the platform, still (`$A3:9612`).
 const fn place_samus(slot: &EnemyCommon, samus: &mut Samus) {
-    samus.position.y = Fixed {
-        pixels: slot.position.y.pixels.wrapping_sub(SAMUS_ABOVE_PLATFORM),
-        subpixels: 0,
-    };
-    samus.position.x.pixels = slot.position.x.pixels;
-    if let Some(vertical) = samus.movement.vertical_mut() {
-        vertical.speed = Speed::ZERO;
-    }
+    let position = &mut samus.motion.position;
+    position.y = Exact::new(slot.position.y.pixels.wrapping_sub(SAMUS_ABOVE_PLATFORM), 0);
+    position.x = Exact::new(slot.position.x.pixels, position.x.sub());
+    samus.motion.vertical_speed = Exact::ZERO;
 }
 
 #[cfg(test)]
 mod tests {
     use super::{elevator_ai, run, select};
+    use crate::model::num::Fixed as Exact;
     use crate::state::room::{
         Elevator, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
         EnemyCommon, EnemyExtraProperty, EnemyProperty,
@@ -407,7 +405,7 @@ mod tests {
         // $1B.0000 + 1.8000 = $1C.8000; Samus stands $1A above, on a whole pixel.
         let (mut slot, elevator, mut ride) = arriving(at(0x1b, 0), 0x80);
         let mut samus = Samus::default();
-        samus.position.y = at(0x40, 0x1234);
+        samus.motion.position.y = Exact::from(at(0x40, 0x1234));
         elevator_ai(
             &mut slot,
             elevator,
@@ -416,8 +414,8 @@ mod tests {
             &Controller::default(),
         );
         assert_eq!(slot.position.y, at(0x1c, 0x8000));
-        assert_eq!(samus.position.y, at(0x02, 0));
-        assert_eq!(samus.position.x.pixels, 0x80);
+        assert_eq!(samus.motion.position.y, Exact::from(at(0x02, 0)));
+        assert_eq!(samus.motion.position.x.pixel(), 0x80);
         assert_eq!(ride.status, ElevatorStatus::EnteringRoom);
         // $1C.8000 + 1.8000 = $1E.0000: the subpixel carries.
         elevator_ai(
@@ -448,7 +446,7 @@ mod tests {
         assert_eq!(slot.position.y, at(0x80, 0x8000));
         assert_eq!(ride.status, ElevatorStatus::Inactive);
         assert_eq!(ride.armed, ElevatorArming::Disarmed);
-        assert_eq!(samus.position.y, at(0x66, 0));
+        assert_eq!(samus.motion.position.y, Exact::from(at(0x66, 0)));
         assert_eq!(samus.drawing, DrawingHandler::Default);
     }
 
@@ -485,7 +483,7 @@ mod tests {
         controller.pressed.insert(Button::Up);
         elevator_ai(&mut slot, elevator, &mut ride, &mut samus, &controller);
         assert_eq!(ride.status, ElevatorStatus::LeavingRoom);
-        assert_eq!(samus.position.y, at(0x66, 0));
+        assert_eq!(samus.motion.position.y, Exact::from(at(0x66, 0)));
         assert_eq!(samus.drawing, DrawingHandler::UsingElevator);
         // Leaving upward: $80.0000 - 1.8000 = $7E.8000.
         elevator_ai(&mut slot, elevator, &mut ride, &mut samus, &controller);
@@ -519,7 +517,7 @@ mod tests {
             .map(|slot| slot.common.frame_counter)
             .collect();
         assert_eq!(counters, [1, 0]);
-        assert_eq!(state.samus.position.y, at(0x02, 0));
+        assert_eq!(state.samus.motion.position.y, Exact::from(at(0x02, 0)));
     }
 
     #[test]

@@ -10,6 +10,8 @@ pub enum Source {
     WramByte(WramByte),
     /// A word of work RAM.
     WramWord(WramWord),
+    /// A pixel word and its subpixel word, one P.S value.
+    WramFixed(WramWord, WramWord),
     /// A run of work RAM bytes.
     WramBlock(WramBlock),
     /// A word of work RAM resolved through the content: a ROM pointer to an ID.
@@ -51,6 +53,13 @@ const fn wram(path: &'static str, word: WramWord) -> Field {
     Field {
         path,
         status: Status::Decoded(Source::WramWord(word)),
+    }
+}
+
+const fn wram_fixed(path: &'static str, pixel: WramWord, sub: WramWord) -> Field {
+    Field {
+        path,
+        status: Status::Decoded(Source::WramFixed(pixel, sub)),
     }
 }
 
@@ -377,10 +386,36 @@ pub const FIELDS: &[Field] = &[
         source::BG2_ROW_UPDATE.enable,
     ),
     wram_byte("video.nmi_requested", source::WAITING_FOR_NMI),
-    wram("samus.position.x.pixels", source::SAMUS_X_POS),
-    wram("samus.position.x.subpixels", source::SAMUS_X_SUBPOS),
-    wram("samus.position.y.pixels", source::SAMUS_Y_POS),
-    wram("samus.position.y.subpixels", source::SAMUS_Y_SUBPOS),
+    // Samus's motion State (`harness::samus_motion::decode`).
+    wram_fixed(
+        "samus.motion.position.x",
+        source::SAMUS_X_POS,
+        source::SAMUS_X_SUBPOS,
+    ),
+    wram_fixed(
+        "samus.motion.position.y",
+        source::SAMUS_Y_POS,
+        source::SAMUS_Y_SUBPOS,
+    ),
+    wram_fixed(
+        "samus.motion.base_speed",
+        source::SAMUS_X_BASE_SPEED,
+        source::SAMUS_X_BASE_SUBSPEED,
+    ),
+    wram_fixed(
+        "samus.motion.extra_run",
+        source::SAMUS_X_EXTRA_RUN_SPEED,
+        source::SAMUS_X_EXTRA_RUN_SUBSPEED,
+    ),
+    wram("samus.motion.momentum", source::SAMUS_HAS_MOMENTUM_FLAG),
+    wram("samus.motion.mode", source::SAMUS_X_ACCEL_MODE),
+    wram_fixed(
+        "samus.motion.vertical_speed",
+        source::SAMUS_Y_SPEED,
+        source::SAMUS_Y_SUBSPEED,
+    ),
+    wram("samus.motion.vertical", source::SAMUS_Y_DIR),
+    wram("samus.motion.bounce", source::SAMUS_BOUNCE_STATE),
     wram("samus.previous_position.x.pixels", source::SAMUS_PREV_X_POS),
     wram(
         "samus.previous_position.x.subpixels",
@@ -409,44 +444,7 @@ pub const FIELDS: &[Field] = &[
     ),
     wram_byte("samus.facing", source::SAMUS_POSE_X_DIR),
     open("samus.aim"),
-    // The variant decodes from the movement type; the data it carries is C3's.
     wram_byte("samus.movement", source::SAMUS_MOVEMENT_TYPE),
-    // The horizontal motion of the movements that keep one: standing, running, turning, the
-    // jumps and the fall.
-    wram(
-        "samus.movement.speed.base.pixels",
-        source::SAMUS_X_BASE_SPEED,
-    ),
-    wram(
-        "samus.movement.speed.base.subpixels",
-        source::SAMUS_X_BASE_SUBSPEED,
-    ),
-    wram(
-        "samus.movement.speed.extra_run.pixels",
-        source::SAMUS_X_EXTRA_RUN_SPEED,
-    ),
-    wram(
-        "samus.movement.speed.extra_run.subpixels",
-        source::SAMUS_X_EXTRA_RUN_SUBSPEED,
-    ),
-    wram(
-        "samus.movement.speed.acceleration",
-        source::SAMUS_X_ACCEL_MODE,
-    ),
-    wram(
-        "samus.movement.speed.momentum",
-        source::SAMUS_HAS_MOMENTUM_FLAG,
-    ),
-    // The jumps' and the fall's vertical motion.
-    wram(
-        "samus.movement.vertical.speed.pixels",
-        source::SAMUS_Y_SPEED,
-    ),
-    wram(
-        "samus.movement.vertical.speed.subpixels",
-        source::SAMUS_Y_SUBSPEED,
-    ),
-    wram("samus.movement.vertical.direction", source::SAMUS_Y_DIR),
     wram("samus.equipment.collected", source::COLLECTED_ITEMS),
     wram("samus.equipment.equipped", source::EQUIPPED_ITEMS),
     wram("samus.equipment.energy.current", source::SAMUS_HEALTH),
@@ -912,10 +910,6 @@ mod tests {
             rules.repeat,
             rules.repeat_delay,
             rules.game_state,
-            rules.samus_x,
-            rules.samus_x_subpixels,
-            rules.samus_y,
-            rules.samus_y_subpixels,
             rules.room,
             rules.level.width,
             rules.collected,
@@ -997,16 +991,10 @@ mod tests {
             rules.pose.pose,
             rules.previous_pose.pose,
             rules.last_different_pose.pose,
-            rules.horizontal.base,
-            rules.horizontal.base_subpixels,
-            rules.horizontal.extra_run,
-            rules.horizontal.extra_run_subpixels,
-            rules.horizontal.acceleration,
-            rules.horizontal.momentum,
-            rules.vertical.speed,
-            rules.vertical.subpixels,
-            rules.vertical.direction,
         ]
+        .into_iter()
+        .chain(crate::harness::samus_motion::SOURCES)
+        .collect()
     }
 
     /// The BG graphics update's word sources, and the room state's.
@@ -1150,6 +1138,13 @@ mod tests {
                 Status::Decoded(Source::WramWord(word) | Source::WramPointer(word)) => {
                     assert!(words.contains(&word), "{} isn't read", field.path);
                 }
+                Status::Decoded(Source::WramFixed(pixel, sub)) => {
+                    assert!(
+                        words.contains(&pixel) && words.contains(&sub),
+                        "{} isn't read",
+                        field.path
+                    );
+                }
                 Status::Decoded(Source::WramByte(byte)) => {
                     assert!(bytes.contains(&byte), "{} isn't read", field.path);
                 }
@@ -1174,7 +1169,11 @@ mod tests {
         };
         for word in words {
             assert!(
-                listed(Source::WramWord(word)) || listed(Source::WramPointer(word)),
+                listed(Source::WramWord(word))
+                    || listed(Source::WramPointer(word))
+                    || FIELDS.iter().any(|field| {
+                        matches!(field.status, Status::Decoded(Source::WramFixed(pixel, sub)) if pixel == word || sub == word)
+                    }),
                 "{} has no row",
                 word.name
             );

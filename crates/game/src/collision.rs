@@ -19,6 +19,7 @@ use crate::state::samus::{Fixed, Point, Speed};
 
 pub mod inside;
 pub mod solid_enemy;
+pub mod world;
 
 /// What a move went through.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -171,43 +172,6 @@ impl SlopeFlag {
             Self::Set => true,
         }
     }
-}
-
-/// The side a wall stopped her on: the X speed killed flag (`$0DCE`), 4 left and 8 right
-/// (bank $90 log, `$90:E5CE`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Side {
-    /// Moving left.
-    Left,
-    /// Moving right.
-    Right,
-}
-
-/// The solid vertical collision result (`$0DC6`, bank $90 log, `$90:E606`, `$90:E61B`).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum VerticalContact {
-    /// 0: no change.
-    #[default]
-    NoChange,
-    /// 1: a downwards move was stopped.
-    Landed,
-    /// 2: a downwards move wasn't.
-    Falling,
-    /// 4: an upwards move was stopped.
-    HitCeiling,
-    /// 5: the spin jump's wall jump check found a wall to jump from (`$90:9E7F`), and she
-    /// didn't move vertically.
-    WallJumpTriggered,
-}
-
-/// What the frame's moves met, for the pose update to read (bank $91 log, `$91:E8B6` and
-/// `$91:EADE`).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Contacts {
-    /// The wall a horizontal move ran into.
-    pub wall: Option<Side>,
-    /// The last vertical move's result.
-    pub vertical: VerticalContact,
 }
 
 /// One axis's names for the routines' shared shape.

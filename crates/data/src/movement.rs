@@ -84,9 +84,16 @@ const ENTRY_BYTES: usize = 12;
 pub const EXTRA_RUN_BYTES: usize = 36;
 
 /// Every movement type's horizontal speeds.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SpeedTable {
     entries: Vec<SpeedEntry>,
+}
+
+/// Every movement type at zero speeds, as a table declared with none named.
+impl Default for SpeedTable {
+    fn default() -> Self {
+        Self::from_iter([])
+    }
 }
 
 impl SpeedTable {

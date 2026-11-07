@@ -36,8 +36,8 @@ fn scene(parameter_2: u16, x: u16, y: u16) -> (EnemyCommon, Samus) {
     common.position.x.pixels = 0x100;
     common.position.y.pixels = 0x80;
     let mut samus = Samus::default();
-    samus.position.x.pixels = 0x100_u16.wrapping_add(x);
-    samus.position.y.pixels = 0x80_u16.wrapping_add(y);
+    samus.motion.position.x = crate::model::num::Fixed::new(0x100_u16.wrapping_add(x), 0);
+    samus.motion.position.y = crate::model::num::Fixed::new(0x80_u16.wrapping_add(y), 0);
     samus.equipment.collected.bits = Item::MorphBall.bit();
     let (mut hook, mut cycle) = (GraphicsDrawnHook::None, EnemyPaletteCycle::default());
     let mut glow = Glow {
@@ -228,7 +228,7 @@ fn samus_within_range_on_its_turning_side_turns_it_once() {
     assert_eq!(common.cursor.delay, Frames(1));
     // Turned, it no longer measures her.
     let mut moved = samus;
-    moved.position.x.pixels = 0x110;
+    moved.motion.position.x = crate::model::num::Fixed::new(0x110, 0);
     let before = (common, block);
     step(&mut common, &mut block, &moved);
     assert_eq!((common, block), before);

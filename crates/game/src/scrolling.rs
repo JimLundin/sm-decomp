@@ -10,8 +10,9 @@
 //! pixels a frame faster than Samus moves, and a blue screen at the room's bottom hides the
 //! two rows the HUD would otherwise cover.
 
+use crate::model::samus::motion::{SpeedMode, VerticalMotion};
 use crate::state::room::{Camera, Layer2Scroll, ScrollArea, StaleScroll};
-use crate::state::samus::{Acceleration, Facing, Fixed, MovementType, Samus, Speed, YDirection};
+use crate::state::samus::{Facing, Fixed, MovementType, Samus, Speed};
 use crate::state::video::{Registers, Scroll};
 
 /// The room's scroll areas, as the scrolling reads them.
@@ -151,32 +152,29 @@ const fn moved(position: Fixed, speed: Speed, forward: bool) -> Fixed {
 // finished hook (`$90:9563`, Spore Spawn's floor) with that room, and time frozen (which the
 // scroll zones test, `$80:A52C`) with the reserve tanks and the X-ray scope.
 pub fn follow(camera: &mut Camera, samus: &mut Samus, areas: ScrollAreas<'_>) {
-    let speed_x = speed(samus.position.x, samus.previous_position.x);
+    let speed_x = speed(samus.motion.position.x.into(), samus.previous_position.x);
     horizontal(camera, samus, areas, speed_x);
-    let speed_y = speed(samus.position.y, samus.previous_position.y);
+    let speed_y = speed(samus.motion.position.y.into(), samus.previous_position.y);
     vertical(camera, samus, areas, speed_y);
-    samus.previous_position = samus.position;
+    samus.previous_position = samus.motion.position.into();
 }
 
 /// Handle horizontal scrolling (`$90:95A0`).
 fn horizontal(camera: &mut Camera, samus: &Samus, areas: ScrollAreas<'_>, speed: Speed) {
-    if samus.position.x.pixels == samus.previous_position.x.pixels {
+    if samus.motion.position.x.pixel() == samus.previous_position.x.pixels {
         settle_x(camera, areas, speed);
         return;
     }
     // open: a knockback (`$0A52`) also aims the camera backwards; it joins with damage.
-    let backwards = samus.movement.kind() == MovementType::Moonwalking
-        || samus
-            .movement
-            .horizontal()
-            .is_some_and(|motion| motion.acceleration == Acceleration::TurningAround);
+    let backwards = samus.movement == MovementType::Moonwalking
+        || samus.motion.mode == SpeedMode::TurningAround;
     let (facing_right, facing_left) = camera.distance.lead();
     let lead = if (samus.facing == Facing::Left) == backwards {
         facing_right
     } else {
         facing_left
     };
-    let ideal = samus.position.x.pixels.wrapping_sub(lead);
+    let ideal = samus.motion.position.x.pixel().wrapping_sub(lead);
     if ideal == camera.x.pixels {
         return;
     }
@@ -191,20 +189,17 @@ fn horizontal(camera: &mut Camera, samus: &Samus, areas: ScrollAreas<'_>, speed:
 
 /// Handle vertical scrolling (`$90:964F`).
 fn vertical(camera: &mut Camera, samus: &Samus, areas: ScrollAreas<'_>, speed: Speed) {
-    if samus.position.y.pixels == samus.previous_position.y.pixels {
+    if samus.motion.position.y.pixel() == samus.previous_position.y.pixels {
         settle_y(camera, areas, speed);
         return;
     }
-    let rising = samus
-        .movement
-        .vertical()
-        .is_some_and(|motion| motion.direction == YDirection::Up);
+    let rising = samus.motion.vertical == VerticalMotion::Up;
     let scroller = if rising {
         camera.scrollers.down
     } else {
         camera.scrollers.up
     };
-    let ideal = samus.position.y.pixels.wrapping_sub(scroller);
+    let ideal = samus.motion.position.y.pixel().wrapping_sub(scroller);
     if ideal == camera.y.pixels {
         return;
     }

@@ -127,8 +127,8 @@ fn react(room: &mut RoomScoped, point: ReactionPoint, x: u16, y: u16) -> Result<
 ///
 /// [`TouchFault`] where a scroll trigger's touch PLM finds no scroll PLM on its block.
 pub fn handle(room: &mut RoomScoped, samus: &Samus) -> Result<(), TouchFault> {
-    let x = samus.position.x.pixels;
-    let y = samus.position.y.pixels;
+    let x = samus.motion.position.x.pixel();
+    let y = samus.motion.position.y.pixel();
     let bottom = y.wrapping_add(samus.y_radius).wrapping_sub(1);
     react(room, ReactionPoint::Bottom, x, bottom)?;
     if (y ^ bottom) & 0xfff0 != 0 {

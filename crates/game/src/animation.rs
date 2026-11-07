@@ -9,13 +9,16 @@
 //! the running momentum check (`$90:852C`) and then runs, its table at `$90:8324`.
 
 use data::pose::PoseId;
-use data::pose::animation::{AnimationFrame, BySpeed, DelayItem, DelayList, Instruction, ItemBits};
+use data::pose::animation::{
+    AnimationFrame, BySpeed, DelayItem, DelayList, Instruction, ItemBits, wall_jump_frame,
+};
 use data::pose::transition::Control;
 
+use crate::model::samus::motion::Contacts;
 use crate::pose::{Content, PoseRequests, controls};
 use crate::state::Controller;
 use crate::state::samus::{
-    AnimationTimer, Item, Items, Movement, MovementType, NewPoseFrame, Samus, SuperSpecial,
+    AnimationTimer, Item, Items, MovementType, NewPoseFrame, Samus, SuperSpecial,
     SuperSpecialCommand,
 };
 
@@ -49,10 +52,40 @@ pub(crate) const fn frame_buffer(_samus: &Samus) -> u16 {
 /// Whether her running momentum runs the running list instead of her pose's: she has
 /// momentum and runs (`$90:84E3`).
 const fn running_momentum(samus: &Samus) -> bool {
-    matches!(
-        samus.movement,
-        Movement::Running { speed } if speed.momentum
-    )
+    matches!(samus.movement, MovementType::Running) && samus.motion.momentum
+}
+
+/// The falling poses whose animation jumps to its terminal velocity frame (`$90:A58D`).
+const FALLING: [PoseId; 4] = [PoseId(0x29), PoseId(0x2A), PoseId(0x67), PoseId(0x68)];
+
+/// The fall's speed in pixels from which the falling animation shows its terminal velocity
+/// frame (`$90:A5BC`).
+const TERMINAL_PIXELS: i16 = 5;
+
+/// The falling animation's terminal velocity frame and its delay (`$90:A5BC`).
+const TERMINAL_FRAME: AnimationFrame = AnimationFrame(5);
+/// The terminal velocity frame's delay.
+const TERMINAL_DELAY: AnimationTimer = AnimationTimer(8);
+
+/// The animation's part of the movement handler, after motion's step.
+///
+/// An armed wall jump holds the spin on the frame before the wall jump's (`$90:9D35`), and a
+/// fast fall shows the terminal velocity frame (`$90:A58D`).
+pub fn after_motion(samus: &mut Samus, contacts: Contacts) {
+    let animation = &mut samus.animation;
+    if contacts.wall_jump_armed {
+        animation.timer = AnimationTimer(1);
+        animation.frame = AnimationFrame(wall_jump_frame(samus.pose).0.wrapping_sub(1));
+    }
+    let terminal = samus.motion.vertical_speed.pixel().cast_signed() >= TERMINAL_PIXELS;
+    if samus.movement == MovementType::Falling
+        && FALLING.contains(&samus.pose)
+        && terminal
+        && animation.frame.0.cast_signed() < TERMINAL_FRAME.0.cast_signed()
+    {
+        animation.frame = TERMINAL_FRAME;
+        animation.timer = TERMINAL_DELAY;
+    }
 }
 
 /// "Animate Samus" (`$90:8000`): count the frame's timer down and, when it is done, advance
@@ -238,9 +271,10 @@ fn holds_any(equipped: Items, named: ItemBits) -> bool {
 
 /// The pose a transition by speed takes: still when her Y speed is zero.
 const fn by_speed(samus: &Samus, poses: BySpeed) -> PoseId {
-    match samus.movement.vertical() {
-        Some(vertical) if vertical.speed.0 != 0 => poses.moving,
-        Some(_) | None => poses.still,
+    if samus.motion.vertical_speed.0 == 0 {
+        poses.still
+    } else {
+        poses.moving
     }
 }
 

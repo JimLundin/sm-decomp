@@ -3,6 +3,8 @@
 use canonical::Canonical;
 
 use super::slots::{FlagSet, Frames};
+use crate::model::num::Fixed as Exact;
+use crate::model::samus::motion::{Position, State as Motion};
 
 /// A pixel position or speed with its subpixel fraction, as the original keeps them.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -22,36 +24,41 @@ pub struct Point {
     pub y: Fixed,
 }
 
+impl From<Exact> for Fixed {
+    fn from(value: Exact) -> Self {
+        Self {
+            pixels: value.pixel(),
+            subpixels: value.sub(),
+        }
+    }
+}
+
+impl From<Fixed> for Exact {
+    fn from(value: Fixed) -> Self {
+        Self::new(value.pixels, value.subpixels)
+    }
+}
+
+impl From<Position> for Point {
+    fn from(position: Position) -> Self {
+        Self {
+            x: position.x.into(),
+            y: position.y.into(),
+        }
+    }
+}
+
+impl From<Point> for Position {
+    fn from(point: Point) -> Self {
+        Self {
+            x: point.x.into(),
+            y: point.y.into(),
+        }
+    }
+}
+
 pub use data::movement::Speed;
 pub use data::pose::{MovementType, PoseFacing as Facing, PoseId};
-
-/// How Samus's base speed changes each frame and which way it moves her (bank $90 log,
-/// `$90:9A7E` "Calculate Samus X base speed", `$90:8EA9` "Move Samus horizontally").
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Acceleration {
-    /// Speeding up to the movement type's cap, the way she faces.
-    #[default]
-    Accelerating,
-    /// Slowing down against the way she faces, the momentum of a turn.
-    TurningAround,
-    /// Slowing down the way she faces, after letting go.
-    Decelerating,
-}
-
-/// Samus's horizontal motion: the speeds the X movement routines (bank $90 log, `$90:8E64`
-/// "Samus X movement") read and keep from frame to frame.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Horizontal {
-    /// The speed the movement type's acceleration builds, capped by its speed table entry.
-    pub base: Speed,
-    /// The extra speed holding the run button adds while running (`$90:973E`).
-    pub extra_run: Speed,
-    /// How the base speed changes.
-    pub acceleration: Acceleration,
-    /// Whether she has started running with the run button held since the last speed boost
-    /// cancel: the extra run speed survives leaving the running movement only then.
-    pub momentum: bool,
-}
 
 /// Where Samus aims her arm cannon.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -67,400 +74,6 @@ pub enum Aim {
     DownForward,
     /// Straight down.
     Down,
-}
-
-/// Which way Samus's vertical speed moves her (bank $90 log, `$90:90E2` "Samus Y movement -
-/// with speed calculations": the original's Y direction word, 0 to 2).
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum YDirection {
-    /// Neither: on the ground, or a pose that entered the air without a jump (the moonfall
-    /// glitch: the rise rule then runs with a speed that only grows downwards).
-    #[default]
-    None,
-    /// Rising: gravity takes from her speed.
-    Up,
-    /// Falling: gravity adds to her speed until its pixel word reaches 5.
-    Down,
-}
-
-/// Samus's vertical motion: the speed the Y movement routine (`$90:90E2`) moves her by and the
-/// way it moves her.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Vertical {
-    /// Pixels a frame. While rising, gravity can take it below zero for the rest of the
-    /// frame; the next frame's release check stops the rise then.
-    pub speed: Speed,
-    /// Which way it moves her.
-    pub direction: YDirection,
-}
-
-/// How a jump began, which decides its rise and what it can turn into.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Jump {
-    /// Upright, aiming.
-    #[default]
-    Normal,
-    /// Somersaulting, from a running jump.
-    Spin,
-}
-
-/// Samus's movement state: one variant per movement type of the original's movement
-/// handler (bank $90), each with the data only it uses.
-///
-/// The landing frames are not a movement type: the landing poses (bank $91 log, poses $A4
-/// to $A7, $E0 to $E5) are standing ones, so behaviour that keys on landing reads
-/// [`Samus::pose`].
-// open: turning around in the air keeps the vertical motion too; it joins with the air turns.
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Movement {
-    /// On the ground, still: a landing's extra run speed still moves her one frame.
-    Standing {
-        /// Horizontal motion.
-        speed: Horizontal,
-    },
-    /// On the ground, moving.
-    Running {
-        /// Horizontal motion.
-        speed: Horizontal,
-    },
-    /// Crouched.
-    Crouching,
-    /// In the air, rising or falling from a jump.
-    Jumping {
-        /// How it began.
-        jump: Jump,
-        /// Horizontal motion.
-        speed: Horizontal,
-        /// Vertical motion.
-        vertical: Vertical,
-    },
-    /// In the air without a jump.
-    Falling {
-        /// Horizontal motion.
-        speed: Horizontal,
-        /// Vertical motion.
-        vertical: Vertical,
-    },
-    /// Rolled into the morph ball.
-    MorphBall {
-        /// Horizontal motion.
-        speed: Horizontal,
-        /// Whether the ball is falling.
-        airborne: bool,
-    },
-    /// The spring ball.
-    SpringBall {
-        /// Where the ball is.
-        phase: SpringBall,
-    },
-    /// Knocked back, or ending a crystal flash.
-    KnockbackOrCrystalFlashEnding,
-    /// Turning around.
-    TurningAround {
-        /// Where she turns.
-        place: Turn,
-        /// Horizontal motion.
-        speed: Horizontal,
-    },
-    /// Crouching, standing, morphing or unmorphing. The fall she began it in carries on
-    /// through it (`$90:A61C`).
-    Transition {
-        /// Horizontal motion, which the transition leaves as it found it.
-        speed: Horizontal,
-        /// Vertical motion.
-        vertical: Vertical,
-    },
-    /// Moonwalking.
-    Moonwalking,
-    /// Wall jumping.
-    WallJumping {
-        /// Horizontal motion.
-        speed: Horizontal,
-        /// Vertical motion.
-        vertical: Vertical,
-    },
-    /// Ran into a wall.
-    RanIntoWall,
-    /// Grappling.
-    Grappling,
-    /// A damage boost.
-    DamageBoost,
-    /// Grabbed by Draygon.
-    GrabbedByDraygon,
-    /// Shinesparking, crystal flashing, drained by a metroid or hit by Mother Brain.
-    Shinespark,
-    /// A movement type only unused poses have.
-    Unused(UnusedMovement),
-}
-
-/// The movement types only unused poses have (7, 9, $B, $C, $D).
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum UnusedMovement {
-    /// Type 7.
-    #[default]
-    Unused07,
-    /// Type 9.
-    Unused09,
-    /// Type $B.
-    Unused0B,
-    /// Type $C.
-    Unused0C,
-    /// Type $D.
-    Unused0D,
-}
-
-/// Where a spring ball is.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum SpringBall {
-    /// On the ground.
-    #[default]
-    OnGround,
-    /// In the air.
-    InAir,
-    /// Falling.
-    Falling,
-}
-
-/// Where Samus turns around.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Turn {
-    /// On the ground.
-    #[default]
-    OnGround,
-    /// In a jump.
-    Jumping,
-    /// Falling.
-    Falling,
-}
-
-impl Default for Movement {
-    fn default() -> Self {
-        Self::Standing {
-            speed: Horizontal::default(),
-        }
-    }
-}
-
-impl From<MovementType> for Movement {
-    /// The movement a type starts, its data at rest.
-    fn from(kind: MovementType) -> Self {
-        let jumping = |jump| Self::Jumping {
-            jump,
-            speed: Horizontal::default(),
-            vertical: Vertical::default(),
-        };
-        let turning = |place| Self::TurningAround {
-            place,
-            speed: Horizontal::default(),
-        };
-        let morph_ball = |airborne| Self::MorphBall {
-            speed: Horizontal::default(),
-            airborne,
-        };
-        match kind {
-            MovementType::Standing => Self::default(),
-            MovementType::Running => Self::Running {
-                speed: Horizontal::default(),
-            },
-            MovementType::NormalJumping => jumping(Jump::Normal),
-            MovementType::SpinJumping => jumping(Jump::Spin),
-            MovementType::MorphBallOnGround => morph_ball(false),
-            MovementType::MorphBallFalling => morph_ball(true),
-            MovementType::Crouching => Self::Crouching,
-            MovementType::Falling => Self::Falling {
-                speed: Horizontal::default(),
-                vertical: Vertical::default(),
-            },
-            MovementType::KnockbackOrCrystalFlashEnding => Self::KnockbackOrCrystalFlashEnding,
-            MovementType::TurningAroundOnGround => turning(Turn::OnGround),
-            MovementType::TurningAroundJumping => turning(Turn::Jumping),
-            MovementType::TurningAroundFalling => turning(Turn::Falling),
-            MovementType::CrouchingTransition => Self::Transition {
-                speed: Horizontal::default(),
-                vertical: Vertical::default(),
-            },
-            MovementType::Moonwalking => Self::Moonwalking,
-            MovementType::SpringBallOnGround => Self::SpringBall {
-                phase: SpringBall::OnGround,
-            },
-            MovementType::SpringBallInAir => Self::SpringBall {
-                phase: SpringBall::InAir,
-            },
-            MovementType::SpringBallFalling => Self::SpringBall {
-                phase: SpringBall::Falling,
-            },
-            MovementType::WallJumping => Self::WallJumping {
-                speed: Horizontal::default(),
-                vertical: Vertical::default(),
-            },
-            MovementType::RanIntoWall => Self::RanIntoWall,
-            MovementType::Grappling => Self::Grappling,
-            MovementType::DamageBoost => Self::DamageBoost,
-            MovementType::GrabbedByDraygon => Self::GrabbedByDraygon,
-            MovementType::Shinespark => Self::Shinespark,
-            MovementType::Unused07 => Self::Unused(UnusedMovement::Unused07),
-            MovementType::Unused09 => Self::Unused(UnusedMovement::Unused09),
-            MovementType::Unused0B => Self::Unused(UnusedMovement::Unused0B),
-            MovementType::Unused0C => Self::Unused(UnusedMovement::Unused0C),
-            MovementType::Unused0D => Self::Unused(UnusedMovement::Unused0D),
-        }
-    }
-}
-
-impl Movement {
-    /// The horizontal motion this movement keeps, if it keeps one.
-    #[must_use]
-    pub const fn horizontal(self) -> Option<Horizontal> {
-        match self {
-            Self::Standing { speed }
-            | Self::Running { speed }
-            | Self::TurningAround { speed, .. }
-            | Self::Jumping { speed, .. }
-            | Self::Falling { speed, .. }
-            | Self::MorphBall { speed, .. }
-            | Self::Transition { speed, .. }
-            | Self::WallJumping { speed, .. } => Some(speed),
-            Self::Crouching
-            | Self::SpringBall { .. }
-            | Self::KnockbackOrCrystalFlashEnding
-            | Self::Moonwalking
-            | Self::RanIntoWall
-            | Self::Grappling
-            | Self::DamageBoost
-            | Self::GrabbedByDraygon
-            | Self::Shinespark
-            | Self::Unused(_) => None,
-        }
-    }
-
-    /// The horizontal motion this movement keeps, to change, if it keeps one.
-    pub const fn horizontal_mut(&mut self) -> Option<&mut Horizontal> {
-        match self {
-            Self::Standing { speed }
-            | Self::Running { speed }
-            | Self::TurningAround { speed, .. }
-            | Self::Jumping { speed, .. }
-            | Self::Falling { speed, .. }
-            | Self::MorphBall { speed, .. }
-            | Self::Transition { speed, .. }
-            | Self::WallJumping { speed, .. } => Some(speed),
-            Self::Crouching
-            | Self::SpringBall { .. }
-            | Self::KnockbackOrCrystalFlashEnding
-            | Self::Moonwalking
-            | Self::RanIntoWall
-            | Self::Grappling
-            | Self::DamageBoost
-            | Self::GrabbedByDraygon
-            | Self::Shinespark
-            | Self::Unused(_) => None,
-        }
-    }
-
-    /// The vertical motion this movement keeps, if it keeps one: the jumps, the fall and the transitions.
-    #[must_use]
-    pub const fn vertical(self) -> Option<Vertical> {
-        match self {
-            Self::Jumping { vertical, .. }
-            | Self::Falling { vertical, .. }
-            | Self::Transition { vertical, .. }
-            | Self::WallJumping { vertical, .. } => Some(vertical),
-            Self::Standing { .. }
-            | Self::Running { .. }
-            | Self::Crouching
-            | Self::MorphBall { .. }
-            | Self::SpringBall { .. }
-            | Self::KnockbackOrCrystalFlashEnding
-            | Self::TurningAround { .. }
-            | Self::Moonwalking
-            | Self::RanIntoWall
-            | Self::Grappling
-            | Self::DamageBoost
-            | Self::GrabbedByDraygon
-            | Self::Shinespark
-            | Self::Unused(_) => None,
-        }
-    }
-
-    /// The vertical motion this movement keeps, to change, if it keeps one.
-    pub const fn vertical_mut(&mut self) -> Option<&mut Vertical> {
-        match self {
-            Self::Jumping { vertical, .. }
-            | Self::Falling { vertical, .. }
-            | Self::Transition { vertical, .. }
-            | Self::WallJumping { vertical, .. } => Some(vertical),
-            Self::Standing { .. }
-            | Self::Running { .. }
-            | Self::Crouching
-            | Self::MorphBall { .. }
-            | Self::SpringBall { .. }
-            | Self::KnockbackOrCrystalFlashEnding
-            | Self::TurningAround { .. }
-            | Self::Moonwalking
-            | Self::RanIntoWall
-            | Self::Grappling
-            | Self::DamageBoost
-            | Self::GrabbedByDraygon
-            | Self::Shinespark
-            | Self::Unused(_) => None,
-        }
-    }
-
-    /// The movement type the original keeps for this movement, byte-exact.
-    #[must_use]
-    pub const fn kind(self) -> MovementType {
-        match self {
-            Self::Standing { .. } => MovementType::Standing,
-            Self::Running { .. } => MovementType::Running,
-            Self::Crouching => MovementType::Crouching,
-            Self::Jumping {
-                jump: Jump::Normal, ..
-            } => MovementType::NormalJumping,
-            Self::Jumping {
-                jump: Jump::Spin, ..
-            } => MovementType::SpinJumping,
-            Self::Falling { .. } => MovementType::Falling,
-            Self::MorphBall {
-                airborne: false, ..
-            } => MovementType::MorphBallOnGround,
-            Self::MorphBall { airborne: true, .. } => MovementType::MorphBallFalling,
-            Self::SpringBall {
-                phase: SpringBall::OnGround,
-            } => MovementType::SpringBallOnGround,
-            Self::SpringBall {
-                phase: SpringBall::InAir,
-            } => MovementType::SpringBallInAir,
-            Self::SpringBall {
-                phase: SpringBall::Falling,
-            } => MovementType::SpringBallFalling,
-            Self::KnockbackOrCrystalFlashEnding => MovementType::KnockbackOrCrystalFlashEnding,
-            Self::TurningAround {
-                place: Turn::OnGround,
-                ..
-            } => MovementType::TurningAroundOnGround,
-            Self::TurningAround {
-                place: Turn::Jumping,
-                ..
-            } => MovementType::TurningAroundJumping,
-            Self::TurningAround {
-                place: Turn::Falling,
-                ..
-            } => MovementType::TurningAroundFalling,
-            Self::Transition { .. } => MovementType::CrouchingTransition,
-            Self::Moonwalking => MovementType::Moonwalking,
-            Self::WallJumping { .. } => MovementType::WallJumping,
-            Self::RanIntoWall => MovementType::RanIntoWall,
-            Self::Grappling => MovementType::Grappling,
-            Self::DamageBoost => MovementType::DamageBoost,
-            Self::GrabbedByDraygon => MovementType::GrabbedByDraygon,
-            Self::Shinespark => MovementType::Shinespark,
-            Self::Unused(UnusedMovement::Unused07) => MovementType::Unused07,
-            Self::Unused(UnusedMovement::Unused09) => MovementType::Unused09,
-            Self::Unused(UnusedMovement::Unused0B) => MovementType::Unused0B,
-            Self::Unused(UnusedMovement::Unused0C) => MovementType::Unused0C,
-            Self::Unused(UnusedMovement::Unused0D) => MovementType::Unused0D,
-        }
-    }
 }
 
 /// A pose with the facing and movement type its definition gave, as the original copies
@@ -746,8 +359,6 @@ pub enum DrawingHandler {
 /// Samus.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Samus {
-    /// Where she is.
-    pub position: Point,
     /// Where she was when the camera last followed her: the main scrolling routine keeps it
     /// at its end (bank $90 log, `$90:956E`), and the next frame's camera speed is the
     /// distance from it.
@@ -766,8 +377,10 @@ pub struct Samus {
     // open: the aim is the pose's shot direction (`data::pose::Shot`); whether the State
     // keeps it beside the pose or reads it from the table joins with weapons.
     pub aim: Aim,
-    /// How she moves.
-    pub movement: Movement,
+    /// Her pose's movement type, as the pose change copies it from the definition.
+    pub movement: MovementType,
+    /// Her motion: where she is and how she moves (`model::samus::motion`).
+    pub motion: Motion,
     /// What she has.
     pub equipment: Equipment,
     /// Frames of invincibility left after a hit.

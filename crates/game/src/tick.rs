@@ -7,9 +7,10 @@
 
 use crate::animation;
 use crate::collision::solid_enemy::SolidEnemies;
+use crate::collision::world::World;
 use crate::collision::{Room, ScanOrder, Surroundings, Touches, inside};
 use crate::message_box;
-use crate::movement;
+use crate::motion;
 use crate::pose::{self, Content};
 use crate::scrolling;
 use crate::session::{Rules, SessionFault};
@@ -194,7 +195,7 @@ fn step(
             (Frame::MainLoop(at), next)
         }
         Frame::Gameplay(at) => {
-            let (at, next) = gameplay(at, state, content)?;
+            let (at, next) = gameplay(at, state, rules, content)?;
             (Frame::Gameplay(at), next)
         }
         Frame::MessageBox(at) => {
@@ -407,13 +408,14 @@ struct Pass {
 fn gameplay(
     at: GameplayAt,
     state: &mut State,
+    rules: Rules,
     content: &Content,
 ) -> Result<(GameplayAt, Next), SessionFault> {
     Ok(match at {
         GameplayAt::Start => {
             let mut pass = Pass::default();
             for phase in THROUGH_PLMS {
-                gameplay_phase(phase, state, content, &mut pass)?;
+                gameplay_phase(phase, state, rules, content, &mut pass)?;
             }
             // An item's pickup called out of the PLM pass.
             let next = pass
@@ -426,7 +428,7 @@ fn gameplay(
             // only the enemy phases before it read.
             let mut pass = Pass::default();
             for phase in AFTER_PLMS {
-                gameplay_phase(phase, state, content, &mut pass)?;
+                gameplay_phase(phase, state, rules, content, &mut pass)?;
             }
             (GameplayAt::Start, Next::Return)
         }
@@ -443,11 +445,11 @@ fn samus_current_state(
     // While the elevator carries her, the locked current state handler (`$90:E713`, from
     // `$91:E44D`) neither sets her radius nor runs the pose input handler, which would
     // return at once anyway (`$91:805C`).
-    if movement::carried(&state.samus, state.elevator) {
+    if pose::carried(&state.samus, state.elevator) {
         crate::projectile::handle(state).map_err(SessionFault::Projectile)?;
         return Ok(pose::PoseRequests::default());
     }
-    movement::set_radius(&mut state.samus, content);
+    pose::set_radius(&mut state.samus, content);
     let requests = pose::input(&state.samus, &state.controller, content);
     // open: the suit palette index and the Y acceleration (`$90:E6B6`, `$90:E6B9`) run
     // between the input handler and the inside handling.
@@ -462,6 +464,7 @@ fn samus_current_state(
 fn gameplay_phase(
     phase: GameplayPhase,
     state: &mut State,
+    rules: Rules,
     content: &Content,
     pass: &mut Pass,
 ) -> Result<(), SessionFault> {
@@ -470,22 +473,20 @@ fn gameplay_phase(
         GameplayPhase::SamusCurrentState => pass.requests = samus_current_state(state, content)?,
         // The movement handler, the animation, the pose the moves ask for (`$91:E8B6`), then
         // the pose update (`$90:E725`).
-        // open: the movement types beyond standing, running and turning join with C3b and C4.
         GameplayPhase::SamusNewState => {
             let completed = state.clock.counters.completed.0;
             let surroundings = surroundings(&state.room, completed, content, &pass.active);
             let mut touches = Touches::default();
-            let contacts = movement::run(
-                &mut state.samus,
-                &state.controller,
-                content,
-                surroundings,
-                &mut touches,
-            );
-            movement::ride(&mut state.samus, state.elevator, surroundings, &mut touches);
+            let samus = &mut state.samus;
+            let inputs = motion::inputs(samus, &state.controller, state.elevator);
+            let values = motion::rules(content, rules.switches.speed_cap);
+            let mut world = World::new(surroundings, &mut touches, samus);
+            let frame =
+                motion::step(samus, inputs, values, &mut world).map_err(SessionFault::Motion)?;
+            animation::after_motion(samus, frame.contacts);
             mini_map(
                 &mut state.hud,
-                state.samus.position,
+                state.samus.motion.position.into(),
                 &state.room,
                 crate::mini_map::Blink::at(state.clock.counters.requested_byte),
                 content,
@@ -493,13 +494,13 @@ fn gameplay_phase(
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             let requests = pose::collision_request(
                 &state.samus,
-                contacts.vertical,
+                frame.contacts.vertical,
                 &state.controller,
                 content,
                 pass.requests,
             );
             let collisions = pose::Collisions {
-                contacts,
+                motion: frame,
                 surroundings,
             };
             change_pose(

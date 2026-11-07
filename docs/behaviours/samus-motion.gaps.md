@@ -6,9 +6,12 @@ suspected entry. The integrator files them; the observer answers them in the spe
 
 | # | Frame | Field | Expected (today's engine) | Model | Suspected entry |
 | --- | --- | --- | --- | --- | --- |
+| G7 | none recorded (no row equips the speed booster) | `vertical_speed` at a jump | the jump adds half the extra run pixel word and its subpixel word, without a carry, when the speed booster is equipped | `Jump` ignores the speed booster (§10 fixes it false) | `Jump`, `SpeedBooster` (§10) |
+| G8 | none recorded | `position.y` sub at a wall-jump probe | the solid-enemy check of the probe zeroes the Y subpixel when she already touches the enemy (`EnemyTouchZeroesYSubpixel`) | `WallHit` carries no touch, so the bridge can't pass it | `probe_wall` (§6), `EnemyTouchZeroesYSubpixel` |
+| G9 | none recorded | `position` | the arm-pump check ran for any movement type, the knockback, grapple, damage boost and shinespark types among them | `Locomotion` has no variant for them, so neither `step` nor `arm_pump_step` runs | `Locomotion` (§2), `ArmPumpStep` |
 
-No gap is open. The domain harness (item-morph-ball, area-brinstar) found none in the model: every
-mismatch it showed was the decode or the bridge (see the decode notes).
+The wiring (lane wire-motion) left the free-run gate, the localiser's first differing frames and
+the lockstep ratchet where they were; G7 to G9 are cases no recorded frame reaches.
 
 ## Answered
 

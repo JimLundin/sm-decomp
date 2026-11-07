@@ -316,13 +316,13 @@ mod tests {
         let decoded = from_bytes::<Checkpoint>(&bytes);
         assert_eq!(decoded.as_ref(), Ok(&checkpoint));
         let mut moved = checkpoint.clone();
-        moved.state.samus.position.x.pixels = 1;
+        moved.state.samus.previous_position.x.pixels = 1;
         let difference = checkpoint
             .diff(&moved)
             .map(|difference| difference.to_string());
         assert_eq!(
             difference.as_deref(),
-            Some("state.samus.position.x.pixels: 0000 != 0100")
+            Some("state.samus.previous_position.x.pixels: 0000 != 0100")
         );
     }
 

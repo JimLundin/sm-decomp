@@ -62,8 +62,8 @@ fn content() -> Content {
 fn state(pose: u16) -> State {
     let mut state = State::default();
     state.samus.pose = PoseId(pose);
-    state.samus.position.x.pixels = 0x150;
-    state.samus.position.y.pixels = 0x90;
+    state.samus.motion.position.x = crate::model::num::Fixed::new(0x150, 0);
+    state.samus.motion.position.y = crate::model::num::Fixed::new(0x90, 0);
     state.room.camera.x.pixels = 0x100;
     state.room.camera.y.pixels = 0x20;
     state

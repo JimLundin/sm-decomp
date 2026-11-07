@@ -114,32 +114,6 @@ struct Comparator {
     compare: fn(&State, &State) -> Option<Difference>,
 }
 
-/// A comparator for one part of the horizontal motion Samus's movement keeps.
-macro_rules! speed {
-    ($path:literal, $part:ident) => {
-        Comparator {
-            path: $path,
-            compare: |engine: &State, oracle: &State| {
-                let part = |state: &State| state.samus.movement.horizontal().map(|h| h.$part);
-                part(engine).diff(&part(oracle))
-            },
-        }
-    };
-}
-
-/// A comparator for one part of the vertical motion Samus's movement keeps.
-macro_rules! vertical {
-    ($path:literal, $part:ident) => {
-        Comparator {
-            path: $path,
-            compare: |engine: &State, oracle: &State| {
-                let part = |state: &State| state.samus.movement.vertical().map(|v| v.$part);
-                part(engine).diff(&part(oracle))
-            },
-        }
-    };
-}
-
 /// A comparator for one common field of every enemy slot, compared slot by slot.
 macro_rules! enemy {
     ($path:literal, $($name:ident).+) => {
@@ -585,10 +559,16 @@ const COMPARATORS: &[Comparator] = &[
     field!("video.batch.cgram", video.batch.cgram),
     field!("video.batch.vram", video.batch.vram),
     field!("video.nmi_requested", video.nmi_requested),
-    field!("samus.position.x.pixels", samus.position.x.pixels),
-    field!("samus.position.x.subpixels", samus.position.x.subpixels),
-    field!("samus.position.y.pixels", samus.position.y.pixels),
-    field!("samus.position.y.subpixels", samus.position.y.subpixels),
+    // Samus's motion State, the motion spec's declared fields (`samus-motion.md` §1.1).
+    field!("samus.motion.position.x", samus.motion.position.x),
+    field!("samus.motion.position.y", samus.motion.position.y),
+    field!("samus.motion.base_speed", samus.motion.base_speed),
+    field!("samus.motion.extra_run", samus.motion.extra_run),
+    field!("samus.motion.momentum", samus.motion.momentum),
+    field!("samus.motion.mode", samus.motion.mode),
+    field!("samus.motion.vertical_speed", samus.motion.vertical_speed),
+    field!("samus.motion.vertical", samus.motion.vertical),
+    field!("samus.motion.bounce", samus.motion.bounce),
     field!(
         "samus.previous_position.x.pixels",
         samus.previous_position.x.pixels
@@ -617,17 +597,6 @@ const COMPARATORS: &[Comparator] = &[
     ),
     field!("samus.facing", samus.facing),
     field!("samus.movement", samus.movement),
-    // The speed words live inside the movement's variant; each row compares the part it names
-    // (a 16.16 speed's pixels and subpixels are one value), absent when the movement keeps none.
-    speed!("samus.movement.speed.base.pixels", base),
-    speed!("samus.movement.speed.base.subpixels", base),
-    speed!("samus.movement.speed.extra_run.pixels", extra_run),
-    speed!("samus.movement.speed.extra_run.subpixels", extra_run),
-    speed!("samus.movement.speed.acceleration", acceleration),
-    speed!("samus.movement.speed.momentum", momentum),
-    vertical!("samus.movement.vertical.speed.pixels", speed),
-    vertical!("samus.movement.vertical.speed.subpixels", speed),
-    vertical!("samus.movement.vertical.direction", direction),
     field!("samus.equipment.collected", samus.equipment.collected),
     field!("samus.animation.frame", samus.animation.frame),
     field!("samus.animation.timer", samus.animation.timer),

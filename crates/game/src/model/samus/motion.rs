@@ -10,6 +10,8 @@ mod pose;
 
 pub use pose::{PoseChange, PoseCommand, PoseStart};
 
+use canonical::Canonical;
+
 use crate::model::collision::{Body, Collision, Enemies, Heading};
 use crate::model::num::Fixed;
 use crate::session::SpeedCap;
@@ -19,7 +21,7 @@ use data::movement::{
 use data::pose::MovementType;
 
 /// Where Samus's centre is.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Position {
     /// Rightward.
     pub x: Fixed,
@@ -37,7 +39,7 @@ pub struct Radius {
 }
 
 /// What the base speed is doing; pose selection sets it when a pose starts.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum SpeedMode {
     /// Speeding up to the row's top speed.
     #[default]
@@ -49,7 +51,7 @@ pub enum SpeedMode {
 }
 
 /// Which way she moves vertically; anything but `None` is airborne.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum VerticalMotion {
     /// On the ground.
     #[default]
@@ -61,7 +63,7 @@ pub enum VerticalMotion {
 }
 
 /// How many times the ball has bounced since it landed.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Bounce {
     /// Not bouncing.
     #[default]
@@ -73,7 +75,7 @@ pub enum Bounce {
 }
 
 /// Samus's motion State: the quantities a later frame reads, one set for every way of moving.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct State {
     /// Her centre.
     pub position: Position,
