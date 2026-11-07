@@ -6,7 +6,7 @@ use core::fmt;
 use game::state::GameTime;
 use oracle_record::FrameRecord;
 
-use super::{Domain, Field, Interval};
+use super::{Domain, Field, Interval, Uncompared};
 use crate::decode::DecodeError;
 use crate::domain_field;
 use crate::source::{self, WramWord};
@@ -98,5 +98,9 @@ impl Domain for Clock {
 
     fn expected(&self, next: &FrameRecord) -> Result<GameTime, Unreadable> {
         time(next)
+    }
+
+    fn uncompared(&self, unreadable: &Unreadable) -> Uncompared {
+        Uncompared::Defect(unreadable.to_string())
     }
 }

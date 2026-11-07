@@ -3,10 +3,19 @@
 //!
 //! For each pair of consecutive records (N, N+1) the harness decodes the domain's State and
 //! inputs from record N, steps the domain's model one frame, and compares the domain's
-//! declared fields with the ones record N+1 holds. The [`Report`] says how many of the M
-//! frames matched on every field, and per field how many matched and the first mismatches with
-//! both values. A domain plugs in by implementing [`Domain`]; [`run`] is the one runner and
-//! [`run_cached`] runs it over a lock row's record cache.
+//! declared fields with the ones record N+1 holds. A domain plugs in by implementing
+//! [`Domain`]; [`run`] is the one runner and [`run_cached`] runs it over a lock row's record
+//! cache.
+//!
+//! The measure is honest (MODEL §4, "The measure must be honest"). The [`Report`] counts every
+//! recorded frame pair, M, and splits it into frames the domain doesn't run in (skipped, by
+//! reason), frames the decode failed on (harness defects) and compared frames. On a compared
+//! frame a field out of the domain's scope is masked, by reason, and the rest are compared. A
+//! field whose value depends on what the domain's stand-in for its neighbours copied from
+//! record N+1 is unverified, not matched: the harness steps the frame a second time against
+//! [`Domain::neutral`]'s stand-in, which copies nothing, and a field whose value differs
+//! depended on the copy. Beside the model the report gives the null model's score on the same
+//! frames, a step that does nothing, and per behaviour the frames that exercised it.
 //!
 //! The harness never consults today's engine: the oracle is the yardstick (MODEL §4).
 
@@ -17,6 +26,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
 
+use game::behaviours::{Behaviour, BehaviourId};
 use oracle_record::{FrameRecord, Pad};
 
 use crate::cache::{Cache, CacheError, CutKind};
@@ -73,34 +83,88 @@ macro_rules! domain_field {
     };
 }
 
+/// A set of a domain's declared fields, by their position in [`Domain::FIELDS`] (the first 64).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct FieldSet(u64);
+
+impl FieldSet {
+    /// No field.
+    pub const EMPTY: Self = Self(0);
+    /// Every field.
+    pub const ALL: Self = Self(u64::MAX);
+
+    /// The field at position `index` alone.
+    #[must_use]
+    pub const fn single(index: usize) -> Self {
+        if index < 64 {
+            Self(1_u64 << index)
+        } else {
+            Self::EMPTY
+        }
+    }
+
+    /// The fields in `self` or `other`.
+    #[must_use]
+    pub const fn union(self, other: Self) -> Self {
+        Self(self.0 | other.0)
+    }
+
+    /// Whether the field at `index` is in the set.
+    #[must_use]
+    pub const fn contains(self, index: usize) -> bool {
+        self.0 & Self::single(index).0 != 0
+    }
+}
+
+/// Declared fields out of a domain's scope on one frame, and why.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Mask {
+    /// Why the fields aren't the domain's on this frame.
+    pub reason: &'static str,
+    /// The fields.
+    pub fields: FieldSet,
+}
+
+/// Why a frame pair isn't compared: the domain doesn't run in it, or its decode failed.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Uncompared {
+    /// The domain doesn't run in the frame, for this named reason.
+    Skip(String),
+    /// The harness couldn't decode the frame: a defect of the harness, never a scope call.
+    Defect(String),
+}
+
 /// A domain of the engine as the harness checks it.
 ///
-/// `decode`, `world` and `expected` are the observer's (MODEL §5, step 4); `step` is the model
-/// under test; `fields` projects the model's State onto the declared fields, the spec's
-/// quantities whose "Read by" isn't "none".
+/// `decode`, `world`, `masks` and `expected` are the observer's (MODEL §5, step 4); `step` is
+/// the model under test; `fields` projects the model's State onto the declared fields, the
+/// spec's quantities whose "Read by" isn't "none".
 pub trait Domain {
     /// The domain's name in the report.
     const NAME: &'static str;
     /// The domain's State.
-    type State;
+    type State: Clone;
     /// What the domain reads each frame from outside its State.
     type Inputs;
     /// The harness's stand-in for the neighbouring domains the model asks during its frame
     /// (collision, pose selection), which aren't under test. Unlike the inputs it may answer
-    /// from record N+1.
+    /// from record N+1; every field such an answer feeds is unverified on the frame.
     type World;
     /// The declared fields, as both the model and the oracle give them.
     type Fields: 'static;
-    /// Why a record isn't decoded for this domain: a frame the domain doesn't cover.
+    /// Why a record isn't compared for this domain: a frame the domain doesn't run in, or one
+    /// the decode failed on ([`Domain::uncompared`] tells them apart).
     type Skip: fmt::Display;
     /// The declared fields, in the spec's order.
     const FIELDS: &'static [Field<Self::Fields>];
+    /// The domain's catalogue entries, which the report attributes frames to.
+    const BEHAVIOURS: &'static [Behaviour] = &[];
 
     /// The State and inputs of the frame from record `from` to the end of `interval`.
     ///
     /// # Errors
     ///
-    /// The reason the frame isn't one the domain covers.
+    /// The reason the frame isn't one the domain runs in, or the decode's failure.
     fn decode(
         &self,
         from: &FrameRecord,
@@ -111,11 +175,43 @@ pub trait Domain {
     ///
     /// # Errors
     ///
-    /// The reason the frame isn't one the domain covers.
+    /// The reason the frame isn't one the domain runs in, or the decode's failure.
     fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Self::World, Self::Skip>;
+
+    /// The fields out of the domain's scope on the frame from `from` to `next`. A mask may read
+    /// record N and the neighbours' answers, never the declared fields of record N+1.
+    ///
+    /// # Errors
+    ///
+    /// The decode's failure.
+    fn masks(
+        &self,
+        _from: &FrameRecord,
+        _next: &FrameRecord,
+        _inputs: &Self::Inputs,
+    ) -> Result<Vec<Mask>, Self::Skip> {
+        Ok(Vec::new())
+    }
+
+    /// `world` with every answer copied from record N+1 replaced by the answer that copies
+    /// nothing, or `None` when `world` copies nothing.
+    fn neutral(&self, _world: &Self::World) -> Option<Self::World> {
+        None
+    }
 
     /// The model: one frame of `state` under `inputs`, asking `world`.
     fn step(&self, state: &mut Self::State, inputs: &Self::Inputs, world: &mut Self::World);
+
+    /// The catalogue entries the frame exercised: `state` and `inputs` as decoded, `world` as
+    /// the step left it.
+    fn exercised(
+        &self,
+        _state: &Self::State,
+        _inputs: &Self::Inputs,
+        _world: &Self::World,
+    ) -> Vec<BehaviourId> {
+        Vec::new()
+    }
 
     /// The declared fields of the model's `state`.
     fn fields(&self, state: &Self::State) -> Self::Fields;
@@ -124,8 +220,13 @@ pub trait Domain {
     ///
     /// # Errors
     ///
-    /// The reason the record isn't one the domain covers.
+    /// The reason the record isn't one the domain covers, or the decode's failure.
     fn expected(&self, next: &FrameRecord) -> Result<Self::Fields, Self::Skip>;
+
+    /// Whether `skip` is a frame the domain doesn't run in, or a decode failure.
+    fn uncompared(&self, skip: &Self::Skip) -> Uncompared {
+        Uncompared::Skip(skip.to_string())
+    }
 }
 
 /// A field's value at a frame where the model and the oracle disagree.
@@ -140,18 +241,43 @@ pub struct Mismatch {
 }
 
 /// One declared field over a run.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FieldReport {
     /// The field's name.
     pub name: &'static str,
-    /// The compared frames on which the field matched.
+    /// The compared frames on which the field matched and was verified.
     pub matched: u64,
-    /// The compared frames on which it didn't.
+    /// The compared frames on which it matched, but its value came through an answer the
+    /// stand-in copied from record N+1.
+    pub unverified: u64,
+    /// The compared frames on which it didn't match.
     pub mismatched: u64,
+    /// The compared frames on which it was masked.
+    pub masked: u64,
+    /// The unmasked frames on which the null model matched it.
+    pub null_matched: u64,
     /// The first [`FIRST_MISMATCHES`] mismatches, in frame order.
     pub first: Vec<Mismatch>,
     /// The first [`FIRST_MISMATCHES`] runs of consecutive mismatched frames.
     pub runs: Vec<Run>,
+}
+
+impl FieldReport {
+    /// The frames the field was compared on, unmasked: matched, unverified or not.
+    #[must_use]
+    pub const fn compared(&self) -> u64 {
+        self.matched
+            .saturating_add(self.unverified)
+            .saturating_add(self.mismatched)
+    }
+
+    const fn add(&mut self, other: &Self) {
+        self.matched = self.matched.saturating_add(other.matched);
+        self.unverified = self.unverified.saturating_add(other.unverified);
+        self.mismatched = self.mismatched.saturating_add(other.mismatched);
+        self.masked = self.masked.saturating_add(other.masked);
+        self.null_matched = self.null_matched.saturating_add(other.null_matched);
+    }
 }
 
 /// Consecutive frames on which a field mismatched.
@@ -163,78 +289,209 @@ pub struct Run {
     pub last: Frame,
 }
 
+/// One catalogue entry over a run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BehaviourReport {
+    /// The entry.
+    pub id: BehaviourId,
+    /// The compared frames that exercised it.
+    pub exercised: u64,
+    /// Those of them that matched and were verified on every unmasked field.
+    pub matched: u64,
+}
+
 /// A domain's run over one scenario's records.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Report {
     /// The domain.
     pub domain: &'static str,
     /// The frames in the run, M: every pair of consecutive records.
     pub frames: u64,
-    /// The frames compared: M less the skipped ones.
+    /// The frames compared: M less the skipped frames and the defects.
     pub compared: u64,
-    /// The compared frames on which every declared field matched, N.
+    /// The compared frames on which every unmasked field matched and was verified.
     pub matched: u64,
-    /// The skipped frames, by reason.
+    /// The compared frames on which every unmasked field matched, but at least one only
+    /// through an answer copied from record N+1.
+    pub unverified: u64,
+    /// The compared frames on which every field was masked.
+    pub masked_whole: u64,
+    /// The compared frames on which the null model matched every unmasked field.
+    pub null_matched: u64,
+    /// The frames the domain doesn't run in, by reason.
     pub skipped: BTreeMap<String, u64>,
+    /// The frames the harness couldn't decode, by failure: harness defects.
+    pub defects: BTreeMap<String, u64>,
+    /// The compared frames with a mask, by the mask's reason.
+    pub masked: BTreeMap<&'static str, u64>,
     /// Each declared field, in the domain's order.
     pub fields: Vec<FieldReport>,
+    /// Each catalogue entry, in the catalogue's order.
+    pub behaviours: Vec<BehaviourReport>,
+}
+
+/// What one compared frame gave.
+struct Compared<'a, F> {
+    frame: Frame,
+    model: &'a F,
+    oracle: &'a F,
+    null: &'a F,
+    masked: FieldSet,
+    unverified: FieldSet,
 }
 
 impl Report {
-    fn new<D: Domain>() -> Self {
+    /// An empty report for `D`.
+    #[must_use]
+    pub fn new<D: Domain>() -> Self {
         Self {
             domain: D::NAME,
-            frames: 0,
-            compared: 0,
-            matched: 0,
-            skipped: BTreeMap::new(),
             fields: D::FIELDS
                 .iter()
                 .map(|field| FieldReport {
                     name: field.name,
-                    matched: 0,
-                    mismatched: 0,
-                    first: Vec::new(),
-                    runs: Vec::new(),
+                    ..FieldReport::default()
                 })
                 .collect(),
+            behaviours: D::BEHAVIOURS
+                .iter()
+                .map(|behaviour| BehaviourReport {
+                    id: behaviour.id,
+                    exercised: 0,
+                    matched: 0,
+                })
+                .collect(),
+            ..Self::default()
         }
     }
 
-    fn skip(&mut self, reason: impl fmt::Display) {
-        let count = self.skipped.entry(reason.to_string()).or_default();
+    fn uncompared(&mut self, reason: Uncompared) {
+        let (counts, reason) = match reason {
+            Uncompared::Skip(reason) => (&mut self.skipped, reason),
+            Uncompared::Defect(reason) => (&mut self.defects, reason),
+        };
+        let count = counts.entry(reason).or_default();
         *count = count.saturating_add(1);
     }
 
-    fn compare<D: Domain>(&mut self, frame: Frame, model: &D::Fields, oracle: &D::Fields) {
+    /// The frames the domain doesn't run in.
+    #[must_use]
+    pub fn skipped_frames(&self) -> u64 {
+        self.skipped.values().sum()
+    }
+
+    /// The frames the harness couldn't decode.
+    #[must_use]
+    pub fn defect_frames(&self) -> u64 {
+        self.defects.values().sum()
+    }
+
+    fn compare<D: Domain>(&mut self, frame: &Compared<'_, D::Fields>, exercised: &[BehaviourId]) {
         self.compared = self.compared.saturating_add(1);
-        let mut all = true;
-        for (field, report) in D::FIELDS.iter().zip(&mut self.fields) {
-            if (field.same)(model, oracle) {
-                report.matched = report.matched.saturating_add(1);
+        let (mut all, mut verified, mut null_all, mut any) = (true, true, true, false);
+        for (index, (field, report)) in D::FIELDS.iter().zip(&mut self.fields).enumerate() {
+            if frame.masked.contains(index) {
+                report.masked = report.masked.saturating_add(1);
+                continue;
+            }
+            any = true;
+            if (field.same)(frame.null, frame.oracle) {
+                report.null_matched = report.null_matched.saturating_add(1);
+            } else {
+                null_all = false;
+            }
+            if (field.same)(frame.model, frame.oracle) {
+                if frame.unverified.contains(index) {
+                    verified = false;
+                    report.unverified = report.unverified.saturating_add(1);
+                } else {
+                    report.matched = report.matched.saturating_add(1);
+                }
                 continue;
             }
             all = false;
             report.mismatched = report.mismatched.saturating_add(1);
             if report.first.len() < FIRST_MISMATCHES {
                 report.first.push(Mismatch {
-                    frame,
-                    model: (field.show)(model),
-                    oracle: (field.show)(oracle),
+                    frame: frame.frame,
+                    model: (field.show)(frame.model),
+                    oracle: (field.show)(frame.oracle),
                 });
             }
             let room = report.runs.len() < FIRST_MISMATCHES;
             match report.runs.last_mut() {
-                Some(run) if run.last.0.checked_add(1) == Some(frame.0) => run.last = frame,
+                Some(run) if run.last.0.checked_add(1) == Some(frame.frame.0) => {
+                    run.last = frame.frame;
+                }
                 Some(_) | None if room => report.runs.push(Run {
-                    first: frame,
-                    last: frame,
+                    first: frame.frame,
+                    last: frame.frame,
                 }),
                 Some(_) | None => {}
             }
         }
-        if all {
-            self.matched = self.matched.saturating_add(1);
+        if !any {
+            self.masked_whole = self.masked_whole.saturating_add(1);
+            return;
+        }
+        match (all, verified) {
+            (true, true) => self.matched = self.matched.saturating_add(1),
+            (true, false) => self.unverified = self.unverified.saturating_add(1),
+            (false, _) => {}
+        }
+        if null_all {
+            self.null_matched = self.null_matched.saturating_add(1);
+        }
+        for id in exercised {
+            if let Some(report) = self.behaviours.iter_mut().find(|entry| entry.id == *id) {
+                report.exercised = report.exercised.saturating_add(1);
+                if all && verified {
+                    report.matched = report.matched.saturating_add(1);
+                }
+            }
+        }
+    }
+
+    /// `other`'s counts added to `self`'s, a total over rows (mismatch lists aren't kept).
+    pub fn add(&mut self, other: &Self) {
+        self.domain = other.domain;
+        self.frames = self.frames.saturating_add(other.frames);
+        self.compared = self.compared.saturating_add(other.compared);
+        self.matched = self.matched.saturating_add(other.matched);
+        self.unverified = self.unverified.saturating_add(other.unverified);
+        self.masked_whole = self.masked_whole.saturating_add(other.masked_whole);
+        self.null_matched = self.null_matched.saturating_add(other.null_matched);
+        for (counts, more) in [
+            (&mut self.skipped, &other.skipped),
+            (&mut self.defects, &other.defects),
+        ] {
+            for (reason, count) in more {
+                let total = counts.entry(reason.clone()).or_default();
+                *total = total.saturating_add(*count);
+            }
+        }
+        for (reason, count) in &other.masked {
+            let total = self.masked.entry(reason).or_default();
+            *total = total.saturating_add(*count);
+        }
+        for field in &other.fields {
+            match self.fields.iter_mut().find(|mine| mine.name == field.name) {
+                Some(mine) => mine.add(field),
+                None => self.fields.push(FieldReport {
+                    first: Vec::new(),
+                    runs: Vec::new(),
+                    ..field.clone()
+                }),
+            }
+        }
+        for entry in &other.behaviours {
+            match self.behaviours.iter_mut().find(|mine| mine.id == entry.id) {
+                Some(mine) => {
+                    mine.exercised = mine.exercised.saturating_add(entry.exercised);
+                    mine.matched = mine.matched.saturating_add(entry.matched);
+                }
+                None => self.behaviours.push(*entry),
+            }
         }
     }
 }
@@ -243,19 +500,37 @@ impl fmt::Display for Report {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "{}: {} of {} frames matched ({} compared)",
-            self.domain, self.matched, self.frames, self.compared
+            "{}: {} frames: {} compared, {} skipped, {} defects; {} matched, {} unverified, \
+             {} masked whole; null model {} matched",
+            self.domain,
+            self.frames,
+            self.compared,
+            self.skipped_frames(),
+            self.defect_frames(),
+            self.matched,
+            self.unverified,
+            self.masked_whole,
+            self.null_matched,
         )?;
         for (reason, count) in &self.skipped {
             writeln!(f, "  skipped {count}: {reason}")?;
         }
+        for (reason, count) in &self.defects {
+            writeln!(f, "  defect {count}: {reason}")?;
+        }
+        for (reason, count) in &self.masked {
+            writeln!(f, "  masked {count}: {reason}")?;
+        }
         for field in &self.fields {
             writeln!(
                 f,
-                "  {} {} of {}",
+                "  {} {} of {} matched, {} unverified, {} masked; null {}",
                 field.name,
                 field.matched,
-                field.matched.saturating_add(field.mismatched)
+                field.compared(),
+                field.unverified,
+                field.masked,
+                field.null_matched,
             )?;
             for run in &field.runs {
                 writeln!(f, "    frames {}..={}", run.first.0, run.last.0)?;
@@ -270,6 +545,86 @@ impl fmt::Display for Report {
         }
         Ok(())
     }
+}
+
+/// The per-behaviour table of a report: each entry's exercised and matched frames, then the
+/// entries no compared frame exercised, "vectors only".
+pub struct Behaviours<'a>(pub &'a Report);
+
+impl fmt::Display for Behaviours<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (exercised, unexercised): (Vec<&BehaviourReport>, Vec<&BehaviourReport>) = self
+            .0
+            .behaviours
+            .iter()
+            .partition(|entry| entry.exercised > 0);
+        for entry in exercised {
+            writeln!(
+                f,
+                "  {:?}: {} matched of {} exercised",
+                entry.id, entry.matched, entry.exercised
+            )?;
+        }
+        let names: Vec<String> = unexercised
+            .iter()
+            .map(|entry| format!("{:?}", entry.id))
+            .collect();
+        writeln!(f, "  vectors only: {}", names.join(", "))
+    }
+}
+
+/// The fields on which two projections differ.
+fn differing<D: Domain>(left: &D::Fields, right: &D::Fields) -> FieldSet {
+    D::FIELDS
+        .iter()
+        .enumerate()
+        .filter(|(_, field)| !(field.same)(left, right))
+        .fold(FieldSet::EMPTY, |set, (index, _)| {
+            set.union(FieldSet::single(index))
+        })
+}
+
+/// One frame from `from` to `next`, compared into `report`.
+fn frame<D: Domain>(
+    domain: &D,
+    report: &mut Report,
+    from: &FrameRecord,
+    next: &FrameRecord,
+) -> Result<(), D::Skip> {
+    let (mut state, inputs) = domain.decode(from, Interval::ending_at(next))?;
+    let mut world = domain.world(from, next)?;
+    let masks = domain.masks(from, next, &inputs)?;
+    let oracle = domain.expected(next)?;
+    let decoded = state.clone();
+    let null = domain.fields(&decoded);
+    let neutral = domain.neutral(&world);
+    domain.step(&mut state, &inputs, &mut world);
+    let model = domain.fields(&state);
+    let unverified = neutral.map_or(FieldSet::EMPTY, |mut neutral| {
+        let mut alone = decoded.clone();
+        domain.step(&mut alone, &inputs, &mut neutral);
+        differing::<D>(&domain.fields(&alone), &model)
+    });
+    let masked = masks
+        .iter()
+        .fold(FieldSet::EMPTY, |set, mask| set.union(mask.fields));
+    for mask in &masks {
+        let count = report.masked.entry(mask.reason).or_default();
+        *count = count.saturating_add(1);
+    }
+    let exercised = domain.exercised(&decoded, &inputs, &world);
+    report.compare::<D>(
+        &Compared {
+            frame: Frame(next.index),
+            model: &model,
+            oracle: &oracle,
+            null: &null,
+            masked,
+            unverified,
+        },
+        &exercised,
+    );
+    Ok(())
 }
 
 /// `domain` over `records`, a scenario's records in frame order.
@@ -290,17 +645,8 @@ pub fn run<D: Domain, E>(
     for record in records {
         let next = record?;
         report.frames = report.frames.saturating_add(1);
-        let compared = domain
-            .decode(&from, Interval::ending_at(&next))
-            .and_then(|decoded| Ok((decoded, domain.world(&from, &next)?)))
-            .and_then(|decoded| Ok((decoded, domain.expected(&next)?)));
-        match compared {
-            Ok((((mut state, inputs), mut world), oracle)) => {
-                domain.step(&mut state, &inputs, &mut world);
-                let model = domain.fields(&state);
-                report.compare::<D>(Frame(next.index), &model, &oracle);
-            }
-            Err(reason) => report.skip(reason),
+        if let Err(reason) = frame(domain, &mut report, &from, &next) {
+            report.uncompared(domain.uncompared(&reason));
         }
         from = next;
     }

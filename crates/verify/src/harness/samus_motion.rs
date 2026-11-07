@@ -13,6 +13,7 @@ use core::fmt;
 use data::movement::{AirMotion, GroundMotion, HorizontalSpeeds, VerticalSpeeds};
 use data::pose::{POSE_COUNT, POSE_DEFINITIONS};
 use data::rom::{AddressError, Lorom};
+use game::behaviours::{self, Behaviour, BehaviourId};
 use game::model::collision::{
     Blocker, Body, Collision, Enemies, EnemyHit, Heading, Moved, Stop, WallHit,
 };
@@ -26,7 +27,7 @@ use game::session::SpeedCap;
 use game::state::strand::Frame;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 
-use super::{Domain, Field, Interval};
+use super::{Domain, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::decode::{DecodeError, Rules};
 use crate::domain_field;
 use crate::source::{self, WramByte, WramWord};
@@ -44,7 +45,8 @@ const SPACE_JUMP: u16 = 0x0200;
 const GRAVITY_SUIT: u16 = 0x0020;
 const SPEED_BOOSTER: u16 = 0x2000;
 
-/// Why a frame isn't one Samus's motion is checked on.
+/// Why a frame isn't one Samus's motion is compared on: her motion doesn't run in it, or the
+/// harness couldn't decode it (`Unreadable`, `Facing`, `Command`: harness defects).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Skip {
     /// A source couldn't be read, or holds a code the model has no value for.
@@ -61,10 +63,6 @@ pub enum Skip {
     MovementType(u8),
     /// Her pose's X direction is no facing.
     Facing(u8),
-    /// Her y radius changes, so pose fit moves y, which isn't an input yet.
-    PoseFit,
-    /// The elevator is moving, and carries her by more than motion's own step.
-    Elevator,
     /// A pose change command the original never writes.
     Command(u16),
     /// Samus's per-frame handler at the frame's start runs no motion: she is locked (the
@@ -73,24 +71,16 @@ pub enum Skip {
     /// Her movement handler at the frame's start isn't the normal one and is no deferred
     /// behaviour this harness names.
     MovementHandler(u16),
-    /// A behaviour the spec defers (§10) runs in the frame.
+    /// A deferred behaviour (spec §10) moves her instead of the normal movement handler.
     Deferred(Deferred),
 }
 
-/// A behaviour the spec defers (§10, "Out of scope") that a frame runs, so the frame isn't
-/// one the motion model is checked on.
+/// A behaviour the spec defers (§10, "Out of scope") whose own movement handler runs in the
+/// frame instead of the motion model's.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Deferred {
-    /// She is submerged in water, lava or acid at either end of the frame: the liquid tables.
-    Liquid,
-    /// The speed booster: `extra_run` beyond the plain 2.0 cap, or a jump that adds `extra_run`
-    /// to the jump speed.
-    SpeedBooster,
     /// The grapple beam's movement (the swing release).
     Grapple,
-    /// A block-inside push (quicksand, a treadmill): extra displacement, the deceleration
-    /// multiplier, or the quicksand's speed writes.
-    Push,
     /// Knockback from a hit.
     Knockback,
     /// The bomb jump's movement.
@@ -104,10 +94,7 @@ pub enum Deferred {
 impl fmt::Display for Deferred {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Self::Liquid => "liquid physics (submerged)",
-            Self::SpeedBooster => "the speed booster (extra run past 2.0, or a boosted jump)",
             Self::Grapple => "grapple (the swing release's movement)",
-            Self::Push => "a block-inside push (quicksand, treadmill)",
             Self::Knockback => "knockback",
             Self::BombJump => "the bomb jump's movement",
             Self::Shinespark => "the shinespark or crystal flash movement",
@@ -125,8 +112,6 @@ impl fmt::Display for Skip {
             Self::Waiting(at) => write!(f, "the main thread waits in {at}: motion doesn't run"),
             Self::MovementType(code) => write!(f, "movement type {code:#04X} isn't in the domain"),
             Self::Facing(code) => write!(f, "pose X direction {code:#04X}"),
-            Self::PoseFit => write!(f, "the y radius changes: pose fit moves y"),
-            Self::Elevator => write!(f, "the elevator moves her: another domain writes y"),
             Self::Command(code) => write!(f, "pose change command {code:#06X}"),
             Self::NotRunning(code) => {
                 write!(
@@ -314,19 +299,23 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
     })
 }
 
-/// Whether the speed booster changes the frame from `from` to `next`: with it equipped, extra
-/// run speed at 2.0 or more (its cap is 7.0, not 2.0), or extra run speed at either end of a
-/// frame that jumps (rises, faster than before), since a jump adds half of it to the speed.
-fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
+/// The fields the speed booster takes out of the domain on the frame from `from`, read from
+/// record N alone. With it equipped and extra run speed at 2.0 or more, its cap is 7.0, not
+/// 2.0: the extra run speed and x. With any extra run speed, a jump adds half of it to the jump
+/// speed: the vertical speed and y.
+fn boosted(from: &FrameRecord) -> Result<FieldSet, Skip> {
     if word(from, source::EQUIPPED_ITEMS)? & SPEED_BOOSTER == 0 {
-        return Ok(false);
+        return Ok(FieldSet::EMPTY);
     }
-    let (before, after) = (state(from)?, state(next)?);
-    let jumped = after.vertical == VerticalMotion::Up
-        && (before.vertical != VerticalMotion::Up
-            || after.vertical_speed.0 > before.vertical_speed.0);
-    Ok(before.extra_run.pixel() >= 2
-        || ((before.extra_run.0 != 0 || after.extra_run.0 != 0) && jumped))
+    let extra_run = state(from)?.extra_run;
+    let mut fields = FieldSet::EMPTY;
+    if extra_run.pixel() >= 2 {
+        fields = fields.union(Quantity::ExtraRun.set().union(Quantity::X.set()));
+    }
+    if extra_run.0 != 0 {
+        fields = fields.union(Quantity::VerticalSpeed.set().union(Quantity::Y.set()));
+    }
+    Ok(fields)
 }
 
 fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, DecodeError> {
@@ -647,7 +636,11 @@ impl Proposal {
 /// command, and the arm-pump step's request is that pose. A special or super special proposal
 /// is forced; the super special one with "transition animation finished" is the animation's
 /// hand-over (`AnimationEnd`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// Every one of these answers copies record N+1, so the fields it feeds are unverified. The
+/// neutral stand-in ([`Domain::neutral`]) copies nothing: every move is unblocked, no seat, no
+/// wall, and no new pose.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Replay {
     target: Position,
     radius: Radius,
@@ -656,28 +649,49 @@ pub struct Replay {
     seat: i16,
     /// The wall jump fired from a solid enemy she already touched.
     enemy_touch: bool,
+    /// Whether the answers copy record N+1; the neutral stand-in's don't.
+    copies: bool,
+    /// What the step asked and was answered, for the behaviour attribution.
+    trace: Trace,
+}
+
+/// What a frame's step asked of the stand-in and got: the harness's view of the behaviours it
+/// exercised, since the model doesn't report its row (`exercised`).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+struct Trace {
+    /// The entries whose answers the stand-in gave: a stop, a seat, the probe's answers.
+    answered: Vec<BehaviourId>,
+    /// The frame's vertical result.
+    vertical: VerticalResult,
+    /// Whether the vertical result was passed to the pose writes.
+    passed: bool,
 }
 
 impl Replay {
     /// The move from `at` by `distance` on an axis whose target is `target`.
-    fn answer(at: Fixed, target: Fixed, distance: Fixed, side: Heading) -> Moved {
+    fn answer(&mut self, at: Fixed, target: Fixed, distance: Fixed, side: Heading) -> Moved {
         let remaining = i64::from(target.0.wrapping_sub(at.0).cast_signed());
         let asked = i64::from(distance.0.cast_signed());
         let landed = Fixed(at.0.wrapping_add(distance.0));
         // Short of the move, or pushed back from it: a stop. A landing on the target's pixel
         // is no stop (a probe may still write the subpixel); beyond it, the model's error.
-        let stopped = match asked.signum() {
-            _ if landed.pixel() == target.pixel() => false,
-            1 => remaining < asked,
-            -1 => remaining > asked,
-            _ => false,
-        };
+        let stopped = self.copies
+            && match asked.signum() {
+                _ if landed.pixel() == target.pixel() => false,
+                1 => remaining < asked,
+                -1 => remaining > asked,
+                _ => false,
+            };
         if !stopped {
             return Moved {
                 distance,
                 stop: None,
                 seat: 0,
             };
+        }
+        self.trace.answered.push(BehaviourId::FloorFlushSubpixel);
+        if matches!(side, Heading::Left | Heading::Right) {
+            self.trace.answered.push(BehaviourId::WallStop);
         }
         Moved {
             distance: Fixed::new(target.pixel().wrapping_sub(at.pixel()), 0),
@@ -701,12 +715,16 @@ impl Collision for Replay {
         enemies: Enemies,
     ) -> Moved {
         let seat = match enemies {
-            Enemies::Test => self.seat,
-            Enemies::Skip => 0,
+            Enemies::Test if self.copies => self.seat,
+            Enemies::Test | Enemies::Skip => 0,
         };
+        if seat != 0 {
+            self.trace.answered.push(BehaviourId::SlopeSeat);
+        }
+        let target = self.target.x;
         Moved {
             seat,
-            ..Self::answer(body.position.x, self.target.x, distance, heading)
+            ..self.answer(body.position.x, target, distance, heading)
         }
     }
 
@@ -721,13 +739,15 @@ impl Collision for Replay {
             Heading::Up => Fixed(distance.0.wrapping_neg()),
             Heading::Down | Heading::Left | Heading::Right => distance,
         };
-        Self::answer(body.position.y, self.target.y, signed, heading)
+        let target = self.target.y;
+        self.answer(body.position.y, target, signed, heading)
     }
 
     fn move_up(&mut self, body: Body, distance: Fixed) -> Moved {
-        Self::answer(
+        let target = self.target.y;
+        self.answer(
             body.position.y,
-            self.target.y,
+            target,
             Fixed(distance.0.wrapping_neg()),
             Heading::Up,
         )
@@ -743,15 +763,27 @@ impl Collision for Replay {
     }
 
     fn probe_wall(&mut self, body: Body, _heading: Heading, reach: u16) -> Option<WallHit> {
+        if !self.copies {
+            return None;
+        }
         let fires = self
             .pose
             .is_some_and(|pose| pose.start == Some(PoseStart::WallJumpStart));
         let subpixel =
             (body.position.x.sub() != self.target.x.sub()).then_some(self.target.x.sub());
+        let touching = fires && self.enemy_touch;
+        if subpixel.is_some() {
+            self.trace.answered.push(BehaviourId::WallProbeSubpixel);
+        }
+        if touching {
+            self.trace
+                .answered
+                .push(BehaviourId::EnemyTouchZeroesYSubpixel);
+        }
         (fires || subpixel.is_some()).then_some(WallHit {
             distance_px: if fires { 0 } else { reach },
             subpixel,
-            touching: fires && self.enemy_touch,
+            touching,
         })
     }
 }
@@ -805,6 +837,42 @@ impl From<&State> for Declared {
     }
 }
 
+/// A declared field that a mask names, by its place in [`SamusMotion`]'s `FIELDS`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Quantity {
+    X,
+    Y,
+    BaseSpeed,
+    ExtraRun,
+    Momentum,
+    Mode,
+    VerticalSpeed,
+    Vertical,
+}
+
+impl Quantity {
+    /// The field alone.
+    const fn set(self) -> FieldSet {
+        FieldSet::single(match self {
+            Self::X => 0,
+            Self::Y => 1,
+            Self::BaseSpeed => 2,
+            Self::ExtraRun => 3,
+            Self::Momentum => 4,
+            Self::Mode => 5,
+            Self::VerticalSpeed => 6,
+            Self::Vertical => 7,
+        })
+    }
+
+    /// The fields in `quantities`.
+    fn all(quantities: &[Self]) -> FieldSet {
+        quantities
+            .iter()
+            .fold(FieldSet::EMPTY, |set, quantity| set.union(quantity.set()))
+    }
+}
+
 /// The pose definition's Y radius byte (`data::pose`: eight bytes a pose, the radius seventh).
 const Y_RADIUS_BYTE: usize = 6;
 /// Bytes a pose definition.
@@ -838,28 +906,14 @@ impl SamusMotion {
         })
     }
 
-    /// Whether pose fit moved her in the air in the frame from `from` to `next` ($91:FDAE):
-    /// the pose changes to one with a larger Y radius, she moves the same way at both ends
-    /// (no landing, no ceiling), and she doesn't end where her vertical speed alone takes her.
-    /// The record's radius shows the change a frame later, so the radius test alone misses
-    /// this frame, and the bridge would read the push as a block (samus-input-poses:116, a
-    /// spin jump into a normal-jump pose just over the floor).
+    /// Whether pose fit ($91:FDAE) may move y in the frame from `from` to `next`: pose
+    /// selection's new pose (record N+1's, an answer of the neighbour, not a declared field)
+    /// has a larger Y radius than the old one. The record's radius shows the change a frame
+    /// later, so the radius test alone misses this frame (samus-input-poses:116).
     fn pose_fit(&self, from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
         let (old, new) = (Pose::of(from)?, Pose::of(next)?);
         let radius = |pose: Pose| self.y_radii.get(usize::from(pose.code)).copied();
-        if new.code == old.code || radius(new) <= radius(old) {
-            return Ok(false);
-        }
-        let (before, after) = (state(from)?, state(next)?);
-        if after.vertical != before.vertical {
-            return Ok(false);
-        }
-        let unblocked = match before.vertical {
-            VerticalMotion::None => return Ok(false),
-            VerticalMotion::Down => before.position.y.0.wrapping_add(before.vertical_speed.0),
-            VerticalMotion::Up => before.position.y.0.wrapping_sub(before.vertical_speed.0),
-        };
-        Ok(after.position.y.0 != unblocked)
+        Ok(new.code != old.code && radius(new) > radius(old))
     }
 
     const fn rules(&self) -> MotionRules<'_> {
@@ -946,6 +1000,7 @@ impl Domain for SamusMotion {
     type World = Replay;
     type Fields = Declared;
     type Skip = Skip;
+    const BEHAVIOURS: &'static [Behaviour] = &behaviours::SAMUS_MOTION;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("position.x", x),
         domain_field!("position.y", y),
@@ -1009,30 +1064,60 @@ impl Domain for SamusMotion {
         Ok((state(from)?, inputs))
     }
 
-    fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Replay, Skip> {
+    fn masks(
+        &self,
+        from: &FrameRecord,
+        next: &FrameRecord,
+        _inputs: &Inputs,
+    ) -> Result<Vec<Mask>, Skip> {
+        use Quantity as Q;
+        let mut masks = Vec::new();
+        let mut mask = |reason, fields| masks.push(Mask { reason, fields });
         if word(from, source::ELEVATOR_STATUS)? != 0 {
-            return Err(Skip::Elevator);
+            mask(
+                "the elevator moves her: another domain writes y",
+                Q::Y.set(),
+            );
         }
-        let (before, after) = (radius(from)?, radius(next)?);
-        if before.y != after.y {
-            return Err(Skip::PoseFit);
+        if radius(from)?.y != radius(next)?.y || self.pose_fit(from, next)? {
+            mask("a larger y radius: pose fit moves y", Q::Y.set());
         }
         if pushed(next)? {
-            return Err(Skip::Deferred(Deferred::Push));
+            mask(
+                "deferred: a block-inside push (quicksand, treadmill)",
+                Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed]),
+            );
         }
-        if submerged(from, after.y)? || submerged(next, after.y)? {
-            return Err(Skip::Deferred(Deferred::Liquid));
+        if submerged(from, radius(from)?.y)? {
+            mask("deferred: liquid physics (submerged)", FieldSet::ALL);
         }
-        if boosted(from, next)? {
-            return Err(Skip::Deferred(Deferred::SpeedBooster));
+        let boost = boosted(from)?;
+        if boost != FieldSet::EMPTY {
+            mask(
+                "deferred: the speed booster (extra run past 2.0, or a boosted jump)",
+                boost,
+            );
         }
         let (old, new) = (Pose::of(from)?, Pose::of(next)?);
         if new.movement == KNOCKBACK && old.movement != KNOCKBACK {
-            return Err(Skip::Deferred(Deferred::Knockback));
+            mask(
+                "deferred: a hit starts knockback and sets her speeds",
+                Q::all(&[
+                    Q::BaseSpeed,
+                    Q::ExtraRun,
+                    Q::Momentum,
+                    Q::Mode,
+                    Q::VerticalSpeed,
+                    Q::Vertical,
+                ]),
+            );
         }
-        if self.pose_fit(from, next)? {
-            return Err(Skip::PoseFit);
-        }
+        Ok(masks)
+    }
+
+    fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Replay, Skip> {
+        let after = radius(next)?;
+        let (old, new) = (Pose::of(from)?, Pose::of(next)?);
         // Pose selection proposes a pose, which may be the one she has: then nothing starts,
         // but its command still runs and the arm-pump step still reads it. A start that leaves
         // another pose than the proposed one (the space jump's and screw attack's spin poses)
@@ -1089,6 +1174,19 @@ impl Domain for SamusMotion {
             pose,
             seat: seat(old, from, next, target)?,
             enemy_touch,
+            copies: true,
+            trace: Trace::default(),
+        })
+    }
+
+    fn neutral(&self, world: &Replay) -> Option<Replay> {
+        Some(Replay {
+            pose: None,
+            seat: 0,
+            enemy_touch: false,
+            copies: false,
+            trace: Trace::default(),
+            ..world.clone()
         })
     }
 
@@ -1111,6 +1209,8 @@ impl Domain for SamusMotion {
                 | VerticalResult::Falling(FallKind::NoChange)
                 | VerticalResult::Landed(LandKind::NoChange)
         );
+        world.trace.vertical = vertical;
+        world.trace.passed = passed;
         let command = |command| match command {
             // The hand-over runs its own command, never the vertical result's.
             Command::AnimationEnd => PoseCommand::AnimationEnd,
@@ -1142,11 +1242,232 @@ impl Domain for SamusMotion {
         state.pose_writes(change, jump_held, inputs.equipment, &rules);
     }
 
+    fn exercised(&self, state: &State, inputs: &Inputs, world: &Replay) -> Vec<BehaviourId> {
+        exercised(state, inputs, world)
+    }
+
     fn fields(&self, state: &State) -> Declared {
         Declared::from(state)
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
         Ok(Declared::from(&state(next)?))
+    }
+
+    fn uncompared(&self, skip: &Skip) -> Uncompared {
+        match skip {
+            Skip::Unreadable(_) | Skip::Facing(_) | Skip::Command(_) => {
+                Uncompared::Defect(skip.to_string())
+            }
+            Skip::GameState(_)
+            | Skip::NotAtFrameEnd
+            | Skip::Waiting(_)
+            | Skip::MovementType(_)
+            | Skip::NotRunning(_)
+            | Skip::MovementHandler(_)
+            | Skip::Deferred(_) => Uncompared::Skip(skip.to_string()),
+        }
+    }
+}
+
+/// How the motion table moves her sideways in a row, as the harness reads the spec's table
+/// (§4) for the attribution: the model keeps its row private.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Across {
+    Ground,
+    Coast,
+    None,
+    TakeOff,
+    Air,
+}
+
+/// The row the decode implies (spec §4's table): its sideways motion, whether it runs the air
+/// step, and whether a rise in it ends on the jump's release (else on its spent speed).
+fn row(state: &State, locomotion: Locomotion) -> (Across, bool, bool) {
+    use Locomotion as L;
+    let airborne = state.vertical != VerticalMotion::None;
+    let accelerating = state.mode == SpeedMode::Accelerating;
+    let bounce = state.bounce != Bounce::None;
+    match locomotion {
+        L::FacingForward => (Across::None, false, false),
+        L::Standing { .. } | L::RanIntoWall | L::Crouching => (Across::Coast, false, false),
+        L::Running | L::Moonwalking | L::TurningOnGround => (Across::Ground, false, false),
+        L::Ball { at_rest: true, .. } if accelerating => (Across::Coast, airborne, false),
+        L::Ball { .. } | L::TurningInAir => (Across::Ground, airborne, false),
+        L::Transition => (Across::Coast, airborne, false),
+        L::Jumping { take_off: true } => (Across::TakeOff, false, false),
+        L::Jumping { take_off: false } | L::WallJumping | L::SpinJumping => {
+            (Across::Air, true, true)
+        }
+        L::BallInAir { falling: false, .. } if !bounce => (Across::Air, true, true),
+        L::Falling | L::BallInAir { .. } => (Across::Air, true, false),
+    }
+}
+
+/// The catalogue entries the frame exercised, derived in the harness from the row the decode
+/// implies and from what the step asked of the stand-in. The model exposes neither its row nor
+/// the behaviours it ran, so this is the observer's reading, not the model's trace: the model
+/// needs a hook for that.
+fn exercised(state: &State, inputs: &Inputs, world: &Replay) -> Vec<BehaviourId> {
+    use BehaviourId as B;
+    let mut ids = vec![B::LocomotionAtFrameStart, B::SpeedTable];
+    let (across, air, released) = row(state, inputs.locomotion);
+    let horizontal: &[BehaviourId] = match across {
+        Across::Ground => &[
+            B::ExtraRunSpeed,
+            B::ExtraRunCap,
+            B::BaseSpeed,
+            B::SpeedCap,
+            B::HorizontalStep,
+            B::DisplacementClamp,
+        ],
+        Across::Coast | Across::Air => &[B::HorizontalStep, B::DisplacementClamp],
+        Across::TakeOff => &[
+            B::ExtraRunSpeed,
+            B::ExtraRunCap,
+            B::HorizontalStep,
+            B::DisplacementClamp,
+        ],
+        Across::None => &[],
+    };
+    ids.extend_from_slice(horizontal);
+    if across == Across::Ground && state.mode == SpeedMode::TurningAround {
+        ids.extend([B::TurnCreep, B::HorizontalDirection]);
+    }
+    if !matches!(across, Across::None | Across::TakeOff) && !air {
+        ids.push(B::StepDown);
+    }
+    if air {
+        ids.extend([B::VerticalStep, B::FallCap]);
+        if state.vertical == VerticalMotion::Up {
+            ids.push(if released {
+                B::JumpRelease
+            } else {
+                B::StartedFalling
+            });
+        }
+    }
+    ids.extend(locomotion_entries(state, inputs, world));
+    ids.extend(world.trace.answered.iter().copied());
+    ids.extend(pose_entries(world));
+    ids
+}
+
+/// The entries a way of moving runs of its own, and the vertical result's.
+fn locomotion_entries(state: &State, inputs: &Inputs, world: &Replay) -> Vec<BehaviourId> {
+    use BehaviourId as B;
+    use Locomotion as L;
+    let bounce = state.bounce != Bounce::None;
+    let mut ids = Vec::new();
+    match inputs.locomotion {
+        L::FacingForward if inputs.elevator_moving => {
+            ids.extend([B::ElevatorRide, B::ElevatorHeadsUp]);
+        }
+        L::Standing { plain } => {
+            ids.push(B::CancelSpeedBoost);
+            if plain && inputs.pad.shoot {
+                ids.push(B::StandingShotRestartsAnimation);
+            }
+        }
+        L::RanIntoWall => ids.push(B::CancelSpeedBoost),
+        L::Ball { at_rest: true, .. } if state.mode == SpeedMode::Accelerating => {
+            ids.push(B::BallAtRest);
+        }
+        L::TurningOnGround | L::TurningInAir => {
+            ids.extend([B::CancelSpeedBoost, B::TurnIgnoresFall]);
+        }
+        L::Transition => ids.push(B::TransitionLanding),
+        L::Jumping { take_off: false } | L::Falling => ids.push(B::NoInputStops),
+        L::BallInAir { falling: true, .. } => ids.extend([B::BallDropStops, B::NoInputStops]),
+        L::BallInAir { falling: false, .. } if bounce => ids.push(B::NoInputStops),
+        L::SpinJumping => {
+            ids.extend([B::SpinJumpDrift, B::WallJumpCheck]);
+            if inputs.equipment.space_jump {
+                ids.push(B::SpaceJump);
+            }
+        }
+        L::WallJumping => ids.push(B::WallJumpDrift),
+        L::FacingForward
+        | L::Running
+        | L::Moonwalking
+        | L::Ball { .. }
+        | L::Crouching
+        | L::Jumping { take_off: true }
+        | L::BallInAir { .. } => {}
+    }
+    let ball_in_air = matches!(inputs.locomotion, L::BallInAir { .. });
+    let vertical = world.trace.vertical;
+    if bounce || (ball_in_air && vertical != VerticalResult::None) {
+        ids.push(B::BallBounce);
+    }
+    if matches!(inputs.locomotion, L::BallInAir { spring: true, .. })
+        && matches!(vertical, VerticalResult::Landed(_))
+    {
+        ids.push(B::SpringBallJump);
+    }
+    if vertical != VerticalResult::None {
+        ids.push(B::LandingContact);
+    }
+    if world.trace.passed {
+        ids.push(B::VerticalResultWrites);
+    }
+    ids
+}
+
+/// The entries pose selection's answer runs: its start's and command's writes.
+fn pose_entries(world: &Replay) -> Vec<BehaviourId> {
+    use BehaviourId as B;
+    let mut ids = Vec::new();
+    let Some(pose) = world.pose else {
+        return ids;
+    };
+    if matches!(pose.request, PoseRequest::Pose { running: true }) {
+        ids.push(B::ArmPumpStep);
+    }
+    if let Some(start) = pose.start {
+        ids.push(B::PoseStartWrites);
+        if matches!(
+            start,
+            PoseStart::TakeOff { .. } | PoseStart::SpinStart | PoseStart::WallJumpStart
+        ) {
+            ids.push(B::Jump);
+        }
+    }
+    match pose.command {
+        Command::AnimationEnd => ids.push(B::AnimationEndPose),
+        Command::Decelerate | Command::Stop | Command::KillXSpeed | Command::KillRunSpeed => {
+            ids.push(B::PoseCommandWrites);
+            if pose.start.is_some() || pose.replaced {
+                ids.push(B::PoseWriteOrder);
+            }
+        }
+        Command::None | Command::SolidVerticalCollision | Command::StartTransition => {}
+    }
+    ids
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Domain, FieldSet, Quantity, SamusMotion};
+
+    #[test]
+    fn a_quantity_names_the_declared_field_at_its_place() {
+        use Quantity as Q;
+        let named = [
+            (Q::X, "position.x"),
+            (Q::Y, "position.y"),
+            (Q::BaseSpeed, "base_speed"),
+            (Q::ExtraRun, "extra_run"),
+            (Q::Momentum, "momentum"),
+            (Q::Mode, "mode"),
+            (Q::VerticalSpeed, "vertical_speed"),
+            (Q::Vertical, "vertical"),
+        ];
+        for (quantity, name) in named {
+            let place = SamusMotion::FIELDS
+                .iter()
+                .position(|field| field.name == name);
+            assert_eq!(place.map(FieldSet::single), Some(quantity.set()), "{name}");
+        }
     }
 }

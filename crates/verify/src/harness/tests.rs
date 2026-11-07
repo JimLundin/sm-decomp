@@ -1,11 +1,16 @@
+use std::collections::BTreeMap;
 use std::convert::Infallible;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 
 use super::game_time::Clock;
-use super::{Mismatch, Run, run, run_cached};
+use game::state::GameTime;
+
+use super::{
+    Behaviours, Domain, Field, FieldSet, Interval, Mask, Mismatch, Report, Run, run, run_cached,
+};
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
 
@@ -91,7 +96,7 @@ fn a_mismatch_names_its_field_frame_and_both_values() {
 }
 
 #[test]
-fn a_record_the_domain_cannot_read_is_skipped_with_its_reason() {
+fn a_record_the_domain_cannot_read_is_a_harness_defect() {
     let mut short = record(1, 8, [0; 4]);
     short.wram = Box::default();
     let Ok(report) = run(
@@ -99,61 +104,113 @@ fn a_record_the_domain_cannot_read_is_skipped_with_its_reason() {
         [Ok::<_, Infallible>(record(0, 8, [0; 4])), Ok(short)],
     );
     assert_eq!((report.frames, report.compared), (1, 0));
-    assert_eq!(report.skipped.values().sum::<u64>(), 1);
+    assert_eq!((report.defect_frames(), report.skipped_frames()), (1, 0));
 }
 
-/// The frames on which the clock domain matches the oracle, per cached row: a floor, so a
-/// change to the model or the harness that loses a frame fails. `item-morph-ball`'s 399 others
-/// are frames 817 to 1215, where the clock holds though the game state stays gameplay.
-const CLOCK_MATCHED: [(&str, u64); 2] = [("area-brinstar", 476), ("item-morph-ball", 1028)];
-
-/// The clock domain over every cached row, against the record cache in `SM_CACHE`, held to
-/// [`CLOCK_MATCHED`]. Skipped only where `SM_CACHE` and `SM_ROM` are both unset, as the ratchet
-/// test is; with one set, or a path that isn't there, it fails. Run with `--nocapture` for the
-/// reports and the rate.
 #[test]
-fn the_clock_holds_its_matched_frames_against_the_cache() {
-    use std::io::Write as _;
-    let cache = match (std::env::var_os("SM_CACHE"), std::env::var_os("SM_ROM")) {
-        (Some(cache), Some(_)) => cache,
-        (None, None) => {
-            let _ = writeln!(std::io::stdout(), "skipped: SM_CACHE/SM_ROM unset");
-            return;
-        }
-        (cache, rom) => panic!("SM_CACHE and SM_ROM go together: {cache:?}, {rom:?}"),
-    };
-    let cache = Path::new(&cache);
-    assert!(
-        cache.is_dir(),
-        "SM_CACHE {}: not a directory",
-        cache.display()
+fn the_null_model_scores_the_frames_on_which_nothing_changes() {
+    let records = [
+        record(0, 8, [0, 0, 0, 1]),
+        record(1, 9, [0, 0, 0, 1]),
+        record(2, 8, [0, 0, 0, 1]),
+    ];
+    let Ok(report) = run(&Clock, records.map(Ok::<_, Infallible>));
+    // Frame 1: the model ticks, the oracle holds, the null model holds. Frame 2: both hold.
+    assert_eq!(
+        (report.compared, report.matched, report.null_matched),
+        (2, 1, 2)
     );
-    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
-    let started = Instant::now();
-    let mut frames = 0_u64;
-    for (row, floor) in CLOCK_MATCHED {
-        let report = match run_cached(&Clock, &lock, cache, row) {
-            Ok(report) => report,
-            Err(error) => panic!("{row}: {error}"),
-        };
-        let _ = write!(std::io::stdout(), "{row}: {report}");
-        assert!(report.matched >= floor, "{row}: {report}");
-        frames = frames.saturating_add(report.frames);
-    }
-    let seconds = started.elapsed().as_secs_f64();
-    let rate = f64::from(u32::try_from(frames).unwrap_or(u32::MAX)) / seconds.max(f64::EPSILON);
-    let _ = writeln!(
-        std::io::stdout(),
-        "{frames} frames in {seconds:.2} s ({rate:.0} frames/s)"
-    );
+    assert_eq!(report.fields[3].null_matched, 2);
 }
 
-/// The frames on which Samus's motion matches the oracle on every declared field, per cached
-/// row: a floor, as [`CLOCK_MATCHED`] is.
-const MOTION_MATCHED: [(&str, u64); 2] = [("area-brinstar", 22), ("item-morph-ball", 553)];
+/// The clock, with the frames field masked out of scope and the seconds field copied from
+/// record N+1 by its stand-in: a domain that exercises the harness's masks and its unverified
+/// count.
+struct Copying;
 
-/// The rows cached under `cache` (a directory with an `index.txt`), sorted, less `held`.
-fn other_cached_rows(cache: &Path, held: &[(&str, u64)]) -> Vec<String> {
+impl Domain for Copying {
+    const NAME: &'static str = "copying clock";
+    type State = GameTime;
+    type Inputs = ();
+    type World = Option<u16>;
+    type Fields = GameTime;
+    type Skip = String;
+    const FIELDS: &'static [Field<GameTime>] = <Clock as Domain>::FIELDS;
+
+    fn decode(&self, from: &FrameRecord, _: Interval) -> Result<(GameTime, ()), String> {
+        let time = Clock.expected(from).map_err(|error| error.to_string())?;
+        Ok((time, ()))
+    }
+
+    fn world(&self, _: &FrameRecord, next: &FrameRecord) -> Result<Option<u16>, String> {
+        let time = Clock.expected(next).map_err(|error| error.to_string())?;
+        Ok(Some(time.seconds))
+    }
+
+    fn masks(&self, _: &FrameRecord, _: &FrameRecord, (): &()) -> Result<Vec<Mask>, String> {
+        Ok(vec![Mask {
+            reason: "frames out of scope",
+            fields: FieldSet::single(3),
+        }])
+    }
+
+    fn neutral(&self, _: &Option<u16>) -> Option<Option<u16>> {
+        Some(None)
+    }
+
+    fn step(&self, state: &mut GameTime, (): &(), world: &mut Option<u16>) {
+        if let Some(seconds) = *world {
+            state.seconds = seconds;
+        }
+    }
+
+    fn fields(&self, state: &GameTime) -> GameTime {
+        *state
+    }
+
+    fn expected(&self, next: &FrameRecord) -> Result<GameTime, String> {
+        Clock.expected(next).map_err(|error| error.to_string())
+    }
+}
+
+#[test]
+fn a_masked_field_is_not_compared_and_a_copied_one_is_unverified() {
+    let Ok(report) = run(&Copying, two_frames([0, 0, 1, 0]));
+    assert_eq!(
+        (report.compared, report.matched, report.unverified),
+        (1, 0, 1)
+    );
+    assert_eq!(report.masked.get("frames out of scope"), Some(&1));
+    let seconds = &report.fields[2];
+    assert_eq!((seconds.matched, seconds.unverified), (0, 1));
+    let frames = &report.fields[3];
+    assert_eq!((frames.masked, frames.compared()), (1, 0));
+}
+
+/// The committed floors: `<domain> <row> <frames matched and verified>` a line, `#` comments.
+const FLOORS: &str = include_str!("floors.txt");
+
+/// The floor of `domain` on each row, from [`FLOORS`].
+fn floors(domain: &str) -> BTreeMap<&'static str, u64> {
+    FLOORS
+        .lines()
+        .filter(|line| !line.starts_with('#') && !line.trim().is_empty())
+        .filter_map(|line| {
+            let mut words = line.split_whitespace();
+            let (Some(name), Some(row), Some(floor)) = (words.next(), words.next(), words.next())
+            else {
+                panic!("floors.txt: {line:?}");
+            };
+            let floor = floor
+                .parse()
+                .unwrap_or_else(|error| panic!("floors.txt: {line:?}: {error}"));
+            (name == domain).then_some((row, floor))
+        })
+        .collect()
+}
+
+/// The rows cached under `cache` (a directory with an `index.txt`), sorted.
+fn cached_rows(cache: &Path) -> Vec<String> {
     let entries = match std::fs::read_dir(cache) {
         Ok(entries) => entries,
         Err(error) => panic!("SM_CACHE {}: {error}", cache.display()),
@@ -162,30 +219,97 @@ fn other_cached_rows(cache: &Path, held: &[(&str, u64)]) -> Vec<String> {
         .filter_map(Result::ok)
         .filter(|entry| entry.path().join("index.txt").is_file())
         .filter_map(|entry| entry.file_name().into_string().ok())
-        .filter(|row| held.iter().all(|(name, _)| name != row))
         .collect();
     rows.sort();
     rows
 }
 
-/// Samus's motion over every cached row, held to [`MOTION_MATCHED`]; `SM_CACHE` and `SM_ROM`
-/// as the clock's test reads them. Any other row cached there (`tools/oracle/record_caches.sh`)
-/// is run and reported without a floor, since CI's cache holds only the held rows; the last
-/// lines total each field over every row.
-#[test]
-fn samus_motion_holds_its_matched_frames_against_the_cache() {
+/// `SM_CACHE` and `SM_ROM`, or `None` (with a line saying so) when both are unset; one without
+/// the other, or a cache that isn't a directory, fails.
+fn environment() -> Option<(PathBuf, PathBuf)> {
     use std::io::Write as _;
     let (cache, rom) = match (std::env::var_os("SM_CACHE"), std::env::var_os("SM_ROM")) {
-        (Some(cache), Some(rom)) => (cache, rom),
+        (Some(cache), Some(rom)) => (PathBuf::from(cache), PathBuf::from(rom)),
         (None, None) => {
             let _ = writeln!(std::io::stdout(), "skipped: SM_CACHE/SM_ROM unset");
-            return;
+            return None;
         }
         (cache, rom) => panic!("SM_CACHE and SM_ROM go together: {cache:?}, {rom:?}"),
     };
+    assert!(
+        cache.is_dir(),
+        "SM_CACHE {}: not a directory",
+        cache.display()
+    );
+    Some((cache, rom))
+}
+
+/// `domain` over every row cached under `cache`, each held to its floor in [`FLOORS`] under
+/// `name`. A cached row without a floor fails, so a new row gets one; a floor whose row isn't
+/// cached (CI's cache holds two rows) is reported and not checked. Prints each row's report,
+/// the total and the per-behaviour table; run with `--nocapture` to see them.
+fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {
+    use std::io::Write as _;
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let floors = floors(name);
+    let started = Instant::now();
+    let mut total = Report::new::<D>();
+    let mut failures = Vec::new();
+    let rows = cached_rows(cache);
+    for row in &rows {
+        let report = match run_cached(domain, &lock, cache, row) {
+            Ok(report) => report,
+            Err(error) => panic!("{row}: {error}"),
+        };
+        let _ = write!(std::io::stdout(), "{row}: {report}");
+        match floors.get(row.as_str()) {
+            Some(&floor) if report.matched >= floor => {}
+            Some(&floor) => failures.push(format!("{row}: {} < floor {floor}", report.matched)),
+            None => failures.push(format!(
+                "{row}: no floor; add `{name} {row} {}`",
+                report.matched
+            )),
+        }
+        total.add(&report);
+    }
+    for row in floors
+        .keys()
+        .filter(|row| !rows.iter().any(|cached| cached == *row))
+    {
+        let _ = writeln!(std::io::stdout(), "not cached, floor not checked: {row}");
+    }
+    let seconds = started.elapsed().as_secs_f64();
+    let rate =
+        f64::from(u32::try_from(total.frames).unwrap_or(u32::MAX)) / seconds.max(f64::EPSILON);
+    let _ = write!(
+        std::io::stdout(),
+        "all {} rows: {total}behaviours:\n{}{} frames in {seconds:.2} s ({rate:.0} frames/s)\n",
+        rows.len(),
+        Behaviours(&total),
+        total.frames,
+    );
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+/// The clock domain over every cached row, held to its floors. Skipped only where `SM_CACHE`
+/// and `SM_ROM` are both unset, as the ratchet test is.
+#[test]
+fn the_clock_holds_its_floors_against_the_cache() {
+    if let Some((cache, _)) = environment() {
+        hold_floors(&Clock, "game-time", &cache);
+    }
+}
+
+/// Samus's motion over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the
+/// clock's test reads them.
+#[test]
+fn samus_motion_holds_its_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
     let image = match std::fs::read(&rom) {
         Ok(image) => image,
-        Err(error) => panic!("SM_ROM {rom:?}: {error}"),
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
     };
     let rom = match data::rom::Rom::new(image) {
         Ok(rom) => rom,
@@ -195,43 +319,5 @@ fn samus_motion_holds_its_matched_frames_against_the_cache() {
         Ok(domain) => domain,
         Err(error) => panic!("speeds: {error:?}"),
     };
-    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
-    let cache = Path::new(&cache);
-    let others = other_cached_rows(cache, &MOTION_MATCHED);
-    let rows = MOTION_MATCHED
-        .iter()
-        .map(|&(row, floor)| (row, Some(floor)))
-        .chain(others.iter().map(|row| (row.as_str(), None)));
-    let mut totals: Vec<(&'static str, u64, u64)> = Vec::new();
-    let (mut matched, mut compared, mut frames) = (0_u64, 0_u64, 0_u64);
-    for (row, floor) in rows {
-        let report = match run_cached(&domain, &lock, cache, row) {
-            Ok(report) => report,
-            Err(error) => panic!("{row}: {error}"),
-        };
-        let _ = write!(std::io::stdout(), "{row}: {report}");
-        if let Some(floor) = floor {
-            assert!(report.matched >= floor, "{row}: {report}");
-        }
-        matched = matched.saturating_add(report.matched);
-        compared = compared.saturating_add(report.compared);
-        frames = frames.saturating_add(report.frames);
-        for field in &report.fields {
-            let checked = field.matched.saturating_add(field.mismatched);
-            match totals.iter_mut().find(|(name, ..)| *name == field.name) {
-                Some((_, total_matched, total_checked)) => {
-                    *total_matched = total_matched.saturating_add(field.matched);
-                    *total_checked = total_checked.saturating_add(checked);
-                }
-                None => totals.push((field.name, field.matched, checked)),
-            }
-        }
-    }
-    let _ = writeln!(
-        std::io::stdout(),
-        "all rows: {matched} of {frames} frames matched ({compared} compared)"
-    );
-    for (name, field_matched, checked) in totals {
-        let _ = writeln!(std::io::stdout(), "  {name} {field_matched} of {checked}");
-    }
+    hold_floors(&domain, "samus-motion", &cache);
 }
