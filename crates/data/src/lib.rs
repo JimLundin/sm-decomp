@@ -5,6 +5,7 @@
 //! It holds no mutable state and no rules (ARCHITECTURE §4.1).
 
 pub mod address_map;
+pub mod assets;
 pub mod compression;
 pub mod digest;
 pub mod dma;
