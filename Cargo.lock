@@ -51,6 +51,7 @@ name = "game"
 version = "0.1.0"
 dependencies = [
  "canonical",
+ "clean_types",
  "data",
  "toml",
 ]

@@ -27,6 +27,7 @@ pub mod projectile;
 pub mod rng;
 pub mod samus_drawing;
 pub mod samus_palette;
+pub mod samus_world;
 pub mod scrolling;
 pub mod session;
 pub mod state;
