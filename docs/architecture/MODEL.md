@@ -139,6 +139,19 @@ It reports **N of M oracle frames matched**, per behaviour. That is the domain's
 measure. Gaps come from frames that don't match, not from reading old code. The spec's vectors stay,
 for cases no recorded frame reaches.
 
+**A domain is a unit that can be verified on its own (Jim, 2026-11-07).** Its boundary is set by
+verification, not by where the original's code is split. If checking a domain needs a stand-in that
+answers from the oracle (a collision bridge that copies the next frame's stop, pose inputs read from
+the next record), the boundary is wrong and the domains merge. That is why Samus's motion, pose
+selection and her collision with the world are one domain: on whole frames, the first motion model
+scored no better than a step that does nothing (5,631 against 5,686 verified frames), because the
+world decides where she ends up.
+
+**The primary proof is a free run, not a per-frame check.** Run the domain from a seed over many
+frames, with no re-seeding, against the recorded game. Report the first differing frame per field and
+per behaviour (the free-run localiser). The per-frame harness re-seeds every frame, so errors never
+accumulate. It finds where a model goes wrong; it does not prove it right.
+
 **The measure must be honest (Jim, 2026-11-07, after the second pilot review):**
 - Report over **all recorded frames** of every row, beside a **null model's** score (a step that
   does nothing) on the same frames. A match rate means only what it gains over that baseline.
@@ -391,6 +404,18 @@ commit `c1b3ea3`, `docs/architecture/MODEL-REVIEW.md`.
 - **One short rules file, and ask Jim only goal trade-offs (rule 23).** Broken by 44 docs
   (16,000 lines) and old skills next to the new code. The repository now holds only this
   engine's docs and code; the history is in git (tag `archive/old-engine`).
+
+**From the first pilot (2026-11-07): the thesis's faulty assumptions.** The honest harness showed the
+first Samus-motion model was no better than a step that does nothing. These assumptions were wrong:
+
+| Assumption | Why it failed | Now |
+| --- | --- | --- |
+| Domains can be cut where the original's code is cut | Motion, pose selection and collision are one behaviour to the player; motion alone can't be checked | A domain is a unit that can be verified on its own (§4) |
+| A stand-in answering from the oracle is a valid test | Whatever it touches is copied, so it is unverified | Copied values are unverified; a domain needing a stand-in merges with what it stands in for |
+| Re-seeding each frame proves behaviour | Errors never accumulate; a model can look 99 % right per frame and still not be the game | The primary proof is a free run (§4) |
+| A match rate means something alone | 99 % was noise against a do-nothing baseline | Every number is reported beside the null model |
+| An observer reading code can write a spec not shaped like it | About 95 % of the spec was the original's structure renamed | The observer works behaviour first; an adversary gates the spec (§5) |
+| A clean room can run on trust | Every channel leaked | It is enforced by construction: an export, canaries, scans (§5) |
 
 **From attempt 3 (2026-11-06):**
 
