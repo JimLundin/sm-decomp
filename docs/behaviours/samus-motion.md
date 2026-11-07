@@ -72,8 +72,9 @@ frames (the vectors' format), never by a value in its start.
   she moves the dash is gone.
 - **The moonfall** (`Moonfall`).
 - **A spin carried on.** A spin she was already in two frames earlier, or that followed a wall
-  jump, can ready a wall jump (`WallJump`). Reversing needs no such memory: any spin can be
-  reversed from its first frame, and the reversal always skids (`TurningRound`).
+  jump, can ready a wall jump (`WallJump`). The spin counts facing either way: reversing it keeps
+  it carried on (RW1 readies in the frame after a reversal). Reversing needs no such memory: any
+  spin can be reversed from its first frame, and the reversal always skids (`TurningRound`).
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
 is skidding, any dash she has is hers to keep, and a vertical speed of 0 means she stands on the ground,
@@ -131,7 +132,8 @@ ends, `AnimationEnds`), upright while `StandingUp`.
 - how far her animation has run (out of scope, §10).
 
 The ball `Still` is the ball at rest. While her body grows or shrinks, she moves as
-`SpeedBuildsAndBrakes` says.
+`SpeedBuildsAndBrakes` says. The frame a crouch or a morph starts, she is lowered
+(`ShrinkingLowersHer`); the frame a taller pose starts, pose fit places her (`PoseFitAfterMoves`).
 
 ---
 
@@ -261,34 +263,75 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   she had, doesn't face the screen, and has a body taller by g px (half-height against
   half-height); otherwise there is no push.
 - Mechanic. From where her moves left her, at her old size, she looks g px up and g px down: each
-  look is a vertical test move of g whole px, her subpixel as it is, stopped as a move is, solid
-  enemies first (`SolidEnemies`), then blocks (`BlocksStopFlush`, its `Even`/`Odd` rule included);
-  against blocks, a look of 8 px or more is tested at 8 px first, and the first test stopped
-  decides. The room on a side is how far its look got: g where nothing stopped it. The cells the
-  looks reach are their own, not `TouchedCells`' reports, and no cell's reaction
-  (`OtherBlockKinds`) starts from them.
+  look is a vertical test move of g whole px from her position, subpixel included, stopped as a
+  move is, solid enemies first (`SolidEnemies`), then blocks (`BlocksStopFlush`, its `Even`/`Odd`
+  rule included, and the sloped floors of `SlopesCarry` for a look down). A look up passes every
+  sloped ceiling; what a sloped floor does to a look up is open (§11, question 18).
+  Against blocks, a look of g = 8 px or more is stopped by whatever a look of 8 px would stop, with
+  the room that look found; only when nothing stops the 8 px look is it the look of g px. So a
+  stepped block decides by the half that 8 px reaches: a ball unmorphing (g = 9) with her top
+  edge against a stepped block's solid lower half finds no room above, though 9 px would reach
+  its air upper half (C-fit-step-ceiling, C-fit-step-floor, C-fit-step-enemy). The room on a
+  side is how far its look got: g where nothing stopped it.
+- A look doesn't move her, but what stops it writes to her as a stop would: a block writes her
+  y subpixel (FFFF looking down, 0 looking up), a solid enemy right against her clears it to 0,
+  and a sloped floor leaves it. A look down that a stepped block stops seats her on a slope
+  (`SlopesCarry`). These writes stay whatever pose fit then decides, a refusal included.
   - Nothing in reach on either side: no push; she grows about her centre.
   - Something on one side only: she is pushed away from it by g less the room on that side, in
-    whole px, her subpixel kept: up from what is below her (on a floor with nothing above, her feet
-    stay where they were: a body that grows by n px raises her centre by n px), down from what is
-    above her. The far side is looked at once more for that distance (blocks at her old size; for
-    a push from a solid enemy, solid enemies at her new size); if that look is stopped, the change
-    is refused.
-  - Something above her and something below her (blocks or solid enemies, in any mix): with an old body under 8 px
-    half-height (the ball) the change is refused. Otherwise she takes crouched `Still` instead, aim
-    `Forward`, facing as before the change; if her old body was shorter than the crouch, she rises
-    by the difference, her feet staying where they were, and there is no other push. The crouch
-    has no take-off: no rise and no 10 px lift.
-  - A refused change leaves her in the pose she had: the frame ends in it, and the chosen pose's
-    speeds (`Jumping`) don't come.
+    whole px, keeping the subpixel her looks left: up from what is below her (on a floor with
+    nothing above, her feet stay where they were: a body that grows by n px raises her centre by
+    n px), down from what is above her. The far side is looked at once more for that distance
+    (blocks at her old size; for a push from a solid enemy, solid enemies at her new size); if
+    that look is stopped, the change is refused.
+  - A block and a solid enemy on the same side: the enemy's far-side look comes first and can
+    refuse the change; then the push is by the block's room, as if the enemy were not there.
+  - Something above her and something below her (blocks or solid enemies, in any mix): with an
+    old body under 8 px half-height (the ball) the change is refused. Otherwise she takes crouched
+    `Still` instead, aim `Forward`, facing as before the change; if her old body was shorter than
+    the crouch, she rises by the difference, her feet staying where they were, and there is no
+    other push. Where the mix is a block on one side and a solid enemy on the other, each side's
+    far-side look runs first, as in the one-side case (the enemy's, then the block's), and either
+    one stopped refuses the change before the crouch or the ball's refusal is reached.
+  - A refused change leaves her in the pose she had, and the crouch taken instead is her pose: the
+    frame ends in it. Either way none of the chosen pose's effects on her speeds and dash come:
+    not its pad chart row's (a rise, a halt, a brake, the dash joining her speed), and not what
+    her moves met (a landing's stop of her speeds: her horizontal and vertical speeds stay as her
+    moves left them, C-fit-land-tunnel). The crouch has no take-off: no rise and no 10 px lift.
+- The cells the looks reach are their own, not `TouchedCells`' reports. What those cells then do
+  belongs to their own domains (§10). In the original a door to a room still starts her passage
+  and spikes still hurt her, as when a move reaches them, while a cell whose reaction depends on
+  the way she moves (a floor that crumbles, a station's or a save point's access) does nothing
+  (§11, question 17).
 - checked: oracle (PF1, item-morph-ball:1311: crouched to the take-off, the body grows 3 px and
   she rises 3 px, then the 10 px lift, in one frame; U1, crouched to standing, 5 px; PF2, a
   landing from a jump, 2 px; PF3, a landing from a spin, 9 px; the push up from a floor in every
   recorded landing on a flat floor; area-norfair:38, a body growing 9 px in open air, no push);
-  constructed (C-fit-ceiling, pushed down from a ceiling; C-fit-tunnel, a take-off between a floor
-  and a ceiling crouches instead; C-fit-ball-tunnel, unmorphing there is
-  refused); original only (the second look's refusal, solid enemies in pose fit, and what else a
-  refused change leaves undone).
+  constructed (C-fit-ceiling, pushed down from a ceiling, the look's subpixel write kept;
+  C-fit-tunnel, a take-off between a floor and a ceiling crouches instead; C-fit-ball-tunnel,
+  unmorphing there is refused; C-fit-step-ceiling and C-fit-step-floor, the 8 px look against a
+  stepped block; C-fit-step-enemy, a stepped block above and a solid enemy below; C-fit-land-tunnel,
+  a landing crouched instead keeps her speeds); original only (the second look's refusal, the
+  mixed and same-side cases beyond C-fit-step-enemy, a look up passing a sloped ceiling, the
+  seat, and the cells' reactions).
+
+### ShrinkingLowersHer
+- Mechanic. The frame she starts to crouch (`Crouching`, aimed or not) she moves down 5 px, and
+  the frame she starts to morph (`Morphing`) 9 px: whole pixels, her subpixel as it is, as the
+  pose change's effect, after her moves. On the ground this keeps her feet where they were (an
+  upright body of half-height 21 becomes a crouched one of 16; a crouched one of 16 becomes the
+  ball's 7). The distance is the pose's own, not the shrink: morphing from a straight jump or a
+  fall aimed `Down`, whose body is shorter than the crouch, lowers her 9 px all the same, so in the
+  air her feet drop below where they were.
+- Nothing stops it: the move ignores what is below her. A look down of that distance at her new
+  size goes with it and only writes as pose fit's looks do (`PoseFitAfterMoves`): a block within
+  reach of her new feet leaves her y subpixel FFFF, a stepped block seats her, and she is still
+  lowered the whole distance (original only; on the ground the look reaches only the row her feet
+  are in, which is air).
+- Her speeds and dash don't change: the rows into `Crouching` and `Morphing` have no other effect.
+- checked: oracle (SH1, r02:95, standing to crouching, 5 px; SH2, samus-bomb-jump-vertical:849,
+  crouched to morphing, 9 px; SH3, r04:312, a straight jump aimed `Down` to morphing in the air,
+  9 px on top of her fall, her speeds and dash kept); original only (the look's writes).
 
 ---
 
@@ -365,8 +408,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   (`SolidEnemies`), and one ahead of her writes nothing.
 - checked: oracle (samus-walljump-16, -22, -28, samus-grapple-walljump, item-morph-ball's leftward
   spin jumps; samus-walljump-16:46-47: readied in one frame, kicked off in the next; RW1: the
-  readying frame writes her x subpixel 0 against the wall on her left, and so does the frame
-  before, which reverses the spin); original only (no test without a spin carried on or without a
+  readying frame writes her x subpixel 0 against the wall on her left, in the frame after the
+  spin is reversed); original only (no test without a spin carried on or without a
   side held: no vector checks a spin near a wall lacking either).
 
 ### Landing
@@ -447,7 +490,7 @@ effects. The tables below are data records (about 120 rows), counted as data.
 
 | She is | Pad | Next pose | Effect |
 | --- | --- | --- | --- |
-| standing still, or landing | down pressed | crouched `Crouching`, crouch aim | none |
+| standing still, or landing | down pressed | crouched `Crouching`, crouch aim | she is lowered 5 px (`ShrinkingLowersHer`) |
 | | jump pressed; beats down pressed | upright `TakingOff`, take-off aim | `Jumping`'s take-off |
 | | back, shoot and an aim button held; beats back and both aim buttons held | `Moonwalking` facing back, `DownForward` with aim down, else `UpForward` | none |
 | | back and both aim buttons held | `Turning` | `TurningRound` |
@@ -460,7 +503,7 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | | aim up or aim down held | `Still`, `UpForward` with aim up, else `DownForward` | none |
 | | back held; beats up held and aim up or aim down held | `Turning` | `TurningRound` |
 | | anything else, or nothing held | kept, aim `Forward`; landing, kept as she is | she follows the pad again (a skid ends) |
-| running | down pressed; beats jump pressed | crouched `Crouching`, `Forward` | none |
+| running | down pressed; beats jump pressed | crouched `Crouching`, `Forward` | she is lowered 5 px (`ShrinkingLowersHer`) |
 | | jump pressed | `Spinning` | `Jumping`'s spin start |
 | | forward and shoot held | `Running`, `Forward`, gun drawn | none |
 | | forward and an aim button held; beats forward with up or down held, and forward and shoot held | `Running`, `UpForward` with aim up, else `DownForward` | none |
@@ -475,7 +518,7 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | | jump and back held; beats jump with up, down or an aim button held | `Turning` in a jump | `TurningRound` |
 | | shoot held | `Jumping`, `Forward`, gun drawn | none |
 | | anything else, or nothing held (jump alone too) | kept | as running |
-| in a straight jump | aiming `Down`: down pressed | ball `Morphing` | none |
+| in a straight jump | aiming `Down`: down pressed | ball `Morphing` | she is lowered 9 px (`ShrinkingLowersHer`) |
 | | aiming `Down`, she faces `Right`: forward, jump and shoot held; forward with up, down or an aim button held beats it | `Jumping`, `Forward`, gun drawn | none |
 | | forward with up, down or an aim button held | `Jumping`, air aim | none |
 | | forward held; beats shoot held and jump held | `Jumping`, `Forward`, striding | none |
@@ -492,14 +535,14 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | | back held | `Spinning`, facing back: the spin reversed | `TurningRound` |
 | | forward held | kept | none |
 | | anything else, or nothing held | kept | none |
-| falling (upright) | aiming `Down`: down pressed | ball `Morphing` | none |
+| falling (upright) | aiming `Down`: down pressed | ball `Morphing` | she is lowered 9 px (`ShrinkingLowersHer`) |
 | | forward with up or down held | `Falling`, `UpForward` with up, else `DownForward` | none |
 | | shoot held; beats forward held | `Falling`, `Forward`, gun drawn | none |
 | | forward held | `Falling`, `Forward`, gun as it was | none |
 | | up, down or an aim button held; beats shoot held and forward held | `Falling`, air aim | none |
 | | back held; beats shoot held, forward held, and up, down or an aim button held; aiming `Down` or with the gun drawn, up or down held beats it | `Turning` in a fall | `TurningRound` |
 | | anything else, or nothing held | kept, aim `Forward` | dash 0 |
-| crouched | down pressed; beats jump pressed | ball `Morphing` | none |
+| crouched | down pressed; beats jump pressed | ball `Morphing` | she is lowered 9 px (`ShrinkingLowersHer`) |
 | | up pressed; beats every other row naming a pressed button | `StandingUp`, crouch aim | none |
 | | jump pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
 | | back pressed; beats down pressed and jump pressed | crouched `Turning` | none |
@@ -522,20 +565,20 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | turning in a jump or a fall, crouched turning, or turning on the ground or from the moonwalk's jump aimed `UpForward` | any button held | kept | none: she keeps turning (`TurningRound`) |
 | | nothing held | kept | she follows the pad again (`TurningRound`) |
 | changing body: `Crouching`, `StandingUp`, `Morphing`, `Unmorphing` | anything, or nothing held | kept | none: the pad has no say until the animation ends |
-| moonwalking | down pressed; beats jump pressed | crouched `Crouching`, facing the way she looks, `Forward` | none |
+| moonwalking | down pressed; beats jump pressed | crouched `Crouching`, facing the way she looks, `Forward` | she is lowered 5 px (`ShrinkingLowersHer`) |
 | | jump pressed | `Turning` from the moonwalk's jump, aim kept, then a spin the way she walks (`AnimationEnds`) | `TurningRound` |
 | | the way she walks, shoot and an aim button held | `Moonwalking`, `UpForward` with aim up, else `DownForward`; with both aim buttons held, `UpForward` facing left and `DownForward` facing right | none |
 | | the way she walks and shoot held | `Moonwalking`, `Forward` | none |
 | | the way she looks held | `Running` that way, `Forward` | none |
 | | the way she walks held | `Turning` | `TurningRound` |
 | | anything else, or nothing held | upright `Still`, facing the way she looks | she follows the pad again |
-| wall jumping | down pressed | ball `Morphing` | none |
+| wall jumping | down pressed | ball `Morphing` | she is lowered 9 px (`ShrinkingLowersHer`) |
 | | shoot held; beats jump held | `Jumping`, `Forward`, gun drawn | none |
 | | aim up or aim down held; beats shoot held and jump held | `Jumping`, `UpForward` with aim up, else `DownForward` | none |
 | | back held; beats every other row naming one button | `Spinning`, facing back | `TurningRound` |
 | | jump held | kept | none |
 | | anything else, or nothing held | `Spinning` | horizontal speed 0, dash 0, following the pad |
-| against the wall | down pressed | crouched `Crouching`, `Forward` | none |
+| against the wall | down pressed | crouched `Crouching`, `Forward` | she is lowered 5 px (`ShrinkingLowersHer`) |
 | | jump pressed; beats down pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
 | | back and an aim button held | `Moonwalking` facing back, `DownForward` with aim down, else `UpForward` | none |
 | | forward with up or down held; beats down pressed | `Running`, `UpForward` with up, else `DownForward` | none |
@@ -707,10 +750,11 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 ### SlopesCarry
 - Mechanic. On a slope the ground pull is 1 px instead of her speed plus 1 px.
 - She is on a slope from the moment something seats her on one until her next vertical move
-  of more than 0 starts (a move of exactly 0 leaves her seated, `BlocksStopFlush`). Two things
-  seat her: the check after every horizontal move (below), and a downward move
-  stopped by a stepped block. So a frame's pull is 1 px when that frame's horizontal move seated
-  her, or the previous frame's pull stopped on a stepped block.
+  of more than 0 starts (a move of exactly 0 leaves her seated, `BlocksStopFlush`). Three things
+  seat her: the check after every horizontal move (below), a downward move
+  stopped by a stepped block, and a look down that a stepped block stops (`PoseFitAfterMoves`,
+  `ShrinkingLowersHer`; original only). So a frame's pull is 1 px when that frame's horizontal
+  move seated her, or the previous frame's pull or look down stopped on a stepped block.
 - After every horizontal move, whether or not it met solid enemies, two checks run, each asking just
   one cell and only on a sloped surface (a stepped block takes no part in them):
   - **Floor.** The block at her centre column and her bottom edge's row, if it is a sloped floor.
@@ -806,8 +850,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   nothing), because some reactions depend on it.
 - The report ends at the first cell that stops her: the cells after it on the line are not
   reached. A move of exactly 0 reaches no cells (`BlocksStopFlush`), and neither does a move that
-  a solid enemy decides (`SolidEnemies`). The wall-jump test (`WallJump`) and pose fit's push
-  reach cells of their own, which belong to them, not to these reports.
+  a solid enemy decides (`SolidEnemies`). The wall-jump test (`WallJump`), pose fit's looks and
+  the look of `ShrinkingLowersHer` reach cells of their own, which belong to them, not to these
+  reports.
 - A cell that stands for another (`OtherBlockKinds`) is reported as the cell it stands for.
 - **The cells she is inside.** Once each frame, before her moves, from her position at the frame's
   start: the cell in her centre column at her bottom edge's row; then at her centre's row, when it
@@ -886,9 +931,10 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 
 1. "A spin she was already in two frames earlier" (§1.2) is not yet traced against a record: it
    may count pose changes rather than frames.
-2. Answered: the pose chart's steps are §7's `pose_step` vectors. The motion vectors change pose
-   by a jump, a fall, a turn from the ground or a spin reversed, and, for pose fit, by a landing,
-   a take-off, standing up and unmorphing (PF1-PF3, U1, the C-fit vectors).
+2. Answered: the pose chart's steps are §7's `pose_step` vectors. In the motion vectors her pose
+   changes by a jump, a fall, a turn from the ground or a spin reversed; for pose fit, by a
+   landing, a take-off, standing up and unmorphing (PF1-PF3, U1, the C-fit vectors); and for
+   `ShrinkingLowersHer`, by starting to crouch or morph (SH1-SH3).
 3. `SolidEnemies`, `RidingTheElevator`, stepped blocks and most of `SlopesCarry` have constructed
    vectors only: no recorded frame is clean for them. The slope landings in r01 and samus-walljump-22 need lead-ins through a
    spin's drift and a sloped floor's effect on a move's length (`SlopesSlowTheWalk`).
@@ -925,3 +971,10 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 16. No vector yet covers the check after a horizontal move on a column far past: a ceiling column
     just past pushes her 0 px and seats her, one far past does neither. Constructed vectors would
     settle it; until then it rests on the original.
+17. The cells that pose fit's looks and the look of `ShrinkingLowersHer` reach: in the original a
+    door to a room starts her passage and spikes hurt her from them, while reactions that depend
+    on the way she moves do nothing (`PoseFitAfterMoves`). How motion hands those cells to the
+    doors' and damage's domains is open; no vector checks them.
+18. A look up of pose fit whose row holds a sloped floor (a ledge's slope above her head): the
+    original tests it as it tests a sloped floor below her, which can give a room no look down
+    would. No record or vector meets one; open.

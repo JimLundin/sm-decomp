@@ -72,11 +72,12 @@
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
 #   standing, running or moonwalking, a take-off becoming a jump, (M1) a turn's end into a spin,
-#   and (RW1) a spin reversed. In RW1 the near-wall test writes her x subpixel after the move, in its
-#   checked frame and its second lead-in frame (spec `WallJump`).
+#   and (RW1) a spin reversed. In RW1 the near-wall test writes her x subpixel after the move in
+#   its checked frame (spec `WallJump`).
 #   J1-J3 and A1 check a frame whose pose changes (a jump start, a take-off, an aim change) and give
-#   its next_pose; PF1 checks a crouch take-off, whose body grows. No recorded vector comes from
-#   a frame run by a bomb jump or a grapple release.
+#   its next_pose; PF1 checks a crouch take-off, whose body grows; SH1-SH3 check the frame a
+#   crouch or a morph begins, whose body shrinks. No recorded vector comes from a frame run by
+#   a bomb jump or a grapple release.
 
 # Constructed vectors: cases no record reaches, and the Exact variant.
 
@@ -2132,14 +2133,15 @@ jump_pressed = false
 after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 
 # The ball unmorphs in the air 3 px below a ceiling: the body grows 9 px, the look up finds 3 px of
-# room, so she is pushed down 6 px, her subpixel kept.
+# room, so she is pushed down 6 px. The look up, stopped by the ceiling, writes her y subpixel 0
+# (8000 before), and the push moves her by whole pixels from there.
 
 [[vector]]
 id = "C-fit-ceiling"
 source = "constructed"
 entries = ["PoseFitAfterMoves", "PadChart", "RisingAndFalling"]
 world = { ceiling_bottom = 240 }
-before = { position = ["0100.0000", "00FA.0000"], speed_y = "+0000.0000" }
+before = { position = ["0100.0000", "00FA.8000"], speed_y = "+0000.0000" }
 pose = { body = "Ball", action = "Falling", facing = "Right", radius = [7, 7] }
 next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = ["jump"]
@@ -2175,6 +2177,72 @@ next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius
 pad = ["jump"]
 jump_pressed = true
 after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", pose = { body = "Ball", action = "Still", facing = "Right", radius = [7, 7] } }
+
+# The 8 px look (PoseFitAfterMoves): a ball unmorphing grows 9 px, so each look is stopped by what
+# a look of 8 px would stop. The stepped block's lower half is solid and its upper half air.
+# - C-fit-step-ceiling: her top edge is against the solid lower half. The 8 px look up stops
+#   there (room 0, her y subpixel written 0), so she is pushed down 9 px. A 9 px look alone would
+#   reach the air upper half and find room: no push, y 00F7.8000.
+# - C-fit-step-floor: the ball rests on the solid lower half, with air under the step. The 8 px
+#   look down stops on it (room 0), so she is pushed up 9 px and her feet stay on the step. A 9 px
+#   look alone would reach the air under the step: no push, y 0111.FFFF.
+# - C-fit-step-enemy: as C-fit-step-ceiling, with a solid enemy right under her. A block
+#   above and an enemy below: the ball is refused. Her y subpixel stays as the looks wrote it (0).
+#   A 9 px look alone would find room above, and the enemy would push her up 9 px instead.
+
+[[vector]]
+id = "C-fit-step-ceiling"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "BlocksStopFlush", "PadChart", "RisingAndFalling"]
+world = { stepped = { block = [256, 224], quarters = ["..", "##"] } }
+before = { position = ["0108.0000", "00F7.8000"], speed_y = "+0000.0000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0108.0000", "0100.0000"], speed_y = "+0000.1C00" }
+
+[[vector]]
+id = "C-fit-step-floor"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "BlocksStopFlush", "PadChart", "FollowingTheGround"]
+world = { stepped = { block = [256, 272], quarters = ["..", "##"] } }
+before = { position = ["0108.0000", "0111.FFFF"] }
+pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0108.0000", "0108.FFFF"], speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-fit-step-enemy"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "BlocksStopFlush", "SolidEnemies", "PadChart", "RisingAndFalling"]
+world = { stepped = { block = [256, 224], quarters = ["..", "##"] }, enemy = { centre = [264, 263], radius = [8, 8] } }
+before = { position = ["0108.0000", "00F7.8000"], speed_y = "+0000.0000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0108.0000", "00F7.0000"], speed_y = "+0000.1C00", pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] } }
+
+# A spin lands in a tunnel: the landing's body grows 9 px, the looks find 8 px of room above and
+# none below, so she takes crouched Still instead and rises 4 px, her feet on the floor (the spin's
+# half-height 12 against the crouch's 16). The crouch taken instead skips the landing's effects:
+# her horizontal speed (1.6000, drifting forward) and her vertical speed (3.0000 grown by the pull)
+# stay as her moves left them, where a landing would stop both.
+
+[[vector]]
+id = "C-fit-land-tunnel"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "Landing", "WhatHerMovesMet", "DriftInTheAir", "BlocksStopFlush"]
+world = { floor_top = 288, ceiling_bottom = 256 }
+before = { position = ["0100.0000", "0112.0000"], speed_x = "+0001.6000", speed_y = "+0003.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0003.1C00", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
 
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
@@ -2878,6 +2946,47 @@ pad = ["left"]
 jump_pressed = false
 after = { position = ["009D.C000", "008B.FFFF"] }
 
+# Starting to crouch or morph lowers her (ShrinkingLowersHer): 5 px into a crouch, 9 px into the
+# ball, after her moves. On the floor her feet stay where they were (SH1, SH2); from a straight
+# jump aimed down, whose body is shorter, she is lowered 9 px all the same (SH3: her jump released,
+# the rise ends with no vertical move, and the morph adds the 9 px; her speeds and dash are kept).
+
+[[vector]]
+id = "SH1"
+source = "r02:95"
+entries = ["ShrinkingLowersHer", "PadChart", "FollowingTheGround", "SpeedBuildsAndBrakes"]
+world = { floor_top = 192 }
+before = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Left", aim = "DownForward", radius = [5, 21] }
+next_pose = { body = "Crouched", action = "Crouching", facing = "Left", radius = [5, 16] }
+pad = ["run", "down"]
+jump_pressed = false
+after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "SH2"
+source = "samus-bomb-jump-vertical:849"
+entries = ["ShrinkingLowersHer", "PadChart", "FollowingTheGround", "SpeedBuildsAndBrakes"]
+world = { floor_top = 208 }
+before = { position = ["00BB.FFFF", "00C0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+pad = ["down"]
+jump_pressed = false
+after = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "SH3"
+source = "r04:312"
+entries = ["ShrinkingLowersHer", "PadChart", "DriftInTheAir", "RisingAndFalling", "Dash"]
+world = {}
+before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
+next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+pad = ["run", "right", "down"]
+jump_pressed = false
+after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00" }
+
 # A spin reversed in its first frame skids: she keeps travelling the old way against her new facing.
 
 [[vector]]
@@ -2894,8 +3003,9 @@ after = { position = ["06C7.2000", "00A7.1FFF"], speed_x = "+0001.6000", dash = 
 
 # A wall jump readied: the near-wall test runs in a spin carried on with a side held, and finding
 # the block wall on her left writes her x subpixel 0 without moving her. The second lead-in frame
-# reverses the spin and runs the same test (x 003C.5FFF becomes 003C.0000); the checked frame
-# readies (the spin's sprite skips ahead; spin turned far holds from the next frame, P8).
+# reverses the spin; the checked frame, a spin carried on facing the other way, readies (the
+# spin's sprite skips ahead; spin turned far holds from the next frame, P8) and writes 0
+# (her x goes from 003B.2000 to 003B.0000).
 
 [[vector]]
 id = "RW1"

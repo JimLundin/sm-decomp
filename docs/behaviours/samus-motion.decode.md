@@ -259,6 +259,39 @@ the vector had them together.
   record meets a ceiling or a solid enemy in pose fit. Vectors PF2 (r02:179), PF3 (r02:549), U1
   gains the entry; C-fit-ceiling, C-fit-tunnel, C-fit-ball-tunnel constructed. The chart's "5 px
   up" on crouch to stand is this push, not an effect of the row.
+- Pose fit, adversary 18. The push writes `0AFA` only, but the looks write `0AFC` first: a look
+  stopped by a solid block ends in `$94:8F82` (`0AFC` = FFFFh down, 0 up), by a stepped block in
+  `$94:8DBD` (the same writes, and a downward stop sets `0DBA`, the seat), by a touching enemy in
+  `$A0:A8F0` (0); a non-square slope (`$94:86FE`) writes nothing. The old engine's
+  `a_ceiling_pushes_her_down_flush_with_it` (4000h → 0) agrees, so C-fit-ceiling from FA.8000
+  ends at 0100.0000, not 0100.8000. Direction Fh (`$94:96E3`) sends every non-square slope to
+  `$94:86FE`'s down branch, which returns clear for a ceiling (BTS bit 7): a look up passes sloped
+  ceilings; for a sloped floor in an up look's row it compares her target bottom boundary mod 10h
+  (question 18). Fh only silences the PLM setups that test the direction (stations' access, save
+  station, chozo hand, crumble; quicksand partly): `$94:93CE` (door) sets game state 9 for a door
+  to a room and `$94:905D` (spike block) runs the damage table whatever the direction (question
+  17). Mixed sides (`$91:FDBD`): the enemy table `$91:FE8A` runs its one-side re-look (`$91:FE9E`,
+  `$91:FEDF`) before the block looks; the block table's one-side handlers `$91:FF20`/`$91:FF49`
+  re-look first and refuse on a hit, and only then test the enemy flags for `$91:FFA7`; same side,
+  `$91:FF20`/`$91:FF49` shift by the block's room. 8 first: `$94:96AB` returns carry set on the
+  8 px look's hit with that look's `$12`. Skipped effects: `$91:F404` returns carry set when the
+  pose is not the one asked for, and `$91:EBEE` then skips `$91:EC16`'s command, the landing's
+  `$91:EFC4` (`$91:F010`: `0B4A`, `0B46`/`0B48` = 0; `$91:F1EC`: the vertical stop) included.
+  C-fit-tunnel can't show it with a speed: the crouched handler halts her in the move
+  (`$90:A337`), so C-fit-land-tunnel (a spin landing crouched instead) carries it.
+- The shrink (`ShrinkingLowersHer`): `$91:F433`'s init sets command 7 for the transition poses
+  (`$91:F758`), and `$91:ECDA` adds `$91:ED36`'s distance (35h/36h 5, 37h/38h 9; F1h-F6h 5) to
+  `0AFA` after `$94:96AB` at the new radius, whose result it ignores; it clears the bounce state
+  and Y speed only if bouncing (unreachable from the poses that start a morph). Runs only when
+  the pose stands (`$91:EBEE`). Records (`$TEMP/adv18s/shrink.pl` over `$TEMP/respec-motion/out`):
+  every start of 35h-38h moves y by the table's distance on top of the frame's move: r02:95, 105,
+  115, 388, 405, 425; r07:28, 38, 59; samus-bomb-jump-vertical:843, 849; r04:312 and
+  item-morph-ball:1259, samus-mockball:69 (17h → 37h in the air, radius 10 → 7, still 9 px).
+  Vectors SH1 (r02:95), SH2 (samus-bomb-jump-vertical:849), SH3 (r04:312).
+- RW1 (adversary 18, G): the second lead-in frame's write (003C.5FFF → 003C.0000) is not
+  observable at the checked frame (003C.5FFF − 0.E000 = 003B.7FFF → 003B.0000 either way), and a
+  vector starting at record 44 has no spin carried on at frame 45, so the claim was dropped rather
+  than adding RW0 (a start at record 43 meets a sloped ceiling: `0DBA` 1 at 44).
 
 **The crouch-to-stand 5 px (chart-left).** The bank log calls `$91:8087`'s y − 5 dead, and it is:
 it reads the movement type `0A1F` after `$91:81A9`, which only writes the prospective pose, so it
@@ -333,6 +366,7 @@ a type 8 block; `slope_ceiling` a non-square slope with BTS bit 7; `frame` the p
 | TouchedCells | `$94:9543`, `$94:959E`, `$94:95F5` (the scans, stop at the first carry set), `$94:9515`/`$94:952C` and the reaction tables `$94:94D5`/`$94:94F5`; `$94:9B60` (inside points bottom, centre, top at `0AF6`; the chained XOR at `$94:9BEB`), called from `$90:E6BC` in the current state handler, which game state 8 runs (`$82:8B58`) before the new state handler's movement (`$82:8B69`) | the collision direction `0B02` is what the reactions read |
 | OtherBlockKinds | `$94:938B`/`$94:93CE` (door: destination ≥ 8000h starts game state 9 and returns carry clear, else solid), `$94:904B`/`$94:905D` (spike: its BTS table, then solid), `$94:9018`/`$94:901A` (spike air), `$94:906F`/`$94:909D` (special air: PLM, carry clear), `$94:90CB`/`$94:9102` (special block: the PLM's carry decides), `$94:92F9`/`$94:9313` (bombable air), `$94:932D`/`$94:934C` (bomb block: the PLM's carry, area-dependent BTS solid), `$94:9411`/`$94:9447` (extensions: block index ± BTS, re-dispatch; BTS 0 air) | the item's block is BTS 45h (`$84:EE64`, `$84:EE8E`, setup `$84:EEAB` returns carry clear); scroll cells BTS 46h (`$84:B393`) |
 | PoseFitAfterMoves | `$90:E725` (movement `$90:E94B`, then `$91:E8B6`, then `$91:EB88`), `$91:F404` (`$91:FDAE` pose fit, then `$91:F433` initialise, then `$91:FBBB` the jump transition with `$91:FC8A` the 10 px lift); the push itself `$91:FDAE`..`$91:FFED` with `$94:96AB` and `$A0:A8F0` | `$91:EADE` (the aim step) runs before `$91:F404` |
+| ShrinkingLowersHer | `$91:F758` (transition poses set command 7), `$91:ECDA` with its table `$91:ED36` and `$94:96AB` (the look, result ignored) | runs after `$91:F404` only when the pose stands (`$91:EBEE`) |
 
 Recorded vectors: S1 is samus-input-poses record 511 → 512 (block at column 6, row 12, BTS 54h:
 14h x-flipped); S2 is r01 record 716 → 717 (BTS 12h, first frame of a fall, `0B2E`.`0B2C` = 0).
