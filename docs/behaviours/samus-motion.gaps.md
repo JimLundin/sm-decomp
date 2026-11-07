@@ -28,8 +28,8 @@ Each answer is in the spec; the gap's row is gone.
   the jump transition (`$91:FBBB`, which makes the jump), and its command is "animation finished"
   (bounce = None, `$91:F36E`), not the prospective one. Spec §7 "How the pose arrives",
   `PoseCommand::AnimationEnd`, `AnimationEndPose`; `VerticalStep` (the moonfall that follows).
-  P14, P14b, A24. Fixes chain-0014-96BA:11, samus-input-poses:125, chain-0232-D5A7:24 once the
-  model and the harness's `AnimationEnd` decode (decode notes) land.
+  P14, P14b, A24. Fixes chain-0014-96BA:11, samus-input-poses:125, chain-0232-D5A7:24 (all match
+  now; decode notes).
 - **G13** (spin to normal-jump pose over the floor): a bridge gap, fixed in the harness. The new
   pose's Y radius is larger, so pose fit (`$91:FDAE`) pushes her up in the same frame; the
   record's radius shows it a frame later, and the bridge read the push as a landing. The
@@ -37,8 +37,8 @@ Each answer is in the spec; the gap's row is gone.
   331, 499, chain-0224-D0B9:188, chain-0232-D5A7:363 and chain-0106-AD5E:167 are now skipped.
 - **G11** (1 px down in a spin jump): the horizontal move ends with the slope seat
   (`$90:9376`, `$94:87F4`), which moves her down under a sloped ceiling (`0DBA` = 1 at
-  record 44). Spec §6 `Moved.seat`, `SlopeSeat`; A25. Fixes samus-walljump-16/22/28:44 once the
-  model applies `seat` and the bridge answers it (decode notes, "Open").
+  record 44). Spec §6 `Moved.seat`, `SlopeSeat`; A25. Fixes samus-walljump-16/22/28:44 (all
+  match now; decode notes, "The slope seat").
 - **G8** (the probe's enemy touch): the wall probe's solid-enemy test (`$90:9D80`, `$90:9DF8`)
   is the same test as a move's, so a touch zeroes y's subpixel. Spec §6 `WallHit.touching`,
   `EnemyTouchZeroesYSubpixel`; A26 (constructed: no record reaches it).

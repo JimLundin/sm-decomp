@@ -57,9 +57,10 @@ N+1; the harness compares the State with record N+1.
   command None: its own commands (`0A32`, `0A30`) aren't the prospective `0A2E`. A new pose
   that differs from the proposal was replaced (`$91:F404`'s carry), so its command is skipped
   (G10).
-- **`AnimationEnd`, once the model has it (G12):** a super special proposal with `0A32` = 3
-  ("transition animation finished") gives `PoseCommand::AnimationEnd`, with the start decoded
-  as now.
+- **`AnimationEnd` (G12):** a super special proposal with `0A32` = 3 ("transition animation
+  finished", `$91:F36E`) gives `PoseCommand::AnimationEnd`, ahead of a passed vertical result,
+  with the start decoded as above and the arm-pump step `Forced`. chain-0014-96BA:11,
+  samus-input-poses:125 and chain-0232-D5A7:24 match.
 - **A proposed pose equal to hers.** Record N+1's prospective pose `0A28` with bit 15 clear is a
   new pose even when it equals the current one: `$91:EBE7` stores it and `$91:F404` finds no
   change, so nothing starts (`start: None`), but its command `0A2E` runs and the arm-pump step
@@ -72,7 +73,14 @@ N+1; the harness compares the State with record N+1.
   beyond is made unblocked, so a wrong speed shows. A zero move is never stopped.
   `enemy_ahead` finds nothing. `probe_wall` finds a wall when record N+1 starts a wall jump
   (distance 0, so it fires) or her X subpixel at N+1 differs from the body's (distance = reach;
-  the subpixel is written, `WallProbeSubpixel`).
+  the subpixel is written, `WallProbeSubpixel`). Its `touching` (G8): the probe fires, the wall
+  jump check's enemy `0E1C` at N+1 isn't FFFF (`$90:9D35` writes FFFF for a block) and y's
+  subpixel at N+1 is 0. No recorded frame reaches it.
+- **The slope seat** (G11): an enemy-testing horizontal move has `seat` when record N's
+  movement type is an air one, the slope flag `0DBA` at N+1 is not 0 and her vertical direction
+  is the same, and not None, at N and N+1 (no landing, no ceiling): the whole-pixel part of y at
+  N+1 less that of y at N moved by her vertical speed at N. On the ground, and on a landing,
+  the vertical move's answer already reaches the target. samus-walljump-16/22/28:44 match.
 
 **Frames the harness skips.** The harness skips whole frames (it has no per-field mask):
 - record N not in gameplay (`0998` ≠ 8), its cut not a requested NMI (a lag frame), or the
@@ -103,10 +111,8 @@ N+1; the harness compares the State with record N+1.
   - a knockback start: movement type 0A at N+1 and not at N;
   - the movement types of deferred behaviours at N (G9): 0A knockback, 16 grapple, 19 damage
     boost, 1B shinespark.
-- Open (G11): once `Moved.seat` exists, `Replay` answers a horizontal `TestEnemies` move with
-  a seat when record N+1's slope flag `0DBA` is not 0 and she is airborne: the whole-pixel part
-  of y at N+1 less y at N moved by the vertical step. Until then samus-walljump-16/22/28:44
-  mismatch in y.
+- Open: terrain-quicksand:13, y 1 px short (model 0049, oracle 004A), the same shape as the
+  seat frames; the seat rule doesn't answer it. Not yet traced.
 - Open: item-morph-ball:1311, the crouch take-off: the model's y is 10 px above the oracle's.
   The model applies `crouch_jump_lift` on the frame the pose changes in the record; the
   oracle's lift falls on a pose-fit frame the radius rule skips. The pose and the radius are a

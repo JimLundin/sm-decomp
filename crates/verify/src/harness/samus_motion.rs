@@ -201,6 +201,15 @@ const SAMUS_SUPER_SPECIAL_PROSPECTIVE_POSE: WramWord = WramWord {
     offset: 0x0A2C,
 };
 const NO_POSE: u16 = 0x8000;
+/// Bank $91 log: the super special proposal's command "transition animation finished"
+/// ($91:F36E).
+const ANIMATION_FINISHED: u16 = 3;
+/// Bank $90 log: the enemy the wall jump check found, FFFF when a block fired it ($90:9D35).
+const ENEMY_INDEX_TO_SHAKE: WramWord = WramWord {
+    name: "ENEMY_INDEX_TO_SHAKE",
+    offset: 0x0E1C,
+};
+const NO_ENEMY: u16 = 0xFFFF;
 /// The knockback's movement type.
 const KNOCKBACK: u8 = 0x0A;
 /// Bank $94 log: the pushes the block-inside reactions (quicksand, treadmills) set at the start
@@ -446,6 +455,14 @@ impl Pose {
         matches!(self.movement, 0x0E | 0x17 | 0x18)
     }
 
+    /// The movement types the air rows run.
+    const fn airborne(self) -> bool {
+        matches!(
+            self.movement,
+            0x02 | 0x03 | 0x06 | 0x08 | 0x12 | 0x13 | 0x14 | 0x17 | 0x18
+        )
+    }
+
     const fn spinning(self) -> bool {
         matches!(self.movement, 0x03 | 0x14)
     }
@@ -540,6 +557,9 @@ enum Command {
     KillXSpeed,
     StartTransition,
     KillRunSpeed,
+    /// An animation's transition handed over the pose: the super special proposal with its
+    /// "transition animation finished" command.
+    AnimationEnd,
 }
 
 impl TryFrom<u16> for Command {
@@ -616,17 +636,26 @@ impl Proposal {
 /// requested distance, the move is made unblocked; when it is shorter in the same direction
 /// (or zero), the move is stopped by a block there, written as the target's subpixel and its
 /// whole-pixel difference; otherwise (longer, or the other way) the move is made unblocked, so
-/// a wrong speed shows in the position. A zero move is never stopped. No enemy is solid
-/// (`enemy_ahead` and the probe find nothing), so the wall jump never fires.
+/// a wrong speed shows in the position. A zero move is never stopped. In the air on a slope,
+/// the enemy-testing horizontal move carries the slope seat: the whole pixels the vertical step
+/// alone doesn't explain. `enemy_ahead` finds nothing; the wall probe fires when record N+1
+/// starts a wall jump, touching a solid enemy when the wall jump check named one and y's
+/// subpixel there is 0.
 ///
 /// **Pose selection.** The new pose is record N+1's when it differs from record N's: its start
 /// comes from the two poses (spec §7), its command from record N+1's prospective pose change
-/// command, and the arm-pump step's request is that pose. No pose is forced.
+/// command, and the arm-pump step's request is that pose. A special or super special proposal
+/// is forced; the super special one with "transition animation finished" is the animation's
+/// hand-over (`AnimationEnd`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Replay {
     target: Position,
     radius: Radius,
     pose: Option<NewPose>,
+    /// The slope seat of the frame's enemy-testing horizontal move, in whole pixels.
+    seat: i16,
+    /// The wall jump fired from a solid enemy she already touched.
+    enemy_touch: bool,
 }
 
 impl Replay {
@@ -647,6 +676,7 @@ impl Replay {
             return Moved {
                 distance,
                 stop: None,
+                seat: 0,
             };
         }
         Moved {
@@ -657,6 +687,7 @@ impl Replay {
                     subpixel: target.sub(),
                 },
             }),
+            seat: 0,
         }
     }
 }
@@ -667,9 +698,16 @@ impl Collision for Replay {
         body: Body,
         heading: Heading,
         distance: Fixed,
-        _enemies: Enemies,
+        enemies: Enemies,
     ) -> Moved {
-        Self::answer(body.position.x, self.target.x, distance, heading)
+        let seat = match enemies {
+            Enemies::Test => self.seat,
+            Enemies::Skip => 0,
+        };
+        Moved {
+            seat,
+            ..Self::answer(body.position.x, self.target.x, distance, heading)
+        }
     }
 
     fn move_down(
@@ -713,6 +751,7 @@ impl Collision for Replay {
         (fires || subpixel.is_some()).then_some(WallHit {
             distance_px: if fires { 0 } else { reach },
             subpixel,
+            touching: fires && self.enemy_touch,
         })
     }
 }
@@ -867,6 +906,31 @@ fn runs_after(record: &FrameRecord) -> Result<(), Skip> {
         .map_or(Ok(()), |at| Err(Skip::Waiting(at)))
 }
 
+/// The slope seat of the frame from `from` to `next` (`target`, her position there), in the air:
+/// with the slope flag set at the frame's end and her vertical direction unchanged (no landing,
+/// no ceiling), the whole pixels between y at `next` and y at `from` moved by the vertical
+/// step. On the ground the vertical move's answer already reaches the target.
+fn seat(pose: Pose, from: &FrameRecord, next: &FrameRecord, target: Position) -> Result<i16, Skip> {
+    if !pose.airborne() || word(next, source::SAMUS_SLOPE_ADJUSTED)? == 0 {
+        return Ok(0);
+    }
+    let (before, after) = (state(from)?, state(next)?);
+    if after.vertical != before.vertical {
+        return Ok(0);
+    }
+    let speed = before.vertical_speed.0;
+    let stepped = match before.vertical {
+        VerticalMotion::None => return Ok(0),
+        VerticalMotion::Down => before.position.y.0.wrapping_add(speed),
+        VerticalMotion::Up => before.position.y.0.wrapping_sub(speed),
+    };
+    Ok(target
+        .y
+        .pixel()
+        .wrapping_sub(Fixed(stepped).pixel())
+        .cast_signed())
+}
+
 const fn jump(held: bool, pressed: bool) -> JumpButton {
     match (held, pressed) {
         (_, true) => JumpButton::Pressed,
@@ -978,11 +1042,17 @@ impl Domain for SamusMotion {
             |by_start: bool| by_start || proposal.is_some_and(|proposal| proposal.pose != new.code);
         let forced = proposal.is_some_and(|proposal| proposal.source != ProposalSource::Selection);
         // Only pose selection's own proposal runs the prospective command; the special ones
-        // run commands of their own, which the model has no value for yet (gaps file, G12).
-        let command = if forced {
-            Command::None
-        } else {
-            Command::try_from(word(next, source::SAMUS_POSE_CHANGE_COMMAND)?)?
+        // run commands of their own, of which the model knows the animation's hand-over.
+        let command = match proposal.map(|proposal| proposal.source) {
+            Some(ProposalSource::SuperSpecial)
+                if word(next, source::SAMUS_HURT_SWITCH_INDEX)? == ANIMATION_FINISHED =>
+            {
+                Command::AnimationEnd
+            }
+            Some(ProposalSource::SuperSpecial | ProposalSource::Special) => Command::None,
+            Some(ProposalSource::Selection) | None => {
+                Command::try_from(word(next, source::SAMUS_POSE_CHANGE_COMMAND)?)?
+            }
         };
         let request = if forced {
             PoseRequest::Forced
@@ -1009,10 +1079,16 @@ impl Domain for SamusMotion {
                 request,
             })
         };
+        let target = position(&next.wram)?;
+        let enemy_touch = pose.is_some_and(|pose| pose.start == Some(PoseStart::WallJumpStart))
+            && word(next, ENEMY_INDEX_TO_SHAKE)? != NO_ENEMY
+            && target.y.sub() == 0;
         Ok(Replay {
-            target: position(&next.wram)?,
+            target,
             radius: after,
             pose,
+            seat: seat(old, from, next, target)?,
+            enemy_touch,
         })
     }
 
@@ -1036,6 +1112,8 @@ impl Domain for SamusMotion {
                 | VerticalResult::Landed(LandKind::NoChange)
         );
         let command = |command| match command {
+            // The hand-over runs its own command, never the vertical result's.
+            Command::AnimationEnd => PoseCommand::AnimationEnd,
             _ if passed => PoseCommand::Vertical(vertical),
             Command::Decelerate => PoseCommand::Decelerate,
             Command::Stop => PoseCommand::Stop,
