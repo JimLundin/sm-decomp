@@ -1,12 +1,13 @@
 use clean_types::{
-    AirKind, AnsweredKind, Axis, Block, Cell, Heading, SlopeFaces, SolidKind, World,
+    AirKind, AnsweredKind, Axis, Block, Cell, Fixed, Heading, Position, Radius, SlopeFaces,
+    SolidKind, World,
 };
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
 
-use super::{Reaction, SamusWorld};
-use crate::collision::Room;
+use super::SamusWorld;
 use crate::collision::solid_enemy::SolidEnemies;
+use crate::collision::{Room, Touch};
 use crate::state::room::{Block as LevelBlock, BlockColumns, BlockIndex};
 
 /// Four blocks across.
@@ -77,14 +78,8 @@ fn each_kind_meets_her_as_its_block_kind_says() {
     assert_eq!(world.block(at(3, 3)), Block::Air(AirKind::Plain));
     // Past the level: air.
     assert_eq!(world.block(at(0, 9)), Block::Air(AirKind::Plain));
-    assert_eq!(
-        world.reaction(at(1, 0)),
-        Some(Reaction::Scroll(BlockIndex(1)))
-    );
-    assert_eq!(
-        world.reaction(at(2, 0)),
-        Some(Reaction::Item(BlockIndex(2)))
-    );
+    assert_eq!(world.reaction(at(1, 0)), Some(Touch::Scroll(BlockIndex(1))));
+    assert_eq!(world.reaction(at(2, 0)), Some(Touch::Item(BlockIndex(2))));
     assert_eq!(world.reaction(at(3, 0)), None);
 }
 
@@ -129,4 +124,86 @@ fn a_surface_is_a_floor_or_a_ceiling_by_its_flip() {
     };
     assert_eq!(ceiling.faces, SlopeFaces::Ceiling);
     assert_eq!((ceiling.surface[0], ceiling.surface[15]), (15, 0));
+}
+
+/// Gap 7, open: a ceiling column with no solid pixel (10h) and one past the block (14h, as
+/// shape 1Bh's columns 0 to 7) both answer row 0 today, where the spec answers 16 for the empty
+/// column. This pins the adapter until the model's `Slope` can say it.
+#[test]
+fn a_ceilings_empty_and_far_columns_answer_row_0_until_the_slope_can_say_16() {
+    let squares = [0; 8];
+    let mut surfaces = vec![0; SHAPES * 16];
+    surfaces[0x13 * 16] = 0x10;
+    surfaces[0x13 * 16 + 1] = 0x14;
+    let factors = vec![0; SHAPES * 4];
+    let slopes = Slopes::decode(&squares, &surfaces, &factors);
+    let blocks = level(&[
+        ((0, 0), BlockKind::Slope(slope(0x13))),
+        ((1, 0), BlockKind::Slope(slope(0x13 | 0x80))),
+    ]);
+    let world = world(&blocks, &slopes);
+    let Block::Slope(floor) = world.block(at(0, 0)) else {
+        panic!("floor slope");
+    };
+    assert_eq!((floor.surface[0], floor.surface[1]), (0x10, 0x14));
+    let Block::Slope(ceiling) = world.block(at(1, 0)) else {
+        panic!("ceiling slope");
+    };
+    assert_eq!((ceiling.surface[0], ceiling.surface[1]), (0, 0));
+}
+
+#[test]
+fn the_cells_her_moves_reached_become_the_touches_in_order() {
+    let slopes = slopes();
+    let blocks = level(&[
+        ((1, 0), BlockKind::SpecialAir(Bts(0x46))),
+        ((2, 0), BlockKind::Special(PlmChoice::Common(0x45))),
+    ]);
+    let world = world(&blocks, &slopes);
+    let reached = |column, heading| clean_types::Touch {
+        cell: at(column, 0),
+        heading,
+    };
+    let touches = world.touches(&[
+        reached(2, Heading::Right),
+        reached(0, Heading::Right),
+        reached(1, Heading::Up),
+    ]);
+    assert_eq!(
+        touches.touched(),
+        [Touch::Item(BlockIndex(2)), Touch::Scroll(BlockIndex(1))]
+    );
+}
+
+#[test]
+fn only_her_centres_scroll_trigger_reacts_when_it_is_in_another_row() {
+    let slopes = slopes();
+    let blocks = level(&[
+        ((1, 1), BlockKind::SpecialAir(Bts(0x46))),
+        ((1, 2), BlockKind::Special(PlmChoice::Common(0x45))),
+    ]);
+    let world = world(&blocks, &slopes);
+    let radius = Radius { x: 5, y: 0x10 };
+    // Centre on row 1, bottom edge on row 2.
+    let position = Position {
+        x: Fixed::px(0x18),
+        y: Fixed::px(0x18),
+    };
+    let inside = [at(1, 2), at(1, 1), at(1, 0)];
+    assert_eq!(
+        world.inside_touch(&inside, position, radius),
+        Some(Touch::Scroll(BlockIndex(5)))
+    );
+    // The item's block below reacts to no inside point.
+    assert_eq!(
+        world.inside_touch(&[at(1, 2), at(1, 2)], position, radius),
+        None
+    );
+    // Centre and bottom edge on one row: the second cell is her top's.
+    let short = Radius { x: 5, y: 4 };
+    let low = Position {
+        x: Fixed::px(0x18),
+        y: Fixed::px(0x1A),
+    };
+    assert_eq!(world.inside_touch(&[at(1, 1), at(1, 1)], low, short), None);
 }
