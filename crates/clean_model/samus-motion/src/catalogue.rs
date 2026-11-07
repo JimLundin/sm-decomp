@@ -93,7 +93,7 @@ pub const CATALOGUE: [Behaviour; 18] = [
     ),
     entry(
         BehaviourId::RidingTheElevator,
-        "Facing the screen on a moving elevator she moves down 1 px a frame",
+        "Facing the screen on a moving elevator she moves down 1 px a frame, stopped as any downward move",
         Kind::Mechanic,
         Switch::Fixed,
     ),
@@ -159,7 +159,7 @@ pub const CATALOGUE: [Behaviour; 18] = [
     ),
     entry(
         BehaviourId::SolidEnemies,
-        "Solid enemies decide a move before blocks, even a move of 0; one she touches clears her y subpixel",
+        "A solid enemy she reaches decides a move before blocks; one she touches clears her y subpixel",
         Kind::Quirk,
         Switch::Fixed,
     ),

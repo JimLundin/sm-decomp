@@ -1,16 +1,9 @@
 //! §8: what her moves meet. The world is data; each move asks what is at her leading edge.
 
 use crate::rules::Rules;
-use clean_types::{Block, Fixed, Half, Position, Radius, Side, SlopeFaces, World};
-
-/// The axis of a move.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Axis {
-    /// Horizontal.
-    X,
-    /// Vertical.
-    Y,
-}
+use clean_types::{
+    Axis, Block, Fixed, Half, Halves, Parity, Position, Radius, Side, Slope, SlopeFaces, World,
+};
 
 /// Which way along the axis: left or up, right or down.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -53,6 +46,15 @@ pub struct Moved {
     pub stop: Option<Stop>,
 }
 
+/// What a frame's moves meet: the room's blocks and solid enemies, and the frame's parity, which
+/// orders a vertical move's stops (`BlocksStopFlush`).
+pub struct Room<'a, W> {
+    /// The room.
+    pub world: &'a W,
+    /// The frame's parity.
+    pub parity: Parity,
+}
+
 /// `BlocksStopFlush`: the subpixel a flush stop leaves: FFFF right or down, 0 left or up.
 const fn flush_sub(toward: Toward) -> u16 {
     match toward {
@@ -63,34 +65,65 @@ const fn flush_sub(toward: Toward) -> u16 {
 
 /// Where a stopped move leaves her. A face is the first pixel that is not free.
 enum End {
-    /// `SolidEnemies`: one she already touches: no distance, y subpixel 0.
+    /// `SolidEnemies`: one she already touches: no move, y subpixel 0.
     Touch,
-    /// `SolidEnemies`: at its face by whole pixels, her subpixel kept.
+    /// `SolidEnemies`, `SlopesCarry`: her centre at this pixel, her subpixel kept.
     Pixels(u16),
-    /// `BlocksStopFlush`: flush against a face, its subpixel FFFF or 0.
+    /// `BlocksStopFlush`: flush against a face, its subpixel FFFF or 0, never backwards.
     Flush(u16),
     /// `SlopesCarry`: a sloped ceiling: no move at all, her subpixel kept.
     Stay,
 }
 
-/// One axis of a box: its centre along the axis, and its span across it.
+/// One axis of a box: its centre and half-size along the axis, and across it.
 struct Line {
     along: Fixed,
     radius: u16,
-    across_lo: u16,
-    across_hi: u16,
+    across: u16,
+    across_radius: u16,
 }
 
-const fn line(x: Fixed, y: Fixed, radius: Radius, axis: Axis) -> Line {
-    let (along, across, r_along, r_across) = match axis {
-        Axis::X => (x, y.pixel(), radius.x, radius.y),
-        Axis::Y => (y, x.pixel(), radius.y, radius.x),
-    };
-    Line {
-        along,
-        radius: r_along,
-        across_lo: across.wrapping_sub(r_across),
-        across_hi: across.wrapping_add(r_across).wrapping_sub(1),
+impl Line {
+    const fn of(x: Fixed, y: Fixed, radius: Radius, axis: Axis) -> Self {
+        let (along, across, r_along, r_across) = match axis {
+            Axis::X => (x, y.pixel(), radius.x, radius.y),
+            Axis::Y => (y, x.pixel(), radius.y, radius.x),
+        };
+        Self {
+            along,
+            radius: r_along,
+            across,
+            across_radius: r_across,
+        }
+    }
+
+    /// The first and last pixels across that the box covers.
+    const fn across_span(&self) -> (u16, u16) {
+        let lo = self.across.wrapping_sub(self.across_radius);
+        let hi = self.across.wrapping_add(self.across_radius).wrapping_sub(1);
+        (lo, hi)
+    }
+}
+
+/// Whether pixel `a` lies beyond pixel `b` the way `toward` points (positions wrap mod 2^16).
+const fn beyond(a: u16, b: u16, toward: Toward) -> bool {
+    let d = a.wrapping_sub(b).cast_signed();
+    match toward {
+        Toward::More => d > 0,
+        Toward::Less => d < 0,
+    }
+}
+
+/// `SolidEnemies`: whether two centres are closer than `reach` (positions wrap mod 2^16).
+const fn closer(a: u16, b: u16, reach: u16) -> bool {
+    a.wrapping_sub(b).cast_signed().unsigned_abs() < reach
+}
+
+/// `pixel` moved `by` pixels the way `toward` points.
+const fn shift(pixel: u16, by: u16, toward: Toward) -> u16 {
+    match toward {
+        Toward::More => pixel.wrapping_add(by),
+        Toward::Less => pixel.wrapping_sub(by),
     }
 }
 
@@ -116,7 +149,7 @@ pub fn travel(
     radius: Radius,
     (axis, toward): (Axis, Toward),
     distance: Fixed,
-    world: &impl World,
+    room: &Room<impl World>,
     rules: &Rules,
 ) -> Moved {
     // BlocksStopFlush: a horizontal move is limited to 15 px either way, its subpixel kept.
@@ -125,24 +158,24 @@ pub fn travel(
     } else {
         distance
     };
-    let her = line(position.x, position.y, radius, axis);
+    let her = Line::of(position.x, position.y, radius, axis);
     let target = match toward {
         Toward::Less => her.along.minus(distance),
         Toward::More => her.along.plus(distance),
     };
-    // SolidEnemies: an enemy in the path decides the move alone, even on a move of 0; blocks
-    // stop her only on a path free of them.
+    // SolidEnemies: an enemy in the path decides the move alone; blocks stop her only on a path
+    // free of them.
     let way = (axis, toward);
-    let stop = enemy_stop(&her, target, way, world)
+    let stop = enemy_stop(&her, distance, target, way, room.world)
         .map(|end| (Stop::Enemy, end))
-        .or_else(|| slope_stop(position, radius, target, way, world, rules))
-        .or_else(|| block_stop(&her, target, way, world, rules));
+        .or_else(|| block_stop(position, &her, target, way, room, rules));
     let Some((stop, end)) = stop else {
         return Moved {
             to: along(position, axis, target),
             stop: None,
         };
     };
+    let start = her.along.pixel();
     let to = match end {
         // SolidEnemies: one she touches stops the move with no distance, y subpixel 0.
         End::Touch => Position {
@@ -150,16 +183,17 @@ pub fn travel(
             ..position
         },
         End::Stay => position,
-        End::Pixels(face) => along(
-            position,
-            axis,
-            Fixed::from_parts(against(face, her.radius, toward), her.along.sub()),
-        ),
-        End::Flush(face) => along(
-            position,
-            axis,
-            Fixed::from_parts(against(face, her.radius, toward), flush_sub(toward)),
-        ),
+        End::Pixels(centre) => along(position, axis, her.along.with_pixel(centre)),
+        End::Flush(face) => {
+            // BlocksStopFlush: a stop never moves her backwards; only the subpixel is written.
+            let flush = against(face, her.radius, toward);
+            let centre = if beyond(start, flush, toward) {
+                start
+            } else {
+                flush
+            };
+            along(position, axis, Fixed::from_parts(centre, flush_sub(toward)))
+        }
     };
     Moved {
         to,
@@ -181,37 +215,51 @@ const fn along(position: Position, axis: Axis, value: Fixed) -> Position {
     }
 }
 
-/// `SolidEnemies`: the first solid enemy across her path that she touches or reaches.
+/// `SolidEnemies`: the first solid enemy her reach meets that stops her. Her reach is her box at
+/// the move's end pushed 1 px further on: moving left or up unless the end's subpixel is 0,
+/// moving right or down unless both her start's subpixel and the move's are 0. An enemy she
+/// reaches is judged by the gap from where she starts: 0 is touching, a larger gap stops her by
+/// that many whole pixels, a negative one doesn't stop her.
 fn enemy_stop(
     her: &Line,
+    distance: Fixed,
     target: Fixed,
     (axis, toward): (Axis, Toward),
     world: &impl World,
 ) -> Option<End> {
-    let now = edge(her.along.pixel(), her.radius, toward);
-    let then = edge(target.pixel(), her.radius, toward);
+    let pushes = match toward {
+        Toward::Less => target.sub() != 0,
+        Toward::More => her.along.sub() != 0 || distance.sub() != 0,
+    };
+    let reach = shift(target.pixel(), u16::from(pushes), toward);
+    let start = her.along.pixel();
     world.solid_enemies().iter().find_map(|enemy| {
-        let it = line(Fixed::px(enemy.x), Fixed::px(enemy.y), enemy.radius, axis);
-        if it.across_hi < her.across_lo || her.across_hi < it.across_lo {
-            return None;
-        }
-        let lo = it.along.pixel().wrapping_sub(it.radius);
-        let hi = it.along.pixel().wrapping_add(it.radius).wrapping_sub(1);
-        // The pixel just past her edge on the tested side, and the enemy's near face.
-        let (next, near) = match toward {
-            Toward::More => (now.wrapping_add(1), lo),
-            Toward::Less => (now.wrapping_sub(1), hi),
+        let it = Line::of(Fixed::px(enemy.x), Fixed::px(enemy.y), enemy.radius, axis);
+        let centre = it.along.pixel();
+        let reached = closer(reach, centre, her.radius.wrapping_add(it.radius))
+            && closer(
+                her.across,
+                it.across,
+                her.across_radius.wrapping_add(it.across_radius),
+            );
+        // The enemy's near side less her near side, less 1.
+        let (ahead, behind) = match toward {
+            Toward::More => (
+                centre.wrapping_sub(it.radius),
+                start.wrapping_add(her.radius),
+            ),
+            Toward::Less => (
+                start.wrapping_sub(her.radius),
+                centre.wrapping_add(it.radius),
+            ),
         };
-        let reached = match toward {
-            Toward::More => then >= near && now < near,
-            Toward::Less => then <= near && now > near,
-        };
-        if (lo..=hi).contains(&next) {
-            Some(End::Touch)
-        } else if reached {
-            Some(End::Pixels(near))
-        } else {
+        let gap = ahead.wrapping_sub(behind).wrapping_sub(1).cast_signed();
+        if !reached || gap < 0 {
             None
+        } else if gap == 0 {
+            Some(End::Touch)
+        } else {
+            Some(End::Pixels(shift(start, gap.unsigned_abs(), toward)))
         }
     })
 }
@@ -233,73 +281,81 @@ const fn half(offset: u16, rules: &Rules) -> Half {
     }
 }
 
-/// `BlocksStopFlush`: tests only the row or column of her leading edge at the target, in every
-/// block her body spans across it. A solid block stops her at its face; a stepped block at the
-/// face of its solid quarter that her leading edge reaches. The nearest face found decides.
+/// `BlocksStopFlush`: the face of a span of `len` px from `from`, on the side she meets it.
+const fn face(from: u16, len: u16, toward: Toward) -> u16 {
+    match toward {
+        Toward::More => from,
+        Toward::Less => from.wrapping_add(len).wrapping_sub(1),
+    }
+}
+
+/// `BlocksStopFlush`: the halves of the block at cell `across` that the pixels `lo..=hi` cover.
+const fn halves(lo: u16, hi: u16, across: u16, rules: &Rules) -> Halves {
+    let start = across.wrapping_mul(rules.block_px);
+    let end = start.wrapping_add(rules.block_px).wrapping_sub(1);
+    let first = if lo > start { lo } else { start };
+    let last = if hi < end { hi } else { end };
+    Halves {
+        first: first.wrapping_sub(start) < rules.quarter_px,
+        second: last.wrapping_sub(start) >= rules.quarter_px,
+    }
+}
+
+/// `BlocksStopFlush`, `SlopesCarry`: what stops a move in the row or column of her leading edge
+/// at the target, in every block her body spans across it: a solid block at its face; a stepped
+/// block at the face of the half her leading edge reaches; and, on a vertical move, a sloped
+/// surface at her centre column. When several would, the topmost decides a horizontal move, and
+/// the leftmost (an even frame) or the rightmost (an odd one) a vertical move.
 fn block_stop(
+    position: Position,
     her: &Line,
     target: Fixed,
     (axis, toward): (Axis, Toward),
-    world: &impl World,
+    room: &Room<impl World>,
     rules: &Rules,
 ) -> Option<(Stop, End)> {
-    let (size, quarter) = (rules.block_px, rules.quarter_px);
     let lead_px = edge(target.pixel(), her.radius, toward);
     let lead = cell(lead_px, rules);
-    let start = lead.wrapping_mul(size);
-    // The face of a span of `len` px from `from`, on the side she meets it.
-    let face = |from: u16, len: u16| match toward {
-        Toward::More => from,
-        Toward::Less => from.wrapping_add(len).wrapping_sub(1),
+    let start = lead.wrapping_mul(rules.block_px);
+    let reached = half(lead_px.wrapping_sub(start), rules);
+    let half_start = match reached {
+        Half::First => start,
+        Half::Second => start.wrapping_add(rules.quarter_px),
     };
-    let (near, far_start) = match toward {
-        Toward::More => (Half::First, start.wrapping_add(quarter)),
-        Toward::Less => (Half::Second, start),
-    };
-    let faces = (cell(her.across_lo, rules)..=cell(her.across_hi, rules)).filter_map(|across| {
+    let (lo, hi) = her.across_span();
+    let centre = position.x.pixel();
+    let mut stops = (cell(lo, rules)..=cell(hi, rules)).filter_map(|across| {
         let block = match axis {
-            Axis::X => world.block(lead, across),
-            Axis::Y => world.block(across, lead),
+            Axis::X => room.world.block(lead, across),
+            Axis::Y => room.world.block(across, lead),
         };
-        let quarters = match block {
-            Block::Solid => return Some((Stop::Block, face(start, size))),
-            Block::Stepped(quarters) => quarters,
-            Block::Air | Block::Slope(_) => return None,
-        };
-        // The halves across that her body spans within this block.
-        let across_start = across.wrapping_mul(size);
-        let first = her.across_lo.max(across_start).wrapping_sub(across_start);
-        let last = her
-            .across_hi
-            .min(across_start.wrapping_add(size).wrapping_sub(1))
-            .wrapping_sub(across_start);
-        let spans = [
-            (Half::First, first < quarter),
-            (Half::Second, last >= quarter),
-        ];
-        let solid = |along: Half| {
-            spans.iter().any(|&(across, spanned)| {
-                spanned
-                    && match axis {
-                        Axis::X => quarters.solid(across, along),
-                        Axis::Y => quarters.solid(along, across),
-                    }
-            })
-        };
-        if !solid(half(lead_px.wrapping_sub(start), rules)) {
-            None
-        } else if solid(near) {
-            Some((Stop::Stepped, face(start, size)))
-        } else {
-            Some((Stop::Stepped, face(far_start, quarter)))
+        match block {
+            Block::Solid => Some((Stop::Block, End::Flush(face(start, rules.block_px, toward)))),
+            Block::Stepped(quarters) => quarters
+                .stops(axis, reached, halves(lo, hi, across, rules))
+                .then_some((
+                    Stop::Stepped,
+                    End::Flush(face(half_start, rules.quarter_px, toward)),
+                )),
+            // SlopesCarry: a sloped surface never stops a horizontal move, and a vertical one
+            // only at her centre column.
+            Block::Slope(slope) if axis == Axis::Y && across == cell(centre, rules) => {
+                slope_stop(slope, (centre, start), lead_px, her.radius, toward, rules)
+            }
+            Block::Air | Block::Slope(_) => None,
         }
     });
-    faces
-        .min_by_key(|&(_, face)| match toward {
-            Toward::More => face,
-            Toward::Less => u16::MAX.wrapping_sub(face),
-        })
-        .map(|(stop, face)| (stop, End::Flush(face)))
+    match (axis, room.parity) {
+        (Axis::X, Parity::Even | Parity::Odd) | (Axis::Y, Parity::Even) => stops.next(),
+        (Axis::Y, Parity::Odd) => stops.last(),
+    }
+}
+
+/// `SlopesCarry`: a sloped surface's y at pixel column `x`, in the block whose top row is `top`.
+fn surface_y(slope: Slope, x: u16, top: u16, rules: &Rules) -> Option<u16> {
+    let column = x.checked_rem(rules.block_px).unwrap_or_default();
+    let within = slope.surface.get(usize::from(column)).copied()?;
+    Some(top.wrapping_add(u16::from(within)))
 }
 
 /// `SlopesCarry`: the sloped surface holding a pixel, and its surface's y at that pixel's column.
@@ -307,34 +363,30 @@ fn slope_at(world: &impl World, x: u16, y: u16, rules: &Rules) -> Option<(SlopeF
     let Block::Slope(slope) = world.block(cell(x, rules), cell(y, rules)) else {
         return None;
     };
-    let column = x.checked_rem(rules.block_px).unwrap_or_default();
-    let within = slope.surface.get(usize::from(column)).copied()?;
     let top = cell(y, rules).wrapping_mul(rules.block_px);
-    Some((slope.faces, top.wrapping_add(u16::from(within))))
+    Some((slope.faces, surface_y(slope, x, top, rules)?))
 }
 
-/// `SlopesCarry`: a vertical move meets a sloped surface only at her centre column. A sloped
-/// floor stops a downward move with her bottom edge on the last air row above it, by whole
-/// pixels; a sloped ceiling's solid part stops a rise before it moves.
+/// `SlopesCarry`: her bottom edge at the target reaching a sloped floor's last air row, or lower,
+/// stops a downward move with that edge on it, by whole pixels; her top edge reaching a sloped
+/// ceiling's solid part, or the first air row under it, stops a rise before it moves.
+/// `(x, top)` is her centre column and the block's top row.
 fn slope_stop(
-    position: Position,
-    radius: Radius,
-    target: Fixed,
-    (axis, toward): (Axis, Toward),
-    world: &impl World,
+    slope: Slope,
+    (x, top): (u16, u16),
+    lead: u16,
+    radius: u16,
+    toward: Toward,
     rules: &Rules,
 ) -> Option<(Stop, End)> {
-    if axis == Axis::X {
-        // SlopesCarry: a sloped surface never stops a horizontal move.
-        return None;
-    }
-    let lead = edge(target.pixel(), radius.y, toward);
-    let (faces, surface) = slope_at(world, position.x.pixel(), lead, rules)?;
-    match (toward, faces) {
-        (Toward::More, SlopeFaces::Floor) if lead >= surface => {
-            Some((Stop::Slope, End::Pixels(surface)))
+    let surface = surface_y(slope, x, top, rules)?;
+    match (toward, slope.faces) {
+        (Toward::More, SlopeFaces::Floor) if lead >= surface.wrapping_sub(1) => {
+            Some((Stop::Slope, End::Pixels(against(surface, radius, toward))))
         }
-        (Toward::Less, SlopeFaces::Ceiling) if lead <= surface => Some((Stop::Slope, End::Stay)),
+        (Toward::Less, SlopeFaces::Ceiling) if lead <= surface.wrapping_add(1) => {
+            Some((Stop::Slope, End::Stay))
+        }
         (Toward::More | Toward::Less, SlopeFaces::Floor | SlopeFaces::Ceiling) => None,
     }
 }
@@ -382,11 +434,11 @@ pub fn wall_test(
     radius: Radius,
     side: Side,
     reach: Fixed,
-    world: &impl World,
+    room: &Room<impl World>,
     rules: &Rules,
 ) -> Moved {
     let toward = Toward::side(side);
-    let test = travel(position, radius, (Axis::X, toward), reach, world, rules);
+    let test = travel(position, radius, (Axis::X, toward), reach, room, rules);
     let to = match test.stop {
         Some(Stop::Block | Stop::Stepped) => Position {
             x: position.x.with_sub(flush_sub(toward)),

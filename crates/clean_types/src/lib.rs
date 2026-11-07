@@ -336,10 +336,19 @@ pub enum Block {
     Air,
     /// A sloped surface, with its shape.
     Slope(Slope),
-    /// A stepped block: solid in some of its four 8 px quarters.
-    Stepped(Quarters),
     /// Solid.
     Solid,
+    /// A stepped block: solid in some of its four 8 px quarters.
+    Stepped(Quarters),
+}
+
+/// The axis of a move.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Axis {
+    /// Horizontal.
+    X,
+    /// Vertical.
+    Y,
 }
 
 /// One half of a block along an axis: its first 8 px (left or top) or its second.
@@ -349,6 +358,15 @@ pub enum Half {
     First,
     /// The right or bottom half.
     Second,
+}
+
+/// Which halves of a block, along one axis, her body overlaps.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Halves {
+    /// The left or top half.
+    pub first: bool,
+    /// The right or bottom half.
+    pub second: bool,
 }
 
 /// A stepped block's solid quarters, by row half then column half.
@@ -367,6 +385,44 @@ impl Quarters {
         match column {
             Half::First => left,
             Half::Second => right,
+        }
+    }
+
+    /// `BlocksStopFlush`: whether a move along `axis` whose leading edge reaches the half
+    /// `reached` stops there: a quarter of that half is solid among those her body overlaps
+    /// across it (`across`).
+    #[must_use]
+    pub const fn stops(self, axis: Axis, reached: Half, across: Halves) -> bool {
+        (across.first && self.along(axis, reached, Half::First))
+            || (across.second && self.along(axis, reached, Half::Second))
+    }
+
+    /// Whether the quarter at half `along` of a move along `axis` and half `across` is solid.
+    const fn along(self, axis: Axis, along: Half, across: Half) -> bool {
+        match axis {
+            Axis::X => self.solid(across, along),
+            Axis::Y => self.solid(along, across),
+        }
+    }
+}
+
+/// `BlocksStopFlush`: the game's frame count's parity, alternating every frame.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum Parity {
+    /// An even frame.
+    #[default]
+    Even,
+    /// An odd frame.
+    Odd,
+}
+
+impl Parity {
+    /// The other parity: the frame before or after.
+    #[must_use]
+    pub const fn other(self) -> Self {
+        match self {
+            Self::Even => Self::Odd,
+            Self::Odd => Self::Even,
         }
     }
 }
