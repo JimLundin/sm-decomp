@@ -1,9 +1,10 @@
 //! One entry per spec entry: what the player sees, its kind and its switch.
 
-use clean_types::{Kind, Switch};
+use clean_types::Kind::{self, Mechanic, Quirk, Timing};
+use clean_types::Switch::{self, Fixed, Parameter, Toggle};
 
 /// A spec entry's id.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum BehaviourId {
     /// §3.
     SpeedBuildsAndBrakes,
@@ -62,7 +63,7 @@ pub enum BehaviourId {
 }
 
 /// A catalogue entry.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub struct Behaviour {
     /// Its id.
     pub id: BehaviourId,
@@ -74,7 +75,7 @@ pub struct Behaviour {
     pub switch: Switch,
 }
 
-const fn entry(id: BehaviourId, summary: &'static str, kind: Kind, switch: Switch) -> Behaviour {
+const fn e(id: BehaviourId, summary: &'static str, kind: Kind, switch: Switch) -> Behaviour {
     Behaviour {
         id,
         summary,
@@ -83,168 +84,171 @@ const fn entry(id: BehaviourId, summary: &'static str, kind: Kind, switch: Switc
     }
 }
 
+#[cfg_attr(not(test), expect(clippy::enum_glob_use))]
+use BehaviourId::*;
+
 /// The catalogue, in spec order.
 pub const CATALOGUE: [Behaviour; 27] = [
-    entry(
-        BehaviourId::SpeedBuildsAndBrakes,
+    e(
+        SpeedBuildsAndBrakes,
         "Her speed builds to a top by what she is doing, and brakes when she carries on along the ground",
-        Kind::Mechanic,
-        Switch::Parameter,
+        Mechanic,
+        Parameter,
     ),
-    entry(
-        BehaviourId::Dash,
+    e(
+        Dash,
         "Running with run held builds a dash up to 2 px a frame, carried into jumps and the ball",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::TurningRound,
+    e(
+        TurningRound,
         "Turning round she skids the old way with her dash added, then creeps the new way",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::AimingAndShooting,
+    e(
+        AimingAndShooting,
         "Changing aim while running moves her 1 px forward; shooting standing restarts the animation",
-        Kind::Quirk,
-        Switch::Fixed,
+        Quirk,
+        Fixed,
     ),
-    entry(
-        BehaviourId::RidingTheElevator,
+    e(
+        RidingTheElevator,
         "Facing the screen on a moving elevator she moves down 1 px a frame, stopped as any downward move",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::Jumping,
+    e(
+        Jumping,
         "Jumps, wall jumps, ball bounces and space jumps start her rising at their speeds",
-        Kind::Mechanic,
-        Switch::Parameter,
+        Mechanic,
+        Parameter,
     ),
-    entry(
-        BehaviourId::FollowingTheGround,
+    e(
+        FollowingTheGround,
         "On the ground she is pulled down onto the floor, and walks off a ledge into a fall",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::MovesAsShePosed,
+    e(
+        MovesAsShePosed,
         "On the frame her pose changes she moves as the pose at the frame's start",
-        Kind::Timing,
-        Switch::Fixed,
+        Timing,
+        Fixed,
     ),
-    entry(
-        BehaviourId::PoseFitAfterMoves,
+    e(
+        PoseFitAfterMoves,
         "A frame ends: her moves, what they met, then the pose change: pose fit, speeds, the lift",
-        Kind::Timing,
-        Switch::Fixed,
+        Timing,
+        Fixed,
     ),
-    entry(
-        BehaviourId::RisingAndFalling,
+    e(
+        RisingAndFalling,
         "She rises and falls under gravity, settling at 5.1400 a frame, and a let-go jump ends the rise",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::DriftInTheAir,
+    e(
+        DriftInTheAir,
         "In the air she drifts towards a top speed, and stops drifting when the pad is let go",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::Moonfall,
+    e(
+        Moonfall,
         "A spin entered as a turn ends drops with no rise and no falling limit until she lands",
-        Kind::Quirk,
-        Switch::Fixed,
+        Quirk,
+        Fixed,
     ),
-    entry(
-        BehaviourId::WallJump,
+    e(
+        WallJump,
         "A spin carried on near a wall readies a wall jump, and jump kicks her off it",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::Landing,
+    e(
+        Landing,
         "Falling onto a floor she lands; the ball bounces twice before it rests",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::PoseFollows,
+    e(
+        PoseFollows,
         "Her pose changes at most once a frame: an animation's end, then what she met, then the pad",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::PadChart,
+    e(
+        PadChart,
         "The pad chart's fitting row with a just-pressed button, then the most buttons, wins",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::Aiming,
+    e(
+        Aiming,
         "The held buttons give a next pose's aim by the rule its row names",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::WhatHerMovesMet,
-        "A wall, a floor, no floor, a ceiling or a kick chooses her pose over the pad",
-        Kind::Mechanic,
-        Switch::Fixed,
+    e(
+        WhatHerMovesMet,
+        "A wall, the aim step's block, a kick, a floor, no floor or a ceiling chooses her pose over the pad",
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::AnimationEnds,
+    e(
+        AnimationEnds,
         "A pose that lasts as long as its animation hands over the next pose at its end",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::BlocksStopFlush,
+    e(
+        BlocksStopFlush,
         "A move into a solid block stops her with her leading edge against its face",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::WallsAndCeilings,
+    e(
+        WallsAndCeilings,
         "A wall halts her; a ceiling ends her rise",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::SolidEnemies,
+    e(
+        SolidEnemies,
         "A solid enemy she reaches decides a move before blocks; one she touches clears her y subpixel",
-        Kind::Quirk,
-        Switch::Fixed,
+        Quirk,
+        Fixed,
     ),
-    entry(
-        BehaviourId::SlopesCarry,
+    e(
+        SlopesCarry,
         "A slope lifts her onto it after a horizontal move, and seated on one her ground pull is 1 px",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::SlopesSlowTheWalk,
+    e(
+        SlopesSlowTheWalk,
         "With no vertical speed, a sloped floor at her leading edge shortens her move by its factor",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::TouchedCells,
+    e(
+        TouchedCells,
         "A frame reports the cells her moves reach, in order, and the cells she is inside",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::OtherBlockKinds,
+    e(
+        OtherBlockKinds,
         "Doors, spikes, shot, bomb and reacting cells meet her as solid, as air, or as they answer",
-        Kind::Mechanic,
-        Switch::Fixed,
+        Mechanic,
+        Fixed,
     ),
-    entry(
-        BehaviourId::WordwiseTopSpeed,
+    e(
+        WordwiseTopSpeed,
         "The top speed is tested part by part, so some speeds snap up and some are kept above it",
-        Kind::Quirk,
-        Switch::Toggle,
+        Quirk,
+        Toggle,
     ),
 ];

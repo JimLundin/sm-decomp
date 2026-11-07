@@ -1,78 +1,54 @@
-//! The domain types the clean models share: quantities, poses and tables in player terms.
+//! The domain types the clean models share: quantities, poses and the world, in player terms.
 
-/// A `P.S` quantity: a 16-bit pixel part and a 16-bit subpixel part.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default, Hash)]
-pub struct Fixed(u32);
+/// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Fixed(pub u32);
 
 impl Fixed {
-    /// Nothing.
-    pub const ZERO: Self = Self(0);
-
-    /// From the whole value, pixel part in the high 16 bits: `0x0002_C000` is `2.C000`.
-    #[must_use]
-    pub const fn from_bits(bits: u32) -> Self {
-        Self(bits)
-    }
-
     /// From a pixel part and a subpixel part.
     #[must_use]
-    pub const fn from_parts(pixel: u16, sub: u16) -> Self {
-        let [a, b] = pixel.to_be_bytes();
-        let [c, d] = sub.to_be_bytes();
+    pub const fn new(pixel: u16, sub: u16) -> Self {
+        let ([a, b], [c, d]) = (pixel.to_be_bytes(), sub.to_be_bytes());
         Self(u32::from_be_bytes([a, b, c, d]))
     }
-
     /// A whole number of pixels.
     #[must_use]
     pub const fn px(pixel: u16) -> Self {
-        Self::from_parts(pixel, 0)
+        Self::new(pixel, 0)
     }
-
     /// The pixel part.
     #[must_use]
     pub const fn pixel(self) -> u16 {
         let [a, b, _, _] = self.0.to_be_bytes();
         u16::from_be_bytes([a, b])
     }
-
     /// The subpixel part.
     #[must_use]
     pub const fn sub(self) -> u16 {
         let [_, _, c, d] = self.0.to_be_bytes();
         u16::from_be_bytes([c, d])
     }
-
-    /// The same pixel part with another subpixel part.
-    #[must_use]
-    pub const fn with_sub(self, sub: u16) -> Self {
-        Self::from_parts(self.pixel(), sub)
-    }
-
-    /// The same subpixel part with another pixel part.
-    #[must_use]
-    pub const fn with_pixel(self, pixel: u16) -> Self {
-        Self::from_parts(pixel, self.sub())
-    }
-
     /// The value read as 8.8: the pixel part's low byte and the subpixel part's high byte.
     #[must_use]
     pub const fn as_8_8(self) -> u16 {
         let [_, b, c, _] = self.0.to_be_bytes();
         u16::from_be_bytes([b, c])
     }
-
-    /// Sum, the subpixel carrying into the pixel part, mod 2^16 on the pixel part.
+    /// The same pixel part with another subpixel part.
+    #[must_use]
+    pub const fn with_sub(self, sub: u16) -> Self {
+        Self::new(self.pixel(), sub)
+    }
+    /// Sum, the subpixel carrying into the pixel part, mod 2^16 on the pixel part (§9).
     #[must_use]
     pub const fn plus(self, other: Self) -> Self {
         Self(self.0.wrapping_add(other.0))
     }
-
     /// Difference, borrowing the same way.
     #[must_use]
     pub const fn minus(self, other: Self) -> Self {
         Self(self.0.wrapping_sub(other.0))
     }
-
     /// Whether this is zero.
     #[must_use]
     pub const fn is_zero(self) -> bool {
@@ -80,14 +56,14 @@ impl Fixed {
     }
 }
 
-/// `below(a, b)` on 16-bit parts: bit 15 of `(a − b) mod 2^16` is set.
+/// `below(a, b)` on 16-bit parts (§9): bit 15 of `(a − b) mod 2^16` is set.
 #[must_use]
 pub const fn below(a: u16, b: u16) -> bool {
-    a.wrapping_sub(b) & 0x8000 != 0
+    a.wrapping_sub(b) > 0x7FFF
 }
 
 /// A signed `P.S` quantity as the player reads it: a size and a sign.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy)]
 pub struct Signed {
     /// Leftward or upward.
     pub negative: bool,
@@ -96,7 +72,7 @@ pub struct Signed {
 }
 
 /// Her position: the centre of her body.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy)]
 pub struct Position {
     /// Rightward.
     pub x: Fixed,
@@ -104,16 +80,20 @@ pub struct Position {
     pub y: Fixed,
 }
 
-/// A side, for a way of moving or a wall.
+/// A direction: the way a move goes (`TouchedCells`), or the way a speed points.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Side {
+pub enum Heading {
     /// Leftward.
     Left,
     /// Rightward.
     Right,
+    /// Upward.
+    Up,
+    /// Downward.
+    Down,
 }
 
-/// Which way she faces.
+/// Which way she faces (§2).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Facing {
     /// Facing left.
@@ -125,17 +105,18 @@ pub enum Facing {
 }
 
 impl Facing {
-    /// The side she faces.
+    /// The side she faces, as a heading.
     #[must_use]
-    pub const fn side(self) -> Side {
-        match self {
-            Self::Left => Side::Left,
-            Self::Right | Self::Screen => Side::Right,
+    pub const fn side(self) -> Heading {
+        if matches!(self, Self::Left) {
+            Heading::Left
+        } else {
+            Heading::Right
         }
     }
 }
 
-/// Her body's shape.
+/// §2 body.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Body {
     /// Standing height.
@@ -148,15 +129,7 @@ pub enum Body {
     SpringBall,
 }
 
-impl Body {
-    /// Whether this is a ball.
-    #[must_use]
-    pub const fn is_ball(self) -> bool {
-        matches!(self, Self::Ball | Self::SpringBall)
-    }
-}
-
-/// What she is doing.
+/// §2 action.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Action {
     /// Pressed to the wall she ran into.
@@ -167,6 +140,8 @@ pub enum Action {
     Falling,
     /// A straight jump, or the spring ball's hop.
     Jumping,
+    /// The moment she touches down, before she stands still, with what she landed from.
+    Landing(LandedFrom),
     /// Moonwalking.
     Moonwalking,
     /// Curling into the ball.
@@ -183,43 +158,88 @@ pub enum Action {
     Still,
     /// The first poses of a straight jump.
     TakingOff,
-    /// Turning round, on the ground or in the air.
-    Turning,
+    /// Turning round, on the ground or in the air, with the turn she is in.
+    Turning(Turn),
     /// Uncurling from the ball.
     Unmorphing,
     /// A wall jump.
     WallJumping,
 }
 
-impl Action {
-    /// Whether her body is changing shape.
-    #[must_use]
-    pub const fn changes_shape(self) -> bool {
-        matches!(
-            self,
-            Self::Crouching | Self::StandingUp | Self::Morphing | Self::Unmorphing
-        )
-    }
+/// §2 aim: the arm's direction.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Aim {
+    /// Unaimed.
+    Forward,
+    /// Up.
+    Up,
+    /// Up and forward.
+    UpForward,
+    /// Down and forward.
+    DownForward,
+    /// Down.
+    Down,
 }
 
-/// The arm's direction.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub enum Aim {
-    /// Aimed down.
-    Down,
-    /// Aimed down and forward.
-    DownForward,
-    /// Unaimed.
-    #[default]
-    Forward,
-    /// Aimed up.
-    Up,
-    /// Aimed up and forward.
-    UpForward,
+/// §2 turn, for `Turning` only: the turn she is in. Its order means nothing.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Turn {
+    /// In a fall.
+    Fall,
+    /// On the ground, upright or crouched.
+    Ground,
+    /// In a take-off or a straight jump.
+    Jump,
+    /// The moonwalk's jump, still on the ground.
+    MoonwalkJump,
+}
+
+/// §2 landed from, for `Landing` only. Its order means nothing.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum LandedFrom {
+    /// A straight jump or a fall, upright.
+    Jump,
+    /// A spin or a wall jump.
+    Spin,
+}
+
+/// §2 gun. Its order means nothing.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Gun {
+    /// Held out in front, a sprite of its own.
+    Drawn,
+    /// Not shown.
+    Stowed,
+}
+
+/// §2 legs. Their order means nothing.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Legs {
+    /// Drawn moving forward.
+    Striding,
+    /// Together.
+    Together,
+}
+
+/// Her pose as the player sees it (§2), every part it lists.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Pose {
+    /// Her body: while it changes shape, the body she changes into.
+    pub body: Body,
+    /// What she is doing, with the turn she is in or what she landed from.
+    pub action: Action,
+    /// Which way she faces.
+    pub facing: Facing,
+    /// The arm's direction.
+    pub aim: Aim,
+    /// Her gun.
+    pub gun: Gun,
+    /// Her legs.
+    pub legs: Legs,
 }
 
 /// A body's half-width and half-height, in pixels.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub struct Radius {
     /// Half-width.
     pub x: u16,
@@ -227,102 +247,49 @@ pub struct Radius {
     pub y: u16,
 }
 
-/// Her pose as the player sees it (§2).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Pose {
-    /// Her body's shape.
-    pub body: Body,
-    /// What she is doing.
-    pub action: Action,
-    /// Which way she faces.
-    pub facing: Facing,
-    /// The arm's direction.
-    pub aim: Aim,
-}
-
-/// A button on the pad.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Button {
+/// The pad's buttons (§1.3), held or just pressed.
+#[derive(Clone, Copy, Default)]
+#[expect(clippy::struct_excessive_bools)]
+pub struct Pad {
     /// Run.
-    Run,
+    pub run: bool,
     /// Jump.
-    Jump,
+    pub jump: bool,
     /// Shoot.
-    Shoot,
+    pub shoot: bool,
     /// Left.
-    Left,
+    pub left: bool,
     /// Right.
-    Right,
+    pub right: bool,
     /// Up.
-    Up,
+    pub up: bool,
     /// Down.
-    Down,
+    pub down: bool,
     /// Aim up.
-    AimUp,
+    pub aim_up: bool,
     /// Aim down.
-    AimDown,
+    pub aim_down: bool,
 }
 
-impl Button {
-    const fn bit(self) -> u16 {
-        match self {
-            Self::Run => 1,
-            Self::Jump => 1 << 1,
-            Self::Shoot => 1 << 2,
-            Self::Left => 1 << 3,
-            Self::Right => 1 << 4,
-            Self::Up => 1 << 5,
-            Self::Down => 1 << 6,
-            Self::AimUp => 1 << 7,
-            Self::AimDown => 1 << 8,
-        }
-    }
-}
-
-/// The buttons held.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub struct Pad(u16);
-
-impl Pad {
-    /// The pad with this button held as well.
-    #[must_use]
-    pub const fn with(self, button: Button) -> Self {
-        Self(self.0 | button.bit())
-    }
-
-    /// Whether a button is held.
-    #[must_use]
-    pub const fn held(self, button: Button) -> bool {
-        self.0 & button.bit() != 0
-    }
-
-    /// Whether the side's button is held.
-    #[must_use]
-    pub const fn holds(self, side: Side) -> bool {
-        match side {
-            Side::Left => self.held(Button::Left),
-            Side::Right => self.held(Button::Right),
-        }
-    }
-
-    /// Whether she steers neither way: neither left nor right held.
-    #[must_use]
-    pub const fn steers_neither_way(self) -> bool {
-        !self.holds(Side::Left) && !self.holds(Side::Right)
-    }
-}
-
-/// The equipment that changes her motion.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+/// Her equipment (§1.3). Screw attack and the other suit change only the sprite, which follows
+/// from the pose and these (§2's last paragraph).
+#[derive(Clone, Copy, Default)]
+#[expect(clippy::struct_excessive_bools)]
 pub struct Equipment {
-    /// Hi-jump boots.
+    /// Hi-jump boots (`Jumping`).
     pub hi_jump: bool,
-    /// Space jump.
+    /// Space jump (`Jumping`).
     pub space_jump: bool,
+    /// Spring ball (`AnimationEnds`).
+    pub spring_ball: bool,
+    /// Screw attack.
+    pub screw_attack: bool,
+    /// A suit other than the first: varia or gravity.
+    pub other_suit: bool,
 }
 
 /// A 16 px cell of the room, by column and row.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Cell {
     /// The column.
     pub column: u16,
@@ -330,21 +297,8 @@ pub struct Cell {
     pub row: u16,
 }
 
-/// The way a move goes (`TouchedCells`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Heading {
-    /// Leftward.
-    Left,
-    /// Rightward.
-    Right,
-    /// Upward.
-    Up,
-    /// Downward.
-    Down,
-}
-
 /// `TouchedCells`: a cell a move reached, and the move's direction.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Touch {
     /// The cell, as the cell it stands for where it stands for another.
     pub cell: Cell,
@@ -353,12 +307,10 @@ pub struct Touch {
 }
 
 /// `OtherBlockKinds`: the kinds of cell that are air to her motion.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub enum AirKind {
     /// Plain air.
     Plain,
-    /// The one other kind of plain air.
-    Other,
     /// A door that leads to a room: her passage to that room starts.
     DoorToRoom,
     /// Air with spikes in it.
@@ -372,7 +324,7 @@ pub enum AirKind {
 }
 
 /// `OtherBlockKinds`: the kinds of cell that are solid to her motion.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub enum SolidKind {
     /// A plain solid block.
     Plain,
@@ -386,120 +338,44 @@ pub enum SolidKind {
     GrappleBlock,
 }
 
-/// `OtherBlockKinds`: the kinds of cell whose own reaction answers, each touch, whether it is
-/// solid or air (`World::lets_through`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+/// `OtherBlockKinds`: the kinds of cell whose reaction answers, each touch, solid or air.
+#[derive(Clone, Copy)]
 pub enum AnsweredKind {
-    /// A block her bombs break: solid unless its reaction lets her through.
+    /// A block her bombs break.
     BombBlock,
     /// A reacting block: one that crumbles, one only speed breaks, an item's.
     Reacting,
 }
 
-/// The kind of a 16 px cell.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+/// The kind of a 16 px cell (§8).
+#[derive(Clone, Copy)]
 pub enum Block {
     /// Air to her motion.
     Air(AirKind),
     /// Solid to her motion.
     Solid(SolidKind),
-    /// Solid or air, as its reaction answers this touch.
+    /// Solid or air, as its reaction answers this touch (`World::lets_through`).
     Answered(AnsweredKind),
     /// A sloped surface, with its shape.
     Slope(Slope),
-    /// A stepped block: solid in some of its four 8 px quarters.
-    Stepped(Quarters),
-    /// A cell that stands for the cell this many cells away along this axis; 0 names nothing.
-    StandsFor(Axis, i16),
-}
-
-/// The axis of a move.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Axis {
-    /// Horizontal.
-    X,
-    /// Vertical.
-    Y,
-}
-
-/// One half of a block along an axis: its first 8 px (left or top) or its second.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Half {
-    /// The left or top half.
-    First,
-    /// The right or bottom half.
-    Second,
-}
-
-/// Which halves of a block, along one axis, her body overlaps.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Halves {
-    /// The left or top half.
-    pub first: bool,
-    /// The right or bottom half.
-    pub second: bool,
-}
-
-/// A stepped block's solid quarters, by row half then column half.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Quarters(pub [[bool; 2]; 2]);
-
-impl Quarters {
-    /// Whether the quarter in this row half and column half is solid.
-    #[must_use]
-    pub const fn solid(self, row: Half, column: Half) -> bool {
-        let [top, bottom] = self.0;
-        let [left, right] = match row {
-            Half::First => top,
-            Half::Second => bottom,
-        };
-        match column {
-            Half::First => left,
-            Half::Second => right,
-        }
-    }
-
-    /// `BlocksStopFlush`: whether a move along `axis` whose leading edge reaches the half
-    /// `reached` stops there: a quarter of that half is solid among those her body overlaps
-    /// across it (`across`).
-    #[must_use]
-    pub const fn stops(self, axis: Axis, reached: Half, across: Halves) -> bool {
-        (across.first && self.along(axis, reached, Half::First))
-            || (across.second && self.along(axis, reached, Half::Second))
-    }
-
-    /// Whether the quarter at half `along` of a move along `axis` and half `across` is solid.
-    const fn along(self, axis: Axis, along: Half, across: Half) -> bool {
-        match axis {
-            Axis::X => self.solid(across, along),
-            Axis::Y => self.solid(along, across),
-        }
-    }
+    /// A stepped block: its 8 px quarters, upper row then lower, each left then right, `true`
+    /// where solid.
+    Stepped([[bool; 2]; 2]),
+    /// A cell that stands for the cell it names; one that names nothing is air.
+    StandsFor(Option<Cell>),
 }
 
 /// `BlocksStopFlush`: the game's frame count's parity, alternating every frame.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Parity {
     /// An even frame.
-    #[default]
     Even,
     /// An odd frame.
     Odd,
 }
 
-impl Parity {
-    /// The other parity: the frame before or after.
-    #[must_use]
-    pub const fn other(self) -> Self {
-        match self {
-            Self::Even => Self::Odd,
-            Self::Odd => Self::Even,
-        }
-    }
-}
-
 /// Which way a sloped surface's solid part lies.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum SlopeFaces {
     /// A sloped ceiling: solid above its surface.
     Ceiling,
@@ -507,24 +383,34 @@ pub enum SlopeFaces {
     Floor,
 }
 
+/// `SlopesCarry`: where a sloped surface lies at one of its block's pixel columns.
+#[derive(Clone, Copy)]
+pub enum Surface {
+    /// At this row of the block, 0 to 15: a floor's topmost solid pixel, a ceiling's lowest.
+    Row(u8),
+    /// An empty column: none of the surface, which lies just past the block's far edge.
+    JustPast,
+    /// A column far past: none of the surface, which lies more than one row past the far edge.
+    FarPast,
+}
+
 /// A sloped surface's shape: world data.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub struct Slope {
     /// Floor or ceiling.
     pub faces: SlopeFaces,
-    /// At each of the block's pixel columns, the row within the block of the surface's solid
-    /// pixel: a floor's topmost, a ceiling's lowest.
-    pub surface: [u8; 16],
+    /// The surface at each of the block's pixel columns, from the left.
+    pub surface: [Surface; 16],
     /// `SlopesSlowTheWalk`: a floor's walk factor, in 1/256ths (`0x100` is 1.00).
     pub factor: u16,
 }
 
-/// A solid enemy's box.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+/// A solid enemy's box: its centre and half-sizes, in pixels.
+#[derive(Clone, Copy)]
 pub struct Hitbox {
-    /// Its centre, in pixels.
+    /// Its centre's x.
     pub x: u16,
-    /// Its centre, in pixels.
+    /// Its centre's y.
     pub y: u16,
     /// Its half-sizes.
     pub radius: Radius,
@@ -534,15 +420,15 @@ pub struct Hitbox {
 pub trait World {
     /// The kind of a 16 px cell.
     fn block(&self, cell: Cell) -> Block;
-    /// `OtherBlockKinds`: whether an answered cell's reaction lets her through on this touch;
-    /// the answer may change from one touch to the next.
+    /// `OtherBlockKinds`: whether an answered cell lets her through on this touch; the answer
+    /// may change from one touch to the next.
     fn lets_through(&self, cell: Cell, heading: Heading) -> bool;
     /// The solid enemies.
     fn solid_enemies(&self) -> &[Hitbox];
 }
 
 /// What kind of behaviour a catalogue entry is.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub enum Kind {
     /// A deliberate game rule.
     Mechanic,
@@ -555,7 +441,7 @@ pub enum Kind {
 }
 
 /// How a catalogue entry can be adjusted.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy)]
 pub enum Switch {
     /// Always on.
     Fixed,
