@@ -286,6 +286,22 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
 - **k is computed under this score** (decision 7): the old code's score (12,723 for
   samus-motion) per unit of the official `tools spec-units` count, times 0.55. The spec header
   states the value and its inputs; it is then frozen.
+- **Two lints close what no weight can** (Jim, 2026-11-07), as `tools/cleanroom/code_check.sh`
+  tags on the clean crates:
+  - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
+    `#[expect]` carries a `reason = "..."` (`allow_attributes_without_reason` is denied too).
+    Outside test code, no attribute may expect, allow or warn a lint that `[workspace.lints]`
+    denies by name (`indexing_slicing`, `arithmetic_side_effects`, `as_conversions`,
+    `wildcard_enum_match_arm` and the rest), a denied group (`clippy::pedantic`) or
+    `warnings`: those lints are what stops the cheaper, worse forms. A lint denied only through
+    a group is a style heuristic and may be expected with its reason, such as
+    `struct_excessive_bools` on a pad whose buttons are independent bools. Tests may expect any
+    lint, with a reason, as `clippy.toml` already loosens them.
+  - **L2, `magic-literal`.** A number other than 0 or 1 in logic is refused, in any spelling
+    (`15_i16`, `0x7FFF`, `0b10`, `0.5`, the `15` of `0..=15`). Allowed in a constant's or
+    static's value (unless L3 makes it logic), in declarations (enum discriminants, array
+    lengths in types), in an array length `[x; N]`, as a tuple field (`.2`), in attributes and
+    in test code. Every number traces to a named constant, a `Rules` field or a behaviour.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once

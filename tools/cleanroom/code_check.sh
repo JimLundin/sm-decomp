@@ -15,6 +15,14 @@
 #     include_bytes!, include!/include_str! of anything but a literal path that resolves to
 #     <root>/scenarios/vectors/<domain>.toml, env!, option_env!, asm!, global_asm!
 #   extern unsafe link path-attr proc-macro     extern, unsafe, #[link], #[path = ...], proc macros
+#   lint-attr      (L1) an #[allow] (the workspace denies clippy::allow_attributes); an #[expect],
+#     #[allow] or #[warn] without reason = "..."; or, outside test code, one that names a lint
+#     this repository's [workspace.lints] denies by name, a denied group, or `warnings`. A lint
+#     denied only through a group (pedantic, nursery) may be expected with its reason.
+#   magic-literal  (L2) a number other than 0 or 1 in logic. Allowed in test code (tests/,
+#     tests.rs, #[cfg(test)] items), attributes, struct/enum/union/type items, a constant's or
+#     static's head and value (unless the value holds behaviour, as `tools size` decides), array
+#     lengths and tuple fields. Both rules are tools/cleanroom/lint_scan.awk.
 # Manifest: build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
 #   dep-registry (not in allowed_deps.txt, or not at its pinned version) target-path
 #   manifest-section ([patch], [replace], [workspace])
@@ -44,8 +52,20 @@ squash() { tr '\n\r\t' '   ' | sed -E 's/ +/ /g; s/ ?(::|[]{}(),;!#*[]) ?/\1/g';
 
 include_re='^include(_str)?![([{]"([^"]*)"[])}]'
 
-scan_source() { # FILE REL ROOT DOMAIN
-  local f=$1 rel=$2 root=$3 domain=$4 b k m g rest lit want
+# The lints this repository denies or forbids by name (clippy's with their prefix), its denied
+# groups, and `warnings`, which the clean room denies on the command line. Read from the
+# trunk's Cargo.toml, not the checked tree's, so an export can't loosen them.
+denied=$(awk '
+  /^\[workspace\.lints\.rust\]/ { p = ""; on = 1; next }
+  /^\[workspace\.lints\.clippy\]/ { p = "clippy::"; on = 1; next }
+  /^\[/ { on = 0 }
+  on && /=/ && /"(deny|forbid)"/ { name = $1; sub(/=.*/, "", name); printf "%s%s ", p, name }
+  END { print "warnings" }' "$here/../../Cargo.toml")
+
+scan_source() { # FILE REL ROOT DOMAIN TEST
+  local f=$1 rel=$2 root=$3 domain=$4 test=$5 b k m g rest lit want tag detail
+  while IFS=$'\t' read -r tag detail; do hit "$rel" "$tag" "$detail"; done \
+    < <(awk -f "$here/strip_rust.awk" "$f" | awk -v denied="$denied" -v test="$test" -f "$here/lint_scan.awk")
   b=$(awk -f "$here/strip_rust.awk" "$f" | squash)
   k=$(awk -v keep=1 -f "$here/strip_rust.awk" "$f" | squash)
 
@@ -106,7 +126,7 @@ scan_source() { # FILE REL ROOT DOMAIN
 }
 
 check_crate() { # CRATE_DIR
-  local crate root domain rel f p allowed
+  local crate root domain rel f p t allowed
   crate=$(cd "$1" && pwd)
   case $crate in
     */crates/clean_model/*) root=${crate%/crates/clean_model/*}; domain=${crate##*/} ;;
@@ -135,7 +155,11 @@ check_crate() { # CRATE_DIR
     < <(cd "$crate" && find . -type l | sed 's#^\./##')
 
   while IFS= read -r f; do
-    scan_source "$crate/$f" "$rel/$f" "$root" "$domain"
+    case $f in
+      tests/* | */tests/* | */tests.rs) t=1 ;;
+      *) t=0 ;;
+    esac
+    scan_source "$crate/$f" "$rel/$f" "$root" "$domain" "$t"
   done < <(cd "$crate" && find src tests -type f -name '*.rs' 2>/dev/null | sort)
 
   # Crate-wide shapes (G6) over the library's sources: test files are not its shape.

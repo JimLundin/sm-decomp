@@ -30,6 +30,7 @@ print_stdout = "deny"
 print_stderr = "deny"
 dbg_macro = "deny"
 allow_attributes = "deny"
+allow_attributes_without_reason = "deny"
 
 [profile.release]
 debug = "line-tables-only"
