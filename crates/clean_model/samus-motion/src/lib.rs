@@ -22,7 +22,12 @@ pub use rules::{Rules, SpeedCap};
 pub use situation::classify;
 
 use Carry::{CarriesOn, FollowsPad};
+use Change::{Chosen, Refused};
+use Drawn::{OtherSuit, Plain, ScrewAttack, SpaceJump};
 use Effect::{AsRunning, EndSkid, Halt, LoseDash, Rise, TakeOff, TurnRound};
+use Spin::CarriedOn;
+use Standing::{Plays, Restarts};
+use Vertical::{Ground, Rising};
 use clean_types::Action::{
     Crouching, Falling, Jumping, Morphing, Spinning, Still, TakingOff, WallJumping,
 };
@@ -30,7 +35,7 @@ use clean_types::Body::{Crouched, Upright};
 use clean_types::button::{JUMP, SHOOT};
 use clean_types::{
     Aim, Buttons, Cell, Equipment, Facing, Fixed, Gun, Heading, Legs, Parity, Pose, Position,
-    Radius, Touch, World,
+    Radius, Touch, World, ZERO,
 };
 use collide::{Bounds, Mover};
 
@@ -228,13 +233,13 @@ const fn crouched(p: Pose) -> Pose {
 const fn drawn(pose: Pose, e: Equipment) -> Drawn {
     let spin = matches!(pose.action, Spinning | WallJumping);
     if spin && e.screw_attack {
-        Drawn::ScrewAttack
+        ScrewAttack
     } else if spin && e.space_jump {
-        Drawn::SpaceJump
+        SpaceJump
     } else if matches!(pose.facing, Facing::Screen) && e.other_suit {
-        Drawn::OtherSuit
+        OtherSuit
     } else {
-        Drawn::Plain
+        Plain
     }
 }
 
@@ -252,7 +257,7 @@ impl Samus {
         // TouchedCells: the cells she is inside, before her moves.
         let inside = m.inside(self.bounds());
         let start = *self;
-        let situation = classify(start.pose, start.vertical == Vertical::Ground);
+        let situation = classify(start.pose, start.vertical == Ground);
         self.begin(situation.doing, frame.pad);
         let meeting = self.moves(situation, frame, &mut m);
         // PoseFitAfterMoves: the speeds her moves left her, for a change that doesn't come.
@@ -262,7 +267,7 @@ impl Samus {
             situation,
             pose: start.pose,
             moving: !start.speed.is_zero(),
-            airborne: self.vertical != Vertical::Ground,
+            airborne: self.vertical != Ground,
             pad: frame.pad,
             pressed: frame.pressed,
             equipment: frame.equipment,
@@ -279,9 +284,9 @@ impl Samus {
         let p = start.pose;
         let restarts = matches!((p.body, p.action, p.aim), (Upright, Still, Aim::Forward));
         let standing = if restarts && frame.pad.any(SHOOT) {
-            Standing::Restarts
+            Restarts
         } else {
-            Standing::Plays
+            Plays
         };
         Outcome {
             wall_test: meeting.wall_test,
@@ -292,7 +297,7 @@ impl Samus {
         }
     }
 
-    /// §8: her box.
+    /// §8, `BlocksStopFlush`: her box, the one her moves test.
     const fn bounds(&self) -> Bounds {
         Bounds {
             at: self.position,
@@ -302,20 +307,21 @@ impl Samus {
 
     /// `RisingAndFalling`, `Jumping`, `WallJump`: she starts rising at this speed.
     const fn rise(&mut self, v: Fixed) {
-        self.vertical = Vertical::Rising;
+        self.vertical = Rising;
         self.vy = v.negated();
     }
 
     /// `RisingAndFalling`, `FollowingTheGround`, `WallsAndCeilings`: she falls from rest.
     const fn fall_from_rest(&mut self) {
         self.vertical = Vertical::Falling;
-        self.vy = Fixed(0);
+        self.vy = ZERO;
     }
 
-    /// A halt: horizontal speed 0, dash 0, following the pad.
+    /// `SpeedBuildsAndBrakes`, `WallsAndCeilings`, `PadChart`: a halt: horizontal speed 0, dash
+    /// 0, following the pad.
     const fn halt(&mut self) {
-        self.speed = Fixed(0);
-        self.dash = Fixed(0);
+        self.speed = ZERO;
+        self.dash = ZERO;
         self.carry = FollowsPad;
     }
 
@@ -323,7 +329,7 @@ impl Samus {
     /// carries on.
     const fn join_dash(&mut self) {
         self.speed = self.speed.plus(self.dash);
-        self.dash = Fixed(0);
+        self.dash = ZERO;
         self.carry = CarriesOn;
     }
 
@@ -334,11 +340,11 @@ impl Samus {
     fn take(&mut self, change: Change, chosen: Choice, moved: Self, frame: &Frame, m: &mut Mover) {
         let (start, r) = (self.pose, m.rules);
         let pose = match change {
-            Change::Chosen => chosen.pose,
-            Change::Refused => start,
+            Chosen => chosen.pose,
+            Refused => start,
             Change::Crouched => crouched(start),
         };
-        if change != Change::Chosen {
+        if change != Chosen {
             *self = Self {
                 position: self.position,
                 seat: self.seat,
@@ -347,7 +353,7 @@ impl Samus {
         }
         self.pose = pose;
         self.radius = (frame.body)(pose);
-        if change != Change::Chosen {
+        if change != Chosen {
             return;
         }
         for effect in chosen.effects {
@@ -379,7 +385,7 @@ impl Samus {
             };
         }
         if start.action == WallJumping && pose.action == Spinning {
-            self.spin = Spin::CarriedOn;
+            self.spin = CarriedOn;
         }
     }
 
@@ -406,7 +412,7 @@ impl Samus {
             // PadChart: as running, with a horizontal speed of 0 she only follows the pad again.
             AsRunning if self.speed.is_zero() => self.carry = FollowsPad,
             AsRunning => self.join_dash(),
-            LoseDash => self.dash = Fixed(0),
+            LoseDash => self.dash = ZERO,
             Halt => self.halt(),
             // Moonfall: a spin she enters when a turn ends, with jump not just pressed, starts
             // with no rise: her vertical speed is 0 and she drops under gravity.

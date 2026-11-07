@@ -9,9 +9,12 @@ pub mod table;
 #[cfg(test)]
 mod tests;
 
-use crate::rows::Test::{Aimed, Airborne, Any, Faces, Held, Moving, Not, Pressed, SpringBall};
+use crate::rows::Test::{
+    Action, Aimed, Airborne, Any, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, SpringBall,
+};
 use crate::rows::{Effect, Met, Row, Side, Situation, Test};
-use clean_types::{Action, Buttons, Equipment, Pose};
+use clean_types::Action::Running;
+use clean_types::{Buttons, Equipment, Pose};
 
 /// What the chart reads.
 ///
@@ -75,11 +78,11 @@ impl Moment {
             Not(t) => !self.passes(t),
             Any(tests) => tests.iter().any(|t| self.passes(t)),
             Aimed(aims) => aims.contains(&p.aim),
-            Test::Gun(gun) => p.gun == gun,
+            Gun(gun) => p.gun == gun,
             Faces(side) => p.facing.side() == side,
-            Test::Body(bodies) => bodies.contains(&p.body),
-            Test::Action(actions) => actions.contains(&p.action),
-            Test::Doing(doings) => doings.contains(&self.situation.doing),
+            Body(bodies) => bodies.contains(&p.body),
+            Action(actions) => actions.contains(&p.action),
+            Doing(doings) => doings.contains(&self.situation.doing),
             Airborne => self.airborne,
             SpringBall => self.equipment.spring_ball,
             Moving => self.moving,
@@ -97,25 +100,23 @@ impl Moment {
     /// chosen, brings the step.
     fn choice(&self, row: &Row) -> Choice {
         let (p, n) = (self.pose, row.next);
+        let facing = match n.facing {
+            Side::Kept => p.facing,
+            Side::Back => p.facing.back(),
+        };
+        let aim = n.aim.iter().find(|a| self.fits(a.when));
         let pose = Pose {
             body: n.body.unwrap_or(p.body),
             action: n.action.unwrap_or(p.action),
-            facing: match n.facing {
-                Side::Kept => p.facing,
-                Side::Back => p.facing.back(),
-            },
-            aim: n
-                .aim
-                .iter()
-                .find(|a| self.fits(a.when))
-                .map_or(p.aim, |a| a.aim),
+            facing,
+            aim: aim.map_or(p.aim, |a| a.aim),
             gun: n.gun.unwrap_or(p.gun),
             legs: n.legs.unwrap_or(p.legs),
         };
         Choice {
             pose,
             effects: row.effects,
-            steps: pose.action == Action::Running && (pose != p || row.steps),
+            steps: pose.action == Running && (pose != p || row.steps),
         }
     }
 

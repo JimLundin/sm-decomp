@@ -6,14 +6,21 @@ use crate::collide::{Moved, Mover, Probe, Stop};
 use crate::rows::{Doing, Drift, FORWARD, Met, Moves, Situation};
 use crate::rules::{Gait, Limits, Rules};
 use crate::{Bounces, Carry, Choice, DashIs, Frame, Samus, Seat, Spin, Vertical, WallTest};
+use Bounces::{Once, Twice};
 use Carry::{CarriesOn, FollowsPad};
+use DashIs::{Hers, ToLose};
+use Doing::{Ball, Hop, Running, Shaping, Spinning, StraightJump, TakingOff, Turning};
 use Met::{Ceiling, Floor, NoFloor, Wall, WallKick};
+use Probe::{Look, Move};
+use Seat::{Seated, Unseated};
+use Spin::{CarriedOn, First, Off, Second};
 use Stride::{Both, Dash, DashThenHalt, Nothing};
-use clean_types::Action::{AgainstWall, Running};
+use Vertical::{Falling, Ground, Moonfall, Rising};
+use WallTest::{Kicked, Neither, Readied};
 use clean_types::Body::SpringBall;
 use clean_types::Heading::{self, Down, Left, Right, Up};
 use clean_types::button::{JUMP, LEFT, RIGHT, RUN};
-use clean_types::{Buttons, Facing, Fixed, Gun, Position, below};
+use clean_types::{Action, Buttons, Facing, Fixed, Gun, Position, ZERO, below};
 
 /// `DriftInTheAir`, `WallJump`: left or right.
 const SIDES: Buttons = LEFT.and(RIGHT);
@@ -55,19 +62,14 @@ impl Samus {
     /// straight jump, a spin or the hop at the start of any frame with jump not held.
     pub(crate) fn begin(&mut self, doing: Doing, pad: Buttons) {
         let next = match self.spin {
-            Spin::Off => Spin::First,
-            Spin::First => Spin::Second,
-            Spin::Second | Spin::CarriedOn => Spin::CarriedOn,
+            Off => First,
+            First => Second,
+            Second | CarriedOn => CarriedOn,
         };
-        self.spin = if doing == Doing::Spinning {
-            next
-        } else {
-            Spin::Off
-        };
-        let lets_go =
-            !pad.any(JUMP) && matches!(doing, Doing::StraightJump | Doing::Spinning | Doing::Hop);
+        self.spin = if doing == Spinning { next } else { Off };
+        let lets_go = !pad.any(JUMP) && matches!(doing, StraightJump | Spinning | Hop);
         let spent = !self.vy.negative() && !self.vy.is_zero();
-        if self.vertical == Vertical::Rising && (lets_go || spent) {
+        if self.vertical == Rising && (lets_go || spent) {
             self.fall_from_rest();
         }
     }
@@ -78,7 +80,7 @@ impl Samus {
             // SpeedBuildsAndBrakes: facing the screen she doesn't move; RidingTheElevator: on a
             // moving elevator she moves down 1 px, a move stopped as any downward move.
             if frame.elevator_moving {
-                self.position = m.go(self.bounds(), Down, m.rules.elevator, Probe::Move).to;
+                self.position = m.go(self.bounds(), Down, m.rules.elevator, Move).to;
             }
             return Meeting::default();
         }
@@ -86,12 +88,12 @@ impl Samus {
         let wall_test = self.wall_test(frame, m);
         // FollowingTheGround: on the ground she is pulled onto the floor, unless as the ball or
         // while her body changes shape she has a vertical speed to move by.
-        let pulled = self.vertical == Vertical::Ground
-            && (self.vy.is_zero() || !matches!(doing, Doing::Shaping | Doing::Ball));
-        let met = if wall_test == WallTest::Kicked {
+        let pulled =
+            self.vertical == Ground && (self.vy.is_zero() || !matches!(doing, Shaping | Ball));
+        let met = if wall_test == Kicked {
             // WallJump: kicking off she doesn't move vertically that frame.
             Some(WallKick)
-        } else if doing == Doing::TakingOff {
+        } else if doing == TakingOff {
             // Jumping: taking off she doesn't move vertically and the pull doesn't act.
             None
         } else if pulled {
@@ -100,7 +102,7 @@ impl Samus {
             self.fall(doing, frame, m)
         };
         // WhatHerMovesMet: a wall stop while running wins over walking off a ledge.
-        let stopped = walk.stop.is_some() && doing == Doing::Running;
+        let stopped = walk.stop.is_some() && doing == Running;
         let met = if stopped { Some(Wall) } else { met };
         Meeting { met, wall_test }
     }
@@ -171,7 +173,7 @@ impl Samus {
         // falling ball instead halts, but still moves by its dash.
         let let_go = !carries && !pad.any(SIDES);
         if let_go && drift == Drift::Air {
-            self.speed = Fixed(0);
+            self.speed = ZERO;
             return Nothing;
         }
         if let_go && drift == Drift::BallAir {
@@ -183,7 +185,7 @@ impl Samus {
         // drifting, and a wall jump always, carry on along her facing.
         let topped = self.build(r.limits(gait), facing, r);
         if drift == Drift::Spin && !topped && !pad.seen(self.pose.facing).any(FORWARD) {
-            self.speed = Fixed(0);
+            self.speed = ZERO;
             self.carry = FollowsPad;
             return Dash;
         }
@@ -206,7 +208,7 @@ impl Samus {
     /// the pad again.
     fn brake(&mut self, r: &Rules) {
         if self.speed < r.brake {
-            self.speed = Fixed(0);
+            self.speed = ZERO;
             self.carry = FollowsPad;
         } else {
             self.speed = self.speed.minus(r.brake);
@@ -222,13 +224,13 @@ impl Samus {
         } else {
             cap
         };
-        self.dash_is = DashIs::Hers;
+        self.dash_is = Hers;
     }
 
     /// `Dash` (§1.2): a dash she is to lose is gone the next frame she moves.
     fn lose_dash(&mut self) {
-        if self.dash_is == DashIs::ToLose {
-            self.dash = Fixed(0);
+        if self.dash_is == ToLose {
+            self.dash = ZERO;
         }
     }
 
@@ -240,7 +242,7 @@ impl Samus {
         } else {
             d
         };
-        m.go(self.bounds(), way, d, Probe::Move)
+        m.go(self.bounds(), way, d, Move)
     }
 
     /// `SpeedBuildsAndBrakes`, `SlopesCarry`: a horizontal move, then the checks that run after
@@ -251,7 +253,7 @@ impl Samus {
         self.position = moved.to;
         if let Some(at) = m.seat(self.bounds()) {
             self.position = at;
-            self.seat = Seat::Seated;
+            self.seat = Seated;
         }
         moved.stop
     }
@@ -268,8 +270,8 @@ impl Samus {
         if moved.stop != Some(Stop::Enemy) {
             self.position.x = moved.to.x;
         }
-        if moved.stop.is_some() && chosen.pose.action == Running {
-            chosen.pose.action = AgainstWall;
+        if moved.stop.is_some() && chosen.pose.action == Action::Running {
+            chosen.pose.action = Action::AgainstWall;
             chosen.pose.gun = Gun::Stowed;
             chosen.effects = &[];
         }
@@ -281,23 +283,23 @@ impl Samus {
     /// her x subpixel, a solid enemy she touches her y subpixel. A wall near her readies the
     /// wall jump; once the spin has turned far, pressing jump kicks her off.
     fn wall_test(&mut self, frame: &Frame, m: &mut Mover) -> WallTest {
-        if self.spin != Spin::CarriedOn || !frame.pad.any(SIDES) {
-            return WallTest::Neither;
+        if self.spin != CarriedOn || !frame.pad.any(SIDES) {
+            return Neither;
         }
         let wall = if frame.pad.any(LEFT) { Right } else { Left };
-        let seen = m.go(self.bounds(), wall, m.rules.wall_reach, Probe::Look);
+        let seen = m.go(self.bounds(), wall, m.rules.wall_reach, Look);
         self.position = Position {
             x: self.position.x.with_sub(seen.to.x.sub()),
             y: seen.to.y,
         };
         if seen.stop.is_none() {
-            WallTest::Neither
+            Neither
         } else if !frame.spin_turned_far {
-            WallTest::Readied
+            Readied
         } else if frame.pressed.any(JUMP) {
-            WallTest::Kicked
+            Kicked
         } else {
-            WallTest::Neither
+            Neither
         }
     }
 
@@ -305,16 +307,16 @@ impl Samus {
     /// move of more than 0 starts she leaves any slope.
     fn vmove(&mut self, v: Fixed, m: &mut Mover) -> Moved {
         if !v.is_zero() {
-            self.seat = Seat::Unseated;
+            self.seat = Unseated;
         }
         let way = if v.negative() { Up } else { Down };
-        m.go(self.bounds(), way, v.size(), Probe::Move)
+        m.go(self.bounds(), way, v.size(), Move)
     }
 
     /// `SlopesCarry`: a downward move or look that a stepped block stops seats her.
     pub(crate) fn seat_on(&mut self, stop: Option<Stop>) {
         if stop == Some(Stop::Stepped) {
-            self.seat = Seat::Seated;
+            self.seat = Seated;
         }
     }
 
@@ -324,18 +326,18 @@ impl Samus {
     /// turning (`TurningRound`: she sinks instead) or changing shape, she falls from rest.
     fn pull(&mut self, doing: Doing, speed: Fixed, m: &mut Mover) -> Option<Met> {
         let r = m.rules;
-        let by = if self.seat == Seat::Seated {
+        let by = if self.seat == Seated {
             r.ground_pull
         } else {
             speed.plus(r.ground_pull)
         };
         let moved = self.vmove(by, m);
-        if moved.stop.is_some() || doing == Doing::Turning {
+        if moved.stop.is_some() || doing == Turning {
             self.position = moved.to;
             self.seat_on(moved.stop);
             return None;
         }
-        if doing == Doing::Shaping {
+        if doing == Shaping {
             return None;
         }
         self.walk_off();
@@ -357,8 +359,8 @@ impl Samus {
         let r = m.rules;
         // Jumping: with space jump, pressing jump while falling in a spin with her fall speed in
         // the window jumps again, rising that same frame; not in a moonfall (`Moonfall`).
-        if self.vertical == Vertical::Falling
-            && doing == Doing::Spinning
+        if self.vertical == Falling
+            && doing == Spinning
             && frame.pressed.any(JUMP)
             && frame.equipment.space_jump
             && r.space_jump.contains(&self.vy.as_8_8())
@@ -374,7 +376,7 @@ impl Samus {
         }
         self.seat_on(moved.stop);
         self.vy = self.pulled(r);
-        let on_ground = self.vertical == Vertical::Ground && doing == Doing::Ball;
+        let on_ground = self.vertical == Ground && doing == Ball;
         if on_ground && moved.stop.is_none() {
             self.walk_off();
             return Some(NoFloor);
@@ -385,7 +387,7 @@ impl Samus {
     /// `RisingAndFalling`: her vertical speed after the pull, which stops growing at pixel part
     /// 5; `Moonfall`: with no limit.
     fn pulled(&self, r: &Rules) -> Fixed {
-        if self.vertical != Vertical::Moonfall && self.vy.pixel() == r.fall_settle_px {
+        if self.vertical != Moonfall && self.vy.pixel() == r.fall_settle_px {
             self.vy
         } else {
             self.vy.plus(r.gravity)
@@ -400,7 +402,7 @@ impl Samus {
             // following the pad; it ends a moonfall (`Moonfall`).
             Some(WallKick) => {
                 self.rise(r.wall_jump.of(frame.equipment.hi_jump));
-                self.speed = Fixed(0);
+                self.speed = ZERO;
                 self.carry = FollowsPad;
             }
             Some(Wall | Met::AimStep | NoFloor | Ceiling) | None => {}
@@ -415,9 +417,9 @@ impl Samus {
     /// stops. Else she lands: vertical speed 0, bounces 0, horizontal speed 0, following the
     /// pad; the dash keeps its value, to lose (§1.2).
     fn land(&mut self, doing: Doing, frame: &Frame, r: &Rules) {
-        let ball = matches!(doing, Doing::Ball | Doing::Hop);
+        let ball = matches!(doing, Ball | Hop);
         let fast = self.vy.minus(r.gravity).pixel() >= r.bounce_from_px;
-        if doing == Doing::Turning {
+        if doing == Turning {
             return;
         }
         if ball && self.pose.body == SpringBall && frame.pad.any(JUMP) {
@@ -427,22 +429,22 @@ impl Samus {
         }
         if ball && fast && self.bounces == Bounces::None {
             self.rise(r.bounce);
-            self.bounces = Bounces::Once;
+            self.bounces = Once;
             return;
         }
-        if ball && fast && self.bounces == Bounces::Once {
+        if ball && fast && self.bounces == Once {
             self.rise(r.bounce.minus(r.second_bounce_less));
-            self.bounces = Bounces::Twice;
+            self.bounces = Twice;
             return;
         }
-        self.vertical = Vertical::Ground;
-        self.vy = Fixed(0);
-        if doing == Doing::Shaping {
+        self.vertical = Ground;
+        self.vy = ZERO;
+        if doing == Shaping {
             return;
         }
         self.bounces = Bounces::None;
-        self.speed = Fixed(0);
+        self.speed = ZERO;
         self.carry = FollowsPad;
-        self.dash_is = DashIs::ToLose;
+        self.dash_is = ToLose;
     }
 }

@@ -52,7 +52,7 @@ pub struct Boots {
 }
 
 impl Boots {
-    /// The speed for her equipment.
+    /// `Jumping`: the speed for her equipment.
     #[must_use]
     pub const fn of(self, hi_jump: bool) -> Fixed {
         if hi_jump { self.hi_jump } else { self.plain }

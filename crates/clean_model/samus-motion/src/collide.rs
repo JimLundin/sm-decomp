@@ -4,10 +4,16 @@
 //! 2^16, as positions do.
 
 use crate::rules::Rules;
+use Probe::{Blocks, Enemies, Move};
+use Stop::{Enemy, Flat};
+use clean_types::Block::{Air, Answered, Solid, StandsFor};
 use clean_types::Heading::{self, Down, Right, Up};
+use clean_types::Parity::Odd;
+use clean_types::SlopeFaces::{Ceiling, Floor};
+use clean_types::Surface::{FarPast, JustPast, Row};
 use clean_types::{
-    Block, Cell, Fixed, Hitbox, Pair, Parity, Position, Radius, Slope, SlopeFaces, Surface, Touch,
-    Way, World,
+    Block, Cell, Fixed, Hitbox, Pair, Parity, Position, Radius, Slope, SlopeFaces, Touch, Way,
+    World,
 };
 
 /// §8: a cell is 16 px, `1 << CELL_BITS`.
@@ -141,24 +147,26 @@ const fn closer(a: u16, b: u16, reach: u16) -> bool {
     a.wrapping_sub(b).cast_signed().unsigned_abs() < reach
 }
 
-/// `SlopesCarry`, the one comparison every slope rule reads: how far an edge on pixel row `y`
-/// of a sloped block, at pixel column `x`, is into its surface. 0 is the surface's solid edge
-/// row, more is deeper into its solid part, −1 the air row next to it (a floor's last air row
-/// above, a ceiling's first air row below). Rows are counted from the surface's open side, so
-/// an empty column's surface lies just past the block's far edge, and a column far past's a row
-/// beyond that: it never comes nearer than −2.
-fn into(s: Slope, x: u16, y: u16) -> i16 {
-    let floor = s.faces == SlopeFaces::Floor;
+/// `SlopesCarry`, the one comparison every slope rule reads: how many rows past the air row next
+/// to its surface (a floor's last air row above, a ceiling's first air row below) an edge on
+/// pixel row `y` of a sloped block, at pixel column `x`, is. 0 is that air row, 1 the surface's
+/// solid edge row, more is deeper into its solid part. Rows are counted from the surface's open
+/// side, so an empty column's surface lies just past the block's far edge, and a column far
+/// past's a row beyond that: it never comes nearer than −1.
+fn past(s: Slope, x: u16, y: u16) -> i16 {
+    let floor = s.faces == Floor;
     let open = |n: i16| if floor { n } else { LAST_ROW.wrapping_sub(n) };
     let row = s
         .surface
         .get(usize::from(x & IN_CELL))
         .map_or(0, |c| match *c {
-            Surface::Row(n) => open(i16::from(n)),
-            Surface::JustPast => JUST_PAST,
-            Surface::FarPast => FAR_PAST,
+            Row(n) => open(i16::from(n)),
+            JustPast => JUST_PAST,
+            FarPast => FAR_PAST,
         });
-    open((y & IN_CELL).cast_signed()).wrapping_sub(row)
+    open((y & IN_CELL).cast_signed())
+        .wrapping_sub(row)
+        .wrapping_add(1)
 }
 
 /// One move along its axis, as §8 reads it: from her centre `from` to the target `to`, her
@@ -263,7 +271,7 @@ impl Axis {
         );
         Some(Moved {
             to: if gap == 0 { touching } else { stopped },
-            stop: Some(Stop::Enemy),
+            stop: Some(Enemy),
         })
     }
 
@@ -273,16 +281,14 @@ impl Axis {
     fn stop(&self, block: Block, k: u16, way: Way) -> Option<Moved> {
         let lead = self.lead();
         match block {
-            Block::Solid | Block::Answered => {
-                Some(self.flush(lead & !IN_CELL, CELL_PX, Stop::Flat))
-            }
+            Solid | Answered => Some(self.flush(lead & !IN_CELL, CELL_PX, Flat)),
             Block::Stepped(q) if self.stepped(q, k) => {
                 Some(self.flush(lead & !IN_QUARTER, QUARTER_PX, Stop::Stepped))
             }
             Block::Slope(s) if vertical(self.heading) && k == cell(self.at.x.pixel()) => {
                 self.slope(s, way)
             }
-            Block::Stepped(_) | Block::Slope(_) | Block::Air | Block::StandsFor(_) => None,
+            Block::Stepped(_) | Block::Slope(_) | Air | StandsFor(_) => None,
         }
     }
 
@@ -310,21 +316,22 @@ impl Axis {
     /// a ceiling stops a rise once her top edge reaches its first air row, with no move at all.
     /// A look up passes every sloped ceiling.
     fn slope(&self, s: Slope, way: Way) -> Option<Moved> {
-        let into = into(s, self.at.x.pixel(), self.lead());
-        let floor = s.faces == SlopeFaces::Floor;
+        let past = past(s, self.at.x.pixel(), self.lead());
+        let floor = s.faces == Floor;
         let meets = if floor {
             self.heading == Down
         } else {
             way == Way::Move(Up)
         };
-        (meets && into >= -1).then(|| Moved {
-            to: if floor {
-                let lift = into.wrapping_add(1).cast_unsigned();
-                self.put(self.to.pixel().wrapping_sub(lift), self.from.sub())
-            } else {
-                self.at
-            },
-            stop: Some(Stop::Flat),
+        let lifted = self.to.pixel().wrapping_sub(past.cast_unsigned());
+        let to = if floor {
+            self.put(lifted, self.from.sub())
+        } else {
+            self.at
+        };
+        (meets && past >= 0).then_some(Moved {
+            to,
+            stop: Some(Flat),
         })
     }
 }
@@ -335,8 +342,8 @@ impl Mover<'_> {
     /// air.
     fn resolve(&self, at: Cell) -> (Block, Cell) {
         let block = self.world.block(at);
-        if let Block::StandsFor(names) = block {
-            return names.map_or((Block::Air, at), |next| self.resolve(next));
+        if let StandsFor(names) = block {
+            return names.map_or((Air, at), |next| self.resolve(next));
         }
         (block, at)
     }
@@ -347,7 +354,7 @@ impl Mover<'_> {
     fn line(&self, a: &Axis) -> Vec<(u16, Cell)> {
         let (lo, hi) = extent(a.across, a.rc);
         let mut line: Vec<u16> = (cell(lo)..=cell(hi)).collect();
-        if vertical(a.heading) && self.parity == Parity::Odd {
+        if vertical(a.heading) && self.parity == Odd {
             line.reverse();
         }
         line.into_iter()
@@ -364,9 +371,9 @@ impl Mover<'_> {
             .collect()
     }
 
-    /// `SlopesCarry`: how far pixel row `y` at column `x` is into its cell's surface, where that
-    /// cell is a sloped surface facing `faces`.
-    fn slope_into(&self, x: u16, y: u16, faces: SlopeFaces) -> Option<i16> {
+    /// `SlopesCarry`: how many rows past its surface's air row pixel row `y` at column `x` is,
+    /// where its cell is a sloped surface facing `faces`.
+    fn slope_past(&self, x: u16, y: u16, faces: SlopeFaces) -> Option<i16> {
         let at = Cell {
             column: cell(x),
             row: cell(y),
@@ -374,7 +381,7 @@ impl Mover<'_> {
         let (Block::Slope(s), _) = self.resolve(at) else {
             return None;
         };
-        (s.faces == faces).then(|| into(s, x, y))
+        (s.faces == faces).then(|| past(s, x, y))
     }
 
     /// `TouchedCells`: the cells she is inside, from her box at the frame's start: her centre
@@ -405,7 +412,7 @@ impl Mover<'_> {
         let line = self.line(&Axis::new(b, heading, d));
         line.into_iter().fold(d, |d, (_, at)| {
             if let (Block::Slope(s), _) = self.resolve(at)
-                && s.faces == SlopeFaces::Floor
+                && s.faces == Floor
             {
                 let cut = if grows(heading) {
                     d.as_8_8()
@@ -439,19 +446,19 @@ impl Mover<'_> {
             dist
         };
         let a = Axis::new(b, heading, dist);
-        let way = if probe == Probe::Move {
+        let way = if probe == Move {
             Way::Move(heading)
         } else {
             Way::Look
         };
         // SolidEnemies: a solid enemy in the move's path decides it alone; blocks stop her only
         // on a path free of them.
-        let enemy = if probe == Probe::Blocks {
+        let enemy = if probe == Blocks {
             None
         } else {
             self.enemy(&a, dist)
         };
-        let stopped = if enemy.is_some() || probe == Probe::Enemies {
+        let stopped = if enemy.is_some() || probe == Enemies {
             enemy
         } else {
             self.blocks(&a, way)
@@ -465,7 +472,7 @@ impl Mover<'_> {
     /// the same way would stop; only when nothing stops that is it the look of its own distance.
     pub fn look(&mut self, b: Bounds, by: Fixed, probe: Probe) -> Moved {
         let (heading, short) = (if by.negative() { Up } else { Down }, self.rules.look);
-        if probe == Probe::Blocks && by.size() >= short {
+        if probe == Blocks && by.size() >= short {
             let first = self.go(b, heading, short, probe);
             if first.stop.is_some() {
                 return first;
@@ -498,7 +505,7 @@ impl Mover<'_> {
         self.line(a).into_iter().find_map(|(k, at)| {
             let (block, at) = self.resolve(at);
             self.reached.push(Touch { cell: at, way });
-            let through = matches!(block, Block::Answered) && self.world.lets_through(at, way);
+            let through = matches!(block, Answered) && self.world.lets_through(at, way);
             a.stop(block, k, way).filter(|_| !through)
         })
     }
@@ -511,20 +518,18 @@ impl Mover<'_> {
     pub fn seat(&self, b: Bounds) -> Option<Position> {
         let (x, y) = (b.at.x.pixel(), b.at.y.pixel());
         let lift = self
-            .slope_into(x, edge(y, b.r.y, Down), SlopeFaces::Floor)
-            .filter(|d| *d >= 0)
-            .map_or(0, |d| d.wrapping_add(1));
+            .slope_past(x, edge(y, b.r.y, Down), Floor)
+            .filter(|d| *d > 0)
+            .unwrap_or(0);
         let lifted = y.wrapping_sub(lift.cast_unsigned());
         let push = self
-            .slope_into(x, edge(lifted, b.r.y, Up), SlopeFaces::Ceiling)
-            .filter(|d| *d >= -1)
-            .map(|d| d.wrapping_add(1));
-        (lift > 0 || push.is_some()).then(|| Position {
-            y: Fixed::new(
-                lifted.wrapping_add(push.unwrap_or(0).cast_unsigned()),
-                b.at.y.sub(),
-            ),
+            .slope_past(x, edge(lifted, b.r.y, Up), Ceiling)
+            .filter(|d| *d >= 0);
+        let pushed = lifted.wrapping_add(push.unwrap_or(0).cast_unsigned());
+        let seated = Position {
+            y: Fixed::new(pushed, b.at.y.sub()),
             ..b.at
-        })
+        };
+        (lift > 0 || push.is_some()).then_some(seated)
     }
 }

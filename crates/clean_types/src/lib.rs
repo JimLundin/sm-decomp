@@ -5,6 +5,7 @@
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Default)]
 pub struct Fixed(pub u32);
 
+/// The header's notation and §9's arithmetic on `P.S` quantities.
 impl Fixed {
     /// From a pixel part and a subpixel part.
     #[must_use]
@@ -29,7 +30,8 @@ impl Fixed {
         let [_, _, c, d] = self.0.to_be_bytes();
         u16::from_be_bytes([c, d])
     }
-    /// The value read as 8.8: the pixel part's low byte and the subpixel part's high byte.
+    /// The value read as 8.8: the pixel part's low byte and the subpixel part's high byte
+    /// (`Jumping`'s space jump window, `SlopesSlowTheWalk`'s cut).
     #[must_use]
     pub const fn as_8_8(self) -> u16 {
         let [_, b, c, _] = self.0.to_be_bytes();
@@ -75,6 +77,9 @@ impl Fixed {
         }
     }
 }
+
+/// No speed, no distance: `0.0000`.
+pub const ZERO: Fixed = Fixed(0);
 
 /// `below(a, b)` on 16-bit parts (§9): bit 15 of `(a − b) mod 2^16` is set.
 #[must_use]
@@ -122,6 +127,7 @@ pub enum Facing {
     Screen,
 }
 
+/// §2 facing: forward is the side she faces, back the other side.
 impl Facing {
     /// The side she faces, as a heading.
     #[must_use]

@@ -3,6 +3,8 @@
 
 use crate::collide::{Bounds, Mover, Probe};
 use crate::{Change, Frame, Samus, crouched};
+use Change::{Chosen, Crouched, Refused};
+use Probe::{Blocks, Enemies};
 use clean_types::{Facing, Fixed, Pose, Radius};
 
 /// `PoseFitAfterMoves`: the room the looks found above her and below her, where something
@@ -49,10 +51,10 @@ impl Samus {
         let (old, new) = (self.radius, (frame.body)(chosen));
         let g = new.y.saturating_sub(old.y);
         if chosen == self.pose || chosen.facing == Facing::Screen || g == 0 {
-            return Change::Chosen;
+            return Chosen;
         }
         let (down, mut found) = (Fixed::px(g), Found::default());
-        for (probe, far) in [(Probe::Enemies, new), (Probe::Blocks, old)] {
+        for (probe, far) in [(Enemies, new), (Blocks, old)] {
             let here = Found {
                 above: self.look(m, down.negated(), old, probe),
                 below: self.look(m, down, old, probe),
@@ -60,7 +62,7 @@ impl Samus {
             if let Some(push) = here.alone(g)
                 && self.look(m, push, far, probe).is_some()
             {
-                return Change::Refused;
+                return Refused;
             }
             found = here.or(found);
         }
@@ -68,14 +70,14 @@ impl Samus {
         match found.alone(g) {
             Some(push) => self.position.y = y.plus(push),
             None if found.above.is_none() => {}
-            None if old.y < m.rules.small_body_px => return Change::Refused,
+            None if old.y < m.rules.small_body_px => return Refused,
             None => {
                 let crouch = (frame.body)(crouched(self.pose));
                 self.position.y = y.minus(Fixed::px(crouch.y.saturating_sub(old.y)));
-                return Change::Crouched;
+                return Crouched;
             }
         }
-        Change::Chosen
+        Chosen
     }
 
     /// `PoseFitAfterMoves`: one look by `by` (signed, downward positive) at size `r`. It doesn't
@@ -96,7 +98,7 @@ impl Samus {
     /// don't stop it), and she is lowered as far as it got; what stops it writes to her as a
     /// stop would.
     pub(crate) fn lower(&mut self, by: Fixed, m: &mut Mover) {
-        let seen = m.look(self.bounds(), by, Probe::Blocks);
+        let seen = m.look(self.bounds(), by, Blocks);
         self.position = seen.to;
         self.seat_on(seen.stop);
     }
