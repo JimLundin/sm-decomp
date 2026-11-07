@@ -12,25 +12,25 @@ fn key(body: Body, action: Action, aim: Aim) -> PoseKey {
     }
 }
 
-fn asset(key: PoseKey, worn: Worn) -> PoseAsset {
-    PoseAsset {
+fn asset(key: PoseKey, worn: Worn) -> Clip {
+    Clip {
         key,
         worn,
         frames: Vec::new(),
+        end: ClipEnd::HandOver,
     }
 }
 
-fn assets(poses: Vec<PoseAsset>) -> SamusAssets {
+fn assets(clips: Vec<Clip>) -> SamusAssets {
     SamusAssets {
-        poses,
+        sheet: SpriteSheet::default(),
+        clips,
         running: Vec::new(),
         chest: Chest {
             left: 0,
             up: 0,
             attributes: SpriteAttributes::from_word(0),
         },
-        sprites: Vec::new(),
-        tiles: Vec::new(),
     }
 }
 
@@ -47,7 +47,7 @@ fn a_turn_without_a_sprite_of_its_own_shows_its_nearest() {
         asset(key(Body::Upright, air, Aim::Down), Worn::Always),
         asset(key(Body::Crouched, ground, Aim::DownForward), Worn::Always),
     ]);
-    let shown = |key| assets.pose(key, PLAIN).map(|asset| asset.key);
+    let shown = |key| assets.clip(key, PLAIN).map(|asset| asset.key);
     assert_eq!(
         shown(key(Body::Upright, air, Aim::DownForward)),
         Some(key(Body::Upright, air, Aim::Down))
@@ -70,7 +70,7 @@ fn the_dress_picks_between_the_sprites_of_one_pose() {
         spin: SpinSprite::ScrewAttack,
         ..PLAIN
     };
-    let worn = |dress| assets.pose(spin, dress).map(|asset| asset.worn);
+    let worn = |dress| assets.clip(spin, dress).map(|asset| asset.worn);
     assert_eq!(worn(PLAIN), Some(Worn::Spin(SpinSprite::Plain)));
     assert_eq!(worn(screw), Some(Worn::Spin(SpinSprite::ScrewAttack)));
 }
