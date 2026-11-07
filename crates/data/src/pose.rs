@@ -307,8 +307,8 @@ pub struct PoseDefinition {
     pub y_radius: u8,
 }
 
-/// The table's first entry.
-const POSE_DEFINITIONS: RomAddress = RomAddress::new(0x91, 0xB629);
+/// Where the pose definitions table starts in the ROM, for decoders that read it directly.
+pub const POSE_DEFINITIONS: RomAddress = RomAddress::new(0x91, 0xB629);
 
 /// The poses the table defines: 0 to 0xFC, ending where the next table begins.
 pub const POSE_COUNT: usize = 0xFD;
