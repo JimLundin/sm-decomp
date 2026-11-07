@@ -1,0 +1,45 @@
+# What a clean-room export holds (MODEL §5, "The clean room is enforced by construction").
+# export.sh copies [all] and [domain <name>] from the source commit, writes [generated] itself,
+# and extracts [model] from docs/architecture/MODEL.md. Nothing else enters the export.
+# `{domain}` is the domain's name. An entry ending in `/` is a directory.
+# A change here widens what an implementer sees: the adversary reviews it like a brief.
+
+[all]
+# The clean crates (crates/README.md has the rest of the workspace). They depend on nothing but
+# each other and std. A crate absent from the source commit is created empty.
+crates/clean_types/
+crates/clean_model/{domain}/
+# The domain's spec and vectors, from the observer.
+docs/behaviours/{domain}.md
+scenarios/vectors/{domain}.toml
+# The implementer's process.
+.agents/skills/implementer/SKILL.md
+# Toolchain and lint configuration. The workspace lints are copied into the generated Cargo.toml.
+rust-toolchain.toml
+clippy.toml
+.gitattributes
+
+# Entries for one domain only, as `[domain samus-motion]`.
+
+[generated]
+# Written by export.sh, not copied.
+Cargo.toml
+.gitignore
+CLEANROOM.md
+docs/MODEL-cleanroom.md
+
+[model]
+# The parts of MODEL.md an implementer reads: `section N.` takes the heading `## N.` whole, and
+# `para TEXT` the paragraph starting `**TEXT`, which runs to the next bold paragraph or heading.
+section 3.
+para Two roles
+para What counts as a leak
+para An adversary gates the clean room
+para The clean room is enforced by construction
+para What the implementer may read
+para No fitting to the oracle
+
+[import]
+# The paths an implementer's patch may touch. import.sh refuses a patch outside them.
+crates/clean_types/
+crates/clean_model/{domain}/
