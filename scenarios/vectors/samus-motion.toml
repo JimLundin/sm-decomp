@@ -17,9 +17,11 @@
 #   - slope_floor: one sloped floor block: block = [x, y], its top-left corner (multiples of 16);
 #     surface = 16 numbers, one per column of pixels from the left, the row (0 to 15) of the surface's
 #     top pixel in the block: that pixel and every one below it in the block are solid, those above
-#     are air.
+#     are air; 16 means the column has no solid pixel in the block. factor (optional, default
+#     "1.00"): the shape's walk factor in hex, a pixel and 1/256ths (spec `SlopesSlowTheWalk`).
 #   - slope_ceiling: one sloped ceiling block, as slope_floor, but each number is the row of the
-#     surface's bottom pixel: that pixel and every one above it in the block are solid.
+#     surface's bottom pixel: that pixel and every one above it in the block are solid. Its factor,
+#     when given, is the shape's and never applies to her moves.
 #   - solid_block: [x, y], the top-left corner of one solid 16 px block.
 #   - stepped: one stepped block: block = [x, y], its top-left corner; quarters = two strings, its
 #     upper 8 px row of quarters then its lower one, each two characters from the left: "#" a solid
@@ -2177,3 +2179,60 @@ jump_pressed = false
 pressed = ["up"]
 met = "nothing"
 after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Up" } }
+
+# Walking along a sloped floor (SlopesSlowTheWalk): two recorded frames and three constructed.
+
+[[vector]]
+id = "S1"
+source = "samus-input-poses:512"
+entries = ["SlopesSlowTheWalk", "TurningRound", "WordwiseTopSpeed", "FollowingTheGround", "SlopesCarry"]
+world = { slope_floor = { block = [96, 192], surface = [9, 10, 11, 12, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16], factor = "0.C0" } }
+before = { position = ["0062.97FF", "00B6.1FFF"] }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0063.27FF", "00B7.1FFF"], speed_x = "+0000.C000", dash = "0000.0000" }
+
+[[vector]]
+id = "S2"
+source = "r01:717"
+entries = ["SlopesSlowTheWalk", "DriftInTheAir", "WordwiseTopSpeed", "RisingAndFalling"]
+world = { slope_floor = { block = [832, 1200], surface = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], factor = "0.C0" } }
+before = { position = ["034C.BC00", "049E.4FFF"], speed_x = "-0000.C000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["034B.9C00", "049E.4FFF"], speed_x = "-0001.8000", speed_y = "+0000.1C00" }
+
+[[vector]]
+id = "C-slope-walk-left"
+source = "constructed"
+entries = ["SlopesSlowTheWalk", "SpeedBuildsAndBrakes", "FollowingTheGround", "SlopesCarry"]
+world = { slope_floor = { block = [256, 272], surface = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], factor = "0.C0" } }
+before = { position = ["0108.0000", "0103.FFFF"], speed_x = "-0001.0080" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0107.1B40", "0104.FFFF"], speed_x = "-0001.3080", dash = "0000.0000" }
+
+[[vector]]
+id = "C-slope-walk-air"
+source = "constructed"
+entries = ["SlopesSlowTheWalk", "DriftInTheAir", "RisingAndFalling"]
+world = { slope_floor = { block = [256, 272], surface = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], factor = "0.C0" } }
+before = { position = ["0108.0000", "00FE.0000"], speed_x = "-0000.C000", speed_y = "+0000.1C00" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0106.8000", "00FE.1C00"], speed_x = "-0001.8000", speed_y = "+0000.3800" }
+
+[[vector]]
+id = "C-slope-walk-ceiling"
+source = "constructed"
+entries = ["SlopesSlowTheWalk", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround"]
+world = { floor_top = 288, slope_ceiling = { block = [272, 240], surface = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], factor = "0.C0" } }
+before = { position = ["010A.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["010C.C000", "010B.FFFF"], speed_x = "+0002.C000" }

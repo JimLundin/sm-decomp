@@ -14,7 +14,8 @@ that changes her speeds, and her collision with blocks, slopes and solid enemies
 **Not in this spec yet** (each an input where it feeds us; §10): which exact sprite pose follows
 which input (the pose chart), pose fit (the push when her body grows), animation timing, liquids,
 the speed booster's extra speed, knockback, bomb jumps, grapple, shinespark, pushes from the room
-(Ceres, conveyors, quicksand), doors, spikes and the other blocks that act when she touches them, and slopes' sideways speed change.
+(Ceres, conveyors, quicksand), and what a cell she reaches then does (`TouchedCells` says which
+she reaches; `OtherBlockKinds` how each kind meets her motion).
 
 **Baseline: about 3,600 lines**, counted with `wc -l`, tests excluded.
 
@@ -211,6 +212,20 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Timing. On the frame she changes pose she still moves as the pose at the frame's start says: what she is doing,
   her speeds, and what a landing or a fall does, come from the pose at the frame's start. checked:
   oracle (J1, J2, A1).
+
+### PoseFitAfterMoves
+- Timing. A frame ends in this order: her moves (horizontal, the ground pull or her vertical move,
+  then the aim change's step), then what they met (a landing, a fall, a ceiling, a wall), then the
+  pose change. Within the pose change, pose fit's push comes first: when the new pose's body is
+  taller, she is pushed clear of what is above or below her from the position her moves left
+  (the push itself is out of scope, the header). Then come the new pose's speeds (a jump's rise,
+  `Jumping`), then the crouch take-off's 10 px lift, from the pushed position.
+- So the push sees her before the lift: her y at the frame's end is the moves' y, plus the push
+  found there, less the 10 px. A push found after the lift would differ wherever a block is within
+  10 px above her.
+- A pose that doesn't change, or a change to facing the screen, gets no push.
+- checked: original only (item-morph-ball 1311 shows the lift and pose fit a frame apart, §11
+  question 6).
 
 ---
 
@@ -481,8 +496,8 @@ of a kind: air, solid, a stepped block, a sloped surface, or a kind out of scope
 block is solid in some of its four 8 px quarters (a half, a quarter, three quarters); a sloped
 surface has a floor or a ceiling whose height changes column by column (its shape). Solid enemies are boxes
 at positions. Her body is a box of half-width `radius.x` and half-height `radius.y` around her
-centre. Each move asks what is at the cells her body's leading edge reaches, and each kind answers
-as below. These rules are Samus's; other actors get their own when their domains are written.
+centre. Each move meets the cells her body's leading edge reaches (`TouchedCells`), and each kind
+acts on her motion as below. These rules are Samus's; other actors get their own when their domains are written.
 
 ### BlocksStopFlush
 - Mechanic. A move into a solid block stops her with her leading edge against its face: moving
@@ -559,7 +574,8 @@ as below. These rules are Samus's; other actors get their own when their domains
     ceiling. When her top edge is in its solid part, or on the first air row under it, she is
     pushed down by whole pixels until her top edge is on that first air row, and the push seats
     her, also when it moves her 0 px because her top edge was already there.
-- A sloped surface never stops a horizontal move (how it changes the move's length is §10).
+- A sloped surface never stops a horizontal move (how a sloped floor changes the move's length is
+  `SlopesSlowTheWalk`).
 - A downward move meets a sloped floor only in the block at her centre column; one in the other
   columns her body spans doesn't stop her. When her bottom edge at the target reaches the last air
   row above the surface's top there, or lower, the move stops with her bottom edge on that last
@@ -582,6 +598,80 @@ as below. These rules are Samus's; other actors get their own when their domains
   samus-input-poses:426 for the landing that keeps the subpixel); constructed (C-slope-land,
   C-slope-edge, C-slope-ceiling-edge, C-seat-lift, C-seat-none, C-step-down, C-down-odd,
   C-aim-slope).
+
+### SlopesSlowTheWalk
+- Mechanic. A horizontal move made while her vertical speed is exactly 0 (standing, running,
+  turning, rolling, the first frame of a fall from rest, or after a rise ends at the frame's
+  start), whose leading edge's column meets a sloped floor, is shortened by that floor's walk
+  factor. A sloped ceiling never shortens a move, and with any vertical speed but 0 no slope does.
+- The cells that count are those `TouchedCells` names for the move: the leading edge's column at
+  the move's unshortened target, in each row her body spans. Each sloped floor among them
+  shortens it again, top row first. A solid block below it in that column still stops her as
+  `BlocksStopFlush` says.
+- The walk factor is world data, a multiple of 1/256 for each shape: 1.00 (a flat-topped shape),
+  0.F0, 0.D8 (a half-height triangle), 0.C0 (a triangle, a quarter or a three-quarter triangle),
+  0.B0 (a bumpy triangle), 0.80 (a half-width triangle), 0.50. Vectors give it as
+  `world.slope_floor.factor`.
+- The arithmetic, exactly. The move is first cut to a multiple of 0.0100 (1/256 px), rounding
+  towards minus infinity, so a leftward move's length rounds up; only the pixel part's value mod
+  256 is kept. Its length is then multiplied by the factor exactly (no bits are lost), and the
+  direction put back. So 1.7000 at 0.C0 is 1.1400, 4.C000 at 0.D8 is 4.0200, and 0.C000 at 0.C0 is
+  0.9000; a factor of 1.00 still cuts the move to a multiple of 0.0100.
+- Her speeds don't change: only that frame's move is shorter. The aim change's step
+  (`AimingAndShooting`) is a horizontal move too: on a 0.C0 floor it moves her 0.C000.
+- checked: oracle (S1 samus-input-poses:512, S2 r01:717; the moves of r01:625-630 at 0.C0 and of
+  r06:123-126 at 0.D8, aim steps included); constructed (C-slope-walk-left, C-slope-walk-air,
+  C-slope-walk-ceiling).
+
+### TouchedCells
+- Output. Some cells react when she reaches them (one that changes the scrolling, an item, a door,
+  a floor that crumbles); what they then do belongs to their own domains. Motion reports which cells she reaches,
+  in order, so the world can raise those reactions. Two reports come out of a frame.
+- **The cells her moves reach.** For each move of the frame (the horizontal move, the ground pull
+  or her vertical move, the aim change's step, the elevator's 1 px), in the order they happen: the
+  cells of her leading edge's line at the move's target, the line `BlocksStopFlush` names. For a
+  horizontal move that is the column of her leading edge at the target, in each row her body
+  spans where she stands before the move, top row first. For a vertical move it is the row of her
+  leading edge at the target, in each column her body spans where she stands before the move, left
+  to right on an `Even` frame and right to left on an `Odd` one. Each cell comes with the move's
+  direction (left, right, up, down), because some reactions depend on it.
+- The report ends at the first cell that stops her: the cells after it on the line are not
+  reached. A move of exactly 0 reaches no cells (`BlocksStopFlush`), and neither does a move that
+  a solid enemy decides (`SolidEnemies`). The wall-jump test (`WallJump`) and pose fit's push
+  reach cells of their own, which belong to them, not to these reports.
+- A cell that stands for another (`OtherBlockKinds`) is reported as the cell it stands for.
+- **The cells she is inside.** Once each frame, before her moves, from her position at the frame's
+  start: the cell in her centre column at her bottom edge's row; then at her centre's row, when it
+  differs from her bottom edge's row; then at her top edge's row, when it differs from her bottom
+  edge's row and the three rows' numbers combined by exclusive-or are not 0. So when the rows of
+  her top edge and her centre are one, and her bottom edge's another, that cell is reported twice.
+- checked: original only (area-brinstar's scrolling cells, item-morph-ball's pickup).
+
+### OtherBlockKinds
+- Mechanic. How the remaining kinds of cell meet her motion. Each is solid (it stops her as a
+  solid block does, `BlocksStopFlush`), air (it never stops her), or decided by the cell's own
+  reaction this frame. Each is reported as `TouchedCells` says, whatever it does.
+
+| Kind | To her motion | Its own domain |
+| --- | --- | --- |
+| a door that leads to a room | air: the move goes on, and her passage to that room starts | doors |
+| a door that leads nowhere (an elevator's) | solid | the elevator |
+| spikes | solid | damage and knockback, which start no sooner than the next frame |
+| air with spikes in it | air | damage, from the cells she is inside |
+| a block her shots break, a block her grapple holds | solid | shots, grapple |
+| air her shots act on, and the one other kind of plain air | air | shots |
+| a block her bombs break | solid, unless its reaction lets her through this frame | bombs |
+| air her bombs act on | air | bombs |
+| a reacting block (one that crumbles, one only speed breaks, an item's) | solid or air, as its reaction answers this frame | those blocks, items |
+| reacting air (a cell that changes the scrolling, a moving floor, an item) | air | scrolling, room pushes, items |
+| a cell that stands for another | like the cell it names, in its own place; one that names nothing is air | the room's data |
+
+- A cell that stands for another names a cell some number of cells away along its row or its
+  column. It meets her exactly as that cell's kind and shape would if it were here: the stop and
+  the slope's shape are at this cell's position. A chain of such cells is followed to its end.
+- The world answers a reacting cell's solid-or-air for each touch; the answer may change from one
+  touch to the next (a floor that crumbles holds her, then falls away).
+- checked: original only.
 
 ---
 
@@ -606,7 +696,7 @@ as below. These rules are Samus's; other actors get their own when their domains
 - **The pose chart:** which pose follows which pad and world event, and what each change does to
   her speeds (§7). It needs its own observer lane, written as records keyed by what the player
   does.
-- **Slopes:** the sideways speed change on a slope, and the corners of steep blocks.
+- **Slopes:** the corners of steep blocks.
 - **Liquids and the speed booster:** other speeds and gravity in water and lava; the booster's dash
   cap of 7 and its higher jump.
 - **Pushes:** room pushes, quicksand, knockback, bomb jumps, grapple, shinespark.
@@ -634,7 +724,9 @@ as below. These rules are Samus's; other actors get their own when their domains
    rules are out of scope.
 5. Answered: landing on a solid enemy's top (item-morph-ball frame 797) clears the y subpixel
    because she reaches the enemy a pixel early and is touching it (`SolidEnemies`).
-6. The crouch take-off's lift appears a frame apart from pose fit (item-morph-ball 1311).
+6. The crouch take-off's lift appears a frame apart from pose fit (item-morph-ball 1311). The
+   order within a frame is `PoseFitAfterMoves`; a recorded vector for it waits for pose fit's own
+   lane.
 7. Answered: holding no button during a turn ends the skid; holding one that changes nothing
    keeps it (`TurningRound`).
 8. `Moonfall` has M1 (r03), whose lead-in runs through the turn's end. Whether a turn's end into a
