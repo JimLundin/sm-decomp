@@ -32,6 +32,8 @@
 #   argument-object  (G6) a struct taken by exactly one signature and built only in the argument
 #     lists of calls to that function, with no impl, and not a field's, variant's, return,
 #     constant's or alias's type or named in a trait: a bag of one call's arguments
+#   layering         (G7) a cycle of module references within the crate: modules import in one
+#     direction only
 #
 # What it can't see: see the report of the lane that wrote it; in short, macro-generated paths
 # beyond `std::$x`, registry crates the allowlist admits (and their transitive build scripts),
@@ -162,7 +164,7 @@ check_crate() { # CRATE_DIR
     scan_source "$crate/$f" "$rel/$f" "$root" "$domain" "$t"
   done < <(cd "$crate" && find src tests -type f -name '*.rs' 2>/dev/null | sort)
 
-  # Crate-wide shapes (G6) over the library's sources: test files are not its shape.
+  # Crate-wide shapes (G6, G7) over the library's sources: test files are not its shape.
   while IFS=$'\t' read -r tag p detail; do
     [ -n "$tag" ] && hit "$rel/src/$p" "$tag" "$detail"
   done < <(cd "$crate" && find src -type f -name '*.rs' ! -name tests.rs ! -path '*/tests/*' 2>/dev/null | sort |

@@ -15,6 +15,7 @@
 #                                      depending only on clean_types and std
 #   docs/behaviours/DOMAIN.md          the spec;  scenarios/vectors/DOMAIN.toml  its vectors
 #   CLEANROOM.md                       how to work and commit in the export
+#   clippy.toml                        generated: tools/cleanroom/clippy.toml, the G5 ceilings
 # A clean crate absent from COMMIT is created empty. Nothing of today's model is copied.
 #
 # Run from the repository (any worktree). CARGO, if set, runs `cargo check` on the export.
@@ -92,6 +93,8 @@ scaffold "crates/clean_model/$domain" "$(model_package "$domain")" \
   git show "$sha:Cargo.toml" | sed -n '/^\[workspace\.lints\.rust\]/,/^\[profile/p' | sed '$d'
 } >"$dest/Cargo.toml"
 printf '/target\n/Cargo.lock\n' >"$dest/.gitignore"
+# The clean crates' clippy configuration: the root's test allowances and the G5 ceilings.
+git show "$sha:tools/cleanroom/clippy.toml" >"$dest/clippy.toml"
 
 
 cat >"$dest/CLEANROOM.md" <<EOF

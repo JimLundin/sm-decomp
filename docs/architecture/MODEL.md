@@ -39,7 +39,8 @@ Jim's decisions, 2026-11-07:
    free, a function signature is half, a `true` or `false` is double (§4). Two quality terms
    compose with those weights: depth (Q1), so nested decisions cost more than a flat dispatch,
    and clumps (Q2), so values that travel together without a type pay where they recur (§4).
-   Hard lints on the clean crates refuse what no weight can price: an argument object (G6).
+   Hard lints on the clean crates refuse what no weight can price: ceilings in the clean
+   room's clippy configuration (G5), an argument object (G6) and a module cycle (G7).
    The integrator's bridge is reported apart and not counted against the model, which its
    implementer didn't write (Jim, 2026-11-07).
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
@@ -276,6 +277,13 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     better.
 - **Gates refuse what no weight can price** (Jim, 2026-11-07): hard lints on the clean crates,
   ceilings that yield no score, so nothing is counted twice.
+  - **G5, the clean room's clippy configuration** (`tools/cleanroom/clippy.toml`, which
+    `export.sh` writes as the export's `clippy.toml` and the trunk's gate and Quality run on its
+    clean crates): at most one `bool` parameter (`max-fn-params-bools = 1`), no block nested 5
+    deep (`excessive_nesting`, denied in `[workspace.lints]` and off wherever no threshold is
+    set), cognitive complexity at most 15. `too-many-arguments-threshold` stays at 7: a lower
+    one would make a struct of the arguments a compliance tool. Q1 gives the gradient below
+    the nesting ceiling.
   - **G6, `argument-object`** (`tools/cleanroom/code_check.sh`, through `shape_scan.awk` over a
     crate's library sources together): a struct taken by exactly one signature and built only in
     the argument lists of calls to that function, with no `impl` (no methods, no trait), and not
@@ -283,6 +291,11 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     trait. That is a bag of one call's arguments, which a parameter-count rule would reward;
     the values are passed as they are, or the concept gets a role. It flags the bag rewrite's
     `Go` and nothing in round 7 or the trunk.
+  - **G7, `layering`** (the same scan): a crate's modules name each other in one direction
+    only. A file's module is its path; a reference is a path through `crate::`, `super::`,
+    `self::` or a child module's name, `use` groups included, and any cycle among them is
+    refused, a child naming its parent while the parent reads the child included. It stops
+    passing a whole owner (`&Samus`) down to a helper module to dodge Q2.
 - **k is computed under this score** (decision 7): the old code's score (12,723 for
   samus-motion) per unit of the official `tools spec-units` count, times 0.55. The spec header
   states the value and its inputs; it is then frozen.

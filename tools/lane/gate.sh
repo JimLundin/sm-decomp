@@ -16,6 +16,11 @@ if ! "$R/cargo" clippy --locked -p data -p game -p runtime -p app -p verify -p t
   fail "CLIPPY FAIL"
   grep -E '^(error|warning)|-->' "$O/check.log" | head -10
 fi
+# The clean crates under the clean room's ceilings (G5): tools/cleanroom/clippy.toml, the export's.
+if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" "$R/cargo" clippy --locked -p clean_types -p clean_model_samus_motion --all-targets --no-deps -- -D warnings >"$O/check.log" 2>&1; then
+  fail "CLEAN CLIPPY FAIL"
+  grep -E '^(error|warning)|-->' "$O/check.log" | head -10
+fi
 CARGO="$R/cargo" bash tools/check_crate_rules.sh >/dev/null 2>&1 || fail "CRATE RULES FAIL"
 sh tools/check_doc_links.sh >/dev/null 2>&1 || fail "DOC LINKS FAIL"
 if [ "$ok" -eq 1 ]; then

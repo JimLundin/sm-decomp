@@ -23,6 +23,8 @@ indexing_slicing = "deny"
 arithmetic_side_effects = "deny"
 as_conversions = "deny"
 unreachable = "deny"
+# Off until a clippy.toml sets its threshold: the clean crates' (tools/cleanroom/clippy.toml, G5).
+excessive_nesting = "deny"
 todo = "deny"
 unimplemented = "deny"
 wildcard_enum_match_arm = "deny"

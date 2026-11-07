@@ -1,0 +1,20 @@
+# The clean crates' clippy configuration: the export's clippy.toml (export.sh writes it there) and
+# the trunk's check of its clean crates (CLIPPY_CONF_DIR=tools/cleanroom, gate.sh and Quality).
+# The root clippy.toml's test allowances, then the clean room's ceilings (G5, Jim 2026-11-07).
+#
+# Tests may unwrap, expect, panic and index (the project's testing principle). These only loosen
+# lints that the new crates deny through [workspace.lints].
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-panic-in-tests = true
+allow-indexing-slicing-in-tests = true
+# G5: ceilings that yield no score, so nothing is counted twice; the score's depth term (Q1)
+# gives the gradient below them. At most one bool parameter (fn_params_excessive_bools,
+# pedantic): a second flag wants an enum. A block nested 5 deep is refused (excessive_nesting,
+# denied in [workspace.lints]; off where no threshold is set). Cognitive complexity at most 15
+# (cognitive_complexity, nursery). The argument count stays at clippy's 7: a lower one would make
+# a struct of the arguments a compliance tool.
+max-fn-params-bools = 1
+excessive-nesting-threshold = 5
+cognitive-complexity-threshold = 15
+too-many-arguments-threshold = 7

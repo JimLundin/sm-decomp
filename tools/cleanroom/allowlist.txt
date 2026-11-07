@@ -17,7 +17,6 @@ scenarios/vectors/{domain}.toml
 docs/cleanroom/DESIGN.md
 # Toolchain and lint configuration. The workspace lints are copied into the generated Cargo.toml.
 rust-toolchain.toml
-clippy.toml
 .gitattributes
 
 # Entries for one domain only, as `[domain samus-motion]`.
@@ -27,6 +26,8 @@ clippy.toml
 Cargo.toml
 .gitignore
 CLEANROOM.md
+# The clean crates' clippy configuration, tools/cleanroom/clippy.toml (G5).
+clippy.toml
 
 [import]
 # The paths an implementer's patch may touch. import.sh refuses a patch outside them.

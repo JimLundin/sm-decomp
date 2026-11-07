@@ -9,14 +9,24 @@
 #                  a field's or a variant's type, a return type, a constant's or an alias's type
 #                  or named in a trait: a bag of one call's arguments. Pass the values, or give
 #                  the concept a role.
+# layering         (G7) the crate's modules name each other in one direction only: no cycle of
+#                  module references. A file's module is its path (lib.rs is the crate root,
+#                  a/mod.rs and a.rs are `a`); a reference is a path through `crate::`,
+#                  `super::`, `self::` or a child module's name, `use` groups included.
 function isid(ch) { return ch ~ /^[A-Za-z0-9_]$/ }
 function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = FNR - fileline; fileof[n] = file }
+function module_of(path,   m) {
+  m = path; sub(/\.rs$/, "", m); sub(/(^|\/)(lib|main|mod)$/, "", m); gsub(/\//, "::", m)
+  return m == "" ? "crate" : "crate::" m
+}
+function parent(m) { if (m == "crate") return m; sub(/::[^:]+$/, "", m); return m }
 BEGIN {
   nops = split("<<= >>= ... ..= :: -> => == != <= >= && || += -= *= /= %= ^= &= |= << >> ..", ops, " ")
   n = 0
 }
 /^\001FILE / {
   file = substr($0, 7); fileline = FNR
+  modof[file] = module_of(file); ismod[modof[file]] = 1
   next
 }
 {
@@ -74,6 +84,33 @@ function after_angles(a,   d) {
 # Marks the struct names among the words a..b-1 as used in role `role`.
 function uses(a, b, role,   k) {
   for (k = a; k < b; k++) if (kind[k] == "word" && (text[k] in declared)) used[role, text[k]] = 1
+}
+# A reference from module `from` to module `to`, first seen at token k.
+function edge(from, to, k) {
+  if (from == to || ((from, to) in edges)) return
+  edges[from, to] = 1; nedges++; efrom[nedges] = from; eto[nedges] = to
+  efile[nedges] = fileof[k]; eline[nedges] = lineof[k]
+}
+# The module references of the path starting at token k, resolved from module `cur`.
+function refs(k, cur, from,   start, j, d, e) {
+  start = k
+  while (k <= n && kind[k] == "word") {
+    if (text[k] == "super") cur = parent(cur)
+    else if (text[k] == "crate") cur = "crate"
+    else if (text[k] != "self") { if ((cur "::" text[k]) in ismod) cur = cur "::" text[k]; else break }
+    if (text[k + 1] != "::") break
+    k += 2
+  }
+  if (text[k] == "{") {
+    e = after_group(k); d = 0
+    for (j = k + 1; j < e - 1; j++) {
+      if (d == 0 && (j == k + 1 || text[j - 1] == ",")) refs(j, cur, from)
+      if (kind[j] == "open") d++
+      else if (kind[j] == "close") d--
+    }
+    return
+  }
+  edge(from, cur, start)
 }
 # Whether a struct literal or tuple constructor at k (its name) is an expression.
 function built(k, e,   p) {
@@ -158,5 +195,21 @@ END {
     if (bad) continue
     printf "argument-object\t%s\tline %d: struct %s is taken only by fn %s and built only in its arguments (%d calls): pass the values, or give it a role\n", \
       dfile[s], dline[s], s, taker[s], calls[s]
+  }
+  # Module references, then the cycles among them.
+  for (a = 1; a <= n; a++) {
+    if (skip[a] || kind[a] != "word" || text[a + 1] != "::" || text[a - 1] == "::" || text[a - 1] == ".") continue
+    from = modof[fileof[a]]; w = text[a]
+    if (w == "crate" || w == "super" || w == "self" || ((from "::" w) in ismod)) refs(a, from, from)
+  }
+  nm = 0
+  for (m in ismod) { nm++; mods[nm] = m }
+  for (i = 1; i <= nm; i++) for (j = 1; j <= nm; j++) reach[mods[i], mods[j]] = ((mods[i], mods[j]) in edges)
+  for (k = 1; k <= nm; k++) for (i = 1; i <= nm; i++) if (reach[mods[i], mods[k]])
+    for (j = 1; j <= nm; j++) if (reach[mods[k], mods[j]]) reach[mods[i], mods[j]] = 1
+  for (i = 1; i <= nedges; i++) {
+    if (!reach[eto[i], efrom[i]]) continue
+    printf "layering\t%s\tline %d: %s names %s, and %s reaches %s: modules import in one direction only\n", \
+      efile[i], eline[i], efrom[i], eto[i], eto[i], efrom[i]
   }
 }
