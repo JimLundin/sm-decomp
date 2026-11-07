@@ -1,6 +1,6 @@
 use clean_types::{
-    AirKind, AnsweredKind, Axis, Block, Cell, Fixed, Heading, Position, Radius, SlopeFaces,
-    SolidKind, World,
+    AirKind, AnsweredKind, Block, Cell, Fixed, Heading, Position, Radius, SlopeFaces, SolidKind,
+    Surface, World,
 };
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
@@ -53,6 +53,15 @@ const fn at(column: u16, row: u16) -> Cell {
     Cell { column, row }
 }
 
+/// A surface column as the vectors write it: its row, 16 just past, 17 far past.
+const fn row(surface: Surface) -> u8 {
+    match surface {
+        Surface::Row(row) => row,
+        Surface::JustPast => 16,
+        Surface::FarPast => 17,
+    }
+}
+
 #[test]
 fn each_kind_meets_her_as_its_block_kind_says() {
     let slopes = slopes();
@@ -65,19 +74,32 @@ fn each_kind_meets_her_as_its_block_kind_says() {
         ((1, 1), BlockKind::VerticalExtension(Offset(2))),
     ]);
     let world = world(&blocks, &slopes);
-    assert_eq!(world.block(at(0, 0)), Block::Solid(SolidKind::Plain));
-    assert_eq!(world.block(at(1, 0)), Block::Air(AirKind::Reacting));
-    assert_eq!(
+    assert!(matches!(
+        world.block(at(0, 0)),
+        Block::Solid(SolidKind::Plain)
+    ));
+    assert!(matches!(
+        world.block(at(1, 0)),
+        Block::Air(AirKind::Reacting)
+    ));
+    assert!(matches!(
         world.block(at(2, 0)),
         Block::Answered(AnsweredKind::Reacting)
-    );
+    ));
     assert!(world.lets_through(at(2, 0), Heading::Down));
     assert!(!world.lets_through(at(3, 0), Heading::Down));
-    assert_eq!(world.block(at(0, 1)), Block::StandsFor(Axis::X, -1));
-    assert_eq!(world.block(at(1, 1)), Block::StandsFor(Axis::Y, 2));
-    assert_eq!(world.block(at(3, 3)), Block::Air(AirKind::Plain));
+    // One block back along the level from (0, 1) is the row above's last.
+    assert!(matches!(
+        world.block(at(0, 1)),
+        Block::StandsFor(Some(Cell { column: 3, row: 0 }))
+    ));
+    assert!(matches!(
+        world.block(at(1, 1)),
+        Block::StandsFor(Some(Cell { column: 1, row: 3 }))
+    ));
+    assert!(matches!(world.block(at(3, 3)), Block::Air(AirKind::Plain)));
     // Past the level: air.
-    assert_eq!(world.block(at(0, 9)), Block::Air(AirKind::Plain));
+    assert!(matches!(world.block(at(0, 9)), Block::Air(AirKind::Plain)));
     assert_eq!(world.reaction(at(1, 0)), Some(Touch::Scroll(BlockIndex(1))));
     assert_eq!(world.reaction(at(2, 0)), Some(Touch::Item(BlockIndex(2))));
     assert_eq!(world.reaction(at(3, 0)), None);
@@ -96,11 +118,11 @@ fn a_square_slope_is_stepped_through_its_flips() {
     let Block::Stepped(top_left) = world.block(at(0, 0)) else {
         panic!("square slope");
     };
-    assert_eq!(top_left.0, [[true, false], [false, false]]);
+    assert_eq!(top_left, [[true, false], [false, false]]);
     let Block::Stepped(bottom_right) = world.block(at(1, 0)) else {
         panic!("flipped square slope");
     };
-    assert_eq!(bottom_right.0, [[false, false], [false, true]]);
+    assert_eq!(bottom_right, [[false, false], [false, true]]);
 }
 
 #[test]
@@ -116,14 +138,14 @@ fn a_surface_is_a_floor_or_a_ceiling_by_its_flip() {
     let Block::Slope(floor) = world.block(at(0, 0)) else {
         panic!("floor slope");
     };
-    assert_eq!(floor.faces, SlopeFaces::Floor);
-    assert_eq!((floor.surface[0], floor.surface[15]), (15, 0));
+    assert!(floor.faces == SlopeFaces::Floor);
+    assert_eq!((row(floor.surface[0]), row(floor.surface[15])), (15, 0));
     assert_eq!(floor.factor, 0xc0);
     let Block::Slope(ceiling) = world.block(at(1, 0)) else {
         panic!("ceiling slope");
     };
-    assert_eq!(ceiling.faces, SlopeFaces::Ceiling);
-    assert_eq!((ceiling.surface[0], ceiling.surface[15]), (15, 0));
+    assert!(ceiling.faces == SlopeFaces::Ceiling);
+    assert_eq!((row(ceiling.surface[0]), row(ceiling.surface[15])), (15, 0));
 }
 
 /// Gap 7, open: a ceiling column with no solid pixel (10h) and one past the block (14h, as
@@ -145,11 +167,11 @@ fn a_ceilings_empty_and_far_columns_answer_row_0_until_the_slope_can_say_16() {
     let Block::Slope(floor) = world.block(at(0, 0)) else {
         panic!("floor slope");
     };
-    assert_eq!((floor.surface[0], floor.surface[1]), (0x10, 0x14));
+    assert_eq!((row(floor.surface[0]), row(floor.surface[1])), (16, 17));
     let Block::Slope(ceiling) = world.block(at(1, 0)) else {
         panic!("ceiling slope");
     };
-    assert_eq!((ceiling.surface[0], ceiling.surface[1]), (0, 0));
+    assert_eq!((row(ceiling.surface[0]), row(ceiling.surface[1])), (0, 0));
 }
 
 #[test]

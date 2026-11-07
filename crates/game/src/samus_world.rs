@@ -6,10 +6,10 @@
 //! world's: the model reports the cells it reached and the caller applies them.
 
 use clean_types::{
-    AirKind, AnsweredKind, Axis, Block, Cell, Heading, Hitbox, Position, Quarters, Radius, Slope,
-    SlopeFaces, SolidKind, World,
+    AirKind, AnsweredKind, Block, Cell, Heading, Hitbox, Position, Radius, Slope, SlopeFaces,
+    SolidKind, Surface, World,
 };
-use data::level::slope::{Shape, Slopes, Square, Surface};
+use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
 
 use crate::collision::solid_enemy::{SolidEnemies, obstacles};
@@ -25,8 +25,12 @@ const SCROLL_TRIGGER: Bts = Bts(0x46);
 /// Pixel rows in a block, less one: a ceiling's surface counts up from the block's bottom.
 const LAST_ROW: u8 = 15;
 
+/// Pixel rows in a block: a surface offset of this lies just past the block, a greater one far
+/// past it.
+const ROWS: u8 = 16;
+
 /// The room and the frame's solid enemies.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct SamusWorld<'a> {
     room: Room<'a>,
     enemies: Vec<Hitbox>,
@@ -60,6 +64,29 @@ impl<'a> SamusWorld<'a> {
                 .wrapping_mul(u16::from(width))
                 .wrapping_add(cell.column),
         )
+    }
+
+    /// The cell at a level data index: the inverse of [`Self::index`], a zero width leaving the
+    /// index as the column.
+    fn cell(&self, index: u16) -> Cell {
+        let [width, _] = self.room.width.0.to_le_bytes();
+        let width = u16::from(width);
+        Cell {
+            column: index.checked_rem(width).unwrap_or(index),
+            row: index.checked_div(width).unwrap_or(0),
+        }
+    }
+
+    /// The cell an extension at `cell` names, `by` blocks along its row or column; an offset of
+    /// 0 names nothing.
+    fn extended(&self, cell: Cell, by: i8, rows: bool) -> Option<Cell> {
+        let step = i16::from(by).cast_unsigned();
+        let step = if rows {
+            step.wrapping_mul(self.room.width.0)
+        } else {
+            step
+        };
+        (by != 0).then(|| self.cell(self.index(cell).0.wrapping_add(step)))
     }
 
     /// The level's kind at `cell`; past the level, air.
@@ -126,35 +153,36 @@ fn slope(slopes: &Slopes, slope: data::level::Slope) -> Option<Block> {
 }
 
 /// A square slope's quarters, by row then column, each read through the flips.
-fn quarters(square: Square, slope: data::level::Slope) -> Quarters {
+fn quarters(square: Square, slope: data::level::Slope) -> [[bool; 2]; 2] {
     let at =
         |bottom: bool, right: bool| square.solid_at(right ^ slope.x_flip, bottom ^ slope.y_flip);
-    Quarters([
+    [
         [at(false, false), at(false, true)],
         [at(true, false), at(true, true)],
-    ])
+    ]
 }
 
 /// A sloped surface: a floor's surface row is its offset from the block's top; a ceiling
 /// (flipped top to bottom) counts its offset up from the block's bottom row.
-fn surface_of(surface: Surface, slope: data::level::Slope) -> Slope {
+fn surface_of(surface: Tops, slope: data::level::Slope) -> Slope {
     let faces = if slope.y_flip {
         SlopeFaces::Ceiling
     } else {
         SlopeFaces::Floor
     };
-    let mut rows = surface.tops;
+    let mut tops = surface.tops;
     if slope.x_flip {
-        rows.reverse();
+        tops.reverse();
     }
-    if faces == SlopeFaces::Ceiling {
-        for row in &mut rows {
-            *row = LAST_ROW.saturating_sub(*row);
-        }
-    }
+    let column = |top: u8| match (faces, top.checked_sub(ROWS)) {
+        (SlopeFaces::Floor, None) => Surface::Row(top),
+        (SlopeFaces::Floor, Some(0)) => Surface::JustPast,
+        (SlopeFaces::Floor, Some(_)) => Surface::FarPast,
+        (SlopeFaces::Ceiling, _) => Surface::Row(LAST_ROW.saturating_sub(top)),
+    };
     Slope {
         faces,
-        surface: rows,
+        surface: tops.map(column),
         factor: surface.factor,
     }
 }
@@ -162,8 +190,7 @@ fn surface_of(surface: Surface, slope: data::level::Slope) -> Slope {
 impl World for SamusWorld<'_> {
     fn block(&self, cell: Cell) -> Block {
         match self.kind(cell) {
-            BlockKind::Air(_) => Block::Air(AirKind::Plain),
-            BlockKind::UnusedAir(_) => Block::Air(AirKind::Other),
+            BlockKind::Air(_) | BlockKind::UnusedAir(_) => Block::Air(AirKind::Plain),
             BlockKind::SpikeAir(_) => Block::Air(AirKind::Spiked),
             BlockKind::ShootableAir(_) => Block::Air(AirKind::ShotAir),
             BlockKind::BombableAir(_) => Block::Air(AirKind::BombAir),
@@ -176,8 +203,12 @@ impl World for SamusWorld<'_> {
             BlockKind::Grapple(_) => Block::Solid(SolidKind::GrappleBlock),
             BlockKind::Bombable(_) => Block::Answered(AnsweredKind::BombBlock),
             BlockKind::Special(_) => Block::Answered(AnsweredKind::Reacting),
-            BlockKind::HorizontalExtension(Offset(by)) => Block::StandsFor(Axis::X, i16::from(by)),
-            BlockKind::VerticalExtension(Offset(by)) => Block::StandsFor(Axis::Y, i16::from(by)),
+            BlockKind::HorizontalExtension(Offset(by)) => {
+                Block::StandsFor(self.extended(cell, by, false))
+            }
+            BlockKind::VerticalExtension(Offset(by)) => {
+                Block::StandsFor(self.extended(cell, by, true))
+            }
             BlockKind::Slope(shape) => self
                 .room
                 .slopes

@@ -1,4 +1,4 @@
-use clean_types::{Button as ModelButton, Pad, Parity, Radius};
+use clean_types::Parity;
 
 use super::FrameSource;
 use crate::pose::{Content, PoseRequests};
@@ -39,18 +39,23 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         content: &content,
     };
     let frame = source.frame();
-    let held = Pad::default()
-        .with(ModelButton::Jump)
-        .with(ModelButton::Run)
-        .with(ModelButton::Right)
-        .with(ModelButton::AimUp);
-    assert_eq!(frame.pad, held);
-    assert_eq!(frame.pressed, Pad::default().with(ModelButton::Jump));
+    let pad = frame.pad;
+    assert_eq!(
+        [pad.jump, pad.run, pad.right, pad.aim_up],
+        [true, true, true, true]
+    );
+    assert_eq!(
+        [pad.shoot, pad.left, pad.up, pad.down, pad.aim_down],
+        [false; 5]
+    );
+    let pressed = frame.pressed;
+    assert!(pressed.jump && !pressed.run && !pressed.right && !pressed.aim_up);
     assert!(frame.equipment.hi_jump);
     assert!(!frame.equipment.space_jump);
+    assert!(!frame.equipment.other_suit);
     assert!(frame.elevator_moving);
-    assert_eq!(frame.parity, Parity::Odd);
-    assert_eq!(frame.radius, Radius { x: 5, y: 0x15 });
+    assert!(frame.parity == Parity::Odd);
+    assert_eq!((frame.radius.x, frame.radius.y), (5, 0x15));
     assert!(!frame.animation_ends);
 
     let still = FrameSource {
@@ -59,6 +64,6 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         ..source
     }
     .frame();
-    assert_eq!(still.parity, Parity::Even);
+    assert!(still.parity == Parity::Even);
     assert!(!still.elevator_moving);
 }
