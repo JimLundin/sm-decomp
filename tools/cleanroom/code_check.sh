@@ -20,6 +20,10 @@
 #   manifest-section ([patch], [replace], [workspace])
 # Files: extra-file for anything in a crate besides Cargo.toml, src/ and tests/ (build.rs,
 #   .cargo/), and for a symlink.
+# Shapes, over a crate's library sources together (tools/cleanroom/shape_scan.awk):
+#   argument-object  (G6) a struct taken by exactly one signature and built only in the argument
+#     lists of calls to that function, with no impl, and not a field's, variant's, return,
+#     constant's or alias's type or named in a trait: a bag of one call's arguments
 #
 # What it can't see: see the report of the lane that wrote it; in short, macro-generated paths
 # beyond `std::$x`, registry crates the allowlist admits (and their transitive build scripts),
@@ -133,6 +137,13 @@ check_crate() { # CRATE_DIR
   while IFS= read -r f; do
     scan_source "$crate/$f" "$rel/$f" "$root" "$domain"
   done < <(cd "$crate" && find src tests -type f -name '*.rs' 2>/dev/null | sort)
+
+  # Crate-wide shapes (G6) over the library's sources: test files are not its shape.
+  while IFS=$'\t' read -r tag p detail; do
+    [ -n "$tag" ] && hit "$rel/src/$p" "$tag" "$detail"
+  done < <(cd "$crate" && find src -type f -name '*.rs' ! -name tests.rs ! -path '*/tests/*' 2>/dev/null | sort |
+    while IFS= read -r f; do printf '\001FILE %s\n' "${f#src/}"; awk -f "$here/strip_rust.awk" "$f"; done |
+    awk -f "$here/shape_scan.awk")
 }
 
 for dir in "$@"; do

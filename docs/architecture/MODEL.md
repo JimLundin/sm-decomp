@@ -39,6 +39,7 @@ Jim's decisions, 2026-11-07:
    free, a function signature is half, a `true` or `false` is double (§4). Two quality terms
    compose with those weights: depth (Q1), so nested decisions cost more than a flat dispatch,
    and clumps (Q2), so values that travel together without a type pay where they recur (§4).
+   Hard lints on the clean crates refuse what no weight can price: an argument object (G6).
    The integrator's bridge is reported apart and not counted against the model, which its
    implementer didn't write (Jim, 2026-11-07).
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
@@ -273,6 +274,15 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     Of four rewrites of round 7, the argument struct scores worse (+59.5) and her body box as a
     concept (−34.75), the box without methods (−33.75) and a split of `Samus::take` (−20)
     better.
+- **Gates refuse what no weight can price** (Jim, 2026-11-07): hard lints on the clean crates,
+  ceilings that yield no score, so nothing is counted twice.
+  - **G6, `argument-object`** (`tools/cleanroom/code_check.sh`, through `shape_scan.awk` over a
+    crate's library sources together): a struct taken by exactly one signature and built only in
+    the argument lists of calls to that function, with no `impl` (no methods, no trait), and not
+    a field's or a variant's type, a return type, a constant's or an alias's type or named in a
+    trait. That is a bag of one call's arguments, which a parameter-count rule would reward;
+    the values are passed as they are, or the concept gets a role. It flags the bag rewrite's
+    `Go` and nothing in round 7 or the trunk.
 - **k is re-derived under this score** (decision 7): the old code's density times 0.55, so
   12,723 / 271 units × 0.55 = 25.8 weighted tokens per unit.
 

@@ -3,6 +3,7 @@ use clean_types::Speed;
 use std::fmt::Write as _;
 use std::io::Write;
 use std::collections::{BTreeMap, HashMap};
+mod shapes;
 
 /* a block comment with std::net::TcpStream and include_bytes!("x") */
 pub fn label(s: &Speed) -> String {
