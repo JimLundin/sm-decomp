@@ -18,11 +18,13 @@
 #   - slope_floor: one sloped floor block: block = [x, y], its top-left corner (multiples of 16);
 #     surface = 16 numbers, one per column of pixels from the left, the row (0 to 15) of the surface's
 #     top pixel in the block: that pixel and every one below it in the block are solid, those above
-#     are air; 16 means the column has no solid pixel in the block. factor (optional, default
+#     are air; 16 means the column has no solid pixel in the block and its surface lies just past the
+#     block's far edge; 17 means it has none and its surface lies further past (spec `SlopesCarry`, a
+#     column far past: it never meets her). factor (optional, default
 #     "1.00"): the shape's walk factor in hex, a pixel and 1/256ths (spec `SlopesSlowTheWalk`).
 #   - slope_ceiling: one sloped ceiling block, as slope_floor, but each number is the row of the
-#     surface's bottom pixel: that pixel and every one above it in the block are solid. 16 means the
-#     column holds none of the surface, as for slope_floor (spec `SlopesCarry`, an empty column). Its factor,
+#     surface's bottom pixel: that pixel and every one above it in the block are solid. 16 and 17 mean the
+#     column holds none of the surface, as for slope_floor (spec `SlopesCarry`). Its factor,
 #     when given, is the shape's and never applies to her moves.
 #   - solid_block: [x, y], the top-left corner of one solid 16 px block.
 #   - stepped: one stepped block: block = [x, y], its top-left corner; quarters = two strings, its
@@ -50,9 +52,9 @@
 # - pose: the pose at the checked frame's start (spec §2): body, action, facing, radius = [x, y]
 #   in px; aim (optional, default Forward: Forward, Up, UpForward, DownForward, Down); gun
 #   (optional, default "Stowed": "Drawn" or "Stowed"); and turn (optional, `Turning` only,
-#   default "Ground": "Ground", "Jump", "Fall" or "MoonwalkJump", the turn she is in, spec §2);
+#   default "Ground": "Fall", "Ground", "Jump" or "MoonwalkJump", the turn she is in, spec §2);
 #   landed_from (`Landing` only: "Jump" or "Spin"); and legs (optional, default "Together":
-#   "Together" or "Striding").
+#   "Striding" or "Together"). These lists of values are alphabetical; their order means nothing.
 #   A recorded pose gives the aim, gun and turn the record shows. next_pose: the pose chosen
 #   during it, when it changes; its radius is her body's size after the change.
 # - frame (optional): "Even" or "Odd", the parity of the checked frame (spec §1.3); default "Even".
@@ -1900,6 +1902,28 @@ pad = []
 jump_pressed = false
 after = { position = ["0108.0000", "010B.2000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 
+[[vector]]
+id = "C-slope-floor-far"
+source = "constructed"
+entries = ["SlopesCarry", "RisingAndFalling"]
+world = { slope_floor = { block = [256, 272], surface = [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17] } }
+before = { position = ["0108.0000", "0108.2000"], speed_y = "+0003.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0108.0000", "010B.2000"], speed_y = "+0003.1C00" }
+
+[[vector]]
+id = "C-slope-ceiling-far"
+source = "constructed"
+entries = ["SlopesCarry", "RisingAndFalling"]
+world = { slope_ceiling = { block = [256, 48], surface = [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17] } }
+before = { position = ["0108.0000", "0048.8000"], speed_y = "-000C.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0108.0000", "003C.8000"], speed_y = "-000B.E400" }
+
 
 [[vector]]
 id = "C-seat-lift"
@@ -2079,9 +2103,9 @@ after = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = 
 #   default "Stowed"; and turn, `Turning` only, as a vector's pose gives it); pad: the
 #   buttons held;
 #   jump_pressed: jump just pressed; pressed: the other buttons just pressed this frame.
-# - met: what this frame's moves met: "nothing", "floor" (a landing), "no_floor" (walking off a
-#   ledge), "wall" (a wall stop), "wall_kick" (the wall-jump kick), or "animation_end" (the pose's
-#   animation ends this frame).
+# - met: what this frame's moves met, listed alphabetically: "animation_end" (the animation of her pose
+#   ends this frame), "floor" (a landing), "no_floor" (walking off a ledge), "nothing", "wall" (a
+#   wall stop) or "wall_kick" (the wall-jump kick).
 # - after.pose: the pose the frame ends in. Only the pose is compared.
 
 [[pose_step]]

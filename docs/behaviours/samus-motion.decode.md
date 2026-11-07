@@ -146,7 +146,9 @@ down skipped) for the right-facing poses 01h, 03h, 05h, 07h, A4h, A6h, E0h-E6h, 
 4Bh, 55h-59h, 4Dh, 51h, 15h, 17h, 69h, 6Bh, 19h, 1Bh, 81h, 29h, 2Bh, 2Dh, 6Dh, 6Fh, 27h, 71h, 73h,
 85h, 1Dh, 1Eh, 31h, 79h, 7Bh, 7Dh, 7Fh, 25h, BFh, 8Bh, 8Dh, 9Ch, 2Fh, 87h, 8Fh-A0h, 43h, 97h, 99h,
 A2h, 35h-3Dh, F1h-FBh, 4Ah, 76h, 78h, 83h, 89h: 0 mismatches. C1h and C3h (aimed moonwalk
-turns) are unreachable from the moonwalk rows (4Ah's unaimed jump row comes first). The ground
+turns) are never a moonwalk row's next pose (4Ah's jump row names the unaimed BFh), but they are
+reached: the turn is re-picked from the moonwalk's shot direction (`$91:F9EA`, the turn re-pick
+row below), so the spec's cell says "aim kept" (adversary-14 F2). The ground
 turns aimed up or down-right (8Bh, 8Dh) have only press-jump rows, and 9Ch's table is empty, so
 it turns as in the air.
 
@@ -257,7 +259,13 @@ a type 8 block; `slope_ceiling` a non-square slope with BTS bit 7; `frame` the p
 Recorded vectors: S1 is samus-input-poses record 511 → 512 (block at column 6, row 12, BTS 54h:
 14h x-flipped); S2 is r01 record 716 → 717 (BTS 12h, first frame of a fall, `0B2E`.`0B2C` = 0).
 The surfaces are `$94:8B2B` rows 14h (flipped) and 12h; 10h in that table is a column with no solid
-pixel, written 16 in the vectors.
+pixel, written 16 in the vectors. 14h in that table is also a column with no solid pixel, four
+rows past the edge, and it never meets her (adversary-14 F1): down (`$94:8780`) A = 14h -
+(bottom % 16) - 1 >= 4, so no stop; up (`$94:8707`) A = (top % 16) + 4 > 0, so no stop; after a
+horizontal move (`$94:87F4`) no lift, no push, not seated. Shape 1Bh (the upper half-width
+triangle, used) has it in columns 0-7; 11h, 1Dh and 1Eh have it too but are unused. The vectors
+write it as 17 (any value past 16 acts alike in both directions): the spec's "column far past",
+C-slope-floor-far and C-slope-ceiling-far.
 
 **Turning with only run, shoot or jump held (root's question, 2026-11-07).** `$91:81A9` runs the
 lookup failure `$91:82D9` (command 2, which ends the skid) when `8B` = 0, or when the pose's
