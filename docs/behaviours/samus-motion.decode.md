@@ -182,6 +182,20 @@ spec, and the take-off below), and the gun 7,438. What the run found:
   samus-grapple-release:231 (68h → 2Eh, pad 0500, handler `$90:A337`), G9 r04:498 (19h → 13h).
   samus-ceres-push:524-529 hold 0Ch with pad 0 (the pose input isn't run there; not used).
 
+**Forward and jump held in a straight jump (jump-tie, 2026-11-07).** The implementer's tie check
+found the spec's "forward held" (striding) and "gun stowed: jump held" (together) rows both fitting
+with forward and jump held, and nothing deciding between them. The table decides: in 4Dh/4Eh,
+51h/52h, 13h/14h, 15h-18h and 69h/6Ah the hold forward + jump row (right + jump or left + jump →
+51h/52h, moving forward) comes before hold jump (→ 4Dh/4Eh) and hold jump + shoot, in both
+facings (`$TEMP/pose-chart/tt.pl 4D 4E 51 52 13 14 15 16 17 18 69 6A`). So forward wins: spec row
+"forward held; beats shoot held and jump held". `chk.pl` reported 0 mismatches because its
+`desc` names 51h and 4Dh alike (`Jumping/F/F`, no legs), so it never saw the legs. Reading every
+situation's same-rank row pairs, this is the chart's only undecided one (the rest are exclusive,
+ranked apart or have a "beats"). Records: L1 r07:224 (4Eh → 52h, pad 0280, nothing new; r05:176
+the same), L2 samus-ceres-push:772 (4Dh → 51h, pad 0180, nothing new). C-chart-j (18h, left +
+jump + shoot) takes 18h's left + jump → 52h, the first fit, so its after has the legs striding;
+the vector had them together.
+
 **The crouch-to-stand 5 px (chart-left).** The bank log calls `$91:8087`'s y − 5 dead, and it is:
 it reads the movement type `0A1F` after `$91:81A9`, which only writes the prospective pose, so it
 still reads crouching. But the 5 px happens: r02:391 → 392 (27h → 01h, pad 0100, y 00B0 → 00AB),

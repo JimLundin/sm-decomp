@@ -424,7 +424,7 @@ effects. The tables below are data records (about 120 rows), counted as data.
 | in a straight jump | aiming `Down`: down pressed | ball `Morphing` | none |
 | | aiming `Down`, she faces `Right`: forward, jump and shoot held; forward with up, down or an aim button held beats it | `Jumping`, `Forward`, gun drawn | none |
 | | forward with up, down or an aim button held | `Jumping`, air aim | none |
-| | forward held; beats shoot held | `Jumping`, `Forward`, striding | none |
+| | forward held; beats shoot held and jump held | `Jumping`, `Forward`, striding | none |
 | | shoot held; beats jump held | `Jumping`, `Forward`, gun drawn | none |
 | | gun stowed: jump held | `Jumping`, `Forward` | none |
 | | up, down or an aim button held; beats forward held, shoot held and jump held | `Jumping`, air aim | none |
@@ -503,8 +503,8 @@ effects. The tables below are data records (about 120 rows), counted as data.
 - The let-go outcomes "as running" mean: the dash joins her horizontal speed (dash 0) and she
   carries on, braking (`SpeedBuildsAndBrakes`); with a horizontal speed of 0 she only follows the
   pad again.
-- checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, U1, and R133 and R141 of
-  `TurningRound`); constructed (C-chart-a to C-chart-j).
+- checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, L1, L2, U1, and R133 and
+  R141 of `TurningRound`); constructed (C-chart-a to C-chart-j).
 
 ### Aiming
 - Mechanic. The aim a next pose takes from the held buttons, by the rule its row names:
