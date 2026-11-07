@@ -34,6 +34,14 @@ Items 1-3 below are answered by `c44e48c` (the pose chart, `Outcome::reached`, `
 8. **A door to a room is air (`OtherBlockKinds`), but the level alone can't tell it from a door to
    nowhere.** The adapter answers every door solid (`DoorToNowhere`), as the engine's collision
    does today; the door's destination is in the room's door list, not the block.
+9. **Pose fit's push is an input, but it follows the pose the step chooses (`PoseFitAfterMoves`,
+   round 6's `Frame::push`).** Round 6 answers item 1 below inside the step (`WhatHerMovesMet`
+   and the chart), so the engine no longer knows the frame's pose before the step, yet the push
+   that pose's body needs is given before it. The engine can only pass 0 and run pose fit after
+   the step, which puts the push after the crouch take-off's 10 px lift. Asked of the model: the
+   push as an answer the step asks for once it has chosen the pose (for example a `World` method
+   given the new body's radius), so the order §`PoseFitAfterMoves` states holds in the engine.
+   No recorded frame tells the two orders apart yet (spec gap 6: a block within 10 px above her).
 
 ## Open: what wiring the model into the engine needs (integrator, 2026-11-07)
 
