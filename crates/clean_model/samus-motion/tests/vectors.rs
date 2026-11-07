@@ -4,26 +4,20 @@
 mod vectors {
     use clean_model_samus_motion::{Bounces, CATALOGUE, Frame, Rules, Samus, SpeedCap};
     use clean_types::{
-        Action, Block, Body, Button, Equipment, Facing, Fixed, Hitbox, Pad, Pose, Position, Radius,
-        Signed, World,
+        Action, Aim, Block, Body, Button, Equipment, Facing, Fixed, Hitbox, Pad, Pose, Position,
+        Radius, Signed, World,
     };
     use std::iter::Peekable;
     use std::str::Chars;
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-motion.toml");
 
-    /// Vectors that fail and that the spec doesn't explain: each is a gap in the report. Listed so
-    /// that a vector passing or failing anew shows here.
-    const GAPS: [&str; 9] = [
-        "R29", "R30", "R37", "R38", "R50", "R67", "R68", "R125", "R133",
-    ];
+    /// The vectors in the file.
+    const VECTOR_COUNT: usize = 129;
 
-    /// Entries no vector names: a coverage gap in the report.
-    const UNEXERCISED: [&str; 7] = [
-        "AimingAndShooting",
+    /// Entries no vector names: a coverage gap in the report (spec §11, question 3).
+    const UNEXERCISED: [&str; 4] = [
         "RidingTheElevator",
-        "Jumping",
-        "MovesAsShePosed",
         "Moonfall",
         "SolidEnemies",
         "SlopesCarry",
@@ -265,6 +259,14 @@ mod vectors {
                 "Screen" => Facing::Screen,
                 other => panic!("facing {other:?}"),
             },
+            aim: match value.get("aim").map_or("Forward", Value::str) {
+                "Forward" => Aim::Forward,
+                "Up" => Aim::Up,
+                "UpForward" => Aim::UpForward,
+                "DownForward" => Aim::DownForward,
+                "Down" => Aim::Down,
+                other => panic!("aim {other:?}"),
+            },
             radius: Radius {
                 x: px(&radius[0]),
                 y: px(&radius[1]),
@@ -273,10 +275,11 @@ mod vectors {
     }
 
     /// The vectors' stand-in room: a floor from `floor_top` down, a wall from `wall_right`
-    /// rightward, air elsewhere.
+    /// rightward, a ceiling above `ceiling_bottom`, air elsewhere.
     struct Room {
         floor_top: Option<u32>,
         wall_right: Option<u32>,
+        ceiling_bottom: Option<u32>,
     }
 
     impl World for Room {
@@ -284,7 +287,13 @@ mod vectors {
             let from = |cell: u16, face: Option<u32>| {
                 face.is_some_and(|face| u32::from(cell).wrapping_mul(16) >= face)
             };
-            if from(row, self.floor_top) || from(column, self.wall_right) {
+            let above = |cell: u16, face: Option<u32>| {
+                face.is_some_and(|face| u32::from(cell).wrapping_add(1).wrapping_mul(16) <= face)
+            };
+            if from(row, self.floor_top)
+                || from(column, self.wall_right)
+                || above(row, self.ceiling_bottom)
+            {
                 Block::Solid
             } else {
                 Block::Air
@@ -322,6 +331,7 @@ mod vectors {
         let room = Room {
             floor_top: face("floor_top"),
             wall_right: face("wall_right"),
+            ceiling_bottom: face("ceiling_bottom"),
         };
 
         // The frames: the lead-in's, then the checked one, each with the pose it starts in.
@@ -356,7 +366,7 @@ mod vectors {
             1 => Bounces::Once,
             _ => Bounces::Twice,
         };
-        let (first_pose, first_pad, _) = frames[0];
+        let (first_pose, _, _) = frames[0];
         let mut samus = Samus::start(
             Position {
                 x: fixed(position[0].str()),
@@ -369,7 +379,6 @@ mod vectors {
             ),
             bounces,
             first_pose,
-            first_pad.aim(),
         );
         let last_next = vector.get("next_pose").map(pose);
         let nexts = frames.iter().skip(1).map(|f| Some(f.0)).chain([last_next]);
@@ -453,20 +462,12 @@ mod vectors {
     #[test]
     fn every_vector() {
         let vectors = parse(VECTORS);
-        assert_eq!(vectors.len(), 127, "vector count");
-        let mut misses = Vec::new();
-        let mut failing = Vec::new();
-        for vector in &vectors {
-            let found = run(vector);
-            if !found.is_empty() {
-                failing.push(vector.get("id").expect("id").str().to_owned());
-            }
-            misses.extend(found);
-        }
-        assert_eq!(
-            failing,
-            GAPS,
-            "failing vectors; mismatches:\n{}",
+        assert_eq!(vectors.len(), VECTOR_COUNT, "vector count");
+        let misses: Vec<String> = vectors.iter().flat_map(run).collect();
+        assert!(
+            misses.is_empty(),
+            "{} mismatches:\n{}",
+            misses.len(),
             misses.join("\n")
         );
     }

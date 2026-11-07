@@ -159,13 +159,13 @@ pub const CATALOGUE: [Behaviour; 18] = [
     ),
     entry(
         BehaviourId::SolidEnemies,
-        "Solid enemies stop her, even on a move of 0, and one she touches clears her y subpixel",
+        "Solid enemies decide a move before blocks, even a move of 0; one she touches clears her y subpixel",
         Kind::Quirk,
         Switch::Fixed,
     ),
     entry(
         BehaviourId::SlopesCarry,
-        "On a slope the ground pull is 1 px",
+        "A slope lifts her onto it after a horizontal move, and seated on one her ground pull is 1 px",
         Kind::Mechanic,
         Switch::Fixed,
     ),

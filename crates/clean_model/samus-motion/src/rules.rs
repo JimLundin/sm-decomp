@@ -21,6 +21,15 @@ pub enum Activity {
     Turning,
 }
 
+/// `Jumping`: which rise a jump speed is for.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum JumpKind {
+    /// A jump, a spin jump, the spring ball's hop or a space jump.
+    Jump,
+    /// A wall jump.
+    WallJump,
+}
+
 /// One row of `SpeedBuildsAndBrakes`'s table.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Limits {
@@ -157,6 +166,17 @@ impl Rules {
         aim_nudge: Fixed::px(1),
         elevator: Fixed::px(1),
     };
+
+    /// `Jumping`: the speed a jump or a wall jump starts her rising at, with or without hi-jump.
+    #[must_use]
+    pub const fn jump_speed(&self, kind: JumpKind, hi_jump: bool) -> Fixed {
+        match (kind, hi_jump) {
+            (JumpKind::Jump, false) => self.jump,
+            (JumpKind::Jump, true) => self.hi_jump,
+            (JumpKind::WallJump, false) => self.wall_jump,
+            (JumpKind::WallJump, true) => self.hi_wall_jump,
+        }
+    }
 
     /// The row of `SpeedBuildsAndBrakes`'s table for what she is doing.
     #[must_use]

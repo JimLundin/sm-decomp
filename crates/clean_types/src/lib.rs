@@ -203,14 +203,19 @@ impl Action {
 }
 
 /// The arm's direction.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum Aim {
+    /// Aimed down.
+    Down,
+    /// Aimed down and forward.
+    DownForward,
     /// Unaimed.
+    #[default]
     Forward,
     /// Aimed up.
     Up,
-    /// Aimed down.
-    Down,
+    /// Aimed up and forward.
+    UpForward,
 }
 
 /// A body's half-width and half-height, in pixels.
@@ -231,6 +236,8 @@ pub struct Pose {
     pub action: Action,
     /// Which way she faces.
     pub facing: Facing,
+    /// The arm's direction.
+    pub aim: Aim,
     /// Her body's size.
     pub radius: Radius,
 }
@@ -300,16 +307,10 @@ impl Pad {
         }
     }
 
-    /// The aim the pad asks for.
+    /// Whether she steers neither way: neither left nor right held.
     #[must_use]
-    pub const fn aim(self) -> Aim {
-        if self.held(Button::AimUp) {
-            Aim::Up
-        } else if self.held(Button::AimDown) {
-            Aim::Down
-        } else {
-            Aim::Forward
-        }
+    pub const fn steers_neither_way(self) -> bool {
+        !self.holds(Side::Left) && !self.holds(Side::Right)
     }
 }
 
@@ -327,10 +328,40 @@ pub struct Equipment {
 pub enum Block {
     /// Nothing.
     Air,
+    /// A slope, with its shape.
+    Slope(Slope),
     /// Solid.
     Solid,
-    /// A slope.
-    Slope,
+}
+
+/// Which way a slope's solid part lies.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SlopeFaces {
+    /// A sloped ceiling: solid above its surface.
+    Ceiling,
+    /// A sloped floor: solid below its surface.
+    Floor,
+}
+
+/// How much of its block a slope fills.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SlopeHeight {
+    /// A half-block slope.
+    Half,
+    /// A whole-block slope.
+    Whole,
+}
+
+/// A slope's shape: world data the slope lane brings.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Slope {
+    /// Floor or ceiling.
+    pub faces: SlopeFaces,
+    /// Half or whole block.
+    pub height: SlopeHeight,
+    /// At each of the block's pixel columns, the row within the block of the surface's solid
+    /// pixel: a floor's topmost, a ceiling's lowest.
+    pub surface: [u8; 16],
 }
 
 /// A solid enemy's box.
