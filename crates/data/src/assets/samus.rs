@@ -7,7 +7,7 @@ pub mod import;
 pub mod key;
 
 use crate::spritemap::{SpriteAttributes, Spritemap};
-use key::{Dress, PoseKey, Worn};
+use key::{Dress, Pose, Worn, shown_as};
 
 /// A sprite list in [`SamusAssets`]'s pool.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -90,10 +90,10 @@ pub enum ClipEnd {
 }
 
 /// A pose's animation clip, shown in a dress.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Clip {
     /// The pose it shows.
-    pub key: PoseKey,
+    pub key: Pose,
     /// The dress variant it is.
     pub worn: Worn,
     /// Its frames, in order; the animation's frame number indexes them.
@@ -138,7 +138,7 @@ impl SpriteSheet {
 }
 
 /// Samus's sprite sheet and animation clips.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SamusAssets {
     /// The sheet the clips draw from.
     pub sheet: SpriteSheet,
@@ -154,8 +154,8 @@ impl SamusAssets {
     /// The clip that shows `key` in `dress`, by its nearest pose's where it has none of its
     /// own; `None` for a pose no sprite shows.
     #[must_use]
-    pub fn clip(&self, key: PoseKey, dress: Dress) -> Option<&Clip> {
-        let shown = key.shown_as();
+    pub fn clip(&self, key: Pose, dress: Dress) -> Option<&Clip> {
+        let shown = shown_as(key);
         self.clips
             .iter()
             .find(|clip| clip.key == shown && clip.worn.holds(dress))

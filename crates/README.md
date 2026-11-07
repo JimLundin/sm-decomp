@@ -5,8 +5,8 @@ The rebuild's crates, as planned in
 
 | Crate | Owns | May depend on (workspace) |
 | --- | --- | --- |
-| `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical` |
-| `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical` |
+| `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical`, `clean_types` (the asset key is the clean room's pose) |
+| `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `clean_types`, `clean_model_samus_motion` |
 | `runtime` | the line compositor, presentation, sound backends, storage. Feeds nothing back into the Session. | `data` |
 | `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `game`, `runtime` |
 | `oracle` | the emulator adapters, `Oracle`, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |

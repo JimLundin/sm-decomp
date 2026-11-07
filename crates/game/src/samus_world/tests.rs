@@ -148,11 +148,10 @@ fn a_surface_is_a_floor_or_a_ceiling_by_its_flip() {
     assert_eq!((row(ceiling.surface[0]), row(ceiling.surface[15])), (15, 0));
 }
 
-/// Gap 7, open: a ceiling column with no solid pixel (10h) and one past the block (14h, as
-/// shape 1Bh's columns 0 to 7) both answer row 0 today, where the spec answers 16 for the empty
-/// column. This pins the adapter until the model's `Slope` can say it.
+/// Gap 7: a column with no solid pixel (10h) lies just past the block and one four rows past
+/// (14h, as shape 1Bh's columns 0 to 7) far past it, for a floor and a ceiling alike.
 #[test]
-fn a_ceilings_empty_and_far_columns_answer_row_0_until_the_slope_can_say_16() {
+fn an_empty_column_is_just_past_and_a_far_one_far_past_floor_or_ceiling() {
     let squares = [0; 8];
     let mut surfaces = vec![0; SHAPES * 16];
     surfaces[0x13 * 16] = 0x10;
@@ -171,7 +170,7 @@ fn a_ceilings_empty_and_far_columns_answer_row_0_until_the_slope_can_say_16() {
     let Block::Slope(ceiling) = world.block(at(1, 0)) else {
         panic!("ceiling slope");
     };
-    assert_eq!((row(ceiling.surface[0]), row(ceiling.surface[1])), (0, 0));
+    assert_eq!((row(ceiling.surface[0]), row(ceiling.surface[1])), (16, 17));
 }
 
 #[test]

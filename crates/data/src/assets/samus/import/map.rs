@@ -5,8 +5,8 @@
 //! hers; the rest are another domain's or unused.
 
 use crate::assets::samus::key::{
-    Action, Aim, Body, Dress, Facing, Gun, LandedFrom, Legs, PoseKey, SpinSprite, Suit, TurnKind,
-    Worn,
+    Action, Aim, Body, Dress, Facing, Gun, LandedFrom, Legs, Pose, SpinSprite, Suit, Turn, Worn,
+    shown_as,
 };
 use crate::pose::PoseId;
 
@@ -16,7 +16,7 @@ pub struct Entry {
     /// The original's pose.
     pub id: PoseId,
     /// The pose it shows.
-    pub key: PoseKey,
+    pub key: Pose,
     /// When it is the one shown.
     pub worn: Worn,
 }
@@ -42,7 +42,7 @@ impl Entry {
 const fn row(id: u16, body: Body, action: Action, facing: Facing, aim: Aim) -> Entry {
     Entry {
         id: PoseId(id),
-        key: PoseKey {
+        key: Pose {
             body,
             action,
             facing,
@@ -89,8 +89,8 @@ pub const MAP: [Entry; 164] = {
         row(0x1D, B::Ball, A::Still, F::Right, M::Forward),
         row(0x1E, B::Ball, A::Rolling, F::Right, M::Forward),
         row(0x1F, B::Ball, A::Rolling, F::Left, M::Forward),
-        row(0x25, B::Upright, A::Turning(TurnKind::Ground), F::Left, M::Forward),
-        row(0x26, B::Upright, A::Turning(TurnKind::Ground), F::Right, M::Forward),
+        row(0x25, B::Upright, A::Turning(Turn::Ground), F::Left, M::Forward),
+        row(0x26, B::Upright, A::Turning(Turn::Ground), F::Right, M::Forward),
         row(0x27, B::Crouched, A::Still, F::Right, M::Forward),
         row(0x28, B::Crouched, A::Still, F::Left, M::Forward),
         row(0x29, B::Upright, A::Falling, F::Right, M::Forward),
@@ -99,8 +99,8 @@ pub const MAP: [Entry; 164] = {
         row(0x2C, B::Upright, A::Falling, F::Left, M::Up),
         row(0x2D, B::Upright, A::Falling, F::Right, M::Down),
         row(0x2E, B::Upright, A::Falling, F::Left, M::Down),
-        row(0x2F, B::Upright, A::Turning(TurnKind::Jump), F::Left, M::Forward),
-        row(0x30, B::Upright, A::Turning(TurnKind::Jump), F::Right, M::Forward),
+        row(0x2F, B::Upright, A::Turning(Turn::Jump), F::Left, M::Forward),
+        row(0x30, B::Upright, A::Turning(Turn::Jump), F::Right, M::Forward),
         row(0x31, B::Ball, A::Falling, F::Right, M::Forward),
         row(0x32, B::Ball, A::Falling, F::Left, M::Forward),
         row(0x35, B::Crouched, A::Crouching, F::Right, M::Forward),
@@ -112,8 +112,8 @@ pub const MAP: [Entry; 164] = {
         row(0x3D, B::Crouched, A::Unmorphing, F::Right, M::Forward),
         row(0x3E, B::Crouched, A::Unmorphing, F::Left, M::Forward),
         row(0x41, B::Ball, A::Still, F::Left, M::Forward),
-        row(0x43, B::Crouched, A::Turning(TurnKind::Ground), F::Left, M::Forward),
-        row(0x44, B::Crouched, A::Turning(TurnKind::Ground), F::Right, M::Forward),
+        row(0x43, B::Crouched, A::Turning(Turn::Ground), F::Left, M::Forward),
+        row(0x44, B::Crouched, A::Turning(Turn::Ground), F::Right, M::Forward),
         row(0x49, B::Upright, A::Moonwalking, F::Right, M::Forward),
         row(0x4A, B::Upright, A::Moonwalking, F::Left, M::Forward),
         row(0x4B, B::Upright, A::TakingOff, F::Right, M::Forward),
@@ -160,45 +160,45 @@ pub const MAP: [Entry; 164] = {
         row(0x84, B::Upright, A::WallJumping, F::Left, M::Forward),
         row(0x85, B::Crouched, A::Still, F::Right, M::Up),
         row(0x86, B::Crouched, A::Still, F::Left, M::Up),
-        row(0x87, B::Upright, A::Turning(TurnKind::Fall), F::Left, M::Forward),
-        row(0x88, B::Upright, A::Turning(TurnKind::Fall), F::Right, M::Forward),
+        row(0x87, B::Upright, A::Turning(Turn::Fall), F::Left, M::Forward),
+        row(0x88, B::Upright, A::Turning(Turn::Fall), F::Right, M::Forward),
         row(0x89, B::Upright, A::AgainstWall, F::Right, M::Forward),
         row(0x8A, B::Upright, A::AgainstWall, F::Left, M::Forward),
-        row(0x8B, B::Upright, A::Turning(TurnKind::Ground), F::Left, M::Up),
-        row(0x8C, B::Upright, A::Turning(TurnKind::Ground), F::Right, M::Up),
-        row(0x8D, B::Upright, A::Turning(TurnKind::Ground), F::Left, M::DownForward),
-        row(0x8E, B::Upright, A::Turning(TurnKind::Ground), F::Right, M::DownForward),
-        row(0x8F, B::Upright, A::Turning(TurnKind::Jump), F::Left, M::Up),
-        row(0x90, B::Upright, A::Turning(TurnKind::Jump), F::Right, M::Up),
-        row(0x91, B::Upright, A::Turning(TurnKind::Jump), F::Left, M::Down),
-        row(0x92, B::Upright, A::Turning(TurnKind::Jump), F::Right, M::Down),
-        row(0x93, B::Upright, A::Turning(TurnKind::Fall), F::Left, M::Up),
-        row(0x94, B::Upright, A::Turning(TurnKind::Fall), F::Right, M::Up),
-        row(0x95, B::Upright, A::Turning(TurnKind::Fall), F::Left, M::Down),
-        row(0x96, B::Upright, A::Turning(TurnKind::Fall), F::Right, M::Down),
-        row(0x97, B::Crouched, A::Turning(TurnKind::Ground), F::Left, M::Up),
-        row(0x98, B::Crouched, A::Turning(TurnKind::Ground), F::Right, M::Up),
-        row(0x99, B::Crouched, A::Turning(TurnKind::Ground), F::Left, M::DownForward),
-        row(0x9A, B::Crouched, A::Turning(TurnKind::Ground), F::Right, M::DownForward),
+        row(0x8B, B::Upright, A::Turning(Turn::Ground), F::Left, M::Up),
+        row(0x8C, B::Upright, A::Turning(Turn::Ground), F::Right, M::Up),
+        row(0x8D, B::Upright, A::Turning(Turn::Ground), F::Left, M::DownForward),
+        row(0x8E, B::Upright, A::Turning(Turn::Ground), F::Right, M::DownForward),
+        row(0x8F, B::Upright, A::Turning(Turn::Jump), F::Left, M::Up),
+        row(0x90, B::Upright, A::Turning(Turn::Jump), F::Right, M::Up),
+        row(0x91, B::Upright, A::Turning(Turn::Jump), F::Left, M::Down),
+        row(0x92, B::Upright, A::Turning(Turn::Jump), F::Right, M::Down),
+        row(0x93, B::Upright, A::Turning(Turn::Fall), F::Left, M::Up),
+        row(0x94, B::Upright, A::Turning(Turn::Fall), F::Right, M::Up),
+        row(0x95, B::Upright, A::Turning(Turn::Fall), F::Left, M::Down),
+        row(0x96, B::Upright, A::Turning(Turn::Fall), F::Right, M::Down),
+        row(0x97, B::Crouched, A::Turning(Turn::Ground), F::Left, M::Up),
+        row(0x98, B::Crouched, A::Turning(Turn::Ground), F::Right, M::Up),
+        row(0x99, B::Crouched, A::Turning(Turn::Ground), F::Left, M::DownForward),
+        row(0x9A, B::Crouched, A::Turning(Turn::Ground), F::Right, M::DownForward),
         row(0x9B, B::Upright, A::Still, F::Screen, M::Forward).worn(Worn::Suit(Suit::VariaOrGravity)),
-        row(0x9C, B::Upright, A::Turning(TurnKind::Ground), F::Left, M::UpForward),
-        row(0x9D, B::Upright, A::Turning(TurnKind::Ground), F::Right, M::UpForward),
-        row(0x9E, B::Upright, A::Turning(TurnKind::Jump), F::Left, M::UpForward),
-        row(0x9F, B::Upright, A::Turning(TurnKind::Jump), F::Right, M::UpForward),
-        row(0xA0, B::Upright, A::Turning(TurnKind::Fall), F::Left, M::UpForward),
-        row(0xA1, B::Upright, A::Turning(TurnKind::Fall), F::Right, M::UpForward),
-        row(0xA2, B::Crouched, A::Turning(TurnKind::Ground), F::Left, M::UpForward),
-        row(0xA3, B::Crouched, A::Turning(TurnKind::Ground), F::Right, M::UpForward),
+        row(0x9C, B::Upright, A::Turning(Turn::Ground), F::Left, M::UpForward),
+        row(0x9D, B::Upright, A::Turning(Turn::Ground), F::Right, M::UpForward),
+        row(0x9E, B::Upright, A::Turning(Turn::Jump), F::Left, M::UpForward),
+        row(0x9F, B::Upright, A::Turning(Turn::Jump), F::Right, M::UpForward),
+        row(0xA0, B::Upright, A::Turning(Turn::Fall), F::Left, M::UpForward),
+        row(0xA1, B::Upright, A::Turning(Turn::Fall), F::Right, M::UpForward),
+        row(0xA2, B::Crouched, A::Turning(Turn::Ground), F::Left, M::UpForward),
+        row(0xA3, B::Crouched, A::Turning(Turn::Ground), F::Right, M::UpForward),
         row(0xA4, B::Upright, A::Landing(LandedFrom::Jump), F::Right, M::Forward),
         row(0xA5, B::Upright, A::Landing(LandedFrom::Jump), F::Left, M::Forward),
         row(0xA6, B::Upright, A::Landing(LandedFrom::Spin), F::Right, M::Forward),
         row(0xA7, B::Upright, A::Landing(LandedFrom::Spin), F::Left, M::Forward),
-        row(0xBF, B::Upright, A::Turning(TurnKind::MoonwalkJump), F::Left, M::Forward),
-        row(0xC0, B::Upright, A::Turning(TurnKind::MoonwalkJump), F::Right, M::Forward),
-        row(0xC1, B::Upright, A::Turning(TurnKind::MoonwalkJump), F::Left, M::UpForward),
-        row(0xC2, B::Upright, A::Turning(TurnKind::MoonwalkJump), F::Right, M::UpForward),
-        row(0xC3, B::Upright, A::Turning(TurnKind::MoonwalkJump), F::Left, M::DownForward),
-        row(0xC4, B::Upright, A::Turning(TurnKind::MoonwalkJump), F::Right, M::DownForward),
+        row(0xBF, B::Upright, A::Turning(Turn::MoonwalkJump), F::Left, M::Forward),
+        row(0xC0, B::Upright, A::Turning(Turn::MoonwalkJump), F::Right, M::Forward),
+        row(0xC1, B::Upright, A::Turning(Turn::MoonwalkJump), F::Left, M::UpForward),
+        row(0xC2, B::Upright, A::Turning(Turn::MoonwalkJump), F::Right, M::UpForward),
+        row(0xC3, B::Upright, A::Turning(Turn::MoonwalkJump), F::Left, M::DownForward),
+        row(0xC4, B::Upright, A::Turning(Turn::MoonwalkJump), F::Right, M::DownForward),
         row(0xCF, B::Upright, A::AgainstWall, F::Right, M::UpForward),
         row(0xD0, B::Upright, A::AgainstWall, F::Left, M::UpForward),
         row(0xD1, B::Upright, A::AgainstWall, F::Right, M::DownForward),
@@ -228,7 +228,7 @@ pub const MAP: [Entry; 164] = {
 
 /// The pose the original's `id` shows; `None` for the poses outside her domain.
 #[must_use]
-pub fn key_of(id: PoseId) -> Option<PoseKey> {
+pub fn key_of(id: PoseId) -> Option<Pose> {
     MAP.iter()
         .find(|entry| entry.id == id)
         .map(|entry| entry.key)
@@ -237,8 +237,8 @@ pub fn key_of(id: PoseId) -> Option<PoseKey> {
 /// The original's pose that shows `key` in `dress`, by its nearest sprite where it has none
 /// of its own; `None` for a pose no sprite shows.
 #[must_use]
-pub fn id_of(key: PoseKey, dress: Dress) -> Option<PoseId> {
-    let shown = key.shown_as();
+pub fn id_of(key: Pose, dress: Dress) -> Option<PoseId> {
+    let shown = shown_as(key);
     MAP.iter()
         .find(|entry| entry.key == shown && entry.worn.holds(dress))
         .map(|entry| entry.id)
