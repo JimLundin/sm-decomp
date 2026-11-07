@@ -21,6 +21,8 @@ pub enum BehaviourId {
     FollowingTheGround,
     /// §4.
     MovesAsShePosed,
+    /// §4.
+    PoseFitAfterMoves,
     /// §5.
     RisingAndFalling,
     /// §5.
@@ -31,6 +33,16 @@ pub enum BehaviourId {
     WallJump,
     /// §6.
     Landing,
+    /// §7.
+    PoseFollows,
+    /// §7.
+    PadChart,
+    /// §7.
+    Aiming,
+    /// §7.
+    WhatHerMovesMet,
+    /// §7.
+    AnimationEnds,
     /// §8.
     BlocksStopFlush,
     /// §8.
@@ -39,6 +51,12 @@ pub enum BehaviourId {
     SolidEnemies,
     /// §8.
     SlopesCarry,
+    /// §8.
+    SlopesSlowTheWalk,
+    /// §8.
+    TouchedCells,
+    /// §8.
+    OtherBlockKinds,
     /// §9.
     WordwiseTopSpeed,
 }
@@ -66,7 +84,7 @@ const fn entry(id: BehaviourId, summary: &'static str, kind: Kind, switch: Switc
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 18] = [
+pub const CATALOGUE: [Behaviour; 27] = [
     entry(
         BehaviourId::SpeedBuildsAndBrakes,
         "Her speed builds to a top by what she is doing, and brakes when she carries on along the ground",
@@ -116,6 +134,12 @@ pub const CATALOGUE: [Behaviour; 18] = [
         Switch::Fixed,
     ),
     entry(
+        BehaviourId::PoseFitAfterMoves,
+        "A frame ends: her moves, what they met, then the pose change: pose fit, speeds, the lift",
+        Kind::Timing,
+        Switch::Fixed,
+    ),
+    entry(
         BehaviourId::RisingAndFalling,
         "She rises and falls under gravity, settling at 5.1400 a frame, and a let-go jump ends the rise",
         Kind::Mechanic,
@@ -146,6 +170,36 @@ pub const CATALOGUE: [Behaviour; 18] = [
         Switch::Fixed,
     ),
     entry(
+        BehaviourId::PoseFollows,
+        "Her pose changes at most once a frame: an animation's end, then what she met, then the pad",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
+        BehaviourId::PadChart,
+        "The pad chart's fitting row with a just-pressed button, then the most buttons, wins",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
+        BehaviourId::Aiming,
+        "The held buttons give a next pose's aim by the rule its row names",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
+        BehaviourId::WhatHerMovesMet,
+        "A wall, a floor, no floor, a ceiling or a kick chooses her pose over the pad",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
+        BehaviourId::AnimationEnds,
+        "A pose that lasts as long as its animation hands over the next pose at its end",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
         BehaviourId::BlocksStopFlush,
         "A move into a solid block stops her with her leading edge against its face",
         Kind::Mechanic,
@@ -166,6 +220,24 @@ pub const CATALOGUE: [Behaviour; 18] = [
     entry(
         BehaviourId::SlopesCarry,
         "A slope lifts her onto it after a horizontal move, and seated on one her ground pull is 1 px",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
+        BehaviourId::SlopesSlowTheWalk,
+        "With no vertical speed, a sloped floor at her leading edge shortens her move by its factor",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
+        BehaviourId::TouchedCells,
+        "A frame reports the cells her moves reach, in order, and the cells she is inside",
+        Kind::Mechanic,
+        Switch::Fixed,
+    ),
+    entry(
+        BehaviourId::OtherBlockKinds,
+        "Doors, spikes, shot, bomb and reacting cells meet her as solid, as air, or as they answer",
         Kind::Mechanic,
         Switch::Fixed,
     ),

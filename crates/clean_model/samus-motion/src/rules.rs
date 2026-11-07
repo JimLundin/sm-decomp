@@ -103,6 +103,8 @@ pub struct Rules {
     pub bounce: Fixed,
     /// `Jumping`: the crouch lift.
     pub crouch_lift: Fixed,
+    /// `PadChart`: crouched, she stands at once this far up.
+    pub stand_up: Fixed,
     /// `Jumping`: the space jump's window of fall speeds read as 8.8, from and up to.
     pub space_jump_window: (u16, u16),
     /// `RisingAndFalling`: gravity.
@@ -156,6 +158,7 @@ impl Rules {
         hi_wall_jump: Fixed::from_bits(0x0005_8000),
         bounce: Fixed::from_bits(0x0001_0000),
         crouch_lift: Fixed::px(10),
+        stand_up: Fixed::px(5),
         space_jump_window: (0x0280, 0x0500),
         gravity: Fixed::from_bits(0x0000_1C00),
         fall_settle_px: 5,

@@ -227,7 +227,7 @@ pub struct Radius {
     pub y: u16,
 }
 
-/// Her pose as the player sees it.
+/// Her pose as the player sees it (§2).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Pose {
     /// Her body's shape.
@@ -238,8 +238,6 @@ pub struct Pose {
     pub facing: Facing,
     /// The arm's direction.
     pub aim: Aim,
-    /// Her body's size.
-    pub radius: Radius,
 }
 
 /// A button on the pad.
@@ -312,12 +310,6 @@ impl Pad {
     pub const fn steers_neither_way(self) -> bool {
         !self.holds(Side::Left) && !self.holds(Side::Right)
     }
-
-    /// Whether no button at all is held.
-    #[must_use]
-    pub const fn none_held(self) -> bool {
-        self.0 == 0
-    }
 }
 
 /// The equipment that changes her motion.
@@ -329,17 +321,96 @@ pub struct Equipment {
     pub space_jump: bool,
 }
 
-/// The kind of a 16 px block.
+/// A 16 px cell of the room, by column and row.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Cell {
+    /// The column.
+    pub column: u16,
+    /// The row.
+    pub row: u16,
+}
+
+/// The way a move goes (`TouchedCells`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Heading {
+    /// Leftward.
+    Left,
+    /// Rightward.
+    Right,
+    /// Upward.
+    Up,
+    /// Downward.
+    Down,
+}
+
+/// `TouchedCells`: a cell a move reached, and the move's direction.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Touch {
+    /// The cell, as the cell it stands for where it stands for another.
+    pub cell: Cell,
+    /// The move's direction.
+    pub heading: Heading,
+}
+
+/// `OtherBlockKinds`: the kinds of cell that are air to her motion.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum AirKind {
+    /// Plain air.
+    Plain,
+    /// The one other kind of plain air.
+    Other,
+    /// A door that leads to a room: her passage to that room starts.
+    DoorToRoom,
+    /// Air with spikes in it.
+    Spiked,
+    /// Air her shots act on.
+    ShotAir,
+    /// Air her bombs act on.
+    BombAir,
+    /// Reacting air: a cell that changes the scrolling, a moving floor, an item.
+    Reacting,
+}
+
+/// `OtherBlockKinds`: the kinds of cell that are solid to her motion.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SolidKind {
+    /// A plain solid block.
+    Plain,
+    /// A door that leads nowhere (an elevator's).
+    DoorToNowhere,
+    /// Spikes.
+    Spikes,
+    /// A block her shots break.
+    ShotBlock,
+    /// A block her grapple holds.
+    GrappleBlock,
+}
+
+/// `OtherBlockKinds`: the kinds of cell whose own reaction answers, each touch, whether it is
+/// solid or air (`World::lets_through`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum AnsweredKind {
+    /// A block her bombs break: solid unless its reaction lets her through.
+    BombBlock,
+    /// A reacting block: one that crumbles, one only speed breaks, an item's.
+    Reacting,
+}
+
+/// The kind of a 16 px cell.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Block {
-    /// Nothing.
-    Air,
+    /// Air to her motion.
+    Air(AirKind),
+    /// Solid to her motion.
+    Solid(SolidKind),
+    /// Solid or air, as its reaction answers this touch.
+    Answered(AnsweredKind),
     /// A sloped surface, with its shape.
     Slope(Slope),
-    /// Solid.
-    Solid,
     /// A stepped block: solid in some of its four 8 px quarters.
     Stepped(Quarters),
+    /// A cell that stands for the cell this many cells away along this axis; 0 names nothing.
+    StandsFor(Axis, i16),
 }
 
 /// The axis of a move.
@@ -444,6 +515,8 @@ pub struct Slope {
     /// At each of the block's pixel columns, the row within the block of the surface's solid
     /// pixel: a floor's topmost, a ceiling's lowest.
     pub surface: [u8; 16],
+    /// `SlopesSlowTheWalk`: a floor's walk factor, in 1/256ths (`0x100` is 1.00).
+    pub factor: u16,
 }
 
 /// A solid enemy's box.
@@ -459,8 +532,11 @@ pub struct Hitbox {
 
 /// The room as Samus meets it.
 pub trait World {
-    /// The block at a column and row of 16 px cells.
-    fn block(&self, column: u16, row: u16) -> Block;
+    /// The kind of a 16 px cell.
+    fn block(&self, cell: Cell) -> Block;
+    /// `OtherBlockKinds`: whether an answered cell's reaction lets her through on this touch;
+    /// the answer may change from one touch to the next.
+    fn lets_through(&self, cell: Cell, heading: Heading) -> bool;
     /// The solid enemies.
     fn solid_enemies(&self) -> &[Hitbox];
 }

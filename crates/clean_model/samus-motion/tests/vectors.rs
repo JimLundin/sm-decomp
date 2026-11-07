@@ -2,10 +2,13 @@
 
 #[cfg(test)]
 mod vectors {
-    use clean_model_samus_motion::{Bounces, CATALOGUE, Frame, Rules, Samus, SpeedCap};
+    use clean_model_samus_motion::{
+        Bounces, CATALOGUE, Contact, Frame, Met, Rules, Samus, Situation, SpeedCap, Turn,
+        next_pose, pad_chart,
+    };
     use clean_types::{
-        Action, Aim, Block, Body, Button, Equipment, Facing, Fixed, Hitbox, Pad, Parity, Pose,
-        Position, Quarters, Radius, Signed, Slope, SlopeFaces, World,
+        Action, Aim, AirKind, Block, Body, Button, Cell, Equipment, Facing, Fixed, Heading, Hitbox,
+        Pad, Parity, Pose, Position, Quarters, Radius, Signed, Slope, SlopeFaces, SolidKind, World,
     };
     use std::iter::Peekable;
     use std::str::Chars;
@@ -13,7 +16,9 @@ mod vectors {
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-motion.toml");
 
     /// The vectors in the file.
-    const VECTOR_COUNT: usize = 152;
+    const VECTOR_COUNT: usize = 158;
+    /// The pose steps in the file.
+    const POSE_STEP_COUNT: usize = 33;
 
     // ---- A parser for the subset of TOML the vector file uses.
 
@@ -145,8 +150,17 @@ mod vectors {
         }
     }
 
-    /// The `[[vector]]` tables, each as a `Value::Table`.
-    fn parse(text: &str) -> Vec<Value> {
+    /// The tables of one kind (`vector` or `pose_step`), each as a `Value::Table`.
+    fn tables(text: &str, kind: &str) -> Vec<Value> {
+        parse(text)
+            .into_iter()
+            .filter(|(k, _)| k == kind)
+            .map(|(_, v)| v)
+            .collect()
+    }
+
+    /// The `[[...]]` tables, each with its kind.
+    fn parse(text: &str) -> Vec<(String, Value)> {
         // A comment runs from a '#' outside a string to the line's end.
         let uncommented = |line: &str| {
             let mut quoted = false;
@@ -163,7 +177,7 @@ mod vectors {
         let mut parser = Parser {
             chars: stripped.chars().peekable(),
         };
-        let mut tables: Vec<Vec<(String, Value)>> = Vec::new();
+        let mut tables: Vec<(String, Vec<(String, Value)>)> = Vec::new();
         loop {
             parser.skip_space();
             if parser.chars.peek().is_none() {
@@ -171,10 +185,11 @@ mod vectors {
             }
             if parser.chars.next_if_eq(&'[').is_some() {
                 parser.expect('[');
-                assert_eq!(parser.word(), "vector");
+                let kind = parser.word();
+                assert!(kind == "vector" || kind == "pose_step", "table {kind:?}");
                 parser.expect(']');
                 parser.expect(']');
-                tables.push(Vec::new());
+                tables.push((kind, Vec::new()));
                 continue;
             }
             let key = parser.word();
@@ -182,10 +197,14 @@ mod vectors {
             let value = parser.value();
             tables
                 .last_mut()
-                .expect("a key before any [[vector]]")
+                .expect("a key before any table")
+                .1
                 .push((key, value));
         }
-        tables.into_iter().map(Value::Table).collect()
+        tables
+            .into_iter()
+            .map(|(kind, pairs)| (kind, Value::Table(pairs)))
+            .collect()
     }
 
     // ---- Reading the vectors' quantities.
@@ -223,10 +242,14 @@ mod vectors {
         })
     }
 
+    /// A pose's body size, `radius = [x, y]`.
+    fn radius(value: &Value) -> Radius {
+        let (x, y) = pair(value.get("radius").expect("pose.radius"));
+        Radius { x, y }
+    }
+
     fn pose(value: &Value) -> Pose {
         let field = |k: &str| value.get(k).unwrap_or_else(|| panic!("pose.{k}")).str();
-        let radius = value.get("radius").expect("pose.radius").array();
-        let px = |v: &Value| u16::try_from(v.int()).expect("radius");
         Pose {
             body: match field("body") {
                 "Upright" => Body::Upright,
@@ -267,10 +290,6 @@ mod vectors {
                 "Down" => Aim::Down,
                 other => panic!("aim {other:?}"),
             },
-            radius: Radius {
-                x: px(&radius[0]),
-                y: px(&radius[1]),
-            },
         }
     }
 
@@ -286,8 +305,9 @@ mod vectors {
     }
 
     impl World for Room {
-        fn block(&self, column: u16, row: u16) -> Block {
-            if let Some(&(_, block)) = self.blocks.iter().find(|(cell, _)| *cell == (column, row)) {
+        fn block(&self, cell: Cell) -> Block {
+            let Cell { column, row } = cell;
+            if let Some(&(_, block)) = self.blocks.iter().find(|(at, _)| *at == (column, row)) {
                 return block;
             }
             let from = |cell: u16, face: Option<u32>| {
@@ -300,10 +320,13 @@ mod vectors {
                 || from(column, self.wall_right)
                 || above(row, self.ceiling_bottom)
             {
-                Block::Solid
+                Block::Solid(SolidKind::Plain)
             } else {
-                Block::Air
+                Block::Air(AirKind::Plain)
             }
+        }
+        fn lets_through(&self, _: Cell, _: Heading) -> bool {
+            false
         }
         fn solid_enemies(&self) -> &[Hitbox] {
             &self.enemies
@@ -331,8 +354,21 @@ mod vectors {
         for (to, row) in surface.iter_mut().zip(rows) {
             *to = u8::try_from(row.int()).expect("surface row");
         }
+        // The walk factor, "P.SS" in hex: a pixel and 1/256ths; 1.00 by default.
+        let factor = value.get("factor").map_or(0x100, |f| {
+            let (pixel, sub) = f.str().split_once('.').expect("factor");
+            assert_eq!(sub.len(), 2, "factor");
+            u16::from_str_radix(&format!("{pixel}{sub}"), 16).expect("factor")
+        });
         let cell = corner(value.get("block").expect("slope block"));
-        (cell, Block::Slope(Slope { faces, surface }))
+        (
+            cell,
+            Block::Slope(Slope {
+                faces,
+                surface,
+                factor,
+            }),
+        )
     }
 
     /// A stepped block: its corner and its quarters, upper row then lower, "#" solid.
@@ -361,7 +397,7 @@ mod vectors {
             blocks.push(slope(v, SlopeFaces::Ceiling));
         }
         if let Some(v) = world.get("solid_block") {
-            blocks.push((corner(v), Block::Solid));
+            blocks.push((corner(v), Block::Solid(SolidKind::Plain)));
         }
         if let Some(v) = world.get("stepped") {
             blocks.push(stepped(v));
@@ -385,9 +421,45 @@ mod vectors {
         }
     }
 
-    /// Runs one vector; returns its mismatches.
-    fn run(vector: &Value) -> Vec<String> {
-        let id = vector.get("id").expect("id").str();
+    /// One frame's inputs: `base` with the frame's pad, body size (pose fit's, out of scope) and
+    /// whether its pose's animation ends. Animation timing is out of scope too: a vector says an
+    /// animation ends by the pose that follows one that lasts only as long as its animation (spec
+    /// `AnimationEnds`).
+    fn frame_inputs(
+        base: Frame,
+        (start, radius, pad, jump_pressed): (Pose, Radius, Pad, bool),
+        end: Option<Pose>,
+    ) -> Frame {
+        let animated = matches!(
+            start.action,
+            Action::TakingOff
+                | Action::Turning
+                | Action::Crouching
+                | Action::StandingUp
+                | Action::Morphing
+                | Action::Unmorphing
+        );
+        let pressed = if jump_pressed {
+            Pad::default().with(Button::Jump)
+        } else {
+            Pad::default()
+        };
+        Frame {
+            pad,
+            pressed,
+            animation_ends: animated && end.is_some_and(|e| e.action != start.action),
+            radius,
+            ..base
+        }
+    }
+
+    /// A flag in an optional table, false when missing.
+    fn flag(table: Option<&Value>, k: &str) -> bool {
+        table.and_then(|t| t.get(k)).is_some_and(Value::bool)
+    }
+
+    /// A vector's rules and equipment.
+    fn settings(vector: &Value) -> (Rules, Equipment) {
         let rules = match vector
             .get("rules")
             .and_then(|r| r.get("speed_cap"))
@@ -400,13 +472,18 @@ mod vectors {
             },
             Some(other) => panic!("speed_cap {other:?}"),
         };
-        let flag =
-            |table: Option<&Value>, k: &str| table.and_then(|t| t.get(k)).is_some_and(Value::bool);
         let equipment = vector.get("equipment");
         let equipment = Equipment {
             hi_jump: flag(equipment, "hi_jump"),
             space_jump: flag(equipment, "space_jump"),
         };
+        (rules, equipment)
+    }
+
+    /// Runs one vector; returns its mismatches.
+    fn run(vector: &Value) -> Vec<String> {
+        let id = vector.get("id").expect("id").str();
+        let (rules, equipment) = settings(vector);
         let world = vector.get("world").expect("world");
         let room = room(world);
         let elevator_moving = flag(Some(world), "elevator_moving");
@@ -416,25 +493,25 @@ mod vectors {
             other => panic!("{id}: frame {other:?}"),
         };
 
-        // The frames: the lead-in's, then the checked one, each with the pose it starts in.
-        let mut frames: Vec<(Pose, Pad, bool)> = vector
+        // The frames: the lead-in's, then the checked one, each with the pose it starts in, its
+        // body size (pose fit's, out of scope) and the pad.
+        let frame_of = |f: &Value| {
+            let start = f.get("pose").expect("pose");
+            (
+                pose(start),
+                radius(start),
+                pad(f.get("pad").expect("pad")),
+                f.get("jump_pressed").expect("jump_pressed").bool(),
+            )
+        };
+        let mut frames: Vec<(Pose, Radius, Pad, bool)> = vector
             .get("lead_in")
             .map(Value::array)
             .unwrap_or_default()
             .iter()
-            .map(|f| {
-                (
-                    pose(f.get("pose").expect("lead-in pose")),
-                    pad(f.get("pad").expect("lead-in pad")),
-                    f.get("jump_pressed").expect("lead-in jump_pressed").bool(),
-                )
-            })
+            .map(frame_of)
             .collect();
-        frames.push((
-            pose(vector.get("pose").expect("pose")),
-            pad(vector.get("pad").expect("pad")),
-            vector.get("jump_pressed").expect("jump_pressed").bool(),
-        ));
+        frames.push(frame_of(vector));
 
         let before = vector.get("before").expect("before");
         let quantity = |k: &str| {
@@ -448,7 +525,7 @@ mod vectors {
             1 => Bounces::Once,
             _ => Bounces::Twice,
         };
-        let (first_pose, _, _) = frames[0];
+        let (first_pose, first_radius, _, _) = frames[0];
         let mut samus = Samus::start(
             Position {
                 x: fixed(position[0].str()),
@@ -460,30 +537,91 @@ mod vectors {
                 quantity("speed_y"),
             ),
             bounces,
-            first_pose,
+            (first_pose, first_radius),
         );
+        // The pose each frame ends in, where the vector says it: the next frame's pose, and the
+        // checked frame's next_pose.
         let last_next = vector.get("next_pose").map(pose);
-        let nexts = frames.iter().skip(1).map(|f| Some(f.0)).chain([last_next]);
+        let ends: Vec<Option<Pose>> = frames
+            .iter()
+            .skip(1)
+            .map(|f| Some(f.0))
+            .chain([last_next])
+            .collect();
         // The lead-in's frames alternate back from the checked frame's parity.
         let mut parity = if frames.len() % 2 == 1 {
             checked_parity
         } else {
             checked_parity.other()
         };
-        for (&(_, pad, jump_pressed), next_pose) in frames.iter().zip(nexts) {
-            let frame = Frame {
-                pad,
-                jump_pressed,
-                equipment,
-                elevator_moving,
-                parity,
-                next_pose,
-                ..Frame::default()
-            };
+        let base = Frame {
+            pad: Pad::default(),
+            pressed: Pad::default(),
+            equipment,
+            spin_turned_far: false,
+            elevator_moving,
+            parity,
+            animation_ends: false,
+            radius: first_radius,
+        };
+        let mut misses = Vec::new();
+        for (n, (&inputs, end)) in frames.iter().zip(&ends).enumerate() {
+            let frame = frame_inputs(Frame { parity, ..base }, inputs, *end);
             parity = parity.other();
             samus.step(&frame, &room, &rules);
+            // The first pose that differs; the later ones follow from it.
+            if let Some(expected) = end
+                && samus.pose != *expected
+                && misses.is_empty()
+            {
+                misses.push(format!(
+                    "{id}: frame {n} ends in pose {:?}, expected {expected:?}",
+                    samus.pose
+                ));
+            }
         }
-        compare(id, vector.get("after").expect("after"), &samus)
+        misses.extend(compare(id, vector.get("after").expect("after"), &samus));
+        misses
+    }
+
+    /// Runs one pose step through the chart; returns its mismatch.
+    fn run_pose_step(step: &Value) -> Option<String> {
+        let id = step.get("id").expect("id").str();
+        let start = pose(step.get("pose").expect("pose"));
+        let held = pad(step.get("pad").expect("pad"));
+        let mut pressed = pad(step.get("pressed").expect("pressed"));
+        if step.get("jump_pressed").expect("jump_pressed").bool() {
+            pressed = pressed.with(Button::Jump);
+        }
+        let mut met = Met::default();
+        let mut animation_ends = false;
+        match step.get("met").expect("met").str() {
+            "nothing" => {}
+            "floor" => met.contact = Some(Contact::Floor),
+            "no_floor" => met.contact = Some(Contact::NoFloor),
+            "wall" => met.wall = true,
+            "wall_kick" => met.contact = Some(Contact::WallKick),
+            "animation_end" => animation_ends = true,
+            other => panic!("{id}: met {other:?}"),
+        }
+        // A step gives no vertical motion: she is off the ground once her moves are made in
+        // the poses of the air and after walking off a ledge, and a turn is on the ground.
+        let airborne = met.contact == Some(Contact::NoFloor)
+            || (met.contact != Some(Contact::Floor)
+                && matches!(
+                    start.action,
+                    Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
+                ));
+        let situation = Situation {
+            pose: start,
+            airborne,
+            turn: Turn::Ground,
+        };
+        let chart = pad_chart(situation, held, pressed);
+        let chosen = next_pose(situation, chart, met, animation_ends).pose;
+        let after = step.get("after").expect("after");
+        let expected = pose(after.get("pose").expect("after.pose"));
+        (chosen != expected).then(|| format!("{id}: pose expected {expected:?}, actual {chosen:?}"))
     }
 
     /// The listed `after` quantities that differ.
@@ -552,9 +690,22 @@ mod vectors {
 
     #[test]
     fn every_vector() {
-        let vectors = parse(VECTORS);
+        let vectors = tables(VECTORS, "vector");
         assert_eq!(vectors.len(), VECTOR_COUNT, "vector count");
         let misses: Vec<String> = vectors.iter().flat_map(run).collect();
+        assert!(
+            misses.is_empty(),
+            "{} mismatches:\n{}",
+            misses.len(),
+            misses.join("\n")
+        );
+    }
+
+    #[test]
+    fn every_pose_step() {
+        let steps = tables(VECTORS, "pose_step");
+        assert_eq!(steps.len(), POSE_STEP_COUNT, "pose step count");
+        let misses: Vec<String> = steps.iter().filter_map(run_pose_step).collect();
         assert!(
             misses.is_empty(),
             "{} mismatches:\n{}",
@@ -569,7 +720,7 @@ mod vectors {
         for (n, id) in ids.iter().enumerate() {
             assert!(!ids[..n].contains(id), "{id} twice in the catalogue");
         }
-        let vectors = parse(VECTORS);
+        let vectors: Vec<Value> = parse(VECTORS).into_iter().map(|(_, v)| v).collect();
         let exercised: Vec<&str> = vectors
             .iter()
             .flat_map(|v| {

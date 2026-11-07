@@ -1,9 +1,12 @@
-//! §8: what her moves meet. The world is data; each move asks what is at her leading edge.
+//! §8: what her moves meet. The world is data; each move asks what is at her leading edge, and
+//! reports the cells it reaches (`TouchedCells`).
 
 use crate::rules::Rules;
 use clean_types::{
-    Axis, Block, Fixed, Half, Halves, Parity, Position, Radius, Side, Slope, SlopeFaces, World,
+    AirKind, Axis, Block, Cell, Fixed, Half, Halves, Heading, Parity, Position, Quarters, Radius,
+    Side, Slope, SlopeFaces, Touch, World,
 };
+use std::cell::RefCell;
 
 /// Which way along the axis: left or up, right or down.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -47,12 +50,144 @@ pub struct Moved {
 }
 
 /// What a frame's moves meet: the room's blocks and solid enemies, and the frame's parity, which
-/// orders a vertical move's stops (`BlocksStopFlush`).
+/// orders a vertical move's stops (`BlocksStopFlush`); and the cells the moves reach.
 pub struct Room<'a, W> {
     /// The room.
     pub world: &'a W,
     /// The frame's parity.
     pub parity: Parity,
+    /// `TouchedCells`: the cells her moves reach, in order.
+    pub reached: RefCell<Vec<Touch>>,
+}
+
+/// `OtherBlockKinds`: what a cell is to her motion.
+enum Shape {
+    Air,
+    Solid,
+    Stepped(Quarters),
+    Slope(Slope),
+}
+
+/// `OtherBlockKinds`: a cell's kind and the cell it is reported as. A cell that stands for
+/// another is that cell's kind, followed to the chain's end; one that names nothing, or a chain
+/// that comes back on itself, is air.
+pub fn resolve(world: &impl World, at: Cell) -> (Block, Cell) {
+    let mut seen = Vec::new();
+    let mut cell = at;
+    loop {
+        match world.block(cell) {
+            Block::StandsFor(axis, by) if by != 0 && !seen.contains(&cell) => {
+                seen.push(cell);
+                let shift = |n: u16| n.wrapping_add_signed(by);
+                cell = match axis {
+                    Axis::X => Cell {
+                        column: shift(cell.column),
+                        ..cell
+                    },
+                    Axis::Y => Cell {
+                        row: shift(cell.row),
+                        ..cell
+                    },
+                };
+            }
+            Block::StandsFor(..) => return (Block::Air(AirKind::Plain), cell),
+            block @ (Block::Air(_)
+            | Block::Solid(_)
+            | Block::Answered(_)
+            | Block::Slope(_)
+            | Block::Stepped(_)) => return (block, cell),
+        }
+    }
+}
+
+/// `OtherBlockKinds`: how the cell at `at` meets a move heading `heading`, and the cell reported.
+fn meet(world: &impl World, at: Cell, heading: Heading) -> (Shape, Cell) {
+    let (block, named) = resolve(world, at);
+    let shape = match block {
+        Block::Answered(_) if world.lets_through(named, heading) => Shape::Air,
+        Block::Solid(_) | Block::Answered(_) => Shape::Solid,
+        Block::Stepped(quarters) => Shape::Stepped(quarters),
+        Block::Slope(slope) => Shape::Slope(slope),
+        Block::Air(_) | Block::StandsFor(..) => Shape::Air,
+    };
+    (shape, named)
+}
+
+/// `TouchedCells`: a move's direction.
+const fn heading((axis, toward): (Axis, Toward)) -> Heading {
+    match (axis, toward) {
+        (Axis::X, Toward::Less) => Heading::Left,
+        (Axis::X, Toward::More) => Heading::Right,
+        (Axis::Y, Toward::Less) => Heading::Up,
+        (Axis::Y, Toward::More) => Heading::Down,
+    }
+}
+
+/// `TouchedCells`: the cells she is inside, from her position at the frame's start: her centre
+/// column at her bottom edge's row; at her centre's row, when it differs; at her top edge's row,
+/// when it differs from her bottom edge's and the three rows combined by exclusive-or are not 0.
+pub fn inside(position: Position, radius: Radius, world: &impl World, rules: &Rules) -> Vec<Cell> {
+    let column = cell(position.x.pixel(), rules);
+    let y = position.y.pixel();
+    let bottom = cell(edge(y, radius.y, Toward::More), rules);
+    let centre = cell(y, rules);
+    let top = cell(edge(y, radius.y, Toward::Less), rules);
+    let mut rows = vec![bottom];
+    if centre != bottom {
+        rows.push(centre);
+    }
+    if top != bottom && bottom ^ centre ^ top != 0 {
+        rows.push(top);
+    }
+    rows.into_iter()
+        .map(|row| resolve(world, Cell { column, row }).1)
+        .collect()
+}
+
+/// `SlopesSlowTheWalk`: a horizontal move of `distance` towards `side`, shortened by the walk
+/// factor of each sloped floor in her leading edge's column at the unshortened target, in each
+/// row her body spans, top row first.
+pub fn walk_shortened(
+    position: Position,
+    radius: Radius,
+    side: Side,
+    distance: Fixed,
+    world: &impl World,
+    rules: &Rules,
+) -> Fixed {
+    let toward = Toward::side(side);
+    let target = match toward {
+        Toward::Less => position.x.minus(distance),
+        Toward::More => position.x.plus(distance),
+    };
+    let column = cell(edge(target.pixel(), radius.x, toward), rules);
+    let her = Line::of(position.x, position.y, radius, Axis::X);
+    let (lo, hi) = her.across_span();
+    (cell(lo, rules)..=cell(hi, rules)).fold(distance, |d, row| {
+        match resolve(world, Cell { column, row }).0 {
+            Block::Slope(slope) if slope.faces == SlopeFaces::Floor => {
+                shorten(d, toward, slope.factor)
+            }
+            Block::Air(_)
+            | Block::Solid(_)
+            | Block::Answered(_)
+            | Block::Slope(_)
+            | Block::Stepped(_)
+            | Block::StandsFor(..) => d,
+        }
+    })
+}
+
+/// `SlopesSlowTheWalk`: the move cut to a multiple of 1/256 px towards minus infinity, its pixel
+/// part kept mod 256, its length multiplied by the factor exactly, its direction put back.
+fn shorten(distance: Fixed, toward: Toward, factor: u16) -> Fixed {
+    // Read as 8.8 (the pixel part's low byte, the subpixel's high byte), the signed move's bits
+    // are the cut, rounded down.
+    let cut = match toward {
+        Toward::Less => Fixed::ZERO.minus(distance).as_8_8().wrapping_neg(),
+        Toward::More => distance.as_8_8(),
+    };
+    Fixed::from_bits(u32::from(cut).wrapping_mul(u32::from(factor)))
 }
 
 /// `BlocksStopFlush`: the subpixel a flush stop leaves: FFFF right or down, 0 left or up.
@@ -143,8 +278,9 @@ const fn against(face: u16, radius: u16, toward: Toward) -> u16 {
     }
 }
 
-/// Where a move of `distance` along `axis` from `position` leaves her, stopping as §8 says.
-pub fn travel(
+/// Where a move of `distance` along `axis` from `position` leaves her, stopping as §8 says; the
+/// cells it reaches go to the room's report (`TouchedCells`).
+pub fn move_until_met(
     position: Position,
     radius: Radius,
     (axis, toward): (Axis, Toward),
@@ -152,6 +288,14 @@ pub fn travel(
     room: &Room<impl World>,
     rules: &Rules,
 ) -> Moved {
+    // BlocksStopFlush, SolidEnemies, TouchedCells: nothing stops a move of exactly 0, and it
+    // reaches no cells.
+    if distance.is_zero() {
+        return Moved {
+            to: position,
+            stop: None,
+        };
+    }
     // BlocksStopFlush: a horizontal move is limited to 15 px either way, its subpixel kept.
     let distance = if axis == Axis::X && distance.pixel() > rules.move_limit_px {
         distance.with_pixel(rules.move_limit_px)
@@ -304,16 +448,18 @@ const fn halves(lo: u16, hi: u16, across: u16, rules: &Rules) -> Halves {
 /// `BlocksStopFlush`, `SlopesCarry`: what stops a move in the row or column of her leading edge
 /// at the target, in every block her body spans across it: a solid block at its face; a stepped
 /// block at the face of the half her leading edge reaches; and, on a vertical move, a sloped
-/// surface at her centre column. When several would, the topmost decides a horizontal move, and
-/// the leftmost (an even frame) or the rightmost (an odd one) a vertical move.
+/// surface at her centre column. The cells are met top to bottom on a horizontal move, and left
+/// to right (an even frame) or right to left (an odd one) on a vertical move; the first that
+/// stops her decides, and `TouchedCells` reports them up to it.
 fn block_stop(
     position: Position,
     her: &Line,
     target: Fixed,
-    (axis, toward): (Axis, Toward),
+    way: (Axis, Toward),
     room: &Room<impl World>,
     rules: &Rules,
 ) -> Option<(Stop, End)> {
+    let (axis, toward) = way;
     let lead_px = edge(target.pixel(), her.radius, toward);
     let lead = cell(lead_px, rules);
     let start = lead.wrapping_mul(rules.block_px);
@@ -324,14 +470,29 @@ fn block_stop(
     };
     let (lo, hi) = her.across_span();
     let centre = position.x.pixel();
-    let mut stops = (cell(lo, rules)..=cell(hi, rules)).filter_map(|across| {
-        let block = match axis {
-            Axis::X => room.world.block(lead, across),
-            Axis::Y => room.world.block(across, lead),
+    let mut line: Vec<u16> = (cell(lo, rules)..=cell(hi, rules)).collect();
+    if (axis, room.parity) == (Axis::Y, Parity::Odd) {
+        line.reverse();
+    }
+    line.into_iter().find_map(|across| {
+        let at = match axis {
+            Axis::X => Cell {
+                column: lead,
+                row: across,
+            },
+            Axis::Y => Cell {
+                column: across,
+                row: lead,
+            },
         };
-        match block {
-            Block::Solid => Some((Stop::Block, End::Flush(face(start, rules.block_px, toward)))),
-            Block::Stepped(quarters) => quarters
+        let (shape, named) = meet(room.world, at, heading(way));
+        room.reached.borrow_mut().push(Touch {
+            cell: named,
+            heading: heading(way),
+        });
+        match shape {
+            Shape::Solid => Some((Stop::Block, End::Flush(face(start, rules.block_px, toward)))),
+            Shape::Stepped(quarters) => quarters
                 .stops(axis, reached, halves(lo, hi, across, rules))
                 .then_some((
                     Stop::Stepped,
@@ -339,16 +500,12 @@ fn block_stop(
                 )),
             // SlopesCarry: a sloped surface never stops a horizontal move, and a vertical one
             // only at her centre column.
-            Block::Slope(slope) if axis == Axis::Y && across == cell(centre, rules) => {
+            Shape::Slope(slope) if axis == Axis::Y && across == cell(centre, rules) => {
                 slope_stop(slope, (centre, start), lead_px, her.radius, toward, rules)
             }
-            Block::Air | Block::Slope(_) => None,
+            Shape::Air | Shape::Slope(_) => None,
         }
-    });
-    match (axis, room.parity) {
-        (Axis::X, Parity::Even | Parity::Odd) | (Axis::Y, Parity::Even) => stops.next(),
-        (Axis::Y, Parity::Odd) => stops.last(),
-    }
+    })
 }
 
 /// `SlopesCarry`: a sloped surface's y at pixel column `x`, in the block whose top row is `top`.
@@ -360,7 +517,11 @@ fn surface_y(slope: Slope, x: u16, top: u16, rules: &Rules) -> Option<u16> {
 
 /// `SlopesCarry`: the sloped surface holding a pixel, and its surface's y at that pixel's column.
 fn slope_at(world: &impl World, x: u16, y: u16, rules: &Rules) -> Option<(SlopeFaces, u16)> {
-    let Block::Slope(slope) = world.block(cell(x, rules), cell(y, rules)) else {
+    let at = Cell {
+        column: cell(x, rules),
+        row: cell(y, rules),
+    };
+    let (Block::Slope(slope), _) = resolve(world, at) else {
         return None;
     };
     let top = cell(y, rules).wrapping_mul(rules.block_px);
@@ -428,7 +589,8 @@ pub fn seat(
 /// `WallJump`: whether a test move of `reach` towards `side` would be stopped (solid enemies
 /// first, then blocks), and where the test leaves her. A block wall writes her x subpixel as a
 /// stop against it would, without moving her. A solid enemy writes her x nothing: one she
-/// already touches clears her y subpixel (`SolidEnemies`), one ahead writes nothing.
+/// already touches clears her y subpixel (`SolidEnemies`), one ahead writes nothing. The cells
+/// the test reaches are its own, not the frame's report (`TouchedCells`).
 pub fn wall_test(
     position: Position,
     radius: Radius,
@@ -438,7 +600,9 @@ pub fn wall_test(
     rules: &Rules,
 ) -> Moved {
     let toward = Toward::side(side);
-    let test = travel(position, radius, (Axis::X, toward), reach, room, rules);
+    let mark = room.reached.borrow().len();
+    let test = move_until_met(position, radius, (Axis::X, toward), reach, room, rules);
+    room.reached.borrow_mut().truncate(mark);
     let to = match test.stop {
         Some(Stop::Block | Stop::Stepped) => Position {
             x: position.x.with_sub(flush_sub(toward)),
