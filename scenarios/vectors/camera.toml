@@ -26,8 +26,8 @@
 #   that moved her this frame; facing, "Left", "Right" or "Screen"; backwards (optional, default
 #   none): "Knockback", "Moonwalk" or "Skid", why she is going backwards (the spec's input is
 #   the bool; each reason reads the same; listed alphabetically); rising (optional, default
-#   false); y_at_start (optional, default seen's y): her y at the frame's start; camera_from
-#   (optional, default y_at_start): her motion's `camera_from` this frame (spec `Remembering`).
+#   false); camera_from (optional, default seen's y): her motion's `camera_from` this frame
+#   (spec `Remembering`).
 # - after: compared at the end of the frame: camera = [x, y] and seen = [x, y], as in before.
 # - Recorded vectors (R): taken from oracle frames that ran one frame of gameplay in one room (the
 #   game's frame count advanced by one), where nothing moved her after the camera's turn and no
@@ -35,9 +35,11 @@
 #   placing her: spec §5). Their before is record N's, their samus and after record N+1's. At most
 #   two vectors show each outcome the frames reach, from different rows. Row ids r01-r11 stand
 #   for the chain rows. R35, a rise at 0, comes from a shinespark's frame where nothing moved
-#   where the camera saw her: the only rows with a rise at 0 at the camera's turn.
+#   where the camera saw her: the only rows with a rise at 0 at the camera's turn. The shinespark
+#   is another domain's (outside samus-motion, masked in the harness), so R35's rising comes from
+#   there.
 # - Constructed vectors (C): cases no record reaches (the lead settings other than Ahead, facing
-#   the screen, a placement and its pixel part, a rise at 0, every ease out of a closed screen,
+#   the screen, a placement and its pixel part, a rise at 0, the frame that spends a rise, every ease out of a closed screen,
 #   the screen after the last column, the back-offs short of a screen's edge, time stopped against
 #   a frame that would ease, the creep, the look ahead while going down, the rows below the
 #   room); each gives its case in a comment. Their after is worked from the
@@ -106,7 +108,7 @@ source = "constructed"
 entries = ["Remembering", "Settling"]
 room = { screens = ["OO", "OO", "OO"], heights = [112, 160] }
 before = { camera = ["0100.0000", "0080.0000"], seen = ["0180.0000", "0100.0000"] }
-samus = { position = ["0180.0000", "00F8.0000"], facing = "Right", y_at_start = "0100.0000", camera_from = "00F8.0000" }
+samus = { position = ["0180.0000", "00F8.0000"], facing = "Right", camera_from = "00F8.0000" }
 after = { camera = ["0100.0000", "0080.0000"], seen = ["0180.0000", "00F8.0000"] }
 
 [[vector]]
@@ -116,7 +118,7 @@ source = "constructed"
 entries = ["Remembering", "Settling", "CreepReadsRightward"]
 room = { screens = ["C", "O"], heights = [112, 160] }
 before = { camera = ["0000.0000", "00F0.0000"], seen = ["0080.0000", "0150.8000"] }
-samus = { position = ["0080.0000", "014C.4000"], facing = "Right", y_at_start = "0150.8000", camera_from = "014C.0000" }
+samus = { position = ["0080.0000", "014C.4000"], facing = "Right", camera_from = "014C.0000" }
 after = { camera = ["0000.0000", "00F2.0000"], seen = ["0080.0000", "014C.4000"] }
 
 [[vector]]
@@ -128,6 +130,16 @@ room = { screens = ["O", "O"], heights = [112, 160] }
 before = { camera = ["0000.0000", "00B0.0000"], seen = ["0080.0000", "0150.0000"] }
 samus = { position = ["0080.0000", "014D.0000"], facing = "Right", rising = true }
 after = { camera = ["0000.0000", "00AD.0000"], seen = ["0080.0000", "014D.0000"] }
+
+[[vector]]
+# the frame that spends her rise: her speed now points down but she is still rising, so the rising height
+id = "C-rise-spent"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer"]
+room = { screens = ["O", "O"], heights = [112, 160] }
+before = { camera = ["0000.0000", "0080.0000"], seen = ["0080.0000", "0100.0800"] }
+samus = { position = ["0080.0000", "00FF.F800"], facing = "Right", rising = true }
+after = { camera = ["0000.0000", "007E.F000"], seen = ["0080.0000", "00FF.F800"] }
 
 [[vector]]
 # the same move, not rising: the other height
@@ -651,7 +663,8 @@ samus = { position = ["00BB.FFFF", "00A7.37FF"], facing = "Right", rising = true
 after = { camera = ["0000.F000", "0000.F800"], seen = ["00BB.FFFF", "00A7.37FF"] }
 
 [[vector]]
-# a rise at 0 (her upward speed exactly 0, still rising) aims at the rising height
+# a rise at 0 (her upward speed exactly 0, still rising) aims at the rising height; a shinespark
+# frame, another domain's, so its rising comes from the shinespark, not samus-motion
 id = "R35"
 source = "samus-shinespark-left:214"
 entries = ["AimingHeight", "FollowingHer", "Remembering"]

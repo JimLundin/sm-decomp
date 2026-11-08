@@ -73,9 +73,8 @@ position), the scratch `0933`-`0939`.
 | her position | `0B10`-`0B16` of record N+1, which the scroll sets to `0AF6`-`0AFC` as it ends | as is; equal to N+1's `0AF6`-`0AFC` unless the room's main code or the next frame's start moved her |
 | her facing | `0A1E` low byte | 4 `Left`; 8 `Right`; 0 `Screen` (the scroll tests only 4) |
 | going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-motion §1.2) |
-| rising | `0B36` | = 1 (up); 0 (none, the moonfall's) and 2 (down) are not rising |
-| her start y | `0AFA`.`0AFC` of record N | as is |
-| `camera_from` | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept); where it equals her start y's pixel part nothing is written |
+| rising | `0B36` | = 1 (up), samus-motion's rise state: from the rise's start until `$90:8FDC`/`$90:9046` end it at the start of a frame, so a rise at 0 and the frame whose pull spends the rise (`0B36` = 1 with `0B2E` negative when `$90:9666` reads it) are rising; 0 (none, the moonfall's) and 2 (down) are not. Records: 3 usable spent frames (samus-bomb-jump-vertical 1035, samus-ceres-push 989, samus-grapple-release 325), none decisive; C-rise-spent is |
+| `camera_from` | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept). Unplaced, it is her start y, whose pixel part is `0B14`'s on every unmasked frame, so the spec's unconditional write changes nothing there |
 | the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`) | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green); the bytes from `w × h` on are the `below` rows, `w` to a row, any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested) |
 | the aim heights | `07AD` (up scroller), `07AF` (down scroller), from the room header (`$82:DEC1`, `$82:DECA`) | `hn` = `07AD`, `hr` = `07AF`; 70h/A0h or 90h/A0h in the records |
 | lead setting | `0941` (camera distance index) | 0 `Ahead`, 2 `Near`, 4 `KeepLeft`, 6 `KeepRight`; the tables `$90:963F` (facing right) and `$90:9647` (facing left): 60h/A0h, 40h/50h, 20h/20h, E0h/E0h. Set by Crocomire (`$A4:8ABD` = 2, `$A4:97F6` = 6) and Kraid's room (`$A7:A9E7` = 2), cleared at `$88:8347`, `$A4:90D8`, `$A4:9B8D`, `$A7:C594`; always 0 in the records |
@@ -150,16 +149,18 @@ be verified on its own from the records, with her motion's outputs decoded as in
 - **Masks (fields, not frames):** where another domain moved the point the camera measures from
   between N and the scroll, or moved the camera after its turn, the axes it touches are
   unverified, reported apart. Whole states (documented as such, not single writes): movement types
-  16h (grapple: `$9B:BB25`.., the ±12 px clamp; `$91:F3AA`, the release's clamp) and 1Bh
+  16h (grapple: `$9B:BB25`.. and `$9B:BE98`.., the ±12 px clamps; `$91:F3AA`, the release's clamp) and 1Bh
   (shinespark: `$90:D1D6`..`$90:D2B9`), and `0CF8` ≠ 0 (slow grapple scrolling), both axes.
   Single writers of where the camera saw her, both axes unless named:
   - `$A0:B7A1`, the cap on scrolling speed (`$A0:B7C4` y, `$A0:B7E8` x), called by Draygon (which
     holds her in movement type 1Ah) and the yapping maw: mask while either holds her;
   - Crocomire's collision (`$A4:8C95`); Kraid's body collision (`$A7:B0F3`) and its restriction of
     her x to the first screen (`$A7:C9EE`, x); Ridley (`$A6:E501`); Mother Brain moving her towards
-    the ceiling or floor (`$A9:BBFD`, y);
+    the ceiling or floor (`$A9:BBFD`, y) and towards the wall (`$A9:BC3F`, x): mask Mother Brain's
+    moves on both axes;
   - the gunship (`$A2:A925`, `$A2:A9BD`, `$A2:AC1B`), the suit pick-ups (`$91:D4E4`, `$91:D5BA`),
-    pose change command 4 (`$91:F37C`, x and y);
+    pose change command 4 (`$91:F37C`, x and y), and Samus's appearance (`$90:E86A`, writes `0B14`;
+    her appearance when a game loads, owned by the game-state domain): mask y;
   - the cutscenes of bank `$8B` (`$8B:AEFB`..`$8B:AFC4`) and the door transitions of bank `$80`/`$82`
     (outside game state 8 or at a room change, so already skipped).
   Writers of the camera after its turn: `07E9` ≠ 0 (the scrolling-finished hook, layer 1 Y only:

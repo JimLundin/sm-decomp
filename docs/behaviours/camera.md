@@ -11,13 +11,14 @@ what it may not. Written behaviour first, from the oracle's records over time. V
 view's position in the room on both axes, the point it aims at (the lead across, the height down),
 the speed it moves at, the room's edges, the room's closed screens and how it eases out of them,
 and what it remembers of her between frames. It reads her motion's outputs: her position after her
-moves, her y at the frame's start, `camera_from`, whether she skids, whether she rises, her facing
+moves, `camera_from`, whether she skids, whether she rises, her facing
 and whether she moonwalks.
 
-**What samus-motion must add.** One output, `rising` (§1.3): her vertical motion points up, a
-negative vertical speed or a rise at 0 (`RisingAndFalling`'s rise by 0 for one more frame). Its
-vertical speed alone can't show the rise at 0, which aims the camera as a rise does (C-rise-at-0,
-R35). Its other outputs are read as it exports them, `camera_from` on every frame.
+**What samus-motion must add.** One output, `rising` (§1.3): she is rising, from the rise's start
+until it ends (`RisingAndFalling`), a rise at 0 and the frame that spends the rise included. Its
+vertical speed can't show either: at a rise at 0 it is 0, and on the frame that spends the rise it
+already points down, yet both aim the camera as a rise does (C-rise-at-0, C-rise-spent). Its
+other outputs are read as it exports them, `camera_from` on every frame.
 
 **Not in this spec** (each an input where it feeds us, §1.3; §5 names who supplies each): a door's
 passage, which places the view in the next room; the cells that open and close screens as she
@@ -74,11 +75,10 @@ the next.
 | Input | Type | Read by |
 | --- | --- | --- |
 | her position | x, y: `P.S`, after everything that moved her this frame | `FollowingHer`, `LeadingHer`, `AimingHeight`, `Remembering` |
-| her start y | `P.S`: her y at the frame's start (her motion's) | `Remembering` |
 | `camera_from` | `P.S`: her motion's y the camera follows her from, every frame: her start y, or where pose fit or a change of shape placed her | `Remembering` |
 | her facing | `Left`, `Right`, `Screen` (facing the player; leads as `Right`) | `LeadingHer` |
 | going backwards | `bool`: she skids (her motion's output), moonwalks (her pose), or takes a knockback (the damage domain); the vectors name which | `LeadingHer` |
-| rising | `bool`: her vertical motion points up, a rise at 0 included (the output samus-motion must add, Header) | `AimingHeight` |
+| rising | `bool`: she is rising, from the rise's start until it ends, a rise at 0 and the frame that spends the rise included (the output samus-motion must add, Header) | `AimingHeight` |
 | the room's screens | a grid of `ScreenKind`, so many screens across (`w`) and down (`h`), and the rows the room's loading left below it (`BelowTheRoom`) | `ClosedScreens`, `ShortScreens`, `Settling`, `RoomEdges`, `ScreensRunOn` |
 | the aim heights | the room's two distances in px: while she isn't rising, and while she rises | `AimingHeight` |
 | lead setting | `Ahead`, `KeepLeft`, `KeepRight`, `Near` (listed alphabetically; the order means nothing); `Ahead` unless a boss sets another | `LeadingHer` |
@@ -149,10 +149,11 @@ column is `ScreensRunOn`'s; below the room's last row, `BelowTheRoom`'s.
 - params: the room's two heights, `hn` while she isn't rising and `hr` while she rises: 112 and
   160, or 144 and 160, in the recorded rooms.
 - switch: none (the heights are the room's).
-- Rising, a rise at 0 included → the aim down is `sy − hr` [R8, R17, R18, R27, R32, R35,
-  C-push-up-back, C-rise-at-0]
+- Rising, a rise at 0 and the frame that spends it included → the aim down is `sy − hr` [R8,
+  R17, R18, R27, R32, R35, C-push-up-back, C-rise-at-0, C-rise-spent]
 - Not rising → the aim down is `sy − hn` [R1, R3, R12, R26, R29, C-unplaced, C-not-rising]
-- So a rise at 0 aims as a rise (R35, C-rise-at-0 against C-not-rising).
+- So a rise at 0 aims as a rise (R35, C-rise-at-0 against C-not-rising), and so does the frame
+  that spends it, though her speed points down by then (C-rise-spent).
 - checked: oracle (both heights of both kinds of room, R26 and R29 at 144; R35 a rise at 0).
 
 ### Remembering
@@ -163,10 +164,10 @@ column is `ScreensRunOn`'s; below the room's last row, `BelowTheRoom`'s.
 - switch: none.
 - Each frame, after both axes → where it last saw her becomes her position, subpixels included
   [R1, R6, R17, R30, C-placed]
-- `camera_from`'s pixel part not her start y's (pose fit or a change of shape placed her) → before
-  it follows, the pixel part of where it last saw her down becomes `camera_from`'s, its subpixel
-  part kept [C-placed, C-placed-pixel, C-unplaced]
-- So the move pose fit or a change of shape made isn't followed: from the placed y she didn't
+- Each frame, before it follows → the pixel part of where it last saw her down becomes
+  `camera_from`'s, its subpixel part kept [C-placed, C-placed-pixel, C-unplaced]
+- So with nothing placing her, `camera_from` is her start y, which is where it last saw her, and
+  nothing changes; the move pose fit or a change of shape made isn't followed: from the placed y she didn't
   move (C-placed); the same frame unplaced scrolls (C-unplaced). The kept subpixel can make her
   creep inside a pixel (C-placed-pixel eases 2 px).
 - checked: oracle (every recorded vector's `after.seen`); constructed (C-placed, C-placed-pixel,
