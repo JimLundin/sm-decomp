@@ -39,11 +39,11 @@ samus-motion area-norfair 207
 samus-motion chain-0012-91F8 398
 samus-motion chain-0013-92FD 586
 samus-motion chain-0014-96BA 341
-samus-motion chain-0057-9FBA 533
+samus-motion chain-0057-9FBA 535
 samus-motion chain-0059-A293 514
 samus-motion chain-0097-ACF0 562
 samus-motion chain-0100-B07A 274
-samus-motion chain-0106-AD5E 480
+samus-motion chain-0106-AD5E 492
 samus-motion chain-0220-D017 139
 samus-motion chain-0224-D0B9 152
 samus-motion chain-0232-D5A7 595

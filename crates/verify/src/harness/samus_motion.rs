@@ -158,8 +158,9 @@ const FX_LIQUID_OPTIONS: WramWord = WramWord {
     offset: 0x197E,
 };
 const LIQUID_PHYSICS_OFF: u16 = 0x0004;
-/// The knockback's movement type.
-const KNOCKBACK: u8 = 0x0A;
+/// Bank $91 log: the knockback's movement handler, which the knockback's start sets
+/// ($91:EE1F, $91:EE40), morphed or not.
+const KNOCKBACK: u16 = 0xDF38;
 /// The running movement type, the only one whose dash the speed booster grows.
 const RUNNING: u8 = 0x01;
 /// The spin jump's movement type, whose falling spin the space jump restarts.
@@ -239,7 +240,7 @@ fn motion_runs(record: &FrameRecord) -> Result<(), Skip> {
     let deferred = match word(record, SAMUS_MOVEMENT_HANDLER)? {
         0xA337 => return Ok(()),
         0x946E => Deferred::Grapple,
-        0xDF38 => Deferred::Knockback,
+        KNOCKBACK => Deferred::Knockback,
         0xE025 | 0xE032 | 0xE04C | 0xE066 => Deferred::BombJump,
         0xD068 | 0xD0AB | 0xD0D7 | 0xD106 | 0xD346 | 0xD383 | 0xD396 | 0xD3CC | 0xD3F3 | 0xD40D
         | 0xD678 | 0xD6CE | 0xD75B => Deferred::Shinespark,
@@ -659,11 +660,18 @@ impl Domain for SamusMotion {
                 Q::all(&[Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed, Q::Vertical]),
             );
         }
-        let movement = |record| byte(record, source::SAMUS_MOVEMENT_TYPE);
-        if movement(next)? == KNOCKBACK && movement(from)? != KNOCKBACK {
+        // A hit starts knockback in the frame's pose change, after the motion ($90:DDE9,
+        // $91:EB88): its pose (53h or 54h, or hers morphed) is taken before the pad's, so the
+        // pad's pose-change command and the aim change's step don't run, which leaves x and her
+        // speeds as the motion left them; the knockback's taller body is fitted (y), and its
+        // start sets her vertical speed upward ($90:99D6). Her health drops in the same frame.
+        // The frames after it run the knockback's movement handler or its poses, not this domain.
+        if word(next, SAMUS_MOVEMENT_HANDLER)? == KNOCKBACK {
             mask(
-                "deferred: a hit starts knockback and sets her speeds",
+                "deferred: knockback's start takes her pose before the pad's (no pose command, no aim step), fits its body and sets her vertical speed",
                 Q::all(&[
+                    Q::X,
+                    Q::Y,
                     Q::BaseSpeed,
                     Q::ExtraRun,
                     Q::Momentum,
