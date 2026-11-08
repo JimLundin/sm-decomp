@@ -1,0 +1,325 @@
+# The camera following Samus: behaviour spec
+
+What the player sees the screen do as Samus moves through a room: how the view follows her across
+and down, how far ahead of her it looks, how fast it moves, and how the room keeps it from showing
+what it may not. Written behaviour first, from the oracle's records over time. Vectors:
+[`scenarios/vectors/camera.toml`](../../scenarios/vectors/camera.toml).
+
+## Header
+
+**Scope.** One domain, because the player sees one thing: the view following her. It covers the
+view's position in the room on both axes, the point it aims at (the lead across, the height down),
+the speed it moves at, the room's edges, the room's closed screens and how it eases out of them,
+and what it remembers of her between frames. It reads her motion's outputs: her position after her
+moves, where pose fit or a change of shape placed her for the camera (`camera_from`), whether she
+skids, whether she rises, her facing and whether she moonwalks.
+
+**Not in this spec** (each an input where it feeds us, §1.3): a door's passage, which places the
+view in the next room; the cells that open and close screens as she touches them (the cells'
+domain changes the room's screens, and we read them as they are); layer 2 and the backgrounds'
+scroll, which follow the view at the room's rates (the background's domain); the grapple beam's own
+camera and any other domain that moves where the camera saw her (the grapple, the shinespark,
+cutscenes); a boss that changes the lead setting (the enemies' domain); one room's own floor for the
+camera (a room rule); what stops time (x-ray, the reserve tanks).
+
+Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and so is
+each bracket pair; comments, layout and tests are free. Two kinds of token are counted apart and
+reported, not held against the target: the values of constants and statics (tables of the game's
+data, such as the lead distances), and declarations (the `struct`, `enum` and `type` items and
+attributes that define the model's shapes; define as many as the behaviour needs). The target is on
+everything else, the logic.
+
+**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion and
+tested here out of sample. An area's budget is k × its units, capped at 70% of its old code (`old`,
+the `tools size` score of the old code that area replaces: `game/src/scrolling.rs` without its
+layer 2 and background scroll, and the lead distances' function in `state/room.rs`, at spine
+`cc505407c`). The budget is an indicator: the fit is score ÷ budget, and being over it costs in
+proportion to how far over, never as a wall; over an area's old code is a failure.
+
+- Area follow (old 715): FollowingHer, LeadingHer, AimingHeight, Remembering, CreepReadsRightward
+- Area limits (old 1,559): RoomEdges, ClosedScreens, ShortScreens, Settling, TimeStopped,
+  DownwardLooksAhead, BelowTheRoom, PushCarries
+
+Budget: 36 × 45.0 units, capped at 70% of old = 1,568 (follow 500 capped, limits 1,068)
+
+**Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex,
+as in samus-motion: `2.C000` is 2.75 px. x grows rightward, y grows downward. A room is a grid of
+screens, each 256 px square; the view is 256 px across.
+
+---
+
+## 1. What the player can tell about the camera
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| camera position | x, y: `P.S`; the view's top-left corner in the room | where the room is drawn on the screen | every entry; output |
+| where it last saw her | x, y: `P.S` | the view's next move: its speed and whether she moved are measured from here | `FollowingHer`, `Remembering`, `CreepReadsRightward` |
+
+In formulas, on one axis: `c` is the camera's pixel part, `s` her position, `e` where it last saw
+her (both `P.S`), and `sx`, `ex`, `sy`, `ey` their pixel parts on each axis.
+
+### 1.2 What it remembers
+
+Only the two quantities above. A vector's start gives both; nothing else carries from one frame to
+the next.
+
+### 1.3 What it reads (Inputs)
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| her position | x, y: `P.S`, after everything that moved her this frame | `FollowingHer`, `LeadingHer`, `AimingHeight`, `Remembering` |
+| her facing | `Left`, `Right`, `Screen` (facing the player; leads as `Right`) | `LeadingHer` |
+| going backwards | `bool`: she skids (her motion's output), moonwalks (her pose), or takes a knockback (the damage domain) | `LeadingHer` |
+| rising | `bool`: her vertical motion points up, a rise at 0 included (her motion's `RisingAndFalling`) | `AimingHeight` |
+| placed | `Option<y: P.S>`: where pose fit or a change of shape placed her for the camera (her motion's `camera_from`), when that is not her y at the frame's start | `Remembering` |
+| the room's screens | a grid of `ScreenKind`, so many screens across (`w`) and down (`h`), and the rows the room's loading left below it (`BelowTheRoom`) | `ClosedScreens`, `ShortScreens`, `Settling`, `RoomEdges` |
+| the aim heights | the room's two distances in px: while she isn't rising, and while she rises | `AimingHeight` |
+| lead setting | `Ahead`, `KeepLeft`, `KeepRight`, `Near` (listed alphabetically; the order means nothing); `Ahead` unless a boss sets another | `LeadingHer` |
+| time stopped | `bool` | `TimeStopped` |
+
+**Screen kinds**, listed alphabetically (the order means nothing):
+- `Closed`: the view may not show it; a view that would is pushed back to its edge.
+- `Open`: the view may show all of it.
+- `Short`: like `Open`, but where the view can go no lower it stops with its top on the screen's
+  top edge, so the screen's bottom 32 px stay out of view (`ShortScreens`).
+
+**Which screens it looks at** (`ClosedScreens`): across, the row that holds the view's middle;
+down, the column. On an axis, the camera's screen is the one that holds its near edge (left or
+top), and the next screen is the one after it (right or below). A screen right of the room's last
+column is `Closed`; the screens below its last row are `BelowTheRoom`'s.
+
+---
+
+## 2. Following her
+
+### FollowingHer
+- kind: mechanic.
+- summary: when she moves, the view moves towards its aim as fast as she moved plus a pixel, and
+  never past the aim.
+- params: the extra pixel, `1.0000`.
+- switch: none.
+- On each axis, she moved when her pixel part is not where it last saw her: `sx ≠ ex`.
+- `before(a, b)`, on 16-bit pixel parts: bit 15 of `(a − b) mod 2^16` is set. Positions compare
+  this way throughout, so a value left of or above the room (`FFF0`) is before 0.
+- She moved on an axis, and its aim's pixel part isn't the camera's → it moves towards the aim by
+  its speed, carrying through the subpixels, `c ± speed` [R4, R8, R14, R16, R32]
+- Her pixel part is not `before` the one where it last saw her → its speed is `(s − e) + 1.0000`,
+  on the whole `P.S` mod 2^32 [R2, R4, R12, R18, R19]
+- Her pixel part is `before` it → its speed is `(e − s) + 1.0000` [R1, R5, R16, R17, R31]
+- The move would take it past the aim → it stops on the aim, its subpixel part 0 [R4, R5, R10,
+  R14, R17, C-lead-near-right]
+- So with the aim's pixel part the camera's, it stays as it is, subpixel included, and doesn't
+  settle (R9, R13, R21, R23). When she didn't move on an axis, it settles instead (`Settling`).
+- Every other rule in this spec sets the camera's pixel part only: its subpixel part changes only
+  by this move and this stop.
+- checked: oracle (every recorded vector); constructed (C-lead-*, C-push-*).
+
+### LeadingHer
+- kind: mechanic and parameter.
+- summary: across, the view aims to show more of the way she faces; going backwards, more of the
+  way she goes.
+- params: the lead, how far her x is from the view's left edge, by the lead setting: `Ahead` 96 when
+  she faces right and 160 when she faces left (she is 96 px from the edge behind her); `KeepLeft`
+  32 either way; `KeepRight` 224 either way; `Near` 64 when she faces right and 80 when she faces
+  left. `lr` is the setting's lead when she faces right, `ll` when she faces left.
+- switch: none (the setting is an input).
+- She faces right or the screen, going forwards, or she faces left, going backwards → the
+  aim across is `sx − lr` [R11, R18, R22, R27, R31, C-lead-near-right, C-lead-keep-right,
+  C-facing-screen]
+- She faces left, going forwards, or she faces right or the screen, going backwards → the aim
+  across is `sx − ll` [R4, R16, R17, R20, R24, C-lead-near-left, C-lead-keep-left]
+- So a skid (R17, R20), a moonwalk (R22, R31) and a knockback (R24, R27) turn the lead round: the
+  view looks the way she travels, not the way she faces.
+- checked: oracle (`Ahead`, every recorded vector that moves across); constructed (`Near`,
+  `KeepLeft`, `KeepRight`, facing the screen).
+
+### AimingHeight
+- kind: mechanic and parameter.
+- summary: down, the view aims to keep her a set height below its top edge, and lower while she
+  rises, so it shows more above her.
+- params: the room's two heights, `hn` while she isn't rising and `hr` while she rises: 112 and
+  160 in most rooms, 144 and 160 in some.
+- switch: none (the heights are the room's).
+- Rising → the aim down is `sy − hr` [R8, R17, R18, R27, R32, C-push-up-back]
+- Not rising → the aim down is `sy − hn` [R1, R3, R12, R26, R29, C-unplaced]
+- checked: oracle (both heights of both kinds of room, R26 and R29 at 144).
+
+### Remembering
+- kind: mechanic.
+- summary: the camera remembers where it last saw her, which sets its next speed and whether she
+  moved.
+- params: none.
+- switch: none.
+- Each frame, after both axes → where it last saw her becomes her position, subpixels included
+  [R1, R6, R17, R30, C-placed]
+- Her motion placed her for the camera (`placed`) → the placed y is where it last saw her, before
+  it follows [C-placed, C-unplaced]
+- So a crouch's lowering or a stand's lift doesn't scroll the view: from the placed y she didn't
+  move (C-placed); the same frame unplaced scrolls (C-unplaced).
+- checked: oracle (every recorded vector's `after.seen`); constructed (C-placed, C-unplaced).
+
+### CreepReadsRightward
+- kind: quirk.
+- summary: a creep left inside a pixel reads as a move right of less than a pixel, so the view
+  eases 2 px that frame, not 3.
+- params: none.
+- switch: none.
+- Her pixel part where it last saw her and her subpixel part smaller (she crept left or up inside
+  a pixel) → its speed is under 1 px, pixel part 0, so a settle eases 2 px [C-creep]
+- So C-creep eases 2 px where C-ease-right, the same frame with her still, eases 3.
+- checked: constructed (C-creep against C-ease-right); no recorded frame settles out of a closed
+  screen on a creep.
+
+---
+
+## 3. Keeping the view in the room
+
+In this section `c` is the camera's pixel part on the axis, `cm` where its move took it before
+the aim stopped it, `v` its speed's pixel part, and `edge(p)` the near edge of the screen holding
+`p` (`ClosedScreens`).
+
+### RoomEdges
+- kind: mechanic.
+- summary: the view never shows past the room's left, top or right edge, nor below its bottom.
+- params: none.
+- switch: none.
+- The camera's furthest right is the last screen's left edge, `xr = (w − 1) × 256`; its furthest
+  down is `yb = (h − 1) × 256 + rows` (`ShortScreens`).
+- Going right past `xr` → it stops on `xr` [R4, R8, R19, R26]
+- Going left or up `before` 0 → it stops on 0 on that axis [R1, R5, R8, R10, R11]
+- Going down past `yb` → it backs up as from a closed screen, `max(yb, cm − v − 2)`, which stops
+  it on `yb` [R12, R17, R25]
+- checked: oracle.
+
+### ClosedScreens
+- kind: mechanic.
+- summary: a closed screen is never shown: a view that goes into one is pushed back to its edge,
+  backing off 2 px a frame against her move.
+- params: the back-off, 2 px beyond the speed.
+- switch: none.
+- `edge(p) = p − p mod 256`; the camera's screen on an axis is `c ÷ 256`.
+- Across, the screens read are in the row `(y + 128) ÷ 256` (`y` the camera's pixel part down);
+  down, in the column `(x + 128) ÷ 256`.
+- Going right or down, the next screen `Closed`, and its near edge past `edge(c) + rows` (`rows`
+  0 across, `ShortScreens` down) → `c = max(edge(c) + rows, cm − v − 2)` [R19, R22, R25, R27,
+  C-push-right-back, C-push-down-back]
+- Going left or up, the camera's screen `Closed` → `c = min(edge(c) + 256, cm + v + 2)` [R18,
+  R20, R32, C-push-left-back, C-push-up-back]
+- So the view stops on the screen's edge (R22, R18) or, short of it, backs 2 px a frame from where
+  it was before its move (C-push-right-back): it moves against her until it is out.
+- So going down, a top within `rows` of its screen's edge stays where the move put it (R2, R11).
+- checked: oracle (the stops on the edge, R18-R32); constructed (the 2 px back-offs).
+
+### ShortScreens
+- kind: mechanic.
+- summary: where the view can go no lower, it stops with its top on a short screen's top edge, or
+  31 px lower on any other screen, which shows that screen's bottom two rows of blocks.
+- params: 31 px.
+- switch: none.
+- The screen it reads `Short` → `rows = 0` [R17, R19, R25, C-ease-up-short]
+- Any other kind → `rows = 31` [R12, C-push-down-back, C-ease-up]
+- The screen it reads is the camera's screen down: going down, the one its move took its top to
+  (`DownwardLooksAhead`); settling, the one its top is in before it settles.
+- checked: oracle (R12 at 31, the others at 0); constructed (C-ease-up, C-ease-up-short).
+
+### Settling
+- kind: mechanic.
+- summary: on an axis she didn't move on, the view, brought into the room, eases out of a closed
+  screen it partly shows at 3 px a frame, towards the open screen beside it.
+- params: the ease, 2 px beyond the speed (whose pixel part is 1 here, or 0, `CreepReadsRightward`).
+- switch: none.
+- `c0` is the camera's pixel part as the frame found it; the rules below read `c` after the first.
+- Settling → it is first brought into the room: `c = min(max(c0, 0), cr)`, `cr` being `xr` across
+  and `yb` down (`RoomEdges`) [C-settle-into-room-down]
+- The camera's screen `Closed`, and `c0 + v + 2` reaches the next screen's edge → it stops on that
+  edge, `c = edge(c) + 256` [C-ease-right-snap]
+- The camera's screen `Closed`, and the screen after the one `c0 + v + 2` is in `Closed` too → it
+  drops to the edge of the screen that ease is in, `c = edge(c0 + v + 2)` [C-ease-both-closed]
+- The camera's screen `Closed`, otherwise → it eases forward, `c = c0 + v + 2` [C-ease-right,
+  C-ease-down, C-creep]
+- The camera's screen `Open` or `Short`, the next `Closed`, and its near edge past `edge(c) + rows` →
+  it eases back, `c = max(edge(c) + rows, c0 − v − 2)` [C-ease-left, C-ease-left-snap, C-ease-up,
+  C-ease-up-short]
+- So with the next screen closed and the camera on its screen's edge, or down within `rows` of
+  it, it holds (R1, R2, R4, R12, R21, R23).
+- So across, from a frame the camera began inside the room, the first rule changes nothing; down it
+  can, when the screen its top is in became `Short` (C-settle-into-room-down).
+- checked: oracle (the holds); constructed (every ease: no recorded frame starts with the view
+  partly in a closed screen beside her still).
+
+### TimeStopped
+- kind: mechanic.
+- summary: while time is stopped the view doesn't settle.
+- params: none.
+- switch: none.
+- Time stopped, on an axis she didn't move on → settling is skipped: the camera keeps its position
+  there [C-stopped, R7, R30]
+- checked: oracle (R7, R30, where settling would have held anyway); constructed (C-stopped, against
+  C-ease-right).
+
+### DownwardLooksAhead
+- kind: quirk.
+- summary: going down, the view checks the screens from where its move took it, before the aim
+  stopped it, so a move that crosses into the next screen can back it up past the aim.
+- params: none.
+- switch: none.
+- Going down → the next screen and `rows` are read from the screen `cm` is in, while `edge(c)`
+  and the back-off measure from where the aim stopped it [C-ahead, R3, R16]
+- So in C-ahead she falls 6 px, the move crosses into the screen above a closed one, the aim stops
+  it 2 px short of the crossing, and it backs up 2 px from where it was: the view rises as she
+  falls.
+- checked: oracle (R3, R16, which cross into the room's last row); constructed (C-ahead).
+
+### BelowTheRoom
+- kind: quirk.
+- summary: below the room's last row, the view reads the screens the room's loading left there,
+  from earlier rooms.
+- params: none.
+- switch: none.
+- A screen below the room's last row → its kind is the room's `below` rows', left to right, a
+  row at a time; past them, `Closed` [R3, R16, C-below-closed, C-below-open]
+- So only a move down that crosses into the last row reads them (`DownwardLooksAhead`): R3 and
+  R16 would back up if the screen below were closed (C-below-closed against C-below-open).
+- checked: oracle (R3, R16); constructed (C-below-closed, C-below-open).
+
+### PushCarries
+- kind: quirk.
+- summary: a push's sum carries once more.
+- params: none.
+- switch: none.
+- A forward push `p + v + 2` whose `p + v` passes `FFFF` → it adds 1 more [original only]
+- A back-off `p − v − 2` whose `p − v` goes below 0 → it takes 1 more [original only]
+- So it shows only from a camera left of or above the room, which a frame never starts with in
+  play (`RoomEdges` and `Settling` bring it back).
+- checked: original only.
+
+---
+
+## 4. Order that matters
+
+- Across first, then down: the row the view's middle is in, across, is the camera's before it
+  moves down, and the column, down, is the camera's after it moved across.
+- Where it last saw her becomes her position after both axes, so a frame's two speeds are both
+  measured from the last frame's.
+- A placement (`placed`) replaces where it last saw her before the camera follows.
+
+## 5. Out of scope, and what remains
+
+- **Doors:** the passage places the view in the next room and sets where it last saw her.
+- **The cells:** a cell that opens or closes a screen changes `the room's screens` before the camera
+  reads them.
+- **Layer 2 and the backgrounds:** they follow the camera at the room's rates; the background's
+  domain reads the camera's position.
+- **Other placements:** the grapple's own slow camera, and the grapple, the shinespark, cutscenes
+  and some enemies changing where the camera saw her; their frames are masked in the harness until
+  those domains come.
+- **A boss's lead and one room's floor:** a boss changes the lead setting; one room holds the view
+  above a floor of its own after it follows.
+
+## 6. Open questions
+
+1. Past the room's below rows the camera reads what the game holds after its table of screens; we
+   say `Closed`. Only a move down that crosses into the last row of a room with nearly as many
+   screens as the table holds could read there; no record does.
+2. The lead settings other than `Ahead` have constructed vectors only: no recorded row meets the
+   bosses that set them.
