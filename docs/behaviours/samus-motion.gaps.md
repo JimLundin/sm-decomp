@@ -25,6 +25,29 @@ is record N's.
     hit's pose replaces the chosen running pose before the step, so that frame brings none, or
     whether x on that frame isn't this domain's. This is the one row below its floor
     (chain-0106-AD5E 479, floor 480: 134 now matches, these two don't).
+    **Answered** (observer, lane/knockback-mask; with gap 22): the hit's pose replaces the chosen
+    pose before the step, so x on that frame is knockback's, not this domain's. The original runs
+    the frame's motion first, then the hit interruption ($90:DDE9, after the movement handler in
+    $90:E725), which sets the start-knockback command with the knockback's pose (53h or 54h by
+    her facing, $90:DEFA; morphed, her own pose, $90:DF15). The pose update ($91:EB88) takes that
+    pose ahead of the pad's: it skips the check that brings the aim change's step ($91:EADE) and
+    the pad's pose-change command (the let-go row's decelerate, $91:EC50), so x and her base
+    speed, dash, mode and momentum stay as the motion left them (106 → 107: base 2.C000, dash
+    2.0000, accelerating, momentum kept; the model merged the dash). The start then sets her
+    vertical speed upward ($90:99D6: 5.0 in air, 2.0 in water, Up) and the knockback's movement
+    handler ($DF38, $91:EE1F). The marker: in record N+1 the movement handler is $DF38 and her
+    pose 53h or 54h (movement type 0Ah), and her health drops in the same frame (014Bh → 0132h
+    at 107, 0119h → 0100h at 257, 00CEh → 00B5h at 294), with the invincibility timer at 5Fh.
+    The harness now detects the start by that handler (a morphed hit keeps her pose but takes
+    it) and masks x, y, base speed, dash, momentum, mode, vertical speed and vertical on that
+    frame, "deferred: knockback's start …"; bounce stays compared, as nothing in the start
+    writes it. The frames after it are already skipped as another domain's: the knockback's
+    handler ("deferred: knockback") and its poses 53h, 54h and the damage boost's 50h ("isn't in
+    the domain") until she is back in a domain pose with the normal handler (chain-0106-AD5E 109,
+    263, 300 are compared as usual). chain-0106-AD5E 479 → 492 (floor 480 → 492: these two,
+    gap 22's two and 9 more start frames that differed in y), chain-0057-9FBA
+    533 → 535 (297's step, 393's fit; floor raised); the same 37 frames masked over the 32 rows
+    as before, with no other row changed.
 26. **Standing from a run at speed 0 keeps her carrying on (`PadChart`'s running let-go row,
     AS3).** samus-space-jump-chain 12 → 13, and samus-walljump-16, -22 and -28 12 → 13: running
     (09h), speed 0 at the frame's start, nothing held. Both move her 0.3000 and leave her speed
@@ -240,6 +263,11 @@ Most match (mockball's x, 19 of 19 compared before, is 87 of 87 now). These don'
     293 → 294: falling in a straight jump (at 0.3800 and 0.7000), the frame knockback starts. y:
     model 010C.53FF and 010D.17FF, game 010B.FFFF both times, above where she started. The
     knockback mask takes her speeds, not y. Asked: whether the hit's y is this domain's.
+    **Answered** (observer, lane/knockback-mask; gap 25 has the whole start): it isn't. The hit's
+    pose change into the knockback's pose (53h, y radius 15h, from the jump's 51h at 13h, bank
+    $91 pose table) runs pose fit for the taller body ($91:F404 → $91:FDAE) after the fall's
+    move, which pushes her up clear of the floor below: 010B.FFFF both times, her bottom on the
+    block's top. Masked with the rest of the start frame's fields.
 
 23. **The run with a kept vertical speed, on slopes (`FollowingTheGround`, gap 17's answer, not
     yet in the model).** y, newly compared: samus-mockball 10-14 and 16-23; samus-shinespark-left,
