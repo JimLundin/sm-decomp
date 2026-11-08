@@ -1086,12 +1086,12 @@ moves match the oracle to 399. At 400 the floor (row C0h, solid) stops her at 00
 (her own), which wins over the landing's `0A28` = A5h (`$91:EB88`), and leaves `0B36` = 2 at
 magnitude 0: falling at 0, not landed (401: 0.1C00, kept on the floor; 402 lands in E5h, pushed
 up 2 px). The model lands her in A5h (half-height 15h against 13h), pushes her up 2 px to
-00AB.FFFF and reports `camera_from` 00AB.A3FF. Answer: out of scope (knockback, spec §10); the
-harness should defer the knockback's tail as it defers its handler: a frame starting with
-`0A52` ≠ 0 under the normal handler (the records ending 395-400 here; 394 starts in 4Fh,
-outside the domain), or at least mask x, y, the speeds and the placement there. The camera's rule
-(adversary 42, M4): its harness masks y on every frame samus-motion's harness defers as the
-knockback's tail (a frame starting with the knockback on under the normal handler), whether or not
+00AB.FFFF and reports `camera_from` 00AB.A3FF. Answer: out of scope (knockback, spec §10). The
+rule, one predicate for both harnesses (adversary 43, M6; filed for the integrator as gap 33):
+samus-motion's harness defers the knockback's tail as it defers its handler, every frame that
+starts with `0A52` ≠ 0 under the normal handler (the records ending 395-400 here; 394 starts in
+4Fh, outside the domain). The camera's rule (adversary 42, M4): its harness masks y on every frame
+samus-motion's harness defers as the knockback's tail, by that same predicate, whether or not
 her pose changes (at 400 she keeps 52h, so a mask on a pose change alone misses it); x stays
 compared, since the lead's turn during a knockback is the camera's own `LeadingHer`. `rising`
 there, and during the knockback itself, is the knockback (damage) domain's output, not

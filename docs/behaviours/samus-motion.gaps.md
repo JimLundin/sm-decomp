@@ -35,6 +35,45 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
     doesn't admit. Asked of the observer: the auto-jump as a rule (which poses, which window,
     what she remembers), with these four frames as vectors.
 
+    **Observer's note** (adversary 43's check, 2026-11-08; not yet a rule). Where the timer is
+    counted: `$90:EAB3` is called only from `$90:EB42`, in `$90:EB35` (draw Samus and
+    projectiles), which `$A0:884D` calls at enemy layer 3 from the main gameplay loop
+    (`$82:8B98`) and the door transitions, and `$8B:8E37`/`$8B:8E41` in the intro. So in gameplay
+    it runs once on every frame, after her pose and movement: on a frame with jump held and held
+    the frame before it adds 1, otherwise it clears the timer. Its only other writer is `$90:E93A`
+    (the auto-jump handler, which clears it when it fires). The handler `$90:E926` is installed by
+    animation delay instruction 8 (`$90:8370`), which ends not only the landings (A4h-A7h,
+    E0h-E7h) but every turn (25h/26h, 2Fh/30h, 43h/44h, 87h/88h, 8Bh-9Ah, 9Ch-A3h) and the
+    moonwalk's turns (BFh-C4h), and fires on the next frame's input when the timer is 1 to 8.
+    Counting with a frame's input being the record it starts from, and the press frame's own
+    count clearing the timer:
+    - samus-screw-attack 174 and 606: the press frame's count clears it, then 172-173 (604-605)
+      add 2: the handler sees 2, admitted.
+    - chain-0059-A293 174: pressed at 165, falling in 2Ah throughout, 166-173 add 8:
+      it sees 8, admitted (the 1-8 window holds; the gap's 9 counts the press frame).
+    - chain-0059-A293 107: pressed at 96, the timer alone would reach 10. But the turn 88h ends
+      into 29h at 99 (instruction 8 at 98), so the handler runs at 99, sees 2, injects a press a
+      fall ignores and clears the timer; 99-106 bring it back to 8 (or to 1, if the turn 87h's end
+      into 2Ah at 106 fires it again at 106). Either way the landing's handler at 107 admits it.
+
+    So the timer explains all four, with what she remembers being the timer (frames jump held
+    since its press, reset when a turn's or a landing's end fires the handler). The records don't
+    hold `$0AF4`; the counts are the bank log's, to be confirmed with `oracle corpus
+    --watch-words 0AF4` on these rows before the rule and its four vectors are written.
+
+## Filed by the observer: the knockback's tail (adversary 43, M6, 2026-11-08)
+
+33. **Defer the knockback's tail (harness; the camera's harness keys off it).** A frame that starts
+    with the knockback on (`0A52` ≠ 0) under the normal handler is the knockback's tail: out of
+    scope (spec §10, knockback is the damage domain's). Samus-motion's harness defers it, as it
+    defers the knockback's handler: nothing on it is compared, x, y, the speeds, the pose, the
+    placement and `rising` included. The camera's harness masks y on exactly the frames this
+    predicate defers (camera.decode, Masks), so both harnesses use this one predicate; a mask of
+    some fields instead of the deferral would leave the camera's mask without its trigger. Seen at
+    r05 395-400 (camera C3, decode notes C3: at 400 the knockback's end hands her 52h at
+    magnitude 0 where the model lands her in A5h). Asked of the integrator: the deferral, and
+    the rows' compared-frame counts after it.
+
 ## Round 10 in the engine and the harness (integrator, 2026-11-08, lane/wire-r10)
 
 The bridge (`game::samus_world`) takes round 10's API. On the ground `0B36` down at a magnitude

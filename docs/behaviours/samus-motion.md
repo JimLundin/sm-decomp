@@ -573,7 +573,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - **Whether she is rising** (§1, an output of the step), at the frame's end.
 - A rise holds at the frame's end (from its start, a take-off, a jump or spin start, the spring
   ball's hop, a ball's bounce, a wall jump's kick or space jump's jump again, through the frame
-  whose pull spends it, a rise at 0 included) → `rising` [J2, E1, E3, R4, SJ1, C-rise-spent,
+  whose pull spends it, a rise at 0 included) → `rising` [J2, E1, E3, R4, WK1, SJ1, C-rise-spent,
   C-rise-at-0, C-bounce-second]
 - So `rising` is false on the frame a rise ends (its speed spent at the frame's start, jump let
   go, a ceiling) and on any frame without a rise: falling, the moonfall, on the ground (E2, R91,
@@ -587,9 +587,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - An upward speed of exactly one pull is never met from a jump: no rise speed in `Jumping` is a
   whole number of pulls. The ball rises at exactly 0 when it bounces the second time, so it
   rises by 0 for one frame before the rise ends.
-- checked: oracle (every air vector; E1 for the speed past zero; `rising`: J2 a take-off, R4 a
-  wall jump's kick, SJ1 space jump's jump again, E1 the frame that spends the rise, R91 the rise
-  ended by jump let go, R32 a fall, MT1 the moonfall); constructed (C-fallcap-a,
+- checked: oracle (every air vector; E1 for the speed past zero; `rising`: J2 a take-off, WK1 a
+  wall jump's kick, R4 the rise after it, SJ1 space jump's jump again, E1 the frame that spends
+  the rise, R91 the rise ended by jump let go, R32 a fall, MT1 the moonfall); constructed (C-fallcap-a,
   C-fallcap-b, E2, E3; `rising`: C-rise-spent and C-rise-at-0, the camera's cases, E3 and
   C-bounce-second at 0, E2 the rise's end, C-ceiling a ceiling).
 
@@ -681,7 +681,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   `Readied` [RW1]
 - Once the spin has turned far, still in a spin carried on and holding away from a wall near her,
   pressing jump → she kicks off: she doesn't move vertically that frame, and starts the wall jump
-  rising at the wall-jump speed, x speed 0, following the pad; the frame reports `Kicked` [P8]
+  rising at the wall-jump speed, x speed 0, following the pad; the frame reports `Kicked` [P8, WK1]
 - No test that frame, no wall found, or a wall near her once the spin has turned far without jump
   pressed → the frame reports `Neither` [W15]
 - The test finds a block wall, readying frames included → it writes her x subpixel as a stop

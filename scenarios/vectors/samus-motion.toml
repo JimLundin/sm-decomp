@@ -98,8 +98,8 @@
 #   (RW1, MT1) a spin reversed, and (MT1) a spin becoming a straight jump and that jump's turn.
 #   In RW1 the near-wall test writes her x subpixel after the move in its checked frame (spec
 #   `WallJump`).
-#   J1-J3 and A1 check a frame whose pose changes (a jump start, a take-off, an aim change) and give
-#   its next_pose; PF1 checks a crouch take-off, whose body grows; SH1-SH3 check the frame a
+#   J1-J3, A1 and WK1 check a frame whose pose changes (a jump start, a take-off, an aim change, a
+#   wall jump's kick) and give its next_pose; PF1 checks a crouch take-off, whose body grows; SH1-SH3 check the frame a
 #   crouch or a morph begins, whose body shrinks. No recorded vector comes from a frame run by
 #   a bomb jump or a grapple release. The W vectors (item-morph-ball, the integration gaps 10-16)
 #   check frames the Tick met there. Most end in a pose other than the one they start in, or grow
@@ -485,6 +485,26 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 pad = ["right"]
 jump_pressed = false
 after = { position = ["006E.1FFF", "045D.DFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.FC00" }
+
+# WK1: a wall jump's kick, item-morph-ball 709-712: spinning left past the block at 0540, jump let
+# go (the rise ends) and left held: the near-wall test readies (711, x subpixel FFFF); jump pressed
+# in the next frame kicks off (pose 1A to 84): rising from the kick at 4.A000, x speed 0, y kept.
+[[vector]]
+id = "WK1"
+source = "item-morph-ball:712"
+entries = ["WallJump", "RisingAndFalling", "DriftInTheAir"]
+world = { solid_block = [1344, 640] }
+before = { position = ["053D.D000", "02A2.5BFF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.A800" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["left"], jump_pressed = false, pressed = ["left"] },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+next_pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 12] }
+pad = ["left", "jump"]
+jump_pressed = true
+after = { position = ["0534.FFFF", "0299.27FF"], speed_x = "+0000.0000", dash = "0001.2000", speed_y = "-0004.A000", rising = true, wall_test = "Kicked" }
 
 # SJ1: space jump's jump again, with hi-jump: falling in a spin at 2.A000 (read as 2.A0, inside
 # the window), jump pressed; she rises at 6.0000 that same frame and the pull leaves 5.E400.
