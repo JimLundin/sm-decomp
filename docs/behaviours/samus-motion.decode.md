@@ -989,7 +989,7 @@ down to 0100, the unmorph's command 7 writes the same: 0100.8000), C-fit-land-tu
 instead raises her to 0110, `$91:FFE9`: 0110.0000) and C-fit-step-enemy (refused: no write, so the
 frame's start, 00F7.8000).
 
-**Gap 29, falling at 0 on the ground (BG2; the harness mask until the model makes it).** The bomb
+**Gap 29, falling at 0 on the ground (BG2; the model's since round 10).** The bomb
 jump's handler (`$90:E025` → `$90:E032`, straight `$90:E066`) runs `$90:90E2` and never changes her
 pose: the ball stays 1Dh (movement type 4). When the rise is spent, `$90:90C4` sets `0B36` = 2 with
 `0B2E`.`0B2C` 0; the next pass sees the direction down and ends the bomb jump (`$90:E07D`, `$90:8F1B`:
@@ -1004,8 +1004,10 @@ skips block collision (`$94:976B`), so it finds no floor: the walk-off `$91:EFEF
 down, and the fall pose (31h) starts from rest (record 1037: 0, down). The spring ball's handler
 (`$90:A69F`, movement type 11h) and the change of shape (`$90:A61C` → `$90:92C7`) test the
 direction alike. BG2 is 1036 → 1037, its start's `falling` the `0B36` = 2 at magnitude 0. The
-harness's mask until the model makes it: movement type 4 or 11h, `0B36` = 2, magnitude 0; over the
-32 rows it meets 1036 only.
+harness masked y there until the model made it (movement type 4 or 11h, `0B36` = 2, magnitude 0;
+over the 32 rows it met 1036 only). Round 10 makes it: the bridge reads `0B36` = 2 at magnitude 0
+in a ground pose as `Vertical::GroundFalling`, the mask is gone and 1036 → 1037 matches
+(lane/wire-r10).
 
 **Gap 30, the moonwalk's jump (MT2).** Jump pressed while moonwalking (49h, facing word 8) takes
 C0h (facing word 8, movement type Eh) after the frame's move; `$91:F8D3` (turning on the ground,

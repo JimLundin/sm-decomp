@@ -170,10 +170,6 @@ const RUNNING: u8 = 0x01;
 const SPIN_JUMPING: u8 = 0x03;
 /// The standing movement type, which the running let-go row stands her in.
 const STANDING: u8 = 0x00;
-/// The ball's and the spring ball's ground movement types, whose vertical move tests her
-/// vertical direction alone ($90:92B8): falling, she moves by her speed, not the ground pull.
-const BALL_ON_GROUND: u8 = 0x04;
-const SPRING_BALL_ON_GROUND: u8 = 0x11;
 /// The pad's left and right (`JOYPAD1_LASTKEYS`), which no binding moves.
 const SIDES: u16 = 0x0300;
 /// Bank $90 log: the shinespark windup's movement handler, which the windup's start sets
@@ -327,17 +323,6 @@ fn let_go_stands(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
     Ok(movement(from)? == RUNNING
         && word(from, source::JOYPAD1_LASTKEYS)? & SIDES == 0
         && movement(next)? == STANDING)
-}
-
-/// Whether `from` starts where a bomb jump or a knockback handed back: the ball in its ground
-/// movement type, falling at a speed of 0, which on the ground only a bomb jump's or a
-/// knockback's end leaves ($90:8F1B, $91:F31D) (gap 29).
-fn handed_back_falling(from: &FrameRecord) -> Result<bool, Skip> {
-    let movement = byte(from, source::SAMUS_MOVEMENT_TYPE)?;
-    let samus = state(from)?;
-    Ok(matches!(movement, BALL_ON_GROUND | SPRING_BALL_ON_GROUND)
-        && samus.vertical == VerticalMotion::Down
-        && samus.vertical_speed.0 == 0)
 }
 
 /// Whether a sloped floor block (not a ceiling's) lies under her path from `from` to `next`:
@@ -740,18 +725,6 @@ impl Domain for SamusMotion {
         if boost.contains(Q::X.index()) && sloped_floor_under(from, next, inputs)? {
             mask(
                 "deferred: the speed booster on a sloped floor (its dash sets x, where the slope's surface leaves her, and the pull)",
-                Q::Y.set(),
-            );
-        }
-        // A bomb jump lifts the ball without changing its ground pose and hands back at its
-        // peak ($90:E066, $90:E07D), its end leaving her falling from rest ($90:8F1B: speed 0,
-        // falling); a knockback taken in the ball keeps her pose ($90:DF15) and its end does the
-        // same ($91:F31D). The next frame the ball's ground move tests that direction alone
-        // ($90:92B8) and moves her by her speed (0, under gravity), not by the ground pull. On
-        // the ground only a bomb jump's or a knockback's end leaves her so (gap 29).
-        if handed_back_falling(from)? {
-            mask(
-                "deferred: a bomb jump's or a knockback's end (the ball still in its ground pose falls from rest by its own speed, not the ground pull)",
                 Q::Y.set(),
             );
         }
