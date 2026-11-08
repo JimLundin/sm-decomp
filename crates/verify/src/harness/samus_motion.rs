@@ -204,7 +204,7 @@ const IN_QUICKSAND: WramWord = WramWord {
 };
 
 /// Whether frame `next` (its record: the pushes stay until the next frame's start) ran a
-/// block-inside push. The camera's harness masks y on the same frames (camera C2).
+/// block-inside push. The camera's harness masks y on those of them that place her (camera C2).
 ///
 /// # Errors
 ///
@@ -237,7 +237,7 @@ const NORMAL_MOVEMENT: u16 = 0xA337;
 ///
 /// It starts with the knockback on under the normal movement handler (samus-motion decode C3,
 /// adversary 43 M6), so the knockback, not her motion, has the last word on y. The camera's
-/// harness masks y on the same frames.
+/// harness masks y on those of them that place her (camera C3).
 ///
 /// # Errors
 ///

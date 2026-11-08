@@ -470,20 +470,33 @@ fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
     Ok(masks)
 }
 
-/// The masks of the frames samus-motion's harness defers to another domain that decides her y
-/// (adversary 42, C2 and M4), by its own predicates. x stays compared: the knockback's turn of
-/// the lead is the camera's own `LeadingHer`.
-fn deferred(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
+/// The masks of the frames on which samus-motion's harness defers her y to another domain
+/// (adversary 42, C2 and M4, by its own predicates) and that deferral reaches what the camera
+/// reads (adversary 49, F1). The camera takes her position from record N+1; from samus-motion it
+/// takes only `camera_from`, which differs from the seen y through a placement alone: a pose
+/// change (camera.gaps C2) or a placement samus-motion's step reports (C3). On a deferred frame
+/// with neither, nothing the camera reads is unverified, so y stays compared. x stays compared
+/// throughout: the knockback's turn of the lead is the camera's own `LeadingHer`.
+fn deferred(
+    from: &FrameRecord,
+    next: &FrameRecord,
+    placement: Placement,
+) -> Result<Vec<Mask>, Skip> {
     let mut masks = Vec::new();
+    let places = word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)?
+        || placement.placed().is_some();
+    if !places {
+        return Ok(masks);
+    }
     if samus_motion::pushed(next)? {
         masks.push(Mask {
-            reason: "another domain: a block-inside push (quicksand, treadmill) moves her y, which samus-motion defers",
+            reason: "another domain: a block-inside push (quicksand, treadmill) moves her y, which samus-motion defers, and her pose change or its step places the y the camera follows from",
             fields: Y,
         });
     }
     if samus_motion::knockback_tail(from)? {
         masks.push(Mask {
-            reason: "another domain: the knockback's tail (the knockback on under the normal handler) decides her y, which samus-motion defers",
+            reason: "another domain: the knockback's tail (the knockback on under the normal handler) decides her y, which samus-motion defers, and her pose change or its step places the y the camera follows from",
             fields: Y,
         });
     }
@@ -542,7 +555,7 @@ impl Domain for CameraDomain {
             fields: SEEN,
         }];
         masks.extend(enemies(from, next)?);
-        masks.extend(deferred(from, next)?);
+        masks.extend(deferred(from, next, *placement)?);
         let mut mask = |reason, fields| masks.push(Mask { reason, fields });
         let movement = [
             byte(from, source::SAMUS_MOVEMENT_TYPE)?,
