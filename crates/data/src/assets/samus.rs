@@ -28,17 +28,6 @@ pub enum Hold {
     Control(u8),
 }
 
-impl Hold {
-    /// The byte the animation timer is set from.
-    #[must_use]
-    pub const fn timer_byte(self) -> u8 {
-        match self {
-            Self::Shows(frames) => frames,
-            Self::Control(byte) => byte,
-        }
-    }
-}
-
 /// The graphics a frame's half uploads before it is drawn: two parts, each to its own place.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct TileUpload {

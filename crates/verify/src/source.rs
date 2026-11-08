@@ -1599,24 +1599,6 @@ pub const SAMUS_BOUNCE_STATE: WramWord = WramWord {
     name: "USED_FOR_BALL_BOUNCE_ON_LANDING",
     offset: 0x0B20,
 };
-/// Bank $91 log, `$91:8304`: the prospective pose change command.
-///
-/// 0 none, 1 decelerate, 2 stop, 5 solid vertical collision, 6 kill X speed, 7 start
-/// transition animation, 8 kill run speed (3 and 4 are unused).
-pub const SAMUS_POSE_CHANGE_COMMAND: WramWord = WramWord {
-    name: "SAMUS_MOMENTUM_ROUTINE_INDEX",
-    offset: 0x0A2E,
-};
-/// Bank $82 log: the shoot button's binding, a pad bit.
-pub const BINDING_SHOOT: WramWord = WramWord {
-    name: "BUTTON_CONFIG_SHOOT_X",
-    offset: 0x09B2,
-};
-/// Bank $82 log: the jump button's binding, a pad bit.
-pub const BINDING_JUMP: WramWord = WramWord {
-    name: "BUTTON_CONFIG_JUMP_A",
-    offset: 0x09B4,
-};
 /// Bank $82 log: the run button's binding, a pad bit.
 pub const BINDING_RUN: WramWord = WramWord {
     name: "BUTTON_CONFIG_RUN_B",

@@ -24,18 +24,6 @@ pub struct VideoMemory {
     pub oam: Box<[u8; OAM_BYTES]>,
 }
 
-impl VideoMemory {
-    /// The image from slices of exactly the memories' sizes, or `None` if one is another size.
-    #[must_use]
-    pub fn from_slices(vram: &[u16], cgram: &[u16], oam: &[u8]) -> Option<Self> {
-        Some(Self {
-            vram: Box::<[u16]>::from(vram).try_into().ok()?,
-            cgram: Box::<[u16]>::from(cgram).try_into().ok()?,
-            oam: Box::<[u8]>::from(oam).try_into().ok()?,
-        })
-    }
-}
-
 /// A zeroed array built on the heap.
 fn zeroed<T: Copy + Default, const N: usize>() -> Box<[T; N]> {
     let boxed = vec![T::default(); N].into_boxed_slice();
