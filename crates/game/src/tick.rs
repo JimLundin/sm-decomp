@@ -390,9 +390,6 @@ const AFTER_PLMS: [GameplayPhase; 13] = [
     GameplayPhase::HurtTimers,
 ];
 
-/// Blocks a screen across.
-const SCREEN_BLOCKS: u16 = 16;
-
 /// What one gameplay pass hands from phase to phase: nothing outlives the step.
 #[derive(Default)]
 struct Pass {
@@ -524,14 +521,7 @@ fn gameplay_phase(
             );
         }
         GameplayPhase::Scrolling => {
-            let room = &mut state.room;
-            let screens = camera_world::room(
-                &room.scroll_areas,
-                &room.stale_scrolls,
-                usize::from(room.width.0 / SCREEN_BLOCKS),
-                room.camera.scrollers,
-            );
-            camera_world::follow(&mut room.camera, &mut state.samus, &screens);
+            camera_world::scroll(&mut state.room, &mut state.samus).map_err(SessionFault::Room)?;
         }
         GameplayPhase::Draw => crate::enemy::drawing::draw(state, content),
         GameplayPhase::BgScroll => bg_scroll(state, content),

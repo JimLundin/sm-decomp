@@ -16,15 +16,16 @@ use core::fmt;
 use core::num::Wrapping;
 
 use clean_model_camera::{
-    BehaviourId, CATALOGUE, Camera, Frame, LeadSetting, Room, Rules, Samus as Her, ScreenKind,
+    BehaviourId, CATALOGUE, Camera, Frame, LeadSetting, Room, RoomError, Rules, Samus as Her,
+    ScreenKind,
 };
 use clean_types::{Facing, Fixed, Pair, Parts, Px, fixed};
-use game::camera_world;
+use game::camera_world::{self, Rows};
 use game::model::num::Fixed as Exact;
 use game::state::room::{ScrollArea, Scrollers, StaleScroll};
 use oracle_record::FrameRecord;
 
-use super::samus_motion::{Ps, SamusMotion, Skip as Motion};
+use super::samus_motion::{self, Ps, SamusMotion, Skip as Motion};
 use super::{Domain, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::decode::DecodeError;
@@ -150,6 +151,8 @@ const SEEN: FieldSet = FieldSet::single(2);
 pub enum Skip {
     /// A source couldn't be read, or holds a code the model has no value for: a harness defect.
     Unreadable(DecodeError),
+    /// The room's screens aren't a room the model takes: a harness defect.
+    Room(RoomError),
     /// The main loop isn't in gameplay at record N or N+1: no scroll runs.
     GameState(u16),
     /// The requested-NMI count advanced by other than one: a lag frame (no scroll) or two
@@ -163,6 +166,7 @@ impl fmt::Display for Skip {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Unreadable(error) => write!(f, "unreadable: {error:?}"),
+            Self::Room(error) => write!(f, "the room's screens aren't a room: {error:?}"),
             Self::GameState(code) => write!(f, "game state {code:#04X}, not gameplay"),
             Self::Frames(count) => write!(f, "{count} frames ran, not one"),
             Self::RoomChange => f.write_str("the room changed (the door's domain)"),
@@ -214,8 +218,9 @@ fn seen(record: &FrameRecord) -> Result<Pair<Fixed>, Skip> {
 }
 
 /// The room's screens as the scroll read them in `record`: the scroll table's first `w × h`
-/// bytes, then what earlier rooms left in it.
-fn screens(record: &FrameRecord) -> Result<Room, Skip> {
+/// bytes, then what earlier rooms left in it; the room, and its rows, which the attribution
+/// reads.
+fn screens(record: &FrameRecord) -> Result<(Room, Rows), Skip> {
     let width = usize::from(word(record, ROOM_WIDTH_SCROLLS)?);
     let height = usize::from(word(record, ROOM_HEIGHT_SCROLLS)?);
     let table = source::SCROLLS.read(&record.wram)?;
@@ -235,7 +240,9 @@ fn screens(record: &FrameRecord) -> Result<Room, Skip> {
         up: word(record, source::UP_SCROLLER)?,
         down: word(record, source::DOWN_SCROLLER)?,
     };
-    Ok(camera_world::room(&areas, &stale, width, scrollers))
+    let rows = camera_world::rows(&areas, &stale, width);
+    let room = Room::new(&rows.0, &rows.1, camera_world::heights(scrollers)).map_err(Skip::Room)?;
+    Ok((room, rows))
 }
 
 /// The lead setting by the camera distance index.
@@ -265,6 +272,7 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
     let backwards = word(next, KNOCKBACK_DIRECTION)? != 0
         || byte(next, source::SAMUS_MOVEMENT_TYPE)? == MOONWALKING
         || word(next, source::SAMUS_X_ACCEL_MODE)? == TURNING_AROUND;
+    let (room, rows) = screens(next)?;
     Ok(Upstream {
         samus: Her {
             // The scroll ends by setting her previous position to her position: exactly what
@@ -275,7 +283,8 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
             backwards,
             rising: word(next, source::SAMUS_Y_DIR)? == UP,
         },
-        room: screens(next)?,
+        room,
+        rows,
         lead: lead(next)?,
         time_stopped: word(next, TIME_IS_FROZEN)? != 0,
     })
@@ -285,6 +294,8 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
 pub struct Upstream {
     samus: Her,
     room: Room,
+    /// The room's rows, then the rows below it, as `room` was built from them.
+    rows: Rows,
     lead: LeadSetting,
     time_stopped: bool,
 }
@@ -354,9 +365,9 @@ const fn ps(value: Fixed) -> Ps {
 impl From<&Camera> for Declared {
     fn from(camera: &Camera) -> Self {
         Self {
-            x: ps(camera.position.x),
-            y: ps(camera.position.y),
-            seen: (ps(camera.seen.x), ps(camera.seen.y)),
+            x: ps(camera.position().x),
+            y: ps(camera.position().y),
+            seen: (ps(camera.seen().x), ps(camera.seen().y)),
         }
     }
 }
@@ -459,6 +470,26 @@ fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
     Ok(masks)
 }
 
+/// The masks of the frames samus-motion's harness defers to another domain that decides her y
+/// (adversary 42, C2 and M4), by its own predicates. x stays compared: the knockback's turn of
+/// the lead is the camera's own `LeadingHer`.
+fn deferred(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
+    let mut masks = Vec::new();
+    if samus_motion::pushed(next)? {
+        masks.push(Mask {
+            reason: "another domain: a block-inside push (quicksand, treadmill) moves her y, which samus-motion defers",
+            fields: Y,
+        });
+    }
+    if samus_motion::knockback_tail(from)? {
+        masks.push(Mask {
+            reason: "another domain: the knockback's tail (the knockback on under the normal handler) decides her y, which samus-motion defers",
+            fields: Y,
+        });
+    }
+    Ok(masks)
+}
+
 impl Domain for CameraDomain {
     const NAME: &'static str = "camera";
     type State = Camera;
@@ -481,10 +512,7 @@ impl Domain for CameraDomain {
 
     fn decode(&self, from: &FrameRecord, interval: Interval) -> Result<(Camera, Placement), Skip> {
         gameplay(from)?;
-        let camera = Camera {
-            position: position(from)?,
-            seen: seen(from)?,
-        };
+        let camera = Camera::new(position(from)?, seen(from)?);
         let placement = Placement::try_from(self.motion.placement(from, interval))?;
         Ok((camera, placement))
     }
@@ -514,6 +542,7 @@ impl Domain for CameraDomain {
             fields: SEEN,
         }];
         masks.extend(enemies(from, next)?);
+        masks.extend(deferred(from, next)?);
         let mut mask = |reason, fields| masks.push(Mask { reason, fields });
         let movement = [
             byte(from, source::SAMUS_MOVEMENT_TYPE)?,
@@ -602,7 +631,8 @@ impl Domain for CameraDomain {
 
     fn step(&self, camera: &mut Camera, placement: &Placement, upstream: &mut Upstream) {
         // Remembering: where her motion's step placed her, else the y it last saw her at.
-        upstream.samus.camera_from = placement.placed().unwrap_or(camera.seen.y);
+        let seen = camera.seen();
+        upstream.samus.camera_from = placement.placed().unwrap_or(seen.y);
         let frame = Frame {
             samus: upstream.samus,
             room: &upstream.room,
@@ -621,15 +651,12 @@ impl Domain for CameraDomain {
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
-        Ok(Declared::from(&Camera {
-            position: position(next)?,
-            seen: seen(next)?,
-        }))
+        Ok(Declared::from(&Camera::new(position(next)?, seen(next)?)))
     }
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Unreadable(_) => Uncompared::Defect(skip.to_string()),
+            Skip::Unreadable(_) | Skip::Room(_) => Uncompared::Defect(skip.to_string()),
             Skip::GameState(_) | Skip::Frames(_) | Skip::RoomChange => {
                 Uncompared::Skip(skip.to_string())
             }
@@ -643,12 +670,13 @@ impl Domain for CameraDomain {
 fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<usize> {
     use BehaviourId as B;
     let samus = &upstream.samus;
-    let room = &upstream.room;
+    let (screens, below) = &upstream.rows;
+    let last_seen = camera.seen();
     let seen = Pair {
         y: placement
             .placed()
-            .map_or(camera.seen.y, |placed| placed.with_sub(camera.seen.y.sub())),
-        ..camera.seen
+            .map_or(last_seen.y, |placed| placed.with_sub(last_seen.y.sub())),
+        ..last_seen
     };
     let moved = |her: Fixed, seen: Fixed| her.pixel() != seen.pixel();
     let creeps = |her: Fixed, seen: Fixed| !moved(her, seen) && her.sub() < seen.sub();
@@ -656,12 +684,12 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         moved(samus.position.x, seen.x),
         moved(samus.position.y, seen.y),
     );
-    let kinds = || room.screens.iter().flatten();
+    let kinds = || screens.iter().flatten();
     let last = |screens: usize| -> Px {
         Wrapping(u16::try_from(screens.saturating_sub(1)).unwrap_or(u16::MAX) << 8)
     };
-    let (w, h) = (room.screens.first().map_or(0, Vec::len), room.screens.len());
-    let (x, y) = (camera.position.x.pixel(), camera.position.y.pixel());
+    let (w, h) = (screens.first().map_or(0, Vec::len), screens.len());
+    let (x, y) = (camera.position().x.pixel(), camera.position().y.pixel());
     let in_last_row = y >= last(h);
     [
         (B::FollowingHer, across || down),
@@ -674,7 +702,7 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         ),
         (
             B::ClosedScreens,
-            kinds().any(|&kind| kind == ScreenKind::Closed),
+            kinds().any(|&kind| matches!(kind, ScreenKind::Closed)),
         ),
         (
             B::RoomEdges,
@@ -682,7 +710,7 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         ),
         (
             B::ShortScreens,
-            kinds().any(|&kind| kind == ScreenKind::Short),
+            kinds().any(|&kind| matches!(kind, ScreenKind::Short)),
         ),
         (B::Settling, !across || !down),
         (B::TimeStopped, upstream.time_stopped && (!across || !down)),
@@ -691,12 +719,9 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         // (the next row's first) decide anything.
         (
             B::ScreensRunOn,
-            x >= last(w) && edge_closed(room, w, y + Wrapping(MIDDLE)),
+            x >= last(w) && edge_closed(screens, w, y + Wrapping(MIDDLE)),
         ),
-        (
-            B::BelowTheRoom,
-            down && in_last_row && !room.below.is_empty(),
-        ),
+        (B::BelowTheRoom, down && in_last_row && !below.is_empty()),
     ]
     .into_iter()
     .filter(|&(_, exercised)| exercised)
@@ -708,12 +733,12 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
 const MIDDLE: u16 = 128;
 
 /// Whether the room's last screen in the row holding `y` is closed.
-fn edge_closed(room: &Room, w: usize, y: Px) -> bool {
+fn edge_closed(screens: &[Vec<ScreenKind>], w: usize, y: Px) -> bool {
     let [row, _] = y.0.to_be_bytes();
-    room.screens
+    screens
         .get(usize::from(row))
-        .and_then(|screens| screens.get(w.saturating_sub(1)))
-        .is_some_and(|&kind| kind == ScreenKind::Closed)
+        .and_then(|row| row.get(w.saturating_sub(1)))
+        .is_some_and(|&kind| matches!(kind, ScreenKind::Closed))
 }
 
 #[cfg(test)]

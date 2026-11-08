@@ -7,13 +7,13 @@
 //! and written back after its step.
 
 use clean_model_camera::{
-    Camera as Model, Frame, Heights, LeadSetting, Room, Rules, Samus as Her, ScreenKind,
+    Camera as Model, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus as Her, ScreenKind,
 };
 use clean_types::{Facing as Side, Fixed, Pair};
-use core::num::Wrapping;
+use core::num::{NonZeroUsize, Wrapping};
 
 use crate::model::num::Fixed as Exact;
-use crate::state::room::{Camera, CameraDistance, ScrollArea, Scrollers, StaleScroll};
+use crate::state::room::{Camera, CameraDistance, RoomScoped, ScrollArea, Scrollers, StaleScroll};
 use crate::state::samus::{Facing, MovementType, Point, Samus, SpeedMode, VerticalMotion};
 
 /// The model's quantity from the engine's.
@@ -52,38 +52,50 @@ pub const fn screen(area: ScrollArea) -> ScreenKind {
     }
 }
 
-/// The room as the camera reads it: its scroll areas, `width` screens to a row, then the rows
-/// the scroll buffer holds after them (`BelowTheRoom`), and its two aim heights.
-///
-/// The areas and the buffer run on as one table, row after row, as the game indexes them: a
-/// row the areas leave short is the first of the rows below.
+/// A room's screens as the camera reads them: its rows, then the rows below it.
+pub type Rows = (Vec<Vec<ScreenKind>>, Vec<Vec<ScreenKind>>);
+
+/// The room's scroll areas, `width` screens to a row, and the rows the scroll buffer holds after
+/// them (`BelowTheRoom`), the last of which may be short.
 #[must_use]
+pub fn rows(areas: &[ScrollArea], stale: &[StaleScroll], width: usize) -> Rows {
+    let Some(width) = NonZeroUsize::new(width) else {
+        return (Vec::new(), Vec::new());
+    };
+    let rows = |kinds: Vec<ScreenKind>| -> Vec<Vec<ScreenKind>> {
+        kinds
+            .chunks(width.get())
+            .map(<[ScreenKind]>::to_vec)
+            .collect()
+    };
+    (
+        rows(areas.iter().copied().map(screen).collect()),
+        rows(stale.iter().map(|stale| screen(stale.area())).collect()),
+    )
+}
+
+/// The room as the camera reads it: its screens (`rows`) and its two aim heights.
+///
+/// # Errors
+///
+/// The model's [`RoomError`] when the areas aren't a room: none, a short last row, or more than
+/// 256 screens across or down.
 pub fn room(
     areas: &[ScrollArea],
     stale: &[StaleScroll],
     width: usize,
     scrollers: Scrollers,
-) -> Room {
-    let kinds: Vec<ScreenKind> = areas
-        .iter()
-        .copied()
-        .chain(stale.iter().map(|stale| stale.area()))
-        .map(screen)
-        .collect();
-    let rows: Vec<Vec<ScreenKind>> = if width == 0 {
-        Vec::new()
-    } else {
-        kinds.chunks(width).map(<[ScreenKind]>::to_vec).collect()
-    };
-    let height = areas.len().checked_div(width).unwrap_or(0);
-    let (screens, below) = rows.split_at(height.min(rows.len()));
-    Room {
-        screens: screens.to_vec(),
-        below: below.to_vec(),
-        heights: Heights {
-            level: Wrapping(scrollers.up),
-            rising: Wrapping(scrollers.down),
-        },
+) -> Result<Room, RoomError> {
+    let (screens, below) = rows(areas, stale, width);
+    Room::new(&screens, &below, heights(scrollers))
+}
+
+/// The room's aim heights from its scrollers.
+#[must_use]
+pub const fn heights(scrollers: Scrollers) -> Heights {
+    Heights {
+        level: Wrapping(scrollers.up),
+        rising: Wrapping(scrollers.down),
     }
 }
 
@@ -135,13 +147,13 @@ pub fn her(samus: &Samus) -> Her {
 /// stopped: the engine has none of the states that stop it yet (the x-ray scope, the reserve
 /// tanks' refill).
 pub fn follow(camera: &mut Camera, samus: &mut Samus, room: &Room) {
-    let model = Model {
-        position: Pair {
+    let model = Model::new(
+        Pair {
             x: quantity(camera.x),
             y: quantity(camera.y),
         },
-        seen: pair(samus.previous_position),
-    };
+        pair(samus.previous_position),
+    );
     let frame = Frame {
         samus: her(samus),
         room,
@@ -149,9 +161,39 @@ pub fn follow(camera: &mut Camera, samus: &mut Samus, room: &Room) {
         time_stopped: false,
     };
     let after = model.step(&Rules::REFERENCE, &frame);
-    let Point { x, y } = point(after.position);
+    let Point { x, y } = point(after.position());
     (camera.x, camera.y) = (x, y);
-    samus.previous_position = point(after.seen);
+    samus.previous_position = point(after.seen());
+}
+
+/// Blocks a screen across.
+const SCREEN_BLOCKS: u16 = 16;
+
+/// The scrolling phase of a frame: the camera follows her over `room`.
+///
+/// With no room loaded (no screens: a State made empty, never a room of the game's) there is
+/// nothing to follow, and the camera stays where it is.
+///
+/// # Errors
+///
+/// The model's [`RoomError`] when the room's scroll areas aren't a room: a short last row, or
+/// more than 256 screens across or down.
+pub fn scroll(room: &mut RoomScoped, samus: &mut Samus) -> Result<(), RoomError> {
+    let width = usize::from(room.width.0 / SCREEN_BLOCKS);
+    let screens = match self::room(
+        &room.scroll_areas,
+        &room.stale_scrolls,
+        width,
+        room.camera.scrollers,
+    ) {
+        Ok(screens) => screens,
+        Err(RoomError::NoScreens) => return Ok(()),
+        Err(error @ (RoomError::BelowRowTooWide | RoomError::TooLarge | RoomError::UnevenRows)) => {
+            return Err(error);
+        }
+    };
+    follow(&mut room.camera, samus, &screens);
+    Ok(())
 }
 
 #[cfg(test)]

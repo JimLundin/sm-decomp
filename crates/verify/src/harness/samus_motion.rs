@@ -204,8 +204,12 @@ const IN_QUICKSAND: WramWord = WramWord {
 };
 
 /// Whether frame `next` (its record: the pushes stay until the next frame's start) ran a
-/// block-inside push.
-fn pushed(next: &FrameRecord) -> Result<bool, Skip> {
+/// block-inside push. The camera's harness masks y on the same frames (camera C2).
+///
+/// # Errors
+///
+/// The [`DecodeError`] of a word the record doesn't hold.
+pub fn pushed(next: &FrameRecord) -> Result<bool, DecodeError> {
     let words = [
         EXTRA_X_DISPLACEMENT,
         EXTRA_X_SUBDISPLACEMENT,
@@ -214,11 +218,33 @@ fn pushed(next: &FrameRecord) -> Result<bool, Skip> {
         IN_QUICKSAND,
     ];
     for source in words {
-        if word(next, source)? != 0 {
+        if source.read(&next.wram)? != 0 {
             return Ok(true);
         }
     }
-    Ok(byte(next, X_DECEL_MULTIPLIER)? != 0)
+    Ok(X_DECEL_MULTIPLIER.read(&next.wram)? != 0)
+}
+
+/// Bank $90 log: the knockback's direction, 0 when she takes none.
+const KNOCKBACK_DIRECTION: WramWord = WramWord {
+    name: "KNOCKBACK_DIR",
+    offset: 0x0A52,
+};
+/// Bank $90 log: the normal movement handler, the one this domain's model runs.
+const NORMAL_MOVEMENT: u16 = 0xA337;
+
+/// Whether the frame from `from` is the knockback's tail.
+///
+/// It starts with the knockback on under the normal movement handler (samus-motion decode C3,
+/// adversary 43 M6), so the knockback, not her motion, has the last word on y. The camera's
+/// harness masks y on the same frames.
+///
+/// # Errors
+///
+/// The [`DecodeError`] of a word the record doesn't hold.
+pub fn knockback_tail(from: &FrameRecord) -> Result<bool, DecodeError> {
+    Ok(KNOCKBACK_DIRECTION.read(&from.wram)? != 0
+        && SAMUS_MOVEMENT_HANDLER.read(&from.wram)? == NORMAL_MOVEMENT)
 }
 
 /// What the handler `code`, one that runs no motion, is.
@@ -244,7 +270,7 @@ fn motion_runs(record: &FrameRecord) -> Result<(), Skip> {
         code => return Err(Skip::NotRunning(code)),
     }
     let deferred = match word(record, SAMUS_MOVEMENT_HANDLER)? {
-        0xA337 => return Ok(()),
+        NORMAL_MOVEMENT => return Ok(()),
         0x946E => Deferred::Grapple,
         KNOCKBACK => Deferred::Knockback,
         0xE025 | 0xE032 | 0xE04C | 0xE066 => Deferred::BombJump,

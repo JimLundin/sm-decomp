@@ -162,6 +162,9 @@ pub enum SessionFault {
     Plm(TouchFault),
     /// A projectile reached a block whose reaction isn't modelled.
     Projectile(crate::projectile::ProjectileFault),
+    /// The room's scroll areas aren't a room the camera can read: a short last row, or more
+    /// than 256 screens across or down.
+    Room(clean_model_camera::RoomError),
 }
 
 /// Why a State can't open as a Session.
