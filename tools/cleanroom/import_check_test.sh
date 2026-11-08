@@ -3,6 +3,9 @@
 # branch where it was, and still imports a harmless one. Builds a throwaway export of the dummy
 # domain `import-test` and a throwaway worktree; run from a checkout of this repository.
 set -u
+# Its own git identity, so it runs where none is configured (CI runners).
+export GIT_AUTHOR_NAME=import-check GIT_AUTHOR_EMAIL=import-check@localhost
+export GIT_COMMITTER_NAME=import-check GIT_COMMITTER_EMAIL=import-check@localhost
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(git rev-parse --show-toplevel) || exit 1
 tmp=$(mktemp -d "${TEMP:-/tmp}/cc-import-XXXXXX")
