@@ -12,8 +12,7 @@
 use core::fmt;
 
 use clean_model_samus_motion::{
-    Behaviour, BehaviourId, CATALOGUE, Rules as Reference, Samus as Model, Seat, Standing,
-    Vertical, WallTest,
+    BehaviourId, CATALOGUE, Rules as Reference, Samus as Model, Seat, Standing, Vertical, WallTest,
 };
 use clean_types::{Action, Block as Kind, Heading, Pose as Shape, Way, World, ZERO};
 use game::Content;
@@ -568,6 +567,61 @@ impl SamusMotion {
     }
 }
 
+impl SamusMotion {
+    /// Where her moves happen: record N's level and the enemies she can touch.
+    fn level<'a>(&'a self, inputs: &'a Inputs) -> SamusWorld<'a> {
+        let room = Room {
+            blocks: &inputs.blocks,
+            width: inputs.width,
+            slopes: Some(&self.content.slopes),
+        };
+        SamusWorld::of(room, inputs.enemies.iter().copied())
+    }
+
+    /// Her frame through the model over `level`, as the engine's Tick runs it; `None` when her
+    /// pose is outside it.
+    fn ran(&self, samus: &mut Samus, inputs: &Inputs, level: &SamusWorld) -> Option<Ran> {
+        let content = &self.content;
+        // Her current state handler sets her radius and reads the pad's pose request before
+        // the movement handler, except while the elevator carries her.
+        let requests = if pose::carried(samus, inputs.ride) {
+            PoseRequests::default()
+        } else {
+            pose::set_radius(samus, content);
+            pose::input(samus, &inputs.controller, content)
+        };
+        let reads = Reads {
+            controller: &inputs.controller,
+            ride: inputs.ride,
+            completed: inputs.completed,
+            requests,
+            content,
+        };
+        run(samus, reads, level, &Reference::REFERENCE)
+    }
+
+    /// Where her motion's frame from record `from` placed the y the camera follows her from
+    /// (`Outcome::camera_from`, the samus-motion spec's output to the camera): `Some` where pose
+    /// fit or a change of shape moved it off her start y, `None` where it is her start y.
+    ///
+    /// # Errors
+    ///
+    /// The reason her motion doesn't run in the frame, or the decode's failure.
+    pub fn placement(
+        &self,
+        from: &FrameRecord,
+        interval: Interval,
+    ) -> Result<Option<clean_types::Fixed>, Skip> {
+        let (mut samus, inputs) = self.decode(from, interval)?;
+        let level = self.level(&inputs);
+        let ran = self
+            .ran(&mut samus, &inputs, &level)
+            .ok_or(Skip::Pose(samus.pose.0))?;
+        let from = ran.outcome.camera_from;
+        Ok((from != ran.before.position.y).then_some(from))
+    }
+}
+
 /// What the model reads besides her, from record N: the pad, the elevator, the frame count,
 /// the level and the enemies she can touch.
 pub struct Inputs {
@@ -610,7 +664,7 @@ impl Inputs {
 
 /// The catalogue entries the step exercised, which the attribution reads.
 #[derive(Default)]
-pub struct Exercised(Vec<&'static BehaviourId>);
+pub struct Exercised(Vec<usize>);
 
 /// Whether Samus's motion runs in the frame after `record`: gameplay, and the main thread
 /// waiting at the main loop's end, not inside a routine that waits mid-pass.
@@ -652,7 +706,6 @@ impl Domain for SamusMotion {
     type World = Exercised;
     type Fields = Declared;
     type Skip = Skip;
-    const BEHAVIOURS: &'static [Behaviour] = &CATALOGUE;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("position.x", x),
         domain_field!("position.y", y),
@@ -763,34 +816,20 @@ impl Domain for SamusMotion {
     }
 
     fn step(&self, samus: &mut Samus, inputs: &Inputs, world: &mut Exercised) {
-        let content = &self.content;
-        // Her current state handler sets her radius and reads the pad's pose request before
-        // the movement handler, except while the elevator carries her.
-        let requests = if pose::carried(samus, inputs.ride) {
-            PoseRequests::default()
-        } else {
-            pose::set_radius(samus, content);
-            pose::input(samus, &inputs.controller, content)
-        };
-        let room = Room {
-            blocks: &inputs.blocks,
-            width: inputs.width,
-            slopes: Some(&content.slopes),
-        };
-        let level = SamusWorld::of(room, inputs.enemies.iter().copied());
-        let reads = Reads {
-            controller: &inputs.controller,
-            ride: inputs.ride,
-            completed: inputs.completed,
-            requests,
-            content,
-        };
-        if let Some(ran) = run(samus, reads, &level, &Reference::REFERENCE) {
+        let level = self.level(inputs);
+        if let Some(ran) = self.ran(samus, inputs, &level) {
             world.0 = exercised(&ran, &level);
         }
     }
 
-    fn exercised(&self, _: &Samus, _: &Inputs, world: &Exercised) -> Vec<&'static BehaviourId> {
+    fn behaviours(&self) -> Vec<String> {
+        CATALOGUE
+            .iter()
+            .map(|entry| format!("{:?}", entry.id))
+            .collect()
+    }
+
+    fn exercised(&self, _: &Samus, _: &Inputs, world: &Exercised) -> Vec<usize> {
         world.0.clone()
     }
 
@@ -825,7 +864,7 @@ const fn turning(pose: Shape) -> bool {
 /// what it showed: each entry whose rule the frame's situation or outcome brings into play.
 /// What her moves met is read from her phases and the cells her moves reached: she landed when
 /// she was in the air and isn't, and a move met a block when it reached one that isn't air.
-fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<&'static BehaviourId> {
+fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
     use BehaviourId as B;
     let Ran {
         before,
@@ -896,10 +935,9 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<&'static BehaviourId> {
     .into_iter()
     .filter(|&(_, exercised)| exercised)
     .filter_map(|(id, _)| {
-        SamusMotion::BEHAVIOURS
+        CATALOGUE
             .iter()
-            .map(|entry| &entry.id)
-            .find(|entry| core::mem::discriminant(*entry) == core::mem::discriminant(&id))
+            .position(|entry| core::mem::discriminant(&entry.id) == core::mem::discriminant(&id))
     })
     .collect()
 }

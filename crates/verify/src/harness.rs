@@ -19,6 +19,7 @@
 //!
 //! The harness never consults today's engine: the oracle is the yardstick (MODEL §4).
 
+pub mod camera;
 pub mod game_time;
 pub mod samus_motion;
 
@@ -26,7 +27,6 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
 
-use clean_model_samus_motion::{Behaviour, BehaviourId};
 use oracle_record::{FrameRecord, Pad};
 
 use crate::cache::{Cache, CacheError, CutKind};
@@ -157,8 +157,12 @@ pub trait Domain {
     type Skip: fmt::Display;
     /// The declared fields, in the spec's order.
     const FIELDS: &'static [Field<Self::Fields>];
-    /// The domain's catalogue entries, which the report attributes frames to.
-    const BEHAVIOURS: &'static [Behaviour] = &[];
+
+    /// The names of the domain's catalogue entries, in the catalogue's order, which the report
+    /// attributes frames to.
+    fn behaviours(&self) -> Vec<String> {
+        Vec::new()
+    }
 
     /// The State and inputs of the frame from record `from` to the end of `interval`.
     ///
@@ -202,14 +206,14 @@ pub trait Domain {
     /// The model: one frame of `state` under `inputs`, asking `world`.
     fn step(&self, state: &mut Self::State, inputs: &Self::Inputs, world: &mut Self::World);
 
-    /// The catalogue entries the frame exercised: `state` and `inputs` as decoded, `world` as
-    /// the step left it.
+    /// The catalogue entries the frame exercised, by their places in [`Domain::behaviours`]:
+    /// `state` and `inputs` as decoded, `world` as the step left it.
     fn exercised(
         &self,
         _state: &Self::State,
         _inputs: &Self::Inputs,
         _world: &Self::World,
-    ) -> Vec<&'static BehaviourId> {
+    ) -> Vec<usize> {
         Vec::new()
     }
 
@@ -290,10 +294,10 @@ pub struct Run {
 }
 
 /// One catalogue entry over a run.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct BehaviourReport {
-    /// The entry.
-    pub id: &'static BehaviourId,
+    /// The entry's name.
+    pub name: String,
     /// The compared frames that exercised it.
     pub exercised: u64,
     /// Those of them that matched and were verified on every unmasked field.
@@ -341,9 +345,9 @@ struct Compared<'a, F> {
 }
 
 impl Report {
-    /// An empty report for `D`.
+    /// An empty report for `domain`.
     #[must_use]
-    pub fn new<D: Domain>() -> Self {
+    pub fn new<D: Domain>(domain: &D) -> Self {
         Self {
             domain: D::NAME,
             fields: D::FIELDS
@@ -353,10 +357,11 @@ impl Report {
                     ..FieldReport::default()
                 })
                 .collect(),
-            behaviours: D::BEHAVIOURS
-                .iter()
-                .map(|behaviour| BehaviourReport {
-                    id: &behaviour.id,
+            behaviours: domain
+                .behaviours()
+                .into_iter()
+                .map(|name| BehaviourReport {
+                    name,
                     exercised: 0,
                     matched: 0,
                 })
@@ -386,11 +391,7 @@ impl Report {
         self.defects.values().sum()
     }
 
-    fn compare<D: Domain>(
-        &mut self,
-        frame: &Compared<'_, D::Fields>,
-        exercised: &[&'static BehaviourId],
-    ) {
+    fn compare<D: Domain>(&mut self, frame: &Compared<'_, D::Fields>, exercised: &[usize]) {
         self.compared = self.compared.saturating_add(1);
         let (mut all, mut verified, mut null_all, mut any) = (true, true, true, false);
         for (index, (field, report)) in D::FIELDS.iter().zip(&mut self.fields).enumerate() {
@@ -446,8 +447,8 @@ impl Report {
         if null_all {
             self.null_matched = self.null_matched.saturating_add(1);
         }
-        for id in exercised {
-            if let Some(report) = self.behaviours.iter_mut().find(|entry| same(entry.id, id)) {
+        for &place in exercised {
+            if let Some(report) = self.behaviours.get_mut(place) {
                 report.exercised = report.exercised.saturating_add(1);
                 if all && verified {
                     report.matched = report.matched.saturating_add(1);
@@ -492,13 +493,13 @@ impl Report {
             match self
                 .behaviours
                 .iter_mut()
-                .find(|mine| same(mine.id, entry.id))
+                .find(|mine| mine.name == entry.name)
             {
                 Some(mine) => {
                     mine.exercised = mine.exercised.saturating_add(entry.exercised);
                     mine.matched = mine.matched.saturating_add(entry.matched);
                 }
-                None => self.behaviours.push(*entry),
+                None => self.behaviours.push(entry.clone()),
             }
         }
     }
@@ -569,21 +570,13 @@ impl fmt::Display for Behaviours<'_> {
         for entry in exercised {
             writeln!(
                 f,
-                "  {:?}: {} matched of {} exercised",
-                entry.id, entry.matched, entry.exercised
+                "  {}: {} matched of {} exercised",
+                entry.name, entry.matched, entry.exercised
             )?;
         }
-        let names: Vec<String> = unexercised
-            .iter()
-            .map(|entry| format!("{:?}", entry.id))
-            .collect();
+        let names: Vec<String> = unexercised.iter().map(|entry| entry.name.clone()).collect();
         writeln!(f, "  vectors only: {}", names.join(", "))
     }
-}
-
-/// Whether `a` and `b` are the same catalogue entry.
-fn same(a: &BehaviourId, b: &BehaviourId) -> bool {
-    std::mem::discriminant(a) == std::mem::discriminant(b)
 }
 
 /// The fields on which two projections differ.
@@ -649,7 +642,7 @@ pub fn run<D: Domain, E>(
     domain: &D,
     records: impl IntoIterator<Item = Result<FrameRecord, E>>,
 ) -> Result<Report, E> {
-    let mut report = Report::new::<D>();
+    let mut report = Report::new(domain);
     let mut records = records.into_iter();
     let Some(first) = records.next() else {
         return Ok(report);

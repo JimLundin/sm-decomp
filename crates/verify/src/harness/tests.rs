@@ -253,7 +253,7 @@ fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {
     let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
     let floors = floors(name);
     let started = Instant::now();
-    let mut total = Report::new::<D>();
+    let mut total = Report::new(domain);
     let mut failures = Vec::new();
     let rows = cached_rows(cache);
     for row in &rows {
@@ -316,4 +316,22 @@ fn samus_motion_holds_its_floors_against_the_cache() {
         Err(error) => panic!("content: {error:?}"),
     };
     hold_floors(&domain, "samus-motion", &cache);
+}
+
+/// The camera over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
+/// test reads them (the ROM for samus-motion's model, which supplies `camera_from`).
+#[test]
+fn the_camera_holds_its_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = match super::camera::CameraDomain::load(&image) {
+        Ok(domain) => domain,
+        Err(error) => panic!("content: {error:?}"),
+    };
+    hold_floors(&domain, "camera", &cache);
 }
