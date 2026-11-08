@@ -81,7 +81,8 @@ the next.
 - `Closed`: the view may not show it; a view that would is pushed back to its edge.
 - `Open`: the view may show all of it.
 - `Short`: like `Open`, but where the view can go no lower it stops with its top on the screen's
-  top edge, so the screen's bottom 32 px stay out of view (`ShortScreens`).
+  top edge, 31 px higher than on an `Open` one, so less of the screen's bottom is shown
+  (`ShortScreens`).
 
 **Which screens it looks at** (`ClosedScreens`): across, the row that holds the view's middle;
 down, the column. On an axis, the camera's screen is the one that holds its near edge (left or
@@ -106,8 +107,8 @@ column is `Closed`; the screens below its last row are `BelowTheRoom`'s.
 - Her pixel part is not `before` the one where it last saw her → its speed is `(s − e) + 1.0000`,
   on the whole `P.S` mod 2^32 [R2, R4, R12, R18, R19]
 - Her pixel part is `before` it → its speed is `(e − s) + 1.0000` [R1, R5, R16, R17, R31]
-- The move would take it past the aim → it stops on the aim, its subpixel part 0 [R4, R5, R10,
-  R14, R17, C-lead-near-right]
+- The move would take its pixel part past the aim's → it stops on the aim, its subpixel part 0
+  [R4, R5, R10, R14, R17, C-lead-near-right]
 - So with the aim's pixel part the camera's, it stays as it is, subpixel included, and doesn't
   settle (R9, R13, R21, R23). When she didn't move on an axis, it settles instead (`Settling`).
 - Every other rule in this spec sets the camera's pixel part only: its subpixel part changes only
@@ -138,7 +139,7 @@ column is `Closed`; the screens below its last row are `BelowTheRoom`'s.
 - summary: down, the view aims to keep her a set height below its top edge, and lower while she
   rises, so it shows more above her.
 - params: the room's two heights, `hn` while she isn't rising and `hr` while she rises: 112 and
-  160 in most rooms, 144 and 160 in some.
+  160, or 144 and 160, in the recorded rooms.
 - switch: none (the heights are the room's).
 - Rising → the aim down is `sy − hr` [R8, R17, R18, R27, R32, C-push-up-back]
 - Not rising → the aim down is `sy − hn` [R1, R3, R12, R26, R29, C-unplaced]
@@ -154,7 +155,7 @@ column is `Closed`; the screens below its last row are `BelowTheRoom`'s.
   [R1, R6, R17, R30, C-placed]
 - Her motion placed her for the camera (`placed`) → the placed y is where it last saw her, before
   it follows [C-placed, C-unplaced]
-- So a crouch's lowering or a stand's lift doesn't scroll the view: from the placed y she didn't
+- So the move pose fit or a change of shape made isn't followed: from the placed y she didn't
   move (C-placed); the same frame unplaced scrolls (C-unplaced).
 - checked: oracle (every recorded vector's `after.seen`); constructed (C-placed, C-unplaced).
 
@@ -185,10 +186,12 @@ the aim stopped it, `v` its speed's pixel part, and `edge(p)` the near edge of t
 - switch: none.
 - The camera's furthest right is the last screen's left edge, `xr = (w − 1) × 256`; its furthest
   down is `yb = (h − 1) × 256 + rows` (`ShortScreens`).
-- Going right past `xr` → it stops on `xr` [R4, R8, R19, R26]
-- Going left or up `before` 0 → it stops on 0 on that axis [R1, R5, R8, R10, R11]
+- Going right past `xr` → it stops on `xr`, and no closed screen moves it that frame [R4, R8,
+  R19, R26]
+- Going left or up `before` 0 → it stops on 0 on that axis, and no closed screen moves it that
+  frame [R1, R5, R8, R10, R11]
 - Going down past `yb` → it backs up as from a closed screen, `max(yb, cm − v − 2)`, which stops
-  it on `yb` [R12, R17, R25]
+  it on `yb`, and no closed screen moves it that frame [R12, R17, R25]
 - checked: oracle.
 
 ### ClosedScreens
@@ -213,7 +216,7 @@ the aim stopped it, `v` its speed's pixel part, and `edge(p)` the near edge of t
 ### ShortScreens
 - kind: mechanic.
 - summary: where the view can go no lower, it stops with its top on a short screen's top edge, or
-  31 px lower on any other screen, which shows that screen's bottom two rows of blocks.
+  31 px lower on any other screen, which shows 31 px more of that screen's bottom.
 - params: 31 px.
 - switch: none.
 - The screen it reads `Short` → `rows = 0` [R17, R19, R25, C-ease-up-short]
@@ -237,9 +240,9 @@ the aim stopped it, `v` its speed's pixel part, and `edge(p)` the near edge of t
   drops to the edge of the screen that ease is in, `c = edge(c0 + v + 2)` [C-ease-both-closed]
 - The camera's screen `Closed`, otherwise → it eases forward, `c = c0 + v + 2` [C-ease-right,
   C-ease-down, C-creep]
-- The camera's screen `Open` or `Short`, the next `Closed`, and its near edge past `edge(c) + rows` →
-  it eases back, `c = max(edge(c) + rows, c0 − v − 2)` [C-ease-left, C-ease-left-snap, C-ease-up,
-  C-ease-up-short]
+- The camera's screen `Open` or `Short`, the next `Closed`, and its near edge past
+  `edge(c) + rows` → it eases back, `c = max(edge(c) + rows, c0 − v − 2)` [C-ease-left,
+  C-ease-left-snap, C-ease-up, C-ease-up-short]
 - So with the next screen closed and the camera on its screen's edge, or down within `rows` of
   it, it holds (R1, R2, R4, R12, R21, R23).
 - So across, from a frame the camera began inside the room, the first rule changes nothing; down it
@@ -302,6 +305,8 @@ the aim stopped it, `v` its speed's pixel part, and `edge(p)` the near edge of t
 - Where it last saw her becomes her position after both axes, so a frame's two speeds are both
   measured from the last frame's.
 - A placement (`placed`) replaces where it last saw her before the camera follows.
+- On an axis, the aim's stop comes first; the room's edges and closed screens then measure from
+  where it stopped (except the reads of `DownwardLooksAhead`).
 
 ## 5. Out of scope, and what remains
 
@@ -318,8 +323,8 @@ the aim stopped it, `v` its speed's pixel part, and `edge(p)` the near edge of t
 
 ## 6. Open questions
 
-1. Past the room's below rows the camera reads what the game holds after its table of screens; we
-   say `Closed`. Only a move down that crosses into the last row of a room with nearly as many
-   screens as the table holds could read there; no record does.
+1. Past the room's below rows the camera reads whatever the game holds there; we say `Closed`.
+   Only a move down that crosses into the last row of one of the largest rooms could read there;
+   no record does.
 2. The lead settings other than `Ahead` have constructed vectors only: no recorded row meets the
    bosses that set them.

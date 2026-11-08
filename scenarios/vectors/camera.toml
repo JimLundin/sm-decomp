@@ -259,7 +259,7 @@ samus = { position = ["0100.0000", "0150.0000"], facing = "Right", rising = true
 after = { camera = ["0000.0000", "00F2.0000"], seen = ["0100.0000", "0150.0000"] }
 
 [[vector]]
-# falling towards a closed screen below: it backs 2 px up, no less than 31 px below its screen's edge
+# falling towards a closed screen: it backs up 2 px, staying 31 px or more past its screen's top edge
 id = "C-push-down-back"
 source = "constructed"
 entries = ["ClosedScreens", "ShortScreens", "FollowingHer", "AimingHeight"]
