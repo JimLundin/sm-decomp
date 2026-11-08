@@ -49,7 +49,8 @@
 #   speed_x, dash, speed_y, bounces; falling (optional, default false): true when, in a pose on
 #   the ground, she is falling at the start's vertical speed of 0 (spec §1.2, falling at 0 on the
 #   ground: only a push beyond this spec hands her back so). A missing quantity is 0. The start is
-#   always a moment where she remembers nothing the quantities don't show (spec §1.2).
+#   always a moment where she remembers nothing the quantities don't show (spec §1.2), with one
+#   exception: falling, which no lead-in in scope reaches.
 # - lead_in: the frames before the checked one, oldest first, when the checked frame depends on
 #   something she remembers. Each gives the pose at its start (as pose below), the pad,
 #   jump_pressed, pressed and animation_ends (optional, as below). A lead-in frame's pose is the one the next frame

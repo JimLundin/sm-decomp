@@ -24,13 +24,15 @@ Adversary 29 asked four questions of round 9's model. Each is answered in the sp
    without a skid the spin stops drifting ($90:906C → $90:9093). Round 9's `speed != sum` test is
    right. `DriftInTheAir` defines "reached" as the step being cut to the top speed (`Exact`: the
    sum over it). No unit change.
-3. **Does an adjusted second bounce under 1 px floor at 0?** The original doesn't floor it.
-   It takes 1 off the bounce speed's pixel word alone ($91:F23F, $91:F2BA `DEC A`), so a bounce
-   speed of 0.8000 would give a rise of FFFF.8000. The vanilla speed is 1.0000, which gives
-   exactly 0, so only an adjusted rule reaches the case. A rise of nearly 2^16 px a frame means
-   nothing the player could see, and a signed speed can't hold it, so the spec floors it:
-   `max(bounce − 1.0000, 0)` in `Landing`, with a note on why. +0.7 units (the formula's
-   operators).
+3. **Does an adjusted second bounce under 1 px floor at 0?** No, and the spec gives no floor
+   (amended after adversary 31). The original takes 1 off the bounce speed's pixel word alone
+   ($91:F23F, $91:F2BA `DEC A`), so a bounce speed of 0.8000 would store a rise of FFFF.8000.
+   With position wrapping mod 2^32, she would then sink about 0.5 px a frame, and any ceiling
+   would stop her. That is perceivable, and an adjusted value must run the same rule as the
+   vanilla one (MODEL §3), so a floor would be a different behaviour, not a guard. The vanilla
+   speed is 1.0000, which gives exactly 0. So the bounce speed's parameter takes a range instead:
+   at least 1.0000 (`Jumping`'s params). `Landing` keeps `bounce − 1.0000`, +0.3 units (its
+   operator).
 4. **May `Slope::surface` be held from its open side?** Yes. It is a question of representation,
    and the spec can state the surface either way without changing behaviour. As depth from the
    open side (a floor's top row as it is, a ceiling's bottom row as 15 less it), 16 (an empty
@@ -83,17 +85,17 @@ row fell (item 29); the frames that newly differ are items 29-31.
     ($90:8F1B, $91:F31D), both out of scope, so the start can't be reached by a lead-in; the spec
     now owns the move anyway (adversary 30's recommendation), so the mask can go once the model
     makes it: the vertical speed's row (§1) and §1.2 name falling at 0 on the ground, handed back
-    by such a push; `FollowingTheGround` gains the arm (the ball on the ground, the spring ball
-    too, falling at 0 → it moves by that speed, 0 px, not pulled, and a move of 0 meeting no block
-    it falls from rest where it was [BG2]) and a note that a change of shape reads falling at 0 as
-    a vertical speed (original only); `SpeedBuildsAndBrakes`' ball-at-rest arms read "a vertical motion"
+    by such a push; `FollowingTheGround`'s arm for a change of shape or the ball on the ground
+    with a vertical speed now reads "with a vertical motion (a vertical speed, or falling at 0)"
+    and cites BG2, with a note that a move of 0 is a walk off from where she is (adversary 31:
+    a separate arm would have the same outcome, so it was folded in); `SpeedBuildsAndBrakes`' ball-at-rest arms read "a vertical motion"
     (falling at 0 keeps both speeds, no halt). The vectors' `before` gains `falling` (true: falling
     at the start's vertical speed of 0 in a pose on the ground), and BG2
     (samus-bomb-jump-vertical:1037) is this frame, recorded: the ball `Still` at 00BB.FFFF,
     00A6.0BFF, all speeds 0, falling, in open air → y kept, the ball `Falling`. Round 9 fails BG2
     (y 1 px low, and its parser refuses `falling`) until the implementer's next round; the
-    harness's mask stays until then. Spec units 204.0 → 205.7 with the code gate's answers below
-    (BG2's arm +1.0, the second bounce's floor +0.7); budget 6,912 → 6,972. Sources in the decode
+    harness's mask stays until then. Spec units 204.0 → 204.3 with the code gate's answers above
+    (the second bounce's `bounce − 1.0000`, +0.3); budget 6,912 → 6,924. Sources in the decode
     notes (gap 29).
 30. **The moonwalk's jump: the way her speed points (`TurningRound`, `PadChart`, MT1).**
     chain-0014-96BA 4 → 5, chain-0232-D5A7 17 → 18 and samus-input-poses 118 → 119: moonwalking
@@ -115,8 +117,9 @@ row fell (item 29); the frames that newly differ are items 29-31.
     on the same frame and leads her backwards, as through the moonwalk; a carried-on speed would
     swing it forwards. So it isn't masked. `TurningRound` gains the arm (the moonwalk's jump →
     she skids against her facing [MT2]) and its consequence (the next frame's brake to 0, which
-    only the camera's lead outlasts); the horizontal speed's **Read by** gains "output" (whether
-    she skids). MT2 (chain-0014-96BA:5): moonwalking right at 0 with right held, jump pressed →
+    only the camera's lead outlasts). Whether she skids is output, in §1.2's skid (amended on
+    lane/r10-spec after adversary 31: not on the horizontal speed's Read by, since a skid of zero
+    can't show in a speed of 0). MT2 (chain-0014-96BA:5): moonwalking right at 0 with right held, jump pressed →
     019C.0000, speed −0.8000. Round 9 fails MT2 on `speed_x` alone (+0.8000) until the
     implementer's next round; the three harness frames stay at their floors until then. Spec
     units 203.0 → 204.0; budget 6,876 → 6,912. Sources in the decode notes (gap 30).
