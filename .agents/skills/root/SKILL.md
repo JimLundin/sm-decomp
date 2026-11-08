@@ -16,7 +16,7 @@ barrier; every other role does one step.
    and hash) and its done-condition.
 2. **Brief** a fresh session for it (below). Done when the brief is saved under
    `~/.cleanroom/briefs/` or sent as the agent's prompt.
-3. **Wait** for its report. Start other work only where [What can run at once](../../../docs/cleanroom/PROCESS.md#what-can-run-at-once) allows it today.
+3. **Wait** for its report. Start other work only where [What can run at once](../../../docs/cleanroom/PROCESS.md#what-can-run-at-once) allows, within its limit of three lanes.
 4. **Check** the report against the step's done-condition: open the branch and run the cheap
    checks yourself (scan, doc links, the vector count, the gate line). Done when every claim you
    relay comes from output you saw.

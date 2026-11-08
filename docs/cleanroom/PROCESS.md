@@ -98,10 +98,10 @@ Each step names its owner, what it waits for, and its done-condition.
 
 ## What can run at once
 
-**Now: one step at a time** (Jim, 2026-11-08). While the process is still changing, each step
-starts only after the one before it reports, so every step stays observable. The root reports
-each step's result to Jim before starting the next. The rest of this section is what the
-dependencies allow, for when Jim lifts that rule.
+**A manageable amount** (Jim, 2026-11-08). At most three lanes run at once, and at most one round
+is in flight per domain, so every lane stays observable while the process is still changing. The
+root names each lane to Jim when it starts, and reports its result when it ends. Within that
+limit, the dependencies below decide what may overlap.
 
 **Within a round:** steps 8 and 9 run together. Both need only the import; the blind reviewer
 writes nothing, and the integrator works outside the clean crates.
