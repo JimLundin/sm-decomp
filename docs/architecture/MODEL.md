@@ -68,6 +68,11 @@ Jim's decisions, 2026-11-07:
    [size-budget.md](size-budget.md), and the weights' is [size-weights.md](size-weights.md); the
    template convention that makes the count exact is
    in §5.
+8. **The repository shows only the current state** (Jim, 2026-11-08). Old code or docs kept only
+   for comparison are deleted; a comparison uses git history (the tag `archive/old-engine`, or the
+   commit before a deletion). When a clean model replaces engine code, the integrator deletes the
+   old code in the same lane, and a baseline cites the commit it was measured at. The engine code
+   of domains not yet rebuilt is current, and goes as each domain is replaced.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
