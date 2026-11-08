@@ -239,3 +239,30 @@ impl Rules {
         if keep { speed } else { top }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Rules;
+    use clean_types::{Parts, fixed};
+
+    /// The reference rules agree with each other. `Landing`: the ball's bounce speed is at least
+    /// what a bounce after the first takes off, its bounce speed less the second bounce's cut,
+    /// so that cut never wraps below zero. `WallJump`, `BlocksStopFlush`: the near-wall test's
+    /// reach is within the longest horizontal move, so the move limit never cuts the test short.
+    #[test]
+    fn the_reference_rules_agree() {
+        let r = Rules::REFERENCE;
+        let after_the_first = r.bounce - r.second_bounce_less;
+        assert!(
+            after_the_first <= r.bounce,
+            "a bounce after the first takes off at {after_the_first:?}, above the bounce speed {:?}",
+            r.bounce
+        );
+        let limit = fixed(r.move_limit_px, r.wall_reach.sub());
+        assert!(
+            r.wall_reach <= limit,
+            "the near-wall test's reach {:?} is beyond the move limit {limit:?}",
+            r.wall_reach
+        );
+    }
+}

@@ -8,16 +8,18 @@ use Probe::{Blocks, Enemies};
 use clean_types::Action::Still;
 use clean_types::{Aim, Body, Facing, Gun, Legs, Pose, Px, Radius, px};
 
-/// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`; she takes it facing as before the
-/// change.
-const CROUCHED: Pose = Pose {
-    body: Body::Crouched,
-    action: Still,
-    facing: Facing::Right,
-    aim: Aim::Forward,
-    gun: Gun::Stowed,
-    legs: Legs::Together,
-};
+/// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing `facing` (she takes it facing
+/// as before the change).
+const fn crouched(facing: Facing) -> Pose {
+    Pose {
+        body: Body::Crouched,
+        action: Still,
+        facing,
+        aim: Aim::Forward,
+        gun: Gun::Stowed,
+        legs: Legs::Together,
+    }
+}
 
 /// `PoseFitAfterMoves`: the room the looks found above her and below her, where something
 /// stopped them, in whole px.
@@ -68,10 +70,7 @@ impl Samus {
         if old.y < t.rules.small_body_px {
             return Some(self.pose);
         }
-        let crouch = Pose {
-            facing: self.pose.facing,
-            ..CROUCHED
-        };
+        let crouch = crouched(self.pose.facing);
         self.position.y -= px(t.body(crouch).y.max(old.y) - old.y);
         Some(crouch)
     }

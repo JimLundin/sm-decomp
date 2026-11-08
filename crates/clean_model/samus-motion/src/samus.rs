@@ -43,9 +43,12 @@ pub enum Bounces {
     Twice,
 }
 
-/// `WallJump` (§1.2 a spin carried on): how many frames she has been in this spin. Only a frame
-/// counts it, so a caller can start one at `Spin::OFF` alone.
-#[derive(Clone, Copy)]
+/// `WallJump` (§1.2 a spin carried on): how many frames she has been in this spin.
+///
+/// It counts up to the spin carried on, where it stays. Only a frame counts it, so a caller
+/// starts one at `Spin::OFF`, or, starting mid-play from an earlier frame, at
+/// `Spin::CARRIED_ON`, the value frames give a spin carried on.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Spin(u8);
 
 impl Spin {
@@ -53,7 +56,7 @@ impl Spin {
     pub const OFF: Self = Self(0);
     /// A spin carried on: in it two frames earlier (this its third frame or later), or one that
     /// followed a wall jump.
-    pub(crate) const CARRIED_ON: Self = Self(3);
+    pub const CARRIED_ON: Self = Self(3);
 
     /// `WallJump` (§1.2): whether the spin is carried on, which can ready a wall jump.
     #[must_use]
@@ -61,10 +64,11 @@ impl Spin {
         self.0 >= Self::CARRIED_ON.0
     }
 
-    /// `WallJump`: the frame's start counts one frame more of a spin, or none.
-    pub(crate) const fn then(self, spinning: bool) -> Self {
+    /// `WallJump`: the frame's start counts one frame more of a spin, up to the spin carried on,
+    /// or none.
+    pub(crate) fn then(self, spinning: bool) -> Self {
         if spinning {
-            Self(self.0.saturating_add(1))
+            Self(self.0.saturating_add(1).min(Self::CARRIED_ON.0))
         } else {
             Self::OFF
         }

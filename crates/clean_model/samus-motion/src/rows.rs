@@ -229,22 +229,35 @@ pub enum Effect {
 /// A change of action's own effect, whatever brought the change.
 ///
 /// The pad chart, what her moves met or an animation's end: a pose whose body and action are
-/// one of `into`, taken from a pose whose action is one of `from` (which never holds the actions
-/// it changes into), brings `effect` after the chosen row's own.
+/// one of `into`, taken from a pose whose action is as `from` says (never the actions it
+/// changes into), brings `effect` after the chosen row's own.
 pub struct Entering {
     /// The bodies and actions it changes into.
     pub into: &'static [(Body, Action)],
     /// The actions it changes from.
-    pub from: &'static [Action],
+    pub from: Was,
     /// What it brings.
     pub effect: Effect,
+}
+
+/// The actions a change of action's own effect is taken from (`Entering::from`).
+#[derive(Clone, Copy)]
+pub enum Was {
+    /// One of these.
+    OneOf(&'static [Action]),
+    /// Any action but these: whatever the set of actions holds, but these.
+    AnyBut(&'static [Action]),
 }
 
 impl Entering {
     /// `Jumping`, `WallJump`: whether the change from action `was` into pose `now` brings it.
     #[must_use]
     pub fn on(&self, was: Action, now: Pose) -> bool {
-        self.from.contains(&was) && self.into.contains(&(now.body, now.action))
+        let from = match self.from {
+            Was::OneOf(actions) => actions.contains(&was),
+            Was::AnyBut(actions) => !actions.contains(&was),
+        };
+        from && self.into.contains(&(now.body, now.action))
     }
 }
 

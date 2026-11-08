@@ -16,7 +16,7 @@ use crate::rows::Effect::{
 use crate::rows::{
     AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, CROUCH, Class, Doing, Drift, Entering, FALL,
     FORWARD, FORWARD_AIM, GROWS, JUMP, KEPT, MOONWALK, MORPH, Moves, Next, ROW, RUN, Row, SPIN,
-    STILL, Side, Situation, TAKE_OFF, TURN, Test, UDA, UP_AIM, UP_DOWN,
+    STILL, Side, Situation, TAKE_OFF, TURN, Test, UDA, UP_AIM, UP_DOWN, Was,
 };
 use crate::rules::Gait;
 use Test::{Aimed, Faces, Held, Not, Pressed};
@@ -82,70 +82,25 @@ const TURNS: &[Action] = &[
     Turning(Turn::Jump),
     Turning(Turn::MoonwalkJump),
 ];
-/// Every action but a straight jump: what a straight jump starts from.
-const BUT_JUMPING: &[Action] = &[
-    AgainstWall,
-    Crouching,
-    Falling,
-    Landing(LandedFrom::Jump),
-    Landing(LandedFrom::Spin),
-    Moonwalking,
-    Morphing,
-    Rolling,
-    Running,
-    Spinning,
-    StandingUp,
-    Still,
-    TakingOff,
-    Turning(Turn::Fall),
-    Turning(Turn::Ground),
-    Turning(Turn::Jump),
-    Turning(Turn::MoonwalkJump),
-    Unmorphing,
-    WallJumping,
-];
-/// Every action but falling: what a fall starts from.
-const BUT_FALLING: &[Action] = &[
-    AgainstWall,
-    Crouching,
-    Jumping,
-    Landing(LandedFrom::Jump),
-    Landing(LandedFrom::Spin),
-    Moonwalking,
-    Morphing,
-    Rolling,
-    Running,
-    Spinning,
-    StandingUp,
-    Still,
-    TakingOff,
-    Turning(Turn::Fall),
-    Turning(Turn::Ground),
-    Turning(Turn::Jump),
-    Turning(Turn::MoonwalkJump),
-    Unmorphing,
-    WallJumping,
-];
-
 /// The change of action's own effects, whatever brought the change.
 ///
-/// `Jumping`: starting a straight jump (upright) or a fall, with a dash she carries on along her
-/// facing, else she follows the pad. `WallJump` (§1.2): a spin that followed a wall jump is
-/// carried on.
+/// `Jumping`: starting a straight jump (upright) or a fall, from any action but that one, with
+/// a dash she carries on along her facing, else she follows the pad. `WallJump` (§1.2): a spin
+/// that followed a wall jump is carried on.
 pub static ENTERING: &[Entering] = &[
     Entering {
         into: &[(Upright, Jumping)],
-        from: BUT_JUMPING,
+        from: Was::AnyBut(&[Jumping]),
         effect: Launch,
     },
     Entering {
         into: &[(Upright, Falling), (Ball, Falling), (SpringBall, Falling)],
-        from: BUT_FALLING,
+        from: Was::AnyBut(&[Falling]),
         effect: Launch,
     },
     Entering {
         into: &[(Upright, Spinning)],
-        from: &[WallJumping],
+        from: Was::OneOf(&[WallJumping]),
         effect: SpinOn,
     },
 ];
