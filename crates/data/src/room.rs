@@ -10,6 +10,7 @@
 //! the dense [`RoomId`] the [`RoomMap`] gives it.
 
 use canonical::Canonical;
+use clean_types::Event;
 
 use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};
@@ -195,13 +196,39 @@ pub struct Scrollers {
     pub down: u8,
 }
 
-/// An event flag's index.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Event(pub u8);
+/// The events by the numbers the original gives them.
+///
+/// A number is the event's bit in the event flags and the operand of the event state
+/// condition. Events 3 to 5 count the zebetites destroyed; 1 and 16h to 3Fh have no meaning.
+// The event flags are `$7E:D820` (`$80:81FA`), the condition `$8F:E612`, the zebetites' count
+// `$A6:FCAA`.
+pub const EVENTS: [(u8, Event); 18] = [
+    (0x00, Event::PlanetAwake),
+    (0x02, Event::MotherBrainTankBroken),
+    (0x06, Event::PhantoonStatueGrey),
+    (0x07, Event::RidleyStatueGrey),
+    (0x08, Event::DraygonStatueGrey),
+    (0x09, Event::KraidStatueGrey),
+    (0x0a, Event::TourianOpen),
+    (0x0b, Event::GlassTunnelBroken),
+    (0x0c, Event::AcidReceded),
+    (0x0d, Event::ShaktoolPath),
+    (0x0e, Event::TimeBombSet),
+    (0x0f, Event::AnimalsFreed),
+    (0x10, Event::MetroidRoom1Empty),
+    (0x11, Event::MetroidRoom2Empty),
+    (0x12, Event::MetroidRoom3Empty),
+    (0x13, Event::MetroidRoom4Empty),
+    (0x14, Event::TourianRoomsUnset),
+    (0x15, Event::LavaQuakeOutrun),
+];
 
-impl Event {
-    /// Event 0, "Zebes is awake".
-    pub const ZEBES_AWAKE: Self = Self(0);
+/// The event the original numbers `number`, if it names one.
+#[must_use]
+pub fn event(number: u8) -> Option<Event> {
+    EVENTS
+        .iter()
+        .find_map(|&(known, event)| (known == number).then_some(event))
 }
 
 /// A set of the current area's boss bits.
@@ -444,6 +471,13 @@ pub enum RoomError {
         /// The code.
         code: u16,
     },
+    /// An event state condition names an event number with no meaning.
+    Event {
+        /// Where the condition is.
+        at: RomAddress,
+        /// The event number.
+        number: u8,
+    },
     /// A room has more states than a [`StateIndex`] counts.
     TooManyStates(RoomKey),
     /// A state's level data doesn't decompress.
@@ -617,7 +651,10 @@ fn condition(reader: &mut Reader<'_>) -> Result<Option<Condition>, RoomError> {
         0xe5e6 => return Ok(None),
         0xe5eb => Condition::Door(reader.pointer(DOOR_BANK)?),
         0xe5ff => Condition::MainAreaBossDead,
-        0xe612 => Condition::Event(Event(reader.byte()?)),
+        0xe612 => {
+            let number = reader.byte()?;
+            Condition::Event(event(number).ok_or(RoomError::Event { at, number })?)
+        }
         0xe629 => Condition::BossDead(BossBits(reader.byte()?)),
         0xe640 => Condition::MorphBall,
         0xe652 => Condition::MorphBallAndMissiles,

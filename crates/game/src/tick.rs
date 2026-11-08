@@ -516,7 +516,7 @@ fn gameplay_phase(
             pass.callout = crate::plm::process(
                 &mut drawing,
                 &mut state.room,
-                &mut state.collected_items,
+                &state.collected_items,
                 population,
             );
         }

@@ -2001,7 +2001,8 @@ struct CachedRows {
 /// Each row's frames decoded from `SM_CACHE`, with the Morph Ball Room's level as content
 /// loads it from `SM_ROM`; `None` where either isn't present (CI's Verify job has neither).
 fn cached_rows() -> Option<CachedRows> {
-    use data::room::{Progress, RoomKey, Rooms, SLICE_ZERO_ROOMS};
+    use clean_model_progress::Progress;
+    use data::room::{RoomKey, Rooms, SLICE_ZERO_ROOMS};
     let cache = std::path::PathBuf::from(std::env::var_os("SM_CACHE")?);
     let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
     let content = crate::bundle::content(image.clone()).unwrap();
@@ -2015,7 +2016,9 @@ fn cached_rows() -> Option<CachedRows> {
     let id = loaded_rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
     let morph_ball_room = loaded_rooms.get(id).unwrap();
     let state = morph_ball_room
-        .state(morph_ball_room.select(&Progress::default()))
+        .state(
+            game::progress_world::room_state(morph_ball_room, &Progress::new_file(), None).unwrap(),
+        )
         .unwrap();
     let loaded = game::state::room::RoomScoped::load(id, morph_ball_room, state);
     let lock_path =

@@ -22,6 +22,7 @@ pub mod nmi;
 pub mod oam;
 pub mod plm;
 pub mod pose;
+pub mod progress_world;
 pub mod projectile;
 pub mod rng;
 pub mod samus_drawing;

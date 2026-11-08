@@ -518,15 +518,18 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     let block = BlockIndex(2 * 16 + 4);
     let item = |state: &State| state.room.plms.slots[39].occupancy;
     // The item's first run: its GFX load and frame 0's draw.
-    plm::process_unseen(&mut state.room, &mut state.collected_items, &population);
+    plm::process_unseen(&mut state.room, &state.collected_items, &population);
     plm::touch_item_block(&mut state.room, block).unwrap();
-    let callout = plm::process_unseen(&mut state.room, &mut state.collected_items, &population);
+    let callout = plm::process_unseen(&mut state.room, &state.collected_items, &population);
     let slot = SlotIndex(39, PhantomData);
     assert_eq!(callout, Some(slot));
-    assert!(state.collected_items.contains(0x1a));
+    assert_eq!(
+        state.collected_items,
+        crate::state::CollectedItems::default()
+    );
     assert!(state.samus.equipment.collected.is_empty());
 
-    // The pickup instruction: equip and collect, then the box.
+    // The pickup: the place emptied, the item equipped and collected, then the box.
     let (at, next) = plm::resume(
         &mut state,
         &data::tileset::TileTables::default(),
@@ -536,6 +539,10 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     assert_eq!(at, slot);
     assert_eq!(next, Next::Call(Frame::MessageBox(MessageBoxAt::Start)));
     assert_eq!(state.message, Message::MORPH_BALL);
+    assert!(crate::progress_world::is_emptied(
+        &state.collected_items,
+        0x1a
+    ));
     assert!(state.samus.equipment.equipped.contains(Item::MorphBall));
     assert!(state.samus.equipment.collected.contains(Item::MorphBall));
     assert_eq!(
@@ -567,7 +574,7 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
 
     // The next pass deletes the item.
     assert_eq!(
-        plm::process_unseen(&mut state.room, &mut state.collected_items, &population),
+        plm::process_unseen(&mut state.room, &state.collected_items, &population),
         None
     );
     assert_eq!(item(&state), Occupancy::Free);

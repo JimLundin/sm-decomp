@@ -13,11 +13,13 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
+use clean_model_progress::Progress;
 use data::id::RoomId;
 use data::plm::PlmPopulation;
 use data::rom::Lorom;
-use data::room::{Progress, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
+use data::room::{RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
 use data::tileset::TilesetId;
+use game::progress_world;
 use game::state::atmospheric::AtmosphericGraphic;
 use game::state::projectile::ProjectileBody;
 use game::state::room::{
@@ -88,8 +90,8 @@ pub fn slice_zero_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>,
         .collect())
 }
 
-/// The PLM population of each room [`slice_zero_rooms`] holds, as it loads with no events
-/// set: the state slice 0's rows play in.
+/// The PLM population of each room [`slice_zero_rooms`] holds, as it loads on a new file
+/// entered by no door: the state slice 0's rows play in.
 ///
 /// # Errors
 ///
@@ -101,7 +103,11 @@ pub fn slice_zero_plms(image: &[u8]) -> Result<Vec<(RoomId, PlmPopulation)>, Roo
         .iter()
         .filter_map(|(_, id)| {
             let room = rooms.get(id)?;
-            let state = room.state(room.select(&Progress::default()))?;
+            let state = room.state(progress_world::room_state(
+                room,
+                &Progress::new_file(),
+                None,
+            )?)?;
             Some((id, state.plms.clone()))
         })
         .collect())

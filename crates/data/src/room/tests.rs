@@ -81,7 +81,10 @@ fn a_header_and_its_states_decode() {
     );
     assert_eq!(room.doors, RomAddress::new(0x8f, 0x9e91));
     assert_eq!(room.conditional.len(), 1);
-    assert_eq!(room.conditional[0].condition, Condition::Event(Event(0)));
+    assert_eq!(
+        room.conditional[0].condition,
+        Condition::Event(Event::PlanetAwake)
+    );
     assert_eq!(room.conditional[0].state.at, RomAddress::new(0x8f, 0x8100));
     assert_eq!(room.conditional[0].state.tileset, 7);
     assert_eq!(
@@ -130,7 +133,7 @@ fn the_first_condition_that_holds_selects_the_state() {
     assert_eq!(room.select(&asleep), StateIndex(1));
     assert_eq!(room.state(StateIndex(1)), Some(&room.default));
     let awake = Progress {
-        events: &[Event::ZEBES_AWAKE],
+        events: &[Event::PlanetAwake],
         ..Progress::default()
     };
     assert_eq!(room.select(&awake), StateIndex(0));
@@ -141,7 +144,7 @@ fn the_first_condition_that_holds_selects_the_state() {
 fn each_condition_tests_its_progress() {
     let door = RomAddress::new(0x83, 0x8a42);
     let progress = Progress {
-        events: &[Event(3)],
+        events: &[Event::TourianOpen],
         area_bosses: BossBits(0b10),
         collected: &[Item::MorphBall, Item::PowerBombs],
         door: Some(door),
@@ -150,8 +153,8 @@ fn each_condition_tests_its_progress() {
         (Condition::Door(door), true),
         (Condition::Door(RomAddress::new(0x83, 0x8a4e)), false),
         (Condition::MainAreaBossDead, false),
-        (Condition::Event(Event(3)), true),
-        (Condition::Event(Event(4)), false),
+        (Condition::Event(Event::TourianOpen), true),
+        (Condition::Event(Event::GlassTunnelBroken), false),
         (Condition::BossDead(BossBits(0b10)), true),
         (Condition::BossDead(BossBits(0b01)), false),
         (Condition::MorphBall, true),
@@ -249,7 +252,7 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
     assert_eq!(room.conditional.len(), 1);
     assert_eq!(
         room.conditional[0].condition,
-        Condition::Event(Event::ZEBES_AWAKE)
+        Condition::Event(Event::PlanetAwake)
     );
     assert_eq!(room.conditional[0].state.at, RomAddress::new(0x8f, 0x9ecb));
 

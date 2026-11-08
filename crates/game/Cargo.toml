@@ -9,6 +9,7 @@ description = "The Session, its State and the Tick: every gameplay domain"
 [dependencies]
 canonical = { path = "../canonical" }
 clean_model_camera = { path = "../clean_model/camera" }
+clean_model_progress = { path = "../clean_model/progress" }
 clean_model_samus_motion = { path = "../clean_model/samus-motion" }
 clean_types = { path = "../clean_types" }
 data = { path = "../data" }

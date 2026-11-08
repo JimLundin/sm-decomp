@@ -115,11 +115,11 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | bridge | 4 | 2,751 | 3,375 | 257 | 12 | 81 | 0 | 504 |
+| samus-motion | bridge | 4 | 2,691 | 3,314 | 257 | 12 | 81 | 0 | 497 |
 | samus-motion | harness | 1 | 3,913 | 4,328 | 455 | 222 | 209 | 17 | 755 |
 | camera | bridge | 1 | 700 | 889 | 39 | 1 | 13 | 0 | 132 |
 | camera | harness | 1 | 2,958 | 3,289 | 456 | 105 | 130 | 22 | 588 |
-| total | | | 10,321 | 11,881 | 1,207 | 340 | 433 | 39 | 1,979 |
+| total | | | 10,261 | 11,820 | 1,207 | 340 | 433 | 39 | 1,972 |
 
 ## Harness floors and vectors
 
@@ -172,6 +172,6 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 47 | 5,620 | 33,718 | 36,083 | 10,219 | 1,079 | 2,731 | 665 | 7,551 |
-| bridges | 5 | 575 | 3,451 | 4,264 | 296 | 13 | 94 | 0 | 636 |
+| engine, not yet rebuilt | 48 | 5,839 | 35,032 | 37,606 | 10,270 | 1,147 | 2,775 | 665 | 7,786 |
+| bridges | 5 | 565 | 3,391 | 4,203 | 296 | 13 | 94 | 0 | 629 |
 | rebuilt models, shared types included | 21 | 1,664 | 9,982 | 12,223 | 3,765 | 8,735 | 450 | 16 | 4,490 |

@@ -4,7 +4,7 @@
 //! the elevator and the frame count, and each pose's body size from the pose table.
 
 use clean_model_samus_motion::Frame;
-use clean_types::{Buttons, Equipment, Parity, Pose, Radius, button};
+use clean_types::{Buttons, Parity, Pose, Radius, button};
 use core::num::Wrapping;
 use data::assets::samus::import::map;
 use data::assets::samus::key::Dress;
@@ -14,9 +14,10 @@ use super::state::X_RADIUS;
 use crate::animation;
 use crate::collision::ScanOrder;
 use crate::pose::{Content, PoseRequests, controls};
+use crate::progress_world;
 use crate::state::Controller;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
-use crate::state::samus::{Item, Samus};
+use crate::state::samus::Samus;
 
 /// The model's pad from the controls the buttons work; item cancel moves nothing.
 fn pad(held: Controls) -> Buttons {
@@ -72,18 +73,10 @@ impl FrameSource<'_> {
     #[must_use]
     pub fn frame<'b>(&self, body: &'b dyn Fn(Pose) -> Radius) -> Frame<'b> {
         let samus = self.samus;
-        let equipped = samus.equipment.equipped;
         Frame {
             pad: pad(controls(self.controller.held)),
             pressed: pad(controls(self.controller.pressed)),
-            equipment: Equipment {
-                hi_jump: equipped.contains(Item::HiJumpBoots),
-                space_jump: equipped.contains(Item::SpaceJump),
-                spring_ball: equipped.contains(Item::SpringBall),
-                screw_attack: equipped.contains(Item::ScrewAttack),
-                other_suit: equipped.contains(Item::VariaSuit)
-                    || equipped.contains(Item::GravitySuit),
-            },
+            equipment: progress_world::equipment(&samus.equipment),
             spin_turned_far: animation::spin_turned_far(samus),
             elevator_moving: self.ride.status != ElevatorStatus::Inactive,
             parity: match ScanOrder::of(self.completed) {

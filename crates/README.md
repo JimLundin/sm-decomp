@@ -6,7 +6,7 @@ The rebuild's crates, as planned in
 | Crate | Owns | May depend on (workspace) |
 | --- | --- | --- |
 | `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical`, `clean_types` (the asset key is the clean room's pose) |
-| `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `clean_types`, `clean_model_samus_motion`, `clean_model_camera` |
+| `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `clean_types`, `clean_model_samus_motion`, `clean_model_camera`, `clean_model_progress` |
 | `runtime` | the line compositor, presentation, sound backends, storage. Feeds nothing back into the Session. | `data` |
 | `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `game`, `runtime` |
 | `oracle` | the emulator adapters, `Oracle`, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |
@@ -17,6 +17,7 @@ The rebuild's crates, as planned in
 | `canonical_derive` | the `Canonical` derive macro, dependency-free. | none |
 | `clean_types` | the clean room's shared domain types (MODEL §5): `P.S` quantities, poses, cells, the `World` trait, the catalogue's kinds. No address or original name. | none |
 | `clean_model_samus_motion` | Samus moving through the world (`crates/clean_model/samus-motion`), built from its spec in the clean room, and its catalogue. | `clean_types` |
+| `clean_model_progress` | what the game remembers of a run (`crates/clean_model/progress`): the reports that change it, the questions it answers and the room states it picks, built from its spec in the clean room, and its catalogue. | `clean_types` |
 
 `data`, `game`, `runtime` and `app` are the engine. Every new crate takes the workspace lint
 set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float arithmetic.

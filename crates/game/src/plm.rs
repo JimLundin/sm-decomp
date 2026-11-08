@@ -8,7 +8,6 @@ use data::level::{Tile, TileNumber};
 use data::plm::{Extension, ItemPlm, PlmEntry, PlmKind, PlmPopulation};
 use data::tileset::TileTables;
 
-use crate::message_box;
 use crate::state::room::{
     Block, BlockIndex, BlockKind, Bts, ItemFrame, ItemGfxSlot, ItemStep, Offset, Plm, PlmBody,
     PlmChoice, PlmCommon, RoomScoped, ScrollPlm, ScrollStep,
@@ -18,6 +17,7 @@ use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
 use crate::state::strand::Message;
 use crate::state::{CollectedItems, State};
 use crate::tick::Next;
+use crate::{message_box, progress_world};
 
 use self::draw::Drawing;
 
@@ -33,9 +33,6 @@ const ITEM_BLOCK: Bts = Bts(0x45);
 /// How long an item shows each of its two frames: each draw instruction draws the PLM and
 /// waits 4 frames (`$84:E04F`, `$84:E067`, through `$84:E07F`).
 const ITEM_FRAME: Frames = Frames(4);
-/// A room argument with its sign bit set names no collected bit: its item is never collected
-/// (`$84:887C`).
-const NEVER_COLLECTED: u16 = 0x8000;
 
 /// The tile an item's frame draws (`$84:A30F` on): its GFX slot's block for the frame, through
 /// the frame tables `$84:E05F` and `$84:E077`.
@@ -253,11 +250,6 @@ pub fn touch_scroll_block(room: &mut RoomScoped, block: BlockIndex) -> Result<()
     Ok(())
 }
 
-/// Whether the item with collected bit `bit` is collected (`$84:887C`).
-fn is_collected(collected: &CollectedItems, bit: u16) -> bool {
-    bit & NEVER_COLLECTED == 0 && collected.contains(bit)
-}
-
 /// Draw item frame `frame` (`$84:E04F`, `$84:E067`) and wait: the block becomes the special
 /// block Samus collides with, with the frame's tile (`$84:A30F`, `$84:A315`: block type
 /// `Bh`), its BTS kept, and the draw queues it into the tilemap if it is on screen. The step
@@ -366,7 +358,7 @@ fn update_scroll(
 pub fn process(
     drawing: &mut Drawing,
     room: &mut RoomScoped,
-    collected: &mut CollectedItems,
+    collected: &CollectedItems,
     population: &PlmPopulation,
 ) -> Option<SlotIndex<Plm>> {
     let end = room.plms.slots.len();
@@ -378,7 +370,7 @@ pub fn process(
 #[cfg(test)]
 pub(crate) fn process_unseen(
     room: &mut RoomScoped,
-    collected: &mut CollectedItems,
+    collected: &CollectedItems,
     population: &PlmPopulation,
 ) -> Option<SlotIndex<Plm>> {
     let mut video = crate::state::video::Video::default();
@@ -395,8 +387,9 @@ pub(crate) fn process_unseen(
 ///
 /// Returned from its message box (`$84:8916`), the item's list goes on to the empty item, whose draw waits a frame
 /// (`$84:DFA9`), and the pass goes on below its slot. The slot an item called out of that
-/// runs its pickup instruction first (`$84:88F3`): equip and collect its equipment, then
-/// display its message box, the call this returns. Another item's pickup further down
+/// runs its pickup instruction first: set its place emptied and take its equipment
+/// (`$84:8899`, `$84:88F3`, the progress model's `Taken`), then display its message box, the
+/// call this returns. Another item's pickup further down
 /// moves the pass to its slot.
 // open: the draw tilemap buffer's index (`$1C25`) restarts at 0 here instead of where the
 // pass left it; it matters only when another PLM drew earlier in the same pass.
@@ -410,15 +403,19 @@ pub fn resume(
     let mut drawing = Drawing::new(&mut state.video, tables);
     let room = &mut state.room;
     if let Some(slot) = room.plms.slots.get_mut(index)
-        && let Occupancy::Live(PlmBody::Item { item, step, .. }) = &mut slot.occupancy
+        && let Occupancy::Live(PlmBody::Item {
+            item,
+            collected_bit,
+            step,
+            ..
+        }) = &mut slot.occupancy
     {
         match *step {
             ItemStep::PickingUp => {
                 let Pickup { item, message } = pickup(*item);
+                let place = *collected_bit;
                 *step = ItemStep::InBox;
-                let equipment = &mut state.samus.equipment;
-                equipment.equipped.insert(item);
-                equipment.collected.insert(item);
+                progress_world::take(state, item, place);
                 // open: the room's music after 6 seconds (`$82:E118`) is C11's.
                 return (at, message_box::display(state, message));
             }
@@ -437,7 +434,7 @@ pub fn resume(
     run_below(
         &mut drawing,
         &mut state.room,
-        &mut state.collected_items,
+        &state.collected_items,
         population,
         index,
     )
@@ -456,7 +453,7 @@ fn set_item(room: &mut RoomScoped, index: usize, body: PlmBody, delay: Frames) {
 fn run_below(
     drawing: &mut Drawing,
     room: &mut RoomScoped,
-    collected: &mut CollectedItems,
+    collected: &CollectedItems,
     population: &PlmPopulation,
     end: usize,
 ) -> Option<SlotIndex<Plm>> {
@@ -509,7 +506,7 @@ fn run_below(
                 // collected, else its link and pre-instruction and frame 0's draw.
                 ItemStep::Spawned => {
                     let gfx_slot = item_gfx::load(&mut room.item_gfx, item);
-                    let (step, delay) = if is_collected(collected, collected_bit) {
+                    let (step, delay) = if progress_world::is_emptied(collected, collected_bit) {
                         (draw_empty(drawing, room, block), Frames(1))
                     } else {
                         (
@@ -536,11 +533,11 @@ fn run_below(
                     };
                     set_item(room, index, body, ITEM_FRAME);
                 }
-                // `$84:E40F`: set the room argument item collected (`$84:8899`), then the
-                // pickup instruction calls out.
+                // `$84:E40F`: the pickup calls out, and [`resume`] sets the room argument's
+                // place emptied (`$84:8899`) with the pickup instruction: nothing reads it
+                // between them.
                 // open: clearing the music queue and queueing the fanfare (`$84:8BDD`) is C11's.
                 ItemStep::Triggered => {
-                    collected.insert(collected_bit);
                     slot.occupancy = Occupancy::Live(PlmBody::Item {
                         item,
                         collected_bit,
