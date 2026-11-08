@@ -45,7 +45,8 @@ For the two confined roles, the brief is also part of the barrier:
 
 From a checkout of `main`:
 1. `bash tools/cleanroom/canary.sh plant`.
-2. `bash tools/cleanroom/export.sh DOMAIN C:/cleanroom/DOMAIN`.
+2. `bash tools/cleanroom/export.sh DOMAIN C:/cleanroom/DOMAIN`, adding `-c COMMIT` when the
+   spec is an amendment still on its branch.
 3. `bash tools/cleanroom/launch.sh C:/cleanroom/DOMAIN BRIEF TRANSCRIPT`, with the transcript
    under `~/.cleanroom/transcripts/`. Done on `LAUNCH OK` and `CANARY CLEAN`.
 4. Read the session's report: the last `result` event of the transcript.

@@ -71,9 +71,12 @@ Each step names its owner, what it waits for, and its done-condition.
 3. **Spec gate** (adversary), after 1 and 2: it gates the spec and the brief together. Done on a
    verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their owners (the observer
    for the spec, the root for the brief), then a re-gate of the delta.
-4. **Land the spec** (root), through `tools/lane/land.sh`.
-5. **Export and launch** (root): `canary.sh plant`, `export.sh`, then `launch.sh`. Done on
-   `LAUNCH OK` with a clean canary check.
+4. **Land the spec** (root), through `tools/lane/land.sh`, when it is a new domain's first spec.
+   An amended spec changes what the landed model must do, so the model's own vector test fails
+   on it until the round implements it. An amendment therefore stays on its branch, the round
+   exports from that branch's commit, and the spec lands with the round (step 11).
+5. **Export and launch** (root): `canary.sh plant`, `export.sh` (with `-c COMMIT` for an
+   amendment's branch), then `launch.sh`. Done on `LAUNCH OK` with a clean canary check.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
 7. **Import** (root): `import.sh` runs `code_check.sh` and applies the commits to a lane branch.
@@ -91,7 +94,8 @@ Each step names its owner, what it waits for, and its done-condition.
 10. **Round gate** (adversary), after 8 and 9. It reads the leaks, the harness's honesty, the
     score against the budget and the blind review. Done on a verdict of MERGE. Findings go to
     the integrator (harness, adapter), or into the next round's queue (model shape, spec gaps).
-11. **Land** (root), through `land.sh`. `docs/REPORT.md` is regenerated in the same change.
+11. **Land** (root), through `land.sh`: the spec amendment, the import and the integration
+    together. `docs/REPORT.md` is regenerated in the same change.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     The domain is done when the queue holds nothing that changes behaviour or shape enough to
     be worth a round.
