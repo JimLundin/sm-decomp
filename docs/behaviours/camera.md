@@ -242,8 +242,10 @@ aim stopped it, and `v` its speed's pixel part.
 - The screen it reads `Short` → `rows = 0` [R17, R19, R25, C-ease-up-short]
 - Any other kind → `rows = 31` [R12, C-push-down-back, C-ease-up]
 - The screen it reads is the camera's screen down: going down, the one its move took its top to
-  (`DownwardLooksAhead`); settling, the one its top is in before it settles.
-- checked: oracle (R12 at 31, the others at 0); constructed (C-ease-up, C-ease-up-short).
+  (`DownwardLooksAhead`); settling, the one its top is in before it settles
+  (C-settle-up-from-below-short).
+- checked: oracle (R12 at 31, the others at 0); constructed (C-ease-up, C-ease-up-short,
+  C-settle-up-from-below-short).
 
 ### Settling
 - kind: mechanic.
@@ -276,7 +278,8 @@ aim stopped it, and `v` its speed's pixel part.
   where the frame found it: from `0150` it eases to `014D` (C-settle-back-right-of-room); from
   `0250` the ease lands in the column after the last, which runs on to a closed screen, and it goes
   on to `0300` (C-settle-back-far-right). A camera below the room is brought to its bottom, its
-  screen's edge plus `rows`, so it holds.
+  screen's edge plus `rows`, so it holds: from `0250`, below a `Short` last row, `rows` is the
+  closed screen's 31 and it holds on `011F` (C-settle-up-from-below-short).
 - So across, from a frame the camera began inside the room, the first rule changes nothing; down it
   can, when the screen its top is in became `Short` (C-settle-into-room-down).
 - checked: oracle (the holds); constructed (every ease: no recorded frame starts with the view

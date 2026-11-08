@@ -481,6 +481,19 @@ before = { camera = ["0003.0000", "0010.0000"], seen = ["0066.0000", "0090.0000"
 samus = { position = ["0062.0000", "0090.0000"], facing = "Right" }
 after = { camera = ["0006.0000", "0000.0000"], seen = ["0062.0000", "0090.0000"] }
 
+[[vector]]
+# placed below the room, she still: the rows its top was in before it settles (2, below the room,
+# Closed) give rows 31, so it is brought to 0100 + 31 = 011F; the screen its top is then in is
+# Short and not closed, the one under it Closed, and 011F is not past 011F, so it holds (taking
+# rows from the Short screen it is brought into would give 0100)
+id = "C-settle-up-from-below-short"
+source = "constructed"
+entries = ["Settling", "ShortScreens", "RoomEdges", "BelowTheRoom"]
+room = { screens = ["O", "S"], heights = [112, 160] }
+before = { camera = ["0000.0000", "0250.0000"], seen = ["0080.0000", "0190.0000"] }
+samus = { position = ["0080.0000", "0190.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "011F.0000"], seen = ["0080.0000", "0190.0000"] }
+
 # Recorded vectors.
 
 [[vector]]
