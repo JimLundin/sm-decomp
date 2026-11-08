@@ -6,6 +6,7 @@
 //! their domain lanes fill them.
 
 use crate::animation;
+use crate::camera_world;
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::collision::{Room, Surroundings, Touches, inside};
 use crate::message_box;
@@ -524,18 +525,13 @@ fn gameplay_phase(
         }
         GameplayPhase::Scrolling => {
             let room = &mut state.room;
-            let width = room.width.0 / SCREEN_BLOCKS;
-            let height = u16::try_from(room.scroll_areas.len())
-                .unwrap_or(u16::MAX)
-                .checked_div(width)
-                .unwrap_or(0);
-            let areas = scrolling::ScrollAreas {
-                areas: &room.scroll_areas,
-                stale: &room.stale_scrolls,
-                width,
-                height,
-            };
-            scrolling::follow(&mut room.camera, &mut state.samus, areas);
+            let screens = camera_world::room(
+                &room.scroll_areas,
+                &room.stale_scrolls,
+                usize::from(room.width.0 / SCREEN_BLOCKS),
+                room.camera.scrollers,
+            );
+            camera_world::follow(&mut room.camera, &mut state.samus, &screens);
         }
         GameplayPhase::Draw => crate::enemy::drawing::draw(state, content),
         GameplayPhase::BgScroll => bg_scroll(state, content),

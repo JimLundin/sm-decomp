@@ -8,6 +8,7 @@
 pub mod animation;
 pub mod atmospheric;
 pub mod bg_graphics;
+pub mod camera_world;
 pub mod collision;
 pub mod commit;
 pub mod enemy;

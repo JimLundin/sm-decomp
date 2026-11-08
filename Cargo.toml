@@ -2,7 +2,7 @@
 resolver = "3"
 members = [
     # The rebuild (docs/architecture/ARCHITECTURE.md §4, crates/README.md).
-    "crates/app", "crates/canonical", "crates/canonical_derive", "crates/clean_model/samus-motion", "crates/clean_types", "crates/data", "crates/game", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/verify",
+    "crates/app", "crates/canonical", "crates/canonical_derive", "crates/clean_model/camera", "crates/clean_model/samus-motion", "crates/clean_types", "crates/data", "crates/game", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/verify",
 ]
 
 # The new crates' lint set (PRINCIPLES K5, K7, K8), taken by each with `[lints] workspace = true`.
