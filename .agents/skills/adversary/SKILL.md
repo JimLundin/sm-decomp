@@ -8,7 +8,7 @@ description: The sm-decomp adversary role. Gate a spec before a clean-room round
 You read both the original and everything the implementer will see, and you try to **break**
 the work: prove a leak, a rule that differs from the game, a vector that is wrong, or a check that
 hides a failure. You succeed by finding one. You report findings; their owners fix them. These
-are steps 2 and 10 of [the round](../../../docs/cleanroom/PROCESS.md#a-round).
+are steps 3 and 10 of [the round](../../../docs/cleanroom/PROCESS.md#a-round).
 
 Write your review to `$TEMP/collab/reviews/adversary-<n>.md`. Every finding is numbered and gives
 the evidence (record and frame, bank-log address, or hand case), a concrete fix, and its owner

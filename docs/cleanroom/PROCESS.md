@@ -49,9 +49,12 @@ decision that could be a table row, a function doing two jobs. It never arrives 
 
 ## A round
 
-One round at a time across the project, while the process is still changing (Jim, 2026-11-08).
-Each step names its owner and ends on its done-condition. The root reports each step's result to
-Jim before starting the next.
+Each step names its owner, what it waits for, and its done-condition.
+
+```
+1 spec ─ 2 brief ─ 3 spec gate ─ 4 land spec ─ 5 launch ─ 6 implement ─ 7 import ─┬─ 8 blind review ─┬─ 10 round gate ─ 11 land ─ 12 queue
+                                                                                  └─ 9 integrate ────┘
+```
 
 1. **Spec** (observer). Done when:
    - `docs/behaviours/<domain>.md` states every rule in arm form;
@@ -61,36 +64,66 @@ Jim before starting the next.
    - the observer's reference model agrees with every vector;
    - `tools/cleanroom/scan.sh` finds 0 on the spec and vectors;
    - the doc links pass.
-2. **Spec gate** (adversary). Done on a verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered
-   findings back to the observer (step 1), then a re-gate of the delta.
-3. **Land the spec** (root), through `tools/lane/land.sh`.
-4. **Brief** (root). Done when the brief:
+2. **Brief** (root), after 1. Done when the brief:
    - names only spec entries and shape findings;
    - carries the runner command;
    - passes `tools/cleanroom/scan_brief.sh` with 0.
+3. **Spec gate** (adversary), after 1 and 2: it gates the spec and the brief together. Done on a
+   verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their owners (the observer
+   for the spec, the root for the brief), then a re-gate of the delta.
+4. **Land the spec** (root), through `tools/lane/land.sh`.
 5. **Export and launch** (root): `canary.sh plant`, `export.sh`, then `launch.sh`. Done on
    `LAUNCH OK` with a clean canary check.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
 7. **Import** (root): `import.sh` runs `code_check.sh` and applies the commits to a lane branch.
    Done when the import passes.
-8. **Blind review** (blind reviewer, confined). The root makes a code-only copy (the model, its
-   tests and the vector file) and launches the review. Done on its report. The root compares the
-   review's "what the code does" with the spec: where the reviewer misread the code, the code
-   doesn't explain itself.
-9. **Integrate** (integrator). Done when:
+8. **Blind review** (blind reviewer, confined), after 7. The root makes a code-only copy (the
+   model, its tests and the vector file) and launches the review. Done on its report. The root
+   compares the review's "what the code does" with the spec: where the reviewer misread the
+   code, the code doesn't explain itself.
+9. **Integrate** (integrator), after 7. Done when:
    - the engine runs the model through an adapter;
    - the honest harness compares it with the records, and its floors are committed;
    - the old code it replaces is deleted;
    - `tools/lane/gate.sh` passes;
    - the free-run gate's green pairs and the lockstep ratchet hold.
-10. **Round gate** (adversary). It reads the leaks, the harness's honesty, the score against the
-    budget and the blind review. Done on a verdict of MERGE. Findings go to the integrator
-    (harness, adapter), or into the next round's queue (model shape, spec gaps).
+10. **Round gate** (adversary), after 8 and 9. It reads the leaks, the harness's honesty, the
+    score against the budget and the blind review. Done on a verdict of MERGE. Findings go to
+    the integrator (harness, adapter), or into the next round's queue (model shape, spec gaps).
 11. **Land** (root), through `land.sh`. `docs/REPORT.md` is regenerated in the same change.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     The domain is done when the queue holds nothing that changes behaviour or shape enough to
     be worth a round.
+
+## What can run at once
+
+**Now: one step at a time** (Jim, 2026-11-08). While the process is still changing, each step
+starts only after the one before it reports, so every step stays observable. The root reports
+each step's result to Jim before starting the next. The rest of this section is what the
+dependencies allow, for when Jim lifts that rule.
+
+**Within a round:** steps 8 and 9 run together. Both need only the import; the blind reviewer
+writes nothing, and the integrator works outside the clean crates.
+
+**Across rounds of one domain:** the observer answers round N's gaps (step 1 of round N+1) as
+soon as step 6 reports them, alongside N's steps 7 to 10. Round N+1's export (step 5) waits for
+N to land, so the implementer starts from the landed model.
+
+**Across domains:**
+
+| Role | Runs alongside another domain's | Constraint |
+| --- | --- | --- |
+| observer | any step | reads the original and writes its own domain's files |
+| adversary | any step | one gate per subject |
+| implementer | any step | `crates/clean_types` is shared: two implementers in flight at once each add only new items there, and the second import rebases on the first |
+| blind reviewer | any step | none |
+| integrator | integration or gate | both touch the engine and `crates/verify`: the second rebases on the first, and re-proves the gates |
+| engineer | any step | its files lie outside every running round |
+| root | none | it alone briefs, imports and lands; landing is one change at a time |
+
+A domain's spec can start before a domain it reads from has landed. Its own round then waits
+until that domain has landed, so the interface it reads is fixed.
 
 ## The loop
 
