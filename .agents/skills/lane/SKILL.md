@@ -29,14 +29,14 @@ lockstep and the localiser say *which behaviour* is wrong, not what code to writ
 ## Done means (a domain)
 
 - Every movement kind or state is a row of data, every parameter a table entry or a `Rules` value,
-  and every behaviour has its catalogue entry (`Behaviour { id, summary, source, kind, switch }`).
-- No bank address in `game::model`: `Source:` lines live in the catalogue only. Nothing in
-  `game::model` names a video type (`VideoMemory`, `NmiBatch`, `VramWord`, `DmaChannel`, OAM bytes,
-  B-bus registers); only `game::exact` encodes bytes. Module docs describe the domain.
+  and every behaviour has its catalogue entry (`Behaviour { id, summary, kind, switch, checked }`).
+- No bank address in the domain's clean model: sources live in the observer's decode notes only.
+  Nothing in the clean model names a video type (`VideoMemory`, `NmiBatch`, `VramWord`,
+  `DmaChannel`, OAM bytes, B-bus registers); only `game::exact` encodes bytes. Module docs describe the domain.
 - Byte-identical: the free-run gate's green pairs hold, the localiser's first differing frames don't
   move earlier, and the lockstep ratchet holds on the spec's declared fields.
-- The domain's vector tests (`scenarios/vectors/<domain>.toml`) pass, its line count is under the
-  budget in its spec header, and its RAM-shape list (State fields decoded as one WRAM word copied
+- The domain's vector tests (`scenarios/vectors/<domain>.toml`) pass, its size (`tools size`) fits
+  the budget in its spec header, and its RAM-shape list (State fields decoded as one WRAM word copied
   as-is) is short, each with a one-line reason in the spec.
 - A switchable quirk has a unit test showing where its variants differ, and the Reference profile
   stays exact. Switches are `Fixed` unless a named use needs a `Toggle`.
@@ -48,11 +48,11 @@ The reviewer stops a change on any "no":
   routine is a stop.
 - Does every ROM instruction list run through the interpreter? A list hand-coded as an enum of
   positions is a stop.
-- Does every literal and branch in `game::model` trace to a `BehaviourId`, with values from `Rules`
+- Does every literal and branch in the clean model trace to a `BehaviourId`, with values from `Rules`
   or `data`? Is there no condition on a frame number, position or room no spec entry names?
 - Which spec entry reads each new State field ("Read by")? Was no field added because the decoder
   has one?
-- Were catalogue entries added only in observer commits (trailer `Role: observer`)?
+- Does the catalogue hold the spec's entries one for one, as the clean crate's vector test checks?
 - Could someone who never saw the original follow the module from its names and types? Does each
   comment say something the code doesn't? Is the domain within its size budget?
 
@@ -76,7 +76,7 @@ The reviewer stops a change on any "no":
   Python (`tools/lane/test_dll.py`; overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`). This is
   for local machines only, never CI; elsewhere it is `cargo test`. Doc tests run only in CI.
 - Behaviour: the lockstep ratchet, the free-run gate and the localiser, as
-  [STATUS](../../../docs/STATUS.md) shows. CI runs the ratchet and the gate on every push.
+  [STATUS](../../../docs/STATUS.md) shows. CI runs the ratchet and the gate on every pull request.
 - A new check must catch a deliberate one-line bug: apply the mutant locally, confirm the check
   fails at the right frame and field, revert. Never commit the mutant.
 

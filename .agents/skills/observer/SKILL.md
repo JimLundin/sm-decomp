@@ -11,7 +11,8 @@ original the implementer gets: write it once, completely, in domain terms. Your 
 its template. This skill adds only how to do them.
 
 **You read:** the [bank logs](https://patrickjohnston.org/bank/), the ROM, the oracle's records,
-`verify`'s decoder and address files, and the existing specs. You don't write `game::model` code.
+`verify`'s decoder and address files, and the existing specs. You don't write the clean
+model's code.
 
 ## 1. The spec and its vectors
 
@@ -46,6 +47,6 @@ oracle or hardware question: a `docs/LEGACY.md` entry.
 
 ## Commits
 
-Catalogue entries (`game::behaviours`) are added only in your commits, with the trailer
-`Role: observer`. Report to the root with the lane skill's format, plus the spec's entry count, how
-many are `checked: oracle`, and the gaps you closed.
+Spec entries are added only in your commits, with the trailer `Role: observer`; the implementer
+mirrors them in the clean model's catalogue. Report to the root with the lane skill's format, plus
+the spec's entry count, how many are `checked: oracle`, and the gaps you closed.
