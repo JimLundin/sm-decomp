@@ -145,3 +145,21 @@ entry name           # the spec's own term
 not including        # plain English
 morph                # rolling into the ball
 unmorph              # rolling out of the ball
+
+# The game's own names for items, places, bosses and stations, as its menus, messages and manual
+# give them (the progress spec, 2026-11-08).
+x ray scope          # item
+ray scope            # part of the x-ray scope's name
+missile tank         # item
+super missile tank   # item
+power bomb tank      # item
+bomb tank            # part of the power bomb tank's name
+map station          # the room that downloads an area's map
+save station         # the room where she saves
+wrecked ship         # area
+landing site         # room, where the gunship lands
+mother brain         # boss
+spore spawn          # boss
+bomb torizo          # boss
+golden torizo        # boss
+mini boss            # a lesser boss: Spore Spawn, Crocomire, Botwoon, Mother Brain
