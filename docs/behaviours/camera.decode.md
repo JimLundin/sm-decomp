@@ -143,12 +143,15 @@ be verified on its own from the records, with her motion's outputs decoded as in
 - **Masks (fields, not frames):** where another domain moved the point the camera measures from
   between N and the scroll, both camera axes are unverified, reported apart: movement types 16h
   (grapple), 1Ah (grabbed by Draygon) and 1Bh (shinespark), `0CF8` ≠ 0 (slow grapple scrolling),
-  `07E9` ≠ 0 (the room's hook, which overwrites layer 1 Y after the scroll), and any frame the enemies'
-  domains place her (the gunship `$A2:A925`, `$A0:B7C4`/`$A0:B7E8`). A pose change between N and
+  `07E9` ≠ 0 (the room's hook, which overwrites layer 1 Y after the scroll), and any frame the
+  enemies' domains place her (the gunship `$A2:A925`, `$A0:B7C4`/`$A0:B7E8`). A pose change between N and
   N+1 is not masked: the `placed` input comes from samus-motion's `camera_from` for that frame (run
   the motion model on it, or, while the camera is checked alone, take N+1's `0B14` when N's pose
   `0A1C` differs from N+1's and the motion domain ran that frame).
 - **Null model:** the camera doesn't move (6,271 of 14,890 frames).
+- **k out of sample:** the old code scores 2,273.5 over this spec's 45.0 units, 50.5 a unit
+  (samus-motion's 65.8); its own 0.55 would give k = 27.8 against the frozen 36, so the 70% caps
+  bind (follow) or nearly (limits).
 - **Free run:** from a seed frame, carry the camera's own State forward and take only the inputs
   from the records; report the first differing frame per axis. Re-seed at a room change.
 - **Per-behaviour attribution:** `model.py`'s tags name the branch each frame takes; the entries
