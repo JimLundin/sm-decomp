@@ -11,7 +11,8 @@ behaviour. For every weight that drops, name the lint that stops the swap to a w
 - A Python mirror of `verify::size`'s lexer and `count()` is in `$TEMP/collab/sizepat/pat.py`.
   It reproduces the DLL's numbers exactly:
   - round-7 model: 9,265 logic, 2,090 types, 7,386 data;
-  - old code (the 11 files in the 13,342 baseline, `sizeparts` cuts included): 13,342 / 1,781 / 153.
+  - old code (the 11 files in the 13,342 baseline at `c7f927ab6`, `sizeparts` cuts included):
+    13,342 / 1,781 / 153.
 - It tags each logic token with the lexical patterns below. `score.py` applies weight scenarios.
   A token in several "good" patterns takes the lowest weight; otherwise it takes the highest "bad" weight.
 - Lints in force: `[workspace.lints]` is identical in the clean-room export and the spine. It sets

@@ -11,7 +11,7 @@ Inputs:
 
 The prototype scripts are in `$TEMP/collab/specbudget/`:
 - `codescore.py` gives weighted and plain logic per file. It reproduces 7,566 / 9,265 for round 7
-  and 11,600 / 13,342 for the old code.
+  and 11,600 / 13,342 for the old code (at `c7f927ab6`).
 - `attribute.py` splits round 7's logic by area, and by the spec entries each function's comments
   cite.
 - `specmeasure.py` counts the spec's structure, with a heuristic for its clauses.

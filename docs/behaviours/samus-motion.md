@@ -27,9 +27,9 @@ target is on everything else, the logic.
 score, 12,723 (`tools size` at spine `bc6f74f9c`, over the old code at `c7f927ab6` and its two
 cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`), times
 0.55 is 36.2. An area's budget is k × its units, capped at 70% of its old code (`old`, the score
-of the old files that area replaces). The budget is an indicator: the fit is score ÷ budget, and
-being over it costs in proportion to how far over, never as a wall; over an area's old code is a
-failure.
+of the old files that area replaces, counted the same way at `c7f927ab6`). The budget is an
+indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
+as a wall; over an area's old code is a failure.
 
 - Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, TurningRound, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
