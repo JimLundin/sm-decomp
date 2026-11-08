@@ -49,3 +49,25 @@ lead needs the damage domain, which the engine doesn't have yet, so it is never 
 scope, the reserve tanks' refill). The harness reads both from the oracle (`0A52`, `0A78`) and
 matches on every compared frame (`TimeStopped` 95 of 95), so the model's rules hold; the engine's
 edge gains them when those domains come.
+
+### C5. Masks and skips beyond the harness note (open, to the camera's observer and samus-motion's)
+
+The harness masks two cases the note doesn't list, and the note says "a pose change between N
+and N+1 is not masked"; it should be amended to name them, or they go:
+
+- **A hit's knockback start** (34 frames, y): her movement handler becomes the knockback's
+  (`DF38h`) in the frame's pose change, which fits its body and writes the y the camera follows
+  her from. Samus-motion defers the knockback and masks that frame too, so its `camera_from` there
+  is not the original's (chain-0106-AD5E 257, 269, 281, 294, 306 differed before the mask).
+- **A pose change where samus-motion's model gives no placement** (68 frames, y). On 9 her motion
+  doesn't run (no gameplay pass, lag, a frame handler that runs no motion, the message box) yet
+  her pose changes; on 59 her motion runs but samus-motion's model doesn't cover the frame (a pose
+  outside its domain, such as 53h, 54h, B2h, B9h, or a deferred movement: grapple, bomb jump).
+  Either way the placement is upstream's, not the camera's.
+
+The message box's waits (the returns of the item pick-ups' calls of `$85:8080`, such as `$84:89CF`
+in the missile tank's, and its own loops `$85:8271`, `$85:8425`) aren't in the strand's tables.
+Samus-motion's harness now names them as the skip the known waits already give ("the main
+thread waits in the message box"): 364 frames that were harness defects (361 in
+samus-square-slope-reserve, the missile tank's box, and 3 in samus-bomb-jump-vertical). The camera skips the same frames
+by its own rule (the requested-NMI count doesn't advance). The strand's tables should learn them.

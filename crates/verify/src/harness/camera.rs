@@ -24,7 +24,7 @@ use game::model::num::Fixed as Exact;
 use game::state::room::{ScrollArea, Scrollers, StaleScroll};
 use oracle_record::FrameRecord;
 
-use super::samus_motion::{Ps, SamusMotion};
+use super::samus_motion::{Ps, SamusMotion, Skip as Motion};
 use super::{Domain, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::decode::DecodeError;
@@ -59,6 +59,8 @@ const ENEMY_SLOTS: u16 = 0x0F78;
 const ENEMY_EXTRA: u16 = 0x8000;
 const ENEMY_SLOT_SIZE: u16 = 0x40;
 const ENEMY_SLOT_COUNT: u16 = 32;
+/// An enemy's function pointer, in its slot.
+const ENEMY_FUNCTION: u16 = 0x3A;
 
 /// The facing byte that faces left (the scroll tests only it) and the one that faces right.
 const FACING_LEFT: u8 = 4;
@@ -86,79 +88,62 @@ const CENTRE_ON_VIEW: u16 = 4;
 /// The yapping maw's species, and its extra word that says it holds her ($A8:A634).
 const YAPPING_MAW: u16 = 0xE7BF;
 const MAW_GRABBING: u16 = 0x0020;
-/// The equipment bits of the two suits, whose pick-ups place her ($91:D4E4, $91:D5BA).
+/// The equipment bits of the two suits, whose pick-ups place her at the view's centre, across
+/// ($91:D57D, $91:D580) and down ($91:D58A, $91:D58D).
 const SUITS: u16 = 0x0021;
 
-/// The rooms whose own code moves the camera, or where it last saw her, during the frame.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum RoomCode {
-    /// The Landing Site: the gunship moves her while she enters, leaves or lands in it
-    /// ($A2:A925, $A2:A9BD, $A2:AC1B).
-    LandingSite,
-    /// The Dachora room's main code scrolls the view right ($8F:C1E6): x.
-    Dachora,
-    /// Crocomire's room: its collision moves her ($A4:8C95) and its main code shakes the view
-    /// across ($8F:E8CD).
-    Crocomire,
-    /// Kraid's room: his collision moves her ($A7:B0F3) and he keeps her x on the first screen
-    /// ($A7:C9EE).
-    Kraid,
-    /// Ridley's room in Norfair: his feet's instructions set where the camera saw her to her
-    /// position ($A6:E501), so it doesn't follow her. Ceres Ridley has no feet.
-    Ridley,
-    /// Mother Brain's room: she moves her towards the ceiling, the floor and the wall
-    /// ($A9:BBFD, $A9:BC3F), and the Shitroid waits for the view ($A9:EFE6).
-    MotherBrain,
+/// An enemy whose code moves where the camera saw her, or the view, while it is live.
+struct Writer {
+    /// Its species, any of these.
+    species: &'static [u16],
+    /// The mask's reason.
+    reason: &'static str,
+    /// The fields it moves.
+    fields: FieldSet,
 }
 
-impl RoomCode {
-    /// The room by its header pointer.
-    const fn of(header: u16) -> Option<Self> {
-        Some(match header {
-            0x91F8 => Self::LandingSite,
-            0x9CB3 => Self::Dachora,
-            0xA98D => Self::Crocomire,
-            0xA59F => Self::Kraid,
-            0xB32E => Self::Ridley,
-            0xDD58 => Self::MotherBrain,
-            _ => return None,
-        })
-    }
+/// The bosses that move her or the view while they are live: their collisions, their holds and
+/// their rooms' code.
+const WRITERS: [Writer; 4] = [
+    Writer {
+        species: &[0xDDBF],
+        reason: "another domain: Crocomire moves her ($A4:8C95), and his room shakes the view across ($8F:E8CD)",
+        fields: CAMERA,
+    },
+    Writer {
+        species: &[0xE2BF],
+        reason: "another domain: Kraid moves her ($A7:B0F3) and holds her x on the first screen ($A7:C9EE)",
+        fields: CAMERA,
+    },
+    // Ceres Ridley (E13Fh) has no feet.
+    Writer {
+        species: &[0xE17F],
+        reason: "another domain: Ridley's feet set where it saw her to her position ($A6:E501)",
+        fields: CAMERA,
+    },
+    Writer {
+        species: &[0xEC3F, 0xEC7F, 0xECBF, 0xEEBF],
+        reason: "another domain: Mother Brain moves her ($A9:BBFD, $A9:BC3F), and the Shitroid waits for the view ($A9:EFE6)",
+        fields: CAMERA,
+    },
+];
 
-    /// The mask's reason and the fields it takes, on a frame where the room's writer may act:
-    /// the gunship only while it holds her (her state handler isn't the normal one).
-    const fn mask(self) -> (&'static str, FieldSet) {
-        match self {
-            Self::LandingSite => (
-                "another domain: the gunship moves her while it holds her",
-                CAMERA,
-            ),
-            Self::Dachora => ("the room's code scrolls the view right after it follows", X),
-            Self::Crocomire => (
-                "another domain: Crocomire moves her, and his room shakes the view",
-                CAMERA,
-            ),
-            Self::Kraid => ("another domain: Kraid moves her and holds her x", CAMERA),
-            Self::Ridley => ("another domain: Ridley's feet set where it saw her", CAMERA),
-            Self::MotherBrain => (
-                "another domain: Mother Brain moves her, and the Shitroid waits for the view",
-                CAMERA,
-            ),
-        }
-    }
-}
+/// The gunship's top, and its idle function, the one that only waits for her to enter: every
+/// other function holds her and moves her, across ($A2:A925, $A2:AA1D, where she enters) and
+/// down ($A2:A8DC landing, $A2:AC2F liftoff, lowering and raising her).
+const GUNSHIP: u16 = 0xD07F;
+const GUNSHIP_IDLE: u16 = 0xA9BD;
+/// The Dachora room, whose main code scrolls the view right ($8F:C1E6) while its scroll Bh is
+/// green.
+const DACHORA_ROOM: u16 = 0x9CB3;
+const DACHORA_SCREEN: usize = 0x0B;
+const GREEN: u8 = 2;
 
 /// The declared fields by their places in [`CameraDomain`]'s `FIELDS`.
 const X: FieldSet = FieldSet::single(0);
 const Y: FieldSet = FieldSet::single(1);
 const CAMERA: FieldSet = X.union(Y);
 const SEEN: FieldSet = FieldSet::single(2);
-
-/// Samus's normal new state handlers: the ones that run her motion ($90:E725, Ceres's, the
-/// elevator's).
-const fn normal(handler: u16) -> bool {
-    matches!(handler, 0xE725 | 0xE8AA | 0xE8EC)
-}
 
 /// Why a frame isn't one the camera is compared on.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -305,13 +290,49 @@ pub struct Upstream {
 }
 
 /// What record N gives besides the State: where samus-motion's model placed the y the camera
-/// follows her from, if it ran.
+/// follows her from.
 #[derive(Clone, Copy, Debug)]
-pub struct Placement {
-    /// Whether her motion ran in the frame, so `camera_from` is the model's.
-    ran: bool,
+pub enum Placement {
+    /// Her motion's frame ran through samus-motion's model: `camera_from`, where it isn't her
+    /// start y.
+    Model(Option<Fixed>),
+    /// Her motion doesn't run in the frame (no gameplay pass, lag, a frame handler that runs no
+    /// motion, the message box): nothing places her.
+    NoMotion,
+    /// Her motion runs, but samus-motion's model doesn't cover the frame (a pose outside its
+    /// domain, a deferred movement): its placement is that model's to come.
+    Uncovered,
+}
+
+impl TryFrom<Result<Option<Fixed>, Motion>> for Placement {
+    type Error = Skip;
+
+    /// The frame's placement by samus-motion's answer; a decode failure is a harness defect.
+    fn try_from(answer: Result<Option<Fixed>, Motion>) -> Result<Self, Skip> {
+        Ok(match answer {
+            Ok(placed) => Self::Model(placed),
+            Err(Motion::Unreadable(error)) => return Err(Skip::Unreadable(error)),
+            Err(
+                Motion::GameState(_)
+                | Motion::NotAtFrameEnd
+                | Motion::Waiting(_)
+                | Motion::NotRunning(_),
+            ) => Self::NoMotion,
+            Err(Motion::Pose(_) | Motion::MovementHandler(_) | Motion::Deferred(_)) => {
+                Self::Uncovered
+            }
+        })
+    }
+}
+
+impl Placement {
     /// `camera_from`, where it isn't her start y.
-    placed: Option<Fixed>,
+    const fn placed(self) -> Option<Fixed> {
+        match self {
+            Self::Model(placed) => placed,
+            Self::NoMotion | Self::Uncovered => None,
+        }
+    }
 }
 
 /// The declared fields: the camera position, and where it last saw her, reported only.
@@ -366,23 +387,76 @@ fn gameplay(record: &FrameRecord) -> Result<(), Skip> {
     }
 }
 
-/// The live enemy slots' words at `field` of the main table and of the extra one.
-fn slots(record: &FrameRecord) -> Result<Vec<(u16, u16)>, Skip> {
+/// An enemy slot as the masks read it.
+#[derive(Clone, Copy, Debug)]
+struct Slot {
+    /// Its species, 0 when free.
+    species: u16,
+    /// Its function pointer.
+    function: u16,
+    /// Its extra word at 20h: the yapping maw's hold.
+    grabbing: u16,
+}
+
+/// The enemy slots of `record`.
+fn slots(record: &FrameRecord) -> Result<Vec<Slot>, Skip> {
     (0..ENEMY_SLOT_COUNT)
         .map(|slot| {
-            let base = slot.wrapping_mul(ENEMY_SLOT_SIZE);
-            Ok((
-                word(record, wram("ENEMY_ID", ENEMY_SLOTS.wrapping_add(base)))?,
-                word(
+            let base = ENEMY_SLOTS.wrapping_add(slot.wrapping_mul(ENEMY_SLOT_SIZE));
+            let extra = ENEMY_EXTRA.wrapping_add(slot.wrapping_mul(ENEMY_SLOT_SIZE));
+            Ok(Slot {
+                species: word(record, wram("ENEMY_ID", base))?,
+                function: word(
                     record,
-                    wram(
-                        "ENEMY_RAM_7E8020",
-                        ENEMY_EXTRA.wrapping_add(MAW_GRABBING).wrapping_add(base),
-                    ),
+                    wram("ENEMY_FUNCTION", base.wrapping_add(ENEMY_FUNCTION)),
                 )?,
-            ))
+                grabbing: word(
+                    record,
+                    wram("ENEMY_RAM_7E8020", extra.wrapping_add(MAW_GRABBING)),
+                )?,
+            })
         })
         .collect()
+}
+
+/// The masks of the enemies that move her or the view in the frame from `from` to `next`,
+/// live at either record: a yapping maw holding her, the bosses, the gunship holding her.
+fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
+    let mut masks = Vec::new();
+    let mut mask = |reason, fields| masks.push(Mask { reason, fields });
+    let (before, after) = (slots(from)?, slots(next)?);
+    let live = |species: u16| {
+        before
+            .iter()
+            .chain(&after)
+            .any(|slot| slot.species == species)
+    };
+    if before
+        .iter()
+        .chain(&after)
+        .any(|slot| slot.species == YAPPING_MAW && slot.grabbing != 0)
+    {
+        mask(
+            "another domain: a yapping maw holds her and caps the scroll's speed",
+            CAMERA,
+        );
+    }
+    for writer in &WRITERS {
+        if writer.species.iter().any(|&species| live(species)) {
+            mask(writer.reason, writer.fields);
+        }
+    }
+    if before
+        .iter()
+        .chain(&after)
+        .any(|slot| slot.species == GUNSHIP && slot.function != GUNSHIP_IDLE)
+    {
+        mask(
+            "another domain: the gunship holds her and moves her",
+            CAMERA,
+        );
+    }
+    Ok(masks)
 }
 
 impl Domain for CameraDomain {
@@ -411,16 +485,7 @@ impl Domain for CameraDomain {
             position: position(from)?,
             seen: seen(from)?,
         };
-        // Where samus-motion's harness can't decode the frame (a wait site it doesn't know),
-        // her motion is taken as not running, as on its own skips: the camera's own words
-        // decoded, and a pose change there masks y.
-        let placement = self.motion.placement(from, interval).map_or(
-            Placement {
-                ran: false,
-                placed: None,
-            },
-            |placed| Placement { ran: true, placed },
-        );
+        let placement = Placement::try_from(self.motion.placement(from, interval))?;
         Ok((camera, placement))
     }
 
@@ -448,6 +513,7 @@ impl Domain for CameraDomain {
             reason: "reported, not counted: where it last saw her is her position's own words",
             fields: SEEN,
         }];
+        masks.extend(enemies(from, next)?);
         let mut mask = |reason, fields| masks.push(Mask { reason, fields });
         let movement = [
             byte(from, source::SAMUS_MOVEMENT_TYPE)?,
@@ -483,26 +549,17 @@ impl Domain for CameraDomain {
                 Y,
             );
         }
-        if slots(from)?
-            .iter()
-            .any(|&(species, grabbing)| species == YAPPING_MAW && grabbing != 0)
-        {
-            mask(
-                "another domain: a yapping maw holds her and caps the scroll's speed",
-                CAMERA,
-            );
+        let green = source::SCROLLS
+            .read(&next.wram)?
+            .get(DACHORA_SCREEN)
+            .is_some_and(|&area| area == GREEN);
+        if word(from, source::ROOM_PTR)? == DACHORA_ROOM && green {
+            mask("the room's code scrolls the view right after it follows", X);
         }
         let handlers = [
             word(from, SAMUS_NEW_STATE_HANDLER)?,
             word(next, SAMUS_NEW_STATE_HANDLER)?,
         ];
-        if let Some(room) = RoomCode::of(word(from, source::ROOM_PTR)?) {
-            let holds = handlers.iter().any(|&handler| !normal(handler));
-            if room != RoomCode::LandingSite || holds {
-                let (reason, fields) = room.mask();
-                mask(reason, fields);
-            }
-        }
         if handlers.contains(&APPEARANCE) {
             mask(
                 "another domain: her appearance when a game loads places her",
@@ -527,18 +584,25 @@ impl Domain for CameraDomain {
             );
         }
         let pose = |record| word(record, source::SAMUS_POSE);
-        if !placement.ran && pose(from)? != pose(next)? {
-            mask(
-                "camera_from: her motion doesn't run in the frame, so where her pose change placed her is samus-motion's to come",
-                Y,
-            );
+        if pose(from)? != pose(next)? {
+            match placement {
+                Placement::Model(_) => {}
+                Placement::NoMotion => mask(
+                    "camera_from: her motion doesn't run in the frame, yet her pose changes and may place her",
+                    Y,
+                ),
+                Placement::Uncovered => mask(
+                    "camera_from: samus-motion's model doesn't cover the frame (a pose outside its domain, a deferred movement), so where her pose change placed her is that model's to come",
+                    Y,
+                ),
+            }
         }
         Ok(masks)
     }
 
     fn step(&self, camera: &mut Camera, placement: &Placement, upstream: &mut Upstream) {
         // Remembering: where her motion's step placed her, else the y it last saw her at.
-        upstream.samus.camera_from = placement.placed.unwrap_or(camera.seen.y);
+        upstream.samus.camera_from = placement.placed().unwrap_or(camera.seen.y);
         let frame = Frame {
             samus: upstream.samus,
             room: &upstream.room,
@@ -549,7 +613,7 @@ impl Domain for CameraDomain {
     }
 
     fn exercised(&self, camera: &Camera, placement: &Placement, upstream: &Upstream) -> Vec<usize> {
-        exercised(camera, placement, upstream)
+        exercised(camera, *placement, upstream)
     }
 
     fn fields(&self, camera: &Camera) -> Declared {
@@ -576,13 +640,13 @@ impl Domain for CameraDomain {
 /// The catalogue entries a frame's situation brings into play, from the camera as record N has
 /// it and the frame's inputs: on each axis she moved or it settles, and the room's screens and
 /// edges it is at.
-fn exercised(camera: &Camera, placement: &Placement, upstream: &Upstream) -> Vec<usize> {
+fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<usize> {
     use BehaviourId as B;
     let samus = &upstream.samus;
     let room = &upstream.room;
     let seen = Pair {
         y: placement
-            .placed
+            .placed()
             .map_or(camera.seen.y, |placed| placed.with_sub(camera.seen.y.sub())),
         ..camera.seen
     };

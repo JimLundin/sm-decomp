@@ -158,9 +158,15 @@ be verified on its own from the records, with her motion's outputs decoded as in
     her x to the first screen (`$A7:C9EE`, x); Ridley (`$A6:E501`); Mother Brain moving her towards
     the ceiling or floor (`$A9:BBFD`, y) and towards the wall (`$A9:BC3F`, x): mask Mother Brain's
     moves on both axes;
-  - the gunship (`$A2:A925`, `$A2:A9BD`, `$A2:AC1B`), the suit pick-ups (`$91:D4E4`, `$91:D5BA`),
-    pose change command 4 (`$91:F37C`, x and y), and Samus's appearance (`$90:E86A`, writes `0B14`;
-    her appearance when a game loads, owned by the game-state domain): mask y;
+  - the gunship, while its function (enemy $D07F's) isn't the idle one (`$A2:A9BD`): it sets her x
+    and where the camera saw her across (`$A2:A925` landing, `$A2:AA1D` as she enters) and moves
+    her y (`$A2:A8DC`, `$A2:AC2F`, lowering and raising her): mask x and y (integrator, lane/wire-cam:
+    an earlier version said y only);
+  - the suit pick-ups (`$91:D4E4`, `$91:D5BA`), which centre her on the view across (`$91:D57D`,
+    `$91:D580`, `0B10`) and down (`$91:D58A`, `$91:D58D`), and pose change command 4 (`$91:F37C`):
+    mask x and y;
+  - Samus's appearance (`$90:E86A`, writes `0B14`; her appearance when a game loads, owned by the
+    game-state domain): mask y;
   - the cutscenes of bank `$8B` (`$8B:AEFB`..`$8B:AFC4`) and the door transitions of bank `$80`/`$82`
     (outside game state 8 or at a room change, so already skipped).
   Writers of the camera after its turn: `07E9` ≠ 0 (the scrolling-finished hook, layer 1 Y only:

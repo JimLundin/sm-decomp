@@ -666,6 +666,21 @@ impl Inputs {
 #[derive(Default)]
 pub struct Exercised(Vec<usize>);
 
+/// Bank $85 log: the message box's bank, whose wait loops ($85:8271, $85:8425) hold the main
+/// loop while a box is up.
+const MESSAGE_BOX_BANK: u32 = 0x85;
+/// Bank $84 and $A2 logs: the returns of the calls of the message box ($85:8080) from the item
+/// pick-ups ($84:88EB..$84:8CF6, $84:B029) and the gunship's save ($A2:AB22).
+const MESSAGE_BOX_RETURNS: [u32; 15] = [
+    0x84_88EF, 0x84_8916, 0x84_893E, 0x84_8965, 0x84_8983, 0x84_89A6, 0x84_89CF, 0x84_89F8,
+    0x84_8A21, 0x84_8CA6, 0x84_8CC0, 0x84_8CE1, 0x84_8CFA, 0x84_B02D, 0xA2_AB26,
+];
+
+/// Whether the main thread's wait at `pc`, or a return on its chain, is the message box's.
+fn in_message_box(pc: u32) -> bool {
+    pc >> 16 == MESSAGE_BOX_BANK || MESSAGE_BOX_RETURNS.contains(&pc)
+}
+
 /// Whether Samus's motion runs in the frame after `record`: gameplay, and the main thread
 /// waiting at the main loop's end, not inside a routine that waits mid-pass.
 fn runs_after(record: &FrameRecord) -> Result<(), Skip> {
@@ -680,12 +695,21 @@ fn runs_after(record: &FrameRecord) -> Result<(), Skip> {
         NmiKind::Requested => {}
         NmiKind::Overrun => return Err(Skip::NotAtFrameEnd),
     }
-    let main = Rules::ORIGINAL.strand.main(
+    let main = match Rules::ORIGINAL.strand.main(
         nmi.interrupted_pc,
         record.cpu.s,
         record.cpu.x,
         &record.wram,
-    )?;
+    ) {
+        Ok(main) => main,
+        // The strand's tables don't hold every message box's waits yet: these are its own loops
+        // and the returns of the item pick-ups' calls of it. The main loop is held there, so
+        // her motion doesn't run, as in the waits the tables do know.
+        Err(DecodeError::UnknownYieldSite { pc }) if in_message_box(pc) => {
+            return Err(Skip::Waiting("the message box"));
+        }
+        Err(error) => return Err(error.into()),
+    };
     // The innermost routine the main thread waits in, the strand's last frame.
     main.frames
         .iter()
