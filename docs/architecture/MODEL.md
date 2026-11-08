@@ -73,6 +73,10 @@ Jim's decisions, 2026-11-07:
    commit before a deletion). When a clean model replaces engine code, the integrator deletes the
    old code in the same lane, and a baseline cites the commit it was measured at. The engine code
    of domains not yet rebuilt is current, and goes as each domain is replaced.
+9. **Audio is rebuilt clean-room too** (Jim, 2026-11-08): a sequencer and a model of the sound
+   chip's DSP, specced in behaviour and verified on the oracle's audio stream, scheduled late; the
+   CPU side (which sound plays when) is modelled with the domains that trigger it. The plan of
+   domains is [domains.md](domains.md).
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
