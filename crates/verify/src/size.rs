@@ -719,8 +719,13 @@ fn after_item<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
     rest
 }
 
-/// The `.rs` files under `path`, skipping `tests` directories and `tests.rs` files, sorted.
-fn sources(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
+/// The `.rs` files under `path`, skipping `tests` directories and `tests.rs` files, sorted, pushed
+/// onto `out`.
+///
+/// # Errors
+///
+/// The path and the error when a directory can't be read.
+pub fn sources(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
     if path.is_file() {
         if path.extension().is_some_and(|e| e == "rs") {
             out.push(path.to_path_buf());
@@ -745,7 +750,8 @@ fn sources(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
 }
 
 /// The size of each source text, measured together: a clump (Q2) recurs across them.
-fn sizes(srcs: &[&str]) -> Vec<Size> {
+#[must_use]
+pub fn sizes(srcs: &[&str]) -> Vec<Size> {
     let lexed: Vec<Vec<Token<'_>>> = srcs.iter().map(|src| without_tests(&lex(src))).collect();
     let quality = quality::of(&lexed);
     lexed

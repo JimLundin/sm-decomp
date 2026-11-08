@@ -44,6 +44,8 @@ jobs:
         run: bash tools/check_crate_rules.sh
       - name: Keep every relative Markdown link and anchor valid
         run: sh tools/check_doc_links.sh
+      - name: Keep docs/REPORT.md what tools report generates
+        run: bash tools/check_report.sh
       - name: Type-check the Python tooling
         # pyproject.toml's [tool.mypy] sets strict mode and the files.
         run: pipx run --spec mypy==2.4.1 mypy

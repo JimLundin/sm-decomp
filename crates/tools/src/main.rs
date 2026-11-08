@@ -21,6 +21,9 @@
 //! frame of each row (`verify::harness`); `DOMAIN` is `game-time`.
 //!
 //! `tools size PATH...`: code volume in logical tokens, per file and in total (`verify::size`).
+//!
+//! `tools report [--write | --check]`: the rebuild's size and progress report, `docs/REPORT.md`
+//! (`verify::report`), printed, written, or checked against the committed one.
 
 mod gate;
 mod localise;
@@ -40,11 +43,12 @@ const HARNESS_USAGE: &str = "tools harness game-time LOCK CACHE ROW...";
 
 fn usage() -> String {
     format!(
-        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}\n       {}\n       {}",
+        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}\n       {}\n       {}\n       {}",
         verify::spec_units::USAGE,
         gate::USAGE,
         localise::USAGE,
-        verify::size::USAGE
+        verify::size::USAGE,
+        verify::report::USAGE
     )
 }
 
@@ -56,6 +60,7 @@ fn run(args: &[String]) -> Result<String, String> {
         [command, rest @ ..] if command == "localise" => localise::run(rest),
         [command, rest @ ..] if command == "harness" => run_harness(rest),
         [command, rest @ ..] if command == "size" => verify::size::run(rest),
+        [command, rest @ ..] if command == "report" => verify::report::run(rest),
         _ => Err(usage()),
     }
 }

@@ -18,6 +18,7 @@ pub mod plm;
 pub mod ppu;
 pub mod projectile;
 pub mod ratchet;
+pub mod report;
 pub mod size;
 pub mod source;
 pub mod spec_units;

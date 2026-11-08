@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Local source gate: the formatting, lint, crate-rule and doc-link checks of Quality, without
-# linking anything. CI runs the tests. Overrides: SM_RUST_BIN (toolchain bin), SM_GATE_DIR.
+# Local source gate: the formatting, lint, crate-rule, doc-link and report checks of Quality. Only
+# the report check links (verify's lib test, tools/check_report.sh); CI runs the other tests.
+# Overrides: SM_RUST_BIN (toolchain bin), SM_GATE_DIR.
 CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
 R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/$CHANNEL-x86_64-pc-windows-gnu/bin}"
 O="${SM_GATE_DIR:-$TEMP/sm-gate}/$(git rev-parse --short HEAD)-$$"
@@ -23,6 +24,7 @@ if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" "$R/carg
 fi
 CARGO="$R/cargo" bash tools/check_crate_rules.sh >/dev/null 2>&1 || fail "CRATE RULES FAIL"
 sh tools/check_doc_links.sh >/dev/null 2>&1 || fail "DOC LINKS FAIL"
+CARGO="$R/cargo" SM_RUST_BIN="$R" bash tools/check_report.sh >/dev/null 2>&1 || fail "REPORT STALE: run cargo run -p tools -- report --write"
 if [ "$ok" -eq 1 ]; then
   echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
 else
