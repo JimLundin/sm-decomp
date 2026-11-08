@@ -6,6 +6,60 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
+## Open: round 8 in the engine and the harness (integrator, 2026-11-08, lane/wire-r8)
+
+Round 8 dropped `Outcome::change` and `Outcome::met` (adversary 27, item 5). The bridge
+(`game::samus_world::step`) now derives what the engine read from them, from her before and
+after the step and the cells it reached, and the proof holds: the free-run gate's eight green
+pairs, the lockstep ratchet at 1372 of 1427 (item-morph-ball) and 476 of 476 (area-brinstar), and
+the free run's localisation as on the spine. The domain harness matches 12,325 of 12,782 compared
+frames over the 32 rows (11,433 at round 7, 5,379 for the null model). The pad of a frame N to N+1
+is record N's.
+
+25. **The frame a hit starts knockback, running: the aim change's step (`AimingAndShooting`,
+    `SolidEnemies`?).** chain-0106-AD5E 106 → 107: running (11h), base speed 2.C000, dash 2.0000,
+    nothing held; the hit starts knockback (record 107 is in it). x: model 00D0.3C00 (4.C000 and
+    the running let-go row's 1 px step), game 00CF.3C00 (4.C000, no step). 650 → 651 the same:
+    running (0Ah) at 0.6000, nothing held: model 01D7.B000, game 01D8.B000. Round 7 matched both
+    (no let-go step). The knockback mask takes her speeds, not x. Asked, with gap 22: whether the
+    hit's pose replaces the chosen running pose before the step, so that frame brings none, or
+    whether x on that frame isn't this domain's. This is the one row below its floor
+    (chain-0106-AD5E 479, floor 480: 134 now matches, these two don't).
+26. **Standing from a run at speed 0 keeps her carrying on (`PadChart`'s running let-go row,
+    AS3).** samus-space-jump-chain 12 → 13, and samus-walljump-16, -22 and -28 12 → 13: running
+    (09h), speed 0 at the frame's start, nothing held. Both move her 0.3000 and leave her speed
+    0.3000; `0B4A`: model 2 (carries on, along her facing), game 0 (follows the pad). Round 7
+    matched. Asked: how she carries on after the let-go row's "upright `Still` when it is 0".
+27. **The run with a kept vertical speed, down slopes: 1 px low (`FollowingTheGround`,
+    `SlopesCarry`; with gaps 20 and 24).** Gap 23's frames now match but for these: samus-mockball
+    and the four samus-shinespark rows, frames 10, 13 and 18-22 (and 79-80, 95-96 on the
+    shinespark rows): running (09h) with +0.E000 kept, down a slope. y: model 1 px lower
+    (samus-shinespark-left 9 → 10: from 048B.FFFF, model 048E.FFFF, game 048D.FFFF). The same
+    1 px as items 20 and 24 where the floor falls away.
+28. **What the edge derives, for the observer to confirm or make an output (`PoseFitAfterMoves`,
+    `TouchedCells`).**
+    - The camera's previous y pixel (`0B14`) becomes hers where pose fit places her: the shrink,
+      and a change to a taller body, not facing the screen, whose looks found something. The
+      bridge reads "found" as standing on the ground as the frame starts or ends (a landing on a
+      solid enemy leaves no cells), or one of the last cells reached, the looks after every move,
+      being other than air. item-morph-ball 738 → 739 (18h → 52h, rising, the look down meets the
+      floor) needs the second; the near-wall test's looks come before the vertical move's, so
+      816 → 817's don't count. Every recorded frame agrees, but the rule infers the push from
+      the cells' order and kinds. Asked: pose fit's push or crouch as a step output, as adversary
+      27 suggests, if the spec wants it said.
+    - A pose request is recorded when the pad asked for one or the chosen pose differs from hers;
+      no recorded frame tells it from "her moves met something".
+    - On the ground the game leaves her vertical direction word as it was. chain-0232-D5A7
+      38 → 44: turning in a moonfall (92h, movement type 17h, `0B36` = 0, `0B2E`.`0B2C`
+      FFFE.7800); the turn's handler pulls her as the ground's does and keeps the word. The bridge
+      gives the model `Ground` with the kept speed there, and writes back no direction while she
+      is still on the ground; a turn in a jump or a fall with `0B36` = 2 is falling, as the
+      vectors' starts have it. Asked: the spec's phase for a turn in a moonfall (the decode notes
+      call `0B36` = 0 with a magnitude outside the airborne types not plain).
+
+The walk-off drift that round 8 widened (adversary 27, item 4) shows nowhere: the gate's pairs
+hold, and no compared frame of the 32 rows newly differs in x but items 25's two.
+
 ## Answered: the Tick on the model (integrator, 2026-11-07, lane/wire-tick; observer, lane/gaps-tick)
 
 The engine's Tick now steps Samus with the model (`game::samus_world::step`): the State is

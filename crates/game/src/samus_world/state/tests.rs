@@ -21,6 +21,8 @@ use crate::state::{Button, Controller};
 const RUNNING_RIGHT: PoseId = PoseId(0x09);
 /// Spin jumping right.
 const SPIN_RIGHT: PoseId = PoseId(0x19);
+/// Turning round in a jump.
+const TURNING_IN_A_JUMP: PoseId = PoseId(0x92);
 /// Standing facing right.
 const STANDING_RIGHT: PoseId = PoseId(0x01);
 
@@ -102,6 +104,18 @@ fn the_games_words_come_back_as_they_went() {
             VerticalMotion::Down,
             0xE000,
         ),
+        (
+            TURNING_IN_A_JUMP,
+            SpeedMode::Accelerating,
+            VerticalMotion::None,
+            0xFFFE_7800,
+        ),
+        (
+            TURNING_IN_A_JUMP,
+            SpeedMode::Accelerating,
+            VerticalMotion::Down,
+            0x1_0000,
+        ),
     ];
     for (pose, mode, vertical, speed) in cases {
         for (momentum, seated) in [(false, false), (true, true)] {
@@ -118,9 +132,12 @@ fn the_games_words_come_back_as_they_went() {
             let Some(model) = clean_of(&before) else {
                 panic!("pose {pose:?} is hers");
             };
+            // The momentum flag and, on the ground, the vertical direction are the words the
+            // write-back keeps as the frame started with them.
             let mut after = Samus {
                 motion: Motion {
                     momentum,
+                    vertical,
                     ..Motion::default()
                 },
                 slope_adjusted: !seated,

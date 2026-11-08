@@ -38,17 +38,21 @@ const fn opposite(heading: Heading) -> Heading {
     }
 }
 
-/// Whether `pose` is one she is in the air in: a jump, a spin, a fall or a wall jump, a turn in
-/// a jump or a fall included. Elsewhere she is on the ground, keeping any vertical speed.
+/// Whether `pose` is one she is in the air in: a jump, a spin, a fall or a wall jump, the
+/// decode notes' airborne movement types. Elsewhere she is on the ground, keeping any vertical
+/// speed.
 const fn in_the_air(pose: Pose) -> bool {
     matches!(
         pose.action,
-        Action::Jumping
-            | Action::Spinning
-            | Action::Falling
-            | Action::WallJumping
-            | Action::Turning(Turn::Jump | Turn::Fall)
+        Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
     )
+}
+
+/// Whether `pose` turns her in a jump or a fall: in the air while she falls, but with no
+/// vertical direction the turn's handler pulls her as the ground's does (chain-0232-D5A7
+/// 38 -> 44, a turn in a moonfall), so it is no moonfall.
+const fn turning_in_the_air(pose: Pose) -> bool {
+    matches!(pose.action, Action::Turning(Turn::Jump | Turn::Fall))
 }
 
 /// The model's Samus as the frame starts; `None` when her pose is outside the domain.
@@ -69,7 +73,9 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         VerticalMotion::None if in_the_air(pose) => (Vertical::Moonfall, magnitude.negated()),
         VerticalMotion::None => (Vertical::Ground, magnitude.negated()),
         VerticalMotion::Up => (Vertical::Rising, magnitude.negated()),
-        VerticalMotion::Down if in_the_air(pose) => (Vertical::Falling, magnitude),
+        VerticalMotion::Down if in_the_air(pose) || turning_in_the_air(pose) => {
+            (Vertical::Falling, magnitude)
+        }
         VerticalMotion::Down => (Vertical::Ground, magnitude),
     };
     // The game's spin is carried on when the pose before the last spin pose was a spin or a
@@ -134,11 +140,17 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     } else {
         SpeedMode::TurningAround
     };
-    // On the ground a speed she keeps is downward or upward by its sign; none is no direction.
+    // On the ground the game leaves her vertical direction as it was: a speed she keeps with no
+    // direction stays so (a turn in a moonfall, chain-0232-D5A7 38 -> 44); another is downward
+    // or upward by its sign, and none is no direction.
     let vy = model.vy;
+    let kept = motion.vertical;
     (motion.vertical, motion.vertical_speed) = match model.vertical {
         Vertical::Moonfall => (VerticalMotion::None, exact(vy.negated())),
         Vertical::Ground if vy.is_zero() => (VerticalMotion::None, Exact(0)),
+        Vertical::Ground if kept == VerticalMotion::None => {
+            (VerticalMotion::None, exact(vy.negated()))
+        }
         Vertical::Rising => (VerticalMotion::Up, exact(vy.negated())),
         Vertical::Ground if vy.negative() => (VerticalMotion::Up, exact(vy.negated())),
         Vertical::Falling | Vertical::Ground => (VerticalMotion::Down, exact(vy)),
