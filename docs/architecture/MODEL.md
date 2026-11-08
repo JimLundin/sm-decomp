@@ -59,8 +59,12 @@ Jim's decisions, 2026-11-07:
    rule ("arm"), plus a third for each term a data table makes the code interpret and a third for
    each operator in an exact formula; table rows, parameters, enum values, prose and vectors
    don't count. The budget moves by k per unit when the spec gains or loses behaviour, and is
-   frozen at each implementer export. Over the budget is a review stop that names the areas and
-   entries over; over the old code is a strict failure. The study is
+   frozen at each implementer export. The budget is an indicator, not a wall (Jim, 2026-11-08):
+   the fit is score ÷ budget, by area and in total, and above 1 the excess costs in proportion to
+   how far over, as a penalty for comparing alternatives and rounds, never as a gate. We look for
+   a reasonable optimum of logic against specification, and stop compacting when a round's gain
+   in fit is small beside its cost and risk; a form that is worse only to get under the line is
+   not wanted. Over the old code is still a failure: it means the design is wrong. The study is
    [size-budget.md](size-budget.md), and the weights' is [size-weights.md](size-weights.md); the
    template convention that makes the count exact is
    in §5.

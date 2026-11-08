@@ -12,7 +12,8 @@ need is in this repository; read nothing outside it.
 - **Exact.** The spec's numbers and rules are exact, quirks included, and the vectors check them.
   The finished model is later checked against the real game, frame by frame.
 - **Small and data-driven.** One kind of movement or situation is one row of a table, where it can
-  be. One rule lives in one place. The spec's header gives a size target; work until you reach it.
+  be. One rule lives in one place. The spec's header gives a size budget, an indicator of how much
+  logic the behaviour should take.
   A table's values are counted apart from the logic, as data. A row states something the spec
   gives as a fact (a speed, a cell, a row of a chart); a row that encodes a decision the code would
   otherwise make, such as which branch to take, is logic and counts as such.
@@ -27,8 +28,10 @@ need is in this repository; read nothing outside it.
   parameter types that recurs in three or more signatures, or a pair of arguments at three or
   more call sites, costs more: group values that travel together into a concept with a name.
   Define as many shapes as the behaviour needs.
-- **The budget** comes from the spec: its header gives it by area. Over it, keep reshaping and say
-  where the rest goes and why; it isn't a reason to stop early.
+- **The budget** comes from the spec: its header gives it by area. It is an indicator, not a
+  wall: being over it costs in proportion to how far over. Aim for the best shape, and come close
+  to the budget where you can without a worse form; never make the code worse to get under it.
+  Say where the size goes, by area, and why.
 - **The lints.** Clippy here enforces at most one bool parameter, nesting at most five deep (test
   code included) and cognitive complexity at most 15. The rest are checked when your work is
   imported, so keep to them as you go:

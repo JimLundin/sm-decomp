@@ -39,9 +39,9 @@ your report and don't use it.
 4. Every literal and branch names its behaviour id. Values come from the rules or the spec's
    numbers, never from a constant you invented. A named constant that holds a number the spec gives is a
    fact of the spec, and is how a number gets into the logic (DESIGN, "How your code is measured").
-5. Watch the size target in the spec's header as you go. Being over it is not a reason to stop
-   early: keep reshaping until you reach it, or until you can say why the rest can't go, and report
-   both.
+5. Watch the size budget in the spec's header as you go. It is an indicator, not a wall: come
+   close to it where a better shape allows, never make the code worse to get under it, and report
+   where the size goes and why.
 6. Take the time and the context the work needs. There is no time limit and no limit on how much
    you read of this repository; finish the task rather than hand back part of it.
 
