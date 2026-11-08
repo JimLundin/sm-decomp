@@ -28,10 +28,13 @@ the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`
 types 16h, 1Ah and 1Bh: grapple, grabbed by Draygon, shinespark; the one it picked from
 samus-square-slope-reserve was dropped, its row name being a lexicon match), `cons.py` writes the
 constructed ones (the results come from the same model) and `vecrun.py` runs every vector of
-`scenarios/vectors/camera.toml` through it: 76 of 76 agree (round 2: it pads each short below
+`scenarios/vectors/camera.toml` through it: 77 of 77 agree (round 2: it pads each short below
 row to `w` with `Closed`, as the vector format says, where it used to run them together;
 C-below-short-row tells the two apart; round 3 adds adversary 42's D1, D2, D6 and D7 and
-C-push-carries-move, each worked by hand from the bank log as well). `rise0.py` writes R35, the one
+C-push-carries-move, and round 4 adversary 43's D8, C-settle-up-from-below-short, each worked by
+hand from the bank log as well: for D8, `$80:A74B` reads `0933` from row 2, below the room, so
+Closed and 1F, before `$80:A788` clamps `0915` to 011F; row 1 is Short, not red, so `$80:A81D`
+reads row 2, red, and `$80:A839` holds on 011F ≥ 011F). `rise0.py` writes R35, the one
 recorded rise at 0 (`0B36` = 1 with `0B2C`/`0B2E` = 0 at the scroll): all 7 such frames are
 shinespark frames (movement type 1Bh), and in samus-shinespark-left 214 the clamp didn't fire
 (the model matches with the previous position as record N left it) and the down scroller decides.
