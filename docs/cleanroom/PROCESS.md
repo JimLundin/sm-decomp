@@ -80,7 +80,9 @@ Each step names its owner, what it waits for, and its done-condition.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
 7. **Import** (root): `import.sh` runs `code_check.sh` and applies the commits to a lane branch.
-   Done when the import passes.
+   Done when the import passes. A refusal goes back to the same implementer's export as a short
+   follow-up session: the brief quotes each finding (file, line, the rule it breaks) in the
+   coding standards' words, and the import runs again.
 8. **Blind review** (blind reviewer, confined), after 7. The root makes a code-only copy (the
    model, its tests and the vector file) and launches the review. Done on its report. The root
    compares the review's "what the code does" with the spec: where the reviewer misread the
