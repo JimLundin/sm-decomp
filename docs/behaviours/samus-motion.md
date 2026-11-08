@@ -1217,8 +1217,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   already stops there.
 - So when they carry into a pixel, the target's row is one lower and she stops 1 px higher, her
   bottom edge on the row above the last air row: the carried pixel moved her target's row, not her
-  (SL1, SL2, C-slope-carry-kept). A run or a roll down a slope from y subpixel FFFF, with a pull
-  that has a subpixel part, stops so: samus-mockball 91 (the spring ball's pull of 9.4000 from
+  (SL1, SL2, C-slope-carry-kept, C-slope-walk-left). A run or a roll down a slope from y subpixel
+  FFFF, with a pull that has a subpixel part, stops so: samus-mockball 91 (the spring ball's pull of 9.4000 from
   04B9.FFFF stops at 04BD.FFFF, its bottom edge on row 3 above a surface whose top row is 5), and
   the same in the runs of samus-mockball and the four samus-shinespark rows with a kept vertical
   speed, and in chain-0220-D017 39-42 with none. Seated, the pull is 1.0000, which never carries.

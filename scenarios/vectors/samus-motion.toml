@@ -2701,7 +2701,7 @@ before = { position = ["0108.0000", "0103.FFFF"], speed_x = "-0001.0080" }
 pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
 pad = ["left"]
 jump_pressed = false
-after = { position = ["0107.1B40", "0104.FFFF"], speed_x = "-0001.3080", dash = "0000.0000" }
+after = { position = ["0107.1B40", "0103.FFFF"], speed_x = "-0001.3080", dash = "0000.0000" }
 
 [[vector]]
 id = "C-slope-walk-air"
