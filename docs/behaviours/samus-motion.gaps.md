@@ -6,6 +6,40 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
+## Answered: the code gate's questions (adversary 29; observer, lane/r10-spec)
+
+Adversary 29 asked four questions of round 9's model. Each is answered in the spec.
+
+1. **A spring ball rising from a bounce, both sides held: is it "falling"?** It is if it bounced
+   out of a fall. "Falling" and "on its hop" are the spring ball's pose, not the way it moves. A
+   bounce keeps the pose the ball landed in: the landing's pose choice keeps the current pose for
+   bounce 1 and bounce 2 ($91:EA63 → $91:EA83/$91:EA93), and only the landing that ends the
+   bounces picks the pose on the ground ($91:EA9B). So a rise from a bounce after a fall is still
+   falling and turns round, and a rise after the hop is still the hop and turns rightward.
+   `PadChart` states this beside the two both-held arms. No unit change.
+2. **A spin step that lands exactly on the top speed: has she "reached" it?** No. The spin's speed
+   step ($90:9B1F, from $90:9069) returns "reached" (carry set, $90:9BCF) only where it caps the
+   speed: a pixel part over the top's, or an equal pixel part with a subpixel part over the top's
+   ($90:9B44). An exact landing falls to $90:9BB7 (carry clear), so without forward held and
+   without a skid the spin stops drifting ($90:906C → $90:9093). Round 9's `speed != sum` test is
+   right. `DriftInTheAir` defines "reached" as the step being cut to the top speed (`Exact`: the
+   sum over it). No unit change.
+3. **Does an adjusted second bounce under 1 px floor at 0?** The original doesn't floor it.
+   It takes 1 off the bounce speed's pixel word alone ($91:F23F, $91:F2BA `DEC A`), so a bounce
+   speed of 0.8000 would give a rise of FFFF.8000. The vanilla speed is 1.0000, which gives
+   exactly 0, so only an adjusted rule reaches the case. A rise of nearly 2^16 px a frame means
+   nothing the player could see, and a signed speed can't hold it, so the spec floors it:
+   `max(bounce − 1.0000, 0)` in `Landing`, with a note on why. +0.7 units (the formula's
+   operators).
+4. **May `Slope::surface` be held from its open side?** Yes. It is a question of representation,
+   and the spec can state the surface either way without changing behaviour. As depth from the
+   open side (a floor's top row as it is, a ceiling's bottom row as 15 less it), 16 (an empty
+   column) and 17 (a column far past) mean the same for floors and ceilings. Every `SlopesCarry`
+   rule then reads the same from either side: the last air row and the first air row are both
+   one less than the depth, counted from the open side. That is why the vectors already write 16
+   and 17 alike for both. `SlopesCarry` says so, with no formula. The vectors' encoding stays as
+   it is, and a model converts it at the world's edge. No unit change.
+
 ## Answered: round 9 in the engine and the harness (integrator, 2026-11-08, lane/wire-r9; observer, lane/wire-r9)
 
 The bridge (`game::samus_world::step`) takes round 9's API. Gap 28's answer is wired: where pose
@@ -37,18 +71,30 @@ row fell (item 29); the frames that newly differ are items 29-31.
     this domain's scope and y is masked, "deferred: a bomb jump's or a knockback's end (...)": the
     ball on the ground falling at a speed of 0, which on the ground only a bomb jump's or a
     knockback's end leaves ($90:8F1B, $91:F31D; adversary 30).
-    **Answered** (observer, lane/wire-r9): every walk-off does, the ball at rest included; this
-    frame is the bomb jump's, so the harness masks y on it. A bomb jump lifts the ball without
-    changing its ground pose and hands back at its peak, where the rise's end has left her falling
-    at a speed of 0. The next frame the ball's ground move reads only that she is falling, so she
-    moves by her own speed under gravity (0 px) instead of being pulled down onto the floor; with
-    no vertical speed (the state the spec's ground ball has, §1.2) the pull runs and a walk-off
-    moves her the whole of it, as SL3 has it. Falling at 0 on the ground arises only from a bomb
-    jump's or a knockback's end ($90:8F1B, $91:F31D), which the header leaves out of scope, so the
-    frame's y isn't this domain's: the mask "deferred: a bomb jump's or a knockback's end (...)"
-    takes y where the ball (or the spring ball) on the ground starts falling at 0 (1 frame over the
-    32 rows: 1036 → 1037). No spec change, no vector. samus-bomb-jump-vertical: 286 of 286 compared
-    frames, at its floor. Sources in the decode notes (gap 29).
+    **Answered** (observer, lane/wire-r9; amended on lane/r10-spec): every walk-off moves her the
+    whole pull, the ball at rest included, as SL3 has it; this frame differs because the ball isn't
+    at rest. A bomb jump lifts the ball without changing its ground pose and hands back at its
+    peak, where the rise's end has left her falling at a speed of 0. The ball's ground move runs
+    the ground pull only with no vertical motion; falling (or rising) it moves by its own vertical
+    speed under gravity instead, here 0 px, and finding no floor that is a walk off a ledge, so she
+    falls from rest where she was (record 1037: the falling ball, 0, falling). With no vertical
+    motion (the state the spec's ground ball has, §1.2) the pull runs and a walk-off moves her the
+    whole of it. Falling at 0 on the ground arises only from a bomb jump's or a knockback's end
+    ($90:8F1B, $91:F31D), both out of scope, so the start can't be reached by a lead-in; the spec
+    now owns the move anyway (adversary 30's recommendation), so the mask can go once the model
+    makes it: the vertical speed's row (§1) and §1.2 name falling at 0 on the ground, handed back
+    by such a push; `FollowingTheGround` gains the arm (the ball on the ground, the spring ball
+    too, falling at 0 → it moves by that speed, 0 px, not pulled, and a move of 0 meeting no block
+    it falls from rest where it was [BG2]) and a note that a change of shape reads falling at 0 as
+    a vertical speed (original only); `SpeedBuildsAndBrakes`' ball-at-rest arms read "a vertical motion"
+    (falling at 0 keeps both speeds, no halt). The vectors' `before` gains `falling` (true: falling
+    at the start's vertical speed of 0 in a pose on the ground), and BG2
+    (samus-bomb-jump-vertical:1037) is this frame, recorded: the ball `Still` at 00BB.FFFF,
+    00A6.0BFF, all speeds 0, falling, in open air → y kept, the ball `Falling`. Round 9 fails BG2
+    (y 1 px low, and its parser refuses `falling`) until the implementer's next round; the
+    harness's mask stays until then. Spec units 204.0 → 205.7 with the code gate's answers below
+    (BG2's arm +1.0, the second bounce's floor +0.7); budget 6,912 → 6,972. Sources in the decode
+    notes (gap 29).
 30. **The moonwalk's jump: the way her speed points (`TurningRound`, `PadChart`, MT1).**
     chain-0014-96BA 4 → 5, chain-0232-D5A7 17 → 18 and samus-input-poses 118 → 119: moonwalking
     (49h, 4Ah, 49h) at speed 0, following the pad, jump pressed: the moonwalk's jump (C0h, BFh,

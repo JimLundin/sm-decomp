@@ -52,7 +52,8 @@ movement type landing is "no change" in `$90:E676`). `0B36` = 2 with magnitude 0
 not plain: a change of shape or the ball on the ground then moves her under the pull (`$90:92C7` and
 `$90:92B8` test the direction alone),
 where with `0B36` = 0 it doesn't; no record has one outside a bomb jump
-(samus-bomb-jump-vertical 1036). From the checked frame
+(samus-bomb-jump-vertical 1036), and a start gives it as `falling` (spec §1.2, BG2; gap 29). From
+the checked frame
 `lead.pl` walks back while each frame passes the selection test above, with radii free to change
 (a pose may change only from movement type 0, 1 or 10h on the ground into a jump, spin, fall or
 turn, from a take-off pose into a jump, or by aim alone, which the x-move test keeps clear of the
@@ -988,16 +989,23 @@ down to 0100, the unmorph's command 7 writes the same: 0100.8000), C-fit-land-tu
 instead raises her to 0110, `$91:FFE9`: 0110.0000) and C-fit-step-enemy (refused: no write, so the
 frame's start, 00F7.8000).
 
-**Gap 29, the bomb jump's peak (harness mask).** The bomb jump's handler (`$90:E025` →
-`$90:E032`, straight `$90:E066`) runs `$90:90E2` and never changes her pose: the ball stays 1Dh
-(movement type 4). When the rise is spent, `$90:90C4` sets `0B36` = 2 with `0B2E`.`0B2C` 0; the
-next pass sees the direction down and ends the bomb jump (`$90:E07D`: handler `$A337`) without a
-move. samus-bomb-jump-vertical 1036 is the first normal frame: `$90:A521` → `$90:92B8` tests
-`0B36` alone, so the ball moves by `$90:90E2` (0 px), not by the ground pull `$90:923F` (which,
-with `0B36` = 0 and no floor, moves her the whole pull: SL3's walk-off, unchanged). The fall pose
-(31h) then starts from rest (record 1037: 0, down). A knockback's end in the ball (`$91:F31D`)
-leaves her the same. The harness's mask: movement type 4 or 11h
-(`$90:A69F` → `$90:92B8` alike), `0B36` = 2, magnitude 0; over the 32 rows it meets 1036 only.
+**Gap 29, falling at 0 on the ground (BG2; the harness mask until the model makes it).** The bomb
+jump's handler (`$90:E025` → `$90:E032`, straight `$90:E066`) runs `$90:90E2` and never changes her
+pose: the ball stays 1Dh (movement type 4). When the rise is spent, `$90:90C4` sets `0B36` = 2 with
+`0B2E`.`0B2C` 0; the next pass sees the direction down and ends the bomb jump (`$90:E07D`, `$90:8F1B`:
+handler `$A337`) without a move. A knockback taken in the ball keeps her pose (`$90:DF15`) and its
+end leaves her the same (`$91:F31D`). So a bomb jump's or a knockback's end is the only way to
+start a frame on the ground with `0B36` ≠ 0 at magnitude 0. samus-bomb-jump-vertical 1036 is the
+first normal frame: `$90:A521` → `$90:92B8` tests `0B36` alone (`$90:92BB`: none returns carry
+clear), so the ball runs `$90:90C4` and `$90:90E2` (0 px) and returns carry set, which skips the
+ground pull `$90:923F` (`$90:A54C`/`$90:A56C`) and, at rest, the halt `$90:A551`-`$90:A561` (with
+`0B36` = 0 and no floor the pull moves her the whole of it: SL3's walk-off, unchanged). A 0.0 move
+skips block collision (`$94:976B`), so it finds no floor: the walk-off `$91:EFEF` sets speed 0,
+down, and the fall pose (31h) starts from rest (record 1037: 0, down). The spring ball's handler
+(`$90:A69F`, movement type 11h) and the change of shape (`$90:A61C` → `$90:92C7`) test the
+direction alike. BG2 is 1036 → 1037, its start's `falling` the `0B36` = 2 at magnitude 0. The
+harness's mask until the model makes it: movement type 4 or 11h, `0B36` = 2, magnitude 0; over the
+32 rows it meets 1036 only.
 
 **Gap 30, the moonwalk's jump (MT2).** Jump pressed while moonwalking (49h, facing word 8) takes
 C0h (facing word 8, movement type Eh) after the frame's move; `$91:F8D3` (turning on the ground,

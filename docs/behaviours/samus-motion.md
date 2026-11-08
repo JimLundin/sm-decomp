@@ -39,7 +39,7 @@ entries over; over an area's old code is a strict failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 204.0 units, capped at 70% of old = 6,912 (motion 2,556, pose fit 624, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 205.7 units, capped at 70% of old = 6,972 (motion 2,616, pose fit 624, pose chart 1,584 capped, collision 2,148)
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
@@ -57,7 +57,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings`; output (whether she skids, travelling against her facing: the camera leads her backwards then) |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball) | `Dash`, `TurningRound`, `Jumping` |
-| vertical speed | signed `P.S`, downward positive | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
+| vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
 | where the camera follows her from | y: `P.S` | the screen scrolls after her vertical move as measured from this height: where the frame started, or where pose fit or a change of shape placed her (`PoseFitAfterMoves`, `ShrinkingLowersHer`), so the scroll doesn't chase those placements | output (the camera's domain reads it; each frame works it out, so it isn't State) |
 | pose | §2 | the sprite | every behaviour; output |
@@ -90,6 +90,13 @@ is skidding, any dash she has is hers to keep, and a vertical speed of 0 means s
 except in a jump, a spin, a fall or a wall jump, where it means she has just started to fall. On the
 ground a vertical speed other than 0 is one she keeps there, or that the ball moves by
 (`FollowingTheGround`): the speed itself shows it, so a start may have one.
+
+**Falling at 0 on the ground.** The ball, or her body while it changes shape, can be on the ground
+and falling at a vertical speed of 0, which moves her unlike no vertical speed
+(`FollowingTheGround`). Only a push beyond this spec hands her back so (a bomb jump's end, at its
+peak, or a knockback's end, §10), so no lead-in in scope reaches it and a start says it outright:
+the vectors' `before.falling`. A vertical motion, on the ground, is a vertical speed other than 0
+or falling at 0.
 
 ### 1.3 What she reads from the world and the player (Inputs)
 
@@ -189,16 +196,17 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Standing, crouched or against the wall → the pad doesn't move her: she moves by her dash only,
   then halts (horizontal speed 0, dash 0, following the pad) [R77, R47, R49, R107, R18]
 - While her body changes shape, or as the ball at rest on the ground following the pad with a
-  vertical speed (`FollowingTheGround`) → she moves by her dash only and keeps both speeds [R48,
-  R89, R128, R129, BG1]
+  vertical motion (a vertical speed, or falling at 0: §1.2, `FollowingTheGround`) → she moves by
+  her dash only and keeps both speeds [R48, R89, R128, R129, BG1, BG2]
 - Facing the screen → she doesn't move at all and keeps her speeds [C-elevator]
-- The ball at rest on the ground, following the pad, with no vertical speed → it moves by its dash
-  only and halts after that move [R43]
+- The ball at rest on the ground, following the pad, with no vertical motion → it moves by its
+  dash only and halts after that move [R43]
 - The ball at rest, braking or skidding → it rolls like running, with its own speeds, and keeps
   its dash (the mockball) [original only]
 - checked: oracle (the running, ground and turning vectors; samus-mockball,
-  samus-bomb-jump-vertical); original only (braking below zero: R98 and R123 start `Still`
-  following the pad, so they halt as standing does; left and right both held).
+  samus-bomb-jump-vertical; BG2, the ball at rest falling at 0); original only (braking below
+  zero: R98 and R123 start `Still` following the pad, so they halt as standing does; left and
+  right both held).
 
 ### Dash
 - kind: mechanic.
@@ -379,10 +387,16 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - While her body changes shape, or as the ball on the ground (the spring ball too), with a
   vertical speed → she moves by it under the pull (`RisingAndFalling`) instead of being pulled
   down onto the floor, and a floor she meets stops her as `Landing` says [HV4, BG1]
+- As the ball on the ground (the spring ball too), falling at a vertical speed of 0 (§1.2) → it
+  moves by that speed, 0 px, instead of being pulled down onto the floor; a move of 0 is never
+  stopped by blocks (`RisingAndFalling`), so it is a walk off the ledge: she falls from rest
+  where she was, vertical speed 0, falling [BG2]
+- While her body changes shape, falling at 0 is a vertical speed for the rule above it: she moves
+  by it under the pull, not pulled onto the floor (original only; no record has it).
 - So a change of shape that ends before a floor stops it leaves her the speed it reached (HV3),
   and the ball keeps its speed on the floor, still growing it (BG1); a move by it that finds no
-  floor is a walk off the ledge, as above. With no vertical speed both are pulled onto the floor
-  as standing is.
+  floor is a walk off the ledge, as above. With no vertical motion (no vertical speed, and not
+  falling at 0) both are pulled onto the floor as standing is.
 - So crouching from a run she comes to keep a downward speed: +0.E000 grows to +1.3400 in the
   crouch (samus-shinespark-left 151-155), and she keeps it crouched, through a turn on the ground
   and into the take-off at 196 (HV3). The kept speed ends when she leaves the ground: a jump or a
@@ -392,8 +406,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   standing, HV2 turning on the ground, HV3 crouched, HV4 the crouch moving her by it, AS3 running
   and braking; samus-mockball and
   the four shinespark rows run with +0.E000 from their first frame, and samus-space-jump-chain
-  and the three wall-jump rows run, brake, stand and turn with it); constructed (BG1, the ball at
-  rest moving by its vertical speed: no record has the ball on the ground with one).
+  and the three wall-jump rows run, brake, stand and turn with it; BG2, the ball on the ground
+  falling at 0, samus-bomb-jump-vertical:1037); constructed (BG1, the ball at rest moving by its
+  vertical speed: no record has the ball on the ground with one).
 
 ### MovesAsShePosed
 - kind: timing.
@@ -597,6 +612,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   frame → she carries on (a skid stays a skid) and moves [R9, R10, R100, R101, R102, W14]
 - A spin jump otherwise → she stops drifting: horizontal speed 0, following the pad, and she moves
   by her dash alone [R125, R7]
+- "Reached her top speed this frame" means the step was cut to the top speed: `WordwiseTopSpeed`
+  gave her the top speed instead of the sum (`Exact`: the sum was over it). A step that lands
+  exactly on the top speed keeps her speed, so it hasn't reached it, and with neither forward held
+  nor a skid she stops drifting (original only).
 - Through a wall jump → she always drifts, carrying on along her facing [R4, R30, R38, R73]
 - Left and right both held → her drift reads it as the side she faces held, never as back held,
   so a spin carries on [R102]
@@ -712,7 +731,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - The ball landing at `vy ≥ 3.0000` with no bounce yet → it rises at the bounce speed (bounces 1)
   [C-bounce, C-bounce-pulled]
 - The ball landing after bounce 1, at any speed (the 3 px gate is only bounce 1's) → it
-  rises at the bounce speed less 1 px, `1.0000 − 1 = 0.0000` (bounces 2) [C-bounce-second]
+  rises at the bounce speed less 1 px, `max(bounce − 1.0000, 0)`, `1.0000 − 1 = 0.0000` (bounces
+  2) [C-bounce-second]
+- The floor at 0 matters only for an adjusted bounce speed under 1 px; the vanilla 1.0000 never
+  meets it. The original takes the 1 px off the pixel part alone, so there the rise would wrap to
+  nearly 2^16 px a frame, which no signed speed holds; the spec floors it instead.
 - So bounce 1, rising at 1.0000, comes back at about 1 px a frame and still bounces again; bounce
   2 rises at exactly 0, so it rises by 0 for one frame before the rise ends
   (`RisingAndFalling`), and the landing after it brings her to rest at any speed.
@@ -799,6 +822,9 @@ effects. The tables below are data records (about 120 rows), counted as data.
   [original only]
 - Both held, falling as the spring ball → it turns round [original only]
 - Both held, the spring ball on its hop → it turns rightward [original only]
+- "Falling" and "on its hop" are its pose (`Falling`, `Jumping`), not the way it moves: a bounce
+  keeps the pose it landed in (`WhatHerMovesMet`), so a spring ball rising from a bounce after a
+  fall is still falling and turns round, and one bouncing after its hop is still on its hop.
 - Both held, the ball in the air without the spring ball → it keeps its facing: forward held wins
   [original only]
 - Both held, everywhere else, the ranks and "beats" decide alone: the outcome is always the one
@@ -1239,6 +1265,13 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   kept), and the rise ends as at a flat ceiling (`WallsAndCeilings`) [C-slope-ceiling-edge]
 - The surface's height at each column is world data; the vectors give it as `world.slope_floor`
   and `world.slope_ceiling`.
+- How a model holds it is a representation, and either side will do. A surface can as well be
+  held as its depth from the block's open side: a floor's top row as it is, a ceiling's bottom
+  row counted up from the block's bottom row (15 less it), with 16 (an empty column) and 17 (a
+  column far past) the same for both. The last air row above a floor is then one less than the
+  depth, counted from the top, and the first air row under a ceiling one less than the depth,
+  counted from the bottom, so every rule here reads the same, the empty and far columns
+  included; nothing changes but where the vectors' numbers are converted.
 - **An empty column.** A column of a sloped surface holding none of the surface (the whole column
   is air in that block; the vectors write it as 16, for a floor and a ceiling alike) → it counts
   as a surface just past the block's far edge [C-slope-floor-empty, C-slope-ceiling-empty,
