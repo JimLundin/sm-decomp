@@ -44,7 +44,10 @@ camera follows the wrong placement. It closes when samus-motion's frame does.
 ### C4. The engine has no knockback and never stops time (open, the engine's other domains)
 
 `backwards` takes the skid and the moonwalk from the engine's State; the knockback's turn of the
-lead needs the damage domain, which the engine doesn't have yet, so it is never set. Likewise
+lead needs the damage domain, which the engine doesn't have yet, so it is never set. The same
+goes for `rising` during a knockback: samus-motion gives it outside one, but while a knockback
+moves her its rise, and its tail's not rising, are the knockback's (the spec's §1.3 and §5;
+adversary 42, M3), so the engine's edge can't give it there until the damage domain comes. Likewise
 `time_stopped` is always false: the engine has none of the states that freeze time (the x-ray
 scope, the reserve tanks' refill). The harness reads both from the oracle (`0A52`, `0A78`) and
 matches on every compared frame (`TimeStopped` 95 of 95), so the model's rules hold; the engine's

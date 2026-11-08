@@ -28,7 +28,10 @@ the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`
 types 16h, 1Ah and 1Bh: grapple, grabbed by Draygon, shinespark; the one it picked from
 samus-square-slope-reserve was dropped, its row name being a lexicon match), `cons.py` writes the
 constructed ones (the results come from the same model) and `vecrun.py` runs every vector of
-`scenarios/vectors/camera.toml` through it: 64 of 64 agree. `rise0.py` writes R35, the one
+`scenarios/vectors/camera.toml` through it: 76 of 76 agree (round 2: it pads each short below
+row to `w` with `Closed`, as the vector format says, where it used to run them together;
+C-below-short-row tells the two apart; round 3 adds adversary 42's D1, D2, D6 and D7 and
+C-push-carries-move, each worked by hand from the bank log as well). `rise0.py` writes R35, the one
 recorded rise at 0 (`0B36` = 1 with `0B2C`/`0B2E` = 0 at the scroll): all 7 such frames are
 shinespark frames (movement type 1Bh), and in samus-shinespark-left 214 the clamp didn't fire
 (the model matches with the previous position as record N left it) and the down scroller decides.
@@ -102,16 +105,53 @@ routine's two reads. All three are marked *.
 | Settling | `$80:A528` (across) and `$80:A731` (down): the clamps `$80:A53D`..`$80:A552` and `$80:A77D`..`$80:A796`, the left/upper red case `$80:A57E`..`$80:A5D7` and `$80:A7C2`..`$80:A81B`, the right/lower red case `$80:A5D9`..`$80:A638` and `$80:A81D`..`$80:A88A` |
 | TimeStopped | `$80:A52C` and `$80:A735` (time frozen `0A78`/`0A79`: return) |
 | DownwardLooksAhead* | `$80:A89D`..`$80:A8D7` (the upper scroll's index `$14` from `0916` after the speed's add, before `$80:A8DA` caps it at the ideal), read again at `$80:A8FC` |
-| ScreensRunOn | `$80:A5D9` (`INX`: the right scroll is index + 1), `$80:A686`..`$80:A68D` (`SEC; ADC`: screen + 1 + row × width), `$80:A5B2`..`$80:A5BA` (`INC`), all on the row-major table; the bank log's note at `$80:A528` |
+| ScreensRunOn | `$80:A5D9` (`INX`: the right scroll is index + 1), `$80:A686`..`$80:A68D` (`SEC; ADC`: screen + 1 + row × width), `$80:A5B2`..`$80:A5BA` (`INC`), `$80:A613`..`$80:A61E` (the eased position's column, any value to FFh, plus row × width), all on the row-major table; the bank log's note at `$80:A528` |
 | BelowTheRoom | the scroll table `$7E:CD20` (32h bytes; `$82:EA73` loads `w × h` of them), read past the room at `$80:A8FC`, `$80:A8C8` and `$80:A823` |
 | PushCarries | the second `ADC #2` after `ADC 0DA2`/`0DA6` and the second `SBC #2` after `SBC 0DA2`/`0DA6` (carry and borrow kept): `$80:A58F`, `$80:A5F0`, `$80:A6A7`, `$80:A71D`, `$80:A7D3`, `$80:A842`, `$80:A922` and the up routine's |
 
 ## Findings behind the spec's choices
 
-- **Positions compare as `before`.** Every compare that decides a branch is `CMP` then `BMI`/`BPL`
-  (the sign of the difference), except the room's right edge and bottom (`BCS`/`BCC`), the forward
-  pushes' `min` (`BCC`) and the settles' forward reach (`BCS`). Those see only values from 0 to
-  the room's far edge, where both agree, so the spec states one compare.
+- **Two compares: `before` and `exceeds`** (round 2; adversary 40, S1). Every compare that
+  decides a branch is `CMP` then `BMI`/`BPL` (the sign of the difference, the spec's `before`),
+  except these, which are `BCS`/`BCC` (unsigned, the spec's `exceeds`):
+  - the room's right edge (`$80:A667`) and bottom (`$80:A8F7`) after a move, and the settles'
+    clamp to them (`$80:A54D`, `$80:A791`);
+  - the left and up pushes' `min` (`$80:A723`, `$80:A99E`);
+  - the settles' forward reach (`$80:A595`, `$80:A7D9`);
+  - the "within `rows`" tests going down (`$80:A919`) and settling up (`$80:A839`).
+
+  Round 1 stated one compare, reasoning that these see only values inside the room. That is
+  wrong for three: a move from a camera left of or above the room reaches the right edge or
+  bottom test with `FFF3` (C-edge-right-from-left, C-edge-down-from-above); the settles' reach
+  is computed from the camera as the frame found it, before the clamp to 0
+  (C-settle-reach-from-left); and the left push sums from where the move took the camera, which
+  can be `8000` from the aim it stopped on (C-push-left-far). The spec now states them as the
+  original makes them, rather than listing the difference in docs/LEGACY.md: the camera is
+  placed by other domains (doors, the room rules), so a camera outside the room is a State the
+  model can be handed, and stating the original costs nothing. `search.py` and `search2.py` in
+  `$TEMP/collab/camera-r2` swap one compare at a time for `before` in `model.py`; each new
+  vector differs under exactly its own swap. The two "within `rows`" tests, both down, and the
+  settles' clamp can't differ by their compare: they see only values from 0 to the room's far edge
+  (the push's test only after the bottom test, the clamp only after the `max` with 0).
+- **No "within `rows`" test across** (round 3; adversary 42, A1). Round 2 stated one across as
+  well, with `rows` 0, and said the settles "can't differ" from the original there, as no search
+  found a case. That was wrong: the test exists only down (`$80:A919` pushing down, `$80:A839` settling up). Across, the right push
+  (`$80:A69A`..`$80:A6B5`) and the ease back (`$80:A5E3`..`$80:A638`) have none: they compare
+  `back` with the left scroll position by `BMI` and take the larger. Inside the room the two
+  readings agree (a camera on its screen's edge backs off before the edge and is held there),
+  which is why it looked unreachable; from a camera right of the room, clamped to the right edge
+  at `$80:A54D` while `0939` keeps the unclamped position, they don't: C-settle-back-right-of-room
+  (0150 eases to 014D, not 0100). `search.py` only swaps compares, so it could not find a test
+  that shouldn't be there. The spec states the original: the test down only.
+- **The row of a position above the room** (round 3; adversary 42, A2). Every screen read takes
+  the row as the high byte of the 16-bit pixel position (`0916`, or `$14` from `0915` after the
+  speed's add, `XBA` of `0915 + 80h` across) and the column likewise, times `07A9` plus the
+  column. So `FFF3` is row FFh: past the room and its below rows, read as `Closed` (docs/LEGACY.md,
+  "Scroll areas past the room's table"), and `0933` is 1Fh. C-edge-down-from-above-short: 011F,
+  where reading the top as the first row (`Short`) would give 0100.
+- **An aim `8000` away** (adversary 40, S2). The direction is `CMP` ideal, camera, then `BMI`
+  (`$90:960B`, `$90:968C`): with the difference `8000` the camera moves left or up. The spec
+  states it (C-aim-half-way).
 - **The screen right of the last column** (adversary 37, F1). The original reads index + 1, the
   next row's first screen (or the first below row from the last row). An earlier version said
   `Closed`, reasoning that it is read only with the camera on the last screen's edge; that missed
@@ -122,10 +162,27 @@ routine's two reads. All three are marked *.
   so a move that crosses into the room's last row reads the row below it, from the leftovers. In
   2 rows (R3, R16) the leftovers decide: read as red, 5 frames would differ from the record. The
   model reading them as the table holds matches all.
-- **The settles' third case.** Easing back (`$80:A5FB`, `$80:A84D`), the original tests whether the
-  screen the eased position is in is red and, if so, puts it on the next screen's edge. From a
-  camera inside the room that screen is the camera's own, which isn't red there, so the spec
-  drops it; only a camera past the room's far edge, which no frame starts with, could reach it.
+- **The settles' third case.** Easing back (`$80:A5FB`..`$80:A631`, `$80:A84D`..`$80:A883`), the
+  original reads the screen the eased position is in (column `093A`, the ease's high byte, `AND
+  #$00FF`, plus the row times `07A9`) and, if it is red, puts the camera on the next screen's edge.
+  Round 2 dropped it as unreachable. Across it is reached from a camera right of the room: from
+  0250 in a room two screens across, the ease to 024D lands in column 2, which runs on to the next
+  row's first screen; red there, it goes to 0300 (C-settle-back-far-right). Down it is not:
+  `$80:A839` returns unless the clamped top is more than `0933` below its screen's edge, and a
+  camera below the room is clamped to exactly that (`$80:A791`, with the same `0933`), while
+  inside the room the eased top stays in the camera's own screen, which isn't red there. The spec
+  states it for both axes, as the original has it.
+- **The push's carry and borrow** (round 3; adversary 42, A3). The second `ADC #2` keeps the
+  first add's carry, and the second `SBC #2` its borrow. The carry shows whenever the push sums
+  from FFxx: a camera placed there (C-push-carries, settling from FFFF: 0003, not 0002), and also
+  inside the room, when a move left or up wraps `0939` below 0 before the aim's `max` stops it
+  (`$80:A6CB`, `$80:A936`), and the first screen is red (C-push-carries-move: 0006, not 0005).
+  Round 2's "only from a camera left of or above the room, which a frame never starts with" missed
+  that case. The borrow never shows: it needs `0939` under the speed, and every such push back is
+  then before the edge it is compared with, which wins. A fuzz over 300,000 random frames of
+  `model.py` with and without each (`$TEMP/collab/camera-r3/fuzz_borrow.py`) found the borrow
+  change nothing and the carry change 503 frames; the spec states the carry as an arm and the
+  borrow as a "So" line.
 - **Time frozen.** The scroll right/left/up/down routines don't test it; she doesn't move while
   time is frozen, so only the settles' test is seen.
 - **Out of scope here and masked in the harness:** the slow grapple scrolling (`0CF8` ≠ 0,
@@ -173,14 +230,19 @@ be verified on its own from the records, with her motion's outputs decoded as in
   mask y, keep x), the room's main code (`$8F:C1E6`, the Dachora room's scroll right, x;
   `$8F:E8CD`, Crocomire's room shaking, x), the Shitroid waiting for the camera (`$A9:EFE6`, x,
   and it closes two screens).
+  Frames samus-motion's harness defers (adversary 42, C2 and M4): y masked on every frame it
+  defers as a block-inside push (the quicksand's, C2), and on every frame it defers as the
+  knockback's tail (a frame starting with the knockback on under the normal handler, C3); x stays
+  compared on both, since the lead's knockback turn is the camera's own `LeadingHer`.
   A pose change between N and N+1 is not masked: `camera_from` for that frame comes from running
   samus-motion's model on it. Taking N+1's `0B14` instead is wrong: it is her y at the scroll by
   construction, which differs from the placement when she moves on after it (samus-motion's PF1,
   the lift after the push).
 - **Null model:** the camera doesn't move (6,271 of 14,890 frames).
-- **k out of sample:** the old code scores 2,273.5 over this spec's 42.3 units, 53.7 a unit
-  (samus-motion's 65.8); its own 0.55 would give k = 29.6 against the frozen 36, so the 70% cap
-  binds in follow. The old code lacks the knockback's turn of the lead and time stopped.
+- **k out of sample:** the old code scores 2,273.5 over this spec's 46.7 units, 48.7 a unit
+  (samus-motion's 65.8); its own 0.55 would give k = 26.8 against the frozen 36, so the 70% cap
+  binds in both areas (limits since round 3, at 31.0 units). The old code lacks the knockback's
+  turn of the lead and time stopped.
 - **Free run:** from a seed frame, carry the camera's own State forward and take only the inputs
   from the records; report the first differing frame per axis. Re-seed at a room change.
 - **Per-behaviour attribution:** `model.py`'s tags name the branch each frame takes; the entries
@@ -229,4 +291,4 @@ code is a failure.
 - Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
   DownwardLooksAhead, ScreensRunOn, BelowTheRoom, PushCarries
 
-Budget: 36 × 42.3 units, capped at 70% of old = 1,508 (follow 500 capped, limits 1,008)
+Budget: 36 × 46.7 units, capped at 70% of old = 1,591 (follow 500 capped, limits 1,091 capped)
