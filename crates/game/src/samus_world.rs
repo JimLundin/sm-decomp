@@ -65,12 +65,12 @@ impl<'a> SamusWorld<'a> {
     /// The level data index of `cell`: the row times the width, each by its low byte as the
     /// level's addressing takes them.
     fn index(&self, cell: Cell) -> BlockIndex {
-        let [row, _] = cell.row.to_le_bytes();
+        let [row, _] = cell.y.to_le_bytes();
         let [width, _] = self.room.width.0.to_le_bytes();
         BlockIndex(
             u16::from(row)
                 .wrapping_mul(u16::from(width))
-                .wrapping_add(cell.column),
+                .wrapping_add(cell.x),
         )
     }
 
@@ -80,8 +80,8 @@ impl<'a> SamusWorld<'a> {
         let [width, _] = self.room.width.0.to_le_bytes();
         let width = u16::from(width);
         Cell {
-            column: index.checked_rem(width).unwrap_or(index),
-            row: index.checked_div(width).unwrap_or(0),
+            x: index.checked_rem(width).unwrap_or(index),
+            y: index.checked_div(width).unwrap_or(0),
         }
     }
 

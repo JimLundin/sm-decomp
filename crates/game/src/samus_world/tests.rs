@@ -47,8 +47,8 @@ fn slope(bts: u8) -> Slope {
     slope
 }
 
-const fn at(column: u16, row: u16) -> Cell {
-    Cell { column, row }
+const fn at(x: u16, y: u16) -> Cell {
+    Cell { x, y }
 }
 
 /// A surface column's depth from the block's open side: its row, 16 just past, 17 far past.
@@ -78,11 +78,11 @@ fn each_kind_meets_her_as_its_block_kind_says() {
     // One block back along the level from (0, 1) is the row above's last.
     assert!(matches!(
         world.block(at(0, 1)),
-        Block::StandsFor(Some(Cell { column: 3, row: 0 }))
+        Block::StandsFor(Some(Cell { x: 3, y: 0 }))
     ));
     assert!(matches!(
         world.block(at(1, 1)),
-        Block::StandsFor(Some(Cell { column: 1, row: 3 }))
+        Block::StandsFor(Some(Cell { x: 1, y: 3 }))
     ));
     assert!(matches!(world.block(at(3, 3)), Block::Air));
     // Past the level: air.
