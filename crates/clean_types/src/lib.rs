@@ -505,3 +505,145 @@ pub enum Checked {
     /// On the original alone: no vector exercises it.
     OriginalOnly,
 }
+
+/// A region of the planet. The area of the room she is in is the frame's area.
+///
+/// Listed alphabetically; the order means nothing beyond keeping areas in sorted sets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Area {
+    /// Brinstar.
+    Brinstar,
+    /// The Ceres space station.
+    Ceres,
+    /// Crateria, where the gunship lands.
+    Crateria,
+    /// Maridia.
+    Maridia,
+    /// Norfair.
+    Norfair,
+    /// Tourian.
+    Tourian,
+    /// The wrecked ship.
+    WreckedShip,
+}
+
+/// A piece of equipment she can take that is not a beam or a tank.
+///
+/// Listed alphabetically; the order means nothing beyond keeping items in sorted sets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Item {
+    /// Bombs, laid from the morph ball.
+    Bombs,
+    /// The grapple beam.
+    GrappleBeam,
+    /// The gravity suit.
+    GravitySuit,
+    /// The hi-jump boots: she jumps higher.
+    HiJumpBoots,
+    /// The morph ball: she rolls.
+    MorphBall,
+    /// The screw attack: she spins through enemies.
+    ScrewAttack,
+    /// The space jump.
+    SpaceJump,
+    /// The speed booster.
+    SpeedBooster,
+    /// The spring ball.
+    SpringBall,
+    /// The varia suit.
+    VariaSuit,
+    /// The x-ray scope.
+    XRayScope,
+}
+
+/// A beam she can take.
+///
+/// Listed alphabetically; the order means nothing beyond keeping beams in sorted sets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Beam {
+    /// The charge beam.
+    Charge,
+    /// The ice beam.
+    Ice,
+    /// The plasma beam.
+    Plasma,
+    /// The spazer.
+    Spazer,
+    /// The wave beam.
+    Wave,
+}
+
+/// Something that, once it happens, changes the world for the rest of the run.
+///
+/// Listed alphabetically; the order means nothing beyond keeping events in sorted sets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Event {
+    /// The chozo statue deep in Norfair has let the acid out of its room.
+    AcidReceded,
+    /// The animals she saved have escaped the planet.
+    AnimalsFreed,
+    /// Draygon's statue at Tourian's door has gone grey.
+    DraygonStatueGrey,
+    /// Maridia's glass tunnel is broken.
+    GlassTunnelBroken,
+    /// Kraid's statue at Tourian's door has gone grey.
+    KraidStatueGrey,
+    /// She outran the rising lava in Norfair's speed booster hall.
+    LavaQuakeOutrun,
+    /// The first of Tourian's four metroid rooms she meets is cleared.
+    MetroidRoom1Empty,
+    /// The second of Tourian's metroid rooms is cleared.
+    MetroidRoom2Empty,
+    /// The third of Tourian's metroid rooms is cleared.
+    MetroidRoom3Empty,
+    /// The fourth of Tourian's metroid rooms is cleared.
+    MetroidRoom4Empty,
+    /// The glass of Mother Brain's tank is broken.
+    MotherBrainTankBroken,
+    /// Phantoon's statue at Tourian's door has gone grey.
+    PhantoonStatueGrey,
+    /// The planet is awake: Crateria's creatures and its rain are out.
+    PlanetAwake,
+    /// Ridley's statue at Tourian's door has gone grey.
+    RidleyStatueGrey,
+    /// Shaktool has dug its path through Maridia's sand.
+    ShaktoolPath,
+    /// The planet's self-destruct is running: the escape.
+    TimeBombSet,
+    /// The way into Tourian is open.
+    TourianOpen,
+    /// Three of Tourian's rooms past the metroids have a version for this event, which nothing in
+    /// the game makes happen.
+    TourianRoomsUnset,
+}
+
+/// The kind of a boss, as the boss itself reports it when defeated. The same kind is a different
+/// boss in each area.
+///
+/// Listed alphabetically; the order means nothing beyond keeping kinds in sorted sets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum BossKind {
+    /// The area's main boss, such as Kraid in Brinstar or Ridley in Norfair.
+    MainBoss,
+    /// The area's lesser boss, such as Spore Spawn in Brinstar or Mother Brain in Tourian.
+    MiniBoss,
+    /// A torizo: Bomb Torizo in Crateria, Golden Torizo in Norfair.
+    Torizo,
+}
+
+/// The id a room's population gives a place where an item lies.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct LocationId(pub u16);
+
+/// The id a room's population gives a door that stays open once opened.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct DoorId(pub u16);
+
+/// A save station's id within its area.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct StationId(pub u16);
+
+/// The way she came into a room. Entrances are numbered in a space of their own: an entrance is
+/// never a `DoorId`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Entrance(pub u16);

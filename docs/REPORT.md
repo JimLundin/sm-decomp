@@ -31,8 +31,8 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 7,153 | 6,924 | 1.03 | 12,724 | 3,415 | 1,192 | 12,639 | 226 |
 | camera | 2,353 | 1,591 | 1.48 | 2,274 | 730 | 392 | 13,315 | 77 |
-| shared types (`crates/clean_types`, used by samus-motion, camera) | 467 | - | - | - | 278 | 78 | - | - |
-| total | 9,973 | 8,515 | 1.17 | 14,998 | 4,423 | 1,662 | 25,954 | 303 |
+| shared types (`crates/clean_types`, used by samus-motion, camera) | 476 | - | - | - | 345 | 79 | - | - |
+| total | 9,982 | 8,515 | 1.17 | 14,998 | 4,490 | 1,664 | 25,954 | 303 |
 
 ## Models
 
@@ -72,7 +72,7 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean_types`, used by samus-motion, camera) | 467 | 590 | 712 | 79 | 10 | 0 | 278 |
+| shared types (`crates/clean_types`, used by samus-motion, camera) | 476 | 599 | 1,010 | 79 | 10 | 0 | 345 |
 
 ## Lines
 
@@ -80,8 +80,8 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 3,415 | 2,332 | 1,083 | 1,192 |
 | camera | 730 | 223 | 507 | 392 |
-| shared types (`crates/clean_types`, used by samus-motion, camera) | 278 | 278 | 0 | 78 |
-| total | 4,423 | 2,833 | 1,590 | 1,662 |
+| shared types (`crates/clean_types`, used by samus-motion, camera) | 345 | 345 | 0 | 79 |
+| total | 4,490 | 2,900 | 1,590 | 1,664 |
 
 ## Spec, budget and fit by area
 
@@ -174,4 +174,4 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 47 | 5,620 | 33,718 | 36,083 | 10,219 | 1,079 | 2,731 | 665 | 7,551 |
 | bridges | 5 | 575 | 3,451 | 4,264 | 296 | 13 | 94 | 0 | 636 |
-| rebuilt models, shared types included | 21 | 1,662 | 9,973 | 12,214 | 3,467 | 8,735 | 450 | 16 | 4,423 |
+| rebuilt models, shared types included | 21 | 1,664 | 9,982 | 12,223 | 3,765 | 8,735 | 450 | 16 | 4,490 |
