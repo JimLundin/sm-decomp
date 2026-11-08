@@ -507,7 +507,7 @@ function named after a routine is a review stop.
    (her moves can't be checked without it). Jim, 2026-11-08: it is accepted near its budget after
    round 12's cut pass (about 7,200 against 6,924, 4% over, substantiated by area: collision and
    pose fit), rather than compacted further at the cost of worse forms. Then **the camera**
-   (scrolling): it reads her motion's outputs (, the skid), has old code to replace,
+   (scrolling): it reads her motion's outputs (`camera_from`, the skid), has old code to replace,
    and is the first domain to test k out of sample.
 3. **Intents and the encoder:**
    - `SpriteDraw` plus `exact::oam` (Samus, enemies);
