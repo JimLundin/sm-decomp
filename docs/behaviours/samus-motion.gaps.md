@@ -61,6 +61,10 @@ is record N's.
     after the move, she carries on (AS1, AS2); 0 at the start, or brought to 0 by the move, she
     follows the pad again (AS3, AS4). Vector AS4 (samus-space-jump-chain:13). No later frame
     shows it (standing halts her either way), so only the harness's compare of her mode does.
+    For the integrator (adversary 28): AS4's distinction shows in no perceivable output, so AS4
+    is not evidence. If the harness compares the let-go mode word on such frames (a running pose
+    let go at speed 0, standing the next frame), mask it there, or accept the model's value as
+    derived, rather than let that word drive the model.
 27. **The run with a kept vertical speed, down slopes: 1 px low (`FollowingTheGround`,
     `SlopesCarry`; with gaps 20 and 24).** Gap 23's frames now match but for these: samus-mockball
     and the four samus-shinespark rows, frames 10, 13 and 18-22 (and 79-80, 95-96 on the

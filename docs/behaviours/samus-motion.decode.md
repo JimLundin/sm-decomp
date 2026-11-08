@@ -977,7 +977,16 @@ horizontal move before it) and one rule was missing (the carry). The re-lay adds
 (SL1, SL2, C-slope-carry-kept), gives the ceiling push C-slope-ceiling-push (samus-walljump-16:44
 started following the pad, which the spin with forward held moves the same), and widens the
 passing arm to what `$94:8742`/`$94:87B9` and the centre-column test let through
-(C-slope-ceiling-side): 11 counted arms to 13, 12.0 units to 16.3.
+(C-slope-ceiling-side): 11 counted arms to 13, 12.0 units to 16.3. After adversary 28 (F4) the
+stop is stated once, as the formula's arm with the no-carry, carry and clamp cases as its
+consequences: 12 arms, 15.0 units.
+
+**Adversary 28's fixes.** F1: the moonwalk's jump turn keeps her facing (4Ah facing left into BFh
+facing left, chain-0232-D5A7 17 → 18), the one turn that doesn't face back; `PadChart`'s cell says
+so. F3: `camera_from` worked from `$91:FDAE`..`$91:FFED` and `$91:ED0E` for C-fit-ceiling (pushed
+down to 0100, the unmorph's command 7 writes the same: 0100.8000), C-fit-land-tunnel (the crouch
+instead raises her to 0110, `$91:FFE9`: 0110.0000) and C-fit-step-enemy (refused: no write, so the
+frame's start, 00F7.8000).
 
 ## Size baseline (tokens, 2026-11-07)
 

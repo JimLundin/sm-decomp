@@ -2212,7 +2212,7 @@ pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.1C00", reached = [{ cell = [240, 224], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }] }
+after = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.1C00", camera_from = "0100.8000", reached = [{ cell = [240, 224], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }] }
 
 # Crouched on a floor with a ceiling at her head, a take-off finds no room on either side: she
 # stays crouched (crouched Still), with no rise, no lift and no push.
@@ -2295,7 +2295,7 @@ pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["0108.0000", "00F7.0000"], speed_y = "+0000.1C00", pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] } }
+after = { position = ["0108.0000", "00F7.0000"], speed_y = "+0000.1C00", camera_from = "00F7.8000", pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] } }
 
 # A spin lands in a tunnel: the landing's body grows 9 px, the looks find 8 px of room above and
 # none below, so she takes crouched Still instead and rises 4 px, her feet on the floor (the spin's
@@ -2313,7 +2313,7 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0003.1C00", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
+after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0003.1C00", camera_from = "0110.0000", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
 
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
@@ -3468,8 +3468,8 @@ after = { position = ["00F2.9C00", "007D.CFFF"], speed_x = "+0002.C000", dash = 
 # C-slope-carry-kept (gap 27): SL2's carry while running with a vertical speed kept on the ground.
 # The kept +0.E000 plays no part in the pull or the stop: the pull is 3.C000 from y subpixel FFFF,
 # which carries, so she stops with her bottom edge on row 1 of the block, 1 px above the last air
-# row (row 2) of the surface at her centre column. Her leading edge's column holds no slope, so
-# the walk isn't shortened either way.
+# row (row 2) of the surface at her centre column. Her rows end at 271, above the slope's row, so
+# her horizontal move meets no slope and the walk isn't shortened either way.
 
 [[vector]]
 id = "C-slope-carry-kept"
