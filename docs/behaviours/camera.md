@@ -14,11 +14,13 @@ and what it remembers of her between frames. It reads her motion's outputs: her 
 moves, `camera_from`, whether she skids, whether she rises, her facing
 and whether she moonwalks.
 
-**What samus-motion must add.** One output, `rising` (§1.3): she is rising, from the rise's start
-until it ends (`RisingAndFalling`), a rise at 0 and the frame that spends the rise included. Its
-vertical speed can't show either: at a rise at 0 it is 0, and on the frame that spends the rise it
-already points down, yet both aim the camera as a rise does (C-rise-at-0, C-rise-spent). Its
-other outputs are read as it exports them, `camera_from` on every frame.
+**What it reads from samus-motion.** Its step's outputs as it exports them: her position,
+`camera_from` on every frame, the skid, her facing and `rising` (§1.3), which samus-motion's
+`RisingAndFalling` gives: she is rising from the rise's start until it ends, a rise at 0 and the
+frame that spends the rise included. Her vertical speed can't stand in for it: at a rise at 0 it is
+0, and on the frame that spends the rise it already points down, yet both aim the camera as a rise
+does (C-rise-at-0, C-rise-spent). While a knockback moves her, `rising` and going backwards are the
+knockback's (§5).
 
 **Not in this spec** (each an input where it feeds us, §1.3; §5 names who supplies each): a door's
 passage, which places the view in the next room; the cells that open and close screens as she
@@ -56,7 +58,7 @@ the next.
 | `camera_from` | `P.S`: her motion's y the camera follows her from, every frame: her start y, or where pose fit or a change of shape placed her | `Remembering` |
 | her facing | `Left`, `Right`, `Screen` (facing the player; leads as `Right`) | `LeadingHer` |
 | going backwards | `bool`: she skids (her motion's output), moonwalks (her pose), or takes a knockback (the damage domain); the vectors name which | `LeadingHer` |
-| rising | `bool`: she is rising, from the rise's start until it ends, a rise at 0 and the frame that spends the rise included (the output samus-motion must add, Header) | `AimingHeight` |
+| rising | `bool`: she is rising, from the rise's start until it ends, a rise at 0 and the frame that spends the rise included: samus-motion's output (`RisingAndFalling`), or the knockback's while one moves her (§5) | `AimingHeight` |
 | the room's screens | a grid of `ScreenKind`, so many screens across (`w`) and down (`h`), and the rows the room's loading left below it (`BelowTheRoom`) | `ClosedScreens`, `ShortScreens`, `Settling`, `RoomEdges`, `ScreensRunOn` |
 | the aim heights | the room's two distances in px: while she isn't rising, and while she rises | `AimingHeight` |
 | lead setting | `Ahead`, `KeepLeft`, `KeepRight`, `Near` (listed alphabetically; the order means nothing); `Ahead` unless a boss sets another | `LeadingHer` |
@@ -72,7 +74,11 @@ the next.
 **Which screens it looks at** (`ClosedScreens`): across, the row that holds the view's middle;
 down, the column. On an axis, the camera's screen is the one that holds its near edge (left or
 top), and the next screen is the one after it (right or below): across, the one after a row's last
-column is `ScreensRunOn`'s; below the room's last row, `BelowTheRoom`'s.
+column is `ScreensRunOn`'s; below the room's last row, `BelowTheRoom`'s. A position's screen is
+found from its pixel part read as 0 to `FFFF`, 256 px a screen: so a top above the room (`FFF0`)
+is in the 256th row, below the room (`BelowTheRoom`), not in its first row
+(C-edge-down-from-above-short), and a position right of the room is in a column past the row's
+last (`ScreensRunOn`).
 
 ---
 
@@ -85,21 +91,34 @@ column is `ScreensRunOn`'s; below the room's last row, `BelowTheRoom`'s.
 - params: the extra pixel, `1.0000`.
 - switch: none.
 - On each axis, she moved when her pixel part is not where it last saw her: `sx ≠ ex`.
-- `before(a, b)`, on 16-bit pixel parts: bit 15 of `(a − b) mod 2^16` is set. Positions compare
-  this way throughout, so a value left of or above the room (`FFF0`) is before 0.
-- She moved on an axis, and its aim's pixel part isn't the camera's → it moves towards the aim by
-  its speed, carrying through the subpixels, `c ± speed` [R4, R8, R14, R16, R32]
+- Positions compare in two ways, both on 16-bit pixel parts:
+  - `before(a, b)`: bit 15 of `(a − b) mod 2^16` is set. So a value left of or above the room
+    (`FFF0`) is before 0, and of two values `8000` apart each is before the other.
+  - `exceeds(a, b)`: `a > b` as plain numbers from 0 to `FFFF`. So `FFF0` exceeds every
+    position in the room.
+  - A rule compares by `before`, and its `max` and `min` pick by `before`, unless it says
+    `exceeds`. The two agree while both values are in the room; they differ only for a camera
+    another domain left outside it (§5), or `8000` or more from what it is compared with
+    (C-edge-right-from-left, C-edge-down-from-above, C-settle-reach-from-left, C-push-left-far).
+- She moved on an axis, its aim's pixel part isn't the camera's, and the aim isn't `before` the
+  camera → it moves right or down by its speed, carrying through the subpixels, `c + speed` [R4,
+  R8, R16, R19, R22, C-lead-near-right]
+- She moved on an axis, and its aim's pixel part is `before` the camera's → it moves left or up by
+  its speed, `c − speed` [R5, R14, R17, R18, R32, C-aim-half-way]
+- So an aim exactly `8000` from the camera is `before` it, and the camera moves left or up
+  (C-aim-half-way).
 - Her pixel part is not `before` the one where it last saw her → its speed is `(s − e) + 1.0000`,
   on the whole `P.S` mod 2^32 [R2, R4, R12, R18, R19]
 - Her pixel part is `before` it → its speed is `(e − s) + 1.0000` [R1, R5, R16, R17, R31]
-- The move would take its pixel part past the aim's → it stops on the aim, its subpixel part 0
+- The move would take its pixel part beyond the aim's (going right or down, the aim `before` it;
+  going left or up, it `before` the aim) → it stops on the aim, its subpixel part 0
   [R4, R5, R10, R14, R17, C-lead-near-right]
 - So with the aim's pixel part the camera's, it stays as it is, subpixel included, and doesn't
   settle (R9, R13, R21, R23). When she didn't move on an axis, it settles instead (`Settling`).
 - So a creep left or up inside a pixel gives a speed under 1 px (`CreepReadsRightward`).
 - Every other rule in this spec sets the camera's pixel part only: its subpixel part changes only
   by this move and this stop.
-- checked: oracle (every recorded vector); constructed (C-lead-*, C-push-*).
+- checked: oracle (every recorded vector); constructed (C-lead-*, C-push-*, C-aim-half-way).
 
 ### LeadingHer
 - kind: mechanic and parameter.
@@ -181,15 +200,20 @@ aim stopped it, and `v` its speed's pixel part.
   (`PushCarries`).
 - Across, the screens read are in the row holding `y + 128` (`y` the camera's pixel part down);
   down, in the column holding `x + 128`.
-- Going right or down, the next screen `Closed`, and `c` past `edge(c) + rows` (`rows` 0 across,
-  `ShortScreens` down) → `c = max(edge(c) + rows, back(cm))` [R19, R22, R25, R27,
-  C-push-right-back, C-push-down-back]
-- Going left or up, the camera's screen `Closed` → `c = min(edge(c) + 256, ahead(cm))` [R18,
-  R20, R32, C-push-left-back, C-push-up-back]
+- Going right or down, the next screen `Closed`, and, down, `c` `exceeds` `edge(c) + rows`
+  (`ShortScreens`; across there is no such test and `rows` is 0) → `c = max(edge(c) + rows,
+  back(cm))` [R19, R22, R25, R27, C-push-right-back, C-push-down-back]
+- Going left or up, the camera's screen `Closed` → `c = min(edge(c) + 256, ahead(cm))`, the
+  `min` by `exceeds` [R18, R20, R32, C-push-left-back, C-push-up-back, C-push-left-far]
+- So in C-push-left-far the camera moves left from `80FE` onto its aim at `00FF`, and `ahead(cm)`
+  is `8100`: `before` would keep `8100`, but it `exceeds` the edge, so the view stops on `0100`.
+- The `exceeds` going down can't differ from `before`: `RoomEdges` lets only a `c` from 0 to `yb`
+  reach it.
 - So the view stops on the screen's edge (R22, R18) or, short of it, backs 2 px a frame from where
   it was before its move (C-push-right-back): it moves against her until it is out.
 - So going down, a top within `rows` of its screen's edge stays where the move put it (R2, R11).
-- checked: oracle (the stops on the edge, R18-R32); constructed (the 2 px back-offs).
+- checked: oracle (the stops on the edge, R18-R32); constructed (the 2 px back-offs,
+  C-push-left-far).
 
 ### RoomEdges
 - kind: mechanic.
@@ -198,13 +222,16 @@ aim stopped it, and `v` its speed's pixel part.
 - switch: none.
 - The camera's furthest right is the last screen's left edge, `xr = (w − 1) × 256`; its furthest
   down is `yb = (h − 1) × 256 + rows` (`ShortScreens`).
-- Going right past `xr` → it stops on `xr`, and no closed screen moves it that frame [R4, R8,
-  R19, R26]
+- Going right, `c` `exceeds` `xr` → it stops on `xr`, and no closed screen moves it that frame
+  [R4, R8, R19, R26, C-edge-right-from-left]
 - Going left or up `before` 0 → it stops on 0 on that axis, and no closed screen moves it that
   frame [R1, R5, R8, R10, R11]
-- Going down past `yb` → it backs up as from a closed screen, `max(yb, back(cm))`, which stops
-  it on `yb`, and no closed screen moves it that frame [R12, R17, R25]
-- checked: oracle.
+- Going down, `c` `exceeds` `yb` → it backs up as from a closed screen, `max(yb, back(cm))`,
+  which stops it on `yb`, and no closed screen moves it that frame [R12, R17, R25,
+  C-edge-down-from-above]
+- So a camera left of or above the room that moves right or down goes straight to the room's
+  right edge or bottom (C-edge-right-from-left, C-edge-down-from-above).
+- checked: oracle; constructed (C-edge-right-from-left, C-edge-down-from-above).
 
 ### ShortScreens
 - kind: mechanic.
@@ -227,19 +254,29 @@ aim stopped it, and `v` its speed's pixel part.
 - switch: none.
 - `c0` is the camera's pixel part as the frame found it, and `a` its ease forward, `ahead(c0)`;
   the rules below read `c` after the first.
-- Settling → it is first brought into the room: `c = min(max(c0, 0), cr)`, `cr` being `xr` across
-  and `yb` down (`RoomEdges`) [C-settle-into-room-down]
-- The camera's screen `Closed`, and `a` reaches the next screen's edge → it stops on that edge,
-  `c = edge(c) + 256` [C-ease-right-snap]
+- Settling → it is first brought into the room: `c = min(max(c0, 0), cr)`, the `min` by
+  `exceeds`, `cr` being `xr` across and `yb` down (`RoomEdges`) [C-settle-into-room-down]
+- The camera's screen `Closed`, and `a` is the next screen's edge or `exceeds` it → it stops on
+  that edge, `c = edge(c) + 256` [C-ease-right-snap, C-settle-reach-from-left]
+- So from `c0` = `FFF0` the camera is brought to 0, its ease `a` is `FFF3`, which `exceeds` the
+  next screen's edge `0100`, and it stops there (C-settle-reach-from-left).
 - The camera's screen `Closed`, and the screen after the one `a` is in `Closed` too → it drops to
   the edge of the screen that ease is in, `c = edge(a)` [C-ease-both-closed]
 - The camera's screen `Closed`, otherwise → it eases forward, `c = a` [C-ease-right, C-ease-down,
   C-creep, C-wrap]
-- The camera's screen `Open` or `Short`, the next `Closed`, and `c` past `edge(c) + rows` → it
-  eases back, `c = max(edge(c) + rows, back(c0))` [C-ease-left, C-ease-left-snap, C-ease-up,
-  C-ease-up-short]
+- The camera's screen `Open` or `Short`, the next `Closed`, and, down, `c` `exceeds`
+  `edge(c) + rows` (across there is no such test and `rows` is 0) → it eases back, `c =
+  max(edge(c) + rows, back(c0))` [C-ease-left, C-ease-left-snap, C-ease-up, C-ease-up-short,
+  C-settle-back-right-of-room]
+- As that, and the `max` is `back(c0)`, which is in a `Closed` screen → it goes on to the next
+  screen's edge from there, `c = edge(back(c0)) + 256` [C-settle-back-far-right]
 - So with the next screen closed and the camera on its screen's edge, or down within `rows` of
   it, it holds (R1, R2, R4, R12, R21, R23).
+- So from a camera right of the room, brought to its right edge, the ease back is measured from
+  where the frame found it: from `0150` it eases to `014D` (C-settle-back-right-of-room); from
+  `0250` the ease lands in the column after the last, which runs on to a closed screen, and it goes
+  on to `0300` (C-settle-back-far-right). A camera below the room is brought to its bottom, its
+  screen's edge plus `rows`, so it holds.
 - So across, from a frame the camera began inside the room, the first rule changes nothing; down it
   can, when the screen its top is in became `Short` (C-settle-into-room-down).
 - checked: oracle (the holds); constructed (every ease: no recorded frame starts with the view
@@ -274,8 +311,9 @@ aim stopped it, and `v` its speed's pixel part.
   at the room's right edge can ease past it.
 - params: none.
 - switch: none.
-- The screen after a row's last column → it is the first screen of the row below, or, after the
-  room's last row, of the first row below the room (`BelowTheRoom`) [C-wrap]
+- A screen `k` columns after a row's last → it is the `k`th screen of the row below, and so on
+  row after row: the screens run on as one strip, after the room's last row into the rows below
+  the room (`BelowTheRoom`) [C-wrap, C-settle-back-far-right]
 - So in C-wrap the view's own screen at the right edge is closed and the first of the row below
   is open: it eases 3 px past the room's right edge, and on from there each frame.
 - checked: constructed (C-wrap); no recorded frame reads it with an effect.
@@ -287,10 +325,11 @@ aim stopped it, and `v` its speed's pixel part.
 - params: none.
 - switch: none.
 - A screen below the room's last row → its kind is the room's `below` rows', left to right, a
-  row at a time; past them, `Closed` [R3, R16, C-below-closed, C-below-open]
+  row of `w` screens at a time, a screen a row doesn't give `Closed`; past them, `Closed` [R3,
+  R16, C-below-closed, C-below-open, C-below-short-row]
 - So only a move down that crosses into the last row reads them (`DownwardLooksAhead`): R3 and
   R16 would back up if the screen below were closed (C-below-closed against C-below-open).
-- checked: oracle (R3, R16); constructed (C-below-closed, C-below-open).
+- checked: oracle (R3, R16); constructed (C-below-closed, C-below-open, C-below-short-row).
 
 ### PushCarries
 - kind: quirk.
@@ -298,11 +337,16 @@ aim stopped it, and `v` its speed's pixel part.
 - params: none.
 - switch: none.
 - `ahead(p)` whose `p + v` passes `FFFF` (`p` the position it pushes from) → it adds 1 more
-  [original only]
-- `back(p)` whose `p − v` goes below 0 → it takes 1 more [original only]
-- So it shows only from a camera left of or above the room, which a frame never starts with in
-  play (`RoomEdges` and `Settling` bring it back).
-- checked: original only.
+  [C-push-carries, C-push-carries-move]
+- So it shows only when the push sums from left of or above the room: from a camera another
+  domain placed there (from `FFFF`, the first screen closed, it eases to `0003`, not `0002`:
+  C-push-carries), or from where a move left or up took it before the aim stopped it in the
+  room's first screen (from `0003` it moves 5 px to `FFFE`, stops on its aim `0002`, and the push
+  from `FFFE` gives `0006`, not `0005`: C-push-carries-move).
+- So `back(p)`'s sum never shows one: it would take 1 more when `p − v` goes below 0, but that
+  needs `p` under the speed, at the room's first pixels, and every such push back lands before
+  the edge it is held at.
+- checked: constructed (C-push-carries, C-push-carries-move).
 
 ---
 
@@ -328,6 +372,8 @@ aim stopped it, and `v` its speed's pixel part.
 - **Other placements:** the grapple's own slow camera; the grapple, the shinespark, a suit she
   collects, cutscenes, some bosses and the gunship changing where the camera saw her; their frames are masked in the harness until
   those domains come.
+- **The knockback (the damage domain):** while a knockback moves her, it supplies going backwards
+  and `rising`.
 - **The enemies:** a boss changes the lead setting; Kraid's room keeps her on its first screen.
 - **The room rules that move the view after it follows** (the room's own code): one room holds the
   view above a floor, one scrolls it right, one shakes it, and one waits for it.
