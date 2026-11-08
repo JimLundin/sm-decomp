@@ -329,9 +329,10 @@ fn let_go_stands(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
         && movement(next)? == STANDING)
 }
 
-/// Whether `from` starts at a bomb jump's peak: the ball in its ground movement type, falling
-/// at a speed of 0: only a bomb jump leaves her so on the ground (gap 29).
-fn bomb_jump_peak(from: &FrameRecord) -> Result<bool, Skip> {
+/// Whether `from` starts where a bomb jump or a knockback handed back: the ball in its ground
+/// movement type, falling at a speed of 0, which on the ground only a bomb jump's or a
+/// knockback's end leaves ($90:8F1B, $91:F31D) (gap 29).
+fn handed_back_falling(from: &FrameRecord) -> Result<bool, Skip> {
     let movement = byte(from, source::SAMUS_MOVEMENT_TYPE)?;
     let samus = state(from)?;
     Ok(matches!(movement, BALL_ON_GROUND | SPRING_BALL_ON_GROUND)
@@ -339,11 +340,20 @@ fn bomb_jump_peak(from: &FrameRecord) -> Result<bool, Skip> {
         && samus.vertical_speed.0 == 0)
 }
 
-/// Whether a sloped floor block lies within a block of her feet in `from`: in her centre's
-/// column or either neighbour, and in her bottom's row or either neighbour. That is as far as
-/// one frame's move and pull reach at the dashes the records hold (gap 31).
-fn sloped_floor_near(from: &FrameRecord, inputs: &Inputs) -> Result<bool, Skip> {
-    let column = word(from, source::SAMUS_X_POS)? >> BLOCK_SHIFT;
+/// Whether a sloped floor block (not a ceiling's) lies under her path from `from` to `next`:
+/// in a column her centre covers between the two records' x, inclusive, and in her bottom's
+/// row at `from` or either neighbour. The model's x lies between the two, since its capped dash
+/// falls short of the game's the same way, so this covers every x either reaches (gap 31).
+fn sloped_floor_under(
+    from: &FrameRecord,
+    next: &FrameRecord,
+    inputs: &Inputs,
+) -> Result<bool, Skip> {
+    let (start, end) = (
+        word(from, source::SAMUS_X_POS)? >> BLOCK_SHIFT,
+        word(next, source::SAMUS_X_POS)? >> BLOCK_SHIFT,
+    );
+    let columns = start.min(end)..=start.max(end);
     let bottom = word(from, source::SAMUS_Y_POS)?
         .wrapping_add(radius(from)?)
         .wrapping_sub(1)
@@ -351,12 +361,12 @@ fn sloped_floor_near(from: &FrameRecord, inputs: &Inputs) -> Result<bool, Skip> 
     let width = usize::from(inputs.width.0);
     let near = |centre: u16| centre.saturating_sub(1)..=centre.saturating_add(1);
     Ok(near(bottom).any(|row| {
-        near(column).any(|column| {
+        columns.clone().any(|column| {
             usize::from(row)
                 .checked_mul(width)
-                .and_then(|start| start.checked_add(usize::from(column)))
+                .and_then(|row_start| row_start.checked_add(usize::from(column)))
                 .and_then(|index| inputs.blocks.get(index))
-                .is_some_and(|block| matches!(block.kind, BlockKind::Slope(_)))
+                .is_some_and(|block| matches!(block.kind, BlockKind::Slope(slope) if !slope.y_flip))
         })
     }))
 }
@@ -720,24 +730,28 @@ impl Domain for SamusMotion {
             );
         }
         // The speed booster's dash moves her further (x, above); on a sloped floor the
-        // surface's height at her centre column, which the walk up and the ground pull end on,
-        // follows that x, and the pull is |speed| + dash + 1, so y is the booster's too there
-        // (gap 31: with the dash's cap lifted, each such frame of the five rows that still
-        // differs has x a pixel off, the booster's own growth of the dash).
-        if boost.contains(Q::X.index()) && sloped_floor_near(from, inputs)? {
+        // surface's height at her centre column, which the walk and the ground pull end on,
+        // follows that x. Following the ground down (the horizontal move not adjusted by the
+        // slope) the pull is |speed| + dash + 1, so the dash reaches y through the pull too;
+        // where the slope adjusted the move the pull is 1.0 ($90:924C, $90:925E) and the dash
+        // reaches y through x alone. Either way y is the booster's there (gap 31: with the
+        // dash's cap lifted, each such frame of the five rows that still differs has x a pixel
+        // off, the booster's own growth of the dash).
+        if boost.contains(Q::X.index()) && sloped_floor_under(from, next, inputs)? {
             mask(
                 "deferred: the speed booster on a sloped floor (its dash sets x, where the slope's surface leaves her, and the pull)",
                 Q::Y.set(),
             );
         }
         // A bomb jump lifts the ball without changing its ground pose and hands back at its
-        // peak ($90:E066, $90:E07D), where the rise's end left her falling from rest
-        // ($90:90C4: speed 0, falling). The next frame the ball's ground move tests that
-        // direction alone ($90:92B8) and moves her by the bomb jump's fall (0, under gravity),
-        // not by the ground pull; no other frame starts on the ground falling at 0 (gap 29).
-        if bomb_jump_peak(from)? {
+        // peak ($90:E066, $90:E07D), its end leaving her falling from rest ($90:8F1B: speed 0,
+        // falling); a knockback taken in the ball keeps her pose ($90:DF15) and its end does the
+        // same ($91:F31D). The next frame the ball's ground move tests that direction alone
+        // ($90:92B8) and moves her by her speed (0, under gravity), not by the ground pull. On
+        // the ground only a bomb jump's or a knockback's end leaves her so (gap 29).
+        if handed_back_falling(from)? {
             mask(
-                "deferred: the bomb jump's peak (the ball still in its ground pose falls from rest by its own speed, not the ground pull)",
+                "deferred: a bomb jump's or a knockback's end (the ball still in its ground pose falls from rest by its own speed, not the ground pull)",
                 Q::Y.set(),
             );
         }

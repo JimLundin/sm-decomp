@@ -33,6 +33,11 @@ row fell (item 29); the frames that newly differ are items 29-31.
     horizontal move, the game doesn't. The row is 285 against its floor of 286, so the floors
     test fails locally on it until this is answered; the floor is kept. Asked: which walk-offs
     move her the pull (a horizontal move first? the ball at rest?).
+    **Harness** (observer, lane/land-r9; the spec's answer comes with round 10): the frame is out of
+    this domain's scope and y is masked, "deferred: a bomb jump's or a knockback's end (...)": the
+    ball on the ground falling at a speed of 0, which on the ground only a bomb jump's or a
+    knockback's end leaves ($90:8F1B, $91:F31D; adversary 30). The answer's wording in the gaps and
+    decode notes held back with MT2 ("only a bomb jump") is corrected to the same when it lands.
 30. **The moonwalk's jump: the way her speed points (`TurningRound`, `PadChart`, MT1).**
     chain-0014-96BA 4 → 5, chain-0232-D5A7 17 → 18 and samus-input-poses 118 → 119: moonwalking
     (49h, 4Ah, 49h) at speed 0, following the pad, jump pressed: the moonwalk's jump (C0h, BFh,
@@ -56,6 +61,12 @@ row fell (item 29); the frames that newly differ are items 29-31.
     frames and these frames match on all five rows. So neither gap 27's frames matching nor these
     differing is evidence of `SlopesCarry`. Asked: whether the booster's mask should also take y
     while that dash runs her over a sloped floor.
+    **Harness** (observer, lane/land-r9): yes, y is masked where the booster's x mask applies and a
+    floor slope lies under the columns her centre covers from this record's x to the next's, in
+    her bottom's row or either neighbour (adversary 30's narrowing: 20 frames of samus-mockball, 70
+    of each shinespark row, all five rows still at 129, 315, 293, 212 and 266). The dash reaches y
+    through the pull only following the ground down; where the slope adjusted the move the pull
+    is 1.0 and it reaches y through x alone.
 
 ## Answered: round 8 in the engine and the harness (integrator, 2026-11-08, lane/wire-r8; observer, lane/r9-spec)
 
