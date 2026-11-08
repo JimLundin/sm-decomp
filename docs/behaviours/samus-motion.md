@@ -39,7 +39,7 @@ entries over; over an area's old code is a strict failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 203.0 units, capped at 70% of old = 6,876 (motion 2,520, pose fit 624, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 204.0 units, capped at 70% of old = 6,912 (motion 2,556, pose fit 624, pose chart 1,584 capped, collision 2,148)
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
@@ -55,7 +55,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
-| horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
+| horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings`; output (whether she skids, travelling against her facing: the camera leads her backwards then) |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball) | `Dash`, `TurningRound`, `Jumping` |
 | vertical speed | signed `P.S`, downward positive | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
@@ -236,6 +236,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   dash (`AnimationEnds`).
 - Every turn and every spin reversed leaves her skidding, whatever she was doing before: her
   speed, the dash added, then points against her new facing.
+- The moonwalk's jump, the one turn that keeps her facing (`PadChart`) → it leaves her skidding
+  too: her speed points against her facing, back the way her sprite looks, though the moonwalk
+  carried her along her facing [MT2]
+- So the turn's first frame brakes that speed to 0 (the moonwalk's top speed, 0.8000, is one
+  frame's brake), and only the camera, which reads the skid, shows which way it pointed.
 - A spin reversed while she is already skidding (travelling against her old facing, which is the
   way she now faces) → that frame she moves the old way (`MovesAsShePosed`), and from the next
   frame the same speed points the other way, back along her old facing, and goes on braking as a
@@ -263,7 +268,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   (samus-input-poses:120-121) for run held on the ground: braked to 0 at 120, she creeps 0.C000 at
   121, which a skid kept at 0 would not; R141 for run held in the air; SR1 for a spin reversed in
   its first frame, which skids; TL4 for the sinking onto a floor; W11 for the sinking over air,
-  subpixel and all; W14 for a spin reversed while skidding); constructed (the sinking); original
+  subpixel and all; W14 for a spin reversed while skidding; MT2 for the moonwalk's jump, chain-0014-96BA,
+  as chain-0232-D5A7:18 and samus-input-poses:119 show it too); constructed (the sinking); original
   only (the aim of a turn begun aimed `DownForward`).
 
 ### AimingAndShooting

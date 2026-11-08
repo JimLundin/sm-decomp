@@ -988,6 +988,40 @@ down to 0100, the unmorph's command 7 writes the same: 0100.8000), C-fit-land-tu
 instead raises her to 0110, `$91:FFE9`: 0110.0000) and C-fit-step-enemy (refused: no write, so the
 frame's start, 00F7.8000).
 
+**Gap 29, the bomb jump's peak (harness mask).** The bomb jump's handler (`$90:E025` →
+`$90:E032`, straight `$90:E066`) runs `$90:90E2` and never changes her pose: the ball stays 1Dh
+(movement type 4). When the rise is spent, `$90:90C4` sets `0B36` = 2 with `0B2E`.`0B2C` 0; the
+next pass sees the direction down and ends the bomb jump (`$90:E07D`: handler `$A337`) without a
+move. samus-bomb-jump-vertical 1036 is the first normal frame: `$90:A521` → `$90:92B8` tests
+`0B36` alone, so the ball moves by `$90:90E2` (0 px), not by the ground pull `$90:923F` (which,
+with `0B36` = 0 and no floor, moves her the whole pull: SL3's walk-off, unchanged). The fall pose
+(31h) then starts from rest (record 1037: 0, down). A knockback's end in the ball (`$91:F31D`)
+leaves her the same. The harness's mask: movement type 4 or 11h
+(`$90:A69F` → `$90:92B8` alike), `0B36` = 2, magnitude 0; over the 32 rows it meets 1036 only.
+
+**Gap 30, the moonwalk's jump (MT2).** Jump pressed while moonwalking (49h, facing word 8) takes
+C0h (facing word 8, movement type Eh) after the frame's move; `$91:F8D3` (turning on the ground,
+its pose from `$91:F9EA` for the moonwalk) adds `0B42` to `0B46` and sets `0B4A` = 1 whatever the
+facing. With the facing kept, `0B4A` = 1 points her speed leftward (`$90:8EA9`), against the
+0.8000 the moonwalk just moved her. chain-0014-96BA 4 → 5: 019B.8000 → 019C.0000, `0B46`.`0B48`
+0.8000, `0B4A` 1; 5 → 6: `$90:9A7E` brakes 0.8000 (the turn's table) to 0, x kept, and the turn's
+let-go (nothing held) clears `0B4A`. Modes 1 and 2 brake alike there, so no later move shows it,
+but the scroll (`$90:95A0`, run after the Samus handler in `$82:8B8A`) reads `0B4A` = 1 at
+`$90:95D4` and leads the camera backwards, as for the moonwalk (`$90:95C2`): the skid is the
+camera's input. chain-0232-D5A7 17 → 18 (4Ah → BFh) and samus-input-poses 118 → 119 (49h → C0h)
+show `0B4A` = 1 the same.
+
+**Gap 31, the speed booster on a sloped floor (harness mask).** With `0B42` ≥ 2.0 running with
+run held, `$90:9789` grows the dash past the model's cap, so x is masked already; on a slope the
+surface row at her centre column (`$94:95A1`, `$94:87DB`) and the pull `$90:923F` (`0DBC`.`0DBE` +
+1) both follow it, so y is the booster's there too. A local run with `dash_cap` 10.0000 and x
+unmasked: y matches on every masked frame except shinespark 110, 118, 142 and 146 (the same on all
+four rows), where x is a pixel ahead (03B4.0FFF against 03B3.FFFF at 110; the model's growth of
+the dash isn't the booster's), so those differ by the booster too. The mask's test: a slope block
+(type 1) within one block of her feet (her centre's column ± 1, her bottom's row ± 1); it takes
+y on 24 frames of samus-mockball and 81 of each shinespark row. Shinespark 198 (left, up-left) and
+185 (right, up) are outside it and still differ (y 1 px).
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not

@@ -6,7 +6,7 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
-## Open: round 9 in the engine and the harness (integrator, 2026-11-08, lane/wire-r9)
+## Answered: round 9 in the engine and the harness (integrator, 2026-11-08, lane/wire-r9; observer, lane/wire-r9)
 
 The bridge (`game::samus_world::step`) takes round 9's API. Gap 28's answer is wired: where pose
 fit or the shrink placed her, the camera's previous y pixel (`0B14`) is the step's `camera_from`,
@@ -36,8 +36,19 @@ row fell (item 29); the frames that newly differ are items 29-31.
     **Harness** (observer, lane/land-r9; the spec's answer comes with round 10): the frame is out of
     this domain's scope and y is masked, "deferred: a bomb jump's or a knockback's end (...)": the
     ball on the ground falling at a speed of 0, which on the ground only a bomb jump's or a
-    knockback's end leaves ($90:8F1B, $91:F31D; adversary 30). The answer's wording in the gaps and
-    decode notes held back with MT2 ("only a bomb jump") is corrected to the same when it lands.
+    knockback's end leaves ($90:8F1B, $91:F31D; adversary 30).
+    **Answered** (observer, lane/wire-r9): every walk-off does, the ball at rest included; this
+    frame is the bomb jump's, so the harness masks y on it. A bomb jump lifts the ball without
+    changing its ground pose and hands back at its peak, where the rise's end has left her falling
+    at a speed of 0. The next frame the ball's ground move reads only that she is falling, so she
+    moves by her own speed under gravity (0 px) instead of being pulled down onto the floor; with
+    no vertical speed (the state the spec's ground ball has, §1.2) the pull runs and a walk-off
+    moves her the whole of it, as SL3 has it. Falling at 0 on the ground arises only from a bomb
+    jump's or a knockback's end ($90:8F1B, $91:F31D), which the header leaves out of scope, so the
+    frame's y isn't this domain's: the mask "deferred: a bomb jump's or a knockback's end (...)"
+    takes y where the ball (or the spring ball) on the ground starts falling at 0 (1 frame over the
+    32 rows: 1036 → 1037). No spec change, no vector. samus-bomb-jump-vertical: 286 of 286 compared
+    frames, at its floor. Sources in the decode notes (gap 29).
 30. **The moonwalk's jump: the way her speed points (`TurningRound`, `PadChart`, MT1).**
     chain-0014-96BA 4 → 5, chain-0232-D5A7 17 → 18 and samus-input-poses 118 → 119: moonwalking
     (49h, 4Ah, 49h) at speed 0, following the pad, jump pressed: the moonwalk's jump (C0h, BFh,
@@ -48,6 +59,21 @@ row fell (item 29); the frames that newly differ are items 29-31.
     matched. No later frame differs (x and her speeds match through the turn). Asked: which way
     her speed points after the moonwalk's jump; or, if that never shows, whether the mode word on
     that frame is evidence, as with AS4.
+    **Answered** (observer, lane/wire-r9): it is evidence, and the spec is amended. The moonwalk's
+    jump leaves her skidding like every other turn: her speed (0.8000) points against her facing,
+    back the way her sprite looks, though the moonwalk had just carried her along it. The turn's
+    start sets the skid whatever her facing, and with the facing kept that reverses the way her
+    speed points. Unlike AS4 (carrying on against following the pad, at a standstill), this is
+    the sign of a speed of 0.8000, and it is perceivable: no later move shows it, since the turn's
+    first frame brakes 0.8000 to 0 whether she skids or carries on, but the camera reads the skid
+    on the same frame and leads her backwards, as through the moonwalk; a carried-on speed would
+    swing it forwards. So it isn't masked. `TurningRound` gains the arm (the moonwalk's jump →
+    she skids against her facing [MT2]) and its consequence (the next frame's brake to 0, which
+    only the camera's lead outlasts); the horizontal speed's **Read by** gains "output" (whether
+    she skids). MT2 (chain-0014-96BA:5): moonwalking right at 0 with right held, jump pressed →
+    019C.0000, speed −0.8000. Round 9 fails MT2 on `speed_x` alone (+0.8000) until the
+    implementer's next round; the three harness frames stay at their floors until then. Spec
+    units 203.0 → 204.0; budget 6,876 → 6,912. Sources in the decode notes (gap 30).
 31. **Down a slope on the speed booster's dash, the pull's row is the booster's (`SlopesCarry`,
     `FollowingTheGround`; with gap 27).** samus-mockball and the four samus-shinespark rows, frames
     10 → 11, 11 → 12, 13 → 14, 15 → 16 and 16 → 17: running down the slope with run held and a dash
@@ -61,12 +87,27 @@ row fell (item 29); the frames that newly differ are items 29-31.
     frames and these frames match on all five rows. So neither gap 27's frames matching nor these
     differing is evidence of `SlopesCarry`. Asked: whether the booster's mask should also take y
     while that dash runs her over a sloped floor.
+    **Answered** (observer, lane/wire-r9): yes. On a sloped floor where she ends up depends on her
+    x, through the surface's height at her centre column, and on the pull, `|speed| + dash + 1`;
+    the booster's dash past 2.0 sets both, so y there is the booster's as x is. The booster mask
+    gains a mask of its own: where the booster's x mask applies (running with run held, a dash of
+    2.0 or more, the booster equipped) and a sloped floor block lies within one block of her feet,
+    y is masked, "deferred: the speed booster on a sloped floor (...)". As first tested it took 24
+    frames of samus-mockball and 81 of each shinespark row (adversary 30 narrowed it, below).
+    Checked by a local run with the cap lifted and x unmasked: y matches on all of them but shinespark 110, 118, 142 and 146, where x is a pixel
+    ahead, the model's growth of the dash not being the booster's, so those are the booster's too.
+    Shinespark 198 (left, up-left) and 185 (right, up) are off the slope test and still differ.
+    Floors: samus-mockball 124 → 129, shinespark-left 289 → 315, -right 267 → 293, -up 186 → 212,
+    -up-left 240 → 266. Sources in the decode notes (gap 31).
     **Harness** (observer, lane/land-r9): yes, y is masked where the booster's x mask applies and a
     floor slope lies under the columns her centre covers from this record's x to the next's, in
     her bottom's row or either neighbour (adversary 30's narrowing: 20 frames of samus-mockball, 70
     of each shinespark row, all five rows still at 129, 315, 293, 212 and 266). The dash reaches y
     through the pull only following the ground down; where the slope adjusted the move the pull
     is 1.0 and it reaches y through x alone.
+
+The harness after these answers: 12,636 of 12,782 compared frames (null model 5,583), every row
+at or above its floor, five floors raised.
 
 ## Answered: round 8 in the engine and the harness (integrator, 2026-11-08, lane/wire-r8; observer, lane/r9-spec)
 
