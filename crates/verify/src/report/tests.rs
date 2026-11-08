@@ -63,9 +63,12 @@ fn figures_read_as_an_observer_would() {
 
 #[test]
 fn the_baseline_commit_is_the_last_the_budget_paragraph_names() {
-    let spec =
+    let section =
         "**Budget.** at spine `bc6f74f9c`, over `x + 1` at `c7f927ab6`.\n\nLater `0123456789`.\n";
-    assert_eq!(baseline(spec).as_deref(), Some("c7f927ab6"));
+    assert_eq!(baseline(section).as_deref(), Some("c7f927ab6"));
+    // A baseline paragraph names it first, wherever it stands.
+    let section = "**Budget.** k = 36, at `c7f927ab6`.\n\n**Baseline.** at spine `387640758`.\n";
+    assert_eq!(baseline(section).as_deref(), Some("387640758"));
 }
 
 #[test]

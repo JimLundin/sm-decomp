@@ -12,12 +12,13 @@ How it is counted:
   count those alone. `crates/clean_types` is a row of its own, **shared types**, with the domains
   whose model depends on it, and is counted once in the total.
 - **Budget** and **units** are `tools spec-units` (`verify::spec_units`) on the domain's spec and
-  vectors, k from the spec's header. **Fit** is score ÷ budget; the total's score includes the
+  vectors, k and the areas from the Budget section of its decode notes, which the implementer
+  never sees (MODEL §1 decision 10). **Fit** is score ÷ budget; the total's score includes the
   shared types. An area's model score is the model files the registry
   (`verify::report::DOMAINS`) assigns it; files in no area are the domain's shared code and count
   in its total only.
-- **Old code** is the sum of the spec header's area `old` figures, at the commit its budget
-  paragraph names last.
+- **Old code** is the sum of the Budget section's area `old` figures, at the commit its
+  baseline or budget paragraph names last.
 - **Lines** are code lines: non-blank, non-comment, tests excluded (`tests` directories,
   `tests.rs` files and `#[cfg(test)]` items). A file holds **tables and types** when its type
   and data tokens outnumber its logic tokens, else **logic**. **Logic-equivalent lines** are
@@ -85,7 +86,7 @@ How it is counted:
 
 ### samus-motion
 
-Spec [`docs/behaviours/samus-motion.md`](behaviours/samus-motion.md), k = 36. Old code 12,724, at `c7f927ab6` as the header states.
+Spec [`docs/behaviours/samus-motion.md`](behaviours/samus-motion.md), k = 36. Old code 12,724, at `c7f927ab6` as its decode notes' Budget section states.
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -98,7 +99,7 @@ Spec [`docs/behaviours/samus-motion.md`](behaviours/samus-motion.md), k = 36. Ol
 
 ### camera
 
-Spec [`docs/behaviours/camera.md`](behaviours/camera.md), k = 36. Old code 2,274, at `cc505407c` as the header states.
+Spec [`docs/behaviours/camera.md`](behaviours/camera.md), k = 36. Old code 2,274, at `cc505407c` as its decode notes' Budget section states.
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |

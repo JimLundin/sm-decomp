@@ -50,8 +50,8 @@ Jim's decisions, 2026-11-07:
    Where the original's exact behaviour departs from those shapes, the shape stays and the
    departure is a named quirk. The clean room's version is in
    [docs/cleanroom/DESIGN.md](../cleanroom/DESIGN.md).
-7. **The budget comes from the spec.** A domain's size budget is k weighted tokens per spec
-   unit. k is defined as the old code's score per unit times 0.55, computed once, on the first
+7. **The budget comes from the spec's units.** A domain's size budget is k weighted tokens per
+   spec unit. k is defined as the old code's score per unit times 0.55, computed once, on the first
    domain, with the official counters (`tools spec-units`, `tools size`), then frozen and tested
    out of sample on the next domain (Jim, 2026-11-07: re-derived under this definition when the
    official count replaced the study's hand estimate of 24). Each area is capped at 70% of its old
@@ -59,7 +59,10 @@ Jim's decisions, 2026-11-07:
    rule ("arm"), plus a third for each term a data table makes the code interpret and a third for
    each operator in an exact formula; table rows, parameters, enum values, prose and vectors
    don't count. The budget moves by k per unit when the spec gains or loses behaviour, and is
-   frozen at each implementer export. The budget is an indicator, not a wall (Jim, 2026-11-08):
+   frozen at each implementer export. The spec never states it: k, the areas, their old code and
+   its commit are in the `## Budget` section of the domain's decode notes, which `tools
+   spec-units` and `tools report` read (decision 10). The budget is an indicator, not a wall
+   (Jim, 2026-11-08):
    the fit is score ÷ budget, by area and in total, and above 1 the excess costs in proportion to
    how far over, as a penalty for comparing alternatives and rounds, never as a gate. We look for
    a reasonable optimum of logic against specification, and stop compacting when a round's gain
@@ -77,6 +80,19 @@ Jim's decisions, 2026-11-07:
    chip's DSP, specced in behaviour and verified on the oracle's audio stream, scheduled late; the
    CPU side (which sound plays when) is modelled with the domains that trigger it. The plan of
    domains is [domains.md](domains.md).
+10. **The implementer is not told the score or the budget** (Jim, 2026-11-08). A score in front
+    of the implementer becomes a clearer goal than modelling the spec well, and invites gaming.
+    The score, k, the budgets, the fit and the old-code baselines are evaluation tools, for the
+    root, the observers and the adversaries comparing spec and code. Implementer-facing material
+    (the export: its design note, its skill, the spec and the vectors; and every brief) states
+    code rules only: the lints and ceilings (L1, L2, G5 to G7) as coding standards, never as parts
+    of a measure. Feedback from a size review reaches the implementer as shape findings
+    (duplication, a table that could be data, a function doing two things), never as a number or
+    a target. The budget lives in the Budget section of the decode notes
+    (`tools/cleanroom/move_budget.sh` moves a spec header's there), and
+    `tools/cleanroom/score_scan.sh`, with its word list `score_words.txt`, refuses an export
+    (`export.sh`), a brief (`scan_brief.sh`) or a trunk file an export would carry
+    (`check_crate_rules.sh`) that mentions any of it.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
@@ -294,7 +310,8 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     passing a whole owner (`&Samus`) down to a helper module to dodge Q2.
 - **k is computed under this score** (decision 7): the old code's score (12,723 for
   samus-motion, at `c7f927ab6`) per unit of the official `tools spec-units` count, times 0.55.
-  The spec header states the value and its inputs; it is then frozen.
+  The decode notes' Budget section states the value and its inputs (decision 10); it is then
+  frozen.
 - **Two lints close what no weight can** (Jim, 2026-11-07), as `tools/cleanroom/code_check.sh`
   tags on the clean crates:
   - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
@@ -324,8 +341,9 @@ localiser show any change against today's engine. Each change is either a fix or
     exact.
 - It's smaller (Jim, 2026-11-06). **A domain that is larger than the old code it replaces is a
   strict failure.** A domain must save significantly over the old code, unless the spec gives a
-  clear, substantiated reason why this domain can't. The spec header holds the baseline (the old
-  code's tokens, by file) and a target. A target over the baseline, or a scope change, goes to Jim with the
+  clear, substantiated reason why this domain can't. The decode notes' Budget section holds the
+  baseline (the old code's tokens, by area, at a commit) and the budget; neither reaches the
+  implementer (decision 10). A budget over the baseline, or a scope change, goes to Jim with the
   numbers, and the lane stops until he answers.
 
 **Done means:**
@@ -466,8 +484,10 @@ history before the tag `archive/old-engine`.
 - No conditions on frame numbers, positions or room IDs that no spec entry names.
 
 **The spec template (review R4).**
-- **Header:** the domain's scope, its baseline in tokens and its budget (R8). The budget line is
-  the tool's, from the spec's units (§1 decision 7), with its split by area.
+- **Header:** the domain's scope, what it reads from other domains and what it leaves to them,
+  and its notation. No size: the baseline in tokens, the areas and the budget (R8) go in the
+  `## Budget` section of the decode notes (§1 decisions 7 and 10). The budget line there is the
+  tool's, from the spec's units, with its split by area.
 - **Rules are arms** (§1 decision 7). Each rule is one bullet of the form
   `<conditions> → <outcome> [vectors]`; only bullets with `→` count, so explanation, rewording or
   splitting a rule doesn't move the count. Two arms of one entry with the same outcome are one
@@ -494,7 +514,8 @@ an address anywhere in the clean crates, comments included. Comments in the engi
 rebuilt still cite the bank logs; they leave with their domain's old code.
 
 **A brief names behaviours and the mechanism** by spec entry IDs (for example: "`BallAtRest`
-coasts like standing; add its row"). It carries no bank-log excerpt and no address. A new free
+coasts like standing; add its row"). It carries no bank-log excerpt and no address, and no score,
+budget or size target (§1 decision 10): a size review's findings go in as shapes to change. A new free
 function named after a routine is a review stop.
 
 **Order** (each domain is proven against the oracle by its harness, §4):

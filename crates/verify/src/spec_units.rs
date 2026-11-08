@@ -2,10 +2,13 @@
 //! "Rules are arms").
 //!
 //! A domain's budget is k weighted tokens per spec unit, per area, each area capped at 70% of
-//! its old code where that figure is given. k is the spec's own: its header states it as
-//! "k = N weighted tokens per spec unit" (MODEL §1 decision 7: computed once, then frozen). A spec
-//! that states no k still has its units counted; its budget is "-" and the findings say so. The units are counted from the spec's structure, so
-//! rewording or explaining a rule moves nothing:
+//! its old code where that figure is given. The spec holds the rules and the counter counts its
+//! units; the budget is the evaluation's, so the spec never states it (MODEL §1 decision 10). k,
+//! the areas and their old code are in the `## Budget` section of the domain's decode notes
+//! (`docs/behaviours/<domain>.decode.md`), k as "k = N weighted tokens per spec unit" (MODEL §1
+//! decision 7: computed once, then frozen). A spec whose notes state no k still has its units
+//! counted; its budget is "-" and the findings say so. The units are counted from the spec's
+//! structure, so rewording or explaining a rule moves nothing:
 //! - an **arm** is a bullet holding `→` (outside backticks): `<conditions> → <outcome> [vectors]`,
 //!   under a `### Entry` heading. It is one unit. Arms of one entry with the same outcome count
 //!   once. An arm counts only if it cites vectors and each of them exists in the vector file. A
@@ -51,7 +54,9 @@
 //! as an error.
 //!
 //! **Areas.** A line `Area <name> (old <tokens>): <item>, <item>, ...`, as a paragraph or a
-//! bullet, in the spec's header or in the `--areas` file, which replaces the spec's. An item names
+//! bullet, in the decode notes' Budget section or in the `--areas` file, which replaces the
+//! notes' areas. A spec that still states k or an area is a finding: `tools/cleanroom/
+//! move_budget.sh` moves them to the notes. An item names
 //! an entry (`SlopesCarry`) or any other heading, by its whole text or its leading number (`1.2`
 //! for "1.2 What she remembers"). `(old N)` is the area's old-code weighted score, which sets the
 //! cap; `--baseline AREA=N` overrides it. A heading no area names, holding units, is reported
@@ -71,7 +76,8 @@
 //! **A spec commit's change.** With the parent's spec beside it,
 //! `git show HEAD~1:docs/behaviours/D.md > old.md`, the command line
 //! `tools spec-units docs/behaviours/D.md scenarios/vectors/D.toml --against old.md` prints the
-//! units and the budget before and after; the header's `Budget:` line is the report's.
+//! units and the budget before and after; the Budget section's `Budget:` line is the report's.
+//! The notes are `--notes FILE`, or the spec's sibling `<domain>.decode.md` when it exists.
 
 use std::collections::hash_map::Entry;
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -79,8 +85,7 @@ use std::fmt::{self, Write as _};
 use std::fs;
 
 /// The command line `run` takes.
-pub const USAGE: &str =
-    "tools spec-units SPEC VECTORS [--areas FILE] [--baseline AREA=TOKENS]... [--against OLD_SPEC]";
+pub const USAGE: &str = "tools spec-units SPEC VECTORS [--notes FILE] [--areas FILE] [--baseline AREA=TOKENS]... [--against OLD_SPEC]";
 
 /// The cap on an area's budget, in tenths of its old code.
 const CAP_TENTHS: u64 = 7;
@@ -830,12 +835,12 @@ pub struct AreaCount {
     pub entries: usize,
     /// What it holds.
     pub tally: Tally,
-    /// The spec's k, if its header states one.
+    /// The domain's k, if its decode notes' Budget section states one.
     pub k: Option<u64>,
 }
 
 impl AreaCount {
-    /// k × its units, before the cap, if the spec states k.
+    /// k × its units, before the cap, if the notes state k.
     #[must_use]
     pub fn uncapped(&self) -> Option<u64> {
         self.k.map(|k| self.tally.units().budget(k))
@@ -847,7 +852,7 @@ impl AreaCount {
         self.old.map(|old| old.saturating_mul(CAP_TENTHS) / 10)
     }
 
-    /// Its budget: k × its units, capped, if the spec states k.
+    /// Its budget: k × its units, capped, if the notes state k.
     #[must_use]
     pub fn budget(&self) -> Option<u64> {
         let uncapped = self.uncapped()?;
@@ -876,24 +881,31 @@ pub struct Count {
     pub unassigned: Option<usize>,
     /// Formulas outside any entry.
     pub strays: Vec<StrayFormula>,
-    /// The spec's k, from its header's "k = N weighted tokens per spec unit".
+    /// The domain's k, from its decode notes' Budget section, "k = N weighted tokens per spec
+    /// unit".
     pub k: Option<u64>,
+    /// Whether the spec itself states k or an area, which belong in the decode notes.
+    pub spec_states_budget: bool,
 }
 
 impl Count {
-    /// Counts `spec` against `vectors`. Areas come from `areas` when given, else from the spec's
-    /// own `Area` lines; `baselines` override their old-code figures.
+    /// Counts `spec` against `vectors`. k and the areas come from `budget`, the decode notes'
+    /// Budget section ([`budget_section`]); areas from `areas` instead when given; `baselines`
+    /// override their old-code figures.
     #[must_use]
     pub fn of(
         spec: &str,
         vectors: &Vectors,
+        budget: Option<&str>,
         areas: Option<&str>,
         baselines: &[(String, u64)],
     ) -> Self {
         let blocks = split_blocks(spec);
-        let k = stated_k(&blocks);
+        let spec_states_budget = stated_k(&blocks).is_some() || !area_defs(&blocks).is_empty();
+        let budget = split_blocks(budget.unwrap_or_default());
+        let k = stated_k(&budget);
         let mut defs =
-            areas.map_or_else(|| area_defs(&blocks), |file| area_defs(&split_blocks(file)));
+            areas.map_or_else(|| area_defs(&budget), |file| area_defs(&split_blocks(file)));
         for (name, old) in baselines {
             if let Some(def) = defs.iter_mut().find(|def| def.name == *name) {
                 def.old = Some(*old);
@@ -981,6 +993,7 @@ impl Count {
             unassigned,
             strays,
             k,
+            spec_states_budget,
         }
     }
 
@@ -1002,7 +1015,7 @@ impl Count {
             .fold(Tally::default(), |sum, area| sum.add(area.tally))
     }
 
-    /// The domain's budget, each area's summed, if the spec states k.
+    /// The domain's budget, each area's summed, if the notes state k.
     #[must_use]
     pub fn budget(&self) -> Option<u64> {
         self.areas.iter().try_fold(0_u64, |sum, area| {
@@ -1010,12 +1023,12 @@ impl Count {
         })
     }
 
-    /// The header's budget line.
+    /// The budget line, as the decode notes' Budget section holds it.
     #[must_use]
     pub fn budget_line(&self) -> String {
         let (Some(k), Some(budget)) = (self.k, self.budget()) else {
             return format!(
-                "Budget: no k in the header (MODEL §1 decision 7), {} units",
+                "Budget: no k in the decode notes' Budget section (MODEL §1 decision 7), {} units",
                 self.total().units()
             );
         };
@@ -1104,7 +1117,12 @@ impl Count {
         let start = out.len();
         if self.k.is_none() {
             out.push_str(
-                "  the header states no k (\"k = N weighted tokens per spec unit\"), so no budget\n",
+                "  the decode notes' Budget section states no k (\"k = N weighted tokens per spec unit\"), so no budget\n",
+            );
+        }
+        if self.spec_states_budget {
+            out.push_str(
+                "  the spec states k or an area: they go in the decode notes' Budget section (tools/cleanroom/move_budget.sh)\n",
             );
         }
         for arm in &self.arms {
@@ -1206,9 +1224,29 @@ fn stated_k(blocks: &[Block]) -> Option<u64> {
         })
 }
 
-/// A budget figure, or "-" when the spec states no k.
+/// A budget figure, or "-" when the notes state no k.
 fn or_dash(figure: Option<u64>) -> String {
     figure.map_or_else(|| String::from("-"), thousands)
+}
+
+/// The decode notes' `## Budget` section: from its heading to the next `## ` heading, or ""
+/// when the notes have none.
+#[must_use]
+pub fn budget_section(notes: &str) -> &str {
+    let mut at = 0_usize;
+    let mut start = None;
+    for line in notes.split_inclusive('\n') {
+        let heading = line.trim_end();
+        match start {
+            None if heading == "## Budget" => start = Some(at),
+            Some(_) if heading.starts_with("## ") => break,
+            _ => {}
+        }
+        at = at.saturating_add(line.len());
+    }
+    start
+        .and_then(|start| notes.get(start..at))
+        .unwrap_or_default()
 }
 
 /// The `Area` lines among the blocks' pieces.
@@ -1446,9 +1484,10 @@ fn thousands(n: u64) -> String {
     out
 }
 
-/// `--areas FILE`, `--baseline AREA=N` (repeatable) and `--against OLD_SPEC`.
+/// `--notes FILE`, `--areas FILE`, `--baseline AREA=N` (repeatable) and `--against OLD_SPEC`.
 #[derive(Default)]
 struct Options {
+    notes: Option<String>,
     areas: Option<String>,
     baselines: Vec<(String, u64)>,
     against: Option<String>,
@@ -1459,6 +1498,7 @@ fn options(args: &[String]) -> Result<Options, String> {
     let mut rest = args;
     while let [flag, value, tail @ ..] = rest {
         match flag.as_str() {
+            "--notes" => options.notes = Some(read(value)?),
             "--areas" => options.areas = Some(read(value)?),
             "--against" => options.against = Some(read(value)?),
             "--baseline" => {
@@ -1484,6 +1524,19 @@ fn read(path: &str) -> Result<String, String> {
     fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))
 }
 
+/// The decode notes beside `spec` (`D.md` beside `D.decode.md`), if they exist.
+fn sibling_notes(spec: &str) -> Result<Option<String>, String> {
+    let Some(stem) = spec.strip_suffix(".md") else {
+        return Ok(None);
+    };
+    let notes = format!("{stem}.decode.md");
+    if fs::exists(&notes).map_err(|e| format!("{notes}: {e}"))? {
+        read(&notes).map(Some)
+    } else {
+        Ok(None)
+    }
+}
+
 /// The change from `old` to `new`, signed.
 fn delta<T: fmt::Display>(old: u64, new: u64, show: impl Fn(u64) -> T) -> String {
     if new >= old {
@@ -1505,9 +1558,15 @@ pub fn run(args: &[String]) -> Result<String, String> {
     };
     let options = options(rest)?;
     let vectors = Vectors::parse(&read(vectors)?);
+    let notes = match options.notes {
+        Some(notes) => Some(notes),
+        None => sibling_notes(spec)?,
+    };
+    let budget = notes.as_deref().map(budget_section);
     let count = Count::of(
         &read(spec)?,
         &vectors,
+        budget,
         options.areas.as_deref(),
         &options.baselines,
     );
@@ -1518,7 +1577,13 @@ pub fn run(args: &[String]) -> Result<String, String> {
         count.report()
     );
     if let Some(old) = options.against {
-        let before = Count::of(&old, &vectors, options.areas.as_deref(), &options.baselines);
+        let before = Count::of(
+            &old,
+            &vectors,
+            budget,
+            options.areas.as_deref(),
+            &options.baselines,
+        );
         let (was, now) = (before.total().units(), count.total().units());
         let units = delta(was.thirds(), now.thirds(), |thirds| Units { thirds });
         let _ = writeln!(
@@ -1546,7 +1611,7 @@ fails: an arm or a formula is outside any entry (see the findings)
 #[cfg(test)]
 mod tests {
     use super::{
-        Complement, Count, StrayFormula, Unchecked, Units, Vectors, Verdict, delta,
+        Complement, Count, StrayFormula, Unchecked, Units, Vectors, Verdict, budget_section, delta,
         entry_operators, operators, thousands,
     };
 
@@ -1564,14 +1629,28 @@ id = "V3"
 source = "constructed"
 "#;
 
-    const SPEC: &str = "# Demo
+    /// The demo's decode notes: its Budget section, between two other sections.
+    const NOTES: &str = "# Demo: decode notes
 
-## Header
+## Sources
+
+Area ignored (old 5): Walk
+
+## Budget
 
 k = 24 weighted tokens per spec unit, frozen.
 
 Area moving (old 1,000): Walk, 1.2
 Area falling: `Fall`
+
+## Later
+
+k = 99 weighted tokens per spec unit
+";
+
+    const SPEC: &str = "# Demo
+
+## Header
 
 ### 1.2 Memory
 - carrying on with the pad let go → she keeps building [V1]
@@ -1602,7 +1681,16 @@ Cells: kept, gun drawn, `kept`
 ";
 
     fn count(spec: &str) -> Count {
-        Count::of(spec, &Vectors::parse(VECTORS), None, &[])
+        count_with(spec, "")
+    }
+
+    /// `spec` counted with `budget` as its notes' Budget section.
+    fn count_with(spec: &str, budget: &str) -> Count {
+        Count::of(spec, &Vectors::parse(VECTORS), Some(budget), None, &[])
+    }
+
+    fn demo() -> Count {
+        count_with(SPEC, budget_section(NOTES))
     }
 
     fn thirds(spec: &str) -> u64 {
@@ -1611,7 +1699,7 @@ Cells: kept, gun drawn, `kept`
 
     #[test]
     fn arms_cells_and_operators_make_the_units() {
-        let count = count(SPEC);
+        let count = demo();
         let [moving, falling, unassigned] = count.areas.as_slice() else {
             panic!("three areas: {:?}", count.areas);
         };
@@ -1634,7 +1722,7 @@ Cells: kept, gun drawn, `kept`
 
     #[test]
     fn verdicts_say_why_an_arm_counts_nothing() {
-        let count = count(SPEC);
+        let count = demo();
         let verdicts: Vec<_> = count
             .arms
             .iter()
@@ -1645,13 +1733,13 @@ Cells: kept, gun drawn, `kept`
             verdicts,
             [
                 Verdict::Counts,
-                Verdict::SameOutcome(15),
+                Verdict::SameOutcome(10),
                 Verdict::Missing(vec![String::from("Nope")]),
                 Verdict::Uncited(Unchecked::NoCite),
                 Verdict::CrossReference,
             ]
         );
-        let negation = count.arms.iter().find(|arm| arm.line == 31);
+        let negation = count.arms.iter().find(|arm| arm.line == 26);
         // A complement with an outcome of its own is a rule: no lint.
         assert_eq!(negation.and_then(|arm| arm.complement), None);
         assert_eq!(negation.map(|arm| &arm.verdict), Some(&Verdict::Counts));
@@ -1938,12 +2026,13 @@ Cells: kept, gun drawn, `kept`
     }
 
     #[test]
-    fn an_areas_file_replaces_the_spec_areas_and_baselines_cap() {
-        let spec = "k = 24 weighted tokens per spec unit\nArea one: A\n### A\n- a → b [V1]\n### B\n- c → d [V1]\n";
+    fn an_areas_file_replaces_the_notes_areas_and_baselines_cap() {
+        let spec = "### A\n- a → b [V1]\n### B\n- c → d [V1]\n";
+        let budget = "k = 24 weighted tokens per spec unit\nArea one: A\n";
         let vectors = Vectors::parse(VECTORS);
         let areas = "- Area left (old 20): A, B\n";
         let baselines = [(String::from("left"), 30)];
-        let count = Count::of(spec, &vectors, Some(areas), &baselines);
+        let count = Count::of(spec, &vectors, Some(budget), Some(areas), &baselines);
         let names: Vec<_> = count.areas.iter().map(|area| area.name.as_str()).collect();
         assert_eq!(names, ["left"]);
         assert_eq!(count.budget(), Some(21));
@@ -1963,49 +2052,70 @@ Cells: kept, gun drawn, `kept`
     }
 
     #[test]
-    fn k_is_read_from_the_header() {
-        let spec = "## Header\n\nk = 36 weighted tokens per spec unit, frozen.\n\nArea a: A\n### A\n- x → y [V1]\n";
-        let count = count(spec);
+    fn k_and_the_areas_are_read_from_the_notes_budget_section() {
+        let count = demo();
+        assert_eq!(count.k, Some(24));
+        let names: Vec<_> = count.areas.iter().map(|area| area.name.as_str()).collect();
+        assert_eq!(names, ["moving", "falling", "unassigned"]);
+        assert!(!count.spec_states_budget);
+        let budget = "## Budget\n\nk = 36 weighted tokens per spec unit, frozen.\n\nArea a: A\n";
+        let count = count_with("### A\n- x → y [V1]\n", budget);
         assert_eq!(count.k, Some(36));
         assert_eq!(count.budget(), Some(36));
         assert_eq!(count.budget_line(), "Budget: 36 × 1.0 units = 36 (a 36)");
         // Another number written as "k = " is not the budget's k.
-        assert_eq!(
-            super::Count::of(
-                "k = 3 cells\n### A\n- x → y [V1]\n",
-                &Vectors::parse(VECTORS),
-                None,
-                &[]
-            )
-            .k,
-            None
-        );
+        assert_eq!(count_with("### A\n- x → y [V1]\n", "k = 3 cells\n").k, None);
+    }
+
+    #[test]
+    fn the_budget_section_runs_to_the_next_section() {
+        let section = budget_section(NOTES);
+        assert!(section.starts_with("## Budget\n"));
+        assert!(section.contains("Area falling"));
+        assert!(!section.contains("ignored") && !section.contains("99"));
+        assert_eq!(budget_section("# Notes\n\n## Sources\n"), "");
+        assert_eq!(budget_section("## Budgets\n"), "");
+    }
+
+    #[test]
+    fn a_spec_stating_k_or_an_area_is_a_finding_and_sets_nothing() {
+        let spec =
+            "## Header\n\nk = 36 weighted tokens per spec unit\n\nArea a: A\n### A\n- x → y [V1]\n";
+        let count = count(spec);
+        assert!(count.spec_states_budget);
+        assert_eq!(count.k, None);
+        let names: Vec<_> = count.areas.iter().map(|area| area.name.as_str()).collect();
+        assert_eq!(names, ["unassigned"]);
+        // The same area in the notes counts.
+        let count = count_with("### A\n- x → y [V1]\n", "Area a: A\n");
+        assert!(!count.spec_states_budget);
+        assert_eq!(count.areas.len(), 1);
     }
 
     #[test]
     fn without_k_the_units_count_and_the_budget_is_a_dash() {
-        let count = count("Area a: A\n### A\n- x → y [V1]\n");
+        let count = count_with("### A\n- x → y [V1]\n", "Area a: A\n");
         assert_eq!(count.k, None);
         assert_eq!(count.budget(), None);
         assert_eq!(count.areas.first().and_then(super::AreaCount::budget), None);
         assert_eq!(
             count.budget_line(),
-            "Budget: no k in the header (MODEL §1 decision 7), 1.0 units"
+            "Budget: no k in the decode notes' Budget section (MODEL §1 decision 7), 1.0 units"
         );
     }
 
     #[test]
     fn the_budget_line_splits_by_area() {
         assert_eq!(
-            count(SPEC).budget_line(),
+            demo().budget_line(),
             "Budget: 24 × 6.0 units = 144 (moving 64, falling 56, unassigned 24)"
         );
     }
 
     #[test]
     fn entries_without_checked_and_unknown_items_are_found() {
-        let spec = "Area one: A, Gone\n### A\n- a → b [V1]\n- checked: oracle\n### B\n";
-        let count = count(spec);
+        let spec = "### A\n- a → b [V1]\n- checked: oracle\n### B\n";
+        let count = count_with(spec, "Area one: A, Gone\n");
         let unchecked: Vec<_> = count
             .blocks
             .iter()

@@ -12,40 +12,29 @@ need is in this repository; read nothing outside it.
 - **Exact.** The spec's numbers and rules are exact, quirks included, and the vectors check them.
   The finished model is later checked against the real game, frame by frame.
 - **Small and data-driven.** One kind of movement or situation is one row of a table, where it can
-  be. One rule lives in one place. The spec's header gives a size budget, an indicator of how much
-  logic the behaviour should take.
-  A table's values are counted apart from the logic, as data. A row states something the spec
-  gives as a fact (a speed, a cell, a row of a chart); a row that encodes a decision the code would
-  otherwise make, such as which branch to take, is logic and counts as such.
+  be. One rule lives in one place. A row states something the spec gives as a fact (a speed, a
+  cell, a row of a chart); a decision the code would otherwise make, such as which branch to take,
+  stays in the code, and a constant or a table holds values, not control flow, closures or calls.
+- **Shaped by types.** Define as many types as the behaviour needs. Values that travel together
+  through several functions are a concept with a name. A flat `match`, a helper and an early
+  return read better than decisions nested inside each other. A state is an enum, not a flag.
 
-## How your code is measured
+## What the checks refuse
 
-- **The score** is one weighted count of your model's logic tokens. Free: type declarations
-  (`struct`, `enum`, `type` items and attributes), the values of constants and statics (data),
-  constant names, `use` and `mod` lines, trailing commas, the `const` of `const fn`, comments and
-  tests. A function's signature counts half; `true` and `false` count double; each level of
-  nesting adds a quarter to every token inside it (a flat `match` doesn't nest). A pair of
-  parameter types that recurs in three or more signatures, or a pair of arguments at three or
-  more call sites, costs more: group values that travel together into a concept with a name.
-  Define as many shapes as the behaviour needs.
-- **The budget** comes from the spec: its header gives it by area. It is an indicator, not a
-  wall: being over it costs in proportion to how far over. Aim for the best shape, and come close
-  to the budget where you can without a worse form; never make the code worse to get under it.
-  Say where the size goes, by area, and why.
-- **The lints.** Clippy here enforces at most one bool parameter, nesting at most five deep (test
-  code included) and cognitive complexity at most 15. The rest are checked when your work is
-  imported, so keep to them as you go:
-  - No bare number other than 0 and 1 in the model's logic. Name it, or put it in `Rules` or a
-    named constant. A constant that holds a number the spec gives is a fact of the spec, not one
-    you invented.
-  - No `allow` attribute at all; every `expect` gives a `reason`. Outside tests, no `expect` names
-    a lint the workspace denies by name, a denied group or `warnings`; a lint denied only through
-    a group (such as `struct_excessive_bools`) may be expected with its reason.
-  - No struct that only wraps one call's arguments (taken by one function, built only at its
-    calls, with no methods).
-  - Modules import in one direction only: a module and its parent, or two siblings, may not each
-    import from the other.
-  - A constant's value that holds control flow, a closure or a function call is logic, not data.
+Clippy here refuses more than one bool parameter, a block nested five deep (test code included),
+cognitive complexity above 15 and more than seven arguments. The rest are checked when your work
+is imported, so keep to them as you go:
+
+- No bare number other than 0 and 1 in the model's logic. Name it, or put it in `Rules` or a
+  named constant. A constant that holds a number the spec gives is a fact of the spec, not one
+  you invented.
+- No `allow` attribute at all; every `expect` gives a `reason`. Outside tests, no `expect` names
+  a lint the workspace denies by name, a denied group or `warnings`; a lint denied only through
+  a group (such as `struct_excessive_bools`) may be expected with its reason.
+- No struct that only wraps one call's arguments (taken by one function, built only at its
+  calls, with no methods).
+- Modules import in one direction only: a module and its parent, or two siblings, may not each
+  import from the other.
 
 ## What a modern developer would expect
 

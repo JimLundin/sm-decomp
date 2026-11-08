@@ -1079,3 +1079,40 @@ The new code at the same commit, round 5:
 
 The pose map (`samus_world/pose.rs`, 3,610 of data) is which sprite shows each pose: the drawing
 domain's data, held in the bridge until the engine draws from the pose itself.
+
+## Budget
+
+Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
+the budget. `tools spec-units` reads k and the areas here, and `tools report` the areas' old
+figures and the commit.
+
+Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and
+so is each bracket pair; comments, layout and tests are free. Two kinds of token are counted
+apart and reported, not held against the target: the values of constants and statics (tables of
+the game's data, such as the chart's rows), and declarations (the `struct`, `enum` and `type`
+items and attributes that define the model's shapes; define as many as the behaviour needs). The
+target is on everything else, the logic.
+
+**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen: the old code's
+score, 12,723 (`tools size` at spine `bc6f74f9c`, over the old code at `c7f927ab6` and its two
+cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`), times
+0.55 is 36.2. An area's budget is k × its units, capped at 70% of its old code (`old`, the score
+of the old files that area replaces, counted the same way at `c7f927ab6`). The budget is an
+indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
+as a wall; over an area's old code is a failure.
+
+- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, TurningRound, AimingAndShooting,
+  RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
+  DriftInTheAir, Moonfall, WallJump, Landing, WordwiseTopSpeed, 1.2, 9
+- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
+- Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
+  AnimationEnds
+- Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
+  SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
+
+Budget: 36 × 204.3 units, capped at 70% of old = 6,924 (motion 2,568, pose fit 624, pose chart 1,584 capped, collision 2,148)
+
+From the spec's §7 (the pose chart), moved with the header's:
+
+**Size.** Inside the header's 1,500 tokens of logic for the chart: the chart's reader and the
+effects. The tables below are data records (about 120 rows), counted as data.

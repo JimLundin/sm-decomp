@@ -4,8 +4,9 @@
 //! Per rebuilt domain ([`DOMAINS`]) and in total: the model's score (`size`) over
 //! `crates/clean_model/<domain>`, with `crates/clean_types` shared out; the spec's units and
 //! budget by area (`spec_units` on `docs/behaviours/<domain>.md` and
-//! `scenarios/vectors/<domain>.toml`) and the fit, score ÷ budget; the old code's baseline as the
-//! spec's header states it; the bridge's and the harness's scores; code lines ([`lines`]); the
+//! `scenarios/vectors/<domain>.toml`, k and the areas from the Budget section of
+//! `docs/behaviours/<domain>.decode.md`) and the fit, score ÷ budget; the old code's baseline as
+//! that section states it; the bridge's and the harness's scores; code lines ([`lines`]); the
 //! harness floors and the vector counts; and the engine code not yet rebuilt, `crates/game`
 //! without the bridges.
 //!
@@ -24,7 +25,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::size::{self, Size};
-use crate::spec_units::{Count, Vectors};
+use crate::spec_units::{Count, Vectors, budget_section};
 
 /// The command line `run` takes.
 pub const USAGE: &str = "tools report [--write | --check]";
@@ -43,7 +44,8 @@ const SHARED_TYPES: &str = "crates/clean_types";
 /// The engine crate, the bridges' home and the code not yet rebuilt.
 const ENGINE: &str = "crates/game";
 
-/// A rebuilt domain. Its spec is `docs/behaviours/<name>.md`, its vectors
+/// A rebuilt domain. Its spec is `docs/behaviours/<name>.md`, its budget the `## Budget`
+/// section of `docs/behaviours/<name>.decode.md`, its vectors
 /// `scenarios/vectors/<name>.toml`, its model `crates/clean_model/<name>`, its harness
 /// `crates/verify/src/harness/<name, snake case>*` and its floors the rows of `floors.txt` that
 /// name it.
@@ -52,7 +54,8 @@ struct Domain {
     name: &'static str,
     /// The bridge's files under `crates/game/src`: those whose names start with it.
     bridge: &'static str,
-    /// The spec's areas, each with the model files (under the model's `src`) that hold it. A
+    /// The Budget section's areas, each with the model files (under the model's `src`) that
+    /// hold it. A
     /// model file in no area is the domain's shared code: it counts in the domain's total only.
     areas: &'static [(&'static str, &'static [&'static str])],
 }
@@ -197,7 +200,8 @@ struct Measured {
     count: Count,
     vectors: usize,
     pose_steps: usize,
-    /// The commit the spec's budget paragraph names last: the old code's.
+    /// The commit the Budget section's baseline or budget paragraph names last: the old
+    /// code's.
     baseline: Option<String>,
     bridge: Vec<File>,
     harness: Vec<File>,
@@ -334,10 +338,18 @@ fn total(files: &[File]) -> Measure {
     files.iter().map(|file| file.measure).sum()
 }
 
-/// The commit the spec's `**Budget` paragraph names last, in backticks: the old code's.
-fn baseline(spec: &str) -> Option<String> {
-    let start = spec.find("**Budget")?;
-    let paragraph = spec.get(start..)?;
+/// The commit the Budget section's `**Baseline` paragraph names last, in backticks, else its
+/// `**Budget` paragraph's: the old code's.
+fn baseline(section: &str) -> Option<String> {
+    ["**Baseline", "**Budget"]
+        .iter()
+        .find_map(|label| last_commit(section, label))
+}
+
+/// The commit the paragraph starting at `label` names last, in backticks.
+fn last_commit(section: &str, label: &str) -> Option<String> {
+    let start = section.find(label)?;
+    let paragraph = section.get(start..)?;
     let paragraph = paragraph
         .find("\n\n")
         .and_then(|end| paragraph.get(..end))
@@ -409,20 +421,22 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
             (file, area)
         })
         .collect();
-    let spec = read(
-        &root
-            .join("docs/behaviours")
-            .join(format!("{}.md", domain.name)),
-    )?;
+    let behaviours = root.join("docs/behaviours");
+    let spec = read(&behaviours.join(format!("{}.md", domain.name)))?;
+    let notes = read(&behaviours.join(format!("{}.decode.md", domain.name)))?;
+    let budget = budget_section(&notes);
     let toml = read(
         &root
             .join("scenarios/vectors")
             .join(format!("{}.toml", domain.name)),
     )?;
-    let count = Count::of(&spec, &Vectors::parse(&toml), None, &[]);
+    let count = Count::of(&spec, &Vectors::parse(&toml), Some(budget), None, &[]);
     for (area, _) in domain.areas {
         if !count.areas.iter().any(|stated| stated.name == *area) {
-            return Err(format!("{}: the spec states no area {area}", domain.name));
+            return Err(format!(
+                "{}: the decode notes' Budget section states no area {area}",
+                domain.name
+            ));
         }
     }
     let harness = prefixed(
@@ -437,7 +451,7 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
         count,
         vectors: tables(&toml, "vector"),
         pose_steps: tables(&toml, "pose_step"),
-        baseline: baseline(&spec),
+        baseline: baseline(budget),
         bridge: measure(
             root,
             &sources(&prefixed(&root.join(ENGINE).join("src"), domain.bridge)?)?,
@@ -451,7 +465,7 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
 /// # Errors
 ///
 /// The path and the error when a file can't be read, or a registry entry that names an area the
-/// spec doesn't state or a file the model doesn't hold.
+/// decode notes' Budget section doesn't state or a file the model doesn't hold.
 pub fn generate(root: &Path) -> Result<String, String> {
     let shared_files = measure(root, &sources(&[root.join(SHARED_TYPES)])?)?;
     let shared = total(&shared_files);
@@ -500,12 +514,13 @@ How it is counted:
   count those alone. `{SHARED_TYPES}` is a row of its own, **shared types**, with the domains
   whose model depends on it, and is counted once in the total.
 - **Budget** and **units** are `tools spec-units` (`verify::spec_units`) on the domain's spec and
-  vectors, k from the spec's header. **Fit** is score ÷ budget; the total's score includes the
+  vectors, k and the areas from the Budget section of its decode notes, which the implementer
+  never sees (MODEL §1 decision 10). **Fit** is score ÷ budget; the total's score includes the
   shared types. An area's model score is the model files the registry
   (`verify::report::DOMAINS`) assigns it; files in no area are the domain's shared code and count
   in its total only.
-- **Old code** is the sum of the spec header's area `old` figures, at the commit its budget
-  paragraph names last.
+- **Old code** is the sum of the Budget section's area `old` figures, at the commit its
+  baseline or budget paragraph names last.
 - **Lines** are code lines: non-blank, non-comment, tests excluded (`tests` directories,
   `tests.rs` files and `#[cfg(test)]` items). A file holds **tables and types** when its type
   and data tokens outnumber its logic tokens, else **logic**. **Logic-equivalent lines** are
@@ -720,7 +735,7 @@ fn areas(out: &mut String, domains: &[Measured]) {
         let _ = write!(
             out,
             "\n### {name}\n\nSpec [`docs/behaviours/{name}.md`](behaviours/{name}.md), k = {}. \
-             Old code {}, at `{}` as the header states.\n\n",
+             Old code {}, at `{}` as its decode notes' Budget section states.\n\n",
             or_dash(domain.count.k),
             or_dash(domain.old()),
             domain.baseline.as_deref().unwrap_or("-")

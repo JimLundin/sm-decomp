@@ -11,7 +11,7 @@
 //!
 //! `tools gate LOCK BUNDLE ROM GREEN [--update] ROW...`: the free-run gate ([`gate`]).
 //!
-//! `tools spec-units SPEC VECTORS [--areas FILE] [--baseline AREA=TOKENS]... [--against OLD]`:
+//! `tools spec-units SPEC VECTORS [--notes FILE] [--areas FILE] [--baseline AREA=TOKENS]... [--against OLD]`:
 //! a behaviour spec's units and the size budget they set, by area (`verify::spec_units`).
 //!
 //! `tools localise LOCK BUNDLE CACHE ROM ROW...`: the free run's first differing frame per

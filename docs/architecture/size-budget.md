@@ -149,16 +149,21 @@ and the minimality review catches that (§6).
 4. **Exact arithmetic as a formula in backticks.** The tool counts its operators.
 5. **The `params:` and `switch:` fields the template already asks for**, so parameters stay
    traceable (they count 0).
-6. **The header's budget line is generated:** `Budget: 24 × 271 = 6,500 (motion 2,500, fit 670, …)`.
-   The tool prints Δunits and Δbudget for every spec commit.
+6. **The budget line is generated:** `Budget: 24 × 271 = 6,500 (motion 2,500, fit 670, …)`.
+   The tool prints Δunits and Δbudget for every spec commit. Since MODEL §1 decision 10 the line,
+   k, the areas and the baseline are in the `## Budget` section of the decode notes, not the
+   spec's header: the implementer is not told them.
 
-**The tool** is `tools spec-units SPEC VECTORS [--areas FILE] [--baseline AREA=N] [--against OLD]`
-([`verify::spec_units`](../../crates/verify/src/spec_units.rs), whose module note states every
-rule it applies). Areas are header lines, one per area, as a paragraph or a bullet:
+**The tool** is `tools spec-units SPEC VECTORS [--notes FILE] [--areas FILE] [--baseline AREA=N]
+[--against OLD]` ([`verify::spec_units`](../../crates/verify/src/spec_units.rs), whose module note
+states every rule it applies). It counts the units from the spec and reads the rest from the
+Budget section of the decode notes (`--notes`, by default the spec's sibling `D.decode.md`).
+Areas are lines there, one per area, as a paragraph or a bullet:
 `Area motion (old 3,818): SpeedBuildsAndBrakes, Dash, …, 1.2, 9`. An item names an entry or any
-other heading, by its text or its leading number; `(old N)` sets the 70 % cap. k is the spec's
-own, read from its header's "k = N weighted tokens per spec unit" (Jim, 2026-11-07); a spec that
-states none has its units counted and no budget. A spec commit shows
+other heading, by its text or its leading number; `(old N)` sets the 70 % cap. k is the domain's
+own, read from the section's "k = N weighted tokens per spec unit" (Jim, 2026-11-07); notes that
+state none leave the units counted and no budget, and a spec that still states k or an area is a
+finding. A spec commit shows
 its change with `git show HEAD~1:docs/behaviours/D.md > old.md` and `--against old.md`, which adds
 `change: units 4.7 → 7.7 (+3.0), budget 112 → 184 (+72)` to the report.
 

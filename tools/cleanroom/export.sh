@@ -126,6 +126,12 @@ disassemblies or annotated listings); if you recognise something from such a sou
   the spec entry you suspect.
 EOF
 
+# Nothing in the export mentions the score, the budget, k, the fit or token weights (MODEL §1
+# decision 10): the implementer is told the code rules only. score_words.txt holds the patterns.
+bash "$cleanroom_dir/score_scan.sh" "$dest" \
+  || die "the export mentions the score or the budget (above); fix the source files, not the export"
+echo "  ok: no mention of the score or the budget"
+
 # One commit, no remote, no template hooks.
 git_isolated "$dest" init -q --template= -b main
 git_isolated "$dest" add -A

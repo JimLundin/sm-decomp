@@ -16,32 +16,6 @@ speed booster's extra speed, knockback, bomb jumps, grapple, shinespark, pushes 
 (Ceres, conveyors, quicksand), and what a cell she reaches then does (`TouchedCells` says which
 she reaches; `OtherBlockKinds` how each kind meets her motion).
 
-Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and
-so is each bracket pair; comments, layout and tests are free. Two kinds of token are counted
-apart and reported, not held against the target: the values of constants and statics (tables of
-the game's data, such as the chart's rows), and declarations (the `struct`, `enum` and `type`
-items and attributes that define the model's shapes; define as many as the behaviour needs). The
-target is on everything else, the logic.
-
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen: the old code's
-score, 12,723 (`tools size` at spine `bc6f74f9c`, over the old code at `c7f927ab6` and its two
-cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`), times
-0.55 is 36.2. An area's budget is k × its units, capped at 70% of its old code (`old`, the score
-of the old files that area replaces, counted the same way at `c7f927ab6`). The budget is an
-indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
-as a wall; over an area's old code is a failure.
-
-- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, TurningRound, AimingAndShooting,
-  RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
-  DriftInTheAir, Moonfall, WallJump, Landing, WordwiseTopSpeed, 1.2, 9
-- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
-- Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
-  AnimationEnds
-- Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
-  SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
-
-Budget: 36 × 204.3 units, capped at 70% of old = 6,924 (motion 2,568, pose fit 624, pose chart 1,584 capped, collision 2,148)
-
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
 leftward. Positions are her body's centre; x grows rightward, y grows downward. A frame reads the
@@ -763,9 +737,6 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 Which pose she shows next, from the pad, her equipment and what her moves met, and what the change
 does to her speeds. Written as data: a few tables keyed by what she is doing and what the player
 holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector file.
-
-**Size.** Inside the header's 1,500 tokens of logic for the chart: the chart's reader and the
-effects. The tables below are data records (about 120 rows), counted as data.
 
 ### PoseFollows
 - kind: mechanic and timing.

@@ -102,6 +102,21 @@ if [ -d crates/clean_types ] || [ -d crates/clean_model ]; then
 fi
 out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/import_check_test.sh 2>&1) || fail "$out"
+out=$(bash tools/cleanroom/score_scan_test.sh 2>&1) || fail "$out"
+
+# What an export of each specced domain would carry, and the blind reviewer's skill, mention no
+# score or budget (MODEL §1 decision 10); export.sh checks the export itself too.
+facing=$(
+  . tools/cleanroom/lib.sh
+  for spec in docs/behaviours/*.md; do
+    case $spec in *.decode.md|*.gaps.md) continue ;; esac
+    allowed_entries "$(basename "$spec" .md)"
+  done
+  echo .agents/skills/blind-reviewer/SKILL.md
+  echo tools/cleanroom/clippy.toml
+)
+mapfile -t facing < <(sort -u <<<"$facing" | while IFS= read -r p; do [ -e "${p%/}" ] && echo "${p%/}"; done)
+out=$(bash tools/cleanroom/score_scan.sh "${facing[@]}" 2>&1) || fail "$out"
 
 # Rule 6: the public surface of `data` describes data in domain terms. A doc-comment line
 # (`///` or `//!`) holding a bank:address pair, a bare four-digit `$XXXX` address or a

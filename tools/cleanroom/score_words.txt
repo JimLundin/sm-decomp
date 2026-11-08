@@ -1,0 +1,27 @@
+# What implementer-facing material must not mention (MODEL §1 decision 10): the score, the
+# budget, k, the fit, token weights and the old-code baselines are evaluation tools only.
+# score_scan.sh reads one extended regular expression per line, matched case-insensitively;
+# `#` lines and blank lines are skipped. Each pattern has a line in
+# score_scan_fixtures/mentions.md, and score_scan_fixtures/clean.md holds the domain words
+# they must not catch (pose fit, a row that fits, units of a quantity).
+\bscor(e|es|ed|ing)\b
+\bbudget(s|ed)?\b
+\bk *(=|×|\*) *[0-9]
+\bk weighted\b
+\bweighted (count|tokens?)\b
+\blogic(al)? tokens?\b
+\btoken (count|weight)s?\b
+\btokens? per (spec )?unit\b
+\bspec[ -]units?\b
+\b(the|its) fit (is|=|by area|in total)
+\bfit *=
+÷ *(the )?budget
+\bcounts? (half|double)\b
+\bold code\b
+\bbaselines?\b
+\btools (size|spec-units|report)\b
+\bQ[12]\b
+\btokens? of logic\b
+\bcounted (apart|as data|as logic)\b
+\bheld against\b
+\bsize target\b

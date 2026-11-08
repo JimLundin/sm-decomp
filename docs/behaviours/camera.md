@@ -26,28 +26,6 @@ touches them; layer 2 and the backgrounds' scroll; the grapple beam's own camera
 domain that moves where the camera saw her; a boss that changes the lead setting; the room rules
 that move the view after it follows; what stops time.
 
-Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and so is
-each bracket pair; comments, layout and tests are free. Two kinds of token are counted apart and
-reported, not held against the target: the values of constants and statics (tables of the game's
-data, such as the lead distances), and declarations (the `struct`, `enum` and `type` items and
-attributes that define the model's shapes; define as many as the behaviour needs). The target is on
-everything else, the logic.
-
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion and
-tested here out of sample. An area's budget is k × its units, capped at 70% of its old code (`old`,
-the `tools size` score of the old code that area replaces: `game/src/scrolling.rs` without its
-layer 2 and background scroll, and the lead distances' function in `state/room.rs`, at spine
-`cc505407c`). The old code lacks two of this spec's rules, the knockback's turn of the lead and time
-stopped, so `old` slightly understates the domain. The budget is an indicator: the fit is score ÷
-budget, and being over it costs in proportion to how far over, never as a wall; over an area's old
-code is a failure.
-
-- Area follow (old 715): FollowingHer, LeadingHer, AimingHeight, Remembering, CreepReadsRightward
-- Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
-  DownwardLooksAhead, ScreensRunOn, BelowTheRoom, PushCarries
-
-Budget: 36 × 42.3 units, capped at 70% of old = 1,508 (follow 500 capped, limits 1,008)
-
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex,
 as in samus-motion: `2.C000` is 2.75 px. x grows rightward, y grows downward. A room is a grid of
 screens, each 256 px square; the view is 256 px across.
