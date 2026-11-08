@@ -35,6 +35,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
 | where the camera follows her from | y: `P.S` | the screen scrolls after her vertical move as measured from this height: where the frame started, or where pose fit or a change of shape placed her (`PoseFitAfterMoves`, `ShrinkingLowersHer`), so the scroll doesn't chase those placements | output (the camera's domain reads it; each frame works it out, so it isn't State) |
+| rising | `bool`, at the frame's end | the view aims lower while she rises, so it shows more above her; her vertical speed can't tell it at a rise at 0, or on the frame whose pull spends the rise, where the speed already points down (`RisingAndFalling`) | output (the camera's domain reads it) |
 | pose | §2 | the sprite | every behaviour; output |
 
 ### 1.2 What she remembers
@@ -338,10 +339,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Starting a straight jump or a fall without a dash → she follows the pad [W16, J3]
 - With space jump, falling in a spin, jump pressed, her fall speed read as 8.8 `v` (its pixel
   part's low byte and its subpixel's high byte) with `2.80 ≤ v < 5.00` → she jumps again, rising
-  at the new speed that same frame [original only]
+  at the new speed that same frame [SJ1]
 - checked: oracle (J1, J2, J3, and the take-off and spin vectors; W16, a take-off from a crouch
-  with run held; the crouch lift open: question 6); original only (space jump: no vector has it
-  outside the moonfall).
+  with run held; SJ1, space jump's jump again with hi-jump; the crouch lift open: question 6).
 
 ### FollowingTheGround
 - kind: mechanic.
@@ -570,14 +570,28 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   at +0.1C00 [E1, R91, R108, R6]
 - Rising, the pull leaves her upward speed exactly 0 → it is not spent: she rises by 0 for one
   more frame [E2, E3]
+- **Whether she is rising** (§1, an output of the step), at the frame's end.
+- A rise holds at the frame's end (from its start, a take-off, a jump or spin start, the spring
+  ball's hop, a ball's bounce, a wall jump's kick or space jump's jump again, through the frame
+  whose pull spends it, a rise at 0 included) → `rising` [J2, E1, E3, R4, SJ1, C-rise-spent,
+  C-rise-at-0, C-bounce-second]
+- So `rising` is false on the frame a rise ends (its speed spent at the frame's start, jump let
+  go, a ceiling) and on any frame without a rise: falling, the moonfall, on the ground (E2, R91,
+  C-ceiling, R32, MT1).
+- So `rising` is not the sign of her vertical speed: at a rise at 0 the speed is 0 (C-rise-at-0,
+  C-bounce-second), and on the frame that spends the rise it points down (E1: +0.0C00, rising)
+  where the next frame's +0.1C00 is a fall (E2).
 - A frame's vertical move of exactly 0 (a fall from rest, a rise at 0) is never stopped by
   blocks, even with her bottom or top edge already inside one (`BlocksStopFlush`): it never lands
   her or ends her rise.
 - An upward speed of exactly one pull is never met from a jump: no rise speed in `Jumping` is a
   whole number of pulls. The ball rises at exactly 0 when it bounces the second time, so it
   rises by 0 for one frame before the rise ends.
-- checked: oracle (every air vector; E1 for the speed past zero); constructed (C-fallcap-a,
-  C-fallcap-b, E2, E3).
+- checked: oracle (every air vector; E1 for the speed past zero; `rising`: J2 a take-off, R4 a
+  wall jump's kick, SJ1 space jump's jump again, E1 the frame that spends the rise, R91 the rise
+  ended by jump let go, R32 a fall, MT1 the moonfall); constructed (C-fallcap-a,
+  C-fallcap-b, E2, E3; `rising`: C-rise-spent and C-rise-at-0, the camera's cases, E3 and
+  C-bounce-second at 0, E2 the rise's end, C-ceiling a ceiling).
 
 ### DriftInTheAir
 - kind: mechanic.
@@ -1434,6 +1448,21 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - **Liquids and the speed booster:** other speeds and gravity in water and lava; the booster's dash
   cap of 7 and its higher jump.
 - **Pushes:** room pushes, quicksand, knockback, bomb jumps, grapple, shinespark.
+- **Her outputs under a push.** Where a push moves her in a frame, pose fit and the shrink still
+  place her as `PoseFitAfterMoves` and `ShrinkingLowersHer` say, and where the camera follows her
+  from is still theirs, but from where the push left her, and the push decides what they meet: in
+  terrain-quicksand the sand carries her 1.C000 down, and the look down meets the sand at once, so a
+  body 7 px taller is pushed up 7 px (62, 75), and it holds her up so that the crouch she starts
+  lowers her 5 px (151, 389). Without the push she meets open air there: the body grows about its
+  centre, or she walks off. So her y and where the camera follows her from are the push's on those
+  frames, with the push.
+- **A knockback's tail.** After a hit's knockback she falls in a jump pose with no falling limit,
+  as in the moonfall, until a floor meets her; that frame ends the knockback, not a landing: she
+  keeps her pose and is handed back falling at 0 (§1.2), with no change of body to fit (r05:400,
+  where a landing would raise her 2 px). The tail is the knockback's, frames and outputs alike.
+  Whether she is rising is one of them: the knockback's rise (the records show her rising on the
+  frame a knockback starts) and the tail's not rising come from the knockback (damage) domain, as
+  her going backwards does, not from `RisingAndFalling`.
 - **Animation timing:** how far an animation has run and on which frame it ends (a vector says,
   `AnimationEnds`); its frames are drawn by the sprite, and readying a wall jump shows only there
   (`WallJump`).

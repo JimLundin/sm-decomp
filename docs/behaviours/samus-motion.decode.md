@@ -1041,6 +1041,63 @@ the dash isn't the booster's), so those differ by the booster too. The mask's te
 y on 24 frames of samus-mockball and 81 of each shinespark row. Shinespark 198 (left, up-left) and
 185 (right, up) are outside it and still differ (y 1 px).
 
+## The camera's asks (C1-C3 of camera.gaps.md, 2026-11-08)
+
+Read with `$TEMP/collab/motion-out/mdump.sh ROW FRAME...` (records N and N+1, the harness's
+decode, step, oracle, placement and masks, and the blocks around her; `BUILD=1` rebuilds against
+the newest `verify` rlib in integrate-ground's target).
+
+**C1, `rising`.** The camera's aim reads `0B36` = 1 at the scroll (`$90:95A0`, after the Samus
+handler). `0B36` = 1 from the rise's start (`$90:98BC` and `$91:FBBB` a jump or the take-off,
+`$90:99CD` the kick, the bounces `$91:F22B`, `$91:F27F`) to the frame-start test that finds
+`0B2E` negative or jump let go (`$90:8FDC`, `$90:9046`, `$90:90C4`: `0B36` = 2, magnitude 0) or
+a ceiling (`$90:E606` only sets the vertical collision result `0DC6` = 4, hit ceiling; the writer
+is `$91:EFDF`, run from `$91:EFC4` by that result, which zeroes `0B2E`.`0B2C` and stores `0B36` =
+2 at `$91:EFEB`; recorded: samus-walljump-16 42 → 43, a spin at 4.B000 up with jump held stopped
+by the ceiling's block at row 430h, y kept at 044B.37FF, `0B36` 1 → 2 at 0.0000, and the same at
+samus-walljump-28 43, the model agreeing). Records: r04:474 (J2, take-off: 1, 4.E000), r03:470 (J1, spin
+start: 1), samus-ceres-push:989 (E1: 1 with `0B2E`.`0B2C` FFFF.F400, past zero) and 990 (E2: 2,
+0.1C00), r02:173 (R91, jump let go: 2). Each frame's `rising` is the spec's arm; the model's
+`Vertical::Rising` at the frame's end is it.
+
+**C2, terrain-quicksand 62, 75, 151, 389.** The blocks around her are type 3 (special air), BTS
+85h with 81h at row C0h: quicksand, air to the model. 62: 82h → 6Ch (spin, left and aim down
+held: the spin's aim row, W15's), extra y displacement `0B5C`.`0B5A` 1.C000: 00AC.A800 + 0.1C00
++ 1.C000 = 00AE.8400, and the record's 00A7.8400 is 7 px up, g = 13h − Ch, room 0 below (the
+look down stopped by the sand's reaction at once); `$91:FF42`.. write `0B14` = 00A7 after the
+push, so the camera's speed is from 00A7.A800 and its pixel equals her y's: the view holds. 75:
+81h → 6Bh, 00AD.B000 + 0.1C00 + 1.C000 − 7 = 00A8.8C00, the same. The model there has no push
+and no sand: the body grows about its centre (nothing in reach), so `camera_from` is her start y.
+151: A5h → 36h, `1E71` = 1, down pressed; the frame moves her 0.3000 (00AA.F000 → 00AB.2000)
+and the crouch lowers her 5 px (00B0.2000), `$91:ED0E` writing `0B14` = 00B0. 389: A6h → F3h,
+`1E71` = 2, 00B6.73FF + 0.3000 + 5 = 00BB.A3FF. The model walks off there (it sees no floor:
+y + 1.0000, falling), so no crouch starts. Every one is a frame `pushed(next)` defers (x, y,
+speeds masked in samus-motion's harness). Answer: the placement rules are the spec's, the
+positions and what the looks meet are the push's; the camera's harness masks y (`camera_from`) on
+the frames samus-motion's harness defers as a block-inside push.
+
+**C3, r05:400.** Not a moonfall: a knockback's tail. r05 391-393 run the knockback's handler
+(`DF38`, pose 54h, `18AA` 9 → 6); 393 → 394 hands over to the normal handler in 4Fh, then 4Eh and
+52h (movement type 2) with `0B36` = 0 and a negative magnitude (FFFF.E400 at 394, growing 0.1C00
+a frame through FFFF.5800 at 399, no limit with direction 0, `$90:913A`), `0A52` = 5 throughout,
+`18AA` 0 from 399. The harness's decode reads direction 0 in the air as the moonfall, and the
+moves match the oracle to 399. At 400 the floor (row C0h, solid) stops her at 00AD.FFFF; with
+`0A52` ≠ 0 the knockback's end (`$91:F31D`) clears it, sets the super special pose `0A2C` = 52h
+(her own), which wins over the landing's `0A28` = A5h (`$91:EB88`), and leaves `0B36` = 2 at
+magnitude 0: falling at 0, not landed (401: 0.1C00, kept on the floor; 402 lands in E5h, pushed
+up 2 px). The model lands her in A5h (half-height 15h against 13h), pushes her up 2 px to
+00AB.FFFF and reports `camera_from` 00AB.A3FF. Answer: out of scope (knockback, spec §10); the
+harness should defer the knockback's tail as it defers its handler: a frame starting with
+`0A52` ≠ 0 under the normal handler (the records ending 395-400 here; 394 starts in 4Fh,
+outside the domain), or at least mask x, y, the speeds and the placement there. The camera's rule
+(adversary 42, M4): its harness masks y on every frame samus-motion's harness defers as the
+knockback's tail (a frame starting with the knockback on under the normal handler), whether or not
+her pose changes (at 400 she keeps 52h, so a mask on a pose change alone misses it); x stays
+compared, since the lead's turn during a knockback is the camera's own `LeadingHer`. `rising`
+there, and during the knockback itself, is the knockback (damage) domain's output, not
+samus-motion's (spec §10): the records show `0B36` = 1 at every knockback start (pose 54h; for
+example chain-0059-A293 65, 139, 246, 585), which samus-motion's harness defers.
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1110,7 +1167,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 204.3 units, capped at 70% of old = 6,924 (motion 2,568, pose fit 624, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 207.0 units, capped at 70% of old = 7,020 (motion 2,664, pose fit 624, pose chart 1,584 capped, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

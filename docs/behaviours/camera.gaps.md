@@ -15,7 +15,7 @@ output and its localisation are identical, and the lockstep ratchet is at 1372 o
 (item-morph-ball) and 476 of 476 (area-brinstar). Five frames differ, all on y and all from
 samus-motion's `camera_from`, not the camera's rules.
 
-### C1. samus-motion must export `rising` (open, to samus-motion's observer)
+### C1. samus-motion must export `rising` (answered in samus-motion's spec; the export is its implementer's)
 
 The spec's header asks for it (`AimingHeight`). Until it is exported the engine derives it at the
 edge from her rise state as the engine keeps it, the vertical direction up (`0B36` = 1), which
@@ -23,7 +23,13 @@ holds from the rise's start through the frame that spends the rise; the harness 
 word at the scroll. Both agree on every compared frame, but the model's own export is what the
 spec names, and what a samus-motion that no longer keeps that word would need.
 
-### C2. `camera_from` misses a placement under a block-inside push (open, samus-motion)
+Answer (samus-motion's observer, 2026-11-08): `rising` is an output of samus-motion's step, its
+§1 table and `RisingAndFalling`'s two arms, checked by J2, E1, E3, R91, C-ceiling,
+C-bounce-second and, as the camera's cases, C-rise-spent and C-rise-at-0. The frames the
+records show agree with `0B36` = 1 at the scroll. Next: the implementer exports it and
+`camera_world::her` reads it.
+
+### C2. `camera_from` misses a placement under a block-inside push (answered: the push's; the harness masks)
 
 terrain-quicksand 62, 75, 151 and 389, `position.y`: the model's camera moves (0000.C000, 0000.BC00,
 0000.1400, 0000.2C00) where the oracle's holds (0000.9C00, 0000.9800, 0000.E400, 0000.FC00). Each
@@ -37,7 +43,15 @@ where her pose changes or samus-motion's step reports a placement, the frames wh
 `camera_from` the push leaves unverified (98 on terrain-quicksand, adversary 49, F1); the other
 pushed frames are compared and match.
 
-### C3. `camera_from` where samus-motion's y differs (open, samus-motion)
+Answer (samus-motion's observer, 2026-11-08): the rules that place her are samus-motion's
+(`PoseFitAfterMoves` at 62 and 75, a body 7 px taller pushed up 7 px; `ShrinkingLowersHer` at 151
+and 389, the crouch's 5 px), but the quicksand decides where they start and what they meet: it
+carries her 1.C000 down and stops the look down at once (62, 75), and holds her up so the crouch
+starts (151, 389). The model, with no push, grows about her centre or walks off, so no placement.
+Samus-motion's spec §10 now says her outputs under a push are the push's. The camera's harness
+masks y on the frames samus-motion's harness defers as a block-inside push.
+
+### C3. `camera_from` where samus-motion's y differs (answered: a knockback's tail, out of scope)
 
 chain-0059-A293 400, `position.y`: model 0000.2000, oracle 0000.C400. Samus-motion's step puts
 her and `camera_from` at 00AB, 2 px above her start y 00AD, where the original leaves her at 00AD
@@ -46,6 +60,13 @@ camera follows the wrong placement. It closes when samus-motion's frame does. Th
 harness masks y on the knockback's tail only where her pose changes or samus-motion's step
 reports a placement, as here (5 frames, adversary 49, F1); the other tail frames are compared
 and match.
+
+Answer (samus-motion's observer, 2026-11-08): not a samus-motion miss. 391-393 are a knockback;
+from 394 she falls in a jump pose with the knockback still on (direction 0, no falling limit),
+which the harness's decode reads as the moonfall, and at 400 the floor ends the knockback: her
+pose is kept and she is handed back falling at 0, not landed, so no pose fit and no 2 px push.
+Samus-motion's spec §10 names the knockback's tail; the decode notes ask the harness to defer it
+as it defers the knockback's handler, which takes 400's y and placement out of both harnesses.
 
 ### C4. The engine has no knockback and never stops time (open, the engine's other domains)
 

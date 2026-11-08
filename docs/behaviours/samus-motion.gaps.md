@@ -6,6 +6,35 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
+## Filed by the observer: take-offs from a landing pose (adversary 42's sweep, 2026-11-08)
+
+32. **A landing pose takes off with jump held but not newly pressed (`PadChart`, `AnimationEnds`,
+    `Jumping`).** Four frames, each the frame after a landing in A5h (landing from a normal jump,
+    facing left), with jump held since a press in the air before the landing and no new press:
+    - chain-0059-A293 107 → 108: jump pressed at 96 (in 88h, then falling in 2Ah), held through the
+      landing at 107 (2Ah → A5h, 00AB.FFFF);
+    - chain-0059-A293 174 → 175: pressed at 165 (2Ah), landed at 174;
+    - samus-screw-attack 174 → 175 and 606 → 607: pressed at 171 and 603 (52h), landed at 174
+      and 606.
+
+    Game: A5h → 4Ch (the take-off), `0B36` 0 → 1, vertical speed 4.E000 up (6.0000 on
+    samus-screw-attack, with hi-jump), x and y unchanged. Model: keeps A5h on the ground, vertical
+    speed 0, not rising, and moves her 1 px left (chain-0059-A293 108: x 0764.8FFF against
+    0765.8FFF). The spec's take-off arm (`Jumping`, `RisingAndFalling`: a take-off → rising) is
+    right; the model doesn't choose the take-off: the pad chart's landing rows take off on a jump
+    press, and none comes on these frames. Not a listed gap, and no harness mask covers them.
+
+    Suspected: the original's auto-jump. A landing pose's animation runs an instruction
+    (`$90:8370`, animation delay instruction 8) that, unless the pose already asked for is a
+    take-off or a spin, installs a one-frame pose input handler (`$90:E926`); that handler counts
+    jump as newly pressed when the auto-jump timer (`$0AF4`, counted by `$90:EAB3` on each frame
+    jump stays held, cleared when it isn't) is 1 to 8, then reads the pose table (`$91:A172` for
+    A5h: a jump tap → 4Ch). The records here don't hold `$0AF4`, so the counts are to confirm:
+    from the press to the landing's record jump is held 3 frames on both samus-screw-attack
+    landings, inside the window, but 11 and 9 on chain-0059-A293's, which the 1-8 window alone
+    doesn't admit. Asked of the observer: the auto-jump as a rule (which poses, which window,
+    what she remembers), with these four frames as vectors.
+
 ## Round 10 in the engine and the harness (integrator, 2026-11-08, lane/wire-r10)
 
 The bridge (`game::samus_world`) takes round 10's API. On the ground `0B36` down at a magnitude

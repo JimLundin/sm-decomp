@@ -89,6 +89,8 @@
 #   only where given. A kick also shows in next_pose, whose action is then `WallJumping`.
 #   camera_from: the y the camera follows her from this frame, a P.S quantity (spec `PoseFitAfterMoves`
 #   and `ShrinkingLowersHer`); compared only where given.
+#   rising: whether she is rising at the frame's end, true or false (spec `RisingAndFalling`'s
+#   output); compared only where given.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
@@ -260,7 +262,7 @@ lead_in = [
 pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 19] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["0530.9FFF", "0290.03FF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.6800" }
+after = { position = ["0530.9FFF", "0290.03FF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.6800", rising = true }
 
 [[vector]]
 id = "R6"
@@ -468,7 +470,7 @@ before = { position = ["006B.FFFF", "045C.3BFF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["006C.BFFF", "045C.FFFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0000.E000" }
+after = { position = ["006C.BFFF", "045C.FFFF"], speed_x = "+0000.C000", dash = "0000.0000", speed_y = "+0000.E000", rising = false }
 
 [[vector]]
 id = "R33"
@@ -483,6 +485,20 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 pad = ["right"]
 jump_pressed = false
 after = { position = ["006E.1FFF", "045D.DFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.FC00" }
+
+# SJ1: space jump's jump again, with hi-jump: falling in a spin at 2.A000 (read as 2.A0, inside
+# the window), jump pressed; she rises at 6.0000 that same frame and the pull leaves 5.E400.
+[[vector]]
+id = "SJ1"
+source = "samus-space-jump-chain:64"
+entries = ["Jumping", "RisingAndFalling", "DriftInTheAir"]
+equipment = { hi_jump = true, space_jump = true }
+world = {}
+before = { position = ["0082.BFFF", "0478.1FFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0002.A000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump", "right"]
+jump_pressed = true
+after = { position = ["0084.1FFF", "0472.1FFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "-0005.E400", rising = true }
 
 [[vector]]
 id = "R34"
@@ -982,7 +998,7 @@ before = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
 pad = []
 jump_pressed = false
-after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
+after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00", rising = false }
 
 [[vector]]
 id = "R92"
@@ -1546,7 +1562,7 @@ pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] 
 next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", rising = true }
 
 [[vector]]
 id = "J3"
@@ -1583,7 +1599,7 @@ before = { position = ["00EB.FFFF", "004C.F7FF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0C00" }
+after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0C00", rising = true }
 
 # E2 continues E1 with the pad of E1 (the record's next frame also holds right, against a wall); its
 # vertical outcome is the record's (samus-ceres-push:990).
@@ -1599,7 +1615,33 @@ lead_in = [
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
+after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00", rising = false }
+
+# C-rise-at-0: the pull takes an upward speed of exactly one pull to 0; she is still rising (the
+# camera's C-rise-at-0 reads it).
+[[vector]]
+id = "C-rise-at-0"
+source = "constructed"
+entries = ["RisingAndFalling"]
+world = {}
+before = { position = ["0080.0000", "0150.0000"], speed_y = "-0000.1C00" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0080.0000", "014F.E400"], speed_y = "+0000.0000", rising = true }
+
+# C-rise-spent: the pull takes her upward speed past zero; she is still rising on this frame,
+# her speed pointing down (the camera's C-rise-spent reads it).
+[[vector]]
+id = "C-rise-spent"
+source = "constructed"
+entries = ["RisingAndFalling"]
+world = {}
+before = { position = ["0080.0000", "0100.0800"], speed_y = "-0000.1000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0080.0000", "00FF.F800"], speed_y = "+0000.0C00", rising = true }
 
 # E3: a rise whose upward speed is exactly the pull rises one more frame at 0 before it ends.
 [[vector]]
@@ -1614,7 +1656,7 @@ lead_in = [
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["0100.0000", "0080.6400"], speed_y = "+0000.1C00" }
+after = { position = ["0100.0000", "0080.6400"], speed_y = "+0000.1C00", rising = true }
 
 [[vector]]
 id = "C-ceiling"
@@ -1625,7 +1667,7 @@ before = { position = ["0100.0000", "0050.8000"], speed_y = "-0005.0000" }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["0100.0000", "004C.0000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+after = { position = ["0100.0000", "004C.0000"], speed_x = "+0000.0000", speed_y = "+0000.0000", rising = false }
 
 [[vector]]
 id = "C-slope-land"
@@ -3543,7 +3585,7 @@ before = { position = ["0100.0000", "0119.4000"], speed_y = "+0000.E000", bounce
 pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 pad = []
 jump_pressed = false
-after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", bounces = 2, speed_x = "+0000.0000" }
+after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", bounces = 2, speed_x = "+0000.0000", rising = true }
 
 [[vector]]
 id = "C-bounce-third"
@@ -3567,7 +3609,7 @@ after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", bounces
 [[vector]]
 id = "MT1"
 source = "chain-0232-D5A7:39"
-entries = ["Moonfall", "TurningRound", "AnimationEnds", "PadChart", "FollowingTheGround", "DriftInTheAir"]
+entries = ["Moonfall", "TurningRound", "AnimationEnds", "PadChart", "FollowingTheGround", "DriftInTheAir", "RisingAndFalling"]
 world = { solid_block = [96, 416] }
 frame = "Even"
 before = { position = ["006F.DFFF", "018B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
@@ -3597,7 +3639,7 @@ lead_in = [
 pose = { body = "Upright", action = "Turning", facing = "Right", aim = "Down", radius = [5, 19], turn = "Jump" }
 pad = []
 jump_pressed = false
-after = { position = ["0078.7FFF", "0197.33FF"], speed_x = "+0000.4000", dash = "0000.0000", speed_y = "+0001.8800" }
+after = { position = ["0078.7FFF", "0197.33FF"], speed_x = "+0000.4000", dash = "0000.0000", speed_y = "+0001.8800", rising = false }
 
 # MT2 (gap 30): the moonwalk's jump. Moonwalking right at speed 0 with right held, jump pressed:
 # the moonwalk moves her its top speed, 0.8000, along her facing, and the turn it starts keeps
