@@ -4,12 +4,14 @@
 # - Each [[vector]] is one step of the HUD, from its state before the step to its state after:
 #   id; source ("<row>:<frame>" for the record holding the frame's result, or "constructed");
 #   entries (the spec's behaviours it exercises); step (optional, default "Frame"); frame (the
-#   frame count mod 256 as the frame begins, spec §1.3); before; inputs; after.
+#   frame count mod 256 as the frame begins, spec §1.3; a "Frame" step only); before; inputs;
+#   after.
 # - step (added for the boss's event, which can come outside a frame): "Frame" is one frame of
 #   play. "BossEvent" is a boss turning the mini-map off outside a frame of play (spec
-#   `BossBlanksTheMap`): it has no frame, its inputs are only mini_map's room (its cell) and
-#   boss_blanks, and its after is the event alone. The mini-map stays off from then: that is
-#   the input `off` of the frames that follow, so the after doesn't list it.
+#   `BossBlanksTheMap`): it has no `frame` key and no other inputs than mini_map's room (its
+#   cell) and boss_blanks, and its after is compared after the event alone. The mini-map stays
+#   off from then: that is the input `off` of the frames that follow, so the after doesn't list
+#   it.
 # - A cell is "PPP:c", then "h" when it is flipped left to right and "v" when it is flipped top to
 #   bottom: PPP its picture (three hex digits), c its colour set (spec §1.4). A HUD row is one
 #   string of its 32 cells, left to right, separated by spaces; hud is the three rows, top first.
@@ -40,8 +42,9 @@
 #     charted, beyond }: whether she has collected the map; the pictures of the map's cells,
 #     "column,row" = picture (a cell not listed shows "01F"); the cells the map charts, [column,
 #     row]; the beyond pictures (spec `LastColumnsShift`), "column,row" = picture, column from
-#     0 (a picture not listed is "01F"); boss_blanks (optional, default none): a boss turned the
-#     mini-map off this frame, and these are the screens of its room it names, [across, down] from
+#     0 (a picture not listed is "01F"); boss_blanks: absent, no boss turned the mini-map off; present
+#     (possibly empty), a boss did, and these are the screens of its room it names (none when
+#     empty); required in a "BossEvent" step; [across, down] from
 #     the room's top-left (spec `BossBlanksTheMap`). A recorded vector lists only the cells the
 #     frame reads.
 # - after: compared at the end of the frame: changed (optional, default none), the HUD's cells that
