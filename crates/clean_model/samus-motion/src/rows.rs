@@ -4,15 +4,15 @@
 //! machine), and the rows of the chart's tables (its moves). `situation` and `chart::table` hold
 //! the rows; `chart` reads them.
 
-use crate::rules::Gait;
+use crate::rules::{Gait, Lowers};
 use clean_types::button::{self, LEFT, PAD, RIGHT};
-use clean_types::{Action, Aim, Body, Buttons, Facing, Fixed, Gun, Heading, Legs, Pose, ZERO};
-use core::num::Wrapping;
+use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Heading, Legs, Pose};
 
-/// `PadChart`: forward held, the side she faces (§2). Never on the pad: only `seen` makes it.
-pub const FORWARD: Buttons = Buttons(512);
-/// `PadChart`: back held, the other side; likewise made by `seen` alone.
-pub const BACK: Buttons = Buttons(1024);
+/// `PadChart`: forward held, the side she faces (§2): the first set above the pad's own buttons,
+/// so never on the pad. Only `seen` makes it.
+pub const FORWARD: Buttons = Buttons(PAD.0 + 1);
+/// `PadChart`: back held, the other side, the set above forward; likewise made by `seen` alone.
+pub const BACK: Buttons = Buttons(FORWARD.0 << 1);
 
 /// `PadChart`: the pad as the chart sees it, facing `facing`.
 ///
@@ -21,14 +21,20 @@ pub const BACK: Buttons = Buttons(1024);
 /// holds the other. Any other bits a caller set are dropped, so forward and back come from this
 /// view alone.
 #[must_use]
-pub fn seen(pad: Buttons, facing: Facing) -> Buttons {
-    let (ahead, behind) = if facing == Facing::Left {
+pub const fn seen(pad: Buttons, facing: Facing) -> Buttons {
+    let (ahead, behind) = if matches!(facing, Facing::Left) {
         (LEFT, RIGHT)
     } else {
         (RIGHT, LEFT)
     };
-    let side = |held: Buttons, named: Buttons| if pad.any(held) { named.0 } else { 0 };
-    Buttons(pad.0 & PAD.0 | side(ahead, FORWARD) | side(behind, BACK))
+    let mut seen = pad.0 & PAD.0;
+    if pad.any(ahead) {
+        seen |= FORWARD.0;
+    }
+    if pad.any(behind) {
+        seen |= BACK.0;
+    }
+    Buttons(seen)
 }
 
 /// What she is doing, as the spec's tables name it ("She is", "She was").
@@ -187,10 +193,10 @@ pub struct Next {
     pub gun: Option<Gun>,
     /// The legs.
     pub legs: Option<Legs>,
-    /// `ShrinkingLowersHer`: the frame this pose starts, she looks down its own distance and is
-    /// lowered by the room it finds (crouching 5 px, morphing 9 px); standing up and unmorphing
-    /// lower her 0 px.
-    pub lower: Option<Fixed>,
+    /// `ShrinkingLowersHer`: the frame this pose starts, she looks down its own distance (the
+    /// rules' crouch or morph distance) and is lowered by the room it finds; standing up and
+    /// unmorphing lower her 0 px.
+    pub lower: Option<Lowers>,
 }
 
 /// What a change does to her speeds, dash and position, in order.
@@ -222,14 +228,12 @@ pub enum Effect {
 
 /// A change of action's own effect, whatever brought the change.
 ///
-/// The pad chart, what her moves met or an animation's end: a pose whose action is one of
-/// `into`, with a body of `body`, taken from a pose whose action differs and is one of `from`,
-/// brings `effect` after the chosen row's own.
+/// The pad chart, what her moves met or an animation's end: a pose whose body and action are
+/// one of `into`, taken from a pose whose action is one of `from` (which never holds the actions
+/// it changes into), brings `effect` after the chosen row's own.
 pub struct Entering {
-    /// The actions it changes into.
-    pub into: &'static [Action],
-    /// The bodies it changes into.
-    pub body: &'static [Body],
+    /// The bodies and actions it changes into.
+    pub into: &'static [(Body, Action)],
     /// The actions it changes from.
     pub from: &'static [Action],
     /// What it brings.
@@ -240,8 +244,7 @@ impl Entering {
     /// `Jumping`, `WallJump`: whether the change from action `was` into pose `now` brings it.
     #[must_use]
     pub fn on(&self, was: Action, now: Pose) -> bool {
-        let into = self.into.contains(&now.action) && self.body.contains(&now.body);
-        into && was != now.action && self.from.contains(&was)
+        self.from.contains(&was) && self.into.contains(&(now.body, now.action))
     }
 }
 
@@ -314,7 +317,7 @@ pub const STILL: Next = Next {
 };
 
 /// `ShrinkingLowersHer`: standing up or unmorphing lowers her 0 px.
-pub const GROWS: Option<Fixed> = Some(ZERO);
+pub const GROWS: Option<Lowers> = Some(Lowers::Nothing);
 /// `Running`, `Forward`.
 pub const RUN: Next = Next {
     action: Some(Action::Running),
@@ -345,18 +348,20 @@ pub const MOONWALK: Next = Next {
     action: Some(Action::Moonwalking),
     ..STILL
 };
-/// Crouched `Crouching`, `Forward`: she is lowered 5 px (`ShrinkingLowersHer`).
+/// Crouched `Crouching`, `Forward`: she is lowered by the crouch's distance, 5 px in vanilla
+/// (`ShrinkingLowersHer`).
 pub const CROUCH: Next = Next {
     body: Some(Body::Crouched),
     action: Some(Action::Crouching),
-    lower: Some(Wrapping(0x5_0000)),
+    lower: Some(Lowers::Crouch),
     ..STILL
 };
-/// Ball `Morphing`: she is lowered 9 px (`ShrinkingLowersHer`).
+/// Ball `Morphing`: she is lowered by the morph's distance, 9 px in vanilla
+/// (`ShrinkingLowersHer`).
 pub const MORPH: Next = Next {
     body: Some(Body::Ball),
     action: Some(Action::Morphing),
-    lower: Some(Wrapping(0x9_0000)),
+    lower: Some(Lowers::Morph),
     ..STILL
 };
 /// `Turning` on the ground: facing back, with the aim she had (§2).
@@ -399,6 +404,8 @@ pub const DOWN_TO_FORWARD: &[Aiming] = &[Aiming {
 pub enum Met {
     /// A wall stop (`WallsAndCeilings`).
     Wall,
+    /// A block or solid enemy in the way of the aim change's step (`AimingAndShooting`).
+    StepBlocked,
     /// A wall near her as she presses jump (`WallJump`'s kick).
     WallKick,
     /// A floor (`Landing`).

@@ -12,8 +12,8 @@ use clean_types::{Action, Aim, Body, Gun, LandedFrom, Legs, Turn};
 /// `WhatHerMovesMet`: what her moves met chooses her pose over the pad, the first row that fits.
 ///
 /// A floor met while turning or while her body changes shape has no row: the turn's own rows
-/// apply, and a changing body's pad has no say. The aim change's step blocked is her pose chosen,
-/// against the wall (`AimingAndShooting`).
+/// apply, and a changing body's pad has no say. The aim change's step blocked is read of the
+/// running pose chosen, which it puts against the wall (`AimingAndShooting`).
 pub const MOVES_MET: &[Row] = &[
     Row {
         name: "a wall stop, running aimed Up",
@@ -34,6 +34,19 @@ pub const MOVES_MET: &[Row] = &[
         next: Next {
             action: Some(Action::AgainstWall),
             aim: DOWN_TO_FORWARD,
+            ..STILL
+        },
+        ..ROW
+    },
+    Row {
+        name: "a block or solid enemy in the way of the aim change's step",
+        needs: &[
+            Test::Met(Met::StepBlocked),
+            Test::Action(&[Action::Running]),
+        ],
+        next: Next {
+            action: Some(Action::AgainstWall),
+            aim: &[],
             ..STILL
         },
         ..ROW

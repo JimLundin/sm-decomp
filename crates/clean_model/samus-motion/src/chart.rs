@@ -13,9 +13,10 @@ use crate::rows::Test::{
     Action, Aimed, Airborne, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, SpringBall,
 };
 use crate::rows::{Effect, Met, Row, Side, Situation, Test, seen};
+use crate::rules::Lowers;
 use crate::tick::Frame;
 use clean_types::Action::Running;
-use clean_types::{Fixed, Pose};
+use clean_types::Pose;
 
 /// What the chart reads.
 ///
@@ -47,7 +48,7 @@ pub struct Choice {
     /// `AimingAndShooting`: a running pose other than hers, or one a row counts as chosen.
     pub steps: bool,
     /// `ShrinkingLowersHer`: the look down the pose starts with.
-    pub lower: Option<Fixed>,
+    pub lower: Option<Lowers>,
 }
 
 /// `PadChart`: a row that needs a just-pressed button outranks one that doesn't; then the one that
@@ -138,8 +139,19 @@ impl Moment<'_> {
         let s = self.situation;
         let fit: Vec<&'static Row> = s.rows.iter().filter(|r| self.fits(r.needs)).collect();
         fit.iter()
-            .find(|a| !fit.iter().any(|b| self.beats(b, a)))
+            .find(|row| !fit.iter().any(|other| self.beats(other, row)))
             .map_or(&s.last, |r| r)
+    }
+
+    /// `WhatHerMovesMet`, `AnimationEnds`: the first of a table's rows that fits.
+    fn first(&self, rows: &'static [Row]) -> Option<&'static Row> {
+        rows.iter().find(|r| self.fits(r.needs))
+    }
+
+    /// `WhatHerMovesMet`: the pose what her moves met chooses, if anything.
+    #[must_use]
+    pub fn met(&self) -> Option<Choice> {
+        self.first(table::MOVES_MET).map(|r| self.choice(r))
     }
 
     /// `PoseFollows`: an animation ending hands over its pose (`AnimationEnds`), else what her
@@ -147,9 +159,8 @@ impl Moment<'_> {
     /// step follows from the second and third alone (`AimingAndShooting`).
     #[must_use]
     pub fn choose(&self) -> Choice {
-        let first = |rows: &'static [Row]| rows.iter().find(|r| self.fits(r.needs));
-        let by_moves = self.choice(first(table::MOVES_MET).unwrap_or_else(|| self.pad_chart()));
-        first(table::ANIMATION_ENDS)
+        let by_moves = self.met().unwrap_or_else(|| self.choice(self.pad_chart()));
+        self.first(table::ANIMATION_ENDS)
             .filter(|_| self.frame.animation_ends)
             .map_or(by_moves, |r| Choice {
                 steps: by_moves.steps,

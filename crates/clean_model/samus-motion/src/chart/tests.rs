@@ -4,18 +4,67 @@
 //! the chart never meets a tie and needs no rule for one. No two fitting rows beat each other,
 //! and every beats clause, with a condition or not, names a row of its own situation.
 
-use super::Moment;
-use crate::rows::Row;
-use crate::situation::classify;
+use super::{Moment, table};
+use crate::rows::{BACK, FORWARD, Row};
+use crate::rules::Rules;
+use crate::situation::{CLASSES, STANDING, classify};
 use crate::tick::Frame;
 use clean_types::Action::{
     AgainstWall, Crouching, Falling, Jumping, Landing, Moonwalking, Morphing, Rolling, Running,
     Spinning, StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
 };
+use clean_types::button::{DOWN, JUMP, LEFT, PAD, RIGHT, SHOOT, UP};
 use clean_types::{
     Aim, Body, Buttons, Equipment, Facing, Gun, LandedFrom, Legs, Pair, Parity, Pose, Radius, Turn,
+    ZERO, px,
 };
 use core::num::Wrapping;
+
+/// Every row of the chart: each situation's pad chart rows and its last row, and the rows of
+/// `WhatHerMovesMet` and `AnimationEnds`.
+fn every_row() -> Vec<&'static Row> {
+    let situations = CLASSES.iter().map(|c| c.is).chain([&STANDING]);
+    let pad = situations.flat_map(|s| s.rows.iter().chain([&s.last]));
+    pad.chain(table::MOVES_MET)
+        .chain(table::ANIMATION_ENDS)
+        .collect()
+}
+
+/// `ShrinkingLowersHer`: in an adjusted game whose crouch and morph lower her by other
+/// distances, a row into `Crouching` lowers her by the crouch's, a row into `Morphing` by the
+/// morph's, standing up and unmorphing by 0 px, and no other change lowers her.
+#[test]
+fn a_crouch_and_a_morph_lower_her_by_their_distances() {
+    let adjusted = Rules {
+        crouch_lowers: px(Wrapping(6)),
+        morph_lowers: px(Wrapping(11)),
+        ..Rules::REFERENCE
+    };
+    for row in every_row() {
+        let lowered = row.next.lower.map(|by| adjusted.lowers(by));
+        let expected = match row.next.action {
+            Some(Crouching) => Some(adjusted.crouch_lowers),
+            Some(Morphing) => Some(adjusted.morph_lowers),
+            Some(StandingUp | Unmorphing) => Some(ZERO),
+            Some(_) | None => None,
+        };
+        assert_eq!(lowered, expected, "the row {:?}", row.name);
+    }
+    let vanilla = Rules::REFERENCE;
+    assert_eq!(vanilla.crouch_lowers, px(Wrapping(5)), "the crouch's 5 px");
+    assert_eq!(vanilla.morph_lowers, px(Wrapping(9)), "the morph's 9 px");
+}
+
+/// `PadChart`: forward and back, the facing-relative view, are no button of the pad, nor each
+/// other, so `seen` alone makes them.
+#[test]
+fn forward_and_back_are_apart_from_the_pad() {
+    assert_eq!(FORWARD.0 & PAD.0, 0, "forward is a pad button");
+    assert_eq!(BACK.0 & PAD.0, 0, "back is a pad button");
+    assert_eq!(FORWARD.0 & BACK.0, 0, "forward and back overlap");
+    assert_ne!(FORWARD.0, 0, "forward is empty");
+    assert_ne!(BACK.0, 0, "back is empty");
+}
 
 /// Every aim.
 const AIMS: [Aim; 5] = [
@@ -85,12 +134,13 @@ fn situations() -> Vec<(Pose, bool)> {
 /// record holds both; left and right may be held together), and those just pressed among the
 /// ones a row names pressed (down, jump, up, left, right, shoot) that are held.
 fn pads() -> Vec<(u16, u16)> {
-    let (up_down, pressable) = (0b110_0000, 0b111_1110);
-    (0..512_u16)
-        .filter(|held| held & up_down != up_down)
+    let up_down = UP.0 | DOWN.0;
+    let pressable = Buttons(DOWN.0 | JUMP.0 | UP.0 | LEFT.0 | RIGHT.0 | SHOOT.0);
+    (0..=PAD.0)
+        .filter(|held| held & !PAD.0 == 0 && held & up_down != up_down)
         .flat_map(|held| {
-            (0..128_u16)
-                .filter(move |pressed| pressed & !(held & pressable) == 0)
+            (0..=pressable.0)
+                .filter(move |pressed| pressed & !(held & pressable.0) == 0)
                 .map(move |pressed| (held, pressed))
         })
         .collect()

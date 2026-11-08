@@ -4,8 +4,8 @@
 //! (`PoseFollows`); pose fit or the shrink places her; then the change's effects act.
 
 use crate::chart::{Choice, Moment};
-use crate::collide::Probe::{Blocks, Look, Move};
-use crate::collide::{Moved, Stop};
+use crate::collide::Probe::{Blocks, Look, Move, Walk};
+use crate::collide::Stop;
 use crate::motion::Carry::FollowsPad;
 use crate::motion::DashIs::ToLose;
 use crate::motion::Stride::{Both, DashThenHalt, Nothing};
@@ -15,18 +15,19 @@ use crate::rows::Doing::{
 use crate::rows::Effect::{
     self, AsRunning, EndSkid, Halt, Launch, Lift, LoseDash, Rise, SpinOn, TurnRound,
 };
-use crate::rows::Met::{self, Ceiling, Floor, NoFloor, Wall, WallKick};
+use crate::rows::Met::{self, Ceiling, Floor, NoFloor, StepBlocked, Wall, WallKick};
 use crate::rows::Situation;
 use crate::rules::Rules;
+use crate::samus::Seat::{Seated, Unseated};
 use crate::samus::WallTest::{Kicked, Neither, Readied};
-use crate::samus::{Bounces, Drawn, Outcome, Samus, Seat, Spin, Standing, Vertical, WallTest};
+use crate::samus::{Bounces, Drawn, Outcome, Samus, Spin, Standing, Vertical, WallTest};
 use crate::situation::{ENTERING, classify};
 use crate::tick::{Frame, Tick};
-use clean_types::Action::{self, AgainstWall, Still, WallJumping};
+use clean_types::Action::{self, Still, WallJumping};
 use clean_types::Body::{SpringBall, Upright};
 use clean_types::Heading::{self, Down, Left, Right};
 use clean_types::button::{JUMP, LEFT, SHOOT, SIDES};
-use clean_types::{Aim, Buttons, Equipment, Facing, Fixed, Gun, Parts, Pose, World, ZERO, fixed};
+use clean_types::{Aim, Buttons, Equipment, Facing, Fixed, Parts, Pose, World, ZERO, px};
 
 /// `WhatHerMovesMet`: what a frame's moves met, and the near-wall test's outcome (`WallJump`).
 #[derive(Default)]
@@ -39,7 +40,7 @@ struct Meeting {
 
 /// `FollowingTheGround`, `WallsAndCeilings`: what a walk did: the speed the ground pull reads,
 /// from before any stop, and a wall stop while running.
-struct Walk {
+struct Walked {
     /// Her horizontal speed and dash.
     pull: Fixed,
     /// A wall stop while running (`WhatHerMovesMet`).
@@ -94,17 +95,22 @@ impl Samus {
         let meeting = self.moves(situation, &mut t);
         let moved = *self;
         self.meet(meeting.met, situation.doing, &t);
-        let mut chosen = Moment {
+        let moment = Moment {
             situation,
             pose: start.pose,
             moving: start.run.speed != ZERO,
             airborne: !self.vertical.on_ground(),
             frame,
             met: meeting.met,
-        }
-        .choose();
-        if chosen.steps {
-            self.aim_step(&mut chosen, &mut t);
+        };
+        let mut chosen = moment.choose();
+        if chosen.steps && self.aim_step(&mut t) {
+            let blocked = Moment {
+                pose: chosen.pose,
+                met: Some(StepBlocked),
+                ..moment
+            };
+            chosen = blocked.met().unwrap_or(chosen);
         }
         let camera_from = self.take(chosen, &start, moved, &mut t);
         Outcome {
@@ -122,8 +128,7 @@ impl Samus {
     /// at the start of the frame after it is spent, and in a straight jump, a spin or the hop at
     /// the start of any frame with jump not held.
     fn begin(&mut self, doing: Doing, pad: Buttons) {
-        let next = Spin(self.spin.0.saturating_add(1).min(Spin::CARRIED_ON.0));
-        self.spin = if doing == Spinning { next } else { Spin::OFF };
+        self.spin = self.spin.then(doing == Spinning);
         let lets_go = !pad.any(JUMP) && matches!(doing, StraightJump | Spinning | Hop);
         let spent = !self.vy.negative() && self.vy != ZERO;
         if self.vertical == Vertical::Rising && (lets_go || spent) {
@@ -162,68 +167,50 @@ impl Samus {
     /// `SpeedBuildsAndBrakes`, `Dash`, `DriftInTheAir`, `WallsAndCeilings`: her horizontal move
     /// by her speed and dash, as her situation moves her, and the halt that follows a wall stop
     /// or a move by her dash alone.
-    fn walk(&mut self, s: &Situation, t: &mut Tick) -> Walk {
+    fn walk(&mut self, s: &Situation, t: &mut Tick) -> Walked {
         let facing = self.pose.facing;
         let stride = self.run.stride(s.moves, facing, self.vertical_motion(), t);
         let pull = self.run.speed + self.run.dash;
+        if stride == Nothing {
+            return Walked { pull, wall: None };
+        }
         let by = if stride == Both { pull } else { self.run.dash };
-        let stop = if stride == Nothing {
-            None
-        } else {
-            self.walk_and_seat(self.run.heading(facing), by, t)
-        };
+        let stop = self.hmove(self.run.heading(facing), by, t);
+        if let Some(y) = t.seat(self.bounds()) {
+            self.position.y = y;
+            self.seat = Seated;
+        }
         if stop.is_some() || stride == DashThenHalt {
             self.run.halt();
         }
-        Walk {
+        Walked {
             pull,
             wall: (stop.is_some() && s.doing == Running).then_some(Wall),
         }
     }
 
-    /// `BlocksStopFlush`, `SlopesSlowTheWalk`: a horizontal move, which a sloped floor at her
-    /// leading edge shortens when it is made with her vertical speed exactly 0, and which is
-    /// limited to 15 px either way, its subpixel kept.
-    fn hmove(&self, way: Heading, d: Fixed, t: &mut Tick) -> Moved {
-        let d = if self.vy == ZERO {
-            t.walk_shortened(self.bounds(), way, d)
-        } else {
-            d
-        };
-        let limit = fixed(t.rules.move_limit_px, d.sub());
-        t.go(self.bounds(), way, d.min(limit), Move)
-    }
-
-    /// `SlopesCarry`: a horizontal move, then the checks that run after every horizontal move,
-    /// whether or not it met solid enemies, and whose lift or push seats her. Returns what
-    /// stopped the move.
-    fn walk_and_seat(&mut self, way: Heading, d: Fixed, t: &mut Tick) -> Option<Stop> {
-        let moved = self.hmove(way, d, t);
+    /// `BlocksStopFlush`, `SlopesSlowTheWalk`: a horizontal move, a walk when it is made with
+    /// her vertical speed exactly 0. Returns what stopped it. `SlopesCarry`: the walk's checks
+    /// after it are `walk`'s.
+    fn hmove(&mut self, way: Heading, d: Fixed, t: &mut Tick) -> Option<Stop> {
+        let probe = if self.vy == ZERO { Walk } else { Move };
+        let moved = t.go(self.bounds(), way, d, probe);
         self.position = moved.to;
-        if let Some(y) = t.seat(self.bounds()) {
-            self.position.y = fixed(y, self.position.y.sub());
-            self.seat = Seat::Seated;
-        }
         moved.stop
     }
 
     /// `AimingAndShooting`: a frame whose chosen pose brings the step moves her 1 px forward, by
     /// her facing at the frame's start, after her moves: a horizontal move with no `SlopesCarry`
     /// checks after it. A solid enemy within its reach stops it with no move at all, one she
-    /// touches still clearing her y subpixel. Something in the way puts her against the wall
-    /// instead, with the running pose's aim (`WhatHerMovesMet`), unless an animation's end
-    /// handed over another pose.
-    fn aim_step(&mut self, chosen: &mut Choice, t: &mut Tick) {
-        let moved = self.hmove(self.pose.facing.side(), t.rules.aim_step, t);
-        self.position.y = moved.to.y;
-        if moved.stop != Some(Stop::Enemy) {
-            self.position.x = moved.to.x;
+    /// touches still clearing her y subpixel. Returns whether something was in the way
+    /// (`WhatHerMovesMet`).
+    fn aim_step(&mut self, t: &mut Tick) -> bool {
+        let x = self.position.x;
+        let stop = self.hmove(self.pose.facing.side(), t.rules.aim_step, t);
+        if stop == Some(Stop::Enemy) {
+            self.position.x = x;
         }
-        if moved.stop.is_some() && chosen.pose.action == Action::Running {
-            chosen.pose.action = AgainstWall;
-            chosen.pose.gun = Gun::Stowed;
-            chosen.effects = NONE;
-        }
+        stop.is_some()
     }
 
     /// `WallJump`: the near-wall test, in a spin carried on with a side held, looking 8 px away
@@ -233,12 +220,12 @@ impl Samus {
     /// wall jump; once the spin has turned far, pressing jump kicks her off.
     fn wall_test(&mut self, t: &mut Tick) -> WallTest {
         let f = t.frame;
-        if self.spin != Spin::CARRIED_ON || !f.pad.any(SIDES) {
+        if !self.spin.carried_on() || !f.pad.any(SIDES) {
             return Neither;
         }
         let wall = if f.pad.any(LEFT) { Right } else { Left };
         let seen = t.go(self.bounds(), wall, t.rules.wall_reach, Look);
-        self.wrote(&seen);
+        self.position = seen.to;
         if seen.stop.is_none() {
             Neither
         } else if !f.spin_turned_far {
@@ -267,7 +254,7 @@ impl Samus {
         let pulled = ground && !(self.vertical_motion() && matches!(doing, Shaping | Ball))
             || self.vertical == Vertical::Moonfall && doing == Turning;
         let grounded = pulled || ground && doing == Ball;
-        let by = if pulled && self.seat == Seat::Seated {
+        let by = if pulled && self.seat == Seated {
             r.ground_pull
         } else if pulled {
             speed + r.ground_pull
@@ -276,18 +263,17 @@ impl Samus {
         };
         let moved = t.vmove(self.bounds(), by, Move);
         if by != ZERO {
-            self.seat = Seat::Unseated;
+            self.seat = Unseated;
         }
         let floor = moved.stop.is_some();
         if pulled && !floor && doing == Shaping {
             return None;
         }
-        self.position = moved.to;
+        self.reach(&moved);
         if by.negative() && floor {
             self.fall_from_rest();
             return Some(Ceiling);
         }
-        self.seat_on(moved.stop);
         if !pulled {
             self.vy = self.pulled(r);
         }
@@ -342,14 +328,15 @@ impl Samus {
         if met != Some(Floor) || doing == Turning {
             return;
         }
-        let hops = self.pose.body == SpringBall && f.pad.any(JUMP);
-        let hop = hops.then_some((r.jump.of(hi_jump), Bounces::None));
-        let bounce = match self.bounces {
+        let rises = match self.bounces {
+            _ if self.pose.body == SpringBall && f.pad.any(JUMP) => {
+                Some((r.jump.of(hi_jump), Bounces::None))
+            }
             Bounces::None if self.vy.pixel() >= r.bounce_from_px => Some((r.bounce, Bounces::Once)),
             Bounces::Once => Some((r.bounce - r.second_bounce_less, Bounces::Twice)),
             Bounces::None | Bounces::Twice => None,
         };
-        if let Some((speed, bounces)) = hop.or(bounce).filter(|_| matches!(doing, Ball | Hop)) {
+        if let Some((speed, bounces)) = rises.filter(|_| matches!(doing, Ball | Hop)) {
             self.rise(speed);
             self.bounces = bounces;
             return;
@@ -368,46 +355,54 @@ impl Samus {
     /// change refused, or crouched `Still` taken instead, leaves her speeds and dash as her moves
     /// left them (`moved`), with her position and seat as her looks left them, and brings none
     /// of the chosen pose's effects. The chosen pose brings, in order: after pose fit's push the
-    /// shrink (`ShrinkingLowersHer`), then its row's effects, then the change of action's own
-    /// (`ENTERING`). Returns where the camera follows her from (§1): after pose fit's push or a
-    /// change of shape, her y pixel there with her y subpixel at the frame's start; else her y
-    /// at the frame's start.
+    /// shrink (`ShrinkingLowersHer`: she looks down its distance at her new size, a block look,
+    /// and is lowered as far as it got, after what stops it writes to her as a stop would), then
+    /// its row's effects, then the change of action's own (`ENTERING`). Returns where the camera
+    /// follows her from (§1).
     fn take(&mut self, chosen: Choice, start: &Self, moved: Self, t: &mut Tick) -> Fixed {
-        let (pose, effects, lower) = match self.fit(t, chosen.pose) {
-            None => (chosen.pose, chosen.effects, chosen.lower),
-            Some(instead) => {
+        let chosen = match self.fit(t, chosen.pose) {
+            None => chosen,
+            Some(pose) => {
                 *self = Self {
                     position: self.position,
                     seat: self.seat,
                     ..moved
                 };
-                (instead, NONE, None)
+                Choice {
+                    pose,
+                    effects: NONE,
+                    lower: None,
+                    ..chosen
+                }
             }
         };
-        self.pose = pose;
-        self.radius = t.body(pose);
-        if let Some(by) = lower {
-            self.lower(by, t);
+        self.pose = chosen.pose;
+        self.radius = t.body(chosen.pose);
+        if let Some(by) = chosen.lower {
+            let seen = t.vmove(self.bounds(), t.rules.lowers(by), Blocks);
+            self.reach(&seen);
+            self.position.y += px(seen.gone);
         }
-        let camera = if lower.is_some() || self.position.y.pixel() != moved.position.y.pixel() {
-            self.position.y.with_sub(start.position.y.sub())
-        } else {
-            start.position.y
-        };
-        let entered = ENTERING.iter().filter(|e| e.on(start.pose.action, pose));
-        for effect in effects.iter().chain(entered.map(|e| &e.effect)) {
+        let camera = self.camera_from(start.position.y, moved.position.y, chosen.lower.is_some());
+        let entered = ENTERING
+            .iter()
+            .filter(|e| e.on(start.pose.action, chosen.pose));
+        for effect in chosen.effects.iter().chain(entered.map(|e| &e.effect)) {
             self.apply(*effect, start, t);
         }
         camera
     }
 
-    /// `ShrinkingLowersHer`: she looks down `by` at her new size, a block look (solid enemies
-    /// don't stop it), and she is lowered as far as it got; what stops it writes to her as a
-    /// stop would, and a stepped block seats her.
-    fn lower(&mut self, by: Fixed, t: &mut Tick) {
-        let seen = t.vmove(self.bounds(), by, Blocks);
-        self.position = seen.to;
-        self.seat_on(seen.stop);
+    /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where the camera follows her from. After
+    /// pose fit moved her (her y pixel differs from `moved`'s, after the frame's moves), or the
+    /// frame a change of shape starts (`shapes`), her y pixel now with her y subpixel at the
+    /// frame's start; else her y at the frame's start, `start`.
+    fn camera_from(&self, start: Fixed, moved: Fixed, shapes: bool) -> Fixed {
+        if shapes || self.position.y.pixel() != moved.pixel() {
+            self.position.y.with_sub(start.sub())
+        } else {
+            start
+        }
     }
 
     /// `Jumping`, `TurningRound`, `Moonfall`: one effect of the change (`PoseFollows`) on her
@@ -425,17 +420,20 @@ impl Samus {
     /// drops under gravity.
     fn apply(&mut self, effect: Effect, start: &Self, t: &Tick) {
         let jump = t.rules.jump.of(t.frame.equipment.hi_jump);
-        let turns = self.pose.facing != start.pose.facing;
+        let pose = self.pose;
         match effect {
             Rise => self.rise(jump),
             Lift if start.pose.aim == Aim::Forward => self.position.y -= t.rules.crouch_lift,
-            TurnRound if turns || matches!(self.pose.action, Action::Turning(_)) => {
-                self.run.way = self.pose.facing.back().side();
+            TurnRound
+                if pose.facing != start.pose.facing
+                    || matches!(pose.action, Action::Turning(_)) =>
+            {
+                self.run.way = pose.facing.back().side();
                 self.run.join_dash();
             }
             EndSkid => {
                 self.run.carry = FollowsPad;
-                self.run.way = self.pose.facing.side();
+                self.run.way = pose.facing.side();
             }
             AsRunning if start.run.speed == ZERO || self.run.speed == ZERO => {
                 self.run.carry = FollowsPad;
@@ -448,7 +446,7 @@ impl Samus {
                 self.fall_from_rest();
                 self.vertical = Vertical::Moonfall;
             }
-            Launch => self.run.launch(self.pose.facing),
+            Launch => self.run.launch(pose.facing),
             SpinOn => self.spin = Spin::CARRIED_ON,
             Lift | TurnRound => {}
         }

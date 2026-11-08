@@ -404,7 +404,7 @@ struct Room {
 
 impl World for Room {
     fn block(&self, cell: Cell) -> Block {
-        let Cell { column, row } = cell;
+        let Cell { x: column, y: row } = cell;
         if let Some(&(_, block)) = self.blocks.iter().find(|(at, _)| *at == (column, row)) {
             return block;
         }
@@ -424,7 +424,7 @@ impl World for Room {
         }
     }
     fn lets_through(&self, cell: Cell, _: Way) -> bool {
-        self.through.contains(&(cell.column, cell.row))
+        self.through.contains(&(cell.x, cell.y))
     }
     fn solid_enemies(&self) -> &[Hitbox] {
         &self.enemies
@@ -506,8 +506,8 @@ fn other_cell(value: &Value) -> ((u16, u16), Block, bool) {
         "DoorToNowhere" | "Spikes" | "BreaksToShots" | "HoldsGrapple" => Block::Solid,
         "BreaksToBombs" | "ReactingBlock" => Block::Answered,
         "StandIn" => Block::StandsFor(value.get("names").map(|n| {
-            let (column, row) = corner(n);
-            Cell { column, row }
+            let (x, y) = corner(n);
+            Cell { x, y }
         })),
         other => panic!("cell kind {other:?}"),
     };
@@ -948,11 +948,7 @@ fn run_pose_step(step: &Value) -> Option<String> {
 
 /// A cell as the vectors write it, `[x, y]`, its top-left corner in px.
 fn show_cell(cell: Cell) -> String {
-    format!(
-        "[{}, {}]",
-        u32::from(cell.column) * 16,
-        u32::from(cell.row) * 16
-    )
+    format!("[{}, {}]", u32::from(cell.x) * 16, u32::from(cell.y) * 16)
 }
 
 /// A reached cell as the vectors write it.

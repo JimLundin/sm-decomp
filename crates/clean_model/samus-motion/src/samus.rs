@@ -3,7 +3,7 @@
 
 use crate::collide::{Bounds, Moved, Stop};
 use crate::motion::Run;
-use clean_types::{Cell, Fixed, Parts, Pose, Position, Radius, Touch, ZERO};
+use clean_types::{Cell, Fixed, Pose, Position, Radius, Touch, ZERO};
 
 /// Her vertical motion's phase; her vertical speed itself is `Samus::vy`.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -12,7 +12,8 @@ pub enum Vertical {
     Ground,
     /// On the ground, falling at a vertical speed of 0 (§1.2): only a push beyond this spec
     /// hands her back so. As the ball, or while her body changes shape, it is a vertical motion
-    /// she moves by (`FollowingTheGround`).
+    /// she moves by; in any other pose on the ground she keeps it and moves as with none, and
+    /// only leaving the ground ends it (`FollowingTheGround`).
     GroundFalling,
     /// Rising (`RisingAndFalling`); at the start of a frame after the pull took her upward
     /// speed past zero, the rise ends.
@@ -42,17 +43,32 @@ pub enum Bounces {
     Twice,
 }
 
-/// `WallJump` (§1.2 a spin carried on): how many frames she has been in this spin, counted up to
-/// `Spin::CARRIED_ON`.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Spin(pub u8);
+/// `WallJump` (§1.2 a spin carried on): how many frames she has been in this spin. Only a frame
+/// counts it, so a caller can start one at `Spin::OFF` alone.
+#[derive(Clone, Copy)]
+pub struct Spin(u8);
 
 impl Spin {
     /// Not spinning.
     pub const OFF: Self = Self(0);
     /// A spin carried on: in it two frames earlier (this its third frame or later), or one that
     /// followed a wall jump.
-    pub const CARRIED_ON: Self = Self(3);
+    pub(crate) const CARRIED_ON: Self = Self(3);
+
+    /// `WallJump` (§1.2): whether the spin is carried on, which can ready a wall jump.
+    #[must_use]
+    pub const fn carried_on(self) -> bool {
+        self.0 >= Self::CARRIED_ON.0
+    }
+
+    /// `WallJump`: the frame's start counts one frame more of a spin, or none.
+    pub(crate) const fn then(self, spinning: bool) -> Self {
+        if spinning {
+            Self(self.0.saturating_add(1))
+        } else {
+            Self::OFF
+        }
+    }
 }
 
 /// `SlopesCarry`: whether she is seated on a slope, until her next vertical move of more than 0
@@ -167,17 +183,12 @@ impl Samus {
         self.vy != ZERO || self.vertical == Vertical::GroundFalling
     }
 
-    /// `SlopesCarry`: a downward move or look that a stepped block stops seats her.
-    pub(crate) fn seat_on(&mut self, stop: Option<Stop>) {
-        if stop == Some(Stop::Seats) {
+    /// `SlopesCarry`: a downward move or look that a stepped block stops seats her, and either
+    /// leaves her where it got to (a look where it wrote to her).
+    pub(crate) fn reach(&mut self, moved: &Moved) {
+        self.position = moved.to;
+        if moved.stop == Some(Stop::Seats) {
             self.seat = Seat::Seated;
         }
-    }
-
-    /// `PoseFitAfterMoves`, `WallJump`: a look writes to her as a stop would, without moving
-    /// her: the subpixels it left.
-    pub(crate) fn wrote(&mut self, seen: &Moved) {
-        let p = &mut self.position;
-        (p.x, p.y) = (p.x.with_sub(seen.to.x.sub()), p.y.with_sub(seen.to.y.sub()));
     }
 }

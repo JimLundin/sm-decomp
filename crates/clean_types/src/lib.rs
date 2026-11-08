@@ -20,13 +20,13 @@ pub type Fixed = Wrapping<u32>;
 /// `Fixed`'s are; read a signed difference by its `.0`'s `cast_signed`.
 pub type Px = Wrapping<u16>;
 
-/// The header's notation: a `P.S` quantity from its pixel part and its subpixel part.
+/// §9, the header's notation: a `P.S` quantity from its pixel part and its subpixel part.
 #[must_use]
 pub fn fixed(pixel: Px, sub: u16) -> Fixed {
     Wrapping(u32::from(pixel.0) << PIXEL_BITS | u32::from(sub))
 }
 
-/// A whole number of pixels, as a `P.S` quantity.
+/// §9: a whole number of pixels, as a `P.S` quantity.
 #[must_use]
 pub fn px(pixel: Px) -> Fixed {
     fixed(pixel, 0)
@@ -57,26 +57,33 @@ pub trait Parts {
 }
 
 impl Parts for Fixed {
+    /// `WordwiseTopSpeed`, `Dash` (§9): the two 16-bit parts, which their tests read apart.
     fn words(self) -> (u16, u16) {
         let [a, b, c, d] = self.0.to_be_bytes();
         (u16::from_be_bytes([a, b]), u16::from_be_bytes([c, d]))
     }
+    /// §9: the pixel part, which `BlocksStopFlush` reads of a position.
     fn pixel(self) -> Px {
         Wrapping(self.words().0)
     }
+    /// §9: the subpixel part, which `BlocksStopFlush` writes FFFF or 0.
     fn sub(self) -> u16 {
         self.words().1
     }
+    /// `Jumping`, `SlopesSlowTheWalk`: the 8.8 reading.
     fn to_8_8(self) -> Px {
         let (pixel, sub) = self.words();
         Wrapping(pixel << BYTE | sub >> BYTE)
     }
+    /// `BlocksStopFlush`: a stop's subpixel written into a position.
     fn with_sub(self, sub: u16) -> Fixed {
         fixed(self.pixel(), sub)
     }
+    /// §1: a signed speed or move pointing upward or leftward.
     fn negative(self) -> bool {
         self.0.cast_signed() < 0
     }
+    /// `WordwiseTopSpeed` (§9): the test is on the speed's size.
     fn size(self) -> Fixed {
         if self.negative() { -self } else { self }
     }
@@ -93,12 +100,36 @@ pub const fn below(a: u16, b: u16) -> bool {
 }
 
 /// A value for each axis: x rightward, y downward.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Pair<T> {
     /// Rightward.
     pub x: T,
     /// Downward.
     pub y: T,
+}
+
+impl<T: Copy> Pair<T> {
+    /// `BlocksStopFlush`: a move tests one axis at a time: the part along a move heading `h`,
+    /// and the part across it.
+    #[must_use]
+    pub const fn along(self, h: Heading) -> (T, T) {
+        if h.vertical() {
+            (self.y, self.x)
+        } else {
+            (self.x, self.y)
+        }
+    }
+
+    /// `BlocksStopFlush`: the pair with its part along a move heading `h` set to `part`.
+    #[must_use]
+    pub const fn with(mut self, h: Heading, part: T) -> Self {
+        if h.vertical() {
+            self.y = part;
+        } else {
+            self.x = part;
+        }
+        self
+    }
 }
 
 /// Her position: the centre of her body.
@@ -121,6 +152,14 @@ pub enum Heading {
     Up,
 }
 
+impl Heading {
+    /// `BlocksStopFlush`: whether a move heading this way is vertical.
+    #[must_use]
+    pub const fn vertical(self) -> bool {
+        matches!(self, Self::Up | Self::Down)
+    }
+}
+
 /// Which way she faces (§2).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Facing {
@@ -134,7 +173,7 @@ pub enum Facing {
 
 /// §2 facing: forward is the side she faces, back the other side.
 impl Facing {
-    /// The side she faces, as a heading.
+    /// `SpeedBuildsAndBrakes`: the side she faces, as a heading, the way she moves at speed 0.
     #[must_use]
     pub const fn side(self) -> Heading {
         if matches!(self, Self::Left) {
@@ -143,7 +182,7 @@ impl Facing {
             Heading::Right
         }
     }
-    /// The other side: back, as she faces.
+    /// `PadChart`, `TurningRound`: the other side, back, as she faces.
     #[must_use]
     pub const fn back(self) -> Self {
         if matches!(self, Self::Left) {
@@ -304,12 +343,14 @@ pub mod button {
     pub const AIM_DOWN: Buttons = Buttons(256);
     /// Left or right.
     pub const SIDES: Buttons = Buttons(LEFT.0 | RIGHT.0);
-    /// Every button of the pad.
-    pub const PAD: Buttons = Buttons(511);
+    /// Every button of the pad, each of the above.
+    pub const PAD: Buttons = Buttons(
+        RUN.0 | JUMP.0 | SHOOT.0 | LEFT.0 | RIGHT.0 | UP.0 | DOWN.0 | AIM_UP.0 | AIM_DOWN.0,
+    );
 }
 
 impl Buttons {
-    /// Whether any of `these` is in the set.
+    /// `PadChart`: whether any of `these` is in the set, held or just pressed.
     #[must_use]
     pub const fn any(self, these: Self) -> bool {
         self.0 & these.0 != 0
@@ -335,14 +376,8 @@ pub struct Equipment {
     pub other_suit: bool,
 }
 
-/// A 16 px cell of the room, by column and row.
-#[derive(Clone, Copy)]
-pub struct Cell {
-    /// The column.
-    pub column: u16,
-    /// The row.
-    pub row: u16,
-}
+/// A 16 px cell of the room: x its column, y its row.
+pub type Cell = Pair<u16>;
 
 /// `TouchedCells`: the way a cell is reached: a move's direction, or a look (the near-wall test,
 /// pose fit's block looks, the shrink's look), which doesn't move her.

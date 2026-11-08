@@ -1,6 +1,8 @@
 //! The tuning parameters the model reads. `Rules::REFERENCE` holds the spec's vanilla numbers.
 
-use clean_types::{Fixed, Parts, Px, below};
+use Gait::{Falling, Moonwalking, Rolling, Running, SpinJump, StraightJump, Turning};
+use Lowers::{Crouch, Morph, Nothing};
+use clean_types::{Fixed, Parts, Px, ZERO, below};
 use core::num::Wrapping;
 use core::ops::Range;
 
@@ -32,12 +34,41 @@ pub enum Gait {
 }
 
 /// One row of `SpeedBuildsAndBrakes`'s table: what she speeds up by a frame, and her top speed.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct Limits {
     /// What she speeds up by a frame.
     pub step: Fixed,
     /// Her top speed.
     pub top: Fixed,
+}
+
+/// `SpeedBuildsAndBrakes`'s table: a row for each thing she can be doing.
+pub struct Speeds {
+    /// Running.
+    pub running: Limits,
+    /// Rolling as a ball.
+    pub rolling: Limits,
+    /// Moonwalking.
+    pub moonwalking: Limits,
+    /// In a straight jump or the spring ball's hop.
+    pub straight_jump: Limits,
+    /// In a spin jump or a wall jump.
+    pub spin_jump: Limits,
+    /// Falling, upright or as a ball.
+    pub falling: Limits,
+    /// Turning round.
+    pub turning: Limits,
+}
+
+/// `ShrinkingLowersHer`: the distance a change of shape lowers her by, as its row names it.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Lowers {
+    /// Starting to crouch: the crouch's own distance.
+    Crouch,
+    /// Starting to morph: the morph's own distance.
+    Morph,
+    /// Standing up or unmorphing: 0 px.
+    Nothing,
 }
 
 /// `Jumping`: a rise speed without and with hi-jump.
@@ -61,8 +92,8 @@ impl Boots {
 pub struct Rules {
     /// `WordwiseTopSpeed`.
     pub speed_cap: SpeedCap,
-    /// `SpeedBuildsAndBrakes`: its table, a row for each thing she can be doing.
-    pub speeds: [(Gait, Limits); 7],
+    /// `SpeedBuildsAndBrakes`: its table.
+    pub speeds: Speeds,
     /// `SpeedBuildsAndBrakes`: lost a frame carrying on along the ground.
     pub brake: Fixed,
     /// `Dash`: gained a frame.
@@ -102,63 +133,46 @@ pub struct Rules {
     pub look: Fixed,
     /// `PoseFitAfterMoves`: an old body under this half-height can't crouch instead.
     pub small_body_px: Px,
+    /// `ShrinkingLowersHer`: the crouch's own distance.
+    pub crouch_lowers: Fixed,
+    /// `ShrinkingLowersHer`: the morph's own distance.
+    pub morph_lowers: Fixed,
 }
 
 impl Rules {
     /// The vanilla game, with the spec's numbers.
     pub const REFERENCE: Self = Self {
         speed_cap: SpeedCap::Wordwise,
-        speeds: [
-            (
-                Gait::Running,
-                Limits {
-                    step: Wrapping(0x3000),
-                    top: Wrapping(0x2_C000),
-                },
-            ),
-            (
-                Gait::Rolling,
-                Limits {
-                    step: Wrapping(0xC000),
-                    top: Wrapping(0x3_4000),
-                },
-            ),
-            (
-                Gait::Moonwalking,
-                Limits {
-                    step: Wrapping(0xC000),
-                    top: Wrapping(0x8000),
-                },
-            ),
-            (
-                Gait::StraightJump,
-                Limits {
-                    step: Wrapping(0xC000),
-                    top: Wrapping(0x1_4000),
-                },
-            ),
-            (
-                Gait::SpinJump,
-                Limits {
-                    step: Wrapping(0xC000),
-                    top: Wrapping(0x1_6000),
-                },
-            ),
-            (
-                Gait::Falling,
-                Limits {
-                    step: Wrapping(0xC000),
-                    top: Wrapping(0x1_0000),
-                },
-            ),
-            (
-                Gait::Turning,
-                Limits {
-                    step: Wrapping(0xC000),
-                    top: Wrapping(0),
-                },
-            ),
-        ],
+        speeds: Speeds {
+            running: Limits {
+                step: Wrapping(0x3000),
+                top: Wrapping(0x2_C000),
+            },
+            rolling: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x3_4000),
+            },
+            moonwalking: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x8000),
+            },
+            straight_jump: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x1_4000),
+            },
+            spin_jump: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x1_6000),
+            },
+            falling: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x1_0000),
+            },
+            turning: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0),
+            },
+        },
         brake: Wrapping(0x8000),
         dash_step: Wrapping(0x1000),
         dash_cap: Wrapping(0x2_0000),
@@ -184,13 +198,33 @@ impl Rules {
         elevator: Wrapping(0x1_0000),
         look: Wrapping(0x8_0000),
         small_body_px: Wrapping(8),
+        crouch_lowers: Wrapping(0x5_0000),
+        morph_lowers: Wrapping(0x9_0000),
     };
 
     /// `SpeedBuildsAndBrakes`: the table's row for what she is doing.
     #[must_use]
-    pub fn limits(&self, gait: Gait) -> Limits {
-        let row = self.speeds.iter().find(|row| row.0 == gait);
-        row.map_or_else(Limits::default, |row| row.1)
+    pub const fn limits(&self, gait: Gait) -> Limits {
+        let s = &self.speeds;
+        match gait {
+            Running => s.running,
+            Rolling => s.rolling,
+            Moonwalking => s.moonwalking,
+            StraightJump => s.straight_jump,
+            SpinJump => s.spin_jump,
+            Falling => s.falling,
+            Turning => s.turning,
+        }
+    }
+
+    /// `ShrinkingLowersHer`: how far the change of shape a row names looks down to lower her.
+    #[must_use]
+    pub const fn lowers(&self, by: Lowers) -> Fixed {
+        match by {
+            Crouch => self.crouch_lowers,
+            Morph => self.morph_lowers,
+            Nothing => ZERO,
+        }
     }
 
     /// `WordwiseTopSpeed`: the speed after the top is tested, on the speed's size. `Wordwise`:

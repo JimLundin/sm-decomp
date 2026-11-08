@@ -82,6 +82,50 @@ const TURNS: &[Action] = &[
     Turning(Turn::Jump),
     Turning(Turn::MoonwalkJump),
 ];
+/// Every action but a straight jump: what a straight jump starts from.
+const BUT_JUMPING: &[Action] = &[
+    AgainstWall,
+    Crouching,
+    Falling,
+    Landing(LandedFrom::Jump),
+    Landing(LandedFrom::Spin),
+    Moonwalking,
+    Morphing,
+    Rolling,
+    Running,
+    Spinning,
+    StandingUp,
+    Still,
+    TakingOff,
+    Turning(Turn::Fall),
+    Turning(Turn::Ground),
+    Turning(Turn::Jump),
+    Turning(Turn::MoonwalkJump),
+    Unmorphing,
+    WallJumping,
+];
+/// Every action but falling: what a fall starts from.
+const BUT_FALLING: &[Action] = &[
+    AgainstWall,
+    Crouching,
+    Jumping,
+    Landing(LandedFrom::Jump),
+    Landing(LandedFrom::Spin),
+    Moonwalking,
+    Morphing,
+    Rolling,
+    Running,
+    Spinning,
+    StandingUp,
+    Still,
+    TakingOff,
+    Turning(Turn::Fall),
+    Turning(Turn::Ground),
+    Turning(Turn::Jump),
+    Turning(Turn::MoonwalkJump),
+    Unmorphing,
+    WallJumping,
+];
 
 /// The change of action's own effects, whatever brought the change.
 ///
@@ -90,20 +134,17 @@ const TURNS: &[Action] = &[
 /// carried on.
 pub static ENTERING: &[Entering] = &[
     Entering {
-        into: &[Jumping],
-        body: &[Upright],
-        from: ACTIONS,
+        into: &[(Upright, Jumping)],
+        from: BUT_JUMPING,
         effect: Launch,
     },
     Entering {
-        into: &[Falling],
-        body: BODIES,
-        from: ACTIONS,
+        into: &[(Upright, Falling), (Ball, Falling), (SpringBall, Falling)],
+        from: BUT_FALLING,
         effect: Launch,
     },
     Entering {
-        into: &[Spinning],
-        body: BODIES,
+        into: &[(Upright, Spinning)],
         from: &[WallJumping],
         effect: SpinOn,
     },

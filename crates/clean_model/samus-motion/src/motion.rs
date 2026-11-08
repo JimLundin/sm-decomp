@@ -3,7 +3,8 @@
 //! How her speed builds, brakes and halts as her situation moves her (`SpeedBuildsAndBrakes`,
 //! `Dash`, `DriftInTheAir`, `Jumping`, `TurningRound`). Samus holds one; her moves read it.
 
-use crate::rows::{Drift, FORWARD, Moves, seen};
+use crate::rows::Drift::{self, Air, BallAir, Ground, Spin, WallJump};
+use crate::rows::{FORWARD, Moves, seen};
 use crate::rules::{Gait, Limits, Rules};
 use crate::tick::Tick;
 use Carry::{CarriesOn, FollowsPad};
@@ -149,24 +150,24 @@ impl Run {
             self.lose_dash();
         }
         let (ahead, carries) = (facing.side(), self.carry == CarriesOn);
-        if carries && (drift == Drift::Ground || self.way != ahead && drift != Drift::WallJump) {
+        if carries && (drift == Ground || self.way != ahead && drift != WallJump) {
             self.brake(r);
             return Both;
         }
         let let_go = !carries && !pad.any(SIDES);
-        if let_go && drift == Drift::Air {
+        if let_go && drift == Air {
             self.speed = ZERO;
             return Nothing;
         }
-        if let_go && drift == Drift::BallAir {
+        if let_go && drift == BallAir {
             return DashThenHalt;
         }
         let topped = self.build(r.limits(gait), ahead, r);
-        if drift == Drift::Spin && !topped && !seen(pad, facing).any(FORWARD) {
+        if drift == Spin && !topped && !seen(pad, facing).any(FORWARD) {
             self.stop();
             return Dash;
         }
-        if matches!(drift, Drift::Spin | Drift::WallJump) {
+        if matches!(drift, Spin | WallJump) {
             self.carry = CarriesOn;
         }
         Both
