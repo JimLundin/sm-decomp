@@ -199,8 +199,8 @@ The fixes are emulator fixes, not ROM patches, named in `OracleId::fixes`:
 - `0002-apu-clock-bsnes-v085-exact`: bsnes v085's 32040.5 Hz as an exact integer ratio ((h)).
 - `0004-hdma-overhead-only-while-a-channel-runs`: no HDMA alignment or overhead on a line where
   every enabled channel has terminated, as anomie's timing doc and bsnes v085 have it ((k), (l)).
-- Tried, not applied: `native/candidates/0003-apu-ports-in-time-order.patch` changes no lag-log
-  word in any% 0-18999 ((j)).
+- Tried, not applied: `0003-apu-ports-in-time-order` changes no lag-log word in any% 0-18999
+  ((j)); the patch is in git history at `8cbdfb119`, `crates/oracle/native/candidates/`.
 
 **Movies.** `movies/manifest.toml` lists the published TAS movies (any% 3653M, low% 3273M,
 100% 4010M and others), each with its download link, SHA-256, frame count, emulator (lsnes
