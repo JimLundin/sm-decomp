@@ -32,14 +32,20 @@ original places the y the camera follows her from at her new y (her y at the scr
 00B0, 00BB), so she didn't move and the view holds; samus-motion's step reports no placement
 (`camera_from` her start y). Samus-motion's harness defers the push (its y is masked on those
 frames), so its `camera_from` there is unchecked. Suspected: `PoseFitAfterMoves` (or the push's
-own entry, when it comes) under the push.
+own entry, when it comes) under the push. The camera's harness masks y on a pushed frame only
+where her pose changes or samus-motion's step reports a placement, the frames whose
+`camera_from` the push leaves unverified (98 on terrain-quicksand, adversary 49, F1); the other
+pushed frames are compared and match.
 
 ### C3. `camera_from` where samus-motion's y differs (open, samus-motion)
 
 chain-0059-A293 400, `position.y`: model 0000.2000, oracle 0000.C400. Samus-motion's step puts
 her and `camera_from` at 00AB, 2 px above her start y 00AD, where the original leaves her at 00AD
 (samus-motion's own harness differs there on `position.y` and `vertical`, its known miss). The
-camera follows the wrong placement. It closes when samus-motion's frame does.
+camera follows the wrong placement. It closes when samus-motion's frame does. The camera's
+harness masks y on the knockback's tail only where her pose changes or samus-motion's step
+reports a placement, as here (5 frames, adversary 49, F1); the other tail frames are compared
+and match.
 
 ### C4. The engine has no knockback and never stops time (open, the engine's other domains)
 
