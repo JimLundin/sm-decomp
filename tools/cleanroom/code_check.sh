@@ -105,6 +105,10 @@ scan_source() { # FILE REL ROOT DOMAIN TEST
       lit=${BASH_REMATCH[2]}
       target=$(realpath -m "$(dirname "$f")/$lit")
       [ -n "$want" ] && [ "$target" = "$want" ] && continue
+      # A test may read its domain's spec as text (the catalogue's checked lines): the spec is
+      # the implementer's own input, exported to it.
+      [ -n "$domain" ] && [[ $m == include_str!* ]] &&
+        [ "$target" = "$(realpath -m "$root/docs/behaviours/$domain.md")" ] && continue
       # A test may read the clean crates' own Rust sources as text (a size check): they hold
       # nothing from outside the clean room.
       if [[ $m == include_str!* && $target == *.rs ]]; then
@@ -113,7 +117,7 @@ scan_source() { # FILE REL ROOT DOMAIN TEST
             "$(realpath -m "$root/crates/clean_model")"/*/src/*) continue ;;
         esac
       fi
-      hit "$rel" include-path "\"$lit\" is not \"$domain\"'s vector file or a clean crate's source"
+      hit "$rel" include-path "\"$lit\" is not \"$domain\"'s vector file, its spec or a clean crate's source"
     else
       hit "$rel" include-path "${m:0:60} is not a literal path"
     fi
