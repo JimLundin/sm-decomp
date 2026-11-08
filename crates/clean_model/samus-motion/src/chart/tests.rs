@@ -1,10 +1,10 @@
 //! `PadChart`: every situation and pad the chart can meet is decided. Where rows of her
 //! situation both fit, the one that loses to the other by rank or by a beats clause drops out;
 //! at most one fitting row may be left, beaten by no other (with none, the last row decides), so
-//! the chart never meets a tie and needs no rule for one. No two rows beat each other, and every
-//! beats clause names a row of its own situation.
+//! the chart never meets a tie and needs no rule for one. No two fitting rows beat each other,
+//! and every beats clause, with a condition or not, names a row of its own situation.
 
-use super::{Moment, beats};
+use super::Moment;
 use crate::rows::Row;
 use crate::situation::classify;
 use clean_types::Action::{
@@ -54,6 +54,7 @@ fn situations() -> Vec<(Pose, bool)> {
         (Body::Ball, Falling),
         (Body::SpringBall, Still),
         (Body::SpringBall, Rolling),
+        (Body::SpringBall, Falling),
         (Body::SpringBall, Jumping),
     ];
     upright
@@ -92,16 +93,21 @@ fn pads() -> Vec<(u16, u16)> {
 }
 
 /// The fitting rows that no other fitting row beats.
-fn unbeaten<'a>(fit: &[&'a Row]) -> Vec<&'a Row> {
+fn unbeaten<'a>(moment: &Moment, fit: &[&'a Row]) -> Vec<&'a Row> {
     fit.iter()
         .copied()
-        .filter(|a| !fit.iter().any(|b| beats(b, a)))
+        .filter(|a| !fit.iter().any(|b| moment.beats(b, a)))
         .collect()
 }
 
 /// A beats clause that names no row of its situation, or two rows that beat each other.
 fn misnamed(rows: &[Row], a: &Row) -> Option<String> {
-    let unknown = a.beats.iter().find(|n| !rows.iter().any(|b| b.name == **n));
+    let conditional = a.beats_if.iter().map(|c| &c.row);
+    let unknown = a
+        .beats
+        .iter()
+        .chain(conditional)
+        .find(|n| !rows.iter().any(|b| b.name == **n));
     let mutual = rows
         .iter()
         .find(|b| a.beats.contains(&b.name) && b.beats.contains(&a.name));
@@ -145,9 +151,13 @@ fn tie(
         .iter()
         .filter(|r| moment.fits(r.needs))
         .collect();
-    let won = unbeaten(&fit);
-    (won.len() > 1).then(|| {
-        let tied: Vec<&str> = won.iter().map(|r| r.name).collect();
+    let won = unbeaten(&moment, &fit);
+    let mutual = fit
+        .iter()
+        .find(|a| fit.iter().any(|b| moment.beats(a, b) && moment.beats(b, a)));
+    let tied: Vec<&str> =
+        mutual.map_or_else(|| won.iter().map(|r| r.name).collect(), |a| vec![a.name]);
+    (won.len() > 1 || mutual.is_some()).then(|| {
         let line = format!(
             "{:?} rows {tied:?} are left, e.g. {pose:?} airborne {airborne} held {held:09b} pressed {pressed:07b}",
             pose.action

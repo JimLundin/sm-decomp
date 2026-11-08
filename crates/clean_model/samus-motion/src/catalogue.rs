@@ -82,7 +82,7 @@ pub const CATALOGUE: [Behaviour; 29] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "Her spin is drawn as the screw attack or the space jump, and facing the screen she wears her suit",
-        kind: Kind::Encoding,
+        kind: Kind::Output,
         switch: Switch::Fixed,
     },
     Behaviour {
@@ -238,7 +238,7 @@ pub const CATALOGUE: [Behaviour; 29] = [
     Behaviour {
         id: BehaviourId::TouchedCells,
         summary: "A frame reports the cells her moves reach, in order, and the cells she is inside",
-        kind: Kind::Mechanic,
+        kind: Kind::Output,
         switch: Switch::Fixed,
     },
     Behaviour {

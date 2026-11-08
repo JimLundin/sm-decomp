@@ -14,8 +14,8 @@
 
 use std::collections::BTreeMap;
 
-/// The header's budget, 6,564 weighted tokens.
-const BUDGET: usize = 6_564;
+/// The header's budget, 6,876 weighted tokens.
+const BUDGET: usize = 6_876;
 /// The old code's score (the header's areas' `old`), over which the score is a strict failure.
 const OLD: usize = 12_724;
 /// The score the test holds to: `OLD`, or `BUDGET` to show the report through a runner that
@@ -23,12 +23,13 @@ const OLD: usize = 12_724;
 const LIMIT: usize = OLD;
 
 /// The model's files, tests excluded.
-const FILES: [(&str, &str); 11] = [
+const FILES: [(&str, &str); 12] = [
     (
         "clean_types/lib.rs",
         include_str!("../../../clean_types/src/lib.rs"),
     ),
     ("lib.rs", include_str!("../src/lib.rs")),
+    ("tick.rs", include_str!("../src/tick.rs")),
     ("motion.rs", include_str!("../src/motion.rs")),
     ("fit.rs", include_str!("../src/fit.rs")),
     ("rules.rs", include_str!("../src/rules.rs")),

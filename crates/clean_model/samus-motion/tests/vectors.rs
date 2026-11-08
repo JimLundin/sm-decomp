@@ -3,13 +3,13 @@
 #![cfg(test)]
 
 use clean_model_samus_motion::{
-    BehaviourId, Bounces, CATALOGUE, Carry, DashIs, Frame, Met, Moment, Outcome, Rules, Samus,
-    Seat, SpeedCap, Spin, Vertical, WallTest, classify,
+    Bounces, CATALOGUE, Carry, DashIs, Frame, Met, Moment, Outcome, Rules, Run, Samus, Seat,
+    SpeedCap, Spin, Vertical, WallTest, classify,
 };
 use clean_types::{
     Action, Aim, Block, Body, Buttons, Cell, Equipment, Facing, Fixed, Gun, Heading, Hitbox,
-    LandedFrom, Legs, Pair, Parity, Pose, Position, Radius, Slope, SlopeFaces, Surface, Touch,
-    Turn, Way, World, button,
+    LandedFrom, Legs, Pair, Parity, Parts, Pose, Position, Radius, Slope, SlopeFaces, Surface,
+    Touch, Turn, Way, World, ZERO, button, fixed as quantity,
 };
 
 /// A signed `P.S` quantity as the vectors write it (the header's notation): a size and a sign.
@@ -24,21 +24,16 @@ struct Signed {
 /// Her horizontal speed as the player reads it, rightward positive.
 const fn speed_x(samus: &Samus) -> Signed {
     Signed {
-        negative: matches!(samus.way, Heading::Left),
-        size: samus.speed,
+        negative: matches!(samus.run.way, Heading::Left),
+        size: samus.run.speed,
     }
 }
 
 /// Her vertical speed as the player reads it, downward positive.
-const fn speed_y(samus: &Samus) -> Signed {
-    let negative = samus.vy.negative();
+fn speed_y(samus: &Samus) -> Signed {
     Signed {
-        negative,
-        size: if negative {
-            samus.vy.negated()
-        } else {
-            samus.vy
-        },
+        negative: samus.vy.negative(),
+        size: samus.vy.size(),
     }
 }
 use std::iter::Peekable;
@@ -244,7 +239,7 @@ fn parse(text: &str) -> Vec<(String, Value)> {
 
 fn fixed(text: &str) -> Fixed {
     let (pixel, sub) = text.split_once('.').expect("P.S");
-    Fixed::new(
+    quantity(
         u16::from_str_radix(pixel, 16).expect("pixel part"),
         u16::from_str_radix(sub, 16).expect("subpixel part"),
     )
@@ -279,7 +274,7 @@ fn pad(value: &Value) -> Buttons {
     value
         .array()
         .iter()
-        .fold(Buttons::default(), |pad, b| pad.and(named(b.str())))
+        .fold(Buttons::default(), |pad, b| pad.union(named(b.str())))
 }
 
 /// The buttons a frame gives as just pressed: `pressed` (none if it is missing), and jump
@@ -288,7 +283,7 @@ fn pressed(frame: &Value) -> Buttons {
     let jump = frame.get("jump_pressed").expect("jump_pressed").bool();
     let others = frame.get("pressed").map_or_else(Buttons::default, pad);
     if jump {
-        others.and(button::JUMP)
+        others.union(button::JUMP)
     } else {
         others
     }
@@ -538,8 +533,11 @@ fn room(world: &Value) -> Room {
             through.push(at);
         }
     }
-    if let Some(v) = world.get("slope_floor") {
-        blocks.push(slope(v, SlopeFaces::Floor));
+    // One sloped floor block, or a list of them (the header's format).
+    match world.get("slope_floor") {
+        Some(Value::Array(list)) => blocks.extend(list.iter().map(|v| slope(v, SlopeFaces::Floor))),
+        Some(v) => blocks.push(slope(v, SlopeFaces::Floor)),
+        None => {}
     }
     if let Some(v) = world.get("slope_ceiling") {
         blocks.push(slope(v, SlopeFaces::Ceiling));
@@ -573,30 +571,6 @@ fn room(world: &Value) -> Room {
     }
 }
 
-/// Animation timing is out of scope: a vector says an animation ends by the pose that
-/// follows one that lasts only as long as its animation, where it is the pose that end
-/// hands over (spec `AnimationEnds`'s table); any other pose that follows is the pad's or
-/// her moves' (a landing into running, W17).
-fn animation_ends(start: Pose, end: Option<Pose>) -> bool {
-    use Action::{
-        Crouching, Falling, Jumping, Landing, Morphing, Spinning, StandingUp, Still, TakingOff,
-        Turning, Unmorphing,
-    };
-    end.is_some_and(|end| {
-        matches!(
-            (start.action, end.action),
-            (TakingOff | Turning(Turn::Jump), Jumping)
-                | (
-                    Turning(Turn::Ground) | Crouching | StandingUp | Landing(_),
-                    Still
-                )
-                | (Turning(Turn::Fall), Falling)
-                | (Turning(Turn::MoonwalkJump), Spinning)
-                | (Morphing | Unmorphing, Still | Falling)
-        )
-    })
-}
-
 /// The keys of a `[[vector]]` (the header's format).
 const VECTOR_KEYS: &[&str] = &[
     "id",
@@ -613,6 +587,7 @@ const VECTOR_KEYS: &[&str] = &[
     "pad",
     "jump_pressed",
     "pressed",
+    "animation_ends",
     "after",
 ];
 
@@ -711,7 +686,7 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
         _ => Bounces::Twice,
     };
     let facing = pose.facing.side();
-    let way = if speed_x.size.is_zero() {
+    let way = if speed_x.size == ZERO {
         facing
     } else if speed_x.negative {
         Heading::Left
@@ -735,17 +710,19 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
     };
     Samus {
         position,
-        speed: speed_x.size,
-        way,
-        carry: if way == facing {
-            Carry::FollowsPad
-        } else {
-            Carry::CarriesOn
+        run: Run {
+            speed: speed_x.size,
+            way,
+            carry: if way == facing {
+                Carry::FollowsPad
+            } else {
+                Carry::CarriesOn
+            },
+            dash,
+            dash_is: DashIs::Hers,
         },
-        dash,
-        dash_is: DashIs::Hers,
         vy: if speed_y.negative {
-            speed_y.size.negated()
+            -speed_y.size
         } else {
             speed_y.size
         },
@@ -759,7 +736,7 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
 }
 
 /// One of a vector's frames: the pose it starts in and her body's size there, the buttons
-/// held and those just pressed.
+/// held and those just pressed, and whether her pose's animation ends on it.
 #[derive(Clone, Copy)]
 struct Step {
     /// The pose at the frame's start.
@@ -770,6 +747,8 @@ struct Step {
     pad: Buttons,
     /// The buttons just pressed.
     pressed: Buttons,
+    /// `AnimationEnds`: the frame's own `animation_ends` (default false), never inferred.
+    animation_ends: bool,
 }
 
 /// A pose with its body size, as the vectors give one.
@@ -783,6 +762,7 @@ fn step_of(f: &Value) -> Step {
         radius: radius(start),
         pad: pad(f.get("pad").expect("pad")),
         pressed: pressed(f),
+        animation_ends: flag(Some(f), "animation_ends"),
     }
 }
 
@@ -790,7 +770,11 @@ fn step_of(f: &Value) -> Step {
 fn frames(vector: &Value) -> Vec<Step> {
     let lead_in = vector.get("lead_in").map(Value::array).unwrap_or_default();
     for f in lead_in {
-        known_keys(f, "lead_in", &["pose", "pad", "jump_pressed", "pressed"]);
+        known_keys(
+            f,
+            "lead_in",
+            &["pose", "pad", "jump_pressed", "pressed", "animation_ends"],
+        );
     }
     lead_in.iter().chain([vector]).map(step_of).collect()
 }
@@ -869,7 +853,7 @@ fn run(vector: &Value) -> Vec<String> {
             spin_turned_far: false,
             elevator_moving,
             parity,
-            animation_ends: animation_ends(step.pose, end.map(|e| e.0)),
+            animation_ends: step.animation_ends,
             body: &body,
         };
         parity = other(parity);
@@ -993,7 +977,7 @@ fn compare(id: &str, after: &Value, samus: &Samus, outcome: &Outcome) -> Vec<Str
     };
     let show = |f: Fixed| format!("{:04X}.{:04X}", f.pixel(), f.sub());
     let show_signed = |s: Signed| {
-        let sign = if s.negative && !s.size.is_zero() {
+        let sign = if s.negative && s.size != ZERO {
             '-'
         } else {
             '+'
@@ -1030,7 +1014,12 @@ fn compare(id: &str, after: &Value, samus: &Samus, outcome: &Outcome) -> Vec<Str
                 show_signed(signed(value.str())),
                 show_signed(speed_y(samus)),
             ),
-            "dash" => check("dash", show(fixed(value.str())), show(samus.dash)),
+            "dash" => check("dash", show(fixed(value.str())), show(samus.run.dash)),
+            "camera_from" => check(
+                "camera_from",
+                show(fixed(value.str())),
+                show(outcome.camera_from),
+            ),
             "reached" => {
                 let actual: Vec<String> = outcome.reached.iter().copied().map(show_touch).collect();
                 check("reached", listed_touches(value), actual.join("; "));
@@ -1120,16 +1109,40 @@ fn catalogue_matches_the_vectors() {
             "{entry} is not in the catalogue"
         );
     }
-    // HowSheIsDrawn is checked on the original alone: no vector sets the equipment seen only
-    // in the sprite (its entry's checked line).
-    let original_only = format!("{:?}", BehaviourId::HowSheIsDrawn);
+    // An entry the spec checks on the original alone (its checked line names no oracle record
+    // and no constructed vector) needs no vector.
     let unexercised: Vec<&str> = ids
         .iter()
         .map(String::as_str)
-        .filter(|id| !exercised.contains(id) && *id != original_only)
+        .filter(|id| !exercised.contains(id) && !original_only(&checked_line(id)))
         .collect();
     assert!(
         unexercised.is_empty(),
         "entries no vector exercises: {unexercised:?}"
     );
+}
+
+/// The behaviour spec, for its entries' checked lines.
+const SPEC: &str = include_str!("../../../../docs/behaviours/samus-motion.md");
+
+/// An entry's `- checked:` line in the spec, its continuation lines joined.
+fn checked_line(id: &str) -> String {
+    let heading = format!("### {id}");
+    let mut entry = SPEC
+        .lines()
+        .skip_while(|l| *l != heading)
+        .skip(1)
+        .take_while(|l| !l.starts_with("### ") && !l.starts_with("---"))
+        .skip_while(|l| !l.starts_with("- checked:"));
+    let first = entry
+        .next()
+        .unwrap_or_else(|| panic!("{id}: no checked line in the spec"));
+    entry
+        .take_while(|l| l.starts_with("  "))
+        .fold(first.to_owned(), |line, more| line + " " + more.trim())
+}
+
+/// Whether a checked line checks on the original alone.
+fn original_only(line: &str) -> bool {
+    line.contains("original only") && !line.contains("oracle") && !line.contains("constructed")
 }

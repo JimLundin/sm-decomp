@@ -1,85 +1,70 @@
 //! The domain types the clean models share: quantities, poses and the world, in player terms.
 
-/// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16. A
-/// signed one is held in two's complement: `-4.E000` is `FFFB.2000`.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Default)]
-pub struct Fixed(pub u32);
+use core::num::Wrapping;
 
-/// The header's notation and §9's arithmetic on `P.S` quantities.
-impl Fixed {
-    /// From a pixel part and a subpixel part.
-    #[must_use]
-    pub const fn new(pixel: u16, sub: u16) -> Self {
-        let ([a, b], [c, d]) = (pixel.to_be_bytes(), sub.to_be_bytes());
-        Self(u32::from_be_bytes([a, b, c, d]))
-    }
-    /// A whole number of pixels.
-    #[must_use]
-    pub const fn px(pixel: u16) -> Self {
-        Self::new(pixel, 0)
-    }
+/// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16.
+///
+/// A signed one is held in two's complement: `-4.E000` is `FFFB.2000`. §9: a sum carries the
+/// subpixel into the pixel part, mod 2^16 on the pixel part, so `+`, `-` and negation are
+/// `Wrapping`'s.
+pub type Fixed = Wrapping<u32>;
+
+/// The header's notation: a `P.S` quantity from its pixel part and its subpixel part.
+#[must_use]
+pub const fn fixed(pixel: u16, sub: u16) -> Fixed {
+    let ([a, b], [c, d]) = (pixel.to_be_bytes(), sub.to_be_bytes());
+    Wrapping(u32::from_be_bytes([a, b, c, d]))
+}
+
+/// A whole number of pixels.
+#[must_use]
+pub const fn px(pixel: u16) -> Fixed {
+    fixed(pixel, 0)
+}
+
+/// The parts of a `P.S` quantity (the header's notation), and its sign read signed (§1).
+pub trait Parts {
     /// The pixel part.
-    #[must_use]
-    pub const fn pixel(self) -> u16 {
+    fn pixel(self) -> u16;
+    /// The subpixel part.
+    fn sub(self) -> u16;
+    /// The value read as 8.8: the pixel part's low byte and the subpixel part's high byte
+    /// (`Jumping`'s space jump window, `SlopesSlowTheWalk`'s cut).
+    fn to_8_8(self) -> u16;
+    /// The same pixel part with another subpixel part.
+    fn with_sub(self, sub: u16) -> Fixed;
+    /// Read signed: whether this points upward or leftward (below zero).
+    fn negative(self) -> bool;
+    /// Read signed, its size.
+    fn size(self) -> Fixed;
+}
+
+impl Parts for Fixed {
+    fn pixel(self) -> u16 {
         let [a, b, _, _] = self.0.to_be_bytes();
         u16::from_be_bytes([a, b])
     }
-    /// The subpixel part.
-    #[must_use]
-    pub const fn sub(self) -> u16 {
+    fn sub(self) -> u16 {
         let [_, _, c, d] = self.0.to_be_bytes();
         u16::from_be_bytes([c, d])
     }
-    /// The value read as 8.8: the pixel part's low byte and the subpixel part's high byte
-    /// (`Jumping`'s space jump window, `SlopesSlowTheWalk`'s cut).
-    #[must_use]
-    pub const fn as_8_8(self) -> u16 {
+    fn to_8_8(self) -> u16 {
         let [_, b, c, _] = self.0.to_be_bytes();
         u16::from_be_bytes([b, c])
     }
-    /// The same pixel part with another subpixel part.
-    #[must_use]
-    pub const fn with_sub(self, sub: u16) -> Self {
-        Self::new(self.pixel(), sub)
+    fn with_sub(self, sub: u16) -> Fixed {
+        fixed(self.pixel(), sub)
     }
-    /// Sum, the subpixel carrying into the pixel part, mod 2^16 on the pixel part (§9).
-    #[must_use]
-    pub const fn plus(self, other: Self) -> Self {
-        Self(self.0.wrapping_add(other.0))
-    }
-    /// Difference, borrowing the same way.
-    #[must_use]
-    pub const fn minus(self, other: Self) -> Self {
-        Self(self.0.wrapping_sub(other.0))
-    }
-    /// Whether this is zero.
-    #[must_use]
-    pub const fn is_zero(self) -> bool {
-        self.0 == 0
-    }
-    /// Read signed: whether this points upward or leftward (below zero).
-    #[must_use]
-    pub const fn negative(self) -> bool {
+    fn negative(self) -> bool {
         self.0.cast_signed() < 0
     }
-    /// The same size the other way, `0 − self`.
-    #[must_use]
-    pub const fn negated(self) -> Self {
-        Self(self.0.wrapping_neg())
-    }
-    /// Read signed, its size.
-    #[must_use]
-    pub const fn size(self) -> Self {
-        if self.negative() {
-            self.negated()
-        } else {
-            self
-        }
+    fn size(self) -> Fixed {
+        if self.negative() { -self } else { self }
     }
 }
 
 /// No speed, no distance: `0.0000`.
-pub const ZERO: Fixed = Fixed(0);
+pub const ZERO: Fixed = Wrapping(0);
 
 /// `below(a, b)` on 16-bit parts (§9): bit 15 of `(a − b) mod 2^16` is set.
 #[must_use]
@@ -275,7 +260,7 @@ pub struct Pose {
 #[derive(Clone, Copy, Default)]
 pub struct Buttons(pub u16);
 
-/// The pad's buttons, each a set of one; `.and` joins sets.
+/// The pad's buttons, each a set of one; `union` joins sets.
 pub mod button {
     use super::Buttons;
     /// Run.
@@ -286,7 +271,7 @@ pub mod button {
     pub const SHOOT: Buttons = Buttons(4);
     /// Left.
     pub const LEFT: Buttons = Buttons(8);
-    /// Right: the bit after left's.
+    /// Right.
     pub const RIGHT: Buttons = Buttons(16);
     /// Up.
     pub const UP: Buttons = Buttons(32);
@@ -296,12 +281,18 @@ pub mod button {
     pub const AIM_UP: Buttons = Buttons(128);
     /// Aim down.
     pub const AIM_DOWN: Buttons = Buttons(256);
+    /// §7 forward: the side she faces, held. Never on the pad itself: `Buttons::seen` adds it.
+    pub const FORWARD: Buttons = Buttons(512);
+    /// §7 back: the other side, held; likewise added by `Buttons::seen`.
+    pub const BACK: Buttons = Buttons(1024);
+    /// Left or right.
+    pub const SIDES: Buttons = LEFT.union(RIGHT);
 }
 
 impl Buttons {
-    /// Both sets.
+    /// The union of two sets: the buttons in either.
     #[must_use]
-    pub const fn and(self, other: Self) -> Self {
+    pub const fn union(self, other: Self) -> Self {
         Self(self.0 | other.0)
     }
     /// Whether any of `these` is in the set.
@@ -309,15 +300,25 @@ impl Buttons {
     pub const fn any(self, these: Self) -> bool {
         self.0 & these.0 != 0
     }
-    /// The set as seen facing `facing` (§7: forward and back are by her facing): facing left,
-    /// left and right trade places, so that right stands for forward and left for back.
+    /// The set as seen facing `facing` (§7: forward and back are by her facing): the set with
+    /// `FORWARD` where she holds the side she faces and `BACK` where she holds the other.
     #[must_use]
     pub const fn seen(self, facing: Facing) -> Self {
-        let (left, right) = (self.0 & button::LEFT.0, self.0 & button::RIGHT.0);
-        match facing {
-            Facing::Left => Self(self.0 ^ left ^ right | left << 1 | right >> 1),
-            Facing::Right | Facing::Screen => self,
-        }
+        let (ahead, behind) = match facing {
+            Facing::Left => (button::LEFT, button::RIGHT),
+            Facing::Right | Facing::Screen => (button::RIGHT, button::LEFT),
+        };
+        let forward = if self.any(ahead) {
+            button::FORWARD
+        } else {
+            Self(0)
+        };
+        let back = if self.any(behind) {
+            button::BACK
+        } else {
+            Self(0)
+        };
+        self.union(forward).union(back)
     }
 }
 
@@ -457,6 +458,8 @@ pub enum Kind {
     Quirk,
     /// Slowdown and loading time.
     Timing,
+    /// What a frame reports beyond her quantities, for the caller to act on.
+    Output,
     /// An output quirk.
     Encoding,
 }

@@ -10,7 +10,7 @@ pub mod table;
 mod tests;
 
 use crate::rows::Test::{
-    Action, Aimed, Airborne, Any, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, SpringBall,
+    Action, Aimed, Airborne, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, SpringBall,
 };
 use crate::rows::{Effect, Met, Row, Side, Situation, Test};
 use clean_types::Action::Running;
@@ -61,13 +61,19 @@ fn rank(row: &Row) -> (bool, usize) {
     )
 }
 
-/// `PadChart`: whether row `a` beats row `b`: as `a`'s beats clause says, else by rank unless
-/// `b`'s says it beats `a`.
-fn beats(a: &Row, b: &Row) -> bool {
-    a.beats.contains(&b.name) || !b.beats.contains(&a.name) && rank(a) > rank(b)
-}
-
 impl Moment {
+    /// `PadChart`: whether row `a` beats row `b`: as `a`'s beats clauses say (one with a
+    /// condition while it holds), else by rank unless `b`'s say it beats `a`.
+    fn beats(&self, a: &Row, b: &Row) -> bool {
+        let names = |r: &Row, name| {
+            r.beats.contains(&name)
+                || r.beats_if
+                    .iter()
+                    .any(|c| c.row == name && self.fits(c.when))
+        };
+        names(a, b.name) || !names(b, a.name) && rank(a) > rank(b)
+    }
+
     /// `PadChart`, `Aiming`, `WhatHerMovesMet`, `AnimationEnds`: whether one test of a row
     /// passes; forward and back are by her facing at the frame's start.
     fn passes(&self, test: &Test) -> bool {
@@ -76,7 +82,6 @@ impl Moment {
             Held(b) => self.pad.seen(p.facing).any(b),
             Pressed(b) => self.pressed.seen(p.facing).any(b),
             Not(t) => !self.passes(t),
-            Any(tests) => tests.iter().any(|t| self.passes(t)),
             Aimed(aims) => aims.contains(&p.aim),
             Gun(gun) => p.gun == gun,
             Faces(side) => p.facing.side() == side,
@@ -103,6 +108,7 @@ impl Moment {
         let facing = match n.facing {
             Side::Kept => p.facing,
             Side::Back => p.facing.back(),
+            Side::To(side) => side,
         };
         let aim = n.aim.iter().find(|a| self.fits(a.when));
         let pose = Pose {
@@ -126,7 +132,7 @@ impl Moment {
         let s = self.situation;
         let fit: Vec<&'static Row> = s.rows.iter().filter(|r| self.fits(r.needs)).collect();
         fit.iter()
-            .find(|a| !fit.iter().any(|b| beats(b, a)))
+            .find(|a| !fit.iter().any(|b| self.beats(b, a)))
             .map_or(&s.last, |r| r)
     }
 

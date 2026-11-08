@@ -1,6 +1,7 @@
 //! The tuning parameters the model reads. `Rules::REFERENCE` holds the spec's vanilla numbers.
 
-use clean_types::{Fixed, below};
+use clean_types::{Fixed, Parts, below};
+use core::num::Wrapping;
 use core::ops::Range;
 
 /// `WordwiseTopSpeed`: how the top speed is tested.
@@ -12,10 +13,9 @@ pub enum SpeedCap {
 }
 
 /// `SpeedBuildsAndBrakes`: what she is doing, as its table's "She is" names it.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Gait {
     /// Running.
-    #[default]
     Running,
     /// Rolling as a ball.
     Rolling,
@@ -31,15 +31,31 @@ pub enum Gait {
     Turning,
 }
 
-/// One row of `SpeedBuildsAndBrakes`'s table.
-#[derive(Clone, Copy, Default)]
+/// One row of `SpeedBuildsAndBrakes`'s table: what she speeds up by a frame, and her top speed.
+#[derive(Clone, Copy)]
 pub struct Limits {
-    /// What she is doing.
-    pub gait: Gait,
     /// What she speeds up by a frame.
     pub step: Fixed,
     /// Her top speed.
     pub top: Fixed,
+}
+
+/// `SpeedBuildsAndBrakes`'s table, a row for each thing she can be doing.
+pub struct Speeds {
+    /// Running.
+    pub running: Limits,
+    /// Rolling as a ball.
+    pub rolling: Limits,
+    /// Moonwalking.
+    pub moonwalking: Limits,
+    /// In a straight jump or the spring ball's hop.
+    pub straight_jump: Limits,
+    /// In a spin jump or a wall jump.
+    pub spin_jump: Limits,
+    /// Falling, upright or as a ball.
+    pub falling: Limits,
+    /// Turning round.
+    pub turning: Limits,
 }
 
 /// `Jumping`: a rise speed without and with hi-jump.
@@ -63,8 +79,8 @@ impl Boots {
 pub struct Rules {
     /// `WordwiseTopSpeed`.
     pub speed_cap: SpeedCap,
-    /// `SpeedBuildsAndBrakes`: its table, a row for each thing she can be doing.
-    pub speeds: [Limits; 7],
+    /// `SpeedBuildsAndBrakes`: its table.
+    pub speeds: Speeds,
     /// `SpeedBuildsAndBrakes`: lost a frame carrying on along the ground.
     pub brake: Fixed,
     /// `Dash`: gained a frame.
@@ -113,79 +129,78 @@ impl Rules {
     /// The vanilla game, with the spec's numbers.
     pub const REFERENCE: Self = Self {
         speed_cap: SpeedCap::Wordwise,
-        speeds: [
-            Limits {
-                gait: Gait::Running,
-                step: Fixed(0x3000),
-                top: Fixed(0x2_C000),
+        speeds: Speeds {
+            running: Limits {
+                step: Wrapping(0x3000),
+                top: Wrapping(0x2_C000),
             },
-            Limits {
-                gait: Gait::Rolling,
-                step: Fixed(0xC000),
-                top: Fixed(0x3_4000),
+            rolling: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x3_4000),
             },
-            Limits {
-                gait: Gait::Moonwalking,
-                step: Fixed(0xC000),
-                top: Fixed(0x8000),
+            moonwalking: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x8000),
             },
-            Limits {
-                gait: Gait::StraightJump,
-                step: Fixed(0xC000),
-                top: Fixed(0x1_4000),
+            straight_jump: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x1_4000),
             },
-            Limits {
-                gait: Gait::SpinJump,
-                step: Fixed(0xC000),
-                top: Fixed(0x1_6000),
+            spin_jump: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x1_6000),
             },
-            Limits {
-                gait: Gait::Falling,
-                step: Fixed(0xC000),
-                top: Fixed(0x1_0000),
+            falling: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0x1_0000),
             },
-            Limits {
-                gait: Gait::Turning,
-                step: Fixed(0xC000),
-                top: Fixed(0),
+            turning: Limits {
+                step: Wrapping(0xC000),
+                top: Wrapping(0),
             },
-        ],
-        brake: Fixed(0x8000),
-        dash_step: Fixed(0x1000),
-        dash_cap: Fixed(0x2_0000),
+        },
+        brake: Wrapping(0x8000),
+        dash_step: Wrapping(0x1000),
+        dash_cap: Wrapping(0x2_0000),
         jump: Boots {
-            plain: Fixed(0x4_E000),
-            hi_jump: Fixed(0x6_0000),
+            plain: Wrapping(0x4_E000),
+            hi_jump: Wrapping(0x6_0000),
         },
         wall_jump: Boots {
-            plain: Fixed(0x4_A000),
-            hi_jump: Fixed(0x5_8000),
+            plain: Wrapping(0x4_A000),
+            hi_jump: Wrapping(0x5_8000),
         },
-        bounce: Fixed(0x1_0000),
-        crouch_lift: Fixed(0xA_0000),
+        bounce: Wrapping(0x1_0000),
+        crouch_lift: Wrapping(0xA_0000),
         space_jump: 0x280..0x500,
-        gravity: Fixed(0x1C00),
+        gravity: Wrapping(0x1C00),
         fall_settle_px: 5,
         bounce_from_px: 3,
-        second_bounce_less: Fixed(0x1_0000),
-        ground_pull: Fixed(0x1_0000),
-        wall_reach: Fixed(0x8_0000),
-        crouch_lower: Fixed(0x5_0000),
-        morph_lower: Fixed(0x9_0000),
+        second_bounce_less: Wrapping(0x1_0000),
+        ground_pull: Wrapping(0x1_0000),
+        wall_reach: Wrapping(0x8_0000),
+        crouch_lower: Wrapping(0x5_0000),
+        morph_lower: Wrapping(0x9_0000),
         move_limit_px: 15,
-        aim_step: Fixed(0x1_0000),
-        elevator: Fixed(0x1_0000),
-        look: Fixed(0x8_0000),
+        aim_step: Wrapping(0x1_0000),
+        elevator: Wrapping(0x1_0000),
+        look: Wrapping(0x8_0000),
         small_body_px: 8,
     };
 
     /// `SpeedBuildsAndBrakes`: the table's row for what she is doing.
     #[must_use]
-    pub fn limits(&self, gait: Gait) -> Limits {
-        self.speeds
-            .into_iter()
-            .find(|l| l.gait == gait)
-            .unwrap_or_default()
+    pub const fn limits(&self, gait: Gait) -> Limits {
+        let s = &self.speeds;
+        match gait {
+            Gait::Running => s.running,
+            Gait::Rolling => s.rolling,
+            Gait::Moonwalking => s.moonwalking,
+            Gait::StraightJump => s.straight_jump,
+            Gait::SpinJump => s.spin_jump,
+            Gait::Falling => s.falling,
+            Gait::Turning => s.turning,
+        }
     }
 
     /// `WordwiseTopSpeed`: the speed after the top is tested.

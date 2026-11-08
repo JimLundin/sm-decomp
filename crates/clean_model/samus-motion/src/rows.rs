@@ -5,12 +5,9 @@
 //! the rows; `chart` reads them.
 
 use crate::rules::Gait;
-use clean_types::{Action, Aim, Body, Buttons, Gun, Heading, Legs, button};
+use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Heading, Legs, button};
 
-/// `PadChart`: forward, in a pad seen by her facing (`Buttons::seen`): the side she faces.
-pub const FORWARD: Buttons = button::RIGHT;
-/// `PadChart`: back, the other side.
-pub const BACK: Buttons = button::LEFT;
+pub use button::{BACK, FORWARD};
 
 /// What she is doing, as the spec's tables name it ("She is", "She was").
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -114,8 +111,6 @@ pub enum Test {
     Pressed(Buttons),
     /// The test failing.
     Not(&'static Self),
-    /// Any of these passing.
-    Any(&'static [Self]),
     /// Her aim one of these.
     Aimed(&'static [Aim]),
     /// Her gun so.
@@ -153,6 +148,8 @@ pub enum Side {
     Kept,
     /// Back.
     Back,
+    /// This side of the pad, whichever way she faced.
+    To(Facing),
 }
 
 /// The pose a row leads to; `None` keeps that part of her pose as it was.
@@ -175,10 +172,11 @@ pub struct Next {
 /// What a change does to her speeds, dash and position, in order.
 #[derive(Clone, Copy)]
 pub enum Effect {
-    /// `Jumping`'s take-off: she rises and follows the pad.
-    TakeOff,
-    /// `Jumping`'s spin start or the spring ball's hop: she rises.
+    /// `Jumping`'s take-off, spin start or the spring ball's hop: she rises at the jump speed
+    /// (taking off, the take-off's poses' own moves follow the pad).
     Rise,
+    /// `Jumping`'s take-off from a crouch without aim: she is also lifted.
+    Lift,
     /// `TurningRound`.
     TurnRound,
     /// She follows the pad again: a skid ends, along her new facing.
@@ -193,6 +191,15 @@ pub enum Effect {
     Moonfall,
 }
 
+/// `PadChart`: a beats clause with a condition: the row it beats, by name, while every test
+/// passes.
+pub struct Beat {
+    /// The row it beats.
+    pub row: &'static str,
+    /// While these pass.
+    pub when: &'static [Test],
+}
+
 /// A move of the state machine: a row of one of §7's tables.
 pub struct Row {
     /// Its Pad cell, which a beats clause names.
@@ -205,16 +212,18 @@ pub struct Row {
     pub effects: &'static [Effect],
     /// `PadChart`: the rows of its situation it beats, by name.
     pub beats: &'static [&'static str],
+    /// `PadChart`: the rows of its situation it beats while a condition holds.
+    pub beats_if: &'static [Beat],
     /// `AimingAndShooting`: its kept running pose counts as chosen, bringing the step.
     pub steps: bool,
 }
 
 /// `PadChart`: an aim button, aim up or aim down.
-pub const AIM: Buttons = button::AIM_UP.and(button::AIM_DOWN);
+pub const AIM: Buttons = button::AIM_UP.union(button::AIM_DOWN);
 /// `PadChart`: up or down.
-pub const UP_DOWN: Buttons = button::UP.and(button::DOWN);
+pub const UP_DOWN: Buttons = button::UP.union(button::DOWN);
 /// `PadChart`: up, down or an aim button.
-pub const UDA: Buttons = UP_DOWN.and(AIM);
+pub const UDA: Buttons = UP_DOWN.union(AIM);
 
 /// A row's defaults: it needs nothing, keeps her pose, does nothing and beats nothing.
 pub const ROW: Row = Row {
@@ -223,6 +232,7 @@ pub const ROW: Row = Row {
     next: KEPT,
     effects: &[],
     beats: &[],
+    beats_if: &[],
     steps: false,
 };
 
@@ -328,8 +338,6 @@ pub const DOWN_TO_FORWARD: &[Aiming] = &[Aiming {
 pub enum Met {
     /// A wall stop (`WallsAndCeilings`).
     Wall,
-    /// A block or solid enemy in the way of the aim change's step (`AimingAndShooting`).
-    AimStep,
     /// A wall near her as she presses jump (`WallJump`'s kick).
     WallKick,
     /// A floor (`Landing`).
