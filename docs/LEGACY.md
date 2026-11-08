@@ -23,7 +23,7 @@ original's bytes as data.
   vanilla count gets there; a Map Rando or custom-content count could.
 - **Scroll areas past the room's table** (the camera domain, `docs/behaviours/camera.md`
   `BelowTheRoom` and its open question 1, which reads the rows below the room as the room's loading
-  left them and past them `Closed`; today `game::scrolling`, `$80:A528`, `$80:A731`, `$80:A8FC`): with
+  left them and past them `Closed`; today `game::camera_world` over the camera model, `$80:A528`, `$80:A731`, `$80:A8FC`): with
   the screen below the camera past the room's last row, the scroll zone routines read the scroll
   buffer past the room's screens, as scrolling down does when the camera moves into the bottom row
   ahead of its ideal position (`area-brinstar` frame 414). The engine keeps that part of the buffer

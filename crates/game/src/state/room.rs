@@ -89,17 +89,6 @@ pub enum CameraDistance {
 impl CameraDistance {
     /// The entries in the original's order.
     pub const ALL: [Self; 4] = [Self::Leading, Self::Near, Self::LeftEdge, Self::RightEdge];
-
-    /// The camera's left edge's distance to the left of Samus: `(facing right, facing left)`.
-    #[must_use]
-    pub const fn lead(self) -> (u16, u16) {
-        match self {
-            Self::Leading => (0x60, 0xA0),
-            Self::Near => (0x40, 0x50),
-            Self::LeftEdge => (0x20, 0x20),
-            Self::RightEdge => (0xE0, 0xE0),
-        }
-    }
 }
 
 impl TryFrom<u16> for CameraDistance {
