@@ -128,85 +128,87 @@ fn past(s: Slope, h: Heading, at: Pair<Px>) -> Option<Px> {
     (!behind(past) && floor == (h == Down)).then_some(past)
 }
 
-/// `BlocksStopFlush`: one move along its axis, from where she starts: her box, the way she
-/// moves, what it is tested against, and the move. Everything else is derived from these: her
-/// centre and half-sizes along the axis and across it, a pixel on along the move, the way its
-/// cells are reported (`TouchedCells`) and its target.
+/// `BlocksStopFlush`: one pixel on along a move heading `h`: +1 or −1.
+fn step(h: Heading) -> Px {
+    if grows(h) { ONE } else { -ONE }
+}
+
+/// `BlocksStopFlush`: one move or look along its axis (`Tick::go` makes it), in the parts of it
+/// its stops read, each worked out once where the move starts (`Bounds::axis`).
 #[derive(Clone, Copy)]
-struct Axis {
-    /// Her box where she starts.
-    b: Bounds,
+pub struct Axis {
     /// The way she moves.
     heading: Heading,
     /// What it is tested against.
     probe: Probe,
+    /// `TouchedCells`: the way its cells are reported: a walk's or a move's direction, or a look.
+    way: Way,
     /// The move (`SlopesCarry`: a sloped floor's stop counts its pixel part, not the carry).
     dist: Fixed,
+    /// Her centre along the axis where she starts.
+    from: Fixed,
+    /// Her centre across it, its subpixel kept for where the move puts her.
+    across: Fixed,
+    /// Her half-size along the axis.
+    ra: Px,
+    /// Her half-size across it.
+    rc: Px,
+}
+
+impl Bounds {
+    /// `BlocksStopFlush`: a move of `dist` from this box heading `heading`, tested as `probe`
+    /// says: the box's parts along the axis and across it. `TouchedCells`: a walk or a move
+    /// reports its cells with its direction, anything else with the way `Look`.
+    pub const fn axis(self, heading: Heading, dist: Fixed, probe: Probe) -> Axis {
+        let ((from, across), (ra, rc)) = (self.at.along(heading), self.r.along(heading));
+        let way = if matches!(probe, Walk | Move) {
+            Way::Move(heading)
+        } else {
+            Way::Look
+        };
+        Axis {
+            heading,
+            probe,
+            way,
+            dist,
+            from,
+            across,
+            ra,
+            rc,
+        }
+    }
 }
 
 impl Axis {
-    /// `BlocksStopFlush`: her centre along the axis.
-    const fn from(&self) -> Fixed {
-        self.b.at.along(self.heading).0
-    }
-
-    /// `BlocksStopFlush`: her centre's pixel across the axis.
-    fn across(&self) -> Px {
-        self.b.at.along(self.heading).1.pixel()
-    }
-
-    /// `BlocksStopFlush`: her half-size along the axis.
-    const fn ra(&self) -> Px {
-        self.b.r.along(self.heading).0
-    }
-
-    /// `BlocksStopFlush`: her half-size across it.
-    const fn rc(&self) -> Px {
-        self.b.r.along(self.heading).1
-    }
-
-    /// `BlocksStopFlush`: one pixel on along the move: +1 or −1.
-    fn dir(&self) -> Px {
-        if grows(self.heading) { ONE } else { -ONE }
-    }
-
-    /// `TouchedCells`: the way its cells are reported: a walk's or a move's direction, or a look.
-    const fn way(&self) -> Way {
-        if matches!(self.probe, Walk | Move) {
-            Way::Move(self.heading)
-        } else {
-            Way::Look
-        }
-    }
-
     /// `BlocksStopFlush`: her centre along the axis at the move's target, the move added.
     fn to(&self) -> Fixed {
         if grows(self.heading) {
-            self.from() + self.dist
+            self.from + self.dist
         } else {
-            self.from() - self.dist
+            self.from - self.dist
         }
     }
 
     /// `BlocksStopFlush`: how far pixel `p` lies ahead of where she starts, along the move.
     fn ahead(&self, p: Px) -> Px {
-        (p - self.from().pixel()) * self.dir()
+        (p - self.from.pixel()) * step(self.heading)
     }
 
     /// `BlocksStopFlush`: her leading edge at the target.
     fn lead(&self) -> Px {
-        edge(self.to().pixel(), self.ra(), self.heading)
+        edge(self.to().pixel(), self.ra, self.heading)
     }
 
     /// `BlocksStopFlush`, `SlopesCarry`: the move ending `by` whole px on from where she starts,
     /// with subpixel `sub`, stopped by `stop`; a stop never moves her backwards. A look leaves
-    /// her pixel where it was (`PoseFitAfterMoves`, `WallJump`).
+    /// her pixel where it was (`PoseFitAfterMoves`, `WallJump`). Her position is rebuilt from
+    /// her part along the axis and her part across it.
     fn put(&self, by: Px, sub: u16, stop: Option<Stop>) -> Moved {
         let gone = if behind(by) { NONE } else { by };
-        let moved = if self.way() == Way::Look { NONE } else { gone };
-        let value = fixed(self.from().pixel() + moved * self.dir(), sub);
+        let moved = if self.way == Way::Look { NONE } else { gone };
+        let along = fixed(self.from.pixel() + moved * step(self.heading), sub);
         Moved {
-            to: self.b.at.with(self.heading, value),
+            to: Pair::from_along(self.heading, along, self.across),
             stop,
             gone,
         }
@@ -218,9 +220,9 @@ impl Axis {
     fn flush(&self, within: Px, stop: Stop) -> Moved {
         let lead = self.lead();
         let (pixel, sub) = if grows(self.heading) {
-            ((lead & !within) - self.ra(), FLUSH)
+            ((lead & !within) - self.ra, FLUSH)
         } else {
-            ((lead | within) + ONE + self.ra(), 0)
+            ((lead | within) + ONE + self.ra, 0)
         };
         self.put(self.ahead(pixel), sub, Some(stop))
     }
@@ -233,18 +235,18 @@ impl Axis {
     /// end's subpixel is 0, right or down unless both her start's and the move's are 0.
     fn enemy(&self, e: &Hitbox) -> Option<Moved> {
         let ((ea, ec), (era, erc)) = (e.centre.along(self.heading), e.radius.along(self.heading));
-        let (from, ra) = (self.from(), self.ra());
-        let gap = self.ahead(ea) - era - ra;
+        let gap = self.ahead(ea) - era - self.ra;
         let push = if grows(self.heading) {
-            from.sub() | self.dist.sub()
+            self.from.sub() | self.dist.sub()
         } else {
             self.to().sub()
         } != 0;
-        let reach = self.to().pixel() + if push { self.dir() } else { NONE };
+        let reach = self.to().pixel() + if push { step(self.heading) } else { NONE };
         let near = |a: Px, b: Px, sum: Px| (a - b).0.cast_signed().unsigned_abs() < sum.0;
-        let reached =
-            !behind(gap) && near(reach, ea, ra + era) && near(self.across(), ec, self.rc() + erc);
-        let mut moved = self.put(gap, from.sub(), Some(Enemy));
+        let reached = !behind(gap)
+            && near(reach, ea, self.ra + era)
+            && near(self.across.pixel(), ec, self.rc + erc);
+        let mut moved = self.put(gap, self.from.sub(), Some(Enemy));
         if gap == NONE {
             moved.to.y = moved.to.y.with_sub(0);
         }
@@ -257,10 +259,11 @@ impl Axis {
     /// column as `slope` says.
     fn stop(&self, block: Block, k: u16) -> Option<Moved> {
         let seats = if self.heading == Down { Seats } else { Flat };
+        let centre = self.heading.vertical() && k == cell(self.across.pixel());
         match block {
             Solid | Answered => Some(self.flush(IN_CELL, Flat)),
             Stepped(q) if self.stepped(q, k) => Some(self.flush(IN_QUARTER, seats)),
-            Block::Slope(s) if self.heading.vertical() && k == cell(self.across()) => self.slope(s),
+            Block::Slope(s) if centre => self.slope(s),
             Stepped(_) | Block::Slope(_) | Air | StandsFor(_) => None,
         }
     }
@@ -269,12 +272,11 @@ impl Axis {
     /// solid quarter in the half her leading edge reaches, among those her body overlaps across
     /// it (the block's quarters across are `2k`, its near half, and `2k + 1`, its far half).
     fn stepped(&self, [upper, lower]: [[bool; 2]; 2], k: u16) -> bool {
-        let (lo, hi) = extent(self.across(), self.rc());
+        let (lo, hi) = extent(self.across.pixel(), self.rc);
         let half = self.lead() & QUARTER != NONE;
         let near = k << 1;
         ((lo.0 >> QUARTER_BITS).max(near)..=(hi.0 >> QUARTER_BITS).min(near | 1)).any(|q| {
-            let far = q & 1 != 0;
-            let at = Pair { x: far, y: far }.with(self.heading, half);
+            let at = Pair::from_along(self.heading, half, q & 1 != 0);
             let [l, r] = if at.y { lower } else { upper };
             if at.x { r } else { l }
         })
@@ -290,16 +292,16 @@ impl Axis {
     fn slope(&self, s: Slope) -> Option<Moved> {
         let floor = s.faces == Floor;
         let at = Pair {
-            x: self.across(),
+            x: self.across.pixel(),
             y: self.lead(),
         };
-        let past = past(s, self.heading, at).filter(|_| floor || self.way() != Way::Look)?;
+        let past = past(s, self.heading, at).filter(|_| floor || self.way != Way::Look)?;
         let by = if floor {
             self.dist.pixel() - past
         } else {
             NONE
         };
-        Some(self.put(by, self.from().sub(), Some(Flat)))
+        Some(self.put(by, self.from.sub(), Some(Flat)))
     }
 }
 
@@ -319,13 +321,13 @@ impl Tick<'_> {
     /// target, in every cell her body spans across it, each with its place across the move: left
     /// to right or top row first, right to left on an `Odd` frame's vertical move.
     fn line(&self, a: &Axis) -> Vec<(u16, Cell)> {
-        let ((lo, hi), lead) = (extent(a.across(), a.rc()), cell(a.lead()));
+        let ((lo, hi), lead) = (extent(a.across.pixel(), a.rc), cell(a.lead()));
         let mut line: Vec<u16> = (cell(lo)..=cell(hi)).collect();
         if a.heading.vertical() && self.frame.parity == Odd {
             line.reverse();
         }
         line.into_iter()
-            .map(|k| (k, Pair { x: k, y: k }.with(a.heading, lead)))
+            .map(|k| (k, Pair::from_along(a.heading, lead, k)))
             .collect()
     }
 
@@ -351,7 +353,7 @@ impl Tick<'_> {
     /// column at her bottom edge's row; at her centre's row, when it differs; at her top edge's
     /// row, when it differs from her bottom edge's and the three rows' exclusive-or is not 0.
     pub fn inside(&self, b: Bounds) -> Vec<Cell> {
-        let (column, y) = (cell(b.at.x.pixel()), b.at.y.pixel());
+        let (x, y) = (cell(b.at.x.pixel()), b.at.y.pixel());
         let (top, bottom) = extent(y, b.r.y);
         let [top, centre, bottom] = [top, y, bottom].map(cell);
         let rows = [
@@ -361,7 +363,7 @@ impl Tick<'_> {
         ];
         rows.into_iter()
             .flatten()
-            .map(|row| self.resolve(Pair { x: column, y: row }).1)
+            .map(|y| self.resolve(Pair { x, y }).1)
             .collect()
     }
 
@@ -392,26 +394,20 @@ impl Tick<'_> {
         self.world.solid_enemies().iter().find_map(|e| a.enemy(e))
     }
 
-    /// `BlocksStopFlush`, `SolidEnemies`, `TouchedCells`: a move of `dist` heading `heading`,
-    /// tested as `probe` says: where it leaves her, and what stopped it; its cells go to the
-    /// frame's report. A walk is shortened first (`SlopesSlowTheWalk`), and a horizontal move is
-    /// limited to 15 px either way, its subpixel kept. A move of exactly 0 is never stopped and
-    /// reaches no cells. A solid enemy in the move's path decides it alone, the first she
-    /// reaches; blocks stop her only on a path free of them.
-    pub fn go(&mut self, b: Bounds, heading: Heading, dist: Fixed, probe: Probe) -> Moved {
-        let mut a = Axis {
-            b,
-            heading,
-            probe,
-            dist,
-        };
-        if probe == Walk {
+    /// `BlocksStopFlush`, `SolidEnemies`, `TouchedCells`: a move along axis `a`, tested as its
+    /// probe says: where it leaves her, and what stopped it; its cells go to the frame's report.
+    /// A walk is shortened first (`SlopesSlowTheWalk`), and a horizontal move is limited to 15 px
+    /// either way, its subpixel kept. A move of exactly 0 is never stopped and reaches no cells.
+    /// A solid enemy in the move's path decides it alone, the first she reaches; blocks stop her
+    /// only on a path free of them.
+    pub fn go(&mut self, mut a: Axis) -> Moved {
+        if a.probe == Walk {
             a.dist = self.shortened(&a);
         }
-        if !heading.vertical() {
+        if !a.heading.vertical() {
             a.dist = a.dist.min(fixed(self.rules.move_limit_px, a.dist.sub()));
         }
-        let stopped = match probe {
+        let stopped = match a.probe {
             _ if a.dist == ZERO => None,
             Enemies => self.enemies(&a),
             Blocks => self.blocks(&a),
@@ -427,10 +423,10 @@ impl Tick<'_> {
     pub fn vmove(&mut self, b: Bounds, by: Fixed, probe: Probe) -> Moved {
         let (heading, eight) = (if by.negative() { Up } else { Down }, self.rules.look);
         let first =
-            (probe == Blocks && by.size() >= eight).then(|| self.go(b, heading, eight, probe));
+            (probe == Blocks && by.size() >= eight).then(|| self.go(b.axis(heading, eight, probe)));
         first
             .filter(|m| m.stop.is_some())
-            .unwrap_or_else(|| self.go(b, heading, by.size(), probe))
+            .unwrap_or_else(|| self.go(b.axis(heading, by.size(), probe)))
     }
 
     /// `BlocksStopFlush`: the cells of her leading edge's line at the target; the first that
@@ -442,9 +438,9 @@ impl Tick<'_> {
             let (block, at) = self.resolve(at);
             self.reached.push(Touch {
                 cell: at,
-                way: a.way(),
+                way: a.way,
             });
-            let through = matches!(block, Answered) && self.world.lets_through(at, a.way());
+            let through = matches!(block, Answered) && self.world.lets_through(at, a.way);
             a.stop(block, k).filter(|_| !through)
         })
     }

@@ -52,8 +52,8 @@ const AIMS: &[Aim] = &[
     Aim::DownForward,
     Aim::Down,
 ];
-/// Every action.
-const ACTIONS: &[Action] = &[
+/// Every action, each once (the chart's test `every_action_is_listed` holds it to `Action`).
+pub(crate) const ACTIONS: &[Action] = &[
     AgainstWall,
     Crouching,
     Falling,

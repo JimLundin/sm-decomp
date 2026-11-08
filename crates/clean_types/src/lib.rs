@@ -120,15 +120,16 @@ impl<T: Copy> Pair<T> {
         }
     }
 
-    /// `BlocksStopFlush`: the pair with its part along a move heading `h` set to `part`.
+    /// `BlocksStopFlush`: the pair whose part along a move heading `h` is `along`, and whose part
+    /// across it is `across`: `along`'s inverse.
     #[must_use]
-    pub const fn with(mut self, h: Heading, part: T) -> Self {
-        if h.vertical() {
-            self.y = part;
+    pub const fn from_along(h: Heading, along: T, across: T) -> Self {
+        let (x, y) = if h.vertical() {
+            (across, along)
         } else {
-            self.x = part;
-        }
-        self
+            (along, across)
+        };
+        Self { x, y }
     }
 }
 

@@ -7,11 +7,11 @@
 use super::{Moment, table};
 use crate::rows::{BACK, FORWARD, Row};
 use crate::rules::Rules;
-use crate::situation::{CLASSES, STANDING, classify};
+use crate::situation::{ACTIONS, CLASSES, STANDING, classify};
 use crate::tick::Frame;
 use clean_types::Action::{
-    AgainstWall, Crouching, Falling, Jumping, Landing, Moonwalking, Morphing, Rolling, Running,
-    Spinning, StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
+    self, AgainstWall, Crouching, Falling, Jumping, Landing, Moonwalking, Morphing, Rolling,
+    Running, Spinning, StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
 };
 use clean_types::button::{DOWN, JUMP, LEFT, PAD, RIGHT, SHOOT, UP};
 use clean_types::{
@@ -64,6 +64,44 @@ fn forward_and_back_are_apart_from_the_pad() {
     assert_eq!(FORWARD.0 & BACK.0, 0, "forward and back overlap");
     assert_ne!(FORWARD.0, 0, "forward is empty");
     assert_ne!(BACK.0, 0, "back is empty");
+}
+
+/// The action after `a` in `ACTIONS`, by a match on `Action` with no wildcard: an action added to
+/// the type doesn't compile here until it is given its place, and then `every_action_is_listed`
+/// fails until `ACTIONS` holds it.
+const fn after(a: Action) -> Option<Action> {
+    match a {
+        AgainstWall => Some(Crouching),
+        Crouching => Some(Falling),
+        Falling => Some(Jumping),
+        Jumping => Some(Landing(LandedFrom::Jump)),
+        Landing(LandedFrom::Jump) => Some(Landing(LandedFrom::Spin)),
+        Landing(LandedFrom::Spin) => Some(Moonwalking),
+        Moonwalking => Some(Morphing),
+        Morphing => Some(Rolling),
+        Rolling => Some(Running),
+        Running => Some(Spinning),
+        Spinning => Some(StandingUp),
+        StandingUp => Some(Still),
+        Still => Some(TakingOff),
+        TakingOff => Some(Turning(Turn::Fall)),
+        Turning(Turn::Fall) => Some(Turning(Turn::Ground)),
+        Turning(Turn::Ground) => Some(Turning(Turn::Jump)),
+        Turning(Turn::Jump) => Some(Turning(Turn::MoonwalkJump)),
+        Turning(Turn::MoonwalkJump) => Some(Unmorphing),
+        Unmorphing => Some(WallJumping),
+        WallJumping => None,
+    }
+}
+
+/// `MovesAsShePosed`: the classes' list of every action holds each action of `Action` once, so
+/// a class of any action (`situation`'s `ANY`) can't miss one.
+#[test]
+fn every_action_is_listed() {
+    let every: Vec<Action> = core::iter::successors(Some(AgainstWall), |a| after(*a))
+        .take(ACTIONS.len().saturating_add(1))
+        .collect();
+    assert_eq!(every, ACTIONS, "ACTIONS isn't every action, each once");
 }
 
 /// Every aim.

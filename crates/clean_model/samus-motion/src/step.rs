@@ -17,7 +17,7 @@ use crate::rows::Effect::{
 };
 use crate::rows::Met::{self, Ceiling, Floor, NoFloor, StepBlocked, Wall, WallKick};
 use crate::rows::Situation;
-use crate::rules::Rules;
+use crate::rules::{Lowers, Rules};
 use crate::samus::Seat::{Seated, Unseated};
 use crate::samus::WallTest::{Kicked, Neither, Readied};
 use crate::samus::{Bounces, Drawn, Outcome, Samus, Spin, Standing, Vertical, WallTest};
@@ -25,7 +25,7 @@ use crate::situation::{ENTERING, classify};
 use crate::tick::{Frame, Tick};
 use clean_types::Action::{self, Still, WallJumping};
 use clean_types::Body::{SpringBall, Upright};
-use clean_types::Heading::{self, Down, Left, Right};
+use clean_types::Heading::{self, Left, Right};
 use clean_types::button::{JUMP, LEFT, SHOOT, SIDES};
 use clean_types::{Aim, Buttons, Equipment, Facing, Fixed, Parts, Pose, World, ZERO, px};
 
@@ -103,15 +103,16 @@ impl Samus {
             frame,
             met: meeting.met,
         };
-        let mut chosen = moment.choose();
-        if chosen.steps && self.aim_step(&mut t) {
-            let blocked = Moment {
-                pose: chosen.pose,
-                met: Some(StepBlocked),
-                ..moment
-            };
-            chosen = blocked.met().unwrap_or(chosen);
-        }
+        let chosen = moment.choose();
+        // `AimingAndShooting`, `WhatHerMovesMet`: the step, where the chosen pose brings it, and
+        // a block in its way read of the running pose chosen.
+        let blocked = chosen.steps && self.aim_step(&mut t);
+        let stepped = Moment {
+            pose: chosen.pose,
+            met: Some(StepBlocked),
+            ..moment
+        };
+        let chosen = stepped.met().filter(|_| blocked).unwrap_or(chosen);
         let camera_from = self.take(chosen, &start, moved, &mut t);
         Outcome {
             wall_test: meeting.wall_test,
@@ -144,7 +145,7 @@ impl Samus {
     fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
         if self.pose.facing == Facing::Screen {
             if t.frame.elevator_moving {
-                self.position = t.go(self.bounds(), Down, t.rules.elevator, Move).to;
+                self.position = t.vmove(self.bounds(), t.rules.elevator, Move).to;
             }
             return Meeting::default();
         }
@@ -194,7 +195,7 @@ impl Samus {
     /// after it are `walk`'s.
     fn hmove(&mut self, way: Heading, d: Fixed, t: &mut Tick) -> Option<Stop> {
         let probe = if self.vy == ZERO { Walk } else { Move };
-        let moved = t.go(self.bounds(), way, d, probe);
+        let moved = t.go(self.bounds().axis(way, d, probe));
         self.position = moved.to;
         moved.stop
     }
@@ -224,7 +225,7 @@ impl Samus {
             return Neither;
         }
         let wall = if f.pad.any(LEFT) { Right } else { Left };
-        let seen = t.go(self.bounds(), wall, t.rules.wall_reach, Look);
+        let seen = t.go(self.bounds().axis(wall, t.rules.wall_reach, Look));
         self.position = seen.to;
         if seen.stop.is_none() {
             Neither
@@ -355,10 +356,8 @@ impl Samus {
     /// change refused, or crouched `Still` taken instead, leaves her speeds and dash as her moves
     /// left them (`moved`), with her position and seat as her looks left them, and brings none
     /// of the chosen pose's effects. The chosen pose brings, in order: after pose fit's push the
-    /// shrink (`ShrinkingLowersHer`: she looks down its distance at her new size, a block look,
-    /// and is lowered as far as it got, after what stops it writes to her as a stop would), then
-    /// its row's effects, then the change of action's own (`ENTERING`). Returns where the camera
-    /// follows her from (§1).
+    /// shrink (`shrink`), then its row's effects, then the change of action's own (`ENTERING`).
+    /// Returns where the camera follows her from (§1).
     fn take(&mut self, chosen: Choice, start: &Self, moved: Self, t: &mut Tick) -> Fixed {
         let chosen = match self.fit(t, chosen.pose) {
             None => chosen,
@@ -378,10 +377,8 @@ impl Samus {
         };
         self.pose = chosen.pose;
         self.radius = t.body(chosen.pose);
-        if let Some(by) = chosen.lower {
-            let seen = t.vmove(self.bounds(), t.rules.lowers(by), Blocks);
-            self.reach(&seen);
-            self.position.y += px(seen.gone);
+        if let Some(lowers) = chosen.lower {
+            self.shrink(lowers, t);
         }
         let camera = self.camera_from(start.position.y, moved.position.y, chosen.lower.is_some());
         let entered = ENTERING
@@ -391,6 +388,15 @@ impl Samus {
             self.apply(*effect, start, t);
         }
         camera
+    }
+
+    /// `ShrinkingLowersHer`: the frame a change of shape starts, she looks down its distance
+    /// (`lowers`) at her new size, a block look, and is lowered as far as it got, after what
+    /// stops it writes to her as a stop would.
+    fn shrink(&mut self, lowers: Lowers, t: &mut Tick) {
+        let seen = t.vmove(self.bounds(), t.rules.lowers(lowers), Blocks);
+        self.reach(&seen);
+        self.position.y += px(seen.gone);
     }
 
     /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where the camera follows her from. After
