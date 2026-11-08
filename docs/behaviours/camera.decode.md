@@ -28,7 +28,10 @@ the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`
 types 16h, 1Ah and 1Bh: grapple, grabbed by Draygon, shinespark; the one it picked from
 samus-square-slope-reserve was dropped, its row name being a lexicon match), `cons.py` writes the
 constructed ones (the results come from the same model) and `vecrun.py` runs every vector of
-`scenarios/vectors/camera.toml` through it: 59 of 59 agree.
+`scenarios/vectors/camera.toml` through it: 64 of 64 agree. `rise0.py` writes R35, the one
+recorded rise at 0 (`0B36` = 1 with `0B2C`/`0B2E` = 0 at the scroll): all 7 such frames are
+shinespark frames (movement type 1Bh), and in samus-shinespark-left 214 the clamp didn't fire
+(the model matches with the previous position as record N left it) and the down scroller decides.
 
 **Row names.** As in samus-motion's decode notes, the chain rows go by opaque ids, because a chain
 row's name carries a room header's address:
@@ -71,19 +74,20 @@ position), the scratch `0933`-`0939`.
 | her facing | `0A1E` low byte | 4 `Left`; 8 `Right`; 0 `Screen` (the scroll tests only 4) |
 | going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-motion §1.2) |
 | rising | `0B36` | = 1 (up); 0 (none, the moonfall's) and 2 (down) are not rising |
-| placed | `0B14` written between the frames | samus-motion's `camera_from`, where it differs from her start y |
+| her start y | `0AFA`.`0AFC` of record N | as is |
+| `camera_from` | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept); where it equals her start y's pixel part nothing is written |
 | the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`) | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green); the bytes from `w × h` on are the `below` rows, `w` to a row, any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested) |
 | the aim heights | `07AD` (up scroller), `07AF` (down scroller), from the room header (`$82:DEC1`, `$82:DECA`) | `hn` = `07AD`, `hr` = `07AF`; 70h/A0h or 90h/A0h in the records |
 | lead setting | `0941` (camera distance index) | 0 `Ahead`, 2 `Near`, 4 `KeepLeft`, 6 `KeepRight`; the tables `$90:963F` (facing right) and `$90:9647` (facing left): 60h/A0h, 40h/50h, 20h/20h, E0h/E0h. Set by Crocomire (`$A4:8ABD` = 2, `$A4:97F6` = 6) and Kraid's room (`$A7:A9E7` = 2), cleared at `$88:8347`, `$A4:90D8`, `$A4:9B8D`, `$A7:C594`; always 0 in the records |
 | time stopped | `0A78` | ≠ 0 (time frozen: x-ray, the reserve tanks' refill); set in 704 record frames of six rows; in the 95 that scroll, none where an ease would have moved |
 
-The spec's enum orders are alphabetical: `Closed`, `Open`, `Short` against the RAM's 0 red, 1
-blue, 2 green; `Ahead`, `KeepLeft`, `KeepRight`, `Near` against 0, 2, 4, 6.
+The spec's enum orders are alphabetical: `Closed`, `Open`, `Short` against the RAM's 0 red, 2
+green, 1 blue; `Ahead`, `KeepLeft`, `KeepRight`, `Near` against 0, 4, 6, 2.
 
 ## Sources per entry
 
 Each entry lists the routines or branches that carry its content. `scan.sh --mirror` finds 2 of
-13 entries (15 %) single-routine, `LeadingHer` and `AimingHeight`; `DownwardLooksAhead` is one
+14 entries (14 %) single-routine, `LeadingHer` and `AimingHeight`; `DownwardLooksAhead` is one
 routine's two reads. All three are marked *.
 
 | Entry | Source |
@@ -91,7 +95,7 @@ routine's two reads. All three are marked *.
 | FollowingHer | `$90:95A0` and `$90:964F` (moved: `0B10` ≠ `0AF6` by pixel parts, `$90:95A3`, `$90:9652`; at the aim: `$90:9606`, `$90:9687`; the move: `$90:960D`..`$90:9636`, `$90:968E`..`$90:96B7`), `$90:96C0` and `$90:96FF` (the speeds, plus `$90:9EAD` = 1), the aim stops at `$80:A651`, `$80:A6CB`, `$80:A8DA`, `$80:A936`'s start (pixel set, subpixel `STZ`) |
 | LeadingHer* | `$90:95B2`..`$90:9600` with the tables `$90:963F` and `$90:9647` |
 | AimingHeight* | `$90:9666`..`$90:9681` |
-| Remembering | `$90:956E`..`$90:9583` (after both axes); the placements: bank `$91`'s writes of `0B14` in pose setting, pose initialisation and the block collision due to a pose change (`$91:E340`, `$91:E44A`, `$91:E50A`, `$91:ED0E`, `$91:F595`, `$91:FF42`..`$91:FFE9`; `$91:80AB` in the crouching pose input) and `$90:92E4` |
+| Remembering | `$90:956E`..`$90:9583` (after both axes); the placements (samus-motion's `camera_from`): bank `$91`'s writes of `0B14` in pose setting, pose initialisation and the block collision due to a pose change (`$91:E340`, `$91:E44A`, `$91:E50A`, `$91:ED0E`, `$91:F595`, `$91:FF42`, `$91:FF6F`, `$91:FF93`..`$91:FFE9`; `$91:80AB` in the crouching pose input; `$91:F3A1`, super special pose change command 5, y + 5), and `$90:ECB1` (aligning her bottom with the old pose). `$90:92E4` is in an unused routine (`$90:92D6`). Pose change command 4 (`$91:F37C`: `$91:F386` x and `$91:F393` y, her position set to the view's centre) is not samus-motion's: masked |
 | CreepReadsRightward | `$90:96C0` and `$90:96FF` (the direction by `CMP`/`BMI` on the pixel parts, the bank log's note at `$96C0`), read by `$80:A58F` and `$80:A7D3` |
 | RoomEdges | `$80:A662` (`(07A9 − 1)` swapped, the last screen), `$80:A6D9` (negative to 0), `$80:A8EB`..`$80:A8FA` (the bottom with `0933`), `$80:A936`'s negative test; the back-off at the bottom `$80:A91E` |
 | ClosedScreens | `$80:A671`..`$80:A6B5` (right), `$80:A6E3`..`$80:A72B` (left), `$80:A8FC`..`$80:A930` (down), `$80:A936`.. (up); the row and column from `0915 + 80h` and `0911 + 80h` through the multiplier `$4202`/`$4203` with `07A9` |
@@ -99,6 +103,7 @@ routine's two reads. All three are marked *.
 | Settling | `$80:A528` (across) and `$80:A731` (down): the clamps `$80:A53D`..`$80:A552` and `$80:A77D`..`$80:A796`, the left/upper red case `$80:A57E`..`$80:A5D7` and `$80:A7C2`..`$80:A81B`, the right/lower red case `$80:A5D9`..`$80:A638` and `$80:A81D`..`$80:A88A` |
 | TimeStopped | `$80:A52C` and `$80:A735` (time frozen `0A78`/`0A79`: return) |
 | DownwardLooksAhead* | `$80:A89D`..`$80:A8D7` (the upper scroll's index `$14` from `0916` after the speed's add, before `$80:A8DA` caps it at the ideal), read again at `$80:A8FC` |
+| ScreensRunOn | `$80:A5D9` (`INX`: the right scroll is index + 1), `$80:A686`..`$80:A68D` (`SEC; ADC`: screen + 1 + row × width), `$80:A5B2`..`$80:A5BA` (`INC`), all on the row-major table; the bank log's note at `$80:A528` |
 | BelowTheRoom | the scroll table `$7E:CD20` (32h bytes; `$82:EA73` loads `w × h` of them), read past the room at `$80:A8FC`, `$80:A8C8` and `$80:A823` |
 | PushCarries | the second `ADC #2` after `ADC 0DA2`/`0DA6` and the second `SBC #2` after `SBC 0DA2`/`0DA6` (carry and borrow kept): `$80:A58F`, `$80:A5F0`, `$80:A6A7`, `$80:A71D`, `$80:A7D3`, `$80:A842`, `$80:A922` and the up routine's |
 
@@ -108,10 +113,12 @@ routine's two reads. All three are marked *.
   (the sign of the difference), except the room's right edge and bottom (`BCS`/`BCC`), the forward
   pushes' `min` (`BCC`) and the settles' forward reach (`BCS`). Those see only values from 0 to
   the room's far edge, where both agree, so the spec states one compare.
-- **The screen right of the last column.** The original reads index + 1, the next row's first
-  screen (or past the room on the last row). It is read only with the camera's left edge on the
-  last screen's edge, where an ease back stops on that edge and a closed screen changes nothing,
-  so the spec says `Closed`; a variant of the model reading it so matches the same 14,704 frames.
+- **The screen right of the last column** (adversary 37, F1). The original reads index + 1, the
+  next row's first screen (or the first below row from the last row). An earlier version said
+  `Closed`, reasoning that it is read only with the camera on the last screen's edge; that missed
+  the ease forward: with the camera's own last-column screen closed (the cells can close it) and
+  the next row's first open, the original eases past the room's right edge, 3 px a frame (C-wrap).
+  No record reaches it; the spec now states the wrap (`ScreensRunOn`).
 - **Below the room.** A move down's reads use `0915` after the speed's add (`DownwardLooksAhead`),
   so a move that crosses into the room's last row reads the row below it, from the leftovers. In
   2 rows (R3, R16) the leftovers decide: read as red, 5 frames would differ from the record. The
@@ -141,17 +148,32 @@ be verified on its own from the records, with her motion's outputs decoded as in
 - **Compared at N+1:** camera x and y, pixel and subpixel parts. Where it last saw her is decoded
   from the same words as her position, so comparing it proves nothing: report it, don't count it.
 - **Masks (fields, not frames):** where another domain moved the point the camera measures from
-  between N and the scroll, both camera axes are unverified, reported apart: movement types 16h
-  (grapple), 1Ah (grabbed by Draygon) and 1Bh (shinespark), `0CF8` ≠ 0 (slow grapple scrolling),
-  `07E9` ≠ 0 (the room's hook, which overwrites layer 1 Y after the scroll), and any frame the
-  enemies' domains place her (the gunship `$A2:A925`, `$A0:B7C4`/`$A0:B7E8`). A pose change between N and
-  N+1 is not masked: the `placed` input comes from samus-motion's `camera_from` for that frame (run
-  the motion model on it, or, while the camera is checked alone, take N+1's `0B14` when N's pose
-  `0A1C` differs from N+1's and the motion domain ran that frame).
+  between N and the scroll, or moved the camera after its turn, the axes it touches are
+  unverified, reported apart. Whole states (documented as such, not single writes): movement types
+  16h (grapple: `$9B:BB25`.., the ±12 px clamp; `$91:F3AA`, the release's clamp) and 1Bh
+  (shinespark: `$90:D1D6`..`$90:D2B9`), and `0CF8` ≠ 0 (slow grapple scrolling), both axes.
+  Single writers of where the camera saw her, both axes unless named:
+  - `$A0:B7A1`, the cap on scrolling speed (`$A0:B7C4` y, `$A0:B7E8` x), called by Draygon (which
+    holds her in movement type 1Ah) and the yapping maw: mask while either holds her;
+  - Crocomire's collision (`$A4:8C95`); Kraid's body collision (`$A7:B0F3`) and its restriction of
+    her x to the first screen (`$A7:C9EE`, x); Ridley (`$A6:E501`); Mother Brain moving her towards
+    the ceiling or floor (`$A9:BBFD`, y);
+  - the gunship (`$A2:A925`, `$A2:A9BD`, `$A2:AC1B`), the suit pick-ups (`$91:D4E4`, `$91:D5BA`),
+    pose change command 4 (`$91:F37C`, x and y);
+  - the cutscenes of bank `$8B` (`$8B:AEFB`..`$8B:AFC4`) and the door transitions of bank `$80`/`$82`
+    (outside game state 8 or at a room change, so already skipped).
+  Writers of the camera after its turn: `07E9` ≠ 0 (the scrolling-finished hook, layer 1 Y only:
+  mask y, keep x), the room's main code (`$8F:C1E6`, the Dachora room's scroll right, x;
+  `$8F:E8CD`, Crocomire's room shaking, x), the Shitroid waiting for the camera (`$A9:EFE6`, x,
+  and it closes two screens).
+  A pose change between N and N+1 is not masked: `camera_from` for that frame comes from running
+  samus-motion's model on it. Taking N+1's `0B14` instead is wrong: it is her y at the scroll by
+  construction, which differs from the placement when she moves on after it (samus-motion's PF1,
+  the lift after the push).
 - **Null model:** the camera doesn't move (6,271 of 14,890 frames).
-- **k out of sample:** the old code scores 2,273.5 over this spec's 45.0 units, 50.5 a unit
-  (samus-motion's 65.8); its own 0.55 would give k = 27.8 against the frozen 36, so the 70% caps
-  bind (follow) or nearly (limits).
+- **k out of sample:** the old code scores 2,273.5 over this spec's 42.3 units, 53.7 a unit
+  (samus-motion's 65.8); its own 0.55 would give k = 29.6 against the frozen 36, so the 70% cap
+  binds in follow. The old code lacks the knockback's turn of the lead and time stopped.
 - **Free run:** from a seed frame, carry the camera's own State forward and take only the inputs
   from the records; report the first differing frame per axis. Re-seed at a room change.
 - **Per-behaviour attribution:** `model.py`'s tags name the branch each frame takes; the entries

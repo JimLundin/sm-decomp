@@ -4,7 +4,7 @@
 # - Each [[vector]] is one frame of the camera, from its state at the frame's start to its state at
 #   the end: id; source ("<row>:<frame>" for the record holding the frame's result, or
 #   "constructed"); entries (the spec's behaviours it exercises); room; lead (optional);
-#   time_stopped (optional); before; placed (optional); samus; after.
+#   time_stopped (optional); before; samus; after.
 # - A P.S quantity is "PPPP.SSSS": the pixel part and the subpixel part, both hex (spec, Notation).
 #   x grows rightward, y downward.
 # - room: the room's screens and heights (spec §1.3).
@@ -13,31 +13,34 @@
 #     as a row's length (w) and as many down as there are rows (h).
 #   - below (optional, default none): the rows the room's loading left below its last row, top
 #     first, in the same characters (spec `BelowTheRoom`); a row may be shorter than w. A screen
-#     below the room that these rows don't hold, and a screen right of the room's last column, is
-#     Closed. A recorded vector gives the rows the frame reads, and no more.
+#     below the room that these rows don't hold is Closed. The screen right of a row's last column
+#     is the first of the row below it, or of the first below row (spec `ScreensRunOn`). A recorded
+#     vector gives the rows the frame reads, and no more.
 #   - heights: [while she isn't rising, while she rises], in px (spec `AimingHeight`).
 # - lead (optional, default "Ahead"): the lead setting, "Ahead", "KeepLeft", "KeepRight" or "Near"
 #   (spec `LeadingHer`; listed alphabetically, the order means nothing).
 # - time_stopped (optional, default false): spec `TimeStopped`.
 # - before: the camera at the frame's start (spec §1): camera = [x, y], the view's top-left corner
 #   in the room; seen = [x, y], where it last saw her.
-# - placed (optional): y = where her motion placed her for the camera this frame (spec
-#   `Remembering`); it replaces seen's y before the camera follows.
 # - samus: what the camera reads of her this frame (spec §1.3): position = [x, y], after everything
 #   that moved her this frame; facing, "Left", "Right" or "Screen"; backwards (optional, default
-#   none): "Knockback", "Moonwalk" or "Skid", the reason she is going backwards (each reads the
-#   same; listed alphabetically); rising (optional, default false).
+#   none): "Knockback", "Moonwalk" or "Skid", why she is going backwards (the spec's input is
+#   the bool; each reason reads the same; listed alphabetically); rising (optional, default
+#   false); y_at_start (optional, default seen's y): her y at the frame's start; camera_from
+#   (optional, default y_at_start): her motion's `camera_from` this frame (spec `Remembering`).
 # - after: compared at the end of the frame: camera = [x, y] and seen = [x, y], as in before.
 # - Recorded vectors (R): taken from oracle frames that ran one frame of gameplay in one room (the
 #   game's frame count advanced by one), where nothing moved her after the camera's turn and no
 #   other domain moved where the camera saw her (no grapple, no shinespark, no room or enemy
 #   placing her: spec §5). Their before is record N's, their samus and after record N+1's. At most
 #   two vectors show each outcome the frames reach, from different rows. Row ids r01-r11 stand
-#   for the chain rows.
+#   for the chain rows. R35, a rise at 0, comes from a shinespark's frame where nothing moved
+#   where the camera saw her: the only rows with a rise at 0 at the camera's turn.
 # - Constructed vectors (C): cases no record reaches (the lead settings other than Ahead, facing
-#   the screen, a placement, every ease out of a closed screen, the back-offs short of a screen's
-#   edge, time stopped against a frame that would ease, the creep, the look ahead on the way down
-#   and the rows below the room); each gives its case in a comment. Their after is worked from the
+#   the screen, a placement and its pixel part, a rise at 0, every ease out of a closed screen,
+#   the screen after the last column, the back-offs short of a screen's edge, time stopped against
+#   a frame that would ease, the creep, the look ahead while going down, the rows below the
+#   room); each gives its case in a comment. Their after is worked from the
 #   spec's rules.
 
 # Constructed vectors.
@@ -97,15 +100,54 @@ samus = { position = ["0182.0000", "0110.0000"], facing = "Screen" }
 after = { camera = ["0122.0000", "0010.0000"], seen = ["0182.0000", "0110.0000"] }
 
 [[vector]]
-# pose fit placed her at her y: she did not move down for the camera
+# pose fit placed her at her y: she did not move up for the camera
 id = "C-placed"
 source = "constructed"
 entries = ["Remembering", "Settling"]
 room = { screens = ["OO", "OO", "OO"], heights = [112, 160] }
 before = { camera = ["0100.0000", "0080.0000"], seen = ["0180.0000", "0100.0000"] }
-placed = { y = "00F8.0000" }
-samus = { position = ["0180.0000", "00F8.0000"], facing = "Right" }
+samus = { position = ["0180.0000", "00F8.0000"], facing = "Right", y_at_start = "0100.0000", camera_from = "00F8.0000" }
 after = { camera = ["0100.0000", "0080.0000"], seen = ["0180.0000", "00F8.0000"] }
+
+[[vector]]
+# the placement takes the pixel part only: the kept subpixel makes her creep up inside a pixel, so the ease is 2 px
+id = "C-placed-pixel"
+source = "constructed"
+entries = ["Remembering", "Settling", "CreepReadsRightward"]
+room = { screens = ["C", "O"], heights = [112, 160] }
+before = { camera = ["0000.0000", "00F0.0000"], seen = ["0080.0000", "0150.8000"] }
+samus = { position = ["0080.0000", "014C.4000"], facing = "Right", y_at_start = "0150.8000", camera_from = "014C.0000" }
+after = { camera = ["0000.0000", "00F2.0000"], seen = ["0080.0000", "014C.4000"] }
+
+[[vector]]
+# she rose 3 px and her upward speed is now exactly 0, a rise at 0: the rising height
+id = "C-rise-at-0"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer"]
+room = { screens = ["O", "O"], heights = [112, 160] }
+before = { camera = ["0000.0000", "00B0.0000"], seen = ["0080.0000", "0150.0000"] }
+samus = { position = ["0080.0000", "014D.0000"], facing = "Right", rising = true }
+after = { camera = ["0000.0000", "00AD.0000"], seen = ["0080.0000", "014D.0000"] }
+
+[[vector]]
+# the same move, not rising: the other height
+id = "C-not-rising"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer"]
+room = { screens = ["O", "O"], heights = [112, 160] }
+before = { camera = ["0000.0000", "00B0.0000"], seen = ["0080.0000", "0150.0000"] }
+samus = { position = ["0080.0000", "014D.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00B4.0000"], seen = ["0080.0000", "014D.0000"] }
+
+[[vector]]
+# right of the last column the view reads the first screen of the row below, open here, so it eases past the room's right edge (and down out of the closed screen)
+id = "C-wrap"
+source = "constructed"
+entries = ["ScreensRunOn", "Settling"]
+room = { screens = ["OC", "OO"], heights = [112, 160] }
+before = { camera = ["0100.0000", "0010.0000"], seen = ["0150.0000", "0090.0000"] }
+samus = { position = ["0150.0000", "0090.0000"], facing = "Right" }
+after = { camera = ["0103.0000", "0013.0000"], seen = ["0150.0000", "0090.0000"] }
 
 [[vector]]
 # the same frame with no placement: she moved up 8 px
@@ -148,7 +190,7 @@ samus = { position = ["0150.0000", "0090.0000"], facing = "Right" }
 after = { camera = ["0100.0000", "0010.0000"], seen = ["0150.0000", "0090.0000"] }
 
 [[vector]]
-# both screens closed: it drops to the edge of the screen its ease is in
+# both screens closed: it drops to the edge of the screen its ease is in; down, nothing is given below the room, so it drops to 0 too
 id = "C-ease-both-closed"
 source = "constructed"
 entries = ["Settling"]
@@ -607,4 +649,14 @@ room = { screens = ["S"], heights = [112, 160] }
 before = { camera = ["0000.F000", "0000.F800"], seen = ["00BB.FFFF", "00A7.C7FF"] }
 samus = { position = ["00BB.FFFF", "00A7.37FF"], facing = "Right", rising = true }
 after = { camera = ["0000.F000", "0000.F800"], seen = ["00BB.FFFF", "00A7.37FF"] }
+
+[[vector]]
+# a rise at 0 (her upward speed exactly 0, still rising) aims at the rising height
+id = "R35"
+source = "samus-shinespark-left:214"
+entries = ["AimingHeight", "FollowingHer", "Remembering"]
+room = { screens = ["CCOOOOOOO", "CCOOOOOOO", "SCOOOOOOO", "CCOOOOOOO", "SSSSSSSSS"], heights = [112, 160] }
+before = { camera = ["04E4.9900", "0400.0000"], seen = ["054A.58FF", "04A2.F3FF"] }
+samus = { position = ["0541.CCFF", "049F.F3FF"], facing = "Left", rising = true }
+after = { camera = ["04DB.0D00", "03FF.0000"], seen = ["0541.CCFF", "049F.F3FF"] }
 
