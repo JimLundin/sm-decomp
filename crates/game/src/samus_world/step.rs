@@ -5,7 +5,7 @@
 //! rest.
 
 use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap, Vertical, WallTest};
-use clean_types::{Action, Aim, Body, Facing, Fixed, Pose};
+use clean_types::{Action, Aim, Block, Body, Facing, Fixed, Pose, Way, World};
 
 use super::SamusWorld;
 use super::frame::{FrameSource, body};
@@ -115,7 +115,7 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
             .iter()
             .copied(),
     );
-    settle(samus, &ran.before, &ran.after, rules.crouch_lift);
+    settle(samus, &ran, &world, rules.crouch_lift);
     Some(Stepped {
         pose: ran.after.pose,
         armed: ran.outcome.wall_test == WallTest::Readied,
@@ -123,21 +123,31 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
 }
 
 /// The words the pose change leaves that the model doesn't hold, from her before and after
-/// the frame.
+/// the frame and the cells it reached.
 ///
 /// Her radius word keeps the pose she had until the next frame sets it, but the shrink gives
 /// it the new pose's at once. Where pose fit places her, the camera's previous y pixel becomes
 /// hers as that left her (before a crouch take-off's lift), so the camera doesn't follow the
-/// move: the shrink lowers her, and a change to a taller body, not facing the screen, with
-/// the ground under her as the frame starts or ends, is pushed clear of it (or crouches
-/// instead). In the air nothing is near enough to push her from.
-fn settle(samus: &mut Samus, before: &Model, after: &Model, crouch_lift: Fixed) {
+/// move: the shrink lowers her, and a change to a taller body, not facing the screen, is pushed
+/// clear of what its looks found (or crouches instead). They found something when she stands
+/// on the ground as the frame starts or ends, or one of them reached a cell that isn't air:
+/// pose fit's looks are the last cells reached, after every move's (the near-wall test's come
+/// before the vertical move's).
+fn settle(samus: &mut Samus, ran: &Ran, world: &SamusWorld, crouch_lift: Fixed) {
+    let Ran { before, after, .. } = ran;
     let (from, to) = (before.pose, after.pose);
     let changed = to != from;
     let shrinks = changed && matches!(to.action, Action::Crouching | Action::Morphing);
     let grounded = before.vertical == Vertical::Ground || after.vertical == Vertical::Ground;
+    let mut looks = ran
+        .outcome
+        .reached
+        .iter()
+        .rev()
+        .take_while(|touch| touch.way == Way::Look);
+    let found = grounded || looks.any(|touch| !matches!(world.block(touch.cell), Block::Air));
     let pushed =
-        changed && grounded && to.facing != Facing::Screen && after.radius.y > before.radius.y;
+        changed && found && to.facing != Facing::Screen && after.radius.y > before.radius.y;
     if shrinks {
         samus.y_radius = after.radius.y;
     }
