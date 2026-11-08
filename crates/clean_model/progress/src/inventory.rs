@@ -10,7 +10,7 @@ use crate::rules::Rules;
 use crate::supplies::{PerSupply, Supply};
 
 /// Energy and its capacity at the start of a new file; every other count starts at 0.
-const NEW_FILE_ENERGY: Count = Count::new(99);
+const NEW_FILE_ENERGY: u16 = 99;
 
 /// The pieces of one sort she has, and those switched on.
 ///
@@ -116,7 +116,7 @@ impl Inventory {
     #[must_use]
     pub fn new_file() -> Self {
         let energy_only = PerSupply {
-            energy: NEW_FILE_ENERGY,
+            energy: Count::new(NEW_FILE_ENERGY),
             ..PerSupply::default()
         };
         Self {

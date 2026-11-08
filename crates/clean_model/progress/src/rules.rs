@@ -32,11 +32,13 @@ impl Rules {
     pub const REFERENCE: Self = Self {
         beams_switched_off: SPAZER_AND_PLASMA,
         percentage_divisors: PerSupply {
-            energy: ENERGY_DIVISOR,
-            reserve: RESERVE_DIVISOR,
-            missiles: MISSILES_DIVISOR,
-            super_missiles: SUPER_MISSILES_DIVISOR,
-            power_bombs: POWER_BOMBS_DIVISOR,
+            energy: Divisor::new(ENERGY_DIVISOR).expect("the energy divisor is not zero"),
+            reserve: Divisor::new(RESERVE_DIVISOR).expect("the reserve divisor is not zero"),
+            missiles: Divisor::new(MISSILES_DIVISOR).expect("the missile divisor is not zero"),
+            super_missiles: Divisor::new(SUPER_MISSILES_DIVISOR)
+                .expect("the super missile divisor is not zero"),
+            power_bombs: Divisor::new(POWER_BOMBS_DIVISOR)
+                .expect("the power bomb divisor is not zero"),
         },
     };
 
@@ -69,12 +71,12 @@ const SPAZER_AND_PLASMA: &[BeamSwitchesOff] = &[
 ];
 
 /// Spec: ItemPercentage. Each 100 of energy capacity counts one.
-const ENERGY_DIVISOR: Divisor = Divisor::new(100).expect("100 is not zero");
+const ENERGY_DIVISOR: u16 = 100;
 /// Spec: ItemPercentage. Each 100 of reserve capacity counts one.
-const RESERVE_DIVISOR: Divisor = Divisor::new(100).expect("100 is not zero");
+const RESERVE_DIVISOR: u16 = 100;
 /// Spec: ItemPercentage. Each 5 of missile capacity counts one.
-const MISSILES_DIVISOR: Divisor = Divisor::new(5).expect("5 is not zero");
+const MISSILES_DIVISOR: u16 = 5;
 /// Spec: ItemPercentage. Each 5 of super missile capacity counts one.
-const SUPER_MISSILES_DIVISOR: Divisor = Divisor::new(5).expect("5 is not zero");
+const SUPER_MISSILES_DIVISOR: u16 = 5;
 /// Spec: ItemPercentage. Each 5 of power bomb capacity counts one.
-const POWER_BOMBS_DIVISOR: Divisor = Divisor::new(5).expect("5 is not zero");
+const POWER_BOMBS_DIVISOR: u16 = 5;
