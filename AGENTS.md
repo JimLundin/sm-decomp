@@ -57,8 +57,10 @@ Model the domain with types, not raw numbers:
   original's value goes back out wherever it is observed.
 
 `cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p
-canonical_derive -p oracle_record -p oracle --all-targets --no-deps -- -D warnings` must pass, as
-Quality and `tools/lane/gate.sh` run it. Fix findings; don't add `allow`s.
+canonical_derive -p oracle_record -p oracle -p clean_types -p clean_model_samus_motion --all-targets
+--no-deps -- -D warnings` must pass, as `tools/lane/gate.sh` runs it, and
+the clean crates pass it again under `tools/cleanroom/clippy.toml`. Fix findings; don't add
+`allow`s.
 
 Checks assert behaviour, not wording: never match on panic or error text. The verifier doesn't
 decide engine behaviour. Docs and comments describe the code as it is now: no history, lane names
