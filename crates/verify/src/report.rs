@@ -31,7 +31,7 @@ pub const USAGE: &str = "tools report [--write | --check]";
 /// Where the report is committed, from the repository root.
 pub const PATH: &str = "docs/REPORT.md";
 /// The one command that regenerates the committed report, from the repository root.
-pub const COMMAND: &str = "cargo run -p tools -- report --write";
+pub const COMMAND: &str = "cargo run -p tools --bin tools -- report --write";
 /// The old engine's density in weighted tokens per code line, which turns a score into lines:
 /// about 5.5 to 7, measured on samus-motion's old code at `c7f927ab6` and the camera's at
 /// `cfa5b8144`.
