@@ -235,34 +235,13 @@ pub struct State {
 /// Words of the collected item bits (`$7E:D870`, 64 bytes).
 pub const COLLECTED_ITEM_WORDS: usize = 32;
 
-/// The items picked up on the file: bit `n` is the item whose room argument is `n`
-/// (bank $84 log, `$84:8899`; `$84:887C` tests it).
+/// The emptied item places of the file.
+///
+/// Bit `n % 16` of word `n / 16` is place `n`, the item PLM's room argument (bank $84 log,
+/// `$84:8899`; `$84:887C` tests it). The progress model reads and writes it through
+/// `progress_world`.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct CollectedItems(pub [u16; COLLECTED_ITEM_WORDS]);
-
-impl CollectedItems {
-    /// The word and mask of bit `bit`: byte `bit / 8`'s bit `bit % 8`, read as words.
-    fn place(bit: u16) -> (usize, u16) {
-        (usize::from(bit >> 4), 1 << (bit & 0xf))
-    }
-
-    /// Whether item bit `bit` is set; past the table, no.
-    #[must_use]
-    pub fn contains(&self, bit: u16) -> bool {
-        let (word, mask) = Self::place(bit);
-        self.0.get(word).is_some_and(|value| value & mask != 0)
-    }
-
-    /// Set item bit `bit`.
-    // open: past the table the original sets a bit in whatever work RAM follows; slice 0's
-    // arguments are inside it.
-    pub fn insert(&mut self, bit: u16) {
-        let (word, mask) = Self::place(bit);
-        if let Some(value) = self.0.get_mut(word) {
-            *value |= mask;
-        }
-    }
-}
 
 /// The State's schema: [`State`]'s structural hash.
 ///

@@ -235,30 +235,6 @@ pub fn event(number: u8) -> Option<Event> {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct BossBits(pub u8);
 
-impl BossBits {
-    /// The area's main boss.
-    pub const MAIN: Self = Self(1);
-
-    /// Whether any of `other`'s bits is set here.
-    #[must_use]
-    pub const fn intersects(self, other: Self) -> bool {
-        self.0 & other.0 != 0
-    }
-}
-
-/// An item a state condition tests.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Item {
-    /// The Morph Ball.
-    MorphBall,
-    /// Any missiles.
-    Missiles,
-    /// Any power bombs.
-    PowerBombs,
-    /// The Speed Booster.
-    SpeedBooster,
-}
-
 /// A state condition other than the default.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Condition {
@@ -278,37 +254,6 @@ pub enum Condition {
     PowerBombs,
     /// The Speed Booster is collected.
     SpeedBooster,
-}
-
-/// What state conditions test: the save's progress when the room loads.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Progress<'a> {
-    /// The events set.
-    pub events: &'a [Event],
-    /// The room's area's boss bits.
-    pub area_bosses: BossBits,
-    /// The items collected.
-    pub collected: &'a [Item],
-    /// The door the room is entered by.
-    pub door: Option<RomAddress>,
-}
-
-impl Condition {
-    /// Whether the condition holds for `progress`.
-    #[must_use]
-    pub fn holds(self, progress: &Progress<'_>) -> bool {
-        let has = |item| progress.collected.contains(&item);
-        match self {
-            Self::Door(door) => progress.door == Some(door),
-            Self::MainAreaBossDead => progress.area_bosses.intersects(BossBits::MAIN),
-            Self::Event(event) => progress.events.contains(&event),
-            Self::BossDead(bits) => progress.area_bosses.intersects(bits),
-            Self::MorphBall => has(Item::MorphBall),
-            Self::MorphBallAndMissiles => has(Item::MorphBall) && has(Item::Missiles),
-            Self::PowerBombs => has(Item::PowerBombs),
-            Self::SpeedBooster => has(Item::SpeedBooster),
-        }
-    }
 }
 
 /// A state's place in its room's list, the default last.
@@ -418,17 +363,6 @@ pub struct Room {
 }
 
 impl Room {
-    /// The state the original loads for `progress`: the first whose condition holds.
-    #[must_use]
-    pub fn select(&self, progress: &Progress<'_>) -> StateIndex {
-        let index = self
-            .conditional
-            .iter()
-            .position(|entry| entry.condition.holds(progress))
-            .unwrap_or(self.conditional.len());
-        StateIndex(u8::try_from(index).unwrap_or(u8::MAX))
-    }
-
     /// The state at `index`.
     #[must_use]
     pub fn state(&self, index: StateIndex) -> Option<&RoomState> {

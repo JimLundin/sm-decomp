@@ -126,49 +126,16 @@ fn a_header_and_its_states_decode() {
 }
 
 #[test]
-fn the_first_condition_that_holds_selects_the_state() {
+fn a_state_index_counts_the_conditional_states_then_the_default() {
     let image = synthetic();
     let room = decode(Lorom::new(&image), SYNTHETIC).unwrap();
-    let asleep = Progress::default();
-    assert_eq!(room.select(&asleep), StateIndex(1));
+    assert_eq!(room.state(StateIndex(0)), Some(&room.conditional[0].state));
     assert_eq!(room.state(StateIndex(1)), Some(&room.default));
-    let awake = Progress {
-        events: &[Event::PlanetAwake],
-        ..Progress::default()
-    };
-    assert_eq!(room.select(&awake), StateIndex(0));
     assert_eq!(room.state(StateIndex(2)), None);
 }
 
 #[test]
-fn each_condition_tests_its_progress() {
-    let door = RomAddress::new(0x83, 0x8a42);
-    let progress = Progress {
-        events: &[Event::TourianOpen],
-        area_bosses: BossBits(0b10),
-        collected: &[Item::MorphBall, Item::PowerBombs],
-        door: Some(door),
-    };
-    let holds = [
-        (Condition::Door(door), true),
-        (Condition::Door(RomAddress::new(0x83, 0x8a4e)), false),
-        (Condition::MainAreaBossDead, false),
-        (Condition::Event(Event::TourianOpen), true),
-        (Condition::Event(Event::GlassTunnelBroken), false),
-        (Condition::BossDead(BossBits(0b10)), true),
-        (Condition::BossDead(BossBits(0b01)), false),
-        (Condition::MorphBall, true),
-        (Condition::MorphBallAndMissiles, false),
-        (Condition::PowerBombs, true),
-        (Condition::SpeedBooster, false),
-    ];
-    for (condition, expected) in holds {
-        assert_eq!(condition.holds(&progress), expected, "{condition:?}");
-    }
-}
-
-#[test]
-fn unknown_areas_and_conditions_are_errors() {
+fn unknown_areas_conditions_and_events_are_errors() {
     let mut image = synthetic();
     image[room_bank(0x8001)] = 9;
     assert_eq!(
@@ -185,6 +152,16 @@ fn unknown_areas_and_conditions_are_errors() {
         Err(RoomError::Condition {
             at: RomAddress::new(0x8f, 0x800b),
             code: 0x1234
+        })
+    );
+    // Event 16h names nothing.
+    let mut image = synthetic();
+    image[room_bank(0x800d)] = 0x16;
+    assert_eq!(
+        decode(Lorom::new(&image), SYNTHETIC),
+        Err(RoomError::Event {
+            at: RomAddress::new(0x8f, 0x800b),
+            number: 0x16
         })
     );
 }
@@ -256,8 +233,8 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
     );
     assert_eq!(room.conditional[0].state.at, RomAddress::new(0x8f, 0x9ecb));
 
-    // Slice 0's seed is before Zebes wakes, so the default state loads.
-    let index = room.select(&Progress::default());
+    // The default state, which slice 0's seed loads before the planet wakes.
+    let index = StateIndex(1);
     let state = room.state(index).unwrap();
     assert_eq!(state.at, RomAddress::new(0x8f, 0x9eb1));
     assert_eq!(state.level.at, RomAddress::new(0xc5, 0xded5));
