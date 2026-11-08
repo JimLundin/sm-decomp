@@ -53,7 +53,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
     let free = [SHOOT, LEFT, UP, DOWN, AIM_DOWN];
     assert!(free.iter().all(|&set| !pad.any(set)));
     let pressed = frame.pressed;
-    assert!(pressed.any(JUMP) && !pressed.any(RUN.and(RIGHT).and(AIM_UP)));
+    assert!(pressed.any(JUMP) && !pressed.any(RUN.union(RIGHT).union(AIM_UP)));
     assert!(frame.equipment.hi_jump);
     assert!(!frame.equipment.space_jump);
     assert!(frame.elevator_moving);

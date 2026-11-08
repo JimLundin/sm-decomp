@@ -1,4 +1,4 @@
-use clean_types::{Block, Cell, Fixed, Heading, Position, Radius, SlopeFaces, Surface, Way, World};
+use clean_types::{Block, Cell, Heading, Position, Radius, SlopeFaces, Surface, Way, World, px};
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
 
@@ -198,8 +198,8 @@ fn only_her_centres_scroll_trigger_reacts_when_it_is_in_another_row() {
     let radius = Radius { x: 5, y: 0x10 };
     // Centre on row 1, bottom edge on row 2.
     let position = Position {
-        x: Fixed::px(0x18),
-        y: Fixed::px(0x18),
+        x: px(0x18),
+        y: px(0x18),
     };
     let inside = [at(1, 2), at(1, 1), at(1, 0)];
     assert_eq!(
@@ -214,8 +214,8 @@ fn only_her_centres_scroll_trigger_reacts_when_it_is_in_another_row() {
     // Centre and bottom edge on one row: the second cell is her top's.
     let short = Radius { x: 5, y: 4 };
     let low = Position {
-        x: Fixed::px(0x18),
-        y: Fixed::px(0x1A),
+        x: px(0x18),
+        y: px(0x1A),
     };
     assert_eq!(world.inside_touch(&[at(1, 1), at(1, 1)], low, short), None);
 }

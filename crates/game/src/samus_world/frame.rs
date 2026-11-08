@@ -32,7 +32,7 @@ fn pad(held: Controls) -> Buttons {
     ]
     .into_iter()
     .filter(|&(control, _)| held.contains(control))
-    .fold(Buttons::default(), |pad, (_, set)| pad.and(set))
+    .fold(Buttons::default(), |pad, (_, set)| pad.union(set))
 }
 
 /// The engine's frame, as the model reads it at the start of the movement handler.

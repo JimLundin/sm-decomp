@@ -4,8 +4,8 @@
 //! reached become the engine's touches, and the engine's animation and pose change read the
 //! rest.
 
-use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap, Vertical, WallTest};
-use clean_types::{Action, Aim, Block, Body, Facing, Fixed, Pose, Way, World};
+use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap, WallTest};
+use clean_types::{Action, Parts, Pose};
 
 use super::SamusWorld;
 use super::frame::{FrameSource, body};
@@ -115,49 +115,27 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
             .iter()
             .copied(),
     );
-    settle(samus, &ran, &world, rules.crouch_lift);
+    settle(samus, &ran);
     Some(Stepped {
         pose: ran.after.pose,
         armed: ran.outcome.wall_test == WallTest::Readied,
     })
 }
 
-/// The words the pose change leaves that the model doesn't hold, from her before and after
-/// the frame and the cells it reached.
+/// The words the pose change leaves that the model doesn't hold.
 ///
 /// Her radius word keeps the pose she had until the next frame sets it, but the shrink gives
-/// it the new pose's at once. Where pose fit places her, the camera's previous y pixel becomes
-/// hers as that left her (before a crouch take-off's lift), so the camera doesn't follow the
-/// move: the shrink lowers her, and a change to a taller body, not facing the screen, is pushed
-/// clear of what its looks found (or crouches instead). They found something when she stands
-/// on the ground as the frame starts or ends, or one of them reached a cell that isn't air:
-/// pose fit's looks are the last cells reached, after every move's (the near-wall test's come
-/// before the vertical move's).
-fn settle(samus: &mut Samus, ran: &Ran, world: &SamusWorld, crouch_lift: Fixed) {
+/// it the new pose's at once. The camera's previous y pixel is where the step says the camera
+/// follows her from (`Outcome::camera_from`): her y at the frame's start, or where pose fit or
+/// the shrink placed her.
+fn settle(samus: &mut Samus, ran: &Ran) {
     let Ran { before, after, .. } = ran;
-    let (from, to) = (before.pose, after.pose);
-    let changed = to != from;
-    let shrinks = changed && matches!(to.action, Action::Crouching | Action::Morphing);
-    let grounded = before.vertical == Vertical::Ground || after.vertical == Vertical::Ground;
-    let mut looks = ran
-        .outcome
-        .reached
-        .iter()
-        .rev()
-        .take_while(|touch| touch.way == Way::Look);
-    let found = grounded || looks.any(|touch| !matches!(world.block(touch.cell), Block::Air));
-    let pushed =
-        changed && found && to.facing != Facing::Screen && after.radius.y > before.radius.y;
+    let shrinks = after.pose != before.pose
+        && matches!(after.pose.action, Action::Crouching | Action::Morphing);
     if shrinks {
         samus.y_radius = after.radius.y;
     }
-    if shrinks || pushed {
-        let lifted = from.body == Body::Crouched
-            && from.aim == Aim::Forward
-            && to.action == Action::TakingOff;
-        let lift = if lifted { crouch_lift } else { Fixed(0) };
-        samus.previous_position.y.pixels = after.position.y.plus(lift).pixel();
-    }
+    samus.previous_position.y.pixels = ran.outcome.camera_from.pixel();
 }
 
 /// The pose the frame's pose change is asked for, as the engine's pose id.

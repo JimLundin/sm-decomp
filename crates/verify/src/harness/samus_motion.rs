@@ -15,7 +15,7 @@ use clean_model_samus_motion::{
     Behaviour, BehaviourId, CATALOGUE, Rules as Reference, Samus as Model, Seat, Standing,
     Vertical, WallTest,
 };
-use clean_types::{Action, Block as Kind, Heading, Pose as Shape, Way, World};
+use clean_types::{Action, Block as Kind, Heading, Pose as Shape, Way, World, ZERO};
 use game::Content;
 use game::collision::Room;
 use game::collision::solid_enemy::Obstacle;
@@ -165,6 +165,10 @@ const KNOCKBACK: u16 = 0xDF38;
 const RUNNING: u8 = 0x01;
 /// The spin jump's movement type, whose falling spin the space jump restarts.
 const SPIN_JUMPING: u8 = 0x03;
+/// The standing movement type, which the running let-go row stands her in.
+const STANDING: u8 = 0x00;
+/// The pad's left and right (`JOYPAD1_LASTKEYS`), which no binding moves.
+const SIDES: u16 = 0x0300;
 /// Bank $90 log: the shinespark windup's movement handler, which the windup's start sets
 /// ($90:CFFA).
 const SHINESPARK_WINDUP: u16 = 0xD068;
@@ -305,6 +309,17 @@ fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
         }
     }
     Ok(fields)
+}
+
+/// Whether the running let-go row stands her (`PadChart`, AS3 and AS4): running with neither
+/// side held in `from`, standing in `next`. Whether she carries on or follows the pad is then
+/// in her speed mode word alone, which standing halts either way, so no later frame shows it
+/// (gap 26).
+fn let_go_stands(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
+    let movement = |record| byte(record, source::SAMUS_MOVEMENT_TYPE);
+    Ok(movement(from)? == RUNNING
+        && word(from, source::JOYPAD1_LASTKEYS)? & SIDES == 0
+        && movement(next)? == STANDING)
 }
 
 /// Whether a jump, a spin's jump or a wall jump's kick starts a rise from `before` to `after`:
@@ -660,6 +675,12 @@ impl Domain for SamusMotion {
                 Q::all(&[Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed, Q::Vertical]),
             );
         }
+        if let_go_stands(from, next)? {
+            mask(
+                "unperceived: the running let-go row's speed mode, which standing halts either way",
+                Q::Mode.set(),
+            );
+        }
         // A hit starts knockback in the frame's pose change, after the motion ($90:DDE9,
         // $91:EB88): its pose (53h or 54h, or hers morphed) is taken before the pad's, so the
         // pad's pose-change command and the aim change's step don't run, which leaves x and her
@@ -782,7 +803,7 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<&'static BehaviourId> {
         (B::FollowingTheGround, !airborne),
         (B::DriftInTheAir, airborne),
         (B::RisingAndFalling, airborne),
-        (B::Dash, !before.dash.is_zero() || !after.dash.is_zero()),
+        (B::Dash, before.run.dash != ZERO || after.run.dash != ZERO),
         (B::TurningRound, turning(before.pose) || turning(after.pose)),
         (
             B::Jumping,

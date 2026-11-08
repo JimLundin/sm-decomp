@@ -7,8 +7,10 @@
 //! her signed vertical speed to a magnitude and a direction, the moonfall to no vertical
 //! direction in the air, a spin carried on to the pose history, the seat to the slope flag.
 
-use clean_model_samus_motion::{Bounces, Carry, DashIs, Samus as Model, Seat, Spin, Vertical};
-use clean_types::{Action, Fixed, Heading, Pose, Position, Radius, Turn};
+use clean_model_samus_motion::{Bounces, Carry, DashIs, Run, Samus as Model, Seat, Spin, Vertical};
+use core::num::Wrapping;
+
+use clean_types::{Action, Fixed, Heading, Parts, Pose, Position, Radius, Turn, ZERO};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -20,7 +22,7 @@ pub const X_RADIUS: u16 = 5;
 
 /// The model's quantity from the engine's.
 const fn quantity(value: Exact) -> Fixed {
-    Fixed(value.0)
+    Wrapping(value.0)
 }
 
 /// The engine's quantity from the model's.
@@ -70,9 +72,9 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
     // pull took past zero is then downward by what it took past.
     let magnitude = quantity(motion.vertical_speed);
     let (vertical, vy) = match motion.vertical {
-        VerticalMotion::None if in_the_air(pose) => (Vertical::Moonfall, magnitude.negated()),
-        VerticalMotion::None => (Vertical::Ground, magnitude.negated()),
-        VerticalMotion::Up => (Vertical::Rising, magnitude.negated()),
+        VerticalMotion::None if in_the_air(pose) => (Vertical::Moonfall, -magnitude),
+        VerticalMotion::None => (Vertical::Ground, -magnitude),
+        VerticalMotion::Up => (Vertical::Rising, -magnitude),
         VerticalMotion::Down if in_the_air(pose) || turning_in_the_air(pose) => {
             (Vertical::Falling, magnitude)
         }
@@ -89,14 +91,16 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
             x: quantity(motion.position.x),
             y: quantity(motion.position.y),
         },
-        speed: quantity(motion.base_speed),
-        way,
-        carry,
-        dash: quantity(motion.extra_run),
-        dash_is: if motion.momentum {
-            DashIs::Hers
-        } else {
-            DashIs::ToLose
+        run: Run {
+            speed: quantity(motion.base_speed),
+            way,
+            carry,
+            dash: quantity(motion.extra_run),
+            dash_is: if motion.momentum {
+                DashIs::Hers
+            } else {
+                DashIs::ToLose
+            },
         },
         vy,
         vertical,
@@ -128,14 +132,15 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     let motion = &mut samus.motion;
     motion.position.x = exact(model.position.x);
     motion.position.y = exact(model.position.y);
-    motion.base_speed = exact(model.speed);
-    motion.extra_run = exact(model.dash);
+    motion.base_speed = exact(model.run.speed);
+    motion.extra_run = exact(model.run.dash);
     // The game's momentum flag holds while she has a dash: set as the dash grows, kept through
     // a landing that leaves the dash to lose, cleared when the dash is gone.
-    motion.momentum = !model.dash.is_zero() && (motion.momentum || model.dash_is == DashIs::Hers);
-    motion.mode = if model.carry == Carry::FollowsPad {
+    motion.momentum =
+        model.run.dash != ZERO && (motion.momentum || model.run.dash_is == DashIs::Hers);
+    motion.mode = if model.run.carry == Carry::FollowsPad {
         SpeedMode::Accelerating
-    } else if model.way == model.pose.facing.side() {
+    } else if model.run.way == model.pose.facing.side() {
         SpeedMode::Decelerating
     } else {
         SpeedMode::TurningAround
@@ -146,13 +151,11 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     let vy = model.vy;
     let kept = motion.vertical;
     (motion.vertical, motion.vertical_speed) = match model.vertical {
-        Vertical::Moonfall => (VerticalMotion::None, exact(vy.negated())),
-        Vertical::Ground if vy.is_zero() => (VerticalMotion::None, Exact(0)),
-        Vertical::Ground if kept == VerticalMotion::None => {
-            (VerticalMotion::None, exact(vy.negated()))
-        }
-        Vertical::Rising => (VerticalMotion::Up, exact(vy.negated())),
-        Vertical::Ground if vy.negative() => (VerticalMotion::Up, exact(vy.negated())),
+        Vertical::Moonfall => (VerticalMotion::None, exact(-vy)),
+        Vertical::Ground if vy == ZERO => (VerticalMotion::None, Exact(0)),
+        Vertical::Ground if kept == VerticalMotion::None => (VerticalMotion::None, exact(-vy)),
+        Vertical::Rising => (VerticalMotion::Up, exact(-vy)),
+        Vertical::Ground if vy.negative() => (VerticalMotion::Up, exact(-vy)),
         Vertical::Falling | Vertical::Ground => (VerticalMotion::Down, exact(vy)),
     };
     motion.bounce = match model.bounces {

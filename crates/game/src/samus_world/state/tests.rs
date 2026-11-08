@@ -1,5 +1,7 @@
 use clean_model_samus_motion::{Carry, DashIs, Rules, Spin, Vertical};
-use clean_types::{Action, Block as Kind, Fixed as Model, Heading, Radius, Way, World};
+use core::num::Wrapping;
+
+use clean_types::{Action, Block as Kind, Heading, Radius, Way, World};
 use data::level::{BlockKind, Bts};
 
 use super::{X_RADIUS, clean_of, pose_id, write_back};
@@ -157,10 +159,10 @@ fn what_she_remembers_reads_from_the_games_words() {
     let read = |pose, mode, vertical, speed| {
         clean_of(&samus(pose, motion(mode, vertical, speed))).map(|model| {
             (
-                model.carry,
-                model.way,
+                model.run.carry,
+                model.run.way,
                 (model.vertical, model.vy),
-                model.dash_is,
+                model.run.dash_is,
             )
         })
     };
@@ -173,7 +175,7 @@ fn what_she_remembers_reads_from_the_games_words() {
     assert!(
         skid.is_some_and(|(carry, way, vertical, _)| carry == Carry::CarriesOn
             && way == Heading::Left
-            && vertical == (Vertical::Ground, Model(0)))
+            && vertical == (Vertical::Ground, Wrapping(0)))
     );
     let spent = read(
         SPIN_RIGHT,
@@ -181,7 +183,9 @@ fn what_she_remembers_reads_from_the_games_words() {
         VerticalMotion::Up,
         0xFFFF_E400,
     );
-    assert!(spent.is_some_and(|(.., vertical, _)| vertical == (Vertical::Rising, Model(0x1C00))));
+    assert!(
+        spent.is_some_and(|(.., vertical, _)| vertical == (Vertical::Rising, Wrapping(0x1C00)))
+    );
     let moonfall = read(
         SPIN_RIGHT,
         SpeedMode::Accelerating,
@@ -190,7 +194,7 @@ fn what_she_remembers_reads_from_the_games_words() {
     );
     assert!(
         moonfall.is_some_and(|(.., vertical, dash)| dash == DashIs::ToLose
-            && vertical == (Vertical::Moonfall, Model(0x1_3800)))
+            && vertical == (Vertical::Moonfall, Wrapping(0x1_3800)))
     );
     // Running with a downward speed, she keeps it on the ground.
     let kept = read(
@@ -199,7 +203,7 @@ fn what_she_remembers_reads_from_the_games_words() {
         VerticalMotion::Down,
         0xE000,
     );
-    assert!(kept.is_some_and(|(.., vertical, _)| vertical == (Vertical::Ground, Model(0xE000))));
+    assert!(kept.is_some_and(|(.., vertical, _)| vertical == (Vertical::Ground, Wrapping(0xE000))));
     // A pose outside her domain has no model.
     assert!(clean_of(&samus(PoseId(0xD3), Motion::default())).is_none());
 }

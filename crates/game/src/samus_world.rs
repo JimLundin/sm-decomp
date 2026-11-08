@@ -6,7 +6,7 @@
 //! world's: the model reports the cells it reached and the caller applies them.
 
 use clean_types::{
-    Block, Cell, Hitbox, Pair, Position, Radius, Slope, SlopeFaces, Surface, Way, World,
+    Block, Cell, Hitbox, Pair, Parts, Position, Radius, Slope, SlopeFaces, Surface, Way, World,
 };
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
