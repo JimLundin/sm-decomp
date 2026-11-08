@@ -168,3 +168,7 @@ mini boss            # a lesser boss: Spore Spawn, Crocomire, Botwoon, Mother Br
 item select          # the controller setup's name for the button
 item cancel          # the controller setup's name for the button
 pick up              # collecting an item
+
+# The camera's vocabulary (adversary 49, F2; root ruling, 2026-11-09).
+right edge           # the player's word for the view's or the room's right-hand edge
+facing right         # the player's word for which way she faces
