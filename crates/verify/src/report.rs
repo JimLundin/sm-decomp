@@ -83,6 +83,19 @@ const DOMAINS: &[Domain] = &[
             ("limits", &["limits.rs", "room.rs"]),
         ],
     },
+    // The model keeps happened and places together in `world.rs`, and the percentage in
+    // `inventory.rs`: those two areas have no file of their own.
+    Domain {
+        name: "progress",
+        bridge: "progress_world",
+        areas: &[
+            ("happened", &[]),
+            ("places", &["world.rs", "per_area.rs"]),
+            ("equipment", &["inventory.rs", "supplies.rs"]),
+            ("rooms", &["room_states.rs"]),
+            ("percentage", &[]),
+        ],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.
