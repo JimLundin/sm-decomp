@@ -376,36 +376,8 @@ that covers a family of behaviours:
 Lockstep and the free-run localiser are the acceptance check, and they tell *which behaviour* is
 wrong. They don't decide *what code to write*.
 
-**Two roles, always separate sessions: the observer and the implementer.** One agent never
-switches between them. A domain goes in this order (review R2):
-1. **The observer** reads the original (the bank logs, the ROM, the oracle's records) and writes
-   the **behaviour spec**, `docs/behaviours/<domain>.md`, to the template below. It also commits
-   the spec's test vectors as data in `scenarios/vectors/<domain>.toml`: before, pad and after, in
-   domain terms, the constructed ones and the `Exact` variants included (review R5). The specs are
-   the catalogue's source and the domain's design note, and Jim can read them as a description of
-   what Super Metroid does.
-2. **A spec reviewer** checks the spec before any implementer starts. That is Jim, or an agent that
-   hasn't seen the asm. The questions:
-   - Could someone who never saw the asm implement this, and would the code be shaped by the domain?
-     (review R4)
-   - Is each entry a behaviour a player would recognise, or a routine of the original renamed?
-     Entries that follow the original's routine boundaries, or use its internal concepts, are
-     regrouped by behaviour before the implementer starts. The clean room stops transliteration.
-     This question stops the implementer inheriting the observer's breakdown of the original.
-3. **The implementer** designs the State types and the model from the spec alone. It writes into
-   an **empty crate**, `crates/clean_model/<domain>`, in an export (below), and never opens the
-   old module; the integrator wires it in and deletes the old module in the same change
-   (review R3). A test in the crate runs the vector file, so it iterates locally and reaches the
-   oracle only to confirm.
-4. **The observer writes `verify`'s decode for the implementer's types.** Decode is an abstraction
-   from RAM to the State, not a copy. If a State value can't be decoded, the observer either names
-   the hidden quantity as a new spec entry, in domain terms, or shows that the value is derived,
-   so the model computes it and doesn't store it. The implementer never adds a field because the
-   decoder has one.
-5. **Gaps go back to the observer** (review R6). The implementer doesn't fix a difference it can't
-   explain. It writes an entry in `docs/behaviours/<domain>.gaps.md` with the frame, the field, the
-   expected and actual values and the entry it suspects, then moves on. The observer answers from
-   the original and amends the spec.
+**The round**, its steps, roles and who sees what, is [PROCESS](../cleanroom/PROCESS.md): the
+single source of truth for the order of the work. This section holds the rules a round relies on.
 
 **What counts as a leak (Jim, 2026-11-07).** Structure leaks; perceivable quantities don't.
 - **Allowed:** quantities a player can perceive or measure (positions, speeds, timers, counts) and

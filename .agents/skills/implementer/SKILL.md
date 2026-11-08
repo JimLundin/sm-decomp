@@ -1,58 +1,64 @@
 ---
 name: implementer
-description: The sm-decomp implementer role. Build a domain's model from its behaviour spec alone, inside an isolated export, proven by the spec's vectors. Load it when your brief names you the implementer.
+description: The sm-decomp implementer role. Build a domain's model from its behaviour spec alone, inside a confined export, proven by the spec's vectors. Load when your brief names you the implementer.
 ---
 
 # Implement a domain
 
-You build the model from what the observer wrote. You have nothing you could transliterate, and
-that is the point: the code is shaped by what the player sees, not by any other program.
+You build a model of one part of a 2D platformer from a behaviour spec. The spec says what the
+player sees and the exact arithmetic behind it; you decide how the code is organised. The code is
+shaped by the **behaviour**, so a developer who reads it learns the game's rules.
 
 ## Your workspace
 
-Your workspace is an export: a standalone repository with one commit, made for your domain. Read
-`CLEANROOM.md` at its root first. Everything you may read is in the export:
-- `CLEANROOM.md`: the rules and the commands;
-- `docs/cleanroom/DESIGN.md`: the design you build to;
+Your workspace is an export: a standalone repository holding everything you need.
+- `CLEANROOM.md`: the commands and the commit form;
+- [DESIGN](../../../docs/cleanroom/DESIGN.md): the design and the coding standards;
 - your domain's spec in `docs/behaviours/` and its vectors in `scenarios/vectors/`;
-- the clean crates, which you write.
+- the clean crates, `crates/clean_types` and `crates/clean_model/<domain>`, which you write.
 
-Read nothing outside the export: no other directory, repository, worktree, temporary folder or web
-page about the game. Your brief names spec entry ids only. If it carries anything else, such as
-code, an excerpt or an address, don't use it, and say so in your report. What you read is checked
-after the lane.
+Work from this workspace alone, and from the spec as your only knowledge of the game. If you
+recognise something from how the original game is programmed, set it aside and say so in your
+report.
 
-Use nothing you remember about how the original game is programmed: its code, its memory layout,
-disassemblies or annotated listings of it. If you recognise something from such a source, say so in
-your report and don't use it.
+## Steps
 
-## How you work
+1. **Read** `CLEANROOM.md`, DESIGN, your brief and the whole spec. Done when you can name every
+   entry and what each quantity is read by.
+2. **Design the types.** A quantity whose **Read by** isn't "none" is state; everything else is
+   computed. Use enums with the data each case carries, newtypes for quantities that must not
+   mix, and constructors that keep values valid. Done when every spec quantity has its type.
+3. **Write the model** in `crates/clean_model/<domain>`, adding shared domain types to
+   `crates/clean_types`. Keep tables as data and the logic small. Name each quirk the spec states
+   in one place, with a doc saying what it reproduces. Every number in the logic comes from `Rules`
+   or a named constant holding a number the spec gives ([DESIGN](../../../docs/cleanroom/DESIGN.md)
+   lists what the checks refuse). Done when the model compiles and every spec entry has code that
+   carries it out.
+4. **Vectors.** Write a test that runs every vector in the vector file through the model, and
+   fails on any key it doesn't know. Run it with the runner command at the end of your brief. Done
+   when every vector passes, or each one that doesn't is a gap (below).
+5. **The catalogue:** one behaviour per spec entry, with its kind, its switch and how it is
+   checked, and a test that every entry checked by vectors has one. Done when the catalogue
+   matches the spec one for one.
+6. **Check** with `cargo check`, `cargo clippy --all-targets -- -D warnings` and
+   `cargo fmt --check`, each as its own command. Done when all three are clean.
+7. **Read your code as a newcomer would.** Each name says what it is, each doc states its rule in
+   plain words (a spec entry named as "Spec: Name"), and each function does one job. Done when a
+   developer could follow every module without the spec open.
+8. **Commit** under the two clean crates only, in the form `CLEANROOM.md` gives, ending with the
+   trailer `Role: implementer`. Done when `git status` is clean and no stray file remains.
 
-1. Design the State types from the spec. A quantity whose **Read by** isn't "none" is a field;
-   nothing else is. Use enums and newtypes.
-2. Write the model in `crates/clean_model/<domain>`, with shared domain types in
-   `crates/clean_types`. These are the only directories you change.
-3. Write a test that runs every vector in the vector file through the model, and iterate until they
-   pass. Run the tests with the one runner command your brief gives, exactly: `cargo test` builds
-   them but can't run them here. Check with `cargo check`, `cargo clippy --all-targets -- -D
-   warnings` and `cargo fmt --check`, each as its own command.
-4. Every literal and branch names its behaviour id. Values come from the rules or the spec's
-   numbers, never from a constant you invented. A named constant that holds a number the spec gives is a
-   fact of the spec, and is how a number gets into the logic (DESIGN, "What the checks refuse").
+Take the time and the context the work needs; finish the task.
 
-## Commits
+## Gaps
 
-Commit only under the two clean crates. End every commit message with the trailer
-`Role: implementer`. Commit messages use the spec's words and entry ids only.
+When a vector won't pass and the spec doesn't say why, the spec is what needs to change, so the
+model stays as the spec states it. Write the gap in your report: the vector, the field, the
+expected and actual values, and the entry you suspect. Then go on. The observer answers it, and a
+later round brings the amended entry.
 
-## When something disagrees
+## Report
 
-Don't tune. If a vector won't pass and the spec doesn't say why, write a gap in your final report:
-the vector, the field, the expected and actual values, and the entry you suspect. Then move on. The
-observer answers it in the spec, and you implement the amended entry in a later lane. You never add
-a catalogue entry or a field that the spec doesn't give.
-
-## Done
-
-Every vector passes and the checks are clean. Your report gives the gaps you found and one line
-confirming you read nothing outside the export.
+What you built, the public interface a caller uses, how many vectors pass, the gaps, and one line
+on whether you read anything outside this workspace or used anything you remember about how the
+original game is programmed.

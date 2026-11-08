@@ -1,13 +1,13 @@
 ---
 name: lane
-description: Start here for any sm-decomp task. Covers the worktree, the observer and implementer roles, commit rules, how to prove a change, guardrails, the report and handoff, and (for the root) picking and landing.
+description: Start here for any sm-decomp task in the repository. Covers the worktree, commit rules, how to prove a change, guardrails, the report and handoff, and (for the root) landing.
 ---
 
 # Work a lane
 
 You were given one bounded task, a branch and a base by the root. You commit on your branch and
 push only it; the root lands it. Read [AGENTS.md](../../../AGENTS.md) and
-[MODEL §5](../../../docs/architecture/MODEL.md#5-how-the-work-is-planned) first.
+[PROCESS](../../../docs/cleanroom/PROCESS.md) first.
 
 ## Set up
 
@@ -16,45 +16,10 @@ push only it; the root lands it. Read [AGENTS.md](../../../AGENTS.md) and
 
 ## Your role
 
-Every engine task is one of two roles, always separate sessions, never one agent switching hats
-([MODEL §5](../../../docs/architecture/MODEL.md#5-how-the-work-is-planned) gives the order of a
-domain). Load the skill your brief names after this one:
-
-- [observer](../observer/SKILL.md): reads the original; writes the spec, the vectors and the decoder.
-- [implementer](../implementer/SKILL.md): builds the model from the spec alone, never the original.
-
-Other tasks (oracle, tools, CI, docs) need only this skill. Work by mechanism, not by divergence:
-lockstep and the localiser say *which behaviour* is wrong, not what code to write.
-
-## Done means (a domain)
-
-- Every movement kind or state is a row of data, every parameter a table entry or a `Rules` value,
-  and every behaviour has its catalogue entry (`Behaviour { id, summary, kind, switch, checked }`).
-- No bank address in the domain's clean model: sources live in the observer's decode notes only.
-  Nothing in the clean model names a video type (`VideoMemory`, `NmiBatch`, `VramWord`,
-  `DmaChannel`, OAM bytes, B-bus registers); only `game::exact` encodes bytes. Module docs describe the domain.
-- Byte-identical: the free-run gate's green pairs hold, the localiser's first differing frames don't
-  move earlier, and the lockstep ratchet holds on the spec's declared fields.
-- The domain's vector tests (`scenarios/vectors/<domain>.toml`) pass, its size (`tools size`) fits
-  the budget in its spec header, and its RAM-shape list (State fields decoded as one WRAM word copied
-  as-is) is short, each with a one-line reason in the spec.
-- A switchable quirk has a unit test showing where its variants differ, and the Reference profile
-  stays exact. Switches are `Fixed` unless a named use needs a `Toggle`.
-
-## Merge-review questions
-
-The reviewer stops a change on any "no":
-- Does the code follow the model, not the original's routines? A new free function named after a
-  routine is a stop.
-- Does every ROM instruction list run through the interpreter? A list hand-coded as an enum of
-  positions is a stop.
-- Does every literal and branch in the clean model trace to a `BehaviourId`, with values from `Rules`
-  or `data`? Is there no condition on a frame number, position or room no spec entry names?
-- Which spec entry reads each new State field ("Read by")? Was no field added because the decoder
-  has one?
-- Does the catalogue hold the spec's entries one for one, as the clean crate's vector test checks?
-- Could someone who never saw the original follow the module from its names and types? Does each
-  comment say something the code doesn't? Is the domain within its size budget?
+[PROCESS](../../../docs/cleanroom/PROCESS.md#roles) names the roles of a clean-room round. Load the
+skill your brief names after this one; an engineer's task (oracle, tools, CI, docs) needs only
+this skill. Work by mechanism, not by divergence: lockstep and the localiser say *which behaviour*
+is wrong, not what code to write.
 
 ## Commit rules
 

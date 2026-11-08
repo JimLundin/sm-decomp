@@ -15,7 +15,7 @@ exact. Exact means every compared cut and every output byte, not the original's 
 | [LEGACY](docs/LEGACY.md) | every known difference from the original or the oracle, by name |
 | [STATUS](docs/STATUS.md) | how to measure progress, and where the numbers live |
 | [docs/behaviours/](docs/behaviours/) | the behaviour specs, one per domain, written by observers |
-| the skills: [lane](.agents/skills/lane/SKILL.md), then [observer](.agents/skills/observer/SKILL.md) or [implementer](.agents/skills/implementer/SKILL.md) | setup, proving, reporting and landing; then your role. Load them first |
+| [PROCESS](docs/cleanroom/PROCESS.md) and the skills in [.agents/skills/](.agents/skills/) | the clean-room round, its roles and who sees what; then [lane](.agents/skills/lane/SKILL.md) and the skill for the role your brief names. Load them first |
 
 Crates are in `crates/` ([crates/README.md](crates/README.md)): `data`, `game`, `runtime` and
 `app` are the engine; `oracle`, `oracle_record`, `verify` and `tools` verify it; `canonical` and

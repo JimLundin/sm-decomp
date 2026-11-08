@@ -1,0 +1,102 @@
+# The clean-room process
+
+How one domain of the game goes from the original to a model on `main`. Each domain is rebuilt in
+**rounds**: a spec, a model built from that spec alone, and proof that the model matches the real
+game. This file is the single source of truth for the order of a round, who does each step, and
+who sees what. The rules it relies on live elsewhere, and are linked where they are used:
+- [MODEL §5](../architecture/MODEL.md#5-how-the-work-is-planned): what a leak is, and the spec
+  template;
+- [DESIGN](DESIGN.md): the coding standards;
+- [size-budget](../architecture/size-budget.md): the score and the budget.
+
+## Roles
+
+Each role is its own session with its own skill, and is never combined with another role in one
+session. The root starts each session with a brief.
+
+| Role | Does | Skill |
+| --- | --- | --- |
+| root | runs the round: briefs, exports, launches, imports, lands, reports to Jim | [root](../../.agents/skills/root/SKILL.md) |
+| observer | reads the original; writes the spec, the vectors, the decode notes and the reference model; answers gaps | [observer](../../.agents/skills/observer/SKILL.md) |
+| adversary | gates a spec before a round, and a round before it lands | [adversary](../../.agents/skills/adversary/SKILL.md) |
+| implementer | builds the model from the spec alone, confined to an export | [implementer](../../.agents/skills/implementer/SKILL.md) |
+| blind reviewer | reads the model's code cold, confined, and reviews it as code | [blind-reviewer](../../.agents/skills/blind-reviewer/SKILL.md) |
+| integrator | wires the model into the engine, writes its honest harness, deletes the old code | [integrator](../../.agents/skills/integrator/SKILL.md) |
+| engineer | builds tools, checks and CI outside a round | [lane](../../.agents/skills/lane/SKILL.md) |
+
+Every role except the confined two (implementer, blind reviewer) also follows the
+[lane](../../.agents/skills/lane/SKILL.md) skill for its worktree, commits, proof and report.
+
+## Who sees what
+
+The **barrier** is the reason the clean room exists: the model is shaped by what a player sees,
+not by the original's code. The implementer and the blind reviewer work in a confined export
+(`tools/cleanroom/launch.sh`) that holds only their column. Every other role works in the
+repository.
+
+| Material | observer | adversary | implementer | blind reviewer | integrator | root |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: |
+| the original (bank logs, ROM, records, decode notes, `verify`'s addresses) | yes | yes | - | - | yes | yes |
+| the spec and its vectors | yes | yes | yes | vectors only | yes | yes |
+| the clean model's code and tests | after import | yes | writes it | yes | yes | yes |
+| the score, budget, k, fit, old-code baselines | yes | yes | - | - | yes | yes |
+| the old engine code | yes | yes | - | - | deletes it | yes |
+
+The score is an **evaluation** tool: the root and the adversary use it to compare spec and code
+after a round. The implementer's goal is to model the spec well, and its material states coding
+standards only. A size finding reaches the implementer as a **shape** finding: duplication, a
+decision that could be a table row, a function doing two jobs. It never arrives as a number.
+
+## A round
+
+One round at a time across the project, while the process is still changing (Jim, 2026-11-08).
+Each step names its owner and ends on its done-condition. The root reports each step's result to
+Jim before starting the next.
+
+1. **Spec** (observer). Done when:
+   - `docs/behaviours/<domain>.md` states every rule in arm form;
+   - `scenarios/vectors/<domain>.toml` holds recorded and constructed vectors;
+   - `docs/behaviours/<domain>.decode.md` holds the sources, the harness note and the Budget
+     section;
+   - the observer's reference model agrees with every vector;
+   - `tools/cleanroom/scan.sh` finds 0 on the spec and vectors;
+   - the doc links pass.
+2. **Spec gate** (adversary). Done on a verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered
+   findings back to the observer (step 1), then a re-gate of the delta.
+3. **Land the spec** (root), through `tools/lane/land.sh`.
+4. **Brief** (root). Done when the brief:
+   - names only spec entries and shape findings;
+   - carries the runner command;
+   - passes `tools/cleanroom/scan_brief.sh` with 0.
+5. **Export and launch** (root): `canary.sh plant`, `export.sh`, then `launch.sh`. Done on
+   `LAUNCH OK` with a clean canary check.
+6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
+   and check, clippy and fmt are clean.
+7. **Import** (root): `import.sh` runs `code_check.sh` and applies the commits to a lane branch.
+   Done when the import passes.
+8. **Blind review** (blind reviewer, confined). The root makes a code-only copy (the model, its
+   tests and the vector file) and launches the review. Done on its report. The root compares the
+   review's "what the code does" with the spec: where the reviewer misread the code, the code
+   doesn't explain itself.
+9. **Integrate** (integrator). Done when:
+   - the engine runs the model through an adapter;
+   - the honest harness compares it with the records, and its floors are committed;
+   - the old code it replaces is deleted;
+   - `tools/lane/gate.sh` passes;
+   - the free-run gate's green pairs and the lockstep ratchet hold.
+10. **Round gate** (adversary). It reads the leaks, the harness's honesty, the score against the
+    budget and the blind review. Done on a verdict of MERGE. Findings go to the integrator
+    (harness, adapter), or into the next round's queue (model shape, spec gaps).
+11. **Land** (root), through `land.sh`. `docs/REPORT.md` is regenerated in the same change.
+12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
+    The domain is done when the queue holds nothing that changes behaviour or shape enough to
+    be worth a round.
+
+## The loop
+
+- A vector that won't pass, and that the spec doesn't explain, is a **gap**. The implementer
+  records it, and the observer answers it in the spec. The model is never tuned to a record.
+- A finding is fixed by its owner: the observer owns spec and vectors, the implementer the clean
+  crates, the integrator the adapter and harness, the root briefs and landing.
+- Old code and documents kept only for comparison are deleted. A comparison uses git history
+  (MODEL §1 decision 8).
