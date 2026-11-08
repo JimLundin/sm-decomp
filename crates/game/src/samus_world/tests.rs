@@ -1,4 +1,5 @@
-use clean_types::{Block, Cell, Heading, Position, Radius, SlopeFaces, Surface, Way, World, px};
+use clean_types::{Block, Cell, Heading, Position, Radius, SlopeFaces, Way, World, px};
+use core::num::Wrapping;
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
 
@@ -50,13 +51,9 @@ const fn at(column: u16, row: u16) -> Cell {
     Cell { column, row }
 }
 
-/// A surface column as the vectors write it: its row, 16 just past, 17 far past.
-const fn row(surface: Surface) -> u8 {
-    match surface {
-        Surface::Row(row) => row,
-        Surface::JustPast => 16,
-        Surface::FarPast => 17,
-    }
+/// A surface column's depth from the block's open side: its row, 16 just past, 17 far past.
+const fn row(depth: clean_types::Px) -> u16 {
+    depth.0
 }
 
 #[test]
@@ -129,13 +126,14 @@ fn a_surface_is_a_floor_or_a_ceiling_by_its_flip() {
         panic!("floor slope");
     };
     assert!(floor.faces == SlopeFaces::Floor);
-    assert_eq!((row(floor.surface[0]), row(floor.surface[15])), (15, 0));
-    assert_eq!(floor.factor, 0xc0);
+    assert_eq!((row(floor.depth[0]), row(floor.depth[15])), (15, 0));
+    assert_eq!(floor.factor, Wrapping(0xc0));
     let Block::Slope(ceiling) = world.block(at(1, 0)) else {
         panic!("ceiling slope");
     };
     assert!(ceiling.faces == SlopeFaces::Ceiling);
-    assert_eq!((row(ceiling.surface[0]), row(ceiling.surface[15])), (15, 0));
+    // A ceiling counts up from the block's bottom, as the level's offsets do.
+    assert_eq!((row(ceiling.depth[0]), row(ceiling.depth[15])), (0, 15));
 }
 
 /// Gap 7: a column with no solid pixel (10h) lies just past the block and one four rows past
@@ -156,11 +154,11 @@ fn an_empty_column_is_just_past_and_a_far_one_far_past_floor_or_ceiling() {
     let Block::Slope(floor) = world.block(at(0, 0)) else {
         panic!("floor slope");
     };
-    assert_eq!((row(floor.surface[0]), row(floor.surface[1])), (16, 17));
+    assert_eq!((row(floor.depth[0]), row(floor.depth[1])), (16, 17));
     let Block::Slope(ceiling) = world.block(at(1, 0)) else {
         panic!("ceiling slope");
     };
-    assert_eq!((row(ceiling.surface[0]), row(ceiling.surface[1])), (16, 17));
+    assert_eq!((row(ceiling.depth[0]), row(ceiling.depth[1])), (16, 17));
 }
 
 #[test]
@@ -195,11 +193,14 @@ fn only_her_centres_scroll_trigger_reacts_when_it_is_in_another_row() {
         ((1, 2), BlockKind::Special(PlmChoice::Common(0x45))),
     ]);
     let world = world(&blocks, &slopes);
-    let radius = Radius { x: 5, y: 0x10 };
+    let radius = Radius {
+        x: Wrapping(5),
+        y: Wrapping(0x10),
+    };
     // Centre on row 1, bottom edge on row 2.
     let position = Position {
-        x: px(0x18),
-        y: px(0x18),
+        x: px(Wrapping(0x18)),
+        y: px(Wrapping(0x18)),
     };
     let inside = [at(1, 2), at(1, 1), at(1, 0)];
     assert_eq!(
@@ -212,10 +213,13 @@ fn only_her_centres_scroll_trigger_reacts_when_it_is_in_another_row() {
         None
     );
     // Centre and bottom edge on one row: the second cell is her top's.
-    let short = Radius { x: 5, y: 4 };
+    let short = Radius {
+        x: Wrapping(5),
+        y: Wrapping(4),
+    };
     let low = Position {
-        x: px(0x18),
-        y: px(0x1A),
+        x: px(Wrapping(0x18)),
+        y: px(Wrapping(0x1A)),
     };
     assert_eq!(world.inside_touch(&[at(1, 1), at(1, 1)], low, short), None);
 }

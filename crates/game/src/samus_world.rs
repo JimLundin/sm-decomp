@@ -6,8 +6,9 @@
 //! world's: the model reports the cells it reached and the caller applies them.
 
 use clean_types::{
-    Block, Cell, Hitbox, Pair, Parts, Position, Radius, Slope, SlopeFaces, Surface, Way, World,
+    Block, Cell, Hitbox, Pair, Parts, Position, Radius, Slope, SlopeFaces, Way, World,
 };
+use core::num::Wrapping;
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
 
@@ -21,12 +22,9 @@ const ITEM_BLOCK: PlmChoice = PlmChoice::Common(0x45);
 /// The special air that changes the scrolling when she reaches it.
 const SCROLL_TRIGGER: Bts = Bts(0x46);
 
-/// Pixel rows in a block, less one: a ceiling's surface counts up from the block's bottom.
-const LAST_ROW: u8 = 15;
-
-/// Pixel rows in a block: a surface offset of this lies just past the block, a greater one far
-/// past it.
-const ROWS: u8 = 16;
+/// A surface's depth for a column far past the block: the level's offsets past 16 all lie
+/// there.
+const FAR_PAST: u8 = 17;
 
 /// The room and the frame's solid enemies.
 pub struct SamusWorld<'a> {
@@ -52,12 +50,12 @@ impl<'a> SamusWorld<'a> {
             .filter(|enemy| enemy.solid || enemy.frozen)
             .map(|enemy| Hitbox {
                 centre: Pair {
-                    x: enemy.position.x.pixels,
-                    y: enemy.position.y.pixels,
+                    x: Wrapping(enemy.position.x.pixels),
+                    y: Wrapping(enemy.position.y.pixels),
                 },
                 radius: Radius {
-                    x: enemy.radius_x,
-                    y: enemy.radius_y,
+                    x: Wrapping(enemy.radius_x),
+                    y: Wrapping(enemy.radius_y),
                 },
             })
             .collect();
@@ -142,8 +140,8 @@ impl<'a> SamusWorld<'a> {
         position: Position,
         radius: Radius,
     ) -> Option<Touch> {
-        let y = position.y.pixel();
-        let bottom = y.wrapping_add(radius.y).wrapping_sub(1);
+        let y = position.y.pixel().0;
+        let bottom = y.wrapping_add(radius.y.0).wrapping_sub(1);
         if (y >> 4) == (bottom >> 4) {
             return None;
         }
@@ -172,9 +170,10 @@ fn quarters(square: Square, slope: data::level::Slope) -> [[bool; 2]; 2] {
     ]
 }
 
-/// A sloped surface: a floor's surface row is its offset from the block's top; a ceiling
-/// (flipped top to bottom) counts its offset up from the block's bottom row. An offset of 16
-/// is a column with nothing solid, just past the block; a greater one lies far past it.
+/// A sloped surface. The level counts each column's surface from the block's open side, its
+/// top for a floor and its bottom for a ceiling (flipped top to bottom), as the model's depth
+/// does; 16 is a column with nothing solid, just past the block, and a greater offset lies far
+/// past it.
 fn surface_of(surface: Tops, slope: data::level::Slope) -> Slope {
     let faces = if slope.y_flip {
         SlopeFaces::Ceiling
@@ -185,16 +184,10 @@ fn surface_of(surface: Tops, slope: data::level::Slope) -> Slope {
     if slope.x_flip {
         tops.reverse();
     }
-    let column = |top: u8| match (faces, top.checked_sub(ROWS)) {
-        (SlopeFaces::Floor, None) => Surface::Row(top),
-        (SlopeFaces::Ceiling, None) => Surface::Row(LAST_ROW.saturating_sub(top)),
-        (_, Some(0)) => Surface::JustPast,
-        (_, Some(_)) => Surface::FarPast,
-    };
     Slope {
         faces,
-        surface: tops.map(column),
-        factor: surface.factor,
+        depth: tops.map(|top| Wrapping(u16::from(top.min(FAR_PAST)))),
+        factor: Wrapping(u32::from(surface.factor)),
     }
 }
 

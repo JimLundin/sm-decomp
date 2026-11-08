@@ -53,14 +53,14 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
     let free = [SHOOT, LEFT, UP, DOWN, AIM_DOWN];
     assert!(free.iter().all(|&set| !pad.any(set)));
     let pressed = frame.pressed;
-    assert!(pressed.any(JUMP) && !pressed.any(RUN.union(RIGHT).union(AIM_UP)));
+    assert!(pressed.any(JUMP) && !pressed.any(clean_types::Buttons(RUN.0 | RIGHT.0 | AIM_UP.0)));
     assert!(frame.equipment.hi_jump);
     assert!(!frame.equipment.space_jump);
     assert!(frame.elevator_moving);
     assert!(frame.parity == Parity::Odd);
     // A pose the empty pose table doesn't hold has no half-height.
     let standing = map::key_of(PoseId(0x01)).map(frame.body);
-    assert!(standing.is_some_and(|radius| (radius.x, radius.y) == (5, 0)));
+    assert!(standing.is_some_and(|radius| (radius.x.0, radius.y.0) == (5, 0)));
     assert!(!frame.animation_ends);
 
     let still = FrameSource {

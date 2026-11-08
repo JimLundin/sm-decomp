@@ -134,11 +134,11 @@ fn settle(samus: &mut Samus, ran: &Ran) {
     let shrinks = after.pose != before.pose
         && matches!(after.pose.action, Action::Crouching | Action::Morphing);
     if shrinks {
-        samus.y_radius = after.radius.y;
+        samus.y_radius = after.radius.y.0;
     }
     let from = ran.outcome.camera_from;
     if from != before.position.y {
-        samus.previous_position.y.pixels = from.pixel();
+        samus.previous_position.y.pixels = from.pixel().0;
     }
 }
 

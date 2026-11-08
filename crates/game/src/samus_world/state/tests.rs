@@ -27,6 +27,8 @@ const SPIN_RIGHT: PoseId = PoseId(0x19);
 const TURNING_IN_A_JUMP: PoseId = PoseId(0x92);
 /// Standing facing right.
 const STANDING_RIGHT: PoseId = PoseId(0x01);
+/// The morph ball on the ground, facing right.
+const BALL_RIGHT: PoseId = PoseId(0x1D);
 
 fn samus(pose: PoseId, motion: Motion) -> Samus {
     Samus {
@@ -106,6 +108,7 @@ fn the_games_words_come_back_as_they_went() {
             VerticalMotion::Down,
             0xE000,
         ),
+        (BALL_RIGHT, SpeedMode::Accelerating, VerticalMotion::Down, 0),
         (
             TURNING_IN_A_JUMP,
             SpeedMode::Accelerating,
@@ -153,7 +156,7 @@ fn the_games_words_come_back_as_they_went() {
 
 /// The game's words mean what the decode notes say: a skid points against her facing, a rise
 /// past zero points downward, no direction in a spin is a moonfall, its word the speed upward,
-/// and a downward speed on the ground is kept.
+/// a downward speed on the ground is kept and downward at 0 there is falling at 0.
 #[test]
 fn what_she_remembers_reads_from_the_games_words() {
     let read = |pose, mode, vertical, speed| {
@@ -204,6 +207,12 @@ fn what_she_remembers_reads_from_the_games_words() {
         0xE000,
     );
     assert!(kept.is_some_and(|(.., vertical, _)| vertical == (Vertical::Ground, Wrapping(0xE000))));
+    // Downward at 0 on the ground, as a bomb jump's end leaves the ball, is falling at 0 (BG2).
+    let handed_back = read(BALL_RIGHT, SpeedMode::Accelerating, VerticalMotion::Down, 0);
+    assert!(
+        handed_back
+            .is_some_and(|(.., vertical, _)| vertical == (Vertical::GroundFalling, Wrapping(0)))
+    );
     // A pose outside her domain has no model.
     assert!(clean_of(&samus(PoseId(0xD3), Motion::default())).is_none());
 }
@@ -212,13 +221,13 @@ fn what_she_remembers_reads_from_the_games_words() {
 #[test]
 fn a_spin_is_carried_on_by_the_pose_history() {
     let mut spinning = samus(SPIN_RIGHT, Motion::default());
-    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::Off));
+    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::OFF));
     spinning.last_different = PoseRecord {
         pose: SPIN_RIGHT,
         movement: MovementType::SpinJumping,
         ..PoseRecord::default()
     };
-    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::CarriedOn));
+    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::CARRIED_ON));
 }
 
 /// The engine's pose for the model's: hers while it shows it, else her dress's.
@@ -290,7 +299,7 @@ fn a_frame_on_the_floor_runs_her_right() {
     }
     .frame(&|_| Radius {
         x: X_RADIUS,
-        y: 0x15,
+        y: Wrapping(0x15),
     });
     let Some(mut model) = clean_of(&engine) else {
         panic!("running is hers");

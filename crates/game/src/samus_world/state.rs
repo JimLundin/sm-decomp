@@ -5,12 +5,13 @@
 //! each frame and written back after the step. What she remembers maps to the game's own
 //! words: carrying on and skidding to the speed mode, a dash to lose to the momentum flag clear,
 //! her signed vertical speed to a magnitude and a direction, the moonfall to no vertical
-//! direction in the air, a spin carried on to the pose history, the seat to the slope flag.
+//! direction in the air, falling at 0 on the ground to direction down at 0, a spin carried on
+//! (its frame count) to the pose history, the seat to the slope flag.
 
 use clean_model_samus_motion::{Bounces, Carry, DashIs, Run, Samus as Model, Seat, Spin, Vertical};
 use core::num::Wrapping;
 
-use clean_types::{Action, Fixed, Heading, Parts, Pose, Position, Radius, Turn, ZERO};
+use clean_types::{Action, Fixed, Heading, Parts, Pose, Position, Px, Radius, Turn, ZERO};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -18,7 +19,7 @@ use crate::model::num::Fixed as Exact;
 use crate::state::samus::{Bounce, Item, MovementType, PoseId, Samus, SpeedMode, VerticalMotion};
 
 /// Her body's half-width, the same in every pose.
-pub const X_RADIUS: u16 = 5;
+pub const X_RADIUS: Px = Wrapping(5);
 
 /// The model's quantity from the engine's.
 const fn quantity(value: Exact) -> Fixed {
@@ -69,7 +70,8 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         SpeedMode::TurningAround => (Carry::CarriesOn, opposite(side)),
     };
     // The word is a magnitude, downward with direction down and upward otherwise; a rise the
-    // pull took past zero is then downward by what it took past.
+    // pull took past zero is then downward by what it took past. On the ground, direction down
+    // at 0 is falling at 0, as a bomb jump's or a knockback's end leaves her (BG2).
     let magnitude = quantity(motion.vertical_speed);
     let (vertical, vy) = match motion.vertical {
         VerticalMotion::None if in_the_air(pose) => (Vertical::Moonfall, -magnitude),
@@ -78,6 +80,7 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         VerticalMotion::Down if in_the_air(pose) || turning_in_the_air(pose) => {
             (Vertical::Falling, magnitude)
         }
+        VerticalMotion::Down if magnitude == ZERO => (Vertical::GroundFalling, ZERO),
         VerticalMotion::Down => (Vertical::Ground, magnitude),
     };
     // The game's spin is carried on when the pose before the last spin pose was a spin or a
@@ -112,12 +115,12 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         pose,
         radius: Radius {
             x: X_RADIUS,
-            y: samus.y_radius,
+            y: Wrapping(samus.y_radius),
         },
         spin: if pose.action == Action::Spinning && carried {
-            Spin::CarriedOn
+            Spin::CARRIED_ON
         } else {
-            Spin::Off
+            Spin::OFF
         },
         seat: if samus.slope_adjusted {
             Seat::Seated
@@ -147,7 +150,7 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     };
     // On the ground the game leaves her vertical direction as it was: a speed she keeps with no
     // direction stays so (a turn in a moonfall, chain-0232-D5A7 38 -> 44); another is downward
-    // or upward by its sign, and none is no direction.
+    // or upward by its sign, and none is no direction. Falling at 0 on the ground is downward.
     let vy = model.vy;
     let kept = motion.vertical;
     (motion.vertical, motion.vertical_speed) = match model.vertical {
@@ -156,7 +159,9 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
         Vertical::Ground if kept == VerticalMotion::None => (VerticalMotion::None, exact(-vy)),
         Vertical::Rising => (VerticalMotion::Up, exact(-vy)),
         Vertical::Ground if vy.negative() => (VerticalMotion::Up, exact(-vy)),
-        Vertical::Falling | Vertical::Ground => (VerticalMotion::Down, exact(vy)),
+        Vertical::Falling | Vertical::GroundFalling | Vertical::Ground => {
+            (VerticalMotion::Down, exact(vy))
+        }
     };
     motion.bounce = match model.bounces {
         Bounces::None => Bounce::None,

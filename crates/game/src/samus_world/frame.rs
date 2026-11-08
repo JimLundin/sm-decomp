@@ -5,6 +5,7 @@
 
 use clean_model_samus_motion::Frame;
 use clean_types::{Buttons, Equipment, Parity, Pose, Radius, button};
+use core::num::Wrapping;
 use data::assets::samus::import::map;
 use data::assets::samus::key::Dress;
 use data::pose::transition::{Control, Controls};
@@ -32,7 +33,7 @@ fn pad(held: Controls) -> Buttons {
     ]
     .into_iter()
     .filter(|&(control, _)| held.contains(control))
-    .fold(Buttons::default(), |pad, (_, set)| pad.union(set))
+    .fold(Buttons::default(), |pad, (_, set)| Buttons(pad.0 | set.0))
 }
 
 /// The engine's frame, as the model reads it at the start of the movement handler.
@@ -58,9 +59,11 @@ pub struct FrameSource<'a> {
 pub fn body(content: &Content, dress: Dress, pose: Pose) -> Radius {
     Radius {
         x: X_RADIUS,
-        y: map::id_of(pose, dress)
-            .and_then(|id| content.poses.get(id))
-            .map_or(0, |definition| u16::from(definition.y_radius)),
+        y: Wrapping(
+            map::id_of(pose, dress)
+                .and_then(|id| content.poses.get(id))
+                .map_or(0, |definition| u16::from(definition.y_radius)),
+        ),
     }
 }
 
