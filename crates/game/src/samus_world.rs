@@ -5,9 +5,7 @@
 //! reactions a reached cell then starts (a scroll trigger, an item's block) aren't the
 //! world's: the model reports the cells it reached and the caller applies them.
 
-use clean_types::{
-    Block, Cell, Hitbox, Pair, Parts, Position, Radius, Slope, SlopeFaces, Way, World,
-};
+use clean_types::{Block, Cell, Hitbox, Pair, Radius, Slope, SlopeFaces, Way, World};
 use core::num::Wrapping;
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Bts, Offset, PlmChoice};
@@ -127,27 +125,6 @@ impl<'a> SamusWorld<'a> {
             .iter()
             .filter_map(|touch| self.reaction(touch.cell))
             .collect()
-    }
-
-    /// The touch the cells she was inside at the frame's start start (`Outcome::inside`): only
-    /// her centre's cell reacts, and only a scroll trigger (`$94:9956`). Her centre's cell is
-    /// listed second, after her bottom edge's, when it is in another row; in the same row it
-    /// isn't listed and nothing reacts.
-    #[must_use]
-    pub fn inside_touch(
-        &self,
-        inside: &[Cell],
-        position: Position,
-        radius: Radius,
-    ) -> Option<Touch> {
-        let y = position.y.pixel().0;
-        let bottom = y.wrapping_add(radius.y.0).wrapping_sub(1);
-        if (y >> 4) == (bottom >> 4) {
-            return None;
-        }
-        let centre = *inside.get(1)?;
-        self.reaction(centre)
-            .filter(|touch| matches!(touch, Touch::Scroll(_)))
     }
 }
 

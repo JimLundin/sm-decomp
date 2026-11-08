@@ -101,6 +101,7 @@ if [ -d crates/clean_types ] || [ -d crates/clean_model ]; then
   out=$(bash tools/cleanroom/code_check.sh crates/clean_types crates/clean_model/* 2>&1) || fail "$out"
 fi
 out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
+out=$(bash tools/cleanroom/import_check_test.sh 2>&1) || fail "$out"
 
 # Rule 6: the public surface of `data` describes data in domain terms. A doc-comment line
 # (`///` or `//!`) holding a bank:address pair, a bare four-digit `$XXXX` address or a

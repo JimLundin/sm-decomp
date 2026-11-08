@@ -1,4 +1,4 @@
-use clean_types::{Block, Cell, Heading, Position, Radius, SlopeFaces, Way, World, px};
+use clean_types::{Block, Cell, Heading, SlopeFaces, Way, World};
 use core::num::Wrapping;
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
@@ -183,43 +183,4 @@ fn the_cells_her_moves_reached_become_the_touches_in_order() {
         touches.touched(),
         [Touch::Item(BlockIndex(2)), Touch::Scroll(BlockIndex(1))]
     );
-}
-
-#[test]
-fn only_her_centres_scroll_trigger_reacts_when_it_is_in_another_row() {
-    let slopes = slopes();
-    let blocks = level(&[
-        ((1, 1), BlockKind::SpecialAir(Bts(0x46))),
-        ((1, 2), BlockKind::Special(PlmChoice::Common(0x45))),
-    ]);
-    let world = world(&blocks, &slopes);
-    let radius = Radius {
-        x: Wrapping(5),
-        y: Wrapping(0x10),
-    };
-    // Centre on row 1, bottom edge on row 2.
-    let position = Position {
-        x: px(Wrapping(0x18)),
-        y: px(Wrapping(0x18)),
-    };
-    let inside = [at(1, 2), at(1, 1), at(1, 0)];
-    assert_eq!(
-        world.inside_touch(&inside, position, radius),
-        Some(Touch::Scroll(BlockIndex(5)))
-    );
-    // The item's block below reacts to no inside point.
-    assert_eq!(
-        world.inside_touch(&[at(1, 2), at(1, 2)], position, radius),
-        None
-    );
-    // Centre and bottom edge on one row: the second cell is her top's.
-    let short = Radius {
-        x: Wrapping(5),
-        y: Wrapping(4),
-    };
-    let low = Position {
-        x: px(Wrapping(0x18)),
-        y: px(Wrapping(0x1A)),
-    };
-    assert_eq!(world.inside_touch(&[at(1, 1), at(1, 1)], low, short), None);
 }
