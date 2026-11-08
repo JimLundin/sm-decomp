@@ -533,7 +533,11 @@ Most match (mockball's x, 19 of 19 compared before, is 87 of 87 now). These don'
 
 area-maridia 190 → 191 (x 1 px short) is gap 19's step: answered.
 
-## Open: the engine's pose at the edge (integrator, 2026-11-07, after `c44e48c`)
+## Answered: the engine's pose at the edge (integrator, 2026-11-07, after `c44e48c`)
+
+Every item is answered: 6 and 7 by the pose map and `SlopesCarry`, 8 by `OtherBlockKinds`'
+table (a door that leads to a room is air, one that leads nowhere solid), and 9 by round 7's push
+(`PoseFitAfterMoves`; the frame is item-morph-ball 1310 → 1311, in the Tick gaps above).
 
 Items 6 and 7 are answered by the observer (lane/pose-map): §2's new parts, the map both ways
 in the decode notes, and `SlopesCarry`'s empty column. Both are wired (lane/wire-r6): the
@@ -570,7 +574,11 @@ Items 1-3 below are answered by `c44e48c` (the pose chart, `Outcome::reached`, `
    given the new body's radius), so the order §`PoseFitAfterMoves` states holds in the engine.
    No recorded frame tells the two orders apart yet (spec gap 6: a block within 10 px above her).
 
-## Open: what wiring the model into the engine needs (integrator, 2026-11-07)
+## Answered: what wiring the model into the engine needs (integrator, 2026-11-07)
+
+Every item is answered in the spec: 1 by the pose chart choosing the pose after the moves
+(`WhatHerMovesMet`), 2 by `TouchedCells`, 3 by `OtherBlockKinds`, 4 by `SlopesSlowTheWalk`'s walk
+factor and 5 by `PoseFitAfterMoves`.
 
 These come from wiring, not from a differing frame: the engine can't drive the model's public API
 as it stands without a stand-in. None has a frame yet; each names the entry it touches.
