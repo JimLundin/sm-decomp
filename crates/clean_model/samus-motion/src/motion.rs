@@ -3,7 +3,7 @@
 //! How her speed builds, brakes and halts as her situation moves her (`SpeedBuildsAndBrakes`,
 //! `Dash`, `DriftInTheAir`, `Jumping`, `TurningRound`). Samus holds one; her moves read it.
 
-use crate::rows::{Drift, FORWARD, Moves};
+use crate::rows::{Drift, FORWARD, Moves, seen};
 use crate::rules::{Gait, Limits, Rules};
 use crate::tick::Tick;
 use Carry::{CarriesOn, FollowsPad};
@@ -64,9 +64,20 @@ impl Run {
     /// `SpeedBuildsAndBrakes`, `WallsAndCeilings`, `PadChart`: a halt: horizontal speed 0, dash
     /// 0, following the pad.
     pub(crate) const fn halt(&mut self) {
-        self.speed = ZERO;
+        self.stop();
         self.dash = ZERO;
+    }
+
+    /// `Landing`, `WallJump`, `DriftInTheAir`: horizontal speed 0, following the pad.
+    pub(crate) const fn stop(&mut self) {
+        self.speed = ZERO;
         self.carry = FollowsPad;
+    }
+
+    /// `TurningRound` (§1.2 skidding): she carries on against her facing, at any speed, 0
+    /// included.
+    pub(crate) fn skids(&self, facing: Facing) -> bool {
+        self.carry == CarriesOn && self.way != facing.side()
     }
 
     /// `TurningRound`, `PadChart`'s "as running": the dash joins her speed (dash 0) and she
@@ -87,8 +98,8 @@ impl Run {
         }
     }
 
-    /// §1, `SpeedBuildsAndBrakes`: the way she moves, the way her speed points, her facing when
-    /// it is 0.
+    /// `SpeedBuildsAndBrakes`: the way she moves, the way her speed points, her facing when it
+    /// is 0 (§1).
     pub(crate) fn heading(&self, facing: Facing) -> Heading {
         if self.speed == ZERO {
             facing.side()
@@ -97,48 +108,51 @@ impl Run {
         }
     }
 
-    /// `SpeedBuildsAndBrakes`, `Dash`, `DriftInTheAir`, `Jumping`: what her speed and dash
-    /// become as her situation moves her (`moves`, facing `facing`), and what she moves by;
-    /// `still` is a vertical speed of 0. Left and right held together read as the side she
-    /// faces held.
-    pub(crate) fn stride(&mut self, moves: Moves, facing: Facing, still: bool, t: &Tick) -> Stride {
-        let (r, pad) = (t.rules, t.frame.pad);
-        let carries = self.carry == CarriesOn;
-        let (gait, drift) = match moves {
-            Moves::Build(gait, drift) => (gait, drift),
-            // The ball at rest braking or skidding rolls like running, and keeps its dash.
-            Moves::Rest if carries => {
-                self.brake(r);
-                return Both;
+    /// `SpeedBuildsAndBrakes`, `Dash`, `Jumping`: what her speed and dash become as her
+    /// situation moves her (`moves`, facing `facing`), and what she moves by; `falls` is a
+    /// vertical motion on the ground (a vertical speed, or falling at 0). The ball at rest
+    /// braking or skidding rolls like running and keeps its dash; with a vertical motion it moves
+    /// by its dash only, keeping both speeds. Taking off she moves by her dash only, a dash she is
+    /// to lose gone first, and follows the pad.
+    pub(crate) fn stride(&mut self, moves: Moves, facing: Facing, falls: bool, t: &Tick) -> Stride {
+        match moves {
+            Moves::Build(gait, drift) => self.drift(gait, drift, facing, t),
+            Moves::Rest if self.carry == CarriesOn => {
+                self.brake(t.rules);
+                Both
             }
-            // The ball at rest with a vertical speed moves by its dash only, keeping both speeds.
-            Moves::Rest if !still => return Dash,
-            Moves::Rest | Moves::DashThenHalt => return DashThenHalt,
-            // Jumping: taking off she moves by her dash only, a dash she is to lose gone first,
-            // and follows the pad.
+            Moves::Rest if falls => Dash,
+            Moves::Rest | Moves::DashThenHalt => DashThenHalt,
             Moves::TakeOff => {
                 self.lose_dash();
                 self.carry = FollowsPad;
-                return Dash;
+                Dash
             }
-            Moves::Dash => return Dash,
-        };
-        // Dash: running with run held she gains dash; in any other moving activity a dash she is
-        // to lose is gone.
+            Moves::Dash => Dash,
+        }
+    }
+
+    /// `SpeedBuildsAndBrakes`, `DriftInTheAir`, `Dash`: her speed building towards her gait's
+    /// top, as her drift says. Running with run held she gains dash; in any other moving
+    /// activity a dash she is to lose is gone. Carrying on along the ground she brakes, and a skid
+    /// in the air brakes as on the ground, but not through a wall jump. Following the pad with
+    /// neither side held, a straight jump or a fall stops drifting, and the falling ball halts but
+    /// still moves by its dash. Else she builds; carrying on in the air she doesn't brake. A spin
+    /// drifts only while she holds the side she faces (left and right together read so) or
+    /// reached her top speed this frame, else she stops drifting and moves by her dash alone; a
+    /// spin drifting, and a wall jump always, carry on along her facing.
+    fn drift(&mut self, gait: Gait, drift: Drift, facing: Facing, t: &Tick) -> Stride {
+        let (r, pad) = (t.rules, t.frame.pad);
         if gait == Gait::Running && pad.any(RUN) {
             self.grow_dash(r);
         } else {
             self.lose_dash();
         }
-        // SpeedBuildsAndBrakes: carrying on along the ground she brakes; DriftInTheAir: a skid in
-        // the air brakes, as on the ground, but not through a wall jump.
-        let ahead = facing.side();
+        let (ahead, carries) = (facing.side(), self.carry == CarriesOn);
         if carries && (drift == Drift::Ground || self.way != ahead && drift != Drift::WallJump) {
             self.brake(r);
             return Both;
         }
-        // DriftInTheAir: following the pad with neither side held she stops drifting; the
-        // falling ball instead halts, but still moves by its dash.
         let let_go = !carries && !pad.any(SIDES);
         if let_go && drift == Drift::Air {
             self.speed = ZERO;
@@ -147,14 +161,9 @@ impl Run {
         if let_go && drift == Drift::BallAir {
             return DashThenHalt;
         }
-        // SpeedBuildsAndBrakes: following the pad she builds; DriftInTheAir: carrying on in the
-        // air she doesn't brake. A spin drifts only while she holds the side she faces or reached
-        // her top speed this frame, else she stops drifting and moves by her dash alone; a spin
-        // drifting, and a wall jump always, carry on along her facing.
         let topped = self.build(r.limits(gait), ahead, r);
-        if drift == Drift::Spin && !topped && !pad.seen(facing).any(FORWARD) {
-            self.speed = ZERO;
-            self.carry = FollowsPad;
+        if drift == Drift::Spin && !topped && !seen(pad, facing).any(FORWARD) {
+            self.stop();
             return Dash;
         }
         if matches!(drift, Drift::Spin | Drift::WallJump) {
@@ -164,7 +173,8 @@ impl Run {
     }
 
     /// `SpeedBuildsAndBrakes`: gains the step up to the top (`WordwiseTopSpeed`), along her
-    /// facing. Returns whether she took the top speed.
+    /// facing. Returns whether she took the top speed: the step was cut to it, so a step that
+    /// lands exactly on it hasn't reached it (`DriftInTheAir`).
     fn build(&mut self, limits: Limits, ahead: Heading, r: &Rules) -> bool {
         let sum = self.speed + limits.step;
         self.speed = r.cap(sum, limits.top);
@@ -186,11 +196,11 @@ impl Run {
     /// `Dash`: grows if, before the step, its pixel part is below the cap's or its subpixel part
     /// is below the cap's; else it becomes the cap.
     fn grow_dash(&mut self, r: &Rules) {
-        let (d, cap) = (self.dash, r.dash_cap);
-        self.dash = if below(d.pixel(), cap.pixel()) || below(d.sub(), cap.sub()) {
-            d + r.dash_step
+        let ((p, s), (cp, cs)) = (self.dash.words(), r.dash_cap.words());
+        self.dash = if below(p, cp) || below(s, cs) {
+            self.dash + r.dash_step
         } else {
-            cap
+            r.dash_cap
         };
         self.dash_is = Hers;
     }

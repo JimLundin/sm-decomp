@@ -7,30 +7,47 @@ use core::num::Wrapping;
 /// A signed one is held in two's complement: `-4.E000` is `FFFB.2000`. §9: a sum carries the
 /// subpixel into the pixel part, mod 2^16 on the pixel part, so `+`, `-` and negation are
 /// `Wrapping`'s.
+///
+/// Its comparisons (`<`, `<=`, `min`, `max`) are unsigned: they read the 32 bits as they stand,
+/// so a signed quantity below zero compares as a large one. Compare a signed quantity by its
+/// `Parts::size` and `Parts::negative`.
 pub type Fixed = Wrapping<u32>;
+
+/// A pixel part, or a whole number of pixels.
+///
+/// A pixel of a position along one axis, a distance, a body's half-size. Its arithmetic wraps
+/// mod 2^16, as the pixel part of a position does (§9). Its comparisons are unsigned, as
+/// `Fixed`'s are; read a signed difference by its `.0`'s `cast_signed`.
+pub type Px = Wrapping<u16>;
 
 /// The header's notation: a `P.S` quantity from its pixel part and its subpixel part.
 #[must_use]
-pub const fn fixed(pixel: u16, sub: u16) -> Fixed {
-    let ([a, b], [c, d]) = (pixel.to_be_bytes(), sub.to_be_bytes());
-    Wrapping(u32::from_be_bytes([a, b, c, d]))
+pub fn fixed(pixel: Px, sub: u16) -> Fixed {
+    Wrapping(u32::from(pixel.0) << PIXEL_BITS | u32::from(sub))
 }
 
-/// A whole number of pixels.
+/// A whole number of pixels, as a `P.S` quantity.
 #[must_use]
-pub const fn px(pixel: u16) -> Fixed {
+pub fn px(pixel: Px) -> Fixed {
     fixed(pixel, 0)
 }
 
+/// §9: the pixel part is a quantity's high 16 bits.
+const PIXEL_BITS: u32 = 16;
+/// `Jumping`, `SlopesSlowTheWalk`: an 8.8 reading takes a byte from each part.
+const BYTE: u32 = 8;
+
 /// The parts of a `P.S` quantity (the header's notation), and its sign read signed (§1).
 pub trait Parts {
+    /// The pixel part and the subpixel part.
+    fn words(self) -> (u16, u16);
     /// The pixel part.
-    fn pixel(self) -> u16;
+    fn pixel(self) -> Px;
     /// The subpixel part.
     fn sub(self) -> u16;
     /// The value read as 8.8: the pixel part's low byte and the subpixel part's high byte
     /// (`Jumping`'s space jump window, `SlopesSlowTheWalk`'s cut).
-    fn to_8_8(self) -> u16;
+    fn to_8_8(self) -> Px;
     /// The same pixel part with another subpixel part.
     fn with_sub(self, sub: u16) -> Fixed;
     /// Read signed: whether this points upward or leftward (below zero).
@@ -40,17 +57,19 @@ pub trait Parts {
 }
 
 impl Parts for Fixed {
-    fn pixel(self) -> u16 {
-        let [a, b, _, _] = self.0.to_be_bytes();
-        u16::from_be_bytes([a, b])
+    fn words(self) -> (u16, u16) {
+        let [a, b, c, d] = self.0.to_be_bytes();
+        (u16::from_be_bytes([a, b]), u16::from_be_bytes([c, d]))
+    }
+    fn pixel(self) -> Px {
+        Wrapping(self.words().0)
     }
     fn sub(self) -> u16 {
-        let [_, _, c, d] = self.0.to_be_bytes();
-        u16::from_be_bytes([c, d])
+        self.words().1
     }
-    fn to_8_8(self) -> u16 {
-        let [_, b, c, _] = self.0.to_be_bytes();
-        u16::from_be_bytes([b, c])
+    fn to_8_8(self) -> Px {
+        let (pixel, sub) = self.words();
+        Wrapping(pixel << BYTE | sub >> BYTE)
     }
     fn with_sub(self, sub: u16) -> Fixed {
         fixed(self.pixel(), sub)
@@ -66,7 +85,8 @@ impl Parts for Fixed {
 /// No speed, no distance: `0.0000`.
 pub const ZERO: Fixed = Wrapping(0);
 
-/// `below(a, b)` on 16-bit parts (§9): bit 15 of `(a − b) mod 2^16` is set.
+/// `WordwiseTopSpeed`, `Dash`: `below(a, b)` on 16-bit parts: bit 15 of `(a − b) mod 2^16` is
+/// set.
 #[must_use]
 pub const fn below(a: u16, b: u16) -> bool {
     a.wrapping_sub(b).cast_signed() < 0
@@ -85,7 +105,7 @@ pub struct Pair<T> {
 pub type Position = Pair<Fixed>;
 
 /// A body's half-width and half-height, in pixels.
-pub type Radius = Pair<u16>;
+pub type Radius = Pair<Px>;
 
 /// A direction: the way a move goes (`TouchedCells`), or the way a speed points. Listed
 /// alphabetically, as the spec lists them; the order means nothing.
@@ -256,11 +276,12 @@ pub struct Pose {
     pub legs: Legs,
 }
 
-/// The pad (§1.3): a set of its buttons, the ones held or the ones just pressed.
+/// The pad (§1.3): a set of its buttons, the ones held or the ones just pressed, each a bit of
+/// `button`'s.
 #[derive(Clone, Copy, Default)]
 pub struct Buttons(pub u16);
 
-/// The pad's buttons, each a set of one; `union` joins sets.
+/// The pad's buttons, each a set of one; sets join by their bits, `Buttons(a.0 | b.0)`.
 pub mod button {
     use super::Buttons;
     /// Run.
@@ -281,44 +302,17 @@ pub mod button {
     pub const AIM_UP: Buttons = Buttons(128);
     /// Aim down.
     pub const AIM_DOWN: Buttons = Buttons(256);
-    /// §7 forward: the side she faces, held. Never on the pad itself: `Buttons::seen` adds it.
-    pub const FORWARD: Buttons = Buttons(512);
-    /// §7 back: the other side, held; likewise added by `Buttons::seen`.
-    pub const BACK: Buttons = Buttons(1024);
     /// Left or right.
-    pub const SIDES: Buttons = LEFT.union(RIGHT);
+    pub const SIDES: Buttons = Buttons(LEFT.0 | RIGHT.0);
+    /// Every button of the pad.
+    pub const PAD: Buttons = Buttons(511);
 }
 
 impl Buttons {
-    /// The union of two sets: the buttons in either.
-    #[must_use]
-    pub const fn union(self, other: Self) -> Self {
-        Self(self.0 | other.0)
-    }
     /// Whether any of `these` is in the set.
     #[must_use]
     pub const fn any(self, these: Self) -> bool {
         self.0 & these.0 != 0
-    }
-    /// The set as seen facing `facing` (§7: forward and back are by her facing): the set with
-    /// `FORWARD` where she holds the side she faces and `BACK` where she holds the other.
-    #[must_use]
-    pub const fn seen(self, facing: Facing) -> Self {
-        let (ahead, behind) = match facing {
-            Facing::Left => (button::LEFT, button::RIGHT),
-            Facing::Right | Facing::Screen => (button::RIGHT, button::LEFT),
-        };
-        let forward = if self.any(ahead) {
-            button::FORWARD
-        } else {
-            Self(0)
-        };
-        let back = if self.any(behind) {
-            button::BACK
-        } else {
-            Self(0)
-        };
-        self.union(forward).union(back)
     }
 }
 
@@ -409,32 +403,25 @@ pub enum SlopeFaces {
     Floor,
 }
 
-/// `SlopesCarry`: where a sloped surface lies at one of its block's pixel columns.
-#[derive(Clone, Copy)]
-pub enum Surface {
-    /// At this row of the block, 0 to 15: a floor's topmost solid pixel, a ceiling's lowest.
-    Row(u8),
-    /// An empty column: none of the surface, which lies just past the block's far edge.
-    JustPast,
-    /// A column far past: none of the surface, which lies more than one row past the far edge.
-    FarPast,
-}
-
 /// A sloped surface's shape: world data.
 #[derive(Clone, Copy)]
 pub struct Slope {
     /// Floor or ceiling.
     pub faces: SlopeFaces,
-    /// The surface at each of the block's pixel columns, from the left.
-    pub surface: [Surface; 16],
+    /// `SlopesCarry`: the surface at each of the block's pixel columns, from the left, held as
+    /// its depth from the block's open side: a floor's top row as it is (counted from the top),
+    /// a ceiling's bottom row counted up from the block's bottom row (15 less it); 16 is an empty
+    /// column (the surface just past the block's far edge) and 17 a column far past, for a floor
+    /// and a ceiling alike.
+    pub depth: [Px; 16],
     /// `SlopesSlowTheWalk`: a floor's walk factor, in 1/256ths (`0x100` is 1.00).
-    pub factor: u16,
+    pub factor: Fixed,
 }
 
 /// A solid enemy's box: its centre and half-sizes, in pixels.
 pub struct Hitbox {
     /// Its centre.
-    pub centre: Pair<u16>,
+    pub centre: Pair<Px>,
     /// Its half-sizes.
     pub radius: Radius,
 }
@@ -472,4 +459,13 @@ pub enum Switch {
     Toggle,
     /// Its values come from `Rules`.
     Parameter,
+}
+
+/// How the spec checks a catalogue entry: its `checked:` line.
+#[derive(PartialEq, Eq)]
+pub enum Checked {
+    /// By vectors: the oracle's records, constructed vectors, or both.
+    ByVectors,
+    /// On the original alone: no vector exercises it.
+    OriginalOnly,
 }

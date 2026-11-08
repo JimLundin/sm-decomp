@@ -5,9 +5,31 @@
 //! the rows; `chart` reads them.
 
 use crate::rules::Gait;
-use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Heading, Legs, button};
+use clean_types::button::{self, LEFT, PAD, RIGHT};
+use clean_types::{Action, Aim, Body, Buttons, Facing, Fixed, Gun, Heading, Legs, Pose, ZERO};
+use core::num::Wrapping;
 
-pub use button::{BACK, FORWARD};
+/// `PadChart`: forward held, the side she faces (§2). Never on the pad: only `seen` makes it.
+pub const FORWARD: Buttons = Buttons(512);
+/// `PadChart`: back held, the other side; likewise made by `seen` alone.
+pub const BACK: Buttons = Buttons(1024);
+
+/// `PadChart`: the pad as the chart sees it, facing `facing`.
+///
+/// Forward and back are by her facing at the frame's start, facing the screen counting as right:
+/// the pad's own buttons, with `FORWARD` where she holds the side she faces and `BACK` where she
+/// holds the other. Any other bits a caller set are dropped, so forward and back come from this
+/// view alone.
+#[must_use]
+pub fn seen(pad: Buttons, facing: Facing) -> Buttons {
+    let (ahead, behind) = if facing == Facing::Left {
+        (LEFT, RIGHT)
+    } else {
+        (RIGHT, LEFT)
+    };
+    let side = |held: Buttons, named: Buttons| if pad.any(held) { named.0 } else { 0 };
+    Buttons(pad.0 & PAD.0 | side(ahead, FORWARD) | side(behind, BACK))
+}
 
 /// What she is doing, as the spec's tables name it ("She is", "She was").
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -95,8 +117,6 @@ pub struct Class {
     pub action: &'static [Action],
     /// Her aim one of these.
     pub aim: &'static [Aim],
-    /// On the ground or not; `None` either.
-    pub ground: Option<bool>,
     /// The situation.
     pub is: &'static Situation,
 }
@@ -167,6 +187,10 @@ pub struct Next {
     pub gun: Option<Gun>,
     /// The legs.
     pub legs: Option<Legs>,
+    /// `ShrinkingLowersHer`: the frame this pose starts, she looks down its own distance and is
+    /// lowered by the room it finds (crouching 5 px, morphing 9 px); standing up and unmorphing
+    /// lower her 0 px.
+    pub lower: Option<Fixed>,
 }
 
 /// What a change does to her speeds, dash and position, in order.
@@ -189,15 +213,45 @@ pub enum Effect {
     Halt,
     /// `Moonfall`.
     Moonfall,
+    /// `Jumping`: the change into a straight jump or a fall: with a dash she carries on along
+    /// her facing, else she follows the pad.
+    Launch,
+    /// `WallJump` (§1.2): the change from a wall jump into a spin: the spin is carried on.
+    SpinOn,
 }
 
-/// `PadChart`: a beats clause with a condition: the row it beats, by name, while every test
-/// passes.
+/// A change of action's own effect, whatever brought the change.
+///
+/// The pad chart, what her moves met or an animation's end: a pose whose action is one of
+/// `into`, with a body of `body`, taken from a pose whose action differs and is one of `from`,
+/// brings `effect` after the chosen row's own.
+pub struct Entering {
+    /// The actions it changes into.
+    pub into: &'static [Action],
+    /// The bodies it changes into.
+    pub body: &'static [Body],
+    /// The actions it changes from.
+    pub from: &'static [Action],
+    /// What it brings.
+    pub effect: Effect,
+}
+
+impl Entering {
+    /// `Jumping`, `WallJump`: whether the change from action `was` into pose `now` brings it.
+    #[must_use]
+    pub fn on(&self, was: Action, now: Pose) -> bool {
+        let into = self.into.contains(&now.action) && self.body.contains(&now.body);
+        into && was != now.action && self.from.contains(&was)
+    }
+}
+
+/// `PadChart`: a beats clause with a condition it doesn't apply under: the row it beats, by
+/// name, unless one of these sets of tests all pass, where that row beats it instead.
 pub struct Beat {
     /// The row it beats.
     pub row: &'static str,
-    /// While these pass.
-    pub when: &'static [Test],
+    /// Where any of these holds (every test of it passing), the other row beats it.
+    pub unless: &'static [&'static [Test]],
 }
 
 /// A move of the state machine: a row of one of §7's tables.
@@ -212,18 +266,18 @@ pub struct Row {
     pub effects: &'static [Effect],
     /// `PadChart`: the rows of its situation it beats, by name.
     pub beats: &'static [&'static str],
-    /// `PadChart`: the rows of its situation it beats while a condition holds.
-    pub beats_if: &'static [Beat],
+    /// `PadChart`: the rows of its situation it beats, but for a condition.
+    pub beats_unless: &'static [Beat],
     /// `AimingAndShooting`: its kept running pose counts as chosen, bringing the step.
     pub steps: bool,
 }
 
 /// `PadChart`: an aim button, aim up or aim down.
-pub const AIM: Buttons = button::AIM_UP.union(button::AIM_DOWN);
+pub const AIM: Buttons = Buttons(button::AIM_UP.0 | button::AIM_DOWN.0);
 /// `PadChart`: up or down.
-pub const UP_DOWN: Buttons = button::UP.union(button::DOWN);
+pub const UP_DOWN: Buttons = Buttons(button::UP.0 | button::DOWN.0);
 /// `PadChart`: up, down or an aim button.
-pub const UDA: Buttons = UP_DOWN.union(AIM);
+pub const UDA: Buttons = Buttons(UP_DOWN.0 | AIM.0);
 
 /// A row's defaults: it needs nothing, keeps her pose, does nothing and beats nothing.
 pub const ROW: Row = Row {
@@ -232,7 +286,7 @@ pub const ROW: Row = Row {
     next: KEPT,
     effects: &[],
     beats: &[],
-    beats_if: &[],
+    beats_unless: &[],
     steps: false,
 };
 
@@ -244,6 +298,7 @@ pub const KEPT: Next = Next {
     aim: &[],
     gun: None,
     legs: None,
+    lower: None,
 };
 
 /// Upright `Still`, aim `Forward`, the gun stowed and the legs together (`PadChart`: a next pose
@@ -255,7 +310,11 @@ pub const STILL: Next = Next {
     aim: FORWARD_AIM,
     gun: Some(Gun::Stowed),
     legs: Some(Legs::Together),
+    lower: None,
 };
+
+/// `ShrinkingLowersHer`: standing up or unmorphing lowers her 0 px.
+pub const GROWS: Option<Fixed> = Some(ZERO);
 /// `Running`, `Forward`.
 pub const RUN: Next = Next {
     action: Some(Action::Running),
@@ -286,16 +345,18 @@ pub const MOONWALK: Next = Next {
     action: Some(Action::Moonwalking),
     ..STILL
 };
-/// Crouched `Crouching`, `Forward`.
+/// Crouched `Crouching`, `Forward`: she is lowered 5 px (`ShrinkingLowersHer`).
 pub const CROUCH: Next = Next {
     body: Some(Body::Crouched),
     action: Some(Action::Crouching),
+    lower: Some(Wrapping(0x5_0000)),
     ..STILL
 };
-/// Ball `Morphing`.
+/// Ball `Morphing`: she is lowered 9 px (`ShrinkingLowersHer`).
 pub const MORPH: Next = Next {
     body: Some(Body::Ball),
     action: Some(Action::Morphing),
+    lower: Some(Wrapping(0x9_0000)),
     ..STILL
 };
 /// `Turning` on the ground: facing back, with the aim she had (§2).

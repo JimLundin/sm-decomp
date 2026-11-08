@@ -7,10 +7,11 @@ use clean_model_samus_motion::{
     SpeedCap, Spin, Vertical, WallTest, classify,
 };
 use clean_types::{
-    Action, Aim, Block, Body, Buttons, Cell, Equipment, Facing, Fixed, Gun, Heading, Hitbox,
-    LandedFrom, Legs, Pair, Parity, Parts, Pose, Position, Radius, Slope, SlopeFaces, Surface,
+    Action, Aim, Block, Body, Buttons, Cell, Checked, Equipment, Facing, Fixed, Gun, Heading,
+    Hitbox, LandedFrom, Legs, Pair, Parity, Parts, Pose, Position, Px, Radius, Slope, SlopeFaces,
     Touch, Turn, Way, World, ZERO, button, fixed as quantity,
 };
+use core::num::Wrapping;
 
 /// A signed `P.S` quantity as the vectors write it (the header's notation): a size and a sign.
 #[derive(Clone, Copy)]
@@ -240,7 +241,7 @@ fn parse(text: &str) -> Vec<(String, Value)> {
 fn fixed(text: &str) -> Fixed {
     let (pixel, sub) = text.split_once('.').expect("P.S");
     quantity(
-        u16::from_str_radix(pixel, 16).expect("pixel part"),
+        Wrapping(u16::from_str_radix(pixel, 16).expect("pixel part")),
         u16::from_str_radix(sub, 16).expect("subpixel part"),
     )
 }
@@ -271,10 +272,9 @@ fn named(name: &str) -> Buttons {
 
 /// A list of buttons, `pad` or `pressed`.
 fn pad(value: &Value) -> Buttons {
-    value
-        .array()
-        .iter()
-        .fold(Buttons::default(), |pad, b| pad.union(named(b.str())))
+    value.array().iter().fold(Buttons::default(), |pad, b| {
+        Buttons(pad.0 | named(b.str()).0)
+    })
 }
 
 /// The buttons a frame gives as just pressed: `pressed` (none if it is missing), and jump
@@ -283,7 +283,7 @@ fn pressed(frame: &Value) -> Buttons {
     let jump = frame.get("jump_pressed").expect("jump_pressed").bool();
     let others = frame.get("pressed").map_or_else(Buttons::default, pad);
     if jump {
-        others.union(button::JUMP)
+        Buttons(others.0 | button::JUMP.0)
     } else {
         others
     }
@@ -291,8 +291,16 @@ fn pressed(frame: &Value) -> Buttons {
 
 /// A pose's body size, `radius = [x, y]`.
 fn radius(value: &Value) -> Radius {
-    let (x, y) = pair(value.get("radius").expect("pose.radius"));
-    Pair { x, y }
+    px_pair(value.get("radius").expect("pose.radius"))
+}
+
+/// A pair of pixels, `[x, y]`, as the model's pixels.
+fn px_pair(value: &Value) -> Pair<Px> {
+    let (x, y) = pair(value);
+    Pair {
+        x: Wrapping(x),
+        y: Wrapping(y),
+    }
 }
 
 /// A pose (spec §2, the header's `pose`): body, action, facing; aim (default `Forward`), gun
@@ -437,32 +445,37 @@ fn corner(value: &Value) -> (u16, u16) {
 }
 
 /// A sloped block: its corner and its surface at its 16 columns; 16 is an empty column (the
-/// surface just past the far edge), 17 a column far past (spec `SlopesCarry`).
+/// surface just past the far edge), 17 a column far past (spec `SlopesCarry`). The model holds
+/// a surface as its depth from the block's open side (spec `SlopesCarry`): a floor's top row as
+/// it is, a ceiling's bottom row counted up from the block's bottom row (15 less it), 16 and 17
+/// the same for both.
 fn slope(value: &Value, faces: SlopeFaces) -> ((u16, u16), Block) {
     known_keys(value, "slope", &["block", "surface", "factor"]);
-    let mut surface = [Surface::Row(0); 16];
+    let mut depth = [Wrapping(0); 16];
     let rows = value.get("surface").expect("slope surface").array();
-    assert_eq!(rows.len(), surface.len(), "slope surface");
-    for (to, row) in surface.iter_mut().zip(rows) {
-        *to = match row.int() {
-            16 => Surface::JustPast,
-            17 => Surface::FarPast,
-            n => Surface::Row(u8::try_from(n).expect("surface row")),
-        };
+    assert_eq!(rows.len(), depth.len(), "slope surface");
+    for (to, row) in depth.iter_mut().zip(rows) {
+        let n = u16::try_from(row.int()).expect("surface row");
+        assert!(n <= 17, "surface row {n}");
+        *to = Wrapping(if faces == SlopeFaces::Ceiling && n <= 15 {
+            15_u16.saturating_sub(n)
+        } else {
+            n
+        });
     }
     // The walk factor, "P.SS" in hex: a pixel and 1/256ths; 1.00 by default.
     let factor = value.get("factor").map_or(0x100, |f| {
         let (pixel, sub) = f.str().split_once('.').expect("factor");
         assert_eq!(sub.len(), 2, "factor");
-        u16::from_str_radix(&format!("{pixel}{sub}"), 16).expect("factor")
+        u32::from_str_radix(&format!("{pixel}{sub}"), 16).expect("factor")
     });
     let cell = corner(value.get("block").expect("slope block"));
     (
         cell,
         Block::Slope(Slope {
             faces,
-            surface,
-            factor,
+            depth,
+            factor: Wrapping(factor),
         }),
     )
 }
@@ -552,11 +565,9 @@ fn room(world: &Value) -> Room {
         .get("enemy")
         .map(|e| {
             known_keys(e, "enemy", &["centre", "radius"]);
-            let (x, y) = pair(e.get("centre").expect("enemy centre"));
-            let (rx, ry) = pair(e.get("radius").expect("enemy radius"));
             Hitbox {
-                centre: Pair { x, y },
-                radius: Pair { x: rx, y: ry },
+                centre: px_pair(e.get("centre").expect("enemy centre")),
+                radius: px_pair(e.get("radius").expect("enemy radius")),
             }
         })
         .into_iter()
@@ -661,12 +672,15 @@ fn settings(vector: &Value) -> (Rules, Equipment) {
 /// her dash is hers to keep, she remembers no spin and no seat, an upward speed is a rise,
 /// and in a jump, a spin, a fall or a wall jump (a turn in a jump or a fall included) she is
 /// in the air: a vertical speed of 0 there means she has just started to fall. In any other
-/// pose she is on the ground, keeping any downward speed she has (`FollowingTheGround`).
+/// pose she is on the ground, keeping any downward speed she has (`FollowingTheGround`), or,
+/// where `before.falling` says so, falling at 0 there.
 fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
     known_keys(
         before,
         "before",
-        &["position", "speed_x", "dash", "speed_y", "bounces"],
+        &[
+            "position", "speed_x", "dash", "speed_y", "bounces", "falling",
+        ],
     );
     // A missing quantity is 0.
     let quantity = |k: &str| signed(before.get(k).map_or("+0000.0000", Value::str));
@@ -705,6 +719,8 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
         Vertical::Rising
     } else if airborne {
         Vertical::Falling
+    } else if flag(Some(before), "falling") {
+        Vertical::GroundFalling
     } else {
         Vertical::Ground
     };
@@ -730,7 +746,7 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
         bounces,
         pose,
         radius,
-        spin: Spin::Off,
+        spin: Spin::OFF,
         seat: Seat::Unseated,
     }
 }
@@ -901,17 +917,29 @@ fn run_pose_step(step: &Value) -> Option<String> {
                 Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
             ));
     // A step gives no speed either: her horizontal speed at the frame's start is 0.
-    let moment = Moment {
-        situation: classify(start, !airborne),
-        pose: start,
-        moving: false,
-        airborne,
+    let body = |_: Pose| Pair {
+        x: Wrapping(0),
+        y: Wrapping(0),
+    };
+    let frame = Frame {
         pad: held,
         pressed,
         equipment: Equipment::default(),
+        spin_turned_far: false,
+        elevator_moving: false,
+        parity: Parity::Even,
+        animation_ends,
+        body: &body,
+    };
+    let moment = Moment {
+        situation: classify(start),
+        pose: start,
+        moving: false,
+        airborne,
+        frame: &frame,
         met,
     };
-    let chosen = moment.choose(animation_ends).pose;
+    let chosen = moment.choose().pose;
     let after = step.get("after").expect("after");
     known_keys(after, "after", &["pose"]);
     let expected = pose(after.get("pose").expect("after.pose"));
@@ -1109,40 +1137,16 @@ fn catalogue_matches_the_vectors() {
             "{entry} is not in the catalogue"
         );
     }
-    // An entry the spec checks on the original alone (its checked line names no oracle record
-    // and no constructed vector) needs no vector.
-    let unexercised: Vec<&str> = ids
+    // An entry the spec checks on the original alone needs no vector; one it checks by vectors
+    // needs one.
+    let unexercised: Vec<String> = CATALOGUE
         .iter()
-        .map(String::as_str)
-        .filter(|id| !exercised.contains(id) && !original_only(&checked_line(id)))
+        .filter(|b| b.checked == Checked::ByVectors)
+        .map(|b| format!("{:?}", b.id))
+        .filter(|id| !exercised.contains(&id.as_str()))
         .collect();
     assert!(
         unexercised.is_empty(),
         "entries no vector exercises: {unexercised:?}"
     );
-}
-
-/// The behaviour spec, for its entries' checked lines.
-const SPEC: &str = include_str!("../../../../docs/behaviours/samus-motion.md");
-
-/// An entry's `- checked:` line in the spec, its continuation lines joined.
-fn checked_line(id: &str) -> String {
-    let heading = format!("### {id}");
-    let mut entry = SPEC
-        .lines()
-        .skip_while(|l| *l != heading)
-        .skip(1)
-        .take_while(|l| !l.starts_with("### ") && !l.starts_with("---"))
-        .skip_while(|l| !l.starts_with("- checked:"));
-    let first = entry
-        .next()
-        .unwrap_or_else(|| panic!("{id}: no checked line in the spec"));
-    entry
-        .take_while(|l| l.starts_with("  "))
-        .fold(first.to_owned(), |line, more| line + " " + more.trim())
-}
-
-/// Whether a checked line checks on the original alone.
-fn original_only(line: &str) -> bool {
-    line.contains("original only") && !line.contains("oracle") && !line.contains("constructed")
 }

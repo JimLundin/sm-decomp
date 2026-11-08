@@ -12,16 +12,17 @@ mod tests;
 use crate::rows::Test::{
     Action, Aimed, Airborne, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, SpringBall,
 };
-use crate::rows::{Effect, Met, Row, Side, Situation, Test};
+use crate::rows::{Effect, Met, Row, Side, Situation, Test, seen};
+use crate::tick::Frame;
 use clean_types::Action::Running;
-use clean_types::{Buttons, Equipment, Pose};
+use clean_types::{Fixed, Pose};
 
 /// What the chart reads.
 ///
 /// Her situation and pose at the frame's start, whether her horizontal speed then isn't 0,
-/// whether she is off the ground once her moves are made, the pad held and just pressed, her
-/// equipment and what her moves met.
-pub struct Moment {
+/// whether she is off the ground once her moves are made, the frame (its pad held and just
+/// pressed, her equipment, an animation's end) and what her moves met.
+pub struct Moment<'a> {
     /// Her situation.
     pub situation: &'static Situation,
     /// Her pose.
@@ -30,12 +31,8 @@ pub struct Moment {
     pub moving: bool,
     /// Off the ground once her moves are made.
     pub airborne: bool,
-    /// The buttons held.
-    pub pad: Buttons,
-    /// The buttons just pressed.
-    pub pressed: Buttons,
-    /// Her equipment.
-    pub equipment: Equipment,
+    /// The frame.
+    pub frame: &'a Frame<'a>,
     /// What her moves met.
     pub met: Option<Met>,
 }
@@ -49,6 +46,8 @@ pub struct Choice {
     pub effects: &'static [Effect],
     /// `AimingAndShooting`: a running pose other than hers, or one a row counts as chosen.
     pub steps: bool,
+    /// `ShrinkingLowersHer`: the look down the pose starts with.
+    pub lower: Option<Fixed>,
 }
 
 /// `PadChart`: a row that needs a just-pressed button outranks one that doesn't; then the one that
@@ -61,26 +60,32 @@ fn rank(row: &Row) -> (bool, usize) {
     )
 }
 
-impl Moment {
-    /// `PadChart`: whether row `a` beats row `b`: as `a`'s beats clauses say (one with a
-    /// condition while it holds), else by rank unless `b`'s say it beats `a`.
+impl Moment<'_> {
+    /// `PadChart`: what row `a`'s beats clauses say of row `b`: that `a` beats it, or, under a
+    /// clause's condition, that `b` beats `a`; nothing where they don't name it.
+    fn says(&self, a: &Row, b: &Row) -> Option<bool> {
+        if a.beats.contains(&b.name) {
+            return Some(true);
+        }
+        let clause = a.beats_unless.iter().find(|c| c.row == b.name)?;
+        Some(!clause.unless.iter().any(|tests| self.fits(tests)))
+    }
+
+    /// `PadChart`: whether row `a` beats row `b`: as `a`'s beats clauses say, else as `b`'s say
+    /// the other way, else by rank.
     fn beats(&self, a: &Row, b: &Row) -> bool {
-        let names = |r: &Row, name| {
-            r.beats.contains(&name)
-                || r.beats_if
-                    .iter()
-                    .any(|c| c.row == name && self.fits(c.when))
-        };
-        names(a, b.name) || !names(b, a.name) && rank(a) > rank(b)
+        self.says(a, b)
+            .or_else(|| self.says(b, a).map(|b_wins| !b_wins))
+            .unwrap_or_else(|| rank(a) > rank(b))
     }
 
     /// `PadChart`, `Aiming`, `WhatHerMovesMet`, `AnimationEnds`: whether one test of a row
     /// passes; forward and back are by her facing at the frame's start.
     fn passes(&self, test: &Test) -> bool {
-        let p = self.pose;
+        let (p, f) = (self.pose, self.frame);
         match *test {
-            Held(b) => self.pad.seen(p.facing).any(b),
-            Pressed(b) => self.pressed.seen(p.facing).any(b),
+            Held(b) => seen(f.pad, p.facing).any(b),
+            Pressed(b) => seen(f.pressed, p.facing).any(b),
             Not(t) => !self.passes(t),
             Aimed(aims) => aims.contains(&p.aim),
             Gun(gun) => p.gun == gun,
@@ -89,7 +94,7 @@ impl Moment {
             Action(actions) => actions.contains(&p.action),
             Doing(doings) => doings.contains(&self.situation.doing),
             Airborne => self.airborne,
-            SpringBall => self.equipment.spring_ball,
+            SpringBall => f.equipment.spring_ball,
             Moving => self.moving,
             Test::Met(met) => self.met == Some(met),
         }
@@ -123,6 +128,7 @@ impl Moment {
             pose,
             effects: row.effects,
             steps: pose.action == Running && (pose != p || row.steps),
+            lower: n.lower,
         }
     }
 
@@ -140,11 +146,11 @@ impl Moment {
     /// moves met chooses (`WhatHerMovesMet`), else the pad chart (`PadChart`). The aim change's
     /// step follows from the second and third alone (`AimingAndShooting`).
     #[must_use]
-    pub fn choose(&self, animation_ends: bool) -> Choice {
+    pub fn choose(&self) -> Choice {
         let first = |rows: &'static [Row]| rows.iter().find(|r| self.fits(r.needs));
         let by_moves = self.choice(first(table::MOVES_MET).unwrap_or_else(|| self.pad_chart()));
         first(table::ANIMATION_ENDS)
-            .filter(|_| animation_ends)
+            .filter(|_| self.frame.animation_ends)
             .map_or(by_moves, |r| Choice {
                 steps: by_moves.steps,
                 ..self.choice(r)

@@ -1,6 +1,6 @@
 //! The tuning parameters the model reads. `Rules::REFERENCE` holds the spec's vanilla numbers.
 
-use clean_types::{Fixed, Parts, below};
+use clean_types::{Fixed, Parts, Px, below};
 use core::num::Wrapping;
 use core::ops::Range;
 
@@ -32,30 +32,12 @@ pub enum Gait {
 }
 
 /// One row of `SpeedBuildsAndBrakes`'s table: what she speeds up by a frame, and her top speed.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Limits {
     /// What she speeds up by a frame.
     pub step: Fixed,
     /// Her top speed.
     pub top: Fixed,
-}
-
-/// `SpeedBuildsAndBrakes`'s table, a row for each thing she can be doing.
-pub struct Speeds {
-    /// Running.
-    pub running: Limits,
-    /// Rolling as a ball.
-    pub rolling: Limits,
-    /// Moonwalking.
-    pub moonwalking: Limits,
-    /// In a straight jump or the spring ball's hop.
-    pub straight_jump: Limits,
-    /// In a spin jump or a wall jump.
-    pub spin_jump: Limits,
-    /// Falling, upright or as a ball.
-    pub falling: Limits,
-    /// Turning round.
-    pub turning: Limits,
 }
 
 /// `Jumping`: a rise speed without and with hi-jump.
@@ -79,8 +61,8 @@ impl Boots {
 pub struct Rules {
     /// `WordwiseTopSpeed`.
     pub speed_cap: SpeedCap,
-    /// `SpeedBuildsAndBrakes`: its table.
-    pub speeds: Speeds,
+    /// `SpeedBuildsAndBrakes`: its table, a row for each thing she can be doing.
+    pub speeds: [(Gait, Limits); 7],
     /// `SpeedBuildsAndBrakes`: lost a frame carrying on along the ground.
     pub brake: Fixed,
     /// `Dash`: gained a frame.
@@ -91,7 +73,8 @@ pub struct Rules {
     pub jump: Boots,
     /// `Jumping`: a wall jump.
     pub wall_jump: Boots,
-    /// `Jumping`: a ball bounce.
+    /// `Jumping`: a ball bounce. An adjusted one is never below its vanilla value, 1.0000: the
+    /// rise after bounce 1 is it less 1 px (`Landing`).
     pub bounce: Fixed,
     /// `Jumping`: the crouch lift.
     pub crouch_lift: Fixed,
@@ -100,21 +83,17 @@ pub struct Rules {
     /// `RisingAndFalling`: the pull a frame.
     pub gravity: Fixed,
     /// `RisingAndFalling`: the pixel part at which a fall stops growing.
-    pub fall_settle_px: u16,
+    pub fall_settle_px: Px,
     /// `Landing`: the slowest landing that bounces the ball, in px.
-    pub bounce_from_px: u16,
+    pub bounce_from_px: Px,
     /// `Landing`: the second bounce is the bounce speed less this.
     pub second_bounce_less: Fixed,
     /// `FollowingTheGround` and `SlopesCarry`: the pull beyond her speed, and on a slope.
     pub ground_pull: Fixed,
     /// `WallJump`: the near-wall test's reach.
     pub wall_reach: Fixed,
-    /// `ShrinkingLowersHer`: the crouch's look down.
-    pub crouch_lower: Fixed,
-    /// `ShrinkingLowersHer`: the morph's look down.
-    pub morph_lower: Fixed,
     /// `BlocksStopFlush`: the longest horizontal move, in px.
-    pub move_limit_px: u16,
+    pub move_limit_px: Px,
     /// `AimingAndShooting`: the step forward.
     pub aim_step: Fixed,
     /// `RidingTheElevator`: the descent a frame.
@@ -122,43 +101,64 @@ pub struct Rules {
     /// `PoseFitAfterMoves`: a block look this long or longer is stopped as this long a look is.
     pub look: Fixed,
     /// `PoseFitAfterMoves`: an old body under this half-height can't crouch instead.
-    pub small_body_px: u16,
+    pub small_body_px: Px,
 }
 
 impl Rules {
     /// The vanilla game, with the spec's numbers.
     pub const REFERENCE: Self = Self {
         speed_cap: SpeedCap::Wordwise,
-        speeds: Speeds {
-            running: Limits {
-                step: Wrapping(0x3000),
-                top: Wrapping(0x2_C000),
-            },
-            rolling: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x3_4000),
-            },
-            moonwalking: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x8000),
-            },
-            straight_jump: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x1_4000),
-            },
-            spin_jump: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x1_6000),
-            },
-            falling: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x1_0000),
-            },
-            turning: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0),
-            },
-        },
+        speeds: [
+            (
+                Gait::Running,
+                Limits {
+                    step: Wrapping(0x3000),
+                    top: Wrapping(0x2_C000),
+                },
+            ),
+            (
+                Gait::Rolling,
+                Limits {
+                    step: Wrapping(0xC000),
+                    top: Wrapping(0x3_4000),
+                },
+            ),
+            (
+                Gait::Moonwalking,
+                Limits {
+                    step: Wrapping(0xC000),
+                    top: Wrapping(0x8000),
+                },
+            ),
+            (
+                Gait::StraightJump,
+                Limits {
+                    step: Wrapping(0xC000),
+                    top: Wrapping(0x1_4000),
+                },
+            ),
+            (
+                Gait::SpinJump,
+                Limits {
+                    step: Wrapping(0xC000),
+                    top: Wrapping(0x1_6000),
+                },
+            ),
+            (
+                Gait::Falling,
+                Limits {
+                    step: Wrapping(0xC000),
+                    top: Wrapping(0x1_0000),
+                },
+            ),
+            (
+                Gait::Turning,
+                Limits {
+                    step: Wrapping(0xC000),
+                    top: Wrapping(0),
+                },
+            ),
+        ],
         brake: Wrapping(0x8000),
         dash_step: Wrapping(0x1000),
         dash_cap: Wrapping(0x2_0000),
@@ -174,45 +174,32 @@ impl Rules {
         crouch_lift: Wrapping(0xA_0000),
         space_jump: 0x280..0x500,
         gravity: Wrapping(0x1C00),
-        fall_settle_px: 5,
-        bounce_from_px: 3,
+        fall_settle_px: Wrapping(5),
+        bounce_from_px: Wrapping(3),
         second_bounce_less: Wrapping(0x1_0000),
         ground_pull: Wrapping(0x1_0000),
         wall_reach: Wrapping(0x8_0000),
-        crouch_lower: Wrapping(0x5_0000),
-        morph_lower: Wrapping(0x9_0000),
-        move_limit_px: 15,
+        move_limit_px: Wrapping(15),
         aim_step: Wrapping(0x1_0000),
         elevator: Wrapping(0x1_0000),
         look: Wrapping(0x8_0000),
-        small_body_px: 8,
+        small_body_px: Wrapping(8),
     };
 
     /// `SpeedBuildsAndBrakes`: the table's row for what she is doing.
     #[must_use]
-    pub const fn limits(&self, gait: Gait) -> Limits {
-        let s = &self.speeds;
-        match gait {
-            Gait::Running => s.running,
-            Gait::Rolling => s.rolling,
-            Gait::Moonwalking => s.moonwalking,
-            Gait::StraightJump => s.straight_jump,
-            Gait::SpinJump => s.spin_jump,
-            Gait::Falling => s.falling,
-            Gait::Turning => s.turning,
-        }
+    pub fn limits(&self, gait: Gait) -> Limits {
+        let row = self.speeds.iter().find(|row| row.0 == gait);
+        row.map_or_else(Limits::default, |row| row.1)
     }
 
-    /// `WordwiseTopSpeed`: the speed after the top is tested.
+    /// `WordwiseTopSpeed`: the speed after the top is tested, on the speed's size. `Wordwise`:
+    /// pixel parts first, then subpixels when they are equal.
     #[must_use]
     pub fn cap(&self, speed: Fixed, top: Fixed) -> Fixed {
+        let ((p, s), (tp, ts)) = (speed.words(), top.words());
         let keep = match self.speed_cap {
-            // `Wordwise`: pixel parts first, then subpixels when they are equal.
-            SpeedCap::Wordwise => {
-                below(speed.pixel(), top.pixel())
-                    || speed.pixel() == top.pixel()
-                        && (speed.sub() == top.sub() || below(speed.sub(), top.sub()))
-            }
+            SpeedCap::Wordwise => below(p, tp) || p == tp && (s == ts || below(s, ts)),
             SpeedCap::Exact => speed <= top,
         };
         if keep { speed } else { top }

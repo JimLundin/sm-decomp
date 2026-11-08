@@ -1,0 +1,456 @@
+//! One frame of her motion, in the order `PoseFitAfterMoves` gives: she moves as the pose at
+//! its start says (`MovesAsShePosed`), horizontally, then by the ground pull or her vertical
+//! move, then by the aim change's step; what those moves met is known; the pose is chosen
+//! (`PoseFollows`); pose fit or the shrink places her; then the change's effects act.
+
+use crate::chart::{Choice, Moment};
+use crate::collide::Probe::{Blocks, Look, Move};
+use crate::collide::{Moved, Stop};
+use crate::motion::Carry::FollowsPad;
+use crate::motion::DashIs::ToLose;
+use crate::motion::Stride::{Both, DashThenHalt, Nothing};
+use crate::rows::Doing::{
+    self, Ball, Hop, Running, Shaping, Spinning, StraightJump, TakingOff, Turning,
+};
+use crate::rows::Effect::{
+    self, AsRunning, EndSkid, Halt, Launch, Lift, LoseDash, Rise, SpinOn, TurnRound,
+};
+use crate::rows::Met::{self, Ceiling, Floor, NoFloor, Wall, WallKick};
+use crate::rows::Situation;
+use crate::rules::Rules;
+use crate::samus::WallTest::{Kicked, Neither, Readied};
+use crate::samus::{Bounces, Drawn, Outcome, Samus, Seat, Spin, Standing, Vertical, WallTest};
+use crate::situation::{ENTERING, classify};
+use crate::tick::{Frame, Tick};
+use clean_types::Action::{self, AgainstWall, Still, WallJumping};
+use clean_types::Body::{SpringBall, Upright};
+use clean_types::Heading::{self, Down, Left, Right};
+use clean_types::button::{JUMP, LEFT, SHOOT, SIDES};
+use clean_types::{Aim, Buttons, Equipment, Facing, Fixed, Gun, Parts, Pose, World, ZERO, fixed};
+
+/// `WhatHerMovesMet`: what a frame's moves met, and the near-wall test's outcome (`WallJump`).
+#[derive(Default)]
+struct Meeting {
+    /// What her moves met.
+    met: Option<Met>,
+    /// The near-wall test's outcome.
+    wall_test: WallTest,
+}
+
+/// `FollowingTheGround`, `WallsAndCeilings`: what a walk did: the speed the ground pull reads,
+/// from before any stop, and a wall stop while running.
+struct Walk {
+    /// Her horizontal speed and dash.
+    pull: Fixed,
+    /// A wall stop while running (`WhatHerMovesMet`).
+    wall: Option<Met>,
+}
+
+/// No effects: a change refused, or crouched `Still` taken instead (`PoseFitAfterMoves`).
+const NONE: &[Effect] = &[];
+
+/// `HowSheIsDrawn`: the spin (and a wall jump's) drawn as the screw attack with screw attack,
+/// else as the space jump with space jump; facing the screen, the other suit's sprite with it.
+const fn drawn(pose: Pose, e: Equipment) -> Drawn {
+    let spin = matches!(pose.action, Action::Spinning | WallJumping);
+    if spin && e.screw_attack {
+        Drawn::ScrewAttack
+    } else if spin && e.space_jump {
+        Drawn::SpaceJump
+    } else if matches!(pose.facing, Facing::Screen) && e.other_suit {
+        Drawn::OtherSuit
+    } else {
+        Drawn::Plain
+    }
+}
+
+/// `AimingAndShooting`: standing, unaimed and not landing, holding shoot restarts the standing
+/// animation.
+const fn standing(p: Pose, pad: Buttons) -> Standing {
+    let unaimed = matches!((p.body, p.action, p.aim), (Upright, Still, Aim::Forward));
+    if unaimed && pad.any(SHOOT) {
+        Standing::Restarts
+    } else {
+        Standing::Plays
+    }
+}
+
+impl Samus {
+    /// `PoseFollows`: one frame, in the order it runs: her moves as the pose at its start says
+    /// (`MovesAsShePosed`) and what they met; the pose chosen; pose fit or the shrink
+    /// (`PoseFitAfterMoves`); then the change's effects. `TouchedCells`: the cells she is inside
+    /// come first, from where she starts.
+    pub fn step(&mut self, frame: &Frame, world: &dyn World, rules: &Rules) -> Outcome {
+        let mut t = Tick {
+            frame,
+            world,
+            rules,
+            reached: Vec::new(),
+        };
+        let inside = t.inside(self.bounds());
+        let start = *self;
+        let situation = classify(start.pose);
+        self.begin(situation.doing, frame.pad);
+        let meeting = self.moves(situation, &mut t);
+        let moved = *self;
+        self.meet(meeting.met, situation.doing, &t);
+        let mut chosen = Moment {
+            situation,
+            pose: start.pose,
+            moving: start.run.speed != ZERO,
+            airborne: !self.vertical.on_ground(),
+            frame,
+            met: meeting.met,
+        }
+        .choose();
+        if chosen.steps {
+            self.aim_step(&mut chosen, &mut t);
+        }
+        let camera_from = self.take(chosen, &start, moved, &mut t);
+        Outcome {
+            wall_test: meeting.wall_test,
+            standing: standing(start.pose, frame.pad),
+            drawn: drawn(self.pose, frame.equipment),
+            skidding: self.run.skids(self.pose.facing),
+            reached: t.reached,
+            inside,
+            camera_from,
+        }
+    }
+
+    /// `WallJump` (§1.2): how long she has been in this spin. `RisingAndFalling`: the rise ends
+    /// at the start of the frame after it is spent, and in a straight jump, a spin or the hop at
+    /// the start of any frame with jump not held.
+    fn begin(&mut self, doing: Doing, pad: Buttons) {
+        let next = Spin(self.spin.0.saturating_add(1).min(Spin::CARRIED_ON.0));
+        self.spin = if doing == Spinning { next } else { Spin::OFF };
+        let lets_go = !pad.any(JUMP) && matches!(doing, StraightJump | Spinning | Hop);
+        let spent = !self.vy.negative() && self.vy != ZERO;
+        if self.vertical == Vertical::Rising && (lets_go || spent) {
+            self.fall_from_rest();
+        }
+    }
+
+    /// `MovesAsShePosed`: her moves, as the pose at the frame's start says, and what they met.
+    /// `SpeedBuildsAndBrakes`: facing the screen she doesn't move; `RidingTheElevator`: on a
+    /// moving elevator she moves down 1 px, a move stopped as any downward move. `WallJump`:
+    /// kicking off she doesn't move vertically that frame; `Jumping`: nor taking off.
+    /// `WhatHerMovesMet`: a wall stop while running wins over walking off a ledge.
+    fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
+        if self.pose.facing == Facing::Screen {
+            if t.frame.elevator_moving {
+                self.position = t.go(self.bounds(), Down, t.rules.elevator, Move).to;
+            }
+            return Meeting::default();
+        }
+        let walk = self.walk(s, t);
+        let wall_test = self.wall_test(t);
+        self.space_jump(s.doing, t);
+        let met = if wall_test == Kicked {
+            Some(WallKick)
+        } else if s.doing == TakingOff {
+            None
+        } else {
+            self.drop(s.doing, walk.pull, t)
+        };
+        Meeting {
+            met: walk.wall.or(met),
+            wall_test,
+        }
+    }
+
+    /// `SpeedBuildsAndBrakes`, `Dash`, `DriftInTheAir`, `WallsAndCeilings`: her horizontal move
+    /// by her speed and dash, as her situation moves her, and the halt that follows a wall stop
+    /// or a move by her dash alone.
+    fn walk(&mut self, s: &Situation, t: &mut Tick) -> Walk {
+        let facing = self.pose.facing;
+        let stride = self.run.stride(s.moves, facing, self.vertical_motion(), t);
+        let pull = self.run.speed + self.run.dash;
+        let by = if stride == Both { pull } else { self.run.dash };
+        let stop = if stride == Nothing {
+            None
+        } else {
+            self.walk_and_seat(self.run.heading(facing), by, t)
+        };
+        if stop.is_some() || stride == DashThenHalt {
+            self.run.halt();
+        }
+        Walk {
+            pull,
+            wall: (stop.is_some() && s.doing == Running).then_some(Wall),
+        }
+    }
+
+    /// `BlocksStopFlush`, `SlopesSlowTheWalk`: a horizontal move, which a sloped floor at her
+    /// leading edge shortens when it is made with her vertical speed exactly 0, and which is
+    /// limited to 15 px either way, its subpixel kept.
+    fn hmove(&self, way: Heading, d: Fixed, t: &mut Tick) -> Moved {
+        let d = if self.vy == ZERO {
+            t.walk_shortened(self.bounds(), way, d)
+        } else {
+            d
+        };
+        let limit = fixed(t.rules.move_limit_px, d.sub());
+        t.go(self.bounds(), way, d.min(limit), Move)
+    }
+
+    /// `SlopesCarry`: a horizontal move, then the checks that run after every horizontal move,
+    /// whether or not it met solid enemies, and whose lift or push seats her. Returns what
+    /// stopped the move.
+    fn walk_and_seat(&mut self, way: Heading, d: Fixed, t: &mut Tick) -> Option<Stop> {
+        let moved = self.hmove(way, d, t);
+        self.position = moved.to;
+        if let Some(y) = t.seat(self.bounds()) {
+            self.position.y = fixed(y, self.position.y.sub());
+            self.seat = Seat::Seated;
+        }
+        moved.stop
+    }
+
+    /// `AimingAndShooting`: a frame whose chosen pose brings the step moves her 1 px forward, by
+    /// her facing at the frame's start, after her moves: a horizontal move with no `SlopesCarry`
+    /// checks after it. A solid enemy within its reach stops it with no move at all, one she
+    /// touches still clearing her y subpixel. Something in the way puts her against the wall
+    /// instead, with the running pose's aim (`WhatHerMovesMet`), unless an animation's end
+    /// handed over another pose.
+    fn aim_step(&mut self, chosen: &mut Choice, t: &mut Tick) {
+        let moved = self.hmove(self.pose.facing.side(), t.rules.aim_step, t);
+        self.position.y = moved.to.y;
+        if moved.stop != Some(Stop::Enemy) {
+            self.position.x = moved.to.x;
+        }
+        if moved.stop.is_some() && chosen.pose.action == Action::Running {
+            chosen.pose.action = AgainstWall;
+            chosen.pose.gun = Gun::Stowed;
+            chosen.effects = NONE;
+        }
+    }
+
+    /// `WallJump`: the near-wall test, in a spin carried on with a side held, looking 8 px away
+    /// from it (left held: a wall on her right; else right held: on her left) from where her
+    /// move left her. What stops it writes to her as a stop would, without moving her: a block
+    /// her x subpixel, a solid enemy she touches her y subpixel. A wall near her readies the
+    /// wall jump; once the spin has turned far, pressing jump kicks her off.
+    fn wall_test(&mut self, t: &mut Tick) -> WallTest {
+        let f = t.frame;
+        if self.spin != Spin::CARRIED_ON || !f.pad.any(SIDES) {
+            return Neither;
+        }
+        let wall = if f.pad.any(LEFT) { Right } else { Left };
+        let seen = t.go(self.bounds(), wall, t.rules.wall_reach, Look);
+        self.wrote(&seen);
+        if seen.stop.is_none() {
+            Neither
+        } else if !f.spin_turned_far {
+            Readied
+        } else if f.pressed.any(JUMP) {
+            Kicked
+        } else {
+            Neither
+        }
+    }
+
+    /// Her vertical move, and what it met. `FollowingTheGround`: on the ground she is pulled
+    /// (`speed`, the frame's horizontal speed and dash) down by that speed plus 1 px
+    /// (`SlopesCarry`: 1 px on a slope), unless as the ball or while her body changes shape she
+    /// has a vertical motion to move by; `Moonfall`: a turn in the moonfall is pulled as a turn
+    /// on the ground over a drop. `RisingAndFalling`, not pulled: she moves by her vertical
+    /// speed, which then grows by the pull. On the ground (pulled, or the ball moving by its
+    /// vertical speed) the floor stops her flush and never lands her, and finding no floor she
+    /// walks off a ledge, moving the whole move, unless turning (`TurningRound`: she sinks
+    /// instead) or changing shape (no move). In the air a floor is a landing, and an upward move
+    /// stopped is a ceiling (`WallsAndCeilings`): the rise ends with no pull that frame.
+    /// `SlopesCarry`: a move of more than 0 unseats her as it starts.
+    fn drop(&mut self, doing: Doing, speed: Fixed, t: &mut Tick) -> Option<Met> {
+        let r = t.rules;
+        let ground = self.vertical.on_ground();
+        let pulled = ground && !(self.vertical_motion() && matches!(doing, Shaping | Ball))
+            || self.vertical == Vertical::Moonfall && doing == Turning;
+        let grounded = pulled || ground && doing == Ball;
+        let by = if pulled && self.seat == Seat::Seated {
+            r.ground_pull
+        } else if pulled {
+            speed + r.ground_pull
+        } else {
+            self.vy
+        };
+        let moved = t.vmove(self.bounds(), by, Move);
+        if by != ZERO {
+            self.seat = Seat::Unseated;
+        }
+        let floor = moved.stop.is_some();
+        if pulled && !floor && doing == Shaping {
+            return None;
+        }
+        self.position = moved.to;
+        if by.negative() && floor {
+            self.fall_from_rest();
+            return Some(Ceiling);
+        }
+        self.seat_on(moved.stop);
+        if !pulled {
+            self.vy = self.pulled(r);
+        }
+        if grounded && !floor && doing != Turning {
+            self.fall_from_rest();
+            self.bounces = Bounces::None;
+            return Some(NoFloor);
+        }
+        (floor && !grounded).then_some(Floor)
+    }
+
+    /// `Jumping`: with space jump, pressing jump while falling in a spin with her fall speed in
+    /// the window jumps again, rising that same frame; not in a moonfall (`Moonfall`).
+    fn space_jump(&mut self, doing: Doing, t: &Tick) {
+        let (r, f) = (t.rules, t.frame);
+        if self.vertical == Vertical::Falling
+            && doing == Spinning
+            && f.pressed.any(JUMP)
+            && f.equipment.space_jump
+            && r.space_jump.contains(&self.vy.to_8_8().0)
+        {
+            self.rise(r.jump.of(f.equipment.hi_jump));
+        }
+    }
+
+    /// `RisingAndFalling`: her vertical speed after the pull, which stops growing at pixel part
+    /// 5; `Moonfall`: with no limit.
+    fn pulled(&self, r: &Rules) -> Fixed {
+        if self.vertical != Vertical::Moonfall && self.vy.pixel() == r.fall_settle_px {
+            self.vy
+        } else {
+            self.vy + r.gravity
+        }
+    }
+
+    /// `Landing`: what her moves met acts on her. `WallJump`'s kick starts the wall jump rising
+    /// at the wall-jump speed, x speed 0, following the pad; it ends a moonfall. A move by her
+    /// vertical speed meeting a floor: turning, only the move stops, her speed going on growing
+    /// by the pull. The spring ball with jump held hops again. The ball's landings each by their
+    /// own rule, reading her vertical speed after the frame's pull: with no bounce yet it bounces
+    /// at 3 px or more; after bounce 1 it bounces again at any speed, 1 px slower; after bounce
+    /// 2 it comes to rest. While her body changes shape only her vertical motion stops. Else she
+    /// lands: vertical speed 0, bounces 0, horizontal speed 0, following the pad; the dash keeps
+    /// its value, to lose (§1.2).
+    fn meet(&mut self, met: Option<Met>, doing: Doing, t: &Tick) {
+        let (r, f) = (t.rules, t.frame);
+        let hi_jump = f.equipment.hi_jump;
+        if met == Some(WallKick) {
+            self.rise(r.wall_jump.of(hi_jump));
+            self.run.stop();
+        }
+        if met != Some(Floor) || doing == Turning {
+            return;
+        }
+        let hops = self.pose.body == SpringBall && f.pad.any(JUMP);
+        let hop = hops.then_some((r.jump.of(hi_jump), Bounces::None));
+        let bounce = match self.bounces {
+            Bounces::None if self.vy.pixel() >= r.bounce_from_px => Some((r.bounce, Bounces::Once)),
+            Bounces::Once => Some((r.bounce - r.second_bounce_less, Bounces::Twice)),
+            Bounces::None | Bounces::Twice => None,
+        };
+        if let Some((speed, bounces)) = hop.or(bounce).filter(|_| matches!(doing, Ball | Hop)) {
+            self.rise(speed);
+            self.bounces = bounces;
+            return;
+        }
+        self.vertical = Vertical::Ground;
+        self.vy = ZERO;
+        if doing == Shaping {
+            return;
+        }
+        self.bounces = Bounces::None;
+        self.run.stop();
+        self.run.dash_is = ToLose;
+    }
+
+    /// `PoseFollows`: she takes the chosen pose, placed by pose fit (`PoseFitAfterMoves`). A
+    /// change refused, or crouched `Still` taken instead, leaves her speeds and dash as her moves
+    /// left them (`moved`), with her position and seat as her looks left them, and brings none
+    /// of the chosen pose's effects. The chosen pose brings, in order: after pose fit's push the
+    /// shrink (`ShrinkingLowersHer`), then its row's effects, then the change of action's own
+    /// (`ENTERING`). Returns where the camera follows her from (§1): after pose fit's push or a
+    /// change of shape, her y pixel there with her y subpixel at the frame's start; else her y
+    /// at the frame's start.
+    fn take(&mut self, chosen: Choice, start: &Self, moved: Self, t: &mut Tick) -> Fixed {
+        let (pose, effects, lower) = match self.fit(t, chosen.pose) {
+            None => (chosen.pose, chosen.effects, chosen.lower),
+            Some(instead) => {
+                *self = Self {
+                    position: self.position,
+                    seat: self.seat,
+                    ..moved
+                };
+                (instead, NONE, None)
+            }
+        };
+        self.pose = pose;
+        self.radius = t.body(pose);
+        if let Some(by) = lower {
+            self.lower(by, t);
+        }
+        let camera = if lower.is_some() || self.position.y.pixel() != moved.position.y.pixel() {
+            self.position.y.with_sub(start.position.y.sub())
+        } else {
+            start.position.y
+        };
+        let entered = ENTERING.iter().filter(|e| e.on(start.pose.action, pose));
+        for effect in effects.iter().chain(entered.map(|e| &e.effect)) {
+            self.apply(*effect, start, t);
+        }
+        camera
+    }
+
+    /// `ShrinkingLowersHer`: she looks down `by` at her new size, a block look (solid enemies
+    /// don't stop it), and she is lowered as far as it got; what stops it writes to her as a
+    /// stop would, and a stepped block seats her.
+    fn lower(&mut self, by: Fixed, t: &mut Tick) {
+        let seen = t.vmove(self.bounds(), by, Blocks);
+        self.position = seen.to;
+        self.seat_on(seen.stop);
+    }
+
+    /// `Jumping`, `TurningRound`, `Moonfall`: one effect of the change (`PoseFollows`) on her
+    /// speeds, dash and position, from how she was at the frame's start (`start`). `Jumping`:
+    /// changing into a take-off from a crouch without aim she is also lifted; starting a straight
+    /// jump or a fall she carries on with a dash, else follows the pad. `WallJump`: a spin that
+    /// followed a wall jump is carried on. `TurningRound`: a turn, or a pose that faces her the other
+    /// way (a spin reversed, the ball turning round): her dash joins her speed and she travels
+    /// against her new facing, a skid; the moonwalk's jump, the one turn that keeps her facing,
+    /// skids too, and a spin reversed while skidding turns her travel round. The ball held to
+    /// the side it faces doesn't turn. `PadChart`: a skid ends along her new facing; as running,
+    /// her horizontal speed 0 at the frame's start or after the frame's move, she follows the pad
+    /// again, keeping the speed the move left her. `Moonfall`: a spin she enters when a turn
+    /// ends, with jump not just pressed, starts with no rise: her vertical speed is 0 and she
+    /// drops under gravity.
+    fn apply(&mut self, effect: Effect, start: &Self, t: &Tick) {
+        let jump = t.rules.jump.of(t.frame.equipment.hi_jump);
+        let turns = self.pose.facing != start.pose.facing;
+        match effect {
+            Rise => self.rise(jump),
+            Lift if start.pose.aim == Aim::Forward => self.position.y -= t.rules.crouch_lift,
+            TurnRound if turns || matches!(self.pose.action, Action::Turning(_)) => {
+                self.run.way = self.pose.facing.back().side();
+                self.run.join_dash();
+            }
+            EndSkid => {
+                self.run.carry = FollowsPad;
+                self.run.way = self.pose.facing.side();
+            }
+            AsRunning if start.run.speed == ZERO || self.run.speed == ZERO => {
+                self.run.carry = FollowsPad;
+            }
+            AsRunning => self.run.join_dash(),
+            LoseDash => self.run.dash = ZERO,
+            Halt => self.run.halt(),
+            Effect::Moonfall if t.frame.pressed.any(JUMP) => self.rise(jump),
+            Effect::Moonfall => {
+                self.fall_from_rest();
+                self.vertical = Vertical::Moonfall;
+            }
+            Launch => self.run.launch(self.pose.facing),
+            SpinOn => self.spin = Spin::CARRIED_ON,
+            Lift | TurnRound => {}
+        }
+    }
+}

@@ -1,9 +1,10 @@
 //! The rows of `WhatHerMovesMet` and of `AnimationEnds` (§7), read in order, the first that
 //! fits. A next pose has its gun stowed and its legs together unless its cell says otherwise.
 
+use crate::rows::Effect::{self, LoseDash};
 use crate::rows::Test::{Aimed, Airborne, Held, SpringBall};
 use crate::rows::{
-    DOWN_TO_FORWARD, Doing, Effect, FALL, JUMP, Met, Next, ROW, Row, SPIN, STILL, Test, UP_AIM,
+    DOWN_TO_FORWARD, Doing, FALL, JUMP, Met, Next, ROW, Row, SPIN, STILL, Test, UP_AIM,
 };
 use clean_types::button::SHOOT;
 use clean_types::{Action, Aim, Body, Gun, LandedFrom, Legs, Turn};
@@ -129,8 +130,9 @@ pub const MOVES_MET: &[Row] = &[
     },
 ];
 
-/// `AnimationEnds`: the pose an ending animation hands over, whatever the pad, the first row
-/// that fits. A turn already faces its new way.
+/// `AnimationEnds`: the pose an ending animation hands over, whatever the pad.
+///
+/// The first row that fits. A turn already faces its new way.
 pub const ANIMATION_ENDS: &[Row] = &[
     Row {
         name: "TakingOff",
@@ -149,14 +151,14 @@ pub const ANIMATION_ENDS: &[Row] = &[
             aim: &[],
             ..STILL
         },
-        effects: &[Effect::LoseDash],
+        effects: &[LoseDash],
         ..ROW
     },
     Row {
         name: "Turning on the ground",
         needs: &[Test::Action(&[Action::Turning(Turn::Ground)])],
         next: Next { aim: &[], ..STILL },
-        effects: &[Effect::LoseDash],
+        effects: &[LoseDash],
         ..ROW
     },
     Row {
@@ -169,21 +171,21 @@ pub const ANIMATION_ENDS: &[Row] = &[
             legs: Some(Legs::Striding),
             ..JUMP
         },
-        effects: &[Effect::LoseDash],
+        effects: &[LoseDash],
         ..ROW
     },
     Row {
         name: "Turning in a jump",
         needs: &[Test::Action(&[Action::Turning(Turn::Jump)])],
         next: Next { aim: &[], ..JUMP },
-        effects: &[Effect::LoseDash],
+        effects: &[LoseDash],
         ..ROW
     },
     Row {
         name: "Turning in a fall",
         needs: &[Test::Action(&[Action::Turning(Turn::Fall)])],
         next: Next { aim: &[], ..FALL },
-        effects: &[Effect::LoseDash],
+        effects: &[LoseDash],
         ..ROW
     },
     Row {

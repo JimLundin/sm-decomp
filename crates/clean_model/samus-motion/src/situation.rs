@@ -6,12 +6,17 @@
 //! A pad chart row's order in its situation decides nothing (`PadChart`: rank and beats clauses
 //! do). Where left and right are held together, rows naming forward and back both fit, and the
 //! beats clauses between them are `PadChart`'s ranks for both held.
+//!
+//! A ball `Still` or `Rolling` is on the ground: in the air a ball keeps its pose, falling or on
+//! its hop (`PadChart`, `WhatHerMovesMet`), so her pose alone gives her situation.
 
-use crate::rows::Effect::{AsRunning, EndSkid, Halt, Lift, LoseDash, Rise, TurnRound};
+use crate::rows::Effect::{
+    AsRunning, EndSkid, Halt, Launch, Lift, LoseDash, Rise, SpinOn, TurnRound,
+};
 use crate::rows::{
-    AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, CROUCH, Class, Doing, Drift, FALL, FORWARD,
-    FORWARD_AIM, JUMP, KEPT, MOONWALK, MORPH, Moves, Next, ROW, RUN, Row, SPIN, STILL, Side,
-    Situation, TAKE_OFF, TURN, Test, UDA, UP_AIM, UP_DOWN,
+    AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, CROUCH, Class, Doing, Drift, Entering, FALL,
+    FORWARD, FORWARD_AIM, GROWS, JUMP, KEPT, MOONWALK, MORPH, Moves, Next, ROW, RUN, Row, SPIN,
+    STILL, Side, Situation, TAKE_OFF, TURN, Test, UDA, UP_AIM, UP_DOWN,
 };
 use crate::rules::Gait;
 use Test::{Aimed, Faces, Held, Not, Pressed};
@@ -23,19 +28,14 @@ use clean_types::Body::{Ball, Crouched, SpringBall, Upright};
 use clean_types::button::{self as key, AIM_DOWN, AIM_UP, DOWN, LEFT, RIGHT, SHOOT, UP};
 use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Heading, LandedFrom, Legs, Pose, Turn};
 
-/// `MovesAsShePosed`: her situation, from her pose at the frame's start and whether she is on
-/// the ground: the first class of `CLASSES` her pose is in, else `OTHERWISE`.
+/// `MovesAsShePosed`: her situation, from her pose at the frame's start: the first class of
+/// `CLASSES` her pose is in, else `OTHERWISE`.
 #[must_use]
-pub fn classify(pose: Pose, on_ground: bool) -> &'static Situation {
-    CLASSES
-        .iter()
-        .find(|c| {
-            c.body.contains(&pose.body)
-                && c.action.contains(&pose.action)
-                && c.aim.contains(&pose.aim)
-                && c.ground.is_none_or(|g| g == on_ground)
-        })
-        .map_or(OTHERWISE, |c| c.is)
+pub fn classify(pose: Pose) -> &'static Situation {
+    let fits = |c: &&Class| {
+        c.body.contains(&pose.body) && c.action.contains(&pose.action) && c.aim.contains(&pose.aim)
+    };
+    CLASSES.iter().find(fits).map_or(OTHERWISE, |c| c.is)
 }
 
 /// Standing still, or landing: the situation of every pose no class names (upright `Still`,
@@ -83,12 +83,37 @@ const TURNS: &[Action] = &[
     Turning(Turn::MoonwalkJump),
 ];
 
-/// A class of any body and aim, on the ground or not.
+/// The change of action's own effects, whatever brought the change.
+///
+/// `Jumping`: starting a straight jump (upright) or a fall, with a dash she carries on along her
+/// facing, else she follows the pad. `WallJump` (§1.2): a spin that followed a wall jump is
+/// carried on.
+pub static ENTERING: &[Entering] = &[
+    Entering {
+        into: &[Jumping],
+        body: &[Upright],
+        from: ACTIONS,
+        effect: Launch,
+    },
+    Entering {
+        into: &[Falling],
+        body: BODIES,
+        from: ACTIONS,
+        effect: Launch,
+    },
+    Entering {
+        into: &[Spinning],
+        body: BODIES,
+        from: &[WallJumping],
+        effect: SpinOn,
+    },
+];
+
+/// A class of any body and aim.
 const ANY: Class = Class {
     body: BODIES,
     action: ACTIONS,
     aim: AIMS,
-    ground: None,
     is: &STANDING,
 };
 
@@ -108,14 +133,12 @@ pub static CLASSES: &[Class] = &[
     Class {
         body: &[Ball, SpringBall],
         action: &[Rolling],
-        ground: Some(true),
         is: &ROLLING,
         ..ANY
     },
     Class {
         body: &[Ball, SpringBall],
         action: &[Still],
-        ground: Some(true),
         is: &RESTING,
         ..ANY
     },
@@ -365,10 +388,11 @@ const TURN_IN_A_FALL: Next = Next {
     aim: TURN_IN_THE_AIR,
     ..TURN
 };
-/// Crouched `Unmorphing`.
+/// Crouched `Unmorphing`, which lowers her 0 px (`ShrinkingLowersHer`).
 const UNMORPH: Next = Next {
     body: Some(Crouched),
     action: Some(Unmorphing),
+    lower: GROWS,
     ..STILL
 };
 /// The same ball, rolling.
@@ -381,7 +405,7 @@ const ROLL: Next = Next {
 /// Any button.
 const ANY_BUTTON: Buttons = Buttons(u16::MAX);
 /// Every button a straight jump's row names but jump.
-const NAMED: Buttons = FORWARD.union(BACK).union(SHOOT).union(UDA);
+const NAMED: Buttons = Buttons(FORWARD.0 | BACK.0 | SHOOT.0 | UDA.0);
 
 /// Standing still, or landing.
 pub static STANDING: Situation = Situation {
@@ -753,10 +777,10 @@ static STRAIGHT_JUMP: Situation = Situation {
                 "aiming Down: jump held, and no other button a row names",
             ],
             // PadChart, left and right both held: back held beats forward with an aim button
-            // held, unless jump is held too.
-            beats_if: &[Beat {
+            // held, unless jump is held too (with up or down held instead, forward wins by rank).
+            beats_unless: &[Beat {
                 row: "forward with up, down or an aim button held",
-                when: &[Held(AIM), Not(&Held(key::JUMP))],
+                unless: &[&[Not(&Held(AIM))], &[Held(key::JUMP)]],
             }],
             ..ROW
         },
@@ -872,9 +896,6 @@ static FALLING: Situation = Situation {
             next: Next { gun: None, ..FALL },
             ..ROW
         },
-        // The back row's clause, "aiming Down or with the gun drawn, up or down held beats it",
-        // as conditional beats both ways: the clause holding, this row beats it; else it beats
-        // this row.
         Row {
             name: "up, down or an aim button held",
             needs: &[Held(UDA)],
@@ -883,34 +904,23 @@ static FALLING: Situation = Situation {
                 ..FALL
             },
             beats: &["shoot held", "forward held"],
-            beats_if: &[
-                Beat {
-                    row: "back held",
-                    when: &[Aimed(&[Aim::Down]), Held(UP_DOWN)],
-                },
-                Beat {
-                    row: "back held",
-                    when: &[Test::Gun(Gun::Drawn), Held(UP_DOWN)],
-                },
-            ],
             ..ROW
         },
+        // "Aiming Down or with the gun drawn, up or down held beats it": the clause's condition,
+        // under which the row it beats beats it instead.
         Row {
             name: "back held",
             needs: &[Held(BACK)],
             next: TURN_IN_A_FALL,
             effects: &[TurnRound],
             beats: &["shoot held", "forward held"],
-            beats_if: &[
-                Beat {
-                    row: "up, down or an aim button held",
-                    when: &[Not(&Held(UP_DOWN))],
-                },
-                Beat {
-                    row: "up, down or an aim button held",
-                    when: &[Not(&Aimed(&[Aim::Down])), Test::Gun(Gun::Stowed)],
-                },
-            ],
+            beats_unless: &[Beat {
+                row: "up, down or an aim button held",
+                unless: &[
+                    &[Aimed(&[Aim::Down]), Held(UP_DOWN)],
+                    &[Test::Gun(Gun::Drawn), Held(UP_DOWN)],
+                ],
+            }],
             ..ROW
         },
     ],
@@ -943,6 +953,7 @@ static CROUCHED: Situation = Situation {
             next: Next {
                 action: Some(StandingUp),
                 aim: CROUCH_AIM,
+                lower: GROWS,
                 ..STILL
             },
             beats: &["down pressed", "jump pressed", "back pressed"],
@@ -1069,9 +1080,10 @@ const BALL_ON_GROUND: &[Row] = &[
 ];
 
 /// The ball in the air: unmorphing, the side of the pad held, which it faces, and the spring
-/// ball's let-go row (the plain ball's is the last). Left and right both held (`PadChart`): the spring ball turns round (the spring
-/// ball falling: in the air it is either falling or on its hop, its own situation), and the
-/// ball without it keeps its facing.
+/// ball's let-go row (the plain ball's is the last). Left and right both held (`PadChart`): the
+/// spring ball turns round (the spring ball falling: in the air it is either falling or on its
+/// hop, its own situation), and the ball without it keeps its facing; as one clause, right held
+/// wins unless the plain ball faces left or the spring ball faces right.
 const BALL_IN_THE_AIR: &[Row] = &[
     UNMORPH_ROW,
     UNMORPH_JUMP,
@@ -1083,16 +1095,13 @@ const BALL_IN_THE_AIR: &[Row] = &[
             ..KEPT
         },
         effects: &[TurnRound],
-        beats_if: &[
-            Beat {
-                row: "left held",
-                when: &[Test::Body(&[Ball]), Faces(Heading::Right)],
-            },
-            Beat {
-                row: "left held",
-                when: &[Test::Body(&[SpringBall]), Faces(Heading::Left)],
-            },
-        ],
+        beats_unless: &[Beat {
+            row: "left held",
+            unless: &[
+                &[Test::Body(&[Ball]), Faces(Heading::Left)],
+                &[Test::Body(&[SpringBall]), Faces(Heading::Right)],
+            ],
+        }],
         ..ROW
     },
     Row {
@@ -1103,16 +1112,6 @@ const BALL_IN_THE_AIR: &[Row] = &[
             ..KEPT
         },
         effects: &[TurnRound],
-        beats_if: &[
-            Beat {
-                row: "right held",
-                when: &[Test::Body(&[Ball]), Faces(Heading::Left)],
-            },
-            Beat {
-                row: "right held",
-                when: &[Test::Body(&[SpringBall]), Faces(Heading::Right)],
-            },
-        ],
         ..ROW
     },
     Row {

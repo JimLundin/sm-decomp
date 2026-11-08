@@ -7,11 +7,15 @@
 use super::Moment;
 use crate::rows::Row;
 use crate::situation::classify;
+use crate::tick::Frame;
 use clean_types::Action::{
     AgainstWall, Crouching, Falling, Jumping, Landing, Moonwalking, Morphing, Rolling, Running,
     Spinning, StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
 };
-use clean_types::{Aim, Body, Buttons, Equipment, Facing, Gun, LandedFrom, Legs, Pose, Turn};
+use clean_types::{
+    Aim, Body, Buttons, Equipment, Facing, Gun, LandedFrom, Legs, Pair, Parity, Pose, Radius, Turn,
+};
+use core::num::Wrapping;
 
 /// Every aim.
 const AIMS: [Aim; 5] = [
@@ -102,7 +106,7 @@ fn unbeaten<'a>(moment: &Moment, fit: &[&'a Row]) -> Vec<&'a Row> {
 
 /// A beats clause that names no row of its situation, or two rows that beat each other.
 fn misnamed(rows: &[Row], a: &Row) -> Option<String> {
-    let conditional = a.beats_if.iter().map(|c| &c.row);
+    let conditional = a.beats_unless.iter().map(|c| &c.row);
     let unknown = a
         .beats
         .iter()
@@ -120,8 +124,8 @@ fn misnamed(rows: &[Row], a: &Row) -> Option<String> {
 fn beats_clauses_name_rows_of_their_situation_and_go_one_way() {
     let problems: Vec<String> = situations()
         .into_iter()
-        .flat_map(|(pose, airborne)| {
-            let rows = classify(pose, !airborne).rows;
+        .flat_map(|(pose, _)| {
+            let rows = classify(pose).rows;
             rows.iter().filter_map(|a| misnamed(rows, a))
         })
         .collect();
@@ -135,15 +139,29 @@ fn tie(
     (held, pressed): (u16, u16),
     moving: bool,
 ) -> Option<(Vec<&'static str>, String)> {
-    let situation = classify(pose, !airborne);
+    let situation = classify(pose);
+    let body = |_: Pose| -> Radius {
+        Pair {
+            x: Wrapping(0),
+            y: Wrapping(0),
+        }
+    };
+    let frame = Frame {
+        pad: Buttons(held),
+        pressed: Buttons(pressed),
+        equipment: Equipment::default(),
+        spin_turned_far: false,
+        elevator_moving: false,
+        parity: Parity::Even,
+        animation_ends: false,
+        body: &body,
+    };
     let moment = Moment {
         situation,
         pose,
         moving,
         airborne,
-        pad: Buttons(held),
-        pressed: Buttons(pressed),
-        equipment: Equipment::default(),
+        frame: &frame,
         met: None,
     };
     let fit: Vec<&Row> = situation

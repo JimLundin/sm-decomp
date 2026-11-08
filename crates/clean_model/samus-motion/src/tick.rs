@@ -39,7 +39,7 @@ pub struct Tick<'a> {
 }
 
 impl Tick<'_> {
-    /// §1.3 body size, `PoseFitAfterMoves`: a pose's half-width and half-height.
+    /// `PoseFitAfterMoves`: a pose's half-width and half-height (§1.3 body size).
     pub fn body(&self, pose: Pose) -> Radius {
         (self.frame.body)(pose)
     }
