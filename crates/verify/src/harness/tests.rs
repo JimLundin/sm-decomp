@@ -335,3 +335,85 @@ fn the_camera_holds_its_floors_against_the_cache() {
     };
     hold_floors(&domain, "camera", &cache);
 }
+
+/// Progress over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
+/// test reads them (the ROM for the rooms' states and the item PLMs' pickups).
+#[test]
+fn progress_holds_its_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    hold_floors(
+        &super::progress::ProgressDomain::new(image),
+        "progress",
+        &cache,
+    );
+}
+
+/// The room state each cached row's first record holds against the model's choice over that
+/// record's progress: the loads before the rows, which hold the states other than the default
+/// the rows' own loads never reach. Beside it the null model, always the default state.
+#[test]
+fn progress_chooses_each_rows_standing_room_state() {
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = super::progress::ProgressDomain::new(image);
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
+    let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
+    let (mut matched, mut defaults, mut differing) = (0, 0, Vec::new());
+    let rows = cached_rows(&cache);
+    for row in &rows {
+        let locked = parsed
+            .row(&crate::lock::RowId(row.clone()))
+            .unwrap_or_else(|| panic!("{row}: not in the lock"));
+        let opened =
+            crate::cache::Cache::open(&cache, locked).unwrap_or_else(|error| panic!("{error}"));
+        let Some(entry) = opened.entries().first() else {
+            continue;
+        };
+        let record = opened
+            .record(entry)
+            .unwrap_or_else(|error| panic!("{row}: {error}"));
+        let super::progress::Standing {
+            held,
+            chosen,
+            states,
+        } = domain
+            .standing_state(&record)
+            .unwrap_or_else(|error| panic!("{row}: {error}"));
+        if held == states.saturating_sub(1) {
+            defaults += 1;
+        }
+        if held == chosen {
+            matched += 1;
+        } else {
+            differing.push(format!(
+                "{row}: holds state {held}, the model chose {chosen}"
+            ));
+        }
+    }
+    let _ = writeln!(
+        std::io::stdout(),
+        "standing room states: {matched} of {} matched; null model (the default) {defaults}",
+        rows.len()
+    );
+    assert!(
+        differing.is_empty(),
+        "{}",
+        differing.join(
+            "
+"
+        )
+    );
+}
