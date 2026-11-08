@@ -6,6 +6,22 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
+## Round 10 in the engine and the harness (integrator, 2026-11-08, lane/wire-r10)
+
+The bridge (`game::samus_world`) takes round 10's API. On the ground `0B36` down at a magnitude
+of 0 (a bomb jump's or a knockback's end) is `Vertical::GroundFalling`, and it writes back as down
+at 0; the spin's frame count maps to the pose history as the spin enum did (`Spin::OFF`,
+`Spin::CARRIED_ON`); a slope's depth is the level's surface offset as it stands, counted from the
+block's open side (offsets past 16 are held as 17). `Outcome::skidding` isn't read: the speed mode
+word the write-back derives from her way and facing already says it. Gap 29 is closed: the
+harness's mask for falling at 0 on the ground is gone, and samus-bomb-jump-vertical 1036 → 1037
+matches with y compared (the row at 286, its floor). Gap 30's three frames (the moonwalk's jump,
+chain-0014-96BA 5, chain-0232-D5A7 18, samus-input-poses 119) now match on the mode word, and those
+three floors rose by one. No frame newly differs on any row. The proof against main 1efc249a0
+holds: the free-run gate's output and its localisation are identical, and the lockstep ratchet is
+at 1372 of 1427 (item-morph-ball) and 476 of 476 (area-brinstar). The harness matches 12,639 of
+12,782 compared frames (12,636 on main). No gap is filed.
+
 ## Answered: the code gate's questions (adversary 29; observer, lane/r10-spec)
 
 Adversary 29 asked four questions of round 9's model. Each is answered in the spec.
