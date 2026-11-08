@@ -78,7 +78,10 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "camera",
         bridge: "camera_world",
-        areas: &[("follow", &["follow.rs"]), ("limits", &["limits.rs"])],
+        areas: &[
+            ("follow", &["follow.rs"]),
+            ("limits", &["limits.rs", "room.rs"]),
+        ],
     },
 ];
 

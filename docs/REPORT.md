@@ -64,7 +64,7 @@ How it is counted:
 | `crates/clean_model/camera/src/input.rs` | - | tables and types | 3 | 20 | 103 | 0 | 0 | 0 | 25 |
 | `crates/clean_model/camera/src/lib.rs` | - | logic | 525 | 665 | 125 | 0 | 19 | 0 | 123 |
 | `crates/clean_model/camera/src/limits.rs` | limits | logic | 893 | 1,090 | 88 | 12 | 21 | 1 | 191 |
-| `crates/clean_model/camera/src/room.rs` | - | logic | 441 | 528 | 107 | 3 | 16 | 0 | 107 |
+| `crates/clean_model/camera/src/room.rs` | limits | logic | 441 | 528 | 107 | 3 | 16 | 0 | 107 |
 | `crates/clean_model/camera/src/rules.rs` | - | tables and types | 92 | 132 | 75 | 88 | 0 | 0 | 58 |
 | total | | | 2,353 | 2,951 | 630 | 538 | 64 | 2 | 730 |
 
@@ -105,8 +105,8 @@ Spec [`docs/behaviours/camera.md`](behaviours/camera.md), k = 36. Old code 2,274
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | follow | 5 | 15.7 | 500 | 715 | 396 | 0.79 |
-| limits | 9 | 31.0 | 1,091 | 1,559 | 893 | 0.82 |
-| shared (in no area) | | | | | 1,064 | |
+| limits | 9 | 31.0 | 1,091 | 1,559 | 1,334 | 1.22 |
+| shared (in no area) | | | | | 623 | |
 | total | 14 | 46.7 | 1,591 | 2,274 | 2,353 | 1.48 |
 
 ## Bridges and harnesses
@@ -118,8 +118,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | bridge | 4 | 2,751 | 3,375 | 257 | 12 | 81 | 0 | 504 |
 | samus-motion | harness | 1 | 3,913 | 4,328 | 455 | 222 | 209 | 17 | 755 |
 | camera | bridge | 1 | 700 | 889 | 39 | 1 | 13 | 0 | 132 |
-| camera | harness | 1 | 2,913 | 3,243 | 456 | 105 | 129 | 22 | 579 |
-| total | | | 10,277 | 11,835 | 1,207 | 340 | 432 | 39 | 1,970 |
+| camera | harness | 1 | 2,958 | 3,289 | 456 | 105 | 130 | 22 | 588 |
+| total | | | 10,321 | 11,881 | 1,207 | 340 | 433 | 39 | 1,979 |
 
 ## Harness floors and vectors
 
