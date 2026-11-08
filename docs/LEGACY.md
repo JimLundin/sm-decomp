@@ -42,6 +42,19 @@ original's bytes as data.
   tables and the original reads what follows (the next area's maps, the variables around `$07F7`). The
   engine reads no cells and the blank tile there. Reads past the map's outer edge
   (`Crossing::PastMap`) follow the original's. Slice 0's rooms are inside the edges.
+- **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/hud.md` §1.5; the
+  original's reads in `docs/behaviours/hud.decode.md`, "Counts past their cells" and "The map's
+  outer edge"): two stated simplifications, both unreachable in vanilla.
+  - Missiles are defined up to 999 and super missiles and power bombs up to 99; past that the
+    original draws its digit table's neighbours and the code at `$80:9DE7` as tiles. Vanilla
+    capacities stop at 230, 50 and 50.
+  - A mini-map cell outside the 64 by 32 map (rows -1, 32 and 33, which the window reaches from her
+    cell in row 31, in row 1 at columns 0-1, or in rows 30-31 at columns 62-63, and her own cell
+    below the map) is unexplored, uncharted and blank `01F`, and exploring it does nothing. The
+    original reads the right page's row 0 for the left page's row 32, and the RAM around the
+    explored and charted bitmaps and past the area's tilemap for the rest (`$90:A91B`,
+    `$90:AB75`). Vanilla maps draw and chart only columns 2-57 and rows 1-22; a randomised map
+    could reach these cells, and the column rules themselves stay in the spec for it.
 - **Level columns and rows past the level buffer** (`game::bg_graphics`, `$80:A9DE`, `$80:AB78`): the
   engine reads the buffer as the original holds it up to its 3200h blocks (the BTS and layer 2 left
   after layer 1, then the `$8000` fill, `RoomScoped::level_tail`). Past those, or past layer 2's copy,

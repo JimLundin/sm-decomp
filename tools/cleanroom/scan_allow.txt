@@ -163,3 +163,8 @@ spore spawn          # boss
 bomb torizo          # boss
 golden torizo        # boss
 mini boss            # a lesser boss: Spore Spawn, Crocomire, Botwoon, Mother Brain
+
+# The HUD's vocabulary (HUD observer, 2026-11-08); its items and Mother Brain are above.
+item select          # the controller setup's name for the button
+item cancel          # the controller setup's name for the button
+pick up              # collecting an item
