@@ -87,11 +87,11 @@ about 20 Ticks/s, verification once throttled all other work.)
 **P15. Prove a design end to end on a thin slice before going broad.** Slice 0 runs open, step, the
 renderer and headless replay, green, before a second cluster; one lane builds the spine.
 
-**P16. Lines are a cost, and a general mechanism needs real users.** Prefer data over code and one
+**P16. Size is a cost, and a general mechanism needs real users.** Prefer data over code and one
 mechanism over per-case code. A generic layer is built when its second real user exists. Each domain
-has a written budget.
-*How we know:* each trait and generic layer names its users in ARCHITECTURE. A domain past its budget
-stops for a design review.
+has a budget from its spec (MODEL §1 decision 7).
+*How we know:* each trait and generic layer names its users in ARCHITECTURE; `tools size` reports
+each domain's fit to its budget. A domain over the old code it replaces stops for a design review.
 
 **P17. Vanilla is one configuration, and options enter at named seams.** Gameplay, timing,
 presentation, content and input are profiles resolved when the Session opens, never forks spread
@@ -172,8 +172,10 @@ churn. *How we know:* `Cargo.toml`, `rust-toolchain.toml` and `tools/check_crate
 **K9. A modern reader can understand the code without the original.** Names come from the domain:
 official names for enemies, bosses, items, rooms and mechanics, never addresses, routine labels or
 decompiler names. A reader understands a module from its names and types without opening the bank
-logs. A bank reference is one `Source:` line on an item where the behaviour is surprising; module docs
-describe the domain, never the original's call order.
+logs. A bank reference lives only in the observer's decode notes (`docs/behaviours/<domain>.decode.md`),
+never in a rebuilt domain's code, spec or catalogue; module docs describe the domain, never the
+original's call order. Engine code not yet rebuilt still cites the bank logs in comments, which
+leave with it.
 *Jim (2026-11-05):* asked for this. *How we know:* review question: "could someone who has never
 seen the original follow this module?" A source check rejects routine-label names (`func_80_8343`).
 

@@ -1,7 +1,7 @@
 # The behaviour model
 
-This note sets the shape of the engine's game code. It amends ARCHITECTURE where they disagree,
-and the amendments are listed in §7. It follows Jim's decisions of 2026-11-06, recorded in §1.
+This note sets the shape of the engine's game code. Its changes to ARCHITECTURE and PRINCIPLES are
+made there, and where they disagree this note wins. It follows Jim's decisions, recorded in §1.
 
 ## 1. The goal, and what is exact
 
@@ -93,19 +93,23 @@ code is organised.
 - `exact` runs where the original queued its uploads, so the batch order is unchanged.
 - The intents are also ARCHITECTURE D16's view: the wide and HD renderers read them, and the
   exact path and the intent path come from one source by construction.
-- `tools/check_crate_rules.sh` enforces the "never names" column. It starts as a warning and
-  becomes an error after the reshape.
+- A rebuilt domain's behaviour is a clean crate (`crates/clean_model/<domain>`, §5), which
+  `game` calls through its bridge in `model`'s place.
+- The "never names" column is held by review; `tools/check_crate_rules.sh` gains a check for it
+  with the reshape.
 
 ## 3. Behaviours are named, catalogued and switchable
 
-`game::behaviours` is the catalogue. Each entry has:
+Each domain's clean model holds its catalogue (`crates/clean_model/<domain>/src/catalogue.rs`),
+one entry per spec entry, over the shared kinds in `clean_types`. Each entry has:
 
 ```rust
 pub struct Behaviour {
-    pub id: BehaviourId,          // enum variant, e.g. BehaviourId::WordwiseSpeedCap
+    pub id: BehaviourId,          // enum variant, e.g. BehaviourId::WordwiseTopSpeed
     pub summary: &'static str,    // what the player sees
-    pub kind: Kind,               // Mechanic | Quirk | Timing (lag, loading) | Encoding
-    pub switch: Switch,           // Fixed | Toggle | Parameter(range)
+    pub kind: Kind,               // Mechanic | Quirk | Timing (lag, loading) | Output
+    pub switch: Switch,           // Fixed | Toggle | Parameter
+    pub checked: Checked,         // ByVectors | OriginalOnly
 }
 ```
 
@@ -117,7 +121,9 @@ the observer's `docs/behaviours/<domain>.decode.md`, which implementers never se
 - A **quirk** is unintended behaviour that we reproduce: the word-by-word speed compare, a full
   write queue dropping a draw.
 - **Timing** covers slowdown and loading time.
-- **Encoding** covers the output's own quirks, which live in `exact`.
+- **Output** covers what a step reports beyond its quantities, for its caller to act on (the
+  cells she touched, where the camera follows her from). The encoder's quirks, in `exact`, take a
+  kind of their own when that layer is rebuilt.
 
 **Switches are Fixed unless there is a named use (review R7).** Every Toggle is a second code path
 that needs its own tests. `SpeedCap` is a Toggle, as the proof of the thesis. Other entries stay
@@ -137,49 +143,25 @@ port.
 
 ## 4. The reference domain: Samus's motion
 
-This domain is replaced first, end to end, so every later domain has a working example to copy.
+This domain was replaced first, end to end, so every later domain has a working example to copy.
 
-**Scope:** Samus's motion is one domain, because one set of speed quantities has writers across all
-of it (Jim, 2026-11-06, after an independent review). It covers:
-- the ground: standing, running, turning, crouching, the morph ball and the step down;
-- the air: jumps, the fall, the wall jump;
-- pose selection's writes to the speeds (pose-change commands, the landing stop).
+**Scope (Jim, 2026-11-07):** Samus moving through the world is one domain, because one set of
+speed quantities has writers across all of it and the player sees one thing. It covers her speeds
+and position on the ground and in the air, how her pose follows from input and the world where
+that changes her speeds, and her collision with blocks, slopes and solid enemies. The spec,
+[samus-motion.md](../behaviours/samus-motion.md), states the scope and what is not in it yet.
 
-**Collision is the next domain, with a fixed slot.** Until then the motion model calls it through
-the collision interface, over a bridge to today's collision code. The bridge's quirks are the
-collision spec's first entries, so the bridge has an end.
+**Replace, never adapt.** The model is wired in and the old code it replaces is deleted in the
+same change. No `LEGACY` gate or compatibility shim keeps the old port's behaviour inside a new
+type. Where the model and the old engine disagree, the oracle decides, and a fall in the old
+numbers is recorded as a defect of the old port.
 
-**Replace, never adapt.** The model is wired in and the old code (`movement.rs`, `movement/air.rs`,
-pose's motion part) is deleted in the same commit. No `LEGACY` gate or compatibility shim keeps
-today's port's behaviour inside a new type. Where the model and today's engine disagree, the
-oracle decides, and a fall in today's numbers is recorded as a defect of the old port.
-
-**Shape:**
-
-```rust
-// data::motion: the vanilla values, decoded from the speed tables or declared, catalogue-linked
-pub struct MotionRules {
-    pub ground: KindTable<SpeedEntry>,
-    pub extra_run: ExtraRun,
-    pub step_down_extra: Pixels,
-    pub speed_cap: SpeedCap,  // SpeedCap::Wordwise (vanilla) | SpeedCap::Exact
-}
-
-// game::model::samus::motion: each way of moving is one row of data
-enum Horizontal { Hold, Accelerate { decelerate: bool }, Coast }
-enum Vertical { KeepToGround, None }
-enum After { Nothing, StopAll, EndTurn }
-struct Row { horizontal: Horizontal, extra_run: ExtraRunRule, vertical: Vertical, after: After }
-
-const fn row(locomotion: Locomotion) -> Row { /* an exhaustive match, no `_` */ }
-
-pub fn step(samus: &mut Samus, pad: Controls, rules: &MotionRules, world: &World) -> Contacts {
-    let row = row(Locomotion::of(samus));      // the one place the pose is read
-    let velocity = velocity(samus, row, pad, rules);
-    let outcome = world.sweep(samus.body(), samus.position, velocity);
-    apply(row.after, samus, outcome)
-}
-```
+**Shape.** The model is the clean crate `clean_model_samus_motion`
+(`crates/clean_model/samus-motion`): a character controller stepped one frame at a time, its
+moves as table rows and its pose as a chart, over the shared types and the `World` trait in
+`clean_types`. `game::samus_world` is the integrator's bridge: it answers `World` from the
+engine's level and solid enemies, maps the engine's State to the model's and back, and turns the
+cells the model reports into the engine's touches.
 
 **What proves it: the oracle, directly, frame by frame.** The yardstick is the oracle, never
 today's engine, which is itself a partly wrong port. The **domain harness** in `verify` covers every
@@ -197,7 +179,7 @@ verification, not by where the original's code is split. If checking a domain ne
 answers from the oracle (a collision bridge that copies the next frame's stop, pose inputs read from
 the next record), the boundary is wrong and the domains merge. That is why Samus's motion, pose
 selection and her collision with the world are one domain: on whole frames, the first motion model
-scored no better than a step that does nothing (5,631 against 5,686 verified frames), because the
+scored no better than a step that does nothing (5,631 against 5,686 verified frames, recorded at `4f5b431ae`), because the
 world decides where she ends up.
 
 **The primary proof is a free run, not a per-frame check.** Run the domain from a seed over many
@@ -279,8 +261,9 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     carry one call's arguments pays as the arguments did.
   - **The parameter count is not a term.** A struct of the arguments would game any count, and
     the base and Q2 already price an interface's width.
-  - Measured on round 7 (`tools size`, both sides the same counter): the old code scores 12,723
-    (base 11,557.5, depth +828.5, clumps +337) and round 7 8,401.75 (7,465, +700.25, +236.5).
+  - Measured on round 7 (`tools size` at `bc6f74f9c`, both sides the same counter, over the old
+    code and round 7 as they stand at `c7f927ab6`): the old code scores 12,723 (base 11,557.5,
+    depth +828.5, clumps +337) and round 7 8,401.75 (7,465, +700.25, +236.5).
     Of four rewrites of round 7, the argument struct scores worse (+59.5) and her body box as a
     concept (−34.75), the box without methods (−33.75) and a split of `Samus::take` (−20)
     better.
@@ -306,8 +289,8 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     refused, a child naming its parent while the parent reads the child included. It stops
     passing a whole owner (`&Samus`) down to a helper module to dodge Q2.
 - **k is computed under this score** (decision 7): the old code's score (12,723 for
-  samus-motion) per unit of the official `tools spec-units` count, times 0.55. The spec header
-  states the value and its inputs; it is then frozen.
+  samus-motion, at `c7f927ab6`) per unit of the official `tools spec-units` count, times 0.55.
+  The spec header states the value and its inputs; it is then frozen.
 - **Two lints close what no weight can** (Jim, 2026-11-07), as `tools/cleanroom/code_check.sh`
   tags on the clean crates:
   - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
@@ -343,12 +326,12 @@ localiser show any change against today's engine. Each change is either a fix or
 
 **Done means:**
 - A movement kind is a row, a parameter is a table entry or a rule, and collision is one sweep.
-- Nothing in `model::samus` names a video type or an address. Source lines live in the catalogue
-  only (review R3).
+- Nothing in the domain's clean model names a video type or an address. Source lines live in
+  the observer's decode notes only.
 
 **The pilot passes (review R10) when all of these hold:**
 1. The three exactness checks above hold.
-2. No asm address appears in `game::model::samus`.
+2. No asm address appears in the domain's clean model.
 3. The domain's RAM-shape list (§5) is short and every item on it is justified.
 4. The domain harness matches the oracle on the declared fields; the vector tests pass; and the
    domain is significantly smaller than the old code it replaces.
@@ -388,9 +371,10 @@ switches between them. A domain goes in this order (review R2):
      regrouped by behaviour before the implementer starts. The clean room stops transliteration.
      This question stops the implementer inheriting the observer's breakdown of the original.
 3. **The implementer** designs the State types and the model from the spec alone. It writes into
-   an **empty module**, `game::model::<domain>`, never opens the old module, and deletes it in the
-   same commit (review R3). A test in `game` runs the vector file, so it iterates locally and
-   reaches the oracle only to confirm.
+   an **empty crate**, `crates/clean_model/<domain>`, in an export (below), and never opens the
+   old module; the integrator wires it in and deletes the old module in the same change
+   (review R3). A test in the crate runs the vector file, so it iterates locally and reaches the
+   oracle only to confirm.
 4. **The observer writes `verify`'s decode for the implementer's types.** Decode is an abstraction
    from RAM to the State, not a copy. If a State value can't be decoded, the observer either names
    the hidden quantity as a new spec entry, in domain terms, or shows that the value is derived,
@@ -418,7 +402,8 @@ pilot came from implementers having the whole repository and being trusted not t
 sparse checkout is not enough: every worktree shares one object store and every ref, and nothing on
 disk or on the web is out of reach. So:
 - **The implementer works in an export,** not a worktree. It is a fresh repository built by
-  `git archive` from an allowlist (the clean crates, this note's clean-room sections, the domain's
+  `git archive` from an allowlist (`tools/cleanroom/allowlist.txt`: the clean crates, the clean room's design
+  [docs/cleanroom/DESIGN.md](../cleanroom/DESIGN.md), the domain's
   spec and vectors, the implementer skill). It has no history, no other refs, no remote and no
   alternates, and lives outside the project's directories. Results come back as patches, applied by
   the integrator.
@@ -444,7 +429,7 @@ disk or on the web is out of reach. So:
   `docs/behaviours/<domain>.decode.md`. The spec carries behaviour ids, rules, parameters and
   vectors. The catalogue carries ids, summaries, kinds and switches.
 - **Implementers work in an export** (`tools/cleanroom/export.sh`, see above). It holds only the
-  clean crates, this note's clean-room sections, the domain's spec and vectors, and the implementer
+  clean crates, the clean room's design, the domain's spec and vectors, and the implementer
   skill. There is nothing else in it to open, and `tools/cleanroom/canary.sh` checks afterwards what
   was read.
 - **Only implementer commits change the clean crates.** A check rejects any commit to them that lacks
@@ -464,15 +449,16 @@ that was a RAM word, and a result type that existed only because the original sp
 - **The spec review is a gate.** An entry named after its one routine, an entry point that matches a
   routine, or a type that mirrors a RAM word stops the spec until it is regrouped.
 
-**What the implementer may read:** this note, its domain's spec and vectors, the localiser's
-output, `data`'s public types, and the model code. **Not:** the bank logs or the asm,
+**What the implementer may read:** the clean room's design, its domain's spec and vectors, the
+localiser's output, `data`'s public types, and the model code. **Not:** the bank logs or the asm,
 `verify/src/{decode,source,strand}.rs` (they hold WRAM addresses), the old module it replaces, and
 history before the tag `archive/old-engine`.
 
 **No fitting to the oracle (review R6).**
-- Every literal and every branch in `game::model` traces to a `BehaviourId`, and values come from
+- Every literal and every branch in the clean model traces to a `BehaviourId`, and values come from
   `Rules` or `data`.
-- Catalogue entries are added only in observer commits, with the trailer `Role: observer`.
+- The catalogue holds the spec's entries one for one, and a test in the clean crate holds it to
+  the vectors: the observer adds an entry to the spec, the implementer to the catalogue.
 - No conditions on frame numbers, positions or room IDs that no spec entry names.
 
 **The spec template (review R4).**
@@ -498,9 +484,10 @@ history before the tag `archive/old-engine`.
 **The RAM-shape report (review R2).** The size report lists, for each domain, the State fields whose
 decode is one WRAM word copied as-is. Each needs a one-line reason in the spec.
 
-**Address check (review R3).** `tools/check_crate_rules.sh` reports `$XX:XXXX` and `$XXXX` anywhere
-in `game` outside `behaviours.rs`. It starts as a report, because 881 lines cite addresses today,
-and becomes an error domain by domain as each one is reshaped.
+**Address check (review R3).** `tools/check_crate_rules.sh` refuses SNES address literals in the
+code of `game`, `runtime` and `app`, and the clean room's scans (`tools/cleanroom/scan.sh`) refuse
+an address anywhere in the clean crates, comments included. Comments in the engine code not yet
+rebuilt still cite the bank logs; they leave with their domain's old code.
 
 **A brief names behaviours and the mechanism** by spec entry IDs (for example: "`BallAtRest`
 coasts like standing; add its row"). It carries no bank-log excerpt and no address. A new free
@@ -546,21 +533,7 @@ Then, as checks that must not regress:
 
 The size report adds tokens per layer, so the routine-port share is visible and falls.
 
-## 7. Amendments to ARCHITECTURE
-
-1. **§2:** phases run in the original's order (§6.3). Inside a domain, structure
-   follows the model, and an order that can be observed at a cut is a named behaviour.
-2. **§4.1 and §9.1:** add `game::exact`. Producers never write video State.
-3. **D16:** intents are the model's primary per-Tick output. `describe` returns them rather than
-   reconstructing them.
-4. **D3, D5 and §11.6:** hardware leftovers are State only when an engine rule reads them.
-   Otherwise they are not compared, and are listed by name.
-5. **D13:** a family whose behaviour is a ROM instruction list runs it through the interpreter.
-   Hand-coding a list as an enum of positions is a review stop.
-6. **P20:** the catalogue (§3) is its artifact, and D24 reports it.
-7. **K9:** a bank reference lives only in the observer's decode notes, never in code, the spec or the catalogue; module docs describe the domain.
-
-## 8. Lessons
+## 7. Lessons
 
 This note answers these lessons from the three attempts so far. The "review R1" to "R10" labels
 refer to an external review of this note (2026-11-06). Its text and the answers are in git history at
@@ -597,7 +570,7 @@ first Samus-motion model was no better than a step that does nothing. These assu
 | With no intent type, every drawing lane wrote bytes | §2: intents and one encoder; `model` may not name video types |
 | The thesis had no artifact in the code | §3: the catalogue and `Rules` switches |
 | Lanes chose work by the next differing field; tick counts rose while the model didn't | §5: plan by mechanism, with the oracle as the acceptance check; §6: measure behaviours first |
-| A ROM list was hand-coded as an enum (`ItemStep`) | §7.5: interpreter mandatory |
+| A ROM list was hand-coded as an enum (`ItemStep`) | ARCHITECTURE D13: interpreter mandatory |
 | Quirks were re-derived in each routine (16 local signed compares) | §4: once, on the type, named and switchable |
 | Each lane rediscovered context from the bank logs; fixed overhead was about half of each lane | §5: the observer writes it once, and briefs carry the excerpts |
 | Coordinator waves and hourly reviews measured the process, not the goal | the orchestrator holds the design; review happens once per finished mechanism, against §6 |

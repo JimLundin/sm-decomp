@@ -84,6 +84,7 @@ amendments are applied here. The oracle and the lock are in [ORACLE.md](../ORACL
 | `oracle_record` | `FrameRecord` and its codec (`oracle::record`), so `verify` reads records without an emulator | link an emulator |
 | `verify` | the record → State decoder, projections, facts, digests, free-run and lockstep comparison | be depended on by an engine crate |
 | `tools` | the command line and the importers | hold comparison logic of its own |
+| `clean_types`, `clean_model/<domain>` | the clean room's crates (MODEL §5): the shared domain types and the `World` trait; each rebuilt domain's model and catalogue | depend on anything but each other and `std`; hold an address, a bank reference or the original's names |
 | `canonical`, `canonical_derive` | the `Canonical` trait (codec, diff, schema hash) and its derive over `proc_macro` alone (no `syn` or `quote`, whose build scripts Defender blocks); separate so `data` can derive it | hold State or rules |
 
 **D1.** The names say what each crate is. `verify` is apart from `tools` because the decoder and
@@ -99,7 +100,7 @@ second comparison path (P7). [crates/README.md](../../crates/README.md) lists th
 3. Engine crates hold no `cfg(verify)`, probe or observer (P6), and no SNES address literal in
    `game`, `runtime` or `app` (K1).
 4. No `#![feature]`, `allow` or `expect` attribute, and no routine-label names, in the engine (K8, K9).
-5. MODEL §2's "never names" column: a warning until the reshape, then an error.
+5. MODEL §2's "never names" column: held by review until the reshape, then checked here.
 
 ### 4.3 The trait budget
 
@@ -316,7 +317,7 @@ pub fn run<F: Family>(programs: &Programs<F>, cursor: &mut Cursor<F>, cx: &mut F
 ```
 
 Every family whose behaviour is a ROM instruction list runs it through this interpreter; hand-coding a
-list as an enum of positions is a review stop (MODEL §7.5).
+list as an enum of positions is a review stop.
 
 ### 7.3 AI, machines and bosses
 
@@ -487,13 +488,12 @@ and its slow path (Mode 1, BG3 at normal priority) is optimised; Checkpoints enc
 
 ## 13. Size, trait and behaviour budgets
 
-**D24.** Every landing reports lines per crate and per MODEL layer (so the routine-port share is
-visible and falls), the trait budget (§4.3), and the behaviour catalogue (MODEL §3, §6): behaviours
-catalogued, proven exact and switchable (P20). A domain past its upper bound stops for a design review.
-Budget in authored lines without tests: `data` 11-17k; `game` spine 9-14k, Samus 9-12k, enemies and
-projectiles 14-20k, bosses 10-15k, PLMs and visual effects 7-10k, rooms, doors, progress and sound
-6-9k, menus and cinematics 7-10k; `runtime` 9.5-14k; `app` 2-3k. Engine total 83-123k; verification
-13.5-20k.
+**D24.** Every landing reports its size with `tools size` (weighted logical tokens, with the data
+and the declarations reported beside them, MODEL §1 decision 5), per crate and per MODEL layer so
+the routine-port share is visible and falls; the trait budget (§4.3); and the behaviour catalogue
+(MODEL §3, §6): behaviours catalogued, proven exact and switchable (P20). A rebuilt domain's budget
+comes from its spec (MODEL §1 decision 7). The budget is an indicator; a domain over the old code
+it replaces stops for a design review.
 
 ## 14. Checkpoints and starts
 

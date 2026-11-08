@@ -15,6 +15,8 @@ The rebuild's crates, as planned in
 | `tools` | the command line over the above and the importers. No comparison logic of its own. | `verify`, `oracle`, `runtime` |
 | `canonical` | the `Canonical` trait, its codec, diff and schema hash, and the primitive impls; re-exports the derive. Its own crate so `data` can derive it without depending on `game`. | `canonical_derive` |
 | `canonical_derive` | the `Canonical` derive macro, dependency-free. | none |
+| `clean_types` | the clean room's shared domain types (MODEL §5): `P.S` quantities, poses, cells, the `World` trait, the catalogue's kinds. No address or original name. | none |
+| `clean_model_samus_motion` | Samus moving through the world (`crates/clean_model/samus-motion`), built from its spec in the clean room, and its catalogue. | `clean_types` |
 
 `data`, `game`, `runtime` and `app` are the engine. Every new crate takes the workspace lint
 set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float arithmetic.
