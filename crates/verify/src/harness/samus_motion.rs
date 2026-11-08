@@ -25,7 +25,7 @@ use game::samus_world::SamusWorld;
 use game::samus_world::state::clean_of;
 use game::samus_world::step::{Ran, Reads, run};
 use game::state::Controller;
-use game::state::room::{Block, BlockColumns, ElevatorRide};
+use game::state::room::{Block, BlockColumns, BlockKind, ElevatorRide};
 use game::state::samus::{Bounce, Motion, Position, Samus, SpeedMode, VerticalMotion};
 use game::state::strand::Frame;
 use oracle_record::{Cut, FrameRecord, NmiKind};
@@ -38,6 +38,9 @@ use crate::source::{self, WramByte, WramWord};
 
 /// The game state the main loop runs gameplay in.
 const MAIN_GAMEPLAY: u16 = 8;
+
+/// A block is 16 px.
+const BLOCK_SHIFT: u16 = 4;
 
 /// The equipment bits the masks read.
 const GRAVITY_SUIT: u16 = 0x0020;
@@ -167,6 +170,10 @@ const RUNNING: u8 = 0x01;
 const SPIN_JUMPING: u8 = 0x03;
 /// The standing movement type, which the running let-go row stands her in.
 const STANDING: u8 = 0x00;
+/// The ball's and the spring ball's ground movement types, whose vertical move tests her
+/// vertical direction alone ($90:92B8): falling, she moves by her speed, not the ground pull.
+const BALL_ON_GROUND: u8 = 0x04;
+const SPRING_BALL_ON_GROUND: u8 = 0x11;
 /// The pad's left and right (`JOYPAD1_LASTKEYS`), which no binding moves.
 const SIDES: u16 = 0x0300;
 /// Bank $90 log: the shinespark windup's movement handler, which the windup's start sets
@@ -320,6 +327,38 @@ fn let_go_stands(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
     Ok(movement(from)? == RUNNING
         && word(from, source::JOYPAD1_LASTKEYS)? & SIDES == 0
         && movement(next)? == STANDING)
+}
+
+/// Whether `from` starts at a bomb jump's peak: the ball in its ground movement type, falling
+/// at a speed of 0: only a bomb jump leaves her so on the ground (gap 29).
+fn bomb_jump_peak(from: &FrameRecord) -> Result<bool, Skip> {
+    let movement = byte(from, source::SAMUS_MOVEMENT_TYPE)?;
+    let samus = state(from)?;
+    Ok(matches!(movement, BALL_ON_GROUND | SPRING_BALL_ON_GROUND)
+        && samus.vertical == VerticalMotion::Down
+        && samus.vertical_speed.0 == 0)
+}
+
+/// Whether a sloped floor block lies within a block of her feet in `from`: in her centre's
+/// column or either neighbour, and in her bottom's row or either neighbour. That is as far as
+/// one frame's move and pull reach at the dashes the records hold (gap 31).
+fn sloped_floor_near(from: &FrameRecord, inputs: &Inputs) -> Result<bool, Skip> {
+    let column = word(from, source::SAMUS_X_POS)? >> BLOCK_SHIFT;
+    let bottom = word(from, source::SAMUS_Y_POS)?
+        .wrapping_add(radius(from)?)
+        .wrapping_sub(1)
+        >> BLOCK_SHIFT;
+    let width = usize::from(inputs.width.0);
+    let near = |centre: u16| centre.saturating_sub(1)..=centre.saturating_add(1);
+    Ok(near(bottom).any(|row| {
+        near(column).any(|column| {
+            usize::from(row)
+                .checked_mul(width)
+                .and_then(|start| start.checked_add(usize::from(column)))
+                .and_then(|index| inputs.blocks.get(index))
+                .is_some_and(|block| matches!(block.kind, BlockKind::Slope(_)))
+        })
+    }))
 }
 
 /// Whether a jump, a spin's jump or a wall jump's kick starts a rise from `before` to `after`:
@@ -489,7 +528,12 @@ enum Quantity {
 impl Quantity {
     /// The field alone.
     const fn set(self) -> FieldSet {
-        FieldSet::single(match self {
+        FieldSet::single(self.index())
+    }
+
+    /// Its place in [`SamusMotion`]'s `FIELDS`.
+    const fn index(self) -> usize {
+        match self {
             Self::X => 0,
             Self::Y => 1,
             Self::BaseSpeed => 2,
@@ -498,7 +542,7 @@ impl Quantity {
             Self::Mode => 5,
             Self::VerticalSpeed => 6,
             Self::Vertical => 7,
-        })
+        }
     }
 
     /// The fields in `quantities`.
@@ -640,7 +684,7 @@ impl Domain for SamusMotion {
         &self,
         from: &FrameRecord,
         next: &FrameRecord,
-        _inputs: &Inputs,
+        inputs: &Inputs,
     ) -> Result<Vec<Mask>, Skip> {
         use Quantity as Q;
         let mut masks = Vec::new();
@@ -673,6 +717,28 @@ impl Domain for SamusMotion {
             mask(
                 "deferred: the shinespark's start sets her dash, base and vertical speeds",
                 Q::all(&[Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed, Q::Vertical]),
+            );
+        }
+        // The speed booster's dash moves her further (x, above); on a sloped floor the
+        // surface's height at her centre column, which the walk up and the ground pull end on,
+        // follows that x, and the pull is |speed| + dash + 1, so y is the booster's too there
+        // (gap 31: with the dash's cap lifted, each such frame of the five rows that still
+        // differs has x a pixel off, the booster's own growth of the dash).
+        if boost.contains(Q::X.index()) && sloped_floor_near(from, inputs)? {
+            mask(
+                "deferred: the speed booster on a sloped floor (its dash sets x, where the slope's surface leaves her, and the pull)",
+                Q::Y.set(),
+            );
+        }
+        // A bomb jump lifts the ball without changing its ground pose and hands back at its
+        // peak ($90:E066, $90:E07D), where the rise's end left her falling from rest
+        // ($90:90C4: speed 0, falling). The next frame the ball's ground move tests that
+        // direction alone ($90:92B8) and moves her by the bomb jump's fall (0, under gravity),
+        // not by the ground pull; no other frame starts on the ground falling at 0 (gap 29).
+        if bomb_jump_peak(from)? {
+            mask(
+                "deferred: the bomb jump's peak (the ball still in its ground pose falls from rest by its own speed, not the ground pull)",
+                Q::Y.set(),
             );
         }
         if let_go_stands(from, next)? {

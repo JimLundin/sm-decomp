@@ -53,12 +53,12 @@ samus-motion samus-ceres-push 1702
 samus-motion samus-grapple-release 243
 samus-motion samus-grapple-walljump 113
 samus-motion samus-input-poses 294
-samus-motion samus-mockball 124
+samus-motion samus-mockball 129
 samus-motion samus-screw-attack 851
-samus-motion samus-shinespark-left 289
-samus-motion samus-shinespark-right 267
-samus-motion samus-shinespark-up 186
-samus-motion samus-shinespark-up-left 240
+samus-motion samus-shinespark-left 315
+samus-motion samus-shinespark-right 293
+samus-motion samus-shinespark-up 212
+samus-motion samus-shinespark-up-left 266
 samus-motion samus-space-jump-chain 383
 samus-motion samus-square-slope-reserve 37
 samus-motion samus-walljump-16 156
