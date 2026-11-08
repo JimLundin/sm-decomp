@@ -6,6 +6,57 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
+## Open: round 9 in the engine and the harness (integrator, 2026-11-08, lane/wire-r9)
+
+The bridge (`game::samus_world::step`) takes round 9's API. Gap 28's answer is wired: where pose
+fit or the shrink placed her, the camera's previous y pixel (`0B14`) is the step's `camera_from`,
+and the bridge no longer infers the push from the looks' cells. On a frame without a placement
+`camera_from` is her y at the frame's start, and the engine's word is left as it was: writing it
+every frame broke the lockstep ratchet in the elevator room (area-brinstar 476 → 449 Ticks
+equal), where the elevator moves her outside the step. The let-go mode word of adversary 28's
+AS4 note is masked, not derived: running with neither side held, standing the next frame
+("unperceived: the running let-go row's speed mode ...", 37 frames over the 32 rows, all of which
+matched). The proof against main 8039dc646 holds: the free-run gate's output and its
+localisation are identical, and the lockstep ratchet is at 1372 of 1427 (item-morph-ball) and
+476 of 476 (area-brinstar). The domain harness matches 12,526 of 12,782 compared frames (12,339
+on main): gaps 20, 21, 24 and 27's frames, the moonfall turn (chain-0232-D5A7) and the let-go row
+(samus-space-jump-chain and the three wall-jump rows at 13) now match, and 24 floors rose. One
+row fell (item 29); the frames that newly differ are items 29-31.
+
+29. **A walk-off at rest moves her the whole pull (`FollowingTheGround`, SL3).**
+    samus-bomb-jump-vertical 1036 → 1037: the ball on the ground (1Dh) the frame after the bomb
+    jump's movement, speeds and dash 0, `0B36` = 2 with `0B2E`.`0B2C` 0, nothing held, nothing
+    under her (record 1037 is the falling ball, 31h). y: model 00A7.0BFF (the walk-off moves her
+    the whole pull, 1.0000), game 00A6.0BFF (no move). Both then fall from rest: 1037 → 1038
+    matches (vertical speed 0.1C00). Round 8 matched: its walk-off fell from rest without the
+    move. Round 9's walk-off arm (gap 21's answer, SL3) moves her the pull; here, with no
+    horizontal move, the game doesn't. The row is 285 against its floor of 286, so the floors
+    test fails locally on it until this is answered; the floor is kept. Asked: which walk-offs
+    move her the pull (a horizontal move first? the ball at rest?).
+30. **The moonwalk's jump: the way her speed points (`TurningRound`, `PadChart`, MT1).**
+    chain-0014-96BA 4 → 5, chain-0232-D5A7 17 → 18 and samus-input-poses 118 → 119: moonwalking
+    (49h, 4Ah, 49h) at speed 0, following the pad, jump pressed: the moonwalk's jump (C0h, BFh,
+    C0h). Both move her 0.8000 the way she walks and leave her speed at 0.8000. `0B4A`: model 2
+    (carries on along her facing), game 1 (a skid, against the turn's facing word). Round 9's
+    turn keeps her facing (MT1), and `TurnRound` sets her way to her facing at the frame's start,
+    so her way and the turn's facing agree; round 8's turn faced back, so they didn't, and it
+    matched. No later frame differs (x and her speeds match through the turn). Asked: which way
+    her speed points after the moonwalk's jump; or, if that never shows, whether the mode word on
+    that frame is evidence, as with AS4.
+31. **Down a slope on the speed booster's dash, the pull's row is the booster's (`SlopesCarry`,
+    `FollowingTheGround`; with gap 27).** samus-mockball and the four samus-shinespark rows, frames
+    10 → 11, 11 → 12, 13 → 14, 15 → 16 and 16 → 17: running down the slope with run held and a dash
+    of 3.0000 to 3.5000. y: model 1 px higher (samus-mockball 10 → 11: from 048E.FFFF, model
+    0492.FFFF, game 0493.FFFF). Gap 27's frames (9 → 10, 12 → 13, and 17 → 18 to 21 → 22) now match.
+    Localised: the booster's dash past 2.0 is deferred (the mask takes x and the dash), so the
+    model's dash stops at 2.0000; its pull is 5.C000 (2.C000 + 2.0000 + 1) against the game's
+    6.D000, and her centre column is 1.1000 behind. On a sloped floor both decide where the pull
+    stops: the carry and the surface's row at her centre column. With the dash's cap lifted in a
+    local run (`Rules::dash_cap` 10.0000, not committed), samus-mockball's y matches on all 129
+    frames and these frames match on all five rows. So neither gap 27's frames matching nor these
+    differing is evidence of `SlopesCarry`. Asked: whether the booster's mask should also take y
+    while that dash runs her over a sloped floor.
+
 ## Answered: round 8 in the engine and the harness (integrator, 2026-11-08, lane/wire-r8; observer, lane/r9-spec)
 
 Round 8 dropped `Outcome::change` and `Outcome::met` (adversary 27, item 5). The bridge
