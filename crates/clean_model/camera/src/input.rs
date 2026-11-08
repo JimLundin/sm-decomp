@@ -1,83 +1,58 @@
-//! What the camera reads each frame (§1.3): her motion's outputs, the room and the frame.
+//! What the camera reads each frame (Spec: §1.3): her motion's outputs, the room, the lead
+//! setting and whether time is stopped.
 
-use clean_types::{Facing, Fixed, Position, Px};
+use clean_types::{Facing, Fixed, Position};
 
-/// The kind of a screen of the room (§1.3, Screen kinds). Listed alphabetically; the order means
-/// nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ScreenKind {
-    /// The view may not show it; a view that would is pushed back to its edge (`ClosedScreens`).
-    Closed,
-    /// The view may show all of it.
-    Open,
-    /// Like `Open`, but where the view can go no lower it stops with its top on the screen's top
-    /// edge (`ShortScreens`).
-    Short,
-}
+use crate::room::Room;
 
-/// `AimingHeight`: the room's two distances in px from the view's top edge down to her.
-#[derive(Clone, Copy, Debug)]
-pub struct Heights {
-    /// `hn`, while she isn't rising.
-    pub level: Px,
-    /// `hr`, while she rises.
-    pub rising: Px,
-}
-
-/// The room as the camera reads it (§1.3), as its loading supplies it (§5).
-#[derive(Clone, Debug)]
-pub struct Room {
-    /// Its screens, one row of screens a `Vec`, top row first, each left to right: so many
-    /// across (`w`, the first row's length) and down (`h`).
-    pub screens: Vec<Vec<ScreenKind>>,
-    /// `BelowTheRoom`: the rows the room's loading left below its last row, top first; a row may
-    /// be shorter than `w`.
-    pub below: Vec<Vec<ScreenKind>>,
-    /// `AimingHeight`: the room's two aim heights.
-    pub heights: Heights,
-}
-
-/// `LeadingHer`: the lead setting, `Ahead` unless a boss sets another (§5). Listed
-/// alphabetically; the order means nothing.
+/// The lead setting: which lead the view keeps from her (Spec: LeadingHer). It is `Ahead` unless
+/// a boss sets another. Listed alphabetically; the order means nothing. The leads each gives are
+/// in `Rules`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum LeadSetting {
-    /// More of the way she faces.
+    /// The view shows more of the way she travels: in the reference profile she is 96 px from the
+    /// view's edge behind her.
     #[default]
     Ahead,
-    /// Her near the view's left edge either way.
+    /// She is kept near the view's left edge, whichever way she travels: 32 px from it in the
+    /// reference profile.
     KeepLeft,
-    /// Her near the view's right edge either way.
+    /// She is kept near the view's right edge, whichever way she travels: 224 px from its left
+    /// edge in the reference profile.
     KeepRight,
-    /// A short lead.
+    /// In the reference profile she is 64 px from the view's left edge when she travels right, so
+    /// it shows more ahead of her than `Ahead` does, and 80 px when she travels left, so it shows
+    /// less.
     Near,
 }
 
-/// What the camera reads of her this frame, her motion's outputs (§1.3).
+/// What the camera reads of her this frame, her motion's outputs (Spec: §1.3).
 #[derive(Clone, Copy, Debug)]
 pub struct Samus {
     /// Her position, after everything that moved her this frame.
     pub position: Position,
-    /// `Remembering`: her motion's y the camera follows her from: her start y, or where pose fit
-    /// or a change of shape placed her.
+    /// The y her motion says the camera follows her from: her start y, or where pose fit or a
+    /// change of shape placed her (Spec: Remembering).
     pub camera_from: Fixed,
-    /// `LeadingHer`: her facing.
+    /// Which way she faces (Spec: LeadingHer).
     pub facing: Facing,
-    /// `LeadingHer`: she is going backwards: she skids, moonwalks or takes a knockback.
+    /// Whether she is going backwards: she skids, moonwalks or takes a knockback (Spec:
+    /// LeadingHer).
     pub backwards: bool,
-    /// `AimingHeight`: she is rising, from the rise's start until it ends, a rise at 0 and the
-    /// frame that spends the rise included.
+    /// Whether she is rising: from the rise's start until it ends, a rise at 0 and the frame that
+    /// spends the rise included (Spec: AimingHeight).
     pub rising: bool,
 }
 
-/// One frame's inputs (§1.3).
+/// One frame's inputs (Spec: §1.3).
 #[derive(Clone, Copy, Debug)]
 pub struct Frame<'a> {
     /// What the camera reads of her.
     pub samus: Samus,
     /// The room she is in.
     pub room: &'a Room,
-    /// `LeadingHer`: the lead setting.
+    /// The lead setting (Spec: LeadingHer).
     pub lead: LeadSetting,
-    /// `TimeStopped`: whether time is stopped.
+    /// Whether time is stopped, which keeps the view from settling (Spec: TimeStopped).
     pub time_stopped: bool,
 }

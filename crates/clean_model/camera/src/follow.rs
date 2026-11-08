@@ -1,103 +1,139 @@
-//! Area follow (§2): where the view aims and how fast it moves there.
-//!
-//! `FollowingHer`, `LeadingHer`, `AimingHeight`, `CreepReadsRightward`; `Remembering` is the
-//! step's order (the crate root).
+//! Following her (Spec: §2): how positions compare, where the view aims, and how fast and how far
+//! it moves there.
 
-use clean_types::{Facing, Fixed, Pair, Parts, Px, below, px};
+use clean_types::{Fixed, Pair, Parts, Px, below, px};
 
-use crate::input::{Frame, LeadSetting};
+use crate::input::Frame;
 use crate::rules::Rules;
 
-/// `FollowingHer`: which way the camera moves on an axis, towards its aim.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Going {
+/// Whether position `a` is before position `b`: bit 15 of a − b, mod 2^16, is set (Spec:
+/// FollowingHer). So a position left of or above the room (FFF0) is before 0, and of two
+/// positions 8000 apart each is before the other.
+pub(crate) const fn before(a: Px, b: Px) -> bool {
+    below(a.0, b.0)
+}
+
+/// Whether position `a` exceeds position `b`, both read as plain numbers from 0 to FFFF (Spec:
+/// FollowingHer). So FFF0 exceeds every position in the room.
+pub(crate) const fn exceeds(a: Px, b: Px) -> bool {
+    a.0 > b.0
+}
+
+/// The later of two positions, the spec's max: `b` when `a` is before it, `a` otherwise.
+pub(crate) const fn later(a: Px, b: Px) -> Px {
+    if before(a, b) { b } else { a }
+}
+
+/// The smaller of two positions as plain numbers, the spec's min by exceeds: `b` when `a`
+/// exceeds it, `a` otherwise.
+pub(crate) const fn smaller(a: Px, b: Px) -> Px {
+    if exceeds(a, b) { b } else { a }
+}
+
+/// Which way the camera moves on an axis, towards its aim (Spec: FollowingHer).
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Going {
     /// Left or up.
     Back,
     /// Right or down.
     Forward,
 }
 
-/// `FollowingHer`: the camera's move on an axis, before the room limits it (§3).
-#[derive(Clone, Copy, Debug)]
-pub struct Move {
-    /// Where it ends: where the move took it, or stopped on the aim.
-    pub to: Fixed,
-    /// `cm`: the pixel part where the move took it before the aim stopped it.
-    pub reach: Px,
-    /// Which way it moved.
-    pub going: Going,
+impl Going {
+    /// The way from the camera's pixel part to its aim's: none when they are the same, back when
+    /// the aim is before the camera (so an aim exactly 8000 away is back), forward otherwise.
+    fn towards(camera: Px, aim: Px) -> Option<Self> {
+        if aim == camera {
+            None
+        } else if before(aim, camera) {
+            Some(Self::Back)
+        } else {
+            Some(Self::Forward)
+        }
+    }
+
+    /// Where a move this way by `speed` takes the camera, carrying through the subpixels.
+    fn by(self, camera: Fixed, speed: Fixed) -> Fixed {
+        match self {
+            Self::Back => camera - speed,
+            Self::Forward => camera + speed,
+        }
+    }
+
+    /// Whether a move this way that reached `reached` went beyond the aim: going forward, the aim
+    /// is before it; going back, it is before the aim.
+    const fn beyond(self, reached: Px, aim: Px) -> bool {
+        match self {
+            Self::Back => before(reached, aim),
+            Self::Forward => before(aim, reached),
+        }
+    }
 }
 
-/// `LeadingHer` and `AimingHeight`: the point the view aims its top-left corner at.
-pub fn aim(rules: &Rules, frame: &Frame) -> Pair<Px> {
+/// The camera's move on an axis, before the room limits it (Spec: FollowingHer, §3).
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Move {
+    /// Which way it moved.
+    pub(crate) going: Going,
+    /// The pixel part the move took it to, before the aim stopped it (the spec's cm).
+    pub(crate) reached: Px,
+    /// Where the move ends: where it took it, or on the aim, subpixel part 0, when it went
+    /// beyond the aim.
+    pub(crate) stopped: Fixed,
+}
+
+/// The point the view aims its top-left corner at (Spec: LeadingHer, AimingHeight): across, her
+/// x less the lead the way she travels; down, her y less the room's height for whether she
+/// rises.
+pub(crate) fn aim(rules: &Rules, frame: &Frame) -> Pair<Px> {
     let samus = &frame.samus;
-    let leads = match frame.lead {
-        LeadSetting::Ahead => rules.ahead,
-        LeadSetting::KeepLeft => rules.keep_left,
-        LeadSetting::KeepRight => rules.keep_right,
-        LeadSetting::Near => rules.near,
-    };
-    // LeadingHer: going backwards turns the lead round, to the way she travels.
-    let way = if samus.backwards {
+    // Going backwards turns the lead round, to the way she travels.
+    let travel = if samus.backwards {
         samus.facing.back()
     } else {
         samus.facing
     };
-    let lead = if way == Facing::Left {
-        leads.left
-    } else {
-        leads.right
-    };
-    // AimingHeight: a rise at 0 and the frame that spends the rise aim as a rise.
-    let height = if samus.rising {
-        frame.room.heights.rising
-    } else {
-        frame.room.heights.level
-    };
     Pair {
-        x: samus.position.x.pixel() - lead,
-        y: samus.position.y.pixel() - height,
+        x: samus.position.x.pixel() - rules.lead(frame.lead, travel),
+        y: samus.position.y.pixel() - frame.room.heights().height(samus.rising),
     }
 }
 
-/// `FollowingHer`: the speed, how far she moved from where it last saw her, plus the extra pixel.
+/// The camera's speed on an axis: how far she moved from where it last saw her, plus the extra
+/// pixel (Spec: FollowingHer).
+pub(crate) fn speed(her: Fixed, seen: Fixed, extra: Fixed) -> Fixed {
+    creep_reads_rightward(her, seen) + extra
+}
+
+/// Spec: CreepReadsRightward. How far she moved from where the camera last saw her, on the whole
+/// P.S value mod 2^32, its way read from the pixel parts alone: the seen value less hers when her
+/// pixel part is before the seen one, hers less the seen one otherwise.
 ///
-/// `CreepReadsRightward`: the way she moved is read on the pixel parts alone, so a creep left or
-/// up inside a pixel reads as a move right or down of under a pixel.
-pub fn speed(her: Fixed, seen: Fixed, extra: Fixed) -> Fixed {
-    let moved = if below(her.pixel().0, seen.pixel().0) {
+/// Reproduces the original's behaviour: a creep left or up inside a pixel reads as a move right or
+/// down of less than a pixel, so the speed's pixel part is 0 and the view settles 2 px, not 3.
+fn creep_reads_rightward(her: Fixed, seen: Fixed) -> Fixed {
+    if before(her.pixel(), seen.pixel()) {
         seen - her
     } else {
         her - seen
-    };
-    moved + extra
+    }
 }
 
-/// `FollowingHer`: the camera moves towards its aim by the speed, and never past it; with the
-/// aim's pixel part its own it stays as it is (`None`).
-pub fn chase(camera: Fixed, aim: Px, speed: Fixed) -> Option<Move> {
-    let c = camera.pixel();
-    if aim == c {
-        return None;
-    }
-    let forward = below(c.0, aim.0);
-    let reach = if forward {
-        camera + speed
+/// The camera's move towards its aim by `speed`, stopping on the aim when it would go beyond it
+/// (Spec: FollowingHer). None when the aim's pixel part is the camera's: the camera stays as it
+/// is, subpixel part included.
+pub(crate) fn chase(camera: Fixed, aim: Px, speed: Fixed) -> Option<Move> {
+    let going = Going::towards(camera.pixel(), aim)?;
+    let moved = going.by(camera, speed);
+    let reached = moved.pixel();
+    let stopped = if going.beyond(reached, aim) {
+        px(aim)
     } else {
-        camera - speed
-    };
-    let (first, last) = if forward {
-        (aim, reach.pixel())
-    } else {
-        (reach.pixel(), aim)
+        moved
     };
     Some(Move {
-        to: if below(first.0, last.0) {
-            px(aim)
-        } else {
-            reach
-        },
-        reach: reach.pixel(),
-        going: if forward { Going::Forward } else { Going::Back },
+        going,
+        reached,
+        stopped,
     })
 }

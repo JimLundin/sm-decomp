@@ -8,9 +8,10 @@ mod tests {
     use core::str::Chars;
 
     use clean_model_camera::{
-        BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, Rules, Samus, ScreenKind,
+        BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus,
+        ScreenKind,
     };
-    use clean_types::{Checked, Facing, Fixed, Pair, Parts, fixed};
+    use clean_types::{Checked, Facing, Fixed, Kind, Pair, Parts, fixed};
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/camera.toml");
 
@@ -227,12 +228,13 @@ mod tests {
         true
     }
 
+    /// A camera as `before` or `after` gives it: its view, and where it last saw her.
     fn camera(value: Value, what: &str) -> Camera {
         let mut t = value.table();
         let position = t.need("camera").pair();
         let seen = t.need("seen").pair();
         t.done(what);
-        Camera { position, seen }
+        Camera::new(position, seen)
     }
 
     fn room(value: Value) -> Room {
@@ -246,11 +248,7 @@ mod tests {
         };
         assert!(h.next().is_none(), "two heights");
         t.done("room");
-        Room {
-            screens,
-            below,
-            heights,
-        }
+        Room::new(&screens, &below, heights).expect("a valid room")
     }
 
     fn samus(value: Value, seen: Pair<Fixed>) -> Samus {
@@ -287,7 +285,7 @@ mod tests {
             .map_or(LeadSetting::Ahead, |l| lead(&l.str()));
         let time_stopped = v.take("time_stopped").is_some_and(Value::bool);
         let before = camera(v.need("before"), "before");
-        let samus = samus(v.need("samus"), before.seen);
+        let samus = samus(v.need("samus"), before.seen());
         let after = camera(v.need("after"), "after");
         v.done(&id);
         let frame = Frame {
@@ -298,18 +296,18 @@ mod tests {
         };
         let got = before.step(&Rules::REFERENCE, &frame);
         let mut wrong = Vec::new();
-        if got.position != after.position {
+        if got.position() != after.position() {
             wrong.push(format!(
                 "camera: expected {}, got {}",
-                show(after.position),
-                show(got.position)
+                show(after.position()),
+                show(got.position())
             ));
         }
-        if got.seen != after.seen {
+        if got.seen() != after.seen() {
             wrong.push(format!(
                 "seen: expected {}, got {}",
-                show(after.seen),
-                show(got.seen)
+                show(after.seen()),
+                show(got.seen())
             ));
         }
         let result = if wrong.is_empty() {
@@ -357,14 +355,55 @@ mod tests {
         }
     }
 
+    const SPEC: &str = include_str!("../../../../docs/behaviours/camera.md");
+
+    /// A spec entry: its name, and its lines up to the next heading.
+    struct SpecEntry {
+        name: &'static str,
+        lines: Vec<&'static str>,
+    }
+
+    impl SpecEntry {
+        /// The text of one of its fields, `- field: ...`, its continuation lines joined on.
+        fn field(&self, field: &str) -> String {
+            let start = format!("- {field}: ");
+            let mut lines = self.lines.iter().skip_while(|l| !l.starts_with(&start));
+            let first = lines
+                .next()
+                .unwrap_or_else(|| panic!("{} has no {field}", self.name));
+            let rest = lines.take_while(|l| l.starts_with("  "));
+            core::iter::once(&first[start.len()..])
+                .chain(rest.map(|l| l.trim()))
+                .collect::<Vec<_>>()
+                .join(" ")
+        }
+    }
+
+    /// The spec's behaviour entries, in its order: the `###` headings not numbered.
+    fn spec_entries() -> Vec<SpecEntry> {
+        let mut entries: Vec<SpecEntry> = Vec::new();
+        for line in SPEC.lines() {
+            if let Some(heading) = line.strip_prefix('#') {
+                let name = heading.strip_prefix("## ");
+                entries.extend(
+                    name.filter(|n| !n.starts_with(|c: char| c.is_ascii_digit()))
+                        .map(|name| SpecEntry {
+                            name,
+                            lines: Vec::new(),
+                        }),
+                );
+                continue;
+            }
+            if let Some(entry) = entries.last_mut() {
+                entry.lines.push(line);
+            }
+        }
+        entries
+    }
+
     #[test]
     fn the_catalogue_has_one_entry_per_spec_entry() {
-        let spec = include_str!("../../../../docs/behaviours/camera.md");
-        let entries: Vec<&str> = spec
-            .lines()
-            .filter_map(|l| l.strip_prefix("### "))
-            .filter(|l| !l.starts_with(|c: char| c.is_ascii_digit()))
-            .collect();
+        let entries: Vec<&str> = spec_entries().iter().map(|e| e.name).collect();
         let ids: Vec<String> = CATALOGUE.iter().map(|b| format!("{:?}", b.id)).collect();
         assert_eq!(
             entries, ids,
@@ -372,5 +411,54 @@ mod tests {
         );
         let first = CATALOGUE.first().map(|b| b.id);
         assert_eq!(first, Some(BehaviourId::FollowingHer));
+    }
+
+    #[test]
+    fn a_room_is_built_only_from_valid_rows() {
+        use ScreenKind::{Closed, Open};
+        let heights = Heights {
+            level: Wrapping(112),
+            rising: Wrapping(160),
+        };
+        let build = |screens: &[Vec<ScreenKind>], below: &[Vec<ScreenKind>]| {
+            Room::new(screens, below, heights).err()
+        };
+        assert_eq!(build(&[], &[]), Some(RoomError::NoScreens));
+        assert_eq!(build(&[vec![]], &[]), Some(RoomError::NoScreens));
+        assert_eq!(
+            build(&[vec![Open, Open], vec![Open]], &[]),
+            Some(RoomError::UnevenRows)
+        );
+        assert_eq!(
+            build(&[vec![Open]], &[vec![Open, Closed]]),
+            Some(RoomError::BelowRowTooWide)
+        );
+        assert_eq!(build(&[vec![Open; 257]], &[]), Some(RoomError::TooLarge));
+        assert_eq!(
+            build(&vec![vec![Open]; 257], &[]),
+            Some(RoomError::TooLarge)
+        );
+        assert_eq!(build(&[vec![Open; 256]], &[vec![Open]]), None);
+    }
+
+    #[test]
+    fn each_entry_has_its_spec_entry_summary_and_kind() {
+        for (entry, behaviour) in spec_entries().iter().zip(&CATALOGUE) {
+            assert_eq!(
+                entry.field("summary"),
+                behaviour.summary,
+                "{}'s summary",
+                entry.name
+            );
+            let kind = entry.field("kind");
+            let agrees = match behaviour.kind {
+                Kind::Mechanic => kind.starts_with("mechanic"),
+                Kind::Quirk => kind.starts_with("quirk"),
+                Kind::Timing => kind.starts_with("timing"),
+                Kind::Encoding => kind.starts_with("encoding"),
+                Kind::Output => kind.starts_with("output"),
+            };
+            assert!(agrees, "{}'s kind is {kind}", entry.name);
+        }
     }
 }

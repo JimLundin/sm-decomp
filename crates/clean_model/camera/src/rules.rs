@@ -2,37 +2,62 @@
 
 use core::num::Wrapping;
 
-use clean_types::{Fixed, Px};
+use clean_types::{Facing, Fixed, Px};
 
-/// `LeadingHer`: a lead setting's leads, how far her x is from the view's left edge.
+use crate::input::LeadSetting;
+
+/// A lead setting's two leads: how far her x is from the view's left edge, by the way she
+/// travels (Spec: LeadingHer).
 #[derive(Clone, Copy, Debug)]
 pub struct Leads {
-    /// `lr`, when she faces right or the screen.
+    /// When she travels right, or faces the screen going forwards (the spec's lr).
     pub right: Px,
-    /// `ll`, when she faces left.
+    /// When she travels left (the spec's ll).
     pub left: Px,
+}
+
+impl Leads {
+    /// The lead for the way she travels: facing the screen leads as facing right.
+    const fn toward(self, travel: Facing) -> Px {
+        match travel {
+            Facing::Left => self.left,
+            Facing::Right | Facing::Screen => self.right,
+        }
+    }
 }
 
 /// The camera's tuning parameters.
 #[derive(Clone, Copy, Debug)]
 pub struct Rules {
-    /// `FollowingHer`: the extra pixel on top of how far she moved.
+    /// The extra pixel the view moves on top of how far she moved (Spec: FollowingHer).
     pub extra: Fixed,
-    /// `LeadingHer`: the leads of `Ahead`.
+    /// The leads of `LeadSetting::Ahead` (Spec: LeadingHer).
     pub ahead: Leads,
-    /// `LeadingHer`: the leads of `KeepLeft`.
+    /// The leads of `LeadSetting::KeepLeft` (Spec: LeadingHer).
     pub keep_left: Leads,
-    /// `LeadingHer`: the leads of `KeepRight`.
+    /// The leads of `LeadSetting::KeepRight` (Spec: LeadingHer).
     pub keep_right: Leads,
-    /// `LeadingHer`: the leads of `Near`.
+    /// The leads of `LeadSetting::Near` (Spec: LeadingHer).
     pub near: Leads,
-    /// `ClosedScreens`: the push, beyond the speed.
+    /// How far a push moves the view beyond its speed (Spec: ClosedScreens).
     pub push: Px,
-    /// `ShortScreens`: how much lower than on a short screen the view stops on any other.
+    /// How much lower than on a short screen the view stops where it can go no lower on any
+    /// other screen (Spec: ShortScreens).
     pub short_rows: Px,
 }
 
 impl Rules {
+    /// The lead a lead setting gives for the way she travels (Spec: LeadingHer).
+    pub(crate) const fn lead(&self, setting: LeadSetting, travel: Facing) -> Px {
+        let leads = match setting {
+            LeadSetting::Ahead => self.ahead,
+            LeadSetting::KeepLeft => self.keep_left,
+            LeadSetting::KeepRight => self.keep_right,
+            LeadSetting::Near => self.near,
+        };
+        leads.toward(travel)
+    }
+
     /// The reference profile: the spec's vanilla values.
     pub const REFERENCE: Self = Self {
         extra: Wrapping(0x1_0000),
