@@ -110,13 +110,13 @@ and `scan.sh --mirror` agrees.
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
 | RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0) |
 | DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` and `$90:9093` (spin; its stop still calls `$90:8EA9`, which adds the extra run speed) |
-| Moonfall | `$91:EBAF`, `$91:F36E` (the hand-over), `$90:913A` (no limit with direction 0), `$90:9D35` (the wall-jump test reads no direction), `$90:99CD` (the kick sets direction up) |
+| Moonfall | `$91:EBAF`, `$91:F36E` (the hand-over), `$90:913A` (no limit with direction 0), `$90:9D35` (the wall-jump test reads no direction), `$90:99CD` (the kick sets direction up); the turn in it: `$90:A790` and `$90:A7AD` (turning in a jump, in a fall) call `$90:92B8`, which with `0B36` = 0 returns carry clear, so `$90:923F` (the ground pull) runs and `0B2C`/`0B2E` are not touched; `$90:E65A`/`$90:E676` give 04 (no change) for movement types 17h and 18h |
 | WallJump | `$90:9D35` (arming and kick test), `$90:90B3` (one distance, `$90:9E9F` = 8, for both), `$91:FA0F` (kick), `$94:967F` (the probe) |
-| Landing | `$91:F010`, `$90:A640` (upright and changing), `$91:F1FC`, `$91:F25E` (the ball) |
+| Landing | `$91:F010`, `$90:A640` (upright and changing), `$91:F1FC`, `$91:F25E` (the ball): by `0B20`, `$91:F20A` (not bouncing: `0B2E` `CMP #3`, read after `$90:90E2` grew it, since `$90:90E2` copies the speed to `$12.$14`, grows `0B2C`/`0B2E`, then moves by the copy), `$91:F22B` (first bounce: any speed, rises at `$90:9EB5` − 1 = 0.0), `$91:F245` (second bounce: rests); spring ball `$91:F27F`, `$91:F2A3`, `$91:F2C0` alike |
 | BlocksStopFlush | `$94:9722`, `$94:976B` (a 0.0 move skips block collision), `$94:8F49`, `$94:8F82` (horizontal and vertical block collision), `$94:8D2B`, `$94:8DBD` (stepped), `$94:9543`, `$94:959E`, `$94:95F5` (the order), `$90:E4AD` (the limit) |
 | WallsAndCeilings | `$90:E5CE` (wall), `$90:E606` and `$91:EFDF` (ceiling) |
 | SolidEnemies | `$A0:AAC8`, `$A0:AA53`, `$A0:AABC` (overlapped: next enemy, then 0 so blocks run), `$90:9D80`, `$90:9DF8`, `$90:93B1`, `$90:93EC` and `$90:9440` (enemy test first; on a hit the move skips block collision, as the bank log's zebetite-skip note says) |
-| SlopesCarry | `$90:9376`, `$94:87F4` (seat after every horizontal move, sets `0DBA`), `$90:924C` (the pull reads `0DBA`), `$94:976B` (a 0.0 vertical move skips block collision), `$94:976F` (cleared by a non-zero vertical move), `$94:8E38` (square slope stop sets it), `$94:86FE` (rising into a non-square ceiling slope: `$12 = max(0, ...)` and `$14 = 0`, so no move), `$94:87E4` (the floor slope stop is `max(0, ...)` too: never upward) |
+| SlopesCarry | `$90:9376`, `$94:87F4` (seat after every horizontal move, sets `0DBA`), `$90:924C` (the pull reads `0DBA`), `$94:976B` (a 0.0 vertical move skips block collision), `$94:976F` (cleared by a non-zero vertical move), `$94:8E38` (square slope stop sets it), `$94:86FE` (rising into a non-square ceiling slope: `$12 = max(0, ...)` and `$14 = 0`, so no move), `$94:87E4` (the floor slope stop is `max(0, ...)` too: never upward); the carry: `$94:95A1` (`$18` = y + `$12.$14` with the subpixel carry, so the target row includes it) and `$94:879E`..`$94:87EE` (`$12 = max(0, $12 + top − 1 − ($18 + 0B00 − 1) % 16)`, `$14 = 0`: the move is the uncarried pixel part corrected by the carried row); `$94:8790`/`$94:8717` (only the block at her centre column), `$94:87B9`/`$94:8742` (a ceiling never stops a downward move, a floor never a rise) |
 | WordwiseTopSpeed* | `$90:9A99` |
 | PoseFollows | `$91:EB88` (one change a frame: super special `0A2C`, then special `0A2A`, then `0A28`), `$91:E8B6` (the vertical collision result `0DC6` overwrites the pad's `0A28` and sets command 5), `$91:EADE` (the wall stop overrides both); the spec's three items fold the wall stop into `WhatHerMovesMet` and the lookup failure into the chart's last rows, `$91:EC85` falling into `$91:EC8E` (the dash goes with the speed) |
 | PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:F404` (crouched into standing: the bottom edge kept, y − 5; `$91:8087`'s own y − 5 is dead); the last rows: `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E`; `$91:8146` (movement type Fh: no lookup at all, the changing-body row) |
@@ -391,8 +391,8 @@ a type 8 block; `slope_ceiling` a non-square slope with BTS bit 7; `frame` the p
 | SlopesSlowTheWalk | `$94:84D6` and its table `$94:8586` (second word: the factor × 100h; the first word's speed modifier is computed and discarded), `$94:8FBB` (non-square kinds, BTS & 1Fh ≥ 5), `$94:9543` (the column scan, `$20` from the unscaled distance), `$80:82D6` (the 16 × 16 multiply) | only when BTS bit 7 is clear and `0B2C`/`0B2E` = 0; `$12`.`$14` is cut to `$12` low byte : `$15`, negated for leftward, multiplied, negated back over 32 bits. Measured by the dumper's `R`/`L` field (`0DAA`..`0DB0`): r01:625-630 BTS 55h/12h at C0, r06:123-126 BTS 56h/57h at D8, samus-input-poses:418 1.7000 → 1.1400, aim steps 1.0 → 0.C000 (r01) and 0.D800 (r06) |
 | TouchedCells | `$94:9543`, `$94:959E`, `$94:95F5` (the scans, stop at the first carry set), `$94:9515`/`$94:952C` and the reaction tables `$94:94D5`/`$94:94F5`; `$94:9B60` (inside points bottom, centre, top at `0AF6`; the chained XOR at `$94:9BEB`), called from `$90:E6BC` in the current state handler, which game state 8 runs (`$82:8B58`) before the new state handler's movement (`$82:8B69`) | the collision direction `0B02` is what the reactions read |
 | OtherBlockKinds | `$94:938B`/`$94:93CE` (door: destination ≥ 8000h starts game state 9 and returns carry clear, else solid), `$94:904B`/`$94:905D` (spike: its BTS table, then solid), `$94:9018`/`$94:901A` (spike air), `$94:906F`/`$94:909D` (special air: PLM, carry clear), `$94:90CB`/`$94:9102` (special block: the PLM's carry decides), `$94:92F9`/`$94:9313` (bombable air), `$94:932D`/`$94:934C` (bomb block: the PLM's carry, area-dependent BTS solid), `$94:9411`/`$94:9447` (extensions: block index ± BTS, re-dispatch; BTS 0 air) | the item's block is BTS 45h (`$84:EE64`, `$84:EE8E`, setup `$84:EEAB` returns carry clear); scroll cells BTS 46h (`$84:B393`) |
-| PoseFitAfterMoves | `$90:E725` (movement `$90:E94B`, then `$91:E8B6`, then `$91:EB88`), `$91:F404` (`$91:FDAE` pose fit, then `$91:F433` initialise, then `$91:FBBB` the jump transition with `$91:FC8A` the 10 px lift); the push itself `$91:FDAE`..`$91:FFED` with `$94:96AB` and `$A0:A8F0` | `$91:EADE` (the aim step) runs before `$91:F404` |
-| ShrinkingLowersHer | `$91:F758` (transition poses set command 7), `$91:ECDA` with its table `$91:ED36` and `$94:96AB` (the look, result ignored) | runs after `$91:F404` only when the pose stands (`$91:EBEE`) |
+| PoseFitAfterMoves | `$90:E725` (movement `$90:E94B`, then `$91:E8B6`, then `$91:EB88`), `$91:F404` (`$91:FDAE` pose fit, then `$91:F433` initialise, then `$91:FBBB` the jump transition with `$91:FC8A` the 10 px lift); the push itself `$91:FDAE`..`$91:FFED` with `$94:96AB` and `$A0:A8F0`; the camera: `$91:FF42`, `$91:FF6F`, `$91:FF89`, `$91:FF98` and `$91:FFE9` write `0B14` = `0AFA` after the push (not `0B16`); `$91:FF87` (nothing found) and a refusal write nothing; `$90:96FF` makes the camera's speed from `0B14`.`0B16`, and `$90:957A` sets them to her y at the frame's end | `$91:EADE` (the aim step) runs before `$91:F404` |
+| ShrinkingLowersHer | `$91:F758` (transition poses set command 7), `$91:ECDA` with its table `$91:ED36` and `$94:96AB` (the look, result ignored); the camera: `$91:ED0E` writes `0B14` after the lowering, for every transition pose (35h-38h lowered, 3Bh-3Eh by 0) | runs after `$91:F404` only when the pose stands (`$91:EBEE`) |
 
 Recorded vectors: S1 is samus-input-poses record 511 → 512 (block at column 6, row 12, BTS 54h:
 14h x-flipped); S2 is r01 record 716 → 717 (BTS 12h, first frame of a fall, `0B2E`.`0B2C` = 0).
@@ -914,6 +914,70 @@ first); the take-off (jump + back first); the straight jump, aimed down and gun 
 forward + aim without jump: the forward + aim rows name jump); the moonwalk (the way she looks
 first); the ball on the ground (right first); the spring ball falling (7Dh/7Eh: the other side first)
 and hopping (7Fh/80h: right first).
+
+## Round 9's gaps (2026-11-08)
+
+Gaps 20 and 24-28 of `samus-motion.gaps.md`, from the round-8 harness. The records are read with
+`$TEMP/collab/r9-spec/lvl.sh` (the harness's decode, step and oracle, plus `0DBA`, `05B6`,
+`0B14`/`0B16`, `0DA6`/`0DA8` and the blocks around her from `7F:0002` and `7F:6402`), the slope
+shapes from the ROM table `$94:8B2B` (BTS & 1Fh: 12h a 45-degree triangle, 13h a rectangle whose
+surface is row 0, bit 40h the x flip, bit 80h a ceiling).
+
+**Gap 26 (AS4).** samus-space-jump-chain 12: running (09h), `0B46`.`0B48` = 0, pad 0. The lookup
+fails (`$91:81A9`), `$91:8304` gives running's 1 (decelerate), and with base speed 0 makes it 2
+(stop), carry clear, so the prospective pose is pose 09h's no-button pose (01h). The running
+handler then accelerates (`0B4A` = 0): 0.3000, x 0055.2FFF → 0055.5FFF. `$91:EBF5` runs the stop
+(`$91:ECD0`: `0B4A` = 0, cancel boosting), which leaves the speed. Record 13: 01h, 0.3000, `0B4A`
+0. With a base speed other than 0 at the lookup, `$91:EC50` runs after the move and tests the
+speed again (0 → the stop; AS3's frame).
+
+**Gaps 27, 20 and 24 (SL1-SL3, C-slope-carry-kept).** The kept vertical speed takes no part: the
+running handler (`$90:A3E5`) moves by `$90:8E64` and pulls by `$90:923F`, neither reads `0B2C`/
+`0B2E`; the only slope code that does is the horizontal reaction `$94:84D6` (the walk factor,
+only at speed 0). The pixel is the carry: `$94:95A1` builds the target `$18` with the subpixel
+add, so from y subpixel FFFF any pull with a subpixel part lands the target row one lower, and
+`$94:87DB` corrects the uncarried `$12` by that row. samus-shinespark-left 9: y 048B.FFFF, pull
+6.C000 (2.C000 + 3.0000 + 1), target 0492.BFFF, bottom row 6 of block (60h, 4A0h), BTS 52h
+(triangle, x flipped) at x 62h: top row 3; `$12` = 6 + 3 − 1 − 6 = 2: 048D.FFFF (the model's
+048E.FFFF is the uncarried row). samus-mockball 91 (SL1): 04B9.FFFF + 9.4000, bottom row 9 of
+(280h, 4C0h), top 5 at x 284h: 9 + 5 − 1 − 9 = 4, 04BD.FFFF; the rectangle at (270h, 4C0h) is
+not her centre's block. 92 (SL2): 04BD.FFFF + 9.4000, row 13, top 13 at x 28Ch: 8, 04C5.FFFF.
+chain-0220-D017 39: 006B.FFFF + 4.9000, row 4 of (E0h, 80h), top 3 at x E2h: 2, 006D.FFFF.
+chain-0220-D017 43 (SL3): 0078.FFFF + 4.D000, row 1 of (F0h, 90h), top 3 at x F2h: above the last
+air row, so no stop; the rectangle at (E0h, 90h) is not her centre's; she moves the whole pull
+(007D.CFFF) and walks off (29h). Both rows have 0B3C set and a dash; the spring ball's 5.0000 and
+the run's 1.0000 are not changed by the booster in these frames (the records show them kept and
+grown by 0.1000).
+
+**Gap 28, the camera.** `0DA6`.`0DA8` at N+1 is |y − (`0B14`.`0B16`)| + 1.0, the pixel words
+compared first (`$90:96FF`); `0B14`.`0B16` at the frame's start is her y then (`$90:957A`). From
+it each vector's `camera_from`: PF1 (item-morph-ball 1310: 02C0.FFFF → 02B3.FFFF, speed B.0000:
+02BD.FFFF), PF2 (r02 178: 1.5C00, 00AB.A3FF), PF3 (r02 548: 1.7800, 00AB.87FF), U1 (r07: 1.0000,
+008B.FFFF), W13 (item-morph-ball 1227: 0.6C00 with the pixels equal, 029B.9400), SH1 (r02 94),
+SH2 (samus-bomb-jump-vertical 848), SH3 (r04 311: 1.0000 after a 9 px lowering, 009D.B7FF), W11
+(item-morph-ball 682: 2.C000, her start 02A9.0000). item-morph-ball 738 (18h → 52h in the air, the
+look down meeting the floor: 1.8C00, 023D.73FF) agrees.
+
+**Gap 28, the turn in the moonfall (MT1).** chain-0232-D5A7: 17 moonwalk 4Ah with jump pressed,
+18-23 turn BFh (`0A94` = 1 at 23), 24 spin 82h with `0B36` = 0 (the moonfall), right pressed (25:
+81h), left pressed at 33 (34: 82h), down pressed at 35 (36: 18h, a straight jump aimed down; the
+moonfall goes on, `0B2E` FFFE), right pressed at 37 (38: 92h, movement type 17h, radius 13h).
+38 → 39: x 0078.BFFF → 0078.7FFF (braked 0.C000 → 0.4000, the old way), y 0195.F3FF → 0197.33FF
+(1.4000: the pull), `0B2E`.`0B2C` FFFE.7800 kept. The same to 43; 43 → 44 the turn ends into 17h
+and 44 → 45 falls by 1.8800 (FFFE.7800 → FFFE.5C00). The ledge is (60h, 1A0h); the pit is air.
+Lead-in pads: 0280 (jump pressed) at 17, 4200 at 18 (item cancel `4000` dropped), then as listed.
+
+**R9-2, the second bounce.** No record holds a second bounce; C-bounce-second, C-bounce-third and
+C-bounce-pulled are worked from `$91:F20A`..`$91:F245` and `$90:90E2`.
+
+**SlopesCarry's units (adversary 27, item 7).** Against `$94:84D6`..`$94:8919`, `$94:8DBD` and
+`$94:9763`: the entry stated every rule but two counted nothing (the ceiling push cited records
+only; the clamp is original only and, after the floor check, is reached only by a move with no
+horizontal move before it) and one rule was missing (the carry). The re-lay adds the carry arm
+(SL1, SL2, C-slope-carry-kept), gives the ceiling push C-slope-ceiling-push (samus-walljump-16:44
+started following the pad, which the spin with forward held moves the same), and widens the
+passing arm to what `$94:8742`/`$94:87B9` and the centre-column test let through
+(C-slope-ceiling-side): 11 counted arms to 13, 12.0 units to 16.3.
 
 ## Size baseline (tokens, 2026-11-07)
 

@@ -6,7 +6,7 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
-## Open: round 8 in the engine and the harness (integrator, 2026-11-08, lane/wire-r8)
+## Answered: round 8 in the engine and the harness (integrator, 2026-11-08, lane/wire-r8; observer, lane/r9-spec)
 
 Round 8 dropped `Outcome::change` and `Outcome::met` (adversary 27, item 5). The bridge
 (`game::samus_world::step`) now derives what the engine read from them, from her before and
@@ -53,12 +53,31 @@ is record N's.
     (09h), speed 0 at the frame's start, nothing held. Both move her 0.3000 and leave her speed
     0.3000; `0B4A`: model 2 (carries on, along her facing), game 0 (follows the pad). Round 7
     matched. Asked: how she carries on after the let-go row's "upright `Still` when it is 0".
+    **Answered** (observer, lane/r9-spec): she doesn't. The let-go effect is decided, like the
+    pose, by her horizontal speed at the frame's start: 0, so she stands following the pad, and
+    keeps the 0.3000 the frame's run gave her (the run follows the pad, so it gains its step). The
+    model read the effect cell's "with a horizontal speed of 0" after the move. The cell now says
+    "as running", and `PadChart` states it as two arms: speed at the start not 0 and still not 0
+    after the move, she carries on (AS1, AS2); 0 at the start, or brought to 0 by the move, she
+    follows the pad again (AS3, AS4). Vector AS4 (samus-space-jump-chain:13). No later frame
+    shows it (standing halts her either way), so only the harness's compare of her mode does.
 27. **The run with a kept vertical speed, down slopes: 1 px low (`FollowingTheGround`,
     `SlopesCarry`; with gaps 20 and 24).** Gap 23's frames now match but for these: samus-mockball
     and the four samus-shinespark rows, frames 10, 13 and 18-22 (and 79-80, 95-96 on the
     shinespark rows): running (09h) with +0.E000 kept, down a slope. y: model 1 px lower
     (samus-shinespark-left 9 → 10: from 048B.FFFF, model 048E.FFFF, game 048D.FFFF). The same
     1 px as items 20 and 24 where the floor falls away.
+    **Answered** (observer, lane/r9-spec; with 20 and 24): the kept speed takes no part; the pixel
+    is a subpixel carry. A downward move onto a sloped floor finds its stop from her position plus
+    the whole move, subpixels added, but moves her by whole pixels from her position: when her y
+    subpixel and the move's subpixel part carry into a pixel (y subpixel FFFF, and a pull of
+    6.C000 here), the target's row is one lower and the stop leaves her bottom edge 1 px above the
+    surface's last air row. 9 → 10: target 0492.BFFF, bottom row 6, the surface's top row 3 at
+    her centre column: moved 6 + 3 − 1 − 6 = 2 px, 048D.FFFF. `SlopesCarry` states the stop as
+    `max(0, d + t − 1 − b)` with two arms (no carry: on the last air row; a carry: 1 px above),
+    `BlocksStopFlush` the target, and `FollowingTheGround` that the kept speed changes only the
+    walk on a slope (`SlopesSlowTheWalk`, at a vertical speed of 0 only). Vectors SL1, SL2
+    (samus-mockball 91, 92) and C-slope-carry-kept (the kept speed).
 28. **What the edge derives, for the observer to confirm or make an output (`PoseFitAfterMoves`,
     `TouchedCells`).**
     - The camera's previous y pixel (`0B14`) becomes hers where pose fit places her: the shrink,
@@ -79,6 +98,26 @@ is record N's.
       is still on the ground; a turn in a jump or a fall with `0B36` = 2 is falling, as the
       vectors' starts have it. Asked: the spec's phase for a turn in a moonfall (the decode notes
       call `0B36` = 0 with a magnitude outside the airborne types not plain).
+    **Answered** (observer, lane/r9-spec):
+    - The camera: pose fit's push and a change of shape's placement are perceivable, in the
+      screen's scroll, which the original makes from her move since a reference height that
+      those placements reset (its vertical speed the frame after is the distance from it). The
+      step now reports **where the camera follows her from** (§1, an output; vectors
+      `camera_from`): her y at the frame's start; on a frame pose fit moves her (a push, or the
+      crouch taken instead raising her), her y pixel just after that with the start's subpixel
+      (`PoseFitAfterMoves`); on a frame a crouch, a morph, standing up or unmorphing starts, her
+      y pixel after the lowering (0 px for the last two), likewise (`ShrinkingLowersHer`). The
+      look's cells and their kinds are not the test: a growing body that finds nothing, or a
+      refused change, doesn't move the reference. Vectors PF1, PF2, PF3, U1, W13, SH1-SH3 (a
+      placement) and W11 (none) gain `camera_from` from the records' scroll speed;
+      item-morph-ball 738 → 739 agrees (023D.73FF).
+    - The pose request: outside the domain (the engine's pose history). The step's chosen pose
+      is its output; no spec change.
+    - The turn in a moonfall: `Moonfall` now has it. The moonfall is in her vertical motion, so a
+      turn in a jump or a fall during it moves as a turn on the ground over a drop: no gravity,
+      no move by her vertical speed, which she keeps unchanged, and the ground pull each frame;
+      the moonfall goes on from the turn's end. Vector MT1 (chain-0232-D5A7 38 → 39, with the
+      lead-in from the moonwalk at 17); `TurningRound` points to it.
 
 The walk-off drift that round 8 widened (adversary 27, item 4) shows nowhere: the gate's pairs
 hold, and no compared frame of the 32 rows newly differs in x but items 25's two.
@@ -244,7 +283,7 @@ her (before the crouch take-off's lift), so the camera doesn't follow those move
 moonfall's vertical speed word is her speed upward (`0B36` = 0: the decode's "− magnitude"), which
 the round-6 edge had the wrong way (chain-0014-96BA 11 → 12 onward).
 
-## Open: frames the narrowed speed-booster mask shows (observer, 2026-11-07, lane/gaps-harness)
+## Answered: frames the narrowed speed-booster mask shows (observer, 2026-11-07, lane/gaps-harness; 20 and 24 in lane/r9-spec)
 
 The harness's speed-booster mask took y and the vertical speed on every frame she had any dash,
 and x and the dash on every frame the dash was 2.0 or more. It now takes only what the booster
@@ -256,9 +295,18 @@ Most match (mockball's x, 19 of 19 compared before, is 87 of 87 now). These don'
     chain-0220-D017 39 → 40 to 42 → 43: running down a slope with dash 0.C000 to 0.F000. Her aim
     changes every frame (the step every frame). y: model 1 px lower than the game (40: 006E.FFFF
     against 006D.FFFF). At 43 → 44 she leaves the slope: model 0078.FFFF, game 007D.CFFF, falling.
+    **Answered** (observer, lane/r9-spec, with gap 27): 39-42 are the slope stop's carry
+    (`SlopesCarry`). At 43 her pull's target is above the last air row of the surface at her
+    centre column (row 1 against row 2) and the rectangle beside it is not her centre's block, so
+    nothing stops it: she moves the whole 4.D000 and walks off. Vector SL3.
 21. **A fall from the ground's edge that the model doesn't move (`FollowingTheGround`).**
     chain-0106-AD5E 13 → 14: running with run held (base speed 2.C000, dash 0.C000), into a fall.
     y: model 028B.FFFF (no move), game 0290.8FFF (the whole pull, 4.9000).
+    **Answered** (observer, lane/r9-spec): the walk-off keeps the pull's move. Her horizontal move
+    leaves her body over the pit (columns A0h), so the pull meets no floor and she moves all of
+    it, 4.9000, then falls from rest; the aim's step doesn't come, as the fall replaces the pad's
+    running pose. `FollowingTheGround`'s walk-off arm now says she moves the whole pull. Vector
+    SL3 (chain-0220-D017 43, the same walk-off past a sloped floor).
 22. **The frame a hit starts knockback, falling (`SolidEnemies`?).** chain-0106-AD5E 256 → 257 and
     293 → 294: falling in a straight jump (at 0.3800 and 0.7000), the frame knockback starts. y:
     model 010C.53FF and 010D.17FF, game 010B.FFFF both times, above where she started. The
@@ -287,6 +335,7 @@ Most match (mockball's x, 19 of 19 compared before, is 87 of 87 now). These don'
     04C5.FFFF (1 px higher, from 04B9.FFFF and 04BD.FFFF); the next frame, on the level floor,
     both are at 04C9.FFFF. Like item 20, a ground pull 1 px lower than the game where the floor
     falls away. Asked: the pull's stop on that floor.
+    **Answered** (observer, lane/r9-spec, with gap 27): the carry; vectors SL1 and SL2.
 
 area-maridia 190 → 191 (x 1 px short) is gap 19's step: answered.
 

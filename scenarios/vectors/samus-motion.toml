@@ -6,7 +6,8 @@
 #   behaviours it exercises); rules (optional: speed_cap = "Wordwise", the default, or "Exact");
 #   equipment (optional: hi_jump, space_jump, default false; screw_attack, spring_ball and
 #   other_suit change only the sprite, spec §2, and no vector sets them); world; before; lead_in (optional);
-#   pose; next_pose (optional); pad; jump_pressed; pressed (optional); after.
+#   pose; next_pose (optional); pad; jump_pressed; pressed (optional); animation_ends (optional);
+#   after.
 # - A P.S quantity is "PPPP.SSSS": the pixel part and the subpixel part, both hex. A signed one
 #   starts with "+" or "-": speed_x is rightward positive, speed_y downward positive.
 # - world: a stand-in for the room. Anything not listed is air.
@@ -15,7 +16,8 @@
 #     rightward is solid.
 #   - ceiling_bottom: the y of a solid ceiling's bottom face, a multiple of 16; every row above it is
 #     solid.
-#   - slope_floor: one sloped floor block: block = [x, y], its top-left corner (multiples of 16);
+#   - slope_floor: one sloped floor block, or a list of them, each: block = [x, y], its top-left
+#     corner (multiples of 16);
 #     surface = 16 numbers, one per column of pixels from the left, the row (0 to 15) of the surface's
 #     top pixel in the block: that pixel and every one below it in the block are solid, those above
 #     are air; 16 means the column has no solid pixel in the block and its surface lies just past the
@@ -48,7 +50,7 @@
 #   she remembers nothing the quantities don't show (spec §1.2).
 # - lead_in: the frames before the checked one, oldest first, when the checked frame depends on
 #   something she remembers. Each gives the pose at its start (as pose below), the pad,
-#   jump_pressed and pressed (optional, as below). A lead-in frame's pose is the one the next frame
+#   jump_pressed, pressed and animation_ends (optional, as below). A lead-in frame's pose is the one the next frame
 #   starts in, so where the pose changes, the change happens in the frame before. Nothing is
 #   compared during the lead-in.
 # - pose: the pose at the checked frame's start (spec §2): body, action, facing, radius = [x, y]
@@ -66,6 +68,9 @@
 #   in pad. A recorded frame gives the record's presses, so a lead-in's first frame and a vector
 #   with no lead-in carry presses too. Presses are given, never inferred from the pads: a button
 #   held and not in pressed was already held the frame before.
+# - animation_ends (optional, default false): true when the animation of her pose ends on this frame
+#   (spec `AnimationEnds`; how far an animation has run is out of scope, so the vector says), false
+#   when it doesn't. A lead-in frame gives it the same way, for that frame. A vector never infers it.
 # - after: compared at the end of the checked frame; only the listed quantities are compared, and
 #   position_x compares x alone. pose: the pose the frame ends in (as `pose` gives it),
 #   given where pose fit refuses the change or makes her crouch instead (spec `PoseFitAfterMoves`), so
@@ -79,12 +84,15 @@
 #   wall_test: the frame's outcome of the near-wall test (spec `WallJump`'s output), one of
 #   "Kicked", "Neither" or "Readied" (listed alphabetically; the order means nothing); compared
 #   only where given. A kick also shows in next_pose, whose action is then `WallJumping`.
+#   camera_from: the y the camera follows her from this frame, a P.S quantity (spec `PoseFitAfterMoves`
+#   and `ShrinkingLowersHer`); compared only where given.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
 #   standing, running or moonwalking, a take-off becoming a jump, (M1) a turn's end into a spin,
-#   and (RW1) a spin reversed. In RW1 the near-wall test writes her x subpixel after the move in
-#   its checked frame (spec `WallJump`).
+#   (RW1, MT1) a spin reversed, and (MT1) a spin becoming a straight jump and that jump's turn.
+#   In RW1 the near-wall test writes her x subpixel after the move in its checked frame (spec
+#   `WallJump`).
 #   J1-J3 and A1 check a frame whose pose changes (a jump start, a take-off, an aim change) and give
 #   its next_pose; PF1 checks a crouch take-off, whose body grows; SH1-SH3 check the frame a
 #   crouch or a morph begins, whose body shrinks. No recorded vector comes from a frame run by
@@ -93,6 +101,8 @@
 #   her body, and there their
 #   next_pose and radius are the record's, the radius being the chosen pose's own (spec §1.3);
 #   W11 (a turn on the ground over air) and W20 (running on a solid enemy) change neither.
+#   AS4, SL1-SL3 and MT1 check frames the domain harness met (the integration gaps 20 and 24-28):
+#   SL1-SL3 meet sloped floors, given as the room's blocks.
 
 # Constructed vectors: cases no record reaches, and the Exact variant.
 
@@ -1537,13 +1547,14 @@ after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = 
 [[vector]]
 id = "J3"
 source = "r04:475"
-entries = ["Jumping"]
+entries = ["Jumping", "AnimationEnds"]
 world = { floor_top = 192 }
 before = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
 pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
 pad = []
 jump_pressed = false
+animation_ends = true
 after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
 
 [[vector]]
@@ -1626,11 +1637,11 @@ after = { position = ["0108.0000", "0102.4000"], speed_y = "+0000.0000", speed_x
 [[vector]]
 id = "M1"
 source = "r03:13"
-entries = ["Moonfall", "TurningRound", "RisingAndFalling", "DriftInTheAir"]
+entries = ["Moonfall", "TurningRound", "RisingAndFalling", "DriftInTheAir", "AnimationEnds"]
 world = { floor_top = 112 }
 before = { position = ["019D.8000", "005B.FFFF"] }
 lead_in = [
-  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false, animation_ends = true },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
 ]
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
@@ -1646,7 +1657,7 @@ equipment = { space_jump = true }
 world = { solid_block = [400, 112] }
 before = { position = ["019D.8000", "005B.FFFF"] }
 lead_in = [
-  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false, animation_ends = true },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
@@ -1683,7 +1694,7 @@ entries = ["Moonfall", "RisingAndFalling"]
 world = { solid_block = [400, 112] }
 before = { position = ["019D.8000", "005B.FFFF"] }
 lead_in = [
-  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false, animation_ends = true },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
@@ -2153,7 +2164,7 @@ next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius =
 pad = ["run", "right", "jump"]
 jump_pressed = true
 pressed = ["run"]
-after = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+after = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", camera_from = "02BD.FFFF" }
 
 # Pose fit (PoseFitAfterMoves): her body grows, and the push follows from the pose chosen. PF2 and
 # PF3 land on a floor with nothing above: the push lifts her by the growth (2 px from a jump, 9 px
@@ -2169,7 +2180,7 @@ pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19]
 next_pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Jump" }
 pad = []
 jump_pressed = false
-after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", camera_from = "00AB.A3FF" }
 
 [[vector]]
 id = "PF3"
@@ -2181,7 +2192,7 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
 pad = []
 jump_pressed = false
-after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", camera_from = "00AB.87FF" }
 
 # The ball unmorphs in the air 3 px below a ceiling: the body grows 9 px, the look up finds 3 px of
 # room, so she is pushed down 6 px. The look up, stopped by the ceiling, writes her y subpixel 0
@@ -3008,7 +3019,7 @@ next_pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 
 pad = ["left"]
 jump_pressed = false
 pressed = ["left"]
-after = { position = ["009D.C000", "008B.FFFF"] }
+after = { position = ["009D.C000", "008B.FFFF"], camera_from = "008B.FFFF" }
 
 # Starting to crouch or morph lowers her (ShrinkingLowersHer): 5 px into a crouch, 9 px into the
 # ball, after her moves. On the floor her feet stay where they were (SH1, SH2); from a straight
@@ -3026,7 +3037,7 @@ next_pose = { body = "Crouched", action = "Crouching", facing = "Left", radius =
 pad = ["run", "down"]
 jump_pressed = false
 pressed = ["down"]
-after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", camera_from = "00B0.FFFF" }
 
 [[vector]]
 id = "SH2"
@@ -3039,7 +3050,7 @@ next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5,
 pad = ["down"]
 jump_pressed = false
 pressed = ["down"]
-after = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+after = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", camera_from = "00C9.FFFF" }
 
 [[vector]]
 id = "SH3"
@@ -3052,7 +3063,7 @@ next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5,
 pad = ["run", "right", "down"]
 jump_pressed = false
 pressed = ["right", "down"]
-after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00" }
+after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", camera_from = "009D.B7FF" }
 
 # C-shrink-floor: SH3 with a floor 2 px under her feet (her bottom pixel 157, the floor's top 160).
 # The morph's look down of 9 px at the ball's size is 8 px or more, so its 8 px look comes first;
@@ -3118,13 +3129,13 @@ after = { position = ["003B.0000", "044C.DFFF"], speed_x = "-0000.E000", dash = 
 [[vector]]
 id = "W11"
 source = "item-morph-ball:683"
-entries = ["FollowingTheGround", "TurningRound"]
+entries = ["FollowingTheGround", "TurningRound", "PoseFitAfterMoves"]
 world = { floor_top = 704 }
 before = { position = ["0580.1000", "02A9.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
 pad = ["run", "left"]
 jump_pressed = false
-after = { position = ["057F.5000", "02AA.C000"], speed_x = "-0000.C000", dash = "0000.0000" }
+after = { position = ["057F.5000", "02AA.C000"], speed_x = "-0000.C000", dash = "0000.0000", camera_from = "02A9.0000" }
 
 # W12-W19: the aim change's step whenever a running pose other than hers is chosen: from
 # standing, from a landing, and from standing against a wall, which puts her against it.
@@ -3195,7 +3206,7 @@ pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], aim = "DownForward", landed_from = "Jump" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
-after = { position = ["047C.3FFF", "029B.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+after = { position = ["047C.3FFF", "029B.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", camera_from = "029B.9400" }
 
 [[vector]]
 id = "W20"
@@ -3260,6 +3271,7 @@ pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 
 next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
 pad = ["run", "right"]
 jump_pressed = false
+animation_ends = true
 after = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
 
 # HV1-HV3 (gaps 17 and 18): the vertical speed she keeps on the ground. Standing, turning on the
@@ -3390,3 +3402,195 @@ pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21
 pad = []
 jump_pressed = false
 after = { position = ["0055.2FFF", "048B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.E000" }
+
+# AS4 (gap 26): running at speed 0 with nothing held. The let-go row stands her (`PadChart`):
+# her speed was 0 at the frame's start, so she follows the pad, and the frame's run still gained
+# its step (0.3000). Standing halts her the next frame either way, so whether she follows the pad
+# shows only in the harness's compare, not in a later frame.
+
+[[vector]]
+id = "AS4"
+source = "samus-space-jump-chain:13"
+entries = ["PadChart", "SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting"]
+world = { floor_top = 1184 }
+frame = "Odd"
+before = { position = ["0055.2FFF", "048B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0055.5FFF", "048B.FFFF"], speed_x = "+0000.3000", dash = "0000.0000", speed_y = "+0000.E000" }
+
+# SL1-SL3 (gaps 20, 24 and 27): the ground pull meeting a sloped floor. Its end is found from her
+# position plus the whole pull, subpixels added; when her y subpixel and the pull's subpixel part carry
+# into a pixel, the stop leaves her 1 px above the last air row (`SlopesCarry`). SL1 and SL2: the
+# spring ball rolling down a slope (samus-mockball 91 and 92), from y subpixel FFFF with a pull
+# of 9.4000; SL1's pull also meets a rectangle-shaped sloped floor in a column her centre isn't
+# in, which doesn't stop it. SL3: a run with a dash passing over a sloped floor whose surface it
+# doesn't reach (chain-0220-D017 43), so she walks off it and falls.
+
+[[vector]]
+id = "SL1"
+source = "samus-mockball:92"
+entries = ["SlopesCarry", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
+world = { slope_floor = [{ block = [624, 1216], surface = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { block = [640, 1216], surface = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], factor = "0.C0" }] }
+before = { position = ["027C.1FFF", "04B9.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0284.5FFF", "04BD.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "SL2"
+source = "samus-mockball:93"
+entries = ["SlopesCarry", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
+world = { slope_floor = { block = [640, 1216], surface = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], factor = "0.C0" } }
+frame = "Odd"
+before = { position = ["0284.5FFF", "04BD.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["028C.9FFF", "04C5.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "SL3"
+source = "chain-0220-D017:44"
+entries = ["SlopesCarry", "FollowingTheGround", "WhatHerMovesMet", "Dash", "SpeedBuildsAndBrakes"]
+world = { slope_floor = [{ block = [224, 144], surface = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { block = [240, 144], surface = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], factor = "0.C0" }] }
+frame = "Odd"
+before = { position = ["00EE.CC00", "0078.FFFF"], speed_x = "+0002.C000", dash = "0001.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["00F2.9C00", "007D.CFFF"], speed_x = "+0002.C000", dash = "0001.1000", speed_y = "+0000.0000" }
+
+# C-slope-carry-kept (gap 27): SL2's carry while running with a vertical speed kept on the ground.
+# The kept +0.E000 plays no part in the pull or the stop: the pull is 3.C000 from y subpixel FFFF,
+# which carries, so she stops with her bottom edge on row 1 of the block, 1 px above the last air
+# row (row 2) of the surface at her centre column. Her leading edge's column holds no slope, so
+# the walk isn't shortened either way.
+
+[[vector]]
+id = "C-slope-carry-kept"
+source = "constructed"
+entries = ["SlopesCarry", "FollowingTheGround", "SpeedBuildsAndBrakes"]
+world = { slope_floor = { block = [256, 272], surface = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], factor = "0.C0" } }
+before = { position = ["00FF.4000", "00FB.FFFF"], speed_x = "+0002.C000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0102.0000", "00FD.FFFF"], speed_x = "+0002.C000", speed_y = "+0000.E000" }
+
+# C-slope-ceiling-side: C-slope-ceiling-edge with her centre moved over by a column. Her body still spans
+# the sloped ceiling's column, but only the block at her centre column counts, so the rise passes.
+
+[[vector]]
+id = "C-slope-ceiling-side"
+source = "constructed"
+entries = ["SlopesCarry", "RisingAndFalling"]
+world = { slope_ceiling = { block = [256, 48], surface = [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7] } }
+before = { position = ["0113.0000", "0048.8000"], speed_y = "-0004.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0113.0000", "0044.8000"], speed_x = "+0000.0000", speed_y = "-0003.E400" }
+
+# C-slope-ceiling-push: the frame of samus-walljump-16:44 (also -22:44 and -28:44). Spinning left
+# with forward held, she moves 1.6000 left; then the check after the horizontal move finds a
+# sloped ceiling, solid in its whole block, at her centre column and her top edge's row, with her
+# top edge on its last row, and pushes her down 1 px to the first air row under it. Her vertical
+# move is a fall from rest (0 px). The record carries on from its wall jump; the vector starts
+# following the pad, which a spin with forward held moves the same (`DriftInTheAir`).
+
+[[vector]]
+id = "C-slope-ceiling-push"
+source = "constructed"
+entries = ["SlopesCarry", "DriftInTheAir", "RisingAndFalling"]
+world = { slope_ceiling = { block = [48, 1072], surface = [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15] } }
+before = { position = ["0040.7FFF", "044B.37FF"], speed_x = "-0001.6000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["left", "jump"]
+jump_pressed = false
+after = { position = ["003F.1FFF", "044C.37FF"], speed_x = "-0001.6000", speed_y = "+0000.1C00" }
+
+# The ball's bounces (`Landing`): the first needs a speed of 3 px or more after the frame's pull
+# (C-bounce-pulled: it met the floor at 2.F000, which the pull took to 3.0C00); the second comes
+# from any landing after the first, at any speed (C-bounce-second, at 0.E000), and rises at 0;
+# after the second it lands, at any speed (C-bounce-third).
+
+[[vector]]
+id = "C-bounce-pulled"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "RisingAndFalling", "DriftInTheAir"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0118.0000"], speed_y = "+0002.F000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0119.FFFF"], speed_y = "-0001.0000", bounces = 1, speed_x = "+0000.0000" }
+
+[[vector]]
+id = "C-bounce-second"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "DriftInTheAir"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0119.4000"], speed_y = "+0000.E000", bounces = 1 }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", bounces = 2, speed_x = "+0000.0000" }
+
+[[vector]]
+id = "C-bounce-third"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "WhatHerMovesMet", "DriftInTheAir"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0117.0000"], speed_y = "+0003.4000", bounces = 2 }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", bounces = 0, speed_x = "+0000.0000" }
+
+# MT1 (gap 28): a turn in a jump during the moonfall moves as a turn on the ground does: no
+# gravity, the ground pull (her speed after braking, 0.4000, plus 1 px), and her vertical speed
+# kept (+1.8800). The lead-in: a moonwalk's jump (17), its turn's end into a spin with no rise
+# (23, the moonfall), two spin reversals (24, 33), down held in the spin, which makes it a
+# straight jump aimed `Down` (35), and back held, a turn in the jump (37). Record 38's next
+# frames keep the speed while the turn lasts and fall by it from its end (44: +1.8800).
+
+[[vector]]
+id = "MT1"
+source = "chain-0232-D5A7:39"
+entries = ["Moonfall", "TurningRound", "AnimationEnds", "PadChart", "FollowingTheGround", "DriftInTheAir"]
+world = { solid_block = [96, 416] }
+frame = "Even"
+before = { position = ["006F.DFFF", "018B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Moonwalking", facing = "Left", radius = [5, 21] }, pad = ["left", "jump"], jump_pressed = true },
+  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "MoonwalkJump" }, pad = ["left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "MoonwalkJump" }, pad = [], jump_pressed = false, animation_ends = true },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["left"], jump_pressed = false, pressed = ["left"] },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["down"], jump_pressed = false, pressed = ["down"] },
+  { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Down", radius = [5, 10] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "Down", radius = [5, 10] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
+]
+pose = { body = "Upright", action = "Turning", facing = "Right", aim = "Down", radius = [5, 19], turn = "Jump" }
+pad = []
+jump_pressed = false
+after = { position = ["0078.7FFF", "0197.33FF"], speed_x = "+0000.4000", dash = "0000.0000", speed_y = "+0001.8800" }
