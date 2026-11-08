@@ -95,9 +95,12 @@ ground a vertical speed other than 0 is one she keeps there, or that the ball mo
 
 **Falling at 0 on the ground.** The ball, or her body while it changes shape, can be on the ground
 and falling at a vertical speed of 0, which moves her unlike no vertical speed
-(`FollowingTheGround`). Only a push beyond this spec hands her back so (a bomb jump's end, at its
-peak, or a knockback's end, §10), so no lead-in in scope reaches it and a start says it outright:
-the vectors' `before.falling`. A vertical motion, on the ground, is a vertical speed other than 0
+(`FollowingTheGround`). In any other pose on the ground she keeps it and moves as with none, until
+she leaves the ground or changes shape (`FollowingTheGround`, BG3). Only a push beyond this spec
+hands her back so (a bomb jump's end, at its peak, or a knockback's end, §10): in scope, a landing
+leaves her no vertical motion, the ball falling at 0 walks off the same frame, and a change of
+shape falling at 0 grows the speed the same frame. So no lead-in in scope reaches it, and a start
+says it outright: the vectors' `before.falling`. A vertical motion, on the ground, is a vertical speed other than 0
 or falling at 0.
 
 ### 1.3 What she reads from the world and the player (Inputs)
@@ -379,10 +382,15 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   changing shape → she moves the whole pull, subpixel part included, and falls from rest from
   there: vertical speed 0, falling, bounces 0 [P6, SL3]
 - On the ground (standing, running, crouched, turning on the ground, moonwalking, against the
-  wall) → her vertical speed is kept as it is, whatever it is:
+  wall) → her vertical speed is kept as it is, whatever it is, and so is falling at 0 (§1.2):
   she doesn't move by it (the pull above is her only vertical move), the pull of
   `RisingAndFalling` doesn't grow it, and the floor under her doesn't land her, so it never halts
-  her [HV1, HV2, HV3, AS3, AS4, C-slope-carry-kept]
+  her [HV1, HV2, HV3, AS3, AS4, C-slope-carry-kept, BG3]
+- So falling at 0 changes nothing in these poses: she moves exactly as with no vertical speed, a
+  walk off a ledge included (she falls from rest either way), and nothing on the ground ends it.
+  Only leaving the ground does (a jump or a spin start sets the jump speed), or a change of shape
+  shows it: crouching or morphing from it, she moves by it under the pull (below), 0 px, and the
+  speed grows to 0.1C00 where with no vertical speed she would be pulled onto the floor (BG3).
 - The kept speed plays no part in the pull either: on a sloped floor she is pulled and stopped
   exactly as with no vertical speed (`SlopesCarry`; C-slope-carry-kept). What it does change on a
   slope is the walk: a sloped floor shortens a move only at a vertical speed of exactly 0
@@ -409,7 +417,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   the four shinespark rows run with +0.E000 from their first frame, and samus-space-jump-chain
   and the three wall-jump rows run, brake, stand and turn with it; BG2, the ball on the ground
   falling at 0, samus-bomb-jump-vertical:1037); constructed (BG1, the ball at rest moving by its
-  vertical speed: no record has the ball on the ground with one).
+  vertical speed: no record has the ball on the ground with one; BG3, standing falling at 0, kept
+  into a crouch: no record has her upright on the ground and falling at 0).
 
 ### MovesAsShePosed
 - kind: timing.

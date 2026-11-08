@@ -1009,6 +1009,15 @@ over the 32 rows it met 1036 only). Round 10 makes it: the bridge reads `0B36` =
 in a ground pose as `Vertical::GroundFalling`, the mask is gone and 1036 → 1037 matches
 (lane/wire-r10).
 
+**Falling at 0 in a standing pose (BG3; adversary 32).** The ground handlers for standing
+(`$90:A383`), running (`$A3E5`), crouching (`$A573`), turning on the ground (`$A67C`),
+moonwalking (`$A694`) and against the wall (`$A75F`) move vertically only by `$90:923F`, which
+never reads `0B36`; landing gives "no change" (`$90:E676`), so `0B36` = 2 at magnitude 0 stays
+until a jump, a walk-off (`$91:EFEF`, which writes the same) or a transition (`$90:A61C` →
+`$90:92C7`: `$90:90C4`/`$90:90E2` move 0 and grow the magnitude by 0.1C00; a 0 move skips block
+collision, so `0DC6` is "falling" with `$90:E65A`[Fh] = 04, no walk-off). `$91:ECDA` clears `0B36`
+only with `0B20` ≠ 0. Reached only by a knockback's end (`$91:F31D`) or a bomb jump's, out of scope.
+
 **Gap 30, the moonwalk's jump (MT2).** Jump pressed while moonwalking (49h, facing word 8) takes
 C0h (facing word 8, movement type Eh) after the frame's move; `$91:F8D3` (turning on the ground,
 its pose from `$91:F9EA` for the moonwalk) adds `0B42` to `0B46` and sets `0B4A` = 1 whatever the

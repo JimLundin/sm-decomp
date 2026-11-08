@@ -22,6 +22,28 @@ holds: the free-run gate's output and its localisation are identical, and the lo
 at 1372 of 1427 (item-morph-ball) and 476 of 476 (area-brinstar). The harness matches 12,639 of
 12,782 compared frames (12,636 on main). No gap is filed.
 
+## Answered: the code gate's question (adversary 32; observer, lane/r11-spec)
+
+**Can a standing pose be falling at 0, and does the ground pull end it?** It keeps it, and
+nothing on the ground ends it. Standing, running, crouched, turning on the ground, moonwalking
+and against the wall all move vertically by the ground pull alone ($90:A3CD, $90:A3EB, $90:A579,
+$90:A682, $90:A69A, $90:A765, each `JSR $923F`), which reads and writes no direction or speed
+($90:923F-$9287). The floor it meets gives "landed" with "no change" for those movement types
+($90:E61B → $90:E676: 0, 1, 5, Eh, 10h, 15h), and the start of a crouch or morph clears the
+direction only for a bouncing ball ($91:ED14-$91:ED1F). So she moves exactly as with no vertical
+speed and keeps it: a walk off a ledge sets speed 0, down, as it would anyway ($91:EFEF); a jump
+sets the direction up; and a change of shape shows it, because the transition tests the direction
+alone ($90:A638 → $90:92C7): it moves her 0 px (never stopped, so neither landed nor a walk-off:
+$90:E65A gives "no change" for movement type Fh) and the pull grows the speed to 0.1C00, where with
+none she is pulled onto the floor. In scope nothing hands a standing pose this state: a landing
+clears it ($91:F1D3, $90:A640), the ball falling at 0 walks off its first frame (BG2), and a change
+of shape falling at 0 grows the speed the same frame; only a knockback's end ($91:F31D: speed 0,
+down) or a bomb jump's (gap 29), both out of scope, leave it. The spec says so under
+`FollowingTheGround` (its kept-speed arm now names falling at 0, one arm as before) and in §1.2.
+Vector BG3 (constructed): standing falling at 0, down pressed, then the crouch's first frame:
+y 00B0.FFFF kept, speed +0.1C00. The round-10 model passes it as it stands. No unit change
+(204.3).
+
 ## Answered: the code gate's questions (adversary 29; observer, lane/r10-spec)
 
 Adversary 29 asked four questions of round 9's model. Each is answered in the spec.

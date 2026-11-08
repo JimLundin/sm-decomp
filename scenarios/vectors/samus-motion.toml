@@ -3634,3 +3634,25 @@ next_pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 
 pad = []
 jump_pressed = false
 after = { position = ["00BB.FFFF", "00A6.0BFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+
+# BG3 (constructed): standing falling at 0, kept into a crouch. A standing pose keeps falling at 0
+# and moves as with no vertical speed: the lead-in's frame pulls her 1 px onto the floor, which
+# stops her flush, and starting to crouch lowers her 5 px. The crouch, a change of shape, then
+# moves her by her vertical speed under the pull: 0 px, never stopped, so no landing and no walk-off,
+# and the speed grows to 0.1C00. With no vertical speed she would be pulled onto the floor and keep 0.
+# No record has her upright on the ground and falling at 0: only a push beyond this spec hands
+# her back so.
+
+[[vector]]
+id = "BG3"
+source = "constructed"
+entries = ["FollowingTheGround", "ShrinkingLowersHer", "RisingAndFalling", "SpeedBuildsAndBrakes"]
+world = { floor_top = 192 }
+before = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", falling = true }
+lead_in = [
+  { pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }, pad = ["down"], jump_pressed = false, pressed = ["down"] },
+]
+pose = { body = "Crouched", action = "Crouching", facing = "Right", radius = [5, 16] }
+pad = ["down"]
+jump_pressed = false
+after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
