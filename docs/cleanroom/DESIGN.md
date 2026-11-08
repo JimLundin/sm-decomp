@@ -76,14 +76,15 @@ Every behaviour in the spec has an id, and the model has a catalogue with one en
 pub struct Behaviour {
     pub id: BehaviourId,          // an enum variant, one per spec entry
     pub summary: &'static str,    // what the player sees
-    pub kind: Kind,               // Mechanic | Quirk | Timing | Encoding
+    pub kind: Kind,               // Mechanic | Quirk | Timing | Encoding | Output
     pub switch: Switch,           // Fixed | Toggle | Parameter
 }
 ```
 
 - A **mechanic** is a deliberate game rule. A **quirk** is unintended behaviour the game has and
   the model reproduces. **Timing** covers slowdown and loading time. **Encoding** covers output
-  quirks.
+  quirks. An **output** is something the step reports for the caller to show or act on (which
+  sprite, which cells she reached), not a rule of her motion.
 - The model reads its values from a `Rules` value, whose reference profile holds the spec's vanilla
   values. A different `Rules` is an adjusted game.
 - Most entries are `Fixed`. An entry is a `Toggle` only where the spec says so; the spec names the
