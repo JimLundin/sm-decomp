@@ -80,8 +80,8 @@ when Select cycles.
 | why no click | none, or she spin jumps, she wall jumps, the grapple beam is out, time is stopped | `SwitchClick` |
 | collected | an item whose pickup this frame draws its icon, or none | `IconsAppear` |
 | the mini-map runs | `bool`: false while she is held at a station (save, refill, map), drained, entering or leaving the gunship, or while the game's opening shows her (the title screen's demos still run it) | `MiniMapStill` |
-| the mini-map is off | `bool`: from the frame a boss turns it off until something turns it on (the next room, a load, the end of some fights) | `MiniMapStill` |
-| a boss turns it off | the boss, when it does, or none: on entering its room (supplied by the door and the load flow, so it can arrive outside a frame of play), or when the fight with Mother Brain begins | `BossBlanksTheMap` |
+| the mini-map is off | `bool`: from when a boss turns it off until something turns it on (the next room, a load, the end of some fights) | `MiniMapStill` |
+| a boss turns it off | the boss, when it does, or none: on entering its room while it lives (supplied by the door and the load flow, outside a frame of play), or when Mother Brain's first form falls, her brain in the tank destroyed (supplied by her fight, during a frame) | `BossBlanksTheMap` |
 | her position | x, y: whole pixels in her room, after this frame's moves and before a pose change places her | `Exploring`, `MiniMapStill` |
 | her room | its top-left cell on her map, and its size in 16 px blocks across and down | `Exploring`, `MiniMapStill` |
 | her map | each cell's picture with its flips; the cells it charts; whether she has collected it; its beyond pictures (`LastColumnsShift`) | `MiniMapWindow`, `DiagonalPicture` |
@@ -332,9 +332,10 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ### BossBlanksTheMap
 - kind: mechanic.
-- summary: on entering the rooms of Kraid, Draygon, Crocomire, Phantoon and Ridley, and when
-  the fight with Mother Brain begins, the mini-map goes blank and the cells of its room count as
-  explored.
+- summary: on entering the room of Kraid, Draygon, Crocomire, Phantoon or Ridley (Ceres's or
+  Norfair's) while it lives, and when Mother Brain's first form falls (her brain in the tank is
+  destroyed), the mini-map goes blank and the cells the boss names count as explored. Entering
+  the room comes outside a frame of play; her fall comes during one.
 - params: the cells each boss explores, as screens across and down from her room's top-left
   cell:
 
@@ -344,7 +345,8 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   | Crocomire | (3, 0), (4, 0), (5, 0) |
   | Phantoon | (0, 0) |
   | Mother Brain | (0, 0), (1, 0), (2, 0), (3, 0) |
-  | Ridley | (0, 0), (0, 1) |
+  | Ridley, in Norfair | (0, 0), (0, 1) |
+  | Ridley, in Ceres | none |
   | any other | none |
 
 - switch: none.
@@ -353,6 +355,10 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - A boss turns it off, a screen `(sx, sy)` its room names → the map's cell `((rx + sx) mod 64,
   ry + sy)` joins the explored cells [C-mm-boss, C-mm-boss-across]
 - So the window stays blank: the mini-map is off from then (`MiniMapStill`, C-mm-boss).
+- The event alone, outside a frame of play → the window goes blank and the cells join the
+  explored cells, as above, and the mini-map is off from then; nothing else changes: the
+  mini-map doesn't update, no blink, no selection, and the status bar isn't drawn
+  [C-mm-boss-alone, C-mm-boss-alone-none]
 - checked: constructed (no recorded row reaches these bosses).
 
 ### DiagonalPicture
@@ -430,9 +436,10 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - **The load flow and the pause screen:** the HUD's first contents (the status bar's frame, the
   icons she has, the counts).
 - **Doors:** the frame count's reset at a door.
-- **Doors and the load flow:** `a boss turns it off` on entering the room of the boss, which can
-  arrive outside a frame of play; only the one at the start of the fight with Mother Brain comes
-  during play.
+- **Doors and the load flow:** `a boss turns it off` on entering the room of Kraid, Draygon,
+  Crocomire, Phantoon or Ridley (Ceres's or Norfair's) while it lives, outside a frame of play.
+- **The bosses' domain (the fight with Mother Brain):** `a boss turns it off` when her first
+  form falls, her brain in the tank destroyed, during a frame of play.
 - **The video encoder:** moving the HUD's cells to the screen every frame.
 - **The sound domain:** when the `Click` request is heard, or dropped.
 

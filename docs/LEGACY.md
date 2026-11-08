@@ -51,8 +51,9 @@ original's bytes as data.
   - A mini-map cell outside the 64 by 32 map (rows -1, 32 and 33, which the window reaches from her
     cell in row 31, in row 1 at columns 0-1, or in rows 30-31 at columns 62-63, and her own cell
     below the map) is unexplored, uncharted and blank `01F`, and exploring it does nothing. The
-    original reads the right page's row 0 for the left page's row 32, and the RAM around the
-    explored and charted bitmaps and past the area's tilemap for the rest (`$90:A91B`,
+    original reads the right page's row 0 for the left page's row 32 and the left page's row 31
+    for the right page's row -1, and the RAM around the explored and charted bitmaps and past the
+    area's tilemap for the rest (the left page's row -1, the right page's row 32; `$90:A91B`,
     `$90:AB75`). Vanilla maps draw and chart only columns 2-57 and rows 1-22; a randomised map
     could reach these cells, and the column rules themselves stay in the spec for it.
 - **Level columns and rows past the level buffer** (`game::bg_graphics`, `$80:A9DE`, `$80:AB78`): the

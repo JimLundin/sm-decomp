@@ -44,7 +44,7 @@ and a shot that doesn't cancel still fell under the old mask: the count is a pro
 `mm_bytes.py` is the mini-map's update byte for byte (`$90:A91B`, `$90:AA43`, `$90:AB75`). On
 4,000 random states at every column the window can start in (`xcheck.py`) it and the spec's cell
 rules (`mm_cells.py`) agree on every cell and every explored bit, and `xcheck_vectors.py` runs every
-vector with a mini-map (36 of them, the two `BossBlanksTheMap` ones aside) through it: 34 agree.
+vector with a mini-map (36 of them, the four `BossBlanksTheMap` ones aside) through it: 34 agree.
 The two that differ are spec §1.5's choices, C-mm-first-columns-row-1 and C-mm-her-cell-outside
 (§Findings, the map's outer edge); C-mm-last-row and C-mm-last-columns-row-30 agree only because
 `mm_bytes.py` pads the bitmap with zeroes. No record reaches the map's first or last two columns,
@@ -113,7 +113,7 @@ the scratch `$12`..`$34`.
 | collected | the item PLM instructions | not in any cached record; a hit at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E` or `$80:9A3E` names it |
 | the mini-map runs | `0A44` (Samus new state handler) at N+1 | runs for `$E725` (normal), `$E7F5` (title demo, `$90:E801`), `$E86A` (appearance), `$E8DC` (locked), `$E8EC` (elevator), `$E8AA` (Ceres, which calls normal); not for `$E7D2` (debug), `$E833` (intro demo: the spec's "while the game's opening shows her"), `$E8D6` (station), `$E8D9` (drained), `$E902` (gunship). The title demos themselves are the demos' domain |
 | the mini-map is off | `05F7` at N+1 | ≠ 0. Set only by `$90:A7E2` (bosses; the cached samus-ceres-push starts with it set); cleared at `$80:C4AF`, `$82:8767`, `$82:E1C4`, `$88:82F3`, `$90:F233`, `$A4:90C4` |
-| a boss turns it off | a call of `$90:A7E2`, with the boss `179C` | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event. Mother Brain's `$A9:8809` is in her first phase's body function, in gameplay. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain) |
+| a boss turns it off | a call of `$90:A7E2`, with the boss `179C` | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain) |
 | her position | `0AF6`, `0AFA` of N+1 | pixels; masked on pose-change frames (§Harness) |
 | her room | `07A1`, `07A3` (room map X, Y); `07A5`, `07A7` (width, height in blocks) | cell `[07A1, 07A3 + 1]` |
 | her map | `079F` (area); the tilemap at the long pointer `$82:964A + area × 3` (800h words: the left page's 32 rows of 32 words, then the right page's); the charted bitmap at `$82:9717 + area × 2` (bank `$82`, 100h bytes, laid out as the explored bitmap); `0789` (current area's map collected) | a picture is a word's bits 0-9, 14 and 15 (its colour bits are replaced); a cell `(c, y)` is word `page × 400h + y × 20h + c mod 32` |
@@ -187,17 +187,18 @@ routines (`$80:9B44`, `$90:A91B`) or of the switch (`$90:C4B5`), not a routine o
   the digit table (`$80:9D8D`): at 10 the next table's first word, past it the timer's code
   (`$80:9DE7`). Two digits past 99 the same. No vanilla capacity reaches it (missiles 230, super
   missiles and power bombs 50): spec §1.5 bounds the counts at 999 and 99 (docs/LEGACY.md).
-- **The map's outer edge.** The window reads past the 64 by 32 map in three places: her cell in
-  row 31 (or below), the plain window's bottom row; `FirstColumnsShift` with her cell in row 1, the
-  top row reads row -1; `LastColumnsShift` with her cell in row 30 or 31, the state comes from row
-  32 or 33. On the left page row 32 is the right page's row 0 (bitmap byte `80h + c div 8`, tile
-  word `400h + c`); on the right page row 32, and row -1 anywhere, lie outside the explored and
-  charted bitmaps (the RAM after `$7E:08F6` or before `$07F7`; bank `$82` past the charted table)
-  and the area's tilemap. Her cell in row 32 on the left page marks the right page's row 0. The
-  seven area maps draw and chart cells only in columns 2 to 57 and rows 1 to 22 (`edges.py`), so
-  no vanilla room reaches any of these, nor either column rule. Spec §1.5 defines every such cell
-  as unexplored, uncharted and blank, and exploring it as doing nothing (docs/LEGACY.md); the
-  column rules themselves are kept, for randomised maps.
+- **The map's outer edge.** The window reads past the 64 by 32 map in three places: her cell in row
+  31 (or below), the plain window's bottom row; `FirstColumnsShift` with her cell in row 1, the top
+  row reads row -1; `LastColumnsShift` with her cell in row 30 or 31, the state comes from row 32 or
+  33. On the left page row 32 is the right page's row 0 (bitmap byte `80h + c div 8`, tile word
+  `400h + c`), and on the right page row -1 is the left page's row 31 (bitmap byte `7Ch + c div 8`,
+  tile word `3E0h + c`, the index `(row + page) × 4 + col div 8`); on the right page row 32, and on
+  the left page row -1, lie outside the explored and charted bitmaps (the RAM after `$7E:08F6` or
+  before `$07F7`; bank `$82` past the charted table) and the area's tilemap. Her cell in row 32 on
+  the left page marks the right page's row 0. The seven area maps draw and chart cells only in
+  columns 2 to 57 and rows 1 to 22 (`edges.py`), so no vanilla room reaches any of these, nor either
+  column rule. Spec §1.5 defines every such cell as unexplored, uncharted and blank, and exploring
+  it as doing nothing (docs/LEGACY.md); the column rules themselves are kept, for randomised maps.
 - **Initialising the HUD** (`$80:9A79`, at `$82:8063`) draws the frame (`$80:988B`, `$80:98CB`),
   the icons of what she has, the counts, zeroes `0A06`..`0A0E` and calls `$90:A8EF`, which jumps
   into the window's drawing with stale `$12`/`$16`/`$22` ("broken" in the bank log). It is the load
@@ -282,18 +283,19 @@ counted: `MapCells::from_bitmap`, `to_bitmap` and `AreaMaps::load` (the importer
 selected item in the State and never changed it.
 
 **k out of sample:** the old code scores 59.7 a unit on the status bar (1,253.75 over 21.0) and
-66.6 on the minimap area (1,665.5 over 25.0); 63.5 over both, which at 0.55 would give k = 34.9
-against the frozen 36. Neither cap binds: status 756 of a 877 cap, minimap 900 of 1,166.
+64.1 on the minimap area (1,665.5 over 26.0); 62.1 over both, which at 0.55 would give k = 34.2
+against the frozen 36. Neither cap binds: status 756 of a 877 cap, minimap 936 of 1,166.
 
 ## Scan
 
 `tools/cleanroom/scan.sh docs/behaviours/hud.md scenarios/vectors/hud.toml`: 0 in every check
-(`SM_SCAN_DLL_DIR=$TEMP/sm-cleanroom-hud2`). The HUD added only multi-word player phrases to
-`tools/cleanroom/scan_allow.txt`: `x ray scope`, `ray scope`, `item select`, `item cancel`,
-`missile tank`, `pick up`, `one shot` and `mother brain`. No single word: the spec is worded so
-that `hud`, `map`, `area`, `row`, `column` and the rest never join a lexicon phrase (the title's
-comma, the area named `minimap`, "second column, left to right", "cells drawn as a diagonal",
-"the game's opening" for the intro demo, "the fight with Mother Brain").
+(`SM_SCAN_DLL_DIR=$TEMP/sm-cleanroom-hud3`). The HUD added only multi-word player phrases to
+`tools/cleanroom/scan_allow.txt`: `x ray scope`, `ray scope`, `item select`, `item cancel`, `missile
+tank`, `pick up` and `mother brain` (the progress spec, landed first, holds `x ray scope`, `ray
+scope`, `missile tank` and `mother brain` too, so the HUD's own section keeps the other three). No
+single word: the spec is worded so that `hud`, `map`, `area`, `row`, `column` and the rest never
+join a lexicon phrase (the title's comma, the area named `minimap`, "second column, left to right",
+"cells drawn as a diagonal", "the game's opening" for the intro demo).
 
 ## Budget
 
@@ -323,4 +325,4 @@ as a wall; over an area's old code is a failure.
 - Area minimap (old 1,666): Exploring, MiniMapWindow, HerBlink, MiniMapStill, BossBlanksTheMap,
   DiagonalPicture, FirstColumnsShift, LastColumnsShift
 
-Budget: 36 × 54.0 units = 1,944 (status 756, selection 288, minimap 900)
+Budget: 36 × 55.0 units = 1,980 (status 756, selection 288, minimap 936)
