@@ -193,11 +193,8 @@ fn emptied(collected: &CollectedItems) -> Remembered<LocationId> {
 /// a bit for. A place past those bits isn't kept: the game's populations name places below 100h.
 fn store_emptied(emptied: &Remembered<LocationId>, collected: &mut CollectedItems) {
     let mut words = [0; COLLECTED_ITEM_WORDS];
-    for (word, bit, place) in places() {
-        if let Some(word) = words
-            .get_mut(word)
-            .filter(|_| emptied.contains(Some(place)))
-        {
+    for (word, bit, _) in places().filter(|&(_, _, place)| emptied.contains(Some(place))) {
+        if let Some(word) = words.get_mut(word) {
             *word |= bit;
         }
     }

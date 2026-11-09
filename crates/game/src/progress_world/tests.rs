@@ -61,7 +61,7 @@ fn room(area: Area, conditions: &[room::Condition]) -> Room {
 }
 
 #[test]
-fn taking_an_item_makes_it_hers_switched_on_and_empties_its_place() {
+fn taking_an_item_makes_it_hers_and_equipped_and_empties_its_place() {
     let mut state = State::default();
     take(&mut state, Item::MorphBall, 0x1a);
     let equipment = state.samus.equipment;
@@ -104,7 +104,7 @@ fn the_engine_keeps_what_the_model_gave_back() {
 }
 
 #[test]
-fn her_motion_reads_the_items_switched_on() {
+fn her_motion_reads_the_items_equipped() {
     let mut equipment = Equipment::default();
     equipment.collected.insert(Item::HiJumpBoots);
     equipment.collected.insert(Item::GravitySuit);

@@ -53,7 +53,7 @@ const fn block(name: &'static str, offset: u32, len: u16) -> WramBlock {
     WramBlock { name, offset, len }
 }
 
-/// Bank $90 log: the beams switched on and hers, in the beam bits.
+/// Bank $90 log: the beams equipped and hers, in the beam bits.
 const EQUIPPED_BEAMS: WramWord = wram("EQUIPPED_BEAMS", 0x09A6);
 const COLLECTED_BEAMS: WramWord = wram("COLLECTED_BEAMS", 0x09A8);
 /// Bank $82 log: the door the room was entered by, a pointer into bank $83.
@@ -168,8 +168,8 @@ const MOTHER_BRAIN: [u16; 2] = [0xEC3F, 0xEC7F];
 const ENEMY_SLOTS: u16 = 32;
 
 /// The declared fields by their places in [`ProgressDomain`]'s `FIELDS`.
-const ITEMS_ON: FieldSet = FieldSet::single(1);
-const BEAMS_ON: FieldSet = FieldSet::single(3);
+const ITEMS_EQUIPPED: FieldSet = FieldSet::single(1);
+const BEAMS_EQUIPPED: FieldSet = FieldSet::single(3);
 const HELD: FieldSet = FieldSet::single(5);
 const RESERVE_MODE: FieldSet = FieldSet::single(6);
 const ROOM_STATE: FieldSet = FieldSet::single(15);
@@ -204,8 +204,8 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
         B::MapsByArea | B::MapOnArrival => field::MAPS,
         B::StationsSavedAt => field::STATIONS,
         B::ItemsPlacedCount => field::ITEMS_PLACED,
-        B::TakingItems => field::ITEMS.union(ITEMS_ON),
-        B::TakingBeams => field::BEAMS.union(BEAMS_ON),
+        B::TakingItems => field::ITEMS.union(ITEMS_EQUIPPED),
+        B::TakingBeams => field::BEAMS.union(BEAMS_EQUIPPED),
         B::Tanks => field::CAPACITY.union(HELD).union(RESERVE_MODE),
         B::RoomStates => ROOM_STATE,
         B::ItemPercentage => FieldSet::EMPTY,
@@ -442,9 +442,9 @@ pub struct Held {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Declared {
     items: Items,
-    items_on: Items,
+    equipped: Items,
     beams: Beams,
-    beams_on: Beams,
+    beams_equipped: Beams,
     capacity: PerSupply<Count>,
     held: PerSupply<Count>,
     reserve_mode: ReserveMode,
@@ -464,9 +464,9 @@ impl Declared {
         let inventory = &progress.inventory;
         Self {
             items: inventory.items,
-            items_on: inventory.equipped,
+            equipped: inventory.equipped,
             beams: inventory.beams,
-            beams_on: inventory.beams_equipped,
+            beams_equipped: inventory.beams_equipped,
             capacity: inventory.capacity,
             held: inventory.held,
             reserve_mode: inventory.reserve_mode,
@@ -761,9 +761,9 @@ impl Domain for ProgressDomain {
     type Skip = Skip;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("items", items),
-        domain_field!("items switched on", items_on),
+        domain_field!("items equipped", equipped),
         domain_field!("beams", beams),
-        domain_field!("beams switched on", beams_on),
+        domain_field!("beams equipped", beams_equipped),
         domain_field!("capacities", capacity),
         domain_field!("what she holds", held),
         domain_field!("reserve mode", reserve_mode),
@@ -839,8 +839,8 @@ impl Domain for ProgressDomain {
         }
         if paused(from)? || paused(next)? {
             let switched = [
-                (ITEMS_ON, now.equipped != was.equipped),
-                (BEAMS_ON, now.beams_equipped != was.beams_equipped),
+                (ITEMS_EQUIPPED, now.equipped != was.equipped),
+                (BEAMS_EQUIPPED, now.beams_equipped != was.beams_equipped),
                 (RESERVE_MODE, now.reserve_mode != was.reserve_mode),
             ]
             .into_iter()
@@ -856,7 +856,7 @@ impl Domain for ProgressDomain {
         if mother_brain(from)? || mother_brain(next)? {
             mask(
                 "another domain: Mother Brain's drain switches on the hyper beam ($91:E5F0)",
-                BEAMS_ON,
+                BEAMS_EQUIPPED,
             );
         }
         if !loads(from, next)? {
@@ -950,16 +950,17 @@ mod tests {
         ZEBETITES,
     };
     use super::{
-        BEAMS_ON, Domain, FieldSet, HELD, ITEMS_ON, ProgressDomain, RESERVE_MODE, ROOM_STATE,
+        BEAMS_EQUIPPED, Domain, FieldSet, HELD, ITEMS_EQUIPPED, ProgressDomain, RESERVE_MODE,
+        ROOM_STATE,
     };
 
     #[test]
     fn the_field_sets_name_the_declared_fields_at_their_places() {
         let named = [
             (ITEMS, "items"),
-            (ITEMS_ON, "items switched on"),
+            (ITEMS_EQUIPPED, "items equipped"),
             (BEAMS, "beams"),
-            (BEAMS_ON, "beams switched on"),
+            (BEAMS_EQUIPPED, "beams equipped"),
             (CAPACITY, "capacities"),
             (HELD, "what she holds"),
             (RESERVE_MODE, "reserve mode"),

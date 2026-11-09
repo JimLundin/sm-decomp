@@ -190,11 +190,11 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | harness | 1 | 4,275 | 4,701 | 457 | 222 | 218 | 17 | 801 |
 | camera | bridge | 1 | 592 | 787 | 21 | 1 | 2 | 0 | 121 |
 | camera | harness | 1 | 3,563 | 3,927 | 499 | 161 | 156 | 26 | 701 |
-| progress | bridge | 1 | 1,336 | 1,545 | 57 | 69 | 67 | 0 | 233 |
+| progress | bridge | 1 | 1,338 | 1,551 | 57 | 69 | 63 | 0 | 230 |
 | progress | harness | 1 | 4,484 | 4,618 | 634 | 407 | 416 | 31 | 760 |
 | hud | bridge | 1 | 2,138 | 2,347 | 141 | 16 | 157 | 2 | 366 |
 | hud | harness | 1 | 3,207 | 3,447 | 505 | 114 | 206 | 22 | 576 |
-| total | | | 22,284 | 24,686 | 2,571 | 1,002 | 1,302 | 97 | 4,055 |
+| total | | | 22,287 | 24,692 | 2,571 | 1,002 | 1,299 | 97 | 4,052 |
 
 ## Harness floors and vectors
 
@@ -271,9 +271,9 @@ Per declared field, the compared frames on which it was compared and those on wh
 | camera | position.y | 13,129 | 1,818 |
 | camera | seen | 0 | 14,947 |
 | progress | items | 18,299 | 0 |
-| progress | items switched on | 18,299 | 0 |
+| progress | items equipped | 18,299 | 0 |
 | progress | beams | 18,299 | 0 |
-| progress | beams switched on | 18,299 | 0 |
+| progress | beams equipped | 18,299 | 0 |
 | progress | capacities | 18,299 | 0 |
 | progress | what she holds | 17,750 | 549 |
 | progress | reserve mode | 18,299 | 0 |
@@ -381,5 +381,5 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 45 | 5,160 | 30,960 | 33,189 | 9,804 | 883 | 2,498 | 655 | 7,049 |
-| bridges | 7 | 1,126 | 6,756 | 7,993 | 476 | 98 | 307 | 2 | 1,217 |
+| bridges | 7 | 1,127 | 6,759 | 7,999 | 476 | 98 | 304 | 2 | 1,214 |
 | rebuilt models, shared types included | 50 | 2,655 | 15,929 | 19,573 | 6,251 | 10,276 | 701 | 135 | 6,424 |

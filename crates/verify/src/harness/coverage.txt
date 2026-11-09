@@ -67,9 +67,9 @@ camera entry BelowTheRoom 2544 2544 65
 camera entry PushCarries 0 0 0
 progress frames 18299 18292 7 18289
 progress field 18299 0 items
-progress field 18299 0 items switched on
+progress field 18299 0 items equipped
 progress field 18299 0 beams
-progress field 18299 0 beams switched on
+progress field 18299 0 beams equipped
 progress field 18299 0 capacities
 progress field 17750 549 what she holds
 progress field 18299 0 reserve mode
