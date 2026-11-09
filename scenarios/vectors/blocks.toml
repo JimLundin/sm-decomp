@@ -1,53 +1,48 @@
 # Test vectors for docs/behaviours/blocks.md.
 #
+# Every vector is constructed, over the invented reactions below. The frames the oracle recorded
+# are checked by the domain harness with the game's own reactions, which the importer gives it at
+# test time; none of the game's content is in this file.
+#
 # Format
 # - [reaction.<name>]: a reaction in the format the importer writes (spec §2), invented for these
-#   vectors: none is the game's, whose reactions the importer gives the harness at test time.
-#   Each has its family; look (the whole look, absent for a shot block that keeps its own);
-#   first_wait; its scripts, each a list of steps: { sound, queue_limit }, { show = [[dx, dy,
-#   becomes, look], ...], frames }, { regrow = true }, { end = true }. A pattern cell's becomes is
-#   "Air", "Itself", "StandInAcross" or "StandInDown". The names are the vectors' own; the model
-#   reads them only as the marks that name them. The set covers every family, step, pattern cell,
-#   first wait of 1, 2 and 3, a whole look and none, and growing back by a step, by a show and
-#   not at all.
-# - Each [[vector]] is one frame: id; source ("<row>:<frame>" for the record holding the frame's
-#   result, or "constructed"); entries (the spec's behaviours it exercises); before; frame; after.
+#   vectors: none is the game's. Each has its family; look (the whole look, absent for a shot
+#   block that keeps its own); first_wait; its scripts, each a list of steps: { sound,
+#   queue_limit }, { show = [[dx, dy, becomes, look], ...], frames }, { regrow = true },
+#   { end = true }. A pattern cell's becomes is "Air", "Itself", "StandInAcross" or
+#   "StandInDown". The names are the vectors' own; the model reads them only as the marks that
+#   name them. The set covers every family, step, pattern cell, first wait of 1, 2 and 3, a whole
+#   look and none, growing back by a step, by a show and not at all, and a bomb block's broken
+#   script with a leading sound and without one.
+# - Each [[vector]] is one frame: id; source ("constructed"); entries (the spec's behaviours it
+#   exercises); before; frame; after. A comment gives its case.
 # - A cell: at = [x, y] in cells; kind ("Air", "Block", "ReactingAir", "Solid", "StandInAcross",
-#   "StandInDown"); look ("310", the picture's index in hex, ":x", ":y" or ":xy" when flipped); mark (a
-#   reaction's name, "scroll" or "nothing", with met_as = "Bomb", "Crumble" or "Shot" for "nothing")
-#   or reach (a stand-in's, in cells). A cell's mark is given wherever it is known, the kinds that
-#   don't read it included; the model must keep it.
+#   "StandInDown"); look ("310", the picture's index in hex, ":x", ":y" or ":xy" when flipped);
+#   mark (a reaction's name, "scroll", "inert", "other" or "nothing", with met_as = "Bomb",
+#   "Crumble" or "Shot" for "nothing") or reach (a stand-in's, in cells); inside = "Nothing" for a
+#   cell that holds a place when she is inside it. A cell's mark is given wherever it is known, the
+#   kinds that don't read it included; the model must keep it.
 # - places: the running reactions, each { place, reaction, script, cell, next (the index of its
 #   next step in the script, from 0), wait (the frames it still waits), remembers (what it grows
 #   back as: "Block" or "ReactingAir"; given only where a Regrow step is still ahead) }, or a scroll
-#   reaction { place, scroll = [{ screen = [x, y], becomes }], cell }. Places not listed are free.
+#   reaction { place, scroll = [{ screen = [x, y], becomes }], cell, touched (true while a touch
+#   waits for the run) }. Places not listed are free.
 # - held: places held by reactions of other parts of the domain (doors' caps, items, ...) or, in
 #   vectors where no scroll cell is touched, by scroll reactions: they take places and do nothing
 #   else here.
 # - held_until_run: places held until the next run that isn't paused (a scroll cell's or a cell
-#   marked Nothing's touch, BlocksMarkedNothing, TheScriptsRun).
+#   marked Nothing's request, BlocksMarkedNothing, TheScriptsRun).
 # - screens (optional): the room's screens, one string a row, "C" Closed, "O" Open, "S" Short, as
 #   in scenarios/vectors/camera.toml; given where a scroll cell is involved.
 # - frame (optional): she = { dashing, shinesparking, screw_attacking } (absent is false);
-#   inside = [{ cell, point }] ("Bottom", "Centre", "Top"), in order; touches = [{ cell, way }]
-#   ("Down", "Left", "Right", "Up", "Look"), in order; hits = [{ cell, by }] ("Beam", "Missile",
-#   "SuperMissile", "Bomb", "PowerBomb"), in order; paused = true (the run is paused this frame,
-#   TheScriptsRun); placements (a room's start, RoomStart): in
-#   order, { scroll = [...], cell }, { stand_in = "Across" | "Down", reach, cell } or { other }.
-# - after: the same fields at the end of the frame; constructed vectors also give answers (one per
-#   touch, in order: "Air" or "Solid"), redrawn (cells in order) and sounds ({ sound, queue_limit }
-#   in order).
-# - Recorded vectors (R): from oracle frames that ran one frame of gameplay in one room (the game's
-#   frame count advanced by one between two frames' commits, the reactions running), on which no
-#   reaction's script decides the outcome: the scroll cells' touches. Their before is the first
-#   commit's, their after the next one's. Their touches and inside cells are the scroll touches
-#   the oracle saw happen in the frame, in order; a touch's cell is the scroll cell nearest her and
-#   its way "Down" (a scroll cell reads none). Their answers, redraws and sounds are not recorded.
-#   The recorded frames whose outcome a game's script decides are checked by the harness, with
-#   the game's reactions from the importer. Row ids r01-r11 stand for the chain rows.
-# - Constructed vectors (C): cases no record reaches, and the rules the harness cases show, over
-#   the invented reactions; each gives its case in a comment. Their after is worked from the
-#   spec's rules.
+#   requests, in the order the frame makes them, each one of { inside = [x, y], point } (point
+#   "Top", "Centre" or "Bottom"), { touch = [x, y], way } (way "Down", "Left", "Look", "Right" or
+#   "Up"), { hit = [x, y], by } (by "Beam", "Bomb", "Grapple", "Missile", "PowerBomb" or
+#   "SuperMissile") or { other } (another part's start); paused = true (the run is paused this
+#   frame, TheScriptsRun); placements (a room's start, RoomStart): in order, { scroll = [...],
+#   cell }, { stand_in = "Across" | "Down", reach, cell } or { other }.
+# - after: the same fields at the end of the frame, and answers (one per touch, in order: "Air"
+#   or "Solid"), redrawn (cells in order) and sounds ({ sound, queue_limit } in order).
 
 # The reactions the vectors use: invented, in the importer's format (spec §2).
 
@@ -64,6 +59,22 @@ touched = [
 broken = [
   { sound = "Crack", queue_limit = 2 },
   { show = [[0, 0, "Air", "342"]], frames = 4 },
+  { regrow = true },
+  { end = true },
+]
+
+[reaction.bomb-quiet]
+family = "Bomb"
+look = "348"
+first_wait = 1
+touched = [
+  { sound = "Shatter", queue_limit = 5 },
+  { show = [[0, 0, "Air", "349"]], frames = 3 },
+  { regrow = true },
+  { end = true },
+]
+broken = [
+  { show = [[0, 0, "Air", "34A"]], frames = 2 },
   { regrow = true },
   { end = true },
 ]
@@ -165,281 +176,7 @@ revealed = [
   { end = true },
 ]
 
-# Recorded vectors.
-
-[[vector]]
-# scroll-apply, scroll-touch, scroll-touch-again
-id = "R17"
-source = "area-brinstar:92"
-entries = ["ScrollCells"]
-[vector.before]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCCCC", "SSSSSSSS"]
-[vector.frame]
-touches = [{ cell = [87, 10], way = "Down" }, { cell = [87, 10], way = "Down" }]
-[vector.after]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCOCC", "SSSSSSSS"]
-
-[[vector]]
-# scroll-apply, scroll-touch, scroll-touch-again
-id = "R18"
-source = "item-morph-ball:92"
-entries = ["ScrollCells"]
-[vector.before]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCCCC", "SSSSSSSS"]
-[vector.frame]
-touches = [{ cell = [87, 10], way = "Down" }, { cell = [87, 10], way = "Down" }]
-[vector.after]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCOCC", "SSSSSSSS"]
-
-[[vector]]
-# scroll-apply, scroll-touch, scroll-touch-again
-id = "R19"
-source = "area-brinstar:391"
-entries = ["ScrollCells"]
-[vector.before]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCOCC", "SSSSSSSS"]
-[vector.frame]
-touches = [{ cell = [87, 38], way = "Down" }, { cell = [87, 38], way = "Down" }]
-[vector.after]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCCCC", "SSSSSSSS"]
-
-[[vector]]
-# scroll-apply, scroll-touch, scroll-touch-again
-id = "R20"
-source = "item-morph-ball:391"
-entries = ["ScrollCells"]
-[vector.before]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCOCC", "SSSSSSSS"]
-[vector.frame]
-touches = [{ cell = [87, 38], way = "Down" }, { cell = [87, 38], way = "Down" }]
-[vector.after]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCCCC", "SSSSSSSS"]
-
-[[vector]]
-# scroll-apply, scroll-touch, scroll-touch-again
-id = "R24"
-source = "area-brinstar:93"
-entries = ["ScrollCells"]
-[vector.before]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCOCC", "SSSSSSSS"]
-[vector.frame]
-touches = [{ cell = [87, 10], way = "Down" }, { cell = [87, 10], way = "Down" }]
-[vector.after]
-cells = [
-  { at = [87, 10], kind = "ReactingAir", look = "06B", mark = "scroll" },
-  { at = [87, 33], kind = "ReactingAir", look = "044", mark = "scroll" },
-  { at = [87, 38], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [8, 43], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [31, 43], kind = "ReactingAir", look = "1EB", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [2, 2], becomes = "Short" }], cell = [31, 43] },
-  { place = 38, scroll = [{ screen = [2, 2], becomes = "Closed" }], cell = [8, 43] },
-  { place = 37, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 33] },
-  { place = 36, scroll = [{ screen = [5, 1], becomes = "Open" }], cell = [87, 10] },
-  { place = 35, scroll = [{ screen = [5, 1], becomes = "Closed" }], cell = [87, 38] },
-]
-held = [34]
-screens = ["CCCCCOCC", "CCCCCOCC", "SSSSSSSS"]
-
-[[vector]]
-# scroll-apply, scroll-touch
-id = "R25"
-source = "r02:47"
-entries = ["ScrollCells"]
-[vector.before]
-cells = [
-  { at = [14, 9], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [28, 10], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [22, 11], kind = "ReactingAir", look = "130:x", mark = "scroll" },
-  { at = [50, 11], kind = "ReactingAir", look = "12A:x", mark = "scroll" },
-  { at = [60, 11], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [63, 11], kind = "ReactingAir", look = "12B:x", mark = "scroll" },
-  { at = [67, 11], kind = "ReactingAir", look = "12A", mark = "scroll" },
-  { at = [22, 13], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [52, 14], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [58, 17], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [3, 1], becomes = "Open" }], cell = [63, 11] },
-  { place = 38, scroll = [{ screen = [3, 1], becomes = "Closed" }], cell = [67, 11] },
-  { place = 37, scroll = [{ screen = [0, 0], becomes = "Closed" }, { screen = [2, 0], becomes = "Closed" }, { screen = [1, 1], becomes = "Open" }], cell = [22, 13] },
-  { place = 36, scroll = [{ screen = [1, 1], becomes = "Closed" }], cell = [22, 11] },
-  { place = 35, scroll = [{ screen = [0, 0], becomes = "Short" }], cell = [14, 9] },
-  { place = 34, scroll = [{ screen = [2, 0], becomes = "Short" }], cell = [28, 10] },
-  { place = 33, scroll = [{ screen = [4, 0], becomes = "Short" }], cell = [50, 11] },
-  { place = 32, scroll = [{ screen = [4, 0], becomes = "Short" }], cell = [60, 11] },
-  { place = 31, scroll = [{ screen = [4, 0], becomes = "Closed" }], cell = [58, 17] },
-  { place = 30, scroll = [{ screen = [4, 0], becomes = "Closed" }, { screen = [3, 1], becomes = "Open" }], cell = [52, 14] },
-]
-held = [29]
-screens = ["CSSSS", "CCCCC", "COCSC", "COCCC", "COCCC"]
-[vector.frame]
-touches = [{ cell = [67, 11], way = "Down" }]
-[vector.after]
-cells = [
-  { at = [14, 9], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [28, 10], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [22, 11], kind = "ReactingAir", look = "130:x", mark = "scroll" },
-  { at = [50, 11], kind = "ReactingAir", look = "12A:x", mark = "scroll" },
-  { at = [60, 11], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [63, 11], kind = "ReactingAir", look = "12B:x", mark = "scroll" },
-  { at = [67, 11], kind = "ReactingAir", look = "12A", mark = "scroll" },
-  { at = [22, 13], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [52, 14], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-  { at = [58, 17], kind = "ReactingAir", look = "0FF", mark = "scroll" },
-]
-places = [
-  { place = 39, scroll = [{ screen = [3, 1], becomes = "Open" }], cell = [63, 11] },
-  { place = 38, scroll = [{ screen = [3, 1], becomes = "Closed" }], cell = [67, 11] },
-  { place = 37, scroll = [{ screen = [0, 0], becomes = "Closed" }, { screen = [2, 0], becomes = "Closed" }, { screen = [1, 1], becomes = "Open" }], cell = [22, 13] },
-  { place = 36, scroll = [{ screen = [1, 1], becomes = "Closed" }], cell = [22, 11] },
-  { place = 35, scroll = [{ screen = [0, 0], becomes = "Short" }], cell = [14, 9] },
-  { place = 34, scroll = [{ screen = [2, 0], becomes = "Short" }], cell = [28, 10] },
-  { place = 33, scroll = [{ screen = [4, 0], becomes = "Short" }], cell = [50, 11] },
-  { place = 32, scroll = [{ screen = [4, 0], becomes = "Short" }], cell = [60, 11] },
-  { place = 31, scroll = [{ screen = [4, 0], becomes = "Closed" }], cell = [58, 17] },
-  { place = 30, scroll = [{ screen = [4, 0], becomes = "Closed" }, { screen = [3, 1], becomes = "Open" }], cell = [52, 14] },
-]
-held = [29]
-screens = ["CSSSS", "CCCCC", "COCSC", "COCCC", "COCCC"]
-
-# Constructed vectors.
+# The vectors.
 
 [[vector]]
 # a crumble hidden behind another picture starts in the highest free place (39 and 38 are held), takes its whole look and waits its first wait
@@ -454,7 +191,7 @@ places = [
 ]
 held = [39, 38]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Down" }]
+requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
@@ -481,7 +218,10 @@ places = [
 ]
 held = [39]
 [vector.frame]
-touches = [{ cell = [5, 7], way = "Down" }, { cell = [4, 7], way = "Down" }]
+requests = [
+  { touch = [5, 7], way = "Down" },
+  { touch = [4, 7], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
@@ -509,7 +249,7 @@ places = [
 ]
 held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Down" }]
+requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
@@ -534,7 +274,7 @@ places = [
 ]
 held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
@@ -559,7 +299,7 @@ places = [
 ]
 held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
@@ -584,7 +324,7 @@ places = [
 ]
 held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Beam" }]
+requests = [{ hit = [4, 7], by = "Beam" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
@@ -609,7 +349,10 @@ places = [
 ]
 held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 2, 1, 0]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Down" }, { cell = [5, 7], way = "Down" }]
+requests = [
+  { touch = [4, 7], way = "Down" },
+  { touch = [5, 7], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
@@ -636,7 +379,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Left" }, { cell = [5, 7], way = "Down" }]
+requests = [
+  { touch = [4, 7], way = "Left" },
+  { touch = [5, 7], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
@@ -846,7 +592,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 4, wait = 1 },
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Down" }]
+requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
@@ -966,7 +712,7 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -997,7 +743,7 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Look" }]
+requests = [{ touch = [4, 7], way = "Look" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -1028,7 +774,7 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-inside = [{ cell = [4, 7], point = "Centre" }]
+requests = [{ inside = [4, 7], point = "Centre" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -1058,7 +804,10 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-inside = [{ cell = [4, 7], point = "Bottom" }, { cell = [4, 7], point = "Top" }]
+requests = [
+  { inside = [4, 7], point = "Bottom" },
+  { inside = [4, 7], point = "Top" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -1088,8 +837,10 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-inside = [{ cell = [4, 7], point = "Centre" }]
-touches = [{ cell = [4, 7], way = "Down" }]
+requests = [
+  { inside = [4, 7], point = "Centre" },
+  { touch = [4, 7], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -1120,7 +871,10 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-touches = [{ cell = [5, 7], way = "Right" }, { cell = [4, 7], way = "Right" }]
+requests = [
+  { touch = [5, 7], way = "Right" },
+  { touch = [4, 7], way = "Right" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -1150,8 +904,10 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-inside = [{ cell = [4, 7], point = "Centre" }]
-touches = [{ cell = [4, 8], way = "Down" }]
+requests = [
+  { inside = [4, 7], point = "Centre" },
+  { touch = [4, 8], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -1181,7 +937,7 @@ places = [
 held = [38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 screens = ["OCC", "OOO"]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
@@ -1207,7 +963,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
@@ -1230,7 +986,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Up" }]
+requests = [{ touch = [4, 7], way = "Up" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
@@ -1253,7 +1009,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Look" }]
+requests = [{ touch = [4, 7], way = "Look" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
@@ -1276,7 +1032,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Down" }]
+requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "310", mark = "crumble" },
@@ -1301,7 +1057,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Down" }]
+requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "320", mark = "crumble-wide" },
@@ -1326,7 +1082,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Down" }, { cell = [4, 7], way = "Down" }]
+requests = [
+  { touch = [4, 7], way = "Down" },
+  { touch = [4, 7], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
@@ -1351,7 +1110,7 @@ places = [
 ]
 [vector.frame]
 she = { dashing = true }
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "331", mark = "speed" },
@@ -1376,7 +1135,7 @@ places = [
 ]
 [vector.frame]
 she = { shinesparking = true }
-touches = [{ cell = [4, 7], way = "Up" }]
+requests = [{ touch = [4, 7], way = "Up" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "331", mark = "speed" },
@@ -1400,7 +1159,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
@@ -1424,7 +1183,7 @@ places = [
 ]
 [vector.frame]
 she = { dashing = true }
-touches = [{ cell = [4, 7], way = "Look" }]
+requests = [{ touch = [4, 7], way = "Look" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "331", mark = "speed" },
@@ -1449,7 +1208,7 @@ places = [
 ]
 [vector.frame]
 she = { screw_attacking = true }
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
@@ -1473,7 +1232,7 @@ places = [
 ]
 [vector.frame]
 she = { screw_attacking = true }
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "341", mark = "bomb" },
@@ -1498,7 +1257,7 @@ places = [
 ]
 [vector.frame]
 she = { dashing = true }
-touches = [{ cell = [4, 7], way = "Left" }]
+requests = [{ touch = [4, 7], way = "Left" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "341", mark = "bomb" },
@@ -1522,7 +1281,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
@@ -1545,7 +1304,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "340", mark = "bomb" },
@@ -1568,7 +1327,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "342", mark = "bomb" },
@@ -1591,7 +1350,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "PowerBomb" }]
+requests = [{ hit = [4, 7], by = "PowerBomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "342", mark = "bomb" },
@@ -1614,7 +1373,11 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Missile" }, { cell = [4, 7], by = "SuperMissile" }, { cell = [4, 7], by = "Beam" }]
+requests = [
+  { hit = [4, 7], by = "Missile" },
+  { hit = [4, 7], by = "SuperMissile" },
+  { hit = [4, 7], by = "Beam" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
@@ -1636,7 +1399,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Missile" }]
+requests = [{ hit = [4, 7], by = "Missile" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "35D", mark = "shot-back" },
@@ -1659,7 +1422,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "3A1:y", mark = "shot" },
@@ -1682,7 +1445,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "SuperMissile" }]
+requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "3FF", mark = "shot" },
@@ -1705,7 +1468,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }]
+requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
@@ -1728,7 +1491,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "SuperMissile" }]
+requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "361", mark = "super" },
@@ -1751,7 +1514,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "SuperMissile" }]
+requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Air", look = "361", mark = "super" },
@@ -1774,7 +1537,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "360", mark = "super" },
@@ -1797,7 +1560,11 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Missile" }, { cell = [4, 7], by = "Beam" }, { cell = [4, 7], by = "PowerBomb" }]
+requests = [
+  { hit = [4, 7], by = "Missile" },
+  { hit = [4, 7], by = "Beam" },
+  { hit = [4, 7], by = "PowerBomb" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "360", mark = "super" },
@@ -1820,7 +1587,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "PowerBomb" }]
+requests = [{ hit = [4, 7], by = "PowerBomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "370", mark = "power-bomb" },
@@ -1845,7 +1612,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "370", mark = "power-bomb" },
@@ -1870,7 +1637,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "SuperMissile" }]
+requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "370", mark = "power-bomb" },
@@ -1893,7 +1660,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
@@ -1917,7 +1684,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "320", mark = "crumble-wide" },
@@ -1941,7 +1708,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
@@ -1985,7 +1752,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "PowerBomb" }, { cell = [4, 7], by = "Beam" }]
+requests = [
+  { hit = [4, 7], by = "PowerBomb" },
+  { hit = [4, 7], by = "Beam" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3A0", mark = "crumble" },
@@ -2007,7 +1777,7 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }]
+requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3A0", mark = "crumble" },
@@ -2030,7 +1800,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }, { cell = [4, 8], way = "Down" }]
+requests = [
+  { touch = [4, 7], way = "Right" },
+  { touch = [4, 8], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
@@ -2056,7 +1829,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Left" }, { cell = [4, 8], way = "Down" }]
+requests = [
+  { touch = [4, 7], way = "Left" },
+  { touch = [4, 8], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Bomb" },
@@ -2082,7 +1858,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 7], way = "Right" }, { cell = [4, 8], way = "Down" }]
+requests = [
+  { touch = [4, 7], way = "Right" },
+  { touch = [4, 8], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
@@ -2108,7 +1887,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Beam" }, { cell = [5, 7], by = "Beam" }]
+requests = [
+  { hit = [4, 7], by = "Beam" },
+  { hit = [5, 7], by = "Beam" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
@@ -2133,7 +1915,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Missile" }, { cell = [5, 7], by = "Beam" }]
+requests = [
+  { hit = [4, 7], by = "Missile" },
+  { hit = [5, 7], by = "Beam" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "nothing", met_as = "Bomb" },
@@ -2158,7 +1943,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Beam" }, { cell = [5, 7], by = "Beam" }]
+requests = [
+  { hit = [4, 7], by = "Beam" },
+  { hit = [5, 7], by = "Beam" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
@@ -2183,7 +1971,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Bomb" }, { cell = [5, 7], by = "Bomb" }]
+requests = [
+  { hit = [4, 7], by = "Bomb" },
+  { hit = [5, 7], by = "Bomb" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
@@ -2208,7 +1999,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "PowerBomb" }, { cell = [5, 7], by = "PowerBomb" }]
+requests = [
+  { hit = [4, 7], by = "PowerBomb" },
+  { hit = [5, 7], by = "PowerBomb" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "nothing", met_as = "Crumble" },
@@ -2233,7 +2027,7 @@ places = [
 ]
 held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 [vector.frame]
-hits = [{ cell = [4, 7], by = "Beam" }]
+requests = [{ hit = [4, 7], by = "Beam" }]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
@@ -2259,7 +2053,10 @@ places = [
   { place = 30, reaction = "crumble", script = "broken", cell = [5, 7], next = 2, wait = 1, remembers = "Block" },
 ]
 [vector.frame]
-touches = [{ cell = [4, 8], way = "Right" }, { cell = [4, 7], way = "Down" }]
+requests = [
+  { touch = [4, 8], way = "Right" },
+  { touch = [4, 7], way = "Down" },
+]
 paused = true
 [vector.after]
 cells = [
@@ -2289,8 +2086,10 @@ cells = [
 places = [
 ]
 [vector.frame]
-touches = [{ cell = [4, 8], way = "Down" }]
-hits = [{ cell = [4, 7], by = "Beam" }]
+requests = [
+  { hit = [4, 7], by = "Beam" },
+  { touch = [4, 8], way = "Down" },
+]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Solid", look = "350", mark = "shot" },
@@ -2299,6 +2098,328 @@ cells = [
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Solid"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# she is inside reacting air whose mark holds a place when she is inside it, at her bottom edge and her top edge: each point holds a place until the run; a cell marked Nothing without it holds none; the crumble she lands on takes 37
+id = "C-nothing-inside"
+source = "constructed"
+entries = ["BlocksMarkedNothing", "Places"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble" },
+  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { inside = [4, 7], point = "Bottom" },
+  { inside = [5, 7], point = "Centre" },
+  { inside = [4, 7], point = "Top" },
+  { touch = [4, 8], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble" },
+  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+]
+places = [
+  { place = 37, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Solid"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# every place held: she inside such a cell takes none
+id = "C-nothing-inside-full"
+source = "constructed"
+entries = ["BlocksMarkedNothing"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
+]
+places = [
+]
+held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+[vector.frame]
+requests = [{ inside = [4, 7], point = "Centre" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
+]
+places = [
+]
+held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+redrawn = []
+sounds = []
+
+[[vector]]
+# a block and reacting air marked Inert: she meets each by its body, a beam and a bomb's blast take no place, and the crumble she lands on takes 39
+id = "C-inert"
+source = "constructed"
+entries = ["BlocksMarkedNothing", "AnswersToHerMotion"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "inert" },
+  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "inert" },
+  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Beam" },
+  { hit = [5, 7], by = "Bomb" },
+  { touch = [4, 7], way = "Right" },
+  { touch = [5, 7], way = "Left" },
+  { touch = [4, 8], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "inert" },
+  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "inert" },
+  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+]
+places = [
+  { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Solid", "Air", "Solid"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# the grapple reaches a shot block: it breaks as for any weapon
+id = "C-shot-grapple"
+source = "constructed"
+entries = ["ShotBlocks"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3A1:y", mark = "shot-back" },
+]
+places = [
+]
+[vector.frame]
+requests = [{ hit = [4, 7], by = "Grapple" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Air", look = "35D", mark = "shot-back" },
+]
+places = [
+  { place = 39, reaction = "shot-back", script = "broken", cell = [4, 7], next = 2, wait = 6, remembers = "Block" },
+]
+redrawn = [[4, 7]]
+sounds = [{ sound = "Pop", queue_limit = 4 }]
+
+[[vector]]
+# the grapple reaches a bomb, a super missile, a power bomb and a crumble block: none starts
+id = "C-grapple-others"
+source = "constructed"
+entries = ["BombBlocks", "SuperMissileBlocks", "PowerBombBlocks", "BombsReveal"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [5, 7], kind = "Block", look = "360", mark = "super" },
+  { at = [6, 7], kind = "Block", look = "3A0", mark = "crumble" },
+  { at = [4, 8], kind = "Block", look = "370", mark = "power-bomb" },
+  { at = [4, 9], kind = "StandInDown", look = "370:y", reach = -1 },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Grapple" },
+  { hit = [5, 7], by = "Grapple" },
+  { hit = [4, 8], by = "Grapple" },
+  { hit = [6, 7], by = "Grapple" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [5, 7], kind = "Block", look = "360", mark = "super" },
+  { at = [6, 7], kind = "Block", look = "3A0", mark = "crumble" },
+  { at = [4, 8], kind = "Block", look = "370", mark = "power-bomb" },
+  { at = [4, 9], kind = "StandInDown", look = "370:y", reach = -1 },
+]
+places = [
+]
+redrawn = []
+sounds = []
+
+[[vector]]
+# the grapple on a cell marked Nothing met as a shot block holds a place; on one met as a crumble block it holds none: the shot block hit after them takes 38
+id = "C-nothing-grapple"
+source = "constructed"
+entries = ["BlocksMarkedNothing", "Places"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
+  { at = [5, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 8], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Grapple" },
+  { hit = [4, 8], by = "Grapple" },
+  { hit = [5, 7], by = "Beam" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
+  { at = [5, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 8], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
+]
+places = [
+  { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
+]
+redrawn = []
+sounds = []
+
+[[vector]]
+# the run paused: she touches a scroll cell twice; it stays touched, each touch holds a place, and its screens wait for the next run
+id = "C-scroll-paused"
+source = "constructed"
+entries = ["ScrollCells", "TheScriptsRun"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+]
+places = [
+  { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
+]
+screens = ["OCC", "OOO"]
+[vector.frame]
+requests = [
+  { touch = [4, 7], way = "Right" },
+  { touch = [4, 7], way = "Right" },
+]
+paused = true
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+]
+places = [
+  { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7], touched = true },
+]
+held_until_run = [38, 37]
+screens = ["OCC", "OOO"]
+answers = ["Air", "Air"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# the first run after the pause: the touched scroll reaction changes its screens though nothing touches it this frame, and the held places are free
+id = "C-scroll-after-pause"
+source = "constructed"
+entries = ["ScrollCells", "TheScriptsRun"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+]
+places = [
+  { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7], touched = true },
+]
+held_until_run = [38, 37]
+screens = ["OCC", "OOO"]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+]
+places = [
+  { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
+]
+screens = ["OOS", "OOO"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# a bomb's blast reaches a bomb block whose broken script has no leading sound: it starts from its first step
+id = "C-bomb-quiet"
+source = "constructed"
+entries = ["BombBlocks", "TheScriptsRun"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3A0", mark = "bomb-quiet" },
+]
+places = [
+]
+[vector.frame]
+requests = [{ hit = [4, 7], by = "Bomb" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Air", look = "34A", mark = "bomb-quiet" },
+]
+places = [
+  { place = 39, reaction = "bomb-quiet", script = "broken", cell = [4, 7], next = 1, wait = 2, remembers = "Block" },
+]
+redrawn = [[4, 7]]
+sounds = []
+
+[[vector]]
+# another part's start between her weapons' hit and her touch: the shot block takes 39, the other part's start 38, the crumble she lands on 37
+id = "C-order-other"
+source = "constructed"
+entries = ["Places"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Beam" },
+  { other = "an enemy's break" },
+  { touch = [4, 8], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+]
+places = [
+  { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
+  { place = 37, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+held = [38]
+answers = ["Solid"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# a touch given before a hit is answered first: the crumble takes 39, the shot block 38
+id = "C-order-as-given"
+source = "constructed"
+entries = ["Places"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { touch = [4, 8], way = "Down" },
+  { hit = [4, 7], by = "Beam" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+]
+places = [
+  { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+  { place = 38, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
 answers = ["Solid"]
 redrawn = []

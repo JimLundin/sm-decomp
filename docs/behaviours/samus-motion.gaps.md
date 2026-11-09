@@ -8,17 +8,20 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
 
 ## Which point of her is inside each cell (the blocks observer, 2026-11-09, lane/blocks-spec)
 
-36. **`TouchedCells`' cells she is inside need their point.** A scroll cell reacts only to the cell
-    at her centre (`docs/behaviours/blocks.md`, `ScrollCells`, its header's "What samus-motion
-    must add"). The report gives the cells in order, bottom edge's row first, then her centre's
-    if its row differs, then her top edge's under the `xor` rule, but not which point each is, and
-    the order alone can't say: with her centre in her bottom edge's row the one cell is her bottom
-    edge's, not her centre's, and the cell after the first may be her centre's or her top edge's.
-    On record: item-charge-beam 139, 140, 141, 815 and 816, where the oracle spawns the scroll
-    touch from her centre's point (`$94:995E`) for the scroll cell (61, 87). Asked: each inside
-    cell comes with its point, `Bottom`, `Centre` or `Top` (listed alphabetically; the order means
-    nothing), in the report's order, a cell reported twice once per point. The blocks spec's
-    vectors give `inside = [{ cell, point }]` in that shape.
+36. **`TouchedCells`' cells she is inside need their point.** Every point is read: a scroll cell
+    reacts only to the cell at her centre, and a cell that holds a place when she is inside it
+    holds one at each point (`docs/behaviours/blocks.md`, `ScrollCells`, `BlocksMarkedNothing`,
+    its header's "What samus-motion must add"). The report gives the cells in order, bottom edge's
+    row first, then her centre's if its row differs, then her top edge's under the `xor` rule, but
+    not which point each is, and the order alone can't say: with her centre in her bottom edge's
+    row the one cell is her bottom edge's, not her centre's, and the cell after the first may be
+    her centre's or her top edge's. On record: item-charge-beam 139, 140, 141, 815 and 816, where
+    the oracle spawns the scroll touch from her centre's point (`$94:995E`) for the scroll cell
+    (61, 87). Asked: each inside cell comes with its point, `Top`, `Centre` or `Bottom` (listed top
+    to bottom), in the report's order, a cell reported twice once per point, and a stand-in already
+    resolved to the cell it stands for, as for her touches (the inside handling follows stand-ins,
+    `$94:9B40`). The blocks spec's vectors give `{ inside = [x, y], point }` requests in that
+    shape.
 
 ## Round 13 in the engine and the harness (integrator, 2026-11-09, lane/samus-r13)
 

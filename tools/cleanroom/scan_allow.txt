@@ -173,8 +173,8 @@ pick up              # collecting an item
 right edge           # the player's word for the view's or the room's right-hand edge
 facing right         # the player's word for which way she faces
 
-# The blocks a player names (blocks spec, 2026-11-08): the kinds every guide and the game's
-# own hint screens call by what breaks them.
+# The blocks a player names (blocks spec, 2026-11-08): the kinds players' guides and the
+# community's maps call by what breaks them or what they do.
 crumble block        # falls away under her feet
 shot block           # any shot breaks it
 bomb block           # a bomb's blast breaks it

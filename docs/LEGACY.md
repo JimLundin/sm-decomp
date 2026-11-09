@@ -82,8 +82,35 @@ original's bytes as data.
 - **A scroll cell with no scroll reaction** (the blocks domain, `docs/behaviours/blocks.md`
   `ScrollCells`; `$84:B3A6`): when she touches a scroll cell whose block no scroll PLM sits on,
   the original searches the PLMs for one, finds none and loops for ever. The spec leaves such a
-  cell to the room's loading, which is to refuse the room. No room of the 44 cached rows has one;
-  a custom room could.
+  cell to the room's loading, which is to refuse the room. No room of the game has one (the
+  importer's scan of the 261 rooms the doors reach, 322 states, 265 scroll cells); a custom room
+  could.
+- **Reacting cells whose tables end before their mark** (the blocks domain,
+  `docs/behaviours/blocks.md` §1's marks; the decode notes' importer's scan): each asker of a
+  reacting cell (her touch, her inside points, a shot, a blast, the grapple) reads the cell's
+  reaction from its own table by the cell's class and BTS, and some tables end before others: the
+  special block's bombed table at BTS 10h (and 8 per area), the special touch, inside and
+  shootable tables at 50h (16, or 8 for the shootable block, per area), the bombable tables at 10h.
+  Past an end the original reads the next area's table, pointer words or code, so one cell can be
+  a crumble block to her touch and a speed block's reveal to a bomb. The importer refuses a room
+  with such a cell; no room of the game has one.
+- **Reactions the original would misread** (the blocks domain, `docs/behaviours/blocks.md` §2,
+  `BombBlocks`; `$84:85E0`, `$84:CF0C`): a `Show` of 0 frames waits 65,536 frames in the original,
+  one of 8000h or more is read as an instruction, and a bomb's blast skips the first three bytes of
+  a bomb block's broken list whatever they hold. The importer refuses a reaction with a `Show`
+  outside 1 to 32,767 frames, or a bomb block whose broken list doesn't begin with a sound; the
+  game has none.
+- **Patterns past the room's edge** (the blocks domain, `docs/behaviours/blocks.md` §2;
+  `$84:861E`): a show draws by block index, so a pattern cell past the room's right or left edge is
+  drawn on the next or the previous row, and one past the top or the bottom is written outside the
+  room's cells. The spec states patterns in cells, and the room's loading refuses a room whose
+  reacting cells' patterns reach past its edge; no room of the game has one.
+- **The grapple on a bomb, a super missile or a power bomb block** (the blocks domain,
+  `docs/behaviours/blocks.md` `BombBlocks`, `SuperMissileBlocks`, `PowerBombBlocks`; `$84:CEDA`,
+  `$84:CF2E`, `$84:CF67`): these blocks decide by the weapon of the projectile last handled
+  (`$0DDE`), which the grapple doesn't set, so the original may break one under the grapple as a
+  bomb's, a super missile's or a power bomb's hit when that projectile's slot still holds one. The
+  engine never starts them under the grapple, as for a beam. Not seen on record.
 
 ## The engine: memory a model keeps that the engine can't hold yet
 
