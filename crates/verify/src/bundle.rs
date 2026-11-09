@@ -216,7 +216,9 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         room_plms,
-        area_maps: data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
+        area_maps: game::hud_world::AreaMaps::import(
+            &data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
+        ),
         tile_tables: TileTables::load(rom.lorom()).map_err(ContentError::TileTables)?,
         message_boxes: data::message::MessageBoxes::load(rom.lorom())
             .map_err(ContentError::MessageBoxes)?,

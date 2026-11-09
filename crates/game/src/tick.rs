@@ -9,6 +9,7 @@ use crate::animation;
 use crate::camera_world;
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::collision::{Room, Surroundings, Touches, inside};
+use crate::hud_world;
 use crate::message_box;
 use crate::pose::{self, Content};
 use crate::samus_world;
@@ -487,13 +488,7 @@ fn gameplay_phase(
             };
             let stepped = samus_world::step::step(&mut state.samus, inputs, &mut touches);
             animation::after_motion(&mut state.samus, stepped.is_some_and(|s| s.armed));
-            mini_map(
-                &mut state.hud,
-                state.samus.motion.position.into(),
-                &state.room,
-                crate::mini_map::Blink::at(state.clock.counters.requested_byte),
-                content,
-            );
+            hud_world::mini_map_turn(state, content).map_err(SessionFault::Hud)?;
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);
             let next = samus_world::step::next(&state.samus, stepped, pass.requests);
             change_pose(&mut state.samus, &mut state.atmospherics, next, content);
@@ -505,7 +500,7 @@ fn gameplay_phase(
         // with those game states. In game state 8 the clock still counts on that frame; it
         // stops only if an earlier phase this frame already left gameplay.
         GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
-        GameplayPhase::Hud => crate::hud::phase(state),
+        GameplayPhase::Hud => hud_world::hud_turn(state, content).map_err(SessionFault::Hud)?,
         GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
         GameplayPhase::Enemies => crate::enemy::run(state, &pass.active, content),
         // `$84:85B4`.
@@ -580,29 +575,5 @@ fn bg_scroll(state: &mut State, content: &Content) {
         &state.video.batch.registers,
         &content.tile_tables,
         &mut state.video.batch.level,
-    );
-}
-
-/// The mini-map's update after the movement handler (`$90:E734`).
-fn mini_map(
-    hud: &mut crate::state::hud::Hud,
-    samus: crate::state::samus::Point,
-    room: &crate::state::room::RoomScoped,
-    blink: crate::mini_map::Blink,
-    content: &Content,
-) {
-    let width = room.width.0;
-    let blocks = u16::try_from(room.blocks.len()).unwrap_or(u16::MAX);
-    let room = crate::mini_map::RoomBlocks {
-        width,
-        height: blocks.checked_div(width).unwrap_or(0),
-    };
-    crate::mini_map::update(
-        &mut hud.mini_map,
-        &mut hud.tilemap,
-        samus,
-        room,
-        blink,
-        &content.area_maps,
     );
 }

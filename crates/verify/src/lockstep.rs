@@ -779,7 +779,6 @@ const COMPARATORS: &[Comparator] = &[
     field!("hud.drawn.super_missiles", hud.drawn.super_missiles),
     field!("hud.drawn.power_bombs", hud.drawn.power_bombs),
     field!("hud.drawn.selection", hud.drawn.selection),
-    field!("hud.item_palette", hud.item_palette),
     field!("hud.mini_map.explored", hud.mini_map.explored),
     field!("hud.mini_map.area", hud.mini_map.area),
     field!("hud.mini_map.room.x", hud.mini_map.room.x),

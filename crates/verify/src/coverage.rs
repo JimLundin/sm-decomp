@@ -723,7 +723,6 @@ pub const FIELDS: &[Field] = &[
     ),
     wram("hud.drawn.power_bombs", source::SAMUS_PREV_POWER_BOMBS),
     wram("hud.drawn.selection", source::SAMUS_PREV_HUD_ITEM_INDEX),
-    wram("hud.item_palette", source::HUD_ITEM_TILEMAP_PALETTE_BITS),
     Field {
         path: "hud.mini_map.explored",
         status: Status::Decoded(Source::WramBlock(source::MAP_TILES_EXPLORED)),
@@ -932,7 +931,6 @@ mod tests {
             rules.hud.super_missiles,
             rules.hud.power_bombs,
             rules.hud.selection,
-            rules.hud.item_palette,
             rules.hud.mini_map.area,
             rules.hud.mini_map.room_x,
             rules.hud.mini_map.room_y,

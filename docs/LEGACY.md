@@ -17,10 +17,6 @@ The engine has no RAM image, so where the original reads past a table it can't r
 there". Each case is listed until a check needs it; then it becomes a named behaviour with the
 original's bytes as data.
 
-- **HUD digits past their cells** (`game::hud`, `$80:9DBF`/`$80:9DD3`): a count above 99 in a
-  two-digit cell, or above 999 in a three-digit one, makes the original index past the digit table
-  into the code at `$80:9DE7` and draw those bytes as tiles. The engine leaves the cell unchanged. No
-  vanilla count gets there; a Map Rando or custom-content count could.
 - **Scroll areas past the room's table** (the camera domain, `docs/behaviours/camera.md`
   `BelowTheRoom` and its open question 1, which reads the screens below the room as one run
   continuing the room's, as the room's loading left them, and past the run `Closed`; today
@@ -41,19 +37,16 @@ original's bytes as data.
   of the 2,096 pointers at `$92:808D` are zero, and the original reads such a spritemap's count from
   `$92:0000`, low work RAM; an index past the table reads a pointer from what follows. The engine draws
   nothing for either. No pose and frame an animation reaches selects one.
-- **The mini-map's edges** (`game::mini_map`, `data::map`, `$90:A9A2`, `$90:AB75`, `$90:AAA8`): the 3 by
-  5 window around Samus reads the explored bitmap, the map station bitmap and the map tilemap a row
-  above and below and two columns either side, in layout order (`data::map::LayoutIndex`). On the
-  map's top or bottom rows, and for a room placed off the 64 by 32 grid, those reads leave the area's
-  tables and the original reads what follows (the next area's maps, the variables around `$07F7`). The
-  engine reads no cells and the blank tile there. Reads past the map's outer edge
-  (`Crossing::PastMap`) follow the original's. Slice 0's rooms are inside the edges.
 - **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/hud.md` §1.5; the
   original's reads in `docs/behaviours/hud.decode.md`, "Counts past their cells" and "The map's
   outer edge"): two stated simplifications, both unreachable in vanilla.
   - Missiles are defined up to 999 and super missiles and power bombs up to 99; past that the
     original draws its digit table's neighbours and the code at `$80:9DE7` as tiles. Vanilla
-    capacities stop at 230, 50 and 50.
+    capacities stop at 230, 50 and 50. The engine (`game::hud_world`) stops the Session with
+    `HudFault::CountPastCells` there.
+  - A room whose top-left cell lies off the map (`HudFault::RoomOffMap`), and an area with no map
+    (the debug area, whose pointers name none: the engine shows a blank map that charts nothing),
+    where the original reads what lies past its tables.
   - A mini-map cell outside the 64 by 32 map (rows -1, 32 and 33, which the window reaches from her
     cell in row 31, in row 1 at columns 0-1, or in rows 30-31 at columns 62-63, and her own cell
     below the map) is unexplored, uncharted and blank `01F`, and exploring it does nothing. The

@@ -54,7 +54,7 @@ fn content() -> Content {
         visor_colours: data::palette::VisorColours::default(),
         face_block_glow: data::enemy::face_block::GlowColours::default(),
         room_plms: crate::plm::RoomPlms::default(),
-        area_maps: data::map::AreaMaps::default(),
+        area_maps: crate::hud_world::AreaMaps::default(),
         tile_tables: data::tileset::TileTables::default(),
         message_boxes: data::message::MessageBoxes::default(),
     }

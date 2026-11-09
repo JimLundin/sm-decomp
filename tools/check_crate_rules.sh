@@ -17,12 +17,12 @@ engine="data game runtime app"
 allowed() {
   case $1 in
     data) echo "canonical clean_types" ;;
-    game) echo "data canonical clean_types clean_model_samus_motion clean_model_camera clean_model_progress" ;;
+    game) echo "data canonical clean_types clean_model_samus_motion clean_model_camera clean_model_hud clean_model_progress" ;;
     runtime) echo "data" ;;
     app) echo "data game runtime" ;;
     oracle) echo "data oracle_record" ;;
     oracle_record) echo "" ;;
-    verify) echo "data game runtime oracle_record canonical clean_types clean_model_samus_motion clean_model_camera clean_model_progress" ;;
+    verify) echo "data game runtime oracle_record canonical clean_types clean_model_samus_motion clean_model_camera clean_model_hud clean_model_progress" ;;
     tools) echo "verify oracle runtime" ;;
     canonical) echo "canonical_derive" ;;
     canonical_derive) echo "" ;;
@@ -30,10 +30,11 @@ allowed() {
     clean_types) echo "" ;;
     clean_model_samus_motion) echo "clean_types" ;;
     clean_model_camera) echo "clean_types" ;;
+    clean_model_hud) echo "clean_types" ;;
     clean_model_progress) echo "clean_types" ;;
   esac
 }
-new_crates="data game runtime app oracle oracle_record verify tools canonical canonical_derive clean_types clean_model_samus_motion clean_model_camera clean_model_progress"
+new_crates="data game runtime app oracle oracle_record verify tools canonical canonical_derive clean_types clean_model_samus_motion clean_model_camera clean_model_hud clean_model_progress"
 
 # Name the rule a forbidden edge breaks, for the message.
 rule() {

@@ -1,8 +1,8 @@
-//! The area maps: each area's map tilemap and the cells its map station reveals, and the
-//! bitmap layout the explored cells share with them.
+//! The area maps: each area's map tilemap, the pictures past its last column and the cells its map
+//! station reveals, and the bitmap layout the explored cells share with the station's.
 //!
-//! An area's map is 64 by 32 cells, two pages of 32 by 32 side by side. A bitmap of it keeps one bit per
-//! cell, four bytes per row and 80h bytes per page, the most significant bit leftmost; the
+//! An area's map is 64 by 32 cells, two pages of 32 by 32 side by side. A bitmap of it keeps one
+//! bit per cell, four bytes per row and 80h bytes per page, the most significant bit leftmost; the
 //! map tilemap keeps one tilemap word per cell, 20h words per row and 400h words per page.
 
 use canonical::Canonical;
@@ -30,167 +30,57 @@ pub const MAP_COLUMNS: u8 = 64;
 pub const PAGE_COLUMNS: u8 = 32;
 /// A map's rows, the top one padding that no room is on.
 pub const MAP_ROWS: u8 = 32;
-/// A map bitmap's bytes: eight cells each in [`LayoutIndex`] order, the first cell the most
-/// significant bit.
+/// A map bitmap's bytes: a page's rows top to bottom, then the other page's, four bytes a row,
+/// the leftmost cell the most significant bit.
 pub const MAP_BIT_BYTES: usize = 0x100;
-/// A map tilemap's words: one per cell in [`LayoutIndex`] order.
+/// A map tilemap's words: a page's rows top to bottom, then the other page's, a word a cell.
 pub const MAP_TILEMAP_WORDS: usize = 0x800;
+/// The words read past an area's tilemap: the next tilemap's left page, whose first columns the
+/// mini-map shows past the map's last column.
+pub const BEYOND_WORDS: usize = 0x400;
+/// A bitmap's bytes per page.
+const PAGE_BYTES: usize = 0x80;
+/// A bitmap's bytes per page row.
+const ROW_BYTES: usize = 4;
 
-/// A half of an area's map.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Page {
-    /// Columns 0 to 31.
-    Left,
-    /// Columns 32 to 63.
-    Right,
-}
-
-/// A cell of an area's map: column `x` of [`MAP_COLUMNS`] and row `y` of [`MAP_ROWS`].
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct MapCell {
-    /// The column, from the left page's left edge.
-    pub x: u8,
-    /// The row, from the top padding row.
-    pub y: u8,
-}
-
-impl MapCell {
-    /// The cell's place in [`LayoutIndex`] order.
-    #[must_use]
-    pub fn layout(self) -> LayoutIndex {
-        let page = if self.x < PAGE_COLUMNS {
-            Page::Left
-        } else {
-            Page::Right
-        };
-        LayoutIndex::on_page(page, u16::from(self.y), self.x % PAGE_COLUMNS)
-    }
-}
-
-/// A place in the order the original lays a map out, its bitmaps and its tilemap alike: the
-/// left page's rows top to bottom, then the right page's, [`PAGE_COLUMNS`] cells a row.
-///
-/// The original steps through a map in this order rather than by column and row, so a step
-/// past a row's end lands at the start of the row below, and a row past the left page's
-/// bottom is the right page's top. A place before the map or past it holds no cell; the
-/// mini-map reads such places at the map's edges (docs/LEGACY.md, the mini-map's edges).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LayoutIndex(pub i32);
-
-impl LayoutIndex {
-    /// The places a row takes.
-    pub const ROW: i32 = 32;
-    /// The places a page takes.
-    pub const PAGE: i32 = 0x400;
-    /// The places the map takes.
-    pub const MAP: i32 = 0x800;
-
-    /// Column `column` of row `row` on `page`; a row past [`MAP_ROWS`] runs on in layout
-    /// order.
-    #[must_use]
-    pub fn on_page(page: Page, row: u16, column: u8) -> Self {
-        let page_start = match page {
-            Page::Left => 0,
-            Page::Right => Self::PAGE,
-        };
-        Self(
-            i32::from(row)
-                .wrapping_mul(Self::ROW)
-                .wrapping_add(page_start)
-                .wrapping_add(i32::from(column)),
-        )
-    }
-
-    /// The place `places` on in layout order, or back for a negative count.
-    #[must_use]
-    pub const fn add(self, places: i32) -> Self {
-        Self(self.0.wrapping_add(places))
-    }
-
-    /// The place `places` back in layout order.
-    #[must_use]
-    pub const fn sub(self, places: i32) -> Self {
-        Self(self.0.wrapping_sub(places))
-    }
-
-    /// The place `rows` rows on, the same column.
-    #[must_use]
-    pub const fn rows(self, rows: i32) -> Self {
-        self.add(rows.wrapping_mul(Self::ROW))
-    }
-
-    /// The place reduced into the first `places` places, as a fixed-width index of the
-    /// original wraps.
-    #[must_use]
-    pub const fn wrapped(self, places: i32) -> Self {
-        match self.0.checked_rem_euclid(places) {
-            Some(index) => Self(index),
-            None => self,
-        }
-    }
-
-    /// Whether the place starts a row.
-    #[must_use]
-    pub const fn starts_row(self) -> bool {
-        matches!(self.0.checked_rem_euclid(Self::ROW), Some(0))
-    }
-
-    /// The cell at this place, when it is on the map.
-    #[must_use]
-    pub fn cell(self) -> Option<MapCell> {
-        if !(0..Self::MAP).contains(&self.0) {
-            return None;
-        }
-        let page = u8::try_from(self.0 / Self::PAGE).ok()?;
-        let row = u8::try_from(self.0 % Self::PAGE / Self::ROW).ok()?;
-        let column = u8::try_from(self.0 % Self::ROW).ok()?;
-        Some(MapCell {
-            x: page.wrapping_mul(PAGE_COLUMNS).wrapping_add(column),
-            y: row,
-        })
-    }
-
-    fn index(self) -> Option<usize> {
-        usize::try_from(self.0).ok()
-    }
-}
-
-/// A set of a map's cells: the cells explored, or the cells a map station reveals.
+/// A set of a map's cells: the cells explored, or the cells a map station reveals. Row `y`'s
+/// word holds the cell in column `x` at bit `x`.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct MapCells([u64; 32]);
+pub struct MapCells(pub [u64; 32]);
+
+/// The row and the bit in its word of the cell that bit `bit` (0 the most significant) of bitmap
+/// byte `byte` holds.
+fn bitmap_cell(byte: usize, bit: u8) -> (usize, u64) {
+    let page = byte / PAGE_BYTES;
+    let row = byte % PAGE_BYTES / ROW_BYTES;
+    let column = page
+        .wrapping_mul(usize::from(PAGE_COLUMNS))
+        .wrapping_add((byte % ROW_BYTES).wrapping_mul(8))
+        .wrapping_add(usize::from(bit));
+    let cell = u32::try_from(column)
+        .ok()
+        .and_then(|column| 1_u64.checked_shl(column))
+        .unwrap_or(0);
+    (row, cell)
+}
+
+/// A bitmap byte's bits, the most significant first.
+const BITS: [u8; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
 
 impl MapCells {
-    /// Whether `cell` is in the set.
-    #[must_use]
-    pub fn contains(&self, cell: MapCell) -> bool {
-        self.0
-            .get(usize::from(cell.y))
-            .is_some_and(|row| row.checked_shr(u32::from(cell.x)).unwrap_or(0) & 1 != 0)
-    }
-
-    /// Whether the cell at `at` is in the set; a place off the map holds none.
-    #[must_use]
-    pub fn contains_at(&self, at: LayoutIndex) -> bool {
-        at.cell().is_some_and(|cell| self.contains(cell))
-    }
-
-    /// Add `cell`; a cell off the map is left out.
-    pub fn insert(&mut self, cell: MapCell) {
-        if let (Some(row), Some(bit)) = (
-            self.0.get_mut(usize::from(cell.y)),
-            1_u64.checked_shl(u32::from(cell.x)),
-        ) {
-            *row |= bit;
-        }
-    }
-
     /// The set a bitmap in the original's layout holds.
     #[must_use]
     pub fn from_bitmap(bitmap: &[u8; MAP_BIT_BYTES]) -> Self {
         let mut cells = Self::default();
-        for (cell, set) in layout_order().zip(bitmap.iter().flat_map(|&byte| bits(byte))) {
-            if set {
-                cells.insert(cell);
+        for (index, &byte) in bitmap.iter().enumerate() {
+            for &bit in BITS
+                .iter()
+                .filter(|&&bit| byte.wrapping_shl(u32::from(bit)) & 0x80 != 0)
+            {
+                let (row, cell) = bitmap_cell(index, bit);
+                if let Some(word) = cells.0.get_mut(row) {
+                    *word |= cell;
+                }
             }
         }
         cells
@@ -199,25 +89,14 @@ impl MapCells {
     /// The set as a bitmap in the original's layout.
     #[must_use]
     pub fn to_bitmap(&self) -> [u8; MAP_BIT_BYTES] {
-        let mut bitmap = [0; MAP_BIT_BYTES];
-        let mut cells = layout_order();
-        for byte in &mut bitmap {
-            for cell in cells.by_ref().take(8) {
-                *byte = (*byte << 1) | u8::from(self.contains(cell));
-            }
-        }
-        bitmap
+        core::array::from_fn(|index| {
+            BITS.iter().fold(0, |byte, &bit| {
+                let (row, cell) = bitmap_cell(index, bit);
+                let set = self.0.get(row).is_some_and(|word| word & cell != 0);
+                (byte << 1) | u8::from(set)
+            })
+        })
     }
-}
-
-/// Every cell of a map in [`LayoutIndex`] order.
-fn layout_order() -> impl Iterator<Item = MapCell> {
-    (0..LayoutIndex::MAP).filter_map(|index| LayoutIndex(index).cell())
-}
-
-/// A bitmap byte's eight cells, the most significant bit first.
-fn bits(byte: u8) -> impl Iterator<Item = bool> {
-    (0..8).rev().map(move |bit| (byte >> bit) & 1 != 0)
 }
 
 /// One area's map.
@@ -225,18 +104,12 @@ fn bits(byte: u8) -> impl Iterator<Item = bool> {
 pub struct AreaMap {
     /// The area.
     pub area: Area,
-    /// The map tilemap's words in [`LayoutIndex`] order, as the PPU reads them.
+    /// The map tilemap's words, a page's rows then the other's, as the PPU reads them.
     pub tiles: Vec<u16>,
+    /// The [`BEYOND_WORDS`] words after them, laid out as a page.
+    pub beyond: Vec<u16>,
     /// The cells the area's map station reveals.
     pub station: MapCells,
-}
-
-impl AreaMap {
-    /// The tilemap word at `at`, when it is on the map.
-    #[must_use]
-    pub fn tile(&self, at: LayoutIndex) -> Option<u16> {
-        self.tiles.get(at.index()?).copied()
-    }
 }
 
 /// Every area's map, from the ROM.
@@ -254,13 +127,15 @@ impl AreaMaps {
         for (index, area) in (0_usize..).zip(MAPPED_AREAS) {
             let long = read_array::<3>(rom, MAP_TILEMAP_POINTERS, index.wrapping_mul(3))?;
             let tilemap = RomAddress::from_long(long);
-            let words = rom.read(tilemap, MAP_TILEMAP_WORDS.wrapping_mul(2))?;
-            let tiles = words
+            let read = MAP_TILEMAP_WORDS.wrapping_add(BEYOND_WORDS);
+            let mut tiles: Vec<u16> = rom
+                .read(tilemap, read.wrapping_mul(2))?
                 .as_chunks::<2>()
                 .0
                 .iter()
                 .map(|&word| u16::from_le_bytes(word))
                 .collect();
+            let beyond = tiles.split_off(MAP_TILEMAP_WORDS);
             let near = read_array::<2>(rom, MAP_STATION_POINTERS, index.wrapping_mul(2))?;
             let bitmap = RomAddress::new(MAP_STATION_POINTERS.bank, u16::from_le_bytes(near));
             let bytes: &[u8; MAP_BIT_BYTES] = rom
@@ -270,16 +145,11 @@ impl AreaMaps {
             maps.push(AreaMap {
                 area,
                 tiles,
+                beyond,
                 station: MapCells::from_bitmap(bytes),
             });
         }
         Ok(Self(maps))
-    }
-
-    /// `area`'s map, when it has one.
-    #[must_use]
-    pub fn of(&self, area: Area) -> Option<&AreaMap> {
-        self.0.iter().find(|map| map.area == area)
     }
 }
 
@@ -312,33 +182,20 @@ mod tests {
     }
 
     #[test]
-    fn layout_order_runs_rows_then_pages() {
-        let cell = |x, y| Some(MapCell { x, y });
-        assert_eq!(LayoutIndex(0).cell(), cell(0, 0));
-        assert_eq!(LayoutIndex(31).add(1).cell(), cell(0, 1));
-        assert_eq!(LayoutIndex(0).rows(32).cell(), cell(32, 0));
-        assert_eq!(LayoutIndex(LayoutIndex::MAP - 1).cell(), cell(63, 31));
-        assert_eq!(LayoutIndex(-1).cell(), None);
-        assert_eq!(LayoutIndex(LayoutIndex::MAP).cell(), None);
-        for index in 0..LayoutIndex::MAP {
-            let at = LayoutIndex(index);
-            assert_eq!(at.cell().map(MapCell::layout), Some(at));
-        }
-    }
-
-    #[test]
     fn a_cell_set_round_trips_the_bitmap() {
         let bitmap: [u8; MAP_BIT_BYTES] =
             core::array::from_fn(|index| u8::try_from(index).unwrap().wrapping_mul(37));
         let cells = MapCells::from_bitmap(&bitmap);
         assert_eq!(cells.to_bitmap(), bitmap);
-        // Byte 81h's most significant bit is the right page's top row, column 8.
+        // Byte 81h's most significant bit is the right page's top row, column 8; byte 7Fh's
+        // least significant the left page's last row, column 31.
         let mut one = [0; MAP_BIT_BYTES];
         one[0x81] = 0x80;
-        let cells = MapCells::from_bitmap(&one);
-        assert!(cells.contains(MapCell { x: 40, y: 0 }));
-        assert!(cells.contains_at(LayoutIndex(0x408)));
-        assert!(!cells.contains_at(LayoutIndex(-1)));
+        one[0x7F] = 0x01;
+        let mut expected = MapCells::default();
+        expected.0[0] = 1 << 40;
+        expected.0[31] = 1 << 31;
+        assert_eq!(MapCells::from_bitmap(&one), expected);
     }
 
     #[test]
@@ -350,14 +207,17 @@ mod tests {
         assert_eq!(maps.0.len(), MAPPED_AREAS.len());
         for map in &maps.0 {
             assert_eq!(map.tiles.len(), MAP_TILEMAP_WORDS);
+            assert_eq!(map.beyond.len(), BEYOND_WORDS);
             // Every map's top row is padding: no room is on it, so no station reveals it.
-            assert!((0..MAP_COLUMNS).all(|x| !map.station.contains(MapCell { x, y: 0 })));
+            assert_eq!(map.station.0[0], 0);
         }
-        assert!(maps.of(Area::Debug).is_none());
-        // Brinstar's map station reveals cells; the map tiles are in bank $B5.
-        let brinstar = maps.of(Area::Brinstar).unwrap();
+        // Brinstar's map station reveals cells; the map tiles are in bank $B5, and Brinstar's
+        // beyond pictures are Crateria's map, the block after its own.
+        let of = |area| maps.0.iter().find(|map| map.area == area).unwrap();
+        let brinstar = of(Area::Brinstar);
         assert_ne!(brinstar.station, MapCells::default());
         assert!(brinstar.tiles.iter().any(|&word| word & 0x03ff != 0x001f));
+        assert_eq!(brinstar.beyond, of(Area::Crateria).tiles[..BEYOND_WORDS]);
     }
 }
 
@@ -366,4 +226,5 @@ mod tests {
 // Bank $90 log, update mini-map `$90:A91B`, and its RAM map note on `$7E:07F7`: an area's
 // The map tilemaps' long pointers, one per area (`$90:AA7C`: `$82:964A + [area] * 3`).
 // The map station bitmaps' pointers into bank $82, one per area (`$90:A9C8`:
-// `$82:9717 + [area] * 2`).
+// `$82:9717 + [area] * 2`). The area maps are consecutive 1000h-byte blocks of bank $B5
+// (Brinstar `$8000`, Crateria `$9000`, ...), so the words past one are the next block's.

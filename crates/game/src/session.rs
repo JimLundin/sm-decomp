@@ -165,6 +165,9 @@ pub enum SessionFault {
     /// The room's scroll areas aren't a room the camera can read: a short last row, or more
     /// than 256 screens across or down.
     Room(clean_model_camera::RoomError),
+    /// The HUD's State holds what the HUD model isn't defined on: a count past its cells, a room
+    /// off the map.
+    Hud(crate::hud_world::HudFault),
 }
 
 /// Why a State can't open as a Session.

@@ -861,8 +861,6 @@ pub struct HudSources {
     pub power_bombs: WramWord,
     /// `.drawn.selection`.
     pub selection: WramWord,
-    /// `.item_palette`.
-    pub item_palette: WramWord,
     /// `.mini_map`.
     pub mini_map: MiniMapSources,
 }
@@ -1031,7 +1029,6 @@ impl Rules<'_> {
             super_missiles: source::SAMUS_PREV_SUPER_MISSILES,
             power_bombs: source::SAMUS_PREV_POWER_BOMBS,
             selection: source::SAMUS_PREV_HUD_ITEM_INDEX,
-            item_palette: source::HUD_ITEM_TILEMAP_PALETTE_BITS,
             mini_map: MiniMapSources {
                 explored: source::MAP_TILES_EXPLORED,
                 area: source::AREA_INDEX,
@@ -1653,9 +1650,6 @@ fn collected_items(block: WramBlock, wram: &[u8]) -> Result<CollectedItems, Deco
     Ok(items)
 }
 
-/// A tilemap palette field's bits within a word.
-const TILEMAP_PALETTE_FIELD: u16 = 0x1C00;
-
 impl MessageBoxSources {
     /// What the message box saved.
     fn read(&self, wram: &[u8]) -> Result<MessageBoxSaved, DecodeError> {
@@ -1675,13 +1669,6 @@ impl HudSources {
         for (cell, word) in tilemap.cells.iter_mut().zip(words) {
             *cell = TilemapEntry::from_word(u16::from_le_bytes(*word));
         }
-        let palette = self.item_palette.read(wram)?;
-        if palette & !TILEMAP_PALETTE_FIELD != 0 {
-            return Err(DecodeError::Unrepresentable {
-                source: self.item_palette.name,
-                value: palette,
-            });
-        }
         Ok(Hud {
             tilemap,
             selected: hud_item(self.selected, wram)?,
@@ -1693,7 +1680,6 @@ impl HudSources {
                 power_bombs: self.power_bombs.read(wram)?,
                 selection: hud_item(self.selection, wram)?,
             },
-            item_palette: TilemapEntry::from_word(palette).palette,
             mini_map: self.mini_map.read(wram)?,
         })
     }

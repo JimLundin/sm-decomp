@@ -58,7 +58,7 @@ pub struct Content {
     /// The rooms' PLM populations, with their scroll PLMs' change lists.
     pub room_plms: RoomPlms,
     /// The area maps the mini-map draws.
-    pub area_maps: data::map::AreaMaps,
+    pub area_maps: crate::hud_world::AreaMaps,
     /// The tilesets' tile tables, which draw the level's blocks.
     pub tile_tables: data::tileset::TileTables,
     /// The message boxes' borders, letters and messages.

@@ -29,12 +29,12 @@ jobs:
           if [ -n "$crlf" ]; then echo "Committed with CRLF line endings:"; echo "$crlf"; exit 1; fi
       - name: Lint the rebuild's crates
         # Their lint set is the root Cargo.toml's [workspace.lints] (PRINCIPLES K8).
-        run: cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record -p clean_types -p clean_model_samus_motion -p clean_model_camera -p clean_model_progress --all-targets --no-deps
+        run: cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record -p clean_types -p clean_model_samus_motion -p clean_model_camera -p clean_model_hud -p clean_model_progress --all-targets --no-deps
       - name: Lint the clean crates under the clean room's ceilings (G5)
         # tools/cleanroom/clippy.toml, which export.sh writes as the export's clippy.toml.
-        run: CLIPPY_CONF_DIR="$PWD/tools/cleanroom" cargo clippy --locked -p clean_types -p clean_model_samus_motion -p clean_model_camera -p clean_model_progress --all-targets --no-deps
+        run: CLIPPY_CONF_DIR="$PWD/tools/cleanroom" cargo clippy --locked -p clean_types -p clean_model_samus_motion -p clean_model_camera -p clean_model_hud -p clean_model_progress --all-targets --no-deps
       - name: Test the rebuild's crates
-        run: cargo test --locked -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools -p oracle_record -p clean_types -p clean_model_samus_motion -p clean_model_camera -p clean_model_progress --no-fail-fast
+        run: cargo test --locked -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools -p oracle_record -p clean_types -p clean_model_samus_motion -p clean_model_camera -p clean_model_hud -p clean_model_progress --no-fail-fast
       - name: "Report the empty Tick rate (B1 target: 50k Ticks/s)"
         run: cargo run --locked --release -p game --example empty_ticks
       - name: "Report the compositor time per frame (A5 target: 0.3 ms)"

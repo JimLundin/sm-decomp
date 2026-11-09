@@ -1256,11 +1256,6 @@ pub const SAMUS_PREV_HUD_ITEM_INDEX: WramWord = WramWord {
     name: "SAMUS_PREV_HUD_ITEM_INDEX",
     offset: 0x0A0E,
 };
-/// Bank $80 log, `$80:9CEA`: the palette bits the last item highlight wrote.
-pub const HUD_ITEM_TILEMAP_PALETTE_BITS: WramWord = WramWord {
-    name: "HUD_ITEM_TILEMAP_PALETTE_BITS",
-    offset: 0x077C,
-};
 
 /// Bank $90 log, update mini-map `$90:A97E`: the current area's explored map cells, one bit
 /// per cell, 80h bytes per map page.

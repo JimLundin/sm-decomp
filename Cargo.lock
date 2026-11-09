@@ -30,6 +30,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "clean_model_hud"
+version = "0.1.0"
+dependencies = [
+ "clean_types",
+]
+
+[[package]]
 name = "clean_model_progress"
 version = "0.1.0"
 dependencies = [
@@ -67,6 +74,7 @@ version = "0.1.0"
 dependencies = [
  "canonical",
  "clean_model_camera",
+ "clean_model_hud",
  "clean_model_progress",
  "clean_model_samus_motion",
  "clean_types",
@@ -236,6 +244,7 @@ version = "0.1.0"
 dependencies = [
  "canonical",
  "clean_model_camera",
+ "clean_model_hud",
  "clean_model_progress",
  "clean_model_samus_motion",
  "clean_types",
