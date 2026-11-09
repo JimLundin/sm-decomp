@@ -6,60 +6,20 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
-## Filed by the observer: take-offs from a landing pose (adversary 42's sweep, 2026-11-08)
+## Answered: take-offs from a landing pose (adversary 42's sweep; observer, 2026-11-09)
 
-32. **A landing pose takes off with jump held but not newly pressed (`PadChart`, `AnimationEnds`,
-    `Jumping`).** Four frames, each the frame after a landing in A5h (landing from a normal jump,
-    facing left), with jump held since a press in the air before the landing and no new press:
-    - chain-0059-A293 107 → 108: jump pressed at 96 (in 88h, then falling in 2Ah), held through the
-      landing at 107 (2Ah → A5h, 00AB.FFFF);
-    - chain-0059-A293 174 → 175: pressed at 165 (2Ah), landed at 174;
-    - samus-screw-attack 174 → 175 and 606 → 607: pressed at 171 and 603 (52h), landed at 174
-      and 606.
-
-    Game: A5h → 4Ch (the take-off), `0B36` 0 → 1, vertical speed 4.E000 up (6.0000 on
-    samus-screw-attack, with hi-jump), x and y unchanged. Model: keeps A5h on the ground, vertical
-    speed 0, not rising, and moves her 1 px left (chain-0059-A293 108: x 0764.8FFF against
-    0765.8FFF). The spec's take-off arm (`Jumping`, `RisingAndFalling`: a take-off → rising) is
-    right; the model doesn't choose the take-off: the pad chart's landing rows take off on a jump
-    press, and none comes on these frames. Not a listed gap, and no harness mask covers them.
-
-    Suspected: the original's auto-jump. A landing pose's animation runs an instruction
-    (`$90:8370`, animation delay instruction 8) that, unless the pose already asked for is a
-    take-off or a spin, installs a one-frame pose input handler (`$90:E926`); that handler counts
-    jump as newly pressed when the auto-jump timer (`$0AF4`, counted by `$90:EAB3` on each frame
-    jump stays held, cleared when it isn't) is 1 to 8, then reads the pose table (`$91:A172` for
-    A5h: a jump tap → 4Ch). The records here don't hold `$0AF4`, so the counts are to confirm:
-    from the press to the landing's record jump is held 3 frames on both samus-screw-attack
-    landings, inside the window, but 11 and 9 on chain-0059-A293's, which the 1-8 window alone
-    doesn't admit. Asked of the observer: the auto-jump as a rule (which poses, which window,
-    what she remembers), with these four frames as vectors.
-
-    **Observer's note** (adversary 43's check, 2026-11-08; not yet a rule). Where the timer is
-    counted: `$90:EAB3` is called only from `$90:EB42`, in `$90:EB35` (draw Samus and
-    projectiles), which `$A0:884D` calls at enemy layer 3 from the main gameplay loop
-    (`$82:8B98`) and the door transitions, and `$8B:8E37`/`$8B:8E41` in the intro. So in gameplay
-    it runs once on every frame, after her pose and movement: on a frame with jump held and held
-    the frame before it adds 1, otherwise it clears the timer. Its only other writer is `$90:E93A`
-    (the auto-jump handler, which clears it when it fires). The handler `$90:E926` is installed by
-    animation delay instruction 8 (`$90:8370`), which ends not only the landings (A4h-A7h,
-    E0h-E7h) but every turn (25h/26h, 2Fh/30h, 43h/44h, 87h/88h, 8Bh-9Ah, 9Ch-A3h) and the
-    moonwalk's turns (BFh-C4h), and fires on the next frame's input when the timer is 1 to 8.
-    Counting with a frame's input being the record it starts from, and the press frame's own
-    count clearing the timer:
-    - samus-screw-attack 174 and 606: the press frame's count clears it, then 172-173 (604-605)
-      add 2: the handler sees 2, admitted.
-    - chain-0059-A293 174: pressed at 165, falling in 2Ah throughout, 166-173 add 8:
-      it sees 8, admitted (the 1-8 window holds; the gap's 9 counts the press frame).
-    - chain-0059-A293 107: pressed at 96, the timer alone would reach 10. But the turn 88h ends
-      into 29h at 99 (instruction 8 at 98), so the handler runs at 99, sees 2, injects a press a
-      fall ignores and clears the timer; 99-106 bring it back to 8 (or to 1, if the turn 87h's end
-      into 2Ah at 106 fires it again at 106). Either way the landing's handler at 107 admits it.
-
-    So the timer explains all four, with what she remembers being the timer (frames jump held
-    since its press, reset when a turn's or a landing's end fires the handler). The records don't
-    hold `$0AF4`; the counts are the bank log's, to be confirmed with `oracle corpus
-    --watch-words 0AF4` on these rows before the rule and its four vectors are written.
+32. **A landing pose takes off with jump held but not newly pressed.** chain-0059-A293 107 → 108
+    and 174 → 175, samus-screw-attack 174 → 175 and 606 → 607: the game takes off from A5h (4Ch,
+    rising at 4.E000, or 6.0000 with hi-jump, x and y kept) where the model, seeing no press,
+    runs on. Answered as a rule: `Jumping`'s jump held through. She remembers how many frames jump
+    has stayed held since its press; on the frame after a landing from a jump, a fall, a spin or a
+    wall jump, or after a turn's or a landing's animation ends, a count of 1 to 8 is a press for
+    the pad chart, and restarts the count. The oracle confirmed the counts the four frames read
+    (`oracle corpus --watch-words` on the two rows, the scenes engineer): 2, 2, 8 and 1. On
+    chain-0059-A293 108 the count from the press would be 11; the two turns' ends on the way
+    (88h at 98, 87h at 105) each restart it. Vectors JH1-JH4 (the four frames, recorded) and
+    C-held-9 (constructed, a count of 9). The round-12 model passes the lead-ins and fails the
+    four checked frames, as the gap says, until round 13.
 
 ## Filed by the observer: the knockback's tail (adversary 43, M6, 2026-11-08)
 

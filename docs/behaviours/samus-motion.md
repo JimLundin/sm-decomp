@@ -34,7 +34,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball) | `Dash`, `TurningRound`, `Jumping` |
 | vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
-| where the camera follows her from | y: `P.S` | the screen scrolls after her vertical move as measured from this height: where the frame started, or where pose fit or a change of shape placed her (`PoseFitAfterMoves`, `ShrinkingLowersHer`), so the scroll doesn't chase those placements | output (the camera's domain reads it; each frame works it out, so it isn't State) |
+| the y a placement put her at, if any | y: `P.S`, or none | the screen scrolls after her vertical move as measured from where pose fit or a change of shape placed her this frame (`PoseFitAfterMoves`, `ShrinkingLowersHer`), a placement of 0 px included, so the scroll doesn't chase those placements; with none, it measures from where it last saw her | output (the camera's domain reads it; each frame works it out, so it isn't State) |
 | rising | `bool`, at the frame's end | the view aims lower while she rises, so it shows more above her; her vertical speed can't tell it at a rise at 0, or on the frame whose pull spends the rise, where the speed already points down (`RisingAndFalling`) | output (the camera's domain reads it) |
 | pose | §2 | the sprite | every behaviour; output |
 
@@ -61,6 +61,8 @@ on the ground (below), which a start gives as `falling`.
 - **Her dash.** The dash she builds running stays hers, through jumps and into the ball, until a
   halt takes it, and a dash a pose change left on her is lost the next frame she moves (`Dash`).
 - **The moonfall** (`Moonfall`).
+- **How long jump has stayed held** since it was pressed, which a landing or a turn's end can make
+  a press (`Jumping`, jump held through).
 - **A spin carried on**, which can ready a wall jump (`WallJump`).
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
@@ -318,10 +320,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 
 ### Jumping
 - kind: mechanic and parameter.
-- summary: how she takes off, starts a spin or a hop, and jumps again with space jump.
+- summary: how she takes off, starts a spin or a hop, jumps again with space jump, and takes off
+  again with jump held through a landing.
 - params: jump 4.E000 upward (hi-jump 6.0000); wall jump 4.A000 (hi-jump 5.8000); ball bounce
   1.0000, and an adjusted one at least 1.0000 (the rise after bounce 1 is it less 1 px,
-  `Landing`); the crouch lift 10 px; space jump's window, 2.80 to 5.00.
+  `Landing`); the crouch lift 10 px; space jump's window, 2.80 to 5.00; jump held through, a
+  count of 1 to 8 frames.
 - switch: none.
 - The first poses of a straight jump (taking off) → she doesn't steer: she moves by her dash only
   and follows the pad; she gains no dash (`Dash`); she doesn't move vertically and the pull
@@ -340,8 +344,23 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - With space jump, falling in a spin, jump pressed, her fall speed read as 8.8 `v` (its pixel
   part's low byte and its subpixel's high byte) with `2.80 ≤ v < 5.00` → she jumps again, rising
   at the new speed that same frame [SJ1]
+- **Jump held through** (§1.2): a count of the frames jump has stayed held since its press.
+- At a frame's end, jump held and not just pressed → the count goes up by 1 [JH1, JH2, JH3, JH4]
+- At a frame's end, jump just pressed, or not held → the count is 0 [JH1, JH2, JH3, JH4]
+- The frame after one on which she landed from a straight jump, a fall, a spin or a wall jump
+  (`WhatHerMovesMet`'s rows into `Landing`, whatever pose fit makes of the change), or on which
+  the animation of a turn or of a landing ended and handed over its pose (`AnimationEnds`), with
+  the count at 1 to 8 → jump counts as just pressed for the pad chart that frame (`PadChart`), and
+  the count is 0 before that frame's end adds to it [JH1, JH2, JH3, JH4, C-held-9]
+- So with jump held through a landing she takes off from it the next frame (JH1-JH3), unless the
+  count has passed 8 (C-held-9: 9). A turn's end on the way, at a count of 1 to 8, starts it
+  again (JH4: pressed at 96, it is 2 at a turn's end, 7 at the next, and 1 at the landing, not 11).
+- The press counts only where a row names jump pressed: the fall's rows don't, and a landing
+  outranks the pad (`PoseFollows`; JH4). The other rules that read a press see the pad as it is.
 - checked: oracle (J1, J2, J3, and the take-off and spin vectors; W16, a take-off from a crouch
-  with run held; SJ1, space jump's jump again with hi-jump; the crouch lift open: question 6).
+  with run held; SJ1, space jump's jump again with hi-jump; the crouch lift open: question 6;
+  JH1-JH4, jump held through a landing from a straight jump and a fall, JH4 through two turns'
+  ends); constructed (C-held-9, a count of 9).
 
 ### FollowingTheGround
 - kind: mechanic.
@@ -481,18 +500,16 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - The block looks reach cells as a vertical move of their distance would, reported with the way
   `Look` (`TouchedCells`). Solid enemies decide their looks and leave no cells. What a reacting
   cell does with a look is `TouchedCells`' (§11, question 17).
-- **Where the camera follows her from** (§1, an output of the step). The screen scrolls after her
-  vertical move, measured from a height the step reports; pose fit's push is not a move the
-  camera chases.
-- Pose fit moves her this frame (a push, or the crouch taken instead raising her) → the camera
-  follows her from her y pixel just after that, with the subpixel her y had at the frame's start
-  [PF1, PF2, PF3, U1, W13, C-fit-ceiling, C-fit-land-tunnel]
+- **Where a placement put her** (§1, an output of the step): the camera's scroll measures her
+  vertical move from it, so pose fit's push is not a move the camera chases.
+- Pose fit moves her this frame (a push, or the crouch taken instead raising her) → she is placed
+  at her y pixel just after that, with the subpixel her y had at the frame's start [PF1, PF2,
+  PF3, U1, W13, C-fit-ceiling, C-fit-land-tunnel]
 - So the push's pixels and the frame's moves before it are not followed, the subpixel part of
   those moves is, and what comes after the push is: the crouch take-off's 10 px lift (PF1: from
-  02C0.FFFF, pushed 3 px to 02BD, lifted to 02B3.FFFF, followed from 02BD.FFFF).
-- Any other frame, a growing body that finds nothing or a refused change included (and not a
-  change of shape, `ShrinkingLowersHer`) → the camera follows her from her y at the frame's start
-  [W11, C-fit-step-enemy]
+  02C0.FFFF, pushed 3 px to 02BD, lifted to 02B3.FFFF, placed at 02BD.FFFF).
+- So any other frame, a growing body that finds nothing or a refused change included (and not a
+  change of shape, `ShrinkingLowersHer`), has no placement (W11, C-fit-step-enemy).
 - checked: oracle (PF1, item-morph-ball:1311: crouched to the take-off, the body grows 3 px and
   she rises 3 px, then the 10 px lift, in one frame; U1, crouched to standing, 5 px; PF2, a
   landing from a jump, 2 px; PF3, a landing from a spin, 9 px; the push up from a floor in every
@@ -505,10 +522,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   enemy below; C-fit-land-tunnel, a landing crouched instead keeps her speeds); original only
   (W15's looks' cells, a body growing 7 px in open air, which the record doesn't show; the second
   look's refusal, the mixed and same-side cases beyond C-fit-step-enemy, a look up passing a sloped
-  ceiling, the seat, and the cells' reactions); where the camera follows her from: how far the
-  records' screen may move up or down the next frame (PF1, PF2, PF3, U1, W13 after a push, W11
-  on a frame without one); constructed for the cases no record has: C-fit-ceiling (a push down),
-  C-fit-land-tunnel (the crouch taken instead), C-fit-step-enemy (a refusal: the frame's start).
+  ceiling, the seat, and the cells' reactions); the placement: how far the records' screen may
+  move up or down the next frame (PF1, PF2, PF3, U1, W13 after a push, W11 on a frame without
+  one); constructed for the cases no record has: C-fit-ceiling (a push down), C-fit-land-tunnel
+  (the crouch taken instead), C-fit-step-enemy (a refusal: none).
 
 ### ShrinkingLowersHer
 - kind: mechanic.
@@ -535,19 +552,25 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   body shrinks, the other grows.
 - Starting to crouch or morph leaves her speeds and dash as they are: the rows into `Crouching`
   and `Morphing` have no other effect (SH3, R48, R89).
-- A crouch or a morph starting this frame, and also standing up (`StandingUp`) or unmorphing
-  (`Unmorphing`), which lower her 0 px → the camera follows her from her y pixel just after the
-  lowering (and after pose fit's push, for a body that grows), with the subpixel her y had at the
-  frame's start (`PoseFitAfterMoves`) [SH1, SH2, SH3, C-fit-ceiling]
+- A crouch or a morph starting this frame, aimed or not, and also standing up aimed `Forward`
+  (`StandingUp`) or unmorphing (`Unmorphing`), which lower her 0 px → she is placed at her y pixel
+  just after the lowering (and after pose fit's push, for a body that grows), with the subpixel
+  her y had at the frame's start (`PoseFitAfterMoves`) [SH1, SH2, SH3, C-fit-ceiling, C-place-0]
 - So in the air the morph's 9 px are not followed (SH3: from 0094.B7FF, lowered to 009D.B7FF and
-  followed from there).
+  placed there), and a placement of 0 px is a placement still: unmorphing in open air she is
+  placed at her start y (C-place-0).
+- A change refused, or the crouch taken instead, starts no change of shape, so it has no
+  placement of its own (`PoseFitAfterMoves`, C-fit-step-enemy).
+- Standing up aimed `Up`, `UpForward` or `DownForward` has no lowering, so only pose fit places
+  her; on a floor its look down always finds the floor, so it pushes her or refuses the change.
 - checked: oracle (SH1, r02:95, standing to crouching, 5 px; SH2, samus-bomb-jump-vertical:849,
   crouched to morphing, 9 px; SH3, r04:312, a straight jump aimed `Down` to morphing in the air,
-  9 px on top of her fall, her speeds and dash kept; SH1-SH3 also for where the camera follows
-  her from, by how far the records' screen may move); constructed (C-shrink-floor, a morph in the
+  9 px on top of her fall, her speeds and dash kept; SH1-SH3 also for the placement,
+  by how far the records' screen may move); constructed (C-shrink-floor, a morph in the
   air 2 px above a floor: the 8 px look stops on it, she is lowered 5 px, her y subpixel FFFF,
-  and the look's one cell; C-fit-ceiling, unmorphing, for the camera); original only (a seat on a
-  stepped block; the camera on a frame she starts standing up).
+  and the look's one cell; C-fit-ceiling, unmorphing, for the placement; C-place-0, a placement of
+  0 px at her start y); original only (a seat on a stepped block; the placement on a frame she
+  starts standing up).
 
 ---
 
@@ -1449,12 +1472,12 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   cap of 7 and its higher jump.
 - **Pushes:** room pushes, quicksand, knockback, bomb jumps, grapple, shinespark.
 - **Her outputs under a push.** Where a push moves her in a frame, pose fit and the shrink still
-  place her as `PoseFitAfterMoves` and `ShrinkingLowersHer` say, and where the camera follows her
-  from is still theirs, but from where the push left her, and the push decides what they meet: in
+  place her as `PoseFitAfterMoves` and `ShrinkingLowersHer` say, and the placement is
+  still theirs, but from where the push left her, and the push decides what they meet: in
   terrain-quicksand the sand carries her 1.C000 down, and the look down meets the sand at once, so a
   body 7 px taller is pushed up 7 px (62, 75), and it holds her up so that the crouch she starts
   lowers her 5 px (151, 389). Without the push she meets open air there: the body grows about its
-  centre, or she walks off. So her y and where the camera follows her from are the push's on those
+  centre, or she walks off. So her y and the placement are the push's on those
   frames, with the push.
 - **A knockback's tail.** After a hit's knockback she falls in a jump pose with no falling limit,
   as in the moonfall, until a floor meets her; that frame ends the knockback, not a landing: she

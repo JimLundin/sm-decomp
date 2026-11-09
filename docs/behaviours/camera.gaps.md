@@ -48,8 +48,7 @@ Answer (samus-motion's observer, 2026-11-08): the rules that place her are samus
 and 389, the crouch's 5 px), but the quicksand decides where they start and what they meet: it
 carries her 1.C000 down and stops the look down at once (62, 75), and holds her up so the crouch
 starts (151, 389). The model, with no push, grows about her centre or walks off, so no placement.
-Samus-motion's spec §10 now says her outputs under a push are the push's. The camera's harness
-masks y on the frames samus-motion's harness defers as a block-inside push.
+Samus-motion's spec §10 now says her outputs under a push are the push's.
 
 ### C3. `camera_from` where samus-motion's y differs (answered: a knockback's tail, out of scope)
 

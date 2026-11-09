@@ -106,7 +106,7 @@ and `scan.sh --mirror` agrees.
 | TurningRound | `$91:F543` (turn start and spin reverse), `$90:A68F` (turning handler, its sink and its end), `$90:A67C` (the creep), `$91:81A9` with `$91:82D9`, `$91:8304` and `$91:ECD0` (letting go: the failed transition lookup's stop command clears `0B4A` after the move) |
 | AimingAndShooting | `$91:EADE` (the step: any prospective pose `0A28` of the running movement type, her own included), `$91:82E4` (the failed lookup's decelerate command keeps her pose as the prospective pose, so a running pose braking steps every frame), `$91:81E4` (a found row naming her own pose sets no prospective pose: no step), `$94:971E` (its block stop), `$90:A3AD` (the shot) |
 | RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
-| Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump) |
+| Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump); jump held through: the count `0AF4` (`$90:EAB3`, from `$90:EB35`'s draw once a gameplay frame: `INC` with jump held now and in `0DFE`, else `STZ`), the one-frame pose input handler `$90:E926` (count 1 to 8: jump ORed into `8F` for `$91:8000` alone, `STZ 0AF4` at `$90:E93A`), installed by `$91:F1EC` (landed, downward result grounded: `$90:E676` gives it for movement types 2, 3, 6 and 14h, and Ah and 19h out of scope) and by animation delay instruction 8 `$90:8370` (the turns, A4h-A7h and E0h-E7h, BFh-C4h; not when `0A28` is 4Bh, 4Ch, 19h or 1Ah) |
 | FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing); the ball on the ground: `$90:A521` (morph ball) and `$90:A69F` (spring ball) call `$90:92B8`, the clone of `$92C7`, on both branches (`A549`/`A569`, `A6C7`/`A6E7`): with `0B36` ≠ 0 it runs `$90:90C4` and `$90:90E2` (moves by the speed, then the pull grows it) and returns carry set, which skips `$90:923F` (no ground pull) and, at rest, the halt at `A551`-`A561`; `$90:E676` gives 04 for movement types 4 and 11h, so `$91:E931` returns and the floor doesn't land it (BG1), `$91:EFEF` (walking off: speed 0), `$90:98BC` (a jump sets it) |
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
 | RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0) |
@@ -393,7 +393,7 @@ a type 8 block; `slope_ceiling` a non-square slope with BTS bit 7; `frame` the p
 | TouchedCells | `$94:9543`, `$94:959E`, `$94:95F5` (the scans, stop at the first carry set), `$94:9515`/`$94:952C` and the reaction tables `$94:94D5`/`$94:94F5`; `$94:9B60` (inside points bottom, centre, top at `0AF6`; the chained XOR at `$94:9BEB`), called from `$90:E6BC` in the current state handler, which game state 8 runs (`$82:8B58`) before the new state handler's movement (`$82:8B69`) | the collision direction `0B02` is what the reactions read |
 | OtherBlockKinds | `$94:938B`/`$94:93CE` (door: destination ≥ 8000h starts game state 9 and returns carry clear, else solid), `$94:904B`/`$94:905D` (spike: its BTS table, then solid), `$94:9018`/`$94:901A` (spike air), `$94:906F`/`$94:909D` (special air: PLM, carry clear), `$94:90CB`/`$94:9102` (special block: the PLM's carry decides), `$94:92F9`/`$94:9313` (bombable air), `$94:932D`/`$94:934C` (bomb block: the PLM's carry, area-dependent BTS solid), `$94:9411`/`$94:9447` (extensions: block index ± BTS, re-dispatch; BTS 0 air) | the item's block is BTS 45h (`$84:EE64`, `$84:EE8E`, setup `$84:EEAB` returns carry clear); scroll cells BTS 46h (`$84:B393`) |
 | PoseFitAfterMoves | `$90:E725` (movement `$90:E94B`, then `$91:E8B6`, then `$91:EB88`), `$91:F404` (`$91:FDAE` pose fit, then `$91:F433` initialise, then `$91:FBBB` the jump transition with `$91:FC8A` the 10 px lift); the push itself `$91:FDAE`..`$91:FFED` with `$94:96AB` and `$A0:A8F0`; the camera: `$91:FF42`, `$91:FF6F`, `$91:FF89`, `$91:FF98` and `$91:FFE9` write `0B14` = `0AFA` after the push (not `0B16`); `$91:FF87` (nothing found) and a refusal write nothing; `$90:96FF` makes the camera's speed from `0B14`.`0B16`, and `$90:957A` sets them to her y at the frame's end | `$91:EADE` (the aim step) runs before `$91:F404` |
-| ShrinkingLowersHer | `$91:F758` (transition poses set command 7), `$91:ECDA` with its table `$91:ED36` and `$94:96AB` (the look, result ignored); the camera: `$91:ED0E` writes `0B14` after the lowering, for every transition pose (35h-38h lowered, 3Bh-3Eh by 0) | runs after `$91:F404` only when the pose stands (`$91:EBEE`) |
+| ShrinkingLowersHer | `$91:F758` (transition poses set command 7), `$91:ECDA` with its table `$91:ED36` and `$94:96AB` (the look, result ignored); the placement: `$91:ED0E` writes `0B14` after the lowering for the poses below DBh (35h-38h lowered, 3Bh-3Eh by 0) and F1h-F6h (5 px, `$91:ED2D`); F7h-FCh (standing up aimed) and the rest from DBh return at `$91:ED26`/`$91:ED2B` with no write | runs after `$91:F404` only when the pose stands (`$91:EBEE`) |
 
 Recorded vectors: S1 is samus-input-poses record 511 → 512 (block at column 6, row 12, BTS 54h:
 14h x-flipped); S2 is r01 record 716 → 717 (BTS 12h, first frame of a fall, `0B2E`.`0B2C` = 0).
@@ -1098,6 +1098,39 @@ there, and during the knockback itself, is the knockback (damage) domain's outpu
 samus-motion's (spec §10): the records show `0B36` = 1 at every knockback start (pose 54h; for
 example chain-0059-A293 65, 139, 246, 585), which samus-motion's harness defers.
 
+## Round 13's amendments (2026-11-09)
+
+**Jump held through (gap 32).** The scenes engineer's run (`oracle corpus --only
+samus-screw-attack --only chain-0059-A293 --watch-words 0AF4,0A1C,008B --watch-pcs
+90EAB3,90E926,90E93A,908370`, on the lsnes lock) read `0AF4` at each cut: the handler at the
+landing's next frame reads 2 (samus-screw-attack 175, 607), 8 (chain-0059-A293 175) and 1
+(chain-0059-A293 108, after firings at 100 and 107 that `$90:8370` installed at the turns' ends,
+99 and 106). The vectors' frames were read with `mdump.sh` from the more-caches cache: the press
+is in record N's pad (`8F` bit 0080h at 171, 603, 165, 96), so the count is 0 at N+1. JH4's run
+press (8000h at 103) is listed. Each landing's floor is her y plus 21 at the landing record (B0h,
+B0h, B0h, C0h). C-held-9 is JH3 started at 164 (`0AF4` would be 9 at 174), its after the
+round-12 model's, which has no jump held through, worked against the landing's rows: left held,
+forward, `Running`, x 1 px left.
+
+**The placement as an option (adversary 56, finding 4; the camera's LEGACY entry "A placement
+of 0 px after another mover").** The writers of `0B14` the step owns, each read in bank `$91`:
+`$91:FF42` (pushed down from above), `$91:FF6F` (pushed up from below), `$91:FF93` and
+`$91:FFA2` (a solid enemy's push), `$91:FFE9` (the crouch taken instead, only when the old body
+is shorter: `$91:FFD9` skips the write otherwise), and `$91:ED0E` (above: the transition poses,
+after `$91:F404` returns carry clear, so not after a refusal or the crouch taken instead, which
+change `0A1C`). `$91:FF76`/`$91:FF87` (nothing in reach) write nothing. So "no placement" is
+exactly the frames none of these runs, and a placement of 0 px is `$91:ED0E` for 3Bh-3Eh with
+nothing pushing: unmorphing in open air (C-place-0, worked by hand: moves 0 at a fall's speed 0,
+the 9 px looks unstopped, so `0AFA` and `0B14` stay 0100). Standing up aimed (F7h-FCh) has no
+write of its own; on a floor pose fit's look down is stopped at once, so `$91:FF6F` pushes her
+up or the change is refused, and the spec says so as original only. The rename from
+`camera_from` to `placed` makes "none" a value: W11 and C-fit-step-enemy now say it.
+
+**WK1's input.** The kick frame needs "spin turned far" (§1.3), which the vector format had no
+key for, so the round-12 vector test ran it with the input false and the frame read `Readied`.
+The format now gives `spin_turned_far` per frame; WK1 sets it on its checked frame (712, the
+frame after 711's readying), and the round-12 model passes it.
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1167,7 +1200,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 207.0 units, capped at 70% of old = 7,020 (motion 2,664, pose fit 624, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 209.0 units, capped at 70% of old = 7,092 (motion 2,772, pose fit 588, pose chart 1,584 capped, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 
