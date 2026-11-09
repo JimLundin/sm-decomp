@@ -44,7 +44,9 @@ For the two confined roles, the brief is also part of the barrier:
   its reason. An item that asks for a mechanism can leave only a costly encoding under the checks
   DESIGN lists. The one that recurs: asking for a keyed shape to be built in a constant. A
   table's lookup is a trait method, which can't be `const`, so a constant set leaves only a
-  positional array or a macro per set. Ask that the value be held, not when it is built. Before
+  positional array or a macro per set. Ask that the value be held, not when it is built. Its
+  mirror: asking that the compiler check a table's members turns the table into a `match` per
+  member, which is logic. Ask that each row name its member; a test checks the set. Before
   launch, the brief's gate works through each item under the checks.
 - **Coding standards, never measures.** The brief gives no score, budget, fit or size target. After
   a round gate it may give the coarse verdict in words (MODEL §1 decision 11).
