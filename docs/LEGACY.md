@@ -83,7 +83,8 @@ original's bytes as data.
   `ScrollCells`; `$84:B3A6`): when she touches a scroll cell whose block no scroll PLM sits on,
   the original searches the PLMs for one, finds none and loops for ever. The spec leaves such a
   cell to the room's loading, which is to refuse the room. No room of the game has one (the
-  importer's scan of the 261 rooms the doors reach, 322 states, 265 scroll cells); a custom room
+  importer's scan of the 261 rooms the doors reach, 322 states, 265 scroll cells, and of the two
+  rooms no door reaches, the unused room `$8F:B3E1` and the debug room `$8F:E82C`); a custom room
   could.
 - **Reacting cells whose tables end before their mark** (the blocks domain,
   `docs/behaviours/blocks.md` §1's marks; the decode notes' importer's scan): each asker of a
@@ -93,7 +94,13 @@ original's bytes as data.
   shootable tables at 50h (16, or 8 for the shootable block, per area), the bombable tables at 10h.
   Past an end the original reads the next area's table, pointer words or code, so one cell can be
   a crumble block to her touch and a speed block's reveal to a bomb. The importer refuses a room
-  with such a cell; no room of the game has one.
+  with such a cell, but for a special block's BTS 10h..19h and 1Eh..4Fh: past the bombed table
+  those read `$B62F`, a reaction that only holds its place, and the importer types them as the
+  original reads them (met as crumble blocks by a blast). The stations' access cells and the save
+  stations, which their placements write when the room starts (49 cells in 33 rooms), are such
+  cells, so a power bomb set off in their rooms holds a place for each it reaches. No room of the
+  game has a refused cell (the 261 rooms the doors reach and the two no door reaches, `$8F:B3E1`
+  and `$8F:E82C`).
 - **Reactions the original would misread** (the blocks domain, `docs/behaviours/blocks.md` §2,
   `BombBlocks`; `$84:85E0`, `$84:CF0C`): a `Show` of 0 frames waits 65,536 frames in the original,
   one of 8000h or more is read as an instruction, and a bomb's blast skips the first three bytes of

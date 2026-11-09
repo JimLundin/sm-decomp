@@ -103,7 +103,9 @@ the room's other kinds (slopes, spikes, doors, ...) are samus-motion's and the o
   met as, `Bomb`, `Crumble` or `Shot` (`BlocksMarkedNothing`);
 - `Inert`: a cell that reacts to nothing and takes no place (`BlocksMarkedNothing`);
 - `Other`: a cell of another part (a door's cap, an item, a station, quicksand). This part keeps
-  its mark and never answers it: its part does, and its starts come here as that part's requests.
+  its mark; its part answers it, and its starts come here as that part's requests. A block marked
+  `Other` may also be met as crumble blocks by a blast, as a station's access cells and a save
+  station are (`BlocksMarkedNothing`).
 
 A reacting air cell's mark may also say that she holds a place when she is inside it
 (`BlocksMarkedNothing`). For a stand-in, the mark is its reach, a signed number of cells. A step
@@ -134,7 +136,7 @@ both last to the next run that isn't paused, so a paused frame carries them to t
 
 | Output | Type | Read by |
 | --- | --- | --- |
-| each touch's answer | in order, one per touch: `Air` or `Solid` (`AnswersToHerMotion`) | samus-motion, in the same frame |
+| each touch's answer | in order, one per touch: `Air`, `Solid`, or `Other` for a cell marked `Other`, which its part answers (`AnswersToHerMotion`, `BlocksMarkedNothing`) | samus-motion, in the same frame |
 | the cells redrawn | in order, each a cell `(x, y)` (`WhatTheScreenRedraws`) | output: the tile encoder (E2) |
 | the sounds asked for | in order, each a sound (the script's) and its queue limit, a count (`Sounds`) | output: audio (U1) |
 | the screens | as in §1's table, after `ScrollCells` | the camera, in the same frame |
@@ -445,8 +447,8 @@ names; "the whole look" is that reaction's (§2).
 - A touch of a crumble, speed or bomb block that doesn't start → `Solid` [C-crumble-side,
   C-speed-walk, C-bomb-walk]
 - A touch of a shot, super missile or power bomb block → `Solid` [C-shot-touch]
-- A touch of a cell marked `Nothing` is answered as `BlocksMarkedNothing` says (C-nothing-touch,
-  C-nothing-shot-touch).
+- A touch of a cell marked `Nothing` or `Other` is answered as `BlocksMarkedNothing` says
+  (C-nothing-touch, C-nothing-shot-touch, C-other).
 - The answer is for that touch: a later touch in the frame meets the cell as the earlier ones left
   it (C-crumble-twice).
 - checked: constructed (her motion's records show the answers only through her moves).
@@ -455,7 +457,8 @@ names; "the whole look" is that reaction's (§2).
 - kind: quirk.
 - summary: a cell marked `Nothing` reacts to nothing, but what would ask a block of its family to
   react still takes a place until the run, and a touch of one passes through; a cell marked
-  `Inert` takes none.
+  `Inert` takes none; a cell marked `Other` is its part's, but for a blast on one met as crumble
+  blocks.
 - params: none.
 - switch: none.
 - A touch of a cell marked `Nothing`, met as crumble or bomb blocks, by any way → `Air`, and the
@@ -464,22 +467,26 @@ names; "the whole look" is that reaction's (§2).
 - A touch of one met as shot blocks → it meets her by its body, as a shot block does, and takes no
   place [C-nothing-shot-touch]
 - Any weapon or the grapple reaching one met as shot blocks or as bomb blocks (a block or
-  reacting air), or a bomb's or a power bomb's blast reaching a block met as crumble blocks → it
-  takes the highest free place until this frame's run [C-nothing-hit, C-nothing-hit-air,
-  C-nothing-blast, C-nothing-grapple]
+  reacting air), or a bomb's or a power bomb's blast reaching a block met as crumble blocks, marked
+  `Nothing` or `Other` → it takes the highest free place until this frame's run [C-nothing-hit,
+  C-nothing-hit-air, C-nothing-blast, C-nothing-grapple, C-other-blast]
 - A beam, a missile or the grapple reaching one met as crumble blocks, or any blast reaching
   reacting air met as them → it takes no place [C-nothing-beam-crumble, C-nothing-blast-air,
   C-nothing-grapple]
 - She is inside reacting air whose mark holds a place when she is inside it → at each point it
   takes the highest free place until this frame's run [C-nothing-inside]
 - With every place taken → it takes none, and nothing else changes [C-nothing-full,
-  C-nothing-inside-full]
+  C-nothing-inside-full, C-other-blast-full]
 - A cell marked `Inert`, touched or hit → it takes no place, and she meets it by its body
   [C-inert]
+- A touch, an inside or any other hit of a cell marked `Other` → the touch is answered `Other`,
+  for its part answers it, and the cell and the places stay as they were [C-other, C-other-blast]
 - So a later start in the same frame takes the place below the one it holds (C-nothing-touch,
-  C-nothing-hit).
+  C-nothing-hit, C-other-blast); a power bomb set off in a room with a station or a save station
+  holds a place for each of their cells it reaches.
 - checked: constructed (no recorded frame meets one; no room of the game holds a place when she
-  is inside it, or is marked `Inert`).
+  is inside it, or is marked `Inert`; no harness case shows a blast on a station's or a save
+  station's cells, whose place is free again by the frame's end).
 
 ### FullPlacesLetHerThrough
 - kind: quirk.
@@ -525,10 +532,14 @@ names; "the whole look" is that reaction's (§2).
   run of every reaction from the highest place down (C-order-as-given, C-order-other,
   C-scroll-holds-place).
 - In the game, the order is the order in which the game meets the cells: the cells she is inside,
-  her top edge last; her weapons' hits, in their order; the enemies'; her touches, in her motion's
-  order; the enemies' shots. Another part's start comes where its asker meets the
-  room: a plant or quicksand she is inside among the cells she is inside, a station she touches
-  among her touches (C-order-hit-then-touch).
+  her top edge last; the grapple's hits, then her weapons' hits, in their order (C-nothing-grapple);
+  the enemies'; her touches, in her motion's order; the enemies' shots. Another part's start comes
+  where its asker meets the room: a plant or quicksand she is inside among the cells she is inside,
+  a station she touches among her touches (C-order-hit-then-touch).
+- Some parts start after the run: the enemies' shots meeting her or her shots, the enemies a power
+  bomb's blast meets, and the room's own script. Such a start comes as a request at the head of
+  the next frame's list, in the order they started. It takes the place it took in the game, for
+  nothing frees a place between the run and that frame's first request.
 - A start changes its cell at once, so a later request in the frame meets the changed cell
   (C-crumble-twice).
 - The run comes before the camera's turn, so a scroll cell's screens change before the camera reads
@@ -548,9 +559,10 @@ names; "the whole look" is that reaction's (§2).
 - **The tile encoder (E2):** drawing redrawn cells that are in view, the queue that carries them,
   and drawing every cell's look as the view scrolls.
 - **Audio (U1):** the sound queue and its limits.
-- **Room loading (R2):** the cells, their marks and looks, the placements and their order; a
-  room with a scroll cell no scroll placement covers, a reacting cell whose patterns reach past
-  its edge, or a reacting cell that isn't one mark to every asker, is refused there.
+- **Room loading (R2):** the cells, their marks and looks (the cells other parts' placements write
+  when the room starts, a station's or a save station's, included), the placements and their
+  order; a room with a scroll cell no scroll placement covers, a reacting cell whose patterns reach
+  past its edge, or a reacting cell that isn't one mark to every asker, is refused there.
 - **Room loading and the doors (R1, R2):** when the run is paused.
 
 ## 9. Open questions

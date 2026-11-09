@@ -35,7 +35,7 @@ frames. The observer's tools, all in `$TEMP/collab/blocks-spec`:
   from different rows, from frames the model matches with the hits' inputs; `rec.toml`), all of
   them harness cases now; `cons.py` writes the vectors, all constructed, over `invented.py` (their
   after from the model), `assemble.py` writes `scenarios/vectors/blocks.toml` with the invented
-  reactions they use, and `vec.py` runs every vector through the model: 86 of 86 agree.
+  reactions they use, and `vec.py` runs every vector through the model: 89 of 89 agree.
 - `cut.py` cuts the old code into the areas' files in `old/` for `tools size`.
 
 **Results** (`harness_hits.py`). Of the 20,615 frames that ran one frame of gameplay in one room
@@ -179,7 +179,7 @@ against `$0C18`'s bits 8-11 (0, 5, none, 1, 3, 2).
 
 | Input | RAM or source | Decode |
 | --- | --- | --- |
-| the frame's requests | one list, in the game's order: Samus's current state handler (`$90:E695`) runs the inside handling (`$94:9B60`) then the projectiles (`$90:DCDD`); the enemies run next (`$82:8B58`..`$82:8B69`); her movement and pose updates in the new state handler (`$90:E731`, the pose-change looks `$91:EB88` from `$90:E745` after her moves); the enemy projectiles; then the PLM handler (`$82:8B71`). Other parts' spawns in each phase take their places there (plants `$9A26`, quicksand `$9A86` inside; quicksand and stations among the touches) | built by the bridge from each domain's report, in that order |
+| the frame's requests | one list, in the game's order: Samus's current state handler (`$90:E695`) runs the inside handling (`$94:9B60`), then the grapple's block collision (`$90:DCF8` → `$90:DD6F` → `$9B:C490` → `$94:A85B`), then the projectiles (`$90:DD00` → `$90:AECE`); the enemies run next (`$82:8B58`..`$82:8B69`); her movement and pose updates in the new state handler (`$90:E731`, the pose-change looks `$91:EB88` from `$90:E745` after her moves); the enemy projectiles; then the PLM handler (`$82:8B71`). Other parts' spawns in each phase take their places there (plants `$9A26`, quicksand `$9A86` inside; quicksand and stations among the touches). After the PLM handler come the enemy projectile / Samus and enemy projectile / projectile collisions (`$82:8B7E`, `$8B82` → `$A0:9894`, `$A0:996C`), the enemy power bomb interaction (`$8B86` → `$A0:A306`) and the room's main ASM (`$82:8BA8` → `$8F:E8BD`): their spawns are seen at the commit, and come at the head of the next frame's list, in their order; no slot is freed between the PLM handler and the next frame's inside handling | built by the bridge from each domain's report, in that order |
 | inside | samus-motion's model: its inside report, which the original makes in Samus block inside handling (`$94:9B60`), the point in `$1E73` (`$94:9B72` bottom, `$94:9BA4` centre, `$94:9BD9` top); stand-ins followed (`$94:9B40` → `$9411`, `$9447`) | the point must be added to samus-motion's output (spec Header) |
 | touch | samus-motion's model: `TouchedCells`, with the collision direction `$0B02` low nybble (0 left, 1 right, 2 up, 3 down) set by the move (`$94:8355`..`$94:8470`) and Fh by the wall-jump test (`$94:9683`) and the pose-change looks (`$94:96E9`) | `Look` is Fh |
 | how she moves | dashing: speed boosting, `$0B3E & 0F00h = 0400h`; shinesparking: pose `$0A1C` in C9h..CEh; screw attacking: pose 81h or 82h | the three `bool`s, from the record until their domains exist |
@@ -237,7 +237,7 @@ refusing a cell some asker of which reads past its table's end (§The importer's
 
 | Type | Mark from |
 | --- | --- |
-| Bh, 3 (special) | BTS < 50h: `$94:9139`; 80h..8Fh the area's table through `$94:92E9` (Brinstar 82h..85h speed blocks). `$B6FF` → `Scroll`; `$B62F`, `$B633`, `$B653`..`$B65B` → `Nothing` met as `Crumble`; a reaction's PLM → that reaction; any other PLM → `Other`. Special air with BTS 80h..8Fh also has an inside reaction, from the area's inside table (`$94:9B06`): `$B62F` or `$B653`..`$B65B` → she holds a place when inside it; any other PLM is another part's (plants `$B6CB`/`$B6CF`, quicksand `$B713`.., ice `$B70F`), which reaches this part as that part's request. Special air below 50h has no inside spawn but the scroll cell's (46h, centre only, `$94:9956`) and part 4's treadmills (8..Bh) |
+| Bh, 3 (special) | BTS < 50h: `$94:9139`; 80h..8Fh the area's table through `$94:92E9` (Brinstar 82h..85h speed blocks). `$B6FF` → `Scroll`; `$B62F`, `$B633`, `$B653`..`$B65B` → `Nothing` met as `Crumble`; a reaction's PLM → that reaction; any other PLM → `Other`, met as `Crumble` for a special block whose blast reads `$B62F` (the bombed table `$94:9DA4`, past its 16 entries for BTS 10h..4Fh, or the area's through `$94:9E44`: the stations' accesses 47h..4Ch, the save station's 4Dh, Norfair's chozo hand 83h). Special air with BTS 80h..8Fh also has an inside reaction, from the area's inside table (`$94:9B06`): `$B62F` or `$B653`..`$B65B` → she holds a place when inside it; any other PLM is another part's (plants `$B6CB`/`$B6CF`, quicksand `$B713`.., ice `$B70F`), which reaches this part as that part's request. Special air below 50h has no inside spawn but the scroll cell's (46h, centre only, `$94:9956`) and part 4's treadmills (8..Bh) |
 | Ch, 4 (shootable) | `$94:9EA6` for BTS < 50h (0..Bh the shot, power bomb and super missile blocks; 40h..4Fh doors and gates, part 2; 45h items); Ch 80h..87h the area's table (`$94:9FC6`, all `$B62F`); `$B62F` → `Nothing` met as `Shot`; 4 with BTS ≥ 80h → `Inert` (`$94:9E5C`: no spawn, carry clear) |
 | Fh, 7 (bombable) | BTS < 10h: `$94:936B` (touch) and `$94:A012` (hit), the same block's two PLMs, `$B62F` for 8..Fh → `Nothing` met as `Bomb`; BTS ≥ 80h → `Inert` (`$94:9348`, `$94:9FF4`: solid to her and her weapons, or air for type 7, with no spawn) |
 | 5, Dh | the reach, BTS signed |
@@ -250,18 +250,39 @@ game's lists does.
 ## The importer's scan
 
 `scan_rooms.py` walks every room the doors reach from the landing site and from Ceres (261 rooms,
-322 states), decompresses each state's level data, adds the scroll PLMs' cells, and for each
-reacting cell (types 3, 4, 7, Bh, Ch, Fh) reads the reaction each asker gives it from the tables:
-her touch (`$94:9139`/`$92E9`, `$936B`), her inside points (`$9966`, `$9B06`), a shot (`$A175`), a
-blast (`$A032`) and the grapple (`$A83B`). 5,756 cells in 136 combinations of type, BTS and area.
+322 states), decompresses each state's level data, adds the scroll PLMs' cells and the cells the
+other parts' placements write when the room starts, and for each reacting cell (types 3, 4, 7,
+Bh, Ch, Fh) reads the reaction each asker gives it from the tables: her touch
+(`$94:9139`/`$92E9`, `$936B`), her inside points (`$9966`, `$9B06`), a shot (`$A175`), a blast
+(`$A032`) and the grapple (`$A83B`). 5,807 cells in 166 combinations of type, BTS and area.
 
-- **Past a table's end:** no cell of the game. The importer refuses them (`docs/LEGACY.md`,
-  "Reacting cells whose tables end before their mark"): special BTS 50h..7Fh (the touch table and
-  the inside jump table have 80 entries; past them the touch reads the area tables and the inside
-  jumps into the PLM table as code) and 90h and up (16 per area); a special block's BTS 10h..7Fh
-  (the bombed table has 16: Brinstar's `D024` at 1Ah..1Dh, then pointers and code) and 88h and up
-  (8 per area: Crateria 8Ah..8Dh read Brinstar's `D024`); shootable 50h..7Fh, and the shootable
-  block's 88h and up; bombable 10h..7Fh (into `$938B`'s code and `$A032`).
+- **Placements' writes** (through `$84:82B4`, by PLM ID): the map station `$B6D3` (`$84:B1AD`,
+  `$B1BA`: B047 one cell right, B048 two left, while its area's map isn't taken), the energy
+  station `$B6DF` (`$84:B233`, `$B23E`: B049 right, B04A left), the missile station `$B6EB`
+  (`$84:B25B`, `$B266`: B04B, B04C), the save station `$B76F` (`$84:B5F1`: B04D on its cell) and the
+  chozo hand in Bomb Torizo's room `$D6EA` (`$84:D619`: B080 on its cell, once the boss is dead).
+  49 cells in 33 rooms are the stations' and save stations' (`Other` met as `Crumble`); the 2 in
+  Bomb Torizo's room read `$B62F` to every asker (`Nothing` met as `Crumble`). Norfair's chozo
+  hand `$D6D6`, which the chozo statue enemy spawns (`$AA:E79B`), writes B083 while the room runs
+  (its wait, `$84:D15C`, once that cell is plain air): asked apart, `Other` met as `Crumble`
+  (touch `$D6DA`, blast `$B62F`). The other immediate writes of a reacting class through
+  `$84:82B4` are the scroll PLMs' (`$84:B374`, `$B385`), shootable 40h..4Fh (doors, gates and
+  items, whose askers all read one PLM: `Other`), and C000 at `$84:D11A` (PLM `$D127`, which no
+  room places).
+- **Rooms no door reaches:** the unused room `$8F:B3E1` (Norfair) and the debug room `$8F:E82C`
+  (area 7) are outside the 261. `scan_rooms.py unreached` asks their cells apart: no askers
+  disagree and none is refused; the debug room holds every family, the shootable 08h block (a
+  power bomb block that grows back) that no other room has among them.
+- **Past a table's end:** the importer refuses them (`docs/LEGACY.md`, "Reacting cells whose
+  tables end before their mark"), and no cell of the game is refused: special BTS 50h..7Fh (the
+  touch table and the inside jump table have 80 entries; past them the touch reads the area
+  tables and the inside jumps into the PLM table as code) and 90h and up (16 per area); a special
+  block's BTS 1Ah..1Dh (past the bombed table's 16 entries, Brinstar's `D024`, a speed block's
+  reveal) and 50h..7Fh (pointers and code), and 88h and up (8 per area: Crateria 8Ah..8Dh read
+  Brinstar's `D024`); shootable 50h..7Fh, and the shootable block's 88h and up; bombable 10h..7Fh
+  (into `$938B`'s code and `$A032`). A special block's BTS 10h..19h and 1Eh..4Fh also read past
+  the bombed table, but read `$B62F` there, and the importer types them: the blast meets them as
+  crumble blocks. The stations' and save stations' cells are such cells.
 - **Askers that disagree** in the game's rooms: 10 combinations, 2,964 cells, all special air whose
   touch and inside reactions differ, and none of them this part's to answer twice:
   - Wrecked Ship BTS 08h, 09h (370 cells, 5 rooms): touch `$B62F` (`Nothing` met as `Crumble`),
@@ -274,7 +295,8 @@ blast (`$A032`) and the grapple (`$A83B`). 5,756 cells in 136 combinations of ty
   `Inert`: no cell of the game either.
 - **Content:** no `Show` outside 1..7FFFh, every bomb block's broken list begins with a sound, and
   no reacting cell's patterns reach past its room's edge (1,866 reacting cells of this part's
-  reactions over the states).
+  reactions over the states, and 237 in the two rooms no door reaches: `scan_rooms.py content
+  unreached`).
 - **Scroll cells:** 265, each with its scroll PLM.
 
 Reveal lists draw `Itself` on a cell whose type is already the family's, so a cell's class never
@@ -310,7 +332,7 @@ delete themselves at the next pass (`$84:AAE3`), so they hold a place until it a
 | SuperMissileBlocks | `$94:9EA6` BTS Ah/Bh; setup `$84:CF67` |
 | PowerBombBlocks | `$94:9EA6` BTS 8/9; setup `$84:CF2E` |
 | BombsReveal | Block bombed reaction pointers `$94:A032` (special block → `$94:9D71`, `$94:9DA4`); setup `$84:CFA0`; the lists `$84:C8EC`..`$84:C8FE`, `$84:C928` |
-| BlocksMarkedNothing | `$B62F`, `$B633`, `$B653`..`$B65B`, `$84:B3CF`, `$84:B3D0`, `$84:AAE3`; the reaction pointers above (§The importer's mapping, what asks a cell's PLM); the PLM tables' `$B62F` entries (`$94:9139`, `$94:9DA4`, `$94:9EA6`, `$94:936B`, `$94:A012`); inside, special air `$94:9B16` (BTS 80h and up, the area's inside table `$94:9A06`..`$9AE6`) at each point (`$94:9B72`, `$9BA4`, `$9BD9`); `Inert`, `$94:9E5C`, `$94:9348`, `$94:9FF4` |
+| BlocksMarkedNothing | `$B62F`, `$B633`, `$B653`..`$B65B`, `$84:B3CF`, `$84:B3D0`, `$84:AAE3`; the reaction pointers above (§The importer's mapping, what asks a cell's PLM); the PLM tables' `$B62F` entries (`$94:9139`, `$94:9DA4`, `$94:9EA6`, `$94:936B`, `$94:A012`); inside, special air `$94:9B16` (BTS 80h and up, the area's inside table `$94:9A06`..`$9AE6`) at each point (`$94:9B72`, `$9BA4`, `$9BD9`); `Inert`, `$94:9E5C`, `$94:9348`, `$94:9FF4`; `Other` met as `Crumble`, the bombed reaction `$94:9D71` reading `$9DA4 + 2 × BTS` past its 16 entries (`$9E32`..`$9E3E` for 47h..4Dh, all `$B62F`) or the area's table, on the cells the stations' setups write (§The importer's scan); her touch of an `Other` cell spawns its part's PLM, whose setup gives her answer |
 | AnswersToHerMotion | the carries of the setups above and of the collision routines (`$94:90E1`, `$94:9343`, `$94:906F`'s `CLC`, `$94:92F9`'s `CLC`), Samus block collision reaction pointers `$94:94D5`/`$94:94F5`; `$B62F`'s setup `$84:B3CF` (an RTS: carry from `$84:8500`'s `ASL`, clear) |
 | FullPlacesLetHerThrough | `$84:84F9` returns without touching the carry, which the `ASL` before the spawn cleared (`$94:90D8`, `$94:9339`), so `$94:90E1`'s `BCC` lets her through |
 | WhatTheScreenRedraws | Draw PLM `$84:8DAA` from `$84:861A` and `$84:8B50` only; the setups write level data without drawing |
@@ -472,7 +494,7 @@ never as a wall; over an area's old code is a failure.
 - Area breakables: CrumbleBlocks, SpeedBlocks, BombBlocks, ShotBlocks, SuperMissileBlocks,
   PowerBombBlocks, BombsReveal, AnswersToHerMotion, BlocksMarkedNothing, FullPlacesLetHerThrough
 
-Budget: 36 × 54.3 units = 1,956 (places 804, scroll 144, breakables 1,008)
+Budget: 36 × 55.3 units = 1,992 (places 804, scroll 144, breakables 1,044)
 
 ### The old code (tokens, 2026-11-08)
 
@@ -501,5 +523,5 @@ the other three parts (`$TEMP/collab/reviews/sz_old.txt`).
 
 **k out of sample:** the old places and scroll score 2,396.5 over their 26.3 units, 91.1 a unit
 (samus-motion's 65.8, the camera's 53.7); 0.55 of it would give 50.1 against the frozen 36, so
-the caps don't bind. The budget is 36 × 54.3 = 1,956 (places 804, §2's four cell terms included;
-scroll 144; breakables 1,008).
+the caps don't bind. The budget is 36 × 55.3 = 1,992 (places 804, §2's four cell terms included;
+scroll 144; breakables 1,044).

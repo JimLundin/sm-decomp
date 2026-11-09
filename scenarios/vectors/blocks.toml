@@ -9,7 +9,8 @@
 #   vectors: none is the game's. Each has its family; look (the whole look, absent for a shot
 #   block that keeps its own); first_wait; its scripts, each a list of steps: { sound,
 #   queue_limit }, { show = [[dx, dy, becomes, look], ...], frames }, { regrow = true },
-#   { end = true }. A pattern cell's becomes is "Air", "Itself", "StandInAcross" or
+#   { end = true }; regrow and end are always true, and a reader refuses false. A pattern cell's
+#   becomes is "Air", "Itself", "StandInAcross" or
 #   "StandInDown". The names are the vectors' own; the model reads them only as the marks that
 #   name them. The set covers every family, step, pattern cell, first wait of 1, 2 and 3, a whole
 #   look and none, growing back by a step, by a show and not at all, and a bomb block's broken
@@ -18,10 +19,12 @@
 #   exercises); before; frame; after. A comment gives its case.
 # - A cell: at = [x, y] in cells; kind ("Air", "Block", "ReactingAir", "Solid", "StandInAcross",
 #   "StandInDown"); look ("310", the picture's index in hex, ":x", ":y" or ":xy" when flipped);
-#   mark (a reaction's name, "scroll", "inert", "other" or "nothing", with met_as = "Bomb",
-#   "Crumble" or "Shot" for "nothing") or reach (a stand-in's, in cells); inside = "Nothing" for a
-#   cell that holds a place when she is inside it. A cell's mark is given wherever it is known, the
-#   kinds that don't read it included; the model must keep it.
+#   reaction (a reaction's name, one of the [reaction.*] tables above), mark ("Nothing", "Scroll",
+#   "Inert" or "Other", for a mark that isn't a reaction; with met_as = "Bomb", "Crumble" or
+#   "Shot" for "Nothing", and met_as = "Crumble" for an "Other" a blast meets as crumble blocks) or
+#   reach (a stand-in's, in cells); inside = "Nothing" for a cell that holds a place when she is
+#   inside it. A cell's mark is given wherever it is known, the kinds that don't read it
+#   included; the model must keep it.
 # - places: the running reactions, each { place, reaction, script, cell, next (the index of its
 #   next step in the script, from 0), wait (the frames it still waits), remembers (what it grows
 #   back as: "Block" or "ReactingAir"; given only where a Regrow step is still ahead) }, or a scroll
@@ -38,11 +41,15 @@
 #   requests, in the order the frame makes them, each one of { inside = [x, y], point } (point
 #   "Top", "Centre" or "Bottom"), { touch = [x, y], way } (way "Down", "Left", "Look", "Right" or
 #   "Up"), { hit = [x, y], by } (by "Beam", "Bomb", "Grapple", "Missile", "PowerBomb" or
-#   "SuperMissile") or { other } (another part's start); paused = true (the run is paused this
-#   frame, TheScriptsRun); placements (a room's start, RoomStart): in order, { scroll = [...],
-#   cell }, { stand_in = "Across" | "Down", reach, cell } or { other }.
-# - after: the same fields at the end of the frame, and answers (one per touch, in order: "Air"
-#   or "Solid"), redrawn (cells in order) and sounds ({ sound, queue_limit } in order).
+#   "SuperMissile") or { other = true } (another part's start; the comment says whose);
+#   paused = true (the run is paused this frame, TheScriptsRun); placements (a room's start,
+#   RoomStart): in order, { scroll = [...], cell }, { stand_in = "Across" | "Down", reach, cell }
+#   or { other = true } (another part's). other is always true, and a reader refuses false.
+#   Each form is told by the key only it has (inside, touch, hit, other; scroll, stand_in, other;
+#   sound, show, regrow, end), so a reader refuses an unknown key.
+# - after: the same fields at the end of the frame, and answers (one per touch, in order: "Air",
+#   "Solid", or "Other" for a cell marked Other, which its part answers), redrawn (cells in order)
+#   and sounds ({ sound, queue_limit } in order).
 
 # The reactions the vectors use: invented, in the importer's format (spec §2).
 
@@ -185,7 +192,7 @@ source = "constructed"
 entries = ["Places", "CrumbleBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble" },
 ]
 places = [
 ]
@@ -194,7 +201,7 @@ held = [39, 38]
 requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 37, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "Block" },
@@ -211,8 +218,8 @@ source = "constructed"
 entries = ["Places", "CrumbleBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -224,8 +231,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [5, 7], next = 0, wait = 2, remembers = "Block" },
@@ -243,7 +250,7 @@ source = "constructed"
 entries = ["Places", "FullPlacesLetHerThrough", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -252,7 +259,7 @@ held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 
 requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -268,7 +275,7 @@ source = "constructed"
 entries = ["FullPlacesLetHerThrough"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -277,7 +284,7 @@ held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -293,7 +300,7 @@ source = "constructed"
 entries = ["FullPlacesLetHerThrough"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -302,7 +309,7 @@ held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -318,7 +325,7 @@ source = "constructed"
 entries = ["Places", "ShotBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -327,7 +334,7 @@ held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 
 requests = [{ hit = [4, 7], by = "Beam" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -342,8 +349,8 @@ source = "constructed"
 entries = ["Places", "FullPlacesLetHerThrough"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -355,8 +362,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 3, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "Block" },
@@ -373,8 +380,8 @@ source = "constructed"
 entries = ["Places", "CrumbleBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -385,8 +392,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [5, 7], next = 0, wait = 2, remembers = "Block" },
@@ -402,8 +409,8 @@ source = "constructed"
 entries = ["TheScriptsRun", "WhatTheScreenRedraws"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Air", look = "311", mark = "crumble" },
-  { at = [5, 7], kind = "Air", look = "311", mark = "crumble" },
+  { at = [4, 7], kind = "Air", look = "311", reaction = "crumble" },
+  { at = [5, 7], kind = "Air", look = "311", reaction = "crumble" },
 ]
 places = [
   { place = 30, reaction = "crumble", script = "broken", cell = [5, 7], next = 2, wait = 1, remembers = "Block" },
@@ -411,8 +418,8 @@ places = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "312:x", mark = "crumble" },
-  { at = [5, 7], kind = "Air", look = "312:x", mark = "crumble" },
+  { at = [4, 7], kind = "Air", look = "312:x", reaction = "crumble" },
+  { at = [5, 7], kind = "Air", look = "312:x", reaction = "crumble" },
 ]
 places = [
   { place = 30, reaction = "crumble", script = "broken", cell = [5, 7], next = 3, wait = 2, remembers = "Block" },
@@ -428,14 +435,14 @@ source = "constructed"
 entries = ["TheScriptsRun", "WhatTheScreenRedraws"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Air", look = "311", mark = "crumble" },
+  { at = [4, 7], kind = "Air", look = "311", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 2, wait = 5, remembers = "Block" },
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "311", mark = "crumble" },
+  { at = [4, 7], kind = "Air", look = "311", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 2, wait = 4, remembers = "Block" },
@@ -450,14 +457,14 @@ source = "constructed"
 entries = ["TheScriptsRun", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 1, remembers = "Block" },
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "311", mark = "crumble" },
+  { at = [4, 7], kind = "Air", look = "311", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 2, wait = 5, remembers = "Block" },
@@ -472,7 +479,7 @@ source = "constructed"
 entries = ["TheScriptsRun", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "320", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Block", look = "320", reaction = "crumble-wide" },
   { at = [5, 7], kind = "StandInAcross", look = "320:x", reach = -1 },
 ]
 places = [
@@ -480,7 +487,7 @@ places = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "320", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Block", look = "320", reaction = "crumble-wide" },
   { at = [5, 7], kind = "StandInAcross", look = "320:x", reach = -1 },
 ]
 places = [
@@ -495,7 +502,7 @@ source = "constructed"
 entries = ["PatternCells", "TheScriptsRun"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Air", look = "321", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Air", look = "321", reaction = "crumble-wide" },
   { at = [5, 7], kind = "Air", look = "321:x", reach = -1 },
 ]
 places = [
@@ -503,7 +510,7 @@ places = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "320", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Block", look = "320", reaction = "crumble-wide" },
   { at = [5, 7], kind = "StandInAcross", look = "320:x", reach = -1 },
 ]
 places = [
@@ -519,7 +526,7 @@ source = "constructed"
 entries = ["PatternCells", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "370", mark = "power-bomb" },
+  { at = [4, 7], kind = "Solid", look = "370", reaction = "power-bomb" },
   { at = [4, 8], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
 places = [
@@ -527,7 +534,7 @@ places = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "371", mark = "power-bomb" },
+  { at = [4, 7], kind = "Air", look = "371", reaction = "power-bomb" },
   { at = [4, 8], kind = "Air", look = "371:y", reach = -1 },
 ]
 places = [
@@ -543,14 +550,14 @@ source = "constructed"
 entries = ["Regrowing"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Air", look = "312:x", mark = "crumble" },
+  { at = [4, 7], kind = "Air", look = "312:x", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 3, wait = 1, remembers = "ReactingAir" },
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "ReactingAir", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 4, wait = 1 },
@@ -565,14 +572,14 @@ source = "constructed"
 entries = ["Regrowing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 4, wait = 1 },
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -586,7 +593,7 @@ source = "constructed"
 entries = ["Regrowing", "CrumbleBlocks", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 4, wait = 1 },
@@ -595,7 +602,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "Block" },
@@ -620,7 +627,7 @@ screens = ["OCC", "OOO"]
 placements = [{ scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] },
@@ -644,7 +651,7 @@ screens = ["OCC", "OOO"]
 placements = [{ stand_in = "Across", reach = -1, cell = [5, 7] }, { scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
   { at = [5, 7], kind = "StandInAcross", look = "3B0", reach = -1 },
 ]
 places = [
@@ -653,7 +660,7 @@ places = [
 screens = ["OCC", "OOO"]
 
 [[vector]]
-# another domain's placement keeps its place: the scroll cell after it takes 38
+# another domain's placement (a door's cap) keeps its place: the scroll cell after it takes 38
 id = "C-room-others"
 source = "constructed"
 entries = ["RoomStart"]
@@ -665,10 +672,10 @@ places = [
 ]
 screens = ["OCC", "OOO"]
 [vector.frame]
-placements = [{ other = "a door's cap" }, { scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] }]
+placements = [{ other = true }, { scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 38, scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] },
@@ -703,8 +710,8 @@ source = "constructed"
 entries = ["ScrollCells", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -715,8 +722,8 @@ screens = ["OCC", "OOO"]
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -734,8 +741,8 @@ source = "constructed"
 entries = ["ScrollCells"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -746,8 +753,8 @@ screens = ["OCC", "OOO"]
 requests = [{ touch = [4, 7], way = "Look" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -765,8 +772,8 @@ source = "constructed"
 entries = ["ScrollCells"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -777,8 +784,8 @@ screens = ["OCC", "OOO"]
 requests = [{ inside = [4, 7], point = "Centre" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -795,8 +802,8 @@ source = "constructed"
 entries = ["ScrollCells"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -810,8 +817,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -828,8 +835,8 @@ source = "constructed"
 entries = ["ScrollCells"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -843,8 +850,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -862,8 +869,8 @@ source = "constructed"
 entries = ["ScrollCells"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -877,8 +884,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [5, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -896,8 +903,8 @@ source = "constructed"
 entries = ["ScrollCells", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -910,8 +917,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -929,7 +936,7 @@ source = "constructed"
 entries = ["ScrollCells", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -940,7 +947,7 @@ screens = ["OCC", "OOO"]
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -958,7 +965,7 @@ source = "constructed"
 entries = ["CrumbleBlocks", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -966,7 +973,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -981,7 +988,7 @@ source = "constructed"
 entries = ["CrumbleBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -989,7 +996,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Up" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1004,7 +1011,7 @@ source = "constructed"
 entries = ["CrumbleBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1012,7 +1019,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Look" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1027,7 +1034,7 @@ source = "constructed"
 entries = ["CrumbleBlocks", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3A0", mark = "crumble" },
+  { at = [4, 7], kind = "ReactingAir", look = "3A0", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1035,7 +1042,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Air", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "ReactingAir" },
@@ -1051,7 +1058,7 @@ source = "constructed"
 entries = ["CrumbleBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble-wide" },
   { at = [5, 7], kind = "StandInAcross", look = "3A1", reach = -1 },
 ]
 places = [
@@ -1060,7 +1067,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Down" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "320", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Solid", look = "320", reaction = "crumble-wide" },
   { at = [5, 7], kind = "StandInAcross", look = "3A1", reach = -1 },
 ]
 places = [
@@ -1077,7 +1084,7 @@ source = "constructed"
 entries = ["CrumbleBlocks", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1088,7 +1095,7 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "Block" },
@@ -1104,7 +1111,7 @@ source = "constructed"
 entries = ["SpeedBlocks", "AnswersToHerMotion", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A1:x", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "3A1:x", reaction = "speed" },
 ]
 places = [
 ]
@@ -1113,7 +1120,7 @@ she = { dashing = true }
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "331", mark = "speed" },
+  { at = [4, 7], kind = "Air", look = "331", reaction = "speed" },
 ]
 places = [
   { place = 39, reaction = "speed", script = "broken", cell = [4, 7], next = 2, wait = 2, remembers = "Block" },
@@ -1129,7 +1136,7 @@ source = "constructed"
 entries = ["SpeedBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -1138,7 +1145,7 @@ she = { shinesparking = true }
 requests = [{ touch = [4, 7], way = "Up" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "331", mark = "speed" },
+  { at = [4, 7], kind = "Air", look = "331", reaction = "speed" },
 ]
 places = [
   { place = 39, reaction = "speed", script = "broken", cell = [4, 7], next = 2, wait = 2, remembers = "Block" },
@@ -1154,7 +1161,7 @@ source = "constructed"
 entries = ["SpeedBlocks", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -1162,7 +1169,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -1177,7 +1184,7 @@ source = "constructed"
 entries = ["SpeedBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -1186,7 +1193,7 @@ she = { dashing = true }
 requests = [{ touch = [4, 7], way = "Look" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "331", mark = "speed" },
+  { at = [4, 7], kind = "Air", look = "331", reaction = "speed" },
 ]
 places = [
   { place = 39, reaction = "speed", script = "broken", cell = [4, 7], next = 2, wait = 2, remembers = "Block" },
@@ -1202,7 +1209,7 @@ source = "constructed"
 entries = ["SpeedBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -1211,7 +1218,7 @@ she = { screw_attacking = true }
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
 ]
@@ -1226,7 +1233,7 @@ source = "constructed"
 entries = ["BombBlocks", "AnswersToHerMotion", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1235,7 +1242,7 @@ she = { screw_attacking = true }
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "341", mark = "bomb" },
+  { at = [4, 7], kind = "Air", look = "341", reaction = "bomb" },
 ]
 places = [
   { place = 39, reaction = "bomb", script = "touched", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
@@ -1251,7 +1258,7 @@ source = "constructed"
 entries = ["BombBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1260,7 +1267,7 @@ she = { dashing = true }
 requests = [{ touch = [4, 7], way = "Left" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "341", mark = "bomb" },
+  { at = [4, 7], kind = "Air", look = "341", reaction = "bomb" },
 ]
 places = [
   { place = 39, reaction = "bomb", script = "touched", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
@@ -1276,7 +1283,7 @@ source = "constructed"
 entries = ["BombBlocks", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1284,7 +1291,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1299,7 +1306,7 @@ source = "constructed"
 entries = ["BombBlocks", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "ReactingAir", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1307,7 +1314,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "ReactingAir", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1322,7 +1329,7 @@ source = "constructed"
 entries = ["BombBlocks", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1330,7 +1337,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "342", mark = "bomb" },
+  { at = [4, 7], kind = "Air", look = "342", reaction = "bomb" },
 ]
 places = [
   { place = 39, reaction = "bomb", script = "broken", cell = [4, 7], next = 2, wait = 4, remembers = "Block" },
@@ -1345,7 +1352,7 @@ source = "constructed"
 entries = ["BombBlocks", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1353,7 +1360,7 @@ places = [
 requests = [{ hit = [4, 7], by = "PowerBomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "342", mark = "bomb" },
+  { at = [4, 7], kind = "Air", look = "342", reaction = "bomb" },
 ]
 places = [
   { place = 39, reaction = "bomb", script = "broken", cell = [4, 7], next = 2, wait = 4, remembers = "Block" },
@@ -1368,7 +1375,7 @@ source = "constructed"
 entries = ["BombBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1380,7 +1387,7 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
 ]
 places = [
 ]
@@ -1394,7 +1401,7 @@ source = "constructed"
 entries = ["ShotBlocks", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A1:y", mark = "shot-back" },
+  { at = [4, 7], kind = "Block", look = "3A1:y", reaction = "shot-back" },
 ]
 places = [
 ]
@@ -1402,7 +1409,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Missile" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "35D", mark = "shot-back" },
+  { at = [4, 7], kind = "Air", look = "35D", reaction = "shot-back" },
 ]
 places = [
   { place = 39, reaction = "shot-back", script = "broken", cell = [4, 7], next = 2, wait = 6, remembers = "Block" },
@@ -1417,7 +1424,7 @@ source = "constructed"
 entries = ["ShotBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A1:y", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "3A1:y", reaction = "shot" },
 ]
 places = [
 ]
@@ -1425,7 +1432,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "3A1:y", mark = "shot" },
+  { at = [4, 7], kind = "Solid", look = "3A1:y", reaction = "shot" },
 ]
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
@@ -1440,7 +1447,7 @@ source = "constructed"
 entries = ["ShotBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "shot" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", reaction = "shot" },
 ]
 places = [
 ]
@@ -1448,7 +1455,7 @@ places = [
 requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "3FF", mark = "shot" },
+  { at = [4, 7], kind = "Air", look = "3FF", reaction = "shot" },
 ]
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
@@ -1463,7 +1470,7 @@ source = "constructed"
 entries = ["ShotBlocks", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -1471,7 +1478,7 @@ places = [
 requests = [{ touch = [4, 7], way = "Right" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -1486,7 +1493,7 @@ source = "constructed"
 entries = ["SuperMissileBlocks", "Sounds"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "360", mark = "super" },
+  { at = [4, 7], kind = "Block", look = "360", reaction = "super" },
 ]
 places = [
 ]
@@ -1494,7 +1501,7 @@ places = [
 requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "361", mark = "super" },
+  { at = [4, 7], kind = "Air", look = "361", reaction = "super" },
 ]
 places = [
   { place = 39, reaction = "super", script = "broken", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
@@ -1509,7 +1516,7 @@ source = "constructed"
 entries = ["SuperMissileBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3A0", mark = "super" },
+  { at = [4, 7], kind = "ReactingAir", look = "3A0", reaction = "super" },
 ]
 places = [
 ]
@@ -1517,7 +1524,7 @@ places = [
 requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "361", mark = "super" },
+  { at = [4, 7], kind = "Air", look = "361", reaction = "super" },
 ]
 places = [
   { place = 39, reaction = "super", script = "broken", cell = [4, 7], next = 2, wait = 3, remembers = "ReactingAir" },
@@ -1532,7 +1539,7 @@ source = "constructed"
 entries = ["SuperMissileBlocks", "BombsReveal"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "super" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "super" },
 ]
 places = [
 ]
@@ -1540,7 +1547,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "360", mark = "super" },
+  { at = [4, 7], kind = "Block", look = "360", reaction = "super" },
 ]
 places = [
   { place = 39, reaction = "super", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
@@ -1555,7 +1562,7 @@ source = "constructed"
 entries = ["SuperMissileBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "360", mark = "super" },
+  { at = [4, 7], kind = "Block", look = "360", reaction = "super" },
 ]
 places = [
 ]
@@ -1567,7 +1574,7 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "360", mark = "super" },
+  { at = [4, 7], kind = "Block", look = "360", reaction = "super" },
 ]
 places = [
 ]
@@ -1581,7 +1588,7 @@ source = "constructed"
 entries = ["PowerBombBlocks", "TheScriptsRun"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "power-bomb" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "power-bomb" },
   { at = [4, 8], kind = "StandInDown", look = "3A1", reach = -1 },
 ]
 places = [
@@ -1590,7 +1597,7 @@ places = [
 requests = [{ hit = [4, 7], by = "PowerBomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "370", mark = "power-bomb" },
+  { at = [4, 7], kind = "Solid", look = "370", reaction = "power-bomb" },
   { at = [4, 8], kind = "StandInDown", look = "3A1", reach = -1 },
 ]
 places = [
@@ -1606,7 +1613,7 @@ source = "constructed"
 entries = ["PowerBombBlocks", "BombsReveal", "PatternCells"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "power-bomb" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "power-bomb" },
   { at = [4, 8], kind = "StandInDown", look = "3A1", reach = -1 },
 ]
 places = [
@@ -1615,7 +1622,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "370", mark = "power-bomb" },
+  { at = [4, 7], kind = "Block", look = "370", reaction = "power-bomb" },
   { at = [4, 8], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
 places = [
@@ -1631,7 +1638,7 @@ source = "constructed"
 entries = ["PowerBombBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "370", mark = "power-bomb" },
+  { at = [4, 7], kind = "Block", look = "370", reaction = "power-bomb" },
   { at = [4, 8], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
 places = [
@@ -1640,7 +1647,7 @@ places = [
 requests = [{ hit = [4, 7], by = "SuperMissile" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "370", mark = "power-bomb" },
+  { at = [4, 7], kind = "Block", look = "370", reaction = "power-bomb" },
   { at = [4, 8], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
 places = [
@@ -1655,7 +1662,7 @@ source = "constructed"
 entries = ["BombsReveal", "TheScriptsRun"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1663,7 +1670,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
@@ -1678,7 +1685,7 @@ source = "constructed"
 entries = ["BombsReveal", "PatternCells"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble-wide" },
   { at = [5, 7], kind = "StandInAcross", look = "3A1", reach = -1 },
 ]
 places = [
@@ -1687,7 +1694,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "320", mark = "crumble-wide" },
+  { at = [4, 7], kind = "Block", look = "320", reaction = "crumble-wide" },
   { at = [5, 7], kind = "StandInAcross", look = "320:x", reach = -1 },
 ]
 places = [
@@ -1703,7 +1710,7 @@ source = "constructed"
 entries = ["BombsReveal"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "speed" },
 ]
 places = [
 ]
@@ -1711,7 +1718,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "330", mark = "speed" },
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
 ]
 places = [
   { place = 39, reaction = "speed", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
@@ -1726,14 +1733,14 @@ source = "constructed"
 entries = ["BombsReveal", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1747,7 +1754,7 @@ source = "constructed"
 entries = ["BombsReveal"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1758,7 +1765,7 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1772,7 +1779,7 @@ source = "constructed"
 entries = ["BombsReveal"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3A0", mark = "crumble" },
+  { at = [4, 7], kind = "ReactingAir", look = "3A0", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1780,7 +1787,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3A0", mark = "crumble" },
+  { at = [4, 7], kind = "ReactingAir", look = "3A0", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1794,8 +1801,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "AnswersToHerMotion", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1806,8 +1813,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
@@ -1823,8 +1830,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Bomb" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Bomb" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1835,8 +1842,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Bomb" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Bomb" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
@@ -1852,8 +1859,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -1864,8 +1871,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
@@ -1881,8 +1888,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
-  { at = [5, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [5, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -1893,8 +1900,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
-  { at = [5, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [5, 7], kind = "Solid", look = "350", reaction = "shot" },
 ]
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
@@ -1909,8 +1916,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "nothing", met_as = "Bomb" },
-  { at = [5, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Nothing", met_as = "Bomb" },
+  { at = [5, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -1921,8 +1928,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "nothing", met_as = "Bomb" },
-  { at = [5, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Nothing", met_as = "Bomb" },
+  { at = [5, 7], kind = "Solid", look = "350", reaction = "shot" },
 ]
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
@@ -1937,8 +1944,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [5, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [5, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -1949,8 +1956,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [5, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [5, 7], kind = "Solid", look = "350", reaction = "shot" },
 ]
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
@@ -1965,8 +1972,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [5, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [5, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -1977,8 +1984,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [5, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [5, 7], kind = "Solid", look = "350", reaction = "shot" },
 ]
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
@@ -1993,8 +2000,8 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "nothing", met_as = "Crumble" },
-  { at = [5, 7], kind = "Block", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Nothing", met_as = "Crumble" },
+  { at = [5, 7], kind = "Block", look = "350", reaction = "shot" },
 ]
 places = [
 ]
@@ -2005,8 +2012,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "nothing", met_as = "Crumble" },
-  { at = [5, 7], kind = "Solid", look = "350", mark = "shot" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Nothing", met_as = "Crumble" },
+  { at = [5, 7], kind = "Solid", look = "350", reaction = "shot" },
 ]
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
@@ -2021,7 +2028,7 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
 ]
 places = [
 ]
@@ -2030,7 +2037,7 @@ held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 
 requests = [{ hit = [4, 7], by = "Beam" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
 ]
 places = [
 ]
@@ -2045,9 +2052,9 @@ source = "constructed"
 entries = ["TheScriptsRun", "Places", "CrumbleBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Air", look = "311", mark = "crumble" },
-  { at = [4, 8], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Air", look = "311", reaction = "crumble" },
+  { at = [4, 8], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
 ]
 places = [
   { place = 30, reaction = "crumble", script = "broken", cell = [5, 7], next = 2, wait = 1, remembers = "Block" },
@@ -2060,9 +2067,9 @@ requests = [
 paused = true
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "310", mark = "crumble" },
-  { at = [5, 7], kind = "Air", look = "311", mark = "crumble" },
-  { at = [4, 8], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Air", look = "311", reaction = "crumble" },
+  { at = [4, 8], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
 ]
 places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 3, remembers = "Block" },
@@ -2080,8 +2087,8 @@ source = "constructed"
 entries = ["Places", "CrumbleBlocks", "ShotBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -2092,8 +2099,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
@@ -2104,33 +2111,35 @@ redrawn = []
 sounds = []
 
 [[vector]]
-# she is inside reacting air whose mark holds a place when she is inside it, at her bottom edge and her top edge: each point holds a place until the run; a cell marked Nothing without it holds none; the crumble she lands on takes 37
+# her three points above one another: her bottom edge and her top edge in reacting air whose mark holds a place when she is inside it, each holding a place until the run; her centre in a cell marked Nothing without it, holding none; the crumble she lands on takes 37
 id = "C-nothing-inside"
 source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
-  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 6], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [4, 8], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [4, 9], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
 [vector.frame]
 requests = [
-  { inside = [4, 7], point = "Bottom" },
-  { inside = [5, 7], point = "Centre" },
-  { inside = [4, 7], point = "Top" },
-  { touch = [4, 8], way = "Down" },
+  { inside = [4, 8], point = "Bottom" },
+  { inside = [4, 7], point = "Centre" },
+  { inside = [4, 6], point = "Top" },
+  { touch = [4, 9], way = "Down" },
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
-  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 6], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble" },
+  { at = [4, 8], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [4, 9], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
-  { place = 37, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+  { place = 37, reaction = "crumble", script = "broken", cell = [4, 9], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid"]
 redrawn = []
@@ -2143,7 +2152,7 @@ source = "constructed"
 entries = ["BlocksMarkedNothing"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble", inside = "Nothing" },
 ]
 places = [
 ]
@@ -2152,7 +2161,7 @@ held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 
 requests = [{ inside = [4, 7], point = "Centre" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "nothing", met_as = "Crumble", inside = "Nothing" },
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble", inside = "Nothing" },
 ]
 places = [
 ]
@@ -2167,9 +2176,9 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "AnswersToHerMotion"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "inert" },
-  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "inert" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Inert" },
+  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "Inert" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -2183,9 +2192,9 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "inert" },
-  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "inert" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Inert" },
+  { at = [5, 7], kind = "ReactingAir", look = "3C0", mark = "Inert" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
@@ -2201,7 +2210,7 @@ source = "constructed"
 entries = ["ShotBlocks"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A1:y", mark = "shot-back" },
+  { at = [4, 7], kind = "Block", look = "3A1:y", reaction = "shot-back" },
 ]
 places = [
 ]
@@ -2209,7 +2218,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Grapple" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "35D", mark = "shot-back" },
+  { at = [4, 7], kind = "Air", look = "35D", reaction = "shot-back" },
 ]
 places = [
   { place = 39, reaction = "shot-back", script = "broken", cell = [4, 7], next = 2, wait = 6, remembers = "Block" },
@@ -2224,10 +2233,10 @@ source = "constructed"
 entries = ["BombBlocks", "SuperMissileBlocks", "PowerBombBlocks", "BombsReveal"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
-  { at = [5, 7], kind = "Block", look = "360", mark = "super" },
-  { at = [6, 7], kind = "Block", look = "3A0", mark = "crumble" },
-  { at = [4, 8], kind = "Block", look = "370", mark = "power-bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
+  { at = [5, 7], kind = "Block", look = "360", reaction = "super" },
+  { at = [6, 7], kind = "Block", look = "3A0", reaction = "crumble" },
+  { at = [4, 8], kind = "Block", look = "370", reaction = "power-bomb" },
   { at = [4, 9], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
 places = [
@@ -2241,10 +2250,10 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "340", mark = "bomb" },
-  { at = [5, 7], kind = "Block", look = "360", mark = "super" },
-  { at = [6, 7], kind = "Block", look = "3A0", mark = "crumble" },
-  { at = [4, 8], kind = "Block", look = "370", mark = "power-bomb" },
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
+  { at = [5, 7], kind = "Block", look = "360", reaction = "super" },
+  { at = [6, 7], kind = "Block", look = "3A0", reaction = "crumble" },
+  { at = [4, 8], kind = "Block", look = "370", reaction = "power-bomb" },
   { at = [4, 9], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
 places = [
@@ -2259,9 +2268,9 @@ source = "constructed"
 entries = ["BlocksMarkedNothing", "Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
-  { at = [5, 7], kind = "Block", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [5, 7], kind = "Block", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
 ]
 places = [
 ]
@@ -2273,9 +2282,9 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3C0", mark = "nothing", met_as = "Shot" },
-  { at = [5, 7], kind = "Solid", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Block", look = "3C0", mark = "nothing", met_as = "Crumble" },
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [5, 7], kind = "Solid", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Crumble" },
 ]
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
@@ -2290,7 +2299,7 @@ source = "constructed"
 entries = ["ScrollCells", "TheScriptsRun"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -2304,7 +2313,7 @@ requests = [
 paused = true
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7], touched = true },
@@ -2322,7 +2331,7 @@ source = "constructed"
 entries = ["ScrollCells", "TheScriptsRun"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7], touched = true },
@@ -2331,7 +2340,7 @@ held_until_run = [38, 37]
 screens = ["OCC", "OOO"]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "scroll" },
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
 ]
 places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
@@ -2347,7 +2356,7 @@ source = "constructed"
 entries = ["BombBlocks", "TheScriptsRun"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "3A0", mark = "bomb-quiet" },
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "bomb-quiet" },
 ]
 places = [
 ]
@@ -2355,7 +2364,7 @@ places = [
 requests = [{ hit = [4, 7], by = "Bomb" }]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Air", look = "34A", mark = "bomb-quiet" },
+  { at = [4, 7], kind = "Air", look = "34A", reaction = "bomb-quiet" },
 ]
 places = [
   { place = 39, reaction = "bomb-quiet", script = "broken", cell = [4, 7], next = 1, wait = 2, remembers = "Block" },
@@ -2364,27 +2373,27 @@ redrawn = [[4, 7]]
 sounds = []
 
 [[vector]]
-# another part's start between her weapons' hit and her touch: the shot block takes 39, the other part's start 38, the crumble she lands on 37
+# another part's start (an enemy's break) between her weapons' hit and her touch: the shot block takes 39, the other part's start 38, the crumble she lands on 37
 id = "C-order-other"
 source = "constructed"
 entries = ["Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
 [vector.frame]
 requests = [
   { hit = [4, 7], by = "Beam" },
-  { other = "an enemy's break" },
+  { other = true },
   { touch = [4, 8], way = "Down" },
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
@@ -2396,14 +2405,107 @@ redrawn = []
 sounds = []
 
 [[vector]]
+# cells marked Other, another part's: her touch of a block and of reacting air is answered Other, the block reached by the grapple and by a beam, and she inside the air, change nothing and take no place; the crumble she lands on takes 39
+id = "C-other"
+source = "constructed"
+entries = ["BlocksMarkedNothing", "AnswersToHerMotion", "Places"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B0", mark = "Other" },
+  { at = [5, 7], kind = "ReactingAir", look = "3B1", mark = "Other" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { inside = [5, 7], point = "Centre" },
+  { hit = [4, 7], by = "Grapple" },
+  { hit = [4, 7], by = "Beam" },
+  { touch = [4, 7], way = "Right" },
+  { touch = [5, 7], way = "Left" },
+  { touch = [4, 8], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B0", mark = "Other" },
+  { at = [5, 7], kind = "ReactingAir", look = "3B1", mark = "Other" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
+]
+places = [
+  { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Other", "Other", "Solid"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# a station's access: a block marked Other met as crumble blocks; a bomb's and a power bomb's blast on it each hold a place until the run, a beam holds none, her touch is answered Other, and the crumble she lands on takes 37
+id = "C-other-blast"
+source = "constructed"
+entries = ["BlocksMarkedNothing", "Places", "AnswersToHerMotion"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B2", mark = "Other", met_as = "Crumble" },
+  { at = [5, 7], kind = "Block", look = "3B2:x", mark = "Other", met_as = "Crumble" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Bomb" },
+  { hit = [5, 7], by = "PowerBomb" },
+  { hit = [4, 7], by = "Beam" },
+  { touch = [5, 7], way = "Right" },
+  { touch = [4, 8], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B2", mark = "Other", met_as = "Crumble" },
+  { at = [5, 7], kind = "Block", look = "3B2:x", mark = "Other", met_as = "Crumble" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
+]
+places = [
+  { place = 37, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Other", "Solid"]
+redrawn = []
+sounds = []
+
+[[vector]]
+# every place held: a power bomb's blast on a block marked Other met as crumble blocks takes none
+id = "C-other-blast-full"
+source = "constructed"
+entries = ["BlocksMarkedNothing"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B2", mark = "Other", met_as = "Crumble" },
+]
+places = [
+]
+held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+[vector.frame]
+requests = [{ hit = [4, 7], by = "PowerBomb" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B2", mark = "Other", met_as = "Crumble" },
+]
+places = [
+]
+held = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+redrawn = []
+sounds = []
+
+[[vector]]
 # a touch given before a hit is answered first: the crumble takes 39, the shot block 38
 id = "C-order-as-given"
 source = "constructed"
 entries = ["Places"]
 [vector.before]
 cells = [
-  { at = [4, 7], kind = "Block", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Block", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
@@ -2414,8 +2516,8 @@ requests = [
 ]
 [vector.after]
 cells = [
-  { at = [4, 7], kind = "Solid", look = "350", mark = "shot" },
-  { at = [4, 8], kind = "Solid", look = "310", mark = "crumble" },
+  { at = [4, 7], kind = "Solid", look = "350", reaction = "shot" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
