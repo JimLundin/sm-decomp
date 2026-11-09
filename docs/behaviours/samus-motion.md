@@ -34,7 +34,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball) | `Dash`, `TurningRound`, `Jumping` |
 | vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
-| the y a placement put her at, if any | y: `P.S`, or none | the screen scrolls after her vertical move as measured from where pose fit or a change of shape placed her this frame (`PoseFitAfterMoves`, `ShrinkingLowersHer`), a placement of 0 px included, so the scroll doesn't chase those placements; with none, it measures from where it last saw her | output (the camera's domain reads it; each frame works it out, so it isn't State) |
+| the y a placement put her at, if any | y: `P.S`, or none | the screen scrolls after her vertical move as measured from where pose fit or a change of shape placed her this frame (`PoseFitAfterMoves`, `ShrinkingLowersHer`), a placement of 0 px included, so the scroll doesn't chase those placements; with none, it measures from where it last saw her. The camera reads only its pixel part and keeps its own subpixel; the subpixel given is hers at the frame's start (`PoseFitAfterMoves`) | output (the camera's domain reads its pixel part; each frame works it out, so it isn't State) |
 | rising | `bool`, at the frame's end | the view aims lower while she rises, so it shows more above her; her vertical speed can't tell it at a rise at 0, or on the frame whose pull spends the rise, where the speed already points down (`RisingAndFalling`) | output (the camera's domain reads it) |
 | pose | §2 | the sprite | every behaviour; output |
 
@@ -61,8 +61,11 @@ on the ground (below), which a start gives as `falling`.
 - **Her dash.** The dash she builds running stays hers, through jumps and into the ball, until a
   halt takes it, and a dash a pose change left on her is lost the next frame she moves (`Dash`).
 - **The moonfall** (`Moonfall`).
-- **How long jump has stayed held** since it was pressed, which a landing or a turn's end can make
-  a press (`Jumping`, jump held through).
+- **How long jump has stayed held** since it was pressed: a count of frames, 0 to 65,535, which a
+  landing or a turn's end can make a press. Read by `Jumping` (jump held through).
+- **Landed or ended the frame before**: `bool`, whether, the frame before, she landed or a turn's
+  or a landing's animation ended and handed over its pose; it lasts one frame. Read by `Jumping`
+  (jump held through), whose press comes the frame after.
 - **A spin carried on**, which can ready a wall jump (`WallJump`).
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
@@ -325,7 +328,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - params: jump 4.E000 upward (hi-jump 6.0000); wall jump 4.A000 (hi-jump 5.8000); ball bounce
   1.0000, and an adjusted one at least 1.0000 (the rise after bounce 1 is it less 1 px,
   `Landing`); the crouch lift 10 px; space jump's window, 2.80 to 5.00; jump held through, a
-  count of 1 to 8 frames.
+  count of 1 to 8 frames (and 32,777 to 65,535, original only).
 - switch: none.
 - The first poses of a straight jump (taking off) → she doesn't steer: she moves by her dash only
   and follows the pad; she gains no dash (`Dash`); she doesn't move vertically and the pull
@@ -347,6 +350,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - **Jump held through** (§1.2): a count of the frames jump has stayed held since its press.
 - At a frame's end, jump held and not just pressed → the count goes up by 1 [JH1, JH2, JH3, JH4]
 - At a frame's end, jump just pressed, or not held → the count is 0 [JH1, JH2, JH3, JH4]
+- The count goes from 65,535 to 0, and a count of 32,777 to 65,535 (jump held about 9 minutes or
+  more) acts as one of 1 to 8 does below [original only]
 - The frame after one on which she landed from a straight jump, a fall, a spin or a wall jump
   (`WhatHerMovesMet`'s rows into `Landing`, whatever pose fit makes of the change), or on which
   the animation of a turn or of a landing ended and handed over its pose (`AnimationEnds`), with
@@ -354,7 +359,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   the count is 0 before that frame's end adds to it [JH1, JH2, JH3, JH4, C-held-9]
 - So with jump held through a landing she takes off from it the next frame (JH1-JH3), unless the
   count has passed 8 (C-held-9: 9). A turn's end on the way, at a count of 1 to 8, starts it
-  again (JH4: pressed at 96, it is 2 at a turn's end, 7 at the next, and 1 at the landing, not 11).
+  again (JH4: pressed at 96, it is 2 at a turn's end, 7 at the next, and 1 at the landing, not 10;
+  frames numbered by their start).
 - The press counts only where a row names jump pressed: the fall's rows don't, and a landing
   outranks the pad (`PoseFollows`; JH4). The other rules that read a press see the pad as it is.
 - checked: oracle (J1, J2, J3, and the take-off and spin vectors; W16, a take-off from a crouch

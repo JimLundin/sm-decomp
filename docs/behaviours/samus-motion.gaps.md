@@ -6,6 +6,19 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
+## Filed by the observer: a take-off or spin on an animation's last frame (adversary 58, finding 4, 2026-11-09)
+
+34. **On a ground turn's or a landing's last frame, a take-off or a spin the pad chart chooses wins
+    over the animation's end.** The original reads the pad (`$90:E700`, which sets the prospective
+    pose `0A28`) before it animates (`$90:E73B`); at the end of these animations (`$90:8370`),
+    `$90:8378`-`$90:838D` return before the handover when `0A28` is a take-off (4Bh, 4Ch) or a
+    spin (19h, 1Ah). So jump pressed on that last frame takes off or spins, as the chart's rows
+    for the turn and the landing say. The spec's `PoseFollows` and `AnimationEnds` say the end
+    hands over its pose whatever the pad. Not for round 13: the next round adds the arm and a
+    vector (a record search for jump pressed on such a frame, or a constructed one). The jump
+    held through arm already says "ended and handed over its pose", so it holds once this is
+    amended.
+
 ## Answered: take-offs from a landing pose (adversary 42's sweep; observer, 2026-11-09)
 
 32. **A landing pose takes off with jump held but not newly pressed.** chain-0059-A293 107 → 108
@@ -15,9 +28,10 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
     has stayed held since its press; on the frame after a landing from a jump, a fall, a spin or a
     wall jump, or after a turn's or a landing's animation ends, a count of 1 to 8 is a press for
     the pad chart, and restarts the count. The oracle confirmed the counts the four frames read
-    (`oracle corpus --watch-words` on the two rows, the scenes engineer): 2, 2, 8 and 1. On
-    chain-0059-A293 108 the count from the press would be 11; the two turns' ends on the way
-    (88h at 98, 87h at 105) each restart it. Vectors JH1-JH4 (the four frames, recorded) and
+    (`oracle corpus --watch-words` on the two rows, the scenes engineer): 2, 2, 8 and 1. Frames
+    here are numbered by their start (frame N runs from record N to record N+1; `107 → 108` is
+    frame 107). On chain-0059-A293's frame 107 the count from the press (96) would be 10; the two
+    turns' ends on the way (88h's on frame 98, 87h's on frame 105) each restart it. Vectors JH1-JH4 (the four frames, recorded) and
     C-held-9 (constructed, a count of 9). The round-12 model passes the lead-ins and fails the
     four checked frames, as the gap says, until round 13.
 

@@ -514,13 +514,15 @@ after = { position = ["0534.FFFF", "0299.27FF"], speed_x = "+0000.0000", dash = 
 # JH1-JH4: jump held through a landing (spec `Jumping`, jump held through). Each starts on the
 # frame jump is pressed in the air, holds it through the landing, and checks the landing's next
 # frame, where the count of frames jump stayed held (1 to 8) makes it a press: from Landing from
-# Jump to the take-off, her facing (left) kept, rising, x and y kept. JH1 and JH2
-# (samus-screw-attack 171-175 and 603-607, hi-jump): a straight jump, the count 2. JH3 (chain-0059-A293 165-175): a fall, the
-# count 8. JH4 (chain-0059-A293 96-108): a turn in a fall ends into a fall (98), and the next frame
-# makes the count 2 a press, which the fall's rows don't name, and starts the count again; she turns
-# again (99), that turn ends (105), and the next frame, the landing's, makes the count 7 a press the
-# landing outranks; the landing's next frame makes the count 1 a press. Counted from the press
-# alone it would be 11.
+# Jump to the take-off, her facing (left) kept, rising, x and y kept. Frames here are numbered by
+# their start: frame N runs from record N to record N+1, its pad is record N's, and what it does
+# shows first in record N+1. JH1 and JH2 (samus-screw-attack 171-175 and 603-607, hi-jump): a
+# straight jump, the count 2. JH3 (chain-0059-A293 165-175): a fall, the count 8. JH4
+# (chain-0059-A293 96-108): jump pressed at 96, a turn in a fall ends into a fall (98), and the next
+# frame makes the count 2 a press, which the fall's rows don't name, and starts the count again;
+# she turns again (99), run is pressed (104, lead-in 9), that turn ends (105), and the next frame,
+# the landing's, makes the count 7 a press the landing outranks; the landing's next frame (107)
+# makes the count 1 a press. Counted from the press alone it would be 10 (107 - 97).
 [[vector]]
 id = "JH1"
 source = "samus-screw-attack:175"
@@ -594,8 +596,8 @@ lead_in = [
   { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }, pad = ["jump", "left"], jump_pressed = false },
   { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }, pad = ["jump", "left"], jump_pressed = false },
   { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }, pad = ["jump", "left"], jump_pressed = false },
   { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }, pad = ["run", "jump", "left"], jump_pressed = false, pressed = ["run"] },
-  { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }, pad = ["run", "jump", "left"], jump_pressed = false },
   { pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 19], turn = "Fall" }, pad = ["run", "jump", "left"], jump_pressed = false, animation_ends = true },
   { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["run", "jump", "left"], jump_pressed = false },
 ]

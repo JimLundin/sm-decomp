@@ -1102,12 +1102,19 @@ example chain-0059-A293 65, 139, 246, 585), which samus-motion's harness defers.
 
 **Jump held through (gap 32).** The scenes engineer's run (`oracle corpus --only
 samus-screw-attack --only chain-0059-A293 --watch-words 0AF4,0A1C,008B --watch-pcs
-90EAB3,90E926,90E93A,908370`, on the lsnes lock) read `0AF4` at each cut: the handler at the
+90EAB3,90E926,90E93A,908370`, on the lsnes lock) read `0AF4` at each cut. This paragraph numbers
+by record: record N holds the state at frame N's start and frame N's pad, so a press is at the
+same number in the vectors and the gaps, which number a frame by its start, and anything a frame
+does is one higher here than there (the turns end on frames 98 and 105, shown at records 99 and
+106). The run: the handler at the
 landing's next frame reads 2 (samus-screw-attack 175, 607), 8 (chain-0059-A293 175) and 1
 (chain-0059-A293 108, after firings at 100 and 107 that `$90:8370` installed at the turns' ends,
 99 and 106). The vectors' frames were read with `mdump.sh` from the more-caches cache: the press
 is in record N's pad (`8F` bit 0080h at 171, 603, 165, 96), so the count is 0 at N+1. JH4's run
-press (8000h at 103) is listed. Each landing's floor is her y plus 21 at the landing record (B0h,
+press (8000h at 104, so on lead-in 9) is listed. From the press alone the count at the handler of
+record 108 would be 10 (107 - 97), not the 1 the turns' restarts leave. The window is signed
+(`$90:E92E` `CMP #$0009` / `BPL`), so counts 8009h-FFFFh also fire, and `$90:EAB3`'s `INC` wraps;
+the spec states it as original only, and LEGACY lists it. Each landing's floor is her y plus 21 at the landing record (B0h,
 B0h, B0h, C0h). C-held-9 is JH3 started at 164 (`0AF4` would be 9 at 174), its after the
 round-12 model's, which has no jump held through, worked against the landing's rows: left held,
 forward, `Running`, x 1 px left.

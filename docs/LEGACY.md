@@ -64,6 +64,13 @@ original's bytes as data.
   them, which an earlier room or the boot left. The engine draws zero words. Vanilla rooms stay within
   their tables.
 
+- **Jump held through's signed window** (the samus-motion domain, `docs/behaviours/samus-motion.md`
+  `Jumping`, jump held through; `$90:E92E`, `$90:EAB3`): the original tests the count of frames
+  jump has stayed held with a signed compare against 9, so counts 8009h-FFFFh (32,777 to 65,535
+  frames, about 9 to 18 minutes of holding jump) make a press as 1 to 8 do, and the count wraps
+  from 65,535 to 0. The spec states it as original only: no record or vector holds jump that long,
+  so nothing checks the engine there.
+
 - **Emptied item places past the engine's bits** (`game::progress_world`'s `store_emptied`,
   `$84:8899`): the engine keeps the 512 bits of `$7E:D870`. A room argument past them makes the
   original set a bit in the work RAM that follows; the engine drops the place, so its item would
