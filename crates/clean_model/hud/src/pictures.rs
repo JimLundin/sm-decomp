@@ -1,10 +1,9 @@
 //! Where things sit on the HUD and the pictures they show (§1.2, §1.4): data, read by the
 //! status bar's and the mini-map's rules.
 
-use clean_types::Item;
-
 use crate::grid::{ColourSet, Flip, GridPos, Picture, Tile};
 use crate::inputs::Ammo;
+use crate::item::SelectableItem;
 
 /// The colours of the digits, the blank and the dim reserve sign.
 const COLOURS_3: ColourSet = ColourSet::named(3);
@@ -157,13 +156,13 @@ const GRAPPLE_BEAM_ICON: [Placed; 4] = two_column_icon(20, 0x038, 0x039);
 const X_RAY_SCOPE_ICON: [Placed; 4] = two_column_icon(23, 0x03A, 0x03B);
 
 /// An item's icon, its top-left tile first (§1.2, §1.4).
-pub const fn icon(item: Item) -> &'static [Placed] {
+pub const fn icon(item: SelectableItem) -> &'static [Placed] {
     match item {
-        Item::Missiles => &MISSILES_ICON,
-        Item::SuperMissiles => &SUPER_MISSILES_ICON,
-        Item::PowerBombs => &POWER_BOMBS_ICON,
-        Item::GrappleBeam => &GRAPPLE_BEAM_ICON,
-        Item::XRayScope => &X_RAY_SCOPE_ICON,
+        SelectableItem::Missiles => &MISSILES_ICON,
+        SelectableItem::SuperMissiles => &SUPER_MISSILES_ICON,
+        SelectableItem::PowerBombs => &POWER_BOMBS_ICON,
+        SelectableItem::GrappleBeam => &GRAPPLE_BEAM_ICON,
+        SelectableItem::XRayScope => &X_RAY_SCOPE_ICON,
     }
 }
 

@@ -1,9 +1,10 @@
 //! What the HUD reads each frame (§1.3): the values other domains own, the buttons, and where she
 //! is on her map.
 
-use clean_types::{Item, MapCell, Pair};
+use clean_types::Pair;
 
-use crate::map::AreaMap;
+use crate::item::SelectableItem;
+use crate::map::{AreaMap, MapCell};
 use crate::rules::Boss;
 
 /// The count of frames the game has finished, mod 256, as this frame begins; a lag frame isn't
@@ -60,11 +61,11 @@ impl Ammo {
 
     /// The item it is, when selected.
     #[must_use]
-    pub const fn item(self) -> Item {
+    pub const fn item(self) -> SelectableItem {
         match self {
-            Self::Missiles => Item::Missiles,
-            Self::SuperMissiles => Item::SuperMissiles,
-            Self::PowerBombs => Item::PowerBombs,
+            Self::Missiles => SelectableItem::Missiles,
+            Self::SuperMissiles => SelectableItem::SuperMissiles,
+            Self::PowerBombs => SelectableItem::PowerBombs,
         }
     }
 
@@ -152,13 +153,13 @@ impl Status {
     /// Spec: CyclingItems. Whether Select can land on `item`: an ammunition with a count above 0,
     /// or an item she has on.
     #[must_use]
-    pub const fn has(&self, item: Item) -> bool {
+    pub const fn has(&self, item: SelectableItem) -> bool {
         match item {
-            Item::Missiles => self.ammunition.missiles.count != 0,
-            Item::SuperMissiles => self.ammunition.super_missiles.count != 0,
-            Item::PowerBombs => self.ammunition.power_bombs.count != 0,
-            Item::GrappleBeam => self.equipped.grapple_beam,
-            Item::XRayScope => self.equipped.x_ray_scope,
+            SelectableItem::Missiles => self.ammunition.missiles.count != 0,
+            SelectableItem::SuperMissiles => self.ammunition.super_missiles.count != 0,
+            SelectableItem::PowerBombs => self.ammunition.power_bombs.count != 0,
+            SelectableItem::GrappleBeam => self.equipped.grapple_beam,
+            SelectableItem::XRayScope => self.equipped.x_ray_scope,
         }
     }
 }
@@ -248,7 +249,7 @@ pub struct FrameInputs<'map> {
     /// The buttons.
     pub controls: Controls,
     /// The item whose pickup this frame draws its icon, or `None`.
-    pub collected: Option<Item>,
+    pub collected: Option<SelectableItem>,
     /// The boss that turns the mini-map off this frame (Mother Brain's first form falling), or
     /// `None`.
     pub boss: Option<Boss>,

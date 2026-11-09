@@ -1,11 +1,9 @@
 //! The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own
 //! cell blinking, and the quirks at the map's first and last columns.
 
-use clean_types::{CellSet, MapCell};
-
 use crate::grid::{ColourSet, HudGrid, Picture, Tile};
 use crate::inputs::{FrameCount, MiniMapInputs};
-use crate::map::{AreaMap, BeyondCell, MapPicture};
+use crate::map::{AreaMap, BeyondCell, MapCell, MapCellSet, MapPicture};
 use crate::pictures::{BLINK, CHARTED, EXPLORED, HER_WINDOW_TILE, WINDOW_REACH};
 use crate::rules::{Boss, Rules};
 
@@ -157,7 +155,7 @@ enum Shows {
 /// or its state read outside the map, the map's blank in the charted colours.
 fn window_tile(
     map: &AreaMap,
-    explored: &CellSet,
+    explored: &MapCellSet,
     reading: Reading,
     seen: MapPoint,
 ) -> (Tile, Shows) {
@@ -192,7 +190,7 @@ pub fn update(
     mini_map: &MiniMapInputs<'_>,
     frame: FrameCount,
     grid: &mut HudGrid,
-    explored: &mut CellSet,
+    explored: &mut MapCellSet,
 ) {
     let her = her_cell(mini_map);
     // Spec: Exploring. Her cell, when it lies on the map, joins the explored cells.
@@ -230,7 +228,7 @@ pub fn boss_turns_it_off(
     boss: Boss,
     room: MapCell,
     grid: &mut HudGrid,
-    explored: &mut CellSet,
+    explored: &mut MapCellSet,
 ) {
     let blank = in_colours(MapPicture::BLANK, CHARTED);
     for (columns, rows) in WINDOW_REACH.offsets() {

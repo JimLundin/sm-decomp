@@ -1,10 +1,10 @@
 //! What the HUD keeps from one frame to the next (§1): its tiles, the values last shown, the
 //! selection and the explored cells. Nothing else carries over.
 
-use clean_types::{CellSet, Item};
-
 use crate::grid::HudGrid;
 use crate::inputs::Ammo;
+use crate::item::SelectableItem;
+use crate::map::MapCellSet;
 use crate::pictures::BLANK;
 
 /// The values the HUD last showed: a value is drawn again only when it differs (§1).
@@ -19,7 +19,7 @@ pub struct Shown {
     /// Her power bombs.
     pub power_bombs: u16,
     /// The item whose icon is highlighted, or `None`.
-    pub selection: Option<Item>,
+    pub selection: Option<SelectableItem>,
 }
 
 impl Shown {
@@ -48,9 +48,9 @@ impl Shown {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Selection {
     /// The selected item, or `None`.
-    pub selected: Option<Item>,
+    pub selected: Option<SelectableItem>,
     /// The one-shot item, or `None`.
-    pub one_shot: Option<Item>,
+    pub one_shot: Option<SelectableItem>,
 }
 
 impl Selection {
@@ -71,7 +71,7 @@ pub struct HudState {
     /// The selected and the one-shot item.
     pub selection: Selection,
     /// The cells of her map she has explored.
-    pub explored: CellSet,
+    pub explored: MapCellSet,
 }
 
 impl Default for HudState {
@@ -82,7 +82,7 @@ impl Default for HudState {
             grid: HudGrid::filled(BLANK),
             shown: Shown::default(),
             selection: Selection::NONE,
-            explored: CellSet::EMPTY,
+            explored: MapCellSet::EMPTY,
         }
     }
 }

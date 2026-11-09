@@ -1,9 +1,81 @@
-//! Her map, as the mini-map reads it (§1.3): each cell's picture with its flips, the cells it
-//! charts, whether she has collected it, and its beyond pictures.
-
-use clean_types::{CellSet, MapCell};
+//! Her map, as the mini-map reads it (§1.3): its cells, each cell's picture with its flips, the
+//! cells it charts, whether she has collected it, and its beyond pictures.
 
 use crate::grid::{Flip, Picture};
+
+/// A cell of her map: column 0 to 63, row 0 to 31, from the top left (Notation).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct MapCell {
+    column: u8,
+    row: u8,
+}
+
+impl MapCell {
+    /// Her map's columns (Notation).
+    pub const COLUMNS: usize = 64;
+    /// Her map's rows (Notation).
+    pub const ROWS: usize = 32;
+
+    /// The cell at `column` and `row`, or `None` off her map.
+    #[must_use]
+    pub fn new(column: u8, row: u8) -> Option<Self> {
+        (usize::from(column) < Self::COLUMNS && usize::from(row) < Self::ROWS)
+            .then_some(Self { column, row })
+    }
+
+    /// Its column.
+    #[must_use]
+    pub const fn column(self) -> u8 {
+        self.column
+    }
+
+    /// Its row.
+    #[must_use]
+    pub const fn row(self) -> u8 {
+        self.row
+    }
+}
+
+/// A set of her map's cells: the explored cells (§1), or the cells a map charts.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct MapCellSet {
+    /// One word per row; bit `c` is the cell in column `c`.
+    rows: [u64; MapCell::ROWS],
+}
+
+impl MapCellSet {
+    /// No cells.
+    pub const EMPTY: Self = Self {
+        rows: [0; MapCell::ROWS],
+    };
+
+    /// The bit of `cell` within its row's word.
+    const fn bit(cell: MapCell) -> u64 {
+        1 << cell.column
+    }
+
+    /// Adds `cell` to the set.
+    pub fn insert(&mut self, cell: MapCell) {
+        if let Some(row) = self.rows.get_mut(usize::from(cell.row)) {
+            *row |= Self::bit(cell);
+        }
+    }
+
+    /// Whether `cell` is in the set.
+    #[must_use]
+    pub fn contains(&self, cell: MapCell) -> bool {
+        self.rows
+            .get(usize::from(cell.row))
+            .is_some_and(|row| row & Self::bit(cell) != 0)
+    }
+
+    /// The cells in the set, row by row from the top, each row left to right.
+    pub fn iter(&self) -> impl Iterator<Item = MapCell> + '_ {
+        (0..=u8::MAX)
+            .flat_map(|row| (0..=u8::MAX).filter_map(move |column| MapCell::new(column, row)))
+            .filter(|&cell| self.contains(cell))
+    }
+}
 
 /// The map's blank picture, `01F` (§1.4).
 const MAP_BLANK: Picture = Picture::new(0x01F);
@@ -51,7 +123,7 @@ impl BeyondCell {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct AreaMap {
     pictures: [[MapPicture; MapCell::COLUMNS]; MapCell::ROWS],
-    charted: CellSet,
+    charted: MapCellSet,
     collected: bool,
     beyond: [[MapPicture; BEYOND_COLUMNS]; MapCell::ROWS],
 }
@@ -68,7 +140,7 @@ impl AreaMap {
     pub const fn new() -> Self {
         Self {
             pictures: [[MapPicture::BLANK; MapCell::COLUMNS]; MapCell::ROWS],
-            charted: CellSet::EMPTY,
+            charted: MapCellSet::EMPTY,
             collected: false,
             beyond: [[MapPicture::BLANK; BEYOND_COLUMNS]; MapCell::ROWS],
         }

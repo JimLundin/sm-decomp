@@ -1,10 +1,9 @@
 //! The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the
 //! items' icons with the selection's highlight.
 
-use clean_types::Item;
-
 use crate::grid::{ColourSet, GridPos, HudGrid, Tile};
 use crate::inputs::{Ammo, Energy, FrameCount, FrameInputs, Reserve, ReserveMode, Status};
+use crate::item::SelectableItem;
 use crate::pictures::{
     BLANK, EMPTY_TANK, ENERGY_DIGITS, FULL_TANK, HIGHLIGHTED, PLAIN, RESERVE_SIGN, SIGN_DIM,
     SIGN_LIT, TANKS, ammo_digits, digit, icon,
@@ -44,7 +43,7 @@ pub fn draw_status_bar(
 /// Spec: OneShotFlash. After the highlight, the one-shot item's icon takes the plain colours for
 /// the first 16 frames of each 32 and the highlighted ones for the next 16, though it is the
 /// selected item.
-fn one_shot_flash(rules: &Rules, frame: FrameCount, grid: &mut HudGrid, item: Item) {
+fn one_shot_flash(rules: &Rules, frame: FrameCount, grid: &mut HudGrid, item: SelectableItem) {
     let colours = if rules.one_shot_flash.first_half(frame.0) {
         PLAIN
     } else {
@@ -112,7 +111,7 @@ fn reserve_sign(grid: &mut HudGrid, reserve: Reserve) {
 /// Spec: IconsAppear. A pickup draws its item's icon in the plain colours when the icon's
 /// top-left tile shows the blank's picture, whatever its colours; otherwise its tiles keep what
 /// they show.
-fn icon_appears(grid: &mut HudGrid, item: Item) {
+fn icon_appears(grid: &mut HudGrid, item: SelectableItem) {
     let tiles = icon(item);
     let blank = tiles
         .first()
@@ -128,7 +127,7 @@ fn icon_appears(grid: &mut HudGrid, item: Item) {
 /// Spec: SelectionHighlight. When the selected item isn't the one last shown, its icon takes the
 /// highlighted colours, the last shown's takes the plain ones, and the selected item becomes the
 /// one shown. Returns whether it moved.
-fn highlight(grid: &mut HudGrid, shown: &mut Shown, selected: Option<Item>) -> bool {
+fn highlight(grid: &mut HudGrid, shown: &mut Shown, selected: Option<SelectableItem>) -> bool {
     if selected == shown.selection {
         return false;
     }
@@ -144,7 +143,7 @@ fn highlight(grid: &mut HudGrid, shown: &mut Shown, selected: Option<Item>) -> b
 
 /// Spec: SelectionHighlight. An icon takes `colours`: each of its tiles keeps its picture and
 /// flips in the new colours, and a tile showing the blank keeps it.
-fn colour_icon(grid: &mut HudGrid, item: Item, colours: ColourSet) {
+fn colour_icon(grid: &mut HudGrid, item: SelectableItem, colours: ColourSet) {
     for placed in icon(item) {
         let tile = grid.tile(placed.pos);
         if tile != BLANK {

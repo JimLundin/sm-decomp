@@ -2,10 +2,10 @@
 //! its after. Any key the file's header doesn't define fails the vector.
 
 use clean_model_hud::{
-    Ammunition, AreaMap, BeyondCell, Boss, CancelButton, CellSet, ColourSet, Controls, Energy,
-    Equipped, Event, Flip, FrameCount, FrameInputs, GridPos, HudGrid, HudState, Item, MapCell,
+    Ammunition, AreaMap, BeyondCell, Boss, CancelButton, ColourSet, Controls, Energy, Equipped,
+    Event, Flip, FrameCount, FrameInputs, GridPos, HudGrid, HudState, MapCell, MapCellSet,
     MapPicture, MiniMapInputs, Mute, Pair, Picture, Reserve, ReserveMode, Room, Rules,
-    SelectButton, Selection, Shown, Status, Stock, Tile,
+    SelectButton, SelectableItem, Selection, Shown, Status, Stock, Tile,
 };
 
 use super::toml::{Table, Value, parse};
@@ -137,7 +137,7 @@ fn event_name(event: Event) -> String {
 }
 
 /// The name a vector gives an item, or none.
-fn item_name(item: Option<Item>) -> String {
+fn item_name(item: Option<SelectableItem>) -> String {
     item.map_or_else(|| "None".to_owned(), |item| format!("{item:?}"))
 }
 
@@ -358,7 +358,7 @@ fn state(before: &Table) -> Result<HudState, String> {
             selected: optional(before, "selection").map_or(Ok(None), item)?,
             one_shot: optional(before, "one_shot").map_or(Ok(None), item)?,
         },
-        explored: optional(before, "explored").map_or(Ok(CellSet::EMPTY), cells)?,
+        explored: optional(before, "explored").map_or(Ok(MapCellSet::EMPTY), cells)?,
     })
 }
 
@@ -458,7 +458,7 @@ fn tile_name(tile: Tile) -> String {
 }
 
 /// A set's cells as `[column, row]` pairs.
-fn cell_list(cells: &CellSet) -> Vec<[u8; 2]> {
+fn cell_list(cells: &MapCellSet) -> Vec<[u8; 2]> {
     cells
         .iter()
         .map(|cell| [cell.column(), cell.row()])
@@ -529,21 +529,21 @@ fn flip(letters: &str) -> Result<Flip, String> {
 }
 
 /// Reads an item, or `"None"`.
-fn item(value: &Value) -> Result<Option<Item>, String> {
+fn item(value: &Value) -> Result<Option<SelectableItem>, String> {
     match string(value)? {
         "None" => Ok(None),
-        "Missiles" => Ok(Some(Item::Missiles)),
-        "SuperMissiles" => Ok(Some(Item::SuperMissiles)),
-        "PowerBombs" => Ok(Some(Item::PowerBombs)),
-        "GrappleBeam" => Ok(Some(Item::GrappleBeam)),
-        "XRayScope" => Ok(Some(Item::XRayScope)),
+        "Missiles" => Ok(Some(SelectableItem::Missiles)),
+        "SuperMissiles" => Ok(Some(SelectableItem::SuperMissiles)),
+        "PowerBombs" => Ok(Some(SelectableItem::PowerBombs)),
+        "GrappleBeam" => Ok(Some(SelectableItem::GrappleBeam)),
+        "XRayScope" => Ok(Some(SelectableItem::XRayScope)),
         other => Err(format!("unknown item {other}")),
     }
 }
 
 /// Reads a set of `[column, row]` cells.
-fn cells(value: &Value) -> Result<CellSet, String> {
-    let mut set = CellSet::EMPTY;
+fn cells(value: &Value) -> Result<MapCellSet, String> {
+    let mut set = MapCellSet::EMPTY;
     for cell in array(value)? {
         set.insert(map_cell(cell)?);
     }

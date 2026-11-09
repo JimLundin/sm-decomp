@@ -1,9 +1,8 @@
 //! One frame of the HUD, and a boss's event outside a frame (§5: the order that matters).
 
-use clean_types::MapCell;
-
 use crate::events::Event;
 use crate::inputs::FrameInputs;
+use crate::map::MapCell;
 use crate::mini_map::{boss_turns_it_off, update, updates};
 use crate::rules::{Boss, Rules};
 use crate::state::HudState;

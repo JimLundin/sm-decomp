@@ -20,6 +20,7 @@ mod events;
 mod frame;
 mod grid;
 mod inputs;
+mod item;
 mod map;
 mod mini_map;
 mod pictures;
@@ -29,7 +30,7 @@ mod state;
 mod status_bar;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
-pub use clean_types::{CellSet, Checked, Item, Kind, MapCell, Pair, Switch};
+pub use clean_types::{Checked, Kind, Pair, Switch};
 pub use events::Event;
 pub use frame::FrameOutcome;
 pub use grid::{ColourSet, Flip, GridPos, HudGrid, Picture, Tile};
@@ -37,6 +38,7 @@ pub use inputs::{
     Ammo, Ammunition, CancelButton, Controls, Energy, Equipped, FrameCount, FrameInputs,
     MiniMapInputs, Mute, Reserve, ReserveMode, Room, SelectButton, Status, Stock,
 };
-pub use map::{AreaMap, BeyondCell, MapPicture};
+pub use item::SelectableItem;
+pub use map::{AreaMap, BeyondCell, MapCell, MapCellSet, MapPicture};
 pub use rules::{Alternation, Boss, BossScreens, Rules, Screen};
 pub use state::{HudState, Selection, Shown};

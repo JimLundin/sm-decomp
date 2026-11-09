@@ -1,9 +1,8 @@
 //! How Select, item cancel and a shot change the selection (§3).
 
-use clean_types::Item;
-
 use crate::events::Event;
 use crate::inputs::{CancelButton, Controls, SelectButton, Status};
+use crate::item::SelectableItem;
 use crate::state::Selection;
 
 impl Selection {
@@ -47,14 +46,14 @@ impl Selection {
 
 /// Spec: CyclingItems. The first item after `current` in the HUD's order that she has (an
 /// ammunition with a count, an item she has on), or `None` past the x-ray scope.
-fn next_item(current: Option<Item>, status: &Status) -> Option<Item> {
+fn next_item(current: Option<SelectableItem>, status: &Status) -> Option<SelectableItem> {
     let start = current.map_or(0, |item| {
-        Item::ORDER
+        SelectableItem::ORDER
             .iter()
             .position(|&other| other == item)
-            .map_or(Item::ORDER.len(), |at| at.saturating_add(1))
+            .map_or(SelectableItem::ORDER.len(), |at| at.saturating_add(1))
     });
-    Item::ORDER
+    SelectableItem::ORDER
         .iter()
         .skip(start)
         .copied()
