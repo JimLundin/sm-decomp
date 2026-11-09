@@ -47,23 +47,23 @@ samus-motion entry SlopesSlowTheWalk 0 0 0
 samus-motion entry TouchedCells 0 0 17868
 samus-motion entry OtherBlockKinds 0 0 0
 samus-motion entry WordwiseTopSpeed 0 0 0
-camera frames 25426 17835 0 6929
-camera field 17835 2780 position.x
-camera field 17625 2990 position.y
+camera frames 25426 18902 0 7458
+camera field 18902 1713 position.x
+camera field 18679 1936 position.y
 camera field 0 20615 seen
-camera entry FollowingHer 11402 11402 1543
-camera entry LeadingHer 8719 8719 855
-camera entry AimingHeight 6634 6634 909
-camera entry Remembering 17625 17625 2990
-camera entry CreepReadsRightward 330 330 61
-camera entry ClosedScreens 7827 7827 2455
-camera entry RoomEdges 14877 14877 2244
-camera entry ShortScreens 16572 16572 2794
-camera entry Settling 13791 13791 2652
+camera entry FollowingHer 11972 11972 973
+camera entry LeadingHer 9172 9172 402
+camera entry AimingHeight 6928 6928 615
+camera entry Remembering 18679 18679 1936
+camera entry CreepReadsRightward 384 384 7
+camera entry ClosedScreens 8881 8881 1401
+camera entry RoomEdges 15931 15931 1190
+camera entry ShortScreens 17626 17626 1740
+camera entry Settling 14678 14678 1765
 camera entry TimeStopped 113 113 6
 camera entry DownwardLooksAhead 1 1 0
 camera entry ScreensRunOn 0 0 0
-camera entry BelowTheRoom 3245 3245 383
+camera entry BelowTheRoom 3539 3539 89
 camera entry PushCarries 0 0 0
 progress frames 25426 25402 24 25399
 progress field 25426 0 items
