@@ -79,6 +79,11 @@ original's bytes as data.
   area for the debug rooms (area 7), so their item pickups report area 0's, Crateria. Taking an
   item reads no area (only a boss's, a map's and a station's reports do), so nothing differs; a
   report that reads one would have to name the debug area first.
+- **A scroll cell with no scroll reaction** (the blocks domain, `docs/behaviours/blocks.md`
+  `ScrollCells`; `$84:B3A6`): when she touches a scroll cell whose block no scroll PLM sits on,
+  the original searches the PLMs for one, finds none and loops for ever. The spec leaves such a
+  cell to the room's loading, which is to refuse the room. No room of the 44 cached rows has one;
+  a custom room could.
 
 ## The engine: memory a model keeps that the engine can't hold yet
 

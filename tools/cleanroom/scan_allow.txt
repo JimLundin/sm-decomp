@@ -172,3 +172,13 @@ pick up              # collecting an item
 # The camera's vocabulary (adversary 49, F2; root ruling, 2026-11-09).
 right edge           # the player's word for the view's or the room's right-hand edge
 facing right         # the player's word for which way she faces
+
+# The blocks a player names (blocks spec, 2026-11-08): the kinds every guide and the game's
+# own hint screens call by what breaks them.
+crumble block        # falls away under her feet
+shot block           # any shot breaks it
+bomb block           # a bomb's blast breaks it
+speed block          # the speed booster breaks it
+super missile block  # a super missile breaks it
+power bomb block     # a power bomb's blast breaks it
+grapple block        # her grapple holds it
