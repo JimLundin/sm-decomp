@@ -6,13 +6,18 @@
 //! [`Cache`] opens a row's directory, refuses it unless its pins are the lock row's, and
 //! gives its records in frame order. [`fold`] folds them through the recorder's span rules,
 //! so a cache can be checked against the lock it was taken for.
+//!
+//! A row recorded with watched instruction addresses also has `hits.txt` (a `# watched`
+//! line, then `frame pc line dot peek` per hit); [`Cache::record`] puts each frame's hits
+//! in its record, and [`Cache::watched`] names the addresses, so a frame without a hit on
+//! one is known not to have reached it.
 
 use crate::lock::{EngineRow, Frame, FrameCount, Row, Sha256, Stream};
 use core::fmt;
 use data::digest::Digest;
 use data::span::{self, PortAccess, PortDirection, SpanFold};
 use oracle_record::codec::{self, CodecError};
-use oracle_record::{ApuAccessKind, Cut, FrameRecord, NmiKind, PpuRegisters};
+use oracle_record::{ApuAccessKind, Beam, Cut, FrameRecord, Hit, NmiKind, PpuRegisters};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -148,6 +153,49 @@ pub struct Cache {
     entries: Vec<Entry>,
     pictures: bool,
     records: Vec<u8>,
+    /// The addresses `hits.txt` watched, and its hits by frame; empty without it.
+    watched: Vec<u32>,
+    hits: BTreeMap<u64, Vec<Hit>>,
+}
+
+/// The watched addresses and the hits by frame of a `hits.txt`.
+type Hits = (Vec<u32>, BTreeMap<u64, Vec<Hit>>);
+
+fn parse_hits(path: &Path, text: &str) -> Result<Hits, CacheError> {
+    let malformed = |line: usize| CacheError::Malformed {
+        path: path.to_owned(),
+        line,
+    };
+    let mut lines = text.lines().enumerate();
+    let watched = lines
+        .next()
+        .and_then(|(_, line)| line.strip_prefix("# watched "))
+        .ok_or_else(|| malformed(1))?
+        .split(',')
+        .map(|pc| u32::from_str_radix(pc, 16).map_err(|_| malformed(1)))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut hits: BTreeMap<u64, Vec<Hit>> = BTreeMap::new();
+    for (number, line) in lines.filter(|(_, line)| !line.starts_with('#')) {
+        let bad = || malformed(number.saturating_add(1));
+        let fields: Vec<&str> = line.split(' ').collect();
+        let [frame, pc, v, h, peek] = fields[..] else {
+            return Err(bad());
+        };
+        let hit = Hit {
+            pc: u32::from_str_radix(pc, 16).map_err(|_| bad())?,
+            beam: Beam {
+                v: v.parse().map_err(|_| bad())?,
+                h: h.parse().map_err(|_| bad())?,
+            },
+            peek: u32::from_str_radix(peek, 16)
+                .map_err(|_| bad())?
+                .to_le_bytes(),
+        };
+        hits.entry(frame.parse().map_err(|_| bad())?)
+            .or_default()
+            .push(hit);
+    }
+    Ok((watched, hits))
 }
 
 /// The pins and entries an index holds.
@@ -268,10 +316,25 @@ impl Cache {
             return Err(CacheError::Stale(*pin));
         }
         let records = read(directory.join("records.bin"))?;
+        let hits_path = directory.join("hits.txt");
+        let (watched, hits) = match std::fs::read(&hits_path) {
+            Ok(text) => parse_hits(&hits_path, &String::from_utf8_lossy(&text))?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                (Vec::new(), BTreeMap::new())
+            }
+            Err(error) => {
+                return Err(CacheError::Io {
+                    path: hits_path,
+                    error,
+                });
+            }
+        };
         Ok(Self {
             entries: index.entries,
             pictures: index.pictures,
             records,
+            watched,
+            hits,
         })
     }
 
@@ -285,6 +348,12 @@ impl Cache {
     #[must_use]
     pub const fn pictures(&self) -> bool {
         self.pictures
+    }
+
+    /// The instruction addresses the row was recorded watching (none without `hits.txt`).
+    #[must_use]
+    pub fn watched(&self) -> &[u32] {
+        &self.watched
     }
 
     /// The bytes the records take.
@@ -311,6 +380,10 @@ impl Cache {
         })?;
         if record.index != entry.frame.0 || CutKind::of(record.cut) != entry.cut {
             return Err(CacheError::Mismatch(entry.frame));
+        }
+        let mut record = record;
+        if let Some(hits) = self.hits.get(&entry.frame.0) {
+            record.hits.clone_from(hits);
         }
         Ok(record)
     }
@@ -505,5 +578,32 @@ mod tests {
     fn a_malformed_index_names_its_line() {
         let parsed = parse_index(Path::new("index.txt"), &index("maybe"));
         assert!(matches!(parsed, Err(CacheError::Malformed { line: 7, .. })));
+    }
+
+    #[test]
+    fn a_hits_file_gives_the_watched_addresses_and_each_frames_hits() {
+        let text = "# watched 90bf25,8081a6\n# frame pc line dot peek\n3 90bf25 40 512 0000a201\n3 8081a6 41 8 00000000\n7 90bf25 2 0 00000000\n";
+        let parsed = parse_hits(Path::new("hits.txt"), text);
+        let Ok((watched, hits)) = parsed else {
+            return assert!(parsed.is_ok());
+        };
+        assert_eq!(watched, [0x90_BF25, 0x80_81A6]);
+        assert_eq!(hits.keys().copied().collect::<Vec<_>>(), [3, 7]);
+        assert_eq!(
+            hits.get(&3).and_then(|frame| frame.first()),
+            Some(&Hit {
+                pc: 0x90_BF25,
+                beam: Beam { v: 40, h: 512 },
+                peek: [0x01, 0xA2, 0x00, 0x00],
+            })
+        );
+        assert_eq!(hits.get(&3).map(Vec::len), Some(2));
+    }
+
+    #[test]
+    fn a_malformed_hit_names_its_line() {
+        let text = "# watched 90bf25\n# frame pc line dot peek\n3 90bf25 40\n";
+        let parsed = parse_hits(Path::new("hits.txt"), text);
+        assert!(matches!(parsed, Err(CacheError::Malformed { line: 3, .. })));
     }
 }

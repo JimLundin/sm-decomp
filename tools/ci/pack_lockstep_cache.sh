@@ -4,8 +4,9 @@
 #
 #   tools/ci/pack_lockstep_cache.sh <cache-dir> <rom> [out-dir]
 #
-# <cache-dir> holds one directory per ratchet row (index.txt, records.bin). The
-# rows are those scenarios/locks/lockstep.ratchet.txt names. The tar is
+# <cache-dir> holds one directory per row (index.txt, records.bin, and hits.txt
+# when it was recorded with watches). The rows are those
+# scenarios/locks/lockstep.ratchet.txt names, or those ROWS lists. The tar is
 # deterministic, so its name is a hash of its contents: the same cache packs to
 # the same name. xz -9e because the records are snapshots of nearly the same
 # state: 627 MB pack to about 1 MB, and the runner unpacks them in seconds.
@@ -31,8 +32,13 @@ if [ "$(sha256sum <"$rom" | cut -d' ' -f1)" != "$rom_sha256" ]; then
   exit 1
 fi
 
-# The ratchet's `row ROW ticks N equal N` lines name the rows.
-mapfile -t rows < <(sed -nE 's/^row ([a-z0-9-]+) .*/\1/p' "$ratchet" | sort -u)
+# The ratchet's `row ROW ticks N equal N` lines name the rows, unless ROWS lists others
+# (a harness cache: every row the harnesses read).
+if [ -n "${ROWS:-}" ]; then
+  read -ra rows <<<"$ROWS"
+else
+  mapfile -t rows < <(sed -nE 's/^row ([a-z0-9-]+) .*/\1/p' "$ratchet" | sort -u)
+fi
 for row in "${rows[@]}"; do
   for file in index.txt records.bin; do
     if [ ! -f "$cache/$row/$file" ]; then

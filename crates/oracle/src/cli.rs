@@ -944,7 +944,7 @@ fn dump_frame(directory: &Path, id: &str, frame: u64, record: &FrameRecord) {
 fn corpus(arguments: &[String]) {
     let [rom, lock, data, rest @ ..] = arguments else {
         fail(
-            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories] [--cache DIR [--cache-pictures]]",
+            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories] [--cache DIR [--cache-pictures]]",
         )
     };
     let scenarios = Path::new(lock)
@@ -966,6 +966,7 @@ fn corpus(arguments: &[String]) {
     let mut backend = String::new();
     let mut native_seeds: Option<PathBuf> = None;
     let mut watched: Vec<usize> = Vec::new();
+    let mut watched_pcs: Vec<u32> = Vec::new();
     let mut pads: Option<FramePads> = None;
     let mut lean = false;
     let mut cache: Option<PathBuf> = None;
@@ -1058,6 +1059,23 @@ fn corpus(arguments: &[String]) {
                     );
                 }
             }
+            "--watch-pcs" => {
+                // Instruction addresses (24-bit hex) whose hits each record
+                // carries, printed per frame and kept in a --cache's hits.txt
+                // (LakeSnes watches the first 32).
+                let list = options
+                    .next()
+                    .unwrap_or_else(|| fail("--watch-pcs ADDR,..."));
+                for address in list.split(',') {
+                    watched_pcs.push(
+                        u32::from_str_radix(
+                            address.trim_start_matches('$').replace(':', "").as_str(),
+                            16,
+                        )
+                        .unwrap_or_else(|_| fail(format!("--watch-pcs: {address}"))),
+                    );
+                }
+            }
             "--limit" => {
                 limit = options
                     .next()
@@ -1147,6 +1165,7 @@ fn corpus(arguments: &[String]) {
                 .map_or(crate::corpus::Pads::Ticks, crate::corpus::Pads::Frames),
             lean,
             tiers,
+            watch: &watched_pcs,
             ..crate::corpus::Observe::default()
         };
         let mut last: Vec<Option<u16>> = vec![None; watched.len()];
@@ -1165,6 +1184,7 @@ fn corpus(arguments: &[String]) {
         let mut end: Vec<u8> = Vec::new();
         let mut cached = cache.as_deref().map(|root| {
             crate::cache::Writer::create(root, &entry.id, cache_pictures)
+                .map(|writer| writer.watching(&watched_pcs))
                 .unwrap_or_else(|error| fail(format!("{}: {error}", root.display())))
         });
         let mut watch = |record: &FrameRecord| {
@@ -1172,6 +1192,12 @@ fn corpus(arguments: &[String]) {
                 writer
                     .push(record)
                     .unwrap_or_else(|error| fail(format!("{}: cache: {error}", entry.id)));
+            }
+            for hit in &record.hits {
+                println!(
+                    "  {} frame {frame}: pc ${:06x} at {},{}",
+                    entry.id, hit.pc, hit.beam.v, hit.beam.h
+                );
             }
             for (address, last) in watched.iter().zip(last.iter_mut()) {
                 let value = word(&record.wram, *address);

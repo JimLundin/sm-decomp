@@ -6,6 +6,11 @@
 //! (`frame offset length cut`). The index is written last, so a row that failed part way
 //! has no index and a reader refuses it. ROM-derived: the cache stays in `$TEMP`.
 //!
+//! A run that watched instruction addresses also writes `hits.txt`: a `# watched` line
+//! naming them, then one `frame pc line dot peek` line per hit (hex pc and peek). The hits
+//! stay out of `records.bin`, so a row recorded again with watches has the same records
+//! as without, and an earlier cache gains its hits by the file alone.
+//!
 //! `verify::cache` reads it.
 
 use crate::record::FrameRecord;
@@ -37,6 +42,8 @@ pub struct Writer {
     offset: u64,
     index: String,
     frames: u64,
+    /// The watched addresses and the hits so far, when the run watches any.
+    hits: Option<String>,
 }
 
 impl Writer {
@@ -61,7 +68,18 @@ impl Writer {
             offset: 0,
             index: String::new(),
             frames: 0,
+            hits: None,
         })
+    }
+
+    /// Keep the hits on `addresses` in `hits.txt` (none watched: no file).
+    #[must_use]
+    pub fn watching(mut self, addresses: &[u32]) -> Self {
+        self.hits = (!addresses.is_empty()).then(|| {
+            let list: Vec<String> = addresses.iter().map(|pc| format!("{pc:06x}")).collect();
+            format!("# watched {}\n# frame pc line dot peek\n", list.join(","))
+        });
+        self
     }
 
     /// Append the row's next frame.
@@ -71,7 +89,26 @@ impl Writer {
     /// The file system's error.
     pub fn push(&mut self, record: &FrameRecord) -> std::io::Result<()> {
         self.scratch.clear();
-        codec::encode(record, self.pictures, &mut self.scratch);
+        if let Some(hits) = self.hits.as_mut() {
+            for hit in &record.hits {
+                let _ = writeln!(
+                    hits,
+                    "{} {:06x} {} {} {:08x}",
+                    self.frames,
+                    hit.pc,
+                    hit.beam.v,
+                    hit.beam.h,
+                    u32::from_le_bytes(hit.peek)
+                );
+            }
+        }
+        if record.hits.is_empty() {
+            codec::encode(record, self.pictures, &mut self.scratch);
+        } else {
+            let mut without = record.clone();
+            without.hits.clear();
+            codec::encode(&without, self.pictures, &mut self.scratch);
+        }
         self.records.write_all(&self.scratch)?;
         let length = u64::try_from(self.scratch.len()).unwrap_or(u64::MAX);
         let _ = writeln!(
@@ -106,6 +143,14 @@ impl Writer {
             self.frames,
             self.index,
         );
+        let hits_path = self.directory.join("hits.txt");
+        match &self.hits {
+            Some(hits) => std::fs::write(&hits_path, hits)?,
+            None => match std::fs::remove_file(&hits_path) {
+                Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error),
+                Ok(()) | Err(_) => {}
+            },
+        }
         std::fs::write(self.directory.join("index.txt"), text)?;
         Ok(self.offset)
     }

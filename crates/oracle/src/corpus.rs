@@ -165,7 +165,13 @@ pub fn run_row_with(
         }
         (None, None) => Start::PowerOn { wram_fill: 0x55 },
     };
-    let mut oracle = Backend::open(observing.backend, rom, start)?;
+    let mut oracle = Backend::open_watching(
+        observing.backend,
+        rom,
+        start,
+        observing.watch,
+        observing.peek,
+    )?;
     match (&mut oracle, &native_seed) {
         (Backend::Lsnes(lsnes), Some(seed)) => seed.apply(lsnes)?,
         (Backend::LakeSnes(_), Some(_)) => {
@@ -174,7 +180,6 @@ pub fn run_row_with(
         (_, None) => {}
     }
     oracle.set_tiers(observing.tiers);
-    oracle.set_watch(observing.watch, observing.peek);
     if let Backend::Lsnes(lsnes) = &mut oracle {
         lsnes.memories = !observing.lean;
         // lsnes takes its stream tiers by request, before the first step.

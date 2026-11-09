@@ -147,6 +147,27 @@ impl Backend {
         }
     }
 
+    /// [`Backend::open`], with a hit recorded whenever the CPU reaches one
+    /// of `addresses`, and `peek`'s four bytes with it where the backend can
+    /// read them (LakeSnes; lsnes takes the addresses at start and peeks nothing).
+    pub fn open_watching(
+        name: &str,
+        rom: &[u8],
+        start: Start,
+        addresses: &[u32],
+        peek: u32,
+    ) -> Result<Self, OracleError> {
+        match name {
+            "lsnes" => lsnes::Lsnes::open_watching(rom, start, addresses)
+                .map(|oracle| Self::Lsnes(Box::new(oracle))),
+            _ => {
+                let mut oracle = lakesnes::LakeSnes::open(rom, start)?;
+                oracle.set_watch(addresses, peek);
+                Ok(Self::LakeSnes(Box::new(oracle)))
+            }
+        }
+    }
+
     pub fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
         match self {
             Self::LakeSnes(oracle) => oracle.step(pad),

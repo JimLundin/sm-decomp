@@ -23,9 +23,14 @@
 //! (rebuilt from bsnes's decoded fields, with the DMA channels; `nmitimen`,
 //! `htime`, `vtime`, `hdmaen` and `memsel` stay at their defaults).
 //!
+//! Watched-PC hits come from the server's trace (`OH_TRACE`, asked for at
+//! start by [`Lsnes::open_watching`]): each with its beam position, split
+//! between records at the cut (the NMI handler's RTI, or the frame boundary),
+//! and without the four peeked WRAM bytes, which the trace doesn't carry.
+//!
 //! Not recorded by this backend: the SPC state (lsnes exposes SPC700 and DSP
 //! only as raw core structs), the instruction profile, the PPU register write
-//! log, watched-PC hits, the per-line forced blank, `overscan` and the old
+//! log, the hits' peeks, the per-line forced blank, `overscan` and the old
 //! lock's `legacy_ppu_digest`.
 //!
 //! A saved state is lsnes's own, taken at the frame boundary that ends the
@@ -36,7 +41,7 @@
 //! state was saved inside).
 
 use crate::record::lsnes::RawPicture;
-use crate::record::{FrameRecord, MAX_LINES, Pad, Picture, WIDTH, shown_channel};
+use crate::record::{Beam, Cut, FrameRecord, Hit, MAX_LINES, Pad, Picture, WIDTH, shown_channel};
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -53,6 +58,8 @@ const WRAM: usize = 0x2_0000;
 /// error goes; lsnes then keeps running without a script) lands there too.
 const STDERR: &str = "stderr.txt";
 const LUA_LOG: &str = "lua.log";
+/// The server's watched-PC trace, in the run's directory.
+const TRACE_LOG: &str = "trace.log";
 /// lsnes's configuration directory, inside the run's directory. lsnes takes
 /// it from `APPDATA` (`%APPDATA%/lsnes`); a shared one races when several
 /// processes start in the same second, and the loser stops at a fatal
@@ -149,6 +156,135 @@ pub struct Lsnes {
     pub memories: bool,
     /// The pad of the step after the coming one, from [`Lsnes::preview`].
     next_pad: Option<Pad>,
+    /// The watched-PC trace, when the run watches any address.
+    trace: Option<Trace>,
+}
+
+/// The server's trace of watched instruction addresses (`OH_TRACE_LOG`): a
+/// `pc ADDRESS LINE DOT` line per hit and a `cut FRAME` line as each record
+/// is sent. The trace watches the NMI handler's RTI too, which marks the cut:
+/// - an NMI that outlasts lsnes's frame boundary is cut and sent at its RTI,
+///   by the server's own callback, which runs before the trace's: that RTI's
+///   line opens the next record's lines;
+/// - an NMI that returns before the boundary is cut at its RTI and sent at
+///   the boundary: hits between them ran in the next frame.
+struct Trace {
+    log: PathBuf,
+    /// How many bytes of the log the earlier steps read.
+    read: usize,
+    /// The NMI handler's RTI.
+    rti: u32,
+    /// Hits after the last record's cut, carried into the next record.
+    carried: Vec<Hit>,
+    /// A resumed run's first RTI returns from the NMI its state was saved
+    /// inside: the server's counts restart there, and so do the hits.
+    dangling: bool,
+}
+
+/// One line of the trace.
+enum TraceLine {
+    Hit(Hit),
+    Cut,
+}
+
+impl Trace {
+    fn parse(line: &str) -> Option<TraceLine> {
+        let mut fields = line.split(' ');
+        match fields.next()? {
+            "cut" => Some(TraceLine::Cut),
+            "pc" => {
+                let pc = u32::from_str_radix(fields.next()?, 16).ok()?;
+                let v = fields.next()?.parse().ok()?;
+                let h = fields.next()?.parse().ok()?;
+                Some(TraceLine::Hit(Hit {
+                    pc,
+                    beam: Beam { v, h },
+                    peek: [0; 4],
+                }))
+            }
+            _ => None,
+        }
+    }
+
+    /// The hits of the record just announced, cut at `cut`: the log's new
+    /// lines up to its `cut` line, without the RTI that sent the record before
+    /// (past the boundary), and less those after an RTI before the boundary,
+    /// which ran in the next frame and are carried to it.
+    fn take(&mut self, cut: Cut) -> Result<Vec<Hit>, Cause> {
+        let text = std::fs::read(&self.log).map_err(|error| Cause::Record(error.to_string()))?;
+        let text = String::from_utf8_lossy(text.get(self.read..).unwrap_or_default()).into_owned();
+        let mut lines = Vec::new();
+        let mut consumed = None;
+        let mut at = 0;
+        for line in text.split_inclusive('\n') {
+            at += line.len();
+            match Self::parse(line.trim_end()) {
+                Some(TraceLine::Hit(hit)) => lines.push(hit),
+                Some(TraceLine::Cut) => {
+                    consumed = Some(at);
+                    break;
+                }
+                None => return Err(Cause::Record(format!("trace: {}", line.trim_end()))),
+            }
+        }
+        let consumed = consumed.ok_or_else(|| Cause::Record("trace: no cut line".into()))?;
+        self.read += consumed;
+        if self.dangling
+            && let Some(first) = lines.iter().position(|hit| hit.pc == self.rti)
+        {
+            self.dangling = false;
+            lines.drain(..=first);
+        }
+        if lines
+            .first()
+            .is_some_and(|hit| hit.pc == self.rti && hit.beam.v >= BOUNDARY_LINE)
+        {
+            lines.remove(0);
+        }
+        let mut hits = std::mem::take(&mut self.carried);
+        let returned = lines.iter().rposition(|hit| hit.pc == self.rti);
+        if let (Cut::NmiReturn(_), Some(at)) = (cut, returned) {
+            self.carried = lines.split_off(at + 1);
+        }
+        hits.extend(lines.into_iter().filter(|hit| hit.pc != self.rti));
+        Ok(hits)
+    }
+}
+
+/// lsnes's frame boundary, where a frame without an NMI is cut and an NMI
+/// still running makes its record wait for the RTI.
+const BOUNDARY_LINE: u16 = 241;
+
+/// The handler's epilogue the server cuts at: `PLY PLX PLA PLD PLB RTI`.
+const EPILOGUE: [u8; 6] = [0x7A, 0xFA, 0x68, 0x2B, 0xAB, 0x40];
+
+/// The NMI handler's RTI in the unheadered LoROM `rom`, found as the server
+/// finds it: the native NMI vector's `REP #$30; JML` and the handler's one
+/// epilogue within 200h bytes.
+fn nmi_rti(rom: &[u8]) -> Option<u32> {
+    let byte = |address: u32| {
+        let offset = (((address >> 16) & 0x7F) << 15) | (address & 0x7FFF);
+        usize::try_from(offset)
+            .ok()
+            .and_then(|offset| rom.get(offset))
+            .copied()
+    };
+    let vector = u32::from(byte(0xFFEA)?) | (u32::from(byte(0xFFEB)?) << 8);
+    let entry: Vec<u8> = (0..6).map(|at| byte(vector + at)).collect::<Option<_>>()?;
+    let [0xC2, 0x30, 0x5C, low, high, bank] = entry[..] else {
+        return None;
+    };
+    let handler = u32::from(low) | (u32::from(high) << 8) | (u32::from(bank) << 16);
+    let span = u32::try_from(0x200 - EPILOGUE.len()).ok()?;
+    let mut found = (handler..handler + span).filter(|&at| {
+        EPILOGUE
+            .iter()
+            .zip(at..)
+            .all(|(&value, address)| byte(address) == Some(value))
+    });
+    let at = found.next()?;
+    let last = u32::try_from(EPILOGUE.len() - 1).ok()?;
+    found.next().is_none().then_some(at + last)
 }
 
 /// A little-endian word to write at a work-RAM offset (`$7E:0000` + offset).
@@ -307,6 +443,114 @@ fn decode_picture(width: usize, height: usize, rgb: &[u8]) -> Picture {
 }
 
 impl Lsnes {
+    /// [`Oracle::open`], recording a hit whenever the CPU reaches one of
+    /// `addresses` (24-bit; instruction starts only, since lsnes's exec
+    /// callback fires on operand fetches too) in [`FrameRecord::hits`],
+    /// without the peek.
+    ///
+    /// # Errors
+    ///
+    /// As [`Oracle::open`], and [`OracleError::Rom`] for a ROM whose NMI
+    /// handler has no single epilogue.
+    pub fn open_watching(rom: &[u8], start: Start, addresses: &[u32]) -> Result<Self, OracleError> {
+        Self::spawn(rom, start, addresses)
+    }
+
+    fn spawn(rom: &[u8], start: Start, watch: &[u32]) -> Result<Self, OracleError> {
+        let directory = Self::directory();
+        std::fs::create_dir_all(&directory).map_err(|_| OracleError::Rom)?;
+        let rom_path = directory.join("game.sfc");
+        let script = directory.join("server.lua");
+        std::fs::write(&rom_path, rom).map_err(|_| OracleError::Rom)?;
+        std::fs::write(&script, SERVER).map_err(|_| OracleError::Rom)?;
+        let mut command = Command::new(executable());
+        let resumed = matches!(start, Start::State(_));
+        match start {
+            Start::PowerOn { wram_fill: 0x55 } => {}
+            // bsnes v085 always fills work RAM with 0x55.
+            Start::PowerOn { .. } => return Err(OracleError::Rom),
+            Start::State(state) => {
+                let path = directory.join("start.lss");
+                std::fs::write(&path, state).map_err(|_| OracleError::State)?;
+                // Given on the command line, a state's core type (snes_ntsc)
+                // mismatches the ROM's (SNES) and lsnes hangs; the server
+                // loads it before the first frame instead.
+                command.env("OH_START", &path);
+            }
+            Start::Capture(_) => {
+                return Err(OracleError::Seed(
+                    "lsnes resumes only its own states".into(),
+                ));
+            }
+        }
+        let stderr = std::fs::File::create(directory.join(STDERR)).map_err(|_| OracleError::Rom)?;
+        let config = directory.join(CONFIG);
+        std::fs::create_dir_all(&config).map_err(|_| OracleError::Rom)?;
+        let trace = if watch.is_empty() {
+            None
+        } else {
+            let rti = nmi_rti(rom).ok_or(OracleError::Rom)?;
+            let log = directory.join(TRACE_LOG);
+            let list: Vec<String> = watch
+                .iter()
+                .chain([&rti])
+                .map(|address| format!("{address:06x}"))
+                .collect();
+            command
+                .env("OH_TRACE", list.join(","))
+                .env("OH_TRACE_LOG", &log);
+            Some(Trace {
+                log,
+                read: 0,
+                rti,
+                carried: Vec::new(),
+                dangling: resumed,
+            })
+        };
+        let mut child = command
+            .arg(format!("--rom={}", rom_path.display()))
+            .arg(format!("--lua={}", script.display()))
+            .arg("--unpause")
+            .current_dir(&directory)
+            .env("OH_RECORD", directory.join("record.bin"))
+            .env("OH_LOG", directory.join(LUA_LOG))
+            .env("APPDATA", &config)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(stderr)
+            .spawn()
+            .map_err(|_| OracleError::Rom)?;
+        let (Some(requests), Some(stdout)) = (child.stdin.take(), child.stdout.take()) else {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(OracleError::Rom);
+        };
+        let (sender, replies) = mpsc::channel();
+        // Ends when lsnes closes its standard output, or the oracle is gone.
+        std::thread::spawn(move || {
+            for line in BufReader::new(stdout).lines() {
+                if sender.send(line).is_err() {
+                    break;
+                }
+            }
+        });
+        Ok(Self {
+            child,
+            requests,
+            replies,
+            failed: None,
+            directory,
+            record: crate::record::lsnes::blank(),
+            steps: 0,
+            saves: 0,
+            raw: Vec::new(),
+            keep: std::env::var_os("SM_LSNES_KEEP").is_some(),
+            memories: true,
+            next_pad: None,
+            trace,
+        })
+    }
+
     fn directory() -> PathBuf {
         let unique = format!(
             "oracle-lsnes-{}-{}",
@@ -428,75 +672,7 @@ impl Oracle for Lsnes {
     }
 
     fn open(rom: &[u8], start: Start) -> Result<Self, OracleError> {
-        let directory = Self::directory();
-        std::fs::create_dir_all(&directory).map_err(|_| OracleError::Rom)?;
-        let rom_path = directory.join("game.sfc");
-        let script = directory.join("server.lua");
-        std::fs::write(&rom_path, rom).map_err(|_| OracleError::Rom)?;
-        std::fs::write(&script, SERVER).map_err(|_| OracleError::Rom)?;
-        let mut command = Command::new(executable());
-        match start {
-            Start::PowerOn { wram_fill: 0x55 } => {}
-            // bsnes v085 always fills work RAM with 0x55.
-            Start::PowerOn { .. } => return Err(OracleError::Rom),
-            Start::State(state) => {
-                let path = directory.join("start.lss");
-                std::fs::write(&path, state).map_err(|_| OracleError::State)?;
-                // Given on the command line, a state's core type (snes_ntsc)
-                // mismatches the ROM's (SNES) and lsnes hangs; the server
-                // loads it before the first frame instead.
-                command.env("OH_START", &path);
-            }
-            Start::Capture(_) => {
-                return Err(OracleError::Seed(
-                    "lsnes resumes only its own states".into(),
-                ));
-            }
-        }
-        let stderr = std::fs::File::create(directory.join(STDERR)).map_err(|_| OracleError::Rom)?;
-        let config = directory.join(CONFIG);
-        std::fs::create_dir_all(&config).map_err(|_| OracleError::Rom)?;
-        let mut child = command
-            .arg(format!("--rom={}", rom_path.display()))
-            .arg(format!("--lua={}", script.display()))
-            .arg("--unpause")
-            .current_dir(&directory)
-            .env("OH_RECORD", directory.join("record.bin"))
-            .env("OH_LOG", directory.join(LUA_LOG))
-            .env("APPDATA", &config)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(stderr)
-            .spawn()
-            .map_err(|_| OracleError::Rom)?;
-        let (Some(requests), Some(stdout)) = (child.stdin.take(), child.stdout.take()) else {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err(OracleError::Rom);
-        };
-        let (sender, replies) = mpsc::channel();
-        // Ends when lsnes closes its standard output, or the oracle is gone.
-        std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines() {
-                if sender.send(line).is_err() {
-                    break;
-                }
-            }
-        });
-        Ok(Self {
-            child,
-            requests,
-            replies,
-            failed: None,
-            directory,
-            record: crate::record::lsnes::blank(),
-            steps: 0,
-            saves: 0,
-            raw: Vec::new(),
-            keep: std::env::var_os("SM_LSNES_KEEP").is_some(),
-            memories: true,
-            next_pad: None,
-        })
+        Self::spawn(rom, start, &[])
     }
 
     fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
@@ -547,6 +723,12 @@ impl Oracle for Lsnes {
         if let Err(cause) = self.decode(&bytes) {
             return Err(self.fail(cause));
         }
+        if let Some(trace) = self.trace.as_mut() {
+            match trace.take(self.record.cut) {
+                Ok(hits) => self.record.hits = hits,
+                Err(cause) => return Err(self.fail(cause)),
+            }
+        }
         self.raw = bytes;
         self.record.index = self.steps;
         self.steps += 1;
@@ -568,6 +750,8 @@ impl Oracle for Lsnes {
         }
     }
 
+    /// The server takes its watched addresses at start:
+    /// [`Lsnes::open_watching`] sets them.
     fn set_watch(&mut self, _addresses: &[u32], _peek: u32) {}
 }
 
@@ -591,4 +775,69 @@ impl Drop for Lsnes {
 /// version a format-2 lock entry is keyed by (docs/ORACLE.md, RELOCK §2).
 pub fn server_sha256() -> String {
     crate::ladder::hex(&crate::ladder::sha256(SERVER.as_bytes()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::record::{Nmi, NmiKind};
+
+    const RTI: u32 = 0x80_9601;
+
+    fn nmi_return() -> Cut {
+        Cut::NmiReturn(Nmi {
+            kind: NmiKind::Requested,
+            interrupted_pc: 0x80_8343,
+            polled: true,
+        })
+    }
+
+    fn trace(log: &Path, dangling: bool) -> Trace {
+        Trace {
+            log: log.to_owned(),
+            read: 0,
+            rti: RTI,
+            carried: Vec::new(),
+            dangling,
+        }
+    }
+
+    fn pcs(hits: &[Hit]) -> Vec<u32> {
+        hits.iter().map(|hit| hit.pc).collect()
+    }
+
+    /// An RTI past the boundary sent the record before: its frame's hits
+    /// follow it. An RTI before the boundary cut this record: the hits after
+    /// it belong to the next. A resumed run drops what ran before its first RTI.
+    #[test]
+    fn the_trace_splits_its_hits_at_each_cut() {
+        let directory = std::env::temp_dir().join(format!("trace-test-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&directory);
+        let log = directory.join("trace.log");
+        let owed = "pc 900000 10 0\npc 809601 250 0\npc 900001 20 0\ncut 1\npc 809601 244 0\npc 900002 88 0\ncut 2\n";
+        let early =
+            "pc 900003 30 0\npc 809601 235 0\npc 900004 238 0\ncut 3\npc 900005 50 0\ncut 4\n";
+        let written = std::fs::write(&log, format!("{owed}{early}"));
+        assert!(written.is_ok());
+        let mut resumed = trace(&log, true);
+        let steps: Vec<Option<Vec<u32>>> = [
+            nmi_return(),
+            nmi_return(),
+            nmi_return(),
+            Cut::VblankWithoutNmi,
+        ]
+        .into_iter()
+        .map(|cut| resumed.take(cut).ok().as_deref().map(pcs))
+        .collect();
+        assert_eq!(
+            steps,
+            [
+                Some(vec![0x90_0001]),
+                Some(vec![0x90_0002]),
+                Some(vec![0x90_0003]),
+                Some(vec![0x90_0004, 0x90_0005]),
+            ]
+        );
+        let _ = std::fs::remove_dir_all(&directory);
+    }
 }

@@ -90,6 +90,14 @@ adds three streams; otherwise records are unchanged.
 - **PPU registers:** rebuilt from bsnes's decoded fields in `memory.getregisters()`, without
   `nmitimen`, `htime`, `vtime`, `hdmaen` and `memsel`.
 
+**Watched-PC hits** (`corpus --watch-pcs`, `Lsnes::open_watching`) come from the server's trace
+(`OH_TRACE`, `OH_TRACE_LOG`), so the server script and its SHA-256 stay as they are: an exec
+callback per address logs `pc ADDRESS LINE DOT`, and each record sent logs `cut FRAME`. The client
+watches the NMI handler's RTI too and splits the log there: a hit after the RTI and before the
+record is sent ran in the next frame, so it goes to the next record; a resumed run drops what ran
+before its first RTI, as the server's counts do. lsnes hits carry no peek (`peek` is 0). Watch
+instruction starts only: lsnes's exec callback fires on operand fetches too.
+
 The lsnes cut is the interrupted instruction reached again with the stack restored. The server
 finds the NMI handler's one `PLY PLX PLA PLD PLB RTI` from the ROM (`$80:9601`), takes the cut when
 S equals the NMI's S, and derives the registers after the RTI. A frame without an NMI is cut at
@@ -375,7 +383,7 @@ with `LIBRARY_PATH` set). Where Defender blocks fresh executables, run the CLI a
 | Command | Does |
 | --- | --- |
 | `oracle movie ROM INPUTS [--oracle lsnes] [--frames N] [--from STATE FRAME] [--lag-log CSV] [--seeds CSV DIR] [--native-seeds CSV DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--no-picture] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
-| `oracle corpus ROM scenarios/lock.toml DATA [--oracle lsnes] [--native-seeds DIR] [--frame-pads DIR \| --from-frame-pads DIR] [--record-v2 FILE] [--sidecar DIR] [--dump-frames ROW:F,...] [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--watch-words ADDR,...]` | runs rows: pads, format-2 recordings, the lockstep record cache |
+| `oracle corpus ROM scenarios/lock.toml DATA [--oracle lsnes] [--native-seeds DIR] [--frame-pads DIR \| --from-frame-pads DIR] [--record-v2 FILE] [--sidecar DIR] [--dump-frames ROW:F,...] [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--watch-words ADDR,...] [--watch-pcs ADDR,...]` | runs rows: pads, format-2 recordings, the lockstep record cache; prints watched words when they change and watched instruction hits per frame |
 | `oracle cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams] [--right-from STATE STEP]` | LakeSnes against lsnes, part by part per step |
 | `oracle measure ROM LOCK DATA ID...`, `oracle measure-movie ROM INPUTS FRAMES`, `oracle trace` | the measurements |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
@@ -389,7 +397,10 @@ with `LIBRARY_PATH` set). Where Defender blocks fresh executables, run the CLI a
 re-lock inputs only. `DATA/<bundle stem>/movies/<inputs>` holds the inputs. The **record cache**
 (`--cache OUT`) holds `OUT/<row>/records.bin` (every `FrameRecord` in `oracle_record::codec`'s
 encoding) and `index.txt` (the lock pins and one `frame offset length cut` line per frame);
-`verify::cache` refuses a cache whose pins differ from the lock row.
+`verify::cache` refuses a cache whose pins differ from the lock row. A row recorded with
+`--watch-pcs` also has `hits.txt`: `# watched` and the addresses, then `frame pc line dot peek`
+per hit. The hits stay out of `records.bin`, so a row recorded again with watches has the same
+records byte for byte, and `verify::cache::Cache::record` puts each frame's hits back.
 
 ## 7. Data: the ROM, bundles and the cipher
 
