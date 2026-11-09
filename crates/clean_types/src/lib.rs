@@ -701,3 +701,159 @@ pub struct StationId(pub u16);
 /// never a `DoorId`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Entrance(pub u16);
+
+/// A table with one entry for each member of the enum `K`, read and changed as `table[member]`.
+pub type Table<K, V> = EnumMap<K, V>;
+
+/// The last picture of a room's tileset: pictures are numbered `000` to `3FF` (blocks' notation).
+pub const LAST_PICTURE: u16 = 0x3FF;
+
+/// One of the room's tileset's pictures, by its index, `000` to `3FF`. Which picture a number is
+/// belongs to the tileset; the models only set the number.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Picture(u16);
+
+impl Picture {
+    /// The picture of this index, if the tileset has one (`000` to `3FF`).
+    #[must_use]
+    pub const fn new(index: u16) -> Option<Self> {
+        if index <= LAST_PICTURE {
+            Some(Self(index))
+        } else {
+            None
+        }
+    }
+
+    /// Its index in the tileset.
+    #[must_use]
+    pub const fn index(self) -> u16 {
+        self.0
+    }
+}
+
+/// How a picture is flipped as a cell shows it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Flip {
+    /// As it is.
+    None,
+    /// Flipped across: left for right.
+    Across,
+    /// Flipped down: top for bottom.
+    Down,
+    /// Flipped across and down.
+    Both,
+}
+
+/// A look: the picture a cell shows, and how it is flipped (blocks' notation, `312:x`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Look {
+    /// The tileset's picture.
+    pub picture: Picture,
+    /// How it is flipped.
+    pub flip: Flip,
+}
+
+impl Look {
+    /// The same picture, not flipped.
+    #[must_use]
+    pub const fn unflipped(self) -> Self {
+        Self {
+            picture: self.picture,
+            flip: Flip::None,
+        }
+    }
+}
+
+/// The kind of one screen of the room, which decides what the camera's view may show of it; what
+/// each kind lets the view show is the camera's.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ScreenKind {
+    /// A closed screen.
+    Closed,
+    /// An open screen.
+    Open,
+    /// A short screen.
+    Short,
+}
+
+/// A screen of the room: x its column, y its row, counted from the room's top-left.
+pub type Screen = Pair<u16>;
+
+/// A point of her body that samus-motion reports the cells of, listed top to bottom.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Point {
+    /// Her top edge.
+    Top,
+    /// Her centre.
+    Centre,
+    /// Her bottom edge.
+    Bottom,
+}
+
+/// What reaches a cell when her weapons or her grapple meet the room. Listed alphabetically;
+/// the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
+pub enum HitBy {
+    /// A beam.
+    Beam,
+    /// A bomb's blast.
+    Bomb,
+    /// The grapple beam.
+    Grapple,
+    /// A missile.
+    Missile,
+    /// A power bomb's blast.
+    PowerBomb,
+    /// A super missile.
+    SuperMissile,
+}
+
+/// How she moves, as the blocks she touches tell (her other domains decide it).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
+pub enum Motion {
+    /// At the speed booster's full speed.
+    Dashing,
+    /// Shinesparking.
+    Shinesparking,
+    /// Spinning in a screw attack (not every pose in which the screw attack hurts).
+    ScrewAttacking,
+}
+
+/// A reaction's family: which rules start it. Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
+pub enum Family {
+    /// A bomb block.
+    Bomb,
+    /// A crumble block.
+    Crumble,
+    /// A power bomb block.
+    PowerBomb,
+    /// A shot block.
+    Shot,
+    /// A speed block.
+    Speed,
+    /// A super missile block.
+    SuperMissile,
+}
+
+/// The family whose blocks a cell marked `Nothing` is met as. Listed alphabetically.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
+pub enum MetAs {
+    /// Met as bomb blocks.
+    Bomb,
+    /// Met as crumble blocks.
+    Crumble,
+    /// Met as shot blocks.
+    Shot,
+}
+
+/// One of a reaction's scripts. Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
+pub enum Script {
+    /// What it does when it breaks.
+    Broken,
+    /// What a bomb that doesn't break it does: it shows itself.
+    Revealed,
+    /// What a bomb block does when her touch breaks it.
+    Touched,
+}
