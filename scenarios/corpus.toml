@@ -1302,3 +1302,54 @@ id = "enemy-etecoon-run-left"
 start = "seed:1ef87bac8d9ca6cb1623cb89d94654c8396cf4b179954ee69c640bc5ef10bc04"
 ticks = 513
 facts = ["room:9AD9", "probe:etecoon.look_right_run_left"]
+
+# The movie from a 100% seed for as many frames as reach one progress report and
+# the HUD's pickups (oracle rows for docs/behaviours/progress.decode.md and hud.decode.md).
+# The event Zebes awake (0) at 152, a door opened at 169.
+[[scenario]]
+id = "event-zebes-awake"
+start = "seed:4269d14c32d19a916d8666fe5ccb64ee6231e6c117fb28da468b805a876e2135"
+ticks = 180
+facts = ["room:975C"]
+
+# An energy tank taken at 240.
+[[scenario]]
+id = "item-energy-tank"
+start = "seed:4149792ab97d3781be5527562c4bebf1c5ba5b25302e3bee01f8582289cbc6a6"
+ticks = 260
+facts = ["room:990D"]
+
+# Two missile tanks (112, 658) and a reserve tank (1212, the reserve mode set).
+[[scenario]]
+id = "item-reserve-tank"
+start = "seed:1d4bebf61e253a7fee2fc20a79d4a6377faf59ea0574d735db9a5473f7759fbd"
+ticks = 1230
+facts = ["room:9C07"]
+
+# The one-shot item set (212-216), the shot's cancel (248), a missile tank (296), the charge beam (902).
+[[scenario]]
+id = "item-charge-beam"
+start = "seed:36262820f622d995ea44ad6162fa8bace23adb165f3d26b06cf4104761297808"
+ticks = 897
+facts = ["room:9D19"]
+
+# The wave beam taken at 37.
+[[scenario]]
+id = "item-wave-beam"
+start = "seed:cf9249a38227658aae6216cfa495663e8f3de653b2a0cd06bd981e56cff22bf6"
+ticks = 60
+facts = ["room:ADDE"]
+
+# The plasma beam taken at 146, spazer switched off.
+[[scenario]]
+id = "item-plasma-beam"
+start = "seed:6a88909509e2481e69f8e012dbeecd0a780dfe4732ea8351a8142250eac45ce7"
+ticks = 170
+facts = ["room:D2AA"]
+
+# Kraid's fight, Kraid defeated at 1059, the door into room A6E2 at 1133.
+[[scenario]]
+id = "boss-kraid-defeated"
+start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+ticks = 1092
+facts = ["room:A6E2"]

@@ -12721,3 +12721,143 @@ streams.apu = ["c796eada314f79f3"]
 streams.video = ["4ba1d8e7db6edf16"]
 streams.timing = ["f18b73ff083767b8"]
 streams.wram = ["5c90d82be1846c58"]
+
+[[row]]
+id = "event-zebes-awake"
+start = "100-input-phase:23"
+seed_record = "1038d6b613f87499056093b48cae098adac45078cfb987fd6bc6d7601184c22e"
+pads = "1202de1e60b3efad3e45dfcb21dbb900a99f4a9e87d36893e22d08baf73efdd9"
+frames = 180
+ticks = 180
+overruns = []
+nmi_off = []
+facts = { "room:975C" = "unevaluated" }
+streams.vram = ["29cdc35e2db3cb38"]
+streams.cgram = ["3fe3e0cd12610867"]
+streams.oam = ["839b56d95d58abbe"]
+streams.sram = ["4420a6635c38ae5f"]
+streams.ppu = ["17cc001a89881e6a"]
+streams.apu = ["bebc82809d289711"]
+streams.video = ["03efeb4f589d0498"]
+streams.timing = ["b1c1c5815862cdce"]
+streams.wram = ["7dec9fa18bd90817"]
+
+[[row]]
+id = "item-charge-beam"
+start = "100-input-phase:55"
+seed_record = "0a857220495f761dc7f0f5471968b10b49564b14a752849f1c1e60de7833df1b"
+pads = "e51a0cd2fb8afd8c17db1c46620ecbaf8feaa73c97b0f1712e048ae49f7d08ad"
+frames = 920
+ticks = 897
+overruns = ["67", "78", "81", "84", "119", "121", "123", "125", "127", "129", "131", "133", "749", "761", "763", "765", "767", "769", "771", "773", "775", "777", "779"]
+nmi_off = []
+facts = { "room:9D19" = "unevaluated" }
+streams.vram = ["28601f80c80dedd6"]
+streams.cgram = ["8773f8bc5992e9ed"]
+streams.oam = ["87470de019d930dc"]
+streams.sram = ["88549888ea2f010d"]
+streams.ppu = ["19b385739b371635"]
+streams.apu = ["b6764c56d018b6c9"]
+streams.video = ["de57d4c7f168d0ec"]
+streams.timing = ["897ff517deb77b90"]
+streams.wram = ["0eef3a46dfc89820"]
+
+[[row]]
+id = "boss-kraid-defeated"
+start = "100-input-phase:73"
+seed_record = "91f1aaf73016436f12fc3511cebf1088b0c4afc5ea5eb6520a7103266869e63b"
+pads = "0912f4c7b13642268f64f008c2a8c6162de756e553f047d2727b702d313b2539"
+frames = 1140
+ticks = 1092
+overruns = ["545", "583", "626", "647", "663", "769", "772", "774", "780", "782", "784", "786", "800", "859-863", "1037", "1093", "1095-1096", "1098-1099", "1101-1102", "1104-1105", "1107-1108", "1110-1111", "1113-1114", "1116-1117", "1119-1120", "1122-1123", "1125-1126", "1128-1129", "1136-1139"]
+nmi_off = []
+facts = { "room:A6E2" = "unevaluated" }
+streams.vram = ["f20e73dcf2c7abdc", "7326f2891b4db19a"]
+streams.cgram = ["aa829f11cfdef258", "ff332d370c2b2037"]
+streams.oam = ["2f80a3fdb3207f35", "12d6e8b47fee6421"]
+streams.sram = ["70b63f409c7cabaa", "b4bf8b512eaa4a38"]
+streams.ppu = ["8c1449c6ffb1effa", "24bd5b27e4c31ab9"]
+streams.apu = ["dd9fa56069e8c120", "572e66f56c8c1dec"]
+streams.video = ["fd7554f59d1e6416", "e9c1621b1a0770ca"]
+streams.timing = ["6fea3206a1603d44", "07f3ba9e7fdc515e"]
+streams.wram = ["4dfee70408a3a3d2", "c96926aabcd51071"]
+
+[[row]]
+id = "item-energy-tank"
+start = "100-input-phase:30"
+seed_record = "5d88f921799a7f2d3b8a11ede14eedd371e72325dd2f61c7a602e890285aa22e"
+pads = "7269de639ad0778a5eb498e7c1fe377b507e58097ad4484f50334e54f586ee06"
+frames = 260
+ticks = 260
+overruns = []
+nmi_off = []
+facts = { "room:990D" = "unevaluated" }
+streams.vram = ["98e3046c1af23ab2"]
+streams.cgram = ["d0a7172479a67a69"]
+streams.oam = ["2967237e13c07924"]
+streams.sram = ["b972742af78ac27e"]
+streams.ppu = ["08749e3f47b60d5e"]
+streams.apu = ["4bcf3b146aafdfbd"]
+streams.video = ["46ac324c5045feb8"]
+streams.timing = ["ab3def8ec53644b5"]
+streams.wram = ["38eefc4c88e885ec"]
+
+[[row]]
+id = "item-wave-beam"
+start = "100-input-phase:104"
+seed_record = "300b9e59b8be2e498223ab91d99c4059d09e671657ae24036f8e718f5433c52a"
+pads = "8262fe3a64c76a0c572fa71ed4707d74f1317816a26363acc5dc5fd625e43d88"
+frames = 60
+ticks = 60
+overruns = []
+nmi_off = []
+facts = { "room:ADDE" = "unevaluated" }
+streams.vram = ["b2979fc8f364a715"]
+streams.cgram = ["16ed71aae8a1f116"]
+streams.oam = ["0d888648ea563d64"]
+streams.sram = ["ac2d9a58df15b11f"]
+streams.ppu = ["7deea24d93dabcbe"]
+streams.apu = ["7e3f74615ffe23fb"]
+streams.video = ["bc0165c3dda26309"]
+streams.timing = ["5de190b486b59d57"]
+streams.wram = ["59735e1b7db122c7"]
+
+[[row]]
+id = "item-reserve-tank"
+start = "100-input-phase:36"
+seed_record = "5b5998b61e98e711f1d9f5423cce96a90530e4ded5e9e3698c4192f17c40f844"
+pads = "58ae0430cbdd3f10460dcb790e5362e99c5eabed8c1c8818168eb11899289977"
+frames = 1230
+ticks = 1230
+overruns = []
+nmi_off = []
+facts = { "room:9C07" = "unevaluated" }
+streams.vram = ["0c7f17da30440877", "a5be4bdb28ed386f"]
+streams.cgram = ["2e074100dd3b10d3", "bb06a175f086e4e3"]
+streams.oam = ["ba74943c80317a88", "7d52a9e187b9af1c"]
+streams.sram = ["9e39c4b3f13e4028", "c634ff62b6963020"]
+streams.ppu = ["ef1533e6a661ee59", "d8218646ef26e8ba"]
+streams.apu = ["47a65bd75d95510e", "60a6b411fe0c889f"]
+streams.video = ["6f7e999063b00f23", "30e06cde69c253b1"]
+streams.timing = ["a8b6fa5def529019", "79ac81036ee8872a"]
+streams.wram = ["3eacfa859f7885cb", "2cb1d813efbb9cc9"]
+
+[[row]]
+id = "item-plasma-beam"
+start = "100-input-phase:249"
+seed_record = "0b1349e0aca722627a3eb7bd84594575af862d7482ec01f37d8e3c021f2eede7"
+pads = "ab25707f5fe96d44cfd82938575daec58bd229c2f94427a28ad822e40609dd3e"
+frames = 170
+ticks = 170
+overruns = []
+nmi_off = []
+facts = { "room:D2AA" = "unevaluated" }
+streams.vram = ["12306b88ae301186"]
+streams.cgram = ["979aef6497657910"]
+streams.oam = ["ba367bd9a0a12728"]
+streams.sram = ["ceca776f09ef8dff"]
+streams.ppu = ["f0233bc272458eaf"]
+streams.apu = ["85665f76881a6ccf"]
+streams.video = ["b488bdcdd62a3961"]
+streams.timing = ["2352f594274b493e"]
+streams.wram = ["f86d4c40b78a166f"]

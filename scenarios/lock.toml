@@ -11,6 +11,7 @@ bundles = [
     { name = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", sha256 = "5d139284193bc61443855b0fa82128abf44e66f2ad03a7dd5360bbbbef582f03" },
     { name = "full-route-chain-v1-72e0f64e0d47b53d.tar.gz.enc", sha256 = "72e0f64e0d47b53d5110cb8c31e13571c14bc95684696aa8ce7f62c05a6f6dc1" },
     { name = "layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc", sha256 = "d4050aa32a965168653e68a2389145af6aa6f2cd5666bec5eec7c737ffef874b" },
+    { name = "scenes-v1-e11b60febee65946.tar.gz.enc", sha256 = "1b5ddb9404521fef36f6281dc445b1d4d6c9c95651da930809d208cf97fd712e" },
     { name = "seeds-v1-acidhand-263f82ef4a26cef1.tar.gz.enc", sha256 = "263f82ef4a26cef1e419f99df61631a394add848940f0e3c4621167b0a856e13" },
     { name = "seeds-v1-coverage-54f838bfd8146bf7.tar.gz.enc", sha256 = "54f838bfd8146bf76d631d567299b0721adbc1c4065584e9de5f3e19632ccb21" },
     { name = "seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc", sha256 = "42b93bf0bf83aba1dd10fc24ca7d5f5b639c65e501e06ce2239c7c638c2a0ce8" },
@@ -65,6 +66,7 @@ pins = [
     { id = "boss-draygon-tail-whip", bundle = "seeds-v1-offroute-4b5962a5bc7f6aaa.tar.gz.enc", seed = "low-input-phase:129", inputs = "authored-draygon-held.inputs", input_sha256 = "04a5cdab779fb74c0ca5d93603eb9365f3d5ed88ec9ced18ec60c717400d18d5" },
     { id = "boss-golden-torizo", bundle = "seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc", seed = "golden-input-phase:1", inputs = "seed-golden-torizo.inputs", input_sha256 = "fe331aac2f3650b33fbaa64dfc555ccbbd7c904e9fe574fbe1babb3c8dd04c34" },
     { id = "boss-kraid", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:73", inputs = "seed-boss-kraid.inputs", input_sha256 = "0429b534282d0ebda01e51763168035cdbe888466830abf5714e61899db4d7f8" },
+    { id = "boss-kraid-defeated", bundle = "scenes-v1-e11b60febee65946.tar.gz.enc", seed = "100-input-phase:73", inputs = "boss-kraid-defeated.inputs", input_sha256 = "0c4d937f1c47b9fd708eb9777d15c364dc36fd159d70a33d0228cb4e6f45cc8a" },
     { id = "boss-kraid-pause-1030", bundle = "seeds-v1-kraid-pause-52ba63dc0b528e28.tar.gz.enc", seed = "100-input-phase:73", inputs = "authored-boss-kraid-pause-1030.inputs", input_sha256 = "b26751a216f06daf946517c8429743991f069b6918da975fab65d7d89cab196a" },
     { id = "boss-kraid-pause-1960", bundle = "seeds-v1-kraid-pause-52ba63dc0b528e28.tar.gz.enc", seed = "100-input-phase:73", inputs = "authored-boss-kraid-pause-1960.inputs", input_sha256 = "027b7113e118f7d8fb38b4427cf8f97889caef16063aba0cdf9505865cf7f367" },
     { id = "boss-kraid-pause-400", bundle = "seeds-v1-kraid-pause-52ba63dc0b528e28.tar.gz.enc", seed = "100-input-phase:73", inputs = "authored-boss-kraid-pause-400.inputs", input_sha256 = "258ecc2135a3e0933ca3a87434a08fbff4e63bded460b4589881329671fdb3ff" },
@@ -651,6 +653,7 @@ pins = [
     { id = "enemy-spike-platform", bundle = "seeds-v1-routeenemies-ad7fd75a7035bea2.tar.gz.enc", seed = "100-input-phase:198", inputs = "seed-spike-platform-cb8b.inputs", input_sha256 = "ad7c886db80dd758d57d85571c4a8cfcff01f058637e25f84da7a1f204fa91c9" },
     { id = "enemy-tatori-touch", bundle = "seeds-v1-enemies-dd825e69ee36457f.tar.gz.enc", seed = "scenario-tatori-touch:221", inputs = "authored-tatori-touch.inputs", input_sha256 = "7869003bd5baadcbdad24e24d606bc95b1d4c388bb58b6e41a35318974235fa5" },
     { id = "enemy-yapping-maw", bundle = "seeds-v1-routeenemies-ad7fd75a7035bea2.tar.gz.enc", seed = "100-input-phase:308", inputs = "seed-yapping-maw-92b3.inputs", input_sha256 = "1eda5ce5e67b1b488afd80bb65b7c24a08fe5612b7bdf87a3cc47846989b5110" },
+    { id = "event-zebes-awake", bundle = "scenes-v1-e11b60febee65946.tar.gz.enc", seed = "100-input-phase:23", inputs = "event-zebes-awake.inputs", input_sha256 = "49a1c6f2d94ff7963bfb1d6c17c74c54afb04a328017e1e9b59dbd56acfc8b72" },
     { id = "file-copy-clear", bundle = "seeds-v1-file-copy-51a67d39af3c9628.tar.gz.enc", seed = "scenario-one-energy-crocomire:142", inputs = "authored-file-copy-clear.inputs", input_sha256 = "507fd14b02f9c9d31098422a91fadf87ed1f097de036b1bb867fad0deadab903" },
     { id = "golden-orb-spawn-parameter", bundle = "seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc", seed = "golden-input-phase:1", inputs = "seed-golden-torizo.inputs", input_sha256 = "fe331aac2f3650b33fbaa64dfc555ccbbd7c904e9fe574fbe1babb3c8dd04c34" },
     { id = "golden-original-wait", bundle = "seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc", seed = "golden-input-phase:1", inputs = "seed-golden-torizo.inputs", input_sha256 = "fe331aac2f3650b33fbaa64dfc555ccbbd7c904e9fe574fbe1babb3c8dd04c34" },
@@ -658,12 +661,16 @@ pins = [
     { id = "ice-return-business", bundle = "seeds-v1-reseeded-bf1451e13f4e2680.tar.gz.enc", seed = "100-input-phase:163", inputs = "authored-ice-return-business.inputs", input_sha256 = "98d50c95f90c4bbd829fad9d16ccb58776dd20f7ea8f73f443a60fca3e6d283b" },
     { id = "item-bombs", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:27", inputs = "seed-item-bombs.inputs", input_sha256 = "83bfd2e9ba9286ac3e7afef9677b2d9f55def390ac0a077d92d4dd686684151f" },
     { id = "item-charge", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:55", inputs = "seed-item-charge.inputs", input_sha256 = "57341da0bba3efb76d84775b8c377ad22136a6a063eaa8d29b012e6bf7dfc54c" },
+    { id = "item-charge-beam", bundle = "scenes-v1-e11b60febee65946.tar.gz.enc", seed = "100-input-phase:55", inputs = "item-charge-beam.inputs", input_sha256 = "18a025d9b7778f4d1cbdcb6ae08fddeab54f8ddc090c033a551a6a78ee45e961" },
+    { id = "item-energy-tank", bundle = "scenes-v1-e11b60febee65946.tar.gz.enc", seed = "100-input-phase:30", inputs = "item-energy-tank.inputs", input_sha256 = "ebfd12b46971639c519c5e22b3a28926d37ff5ffef31e3872c83f1fe2b5efd0a" },
     { id = "item-grapple", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "100-input-phase:148", inputs = "seed-grapple.inputs", input_sha256 = "0dff1cc309ddf23e3a7fba10ceb30b4b7de2e7d7f18e2501dab2e30d988d8b02" },
     { id = "item-gravity", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "100-input-phase:212", inputs = "seed-gravity.inputs", input_sha256 = "d6c5da06bfe3cf7bfa6e3753abeb27c8ef3006d051d040e9562cc507e0259e00" },
     { id = "item-hi-jump", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:85", inputs = "seed-item-hi-jump.inputs", input_sha256 = "841f0f1116fbaedf95c1be8f37de917fe625deee4cdb130df1f0eba86ecd26bb" },
     { id = "item-ice", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:163", inputs = "seed-ice.inputs", input_sha256 = "60c52571107060f4a303f471395c9e57b174ff4928a9a7c81d9e2c914ade42be" },
     { id = "item-morph-ball", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:17", inputs = "seed-item-morph-ball.inputs", input_sha256 = "3091dcd8621efbdadf285cb42ba548d3eaae6d96bae5837c19d1f76fbafbb8e8" },
     { id = "item-plasma", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "any-boundary:134", inputs = "seed-plasma.inputs", input_sha256 = "8cafeaae7e8fdd1500aabc42a89a13ee243709e22598110d9b56550b93d0a484" },
+    { id = "item-plasma-beam", bundle = "scenes-v1-e11b60febee65946.tar.gz.enc", seed = "100-input-phase:249", inputs = "item-plasma-beam.inputs", input_sha256 = "df3eaaaf14dcf85f8353123553892b01da653cc18691d5bdb0ed039a491cc732" },
+    { id = "item-reserve-tank", bundle = "scenes-v1-e11b60febee65946.tar.gz.enc", seed = "100-input-phase:36", inputs = "item-reserve-tank.inputs", input_sha256 = "8c23ed84cf27c540f61cf169d1b2cd0f579856e3dfdc9e9e8fa6f34a8a5e877f" },
     { id = "item-screw-attack", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "100-boundary:131", inputs = "seed-screw-attack.inputs", input_sha256 = "70d97c6219384a2c982a5e482095d49b42ae24e4f84fd273aacf8f523b52aa01" },
     { id = "item-space-jump", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "100-boundary:260", inputs = "seed-space-jump.inputs", input_sha256 = "a50f19a46b89b310a412155002fde5d4501df5b45164341c6e957f01d3fd7524" },
     { id = "item-spazer", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:173", inputs = "seed-item-spazer.inputs", input_sha256 = "f6c558df6347866008cf390d8e825e7b555f4a427062e15db8182863cff8f705" },
@@ -671,6 +678,7 @@ pins = [
     { id = "item-spring-ball", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "100-boundary:239", inputs = "seed-spring-ball.inputs", input_sha256 = "36c12519c80042f7e885ed7004e98c400f759716c952f97af957d613da9f4e26" },
     { id = "item-varia", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:74", inputs = "seed-item-varia.inputs", input_sha256 = "8482ac742c8dabd6f9967facbc159090ed370a59cffa91692c317789956bf2a2" },
     { id = "item-wave", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:104", inputs = "seed-wave.inputs", input_sha256 = "f1725b4ccd8d99694ef9bc995df5ea104a7f2302c5039b2e698d22f795dcd425" },
+    { id = "item-wave-beam", bundle = "scenes-v1-e11b60febee65946.tar.gz.enc", seed = "100-input-phase:104", inputs = "item-wave-beam.inputs", input_sha256 = "1375cb7e3cce45f4cc29eddf4344bb2aa635aa913f0d3adf404f9453fa5ef794" },
     { id = "item-x-ray", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "any-boundary:50", inputs = "seed-xray.inputs", input_sha256 = "b75d8c13210382cd93d1a136c71b9c78e466cc5e6ca41e385486bfb860ab3517" },
     { id = "mother-brain-baby-metroid-drain", bundle = "seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc", seed = "100-mb-phases:327", inputs = "seed-mother-brain-baby-metroid-drain.inputs", input_sha256 = "e5dfed658652da7037e02db0ab8112ac10d4ac007247842cc56d9a7edf332cbd" },
     { id = "mother-brain-baby-metroid-sacrifice", bundle = "seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc", seed = "100-mb-phases:328", inputs = "seed-mother-brain-baby-metroid-sacrifice.inputs", input_sha256 = "55fb211aea3aeeebdfe1de89b5a74752503e128f708b3cd1e4139ddb5a03dac1" },
@@ -8381,3 +8389,69 @@ ticks = 261
 combined = "0075dc8f4b8e8add"
 digests = { "wram" = "3b7d796dcfe70fb9", "sram" = "74800512e9d2f552", "vram" = "656b9da2d8111a8b", "cgram" = "60aecc1da7667735", "oam" = "38bb4e1208a8878c", "ppu" = "f795cbadb842c275", "video" = "f6dc4013398bba25", "apu" = "245b8ac0887558ba", "input" = "18743b751fd08b9a", "samus" = "c2cd93beb8b4567f", "camera" = "67f55e65e0836da2", "room" = "1af0fad17fea8fe2", "progress" = "8286963d93595ac3", "actors" = "b61c04a963a5fa5b", "effects" = "12781897ea18d49d" }
 marks = {  }
+
+# Rows recorded on lsnes alone (lane scenes): the movie's own pads from each seed, played
+# --from-frame-pads (the bundle's pads/ and inputs are the same per-frame words, not Tick
+# words). No faithful digests: their lock is scenarios/locks/lsnes.toml.
+[[scenario]]
+id = "event-zebes-awake"
+oracle = "faithful"
+start = "seed:4269d14c32d19a916d8666fe5ccb64ee6231e6c117fb28da468b805a876e2135"
+inputs = "49a1c6f2d94ff7963bfb1d6c17c74c54afb04a328017e1e9b59dbd56acfc8b72"
+frames = 180
+format = 1
+ticks = 180
+
+[[scenario]]
+id = "item-energy-tank"
+oracle = "faithful"
+start = "seed:4149792ab97d3781be5527562c4bebf1c5ba5b25302e3bee01f8582289cbc6a6"
+inputs = "ebfd12b46971639c519c5e22b3a28926d37ff5ffef31e3872c83f1fe2b5efd0a"
+frames = 260
+format = 1
+ticks = 260
+
+[[scenario]]
+id = "item-reserve-tank"
+oracle = "faithful"
+start = "seed:1d4bebf61e253a7fee2fc20a79d4a6377faf59ea0574d735db9a5473f7759fbd"
+inputs = "8c23ed84cf27c540f61cf169d1b2cd0f579856e3dfdc9e9e8fa6f34a8a5e877f"
+frames = 1230
+format = 1
+ticks = 1230
+
+[[scenario]]
+id = "item-charge-beam"
+oracle = "faithful"
+start = "seed:36262820f622d995ea44ad6162fa8bace23adb165f3d26b06cf4104761297808"
+inputs = "18a025d9b7778f4d1cbdcb6ae08fddeab54f8ddc090c033a551a6a78ee45e961"
+frames = 920
+format = 1
+ticks = 897
+
+[[scenario]]
+id = "item-wave-beam"
+oracle = "faithful"
+start = "seed:cf9249a38227658aae6216cfa495663e8f3de653b2a0cd06bd981e56cff22bf6"
+inputs = "1375cb7e3cce45f4cc29eddf4344bb2aa635aa913f0d3adf404f9453fa5ef794"
+frames = 60
+format = 1
+ticks = 60
+
+[[scenario]]
+id = "item-plasma-beam"
+oracle = "faithful"
+start = "seed:6a88909509e2481e69f8e012dbeecd0a780dfe4732ea8351a8142250eac45ce7"
+inputs = "df3eaaaf14dcf85f8353123553892b01da653cc18691d5bdb0ed039a491cc732"
+frames = 170
+format = 1
+ticks = 170
+
+[[scenario]]
+id = "boss-kraid-defeated"
+oracle = "faithful"
+start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+inputs = "0c4d937f1c47b9fd708eb9777d15c364dc36fd159d70a33d0228cb4e6f45cc8a"
+frames = 1140
+format = 1
+ticks = 1092

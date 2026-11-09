@@ -319,7 +319,7 @@ fn the_committed_lsnes_lock_reads() {
         .expect("the committed lock parses");
     assert_eq!(lock.header.oracle.emulator, "lsnes-bsnes");
     assert_eq!(lock.header.bundles.len(), 1);
-    assert_eq!(lock.rows.len(), 635);
+    assert_eq!(lock.rows.len(), 642);
     assert!(lock.row(&RowId("area-brinstar".to_owned())).is_some());
     assert!(lock.row(&RowId("item-morph-ball".to_owned())).is_some());
 }
