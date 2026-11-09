@@ -30,11 +30,11 @@ How it is counted:
 | Domain | Model score | Budget | Fit | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 7,219 | 6,924 | 1.04 | 12,724 | 3,415 | 1,203 | 17,988 | 226 |
-| camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,902 | 80 |
+| camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
 | progress | 2,013 | 878 | 2.29 | - | 678 | 335 | 25,402 | 63 |
 | hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 532 | - | - | - | 357 | 89 | - | - |
-| total | 14,730 | 11,373 | 1.30 | - | 6,162 | 2,455 | 82,905 | 431 |
+| total | 14,730 | 11,373 | 1.30 | - | 6,162 | 2,455 | 82,906 | 431 |
 
 ## Models
 
@@ -189,12 +189,12 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | bridge | 4 | 2,691 | 3,314 | 257 | 12 | 81 | 0 | 497 |
 | samus-motion | harness | 1 | 4,275 | 4,701 | 457 | 222 | 218 | 17 | 801 |
 | camera | bridge | 1 | 593 | 797 | 21 | 1 | 2 | 0 | 125 |
-| camera | harness | 1 | 3,734 | 4,100 | 550 | 173 | 170 | 27 | 731 |
+| camera | harness | 1 | 3,845 | 4,213 | 562 | 175 | 179 | 27 | 747 |
 | progress | bridge | 1 | 1,338 | 1,551 | 57 | 69 | 63 | 0 | 230 |
 | progress | harness | 1 | 4,484 | 4,618 | 634 | 407 | 416 | 31 | 760 |
 | hud | bridge | 1 | 1,870 | 2,173 | 100 | 9 | 62 | 0 | 333 |
 | hud | harness | 1 | 3,160 | 3,403 | 518 | 135 | 196 | 22 | 584 |
-| total | | | 22,145 | 24,657 | 2,594 | 1,028 | 1,208 | 96 | 4,061 |
+| total | | | 22,256 | 24,770 | 2,606 | 1,030 | 1,217 | 96 | 4,077 |
 
 ## Harness floors and vectors
 
@@ -205,7 +205,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | area-brinstar | 476 | 476 | 476 | 476 |
 | area-maridia | 252 | 257 | 428 | 257 |
 | area-norfair | 208 | 208 | 374 | 208 |
-| boss-kraid-defeated | 1,013 | 1,067 | 1,137 | 1,069 |
+| boss-kraid-defeated | 1,013 | 1,068 | 1,137 | 1,069 |
 | boss-phantoon | 1,898 | 1,984 | 2,107 | 2,062 |
 | chain-0012-91F8 | 421 | 422 | 1,031 | 1,031 |
 | chain-0013-92FD | 595 | 599 | 599 | 599 |
@@ -246,7 +246,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-walljump-22 | 161 | 163 | 163 | 163 |
 | samus-walljump-28 | 167 | 169 | 169 | 169 |
 | terrain-quicksand | 332 | 450 | 456 | 450 |
-| total | 17,988 in 44 rows | 18,902 in 44 rows | 25,402 in 44 rows | 20,613 in 44 rows |
+| total | 17,988 in 44 rows | 18,903 in 44 rows | 25,402 in 44 rows | 20,613 in 44 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
@@ -262,7 +262,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 | Domain | Frames | Matched and verified | Unverified | Null model |
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 25,426 | 17,988 | 0 | 6,606 |
-| camera | 25,426 | 18,902 | 0 | 7,458 |
+| camera | 25,426 | 18,903 | 0 | 7,458 |
 | progress | 25,426 | 25,402 | 24 | 25,399 |
 | hud | 25,426 | 20,613 | 0 | 17,975 |
 
@@ -279,7 +279,7 @@ Per declared field, the compared frames on which it was compared and those on wh
 | samus-motion | vertical_speed | 17,809 | 443 |
 | samus-motion | vertical | 18,201 | 51 |
 | samus-motion | bounce | 18,252 | 0 |
-| camera | position.x | 18,902 | 1,713 |
+| camera | position.x | 18,903 | 1,712 |
 | camera | position.y | 18,679 | 1,936 |
 | camera | seen | 0 | 20,615 |
 | progress | items | 25,426 | 0 |
@@ -339,7 +339,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | samus-motion | OtherBlockKinds | vectors only | 0 | 0 |
 | samus-motion | WordwiseTopSpeed | vectors only | 0 | 0 |
 | camera | FollowingHer | 11,972 | 11,972 | 973 |
-| camera | LeadingHer | 9,172 | 9,172 | 402 |
+| camera | LeadingHer | 9,173 | 9,173 | 401 |
 | camera | AimingHeight | 6,928 | 6,928 | 615 |
 | camera | Remembering | 18,679 | 18,679 | 1,936 |
 | camera | CreepReadsRightward | 384 | 384 | 7 |
