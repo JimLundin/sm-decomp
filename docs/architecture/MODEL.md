@@ -486,7 +486,9 @@ history before the tag `archive/old-engine`.
   samples arms against the original: a padded arm stops the spec as a leak does.
 - **Each quantity:** its units, a domain type (an enum, never ROM codes), and **Read by**: the
   behaviour IDs that read it on a later frame, or "output" if it reaches bytes, or "none". "None"
-  means it isn't State (decision 3). ROM codes belong in the decode notes.
+  means it isn't State (decision 3). A quantity that is State is one a caller can set to any
+  value the spec allows and read back, so the engine can carry, save and restore it; the spec
+  says so where the model's memory is listed. ROM codes belong in the decode notes.
 - **Each entry:** id, kind, summary, rule, params, switch, and **checked** (`oracle (V3, V4)` or
   `original only`). Its source in the original goes in the observer's
   `docs/behaviours/<domain>.decode.md`, never in the spec.

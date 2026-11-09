@@ -18,6 +18,10 @@ need is in this repository; read nothing outside it.
 - **Shaped by types.** Define as many types as the behaviour needs. Values that travel together
   through several functions are a concept with a name. A flat `match`, a helper and an early
   return read better than decisions nested inside each other. A state is an enum, not a flag.
+- **State a caller can hold.** Everything the spec lists as what the model remembers from one
+  frame to the next is state another part of the game carries between frames, saves and restores,
+  and sets when play starts part-way. So a caller can build each part of the state at any value
+  the spec allows, and read each part back.
 - **Concise.** Write the smallest clear code that models the spec. Each rule is stated once.
   Where two things run the same steps, write the steps once and let each supply only what
   differs. Every type, function and module carries a rule or a concept of the spec; a value is
