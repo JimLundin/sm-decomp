@@ -29,7 +29,7 @@ const HEX: u32 = 16;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct File {
+struct VectorFile {
     reaction: BTreeMap<String, ReactionRow>,
     vector: Vec<Vector>,
 }
@@ -254,7 +254,7 @@ impl<'de> Deserialize<'de> for True {
     }
 }
 
-fn parse() -> File {
+fn parse() -> VectorFile {
     toml::from_str(VECTORS).expect("the vector file reads as the format its header gives")
 }
 
@@ -443,7 +443,7 @@ fn steps(rows: Option<&Vec<StepRow>>) -> Vec<Step> {
         .unwrap_or_default()
 }
 
-fn reactions(file: &File) -> Reactions {
+fn reactions(file: &VectorFile) -> Reactions {
     file.reaction
         .iter()
         .map(|(name, row)| {
