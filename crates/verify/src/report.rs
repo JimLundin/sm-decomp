@@ -69,7 +69,16 @@ const DOMAINS: &[Domain] = &[
         name: "samus-motion",
         bridge: "samus_world",
         areas: &[
-            ("motion", &["motion.rs", "samus.rs", "step.rs", "tick.rs"]),
+            (
+                "motion",
+                &[
+                    "jump_held.rs",
+                    "motion.rs",
+                    "samus.rs",
+                    "step.rs",
+                    "tick.rs",
+                ],
+            ),
             ("pose fit", &["fit.rs"]),
             (
                 "pose chart",
