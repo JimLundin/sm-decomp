@@ -1,7 +1,10 @@
 use std::path::Path;
 
 use super::lines::code_lines;
-use super::{Coverage, baseline, check, coverage, current, fit, floors, generate, grouped, tables};
+use super::{
+    Coverage, EntryCoverage, baseline, check, coverage, current, fit, floors, generate, grouped,
+    tables,
+};
 
 /// The repository root, from this crate's manifest.
 fn root() -> &'static Path {
@@ -86,19 +89,25 @@ fn floors_and_tables_parse() {
 fn coverage_parses() {
     let parsed = coverage(
         "# coverage\ncamera frames 10 8 1 5\ncamera field 9 1 position x\n\
-         camera entry Follow 3 4 2\n",
+         camera entry Follow 3 1 4 2\n",
     );
     let camera = Coverage {
         frames: Some([10, 8, 1, 5]),
         fields: vec![("position x".to_owned(), 9, 1)],
-        entries: vec![("Follow".to_owned(), 3, 4, 2)],
+        entries: vec![EntryCoverage {
+            name: "Follow".to_owned(),
+            matched: 3,
+            null_matched: 1,
+            exercised: 4,
+            unchecked: 2,
+        }],
     };
     assert_eq!(
         parsed.map(|domains| domains.get("camera") == Some(&camera)),
         Ok(true)
     );
     assert!(coverage("camera frames 10 8 1\n").is_err());
-    assert!(coverage("camera entry Follow x 4 0\n").is_err());
-    assert!(coverage("camera entry Follow 3 4\n").is_err());
+    assert!(coverage("camera entry Follow x 0 4 0\n").is_err());
+    assert!(coverage("camera entry Follow 3 4 2\n").is_err());
     assert!(coverage("camera field 9 1\n").is_err());
 }

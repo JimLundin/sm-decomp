@@ -21,7 +21,9 @@
 //! declared fields its output reaches, and a frame that exercised it counts for it only when
 //! none of them was masked. A frame with one of them masked is counted apart, unchecked, and an
 //! entry whose output reaches no declared field (an event the harness doesn't compare) is never
-//! credited: its vectors alone check it.
+//! credited: its vectors alone check it. Beside an entry's matched frames the report counts
+//! those on which the null model also matched every field the entry reaches: an entry the null
+//! model passes as often as the model is only weakly checked by the rows.
 //!
 //! The harness never consults today's engine: the oracle is the yardstick (MODEL §4).
 
@@ -336,16 +338,19 @@ pub struct BehaviourReport {
     pub exercised: u64,
     /// Those of them that matched and were verified on every unmasked field.
     pub matched: u64,
+    /// Those of them on which the null model matched every field the entry reaches, so the
+    /// frame checks the entry no more than doing nothing would.
+    pub null_matched: u64,
     /// The compared frames that exercised it without comparing its output: one of its fields
     /// masked, or none declared.
     pub unchecked: u64,
 }
 
 impl BehaviourReport {
-    /// A compared frame that exercised the entry, with `masked` out of scope and `verified` when
-    /// it matched and was verified on every unmasked field: it counts for the entry only when
-    /// the entry's output was compared.
-    const fn credit(&mut self, masked: FieldSet, verified: bool) {
+    /// A compared frame that exercised the entry, with `masked` out of scope, `verified` when
+    /// it matched and was verified on every unmasked field, and `null_differs` the fields the
+    /// null model missed: it counts for the entry only when the entry's output was compared.
+    const fn credit(&mut self, masked: FieldSet, verified: bool, null_differs: FieldSet) {
         if self.fields.is_empty() || self.fields.overlaps(masked) {
             self.unchecked = self.unchecked.saturating_add(1);
             return;
@@ -353,6 +358,9 @@ impl BehaviourReport {
         self.exercised = self.exercised.saturating_add(1);
         if verified {
             self.matched = self.matched.saturating_add(1);
+        }
+        if !self.fields.overlaps(null_differs) {
+            self.null_matched = self.null_matched.saturating_add(1);
         }
     }
 }
@@ -418,6 +426,7 @@ impl Report {
                     fields,
                     exercised: 0,
                     matched: 0,
+                    null_matched: 0,
                     unchecked: 0,
                 })
                 .collect(),
@@ -448,7 +457,8 @@ impl Report {
 
     fn compare<D: Domain>(&mut self, frame: &Compared<'_, D::Fields>, exercised: &[usize]) {
         self.compared = self.compared.saturating_add(1);
-        let (mut all, mut verified, mut null_all, mut any) = (true, true, true, false);
+        let (mut all, mut verified, mut any) = (true, true, false);
+        let mut null_differs = FieldSet::EMPTY;
         for (index, (field, report)) in D::FIELDS.iter().zip(&mut self.fields).enumerate() {
             if frame.masked.contains(index) {
                 report.masked = report.masked.saturating_add(1);
@@ -458,7 +468,7 @@ impl Report {
             if (field.same)(frame.null, frame.oracle) {
                 report.null_matched = report.null_matched.saturating_add(1);
             } else {
-                null_all = false;
+                null_differs = null_differs.union(FieldSet::single(index));
             }
             if (field.same)(frame.model, frame.oracle) {
                 if frame.unverified.contains(index) {
@@ -492,7 +502,7 @@ impl Report {
         }
         for &place in exercised {
             if let Some(report) = self.behaviours.get_mut(place) {
-                report.credit(frame.masked, all && verified);
+                report.credit(frame.masked, all && verified, null_differs);
             }
         }
         if !any {
@@ -504,7 +514,7 @@ impl Report {
             (true, false) => self.unverified = self.unverified.saturating_add(1),
             (false, _) => {}
         }
-        if null_all {
+        if null_differs.is_empty() {
             self.null_matched = self.null_matched.saturating_add(1);
         }
     }
@@ -550,6 +560,7 @@ impl Report {
                 Some(mine) => {
                     mine.exercised = mine.exercised.saturating_add(entry.exercised);
                     mine.matched = mine.matched.saturating_add(entry.matched);
+                    mine.null_matched = mine.null_matched.saturating_add(entry.null_matched);
                     mine.unchecked = mine.unchecked.saturating_add(entry.unchecked);
                 }
                 None => self.behaviours.push(entry.clone()),
@@ -609,8 +620,10 @@ impl fmt::Display for Report {
     }
 }
 
-/// The per-behaviour table of a report: each entry's exercised and matched frames and the
-/// frames that exercised it unchecked, then the entries no frame verifies, "vectors only".
+/// The per-behaviour table of a report.
+///
+/// Each entry's exercised and matched frames, those the null model matched too, and the frames
+/// that exercised it unchecked, then the entries no frame verifies, "vectors only".
 pub struct Behaviours<'a>(pub &'a Report);
 
 impl fmt::Display for Behaviours<'_> {
@@ -623,8 +636,8 @@ impl fmt::Display for Behaviours<'_> {
         for entry in exercised {
             writeln!(
                 f,
-                "  {}: {} matched of {} exercised, {} unchecked",
-                entry.name, entry.matched, entry.exercised, entry.unchecked
+                "  {}: {} matched of {} exercised (null {}), {} unchecked",
+                entry.name, entry.matched, entry.exercised, entry.null_matched, entry.unchecked
             )?;
         }
         let names: Vec<String> = unexercised.iter().map(|entry| entry.name.clone()).collect();
@@ -636,8 +649,8 @@ impl fmt::Display for Behaviours<'_> {
 ///
 /// One line each, under the domain's name: `<domain> frames <frames> <matched and verified>
 /// <unverified> <null model matched>`, then `<domain> field <compared> <masked> <field>` per
-/// declared field, then `<domain> entry <entry> <matched and verified> <exercised> <unchecked>`
-/// per catalogue entry.
+/// declared field, then `<domain> entry <entry> <matched and verified> <null model matched>
+/// <exercised> <unchecked>` per catalogue entry.
 pub struct Coverage<'a> {
     /// The domain's name in `floors.txt`.
     pub name: &'a str,
@@ -665,8 +678,8 @@ impl fmt::Display for Coverage<'_> {
         for entry in &report.behaviours {
             writeln!(
                 f,
-                "{name} entry {} {} {} {}",
-                entry.name, entry.matched, entry.exercised, entry.unchecked
+                "{name} entry {} {} {} {} {}",
+                entry.name, entry.matched, entry.null_matched, entry.exercised, entry.unchecked
             )?;
         }
         Ok(())

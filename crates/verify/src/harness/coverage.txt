@@ -1,8 +1,8 @@
 # The harnesses' oracle coverage over every cached row (MODEL §4), for docs/REPORT.md beside the
 # floors: `<domain> frames <frames> <matched and verified> <unverified> <null model matched>`,
 # then `<domain> field <compared> <masked> <field>` per declared field, then `<domain> entry
-# <entry> <matched and verified> <exercised> <unchecked>` per catalogue entry. The floor tests
-# fail when a run over every row in floors.txt gives other lines.
+# <entry> <matched and verified> <null model matched> <exercised> <unchecked>` per catalogue
+# entry. The floor tests fail when a run over every row in floors.txt gives other lines.
 game-time frames 25426 22415 0 4796
 game-time field 25426 0 hours
 game-time field 25426 0 minutes
@@ -20,53 +20,53 @@ samus-motion field 18198 51 vertical
 samus-motion field 18249 0 bounce
 samus-motion field 18198 51 rising
 samus-motion field 16447 1802 placed
-samus-motion entry HowSheIsDrawn 0 0 0
-samus-motion entry SpeedBuildsAndBrakes 10753 10837 966
-samus-motion entry Dash 3757 3789 817
-samus-motion entry TurningRound 1179 1245 12
-samus-motion entry AimingAndShooting 2806 2828 126
-samus-motion entry RidingTheElevator 0 0 906
-samus-motion entry Jumping 206 212 33
-samus-motion entry FollowingTheGround 10311 10396 1407
-samus-motion entry MovesAsShePosed 15984 16162 2087
-samus-motion entry PoseFitAfterMoves 352 360 31
-samus-motion entry ShrinkingLowersHer 58 59 7
-samus-motion entry RisingAndFalling 6115 6204 242
-samus-motion entry DriftInTheAir 6115 6204 242
-samus-motion entry Moonfall 339 339 66
-samus-motion entry WallJump 234 253 2
-samus-motion entry Landing 150 150 5
-samus-motion entry PoseFollows 0 0 18249
-samus-motion entry PadChart 0 0 18249
-samus-motion entry Aiming 0 0 2735
-samus-motion entry WhatHerMovesMet 0 0 1864
-samus-motion entry AnimationEnds 0 0 346
-samus-motion entry BlocksStopFlush 10181 10287 921
-samus-motion entry WallsAndCeilings 1312 1347 128
-samus-motion entry SolidEnemies 4387 4412 489
-samus-motion entry SlopesCarry 79 80 1
-samus-motion entry SlopesSlowTheWalk 0 0 0
-samus-motion entry TouchedCells 0 0 17865
-samus-motion entry OtherBlockKinds 0 0 0
-samus-motion entry WordwiseTopSpeed 0 0 0
+samus-motion entry HowSheIsDrawn 0 0 0 0
+samus-motion entry SpeedBuildsAndBrakes 10753 5589 10837 966
+samus-motion entry Dash 3757 9 3789 817
+samus-motion entry TurningRound 1179 17 1245 12
+samus-motion entry AimingAndShooting 2806 485 2828 126
+samus-motion entry RidingTheElevator 0 0 0 906
+samus-motion entry Jumping 206 3 212 33
+samus-motion entry FollowingTheGround 10311 9625 10396 1407
+samus-motion entry MovesAsShePosed 15984 5259 16162 2087
+samus-motion entry PoseFitAfterMoves 352 0 360 31
+samus-motion entry ShrinkingLowersHer 58 1 59 7
+samus-motion entry RisingAndFalling 6115 55 6204 242
+samus-motion entry DriftInTheAir 6115 1796 6204 242
+samus-motion entry Moonfall 339 3 339 66
+samus-motion entry WallJump 234 0 253 2
+samus-motion entry Landing 150 0 150 5
+samus-motion entry PoseFollows 0 0 0 18249
+samus-motion entry PadChart 0 0 0 18249
+samus-motion entry Aiming 0 0 0 2735
+samus-motion entry WhatHerMovesMet 0 0 0 1864
+samus-motion entry AnimationEnds 0 0 0 346
+samus-motion entry BlocksStopFlush 10181 4859 10287 921
+samus-motion entry WallsAndCeilings 1312 474 1347 128
+samus-motion entry SolidEnemies 4387 2034 4412 489
+samus-motion entry SlopesCarry 79 3 80 1
+samus-motion entry SlopesSlowTheWalk 0 0 0 0
+samus-motion entry TouchedCells 0 0 0 17865
+samus-motion entry OtherBlockKinds 0 0 0 0
+samus-motion entry WordwiseTopSpeed 0 0 0 0
 camera frames 25426 18903 0 7457
 camera field 18903 1712 position.x
 camera field 18684 1931 position.y
 camera field 0 20615 seen
-camera entry FollowingHer 11976 11976 968
-camera entry LeadingHer 9173 9173 401
-camera entry AimingHeight 6931 6931 611
-camera entry Remembering 18684 18684 1931
-camera entry CreepReadsRightward 384 384 7
-camera entry ClosedScreens 8886 8886 1396
-camera entry RoomEdges 15936 15936 1185
-camera entry ShortScreens 17631 17631 1735
-camera entry Settling 14681 14681 1762
-camera entry TimeStopped 113 113 6
-camera entry DownwardLooksAhead 1 1 0
-camera entry ScreensRunOn 0 0 0
-camera entry BelowTheRoom 3540 3540 88
-camera entry PushCarries 0 0 0
+camera entry FollowingHer 11976 641 11976 968
+camera entry LeadingHer 9173 482 9173 401
+camera entry AimingHeight 6931 765 6931 611
+camera entry Remembering 18684 7349 18684 1931
+camera entry CreepReadsRightward 384 300 384 7
+camera entry ClosedScreens 8886 3113 8886 1396
+camera entry RoomEdges 15936 7121 15936 1185
+camera entry ShortScreens 17631 11776 17631 1735
+camera entry Settling 14681 7340 14681 1762
+camera entry TimeStopped 113 113 113 6
+camera entry DownwardLooksAhead 1 0 1 0
+camera entry ScreensRunOn 0 0 0 0
+camera entry BelowTheRoom 3540 487 3540 88
+camera entry PushCarries 0 0 0 0
 progress frames 25426 25417 9 25399
 progress field 25426 0 items
 progress field 25426 0 items switched on
@@ -84,20 +84,20 @@ progress field 25426 0 maps
 progress field 25426 0 stations saved at
 progress field 25426 0 items placed
 progress field 8 25418 room state
-progress entry EventsHappen 1 1 0
-progress entry ZebetitesCounted 0 0 0
-progress entry BossesDefeated 0 3 0
-progress entry EmptiedLocations 13 14 0
-progress entry DoorsStayOpen 0 5 0
-progress entry MapsByArea 0 0 0
-progress entry MapOnArrival 8 8 0
-progress entry StationsSavedAt 1 1 0
-progress entry ItemsPlacedCount 3 3 0
-progress entry TakingItems 2 2 0
-progress entry TakingBeams 4 4 0
-progress entry Tanks 7 8 0
-progress entry RoomStates 8 8 0
-progress entry ItemPercentage 0 0 0
+progress entry EventsHappen 1 0 1 0
+progress entry ZebetitesCounted 0 0 0 0
+progress entry BossesDefeated 0 0 3 0
+progress entry EmptiedLocations 13 0 14 0
+progress entry DoorsStayOpen 0 0 5 0
+progress entry MapsByArea 0 0 0 0
+progress entry MapOnArrival 8 8 8 0
+progress entry StationsSavedAt 1 0 1 0
+progress entry ItemsPlacedCount 3 0 3 0
+progress entry TakingItems 2 0 2 0
+progress entry TakingBeams 4 0 4 0
+progress entry Tanks 7 0 8 0
+progress entry RoomStates 8 8 8 0
+progress entry ItemPercentage 0 0 0 0
 hud frames 25426 20613 0 17975
 hud field 20615 0 status bar
 hud field 20615 0 values last shown
@@ -105,22 +105,22 @@ hud field 20583 32 selected item
 hud field 20583 32 one-shot item
 hud field 19733 882 mini-map window
 hud field 19733 882 explored cells
-hud entry EnergyGauge 642 642 0
-hud entry AmmoCounts 48 50 0
-hud entry AutoReserveSign 13818 13820 0
-hud entry SelectionHighlight 123 124 0
-hud entry SwitchClick 0 0 124
-hud entry OneShotFlash 48 49 0
-hud entry IconsAppear 0 0 0
-hud entry CyclingItems 85 86 4
-hud entry CancellingTheItem 47 47 0
-hud entry OneShotItem 85 86 4
-hud entry Switching 0 0 137
-hud entry Exploring 14823 14824 882
-hud entry MiniMapWindow 14823 14824 882
-hud entry HerBlink 14823 14824 882
-hud entry MiniMapStill 4908 4909 0
-hud entry BossBlanksTheMap 0 0 0
-hud entry DiagonalPicture 68 68 23
-hud entry FirstColumnsShift 0 0 0
-hud entry LastColumnsShift 0 0 0
+hud entry EnergyGauge 642 0 642 0
+hud entry AmmoCounts 48 0 50 0
+hud entry AutoReserveSign 13818 13029 13820 0
+hud entry SelectionHighlight 123 0 124 0
+hud entry SwitchClick 0 0 0 124
+hud entry OneShotFlash 48 38 49 0
+hud entry IconsAppear 0 0 0 0
+hud entry CyclingItems 85 1 86 4
+hud entry CancellingTheItem 47 14 47 0
+hud entry OneShotItem 85 81 86 4
+hud entry Switching 0 0 0 137
+hud entry Exploring 14823 14760 14824 882
+hud entry MiniMapWindow 14823 12900 14824 882
+hud entry HerBlink 14823 12900 14824 882
+hud entry MiniMapStill 4908 4909 4909 0
+hud entry BossBlanksTheMap 0 0 0 0
+hud entry DiagonalPicture 68 68 68 23
+hud entry FirstColumnsShift 0 0 0 0
+hud entry LastColumnsShift 0 0 0 0

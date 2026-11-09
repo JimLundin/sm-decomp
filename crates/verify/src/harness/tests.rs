@@ -162,6 +162,7 @@ impl Domain for Copying {
     fn behaviours(&self) -> Vec<Entry> {
         [
             ("Hours", FieldSet::single(0)),
+            ("Seconds", FieldSet::single(2)),
             ("Frames", FieldSet::single(3)),
             ("Event", FieldSet::EMPTY),
         ]
@@ -173,7 +174,7 @@ impl Domain for Copying {
     }
 
     fn exercised(&self, _: &GameTime, (): &(), _: &Option<u16>) -> Vec<usize> {
-        vec![0, 1, 2]
+        vec![0, 1, 2, 3]
     }
 
     fn step(&self, state: &mut GameTime, (): &(), world: &mut Option<u16>) {
@@ -208,7 +209,7 @@ fn a_masked_field_is_not_compared_and_a_copied_one_is_unverified() {
 #[test]
 fn an_entry_is_credited_only_where_its_fields_are_compared() {
     let Ok(report) = run(&Copying, two_frames([0, 0, 1, 0]));
-    let counts: Vec<(&str, u64, u64, u64)> = report
+    let counts: Vec<(&str, u64, u64, u64, u64)> = report
         .behaviours
         .iter()
         .map(|entry| {
@@ -216,14 +217,21 @@ fn an_entry_is_credited_only_where_its_fields_are_compared() {
                 entry.name.as_str(),
                 entry.exercised,
                 entry.matched,
+                entry.null_matched,
                 entry.unchecked,
             )
         })
         .collect();
-    // Hours is compared, but the frame is unverified; frames is masked; the event isn't a field.
+    // Hours and seconds are compared, but the frame is unverified; the null model holds the
+    // hours as the oracle does, not the seconds; frames is masked; the event isn't a field.
     assert_eq!(
         counts,
-        [("Hours", 1, 0, 0), ("Frames", 0, 0, 1), ("Event", 0, 0, 1)]
+        [
+            ("Hours", 1, 0, 1, 0),
+            ("Seconds", 1, 0, 0, 0),
+            ("Frames", 0, 0, 0, 1),
+            ("Event", 0, 0, 0, 1)
+        ]
     );
 }
 
