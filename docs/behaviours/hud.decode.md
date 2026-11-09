@@ -234,8 +234,14 @@ the records, with the other domains' values decoded as inputs.
 
     Until then mask the mini-map's 15 cells and the explored cells only on frames with a hit on
     `$91:EB88`'s writes to `0AF6`/`0AFA` that moved her `x div 256` or `y div 256`. The cached
-    records have no such hit: today the mask falls back to `0A1C` differs, 3,027 frames for the 8
-    the writer is known to make (§How the spec was made), and those 3,027 are reported masked.
+    records have no such hit, and samus-motion's model reports only `camera_from` (a y, and only
+    where pose fit or a shrink moved her), not where her moves left her, so the first decode isn't
+    available yet. Today the mask falls back to the frames the writer can reach: `0A1C` differs,
+    the mini-map runs and isn't off (on any other frame it never reads her), and her position at
+    N+1 lies within 32 px of a screen's edge on either axis (the pose change's placements, pose
+    fit's push, the shrink, the take-off's lift and the aim step, move her by less). That is 669
+    frames for the 8 the writer is known to make (§How the spec was made); keyed on `0A1C` alone it
+    was 3,039, and on `0A1C` with the mini-map reading her 2,705. Unmasked, the 8 mismatch.
   - **The shot's cancel.** Writers: the weapons' four stores, `$90:BF25` and `$90:C091` (clear
     `09D2` and `0A04`) and `$90:BF41` and `$90:C0A6` (clear `09D2`, reached only when `0A04` is 0).
     Decode `the shot's cancel` as true when one of them is hit in frame N+1, as `collected` is
@@ -296,6 +302,26 @@ scope`, `missile tank` and `mother brain` too, so the HUD's own section keeps th
 single word: the spec is worded so that `hud`, `map`, `area`, `row`, `column` and the rest never
 join a lexicon phrase (the title's comma, the area named `minimap`, "second column, left to right",
 "cells drawn as a diagonal", "the game's opening" for the intro demo).
+
+**The model's scans, ruled at round 1's gate (adversary 52).** The root accepted each hit below for
+this round; none is a leak.
+
+- **The mirror scan's one hit.** `scan.sh --mirror` on the model finds 1 of 3 tagged public
+  functions mapping onto one routine: `mini_map::update`, whose first named entry, `Exploring`,
+  resolves to `$90:A91B`. Accepted, because its boundary and order are the spec's own: "the
+  mini-map updates" is `MiniMapStill`'s condition, and §5 gives the order (her cell explored, the
+  window, the diagonal cell after, the blink last). It isn't to be hidden by making it
+  `pub(crate)`: the check is textual, so that would change how the shape looks, not the shape.
+- **The name scan's prose phrases.** "two column", "top left", "column right", "column left", "up
+  one", "down one", "abov below", "draw til", "til blank", "draw item", "room map", "bos room" and
+  "word per" are the spec's own wording in doc comments. Accepted.
+- **The enum-order hit.** `tests/support/toml.rs`'s `Value` (Str, Int, Bool, Array, Table) is a
+  TOML value's kinds; its match with a RAM code table is a coincidence. Accepted.
+- **`AreaMap`**, the one name hit on a type ("area map", 18 uses), is renamed in the next round to
+  a name that says "her map".
+- **A count past what its cells hold** stops the session (`HudFault::CountPastCells`), where the
+  old engine left the cell unchanged. Accepted: unreachable in vanilla, whose capacities stop below
+  the cells' reach, and listed in docs/LEGACY.md.
 
 ## Budget
 
