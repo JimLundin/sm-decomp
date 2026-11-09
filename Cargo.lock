@@ -23,6 +23,15 @@ name = "canonical_derive"
 version = "0.1.0"
 
 [[package]]
+name = "clean_model_blocks"
+version = "0.1.0"
+dependencies = [
+ "clean_types",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+]
+
+[[package]]
 name = "clean_model_camera"
 version = "0.1.0"
 dependencies = [
@@ -99,6 +108,7 @@ name = "game"
 version = "0.1.0"
 dependencies = [
  "canonical",
+ "clean_model_blocks",
  "clean_model_camera",
  "clean_model_hud",
  "clean_model_progress",
@@ -311,6 +321,7 @@ name = "verify"
 version = "0.1.0"
 dependencies = [
  "canonical",
+ "clean_model_blocks",
  "clean_model_camera",
  "clean_model_hud",
  "clean_model_progress",
