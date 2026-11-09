@@ -27,6 +27,7 @@
 //!
 //! The harness never consults today's engine: the oracle is the yardstick (MODEL §4).
 
+pub mod blocks;
 pub mod camera;
 pub mod game_time;
 pub mod hud;
@@ -265,6 +266,13 @@ pub trait Domain {
     fn uncompared(&self, skip: &Self::Skip) -> Uncompared {
         Uncompared::Skip(skip.to_string())
     }
+
+    /// Whether record `next` falls inside the frame that began at record `from`, so the frame
+    /// runs on to a later record: a domain whose frame's work can straddle a lag record says
+    /// so, and [`run`] pairs `from` with the first record past it, its hits carried along.
+    fn folds(&self, _from: &FrameRecord, _next: &FrameRecord) -> bool {
+        false
+    }
 }
 
 /// A field's value at a frame where the model and the oracle disagree.
@@ -370,7 +378,8 @@ impl BehaviourReport {
 pub struct Report {
     /// The domain.
     pub domain: &'static str,
-    /// The frames in the run, M: every pair of consecutive records.
+    /// The frames in the run, M: every pair of consecutive records, a record the domain folds
+    /// into the frame before it left out.
     pub frames: u64,
     /// The frames compared: M less the skipped frames and the defects.
     pub compared: u64,
@@ -743,7 +752,9 @@ fn frame<D: Domain>(
     Ok(())
 }
 
-/// `domain` over `records`, a scenario's records in frame order.
+/// `domain` over `records`, a scenario's records in frame order. A record the domain folds
+/// into the frame before it ([`Domain::folds`]) isn't a frame's end: its hits go to the next
+/// record that is.
 ///
 /// # Errors
 ///
@@ -758,8 +769,17 @@ pub fn run<D: Domain, E>(
         return Ok(report);
     };
     let mut from = first?;
+    let mut folded = Vec::new();
     for record in records {
-        let next = record?;
+        let mut next = record?;
+        if domain.folds(&from, &next) {
+            folded.append(&mut next.hits);
+            continue;
+        }
+        if !folded.is_empty() {
+            folded.append(&mut next.hits);
+            next.hits = core::mem::take(&mut folded);
+        }
         report.frames = report.frames.saturating_add(1);
         if let Err(reason) = frame(domain, &mut report, &from, &next) {
             report.uncompared(domain.uncompared(&reason));

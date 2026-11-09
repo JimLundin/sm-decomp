@@ -417,6 +417,25 @@ fn the_camera_holds_its_floors_against_the_cache() {
     hold_floors(&domain, "camera", &cache);
 }
 
+/// The blocks over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
+/// test reads them (the ROM for the reactions and the scroll lists). The cache's rows carry the
+/// blocks' watched instructions' hits (`docs/behaviours/blocks.decode.md`, "The harness").
+#[test]
+fn the_blocks_hold_their_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = match super::blocks::BlocksDomain::load(image) {
+        Ok(domain) => domain,
+        Err(error) => panic!("content: {error}"),
+    };
+    hold_floors(&domain, "blocks", &cache);
+}
+
 /// Progress over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
 /// test reads them (the ROM for the rooms' states and the item PLMs' pickups).
 #[test]
