@@ -1,22 +1,21 @@
 //! Which version of a room loads, given the run's progress. Spec: RoomStates.
 
-use std::collections::BTreeSet;
-
-use clean_types::{Area, BossKind, Entrance, Event, Item};
+use clean_types::{Area, Entrance, Event, Item};
 
 use crate::progress::Progress;
 use crate::supplies::Supply;
+use crate::world::BossKinds;
 
 /// The condition a version of a room loads on. Spec: RoomStates.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Condition {
     /// Always holds.
     Always,
     /// Holds once the event has happened.
     Happened(Event),
     /// Holds when a boss of any of these kinds is defeated in the room's own area.
-    Defeated(BTreeSet<BossKind>),
-    /// Holds when the item is hers, switched on or not.
+    Defeated(BossKinds),
+    /// Holds when the item is hers, equipped or not.
     Has(Item),
     /// Holds when the morph ball is hers and her missile capacity isn't 0, however many
     /// missiles she holds.
@@ -27,7 +26,8 @@ pub enum Condition {
     EnteredBy(Entrance),
 }
 
-/// The room she loads into: its area, and the entrance she came in by, if any.
+/// The room she loads into: its area, and the entrance she came in by, if any. The area is the
+/// new room's, known before its state is chosen.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RoomEntry {
     /// The room's own area.
@@ -37,41 +37,41 @@ pub struct RoomEntry {
 }
 
 impl Condition {
-    /// Whether the condition holds for `progress`, for the room she loads into.
+    /// Whether the condition holds for `progress`, for the room she loads into. The missiles'
+    /// and power bombs' conditions read capacity, not what she holds, so a room changes for a
+    /// tank taken even with every one spent.
     #[must_use]
-    fn holds(&self, progress: &Progress, room: RoomEntry) -> bool {
+    fn holds(self, progress: &Progress, room: RoomEntry) -> bool {
         let inventory = &progress.inventory;
+        let has_any = |supply| inventory.capacity[supply].0 != 0;
         match self {
             Self::Always => true,
-            Self::Happened(event) => progress.world.has_happened(*event),
-            Self::Defeated(kinds) => progress.world.is_any_defeated(room.area, kinds),
-            Self::Has(item) => inventory.items.is_hers(*item),
+            Self::Happened(event) => progress.events.contains(event),
+            Self::Defeated(kinds) => progress.defeated[room.area].intersects(kinds),
+            Self::Has(item) => inventory.items.contains(item),
             Self::MorphBallAndMissiles => {
-                inventory.items.is_hers(Item::MorphBall)
-                    && !inventory.capacity.get(Supply::Missiles).is_zero()
+                inventory.items.contains(Item::MorphBall) && has_any(Supply::Missiles)
             }
-            Self::PowerBombs => !inventory.capacity.get(Supply::PowerBombs).is_zero(),
-            Self::EnteredBy(entrance) => room.entered_by == Some(*entrance),
+            Self::PowerBombs => has_any(Supply::PowerBombs),
+            Self::EnteredBy(entrance) => room.entered_by == Some(entrance),
         }
     }
 }
 
 /// A room's versions in its order, each with its condition; the last always holds.
 /// Spec: RoomStates.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct RoomStates {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RoomStates<'a> {
     /// Every version but the last, in order.
-    conditional: Vec<Condition>,
+    conditional: &'a [Condition],
 }
 
-impl RoomStates {
+impl<'a> RoomStates<'a> {
     /// A room's versions, in order, or nothing unless the last is `Condition::Always`.
     #[must_use]
-    pub fn new(mut states: Vec<Condition>) -> Option<Self> {
-        match states.pop() {
-            Some(Condition::Always) => Some(Self {
-                conditional: states,
-            }),
+    pub const fn new(states: &'a [Condition]) -> Option<Self> {
+        match states.split_last() {
+            Some((Condition::Always, conditional)) => Some(Self { conditional }),
             Some(_) | None => None,
         }
     }
@@ -82,7 +82,7 @@ impl RoomStates {
     pub fn choose(&self, progress: &Progress, room: RoomEntry) -> usize {
         self.conditional
             .iter()
-            .position(|condition| condition.holds(progress, room))
+            .position(|&condition| condition.holds(progress, room))
             .unwrap_or(self.conditional.len())
     }
 }

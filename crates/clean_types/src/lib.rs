@@ -530,6 +530,19 @@ pub enum Area {
     WreckedShip,
 }
 
+impl Area {
+    /// Every area, in the order listed.
+    pub const ALL: &[Self] = &[
+        Self::Brinstar,
+        Self::Ceres,
+        Self::Crateria,
+        Self::Maridia,
+        Self::Norfair,
+        Self::Tourian,
+        Self::WreckedShip,
+    ];
+}
+
 /// A piece of equipment she can take that is not a beam or a tank.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping items in sorted sets.

@@ -1,22 +1,33 @@
 //! What other domains report, and how each report changes the progress.
 
+use core::num::Wrapping;
+
 use clean_types::{Area, BossKind, DoorId, Event, LocationId, StationId};
 
 use crate::count::Count;
 use crate::inventory::Pickup;
+use crate::places::MapStatus;
 use crate::progress::Progress;
 use crate::rules::Rules;
 
-/// Something another domain tells progress has happened. When a report comes is the reporting
-/// domain's to decide; progress only records it.
+/// Something another domain tells progress has happened.
+///
+/// When a report comes is the reporting domain's to decide; progress only records it. A report
+/// that concerns an area names it: the area of the room she is in, which is still the old area
+/// when she leaves it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Report {
     /// An event happens. Spec: EventsHappen.
     Happened(Event),
     /// A zebetite is destroyed. Spec: ZebetitesCounted.
     ZebetiteDestroyed,
-    /// A boss of this kind is defeated, in the frame's area. Spec: BossesDefeated.
-    Defeated(BossKind),
+    /// A boss of this kind is defeated in this area. Spec: BossesDefeated.
+    Defeated {
+        /// The kind the boss reports.
+        kind: BossKind,
+        /// The area it is defeated in.
+        area: Area,
+    },
     /// She takes an item, a beam or a tank, from a place with an id or without one.
     /// Spec: TakingItems, Spec: TakingBeams, Spec: Tanks, Spec: EmptiedLocations.
     Taken {
@@ -28,45 +39,51 @@ pub enum Report {
     /// A door that stays open is opened, with its id if its room's population gave it one.
     /// Spec: DoorsStayOpen.
     DoorOpened(Option<DoorId>),
-    /// The map station of the frame's area downloads. Spec: MapsByArea.
-    MapStation,
-    /// She enters the room that gives the map of the frame's area. Spec: MapOnArrival.
-    MapOnArrival,
-    /// She leaves the frame's area by a door into another area. Spec: MapOnArrival.
-    LeftArea,
-    /// She saves at this station of the frame's area, or the gunship first lands there.
+    /// The map station of this area downloads. Spec: MapsByArea.
+    MapStation(Area),
+    /// She enters the room that gives the map of this area. Spec: MapOnArrival.
+    MapOnArrival(Area),
+    /// She leaves this area by a door into another area. Spec: MapOnArrival.
+    LeftArea(Area),
+    /// She saves at a station of this area, or the gunship first lands at its area's first.
     /// Spec: StationsSavedAt.
-    Saved(StationId),
+    Saved {
+        /// The station's area.
+        area: Area,
+        /// The station's id within its area.
+        station: StationId,
+    },
     /// A room's loading places this many items. Spec: ItemsPlacedCount.
     ItemsPlaced(Count),
 }
 
 impl Progress {
-    /// Records one report, made in a frame whose area is `area`: the area of the room she is
-    /// in, which is still the old area when she leaves it.
-    pub fn apply(&mut self, rules: &Rules, area: Area, report: Report) {
-        let world = &mut self.world;
+    /// Records one report. A frame's reports apply in the order they come; none reads another's
+    /// result, but she leaves the old area before the new room's loading reports.
+    pub fn apply(&mut self, rules: &Rules, report: Report) {
         match report {
-            Report::Happened(event) => world.happen(event),
-            Report::ZebetiteDestroyed => world.destroy_zebetite(),
-            Report::Defeated(kind) => world.defeat(area, kind),
+            Report::Happened(event) => self.events = self.events.with(event),
+            Report::ZebetiteDestroyed => self.zebetites += Wrapping(1),
+            Report::Defeated { kind, area } => self.defeated[area] = self.defeated[area].with(kind),
             Report::Taken { pickup, location } => {
                 self.inventory.take(rules, pickup);
-                world.empty(location);
+                self.emptied.remember(location);
             }
-            Report::DoorOpened(door) => world.open(door),
-            Report::MapStation => world.download_map(area),
-            Report::MapOnArrival => world.map_on_arrival(area),
-            Report::LeftArea => world.leave_area(area),
-            Report::Saved(station) => world.save(area, station),
-            Report::ItemsPlaced(count) => world.place_items(count),
-        }
-    }
-
-    /// Records a frame's reports in the order they come.
-    pub fn apply_all(&mut self, rules: &Rules, area: Area, reports: &[Report]) {
-        for &report in reports {
-            self.apply(rules, area, report);
+            Report::DoorOpened(door) => self.opened.remember(door),
+            Report::MapStation(area) => self.maps[area] = MapStatus::Downloaded,
+            // Spec: MapOnArrival. The room that gives the map leaves it `OnArrival`, unless she
+            // has it downloaded; leaving the area turns `OnArrival` into `Downloaded`.
+            Report::MapOnArrival(area) if self.maps[area] != MapStatus::Downloaded => {
+                self.maps[area] = MapStatus::OnArrival;
+            }
+            Report::LeftArea(area) if self.maps[area] == MapStatus::OnArrival => {
+                self.maps[area] = MapStatus::Downloaded;
+            }
+            Report::MapOnArrival(_) | Report::LeftArea(_) => {}
+            Report::Saved { area, station } => {
+                self.stations[area].insert(station);
+            }
+            Report::ItemsPlaced(count) => self.placements += count,
         }
     }
 }

@@ -1,6 +1,6 @@
 //! The names the vector file gives each value, as the spec writes them.
 
-use clean_model_progress::{AreaMap, ReserveMode, Supply};
+use clean_model_progress::{MapStatus, ReserveMode, Supply};
 use clean_types::{Area, Beam, BossKind, Event, Item};
 
 /// The value `name` stands for in `table`, if any.
@@ -105,7 +105,7 @@ pub const RESERVE_MODES: [(&str, ReserveMode); 3] = [
     ("Manual", ReserveMode::Manual),
 ];
 
-pub const MAPS: [(&str, AreaMap); 2] = [
-    ("Downloaded", AreaMap::Downloaded),
-    ("OnArrival", AreaMap::OnArrival),
+pub const MAPS: [(&str, MapStatus); 2] = [
+    ("Downloaded", MapStatus::Downloaded),
+    ("OnArrival", MapStatus::OnArrival),
 ];

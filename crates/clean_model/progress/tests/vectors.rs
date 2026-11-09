@@ -6,9 +6,11 @@ mod support;
 
 use std::collections::BTreeSet;
 use std::fmt::Debug;
+use std::num::Wrapping;
 
 use clean_model_progress::{
-    CATALOGUE, Condition, Count, PerArea, Pickup, Progress, Report, RoomEntry, RoomStates, Rules,
+    Beams, BossKinds, CATALOGUE, Condition, Count, Events, Items, PerArea, Pickup, Progress,
+    Remembered, Report, RoomEntry, RoomStates, Rules,
 };
 use clean_types::{Area, Checked, DoorId, Entrance, LocationId, StationId};
 use support::names::{
@@ -42,7 +44,7 @@ struct Vector {
 /// The questions of an asking vector.
 #[derive(Default)]
 struct Asks {
-    room_states: Option<RoomStates>,
+    room_states: Option<Vec<Condition>>,
     entered_by: Option<Entrance>,
     percentage: bool,
     emptied: Option<Vec<Option<LocationId>>>,
@@ -62,6 +64,10 @@ struct Answers {
     zebetites: Option<u16>,
 }
 
+fn list_of<T>(value: &Value, read: impl Fn(&Value) -> T) -> Vec<T> {
+    value.array().iter().map(read).collect()
+}
+
 fn set_of<T: Ord>(value: &Value, read: impl Fn(&Value) -> T) -> BTreeSet<T> {
     value.array().iter().map(read).collect()
 }
@@ -69,13 +75,25 @@ fn set_of<T: Ord>(value: &Value, read: impl Fn(&Value) -> T) -> BTreeSet<T> {
 fn per_area<T: Default>(value: &Value, read: impl Fn(&Value) -> T) -> PerArea<T> {
     let mut each = PerArea::default();
     for (area, v) in value.table() {
-        *each.get_mut(named(&AREAS, area)) = read(v);
+        each[named(&AREAS, area)] = read(v);
     }
     each
 }
 
 fn count(value: &Value) -> Count {
-    Count::new(value.u16())
+    Wrapping(value.u16())
+}
+
+fn items(value: &Value) -> Items {
+    Items::of(&list_of(value, |i| named(&ITEMS, i.str())))
+}
+
+fn beams(value: &Value) -> Beams {
+    Beams::of(&list_of(value, |b| named(&BEAMS, b.str())))
+}
+
+fn boss_kinds(value: &Value) -> BossKinds {
+    BossKinds::of(&list_of(value, |b| named(&BOSS_KINDS, b.str())))
 }
 
 /// A progress in the file's layout: every key left out at its start-of-game value.
@@ -88,16 +106,15 @@ fn progress(value: &Value) -> Progress {
 }
 
 fn set_field(progress: &mut Progress, key: &str, v: &Value) {
-    let world = &mut progress.world;
     match key {
-        "events" => world.events = set_of(v, |e| named(&EVENTS, e.str())),
-        "zebetites" => world.zebetites = count(v),
-        "defeated" => world.defeated = per_area(v, |k| set_of(k, |b| named(&BOSS_KINDS, b.str()))),
-        "emptied" => world.emptied = set_of(v, |n| LocationId(n.u16())),
-        "opened" => world.opened = set_of(v, |n| DoorId(n.u16())),
-        "maps" => world.maps = per_area(v, |m| named(&MAPS, m.str())),
-        "stations" => world.stations = per_area(v, |s| set_of(s, |n| StationId(n.u16()))),
-        "items_placed" => world.items_placed = count(v),
+        "events" => progress.events = Events::of(&list_of(v, |e| named(&EVENTS, e.str()))),
+        "zebetites" => progress.zebetites = count(v),
+        "defeated" => progress.defeated = per_area(v, boss_kinds),
+        "emptied" => progress.emptied = Remembered::of(list_of(v, |n| LocationId(n.u16()))),
+        "opened" => progress.opened = Remembered::of(list_of(v, |n| DoorId(n.u16()))),
+        "maps" => progress.maps = per_area(v, |m| named(&MAPS, m.str())),
+        "stations" => progress.stations = per_area(v, |s| set_of(s, |n| StationId(n.u16()))),
+        "items_placed" => progress.placements = count(v),
         other => set_inventory_field(progress, other, v),
     }
 }
@@ -105,18 +122,18 @@ fn set_field(progress: &mut Progress, key: &str, v: &Value) {
 fn set_inventory_field(progress: &mut Progress, key: &str, v: &Value) {
     let inventory = &mut progress.inventory;
     if let Some(supply) = lookup(&HELD, key) {
-        inventory.held.set(supply, count(v));
+        inventory.held[supply] = count(v);
         return;
     }
     match key {
-        "items" => inventory.items.hers = set_of(v, |i| named(&ITEMS, i.str())),
-        "equipped" => inventory.items.switched_on = set_of(v, |i| named(&ITEMS, i.str())),
-        "beams" => inventory.beams.hers = set_of(v, |b| named(&BEAMS, b.str())),
-        "beams_equipped" => inventory.beams.switched_on = set_of(v, |b| named(&BEAMS, b.str())),
+        "items" => inventory.items = items(v),
+        "equipped" => inventory.equipped = items(v),
+        "beams" => inventory.beams = beams(v),
+        "beams_equipped" => inventory.beams_equipped = beams(v),
         "reserve_mode" => inventory.reserve_mode = named(&RESERVE_MODES, v.str()),
         "capacity" => {
             for (supply, n) in v.table() {
-                inventory.capacity.set(named(&SUPPLIES, supply), count(n));
+                inventory.capacity[named(&SUPPLIES, supply)] = count(n);
             }
         }
         other => panic!("unknown progress key {other:?}"),
@@ -133,22 +150,30 @@ fn pickup(fields: &mut Fields) -> Pickup {
     lookup(&ITEMS, name).map_or_else(|| Pickup::Beam(named(&BEAMS, name)), Pickup::Item)
 }
 
-fn report(value: &Value) -> Report {
+/// A report of the file, made in a frame whose area is `area`: the reports that concern an area
+/// carry it.
+fn report(value: &Value, area: Area) -> Report {
     let mut fields = Fields::new(value.table(), "report");
     let kind = fields.need("report");
     let report = match kind.str() {
         "Happened" => Report::Happened(named(&EVENTS, fields.need("event").str())),
         "ZebetiteDestroyed" => Report::ZebetiteDestroyed,
-        "Defeated" => Report::Defeated(named(&BOSS_KINDS, fields.need("boss").str())),
+        "Defeated" => Report::Defeated {
+            kind: named(&BOSS_KINDS, fields.need("boss").str()),
+            area,
+        },
         "Taken" => Report::Taken {
             pickup: pickup(&mut fields),
             location: fields.take("location").map(|n| LocationId(n.u16())),
         },
         "DoorOpened" => Report::DoorOpened(fields.take("door").map(|n| DoorId(n.u16()))),
-        "MapStation" => Report::MapStation,
-        "MapOnArrival" => Report::MapOnArrival,
-        "LeftArea" => Report::LeftArea,
-        "Saved" => Report::Saved(StationId(fields.need("station").u16())),
+        "MapStation" => Report::MapStation(area),
+        "MapOnArrival" => Report::MapOnArrival(area),
+        "LeftArea" => Report::LeftArea(area),
+        "Saved" => Report::Saved {
+            area,
+            station: StationId(fields.need("station").u16()),
+        },
         "ItemsPlaced" => Report::ItemsPlaced(count(&fields.need("count"))),
         other => panic!("unknown report {other:?}"),
     };
@@ -162,9 +187,7 @@ fn condition(value: &Value) -> Condition {
     let condition = match when.str() {
         "Always" => Condition::Always,
         "Happened" => Condition::Happened(named(&EVENTS, fields.need("event").str())),
-        "Defeated" => Condition::Defeated(set_of(&fields.need("bosses"), |b| {
-            named(&BOSS_KINDS, b.str())
-        })),
+        "Defeated" => Condition::Defeated(boss_kinds(&fields.need("bosses"))),
         "Has" => Condition::Has(named(&ITEMS, fields.need("item").str())),
         "MorphBallAndMissiles" => Condition::MorphBallAndMissiles,
         "PowerBombs" => Condition::PowerBombs,
@@ -191,12 +214,8 @@ fn bools(value: &Value) -> Vec<bool> {
 
 fn asks(value: &Value) -> Asks {
     let mut fields = Fields::new(value.table(), "asks");
-    let states = fields.take("room_states").map(|s| {
-        let conditions = s.array().iter().map(condition).collect();
-        RoomStates::new(conditions).expect("a room's states end with Always")
-    });
     let asks = Asks {
-        room_states: states,
+        room_states: fields.take("room_states").map(|s| list_of(&s, condition)),
         entered_by: fields.take("entered_by").map(|n| Entrance(n.u16())),
         percentage: fields.take("percentage").is_some_and(|p| p.bool()),
         emptied: fields
@@ -239,7 +258,7 @@ fn vector(table: &Table) -> Vector {
             answers: answers(&fields.need("answers")),
         },
         None => Check::Frame {
-            reports: fields.need("reports").array().iter().map(report).collect(),
+            reports: list_of(&fields.need("reports"), |r| report(r, area)),
             after: Box::new(progress(&fields.need("after"))),
         },
     };
@@ -258,29 +277,33 @@ fn vectors() -> Vec<Vector> {
 }
 
 fn answer(asks: &Asks, progress: &Progress, area: Area) -> Answers {
-    let world = &progress.world;
     let room = RoomEntry {
         area,
         entered_by: asks.entered_by,
     };
+    let room_state = |states: &Vec<Condition>| {
+        RoomStates::new(states)
+            .expect("a room's states end with Always")
+            .choose(progress, room)
+    };
     Answers {
-        room_state: asks.room_states.as_ref().map(|s| s.choose(progress, room)),
+        room_state: asks.room_states.as_ref().map(room_state),
         percentage: asks
             .percentage
-            .then(|| progress.inventory.item_percentage(&Rules::REFERENCE).get()),
+            .then(|| progress.inventory.item_percentage(&Rules::REFERENCE).0),
         emptied: asks
             .emptied
             .as_ref()
-            .map(|q| q.iter().map(|&l| world.is_emptied(l)).collect()),
+            .map(|q| q.iter().map(|&l| progress.emptied.contains(l)).collect()),
         opened: asks
             .opened
             .as_ref()
-            .map(|q| q.iter().map(|&d| world.is_open(d)).collect()),
+            .map(|q| q.iter().map(|&d| progress.opened.contains(d)).collect()),
         map_known: asks
             .map_known
             .as_ref()
-            .map(|q| q.iter().map(|&a| world.is_map_known(a)).collect()),
-        zebetites: asks.zebetites.then(|| world.zebetites.get()),
+            .map(|q| q.iter().map(|&a| progress.maps[a].is_known()).collect()),
+        zebetites: asks.zebetites.then_some(progress.zebetites.0),
     }
 }
 
@@ -294,12 +317,15 @@ fn differ<T: PartialEq + Debug>(out: &mut Vec<String>, field: &str, actual: &T, 
 fn differences(actual: &Progress, expected: &Progress) -> Vec<String> {
     let mut out = Vec::new();
     let (a, e) = (&actual.inventory, &expected.inventory);
-    differ(&mut out, "items", &a.items, &e.items);
-    differ(&mut out, "beams", &a.beams, &e.beams);
+    let o = &mut out;
+    differ(o, "items", &a.items, &e.items);
+    differ(o, "equipped", &a.equipped, &e.equipped);
+    differ(o, "beams", &a.beams, &e.beams);
+    differ(o, "beams_equipped", &a.beams_equipped, &e.beams_equipped);
     differ(&mut out, "capacity", &a.capacity, &e.capacity);
     differ(&mut out, "held", &a.held, &e.held);
     differ(&mut out, "reserve_mode", &a.reserve_mode, &e.reserve_mode);
-    let (a, e) = (&actual.world, &expected.world);
+    let (a, e) = (actual, expected);
     differ(&mut out, "events", &a.events, &e.events);
     differ(&mut out, "zebetites", &a.zebetites, &e.zebetites);
     differ(&mut out, "defeated", &a.defeated, &e.defeated);
@@ -307,7 +333,7 @@ fn differences(actual: &Progress, expected: &Progress) -> Vec<String> {
     differ(&mut out, "opened", &a.opened, &e.opened);
     differ(&mut out, "maps", &a.maps, &e.maps);
     differ(&mut out, "stations", &a.stations, &e.stations);
-    differ(&mut out, "items_placed", &a.items_placed, &e.items_placed);
+    differ(&mut out, "items_placed", &a.placements, &e.placements);
     if out.is_empty() {
         differ(&mut out, "progress", actual, expected);
     }
@@ -319,7 +345,9 @@ fn run(vector: &Vector) -> Vec<String> {
     match &vector.check {
         Check::Frame { reports, after } => {
             let mut progress = vector.before.clone();
-            progress.apply_all(&Rules::REFERENCE, vector.area, reports);
+            for &report in reports {
+                progress.apply(&Rules::REFERENCE, report);
+            }
             differences(&progress, after)
         }
         Check::Asks { asks, answers } => {
@@ -358,7 +386,7 @@ fn every_vector_names_catalogue_entries() {
     for vector in vectors() {
         for entry in &vector.entries {
             assert!(
-                CATALOGUE.iter().any(|b| format!("{:?}", b.id) == *entry),
+                CATALOGUE.iter().any(|b| b.name == entry),
                 "{}: {entry} is no catalogue entry",
                 vector.id
             );
@@ -370,9 +398,9 @@ fn every_vector_names_catalogue_entries() {
 fn every_entry_checked_by_vectors_has_one() {
     let vectors = vectors();
     for behaviour in CATALOGUE.iter().filter(|b| b.checked == Checked::ByVectors) {
-        let name = format!("{:?}", behaviour.id);
+        let name = behaviour.name;
         assert!(
-            vectors.iter().any(|v| v.entries.contains(&name)),
+            vectors.iter().any(|v| v.entries.iter().any(|e| e == name)),
             "{name} is checked by vectors, but no vector names it"
         );
     }
