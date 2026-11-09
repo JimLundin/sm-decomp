@@ -9,8 +9,8 @@ use super::game_time::Clock;
 use game::state::GameTime;
 
 use super::{
-    Behaviours, Coverage, Domain, Field, FieldSet, Interval, Mask, Mismatch, Report, Run, run,
-    run_cached,
+    Behaviours, Coverage, Domain, Entry, Field, FieldSet, Interval, Mask, Mismatch, Report, Run,
+    run, run_cached,
 };
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
@@ -159,6 +159,23 @@ impl Domain for Copying {
         Some(None)
     }
 
+    fn behaviours(&self) -> Vec<Entry> {
+        [
+            ("Hours", FieldSet::single(0)),
+            ("Frames", FieldSet::single(3)),
+            ("Event", FieldSet::EMPTY),
+        ]
+        .map(|(name, fields)| Entry {
+            name: name.to_owned(),
+            fields,
+        })
+        .into()
+    }
+
+    fn exercised(&self, _: &GameTime, (): &(), _: &Option<u16>) -> Vec<usize> {
+        vec![0, 1, 2]
+    }
+
     fn step(&self, state: &mut GameTime, (): &(), world: &mut Option<u16>) {
         if let Some(seconds) = *world {
             state.seconds = seconds;
@@ -186,6 +203,28 @@ fn a_masked_field_is_not_compared_and_a_copied_one_is_unverified() {
     assert_eq!((seconds.matched, seconds.unverified), (0, 1));
     let frames = &report.fields[3];
     assert_eq!((frames.masked, frames.compared()), (1, 0));
+}
+
+#[test]
+fn an_entry_is_credited_only_where_its_fields_are_compared() {
+    let Ok(report) = run(&Copying, two_frames([0, 0, 1, 0]));
+    let counts: Vec<(&str, u64, u64, u64)> = report
+        .behaviours
+        .iter()
+        .map(|entry| {
+            (
+                entry.name.as_str(),
+                entry.exercised,
+                entry.matched,
+                entry.unchecked,
+            )
+        })
+        .collect();
+    // Hours is compared, but the frame is unverified; frames is masked; the event isn't a field.
+    assert_eq!(
+        counts,
+        [("Hours", 1, 0, 0), ("Frames", 0, 0, 1), ("Event", 0, 0, 1)]
+    );
 }
 
 /// The committed floors: `<domain> <row> <frames matched and verified>` a line, `#` comments.

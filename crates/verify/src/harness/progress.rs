@@ -35,7 +35,7 @@ use data::room::{RoomKey, decode as decode_room};
 use game::progress_world;
 use oracle_record::FrameRecord;
 
-use super::{Domain, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::decode::DecodeError;
 use crate::domain_field;
 use crate::source::{self, WramBlock, WramWord};
@@ -142,6 +142,44 @@ const BEAMS_ON: FieldSet = FieldSet::single(3);
 const HELD: FieldSet = FieldSet::single(5);
 const RESERVE_MODE: FieldSet = FieldSet::single(6);
 const ROOM_STATE: FieldSet = FieldSet::single(15);
+/// The declared fields only the catalogue's entries name, by their places in
+/// [`ProgressDomain`]'s `FIELDS`.
+mod field {
+    use super::FieldSet;
+
+    pub const ITEMS: FieldSet = FieldSet::single(0);
+    pub const BEAMS: FieldSet = FieldSet::single(2);
+    pub const CAPACITY: FieldSet = FieldSet::single(4);
+    pub const EVENTS: FieldSet = FieldSet::single(7);
+    pub const ZEBETITES: FieldSet = FieldSet::single(8);
+    pub const DEFEATED: FieldSet = FieldSet::single(9);
+    pub const EMPTIED: FieldSet = FieldSet::single(10);
+    pub const OPENED: FieldSet = FieldSet::single(11);
+    pub const MAPS: FieldSet = FieldSet::single(12);
+    pub const STATIONS: FieldSet = FieldSet::single(13);
+    pub const ITEMS_PLACED: FieldSet = FieldSet::single(14);
+}
+
+/// The declared fields a catalogue entry's output reaches. The item percentage is the ending's,
+/// which no declared field holds, so it is credited nothing.
+const fn shown_by(id: BehaviourId) -> FieldSet {
+    use BehaviourId as B;
+    match id {
+        B::EventsHappen => field::EVENTS,
+        B::ZebetitesCounted => field::ZEBETITES,
+        B::BossesDefeated => field::DEFEATED,
+        B::EmptiedLocations => field::EMPTIED,
+        B::DoorsStayOpen => field::OPENED,
+        B::MapsByArea | B::MapOnArrival => field::MAPS,
+        B::StationsSavedAt => field::STATIONS,
+        B::ItemsPlacedCount => field::ITEMS_PLACED,
+        B::TakingItems => field::ITEMS.union(ITEMS_ON),
+        B::TakingBeams => field::BEAMS.union(BEAMS_ON),
+        B::Tanks => field::CAPACITY.union(HELD).union(RESERVE_MODE),
+        B::RoomStates => ROOM_STATE,
+        B::ItemPercentage => FieldSet::EMPTY,
+    }
+}
 
 /// Why a frame isn't compared: every one is a harness defect.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -694,10 +732,13 @@ impl Domain for ProgressDomain {
         domain_field!("room state", room_state),
     ];
 
-    fn behaviours(&self) -> Vec<String> {
+    fn behaviours(&self) -> Vec<Entry> {
         CATALOGUE
             .iter()
-            .map(|entry| format!("{:?}", entry.id))
+            .map(|entry| Entry {
+                name: format!("{:?}", entry.id),
+                fields: shown_by(entry.id),
+            })
             .collect()
     }
 
@@ -861,5 +902,44 @@ impl Domain for ProgressDomain {
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         Uncompared::Defect(skip.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::field::{
+        BEAMS, CAPACITY, DEFEATED, EMPTIED, EVENTS, ITEMS, ITEMS_PLACED, MAPS, OPENED, STATIONS,
+        ZEBETITES,
+    };
+    use super::{
+        BEAMS_ON, Domain, FieldSet, HELD, ITEMS_ON, ProgressDomain, RESERVE_MODE, ROOM_STATE,
+    };
+
+    #[test]
+    fn the_field_sets_name_the_declared_fields_at_their_places() {
+        let named = [
+            (ITEMS, "items"),
+            (ITEMS_ON, "items switched on"),
+            (BEAMS, "beams"),
+            (BEAMS_ON, "beams switched on"),
+            (CAPACITY, "capacities"),
+            (HELD, "what she holds"),
+            (RESERVE_MODE, "reserve mode"),
+            (EVENTS, "events"),
+            (ZEBETITES, "zebetites"),
+            (DEFEATED, "bosses defeated"),
+            (EMPTIED, "emptied places"),
+            (OPENED, "open doors"),
+            (MAPS, "maps"),
+            (STATIONS, "stations saved at"),
+            (ITEMS_PLACED, "items placed"),
+            (ROOM_STATE, "room state"),
+        ];
+        for (set, name) in named {
+            let place = ProgressDomain::FIELDS
+                .iter()
+                .position(|field| field.name == name);
+            assert_eq!(place.map(FieldSet::single), Some(set), "{name}");
+        }
     }
 }

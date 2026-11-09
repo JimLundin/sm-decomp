@@ -84,15 +84,21 @@ fn floors_and_tables_parse() {
 
 #[test]
 fn coverage_parses() {
-    let parsed = coverage("# coverage\ncamera frames 10 8 1 5\ncamera entry Follow 3 4\n");
+    let parsed = coverage(
+        "# coverage\ncamera frames 10 8 1 5\ncamera field 9 1 position x\n\
+         camera entry Follow 3 4 2\n",
+    );
     let camera = Coverage {
         frames: Some([10, 8, 1, 5]),
-        entries: vec![("Follow".to_owned(), 3, 4)],
+        fields: vec![("position x".to_owned(), 9, 1)],
+        entries: vec![("Follow".to_owned(), 3, 4, 2)],
     };
     assert_eq!(
         parsed.map(|domains| domains.get("camera") == Some(&camera)),
         Ok(true)
     );
     assert!(coverage("camera frames 10 8 1\n").is_err());
-    assert!(coverage("camera entry Follow x 4\n").is_err());
+    assert!(coverage("camera entry Follow x 4 0\n").is_err());
+    assert!(coverage("camera entry Follow 3 4\n").is_err());
+    assert!(coverage("camera field 9 1\n").is_err());
 }

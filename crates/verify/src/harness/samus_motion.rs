@@ -29,7 +29,7 @@ use game::state::samus::{Bounce, Motion, Position, Samus, SpeedMode, VerticalMot
 use game::state::strand::Frame;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 
-use super::{Domain, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::{self, ContentError};
 use crate::decode::{DecodeError, Rules, buttons};
 use crate::domain_field;
@@ -532,7 +532,52 @@ impl From<&Motion> for Declared {
     }
 }
 
-/// A declared field that a mask names, by its place in [`SamusMotion`]'s `FIELDS`.
+/// The declared fields a catalogue entry's output reaches. Her pose, what she is drawn as, the
+/// standing animation and the cells she touched aren't declared fields, so an entry whose output
+/// is only those (the pose's choice, its chart, its aim, an animation's end) is credited nothing.
+fn shown_by(id: &BehaviourId) -> FieldSet {
+    use BehaviourId as B;
+    use Quantity as Q;
+    let horizontal = [Q::X, Q::BaseSpeed, Q::ExtraRun, Q::Momentum, Q::Mode];
+    let vertical = [Q::Y, Q::VerticalSpeed, Q::Vertical];
+    match id {
+        B::HowSheIsDrawn
+        | B::PoseFollows
+        | B::PadChart
+        | B::Aiming
+        | B::WhatHerMovesMet
+        | B::AnimationEnds
+        | B::TouchedCells => FieldSet::EMPTY,
+        B::SpeedBuildsAndBrakes | B::DriftInTheAir => {
+            Q::all(&[Q::X, Q::BaseSpeed, Q::Momentum, Q::Mode])
+        }
+        B::Dash => Q::all(&[Q::X, Q::ExtraRun]),
+        B::TurningRound => Q::all(&horizontal),
+        B::AimingAndShooting | B::SlopesSlowTheWalk => Q::X.set(),
+        B::RidingTheElevator | B::ShrinkingLowersHer => Q::Y.set(),
+        B::Jumping | B::FollowingTheGround | B::RisingAndFalling | B::Moonfall => Q::all(&vertical),
+        B::Landing => Q::all(&[Q::Y, Q::VerticalSpeed, Q::Vertical, Q::Bounce]),
+        B::MovesAsShePosed
+        | B::BlocksStopFlush
+        | B::SolidEnemies
+        | B::SlopesCarry
+        | B::OtherBlockKinds => Q::all(&[Q::X, Q::Y]),
+        B::WallsAndCeilings => Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed]),
+        B::WordwiseTopSpeed => Q::BaseSpeed.set(),
+        B::PoseFitAfterMoves | B::WallJump => Q::all(&[
+            Q::X,
+            Q::Y,
+            Q::BaseSpeed,
+            Q::ExtraRun,
+            Q::Momentum,
+            Q::Mode,
+            Q::VerticalSpeed,
+            Q::Vertical,
+        ]),
+    }
+}
+
+/// A declared field that a mask or an entry names, by its place in [`SamusMotion`]'s `FIELDS`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Quantity {
     X,
@@ -543,6 +588,7 @@ enum Quantity {
     Mode,
     VerticalSpeed,
     Vertical,
+    Bounce,
 }
 
 impl Quantity {
@@ -562,6 +608,7 @@ impl Quantity {
             Self::Mode => 5,
             Self::VerticalSpeed => 6,
             Self::Vertical => 7,
+            Self::Bounce => 8,
         }
     }
 
@@ -872,10 +919,13 @@ impl Domain for SamusMotion {
         }
     }
 
-    fn behaviours(&self) -> Vec<String> {
+    fn behaviours(&self) -> Vec<Entry> {
         CATALOGUE
             .iter()
-            .map(|entry| format!("{:?}", entry.id))
+            .map(|entry| Entry {
+                name: format!("{:?}", entry.id),
+                fields: shown_by(&entry.id),
+            })
             .collect()
     }
 
@@ -1008,6 +1058,7 @@ mod tests {
             (Q::Mode, "mode"),
             (Q::VerticalSpeed, "vertical_speed"),
             (Q::Vertical, "vertical"),
+            (Q::Bounce, "bounce"),
         ];
         for (quantity, name) in named {
             let place = SamusMotion::FIELDS

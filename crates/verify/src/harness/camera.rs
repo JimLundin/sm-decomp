@@ -26,7 +26,7 @@ use game::state::room::{Scrollers, StaleScroll};
 use oracle_record::FrameRecord;
 
 use super::samus_motion::{self, Ps, SamusMotion, Skip as Motion};
-use super::{Domain, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::decode::DecodeError;
 use crate::domain_field;
@@ -145,6 +145,24 @@ const X: FieldSet = FieldSet::single(0);
 const Y: FieldSet = FieldSet::single(1);
 const CAMERA: FieldSet = X.union(Y);
 const SEEN: FieldSet = FieldSet::single(2);
+
+/// The declared fields a catalogue entry's output reaches: the axis it moves the view on, or
+/// both. Where it last saw her is reported only, so no entry is credited by it.
+const fn shown_by(id: BehaviourId) -> FieldSet {
+    use BehaviourId as B;
+    match id {
+        B::LeadingHer | B::ScreensRunOn => X,
+        B::AimingHeight | B::ShortScreens | B::DownwardLooksAhead | B::BelowTheRoom => Y,
+        B::FollowingHer
+        | B::Remembering
+        | B::CreepReadsRightward
+        | B::ClosedScreens
+        | B::RoomEdges
+        | B::Settling
+        | B::TimeStopped
+        | B::PushCarries => CAMERA,
+    }
+}
 
 /// Why a frame isn't one the camera is compared on.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -556,10 +574,13 @@ impl Domain for CameraDomain {
         domain_field!("seen", seen),
     ];
 
-    fn behaviours(&self) -> Vec<String> {
+    fn behaviours(&self) -> Vec<Entry> {
         CATALOGUE
             .iter()
-            .map(|entry| format!("{:?}", entry.id))
+            .map(|entry| Entry {
+                name: format!("{:?}", entry.id),
+                fields: shown_by(entry.id),
+            })
             .collect()
     }
 

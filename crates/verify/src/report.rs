@@ -900,12 +900,15 @@ fn floors_section(
 struct Coverage {
     /// Frames, matched and verified, unverified and the null model's matched.
     frames: Option<[usize; 4]>,
-    /// Each catalogue entry: its name, the frames matched and verified, the frames exercised.
-    entries: Vec<(String, usize, usize)>,
+    /// Each declared field: its name, the frames it was compared on, the frames it was masked on.
+    fields: Vec<(String, usize, usize)>,
+    /// Each catalogue entry: its name, the frames matched and verified, the frames exercised
+    /// with its fields compared, the frames that exercised it unchecked.
+    entries: Vec<(String, usize, usize, usize)>,
 }
 
-/// The coverage by domain: `domain frames <4 counts>` and `domain entry <name> <2 counts>` lines,
-/// `#` comments skipped.
+/// The coverage by domain: `domain frames <4 counts>`, `domain field <2 counts> <name>` and
+/// `domain entry <name> <3 counts>` lines, `#` comments skipped.
 fn coverage(text: &str) -> Result<BTreeMap<String, Coverage>, String> {
     let mut domains: BTreeMap<String, Coverage> = BTreeMap::new();
     let number = |line: &str, word: &str| {
@@ -925,11 +928,24 @@ fn coverage(text: &str) -> Result<BTreeMap<String, Coverage>, String> {
                 }
                 domains.entry((*domain).to_owned()).or_default().frames = Some(frames);
             }
-            [domain, "entry", name, matched, exercised] => {
+            [domain, "field", compared, masked, name @ ..] if !name.is_empty() => {
+                let field = (
+                    name.join(" "),
+                    number(line, compared)?,
+                    number(line, masked)?,
+                );
+                domains
+                    .entry((*domain).to_owned())
+                    .or_default()
+                    .fields
+                    .push(field);
+            }
+            [domain, "entry", name, matched, exercised, unchecked] => {
                 let entry = (
                     (*name).to_owned(),
                     number(line, matched)?,
                     number(line, exercised)?,
+                    number(line, unchecked)?,
                 );
                 domains
                     .entry((*domain).to_owned())
@@ -974,17 +990,46 @@ fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<
         let _ = writeln!(out, "| {name} | {cells} |");
     }
     out.push_str(
-        "\nPer catalogue entry, the frames that exercised it and those of them matched and \
-         verified. An entry no frame exercised is checked by its vectors only.\n\n",
+        "\nPer declared field, the compared frames on which it was compared and those on which \
+         a mask, by its named writer, put it out of scope. The summary's harness frames count a \
+         frame matched on its unmasked fields alone.\n\n",
+    );
+    table(out, 2, &["Domain", "Field", "Compared", "Masked"]);
+    for domain in domains {
+        let name = domain.domain.name;
+        for (field, compared, masked) in coverage
+            .get(name)
+            .map(|coverage| coverage.fields.as_slice())
+            .unwrap_or_default()
+        {
+            let _ = writeln!(
+                out,
+                "| {name} | {field} | {} | {} |",
+                grouped(*compared),
+                grouped(*masked)
+            );
+        }
+    }
+    out.push_str(
+        "\nPer catalogue entry, the frames that exercised it with every field its output reaches \
+         compared, those of them matched and verified, and the frames that exercised it \
+         unchecked: one of its fields masked, or an output (an event) the harness doesn't \
+         compare. An entry no frame verifies is checked by its vectors only.\n\n",
     );
     table(
         out,
         2,
-        &["Domain", "Entry", "Matched and verified", "Exercised"],
+        &[
+            "Domain",
+            "Entry",
+            "Matched and verified",
+            "Exercised",
+            "Unchecked",
+        ],
     );
     for domain in domains {
         let name = domain.domain.name;
-        for (entry, matched, exercised) in coverage
+        for (entry, matched, exercised, unchecked) in coverage
             .get(name)
             .map(|coverage| coverage.entries.as_slice())
             .unwrap_or_default()
@@ -996,8 +1041,9 @@ fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<
             };
             let _ = writeln!(
                 out,
-                "| {name} | {entry} | {matched} | {} |",
-                grouped(*exercised)
+                "| {name} | {entry} | {matched} | {} | {} |",
+                grouped(*exercised),
+                grouped(*unchecked)
             );
         }
     }

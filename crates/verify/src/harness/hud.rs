@@ -17,8 +17,9 @@
 //!   compared with the cancel false.
 //!
 //! The pickups' icons (`collected`) and a boss turning the mini-map off in a frame (Mother Brain's
-//! first form) have no hit either; no cached row reaches them, so both are none. The click isn't
-//! compared until the sound domain's request stream exists. Nothing answers from record N+1's HUD,
+//! first form) have no hit either; no cached row reaches them, so both are none. The click and the
+//! switch aren't compared until the sound and the weapons' request streams exist, so their entries
+//! are credited nothing. Nothing answers from record N+1's HUD,
 //! so no field is unverified; the null model is the HUD left as record N has it.
 
 use core::fmt;
@@ -36,7 +37,7 @@ use game::hud_world::{self, AreaMaps};
 use game::state::video::TilemapEntry;
 use oracle_record::FrameRecord;
 
-use super::{Domain, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::decode::DecodeError;
 use crate::domain_field;
@@ -107,6 +108,28 @@ const SELECTED: FieldSet = FieldSet::single(2);
 const ONE_SHOT: FieldSet = FieldSet::single(3);
 const WINDOW_TILES: FieldSet = FieldSet::single(4);
 const EXPLORED: FieldSet = FieldSet::single(5);
+const STATUS_BAR: FieldSet = FieldSet::single(0);
+const SHOWN: FieldSet = FieldSet::single(1);
+
+/// The declared fields a catalogue entry's output reaches. The click and the switch are events,
+/// which aren't compared until the sound and the weapons' request streams exist, so
+/// `SwitchClick` and `Switching` are credited nothing.
+const fn shown_by(id: BehaviourId) -> FieldSet {
+    use BehaviourId as B;
+    match id {
+        B::EnergyGauge | B::AmmoCounts | B::SelectionHighlight => STATUS_BAR.union(SHOWN),
+        B::AutoReserveSign | B::OneShotFlash | B::IconsAppear => STATUS_BAR,
+        B::SwitchClick | B::Switching => FieldSet::EMPTY,
+        B::CyclingItems => SELECTED,
+        B::CancellingTheItem => SELECTED.union(ONE_SHOT),
+        B::OneShotItem => ONE_SHOT,
+        B::Exploring | B::DiagonalPicture => EXPLORED,
+        B::MiniMapWindow | B::HerBlink | B::BossBlanksTheMap => WINDOW_TILES,
+        B::MiniMapStill | B::FirstColumnsShift | B::LastColumnsShift => {
+            WINDOW_TILES.union(EXPLORED)
+        }
+    }
+}
 
 /// Why a frame isn't compared.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -510,10 +533,13 @@ impl Domain for HudDomain {
         domain_field!("explored cells", explored),
     ];
 
-    fn behaviours(&self) -> Vec<String> {
+    fn behaviours(&self) -> Vec<Entry> {
         CATALOGUE
             .iter()
-            .map(|entry| format!("{:?}", entry.id))
+            .map(|entry| Entry {
+                name: format!("{:?}", entry.id),
+                fields: shown_by(entry.id),
+            })
             .collect()
     }
 
@@ -687,6 +713,8 @@ mod tests {
                 .position(|field| field.name == name)
                 .map(FieldSet::single)
         };
+        assert_eq!(place("status bar"), Some(STATUS_BAR));
+        assert_eq!(place("values last shown"), Some(SHOWN));
         assert_eq!(place("selected item"), Some(SELECTED));
         assert_eq!(place("one-shot item"), Some(ONE_SHOT));
         assert_eq!(place("mini-map window"), Some(WINDOW_TILES));
