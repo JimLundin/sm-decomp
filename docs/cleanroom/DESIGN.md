@@ -55,6 +55,13 @@ is imported, so keep to them as you go:
   calls, with no methods).
 - Modules import in one direction only: a module and its parent, or two siblings, may not each
   import from the other.
+- Use the crates your manifests name where they model the domain better than hand-written code:
+  `enum-map` for a table with one entry per variant of an enum, `serde` to read text into typed
+  records, `toml` for the vector files. Nothing else from outside std: no other crate, no feature
+  of these beyond the ones the manifests turn on, no file, network, process or environment
+  access, no `unsafe`, no build script. If another widely used crate is the standard tool for
+  something your model needs and std lacks, ask for it in your report and say what it would
+  model.
 
 ## What a modern developer would expect
 
@@ -121,8 +128,8 @@ behaviour exact. Use enums with data and newtypes, never raw numbers for a mode 
 
 ## The rules of this repository
 
-- Write only in `crates/clean_model/<domain>` and `crates/clean_types`. They depend on nothing but
-  each other and the standard library.
+- Write only in `crates/clean_model/<domain>` and `crates/clean_types`. They depend on each other,
+  the standard library and the crates their manifests name.
 - End every commit message with the trailer `Role: implementer`, and use the spec's words and entry
   ids in it.
 - Check with `cargo check`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`. Run the

@@ -1,6 +1,6 @@
 # check_manifest.awk: the findings in one clean crate's Cargo.toml, one `tag<TAB>detail` per line.
 #   -v crate=ABS_CRATE_DIR  -v allowed=PATH|PATH  (the directories a path dependency may name)
-#   -v allowfile=allowed_deps.txt  (lines `name version kind`, `#` comments)
+#   -v allowfile=allowed_deps.txt  (lines `name version kinds features`, `#` comments)
 # Not a TOML parser: it reads the manifest shapes cargo's own templates and ours produce, and
 # reports a dependency line it can't read as a finding.
 function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
@@ -22,7 +22,8 @@ BEGIN {
   while ((getline l < allowfile) > 0) {
     sub(/#.*/, "", l); l = trim(l)
     if (l == "") continue
-    split(l, f, /[ \t]+/); allowv[f[1]] = f[2]; allowk[f[1]] = f[3]
+    split(l, f, /[ \t]+/); allowv[f[1]] = f[2]; allowk[f[1]] = "," f[3] ","
+    allowf[f[1]] = (f[4] == "-" || f[4] == "") ? "," : "," f[4] ","
   }
   np = split(allowed, ap, "|")
   for (k = 1; k <= np; k++) okpath[norm(ap[k])] = 1
@@ -91,7 +92,21 @@ END {
     }
     if (!(real in allowv)) { emit("dep-registry", label ": not in allowed_deps.txt"); continue }
     ver = ((pre "version") in d) ? d[pre "version"] : ""
-    if (ver != allowv[real] || kind != allowk[real])
-      emit("dep-registry", label ": allowed only as a " allowk[real] " dependency pinned `" allowv[real] "`, found " kind " `" ver "`")
+    if (ver != allowv[real] || index(allowk[real], "," kind ",") == 0)
+      emit("dep-registry", label ": allowed only as a " substr(allowk[real], 2, length(allowk[real]) - 2) " dependency pinned `" allowv[real] "`, found " kind " `" ver "`")
+    for (dk in d) {
+      split(dk, b, SUBSEP)
+      if (b[1] == kind && b[2] == name && b[3] !~ /^(version|features|default-features|package)$/)
+        emit("dep-registry", label ": the key `" b[3] "` is not allowed on a registry dependency")
+    }
+    if ((pre "features") in d) {
+      fl = d[pre "features"]; gsub(/^\[|\][ \t]*$/, "", fl)
+      nf = split(fl, feat, ",")
+      for (k = 1; k <= nf; k++) {
+        ft = unq(feat[k]); if (ft == "") continue
+        if (index(allowf[real], "," ft ",") == 0)
+          emit("dep-registry", label ": feature `" ft "` is not in allowed_deps.txt")
+      }
+    }
   }
 }

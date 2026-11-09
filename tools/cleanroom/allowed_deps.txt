@@ -1,8 +1,19 @@
-# The registry dependencies a clean crate may have. code_check.sh refuses any other registry,
-# git or out-of-tree dependency. Columns: package, the exact version string the crate's
-# Cargo.toml must carry, kind (dev or normal).
+# The registry crates a clean crate may depend on (MODEL §1 decision 12). code_check.sh refuses
+# any other registry, git or out-of-tree dependency, and on a listed one any key but `version`,
+# `features`, `default-features` and `package`.
 #
-# None. A clean crate runs no third-party code: a vector test parses its vector file by hand from
-# the include_str!ed text. Third-party crates bring build scripts, macros and floating transitive
-# versions into the export, and Defender blocks their build scripts on the development machine.
+# The policy: a crate is listed when it is widely used and the standard choice for its job, std
+# doesn't cover that job, it helps model the domain, and it builds on the development machine
+# (a build script is baked in by tools/vendor_nobuild.sh and patched in the root Cargo.toml).
+# The root approves each line; an implementer may ask for a crate in its report.
+#
+# Columns: package; the exact version requirement the Cargo.toml must carry; the dependency kinds
+# allowed (normal, dev, comma-separated); the features `features = [...]` may switch on beyond
+# the crate's defaults (comma-separated, `-` for none). `default-features` may take either value.
 
+# Maps and sets keyed by an enum: one entry per variant, which the compiler checks.
+enum-map =3.1.0 normal,dev -
+# Typed records read from text: a table or a vector file deserialised into the domain's types.
+serde =1.0.229 normal,dev derive
+# The vector files' format.
+toml =1.2.1 dev -

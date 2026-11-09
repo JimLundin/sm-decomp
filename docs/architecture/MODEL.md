@@ -102,6 +102,19 @@ Jim's decisions, 2026-11-07:
     stated once) and cut rounds (PROCESS, "The loop"): rounds whose brief is the verdict and the
     shape findings alone, repeated until the gate is satisfied.
 
+Jim's decision, 2026-11-09:
+
+12. **Widely used crates where they model the domain.** In Jim's words: "we should in general be
+    in favor of widely used crates... not restrained to only the standard library... When an
+    outside dependency can help us better model the domain we're building, then we should do
+    so." A crate is used when it is widely used and the standard choice for its job, std doesn't
+    cover that job, it helps model the domain, and it builds on the development machine. The
+    root approves each, at an exact version: `tools/cleanroom/allowed_deps.txt` lists those the
+    clean crates may use, with their kinds and features, and `code_check.sh` refuses the rest.
+    A crate whose build script Defender would block is used through a copy with the script's
+    output baked in (`tools/vendor_nobuild.sh`, the root manifest's `[patch.crates-io]`), which
+    CI holds to the real script's output (`tools/vendor_nobuild_check.sh`).
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our
@@ -432,8 +445,9 @@ disk or on the web is out of reach. So:
     less), and entry points that map to one routine.
 - **Briefs are saved and scanned before the spawn.** The root and the observer are relays too.
 - **The clean crates.** The model, the catalogue and the domain types an implementer needs (speeds,
-  poses as enums, tables as typed records) live in their own crates. Those crates depend on nothing
-  but each other and the standard library. They contain **no address, bank, RAM, ROM-code or
+  poses as enums, tables as typed records) live in their own crates. Those crates depend on each
+  other, the standard library and the registry crates of `tools/cleanroom/allowed_deps.txt`
+  (§1 decision 12). They contain **no address, bank, RAM, ROM-code or
   original routine name anywhere, comments included.** `data` stays on the observer side and turns
   ROM bytes into the clean types at the edge. `tools/check_crate_rules.sh` enforces both rules in CI.
 - **No addresses where an implementer can see them.** `Source:` lines live only in the observer's

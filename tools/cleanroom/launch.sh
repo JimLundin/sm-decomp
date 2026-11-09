@@ -55,9 +55,10 @@
 # what catches a test that read a forbidden file and printed it, and code_check.sh, which import.sh
 # runs before applying anything, refuses the source that could (std::fs, net, process, env,
 # unsafe, include_*! outside the vector file, build scripts, dependencies beyond allowed_deps.txt).
-# The clean crates' Cargo.toml is not writable here: export.sh gives the model crate the one
-# dev-dependency code_check.sh allows, so a manifest edit is never needed. CLI 2.1.316 offers only
-# Read, Edit and Bash (Edit creates files; Glob, Grep and Write don't exist); their rules stay for later CLIs.
+# The clean crates' Cargo.toml is not writable here: their dependencies are the integrator's, from
+# allowed_deps.txt (export.sh gives a new model crate the vector parser), so a manifest edit is
+# never needed. CLI 2.1.316 offers only Read, Edit and Bash (Edit creates files; Glob, Grep and
+# Write don't exist); their rules stay for later CLIs.
 #
 # Overrides: CLAUDE_BIN (default ~/.local/bin/claude.exe), CLEANROOM_MODEL (default opus),
 # CLEANROOM_MAX_BUDGET_USD (passed as --max-budget-usd), CLEANROOM_AUTH (a file of top-level

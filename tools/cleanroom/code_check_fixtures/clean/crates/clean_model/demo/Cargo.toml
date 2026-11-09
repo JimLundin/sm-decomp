@@ -8,6 +8,8 @@ publish = false
 
 [dependencies]
 clean_types = { path = "../../clean_types" }
+enum-map = "=3.1.0"
+serde = { version = "=1.0.229", default-features = false, features = ["derive"] }
 
 
 

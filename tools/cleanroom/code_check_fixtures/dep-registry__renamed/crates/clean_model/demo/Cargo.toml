@@ -8,10 +8,10 @@ publish = false
 
 [dependencies]
 clean_types = { path = "../../clean_types" }
-toml = { package = "evil", version = "=0.8.23" }
+toml = { package = "evil", version = "=1.2.1" }
 
 [dev-dependencies]
-toml = "=0.8.23"
+toml = "=1.2.1"
 
 
 [lints]

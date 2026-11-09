@@ -27,7 +27,9 @@
 #     call, an operator, control flow, a closure or a macro makes it logic), array lengths and
 #     tuple fields. Both rules are tools/cleanroom/lint_scan.awk.
 # Manifest: build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
-#   dep-registry (not in allowed_deps.txt, or not at its pinned version) target-path
+#   dep-registry (not in allowed_deps.txt; or not at its pinned version, of an allowed kind, with
+#   allowed features only and no other key than version, features, default-features and package)
+#   target-path
 #   manifest-section ([patch], [replace], [workspace])
 # Files: extra-file for anything in a crate besides Cargo.toml, src/ and tests/ (build.rs,
 #   .cargo/), and for a symlink.
