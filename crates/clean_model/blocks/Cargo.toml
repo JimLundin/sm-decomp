@@ -1,0 +1,17 @@
+[package]
+name = "clean_model_blocks"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The blocks model, built from its behaviour spec"
+
+[dependencies]
+clean_types = { path = "../../clean_types" }
+
+[dev-dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+toml = "=1.2.1"
+
+[lints]
+workspace = true
