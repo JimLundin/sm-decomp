@@ -79,9 +79,10 @@ pub struct Room {
 }
 
 impl Room {
-    /// A room `width` screens across and `height` rows down, from its `run` of screens: its rows,
-    /// top first, each left to right, then the screens the room's loading left after its last,
-    /// which continue the run below it, a row of `width` screens at a time (Spec: BelowTheRoom).
+    /// A room of `size` screens, `size.x` across (the spec's w) and `size.y` down (h), from its
+    /// `run` of screens: its rows, top first, each left to right, then the screens the room's
+    /// loading left after its last, which continue the run below it, a row of w screens at a
+    /// time (Spec: BelowTheRoom).
     ///
     /// # Errors
     ///
@@ -89,22 +90,22 @@ impl Room {
     /// fewer screens than the room.
     pub fn new(
         run: Vec<ScreenKind>,
-        width: usize,
-        height: usize,
+        size: Pair<usize>,
         heights: Heights,
     ) -> Result<Self, RoomError> {
         let last = Pair {
-            x: last_edge(width)?,
-            y: last_edge(height)?,
+            x: last_edge(size.x)?,
+            y: last_edge(size.y)?,
         };
-        if width
-            .checked_mul(height)
+        if size
+            .x
+            .checked_mul(size.y)
             .is_none_or(|room| run.len() < room)
         {
             return Err(RoomError::MissingScreens);
         }
         Ok(Self {
-            width,
+            width: size.x,
             last,
             run,
             heights,

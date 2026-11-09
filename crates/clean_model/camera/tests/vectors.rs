@@ -246,7 +246,10 @@ mod tests {
             .collect();
         let width = rows.first().map_or(0, Vec::len);
         assert!(rows.iter().all(|r| r.len() == width), "rows of one width");
-        let height = rows.len();
+        let size = Pair {
+            x: width,
+            y: rows.len(),
+        };
         let mut run: Vec<ScreenKind> = rows.into_iter().flatten().collect();
         run.extend(t.take("below").map_or_else(Vec::new, Value::screens));
         let mut h = t.need("heights").array().into_iter();
@@ -256,14 +259,14 @@ mod tests {
         };
         assert!(h.next().is_none(), "two heights");
         t.done("room");
-        Room::new(run, width, height, heights).expect("a valid room")
+        Room::new(run, size, heights).expect("a valid room")
     }
 
-    fn samus(value: Value, seen: Pair<Fixed>) -> Samus {
+    fn samus(value: Value) -> Samus {
         let mut t = value.table();
         let s = Samus {
             position: t.need("position").pair(),
-            camera_from: t.take("camera_from").map_or(seen.y, Value::fixed),
+            placed: t.take("placed").map(Value::fixed),
             facing: facing(&t.need("facing").str()),
             backwards: t.take("backwards").is_some_and(|v| backwards(&v.str())),
             rising: t.take("rising").is_some_and(Value::bool),
@@ -293,7 +296,7 @@ mod tests {
             .map_or(LeadSetting::Ahead, |l| lead(&l.str()));
         let time_stopped = v.take("time_stopped").is_some_and(Value::bool);
         let before = camera(v.need("before"), "before");
-        let samus = samus(v.need("samus"), before.seen());
+        let samus = samus(v.need("samus"));
         let after = camera(v.need("after"), "after");
         v.done(&id);
         let frame = Frame {
@@ -370,9 +373,8 @@ mod tests {
             level: Wrapping(112),
             rising: Wrapping(160),
         };
-        let build = |run: Vec<ScreenKind>, width: usize, height: usize| {
-            Room::new(run, width, height, heights).err()
-        };
+        let build =
+            |run: Vec<ScreenKind>, x: usize, y: usize| Room::new(run, Pair { x, y }, heights).err();
         assert_eq!(build(vec![Open], 0, 1), Some(RoomError::NoScreens));
         assert_eq!(build(vec![Open], 1, 0), Some(RoomError::NoScreens));
         assert_eq!(build(vec![Open; 3], 2, 2), Some(RoomError::MissingScreens));

@@ -41,8 +41,9 @@ pub struct Rules {
     pub near: Leads,
     /// How far a push moves the view beyond its speed (Spec: ClosedScreens).
     pub push: Px,
-    /// The rows of any screen but a short one: how far below its top edge the view stops where
-    /// it can go no lower, a short screen's being 0 (Spec: ShortScreens).
+    /// The rows: how many pixels down from a screen's top edge the view stops where it can go no
+    /// lower; across there are none. These are any screen's but a short one's, which has none
+    /// (Spec: ShortScreens).
     pub rows_not_short: Px,
 }
 
