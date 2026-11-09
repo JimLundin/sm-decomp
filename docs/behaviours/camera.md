@@ -14,13 +14,20 @@ and what it remembers of her between frames. It reads her motion's outputs: her 
 moves, the y a placement put her at, if any, whether she skids, whether she rises, her facing and
 whether she moonwalks.
 
-**What it reads from samus-motion.** Its step's outputs as it exports them: her position, the y a
-placement put her at, if any (where pose fit or a change of shape placed her), the skid, her
-facing and `rising` (§1.3), which samus-motion's `RisingAndFalling` gives: she is rising from the
+**What it reads from samus-motion.** Its step's outputs: her position, the y a placement put her
+at, if any (where pose fit or a change of shape placed her), the skid, her facing and `rising` (§1.3), which samus-motion's `RisingAndFalling` gives: she is rising from the
 rise's start until it ends, a rise at 0 and the frame that spends the rise included. Her vertical
 speed can't stand in for it: at a rise at 0 it is 0, and on the frame that spends the rise it
 already points down, yet both aim the camera as a rise does (C-rise-at-0, C-rise-spent). While a knockback moves her, `rising` and going backwards are the
 knockback's (§5).
+
+Samus-motion exports, on every frame, a y the camera follows her from: her start y where nothing
+placed her. Until it exports the placement as an option, the camera takes that y as the y a
+placement put her at when it differs from her start y. That misses one case: a placement of 0 px,
+leaving her y as it was, on a frame where another mover (an elevator) moved her before her step.
+There the camera should follow her from her start y, and it follows her from where it last saw her
+instead. No recorded row reaches it; `docs/LEGACY.md` lists it as "A placement of 0 px after
+another mover".
 
 **Not in this spec** (each an input where it feeds us, §1.3; §5 names who supplies each): a door's
 passage, which places the view in the next room; the cells that open and close screens as she
@@ -212,8 +219,9 @@ aim stopped it, and `v` its speed's pixel part.
   is `8100`: `before` would keep `8100`, but it `exceeds` the edge, so the view stops on `0100`.
 - The `exceeds` going down can't differ from `before`: `RoomEdges` lets only a `c` from 0 to `yb`
   reach it.
-- So the view stops on the screen's edge (R22, R18) or, short of it, backs 2 px a frame from where
-  it was before its move (C-push-right-back): it moves against her until it is out.
+- So the view stops on the screen's edge (R22, R18) or, short of it, backs 2 px from where it was
+  before its move, or 1 when the move carried a subpixel (C-push-right-back): it moves against her
+  until it is out.
 - So going down, a top within `rows` of its screen's edge stays where the move put it (R2, R11).
 - checked: oracle (the stops on the edge, R18-R32); constructed (the 2 px back-offs,
   C-push-left-far).
@@ -232,11 +240,14 @@ aim stopped it, and `v` its speed's pixel part.
 - Going down, `c` `exceeds` `yb` → it backs up as from a closed screen, `max(yb, back(cm))`,
   and no closed screen moves it that frame [R12, R17, R25, C-edge-down-from-above,
   C-edge-down-from-below]
-- So a camera in the room or above it stops on `yb`: its move ends at most `v + 1` px past `yb`,
-  so `back(cm)` is `before` `yb` (R12; C-edge-down-from-above, from `FFF0`, backs to `FFEE`).
-  A camera another domain left below the room, far enough that `back(cm)` is after `yb`, backs
-  instead 2 px a frame from where it was (C-edge-down-from-below: from `0150` it ends on `014E`,
-  not on `011F`).
+- So a camera in the room stops on `yb`: its move ends at most `v + 1` px past it, so `back(cm)`
+  is `before` `yb` (R12).
+- So does one above the room, since `back(cm)` is `before` `yb` there too
+  (C-edge-down-from-above: from `FFF0`, `back(cm)` is `FFEE`).
+- A camera another domain left below the room, far enough that `back(cm)` is after `yb`, backs up
+  to `back(cm)`, which is `c − 2` plus the move's carry: 2 px from where it was, or 1 when the move
+  carried a subpixel (C-edge-down-from-below: from `0150`, no carry, it ends on `014E`, not on
+  `011F`).
 - So a camera left of the room that moves right goes straight to the room's right edge
   (C-edge-right-from-left).
 - checked: oracle; constructed (C-edge-right-from-left, C-edge-down-from-above,

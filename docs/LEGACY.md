@@ -73,6 +73,23 @@ original's bytes as data.
   item reads no area (only a boss's, a map's and a station's reports do), so nothing differs; a
   report that reads one would have to name the debug area first.
 
+## The engine: outputs a domain doesn't export yet
+
+- **A placement of 0 px after another mover** (the camera domain, `docs/behaviours/camera.md` §1;
+  `game::samus_world`'s `settle` and the harness's `placement` in `verify::harness::samus_motion`;
+  the decode notes' Remembering row, `$91:ECDA`..`$91:ED0E`): samus-motion reports where the camera
+  follows her from on every frame, her start y where nothing placed her, so both callers take a
+  placement only where it differs from her start y. The original writes the camera's previous y
+  (`0B14`) on every pose change that places her, 0 px included: the standing and unmorphing
+  transitions write her own y. On a frame where another mover (the elevator) moved her before her
+  step, so that where the camera last saw her differs from her start y, such a placement makes the
+  original follow her from her start y; the engine leaves the camera's previous y as it was and
+  follows her from where it last saw her. No recorded row reaches it: over the 44 rows of the CI
+  cache (20,558 frames of one frame of gameplay in one room), her y moves after the camera's turn
+  on 7 frames (chain-0232-D5A7 4, item-charge-beam, item-morph-ball and item-reserve-tank 1 each),
+  and her pose changes on none of the frames that follow them. The entry goes when samus-motion
+  exports the placement as an option and the callers pass it through.
+
 ## Tolerated values kept as named variants
 
 - `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (`$91:B731`, `$91:B739`) hold X

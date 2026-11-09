@@ -21,7 +21,13 @@ camera measures from (`0B10`-`0B16`) after record N and before the scroll: 113 a
 `camera_from`), 69 are the shinespark's clamp (`$90:D1D6`..`$90:D1FE` and `$90:D2A3`..`$90:D2B9`,
 previous position within 15 px across and 14 px down), and the rest the grapple (`$9B:BB25`..,
 the ±12 px clamp) and the Landing Site's gunship (`$A2:A925`). With the y the camera saw taken as her y at the scroll, the
-113 pose changes match too.
+113 pose changes match too. Over the 44-row cache (the 12 rows added since: the bosses, the
+items, the event and four chain rows; `camdump3` on `$TEMP/collab/scenes/cache`, then
+`$TEMP/collab/camera-r4/model.py` and `pfpose.py`), it matches 20,289 of 20,558 frames, the null
+model 8,361. The 12 new rows add 5,668 frames, 5,585 matched: 81 of the 83 misses are pose changes
+that match with the seen y taken as her y at the scroll, and 2 are in boss-kraid-defeated
+(records 806 and 850, movement types 0Ah and 3, the camera's x subpixel only, its pixels matching; that row's
+camera floor is 0).
 
 `gen.py` picks the recorded vectors (at most two per outcome, from different rows, from frames
 the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`, outside movement
