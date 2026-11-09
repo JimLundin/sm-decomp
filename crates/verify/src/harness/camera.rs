@@ -139,6 +139,10 @@ const EXTRA_Y_DISPLACEMENT: WramWord = wram("EXTRA_SAMUS_Y_DISPLACEMENT", 0x0B5C
 /// The extra displacement Kraid's push back sets ($A7:94A4), 4 px across and -8 px down, which
 /// its body collision calls after it moves her.
 const KRAID_PUSH: (u16, u16) = (0x0004, 0xFFF8);
+/// Kraid's bottom lint, and the function Kraid's arm's touch ($A7:9490) gives it ($A7:9499,
+/// `$10A8`) before it calls the same push back without moving her.
+const KRAID_BOTTOM_LINT: u16 = 0xE3BF;
+const KRAID_ARM_TOUCHED: u16 = 0xB89B;
 
 /// The gunship's top, and its idle function, the one that only waits for her to enter: every
 /// other function holds her and moves her, across ($A2:A925, $A2:AA1D, where she enters) and
@@ -459,36 +463,61 @@ impl CameraDomain {
     }
 }
 
-/// The masks of Kraid's moves of her in the frame from `from` to `next`, whose enemy phase reads
-/// `from`'s slots and her position there, before her motion runs. Its body collision ($A7:B0F3)
-/// moves her up and back and sets where the camera saw her to her new position's pixels, the
-/// subpixels kept, then pushes her back ($A7:94A4), which leaves its extra displacement at the
-/// frame's end: both axes. Its hold on the first screen ($A7:C9EE) sets her x and where the
-/// camera saw her across to 100h when she is past it: x. On every other frame of the fight it
-/// moves neither her nor the view, so the camera stays compared.
-fn kraid(from: &FrameRecord, next: &FrameRecord, slots: &[Slot]) -> Result<Vec<Mask>, Skip> {
+/// The masks of Kraid's moves of her in the frame from `from` to `next`. The frame runs her
+/// movement ($82:8B58), then the enemies ($82:8B65), then her pose change ($82:8B69), so Kraid
+/// reads `from`'s slots and the position her movement left.
+///
+/// Its body collision ($A7:B0F3) moves her up and back and sets where the camera saw her to her
+/// new position's pixels, the subpixels kept, then pushes her back ($A7:94A4), which leaves its
+/// extra displacement at the frame's end: both axes. The arm's touch ($A7:9490) calls the same
+/// push back but moves neither her nor the view; it alone turns the bottom lint's function to
+/// [`KRAID_ARM_TOUCHED`], and its frames stay compared, so a frame where both touch her fails
+/// rather than hides.
+///
+/// Its hold on the first screen ($A7:C9EE) sets her x and where the camera saw her across to
+/// 100h when her movement left her at it or past it: x. The records hold her x before her
+/// movement and after the hold, so the mask is on where either is 100h or past it. On every other
+/// frame of the fight it moves neither her nor the view, so the camera stays compared.
+fn kraid(
+    from: &FrameRecord,
+    next: &FrameRecord,
+    slots: (&[Slot], &[Slot]),
+) -> Result<Vec<Mask>, Skip> {
     let mut masks = Vec::new();
-    let Some(kraid) = slots.iter().find(|slot| slot.species == KRAID) else {
+    let (before, after) = slots;
+    let Some(kraid) = before.iter().find(|slot| slot.species == KRAID) else {
         return Ok(masks);
     };
     let pushed = (
         word(next, EXTRA_X_DISPLACEMENT)?,
         word(next, EXTRA_Y_DISPLACEMENT)?,
     ) == KRAID_PUSH;
-    if pushed {
+    if pushed && !arm_touched(before, after) {
         masks.push(Mask {
             reason: "another domain: Kraid's body collision moves her and where the camera saw her ($A7:B0F3)",
             fields: CAMERA,
         });
     }
-    let past = !below(word(from, source::SAMUS_X_POS)?, KRAID_SCREEN_END);
-    if past && KRAID_HOLDS_HER_X.contains(&kraid.own_function) {
+    let past = |record| Ok::<_, Skip>(!below(word(record, source::SAMUS_X_POS)?, KRAID_SCREEN_END));
+    if KRAID_HOLDS_HER_X.contains(&kraid.own_function) && (past(from)? || past(next)?) {
         masks.push(Mask {
             reason: "another domain: Kraid holds her x and where the camera saw her on the first screen ($A7:C9EE)",
             fields: X,
         });
     }
     Ok(masks)
+}
+
+/// Whether Kraid's arm touched her in the frame from `before`'s slots to `after`'s: the bottom
+/// lint's function turned to the one the touch gives it.
+fn arm_touched(before: &[Slot], after: &[Slot]) -> bool {
+    let lint = |slots: &[Slot]| {
+        slots
+            .iter()
+            .find(|slot| slot.species == KRAID_BOTTOM_LINT)
+            .map(|slot| slot.own_function)
+    };
+    lint(before) != Some(KRAID_ARM_TOUCHED) && lint(after) == Some(KRAID_ARM_TOUCHED)
 }
 
 /// Whether the main loop runs gameplay in `record`.
@@ -541,7 +570,7 @@ fn slots(record: &FrameRecord) -> Result<Vec<Slot>, Skip> {
 /// live at either record: a yapping maw holding her, the bosses, the gunship holding her.
 fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
     let (before, after) = (slots(from)?, slots(next)?);
-    let mut masks = kraid(from, next, &before)?;
+    let mut masks = kraid(from, next, (&before, &after))?;
     let mut mask = |reason, fields| masks.push(Mask { reason, fields });
     let live = |species: u16| {
         before

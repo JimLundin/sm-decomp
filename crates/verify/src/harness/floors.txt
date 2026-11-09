@@ -92,7 +92,7 @@ samus-motion terrain-quicksand 332
 camera area-brinstar 476
 camera area-maridia 257
 camera area-norfair 208
-camera boss-kraid-defeated 1067
+camera boss-kraid-defeated 1068
 camera boss-phantoon 1984
 camera chain-0012-91F8 422
 camera chain-0013-92FD 599

@@ -47,12 +47,12 @@ samus-motion entry SlopesSlowTheWalk 0 0 0
 samus-motion entry TouchedCells 0 0 17868
 samus-motion entry OtherBlockKinds 0 0 0
 samus-motion entry WordwiseTopSpeed 0 0 0
-camera frames 25426 18902 0 7458
-camera field 18902 1713 position.x
+camera frames 25426 18903 0 7458
+camera field 18903 1712 position.x
 camera field 18679 1936 position.y
 camera field 0 20615 seen
 camera entry FollowingHer 11972 11972 973
-camera entry LeadingHer 9172 9172 402
+camera entry LeadingHer 9173 9173 401
 camera entry AimingHeight 6928 6928 615
 camera entry Remembering 18679 18679 1936
 camera entry CreepReadsRightward 384 384 7
