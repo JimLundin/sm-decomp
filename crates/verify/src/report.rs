@@ -99,6 +99,17 @@ const DOMAINS: &[Domain] = &[
             ("percentage", &[]),
         ],
     },
+    // The pictures and the places, which both the status bar and the mini-map read, are the
+    // domain's shared code, with the grid, the inputs and the frame.
+    Domain {
+        name: "hud",
+        bridge: "hud_world",
+        areas: &[
+            ("status", &["status_bar.rs"]),
+            ("selection", &["selection.rs", "item.rs"]),
+            ("minimap", &["mini_map.rs", "map.rs"]),
+        ],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.
