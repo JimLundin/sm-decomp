@@ -45,7 +45,7 @@ fn of(areas: &[ScrollArea], stale: &[StaleScroll], width: usize) -> Room {
 }
 
 #[test]
-fn the_room_runs_on_into_the_scroll_buffer_a_row_at_a_time() {
+fn the_room_runs_on_into_the_scroll_buffer() {
     let areas = [
         ScrollArea::Green,
         ScrollArea::Blue,
@@ -53,27 +53,27 @@ fn the_room_runs_on_into_the_scroll_buffer_a_row_at_a_time() {
         ScrollArea::Green,
     ];
     let stale = [0x01, 0x80, 0x00].map(StaleScroll::from);
-    let (screens, below) = rows(&areas, &stale, 2);
     let (open, short, closed) = (ScreenKind::Open, ScreenKind::Short, ScreenKind::Closed);
-    assert_eq!(screens, [vec![open, short], vec![closed, open]]);
-    // A byte that is no area reads as open; the last row is short.
-    assert_eq!(below, [vec![short, open], vec![closed]]);
+    // A byte that is no area reads as open.
+    assert_eq!(
+        run(&areas, &stale),
+        [open, short, closed, open, short, open, closed]
+    );
     let Heights { level, rising } = heights(SCROLLERS);
     assert_eq!((level, rising), (Wrapping(0x70), Wrapping(0xA0)));
-    assert_eq!(rows(&areas, &stale, 0), (Vec::new(), Vec::new()));
 }
 
 #[test]
-fn a_room_of_no_screens_or_a_short_row_is_no_room() {
+fn a_room_of_no_screens_across_or_no_whole_row_is_no_room() {
     let areas = [ScrollArea::Green; 3];
-    assert_eq!(
-        room(&areas, &[], 0, SCROLLERS).err(),
-        Some(RoomError::NoScreens)
-    );
-    assert_eq!(
-        room(&areas, &[], 2, SCROLLERS).err(),
-        Some(RoomError::UnevenRows)
-    );
+    for width in [0, 4] {
+        assert_eq!(
+            room(&areas, &[], width, SCROLLERS).err(),
+            Some(RoomError::NoScreens),
+            "{width}"
+        );
+    }
+    assert!(room(&areas, &[], 2, SCROLLERS).is_ok());
 }
 
 #[test]
@@ -211,15 +211,15 @@ fn scrolling_down_reads_the_scroll_buffer_past_the_room() {
 }
 
 #[test]
-fn with_no_room_loaded_the_camera_stays_and_a_short_row_is_a_fault() {
+fn with_no_room_loaded_the_camera_stays_and_no_whole_row_is_a_fault() {
     let mut state = crate::state::State::default();
     let before = state.room.camera;
     assert_eq!(scroll(&mut state.room, &mut state.samus), Ok(()));
     assert_eq!(state.room.camera, before);
     state.room.scroll_areas = vec![ScrollArea::Green; 3];
-    state.room.width = crate::state::room::BlockColumns(2 * SCREEN_BLOCKS);
+    state.room.width = crate::state::room::BlockColumns(4 * SCREEN_BLOCKS);
     assert_eq!(
         scroll(&mut state.room, &mut state.samus),
-        Err(RoomError::UnevenRows)
+        Err(RoomError::NoScreens)
     );
 }

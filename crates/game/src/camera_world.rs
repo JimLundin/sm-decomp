@@ -10,7 +10,7 @@ use clean_model_camera::{
     Camera as Model, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus as Her, ScreenKind,
 };
 use clean_types::{Facing as Side, Fixed, Pair};
-use core::num::{NonZeroUsize, Wrapping};
+use core::num::Wrapping;
 
 use crate::model::num::Fixed as Exact;
 use crate::state::room::{Camera, CameraDistance, RoomScoped, ScrollArea, Scrollers, StaleScroll};
@@ -52,42 +52,36 @@ pub const fn screen(area: ScrollArea) -> ScreenKind {
     }
 }
 
-/// A room's screens as the camera reads them: its rows, then the rows below it.
-pub type Rows = (Vec<Vec<ScreenKind>>, Vec<Vec<ScreenKind>>);
-
-/// The room's scroll areas, `width` screens to a row, and the rows the scroll buffer holds after
-/// them (`BelowTheRoom`), the last of which may be short.
+/// The screens as the camera reads them: one run of the room's, row-major, then the scroll
+/// buffer past them, which continues the run below the room (`BelowTheRoom`).
 #[must_use]
-pub fn rows(areas: &[ScrollArea], stale: &[StaleScroll], width: usize) -> Rows {
-    let Some(width) = NonZeroUsize::new(width) else {
-        return (Vec::new(), Vec::new());
-    };
-    let rows = |kinds: Vec<ScreenKind>| -> Vec<Vec<ScreenKind>> {
-        kinds
-            .chunks(width.get())
-            .map(<[ScreenKind]>::to_vec)
-            .collect()
-    };
-    (
-        rows(areas.iter().copied().map(screen).collect()),
-        rows(stale.iter().map(|stale| screen(stale.area())).collect()),
-    )
+pub fn run(areas: &[ScrollArea], stale: &[StaleScroll]) -> Vec<ScreenKind> {
+    areas
+        .iter()
+        .copied()
+        .chain(stale.iter().map(|stale| stale.area()))
+        .map(screen)
+        .collect()
 }
 
-/// The room as the camera reads it: its screens (`rows`) and its two aim heights.
+/// The room as the camera reads it: `width` screens across and as many rows down as its areas
+/// fill, the screens below it continuing the run (`run`), and its two aim heights.
+///
+/// A room's areas are always whole rows; any past the last whole row would continue the run
+/// below it, as the scroll table's bytes there do.
 ///
 /// # Errors
 ///
-/// The model's [`RoomError`] when the areas aren't a room: none, a short last row, or more than
-/// 256 screens across or down.
+/// The model's [`RoomError`] when the areas aren't a room: no screens across, fewer than a row,
+/// or more than 256 screens across or down.
 pub fn room(
     areas: &[ScrollArea],
     stale: &[StaleScroll],
     width: usize,
     scrollers: Scrollers,
 ) -> Result<Room, RoomError> {
-    let (screens, below) = rows(areas, stale, width);
-    Room::new(&screens, &below, heights(scrollers))
+    let height = areas.len().checked_div(width).unwrap_or_default();
+    Room::new(run(areas, stale), width, height, heights(scrollers))
 }
 
 /// The room's aim heights from its scrollers.
@@ -169,29 +163,26 @@ pub fn follow(camera: &mut Camera, samus: &mut Samus, room: &Room) {
 /// Blocks a screen across.
 const SCREEN_BLOCKS: u16 = 16;
 
-/// The scrolling phase of a frame: the camera follows her over `room`.
+/// The scrolling phase of a frame: the camera follows her over the room.
 ///
 /// With no room loaded (no screens: a State made empty, never a room of the game's) there is
 /// nothing to follow, and the camera stays where it is.
 ///
 /// # Errors
 ///
-/// The model's [`RoomError`] when the room's scroll areas aren't a room: a short last row, or
+/// The model's [`RoomError`] when the room's scroll areas aren't a room: fewer than a row, or
 /// more than 256 screens across or down.
 pub fn scroll(room: &mut RoomScoped, samus: &mut Samus) -> Result<(), RoomError> {
+    if room.scroll_areas.is_empty() {
+        return Ok(());
+    }
     let width = usize::from(room.width.0 / SCREEN_BLOCKS);
-    let screens = match self::room(
+    let screens = self::room(
         &room.scroll_areas,
         &room.stale_scrolls,
         width,
         room.camera.scrollers,
-    ) {
-        Ok(screens) => screens,
-        Err(RoomError::NoScreens) => return Ok(()),
-        Err(error @ (RoomError::BelowRowTooWide | RoomError::TooLarge | RoomError::UnevenRows)) => {
-            return Err(error);
-        }
-    };
+    )?;
     follow(&mut room.camera, samus, &screens);
     Ok(())
 }

@@ -20,9 +20,9 @@ use clean_model_camera::{
     ScreenKind,
 };
 use clean_types::{Facing, Fixed, Pair, Parts, Px, fixed};
-use game::camera_world::{self, Rows};
+use game::camera_world;
 use game::model::num::Fixed as Exact;
-use game::state::room::{ScrollArea, Scrollers, StaleScroll};
+use game::state::room::{Scrollers, StaleScroll};
 use oracle_record::FrameRecord;
 
 use super::samus_motion::{self, Ps, SamusMotion, Skip as Motion};
@@ -217,32 +217,50 @@ fn seen(record: &FrameRecord) -> Result<Pair<Fixed>, Skip> {
     })
 }
 
-/// The room's screens as the scroll read them in `record`: the scroll table's first `w × h`
-/// bytes, then what earlier rooms left in it; the room, and its rows, which the attribution
-/// reads.
-fn screens(record: &FrameRecord) -> Result<(Room, Rows), Skip> {
-    let width = usize::from(word(record, ROOM_WIDTH_SCROLLS)?);
-    let height = usize::from(word(record, ROOM_HEIGHT_SCROLLS)?);
-    let table = source::SCROLLS.read(&record.wram)?;
-    let (areas, stale) =
-        table
-            .split_at_checked(width.saturating_mul(height))
-            .ok_or(DecodeError::WramTooShort {
-                source: source::SCROLLS.name,
-            })?;
-    // Only red and blue are ever tested: any other byte in the room reads as green.
-    let areas: Vec<ScrollArea> = areas
+/// The room's screens as the scroll read them in `record`: the whole scroll table, one run
+/// whose first `w × h` bytes are the room's and the rest what its loading left after them.
+fn screens(record: &FrameRecord) -> Result<Screens, Skip> {
+    // Only red and blue are ever tested: any other byte reads as green.
+    let run = source::SCROLLS
+        .read(&record.wram)?
         .iter()
-        .map(|&area| StaleScroll::from(area).area())
+        .map(|&area| camera_world::screen(StaleScroll::from(area).area()))
         .collect();
-    let stale: Vec<StaleScroll> = stale.iter().copied().map(StaleScroll::from).collect();
-    let scrollers = Scrollers {
-        up: word(record, source::UP_SCROLLER)?,
-        down: word(record, source::DOWN_SCROLLER)?,
-    };
-    let rows = camera_world::rows(&areas, &stale, width);
-    let room = Room::new(&rows.0, &rows.1, camera_world::heights(scrollers)).map_err(Skip::Room)?;
-    Ok((room, rows))
+    Ok(Screens {
+        run,
+        width: usize::from(word(record, ROOM_WIDTH_SCROLLS)?),
+        height: usize::from(word(record, ROOM_HEIGHT_SCROLLS)?),
+    })
+}
+
+/// The room's screens as one run, and its size in screens, which the attribution reads.
+struct Screens {
+    run: Vec<ScreenKind>,
+    width: usize,
+    height: usize,
+}
+
+impl Screens {
+    /// The room's own screens: the run's first `w × h`.
+    fn room(&self) -> &[ScreenKind] {
+        let screens = self.width.saturating_mul(self.height);
+        self.run.get(..screens).unwrap_or(&self.run)
+    }
+
+    /// Whether the run goes on below the room.
+    const fn below(&self) -> bool {
+        self.run.len() > self.width.saturating_mul(self.height)
+    }
+
+    /// Whether the room's last screen in the row holding `y` is closed.
+    fn edge_closed(&self, y: Px) -> bool {
+        let [row, _] = y.0.to_be_bytes();
+        usize::from(row)
+            .checked_mul(self.width)
+            .and_then(|start| start.checked_add(self.width.checked_sub(1)?))
+            .and_then(|screen| self.room().get(screen))
+            .is_some_and(|&kind| matches!(kind, ScreenKind::Closed))
+    }
 }
 
 /// The lead setting by the camera distance index.
@@ -272,7 +290,18 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
     let backwards = word(next, KNOCKBACK_DIRECTION)? != 0
         || byte(next, source::SAMUS_MOVEMENT_TYPE)? == MOONWALKING
         || word(next, source::SAMUS_X_ACCEL_MODE)? == TURNING_AROUND;
-    let (room, rows) = screens(next)?;
+    let screens = screens(next)?;
+    let scrollers = Scrollers {
+        up: word(next, source::UP_SCROLLER)?,
+        down: word(next, source::DOWN_SCROLLER)?,
+    };
+    let room = Room::new(
+        screens.run.clone(),
+        screens.width,
+        screens.height,
+        camera_world::heights(scrollers),
+    )
+    .map_err(Skip::Room)?;
     Ok(Upstream {
         samus: Her {
             // The scroll ends by setting her previous position to her position: exactly what
@@ -284,7 +313,7 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
             rising: word(next, source::SAMUS_Y_DIR)? == UP,
         },
         room,
-        rows,
+        screens,
         lead: lead(next)?,
         time_stopped: word(next, TIME_IS_FROZEN)? != 0,
     })
@@ -294,8 +323,8 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
 pub struct Upstream {
     samus: Her,
     room: Room,
-    /// The room's rows, then the rows below it, as `room` was built from them.
-    rows: Rows,
+    /// The run of screens and the size `room` was built from.
+    screens: Screens,
     lead: LeadSetting,
     time_stopped: bool,
 }
@@ -683,7 +712,7 @@ impl Domain for CameraDomain {
 fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<usize> {
     use BehaviourId as B;
     let samus = &upstream.samus;
-    let (screens, below) = &upstream.rows;
+    let screens = &upstream.screens;
     let last_seen = camera.seen();
     let seen = Pair {
         y: placement
@@ -697,11 +726,11 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         moved(samus.position.x, seen.x),
         moved(samus.position.y, seen.y),
     );
-    let kinds = || screens.iter().flatten();
+    let kinds = || screens.room().iter();
     let last = |screens: usize| -> Px {
         Wrapping(u16::try_from(screens.saturating_sub(1)).unwrap_or(u16::MAX) << 8)
     };
-    let (w, h) = (screens.first().map_or(0, Vec::len), screens.len());
+    let (w, h) = (screens.width, screens.height);
     let (x, y) = (camera.position().x.pixel(), camera.position().y.pixel());
     let in_last_row = y >= last(h);
     [
@@ -732,9 +761,9 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         // (the next row's first) decide anything.
         (
             B::ScreensRunOn,
-            x >= last(w) && edge_closed(screens, w, y + Wrapping(MIDDLE)),
+            x >= last(w) && screens.edge_closed(y + Wrapping(MIDDLE)),
         ),
-        (B::BelowTheRoom, down && in_last_row && !below.is_empty()),
+        (B::BelowTheRoom, down && in_last_row && screens.below()),
     ]
     .into_iter()
     .filter(|&(_, exercised)| exercised)
@@ -744,15 +773,6 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
 
 /// Half the view: its middle is this far from its near edge.
 const MIDDLE: u16 = 128;
-
-/// Whether the room's last screen in the row holding `y` is closed.
-fn edge_closed(screens: &[Vec<ScreenKind>], w: usize, y: Px) -> bool {
-    let [row, _] = y.0.to_be_bytes();
-    screens
-        .get(usize::from(row))
-        .and_then(|row| row.get(w.saturating_sub(1)))
-        .is_some_and(|&kind| matches!(kind, ScreenKind::Closed))
-}
 
 #[cfg(test)]
 mod tests {
