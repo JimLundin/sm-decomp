@@ -83,8 +83,10 @@ scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE [DEV_DEPENDENCY_LINE
   } >"$dest/$1/Cargo.toml"
   printf '//! %s\n' "$4" >"$dest/$1/src/lib.rs"
 }
-# A new model crate gets the vector parser as a dev-dependency, at allowed_deps.txt's pin.
-vector_parser=$(awk '$1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
+# A new model crate gets the vector reader as dev-dependencies, at allowed_deps.txt's pins: toml,
+# and serde with its derive to declare the vectors' shape.
+vector_parser=$(awk '$1 == "serde" { printf "serde = { version = \"%s\", features = [\"derive\"] }\n", $2 }
+  $1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
 scaffold crates/clean_types clean_types "The domain types the clean models share" \
   "The domain types the clean models share: quantities, poses and tables in player terms."
 scaffold "crates/clean_model/$domain" "$(model_package "$domain")" \
