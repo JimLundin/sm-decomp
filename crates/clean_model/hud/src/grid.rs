@@ -1,187 +1,97 @@
-//! The HUD's tile grid (Notation, §1.4): three rows of 32 tiles, each a picture in one of the
-//! HUD's colour sets, perhaps flipped. Every tile keeps what it shows until a rule draws it.
+//! A grid of cells, each holding a value: the HUD's tiles, her map's pictures and the sets of her
+//! map's cells are each one. A position lies within its grid, so a cell read or written is
+//! always there; every cell keeps its value until a rule writes it.
 
-/// The grid's rows.
-const ROWS: usize = 3;
-/// The grid's columns.
-const COLUMNS: usize = 32;
-/// The HUD's colour sets (§1.4: eight palettes).
-const COLOUR_SETS: u8 = 8;
+use clean_types::Pair;
 
-/// A picture of the HUD's graphics, by the number the importer gives it (§1.4).
+/// A cell's place in a grid `COLUMNS` across by `ROWS` down: `x` across from the left, `y` down
+/// from the top, both from 0.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Picture(u16);
+pub struct Pos<const COLUMNS: usize, const ROWS: usize> {
+    x: u8,
+    y: u8,
+}
 
-impl Picture {
-    /// The picture numbered `number`.
+impl<const COLUMNS: usize, const ROWS: usize> Pos<COLUMNS, ROWS> {
+    /// The cell `x` across and `y` down, or `None` outside the grid. Every position worked out
+    /// while the game runs is checked here.
     #[must_use]
-    pub const fn new(number: u16) -> Self {
-        Self(number)
+    pub fn new(x: i32, y: i32) -> Option<Self> {
+        let x = u8::try_from(x).ok().filter(|&x| usize::from(x) < COLUMNS)?;
+        let y = u8::try_from(y).ok().filter(|&y| usize::from(y) < ROWS)?;
+        Some(Self { x, y })
     }
 
-    /// Its number.
+    /// A place the spec's fixed layout gives, which lies in the grid.
+    pub(crate) const fn at(x: u8, y: u8) -> Self {
+        Self { x, y }
+    }
+
+    /// Its column, across from the left.
     #[must_use]
-    pub const fn number(self) -> u16 {
-        self.0
+    pub const fn x(self) -> u8 {
+        self.x
+    }
+
+    /// Its row, down from the top.
+    #[must_use]
+    pub const fn y(self) -> u8 {
+        self.y
+    }
+
+    /// The place `by` across and down from this one, if it lies in the grid.
+    pub(crate) fn offset(self, by: Pair<i32>) -> Option<Self> {
+        Self::new(
+            i32::from(self.x).saturating_add(by.x),
+            i32::from(self.y).saturating_add(by.y),
+        )
+    }
+
+    /// Every place of the grid, the top row first, each row left to right.
+    pub fn all() -> impl Iterator<Item = Self> {
+        (0..=u8::MAX)
+            .take(ROWS)
+            .flat_map(|y| (0..=u8::MAX).take(COLUMNS).map(move |x| Self { x, y }))
     }
 }
 
-/// One of the HUD's eight colour sets, 0 to 7 (§1.4).
+/// A grid `COLUMNS` across by `ROWS` down, each cell holding a `T`; a new one holds `T`'s
+/// default in every cell.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct ColourSet(u8);
-
-impl ColourSet {
-    /// Colour set `number`, or `None` past the eight.
-    #[must_use]
-    pub const fn new(number: u8) -> Option<Self> {
-        if number < COLOUR_SETS {
-            Some(Self(number))
-        } else {
-            None
-        }
-    }
-
-    /// A colour set the spec names; the tables of §1.4 give only numbers below eight.
-    pub(crate) const fn named(number: u8) -> Self {
-        Self(number)
-    }
-
-    /// Its number, 0 to 7.
-    #[must_use]
-    pub const fn number(self) -> u8 {
-        self.0
-    }
+pub struct Grid<T, const COLUMNS: usize, const ROWS: usize> {
+    rows: [[T; COLUMNS]; ROWS],
 }
 
-/// How a tile's picture is flipped.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Flip {
-    /// As drawn.
-    None,
-    /// Flipped left to right.
-    Horizontal,
-    /// Flipped top to bottom.
-    Vertical,
-    /// Flipped both ways.
-    Both,
-}
-
-impl Flip {
-    /// Whether it is flipped left to right.
-    #[must_use]
-    pub const fn horizontal(self) -> bool {
-        matches!(self, Self::Horizontal | Self::Both)
-    }
-
-    /// Whether it is flipped top to bottom.
-    #[must_use]
-    pub const fn vertical(self) -> bool {
-        matches!(self, Self::Vertical | Self::Both)
-    }
-}
-
-/// What one of the HUD's tiles shows: a picture in a colour set, perhaps flipped.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Tile {
-    /// The picture.
-    pub picture: Picture,
-    /// Its colour set.
-    pub colours: ColourSet,
-    /// Its flips.
-    pub flip: Flip,
-}
-
-impl Tile {
-    /// A picture in a colour set, flipped as `flip` says.
-    #[must_use]
-    pub const fn new(picture: Picture, colours: ColourSet, flip: Flip) -> Self {
+impl<T: Copy + Default, const COLUMNS: usize, const ROWS: usize> Default
+    for Grid<T, COLUMNS, ROWS>
+{
+    fn default() -> Self {
         Self {
-            picture,
-            colours,
-            flip,
+            rows: [[T::default(); COLUMNS]; ROWS],
         }
     }
-
-    /// The same picture and flips in other colours.
-    #[must_use]
-    pub const fn in_colours(self, colours: ColourSet) -> Self {
-        Self { colours, ..self }
-    }
 }
 
-/// A tile's place in the grid: row 0 to 2 from the top, column 0 to 31 from the left.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct GridPos {
-    row: u8,
-    column: u8,
-}
-
-impl GridPos {
-    /// The tile at `row` and `column`, or `None` outside the grid's 3 rows and 32 columns.
+impl<T: Copy + Default, const COLUMNS: usize, const ROWS: usize> Grid<T, COLUMNS, ROWS> {
+    /// What the cell at `pos` holds.
     #[must_use]
-    pub fn new(row: u8, column: u8) -> Option<Self> {
-        (usize::from(row) < ROWS && usize::from(column) < COLUMNS).then_some(Self { row, column })
-    }
-
-    /// A place the spec's layout gives (§1.2), which lies in the grid.
-    pub(crate) const fn at(row: u8, column: u8) -> Self {
-        Self { row, column }
-    }
-
-    /// Its row.
-    #[must_use]
-    pub const fn row(self) -> u8 {
-        self.row
-    }
-
-    /// Its column.
-    #[must_use]
-    pub const fn column(self) -> u8 {
-        self.column
-    }
-
-    /// The place `rows` down and `columns` right of this one, if it lies in the grid.
-    pub(crate) fn offset(self, rows: i32, columns: i32) -> Option<Self> {
-        let row = i32::from(self.row).checked_add(rows)?;
-        let column = i32::from(self.column).checked_add(columns)?;
-        Self::new(u8::try_from(row).ok()?, u8::try_from(column).ok()?)
-    }
-}
-
-/// The HUD's tiles: three rows of 32, the status bar and the mini-map's window.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct HudGrid {
-    rows: [[Tile; COLUMNS]; ROWS],
-}
-
-impl HudGrid {
-    /// Every tile showing `tile`.
-    #[must_use]
-    pub const fn filled(tile: Tile) -> Self {
-        Self {
-            rows: [[tile; COLUMNS]; ROWS],
-        }
-    }
-
-    /// What the tile at `pos` shows.
-    #[must_use]
-    pub fn tile(&self, pos: GridPos) -> Tile {
-        // A `GridPos` always lies in the grid, so the fallback is never read.
+    pub fn get(&self, pos: Pos<COLUMNS, ROWS>) -> T {
+        // A position lies within its grid, so the default is never read.
         self.rows
-            .get(usize::from(pos.row))
-            .and_then(|row| row.get(usize::from(pos.column)))
+            .get(usize::from(pos.y))
+            .and_then(|row| row.get(usize::from(pos.x)))
             .copied()
-            .unwrap_or(Tile::new(Picture(0), ColourSet(0), Flip::None))
+            .unwrap_or_default()
     }
 
-    /// Draws `tile` at `pos`.
-    pub fn set(&mut self, pos: GridPos, tile: Tile) {
+    /// Puts `value` in the cell at `pos`.
+    pub fn set(&mut self, pos: Pos<COLUMNS, ROWS>, value: T) {
         if let Some(cell) = self
             .rows
-            .get_mut(usize::from(pos.row))
-            .and_then(|row| row.get_mut(usize::from(pos.column)))
+            .get_mut(usize::from(pos.y))
+            .and_then(|row| row.get_mut(usize::from(pos.x)))
         {
-            *cell = tile;
+            *cell = value;
         }
     }
 }

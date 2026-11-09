@@ -3,7 +3,7 @@
 
 use clean_types::{Checked, Kind, Switch};
 
-/// An entry of the HUD's spec.
+/// An entry of the HUD's spec; each variant is named as the spec names its entry.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum BehaviourId {
     /// Spec: EnergyGauge.
@@ -44,34 +44,6 @@ pub enum BehaviourId {
     FirstColumnsShift,
     /// Spec: LastColumnsShift.
     LastColumnsShift,
-}
-
-impl BehaviourId {
-    /// The entry's name in the spec.
-    #[must_use]
-    pub const fn name(self) -> &'static str {
-        match self {
-            Self::EnergyGauge => "EnergyGauge",
-            Self::AmmoCounts => "AmmoCounts",
-            Self::AutoReserveSign => "AutoReserveSign",
-            Self::SelectionHighlight => "SelectionHighlight",
-            Self::SwitchClick => "SwitchClick",
-            Self::OneShotFlash => "OneShotFlash",
-            Self::IconsAppear => "IconsAppear",
-            Self::CyclingItems => "CyclingItems",
-            Self::CancellingTheItem => "CancellingTheItem",
-            Self::OneShotItem => "OneShotItem",
-            Self::Switching => "Switching",
-            Self::Exploring => "Exploring",
-            Self::MiniMapWindow => "MiniMapWindow",
-            Self::HerBlink => "HerBlink",
-            Self::MiniMapStill => "MiniMapStill",
-            Self::BossBlanksTheMap => "BossBlanksTheMap",
-            Self::DiagonalPicture => "DiagonalPicture",
-            Self::FirstColumnsShift => "FirstColumnsShift",
-            Self::LastColumnsShift => "LastColumnsShift",
-        }
-    }
 }
 
 /// A behaviour of the HUD, as the catalogue lists it.
@@ -199,8 +171,10 @@ pub const CATALOGUE: [Behaviour; 19] = [
     parameter(
         BehaviourId::BossBlanksTheMap,
         Kind::Mechanic,
-        "On entering a boss's room while it lives, and when Mother Brain's first form falls, the \
-         mini-map goes blank and the cells the boss names count as explored.",
+        "On entering the room of Kraid, Draygon, Crocomire, Phantoon or Ridley (Ceres's or \
+         Norfair's) while it lives, and when Mother Brain's first form falls (her brain in the \
+         tank is destroyed), the mini-map goes blank and the cells the boss names count as \
+         explored. Entering the room comes outside a frame of play; her fall comes during one.",
     ),
     parameter(
         BehaviourId::DiagonalPicture,

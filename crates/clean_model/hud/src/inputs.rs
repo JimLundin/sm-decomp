@@ -1,10 +1,11 @@
 //! What the HUD reads each frame (§1.3): the values other domains own, the buttons, and where she
-//! is on her map.
+//! is on her map; and what the HUD knows of each kind of ammunition it counts.
 
 use clean_types::Pair;
 
 use crate::item::SelectableItem;
-use crate::map::{AreaMap, MapCell};
+use crate::map::{HerMap, MapCell};
+use crate::pictures::HudPos;
 use crate::rules::Boss;
 
 /// The count of frames the game has finished, mod 256, as this frame begins; a lag frame isn't
@@ -39,46 +40,36 @@ pub struct Reserve {
     pub mode: ReserveMode,
 }
 
-/// A kind of ammunition the HUD counts.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Ammo {
-    /// Missiles: three digits.
-    Missiles,
-    /// Super missiles: two digits.
-    SuperMissiles,
-    /// Power bombs: two digits.
-    PowerBombs,
-}
-
-/// The most missiles the spec defines the HUD on (§1.5).
-const MOST_MISSILES: u16 = 999;
-/// The most super missiles or power bombs the spec defines the HUD on (§1.5).
-const MOST_OF_THE_OTHERS: u16 = 99;
-
-impl Ammo {
-    /// Every kind, in the HUD's order.
-    pub const ALL: [Self; 3] = [Self::Missiles, Self::SuperMissiles, Self::PowerBombs];
-
+/// What the HUD knows of a kind of ammunition.
+#[derive(Debug)]
+pub struct AmmoKind {
     /// The item it is, when selected.
-    #[must_use]
-    pub const fn item(self) -> SelectableItem {
-        match self {
-            Self::Missiles => SelectableItem::Missiles,
-            Self::SuperMissiles => SelectableItem::SuperMissiles,
-            Self::PowerBombs => SelectableItem::PowerBombs,
-        }
-    }
-
-    /// The largest count or capacity the HUD is defined on (§1.5): 999 missiles, 99 of the
-    /// others.
-    #[must_use]
-    pub const fn most(self) -> u16 {
-        match self {
-            Self::Missiles => MOST_MISSILES,
-            Self::SuperMissiles | Self::PowerBombs => MOST_OF_THE_OTHERS,
-        }
-    }
+    pub item: SelectableItem,
+    /// The largest count or capacity the HUD is defined on (§1.5).
+    pub most: u16,
+    /// The tiles of its digits, the highest first (§1.2); as many as its count's digits.
+    pub digits: &'static [HudPos],
 }
+
+/// The kinds of ammunition, in the HUD's order: missiles in three digits, at most 999; super
+/// missiles and power bombs in two, at most 99 (§1.2, §1.5).
+pub const AMMO_KINDS: [AmmoKind; 3] = [
+    AmmoKind {
+        item: SelectableItem::Missiles,
+        most: 999,
+        digits: &[HudPos::at(10, 2), HudPos::at(11, 2), HudPos::at(12, 2)],
+    },
+    AmmoKind {
+        item: SelectableItem::SuperMissiles,
+        most: 99,
+        digits: &[HudPos::at(14, 2), HudPos::at(15, 2)],
+    },
+    AmmoKind {
+        item: SelectableItem::PowerBombs,
+        most: 99,
+        digits: &[HudPos::at(17, 2), HudPos::at(18, 2)],
+    },
+];
 
 /// A count of one ammunition and how many she can carry (§1.3).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
@@ -89,41 +80,29 @@ pub struct Stock {
     pub capacity: u16,
 }
 
-/// Her missiles, super missiles and power bombs, each within the HUD's domain (§1.5).
+/// Her stock of each kind of ammunition, in the order of `AMMO_KINDS`, each within the HUD's
+/// domain (§1.5).
 #[derive(Clone, Copy, Debug)]
-pub struct Ammunition {
-    missiles: Stock,
-    super_missiles: Stock,
-    power_bombs: Stock,
-}
+pub struct Ammunition([Stock; AMMO_KINDS.len()]);
 
 impl Ammunition {
-    /// The three stocks, or `None` if a count or capacity is past what the HUD is defined on
-    /// (§1.5: 999 missiles, 99 super missiles or power bombs).
+    /// Her stocks, in the order of `AMMO_KINDS`, or `None` if a count or capacity is past what
+    /// the HUD is defined on (§1.5).
     #[must_use]
-    pub fn new(missiles: Stock, super_missiles: Stock, power_bombs: Stock) -> Option<Self> {
-        let ammunition = Self {
-            missiles,
-            super_missiles,
-            power_bombs,
+    pub fn new(stocks: [Stock; AMMO_KINDS.len()]) -> Option<Self> {
+        let within = |(kind, stock): (&AmmoKind, &Stock)| {
+            stock.count <= kind.most && stock.capacity <= kind.most
         };
-        Ammo::ALL
+        AMMO_KINDS
             .iter()
-            .all(|&ammo| {
-                let stock = ammunition.stock(ammo);
-                stock.count <= ammo.most() && stock.capacity <= ammo.most()
-            })
-            .then_some(ammunition)
+            .zip(&stocks)
+            .all(within)
+            .then_some(Self(stocks))
     }
 
-    /// The stock of one kind.
-    #[must_use]
-    pub const fn stock(&self, ammo: Ammo) -> Stock {
-        match ammo {
-            Ammo::Missiles => self.missiles,
-            Ammo::SuperMissiles => self.super_missiles,
-            Ammo::PowerBombs => self.power_bombs,
-        }
+    /// Each kind with her stock of it, in the HUD's order.
+    pub fn kinds(&self) -> impl Iterator<Item = (&'static AmmoKind, Stock)> {
+        AMMO_KINDS.iter().zip(self.0)
     }
 }
 
@@ -153,13 +132,16 @@ impl Status {
     /// Spec: CyclingItems. Whether Select can land on `item`: an ammunition with a count above 0,
     /// or an item she has on.
     #[must_use]
-    pub const fn has(&self, item: SelectableItem) -> bool {
+    pub fn has(&self, item: SelectableItem) -> bool {
         match item {
-            SelectableItem::Missiles => self.ammunition.missiles.count != 0,
-            SelectableItem::SuperMissiles => self.ammunition.super_missiles.count != 0,
-            SelectableItem::PowerBombs => self.ammunition.power_bombs.count != 0,
             SelectableItem::GrappleBeam => self.equipped.grapple_beam,
             SelectableItem::XRayScope => self.equipped.x_ray_scope,
+            SelectableItem::Missiles
+            | SelectableItem::SuperMissiles
+            | SelectableItem::PowerBombs => self
+                .ammunition
+                .kinds()
+                .any(|(kind, stock)| kind.item == item && stock.count != 0),
         }
     }
 }
@@ -168,7 +150,7 @@ impl Status {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SelectButton {
     /// It didn't go down this frame.
-    Up,
+    NotPressed,
     /// It went down this frame.
     Pressed,
 }
@@ -176,8 +158,8 @@ pub enum SelectButton {
 /// Item cancel this frame (§1.3).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum CancelButton {
-    /// Not held.
-    Up,
+    /// Neither pressed this frame nor held from before.
+    NotPressed,
     /// It went down this frame.
     Pressed,
     /// Held from before.
@@ -228,7 +210,8 @@ pub struct MiniMapInputs<'map> {
     /// False while she is held at a station, drained, entering or leaving the gunship, or while
     /// the game's opening shows her.
     pub runs: bool,
-    /// From when a boss turns it off until something turns it on.
+    /// From when a boss turns it off until something turns it on: the one source of whether the
+    /// mini-map is off, so a frame whose boss turns it off says so here too.
     pub off: bool,
     /// Where she is: whole pixels in her room, after this frame's moves and before a pose change
     /// places her.
@@ -236,7 +219,9 @@ pub struct MiniMapInputs<'map> {
     /// Her room.
     pub room: Room,
     /// Her map.
-    pub map: &'map AreaMap,
+    pub map: &'map HerMap,
+    /// She has collected her map.
+    pub map_collected: bool,
 }
 
 /// Everything the HUD reads in one frame of play (§1.3).

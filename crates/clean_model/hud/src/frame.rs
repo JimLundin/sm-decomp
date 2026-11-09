@@ -3,10 +3,8 @@
 use crate::events::Event;
 use crate::inputs::FrameInputs;
 use crate::map::MapCell;
-use crate::mini_map::{boss_turns_it_off, update, updates};
 use crate::rules::{Boss, Rules};
 use crate::state::HudState;
-use crate::status_bar::draw_status_bar;
 
 /// The HUD after a frame, and what it reports.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -20,49 +18,32 @@ pub struct FrameOutcome {
 impl HudState {
     /// One frame of play, in the order §5 gives: the selection changes (Select, item cancel),
     /// then a shot may cancel it and a boss may turn the mini-map off, then the mini-map updates,
-    /// then the status bar is drawn from the selection as it then is.
+    /// then the status bar is drawn from the selection as it then is: the energy, the counts and
+    /// the sign, a pickup's icon, the highlight, and the one-shot item's flash last.
     ///
-    /// Spec: SwitchClick. When the highlight moves and nothing mutes it (a spin jump, a wall
-    /// jump, the grapple beam out, time stopped), the frame requests a `Click`.
+    /// Spec: SwitchClick. When the item shown highlighted changes, from an item to none as much
+    /// as to another item, and nothing mutes it (a spin jump, a wall jump, the grapple beam out,
+    /// time stopped), the frame requests a `Click`.
     #[must_use]
     pub fn frame(mut self, rules: &Rules, inputs: &FrameInputs<'_>) -> FrameOutcome {
         let mut events = Vec::new();
-        let (selection, switched) = self
-            .selection
-            .after_buttons(&inputs.controls, &inputs.status);
-        events.extend(switched);
-        self.selection = selection.after_shot(&inputs.controls);
-
-        let mini_map = &inputs.mini_map;
+        events.extend(self.press_buttons(inputs.controls, &inputs.status));
+        self.shot_cancels(inputs.controls);
         if let Some(boss) = inputs.boss {
-            boss_turns_it_off(
-                rules,
-                boss,
-                mini_map.room.cell,
-                &mut self.grid,
-                &mut self.explored,
-            );
+            self.blank_mini_map(rules, boss, inputs.mini_map.room.cell);
         }
-        // Spec: BossBlanksTheMap. Once a boss turns it off, the mini-map is off from then (spec:
-        // MiniMapStill).
-        if inputs.boss.is_none() && updates(mini_map) {
-            update(
-                rules,
-                mini_map,
-                inputs.frame,
-                &mut self.grid,
-                &mut self.explored,
-            );
+        if inputs.mini_map.updates() {
+            self.update_mini_map(rules, &inputs.mini_map, inputs.frame);
         }
-
-        let moved = draw_status_bar(
-            rules,
-            inputs,
-            self.selection,
-            &mut self.grid,
-            &mut self.shown,
-        );
-        if moved && inputs.controls.muted_by.is_none() {
+        self.energy_gauge(inputs.status.energy);
+        self.ammo_counts(&inputs.status.ammunition);
+        self.reserve_sign(inputs.status.reserve);
+        if let Some(item) = inputs.collected {
+            self.icon_appears(item);
+        }
+        let highlight_changed = self.highlight();
+        self.one_shot_flash(rules, inputs.frame);
+        if highlight_changed && inputs.controls.muted_by.is_none() {
             events.push(Event::Click);
         }
         FrameOutcome {
@@ -77,7 +58,7 @@ impl HudState {
     /// from then, which the frames that follow read as their input.
     #[must_use]
     pub fn boss_turns_off_mini_map(mut self, rules: &Rules, boss: Boss, room: MapCell) -> Self {
-        boss_turns_it_off(rules, boss, room, &mut self.grid, &mut self.explored);
+        self.blank_mini_map(rules, boss, room);
         self
     }
 }

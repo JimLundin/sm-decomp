@@ -6,9 +6,14 @@ mod support;
 
 #[cfg(test)]
 mod tests {
-    use clean_model_hud::{CATALOGUE, Checked};
+    use clean_model_hud::{BehaviourId, CATALOGUE, Checked};
 
     use crate::support::vectors::{Vector, load};
+
+    /// The entry's name in the spec: its variant's.
+    fn name(id: BehaviourId) -> String {
+        format!("{id:?}")
+    }
 
     /// The behaviour whose output an expected event is (spec: `Switching`, `SwitchClick`).
     fn output_entry(event: &str) -> Option<&'static str> {
@@ -65,7 +70,7 @@ mod tests {
         for vector in load().unwrap() {
             for entry in &vector.entries {
                 assert!(
-                    CATALOGUE.iter().any(|b| b.id.name() == entry),
+                    CATALOGUE.iter().any(|b| name(b.id) == *entry),
                     "vector {} lists {entry}, which the catalogue lacks",
                     vector.id
                 );
@@ -78,7 +83,7 @@ mod tests {
         let vectors = load().unwrap();
         let checked = CATALOGUE.iter().filter(|b| b.checked == Checked::ByVectors);
         for behaviour in checked {
-            let name = behaviour.id.name();
+            let name = name(behaviour.id);
             assert!(
                 vectors.iter().any(|v| exercised(v).any(|e| e == name)),
                 "no vector exercises {name}"
@@ -94,7 +99,7 @@ mod tests {
                 .skip(at)
                 .skip(1)
                 .any(|b| b.id == behaviour.id);
-            assert!(!again, "{} appears twice", behaviour.id.name());
+            assert!(!again, "{:?} appears twice", behaviour.id);
         }
     }
 }

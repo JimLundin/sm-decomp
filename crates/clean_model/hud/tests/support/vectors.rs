@@ -2,10 +2,10 @@
 //! its after. Any key the file's header doesn't define fails the vector.
 
 use clean_model_hud::{
-    Ammunition, AreaMap, BeyondCell, Boss, CancelButton, ColourSet, Controls, Energy, Equipped,
-    Event, Flip, FrameCount, FrameInputs, GridPos, HudGrid, HudState, MapCell, MapCellSet,
-    MapPicture, MiniMapInputs, Mute, Pair, Picture, Reserve, ReserveMode, Room, Rules,
-    SelectButton, SelectableItem, Selection, Shown, Status, Stock, Tile,
+    Ammunition, Boss, CancelButton, ColourSet, Controls, Energy, Equipped, Event, Flip, FrameCount,
+    FrameInputs, HerMap, HudGrid, HudPos, HudState, MapCell, MapCellSet, MapPicture, MiniMapInputs,
+    Mute, Pair, Picture, PicturePos, Reserve, ReserveMode, Room, Rules, SelectButton,
+    SelectableItem, Selection, Shown, Status, Stock, Tile,
 };
 
 use super::toml::{Table, Value, parse};
@@ -13,10 +13,14 @@ use super::toml::{Table, Value, parse};
 /// The vector file.
 const VECTOR_FILE: &str = include_str!("../../../../../scenarios/vectors/hud.toml");
 
-/// The HUD's rows and columns (Notation).
-const HUD_ROWS: u8 = 3;
+/// The HUD's rows (Notation).
+const HUD_ROWS: usize = 3;
 /// The HUD's columns.
-const HUD_COLUMNS: u8 = 32;
+const HUD_COLUMNS: usize = 32;
+/// Her map's columns: a beyond picture's column counts on from the last (Notation).
+const MAP_COLUMNS: i32 = 64;
+/// The keys of the ammunition, in the order of `AMMO_KINDS`.
+const AMMO_KEYS: [&str; 3] = ["missiles", "super_missiles", "power_bombs"];
 
 /// A vector's keys.
 const VECTOR_KEYS: [&str; 8] = [
@@ -159,6 +163,7 @@ fn frame_step(table: &Table, before: HudState) -> Result<(HudState, Vec<Event>),
             position: read.position,
             room: read.room,
             map: &read.map,
+            map_collected: read.map_collected,
         },
     };
     let outcome = before.frame(&Rules::reference(), &frame_inputs);
@@ -187,7 +192,8 @@ struct MiniMapRead {
     off: bool,
     position: Pair<u16>,
     room: Room,
-    map: AreaMap,
+    map: HerMap,
+    map_collected: bool,
     boss: Option<Boss>,
 }
 
@@ -203,18 +209,21 @@ impl MiniMapRead {
                     cell: MapCell::new(0, 0).ok_or("no cell 0, 0")?,
                     blocks: Pair { x: 0, y: 0 },
                 },
-                map: AreaMap::new(),
+                map: HerMap::default(),
+                map_collected: false,
                 boss: None,
             });
         };
         known(table, &MINI_MAP_KEYS, "mini_map")?;
         let (x, y) = pair(required(table, "position")?)?;
+        let map = sub_table(table, "map")?.ok_or("no map")?;
         Ok(Self {
             runs: boolean(table, "runs", true)?,
             off: boolean(table, "off", false)?,
             position: Pair { x, y },
             room: room(sub_table(table, "room")?.ok_or("no room")?)?,
-            map: area_map(sub_table(table, "map")?.ok_or("no map")?)?,
+            map: her_map(map)?,
+            map_collected: boolean(map, "collected", false)?,
             boss: optional(table, "boss_blanks").map(boss).transpose()?,
         })
     }
@@ -230,46 +239,43 @@ fn room(table: &Table) -> Result<Room, String> {
     })
 }
 
-/// Reads `map`.
-fn area_map(table: &Table) -> Result<AreaMap, String> {
+/// Reads `map`, but for whether she has collected it, which is the frame's input.
+fn her_map(table: &Table) -> Result<HerMap, String> {
     known(table, &MAP_KEYS, "map")?;
-    let mut map = AreaMap::new();
-    map.set_collected(boolean(table, "collected", false)?);
+    let mut map = HerMap::default();
     for (key, value) in sub_table(table, "pictures")?.map_or(&[][..], |t| &t.0) {
         let (column, row) = coordinates(key)?;
-        let cell = MapCell::new(column, row).ok_or_else(|| format!("no map cell {key}"))?;
-        map.set_picture(cell, map_picture(string(value)?)?);
+        let at = MapCell::new(column, row)
+            .and_then(|_| PicturePos::new(column, row))
+            .ok_or_else(|| format!("no map cell {key}"))?;
+        map.pictures.set(at, map_picture(string(value)?)?);
     }
     if let Some(charted) = optional(table, "charted") {
         for value in array(charted)? {
-            map.chart(map_cell(value)?);
+            map.charted.set(map_cell(value)?, true);
         }
     }
     for (key, value) in sub_table(table, "beyond")?.map_or(&[][..], |t| &t.0) {
         let (column, row) = coordinates(key)?;
-        let cell = BeyondCell::new(column, row).ok_or_else(|| format!("no beyond cell {key}"))?;
-        map.set_beyond(cell, map_picture(string(value)?)?);
+        let at = PicturePos::new(column.saturating_add(MAP_COLUMNS), row)
+            .filter(|_| column >= 0)
+            .ok_or_else(|| format!("no beyond picture {key}"))?;
+        map.pictures.set(at, map_picture(string(value)?)?);
     }
     Ok(map)
 }
 
 /// The boss whose screens the reference rules give as `screens`.
 fn boss(screens: &Value) -> Result<Boss, String> {
-    let mut wanted = array(screens)?
-        .iter()
-        .map(pair::<u8>)
-        .collect::<Result<Vec<_>, _>>()?;
-    wanted.sort_unstable();
-    Rules::reference()
-        .boss_screens
-        .iter()
-        .find(|row| {
-            let mut screens: Vec<(u8, u8)> =
-                row.screens.iter().map(|s| (s.across, s.down)).collect();
-            screens.sort_unstable();
-            screens == wanted
-        })
-        .map(|row| row.boss)
+    let sorted = |mut screens: Vec<(u16, u16)>| {
+        screens.sort_unstable();
+        screens
+    };
+    let wanted = sorted(array(screens)?.iter().map(pair).collect::<Result<_, _>>()?);
+    let rules = Rules::reference();
+    Boss::ALL
+        .into_iter()
+        .find(|&boss| sorted(rules.screens_of(boss).iter().map(|s| (s.x, s.y)).collect()) == wanted)
         .ok_or_else(|| format!("no boss names the screens {wanted:?}"))
 }
 
@@ -287,12 +293,9 @@ fn status(inputs: &Table) -> Result<Status, String> {
             }
         }
     }
-    let ammunition = Ammunition::new(
-        stock(inputs, "missiles")?,
-        stock(inputs, "super_missiles")?,
-        stock(inputs, "power_bombs")?,
-    )
-    .ok_or("ammunition outside the HUD's domain")?;
+    let [missiles, super_missiles, power_bombs] = AMMO_KEYS.map(|key| stock(inputs, key));
+    let ammunition = Ammunition::new([missiles?, super_missiles?, power_bombs?])
+        .ok_or("ammunition outside the HUD's domain")?;
     Ok(Status {
         energy: Energy { now, capacity },
         reserve: Reserve {
@@ -317,12 +320,12 @@ fn stock(inputs: &Table, key: &str) -> Result<Stock, String> {
 /// Reads the buttons from the inputs.
 fn controls(inputs: &Table) -> Result<Controls, String> {
     let select = match optional(inputs, "select").map(string).transpose()? {
-        None => SelectButton::Up,
+        None => SelectButton::NotPressed,
         Some("Pressed") => SelectButton::Pressed,
         Some(other) => return Err(format!("unknown select {other}")),
     };
     let cancel = match optional(inputs, "cancel").map(string).transpose()? {
-        None => CancelButton::Up,
+        None => CancelButton::NotPressed,
         Some("Pressed") => CancelButton::Pressed,
         Some("Held") => CancelButton::Held,
         Some(other) => return Err(format!("unknown cancel {other}")),
@@ -349,7 +352,7 @@ fn state(before: &Table) -> Result<HudState, String> {
     known(before, &BEFORE_KEYS, "before")?;
     let grid = match optional(before, "hud") {
         Some(rows) => hud_grid(rows)?,
-        None => HudGrid::filled(tile("00F:3")?),
+        None => HudGrid::default(),
     };
     Ok(HudState {
         grid,
@@ -358,7 +361,7 @@ fn state(before: &Table) -> Result<HudState, String> {
             selected: optional(before, "selection").map_or(Ok(None), item)?,
             one_shot: optional(before, "one_shot").map_or(Ok(None), item)?,
         },
-        explored: optional(before, "explored").map_or(Ok(MapCellSet::EMPTY), cells)?,
+        explored: optional(before, "explored").map_or_else(|| Ok(MapCellSet::default()), cells)?,
     })
 }
 
@@ -367,7 +370,7 @@ fn expected_state(after: &Table, before: &HudState) -> Result<HudState, String> 
     let mut grid = before.grid;
     for (key, value) in sub_table(after, "changed")?.map_or(&[][..], |t| &t.0) {
         let (row, column) = coordinates(key)?;
-        let pos = GridPos::new(row, column).ok_or_else(|| format!("no HUD tile {key}"))?;
+        let pos = HudPos::new(column, row).ok_or_else(|| format!("no HUD tile {key}"))?;
         grid.set(pos, tile(string(value)?)?);
     }
     Ok(HudState {
@@ -385,12 +388,11 @@ fn expected_state(after: &Table, before: &HudState) -> Result<HudState, String> 
 fn shown(table: &Table) -> Result<Shown, String> {
     known(table, &SHOWN_KEYS, "shown")?;
     let count = |key| optional(table, key).map_or(Ok(0), int);
+    let [missiles, super_missiles, power_bombs] = AMMO_KEYS.map(count);
     Ok(Shown {
         energy: count("energy")?,
-        missiles: count("missiles")?,
-        super_missiles: count("super_missiles")?,
-        power_bombs: count("power_bombs")?,
-        selection: optional(table, "selection").map_or(Ok(None), item)?,
+        ammo: [missiles?, super_missiles?, power_bombs?],
+        highlighted: optional(table, "selection").map_or(Ok(None), item)?,
     })
 }
 
@@ -429,18 +431,17 @@ fn differences(
     problems
 }
 
-/// The tiles that differ.
+/// The tiles that differ, each named "row,column" as the vector file names them.
 fn grid_differences(expected: &HudGrid, actual: &HudGrid) -> Vec<String> {
-    (0..HUD_ROWS)
-        .flat_map(|row| (0..HUD_COLUMNS).filter_map(move |column| GridPos::new(row, column)))
-        .filter(|&pos| expected.tile(pos) != actual.tile(pos))
+    HudPos::all()
+        .filter(|&pos| expected.get(pos) != actual.get(pos))
         .map(|pos| {
             format!(
                 "tile {},{}: expected {}, got {}",
-                pos.row(),
-                pos.column(),
-                tile_name(expected.tile(pos)),
-                tile_name(actual.tile(pos))
+                pos.y(),
+                pos.x(),
+                tile_name(expected.get(pos)),
+                tile_name(actual.get(pos))
             )
         })
         .collect()
@@ -459,26 +460,26 @@ fn tile_name(tile: Tile) -> String {
 
 /// A set's cells as `[column, row]` pairs.
 fn cell_list(cells: &MapCellSet) -> Vec<[u8; 2]> {
-    cells
-        .iter()
-        .map(|cell| [cell.column(), cell.row()])
+    MapCell::all()
+        .filter(|&cell| cells.get(cell))
+        .map(|cell| [cell.x(), cell.y()])
         .collect()
 }
 
 /// Reads the HUD's three rows of 32 tiles.
 fn hud_grid(rows: &Value) -> Result<HudGrid, String> {
     let rows = strings(rows)?;
-    if rows.len() != usize::from(HUD_ROWS) {
+    if rows.len() != HUD_ROWS {
         return Err(format!("hud has {} rows", rows.len()));
     }
-    let mut grid = HudGrid::filled(tile("00F:3")?);
-    for (row, text) in (0..HUD_ROWS).zip(&rows) {
+    let mut grid = HudGrid::default();
+    for (row, text) in (0..).zip(&rows) {
         let tiles: Vec<&str> = text.split_whitespace().collect();
-        if tiles.len() != usize::from(HUD_COLUMNS) {
+        if tiles.len() != HUD_COLUMNS {
             return Err(format!("hud row {row} has {} tiles", tiles.len()));
         }
-        for (column, name) in (0..HUD_COLUMNS).zip(tiles) {
-            let pos = GridPos::new(row, column).ok_or("no tile")?;
+        for (column, name) in (0..).zip(tiles) {
+            let pos = HudPos::new(column, row).ok_or("no tile")?;
             grid.set(pos, tile(name)?);
         }
     }
@@ -543,9 +544,9 @@ fn item(value: &Value) -> Result<Option<SelectableItem>, String> {
 
 /// Reads a set of `[column, row]` cells.
 fn cells(value: &Value) -> Result<MapCellSet, String> {
-    let mut set = MapCellSet::EMPTY;
+    let mut set = MapCellSet::default();
     for cell in array(value)? {
-        set.insert(map_cell(cell)?);
+        set.set(map_cell(cell)?, true);
     }
     Ok(set)
 }
@@ -557,7 +558,7 @@ fn map_cell(value: &Value) -> Result<MapCell, String> {
 }
 
 /// Reads a `"a,b"` key.
-fn coordinates(key: &str) -> Result<(u8, u8), String> {
+fn coordinates(key: &str) -> Result<(i32, i32), String> {
     let bad = || format!("bad key {key}");
     let (a, b) = key.split_once(',').ok_or_else(bad)?;
     let a = a.trim().parse().map_err(|_| bad())?;
