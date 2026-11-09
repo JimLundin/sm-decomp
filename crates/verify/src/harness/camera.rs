@@ -105,16 +105,11 @@ struct Writer {
 }
 
 /// The bosses that move her or the view while they are live: their collisions, their holds and
-/// their rooms' code.
-const WRITERS: [Writer; 4] = [
+/// their rooms' code. Kraid moves her only on the frames `kraid` names.
+const WRITERS: [Writer; 3] = [
     Writer {
         species: &[0xDDBF],
         reason: "another domain: Crocomire moves her ($A4:8C95), and his room shakes the view across ($8F:E8CD)",
-        fields: CAMERA,
-    },
-    Writer {
-        species: &[0xE2BF],
-        reason: "another domain: Kraid moves her ($A7:B0F3) and holds her x on the first screen ($A7:C9EE)",
         fields: CAMERA,
     },
     // Ceres Ridley (E13Fh) has no feet.
@@ -129,6 +124,21 @@ const WRITERS: [Writer; 4] = [
         fields: CAMERA,
     },
 ];
+
+/// Kraid's species, and the word of its slot that holds Kraid's function ($0FA8 in slot 0).
+const KRAID: u16 = 0xE2BF;
+const KRAID_FUNCTION: u16 = 0x30;
+/// Kraid's functions that start by holding her x on the first screen ($A7:C9EE): from
+/// $A7:C865, while Kraid waits, to $A7:C924, as it rises through the floor.
+const KRAID_HOLDS_HER_X: [u16; 6] = [0xC865, 0xC86B, 0xC89A, 0xC8E0, 0xC902, 0xC924];
+/// The first x past Kraid's first screen, where it holds her.
+const KRAID_SCREEN_END: u16 = 0x0100;
+/// Bank $90 log: the extra displacement her motion adds to her moves.
+const EXTRA_X_DISPLACEMENT: WramWord = wram("EXTRA_SAMUS_X_DISPLACEMENT", 0x0B58);
+const EXTRA_Y_DISPLACEMENT: WramWord = wram("EXTRA_SAMUS_Y_DISPLACEMENT", 0x0B5C);
+/// The extra displacement Kraid's push back sets ($A7:94A4), 4 px across and -8 px down, which
+/// its body collision calls after it moves her.
+const KRAID_PUSH: (u16, u16) = (0x0004, 0xFFF8);
 
 /// The gunship's top, and its idle function, the one that only waits for her to enter: every
 /// other function holds her and moves her, across ($A2:A925, $A2:AA1D, where she enters) and
@@ -449,6 +459,38 @@ impl CameraDomain {
     }
 }
 
+/// The masks of Kraid's moves of her in the frame from `from` to `next`, whose enemy phase reads
+/// `from`'s slots and her position there, before her motion runs. Its body collision ($A7:B0F3)
+/// moves her up and back and sets where the camera saw her to her new position's pixels, the
+/// subpixels kept, then pushes her back ($A7:94A4), which leaves its extra displacement at the
+/// frame's end: both axes. Its hold on the first screen ($A7:C9EE) sets her x and where the
+/// camera saw her across to 100h when she is past it: x. On every other frame of the fight it
+/// moves neither her nor the view, so the camera stays compared.
+fn kraid(from: &FrameRecord, next: &FrameRecord, slots: &[Slot]) -> Result<Vec<Mask>, Skip> {
+    let mut masks = Vec::new();
+    let Some(kraid) = slots.iter().find(|slot| slot.species == KRAID) else {
+        return Ok(masks);
+    };
+    let pushed = (
+        word(next, EXTRA_X_DISPLACEMENT)?,
+        word(next, EXTRA_Y_DISPLACEMENT)?,
+    ) == KRAID_PUSH;
+    if pushed {
+        masks.push(Mask {
+            reason: "another domain: Kraid's body collision moves her and where the camera saw her ($A7:B0F3)",
+            fields: CAMERA,
+        });
+    }
+    let past = !below(word(from, source::SAMUS_X_POS)?, KRAID_SCREEN_END);
+    if past && KRAID_HOLDS_HER_X.contains(&kraid.own_function) {
+        masks.push(Mask {
+            reason: "another domain: Kraid holds her x and where the camera saw her on the first screen ($A7:C9EE)",
+            fields: X,
+        });
+    }
+    Ok(masks)
+}
+
 /// Whether the main loop runs gameplay in `record`.
 fn gameplay(record: &FrameRecord) -> Result<(), Skip> {
     match word(record, source::GAME_STATE)? {
@@ -464,6 +506,8 @@ struct Slot {
     species: u16,
     /// Its function pointer.
     function: u16,
+    /// Its word at 30h, which holds Kraid's function in Kraid's slot.
+    own_function: u16,
     /// Its extra word at 20h: the yapping maw's hold.
     grabbing: u16,
 }
@@ -480,6 +524,10 @@ fn slots(record: &FrameRecord) -> Result<Vec<Slot>, Skip> {
                     record,
                     wram("ENEMY_FUNCTION", base.wrapping_add(ENEMY_FUNCTION)),
                 )?,
+                own_function: word(
+                    record,
+                    wram("ENEMY_VAR_30", base.wrapping_add(KRAID_FUNCTION)),
+                )?,
                 grabbing: word(
                     record,
                     wram("ENEMY_RAM_7E8020", extra.wrapping_add(MAW_GRABBING)),
@@ -492,9 +540,9 @@ fn slots(record: &FrameRecord) -> Result<Vec<Slot>, Skip> {
 /// The masks of the enemies that move her or the view in the frame from `from` to `next`,
 /// live at either record: a yapping maw holding her, the bosses, the gunship holding her.
 fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
-    let mut masks = Vec::new();
-    let mut mask = |reason, fields| masks.push(Mask { reason, fields });
     let (before, after) = (slots(from)?, slots(next)?);
+    let mut masks = kraid(from, next, &before)?;
+    let mut mask = |reason, fields| masks.push(Mask { reason, fields });
     let live = |species: u16| {
         before
             .iter()

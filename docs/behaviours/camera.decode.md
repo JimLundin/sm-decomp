@@ -26,8 +26,9 @@ items, the event and four chain rows; `camdump3` on `$TEMP/collab/scenes/cache`,
 `$TEMP/collab/camera-r4/model.py` and `pfpose.py`), it matches 20,289 of 20,558 frames, the null
 model 8,361. The 12 new rows add 5,668 frames, 5,585 matched: 81 of the 83 misses are pose changes
 that match with the seen y taken as her y at the scroll, and 2 are in boss-kraid-defeated
-(records 806 and 850, movement types 0Ah and 3, the camera's x subpixel only, its pixels matching; that row's
-camera floor is 0).
+(records 806 and 850, movement types 0Ah and 3, the camera's x subpixel only, its pixels matching):
+Kraid's body collision moved where the camera saw her on both, and the harness masks the 3 frames
+it fires on (672 too), by the push back's extra displacement it leaves (below).
 
 `gen.py` picks the recorded vectors (at most two per outcome, from different rows, from frames
 the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`, outside movement
@@ -256,10 +257,12 @@ be verified on its own from the records, with her motion's outputs decoded as in
   Single writers of where the camera saw her, both axes unless named:
   - `$A0:B7A1`, the cap on scrolling speed (`$A0:B7C4` y, `$A0:B7E8` x), called by Draygon (which
     holds her in movement type 1Ah) and the yapping maw: mask while either holds her;
-  - Crocomire's collision (`$A4:8C95`); Kraid's body collision (`$A7:B0F3`) and its restriction of
-    her x to the first screen (`$A7:C9EE`, x); Ridley (`$A6:E501`); Mother Brain moving her towards
-    the ceiling or floor (`$A9:BBFD`, y) and towards the wall (`$A9:BC3F`, x): mask Mother Brain's
-    moves on both axes;
+  - Crocomire's collision (`$A4:8C95`); Kraid's body collision (`$A7:B0F3`), on the frames whose
+    end holds the extra displacement its push back sets (`$A7:94A4`: `0B58` = 4, `0B5C` = FFF8h),
+    and its restriction of her x to the first screen (`$A7:C9EE`, x), under the six Kraid functions
+    that call it (`$A7:C865`..`$A7:C924`, `0FA8`) with her x at record N at 100h or past it;
+    Ridley (`$A6:E501`); Mother Brain moving her towards the ceiling or floor (`$A9:BBFD`, y) and
+    towards the wall (`$A9:BC3F`, x): mask Mother Brain's moves on both axes;
   - the gunship, while its function (enemy $D07F's) isn't the idle one (`$A2:A9BD`): it sets her x
     and where the camera saw her across (`$A2:A925` landing, `$A2:AA1D` as she enters) and moves
     her y (`$A2:A8DC`, `$A2:AC2F`, lowering and raising her): mask x and y (integrator, lane/wire-cam:
