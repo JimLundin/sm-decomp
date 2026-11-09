@@ -283,6 +283,11 @@ be verified on its own from the records, with her motion's outputs decoded as in
   edge (the `*-red-back`, `*-red-step` and `*-red-both` tags, 0 each); every push the records
   reach ends on the edge. The push's figure (`ClosedScreens`, `PushCarries`, the settles' ease) is
   checked by the constructed vectors alone (C-push-*, C-ease-*, C-ahead, C-wrap).
+- **The reads down from where the move took it: vectors only** (adversary 53, F2). No recorded
+  frame decides `DownwardLooksAhead`: reading the screens from where the aim stopped the move
+  leaves every row's output the same. In R3 and R16 the move crosses into the last row past its
+  aim, but the view stops on its aim under either read. It is checked by C-ahead,
+  C-below-closed and C-below-short-row, and the bank log (`$80:A8A6`..`$80:A8D4`).
 - **k out of sample:** the old code scores 2,273.5 over this spec's 46.7 units, 48.7 a unit
   (samus-motion's 65.8); its own 0.55 would give k = 26.8 against the frozen 36, so the 70% cap
   binds in both areas (limits since round 3, at 31.0 units). The old code lacks the knockback's

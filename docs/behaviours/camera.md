@@ -305,11 +305,13 @@ aim stopped it, and `v` its speed's pixel part.
 - params: none.
 - switch: none.
 - Going down → the next screen and `rows` are read from the screen `cm` is in, while `edge(c)`
-  and the back-off measure from where the aim stopped it [C-ahead, R3, R16]
+  and the back-off measure from where the aim stopped it [C-ahead, C-below-closed,
+  C-below-short-row]
 - So in C-ahead she falls 6 px, the move crosses into the screen above a closed one, the aim stops
   it 2 px short of the crossing, and it backs up 2 px from where it was: the view rises as she
   falls.
-- checked: oracle (R3, R16, which cross into the room's last row); constructed (C-ahead).
+- checked: constructed (C-ahead, C-below-closed, C-below-short-row); no recorded frame decides
+  it: R3 and R16 cross into the room's last row, but either read stops the view on its aim there.
 
 ### ScreensRunOn
 - kind: quirk.
