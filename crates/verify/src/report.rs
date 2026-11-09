@@ -95,13 +95,13 @@ const DOMAINS: &[Domain] = &[
             ("limits", &["axis.rs", "room.rs"]),
         ],
     },
-    // The keyed machinery (`sets.rs`, `table.rs` and the area and supply keys) is the domain's
-    // shared code, with the counts, the reports, the rules, the catalogue and the whole progress.
+    // The reports, the rules and the catalogue are the domain's shared code; the keyed tables
+    // and sets are `clean_types`'. `progress.rs` holds what has happened with the whole progress.
     Domain {
         name: "progress",
         bridge: "progress_world",
         areas: &[
-            ("happened", &["world.rs"]),
+            ("happened", &["progress.rs"]),
             ("places", &["places.rs"]),
             ("equipment", &["inventory.rs"]),
             ("rooms", &["room_states.rs"]),

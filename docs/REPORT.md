@@ -31,10 +31,10 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 7,515 | 7,092 | 1.06 | 12,724 | 3,511 | 1,253 | 17,988 | 236 |
 | camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
-| progress | 2,013 | 878 | 2.29 | - | 678 | 335 | 25,402 | 63 |
+| progress | 1,130 | 878 | 1.29 | - | 475 | 188 | 25,417 | 63 |
 | hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 532 | - | - | - | 357 | 89 | - | - |
-| total | 15,026 | 11,541 | 1.30 | - | 6,258 | 2,504 | 82,906 | 441 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 1,870 | - | - | - | 490 | 312 | - | - |
+| total | 15,482 | 11,541 | 1.34 | - | 6,188 | 2,580 | 82,921 | 441 |
 
 ## Models
 
@@ -75,22 +75,16 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 3 | 13 | 89 | 492 | 0 | 0 | 147 |
-| `crates/clean_model/progress/src/count.rs` | - | logic | 30 | 42 | 11 | 0 | 0 | 0 | 7 |
-| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 421 | 467 | 129 | 3 | 28 | 0 | 101 |
-| `crates/clean_model/progress/src/lib.rs` | - | logic | 12 | 148 | 12 | 0 | 0 | 0 | 30 |
-| `crates/clean_model/progress/src/per_area.rs` | - | logic | 91 | 118 | 19 | 0 | 0 | 0 | 25 |
-| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 86 | 121 | 3 | 0 | 6 | 0 | 16 |
-| `crates/clean_model/progress/src/places.rs` | places | logic | 96 | 125 | 55 | 0 | 2 | 0 | 28 |
-| `crates/clean_model/progress/src/progress.rs` | - | logic | 75 | 136 | 79 | 0 | 0 | 0 | 35 |
-| `crates/clean_model/progress/src/report.rs` | - | logic | 237 | 291 | 81 | 0 | 12 | 0 | 55 |
-| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 230 | 280 | 102 | 0 | 8 | 0 | 57 |
-| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 18 | 46 | 64 | 65 | 0 | 0 | 40 |
-| `crates/clean_model/progress/src/sets.rs` | - | logic | 386 | 446 | 56 | 0 | 5 | 0 | 58 |
-| `crates/clean_model/progress/src/supplies.rs` | - | logic | 80 | 101 | 53 | 22 | 0 | 0 | 31 |
-| `crates/clean_model/progress/src/table.rs` | - | logic | 197 | 244 | 48 | 0 | 1 | 0 | 35 |
-| `crates/clean_model/progress/src/world.rs` | happened | logic | 54 | 70 | 0 | 0 | 0 | 0 | 13 |
-| total | | | 2,013 | 2,648 | 801 | 582 | 61 | 0 | 678 |
+| `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 3 | 13 | 82 | 436 | 0 | 0 | 132 |
+| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 440 | 475 | 234 | 48 | 20 | 0 | 124 |
+| `crates/clean_model/progress/src/lib.rs` | - | logic | 7 | 106 | 12 | 0 | 0 | 0 | 21 |
+| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 109 | 152 | 3 | 0 | 5 | 0 | 18 |
+| `crates/clean_model/progress/src/places.rs` | places | logic | 116 | 148 | 55 | 0 | 2 | 0 | 33 |
+| `crates/clean_model/progress/src/progress.rs` | happened | tables and types | 10 | 57 | 119 | 0 | 0 | 0 | 19 |
+| `crates/clean_model/progress/src/report.rs` | - | logic | 231 | 279 | 81 | 0 | 13 | 0 | 54 |
+| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 180 | 218 | 117 | 0 | 7 | 0 | 51 |
+| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 35 | 59 | 64 | 46 | 0 | 0 | 23 |
+| total | | | 1,130 | 1,507 | 767 | 530 | 47 | 0 | 475 |
 
 ### hud
 
@@ -116,7 +110,7 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 532 | 656 | 1,024 | 62 | 10 | 0 | 357 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 1,870 | 2,104 | 1,119 | 66 | 12 | 0 | 490 |
 
 ## Lines
 
@@ -124,10 +118,10 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 3,511 | 2,336 | 1,175 | 1,253 |
 | camera | 638 | 223 | 415 | 318 |
-| progress | 678 | 187 | 491 | 335 |
+| progress | 475 | 174 | 301 | 188 |
 | hud | 1,074 | 653 | 421 | 510 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 357 | 357 | 0 | 89 |
-| total | 6,258 | 3,756 | 2,502 | 2,504 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 490 | 0 | 490 | 312 |
+| total | 6,188 | 3,386 | 2,802 | 2,580 |
 
 ## Spec, budget and fit by area
 
@@ -161,13 +155,13 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 36. Old code -
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| happened | 3 | 3.3 | 120 | - | 54 | 0.45 |
-| places | 6 | 10.3 | 372 | - | 96 | 0.26 |
-| equipment | 3 | 7.7 | 177 | 254 | 421 | 2.38 |
-| rooms | 1 | 7.0 | 137 | 197 | 230 | 1.68 |
-| percentage | 1 | 2.0 | 72 | - | 86 | 1.19 |
-| shared (in no area) | | | | | 1,126 | |
-| total | 14 | 30.3 | 878 | - | 2,013 | 2.29 |
+| happened | 3 | 3.3 | 120 | - | 10 | 0.08 |
+| places | 6 | 10.3 | 372 | - | 116 | 0.31 |
+| equipment | 3 | 7.7 | 177 | 254 | 440 | 2.49 |
+| rooms | 1 | 7.0 | 137 | 197 | 180 | 1.31 |
+| percentage | 1 | 2.0 | 72 | - | 109 | 1.51 |
+| shared (in no area) | | | | | 276 | |
+| total | 14 | 30.3 | 878 | - | 1,130 | 1.29 |
 
 ### hud
 
@@ -191,11 +185,11 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | harness | 1 | 4,758 | 5,203 | 521 | 254 | 242 | 1 | 908 |
 | camera | bridge | 1 | 593 | 797 | 21 | 1 | 2 | 0 | 125 |
 | camera | harness | 1 | 3,845 | 4,213 | 562 | 175 | 179 | 27 | 747 |
-| progress | bridge | 1 | 1,338 | 1,551 | 57 | 69 | 63 | 0 | 230 |
-| progress | harness | 1 | 4,484 | 4,618 | 634 | 407 | 416 | 31 | 760 |
+| progress | bridge | 1 | 1,359 | 1,587 | 60 | 69 | 59 | 0 | 244 |
+| progress | harness | 1 | 5,126 | 5,236 | 711 | 460 | 492 | 42 | 860 |
 | hud | bridge | 1 | 1,870 | 2,173 | 100 | 9 | 62 | 0 | 333 |
 | hud | harness | 1 | 3,160 | 3,403 | 518 | 135 | 196 | 22 | 584 |
-| total | | | 22,740 | 25,276 | 2,670 | 1,062 | 1,241 | 80 | 4,186 |
+| total | | | 23,402 | 25,930 | 2,750 | 1,115 | 1,313 | 91 | 4,300 |
 
 ## Harness floors and vectors
 
@@ -208,29 +202,29 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | area-norfair | 208 | 208 | 374 | 208 |
 | boss-kraid-defeated | 1,013 | 1,068 | 1,137 | 1,069 |
 | boss-phantoon | 1,898 | 1,984 | 2,107 | 2,062 |
-| chain-0012-91F8 | 421 | 422 | 1,031 | 1,031 |
+| chain-0012-91F8 | 421 | 422 | 1,032 | 1,031 |
 | chain-0013-92FD | 595 | 599 | 599 | 599 |
 | chain-0014-96BA | 342 | 342 | 506 | 342 |
-| chain-0043-9AD9 | 398 | 416 | 416 | 416 |
+| chain-0043-9AD9 | 398 | 416 | 417 | 416 |
 | chain-0057-9FBA | 537 | 549 | 548 | 549 |
 | chain-0059-A293 | 517 | 584 | 777 | 584 |
 | chain-0097-ACF0 | 661 | 662 | 817 | 662 |
 | chain-0100-B07A | 274 | 284 | 285 | 284 |
 | chain-0106-AD5E | 493 | 600 | 782 | 600 |
-| chain-0163-A890 | 27 | 27 | 29 | 27 |
+| chain-0163-A890 | 27 | 27 | 30 | 27 |
 | chain-0220-D017 | 145 | 144 | 538 | 144 |
 | chain-0224-D0B9 | 153 | 158 | 512 | 335 |
 | chain-0232-D5A7 | 596 | 632 | 706 | 632 |
-| chain-0234-D51E | 145 | 152 | 152 | 152 |
+| chain-0234-D51E | 145 | 152 | 153 | 152 |
 | chain-0314-DAE1 | 443 | 450 | 465 | 450 |
-| event-zebes-awake | 127 | 179 | 177 | 179 |
-| item-charge-beam | 467 | 479 | 917 | 478 |
-| item-energy-tank | 240 | 239 | 258 | 239 |
-| item-morph-ball | 1,028 | 1,028 | 1,426 | 1,028 |
-| item-plasma-beam | 145 | 145 | 168 | 145 |
-| item-reserve-tank | 410 | 413 | 1,226 | 413 |
-| item-wave-beam | 36 | 36 | 58 | 36 |
-| samus-bomb-jump-vertical | 286 | 314 | 1,057 | 314 |
+| event-zebes-awake | 127 | 179 | 178 | 179 |
+| item-charge-beam | 467 | 479 | 919 | 478 |
+| item-energy-tank | 240 | 239 | 259 | 239 |
+| item-morph-ball | 1,028 | 1,028 | 1,427 | 1,028 |
+| item-plasma-beam | 145 | 145 | 169 | 145 |
+| item-reserve-tank | 410 | 413 | 1,228 | 413 |
+| item-wave-beam | 36 | 36 | 59 | 36 |
+| samus-bomb-jump-vertical | 286 | 314 | 1,058 | 314 |
 | samus-ceres-push | 1,702 | 1,777 | 1,776 | 1,777 |
 | samus-grapple-release | 243 | 248 | 488 | 488 |
 | samus-grapple-walljump | 113 | 114 | 174 | 174 |
@@ -242,12 +236,12 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-shinespark-up | 212 | 212 | 393 | 393 |
 | samus-shinespark-up-left | 266 | 267 | 418 | 418 |
 | samus-space-jump-chain | 383 | 383 | 383 | 383 |
-| samus-square-slope-reserve | 37 | 36 | 397 | 36 |
+| samus-square-slope-reserve | 37 | 36 | 398 | 36 |
 | samus-walljump-16 | 156 | 157 | 157 | 157 |
 | samus-walljump-22 | 161 | 163 | 163 | 163 |
 | samus-walljump-28 | 167 | 169 | 169 | 169 |
 | terrain-quicksand | 332 | 450 | 456 | 450 |
-| total | 17,988 in 44 rows | 18,903 in 44 rows | 25,402 in 44 rows | 20,613 in 44 rows |
+| total | 17,988 in 44 rows | 18,903 in 44 rows | 25,417 in 44 rows | 20,613 in 44 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
@@ -264,7 +258,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 25,426 | 17,988 | 0 | 6,606 |
 | camera | 25,426 | 18,903 | 0 | 7,457 |
-| progress | 25,426 | 25,402 | 24 | 25,399 |
+| progress | 25,426 | 25,417 | 9 | 25,399 |
 | hud | 25,426 | 20,613 | 0 | 17,975 |
 
 Per declared field, the compared frames on which it was compared and those on which a mask, by its named writer, put it out of scope. The summary's harness frames count a frame matched on its unmasked fields alone.
@@ -286,9 +280,9 @@ Per declared field, the compared frames on which it was compared and those on wh
 | camera | position.y | 18,684 | 1,931 |
 | camera | seen | 0 | 20,615 |
 | progress | items | 25,426 | 0 |
-| progress | items equipped | 25,426 | 0 |
+| progress | items switched on | 25,426 | 0 |
 | progress | beams | 25,426 | 0 |
-| progress | beams equipped | 25,426 | 0 |
+| progress | beams switched on | 25,426 | 0 |
 | progress | capacities | 25,426 | 0 |
 | progress | what she holds | 24,727 | 699 |
 | progress | reserve mode | 25,426 | 0 |
@@ -355,18 +349,18 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | camera | ScreensRunOn | vectors only | 0 | 0 |
 | camera | BelowTheRoom | 3,540 | 3,540 | 88 |
 | camera | PushCarries | vectors only | 0 | 0 |
-| progress | EventsHappen | 0 | 1 | 0 |
+| progress | EventsHappen | 1 | 1 | 0 |
 | progress | ZebetitesCounted | vectors only | 0 | 0 |
 | progress | BossesDefeated | 0 | 3 | 0 |
-| progress | EmptiedLocations | 0 | 14 | 0 |
+| progress | EmptiedLocations | 13 | 14 | 0 |
 | progress | DoorsStayOpen | 0 | 5 | 0 |
 | progress | MapsByArea | vectors only | 0 | 0 |
-| progress | MapOnArrival | vectors only | 0 | 0 |
-| progress | StationsSavedAt | 0 | 1 | 0 |
+| progress | MapOnArrival | 8 | 8 | 0 |
+| progress | StationsSavedAt | 1 | 1 | 0 |
 | progress | ItemsPlacedCount | 3 | 3 | 0 |
-| progress | TakingItems | 0 | 2 | 0 |
-| progress | TakingBeams | 0 | 4 | 0 |
-| progress | Tanks | 0 | 8 | 0 |
+| progress | TakingItems | 2 | 2 | 0 |
+| progress | TakingBeams | 4 | 4 | 0 |
+| progress | Tanks | 7 | 8 | 0 |
 | progress | RoomStates | 8 | 8 | 0 |
 | progress | ItemPercentage | vectors only | 0 | 0 |
 | hud | EnergyGauge | 642 | 642 | 0 |
@@ -396,5 +390,5 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 45 | 5,163 | 30,979 | 33,208 | 9,832 | 883 | 2,498 | 655 | 7,053 |
-| bridges | 7 | 1,082 | 6,494 | 7,839 | 435 | 91 | 209 | 0 | 1,187 |
-| rebuilt models, shared types included | 51 | 2,504 | 15,026 | 18,660 | 6,224 | 10,322 | 666 | 34 | 6,258 |
+| bridges | 7 | 1,086 | 6,514 | 7,875 | 438 | 91 | 204 | 0 | 1,201 |
+| rebuilt models, shared types included | 45 | 2,580 | 15,482 | 18,967 | 6,285 | 10,274 | 654 | 34 | 6,188 |

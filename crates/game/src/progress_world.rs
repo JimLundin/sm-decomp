@@ -13,8 +13,8 @@
 use core::num::Wrapping;
 
 use clean_model_progress::{
-    Beams, BossKinds, Condition, Count, Inventory, Items as Pieces, PerSupply, Pickup, Progress,
-    Remembered, Report, ReserveMode, RoomEntry, RoomStates, Rules, Supply,
+    Beams, BossKinds, Condition, Count, EnteredRoom, Inventory, Items as Pieces, PerSupply, Pickup,
+    Progress, Remembered, Report, ReserveMode, RoomStates, Rules, Supply, Version,
 };
 use clean_types::{Area as Region, BossKind, Entrance, Item as Piece, LocationId};
 use data::rom::RomAddress;
@@ -70,20 +70,17 @@ pub const fn piece(item: Item) -> Piece {
 
 /// The model's items for a set of the engine's.
 fn pieces(items: Items) -> Pieces {
-    ITEMS
-        .into_iter()
-        .filter(|&item| items.contains(item))
-        .map(piece)
-        .fold(Pieces::default(), Pieces::with)
+    let mut pieces = Pieces::default();
+    for item in ITEMS.into_iter().filter(|&item| items.contains(item)) {
+        pieces[piece(item)] = true;
+    }
+    pieces
 }
 
 /// The engine's set of the model's items.
 fn items(pieces: Pieces) -> Items {
     let mut items = Items::default();
-    for item in ITEMS
-        .into_iter()
-        .filter(|&item| pieces.contains(piece(item)))
-    {
+    for item in ITEMS.into_iter().filter(|&item| pieces[piece(item)]) {
         items.insert(item);
     }
     items
@@ -92,7 +89,7 @@ fn items(pieces: Pieces) -> Items {
 /// The model's reserve mode for the engine's.
 const fn mode(mode: samus::ReserveMode) -> ReserveMode {
     match mode {
-        samus::ReserveMode::None => ReserveMode::None,
+        samus::ReserveMode::None => ReserveMode::NoTank,
         samus::ReserveMode::Automatic => ReserveMode::Automatic,
         samus::ReserveMode::Manual => ReserveMode::Manual,
     }
@@ -101,7 +98,7 @@ const fn mode(mode: samus::ReserveMode) -> ReserveMode {
 /// The engine's reserve mode for the model's.
 const fn engine_mode(mode: ReserveMode) -> samus::ReserveMode {
     match mode {
-        ReserveMode::None => samus::ReserveMode::None,
+        ReserveMode::NoTank => samus::ReserveMode::None,
         ReserveMode::Automatic => samus::ReserveMode::Automatic,
         ReserveMode::Manual => samus::ReserveMode::Manual,
     }
@@ -131,9 +128,9 @@ fn supplies(mut equipment: Equipment, part: fn(Gauge) -> u16) -> PerSupply<Count
 fn inventory(equipment: &Equipment) -> Inventory {
     Inventory {
         items: pieces(equipment.collected),
-        equipped: pieces(equipment.equipped),
+        items_switched_on: pieces(equipment.equipped),
         beams: Beams::default(),
-        beams_equipped: Beams::default(),
+        beams_switched_on: Beams::default(),
         capacity: supplies(*equipment, |gauge| gauge.max),
         held: supplies(*equipment, |gauge| gauge.current),
         reserve_mode: mode(equipment.reserve_mode),
@@ -143,7 +140,7 @@ fn inventory(equipment: &Equipment) -> Inventory {
 /// `inventory` written back to the engine's equipment.
 fn store_inventory(inventory: &Inventory, equipment: &mut Equipment) {
     equipment.collected = items(inventory.items);
-    equipment.equipped = items(inventory.equipped);
+    equipment.equipped = items(inventory.items_switched_on);
     for &supply in Supply::ALL {
         *gauge(equipment, supply) = Gauge {
             current: inventory.held[supply].0,
@@ -153,7 +150,7 @@ fn store_inventory(inventory: &Inventory, equipment: &mut Equipment) {
     equipment.reserve_mode = engine_mode(inventory.reserve_mode);
 }
 
-/// What her motion reads: the model's answer from the items equipped.
+/// What her motion reads: the model's answer from the items switched on.
 #[must_use]
 pub fn equipment(equipment: &Equipment) -> clean_types::Equipment {
     inventory(equipment).equipment()
@@ -204,10 +201,11 @@ fn store_emptied(emptied: &Remembered<LocationId>, collected: &mut CollectedItem
 /// The run's progress as the engine keeps it: her equipment and the emptied places.
 #[must_use]
 pub fn progress(equipment: &Equipment, collected: &CollectedItems) -> Progress {
-    let mut progress = Progress::new_file();
-    progress.inventory = inventory(equipment);
-    progress.emptied = emptied(collected);
-    progress
+    Progress {
+        inventory: inventory(equipment),
+        emptied: emptied(collected),
+        ..Progress::default()
+    }
 }
 
 /// Whether the item PLM with room argument `argument` finds its place emptied (`$84:887C`).
@@ -232,7 +230,7 @@ pub const fn region(area: Area) -> Option<Region> {
 }
 
 /// She takes the item of the item PLM with room argument `argument`: the item is hers and
-/// equipped, and its place is emptied (`$84:8899`, `$84:88F3`).
+/// switched on, and its place is emptied (`$84:8899`, `$84:88F3`).
 pub fn take(state: &mut State, item: Item, argument: u16) {
     let mut progress = progress(&state.samus.equipment, &state.collected_items);
     let report = Report::Taken {
@@ -248,20 +246,26 @@ pub fn take(state: &mut State, item: Item, argument: u16) {
 fn kinds(bits: BossBits) -> Option<BossKinds> {
     let known = BOSS_KINDS.iter().fold(0, |all, &(bit, _)| all | bit);
     (bits.0 & !known == 0).then(|| {
-        BOSS_KINDS
-            .iter()
-            .filter(|&&(bit, _)| bits.0 & bit != 0)
-            .fold(BossKinds::default(), |kinds, &(_, kind)| kinds.with(kind))
+        let mut kinds = BossKinds::default();
+        for &(bit, kind) in &BOSS_KINDS {
+            kinds[kind] = bits.0 & bit != 0;
+        }
+        kinds
     })
+}
+
+/// The kinds a room's main-boss condition asks about: the main boss alone.
+fn main_boss() -> BossKinds {
+    let mut kinds = BossKinds::default();
+    kinds[BossKind::MainBoss] = true;
+    kinds
 }
 
 /// The model's condition for the importer's.
 fn condition(condition: room::Condition) -> Option<Condition> {
     Some(match condition {
         room::Condition::Door(door) => Condition::EnteredBy(Entrance(door.offset)),
-        room::Condition::MainAreaBossDead => {
-            Condition::Defeated(BossKinds::of(&[BossKind::MainBoss]))
-        }
+        room::Condition::MainAreaBossDead => Condition::Defeated(main_boss()),
         room::Condition::Event(event) => Condition::Happened(event),
         room::Condition::BossDead(bits) => Condition::Defeated(kinds(bits)?),
         room::Condition::MorphBall => Condition::Has(Piece::MorphBall),
@@ -271,15 +275,24 @@ fn condition(condition: room::Condition) -> Option<Condition> {
     })
 }
 
-/// The conditions of the room's states as `RoomStates::new` reads them, the default's `Always`
-/// last; none when a condition names a boss bit no kind has.
+/// The conditions of the room's conditional states, in its order, as `RoomStates` reads them;
+/// none when a condition names a boss bit no kind has.
 #[must_use]
 pub fn conditions(room: &Room) -> Option<Vec<Condition>> {
     room.conditional
         .iter()
         .map(|entry| condition(entry.condition))
-        .chain(core::iter::once(Some(Condition::Always)))
         .collect()
+}
+
+/// The place in a room's list of the version that loads: the default comes after the
+/// `conditional` ones.
+#[must_use]
+pub const fn state_place(version: Version, conditional: usize) -> usize {
+    match version {
+        Version::Conditional(place) => place,
+        Version::Default => conditional,
+    }
 }
 
 /// The state `room` loads in for `progress`, entered by the door at `door` if any (`$8F:E5D2`);
@@ -290,12 +303,18 @@ pub fn room_state(
     progress: &Progress,
     door: Option<RomAddress>,
 ) -> Option<StateIndex> {
-    let entry = RoomEntry {
+    let entered = EnteredRoom {
         area: region(room.area)?,
         entered_by: door.map(|door| Entrance(door.offset)),
     };
-    let index = RoomStates::new(&conditions(room)?)?.choose(progress, entry);
-    u8::try_from(index).ok().map(StateIndex)
+    let conditional = conditions(room)?;
+    let version = RoomStates {
+        conditional: &conditional,
+    }
+    .choose(progress, entered);
+    u8::try_from(state_place(version, conditional.len()))
+        .ok()
+        .map(StateIndex)
 }
 
 #[cfg(test)]

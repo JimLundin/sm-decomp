@@ -67,11 +67,11 @@ camera entry DownwardLooksAhead 1 1 0
 camera entry ScreensRunOn 0 0 0
 camera entry BelowTheRoom 3540 3540 88
 camera entry PushCarries 0 0 0
-progress frames 25426 25402 24 25399
+progress frames 25426 25417 9 25399
 progress field 25426 0 items
-progress field 25426 0 items equipped
+progress field 25426 0 items switched on
 progress field 25426 0 beams
-progress field 25426 0 beams equipped
+progress field 25426 0 beams switched on
 progress field 25426 0 capacities
 progress field 24727 699 what she holds
 progress field 25426 0 reserve mode
@@ -84,18 +84,18 @@ progress field 25426 0 maps
 progress field 25426 0 stations saved at
 progress field 25426 0 items placed
 progress field 8 25418 room state
-progress entry EventsHappen 0 1 0
+progress entry EventsHappen 1 1 0
 progress entry ZebetitesCounted 0 0 0
 progress entry BossesDefeated 0 3 0
-progress entry EmptiedLocations 0 14 0
+progress entry EmptiedLocations 13 14 0
 progress entry DoorsStayOpen 0 5 0
 progress entry MapsByArea 0 0 0
-progress entry MapOnArrival 0 0 0
-progress entry StationsSavedAt 0 1 0
+progress entry MapOnArrival 8 8 0
+progress entry StationsSavedAt 1 1 0
 progress entry ItemsPlacedCount 3 3 0
-progress entry TakingItems 0 2 0
-progress entry TakingBeams 0 4 0
-progress entry Tanks 0 8 0
+progress entry TakingItems 2 2 0
+progress entry TakingBeams 4 4 0
+progress entry Tanks 7 8 0
 progress entry RoomStates 8 8 0
 progress entry ItemPercentage 0 0 0
 hud frames 25426 20613 0 17975

@@ -105,7 +105,7 @@ pub fn slice_zero_plms(image: &[u8]) -> Result<Vec<(RoomId, PlmPopulation)>, Roo
             let room = rooms.get(id)?;
             let state = room.state(progress_world::room_state(
                 room,
-                &Progress::new_file(),
+                &Progress::default(),
                 None,
             )?)?;
             Some((id, state.plms.clone()))

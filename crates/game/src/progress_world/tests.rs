@@ -61,7 +61,7 @@ fn room(area: Area, conditions: &[room::Condition]) -> Room {
 }
 
 #[test]
-fn taking_an_item_makes_it_hers_and_equipped_and_empties_its_place() {
+fn taking_an_item_makes_it_hers_and_switched_on_and_empties_its_place() {
     let mut state = State::default();
     take(&mut state, Item::MorphBall, 0x1a);
     let equipment = state.samus.equipment;
@@ -104,7 +104,7 @@ fn the_engine_keeps_what_the_model_gave_back() {
 }
 
 #[test]
-fn her_motion_reads_the_items_equipped() {
+fn her_motion_reads_the_items_switched_on() {
     let mut equipment = Equipment::default();
     equipment.collected.insert(Item::HiJumpBoots);
     equipment.collected.insert(Item::GravitySuit);
@@ -124,9 +124,9 @@ fn the_first_state_whose_condition_holds_loads() {
             room::Condition::Event(Event::PlanetAwake),
         ],
     );
-    let mut progress = Progress::new_file();
+    let mut progress = Progress::default();
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(3)));
-    progress.events = progress.events.with(Event::PlanetAwake);
+    progress.events[Event::PlanetAwake] = true;
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(2)));
     progress.inventory.capacity[Supply::PowerBombs] = Wrapping(5);
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(1)));
@@ -143,14 +143,14 @@ fn the_room_s_own_area_and_door_decide() {
             room::Condition::MainAreaBossDead,
         ],
     );
-    let mut progress = Progress::new_file();
+    let mut progress = Progress::default();
     assert_eq!(
         room_state(&torizo, &progress, Some(door)),
         Some(StateIndex(1))
     );
-    progress.defeated[Region::Norfair] = BossKinds::of(&[BossKind::MainBoss]);
+    progress.defeated[Region::Norfair][BossKind::MainBoss] = true;
     assert_eq!(room_state(&torizo, &progress, None), Some(StateIndex(3)));
-    progress.defeated[Region::Crateria] = BossKinds::of(&[BossKind::Torizo]);
+    progress.defeated[Region::Crateria][BossKind::Torizo] = true;
     assert_eq!(room_state(&torizo, &progress, None), Some(StateIndex(0)));
 }
 
@@ -158,5 +158,5 @@ fn the_room_s_own_area_and_door_decide() {
 fn a_boss_bit_no_kind_has_reads_no_states() {
     let odd = room(Area::Brinstar, &[room::Condition::BossDead(BossBits(8))]);
     assert_eq!(conditions(&odd), None);
-    assert_eq!(room_state(&odd, &Progress::new_file(), None), None);
+    assert_eq!(room_state(&odd, &Progress::default(), None), None);
 }

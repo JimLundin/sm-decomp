@@ -2017,7 +2017,7 @@ fn cached_rows() -> Option<CachedRows> {
     let morph_ball_room = loaded_rooms.get(id).unwrap();
     let state = morph_ball_room
         .state(
-            game::progress_world::room_state(morph_ball_room, &Progress::new_file(), None).unwrap(),
+            game::progress_world::room_state(morph_ball_room, &Progress::default(), None).unwrap(),
         )
         .unwrap();
     let loaded = game::state::room::RoomScoped::load(id, morph_ball_room, state);

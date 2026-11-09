@@ -7,17 +7,23 @@
 //! decoded from record N; the room load from record N+1, which other domains write; and the
 //! model's output is compared with record N+1.
 //!
-//! The reports should come from the record's watched instruction hits (the entry points of the
-//! decode notes' Inputs table). The cached rows were recorded without those watches, so the
-//! harness stands in for the reporting domains from what record N+1 shows changed: a place newly
-//! emptied is the pickup of the item PLM record N holds with that room argument (its pickup
-//! instruction read from the ROM), a door newly open the door PLM's report, and an event, a
-//! zebetite, a boss, a map or a station newly marked the report that marks it, naming the area
-//! she is in (record N+1's), or for leaving the area the one she leaves (record N's). Those
-//! answers copy record N+1, so every field they move is unverified, never matched (the harness's
-//! neutral stand-in makes none). A room load is the door's domain's, from the room pointer: its
-//! state is the model's choice over the room's conditions, and the items its state places (the
-//! PLM domain's `ItemsPlaced`) come from the ROM, so neither copies an answer.
+//! A report is heard from the frame's watched instruction hits (record N+1's, the entry points
+//! of the decode notes' Inputs table) where the instruction alone names it, with record N and the
+//! ROM: an instruction that marks one event, a zebetite destroyed, a map station, the room that
+//! gives its map on arrival, leaving the area, the gunship's station; and a pickup, when the
+//! frame sets one place emptied and record N holds one item PLM, its place not yet emptied, whose
+//! list (read from the ROM) runs the pickup instruction hit. The hits carry no arguments, so
+//! what an instruction can't name alone (the kind of boss defeated, the door opened, the station
+//! saved at, an event a PLM or the statues mark) is stood in for from what record N+1 shows
+//! changed: a place newly emptied is the pickup of the item PLM record N holds with that room
+//! argument, a door newly open the door PLM's report, and an event, a zebetite, a boss, a map or
+//! a station newly marked the report that marks it, naming the area she is in (record N+1's), or
+//! for leaving the area the one she leaves (record N's). Those answers copy record N+1, so every
+//! field they move is unverified, never matched (the harness's neutral stand-in makes none). A
+//! row recorded without the watches hears nothing, and every report is stood in for. A room load
+//! is the door's domain's, from the room pointer: its state is the model's choice over the
+//! room's conditions, and the items its state places (the PLM domain's `ItemsPlaced`) come from
+//! the ROM, so neither copies an answer.
 //!
 //! The null model is progress left as record N has it, and the room loaded in its default state.
 
@@ -28,11 +34,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 use clean_model_progress::{
-    Beams, BehaviourId, BossKinds, CATALOGUE, Condition, Count, Events, Items, MapStatus, PerArea,
-    PerSupply, Pickup, Progress, Remembered, Report, ReserveMode, RoomEntry, RoomStates, Rules,
-    Supply,
+    Beams, BehaviourId, BossKinds, CATALOGUE, Condition, Count, EnteredRoom, Events, Items,
+    MapStatus, PerArea, PerSupply, Pickup, Progress, Remembered, Report, ReserveMode, RoomStates,
+    Rules, Supply,
 };
-use clean_types::{Area, Beam, BossKind, DoorId, Entrance, Item, LocationId, StationId};
+use clean_types::{Area, Beam, BossKind, DoorId, Entrance, Item, Key, LocationId, Set, StationId};
 use data::rom::{Lorom, RomAddress};
 use data::room::{RoomKey, decode as decode_room};
 use game::progress_world;
@@ -53,7 +59,7 @@ const fn block(name: &'static str, offset: u32, len: u16) -> WramBlock {
     WramBlock { name, offset, len }
 }
 
-/// Bank $90 log: the beams equipped and hers, in the beam bits.
+/// Bank $90 log: the beams switched on and hers, in the beam bits.
 const EQUIPPED_BEAMS: WramWord = wram("EQUIPPED_BEAMS", 0x09A6);
 const COLLECTED_BEAMS: WramWord = wram("COLLECTED_BEAMS", 0x09A8);
 /// Bank $82 log: the door the room was entered by, a pointer into bank $83.
@@ -159,6 +165,33 @@ const LIST_REACH: usize = 0x100;
 /// The PLM bank.
 const PLM_BANK: u8 = 0x84;
 
+/// The instructions that each mark one event, with the event's bit (the decode notes' Inputs).
+const EVENT_MARKERS: [(u32, u16); 8] = [
+    (0x84_B86E, 0x15),
+    (0x84_B8CB, 0x0D),
+    (0x84_B9B9, 0x0F),
+    (0x84_BE0B, 0x00),
+    (0x84_D1B4, 0x0C),
+    (0x88_DCA3, 0x0A),
+    (0x8F_C91F, 0x0E),
+    (0xA9_B313, 0x0E),
+];
+/// A zebetite destroyed: the counter's one caller (`$A6:FCAA`).
+const ZEBETITE_DESTROYED: u32 = 0xA6_FCAA;
+/// The item PLM's instruction that sets its place emptied (`$84:8899`).
+const SET_EMPTIED: u32 = 0x84_8899;
+/// A map station downloads (`$84:8C8F`).
+const MAP_STATION: u32 = 0x84_8C8F;
+/// The setup code of the room that gives its area's map on arrival (`$8F:C90A`).
+const MAP_ON_ARRIVAL: u32 = 0x8F_C90A;
+/// A door into another area (`$82:DF99`).
+const LEFT_AREA: u32 = 0x82_DF99;
+/// The gunship's station, saved at on its first landing and when she saves in it (`$A2:A9A7`,
+/// `$A2:AB2B`).
+const GUNSHIP_SAVES: [u32; 2] = [0xA2_A9A7, 0xA2_AB2B];
+/// The gunship's station's id.
+const GUNSHIP: StationId = StationId(0);
+
 /// The game states of the pause screens, where the equipment screen switches items, beams and
 /// the reserve mode (`$82:8CEF` to `$82:A5B7`, game states Ch to 12h).
 const PAUSE: core::ops::RangeInclusive<u16> = 0x0C..=0x12;
@@ -168,8 +201,8 @@ const MOTHER_BRAIN: [u16; 2] = [0xEC3F, 0xEC7F];
 const ENEMY_SLOTS: u16 = 32;
 
 /// The declared fields by their places in [`ProgressDomain`]'s `FIELDS`.
-const ITEMS_EQUIPPED: FieldSet = FieldSet::single(1);
-const BEAMS_EQUIPPED: FieldSet = FieldSet::single(3);
+const ITEMS_SWITCHED_ON: FieldSet = FieldSet::single(1);
+const BEAMS_SWITCHED_ON: FieldSet = FieldSet::single(3);
 const HELD: FieldSet = FieldSet::single(5);
 const RESERVE_MODE: FieldSet = FieldSet::single(6);
 const ROOM_STATE: FieldSet = FieldSet::single(15);
@@ -204,8 +237,8 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
         B::MapsByArea | B::MapOnArrival => field::MAPS,
         B::StationsSavedAt => field::STATIONS,
         B::ItemsPlacedCount => field::ITEMS_PLACED,
-        B::TakingItems => field::ITEMS.union(ITEMS_EQUIPPED),
-        B::TakingBeams => field::BEAMS.union(BEAMS_EQUIPPED),
+        B::TakingItems => field::ITEMS.union(ITEMS_SWITCHED_ON),
+        B::TakingBeams => field::BEAMS.union(BEAMS_SWITCHED_ON),
         B::Tanks => field::CAPACITY.union(HELD).union(RESERVE_MODE),
         B::RoomStates => ROOM_STATE,
         B::ItemPercentage => FieldSet::EMPTY,
@@ -265,6 +298,19 @@ fn members<T: Copy>(word: u16, table: &[(u16, T)], source: &'static str) -> Resu
         .collect())
 }
 
+/// The set of `word`'s members by `table`'s bits; a bit no member has is unnamed.
+fn set<K: Key<N>, const N: usize>(
+    word: u16,
+    table: &[(u16, K)],
+    source: &'static str,
+) -> Result<Set<K, N>, Skip> {
+    let mut set = Set::default();
+    for member in members(word, table, source)? {
+        set[member] = true;
+    }
+    Ok(set)
+}
+
 /// The one member of `members`, if it has exactly one.
 const fn single<T: Copy>(members: &[T]) -> Option<T> {
     match *members {
@@ -301,6 +347,14 @@ fn event(number: u16) -> Option<clean_types::Event> {
     u8::try_from(number).ok().and_then(data::room::event)
 }
 
+/// The event the instruction at `pc` marks, if it marks one alone.
+fn marked(pc: u32) -> Option<clean_types::Event> {
+    EVENT_MARKERS
+        .iter()
+        .find(|&&(marker, _)| marker == pc)
+        .and_then(|&(_, number)| event(number))
+}
+
 /// The frame's area (`079F`).
 fn area(record: &FrameRecord) -> Result<Area, Skip> {
     let index = word(record, source::AREA_INDEX)?;
@@ -317,32 +371,24 @@ fn count(record: &FrameRecord, source: WramWord) -> Result<Count, Skip> {
 
 /// The progress `record` holds (the decode notes' State).
 fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
-    let mut progress = Progress::new_file();
+    let mut progress = Progress::default();
     let items = |source: WramWord| -> Result<Items, Skip> {
-        Ok(Items::of(&members(
-            word(record, source)?,
-            &ITEMS,
-            source.name,
-        )?))
+        set(word(record, source)?, &ITEMS, source.name)
     };
     let beams = |source: WramWord| -> Result<Beams, Skip> {
-        Ok(Beams::of(&members(
-            word(record, source)?,
-            &BEAMS,
-            source.name,
-        )?))
+        set(word(record, source)?, &BEAMS, source.name)
     };
     let inventory = &mut progress.inventory;
     inventory.items = items(source::COLLECTED_ITEMS)?;
-    inventory.equipped = items(source::EQUIPPED_ITEMS)?;
+    inventory.items_switched_on = items(source::EQUIPPED_ITEMS)?;
     inventory.beams = beams(COLLECTED_BEAMS)?;
-    inventory.beams_equipped = beams(EQUIPPED_BEAMS)?;
+    inventory.beams_switched_on = beams(EQUIPPED_BEAMS)?;
     for (supply, capacity, held) in SUPPLIES {
         inventory.capacity[supply] = count(record, capacity)?;
         inventory.held[supply] = count(record, held)?;
     }
     inventory.reserve_mode = match word(record, source::RESERVE_HEALTH_MODE)? {
-        0 => ReserveMode::None,
+        0 => ReserveMode::NoTank,
         1 => ReserveMode::Automatic,
         2 => ReserveMode::Manual,
         mode => return Err(unnamed(source::RESERVE_HEALTH_MODE.name, mode)),
@@ -352,7 +398,7 @@ fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
             progress.zebetites += Wrapping(1 << place);
         } else {
             let event = event(number).ok_or_else(|| unnamed(EVENTS.name, number))?;
-            progress.events = progress.events.with(event);
+            progress.events[event] = true;
         }
     }
     let per_area = |source: WramBlock, stride: usize| -> Result<Vec<(Area, u8)>, Skip> {
@@ -364,12 +410,11 @@ fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
             .collect())
     };
     for (area, bits) in per_area(BOSSES, 1)? {
-        let kinds = members(u16::from(bits), &BOSS_KINDS, BOSSES.name)?;
-        progress.defeated[area] = BossKinds::of(&kinds);
+        progress.defeated[area] = set(u16::from(bits), &BOSS_KINDS, BOSSES.name)?;
     }
     for (area, byte) in per_area(MAPS, 1)? {
         progress.maps[area] = match byte {
-            0 => MapStatus::None,
+            0 => MapStatus::Unmapped,
             DOWNLOADED => MapStatus::Downloaded,
             _ => MapStatus::OnArrival,
         };
@@ -381,7 +426,7 @@ fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
     progress.emptied =
         Remembered::of(numbers(bytes(record, source::ITEM_BIT_ARRAY)?).map(LocationId));
     progress.opened = Remembered::of(numbers(bytes(record, DOORS)?).map(DoorId));
-    progress.placements = count(record, ITEMS_PLACED)?;
+    progress.items_placed = count(record, ITEMS_PLACED)?;
     Ok(progress)
 }
 
@@ -389,8 +434,8 @@ fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
 pub struct RoomStatesAt {
     /// The room's own area.
     area: Area,
-    /// Its states' conditions as the model reads them, the default's last.
-    conditions: Vec<Condition>,
+    /// Its conditional states' conditions as the model reads them, in the list's order.
+    conditional: Vec<Condition>,
     /// Each state's header pointer, in the list's order, the default last.
     headers: Vec<u16>,
     /// The item PLMs each state's population places.
@@ -404,7 +449,7 @@ pub struct Standing {
     /// The state the record holds.
     pub held: usize,
     /// The state the model chooses.
-    pub chosen: Option<usize>,
+    pub chosen: usize,
     /// The room's states, the default last.
     pub states: usize,
 }
@@ -417,11 +462,21 @@ pub struct Load {
     door: Entrance,
 }
 
-/// What the frame gives progress besides its State: the stand-in's reports and the room load.
+/// Where a report the frame gives progress comes from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Source {
+    /// Heard from the frame's watched instruction hits, with record N and the ROM.
+    Heard,
+    /// The stand-in's, decoded from record N+1's changes: copied.
+    Copied,
+}
+
+/// What the frame gives progress besides its State: the reports and the room load.
 #[derive(Clone)]
 pub struct Upstream {
-    /// The reports the stand-in decoded from record N+1's changes, copied.
-    reports: Vec<Report>,
+    /// The frame's reports in the order they apply: the heard ones in the order their
+    /// instructions ran, then the stand-in's for the changes none of them makes.
+    reports: Vec<(Report, Source)>,
     /// The room loaded in the frame, if one is.
     load: Option<Rc<Load>>,
     /// The items the room's state places, when its PLMs spawn in the frame.
@@ -442,9 +497,9 @@ pub struct Held {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Declared {
     items: Items,
-    equipped: Items,
+    items_switched_on: Items,
     beams: Beams,
-    beams_equipped: Beams,
+    beams_switched_on: Beams,
     capacity: PerSupply<Count>,
     held: PerSupply<Count>,
     reserve_mode: ReserveMode,
@@ -455,7 +510,7 @@ pub struct Declared {
     opened: Remembered<DoorId>,
     maps: PerArea<MapStatus>,
     stations: PerArea<BTreeSet<StationId>>,
-    placements: Count,
+    items_placed: Count,
     room_state: Option<usize>,
 }
 
@@ -464,9 +519,9 @@ impl Declared {
         let inventory = &progress.inventory;
         Self {
             items: inventory.items,
-            equipped: inventory.equipped,
+            items_switched_on: inventory.items_switched_on,
             beams: inventory.beams,
-            beams_equipped: inventory.beams_equipped,
+            beams_switched_on: inventory.beams_switched_on,
             capacity: inventory.capacity,
             held: inventory.held,
             reserve_mode: inventory.reserve_mode,
@@ -477,7 +532,7 @@ impl Declared {
             opened: progress.opened.clone(),
             maps: progress.maps,
             stations: progress.stations.clone(),
-            placements: progress.placements,
+            items_placed: progress.items_placed,
             room_state,
         }
     }
@@ -490,19 +545,21 @@ pub struct ProgressDomain {
 }
 
 impl RoomStatesAt {
-    /// The default state's place in the list: the last.
+    /// The default state's place in the list: after the conditional ones.
     const fn default_state(&self) -> usize {
-        self.headers.len().saturating_sub(1)
+        self.conditional.len()
     }
 
-    /// The state the model chooses for `progress`, entered by `door`; none if the conditions
-    /// don't end in the default's (`progress_world::conditions` always ends them so).
-    fn choose(&self, progress: &Progress, door: Entrance) -> Option<usize> {
-        let entry = RoomEntry {
+    /// The place of the state the model chooses for `progress`, entered by `door`.
+    fn choose(&self, progress: &Progress, door: Entrance) -> usize {
+        let entered = EnteredRoom {
             area: self.area,
             entered_by: Some(door),
         };
-        RoomStates::new(&self.conditions).map(|states| states.choose(progress, entry))
+        let states = RoomStates {
+            conditional: &self.conditional,
+        };
+        progress_world::state_place(states.choose(progress, entered), self.conditional.len())
     }
 }
 
@@ -524,7 +581,7 @@ impl ProgressDomain {
         let failed = |error: String| Skip::Room(pointer, error);
         let decoded = decode_room(Lorom::new(&self.image), RoomKey::from_room_pointer(pointer))
             .map_err(|error| failed(format!("{error:?}")))?;
-        let conditions = progress_world::conditions(&decoded)
+        let conditional = progress_world::conditions(&decoded)
             .ok_or_else(|| failed("a condition the model can't read".to_owned()))?;
         let area = progress_world::region(decoded.area)
             .ok_or_else(|| failed("the debug area".to_owned()))?;
@@ -542,7 +599,7 @@ impl ProgressDomain {
             .unzip();
         let room = Rc::new(RoomStatesAt {
             area,
-            conditions,
+            conditional,
             headers,
             items,
         });
@@ -595,8 +652,9 @@ impl ProgressDomain {
             .ok_or_else(|| Skip::NoReport(format!("state {state:#06X} isn't one of its room's")))
     }
 
-    /// What the item PLM `plm` gives: its list's pickup instruction and its word.
-    fn pickup(&self, plm: u16) -> Result<Pickup, Skip> {
+    /// What the item PLM `plm` gives, by its list's pickup instruction and its word, with the
+    /// instruction's address.
+    fn pickup(&self, plm: u16) -> Result<(u32, Pickup), Skip> {
         let rom = Lorom::new(&self.image);
         let none = || Skip::NoReport(format!("item PLM {plm:#06X} has no pickup the spec names"));
         let read = |offset: u16, count: usize| rom.read(RomAddress::new(PLM_BANK, offset), count);
@@ -620,7 +678,9 @@ impl ProgressDomain {
             supply,
             amount: Wrapping(argument),
         };
-        Ok(match u16::from_le_bytes([code_low, code_high]) {
+        let code = u16::from_le_bytes([code_low, code_high]);
+        let instruction = (u32::from(PLM_BANK) << 16) | u32::from(code);
+        let pickup = match code {
             0x88B0 => {
                 Pickup::Beam(single(&members(argument, &BEAMS, "beam pickup")?).ok_or_else(none)?)
             }
@@ -633,7 +693,66 @@ impl ProgressDomain {
             0x89D2 => tank(Supply::SuperMissiles),
             0x89FB => tank(Supply::PowerBombs),
             _ => return Err(none()),
-        })
+        };
+        Ok((instruction, pickup))
+    }
+
+    /// The reports the frame from `from` to `next` makes that its watched instruction hits
+    /// name, with record N and the ROM, in the order their instructions ran.
+    fn heard(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Report>, Skip> {
+        let ran = |pc: u32| next.hits.iter().any(|hit| hit.pc == pc);
+        let here = area(from)?;
+        let mut reports = Vec::new();
+        for hit in &next.hits {
+            reports.extend(match hit.pc {
+                ZEBETITE_DESTROYED => Some(Report::ZebetiteDestroyed),
+                MAP_STATION => Some(Report::MapStation(here)),
+                MAP_ON_ARRIVAL => Some(Report::MapOnArrival(self.room_of(from)?.area)),
+                LEFT_AREA => Some(Report::LeftArea(here)),
+                pc if GUNSHIP_SAVES.contains(&pc) => Some(Report::Saved {
+                    area: here,
+                    station: GUNSHIP,
+                }),
+                pc => marked(pc).map(Report::Happened),
+            });
+        }
+        let emptying = next.hits.iter().filter(|hit| hit.pc == SET_EMPTIED).count();
+        if emptying == 1 {
+            let was = progress(from)?;
+            let taken: Vec<Report> = item_plms(from)?
+                .into_iter()
+                .filter_map(|(plm, argument)| {
+                    let (instruction, pickup) = self.pickup(plm).ok()?;
+                    let location = progress_world::place(argument);
+                    (ran(instruction) && !was.emptied.contains(location))
+                        .then_some(Report::Taken { pickup, location })
+                })
+                .collect();
+            if let [taken] = taken[..] {
+                reports.push(taken);
+            }
+        }
+        Ok(reports)
+    }
+
+    /// The frame's reports: the heard ones, then the stand-in's for what they don't make.
+    fn reports(
+        &self,
+        from: &FrameRecord,
+        next: &FrameRecord,
+    ) -> Result<Vec<(Report, Source)>, Skip> {
+        let heard = self.heard(from, next)?;
+        let copied: Vec<(Report, Source)> = self
+            .stand_in(from, next)?
+            .into_iter()
+            .filter(|report| !heard.contains(report))
+            .map(|report| (report, Source::Copied))
+            .collect();
+        Ok(heard
+            .into_iter()
+            .map(|report| (report, Source::Heard))
+            .chain(copied)
+            .collect())
     }
 
     /// The reports the stand-in decodes for the frame from `from` to `next`: what changed, by
@@ -660,17 +779,15 @@ impl ProgressDomain {
         for area in AREAS {
             let defeated = BOSS_KINDS
                 .iter()
-                .filter(|&&(_, kind)| {
-                    now.defeated[area].contains(kind) && !was.defeated[area].contains(kind)
-                })
+                .filter(|&&(_, kind)| now.defeated[area][kind] && !was.defeated[area][kind])
                 .map(|&(_, kind)| Report::Defeated { kind, area });
             let saved = now.stations[area]
                 .difference(&was.stations[area])
                 .map(|&station| Report::Saved { area, station });
             let map = match (was.maps[area], now.maps[area]) {
                 (map, now) if map == now => None,
-                (MapStatus::None, MapStatus::Downloaded) => Some(Report::MapStation(area)),
-                (MapStatus::None, MapStatus::OnArrival) => Some(Report::MapOnArrival(area)),
+                (MapStatus::Unmapped, MapStatus::Downloaded) => Some(Report::MapStation(area)),
+                (MapStatus::Unmapped, MapStatus::OnArrival) => Some(Report::MapOnArrival(area)),
                 (MapStatus::OnArrival, MapStatus::Downloaded) => Some(Report::LeftArea(area)),
                 (map, now) => {
                     return Err(Skip::NoReport(format!(
@@ -708,7 +825,7 @@ impl ProgressDomain {
                     Skip::NoReport(format!("place {place} emptied, no item PLM holds it"))
                 })?;
             reports.push(Report::Taken {
-                pickup: self.pickup(plm)?,
+                pickup: self.pickup(plm)?.1,
                 location: Some(LocationId(place)),
             });
         }
@@ -761,9 +878,9 @@ impl Domain for ProgressDomain {
     type Skip = Skip;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("items", items),
-        domain_field!("items equipped", equipped),
+        domain_field!("items switched on", items_switched_on),
         domain_field!("beams", beams),
-        domain_field!("beams equipped", beams_equipped),
+        domain_field!("beams switched on", beams_switched_on),
         domain_field!("capacities", capacity),
         domain_field!("what she holds", held),
         domain_field!("reserve mode", reserve_mode),
@@ -774,7 +891,7 @@ impl Domain for ProgressDomain {
         domain_field!("open doors", opened),
         domain_field!("maps", maps),
         domain_field!("stations saved at", stations),
-        domain_field!("items placed", placements),
+        domain_field!("items placed", items_placed),
         domain_field!("room state", room_state),
     ];
 
@@ -782,7 +899,7 @@ impl Domain for ProgressDomain {
         CATALOGUE
             .iter()
             .map(|entry| Entry {
-                name: entry.name.to_owned(),
+                name: format!("{:?}", entry.id),
                 fields: shown_by(entry.id),
             })
             .collect()
@@ -808,7 +925,7 @@ impl Domain for ProgressDomain {
             None
         };
         Ok(Upstream {
-            reports: self.stand_in(from, next)?,
+            reports: self.reports(from, next)?,
             load,
             placed: self.placed(from, next)?,
         })
@@ -822,7 +939,7 @@ impl Domain for ProgressDomain {
         let (was, now) = (&before.inventory, &after.inventory);
         let mut masks = Vec::new();
         let mut mask = |reason, fields| masks.push(Mask { reason, fields });
-        let tank = self.stand_in(from, next)?.iter().any(|report| {
+        let tank = self.reports(from, next)?.iter().any(|(report, _)| {
             matches!(
                 report,
                 Report::Taken {
@@ -839,8 +956,14 @@ impl Domain for ProgressDomain {
         }
         if paused(from)? || paused(next)? {
             let switched = [
-                (ITEMS_EQUIPPED, now.equipped != was.equipped),
-                (BEAMS_EQUIPPED, now.beams_equipped != was.beams_equipped),
+                (
+                    ITEMS_SWITCHED_ON,
+                    now.items_switched_on != was.items_switched_on,
+                ),
+                (
+                    BEAMS_SWITCHED_ON,
+                    now.beams_switched_on != was.beams_switched_on,
+                ),
                 (RESERVE_MODE, now.reserve_mode != was.reserve_mode),
             ]
             .into_iter()
@@ -856,7 +979,7 @@ impl Domain for ProgressDomain {
         if mother_brain(from)? || mother_brain(next)? {
             mask(
                 "another domain: Mother Brain's drain switches on the hyper beam ($91:E5F0)",
-                BEAMS_EQUIPPED,
+                BEAMS_SWITCHED_ON,
             );
         }
         if !loads(from, next)? {
@@ -866,8 +989,14 @@ impl Domain for ProgressDomain {
     }
 
     fn neutral(&self, upstream: &Upstream) -> Option<Upstream> {
-        (!upstream.reports.is_empty()).then(|| Upstream {
-            reports: Vec::new(),
+        let copied = |&(_, source): &(Report, Source)| source == Source::Copied;
+        upstream.reports.iter().any(copied).then(|| Upstream {
+            reports: upstream
+                .reports
+                .iter()
+                .filter(|&report| !copied(report))
+                .copied()
+                .collect(),
             ..upstream.clone()
         })
     }
@@ -875,10 +1004,11 @@ impl Domain for ProgressDomain {
     fn step(&self, held: &mut Held, (): &(), upstream: &mut Upstream) {
         let rules = Rules::REFERENCE;
         if let Some(load) = &upstream.load {
-            held.room_state = load.room.choose(&held.progress, load.door);
+            held.room_state = Some(load.room.choose(&held.progress, load.door));
         }
         let placed = upstream.placed.map(Report::ItemsPlaced);
-        for &report in placed.iter().chain(&upstream.reports) {
+        let reports = upstream.reports.iter().map(|&(report, _)| report);
+        for report in placed.into_iter().chain(reports) {
             held.progress.apply(&rules, report);
         }
     }
@@ -886,7 +1016,7 @@ impl Domain for ProgressDomain {
     fn exercised(&self, _held: &Held, (): &(), upstream: &Upstream) -> Vec<usize> {
         use BehaviourId as B;
         let mut entries = Vec::new();
-        for report in &upstream.reports {
+        for (report, _) in &upstream.reports {
             match report {
                 Report::Happened(_) => entries.push(B::EventsHappen),
                 Report::ZebetiteDestroyed => entries.push(B::ZebetitesCounted),
@@ -950,7 +1080,7 @@ mod tests {
         ZEBETITES,
     };
     use super::{
-        BEAMS_EQUIPPED, Domain, FieldSet, HELD, ITEMS_EQUIPPED, ProgressDomain, RESERVE_MODE,
+        BEAMS_SWITCHED_ON, Domain, FieldSet, HELD, ITEMS_SWITCHED_ON, ProgressDomain, RESERVE_MODE,
         ROOM_STATE,
     };
 
@@ -958,9 +1088,9 @@ mod tests {
     fn the_field_sets_name_the_declared_fields_at_their_places() {
         let named = [
             (ITEMS, "items"),
-            (ITEMS_EQUIPPED, "items equipped"),
+            (ITEMS_SWITCHED_ON, "items switched on"),
             (BEAMS, "beams"),
-            (BEAMS_EQUIPPED, "beams equipped"),
+            (BEAMS_SWITCHED_ON, "beams switched on"),
             (CAPACITY, "capacities"),
             (HELD, "what she holds"),
             (RESERVE_MODE, "reserve mode"),
