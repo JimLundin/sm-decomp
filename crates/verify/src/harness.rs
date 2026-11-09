@@ -21,6 +21,7 @@
 
 pub mod camera;
 pub mod game_time;
+pub mod hud;
 pub mod progress;
 pub mod samus_motion;
 

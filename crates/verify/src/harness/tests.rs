@@ -451,3 +451,21 @@ fn progress_chooses_each_rows_standing_room_state() {
         )
     );
 }
+
+/// The HUD over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's test
+/// reads them (the ROM for the area maps).
+#[test]
+fn the_hud_holds_its_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = match super::hud::HudDomain::load(&image) {
+        Ok(domain) => domain,
+        Err(error) => panic!("content: {error:?}"),
+    };
+    hold_floors(&domain, "hud", &cache);
+}
