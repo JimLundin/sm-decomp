@@ -8,7 +8,9 @@
 //! direction in the air, falling at 0 on the ground to direction down at 0, a spin carried on
 //! (its frame count) to the pose history, the seat to the slope flag.
 
-use clean_model_samus_motion::{Bounces, Carry, DashIs, Run, Samus as Model, Seat, Spin, Vertical};
+use clean_model_samus_motion::{
+    Bounces, Carry, DashIs, JumpHeld, Run, Samus as Model, Seat, Spin, Vertical,
+};
 use core::num::Wrapping;
 
 use clean_types::{Action, Fixed, Heading, Parts, Pose, Position, Px, Radius, Turn, ZERO};
@@ -127,6 +129,9 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
         } else {
             Seat::Unseated
         },
+        // The model's count can't be built from the engine's words: it starts every frame
+        // unheld, so jump held through a landing never presses (docs/LEGACY.md).
+        jump_held: JumpHeld::NONE,
     })
 }
 

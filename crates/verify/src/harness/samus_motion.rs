@@ -5,9 +5,11 @@
 //! Each frame decodes record N: Samus, the pad, the frame count, the elevator, the level's
 //! layer 1 and the enemies' common words, all from work RAM, so every room reads. It steps her
 //! through the model over that level and the enemies the selection would touch
-//! (`game::samus_world`), and compares her motion words with record N+1's. Nothing answers
-//! from record N+1, so no field is unverified; the null model is her State left as record N
-//! has it.
+//! (`game::samus_world`), and compares her motion words with record N+1's, and the step's two
+//! outputs to the camera: whether she is rising, and the y a placement put her at, which the
+//! record shows through the camera's speed down. Nothing answers from record N+1, so no field is
+//! unverified; the null model is her State left as record N has it, rising as she was, and
+//! placed nowhere.
 
 use core::fmt;
 
@@ -22,7 +24,7 @@ use game::model::num::Fixed;
 use game::pose::{self, PoseRequests};
 use game::samus_world::SamusWorld;
 use game::samus_world::state::clean_of;
-use game::samus_world::step::{Ran, Reads, run};
+use game::samus_world::step::{Ran, Reads, run, settle};
 use game::state::Controller;
 use game::state::room::{Block, BlockColumns, BlockKind, ElevatorRide};
 use game::state::samus::{Bounce, Motion, Position, Samus, SpeedMode, VerticalMotion};
@@ -40,6 +42,9 @@ const MAIN_GAMEPLAY: u16 = 8;
 
 /// A block is 16 px.
 const BLOCK_SHIFT: u16 = 4;
+
+/// The vertical direction up (`0B36`): she is rising.
+const UP: u16 = 1;
 
 /// The equipment bits the masks read.
 const GRAVITY_SUIT: u16 = 0x0020;
@@ -79,6 +84,9 @@ pub enum Deferred {
     Grapple,
     /// Knockback from a hit.
     Knockback,
+    /// The knockback's tail: the normal movement handler runs with the knockback still on, and
+    /// the knockback has the last word on her y and pose (spec §10, gap 33).
+    KnockbackTail,
     /// The bomb jump's movement.
     BombJump,
     /// The shinespark's or the crystal flash's movement.
@@ -92,6 +100,9 @@ impl fmt::Display for Deferred {
         f.write_str(match self {
             Self::Grapple => "grapple (the swing release's movement)",
             Self::Knockback => "knockback",
+            Self::KnockbackTail => {
+                "the knockback's tail (the knockback on under the normal handler)"
+            }
             Self::BombJump => "the bomb jump's movement",
             Self::Shinespark => "the shinespark or crystal flash movement",
             Self::DamageBoost => "the damage boost's movement",
@@ -203,6 +214,19 @@ const IN_QUICKSAND: WramWord = WramWord {
     offset: 0x1E71,
 };
 
+/// Bank $90 log, `$90:96FF`: the camera's speed down, made from where it last saw her (`0B14`,
+/// a placement's pixel where one put her) as the scroll reads her y.
+const CAMERA_Y_SPEED: WramWord = WramWord {
+    name: "CAMERA_Y_SPEED",
+    offset: 0x0DA6,
+};
+const CAMERA_Y_SUBSPEED: WramWord = WramWord {
+    name: "CAMERA_Y_SUBSPEED",
+    offset: 0x0DA8,
+};
+/// The extra pixel the camera's speed adds to her move.
+const ONE_PIXEL: u32 = 0x0001_0000;
+
 /// Whether frame `next` (its record: the pushes stay until the next frame's start) ran a
 /// block-inside push. The camera's harness masks y on those of them that place her (camera C2).
 ///
@@ -236,8 +260,8 @@ const NORMAL_MOVEMENT: u16 = 0xA337;
 /// Whether the frame from `from` is the knockback's tail.
 ///
 /// It starts with the knockback on under the normal movement handler (samus-motion decode C3,
-/// adversary 43 M6), so the knockback, not her motion, has the last word on y. The camera's
-/// harness masks y on those of them that place her (camera C3).
+/// adversary 43 M6), so the knockback, not her motion, has the last word on y: this harness
+/// defers it (gap 33), and the camera's masks y on those of them that place her (camera C3).
 ///
 /// # Errors
 ///
@@ -270,6 +294,7 @@ fn motion_runs(record: &FrameRecord) -> Result<(), Skip> {
         code => return Err(Skip::NotRunning(code)),
     }
     let deferred = match word(record, SAMUS_MOVEMENT_HANDLER)? {
+        NORMAL_MOVEMENT if knockback_tail(record)? => Deferred::KnockbackTail,
         NORMAL_MOVEMENT => return Ok(()),
         0x946E => Deferred::Grapple,
         KNOCKBACK => Deferred::Knockback,
@@ -483,6 +508,34 @@ fn radius(record: &FrameRecord) -> Result<u16, Skip> {
     word(record, source::SAMUS_Y_RADIUS)
 }
 
+/// Her State as the harness steps it, with the two outputs the camera reads of her frame.
+#[derive(Clone, Debug)]
+pub struct Hers {
+    /// Her State; after the step, where the camera last saw her down holds the pixel a
+    /// placement put her at, as the engine's `settle` writes it.
+    samus: Samus,
+    /// Whether she is rising: as record N has it (`0B36` = 1), then the step's `rising`.
+    rising: bool,
+}
+
+impl Hers {
+    /// The camera's speed down after her frame, as the scroll works it out from her y and where
+    /// it last saw her, a placement's pixel included (camera `FollowingHer`): her move plus a
+    /// pixel, its way read from the pixel parts. The scroll works it out every frame, also one
+    /// on which her pixel part stays where it last saw her.
+    const fn speed_down(&self) -> Fixed {
+        let her = self.samus.motion.position.y;
+        let seen = self.samus.previous_position.y;
+        let seen = Fixed::new(seen.pixels, seen.subpixels);
+        let moved = if clean_types::below(her.pixel(), seen.pixel()) {
+            seen.0.wrapping_sub(her.0)
+        } else {
+            her.0.wrapping_sub(seen.0)
+        };
+        Fixed(moved.wrapping_add(ONE_PIXEL))
+    }
+}
+
 /// A `P.S` value, shown as the spec writes it.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Ps(pub Fixed);
@@ -514,10 +567,17 @@ pub struct Declared {
     pub vertical: VerticalMotion,
     /// `bounce`.
     pub bounce: Bounce,
+    /// `rising`.
+    pub rising: bool,
+    /// `placed`, as the record shows it: the camera's speed down, measured from the y a
+    /// placement put her at, or, with none, from where the camera last saw her.
+    pub placed: Ps,
 }
 
-impl From<&Motion> for Declared {
-    fn from(state: &Motion) -> Self {
+impl Declared {
+    /// The declared fields of `state`, rising or not, with the camera's speed down `placed`
+    /// makes.
+    const fn of(state: &Motion, rising: bool, placed: Fixed) -> Self {
         Self {
             x: Ps(state.position.x),
             y: Ps(state.position.y),
@@ -528,8 +588,20 @@ impl From<&Motion> for Declared {
             vertical_speed: Ps(state.vertical_speed),
             vertical: state.vertical,
             bounce: state.bounce,
+            rising,
+            placed: Ps(placed),
         }
     }
+}
+
+/// The outputs a mask of `fields` reaches as well: the camera's speed down is made from her y,
+/// and whether she is rising is her vertical direction up.
+fn follows(fields: FieldSet) -> FieldSet {
+    use Quantity as Q;
+    [(Q::Y, Q::Placed), (Q::Vertical, Q::Rising)]
+        .into_iter()
+        .filter(|(by, _)| fields.contains(by.index()))
+        .fold(FieldSet::EMPTY, |set, (_, output)| set.union(output.set()))
 }
 
 /// The declared fields a catalogue entry's output reaches. Her pose, what she is drawn as, the
@@ -539,7 +611,7 @@ fn shown_by(id: &BehaviourId) -> FieldSet {
     use BehaviourId as B;
     use Quantity as Q;
     let horizontal = [Q::X, Q::BaseSpeed, Q::ExtraRun, Q::Momentum, Q::Mode];
-    let vertical = [Q::Y, Q::VerticalSpeed, Q::Vertical];
+    let vertical = [Q::Y, Q::VerticalSpeed, Q::Vertical, Q::Rising];
     match id {
         B::HowSheIsDrawn
         | B::PoseFollows
@@ -554,15 +626,16 @@ fn shown_by(id: &BehaviourId) -> FieldSet {
         B::Dash => Q::all(&[Q::X, Q::ExtraRun]),
         B::TurningRound => Q::all(&horizontal),
         B::AimingAndShooting | B::SlopesSlowTheWalk => Q::X.set(),
-        B::RidingTheElevator | B::ShrinkingLowersHer => Q::Y.set(),
+        B::RidingTheElevator => Q::Y.set(),
+        B::ShrinkingLowersHer => Q::all(&[Q::Y, Q::Placed]),
         B::Jumping | B::FollowingTheGround | B::RisingAndFalling | B::Moonfall => Q::all(&vertical),
-        B::Landing => Q::all(&[Q::Y, Q::VerticalSpeed, Q::Vertical, Q::Bounce]),
+        B::Landing => Q::all(&[Q::Y, Q::VerticalSpeed, Q::Vertical, Q::Bounce, Q::Rising]),
         B::MovesAsShePosed
         | B::BlocksStopFlush
         | B::SolidEnemies
         | B::SlopesCarry
         | B::OtherBlockKinds => Q::all(&[Q::X, Q::Y]),
-        B::WallsAndCeilings => Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed]),
+        B::WallsAndCeilings => Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed, Q::Rising]),
         B::WordwiseTopSpeed => Q::BaseSpeed.set(),
         B::PoseFitAfterMoves | B::WallJump => Q::all(&[
             Q::X,
@@ -573,6 +646,8 @@ fn shown_by(id: &BehaviourId) -> FieldSet {
             Q::Mode,
             Q::VerticalSpeed,
             Q::Vertical,
+            Q::Rising,
+            Q::Placed,
         ]),
     }
 }
@@ -589,6 +664,8 @@ enum Quantity {
     VerticalSpeed,
     Vertical,
     Bounce,
+    Rising,
+    Placed,
 }
 
 impl Quantity {
@@ -609,6 +686,8 @@ impl Quantity {
             Self::VerticalSpeed => 6,
             Self::Vertical => 7,
             Self::Bounce => 8,
+            Self::Rising => 9,
+            Self::Placed => 10,
         }
     }
 
@@ -673,9 +752,9 @@ impl SamusMotion {
         run(samus, reads, level, &Reference::REFERENCE)
     }
 
-    /// Where her motion's frame from record `from` placed the y the camera follows her from
-    /// (`Outcome::camera_from`, the samus-motion spec's output to the camera): `Some` where pose
-    /// fit or a change of shape moved it off her start y, `None` where it is her start y.
+    /// The y her motion's frame from record `from` placed her at, if any (`Outcome::placed`,
+    /// the samus-motion spec's output to the camera): where pose fit moved her or a change of
+    /// shape started, a placement of 0 px included.
     ///
     /// # Errors
     ///
@@ -685,13 +764,12 @@ impl SamusMotion {
         from: &FrameRecord,
         interval: Interval,
     ) -> Result<Option<clean_types::Fixed>, Skip> {
-        let (mut samus, inputs) = self.decode(from, interval)?;
+        let (mut hers, inputs) = self.decode(from, interval)?;
         let level = self.level(&inputs);
         let ran = self
-            .ran(&mut samus, &inputs, &level)
-            .ok_or(Skip::Pose(samus.pose.0))?;
-        let from = ran.outcome.camera_from;
-        Ok((from != ran.before.position.y).then_some(from))
+            .ran(&mut hers.samus, &inputs, &level)
+            .ok_or(Skip::Pose(hers.samus.pose.0))?;
+        Ok(ran.outcome.placed)
     }
 }
 
@@ -798,7 +876,7 @@ fn runs_after(record: &FrameRecord) -> Result<(), Skip> {
 
 impl Domain for SamusMotion {
     const NAME: &'static str = "samus motion";
-    type State = Samus;
+    type State = Hers;
     type Inputs = Inputs;
     type World = Exercised;
     type Fields = Declared;
@@ -813,16 +891,22 @@ impl Domain for SamusMotion {
         domain_field!("vertical_speed", vertical_speed),
         domain_field!("vertical", vertical),
         domain_field!("bounce", bounce),
+        domain_field!("rising", rising),
+        domain_field!("placed", placed),
     ];
 
-    fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(Samus, Inputs), Skip> {
+    fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(Hers, Inputs), Skip> {
         runs_after(from)?;
         motion_runs(from)?;
         let samus = Rules::ORIGINAL.samus(&from.wram)?;
         if clean_of(&samus).is_none() {
             return Err(Skip::Pose(samus.pose.0));
         }
-        Ok((samus, Inputs::of(&from.wram)?))
+        let hers = Hers {
+            samus,
+            rising: word(from, source::SAMUS_Y_DIR)? == UP,
+        };
+        Ok((hers, Inputs::of(&from.wram)?))
     }
 
     fn masks(
@@ -905,16 +989,51 @@ impl Domain for SamusMotion {
                 ]),
             );
         }
-        Ok(masks)
+        // The camera's speed down is made from her y at the scroll, so where another domain
+        // writes y the speed is that domain's too (below). Record N+1 shows the scroll's speed
+        // only once the frame has reached it: an item's message box holds the frame between her
+        // motion and the scroll.
+        if matches!(
+            runs_after(next),
+            Err(Skip::Waiting(_) | Skip::NotAtFrameEnd)
+        ) {
+            mask(
+                "the scroll hasn't run: record N+1's main thread waits before it (the message box) or is mid-frame",
+                Q::Placed.set(),
+            );
+        }
+        // Something that moves her after the scroll leaves her y in record N+1 off the one the
+        // scroll read.
+        if fixed(&next.wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?
+            != fixed(
+                &next.wram,
+                source::SAMUS_PREV_Y_POS,
+                source::SAMUS_PREV_Y_SUBPOS,
+            )?
+        {
+            mask(
+                "another domain moves her after the scroll: the camera's speed down is from the y it read",
+                Q::Placed.set(),
+            );
+        }
+        Ok(masks
+            .into_iter()
+            .map(|mask| Mask {
+                fields: mask.fields.union(follows(mask.fields)),
+                ..mask
+            })
+            .collect())
     }
 
     fn world(&self, _from: &FrameRecord, _next: &FrameRecord) -> Result<Exercised, Skip> {
         Ok(Exercised::default())
     }
 
-    fn step(&self, samus: &mut Samus, inputs: &Inputs, world: &mut Exercised) {
+    fn step(&self, hers: &mut Hers, inputs: &Inputs, world: &mut Exercised) {
         let level = self.level(inputs);
-        if let Some(ran) = self.ran(samus, inputs, &level) {
+        if let Some(ran) = self.ran(&mut hers.samus, inputs, &level) {
+            settle(&mut hers.samus, &ran);
+            hers.rising = ran.outcome.rising;
             world.0 = exercised(&ran, &level);
         }
     }
@@ -929,16 +1048,20 @@ impl Domain for SamusMotion {
             .collect()
     }
 
-    fn exercised(&self, _: &Samus, _: &Inputs, world: &Exercised) -> Vec<usize> {
+    fn exercised(&self, _: &Hers, _: &Inputs, world: &Exercised) -> Vec<usize> {
         world.0.clone()
     }
 
-    fn fields(&self, samus: &Samus) -> Declared {
-        Declared::from(&samus.motion)
+    fn fields(&self, hers: &Hers) -> Declared {
+        Declared::of(&hers.samus.motion, hers.rising, hers.speed_down())
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
-        Ok(Declared::from(&state(next)?))
+        Ok(Declared::of(
+            &state(next)?,
+            word(next, source::SAMUS_Y_DIR)? == UP,
+            fixed(&next.wram, CAMERA_Y_SPEED, CAMERA_Y_SUBSPEED)?,
+        ))
     }
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
@@ -1059,6 +1182,8 @@ mod tests {
             (Q::VerticalSpeed, "vertical_speed"),
             (Q::Vertical, "vertical"),
             (Q::Bounce, "bounce"),
+            (Q::Rising, "rising"),
+            (Q::Placed, "placed"),
         ];
         for (quantity, name) in named {
             let place = SamusMotion::FIELDS

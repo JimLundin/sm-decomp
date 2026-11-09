@@ -80,6 +80,20 @@ original's bytes as data.
   item reads no area (only a boss's, a map's and a station's reports do), so nothing differs; a
   report that reads one would have to name the debug area first.
 
+## The engine: memory a model keeps that the engine can't hold yet
+
+- **Jump held through** (the samus-motion domain, `docs/behaviours/samus-motion.md` `Jumping`,
+  jump held through; `game::samus_world::state`'s `clean_of`; the decode notes' Jumping row,
+  `0AF4` and `$90:E926`): the original remembers how many frames jump has stayed held and, for one
+  frame, that she landed or a turn's or a landing's animation ended, and a count of 1 to 8 then is
+  a press, so she takes off again from the landing. The model keeps both in `JumpHeld`, but builds
+  one only as `JumpHeld::NONE` and shows neither part, so the engine can't decode it from the
+  original's words or carry it in its State: it starts each frame at `NONE` and never takes off
+  again without a press. The harness does the same, so the frames gap 32 names differ there
+  (chain-0059-A293 107 → 108 and 174 → 175, samus-screw-attack 174 → 175 and 606 → 607: x, the
+  vertical speed, the vertical direction and `rising`). The entry goes when the model can build
+  its memory from the count and the frame before.
+
 ## Tolerated values kept as named variants
 
 - `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (`$91:B731`, `$91:B739`) hold X

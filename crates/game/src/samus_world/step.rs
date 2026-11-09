@@ -125,20 +125,19 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
 /// The words the pose change leaves that the model doesn't hold.
 ///
 /// Her radius word keeps the pose she had until the next frame sets it, but the shrink gives
-/// it the new pose's at once. Where pose fit or the shrink placed her, the camera's previous y
-/// pixel is where the step says the camera follows her from (`Outcome::camera_from`); on other
-/// frames that is her y at the frame's start, and the engine's word is left as it was, since
-/// another mover (the elevator) may already have moved her from it.
-fn settle(samus: &mut Samus, ran: &Ran) {
+/// it the new pose's at once. Where pose fit or the shrink placed her (`Outcome::placed`), the
+/// camera's previous y pixel becomes the placement's, as the game writes it at the pose change;
+/// on other frames the engine's word is left as it was, since another mover (the elevator) may
+/// already have moved her from where the camera last saw her.
+pub fn settle(samus: &mut Samus, ran: &Ran) {
     let Ran { before, after, .. } = ran;
     let shrinks = after.pose != before.pose
         && matches!(after.pose.action, Action::Crouching | Action::Morphing);
     if shrinks {
         samus.y_radius = after.radius.y.0;
     }
-    let from = ran.outcome.camera_from;
-    if from != before.position.y {
-        samus.previous_position.y.pixels = from.pixel().0;
+    if let Some(placed) = ran.outcome.placed {
+        samus.previous_position.y.pixels = placed.pixel().0;
     }
 }
 

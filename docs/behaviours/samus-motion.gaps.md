@@ -6,6 +6,33 @@ entry. The integrator files them; the observer answers them in the spec.
 
 The previous spec's gaps and answers are in git history (`1dc3a12`).
 
+## Round 13 in the engine and the harness (integrator, 2026-11-09, lane/samus-r13)
+
+35. **The engine can't hold jump held through (the model's).** `JumpHeld` has private fields and
+    no constructor but `JumpHeld::NONE`, and shows neither its count nor what the frame before
+    left, so the bridge can't build it from the State (`0AF4` and the one-frame pose input
+    handler `$90:E926`) or write it back to the State, and the harness can't decode it from a
+    record. Both start every frame at `NONE`, so gap 32's four frames still differ (x, the
+    vertical speed, the vertical direction, `rising`), and `docs/LEGACY.md` lists it as "Jump held
+    through". Asked of the implementer: a `JumpHeld` built from the count (`u16`) and whether she
+    landed or an animation ended the frame before, and the two read back.
+
+Gap 33 is in: the harness defers a frame that starts with the knockback on under the normal
+handler (`Deferred::KnockbackTail`): 30 frames over the 44-row cache (boss-kraid-defeated 19,
+chain-0059-A293 7, chain-0106-AD5E 4). The rest were skipped before by another reason, so
+compared falls by 17 on the three rows (8, 6, 3) and matched by 14 (7, 5, 2), the three floors
+with it. The camera's
+harness, keyed off the same predicate, gains one compared y, which matches.
+
+`rising` is compared with `0B36` = 1 in record N+1. `placed` can't be read from `0B14` there: the
+scroll sets it to her y as it ends. The record shows it through the camera's speed down,
+`0DA6`.`0DA8`, which the scroll works out every frame from her y and `0B14`.`0B16` as her
+motion left them (`$90:96FF`, camera `FollowingHer`): the harness compares that speed, made from
+the model's y and the y it placed her at (with none, where the camera last saw her). It is masked
+wherever y is, where record N+1 is held before the scroll (the message box: chain-0043-9AD9 417,
+chain-0234-D51E 153, item-energy-tank 240), and where her y in record N+1 isn't the one the
+scroll read. Neither field differs on a frame where the others match.
+
 ## Filed by the observer: a take-off or spin on an animation's last frame (adversary 58, finding 4, 2026-11-09)
 
 34. **On a ground turn's or a landing's last frame, a take-off or a spin the pad chart chooses wins

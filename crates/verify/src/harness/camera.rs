@@ -6,9 +6,8 @@
 //! own: its State (the camera position and where it last saw her) is decoded from record N, the
 //! inputs from record N+1 as the scroll read them (her position after everything moved her, her
 //! facing and state, the room's screens), and the y a placement put her at from samus-motion's
-//! model run on the frame (its `camera_from` where that differs from her start y, as
-//! `docs/LEGACY.md` lists), never from record N+1's word, which is her y at the scroll by
-//! construction. The compared fields are the camera's position, pixel and subpixel parts. Where
+//! model run on the frame (its `placed`), never from record N+1's word, which is her y at the
+//! scroll by construction. The compared fields are the camera's position, pixel and subpixel parts. Where
 //! it last saw her is decoded from the same words as her position, so it is reported and masked,
 //! never counted. Nothing answers from the camera's own fields of record N+1, so no field is
 //! unverified; the null model is the camera left where record N has it.
