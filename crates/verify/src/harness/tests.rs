@@ -468,11 +468,11 @@ fn progress_chooses_each_rows_standing_room_state() {
         if held == states.saturating_sub(1) {
             defaults += 1;
         }
-        if held == chosen {
+        if chosen == Some(held) {
             matched += 1;
         } else {
             differing.push(format!(
-                "{row}: holds state {held}, the model chose {chosen}"
+                "{row}: holds state {held}, the model chose {chosen:?}"
             ));
         }
     }

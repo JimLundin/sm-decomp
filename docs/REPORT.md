@@ -31,10 +31,10 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 7,219 | 6,924 | 1.04 | 12,724 | 3,415 | 1,203 | 12,639 | 226 |
 | camera | 1,950 | 1,591 | 1.23 | 2,274 | 620 | 325 | 13,315 | 79 |
-| progress | 1,948 | 878 | 2.22 | - | 676 | 325 | 18,292 | 63 |
+| progress | 2,013 | 878 | 2.29 | - | 678 | 335 | 18,292 | 63 |
 | hud | 4,215 | 1,980 | 2.13 | - | 1,354 | 703 | 14,947 | 62 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 528 | - | - | - | 346 | 88 | - | - |
-| total | 15,860 | 11,373 | 1.39 | - | 6,411 | 2,643 | 59,193 | 430 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 532 | - | - | - | 357 | 89 | - | - |
+| total | 15,929 | 11,373 | 1.40 | - | 6,424 | 2,655 | 59,193 | 430 |
 
 ## Models
 
@@ -74,18 +74,22 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 3 | 13 | 82 | 436 | 0 | 0 | 132 |
-| `crates/clean_model/progress/src/count.rs` | - | logic | 117 | 160 | 77 | 6 | 0 | 0 | 42 |
-| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 567 | 647 | 170 | 1 | 24 | 0 | 131 |
-| `crates/clean_model/progress/src/lib.rs` | - | logic | 10 | 119 | 12 | 0 | 0 | 0 | 24 |
-| `crates/clean_model/progress/src/per_area.rs` | places | logic | 164 | 186 | 57 | 0 | 0 | 0 | 36 |
-| `crates/clean_model/progress/src/progress.rs` | - | logic | 24 | 41 | 27 | 0 | 0 | 0 | 16 |
-| `crates/clean_model/progress/src/report.rs` | - | logic | 190 | 248 | 61 | 0 | 7 | 0 | 46 |
-| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 226 | 279 | 98 | 0 | 8 | 0 | 59 |
-| `crates/clean_model/progress/src/rules.rs` | - | logic | 126 | 154 | 105 | 37 | 2 | 0 | 54 |
-| `crates/clean_model/progress/src/supplies.rs` | equipment | logic | 128 | 144 | 83 | 22 | 0 | 0 | 46 |
-| `crates/clean_model/progress/src/world.rs` | places | logic | 396 | 521 | 123 | 0 | 12 | 0 | 90 |
-| total | | | 1,948 | 2,512 | 895 | 502 | 52 | 0 | 676 |
+| `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 3 | 13 | 89 | 492 | 0 | 0 | 147 |
+| `crates/clean_model/progress/src/count.rs` | - | logic | 30 | 42 | 11 | 0 | 0 | 0 | 7 |
+| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 421 | 467 | 129 | 3 | 28 | 0 | 101 |
+| `crates/clean_model/progress/src/lib.rs` | - | logic | 12 | 148 | 12 | 0 | 0 | 0 | 30 |
+| `crates/clean_model/progress/src/per_area.rs` | places | logic | 91 | 118 | 19 | 0 | 0 | 0 | 25 |
+| `crates/clean_model/progress/src/percentage.rs` | - | logic | 86 | 121 | 3 | 0 | 6 | 0 | 16 |
+| `crates/clean_model/progress/src/places.rs` | - | logic | 96 | 125 | 55 | 0 | 2 | 0 | 28 |
+| `crates/clean_model/progress/src/progress.rs` | - | logic | 75 | 136 | 79 | 0 | 0 | 0 | 35 |
+| `crates/clean_model/progress/src/report.rs` | - | logic | 237 | 291 | 81 | 0 | 12 | 0 | 55 |
+| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 230 | 280 | 102 | 0 | 8 | 0 | 57 |
+| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 18 | 46 | 64 | 65 | 0 | 0 | 40 |
+| `crates/clean_model/progress/src/sets.rs` | - | logic | 386 | 446 | 56 | 0 | 5 | 0 | 58 |
+| `crates/clean_model/progress/src/supplies.rs` | equipment | logic | 80 | 101 | 53 | 22 | 0 | 0 | 31 |
+| `crates/clean_model/progress/src/table.rs` | - | logic | 197 | 244 | 48 | 0 | 1 | 0 | 35 |
+| `crates/clean_model/progress/src/world.rs` | places | logic | 54 | 70 | 0 | 0 | 0 | 0 | 13 |
+| total | | | 2,013 | 2,648 | 801 | 582 | 61 | 0 | 678 |
 
 ### hud
 
@@ -111,7 +115,7 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 528 | 652 | 1,016 | 32 | 10 | 0 | 346 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 532 | 656 | 1,024 | 62 | 10 | 0 | 357 |
 
 ## Lines
 
@@ -119,10 +123,10 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 3,415 | 2,332 | 1,083 | 1,203 |
 | camera | 620 | 223 | 397 | 325 |
-| progress | 676 | 132 | 544 | 325 |
+| progress | 678 | 187 | 491 | 335 |
 | hud | 1,354 | 594 | 760 | 703 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 346 | 346 | 0 | 88 |
-| total | 6,411 | 3,627 | 2,784 | 2,643 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 357 | 357 | 0 | 89 |
+| total | 6,424 | 3,693 | 2,731 | 2,655 |
 
 ## Spec, budget and fit by area
 
@@ -157,12 +161,12 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 36. Old code -
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | happened | 3 | 3.3 | 120 | - | 0 | 0.00 |
-| places | 6 | 10.3 | 372 | - | 560 | 1.51 |
-| equipment | 3 | 7.7 | 177 | 254 | 694 | 3.92 |
-| rooms | 1 | 7.0 | 137 | 197 | 226 | 1.65 |
+| places | 6 | 10.3 | 372 | - | 145 | 0.39 |
+| equipment | 3 | 7.7 | 177 | 254 | 501 | 2.83 |
+| rooms | 1 | 7.0 | 137 | 197 | 230 | 1.68 |
 | percentage | 1 | 2.0 | 72 | - | 0 | 0.00 |
-| shared (in no area) | | | | | 468 | |
-| total | 14 | 30.3 | 878 | - | 1,948 | 2.22 |
+| shared (in no area) | | | | | 1,138 | |
+| total | 14 | 30.3 | 878 | - | 2,013 | 2.29 |
 
 ### hud
 
@@ -186,11 +190,11 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | harness | 1 | 4,275 | 4,701 | 457 | 222 | 218 | 17 | 801 |
 | camera | bridge | 1 | 592 | 787 | 21 | 1 | 2 | 0 | 121 |
 | camera | harness | 1 | 3,563 | 3,927 | 499 | 161 | 156 | 26 | 701 |
-| progress | bridge | 1 | 1,355 | 1,558 | 57 | 69 | 52 | 0 | 235 |
-| progress | harness | 1 | 4,509 | 4,658 | 635 | 336 | 365 | 26 | 731 |
+| progress | bridge | 1 | 1,336 | 1,545 | 57 | 69 | 67 | 0 | 233 |
+| progress | harness | 1 | 4,484 | 4,618 | 634 | 407 | 416 | 31 | 760 |
 | hud | bridge | 1 | 2,138 | 2,347 | 141 | 16 | 157 | 2 | 366 |
 | hud | harness | 1 | 3,207 | 3,447 | 505 | 114 | 206 | 22 | 576 |
-| total | | | 22,329 | 24,739 | 2,572 | 931 | 1,236 | 92 | 4,028 |
+| total | | | 22,284 | 24,686 | 2,571 | 1,002 | 1,302 | 97 | 4,055 |
 
 ## Harness floors and vectors
 
@@ -377,5 +381,5 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 45 | 5,160 | 30,960 | 33,189 | 9,804 | 883 | 2,498 | 655 | 7,049 |
-| bridges | 7 | 1,129 | 6,776 | 8,006 | 476 | 98 | 293 | 2 | 1,219 |
-| rebuilt models, shared types included | 46 | 2,643 | 15,860 | 19,433 | 6,337 | 10,166 | 692 | 135 | 6,411 |
+| bridges | 7 | 1,126 | 6,756 | 7,993 | 476 | 98 | 307 | 2 | 1,217 |
+| rebuilt models, shared types included | 50 | 2,655 | 15,929 | 19,573 | 6,251 | 10,276 | 701 | 135 | 6,424 |

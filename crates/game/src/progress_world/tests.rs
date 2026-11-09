@@ -126,9 +126,9 @@ fn the_first_state_whose_condition_holds_loads() {
     );
     let mut progress = Progress::new_file();
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(3)));
-    progress.world.events.insert(Event::PlanetAwake);
+    progress.events = progress.events.with(Event::PlanetAwake);
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(2)));
-    progress.inventory.capacity.power_bombs = Count::new(5);
+    progress.inventory.capacity[Supply::PowerBombs] = Wrapping(5);
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(1)));
 }
 
@@ -148,15 +148,15 @@ fn the_room_s_own_area_and_door_decide() {
         room_state(&torizo, &progress, Some(door)),
         Some(StateIndex(1))
     );
-    progress.world.defeated.norfair.insert(BossKind::MainBoss);
+    progress.defeated[Region::Norfair] = BossKinds::of(&[BossKind::MainBoss]);
     assert_eq!(room_state(&torizo, &progress, None), Some(StateIndex(3)));
-    progress.world.defeated.crateria.insert(BossKind::Torizo);
+    progress.defeated[Region::Crateria] = BossKinds::of(&[BossKind::Torizo]);
     assert_eq!(room_state(&torizo, &progress, None), Some(StateIndex(0)));
 }
 
 #[test]
 fn a_boss_bit_no_kind_has_reads_no_states() {
     let odd = room(Area::Brinstar, &[room::Condition::BossDead(BossBits(8))]);
-    assert_eq!(room_states(&odd), None);
+    assert_eq!(conditions(&odd), None);
     assert_eq!(room_state(&odd, &Progress::new_file(), None), None);
 }

@@ -7,13 +7,14 @@
 //! the model's choice over the room's conditions as the importer decoded them.
 //!
 //! The engine holds no events, bosses, beams, doors, maps or stations yet: a report of them has
-//! nowhere to be kept, so only `Taken` is made, by the item PLM's pickup.
+//! nowhere to be kept, so only `Taken` is made, by the item PLM's pickup. `Taken` concerns no
+//! area, so the adapter names none.
 
-use std::collections::BTreeSet;
+use core::num::Wrapping;
 
 use clean_model_progress::{
-    Collection, Condition, Count, Inventory, PerSupply, Pickup, Progress, Report, ReserveMode,
-    RoomEntry, RoomStates, Rules,
+    Beams, BossKinds, Condition, Count, Inventory, Items as Pieces, PerSupply, Pickup, Progress,
+    Remembered, Report, ReserveMode, RoomEntry, RoomStates, Rules, Supply,
 };
 use clean_types::{Area as Region, BossKind, Entrance, Item as Piece, LocationId};
 use data::rom::RomAddress;
@@ -68,20 +69,20 @@ pub const fn piece(item: Item) -> Piece {
 }
 
 /// The model's items for a set of the engine's.
-fn pieces(items: Items) -> BTreeSet<Piece> {
+fn pieces(items: Items) -> Pieces {
     ITEMS
         .into_iter()
         .filter(|&item| items.contains(item))
         .map(piece)
-        .collect()
+        .fold(Pieces::default(), Pieces::with)
 }
 
 /// The engine's set of the model's items.
-fn items(pieces: &BTreeSet<Piece>) -> Items {
+fn items(pieces: Pieces) -> Items {
     let mut items = Items::default();
     for item in ITEMS
         .into_iter()
-        .filter(|&item| pieces.contains(&piece(item)))
+        .filter(|&item| pieces.contains(piece(item)))
     {
         items.insert(item);
     }
@@ -106,53 +107,53 @@ const fn engine_mode(mode: ReserveMode) -> samus::ReserveMode {
     }
 }
 
-/// The gauges' capacities or what she holds, by `part`.
-fn supplies(equipment: &Equipment, part: fn(Gauge) -> u16) -> PerSupply<Count> {
-    let count = |gauge| Count::new(part(gauge));
-    PerSupply {
-        energy: count(equipment.energy),
-        reserve: count(equipment.reserve),
-        missiles: count(equipment.missiles),
-        super_missiles: count(equipment.super_missiles),
-        power_bombs: count(equipment.power_bombs),
+/// The engine's gauge of `supply`.
+const fn gauge(equipment: &mut Equipment, supply: Supply) -> &mut Gauge {
+    match supply {
+        Supply::Energy => &mut equipment.energy,
+        Supply::Reserve => &mut equipment.reserve,
+        Supply::Missiles => &mut equipment.missiles,
+        Supply::SuperMissiles => &mut equipment.super_missiles,
+        Supply::PowerBombs => &mut equipment.power_bombs,
     }
+}
+
+/// The gauges' capacities or what she holds, by `part`.
+fn supplies(mut equipment: Equipment, part: fn(Gauge) -> u16) -> PerSupply<Count> {
+    let mut table = PerSupply::default();
+    for &supply in Supply::ALL {
+        table[supply] = Wrapping(part(*gauge(&mut equipment, supply)));
+    }
+    table
 }
 
 /// What she has, as the model keeps it. The engine has no beams yet: none are hers.
 fn inventory(equipment: &Equipment) -> Inventory {
     Inventory {
-        items: Collection {
-            hers: pieces(equipment.collected),
-            switched_on: pieces(equipment.equipped),
-        },
-        beams: Collection::new(),
-        capacity: supplies(equipment, |gauge| gauge.max),
-        held: supplies(equipment, |gauge| gauge.current),
+        items: pieces(equipment.collected),
+        equipped: pieces(equipment.equipped),
+        beams: Beams::default(),
+        beams_equipped: Beams::default(),
+        capacity: supplies(*equipment, |gauge| gauge.max),
+        held: supplies(*equipment, |gauge| gauge.current),
         reserve_mode: mode(equipment.reserve_mode),
     }
 }
 
 /// `inventory` written back to the engine's equipment.
 fn store_inventory(inventory: &Inventory, equipment: &mut Equipment) {
-    let gauge = |current: Count, max: Count| Gauge {
-        current: current.get(),
-        max: max.get(),
-    };
-    let (held, capacity) = (&inventory.held, &inventory.capacity);
-    *equipment = Equipment {
-        collected: items(&inventory.items.hers),
-        equipped: items(&inventory.items.switched_on),
-        energy: gauge(held.energy, capacity.energy),
-        reserve: gauge(held.reserve, capacity.reserve),
-        missiles: gauge(held.missiles, capacity.missiles),
-        super_missiles: gauge(held.super_missiles, capacity.super_missiles),
-        power_bombs: gauge(held.power_bombs, capacity.power_bombs),
-        reserve_mode: engine_mode(inventory.reserve_mode),
-    };
+    equipment.collected = items(inventory.items);
+    equipment.equipped = items(inventory.equipped);
+    for &supply in Supply::ALL {
+        *gauge(equipment, supply) = Gauge {
+            current: inventory.held[supply].0,
+            max: inventory.capacity[supply].0,
+        };
+    }
+    equipment.reserve_mode = engine_mode(inventory.reserve_mode);
 }
 
-/// What she can do and how she looks, as her motion reads it: the model's answer from the items
-/// switched on.
+/// What her motion reads: the model's answer from the items equipped.
 #[must_use]
 pub fn equipment(equipment: &Equipment) -> clean_types::Equipment {
     inventory(equipment).equipment()
@@ -168,27 +169,36 @@ pub const fn place(argument: u16) -> Option<LocationId> {
     }
 }
 
-/// The emptied places the engine keeps, one bit per place.
-fn emptied(collected: &CollectedItems) -> BTreeSet<LocationId> {
-    collected
-        .0
-        .iter()
-        .zip((0..).step_by(usize::from(BITS_PER_WORD)))
-        .flat_map(|(&word, first): (&u16, u16)| {
-            (0..BITS_PER_WORD)
-                .filter(move |bit| (word >> bit) & 1 != 0)
-                .map(move |bit| LocationId(first.wrapping_add(bit)))
+/// Every place the engine has a bit for: its word, its bit in the word, and the place.
+fn places() -> impl Iterator<Item = (usize, u16, LocationId)> {
+    (0..COLLECTED_ITEM_WORDS)
+        .zip((0_u16..).step_by(usize::from(BITS_PER_WORD)))
+        .flat_map(|(word, first)| {
+            (0..BITS_PER_WORD).map(move |bit| (word, 1 << bit, LocationId(first.wrapping_add(bit))))
         })
-        .collect()
 }
 
-/// `emptied` written back as the engine keeps it. A place past the engine's bits isn't kept:
-/// the game's populations name places below 100h.
-fn store_emptied(emptied: &BTreeSet<LocationId>, collected: &mut CollectedItems) {
+/// The emptied places the engine keeps, one bit per place.
+fn emptied(collected: &CollectedItems) -> Remembered<LocationId> {
+    Remembered::of(places().filter_map(|(word, bit, place)| {
+        collected
+            .0
+            .get(word)
+            .is_some_and(|&word| word & bit != 0)
+            .then_some(place)
+    }))
+}
+
+/// `emptied` written back as the engine keeps it, asking the model of each place the engine has
+/// a bit for. A place past those bits isn't kept: the game's populations name places below 100h.
+fn store_emptied(emptied: &Remembered<LocationId>, collected: &mut CollectedItems) {
     let mut words = [0; COLLECTED_ITEM_WORDS];
-    for &LocationId(place) in emptied {
-        if let Some(word) = words.get_mut(usize::from(place / BITS_PER_WORD)) {
-            *word |= 1 << (place % BITS_PER_WORD);
+    for (word, bit, place) in places() {
+        if let Some(word) = words
+            .get_mut(word)
+            .filter(|_| emptied.contains(Some(place)))
+        {
+            *word |= bit;
         }
     }
     *collected = CollectedItems(words);
@@ -199,18 +209,14 @@ fn store_emptied(emptied: &BTreeSet<LocationId>, collected: &mut CollectedItems)
 pub fn progress(equipment: &Equipment, collected: &CollectedItems) -> Progress {
     let mut progress = Progress::new_file();
     progress.inventory = inventory(equipment);
-    progress.world.emptied = emptied(collected);
+    progress.emptied = emptied(collected);
     progress
 }
 
 /// Whether the item PLM with room argument `argument` finds its place emptied (`$84:887C`).
 #[must_use]
 pub fn is_emptied(collected: &CollectedItems, argument: u16) -> bool {
-    let world = clean_model_progress::WorldMemory {
-        emptied: emptied(collected),
-        ..clean_model_progress::WorldMemory::default()
-    };
-    world.is_emptied(place(argument))
+    emptied(collected).contains(place(argument))
 }
 
 /// The model's area for a room's, or none for the debug rooms, which no state condition reads.
@@ -228,31 +234,27 @@ pub const fn region(area: Area) -> Option<Region> {
     })
 }
 
-/// She takes the item of the item PLM with room argument `argument`, in the frame's `area`:
-/// the item is hers and switched on, and its place is emptied (`$84:8899`, `$84:88F3`).
+/// She takes the item of the item PLM with room argument `argument`: the item is hers and
+/// equipped, and its place is emptied (`$84:8899`, `$84:88F3`).
 pub fn take(state: &mut State, item: Item, argument: u16) {
     let mut progress = progress(&state.samus.equipment, &state.collected_items);
     let report = Report::Taken {
         pickup: Pickup::Item(piece(item)),
         location: place(argument),
     };
-    // Taking an item reads no area (only a boss's, a map's and a station's reports do), so the
-    // debug rooms, which the model has no area for, take theirs as area 0's.
-    let area = region(state.room.area).unwrap_or(Region::Crateria);
-    progress.apply(&Rules::REFERENCE, area, report);
+    progress.apply(&Rules::REFERENCE, report);
     store_inventory(&progress.inventory, &mut state.samus.equipment);
-    store_emptied(&progress.world.emptied, &mut state.collected_items);
+    store_emptied(&progress.emptied, &mut state.collected_items);
 }
 
 /// The boss kinds of an area's boss byte, or none when it holds a bit no kind has.
-fn kinds(bits: BossBits) -> Option<BTreeSet<BossKind>> {
+fn kinds(bits: BossBits) -> Option<BossKinds> {
     let known = BOSS_KINDS.iter().fold(0, |all, &(bit, _)| all | bit);
     (bits.0 & !known == 0).then(|| {
         BOSS_KINDS
             .iter()
             .filter(|&&(bit, _)| bits.0 & bit != 0)
-            .map(|&(_, kind)| kind)
-            .collect()
+            .fold(BossKinds::default(), |kinds, &(_, kind)| kinds.with(kind))
     })
 }
 
@@ -261,7 +263,7 @@ fn condition(condition: room::Condition) -> Option<Condition> {
     Some(match condition {
         room::Condition::Door(door) => Condition::EnteredBy(Entrance(door.offset)),
         room::Condition::MainAreaBossDead => {
-            Condition::Defeated(BTreeSet::from([BossKind::MainBoss]))
+            Condition::Defeated(BossKinds::of(&[BossKind::MainBoss]))
         }
         room::Condition::Event(event) => Condition::Happened(event),
         room::Condition::BossDead(bits) => Condition::Defeated(kinds(bits)?),
@@ -272,17 +274,15 @@ fn condition(condition: room::Condition) -> Option<Condition> {
     })
 }
 
-/// The room's states as the model reads them, the default last; none when a condition names a
-/// boss bit no kind has.
+/// The conditions of the room's states as `RoomStates::new` reads them, the default's `Always`
+/// last; none when a condition names a boss bit no kind has.
 #[must_use]
-pub fn room_states(room: &Room) -> Option<RoomStates> {
-    let conditions = room
-        .conditional
+pub fn conditions(room: &Room) -> Option<Vec<Condition>> {
+    room.conditional
         .iter()
         .map(|entry| condition(entry.condition))
         .chain(core::iter::once(Some(Condition::Always)))
-        .collect::<Option<Vec<_>>>()?;
-    RoomStates::new(conditions)
+        .collect()
 }
 
 /// The state `room` loads in for `progress`, entered by the door at `door` if any (`$8F:E5D2`);
@@ -297,7 +297,7 @@ pub fn room_state(
         area: region(room.area)?,
         entered_by: door.map(|door| Entrance(door.offset)),
     };
-    let index = room_states(room)?.choose(progress, entry);
+    let index = RoomStates::new(&conditions(room)?)?.choose(progress, entry);
     u8::try_from(index).ok().map(StateIndex)
 }
 
