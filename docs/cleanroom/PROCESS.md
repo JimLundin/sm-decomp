@@ -136,6 +136,11 @@ until that domain has landed, so the interface it reads is fixed.
 
 ## The loop
 
+- **Cut rounds.** When a round gate's coarse verdict says the model is much larger than its
+  behaviour needs, the next round of that domain is a cut round: its brief carries the verdict
+  and the gate's shape findings, and asks for no new behaviour. Cut rounds repeat until the
+  gate finds nothing that changes the shape enough to be worth a round.
+
 - A vector that won't pass, and that the spec doesn't explain, is a **gap**. The implementer
   records it, and the observer answers it in the spec. The model is never tuned to a record.
 - A finding is fixed by its owner: the observer owns spec and vectors, the implementer the clean

@@ -97,7 +97,10 @@ Jim's decisions, 2026-11-07:
     the score came out far larger than their behaviour needed (camera round 2, progress round 1).
     So after a round gate, the next brief may say, in words only, that the model is much larger
     than the behaviour needs, and in which files and items, alongside the shape findings that
-    say how. It never carries the score, the budget, a ratio or a target.
+    say how. It never carries the score, the budget, a ratio or a target. With it go a numberless
+    standard in the design note (concise: the smallest clear code that models the spec, each rule
+    stated once) and cut rounds (PROCESS, "The loop"): rounds whose brief is the verdict and the
+    shape findings alone, repeated until the gate is satisfied.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
