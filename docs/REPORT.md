@@ -189,8 +189,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | progress | bridge | 1 | 1,355 | 1,558 | 57 | 69 | 52 | 0 | 235 |
 | progress | harness | 1 | 4,509 | 4,658 | 635 | 336 | 365 | 26 | 731 |
 | hud | bridge | 1 | 2,138 | 2,347 | 141 | 16 | 157 | 2 | 366 |
-| hud | harness | 1 | 3,105 | 3,346 | 499 | 113 | 201 | 22 | 561 |
-| total | | | 22,228 | 24,638 | 2,566 | 930 | 1,232 | 92 | 4,013 |
+| hud | harness | 1 | 3,207 | 3,447 | 505 | 114 | 206 | 22 | 576 |
+| total | | | 22,329 | 24,739 | 2,572 | 931 | 1,236 | 92 | 4,028 |
 
 ## Harness floors and vectors
 
@@ -248,7 +248,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 | samus-motion | 18,299 | 12,639 | 0 | 5,583 |
 | camera | 18,299 | 13,315 | 0 | 5,440 |
 | progress | 18,299 | 18,292 | 7 | 18,289 |
-| hud | 18,299 | 14,947 | 0 | 13,032 |
+| hud | 18,299 | 14,947 | 0 | 12,786 |
 
 Per declared field, the compared frames on which it was compared and those on which a mask, by its named writer, put it out of scope. The summary's harness frames count a frame matched on its unmasked fields alone.
 
@@ -286,8 +286,8 @@ Per declared field, the compared frames on which it was compared and those on wh
 | hud | values last shown | 14,947 | 0 |
 | hud | selected item | 14,927 | 20 |
 | hud | one-shot item | 14,927 | 20 |
-| hud | mini-map window | 11,908 | 3,039 |
-| hud | explored cells | 11,908 | 3,039 |
+| hud | mini-map window | 14,278 | 669 |
+| hud | explored cells | 14,278 | 669 |
 
 Per catalogue entry, the frames that exercised it with every field its output reaches compared, those of them matched and verified, and the frames that exercised it unchecked: one of its fields masked, or an output (an event) the harness doesn't compare. An entry no frame verifies is checked by its vectors only.
 
@@ -361,10 +361,10 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | hud | CancellingTheItem | 28 | 28 | 0 |
 | hud | OneShotItem | 58 | 58 | 2 |
 | hud | Switching | vectors only | 0 | 88 |
-| hud | Exploring | 10,465 | 10,465 | 2,705 |
-| hud | MiniMapWindow | 10,465 | 10,465 | 2,705 |
-| hud | HerBlink | 10,465 | 10,465 | 2,705 |
-| hud | MiniMapStill | 1,443 | 1,443 | 334 |
+| hud | Exploring | 12,501 | 12,501 | 669 |
+| hud | MiniMapWindow | 12,501 | 12,501 | 669 |
+| hud | HerBlink | 12,501 | 12,501 | 669 |
+| hud | MiniMapStill | 1,777 | 1,777 | 0 |
 | hud | BossBlanksTheMap | vectors only | 0 | 0 |
 | hud | DiagonalPicture | vectors only | 0 | 0 |
 | hud | FirstColumnsShift | vectors only | 0 | 0 |

@@ -96,13 +96,13 @@ progress entry TakingBeams 0 0 0
 progress entry Tanks 0 1 0
 progress entry RoomStates 7 7 0
 progress entry ItemPercentage 0 0 0
-hud frames 18299 14947 0 13032
+hud frames 18299 14947 0 12786
 hud field 14947 0 status bar
 hud field 14947 0 values last shown
 hud field 14927 20 selected item
 hud field 14927 20 one-shot item
-hud field 11908 3039 mini-map window
-hud field 11908 3039 explored cells
+hud field 14278 669 mini-map window
+hud field 14278 669 explored cells
 hud entry EnergyGauge 516 516 0
 hud entry AmmoCounts 27 27 0
 hud entry AutoReserveSign 8983 8983 0
@@ -114,10 +114,10 @@ hud entry CyclingItems 58 58 2
 hud entry CancellingTheItem 28 28 0
 hud entry OneShotItem 58 58 2
 hud entry Switching 0 0 88
-hud entry Exploring 10465 10465 2705
-hud entry MiniMapWindow 10465 10465 2705
-hud entry HerBlink 10465 10465 2705
-hud entry MiniMapStill 1443 1443 334
+hud entry Exploring 12501 12501 669
+hud entry MiniMapWindow 12501 12501 669
+hud entry HerBlink 12501 12501 669
+hud entry MiniMapStill 1777 1777 0
 hud entry BossBlanksTheMap 0 0 0
 hud entry DiagonalPicture 0 0 0
 hud entry FirstColumnsShift 0 0 0

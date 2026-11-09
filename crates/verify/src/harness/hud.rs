@@ -11,7 +11,10 @@
 //! each keyed as near its writer as the records allow and reported as masked, never passed:
 //! - her position at the mini-map's turn: the pose change's placement (`$91:EB88`) runs after the
 //!   mini-map read her and can move her across a screen, so the window and the explored cells are
-//!   masked where her pose changed;
+//!   masked where her pose changed, the mini-map ran and wasn't off, and her position lies within
+//!   the placement's reach of a screen's edge. samus-motion's model, which the camera harness asks
+//!   for the y the camera follows her from, doesn't report where her moves left her, so it can't
+//!   yet decode her position at the mini-map's turn;
 //! - the shot's cancel (the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`): the
 //!   selection and the one-shot item are masked where a count fell, and the status bar is
 //!   compared with the cancel false.
@@ -97,6 +100,9 @@ const DIAGONAL: u16 = 0x028;
 /// A screen is 256 px, a block 16.
 const SCREEN_PX: u16 = 256;
 const BLOCK_PX: u16 = 16;
+/// How far the pose change's placement can move her: samus-motion's pose fit, the shrink, the
+/// take-off's lift and the aim step each move her by less than this, and never together by more.
+const PLACEMENT_REACH: u16 = 32;
 /// The columns from which the window reads by the first or the last columns' rule.
 const FIRST_COLUMNS_END: u16 = 1;
 const LAST_COLUMNS_START: u16 = 62;
@@ -177,6 +183,13 @@ const fn unnamed(source: &'static str, value: u16) -> Skip {
 /// The HUD's tiles in the tilemap's order, row by row.
 fn positions() -> impl Iterator<Item = GridPos> {
     (0..3).flat_map(|row| (0..32).filter_map(move |column| GridPos::new(row, column)))
+}
+
+/// Whether `at`, her position on one axis, is within the pose change's reach of a screen's edge,
+/// so that where her moves left her, which the mini-map read, may lie in the next screen.
+const fn near_screen_edge(at: u16) -> bool {
+    let into = at % SCREEN_PX;
+    into < PLACEMENT_REACH || into >= SCREEN_PX - PLACEMENT_REACH
 }
 
 /// Whether the tile at `pos` is the mini-map's window's.
@@ -567,9 +580,19 @@ impl Domain for HudDomain {
 
     fn masks(&self, from: &FrameRecord, next: &FrameRecord, _pad: &Pad) -> Result<Vec<Mask>, Skip> {
         let mut masks = Vec::new();
-        if word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)? {
+        let read_her = runs(next)? && word(next, source::DEBUG_DISABLE_MINIMAP)? == 0;
+        let near_edge = [source::SAMUS_X_POS, source::SAMUS_Y_POS]
+            .into_iter()
+            .map(|axis| word(next, axis))
+            .try_fold(false, |near, at| {
+                Ok::<_, Skip>(near || near_screen_edge(at?))
+            })?;
+        if read_her
+            && near_edge
+            && word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)?
+        {
             masks.push(Mask {
-                reason: "interim: her pose changed, so its placement ($91:EB88) may have moved her after the mini-map read her; no hit recorded",
+                reason: "interim: her pose changed within its placement's reach of a screen's edge and the mini-map read her, so the placement ($91:EB88) may have moved her across after; no hit recorded, and samus-motion's model reports only the y the camera follows her from",
                 fields: WINDOW_TILES.union(EXPLORED),
             });
         }
