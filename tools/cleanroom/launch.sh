@@ -29,7 +29,7 @@
 #     mode dontAsk (anything not allowed is refused, nothing prompts), the tool set Read, Glob,
 #     Grep, Edit, Write and Bash only (no web, agent, notebook, skill or MCP tool exists), Read
 #     under EXPORT, Edit and Write under the [import] paths of allowlist.txt, Bash for
-#     `cargo check|clippy|fmt|test|build`, `git add|commit|status|diff|log` and the one Python
+#     `cargo check|clippy|fmt|test|build`, `git add|commit|status|diff|log|rm|mv` and the one Python
 #     command `"<python>" -I "<lane>\vector_runner.py"` (Defender blocks the executables
 #     `cargo test` links; the runner links the clean crates' tests as DLLs and takes no
 #     arguments), and explicit deny rules for everything the adversary named;
@@ -170,7 +170,7 @@ rules() { # each argument a rule; prints a JSON array body
 allow=( "Read($ex/**)" "Glob($ex/**)" "Grep($ex/**)" )
 for w in "${writable[@]}"; do allow+=("Edit($ex/$w**)" "Write($ex/$w**)"); done
 for c in check clippy fmt test build; do allow+=("Bash(cargo $c)" "Bash(cargo $c *)"); done
-for g in add commit status diff log; do allow+=("Bash(git $g)" "Bash(git $g *)"); done
+for g in add commit status diff log rm mv; do allow+=("Bash(git $g)" "Bash(git $g *)"); done
 # The CLI reads a backslash in a rule as an escape, so the rule doubles each one.
 bs='\'
 allow+=("Bash(${run_tests//"$bs"/"$bs$bs"})")

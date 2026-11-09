@@ -115,6 +115,8 @@ disassemblies or annotated listings); if you recognise something from such a sou
   \`git commit -m "Subject" -m "Body paragraph." -m "Role: implementer"\`. The shell rules refuse
   a command holding any of \`; & | < > \$ ~\`, \`..\`, a space or colon before \`/\`, or \`-F\`, so
   write the message without them (no heredoc, no message file).
+- Delete or rename a file with \`git rm PATH\` or \`git mv OLD NEW\`, each path relative to this
+  directory and inside the two crates.
 - Check with \`cargo check\`, \`cargo clippy --all-targets -- -D warnings\` and \`cargo fmt --check\`,
   each as its own command.
 - \`cargo test\` builds the tests but cannot run them: this machine blocks the test executables.
