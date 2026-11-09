@@ -350,8 +350,8 @@ after = {  }
 
 [[vector]]
 # a door takes her from Tourian, its map on arrival, into Crateria, into an invented room that
-# gives Crateria's map: Tourian is left first, so its map counts as downloaded, then Crateria's
-# arrives; the frame's area is the new room's
+# gives Crateria's map: her leaving names Tourian, so Tourian's map counts as downloaded, and
+# Crateria's arrives in the frame's area, the new room's
 id = "C-door-from-tourian"
 source = "constructed"
 entries = ["MapOnArrival"]
@@ -362,7 +362,7 @@ after = { maps = { Crateria = "OnArrival", Tourian = "Downloaded" } }
 
 [[vector]]
 # a door takes her from Crateria, its map downloaded, into the room that gives Tourian's map:
-# leaving Crateria leaves its map as it was, and Tourian's arrives
+# her leaving names Crateria, whose map stays as it was, and Tourian's arrives in the frame's area
 id = "C-door-into-tourian"
 source = "constructed"
 entries = ["MapOnArrival"]

@@ -27,7 +27,10 @@ table of the record before. The bank logs were then read to name the cases and p
   model. The two door vectors (`C-door-from-tourian`, `C-door-into-tourian`) and a report's own
   `area` key were added by hand after; `$TEMP/collab/progress-spec-r5/model.py` is the model
   that reads that key (a report's `area`, else the vector's): 65 of 65 agree. The model without
-  it fails `C-door-from-tourian` (Tourian's map stays `OnArrival`).
+  it fails `C-door-from-tourian` (Tourian's map stays `OnArrival`). The two vectors check the
+  area each report takes, not an order: the reports touch different areas, so a model applying
+  them in reverse passes all 65. No recorded row leaves an area whose map is `OnArrival`, so
+  `LeftArea`'s change is checked by constructed vectors only.
 
 **Row ids.** As in the camera's notes, the chain rows go by opaque ids, because a chain row's name
 carries a room header's address; s01 is a row whose name matches the lexicon:
@@ -250,7 +253,8 @@ of the same frame, so it is verified on its own with the reports as inputs.
   at N, but for `LeftArea`, whose area is `079F` at N-1: `$82:DF99` runs at `$82:E373`, just
   before the room header's load (`$82:E376` → `$82:DE6F`, `STA $079F` at `$82:DE86`) in the
   same frame, so `079F` at N already holds the new room's area. `MapOnArrival` (the room's setup
-  code) runs after the header, so it takes `079F` at N.
+  code) runs after the header, so it takes `079F` at N. No recorded row leaves an area whose map
+  is `OnArrival`, so no recorded frame tells N-1's area from N's for `LeftArea`.
 - **Compared at N:** every quantity of §State, masked only where another domain changed it. What
   she holds (energy, ammunition) is masked by name (the energy and weapons domains) on the frames
   it changed with no tank report (549 of 18,299); on every other frame it is compared, so a report

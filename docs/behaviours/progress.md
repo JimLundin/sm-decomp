@@ -139,7 +139,8 @@ stays open is placed. A population may place one without an id: then nothing of 
 | a room's loading places its items | how many | the room's loading |
 
 The frame's area is an input too, from the room's loading: in the frame a door takes her into
-another area, it is the new room's, and her leaving carries the area she leaves. So is, when a
+another area, it is the new room's, and her leaving carries the area she leaves
+(C-door-from-tourian, C-door-into-tourian). So is, when a
 room loads, the entrance she came in by (an `Entrance`, the way into the room she took), from the
 doors. An entrance is not a door of `DoorsStayOpen`: its ids are a space of their own.
 
@@ -360,11 +361,9 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 
 ## 7. Order that matters
 
-- A frame's reports apply in the order they come; none of this spec's rules reads another's result
-  within the frame, so no order is visible but the one between leaving an area and arriving: when
-  a door takes her into another area, her leaving the old area (`MapOnArrival`) comes before the
-  new room's loading reports, and each takes its own area: the one she leaves, then the new room's
-  [C-door-from-tourian, C-door-into-tourian].
+- A frame's reports apply in the order they come. Each report carries its own area: her leaving
+  the one she leaves, every other report the new room's (§1.3). So none of this spec's rules reads
+  another's result within the frame, and no order within a frame is visible.
 - A room's state is chosen with the room's own area, after it is known, so `Defeated` reads the
   new room's area.
 
