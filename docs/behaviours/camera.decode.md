@@ -18,7 +18,7 @@ camera's position (`0911`.`090F`, `0915`.`0913`) on 14,704. A null model (the ca
 matches 6,271 of them. The 186 it misses are frames where another routine moved the point the
 camera measures from (`0B10`-`0B16`) after record N and before the scroll: 113 are pose changes
 (the transitions of bank `$91` that set `0B14`, the placements samus-motion reports as
-`camera_from`), 69 are the shinespark's clamp (`$90:D1D6`..`$90:D1FE` and `$90:D2A3`..`$90:D2B9`,
+`placed`), 69 are the shinespark's clamp (`$90:D1D6`..`$90:D1FE` and `$90:D2A3`..`$90:D2B9`,
 previous position within 15 px across and 14 px down), and the rest the grapple (`$9B:BB25`..,
 the ±12 px clamp) and the Landing Site's gunship (`$A2:A925`). With the y the camera saw taken as her y at the scroll, the
 113 pose changes match too. Over the 44-row cache (the 12 rows added since: the bosses, the
@@ -117,7 +117,7 @@ position), the scratch `0933`-`0939`.
 | her facing | `0A1E` low byte | 4 `Left`; 8 `Right`; 0 `Screen` (the scroll tests only 4) |
 | going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-motion §1.2) |
 | rising | `0B36` | = 1 (up), samus-motion's rise state: from the rise's start until `$90:8FDC`/`$90:9046` end it at the start of a frame, so a rise at 0 and the frame whose pull spends the rise (`0B36` = 1 with `0B2E` negative when `$90:9666` reads it) are rising; 0 (none, the moonfall's) and 2 (down) are not. Records: 3 usable spent frames (samus-bomb-jump-vertical 1035, samus-ceres-push 989, samus-grapple-release 325), none decisive; C-rise-spent is |
-| the y a placement put her at, if any | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept); with none, `0B14` is not written. Samus-motion reports `camera_from` on every frame, her start y where nothing placed her, and both callers (the harness's `placement`, the bridge's `settle`) take a placement where it differs from her start y. That misses only a placement that leaves her y pixel at her start pixel on a frame where another mover moved her before her step (an elevator), where the original writes `0B14` = her start pixel |
+| the y a placement put her at, if any | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept); with none, `0B14` is not written. Samus-motion reports it as an option (`placed`), a placement of 0 px included, which the harness's `placement` passes through and the bridge's `settle` writes to `0B14`'s pixel |
 | the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`) | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green); the bytes from `w × h` on are the `below` run (index row × `w` + column, the room's rows continued), any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested); past the 32h bytes, the RAM after it (docs/LEGACY.md) |
 | the aim heights | `07AD` (up scroller), `07AF` (down scroller), from the room header (`$82:DEC1`, `$82:DECA`) | `hn` = `07AD`, `hr` = `07AF`; 70h/A0h or 90h/A0h in the records |
 | lead setting | `0941` (camera distance index) | 0 `Ahead`, 2 `Near`, 4 `KeepLeft`, 6 `KeepRight`; the tables `$90:963F` (facing right) and `$90:9647` (facing left): 60h/A0h, 40h/50h, 20h/20h, E0h/E0h. Set by Crocomire (`$A4:8ABD` = 2, `$A4:97F6` = 6) and Kraid's room (`$A7:A9E7` = 2), cleared at `$88:8347`, `$A4:90D8`, `$A4:9B8D`, `$A7:C594`; always 0 in the records |
@@ -139,7 +139,7 @@ vectors test's TOML `Value`, a false positive; the root accepts both.
 | FollowingHer | `$90:95A0` and `$90:964F` (moved: `0B10` ≠ `0AF6` by pixel parts, `$90:95A3`, `$90:9652`; at the aim: `$90:9606`, `$90:9687`; the move: `$90:960D`..`$90:9636`, `$90:968E`..`$90:96B7`), `$90:96C0` and `$90:96FF` (the speeds, plus `$90:9EAD` = 1), the aim stops at `$80:A651`, `$80:A6CB`, `$80:A8DA`, `$80:A936`'s start (pixel set, subpixel `STZ`) |
 | LeadingHer* | `$90:95B2`..`$90:9600` with the tables `$90:963F` and `$90:9647` |
 | AimingHeight* | `$90:9666`..`$90:9681` |
-| Remembering | `$90:956E`..`$90:9583` (after both axes); the placements (samus-motion's `camera_from`): bank `$91`'s writes of `0B14` in pose setting, pose initialisation and the block collision due to a pose change (`$91:E340`, `$91:E44A`, `$91:E50A`, `$91:ED0E`, `$91:F595`, `$91:FF42`, `$91:FF6F`, `$91:FF93`..`$91:FFE9`; `$91:80AB` in the crouching pose input; `$91:F3A1`, super special pose change command 5, y + 5), and `$90:ECB1` (aligning her bottom with the old pose). `$90:92E4` is in an unused routine (`$90:92D6`). Pose change command 4 (`$91:F37C`: `$91:F386` x and `$91:F393` y, her position set to the view's centre) is not samus-motion's: masked |
+| Remembering | `$90:956E`..`$90:9583` (after both axes); the placements (samus-motion's `placed`): bank `$91`'s writes of `0B14` in pose setting, pose initialisation and the block collision due to a pose change (`$91:E340`, `$91:E44A`, `$91:E50A`, `$91:ED0E`, `$91:F595`, `$91:FF42`, `$91:FF6F`, `$91:FF93`..`$91:FFE9`; `$91:80AB` in the crouching pose input; `$91:F3A1`, super special pose change command 5, y + 5), and `$90:ECB1` (aligning her bottom with the old pose). `$90:92E4` is in an unused routine (`$90:92D6`). Pose change command 4 (`$91:F37C`: `$91:F386` x and `$91:F393` y, her position set to the view's centre) is not samus-motion's: masked |
 | CreepReadsRightward | `$90:96C0` and `$90:96FF` (the direction by `CMP`/`BMI` on the pixel parts, the bank log's note at `$96C0`), read by `$80:A58F` and `$80:A7D3` |
 | RoomEdges | `$80:A662` (`(07A9 − 1)` swapped, the last screen), `$80:A6D9` (negative to 0), `$80:A8EB`..`$80:A8FA` (the bottom with `0933`), `$80:A936`'s negative test; the back-off at the bottom `$80:A91E` |
 | ClosedScreens | `$80:A671`..`$80:A6B5` (right), `$80:A6E3`..`$80:A72B` (left), `$80:A8FC`..`$80:A930` (down), `$80:A936`.. (up); the row and column from `0915 + 80h` and `0911 + 80h` through the multiplier `$4202`/`$4203` with `07A9` |
@@ -291,7 +291,7 @@ be verified on its own from the records, with her motion's outputs decoded as in
   samus-motion defers y (a block-inside push, the quicksand's, C2; the knockback's tail, a frame
   starting with the knockback on under the normal handler, C3) and either her pose changes or
   samus-motion's step reports a placement. The camera takes her position from N+1, and from
-  samus-motion only the placement (its `camera_from` where that differs from her start y); on a
+  samus-motion only the placement (its `placed`); on a
   deferred frame without one, nothing the camera reads is unverified, so y stays compared
   (adversary 49, F1: 98 push and 5 tail frames masked, 247 more y compared, every one matching).
   x stays compared on both, since the lead's knockback turn is the camera's own `LeadingHer`.

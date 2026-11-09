@@ -21,14 +21,6 @@ speed can't stand in for it: at a rise at 0 it is 0, and on the frame that spend
 already points down, yet both aim the camera as a rise does (C-rise-at-0, C-rise-spent). While a knockback moves her, `rising` and going backwards are the
 knockback's (§5).
 
-Samus-motion exports, on every frame, a y the camera follows her from: her start y where nothing
-placed her. Until it exports the placement as an option, the camera takes that y as the y a
-placement put her at when it differs from her start y. That misses one case: a placement of 0 px,
-leaving her y as it was, on a frame where another mover (an elevator) moved her before her step.
-There the camera should follow her from her start y, and it follows her from where it last saw her
-instead. No recorded row reaches it; `docs/LEGACY.md` lists it as "A placement of 0 px after
-another mover".
-
 **Not in this spec** (each an input where it feeds us, §1.3; §5 names who supplies each): a door's
 passage, which places the view in the next room; the cells that open and close screens as she
 touches them; layer 2 and the backgrounds' scroll; the grapple beam's own camera and any other
