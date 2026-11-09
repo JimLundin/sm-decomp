@@ -59,7 +59,7 @@ the next.
 | her facing | `Left`, `Right`, `Screen` (facing the player; leads as `Right`) | `LeadingHer` |
 | going backwards | `bool`: she skids (her motion's output), moonwalks (her pose), or takes a knockback (the damage domain); the vectors name which | `LeadingHer` |
 | rising | `bool`: she is rising, from the rise's start until it ends, a rise at 0 and the frame that spends the rise included: samus-motion's output (`RisingAndFalling`), or the knockback's while one moves her (§5) | `AimingHeight` |
-| the room's screens | a grid of `ScreenKind`, so many screens across (`w`) and down (`h`), and the rows the room's loading left below it (`BelowTheRoom`) | `ClosedScreens`, `ShortScreens`, `Settling`, `RoomEdges`, `ScreensRunOn` |
+| the room's screens | a grid of `ScreenKind`, so many screens across (`w`) and down (`h`), and the run of screens the room's loading left after its last screen (`BelowTheRoom`) | `ClosedScreens`, `ShortScreens`, `Settling`, `RoomEdges`, `ScreensRunOn` |
 | the aim heights | the room's two distances in px: while she isn't rising, and while she rises | `AimingHeight` |
 | lead setting | `Ahead`, `KeepLeft`, `KeepRight`, `Near` (listed alphabetically; the order means nothing); `Ahead` unless a boss sets another | `LeadingHer` |
 | time stopped | `bool` | `TimeStopped` |
@@ -74,7 +74,7 @@ the next.
 **Which screens it looks at** (`ClosedScreens`): across, the row that holds the view's middle;
 down, the column. On an axis, the camera's screen is the one that holds its near edge (left or
 top), and the next screen is the one after it (right or below): across, the one after a row's last
-column is `ScreensRunOn`'s; below the room's last row, `BelowTheRoom`'s. A position's screen is
+column is `ScreensRunOn`'s; below the room's last row, `BelowTheRoom`'s run. A position's screen is
 found from its pixel part read as 0 to `FFFF`, 256 px a screen: so a top above the room (`FFF0`)
 is in the 256th row, below the room (`BelowTheRoom`), not in its first row
 (C-edge-down-from-above-short), and a position right of the room is in a column past the row's
@@ -196,8 +196,11 @@ aim stopped it, and `v` its speed's pixel part.
 - params: the push, 2 px beyond the speed.
 - switch: none.
 - `edge(p) = p − p mod 256`, the near edge of the screen holding `p`.
-- The push forward from `p` is `ahead(p) = p + v + 2`, the push back `back(p) = p − v − 2`
-  (`PushCarries`).
+- The push forward from `p` is `ahead(p) = p + v + 2` (`PushCarries`), the push back
+  `back(p) = p − v − 2`.
+- So the push back has no carry (`PushCarries`): it would take 1 more when `p − v` goes below 0,
+  but that needs `p` under the speed, at the room's first pixels, and every such push back lands
+  before the edge it is held at.
 - Across, the screens read are in the row holding `y + 128` (`y` the camera's pixel part down);
   down, in the column holding `x + 128`.
 - Going right or down, the next screen `Closed`, and, down, `c` `exceeds` `edge(c) + rows`
@@ -315,21 +318,24 @@ aim stopped it, and `v` its speed's pixel part.
 - params: none.
 - switch: none.
 - A screen `k` columns after a row's last → it is the `k`th screen of the row below, and so on
-  row after row: the screens run on as one strip, after the room's last row into the rows below
-  the room (`BelowTheRoom`) [C-wrap, C-settle-back-far-right]
+  row after row: the screens run on as one strip, after the room's last screen into the run the
+  room's loading left (`BelowTheRoom`) [C-wrap, C-settle-back-far-right]
 - So in C-wrap the view's own screen at the right edge is closed and the first of the row below
   is open: it eases 3 px past the room's right edge, and on from there each frame.
 - checked: constructed (C-wrap); no recorded frame reads it with an effect.
 
 ### BelowTheRoom
 - kind: quirk.
-- summary: below the room's last row, the view reads the screens the room's loading left there,
-  from earlier rooms.
+- summary: below the room's last row, the view reads the screens the room's loading left after
+  the room's last screen.
 - params: none.
 - switch: none.
-- A screen below the room's last row → its kind is the room's `below` rows', left to right, a
-  row of `w` screens at a time, a screen a row doesn't give `Closed`; past them, `Closed` [R3,
-  R16, C-below-closed, C-below-open, C-below-short-row]
+- A screen below the room's last row → its kind is the run's, `below`, which goes on from the
+  room's last screen as one strip (`ScreensRunOn`): its first `w` screens are the row below the
+  last, left to right, the next `w` the row below that, so only its end can fall short of a row;
+  past its end, `Closed` [R3, R16, C-below-closed, C-below-open, C-below-short-row]
+- So in C-below-short-row the run holds one screen, under the left column: the screen under the
+  right column is past its end, `Closed`, and the view backs up 2 px.
 - So only a move down that crosses into the last row reads them (`DownwardLooksAhead`): R3 and
   R16 would back up if the screen below were closed (C-below-closed against C-below-open).
 - checked: oracle (R3, R16); constructed (C-below-closed, C-below-open, C-below-short-row).
@@ -346,9 +352,7 @@ aim stopped it, and `v` its speed's pixel part.
   C-push-carries), or from where a move left or up took it before the aim stopped it in the
   room's first screen (from `0003` it moves 5 px to `FFFE`, stops on its aim `0002`, and the push
   from `FFFE` gives `0006`, not `0005`: C-push-carries-move).
-- So `back(p)`'s sum never shows one: it would take 1 more when `p − v` goes below 0, but that
-  needs `p` under the speed, at the room's first pixels, and every such push back lands before
-  the edge it is held at.
+- So only the push forward carries; `ClosedScreens` says why the push back doesn't.
 - checked: constructed (C-push-carries, C-push-carries-move).
 
 ---
@@ -366,8 +370,8 @@ aim stopped it, and `v` its speed's pixel part.
 ## 5. Out of scope, and who supplies it
 
 - **Doors and room loading:** the passage places the view in the next room and sets where it
-  last saw her; the room's loading supplies the room's screens, its aim heights and the rows below
-  the room (what earlier rooms left).
+  last saw her; the room's loading supplies the room's screens, its aim heights and the run of
+  screens after the room's last screen (`BelowTheRoom`).
 - **The cells:** a cell that opens or closes a screen changes the room's screens before the camera
   reads them.
 - **Layer 2 and the backgrounds:** they follow the camera at the room's rates; the background's
@@ -383,7 +387,7 @@ aim stopped it, and `v` its speed's pixel part.
 
 ## 6. Open questions
 
-1. Past the room's below rows the camera reads whatever the game holds there; we say `Closed`.
+1. Past the run below the room the camera reads whatever the game holds there; we say `Closed`.
    Only a move down that crosses into the last row of one of the largest rooms could read there;
    no record does (docs/LEGACY.md, "Scroll areas past the room's table").
 2. The lead settings other than `Ahead` have constructed vectors only: no recorded row meets the

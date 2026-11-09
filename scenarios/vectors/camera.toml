@@ -11,11 +11,14 @@
 #   - screens: one string a row of screens, top row first; one character a screen, left to right:
 #     "C" Closed, "O" Open, "S" Short (spec §1.3, Screen kinds). The room is as many screens across
 #     as a row's length (w) and as many down as there are rows (h).
-#   - below (optional, default none): the rows the room's loading left below its last row, top
-#     first, in the same characters (spec `BelowTheRoom`); a row may be shorter than w. A screen
-#     below the room that these rows don't hold is Closed. The screen right of a row's last column
-#     is the first of the row below it, or of the first below row (spec `ScreensRunOn`). A recorded
-#     vector gives the rows the frame reads, and no more.
+#   - below (optional, default none): one string, the run of screens the room's loading left after
+#     the room's last screen, in the same characters (spec `BelowTheRoom`). It continues the room's
+#     screens as one run: its first w screens are the row below the room's last row, left to right,
+#     the next w the row below that, and so on, so only its end can fall short of a whole row. A
+#     screen past its end is Closed. The screen right of a row's last column is the next in the
+#     run: the first of the row below, or from the room's last row the run's first (spec
+#     `ScreensRunOn`). A recorded vector gives the run as far as the last screen the frame reads,
+#     and no further.
 #   - heights: [while she isn't rising, while she rises], in px (spec `AimingHeight`).
 # - lead (optional, default "Ahead"): the lead setting, "Ahead", "KeepLeft", "KeepRight" or "Near"
 #   (spec `LeadingHer`; listed alphabetically, the order means nothing).
@@ -41,7 +44,7 @@
 # - Constructed vectors (C): cases no record reaches (the lead settings other than Ahead, facing
 #   the screen, a placement and its pixel part, a rise at 0, the frame that spends a rise, every ease out of a closed screen,
 #   the screen after the last column, the back-offs short of a screen's edge, time stopped against
-#   a frame that would ease, the creep, the look ahead while going down, the rows below the
+#   a frame that would ease, the creep, the look ahead while going down, the run below the
 #   room, a camera outside the room or 8000 from what it compares with, a push that carries); each
 #   gives its case in a comment. Their after is worked from the
 #   spec's rules.
@@ -348,7 +351,7 @@ after = { camera = ["0000.0000", "00F8.0000"], seen = ["0080.0000", "016E.0000"]
 id = "C-below-open"
 source = "constructed"
 entries = ["BelowTheRoom", "DownwardLooksAhead"]
-room = { screens = ["O", "O"], heights = [112, 160], below = ["O"] }
+room = { screens = ["O", "O"], heights = [112, 160], below = "O" }
 before = { camera = ["0000.0000", "00FA.0000"], seen = ["0080.0000", "0168.0000"] }
 samus = { position = ["0080.0000", "016E.0000"], facing = "Right" }
 after = { camera = ["0000.0000", "00FE.0000"], seen = ["0080.0000", "016E.0000"] }
@@ -410,13 +413,13 @@ samus = { position = ["8070.0000", "0090.0000"], facing = "Right" }
 after = { camera = ["000E.0000", "0010.0000"], seen = ["8070.0000", "0090.0000"] }
 
 [[vector]]
-# as C-below-open in a room two screens across, read in its right column: the first row below
-# gives one screen, so the one under the right column is Closed and it backs up 2 px (read as one
-# run, the rows would give the second row's first screen, Open)
+# as C-below-open in a room two screens across, read in its right column: the run below the room
+# holds one screen, under the left column, so the one under the right column is past its end,
+# Closed, and it backs up 2 px
 id = "C-below-short-row"
 source = "constructed"
 entries = ["BelowTheRoom", "DownwardLooksAhead"]
-room = { screens = ["OO", "OO"], heights = [112, 160], below = ["O", "OO"] }
+room = { screens = ["OO", "OO"], heights = [112, 160], below = "O" }
 before = { camera = ["0100.0000", "00FA.0000"], seen = ["0180.0000", "0168.0000"] }
 samus = { position = ["0180.0000", "016E.0000"], facing = "Right" }
 after = { camera = ["0100.0000", "00F8.0000"], seen = ["0180.0000", "016E.0000"] }
@@ -518,7 +521,7 @@ after = { camera = ["0500.C000", "0001.0000"], seen = ["0580.1000", "0071.0000"]
 id = "R3"
 source = "area-brinstar:414"
 entries = ["BelowTheRoom", "Settling", "FollowingHer", "AimingHeight", "Remembering"]
-room = { screens = ["CCCCCOCC", "CCCCCCCC", "SSSSSSSS"], below = ["SOSSOOSO"], heights = [112, 160] }
+room = { screens = ["CCCCCOCC", "CCCCCCCC", "SSSSSSSS"], below = "OSOOCO", heights = [112, 160] }
 before = { camera = ["0500.C000", "01FD.0000"], seen = ["0580.1000", "026D.0000"] }
 samus = { position = ["0580.1000", "026F.0000"], facing = "Screen" }
 after = { camera = ["0500.C000", "01FF.0000"], seen = ["0580.1000", "026F.0000"] }
@@ -636,7 +639,7 @@ after = { camera = ["03F9.8000", "03D3.C000"], seen = ["047D.8000", "0443.FFFF"]
 id = "R16"
 source = "r01:655"
 entries = ["BelowTheRoom", "LeadingHer", "FollowingHer", "AimingHeight", "Remembering"]
-room = { screens = ["CCOOOOOOO", "CCOOOOOOO", "SCOOOOOOO", "CCOOOOOOO", "SSSSSSSSS"], below = ["SOSSOOSC"], heights = [112, 160] }
+room = { screens = ["CCOOOOOOO", "CCOOOOOOO", "SCOOOOOOO", "CCOOOOOOO", "SSSSSSSSS"], below = "OSOS", heights = [112, 160] }
 before = { camera = ["0363.0000", "03FE.8C00"], seen = ["0403.6800", "046E.A3FF"] }
 samus = { position = ["0400.9800", "046F.4BFF"], facing = "Left" }
 after = { camera = ["0360.0000", "03FF.0000"], seen = ["0400.9800", "046F.4BFF"] }

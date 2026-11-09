@@ -28,9 +28,11 @@ the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`
 types 16h, 1Ah and 1Bh: grapple, grabbed by Draygon, shinespark; the one it picked from
 samus-square-slope-reserve was dropped, its row name being a lexicon match), `cons.py` writes the
 constructed ones (the results come from the same model) and `vecrun.py` runs every vector of
-`scenarios/vectors/camera.toml` through it: 77 of 77 agree (round 2: it pads each short below
-row to `w` with `Closed`, as the vector format says, where it used to run them together;
-C-below-short-row tells the two apart; round 3 adds adversary 42's D1, D2, D6 and D7 and
+`scenarios/vectors/camera.toml` through it: 77 of 77 agree (camera round 3, adversary 49's O1:
+`below` is one run continuing the room's screens, as the table is, and
+`$TEMP/collab/camera-r3/vecrun.py` appends it to the room's screens unpadded, a screen past its
+end read as `Closed`; round 2's version padded each below row to `w`, which let a short row stand
+before another, a table the game can't hold; round 3 adds adversary 42's D1, D2, D6 and D7 and
 C-push-carries-move, and round 4 adversary 43's D8, C-settle-up-from-below-short, each worked by
 hand from the bank log as well: for D8, `$80:A74B` reads `0933` from row 2, below the room, so
 Closed and 1F, before `$80:A788` clamps `0915` to 011F; row 1 is Short, not red, so `$80:A81D`
@@ -38,6 +40,19 @@ reads row 2, red, and `$80:A839` holds on 011F ≥ 011F). `rise0.py` writes R35,
 recorded rise at 0 (`0B36` = 1 with `0B2C`/`0B2E` = 0 at the scroll): all 7 such frames are
 shinespark frames (movement type 1Bh), and in samus-shinespark-left 214 the clamp didn't fire
 (the model matches with the previous position as record N left it) and the down scroller decides.
+
+**The dump's screen table** (camera round 3). `camera-spec/dump` wrote each of the table's 50
+bytes in decimal with no separator, and `model.py` read it a digit a screen. Inside the room the
+table holds only 0, 1 and 2, so the rooms' screens were right, but a byte past the room of 10 or
+more (the bytes the loading copies from after the room's own, `$82:EB28`) became several screens.
+`$TEMP/collab/camera-r3/sdump` writes them in hex, its output is `camera-r3/out3`, and
+`camera-r3/model.py` reads it: the per-frame counts are unchanged (14,704 of 14,890, null 6,271),
+since the screens each frame reads past the room happen to read the same. Two recorded vectors'
+`below` were wrong past those screens and are now the true run, cut by `camera-r3/belowrun.py` to
+the shortest that gives the recorded result: R3 (area-brinstar 414, table bytes past the room `12
+01 80 12 00 80 ..`, the frame reads column 5, `80`, Open) "OSOOCO", was "SOSSOOSO"; R16 (r01 655,
+`13 01 80 01 00`, column 3, `01`, Short) "OSOS", was "SOSSOOSC", whose last three screens lay past
+the 50-byte table and came from the misread digits.
 
 **Row names.** As in samus-motion's decode notes, the chain rows go by opaque ids, because a chain
 row's name carries a room header's address:
@@ -81,7 +96,7 @@ position), the scratch `0933`-`0939`.
 | going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-motion §1.2) |
 | rising | `0B36` | = 1 (up), samus-motion's rise state: from the rise's start until `$90:8FDC`/`$90:9046` end it at the start of a frame, so a rise at 0 and the frame whose pull spends the rise (`0B36` = 1 with `0B2E` negative when `$90:9666` reads it) are rising; 0 (none, the moonfall's) and 2 (down) are not. Records: 3 usable spent frames (samus-bomb-jump-vertical 1035, samus-ceres-push 989, samus-grapple-release 325), none decisive; C-rise-spent is |
 | `camera_from` | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept). Unplaced, it is her start y, whose pixel part is `0B14`'s on every unmasked frame, so the spec's unconditional write changes nothing there |
-| the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`) | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green); the bytes from `w × h` on are the `below` rows, `w` to a row, any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested) |
+| the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`) | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green); the bytes from `w × h` on are the `below` run (index row × `w` + column, the room's rows continued), any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested); past the 32h bytes, the RAM after it (docs/LEGACY.md) |
 | the aim heights | `07AD` (up scroller), `07AF` (down scroller), from the room header (`$82:DEC1`, `$82:DECA`) | `hn` = `07AD`, `hr` = `07AF`; 70h/A0h or 90h/A0h in the records |
 | lead setting | `0941` (camera distance index) | 0 `Ahead`, 2 `Near`, 4 `KeepLeft`, 6 `KeepRight`; the tables `$90:963F` (facing right) and `$90:9647` (facing left): 60h/A0h, 40h/50h, 20h/20h, E0h/E0h. Set by Crocomire (`$A4:8ABD` = 2, `$A4:97F6` = 6) and Kraid's room (`$A7:A9E7` = 2), cleared at `$88:8347`, `$A4:90D8`, `$A4:9B8D`, `$A7:C594`; always 0 in the records |
 | time stopped | `0A78` | ≠ 0 (time frozen: x-ray, the reserve tanks' refill); set in 704 record frames of six rows; in the 95 that scroll, none where an ease would have moved |
@@ -109,7 +124,7 @@ routine's two reads. All three are marked *.
 | TimeStopped | `$80:A52C` and `$80:A735` (time frozen `0A78`/`0A79`: return) |
 | DownwardLooksAhead* | `$80:A89D`..`$80:A8D7` (the upper scroll's index `$14` from `0916` after the speed's add, before `$80:A8DA` caps it at the ideal), read again at `$80:A8FC` |
 | ScreensRunOn | `$80:A5D9` (`INX`: the right scroll is index + 1), `$80:A686`..`$80:A68D` (`SEC; ADC`: screen + 1 + row × width), `$80:A5B2`..`$80:A5BA` (`INC`), `$80:A613`..`$80:A61E` (the eased position's column, any value to FFh, plus row × width), all on the row-major table; the bank log's note at `$80:A528` |
-| BelowTheRoom | the scroll table `$7E:CD20` (32h bytes; `$82:EA73` loads `w × h` of them), read past the room at `$80:A8FC`, `$80:A8C8` and `$80:A823` |
+| BelowTheRoom | the scroll table `$7E:CD20` (32h bytes), one table for the room and below it: every read indexes it by row × `07A9` + column (`$4202`/`$4203`, then `ADC $4216`), so a row past `07AB` continues the run, read past the room at `$80:A8FC`, `$80:A8C8` and `$80:A823`. `$82:EA73` loads it: a room with a scroll pointer copies all 32h bytes from it whatever the room's size (`$82:EB28`..`$82:EB39`), so past `w × h` the run is the ROM bytes that follow the room's screens; a room with preset scrolls fills `w × h` only (`$82:EB3D`..`$82:EB67`), leaving the rest as the last room left it. Either way it is one run from `w × h` on, so a short row can only be its last |
 | PushCarries | the second `ADC #2` after `ADC 0DA2`/`0DA6` and the second `SBC #2` after `SBC 0DA2`/`0DA6` (carry and borrow kept): `$80:A58F`, `$80:A5F0`, `$80:A6A7`, `$80:A71D`, `$80:A7D3`, `$80:A842`, `$80:A922` and the up routine's |
 
 ## Findings behind the spec's choices
@@ -246,6 +261,12 @@ be verified on its own from the records, with her motion's outputs decoded as in
   construction, which differs from the placement when she moves on after it (samus-motion's PF1,
   the lift after the push).
 - **Null model:** the camera doesn't move (6,271 of 14,890 frames).
+- **The push's 2 px: vectors only** (adversary 49, O3). No recorded frame backs off short of an
+  edge: over the 32 rows, `camera-r3/o3model.py` (`model.py` with a tag for the push down that
+  wins over the edge) finds no right, left, up or down push and no settle that stops short of its
+  edge (the `*-red-back`, `*-red-step` and `*-red-both` tags, 0 each); every push the records
+  reach ends on the edge. The push's figure (`ClosedScreens`, `PushCarries`, the settles' ease) is
+  checked by the constructed vectors alone (C-push-*, C-ease-*, C-ahead, C-wrap).
 - **k out of sample:** the old code scores 2,273.5 over this spec's 46.7 units, 48.7 a unit
   (samus-motion's 65.8); its own 0.55 would give k = 26.8 against the frozen 36, so the 70% cap
   binds in both areas (limits since round 3, at 31.0 units). The old code lacks the knockback's
