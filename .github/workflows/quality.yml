@@ -42,6 +42,9 @@ jobs:
       - name: Hold the crate plan's dependency and source rules
         # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
         run: bash tools/check_crate_rules.sh
+      - name: Hold the crates in vendor/ to their real build scripts
+        # tools/vendor_nobuild.sh bakes each script's output in, for a machine that can't run it; here it runs.
+        run: bash tools/vendor_nobuild_check.sh
       - name: Keep every relative Markdown link and anchor valid
         run: sh tools/check_doc_links.sh
       - name: Keep docs/REPORT.md what tools report generates
