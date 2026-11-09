@@ -86,17 +86,17 @@ const DOMAINS: &[Domain] = &[
             ("limits", &["axis.rs", "room.rs"]),
         ],
     },
-    // The model keeps happened and places together in `world.rs`, and the percentage in
-    // `inventory.rs`: those two areas have no file of their own.
+    // The keyed machinery (`sets.rs`, `table.rs` and the area and supply keys) is the domain's
+    // shared code, with the counts, the reports, the rules, the catalogue and the whole progress.
     Domain {
         name: "progress",
         bridge: "progress_world",
         areas: &[
-            ("happened", &[]),
-            ("places", &["world.rs", "per_area.rs"]),
-            ("equipment", &["inventory.rs", "supplies.rs"]),
+            ("happened", &["world.rs"]),
+            ("places", &["places.rs"]),
+            ("equipment", &["inventory.rs"]),
             ("rooms", &["room_states.rs"]),
-            ("percentage", &[]),
+            ("percentage", &["percentage.rs"]),
         ],
     },
     // The pictures and the places, which both the status bar and the mini-map read, are the

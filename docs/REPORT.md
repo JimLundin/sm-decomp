@@ -78,17 +78,17 @@ How it is counted:
 | `crates/clean_model/progress/src/count.rs` | - | logic | 30 | 42 | 11 | 0 | 0 | 0 | 7 |
 | `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 421 | 467 | 129 | 3 | 28 | 0 | 101 |
 | `crates/clean_model/progress/src/lib.rs` | - | logic | 12 | 148 | 12 | 0 | 0 | 0 | 30 |
-| `crates/clean_model/progress/src/per_area.rs` | places | logic | 91 | 118 | 19 | 0 | 0 | 0 | 25 |
-| `crates/clean_model/progress/src/percentage.rs` | - | logic | 86 | 121 | 3 | 0 | 6 | 0 | 16 |
-| `crates/clean_model/progress/src/places.rs` | - | logic | 96 | 125 | 55 | 0 | 2 | 0 | 28 |
+| `crates/clean_model/progress/src/per_area.rs` | - | logic | 91 | 118 | 19 | 0 | 0 | 0 | 25 |
+| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 86 | 121 | 3 | 0 | 6 | 0 | 16 |
+| `crates/clean_model/progress/src/places.rs` | places | logic | 96 | 125 | 55 | 0 | 2 | 0 | 28 |
 | `crates/clean_model/progress/src/progress.rs` | - | logic | 75 | 136 | 79 | 0 | 0 | 0 | 35 |
 | `crates/clean_model/progress/src/report.rs` | - | logic | 237 | 291 | 81 | 0 | 12 | 0 | 55 |
 | `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 230 | 280 | 102 | 0 | 8 | 0 | 57 |
 | `crates/clean_model/progress/src/rules.rs` | - | tables and types | 18 | 46 | 64 | 65 | 0 | 0 | 40 |
 | `crates/clean_model/progress/src/sets.rs` | - | logic | 386 | 446 | 56 | 0 | 5 | 0 | 58 |
-| `crates/clean_model/progress/src/supplies.rs` | equipment | logic | 80 | 101 | 53 | 22 | 0 | 0 | 31 |
+| `crates/clean_model/progress/src/supplies.rs` | - | logic | 80 | 101 | 53 | 22 | 0 | 0 | 31 |
 | `crates/clean_model/progress/src/table.rs` | - | logic | 197 | 244 | 48 | 0 | 1 | 0 | 35 |
-| `crates/clean_model/progress/src/world.rs` | places | logic | 54 | 70 | 0 | 0 | 0 | 0 | 13 |
+| `crates/clean_model/progress/src/world.rs` | happened | logic | 54 | 70 | 0 | 0 | 0 | 0 | 13 |
 | total | | | 2,013 | 2,648 | 801 | 582 | 61 | 0 | 678 |
 
 ### hud
@@ -160,12 +160,12 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 36. Old code -
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| happened | 3 | 3.3 | 120 | - | 0 | 0.00 |
-| places | 6 | 10.3 | 372 | - | 145 | 0.39 |
-| equipment | 3 | 7.7 | 177 | 254 | 501 | 2.83 |
+| happened | 3 | 3.3 | 120 | - | 54 | 0.45 |
+| places | 6 | 10.3 | 372 | - | 96 | 0.26 |
+| equipment | 3 | 7.7 | 177 | 254 | 421 | 2.38 |
 | rooms | 1 | 7.0 | 137 | 197 | 230 | 1.68 |
-| percentage | 1 | 2.0 | 72 | - | 0 | 0.00 |
-| shared (in no area) | | | | | 1,138 | |
+| percentage | 1 | 2.0 | 72 | - | 86 | 1.19 |
+| shared (in no area) | | | | | 1,126 | |
 | total | 14 | 30.3 | 878 | - | 2,013 | 2.29 |
 
 ### hud
