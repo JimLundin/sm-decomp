@@ -317,11 +317,30 @@ this round; none is a leak.
   "word per" are the spec's own wording in doc comments. Accepted.
 - **The enum-order hit.** `tests/support/toml.rs`'s `Value` (Str, Int, Bool, Array, Table) is a
   TOML value's kinds; its match with a RAM code table is a coincidence. Accepted.
-- **`AreaMap`**, the one name hit on a type ("area map", 18 uses), is renamed in the next round to
-  a name that says "her map".
+- **`AreaMap`**, the one name hit on a type ("area map", 18 uses), is renamed: round 2 calls it
+  `HerMap`.
 - **A count past what its cells hold** stops the session (`HudFault::CountPastCells`), where the
   old engine left the cell unchanged. Accepted: unreachable in vanilla, whose capacities stop below
   the cells' reach, and listed in docs/LEGACY.md.
+
+**The model's scans, ruled at round 2's gate (adversary 57).** The root accepted each hit below for
+this round; none is a leak.
+
+- **The name scan's new hit,** "updat mini map", is the step `HudState::update_mini_map`, which
+  replaced round 1's `mini_map::update`. Accepted for round 1's reason: its boundary is
+  `MiniMapStill`'s "the mini-map updates" and its order is §5's. The other hits are round 1's
+  accepted prose phrases and the `Value` enum order. The next round names the step for its entries.
+- **The mirror scan can't see the round's steps.** It finds public functions by the text `pub fn`
+  and `pub const fn`, and round 2 made every rule a `pub(crate)` step on the state, so it reports 0
+  of 0 tagged functions. This is the scan's blind spot, not a hidden shape: an engineer widens it to
+  `pub(crate) fn`, or to every function whose doc names a `Spec:` entry.
+
+**BossBlanksTheMap's per-boss table is unchecked.** The harness covers the entry by vectors only,
+and the vector test picks each vector's boss by finding the boss whose screens in the model's own
+`Rules::reference()` equal the vector's blanked screens: swapping two bosses' screens in the model
+still passes all 62 vectors, and Draygon's can't be tested. The vectors check the blanking, not
+which boss blanks which screens. The observer names the boss in each of `scenarios/vectors/hud.toml`'s
+boss vectors, and the test then reads the name.
 
 ## Budget
 
