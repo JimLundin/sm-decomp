@@ -8,7 +8,7 @@ mod support;
 use std::fmt::Debug;
 
 use clean_model_progress::{
-    CATALOGUE, Condition, EnteredRoom, Progress, RoomStates, Rules, Version,
+    Condition, EnteredRoom, Progress, RoomStates, Rules, Version, catalogue,
 };
 use clean_types::{Area, Checked, Entrance};
 use support::{Answers, Asks, Check, Named, Vector, VectorFile};
@@ -46,7 +46,7 @@ fn answer(asks: &Asks, progress: &Progress, area: Area) -> Answers {
         room_state: asks.room_states().map(room_state),
         percentage: asks
             .percentage
-            .then(|| progress.inventory.item_percentage(&Rules::REFERENCE).0),
+            .then(|| progress.inventory.item_percentage(&Rules::reference()).0),
         emptied: asks.emptied().map(|q| {
             q.into_iter()
                 .map(|l| progress.emptied.contains(l))
@@ -107,9 +107,9 @@ fn run(vector: &Vector) -> Vec<String> {
     let before = vector.before.progress();
     match vector.check() {
         Check::Frame { reports, after } => {
-            let mut progress = before;
+            let (mut progress, rules) = (before, Rules::reference());
             for report in reports {
-                progress.apply(&Rules::REFERENCE, report);
+                progress.apply(&rules, report);
             }
             differences(&progress, &after)
         }
@@ -170,6 +170,13 @@ fn unknown_keys_and_names_fail_in_every_table() {
             "{}",
             "{ report = \"Taken\", item = \"MissileTank\", amount = 5 }",
         ),
+        frame(
+            "{}",
+            "{ report = \"LeftArea\", area = \"Tourian\" }, { report = \"Defeated\", \
+             boss = \"Torizo\", area = \"Norfair\" }, { report = \"Saved\", station = 0, \
+             area = \"Ceres\" }, { report = \"MapStation\", area = \"Maridia\" }, \
+             { report = \"MapOnArrival\", area = \"WreckedShip\" }",
+        ),
         questions(
             "{ room_states = [{ when = \"Always\" }] }",
             "{ room_state = 0 }",
@@ -193,6 +200,15 @@ fn unknown_keys_and_names_fail_in_every_table() {
         frame("{}", "{ report = \"Taken\", item = \"Boots\" }"),
         frame("{}", "{ report = \"Taken\", item = \"Bombs\", extra = 1 }"),
         frame("{}", "{ report = \"Happened\", event = \"PlanetAsleep\" }"),
+        frame("{}", "{ report = \"LeftArea\", area = \"Zebes\" }"),
+        frame(
+            "{}",
+            "{ report = \"ZebetiteDestroyed\", area = \"Tourian\" }",
+        ),
+        frame(
+            "{}",
+            "{ report = \"ItemsPlaced\", count = 1, area = \"Norfair\" }",
+        ),
         questions("{ extra = true }", "{}"),
         questions("{}", "{ extra = 0 }"),
         questions("{ room_states = [{ when = \"Always\", extra = 1 }] }", "{}"),
@@ -208,10 +224,11 @@ fn unknown_keys_and_names_fail_in_every_table() {
 
 #[test]
 fn every_vector_names_catalogue_entries() {
+    let catalogue = catalogue();
     for vector in vectors() {
         for entry in &vector.entries {
             assert!(
-                CATALOGUE.iter().any(|b| format!("{:?}", b.id) == *entry),
+                catalogue.values().any(|b| format!("{:?}", b.id) == *entry),
                 "{}: {entry} is no catalogue entry",
                 vector.id
             );
@@ -222,7 +239,11 @@ fn every_vector_names_catalogue_entries() {
 #[test]
 fn every_entry_checked_by_vectors_has_one() {
     let vectors = vectors();
-    for behaviour in CATALOGUE.iter().filter(|b| b.checked == Checked::ByVectors) {
+    let catalogue = catalogue();
+    for behaviour in catalogue
+        .values()
+        .filter(|b| b.checked == Checked::ByVectors)
+    {
         let name = format!("{:?}", behaviour.id);
         assert!(
             vectors.iter().any(|v| v.entries.contains(&name)),

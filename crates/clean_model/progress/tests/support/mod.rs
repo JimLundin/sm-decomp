@@ -75,128 +75,153 @@ impl Vector {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Named<T>(pub T);
 
-/// Reads `Named<$model>` by `$names`, a copy of `$model` giving each member the name the file
-/// writes. Serde's `remote` builds the model's own members from it, so the copy can name only
-/// real members, and a name it doesn't hold fails the read.
+/// Reads `Named<$model>` by `$names`, a copy of the model's enum `$model` giving each member
+/// the name the file writes (a member's attributes rename it, or keep the file from naming it).
+/// The copy is matched against the model's enum both ways, so the compiler checks that it holds
+/// every member of the model's and no other: a member the copy lacks fails to build. A name the
+/// copy doesn't hold fails the read.
 macro_rules! named_by {
-    ($model:ty, $names:ident) => {
+    ($model:ident, $names:ident { $($(#[$attr:meta])* $member:ident),* $(,)? }) => {
+        #[derive(Deserialize)]
+        enum $names {
+            $($(#[$attr])* $member),*
+        }
+
+        impl From<$names> for $model {
+            fn from(name: $names) -> Self {
+                match name {
+                    $($names::$member => Self::$member),*
+                }
+            }
+        }
+
+        impl From<$model> for $names {
+            fn from(member: $model) -> Self {
+                match member {
+                    $($model::$member => Self::$member),*
+                }
+            }
+        }
+
         impl<'de> Deserialize<'de> for Named<$model> {
             fn deserialize<D: Deserializer<'de>>(reader: D) -> Result<Self, D::Error> {
-                $names::deserialize(reader).map(Named)
+                $names::deserialize(reader).map(|name| Named(name.into()))
             }
         }
     };
 }
 
-#[derive(Deserialize)]
-#[serde(remote = "Area")]
-enum AreaNames {
-    Brinstar,
-    Ceres,
-    Crateria,
-    Maridia,
-    Norfair,
-    Tourian,
-    WreckedShip,
-}
-named_by!(Area, AreaNames);
+named_by!(
+    Area,
+    AreaNames {
+        Brinstar,
+        Ceres,
+        Crateria,
+        Maridia,
+        Norfair,
+        Tourian,
+        WreckedShip,
+    }
+);
 
-#[derive(Deserialize)]
-#[serde(remote = "Item")]
-enum ItemNames {
-    Bombs,
-    GrappleBeam,
-    GravitySuit,
-    HiJumpBoots,
-    MorphBall,
-    ScrewAttack,
-    SpaceJump,
-    SpeedBooster,
-    SpringBall,
-    VariaSuit,
-    XRayScope,
-}
-named_by!(Item, ItemNames);
+named_by!(
+    Item,
+    ItemNames {
+        Bombs,
+        GrappleBeam,
+        GravitySuit,
+        HiJumpBoots,
+        MorphBall,
+        ScrewAttack,
+        SpaceJump,
+        SpeedBooster,
+        SpringBall,
+        VariaSuit,
+        XRayScope,
+    }
+);
 
-#[derive(Deserialize)]
-#[serde(remote = "Beam")]
-enum BeamNames {
-    Charge,
-    Ice,
-    Plasma,
-    Spazer,
-    Wave,
-}
-named_by!(Beam, BeamNames);
+named_by!(
+    Beam,
+    BeamNames {
+        Charge,
+        Ice,
+        Plasma,
+        Spazer,
+        Wave,
+    }
+);
 
-#[derive(Deserialize)]
-#[serde(remote = "Event")]
-enum EventNames {
-    AcidReceded,
-    AnimalsFreed,
-    DraygonStatueGrey,
-    GlassTunnelBroken,
-    KraidStatueGrey,
-    LavaQuakeOutrun,
-    MetroidRoom1Empty,
-    MetroidRoom2Empty,
-    MetroidRoom3Empty,
-    MetroidRoom4Empty,
-    MotherBrainTankBroken,
-    PhantoonStatueGrey,
-    PlanetAwake,
-    RidleyStatueGrey,
-    ShaktoolPath,
-    TimeBombSet,
-    TourianOpen,
-    TourianRoomsUnset,
-}
-named_by!(Event, EventNames);
+named_by!(
+    Event,
+    EventNames {
+        AcidReceded,
+        AnimalsFreed,
+        DraygonStatueGrey,
+        GlassTunnelBroken,
+        KraidStatueGrey,
+        LavaQuakeOutrun,
+        MetroidRoom1Empty,
+        MetroidRoom2Empty,
+        MetroidRoom3Empty,
+        MetroidRoom4Empty,
+        MotherBrainTankBroken,
+        PhantoonStatueGrey,
+        PlanetAwake,
+        RidleyStatueGrey,
+        ShaktoolPath,
+        TimeBombSet,
+        TourianOpen,
+        TourianRoomsUnset,
+    }
+);
 
-#[derive(Deserialize)]
-#[serde(remote = "BossKind")]
-enum BossKindNames {
-    MainBoss,
-    MiniBoss,
-    Torizo,
-}
-named_by!(BossKind, BossKindNames);
+named_by!(
+    BossKind,
+    BossKindNames {
+        MainBoss,
+        MiniBoss,
+        Torizo,
+    }
+);
 
-/// The tanks, by the supply each raises.
-#[derive(Deserialize)]
-#[serde(remote = "Supply")]
-enum TankNames {
-    #[serde(rename = "EnergyTank")]
-    Energy,
-    #[serde(rename = "ReserveTank")]
-    Reserve,
-    #[serde(rename = "MissileTank")]
-    Missiles,
-    #[serde(rename = "SuperMissileTank")]
-    SuperMissiles,
-    #[serde(rename = "PowerBombTank")]
-    PowerBombs,
-}
-named_by!(Supply, TankNames);
+// The tanks, by the supply each raises.
+named_by!(
+    Supply,
+    TankNames {
+        #[serde(rename = "EnergyTank")]
+        Energy,
+        #[serde(rename = "ReserveTank")]
+        Reserve,
+        #[serde(rename = "MissileTank")]
+        Missiles,
+        #[serde(rename = "SuperMissileTank")]
+        SuperMissiles,
+        #[serde(rename = "PowerBombTank")]
+        PowerBombs,
+    }
+);
 
-#[derive(Deserialize)]
-#[serde(remote = "ReserveMode")]
-enum ReserveModeNames {
-    #[serde(rename = "None")]
-    NoTank,
-    Automatic,
-    Manual,
-}
-named_by!(ReserveMode, ReserveModeNames);
+named_by!(
+    ReserveMode,
+    ReserveModeNames {
+        #[serde(rename = "None")]
+        NoTank,
+        Automatic,
+        Manual,
+    }
+);
 
-/// The maps the file names; an area it doesn't name is `Unmapped`.
-#[derive(Deserialize)]
-#[serde(remote = "MapStatus")]
-enum MapNames {
-    Downloaded,
-    OnArrival,
-}
-named_by!(MapStatus, MapNames);
+// The maps the file names; it never names `Unmapped`, which an area it doesn't name is.
+named_by!(
+    MapStatus,
+    MapNames {
+        #[serde(skip_deserializing)]
+        Unmapped,
+        Downloaded,
+        OnArrival,
+    }
+);
 
 /// The set of the members `names` names.
 fn set<K: Enum + Copy>(names: &[Named<K>]) -> Set<K> {
@@ -291,8 +316,8 @@ impl State {
             events: set(&self.events),
             zebetites: Wrapping(self.zebetites),
             defeated: per_area(&self.defeated, |kinds| set(kinds)),
-            emptied: Remembered::of(self.emptied.iter().map(|&id| LocationId(id))),
-            opened: Remembered::of(self.opened.iter().map(|&id| DoorId(id))),
+            emptied: Remembered(self.emptied.iter().map(|&id| LocationId(id)).collect()),
+            opened: Remembered(self.opened.iter().map(|&id| DoorId(id)).collect()),
             maps: per_area(&self.maps, |&Named(map)| map),
             stations: per_area(&self.stations, |ids| {
                 ids.iter().map(|&id| StationId(id)).collect()
@@ -302,7 +327,8 @@ impl State {
     }
 }
 
-/// A report, by its `report` key; one that concerns an area is the frame's.
+/// A report, by its `report` key. One that concerns an area may name it in `area`; left out, it
+/// is the frame's.
 #[derive(Deserialize)]
 #[serde(tag = "report", deny_unknown_fields)]
 enum ReportRow {
@@ -312,6 +338,7 @@ enum ReportRow {
     ZebetiteDestroyed {},
     Defeated {
         boss: Named<BossKind>,
+        area: Option<Named<Area>>,
     },
     Taken {
         item: Taken,
@@ -321,11 +348,18 @@ enum ReportRow {
     DoorOpened {
         door: Option<u16>,
     },
-    MapStation {},
-    MapOnArrival {},
-    LeftArea {},
+    MapStation {
+        area: Option<Named<Area>>,
+    },
+    MapOnArrival {
+        area: Option<Named<Area>>,
+    },
+    LeftArea {
+        area: Option<Named<Area>>,
+    },
     Saved {
         station: u16,
+        area: Option<Named<Area>>,
     },
     ItemsPlaced {
         count: u16,
@@ -357,14 +391,21 @@ fn pickup(taken: Taken, amount: Option<u16>) -> Pickup {
 }
 
 impl ReportRow {
-    /// The report, made in a frame whose area is `area`.
-    fn report(&self, area: Area) -> Report {
+    /// The report, made in a frame whose area is `frame_area`.
+    fn report(&self, frame_area: Area) -> Report {
+        let area = |named: Option<Named<Area>>| named.map_or(frame_area, |Named(area)| area);
         match *self {
             Self::Happened {
                 event: Named(event),
             } => Report::Happened(event),
             Self::ZebetiteDestroyed {} => Report::ZebetiteDestroyed,
-            Self::Defeated { boss: Named(kind) } => Report::Defeated { kind, area },
+            Self::Defeated {
+                boss: Named(kind),
+                area: named,
+            } => Report::Defeated {
+                kind,
+                area: area(named),
+            },
             Self::Taken {
                 item,
                 location,
@@ -374,11 +415,14 @@ impl ReportRow {
                 location: location.map(LocationId),
             },
             Self::DoorOpened { door } => Report::DoorOpened(door.map(DoorId)),
-            Self::MapStation {} => Report::MapStation(area),
-            Self::MapOnArrival {} => Report::MapOnArrival(area),
-            Self::LeftArea {} => Report::LeftArea(area),
-            Self::Saved { station } => Report::Saved {
-                area,
+            Self::MapStation { area: named } => Report::MapStation(area(named)),
+            Self::MapOnArrival { area: named } => Report::MapOnArrival(area(named)),
+            Self::LeftArea { area: named } => Report::LeftArea(area(named)),
+            Self::Saved {
+                station,
+                area: named,
+            } => Report::Saved {
+                area: area(named),
                 station: StationId(station),
             },
             Self::ItemsPlaced { count } => Report::ItemsPlaced(Wrapping(count)),

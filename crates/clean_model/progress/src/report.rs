@@ -12,8 +12,9 @@ use crate::rules::Rules;
 /// Something another domain tells progress has happened.
 ///
 /// When a report comes is the reporting domain's to decide; progress only records it. A report
-/// that concerns an area names it: the area of the room she is in, which is still the area she
-/// leaves when she leaves it.
+/// that concerns an area names it. That is the frame's area, the area of the room she is in,
+/// except for her leaving: in the frame a door takes her into another area, the frame's area is
+/// the new room's, and `LeftArea` carries the area she leaves.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Report {
     /// An event happens. Spec: EventsHappen.
@@ -42,7 +43,7 @@ pub enum Report {
     MapStation(Area),
     /// She enters the room that gives the map of its area, the area named. Spec: MapOnArrival.
     MapOnArrival(Area),
-    /// She leaves the area named, by a door into another area. Spec: MapOnArrival.
+    /// A door takes her into another area, out of the area named. Spec: MapOnArrival.
     LeftArea(Area),
     /// She saves at a save station of this area; or the gunship lands for the first time, which
     /// counts as a save at the first station of the area it lands in, and comes with that
@@ -63,8 +64,8 @@ impl Progress {
     /// A frame's reports are applied one call each, in the order they come (spec §7): each is
     /// recorded at once, against the progress the reports before it left, and nothing is
     /// gathered up or reordered over the frame. The spec's rules don't read one another's results
-    /// within a frame, so the one order that shows is leaving and arriving: when she goes through
-    /// a door into another area, `LeftArea` with the area she leaves comes before the new room's
+    /// within a frame, so the one order that shows is leaving and arriving: when a door takes her
+    /// into another area, `LeftArea` with the area she leaves comes before the new room's
     /// loading reports, such as `MapOnArrival`, which name the new room's area.
     pub fn apply(&mut self, rules: &Rules, report: Report) {
         match report {
@@ -78,7 +79,8 @@ impl Progress {
             Report::DoorOpened(door) => self.opened.remember(door),
             Report::MapStation(area) => self.maps[area] = MapStatus::Downloaded,
             // Spec: MapOnArrival. The room she enters leaves its area's map `OnArrival`, unless
-            // she has it downloaded; leaving the area turns `OnArrival` into `Downloaded`.
+            // she has it downloaded; a door taking her into another area turns the map of the
+            // area she leaves from `OnArrival` into `Downloaded`.
             Report::MapOnArrival(entered) if self.maps[entered] != MapStatus::Downloaded => {
                 self.maps[entered] = MapStatus::OnArrival;
             }

@@ -7,8 +7,8 @@ use enum_map::EnumMap;
 
 use crate::inventory::Supply;
 
-/// The values the rules of a run's progress read. `Rules::REFERENCE` is the original game; any
-/// other value is an adjusted game.
+/// The values the rules of a run's progress read. `Rules::reference()` is the original game;
+/// any other value is an adjusted game.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Rules {
     /// For each beam, the beam that taking it switches off, if any. Spec: TakingBeams.
@@ -19,20 +19,34 @@ pub struct Rules {
 }
 
 impl Rules {
-    /// The original game's values.
-    pub const REFERENCE: Self = Self {
-        // In `Beam`'s declared order: charge, ice, plasma, spazer, wave. Spazer and plasma don't
-        // fire together: taking either switches the other off.
-        beam_switches_off: EnumMap::from_array([
-            None,
-            None,
-            Some(Beam::Spazer),
-            Some(Beam::Plasma),
-            None,
-        ]),
-        // In `Supply`'s declared order: energy, reserve, missiles, super missiles, power bombs.
-        percentage_divisors: EnumMap::from_array([BY_TANK, BY_TANK, BY_AMMO, BY_AMMO, BY_AMMO]),
-    };
+    /// The original game's values, each table's row stated by its member.
+    #[must_use]
+    pub fn reference() -> Self {
+        Self {
+            beam_switches_off: EnumMap::from_fn(reference_switches_off),
+            percentage_divisors: EnumMap::from_fn(reference_divisor),
+        }
+    }
+}
+
+/// The beam taking `beam` switches off in the original game: spazer and plasma don't fire
+/// together, so taking either switches the other off; the rest switch none off.
+/// Spec: TakingBeams.
+const fn reference_switches_off(beam: Beam) -> Option<Beam> {
+    match beam {
+        Beam::Spazer => Some(Beam::Plasma),
+        Beam::Plasma => Some(Beam::Spazer),
+        Beam::Charge | Beam::Ice | Beam::Wave => None,
+    }
+}
+
+/// What the original game divides a capacity by for the item percentage: energy and reserve
+/// 100, missiles, super missiles and power bombs 5. Spec: ItemPercentage.
+const fn reference_divisor(supply: Supply) -> NonZeroU16 {
+    match supply {
+        Supply::Energy | Supply::Reserve => BY_TANK,
+        Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => BY_AMMO,
+    }
 }
 
 /// The energy or reserve capacity that counts one towards the item percentage.
@@ -46,6 +60,6 @@ const BY_AMMO: NonZeroU16 = NonZeroU16::new(AMMO_DIVISOR).expect("AMMO_DIVISOR i
 
 impl Default for Rules {
     fn default() -> Self {
-        Self::REFERENCE
+        Self::reference()
     }
 }

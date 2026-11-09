@@ -3,7 +3,7 @@
 
 use core::num::Wrapping;
 
-use clean_types::{Beam, Equipment, Item, Set};
+use clean_types::{Beam, Item, Set};
 use enum_map::{Enum, EnumMap};
 
 /// A count or a capacity. The spec's notation: counts and capacities are whole numbers of 16 bits
@@ -57,15 +57,17 @@ pub enum Pickup {
 /// What she has: what is hers, and what is switched on.
 ///
 /// The two are kept apart and neither is kept within the other. Taking an item or a beam makes
-/// it both hers and switched on, but others switch her items and beams on and off too (the
-/// equipment screen, and the rainbow beam late in the fight with Mother Brain, which switches on
-/// charge, plasma and wave whichever are hers). So what is switched on need not be among what is
-/// hers: a beam can be switched on that she never took.
+/// it both hers and switched on, but others switch her items and beams on and off too: the
+/// equipment screen, and the rainbow beam she is given late in the fight with Mother Brain,
+/// which switches on exactly charge, plasma and wave, whether or not they are hers. So a beam
+/// can be switched on without being hers.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Inventory {
     /// The items that are hers, switched on or not. Spec: TakingItems.
     pub items: Set<Item>,
-    /// The items switched on, which decide what she can do and how she looks.
+    /// The items switched on, which decide what she can do and how she looks. Her motion reads
+    /// the hi-jump boots and the space jump here, and her sprite the screw attack, the spring
+    /// ball and a suit other than the first: never the items merely hers.
     pub items_switched_on: Set<Item>,
     /// The beams that are hers, switched on or not. Spec: TakingBeams.
     pub beams: Set<Beam>,
@@ -88,27 +90,14 @@ impl Default for Inventory {
             items_switched_on: Set::default(),
             beams: Set::default(),
             beams_switched_on: Set::default(),
-            capacity: NEW_FILE_SUPPLIES,
-            held: NEW_FILE_SUPPLIES,
+            capacity: EnumMap::from_fn(new_file_supply),
+            held: EnumMap::from_fn(new_file_supply),
             reserve_mode: ReserveMode::default(),
         }
     }
 }
 
 impl Inventory {
-    /// What her motion reads: the items switched on, never the ones merely hers.
-    #[must_use]
-    pub fn equipment(&self) -> Equipment {
-        let on = &self.items_switched_on;
-        Equipment {
-            hi_jump: on[Item::HiJumpBoots],
-            space_jump: on[Item::SpaceJump],
-            spring_ball: on[Item::SpringBall],
-            screw_attack: on[Item::ScrewAttack],
-            other_suit: on[Item::VariaSuit] || on[Item::GravitySuit],
-        }
-    }
-
     /// She takes an item, a beam or a tank; `switches_off` is the beam each beam taken switches
     /// off, if any.
     pub(crate) fn take(&mut self, pickup: Pickup, switches_off: EnumMap<Beam, Option<Beam>>) {
@@ -153,12 +142,13 @@ impl Inventory {
 /// Energy and its capacity at the start of a new file.
 const NEW_FILE_ENERGY: Count = Wrapping(99);
 
-/// Each capacity and count at the start of a new file, in `Supply`'s declared order: energy 99,
-/// every other 0.
-const NEW_FILE_SUPPLIES: EnumMap<Supply, Count> = EnumMap::from_array([
-    NEW_FILE_ENERGY,
-    Wrapping(0),
-    Wrapping(0),
-    Wrapping(0),
-    Wrapping(0),
-]);
+/// A supply's capacity, and what she holds of it, at the start of a new file: energy 99, every
+/// other 0.
+const fn new_file_supply(supply: Supply) -> Count {
+    match supply {
+        Supply::Energy => NEW_FILE_ENERGY,
+        Supply::Reserve | Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => {
+            Wrapping(0)
+        }
+    }
+}
