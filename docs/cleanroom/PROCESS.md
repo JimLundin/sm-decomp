@@ -46,6 +46,9 @@ The score is an **evaluation** tool: the root and the adversary use it to compar
 after a round. The implementer's goal is to model the spec well, and its material states coding
 standards only. A size finding reaches the implementer as a **shape** finding: duplication, a
 decision that could be a table row, a function doing two jobs. It never arrives as a number.
+After a round gate, the next brief may also give a **coarse verdict** in words: that the model is
+much larger than the behaviour needs, and in which files and items (MODEL §1 decision 11). No
+score, budget, ratio or target goes with it.
 
 ## A round
 

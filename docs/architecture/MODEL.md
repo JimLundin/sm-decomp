@@ -93,6 +93,11 @@ Jim's decisions, 2026-11-07:
     `tools/cleanroom/score_scan.sh`, with its word list `score_words.txt`, refuses an export
     (`export.sh`), a brief (`scan_brief.sh`) or a trunk file an export would carry
     (`check_crate_rules.sh`) that mentions any of it.
+11. **A coarse verdict on size may reach the implementer** (Jim, 2026-11-09). Two rounds without
+    the score came out far larger than their behaviour needed (camera round 2, progress round 1).
+    So after a round gate, the next brief may say, in words only, that the model is much larger
+    than the behaviour needs, and in which files and items, alongside the shape findings that
+    say how. It never carries the score, the budget, a ratio or a target.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
