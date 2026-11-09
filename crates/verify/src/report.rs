@@ -83,7 +83,7 @@ const DOMAINS: &[Domain] = &[
         bridge: "camera_world",
         areas: &[
             ("follow", &["follow.rs"]),
-            ("limits", &["limits.rs", "room.rs"]),
+            ("limits", &["axis.rs", "room.rs"]),
         ],
     },
     // The model keeps happened and places together in `world.rs`, and the percentage in
