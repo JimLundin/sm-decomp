@@ -28,8 +28,8 @@
 use core::fmt;
 
 use clean_model_hud::{
-    Ammo, Ammunition, AreaMap, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped,
-    Event, FrameCount, FrameInputs, GridPos, HudState, MapCell, MapCellSet, MiniMapInputs, Mute,
+    Ammunition, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped, Event,
+    FrameCount, FrameInputs, HerMap, HudPos, HudState, MapCell, MapCellSet, MiniMapInputs, Mute,
     Reserve, ReserveMode, Room, Rules, SelectButton, SelectableItem, Selection, Shown, Status,
     Stock, Tile,
 };
@@ -92,8 +92,17 @@ const CHARTED: u8 = 3;
 const PRIORITY: u16 = 0x2000;
 /// The mini-map's window: rows 0 to 2, columns 26 to 30 (spec §1.2).
 const WINDOW: core::ops::RangeInclusive<u8> = 26..=30;
-/// Her window tile, which the diagonal test reads.
-const HER_TILE: (u8, u8) = (1, 28);
+/// Her window tile, across then down, which the diagonal test reads.
+const HER_TILE: (i32, i32) = (28, 1);
+/// The HUD's item indices from 1, as the bank $90 log orders them: the harness's own table, so
+/// a model that ordered its items otherwise would fail rather than decode the records its way.
+const HUD_ITEMS: [SelectableItem; 5] = [
+    SelectableItem::Missiles,
+    SelectableItem::SuperMissiles,
+    SelectableItem::PowerBombs,
+    SelectableItem::GrappleBeam,
+    SelectableItem::XRayScope,
+];
 /// A picture's number is read mod 200h by the diagonal test, against 28h.
 const DIAGONAL_READ: u16 = 0x1FF;
 const DIAGONAL: u16 = 0x028;
@@ -180,11 +189,6 @@ const fn unnamed(source: &'static str, value: u16) -> Skip {
     Skip::Unreadable(DecodeError::Unrepresentable { source, value })
 }
 
-/// The HUD's tiles in the tilemap's order, row by row.
-fn positions() -> impl Iterator<Item = GridPos> {
-    (0..3).flat_map(|row| (0..32).filter_map(move |column| GridPos::new(row, column)))
-}
-
 /// Whether `at`, her position on one axis, is within the pose change's reach of a screen's edge,
 /// so that where her moves left her, which the mini-map read, may lie in the next screen.
 const fn near_screen_edge(at: u16) -> bool {
@@ -193,15 +197,15 @@ const fn near_screen_edge(at: u16) -> bool {
 }
 
 /// Whether the tile at `pos` is the mini-map's window's.
-fn in_window(pos: GridPos) -> bool {
-    WINDOW.contains(&pos.column())
+fn in_window(pos: HudPos) -> bool {
+    WINDOW.contains(&pos.x())
 }
 
 /// A HUD item index: 0 for none, then the HUD's items left to right.
 fn item(record: &FrameRecord, source: WramWord) -> Result<Option<SelectableItem>, Skip> {
     match word(record, source)? {
         0 => Ok(None),
-        index => SelectableItem::ORDER
+        index => HUD_ITEMS
             .get(usize::from(index).wrapping_sub(1))
             .copied()
             .map(Some)
@@ -214,10 +218,12 @@ fn hud(record: &FrameRecord) -> Result<HudState, Skip> {
     let mut state = HudState {
         shown: Shown {
             energy: word(record, source::SAMUS_PREV_HEALTH)?,
-            missiles: word(record, source::SAMUS_PREV_MISSILES)?,
-            super_missiles: word(record, source::SAMUS_PREV_SUPER_MISSILES)?,
-            power_bombs: word(record, source::SAMUS_PREV_POWER_BOMBS)?,
-            selection: item(record, source::SAMUS_PREV_HUD_ITEM_INDEX)?,
+            ammo: [
+                word(record, source::SAMUS_PREV_MISSILES)?,
+                word(record, source::SAMUS_PREV_SUPER_MISSILES)?,
+                word(record, source::SAMUS_PREV_POWER_BOMBS)?,
+            ],
+            highlighted: item(record, source::SAMUS_PREV_HUD_ITEM_INDEX)?,
         },
         selection: Selection {
             selected: item(record, source::HUD_ITEM_INDEX)?,
@@ -226,7 +232,7 @@ fn hud(record: &FrameRecord) -> Result<HudState, Skip> {
         ..HudState::default()
     };
     let words = source::HUD_TILEMAP.read(&record.wram)?.as_chunks::<2>().0;
-    for (pos, &bytes) in positions().zip(words) {
+    for (pos, &bytes) in HudPos::all().zip(words) {
         let raw = u16::from_le_bytes(bytes);
         if raw & PRIORITY == 0 {
             return Err(Skip::NoPriority(raw));
@@ -258,8 +264,8 @@ pub struct Pad {
     held: u16,
 }
 
-/// Her map: its area, and whether she has it. The map itself is lent from the domain's maps when
-/// the model steps.
+/// Her map: its area, and whether she has collected it. The map itself is lent from the domain's
+/// maps when the model steps.
 #[derive(Clone, Copy, Debug)]
 pub struct MapKey {
     area: Area,
@@ -307,14 +313,14 @@ fn status(next: &FrameRecord) -> Result<Status, Skip> {
         })
     };
     let missiles = stock(source::SAMUS_MISSILES, source::SAMUS_MAX_MISSILES)?;
-    let ammunition = Ammunition::new(
+    let ammunition = Ammunition::new([
         missiles,
         stock(
             source::SAMUS_SUPER_MISSILES,
             source::SAMUS_MAX_SUPER_MISSILES,
         )?,
         stock(source::SAMUS_POWER_BOMBS, source::SAMUS_MAX_POWER_BOMBS)?,
-    )
+    ])
     .ok_or_else(|| unnamed("a count past its cells", missiles.count))?;
     let equipped = word(next, source::EQUIPPED_ITEMS)?;
     Ok(Status {
@@ -377,7 +383,7 @@ fn room(next: &FrameRecord) -> Result<Room, Skip> {
         coordinate(source::ROOM_Y_COORDINATE_ON_MAP)?,
     );
     // Rooms start a row down: the map's row 0 is padding.
-    let cell = MapCell::new(x, y.wrapping_add(1))
+    let cell = MapCell::new(i32::from(x), i32::from(y).wrapping_add(1))
         .ok_or_else(|| unnamed(source::ROOM_Y_COORDINATE_ON_MAP.name, u16::from(y)))?;
     Ok(Room {
         cell,
@@ -423,14 +429,14 @@ impl Upstream {
             select: if has(pad.pressed, self.select) {
                 SelectButton::Pressed
             } else {
-                SelectButton::Up
+                SelectButton::NotPressed
             },
             cancel: if has(pad.pressed, self.cancel) {
                 CancelButton::Pressed
             } else if has(pad.held, self.cancel) {
                 CancelButton::Held
             } else {
-                CancelButton::Up
+                CancelButton::NotPressed
             },
             can_switch: self.can_switch,
             shot_cancels: false,
@@ -440,7 +446,7 @@ impl Upstream {
 
     /// The model's inputs over `map`. No cached row picks up an item with an icon or reaches
     /// Mother Brain's first form, so neither is reported.
-    const fn model<'map>(&self, pad: Pad, map: &'map AreaMap) -> FrameInputs<'map> {
+    const fn model<'map>(&self, pad: Pad, map: &'map HerMap) -> FrameInputs<'map> {
         FrameInputs {
             frame: pad.frame,
             status: self.status,
@@ -453,6 +459,7 @@ impl Upstream {
                 position: self.position,
                 room: self.room,
                 map,
+                map_collected: self.map.collected,
             },
         }
     }
@@ -467,7 +474,7 @@ impl Upstream {
 
     /// Her cell's column on her map (spec: `Exploring`).
     fn her_column(&self) -> u16 {
-        u16::from(self.room.cell.column()).wrapping_add(self.position.x / SCREEN_PX) % MAP_COLUMNS
+        u16::from(self.room.cell.x()).wrapping_add(self.position.x / SCREEN_PX) % MAP_COLUMNS
     }
 }
 
@@ -486,9 +493,9 @@ pub struct Declared {
 impl From<&HudState> for Declared {
     fn from(state: &HudState) -> Self {
         let tiles = |window: bool| -> Vec<Tile> {
-            positions()
+            HudPos::all()
                 .filter(|&pos| in_window(pos) == window)
-                .map(|pos| state.grid.tile(pos))
+                .map(|pos| state.grid.get(pos))
                 .collect()
         };
         Self {
@@ -502,9 +509,10 @@ impl From<&HudState> for Declared {
     }
 }
 
-/// The HUD domain over the ROM's area maps.
+/// The HUD domain over the ROM's area maps and the spec's rules.
 pub struct HudDomain {
     maps: AreaMaps,
+    rules: Rules,
 }
 
 impl HudDomain {
@@ -518,6 +526,7 @@ impl HudDomain {
         let maps = data::map::AreaMaps::load(rom).map_err(ContentError::AreaMaps)?;
         Ok(Self {
             maps: AreaMaps::import(&maps),
+            rules: Rules::reference(),
         })
     }
 }
@@ -615,12 +624,10 @@ impl Domain for HudDomain {
 
     fn step(&self, state: &mut HudState, pad: &Pad, world: &mut World) {
         let upstream = &world.upstream;
-        let map = self.maps.of(upstream.map.area, upstream.map.collected);
-        let outcome = state
-            .clone()
-            .frame(&Rules::reference(), &upstream.model(*pad, map));
+        let map = self.maps.of(upstream.map.area);
+        let outcome = state.clone().frame(&self.rules, &upstream.model(*pad, map));
         *state = outcome.state;
-        world.her_tile = GridPos::new(HER_TILE.0, HER_TILE.1).map(|pos| state.grid.tile(pos));
+        world.her_tile = HudPos::new(HER_TILE.0, HER_TILE.1).map(|pos| state.grid.get(pos));
         world.events = outcome.events;
     }
 
@@ -658,11 +665,12 @@ fn exercised(state: &HudState, pad: Pad, world: &World) -> Vec<usize> {
     if status.energy.now != shown.energy {
         entries.push(B::EnergyGauge);
     }
-    let counts = [Ammo::Missiles, Ammo::SuperMissiles, Ammo::PowerBombs];
-    if counts.iter().any(|&ammo| {
-        let stock = status.ammunition.stock(ammo);
-        stock.capacity != 0 && stock.count != shown.ammo(ammo)
-    }) {
+    if status
+        .ammunition
+        .kinds()
+        .zip(shown.ammo)
+        .any(|((_, stock), shown)| stock.capacity != 0 && stock.count != shown)
+    {
         entries.push(B::AmmoCounts);
     }
     if status.reserve.mode == ReserveMode::Auto {
@@ -692,7 +700,7 @@ fn exercised(state: &HudState, pad: Pad, world: &World) -> Vec<usize> {
                 .flatten();
         }
     }
-    if selection.selected != shown.selection {
+    if selection.selected != shown.highlighted {
         entries.extend([B::SelectionHighlight, B::SwitchClick]);
     }
     if state.selection.one_shot.is_some() || selection.one_shot.is_some() {

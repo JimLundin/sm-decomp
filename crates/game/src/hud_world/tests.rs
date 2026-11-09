@@ -22,30 +22,38 @@ fn rom_map(area: Area) -> data::map::AreaMap {
     }
 }
 
-fn cell(column: u8, row: u8) -> MapCell {
+fn cell(column: i32, row: i32) -> MapCell {
     MapCell::new(column, row).unwrap()
+}
+
+fn picture_at(column: i32, row: i32) -> PicturePos {
+    PicturePos::new(column, row).unwrap()
 }
 
 #[test]
 fn the_maps_import_pictures_charts_and_beyond() {
     let maps = AreaMaps::import(&data::map::AreaMaps(vec![rom_map(Area::Brinstar)]));
-    let map = maps.of(Area::Brinstar, false);
+    let map = maps.of(Area::Brinstar);
     // Column 40 of row 3 is the right page's column 8: word 400h + 3 × 20h + 8.
     assert_eq!(
-        map.picture(cell(40, 3)),
+        map.pictures.get(picture_at(40, 3)),
         MapPicture {
             picture: Picture::new(0x068),
             flip: Flip::Both,
         }
     );
-    assert_eq!(map.picture(cell(5, 2)).picture, Picture::new(0x045));
-    assert!(map.charts(cell(40, 3)));
-    assert!(!map.charts(cell(40, 2)));
-    let beyond = map.beyond(BeyondCell::new(1, 2).unwrap());
-    assert_eq!(beyond.picture, Picture::new(0x341));
-    assert!(!map.collected());
-    assert!(maps.of(Area::Brinstar, true).collected());
-    assert_eq!(maps.of(Area::Debug, true), &AreaMap::new());
+    assert_eq!(
+        map.pictures.get(picture_at(5, 2)).picture,
+        Picture::new(0x045)
+    );
+    assert!(map.charted.get(cell(40, 3)));
+    assert!(!map.charted.get(cell(40, 2)));
+    // Column 65 is the beyond pictures' column 1.
+    assert_eq!(
+        map.pictures.get(picture_at(65, 2)).picture,
+        Picture::new(0x341)
+    );
+    assert_eq!(maps.of(Area::Debug), &HerMap::default());
 }
 
 #[test]
@@ -55,7 +63,7 @@ fn the_explored_cells_round_trip() {
         *word = 0x9E37_79B9_7F4A_7C15_u64.rotate_left(u32::try_from(row).unwrap());
     }
     let set = explored(&cells);
-    assert!(set.contains(cell(0, 0)));
+    assert!(set.get(cell(0, 0)));
     assert_eq!(engine_cells(&set), cells);
 }
 
