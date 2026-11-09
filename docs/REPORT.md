@@ -31,10 +31,10 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 7,515 | 7,092 | 1.06 | 12,724 | 3,511 | 1,253 | 17,988 | 236 |
 | camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
-| progress | 1,130 | 878 | 1.29 | - | 475 | 188 | 25,417 | 63 |
+| progress | 973 | 878 | 1.11 | - | 450 | 162 | 25,417 | 63 |
 | hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 1,870 | - | - | - | 490 | 312 | - | - |
-| total | 15,482 | 11,541 | 1.34 | - | 6,188 | 2,580 | 82,921 | 441 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 627 | - | - | - | 374 | 104 | - | - |
+| total | 14,081 | 11,541 | 1.22 | - | 6,047 | 2,347 | 82,921 | 441 |
 
 ## Models
 
@@ -76,15 +76,15 @@ How it is counted:
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 3 | 13 | 82 | 436 | 0 | 0 | 132 |
-| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 440 | 475 | 234 | 48 | 20 | 0 | 124 |
-| `crates/clean_model/progress/src/lib.rs` | - | logic | 7 | 106 | 12 | 0 | 0 | 0 | 21 |
-| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 109 | 152 | 3 | 0 | 5 | 0 | 18 |
+| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 325 | 353 | 189 | 26 | 20 | 0 | 101 |
+| `crates/clean_model/progress/src/lib.rs` | - | logic | 7 | 90 | 12 | 0 | 0 | 0 | 19 |
+| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 76 | 109 | 3 | 0 | 2 | 0 | 13 |
 | `crates/clean_model/progress/src/places.rs` | places | logic | 116 | 148 | 55 | 0 | 2 | 0 | 33 |
-| `crates/clean_model/progress/src/progress.rs` | happened | tables and types | 10 | 57 | 119 | 0 | 0 | 0 | 19 |
+| `crates/clean_model/progress/src/progress.rs` | happened | tables and types | 1 | 51 | 89 | 0 | 0 | 0 | 17 |
 | `crates/clean_model/progress/src/report.rs` | - | logic | 231 | 279 | 81 | 0 | 13 | 0 | 54 |
-| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 180 | 218 | 117 | 0 | 7 | 0 | 51 |
-| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 35 | 59 | 64 | 46 | 0 | 0 | 23 |
-| total | | | 1,130 | 1,507 | 767 | 530 | 47 | 0 | 475 |
+| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 180 | 221 | 120 | 0 | 7 | 0 | 51 |
+| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 35 | 61 | 68 | 47 | 0 | 0 | 30 |
+| total | | | 973 | 1,325 | 699 | 509 | 44 | 0 | 450 |
 
 ### hud
 
@@ -110,7 +110,7 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 1,870 | 2,104 | 1,119 | 66 | 12 | 0 | 490 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 627 | 779 | 1,047 | 62 | 12 | 0 | 374 |
 
 ## Lines
 
@@ -118,10 +118,10 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 3,511 | 2,336 | 1,175 | 1,253 |
 | camera | 638 | 223 | 415 | 318 |
-| progress | 475 | 174 | 301 | 188 |
+| progress | 450 | 179 | 271 | 162 |
 | hud | 1,074 | 653 | 421 | 510 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 490 | 0 | 490 | 312 |
-| total | 6,188 | 3,386 | 2,802 | 2,580 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 374 | 374 | 0 | 104 |
+| total | 6,047 | 3,765 | 2,282 | 2,347 |
 
 ## Spec, budget and fit by area
 
@@ -155,13 +155,13 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 36. Old code -
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| happened | 3 | 3.3 | 120 | - | 10 | 0.08 |
+| happened | 3 | 3.3 | 120 | - | 1 | 0.01 |
 | places | 6 | 10.3 | 372 | - | 116 | 0.31 |
-| equipment | 3 | 7.7 | 177 | 254 | 440 | 2.49 |
+| equipment | 3 | 7.7 | 177 | 254 | 325 | 1.83 |
 | rooms | 1 | 7.0 | 137 | 197 | 180 | 1.31 |
-| percentage | 1 | 2.0 | 72 | - | 109 | 1.51 |
+| percentage | 1 | 2.0 | 72 | - | 76 | 1.06 |
 | shared (in no area) | | | | | 276 | |
-| total | 14 | 30.3 | 878 | - | 1,130 | 1.29 |
+| total | 14 | 30.3 | 878 | - | 973 | 1.11 |
 
 ### hud
 
@@ -185,11 +185,11 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | harness | 1 | 4,758 | 5,203 | 521 | 254 | 242 | 1 | 908 |
 | camera | bridge | 1 | 593 | 797 | 21 | 1 | 2 | 0 | 125 |
 | camera | harness | 1 | 3,845 | 4,213 | 562 | 175 | 179 | 27 | 747 |
-| progress | bridge | 1 | 1,359 | 1,587 | 60 | 69 | 59 | 0 | 244 |
-| progress | harness | 1 | 5,152 | 5,258 | 711 | 460 | 499 | 42 | 862 |
+| progress | bridge | 1 | 1,355 | 1,590 | 60 | 69 | 56 | 0 | 241 |
+| progress | harness | 1 | 5,154 | 5,249 | 738 | 460 | 500 | 42 | 864 |
 | hud | bridge | 1 | 1,870 | 2,173 | 100 | 9 | 62 | 0 | 333 |
 | hud | harness | 1 | 3,160 | 3,403 | 518 | 135 | 196 | 22 | 584 |
-| total | | | 23,429 | 25,952 | 2,750 | 1,115 | 1,320 | 91 | 4,302 |
+| total | | | 23,427 | 25,946 | 2,777 | 1,115 | 1,318 | 91 | 4,301 |
 
 ## Harness floors and vectors
 
@@ -390,5 +390,5 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 45 | 5,163 | 30,979 | 33,208 | 9,832 | 883 | 2,498 | 655 | 7,053 |
-| bridges | 7 | 1,086 | 6,514 | 7,875 | 438 | 91 | 204 | 0 | 1,201 |
-| rebuilt models, shared types included | 45 | 2,580 | 15,482 | 18,967 | 6,285 | 10,274 | 654 | 34 | 6,188 |
+| bridges | 7 | 1,085 | 6,511 | 7,878 | 438 | 91 | 201 | 0 | 1,198 |
+| rebuilt models, shared types included | 45 | 2,347 | 14,081 | 17,460 | 6,145 | 10,249 | 651 | 34 | 6,047 |
