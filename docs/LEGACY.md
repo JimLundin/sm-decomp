@@ -22,15 +22,21 @@ original's bytes as data.
   into the code at `$80:9DE7` and draw those bytes as tiles. The engine leaves the cell unchanged. No
   vanilla count gets there; a Map Rando or custom-content count could.
 - **Scroll areas past the room's table** (the camera domain, `docs/behaviours/camera.md`
-  `BelowTheRoom` and its open question 1, which reads the rows below the room as the room's loading
-  left them and past them `Closed`; today `game::camera_world` over the camera model, `$80:A528`, `$80:A731`, `$80:A8FC`): with
-  the screen below the camera past the room's last row, the scroll zone routines read the scroll
-  buffer past the room's screens, as scrolling down does when the camera moves into the bottom row
-  ahead of its ideal position (`area-brinstar` frame 414). The engine keeps that part of the buffer
-  (`RoomScoped::stale_scrolls`, decoded from the oracle) and reads it as the original does; a byte no
-  area has (`StaleScroll::Unknown`) is neither red nor blue, so the camera goes through it. Past the
-  50-byte buffer the original reads the RAM after it, which the engine reads as red. The engine's room
-  load leaves the stale part empty (red) until the room transition joins.
+  `BelowTheRoom` and its open question 1, which reads the screens below the room as one run
+  continuing the room's, as the room's loading left them, and past the run `Closed`; today
+  `game::camera_world` over the camera model, `$80:A528`, `$80:A731`, `$80:A8FC`): with the screen
+  below the camera past the room's last row, the scroll zone routines read the scroll buffer past
+  the room's screens, as scrolling down does when the camera moves into the bottom row ahead of its
+  ideal position (`area-brinstar` frame 414). Every read indexes the one buffer by row × width +
+  column, so the bytes past the room are one run. A room with a scroll pointer copies all 50 bytes
+  from the ROM whatever its size (`$82:EB28`), so its run is the ROM bytes after its screens; a room
+  with preset scrolls fills width × height only and leaves the rest as the last room left it. The
+  engine keeps that part of the buffer (`RoomScoped::stale_scrolls`, decoded from the oracle) and
+  reads it as the original does; a byte no area has (`StaleScroll::Unknown`) is neither red nor
+  blue, so the camera goes through it. Past the 50-byte buffer the original reads the RAM after it,
+  which the engine reads as red: the four shinespark rows read indices 50 and 51 there 409 times,
+  RAM `00 00`, red, so they agree. The engine's room load leaves the stale part empty (red) until
+  the room transition joins.
 - **Samus spritemaps with a zero pointer or past the table** (`data::pose::spritemap`, `$81:89AE`): 183
   of the 2,096 pointers at `$92:808D` are zero, and the original reads such a spritemap's count from
   `$92:0000`, low work RAM; an index past the table reads a pointer from what follows. The engine draws

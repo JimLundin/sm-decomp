@@ -497,6 +497,30 @@ before = { camera = ["0000.0000", "0250.0000"], seen = ["0080.0000", "0190.0000"
 samus = { position = ["0080.0000", "0190.0000"], facing = "Right" }
 after = { camera = ["0000.0000", "011F.0000"], seen = ["0080.0000", "0190.0000"] }
 
+[[vector]]
+# she falls 11F px, the aim 00F8: the move takes the camera's top from 00F0 to 0210, in the row
+# below the room (the run's first w, Open, so rows 31); the screen under it is the run's second w
+# (its third screen, Open), so it stops on the aim; read as Closed it would back up to 00EE
+id = "C-below-second-row"
+source = "constructed"
+entries = ["BelowTheRoom", "DownwardLooksAhead", "FollowingHer"]
+room = { screens = ["OO", "OO"], heights = [112, 160], below = "OOO" }
+before = { camera = ["0000.0000", "00F0.0000"], seen = ["0080.0000", "0049.0000"] }
+samus = { position = ["0080.0000", "0168.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00F8.0000"], seen = ["0080.0000", "0168.0000"] }
+
+[[vector]]
+# she still, the view on the right edge of the room's last row, in a closed screen: the screen
+# after it is the run's first, Open, so it eases 3 px right; read as Closed it would hold on 0100.
+# Down, its own screen is closed and the one under it past the run's end, Closed: it holds on 0100
+id = "C-wrap-into-below"
+source = "constructed"
+entries = ["ScreensRunOn", "BelowTheRoom", "Settling"]
+room = { screens = ["OO", "OC"], heights = [112, 160], below = "O" }
+before = { camera = ["0100.0000", "0100.0000"], seen = ["0180.0000", "0190.0000"] }
+samus = { position = ["0180.0000", "0190.0000"], facing = "Right" }
+after = { camera = ["0103.0000", "0100.0000"], seen = ["0180.0000", "0190.0000"] }
+
 # Recorded vectors.
 
 [[vector]]

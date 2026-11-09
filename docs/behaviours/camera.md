@@ -319,10 +319,12 @@ aim stopped it, and `v` its speed's pixel part.
 - switch: none.
 - A screen `k` columns after a row's last → it is the `k`th screen of the row below, and so on
   row after row: the screens run on as one strip, after the room's last screen into the run the
-  room's loading left (`BelowTheRoom`) [C-wrap, C-settle-back-far-right]
+  room's loading left (`BelowTheRoom`) [C-wrap, C-settle-back-far-right, C-wrap-into-below]
 - So in C-wrap the view's own screen at the right edge is closed and the first of the row below
   is open: it eases 3 px past the room's right edge, and on from there each frame.
-- checked: constructed (C-wrap); no recorded frame reads it with an effect.
+- So from the room's last row the screen after its last column is the run's first: in
+  C-wrap-into-below it is open and the view eases 3 px; were it closed, the view would hold.
+- checked: constructed (C-wrap, C-wrap-into-below); no recorded frame reads it with an effect.
 
 ### BelowTheRoom
 - kind: quirk.
@@ -333,12 +335,19 @@ aim stopped it, and `v` its speed's pixel part.
 - A screen below the room's last row → its kind is the run's, `below`, which goes on from the
   room's last screen as one strip (`ScreensRunOn`): its first `w` screens are the row below the
   last, left to right, the next `w` the row below that, so only its end can fall short of a row;
-  past its end, `Closed` [R3, R16, C-below-closed, C-below-open, C-below-short-row]
+  past its end, `Closed` [R3, R16, C-below-closed, C-below-open, C-below-short-row,
+  C-below-second-row]
 - So in C-below-short-row the run holds one screen, under the left column: the screen under the
   right column is past its end, `Closed`, and the view backs up 2 px.
-- So only a move down that crosses into the last row reads them (`DownwardLooksAhead`): R3 and
-  R16 would back up if the screen below were closed (C-below-closed against C-below-open).
-- checked: oracle (R3, R16); constructed (C-below-closed, C-below-open, C-below-short-row).
+- So, from inside the room, only a move down that crosses into the last row or past it reads them
+  to effect (`DownwardLooksAhead`); a view on the room's bottom reads the screen under it but holds
+  whatever it is. R3 and R16 would back up if the screen below were closed (C-below-closed against
+  C-below-open).
+- So a move whose top crosses into the row below the room reads the screen under it from the
+  run's second `w`: in C-below-second-row it is open and the view stops on its aim; were it
+  closed, the view would back up.
+- checked: oracle (R3, R16); constructed (C-below-closed, C-below-open, C-below-short-row,
+  C-below-second-row).
 
 ### PushCarries
 - kind: quirk.
@@ -388,7 +397,13 @@ aim stopped it, and `v` its speed's pixel part.
 ## 6. Open questions
 
 1. Past the run below the room the camera reads whatever the game holds there; we say `Closed`.
-   Only a move down that crosses into the last row of one of the largest rooms could read there;
-   no record does (docs/LEGACY.md, "Scroll areas past the room's table").
+   The records do read there: in the four shinespark rows (left, right, up and up-left), a view on
+   the room's bottom with her still down reads the two screens just past the run, 409 times, and
+   the game holds `Closed` there each time, so the records agree (a view on the room's bottom holds
+   whatever that screen is). Two ways would let the value change the view: a move down that crosses
+   into the last row of one of the largest rooms, and a camera another domain left outside the
+   room, above it (its top in the 256th row, C-edge-down-from-above-short) or right of it, past
+   what `ScreensRunOn` runs on to. No record does either (docs/LEGACY.md, "Scroll areas past the
+   room's table").
 2. The lead settings other than `Ahead` have constructed vectors only: no recorded row meets the
    bosses that set them; a Crocomire or Kraid segment would promote them.

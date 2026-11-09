@@ -28,7 +28,7 @@ the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`
 types 16h, 1Ah and 1Bh: grapple, grabbed by Draygon, shinespark; the one it picked from
 samus-square-slope-reserve was dropped, its row name being a lexicon match), `cons.py` writes the
 constructed ones (the results come from the same model) and `vecrun.py` runs every vector of
-`scenarios/vectors/camera.toml` through it: 77 of 77 agree (camera round 3, adversary 49's O1:
+`scenarios/vectors/camera.toml` through it: 79 of 79 agree (camera round 3, adversary 49's O1:
 `below` is one run continuing the room's screens, as the table is, and
 `$TEMP/collab/camera-r3/vecrun.py` appends it to the room's screens unpadded, a screen past its
 end read as `Closed`; round 2's version padded each below row to `w`, which let a short row stand
@@ -36,7 +36,16 @@ before another, a table the game can't hold; round 3 adds adversary 42's D1, D2,
 C-push-carries-move, and round 4 adversary 43's D8, C-settle-up-from-below-short, each worked by
 hand from the bank log as well: for D8, `$80:A74B` reads `0933` from row 2, below the room, so
 Closed and 1F, before `$80:A788` clamps `0915` to 011F; row 1 is Short, not red, so `$80:A81D`
-reads row 2, red, and `$80:A839` holds on 011F ≥ 011F). `rise0.py` writes R35, the one
+reads row 2, red, and `$80:A839` holds on 011F ≥ 011F; and adversary 51's F1, two vectors that
+read the run past its first `w` and past the last row's right edge: C-below-second-row, where
+`0915` after the speed's add is 0210, row 2, so the down scroller reads index 2 × 2 + 0 = 4
+(Open, 1F rows) and `$80:A8FC` index 4 + `07A9` = 6, the run's third byte, Open, and the camera
+stays on its aim 00F8 (red there gives 00F0 − 2 = 00EE); and C-wrap-into-below, where across the
+row is (0100 + 80h) >> 8 = 1 and the camera's screen is index 1 × 2 + 1 = 3, red, its ease 0103
+and the screen after it index 1 × 2 + 2 = 4, the run's first, Open, so it eases to 0103 (red
+there drops it to 0100); down, column 1, index 3 red and index 5, past the run, red, so it holds
+on 0100. Each Closed variant was run through the model as well and gives the stated other
+result). `rise0.py` writes R35, the one
 recorded rise at 0 (`0B36` = 1 with `0B2C`/`0B2E` = 0 at the scroll): all 7 such frames are
 shinespark frames (movement type 1Bh), and in samus-shinespark-left 214 the clamp didn't fire
 (the model matches with the previous position as record N left it) and the down scroller decides.
@@ -180,6 +189,13 @@ routine's two reads. All three are marked *.
   so a move that crosses into the room's last row reads the row below it, from the leftovers. In
   2 rows (R3, R16) the leftovers decide: read as red, 5 frames would differ from the record. The
   model reading them as the table holds matches all.
+- **Past the run** (adversary 51, F2; spec open question 1). `$TEMP/collab/adv51/past50.py` logs
+  every table read at index 32h or more over `out3`: 409, all indices 50 and 51 (`$7E:CD52`,
+  `$7E:CD53`), in samus-shinespark-left, -right, -up and -up-left, all in Landing Site (w 9, h 5,
+  the run 45..49). They are the down settle's read of the screen under a camera on the room's
+  bottom (`0915` = 0400, columns 5 and 6); the dump holds `00 00` there, red, so `Closed` agrees,
+  and the settle holds there whatever the byte is. A top above the room (row FFh, index
+  255 × `07A9` + column) also reads far past the table (C-edge-down-from-above-short).
 - **The settles' third case.** Easing back (`$80:A5FB`..`$80:A631`, `$80:A84D`..`$80:A883`), the
   original reads the screen the eased position is in (column `093A`, the ease's high byte, `AND
   #$00FF`, plus the row times `07A9`) and, if it is red, puts the camera on the next screen's edge.
