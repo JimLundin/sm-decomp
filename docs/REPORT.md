@@ -29,12 +29,12 @@ How it is counted:
 
 | Domain | Model score | Budget | Fit | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | 7,219 | 6,924 | 1.04 | 12,724 | 3,415 | 1,203 | 17,988 | 226 |
+| samus-motion | 7,219 | 7,092 | 1.02 | 12,724 | 3,415 | 1,203 | 17,988 | 236 |
 | camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
 | progress | 2,013 | 878 | 2.29 | - | 678 | 335 | 25,402 | 63 |
 | hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 532 | - | - | - | 357 | 89 | - | - |
-| total | 14,730 | 11,373 | 1.30 | - | 6,162 | 2,455 | 82,906 | 431 |
+| total | 14,730 | 11,541 | 1.28 | - | 6,162 | 2,455 | 82,906 | 441 |
 
 ## Models
 
@@ -136,12 +136,12 @@ Spec [`docs/behaviours/samus-motion.md`](behaviours/samus-motion.md), k = 36. Ol
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| motion | 14 | 71.3 | 2,568 | 4,019 | 3,221 | 1.25 |
-| pose fit | 2 | 17.3 | 624 | 1,549 | 467 | 0.75 |
+| motion | 14 | 77.0 | 2,772 | 4,019 | 3,221 | 1.16 |
+| pose fit | 2 | 16.3 | 588 | 1,549 | 467 | 0.79 |
 | pose chart | 6 | 56.0 | 1,584 | 2,263 | 1,152 | 0.73 |
 | collision | 7 | 59.7 | 2,148 | 4,893 | 2,164 | 1.01 |
 | shared (in no area) | | | | | 216 | |
-| total | 29 | 204.3 | 6,924 | 12,724 | 7,219 | 1.04 |
+| total | 29 | 209.0 | 7,092 | 12,724 | 7,219 | 1.02 |
 
 ### camera
 
@@ -250,7 +250,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
-| samus-motion | 226 | 51 |
+| samus-motion | 236 | 51 |
 | camera | 80 | 0 |
 | progress | 63 | 0 |
 | hud | 62 | 0 |
