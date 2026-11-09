@@ -228,7 +228,9 @@ of the same frame, so it is verified on its own with the reports as inputs.
 
 - **Frames:** every record pair N-1, N of every row. A frame with no report must leave progress
   as it was (the null model is the model there); the domain's score is over all frames, beside the
-  null model's (18,289 of 18,299 on the 32 rows: only the 10 report frames tell them apart).
+  null model's (18,289 of 18,299 on the 32 rows). Of the 10 frames that tell them apart, 7 are
+  the stand-in's reports and so unverified (below), and 3 are ItemsPlaced: the model is matched
+  and verified on 18,292 frames, 3 more than the null model.
 - **Decoded from record N-1:** the State (§State).
 - **Reports:** taken from the record's watched instruction hits, not from the RAM's change: watch
   the entry points of the Inputs table (`oracle corpus --watch-words`, the record's `hits`) with
@@ -238,17 +240,26 @@ of the same frame, so it is verified on its own with the reports as inputs.
   item and door PLMs' state at N-1 (`gen.py` does: the PLM whose room argument the frame's bit is,
   and the pickup instruction its list holds), which is a stand-in, so those frames are reported
   as unverified, not matched. The frame's area is `079F` at N.
-- **Compared at N:** every quantity of §State. What she holds (energy, ammunition) is compared only
-  on frames with a tank report; on others other domains move it, so it is masked by name (the
-  energy and weapons domains). The items and beams switched on are compared only up to the
+- **Compared at N:** every quantity of §State, masked only where another domain changed it. What
+  she holds (energy, ammunition) is masked by name (the energy and weapons domains) on the frames
+  it changed with no tank report (549 of 18,299); on every other frame it is compared, so a report
+  that wrongly touches it is caught. The items and beams switched on are compared only up to the
   other writers: from the frame `$91:E5F0` runs (the hyper beam), `09A6` is Mother Brain's
   domain's to set, and the equipment screen's switches (F1) are masked by name on the frames its
-  menu is open.
-- **Room states:** at each room load (`07BB` changes), the state chosen from the new room's list
-  (decoded from the ROM: `$8F:E5D2`'s format) against the progress at the load, compared with the
-  state pointer.
-- **Null model:** nothing changes (18,289 of 18,299 frames); for room states, always the last
-  state (30 of the 39 loads; the 9 others are the Landing Site's power bomb version).
+  menu is open and the item, beam or reserve mode switched (none on the 32 rows).
+- **ItemsPlaced:** the count moves when the room's PLMs spawn (an item PLM in record N that
+  record N-1 doesn't hold), about 37 frames after the load, by the item PLMs of the state the room
+  loaded in (from the ROM). 3 frames on the 32 rows.
+- **Room states:** a room loads on the frame its door list `07B5` changes: loading the room header
+  sets it (`$82:DED0`) just before the state is chosen (`$82:DED3`). Not `07BB`, and not the room
+  pointer `079B`, which changes at the door header's load about 40 frames earlier. At each load,
+  the state chosen from the new room's list (decoded from the ROM: `$8F:E5D2`'s format) against
+  the progress at the load, compared with the state pointer. The 32 rows hold 7 loads; each row's
+  first record also holds a standing state (32), chosen by a load before the row, compared against
+  the same choice over that record's progress and door.
+- **Null model:** nothing changes (18,289 of 18,299 frames); for room states, the default state
+  (the last in the list): 7 of the 7 loads, and 23 of the 32 standing states (the 9 others hold a
+  conditional state).
 - **Free run:** carry progress forward from a row's first record with only the reports; it should
   equal the record at every frame. Re-seeding is never needed within a run: progress is never
   reset except by loading a file.
