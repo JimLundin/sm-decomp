@@ -41,8 +41,11 @@ For the two confined roles, the brief is also part of the barrier:
 - **Shapes, not mechanisms.** A shape item names what the code should express, and leaves how
   to the implementer. Before writing one, sort each thing it names into a **value** or a
   **decision**: a table or a record holds values; a decision stays in the code, written once with
-  its reason. An item that asks for a mechanism ("built in a constant", "a table of whether") can
-  leave only a costly encoding under the checks DESIGN lists.
+  its reason. An item that asks for a mechanism can leave only a costly encoding under the checks
+  DESIGN lists. The one that recurs: asking for a keyed shape to be built in a constant. A
+  table's lookup is a trait method, which can't be `const`, so a constant set leaves only a
+  positional array or a macro per set. Ask that the value be held, not when it is built. Before
+  launch, the brief's gate works through each item under the checks.
 - **Coding standards, never measures.** The brief gives no score, budget, fit or size target. After
   a round gate it may give the coarse verdict in words (MODEL §1 decision 11).
 - **Scanned.** `tools/cleanroom/scan_brief.sh BRIEF` reports 0 before `launch.sh` takes it.
