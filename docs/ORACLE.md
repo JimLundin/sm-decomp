@@ -448,7 +448,10 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
 - **Defender** blocks freshly built executables at random (exit 126), build scripts included.
   Locally, build a cdylib exporting `sm_oracle_run(argc, argv)` around `oracle::cli::main` and call it
   from Python with ctypes, as `tools/lane/test_dll.py` does for tests. Only `$TEMP` allows executables.
-  A DLL in use can't be relinked: build under a new name. CI runs ordinary binaries.
+  A DLL in use can't be relinked: build under a new name. CI runs ordinary binaries. A registry
+  crate with a build script is used through its copy in `vendor/`, the script's output baked in by
+  `tools/vendor_nobuild.sh` and patched in by the root `Cargo.toml`; CI's
+  `tools/vendor_nobuild_check.sh` holds each copy to the real script.
 - **lsnes processes started together** used to race on `%APPDATA%/lsnes`; each now has its own
   config directory. A killed lsnes usually shows as `took no request`.
 - **lsnes crashes (fixed):** a cut callback that unregistered itself while lsnes dispatched it made

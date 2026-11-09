@@ -28,3 +28,8 @@ set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float a
 `cfg(verify)`, probe or observer in the engine, no SNES address literal in `game`, `runtime` or
 `app`, no `#![feature]`, `allow` or `expect` in the engine, and no routine-label names. CI runs
 it in Quality.
+
+`vendor/` is not ours: it holds published registry crates whose build scripts Defender blocks on
+the development machine, each with its script's output baked in by `tools/vendor_nobuild.sh` and
+patched in by the root `Cargo.toml`. CI's `tools/vendor_nobuild_check.sh` runs the real scripts
+and fails if a copy's baked output differs.
