@@ -69,7 +69,9 @@ jobs:
           line=$(grep -E "$entry" scenarios/locks/lsnes.toml)
           name=$(sed -E "s/$entry/\1/" <<<"$line")
           sha=$(sed -E "s/$entry/\2/" <<<"$line")
-          curl --fail --silent --show-error --location --retry 4 --retry-all-errors \
+          # The release host answers 504 at times: back off for up to ten minutes.
+          curl --fail --silent --show-error --location \
+            --retry 8 --retry-delay 15 --retry-all-errors --retry-max-time 600 \
             --output "$RUNNER_TEMP/relock.tar.gz.enc" \
             "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$name"
           echo "$sha  $RUNNER_TEMP/relock.tar.gz.enc" | sha256sum --check
@@ -110,10 +112,12 @@ jobs:
             echo "::error::CACHE_SHA256 is not pinned: upload $CACHE_ASSET to ci-data and set its SHA-256"
             exit 1
           fi
-          if ! curl --fail --silent --show-error --location --retry 4 --retry-all-errors \
+          # The release host answers 504 at times: back off for up to ten minutes.
+          if ! curl --fail --silent --show-error --location \
+            --retry 8 --retry-delay 15 --retry-all-errors --retry-max-time 600 \
             --output "$RUNNER_TEMP/cache.tar.xz.enc" \
             "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$CACHE_ASSET"; then
-            echo "::error::$CACHE_ASSET is not on the ci-data release"
+            echo "::error::$CACHE_ASSET could not be fetched from the ci-data release"
             exit 1
           fi
           echo "$CACHE_SHA256  $RUNNER_TEMP/cache.tar.xz.enc" | sha256sum --check
