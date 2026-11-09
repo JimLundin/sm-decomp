@@ -32,9 +32,9 @@ How it is counted:
 | samus-motion | 7,219 | 6,924 | 1.04 | 12,724 | 3,415 | 1,203 | 17,988 | 226 |
 | camera | 1,950 | 1,591 | 1.23 | 2,274 | 620 | 325 | 17,835 | 79 |
 | progress | 2,013 | 878 | 2.29 | - | 678 | 335 | 25,402 | 63 |
-| hud | 4,215 | 1,980 | 2.13 | - | 1,354 | 703 | 20,613 | 62 |
+| hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 532 | - | - | - | 357 | 89 | - | - |
-| total | 15,929 | 11,373 | 1.40 | - | 6,424 | 2,655 | 81,838 | 430 |
+| total | 14,771 | 11,373 | 1.30 | - | 6,144 | 2,462 | 81,838 | 430 |
 
 ## Models
 
@@ -95,21 +95,21 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean_model/hud/src/catalogue.rs` | - | tables and types | 186 | 224 | 96 | 248 | 0 | 0 | 184 |
+| `crates/clean_model/hud/src/catalogue.rs` | - | tables and types | 61 | 93 | 93 | 248 | 0 | 0 | 160 |
 | `crates/clean_model/hud/src/events.rs` | - | tables and types | 1 | 8 | 25 | 0 | 0 | 0 | 6 |
-| `crates/clean_model/hud/src/frame.rs` | - | logic | 249 | 308 | 33 | 0 | 14 | 8 | 61 |
-| `crates/clean_model/hud/src/grid.rs` | - | logic | 411 | 501 | 198 | 3 | 8 | 0 | 127 |
-| `crates/clean_model/hud/src/inputs.rs` | - | tables and types | 258 | 316 | 479 | 14 | 7 | 0 | 155 |
+| `crates/clean_model/hud/src/frame.rs` | - | logic | 225 | 273 | 33 | 0 | 11 | 0 | 44 |
+| `crates/clean_model/hud/src/grid.rs` | - | logic | 401 | 447 | 86 | 0 | 17 | 0 | 68 |
+| `crates/clean_model/hud/src/inputs.rs` | - | tables and types | 182 | 235 | 463 | 108 | 7 | 0 | 144 |
 | `crates/clean_model/hud/src/item.rs` | selection | tables and types | 5 | 5 | 35 | 21 | 0 | 0 | 17 |
-| `crates/clean_model/hud/src/lib.rs` | - | logic | 10 | 177 | 12 | 0 | 0 | 0 | 30 |
-| `crates/clean_model/hud/src/map.rs` | minimap | logic | 584 | 665 | 213 | 31 | 27 | 0 | 147 |
-| `crates/clean_model/hud/src/mini_map.rs` | minimap | logic | 997 | 1,107 | 100 | 7 | 54 | 25 | 179 |
-| `crates/clean_model/hud/src/pictures.rs` | - | tables and types | 291 | 363 | 231 | 526 | 7 | 1 | 127 |
-| `crates/clean_model/hud/src/rules.rs` | - | tables and types | 151 | 183 | 182 | 182 | 3 | 0 | 105 |
-| `crates/clean_model/hud/src/selection.rs` | selection | logic | 236 | 280 | 6 | 0 | 19 | 0 | 45 |
-| `crates/clean_model/hud/src/state.rs` | - | logic | 121 | 176 | 123 | 10 | 0 | 0 | 58 |
-| `crates/clean_model/hud/src/status_bar.rs` | status | logic | 717 | 781 | 12 | 2 | 65 | 47 | 113 |
-| total | | | 4,215 | 5,094 | 1,745 | 1,044 | 202 | 81 | 1,354 |
+| `crates/clean_model/hud/src/lib.rs` | - | logic | 11 | 186 | 12 | 0 | 0 | 0 | 31 |
+| `crates/clean_model/hud/src/map.rs` | minimap | tables and types | 41 | 73 | 106 | 17 | 0 | 0 | 31 |
+| `crates/clean_model/hud/src/mini_map.rs` | minimap | logic | 767 | 890 | 113 | 45 | 40 | 0 | 141 |
+| `crates/clean_model/hud/src/pictures.rs` | - | tables and types | 346 | 452 | 330 | 470 | 2 | 0 | 179 |
+| `crates/clean_model/hud/src/rules.rs` | - | tables and types | 175 | 211 | 160 | 133 | 3 | 0 | 88 |
+| `crates/clean_model/hud/src/selection.rs` | selection | logic | 207 | 259 | 0 | 0 | 13 | 0 | 37 |
+| `crates/clean_model/hud/src/state.rs` | - | tables and types | 7 | 35 | 118 | 10 | 0 | 0 | 28 |
+| `crates/clean_model/hud/src/status_bar.rs` | status | logic | 629 | 687 | 12 | 2 | 64 | 0 | 100 |
+| total | | | 3,057 | 3,854 | 1,586 | 1,054 | 155 | 0 | 1,074 |
 
 ### Shared types
 
@@ -124,9 +124,9 @@ How it is counted:
 | samus-motion | 3,415 | 2,332 | 1,083 | 1,203 |
 | camera | 620 | 223 | 397 | 325 |
 | progress | 678 | 187 | 491 | 335 |
-| hud | 1,354 | 594 | 760 | 703 |
+| hud | 1,074 | 653 | 421 | 510 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud) | 357 | 357 | 0 | 89 |
-| total | 6,424 | 3,693 | 2,731 | 2,655 |
+| total | 6,144 | 3,752 | 2,392 | 2,462 |
 
 ## Spec, budget and fit by area
 
@@ -174,11 +174,11 @@ Spec [`docs/behaviours/hud.md`](behaviours/hud.md), k = 36. Old code -, at `3876
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| status | 7 | 21.0 | 756 | 1,254 | 717 | 0.95 |
-| selection | 4 | 8.0 | 288 | - | 241 | 0.84 |
-| minimap | 8 | 26.0 | 936 | 1,666 | 1,580 | 1.69 |
-| shared (in no area) | | | | | 1,677 | |
-| total | 19 | 55.0 | 1,980 | - | 4,215 | 2.13 |
+| status | 7 | 21.0 | 756 | 1,254 | 629 | 0.83 |
+| selection | 4 | 8.0 | 288 | - | 212 | 0.74 |
+| minimap | 8 | 26.0 | 936 | 1,666 | 808 | 0.86 |
+| shared (in no area) | | | | | 1,408 | |
+| total | 19 | 55.0 | 1,980 | - | 3,057 | 1.54 |
 
 ## Bridges and harnesses
 
@@ -192,9 +192,9 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | camera | harness | 1 | 3,563 | 3,927 | 499 | 161 | 156 | 26 | 701 |
 | progress | bridge | 1 | 1,338 | 1,551 | 57 | 69 | 63 | 0 | 230 |
 | progress | harness | 1 | 4,484 | 4,618 | 634 | 407 | 416 | 31 | 760 |
-| hud | bridge | 1 | 2,138 | 2,347 | 141 | 16 | 157 | 2 | 366 |
-| hud | harness | 1 | 3,207 | 3,447 | 505 | 114 | 206 | 22 | 576 |
-| total | | | 22,287 | 24,692 | 2,571 | 1,002 | 1,299 | 97 | 4,052 |
+| hud | bridge | 1 | 1,870 | 2,173 | 100 | 9 | 62 | 0 | 333 |
+| hud | harness | 1 | 3,160 | 3,403 | 518 | 135 | 196 | 22 | 584 |
+| total | | | 21,972 | 24,474 | 2,543 | 1,016 | 1,194 | 95 | 4,027 |
 
 ## Harness floors and vectors
 
@@ -393,5 +393,5 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 45 | 5,160 | 30,960 | 33,189 | 9,804 | 883 | 2,498 | 655 | 7,049 |
-| bridges | 7 | 1,127 | 6,759 | 7,999 | 476 | 98 | 304 | 2 | 1,214 |
-| rebuilt models, shared types included | 50 | 2,655 | 15,929 | 19,573 | 6,251 | 10,276 | 701 | 135 | 6,424 |
+| bridges | 7 | 1,082 | 6,492 | 7,825 | 435 | 91 | 209 | 0 | 1,181 |
+| rebuilt models, shared types included | 50 | 2,462 | 14,771 | 18,333 | 6,092 | 10,286 | 654 | 54 | 6,144 |
