@@ -1,5 +1,5 @@
-//! What the places remember: the item locations emptied and the doors that stay open, by id, and
-//! how she has each area's map.
+//! What the places remember (spec §3): the item locations emptied and the doors that stay open,
+//! by id, and how she has each area's map.
 
 use std::collections::BTreeSet;
 
@@ -29,17 +29,25 @@ impl<Id: Ord> Remembered<Id> {
     }
 }
 
+/// None remembered, as a new file starts.
+impl<Id> Default for Remembered<Id> {
+    fn default() -> Self {
+        Self(BTreeSet::new())
+    }
+}
+
 /// How she has an area's map.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum MapStatus {
     /// She doesn't have it.
     #[default]
-    None,
+    Unmapped,
     /// A map station gave it, or she has left the area since the room that gives it on arrival.
     Downloaded,
-    /// The room that gives it on arrival gave it, and she hasn't left the area since: the quirk
-    /// of Tourian, which has no map station. Play reads it as `Downloaded`; the saved file is what
-    /// reads it, which keeps the two apart. Spec: MapOnArrival.
+    /// The map a room gives on arrival: Tourian has no map station, so its first room gives its
+    /// map as she enters it. It stays `OnArrival` until she leaves the area by a door into
+    /// another, when it becomes `Downloaded`. Play reads the two the same; only the saved file
+    /// tells them apart, when she saves before leaving. Spec: MapOnArrival.
     OnArrival,
 }
 

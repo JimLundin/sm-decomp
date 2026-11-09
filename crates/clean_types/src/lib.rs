@@ -1,6 +1,8 @@
 //! The domain types the clean models share: quantities, poses and the world, in player terms.
 
+use core::marker::PhantomData;
 use core::num::Wrapping;
+use core::ops::{Index, IndexMut};
 
 /// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16.
 ///
@@ -509,6 +511,72 @@ pub enum Checked {
     OriginalOnly,
 }
 
+/// An enum of `N` members that keys a `Table`: each member has its place among them, in the
+/// enum's declared order.
+pub trait Key<const N: usize>: Copy {
+    /// The value at this member's place in `row`, which holds one value for each member in the
+    /// enum's declared order. Each enum gives every member's place in one exhaustive match, its
+    /// last member's pattern the whole row, so a row of another length than its members is
+    /// refused by the compiler.
+    fn pick<T>(self, row: [T; N]) -> T;
+}
+
+/// A value for each member of the enum `K`, read and changed in place as `table[member]`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Table<K, V, const N: usize> {
+    /// The values, in `K`'s declared order.
+    values: [V; N],
+    keys: PhantomData<K>,
+}
+
+impl<K, V, const N: usize> Table<K, V, N> {
+    /// The table of `values`, given in `K`'s declared order.
+    #[must_use]
+    pub const fn new(values: [V; N]) -> Self {
+        Self {
+            values,
+            keys: PhantomData,
+        }
+    }
+
+    /// Every value, in `K`'s declared order.
+    pub fn values(&self) -> impl Iterator<Item = &V> {
+        self.values.iter()
+    }
+}
+
+impl<K, V: Default, const N: usize> Default for Table<K, V, N> {
+    fn default() -> Self {
+        Self::new(core::array::from_fn(|_| V::default()))
+    }
+}
+
+impl<K: Key<N>, V, const N: usize> Index<K> for Table<K, V, N> {
+    type Output = V;
+
+    fn index(&self, key: K) -> &V {
+        key.pick(self.values.each_ref())
+    }
+}
+
+impl<K: Key<N>, V, const N: usize> IndexMut<K> for Table<K, V, N> {
+    fn index_mut(&mut self, key: K) -> &mut V {
+        key.pick(self.values.each_mut())
+    }
+}
+
+/// A set of members of the enum `K`: a table of whether each member is in it. Its default is
+/// the empty set.
+pub type Set<K, const N: usize> = Table<K, bool, N>;
+
+impl<K, const N: usize> Set<K, N> {
+    /// Whether any member is in both sets.
+    #[must_use]
+    pub fn intersects(&self, other: &Self) -> bool {
+        self.values().zip(other.values()).any(|(&a, &b)| a && b)
+    }
+}
+
 /// A region of the planet. The area of the room she is in is the frame's area.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping areas in sorted sets.
@@ -543,6 +611,20 @@ impl Area {
     ];
 }
 
+impl Key<{ Self::ALL.len() }> for Area {
+    fn pick<T>(self, row: [T; Self::ALL.len()]) -> T {
+        match (self, row) {
+            (Self::Brinstar, [v, ..])
+            | (Self::Ceres, [_, v, ..])
+            | (Self::Crateria, [_, _, v, ..])
+            | (Self::Maridia, [_, _, _, v, ..])
+            | (Self::Norfair, [_, _, _, _, v, ..])
+            | (Self::Tourian, [_, _, _, _, _, v, ..])
+            | (Self::WreckedShip, [_, _, _, _, _, _, v]) => v,
+        }
+    }
+}
+
 /// A piece of equipment she can take that is not a beam or a tank.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping items in sorted sets.
@@ -572,6 +654,29 @@ pub enum Item {
     XRayScope,
 }
 
+impl Item {
+    /// How many items there are.
+    pub const COUNT: usize = 11;
+}
+
+impl Key<{ Self::COUNT }> for Item {
+    fn pick<T>(self, row: [T; Self::COUNT]) -> T {
+        match (self, row) {
+            (Self::Bombs, [v, ..])
+            | (Self::GrappleBeam, [_, v, ..])
+            | (Self::GravitySuit, [_, _, v, ..])
+            | (Self::HiJumpBoots, [_, _, _, v, ..])
+            | (Self::MorphBall, [_, _, _, _, v, ..])
+            | (Self::ScrewAttack, [_, _, _, _, _, v, ..])
+            | (Self::SpaceJump, [_, _, _, _, _, _, v, ..])
+            | (Self::SpeedBooster, [_, _, _, _, _, _, _, v, ..])
+            | (Self::SpringBall, [_, _, _, _, _, _, _, _, v, ..])
+            | (Self::VariaSuit, [_, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::XRayScope, [_, _, _, _, _, _, _, _, _, _, v]) => v,
+        }
+    }
+}
+
 /// A beam she can take.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping beams in sorted sets.
@@ -587,6 +692,23 @@ pub enum Beam {
     Spazer,
     /// The wave beam.
     Wave,
+}
+
+impl Beam {
+    /// How many beams there are.
+    pub const COUNT: usize = 5;
+}
+
+impl Key<{ Self::COUNT }> for Beam {
+    fn pick<T>(self, row: [T; Self::COUNT]) -> T {
+        match (self, row) {
+            (Self::Charge, [v, ..])
+            | (Self::Ice, [_, v, ..])
+            | (Self::Plasma, [_, _, v, ..])
+            | (Self::Spazer, [_, _, _, v, ..])
+            | (Self::Wave, [_, _, _, _, v]) => v,
+        }
+    }
 }
 
 /// Something that, once it happens, changes the world for the rest of the run.
@@ -633,6 +755,38 @@ pub enum Event {
     TourianRoomsUnset,
 }
 
+impl Event {
+    /// How many events there are.
+    pub const COUNT: usize = 18;
+}
+
+impl Key<{ Self::COUNT }> for Event {
+    fn pick<T>(self, row: [T; Self::COUNT]) -> T {
+        match (self, row) {
+            (Self::AcidReceded, [v, ..])
+            | (Self::AnimalsFreed, [_, v, ..])
+            | (Self::DraygonStatueGrey, [_, _, v, ..])
+            | (Self::GlassTunnelBroken, [_, _, _, v, ..])
+            | (Self::KraidStatueGrey, [_, _, _, _, v, ..])
+            | (Self::LavaQuakeOutrun, [_, _, _, _, _, v, ..])
+            | (Self::MetroidRoom1Empty, [_, _, _, _, _, _, v, ..])
+            | (Self::MetroidRoom2Empty, [_, _, _, _, _, _, _, v, ..])
+            | (Self::MetroidRoom3Empty, [_, _, _, _, _, _, _, _, v, ..])
+            | (Self::MetroidRoom4Empty, [_, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::MotherBrainTankBroken, [_, _, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::PhantoonStatueGrey, [_, _, _, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::PlanetAwake, [_, _, _, _, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::RidleyStatueGrey, [_, _, _, _, _, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::ShaktoolPath, [_, _, _, _, _, _, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::TimeBombSet, [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::TourianOpen, [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, v, ..])
+            | (Self::TourianRoomsUnset, [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, v]) => {
+                v
+            }
+        }
+    }
+}
+
 /// The kind of a boss, as the boss itself reports it when defeated. The same kind is a different
 /// boss in each area.
 ///
@@ -645,6 +799,21 @@ pub enum BossKind {
     MiniBoss,
     /// A torizo: Bomb Torizo in Crateria, Golden Torizo in Norfair.
     Torizo,
+}
+
+impl BossKind {
+    /// How many kinds of boss there are.
+    pub const COUNT: usize = 3;
+}
+
+impl Key<{ Self::COUNT }> for BossKind {
+    fn pick<T>(self, row: [T; Self::COUNT]) -> T {
+        match (self, row) {
+            (Self::MainBoss, [v, ..])
+            | (Self::MiniBoss, [_, v, ..])
+            | (Self::Torizo, [_, _, v]) => v,
+        }
+    }
 }
 
 /// The id a room's population gives a place where an item lies.

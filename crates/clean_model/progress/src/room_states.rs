@@ -1,16 +1,13 @@
-//! Which version of a room loads, given the run's progress. Spec: RoomStates.
+//! Which version of a room loads, given the run's progress (spec §5). Spec: RoomStates.
 
 use clean_types::{Area, Entrance, Event, Item};
 
-use crate::progress::Progress;
-use crate::supplies::Supply;
-use crate::world::BossKinds;
+use crate::inventory::Supply;
+use crate::progress::{BossKinds, Progress};
 
 /// The condition a version of a room loads on. Spec: RoomStates.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Condition {
-    /// Always holds.
-    Always,
     /// Holds once the event has happened.
     Happened(Event),
     /// Holds when a boss of any of these kinds is defeated in the room's own area.
@@ -26,10 +23,10 @@ pub enum Condition {
     EnteredBy(Entrance),
 }
 
-/// The room she loads into: its area, and the entrance she came in by, if any. The area is the
-/// new room's, known before its state is chosen.
+/// The room she enters: its area, and the entrance she came in by, if any. The area is the
+/// room's own, known before its state is chosen.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct RoomEntry {
+pub struct EnteredRoom {
     /// The room's own area.
     pub area: Area,
     /// The way she came into the room, if she came in by one.
@@ -37,20 +34,18 @@ pub struct RoomEntry {
 }
 
 impl Condition {
-    /// Whether the condition holds for `progress`, for the room she loads into. The missiles'
-    /// and power bombs' conditions read capacity, not what she holds, so a room changes for a
-    /// tank taken even with every one spent.
-    #[must_use]
-    fn holds(self, progress: &Progress, room: RoomEntry) -> bool {
+    /// Whether the condition holds for `progress`, in the room she enters. The missiles' and
+    /// power bombs' conditions read capacity, not what she holds, so a room changes for a tank
+    /// taken even with every one spent.
+    fn holds(self, progress: &Progress, room: EnteredRoom) -> bool {
         let inventory = &progress.inventory;
         let has_any = |supply| inventory.capacity[supply].0 != 0;
         match self {
-            Self::Always => true,
-            Self::Happened(event) => progress.events.contains(event),
-            Self::Defeated(kinds) => progress.defeated[room.area].intersects(kinds),
-            Self::Has(item) => inventory.items.contains(item),
+            Self::Happened(event) => progress.events[event],
+            Self::Defeated(kinds) => progress.defeated[room.area].intersects(&kinds),
+            Self::Has(item) => inventory.items[item],
             Self::MorphBallAndMissiles => {
-                inventory.items.contains(Item::MorphBall) && has_any(Supply::Missiles)
+                inventory.items[Item::MorphBall] && has_any(Supply::Missiles)
             }
             Self::PowerBombs => has_any(Supply::PowerBombs),
             Self::EnteredBy(entrance) => room.entered_by == Some(entrance),
@@ -58,31 +53,31 @@ impl Condition {
     }
 }
 
-/// A room's versions in its order, each with its condition; the last always holds.
-/// Spec: RoomStates.
+/// A room's versions: one for each of its conditions, in its order, then the default version,
+/// which loads when none of them holds. Spec: RoomStates.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RoomStates<'a> {
-    /// Every version but the last, in order.
-    conditional: &'a [Condition],
+    /// The conditions of every version but the default, in the room's order.
+    pub conditional: &'a [Condition],
 }
 
-impl<'a> RoomStates<'a> {
-    /// A room's versions, in order, or nothing unless the last is `Condition::Always`.
-    #[must_use]
-    pub const fn new(states: &'a [Condition]) -> Option<Self> {
-        match states.split_last() {
-            Some((Condition::Always, conditional)) => Some(Self { conditional }),
-            Some(_) | None => None,
-        }
-    }
+/// The version of a room that loads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Version {
+    /// The version of the condition at this index, from 0, of `RoomStates::conditional`.
+    Conditional(usize),
+    /// The default version, which loads when no condition holds.
+    Default,
+}
 
-    /// The index, from 0, of the version that loads: the first whose condition holds, or the
-    /// last when none before it does. Spec: RoomStates.
+impl RoomStates<'_> {
+    /// The version that loads: the first whose condition holds, or the default when none does.
+    /// Spec: RoomStates.
     #[must_use]
-    pub fn choose(&self, progress: &Progress, room: RoomEntry) -> usize {
+    pub fn choose(&self, progress: &Progress, room: EnteredRoom) -> Version {
         self.conditional
             .iter()
             .position(|&condition| condition.holds(progress, room))
-            .unwrap_or(self.conditional.len())
+            .map_or(Version::Default, Version::Conditional)
     }
 }

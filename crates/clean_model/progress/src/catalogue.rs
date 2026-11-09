@@ -2,7 +2,7 @@
 
 use clean_types::{Checked, Kind, Switch};
 
-/// A behaviour of the spec, one per entry, named as the spec names it.
+/// A behaviour of the spec, one per entry, named as the spec and the vector file name it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BehaviourId {
     /// Spec: EventsHappen.
@@ -39,8 +39,6 @@ pub enum BehaviourId {
 pub struct Behaviour {
     /// Which spec entry it is.
     pub id: BehaviourId,
-    /// The entry's name, as the spec and the vector file write it.
-    pub name: &'static str,
     /// What the player sees.
     pub summary: &'static str,
     /// Whether it is a rule of the game, a quirk, or another kind.
@@ -55,7 +53,6 @@ pub struct Behaviour {
 pub const CATALOGUE: &[Behaviour] = &[
     Behaviour {
         id: BehaviourId::EventsHappen,
-        name: "EventsHappen",
         summary: "an event, once it happens, has happened for the rest of the run",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -63,7 +60,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::ZebetitesCounted,
-        name: "ZebetitesCounted",
         summary: "the game counts the zebetites she has destroyed, so the ones she broke stay broken",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -71,7 +67,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::BossesDefeated,
-        name: "BossesDefeated",
         summary: "a defeated boss is remembered by its kind in its area, so it stays gone",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -79,7 +74,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::EmptiedLocations,
-        name: "EmptiedLocations",
         summary: "an item she takes is gone from its place for good",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -87,7 +81,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::DoorsStayOpen,
-        name: "DoorsStayOpen",
         summary: "a door she opens for good stays open",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -95,7 +88,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::MapsByArea,
-        name: "MapsByArea",
         summary: "a map station gives her the map of its area",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -103,7 +95,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::MapOnArrival,
-        name: "MapOnArrival",
         summary: "Tourian, which has no map station, gives its map when she enters its first room; \
                   the map counts as downloaded only once she has left the area",
         kind: Kind::Quirk,
@@ -112,7 +103,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::StationsSavedAt,
-        name: "StationsSavedAt",
         summary: "the save stations she has saved at are remembered by area, for the maps to show",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -120,7 +110,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::ItemsPlacedCount,
-        name: "ItemsPlacedCount",
         summary: "the game counts every item it places as rooms load, taken or not, over the whole \
                   run; nothing in play reads the count, but the file keeps it",
         kind: Kind::Quirk,
@@ -129,7 +118,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::TakingItems,
-        name: "TakingItems",
         summary: "an item she takes is hers and switched on",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
@@ -137,7 +125,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::TakingBeams,
-        name: "TakingBeams",
         summary: "a beam she takes is hers and switched on; spazer and plasma don't fire together, \
                   so taking one switches the other off",
         kind: Kind::Mechanic,
@@ -146,7 +133,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::Tanks,
-        name: "Tanks",
         summary: "a tank raises a capacity by its amount: an energy tank fills her energy to the new \
                   capacity, a reserve tank leaves the reserves as they were and, the first time, \
                   makes them refill her automatically, and a missile, super missile or power bomb \
@@ -157,7 +143,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::RoomStates,
-        name: "RoomStates",
         summary: "a room has versions, each with a condition on the run's progress; it loads the \
                   first whose condition holds, so it changes as the run goes on",
         kind: Kind::Mechanic,
@@ -166,7 +151,6 @@ pub const CATALOGUE: &[Behaviour] = &[
     },
     Behaviour {
         id: BehaviourId::ItemPercentage,
-        name: "ItemPercentage",
         summary: "the ending shows how much of the game's equipment she found, as a percentage",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,

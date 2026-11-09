@@ -100,7 +100,7 @@ pub const BOSS_KINDS: [(&str, BossKind); 3] = [
 ];
 
 pub const RESERVE_MODES: [(&str, ReserveMode); 3] = [
-    ("None", ReserveMode::None),
+    ("None", ReserveMode::NoTank),
     ("Automatic", ReserveMode::Automatic),
     ("Manual", ReserveMode::Manual),
 ];

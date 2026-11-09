@@ -9,10 +9,10 @@ use std::fmt::Debug;
 use std::num::Wrapping;
 
 use clean_model_progress::{
-    Beams, BossKinds, CATALOGUE, Condition, Count, Events, Items, PerArea, Pickup, Progress,
-    Remembered, Report, RoomEntry, RoomStates, Rules,
+    CATALOGUE, Condition, Count, EnteredRoom, PerArea, Pickup, Progress, Remembered, Report,
+    RoomStates, Rules, Version,
 };
-use clean_types::{Area, Checked, DoorId, Entrance, LocationId, StationId};
+use clean_types::{Area, Checked, DoorId, Entrance, Key, LocationId, Set, StationId};
 use support::names::{
     AREAS, BEAMS, BOSS_KINDS, EVENTS, HELD, ITEMS, MAPS, RESERVE_MODES, SUPPLIES, TANKS, lookup,
     named,
@@ -84,21 +84,18 @@ fn count(value: &Value) -> Count {
     Wrapping(value.u16())
 }
 
-fn items(value: &Value) -> Items {
-    Items::of(&list_of(value, |i| named(&ITEMS, i.str())))
-}
-
-fn beams(value: &Value) -> Beams {
-    Beams::of(&list_of(value, |b| named(&BEAMS, b.str())))
-}
-
-fn boss_kinds(value: &Value) -> BossKinds {
-    BossKinds::of(&list_of(value, |b| named(&BOSS_KINDS, b.str())))
+/// The set of the members `value` names, each by its name in `names`.
+fn set<K: Key<N>, const N: usize>(value: &Value, names: &[(&str, K)]) -> Set<K, N> {
+    let mut set = Set::default();
+    for member in value.array() {
+        set[named(names, member.str())] = true;
+    }
+    set
 }
 
 /// A progress in the file's layout: every key left out at its start-of-game value.
 fn progress(value: &Value) -> Progress {
-    let mut progress = Progress::new_file();
+    let mut progress = Progress::default();
     for (key, v) in value.table() {
         set_field(&mut progress, key, v);
     }
@@ -107,14 +104,14 @@ fn progress(value: &Value) -> Progress {
 
 fn set_field(progress: &mut Progress, key: &str, v: &Value) {
     match key {
-        "events" => progress.events = Events::of(&list_of(v, |e| named(&EVENTS, e.str()))),
+        "events" => progress.events = set(v, &EVENTS),
         "zebetites" => progress.zebetites = count(v),
-        "defeated" => progress.defeated = per_area(v, boss_kinds),
+        "defeated" => progress.defeated = per_area(v, |kinds| set(kinds, &BOSS_KINDS)),
         "emptied" => progress.emptied = Remembered::of(list_of(v, |n| LocationId(n.u16()))),
         "opened" => progress.opened = Remembered::of(list_of(v, |n| DoorId(n.u16()))),
         "maps" => progress.maps = per_area(v, |m| named(&MAPS, m.str())),
         "stations" => progress.stations = per_area(v, |s| set_of(s, |n| StationId(n.u16()))),
-        "items_placed" => progress.placements = count(v),
+        "items_placed" => progress.items_placed = count(v),
         other => set_inventory_field(progress, other, v),
     }
 }
@@ -126,10 +123,10 @@ fn set_inventory_field(progress: &mut Progress, key: &str, v: &Value) {
         return;
     }
     match key {
-        "items" => inventory.items = items(v),
-        "equipped" => inventory.equipped = items(v),
-        "beams" => inventory.beams = beams(v),
-        "beams_equipped" => inventory.beams_equipped = beams(v),
+        "items" => inventory.items = set(v, &ITEMS),
+        "equipped" => inventory.items_switched_on = set(v, &ITEMS),
+        "beams" => inventory.beams = set(v, &BEAMS),
+        "beams_equipped" => inventory.beams_switched_on = set(v, &BEAMS),
         "reserve_mode" => inventory.reserve_mode = named(&RESERVE_MODES, v.str()),
         "capacity" => {
             for (supply, n) in v.table() {
@@ -181,13 +178,22 @@ fn report(value: &Value, area: Area) -> Report {
     report
 }
 
+/// A room's states in the file: its conditional versions, then `Always`, its default version,
+/// which `RoomStates` holds by its type.
+fn room_states(value: &Value) -> Vec<Condition> {
+    let (default, conditional) = value.array().split_last().expect("a room has states");
+    let mut fields = Fields::new(default.table(), "condition");
+    assert_eq!(fields.need("when").str(), "Always", "a room's last state");
+    fields.done();
+    conditional.iter().map(condition).collect()
+}
+
 fn condition(value: &Value) -> Condition {
     let mut fields = Fields::new(value.table(), "condition");
     let when = fields.need("when");
     let condition = match when.str() {
-        "Always" => Condition::Always,
         "Happened" => Condition::Happened(named(&EVENTS, fields.need("event").str())),
-        "Defeated" => Condition::Defeated(boss_kinds(&fields.need("bosses"))),
+        "Defeated" => Condition::Defeated(set(&fields.need("bosses"), &BOSS_KINDS)),
         "Has" => Condition::Has(named(&ITEMS, fields.need("item").str())),
         "MorphBallAndMissiles" => Condition::MorphBallAndMissiles,
         "PowerBombs" => Condition::PowerBombs,
@@ -215,7 +221,7 @@ fn bools(value: &Value) -> Vec<bool> {
 fn asks(value: &Value) -> Asks {
     let mut fields = Fields::new(value.table(), "asks");
     let asks = Asks {
-        room_states: fields.take("room_states").map(|s| list_of(&s, condition)),
+        room_states: fields.take("room_states").map(|s| room_states(&s)),
         entered_by: fields.take("entered_by").map(|n| Entrance(n.u16())),
         percentage: fields.take("percentage").is_some_and(|p| p.bool()),
         emptied: fields
@@ -277,15 +283,16 @@ fn vectors() -> Vec<Vector> {
 }
 
 fn answer(asks: &Asks, progress: &Progress, area: Area) -> Answers {
-    let room = RoomEntry {
+    let room = EnteredRoom {
         area,
         entered_by: asks.entered_by,
     };
-    let room_state = |states: &Vec<Condition>| {
-        RoomStates::new(states)
-            .expect("a room's states end with Always")
-            .choose(progress, room)
-    };
+    // The file numbers the default version after the conditional ones.
+    let room_state =
+        |conditional: &Vec<Condition>| match (RoomStates { conditional }).choose(progress, room) {
+            Version::Conditional(index) => index,
+            Version::Default => conditional.len(),
+        };
     Answers {
         room_state: asks.room_states.as_ref().map(room_state),
         percentage: asks
@@ -319,9 +326,14 @@ fn differences(actual: &Progress, expected: &Progress) -> Vec<String> {
     let (a, e) = (&actual.inventory, &expected.inventory);
     let o = &mut out;
     differ(o, "items", &a.items, &e.items);
-    differ(o, "equipped", &a.equipped, &e.equipped);
+    differ(o, "equipped", &a.items_switched_on, &e.items_switched_on);
     differ(o, "beams", &a.beams, &e.beams);
-    differ(o, "beams_equipped", &a.beams_equipped, &e.beams_equipped);
+    differ(
+        o,
+        "beams_equipped",
+        &a.beams_switched_on,
+        &e.beams_switched_on,
+    );
     differ(&mut out, "capacity", &a.capacity, &e.capacity);
     differ(&mut out, "held", &a.held, &e.held);
     differ(&mut out, "reserve_mode", &a.reserve_mode, &e.reserve_mode);
@@ -333,7 +345,7 @@ fn differences(actual: &Progress, expected: &Progress) -> Vec<String> {
     differ(&mut out, "opened", &a.opened, &e.opened);
     differ(&mut out, "maps", &a.maps, &e.maps);
     differ(&mut out, "stations", &a.stations, &e.stations);
-    differ(&mut out, "items_placed", &a.placements, &e.placements);
+    differ(&mut out, "items_placed", &a.items_placed, &e.items_placed);
     if out.is_empty() {
         differ(&mut out, "progress", actual, expected);
     }
@@ -386,7 +398,7 @@ fn every_vector_names_catalogue_entries() {
     for vector in vectors() {
         for entry in &vector.entries {
             assert!(
-                CATALOGUE.iter().any(|b| b.name == entry),
+                CATALOGUE.iter().any(|b| format!("{:?}", b.id) == *entry),
                 "{}: {entry} is no catalogue entry",
                 vector.id
             );
@@ -398,9 +410,9 @@ fn every_vector_names_catalogue_entries() {
 fn every_entry_checked_by_vectors_has_one() {
     let vectors = vectors();
     for behaviour in CATALOGUE.iter().filter(|b| b.checked == Checked::ByVectors) {
-        let name = behaviour.name;
+        let name = format!("{:?}", behaviour.id);
         assert!(
-            vectors.iter().any(|v| v.entries.iter().any(|e| e == name)),
+            vectors.iter().any(|v| v.entries.contains(&name)),
             "{name} is checked by vectors, but no vector names it"
         );
     }
