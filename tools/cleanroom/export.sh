@@ -83,8 +83,10 @@ scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE [DEV_DEPENDENCY_LINE
   } >"$dest/$1/Cargo.toml"
   printf '//! %s\n' "$4" >"$dest/$1/src/lib.rs"
 }
-# A new model crate gets the vector reader as dev-dependencies, at allowed_deps.txt's pins: toml,
-# and serde with its derive to declare the vectors' shape.
+# A new model crate gets, at allowed_deps.txt's pins, enum-map for its own tables keyed by an
+# enum (so a key type needn't move into clean_types to be one), and the vector reader as
+# dev-dependencies: toml, and serde with its derive to declare the vectors' shape.
+enum_tables=$(awk '$1 == "enum-map" { printf "enum-map = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
 vector_parser=$(awk '$1 == "serde" { printf "serde = { version = \"%s\", features = [\"derive\"] }\n", $2 }
   $1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
 scaffold crates/clean_types clean_types "The domain types the clean models share" \
@@ -92,7 +94,8 @@ scaffold crates/clean_types clean_types "The domain types the clean models share
 scaffold "crates/clean_model/$domain" "$(model_package "$domain")" \
   "The $domain model, built from its behaviour spec" \
   "The $domain model, built from its behaviour spec alone." \
-  'clean_types = { path = "../../clean_types" }' "$vector_parser"
+  "clean_types = { path = \"../../clean_types\" }
+$enum_tables" "$vector_parser"
 
 # The workspace manifest: the clean crates and the root manifest's lint set, unchanged.
 {

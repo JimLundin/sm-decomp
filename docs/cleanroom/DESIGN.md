@@ -62,6 +62,8 @@ is imported, so keep to them as you go:
   access, no `unsafe`, no build script. If another widely used crate is the standard tool for
   something your model needs and std lacks, ask for it in your report and say what it would
   model.
+- No item, tests included, is named `File`, `TcpStream`, `UdpSocket` or `Command`: the check
+  can't tell a type of yours from the standard library's, so it refuses the names themselves.
 
 ## What a modern developer would expect
 
