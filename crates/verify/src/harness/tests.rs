@@ -302,7 +302,7 @@ fn environment() -> Option<(PathBuf, PathBuf)> {
 
 /// `domain` over every row cached under `cache`, each held to its floor in [`FLOORS`] under
 /// `name`. A cached row without a floor fails, so a new row gets one; a floor whose row isn't
-/// cached (CI's cache holds two rows) is reported and not checked. With every row cached, the
+/// cached (a partial local cache) is reported and not checked. With every row cached, the
 /// total's coverage must equal [`COVERAGE`]'s, so the report never shows a stale one. Prints
 /// each row's report, the total and the per-behaviour table; run with `--nocapture` to see them.
 fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {

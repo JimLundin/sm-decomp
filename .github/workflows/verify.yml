@@ -94,13 +94,14 @@ jobs:
   # (A2) replays engine-only in lockstep, and the job fails when a row's fully equal Ticks
   # fall or a group's differing Ticks rise. The cache is a ci-data asset packed by
   # tools/ci/pack_lockstep_cache.sh and pinned here by name and ciphertext SHA-256; a new
-  # cache is a new asset and a commit that repins it.
+  # cache is a new asset and a commit that repins it. The cache holds every row a harness
+  # reads, so the same job holds each domain's harness to its floors and its coverage.
   lockstep-ratchet:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
-      CACHE_ASSET: lockstep-cache-19ca14d51ae1f67e.tar.xz.enc
-      CACHE_SHA256: 46e9eeab8e9c1ec61b7c6c056d4a8af27dee2daa31f3cc997fcdd81637d03620
+      CACHE_ASSET: lockstep-cache-bb15e3b36b4a769b.tar.xz.enc
+      CACHE_SHA256: 3bfe219366b56534244cea456a1d8d0cf068af474acf227ce9c5d5f00313d562
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the record cache and check its pin
@@ -136,3 +137,14 @@ jobs:
             cargo test --locked -p verify --release committed_ratchet_holds_against_the_cache -- --nocapture \
             | tee "$RUNNER_TEMP/ratchet.txt"
           grep -q '^ratchet holds: ' "$RUNNER_TEMP/ratchet.txt"
+      - name: "Harness floors: every domain over every cached row against floors.txt and coverage.txt"
+        run: |
+          # A renamed test would filter to nothing and pass, so require each domain's result.
+          set -o pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --release holds_its_floors_against_the_cache \
+            | tee "$RUNNER_TEMP/floors.txt"
+          for test in the_clock samus_motion the_camera progress the_hud; do
+            grep -q "^test harness::tests::${test}_holds_its_floors_against_the_cache \.\.\. ok$" \
+              "$RUNNER_TEMP/floors.txt"
+          done
