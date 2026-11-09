@@ -4,8 +4,9 @@
 # - Each [[vector]] is either one frame of reports (before, reports, after) or a question other
 #   domains ask (before, asks, answers). Every vector has: id; source ("<row>:<frame>" for the
 #   record it comes from, or "constructed"); entries (the spec's behaviours it exercises); area
-#   (the area of the room she is in this frame: "Brinstar", "Ceres", "Crateria", "Maridia",
-#   "Norfair", "Tourian" or "WreckedShip"; listed alphabetically, the order means nothing).
+#   (the area of the room she is in this frame, the new room's in a frame a door takes her into
+#   another area: "Brinstar", "Ceres", "Crateria", "Maridia", "Norfair", "Tourian" or
+#   "WreckedShip"; listed alphabetically, the order means nothing).
 # - before: the progress at the frame's start (spec §1). A field left out is at its start-of-game
 #   value (spec §1, The start of a run): no items, beams, events, defeats, locations, doors, maps
 #   or stations; capacity energy 99 and the others 0; energy 99 and the other counts 0;
@@ -28,20 +29,21 @@
 #   - stations = { <area> = [ids] }: the save stations she has saved at in each area, by
 #     their id in it.
 #   - items_placed: the count of items the game has placed in rooms (ItemsPlacedCount).
-# - reports: what other domains tell progress this frame, in order (spec §1.3):
+# - reports: what other domains tell progress this frame, in order (spec §1.3). A report that
+#   concerns an area (Defeated, MapStation, MapOnArrival, LeftArea, Saved) may carry area, the
+#   area it concerns, named as the vector's area is; left out, it is the frame's area.
 #   - { report = "Happened", event }: an event happens;
 #   - { report = "ZebetiteDestroyed" };
-#   - { report = "Defeated", boss }: a boss of that kind is defeated, in the frame's area;
+#   - { report = "Defeated", boss, area? }: a boss of that kind is defeated, in the area;
 #   - { report = "Taken", item, location?, amount? }: she takes an item, a beam or a tank
 #     ("EnergyTank", "MissileTank", "PowerBombTank", "ReserveTank", "SuperMissileTank", which carry
 #     an amount); location is left out for an item placed without one;
 #   - { report = "DoorOpened", door? }: a door that stays open is opened; door is left out for a
 #     door placed without an id;
-#   - { report = "MapStation" }: the map station of the frame's area downloads;
-#   - { report = "MapOnArrival" }: she enters the room that hands out the map of the frame's
-#     area;
-#   - { report = "LeftArea" }: she leaves the frame's area by a door into another area;
-#   - { report = "Saved", station }: she saves at a station of the frame's area;
+#   - { report = "MapStation", area? }: the map station of the area downloads;
+#   - { report = "MapOnArrival", area? }: she enters the room that hands out the map of the area;
+#   - { report = "LeftArea", area? }: a door takes her out of the area into another area;
+#   - { report = "Saved", station, area? }: she saves at a station of the area;
 #   - { report = "ItemsPlaced", count }: a room's loading places that many items.
 # - after: the progress at the frame's end, in before's layout; compared whole.
 # - asks: the questions; answers: what progress answers, compared whole.
@@ -327,7 +329,7 @@ reports = [{ report = "MapOnArrival" }]
 after = { maps = { Tourian = "Downloaded" } }
 
 [[vector]]
-# leaving the area by a door into another area: the map counts as downloaded
+# a door takes her out of the area into another area: the map counts as downloaded
 id = "C-map-left"
 source = "constructed"
 entries = ["MapOnArrival"]
@@ -345,6 +347,29 @@ area = "Brinstar"
 before = {  }
 reports = [{ report = "LeftArea" }]
 after = {  }
+
+[[vector]]
+# a door takes her from Tourian, its map on arrival, into Crateria, into an invented room that
+# gives Crateria's map: Tourian is left first, so its map counts as downloaded, then Crateria's
+# arrives; the frame's area is the new room's
+id = "C-door-from-tourian"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Crateria"
+before = { maps = { Tourian = "OnArrival" } }
+reports = [{ report = "LeftArea", area = "Tourian" }, { report = "MapOnArrival" }]
+after = { maps = { Crateria = "OnArrival", Tourian = "Downloaded" } }
+
+[[vector]]
+# a door takes her from Crateria, its map downloaded, into the room that gives Tourian's map:
+# leaving Crateria leaves its map as it was, and Tourian's arrives
+id = "C-door-into-tourian"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Tourian"
+before = { maps = { Crateria = "Downloaded" } }
+reports = [{ report = "LeftArea", area = "Crateria" }, { report = "MapOnArrival" }]
+after = { maps = { Crateria = "Downloaded", Tourian = "OnArrival" } }
 
 [[vector]]
 # a map got either way is known

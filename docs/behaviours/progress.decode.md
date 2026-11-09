@@ -24,7 +24,10 @@ table of the record before. The bank logs were then read to name the cases and p
 - `model.py` is the reference model, in the spec's terms only; `gen.py` decodes the recorded
   vectors (the mapping below), writes the constructed ones from the model, and writes
   `scenarios/vectors/progress.toml` with `header.toml`; `vecrun.py` runs the file through the
-  model: 63 of 63 agree.
+  model. The two door vectors (`C-door-from-tourian`, `C-door-into-tourian`) and a report's own
+  `area` key were added by hand after; `$TEMP/collab/progress-spec-r5/model.py` is the model
+  that reads that key (a report's `area`, else the vector's): 65 of 65 agree. The model without
+  it fails `C-door-from-tourian` (Tourian's map stays `OnArrival`).
 
 **Row ids.** As in the camera's notes, the chain rows go by opaque ids, because a chain row's name
 carries a room header's address; s01 is a row whose name matches the lexicon:
@@ -244,7 +247,10 @@ of the same frame, so it is verified on its own with the reports as inputs.
   door PLMs' state at N-1 (`gen.py` does: the PLM whose room argument the frame's bit is), which
   is a stand-in, so those frames are reported as unverified, not matched. A peek of A at
   `$80:81A6` and `$80:81FA`, and of `$1DC7,x`, would hear them too. The frame's area is `079F`
-  at N.
+  at N, but for `LeftArea`, whose area is `079F` at N-1: `$82:DF99` runs at `$82:E373`, just
+  before the room header's load (`$82:E376` → `$82:DE6F`, `STA $079F` at `$82:DE86`) in the
+  same frame, so `079F` at N already holds the new room's area. `MapOnArrival` (the room's setup
+  code) runs after the header, so it takes `079F` at N.
 - **Compared at N:** every quantity of §State, masked only where another domain changed it. What
   she holds (energy, ammunition) is masked by name (the energy and weapons domains) on the frames
   it changed with no tank report (549 of 18,299); on every other frame it is compared, so a report

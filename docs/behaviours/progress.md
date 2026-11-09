@@ -24,8 +24,9 @@ P2 builds the saved file from progress, and the file tells them apart.
 
 **How other domains reach it.**
 - They report (§1.3): an event happens; a zebetite is destroyed; a boss is defeated; she takes
-  an item; a door is opened; a map station downloads; she enters the room that gives a map; she
-  leaves an area; she saves, or the gunship first lands; a room's loading places its items.
+  an item; a door is opened; a map station downloads; she enters the room that gives a map; a
+  door takes her into another area; she saves, or the gunship first lands; a room's loading
+  places its items.
 - They ask (§1.4): has an event happened; is a boss of any of these kinds defeated in this area;
   is this location emptied; is this door open; is the map known for this area; how many
   zebetites; which state a room loads; the item percentage.
@@ -65,8 +66,8 @@ alphabetically; the order means nothing). "The frame's area" is the area of the 
 
 Others switch them too (§8): the equipment screen switches her items and beams on and off, and
 the rainbow beam she is given late in the fight with Mother Brain switches on exactly `Charge`,
-`Plasma` and `Wave`, whichever beams are hers. So a beam can be switched on without being hers:
-nothing in this domain keeps the beams switched on within hers.
+`Plasma` and `Wave`, whether or not they are hers. So a beam can be switched on without being
+hers: nothing in this domain keeps the beams switched on within hers.
 
 **The start of a run.** A new file (P2's) starts her with energy and its capacity at 99, every
 other capacity and count at 0, the reserve mode `NoTank`, no items or beams, hers or switched on,
@@ -133,13 +134,14 @@ stays open is placed. A population may place one without an id: then nothing of 
 | a door is opened | the door id, if it has one | the doors |
 | a map station downloads | | the map stations |
 | she enters the room that gives the map of its area | | the room's loading |
-| she leaves an area by a door into another area | | doors and elevators |
+| a door takes her into another area | the area she leaves | doors and elevators |
 | she saves, or the gunship first lands | the station's id in the area | the save stations, the gunship |
 | a room's loading places its items | how many | the room's loading |
 
-The frame's area is an input too, from the room's loading; and, when a room loads, the entrance
-she came in by (an `Entrance`, the way into the room she took), from the doors. An entrance is
-not a door of `DoorsStayOpen`: its ids are a space of their own.
+The frame's area is an input too, from the room's loading: in the frame a door takes her into
+another area, it is the new room's, and her leaving carries the area she leaves. So is, when a
+room loads, the entrance she came in by (an `Entrance`, the way into the room she took), from the
+doors. An entrance is not a door of `DoorsStayOpen`: its ids are a space of their own.
 
 ### 1.4 What other domains ask
 
@@ -229,9 +231,10 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - params: none.
 - switch: none.
 - She enters the room that gives the map of its area, the map not `Downloaded` → it is
-  `OnArrival` [C-map-on-arrival, C-map-on-arrival-had]
-- She leaves an area by a door into another area, its map `OnArrival` → it becomes
-  `Downloaded` [C-map-left, C-map-left-none]
+  `OnArrival` [C-map-on-arrival, C-map-on-arrival-had, C-door-from-tourian,
+  C-door-into-tourian]
+- When a door takes her into another area, the map of the area she leaves `OnArrival` → it
+  becomes `Downloaded` [C-map-left, C-map-left-none, C-door-from-tourian, C-door-into-tourian]
 - So the two read the same everywhere in play (`MapsByArea`); only the saved file tells them apart,
   when she saves before leaving.
 - checked: constructed.
@@ -358,8 +361,10 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 ## 7. Order that matters
 
 - A frame's reports apply in the order they come; none of this spec's rules reads another's result
-  within the frame, so no order is visible but the one between leaving an area and arriving: she
-  leaves the old area (`MapOnArrival`) before the new room's loading reports.
+  within the frame, so no order is visible but the one between leaving an area and arriving: when
+  a door takes her into another area, her leaving the old area (`MapOnArrival`) comes before the
+  new room's loading reports, and each takes its own area: the one she leaves, then the new room's
+  [C-door-from-tourian, C-door-into-tourian].
 - A room's state is chosen with the room's own area, after it is known, so `Defeated` reads the
   new room's area.
 
