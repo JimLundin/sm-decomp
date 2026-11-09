@@ -313,6 +313,16 @@ until the k-th requested NMI) and writes `DIR/<row>.pads`; with memories also `<
 previewing every next pad, so no cut is `NmiStillRunning`. Its cuts are the Tick run's without the
 `S` ones plus the RTIs the Tick run missed; memories equal at every shared cut.
 
+**The 100% chain rows' pads sit one frame early against the movie.** Their `.pads` came from the
+Tick run, not from the movie: of the 327 100% chain rows, 0 play the movie's own pads from the
+seed (most differ from the first pad), and `chain-0073-A59F` dies to Kraid. A row's pads are the
+movie's from the seed record's lsnes frame counter (record bytes 20-23), where the movie's pad for
+the seed's first step is: line `first` to `first + frames` of the `.inputs`, one more than the
+row's frames. The seven movie rows of `scenes-v1` (`event-zebes-awake`, `item-energy-tank`,
+`item-reserve-tank`, `item-charge-beam`, `item-wave-beam`, `item-plasma-beam`,
+`boss-kraid-defeated`) are cut that way and play the movie through the progress report each was
+chosen for. The chain rows are re-cut and re-locked the same way (§9).
+
 ### Step c: the recorder (RELOCK §6)
 
 `oracle corpus ROM LOCK DATA --oracle lsnes --native-seeds DIR --from-frame-pads DIR --record-v2 FILE`
@@ -423,10 +433,13 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   `acd6d6182d9b5f65e75339781c9fca59ade98872987f692700498548544bf11f`), pinned by the `bundles` line
   of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
   `.lss` and `.words`, and the rows' `.pads` (`verify::bundle`).
-- **The lockstep record cache** `lockstep-cache-19ca14d51ae1f67e.tar.xz.enc` (SHA-256
-  `46e9eeab8e9c1ec61b7c6c056d4a8af27dee2daa31f3cc997fcdd81637d03620`), pinned in
-  `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ`. A new cache
-  is a new asset and a commit that repins it.
+- **The lockstep record cache** `lockstep-cache-bb15e3b36b4a769b.tar.xz.enc` (SHA-256
+  `3bfe219366b56534244cea456a1d8d0cf068af474acf227ce9c5d5f00313d562`), pinned in
+  `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
+  5.2 GB). It holds the 44 rows `floors.txt` names, each with its `hits.txt`, so CI holds the
+  ratchet's rows and every domain's harness floors and coverage. Pack it with
+  `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that
+  repins it.
 - Only the root uploads (`timeout 600 gh release upload ci-data FILE`). Nothing unencrypted and
   ROM-derived is ever committed or uploaded; logs carry ids, frames, field names and hashes.
 
@@ -461,6 +474,11 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
 - LakeSnes past any% 35175: fit the line-0 HDMA pause on both emulators, then fix 0005 ((q)).
 - DMA bytes under forced blank are counted only at the cut; a per-write INIDISP check is needed ((a)).
 - `oracle` and `oracle_record` tests don't run in CI yet.
+- The 100% chain rows' pads, one frame early against the movie (§5, step b1): re-cut them from
+  the movie at each seed record's frame counter and re-lock those rows.
+- `lsnes.toml`'s `server` pin (`833e4df9...`) is the SHA-256 of an older `lsnes_server.lua`; the
+  script's comment changed since (`lsnes::server_sha256` gives `7e2b31f1...`), its behaviour not.
+  The next re-lock writes the current one; nothing compares the pin with the build yet.
 
 ## Appendix A: measurements (MEASUREMENTS)
 
