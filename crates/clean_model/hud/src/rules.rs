@@ -99,6 +99,16 @@ impl Alternation {
     }
 }
 
+/// The one-shot item's flash: 16 frames each way (spec: `OneShotFlash`).
+const VANILLA_ONE_SHOT_FLASH_FRAMES: u8 = 16;
+
+/// Her mini-map cell's blink: 8 frames each way (spec: `HerBlink`).
+const VANILLA_HER_BLINK_FRAMES: u8 = 8;
+
+/// The picture whose number's last nine bits mark her cell as a diagonal: `028` (spec:
+/// `DiagonalPicture`).
+const VANILLA_DIAGONAL_PICTURE: u16 = 0x028;
+
 /// The values the HUD's rules read.
 #[derive(Clone, Copy, Debug)]
 pub struct Rules {
@@ -122,10 +132,12 @@ impl Rules {
     pub const fn reference() -> Self {
         Self {
             one_shot_flash: Alternation {
-                frames_each_way: 16,
+                frames_each_way: VANILLA_ONE_SHOT_FLASH_FRAMES,
             },
-            her_blink: Alternation { frames_each_way: 8 },
-            diagonal_picture: Picture::new(0x028),
+            her_blink: Alternation {
+                frames_each_way: VANILLA_HER_BLINK_FRAMES,
+            },
+            diagonal_picture: Picture::new(VANILLA_DIAGONAL_PICTURE),
             boss_screens: &VANILLA_BOSS_SCREENS,
         }
     }
