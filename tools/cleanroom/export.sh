@@ -12,13 +12,18 @@
 #   crates/clean_types/                package `clean_types`: the domain types an implementer
 #                                      needs (speeds, poses as enums, tables as typed records)
 #   crates/clean_model/DOMAIN/         package `clean_model_<domain>`: the domain's model,
-#                                      depending only on clean_types and std
+#                                      depending on clean_types, std and allowed_deps.txt
 #   docs/behaviours/DOMAIN.md          the spec;  scenarios/vectors/DOMAIN.toml  its vectors
 #   CLEANROOM.md                       how to work and commit in the export
 #   clippy.toml                        generated: tools/cleanroom/clippy.toml, the G5 ceilings
+#   Cargo.lock, .cargo/config.toml     generated: COMMIT's lock pruned to the export; offline
+#   vendor/                            the baked crates of the root's [patch.crates-io] the export
+#                                      uses, and vendor/crates-io (generated): the rest it locks
 # A clean crate absent from COMMIT is created empty. Nothing of today's model is copied.
 #
-# Run from the repository (any worktree). CARGO, if set, runs `cargo check` on the export.
+# Run from the repository (any worktree). CARGO (default `cargo`) resolves and vendors the
+# export's crates, reaching crates.io for any the download cache lacks; if CARGO is set, it also
+# runs `cargo check` on the export.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
@@ -78,7 +83,7 @@ scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE [DEV_DEPENDENCY_LINE
   } >"$dest/$1/Cargo.toml"
   printf '//! %s\n' "$4" >"$dest/$1/src/lib.rs"
 }
-# A dev-dependency for each line of allowed_deps.txt (none today: vector tests parse by hand).
+# A new model crate gets the vector parser as a dev-dependency, at allowed_deps.txt's pin.
 vector_parser=$(awk '$1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
 scaffold crates/clean_types clean_types "The domain types the clean models share" \
   "The domain types the clean models share: quantities, poses and tables in player terms."
@@ -89,10 +94,41 @@ scaffold "crates/clean_model/$domain" "$(model_package "$domain")" \
 
 # The workspace manifest: the clean crates and the root manifest's lint set, unchanged.
 {
-  printf '[workspace]\nresolver = "3"\nmembers = ["crates/clean_types", "crates/clean_model/%s"]\n\n' "$domain"
+  printf '[workspace]\nresolver = "3"\nexclude = ["vendor"]\n'
+  printf 'members = ["crates/clean_types", "crates/clean_model/%s"]\n\n' "$domain"
   git show "$sha:Cargo.toml" | sed -n '/^\[workspace\.lints\.rust\]/,/^\[profile/p' | sed '$d'
+  # The registry crates whose build scripts can't run here, patched as the root manifest does.
+  git show "$sha:Cargo.toml" | awk '/^\[/ { on = ($0 == "[patch.crates-io]") } on'
 } >"$dest/Cargo.toml"
-printf '/target\n/Cargo.lock\n' >"$dest/.gitignore"
+printf '/target\n' >"$dest/.gitignore"
+
+# The lock and the registry crates, so cargo resolves offline to the versions this repository
+# locked: COMMIT's Cargo.lock, pruned to the export's crates, and every registry crate it then
+# names copied into vendor/crates-io by `cargo vendor`, which cargo checks against the lock's
+# checksums. Unlike cargo's download cache, the copies can't be cleaned away or differ between
+# machines. A patched copy the export doesn't use goes, with its [patch] line.
+cargo=${CARGO:-cargo}
+git show "$sha:Cargo.lock" >"$dest/Cargo.lock"
+(cd "$dest" && "$cargo" metadata -q --format-version 1 >/dev/null) \
+  || die "cargo can't resolve the export from $sha's Cargo.lock"
+while IFS= read -r unused; do
+  sed -i "/^$unused = { path = /d" "$dest/Cargo.toml"
+  rm -rf -- "$dest/vendor/$unused-"[0-9]*
+done < <(awk '/^\[\[patch\.unused\]\]/ { on = 1; next } /^\[/ { on = 0 }
+  on && /^name = / { gsub(/"/, "", $3); print $3 }' "$dest/Cargo.lock")
+if ! grep -q '^[a-z_-]* = { path = "vendor/' "$dest/Cargo.toml"; then
+  sed -i '/^\[patch\.crates-io\]$/,$d' "$dest/Cargo.toml"
+  rm -rf -- "$dest/vendor"
+fi
+(cd "$dest" && "$cargo" metadata -q --format-version 1 >/dev/null) || die "cargo can't resolve the export"
+mkdir -p "$dest/.cargo"
+printf '# Cargo never reaches the network here: the lock and vendor/ hold every crate.\n[net]\noffline = true\n' \
+  >"$dest/.cargo/config.toml"
+if grep -q '^source = "registry+' "$dest/Cargo.lock"; then
+  (cd "$dest" && "$cargo" vendor -q --locked vendor/crates-io >/dev/null) || die "cargo vendor failed in $dest"
+  printf '\n[source.crates-io]\nreplace-with = "vendored"\n\n[source.vendored]\ndirectory = "vendor/crates-io"\n' \
+    >>"$dest/.cargo/config.toml"
+fi
 # The clean crates' clippy configuration: the root's test allowances and the G5 ceilings.
 git show "$sha:tools/cleanroom/clippy.toml" >"$dest/clippy.toml"
 
@@ -108,7 +144,9 @@ Use nothing you remember about how the original game is programmed (its code, me
 disassemblies or annotated listings); if you recognise something from such a source, report it.
 
 - Write the model in \`crates/clean_model/$domain\` and the types it shares in
-  \`crates/clean_types\`. They depend on nothing but each other and std.
+  \`crates/clean_types\`. They depend on each other, std and the registry crates their
+  manifests name. The manifests are not yours to edit: if a widely used crate would model the
+  domain better, ask for it in your report. Cargo works offline here.
 - Every commit touches only those two directories, and its message ends with the trailer
   \`Role: implementer\`. Commits that touch anything else are refused on import.
 - Commit with one \`-m\` per paragraph, the trailer the last:
@@ -130,7 +168,14 @@ EOF
 
 # Nothing in the export mentions the score, the budget, k, the fit or token weights (MODEL §1
 # decision 10): the implementer is told the code rules only. score_words.txt holds the patterns.
-bash "$cleanroom_dir/score_scan.sh" "$dest" \
+# vendor/crates-io is skipped: the registry's published crates, held to their checksums, aren't
+# this repository's words (a benchmark's "baseline").
+scanned=()
+for p in "$dest"/* "$dest"/.[!.]* "$dest"/vendor/*; do
+  [ -e "$p" ] || continue
+  case ${p#"$dest"/} in .git|vendor|vendor/crates-io) ;; *) scanned+=("$p") ;; esac
+done
+bash "$cleanroom_dir/score_scan.sh" "${scanned[@]}" \
   || die "the export mentions the score or the budget (above); fix the source files, not the export"
 echo "  ok: no mention of the score or the budget"
 

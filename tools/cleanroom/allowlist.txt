@@ -5,8 +5,9 @@
 # A change here widens what an implementer sees: the adversary reviews it like a brief.
 
 [all]
-# The clean crates (crates/README.md has the rest of the workspace). They depend on nothing but
-# each other and std. A crate absent from the source commit is created empty.
+# The clean crates (crates/README.md has the rest of the workspace). They depend on each other,
+# std and the registry crates of allowed_deps.txt. A crate absent from the source commit is
+# created empty.
 crates/clean_types/
 crates/clean_model/{domain}/
 # The domain's spec and vectors, from the observer.
@@ -18,13 +19,20 @@ docs/cleanroom/DESIGN.md
 # Toolchain and lint configuration. The workspace lints are copied into the generated Cargo.toml.
 rust-toolchain.toml
 .gitattributes
+# The registry crates whose build scripts are baked in (tools/vendor_nobuild.sh), as the root
+# manifest's [patch.crates-io] names them; export.sh drops those the export doesn't use.
+vendor/
 
 # Entries for one domain only, as `[domain samus-motion]`.
 
 [generated]
-# Written by export.sh, not copied.
+# Written by export.sh, not copied. Cargo.lock is the source commit's, pruned to the export;
+# vendor/crates-io/ holds every registry crate it names, and .cargo/config.toml keeps cargo offline.
 Cargo.toml
 .gitignore
+Cargo.lock
+.cargo/config.toml
+vendor/crates-io/
 CLEANROOM.md
 # The clean crates' clippy configuration, tools/cleanroom/clippy.toml (G5).
 clippy.toml
