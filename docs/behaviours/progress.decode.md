@@ -55,13 +55,13 @@ save, `$81:8019`) and `$7E:D820..DE1B` (the rest of the save data, `$81:8000` an
 | beams switched on / hers | `09A6` / `09A8` | bits: 1 `Wave`, 2 `Ice`, 4 `Spazer`, 8 `Plasma`, 1000h `Charge` |
 | capacities | `09C4` energy, `09D4` reserve, `09C8` missiles, `09CC` super missiles, `09D0` power bombs | as is |
 | what she holds | `09C2` energy, `09D6` reserve energy, `09C6` missiles, `09CA` super missiles, `09CE` power bombs | as is |
-| reserve mode | `09C0` | 0 `None`, 1 `Automatic`, 2 `Manual` |
+| reserve mode | `09C0` | 0 `NoTank`, 1 `Automatic`, 2 `Manual` |
 | events | `$7E:D820..D827`, bit n of byte n >> 3 | the event numbers of `$80:81FA`'s list: 0 `PlanetAwake`, 2 `MotherBrainTankBroken`, 6 `PhantoonStatueGrey`, 7 `RidleyStatueGrey`, 8 `DraygonStatueGrey`, 9 `KraidStatueGrey`, Ah `TourianOpen`, Bh `GlassTunnelBroken`, Ch `AcidReceded`, Dh `ShaktoolPath`, Eh `TimeBombSet`, Fh `AnimalsFreed`, 10h-13h `MetroidRoom1Empty`..`MetroidRoom4Empty`, 14h `TourianRoomsUnset`, 15h `LavaQuakeOutrun`; 3-5 the zebetites (below); 1 and 16h-3Fh no meaning |
 | zebetites destroyed | events 3, 4, 5 | the count in binary, event 3 its lowest bit (`$A6:FBA5`, `$A6:FCAA`) |
 | bosses defeated | `$7E:D828 + area`, one byte an area | bits: 1 `MainBoss`, 2 `MiniBoss`, 4 `Torizo` (`$80:81A6`'s list) |
 | emptied locations | `$7E:D870..D8AF`, bit n of byte n >> 3 | location n (the item PLM's room argument) |
 | open doors | `$7E:D8B0..D8EF`, the same | door n (the door PLM's room argument) |
-| maps | `$7E:D908 + area`, one byte an area | 0 `None`; FFh `Downloaded`; any other value (01h) `OnArrival` |
+| maps | `$7E:D908 + area`, one byte an area | 0 `Unmapped`; FFh `Downloaded`; any other value (01h) `OnArrival` |
 | stations saved at | `$7E:D8F8 + area × 2`, low byte | bit n: station n (the save station PLM's room argument & 7) |
 | items placed | `$7E:D91A`, a word | as is |
 | the frame's area | `079F` | 0 Crateria, 1 Brinstar, 2 Norfair, 3 Wrecked Ship, 4 Maridia, 5 Tourian, 6 Ceres |
@@ -235,11 +235,16 @@ of the same frame, so it is verified on its own with the reports as inputs.
 - **Reports:** taken from the record's watched instruction hits, not from the RAM's change: watch
   the entry points of the Inputs table (`oracle corpus --watch-words`, the record's `hits`) with
   their arguments (the PLM's room argument at `$1DC7,x`, its instruction argument at `[Y]`, the
-  kind in A at `$80:81A6`, the event in A at `$80:81FA`). The 32 cached rows were recorded without
-  these watches; until they are re-recorded, the integrator can decode a frame's reports from the
-  item and door PLMs' state at N-1 (`gen.py` does: the PLM whose room argument the frame's bit is,
-  and the pickup instruction its list holds), which is a stand-in, so those frames are reported
-  as unverified, not matched. The frame's area is `079F` at N.
+  kind in A at `$80:81A6`, the event in A at `$80:81FA`). The cached rows carry these watches'
+  hits, but not their arguments. So a report its instruction names alone (an event marker, a
+  zebetite, a map station, the room that gives its map, leaving the area, the gunship's station)
+  and a pickup (the one item PLM at N-1 whose list runs the pickup instruction hit) are heard
+  from the hits. What only an argument names (the kind of boss, the door opened, the station
+  saved at, an event a PLM or the statues mark) is decoded from what changed and the item and
+  door PLMs' state at N-1 (`gen.py` does: the PLM whose room argument the frame's bit is), which
+  is a stand-in, so those frames are reported as unverified, not matched. A peek of A at
+  `$80:81A6` and `$80:81FA`, and of `$1DC7,x`, would hear them too. The frame's area is `079F`
+  at N.
 - **Compared at N:** every quantity of §State, masked only where another domain changed it. What
   she holds (energy, ammunition) is masked by name (the energy and weapons domains) on the frames
   it changed with no tank report (549 of 18,299); on every other frame it is compared, so a report

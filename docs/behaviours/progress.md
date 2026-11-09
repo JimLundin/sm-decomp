@@ -57,7 +57,7 @@ alphabetically; the order means nothing). "The frame's area" is the area of the 
 | beams switched on | `Beam`s | the beam she shoots | `TakingBeams`; her weapons; output |
 | capacities | energy, reserve, missiles, super missiles, power bombs: counts | the HUD's tanks and ammunition maxima | `Tanks`; `RoomStates`; `ItemPercentage`; energy, reserves and weapons; the HUD; output |
 | what she holds | energy, reserve energy, missiles, super missiles, power bombs: counts | the HUD's numbers | `Tanks` (which adds to them); energy, reserves and weapons, which spend and refill them; the HUD; output |
-| reserve mode | `None` (no reserve tank yet), `Automatic`, `Manual` | the HUD's AUTO sign; whether the reserves refill her on their own | `Tanks`; the reserves; the HUD; output |
+| reserve mode | `NoTank` (no reserve tank yet), `Automatic`, `Manual` | the HUD's AUTO sign; whether the reserves refill her on their own | `Tanks`; the reserves; the HUD; output |
 
 **Items**, listed alphabetically: `Bombs`, `GrappleBeam`, `GravitySuit`, `HiJumpBoots`,
 `MorphBall`, `ScrewAttack`, `SpaceJump`, `SpeedBooster`, `SpringBall`, `VariaSuit`, `XRayScope`.
@@ -69,7 +69,7 @@ the rainbow beam she is given late in the fight with Mother Brain switches on ex
 nothing in this domain keeps the beams switched on within hers.
 
 **The start of a run.** A new file (P2's) starts her with energy and its capacity at 99, every
-other capacity and count at 0, the reserve mode `None`, no items or beams, hers or switched on,
+other capacity and count at 0, the reserve mode `NoTank`, no items or beams, hers or switched on,
 and no locations emptied, doors open, maps or stations. A new file doesn't clear the events, the
 bosses defeated or the items placed; it takes them from the slot, which the file select has
 already emptied (P2's), so none and 0.
@@ -83,7 +83,7 @@ already emptied (P2's), so none and 0.
 | bosses defeated | for each area, the `BossKind`s defeated there | a defeated boss stays gone; the pause map greys its icon | `RoomStates`; the bosses; the pause map; output |
 | emptied locations | location ids | a taken item never comes back | `EmptiedLocations`; the items; output |
 | open doors | door ids | a door she shot open stays open | `DoorsStayOpen`; the doors; output |
-| maps | for each area, `None`, `Downloaded` or `OnArrival` | the mini-map and the pause map show the rooms of the area | `MapsByArea`, `MapOnArrival`; the mini-map; the pause map; output |
+| maps | for each area, `Unmapped`, `Downloaded` or `OnArrival` | the mini-map and the pause map show the rooms of the area | `MapsByArea`, `MapOnArrival`; the mini-map; the pause map; output |
 | stations saved at | for each area, station ids | the pause map shows them | the pause map; the file select; output |
 | items placed | a count | only in the saved file | output |
 
@@ -295,7 +295,7 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
   the new capacity, `capacity + amount` [C-energy-tank]
 - She takes a reserve tank → the reserve capacity grows by its amount; the energy in them
   doesn't [C-reserve-first, C-reserve-manual]
-- She takes a reserve tank, the reserve mode `None` → it becomes `Automatic` [C-reserve-first]
+- She takes a reserve tank, the reserve mode `NoTank` → it becomes `Automatic` [C-reserve-first]
 - She takes a missile, super missile or power bomb tank → its capacity and her count of it
   both grow by its amount, `count + amount` [R-missile-tank, C-missile-not-full, C-super-tank,
   C-power-bomb-tank]

@@ -9,13 +9,14 @@
 # - before: the progress at the frame's start (spec §1). A field left out is at its start-of-game
 #   value (spec §1, The start of a run): no items, beams, events, defeats, locations, doors, maps
 #   or stations; capacity energy 99 and the others 0; energy 99 and the other counts 0;
-#   reserve_mode "None"; zebetites 0; items_placed 0.
+#   reserve_mode "None" (no reserve tank, the spec's `NoTank`); zebetites 0; items_placed 0.
 #   - items, equipped: the items that are hers, and those switched on (spec §1.1, Items); listed
-#     alphabetically.
+#     alphabetically. The key `equipped` means switched on.
 #   - beams, beams_equipped: the beams that are hers, and those switched on (Beams).
 #   - capacity = { energy, reserve, missiles, super_missiles, power_bombs }: the most each can
-#     hold; energy, reserve_energy, missiles, super_missiles, power_bombs: what she holds now.
-#   - reserve_mode: "None", "Automatic" or "Manual".
+#     hold; energy, reserve_energy, missiles, super_missiles, power_bombs: what she holds now,
+#     the key `reserve_energy` being the reserve.
+#   - reserve_mode: "None" (no reserve tank yet, the spec's `NoTank`), "Automatic" or "Manual".
 #   - events: the events that have happened (spec §1.1, Events); zebetites: how many of
 #     Tourian's zebetites are destroyed, 0 to 4.
 #   - defeated = { <area> = [kinds] }: the kinds of boss defeated in each area, "MainBoss",
@@ -23,7 +24,7 @@
 #   - emptied: the item locations whose item she has taken; opened: the doors that stay open. Both
 #     are the ids the room's population gives them, whole numbers from 0.
 #   - maps = { <area> = "Downloaded" or "OnArrival" }: the areas whose map she has (MapsByArea,
-#     MapOnArrival); an area not named has none.
+#     MapOnArrival); an area not named is `Unmapped`.
 #   - stations = { <area> = [ids] }: the save stations she has saved at in each area, by
 #     their id in it.
 #   - items_placed: the count of items the game has placed in rooms (ItemsPlacedCount).
@@ -45,7 +46,8 @@
 # - after: the progress at the frame's end, in before's layout; compared whole.
 # - asks: the questions; answers: what progress answers, compared whole.
 #   - room_states = [conditions], entered_by (optional): a room's states in its order, the last
-#     "Always", and the entrance she came in by; answers room_state, the index of the state it
+#     "Always", the default state the room loads in when no condition before it holds, and the
+#     entrance she came in by; answers room_state, the index of the state it
 #     loads, from 0 (RoomStates). A condition is { when = "Always" }, { when = "Happened", event },
 #     { when = "Defeated", bosses = [kinds] }, { when = "Has", item },
 #     { when = "MorphBallAndMissiles" }, { when = "PowerBombs" } or
