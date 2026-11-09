@@ -9,7 +9,8 @@ use super::game_time::Clock;
 use game::state::GameTime;
 
 use super::{
-    Behaviours, Domain, Field, FieldSet, Interval, Mask, Mismatch, Report, Run, run, run_cached,
+    Behaviours, Coverage, Domain, Field, FieldSet, Interval, Mask, Mismatch, Report, Run, run,
+    run_cached,
 };
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
@@ -209,6 +210,22 @@ fn floors(domain: &str) -> BTreeMap<&'static str, u64> {
         .collect()
 }
 
+/// The committed oracle coverage over every row: [`Coverage`]'s lines, `#` comments.
+const COVERAGE: &str = include_str!("coverage.txt");
+
+/// The committed coverage lines of `domain`.
+fn coverage(domain: &str) -> String {
+    let mut lines = String::new();
+    for line in COVERAGE
+        .lines()
+        .filter(|line| line.split_whitespace().next() == Some(domain))
+    {
+        lines.push_str(line);
+        lines.push('\n');
+    }
+    lines
+}
+
 /// The rows cached under `cache` (a directory with an `index.txt`), sorted.
 fn cached_rows(cache: &Path) -> Vec<String> {
     let entries = match std::fs::read_dir(cache) {
@@ -246,8 +263,9 @@ fn environment() -> Option<(PathBuf, PathBuf)> {
 
 /// `domain` over every row cached under `cache`, each held to its floor in [`FLOORS`] under
 /// `name`. A cached row without a floor fails, so a new row gets one; a floor whose row isn't
-/// cached (CI's cache holds two rows) is reported and not checked. Prints each row's report,
-/// the total and the per-behaviour table; run with `--nocapture` to see them.
+/// cached (CI's cache holds two rows) is reported and not checked. With every row cached, the
+/// total's coverage must equal [`COVERAGE`]'s, so the report never shows a stale one. Prints
+/// each row's report, the total and the per-behaviour table; run with `--nocapture` to see them.
 fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {
     use std::io::Write as _;
     let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
@@ -272,11 +290,27 @@ fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {
         }
         total.add(&report);
     }
-    for row in floors
+    let uncached: Vec<&&str> = floors
         .keys()
         .filter(|row| !rows.iter().any(|cached| cached == *row))
-    {
+        .collect();
+    for row in &uncached {
         let _ = writeln!(std::io::stdout(), "not cached, floor not checked: {row}");
+    }
+    let fresh = Coverage {
+        name,
+        report: &total,
+    }
+    .to_string();
+    if !uncached.is_empty() {
+        let _ = writeln!(
+            std::io::stdout(),
+            "not every row cached, coverage not checked"
+        );
+    } else if fresh != coverage(name) {
+        failures.push(format!(
+            "coverage.txt is stale; its {name} lines are:\n{fresh}"
+        ));
     }
     let seconds = started.elapsed().as_secs_f64();
     let rate =

@@ -202,6 +202,78 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | camera | 77 | 0 |
 | progress | 63 | 0 |
 
+## Oracle coverage
+
+Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which the floor tests hold equal to a run over every row). A frame is matched and verified when every unmasked field matched the oracle, and unverified when it matched only through a stand-in's answer copied from the next record; the null model is a step that does nothing.
+
+| Domain | Frames | Matched and verified | Unverified | Null model |
+| --- | ---: | ---: | ---: | ---: |
+| samus-motion | 18,299 | 12,639 | 0 | 5,583 |
+| camera | 18,299 | 13,315 | 0 | 5,440 |
+| progress | 18,299 | 18,292 | 7 | 18,289 |
+
+Per catalogue entry, the frames that exercised it and those of them matched and verified. An entry no frame exercised is checked by its vectors only.
+
+| Domain | Entry | Matched and verified | Exercised |
+| --- | --- | ---: | ---: |
+| samus-motion | HowSheIsDrawn | vectors only | 0 |
+| samus-motion | SpeedBuildsAndBrakes | 8,418 | 8,516 |
+| samus-motion | Dash | 2,967 | 2,979 |
+| samus-motion | TurningRound | 734 | 748 |
+| samus-motion | AimingAndShooting | 2,199 | 2,234 |
+| samus-motion | RidingTheElevator | 906 | 906 |
+| samus-motion | Jumping | 141 | 145 |
+| samus-motion | FollowingTheGround | 8,418 | 8,516 |
+| samus-motion | MovesAsShePosed | 12,639 | 12,782 |
+| samus-motion | PoseFitAfterMoves | 226 | 234 |
+| samus-motion | ShrinkingLowersHer | 30 | 32 |
+| samus-motion | RisingAndFalling | 4,221 | 4,266 |
+| samus-motion | DriftInTheAir | 4,221 | 4,266 |
+| samus-motion | Moonfall | 339 | 340 |
+| samus-motion | WallJump | 113 | 118 |
+| samus-motion | Landing | 102 | 103 |
+| samus-motion | PoseFollows | 12,639 | 12,782 |
+| samus-motion | PadChart | 12,639 | 12,782 |
+| samus-motion | Aiming | 2,050 | 2,074 |
+| samus-motion | WhatHerMovesMet | 1,153 | 1,226 |
+| samus-motion | AnimationEnds | 178 | 184 |
+| samus-motion | BlocksStopFlush | 7,711 | 7,745 |
+| samus-motion | WallsAndCeilings | 952 | 961 |
+| samus-motion | SolidEnemies | 3,750 | 3,788 |
+| samus-motion | SlopesCarry | 36 | 37 |
+| samus-motion | SlopesSlowTheWalk | vectors only | 0 |
+| samus-motion | TouchedCells | 12,327 | 12,464 |
+| samus-motion | OtherBlockKinds | vectors only | 0 |
+| samus-motion | WordwiseTopSpeed | vectors only | 0 |
+| camera | FollowingHer | 8,412 | 8,412 |
+| camera | LeadingHer | 6,276 | 6,276 |
+| camera | AimingHeight | 4,983 | 4,983 |
+| camera | Remembering | 13,315 | 13,315 |
+| camera | CreepReadsRightward | 168 | 168 |
+| camera | ClosedScreens | 6,752 | 6,752 |
+| camera | RoomEdges | 11,581 | 11,581 |
+| camera | ShortScreens | 12,395 | 12,395 |
+| camera | Settling | 10,468 | 10,468 |
+| camera | TimeStopped | 95 | 95 |
+| camera | DownwardLooksAhead | 4,983 | 4,983 |
+| camera | ScreensRunOn | vectors only | 0 |
+| camera | BelowTheRoom | 2,587 | 2,587 |
+| camera | PushCarries | vectors only | 0 |
+| progress | EventsHappen | vectors only | 0 |
+| progress | ZebetitesCounted | vectors only | 0 |
+| progress | BossesDefeated | 0 | 1 |
+| progress | EmptiedLocations | 0 | 3 |
+| progress | DoorsStayOpen | 0 | 2 |
+| progress | MapsByArea | vectors only | 0 |
+| progress | MapOnArrival | vectors only | 0 |
+| progress | StationsSavedAt | 0 | 1 |
+| progress | ItemsPlacedCount | 3 | 3 |
+| progress | TakingItems | 0 | 2 |
+| progress | TakingBeams | vectors only | 0 |
+| progress | Tanks | 0 | 1 |
+| progress | RoomStates | 7 | 7 |
+| progress | ItemPercentage | vectors only | 0 |
+
 ## Engine not yet rebuilt
 
 The engine's code, every non-test source of `crates/game` without the bridges: what the rebuilt domains have yet to replace, beside what they hold.

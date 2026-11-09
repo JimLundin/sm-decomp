@@ -1,0 +1,65 @@
+# The harnesses' oracle coverage over every cached row (MODEL §4), for docs/REPORT.md beside the
+# floors: `<domain> frames <frames> <matched and verified> <unverified> <null model matched>`,
+# then `<domain> entry <entry> <matched and verified> <exercised>` per catalogue entry. The floor
+# tests fail when a run over every row in floors.txt gives other lines.
+game-time frames 18299 16697 0 3338
+samus-motion frames 18299 12639 0 5583
+samus-motion entry HowSheIsDrawn 0 0
+samus-motion entry SpeedBuildsAndBrakes 8418 8516
+samus-motion entry Dash 2967 2979
+samus-motion entry TurningRound 734 748
+samus-motion entry AimingAndShooting 2199 2234
+samus-motion entry RidingTheElevator 906 906
+samus-motion entry Jumping 141 145
+samus-motion entry FollowingTheGround 8418 8516
+samus-motion entry MovesAsShePosed 12639 12782
+samus-motion entry PoseFitAfterMoves 226 234
+samus-motion entry ShrinkingLowersHer 30 32
+samus-motion entry RisingAndFalling 4221 4266
+samus-motion entry DriftInTheAir 4221 4266
+samus-motion entry Moonfall 339 340
+samus-motion entry WallJump 113 118
+samus-motion entry Landing 102 103
+samus-motion entry PoseFollows 12639 12782
+samus-motion entry PadChart 12639 12782
+samus-motion entry Aiming 2050 2074
+samus-motion entry WhatHerMovesMet 1153 1226
+samus-motion entry AnimationEnds 178 184
+samus-motion entry BlocksStopFlush 7711 7745
+samus-motion entry WallsAndCeilings 952 961
+samus-motion entry SolidEnemies 3750 3788
+samus-motion entry SlopesCarry 36 37
+samus-motion entry SlopesSlowTheWalk 0 0
+samus-motion entry TouchedCells 12327 12464
+samus-motion entry OtherBlockKinds 0 0
+samus-motion entry WordwiseTopSpeed 0 0
+camera frames 18299 13315 0 5440
+camera entry FollowingHer 8412 8412
+camera entry LeadingHer 6276 6276
+camera entry AimingHeight 4983 4983
+camera entry Remembering 13315 13315
+camera entry CreepReadsRightward 168 168
+camera entry ClosedScreens 6752 6752
+camera entry RoomEdges 11581 11581
+camera entry ShortScreens 12395 12395
+camera entry Settling 10468 10468
+camera entry TimeStopped 95 95
+camera entry DownwardLooksAhead 4983 4983
+camera entry ScreensRunOn 0 0
+camera entry BelowTheRoom 2587 2587
+camera entry PushCarries 0 0
+progress frames 18299 18292 7 18289
+progress entry EventsHappen 0 0
+progress entry ZebetitesCounted 0 0
+progress entry BossesDefeated 0 1
+progress entry EmptiedLocations 0 3
+progress entry DoorsStayOpen 0 2
+progress entry MapsByArea 0 0
+progress entry MapOnArrival 0 0
+progress entry StationsSavedAt 0 1
+progress entry ItemsPlacedCount 3 3
+progress entry TakingItems 0 2
+progress entry TakingBeams 0 0
+progress entry Tanks 0 1
+progress entry RoomStates 7 7
+progress entry ItemPercentage 0 0

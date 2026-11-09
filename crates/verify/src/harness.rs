@@ -581,6 +581,37 @@ impl fmt::Display for Behaviours<'_> {
     }
 }
 
+/// A report's oracle coverage as `coverage.txt` commits it.
+///
+/// One line each, under the domain's name: `<domain> frames <frames> <matched and verified>
+/// <unverified> <null model matched>`, then `<domain> entry <entry> <matched and verified>
+/// <exercised>` per catalogue entry.
+pub struct Coverage<'a> {
+    /// The domain's name in `floors.txt`.
+    pub name: &'a str,
+    /// The report over every row.
+    pub report: &'a Report,
+}
+
+impl fmt::Display for Coverage<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self { name, report } = self;
+        writeln!(
+            f,
+            "{name} frames {} {} {} {}",
+            report.frames, report.matched, report.unverified, report.null_matched
+        )?;
+        for entry in &report.behaviours {
+            writeln!(
+                f,
+                "{name} entry {} {} {}",
+                entry.name, entry.matched, entry.exercised
+            )?;
+        }
+        Ok(())
+    }
+}
+
 /// The fields on which two projections differ.
 fn differing<D: Domain>(left: &D::Fields, right: &D::Fields) -> FieldSet {
     D::FIELDS

@@ -7,7 +7,8 @@
 //! `scenarios/vectors/<domain>.toml`, k and the areas from the Budget section of
 //! `docs/behaviours/<domain>.decode.md`) and the fit, score ÷ budget; the old code's baseline as
 //! that section states it; the bridge's and the harness's scores; code lines ([`lines`]); the
-//! harness floors and the vector counts; and the engine code not yet rebuilt, `crates/game`
+//! harness floors and the vector counts; the harnesses' oracle coverage, unverified frames
+//! and per catalogue entry; and the engine code not yet rebuilt, `crates/game`
 //! without the bridges.
 //!
 //! The report is generated, never edited: [`check`] fails when the committed file differs from
@@ -39,6 +40,8 @@ pub const COMMAND: &str = "cargo run -p tools --bin tools -- report --write";
 const TOKENS_PER_LINE: usize = 6;
 /// The harness floors, per domain and row.
 const FLOORS: &str = "crates/verify/src/harness/floors.txt";
+/// The harnesses' oracle coverage over every row, per domain and catalogue entry.
+const COVERAGE: &str = "crates/verify/src/harness/coverage.txt";
 /// The crate of types the clean models share.
 const SHARED_TYPES: &str = "crates/clean_types";
 /// The engine crate, the bridges' home and the code not yet rebuilt.
@@ -500,6 +503,7 @@ pub fn generate(root: &Path) -> Result<String, String> {
         .collect();
     let remaining = total(&measure(root, &engine)?);
     let floors = floors(&read(&root.join(FLOORS))?)?;
+    let coverage = coverage(&read(&root.join(COVERAGE))?)?;
 
     let mut out = String::new();
     header(&mut out);
@@ -509,6 +513,7 @@ pub fn generate(root: &Path) -> Result<String, String> {
     areas(&mut out, &domains);
     bridge_and_harness(&mut out, &domains);
     floors_section(&mut out, &domains, &floors);
+    coverage_section(&mut out, &domains, &coverage);
     engine_section(&mut out, &domains, &shared_files, remaining, engine.len());
     Ok(out)
 }
@@ -876,6 +881,114 @@ fn floors_section(
             grouped(domain.vectors),
             grouped(domain.pose_steps)
         );
+    }
+}
+
+/// A domain's oracle coverage over every row, as `coverage.txt` commits it.
+#[derive(Default, Debug, PartialEq, Eq)]
+struct Coverage {
+    /// Frames, matched and verified, unverified and the null model's matched.
+    frames: Option<[usize; 4]>,
+    /// Each catalogue entry: its name, the frames matched and verified, the frames exercised.
+    entries: Vec<(String, usize, usize)>,
+}
+
+/// The coverage by domain: `domain frames <4 counts>` and `domain entry <name> <2 counts>` lines,
+/// `#` comments skipped.
+fn coverage(text: &str) -> Result<BTreeMap<String, Coverage>, String> {
+    let mut domains: BTreeMap<String, Coverage> = BTreeMap::new();
+    let number = |line: &str, word: &str| {
+        word.parse::<usize>()
+            .map_err(|e| format!("{COVERAGE}: {line}: {e}"))
+    };
+    for line in text
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+    {
+        match line.split_whitespace().collect::<Vec<_>>().as_slice() {
+            [domain, "frames", counts @ ..] if counts.len() == 4 => {
+                let mut frames = [0; 4];
+                for (slot, word) in frames.iter_mut().zip(counts) {
+                    *slot = number(line, word)?;
+                }
+                domains.entry((*domain).to_owned()).or_default().frames = Some(frames);
+            }
+            [domain, "entry", name, matched, exercised] => {
+                let entry = (
+                    (*name).to_owned(),
+                    number(line, matched)?,
+                    number(line, exercised)?,
+                );
+                domains
+                    .entry((*domain).to_owned())
+                    .or_default()
+                    .entries
+                    .push(entry);
+            }
+            _ => return Err(format!("{COVERAGE}: {line}: not a coverage line")),
+        }
+    }
+    Ok(domains)
+}
+
+fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<String, Coverage>) {
+    out.push_str(
+        "\n## Oracle coverage\n\nOver every row the floors name \
+         (`crates/verify/src/harness/coverage.txt`, which the floor tests hold equal to a run over \
+         every row). A frame is matched and verified when every unmasked field matched the \
+         oracle, and unverified when it matched only through a stand-in's answer copied from the \
+         next record; the null model is a step that does nothing.\n\n",
+    );
+    table(
+        out,
+        1,
+        &[
+            "Domain",
+            "Frames",
+            "Matched and verified",
+            "Unverified",
+            "Null model",
+        ],
+    );
+    for domain in domains {
+        let name = domain.domain.name;
+        let cells = coverage
+            .get(name)
+            .and_then(|coverage| coverage.frames)
+            .map_or_else(
+                || String::from("- | - | - | -"),
+                |frames| frames.map(grouped).join(" | "),
+            );
+        let _ = writeln!(out, "| {name} | {cells} |");
+    }
+    out.push_str(
+        "\nPer catalogue entry, the frames that exercised it and those of them matched and \
+         verified. An entry no frame exercised is checked by its vectors only.\n\n",
+    );
+    table(
+        out,
+        2,
+        &["Domain", "Entry", "Matched and verified", "Exercised"],
+    );
+    for domain in domains {
+        let name = domain.domain.name;
+        for (entry, matched, exercised) in coverage
+            .get(name)
+            .map(|coverage| coverage.entries.as_slice())
+            .unwrap_or_default()
+        {
+            let matched = if *exercised == 0 {
+                String::from("vectors only")
+            } else {
+                grouped(*matched)
+            };
+            let _ = writeln!(
+                out,
+                "| {name} | {entry} | {matched} | {} |",
+                grouped(*exercised)
+            );
+        }
     }
 }
 

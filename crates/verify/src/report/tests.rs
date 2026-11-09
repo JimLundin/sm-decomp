@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use super::lines::code_lines;
-use super::{baseline, check, current, fit, floors, generate, grouped, tables};
+use super::{Coverage, baseline, check, coverage, current, fit, floors, generate, grouped, tables};
 
 /// The repository root, from this crate's manifest.
 fn root() -> &'static Path {
@@ -80,4 +80,19 @@ fn floors_and_tables_parse() {
         tables("[[vector]]\nid = 1\n[[pose_step]]\n[[vector]]\n", "vector"),
         2
     );
+}
+
+#[test]
+fn coverage_parses() {
+    let parsed = coverage("# coverage\ncamera frames 10 8 1 5\ncamera entry Follow 3 4\n");
+    let camera = Coverage {
+        frames: Some([10, 8, 1, 5]),
+        entries: vec![("Follow".to_owned(), 3, 4)],
+    };
+    assert_eq!(
+        parsed.map(|domains| domains.get("camera") == Some(&camera)),
+        Ok(true)
+    );
+    assert!(coverage("camera frames 10 8 1\n").is_err());
+    assert!(coverage("camera entry Follow x 4\n").is_err());
 }
