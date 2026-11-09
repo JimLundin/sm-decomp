@@ -19,7 +19,7 @@ use serde::{Deserialize, Deserializer};
 /// The vector file: its `[[vector]]`s.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct File {
+pub struct VectorFile {
     pub vector: Vec<Vector>,
 }
 

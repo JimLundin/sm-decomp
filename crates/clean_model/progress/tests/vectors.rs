@@ -11,12 +11,12 @@ use clean_model_progress::{
     CATALOGUE, Condition, EnteredRoom, Progress, RoomStates, Rules, Version,
 };
 use clean_types::{Area, Checked, Entrance};
-use support::{Answers, Asks, Check, File, Named, Vector};
+use support::{Answers, Asks, Check, Named, Vector, VectorFile};
 
 const VECTOR_FILE: &str = include_str!("../../../../scenarios/vectors/progress.toml");
 
 /// The file's text, read into its shape.
-fn read(text: &str) -> Result<File, toml::de::Error> {
+fn read(text: &str) -> Result<VectorFile, toml::de::Error> {
     toml::from_str(text)
 }
 
