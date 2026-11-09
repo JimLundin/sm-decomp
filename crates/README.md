@@ -20,6 +20,11 @@ The rebuild's crates, as planned in
 | `clean_model_hud` | the HUD (`crates/clean_model/hud`): the status bar, the selected item and the mini-map, built from its spec in the clean room, and its catalogue. | `clean_types` |
 | `clean_model_progress` | what the game remembers of a run (`crates/clean_model/progress`): the reports that change it, the questions it answers and the room states it picks, built from its spec in the clean room, and its catalogue. | `clean_types` |
 
+The table lists workspace packages only. A clean crate may also take the registry crates of
+`tools/cleanroom/allowed_deps.txt` (MODEL §1 decision 12), and an engine or verification crate
+takes one of them, at the same pin, where its types cross the bridge: `game` and `verify` depend
+on `enum-map` because the progress model's tables are `EnumMap`s.
+
 `data`, `game`, `runtime` and `app` are the engine. Every new crate takes the workspace lint
 set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float arithmetic.
 
