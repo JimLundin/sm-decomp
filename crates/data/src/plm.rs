@@ -171,8 +171,13 @@ fn take<const N: usize>(rom: Lorom<'_>, at: RomAddress) -> Result<([u8; N], RomA
     Ok((array, next))
 }
 
-/// The scroll change list at `at` (`$84:8B68`).
-fn scroll_changes(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<ScrollChange>, PlmError> {
+/// The scroll change list at `at`: each screen and the area it takes, to its end.
+///
+/// # Errors
+///
+/// [`PlmError`] if the list is outside the image or a change names no area.
+// The list's reader is `$84:8B68`.
+pub fn scroll_changes(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<ScrollChange>, PlmError> {
     let mut changes = Vec::new();
     let mut cursor = at;
     loop {

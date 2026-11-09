@@ -6,6 +6,7 @@
 
 pub mod address_map;
 pub mod assets;
+pub mod blocks;
 pub mod compression;
 pub mod digest;
 pub mod dma;
