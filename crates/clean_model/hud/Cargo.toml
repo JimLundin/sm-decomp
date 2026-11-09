@@ -1,0 +1,13 @@
+[package]
+name = "clean_model_hud"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The hud model, built from its behaviour spec"
+
+[dependencies]
+clean_types = { path = "../../clean_types" }
+
+[lints]
+workspace = true
