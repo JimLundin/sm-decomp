@@ -650,7 +650,8 @@ impl fmt::Display for Behaviours<'_> {
 /// One line each, under the domain's name: `<domain> frames <frames> <matched and verified>
 /// <unverified> <null model matched>`, then `<domain> field <compared> <masked> <field>` per
 /// declared field, then `<domain> entry <entry> <matched and verified> <null model matched>
-/// <exercised> <unchecked>` per catalogue entry.
+/// <exercised> <unchecked>` per catalogue entry, by the entry's name: the order a model
+/// declares its entries in changes no line.
 pub struct Coverage<'a> {
     /// The domain's name in `floors.txt`.
     pub name: &'a str,
@@ -675,7 +676,9 @@ impl fmt::Display for Coverage<'_> {
                 field.name
             )?;
         }
-        for entry in &report.behaviours {
+        let mut entries: Vec<_> = report.behaviours.iter().collect();
+        entries.sort_by(|left, right| left.name.cmp(&right.name));
+        for entry in entries {
             writeln!(
                 f,
                 "{name} entry {} {} {} {} {}",

@@ -10,8 +10,9 @@
 //! A report is heard from the frame's watched instruction hits (record N+1's, the entry points
 //! of the decode notes' Inputs table) where the instruction alone names it, with record N and the
 //! ROM: an instruction that marks one event, a zebetite destroyed, a map station, the room that
-//! gives its map on arrival, leaving the area, the gunship's station; and a pickup, when the
-//! frame sets one place emptied and record N holds one item PLM, its place not yet emptied, whose
+//! gives its map on arrival, leaving the area (on a door, the one record N takes, whose header
+//! in the ROM leads into another area), the gunship's station; and a pickup, when the frame
+//! sets one place emptied and record N holds one item PLM, its place not yet emptied, whose
 //! list (read from the ROM) runs the pickup instruction hit, and none whose pickup the ROM
 //! doesn't decode, since that one could be the PLM taken. The hits carry no arguments, so
 //! what an instruction can't name alone (the kind of boss defeated, the door opened, the station
@@ -187,8 +188,14 @@ const SET_EMPTIED: u32 = 0x84_8899;
 const MAP_STATION: u32 = 0x84_8C8F;
 /// The setup code of the room that gives its area's map on arrival (`$8F:C90A`).
 const MAP_ON_ARRIVAL: u32 = 0x8F_C90A;
-/// A door into another area (`$82:DF99`).
+/// Every door's transition runs it (`$82:DF99`); only a door into another area saves the map.
 const LEFT_AREA: u32 = 0x82_DF99;
+/// The door headers' bank.
+const DOOR_BANK: u8 = 0x83;
+/// A door header's flags byte, from its start (`$83:0002,x`).
+const DOOR_FLAGS: u16 = 2;
+/// The door flag that takes her into another area.
+const INTO_ANOTHER_AREA: u8 = 0x40;
 /// The gunship's station, saved at on its first landing and when she saves in it (`$A2:A9A7`,
 /// `$A2:AB2B`).
 const GUNSHIP_SAVES: [u32; 2] = [0xA2_A9A7, 0xA2_AB2B];
@@ -703,13 +710,26 @@ impl ProgressDomain {
         Ok((instruction, pickup))
     }
 
+    /// Whether the door `record` is taking leads into another area, by its header's flag in the
+    /// ROM; the door pointer is set when she touches it, before its transition.
+    fn leads_into_another_area(&self, record: &FrameRecord) -> Result<bool, Skip> {
+        let door = word(record, DOOR_POINTER)?;
+        Lorom::new(&self.image)
+            .read(RomAddress::new(DOOR_BANK, door.wrapping_add(DOOR_FLAGS)), 1)
+            .ok()
+            .and_then(|flags| flags.first().copied())
+            .map(|flags| flags & INTO_ANOTHER_AREA != 0)
+            .ok_or_else(|| Skip::NoReport(format!("door {door:#06X} has no header in the ROM")))
+    }
+
     /// The reports the frame from `from` to `next` makes that its watched instruction hits
     /// name, with record N and the ROM, in the order their instructions ran.
     fn heard(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Report>, Skip> {
         let ran = |pc: u32| next.hits.iter().any(|hit| hit.pc == pc);
-        // Every report of an area names the one she is in, record N+1's: the room's map on
-        // arrival runs after the new room's header set its area. Leaving the area runs just
-        // before that, so it names the one she leaves, record N's.
+        // In the decode notes' numbering `from` is record N-1 and `next` record N. Every report
+        // of an area names `079F` at N, the area she is in: the room's map on arrival runs after
+        // the new room's header set it. Leaving the area runs just before that, so it names
+        // `079F` at N-1, the one she leaves.
         let (left, here) = (area(from)?, area(next)?);
         let mut reports = Vec::new();
         for hit in &next.hits {
@@ -717,7 +737,9 @@ impl ProgressDomain {
                 ZEBETITE_DESTROYED => Some(Report::ZebetiteDestroyed),
                 MAP_STATION => Some(Report::MapStation(here)),
                 MAP_ON_ARRIVAL => Some(Report::MapOnArrival(here)),
-                LEFT_AREA => Some(Report::LeftArea(left)),
+                LEFT_AREA => self
+                    .leads_into_another_area(from)?
+                    .then_some(Report::LeftArea(left)),
                 pc if GUNSHIP_SAVES.contains(&pc) => Some(Report::Saved {
                     area: here,
                     station: GUNSHIP,
