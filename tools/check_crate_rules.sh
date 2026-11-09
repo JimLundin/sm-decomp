@@ -3,7 +3,8 @@
 # D1; PRINCIPLES K1, K8, K9), checked over the new crates. Exit 1 lists each violation.
 #   Dependencies (rules 1-3, D1): each new crate depends on exactly the workspace packages the
 #     plan allows, over normal, build and dev dependencies with every feature on. Registry
-#     packages aren't constrained here.
+#     packages aren't constrained here, nor the baked copies under vendor/ that the root
+#     manifest patches in for registry crates (path packages, not workspace members).
 #   Sources (rules 4, 5, K8, K9): pattern checks over the engine crates' Rust files.
 # Run from the repository root. CARGO overrides the cargo binary.
 set -u
@@ -48,12 +49,13 @@ rule() {
 }
 
 for crate in $new_crates; do
-  # Direct dependencies that are path packages, that is workspace members: "name vX (path)".
+  # Direct dependencies that are workspace members: path packages, "name vX (path)", outside
+  # vendor/, whose baked copies stand in for registry crates.
   if ! deps=$("$cargo" tree -q -p "$crate" --all-features -e normal,build,dev --depth 1 \
       --prefix none --format '{p}' 2>&1); then
     fail "$crate: cargo tree failed: $deps"; continue
   fi
-  for dep in $(echo "$deps" | tail -n +2 | grep ' (' | grep -v ' (\*)$' | cut -d' ' -f1 | sort -u); do
+  for dep in $(echo "$deps" | tail -n +2 | grep ' (' | grep -v ' (\*)$' | grep -vE '[\\/]vendor[\\/][^\\/]*\)$' | cut -d' ' -f1 | sort -u); do
     case " $(allowed "$crate") " in *" $dep "*) continue ;; esac
     fail "$crate depends on $dep ($(rule "$crate" "$dep"))"
   done
