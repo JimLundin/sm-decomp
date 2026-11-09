@@ -78,9 +78,10 @@ const fn standing(p: Pose, pad: Buttons) -> Standing {
 
 impl Samus {
     /// `PoseFollows`: one frame, in the order it runs: her moves as the pose at its start says
-    /// (`MovesAsShePosed`) and what they met; the pose chosen; pose fit or the shrink
-    /// (`PoseFitAfterMoves`); then the change's effects. `TouchedCells`: the cells she is inside
-    /// come first, from where she starts.
+    /// (`MovesAsShePosed`) and what they met; the pose chosen, the pad chart reading jump held
+    /// through as a press (`Jumping`); pose fit or the shrink (`PoseFitAfterMoves`); then the
+    /// change's effects; at its end, what she remembers of jump held. `TouchedCells`: the cells
+    /// she is inside come first, from where she starts.
     pub fn step(&mut self, frame: &Frame, world: &dyn World, rules: &Rules) -> Outcome {
         let mut t = Tick {
             frame,
@@ -100,6 +101,7 @@ impl Samus {
             pose: start.pose,
             moving: start.run.speed != ZERO,
             airborne: !self.vertical.on_ground(),
+            jump_held_through: start.jump_held.presses(rules),
             frame,
             met: meeting.met,
         };
@@ -113,7 +115,8 @@ impl Samus {
             ..moment
         };
         let chosen = stepped.met().filter(|_| blocked).unwrap_or(chosen);
-        let camera_from = self.take(chosen, &start, moved, &mut t);
+        let placed = self.take(chosen, &start, moved, &mut t);
+        self.jump_held = start.jump_held.then(&moment);
         Outcome {
             wall_test: meeting.wall_test,
             standing: standing(start.pose, frame.pad),
@@ -121,7 +124,8 @@ impl Samus {
             skidding: self.run.skids(self.pose.facing),
             reached: t.reached,
             inside,
-            camera_from,
+            placed,
+            rising: self.vertical == Vertical::Rising,
         }
     }
 
@@ -357,9 +361,14 @@ impl Samus {
     /// left them (`moved`), with her position and seat as her looks left them, and brings none
     /// of the chosen pose's effects. The chosen pose brings, in order: after pose fit's push the
     /// shrink (`shrink`), then its row's effects, then the change of action's own (`ENTERING`).
-    /// Returns where the camera follows her from (§1).
-    fn take(&mut self, chosen: Choice, start: &Self, moved: Self, t: &mut Tick) -> Fixed {
-        let chosen = match self.fit(t, chosen.pose) {
+    ///
+    /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where pose fit moved her, or a change of
+    /// shape starts (a lowering of 0 px included), she is placed at her y pixel just after that,
+    /// before the effects, with the subpixel her y had at the frame's start. Returns that y, the
+    /// placement, or none on any other frame.
+    fn take(&mut self, chosen: Choice, start: &Self, moved: Self, t: &mut Tick) -> Option<Fixed> {
+        let fitted = self.fit(t, chosen.pose);
+        let chosen = match fitted.instead {
             None => chosen,
             Some(pose) => {
                 *self = Self {
@@ -380,14 +389,15 @@ impl Samus {
         if let Some(lowers) = chosen.lower {
             self.shrink(lowers, t);
         }
-        let camera = self.camera_from(start.position.y, moved.position.y, chosen.lower.is_some());
+        let placed = (fitted.moved || chosen.lower.is_some())
+            .then(|| self.position.y.with_sub(start.position.y.sub()));
         let entered = ENTERING
             .iter()
             .filter(|e| e.on(start.pose.action, chosen.pose));
         for effect in chosen.effects.iter().chain(entered.map(|e| &e.effect)) {
             self.apply(*effect, start, t);
         }
-        camera
+        placed
     }
 
     /// `ShrinkingLowersHer`: the frame a change of shape starts, she looks down its distance
@@ -397,18 +407,6 @@ impl Samus {
         let seen = t.vmove(self.bounds(), t.rules.lowers(lowers), Blocks);
         self.reach(&seen);
         self.position.y += px(seen.gone);
-    }
-
-    /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where the camera follows her from. After
-    /// pose fit moved her (her y pixel differs from `moved`'s, after the frame's moves), or the
-    /// frame a change of shape starts (`shapes`), her y pixel now with her y subpixel at the
-    /// frame's start; else her y at the frame's start, `start`.
-    fn camera_from(&self, start: Fixed, moved: Fixed, shapes: bool) -> Fixed {
-        if shapes || self.position.y.pixel() != moved.pixel() {
-            self.position.y.with_sub(start.sub())
-        } else {
-            start
-        }
     }
 
     /// `Jumping`, `TurningRound`, `Moonfall`: one effect of the change (`PoseFollows`) on her

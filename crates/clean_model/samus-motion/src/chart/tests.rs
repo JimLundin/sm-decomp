@@ -244,11 +244,13 @@ fn tie(
         animation_ends: false,
         body: &body,
     };
+    // Jump held through only adds jump to the presses, which `pads` already gives with jump held.
     let moment = Moment {
         situation,
         pose,
         moving,
         airborne,
+        jump_held_through: false,
         frame: &frame,
         met: None,
     };

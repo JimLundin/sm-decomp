@@ -4,7 +4,7 @@ use Gait::{Falling, Moonwalking, Rolling, Running, SpinJump, StraightJump, Turni
 use Lowers::{Crouch, Morph, Nothing};
 use clean_types::{Fixed, Parts, Px, ZERO, below};
 use core::num::Wrapping;
-use core::ops::Range;
+use core::ops::{Range, RangeInclusive};
 
 /// `WordwiseTopSpeed`: how the top speed is tested.
 pub enum SpeedCap {
@@ -111,6 +111,12 @@ pub struct Rules {
     pub crouch_lift: Fixed,
     /// `Jumping`: the space jump's fall speeds, read as 8.8.
     pub space_jump: Range<u16>,
+    /// `Jumping`, jump held through: the counts of frames jump has stayed held at which, the
+    /// frame after a landing or a turn's or a landing's end, it counts as a press.
+    pub held_through: RangeInclusive<u16>,
+    /// `Jumping`, jump held through: the counts of jump held about 9 minutes or more, which act
+    /// as one of `held_through` does (original only).
+    pub held_long: RangeInclusive<u16>,
     /// `RisingAndFalling`: the pull a frame.
     pub gravity: Fixed,
     /// `RisingAndFalling`: the pixel part at which a fall stops growing.
@@ -187,6 +193,8 @@ impl Rules {
         bounce: Wrapping(0x1_0000),
         crouch_lift: Wrapping(0xA_0000),
         space_jump: 0x280..0x500,
+        held_through: 1..=8,
+        held_long: 32_777..=65_535,
         gravity: Wrapping(0x1C00),
         fall_settle_px: Wrapping(5),
         bounce_from_px: Wrapping(3),

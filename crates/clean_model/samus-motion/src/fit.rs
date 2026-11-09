@@ -7,6 +7,7 @@ use crate::tick::Tick;
 use Probe::{Blocks, Enemies};
 use clean_types::Action::Still;
 use clean_types::{Aim, Body, Facing, Gun, Legs, Pose, Px, Radius, px};
+use core::num::Wrapping;
 
 /// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing `facing` (she takes it facing
 /// as before the change).
@@ -36,6 +37,22 @@ fn alone(rooms: Rooms, g: Px) -> Option<Px> {
     }
 }
 
+/// `PoseFitAfterMoves`: what pose fit made of the change.
+pub struct Fitted {
+    /// The pose she takes instead of the chosen one, which brings none of the chosen pose's
+    /// effects: the one she had where the change is refused, or crouched `Still`. `None` where
+    /// she takes the chosen pose.
+    pub instead: Option<Pose>,
+    /// Pose fit moved her: a push, or the crouch taken instead raising her (§1: it places her).
+    pub moved: bool,
+}
+
+/// `PoseFitAfterMoves`: she takes the chosen pose where her moves left her.
+const TAKEN: Fitted = Fitted {
+    instead: None,
+    moved: false,
+};
+
 impl Samus {
     /// `PoseFitAfterMoves`: when the chosen pose differs from hers, doesn't face the screen and
     /// has a body taller by g px, she looks g px up and down from where her moves left her, at
@@ -44,35 +61,46 @@ impl Samus {
     /// change. With something on one side only she is pushed away from it (a block's room before
     /// an enemy's on the same side), keeping the subpixel her looks left; with something on both,
     /// a ball's change is refused, and any other body takes crouched `Still` instead, rising by
-    /// the crouch's growth over her old body, her feet where they were. Returns the pose she
-    /// takes instead of the chosen one, refused or crouched, which brings none of its effects.
-    pub(crate) fn fit(&mut self, t: &mut Tick, chosen: Pose) -> Option<Pose> {
+    /// the crouch's growth over her old body, her feet where they were.
+    pub(crate) fn fit(&mut self, t: &mut Tick, chosen: Pose) -> Fitted {
         let (old, new) = (self.radius, t.body(chosen));
         if chosen == self.pose || chosen.facing == Facing::Screen || new.y <= old.y {
-            return None;
+            return TAKEN;
         }
         let g = new.y - old.y;
+        let refused = Fitted {
+            instead: Some(self.pose),
+            moved: false,
+        };
         let mut found: Rooms = (None, None);
         for (probe, far) in [(Enemies, new), (Blocks, old)] {
             let mut look = |by, r| self.look(t, by, r, probe);
             let here = (look(-g, old), look(g, old));
             if alone(here, g).is_some_and(|push| look(push, far).is_some()) {
-                return Some(self.pose);
+                return refused;
             }
             found = (here.0.or(found.0), here.1.or(found.1));
         }
         if let Some(push) = alone(found, g) {
             self.position.y += px(push);
+            return Fitted {
+                instead: None,
+                moved: true,
+            };
         }
         let (Some(_), Some(_)) = found else {
-            return None;
+            return TAKEN;
         };
         if old.y < t.rules.small_body_px {
-            return Some(self.pose);
+            return refused;
         }
         let crouch = crouched(self.pose.facing);
-        self.position.y -= px(t.body(crouch).y.max(old.y) - old.y);
-        Some(crouch)
+        let rise = t.body(crouch).y.max(old.y) - old.y;
+        self.position.y -= px(rise);
+        Fitted {
+            instead: Some(crouch),
+            moved: rise != Wrapping(0),
+        }
     }
 
     /// `PoseFitAfterMoves`: one look by `by` whole px (read signed, downward positive) at size

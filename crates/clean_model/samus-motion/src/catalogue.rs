@@ -125,7 +125,7 @@ pub const CATALOGUE: [Behaviour; 29] = [
     },
     Behaviour {
         id: BehaviourId::Jumping,
-        summary: "Jumps, wall jumps, ball bounces and space jumps start her rising at their speeds",
+        summary: "Jumps, wall jumps, ball bounces and space jumps start her rising at their speeds, and jump held through a landing or a turn's end takes her off again",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
@@ -146,21 +146,21 @@ pub const CATALOGUE: [Behaviour; 29] = [
     },
     Behaviour {
         id: BehaviourId::PoseFitAfterMoves,
-        summary: "A frame ends: her moves, what they met, then the pose change: pose fit's push or refusal, speeds, the lift",
+        summary: "A frame ends: her moves, what they met, then the pose change: pose fit's push or refusal, which places her, speeds, the lift",
         kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::ShrinkingLowersHer,
-        summary: "Starting to crouch or to morph lowers her 5 or 9 px, or only to a floor nearer under her",
+        summary: "Starting to crouch or to morph lowers her 5 or 9 px, or only to a floor nearer under her, and any change of shape places her",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::RisingAndFalling,
-        summary: "She rises and falls under gravity, settling at 5.1400 a frame, and a let-go jump ends the rise",
+        summary: "She rises and falls under gravity, settling at 5.1400 a frame, a let-go jump ends the rise, and each frame says whether she is rising",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

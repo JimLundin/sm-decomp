@@ -16,13 +16,15 @@ use crate::rows::{Effect, Met, Row, Side, Situation, Test, seen};
 use crate::rules::Lowers;
 use crate::tick::Frame;
 use clean_types::Action::Running;
-use clean_types::Pose;
+use clean_types::button::JUMP;
+use clean_types::{Buttons, Pose};
 
 /// What the chart reads.
 ///
 /// Her situation and pose at the frame's start, whether her horizontal speed then isn't 0,
-/// whether she is off the ground once her moves are made, the frame (its pad held and just
-/// pressed, her equipment, an animation's end) and what her moves met.
+/// whether she is off the ground once her moves are made, whether jump held through counts as a
+/// press, the frame (its pad held and just pressed, her equipment, an animation's end) and what
+/// her moves met.
 pub struct Moment<'a> {
     /// Her situation.
     pub situation: &'static Situation,
@@ -32,6 +34,8 @@ pub struct Moment<'a> {
     pub moving: bool,
     /// Off the ground once her moves are made.
     pub airborne: bool,
+    /// `Jumping`, jump held through: jump counts as just pressed for the pad chart this frame.
+    pub jump_held_through: bool,
     /// The frame.
     pub frame: &'a Frame<'a>,
     /// What her moves met.
@@ -80,13 +84,24 @@ impl Moment<'_> {
             .unwrap_or_else(|| rank(a) > rank(b))
     }
 
+    /// `PadChart`, `Jumping` (jump held through): the buttons the chart reads as just pressed:
+    /// the pad's, and jump where jump held through counts as a press.
+    const fn pressed(&self) -> Buttons {
+        let pad = self.frame.pressed;
+        if self.jump_held_through {
+            Buttons(pad.0 | JUMP.0)
+        } else {
+            pad
+        }
+    }
+
     /// `PadChart`, `Aiming`, `WhatHerMovesMet`, `AnimationEnds`: whether one test of a row
     /// passes; forward and back are by her facing at the frame's start.
     fn passes(&self, test: &Test) -> bool {
         let (p, f) = (self.pose, self.frame);
         match *test {
             Held(b) => seen(f.pad, p.facing).any(b),
-            Pressed(b) => seen(f.pressed, p.facing).any(b),
+            Pressed(b) => seen(self.pressed(), p.facing).any(b),
             Not(t) => !self.passes(t),
             Aimed(aims) => aims.contains(&p.aim),
             Gun(gun) => p.gun == gun,

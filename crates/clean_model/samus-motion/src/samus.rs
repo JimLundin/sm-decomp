@@ -2,6 +2,7 @@
 //! beyond her quantities: its outputs, for the caller to act on.
 
 use crate::collide::{Bounds, Moved, Stop};
+use crate::jump_held::JumpHeld;
 use crate::motion::Run;
 use clean_types::{Cell, Fixed, Pose, Position, Radius, Touch, ZERO};
 
@@ -133,8 +134,13 @@ pub struct Outcome {
     pub reached: Vec<Touch>,
     /// `TouchedCells`: the cells she was inside at the frame's start.
     pub inside: Vec<Cell>,
-    /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where the camera follows her from, a y.
-    pub camera_from: Fixed,
+    /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: the y a placement put her at this frame,
+    /// if any: pose fit moved her, or a change of shape started, a placement of 0 px included.
+    /// The camera's scroll measures her vertical move from it.
+    pub placed: Option<Fixed>,
+    /// §1, `RisingAndFalling`: she is rising at the frame's end, a rise at 0 and the frame whose
+    /// pull spends the rise included.
+    pub rising: bool,
 }
 
 /// Samus as the player can tell her, and what she remembers.
@@ -158,6 +164,9 @@ pub struct Samus {
     pub spin: Spin,
     /// `SlopesCarry`: seated on a slope.
     pub seat: Seat,
+    /// `Jumping`: how long jump has stayed held, and whether she landed or an animation ended
+    /// the frame before.
+    pub jump_held: JumpHeld,
 }
 
 impl Samus {

@@ -3,8 +3,8 @@
 #![cfg(test)]
 
 use clean_model_samus_motion::{
-    Bounces, CATALOGUE, Carry, DashIs, Frame, Met, Moment, Outcome, Rules, Run, Samus, Seat,
-    SpeedCap, Spin, Vertical, WallTest, classify,
+    Bounces, CATALOGUE, Carry, DashIs, Frame, JumpHeld, Met, Moment, Outcome, Rules, Run, Samus,
+    Seat, SpeedCap, Spin, Vertical, WallTest, classify,
 };
 use clean_types::{
     Action, Aim, Block, Body, Buttons, Cell, Checked, Equipment, Facing, Fixed, Gun, Heading,
@@ -599,6 +599,7 @@ const VECTOR_KEYS: &[&str] = &[
     "jump_pressed",
     "pressed",
     "animation_ends",
+    "spin_turned_far",
     "after",
 ];
 
@@ -669,7 +670,8 @@ fn settings(vector: &Value) -> (Rules, Equipment) {
 }
 
 /// Samus at a vector's start (spec §1.2): her motion follows the pad unless she is skidding,
-/// her dash is hers to keep, she remembers no spin and no seat, an upward speed is a rise,
+/// her dash is hers to keep, she remembers no spin, no seat and no jump held, an upward speed
+/// is a rise,
 /// and in a jump, a spin, a fall or a wall jump (a turn in a jump or a fall included) she is
 /// in the air: a vertical speed of 0 there means she has just started to fall. In any other
 /// pose she is on the ground, keeping any downward speed she has (`FollowingTheGround`), or,
@@ -748,11 +750,13 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
         radius,
         spin: Spin::OFF,
         seat: Seat::Unseated,
+        jump_held: JumpHeld::NONE,
     }
 }
 
 /// One of a vector's frames: the pose it starts in and her body's size there, the buttons
-/// held and those just pressed, and whether her pose's animation ends on it.
+/// held and those just pressed, whether her pose's animation ends on it, and whether the spin
+/// has turned far.
 #[derive(Clone, Copy)]
 struct Step {
     /// The pose at the frame's start.
@@ -765,6 +769,8 @@ struct Step {
     pressed: Buttons,
     /// `AnimationEnds`: the frame's own `animation_ends` (default false), never inferred.
     animation_ends: bool,
+    /// `WallJump`: the frame's own `spin_turned_far` (default false), given as `animation_ends`.
+    spin_turned_far: bool,
 }
 
 /// A pose with its body size, as the vectors give one.
@@ -779,6 +785,7 @@ fn step_of(f: &Value) -> Step {
         pad: pad(f.get("pad").expect("pad")),
         pressed: pressed(f),
         animation_ends: flag(Some(f), "animation_ends"),
+        spin_turned_far: flag(Some(f), "spin_turned_far"),
     }
 }
 
@@ -789,7 +796,14 @@ fn frames(vector: &Value) -> Vec<Step> {
         known_keys(
             f,
             "lead_in",
-            &["pose", "pad", "jump_pressed", "pressed", "animation_ends"],
+            &[
+                "pose",
+                "pad",
+                "jump_pressed",
+                "pressed",
+                "animation_ends",
+                "spin_turned_far",
+            ],
         );
     }
     lead_in.iter().chain([vector]).map(step_of).collect()
@@ -866,7 +880,7 @@ fn run(vector: &Value) -> Vec<String> {
             pad: step.pad,
             pressed: step.pressed,
             equipment,
-            spin_turned_far: false,
+            spin_turned_far: step.spin_turned_far,
             elevator_moving,
             parity,
             animation_ends: step.animation_ends,
@@ -931,11 +945,13 @@ fn run_pose_step(step: &Value) -> Option<String> {
         animation_ends,
         body: &body,
     };
+    // A step has no lead-in, so nothing makes jump held through a press.
     let moment = Moment {
         situation: classify(start),
         pose: start,
         moving: false,
         airborne,
+        jump_held_through: false,
         frame: &frame,
         met,
     };
@@ -1039,10 +1055,19 @@ fn compare(id: &str, after: &Value, samus: &Samus, outcome: &Outcome) -> Vec<Str
                 show_signed(speed_y(samus)),
             ),
             "dash" => check("dash", show(fixed(value.str())), show(samus.run.dash)),
-            "camera_from" => check(
-                "camera_from",
-                show(fixed(value.str())),
-                show(outcome.camera_from),
+            // The y a placement put her at, or "none": no placement reported.
+            "placed" => {
+                let none = || "none".to_owned();
+                let expected = match value.str() {
+                    "none" => none(),
+                    y => show(fixed(y)),
+                };
+                check("placed", expected, outcome.placed.map_or_else(none, show));
+            }
+            "rising" => check(
+                "rising",
+                value.bool().to_string(),
+                outcome.rising.to_string(),
             ),
             "reached" => {
                 let actual: Vec<String> = outcome.reached.iter().copied().map(show_touch).collect();
