@@ -62,18 +62,18 @@ scroll read. Neither field differs on a frame where the others match.
     C-held-9 (constructed, a count of 9). The round-12 model passes the lead-ins and fails the
     four checked frames, as the gap says, until round 13.
 
-## Filed by the observer: the knockback's tail (adversary 43, M6, 2026-11-08)
+## Filed by the observer: the knockback's end (adversary 43, M6, 2026-11-08)
 
-33. **Defer the knockback's tail (harness; the camera's harness keys off it).** A frame that starts
-    with the knockback on (`0A52` ≠ 0) under the normal handler is the knockback's tail: out of
-    scope (spec §10, knockback is the damage domain's). Samus-motion's harness defers it, as it
-    defers the knockback's handler: nothing on it is compared, x, y, the speeds, the pose, the
-    placement and `rising` included. The camera's harness masks y on exactly the frames this
-    predicate defers (camera.decode, Masks), so both harnesses use this one predicate; a mask of
-    some fields instead of the deferral would leave the camera's mask without its trigger. Seen at
-    r05 395-400 (camera C3, decode notes C3: at 400 the knockback's end hands her 52h at
-    magnitude 0 where the model lands her in A5h). Asked of the integrator: the deferral, and
-    the rows' compared-frame counts after it.
+33. **Defer the knockback's end (harness; the camera's harness keys off it).** A frame that starts
+    with the knockback on (`0A52` ≠ 0), its time run out (`18AA` = 0) and the normal handler is
+    the knockback's end: out of scope (spec §10, knockback is the damage domain's). Samus-motion's
+    harness defers it, as it defers the knockback's handler: nothing on it is compared, x, y, the
+    speeds, the pose, the placement and `rising` included. The tail's frames before it run her own
+    motion and are compared (decode notes C3: the writers there are this domain's). The camera's
+    harness calls the same predicate for its y mask (camera.decode, Masks), so it keeps its
+    trigger whatever samus-motion defers. Seen at r05 400 (camera C3, decode notes C3: the
+    knockback's end hands her 52h at magnitude 0 where the model lands her in A5h). Asked of the
+    integrator: the deferral, and the rows' compared-frame counts after it.
 
 ## Round 10 in the engine and the harness (integrator, 2026-11-08, lane/wire-r10)
 

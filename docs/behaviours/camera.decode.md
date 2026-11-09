@@ -288,12 +288,14 @@ be verified on its own from the records, with her motion's outputs decoded as in
   `$8F:E8CD`, Crocomire's room shaking, x), the Shitroid waiting for the camera (`$A9:EFE6`, x,
   and it closes two screens).
   Frames samus-motion's harness defers (adversary 42, C2 and M4), as one rule: y masked where
-  samus-motion defers y (a block-inside push, the quicksand's, C2; the knockback's tail, a frame
-  starting with the knockback on under the normal handler, C3) and either her pose changes or
-  samus-motion's step reports a placement. The camera takes her position from N+1, and from
-  samus-motion only the placement (its `placed`); on a
-  deferred frame without one, nothing the camera reads is unverified, so y stays compared
-  (adversary 49, F1: 98 push and 5 tail frames masked, 247 more y compared, every one matching).
+  samus-motion defers y (a block-inside push, the quicksand's, C2; the knockback's end, a frame
+  starting with the knockback on and its time run out under the normal handler, C3) and either
+  her pose changes or samus-motion's step reports a placement. The camera takes her position from
+  N+1, and from samus-motion only the placement (its `placed`); on a deferred frame without one,
+  nothing the camera reads is unverified, so y stays compared (adversary 49, F1: 98 push and 5
+  tail frames masked, 247 more y compared, every one matching). With the tail narrowed to its end
+  (adversary 61, F1), the tail's frames before it are samus-motion's and compared: 4 more y
+  compared, each matching, and no end frame of the 44-row cache masked.
   x stays compared on both, since the lead's knockback turn is the camera's own `LeadingHer`.
   A pose change between N and N+1 is not masked: the placement for that frame comes from running
   samus-motion's model on it. Taking N+1's `0B14` instead is wrong: it is her y at the scroll by

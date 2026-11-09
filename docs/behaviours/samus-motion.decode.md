@@ -1076,7 +1076,7 @@ speeds masked in samus-motion's harness). Answer: the placement rules are the sp
 positions and what the looks meet are the push's; the camera's harness masks y (`camera_from`) on
 the frames samus-motion's harness defers as a block-inside push.
 
-**C3, r05:400.** Not a moonfall: a knockback's tail. r05 391-393 run the knockback's handler
+**C3, r05:400.** Not a landing: a knockback's end. r05 391-393 run the knockback's handler
 (`DF38`, pose 54h, `18AA` 9 → 6); 393 → 394 hands over to the normal handler in 4Fh, then 4Eh and
 52h (movement type 2) with `0B36` = 0 and a negative magnitude (FFFF.E400 at 394, growing 0.1C00
 a frame through FFFF.5800 at 399, no limit with direction 0, `$90:913A`), `0A52` = 5 throughout,
@@ -1086,17 +1086,39 @@ moves match the oracle to 399. At 400 the floor (row C0h, solid) stops her at 00
 (her own), which wins over the landing's `0A28` = A5h (`$91:EB88`), and leaves `0B36` = 2 at
 magnitude 0: falling at 0, not landed (401: 0.1C00, kept on the floor; 402 lands in E5h, pushed
 up 2 px). The model lands her in A5h (half-height 15h against 13h), pushes her up 2 px to
-00AB.FFFF and reports `camera_from` 00AB.A3FF. Answer: out of scope (knockback, spec §10). The
-rule, one predicate for both harnesses (adversary 43, M6; filed for the integrator as gap 33):
-samus-motion's harness defers the knockback's tail as it defers its handler, every frame that
-starts with `0A52` ≠ 0 under the normal handler (the records ending 395-400 here; 394 starts in
-4Fh, outside the domain). The camera's rule (adversary 42, M4): its harness masks y on every frame
-samus-motion's harness defers as the knockback's tail, by that same predicate, whether or not
-her pose changes (at 400 she keeps 52h, so a mask on a pose change alone misses it); x stays
-compared, since the lead's turn during a knockback is the camera's own `LeadingHer`. `rising`
-there, and during the knockback itself, is the knockback (damage) domain's output, not
-samus-motion's (spec §10): the records show `0B36` = 1 at every knockback start (pose 54h; for
-example chain-0059-A293 65, 139, 246, 585), which samus-motion's harness defers.
+00AB.FFFF and reports `camera_from` 00AB.A3FF. Answer: 400 is out of scope (knockback, spec §10);
+395-399 are hers.
+
+Who writes what on the tail (adversary 61, F1). Before its last frame nothing in the normal path
+reads the knockback: in bank `$90` only `$90:8EDF` (called by the knockback's handlers `$DF53`
+and `$DF64` and by the bomb jump), `$90:91FB` (morphed bouncing), `$90:95B7` (the horizontal
+scroll), `$90:DDE9` and `$90:DF38` read `0A52`. `$91:ED4E`, the knockback's start, leaves the pose
+input handler alone, and the handler hands over to the normal one, `$A337`. So the tail's frames
+run her own motion: x by the normal horizontal move (`$90:8EA9`), y by `$90:90E2` with `0B36` = 0,
+the moonfall's path (no fall limit), and her pose by the pad. The knockback's end is one frame.
+`18AA` is counted down once a frame at the frame's very end (`$A0:9169`, called last in the
+gameplay loop at `$82:8BB3`, after the new-state handler `$90:E722` and the scroll), to no lower
+than 0. So a record whose `18AA` is 0 starts a frame whose hit check `$90:DDE9`, run after her
+motion, takes its timer-zero branch (`$DE20`): with `0A52` ≠ 0 and a movement type other than
+knockback it sets the super special pose to her pose (or, after a transition animation's end,
+`0A32` = 8) and the command "knockback finished". `$91:F31D` then clears `0A52`, sets the normal
+handler, zeroes the bounce and her y speed, sets falling with `0B36` = down, aligns her bottom
+with the old pose (`$90:EC7E`) and keeps her pose: falling at 0, whatever the motion did, landing
+or not. The other writers of `18AA` set it at a hit (`$A0:986D`, `$A0:992C`, `$A0:A57E`: 5;
+`$94:8EA2`, `$94:8EDD`, `$94:AAD2`, `$94:AB4B`: Ah; `$94:9879`: 10) or clear it (`$90:D66F`,
+`$90:D6A4`, `$90:D6D9`, `$90:D78F`, `$90:DDFC`, `$91:8128`, `$91:E150`, `$A0:A549`, `$82:DCD8`).
+
+The rule, one predicate for both harnesses (filed for the integrator as gap 33): samus-motion's
+harness defers the knockback's end as it defers its handler, every frame that starts with
+`0A52` ≠ 0 and `18AA` = 0 under the normal handler (here the record ending 400; 394 starts in 4Fh,
+outside the domain, and 395-399 are compared). The camera's rule (adversary 42, M4): its harness
+masks y on the frames samus-motion's harness defers as the knockback's end, by that same
+predicate, where her pose changes or samus-motion's step places her; x stays compared, since the
+lead's turn during a knockback is the camera's own `LeadingHer`. `rising` on the tail is
+samus-motion's (`RisingAndFalling`: every tail frame matches the records); at the end, and during
+the knockback itself, it is the knockback (damage) domain's output (spec §10): the records show
+`0B36` = 1 at every knockback start (pose 54h; for example chain-0059-A293 65, 139, 246, 585),
+which samus-motion's harness defers.
 
 ## Round 13's amendments (2026-11-09)
 

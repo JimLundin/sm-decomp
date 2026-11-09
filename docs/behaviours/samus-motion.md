@@ -1485,13 +1485,15 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   lowers her 5 px (151, 389). Without the push she meets open air there: the body grows about its
   centre, or she walks off. So her y and the placement are the push's on those
   frames, with the push.
-- **A knockback's tail.** After a hit's knockback she falls in a jump pose with no falling limit,
-  as in the moonfall, until a floor meets her; that frame ends the knockback, not a landing: she
-  keeps her pose and is handed back falling at 0 (§1.2), with no change of body to fit (r05:400,
-  where a landing would raise her 2 px). The tail is the knockback's, frames and outputs alike.
-  Whether she is rising is one of them: the knockback's rise (the records show her rising on the
-  frame a knockback starts) and the tail's not rising come from the knockback (damage) domain, as
-  her going backwards does, not from `RisingAndFalling`.
+- **A knockback's end.** After a hit's push back she falls in a jump pose with no falling limit, as
+  in the moonfall, while the knockback's time runs on. Those frames are her own motion, in scope:
+  `Moonfall`'s rule for her fall, `RisingAndFalling` for whether she rises. The first frame after
+  its time has run out ends the knockback, wherever she is, and that frame is the knockback's,
+  outputs and all: whatever her motion did, she keeps her pose and is handed back falling at 0
+  (§1.2), with no change of body to fit (r05:400, where the floor meets her on that frame and a
+  landing would raise her 2 px). The knockback's own push, and her rise on the frame it starts (the
+  records show her rising there), are the knockback (damage) domain's too, as her going backwards
+  is.
 - **Animation timing:** how far an animation has run and on which frame it ends (a vector says,
   `AnimationEnds`); its frames are drawn by the sprite, and readying a wall jump shows only there
   (`WallJump`).
