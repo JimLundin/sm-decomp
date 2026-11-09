@@ -5,8 +5,8 @@
 # counts per class; exits 1 on any finding.
 #
 # scan.sh --mirror SPEC DECODE MODEL...: check 4, routine mirroring (SPEC's entries through the
-# decode notes DECODE, or `-`; MODEL's public functions). Fails above the single-routine limit
-# or on any public function that maps onto one routine.
+# decode notes DECODE, or `-`; MODEL's non-private functions, `pub` and `pub(crate)` alike).
+# Fails above the single-routine limit or on any such function that maps onto one routine.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 if [ "${1:-}" = "--mirror" ]; then

@@ -3,8 +3,8 @@
 //! Each spec entry (`### Id`) collects the addresses its section and the decode notes give it.
 //! An address belongs to the routine whose entry is the nearest known one at or below it, found
 //! by walking down the hashed routine set. An entry is single-routine when every address it
-//! cites is in one routine; a public model function maps onto a routine when the first entry it
-//! names is single-routine.
+//! cites is in one routine; a non-private model function (`pub`, `pub(crate)`, `pub(super)`)
+//! maps onto a routine when the first entry it names is single-routine.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -79,26 +79,36 @@ fn idents(text: &str) -> impl Iterator<Item = &str> {
         .filter(|w| !w.is_empty())
 }
 
-/// The bodies of a Rust file's public functions, by brace matching on the raw text, so that
-/// the comments naming entries stay in.
+/// Whether the text before an `fn` keyword ends in a visibility: `pub`, or `pub(crate)`,
+/// `pub(super)` and the other restricted forms, with any of `const`, `async` and `unsafe`
+/// between. A model's steps are often `pub(crate)`, and they are its entry points as much as
+/// its `pub` functions are.
+fn is_visible(before: &str) -> bool {
+    let line = before.rsplit('\n').next().unwrap_or_default();
+    line.split_whitespace()
+        .rev()
+        .find(|w| !matches!(*w, "const" | "async" | "unsafe"))
+        .is_some_and(|w| w == "pub" || w.starts_with("pub("))
+}
+
+/// The bodies of a Rust file's non-private functions, by brace matching on the raw text, so
+/// that the comments naming entries stay in.
 fn public_fns(src: &str) -> Vec<(String, usize, String)> {
     let mut out = Vec::new();
-    for (start, _) in src
-        .match_indices("pub fn ")
-        .chain(src.match_indices("pub const fn "))
-    {
+    for (start, _) in src.match_indices("fn ") {
+        let before = src.get(..start).unwrap_or_default();
+        let at_word = before.chars().next_back().is_none_or(char::is_whitespace);
+        if !at_word || !is_visible(before) {
+            continue;
+        }
         let rest = src.get(start..).unwrap_or_default();
-        let after = rest.split_once("fn ").map_or("", |(_, r)| r);
+        let after = rest.get("fn ".len()..).unwrap_or_default();
         let name: String = after
             .chars()
             .take_while(|c| c.is_alphanumeric() || *c == '_')
             .collect();
-        let line = src
-            .get(..start)
-            .unwrap_or_default()
-            .lines()
-            .count()
-            .saturating_add(1);
+        // Counted by newlines: `lines()` would count an indented method's own partial line.
+        let line = before.matches('\n').count().saturating_add(1);
         let Some(open) = rest.find('{') else { continue };
         let mut depth = 0usize;
         let mut end = open;
@@ -191,7 +201,90 @@ pub fn check(
     }
     let summary = format!(
         "mirror: {single} of {total} entries single-routine ({share} %, limit {SINGLE_ROUTINE_LIMIT} %), \
-         {unsourced} unsourced; {mapped} of {entry_points} tagged public functions map onto one routine\n"
+         {unsourced} unsourced; {mapped} of {entry_points} tagged non-private functions map onto one routine\n"
     );
     (findings, summary)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{check, public_fns};
+    use crate::lexicon::Lexicon;
+    use crate::scan::Class;
+
+    fn names(src: &str) -> Vec<String> {
+        public_fns(src)
+            .into_iter()
+            .map(|(name, _, _)| name)
+            .collect()
+    }
+
+    #[test]
+    fn pub_fns_are_tagged() {
+        assert_eq!(names("pub fn step() { Rolling }"), ["step"]);
+        assert_eq!(names("pub const fn step() -> u8 { 1 }"), ["step"]);
+    }
+
+    #[test]
+    fn crate_visible_fns_are_tagged() {
+        assert_eq!(names("pub(crate) fn step() { Rolling }"), ["step"]);
+        assert_eq!(names("pub(crate) const fn step() -> u8 { 1 }"), ["step"]);
+    }
+
+    #[test]
+    fn parent_visible_fns_are_tagged() {
+        assert_eq!(names("pub(super) fn step() { Rolling }"), ["step"]);
+        assert_eq!(
+            names("    pub(super) unsafe fn step() { Rolling }"),
+            ["step"]
+        );
+    }
+
+    #[test]
+    fn private_fns_are_not_tagged() {
+        assert_eq!(names("fn step() { Rolling }"), Vec::<String>::new());
+        assert_eq!(names("const fn step() -> u8 { 1 }"), Vec::<String>::new());
+        assert_eq!(names("pub struct S; fn step() {}"), Vec::<String>::new());
+        assert_eq!(names("pub fn_like(); let my_fn = 1;"), Vec::<String>::new());
+    }
+
+    #[test]
+    fn body_and_line_are_kept() {
+        let found =
+            public_fns("struct S;\nimpl S {\n    pub(crate) fn step(&self) { Rolling }\n}\n");
+        assert_eq!(found.len(), 1);
+        let (name, line, body) = found.first().cloned().unwrap_or_default();
+        assert_eq!((name.as_str(), line), ("step", 3));
+        assert!(body.contains("Rolling"));
+    }
+
+    /// A spec whose one entry cites one address, so its source is one routine.
+    const SPEC: &str = "### Rolling\n\nShe rolls ($91:8000).\n";
+
+    fn gate(model: &str) -> (usize, bool) {
+        let mut failed = false;
+        let source = [("model.rs".to_owned(), model.to_owned())];
+        let (findings, _) = check(
+            &Lexicon::default(),
+            "spec.md",
+            SPEC,
+            "",
+            &source,
+            &mut failed,
+        );
+        let mapped = findings
+            .iter()
+            .filter(|f| f.class == Class::EntryPoint)
+            .count();
+        (mapped, failed)
+    }
+
+    #[test]
+    fn every_visible_step_is_gated() {
+        for visibility in ["pub", "pub(crate)", "pub(super)"] {
+            let model = format!("impl S {{\n    {visibility} fn step(&self) {{ Rolling }}\n}}\n");
+            assert_eq!(gate(&model), (1, true), "{visibility}");
+        }
+        assert_eq!(gate("fn step() { Rolling }"), (0, true));
+    }
 }
