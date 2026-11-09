@@ -84,9 +84,9 @@ pub enum Deferred {
     Grapple,
     /// Knockback from a hit.
     Knockback,
-    /// The knockback's tail: the normal movement handler runs with the knockback still on, and
-    /// the knockback has the last word on her y and pose (spec §10, gap 33).
-    KnockbackTail,
+    /// The knockback's end: the frame whose knockback time ran out the frame before, on which the
+    /// knockback has the last word on her pose, y and vertical motion (spec §10, gap 33).
+    KnockbackEnds,
     /// The bomb jump's movement.
     BombJump,
     /// The shinespark's or the crystal flash's movement.
@@ -100,8 +100,8 @@ impl fmt::Display for Deferred {
         f.write_str(match self {
             Self::Grapple => "grapple (the swing release's movement)",
             Self::Knockback => "knockback",
-            Self::KnockbackTail => {
-                "the knockback's tail (the knockback on under the normal handler)"
+            Self::KnockbackEnds => {
+                "the knockback's end (its time run out, the knockback on under the normal handler)"
             }
             Self::BombJump => "the bomb jump's movement",
             Self::Shinespark => "the shinespark or crystal flash movement",
@@ -254,20 +254,28 @@ const KNOCKBACK_DIRECTION: WramWord = WramWord {
     name: "KNOCKBACK_DIR",
     offset: 0x0A52,
 };
+/// Bank $A0 log: the knockback's time left, counted down at the frame's end (`$A0:9169`).
+const KNOCKBACK_TIMER: WramWord = WramWord {
+    name: "KNOCKBACK_TIMER",
+    offset: 0x18AA,
+};
 /// Bank $90 log: the normal movement handler, the one this domain's model runs.
 const NORMAL_MOVEMENT: u16 = 0xA337;
 
-/// Whether the frame from `from` is the knockback's tail.
+/// Whether the frame from `from` is the knockback's end.
 ///
-/// It starts with the knockback on under the normal movement handler (samus-motion decode C3,
-/// adversary 43 M6), so the knockback, not her motion, has the last word on y: this harness
-/// defers it (gap 33), and the camera's masks y on those of them that place her (camera C3).
+/// It starts with the knockback on under the normal movement handler and its time run out, so
+/// the hit's pose change after her motion ends the knockback (`$90:DDE9`, then `$91:F31D`): it
+/// keeps her pose and hands her back falling at 0, whatever her motion did (samus-motion decode
+/// C3). This harness defers it (gap 33), and the camera's masks y on those of them that place her
+/// (camera C3). The tail's frames before it run her own motion, and are compared.
 ///
 /// # Errors
 ///
 /// The [`DecodeError`] of a word the record doesn't hold.
-pub fn knockback_tail(from: &FrameRecord) -> Result<bool, DecodeError> {
+pub fn knockback_ends(from: &FrameRecord) -> Result<bool, DecodeError> {
     Ok(KNOCKBACK_DIRECTION.read(&from.wram)? != 0
+        && KNOCKBACK_TIMER.read(&from.wram)? == 0
         && SAMUS_MOVEMENT_HANDLER.read(&from.wram)? == NORMAL_MOVEMENT)
 }
 
@@ -294,7 +302,7 @@ fn motion_runs(record: &FrameRecord) -> Result<(), Skip> {
         code => return Err(Skip::NotRunning(code)),
     }
     let deferred = match word(record, SAMUS_MOVEMENT_HANDLER)? {
-        NORMAL_MOVEMENT if knockback_tail(record)? => Deferred::KnockbackTail,
+        NORMAL_MOVEMENT if knockback_ends(record)? => Deferred::KnockbackEnds,
         NORMAL_MOVEMENT => return Ok(()),
         0x946E => Deferred::Grapple,
         KNOCKBACK => Deferred::Knockback,
@@ -637,7 +645,18 @@ fn shown_by(id: &BehaviourId) -> FieldSet {
         | B::OtherBlockKinds => Q::all(&[Q::X, Q::Y]),
         B::WallsAndCeilings => Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed, Q::Rising]),
         B::WordwiseTopSpeed => Q::BaseSpeed.set(),
-        B::PoseFitAfterMoves | B::WallJump => Q::all(&[
+        B::WallJump => Q::all(&[
+            Q::X,
+            Q::Y,
+            Q::BaseSpeed,
+            Q::ExtraRun,
+            Q::Momentum,
+            Q::Mode,
+            Q::VerticalSpeed,
+            Q::Vertical,
+            Q::Rising,
+        ]),
+        B::PoseFitAfterMoves => Q::all(&[
             Q::X,
             Q::Y,
             Q::BaseSpeed,
@@ -992,24 +1011,26 @@ impl Domain for SamusMotion {
         // The camera's speed down is made from her y at the scroll, so where another domain
         // writes y the speed is that domain's too (below). Record N+1 shows the scroll's speed
         // only once the frame has reached it: an item's message box holds the frame between her
-        // motion and the scroll.
-        if matches!(
+        // motion and the scroll. Once the scroll has run, something that moves her after it
+        // leaves her y in record N+1 off the one the scroll read; before it, that y is only her
+        // motion's, not yet read.
+        let scrolled = !matches!(
             runs_after(next),
             Err(Skip::Waiting(_) | Skip::NotAtFrameEnd)
-        ) {
+        );
+        if !scrolled {
             mask(
                 "the scroll hasn't run: record N+1's main thread waits before it (the message box) or is mid-frame",
                 Q::Placed.set(),
             );
         }
-        // Something that moves her after the scroll leaves her y in record N+1 off the one the
-        // scroll read.
-        if fixed(&next.wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?
-            != fixed(
-                &next.wram,
-                source::SAMUS_PREV_Y_POS,
-                source::SAMUS_PREV_Y_SUBPOS,
-            )?
+        if scrolled
+            && fixed(&next.wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?
+                != fixed(
+                    &next.wram,
+                    source::SAMUS_PREV_Y_POS,
+                    source::SAMUS_PREV_Y_SUBPOS,
+                )?
         {
             mask(
                 "another domain moves her after the scroll: the camera's speed down is from the y it read",

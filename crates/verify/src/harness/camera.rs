@@ -629,9 +629,9 @@ fn deferred(
             fields: Y,
         });
     }
-    if samus_motion::knockback_tail(from)? {
+    if samus_motion::knockback_ends(from)? {
         masks.push(Mask {
-            reason: "another domain: the knockback's tail (the knockback on under the normal handler) decides her y, which samus-motion defers, and her pose change or its step places the y the camera follows from",
+            reason: "another domain: the knockback's end (its time run out under the normal handler) decides her y, which samus-motion defers, and her pose change or its step places the y the camera follows from",
             fields: Y,
         });
     }

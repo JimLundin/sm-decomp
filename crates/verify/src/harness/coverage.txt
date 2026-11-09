@@ -8,64 +8,64 @@ game-time field 25426 0 hours
 game-time field 25426 0 minutes
 game-time field 25426 0 seconds
 game-time field 25426 0 frames
-samus-motion frames 25426 17974 0 6606
-samus-motion field 17054 1181 position.x
-samus-motion field 16615 1620 position.y
-samus-motion field 17815 420 base_speed
-samus-motion field 17048 1187 extra_run
-samus-motion field 18190 45 momentum
-samus-motion field 18168 67 mode
-samus-motion field 17792 443 vertical_speed
-samus-motion field 18184 51 vertical
-samus-motion field 18235 0 bounce
-samus-motion field 18184 51 rising
-samus-motion field 16433 1802 placed
+samus-motion frames 25426 17988 0 6606
+samus-motion field 17068 1181 position.x
+samus-motion field 16629 1620 position.y
+samus-motion field 17829 420 base_speed
+samus-motion field 17062 1187 extra_run
+samus-motion field 18204 45 momentum
+samus-motion field 18182 67 mode
+samus-motion field 17806 443 vertical_speed
+samus-motion field 18198 51 vertical
+samus-motion field 18249 0 bounce
+samus-motion field 18198 51 rising
+samus-motion field 16447 1802 placed
 samus-motion entry HowSheIsDrawn 0 0 0
 samus-motion entry SpeedBuildsAndBrakes 10753 10837 966
-samus-motion entry Dash 3756 3788 817
+samus-motion entry Dash 3757 3789 817
 samus-motion entry TurningRound 1179 1245 12
-samus-motion entry AimingAndShooting 2805 2827 126
+samus-motion entry AimingAndShooting 2806 2828 126
 samus-motion entry RidingTheElevator 0 0 906
 samus-motion entry Jumping 206 212 33
 samus-motion entry FollowingTheGround 10311 10396 1407
-samus-motion entry MovesAsShePosed 15970 16148 2087
+samus-motion entry MovesAsShePosed 15984 16162 2087
 samus-motion entry PoseFitAfterMoves 352 360 31
 samus-motion entry ShrinkingLowersHer 58 59 7
-samus-motion entry RisingAndFalling 6101 6190 242
-samus-motion entry DriftInTheAir 6101 6190 242
-samus-motion entry Moonfall 334 334 66
-samus-motion entry WallJump 230 249 6
+samus-motion entry RisingAndFalling 6115 6204 242
+samus-motion entry DriftInTheAir 6115 6204 242
+samus-motion entry Moonfall 339 339 66
+samus-motion entry WallJump 234 253 2
 samus-motion entry Landing 150 150 5
-samus-motion entry PoseFollows 0 0 18235
-samus-motion entry PadChart 0 0 18235
-samus-motion entry Aiming 0 0 2734
-samus-motion entry WhatHerMovesMet 0 0 1863
+samus-motion entry PoseFollows 0 0 18249
+samus-motion entry PadChart 0 0 18249
+samus-motion entry Aiming 0 0 2735
+samus-motion entry WhatHerMovesMet 0 0 1864
 samus-motion entry AnimationEnds 0 0 346
-samus-motion entry BlocksStopFlush 10180 10286 921
-samus-motion entry WallsAndCeilings 1311 1346 128
-samus-motion entry SolidEnemies 4380 4405 489
+samus-motion entry BlocksStopFlush 10181 10287 921
+samus-motion entry WallsAndCeilings 1312 1347 128
+samus-motion entry SolidEnemies 4387 4412 489
 samus-motion entry SlopesCarry 79 80 1
 samus-motion entry SlopesSlowTheWalk 0 0 0
-samus-motion entry TouchedCells 0 0 17851
+samus-motion entry TouchedCells 0 0 17865
 samus-motion entry OtherBlockKinds 0 0 0
 samus-motion entry WordwiseTopSpeed 0 0 0
-camera frames 25426 18903 0 7458
+camera frames 25426 18903 0 7457
 camera field 18903 1712 position.x
-camera field 18680 1935 position.y
+camera field 18684 1931 position.y
 camera field 0 20615 seen
-camera entry FollowingHer 11972 11972 972
+camera entry FollowingHer 11976 11976 968
 camera entry LeadingHer 9173 9173 401
-camera entry AimingHeight 6928 6928 614
-camera entry Remembering 18680 18680 1935
+camera entry AimingHeight 6931 6931 611
+camera entry Remembering 18684 18684 1931
 camera entry CreepReadsRightward 384 384 7
-camera entry ClosedScreens 8882 8882 1400
-camera entry RoomEdges 15932 15932 1189
-camera entry ShortScreens 17627 17627 1739
-camera entry Settling 14679 14679 1764
+camera entry ClosedScreens 8886 8886 1396
+camera entry RoomEdges 15936 15936 1185
+camera entry ShortScreens 17631 17631 1735
+camera entry Settling 14681 14681 1762
 camera entry TimeStopped 113 113 6
 camera entry DownwardLooksAhead 1 1 0
 camera entry ScreensRunOn 0 0 0
-camera entry BelowTheRoom 3539 3539 89
+camera entry BelowTheRoom 3540 3540 88
 camera entry PushCarries 0 0 0
 progress frames 25426 25402 24 25399
 progress field 25426 0 items

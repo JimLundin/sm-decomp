@@ -17,12 +17,16 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
     through". Asked of the implementer: a `JumpHeld` built from the count (`u16`) and whether she
     landed or an animation ended the frame before, and the two read back.
 
-Gap 33 is in: the harness defers a frame that starts with the knockback on under the normal
-handler (`Deferred::KnockbackTail`): 30 frames over the 44-row cache (boss-kraid-defeated 19,
-chain-0059-A293 7, chain-0106-AD5E 4). The rest were skipped before by another reason, so
-compared falls by 17 on the three rows (8, 6, 3) and matched by 14 (7, 5, 2), the three floors
-with it. The camera's
-harness, keyed off the same predicate, gains one compared y, which matches.
+Gap 33 is in: the harness defers a frame that starts with the knockback on, its time run out,
+under the normal handler (`Deferred::KnockbackEnds`): 13 frames over the 44-row cache
+(boss-kraid-defeated 4, chain-0059-A293 1, chain-0106-AD5E 1, event-zebes-awake 2,
+samus-ceres-push 3, samus-screw-attack 2). 10 of them were skipped before for another reason, so
+compared falls by 3 (18,252 to 18,249) and matched holds at 17,988, every floor with it. The tail
+with the knockback on under the normal handler is 49 frames over those 6 rows (19, 7, 4, 3, 8, 8),
+32 of them skipped before as poses outside the domain; its 36 frames before the ends run her own
+motion, and the 14 of them in the domain stay compared and all match. The camera's harness calls
+the same predicate for its y mask: it masks no frame of the cache, compares 4 more y, each
+matching, and holds at 18,903 matched.
 
 `rising` is compared with `0B36` = 1 in record N+1. `placed` can't be read from `0B14` there: the
 scroll sets it to her y as it ends. The record shows it through the camera's speed down,
@@ -30,8 +34,13 @@ scroll sets it to her y as it ends. The record shows it through the camera's spe
 motion left them (`$90:96FF`, camera `FollowingHer`): the harness compares that speed, made from
 the model's y and the y it placed her at (with none, where the camera last saw her). It is masked
 wherever y is, where record N+1 is held before the scroll (the message box: chain-0043-9AD9 417,
-chain-0234-D51E 153, item-energy-tank 240), and where her y in record N+1 isn't the one the
-scroll read. Neither field differs on a frame where the others match.
+chain-0234-D51E 153, item-energy-tank 240) or cut mid-frame, and, once the scroll has run, where
+her y in record N+1 isn't the one the scroll read. That last mask holds on no frame of the cache:
+the 11 frames whose y is off the scroll's are all held before it (7 in the message box, 4 lag
+frames of chain-0232-D5A7 cut mid-frame), so no writer after the scroll is seen. Neither field
+differs on a frame where the others match. The placement's own evidence is the frames a
+placement moves: without the pose fit's (`placed` only on a crouch or morph that lowers her),
+`placed` matches 197 fewer frames (16,441 to 16,244 of 16,447).
 
 ## Filed by the observer: a take-off or spin on an animation's last frame (adversary 58, finding 4, 2026-11-09)
 
