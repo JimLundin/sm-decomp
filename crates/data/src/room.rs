@@ -405,7 +405,10 @@ pub enum RoomError {
         /// The code.
         code: u16,
     },
-    /// An event state condition names an event number with no meaning.
+    /// An event state condition names an event number with no meaning. The original would test
+    /// the number's bit; no room of the release names one (every room a load station or a door
+    /// reaches is checked), so the importer refuses an image that does rather than invent an
+    /// event for it.
     Event {
         /// Where the condition is.
         at: RomAddress,

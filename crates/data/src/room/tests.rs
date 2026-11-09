@@ -1,6 +1,7 @@
 use super::*;
 use crate::level::ScrollArea;
 use crate::rom::Rom;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// The file offset of `$8F:offset`.
 fn room_bank(offset: u16) -> usize {
@@ -282,5 +283,111 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
     assert_eq!(
         addresses.get(Location::State(id, index, StatePart::PlmPopulation)),
         Some(RomAddress::new(0x8f, 0x867e))
+    );
+}
+
+/// The word at `address`.
+fn word(rom: Lorom<'_>, address: RomAddress) -> u16 {
+    let bytes = rom.read(address, 2).unwrap();
+    u16::from_le_bytes([bytes[0], bytes[1]])
+}
+
+/// A room header's door list and its state conditions, read as `decode` reads them, without
+/// the states (a few rooms' scroll data is outside what the importer decodes yet).
+fn conditions(image: Lorom<'_>, pointer: u16) -> Result<(RomAddress, Vec<Condition>), RoomError> {
+    let mut reader = Reader {
+        rom: image,
+        at: RomAddress::new(ROOM_BANK, pointer),
+    };
+    let _: [u8; 9] = reader.take()?;
+    let doors = reader.pointer(ROOM_BANK)?;
+    let mut conditions = Vec::new();
+    while let Some(condition) = condition(&mut reader)? {
+        let _state = reader.pointer(ROOM_BANK)?;
+        conditions.push(condition);
+    }
+    Ok((doors, conditions))
+}
+
+/// The state conditions of every room a door can lead to, by room pointer: from each area's
+/// first load station (`$80:C4B5`'s lists of 14-byte entries, the room pointer first), through
+/// the door lists. Each list entry points at a door in bank $83 whose first word is the room it
+/// leads to (none for an elevator's stand-in), and a list ends at the first word that isn't a
+/// door's.
+fn every_room(image: Lorom<'_>) -> BTreeMap<u16, Vec<Condition>> {
+    let room_headers = 0x91f8..0xe900;
+    let mut todo: Vec<u16> = (0..8_u16)
+        .map(|area| {
+            let list = word(
+                image,
+                RomAddress::new(0x80, 0xc4b5_u16.wrapping_add(area.wrapping_mul(2))),
+            );
+            word(image, RomAddress::new(0x80, list))
+        })
+        .collect();
+    let mut rooms = BTreeMap::new();
+    while let Some(pointer) = todo.pop() {
+        if rooms.contains_key(&pointer) {
+            continue;
+        }
+        let (list, read) = conditions(image, pointer)
+            .unwrap_or_else(|error| panic!("room {pointer:#06X}: {error:?}"));
+        let doors = (0..).map(|door: u16| {
+            let at = list.offset.wrapping_add(door.wrapping_mul(2));
+            word(image, RomAddress::new(list.bank, at))
+        });
+        for entry in doors {
+            if entry < 0x8000 {
+                break;
+            }
+            match word(image, RomAddress::new(0x83, entry)) {
+                0 => {}
+                next if room_headers.contains(&next) => todo.push(next),
+                _ => break,
+            }
+        }
+        rooms.insert(pointer, read);
+    }
+    rooms
+}
+
+/// No room of the release names an event number the clean room has no event for, so the
+/// importer's `RoomError::Event` never happens on it: the conditions of every room a load
+/// station or a door reaches decode, and its events are these.
+#[test]
+fn every_rooms_conditions_name_only_known_events() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let rooms = every_room(cartridge.lorom());
+    assert_eq!(rooms.len(), 262);
+    let events: BTreeSet<Event> = rooms
+        .values()
+        .flatten()
+        .filter_map(|&condition| match condition {
+            Condition::Event(event) => Some(event),
+            Condition::Door(_)
+            | Condition::MainAreaBossDead
+            | Condition::BossDead(_)
+            | Condition::MorphBall
+            | Condition::MorphBallAndMissiles
+            | Condition::PowerBombs
+            | Condition::SpeedBooster => None,
+        })
+        .collect();
+    assert_eq!(
+        events,
+        BTreeSet::from([
+            Event::PlanetAwake,
+            Event::MotherBrainTankBroken,
+            Event::GlassTunnelBroken,
+            Event::ShaktoolPath,
+            Event::TimeBombSet,
+            Event::MetroidRoom1Empty,
+            Event::MetroidRoom2Empty,
+            Event::MetroidRoom3Empty,
+            Event::MetroidRoom4Empty,
+            Event::TourianRoomsUnset,
+        ])
     );
 }

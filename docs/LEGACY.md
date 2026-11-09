@@ -65,6 +65,15 @@ original's bytes as data.
   them, which an earlier room or the boot left. The engine draws zero words. Vanilla rooms stay within
   their tables.
 
+- **Emptied item places past the engine's bits** (`game::progress_world`'s `store_emptied`,
+  `$84:8899`): the engine keeps the 512 bits of `$7E:D870`. A room argument past them makes the
+  original set a bit in the work RAM that follows; the engine drops the place, so its item would
+  come back. The release's 100 item PLMs name places 0 to 9Ah; a custom room's could name more.
+- **The debug area's item pickups** (`game::progress_world::take`): the progress model has no
+  area for the debug rooms (area 7), so their item pickups report area 0's, Crateria. Taking an
+  item reads no area (only a boss's, a map's and a station's reports do), so nothing differs; a
+  report that reads one would have to name the debug area first.
+
 ## Tolerated values kept as named variants
 
 - `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (`$91:B731`, `$91:B739`) hold X
