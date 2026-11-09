@@ -44,7 +44,7 @@ camera entry RoomEdges 11581 11581
 camera entry ShortScreens 12395 12395
 camera entry Settling 10468 10468
 camera entry TimeStopped 95 95
-camera entry DownwardLooksAhead 4983 4983
+camera entry DownwardLooksAhead 0 0
 camera entry ScreensRunOn 0 0
 camera entry BelowTheRoom 2587 2587
 camera entry PushCarries 0 0

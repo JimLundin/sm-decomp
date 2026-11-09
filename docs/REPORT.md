@@ -151,10 +151,10 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | bridge | 4 | 2,691 | 3,314 | 257 | 12 | 81 | 0 | 497 |
 | samus-motion | harness | 1 | 3,913 | 4,328 | 455 | 222 | 209 | 17 | 755 |
 | camera | bridge | 1 | 592 | 787 | 21 | 1 | 2 | 0 | 121 |
-| camera | harness | 1 | 2,882 | 3,206 | 474 | 160 | 134 | 22 | 603 |
+| camera | harness | 1 | 3,479 | 3,832 | 499 | 161 | 153 | 26 | 683 |
 | progress | bridge | 1 | 1,355 | 1,558 | 57 | 69 | 52 | 0 | 235 |
 | progress | harness | 1 | 4,354 | 4,484 | 569 | 281 | 362 | 26 | 696 |
-| total | | | 15,787 | 17,677 | 1,833 | 745 | 840 | 64 | 2,907 |
+| total | | | 16,384 | 18,303 | 1,858 | 746 | 859 | 69 | 2,987 |
 
 ## Harness floors and vectors
 
@@ -255,7 +255,7 @@ Per catalogue entry, the frames that exercised it and those of them matched and 
 | camera | ShortScreens | 12,395 | 12,395 |
 | camera | Settling | 10,468 | 10,468 |
 | camera | TimeStopped | 95 | 95 |
-| camera | DownwardLooksAhead | 4,983 | 4,983 |
+| camera | DownwardLooksAhead | vectors only | 0 |
 | camera | ScreensRunOn | vectors only | 0 |
 | camera | BelowTheRoom | 2,587 | 2,587 |
 | camera | PushCarries | vectors only | 0 |

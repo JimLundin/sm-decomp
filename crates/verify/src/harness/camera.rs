@@ -16,10 +16,10 @@ use core::fmt;
 use core::num::Wrapping;
 
 use clean_model_camera::{
-    BehaviourId, CATALOGUE, Camera, Frame, LeadSetting, Room, RoomError, Rules, Samus as Her,
-    ScreenKind,
+    BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules,
+    Samus as Her, ScreenKind,
 };
-use clean_types::{Facing, Fixed, Pair, Parts, Px, fixed};
+use clean_types::{Facing, Fixed, Pair, Parts, Px, below, fixed};
 use game::camera_world;
 use game::model::num::Fixed as Exact;
 use game::state::room::{Scrollers, StaleScroll};
@@ -295,13 +295,9 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
         up: word(next, source::UP_SCROLLER)?,
         down: word(next, source::DOWN_SCROLLER)?,
     };
-    let room = Room::new(
-        screens.run.clone(),
-        screens.width,
-        screens.height,
-        camera_world::heights(scrollers),
-    )
-    .map_err(Skip::Room)?;
+    let heights = camera_world::heights(scrollers);
+    let room = Room::new(screens.run.clone(), screens.width, screens.height, heights)
+        .map_err(Skip::Room)?;
     Ok(Upstream {
         samus: Her {
             // The scroll ends by setting her previous position to her position: exactly what
@@ -314,6 +310,7 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
         },
         room,
         screens,
+        heights,
         lead: lead(next)?,
         time_stopped: word(next, TIME_IS_FROZEN)? != 0,
     })
@@ -325,8 +322,22 @@ pub struct Upstream {
     room: Room,
     /// The run of screens and the size `room` was built from.
     screens: Screens,
+    /// The heights `room` was built with, from which the attribution finds the aim down.
+    heights: Heights,
     lead: LeadSetting,
     time_stopped: bool,
+}
+
+impl Upstream {
+    /// The model's input for the frame.
+    const fn frame(&self) -> Frame<'_> {
+        Frame {
+            samus: self.samus,
+            room: &self.room,
+            lead: self.lead,
+            time_stopped: self.time_stopped,
+        }
+    }
 }
 
 /// What record N gives besides the State: where samus-motion's model placed the y the camera
@@ -675,13 +686,7 @@ impl Domain for CameraDomain {
         // Remembering: where her motion's step placed her, else the y it last saw her at.
         let seen = camera.seen();
         upstream.samus.camera_from = placement.placed().unwrap_or(seen.y);
-        let frame = Frame {
-            samus: upstream.samus,
-            room: &upstream.room,
-            lead: upstream.lead,
-            time_stopped: upstream.time_stopped,
-        };
-        *camera = camera.step(&Rules::REFERENCE, &frame);
+        *camera = camera.step(&Rules::REFERENCE, &upstream.frame());
     }
 
     fn exercised(&self, camera: &Camera, placement: &Placement, upstream: &Upstream) -> Vec<usize> {
@@ -756,7 +761,10 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         ),
         (B::Settling, !across || !down),
         (B::TimeStopped, upstream.time_stopped && (!across || !down)),
-        (B::DownwardLooksAhead, down),
+        (
+            B::DownwardLooksAhead,
+            down && looks_ahead_decides(camera, seen.y, upstream),
+        ),
         // Only from the room's last column, with that screen closed, does the screen after it
         // (the next row's first) decide anything.
         (
@@ -770,6 +778,104 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
     .filter_map(|(id, _)| CATALOGUE.iter().position(|entry| entry.id == id))
     .collect()
 }
+
+/// Whether `DownwardLooksAhead` decides the frame: her move down went past its aim into
+/// another screen than the one the aim stops it in, and the room's limits on the move stop it
+/// elsewhere when they read that screen than when they read the one it stopped in. The column
+/// read is the camera's after it moved across (spec §4), so the model's step gives it.
+fn looks_ahead_decides(camera: &Camera, seen: Fixed, upstream: &Upstream) -> bool {
+    let Some(went) = down_past_aim(camera.position().y, seen, upstream) else {
+        return false;
+    };
+    let across = camera
+        .step(&Rules::REFERENCE, &upstream.frame())
+        .position()
+        .x;
+    let column = (across.pixel() + Wrapping(MIDDLE)).0 / SCREEN;
+    let limited = |read: Px| upstream.screens.limit_down(&went, column, read);
+    edge(went.reached) != edge(went.stopped) && limited(went.reached) != limited(went.stopped)
+}
+
+/// A move down that the aim stopped short of where it reached (spec `FollowingHer`).
+struct DownMove {
+    /// Where the aim stopped it.
+    stopped: Px,
+    /// Where the move took it before the aim stopped it.
+    reached: Px,
+    /// The pixel part of its speed.
+    speed: Px,
+}
+
+/// The camera's move down on the frame, if it goes down and its aim stops it.
+fn down_past_aim(camera: Fixed, seen: Fixed, upstream: &Upstream) -> Option<DownMove> {
+    let samus = &upstream.samus;
+    let height = if samus.rising {
+        upstream.heights.rising
+    } else {
+        upstream.heights.level
+    };
+    let her = samus.position.y;
+    let aim = her.pixel() - height;
+    let at = camera.pixel();
+    let travel = if below(her.pixel().0, seen.pixel().0) {
+        seen - her
+    } else {
+        her - seen
+    };
+    let speed = travel + Rules::REFERENCE.extra;
+    let reached = (camera + speed).pixel();
+    let goes_down = aim != at && !below(aim.0, at.0);
+    (goes_down && below(aim.0, reached.0)).then_some(DownMove {
+        stopped: aim,
+        reached,
+        speed: speed.pixel(),
+    })
+}
+
+impl Screens {
+    /// The screen `column` across and `row` down, in the run as one strip (spec `ScreensRunOn`,
+    /// `BelowTheRoom`): past its end, closed.
+    fn kind(&self, column: u16, row: u16) -> ScreenKind {
+        usize::from(row)
+            .checked_mul(self.width)
+            .and_then(|start| start.checked_add(usize::from(column)))
+            .and_then(|screen| self.run.get(screen))
+            .copied()
+            .unwrap_or(ScreenKind::Closed)
+    }
+
+    /// Where the room's bottom and closed screens stop the move down, reading the screen in
+    /// `column` that holds `read` and the one under it (spec `ClosedScreens`, `RoomEdges`,
+    /// `ShortScreens`).
+    fn limit_down(&self, went: &DownMove, column: u16, read: Px) -> Px {
+        let row = read.0 / SCREEN;
+        let rows = match self.kind(column, row) {
+            ScreenKind::Short => Wrapping(0),
+            ScreenKind::Open | ScreenKind::Closed => Rules::REFERENCE.rows_not_short,
+        };
+        let next_closed = matches!(self.kind(column, row.wrapping_add(1)), ScreenKind::Closed);
+        let back = went.reached - went.speed - Rules::REFERENCE.push;
+        let stop = |at: Px| if below(at.0, back.0) { back } else { at };
+        let height = u16::try_from(self.height.saturating_sub(1)).unwrap_or(u16::MAX);
+        let bottom = Wrapping(height.wrapping_mul(SCREEN)) + rows;
+        let c = went.stopped;
+        if c > bottom {
+            stop(bottom)
+        } else if next_closed && c > edge(c) + rows {
+            stop(edge(c) + rows)
+        } else {
+            c
+        }
+    }
+}
+
+/// The near edge of the screen holding `p`.
+const fn edge(p: Px) -> Px {
+    Wrapping(p.0.wrapping_sub(p.0 % SCREEN))
+}
+
+/// A screen's size on each axis.
+const SCREEN: u16 = 256;
 
 /// Half the view: its middle is this far from its near edge.
 const MIDDLE: u16 = 128;
