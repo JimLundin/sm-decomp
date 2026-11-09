@@ -35,8 +35,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 use clean_model_progress::{
-    BehaviourId, CATALOGUE, Condition, Count, EnteredRoom, MapStatus, Pickup, Progress, Remembered,
-    Report, ReserveMode, RoomStates, Rules, Supply,
+    BehaviourId, Condition, Count, EnteredRoom, MapStatus, Pickup, Progress, Remembered, Report,
+    ReserveMode, RoomStates, Rules, Supply, catalogue,
 };
 use clean_types::{
     Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId,
@@ -426,9 +426,12 @@ fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
     for (area, bits) in per_area(STATIONS, 2)? {
         progress.stations[area] = numbers(&[bits]).map(StationId).collect();
     }
-    progress.emptied =
-        Remembered::of(numbers(bytes(record, source::ITEM_BIT_ARRAY)?).map(LocationId));
-    progress.opened = Remembered::of(numbers(bytes(record, DOORS)?).map(DoorId));
+    progress.emptied = Remembered(
+        numbers(bytes(record, source::ITEM_BIT_ARRAY)?)
+            .map(LocationId)
+            .collect(),
+    );
+    progress.opened = Remembered(numbers(bytes(record, DOORS)?).map(DoorId).collect());
     progress.items_placed = count(record, ITEMS_PLACED)?;
     Ok(progress)
 }
@@ -704,14 +707,17 @@ impl ProgressDomain {
     /// name, with record N and the ROM, in the order their instructions ran.
     fn heard(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Report>, Skip> {
         let ran = |pc: u32| next.hits.iter().any(|hit| hit.pc == pc);
-        let here = area(from)?;
+        // Every report of an area names the one she is in, record N+1's: the room's map on
+        // arrival runs after the new room's header set its area. Leaving the area runs just
+        // before that, so it names the one she leaves, record N's.
+        let (left, here) = (area(from)?, area(next)?);
         let mut reports = Vec::new();
         for hit in &next.hits {
             reports.extend(match hit.pc {
                 ZEBETITE_DESTROYED => Some(Report::ZebetiteDestroyed),
                 MAP_STATION => Some(Report::MapStation(here)),
-                MAP_ON_ARRIVAL => Some(Report::MapOnArrival(self.room_of(from)?.area)),
-                LEFT_AREA => Some(Report::LeftArea(here)),
+                MAP_ON_ARRIVAL => Some(Report::MapOnArrival(here)),
+                LEFT_AREA => Some(Report::LeftArea(left)),
                 pc if GUNSHIP_SAVES.contains(&pc) => Some(Report::Saved {
                     area: here,
                     station: GUNSHIP,
@@ -903,11 +909,11 @@ impl Domain for ProgressDomain {
     ];
 
     fn behaviours(&self) -> Vec<Entry> {
-        CATALOGUE
-            .iter()
-            .map(|entry| Entry {
-                name: format!("{:?}", entry.id),
-                fields: shown_by(entry.id),
+        catalogue()
+            .into_iter()
+            .map(|(id, _)| Entry {
+                name: format!("{id:?}"),
+                fields: shown_by(id),
             })
             .collect()
     }
@@ -1009,7 +1015,7 @@ impl Domain for ProgressDomain {
     }
 
     fn step(&self, held: &mut Held, (): &(), upstream: &mut Upstream) {
-        let rules = Rules::REFERENCE;
+        let rules = Rules::reference();
         if let Some(load) = &upstream.load {
             held.room_state = Some(load.room.choose(&held.progress, load.door));
         }
@@ -1051,10 +1057,7 @@ impl Domain for ProgressDomain {
         if upstream.placed.is_some_and(|placed| placed.0 != 0) {
             entries.push(B::ItemsPlacedCount);
         }
-        let mut places: Vec<usize> = entries
-            .into_iter()
-            .filter_map(|id| CATALOGUE.iter().position(|entry| entry.id == id))
-            .collect();
+        let mut places: Vec<usize> = entries.into_iter().map(Enum::into_usize).collect();
         places.sort_unstable();
         places.dedup();
         places

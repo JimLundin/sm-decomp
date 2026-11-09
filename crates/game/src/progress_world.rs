@@ -147,10 +147,17 @@ fn store_inventory(inventory: &Inventory, equipment: &mut Equipment) {
     equipment.reserve_mode = engine_mode(inventory.reserve_mode);
 }
 
-/// What her motion reads: the model's answer from the items switched on.
+/// What her motion and her sprite read: the items switched on, never the ones merely hers.
 #[must_use]
 pub fn equipment(equipment: &Equipment) -> clean_types::Equipment {
-    inventory(equipment).equipment()
+    let on = pieces(equipment.equipped);
+    clean_types::Equipment {
+        hi_jump: on[Piece::HiJumpBoots],
+        space_jump: on[Piece::SpaceJump],
+        spring_ball: on[Piece::SpringBall],
+        screw_attack: on[Piece::ScrewAttack],
+        other_suit: on[Piece::VariaSuit] || on[Piece::GravitySuit],
+    }
 }
 
 /// The place a room argument names: none with bit 15 set.
@@ -163,31 +170,36 @@ pub const fn place(argument: u16) -> Option<LocationId> {
     }
 }
 
-/// Every place the engine has a bit for: its word, its bit in the word, and the place.
-fn places() -> impl Iterator<Item = (usize, u16, LocationId)> {
-    (0..COLLECTED_ITEM_WORDS)
-        .zip((0_u16..).step_by(usize::from(BITS_PER_WORD)))
-        .flat_map(|(word, first)| {
-            (0..BITS_PER_WORD).map(move |bit| (word, 1 << bit, LocationId(first.wrapping_add(bit))))
-        })
+/// The word of the emptied places that keeps `place`, and its bit in the word.
+fn bit_of(LocationId(place): LocationId) -> (usize, u16) {
+    (
+        usize::from(place / BITS_PER_WORD),
+        1 << (place % BITS_PER_WORD),
+    )
+}
+
+/// Whether the engine's bit for `place` is set; a place past its bits never is.
+fn is_set(collected: &CollectedItems, place: LocationId) -> bool {
+    let (word, bit) = bit_of(place);
+    collected.0.get(word).is_some_and(|&word| word & bit != 0)
 }
 
 /// The emptied places the engine keeps, one bit per place.
 fn emptied(collected: &CollectedItems) -> Remembered<LocationId> {
-    Remembered::of(places().filter_map(|(word, bit, place)| {
-        collected
-            .0
-            .get(word)
-            .is_some_and(|&word| word & bit != 0)
-            .then_some(place)
-    }))
+    let places = (0..).take(COLLECTED_ITEM_WORDS * usize::from(BITS_PER_WORD));
+    Remembered(
+        places
+            .map(LocationId)
+            .filter(|&place| is_set(collected, place))
+            .collect(),
+    )
 }
 
-/// `emptied` written back as the engine keeps it, asking the model of each place the engine has
-/// a bit for. A place past those bits isn't kept: the game's populations name places below 100h.
+/// `emptied` written back as the engine keeps it, one bit per place the model remembers. A place
+/// past those bits isn't kept: the game's populations name places below 100h.
 fn store_emptied(emptied: &Remembered<LocationId>, collected: &mut CollectedItems) {
     let mut words = [0; COLLECTED_ITEM_WORDS];
-    for (word, bit, _) in places().filter(|&(_, _, place)| emptied.contains(Some(place))) {
+    for (word, bit) in emptied.0.iter().copied().map(bit_of) {
         if let Some(word) = words.get_mut(word) {
             *word |= bit;
         }
@@ -234,7 +246,7 @@ pub fn take(state: &mut State, item: Item, argument: u16) {
         pickup: Pickup::Item(piece(item)),
         location: place(argument),
     };
-    progress.apply(&Rules::REFERENCE, report);
+    progress.apply(&Rules::reference(), report);
     store_inventory(&progress.inventory, &mut state.samus.equipment);
     store_emptied(&progress.emptied, &mut state.collected_items);
 }
