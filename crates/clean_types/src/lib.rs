@@ -536,6 +536,17 @@ impl<K: Enum> Members for Set<K> {
     }
 }
 
+/// A table keyed by the enum `K`, built from its rows, one row for each member, each naming its
+/// member (read by `member`), in any order: a reordered enum changes nothing.
+#[must_use]
+pub fn by_member<K, R, const N: usize>(mut rows: [R; N], member: fn(&R) -> K) -> EnumMap<K, R>
+where
+    K: Enum<Array<R> = [R; N]>,
+{
+    rows.sort_unstable_by_key(|row| member(row).into_usize());
+    EnumMap::from_array(rows)
+}
+
 /// A region of the planet. The area of the room she is in is the frame's area.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping areas in sorted sets.

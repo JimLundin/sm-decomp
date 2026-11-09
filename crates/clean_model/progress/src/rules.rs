@@ -2,8 +2,8 @@
 
 use core::num::NonZeroU16;
 
-use clean_types::Beam;
-use enum_map::EnumMap;
+use clean_types::{Beam, by_member};
+use enum_map::{Enum, EnumMap};
 
 use crate::inventory::Supply;
 
@@ -19,35 +19,44 @@ pub struct Rules {
 }
 
 impl Rules {
-    /// The original game's values, each table's row stated by its member.
+    /// The original game's values, each table built from its rows.
     #[must_use]
     pub fn reference() -> Self {
         Self {
-            beam_switches_off: EnumMap::from_fn(reference_switches_off),
-            percentage_divisors: EnumMap::from_fn(reference_divisor),
+            beam_switches_off: values(REFERENCE_SWITCHES_OFF),
+            percentage_divisors: values(REFERENCE_DIVISORS),
         }
     }
 }
 
-/// The beam taking `beam` switches off in the original game: spazer and plasma don't fire
-/// together, so taking either switches the other off; the rest switch none off.
-/// Spec: TakingBeams.
-const fn reference_switches_off(beam: Beam) -> Option<Beam> {
-    match beam {
-        Beam::Spazer => Some(Beam::Plasma),
-        Beam::Plasma => Some(Beam::Spazer),
-        Beam::Charge | Beam::Ice | Beam::Wave => None,
-    }
+/// A table of the values its rows give, each row a member and its value.
+fn values<K, V, const N: usize>(rows: [(K, V); N]) -> EnumMap<K, V>
+where
+    K: Copy + Enum<Array<(K, V)> = [(K, V); N]>,
+{
+    by_member(rows, |&(member, _)| member).map(|_, (_, value)| value)
 }
 
-/// What the original game divides a capacity by for the item percentage: energy and reserve
-/// 100, missiles, super missiles and power bombs 5. Spec: ItemPercentage.
-const fn reference_divisor(supply: Supply) -> NonZeroU16 {
-    match supply {
-        Supply::Energy | Supply::Reserve => BY_TANK,
-        Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => BY_AMMO,
-    }
-}
+/// Each beam and the beam taking it switches off in the original game: spazer and plasma don't
+/// fire together, so taking either switches the other off; the rest switch none off.
+/// Spec: TakingBeams.
+pub const REFERENCE_SWITCHES_OFF: <Beam as Enum>::Array<(Beam, Option<Beam>)> = [
+    (Beam::Charge, None),
+    (Beam::Ice, None),
+    (Beam::Plasma, Some(Beam::Spazer)),
+    (Beam::Spazer, Some(Beam::Plasma)),
+    (Beam::Wave, None),
+];
+
+/// Each supply and what the original game divides its capacity by for the item percentage:
+/// energy and reserve 100, missiles, super missiles and power bombs 5. Spec: ItemPercentage.
+pub const REFERENCE_DIVISORS: <Supply as Enum>::Array<(Supply, NonZeroU16)> = [
+    (Supply::Energy, BY_TANK),
+    (Supply::Reserve, BY_TANK),
+    (Supply::Missiles, BY_AMMO),
+    (Supply::SuperMissiles, BY_AMMO),
+    (Supply::PowerBombs, BY_AMMO),
+];
 
 /// The energy or reserve capacity that counts one towards the item percentage.
 const TANK_DIVISOR: u16 = 100;

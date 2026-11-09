@@ -32,3 +32,39 @@ pub use progress::Progress;
 pub use report::Report;
 pub use room_states::{Condition, EnteredRoom, RoomStates, Version};
 pub use rules::Rules;
+
+#[cfg(test)]
+mod tests {
+    use core::fmt::Debug;
+
+    use enum_map::{Enum, EnumMap};
+
+    use crate::catalogue::CATALOGUE;
+    use crate::rules::{REFERENCE_DIVISORS, REFERENCE_SWITCHES_OFF};
+
+    /// Each member of `K` that `rows` of `table` don't name exactly once, and how many do.
+    fn not_named_once<K: Enum + Debug + PartialEq, R>(
+        table: &str,
+        rows: &[R],
+        member: fn(&R) -> K,
+    ) -> Vec<String> {
+        EnumMap::<K, ()>::default()
+            .into_iter()
+            .filter_map(|(k, ())| {
+                let named = rows.iter().filter(|row| member(row) == k).count();
+                (named != 1).then(|| format!("{table}: {k:?} is named by {named} rows, not 1"))
+            })
+            .collect()
+    }
+
+    #[test]
+    fn every_table_names_each_member_once() {
+        let failures = [
+            not_named_once("CATALOGUE", &CATALOGUE, |b| b.id),
+            not_named_once("REFERENCE_SWITCHES_OFF", &REFERENCE_SWITCHES_OFF, |r| r.0),
+            not_named_once("REFERENCE_DIVISORS", &REFERENCE_DIVISORS, |r| r.0),
+        ]
+        .concat();
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+}
