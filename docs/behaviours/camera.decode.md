@@ -27,8 +27,9 @@ items, the event and four chain rows; `camdump3` on `$TEMP/collab/scenes/cache`,
 model 8,361. The 12 new rows add 5,668 frames, 5,585 matched: 81 of the 83 misses are pose changes
 that match with the seen y taken as her y at the scroll, and 2 are in boss-kraid-defeated
 (records 806 and 850, movement types 0Ah and 3, the camera's x subpixel only, its pixels matching):
-Kraid's body collision moved where the camera saw her on both, and the harness masks the 3 frames
-it fires on (672 too), by the push back's extra displacement it leaves (below).
+Kraid's body collision moved where the camera saw her on both, and the harness masks the 2 frames
+it fires on, by the push back's extra displacement it leaves (below); frame 672, where Kraid's arm's
+touch calls the same push back, stays compared and matches.
 
 `gen.py` picks the recorded vectors (at most two per outcome, from different rows, from frames
 the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`, outside movement
@@ -129,7 +130,9 @@ green, 1 blue; `Ahead`, `KeepLeft`, `KeepRight`, `Near` against 0, 4, 6, 2.
 
 Each entry lists the routines or branches that carry its content. `scan.sh --mirror` finds 2 of
 14 entries (14 %) single-routine, `LeadingHer` and `AimingHeight`; `DownwardLooksAhead` is one
-routine's two reads. All three are marked *.
+routine's two reads. All three are marked *. The name scan's 5 hits in the camera crate are prose
+(axis.rs, follow.rs, room.rs twice, tests/spec.rs), and the enum-order scan's one hit is the
+vectors test's TOML `Value`, a false positive; the root accepts both.
 
 | Entry | Source |
 | --- | --- |
@@ -259,8 +262,14 @@ be verified on its own from the records, with her motion's outputs decoded as in
     holds her in movement type 1Ah) and the yapping maw: mask while either holds her;
   - Crocomire's collision (`$A4:8C95`); Kraid's body collision (`$A7:B0F3`), on the frames whose
     end holds the extra displacement its push back sets (`$A7:94A4`: `0B58` = 4, `0B5C` = FFF8h),
-    and its restriction of her x to the first screen (`$A7:C9EE`, x), under the six Kraid functions
-    that call it (`$A7:C865`..`$A7:C924`, `0FA8`) with her x at record N at 100h or past it;
+    except where the bottom lint's function (`10A8`) turns to B89Bh: Kraid's arm's touch
+    (`$A7:9490`, `$A7:9496`; `$A7:9499` writes B89Bh) calls the same push back and moves neither her
+    nor where the camera saw her; and its restriction of her x to the first screen (`$A7:C9EE`, x),
+    under the six Kraid functions that call it (`$A7:C865`..`$A7:C924`, `0FA8`). The frame runs her
+    movement (`$82:8B58`), then the enemies (`$82:8B65`), then her pose change (`$82:8B69`), so the
+    restriction reads the x her movement left: mask x where her x at record N or at N+1 is 100h or
+    past it (N+1's is 100h wherever it acted, unless a pose change placed her after it, which the
+    placement masks cover);
     Ridley (`$A6:E501`); Mother Brain moving her towards the ceiling or floor (`$A9:BBFD`, y) and
     towards the wall (`$A9:BC3F`, x): mask Mother Brain's moves on both axes;
   - the gunship, while its function (enemy $D07F's) isn't the idle one (`$A2:A9BD`): it sets her x
@@ -302,9 +311,9 @@ be verified on its own from the records, with her motion's outputs decoded as in
   leaves every row's output the same. In R3 and R16 the move crosses into the last row past its
   aim, but the view stops on its aim under either read. It is checked by C-ahead,
   C-below-closed and C-below-short-row, and the bank log (`$80:A8A6`..`$80:A8D4`).
-- **k out of sample:** the old code scores 2,273.5 over this spec's 46.7 units, 48.7 a unit
-  (samus-motion's 65.8); its own 0.55 would give k = 26.8 against the frozen 36, so the 70% cap
-  binds in both areas (limits since round 3, at 31.0 units). The old code lacks the knockback's
+- **k out of sample:** the old code scores 2,273.5 over this spec's 47.0 units, 48.4 a unit
+  (samus-motion's 65.8); its own 0.55 would give k = 26.6 against the frozen 36, so the 70% cap
+  binds in both areas (limits at 31.3 units). The old code lacks the knockback's
   turn of the lead and time stopped.
 - **Free run:** from a seed frame, carry the camera's own State forward and take only the inputs
   from the records; report the first differing frame per axis. Re-seed at a room change.
@@ -354,4 +363,4 @@ code is a failure.
 - Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
   DownwardLooksAhead, ScreensRunOn, BelowTheRoom, PushCarries
 
-Budget: 36 × 46.7 units, capped at 70% of old = 1,591 (follow 500 capped, limits 1,091 capped)
+Budget: 36 × 47.0 units, capped at 70% of old = 1,591 (follow 500 capped, limits 1,091 capped)
