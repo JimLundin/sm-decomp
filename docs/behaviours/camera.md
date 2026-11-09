@@ -11,15 +11,15 @@ what it may not. Written behaviour first, from the oracle's records over time. V
 view's position in the room on both axes, the point it aims at (the lead across, the height down),
 the speed it moves at, the room's edges, the room's closed screens and how it eases out of them,
 and what it remembers of her between frames. It reads her motion's outputs: her position after her
-moves, `camera_from`, whether she skids, whether she rises, her facing
-and whether she moonwalks.
+moves, the y a placement put her at, if any, whether she skids, whether she rises, her facing and
+whether she moonwalks.
 
-**What it reads from samus-motion.** Its step's outputs as it exports them: her position,
-`camera_from` on every frame, the skid, her facing and `rising` (§1.3), which samus-motion's
-`RisingAndFalling` gives: she is rising from the rise's start until it ends, a rise at 0 and the
-frame that spends the rise included. Her vertical speed can't stand in for it: at a rise at 0 it is
-0, and on the frame that spends the rise it already points down, yet both aim the camera as a rise
-does (C-rise-at-0, C-rise-spent). While a knockback moves her, `rising` and going backwards are the
+**What it reads from samus-motion.** Its step's outputs as it exports them: her position, the y a
+placement put her at, if any (where pose fit or a change of shape placed her), the skid, her
+facing and `rising` (§1.3), which samus-motion's `RisingAndFalling` gives: she is rising from the
+rise's start until it ends, a rise at 0 and the frame that spends the rise included. Her vertical
+speed can't stand in for it: at a rise at 0 it is 0, and on the frame that spends the rise it
+already points down, yet both aim the camera as a rise does (C-rise-at-0, C-rise-spent). While a knockback moves her, `rising` and going backwards are the
 knockback's (§5).
 
 **Not in this spec** (each an input where it feeds us, §1.3; §5 names who supplies each): a door's
@@ -55,7 +55,7 @@ the next.
 | Input | Type | Read by |
 | --- | --- | --- |
 | her position | x, y: `P.S`, after everything that moved her this frame | `FollowingHer`, `LeadingHer`, `AimingHeight`, `Remembering` |
-| `camera_from` | `P.S`: her motion's y the camera follows her from, every frame: her start y, or where pose fit or a change of shape placed her | `Remembering` |
+| the y a placement put her at, if any | `P.S`, or none: where pose fit or a change of shape placed her this frame (her motion's output); none on a frame nothing placed her, and then the camera follows her from where it last saw her | `Remembering` |
 | her facing | `Left`, `Right`, `Screen` (facing the player; leads as `Right`) | `LeadingHer` |
 | going backwards | `bool`: she skids (her motion's output), moonwalks (her pose), or takes a knockback (the damage domain); the vectors name which | `LeadingHer` |
 | rising | `bool`: she is rising, from the rise's start until it ends, a rise at 0 and the frame that spends the rise included: samus-motion's output (`RisingAndFalling`), or the knockback's while one moves her (§5) | `AimingHeight` |
@@ -161,11 +161,11 @@ last (`ScreensRunOn`).
 - switch: none.
 - Each frame, after both axes → where it last saw her becomes her position, subpixels included
   [R1, R6, R17, R30, C-placed]
-- Each frame, before it follows → the pixel part of where it last saw her down becomes
-  `camera_from`'s, its subpixel part kept [C-placed, C-placed-pixel, C-unplaced]
-- So with nothing placing her, `camera_from` is her start y, which is where it last saw her, and
-  nothing changes; the move pose fit or a change of shape made isn't followed: from the placed y she didn't
-  move (C-placed); the same frame unplaced scrolls (C-unplaced). The kept subpixel can make her
+- A placement put her at a y this frame, before it follows → the pixel part of where it last saw
+  her down becomes that y's, its subpixel part kept [C-placed, C-placed-pixel]
+- So with nothing placing her, where it last saw her stays as it was until after both axes, and
+  the move pose fit or a change of shape made isn't followed: from the placed y she didn't move
+  (C-placed); the same frame unplaced scrolls (C-unplaced). The kept subpixel can make her
   creep inside a pixel (C-placed-pixel eases 2 px).
 - checked: oracle (every recorded vector's `after.seen`); constructed (C-placed, C-placed-pixel,
   C-unplaced).
@@ -230,11 +230,17 @@ aim stopped it, and `v` its speed's pixel part.
 - Going left or up `before` 0 → it stops on 0 on that axis, and no closed screen moves it that
   frame [R1, R5, R8, R10, R11]
 - Going down, `c` `exceeds` `yb` → it backs up as from a closed screen, `max(yb, back(cm))`,
-  which stops it on `yb`, and no closed screen moves it that frame [R12, R17, R25,
-  C-edge-down-from-above]
-- So a camera left of or above the room that moves right or down goes straight to the room's
-  right edge or bottom (C-edge-right-from-left, C-edge-down-from-above).
-- checked: oracle; constructed (C-edge-right-from-left, C-edge-down-from-above).
+  and no closed screen moves it that frame [R12, R17, R25, C-edge-down-from-above,
+  C-edge-down-from-below]
+- So a camera in the room or above it stops on `yb`: its move ends at most `v + 1` px past `yb`,
+  so `back(cm)` is `before` `yb` (R12; C-edge-down-from-above, from `FFF0`, backs to `FFEE`).
+  A camera another domain left below the room, far enough that `back(cm)` is after `yb`, backs
+  instead 2 px a frame from where it was (C-edge-down-from-below: from `0150` it ends on `014E`,
+  not on `011F`).
+- So a camera left of the room that moves right goes straight to the room's right edge
+  (C-edge-right-from-left).
+- checked: oracle; constructed (C-edge-right-from-left, C-edge-down-from-above,
+  C-edge-down-from-below).
 
 ### ShortScreens
 - kind: mechanic.
@@ -374,7 +380,7 @@ aim stopped it, and `v` its speed's pixel part.
   moves down, and the column, down, is the camera's after it moved across.
 - Where it last saw her becomes her position after both axes, so a frame's two speeds are both
   measured from the last frame's.
-- A placement (`camera_from`) replaces where it last saw her down before the camera follows.
+- A placement (the y it put her at) replaces where it last saw her down before the camera follows.
 - On an axis, the aim's stop comes first; the room's edges and closed screens then measure from
   where it stopped (except the reads of `DownwardLooksAhead`).
 

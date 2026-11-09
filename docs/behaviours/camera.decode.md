@@ -17,10 +17,10 @@ one frame of gameplay in one room (game state 8 at both, `05B6` advanced by one,
 camera's position (`0911`.`090F`, `0915`.`0913`) on 14,704. A null model (the camera doesn't move)
 matches 6,271 of them. The 186 it misses are frames where another routine moved the point the
 camera measures from (`0B10`-`0B16`) after record N and before the scroll: 113 are pose changes
-(the transitions of bank `$91` that set `0B14`, which is samus-motion's `camera_from`), 69 are the
-shinespark's clamp (`$90:D1D6`..`$90:D1FE` and `$90:D2A3`..`$90:D2B9`, previous position within
-15 px across and 14 px down), and the rest the grapple (`$9B:BB25`.., the ±12 px clamp) and the
-Landing Site's gunship (`$A2:A925`). With the y the camera saw taken as her y at the scroll, the
+(the transitions of bank `$91` that set `0B14`, the placements samus-motion reports as
+`camera_from`), 69 are the shinespark's clamp (`$90:D1D6`..`$90:D1FE` and `$90:D2A3`..`$90:D2B9`,
+previous position within 15 px across and 14 px down), and the rest the grapple (`$9B:BB25`..,
+the ±12 px clamp) and the Landing Site's gunship (`$A2:A925`). With the y the camera saw taken as her y at the scroll, the
 113 pose changes match too.
 
 `gen.py` picks the recorded vectors (at most two per outcome, from different rows, from frames
@@ -28,7 +28,8 @@ the model matches, with `0B10`-`0B16` at N+1 equal to her position `0AF6`-`0AFC`
 types 16h, 1Ah and 1Bh: grapple, grabbed by Draygon, shinespark; the one it picked from
 samus-square-slope-reserve was dropped, its row name being a lexicon match), `cons.py` writes the
 constructed ones (the results come from the same model) and `vecrun.py` runs every vector of
-`scenarios/vectors/camera.toml` through it: 79 of 79 agree (camera round 3, adversary 49's O1:
+`scenarios/vectors/camera.toml` through it: 80 of 80 agree (`$TEMP/collab/camera-r4/vecrun.py`
+reads `placed`, adversary 53's O3; camera round 3, adversary 49's O1:
 `below` is one run continuing the room's screens, as the table is, and
 `$TEMP/collab/camera-r3/vecrun.py` appends it to the room's screens unpadded, a screen past its
 end read as `Closed`; round 2's version padded each below row to `w`, which let a short row stand
@@ -45,7 +46,11 @@ row is (0100 + 80h) >> 8 = 1 and the camera's screen is index 1 × 2 + 1 = 3, re
 and the screen after it index 1 × 2 + 2 = 4, the run's first, Open, so it eases to 0103 (red
 there drops it to 0100); down, column 1, index 3 red and index 5, past the run, red, so it holds
 on 0100. Each Closed variant was run through the model as well and gives the stated other
-result). `rise0.py` writes R35, the one
+result; and adversary 53's O1, C-edge-down-from-below: from 0150, seen 0200 and her 0202, the
+speed is 3, `$80:A8DA` keeps 0153 (the aim 0192 is below it), the upper scroll's index 1 is Open,
+so `0933` = 1F and `0937` = 011F; 011F < 0153 takes `$80:A8FA`'s branch to `$80:A91E`, which
+proposes 0153 − 3 − 2 = 014E, and `$80:A928`'s signed compare keeps it over 011F; folding the
+stop into 011F would give 011F). `rise0.py` writes R35, the one
 recorded rise at 0 (`0B36` = 1 with `0B2C`/`0B2E` = 0 at the scroll): all 7 such frames are
 shinespark frames (movement type 1Bh), and in samus-shinespark-left 214 the clamp didn't fire
 (the model matches with the previous position as record N left it) and the down scroller decides.
@@ -104,7 +109,7 @@ position), the scratch `0933`-`0939`.
 | her facing | `0A1E` low byte | 4 `Left`; 8 `Right`; 0 `Screen` (the scroll tests only 4) |
 | going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-motion §1.2) |
 | rising | `0B36` | = 1 (up), samus-motion's rise state: from the rise's start until `$90:8FDC`/`$90:9046` end it at the start of a frame, so a rise at 0 and the frame whose pull spends the rise (`0B36` = 1 with `0B2E` negative when `$90:9666` reads it) are rising; 0 (none, the moonfall's) and 2 (down) are not. Records: 3 usable spent frames (samus-bomb-jump-vertical 1035, samus-ceres-push 989, samus-grapple-release 325), none decisive; C-rise-spent is |
-| `camera_from` | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept). Unplaced, it is her start y, whose pixel part is `0B14`'s on every unmasked frame, so the spec's unconditional write changes nothing there |
+| the y a placement put her at, if any | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept); with none, `0B14` is not written. Samus-motion reports `camera_from` on every frame, her start y where nothing placed her, and both callers (the harness's `placement`, the bridge's `settle`) take a placement where it differs from her start y. That misses only a placement that leaves her y pixel at her start pixel on a frame where another mover moved her before her step (an elevator), where the original writes `0B14` = her start pixel |
 | the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`) | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green); the bytes from `w × h` on are the `below` run (index row × `w` + column, the room's rows continued), any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested); past the 32h bytes, the RAM after it (docs/LEGACY.md) |
 | the aim heights | `07AD` (up scroller), `07AF` (down scroller), from the room header (`$82:DEC1`, `$82:DECA`) | `hn` = `07AD`, `hr` = `07AF`; 70h/A0h or 90h/A0h in the records |
 | lead setting | `0941` (camera distance index) | 0 `Ahead`, 2 `Near`, 4 `KeepLeft`, 6 `KeepRight`; the tables `$90:963F` (facing right) and `$90:9647` (facing left): 60h/A0h, 40h/50h, 20h/20h, E0h/E0h. Set by Crocomire (`$A4:8ABD` = 2, `$A4:97F6` = 6) and Kraid's room (`$A7:A9E7` = 2), cleared at `$88:8347`, `$A4:90D8`, `$A4:9B8D`, `$A7:C594`; always 0 in the records |
@@ -268,11 +273,11 @@ be verified on its own from the records, with her motion's outputs decoded as in
   samus-motion defers y (a block-inside push, the quicksand's, C2; the knockback's tail, a frame
   starting with the knockback on under the normal handler, C3) and either her pose changes or
   samus-motion's step reports a placement. The camera takes her position from N+1, and from
-  samus-motion only `camera_from`, which differs from the seen y through a placement alone; on a
+  samus-motion only the placement (its `camera_from` where that differs from her start y); on a
   deferred frame without one, nothing the camera reads is unverified, so y stays compared
   (adversary 49, F1: 98 push and 5 tail frames masked, 247 more y compared, every one matching).
   x stays compared on both, since the lead's knockback turn is the camera's own `LeadingHer`.
-  A pose change between N and N+1 is not masked: `camera_from` for that frame comes from running
+  A pose change between N and N+1 is not masked: the placement for that frame comes from running
   samus-motion's model on it. Taking N+1's `0B14` instead is wrong: it is her y at the scroll by
   construction, which differs from the placement when she moves on after it (samus-motion's PF1,
   the lift after the push).
