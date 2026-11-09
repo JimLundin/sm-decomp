@@ -12,7 +12,7 @@ pub enum Condition {
     Happened(Event),
     /// Holds when a boss of any of these kinds is defeated in the room's own area.
     Defeated(BossKinds),
-    /// Holds when the item is hers, equipped or not.
+    /// Holds when the item is hers, switched on or not.
     Has(Item),
     /// Holds when the morph ball is hers and her missile capacity isn't 0, however many
     /// missiles she holds.
