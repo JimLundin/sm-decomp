@@ -254,7 +254,10 @@ of the same frame, so it is verified on its own with the reports as inputs.
   before the room header's load (`$82:E376` → `$82:DE6F`, `STA $079F` at `$82:DE86`) in the
   same frame, so `079F` at N already holds the new room's area. `MapOnArrival` (the room's setup
   code) runs after the header, so it takes `079F` at N. No recorded row leaves an area whose map
-  is `OnArrival`, so no recorded frame tells N-1's area from N's for `LeftArea`.
+  is `OnArrival`, so no recorded frame tells N-1's area from N's for `LeftArea`. Every door's
+  transition runs `$82:DF99`, so `LeftArea` is heard only on a door whose header has bit 40h
+  (`$83:0002,x`, x the door pointer `078D` at N-1). On the cached rows no frame runs `$8F:C90A`
+  and no `$82:DF99` hit is on such a door: `MapOnArrival` is checked by the vectors only.
 - **Compared at N:** every quantity of §State, masked only where another domain changed it. What
   she holds (energy, ammunition) is masked by name (the energy and weapons domains) on the frames
   it changed with no tank report (549 of 18,299); on every other frame it is compared, so a report
