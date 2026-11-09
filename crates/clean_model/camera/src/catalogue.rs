@@ -1,6 +1,11 @@
 //! The catalogue: one behaviour per spec entry, with its kind, its switch and how it is checked.
 //!
-//! An entry's switch is `Parameter` where `Rules` holds its values, and `Fixed` otherwise.
+//! An entry's switch is `Parameter` where `Rules` holds its values, and `Fixed` otherwise. The
+//! spec names no toggle. An entry whose values are an input, as `AimingHeight`'s heights are the
+//! room's, or another entry's, as `Settling`'s ease is `ClosedScreens`' push, is `Fixed`: `Rules`
+//! holds nothing of its own to adjust, so a caller changes it through that input or that entry.
+//! `LeadingHer`'s setting is an input too, but the leads each setting gives are in `Rules`, so it
+//! is a `Parameter`.
 
 use clean_types::{Checked, Kind, Switch};
 
@@ -31,7 +36,8 @@ pub enum BehaviourId {
     DownwardLooksAhead,
     /// The screen after a row's last column is the first of the row below.
     ScreensRunOn,
-    /// Below the room's last row, the view reads what earlier rooms left there.
+    /// Below the room's last row, the view reads the screens the room's loading left after its
+    /// last screen.
     BelowTheRoom,
     /// A push's sum carries once more.
     PushCarries,
@@ -154,7 +160,7 @@ pub const CATALOGUE: [Behaviour; 14] = [
     Behaviour {
         id: BehaviourId::BelowTheRoom,
         summary: "below the room's last row, the view reads the screens the room's loading left \
-                  there, from earlier rooms.",
+                  after the room's last screen.",
         kind: Kind::Quirk,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

@@ -92,6 +92,9 @@ impl Parts for Fixed {
 /// No speed, no distance: `0.0000`.
 pub const ZERO: Fixed = Wrapping(0);
 
+/// One whole pixel: `1.0000`.
+pub const PIXEL: Fixed = Wrapping(1 << PIXEL_BITS);
+
 /// `WordwiseTopSpeed`, `Dash`: `below(a, b)` on 16-bit parts: bit 15 of `(a − b) mod 2^16` is
 /// set.
 #[must_use]

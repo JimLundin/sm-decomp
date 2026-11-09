@@ -1,5 +1,6 @@
 //! Runs every vector of `scenarios/vectors/camera.toml` through the model, and checks that every
-//! catalogue entry checked by vectors has one. A key the format doesn't give fails the test.
+//! catalogue entry checked by vectors has one, from the code and the vector file alone. A key the
+//! format doesn't give fails the test. The checks that read the spec are `tests/spec.rs`.
 
 #[cfg(test)]
 mod tests {
@@ -8,10 +9,9 @@ mod tests {
     use core::str::Chars;
 
     use clean_model_camera::{
-        BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus,
-        ScreenKind,
+        CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus, ScreenKind,
     };
-    use clean_types::{Checked, Facing, Fixed, Kind, Pair, Parts, fixed};
+    use clean_types::{Checked, Facing, Fixed, Pair, Parts, fixed};
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/camera.toml");
 
@@ -101,12 +101,9 @@ mod tests {
             Pair { x, y }
         }
 
-        /// Rows of screens, one string a row.
-        fn screens(self) -> Vec<Vec<ScreenKind>> {
-            self.array()
-                .into_iter()
-                .map(|row| row.str().chars().map(screen).collect())
-                .collect()
+        /// A string of screens, one character a screen.
+        fn screens(self) -> Vec<ScreenKind> {
+            self.str().chars().map(screen).collect()
         }
     }
 
@@ -237,10 +234,21 @@ mod tests {
         Camera::new(position, seen)
     }
 
+    /// A room as the vector gives it: its rows, each as wide as the first, then the run below
+    /// them continuing them.
     fn room(value: Value) -> Room {
         let mut t = value.table();
-        let screens = t.need("screens").screens();
-        let below = t.take("below").map_or_else(Vec::new, Value::screens);
+        let rows: Vec<Vec<ScreenKind>> = t
+            .need("screens")
+            .array()
+            .into_iter()
+            .map(Value::screens)
+            .collect();
+        let width = rows.first().map_or(0, Vec::len);
+        assert!(rows.iter().all(|r| r.len() == width), "rows of one width");
+        let height = rows.len();
+        let mut run: Vec<ScreenKind> = rows.into_iter().flatten().collect();
+        run.extend(t.take("below").map_or_else(Vec::new, Value::screens));
         let mut h = t.need("heights").array().into_iter();
         let heights = Heights {
             level: Wrapping(h.next().expect("hn").int()),
@@ -248,7 +256,7 @@ mod tests {
         };
         assert!(h.next().is_none(), "two heights");
         t.done("room");
-        Room::new(&screens, &below, heights).expect("a valid room")
+        Room::new(run, width, height, heights).expect("a valid room")
     }
 
     fn samus(value: Value, seen: Pair<Fixed>) -> Samus {
@@ -355,110 +363,21 @@ mod tests {
         }
     }
 
-    const SPEC: &str = include_str!("../../../../docs/behaviours/camera.md");
-
-    /// A spec entry: its name, and its lines up to the next heading.
-    struct SpecEntry {
-        name: &'static str,
-        lines: Vec<&'static str>,
-    }
-
-    impl SpecEntry {
-        /// The text of one of its fields, `- field: ...`, its continuation lines joined on.
-        fn field(&self, field: &str) -> String {
-            let start = format!("- {field}: ");
-            let mut lines = self.lines.iter().skip_while(|l| !l.starts_with(&start));
-            let first = lines
-                .next()
-                .unwrap_or_else(|| panic!("{} has no {field}", self.name));
-            let rest = lines.take_while(|l| l.starts_with("  "));
-            core::iter::once(&first[start.len()..])
-                .chain(rest.map(|l| l.trim()))
-                .collect::<Vec<_>>()
-                .join(" ")
-        }
-    }
-
-    /// The spec's behaviour entries, in its order: the `###` headings not numbered.
-    fn spec_entries() -> Vec<SpecEntry> {
-        let mut entries: Vec<SpecEntry> = Vec::new();
-        for line in SPEC.lines() {
-            if let Some(heading) = line.strip_prefix('#') {
-                let name = heading.strip_prefix("## ");
-                entries.extend(
-                    name.filter(|n| !n.starts_with(|c: char| c.is_ascii_digit()))
-                        .map(|name| SpecEntry {
-                            name,
-                            lines: Vec::new(),
-                        }),
-                );
-                continue;
-            }
-            if let Some(entry) = entries.last_mut() {
-                entry.lines.push(line);
-            }
-        }
-        entries
-    }
-
     #[test]
-    fn the_catalogue_has_one_entry_per_spec_entry() {
-        let entries: Vec<&str> = spec_entries().iter().map(|e| e.name).collect();
-        let ids: Vec<String> = CATALOGUE.iter().map(|b| format!("{:?}", b.id)).collect();
-        assert_eq!(
-            entries, ids,
-            "one entry per spec entry, in the spec's order"
-        );
-        let first = CATALOGUE.first().map(|b| b.id);
-        assert_eq!(first, Some(BehaviourId::FollowingHer));
-    }
-
-    #[test]
-    fn a_room_is_built_only_from_valid_rows() {
-        use ScreenKind::{Closed, Open};
+    fn a_room_is_built_only_from_a_run_that_holds_it() {
+        use ScreenKind::Open;
         let heights = Heights {
             level: Wrapping(112),
             rising: Wrapping(160),
         };
-        let build = |screens: &[Vec<ScreenKind>], below: &[Vec<ScreenKind>]| {
-            Room::new(screens, below, heights).err()
+        let build = |run: Vec<ScreenKind>, width: usize, height: usize| {
+            Room::new(run, width, height, heights).err()
         };
-        assert_eq!(build(&[], &[]), Some(RoomError::NoScreens));
-        assert_eq!(build(&[vec![]], &[]), Some(RoomError::NoScreens));
-        assert_eq!(
-            build(&[vec![Open, Open], vec![Open]], &[]),
-            Some(RoomError::UnevenRows)
-        );
-        assert_eq!(
-            build(&[vec![Open]], &[vec![Open, Closed]]),
-            Some(RoomError::BelowRowTooWide)
-        );
-        assert_eq!(build(&[vec![Open; 257]], &[]), Some(RoomError::TooLarge));
-        assert_eq!(
-            build(&vec![vec![Open]; 257], &[]),
-            Some(RoomError::TooLarge)
-        );
-        assert_eq!(build(&[vec![Open; 256]], &[vec![Open]]), None);
-    }
-
-    #[test]
-    fn each_entry_has_its_spec_entry_summary_and_kind() {
-        for (entry, behaviour) in spec_entries().iter().zip(&CATALOGUE) {
-            assert_eq!(
-                entry.field("summary"),
-                behaviour.summary,
-                "{}'s summary",
-                entry.name
-            );
-            let kind = entry.field("kind");
-            let agrees = match behaviour.kind {
-                Kind::Mechanic => kind.starts_with("mechanic"),
-                Kind::Quirk => kind.starts_with("quirk"),
-                Kind::Timing => kind.starts_with("timing"),
-                Kind::Encoding => kind.starts_with("encoding"),
-                Kind::Output => kind.starts_with("output"),
-            };
-            assert!(agrees, "{}'s kind is {kind}", entry.name);
-        }
+        assert_eq!(build(vec![Open], 0, 1), Some(RoomError::NoScreens));
+        assert_eq!(build(vec![Open], 1, 0), Some(RoomError::NoScreens));
+        assert_eq!(build(vec![Open; 3], 2, 2), Some(RoomError::MissingScreens));
+        assert_eq!(build(vec![Open; 257], 257, 1), Some(RoomError::TooLarge));
+        assert_eq!(build(vec![Open; 257], 1, 257), Some(RoomError::TooLarge));
+        assert_eq!(build(vec![Open; 257], 256, 1), None);
     }
 }

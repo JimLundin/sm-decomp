@@ -2,7 +2,7 @@
 
 use core::num::Wrapping;
 
-use clean_types::{Facing, Fixed, Px};
+use clean_types::{Facing, Fixed, PIXEL, Px};
 
 use crate::input::LeadSetting;
 
@@ -41,9 +41,9 @@ pub struct Rules {
     pub near: Leads,
     /// How far a push moves the view beyond its speed (Spec: ClosedScreens).
     pub push: Px,
-    /// How much lower than on a short screen the view stops where it can go no lower on any
-    /// other screen (Spec: ShortScreens).
-    pub short_rows: Px,
+    /// The rows of any screen but a short one: how far below its top edge the view stops where
+    /// it can go no lower, a short screen's being 0 (Spec: ShortScreens).
+    pub rows_not_short: Px,
 }
 
 impl Rules {
@@ -60,7 +60,7 @@ impl Rules {
 
     /// The reference profile: the spec's vanilla values.
     pub const REFERENCE: Self = Self {
-        extra: Wrapping(0x1_0000),
+        extra: PIXEL,
         ahead: Leads {
             right: Wrapping(96),
             left: Wrapping(160),
@@ -78,6 +78,6 @@ impl Rules {
             left: Wrapping(80),
         },
         push: Wrapping(2),
-        short_rows: Wrapping(31),
+        rows_not_short: Wrapping(31),
     };
 }

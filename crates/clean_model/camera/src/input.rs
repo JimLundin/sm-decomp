@@ -31,8 +31,9 @@ pub enum LeadSetting {
 pub struct Samus {
     /// Her position, after everything that moved her this frame.
     pub position: Position,
-    /// The y her motion says the camera follows her from: her start y, or where pose fit or a
-    /// change of shape placed her (Spec: Remembering).
+    /// The y the camera follows her from this frame, her motion's `camera_from`: her y at the
+    /// frame's start, or the y pose fit or a change of shape placed her at. Its pixel part
+    /// replaces where the camera last saw her down (Spec: Remembering).
     pub camera_from: Fixed,
     /// Which way she faces (Spec: LeadingHer).
     pub facing: Facing,

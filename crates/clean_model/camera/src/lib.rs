@@ -5,8 +5,8 @@
 //! then the room limits it: its edges and its closed screens. On an axis she didn't move on it
 //! settles out of a closed screen instead, unless time is stopped.
 //!
-//! A caller builds a `Room`, places a `Camera` with `Camera::new`, and steps it once a frame with
-//! `Camera::step`, reading `Camera::position`. `Rules::REFERENCE` is the original's tuning;
+//! A caller builds a `Room` from its run of screens, its width and its height, places a `Camera`
+//! with `Camera::new`, and steps it once a frame with `Camera::step`, reading `Camera::position`. `Rules::REFERENCE` is the original's tuning;
 //! `CATALOGUE` names every behaviour.
 #![expect(
     clippy::doc_markdown,
@@ -19,10 +19,10 @@
               public interface is only what lib.rs exports"
 )]
 
+mod axis;
 mod catalogue;
 mod follow;
 mod input;
-mod limits;
 mod room;
 mod rules;
 
@@ -31,9 +31,9 @@ pub use input::{Frame, LeadSetting, Samus};
 pub use room::{Heights, Room, RoomError, ScreenKind};
 pub use rules::{Leads, Rules};
 
-use clean_types::{Fixed, Pair, Parts, Position, Px, fixed};
-use follow::{aim, chase, speed};
-use limits::{Across, Down, Line, Push};
+use axis::Line;
+use clean_types::{Fixed, Pair, Parts, Position};
+use follow::aim;
 
 /// The camera: where the view is and where it last saw her, all a later frame needs (Spec: §1).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -71,111 +71,23 @@ impl Camera {
     /// The camera after one frame of following her.
     #[must_use]
     pub fn step(self, rules: &Rules, frame: &Frame) -> Self {
-        let samus = &frame.samus;
+        let her = frame.samus.position;
         // Spec: Remembering. Before it follows, the pixel part of where it last saw her down
         // becomes camera_from's, its subpixel part kept.
         let seen = Pair {
-            y: samus.camera_from.with_sub(self.seen.y.sub()),
+            y: frame.samus.camera_from.with_sub(self.seen.y.sub()),
             ..self.seen
         };
-        let following = Following {
-            rules,
-            frame,
-            seen,
-            aim: aim(rules, frame),
-        };
+        let aim = aim(rules, frame);
+        let Pair { x, y } = self.position;
         // Spec: §4. Across first, in the row its middle was in; then down, in the column the
         // move across took it to.
-        let x = following.across(self.position);
-        let y = following.down(Pair { x, ..self.position });
+        let x = Line::across(frame, rules, y.pixel()).follow(x, her.x, seen.x, aim.x);
+        let y = Line::down(frame, rules, x.pixel()).follow(y, her.y, seen.y, aim.y);
         // Spec: Remembering. After both axes, where it last saw her becomes her position.
         Self {
             position: Pair { x, y },
-            seen: samus.position,
-        }
-    }
-}
-
-/// What one frame's following reads on both axes.
-struct Following<'a> {
-    /// The tuning.
-    rules: &'a Rules,
-    /// The frame's inputs.
-    frame: &'a Frame<'a>,
-    /// Where it last saw her, after the placement down.
-    seen: Position,
-    /// The point it aims at.
-    aim: Pair<Px>,
-}
-
-impl Following<'_> {
-    /// The camera's position across after the frame.
-    fn across(&self, camera: Pair<Fixed>) -> Fixed {
-        let axis = OnAxis {
-            camera: camera.x,
-            her: self.frame.samus.position.x,
-            seen: self.seen.x,
-            aim: self.aim.x,
-            speed: speed(self.frame.samus.position.x, self.seen.x, self.rules.extra),
-        };
-        let line = Across::new(self.frame.room, camera.y.pixel(), axis.push(self.rules));
-        axis.follow(&line, self.frame.time_stopped)
-    }
-
-    /// The camera's position down after the frame, from where it is after moving across.
-    fn down(&self, camera: Pair<Fixed>) -> Fixed {
-        let axis = OnAxis {
-            camera: camera.y,
-            her: self.frame.samus.position.y,
-            seen: self.seen.y,
-            aim: self.aim.y,
-            speed: speed(self.frame.samus.position.y, self.seen.y, self.rules.extra),
-        };
-        let push = axis.push(self.rules);
-        let line = Down::new(self.frame.room, self.rules, camera.x.pixel(), push);
-        axis.follow(&line, self.frame.time_stopped)
-    }
-}
-
-/// One axis of a frame: the camera, her, where it last saw her, its aim and its speed there.
-#[derive(Clone, Copy)]
-struct OnAxis {
-    /// The camera's position on the axis.
-    camera: Fixed,
-    /// Her position on the axis.
-    her: Fixed,
-    /// Where it last saw her on the axis.
-    seen: Fixed,
-    /// Its aim's pixel part on the axis.
-    aim: Px,
-    /// Its speed on the axis (Spec: FollowingHer).
-    speed: Fixed,
-}
-
-impl OnAxis {
-    /// Whether she moved on the axis: her pixel part is not where it last saw her (Spec:
-    /// FollowingHer).
-    fn she_moved(self) -> bool {
-        self.her.pixel() != self.seen.pixel()
-    }
-
-    /// The push on the axis, from its speed (Spec: ClosedScreens).
-    fn push(self, rules: &Rules) -> Push {
-        Push::new(self.speed, rules)
-    }
-
-    /// The camera's position on the axis after the frame. When she moved, it moves towards its
-    /// aim and the room limits it (Spec: FollowingHer, §3); when she didn't, it settles, unless
-    /// time is stopped (Spec: Settling, TimeStopped). The room's rules set its pixel part only.
-    fn follow(self, line: &impl Line, time_stopped: bool) -> Fixed {
-        if self.she_moved() {
-            return chase(self.camera, self.aim, self.speed)
-                .map_or(self.camera, |m| fixed(line.limit(m), m.stopped.sub()));
-        }
-        if time_stopped {
-            self.camera
-        } else {
-            fixed(line.settle(self.camera.pixel()), self.camera.sub())
+            seen: her,
         }
     }
 }

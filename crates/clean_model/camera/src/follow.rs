@@ -19,14 +19,14 @@ pub(crate) const fn exceeds(a: Px, b: Px) -> bool {
     a.0 > b.0
 }
 
-/// The later of two positions, the spec's max: `b` when `a` is before it, `a` otherwise.
-pub(crate) const fn later(a: Px, b: Px) -> Px {
+/// The spec's `max`, picking by `before`: `b` when `a` is before it, `a` otherwise.
+pub(crate) const fn max_by_before(a: Px, b: Px) -> Px {
     if before(a, b) { b } else { a }
 }
 
-/// The smaller of two positions as plain numbers, the spec's min by exceeds: `b` when `a`
-/// exceeds it, `a` otherwise.
-pub(crate) const fn smaller(a: Px, b: Px) -> Px {
+/// The spec's `min` by `exceeds`, picking as plain numbers: `b` when `a` exceeds it, `a`
+/// otherwise.
+pub(crate) const fn min_by_exceeds(a: Px, b: Px) -> Px {
     if exceeds(a, b) { b } else { a }
 }
 
@@ -95,33 +95,35 @@ pub(crate) fn aim(rules: &Rules, frame: &Frame) -> Pair<Px> {
     };
     Pair {
         x: samus.position.x.pixel() - rules.lead(frame.lead, travel),
-        y: samus.position.y.pixel() - frame.room.heights().height(samus.rising),
+        y: samus.position.y.pixel() - frame.room.heights.height(samus.rising),
     }
 }
 
-/// The camera's speed on an axis: how far she moved from where it last saw her, plus the extra
-/// pixel (Spec: FollowingHer).
-pub(crate) fn speed(her: Fixed, seen: Fixed, extra: Fixed) -> Fixed {
-    creep_reads_rightward(her, seen) + extra
-}
-
-/// Spec: CreepReadsRightward. How far she moved from where the camera last saw her, on the whole
-/// P.S value mod 2^32, its way read from the pixel parts alone: the seen value less hers when her
-/// pixel part is before the seen one, hers less the seen one otherwise.
+/// The camera's speed on an axis: how far she moved from where it last saw her, `her` and `seen`
+/// on that axis, on the whole P.S value mod 2^32, plus the extra pixel (Spec: FollowingHer). Its
+/// way is read from the pixel parts alone: the seen value less hers when her pixel part is before
+/// the seen one, hers less the seen one otherwise.
 ///
-/// Reproduces the original's behaviour: a creep left or up inside a pixel reads as a move right or
-/// down of less than a pixel, so the speed's pixel part is 0 and the view settles 2 px, not 3.
-fn creep_reads_rightward(her: Fixed, seen: Fixed) -> Fixed {
-    if before(her.pixel(), seen.pixel()) {
+/// Spec: CreepReadsRightward. Reproduces the original's behaviour: a creep left or up inside a
+/// pixel leaves her pixel part where it was seen, so it isn't before the seen one and the move
+/// reads as hers less the seen one. That is under a pixel below 0, `FFFF.xxxx` mod 2^32, and the
+/// extra pixel carries it round to `0.xxxx`: a speed under a pixel, its pixel part 0, so the view
+/// settles 2 px, not 3.
+pub(crate) fn speed(rules: &Rules, her: Fixed, seen: Fixed) -> Fixed {
+    let moved = if before(her.pixel(), seen.pixel()) {
         seen - her
     } else {
         her - seen
-    }
+    };
+    moved + rules.extra
 }
 
 /// The camera's move towards its aim by `speed`, stopping on the aim when it would go beyond it
-/// (Spec: FollowingHer). None when the aim's pixel part is the camera's: the camera stays as it
-/// is, subpixel part included.
+/// (Spec: FollowingHer).
+///
+/// None on a frame where the aim is the view's own pixel, its pixel part the camera's: the camera
+/// stays as it is, subpixel part included, and, as she moved, it doesn't settle either (R9, R13,
+/// R21, R23).
 pub(crate) fn chase(camera: Fixed, aim: Px, speed: Fixed) -> Option<Move> {
     let going = Going::towards(camera.pixel(), aim)?;
     let moved = going.by(camera, speed);

@@ -1,10 +1,9 @@
 //! The room as the camera reads it (Spec: §1.3): its screens, run on as one strip, and its aim
 //! heights.
 
-use core::iter::repeat;
 use core::num::Wrapping;
 
-use clean_types::Px;
+use clean_types::{Pair, Px};
 
 /// Notation: a screen is 256 px square.
 pub(crate) const SCREEN: Px = Wrapping(256);
@@ -52,100 +51,82 @@ impl Heights {
     }
 }
 
-/// Why a room can't be built from the rows given.
+/// Why a room can't be built from the run given.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RoomError {
-    /// A row below the room holds more screens than the room is across.
-    BelowRowTooWide,
-    /// The room has no screens.
+    /// The run holds fewer screens than the room, its width times its height.
+    MissingScreens,
+    /// The room is no screens across or down.
     NoScreens,
     /// The room is more than 256 screens across or down: past that its positions would not fit
     /// the 16-bit pixel part.
     TooLarge,
-    /// The room's rows don't all hold the same number of screens.
-    UnevenRows,
 }
 
 /// The room as the camera reads it, as its loading supplies it (Spec: §1.3, §5).
-///
-/// Its screens are held as the one strip they run on as (Spec: ScreensRunOn): the room's rows,
-/// top first, each left to right, then the rows the room's loading left below it, each read as a
-/// full row (Spec: BelowTheRoom).
 #[derive(Clone, Debug)]
 pub struct Room {
     /// How many screens the room is across (the spec's w).
     width: usize,
-    /// The near edge of its last column, the furthest right the view goes (Spec: RoomEdges).
-    right_edge: Px,
-    /// The top edge of its last row (Spec: RoomEdges).
-    last_row_edge: Px,
-    /// The screens in the order they run on.
-    strip: Vec<ScreenKind>,
+    /// The near edges of its last column and its last row: across, the furthest right the view
+    /// goes, xr; down, yb less the rows (Spec: RoomEdges).
+    pub(crate) last: Pair<Px>,
+    /// The run of screens: the room's rows, top first, each left to right, then the screens below
+    /// the room continuing it (Spec: ScreensRunOn, BelowTheRoom).
+    run: Vec<ScreenKind>,
     /// Its aim heights.
-    heights: Heights,
+    pub(crate) heights: Heights,
 }
 
 impl Room {
-    /// A room from its rows of screens, top row first, each left to right, the rows its loading
-    /// left below it, and its aim heights.
+    /// A room `width` screens across and `height` rows down, from its `run` of screens: its rows,
+    /// top first, each left to right, then the screens the room's loading left after its last,
+    /// which continue the run below it, a row of `width` screens at a time (Spec: BelowTheRoom).
     ///
     /// # Errors
     ///
-    /// When it has no screens, its rows differ in length, a row below it is longer than it is
-    /// across, or it is more than 256 screens across or down.
+    /// When it is no screens across or down, more than 256 across or down, or the run holds
+    /// fewer screens than the room.
     pub fn new(
-        screens: &[Vec<ScreenKind>],
-        below: &[Vec<ScreenKind>],
+        run: Vec<ScreenKind>,
+        width: usize,
+        height: usize,
         heights: Heights,
     ) -> Result<Self, RoomError> {
-        let width = screens.first().map_or(0, Vec::len);
-        let right_edge = last_edge(width)?;
-        let last_row_edge = last_edge(screens.len())?;
-        if screens.iter().any(|row| row.len() != width) {
-            return Err(RoomError::UnevenRows);
+        let last = Pair {
+            x: last_edge(width)?,
+            y: last_edge(height)?,
+        };
+        if width
+            .checked_mul(height)
+            .is_none_or(|room| run.len() < room)
+        {
+            return Err(RoomError::MissingScreens);
         }
-        if below.iter().any(|row| row.len() > width) {
-            return Err(RoomError::BelowRowTooWide);
-        }
-        let strip = screens
-            .iter()
-            .flatten()
-            .copied()
-            .chain(below_the_room(below, width))
-            .collect();
         Ok(Self {
             width,
-            right_edge,
-            last_row_edge,
-            strip,
+            last,
+            run,
             heights,
         })
     }
 
-    /// The room's aim heights.
-    pub(crate) const fn heights(&self) -> Heights {
-        self.heights
-    }
-
-    /// The near edge of the room's last column, (w − 1) × 256 (Spec: RoomEdges, xr).
-    pub(crate) const fn right_edge(&self) -> Px {
-        self.right_edge
-    }
-
-    /// The top edge of the room's last row, (h − 1) × 256 (Spec: RoomEdges, yb before
-    /// ShortScreens' rows).
-    pub(crate) const fn last_row_edge(&self) -> Px {
-        self.last_row_edge
-    }
-
-    /// The kind of the screen in the column holding position `x` and the row holding position
-    /// `y`, each read as 0 to FFFF, 256 px a screen (Spec: §1.3, Which screens it looks at).
+    /// The kind of the screen in the column holding `at.x` and the row holding `at.y`, each read
+    /// as 0 to FFFF, 256 px a screen (Spec: §1.3, Which screens it looks at).
     ///
-    /// A screen past the strip, below the rows the room's loading left, is closed (Spec:
-    /// BelowTheRoom; Open questions, 1).
-    pub(crate) fn screen(&self, x: Px, y: Px) -> ScreenKind {
-        screens_run_on(screen_number(x), screen_number(y), self.width)
-            .and_then(|place| self.strip.get(place).copied())
+    /// Spec: ScreensRunOn. Reproduces the original's behaviour: the screens run on as one strip,
+    /// the screen in a column and a row being the run's row × w + column, so a screen k columns
+    /// after a row's last is the kth of the row below, and from the room's last row the first
+    /// below the room.
+    ///
+    /// Spec: BelowTheRoom. Reproduces the original's behaviour: below the room's last row the
+    /// run goes on into the screens the room's loading left after its last; a screen past the
+    /// run's end is closed (Spec: Open questions, 1).
+    pub(crate) fn screen(&self, at: Pair<Px>) -> ScreenKind {
+        screen_number(at.y)
+            .checked_mul(self.width)
+            .and_then(|row| row.checked_add(screen_number(at.x)))
+            .and_then(|place| self.run.get(place).copied())
             .unwrap_or(ScreenKind::Closed)
     }
 }
@@ -163,28 +144,4 @@ fn last_edge(count: usize) -> Result<Px, RoomError> {
 fn screen_number(p: Px) -> usize {
     let [number, _] = p.0.to_be_bytes();
     usize::from(number)
-}
-
-/// Spec: ScreensRunOn. The place in the strip of the screen `column` across and `row` down,
-/// row × w + column; none past what the platform can count.
-///
-/// Reproduces the original's behaviour: the screens run on as one strip, so a screen k columns
-/// after a row's last is the kth screen of the row below, and after the room's last row the strip
-/// runs on into the rows below the room.
-fn screens_run_on(column: usize, row: usize, width: usize) -> Option<usize> {
-    row.checked_mul(width)?.checked_add(column)
-}
-
-/// Spec: BelowTheRoom. The rows the room's loading left below its last row, top first, each read
-/// as a full row of `width` screens, a screen the row doesn't give closed.
-///
-/// Reproduces the original's behaviour: below the room's last row, the view reads the screens the
-/// room's loading left there, from earlier rooms.
-fn below_the_room(below: &[Vec<ScreenKind>], width: usize) -> impl Iterator<Item = ScreenKind> {
-    below.iter().flat_map(move |row| {
-        row.iter()
-            .copied()
-            .chain(repeat(ScreenKind::Closed))
-            .take(width)
-    })
 }
