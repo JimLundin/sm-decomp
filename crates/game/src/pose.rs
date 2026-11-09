@@ -57,6 +57,8 @@ pub struct Content {
     pub face_block_glow: GlowColours,
     /// The rooms' PLM populations, with their scroll PLMs' change lists.
     pub room_plms: RoomPlms,
+    /// The blocks' reactions and what each reacting cell's mark is.
+    pub blocks: crate::blocks_world::BlockContent,
     /// The area maps the mini-map draws.
     pub area_maps: crate::hud_world::AreaMaps,
     /// The tilesets' tile tables, which draw the level's blocks.

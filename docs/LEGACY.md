@@ -85,7 +85,9 @@ original's bytes as data.
   cell to the room's loading, which is to refuse the room. No room of the game has one (the
   importer's scan of the 261 rooms the doors reach, 322 states, 265 scroll cells, and of the two
   rooms no door reaches, the unused room `$8F:B3E1` and the debug room `$8F:E82C`); a custom room
-  could.
+  could. The engine has no room loading to refuse it yet, so its Session stops with
+  `SessionFault::Blocks` when a touch meets such a cell (`game::blocks_world`), as it stopped at
+  the hang before.
 - **Reacting cells whose tables end before their mark** (the blocks domain,
   `docs/behaviours/blocks.md` §1's marks; the decode notes' importer's scan): each asker of a
   reacting cell (her touch, her inside points, a shot, a blast, the grapple) reads the cell's
@@ -111,7 +113,8 @@ original's bytes as data.
   `$84:861E`): a show draws by block index, so a pattern cell past the room's right or left edge is
   drawn on the next or the previous row, and one past the top or the bottom is written outside the
   room's cells. The spec states patterns in cells, and the room's loading refuses a room whose
-  reacting cells' patterns reach past its edge; no room of the game has one.
+  reacting cells' patterns reach past its edge; no room of the game has one. Until the engine's
+  room loading refuses it, the engine draws no such cell (`game::blocks_world`).
 - **The grapple on a bomb, a super missile or a power bomb block** (the blocks domain,
   `docs/behaviours/blocks.md` `BombBlocks`, `SuperMissileBlocks`, `PowerBombBlocks`; `$84:CEDA`,
   `$84:CF2E`, `$84:CF67`): these blocks decide by the weapon of the projectile last handled
@@ -132,6 +135,17 @@ original's bytes as data.
   (chain-0059-A293 107 → 108 and 174 → 175, samus-screw-attack 174 → 175 and 606 → 607: x, the
   vertical speed, the vertical direction and `rising`). The entry goes when the model can build
   its memory from the count and the frame before.
+
+- **The blocks' askers the engine doesn't have yet** (the blocks domain, `docs/behaviours/blocks.md`
+  §1.3; `game::blocks_world`): her moves meet each reacting cell by its body and the touches reach
+  the blocks after them, so a touch's answer (`AnswersToHerMotion`, `FullPlacesLetHerThrough`)
+  changes nothing she does; the engine keeps no speed booster's charge, so to the blocks she never
+  dashes, shinesparks or screw attacks; her beam's hits reach only shootable blocks, and the bombs,
+  power bombs, missiles and the grapple hit none; the run is never paused; and the sounds the
+  scripts ask for go nowhere. Slice 0's rooms meet none of it: their reacting cells are scroll
+  cells, which are air to her, the shot blocks her beam breaks, and the item. Each goes when its
+  asker joins: her motion asking the blocks (samus-motion), her weapons (W1), the grapple (S6),
+  the room's loading and the doors (R1, R2), the sound queue (U1).
 
 ## Tolerated values kept as named variants
 

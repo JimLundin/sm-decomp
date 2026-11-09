@@ -514,13 +514,26 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     let mut state = State::default();
     state.room.width = crate::state::room::BlockColumns(16);
     state.room.blocks = vec![crate::state::room::Block::default(); 64];
-    plm::spawn_population(&mut state.room, &population);
+    let content = crate::blocks_world::fixture::content();
+    plm::spawn_population(&mut state.room, &content, &population).unwrap();
     let block = BlockIndex(2 * 16 + 4);
     let item = |state: &State| state.room.plms.slots[39].occupancy;
     // The item's first run: its GFX load and frame 0's draw.
-    plm::process_unseen(&mut state.room, &state.collected_items, &population);
+    plm::process_unseen(
+        &mut state.room,
+        &state.collected_items,
+        &content,
+        &population,
+    )
+    .unwrap();
     plm::touch_item_block(&mut state.room, block).unwrap();
-    let callout = plm::process_unseen(&mut state.room, &state.collected_items, &population);
+    let callout = plm::process_unseen(
+        &mut state.room,
+        &state.collected_items,
+        &content,
+        &population,
+    )
+    .unwrap();
     let slot = SlotIndex(39, PhantomData);
     assert_eq!(callout, Some(slot));
     assert_eq!(
@@ -533,9 +546,11 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     let (at, next) = plm::resume(
         &mut state,
         &data::tileset::TileTables::default(),
+        &content,
         &population,
         slot,
-    );
+    )
+    .unwrap();
     assert_eq!(at, slot);
     assert_eq!(next, Next::Call(Frame::MessageBox(MessageBoxAt::Start)));
     assert_eq!(state.message, Message::MORPH_BALL);
@@ -559,9 +574,11 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     let (_, next) = plm::resume(
         &mut state,
         &data::tileset::TileTables::default(),
+        &content,
         &population,
         slot,
-    );
+    )
+    .unwrap();
     assert_eq!(next, Next::Return);
     let emptied = state.room.blocks[usize::from(block.0)];
     assert_eq!(
@@ -574,8 +591,13 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
 
     // The next pass deletes the item.
     assert_eq!(
-        plm::process_unseen(&mut state.room, &state.collected_items, &population),
-        None
+        plm::process_unseen(
+            &mut state.room,
+            &state.collected_items,
+            &content,
+            &population
+        ),
+        Ok(None)
     );
     assert_eq!(item(&state), Occupancy::Free);
 }

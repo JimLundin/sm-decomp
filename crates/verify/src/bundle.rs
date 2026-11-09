@@ -145,6 +145,10 @@ pub enum ContentError {
     TileTables(TilesetError),
     /// The message boxes' tables are outside the image or name an unknown routine.
     MessageBoxes(data::message::MessageError),
+    /// The blocks' reactions or their tables don't import.
+    Blocks(data::blocks::Refused),
+    /// A reaction waits longer than the blocks model's frames.
+    Reaction(data::blocks::ReactionId),
 }
 
 impl fmt::Display for ContentError {
@@ -164,6 +168,8 @@ impl fmt::Display for ContentError {
             Self::AreaMaps(error) => write!(f, "the area maps: {error:?}"),
             Self::TileTables(error) => write!(f, "the tile tables: {error:?}"),
             Self::MessageBoxes(error) => write!(f, "the message boxes: {error:?}"),
+            Self::Blocks(error) => write!(f, "the blocks' reactions: {error:?}"),
+            Self::Reaction(id) => write!(f, "the blocks' reaction {id:?}: a wait too long"),
         }
     }
 }
@@ -180,6 +186,9 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let populations = crate::lockstep::slice_zero_plms(&image);
     let rom = Rom::new(image).map_err(ContentError::Rom)?;
     let room_plms = RoomPlms(populations.map_err(ContentError::Rooms)?);
+    let reactions = data::blocks::Reactions::load(rom.lorom()).map_err(ContentError::Blocks)?;
+    let blocks =
+        game::blocks_world::BlockContent::import(&reactions).map_err(ContentError::Reaction)?;
     let enemy_programs =
         EnemyPrograms::slice_zero(rom.lorom()).map_err(ContentError::EnemyPrograms)?;
     let eye_lists = EyeLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
@@ -216,6 +225,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         room_plms,
+        blocks,
         area_maps: game::hud_world::AreaMaps::import(
             &data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
         ),
@@ -239,5 +249,6 @@ pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, data::room::Roo
         .with_programs(content.enemy_programs.clone())
         .with_samus_tiles(content.samus_tiles.clone())
         .with_plms(slice_zero_plms(image)?)
-        .with_states(slice_zero_states(image)?))
+        .with_states(slice_zero_states(image)?)
+        .with_reactions(content.blocks.imported().clone()))
 }

@@ -206,7 +206,14 @@ fn step(
         // The PLM pass, called out of by an item's pickup.
         Frame::Plms { slot } => {
             let population = content.room_plms.of(state.room.room);
-            let (slot, next) = crate::plm::resume(state, &content.tile_tables, population, slot);
+            let (slot, next) = crate::plm::resume(
+                state,
+                &content.tile_tables,
+                &content.blocks,
+                population,
+                slot,
+            )
+            .map_err(SessionFault::Blocks)?;
             (Frame::Plms { slot }, next)
         }
     })
@@ -443,17 +450,26 @@ fn samus_current_state(
     // While the elevator carries her, the locked current state handler (`$90:E713`, from
     // `$91:E44D`) neither sets her radius nor runs the pose input handler, which would
     // return at once anyway (`$91:805C`).
+    let reads = blocks(state, content);
     if pose::carried(&state.samus, state.elevator) {
-        crate::projectile::handle(state).map_err(SessionFault::Projectile)?;
+        crate::projectile::handle(state, reads).map_err(SessionFault::Projectile)?;
         return Ok(pose::PoseRequests::default());
     }
     pose::set_radius(&mut state.samus, content);
     let requests = pose::input(&state.samus, &state.controller, content);
     // open: the suit palette index and the Y acceleration (`$90:E6B6`, `$90:E6B9`) run
     // between the input handler and the inside handling.
-    inside::handle(&mut state.room, &state.samus).map_err(SessionFault::Plm)?;
-    crate::projectile::current_state(state).map_err(SessionFault::Projectile)?;
+    inside::handle(&mut state.room, &state.samus, reads).map_err(SessionFault::Blocks)?;
+    crate::projectile::current_state(state, reads).map_err(SessionFault::Projectile)?;
     Ok(requests)
+}
+
+/// What the blocks read in `state`'s room: the content's blocks and the room's population.
+fn blocks<'a>(state: &State, content: &'a Content) -> crate::blocks_world::Reads<'a> {
+    crate::blocks_world::Reads {
+        content: &content.blocks,
+        population: content.room_plms.of(state.room.room),
+    }
 }
 
 /// A gameplay phase's work.
@@ -474,6 +490,7 @@ fn gameplay_phase(
         GameplayPhase::SamusNewState => {
             let completed = state.clock.counters.completed.0;
             let surroundings = surroundings(&state.room, content, &pass.active);
+            let reads = blocks(state, content);
             let mut touches = Touches::default();
             let inputs = samus_world::step::Inputs {
                 reads: samus_world::step::Reads {
@@ -493,7 +510,12 @@ fn gameplay_phase(
             let next = samus_world::step::next(&state.samus, stepped, pass.requests);
             change_pose(&mut state.samus, &mut state.atmospherics, next, content);
             // The touch PLMs the moves spawned, which change nothing the moves read.
-            touches.apply(&mut state.room).map_err(SessionFault::Plm)?;
+            touches
+                .apply(&mut state.room, reads)
+                .map_err(|fault| match fault {
+                    crate::collision::Fault::Item(fault) => SessionFault::Plm(fault),
+                    crate::collision::Fault::Blocks(fault) => SessionFault::Blocks(fault),
+                })?;
             crate::samus_palette::handle(state, &content.visor_colours);
         }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
@@ -512,8 +534,10 @@ fn gameplay_phase(
                 &mut drawing,
                 &mut state.room,
                 &state.collected_items,
+                &content.blocks,
                 population,
-            );
+            )
+            .map_err(SessionFault::Blocks)?;
         }
         GameplayPhase::Scrolling => {
             camera_world::scroll(&mut state.room, &mut state.samus).map_err(SessionFault::Room)?;

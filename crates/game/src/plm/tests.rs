@@ -2,9 +2,13 @@ use data::level::ScrollArea;
 use data::plm::{ItemPlm, ScrollChange, ScrollChangesId};
 use data::rom::RomAddress;
 
+use data::plm::{Extension, PlmEntry};
+
 use super::*;
+use crate::blocks_world::fixture::content;
 use crate::state::room::{
-    BlockColumns, Crumble, ItemGfx, ItemGfxSlot, ItemStep, PlmChoice, Tile, TileNumber,
+    BlockColumns, ItemGfx, ItemGfxSlot, ItemStep, PlmChoice, ScrollPlm, ScrollStep, Tile,
+    TileNumber,
 };
 use crate::state::video::Video;
 use crate::state::{COLLECTED_ITEM_WORDS, CollectedItems};
@@ -56,37 +60,17 @@ const TRIGGER: BlockIndex = BlockIndex(2 * 32 + 3);
 
 fn loaded() -> RoomScoped {
     let mut room = room();
-    spawn_population(&mut room, &population());
+    spawn_population(&mut room, &content(), &population()).unwrap();
     room
 }
 
-fn scroll(room: &RoomScoped, slot: usize) -> Option<ScrollPlm> {
-    if let Occupancy::Live(PlmBody::Scroll(scroll)) = room.plms.slots[slot].occupancy {
-        Some(scroll)
-    } else {
-        None
-    }
-}
-
-#[test]
-fn setup_writes_each_plms_block_keeping_its_tile() {
-    let room = loaded();
-    let kind = |index: u16| room.blocks[usize::from(index)].kind;
-    assert_eq!(kind(TRIGGER.0), BlockKind::SpecialAir(Bts(0x46)));
-    assert_eq!(kind(32 + 3), BlockKind::VerticalExtension(Offset(1)));
-    assert_eq!(kind(2 * 32 + 4), BlockKind::HorizontalExtension(Offset(-1)));
-    assert_eq!(kind(5 * 32 + 20), BlockKind::Air(Bts(0x45)));
-    assert!(
-        room.blocks
-            .iter()
-            .all(|block| block.tile.number == TileNumber(0x55))
-    );
-    let written = room
-        .blocks
-        .iter()
-        .filter(|block| block.kind != BlockKind::Solid(Bts(0)))
-        .count();
-    assert_eq!(written, 4);
+/// The pass with the invented blocks' content.
+fn process_unseen(
+    room: &mut RoomScoped,
+    collected: &CollectedItems,
+    population: &PlmPopulation,
+) -> Option<SlotIndex<Plm>> {
+    super::process_unseen(room, collected, &content(), population).unwrap()
 }
 
 #[test]
@@ -95,12 +79,12 @@ fn spawns_take_the_highest_free_slot_and_extensions_free_theirs() {
     let slots = &room.plms.slots;
     // The scroll PLM takes 39; each extension takes 38 and frees it; the item takes 38.
     assert_eq!(
-        scroll(&room, 39),
-        Some(ScrollPlm {
+        slots[39].occupancy,
+        Occupancy::Live(PlmBody::Scroll(ScrollPlm {
             changes: ScrollChangesId(0),
             triggered: false,
             step: ScrollStep::Sleep,
-        })
+        }))
     );
     assert_eq!(
         slots[38].occupancy,
@@ -122,81 +106,6 @@ fn spawns_take_the_highest_free_slot_and_extensions_free_theirs() {
 }
 
 #[test]
-fn a_sleeping_scroll_plm_changes_nothing() {
-    let mut room = loaded();
-    let before = room.clone();
-    for _ in 0..3 {
-        process_unseen(&mut room, &CollectedItems::default(), &population());
-    }
-    assert_eq!(room.scroll_areas, before.scroll_areas);
-    // Only the item's draw writes a block.
-    let written: Vec<_> = (0_u16..)
-        .zip(room.blocks.iter().zip(&before.blocks))
-        .filter_map(|(index, (after, before))| (after != before).then_some(index))
-        .collect();
-    assert_eq!(written, [5 * 32 + 20]);
-    // The sleep leaves the timer at 0, and it wraps.
-    assert_eq!(room.plms.slots[39].common.cursor.delay, Frames(0xfffe));
-}
-
-#[test]
-fn touching_the_trigger_changes_the_scroll_areas_on_the_next_pass() {
-    let mut room = loaded();
-    process_unseen(&mut room, &CollectedItems::default(), &population());
-    touch_scroll_block(&mut room, TRIGGER).unwrap();
-    let touch = &room.plms.slots[37];
-    assert_eq!(touch.occupancy, Occupancy::Live(PlmBody::ScrollTouch));
-    assert_eq!(touch.common.block, BlockIndex(0));
-    let triggered = scroll(&room, 39).unwrap();
-    assert!(triggered.triggered);
-    assert_eq!(triggered.step, ScrollStep::Update);
-
-    // A second touch before the update spawns another touch PLM but changes nothing.
-    touch_scroll_block(&mut room, TRIGGER).unwrap();
-    assert_eq!(scroll(&room, 39), Some(triggered));
-
-    process_unseen(&mut room, &CollectedItems::default(), &population());
-    assert_eq!(room.scroll_areas, [ScrollArea::Red, ScrollArea::Green]);
-    assert_eq!(
-        scroll(&room, 39),
-        Some(ScrollPlm {
-            triggered: false,
-            step: ScrollStep::Sleep,
-            ..triggered
-        })
-    );
-    assert_eq!(
-        room.blocks[usize::from(TRIGGER.0)].kind,
-        BlockKind::SpecialAir(Bts(0x46))
-    );
-    // The touch PLMs deleted themselves.
-    assert_eq!(room.plms.slots[37].occupancy, Occupancy::Free);
-    assert_eq!(room.plms.slots[36].occupancy, Occupancy::Free);
-}
-
-#[test]
-fn a_touch_with_no_plm_on_its_block_is_the_originals_hang() {
-    let mut room = loaded();
-    assert_eq!(
-        touch_scroll_block(&mut room, BlockIndex(7)),
-        Err(TouchFault::NoPlmOnBlock(BlockIndex(7)))
-    );
-}
-
-#[test]
-fn a_touch_with_no_free_slot_spawns_nothing_and_triggers_nothing() {
-    let mut room = loaded();
-    for slot in &mut room.plms.slots {
-        if slot.occupancy == Occupancy::Free {
-            slot.occupancy = Occupancy::Live(PlmBody::ScrollTouch);
-        }
-    }
-    let before = room.clone();
-    touch_scroll_block(&mut room, TRIGGER).unwrap();
-    assert_eq!(room, before);
-}
-
-#[test]
 fn the_pass_deletes_an_item_collision_plm() {
     let mut room = loaded();
     let slot = &mut room.plms.slots[30];
@@ -204,77 +113,6 @@ fn the_pass_deletes_an_item_collision_plm() {
     slot.common.cursor.delay = Frames(1);
     process_unseen(&mut room, &CollectedItems::default(), &population());
     assert_eq!(room.plms.slots[30].occupancy, Occupancy::Free);
-}
-
-/// A shootable block with BTS 4 at (10, 4) in [`loaded`].
-const SHOT: BlockIndex = BlockIndex(4 * 32 + 10);
-
-fn with_shot_block() -> RoomScoped {
-    let mut room = loaded();
-    room.blocks[usize::from(SHOT.0)].kind = BlockKind::Shootable(PlmChoice::Common(4));
-    room
-}
-
-#[test]
-fn shooting_a_bts_4_block_spawns_the_shot_block_and_makes_it_solid() {
-    let mut room = with_shot_block();
-    crumble::shoot_block(&mut room, SHOT).unwrap();
-    // 39 and 38 hold the scroll PLM and the item.
-    let slot = &room.plms.slots[37];
-    assert_eq!(
-        slot.occupancy,
-        Occupancy::Live(PlmBody::ShotBlock {
-            crumble: Crumble::Spawned
-        })
-    );
-    assert_eq!(slot.common.block, SHOT);
-    assert_eq!(slot.common.cursor.delay, Frames(1));
-    let block = room.blocks[usize::from(SHOT.0)];
-    assert_eq!(block.kind, BlockKind::Solid(Bts(4)));
-    assert_eq!(block.tile.number, TileNumber(0x55));
-}
-
-#[test]
-fn shooting_another_block_is_unmodelled() {
-    let mut room = with_shot_block();
-    let before = room.clone();
-    assert_eq!(
-        crumble::shoot_block(&mut room, BlockIndex(0)),
-        Err(crumble::ShotFault::Unmodelled(BlockKind::Solid(Bts(0))))
-    );
-    assert_eq!(room, before);
-}
-
-/// The oracle's crumble from the shot (item-morph-ball frames 1,236 to 1,249): its first run
-/// in the shot's frame, three crumble tiles for 4 frames each, the empty tile for 1, then
-/// the delete, the block left air with its BTS.
-#[test]
-fn the_shot_block_crumbles_through_its_list_and_deletes_itself() {
-    let mut room = with_shot_block();
-    crumble::shoot_block(&mut room, SHOT).unwrap();
-    let mut passes = Vec::new();
-    for _ in 0..14 {
-        process_unseen(&mut room, &CollectedItems::default(), &population());
-        let slot = &room.plms.slots[37];
-        let crumble = if let Occupancy::Live(PlmBody::ShotBlock { crumble }) = slot.occupancy {
-            Some(crumble)
-        } else {
-            None
-        };
-        let block = room.blocks[usize::from(SHOT.0)];
-        passes.push((crumble, slot.common.cursor.delay.0, block.tile.number.0));
-    }
-    let shown = |crumble, tile| (1..=4).rev().map(move |delay| (Some(crumble), delay, tile));
-    let expected: Vec<_> = shown(Crumble::First, 0x53)
-        .chain(shown(Crumble::Second, 0x54))
-        .chain(shown(Crumble::Third, 0x55))
-        .chain([(Some(Crumble::Cleared), 1, 0xff), (None, 0, 0xff)])
-        .collect();
-    assert_eq!(passes, expected);
-    assert_eq!(
-        room.blocks[usize::from(SHOT.0)].kind,
-        BlockKind::Air(Bts(4))
-    );
 }
 
 #[test]
@@ -339,7 +177,7 @@ fn a_rooms_second_item_loads_into_the_second_slot() {
         .entries
         .push(entry(PlmKind::Item(ItemPlm::MorphBall, 0x1b), 22, 5));
     let mut room = room();
-    spawn_population(&mut room, &population);
+    spawn_population(&mut room, &content(), &population).unwrap();
     process_unseen(&mut room, &CollectedItems::default(), &population);
     assert_eq!(room.item_gfx.next, ItemGfxSlot(2));
     assert_eq!(
@@ -453,7 +291,7 @@ fn a_rooms_second_item_draws_the_blocks_of_its_slot() {
         .entries
         .push(entry(PlmKind::Item(ItemPlm::MorphBall, 0x1b), 22, 5));
     let mut room = room();
-    spawn_population(&mut room, &population);
+    spawn_population(&mut room, &content(), &population).unwrap();
     let second = BlockIndex(5 * 32 + 22);
     let tile = |room: &RoomScoped| room.blocks[usize::from(second.0)].tile.number.0;
     let mut tiles = Vec::new();
@@ -491,8 +329,10 @@ fn an_on_screen_items_draws_queue_its_blocks_tiles() {
             &mut Drawing::new(video, &tables),
             room,
             &CollectedItems::default(),
+            &content(),
             &population(),
-        );
+        )
+        .unwrap();
     };
     pass(&mut room, &mut video);
     let words = |video: &Video| -> Vec<Vec<u16>> {

@@ -586,7 +586,7 @@ pub const FIELDS: &[Field] = &[
         source::PLM_ROOM_ARGUMENTS,
     ),
     plm(
-        "room.plms.slots.occupancy.crumble",
+        "room.plms.slots.occupancy.reaction",
         source::PLM_INSTR_LIST_PTRS,
     ),
     wram("room.item_gfx.next", source::PLM_ITEM_GFX_INDEX),

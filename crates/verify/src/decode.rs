@@ -84,6 +84,8 @@ pub struct RoomMap {
     pub plms: Vec<(RoomId, PlmPopulation)>,
     /// What each known room state loads that RAM doesn't keep, by its header pointer.
     pub states: Vec<(StateHeader, StateLevel)>,
+    /// The blocks' reactions, which name the PLMs their places hold.
+    pub reactions: data::blocks::Reactions,
 }
 
 /// A pointer to a room state header in bank $8F, as `ROOMDEFROOMSTATE_PTR` holds it.
@@ -120,6 +122,12 @@ impl RoomMap {
     #[must_use]
     pub fn with_plms(self, plms: Vec<(RoomId, PlmPopulation)>) -> Self {
         Self { plms, ..self }
+    }
+
+    /// The map with `reactions` as the blocks' reactions.
+    #[must_use]
+    pub fn with_reactions(self, reactions: data::blocks::Reactions) -> Self {
+        Self { reactions, ..self }
     }
 
     /// The map with `states` as its room states' levels.
@@ -1274,7 +1282,9 @@ impl Rules<'_> {
                 },
                 ..self.scrolling.read(wram)?
             },
-            plms: self.plms.read(wram, rooms.population(room))?,
+            plms: self
+                .plms
+                .read(wram, rooms.population(room), &rooms.reactions)?,
             item_gfx: self.item_gfx.read(wram)?,
             enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
             drawing: EnemyDrawing {

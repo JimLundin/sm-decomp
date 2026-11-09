@@ -14,10 +14,10 @@ use data::room::{Area, MapPosition};
 use game::enemy::instructions::label;
 use game::model::num::Fixed as Exact;
 use game::state::room::{
-    Block, BlockIndex, Crumble, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus,
-    Enemy, EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemFrame,
-    ItemStep, LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm,
-    ScrollStep, SpritePalette, TilesIndex,
+    Block, BlockIndex, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy,
+    EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemFrame, ItemStep,
+    LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep,
+    SpritePalette, TilesIndex,
 };
 use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
@@ -69,6 +69,7 @@ fn rooms() -> RoomMap {
         samus_tiles: samus_tiles(),
         plms: vec![(MORPH_BALL_ROOM_ID, population())],
         states: vec![(MORPH_BALL_STATE, MORPH_BALL_LEVEL)],
+        reactions: data::blocks::Reactions::default(),
     }
 }
 
@@ -1181,9 +1182,9 @@ const PLM_TIMER: usize = 0xDE1C;
 const PLM_ITEM_GFX: usize = 0xDF0C;
 
 /// The synthetic PLM slots: a sleeping scroll PLM in slot 39, a triggered one in 38, the
-/// Morph Ball in 37, a scroll block touch PLM in 36, an item collision detection PLM in 35 and
-/// a 1x1 shot block past its second draw in 34; every slot's block and timer distinct, as a
-/// free slot keeps its last occupant's.
+/// Morph Ball in 37, a scroll block touch PLM in 36 and an item collision detection PLM in 35;
+/// every slot's block and timer distinct, as a free slot keeps its last occupant's. The blocks'
+/// reactions decode through the ROM's lists (`the_cached_plm_slots_are_the_loaded_rooms_population`).
 fn put_plms(wram: &mut [u8]) {
     for slot in 0..PLM_SLOTS {
         let distinct = u16::try_from(slot).unwrap();
@@ -1202,7 +1203,6 @@ fn put_plms(wram: &mut [u8]) {
         (37, 0xEF23, 0x001A, 0, 0xE3EF),
         (36, 0xB6FF, 0, 0, 0xAAE3),
         (35, 0xEED3, 0, 0, 0xAAE3),
-        (34, 0xD074, 0, 0, 0xCBC6),
     ] {
         put(wram, plm_word(PLM_ID, slot), id);
         put(wram, plm_word(PLM_ARGUMENT, slot), argument);
@@ -1231,9 +1231,6 @@ fn decodes_the_plms(state: &State) -> bool {
         }),
         36 => Occupancy::Live(PlmBody::ScrollTouch),
         35 => Occupancy::Live(PlmBody::ItemCollision),
-        34 => Occupancy::Live(PlmBody::ShotBlock {
-            crumble: Crumble::Third,
-        }),
         _ => Occupancy::Free,
     };
     state
@@ -1301,9 +1298,8 @@ fn a_plm_word_outside_the_rooms_plms_is_unrepresentable() {
         (PLM_ITEM_GFX, 37, 0x0003, "PLM_ITEM_GFX_SLOT"),
         (PLM_ITEM_GFX, 37, 0x0008, "PLM_ITEM_GFX_SLOT"),
         (PLM_INSTRUCTION, 39, 0xAF86, "PLM_INSTR_LIST_PTRS"),
-        // An item collision detection PLM past its delete, a shot block inside a draw.
+        // An item collision detection PLM past its delete.
         (PLM_INSTRUCTION, 35, 0x86BC, "PLM_INSTR_LIST_PTRS"),
-        (PLM_INSTRUCTION, 34, 0xCBBA, "PLM_INSTR_LIST_PTRS"),
     ] {
         let mut record = record();
         put(&mut record.wram, plm_word(array, slot), value);
@@ -2010,7 +2006,8 @@ fn cached_rows() -> Option<CachedRows> {
         .with_programs(content.enemy_programs)
         .with_samus_tiles(content.samus_tiles)
         .with_plms(crate::lockstep::slice_zero_plms(&image).unwrap())
-        .with_states(crate::lockstep::slice_zero_states(&image).unwrap());
+        .with_states(crate::lockstep::slice_zero_states(&image).unwrap())
+        .with_reactions(content.blocks.imported().clone());
     let rom = data::rom::Rom::new(image).unwrap();
     let (loaded_rooms, _) = Rooms::load(rom.lorom(), &SLICE_ZERO_ROOMS).unwrap();
     let id = loaded_rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
@@ -2020,7 +2017,8 @@ fn cached_rows() -> Option<CachedRows> {
             game::progress_world::room_state(morph_ball_room, &Progress::default(), None).unwrap(),
         )
         .unwrap();
-    let loaded = game::state::room::RoomScoped::load(id, morph_ball_room, state);
+    let loaded =
+        game::state::room::RoomScoped::load(id, morph_ball_room, state, &content.blocks).unwrap();
     let lock_path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
     let lock = crate::lock::Lock::parse(&std::fs::read_to_string(lock_path).unwrap()).unwrap();
@@ -2132,7 +2130,7 @@ fn live_plms(
 /// five scroll PLMs asleep and the item, once the extensions have freed theirs, until the
 /// item is collected; beside them the item collision detection PLM (`$84:EED3`) Samus's touch
 /// of the Morph Ball spawns, left live while the pickup's message box holds the PLM pass
-/// (C13), and the 1x1 shot block (`$84:D074`) Samus shoots, through its crumble.
+/// (C13), and the 1x1 shot block (`$84:D074`) Samus shoots, through its script.
 #[test]
 fn the_cached_plm_slots_are_the_loaded_rooms_population() {
     let Some(rows) = cached_rows() else {
@@ -2180,7 +2178,7 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
             touches.push(frame.as_str());
         }
         if let Some(at) = live.iter().position(|(slot, block, body)| {
-            (*slot, *block) == (34, BlockIndex(5708)) && matches!(body, PlmBody::ShotBlock { .. })
+            (*slot, *block) == (34, BlockIndex(5708)) && matches!(body, PlmBody::Reaction(_))
         }) {
             live.remove(at);
             crumbles.push(frame.as_str());

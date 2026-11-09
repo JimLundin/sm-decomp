@@ -3,8 +3,10 @@ use data::plm::{Extension, PlmEntry, PlmKind, PlmPopulation, ScrollChange, Scrol
 use data::rom::RomAddress;
 
 use super::*;
-use crate::plm::{process_unseen as process, spawn_population};
+use crate::blocks_world::fixture::content;
+use crate::plm::spawn_population;
 use crate::state::CollectedItems;
+use crate::state::room::Bts;
 use crate::state::room::{
     Block, BlockColumns, BlockRows, PlmBody, ScrollPlm, ScrollStep, Tile, TileNumber,
 };
@@ -55,8 +57,27 @@ fn room() -> RoomScoped {
         scroll_areas: vec![ScrollArea::Red; 2],
         ..RoomScoped::default()
     };
-    spawn_population(&mut room, &population());
+    spawn_population(&mut room, &content(), &population()).unwrap();
     room
+}
+
+/// Her inside handling, with the invented blocks' content.
+fn handle(room: &mut RoomScoped, samus: &Samus) -> Result<(), BlocksFault> {
+    let population = population();
+    let content = content();
+    super::handle(
+        room,
+        samus,
+        Reads {
+            content: &content,
+            population: &population,
+        },
+    )
+}
+
+/// The PLM pass, with the invented blocks' content.
+fn process(room: &mut RoomScoped, collected: &CollectedItems, population: &PlmPopulation) {
+    crate::plm::process_unseen(room, collected, &content(), population).unwrap();
 }
 
 /// Samus standing at `x`, `y` with a Y radius of 15h.
@@ -146,6 +167,7 @@ fn a_gameplay_pass_inside_the_trigger_changes_the_scroll_area() {
     let content = Content {
         poses: Poses::decode(&[8, 0, 0xff, 2, 0, 0, 0x15, 0]).unwrap(),
         room_plms: crate::plm::RoomPlms(vec![(data::id::RoomId(0), population())]),
+        blocks: content(),
         ..Content::default()
     };
     let state = State {

@@ -87,9 +87,29 @@ fn each_kind_meets_her_as_its_block_kind_says() {
     assert!(matches!(world.block(at(3, 3)), Block::Air));
     // Past the level: air.
     assert!(matches!(world.block(at(0, 9)), Block::Air));
-    assert_eq!(world.reaction(at(1, 0)), Some(Touch::Scroll(BlockIndex(1))));
-    assert_eq!(world.reaction(at(2, 0)), Some(Touch::Item(BlockIndex(2))));
-    assert_eq!(world.reaction(at(3, 0)), None);
+    let down = |cell| clean_types::Touch {
+        cell,
+        way: Way::Move(Heading::Down),
+    };
+    assert_eq!(
+        world.reaction(down(at(1, 0))),
+        Some(Touch::Blocks {
+            cell: at(1, 0),
+            way: Way::Move(Heading::Down),
+        })
+    );
+    assert_eq!(
+        world.reaction(down(at(2, 0))),
+        Some(Touch::Item(BlockIndex(2)))
+    );
+    assert_eq!(
+        world.reaction(down(at(3, 0))),
+        Some(Touch::Blocks {
+            cell: at(3, 0),
+            way: Way::Move(Heading::Down),
+        })
+    );
+    assert_eq!(world.reaction(down(at(0, 0))), None);
 }
 
 #[test]
@@ -181,6 +201,12 @@ fn the_cells_her_moves_reached_become_the_touches_in_order() {
     ]);
     assert_eq!(
         touches.touched(),
-        [Touch::Item(BlockIndex(2)), Touch::Scroll(BlockIndex(1))]
+        [
+            Touch::Item(BlockIndex(2)),
+            Touch::Blocks {
+                cell: at(1, 0),
+                way: Way::Look,
+            },
+        ]
     );
 }

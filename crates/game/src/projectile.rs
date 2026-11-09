@@ -4,9 +4,10 @@
 //! checks the blocks it reaches (bank $94 log, `$94:A23B`), then its instruction list (bank
 //! $93 log, `$93:81E9`).
 
+use clean_types::HitBy;
 use data::level::BlockKind;
 
-use crate::plm::crumble::{self, ShotFault};
+use crate::blocks_world::{self, BlocksFault, Reads};
 use crate::pose::FACING_FORWARD;
 use crate::state::State;
 use crate::state::projectile::{
@@ -89,8 +90,8 @@ pub const fn cool_down(projectiles: &mut Projectiles) {
 /// Why a projectile can't go on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProjectileFault {
-    /// It shot a shootable block whose reaction isn't modelled.
-    Shot(ShotFault),
+    /// It reached a cell the room's loading would refuse.
+    Blocks(BlocksFault),
 }
 
 /// The projectiles' part of Samus's normal current state handler (`$90:DCDD`): the cooldown
@@ -98,14 +99,14 @@ pub enum ProjectileFault {
 ///
 /// # Errors
 ///
-/// A [`ProjectileFault`] when a beam reaches a block whose reaction isn't modelled.
+/// A [`ProjectileFault`] when a beam reaches a cell the room's loading would refuse.
 // open: the HUD selection and the movement type's selection handler between them, which
 // fire, join with firing; frozen time, which skips the pass, with its states.
-pub fn current_state(state: &mut State) -> Result<(), ProjectileFault> {
+pub fn current_state(state: &mut State, reads: Reads<'_>) -> Result<(), ProjectileFault> {
     if !FACING_FORWARD.contains(&state.samus.pose) {
         cool_down(&mut state.projectiles);
     }
-    handle(state)
+    handle(state, reads)
 }
 
 /// The projectile pass (`$90:AECE`), which the locked current state handler runs alone
@@ -114,10 +115,10 @@ pub fn current_state(state: &mut State) -> Result<(), ProjectileFault> {
 ///
 /// # Errors
 ///
-/// A [`ProjectileFault`] when a beam reaches a block whose reaction isn't modelled.
+/// A [`ProjectileFault`] when a beam reaches a cell the room's loading would refuse.
 // open: the wave beam, hyper beam, missiles and bombs join with the rooms that fire them;
 // until then they stand still.
-pub fn handle(state: &mut State) -> Result<(), ProjectileFault> {
+pub fn handle(state: &mut State, reads: Reads<'_>) -> Result<(), ProjectileFault> {
     let State {
         projectiles, room, ..
     } = state;
@@ -130,7 +131,7 @@ pub fn handle(state: &mut State) -> Result<(), ProjectileFault> {
         };
         match body.kind.shot {
             Shot::Beam(beam) if !beam.beams.contains(Beam::Wave) => {
-                fly_beam(projectiles, index, room)?;
+                fly_beam(projectiles, index, room, reads)?;
             }
             Shot::Beam(_)
             | Shot::Missile
@@ -193,6 +194,7 @@ fn fly_beam(
     projectiles: &mut Projectiles,
     index: usize,
     room: &mut RoomScoped,
+    reads: Reads<'_>,
 ) -> Result<(), ProjectileFault> {
     let Some(slot) = projectiles.slots.slots.get_mut(index) else {
         return Ok(());
@@ -214,9 +216,11 @@ fn fly_beam(
     body.velocity.x = SubpixelSpeed(body.velocity.x.0.wrapping_add(ax));
     body.velocity.y = SubpixelSpeed(body.velocity.y.0.wrapping_add(ay));
     let collided = match axes(body.heading.direction) {
-        Axes::Horizontal => move_horizontally(&mut body, room)?,
-        Axes::Vertical => move_vertically(&mut body, room)?,
-        Axes::Diagonal => move_horizontally(&mut body, room)? || move_vertically(&mut body, room)?,
+        Axes::Horizontal => move_horizontally(&mut body, room, reads)?,
+        Axes::Vertical => move_vertically(&mut body, room, reads)?,
+        Axes::Diagonal => {
+            move_horizontally(&mut body, room, reads)? || move_vertically(&mut body, room, reads)?
+        }
     };
     if collided && let Shot::Beam(beam) = body.kind.shot {
         explode(&mut body, beam);
@@ -330,6 +334,7 @@ struct Reaction {
 /// `$94:A1D6`): whether enough collided to stop the beam.
 fn check_blocks(
     room: &mut RoomScoped,
+    reads: Reads<'_>,
     start: u16,
     step: u16,
     count: u16,
@@ -349,7 +354,7 @@ fn check_blocks(
                 .get(usize::from(block.0))
                 .map(|cell| cell.kind)
                 .unwrap_or_default();
-            if react(room, block, kind)? {
+            if react(room, reads, block, kind)? {
                 reaction.needed = reaction.needed.wrapping_sub(1);
             }
         }
@@ -368,6 +373,7 @@ fn check_blocks(
 // whose beams reach them; until then they let the beam through.
 fn react(
     room: &mut RoomScoped,
+    reads: Reads<'_>,
     block: BlockIndex,
     kind: BlockKind,
 ) -> Result<bool, ProjectileFault> {
@@ -387,8 +393,10 @@ fn react(
         | BlockKind::Spike(_)
         | BlockKind::Special(_)
         | BlockKind::Grapple(_) => true,
+        // `ShotBlocks`: the blocks model meets the beam's hit; the block stops the beam by its
+        // body, as its kind is now.
         BlockKind::Shootable(_) => {
-            crumble::shoot_block(room, block).map_err(ProjectileFault::Shot)?;
+            blocks_world::hit(room, reads, block, HitBy::Beam).map_err(ProjectileFault::Blocks)?;
             true
         }
     })
@@ -414,6 +422,7 @@ fn inside_room(boundary: u16, screens: u16) -> bool {
 fn move_horizontally(
     body: &mut ProjectileBody,
     room: &mut RoomScoped,
+    reads: Reads<'_>,
 ) -> Result<bool, ProjectileFault> {
     let count = span(body.position.y.pixels, body.radius.y);
     let row = low_byte(body.position.y.pixels.wrapping_sub(body.radius.y) >> BLOCK_SHIFT);
@@ -433,7 +442,7 @@ fn move_horizontally(
         return Ok(false);
     }
     let step = room.width.0.wrapping_mul(2);
-    check_blocks(room, start, step, count)
+    check_blocks(room, reads, start, step, count)
 }
 
 /// Move a beam vertically and check the blocks its leading edge reached (`$94:A2CA`):
@@ -441,6 +450,7 @@ fn move_horizontally(
 fn move_vertically(
     body: &mut ProjectileBody,
     room: &mut RoomScoped,
+    reads: Reads<'_>,
 ) -> Result<bool, ProjectileFault> {
     let count = span(body.position.x.pixels, body.radius.x);
     body.position.y = advance(body.position.y, body.velocity.y);
@@ -457,7 +467,7 @@ fn move_vertically(
     if !below(count, WIDEST_SPAN) || !inside_room(boundary, down) {
         return Ok(false);
     }
-    check_blocks(room, start, 2, count)
+    check_blocks(room, reads, start, 2, count)
 }
 
 /// Kill beam `beam` that collided (`$90:AE06`): it steps to its leading edge and turns into

@@ -1,8 +1,11 @@
 //! Everything a room transition resets, in one struct (D4): replacing it is the reset.
 
 use canonical::Canonical;
+use data::blocks::ReactionId;
 use data::enemy::program::SpritemapId;
 use data::id::{DoorwayId, RoomId, SpeciesId};
+
+use crate::blocks_world::{BlockContent, BlocksFault};
 use data::plm::{ItemPlm, ScrollChangesId};
 use data::room::{Area, Room, RoomState};
 use data::tileset::TilesetId;
@@ -257,25 +260,44 @@ pub struct ScrollPlm {
     pub step: ScrollStep,
 }
 
-/// Where the 1x1 shot block is in its crumble (bank $84 log, its list `$84:CBB7`): each of
-/// its draws holds for its frames, the last one before the delete.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Crumble {
-    /// Spawned: its first run queues the crumble sound and draws the first frame.
-    #[default]
-    Spawned,
-    /// The first frame drawn, air with tile `$53`, for 4 frames (`$84:A345`).
-    First,
-    /// The second, tile `$54`, for 4 frames (`$84:A34B`).
-    Second,
-    /// The third, tile `$55`, for 4 frames (`$84:A351`).
-    Third,
-    /// The block drawn empty, tile `$FF`, for 1 frame (`$84:A357`); its next run deletes it.
-    Cleared,
+/// Which of a reaction's scripts a place runs (the blocks spec's §2).
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReactionScript {
+    /// What it does when it breaks.
+    Broken,
+    /// What a bomb that doesn't break it does.
+    Revealed,
+    /// What a bomb block does when her touch breaks it.
+    Touched,
 }
 
-/// A PLM's typed body: one variant per PLM slice 0's rooms run. An extension PLM deletes
-/// itself in its setup, so no body holds one.
+/// The kind a reaction's cell grows back as: the reacting kind it was when it started.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GrowsBackAs {
+    /// A block, solid to her.
+    Block,
+    /// Reacting air.
+    Air,
+}
+
+/// One of the blocks' reactions running in a place (`blocks_world`).
+///
+/// Which imported reaction, which of its scripts, the step it runs next and what its cell grows
+/// back as; the place's block is its cell and its timer its wait.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ReactionPlace {
+    /// The imported reaction.
+    pub reaction: ReactionId,
+    /// The script it runs.
+    pub script: ReactionScript,
+    /// The index of its next step in the script.
+    pub next: u16,
+    /// What its cell grows back as, while a `Regrow` step is still ahead.
+    pub grows_back_as: Option<GrowsBackAs>,
+}
+
+/// A PLM's typed body: one variant per PLM slice 0's rooms run, and the blocks' reactions. An
+/// extension PLM deletes itself in its setup, so no body holds one.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PlmBody {
     /// The scroll PLM, `$84:B703`.
@@ -300,12 +322,11 @@ pub enum PlmBody {
     /// block (`$84:EEAB`), and its list deletes it (`$84:AAE3`). It stays live while the
     /// item's pickup holds the PLM pass in its message box.
     ItemCollision,
-    /// The 1x1 shot block, `$84:D074`, which shooting a shootable block with BTS 4 spawns:
-    /// its setup makes the block solid (`$84:B3C1`), and its list crumbles it.
-    ShotBlock {
-        /// Its place in the crumble.
-        crumble: Crumble,
-    },
+    /// One of the blocks' reactions, running.
+    Reaction(ReactionPlace),
+    /// A hold until the next pass of a cell marked to react to nothing: its touch, a hit or
+    /// she inside it spawns a PLM that only deletes itself (`$84:B62F` and its like).
+    Held,
 }
 
 /// The enemy family marker.
@@ -865,11 +886,19 @@ impl RoomScoped {
     /// Room `room`, as it loads in `state`: its level's layer 1 blocks, its width in blocks,
     /// its scroll areas and the camera's scroll settings, its PLMs spawned and set up, with no
     /// enemies yet and the camera at the top left.
+    ///
+    /// # Errors
+    ///
+    /// A [`BlocksFault`] where a placement's cell is one the room's loading would refuse.
     // open: the door's arrival, the enemy population, the FX's layer blending, the camera's
     // start and the scroll buffer past the room's screens (`stale_scrolls`, what the room
     // before left) join with the room transition (bank $82 log, `$82:E7D3`).
-    #[must_use]
-    pub fn load(room: RoomId, header: &Room, state: &RoomState) -> Self {
+    pub fn load(
+        room: RoomId,
+        header: &Room,
+        state: &RoomState,
+        blocks: &BlockContent,
+    ) -> Result<Self, BlocksFault> {
         let [x, y] = state.layer2_scroll.map(Layer2Scroll::from);
         let mut loaded = Self {
             room,
@@ -891,8 +920,8 @@ impl RoomScoped {
             },
             ..Self::default()
         };
-        crate::plm::spawn_population(&mut loaded, &state.plms);
-        loaded
+        crate::plm::spawn_population(&mut loaded, blocks, &state.plms)?;
+        Ok(loaded)
     }
 }
 

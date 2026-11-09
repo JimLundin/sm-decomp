@@ -157,9 +157,11 @@ pub enum SessionFault {
     StepBudgetExceeded,
     /// A Tick was begun and dropped before it ended.
     TickAbandoned,
-    /// A scroll trigger's touch PLM found no scroll PLM on its block, where the original
-    /// hangs.
+    /// An item's touch PLM found no item on its block, where the original crashes.
     Plm(TouchFault),
+    /// The blocks met a cell the room's loading would refuse, or a place the model isn't
+    /// defined on.
+    Blocks(crate::blocks_world::BlocksFault),
     /// A projectile reached a block whose reaction isn't modelled.
     Projectile(crate::projectile::ProjectileFault),
     /// The room's scroll areas aren't a room the camera can read: a short last row, or more

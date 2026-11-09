@@ -1,8 +1,9 @@
-use data::level::{Block, BlockKind, Bts, PlmChoice};
+use data::level::{Block, BlockKind, Bts};
 
 use super::*;
+use crate::blocks_world::fixture::{SHOT, content};
 use crate::state::projectile::{Damage, Heading, ProjectileCommon, Velocity};
-use crate::state::room::{BlockColumns, Crumble, PlmBody};
+use crate::state::room::{BlockColumns, PlmBody, ReactionPlace, ReactionScript};
 use crate::state::samus::Point;
 
 /// The room's width: eight screens.
@@ -22,6 +23,32 @@ fn state() -> State {
 
 const fn at(pixels: u16, subpixels: u16) -> Fixed {
     Fixed { pixels, subpixels }
+}
+
+/// The projectile pass over the invented blocks' content.
+fn handle(state: &mut State) -> Result<(), ProjectileFault> {
+    let content = content();
+    let population = data::plm::PlmPopulation::default();
+    super::handle(
+        state,
+        Reads {
+            content: &content,
+            population: &population,
+        },
+    )
+}
+
+/// The projectiles' part of her current state handler over the invented blocks' content.
+fn current_state(state: &mut State) -> Result<(), ProjectileFault> {
+    let content = content();
+    let population = data::plm::PlmPopulation::default();
+    super::current_state(
+        state,
+        Reads {
+            content: &content,
+            population: &population,
+        },
+    )
 }
 
 /// The uncharged power beam fired down-right, as the oracle has it in slot 0.
@@ -133,7 +160,7 @@ fn a_beam_that_reaches_a_solid_block_steps_to_its_edge_and_explodes() {
 #[test]
 fn a_beam_that_reaches_a_shot_block_spawns_its_crumble() {
     let mut state = state();
-    state.room.blocks[usize::from(TARGET.0)].kind = BlockKind::Shootable(PlmChoice::Common(4));
+    state.room.blocks[usize::from(TARGET.0)].kind = SHOT;
     fire(
         &mut state,
         beam(at(0x04b7, 0x9100), at(0x02c8, 0x9100), 0x03db, 0x0c),
@@ -158,9 +185,12 @@ fn a_beam_that_reaches_a_shot_block_spawns_its_crumble() {
             .iter()
             .any(|slot| slot.common.block == TARGET
                 && slot.occupancy
-                    == Occupancy::Live(PlmBody::ShotBlock {
-                        crumble: Crumble::Spawned
-                    }))
+                    == Occupancy::Live(PlmBody::Reaction(ReactionPlace {
+                        reaction: data::blocks::ReactionId(0),
+                        script: ReactionScript::Broken,
+                        next: 0,
+                        grows_back_as: None,
+                    })))
     );
     assert_eq!(
         state.room.blocks[usize::from(TARGET.0)].kind,

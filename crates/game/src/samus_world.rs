@@ -2,13 +2,13 @@
 //! shapes, and the solid enemies, answered in the model's terms (`clean_types::World`).
 //!
 //! Each block kind is named once, here, as `OtherBlockKinds` says it meets her motion. The
-//! reactions a reached cell then starts (a scroll trigger, an item's block) aren't the
-//! world's: the model reports the cells it reached and the caller applies them.
+//! reactions a reached cell then starts (the blocks', an item's) aren't the world's: the model
+//! reports the cells it reached and the caller applies them.
 
 use clean_types::{Block, Cell, Hitbox, Pair, Radius, Slope, SlopeFaces, Way, World};
 use core::num::Wrapping;
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
-use data::level::{BlockKind, Bts, Offset, PlmChoice};
+use data::level::{BlockKind, Offset, PlmChoice};
 
 use crate::collision::solid_enemy::{Obstacle, SolidEnemies, obstacles};
 use crate::collision::{Room, Touch, Touches};
@@ -16,9 +16,6 @@ use crate::state::room::BlockIndex;
 
 /// An item's drawn block: a special block whose reaction lets her through.
 const ITEM_BLOCK: PlmChoice = PlmChoice::Common(0x45);
-
-/// The special air that changes the scrolling when she reaches it.
-const SCROLL_TRIGGER: Bts = Bts(0x46);
 
 /// A surface's depth for a column far past the block: the level's offsets past 16 all lie
 /// there.
@@ -103,17 +100,31 @@ impl<'a> SamusWorld<'a> {
             .map_or_else(BlockKind::default, |block| block.kind)
     }
 
-    /// What reaching `cell` starts, if anything.
+    /// What reaching a cell starts, if anything: an item's block its item's touch, a reacting
+    /// cell of another kind the blocks'.
     #[must_use]
-    pub fn reaction(&self, cell: Cell) -> Option<Touch> {
-        let at = self.index(cell);
-        let kind = self.kind(cell);
-        if kind == BlockKind::SpecialAir(SCROLL_TRIGGER) {
-            Some(Touch::Scroll(at))
-        } else if kind == BlockKind::Special(ITEM_BLOCK) {
-            Some(Touch::Item(at))
-        } else {
-            None
+    pub fn reaction(&self, touch: clean_types::Touch) -> Option<Touch> {
+        match self.kind(touch.cell) {
+            BlockKind::Special(ITEM_BLOCK) => Some(Touch::Item(self.index(touch.cell))),
+            BlockKind::Special(_)
+            | BlockKind::Shootable(_)
+            | BlockKind::Bombable(_)
+            | BlockKind::SpecialAir(_)
+            | BlockKind::ShootableAir(_)
+            | BlockKind::BombableAir(_) => Some(Touch::Blocks {
+                cell: touch.cell,
+                way: touch.way,
+            }),
+            BlockKind::Air(_)
+            | BlockKind::Slope(_)
+            | BlockKind::SpikeAir(_)
+            | BlockKind::HorizontalExtension(_)
+            | BlockKind::UnusedAir(_)
+            | BlockKind::Solid(_)
+            | BlockKind::Door(_)
+            | BlockKind::Spike(_)
+            | BlockKind::VerticalExtension(_)
+            | BlockKind::Grapple(_) => None,
         }
     }
 
@@ -123,7 +134,7 @@ impl<'a> SamusWorld<'a> {
     pub fn touches(&self, reached: &[clean_types::Touch]) -> Touches {
         reached
             .iter()
-            .filter_map(|touch| self.reaction(touch.cell))
+            .filter_map(|&touch| self.reaction(touch))
             .collect()
     }
 }

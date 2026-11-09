@@ -23,8 +23,8 @@ use game::progress_world;
 use game::state::atmospheric::AtmosphericGraphic;
 use game::state::projectile::ProjectileBody;
 use game::state::room::{
-    Crumble, ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, ItemGfxSlot, ItemStep, MorphBallEye,
-    PLM_SLOTS, PlmBody, ScrollPlm, ScrollStep,
+    ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, ItemGfxSlot, ItemStep, MorphBallEye, PLM_SLOTS,
+    PlmBody, ReactionPlace, ScrollPlm, ScrollStep,
 };
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
@@ -60,6 +60,7 @@ pub fn slice_zero_rooms() -> RoomMap {
         samus_tiles: data::pose::tiles::SamusTiles::default(),
         plms: Vec::new(),
         states: Vec::new(),
+        reactions: data::blocks::Reactions::default(),
     }
 }
 
@@ -211,9 +212,12 @@ fn plm_occupant(state: &State) -> [Occupancy<PlmBody>; PLM_SLOTS] {
             slot: ItemGfxSlot::default(),
         },
         PlmBody::ItemCollision => PlmBody::ItemCollision,
-        PlmBody::ShotBlock { .. } => PlmBody::ShotBlock {
-            crumble: Crumble::default(),
-        },
+        PlmBody::Held => PlmBody::Held,
+        PlmBody::Reaction(running) => PlmBody::Reaction(ReactionPlace {
+            next: 0,
+            grows_back_as: None,
+            ..running
+        }),
     };
     state.room.plms.slots.map(|slot| match slot.occupancy {
         Occupancy::Free => Occupancy::Free,
@@ -229,7 +233,8 @@ const fn scroll(body: PlmBody) -> Option<ScrollPlm> {
         PlmBody::ScrollTouch
         | PlmBody::Item { .. }
         | PlmBody::ItemCollision
-        | PlmBody::ShotBlock { .. } => None,
+        | PlmBody::Held
+        | PlmBody::Reaction(_) => None,
     }
 }
 
@@ -247,7 +252,9 @@ const fn plm_step(body: PlmBody) -> Option<PlmStep> {
     match body {
         PlmBody::Scroll(scroll) => Some(PlmStep::Scroll(scroll.step)),
         PlmBody::Item { step, .. } => Some(PlmStep::Item(step)),
-        PlmBody::ScrollTouch | PlmBody::ItemCollision | PlmBody::ShotBlock { .. } => None,
+        PlmBody::ScrollTouch | PlmBody::ItemCollision | PlmBody::Held | PlmBody::Reaction(_) => {
+            None
+        }
     }
 }
 
@@ -258,18 +265,20 @@ const fn collected_bit(body: PlmBody) -> Option<u16> {
         PlmBody::Scroll(_)
         | PlmBody::ScrollTouch
         | PlmBody::ItemCollision
-        | PlmBody::ShotBlock { .. } => None,
+        | PlmBody::Held
+        | PlmBody::Reaction(_) => None,
     }
 }
 
-/// The 1x1 shot block's place in its crumble.
-const fn crumble(body: PlmBody) -> Option<Crumble> {
+/// A reaction's place: its reaction and script, its next step and what its cell grows back as.
+const fn reaction(body: PlmBody) -> Option<ReactionPlace> {
     match body {
-        PlmBody::ShotBlock { crumble } => Some(crumble),
+        PlmBody::Reaction(running) => Some(running),
         PlmBody::Scroll(_)
         | PlmBody::ScrollTouch
         | PlmBody::Item { .. }
-        | PlmBody::ItemCollision => None,
+        | PlmBody::ItemCollision
+        | PlmBody::Held => None,
     }
 }
 
@@ -697,10 +706,11 @@ const COMPARATORS: &[Comparator] = &[
         PlmBody::Scroll(_)
         | PlmBody::ScrollTouch
         | PlmBody::ItemCollision
-        | PlmBody::ShotBlock { .. } => None,
+        | PlmBody::Held
+        | PlmBody::Reaction(_) => None,
     }),
     plm_body!("room.plms.slots.occupancy.collected_bit", collected_bit),
-    plm_body!("room.plms.slots.occupancy.crumble", crumble),
+    plm_body!("room.plms.slots.occupancy.reaction", reaction),
     field!("room.item_gfx.next", room.item_gfx.next),
     field!("room.item_gfx.loaded", room.item_gfx.loaded),
     enemy!("room.enemies.slots.common.species", species),
