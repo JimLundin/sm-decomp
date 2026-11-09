@@ -14,6 +14,7 @@ clean_model_progress = { path = "../clean_model/progress" }
 clean_model_samus_motion = { path = "../clean_model/samus-motion" }
 clean_types = { path = "../clean_types" }
 data = { path = "../data" }
+enum-map = "=3.1.0"
 game = { path = "../game" }
 oracle_record = { path = "../oracle_record" }
 runtime = { path = "../runtime" }

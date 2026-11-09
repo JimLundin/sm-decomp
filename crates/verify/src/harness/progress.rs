@@ -35,13 +35,15 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 use clean_model_progress::{
-    Beams, BehaviourId, BossKinds, CATALOGUE, Condition, Count, EnteredRoom, Events, Items,
-    MapStatus, PerArea, PerSupply, Pickup, Progress, Remembered, Report, ReserveMode, RoomStates,
-    Rules, Supply,
+    BehaviourId, CATALOGUE, Condition, Count, EnteredRoom, MapStatus, Pickup, Progress, Remembered,
+    Report, ReserveMode, RoomStates, Rules, Supply,
 };
-use clean_types::{Area, Beam, BossKind, DoorId, Entrance, Item, Key, LocationId, Set, StationId};
+use clean_types::{
+    Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId,
+};
 use data::rom::{Lorom, RomAddress};
 use data::room::{RoomKey, decode as decode_room};
+use enum_map::{Enum, EnumMap};
 use game::progress_world;
 use oracle_record::FrameRecord;
 
@@ -300,11 +302,11 @@ fn members<T: Copy>(word: u16, table: &[(u16, T)], source: &'static str) -> Resu
 }
 
 /// The set of `word`'s members by `table`'s bits; a bit no member has is unnamed.
-fn set<K: Key<N>, const N: usize>(
+fn set<K: Enum + Copy>(
     word: u16,
     table: &[(u16, K)],
     source: &'static str,
-) -> Result<Set<K, N>, Skip> {
+) -> Result<Set<K>, Skip> {
     let mut set = Set::default();
     for member in members(word, table, source)? {
         set[member] = true;
@@ -341,7 +343,7 @@ fn newly(from: &FrameRecord, next: &FrameRecord, source: WramBlock) -> Result<Ve
 }
 
 /// The event of event bit `number`, or none for a zebetite's bit or a bit no event has.
-fn event(number: u16) -> Option<clean_types::Event> {
+fn event(number: u16) -> Option<Event> {
     if ZEBETITE_BITS.contains(&number) {
         return None;
     }
@@ -349,7 +351,7 @@ fn event(number: u16) -> Option<clean_types::Event> {
 }
 
 /// The event the instruction at `pc` marks, if it marks one alone.
-fn marked(pc: u32) -> Option<clean_types::Event> {
+fn marked(pc: u32) -> Option<Event> {
     EVENT_MARKERS
         .iter()
         .find(|&&(marker, _)| marker == pc)
@@ -373,10 +375,10 @@ fn count(record: &FrameRecord, source: WramWord) -> Result<Count, Skip> {
 /// The progress `record` holds (the decode notes' State).
 fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
     let mut progress = Progress::default();
-    let items = |source: WramWord| -> Result<Items, Skip> {
+    let items = |source: WramWord| -> Result<Set<Item>, Skip> {
         set(word(record, source)?, &ITEMS, source.name)
     };
-    let beams = |source: WramWord| -> Result<Beams, Skip> {
+    let beams = |source: WramWord| -> Result<Set<Beam>, Skip> {
         set(word(record, source)?, &BEAMS, source.name)
     };
     let inventory = &mut progress.inventory;
@@ -497,20 +499,20 @@ pub struct Held {
 /// The declared fields: every quantity of the spec's State, and the room state at a load.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Declared {
-    items: Items,
-    items_switched_on: Items,
-    beams: Beams,
-    beams_switched_on: Beams,
-    capacity: PerSupply<Count>,
-    held: PerSupply<Count>,
+    items: Set<Item>,
+    items_switched_on: Set<Item>,
+    beams: Set<Beam>,
+    beams_switched_on: Set<Beam>,
+    capacity: EnumMap<Supply, Count>,
+    held: EnumMap<Supply, Count>,
     reserve_mode: ReserveMode,
-    events: Events,
+    events: Set<Event>,
     zebetites: Count,
-    defeated: PerArea<BossKinds>,
+    defeated: EnumMap<Area, Set<BossKind>>,
     emptied: Remembered<LocationId>,
     opened: Remembered<DoorId>,
-    maps: PerArea<MapStatus>,
-    stations: PerArea<BTreeSet<StationId>>,
+    maps: EnumMap<Area, MapStatus>,
+    stations: EnumMap<Area, BTreeSet<StationId>>,
     items_placed: Count,
     room_state: Option<usize>,
 }

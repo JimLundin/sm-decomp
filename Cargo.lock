@@ -105,6 +105,7 @@ dependencies = [
  "clean_model_samus_motion",
  "clean_types",
  "data",
+ "enum-map",
  "toml 0.8.23",
 ]
 
@@ -316,6 +317,7 @@ dependencies = [
  "clean_model_samus_motion",
  "clean_types",
  "data",
+ "enum-map",
  "game",
  "oracle_record",
  "runtime",

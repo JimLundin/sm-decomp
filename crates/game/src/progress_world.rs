@@ -13,12 +13,13 @@
 use core::num::Wrapping;
 
 use clean_model_progress::{
-    Beams, BossKinds, Condition, Count, EnteredRoom, Inventory, Items as Pieces, PerSupply, Pickup,
-    Progress, Remembered, Report, ReserveMode, RoomStates, Rules, Supply, Version,
+    Condition, Count, EnteredRoom, Inventory, Pickup, Progress, Remembered, Report, ReserveMode,
+    RoomStates, Rules, Supply, Version,
 };
-use clean_types::{Area as Region, BossKind, Entrance, Item as Piece, LocationId};
+use clean_types::{Area as Region, BossKind, Entrance, Item as Piece, LocationId, Set};
 use data::rom::RomAddress;
 use data::room::{self, Area, BossBits, Room, StateIndex};
+use enum_map::EnumMap;
 
 use crate::state::samus::{self, Equipment, Gauge, Item, Items};
 use crate::state::{COLLECTED_ITEM_WORDS, CollectedItems, State};
@@ -69,8 +70,8 @@ pub const fn piece(item: Item) -> Piece {
 }
 
 /// The model's items for a set of the engine's.
-fn pieces(items: Items) -> Pieces {
-    let mut pieces = Pieces::default();
+fn pieces(items: Items) -> Set<Piece> {
+    let mut pieces = Set::default();
     for item in ITEMS.into_iter().filter(|&item| items.contains(item)) {
         pieces[piece(item)] = true;
     }
@@ -78,7 +79,7 @@ fn pieces(items: Items) -> Pieces {
 }
 
 /// The engine's set of the model's items.
-fn items(pieces: Pieces) -> Items {
+fn items(pieces: Set<Piece>) -> Items {
     let mut items = Items::default();
     for item in ITEMS.into_iter().filter(|&item| pieces[piece(item)]) {
         items.insert(item);
@@ -116,12 +117,8 @@ const fn gauge(equipment: &mut Equipment, supply: Supply) -> &mut Gauge {
 }
 
 /// The gauges' capacities or what she holds, by `part`.
-fn supplies(mut equipment: Equipment, part: fn(Gauge) -> u16) -> PerSupply<Count> {
-    let mut table = PerSupply::default();
-    for &supply in Supply::ALL {
-        table[supply] = Wrapping(part(*gauge(&mut equipment, supply)));
-    }
-    table
+fn supplies(mut equipment: Equipment, part: fn(Gauge) -> u16) -> EnumMap<Supply, Count> {
+    EnumMap::from_fn(|supply| Wrapping(part(*gauge(&mut equipment, supply))))
 }
 
 /// What she has, as the model keeps it. The engine has no beams yet: none are hers.
@@ -129,8 +126,8 @@ fn inventory(equipment: &Equipment) -> Inventory {
     Inventory {
         items: pieces(equipment.collected),
         items_switched_on: pieces(equipment.equipped),
-        beams: Beams::default(),
-        beams_switched_on: Beams::default(),
+        beams: Set::default(),
+        beams_switched_on: Set::default(),
         capacity: supplies(*equipment, |gauge| gauge.max),
         held: supplies(*equipment, |gauge| gauge.current),
         reserve_mode: mode(equipment.reserve_mode),
@@ -141,10 +138,10 @@ fn inventory(equipment: &Equipment) -> Inventory {
 fn store_inventory(inventory: &Inventory, equipment: &mut Equipment) {
     equipment.collected = items(inventory.items);
     equipment.equipped = items(inventory.items_switched_on);
-    for &supply in Supply::ALL {
+    for ((supply, held), max) in inventory.held.iter().zip(inventory.capacity.values()) {
         *gauge(equipment, supply) = Gauge {
-            current: inventory.held[supply].0,
-            max: inventory.capacity[supply].0,
+            current: held.0,
+            max: max.0,
         };
     }
     equipment.reserve_mode = engine_mode(inventory.reserve_mode);
@@ -243,10 +240,10 @@ pub fn take(state: &mut State, item: Item, argument: u16) {
 }
 
 /// The boss kinds of an area's boss byte, or none when it holds a bit no kind has.
-fn kinds(bits: BossBits) -> Option<BossKinds> {
+fn kinds(bits: BossBits) -> Option<Set<BossKind>> {
     let known = BOSS_KINDS.iter().fold(0, |all, &(bit, _)| all | bit);
     (bits.0 & !known == 0).then(|| {
-        let mut kinds = BossKinds::default();
+        let mut kinds = Set::default();
         for &(bit, kind) in &BOSS_KINDS {
             kinds[kind] = bits.0 & bit != 0;
         }
@@ -255,8 +252,8 @@ fn kinds(bits: BossBits) -> Option<BossKinds> {
 }
 
 /// The kinds a room's main-boss condition asks about: the main boss alone.
-fn main_boss() -> BossKinds {
-    let mut kinds = BossKinds::default();
+fn main_boss() -> Set<BossKind> {
+    let mut kinds = Set::default();
     kinds[BossKind::MainBoss] = true;
     kinds
 }
