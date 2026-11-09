@@ -5,12 +5,13 @@
 //! The camera is downstream of her motion and nothing upstream reads it, so it is checked on its
 //! own: its State (the camera position and where it last saw her) is decoded from record N, the
 //! inputs from record N+1 as the scroll read them (her position after everything moved her, her
-//! facing and state, the room's screens), and `camera_from` from samus-motion's model run on the
-//! frame, never from record N+1's word, which is her y at the scroll by construction. The
-//! compared fields are the camera's position, pixel and subpixel parts. Where it last saw her is
-//! decoded from the same words as her position, so it is reported and masked, never counted.
-//! Nothing answers from the camera's own fields of record N+1, so no field is unverified; the null
-//! model is the camera left where record N has it.
+//! facing and state, the room's screens), and the y a placement put her at from samus-motion's
+//! model run on the frame (its `camera_from` where that differs from her start y, as
+//! `docs/LEGACY.md` lists), never from record N+1's word, which is her y at the scroll by
+//! construction. The compared fields are the camera's position, pixel and subpixel parts. Where
+//! it last saw her is decoded from the same words as her position, so it is reported and masked,
+//! never counted. Nothing answers from the camera's own fields of record N+1, so no field is
+//! unverified; the null model is the camera left where record N has it.
 
 use core::fmt;
 use core::num::Wrapping;
@@ -246,36 +247,38 @@ fn screens(record: &FrameRecord) -> Result<Screens, Skip> {
         .collect();
     Ok(Screens {
         run,
-        width: usize::from(word(record, ROOM_WIDTH_SCROLLS)?),
-        height: usize::from(word(record, ROOM_HEIGHT_SCROLLS)?),
+        size: Pair {
+            x: usize::from(word(record, ROOM_WIDTH_SCROLLS)?),
+            y: usize::from(word(record, ROOM_HEIGHT_SCROLLS)?),
+        },
     })
 }
 
 /// The room's screens as one run, and its size in screens, which the attribution reads.
 struct Screens {
     run: Vec<ScreenKind>,
-    width: usize,
-    height: usize,
+    /// Screens across and down.
+    size: Pair<usize>,
 }
 
 impl Screens {
     /// The room's own screens: the run's first `w × h`.
     fn room(&self) -> &[ScreenKind] {
-        let screens = self.width.saturating_mul(self.height);
+        let screens = self.size.x.saturating_mul(self.size.y);
         self.run.get(..screens).unwrap_or(&self.run)
     }
 
     /// Whether the run goes on below the room.
     const fn below(&self) -> bool {
-        self.run.len() > self.width.saturating_mul(self.height)
+        self.run.len() > self.size.x.saturating_mul(self.size.y)
     }
 
     /// Whether the room's last screen in the row holding `y` is closed.
     fn edge_closed(&self, y: Px) -> bool {
         let [row, _] = y.0.to_be_bytes();
         usize::from(row)
-            .checked_mul(self.width)
-            .and_then(|start| start.checked_add(self.width.checked_sub(1)?))
+            .checked_mul(self.size.x)
+            .and_then(|start| start.checked_add(self.size.x.checked_sub(1)?))
             .and_then(|screen| self.room().get(screen))
             .is_some_and(|&kind| matches!(kind, ScreenKind::Closed))
     }
@@ -298,8 +301,8 @@ fn lead(record: &FrameRecord) -> Result<LeadSetting, Skip> {
 }
 
 /// What the camera read of her and the room at the scroll of the frame ending at `next`, but
-/// `camera_from`, which is samus-motion's.
-fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
+/// the y a placement put her at, which is samus-motion's: none until `step` fills it in.
+fn upstream(next: &FrameRecord) -> Result<Upstream, Skip> {
     let facing = match byte(next, source::SAMUS_POSE_X_DIR)? {
         FACING_LEFT => Facing::Left,
         FACING_RIGHT => Facing::Right,
@@ -314,14 +317,13 @@ fn upstream(next: &FrameRecord, camera_from: Fixed) -> Result<Upstream, Skip> {
         down: word(next, source::DOWN_SCROLLER)?,
     };
     let heights = camera_world::heights(scrollers);
-    let room = Room::new(screens.run.clone(), screens.width, screens.height, heights)
-        .map_err(Skip::Room)?;
+    let room = Room::new(screens.run.clone(), screens.size, heights).map_err(Skip::Room)?;
     Ok(Upstream {
         samus: Her {
             // The scroll ends by setting her previous position to her position: exactly what
             // it read.
             position: seen(next)?,
-            camera_from,
+            placed: None,
             facing,
             backwards,
             rising: word(next, source::SAMUS_Y_DIR)? == UP,
@@ -362,8 +364,7 @@ impl Upstream {
 /// follows her from.
 #[derive(Clone, Copy, Debug)]
 pub enum Placement {
-    /// Her motion's frame ran through samus-motion's model: `camera_from`, where it isn't her
-    /// start y.
+    /// Her motion's frame ran through samus-motion's model: the y it placed her at, if any.
     Model(Option<Fixed>),
     /// Her motion doesn't run in the frame (no gameplay pass, lag, a frame handler that runs no
     /// motion, the message box): nothing places her.
@@ -395,7 +396,7 @@ impl TryFrom<Result<Option<Fixed>, Motion>> for Placement {
 }
 
 impl Placement {
-    /// `camera_from`, where it isn't her start y.
+    /// The y a placement put her at, if any.
     const fn placed(self) -> Option<Fixed> {
         match self {
             Self::Model(placed) => placed,
@@ -430,7 +431,7 @@ impl From<&Camera> for Declared {
     }
 }
 
-/// The camera domain, with the samus-motion model that supplies `camera_from`.
+/// The camera domain, with the samus-motion model that supplies the placement.
 pub struct CameraDomain {
     motion: SamusMotion,
 }
@@ -531,10 +532,10 @@ fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
 /// The masks of the frames on which samus-motion's harness defers her y to another domain
 /// (adversary 42, C2 and M4, by its own predicates) and that deferral reaches what the camera
 /// reads (adversary 49, F1). The camera takes her position from record N+1; from samus-motion it
-/// takes only `camera_from`, which differs from the seen y through a placement alone: a pose
-/// change (camera.gaps C2) or a placement samus-motion's step reports (C3). On a deferred frame
-/// with neither, nothing the camera reads is unverified, so y stays compared. x stays compared
-/// throughout: the knockback's turn of the lead is the camera's own `LeadingHer`.
+/// takes only the y a placement put her at, which a pose change (camera.gaps C2) or a placement
+/// samus-motion's step reports (C3) gives. On a deferred frame with neither, nothing the camera
+/// reads is unverified, so y stays compared. x stays compared throughout: the knockback's turn
+/// of the lead is the camera's own `LeadingHer`.
 fn deferred(
     from: &FrameRecord,
     next: &FrameRecord,
@@ -601,8 +602,7 @@ impl Domain for CameraDomain {
         if word(next, source::ROOM_PTR)? != word(from, source::ROOM_PTR)? {
             return Err(Skip::RoomChange);
         }
-        // Filled in by `step` from the frame's placement; the State's seen y until then.
-        upstream(next, seen(from)?.y)
+        upstream(next)
     }
 
     fn masks(
@@ -691,11 +691,11 @@ impl Domain for CameraDomain {
             match placement {
                 Placement::Model(_) => {}
                 Placement::NoMotion => mask(
-                    "camera_from: her motion doesn't run in the frame, yet her pose changes and may place her",
+                    "the placement: her motion doesn't run in the frame, yet her pose changes and may place her",
                     Y,
                 ),
                 Placement::Uncovered => mask(
-                    "camera_from: samus-motion's model doesn't cover the frame (a pose outside its domain, a deferred movement), so where her pose change placed her is that model's to come",
+                    "the placement: samus-motion's model doesn't cover the frame (a pose outside its domain, a deferred movement), so where her pose change placed her is that model's to come",
                     Y,
                 ),
             }
@@ -704,9 +704,7 @@ impl Domain for CameraDomain {
     }
 
     fn step(&self, camera: &mut Camera, placement: &Placement, upstream: &mut Upstream) {
-        // Remembering: where her motion's step placed her, else the y it last saw her at.
-        let seen = camera.seen();
-        upstream.samus.camera_from = placement.placed().unwrap_or(seen.y);
+        upstream.samus.placed = placement.placed();
         *camera = camera.step(&Rules::REFERENCE, &upstream.frame());
     }
 
@@ -756,7 +754,7 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
     let last = |screens: usize| -> Px {
         Wrapping(u16::try_from(screens.saturating_sub(1)).unwrap_or(u16::MAX) << 8)
     };
-    let (w, h) = (screens.width, screens.height);
+    let (w, h) = (screens.size.x, screens.size.y);
     let (x, y) = (camera.position().x.pixel(), camera.position().y.pixel());
     let in_last_row = y >= last(h);
     [
@@ -858,7 +856,7 @@ impl Screens {
     /// `BelowTheRoom`): past its end, closed.
     fn kind(&self, column: u16, row: u16) -> ScreenKind {
         usize::from(row)
-            .checked_mul(self.width)
+            .checked_mul(self.size.x)
             .and_then(|start| start.checked_add(usize::from(column)))
             .and_then(|screen| self.run.get(screen))
             .copied()
@@ -877,7 +875,7 @@ impl Screens {
         let next_closed = matches!(self.kind(column, row.wrapping_add(1)), ScreenKind::Closed);
         let back = went.reached - went.speed - Rules::REFERENCE.push;
         let stop = |at: Px| if below(at.0, back.0) { back } else { at };
-        let height = u16::try_from(self.height.saturating_sub(1)).unwrap_or(u16::MAX);
+        let height = u16::try_from(self.size.y.saturating_sub(1)).unwrap_or(u16::MAX);
         let bottom = Wrapping(height.wrapping_mul(SCREEN)) + rows;
         let c = went.stopped;
         if c > bottom {

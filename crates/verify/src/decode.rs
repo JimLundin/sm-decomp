@@ -22,10 +22,11 @@ use game::state::atmospheric::{
 };
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap, MiniMap};
 use game::state::room::{
-    Block, BlockColumns, BlockPoint, Camera, CameraDistance, DrawnBlocks, ElevatorArming,
-    ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyDrawing, EnemyPaletteCycle, GlowSet,
-    GraphicsDrawnHook, ITEM_GFX_SLOTS, ItemGfx, ItemGfxSlot, Layer2Block, Layer2Scroll,
-    Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers, SpritePalette, StaleScroll,
+    Block, BlockColumns, BlockPoint, BlockRows, Camera, CameraDistance, DrawnBlocks,
+    ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyDrawing,
+    EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ITEM_GFX_SLOTS, ItemGfx, ItemGfxSlot,
+    Layer2Block, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers,
+    SpritePalette, StaleScroll,
 };
 use game::state::samus::{
     Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing, Fixed, Gauge,
@@ -1253,6 +1254,7 @@ impl Rules<'_> {
             room,
             blocks,
             width: BlockColumns(self.level.width.read(wram)?),
+            height: BlockRows(self.level.height.read(wram)?),
             layer2,
             level_tail: tail,
             area: area(self.area, wram)?,

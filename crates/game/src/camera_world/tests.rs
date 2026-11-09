@@ -36,9 +36,14 @@ fn camera() -> Camera {
     }
 }
 
-/// The room of `areas`, `width` screens across, with `stale` after it.
+/// The room of `areas`, `width` screens across and as many rows down as they fill, with
+/// `stale` after it.
 fn of(areas: &[ScrollArea], stale: &[StaleScroll], width: usize) -> Room {
-    match room(areas, stale, width, SCROLLERS) {
+    let size = Pair {
+        x: width,
+        y: areas.len().checked_div(width).unwrap_or_default(),
+    };
+    match room(areas, stale, size, SCROLLERS) {
         Ok(room) => room,
         Err(error) => panic!("{error:?}"),
     }
@@ -64,16 +69,21 @@ fn the_room_runs_on_into_the_scroll_buffer() {
 }
 
 #[test]
-fn a_room_of_no_screens_across_or_no_whole_row_is_no_room() {
+fn a_room_of_no_screens_or_short_of_areas_is_no_room() {
     let areas = [ScrollArea::Green; 3];
-    for width in [0, 4] {
+    let size = |x, y| Pair { x, y };
+    for empty in [size(0, 1), size(3, 0)] {
         assert_eq!(
-            room(&areas, &[], width, SCROLLERS).err(),
+            room(&areas, &[], empty, SCROLLERS).err(),
             Some(RoomError::NoScreens),
-            "{width}"
+            "{empty:?}"
         );
     }
-    assert!(room(&areas, &[], 2, SCROLLERS).is_ok());
+    assert_eq!(
+        room(&areas, &[], size(2, 2), SCROLLERS).err(),
+        Some(RoomError::MissingScreens)
+    );
+    assert!(room(&areas, &[], size(1, 3), SCROLLERS).is_ok());
 }
 
 #[test]
@@ -211,15 +221,16 @@ fn scrolling_down_reads_the_scroll_buffer_past_the_room() {
 }
 
 #[test]
-fn with_no_room_loaded_the_camera_stays_and_no_whole_row_is_a_fault() {
+fn with_no_room_loaded_the_camera_stays_and_too_few_areas_are_a_fault() {
     let mut state = crate::state::State::default();
     let before = state.room.camera;
     assert_eq!(scroll(&mut state.room, &mut state.samus), Ok(()));
     assert_eq!(state.room.camera, before);
     state.room.scroll_areas = vec![ScrollArea::Green; 3];
     state.room.width = crate::state::room::BlockColumns(4 * SCREEN_BLOCKS);
+    state.room.height = crate::state::room::BlockRows(SCREEN_BLOCKS);
     assert_eq!(
         scroll(&mut state.room, &mut state.samus),
-        Err(RoomError::NoScreens)
+        Err(RoomError::MissingScreens)
     );
 }

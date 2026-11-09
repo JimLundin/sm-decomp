@@ -64,24 +64,20 @@ pub fn run(areas: &[ScrollArea], stale: &[StaleScroll]) -> Vec<ScreenKind> {
         .collect()
 }
 
-/// The room as the camera reads it: `width` screens across and as many rows down as its areas
-/// fill, the screens below it continuing the run (`run`), and its two aim heights.
-///
-/// A room's areas are always whole rows; any past the last whole row would continue the run
-/// below it, as the scroll table's bytes there do.
+/// The room as the camera reads it: `size` screens across and down, the screens below it
+/// continuing the run (`run`), and its two aim heights.
 ///
 /// # Errors
 ///
-/// The model's [`RoomError`] when the areas aren't a room: no screens across, fewer than a row,
-/// or more than 256 screens across or down.
+/// The model's [`RoomError`] when the areas aren't a room: no screens across or down, a run
+/// shorter than its screens, or more than 256 screens across or down.
 pub fn room(
     areas: &[ScrollArea],
     stale: &[StaleScroll],
-    width: usize,
+    size: Pair<usize>,
     scrollers: Scrollers,
 ) -> Result<Room, RoomError> {
-    let height = areas.len().checked_div(width).unwrap_or_default();
-    Room::new(run(areas, stale), width, height, heights(scrollers))
+    Room::new(run(areas, stale), size, heights(scrollers))
 }
 
 /// The room's aim heights from its scrollers.
@@ -106,9 +102,11 @@ pub const fn lead(distance: CameraDistance) -> LeadSetting {
 
 /// What the camera reads of her, from the engine's State at the scroll.
 ///
-/// - `camera_from` is her previous y: where her motion's step placed her (pose fit, a change of
-///   shape) it has already written the placement there (`samus_world::step`), and otherwise it
-///   is the y the camera last saw her at, so the model's placement changes nothing.
+/// - Nothing is `placed`: where her motion's step placed her (pose fit, a change of shape) it
+///   has already written the placement's pixel to her previous y (`samus_world::step`'s
+///   `settle`), as the game writes it at the pose change, and the camera follows her from
+///   there. The engine holds it in the State because the item's message box can run between her
+///   step and the scroll, and the State shows the placement there as the game's does.
 /// - Going backwards is a skid (turning round, her speed mode) or a moonwalk (her movement
 ///   type). The engine has no knockback yet (the damage domain), so none turns the lead.
 /// - Rising is her rise state, the vertical direction up, which holds from the rise's start
@@ -123,7 +121,7 @@ pub fn her(samus: &Samus) -> Her {
             x: Wrapping(motion.position.x.0),
             y: Wrapping(motion.position.y.0),
         },
-        camera_from: quantity(samus.previous_position.y),
+        placed: None,
         facing: match samus.facing {
             Facing::Left => Side::Left,
             Facing::Right => Side::Right,
@@ -160,8 +158,16 @@ pub fn follow(camera: &mut Camera, samus: &mut Samus, room: &Room) {
     samus.previous_position = point(after.seen());
 }
 
-/// Blocks a screen across.
+/// Blocks a screen across or down.
 const SCREEN_BLOCKS: u16 = 16;
+
+/// The room's size in screens, across and down.
+fn screens(room: &RoomScoped) -> Pair<usize> {
+    Pair {
+        x: usize::from(room.width.0 / SCREEN_BLOCKS),
+        y: usize::from(room.height.0 / SCREEN_BLOCKS),
+    }
+}
 
 /// The scrolling phase of a frame: the camera follows her over the room.
 ///
@@ -170,17 +176,16 @@ const SCREEN_BLOCKS: u16 = 16;
 ///
 /// # Errors
 ///
-/// The model's [`RoomError`] when the room's scroll areas aren't a room: fewer than a row, or
-/// more than 256 screens across or down.
+/// The model's [`RoomError`] when the room's scroll areas aren't a room: no screens across or
+/// down, a run shorter than its screens, or more than 256 screens across or down.
 pub fn scroll(room: &mut RoomScoped, samus: &mut Samus) -> Result<(), RoomError> {
     if room.scroll_areas.is_empty() {
         return Ok(());
     }
-    let width = usize::from(room.width.0 / SCREEN_BLOCKS);
     let screens = self::room(
         &room.scroll_areas,
         &room.stale_scrolls,
-        width,
+        screens(room),
         room.camera.scrollers,
     )?;
     follow(&mut room.camera, samus, &screens);

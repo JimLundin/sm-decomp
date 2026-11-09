@@ -653,6 +653,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.room", room.room),
     field!("room.blocks", room.blocks),
     field!("room.width", room.width),
+    field!("room.height", room.height),
     field!("room.layer2", room.layer2),
     field!("room.level_tail", room.level_tail),
     field!("room.area", room.area),

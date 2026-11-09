@@ -733,6 +733,10 @@ pub struct EnemyPaletteCycle {
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct BlockColumns(pub u16);
 
+/// A room's height in blocks, 16 a screen.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BlockRows(pub u16);
+
 /// A layer blending configuration (`FX_LAYER_BLENDING_CONFIG_A`, the bank logs' default layer
 /// blending configuration): the room's FX sets it as the room loads.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -821,6 +825,8 @@ pub struct RoomScoped {
     pub blocks: Vec<Block>,
     /// How many blocks across the room is: the level's row length.
     pub width: BlockColumns,
+    /// How many blocks down the room is: its rows of screens are what the camera's room has.
+    pub height: BlockRows,
     /// Layer 2's level data, when the room has its own background.
     pub layer2: Option<Vec<Layer2Block>>,
     /// The decompressed level data past layer 1 (the BTS, then layer 2), which the original's
@@ -873,6 +879,7 @@ impl RoomScoped {
             area: header.area,
             tileset: TilesetId(state.tileset),
             width: BlockColumns(u16::from(header.size.width).wrapping_mul(16)),
+            height: BlockRows(u16::from(header.size.height).wrapping_mul(16)),
             scroll_areas: state.scroll_areas.clone(),
             camera: Camera {
                 scrollers: Scrollers {

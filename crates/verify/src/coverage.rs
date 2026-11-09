@@ -506,6 +506,7 @@ pub const FIELDS: &[Field] = &[
         status: Status::Decoded(Source::WramBlock(source::LEVEL_DATA)),
     },
     wram("room.width", source::ROOM_WIDTH_IN_BLOCKS),
+    wram("room.height", source::ROOM_HEIGHT_IN_BLOCKS),
     // Present when the room state's level data has layer 2, which the content says.
     block("room.layer2", source::CUSTOM_BACKGROUND),
     block("room.level_tail", source::LEVEL_DATA),
@@ -911,6 +912,7 @@ mod tests {
             rules.game_state,
             rules.room,
             rules.level.width,
+            rules.level.height,
             rules.collected,
             rules.equipped,
             rules.energy,

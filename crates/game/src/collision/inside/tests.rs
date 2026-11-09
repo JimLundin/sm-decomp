@@ -5,7 +5,9 @@ use data::rom::RomAddress;
 use super::*;
 use crate::plm::{process_unseen as process, spawn_population};
 use crate::state::CollectedItems;
-use crate::state::room::{Block, BlockColumns, PlmBody, ScrollPlm, ScrollStep, Tile, TileNumber};
+use crate::state::room::{
+    Block, BlockColumns, BlockRows, PlmBody, ScrollPlm, ScrollStep, Tile, TileNumber,
+};
 use crate::state::slots::Occupancy;
 
 /// The scroll PLM's slot: the first spawn takes the highest.
@@ -49,6 +51,7 @@ fn room() -> RoomScoped {
     let mut room = RoomScoped {
         blocks: vec![air; 512],
         width: BlockColumns(32),
+        height: BlockRows(16),
         scroll_areas: vec![ScrollArea::Red; 2],
         ..RoomScoped::default()
     };

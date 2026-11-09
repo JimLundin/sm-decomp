@@ -392,7 +392,7 @@ fn samus_motion_holds_its_floors_against_the_cache() {
 }
 
 /// The camera over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
-/// test reads them (the ROM for samus-motion's model, which supplies `camera_from`).
+/// test reads them (the ROM for samus-motion's model, which supplies the placement).
 #[test]
 fn the_camera_holds_its_floors_against_the_cache() {
     let Some((cache, rom)) = environment() else {
