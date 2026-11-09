@@ -44,8 +44,9 @@ pub enum Report {
     MapOnArrival(Area),
     /// She leaves the area named, by a door into another area. Spec: MapOnArrival.
     LeftArea(Area),
-    /// She saves at a station of this area, or the gunship first lands at its area's first.
-    /// Spec: StationsSavedAt.
+    /// She saves at a save station of this area; or the gunship lands for the first time, which
+    /// counts as a save at the first station of the area it lands in, and comes with that
+    /// station's id. Spec: StationsSavedAt.
     Saved {
         /// The station's area.
         area: Area,
@@ -57,8 +58,14 @@ pub enum Report {
 }
 
 impl Progress {
-    /// Records one report. A frame's reports apply in the order they come; none reads another's
-    /// result, but she leaves the old area before the new room's loading reports.
+    /// Records one report.
+    ///
+    /// A frame's reports are applied one call each, in the order they come (spec §7): each is
+    /// recorded at once, against the progress the reports before it left, and nothing is
+    /// gathered up or reordered over the frame. The spec's rules don't read one another's results
+    /// within a frame, so the one order that shows is leaving and arriving: when she goes through
+    /// a door into another area, `LeftArea` with the area she leaves comes before the new room's
+    /// loading reports, such as `MapOnArrival`, which name the new room's area.
     pub fn apply(&mut self, rules: &Rules, report: Report) {
         match report {
             Report::Happened(event) => self.events[event] = true,

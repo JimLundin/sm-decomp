@@ -1,9 +1,9 @@
 //! Which version of a room loads, given the run's progress (spec §5). Spec: RoomStates.
 
-use clean_types::{Area, Entrance, Event, Item};
+use clean_types::{Area, BossKind, Entrance, Event, Item, Members, Set};
 
 use crate::inventory::Supply;
-use crate::progress::{BossKinds, Progress};
+use crate::progress::Progress;
 
 /// The condition a version of a room loads on. Spec: RoomStates.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -11,7 +11,7 @@ pub enum Condition {
     /// Holds once the event has happened.
     Happened(Event),
     /// Holds when a boss of any of these kinds is defeated in the room's own area.
-    Defeated(BossKinds),
+    Defeated(Set<BossKind>),
     /// Holds when the item is hers, switched on or not.
     Has(Item),
     /// Holds when the morph ball is hers and her missile capacity isn't 0, however many

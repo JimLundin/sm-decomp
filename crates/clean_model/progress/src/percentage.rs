@@ -2,9 +2,9 @@
 
 use core::num::Wrapping;
 
-use clean_types::Set;
+use clean_types::Members;
 
-use crate::inventory::{Count, Inventory, Supply};
+use crate::inventory::{Count, Inventory};
 use crate::rules::Rules;
 
 impl Inventory {
@@ -14,16 +14,9 @@ impl Inventory {
     /// hers adds nothing; and the 99 energy she starts with counts 0. Spec: ItemPercentage.
     #[must_use]
     pub fn item_percentage(&self, rules: &Rules) -> Count {
-        let share = |&supply| Wrapping(self.capacity[supply].0 / rules.percentage_divisors[supply]);
-        let tanks: Count = Supply::ALL.iter().map(share).sum();
-        tanks + members(&self.items) + members(&self.beams)
+        let share =
+            |(supply, capacity): (_, &Count)| capacity.0 / rules.percentage_divisors[supply];
+        let tanks: Count = self.capacity.iter().map(share).map(Wrapping).sum();
+        tanks + self.items.count() + self.beams.count()
     }
-}
-
-/// How many members `set` holds: each member in it counts one.
-fn members<K, const N: usize>(set: &Set<K, N>) -> Count {
-    set.values()
-        .filter(|&&is_in| is_in)
-        .map(|_| Wrapping(1))
-        .sum()
 }

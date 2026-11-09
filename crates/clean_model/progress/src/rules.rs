@@ -3,28 +3,35 @@
 use core::num::NonZeroU16;
 
 use clean_types::Beam;
+use enum_map::EnumMap;
 
-use crate::inventory::{PerBeam, PerSupply};
+use crate::inventory::Supply;
 
 /// The values the rules of a run's progress read. `Rules::REFERENCE` is the original game; any
 /// other value is an adjusted game.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Rules {
     /// For each beam, the beam that taking it switches off, if any. Spec: TakingBeams.
-    pub beam_switches_off: PerBeam<Option<Beam>>,
+    pub beam_switches_off: EnumMap<Beam, Option<Beam>>,
     /// What each capacity is divided by, rounding down, to count towards the item percentage.
     /// Spec: ItemPercentage.
-    pub percentage_divisors: PerSupply<NonZeroU16>,
+    pub percentage_divisors: EnumMap<Supply, NonZeroU16>,
 }
 
 impl Rules {
     /// The original game's values.
     pub const REFERENCE: Self = Self {
-        // In `Beam`'s order: charge, ice, plasma, spazer, wave. Spazer and plasma don't fire
-        // together: taking either switches the other off.
-        beam_switches_off: PerBeam::new([None, None, Some(Beam::Spazer), Some(Beam::Plasma), None]),
-        // In `Supply::ALL`'s order: energy, reserve, missiles, super missiles, power bombs.
-        percentage_divisors: PerSupply::new([BY_TANK, BY_TANK, BY_AMMO, BY_AMMO, BY_AMMO]),
+        // In `Beam`'s declared order: charge, ice, plasma, spazer, wave. Spazer and plasma don't
+        // fire together: taking either switches the other off.
+        beam_switches_off: EnumMap::from_array([
+            None,
+            None,
+            Some(Beam::Spazer),
+            Some(Beam::Plasma),
+            None,
+        ]),
+        // In `Supply`'s declared order: energy, reserve, missiles, super missiles, power bombs.
+        percentage_divisors: EnumMap::from_array([BY_TANK, BY_TANK, BY_AMMO, BY_AMMO, BY_AMMO]),
     };
 }
 

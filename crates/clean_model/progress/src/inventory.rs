@@ -3,23 +3,15 @@
 
 use core::num::Wrapping;
 
-use clean_types::{Beam, Equipment, Item, Key, Set, Table};
+use clean_types::{Beam, Equipment, Item, Set};
+use enum_map::{Enum, EnumMap};
 
 /// A count or a capacity. The spec's notation: counts and capacities are whole numbers of 16 bits
 /// and wrap at 65536, so 65535 and 2 more is 1: its `+` is `Wrapping`'s.
 pub type Count = Wrapping<u16>;
 
-/// Items: those that are hers, or those switched on. Spec: TakingItems.
-pub type Items = Set<Item, { Item::COUNT }>;
-
-/// Beams: those that are hers, or those switched on. Spec: TakingBeams.
-pub type Beams = Set<Beam, { Beam::COUNT }>;
-
-/// One value for each beam.
-pub type PerBeam<V> = Table<Beam, V, { Beam::COUNT }>;
-
 /// A supply she holds, whose capacity a tank raises.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
 pub enum Supply {
     /// Energy, raised by an energy tank.
     Energy,
@@ -32,32 +24,6 @@ pub enum Supply {
     /// Power bombs, raised by a power bomb tank.
     PowerBombs,
 }
-
-impl Supply {
-    /// Every supply, in the order listed.
-    pub const ALL: &[Self] = &[
-        Self::Energy,
-        Self::Reserve,
-        Self::Missiles,
-        Self::SuperMissiles,
-        Self::PowerBombs,
-    ];
-}
-
-impl Key<{ Self::ALL.len() }> for Supply {
-    fn pick<T>(self, row: [T; Self::ALL.len()]) -> T {
-        match (self, row) {
-            (Self::Energy, [v, ..])
-            | (Self::Reserve, [_, v, ..])
-            | (Self::Missiles, [_, _, v, ..])
-            | (Self::SuperMissiles, [_, _, _, v, ..])
-            | (Self::PowerBombs, [_, _, _, _, v]) => v,
-        }
-    }
-}
-
-/// One value for each supply: a capacity, what she holds, or a divisor.
-pub type PerSupply<V> = Table<Supply, V, { Supply::ALL.len() }>;
 
 /// Whether the reserve refills her on its own.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -88,38 +54,40 @@ pub enum Pickup {
     },
 }
 
-/// What she has.
+/// What she has: what is hers, and what is switched on.
 ///
-/// Others switch her items and beams on and off too (the equipment screen, the rainbow beam),
-/// and nothing here keeps those switched on within hers: a beam can be switched on without being
-/// hers.
+/// The two are kept apart and neither is kept within the other. Taking an item or a beam makes
+/// it both hers and switched on, but others switch her items and beams on and off too (the
+/// equipment screen, and the rainbow beam late in the fight with Mother Brain, which switches on
+/// charge, plasma and wave whichever are hers). So what is switched on need not be among what is
+/// hers: a beam can be switched on that she never took.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Inventory {
-    /// The items that are hers, switched on or not.
-    pub items: Items,
+    /// The items that are hers, switched on or not. Spec: TakingItems.
+    pub items: Set<Item>,
     /// The items switched on, which decide what she can do and how she looks.
-    pub items_switched_on: Items,
-    /// The beams that are hers, switched on or not.
-    pub beams: Beams,
-    /// The beams switched on, which decide the beam she shoots.
-    pub beams_switched_on: Beams,
+    pub items_switched_on: Set<Item>,
+    /// The beams that are hers, switched on or not. Spec: TakingBeams.
+    pub beams: Set<Beam>,
+    /// The beams switched on, which decide the beam she shoots; not always among hers.
+    pub beams_switched_on: Set<Beam>,
     /// The most of each supply she can hold.
-    pub capacity: PerSupply<Count>,
+    pub capacity: EnumMap<Supply, Count>,
     /// How much of each supply she holds now.
-    pub held: PerSupply<Count>,
+    pub held: EnumMap<Supply, Count>,
     /// Whether the reserve refills her on its own.
     pub reserve_mode: ReserveMode,
 }
 
-/// A new file's: 99 energy of a capacity of 99, every other capacity and count at 0, no reserve
-/// tank, and no items or beams, hers or switched on.
+/// What a new file gives her: 99 energy of a capacity of 99, every other capacity and count at
+/// 0, no reserve tank, and no items or beams, hers or switched on.
 impl Default for Inventory {
     fn default() -> Self {
         Self {
-            items: Items::default(),
-            items_switched_on: Items::default(),
-            beams: Beams::default(),
-            beams_switched_on: Beams::default(),
+            items: Set::default(),
+            items_switched_on: Set::default(),
+            beams: Set::default(),
+            beams_switched_on: Set::default(),
             capacity: NEW_FILE_SUPPLIES,
             held: NEW_FILE_SUPPLIES,
             reserve_mode: ReserveMode::default(),
@@ -143,7 +111,7 @@ impl Inventory {
 
     /// She takes an item, a beam or a tank; `switches_off` is the beam each beam taken switches
     /// off, if any.
-    pub(crate) fn take(&mut self, pickup: Pickup, switches_off: PerBeam<Option<Beam>>) {
+    pub(crate) fn take(&mut self, pickup: Pickup, switches_off: EnumMap<Beam, Option<Beam>>) {
         match pickup {
             // Spec: TakingItems. Hers and switched on, even one she had and switched off.
             Pickup::Item(item) => {
@@ -185,9 +153,9 @@ impl Inventory {
 /// Energy and its capacity at the start of a new file.
 const NEW_FILE_ENERGY: Count = Wrapping(99);
 
-/// Each capacity and count at the start of a new file, in `Supply::ALL`'s order: energy 99, every
-/// other 0.
-const NEW_FILE_SUPPLIES: PerSupply<Count> = PerSupply::new([
+/// Each capacity and count at the start of a new file, in `Supply`'s declared order: energy 99,
+/// every other 0.
+const NEW_FILE_SUPPLIES: EnumMap<Supply, Count> = EnumMap::from_array([
     NEW_FILE_ENERGY,
     Wrapping(0),
     Wrapping(0),

@@ -4,9 +4,11 @@
 //! A `Progress` holds what she has (its `Inventory`), what has happened in the world and what
 //! its places remember, each a public field other domains read as it is now: `events[event]`,
 //! `defeated[area].intersects`, `emptied.contains`, `opened.contains`, `maps[area].is_known`,
-//! `zebetites`, `inventory.equipment()`, `inventory.item_percentage`. Its default is a new file.
-//! Domains that act tell it what happened with a `Report`, which `Progress::apply` records. A
-//! room picks the version it loads with `RoomStates::choose`.
+//! `zebetites`, `inventory.equipment()`, `inventory.item_percentage`. Tables keyed by an enum
+//! are `enum_map::EnumMap`s, and sets of an enum's members are `clean_types::Set`s, read and
+//! changed as `table[member]`. Its default is what a new file holds. Domains that act tell it
+//! what happened with a `Report`, which `Progress::apply` records. A room picks the version it
+//! loads with `RoomStates::choose`.
 #![expect(
     clippy::doc_markdown,
     reason = "spec entries such as EventsHappen are named plainly, as Spec: Name, not as Rust items"
@@ -22,11 +24,9 @@ mod room_states;
 mod rules;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
-pub use inventory::{
-    Beams, Count, Inventory, Items, PerBeam, PerSupply, Pickup, ReserveMode, Supply,
-};
+pub use inventory::{Count, Inventory, Pickup, ReserveMode, Supply};
 pub use places::{MapStatus, Remembered};
-pub use progress::{BossKinds, Events, PerArea, Progress};
+pub use progress::Progress;
 pub use report::Report;
 pub use room_states::{Condition, EnteredRoom, RoomStates, Version};
 pub use rules::Rules;
