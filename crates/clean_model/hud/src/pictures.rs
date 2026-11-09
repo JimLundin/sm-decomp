@@ -23,9 +23,6 @@ pub const BLINK: ColourSet = ColourSet::named(7);
 /// The blank tile: `00F` in colours 3, unflipped (§1.4).
 pub const BLANK: Tile = Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None);
 
-/// The map's blank picture, `01F` (§1.4).
-pub const MAP_BLANK: Picture = Picture::new(0x01F);
-
 /// The digits 0 to 9, in order (§1.4).
 const DIGITS: [Picture; 10] = [
     Picture::new(0x009),

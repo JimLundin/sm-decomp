@@ -4,7 +4,9 @@
 use clean_types::{CellSet, MapCell};
 
 use crate::grid::{Flip, Picture};
-use crate::pictures::MAP_BLANK;
+
+/// The map's blank picture, `01F` (§1.4).
+const MAP_BLANK: Picture = Picture::new(0x01F);
 
 /// The beyond pictures' columns: as many as the window reaches past the map's last column, 2
 /// (spec: `LastColumnsShift`, the window's 2 columns to each side of hers).
