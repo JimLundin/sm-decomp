@@ -102,7 +102,7 @@ Jim's decisions, 2026-11-07:
     stated once) and cut rounds (PROCESS, "The loop"): rounds whose brief is the verdict and the
     shape findings alone, repeated until the gate is satisfied.
 
-Jim's decision, 2026-11-09:
+Jim's decisions, 2026-11-09:
 
 12. **Widely used crates where they model the domain.** In Jim's words: "we should in general be
     in favor of widely used crates... not restrained to only the standard library... When an
@@ -114,6 +114,14 @@ Jim's decision, 2026-11-09:
     A crate whose build script Defender would block is used through a copy with the script's
     output baked in (`tools/vendor_nobuild.sh`, the root manifest's `[patch.crates-io]`), which
     CI holds to the real script's output (`tools/vendor_nobuild_check.sh`).
+13. **Vectors hold RAM observations and invented content only.** Jim chose "invented reactions
+    only" for the blocks spec, then widened it to every domain. A vector carries what the records
+    show of RAM and content made up in our own format to tell the rules apart, never the game's
+    content: no script, table, room's state list, screen, screen kind or cell look taken from the
+    ROM. A recorded case that needs real content becomes a harness case: its row and frame go in
+    the decode notes, the importer loads the content in the integrator's harness, and a
+    constructed vector over invented content carries the rule. Each domain's next observer pass
+    converts its recorded vectors that carry real content.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs

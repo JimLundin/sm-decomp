@@ -27,7 +27,9 @@ engine's current code for your domain.
    them by what a player sees. Done when every rule is an arm citing the vectors that check it,
    and every quantity has its units, a domain type and **Read by**.
 4. **Vectors.** Take recorded ones from the records, naming the row and frame. Construct the
-   cases no record reaches, and each switch's other variants. Done when every arm that says
+   cases no record reaches, and each switch's other variants. A vector holds RAM observations and
+   invented content only (MODEL §1 decision 13): a case that needs the game's content is a harness
+   case, named in the decode notes. Done when every arm that says
    `checked: oracle` has a vector, and every constructed vector's values are worked by hand from
    the bank log.
 5. **Reference model.** Write a small model of your spec (Python, in `$TEMP/collab/<lane>/`) and
