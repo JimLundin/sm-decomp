@@ -18,8 +18,18 @@ pub fn label(s: &Speed) -> String {
 pub const TILE: u16 = 16;
 const ROWS: [u16; 4] = [3, 5, 7, 9];
 static LIMIT: u32 = 0x7FFF;
-/// A table row of constructors and operators on constants is data.
-const MASK: u16 = TILE << 4 | 0b1100;
+const MASK: u16 = 0b1100;
+/// A typed table is data: literals, paths, references, tuples, arrays, struct literals and calls
+/// whose every argument is data.
+const STEPS: &[(Speed, Kind)] = &[(Speed(-3), Kind::A), (Speed(5), Kind::B)];
+const DIGITS: [Speed; 3] = [Speed::new(0x009), Speed::new(0x000), Speed::new(0x001)];
+const START: Grid = Grid::filled(Speed::new(7), [TILE; 3], ::clean_types::Speed(-2));
+static BASE: Pad = Pad { a: true, b, ..Pad::new(3) };
+/// A string that runs over lines is one literal.
+const NOTED: (&str, u16) = ("a note that runs \
+    over two lines", 7);
+/// A range whose ends are literals or constants is data.
+const WINDOWS: [Range<u16>; 3] = [0x280..0x500, 2..=TILE, -3..Grid::MAX];
 
 /// An enum's discriminants are declarations.
 pub enum Kind {

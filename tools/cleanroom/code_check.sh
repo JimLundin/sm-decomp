@@ -21,8 +21,11 @@
 #     denied only through a group (pedantic, nursery) may be expected with its reason.
 #   magic-literal  (L2) a number other than 0 or 1 in logic. Allowed in test code (tests/,
 #     tests.rs, #[cfg(test)] items), attributes, struct/enum/union/type items, a constant's or
-#     static's head and value (unless the value holds behaviour, as `tools size` decides), array
-#     lengths and tuple fields. Both rules are tools/cleanroom/lint_scan.awk.
+#     static's head and value while the value is data (L3, as `tools size` decides: literals,
+#     paths, tuples, arrays, struct literals, calls whose every argument is data and ranges
+#     whose two ends are literals or paths; a method
+#     call, an operator, control flow, a closure or a macro makes it logic), array lengths and
+#     tuple fields. Both rules are tools/cleanroom/lint_scan.awk.
 # Manifest: build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
 #   dep-registry (not in allowed_deps.txt, or not at its pinned version) target-path
 #   manifest-section ([patch], [replace], [workspace])

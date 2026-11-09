@@ -9,8 +9,9 @@
 #                that names a lint in `denied`. A lint denied only through a group (pedantic,
 #                nursery) may be expected, with its reason.
 # magic-literal  (L2) a number other than 0 or 1 in logic. Exempt: test code, attributes,
-#                struct/enum/union/type items, a constant's head, a constant's value unless it
-#                holds behaviour (the counter's L3), an array length (`[T; N]`, `[x; N]`) and a
+#                struct/enum/union/type items, a constant's head, a constant's value while it is
+#                data (the counter's L3: literals, paths, tuples, arrays, struct literals and
+#                calls whose arguments are data), an array length (`[T; N]`, `[x; N]`) and a
 #                tuple field (`.2`).
 function isid(ch) { return ch ~ /^[A-Za-z0-9_]$/ }
 function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = NR }
@@ -22,10 +23,16 @@ BEGIN {
 }
 {
   line = $0; len = length(line); i = 1
+  # A string that spans lines is one literal: its first line added it; its closing `"` ends it.
+  if (instr) { j = index(line, "\""); if (!j) next; instr = 0; i = j + 1 }
   while (i <= len) {
     c = substr(line, i, 1)
     if (c ~ /[ \t\r]/) { i++; continue }
-    if (c == "\"") { j = index(substr(line, i + 1), "\""); add("lit", "\"\""); i += (j > 0 ? j + 1 : len); continue }
+    if (c == "\"") {
+      j = index(substr(line, i + 1), "\""); add("lit", "\"\"")
+      if (j) i += j + 1; else { instr = 1; i = len + 1 }
+      continue
+    }
     if (c == "'") {
       if (substr(line, i + 1, 1) == "'") { add("lit", "''"); i += 2; continue }
       j = i + 1; while (j <= len && isid(substr(line, j, 1))) j++
@@ -76,20 +83,91 @@ function ends_item(p) {
   return p == 0 || (kind[p] == "punct" && text[p] == ";") || (kind[p] == "open" && text[p] == "{") \
     || kind[p] == "close" || (kind[p] == "word" && (text[p] == "pub" || text[p] == "mut"))
 }
-# Whether the tokens a..b-1 hold behaviour, as the size counter's L3 decides.
-function behaviour(a, b,   k, w, p) {
-  for (k = a; k < b; k++) {
-    w = text[k]; p = k > a ? k - 1 : 0
-    if (kind[k] == "word") {
-      if (w ~ /^(if|match|loop|while|for|let|fn|move)$/) return 1
-      if (w ~ /^[a-z_]/ && w !~ /^(mut|as|in|return|ref|dyn|impl|const|unsafe|crate|super|self)$/ \
-          && ((kind[k + 1] == "open" && text[k + 1] == "(") || (text[k + 1] == "::" && text[k + 2] == "<"))) return 1
-    } else if (kind[k] == "punct") {
-      if (w == "!" && p && kind[p] == "word") return 1
-      if ((w == "|" || w == "||") && (!p || kind[p] == "open" || text[p] ~ /^(,|;|:|=>)$/)) return 1
-    }
+# Whether the tokens a..b-1, a constant's value, hold behaviour, as the size counter's L3 decides:
+# anything but one data expression. Data is a literal, a minus on a literal, a reference to data,
+# a path (a constant, an enum variant, a unit struct), a tuple, an array (`[a, b]`, `[a; N]`), a
+# struct literal whose fields are data, a call of a path whose every argument is data
+# (`Picture::new(0x009)`), or a range whose two ends are literals or paths (`0x280..0x500`). A
+# method call on a value, a field, an index, a turbofish, control flow, a closure, a macro and
+# every other operator are logic.
+function behaviour(a, b) { at = a; lim = b; return !(data_expr() && at == lim) }
+function is_kw(w) {
+  return w ~ /^(as|async|await|break|const|continue|dyn|else|enum|extern|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|static|struct|trait|type|union|unsafe|use|where|while|yield)$/
+}
+function tok(k, t) { return at < lim && kind[at] == k && (t == "" || text[at] == t) }
+# Each data_* advances `at` past one form and returns 1, or returns 0.
+function data_expr(   from) {
+  from = at
+  if (data_range_end() && (tok("punct", "..") || tok("punct", "..="))) {
+    at++
+    if (data_range_end()) return 1
+    return 0
+  }
+  at = from
+  if (tok("num") || tok("lit")) { at++; return 1 }
+  if (tok("punct", "-")) { at++; if (tok("num") || tok("lit")) { at++; return 1 } return 0 }
+  if (tok("punct", "&")) { at++; return data_expr() }
+  if (tok("open", "(")) { at++; return data_list() }
+  if (tok("open", "[")) { at++; return data_array() }
+  if (tok("word") || tok("punct", "::")) {
+    if (!data_path()) return 0
+    if (tok("open", "(")) { at++; return data_list() }
+    if (tok("open", "{")) { at++; return data_fields() }
+    return 1
   }
   return 0
+}
+function data_path() {
+  if (tok("punct", "::")) at++
+  while (1) {
+    if (!tok("word") || is_kw(text[at])) return 0
+    at++
+    if (!tok("punct", "::")) return 1
+    at++
+  }
+}
+# A range's end: a literal (a minus on one included) or a path that neither calls nor builds.
+function data_range_end() {
+  if (tok("num") || tok("lit")) { at++; return 1 }
+  if (tok("punct", "-")) { at++; if (tok("num") || tok("lit")) { at++; return 1 } return 0 }
+  if (!tok("word") && !tok("punct", "::")) return 0
+  if (!data_path()) return 0
+  return !tok("open", "(") && !tok("open", "{")
+}
+function data_list() {
+  while (1) {
+    if (tok("close")) { at++; return 1 }
+    if (!data_expr()) return 0
+    if (tok("punct", ",")) { at++; continue }
+    if (tok("close")) { at++; return 1 }
+    return 0
+  }
+}
+function data_array(   from) {
+  from = at
+  if (data_expr() && tok("punct", ";")) {
+    at++
+    if (!data_expr() || !tok("close")) return 0
+    at++; return 1
+  }
+  at = from
+  return data_list()
+}
+function data_fields() {
+  while (1) {
+    if (tok("close")) { at++; return 1 }
+    if (tok("punct", "..")) {
+      at++
+      if (!data_expr() || !tok("close")) return 0
+      at++; return 1
+    }
+    if (!tok("word") && !tok("num")) return 0
+    at++
+    if (tok("punct", ":")) { at++; if (!data_expr()) return 0 }
+    if (tok("punct", ",")) { at++; continue }
+    if (tok("close")) { at++; return 1 }
+    return 0
+  }
 }
 function mark(a, b, r,   k) { for (k = a; k < b; k++) region[k] = r }
 # A lint-control attribute's findings: the attribute spans a..b-1.

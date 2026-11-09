@@ -33,6 +33,17 @@ is imported, so keep to them as you go:
 - No bare number other than 0 and 1 in the model's logic. Name it, or put it in `Rules` or a
   named constant. A constant that holds a number the spec gives is a fact of the spec, not one
   you invented.
+- A constant's value may hold numbers while it states data: literals (a negative one included),
+  other constants, enum variants, references, struct and tuple-struct literals, arrays, tuples,
+  a constructor such as `T::new(..)` or `f(..)` given only data as its arguments, and a range
+  whose two ends are literals or constants (`0x280..0x500`). A table
+  of typed values such as `[Picture::new(0x009), Picture::new(0x000)]` or
+  `Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None)` is data. A value that also does
+  something is logic, and its numbers are bare: control flow (`if`, `match`, loops, `?`), a
+  block, a closure, a macro, a method call on a value (`Divisor::new(100).expect(..)`,
+  `.unwrap()`), a field or an index, a cast, a range with arithmetic or a call at an end
+  (`0..A + 1`), or any other operator but the minus of a negative literal (`A | B`). Where a constructor can fail, name its number in a constant of
+  its own first (`Divisor::new(ENERGY_DIVISOR).expect(..)`).
 - No `allow` attribute at all; every `expect` gives a `reason`. Outside tests, no `expect` names
   a lint the workspace denies by name, a denied group or `warnings`; a lint denied only through
   a group (such as `struct_excessive_bools`) may be expected with its reason.

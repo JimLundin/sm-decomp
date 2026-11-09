@@ -153,8 +153,6 @@ fn a_table_of_constructors_stays_data() {
     let size = of(rows);
     assert_eq!((size.logic, size.score), (0, Score(0)));
     assert!(size.data > 0);
-    // Arithmetic and bit operators on constants are a stated value, not behaviour.
-    assert_eq!(of("const M: u16 = A | B << 4;").logic, 0);
 }
 
 #[test]
@@ -167,9 +165,47 @@ fn a_per_situation_column_of_enum_values_stays_data() {
     assert_eq!((size.logic, size.score), (0, Score(0)));
     assert!(size.data > 0);
     // The same decision written as a method on the row is logic.
-    let method =
-        "const SITUATIONS: &[Situation] = &[Situation { ledge: Ledge::of(Doing::Turning) }];";
+    let method = "const SITUATIONS: &[Situation] = &[Situation { ledge: Doing::Turning.ledge() }];";
     assert!(of(method).logic > 0);
+}
+
+#[test]
+fn a_constant_built_from_data_is_data() {
+    // Each form a value that is data may take (root's L3 ruling, 2026-11-09).
+    for value in [
+        "3",
+        "-3",
+        "\"text\"",
+        "true",
+        "COLOURS_3",
+        "Flip::None",
+        "::m::A",
+        "Self::A",
+        "&A",
+        "(1, B)",
+        "()",
+        "[1, 2,]",
+        "[0; 16]",
+        "[Picture::new(0x009); N]",
+        "S { a: 1, b, ..BASE }",
+        "S(1, -2)",
+        "S {}",
+        "Some(Fixed(3))",
+        "Picture::new(0x009)",
+        "Count::new(99)",
+        "Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None)",
+        "[GridPos::at(1, 1), GridPos::at(1, 2)]",
+        "build()",
+        "Divisor::new(100)",
+        "0..16",
+        "0x280..=0x500",
+        "-2..Self::MAX",
+        "S { window: A..B }",
+    ] {
+        let size = of(&format!("const A: T = {value};"));
+        assert_eq!((size.logic, size.score), (0, Score(0)), "{value}");
+        assert!(size.data > 0, "{value}");
+    }
 }
 
 #[test]
@@ -177,16 +213,33 @@ fn a_constant_holding_behaviour_is_logic() {
     for value in [
         "if A { 1 } else { 2 }",
         "match A { B => 1, C => 2 }",
+        "loop { break 3 }",
+        "unsafe { A }",
         "{ let a = 3; a }",
+        "{ A }",
         "|a: u8| a",
         "&[(1, |a| a)]",
         "move || 0",
-        "Fixed::new(3)",
+        "Divisor::new(100).expect(\"not zero\")",
+        "Count::new(99).unwrap()",
         "A.wrapping_add(B)",
+        "Picture::new(0x009).0",
+        "TABLE[2]",
         "size_of::<u8>()",
-        "build()",
-        "[f(1), f(2)]",
+        "f(A.get(2))",
+        "[f(1), g(2)?]",
         "concat!(1)",
+        "S { a: 3 + B }",
+        "A | B << 4",
+        "-A",
+        "!A",
+        "3 as u16",
+        "0..A + 1",
+        "0..f(1)",
+        "Picture::new(0x009)..B",
+        "A.0..3",
+        "..3",
+        "Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None).flipped()",
     ] {
         let size = of(&format!("const A: T = {value};"));
         assert_eq!(size.data, 0, "{value}");

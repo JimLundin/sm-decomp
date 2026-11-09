@@ -241,14 +241,22 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   and so never paid for them; loading them is part of rebuilding the game, so the new engine
   stating them is not extra logic. A data row must state the game's data. A row that encodes a
   decision the code would otherwise make is logic, and a review moves it back.
-- **A value that holds behaviour is logic** (Jim, 2026-11-07; rule L3 in the counter). A
-  constant's or static's value that holds control flow (`if`, `match`, `loop`, `while`, `for`), a
-  binding (`let`, `fn`), a closure (`|..|`, `move`), a macro or a call is counted as logic. A call
-  is a snake-case name followed by its arguments: `f(..)`, `T::new(..)`, `x.get(..)`,
-  `size_of::<T>()`. Constructors are camel case, so a chart row built from enum variants and
-  struct literals (`Held(Key::Jump)`, `Not(&Airborne)`, `Some(Fixed(3))`) stays data, and so do
-  operators on constants (`A | B << 4`). Chart rows are data while they state the spec's chart;
-  L3 and review guard the line.
+- **A value that holds behaviour is logic** (Jim, 2026-11-07; rule L3 in the counter; refined by
+  the root, 2026-11-09). A constant's or static's value is data when it is built only from
+  literals (a minus on a literal included), other constants' names, paths to enum variants or
+  unit structs, references to data, struct and tuple-struct literals (with a `..BASE`), arrays
+  (`[a, b]`, `[a; N]`) and tuples, calls of a function or associated function whose every
+  argument is itself data by this rule, and ranges whose two ends are literals or paths
+  (`0x280..0x500`, `A..=B`). So a typed table is data: `Picture::new(0x009)`,
+  `Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None)`, `Count::new(99)`, `Held(Key::Jump)`,
+  `Some(Fixed(3))`; the constructor's body is counted as logic where it is defined. Anything else
+  makes the whole value logic: control flow (`if`, `match`, loops, `?`), a block, a closure, a
+  macro, a method call on a value (`Divisor::new(100).expect(..)`, `.unwrap()`, `.map(..)`), a
+  field or an index (`A.0`, `T[2]`), a turbofish, a cast, a range with an operator or a call at
+  either end (`0..A + 1`, `..16`), and every other operator but a minus on a literal
+  (`A | B << 4`, `-A`). Chart rows are data while they state the spec's chart;
+  L3 and review guard the line. `tools size` and `code_check.sh` apply the same rule, so the
+  import check and the counter agree.
 - **Declarations are not counted against the rule** (Jim, 2026-11-07): `tools size` reports the
   tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as
   types, on both sides. Defining shapes is what decision 6 asks for. A declaration holds no
@@ -333,8 +341,9 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     lint, with a reason, as `clippy.toml` already loosens them.
   - **L2, `magic-literal`.** A number other than 0 or 1 in logic is refused, in any spelling
     (`15_i16`, `0x7FFF`, `0b10`, `0.5`, the `15` of `0..=15`). Allowed in a constant's or
-    static's value (unless L3 makes it logic), in declarations (enum discriminants, array
-    lengths in types), in an array length `[x; N]`, as a tuple field (`.2`), in attributes and
+    static's value while L3 counts it as data (`Picture::new(0x009)` is; a `.expect(..)` on it
+    is not), in declarations (enum discriminants, array lengths in types), in an array length
+    `[x; N]`, as a tuple field (`.2`), in attributes and
     in test code. Every number traces to a named constant, a `Rules` field or a behaviour.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that

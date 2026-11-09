@@ -8,7 +8,9 @@
 //!
 //! The values of `const` and `static` items are reported apart, as data: the game's tables and
 //! parameters, which the old engine read from the ROM and the new one states (Jim, 2026-11-07).
-//! A value that holds behaviour (control flow, a closure, a call) is logic all the same.
+//! A value is data only while it is built from literals, paths, tuples, arrays, struct literals
+//! and calls whose arguments are data; anything else (control flow, a closure, a method call,
+//! an operator) holds behaviour and is logic all the same.
 //!
 //! The size rule is held on one weighted score of the logic (Jim, 2026-11-07), so that a lower
 //! score means better code. Forms that hold no behaviour weigh nothing: `use` items, `mod`
@@ -618,53 +620,143 @@ fn signature_body<'a, 'b>(tokens: &'a [Token<'b>]) -> &'a [Token<'b>] {
     rest
 }
 
-/// Keywords that start control flow or a binding, which a value that is data doesn't hold.
-const BEHAVIOUR_KEYWORDS: &[&str] = &["if", "match", "loop", "while", "for", "let", "fn", "move"];
-
-/// Lower-case keywords that can stand before a `(` without calling anything.
-const NOT_CALLS: &[&str] = &[
-    "mut", "as", "in", "return", "ref", "dyn", "impl", "const", "unsafe", "crate", "super", "self",
+/// Keywords, which never name a constant, a variant or a function in a value that is data.
+const KEYWORDS: &[&str] = &[
+    "as", "async", "await", "break", "const", "continue", "dyn", "else", "enum", "extern", "fn",
+    "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref",
+    "return", "static", "struct", "trait", "type", "union", "unsafe", "use", "where", "while",
+    "yield",
 ];
 
-/// Whether a constant's value holds behaviour, so it counts as logic (review L3): control flow,
-/// a binding, a closure, a macro, or a call to a function or a method.
-///
-/// A call is a lower-case name followed by its arguments, `f(..)`, `T::new(..)`, `x.get(..)` or
-/// `size_of::<T>()`. Rust names functions and methods in snake case and tuple structs and enum
-/// variants in camel case (the `non_snake_case` and `non_camel_case_types` lints hold it), so a
-/// table row built from constructors, `Held(Key::Jump)`, `Not(&Airborne)` or `Some(3)`, struct
-/// literals and a column of plain enum values per situation (`ledge: Falls`) stay data.
+/// Whether a constant's value holds behaviour, so it counts as logic (review L3): anything but
+/// one data expression. Data is a literal, a minus on a literal, a reference to data, a path (a
+/// constant, an enum variant, a unit struct), a tuple, an array (`[a, b]` or `[a; N]`), a struct
+/// literal whose fields are data, a call of a path whose every argument is data (the
+/// constructors of a typed table, `Picture::new(0x009)`, `Some(Fixed(3))`), or a range whose two
+/// ends are literals or paths (`0x280..0x500`, `A..=B`). Control flow, a closure, a macro, a
+/// method call on a value (`.expect(..)`), a field or an index, a turbofish and every other
+/// operator are logic, wherever they stand.
 fn holds_behaviour(value: &[Token<'_>]) -> bool {
-    let mut previous = None;
-    let mut rest = value;
-    while let Some((&token, tail)) = rest.split_first() {
-        let next = tail.first().copied();
-        let behaviour = match token {
-            Token::Word(word) if BEHAVIOUR_KEYWORDS.contains(&word) => true,
-            Token::Word(word) => {
-                let function = word.starts_with(|c: char| c.is_lowercase() || c == '_')
-                    && !NOT_CALLS.contains(&word);
-                function
-                    && matches!(
-                        (next, tail.get(1)),
-                        (Some(Token::Open('(')), _)
-                            | (Some(Token::Punct("::")), Some(Token::Punct("<")))
-                    )
-            }
-            Token::Punct("!") => matches!(previous, Some(Token::Word(_))),
-            Token::Punct("|" | "||") => matches!(
-                previous,
-                None | Some(Token::Open(_) | Token::Punct("," | ";" | ":" | "=>"))
-            ),
-            Token::Open(_) | Token::Close | Token::Punct(_) | Token::Literal(_) => false,
-        };
-        if behaviour {
-            return true;
-        }
-        previous = Some(token);
-        rest = tail;
+    after_data(value) != Some(&[])
+}
+
+/// The tokens after the data expression at the start of `tokens`, if one starts there.
+fn after_data<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    if let Some(range) = after_range(tokens) {
+        return Some(range);
     }
-    false
+    let (&token, tail) = tokens.split_first()?;
+    match token {
+        Token::Literal(_) => Some(tail),
+        Token::Punct("-") => match tail.split_first()? {
+            (Token::Literal(_), after) => Some(after),
+            _ => None,
+        },
+        Token::Punct("&") => after_data(tail),
+        Token::Open('(') => after_list(tail),
+        Token::Open('[') => after_array(tail),
+        Token::Word(_) | Token::Punct("::") => {
+            let rest = after_path(tokens)?;
+            match rest.split_first() {
+                Some((Token::Open('('), arguments)) => after_list(arguments),
+                Some((Token::Open('{'), fields)) => after_fields(fields),
+                _ => Some(rest),
+            }
+        }
+        Token::Open(_) | Token::Close | Token::Punct(_) => None,
+    }
+}
+
+/// The tokens after a range of two ends, `a..b` or `a..=b`, at the start of `tokens`.
+fn after_range<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    let (dots, end) = after_range_end(tokens)?.split_first()?;
+    if !matches!(dots, Token::Punct(".." | "..=")) {
+        return None;
+    }
+    after_range_end(end)
+}
+
+/// The tokens after a range's end, a literal (a minus on one included) or a path that neither
+/// calls nor builds anything.
+fn after_range_end<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    let rest = match tokens.split_first()? {
+        (Token::Literal(_), tail) => tail,
+        (Token::Punct("-"), tail) => match tail.split_first()? {
+            (Token::Literal(_), after) => after,
+            _ => return None,
+        },
+        (Token::Word(_) | Token::Punct("::"), _) => after_path(tokens)?,
+        _ => return None,
+    };
+    match rest.first() {
+        Some(Token::Open('(' | '{')) => None,
+        _ => Some(rest),
+    }
+}
+
+/// The tokens after a path, `A`, `Key::Jump` or `::m::A`, at the start of `tokens`.
+fn after_path<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    let mut rest = tokens.strip_prefix(&[Token::Punct("::")]).unwrap_or(tokens);
+    loop {
+        let (Token::Word(word), tail) = rest.split_first()? else {
+            return None;
+        };
+        if KEYWORDS.contains(word) {
+            return None;
+        }
+        match tail.strip_prefix(&[Token::Punct("::")]) {
+            Some(next) => rest = next,
+            None => return Some(tail),
+        }
+    }
+}
+
+/// The tokens after a comma-separated list of data and its closing bracket; `tokens` follows the
+/// opening one.
+fn after_list<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    let mut rest = tokens;
+    loop {
+        if let Some(after) = rest.strip_prefix(&[Token::Close]) {
+            return Some(after);
+        }
+        let item = after_data(rest)?;
+        match item.split_first()? {
+            (Token::Punct(","), next) => rest = next,
+            (Token::Close, after) => return Some(after),
+            _ => return None,
+        }
+    }
+}
+
+/// The tokens after an array, `[a, b]` or `[a; N]`; `tokens` follows its `[`.
+fn after_array<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    let repeated = after_data(tokens).and_then(|item| item.strip_prefix(&[Token::Punct(";")]));
+    match repeated {
+        Some(length) => after_data(length)?.strip_prefix(&[Token::Close]),
+        None => after_list(tokens),
+    }
+}
+
+/// The tokens after a struct literal's fields and its `}`; `tokens` follows its `{`. A field is
+/// `name: data` or a shorthand `name`, and a base `..data` may come last.
+fn after_fields<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    let mut rest = tokens;
+    loop {
+        let field = match rest.split_first()? {
+            (Token::Close, after) => return Some(after),
+            (Token::Punct(".."), base) => return after_data(base)?.strip_prefix(&[Token::Close]),
+            (Token::Word(_) | Token::Literal(_), tail) => match tail.split_first()? {
+                (Token::Punct(":"), value) => after_data(value)?,
+                _ => tail,
+            },
+            _ => return None,
+        };
+        match field.split_first()? {
+            (Token::Punct(","), next) => rest = next,
+            (Token::Close, after) => return Some(after),
+            _ => return None,
+        }
+    }
 }
 
 /// The counted tokens of a run: all but closing brackets.
