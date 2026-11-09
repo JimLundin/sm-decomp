@@ -18,7 +18,7 @@
 //! the model's choice over the room's conditions, and the items its state places (the PLM
 //! domain's `ItemsPlaced`) come from the ROM, so neither copies an answer.
 //!
-//! The null model is progress left as record N has it, and no room state chosen.
+//! The null model is progress left as record N has it, and the room loaded in its default state.
 
 use core::cell::RefCell;
 use core::fmt;
@@ -367,7 +367,8 @@ pub struct Upstream {
 pub struct Held {
     /// The progress.
     progress: Progress,
-    /// The state the model chose for the room loaded in the frame, by its place in the list.
+    /// The room's state, by its place in the list: its default as decoded, the model's choice
+    /// when a room loads in the frame.
     room_state: Option<usize>,
 }
 
@@ -420,6 +421,13 @@ impl Declared {
 pub struct ProgressDomain {
     image: Vec<u8>,
     rooms: RefCell<BTreeMap<u16, Rc<RoomStatesAt>>>,
+}
+
+impl RoomStatesAt {
+    /// The default state's place in the list: the last.
+    const fn default_state(&self) -> usize {
+        self.headers.len().saturating_sub(1)
+    }
 }
 
 impl ProgressDomain {
@@ -694,9 +702,11 @@ impl Domain for ProgressDomain {
     }
 
     fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(Held, ()), Skip> {
+        // The room pointer is the new room's from the door's load on, well before its state is
+        // chosen, so record N's room is the one a load in the frame loads.
         let held = Held {
             progress: progress(from)?,
-            room_state: None,
+            room_state: self.room_of(from).ok().map(|room| room.default_state()),
         };
         Ok((held, ()))
     }
@@ -719,6 +729,11 @@ impl Domain for ProgressDomain {
     }
 
     fn masks(&self, from: &FrameRecord, next: &FrameRecord, (): &()) -> Result<Vec<Mask>, Skip> {
+        // Record N+1's quantities are read here only to find the frames another domain's
+        // writer moved them: on those the field isn't the model's, on every other frame it is
+        // compared, so a report that wrongly moves it is caught.
+        let (before, after) = (progress(from)?, progress(next)?);
+        let (was, now) = (&before.inventory, &after.inventory);
         let mut masks = Vec::new();
         let mut mask = |reason, fields| masks.push(Mask { reason, fields });
         let tank = self.stand_in(from, next)?.iter().any(|report| {
@@ -730,17 +745,27 @@ impl Domain for ProgressDomain {
                 }
             )
         });
-        if !tank {
+        if !tank && now.held != was.held {
             mask(
-                "another domain: the energy and weapons domains spend and refill what she holds; compared only with a tank",
+                "another domain: the energy and weapons domains spent or refilled what she holds, with no tank",
                 HELD,
             );
         }
         if paused(from)? || paused(next)? {
-            mask(
-                "another domain: the equipment screen switches items and beams and sets the reserve mode",
-                ITEMS_ON.union(BEAMS_ON).union(RESERVE_MODE),
-            );
+            let switched = [
+                (ITEMS_ON, now.items.switched_on != was.items.switched_on),
+                (BEAMS_ON, now.beams.switched_on != was.beams.switched_on),
+                (RESERVE_MODE, now.reserve_mode != was.reserve_mode),
+            ]
+            .into_iter()
+            .filter(|&(_, changed)| changed)
+            .fold(FieldSet::EMPTY, |set, (field, _)| set.union(field));
+            if switched != FieldSet::EMPTY {
+                mask(
+                    "another domain: the equipment screen switched items or beams or set the reserve mode",
+                    switched,
+                );
+            }
         }
         if mother_brain(from)? || mother_brain(next)? {
             mask(

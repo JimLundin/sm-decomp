@@ -184,7 +184,8 @@ pub trait Domain {
     fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Self::World, Self::Skip>;
 
     /// The fields out of the domain's scope on the frame from `from` to `next`. A mask may read
-    /// record N and the neighbours' answers, never the declared fields of record N+1.
+    /// record N and the neighbours' answers, and record N+1's declared fields only to find the
+    /// frames another domain's writer moved them.
     ///
     /// # Errors
     ///

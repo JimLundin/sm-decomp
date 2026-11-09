@@ -153,8 +153,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | camera | bridge | 1 | 700 | 889 | 39 | 1 | 13 | 0 | 132 |
 | camera | harness | 1 | 2,958 | 3,289 | 456 | 105 | 130 | 22 | 588 |
 | progress | bridge | 1 | 1,355 | 1,558 | 57 | 69 | 52 | 0 | 235 |
-| progress | harness | 1 | 4,261 | 4,409 | 569 | 196 | 339 | 26 | 679 |
-| total | | | 15,877 | 17,787 | 1,833 | 605 | 823 | 64 | 2,886 |
+| progress | harness | 1 | 4,439 | 4,569 | 569 | 196 | 362 | 26 | 696 |
+| total | | | 16,055 | 17,947 | 1,833 | 605 | 847 | 64 | 2,903 |
 
 ## Harness floors and vectors
 
