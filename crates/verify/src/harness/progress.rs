@@ -12,7 +12,8 @@
 //! ROM: an instruction that marks one event, a zebetite destroyed, a map station, the room that
 //! gives its map on arrival, leaving the area, the gunship's station; and a pickup, when the
 //! frame sets one place emptied and record N holds one item PLM, its place not yet emptied, whose
-//! list (read from the ROM) runs the pickup instruction hit. The hits carry no arguments, so
+//! list (read from the ROM) runs the pickup instruction hit, and none whose pickup the ROM
+//! doesn't decode, since that one could be the PLM taken. The hits carry no arguments, so
 //! what an instruction can't name alone (the kind of boss defeated, the door opened, the station
 //! saved at, an event a PLM or the statues mark) is stood in for from what record N+1 shows
 //! changed: a place newly emptied is the pickup of the item PLM record N holds with that room
@@ -719,16 +720,20 @@ impl ProgressDomain {
         let emptying = next.hits.iter().filter(|hit| hit.pc == SET_EMPTIED).count();
         if emptying == 1 {
             let was = progress(from)?;
-            let taken: Vec<Report> = item_plms(from)?
+            // A PLM whose pickup the spec doesn't name may be the one that emptied its place, so
+            // it stays a candidate, one that can't be heard: the frame's pickup is then stood in.
+            let candidates: Vec<Option<Report>> = item_plms(from)?
                 .into_iter()
-                .filter_map(|(plm, argument)| {
-                    let (instruction, pickup) = self.pickup(plm).ok()?;
-                    let location = progress_world::place(argument);
-                    (ran(instruction) && !was.emptied.contains(location))
-                        .then_some(Report::Taken { pickup, location })
+                .filter(|&(_, argument)| !was.emptied.contains(progress_world::place(argument)))
+                .filter_map(|(plm, argument)| match self.pickup(plm) {
+                    Ok((instruction, pickup)) => ran(instruction).then_some(Some(Report::Taken {
+                        pickup,
+                        location: progress_world::place(argument),
+                    })),
+                    Err(_) => Some(None),
                 })
                 .collect();
-            if let [taken] = taken[..] {
+            if let [Some(taken)] = candidates[..] {
                 reports.push(taken);
             }
         }
