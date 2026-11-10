@@ -35,7 +35,7 @@ frames. The observer's tools, all in `$TEMP/collab/blocks-spec`:
   from different rows, from frames the model matches with the hits' inputs; `rec.toml`), all of
   them harness cases now; `cons.py` writes the vectors, all constructed, over `invented.py` (their
   after from the model), `assemble.py` writes `scenarios/vectors/blocks.toml` with the invented
-  reactions they use, and `vec.py` runs every vector through the model: 96 of 96 agree. It also
+  reactions they use, and `vec.py` runs every vector through the model: 99 of 99 agree. It also
   refuses a reaction name no table holds, a flipped whole look, a wait outside 1 to 32,767, and a
   `remembers` given for a script with no `Regrow`.
 - `cut.py` cuts the old code into the areas' files in `old/` for `tools size`.
@@ -327,8 +327,8 @@ delete themselves at the next pass (`$84:AAE3`), so they hold a place until it a
 | TheScriptsRun | PLM handler `$84:85B4` (slots 4Eh down to 0; paused while `$1C23` bit 15 is clear, `$84:85BA`), Process PLM `$84:85DA` (timer decrement `$84:85E0`, instruction loop `$84:85EE`, draw `$84:85FD`..`$84:861A`), sleep and delete `$84:86B4`, `$84:86BC`; Game state 8 `$82:8B44` (the PLM handler after Samus's handlers and the projectiles, `$82:8B71`) |
 | PatternCells* | Process PLM draw instruction `$84:861E` (row and column loops, `$84:8664` offsets); the BTS is never written by a draw |
 | Regrowing | draw PLM block `$84:8B17`/`$84:8B05` (`$1E17` written back, timer 1, `$84:8B34`); the respawn block `[block] & F000h | tile` in each setup (`$84:CE49`, `$84:CE25`, `$84:CE72`, `$84:CEC8`, `$84:CF4F`, `$84:CF88`) |
-| RoomStart | Spawn room PLM `$84:846A`; extension setups `$84:B33A`..`$84:B35B` (write block and BTS `$84:82B4`, delete `$84:B333`); scroll PLM setup `$84:B371` (`3046h`: special air, BTS 46h; skip the debug draw `$84:B366`) |
-| ScrollCells | special air collision `$94:906F`/`$94:909D` and special block collision `$94:90CB`/`$94:9102` (BTS 46h → `$B6FF`); inside reaction `$94:9956` (centre only); scroll block touch setup `$84:B393` (search by block index `$84:B39D`, triggered flag `$84:B3A8`, `$1D27` += 2, timer 1; the hang `$84:B3A6`); scroll PLM list `$84:AF86`, process air scroll update `$84:8B55` |
+| RoomStart | Spawn room PLM `$84:846A`; extension setups `$84:B33A`..`$84:B35B` (write block and BTS `$84:82B4`, delete `$84:B333`); scroll PLM setup `$84:B371` (`3046h`: special air, BTS 46h, the tile kept by `$84:82B4`; skip the debug draw `$84:B366`) |
+| ScrollCells | special air collision `$94:906F`/`$94:909D` and special block collision `$94:90CB`/`$94:9102` (BTS 46h → `$B6FF`); inside reaction `$94:9956` (centre only); the list's pairs written in order, `$84:8B68`..`$8B77`; scroll block touch setup `$84:B393` (search by block index `$84:B39D`, triggered flag `$84:B3A8`, `$1D27` += 2, timer 1; the hang `$84:B3A6`); scroll PLM list `$84:AF86`, process air scroll update `$84:8B55` |
 | CrumbleBlocks | special block collision `$94:90CB`/`$94:9102` → `$94:9139` BTS 0..7; setup `$84:CE37` (`$0B02` = 3) |
 | SpeedBlocks | `$94:9139` BTS Eh/Fh, Brinstar 82h..85h (`$94:91F9`); setup `$84:CDEA` |
 | BombBlocks | bombable collision `$94:932D`/`$94:934C`, `$94:92F9`/`$94:9313` → `$94:936B`, setup `$84:CE83`; bombable shot/bombed/grappled reaction `$94:9FF4`/`$94:9FD6` → `$94:A012`, setup `$84:CEDA` (bomb: `$1D27` += 3 past the list's sound, `$84:CF0C`; the grapple reads a stale `$0DDE`, LEGACY) |
@@ -398,6 +398,17 @@ content is the draw routine's, which the format names by what each cell becomes.
 - **The shootable blocks and her touch.** Her touch never asks a shootable cell's PLM (solid by
   body, `$94:8F49`), so the way, her motion and the full places change nothing
   (C-shot-touch-look, C-shot-touch-full).
+- **Inside, whatever the mark.** `$94:9B16` reads only the cell's BTS: below 80h its jump table
+  (`$9966`: 46h the scroll cell's centre, 8..Bh the treadmills), from 80h the area's inside table
+  (`$9B06`). Her touch, a shot, a blast and the grapple read their own tables, so whether she holds
+  a place inside a cell doesn't depend on the mark they give it: a cell marked `Other` whose inside
+  table gives `$B62F` holds one (C-other). No cell of the game holds one (§The importer's scan).
+- **A scroll cell's inside.** The scroll PLM's setup writes `3046h` through `$84:82B4`, which keeps
+  the tile and replaces the BTS, so a placed scroll cell's inside is the scroll's centre (46h)
+  whatever its BTS was, and never a hold: the two can't meet on one cell. The spec says it by the
+  room's start (C-room-scroll-over-hold).
+- **A scroll list's order.** The update writes each pair of the list in turn (`$84:8B68`..`$8B77`),
+  so a screen a list names twice takes its later value (C-scroll-list-order).
 - **Inside a cell that holds a place, as a block.** The inside reaction pointers (`$94:9B40`) ask
   special air only; a `Show` of `Block` can make such a cell a special block keeping its BTS, and
   then she holds no place there (C-nothing-block-holds-none).

@@ -109,8 +109,9 @@ the room's other kinds (slopes, spikes, doors, ...) are samus-motion's and the o
 
 A mark that names a reaction always names one of the room's reactions: the room's loading
 refuses a room with a mark that names none (R2), so this domain never meets one. A reacting cell's
-mark may also say that she holds a place when she is inside it; it holds one only while the cell
-is reacting air (`BlocksMarkedNothing`). For a stand-in, the mark is its reach, a signed number of
+mark may also say that she holds a place when she is inside it, whatever else it says, `Other`
+included; it holds one only while the cell is reacting air (`BlocksMarkedNothing`). A scroll cell's
+mark never says so (`RoomStart`). For a stand-in, the mark is its reach, a signed number of
 cells. A step changes a cell's kind and look, never its mark, so a block that has crumbled into
 air still carries its mark and grows back as the same block.
 
@@ -293,7 +294,8 @@ is `none`.
 - switch: none.
 - Each placement takes a place as any start does (`Places`).
 - A scroll cell placed → its cell becomes `ReactingAir` marked `Scroll`, keeping its look, and its
-  reaction holds its place with its changes [C-room-scroll, C-room-stand-in]
+  mark holds no place when she is inside it, whatever it held before; its reaction holds its place
+  with its changes [C-room-scroll, C-room-stand-in, C-room-scroll-over-hold]
 - A stand-in placed → its cell becomes that stand-in, marked with its reach, and its place is free
   again at once [C-room-stand-in, C-room-down]
 - Another part's placement → it holds its place, as its part says [C-room-others]
@@ -318,15 +320,18 @@ is `none`.
 - A scroll cell touched with every place taken → it isn't touched [C-scroll-full]
 - A touched scroll reaction, in the next run that isn't paused → each of its changes sets its
   screen's kind, in the order the changes are listed, and it is no longer touched [C-scroll-move,
-  C-scroll-after-pause]
+  C-scroll-after-pause, C-scroll-list-order]
 - So a second touch of a scroll cell before its run leaves it touched, and the run sets its
   screens as for one touch (C-scroll-twice, C-scroll-paused); one touched on every frame she stays
   in it sets screens that already have their kinds, which shows nothing; and of two scroll cells
   touched in one frame whose changes name the same screen, the lower place's change stays
-  (C-scroll-order).
+  (C-scroll-order), as the later change stays of a list that names a screen twice
+  (C-scroll-list-order).
 - A scroll cell is air to her (`ReactingAir`), so she passes through it as she touches it.
 - A room never has a scroll cell without a scroll reaction on it: the room's loading refuses such a
-  room (R2), so this domain never meets one.
+  room (R2), so this domain never meets one. Nor does it meet a scroll cell whose mark holds a place
+  when she is inside it: the room's start makes a scroll cell's mark hold none (`RoomStart`), so at
+  her centre she touches it and holds no other place (C-room-scroll-over-hold).
 - checked: oracle (197 scroll touches over 44 rows, as the harness cases show: the Morph Ball
   Room's shaft opening and closing a screen as she climbs and falls, area-brinstar:92 and 391 and
   item-morph-ball:92 and 391; touches every frame, area-brinstar:93 and r02:47; at her centre,
@@ -453,9 +458,9 @@ names; "the whole look" is that reaction's (§2).
 - A bomb's blast reaches a crumble or speed block that is a block to her → its `revealed` script
   starts, leaving the cell as it is until the script's show [C-reveal-crumble, C-reveal-crumble-2x1,
   C-reveal-speed]
-- A power bomb's blast, a beam, a missile or the grapple reaches one, or a bomb reaches one that
-  is air to her → its reaction doesn't start [C-reveal-power-bomb, C-reveal-air,
-  C-reveal-speed-air, C-grapple-others]
+- A power bomb's blast, a beam, a missile of either kind or the grapple reaches one, or a bomb
+  reaches one that is air to her → its reaction doesn't start [C-reveal-power-bomb,
+  C-speed-by-weapons, C-reveal-air, C-reveal-speed-air, C-grapple-others]
 - So the revealed script shows the block's whole look as `Block` for a frame and ends
   (C-reveal-ends): the block is unchanged but for its look.
 - checked: constructed; on record with no vector, r11's frames 140 to 158, where the oracle saw a
@@ -483,8 +488,8 @@ names; "the whole look" is that reaction's (§2).
 - kind: quirk.
 - summary: a cell marked `Nothing` reacts to nothing, but what would ask a block of its family to
   react still takes a place until the run, and a touch of one passes through; a cell marked
-  `Inert` takes none; a cell marked `Other` is its part's, but for a blast on one met as crumble
-  blocks.
+  `Inert` takes none; a cell marked `Other` is its part's, but for the place its mark may hold
+  when she is inside it, and for a blast on one met as crumble blocks.
 - params: none.
 - switch: parameter (the rows of the rules for the cells marked `Nothing`, one for each family they
   are met as: which touches and hits take a place; the reference rules hold the rows this entry
@@ -501,16 +506,18 @@ names; "the whole look" is that reaction's (§2).
 - A beam, a missile or the grapple reaching one met as crumble blocks, or any blast reaching
   reacting air met as them → it takes no place [C-nothing-beam-crumble, C-nothing-blast-air,
   C-nothing-grapple]
-- She is inside reacting air whose mark holds a place when she is inside it → at each point it
-  takes the highest free place until this frame's run [C-nothing-inside]
+- She is inside reacting air whose mark holds a place when she is inside it, whatever else the
+  mark says → at each point it takes the highest free place until this frame's run
+  [C-nothing-inside, C-other]
 - A block whose mark holds a place when she is inside it, with her in it → it takes no place
   [C-nothing-block-holds-none]
 - With every place taken → it takes none, and nothing else changes [C-nothing-full,
   C-nothing-inside-full, C-other-blast-full]
 - A cell marked `Inert`, touched or hit → it takes no place, and she meets it by its body
   [C-inert]
-- A touch, an inside or any other hit of a cell marked `Other` → the touch is answered `Other`,
-  for its part answers it, and the cell and the places stay as they were [C-other, C-other-blast]
+- A touch or any other hit of a cell marked `Other`, or she inside one whose mark holds no place
+  when she is inside it → the touch is answered `Other`, for its part answers it, and the cell and
+  the places stay as they were [C-other, C-other-blast]
 - So a later start in the same frame takes the place below the one it holds (C-nothing-touch,
   C-nothing-hit, C-other-blast); a power bomb set off in a room with a station or a save station
   holds a place for each of their cells it reaches.

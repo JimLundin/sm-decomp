@@ -33,9 +33,9 @@ How it is counted:
 | camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
 | progress | 979 | 878 | 1.12 | - | 488 | 163 | 25,419 | 66 |
 | hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
-| blocks | 2,872 | 1,992 | 1.44 | - | 1,068 | 479 | 20,530 | 96 |
+| blocks | 2,872 | 1,992 | 1.44 | - | 1,068 | 479 | 20,530 | 99 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 790 | - | - | - | 479 | 132 | - | - |
-| total | 17,667 | 13,574 | 1.30 | - | 7,468 | 2,945 | 103,465 | 562 |
+| total | 17,667 | 13,574 | 1.30 | - | 7,468 | 2,945 | 103,465 | 565 |
 
 ## Models
 
@@ -280,7 +280,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | camera | 80 | 0 |
 | progress | 66 | 0 |
 | hud | 62 | 0 |
-| blocks | 96 | 0 |
+| blocks | 99 | 0 |
 
 ## Oracle coverage
 

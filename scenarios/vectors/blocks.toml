@@ -28,8 +28,8 @@
 #   "Shot" for "Nothing", and met_as = "Crumble" for an "Other" a blast meets as crumble blocks) or
 #   reach (a stand-in's, in cells); inside = "HoldsPlace" for a cell whose mark holds a place
 #   when she is inside it: it holds one only while the cell is reacting air, and a cell that is
-#   a block keeps the key. A cell's mark is given wherever it is known, the kinds that don't
-#   read it included; the model must keep it.
+#   a block keeps the key; a scroll cell never has it (RoomStart). A cell's mark is given
+#   wherever it is known, the kinds that don't read it included; the model must keep it.
 # - places: the running reactions, each { place, reaction, script, cell, next (the index of its
 #   next step in the script, from 0), wait (the frames it still waits, 1 to 32,767), remembers
 #   (what it grows back as: "Block" or "ReactingAir"; given for every running reaction whose
@@ -696,6 +696,29 @@ other_parts = [39]
 screens = ["OCC", "OOO"]
 
 [[vector]]
+# the room places a scroll cell on reacting air whose mark held a place when she is inside it: it becomes a scroll cell, which holds none
+id = "C-room-scroll-over-hold"
+source = "constructed"
+entries = ["RoomStart", "ScrollCells"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "Nothing", met_as = "Crumble", inside = "HoldsPlace" },
+]
+places = [
+]
+screens = ["OCC", "OOO"]
+[vector.frame]
+placements = [{ scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3C0", mark = "Scroll" },
+]
+places = [
+  { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }], cell = [4, 7] },
+]
+screens = ["OCC", "OOO"]
+
+[[vector]]
 # a stand-in placed for the cell above
 id = "C-room-down"
 source = "constructed"
@@ -905,6 +928,33 @@ places = [
 ]
 screens = ["OCS", "OOO"]
 answers = ["Air", "Air"]
+written = []
+sounds = []
+
+[[vector]]
+# a scroll cell whose changes name one screen twice: the run sets them in the order listed, so the later change stays
+id = "C-scroll-list-order"
+source = "constructed"
+entries = ["ScrollCells"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+]
+places = [
+  { place = 39, scroll = [{ screen = [1, 0], becomes = "Short" }, { screen = [2, 0], becomes = "Open" }, { screen = [1, 0], becomes = "Open" }], cell = [4, 7] },
+]
+screens = ["OCC", "OOO"]
+[vector.frame]
+requests = [{ touch = [4, 7], way = "Right" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "ReactingAir", look = "3FF", mark = "Scroll" },
+]
+places = [
+  { place = 39, scroll = [{ screen = [1, 0], becomes = "Short" }, { screen = [2, 0], becomes = "Open" }, { screen = [1, 0], becomes = "Open" }], cell = [4, 7] },
+]
+screens = ["OOO", "OOO"]
+answers = ["Air"]
 written = []
 sounds = []
 
@@ -1902,13 +1952,14 @@ written = []
 sounds = []
 
 [[vector]]
-# a power bomb's blast or a beam on a crumble block changes nothing
+# a power bomb's blast or a beam on a crumble block, and a power bomb's blast on a speed block, change nothing
 id = "C-reveal-power-bomb"
 source = "constructed"
-entries = ["BombsReveal"]
+entries = ["BombsReveal", "SpeedBlocks"]
 [vector.before]
 cells = [
   { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "3A0", reaction = "speed" },
 ]
 places = [
 ]
@@ -1916,10 +1967,38 @@ places = [
 requests = [
   { hit = [4, 7], by = "PowerBomb" },
   { hit = [4, 7], by = "Beam" },
+  { hit = [5, 7], by = "PowerBomb" },
 ]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "3A0", reaction = "speed" },
+]
+places = [
+]
+written = []
+sounds = []
+
+[[vector]]
+# a beam, a missile and a super missile on a hidden speed block change nothing
+id = "C-speed-by-weapons"
+source = "constructed"
+entries = ["SpeedBlocks", "BombsReveal"]
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "speed" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Beam" },
+  { hit = [4, 7], by = "Missile" },
+  { hit = [4, 7], by = "SuperMissile" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "speed" },
 ]
 places = [
 ]
@@ -2433,15 +2512,16 @@ written = [[4, 7]]
 sounds = [{ sound = "Pop", queue_limit = 4 }]
 
 [[vector]]
-# the grapple reaches a bomb, a super missile, a power bomb and a crumble block: none starts
+# the grapple reaches a bomb, a super missile, a power bomb, a crumble and a speed block: none starts
 id = "C-grapple-others"
 source = "constructed"
-entries = ["BombBlocks", "SuperMissileBlocks", "PowerBombBlocks", "BombsReveal"]
+entries = ["BombBlocks", "SuperMissileBlocks", "PowerBombBlocks", "BombsReveal", "SpeedBlocks"]
 [vector.before]
 cells = [
   { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
   { at = [5, 7], kind = "Block", look = "360", reaction = "super" },
   { at = [6, 7], kind = "Block", look = "3A0", reaction = "crumble" },
+  { at = [7, 7], kind = "Block", look = "3A0", reaction = "speed" },
   { at = [4, 8], kind = "Block", look = "370", reaction = "power-bomb" },
   { at = [4, 9], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
@@ -2453,12 +2533,14 @@ requests = [
   { hit = [5, 7], by = "Grapple" },
   { hit = [4, 8], by = "Grapple" },
   { hit = [6, 7], by = "Grapple" },
+  { hit = [7, 7], by = "Grapple" },
 ]
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
   { at = [5, 7], kind = "Block", look = "360", reaction = "super" },
   { at = [6, 7], kind = "Block", look = "3A0", reaction = "crumble" },
+  { at = [7, 7], kind = "Block", look = "3A0", reaction = "speed" },
   { at = [4, 8], kind = "Block", look = "370", reaction = "power-bomb" },
   { at = [4, 9], kind = "StandInDown", look = "370:y", reach = -1 },
 ]
@@ -2611,20 +2693,22 @@ written = []
 sounds = []
 
 [[vector]]
-# cells marked Other, another part's: her touch of a block and of reacting air is answered Other, the block reached by the grapple and by a beam, and she inside the air, change nothing and take no place; the crumble she lands on takes 39
+# cells marked Other, another part's: her touch of a block and of reacting air is answered Other, and the block reached by the grapple and by a beam changes nothing and takes no place; she inside reacting air marked Other whose mark holds a place when she is inside it holds one until the run, and inside one whose mark doesn't, none; the crumble she lands on takes 38
 id = "C-other"
 source = "constructed"
 entries = ["BlocksMarkedNothing", "AnswersToHerMotion", "Places"]
 [vector.before]
 cells = [
   { at = [4, 7], kind = "Block", look = "3B0", mark = "Other" },
-  { at = [5, 7], kind = "ReactingAir", look = "3B1", mark = "Other" },
+  { at = [5, 7], kind = "ReactingAir", look = "3B1", mark = "Other", inside = "HoldsPlace" },
+  { at = [6, 7], kind = "ReactingAir", look = "3B1", mark = "Other" },
   { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
 ]
 places = [
 ]
 [vector.frame]
 requests = [
+  { inside = [6, 7], point = "Bottom" },
   { inside = [5, 7], point = "Centre" },
   { hit = [4, 7], by = "Grapple" },
   { hit = [4, 7], by = "Beam" },
@@ -2635,11 +2719,12 @@ requests = [
 [vector.after]
 cells = [
   { at = [4, 7], kind = "Block", look = "3B0", mark = "Other" },
-  { at = [5, 7], kind = "ReactingAir", look = "3B1", mark = "Other" },
+  { at = [5, 7], kind = "ReactingAir", look = "3B1", mark = "Other", inside = "HoldsPlace" },
+  { at = [6, 7], kind = "ReactingAir", look = "3B1", mark = "Other" },
   { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
 ]
 places = [
-  { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+  { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Other", "Other", "Solid"]
 written = []
