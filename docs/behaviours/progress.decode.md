@@ -15,8 +15,10 @@ table of the record before. The bank logs were then read to name the cases and p
 - `allframes.py` decodes the progress of every record and compares neighbours: of the 18,299
   frame pairs, 10 change what progress holds (the fields this domain owns: not energy and
   ammunition spent or refilled by other domains). The null model (nothing changes) matches the
-  other 18,289. Each of the 10 is a recorded vector, and the reference model reproduces it from
-  the report the acting domain made.
+  other 18,289. Each of the 10 was a recorded vector, and the reference model reproduces it from
+  the report the acting domain made. Eight of them carry the game's content (a location or door
+  id, a tank's amount, the items a room places) and are harness cases now (§The harness cases);
+  the other two stay vectors.
 - `analyse.py` checks the room state choice at every room load in the rows (13) and at every row's
   first record (26 more, the state the room holds there against the progress then): 39 of 39
   agree with the rule. `rooms.py` walks the ROM's rooms by their doors from the Landing Site and
@@ -31,6 +33,12 @@ table of the record before. The bank logs were then read to name the cases and p
   area each report takes, not an order: the reports touch different areas, so a model applying
   them in reverse passes all 65. No recorded row leaves an area whose map is `OnArrival`, so
   `LeftArea`'s change is checked by constructed vectors only.
+- `$TEMP/collab/progress-spec-r6/` holds the conversion to invented content (MODEL §1 decision
+  13; §The harness cases): `edit_ids.py` gives the constructed vectors invented location and
+  door ids and invented tank amounts, `tail.toml` holds the rewritten room state, percentage and
+  twin vectors, and `real_lists.py` checks every vector's state list against the lists the ROM's
+  rooms use (`rooms.txt`): 13 vectors carried one before, 0 after. r5's `model.py` agrees with
+  65 of 65 through `vecrun.py`.
 
 **Row ids.** As in the camera's notes, the chain rows go by opaque ids, because a chain row's name
 carries a room header's address; s01 is a row whose name matches the lexicon:
@@ -281,6 +289,66 @@ of the same frame, so it is verified on its own with the reports as inputs.
 - **Free run:** carry progress forward from a row's first record with only the reports; it should
   equal the record at every frame. Re-seeding is never needed within a run: progress is never
   reset except by loading a file.
+
+## The harness cases
+
+The vectors hold RAM observations and invented content only (MODEL §1 decision 13). Fifteen
+recorded vectors carried the game's content, so they left the vector file and are **harness
+cases**: the harness, which decodes progress from the records and loads the ROM's content
+through its importer, must match each named frame. Each case keeps its old vector's id, so its
+history reads. The constructed vector beside it carries the same rule over invented content,
+worked by hand from the spec.
+
+**Reports.** Each case is the frame pair record N-1, N; the harness decodes before and after
+from the records (§State) and hears the report (§The harness). The content is what the report
+carries from the room's population: the item PLM's room argument (the location id), its
+instruction's amount, the door PLM's room argument, the item PLMs the room's state spawns.
+
+| Case | Row and record N | Report, and the content the importer loads | Compared at N | Constructed vector |
+| --- | --- | --- | --- | --- |
+| R-morph-ball | item-morph-ball 817 | `Taken(MorphBall)`, location 26 (the Morph Ball Room's item PLM) | `09A2`, `09A4`, `D873` bit 2; the rest unchanged | C-item-first |
+| R-bombs | samus-bomb-jump-vertical 55 | `Taken(Bombs)`, location 7 (Bomb Torizo's room's item PLM) | `09A3`, `09A5`, `D870` bit 7 | C-item-second |
+| R-missile-tank | s01 37 | `Taken(MissileTank)`, location 63, amount 5 (the room's item PLM and its instruction) | `09C8` 32h → 37h, `09C6` + 5, `D877` bit 7 | C-missile-tank-stocked, C-missile-not-full |
+| R-door-a | r04 280 | `DoorOpened`, door 51 (the room's door PLM) | `D8B6` bit 3 | C-door-between |
+| R-door-b | r06 519 | `DoorOpened`, door 85 | `D8BA` bit 5 | C-door-last |
+| R-placed-two | area-norfair 200 | `ItemsPlaced(2)`: the room's state spawns two item PLMs | `D91A` 2Eh → 30h | C-placed-several |
+| R-placed-a | r06 757 | `ItemsPlaced(1)` | `D91A` 38h → 39h | C-placed-one |
+| R-placed-b | r08 567 | `ItemsPlaced(1)`, the room's one item (location 64) already taken | `D91A` 3Eh → 3Fh; `D878` unchanged | C-placed-taken |
+
+**Room states.** Each case is the state a room holds at a record (the row's first, or the load
+on the frame `07B5` changes; §The harness), chosen from the room's state list as the importer
+decodes it from the room header (`$8F:E5D2`'s format), against the progress decoded from that
+record. Compared: the state pointer `07BB`'s state, as its index in the list.
+
+| Case | Row and record | Room (header) and its state list | State | Constructed vector |
+| --- | --- | --- | --- | --- |
+| R-landing-power-bombs | samus-mockball 0 | Landing Site (`$91F8`): event Eh, power bombs, event 0, default | 1 (power bombs, over the planet awake) | C-state-earlier-wins |
+| R-landing-default | r01 0 | Landing Site (`$91F8`), the same list | 3 (default) | C-state-none-hold |
+| R-morph-room-default | item-morph-ball 0 | Morph Ball Room (`$9E9F`): event 0, default | 1 | C-state-event-not-yet |
+| R-no-morph-ball | r03 267 (the load through door `$8B62`) | `$975C`: morph ball and missiles, default | 1 | C-state-morph-no-missiles, C-state-missiles-only |
+| R-ceres-alive | samus-ceres-push 0 | `$E0B5` (Ceres): boss bit 1, default | 1 | C-state-boss-alive |
+| R-torizo-alive | samus-bomb-jump-vertical 0 | Bomb Torizo's room (`$9804`): event Eh, boss bit 4, default | 2 | C-state-boss-not-yet |
+| R-tunnel-whole | area-maridia 0 | Glass Tunnel (`$CEFB`): event Bh, default | 1 | C-state-other-event |
+
+The harness already compares every one of these frames (`coverage.txt`'s room state and field
+lines); a case names the frame so that a fall there is reported by name.
+
+**No record: the full percentage.** C-percent-all carried the game's totals (the capacities
+every tank the game places adds up to: energy 1499, reserve 400, missiles 230, super missiles 50,
+power bombs 50; with the 11 items and 5 beams, 100). It is a harness case over the importer's
+item population of every room (each item PLM's kind and amount, once per location), with no
+record: its percentage must be 100. C-percent-many carries the rule with invented capacities.
+
+**Constructed vectors changed with them.** The constructed vectors modelled on real rooms'
+lists were rewritten over invented lists: C-state-event and C-state-first-holds (the Landing
+Site's), C-state-boss (Bomb Torizo's room's), C-state-boss-other-area (a Brinstar boss room's,
+boss bit 1 and default), C-state-morph-missiles and C-state-missiles-only (`$975C`'s). The
+constructed location and door ids and tank amounts are invented (`edit_ids.py`).
+
+**Kept as vectors.** R-ceres-boss (samus-ceres-push 1586: `D82E` 00h → 01h, Ceres Ridley's
+`Defeated(MainBoss)`) and R-gunship-save (r01 610: `D8F8` bit 0, the gunship's station 0) are
+RAM only: the boss's kind and the gunship's station are what those domains report, constants of
+their code, not a room's population or a table.
 
 ## Size baseline
 

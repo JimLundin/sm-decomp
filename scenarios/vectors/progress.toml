@@ -60,13 +60,14 @@
 #     a question without an id is about an item or door placed without one.
 #   - map_known = [areas]: answers a list of bools.
 #   - zebetites = true: answers zebetites.
-# - Recorded vectors (R): from the 32 cached rows; their before is record N-1's progress and their
-#   after record N's, their reports what the domain that acted reported (the item and its amount
-#   as the item's own list gives them). The room state vectors give the state each room holds at
-#   the row's first record or at the room's loading, against the progress then. Row ids r01-r11
-#   stand for the chain rows and s01 for another row.
-# - Constructed vectors (C): cases no record reaches, each with its case in a comment; their after
-#   and answers are worked from the spec's rules.
+# - Recorded vectors (R): from the cached rows, holding only what the record shows of progress and
+#   a report that carries none of the game's content (a boss's kind, the gunship's station); their
+#   before is record N-1's progress and their after record N's. Row id r01 stands for a chain row.
+# - Constructed vectors (C): their after and answers are worked from the spec's rules, each with
+#   its case in a comment. Their content is invented: the location, door and station ids, the
+#   tanks' amounts, the items a room places and the rooms' state lists are made up to tell the
+#   rules apart, and none is the game's. The frames that need the game's own content are checked
+#   by the domain's harness.
 
 [[vector]]
 # an event happens and stays happened
@@ -144,9 +145,9 @@ id = "C-two-items"
 source = "constructed"
 entries = ["TakingItems", "EmptiedLocations"]
 area = "Maridia"
-before = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [26] }
-reports = [{ report = "Taken", item = "GravitySuit", location = 135 }]
-after = { items = ["GravitySuit", "MorphBall"], equipped = ["GravitySuit", "MorphBall"], emptied = [26, 135] }
+before = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12] }
+reports = [{ report = "Taken", item = "GravitySuit", location = 57 }]
+after = { items = ["GravitySuit", "MorphBall"], equipped = ["GravitySuit", "MorphBall"], emptied = [12, 57] }
 
 [[vector]]
 # an item she has but switched off, taken again: switched back on
@@ -155,8 +156,8 @@ source = "constructed"
 entries = ["TakingItems"]
 area = "Norfair"
 before = { items = ["MorphBall", "SpeedBooster"], equipped = ["MorphBall"] }
-reports = [{ report = "Taken", item = "SpeedBooster", location = 77 }]
-after = { items = ["MorphBall", "SpeedBooster"], equipped = ["MorphBall", "SpeedBooster"], emptied = [77] }
+reports = [{ report = "Taken", item = "SpeedBooster", location = 38 }]
+after = { items = ["MorphBall", "SpeedBooster"], equipped = ["MorphBall", "SpeedBooster"], emptied = [38] }
 
 [[vector]]
 # an item placed with no location: collected, but no location is emptied
@@ -174,8 +175,8 @@ id = "C-asked-no-location"
 source = "constructed"
 entries = ["EmptiedLocations"]
 area = "Brinstar"
-before = { emptied = [0, 26] }
-asks = { emptied = [{ location = 26 }, { location = 27 }, {  }] }
+before = { emptied = [0, 12] }
+asks = { emptied = [{ location = 12 }, { location = 13 }, {  }] }
 answers = { emptied = [true, false, false] }
 
 [[vector]]
@@ -185,8 +186,8 @@ source = "constructed"
 entries = ["TakingBeams"]
 area = "Norfair"
 before = { beams = ["Charge", "Plasma"], beams_equipped = ["Charge", "Plasma"] }
-reports = [{ report = "Taken", item = "Spazer", location = 40 }]
-after = { beams = ["Charge", "Plasma", "Spazer"], beams_equipped = ["Charge", "Spazer"], emptied = [40] }
+reports = [{ report = "Taken", item = "Spazer", location = 29 }]
+after = { beams = ["Charge", "Plasma", "Spazer"], beams_equipped = ["Charge", "Spazer"], emptied = [29] }
 
 [[vector]]
 # plasma taken with spazer on: spazer switches off
@@ -195,8 +196,8 @@ source = "constructed"
 entries = ["TakingBeams"]
 area = "Norfair"
 before = { beams = ["Ice", "Spazer", "Wave"], beams_equipped = ["Ice", "Spazer", "Wave"] }
-reports = [{ report = "Taken", item = "Plasma", location = 131 }]
-after = { beams = ["Ice", "Plasma", "Spazer", "Wave"], beams_equipped = ["Ice", "Plasma", "Wave"], emptied = [131] }
+reports = [{ report = "Taken", item = "Plasma", location = 64 }]
+after = { beams = ["Ice", "Plasma", "Spazer", "Wave"], beams_equipped = ["Ice", "Plasma", "Wave"], emptied = [64] }
 
 [[vector]]
 # a beam other than spazer and plasma switches nothing off
@@ -205,8 +206,8 @@ source = "constructed"
 entries = ["TakingBeams"]
 area = "Norfair"
 before = { beams = ["Spazer"], beams_equipped = ["Spazer"] }
-reports = [{ report = "Taken", item = "Wave", location = 70 }]
-after = { beams = ["Spazer", "Wave"], beams_equipped = ["Spazer", "Wave"], emptied = [70] }
+reports = [{ report = "Taken", item = "Wave", location = 46 }]
+after = { beams = ["Spazer", "Wave"], beams_equipped = ["Spazer", "Wave"], emptied = [46] }
 
 [[vector]]
 # plasma taken with spazer collected but off: spazer stays off, plasma on
@@ -215,8 +216,8 @@ source = "constructed"
 entries = ["TakingBeams"]
 area = "Norfair"
 before = { beams = ["Spazer", "Wave"], beams_equipped = ["Wave"] }
-reports = [{ report = "Taken", item = "Plasma", location = 131 }]
-after = { beams = ["Plasma", "Spazer", "Wave"], beams_equipped = ["Plasma", "Wave"], emptied = [131] }
+reports = [{ report = "Taken", item = "Plasma", location = 52 }]
+after = { beams = ["Plasma", "Spazer", "Wave"], beams_equipped = ["Plasma", "Wave"], emptied = [52] }
 
 [[vector]]
 # an energy tank: the capacity grows by its amount and she is filled
@@ -225,8 +226,8 @@ source = "constructed"
 entries = ["Tanks"]
 area = "Brinstar"
 before = { capacity = { energy = 199 }, energy = 30 }
-reports = [{ report = "Taken", item = "EnergyTank", amount = 100, location = 33 }]
-after = { capacity = { energy = 299 }, energy = 299, emptied = [33] }
+reports = [{ report = "Taken", item = "EnergyTank", amount = 50, location = 15 }]
+after = { capacity = { energy = 249 }, energy = 249, emptied = [15] }
 
 [[vector]]
 # the first reserve tank: the reserves refill automatically from now on, and stay empty
@@ -235,8 +236,8 @@ source = "constructed"
 entries = ["Tanks"]
 area = "Brinstar"
 before = { capacity = { energy = 299 }, energy = 299 }
-reports = [{ report = "Taken", item = "ReserveTank", amount = 100, location = 47 }]
-after = { capacity = { energy = 299, reserve = 100 }, energy = 299, reserve_mode = "Automatic", emptied = [47] }
+reports = [{ report = "Taken", item = "ReserveTank", amount = 75, location = 21 }]
+after = { capacity = { energy = 299, reserve = 75 }, energy = 299, reserve_mode = "Automatic", emptied = [21] }
 
 [[vector]]
 # a reserve tank when she set them to manual: they stay manual, and the energy in them doesn't grow
@@ -245,18 +246,18 @@ source = "constructed"
 entries = ["Tanks"]
 area = "Norfair"
 before = { capacity = { energy = 599, reserve = 100 }, energy = 599, reserve_energy = 60, reserve_mode = "Manual" }
-reports = [{ report = "Taken", item = "ReserveTank", amount = 100, location = 95 }]
-after = { capacity = { energy = 599, reserve = 200 }, energy = 599, reserve_energy = 60, reserve_mode = "Manual", emptied = [95] }
+reports = [{ report = "Taken", item = "ReserveTank", amount = 25, location = 70 }]
+after = { capacity = { energy = 599, reserve = 125 }, energy = 599, reserve_energy = 60, reserve_mode = "Manual", emptied = [70] }
 
 [[vector]]
-# a missile tank when she has fired some: the count grows by 5, not to the capacity
+# a missile tank when she has fired some: the count grows by its amount, 4, not to the capacity
 id = "C-missile-not-full"
 source = "constructed"
 entries = ["Tanks"]
 area = "Brinstar"
 before = { capacity = { missiles = 20 }, missiles = 3 }
-reports = [{ report = "Taken", item = "MissileTank", amount = 5, location = 10 }]
-after = { capacity = { missiles = 25 }, missiles = 8, emptied = [10] }
+reports = [{ report = "Taken", item = "MissileTank", amount = 4, location = 5 }]
+after = { capacity = { missiles = 24 }, missiles = 7, emptied = [5] }
 
 [[vector]]
 # the first super missile tank
@@ -265,8 +266,8 @@ source = "constructed"
 entries = ["Tanks"]
 area = "Brinstar"
 before = {  }
-reports = [{ report = "Taken", item = "SuperMissileTank", amount = 5, location = 30 }]
-after = { capacity = { super_missiles = 5 }, super_missiles = 5, emptied = [30] }
+reports = [{ report = "Taken", item = "SuperMissileTank", amount = 2, location = 33 }]
+after = { capacity = { super_missiles = 2 }, super_missiles = 2, emptied = [33] }
 
 [[vector]]
 # a power bomb tank
@@ -275,8 +276,8 @@ source = "constructed"
 entries = ["Tanks"]
 area = "Crateria"
 before = { capacity = { power_bombs = 5 }, power_bombs = 5 }
-reports = [{ report = "Taken", item = "PowerBombTank", amount = 5, location = 2 }]
-after = { capacity = { power_bombs = 10 }, power_bombs = 10, emptied = [2] }
+reports = [{ report = "Taken", item = "PowerBombTank", amount = 3, location = 8 }]
+after = { capacity = { power_bombs = 8 }, power_bombs = 8, emptied = [8] }
 
 [[vector]]
 # a door placed with no id opens, but isn't remembered
@@ -284,9 +285,9 @@ id = "C-door-no-id"
 source = "constructed"
 entries = ["DoorsStayOpen"]
 area = "Brinstar"
-before = { opened = [51] }
+before = { opened = [17] }
 reports = [{ report = "DoorOpened" }]
-after = { opened = [51] }
+after = { opened = [17] }
 
 [[vector]]
 # asked about doors: open, closed, and a door with no id
@@ -294,8 +295,8 @@ id = "C-asked-doors"
 source = "constructed"
 entries = ["DoorsStayOpen"]
 area = "Brinstar"
-before = { opened = [51] }
-asks = { opened = [{ door = 51 }, { door = 52 }, {  }] }
+before = { opened = [17] }
+asks = { opened = [{ door = 17 }, { door = 18 }, {  }] }
 answers = { opened = [true, false, false] }
 
 [[vector]]
@@ -402,33 +403,175 @@ reports = [{ report = "ItemsPlaced", count = 2 }]
 after = { items_placed = 1 }
 
 [[vector]]
-# the Landing Site after Zebes wakes, before power bombs
+# a room's loading places several items
+id = "C-placed-several"
+source = "constructed"
+entries = ["ItemsPlacedCount"]
+area = "Norfair"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12], items_placed = 18 }
+reports = [{ report = "ItemsPlaced", count = 3 }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12], items_placed = 21 }
+
+[[vector]]
+# a room's loading places one item
+id = "C-placed-one"
+source = "constructed"
+entries = ["ItemsPlacedCount"]
+area = "Brinstar"
+before = { capacity = { missiles = 10 }, missiles = 4, items_placed = 21 }
+reports = [{ report = "ItemsPlaced", count = 1 }]
+after = { capacity = { missiles = 10 }, missiles = 4, items_placed = 22 }
+
+[[vector]]
+# the room's one item, at location 12, is already taken: it still counts, and nothing else changes
+id = "C-placed-taken"
+source = "constructed"
+entries = ["ItemsPlacedCount"]
+area = "Maridia"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12, 57], items_placed = 22 }
+reports = [{ report = "ItemsPlaced", count = 1 }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12, 57], items_placed = 23 }
+
+[[vector]]
+# her first item, with the rest of the run's start around it: it is hers and switched on, its
+# location emptied, and nothing else changes
+id = "C-item-first"
+source = "constructed"
+entries = ["EmptiedLocations", "TakingItems"]
+area = "Brinstar"
+before = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] }, items_placed = 1 }
+reports = [{ report = "Taken", item = "MorphBall", location = 12 }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"], defeated = { Ceres = ["MainBoss"] }, emptied = [12], stations = { Crateria = [0] }, items_placed = 1 }
+
+[[vector]]
+# a second item, its location below those already emptied
+id = "C-item-second"
+source = "constructed"
+entries = ["EmptiedLocations", "TakingItems"]
+area = "Crateria"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 }, energy = 69, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [12, 19], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 5 }
+reports = [{ report = "Taken", item = "Bombs", location = 3 }]
+after = { items = ["Bombs", "MorphBall"], equipped = ["Bombs", "MorphBall"], capacity = { missiles = 5 }, energy = 69, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [3, 12, 19], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 5 }
+
+[[vector]]
+# a missile tank late in a run, every other count below its capacity: only the missiles' capacity
+# and count grow, by its amount, and its location is emptied
+id = "C-missile-tank-stocked"
+source = "constructed"
+entries = ["EmptiedLocations", "Tanks"]
+area = "Norfair"
+before = { items = ["Bombs", "MorphBall", "VariaSuit"], equipped = ["Bombs", "MorphBall", "VariaSuit"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 399, reserve = 100, missiles = 30, super_missiles = 10, power_bombs = 5 }, energy = 350, reserve_energy = 4, missiles = 5, super_missiles = 7, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [3, 12, 19, 44], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 30 }
+reports = [{ report = "Taken", item = "MissileTank", location = 61, amount = 4 }]
+after = { items = ["Bombs", "MorphBall", "VariaSuit"], equipped = ["Bombs", "MorphBall", "VariaSuit"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 399, reserve = 100, missiles = 34, super_missiles = 10, power_bombs = 5 }, energy = 350, reserve_energy = 4, missiles = 9, super_missiles = 7, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [3, 12, 19, 44, 61], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 30 }
+
+[[vector]]
+# a door opened among those already open
+id = "C-door-between"
+source = "constructed"
+entries = ["DoorsStayOpen"]
+area = "Brinstar"
+before = { emptied = [12], opened = [4, 9, 23] }
+reports = [{ report = "DoorOpened", door = 17 }]
+after = { emptied = [12], opened = [4, 9, 17, 23] }
+
+[[vector]]
+# a door opened past every one already open
+id = "C-door-last"
+source = "constructed"
+entries = ["DoorsStayOpen"]
+area = "Norfair"
+before = { opened = [4, 9, 17] }
+reports = [{ report = "DoorOpened", door = 60 }]
+after = { opened = [4, 9, 17, 60] }
+
+[[vector]]
+# an event's state, after two that don't hold; the event that holds is not the first named
 id = "C-state-event"
 source = "constructed"
 entries = ["RoomStates"]
 area = "Crateria"
-before = { events = ["PlanetAwake"] }
-asks = { room_states = [{ when = "Happened", event = "TimeBombSet" }, { when = "PowerBombs" }, { when = "Happened", event = "PlanetAwake" }, { when = "Always" }] }
+before = { events = ["ShaktoolPath"] }
+asks = { room_states = [{ when = "Happened", event = "AnimalsFreed" }, { when = "PowerBombs" }, { when = "Happened", event = "ShaktoolPath" }, { when = "Always" }] }
 answers = { room_state = 2 }
 
 [[vector]]
-# the escape: the first state that holds wins
+# every state holds: the first wins
 id = "C-state-first-holds"
 source = "constructed"
 entries = ["RoomStates"]
 area = "Crateria"
-before = { capacity = { power_bombs = 10 }, events = ["PlanetAwake", "TimeBombSet"] }
-asks = { room_states = [{ when = "Happened", event = "TimeBombSet" }, { when = "PowerBombs" }, { when = "Happened", event = "PlanetAwake" }, { when = "Always" }] }
+before = { capacity = { power_bombs = 10 }, events = ["AcidReceded", "LavaQuakeOutrun"] }
+asks = { room_states = [{ when = "Happened", event = "AcidReceded" }, { when = "PowerBombs" }, { when = "Happened", event = "LavaQuakeOutrun" }, { when = "Always" }] }
 answers = { room_state = 0 }
 
 [[vector]]
-# Bomb Torizo's room once it is defeated
-id = "C-state-boss"
+# the first fails, and the second and third hold: the second wins over the third
+id = "C-state-earlier-wins"
 source = "constructed"
 entries = ["RoomStates"]
 area = "Crateria"
-before = { defeated = { Crateria = ["Torizo"] } }
-asks = { room_states = [{ when = "Happened", event = "TimeBombSet" }, { when = "Defeated", bosses = ["Torizo"] }, { when = "Always" }] }
+before = { capacity = { power_bombs = 20 }, power_bombs = 3, events = ["LavaQuakeOutrun"] }
+asks = { room_states = [{ when = "Happened", event = "AnimalsFreed" }, { when = "PowerBombs" }, { when = "Happened", event = "LavaQuakeOutrun" }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# none of the conditions holds: the last state
+id = "C-state-none-hold"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { defeated = { Ceres = ["MainBoss"] } }
+asks = { room_states = [{ when = "Happened", event = "AnimalsFreed" }, { when = "PowerBombs" }, { when = "Happened", event = "LavaQuakeOutrun" }, { when = "Always" }] }
+answers = { room_state = 3 }
+
+[[vector]]
+# an event that hasn't happened yet
+id = "C-state-event-not-yet"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Brinstar"
+before = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] }, items_placed = 1 }
+asks = { room_states = [{ when = "Happened", event = "AcidReceded" }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# another event has happened, not the one named
+id = "C-state-other-event"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Maridia"
+before = { events = ["KraidStatueGrey", "PlanetAwake"] }
+asks = { room_states = [{ when = "Happened", event = "DraygonStatueGrey" }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# a torizo defeated in the room's area
+id = "C-state-boss"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Norfair"
+before = { defeated = { Norfair = ["Torizo"] } }
+asks = { room_states = [{ when = "Happened", event = "KraidStatueGrey" }, { when = "Defeated", bosses = ["Torizo"] }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# another kind defeated in the room's area doesn't count
+id = "C-state-boss-not-yet"
+source = "constructed"
+entries = ["RoomStates"]
+area = "WreckedShip"
+before = { defeated = { WreckedShip = ["MainBoss"] } }
+asks = { room_states = [{ when = "Happened", event = "PhantoonStatueGrey" }, { when = "Defeated", bosses = ["Torizo"] }, { when = "Always" }] }
+answers = { room_state = 2 }
+
+[[vector]]
+# nothing defeated anywhere: neither kind named holds
+id = "C-state-boss-alive"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Ceres"
+before = {  }
+asks = { room_states = [{ when = "Defeated", bosses = ["MiniBoss", "Torizo"] }, { when = "Always" }] }
 answers = { room_state = 1 }
 
 [[vector]]
@@ -438,8 +581,8 @@ source = "constructed"
 entries = ["RoomStates"]
 area = "Brinstar"
 before = { defeated = { Norfair = ["MainBoss"] } }
-asks = { room_states = [{ when = "Defeated", bosses = ["MainBoss"] }, { when = "Always" }] }
-answers = { room_state = 1 }
+asks = { room_states = [{ when = "Defeated", bosses = ["MainBoss"] }, { when = "Has", item = "SpringBall" }, { when = "Always" }] }
+answers = { room_state = 2 }
 
 [[vector]]
 # any of the kinds named
@@ -458,8 +601,8 @@ source = "constructed"
 entries = ["RoomStates"]
 area = "Brinstar"
 before = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 } }
-asks = { room_states = [{ when = "MorphBallAndMissiles" }, { when = "Always" }] }
-answers = { room_state = 0 }
+asks = { room_states = [{ when = "Happened", event = "RidleyStatueGrey" }, { when = "MorphBallAndMissiles" }, { when = "Always" }] }
+answers = { room_state = 1 }
 
 [[vector]]
 # missiles without the morph ball
@@ -468,8 +611,18 @@ source = "constructed"
 entries = ["RoomStates"]
 area = "Brinstar"
 before = { capacity = { missiles = 5 }, missiles = 5 }
-asks = { room_states = [{ when = "MorphBallAndMissiles" }, { when = "Always" }] }
-answers = { room_state = 1 }
+asks = { room_states = [{ when = "Happened", event = "RidleyStatueGrey" }, { when = "MorphBallAndMissiles" }, { when = "Always" }] }
+answers = { room_state = 2 }
+
+[[vector]]
+# the morph ball without missiles
+id = "C-state-morph-no-missiles"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] } }
+asks = { room_states = [{ when = "Happened", event = "RidleyStatueGrey" }, { when = "MorphBallAndMissiles" }, { when = "Always" }] }
+answers = { room_state = 2 }
 
 [[vector]]
 # power bombs all spent: the capacity is read
@@ -522,14 +675,16 @@ asks = { percentage = true }
 answers = { percentage = 0 }
 
 [[vector]]
-# everything: 100
-id = "C-percent-all"
+# every item and beam, and capacities that each round down: energy 999 / 100 = 9, reserve
+# 250 / 100 = 2, missiles 101 / 5 = 20, super missiles 7 / 5 = 1, power bombs 23 / 5 = 4; with
+# 11 items and 5 beams, 9 + 2 + 20 + 1 + 4 + 11 + 5 = 52
+id = "C-percent-many"
 source = "constructed"
 entries = ["ItemPercentage"]
 area = "Crateria"
-before = { items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"], beams = ["Charge", "Ice", "Plasma", "Spazer", "Wave"], capacity = { energy = 1499, reserve = 400, missiles = 230, super_missiles = 50, power_bombs = 50 } }
+before = { items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"], beams = ["Charge", "Ice", "Plasma", "Spazer", "Wave"], capacity = { energy = 999, reserve = 250, missiles = 101, super_missiles = 7, power_bombs = 23 } }
 asks = { percentage = true }
-answers = { percentage = 100 }
+answers = { percentage = 52 }
 
 [[vector]]
 # the divisions round down: 299 energy is 2, 24 missiles 4
@@ -554,51 +709,6 @@ asks = { percentage = true }
 answers = { percentage = 4 }
 
 [[vector]]
-id = "R-morph-ball"
-source = "item-morph-ball:817"
-entries = ["EmptiedLocations", "TakingItems"]
-area = "Brinstar"
-before = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] }, items_placed = 1 }
-reports = [{ report = "Taken", item = "MorphBall", location = 26 }]
-after = { items = ["MorphBall"], equipped = ["MorphBall"], defeated = { Ceres = ["MainBoss"] }, emptied = [26], stations = { Crateria = [0] }, items_placed = 1 }
-
-[[vector]]
-id = "R-bombs"
-source = "samus-bomb-jump-vertical:55"
-entries = ["EmptiedLocations", "TakingItems"]
-area = "Crateria"
-before = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 }, energy = 69, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [26, 34], opened = [26, 29], stations = { Crateria = [0] }, items_placed = 5 }
-reports = [{ report = "Taken", item = "Bombs", location = 7 }]
-after = { items = ["Bombs", "MorphBall"], equipped = ["Bombs", "MorphBall"], capacity = { missiles = 5 }, energy = 69, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [7, 26, 34], opened = [26, 29], stations = { Crateria = [0] }, items_placed = 5 }
-
-[[vector]]
-id = "R-missile-tank"
-source = "s01:37"
-entries = ["EmptiedLocations", "Tanks"]
-area = "Norfair"
-before = { items = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 599, reserve = 100, missiles = 50, super_missiles = 15, power_bombs = 10 }, energy = 562, reserve_energy = 4, missiles = 5, super_missiles = 13, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83], stations = { Crateria = [0] }, items_placed = 51 }
-reports = [{ report = "Taken", item = "MissileTank", location = 63, amount = 5 }]
-after = { items = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 599, reserve = 100, missiles = 55, super_missiles = 15, power_bombs = 10 }, energy = 562, reserve_energy = 4, missiles = 10, super_missiles = 13, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56, 63], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83], stations = { Crateria = [0] }, items_placed = 51 }
-
-[[vector]]
-id = "R-door-a"
-source = "r04:280"
-entries = ["DoorsStayOpen"]
-area = "Brinstar"
-before = { items = ["Bombs", "MorphBall"], equipped = ["Bombs", "MorphBall"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 399, reserve = 100, missiles = 35, super_missiles = 15, power_bombs = 10 }, energy = 397, missiles = 18, super_missiles = 6, power_bombs = 2, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 52, 53, 54, 55], stations = { Crateria = [0] }, items_placed = 38 }
-reports = [{ report = "DoorOpened", door = 51 }]
-after = { items = ["Bombs", "MorphBall"], equipped = ["Bombs", "MorphBall"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 399, reserve = 100, missiles = 35, super_missiles = 15, power_bombs = 10 }, energy = 397, missiles = 18, super_missiles = 6, power_bombs = 2, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55], stations = { Crateria = [0] }, items_placed = 38 }
-
-[[vector]]
-id = "R-door-b"
-source = "r06:519"
-entries = ["DoorsStayOpen"]
-area = "Norfair"
-before = { items = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 599, reserve = 200, missiles = 60, super_missiles = 15, power_bombs = 10 }, energy = 485, reserve_energy = 4, missiles = 14, super_missiles = 13, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56, 61, 62, 63], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83, 84], stations = { Crateria = [0] }, items_placed = 56 }
-reports = [{ report = "DoorOpened", door = 85 }]
-after = { items = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 599, reserve = 200, missiles = 60, super_missiles = 15, power_bombs = 10 }, energy = 485, reserve_energy = 4, missiles = 14, super_missiles = 13, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56, 61, 62, 63], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83, 84, 85], stations = { Crateria = [0] }, items_placed = 56 }
-
-[[vector]]
 id = "R-ceres-boss"
 source = "samus-ceres-push:1586"
 entries = ["BossesDefeated"]
@@ -615,93 +725,3 @@ area = "Crateria"
 before = { defeated = { Ceres = ["MainBoss"] } }
 reports = [{ report = "Saved", station = 0 }]
 after = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] } }
-
-[[vector]]
-id = "R-placed-two"
-source = "area-norfair:200"
-entries = ["ItemsPlacedCount"]
-area = "Norfair"
-before = { items = ["Bombs", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 499, reserve = 100, missiles = 40, super_missiles = 15, power_bombs = 10 }, energy = 499, missiles = 2, super_missiles = 13, power_bombs = 2, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 77], stations = { Crateria = [0] }, items_placed = 46 }
-reports = [{ report = "ItemsPlaced", count = 2 }]
-after = { items = ["Bombs", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 499, reserve = 100, missiles = 40, super_missiles = 15, power_bombs = 10 }, energy = 499, missiles = 2, super_missiles = 13, power_bombs = 2, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 77], stations = { Crateria = [0] }, items_placed = 48 }
-
-[[vector]]
-id = "R-placed-a"
-source = "r06:757"
-entries = ["ItemsPlacedCount"]
-area = "Norfair"
-before = { items = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 599, reserve = 200, missiles = 60, super_missiles = 15, power_bombs = 10 }, energy = 485, reserve_energy = 4, missiles = 14, super_missiles = 13, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56, 61, 62, 63], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83, 84, 85], stations = { Crateria = [0] }, items_placed = 56 }
-reports = [{ report = "ItemsPlaced", count = 1 }]
-after = { items = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 599, reserve = 200, missiles = 60, super_missiles = 15, power_bombs = 10 }, energy = 485, reserve_energy = 4, missiles = 14, super_missiles = 13, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56, 61, 62, 63], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83, 84, 85], stations = { Crateria = [0] }, items_placed = 57 }
-
-[[vector]]
-id = "R-placed-b"
-source = "r08:567"
-entries = ["ItemsPlacedCount"]
-area = "Norfair"
-before = { items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"], beams = ["Charge", "Wave"], beams_equipped = ["Charge", "Wave"], capacity = { energy = 599, reserve = 200, missiles = 75, super_missiles = 15, power_bombs = 10 }, energy = 0, reserve_energy = 4, missiles = 19, super_missiles = 13, reserve_mode = "Automatic", events = ["LavaQuakeOutrun", "PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56, 61, 62, 63, 64, 65, 66, 67, 68], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83, 84, 85, 86, 87], stations = { Crateria = [0] }, items_placed = 62 }
-reports = [{ report = "ItemsPlaced", count = 1 }]
-after = { items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"], equipped = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"], beams = ["Charge", "Wave"], beams_equipped = ["Charge", "Wave"], capacity = { energy = 599, reserve = 200, missiles = 75, super_missiles = 15, power_bombs = 10 }, energy = 0, reserve_energy = 4, missiles = 19, super_missiles = 13, reserve_mode = "Automatic", events = ["LavaQuakeOutrun", "PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 53, 55, 56, 61, 62, 63, 64, 65, 66, 67, 68], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 77, 80, 83, 84, 85, 86, 87], stations = { Crateria = [0] }, items_placed = 63 }
-
-[[vector]]
-id = "R-landing-power-bombs"
-source = "samus-mockball:0"
-entries = ["RoomStates"]
-area = "Crateria"
-before = { items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"], equipped = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"], beams = ["Charge", "Ice", "Plasma", "Spazer", "Wave"], beams_equipped = ["Charge", "Ice", "Plasma", "Wave"], capacity = { energy = 1399, reserve = 400, missiles = 220, super_missiles = 50, power_bombs = 45 }, energy = 1236, reserve_energy = 60, missiles = 52, super_missiles = 12, power_bombs = 8, reserve_mode = "Automatic", events = ["LavaQuakeOutrun", "PlanetAwake", "ShaktoolPath"], defeated = { Brinstar = ["MainBoss"], Norfair = ["MainBoss", "MiniBoss"], WreckedShip = ["MainBoss"], Maridia = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [1, 2, 3, 4, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 76, 77, 78, 79, 80, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 154], opened = [12, 13, 14, 16, 19, 26, 29, 33, 34, 38, 40, 41, 43, 47, 48, 50, 51, 52, 53, 54, 55, 57, 58, 59, 61, 62, 63, 64, 65, 66, 67, 69, 70, 71, 73, 74, 75, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 90, 91, 92, 93, 94, 95, 96, 130, 131, 132, 133, 134, 136, 137, 139, 142, 143, 145, 149, 154, 155, 158, 159], stations = { Crateria = [0] }, items_placed = 153 }
-asks = { room_states = [{ when = "Happened", event = "TimeBombSet" }, { when = "PowerBombs" }, { when = "Happened", event = "PlanetAwake" }, { when = "Always" }] }
-answers = { room_state = 1 }
-
-[[vector]]
-id = "R-landing-default"
-source = "r01:0"
-entries = ["RoomStates"]
-area = "Crateria"
-before = { defeated = { Ceres = ["MainBoss"] } }
-asks = { room_states = [{ when = "Happened", event = "TimeBombSet" }, { when = "PowerBombs" }, { when = "Happened", event = "PlanetAwake" }, { when = "Always" }] }
-answers = { room_state = 3 }
-
-[[vector]]
-id = "R-morph-room-default"
-source = "item-morph-ball:0"
-entries = ["RoomStates"]
-area = "Brinstar"
-before = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] }, items_placed = 1 }
-asks = { room_states = [{ when = "Happened", event = "PlanetAwake" }, { when = "Always" }] }
-answers = { room_state = 1 }
-
-[[vector]]
-id = "R-no-morph-ball"
-source = "r03:267"
-entries = ["RoomStates"]
-area = "Crateria"
-before = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] } }
-asks = { room_states = [{ when = "MorphBallAndMissiles" }, { when = "Always" }] }
-answers = { room_state = 1 }
-
-[[vector]]
-id = "R-ceres-alive"
-source = "samus-ceres-push:0"
-entries = ["RoomStates"]
-area = "Ceres"
-before = {  }
-asks = { room_states = [{ when = "Defeated", bosses = ["MainBoss"] }, { when = "Always" }] }
-answers = { room_state = 1 }
-
-[[vector]]
-id = "R-torizo-alive"
-source = "samus-bomb-jump-vertical:0"
-entries = ["RoomStates"]
-area = "Crateria"
-before = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 }, energy = 69, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [26, 34], opened = [26, 29], stations = { Crateria = [0] }, items_placed = 5 }
-asks = { room_states = [{ when = "Happened", event = "TimeBombSet" }, { when = "Defeated", bosses = ["Torizo"] }, { when = "Always" }] }
-answers = { room_state = 2 }
-
-[[vector]]
-id = "R-tunnel-whole"
-source = "area-maridia:0"
-entries = ["RoomStates"]
-area = "Maridia"
-before = { items = ["Bombs", "GrappleBeam", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpeedBooster", "VariaSuit", "XRayScope"], equipped = ["Bombs", "GrappleBeam", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpeedBooster", "VariaSuit", "XRayScope"], beams = ["Charge", "Ice", "Wave"], beams_equipped = ["Charge", "Ice", "Wave"], capacity = { energy = 899, reserve = 200, missiles = 115, super_missiles = 20, power_bombs = 25 }, energy = 804, reserve_energy = 1, missiles = 12, super_missiles = 4, power_bombs = 4, reserve_mode = "Automatic", events = ["LavaQuakeOutrun", "PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Norfair = ["MainBoss", "MiniBoss"], Ceres = ["MainBoss"] }, emptied = [7, 8, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 30, 31, 34, 35, 38, 43, 44, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 76, 77, 78, 79, 80], opened = [26, 29, 33, 34, 38, 40, 41, 47, 48, 51, 52, 53, 54, 55, 57, 58, 64, 65, 66, 67, 69, 70, 71, 73, 74, 75, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 90, 91, 92, 93, 94, 95, 96], stations = { Crateria = [0] }, items_placed = 84 }
-asks = { room_states = [{ when = "Happened", event = "GlassTunnelBroken" }, { when = "Always" }] }
-answers = { room_state = 1 }
