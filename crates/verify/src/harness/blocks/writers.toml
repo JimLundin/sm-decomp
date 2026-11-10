@@ -1,0 +1,321 @@
+# The other parts' cell writers: every PLM of bank $84 outside the blocks that writes a cell other
+# than its own, with the cells it writes, the single source of the blocks harness's masks
+# (docs/behaviours/blocks.decode.md, "The other parts' cell writers", says how it was read). Every
+# other PLM, the items' included, writes only its own cell, or none.
+#
+# Each writer:
+# - `plms`: its PLM header ids (`$1C37,x`);
+# - `cells`: what it writes from its own cell (`$1C87,x`) at that frame, x rightward and y
+#   downward, negative offsets allowed: a point `[dx, dy]`, or a box `{ x = [from, to], y = [from,
+#   to] }`, both ends included;
+# - `reached`: what the 44 cached rows do with it: `writes` (a cell of its reach other than its
+#   own changes while it is live), `live` (a row holds it, but no other cell of its reach changes
+#   there) or `no`;
+# - `left_out`: for a writer whose cells aren't all relative to a cell it keeps, why:
+#   `room-absolute` (it writes a cell of the room wherever it sits), `moves` (it moves between its
+#   draws) or `frees-its-slot` (its setup writes and frees its slot in one call, so no record
+#   shows it). The harness masks only its own cell, so a cell it writes past that fails loudly as
+#   a mismatch; no cached row reaches one, and the harness refuses a table where one `writes`.
+#
+# Each comment gives the writer, the notes' account of its cells, and the rows that hold it.
+
+# Part 2: the doors' caps facing left or right: grey, yellow, green, red, blue, the blue caps closing, Bomb Torizo's. Cells: x 0, y 0..3.
+# Rows: writes: `$C842` (area-norfair, boss-kraid-defeated, event-zebes-awake), `$C848` (boss-kraid-defeated, boss-phantoon, r03, event-zebes-awake, item-plasma-beam), `$C872` (r04, r10), `$C88A` (r06), `$C8A2` (area-norfair, r03, r10), `$C8A8` (area-maridia, r08), `$C8BA` (10 rows), `$C8BE` (22 rows), `$BAF4` (samus-bomb-jump-vertical); live: `$C85A` (11 rows), `$C878` (r08), `$C890` (4 rows).
+[[writer]]
+plms = [0xC842, 0xC848, 0xC85A, 0xC860, 0xC872, 0xC878, 0xC88A, 0xC890, 0xC8A2, 0xC8A8, 0xC8BA, 0xC8BE, 0xBAF4]
+reached = "writes"
+cells = [{ x = [0, 0], y = [0, 3] }]
+
+# Part 2: the doors' caps facing up or down. Cells: x 0..3, y 0.
+# Rows: writes: `$C8C6` (r03, r09).
+[[writer]]
+plms = [0xC84E, 0xC854, 0xC866, 0xC86C, 0xC87E, 0xC884, 0xC896, 0xC89C, 0xC8AE, 0xC8B4, 0xC8C2, 0xC8C6]
+reached = "writes"
+cells = [{ x = [0, 3], y = [0, 0] }]
+
+# Part 2: the gate that closes in the escape after Mother Brain. Cells: x 0, y 0..3.
+[[writer]]
+plms = [0xC8CA, 0xC8D0]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 3] }]
+
+# Part 2: the gates that open downwards, open and closed. Cells: x 0, y 0..4 (the draws; `$84:C66A` gives the column BTS 10h).
+[[writer]]
+plms = [0xC826, 0xC82A]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 4] }]
+
+# Part 2: the gates that open upwards. Cells: x 0, y −4..0 (`$84:C694`).
+[[writer]]
+plms = [0xC82E, 0xC832]
+reached = "no"
+cells = [{ x = [0, 0], y = [-4, 0] }]
+
+# Part 2: the gates' shot blocks. Cells: x −1..1, y 0 (the setups `$84:C6E0`, `$C73A` write the trigger beside it, by colour).
+[[writer]]
+plms = [0xC836, 0xC83A]
+reached = "no"
+cells = [{ x = [-1, 1], y = [0, 0] }]
+
+# Part 2: the eye door's eye, facing right and left. Cells: x 0, y −1..3: the draws 0..3, and `$84:D7C3`/`$D7DA` move the PLM up a row and write a blue door there and the 3 cells below (`$84:D7EF`), so its own cell is one higher after.
+[[writer]]
+plms = [0xDB48, 0xDB56]
+reached = "no"
+cells = [{ x = [0, 0], y = [-1, 3] }]
+
+# Part 3: the floor plant. Cells: x −2..1, y −1..0.
+[[writer]]
+plms = [0xB6CB]
+reached = "no"
+cells = [{ x = [-2, 1], y = [-1, 0] }]
+
+# Part 3: the ceiling plant. Cells: x −2..1, y 0..1.
+[[writer]]
+plms = [0xB6CF]
+reached = "no"
+cells = [{ x = [-2, 1], y = [0, 1] }]
+
+# Part 4: the Wrecked Ship entrance treadmills. Cells: x 0..55, y 0 (`$84:B04A`; `$84:AD43`, `$AD58` through `$84:82D6`).
+[[writer]]
+plms = [0xB64B, 0xB64F]
+reached = "no"
+cells = [{ x = [0, 55], y = [0, 0] }]
+
+# Part 4: the map station. Cells: x −2..1, y 0: the draws −1..0, and the setup `$84:B18B` writes the accesses at +1 and −2.
+[[writer]]
+plms = [0xB6D3]
+reached = "no"
+cells = [{ x = [-2, 1], y = [0, 0] }]
+
+# Part 4: the map station's right access. Cells: (−3, 0), (0, 0).
+[[writer]]
+plms = [0xB6D7]
+reached = "no"
+cells = [[-3, 0], [0, 0]]
+
+# Part 4: the map station's left access. Cells: (0, 0), (3, 0).
+[[writer]]
+plms = [0xB6DB]
+reached = "no"
+cells = [[0, 0], [3, 0]]
+
+# Part 4: the energy and missile stations. Cells: (−1, 0), (0, −1), (0, 0), (1, 0): the draws (0, −1) and (0, 0), and the setups `$84:B21D`, `$B245` the accesses at ±1.
+[[writer]]
+plms = [0xB6DF, 0xB6EB]
+reached = "no"
+cells = [[-1, 0], [0, -1], [0, 0], [1, 0]]
+
+# Part 4: the save station. Cells: x 0..1, y −5..0.
+[[writer]]
+plms = [0xB76F]
+reached = "no"
+cells = [{ x = [0, 1], y = [-5, 0] }]
+
+# Part 4: the elevator platform. Cells: (0, 0), (3, 0), and x 0..3 at y 1.
+# Rows: writes: chain-0043-9AD9.
+[[writer]]
+plms = [0xB70B]
+reached = "writes"
+cells = [[0, 0], [3, 0], { x = [0, 3], y = [1, 1] }]
+
+# Part 4: the access to Tourian's elevator crumbling. Cells: x 0..3, y 0.
+[[writer]]
+plms = [0xB773]
+reached = "no"
+cells = [{ x = [0, 3], y = [0, 0] }]
+
+# Part 4: the access to Tourian's elevator cleared. Cells: x 0..3, y 0..5.
+[[writer]]
+plms = [0xB777]
+reached = "no"
+cells = [{ x = [0, 3], y = [0, 5] }]
+
+# Part 4: Mother Brain's wall filled. Cells: x 0, y −1..1.
+[[writer]]
+plms = [0xB673]
+reached = "no"
+cells = [{ x = [0, 0], y = [-1, 1] }]
+
+# Part 4: Mother Brain's room's escape door. Cells: x 0..1, y 0..3 (the setup `$84:B5F8` writes x 0, y 0..3).
+[[writer]]
+plms = [0xB677]
+reached = "no"
+cells = [{ x = [0, 1], y = [0, 3] }]
+
+# Part 4: Mother Brain's background, rows 2 to Dh. Cells: x 0..12, y 0.
+[[writer]]
+plms = [0xB67B, 0xB67F, 0xB683, 0xB687, 0xB68B, 0xB68F, 0xB693, 0xB697, 0xB69B, 0xB69F, 0xB6A3, 0xB6A7]
+reached = "no"
+cells = [{ x = [0, 12], y = [0, 0] }]
+
+# Part 4: Mother Brain's ceiling block, ceiling tube and bottom-middle-side tube cleared. Cells: x 0, y 0..1; x 0, y 0..4; x 0, y 0..3.
+[[writer]]
+plms = [0xB6B3]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 1] }]
+
+# Part 4: Mother Brain's ceiling block, ceiling tube and bottom-middle-side tube cleared. Cells: x 0, y 0..1; x 0, y 0..4; x 0, y 0..3.
+[[writer]]
+plms = [0xB6B7]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 4] }]
+
+# Part 4: Mother Brain's ceiling block, ceiling tube and bottom-middle-side tube cleared. Cells: x 0, y 0..1; x 0, y 0..4; x 0, y 0..3.
+[[writer]]
+plms = [0xB6BB]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 3] }]
+
+# Part 4: her bottom-middle tubes cleared. Cells: x 0..1, y 0..6.
+[[writer]]
+plms = [0xB6BF]
+reached = "no"
+cells = [{ x = [0, 1], y = [0, 6] }]
+
+# Part 4: her bottom-left tube cleared. Cells: (1, 0), x 0 at y 0..4.
+[[writer]]
+plms = [0xB6C3]
+reached = "no"
+cells = [[1, 0], { x = [0, 0], y = [0, 4] }]
+
+# Part 4: her bottom-right tube cleared. Cells: (−1, 0), x 0 at y 0..4.
+[[writer]]
+plms = [0xB6C7]
+reached = "no"
+cells = [[-1, 0], { x = [0, 0], y = [0, 4] }]
+
+# Part 4: Mother Brain's glass. Cells: x −3..0, y 0..3.
+[[writer]]
+plms = [0xD6DE]
+reached = "no"
+cells = [{ x = [-3, 0], y = [0, 3] }]
+
+# Part 4: Crocomire's bridge cleared. Cells: x 0..9, y 0.
+[[writer]]
+plms = [0xB747]
+reached = "no"
+cells = [{ x = [0, 9], y = [0, 0] }]
+
+# Part 4: Crocomire's invisible wall cleared and made. Cells: x 0..2, y 0..7.
+[[writer]]
+plms = [0xB753, 0xB757]
+reached = "no"
+cells = [{ x = [0, 2], y = [0, 7] }]
+
+# Part 4: the invisible wall in the baby metroid's room cleared and made. Cells: x 0, y 0..9 (the setups `$84:B551`, `$B56F`).
+[[writer]]
+plms = [0xB763, 0xB767]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 9] }]
+
+# Part 4: Phantoon's door drawn during the fight. Cells: x 0..1, y 0..3.
+# Rows: writes: boss-phantoon.
+[[writer]]
+plms = [0xB781]
+reached = "writes"
+cells = [{ x = [0, 1], y = [0, 3] }]
+
+# Part 4: Phantoon's door restored after it. Cells: x 0, y 0..3.
+# Rows: writes: boss-phantoon.
+[[writer]]
+plms = [0xB78B]
+reached = "writes"
+cells = [{ x = [0, 0], y = [0, 3] }]
+
+# Part 4: Spore Spawn's ceiling crumbling and cleared. Cells: x 0..1, y 0..1.
+[[writer]]
+plms = [0xB78F, 0xB793]
+reached = "no"
+cells = [{ x = [0, 1], y = [0, 1] }]
+
+# Part 4: Botwoon's wall cleared. Cells: x 0, y 0..8.
+[[writer]]
+plms = [0xB797]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 8] }]
+
+# Part 4: Kraid's ceiling blocks cleared. Cells: x 0..14, y 0.
+[[writer]]
+plms = [0xB7B7]
+reached = "no"
+cells = [{ x = [0, 14], y = [0, 0] }]
+
+# Part 4: Kraid's spike blocks cleared. Cells: x 0..21, y 0.
+# Rows: (`$B7BF`, crumbling them one at a time, is live in boss-kraid-defeated: own cell).
+[[writer]]
+plms = [0xB7BB]
+reached = "no"
+cells = [{ x = [0, 21], y = [0, 0] }]
+
+# Part 4: Bomb Torizo's chozo crumbling. Cells: x −2..1, y −2..1.
+# Rows: live: samus-bomb-jump-vertical (the one cell of its reach that changes there, (−1, −1), is the bombs' item's own cell).
+[[writer]]
+plms = [0xD6EA]
+reached = "live"
+cells = [{ x = [-2, 1], y = [-2, 1] }]
+
+# Part 4: the slope access in the Wrecked Ship chozo's room cleared and blocked. Cells: x 0..13 at y 0, x 0..8 at y 5, x 5..6 at y 6, x 5 at y 7..8; and through `$84:D3D7`/`$D3F4` the room's blocks B04h and B05h (word offsets 1608h, 160Ah), wherever the PLM is.
+[[writer]]
+plms = [0xD6F8, 0xD6FC]
+reached = "no"
+left_out = "room-absolute"
+cells = [{ x = [0, 13], y = [0, 0] }, { x = [0, 8], y = [5, 5] }, { x = [5, 6], y = [6, 6] }, { x = [5, 5], y = [7, 8] }]
+
+# Part 4: Lower Norfair's chozo hand. Cells: the room's cell (4, 8), wherever the PLM is (`$84:D15C`).
+[[writer]]
+plms = [0xD6D6]
+reached = "no"
+left_out = "room-absolute"
+cells = [[0, 0]]
+
+# Part 4: Maridia's glass tube. Cells: x 0..11, y 0..5.
+# Rows: live: area-maridia.
+[[writer]]
+plms = [0xD70C]
+reached = "live"
+cells = [{ x = [0, 11], y = [0, 5] }]
+
+# Part 4: Draygon's cannons facing right. Cells: x 0..1, y 0..1.
+[[writer]]
+plms = [0xDF59, 0xDF65, 0xDF5D, 0xDF61, 0xDF69, 0xDF6D]
+reached = "no"
+cells = [{ x = [0, 1], y = [0, 1] }]
+
+# Part 4: Draygon's cannons facing left. Cells: x −1..0, y 0..1.
+[[writer]]
+plms = [0xDF71, 0xDF7D, 0xDF75, 0xDF79, 0xDF81, 0xDF85]
+reached = "no"
+cells = [{ x = [-1, 0], y = [0, 1] }]
+
+# Part 4: the critters' escape block. Cells: x 0, y 0..2 (`$84:B9C5`).
+[[writer]]
+plms = [0xB9C1, 0xB9ED]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 2] }]
+
+# Part 4: the old Tourian escape shaft's fake wall exploding. Cells: x 0..1, y 0..2.
+[[writer]]
+plms = [0xB964]
+reached = "no"
+cells = [{ x = [0, 1], y = [0, 2] }]
+
+# Part 4: Ceres' elevator door made solid in the escape. Cells: x 0, y 0..3 (`$84:B9F1`).
+[[writer]]
+plms = [0xBA48]
+reached = "no"
+cells = [{ x = [0, 0], y = [0, 3] }]
+
+# Part 4: Crateria's main street escape passage cleared. Cells: x 0..1, y 0, twice: it moves the PLM right 4 cells between its draws (`$84:BB25`).
+[[writer]]
+plms = [0xBB30]
+reached = "no"
+left_out = "moves"
+cells = [[0, 0]]
+
+# Part 4: the Wrecked Ship chozo's collision setup: it makes its cell air, sets the screens and
+# spawns `$D6F8` at (17h, 1Dh), all in its setup (`$84:D620`).
+[[writer]]
+plms = [0xD6F2]
+reached = "no"
+left_out = "frees-its-slot"
+cells = [[0, 0]]

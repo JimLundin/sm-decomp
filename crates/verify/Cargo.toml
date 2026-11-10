@@ -19,6 +19,8 @@ enum-map = "=3.1.0"
 game = { path = "../game" }
 oracle_record = { path = "../oracle_record" }
 runtime = { path = "../runtime" }
+serde = { version = "=1.0.229", features = ["derive"] }
+toml = "=1.2.1"
 
 [lints]
 workspace = true

@@ -8,8 +8,8 @@
 //! room's cells, every place, the screens. The model's output is compared with record N+1 on
 //! each place, the screens and every cell of the room, as each differs from record N's. A cell
 //! another part's place sits on or writes at either record is masked, by position, never by
-//! value, and the mask names the PLM that writes it; the cells each PLM writes are the decode
-//! notes' table's (`writers`).
+//! value, and the mask names the PLM that writes it; the cells each PLM writes are the writers'
+//! table's (`writers.toml`).
 //!
 //! The requests are heard from the frame's watched instruction hits, in the order the CPU ran
 //! them: each reaction's setup is matched, by family, to the place record N+1 shows a new
@@ -334,7 +334,7 @@ pub struct BlocksDomain {
     image: Vec<u8>,
     content: BlockContent,
     rules: Rules,
-    /// The other parts' cell writers, from the decode notes' table.
+    /// The other parts' cell writers, from their table.
     writers: Writers,
     /// The scroll lists read, by argument and the room's screens across.
     lists: RefCell<BTreeMap<(u16, u16), Vec<ScreenChange>>>,
@@ -390,7 +390,7 @@ impl BlocksDomain {
             image,
             content,
             rules: Rules::reference(),
-            writers: Writers::from_notes(),
+            writers: Writers::load()?,
             lists: RefCell::new(BTreeMap::new()),
             frame: RefCell::new(Frame::default()),
             masked: RefCell::new(BTreeMap::new()),

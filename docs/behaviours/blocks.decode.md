@@ -469,7 +469,7 @@ content is the draw routine's, which the format names by what each cell becomes.
 During play only PLMs write the room's cells. Outside bank `$84` the level is written by the
 room's load (`$82:E7D3`, `$82:EA73`: a room change, which the harness skips) and the intro's
 cinematics (`$8B:AEB8`, `$8B:AF6C`: not game state 8); the enemies and bosses read it and spawn
-PLMs to change it. This table is every PLM of bank `$84` outside this part that writes a cell
+PLMs to change it. The table is every PLM of bank `$84` outside this part that writes a cell
 other than its own, with the cells it writes as `(dx, dy)` from its own cell (`$1C87,x`) at that
 frame, x rightward and y downward. `x a..b, y c..d` is the whole rectangle unless cells are
 listed. Every other PLM, the items' included, writes only its own cell, or none.
@@ -481,60 +481,10 @@ another PLM's draws are noted under takes those draws too: the blue doors' closi
 `$84:82D6` or `STA $7F0002,x`, read by hand. `$TEMP/collab/blocks-spec/masks.py` prints the draws'
 cells by PLM; `mask_reach.py ROW...` reads the dumps.
 
-**Rows** says what the 44 cached rows do with it. **Writes**: a cell of its reach other than its
-own changes while it is live, in the rows named (`mask_reach.py`). **Live**: a row holds it, but
-no other cell of its reach changes there. Blank: no row holds it. Only the "writes" PLMs need
-their reach for today's rows. The harness reads its masks from this table
-(`crates/verify/src/harness/blocks/writers.rs`), every row in the forms it reads, and its tests
-hold that each "writes" row is one of them and each row it can't read is named below.
-
-| Part | PLMs | What | Cells written | Rows |
-| --- | --- | --- | --- | --- |
-| 2 | `$C842`, `$C848`, `$C85A`, `$C860`, `$C872`, `$C878`, `$C88A`, `$C890`, `$C8A2`, `$C8A8`, `$C8BA`, `$C8BE`, `$BAF4` | the doors' caps facing left or right: grey, yellow, green, red, blue, the blue caps closing, Bomb Torizo's | x 0, y 0..3 | writes: `$C842` (area-norfair, boss-kraid-defeated, event-zebes-awake), `$C848` (boss-kraid-defeated, boss-phantoon, r03, event-zebes-awake, item-plasma-beam), `$C872` (r04, r10), `$C88A` (r06), `$C8A2` (area-norfair, r03, r10), `$C8A8` (area-maridia, r08), `$C8BA` (10 rows), `$C8BE` (22 rows), `$BAF4` (samus-bomb-jump-vertical); live: `$C85A` (11 rows), `$C878` (r08), `$C890` (4 rows) |
-| 2 | `$C84E`, `$C854`, `$C866`, `$C86C`, `$C87E`, `$C884`, `$C896`, `$C89C`, `$C8AE`, `$C8B4`, `$C8C2`, `$C8C6` | the doors' caps facing up or down | x 0..3, y 0 | writes: `$C8C6` (r03, r09) |
-| 2 | `$C8CA`, `$C8D0` | the gate that closes in the escape after Mother Brain | x 0, y 0..3 | |
-| 2 | `$C826`, `$C82A` | the gates that open downwards, open and closed | x 0, y 0..4 (the draws; `$84:C66A` gives the column BTS 10h) | |
-| 2 | `$C82E`, `$C832` | the gates that open upwards | x 0, y −4..0 (`$84:C694`) | |
-| 2 | `$C836`, `$C83A` | the gates' shot blocks | x −1..1, y 0 (the setups `$84:C6E0`, `$C73A` write the trigger beside it, by colour) | |
-| 2 | `$DB48`, `$DB56` | the eye door's eye, facing right and left | x 0, y −1..3: the draws 0..3, and `$84:D7C3`/`$D7DA` move the PLM up a row and write a blue door there and the 3 cells below (`$84:D7EF`), so its own cell is one higher after | |
-| 3 | `$B6CB` | the floor plant | x −2..1, y −1..0 | |
-| 3 | `$B6CF` | the ceiling plant | x −2..1, y 0..1 | |
-| 4 | `$B64B`, `$B64F` | the Wrecked Ship entrance treadmills | x 0..55, y 0 (`$84:B04A`; `$84:AD43`, `$AD58` through `$84:82D6`) | |
-| 4 | `$B6D3` | the map station | x −2..1, y 0: the draws −1..0, and the setup `$84:B18B` writes the accesses at +1 and −2 | |
-| 4 | `$B6D7` | the map station's right access | (−3, 0), (0, 0) | |
-| 4 | `$B6DB` | the map station's left access | (0, 0), (3, 0) | |
-| 4 | `$B6DF`, `$B6EB` | the energy and missile stations | (−1, 0), (0, −1), (0, 0), (1, 0): the draws (0, −1) and (0, 0), and the setups `$84:B21D`, `$B245` the accesses at ±1 | |
-| 4 | `$B76F` | the save station | x 0..1, y −5..0 | |
-| 4 | `$B70B` | the elevator platform | (0, 0), (3, 0), and x 0..3 at y 1 | writes: chain-0043-9AD9 |
-| 4 | `$B773` | the access to Tourian's elevator crumbling | x 0..3, y 0 | |
-| 4 | `$B777` | the access to Tourian's elevator cleared | x 0..3, y 0..5 | |
-| 4 | `$B673` | Mother Brain's wall filled | x 0, y −1..1 | |
-| 4 | `$B677` | Mother Brain's room's escape door | x 0..1, y 0..3 (the setup `$84:B5F8` writes x 0, y 0..3) | |
-| 4 | `$B67B`..`$B6A7` | Mother Brain's background, rows 2 to Dh | x 0..12, y 0 | |
-| 4 | `$B6B3`, `$B6B7`, `$B6BB` | Mother Brain's ceiling block, ceiling tube and bottom-middle-side tube cleared | x 0, y 0..1; x 0, y 0..4; x 0, y 0..3 | |
-| 4 | `$B6BF` | her bottom-middle tubes cleared | x 0..1, y 0..6 | |
-| 4 | `$B6C3` | her bottom-left tube cleared | (1, 0), x 0 at y 0..4 | |
-| 4 | `$B6C7` | her bottom-right tube cleared | (−1, 0), x 0 at y 0..4 | |
-| 4 | `$D6DE` | Mother Brain's glass | x −3..0, y 0..3 | |
-| 4 | `$B747` | Crocomire's bridge cleared | x 0..9, y 0 | |
-| 4 | `$B753`, `$B757` | Crocomire's invisible wall cleared and made | x 0..2, y 0..7 | |
-| 4 | `$B763`, `$B767` | the invisible wall in the baby metroid's room cleared and made | x 0, y 0..9 (the setups `$84:B551`, `$B56F`) | |
-| 4 | `$B781` | Phantoon's door drawn during the fight | x 0..1, y 0..3 | writes: boss-phantoon |
-| 4 | `$B78B` | Phantoon's door restored after it | x 0, y 0..3 | writes: boss-phantoon |
-| 4 | `$B78F`, `$B793` | Spore Spawn's ceiling crumbling and cleared | x 0..1, y 0..1 | |
-| 4 | `$B797` | Botwoon's wall cleared | x 0, y 0..8 | |
-| 4 | `$B7B7` | Kraid's ceiling blocks cleared | x 0..14, y 0 | |
-| 4 | `$B7BB` | Kraid's spike blocks cleared | x 0..21, y 0 | (`$B7BF`, crumbling them one at a time, is live in boss-kraid-defeated: own cell) |
-| 4 | `$D6EA` | Bomb Torizo's chozo crumbling | x −2..1, y −2..1 | live: samus-bomb-jump-vertical (the one cell of its reach that changes there, (−1, −1), is the bombs' item's own cell) |
-| 4 | `$D6F8`, `$D6FC` | the slope access in the Wrecked Ship chozo's room cleared and blocked | x 0..13 at y 0, x 0..8 at y 5, x 5..6 at y 6, x 5 at y 7..8; and through `$84:D3D7`/`$D3F4` the room's blocks B04h and B05h (word offsets 1608h, 160Ah), wherever the PLM is | |
-| 4 | `$D6D6` | Lower Norfair's chozo hand | the room's cell (4, 8), wherever the PLM is (`$84:D15C`) | |
-| 4 | `$D70C` | Maridia's glass tube | x 0..11, y 0..5 | live: area-maridia |
-| 4 | `$DF59`, `$DF65` (and the unused `$DF5D`, `$DF61`, `$DF69`, `$DF6D`) | Draygon's cannons facing right | x 0..1, y 0..1 | |
-| 4 | `$DF71`, `$DF7D` (and the unused `$DF75`, `$DF79`, `$DF81`, `$DF85`) | Draygon's cannons facing left | x −1..0, y 0..1 | |
-| 4 | `$B9C1`, `$B9ED` | the critters' escape block | x 0, y 0..2 (`$84:B9C5`) | |
-| 4 | `$B964` | the old Tourian escape shaft's fake wall exploding | x 0..1, y 0..2 | |
-| 4 | `$BA48` | Ceres' elevator door made solid in the escape | x 0, y 0..3 (`$84:B9F1`) | |
-| 4 | `$BB30` | Crateria's main street escape passage cleared | x 0..1, y 0, twice: it moves the PLM right 4 cells between its draws (`$84:BB25`) | |
+The table's single source is
+[`writers.toml`](../../crates/verify/src/harness/blocks/writers.toml), which the harness masks
+by: each writer's PLMs, its cells as points and boxes from its own cell, what the 44 cached rows
+do with it (`writes`, `live` or `no`, from `mask_reach.py`) and, for a writer left out, why.
 
 Unused, placed by no room: `$B65F`, `$B663` (x 0, y −2..1), `$B667` (x 0, y 0..3), `$B6AB`,
 `$B6AF`, `$B75B`, `$B75F` (x 0..12, y 0), `$B6F7` (x 0, y 0..1), `$B6FB` (x −1..0, y 0..1),
