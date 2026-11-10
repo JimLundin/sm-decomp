@@ -7,8 +7,7 @@ use std::collections::BTreeMap;
 use std::num::Wrapping;
 
 use clean_model_progress::{
-    Condition, Count, Inventory, MapStatus, Pickup, Progress, Remembered, Report, ReserveMode,
-    Supply,
+    Condition, Inventory, MapStatus, Pickup, Progress, Remembered, Report, ReserveMode, Supply,
 };
 use clean_types::{
     Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId,
@@ -238,16 +237,12 @@ fn per_area<T, V: Default>(
         .collect()
 }
 
-/// The supplies a table gives, each left out at its value in `start`.
-fn supplies(
-    given: EnumMap<Supply, Option<u16>>,
-    start: EnumMap<Supply, Count>,
-) -> EnumMap<Supply, Count> {
-    given.map(|supply, n| n.map_or(start[supply], Wrapping))
-}
+/// The energy, and its capacity, the file's header gives a field left out: 99.
+const HEADER_ENERGY: u16 = 99;
 
-/// A progress (`before`, `after`): every key left out at its value in a new file.
-#[derive(Deserialize, Default)]
+/// A progress (`before`, `after`): every key left out at the start-of-game value the file's
+/// header lists, never at the model's own start, so the vectors check the model's new file.
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct State {
     items: Vec<Named<Item>>,
@@ -255,12 +250,12 @@ pub struct State {
     beams: Vec<Named<Beam>>,
     beams_equipped: Vec<Named<Beam>>,
     capacity: Capacity,
-    energy: Option<u16>,
-    reserve_energy: Option<u16>,
-    missiles: Option<u16>,
-    super_missiles: Option<u16>,
-    power_bombs: Option<u16>,
-    reserve_mode: Option<Named<ReserveMode>>,
+    energy: u16,
+    reserve_energy: u16,
+    missiles: u16,
+    super_missiles: u16,
+    power_bombs: u16,
+    reserve_mode: Named<ReserveMode>,
     events: Vec<Named<Event>>,
     zebetites: u16,
     defeated: BTreeMap<Named<Area>, Vec<Named<BossKind>>>,
@@ -271,47 +266,93 @@ pub struct State {
     items_placed: u16,
 }
 
-/// A progress's `capacity`: each left out at its value in a new file.
-#[derive(Deserialize, Default)]
+/// The header's list: `items = [], equipped = [], beams = [], beams_equipped = [], capacity =
+/// { energy = 99, .. 0 }, energy = 99, reserve_energy = 0, missiles = 0, super_missiles = 0,
+/// power_bombs = 0, reserve_mode = "None", events = [], zebetites = 0, defeated = {}, emptied =
+/// [], opened = [], maps = {}, stations = {}, items_placed = 0`.
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            items: Vec::new(),
+            equipped: Vec::new(),
+            beams: Vec::new(),
+            beams_equipped: Vec::new(),
+            capacity: Capacity::default(),
+            energy: HEADER_ENERGY,
+            reserve_energy: 0,
+            missiles: 0,
+            super_missiles: 0,
+            power_bombs: 0,
+            reserve_mode: Named(ReserveMode::NoTank),
+            events: Vec::new(),
+            zebetites: 0,
+            defeated: BTreeMap::new(),
+            emptied: Vec::new(),
+            opened: Vec::new(),
+            maps: BTreeMap::new(),
+            stations: BTreeMap::new(),
+            items_placed: 0,
+        }
+    }
+}
+
+/// A progress's `capacity`: each left out at the header's value.
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct Capacity {
-    energy: Option<u16>,
-    reserve: Option<u16>,
-    missiles: Option<u16>,
-    super_missiles: Option<u16>,
-    power_bombs: Option<u16>,
+    energy: u16,
+    reserve: u16,
+    missiles: u16,
+    super_missiles: u16,
+    power_bombs: u16,
+}
+
+/// The header's capacities: `{ energy = 99, reserve = 0, missiles = 0, super_missiles = 0,
+/// power_bombs = 0 }`.
+impl Default for Capacity {
+    fn default() -> Self {
+        Self {
+            energy: HEADER_ENERGY,
+            reserve: 0,
+            missiles: 0,
+            super_missiles: 0,
+            power_bombs: 0,
+        }
+    }
 }
 
 impl State {
     /// The progress this state gives.
     pub fn progress(&self) -> Progress {
-        let new = Inventory::default();
         let capacity = &self.capacity;
-        let given_capacity = EnumMap::from_fn(|supply| match supply {
-            Supply::Energy => capacity.energy,
-            Supply::Reserve => capacity.reserve,
-            Supply::Missiles => capacity.missiles,
-            Supply::SuperMissiles => capacity.super_missiles,
-            Supply::PowerBombs => capacity.power_bombs,
+        let capacity = EnumMap::from_fn(|supply| {
+            Wrapping(match supply {
+                Supply::Energy => capacity.energy,
+                Supply::Reserve => capacity.reserve,
+                Supply::Missiles => capacity.missiles,
+                Supply::SuperMissiles => capacity.super_missiles,
+                Supply::PowerBombs => capacity.power_bombs,
+            })
         });
-        let given_held = EnumMap::from_fn(|supply| match supply {
-            Supply::Energy => self.energy,
-            Supply::Reserve => self.reserve_energy,
-            Supply::Missiles => self.missiles,
-            Supply::SuperMissiles => self.super_missiles,
-            Supply::PowerBombs => self.power_bombs,
+        let held = EnumMap::from_fn(|supply| {
+            Wrapping(match supply {
+                Supply::Energy => self.energy,
+                Supply::Reserve => self.reserve_energy,
+                Supply::Missiles => self.missiles,
+                Supply::SuperMissiles => self.super_missiles,
+                Supply::PowerBombs => self.power_bombs,
+            })
         });
+        let Named(reserve_mode) = self.reserve_mode;
         Progress {
             inventory: Inventory {
                 items: set(&self.items),
                 items_switched_on: set(&self.equipped),
                 beams: set(&self.beams),
                 beams_switched_on: set(&self.beams_equipped),
-                capacity: supplies(given_capacity, new.capacity),
-                held: supplies(given_held, new.held),
-                reserve_mode: self
-                    .reserve_mode
-                    .map_or(new.reserve_mode, |Named(mode)| mode),
+                capacity,
+                held,
+                reserve_mode,
             },
             events: set(&self.events),
             zebetites: Wrapping(self.zebetites),

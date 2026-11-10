@@ -81,26 +81,41 @@ pub struct Inventory {
     pub reserve_mode: ReserveMode,
 }
 
-/// What a new file gives her: 99 energy of a capacity of 99, every other capacity and count at
-/// 0, no reserve tank, and no items or beams, hers or switched on.
+/// What a new file gives her: every capacity and count at 0 but energy, which is 99 of a
+/// capacity of 99; no reserve tank; and no items or beams, hers or switched on.
 impl Default for Inventory {
     fn default() -> Self {
+        let mut supplies = EnumMap::<Supply, Count>::default();
+        supplies[Supply::Energy] = NEW_FILE_ENERGY;
         Self {
             items: Set::default(),
             items_switched_on: Set::default(),
             beams: Set::default(),
             beams_switched_on: Set::default(),
-            capacity: EnumMap::from_fn(new_file_supply),
-            held: EnumMap::from_fn(new_file_supply),
+            capacity: supplies,
+            held: supplies,
             reserve_mode: ReserveMode::default(),
         }
     }
 }
 
+/// Energy and its capacity at the start of a new file.
+const NEW_FILE_ENERGY: Count = Wrapping(99);
+
+/// A row of the beams' table: a beam, and the beam taking it switches off, if any; spazer and
+/// plasma don't fire together. Spec: TakingBeams.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BeamTaken {
+    /// The beam she takes.
+    pub beam: Beam,
+    /// The beam taking it switches off, if any.
+    pub switches_off: Option<Beam>,
+}
+
 impl Inventory {
-    /// She takes an item, a beam or a tank; `switches_off` is the beam each beam taken switches
-    /// off, if any.
-    pub(crate) fn take(&mut self, pickup: Pickup, switches_off: EnumMap<Beam, Option<Beam>>) {
+    /// She takes an item, a beam or a tank; `taking_beams` gives the beam each beam taken
+    /// switches off, if any.
+    pub(crate) fn take(&mut self, pickup: Pickup, taking_beams: &EnumMap<Beam, BeamTaken>) {
         match pickup {
             // Spec: TakingItems. Hers and switched on, even one she had and switched off.
             Pickup::Item(item) => {
@@ -112,7 +127,7 @@ impl Inventory {
             Pickup::Beam(beam) => {
                 self.beams[beam] = true;
                 self.beams_switched_on[beam] = true;
-                if let Some(other) = switches_off[beam] {
+                if let Some(other) = taking_beams[beam].switches_off {
                     self.beams_switched_on[other] = false;
                 }
             }
@@ -135,20 +150,6 @@ impl Inventory {
             Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => {
                 self.held[supply] += amount;
             }
-        }
-    }
-}
-
-/// Energy and its capacity at the start of a new file.
-const NEW_FILE_ENERGY: Count = Wrapping(99);
-
-/// A supply's capacity, and what she holds of it, at the start of a new file: energy 99, every
-/// other 0.
-const fn new_file_supply(supply: Supply) -> Count {
-    match supply {
-        Supply::Energy => NEW_FILE_ENERGY,
-        Supply::Reserve | Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => {
-            Wrapping(0)
         }
     }
 }

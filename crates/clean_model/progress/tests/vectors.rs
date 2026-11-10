@@ -11,7 +11,7 @@ use clean_model_progress::{
     Condition, EnteredRoom, Progress, RoomStates, Rules, Version, catalogue,
 };
 use clean_types::{Area, Checked, Entrance};
-use support::{Answers, Asks, Check, Named, Vector, VectorFile};
+use support::{Answers, Asks, Check, Named, State, Vector, VectorFile};
 
 const VECTOR_FILE: &str = include_str!("../../../../scenarios/vectors/progress.toml");
 
@@ -140,6 +140,15 @@ fn every_vector_passes() {
         vectors.len(),
         failures.join("\n")
     );
+}
+
+/// Spec §1.1, The start of a run: the model's new file is the start the vector file's header
+/// lists, which fills every field a vector leaves out.
+#[test]
+fn a_new_file_is_the_headers_start() {
+    let header = State::default().progress();
+    let failures = differences(&Progress::default(), &header);
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
 /// A vector of one frame whose `before` and reports are given, the rest the least the file allows.

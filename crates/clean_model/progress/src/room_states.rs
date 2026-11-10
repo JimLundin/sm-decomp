@@ -72,7 +72,8 @@ pub enum Version {
 
 impl RoomStates<'_> {
     /// The version that loads: the first whose condition holds, or the default when none does.
-    /// Spec: RoomStates.
+    /// So a version whose condition holds wins over every later one, whether or not theirs hold
+    /// too. Spec: RoomStates.
     #[must_use]
     pub fn choose(&self, progress: &Progress, room: EnteredRoom) -> Version {
         self.conditional

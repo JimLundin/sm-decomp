@@ -14,8 +14,9 @@ impl Inventory {
     /// hers adds nothing; and the 99 energy she starts with counts 0. Spec: ItemPercentage.
     #[must_use]
     pub fn item_percentage(&self, rules: &Rules) -> Count {
-        let share =
-            |(supply, capacity): (_, &Count)| capacity.0 / rules.percentage_divisors[supply];
+        let share = |(supply, capacity): (_, &Count)| {
+            capacity.0 / rules.percentage_divisors[supply].divisor
+        };
         let tanks: Count = self.capacity.iter().map(share).map(Wrapping).sum();
         tanks + self.items.count() + self.beams.count()
     }

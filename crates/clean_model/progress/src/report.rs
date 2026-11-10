@@ -61,19 +61,17 @@ pub enum Report {
 impl Progress {
     /// Records one report.
     ///
-    /// A frame's reports are applied one call each, in the order they come (spec §7): each is
-    /// recorded at once, against the progress the reports before it left, and nothing is
-    /// gathered up or reordered over the frame. The spec's rules don't read one another's results
-    /// within a frame, so the one order that shows is leaving and arriving: when a door takes her
-    /// into another area, `LeftArea` with the area she leaves comes before the new room's
-    /// loading reports, such as `MapOnArrival`, which name the new room's area.
+    /// A frame's reports are applied one call each, in the order they come (spec §7). Each
+    /// report carries its own area: `LeftArea` the area she leaves, every other report the new
+    /// room's. So none of the rules reads another's result within the frame, and no order within
+    /// a frame is visible.
     pub fn apply(&mut self, rules: &Rules, report: Report) {
         match report {
             Report::Happened(event) => self.events[event] = true,
             Report::ZebetiteDestroyed => self.zebetites += Wrapping(1),
             Report::Defeated { kind, area } => self.defeated[area][kind] = true,
             Report::Taken { pickup, location } => {
-                self.inventory.take(pickup, rules.beam_switches_off);
+                self.inventory.take(pickup, &rules.taking_beams);
                 self.emptied.remember(location);
             }
             Report::DoorOpened(door) => self.opened.remember(door),

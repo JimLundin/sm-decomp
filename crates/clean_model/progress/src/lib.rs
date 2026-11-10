@@ -26,12 +26,12 @@ mod room_states;
 mod rules;
 
 pub use catalogue::{Behaviour, BehaviourId, catalogue};
-pub use inventory::{Count, Inventory, Pickup, ReserveMode, Supply};
+pub use inventory::{BeamTaken, Count, Inventory, Pickup, ReserveMode, Supply};
 pub use places::{MapStatus, Remembered};
 pub use progress::Progress;
 pub use report::Report;
 pub use room_states::{Condition, EnteredRoom, RoomStates, Version};
-pub use rules::Rules;
+pub use rules::{PercentageDivisor, Rules};
 
 #[cfg(test)]
 mod tests {
@@ -40,7 +40,7 @@ mod tests {
     use enum_map::{Enum, EnumMap};
 
     use crate::catalogue::CATALOGUE;
-    use crate::rules::{REFERENCE_DIVISORS, REFERENCE_SWITCHES_OFF};
+    use crate::rules::{REFERENCE_DIVISORS, REFERENCE_TAKING_BEAMS};
 
     /// Each member of `K` that `rows` of `table` don't name exactly once, and how many do.
     fn not_named_once<K: Enum + Debug + PartialEq, R>(
@@ -61,8 +61,10 @@ mod tests {
     fn every_table_names_each_member_once() {
         let failures = [
             not_named_once("CATALOGUE", &CATALOGUE, |b| b.id),
-            not_named_once("REFERENCE_SWITCHES_OFF", &REFERENCE_SWITCHES_OFF, |r| r.0),
-            not_named_once("REFERENCE_DIVISORS", &REFERENCE_DIVISORS, |r| r.0),
+            not_named_once("REFERENCE_TAKING_BEAMS", &REFERENCE_TAKING_BEAMS, |r| {
+                r.beam
+            }),
+            not_named_once("REFERENCE_DIVISORS", &REFERENCE_DIVISORS, |r| r.supply),
         ]
         .concat();
         assert!(failures.is_empty(), "{}", failures.join("\n"));
