@@ -136,10 +136,15 @@ until that domain has landed, so the interface it reads is fixed.
 
 ## The loop
 
-- **Cut rounds.** When a round gate's coarse verdict says the model is much larger than its
-  behaviour needs, the next round of that domain is a cut round: its brief carries the verdict
-  and the gate's shape findings, and asks for no new behaviour. Cut rounds repeat until the
-  gate finds nothing that changes the shape enough to be worth a round.
+- **Cut rounds.** The aim is code that reads well without bloat, not the shortest code: a seam
+  that makes the code clearer can be worth its tokens, and growth that adds no clarity is bloat.
+  A round gate that finds bloat prototypes the cuts on the current model and measures each one,
+  every vector still passing. The next round of that domain is a cut round only when the measured
+  total is worth a round (about 3 % of the model, or an area brought back under its old code). Its
+  brief carries the coarse verdict and those measured cuts, as outcomes in words, and asks for no
+  new behaviour; a cut no gate has measured stays out of the brief. Smaller measured cuts ride
+  along with the domain's next round of behaviour. Cut rounds stop when the gate measures nothing
+  worth a round.
 
 - A vector that won't pass, and that the spec doesn't explain, is a **gap**. The implementer
   records it, and the observer answers it in the spec. The model is never tuned to a record.

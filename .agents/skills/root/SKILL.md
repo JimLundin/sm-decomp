@@ -52,6 +52,9 @@ For the two confined roles, the brief is also part of the barrier:
   launch, the brief's gate works through each item under the checks.
 - **Coding standards, never measures.** The brief gives no score, budget, fit or size target. After
   a round gate it may give the coarse verdict in words (MODEL §1 decision 11).
+- **A cut round carries only measured cuts** (PROCESS, "Cut rounds"): shapes a gate prototyped and
+  measured to shrink, stated as outcomes. Four samus cut rounds grew the model under shape-only
+  briefs, while every cut a gate measured shrank it.
 - **A cut round asks for the outcome.** Each shape finding says what the code should have less of
   ("one decision per thing she meets", "the air's case decided once"), never the device that
   would get there ("a value decided before", "an enum of its cases", "no snapshot"). A named

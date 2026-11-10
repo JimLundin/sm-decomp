@@ -54,6 +54,10 @@ Your brief names the import and integration branches, the blind review, and the 
 5. **Size.** Measure the model with `tools size` against the Budget section, by area, and say
    where the size goes. Turn every size finding into **shape**: duplication, a decision that
    could be a table row, a function doing two jobs. The implementer only ever sees the shape.
+   Judge bloat, not length: a seam that makes the code clearer can be worth its tokens. Prototype
+   each cut you propose on the current model, every vector passing, and measure it; give the root
+   the measured total. A cut you haven't measured is a note, not a brief item (PROCESS, "Cut
+   rounds").
 6. **The blind review.** Compare the reviewer's "what the code does" with the spec, and turn each
    misreading into a finding about a name, a doc or a shape.
 7. **The old code** the model replaces is deleted, and the engine's gates hold.
