@@ -383,8 +383,9 @@ localiser show any change against today's engine. Each change is either a fix or
   strict failure.** A domain must save significantly over the old code, unless the spec gives a
   clear, substantiated reason why this domain can't. The decode notes' Budget section holds the
   baseline (the old code's tokens, by area, at a commit) and the budget; neither reaches the
-  implementer (decision 10). A budget over the baseline, or a scope change, goes to Jim with the
-  numbers, and the lane stops until he answers.
+  implementer (decision 10). The budget is k × units even where that is over the baseline: an area
+  whose spec holds more than its old code did grows its budget (Jim, 2026-11-10, dropping the
+  caps). A scope change still goes to Jim with the numbers, and the lane stops until he answers.
 
 **Done means:**
 - A movement kind is a row, a parameter is a table entry or a rule, and collision is one sweep.
