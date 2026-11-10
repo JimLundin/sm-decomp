@@ -118,10 +118,39 @@ position), the scratch `0933`-`0939`.
 | going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-motion §1.2) |
 | rising | `0B36` | = 1 (up), samus-motion's rise state: from the rise's start until `$90:8FDC`/`$90:9046` end it at the start of a frame, so a rise at 0 and the frame whose pull spends the rise (`0B36` = 1 with `0B2E` negative when `$90:9666` reads it) are rising; 0 (none, the moonfall's) and 2 (down) are not. Records: 3 usable spent frames (samus-bomb-jump-vertical 1035, samus-ceres-push 989, samus-grapple-release 325), none decisive; C-rise-spent is |
 | the y a placement put her at, if any | samus-motion's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept); with none, `0B14` is not written. Samus-motion reports it as an option (`placed`), a placement of 0 px included, which the harness's `placement` passes through and the bridge's `settle` writes to `0B14`'s pixel |
-| the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`) | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green); the bytes from `w × h` on are the `below` run (index row × `w` + column, the room's rows continued), any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested); past the 32h bytes, the RAM after it (docs/LEGACY.md) |
+| the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`); the shared `clean_types::ScreenKind` | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green), any other byte `Open` (below); the bytes from `w × h` on are the `below` run (index row × `w` + column, the room's rows continued), any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested); past the 32h bytes, the RAM after it (docs/LEGACY.md) |
 | the aim heights | `07AD` (up scroller), `07AF` (down scroller), from the room header (`$82:DEC1`, `$82:DECA`) | `hn` = `07AD`, `hr` = `07AF`; 70h/A0h or 90h/A0h in the records |
 | lead setting | `0941` (camera distance index) | 0 `Ahead`, 2 `Near`, 4 `KeepLeft`, 6 `KeepRight`; the tables `$90:963F` (facing right) and `$90:9647` (facing left): 60h/A0h, 40h/50h, 20h/20h, E0h/E0h. Set by Crocomire (`$A4:8ABD` = 2, `$A4:97F6` = 6) and Kraid's room (`$A7:A9E7` = 2), cleared at `$88:8347`, `$A4:90D8`, `$A4:9B8D`, `$A7:C594`; always 0 in the records |
 | time stopped | `0A78` | ≠ 0 (time frozen: x-ray, the reserve tanks' refill); set in 704 record frames of six rows; in the 95 that scroll, none where an ease would have moved |
+
+**A scroll byte other than 0, 1 and 2** (spec §1.3, Screen kinds). The camera's 14 reads of the
+table, `$80:A575`, `$80:A5BE`, `$80:A5DA`, `$80:A61E`, `$80:A691`, `$80:A703`, `$80:A7B9`,
+`$80:A802`, `$80:A823`, `$80:A870`, `$80:A903`, `$80:A97E` (each `AND #$00FF` then `BNE`: not
+red) and `$80:A76B`, `$80:A8C8` (`CMP #$0001`, `BEQ`: blue), test only 0 and 1, and no other bank
+reads the table for the camera (the Shitroid's `$A9:EFF4`.. and the Dachora room's `$8F:C1E6` are
+the room's own code, §5). So every other byte reads as green, at every read, and the spec states
+it as `Open`. The run past a room's screens holds such bytes (`80`, `12` and `13` in the records),
+and so does room `$ADAD`'s bottom row (docs/LEGACY.md): its scroll pointer `$8F:ADDA` names four
+bytes for 4×2 screens, so the copy (`$82:EB28`, 32h bytes) takes the next room's header, `1F 02 1D
+04`, as the bottom row, all green to the camera. The importer keeps such a byte as a named variant
+(`Unknown(u8)` of `data::level::ScrollArea`), so it decodes the room and the byte goes back out
+unchanged wherever the table is observed; the bridge hands the camera `ScreenKind::Open` for it,
+as `StaleScroll::Unknown` already reads as green (`StaleScroll::area`).
+
+**The shared screen kind.** The blocks domain's `clean_types::ScreenKind` (`Closed`, `Open`,
+`Short`) is the camera's: the scroll cells write it and the camera reads it. The camera model's own
+`ScreenKind` (`clean_model/camera/src/room.rs`) is a copy of it, and goes.
+
+**Switches** (spec, each entry's switch). `Parameter` where `Rules` holds the values:
+`FollowingHer` (`extra`), `LeadingHer` (the four settings' leads), `ClosedScreens` (`push`),
+`ShortScreens` (`rows_not_short`, the spec's margin). The rest are `none`: `AimingHeight`'s heights
+are the room's input and `Settling`'s ease is `ClosedScreens`' push.
+
+**The words** (adversary 59, O3 and O4). The spec's `rows` (31 or 0) is `margin` now, as three
+blind reviews read `rows` as screen rows; "the view's middle" is "128 px below its top edge" and
+"128 px right of its left edge", since 128 is the middle only across (the view is 224 px tall).
+The summaries give 1 px, 2 px, 31 px and 3 px as the reference profile's, and `LeadingHer`'s covers
+every lead setting.
 
 The spec's enum orders are alphabetical: `Closed`, `Open`, `Short` against the RAM's 0 red, 2
 green, 1 blue; `Ahead`, `KeepLeft`, `KeepRight`, `Near` against 0, 4, 6, 2.
