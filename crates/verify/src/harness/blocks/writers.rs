@@ -53,20 +53,44 @@ enum LeftOut {
     FreesItsSlot,
 }
 
-/// A point `[dx, dy]`, or a box with both ends included.
+/// A point `[dx, dy]`, or a box.
 #[derive(Clone, Copy, Deserialize)]
 #[serde(untagged)]
 enum Cells {
     Point([i16; 2]),
-    Box { x: [i16; 2], y: [i16; 2] },
+    Box(Span),
+}
+
+/// A box's columns and rows, each `[from, to]` with both ends included.
+#[derive(Clone, Copy, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Span {
+    x: [i16; 2],
+    y: [i16; 2],
 }
 
 impl Cells {
-    fn offsets(self) -> impl Iterator<Item = Offset> {
-        let ([left, right], [top, bottom]) = match self {
-            Self::Point([x, y]) => ([x, x], [y, y]),
-            Self::Box { x, y } => (x, y),
+    /// Its columns and rows; `None` for a box whose span runs backwards.
+    const fn span(self) -> Option<Span> {
+        let span = match self {
+            Self::Point([x, y]) => Span {
+                x: [x, x],
+                y: [y, y],
+            },
+            Self::Box(span) => span,
         };
+        let ([left, right], [top, bottom]) = (span.x, span.y);
+        if left <= right && top <= bottom {
+            Some(span)
+        } else {
+            None
+        }
+    }
+}
+
+impl Span {
+    fn offsets(self) -> impl Iterator<Item = Offset> {
+        let ([left, right], [top, bottom]) = (self.x, self.y);
         (top..=bottom).flat_map(move |y| (left..=right).map(move |x| Pair { x, y }))
     }
 }
@@ -79,7 +103,8 @@ impl Writers {
     ///
     /// # Errors
     ///
-    /// A table that doesn't read, or that leaves out a writer the cached rows see write.
+    /// A table that doesn't read (a key it doesn't know included), that holds a box that runs
+    /// backwards, or that leaves out a writer the cached rows see write.
     pub(super) fn load() -> Result<Self, String> {
         Self::parse(TABLE)
     }
@@ -95,7 +120,11 @@ impl Writers {
                 }
                 continue;
             }
-            let cells: Vec<Offset> = row.cells.into_iter().flat_map(Cells::offsets).collect();
+            let spans: Option<Vec<Span>> = row.cells.into_iter().map(Cells::span).collect();
+            let Some(spans) = spans else {
+                return Err(format!("{:04X?}: a box that runs backwards", row.plms));
+            };
+            let cells: Vec<Offset> = spans.into_iter().flat_map(Span::offsets).collect();
             writers.extend(row.plms.into_iter().map(|plm| (plm, cells.clone())));
         }
         Ok(Self(writers))
@@ -124,10 +153,28 @@ mod tests {
     use super::{TABLE, Table, Writers};
     use clean_types::Cell;
 
-    /// The table reads, and every writer the cached rows see write is one the harness masks.
+    /// The table reads: its keys, its boxes, and no writer left out that the rows see write.
     #[test]
-    fn every_writer_the_cached_rows_see_write_is_read() {
+    fn the_table_reads() {
         assert!(Writers::load().is_ok());
+    }
+
+    /// A box with a key it doesn't know, or one that runs backwards, is refused.
+    #[test]
+    fn a_box_with_an_unknown_key_or_backwards_is_refused() {
+        let table = |cells: &str| {
+            format!(
+                "[[writer]]
+plms = [1]
+cells = [{cells}]
+reached = \"no\"
+"
+            )
+        };
+        assert!(Writers::parse(&table("{ x = [0, 1], y = [0, 3] }")).is_ok());
+        assert!(Writers::parse(&table("{ x = [0, 1], y = [0, 3], z = [0, 0] }")).is_err());
+        assert!(Writers::parse(&table("{ x = [1, 0], y = [0, 3] }")).is_err());
+        assert!(Writers::parse(&table("{ x = [0, 1], y = [3, 0] }")).is_err());
     }
 
     /// Every writer left out has its reason, and one the cached rows see write is refused, so it
