@@ -79,7 +79,12 @@ pub enum PlmKind {
     /// A PLM slice 0 doesn't run, by its ID and its room argument: the Morph Ball Room's
     /// Zebes-awake state places one (`$84:C848`), which slice 0 never loads.
     // open: each joins as a kind with the room that runs it.
-    Unmodelled(u16, u16),
+    Unmodelled {
+        /// Its ID.
+        id: u16,
+        /// Its room argument.
+        argument: u16,
+    },
 }
 
 impl PlmKind {
@@ -93,7 +98,7 @@ impl PlmKind {
             Self::Extension(Extension::Down) => DOWN_EXTENSION,
             Self::Extension(Extension::Up) => UP_EXTENSION,
             Self::Item(ItemPlm::MorphBall, _) => MORPH_BALL,
-            Self::Unmodelled(id, _) => id,
+            Self::Unmodelled { id, .. } => id,
         }
     }
 }
@@ -230,7 +235,7 @@ pub fn population(rom: Lorom<'_>, at: RomAddress) -> Result<PlmPopulation, PlmEr
             DOWN_EXTENSION => PlmKind::Extension(Extension::Down),
             UP_EXTENSION => PlmKind::Extension(Extension::Up),
             MORPH_BALL => PlmKind::Item(ItemPlm::MorphBall, argument),
-            id => PlmKind::Unmodelled(id, argument),
+            id => PlmKind::Unmodelled { id, argument },
         };
         decoded.entries.push(PlmEntry { kind, x, y });
         cursor = next;

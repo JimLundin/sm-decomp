@@ -64,7 +64,7 @@ impl ProgressDomain {
             for plms in &room.plms {
                 for entry in &plms.entries {
                     let plm = entry.kind.id();
-                    let (PlmKind::Item(_, argument) | PlmKind::Unmodelled(_, argument)) =
+                    let (PlmKind::Item(_, argument) | PlmKind::Unmodelled { argument, .. }) =
                         entry.kind
                     else {
                         continue;
