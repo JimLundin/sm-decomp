@@ -1,97 +1,83 @@
-//! A grid of cells, each holding a value: the HUD's tiles, her map's pictures and the sets of her
-//! map's cells are each one. A position lies within its grid, so a cell read or written is
-//! always there; every cell keeps its value until a rule writes it.
+//! A grid of cells, each holding a value: the HUD's cells, her map's pictures and the sets of
+//! her map's cells are each one. A place outside the grid has no cell: reading it gives nothing
+//! and writing it changes nothing. Every cell keeps its value until a rule writes it.
 
 use clean_types::Pair;
 
-/// A cell's place in a grid `COLUMNS` across by `ROWS` down: `x` across from the left, `y` down
-/// from the top, both from 0.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Pos<const COLUMNS: usize, const ROWS: usize> {
-    x: u8,
-    y: u8,
+/// A place on a grid: `x` across from the left, `y` down from the top, both from 0. It may lie
+/// outside the grid.
+pub type Point = Pair<i32>;
+
+/// The place `x` across and `y` down.
+pub const fn at(x: i32, y: i32) -> Point {
+    Pair { x, y }
 }
 
-impl<const COLUMNS: usize, const ROWS: usize> Pos<COLUMNS, ROWS> {
-    /// The cell `x` across and `y` down, or `None` outside the grid. Every position worked out
-    /// while the game runs is checked here.
-    #[must_use]
-    pub fn new(x: i32, y: i32) -> Option<Self> {
-        let x = u8::try_from(x).ok().filter(|&x| usize::from(x) < COLUMNS)?;
-        let y = u8::try_from(y).ok().filter(|&y| usize::from(y) < ROWS)?;
-        Some(Self { x, y })
-    }
-
-    /// A place the spec's fixed layout gives, which lies in the grid.
-    pub(crate) const fn at(x: u8, y: u8) -> Self {
-        Self { x, y }
-    }
-
-    /// Its column, across from the left.
-    #[must_use]
-    pub const fn x(self) -> u8 {
-        self.x
-    }
-
-    /// Its row, down from the top.
-    #[must_use]
-    pub const fn y(self) -> u8 {
-        self.y
-    }
-
-    /// The place `by` across and down from this one, if it lies in the grid.
-    pub(crate) fn offset(self, by: Pair<i32>) -> Option<Self> {
-        Self::new(
-            i32::from(self.x).saturating_add(by.x),
-            i32::from(self.y).saturating_add(by.y),
-        )
-    }
-
-    /// Every place of the grid, the top row first, each row left to right.
-    pub fn all() -> impl Iterator<Item = Self> {
-        (0..=u8::MAX)
-            .take(ROWS)
-            .flat_map(|y| (0..=u8::MAX).take(COLUMNS).map(move |x| Self { x, y }))
-    }
+/// The place `by` across and down from `point`.
+pub const fn plus(point: Point, by: Point) -> Point {
+    at(point.x.saturating_add(by.x), point.y.saturating_add(by.y))
 }
 
-/// A grid `COLUMNS` across by `ROWS` down, each cell holding a `T`; a new one holds `T`'s
-/// default in every cell.
+/// A grid `COLUMNS` across by `ROWS` down, each cell holding a `T`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Grid<T, const COLUMNS: usize, const ROWS: usize> {
     rows: [[T; COLUMNS]; ROWS],
 }
 
-impl<T: Copy + Default, const COLUMNS: usize, const ROWS: usize> Default
-    for Grid<T, COLUMNS, ROWS>
-{
-    fn default() -> Self {
+impl<T: Copy, const COLUMNS: usize, const ROWS: usize> Grid<T, COLUMNS, ROWS> {
+    /// A grid holding `value` in every cell.
+    #[must_use]
+    pub const fn filled(value: T) -> Self {
         Self {
-            rows: [[T::default(); COLUMNS]; ROWS],
+            rows: [[value; COLUMNS]; ROWS],
+        }
+    }
+
+    /// What the cell at `point` holds, or `None` outside the grid.
+    #[must_use]
+    pub fn get(&self, point: Point) -> Option<T> {
+        let (x, y) = index(point)?;
+        self.rows.get(y)?.get(x).copied()
+    }
+
+    /// Puts `value` in the cell at `point`; outside the grid, nothing changes.
+    pub fn set(&mut self, point: Point, value: T) {
+        let Some((x, y)) = index(point) else {
+            return;
+        };
+        if let Some(cell) = self.rows.get_mut(y).and_then(|row| row.get_mut(x)) {
+            *cell = value;
         }
     }
 }
 
-impl<T: Copy + Default, const COLUMNS: usize, const ROWS: usize> Grid<T, COLUMNS, ROWS> {
-    /// What the cell at `pos` holds.
+/// A grid of `bool` is a set of its cells, each `true` in it.
+impl<const COLUMNS: usize, const ROWS: usize> Grid<bool, COLUMNS, ROWS> {
+    /// Whether the cell at `point` is in the set; a place outside the grid never is.
     #[must_use]
-    pub fn get(&self, pos: Pos<COLUMNS, ROWS>) -> T {
-        // A position lies within its grid, so the default is never read.
-        self.rows
-            .get(usize::from(pos.y))
-            .and_then(|row| row.get(usize::from(pos.x)))
-            .copied()
-            .unwrap_or_default()
+    pub fn contains(&self, point: Point) -> bool {
+        self.get(point) == Some(true)
     }
 
-    /// Puts `value` in the cell at `pos`.
-    pub fn set(&mut self, pos: Pos<COLUMNS, ROWS>, value: T) {
-        if let Some(cell) = self
-            .rows
-            .get_mut(usize::from(pos.y))
-            .and_then(|row| row.get_mut(usize::from(pos.x)))
-        {
-            *cell = value;
-        }
+    /// The cell at `point` joins the set; outside the grid, nothing changes.
+    pub fn insert(&mut self, point: Point) {
+        self.set(point, true);
     }
+}
+
+impl<T: Copy + Default, const COLUMNS: usize, const ROWS: usize> Default
+    for Grid<T, COLUMNS, ROWS>
+{
+    /// A grid holding `T`'s default in every cell: for a set of cells, the empty set.
+    fn default() -> Self {
+        Self::filled(T::default())
+    }
+}
+
+/// A place's column and row as indices, or `None` left of or above the grid.
+fn index(point: Point) -> Option<(usize, usize)> {
+    Some((
+        usize::try_from(point.x).ok()?,
+        usize::try_from(point.y).ok()?,
+    ))
 }

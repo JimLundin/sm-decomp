@@ -1,12 +1,12 @@
 //! What the HUD reads each frame (§1.3): the values other domains own, the buttons, and where she
-//! is on her map; and what the HUD knows of each kind of ammunition it counts.
+//! is on her map.
 
-use clean_types::Pair;
+use clean_types::{Pair, by_member};
+use enum_map::EnumMap;
 
-use crate::item::SelectableItem;
-use crate::map::{HerMap, MapCell};
-use crate::pictures::HudPos;
-use crate::rules::Boss;
+use crate::grid::Point;
+use crate::item::{Ammo, SelectableItem};
+use crate::map::HerMap;
 
 /// The count of frames the game has finished, mod 256, as this frame begins; a lag frame isn't
 /// one (§1.3).
@@ -40,34 +40,27 @@ pub struct Reserve {
     pub mode: ReserveMode,
 }
 
-/// What the HUD knows of a kind of ammunition.
-#[derive(Debug)]
-pub struct AmmoKind {
-    /// The item it is, when selected.
-    pub item: SelectableItem,
-    /// The largest count or capacity the HUD is defined on (§1.5).
-    pub most: u16,
-    /// The tiles of its digits, the highest first (§1.2); as many as its count's digits.
-    pub digits: &'static [HudPos],
+/// The most of an ammunition, count or capacity, the HUD is defined on (§1.5).
+struct AmmoDomain {
+    /// The ammunition.
+    ammo: Ammo,
+    /// Its most.
+    most: u16,
 }
 
-/// The kinds of ammunition, in the HUD's order: missiles in three digits, at most 999; super
-/// missiles and power bombs in two, at most 99 (§1.2, §1.5).
-pub const AMMO_KINDS: [AmmoKind; 3] = [
-    AmmoKind {
-        item: SelectableItem::Missiles,
+/// §1.5: missiles at most 999, super missiles and power bombs at most 99.
+const AMMO_DOMAIN: [AmmoDomain; 3] = [
+    AmmoDomain {
+        ammo: Ammo::Missiles,
         most: 999,
-        digits: &[HudPos::at(10, 2), HudPos::at(11, 2), HudPos::at(12, 2)],
     },
-    AmmoKind {
-        item: SelectableItem::SuperMissiles,
+    AmmoDomain {
+        ammo: Ammo::SuperMissiles,
         most: 99,
-        digits: &[HudPos::at(14, 2), HudPos::at(15, 2)],
     },
-    AmmoKind {
-        item: SelectableItem::PowerBombs,
+    AmmoDomain {
+        ammo: Ammo::PowerBombs,
         most: 99,
-        digits: &[HudPos::at(17, 2), HudPos::at(18, 2)],
     },
 ];
 
@@ -80,29 +73,25 @@ pub struct Stock {
     pub capacity: u16,
 }
 
-/// Her stock of each kind of ammunition, in the order of `AMMO_KINDS`, each within the HUD's
-/// domain (§1.5).
+/// Her stock of each ammunition, each within the HUD's domain (§1.5).
 #[derive(Clone, Copy, Debug)]
-pub struct Ammunition([Stock; AMMO_KINDS.len()]);
+pub struct Ammunition(EnumMap<Ammo, Stock>);
 
 impl Ammunition {
-    /// Her stocks, in the order of `AMMO_KINDS`, or `None` if a count or capacity is past what
-    /// the HUD is defined on (§1.5).
+    /// Her stocks, or `None` if a count or capacity is past what the HUD is defined on (§1.5).
     #[must_use]
-    pub fn new(stocks: [Stock; AMMO_KINDS.len()]) -> Option<Self> {
-        let within = |(kind, stock): (&AmmoKind, &Stock)| {
-            stock.count <= kind.most && stock.capacity <= kind.most
-        };
-        AMMO_KINDS
+    pub fn new(stocks: EnumMap<Ammo, Stock>) -> Option<Self> {
+        let domain = by_member(AMMO_DOMAIN, |row| row.ammo);
+        stocks
             .iter()
-            .zip(&stocks)
-            .all(within)
+            .all(|(ammo, stock)| stock.count.max(stock.capacity) <= domain[ammo].most)
             .then_some(Self(stocks))
     }
 
-    /// Each kind with her stock of it, in the HUD's order.
-    pub fn kinds(&self) -> impl Iterator<Item = (&'static AmmoKind, Stock)> {
-        AMMO_KINDS.iter().zip(self.0)
+    /// Her stock of `ammo`.
+    #[must_use]
+    pub fn of(&self, ammo: Ammo) -> Stock {
+        self.0[ammo]
     }
 }
 
@@ -134,14 +123,9 @@ impl Status {
     #[must_use]
     pub fn has(&self, item: SelectableItem) -> bool {
         match item {
+            SelectableItem::Ammo(ammo) => self.ammunition.of(ammo).count != 0,
             SelectableItem::GrappleBeam => self.equipped.grapple_beam,
             SelectableItem::XRayScope => self.equipped.x_ray_scope,
-            SelectableItem::Missiles
-            | SelectableItem::SuperMissiles
-            | SelectableItem::PowerBombs => self
-                .ammunition
-                .kinds()
-                .any(|(kind, stock)| kind.item == item && stock.count != 0),
         }
     }
 }
@@ -166,8 +150,8 @@ pub enum CancelButton {
     Held,
 }
 
-/// Why a switch makes no click (§1.3; spec: `SwitchClick`). Listed alphabetically; the order
-/// means nothing.
+/// Why a switch makes no click (§1.3; spec: SwitchClick). Listed alphabetically; the order means
+/// nothing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Mute {
     /// The grapple beam is out.
@@ -199,7 +183,7 @@ pub struct Controls {
 #[derive(Clone, Copy, Debug)]
 pub struct Room {
     /// Its top-left cell on her map.
-    pub cell: MapCell,
+    pub cell: Point,
     /// Its size in 16 px blocks, across and down.
     pub blocks: Pair<u16>,
 }
@@ -210,9 +194,9 @@ pub struct MiniMapInputs<'map> {
     /// False while she is held at a station, drained, entering or leaving the gunship, or while
     /// the game's opening shows her.
     pub runs: bool,
-    /// From when a boss turns it off until something turns it on: the one source of whether the
-    /// mini-map is off, so a frame whose boss turns it off says so here too.
-    pub off: bool,
+    /// Something turned the mini-map on since its last turn, and no boss was met since; or,
+    /// during this frame before the mini-map's turn, Crocomire fell into the acid.
+    pub turned_on: bool,
     /// Where she is: whole pixels in her room, after this frame's moves and before a pose change
     /// places her.
     pub position: Pair<u16>,
@@ -220,8 +204,6 @@ pub struct MiniMapInputs<'map> {
     pub room: Room,
     /// Her map.
     pub map: &'map HerMap,
-    /// She has collected her map.
-    pub map_collected: bool,
 }
 
 /// Everything the HUD reads in one frame of play (§1.3).
@@ -235,9 +217,20 @@ pub struct FrameInputs<'map> {
     pub controls: Controls,
     /// The item whose pickup this frame draws its icon, or `None`.
     pub collected: Option<SelectableItem>,
-    /// The boss that turns the mini-map off this frame (Mother Brain's first form falling), or
-    /// `None`.
-    pub boss: Option<Boss>,
+    /// Mother Brain's first form falls this frame, her brain in the tank destroyed.
+    pub mother_brain_falls: bool,
     /// What the mini-map reads.
     pub mini_map: MiniMapInputs<'map>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AMMO_DOMAIN;
+    use crate::item::Ammo;
+    use crate::tests::names_each_member_once;
+
+    #[test]
+    fn the_ammo_domain_names_each_ammo_once() {
+        assert!(names_each_member_once::<Ammo, _>(&AMMO_DOMAIN, |row| row.ammo));
+    }
 }

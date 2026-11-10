@@ -9,35 +9,35 @@ impl HudState {
     /// The buttons change the selection, and report `Switched` when they act.
     ///
     /// Spec: CyclingItems. While she can't switch, nothing changes. Spec: CancellingTheItem. Item
-    /// cancel pressed clears the selection and the one-shot item, whatever Select does. Otherwise
-    /// Select pressed moves to the next item she has; spec: OneShotItem, with item cancel held the
-    /// new selection is also the one-shot item, without it there is none. Spec: Switching. Either
-    /// acting reports the item it lands on.
+    /// cancel pressed clears the selection, and with it the one-shot item, whatever Select does.
+    /// Otherwise Select pressed moves to the next item she has; spec: OneShotItem, with item
+    /// cancel held the new selection is the one-shot item, without it it isn't. Spec: Switching.
+    /// Either acting reports the item it lands on.
     pub(crate) fn press_buttons(&mut self, controls: Controls, status: &Status) -> Option<Event> {
         if !controls.can_switch {
             return None;
         }
         if controls.cancel == CancelButton::Pressed {
-            self.selection = Selection::NONE;
+            self.selection = Selection::None;
             return Some(Event::Switched(None));
         }
         if controls.select == SelectButton::NotPressed {
             return None;
         }
-        let selected = next_item(self.selection.selected, status);
-        let one_shot = match controls.cancel {
-            CancelButton::Held => selected,
-            CancelButton::NotPressed | CancelButton::Pressed => None,
+        let next = next_item(self.selection.item(), status);
+        self.selection = match (next, controls.cancel) {
+            (None, _) => Selection::None,
+            (Some(item), CancelButton::Held) => Selection::OneShot(item),
+            (Some(item), CancelButton::NotPressed | CancelButton::Pressed) => Selection::Item(item),
         };
-        self.selection = Selection { selected, one_shot };
-        Some(Event::Switched(selected))
+        Some(Event::Switched(next))
     }
 
-    /// Spec: CancellingTheItem. After the buttons, a shot the weapons cancel clears the selection
-    /// and the one-shot item.
+    /// Spec: CancellingTheItem. After the buttons, a shot the weapons cancel clears the selection,
+    /// and with it the one-shot item.
     pub(crate) const fn shot_cancels(&mut self, controls: Controls) {
         if controls.shot_cancels {
-            self.selection = Selection::NONE;
+            self.selection = Selection::None;
         }
     }
 }

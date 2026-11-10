@@ -2,9 +2,10 @@
 //! the spec checks it.
 
 use clean_types::{Checked, Kind, Switch};
+use enum_map::Enum;
 
 /// An entry of the HUD's spec; each variant is named as the spec names its entry.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
 pub enum BehaviourId {
     /// Spec: EnergyGauge.
     EnergyGauge,
@@ -82,7 +83,8 @@ const fn parameter(id: BehaviourId, kind: Kind, summary: &'static str) -> Behavi
     }
 }
 
-/// Every behaviour of the HUD's spec, in the spec's order.
+/// Every behaviour of the HUD's spec, one row per entry, each naming its entry; listed in the
+/// spec's order, though the order means nothing.
 pub const CATALOGUE: [Behaviour; 19] = [
     fixed(
         BehaviourId::EnergyGauge,
@@ -117,7 +119,7 @@ pub const CATALOGUE: [Behaviour; 19] = [
     parameter(
         BehaviourId::OneShotFlash,
         Kind::Mechanic,
-        "The icon of the one-shot item flashes, 16 frames highlighted and 16 plain.",
+        "The icon of the one-shot item flashes, 16 frames plain, then 16 highlighted.",
     ),
     fixed(
         BehaviourId::IconsAppear,
@@ -174,12 +176,14 @@ pub const CATALOGUE: [Behaviour; 19] = [
         "On entering the room of Kraid, Draygon, Crocomire, Phantoon or Ridley (Ceres's or \
          Norfair's) while it lives, and when Mother Brain's first form falls (her brain in the \
          tank is destroyed), the mini-map goes blank and the cells the boss names count as \
-         explored. Entering the room comes outside a frame of play; her fall comes during one.",
+         explored. Entering the room is a step of its own, outside a frame of play; her fall \
+         comes during a frame.",
     ),
-    parameter(
+    fixed(
         BehaviourId::DiagonalPicture,
         Kind::Quirk,
-        "Where her cell shows the diagonal picture, the cell over hers becomes explored too.",
+        "Where her cell shows the diagonal picture (cells drawn as a diagonal), the cell over \
+         hers becomes explored too.",
     ),
     fixed(
         BehaviourId::FirstColumnsShift,
@@ -195,3 +199,17 @@ pub const CATALOGUE: [Behaviour; 19] = [
          lower, and past column 63 the pictures are another map's.",
     ),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::{BehaviourId, CATALOGUE};
+    use crate::tests::names_each_member_once;
+
+    #[test]
+    fn the_catalogue_names_each_entry_once() {
+        assert!(names_each_member_once::<BehaviourId, _>(
+            &CATALOGUE,
+            |behaviour| behaviour.id
+        ));
+    }
+}
