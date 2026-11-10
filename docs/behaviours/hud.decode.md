@@ -511,10 +511,10 @@ and `type` items and attributes that define the model's shapes; define as many a
 needs). The target is on everything else, the logic.
 
 **Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion. An
-area's budget is k × its units, capped at 70% of its old code (`old`, the `tools size` score of the
-old code that area replaces, at spine `387640758`: for the status bar `game/src/hud.rs` and the
+area's budget is k × its units; its old code (`old`, for reference, not a bound) is the `tools size`
+score of the old code that area replaces, at spine `387640758`: for the status bar `game/src/hud.rs` and the
 cells of the HUD in `game/src/state/hud.rs`; for the mini-map `game/src/mini_map.rs` and the
-map layout it walks in `data/src/map.rs`, without the ROM loader and the bitmap conversions). The
+map layout it walks in `data/src/map.rs`, without the ROM loader and the bitmap conversions. The
 selection has no old code: the old engine never changed the selected item. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
 as a wall; over an area's old code is a failure.

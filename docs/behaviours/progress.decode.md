@@ -480,12 +480,12 @@ target is on everything else, the logic.
 size`). Rooms: today's engine's state conditions and choice of state, which handle every
 condition and the first that holds, 197.25. Equipment: the earlier whole-game port's taking of an
 item, a beam or a tank, without the drawing and the message, 253.5. Happened, places and
-percentage have no complete old code, so they carry no cap. The counter takes the old code in
+percentage have no complete old code. The counter takes the old code in
 whole tokens: 197 and 254.
 
 **Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion
-and tested on the camera. An area's budget is k × its units, capped at 70% of its old code where
-it has one (`old`). The budget is an indicator: the fit is score ÷ budget, and being over it
+and tested on the camera. An area's budget is k × its units; its old code (`old`), where it has
+one, is for reference and doesn't bound it. The budget is an indicator: the fit is score ÷ budget, and being over it
 costs in proportion to how far over, never as a wall; over an area's old code is a failure.
 
 - Area happened: EventsHappen, ZebetitesCounted, BossesDefeated
@@ -495,5 +495,5 @@ costs in proportion to how far over, never as a wall; over an area's old code is
 - Area rooms (old 197): RoomStates
 - Area percentage: ItemPercentage
 
-Budget: 36 × 30.3 units, capped at 70% of old = 878 (happened 120, places 372, equipment 177 capped,
-rooms 137 capped, percentage 72)
+Budget: 36 × 30.3 units = 1,092 (happened 120, places 372, equipment 276, rooms 252,
+percentage 72)

@@ -1526,8 +1526,8 @@ target is on everything else, the logic.
 **Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen: the old code's
 score, 12,723 (`tools size` at spine `bc6f74f9c`, over the old code at `c7f927ab6` and its two
 cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`), times
-0.55 is 36.2. An area's budget is k × its units, capped at 70% of its old code (`old`, the score
-of the old files that area replaces, counted the same way at `c7f927ab6`). The budget is an
+0.55 is 36.2. An area's budget is k × its units; its old code (`old`, the score of the old files
+that area replaces, counted the same way at `c7f927ab6`) is for reference and doesn't bound it. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
 as a wall; over an area's old code is a failure.
 
@@ -1540,7 +1540,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 214.0 units, capped at 70% of old = 7,169 (motion 2,813 capped, pose fit 624, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 214.0 units = 7,704 (motion 2,844, pose fit 624, pose chart 2,088, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

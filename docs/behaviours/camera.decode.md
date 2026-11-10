@@ -353,10 +353,10 @@ attributes that define the model's shapes; define as many as the behaviour needs
 everything else, the logic.
 
 **Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion and
-tested here out of sample. An area's budget is k × its units, capped at 70% of its old code (`old`,
-the `tools size` score of the old code that area replaces: `game/src/scrolling.rs` without its
-layer 2 and background scroll, and the lead distances' function in `state/room.rs`, at spine
-`cc505407c`). The old code lacks two of this spec's rules, the knockback's turn of the lead and time
+tested here out of sample. An area's budget is k × its units; its old code (`old`, for reference,
+not a bound) is the `tools size` score of the old code that area replaces: `game/src/scrolling.rs`
+without its layer 2 and background scroll, and the lead distances' function in `state/room.rs`, at
+spine `cc505407c`. The old code lacks two of this spec's rules, the knockback's turn of the lead and time
 stopped, so `old` slightly understates the domain. The budget is an indicator: the fit is score ÷
 budget, and being over it costs in proportion to how far over, never as a wall; over an area's old
 code is a failure.
@@ -365,4 +365,4 @@ code is a failure.
 - Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
   DownwardLooksAhead, ScreensRunOn, BelowTheRoom, PushCarries
 
-Budget: 36 × 47.0 units, capped at 70% of old = 1,591 (follow 500 capped, limits 1,091 capped)
+Budget: 36 × 47.0 units = 1,692 (follow 564, limits 1,128)

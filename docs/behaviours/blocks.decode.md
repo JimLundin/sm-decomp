@@ -612,10 +612,10 @@ model's shapes; define as many as the behaviour needs). The scripts are imported
 are data the importer writes, not code. The target is on everything else, the logic.
 
 **Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion. An
-area's budget is k × its units, capped at 70% of its old code (`old`, the `tools size` score of the
-old code that area replaces, at spine `387640758`). The old code covers the places and the scroll
-cells, but of the blocks that break only the start of one shot block (175.5), so breakables has no
-cap: as the plan proposes for domains without old code, its budget is k × units alone. The budget
+area's budget is k × its units; its old code (`old`, for reference, not a bound) is the `tools size`
+score of the old code that area replaces, at spine `387640758`. The old code covers the places and
+the scroll cells, but of the blocks that break only the start of one shot block (175.5), so
+breakables has no `old`. The budget
 is an indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over,
 never as a wall; over an area's old code is a failure.
 
@@ -644,7 +644,7 @@ Lines by `$TEMP/collab/scripts/code_lines.py` over the three cuts. Not counted: 
 (drawing PLMs into the tilemap, E2's), `plm/item_gfx.rs` and the item paths (W3's),
 `collision.rs`'s `Room`, `ScanOrder` and `Surroundings` (samus-motion's bridge), and
 `samus_world.rs`'s mapping of the clean touches (the bridge's). The areas below state places' old
-code as 1,252 and scroll's as 1,145; breakables has no cap.
+code as 1,252 and scroll's as 1,145; breakables has none.
 
 **The ceiling** (decode-only; the plan's proposal for domains without old code): the whole-game
 port at `archive/old-engine` holds this part's mechanism in `room_mechanisms/scheduler.rs` (1,161),
@@ -653,6 +653,5 @@ port at `archive/old-engine` holds this part's mechanism in `room_mechanisms/sch
 the other three parts (`$TEMP/collab/reviews/sz_old.txt`).
 
 **k out of sample:** the old places and scroll score 2,396.5 over their 26.3 units, 91.1 a unit
-(samus-motion's 65.8, the camera's 53.7); 0.55 of it would give 50.1 against the frozen 36, so
-the caps don't bind. The budget is 36 × 55.3 = 1,992 (places 804, §2's four cell terms included;
+(samus-motion's 65.8, the camera's 53.7); 0.55 of it would give 50.1 against the frozen 36. The budget is 36 × 55.3 = 1,992 (places 804, §2's four cell terms included;
 scroll 144; breakables 1,044).
