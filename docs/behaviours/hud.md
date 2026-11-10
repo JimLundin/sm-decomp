@@ -84,7 +84,7 @@ when Select cycles.
 | why no click | none, or she spin jumps, she wall jumps, the grapple beam is out, time is stopped | `SwitchClick` |
 | collected | an item whose pickup this frame draws its icon, or none | `IconsAppear` |
 | the mini-map runs | `bool`: false while she is held at a station (save, refill, map), drained, entering or leaving the gunship, or while the game's opening shows her (the title screen's demos still run it) | `MiniMapStill` |
-| the mini-map turned on | `bool`: something turned the mini-map on since its last turn, and no boss encountered since: the next room, a load or a new game; or, during this frame before the mini-map's turn, Crocomire's fall into the acid or her arrival in Ceres | `MiniMapStill` |
+| the mini-map turned on | `bool`: something turned the mini-map on since its last turn, and no boss encountered since: the next room, a load, a new game or the demos' load; or, during this frame before the mini-map's turn, Crocomire's fall into the acid | `MiniMapStill` |
 | a boss encountered | the boss she encounters: Kraid, Draygon, Crocomire, Phantoon, or Ridley in Norfair or in Ceres, on entering its room while it lives; a step of its own, outside a frame of play (supplied by the door and the load flow) | `BossBlanksTheMap` |
 | Mother Brain falls | `bool`: her first form falls this frame, her brain in the tank destroyed (supplied by her fight) | `BossBlanksTheMap` |
 | her position | x, y: whole pixels in her room, after this frame's moves and before a pose change places her | `Exploring`, `MiniMapStill` |
@@ -462,12 +462,10 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - **Doors:** the frame count's reset at a door.
 - **Doors and the load flow:** `a boss encountered`, on entering the room of Kraid,
   Draygon, Crocomire, Phantoon or Ridley (Ceres's or Norfair's) while it lives, outside a frame
-  of play; and `the mini-map turned on`, at each new room ahead of its boss, at a load and at a
-  new game.
+  of play; and `the mini-map turned on`, at each new room ahead of its boss, at a load, at a
+  new game and at the demos' load.
 - **The bosses' domain (Crocomire's fight):** `the mini-map turned on` when Crocomire falls into
   the acid, during a frame of play.
-- **Cinematics (Samus's arrival in Ceres):** `the mini-map turned on` when she arrives, during a
-  frame of play.
 - **Her control (samus-motion, the stations, cinematics and the intro):** `the mini-map runs`,
   false while she is held at a station, drained, entering or leaving the gunship, or shown by the
   game's opening.

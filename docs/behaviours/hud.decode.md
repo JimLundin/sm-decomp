@@ -118,7 +118,7 @@ the scratch `$12`..`$34`.
 | why no click | `0A1F` low byte, `0D32`, `0A78` at N+1 | 3 spin jumping, 14h wall jumping; `0D32` ≠ `$C4F0` the grapple beam is out; `0A78` ≠ 0 time stopped |
 | collected | the item PLM instructions | not in any cached record; a hit at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E` or `$80:9A3E` names it |
 | the mini-map runs | `0A44` (Samus new state handler) at N+1 | runs for `$E725` (normal), `$E7F5` (title demo, `$90:E801`), `$E86A` (appearance), `$E8DC` (locked), `$E8EC` (elevator), `$E8AA` (Ceres, which calls normal); not for `$E7D2` (debug), `$E833` (intro demo: the spec's "while the game's opening shows her"), `$E8D6` (station), `$E8D9` (drained), `$E902` (gunship). The title demos themselves are the demos' domain |
-| the mini-map turned on | the stores of 0 to `05F7` | true when one is hit in frame N+1; the writers: `$80:C4AF` (a load at a station), `$82:8767` (a new game), `$82:E1C4` (a door's start, before the new room's enemies load at `$82:E4D4`, so a boss of that room turns it off after), `$88:82F3` (the new room's effects setup), `$90:F233` (the Ceres elevator, her arrival), `$A4:90C4` (Crocomire's skeleton flowing down the river). Only the last two can land in a compared pair; the others are a door's or a load's, skipped pairs |
+| the mini-map turned on | the stores of 0 to `05F7` | true when one is hit in frame N+1; the writers: `$80:C4AF` (a load at a station), `$82:8767` (the demos' load), `$82:E1C4` (a door's start, before the new room's enemies load at `$82:E4D4`, so a boss of that room turns it off after), `$88:82F3` (the new room's effects setup), `$90:F233` (Samus command 8, called only in game states 6, 1Fh and 28h, before state 7: part of a new game or a load), `$A4:90C4` (Crocomire's skeleton flowing down the river). Only the last, `$A4:90C4`, can land in a compared pair; the others are a door's, a load's or a new game's, outside gameplay or in skipped pairs |
 | a boss encountered | a call of `$90:A7E2` outside game state 8, with the boss `179C` (3 Kraid, 5 Ridley in Norfair, 6 Crocomire, 7 Phantoon, 8 Draygon; 1 Ridley in Ceres) | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain); boss id 1 isn't in it, so Ceres Ridley's screens are none |
 | Mother Brain falls | a call of `$90:A7E2` in frame N+1 with `179C` = Ah | Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event |
 | the HUD's pictures | the importer (§The HUD's pictures) | by name; the clean model holds none |
@@ -335,11 +335,12 @@ Every other entry is a fixed rule.
     numbering);
   - the map and HUD numbers for a constant offset that carries nine in ten of them onto vanilla
     ones;
-  - a vector's map cells against the area maps in place under any offset;
+  - a vector's map cells against the area maps in place or moved by up to 4 cells either way,
+    under any offset;
   - ids and comments for a vanilla number.
 
   The vanilla HUD set is the named pictures and every picture the recorded HUD rows show (47).
-  Round 2's file: 11,949 hits; the gated round-3 file: 131 (4 named offsets, 126 frame cells, the
+  Round 2's file: 12,137 hits; the gated round-3 file: 131 (4 named offsets, 126 frame cells, the
   id); the current file: 0.
 - **F3, rules a vector now tells from their absence.** C-sign-lights and C-sign-dims start from
   the other state of the sign; C-energy-unchanged-stale and C-ammo-unchanged-stale from digits and
@@ -353,8 +354,8 @@ Every other entry is a fixed rule.
   reads it, and the input `the mini-map turned on` clears it before the frame's update (a new arm
   of MiniMapStill, checked by C-mm-turned-on; `turned_on_ignored` is killed by it alone). The
   vectors carry it as `mini_map_off` in before and after. §6 names the suppliers of `the mini-map
-  turned on` (doors and the load flow, Crocomire's fight, the Ceres arrival) and of `the mini-map
-  runs` (her control).
+  turned on` (doors and the load flow, Crocomire's fight) and of `the mini-map runs` (her
+  control).
 - **F9.** The header points at §6.
 
 ## The harness (for the integrator)
