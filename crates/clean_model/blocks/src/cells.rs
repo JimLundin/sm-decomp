@@ -55,11 +55,12 @@ pub type Tilemap = Grid<Tile>;
 pub struct Tile {
     /// Its kind.
     pub kind: CellKind,
-    /// Its mark, which no step changes.
+    /// Its mark: which reaction a reacting cell has, or how far a stand-in reaches. The room gives
+    /// it and its start's placements set it (`RoomStart`); a step keeps it (`PatternCells`).
     pub mark: Mark,
     /// The picture it shows.
     pub look: Look,
-    /// The part of its mark that says what she meets when she is inside it.
+    /// The part of its mark that says whether she holds a place when she is inside it.
     pub inside: Inside,
 }
 
@@ -152,11 +153,11 @@ pub enum Mark {
     Reach(i16),
 }
 
-/// What she meets when she is inside a cell (`BlocksMarkedNothing`).
+/// Whether she holds a place when she is inside a cell (`BlocksMarkedNothing`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Inside {
-    /// Nothing but what its mark says.
-    Passes,
+    /// Her being inside it holds no place.
+    HoldsNoPlace,
     /// Its mark holds a place when she is inside it: while it is reacting air, each of her points
     /// inside it holds one until the run.
     HoldsPlace,
@@ -164,11 +165,11 @@ pub enum Inside {
 
 impl Tile {
     /// `PatternCells`: a show's pattern cell writes this cell: it takes the pattern's kind and
-    /// look, and keeps its mark. `Itself` is its reacting kind as a block.
+    /// look, and keeps its mark; one that becomes `Block` is a reacting block, whatever it was.
     pub const fn show(&mut self, cell: &PatternCell) {
         self.kind = match cell.becomes {
             Becomes::Air => CellKind::Air,
-            Becomes::Itself => CellKind::Reacting(ReactingBody::Block),
+            Becomes::Block => CellKind::Reacting(ReactingBody::Block),
             Becomes::StandInAcross => CellKind::StandIn(StandIn::Across),
             Becomes::StandInDown => CellKind::StandIn(StandIn::Down),
         };

@@ -29,19 +29,6 @@ pub enum Request {
     OtherPart,
 }
 
-impl Request {
-    /// The cell it names, if it names one.
-    #[must_use]
-    pub const fn cell(&self) -> Option<Cell> {
-        match self {
-            Self::Inside { cell, .. }
-            | Self::Hit { cell, .. }
-            | Self::Touch(Touch { cell, .. }) => Some(*cell),
-            Self::OtherPart => None,
-        }
-    }
-}
-
 /// Whether the run comes this frame (`TheScriptsRun`), as the room's loading and the doors say.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Run {
@@ -74,19 +61,9 @@ pub enum Placement {
     OtherPart,
 }
 
-impl Placement {
-    /// The cell it places, if it places one.
-    #[must_use]
-    pub const fn cell(&self) -> Option<Cell> {
-        match self {
-            Self::Scroll { cell, .. } | Self::StandIn { cell, .. } => Some(*cell),
-            Self::OtherPart => None,
-        }
-    }
-}
-
-/// A request or a placement that names a cell past the room's edge, which the spec rules out
-/// (§1.3, §8: what her motion and her weapons meet there is theirs). The model refuses it and
-/// changes nothing.
+/// A request or a placement that names a cell past the room's edge, which the spec rules out.
+///
+/// What her motion and her weapons meet there is theirs (§1.3, §8), and the room's loading places
+/// nothing there (R2). The model refuses it as it enters, and goes no further.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct OutsideTheRoom(pub Cell);

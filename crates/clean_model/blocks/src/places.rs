@@ -11,6 +11,15 @@ use crate::reactions::{Frames, PatternCell, Reaction, Step};
 use crate::report::Report;
 use crate::rules::Start;
 
+/// The room's cells as the run writes them, travelling with the frame's report, which records
+/// each cell written (`WhatTheScreenRedraws`) and each sound asked for (`Sounds`).
+pub struct Room<'a> {
+    /// The room's cells.
+    pub tiles: &'a mut Tilemap,
+    /// The frame's report.
+    pub report: &'a mut Report,
+}
+
 /// How many places there are: 40, numbered 0 to 39 (`Places`).
 pub const PLACE_COUNT: usize = 40;
 
@@ -34,18 +43,15 @@ pub enum Place {
 }
 
 /// A running reaction (spec §1).
-///
-/// Its reaction, its script and what it grows back as are set together, so that a reaction whose
-/// script has a `Regrow` step always knows what it grows back as, and one whose script has none
-/// never does.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Running {
     /// The imported reaction it runs.
-    reaction: Arc<Reaction>,
+    pub reaction: Arc<Reaction>,
     /// The script it runs.
-    script: Script,
-    /// What it grows back as, kept for as long as it runs, if its script has a `Regrow` step.
-    grows_back_as: Option<ReactingBody>,
+    pub script: Script,
+    /// What it grows back as (`Regrowing`): what its cell was when it started, kept for as long
+    /// as it runs, for a reaction whose script has a `Regrow` step; none for a script without one.
+    pub grows_back_as: Option<ReactingBody>,
     /// Its cell.
     pub cell: Cell,
     /// The index of its next step in its script, from 0.
@@ -100,14 +106,15 @@ impl Default for Places {
 }
 
 impl Places {
+    /// `Places`: the highest free place, which a start takes; none with every place taken.
+    pub fn highest_free(&mut self) -> Option<&mut Place> {
+        self.0.iter_mut().rev().find(|place| **place == Place::Free)
+    }
+
     /// `Places`: puts `occupant` in the highest free place; with every place taken it takes none.
     /// Returns whether it took one.
     pub fn take(&mut self, occupant: Place) -> bool {
-        let Some(place) = self.0.iter_mut().rev().find(|place| **place == Place::Free) else {
-            return false;
-        };
-        *place = occupant;
-        true
+        self.highest_free().map(|place| *place = occupant).is_some()
     }
 
     /// Whether every place is taken.
@@ -128,14 +135,11 @@ impl Places {
         if !self.hold_until_run() {
             return;
         }
-        let scroll = self.0.iter_mut().find_map(|place| match place {
-            Place::Scroll(scroll) if scroll.cell == cell => Some(scroll),
-            Place::Free
-            | Place::Running(_)
-            | Place::Scroll(_)
-            | Place::OtherPart
-            | Place::HeldUntilRun => None,
-        });
+        let scroll = self
+            .0
+            .iter_mut()
+            .filter_map(Place::scroll)
+            .find(|scroll| scroll.cell == cell);
         if let Some(scroll) = scroll {
             scroll.touched = Touched::Yes;
         }
@@ -153,27 +157,24 @@ impl Places {
         start: Start,
         body: ReactingBody,
     ) {
-        let running = Running::started(Arc::clone(reaction), start, cell, body);
-        if self.take(Place::Running(running)) {
-            start.change.apply(tile, body, reaction);
-        }
+        let Some(place) = self.highest_free() else {
+            return;
+        };
+        *place = Place::Running(Running::started(Arc::clone(reaction), start, cell, body));
+        start.change.apply(tile, body, reaction);
     }
 
     /// `TheScriptsRun`: each place from the highest down: a running reaction counts down and runs
-    /// its steps, a touched scroll reaction sets its screens, a hold until the run is freed.
-    pub fn run(
-        &mut self,
-        tiles: &mut Tilemap,
-        screens: &mut Grid<ScreenKind>,
-        report: &mut Report,
-    ) {
+    /// its steps, writing the room, a touched scroll reaction sets its screens, a hold until the
+    /// run is freed.
+    pub fn run(&mut self, room: &mut Room, screens: &mut Grid<ScreenKind>) {
         for place in self.0.iter_mut().rev() {
             match place {
                 Place::Free | Place::OtherPart => {}
                 Place::HeldUntilRun => *place = Place::Free,
                 Place::Scroll(scroll) => scroll.run(screens),
                 Place::Running(running) => {
-                    if running.advance(tiles, report) == Progress::Ends {
+                    if running.advance(room) == Progress::Ends {
                         *place = Place::Free;
                     }
                 }
@@ -182,28 +183,18 @@ impl Places {
     }
 }
 
-impl Running {
-    /// A running reaction as a caller holds it, if what it grows back as is given exactly when its
-    /// script has a `Regrow` step (`Regrowing`).
-    #[must_use]
-    pub fn new(
-        reaction: Arc<Reaction>,
-        script: Script,
-        grows_back_as: Option<ReactingBody>,
-        cell: Cell,
-        next: usize,
-        wait: Frames,
-    ) -> Option<Self> {
-        (grows_back_as.is_some() == reaction.regrows(script)).then_some(Self {
-            reaction,
-            script,
-            grows_back_as,
-            cell,
-            next,
-            wait,
-        })
+impl Place {
+    /// The scroll reaction it holds, if it holds one.
+    pub const fn scroll(&mut self) -> Option<&mut ScrollReaction> {
+        if let Self::Scroll(scroll) = self {
+            Some(scroll)
+        } else {
+            None
+        }
     }
+}
 
+impl Running {
     /// `Places`, `Regrowing`: a reaction started on a cell of this body: it waits its script's
     /// first wait before the step it starts from, and keeps the body to grow back as if its script
     /// has a `Regrow` step.
@@ -218,27 +209,9 @@ impl Running {
         }
     }
 
-    /// The imported reaction it runs.
-    #[must_use]
-    pub const fn reaction(&self) -> &Arc<Reaction> {
-        &self.reaction
-    }
-
-    /// The script it runs.
-    #[must_use]
-    pub const fn script(&self) -> Script {
-        self.script
-    }
-
-    /// What it grows back as; none for a reaction whose script has no `Regrow` step.
-    #[must_use]
-    pub const fn grows_back_as(&self) -> Option<ReactingBody> {
-        self.grows_back_as
-    }
-
     /// `TheScriptsRun`: its wait drops by one frame; when it runs out its steps run from its next
     /// step, until a step that waits or ends it. A script that runs out of steps ends.
-    fn advance(&mut self, tiles: &mut Tilemap, report: &mut Report) -> Progress {
+    fn advance(&mut self, room: &mut Room) -> Progress {
         if let Some(left) = self.wait.less_one() {
             self.wait = left;
             return Progress::Waits;
@@ -247,14 +220,14 @@ impl Running {
             let step = self.reaction.scripts[self.script].get(self.next);
             self.next = self.next.saturating_add(1);
             match step {
-                Some(Step::Sound(sound)) => report.sounds.push(sound.clone()),
+                Some(Step::Sound(sound)) => room.report.sounds.push(sound.clone()),
                 Some(Step::Show { pattern, frames }) => {
-                    show(pattern, self.cell, tiles, report);
+                    room.show(pattern, self.cell);
                     self.wait = *frames;
                     return Progress::Waits;
                 }
                 Some(Step::Regrow) => {
-                    self.regrow(tiles, report);
+                    self.regrow(room);
                     self.wait = Frames::ONE;
                     return Progress::Waits;
                 }
@@ -263,26 +236,34 @@ impl Running {
         }
     }
 
-    /// `Regrowing`: its cell grows back as what it remembers, with its reaction's whole look;
-    /// `WhatTheScreenRedraws`: the cell is written.
-    fn regrow(&self, tiles: &mut Tilemap, report: &mut Report) {
-        if let (Some(body), Some(tile)) = (self.grows_back_as, tiles.get_mut(self.cell)) {
-            tile.regrow(body, self.reaction.whole_look);
-            report.written.push(self.cell);
+    /// `Regrowing`: its cell grows back as the reacting kind it remembers, with its reaction's
+    /// whole look. A reaction that remembers none has nothing to grow back, and writes nothing.
+    fn regrow(&self, room: &mut Room) {
+        let whole_look = self.reaction.whole_look;
+        if let Some(body) = self.grows_back_as {
+            room.write(self.cell, |tile| tile.regrow(body, whole_look));
         }
     }
 }
 
-/// `PatternCells`: each pattern cell, at the reaction's cell plus its offset, is written as the
-/// pattern says; `WhatTheScreenRedraws`: in the pattern's order.
-fn show(pattern: &[PatternCell], origin: Cell, tiles: &mut Tilemap, report: &mut Report) {
-    for cell in pattern {
-        let Some(at) = offset(origin, cell.offset) else {
-            continue;
-        };
-        if let Some(tile) = tiles.get_mut(at) {
-            tile.show(cell);
-            report.written.push(at);
+impl Room<'_> {
+    /// `WhatTheScreenRedraws`: a step writes the cell at `at` with `write`, and it is reported
+    /// written, whether or not its look changed. A cell past the room's edge, which no reaction's
+    /// pattern reaches (the room's loading refuses such a room, R2), is neither.
+    fn write(&mut self, at: Cell, write: impl FnOnce(&mut Tile)) {
+        if let Some(tile) = self.tiles.get_mut(at) {
+            write(tile);
+            self.report.written.push(at);
+        }
+    }
+
+    /// `PatternCells`: a show writes each of its pattern's cells, at `origin` plus its offset, as
+    /// the pattern says, in the pattern's order.
+    fn show(&mut self, pattern: &[PatternCell], origin: Cell) {
+        for cell in pattern {
+            if let Some(at) = offset(origin, cell.offset) {
+                self.write(at, |tile| tile.show(cell));
+            }
         }
     }
 }

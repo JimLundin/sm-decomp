@@ -122,8 +122,8 @@ pub struct PatternCell {
 pub enum Becomes {
     /// Air.
     Air,
-    /// Its reacting kind as a block: `Block`, its mark unchanged.
-    Itself,
+    /// A reacting block, `Block`, whatever it was (reacting air included), its mark unchanged.
+    Block,
     /// A stand-in along its row, reaching as its mark says.
     StandInAcross,
     /// A stand-in along its column, reaching as its mark says.

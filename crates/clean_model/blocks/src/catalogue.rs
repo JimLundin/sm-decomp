@@ -51,7 +51,8 @@ pub struct Behaviour {
     pub summary: &'static str,
     /// What kind of behaviour it is.
     pub kind: Kind,
-    /// How it can be adjusted: every entry's switch is none, so `Fixed`.
+    /// How it can be adjusted: `Parameter` for an entry whose rule is a row of the `Rules` (§2,
+    /// "The rules' rows"), `Fixed` for every other.
     pub switch: Switch,
     /// Whether vectors check it, or the original only.
     pub checked: Checked,
@@ -110,7 +111,7 @@ pub const CATALOGUE: &[Behaviour] = &[
         id: BehaviourId::CrumbleBlocks,
         summary: "a crumble block falls away a few frames after she lands on it.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -118,7 +119,7 @@ pub const CATALOGUE: &[Behaviour] = &[
         summary: "a speed block shatters as she dashes or shinesparks into it, and stops her \
                   otherwise.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -126,35 +127,35 @@ pub const CATALOGUE: &[Behaviour] = &[
         summary: "a bomb block breaks under a bomb's or a power bomb's blast, or as she dashes, \
                   shinesparks or screw attacks into it.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::ShotBlocks,
         summary: "a shot block breaks under any of her weapons and under the grapple.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::SuperMissileBlocks,
         summary: "a super missile breaks a super missile block; a bomb shows it for what it is.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::PowerBombBlocks,
         summary: "a power bomb's blast breaks a power bomb block; a bomb shows it for what it is.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::BombsReveal,
         summary: "a bomb's blast shows a hidden crumble or speed block for what it is.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -171,7 +172,7 @@ pub const CATALOGUE: &[Behaviour] = &[
                   through; a cell marked `Inert` takes none; a cell marked `Other` is its part's, \
                   but for a blast on one met as crumble blocks.",
         kind: Kind::Quirk,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {

@@ -1,10 +1,11 @@
 //! The rules (spec §5, `BlocksMarkedNothing`): for each family, and for each family a cell marked
 //! `Nothing` is met as, what her touches and the hits ask of its cells. A family's act is a start
-//! of its reaction; a `Nothing` mark's is a place held until the run. Every row is a constant,
-//! naming its member; `Rules::reference` is the game's, keyed from those rows.
+//! of its reaction; a `Nothing` mark's is a place held until the run. Each row is a row of the
+//! rules a caller may adjust (§2, "The rules' rows"); every row names its member, and
+//! `Rules::reference` is the game's, keyed from the tables of those rows.
 
 use clean_types::{Family, Heading, HitBy, Look, MetAs, Motion, Script, Set, Way, by_member};
-use enum_map::EnumMap;
+use enum_map::{Enum, EnumMap};
 
 use crate::cells::{CellKind, ReactingBody, Tile};
 use crate::reactions::{Reaction, Step};
@@ -73,7 +74,7 @@ pub enum Bodies {
     BlockOnly,
 }
 
-/// What a row makes of a request.
+/// What a row makes of her touch.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Response<A> {
     /// The row's act: a start of the cell's reaction, or a place held until the run.
@@ -82,17 +83,8 @@ pub enum Response<A> {
     /// touches ask it to react (a crumble, speed or bomb block, or a cell marked `Nothing` met as
     /// crumble or bomb blocks, by any way, however she moves) lets her through without acting.
     LetsHerThrough,
-    /// Nothing reacts.
+    /// Nothing reacts: she meets the cell by its body.
     Ignored,
-}
-
-/// What meets a reacting cell: her touch, or a hit.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Meets {
-    /// Her move or look reaches it this way.
-    Touch(Way),
-    /// This reaches it.
-    Hit(HitBy),
 }
 
 /// `BlocksMarkedNothing`: a cell marked `Nothing` reacts to nothing, but a request that would
@@ -170,28 +162,29 @@ const REVEALS: Start = Start {
 };
 
 impl Rules {
-    /// The game's rules.
+    /// The game's rules: the rows the entries of §5 state.
     #[must_use]
     pub fn reference() -> Self {
         Self {
-            families: by_member(
-                [
-                    BOMB_BLOCKS,
-                    CRUMBLE_BLOCKS,
-                    POWER_BOMB_BLOCKS,
-                    SHOT_BLOCKS,
-                    SPEED_BLOCKS,
-                    SUPER_MISSILE_BLOCKS,
-                ],
-                |row| row.member,
-            ),
-            marked_nothing: by_member(
-                [NOTHING_AS_BOMB, NOTHING_AS_CRUMBLE, NOTHING_AS_SHOT],
-                |row| row.member,
-            ),
+            families: by_member(FAMILY_ROWS, |row| row.member),
+            marked_nothing: by_member(MARKED_NOTHING_ROWS, |row| row.member),
         }
     }
 }
+
+/// The game's row for each family, one for each.
+const FAMILY_ROWS: <Family as Enum>::Array<Row<Family, Start>> = [
+    BOMB_BLOCKS,
+    CRUMBLE_BLOCKS,
+    POWER_BOMB_BLOCKS,
+    SHOT_BLOCKS,
+    SPEED_BLOCKS,
+    SUPER_MISSILE_BLOCKS,
+];
+
+/// The game's row for each family a cell marked `Nothing` is met as, one for each.
+const MARKED_NOTHING_ROWS: <MetAs as Enum>::Array<Row<MetAs, HoldUntilRun>> =
+    [NOTHING_AS_BOMB, NOTHING_AS_CRUMBLE, NOTHING_AS_SHOT];
 
 /// Every hit: any of her weapons or the grapple.
 const EVERY_HIT: &[HitBy] = &[
@@ -356,24 +349,13 @@ const NOTHING_AS_SHOT: Row<MetAs, HoldUntilRun> = Row {
 };
 
 impl<K, A: Copy> Row<K, A> {
-    /// What this row makes of `meets` on a cell of this body, as she moves, with every place
-    /// taken or not.
+    /// The act of a hit by `by` on a cell of this body, if one of the row's hits acts on it.
     #[must_use]
-    pub fn respond(
-        &self,
-        meets: Meets,
-        body: ReactingBody,
-        moving: Set<Motion>,
-        places_full: bool,
-    ) -> Response<A> {
-        match meets {
-            Meets::Touch(way) => self.touch.respond(way, moving, places_full),
-            Meets::Hit(by) => self
-                .hits
-                .iter()
-                .find(|hit| hit.by.contains(&by) && hit.on.holds(body))
-                .map_or(Response::Ignored, |hit| Response::Act(hit.act)),
-        }
+    pub fn hit(&self, by: HitBy, body: ReactingBody) -> Option<A> {
+        self.hits
+            .iter()
+            .find(|hit| hit.by.contains(&by) && hit.on.holds(body))
+            .map(|hit| hit.act)
     }
 }
 
@@ -435,5 +417,26 @@ impl Change {
         if let Some(picture) = reaction.whole_look {
             tile.look = Look::unflipped(picture);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::fmt::Debug;
+
+    use super::*;
+
+    /// Each member of `K` is named by exactly one of `rows`; a failure names the member.
+    fn names_every_member_once<K: Enum + Debug + PartialEq, A>(table: &str, rows: &[Row<K, A>]) {
+        for (member, ()) in EnumMap::<K, ()>::from_fn(|_| ()) {
+            let count = rows.iter().filter(|row| row.member == member).count();
+            assert_eq!(count, 1, "{table}: {member:?} is named by {count} rows");
+        }
+    }
+
+    #[test]
+    fn each_rule_table_names_every_member_of_its_enum_once() {
+        names_every_member_once("the families' rows", &FAMILY_ROWS);
+        names_every_member_once("the rows of the cells marked Nothing", &MARKED_NOTHING_ROWS);
     }
 }

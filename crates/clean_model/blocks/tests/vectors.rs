@@ -113,7 +113,7 @@ struct After {
     held_until_run: Option<Vec<usize>>,
     screens: Option<Vec<String>>,
     answers: Option<Vec<String>>,
-    redrawn: Option<Vec<(u16, u16)>>,
+    written: Option<Vec<(u16, u16)>>,
     sounds: Option<Vec<SoundRow>>,
 }
 
@@ -313,7 +313,7 @@ fn kind(name: &str) -> CellKind {
 fn becomes(name: &str) -> Becomes {
     match name {
         "Air" => Becomes::Air,
-        "Itself" => Becomes::Itself,
+        "Block" => Becomes::Block,
         "StandInAcross" => Becomes::StandInAcross,
         "StandInDown" => Becomes::StandInDown,
         other => panic!("unknown pattern cell {other}"),
@@ -330,7 +330,7 @@ fn remembers(name: &str) -> ReactingBody {
 
 fn inside(name: Option<&str>) -> Inside {
     match name {
-        None => Inside::Passes,
+        None => Inside::HoldsNoPlace,
         Some("HoldsPlace") => Inside::HoldsPlace,
         Some(other) => panic!("unknown inside {other}"),
     }
@@ -535,7 +535,7 @@ fn plain() -> Tile {
         kind: CellKind::Air,
         mark: Mark::Unmarked,
         look: look("000"),
-        inside: Inside::Passes,
+        inside: Inside::HoldsNoPlace,
     }
 }
 
@@ -566,21 +566,26 @@ fn changes(rows: &[ChangeRow]) -> Vec<ScreenChange> {
         .collect()
 }
 
+/// A running reaction, refusing a `remembers` missing from one whose script has a `Regrow` step,
+/// or given on one whose script has none.
 fn running(reactions: &Reactions, row: &RunningRow) -> Place {
-    let running = Running::new(
-        named(reactions, &row.reaction),
-        script(&row.script),
-        row.remembers.as_deref().map(remembers),
-        cell(row.cell),
-        row.next,
-        frames(row.wait),
+    let reaction = named(reactions, &row.reaction);
+    let script = script(&row.script);
+    let grows_back_as = row.remembers.as_deref().map(remembers);
+    assert_eq!(
+        grows_back_as.is_some(),
+        reaction.regrows(script),
+        "place {}: remembers is given exactly when the script has a Regrow step",
+        row.place
     );
-    Place::Running(running.unwrap_or_else(|| {
-        panic!(
-            "place {}: remembers is given exactly when the script has a Regrow step",
-            row.place
-        )
-    }))
+    Place::Running(Running {
+        reaction,
+        script,
+        grows_back_as,
+        cell: cell(row.cell),
+        next: row.next,
+        wait: frames(row.wait),
+    })
 }
 
 fn scroll(row: &ScrollRow) -> Place {
@@ -660,7 +665,7 @@ fn after(reactions: &Reactions, vector: &Vector) -> (State, Report) {
     };
     let report = Report {
         answers: side.answers.iter().flatten().map(|a| answer(a)).collect(),
-        written: side.redrawn.iter().flatten().map(|&at| cell(at)).collect(),
+        written: side.written.iter().flatten().map(|&at| cell(at)).collect(),
         sounds: side.sounds.iter().flatten().map(sound).collect(),
     };
     (state, report)
@@ -779,7 +784,7 @@ fn check(rules: &Rules, reactions: &Reactions, vector: &Vector) -> Vec<String> {
         &mut out,
     );
     differ(
-        "redrawn",
+        "written",
         &report.written,
         &expected_report.written,
         &mut out,
