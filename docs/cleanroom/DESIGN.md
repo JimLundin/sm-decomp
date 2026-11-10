@@ -53,8 +53,9 @@ is imported, so keep to them as you go:
   a group (such as `struct_excessive_bools`) may be expected with its reason.
 - No struct that only wraps one call's arguments (taken by one function, built only at its
   calls, with no methods).
-- Modules import in one direction only: a module and its parent, or two siblings, may not each
-  import from the other.
+- Modules import in one direction only: no module reaches itself through the modules it imports,
+  by a loop of any length. Two modules naming each other is the shortest such loop; a module
+  that names one which, through others, names it back closes a longer one.
 - Use the crates your manifests name where they model the domain better than hand-written code:
   `enum-map` for a table with one entry per variant of an enum, `serde` to read text into typed
   records, `toml` for the vector files. Nothing else from outside std: no other crate, no feature
