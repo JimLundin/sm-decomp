@@ -584,6 +584,7 @@ fn surroundings<'a>(
             blocks: &room.blocks,
             width: room.width,
             slopes: Some(&content.slopes),
+            doors: content.room_doors.of(room.room),
         },
         enemies: SolidEnemies {
             interactive: active.interactive(),

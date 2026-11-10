@@ -187,8 +187,10 @@ impl std::error::Error for ContentError {}
 pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     // Decoded before the image moves into the ROM, reported after the ROM's own check.
     let populations = crate::lockstep::slice_zero_plms(&image);
+    let doors = crate::lockstep::slice_zero_doors(&image);
     let rom = Rom::new(image).map_err(ContentError::Rom)?;
     let room_plms = RoomPlms(populations.map_err(ContentError::Rooms)?);
+    let room_doors = game::collision::RoomDoors(doors.map_err(ContentError::Rooms)?);
     let reactions = data::blocks::Reactions::load(rom.lorom()).map_err(ContentError::Blocks)?;
     let blocks =
         game::blocks_world::BlockContent::import(&reactions).map_err(ContentError::Reaction)?;
@@ -228,6 +230,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         visor_colours: VisorColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         room_plms,
+        room_doors,
         blocks,
         hud: game::hud_world::HudContent::import(
             &data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,

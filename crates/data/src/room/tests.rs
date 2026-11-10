@@ -1,5 +1,5 @@
 use super::*;
-use crate::level::ScrollArea;
+use crate::level::{DoorIndex, ScrollArea};
 use crate::rom::Rom;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -80,7 +80,9 @@ fn a_header_and_its_states_decode() {
             down: 0xa0
         }
     );
-    assert_eq!(room.doors, RomAddress::new(0x8f, 0x9e91));
+    assert_eq!(room.doors.at, RomAddress::new(0x8f, 0x9e91));
+    // No state's level has a door block, so the list names no door.
+    assert_eq!(room.doors.doors, []);
     assert_eq!(room.conditional.len(), 1);
     assert_eq!(
         room.conditional[0].condition,
@@ -126,6 +128,39 @@ fn a_header_and_its_states_decode() {
     assert_eq!(
         default.scroll_areas,
         vec![ScrollArea::Red; crate::level::SCROLL_TABLE_BYTES]
+    );
+}
+
+/// The file offset of `$83:offset`.
+fn door_bank(offset: u16) -> usize {
+    usize::from(offset & 0x7fff) | 0x18000
+}
+
+#[test]
+fn the_door_list_holds_each_place_a_door_block_names() {
+    let mut image = synthetic();
+    // The event state's one block is a door naming place 1, its top bit set; the list's
+    // first header leads nowhere, its second to the room at `$8F:91F8`.
+    put(
+        &mut image,
+        room_bank(0x9010),
+        &[0x04, 0x02, 0x00, 0x11, 0x92, 0x81, 0xff],
+    );
+    put(&mut image, room_bank(0x9e91), &[0x00, 0x88, 0x10, 0x88]);
+    put(&mut image, door_bank(0x8800), &[0x00, 0x00]);
+    put(&mut image, door_bank(0x8810), &[0xf8, 0x91]);
+    let room = decode(Lorom::new(&image), SYNTHETIC).unwrap();
+    assert_eq!(
+        room.conditional[0].state.layers.layer1[0].kind,
+        crate::level::BlockKind::Door(DoorIndex(0x81))
+    );
+    assert_eq!(DoorIndex(0x81).place(), 1);
+    assert_eq!(
+        room.doors.doors,
+        [
+            Door::Nowhere,
+            Door::ToRoom(RoomKey::from_room_pointer(0x91f8))
+        ]
     );
 }
 
@@ -277,6 +312,15 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
     kinds.dedup();
     // Air, slopes, solid, doors, shot blocks, vertical extensions and bomb blocks.
     assert_eq!(kinds, [0x0, 0x1, 0x8, 0x9, 0xc, 0xd, 0xf]);
+    // Its door blocks name four doors: three lead to rooms, and the last is the doorway of the
+    // elevator that brings her down into the room.
+    let leads: Vec<bool> = room
+        .doors
+        .doors
+        .iter()
+        .map(|door| matches!(door, Door::ToRoom(_)))
+        .collect();
+    assert_eq!(leads, [true, true, true, false]);
     let (red, blue, green) = (ScrollArea::Red, ScrollArea::Blue, ScrollArea::Green);
     let mut areas = vec![red; 16];
     areas[5] = green;

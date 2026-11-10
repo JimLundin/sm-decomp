@@ -1,7 +1,8 @@
 use clean_types::{Block, Cell, Heading, SlopeFaces, Way, World};
 use core::num::Wrapping;
 use data::level::slope::{SHAPES, Slopes};
-use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
+use data::level::{BlockKind, Bts, DoorIndex, Offset, PlmChoice, Slope};
+use data::room::{Door, RoomKey};
 
 use super::{SamusFault, SamusWorld};
 use crate::collision::solid_enemy::SolidEnemies;
@@ -32,10 +33,19 @@ fn level(kinds: &[((u16, u16), BlockKind)]) -> Vec<LevelBlock> {
 }
 
 fn world<'a>(blocks: &'a [LevelBlock], slopes: &'a Slopes) -> SamusWorld<'a> {
+    with_doors(blocks, slopes, &[])
+}
+
+fn with_doors<'a>(
+    blocks: &'a [LevelBlock],
+    slopes: &'a Slopes,
+    doors: &'a [Door],
+) -> SamusWorld<'a> {
     let room = Room {
         blocks,
         width: BlockColumns(WIDTH),
         slopes: Some(slopes),
+        doors,
     };
     SamusWorld::new(room, SolidEnemies::default())
 }
@@ -77,6 +87,34 @@ fn a_stand_in_chain_that_loops_is_refused() {
     // The first cell refused is the one reported.
     assert!(matches!(world.block(at(0, 2)), Block::StandsFor(None)));
     assert_eq!(world.refused(), Err(SamusFault::StandInLoop(at(2, 2))));
+}
+
+#[test]
+fn a_door_lets_her_through_where_its_door_leads_to_a_room() {
+    let slopes = slopes();
+    let blocks = level(&[
+        ((0, 0), BlockKind::Door(DoorIndex(0))),
+        ((1, 0), BlockKind::Door(DoorIndex(1))),
+        // The top bit is no part of the place: this is the door at place 1 too.
+        ((2, 0), BlockKind::Door(DoorIndex(0x81))),
+        ((3, 0), BlockKind::Door(DoorIndex(2))),
+    ]);
+    let doors = [
+        Door::Nowhere,
+        Door::ToRoom(RoomKey::from_room_pointer(0x91f8)),
+    ];
+    let world = with_doors(&blocks, &slopes, &doors);
+    assert!(matches!(world.block(at(0, 0)), Block::Solid));
+    assert!(matches!(world.block(at(1, 0)), Block::Air));
+    assert!(matches!(world.block(at(2, 0)), Block::Air));
+    // A place past the list.
+    assert!(matches!(world.block(at(3, 0)), Block::Solid));
+    // A door is none of the blocks' reactions.
+    let touch = |x| clean_types::Touch {
+        cell: at(x, 0),
+        way: Way::Move(Heading::Left),
+    };
+    assert_eq!(world.touches(&[touch(0), touch(1)]).touched(), []);
 }
 
 #[test]

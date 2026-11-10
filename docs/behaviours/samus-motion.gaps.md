@@ -23,6 +23,29 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
     `$94:9B40`). The blocks spec's vectors give `{ inside = [x, y], point }` requests in that
     shape.
 
+## Wiring gap 8 in the engine and the harness (engineer, 2026-11-10)
+
+Item 8 below is wired: the adapter answers a door block as `OtherBlockKinds` says, from the room's
+door list. A door block's BTS is its place in the list (its low seven bits); the list's word there
+is its door header's pointer, and the header's first word its destination room. A destination of
+8000h or more is a room, so the cell is air to her, and any other leads nowhere (an elevator's
+doorway), so it is solid (bank `$94` log, `$94:938B` horizontal and `$94:93CE` vertical, which
+then start game state 9 for a room and go on to the solid block's reaction for nowhere). The
+importer reads each room's list (`data::room::DoorList`) as far as its levels' door blocks name
+places, since the list holds no count. The engine's content holds the loaded rooms' lists, and the
+harness decodes record N's room by its pointer (`079B`).
+
+Eight frames that ran into a door to a room now match on every field, and no frame falls. In each
+the model stopped her flush against the door (x at a block's edge less her radius) and the game
+moved her on into it as its passage started: area-maridia 22 → 23 and area-norfair 119 → 120, as
+round 17 said, and boss-kraid-defeated 1089 → 1090, chain-0014-96BA 221 → 222, chain-0097-ACF0
+662 → 663, chain-0106-AD5E 481 → 482, chain-0224-D0B9 200 → 201 and samus-input-poses 250 → 251.
+Some of them also differed in the base speed, the extra run, the momentum or the mode, all of
+which a wall stop changes and a door to a room doesn't. The cache's total is 18,007 of 18,249,
+from 17,999, and those eight rows' floors rose by one each. The entries' counts move with those
+frames: none of them stops at a wall now (`WallsAndCeilings` exercised 1,432 → 1,424). The engine
+starts no passage yet (LEGACY, "Her passage through a door").
+
 ## Round 17 in the engine and the harness (integrator, 2026-11-10, lane/samus-r17)
 
 The model grows the dash under the speed booster's cap and gives a booster rise its share of the
@@ -693,8 +716,8 @@ Items 1-3 below are answered by `c44e48c` (the pose chart, `Outcome::reached`, `
    (`u8`) can't hold; the adapter answers 0, so a rise whose top edge is on the block's row 1
    stops where the game lets it on. Asked: the spec's surface for such a column.
 8. **A door to a room is air (`OtherBlockKinds`), but the level alone can't tell it from a door to
-   nowhere.** The adapter answers every door solid (`DoorToNowhere`), as the engine's collision
-   does today; the door's destination is in the room's door list, not the block.
+   nowhere.** The door's destination is in the room's door list, not the block. **Wired**: the
+   adapter reads the room's door list (above, "Wiring gap 8 in the engine and the harness").
 9. **Pose fit's push is an input, but it follows the pose the step chooses (`PoseFitAfterMoves`,
    round 6's `Frame::push`).** Round 6 answers item 1 below inside the step (`WhatHerMovesMet`
    and the chart), so the engine no longer knows the frame's pose before the step, yet the push

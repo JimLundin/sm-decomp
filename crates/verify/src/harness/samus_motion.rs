@@ -3,7 +3,8 @@
 //! (`docs/behaviours/samus-motion.md` §1.1).
 //!
 //! Each frame decodes record N: Samus, the pad, the frame count, the elevator, the level's
-//! layer 1 and the enemies' common words, all from work RAM, so every room reads. It steps her
+//! layer 1 and the enemies' common words, all from work RAM, so every room reads, and the
+//! room's door list, which the importer reads from the ROM by record N's room. It steps her
 //! through the model over that level and the enemies the selection would touch
 //! (`game::samus_world`), and compares her motion words with record N+1's, and the step's two
 //! outputs to the camera: whether she is rising, and the y a placement put her at, which the
@@ -11,13 +12,17 @@
 //! unverified; the null model is her State left as record N has it, rising as she was, and
 //! placed nowhere.
 
+use core::cell::RefCell;
 use core::fmt;
+use std::collections::BTreeMap;
 
 use clean_model_samus_motion::{
     BehaviourId, CATALOGUE, Phase, Rules as Reference, Samus as Model, Seat, StandingAnimation,
     WallTest,
 };
 use clean_types::{Action, Block as Kind, Heading, Pose as Shape, Way, World, ZERO};
+use data::rom::Lorom;
+use data::room::{Door, RoomError, RoomKey, decode as decode_room};
 use game::Content;
 use game::collision::Room;
 use game::collision::solid_enemy::Obstacle;
@@ -66,6 +71,9 @@ pub enum Skip {
     /// The adapter refuses the frame: a pose no situation of the model names, or a stand-in
     /// chain that loops (a harness defect: the original ran the frame).
     Fault(SamusFault),
+    /// The room record N is in, whose header is at `$8F:` this pointer, doesn't decode, so its
+    /// door list can't be read (a harness defect).
+    Room(u16, RoomError),
     /// Samus's per-frame handler at the frame's start runs no motion: she is locked (the
     /// gunship, a station, a cutscene) or time is frozen (the x-ray scope).
     NotRunning(u16),
@@ -119,6 +127,9 @@ impl fmt::Display for Skip {
             Self::Waiting(at) => write!(f, "the main thread waits in {at}: motion doesn't run"),
             Self::Pose(code) => write!(f, "pose {code:#04X} isn't in the domain"),
             Self::Fault(fault) => write!(f, "the adapter refuses the frame: {fault:?}"),
+            Self::Room(pointer, error) => {
+                write!(f, "room {pointer:#06X} doesn't decode: {error:?}")
+            }
             Self::NotRunning(code) => {
                 write!(
                     f,
@@ -641,10 +652,14 @@ impl Quantity {
 }
 
 /// Samus's motion domain, with the content the model reads: the pose table, the delay lists,
-/// the slope shapes.
+/// the slope shapes, and each room's door list.
 #[derive(Clone, Debug)]
 pub struct SamusMotion {
     content: Content,
+    /// The ROM, whose rooms' door lists the frames read.
+    image: Vec<u8>,
+    /// Each room's door list, by its header's pointer, decoded once.
+    doors: RefCell<BTreeMap<u16, Vec<Door>>>,
 }
 
 impl SamusMotion {
@@ -656,7 +671,21 @@ impl SamusMotion {
     pub fn load(image: &[u8]) -> Result<Self, ContentError> {
         Ok(Self {
             content: bundle::content(image.to_vec())?,
+            image: image.to_vec(),
+            doors: RefCell::default(),
         })
+    }
+
+    /// The door list of the room whose header is at `$8F:pointer`.
+    fn doors(&self, pointer: u16) -> Result<Vec<Door>, Skip> {
+        if let Some(doors) = self.doors.borrow().get(&pointer) {
+            return Ok(doors.clone());
+        }
+        let room = decode_room(Lorom::new(&self.image), RoomKey::from_room_pointer(pointer))
+            .map_err(|error| Skip::Room(pointer, error))?;
+        let doors = room.doors.doors;
+        self.doors.borrow_mut().insert(pointer, doors.clone());
+        Ok(doors)
     }
 }
 
@@ -667,6 +696,7 @@ impl SamusMotion {
             blocks: &inputs.blocks,
             width: inputs.width,
             slopes: Some(&self.content.slopes),
+            doors: &inputs.doors,
         };
         SamusWorld::of(room, inputs.enemies.iter().copied())
     }
@@ -716,20 +746,21 @@ impl SamusMotion {
 }
 
 /// What the model reads besides her, from record N: the pad, the elevator, the frame count,
-/// the level and the enemies she can touch.
+/// the level, its room's door list and the enemies she can touch.
 pub struct Inputs {
     controller: Controller,
     ride: ElevatorRide,
     completed: u16,
     width: BlockColumns,
     blocks: Vec<Block>,
+    doors: Vec<Door>,
     enemies: Vec<Obstacle>,
 }
 
 impl Inputs {
-    /// Record N's inputs: the enemies are the live ones the selection would let her touch,
-    /// by the camera as record N has it.
-    fn of(wram: &[u8]) -> Result<Self, DecodeError> {
+    /// Record N's inputs, in a room of `doors`: the enemies are the live ones the selection
+    /// would let her touch, by the camera as record N has it.
+    fn of(wram: &[u8], doors: Vec<Door>) -> Result<Self, DecodeError> {
         let rules = Rules::ORIGINAL;
         let (camera_x, camera_y) = (rules.camera_x.read(wram)?, rules.camera_y.read(wram)?);
         let enemies = rules
@@ -750,6 +781,7 @@ impl Inputs {
             completed: rules.completed.read(wram)?,
             width: BlockColumns(rules.level.width.read(wram)?),
             blocks: rules.level.layer1(wram)?,
+            doors,
             enemies,
         })
     }
@@ -851,7 +883,8 @@ impl Domain for SamusMotion {
             samus,
             rising: word(from, source::SAMUS_Y_DIR)? == UP,
         };
-        Ok((hers, Inputs::of(&from.wram)?))
+        let doors = self.doors(word(from, source::ROOM_PTR)?)?;
+        Ok((hers, Inputs::of(&from.wram, doors)?))
     }
 
     fn masks(
@@ -1000,7 +1033,9 @@ impl Domain for SamusMotion {
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Unreadable(_) | Skip::Fault(_) => Uncompared::Defect(skip.to_string()),
+            Skip::Unreadable(_) | Skip::Fault(_) | Skip::Room(..) => {
+                Uncompared::Defect(skip.to_string())
+            }
             Skip::GameState(_)
             | Skip::NotAtFrameEnd
             | Skip::Waiting(_)
@@ -1150,6 +1185,8 @@ mod tests {
     fn masked(from: &FrameRecord, next: &FrameRecord) -> FieldSet {
         let domain = SamusMotion {
             content: game::Content::default(),
+            image: Vec::new(),
+            doors: core::cell::RefCell::default(),
         };
         let inputs = Inputs {
             controller: game::state::Controller::default(),
@@ -1157,6 +1194,7 @@ mod tests {
             completed: 0,
             width: game::state::room::BlockColumns(0),
             blocks: Vec::new(),
+            doors: Vec::new(),
             enemies: Vec::new(),
         };
         match domain.masks(from, next, &inputs) {

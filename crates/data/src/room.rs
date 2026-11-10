@@ -15,7 +15,7 @@ use clean_types::Event;
 use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};
 use crate::id::RoomId;
-use crate::level::{Level, LevelError, ScrollArea, scroll_areas};
+use crate::level::{BlockKind, DoorIndex, Level, LevelError, ScrollArea, scroll_areas};
 use crate::plm::{PlmError, PlmPopulation, population};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
@@ -23,6 +23,9 @@ use crate::rom::{AddressError, Lorom, RomAddress};
 const ROOM_BANK: u8 = 0x8f;
 /// Door headers.
 const DOOR_BANK: u8 = 0x83;
+/// Where a bank's ROM starts: a 16-bit pointer below it names work RAM or a register, not a
+/// record of the ROM.
+const BANK_ROM: u16 = 0x8000;
 /// FX lists.
 const FX_BANK: u8 = 0x83;
 /// Enemy populations.
@@ -344,6 +347,44 @@ pub struct ConditionalState {
     pub state: RoomState,
 }
 
+/// Where a door of a room's door list leads, as its door header's destination says.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Door {
+    /// To the room whose header the destination names: a door block of this door lets her
+    /// through, and her passage to that room starts.
+    ToRoom(RoomKey),
+    /// Nowhere: an elevator's doorway, whose door block is solid to her.
+    Nowhere,
+    /// A door whose header pointer names work RAM, not a header (the unused room's list holds
+    /// one): the original reads the destination from whatever the RAM holds there.
+    HeaderInRam(u16),
+}
+
+impl Door {
+    /// The door whose header names `destination`: a pointer below the room bank's ROM names no
+    /// room.
+    #[must_use]
+    pub const fn leading_to(destination: u16) -> Self {
+        if destination >= BANK_ROM {
+            Self::ToRoom(RoomKey::from_room_pointer(destination))
+        } else {
+            Self::Nowhere
+        }
+    }
+}
+
+/// A room's door list: where it is, and its doors by their place in it.
+///
+/// The list holds no count of its own: the room's door blocks name their places in it. So it
+/// holds a door for each place up to the last a door block of any of the room's states names.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DoorList {
+    /// Where the list is: a word a door, each its door header's place in the door bank.
+    pub at: RomAddress,
+    /// The doors, by their place (`DoorIndex::place`).
+    pub doors: Vec<Door>,
+}
+
 /// A room header and its states.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Room {
@@ -362,7 +403,7 @@ pub struct Room {
     /// The CRE bits, as the original stores them.
     pub cre: u8,
     /// The door list.
-    pub doors: RomAddress,
+    pub doors: DoorList,
     /// The conditional states, in the order they're checked.
     pub conditional: Vec<ConditionalState>,
     /// The default state.
@@ -505,7 +546,7 @@ impl Rooms {
 /// Add `room`'s locations to `addresses`.
 fn record(addresses: &mut AddressMap, id: RoomId, room: &Room) {
     addresses.insert(Location::RoomHeader(id), room.key.0);
-    addresses.insert(Location::DoorList(id), room.doors);
+    addresses.insert(Location::DoorList(id), room.doors.at);
     for (index, state) in room.states() {
         for (part, address) in [
             (StatePart::Header, state.at),
@@ -574,6 +615,12 @@ pub fn decode(rom: Lorom<'_>, key: RoomKey) -> Result<Room, RoomError> {
     if u8::try_from(conditional.len()).is_err() {
         return Err(RoomError::TooManyStates(key));
     }
+    let default = state(rom, reader.at, size)?;
+    let states = conditional
+        .iter()
+        .map(|entry| &entry.state)
+        .chain(core::iter::once(&default));
+    let doors = door_list(rom, doors, states)?;
     Ok(Room {
         key,
         index,
@@ -584,8 +631,40 @@ pub fn decode(rom: Lorom<'_>, key: RoomKey) -> Result<Room, RoomError> {
         cre,
         doors,
         conditional,
-        default: state(rom, reader.at, size)?,
+        default,
     })
+}
+
+/// The door list at `at`, as far as the door blocks of `states` name its places.
+fn door_list<'a>(
+    rom: Lorom<'_>,
+    at: RomAddress,
+    states: impl Iterator<Item = &'a RoomState>,
+) -> Result<DoorList, RoomError> {
+    let named = states
+        .flat_map(|state| &state.layers.layer1)
+        .filter_map(|block| {
+            if let BlockKind::Door(index) = block.kind {
+                Some(index)
+            } else {
+                None
+            }
+        })
+        .map(DoorIndex::place)
+        .max();
+    let count = named.map_or(0, |last| last.saturating_add(1));
+    let mut list = Reader { rom, at };
+    let doors = (0..count)
+        .map(|_| {
+            let header = list.pointer(DOOR_BANK)?;
+            if header.offset < BANK_ROM {
+                return Ok(Door::HeaderInRam(header.offset));
+            }
+            let destination = Reader { rom, at: header }.word()?;
+            Ok(Door::leading_to(destination))
+        })
+        .collect::<Result<_, RoomError>>()?;
+    Ok(DoorList { at, doors })
 }
 
 /// The level data at `at` of a room of `size`, decompressed and decoded, refused where a chain of
@@ -702,3 +781,10 @@ mod tests;
 // `$E652`: the Morph Ball and missiles are collected.
 // `$E669`: power bombs are collected.
 // `$E678` (unused): the Speed Booster is collected.
+// Where a door leads: the door block's reactions (bank `$94` log, `$94:938B` horizontal and
+// `$94:93CE` vertical) read the word at `$8F:[$07B5] + (BTS & 7Fh) * 2`, the door header's
+// pointer, then the header's first word, its destination room header. One of 8000h or more
+// sets the door pointer (`$078D`) and game state 9 and returns carry clear: the move goes on.
+// Any other is an elevator's doorway (`$94:93BD`): solid, and in a pose below 9 she stands on
+// the elevator (`$0E16`).
+// The unused room whose door list names a header in work RAM is `$8F:B3E1`.

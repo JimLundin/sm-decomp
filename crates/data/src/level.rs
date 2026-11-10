@@ -108,6 +108,17 @@ pub struct Offset(pub i8);
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct DoorIndex(pub u8);
 
+impl DoorIndex {
+    /// The bits of the index that give the door's place in the list: the top bit is not one.
+    const PLACE: u8 = 0x7f;
+
+    /// The door's place in the room's door list.
+    #[must_use]
+    pub fn place(self) -> usize {
+        usize::from(self.0 & Self::PLACE)
+    }
+}
+
 /// The PLM a shootable or special block spawns when it reacts.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PlmChoice {
@@ -612,6 +623,8 @@ mod tests;
 // A slope's shape and flips (bank `$94` log, the slope collision routines `$94:8D2B` on).
 // Zero acts as air (bank `$94` log, `$94:9411`, `$94:9447`).
 // A door block's door: its index in the room's door list (bank `$94` log, the door
+// block's reactions `$94:938B` and `$94:93CE`, which read the list's word at
+// `[$07B5] + (BTS & 7Fh) * 2`; `$078F` keeps the whole BTS).
 // The PLM a shootable or special block spawns when it reacts (bank `$94` log, `$94:9E73`).
 // BTS bit 7 clear: entry `n` of the block type's PLM table (`$94:9EA6` shootable,
 // `$94:9139` special).

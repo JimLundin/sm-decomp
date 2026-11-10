@@ -17,7 +17,7 @@ use clean_model_progress::Progress;
 use data::id::RoomId;
 use data::plm::PlmPopulation;
 use data::rom::Lorom;
-use data::room::{RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
+use data::room::{Door, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
 use data::tileset::TilesetId;
 use game::progress_world;
 use game::state::atmospheric::AtmosphericGraphic;
@@ -111,6 +111,20 @@ pub fn slice_zero_plms(image: &[u8]) -> Result<Vec<(RoomId, PlmPopulation)>, Roo
             )?)?;
             Some((id, state.plms.clone()))
         })
+        .collect())
+}
+
+/// The door list of each room [`slice_zero_rooms`] holds.
+///
+/// # Errors
+///
+/// [`RoomError`] if a room doesn't decode from `image`.
+pub fn slice_zero_doors(image: &[u8]) -> Result<Vec<(RoomId, Vec<Door>)>, RoomError> {
+    let (rooms, _) = Rooms::load(Lorom::new(image), &SLICE_ZERO_ROOMS)?;
+    Ok(rooms
+        .map()
+        .iter()
+        .filter_map(|(_, id)| Some((id, rooms.get(id)?.doors.doors.clone())))
         .collect())
 }
 

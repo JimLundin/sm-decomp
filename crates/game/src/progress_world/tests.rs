@@ -2,7 +2,8 @@ use clean_types::Event;
 use data::level::Level;
 use data::plm::PlmPopulation;
 use data::room::{
-    ConditionalState, LevelData, MapPosition, Music, RoomKey, RoomState, Screens, Scrollers,
+    ConditionalState, DoorList, LevelData, MapPosition, Music, RoomKey, RoomState, Screens,
+    Scrollers,
 };
 
 use super::*;
@@ -47,7 +48,10 @@ fn room(area: Area, conditions: &[room::Condition]) -> Room {
         },
         scrollers: Scrollers { up: 0, down: 0 },
         cre: 0,
-        doors: RomAddress::new(0x8f, 0),
+        doors: DoorList {
+            at: RomAddress::new(0x8f, 0),
+            doors: Vec::new(),
+        },
         conditional: conditions
             .iter()
             .zip(0x9000..)

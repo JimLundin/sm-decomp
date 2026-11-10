@@ -38,6 +38,7 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
         blocks: &from.room.blocks,
         width: from.room.width,
         slopes: Some(&content.slopes),
+        doors: content.room_doors.of(from.room.room),
     };
     let world = SamusWorld::new(room, SolidEnemies::default());
     let sized = |pose| body(content, &samus, pose);

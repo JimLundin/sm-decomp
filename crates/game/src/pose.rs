@@ -57,6 +57,8 @@ pub struct Content {
     pub face_block_glow: GlowColours,
     /// The rooms' PLM populations, with their scroll PLMs' change lists.
     pub room_plms: RoomPlms,
+    /// The rooms' door lists, which say where each door block leads.
+    pub room_doors: crate::collision::RoomDoors,
     /// The blocks' reactions and what each reacting cell's mark is.
     pub blocks: crate::blocks_world::BlockContent,
     /// The area maps and the pictures the HUD draws with.

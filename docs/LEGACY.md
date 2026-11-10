@@ -114,6 +114,14 @@ original's bytes as data.
   cells, so a power bomb set off in their rooms holds a place for each it reaches. No room of the
   game has a refused cell (the 261 rooms the doors reach and the two no door reaches, `$8F:B3E1`
   and `$8F:E82C`).
+- **A door block whose place is past its room's door list** (the samus-motion domain,
+  `docs/behaviours/samus-motion.md` `OtherBlockKinds`; `data::room::DoorList`,
+  `game::samus_world`; `$94:938B`, `$94:93CE`): a door block names its door by its BTS, the place
+  in the room's door list, and the list holds no count of its own. The importer reads one door for
+  each place up to the last a door block of any of the room's states names, so every door block of
+  the level data has its door. A block written as the room runs (a PLM's or a reaction's) could
+  name a place past that, where the original reads the bytes after the list as a door header's
+  pointer and goes where they lead. The engine answers such a door solid.
 - **Reactions the original would misread** (the blocks domain, `docs/behaviours/blocks.md` §2,
   `BombBlocks`; `$84:85E0`, `$84:CF0C`): a `Show` of 0 frames waits 65,536 frames in the original,
   one of 8000h or more is read as an instruction, and a bomb's blast skips the first three bytes of
@@ -158,8 +166,19 @@ original's bytes as data.
   cells, which are air to her, the shot blocks her beam breaks, and the item. Each goes when its
   asker joins: her motion asking the blocks (samus-motion), her weapons (W1), the grapple (S6),
   the room's loading and the doors (R1, R2), the sound queue (U1).
+- **Her passage through a door** (the samus-motion domain, `docs/behaviours/samus-motion.md`
+  `OtherBlockKinds`; `game::samus_world`; `$94:938B`, `$94:93CE`): a door that leads to a room
+  lets her move on, as in the original, but the engine has no doors yet, so it starts no passage
+  (game state 9 and the door pointer `$078D`, set as she reaches the door): she moves on into the
+  door's cells and the room goes on running. The harness compares the frame that reaches the door,
+  her move, and skips those after it, which aren't gameplay. The entry goes with the doors (R1, R2).
 
 ## Tolerated values kept as named variants
+
+- `data::room::Door::HeaderInRam(u16)`: the unused room `$8F:B3E1`'s door list names a door header
+  below the door bank's ROM, so a door block naming it would read its destination from low work
+  RAM (`$94:93AC`). The importer keeps the pointer, and the engine answers the door solid. No door
+  reaches the room, and no row enters it.
 
 - `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (`$91:B731`, `$91:B739`) hold X
   direction bytes 1 and 2, neither left (4), right (8) nor forward (0). The original's facing tests read

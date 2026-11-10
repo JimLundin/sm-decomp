@@ -38,6 +38,7 @@ fn content() -> Content {
         visor_colours: data::palette::VisorColours::default(),
         face_block_glow: data::enemy::face_block::GlowColours::default(),
         room_plms: crate::plm::RoomPlms::default(),
+        room_doors: crate::collision::RoomDoors::default(),
         blocks: crate::blocks_world::BlockContent::default(),
         hud: crate::hud_world::HudContent::default(),
         tile_tables: data::tileset::TileTables::default(),

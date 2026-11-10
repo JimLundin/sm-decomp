@@ -4,8 +4,10 @@
 //! blocks model and the items meet after the moves. The moves themselves are the samus-motion
 //! model's (`samus_world`); the cells she is inside are `inside`'s.
 
-use data::level::BlockKind;
+use data::id::RoomId;
 use data::level::slope::Slopes;
+use data::level::{BlockKind, DoorIndex};
+use data::room::Door;
 
 use crate::blocks_world::{self, BlocksFault, Reads};
 use crate::plm::{self, TouchFault};
@@ -23,6 +25,23 @@ pub struct Room<'a> {
     pub width: BlockColumns,
     /// The slope shapes.
     pub slopes: Option<&'a Slopes>,
+    /// The room's door list, by each door's place.
+    pub doors: &'a [Door],
+}
+
+/// Each loaded room's door list.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RoomDoors(pub Vec<(RoomId, Vec<Door>)>);
+
+impl RoomDoors {
+    /// Room `room`'s doors; none for a room the content doesn't hold.
+    #[must_use]
+    pub fn of(&self, room: RoomId) -> &[Door] {
+        self.0
+            .iter()
+            .find_map(|(id, doors)| (*id == room).then_some(doors.as_slice()))
+            .unwrap_or_default()
+    }
 }
 
 /// A reacting cell her moves reached.
@@ -166,5 +185,11 @@ impl Room<'_> {
         self.blocks
             .get(usize::from(index))
             .map_or_else(BlockKind::default, |block| block.kind)
+    }
+
+    /// The door a door block of `index` names, if the room's door list holds it.
+    #[must_use]
+    pub fn door(&self, index: DoorIndex) -> Option<Door> {
+        self.doors.get(index.place()).copied()
     }
 }

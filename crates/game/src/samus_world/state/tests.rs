@@ -266,6 +266,7 @@ fn a_frame_on_the_floor_runs_her_right() {
         blocks: &blocks,
         width: BlockColumns(4),
         slopes: None,
+        doors: &[],
     };
     let world = SamusWorld::new(room, SolidEnemies::default());
     // Her feet on the floor's top (y 30h): centre 30h less her radius.

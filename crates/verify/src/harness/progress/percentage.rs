@@ -87,7 +87,7 @@ impl ProgressDomain {
             let doors = (0_u16..)
                 .take(DOOR_LIST_REACH)
                 .map_while(|place| {
-                    let at = room.doors.offset.wrapping_add(place.wrapping_mul(2));
+                    let at = room.doors.at.offset.wrapping_add(place.wrapping_mul(2));
                     rom_word(image, ROOM_BANK, at).filter(|door| DOOR_HEADERS.contains(door))
                 })
                 .filter_map(|door| rom_word(image, DOOR_BANK, door))

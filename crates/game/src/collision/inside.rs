@@ -53,6 +53,7 @@ fn point(
         blocks: &room.blocks,
         width: room.width,
         slopes: None,
+        doors: &[],
     };
     let Some(index) = block_at(view, x, y) else {
         return Ok(None);

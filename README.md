@@ -21,7 +21,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | S1, S2 (in progress); S3, S4 (not started) | in progress | 17 | 284 | 17,999 of 25,426 | 8,475 | 7,884 | 1.07 |
+| samus-motion | S1, S2 (in progress); S3, S4 (not started) | in progress | 17 | 284 | 18,007 of 25,426 | 8,475 | 7,884 | 1.07 |
 | camera | CAM (in progress) | in progress | 6 | 83 | 20,513 of 25,426 | 1,883 | 1,692 | 1.11 |
 | progress | P1 (in progress) | in progress | 6 | 66 | 25,419 of 25,426 | 979 | 1,092 | 0.90 |
 | hud | H2 (in progress) | in progress | 3 | 72 | 20,614 of 25,426 | 2,978 | 2,028 | 1.47 |
@@ -46,8 +46,8 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
-| not yet rebuilt | 44 | 5,040 | 30,241 | 6,920 |
-| bridges from the engine to the models | 8 | 2,449 | 14,693 | 2,473 |
+| not yet rebuilt | 44 | 5,054 | 30,326 | 6,941 |
+| bridges from the engine to the models | 8 | 2,457 | 14,743 | 2,480 |
 | rebuilt models, shared types included | 59 | 2,956 | 17,737 | 7,701 |
 
 ### Verification
