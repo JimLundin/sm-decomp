@@ -137,12 +137,12 @@ progress area-brinstar 476
 progress area-maridia 428
 progress area-norfair 374
 progress boss-kraid-defeated 1137
-progress boss-phantoon 2107
+progress boss-phantoon 2108
 progress chain-0012-91F8 1032
 progress chain-0013-92FD 599
 progress chain-0014-96BA 506
 progress chain-0043-9AD9 417
-progress chain-0057-9FBA 548
+progress chain-0057-9FBA 549
 progress chain-0059-A293 777
 progress chain-0097-ACF0 817
 progress chain-0100-B07A 285

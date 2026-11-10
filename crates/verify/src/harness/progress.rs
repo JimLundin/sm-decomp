@@ -7,25 +7,27 @@
 //! decoded from record N; the room load from record N+1, which other domains write; and the
 //! model's output is compared with record N+1.
 //!
-//! A report is heard from the frame's watched instruction hits (record N+1's, the entry points
-//! of the decode notes' Inputs table) where the instruction alone names it, with record N and the
-//! ROM: an instruction that marks one event, a zebetite destroyed, a map station, the room that
-//! gives its map on arrival, leaving the area (on a door, the one record N takes, whose header
-//! in the ROM leads into another area), the gunship's station; and a pickup, when the frame
-//! sets one place emptied and record N holds one item PLM, its place not yet emptied, whose
-//! list (read from the ROM) runs the pickup instruction hit, and none whose pickup the ROM
-//! doesn't decode, since that one could be the PLM taken. The hits carry no arguments, so
-//! what an instruction can't name alone (the kind of boss defeated, the door opened, the station
-//! saved at, an event a PLM or the statues mark) is stood in for from what record N+1 shows
+//! A report is heard from the frame's watched instruction hits (record N+1's, the entry points of
+//! the decode notes' Inputs table) where the instruction alone names it, with record N and the ROM:
+//! an instruction that marks one event, a zebetite destroyed, a map station, the room that gives
+//! its map on arrival, leaving the area (on a door, the one record N takes, whose header in the ROM
+//! leads into another area), the gunship's station; and a pickup, when the frame sets one place
+//! emptied and record N holds one item PLM, its place not yet emptied, whose list (read from the
+//! ROM) runs the pickup instruction hit, and none whose pickup the ROM doesn't decode, since that
+//! one could be the PLM taken; and a door opened, when the door hit instruction runs and record N
+//! holds one door PLM whose door isn't open yet, whose hit counter is one short of the count its
+//! list (read from the ROM) gives. The hits carry no arguments, so what an instruction can't name
+//! alone (the kind of boss defeated, a door among several or one a super missile opens early, the
+//! station saved at, an event a PLM or the statues mark) is stood in for from what record N+1 shows
 //! changed: a place newly emptied is the pickup of the item PLM record N holds with that room
-//! argument, a door newly open the door PLM's report, and an event, a zebetite, a boss, a map or
-//! a station newly marked the report that marks it, naming the area she is in (record N+1's), or
-//! for leaving the area the one she leaves (record N's). Those answers copy record N+1, so every
-//! field they move is unverified, never matched (the harness's neutral stand-in makes none). A
-//! row recorded without the watches hears nothing, and every report is stood in for. A room load
-//! is the door's domain's, from the room pointer: its state is the model's choice over the
-//! room's conditions, and the items its state places (the PLM domain's `ItemsPlaced`) come from
-//! the ROM, so neither copies an answer.
+//! argument, a door newly open the door PLM's report, and an event, a zebetite, a boss, a map or a
+//! station newly marked the report that marks it, naming the area she is in (record N+1's), or for
+//! leaving the area the one she leaves (record N's). Those answers copy record N+1, so every field
+//! they move is unverified, never matched (the harness's neutral stand-in makes none). A row
+//! recorded without the watches hears nothing, and every report is stood in for. A room load is the
+//! door's domain's, from the room pointer: its state is the model's choice over the room's
+//! conditions, and the items its state places (the PLM domain's `ItemsPlaced`) come from the ROM,
+//! so neither copies an answer.
 //!
 //! The null model is progress left as record N has it, and the room loaded in its default state.
 
@@ -51,7 +53,7 @@ use oracle_record::FrameRecord;
 use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::decode::DecodeError;
 use crate::domain_field;
-use crate::source::{self, WramBlock, WramWord};
+use crate::source::{self, WramArray, WramBlock, WramWord};
 
 /// A work RAM word the harness reads that `source` doesn't name.
 const fn wram(name: &'static str, offset: u16) -> WramWord {
@@ -164,6 +166,25 @@ const PLM_SLOTS: u16 = 40;
 /// its byte), then the pickup instruction and its word.
 const BEFORE_PICKUP: [u8; 4] = [0x99, 0x88, 0xDD, 0x8B];
 const PICKUP_AFTER: usize = 5;
+/// Bank $84 log, `$84:8A91`: each door PLM's hit counter, which the instruction counts up (the
+/// same words hold an item PLM's graphics slot).
+const DOOR_HIT_COUNTERS: WramArray = WramArray {
+    name: "PLM_DOOR_HIT_COUNTERS",
+    offset: 0xDF0C,
+};
+/// Bank $84 log: each PLM's pre-instruction.
+const PRE_INSTRUCTIONS: WramArray = WramArray {
+    name: "PLM_PRE_INSTRUCTIONS",
+    offset: 0x1CD7,
+};
+/// The pre-instruction a door PLM takes once its door is open (`$84:8AA6`, a return): no shot
+/// reaches it after.
+const OPEN_DOOR: u16 = 0x8AA6;
+/// The door PLM's instruction (`$84:8A91`) and its count byte after it: it counts a hit, and at
+/// the count sets the door open for good, unless the room argument has bit 15.
+const DOOR_HIT: [u8; 2] = [0x91, 0x8A];
+/// A room argument with bit 15 names no door: its door is never remembered (`$84:8A91`).
+const UNREMEMBERED: u16 = 0x8000;
 /// How far into an item PLM's list the harness looks for its pickup.
 const LIST_REACH: usize = 0x100;
 /// The PLM bank.
@@ -199,6 +220,8 @@ const INTO_ANOTHER_AREA: u8 = 0x40;
 /// The gunship's station, saved at on its first landing and when she saves in it (`$A2:A9A7`,
 /// `$A2:AB2B`).
 const GUNSHIP_SAVES: [u32; 2] = [0xA2_A9A7, 0xA2_AB2B];
+/// A door PLM's hit (`$84:8A91`).
+const HIT_DOOR: u32 = 0x84_8A91;
 /// The gunship's station's id.
 const GUNSHIP: StationId = StationId(0);
 
@@ -722,6 +745,42 @@ impl ProgressDomain {
             .ok_or_else(|| Skip::NoReport(format!("door {door:#06X} has no header in the ROM")))
     }
 
+    /// The count of hits that opens the door of door PLM `plm`: the byte after the first door
+    /// hit instruction in its list (read from the ROM); none for a PLM that isn't a door's.
+    fn door_count(&self, plm: u16) -> Option<u8> {
+        let rom = Lorom::new(&self.image);
+        let read = |offset: u16, count: usize| rom.read(RomAddress::new(PLM_BANK, offset), count);
+        let header = read(plm, 4).ok()?;
+        let list = u16::from_le_bytes([*header.get(2)?, *header.get(3)?]);
+        let bytes = read(list, LIST_REACH).ok()?;
+        let at = bytes
+            .windows(DOOR_HIT.len())
+            .position(|window| window == DOOR_HIT)?;
+        bytes.get(at.wrapping_add(DOOR_HIT.len())).copied()
+    }
+
+    /// The door PLMs in `record`'s slots a shot could still reach: the ones whose door isn't
+    /// open yet.
+    fn doors(&self, record: &FrameRecord) -> Result<Vec<Door>, Skip> {
+        let mut doors = Vec::new();
+        for slot in 0..PLM_SLOTS {
+            let plm = word(record, source::PLM_HEADER_PTR.word(slot)?)?;
+            if plm == 0 || word(record, PRE_INSTRUCTIONS.word(slot)?)? == OPEN_DOOR {
+                continue;
+            }
+            let Some(count) = self.door_count(plm) else {
+                continue;
+            };
+            let argument = word(record, source::PLM_ROOM_ARGUMENTS.word(slot)?)?;
+            let hits = word(record, DOOR_HIT_COUNTERS.word(slot)?)?;
+            doors.push(Door {
+                id: (argument & UNREMEMBERED == 0).then_some(DoorId(argument)),
+                opens: hits.wrapping_add(1) >= u16::from(count),
+            });
+        }
+        Ok(doors)
+    }
+
     /// The reports the frame from `from` to `next` makes that its watched instruction hits
     /// name, with record N and the ROM, in the order their instructions ran.
     fn heard(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Report>, Skip> {
@@ -766,6 +825,16 @@ impl ProgressDomain {
             if let [Some(taken)] = candidates[..] {
                 reports.push(taken);
             }
+        }
+        // A door hit names no PLM, so it is heard only when record N holds one door a shot could
+        // reach: then that door is the one hit, and opens for certain when its counter is one
+        // short of its count. A super missile's hit raises the counter before the instruction
+        // counts it, so a door short by more may open too; that frame is the stand-in's.
+        if ran(HIT_DOOR)
+            && let [door] = self.doors(from)?[..]
+            && door.opens
+        {
+            reports.push(Report::DoorOpened(door.id));
         }
         Ok(reports)
     }
@@ -878,6 +947,16 @@ fn item_plms(record: &FrameRecord) -> Result<BTreeSet<(u16, u16)>, Skip> {
         }
     }
     Ok(plms)
+}
+
+/// A door PLM a shot could reach in a record: the door it names and whether one more hit opens
+/// it.
+#[derive(Clone, Copy)]
+struct Door {
+    /// The door its room argument names; none with bit 15 set.
+    id: Option<DoorId>,
+    /// Whether its hit counter is one short of its count or more.
+    opens: bool,
 }
 
 /// Whether a room loads in the frame from `from` to `next`: its header's door list is new.

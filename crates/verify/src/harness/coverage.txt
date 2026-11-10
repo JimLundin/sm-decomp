@@ -67,7 +67,7 @@ camera entry ScreensRunOn 0 0 0 0
 camera entry Settling 14681 7340 14681 1762
 camera entry ShortScreens 17631 11776 17631 1735
 camera entry TimeStopped 113 113 113 6
-progress frames 25426 25417 9 25399
+progress frames 25426 25419 7 25399
 progress field 25426 0 items
 progress field 25426 0 items switched on
 progress field 25426 0 beams
@@ -85,7 +85,7 @@ progress field 25426 0 stations saved at
 progress field 25426 0 items placed
 progress field 8 25418 room state
 progress entry BossesDefeated 0 0 3 0
-progress entry DoorsStayOpen 0 0 5 0
+progress entry DoorsStayOpen 2 0 5 0
 progress entry EmptiedLocations 13 0 14 0
 progress entry EventsHappen 1 0 1 0
 progress entry ItemPercentage 0 0 0 0
