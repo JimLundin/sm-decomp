@@ -35,7 +35,7 @@ frames. The observer's tools, all in `$TEMP/collab/blocks-spec`:
   from different rows, from frames the model matches with the hits' inputs; `rec.toml`), all of
   them harness cases now; `cons.py` writes the vectors, all constructed, over `invented.py` (their
   after from the model), `assemble.py` writes `scenarios/vectors/blocks.toml` with the invented
-  reactions they use, and `vec.py` runs every vector through the model: 99 of 99 agree. It also
+  reactions they use, and `vec.py` runs every vector through the model: 100 of 100 agree. It also
   refuses a reaction name no table holds, a flipped whole look, a wait outside 1 to 32,767, and a
   `remembers` given for a script with no `Regrow`.
 - `cut.py` cuts the old code into the areas' files in `old/` for `tools size`.
@@ -295,7 +295,10 @@ Bh, Ch, Fh) reads the reaction each asker gives it from the tables: her touch
     `$B6CF` (part 3; its start takes a place, as another part's request);
   - Maridia 80h..85h (2,580 cells): touch and inside both part 4's quicksand.
 - **Inside a cell that holds a place:** no cell of the game (no special air at BTS 80h and up
-  whose inside table gives `$B62F` or `$B653`..`$B65B`); the arm stands for a custom room.
+  whose inside table gives `$B62F` or `$B653`..`$B65B`); the arm stands for a custom room. The
+  tables would give one to a Brinstar speed block placed as special air (BTS 82h..85h: the touch
+  table `$94:91F9` a speed block, the inside table `$94:9A26` `$B62F`), which no room has
+  (C-inside-any-mark).
   `Inert`: no cell of the game either.
 - **Content:** no `Show` outside 1..7FFFh, every bomb block's broken list begins with a sound, and
   no reacting cell's patterns reach past its room's edge (1,866 reacting cells of this part's
@@ -401,8 +404,8 @@ content is the draw routine's, which the format names by what each cell becomes.
 - **Inside, whatever the mark.** `$94:9B16` reads only the cell's BTS: below 80h its jump table
   (`$9966`: 46h the scroll cell's centre, 8..Bh the treadmills), from 80h the area's inside table
   (`$9B06`). Her touch, a shot, a blast and the grapple read their own tables, so whether she holds
-  a place inside a cell doesn't depend on the mark they give it: a cell marked `Other` whose inside
-  table gives `$B62F` holds one (C-other). No cell of the game holds one (§The importer's scan).
+  a place inside a cell doesn't depend on the mark they give it: a cell marked `Other`, `Inert` or
+  with a reaction whose inside table gives `$B62F` holds one (C-other, C-inside-any-mark). No cell of the game holds one (§The importer's scan).
 - **A scroll cell's inside.** The scroll PLM's setup writes `3046h` through `$84:82B4`, which keeps
   the tile and replaces the BTS, so a placed scroll cell's inside is the scroll's centre (46h)
   whatever its BTS was, and never a hold: the two can't meet on one cell. The spec says it by the

@@ -508,7 +508,7 @@ names; "the whole look" is that reaction's (§2).
   C-nothing-grapple]
 - She is inside reacting air whose mark holds a place when she is inside it, whatever else the
   mark says → at each point it takes the highest free place until this frame's run
-  [C-nothing-inside, C-other]
+  [C-nothing-inside, C-inside-any-mark, C-other]
 - A block whose mark holds a place when she is inside it, with her in it → it takes no place
   [C-nothing-block-holds-none]
 - With every place taken → it takes none, and nothing else changes [C-nothing-full,

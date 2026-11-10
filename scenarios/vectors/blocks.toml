@@ -2455,6 +2455,38 @@ written = []
 sounds = []
 
 [[vector]]
+# her bottom edge in reacting air marked as a speed block and her top edge in reacting air marked Inert, each mark holding a place when she is inside it: each holds one until the run, and the crumble she lands on takes 37
+id = "C-inside-any-mark"
+source = "constructed"
+entries = ["BlocksMarkedNothing", "SpeedBlocks", "Places"]
+[vector.before]
+cells = [
+  { at = [4, 6], kind = "ReactingAir", look = "3C0", mark = "Inert", inside = "HoldsPlace" },
+  { at = [4, 8], kind = "ReactingAir", look = "3A0", reaction = "speed", inside = "HoldsPlace" },
+  { at = [4, 9], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { inside = [4, 8], point = "Bottom" },
+  { inside = [4, 6], point = "Top" },
+  { touch = [4, 9], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 6], kind = "ReactingAir", look = "3C0", mark = "Inert", inside = "HoldsPlace" },
+  { at = [4, 8], kind = "ReactingAir", look = "3A0", reaction = "speed", inside = "HoldsPlace" },
+  { at = [4, 9], kind = "Solid", look = "310", reaction = "crumble" },
+]
+places = [
+  { place = 37, reaction = "crumble", script = "broken", cell = [4, 9], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Solid"]
+written = []
+sounds = []
+
+[[vector]]
 # a block and reacting air marked Inert: she meets each by its body, a beam and a bomb's blast take no place, and the crumble she lands on takes 39
 id = "C-inert"
 source = "constructed"
@@ -2693,7 +2725,7 @@ written = []
 sounds = []
 
 [[vector]]
-# cells marked Other, another part's: her touch of a block and of reacting air is answered Other, and the block reached by the grapple and by a beam changes nothing and takes no place; she inside reacting air marked Other whose mark holds a place when she is inside it holds one until the run, and inside one whose mark doesn't, none; the crumble she lands on takes 38
+# cells marked Other, another part's: her touch of a block and of reacting air is answered Other, and the block reached by the grapple and by a beam changes nothing and takes no place; her centre inside reacting air marked Other whose mark doesn't hold a place when she is inside it holds none, and her top edge inside one whose mark does holds one until the run; the crumble she lands on takes 38
 id = "C-other"
 source = "constructed"
 entries = ["BlocksMarkedNothing", "AnswersToHerMotion", "Places"]
@@ -2708,8 +2740,8 @@ places = [
 ]
 [vector.frame]
 requests = [
-  { inside = [6, 7], point = "Bottom" },
-  { inside = [5, 7], point = "Centre" },
+  { inside = [6, 7], point = "Centre" },
+  { inside = [5, 7], point = "Top" },
   { hit = [4, 7], by = "Grapple" },
   { hit = [4, 7], by = "Beam" },
   { touch = [4, 7], way = "Right" },
