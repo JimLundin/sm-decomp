@@ -90,7 +90,10 @@ Other types are outside the domain (0A knockback, 16 grapple, 19 damage boost, 1
 **RAM shape** (fields decoded as one word copied as-is): none. Positions, speeds and the dash join
 two words; the two speeds are signed from a magnitude and a direction; bounces are mapped.
 
-**Inputs.** pad held `8B`, newly pressed `8F`; equipment `09A2` (0100 hi-jump, 0200 space jump);
+**Inputs.** pad held `8B`, newly pressed `8F`; the items switched on are `09A2`, the equipped
+items (0001 varia, 0002 spring ball, 0004 morph ball, 0008 screw attack, 0020 gravity, 0100
+hi-jump, 0200 space jump, 1000 bombs, 2000 speed booster, 4000 grapple, 8000 x-ray), which is
+progress's items switched on; the bridge hands that set over as it is;
 spin turned far: animation frame `0A96` ≥ 0B (≥ 1B in poses 81, 82); elevator moving: `0E18` ≠ 0.
 
 ## Sources per entry
@@ -107,9 +110,9 @@ and `scan.sh --mirror` agrees.
 | AimingAndShooting | `$91:EADE` (the step: any prospective pose `0A28` of the running movement type, her own included), `$91:82E4` (the failed lookup's decelerate command keeps her pose as the prospective pose, so a running pose braking steps every frame), `$91:81E4` (a found row naming her own pose sets no prospective pose: no step), `$94:971E` (its block stop), `$90:A3AD` (the shot) |
 | RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
 | Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump); jump held through: the count `0AF4` (`$90:EAB3`, from `$90:EB35`'s draw once a gameplay frame: `INC` with jump held now and in `0DFE`, else `STZ`), the one-frame pose input handler `$90:E926` (count 1 to 8: jump ORed into `8F` for `$91:8000` alone, `STZ 0AF4` at `$90:E93A`), installed by `$91:F1EC` (landed, downward result grounded: `$90:E676` gives it for movement types 2, 3, 6 and 14h, and Ah and 19h out of scope) and by animation delay instruction 8 `$90:8370` (the turns, A4h-A7h and E0h-E7h, BFh-C4h; not when `0A28` is 4Bh, 4Ch, 19h or 1Ah) |
-| FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing); the ball on the ground: `$90:A521` (morph ball) and `$90:A69F` (spring ball) call `$90:92B8`, the clone of `$92C7`, on both branches (`A549`/`A569`, `A6C7`/`A6E7`): with `0B36` ≠ 0 it runs `$90:90C4` and `$90:90E2` (moves by the speed, then the pull grows it) and returns carry set, which skips `$90:923F` (no ground pull) and, at rest, the halt at `A551`-`A561`; `$90:E676` gives 04 for movement types 4 and 11h, so `$91:E931` returns and the floor doesn't land it (BG1), `$91:EFEF` (walking off: speed 0), `$90:98BC` (a jump sets it) |
+| FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing); the ball on the ground: `$90:A521` (morph ball) and `$90:A69F` (spring ball) call `$90:92B8`, the clone of `$92C7`, on both branches (`A549`/`A569`, `A6C7`/`A6E7`): with `0B36` ≠ 0 it runs `$90:90C4` and `$90:90E2` (moves by the speed, then the pull grows it) and returns carry set, which skips `$90:923F` (no ground pull) and, at rest, the halt at `A551`-`A561`; `$90:E676` gives 04 for movement types 4 and 11h, so `$91:E931` returns and the floor doesn't land it (BG1), `$91:EFEF` (walking off: speed 0, unless `0B36` = 1: `$91:EFEF` then keeps the speed and the direction, item-charge-beam 7 → 8 keeps 2.4000 up), `$90:98BC` (a jump sets it) |
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
-| RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0) |
+| RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0); `rising` is `0B36` = 1 at the frame's end, which the ground handlers keep as they keep the speed (`$90:923F` writes neither), so a crouch the unmorph's end hands over in a rise holds it (item-charge-beam 7) |
 | DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` and `$90:9093` (spin; its stop still calls `$90:8EA9`, which adds the extra run speed) |
 | Moonfall | `$91:EBAF`, `$91:F36E` (the hand-over), `$90:913A` (no limit with direction 0), `$90:9D35` (the wall-jump test reads no direction), `$90:99CD` (the kick sets direction up); the turn in it: `$90:A790` and `$90:A7AD` (turning in a jump, in a fall) call `$90:92B8`, which with `0B36` = 0 returns carry clear, so `$90:923F` (the ground pull) runs and `0B2C`/`0B2E` are not touched; `$90:E65A`/`$90:E676` give 04 (no change) for movement types 17h and 18h |
 | WallJump | `$90:9D35` (arming and kick test), `$90:90B3` (one distance, `$90:9E9F` = 8, for both), `$91:FA0F` (kick), `$94:967F` (the probe) |
@@ -119,11 +122,11 @@ and `scan.sh --mirror` agrees.
 | SolidEnemies | `$A0:AAC8`, `$A0:AA53`, `$A0:AABC` (overlapped: next enemy, then 0 so blocks run), `$90:9D80`, `$90:9DF8`, `$90:93B1`, `$90:93EC` and `$90:9440` (enemy test first; on a hit the move skips block collision, as the bank log's zebetite-skip note says) |
 | SlopesCarry | `$90:9376`, `$94:87F4` (seat after every horizontal move, sets `0DBA`), `$90:924C` (the pull reads `0DBA`), `$94:976B` (a 0.0 vertical move skips block collision), `$94:976F` (cleared by a non-zero vertical move), `$94:8E38` (square slope stop sets it), `$94:86FE` (rising into a non-square ceiling slope: `$12 = max(0, ...)` and `$14 = 0`, so no move), `$94:87E4` (the floor slope stop is `max(0, ...)` too: never upward); the carry: `$94:95A1` (`$18` = y + `$12.$14` with the subpixel carry, so the target row includes it) and `$94:879E`..`$94:87EE` (`$12 = max(0, $12 + top − 1 − ($18 + 0B00 − 1) % 16)`, `$14 = 0`: the move is the uncarried pixel part corrected by the carried row); `$94:8790`/`$94:8717` (only the block at her centre column), `$94:87B9`/`$94:8742` (a ceiling never stops a downward move, a floor never a rise) |
 | WordwiseTopSpeed* | `$90:9A99` |
-| PoseFollows | `$91:EB88` (one change a frame: super special `0A2C`, then special `0A2A`, then `0A28`), `$91:E8B6` (the vertical collision result `0DC6` overwrites the pad's `0A28` and sets command 5), `$91:EADE` (the wall stop overrides both); the spec's three items fold the wall stop into `WhatHerMovesMet` and the lookup failure into the chart's last rows, `$91:EC85` falling into `$91:EC8E` (the dash goes with the speed) |
+| PoseFollows | `$91:EB88` (one change a frame: super special `0A2C`, then special `0A2A`, then `0A28`), `$91:E8B6` (the vertical collision result `0DC6` overwrites the pad's `0A28` and sets command 5), `$91:EADE` (the wall stop overrides both); the spec's three items fold the wall stop into `WhatHerMovesMet` and the lookup failure into the chart's last rows, `$91:EC85` falling into `$91:EC8E` (the dash goes with the speed); the morph ball: `$91:F404` runs `$91:FDAE` then the pose's initialisation, and for the morphing transition 37h/38h `$91:F7CE` tests `09A2` bit 0004: without it `$91:F7EC` puts the old pose back, so `$91:F404` returns carry set (the pose changed under it) and `$91:EBEE` skips the lowering and `$91:ED0E`'s write: no lowering, no placement, no fall-back row (r02:489, pose 28h with 0600h pressed and `09A2` = 0, stays 28h at y 00B0) |
 | PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:F404` (crouched into standing: the bottom edge kept, y − 5; `$91:8087`'s own y − 5 is dead); the last rows: `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E`; `$91:8146` (movement type Fh: no lookup at all, the changing-body row) |
 | Aiming | the table's aim rows per pose, `$91:E9F3` (landing keeps the aim, down becomes forward), `$91:EB74` (the wall stop keeps the aim) |
-| WhatHerMovesMet | `$91:E8F2` (falling poses, `$91:E921`), `$91:E95D`..`$91:EA47` (landing poses, ball bounces), `$91:EABE` (wall-jump pose), `$91:EADE` (ran-into-wall poses, the aim step's block) |
-| AnimationEnds | the animation delay table `$91:B010` (its go-to-pose instructions), `$91:EB88` (the super special pose wins) |
+| WhatHerMovesMet | `$91:E8F2` (falling poses, `$91:E921`), `$91:E95D`..`$91:EA47` (landing poses, ball bounces), `$91:EABE` (wall-jump pose), `$91:EADE` (ran-into-wall poses, the aim step's block); walking off from the crouch: `$90:E65A` gives 00 (airborne) for movement type 5 as for 0, 1, 10h and 15h, so `$91:E921` hands over 29h/2Ah, upright falling (item-charge-beam 7 → 8: 28h → 2Ah) |
+| AnimationEnds | the animation delay table `$91:B010` (its go-to-pose instructions), `$91:EB88` (the super special pose wins); the unmorph's end: 3Dh/3Eh's sequences `$91:B4E6`/`$91:B4EA` end in instruction Dh (`$90:84B6`) to 27h/28h, the crouch, with no test of the air (records: boss-kraid-defeated 779-782, item-charge-beam 5-7, item-reserve-tank 1115-1116); the morph's end: instruction 9 (`$90:839A`) chooses the ground ball when the speed magnitude `0B2E`.`0B2C` is 0 and the air ball otherwise (spec question 20) |
 
 **The pose chart (spec §7).** The pad chart is the transition table regrouped by situation, with
 facing made relative (forward, back) and aim moved into one rule, so neither the table's layout,
@@ -1160,6 +1163,116 @@ key for, so the round-12 vector test ran it with the input false and the frame r
 The format now gives `spin_turned_far` per frame; WK1 sets it on its checked frame (712, the
 frame after 711's readying), and the round-12 model passes it.
 
+## Round 14's amendments (2026-11-10)
+
+From adversary 61 §9 (V1-V5) and adversary 67's finding 4.
+
+**V1, jump held through built and read back (spec §1.2).** The two parts are `0AF4` (the count)
+and `0A60` = `$E926` (the frame before: installed by `$91:F1EC` and `$90:8370`, reset at
+`$90:E944`). Nothing in the original ties either to the rest of her state: `$90:EAB3` counts with
+`8B` and `0DFE` alone, and `$90:E926` reads `0AF4` alone, whatever the pose. So any count and
+either value are a start a caller may give. The format gives them as `before.jump_held` and
+`before.landed_or_ended`, read back as `after.jump_held` and `after.landed_or_ended`. The
+constructed vectors, worked by hand: C-held-built (count 5, `$E926` installed, jump held: `$E926`
+ORs jump into `8F`, the standing row takes off, `$90:E93A` zeroes `0AF4`, and `$90:EAB3` at the
+frame's end, jump in `8B` and in `0DFE`, makes it 1; `0A60` is reset to `$E913`); C-held-long
+(40000 = 9C40h: `CMP #9` leaves 9C37h, negative, so `BPL` doesn't skip: a press); C-held-edge
+(32776 = 8008h: `CMP #9` leaves 7FFFh, positive, no press; `INC` to 32777); C-held-wrap (FFFFh,
+`$E913` installed: `INC` wraps to 0); C-held-landed (PF2's frame, r02:179, with jump held at 3:
+the landing installs `$E926` through `$91:F1EC`, the count goes on to 4). Those that compare the
+read-back fail on the current model only because it has no reading back (see below).
+
+**V2, the crouch taken instead at the crouch's height.** C-fit-tunnel-aimed: crouched aimed up
+(85h, y radius 10h, `$91:B629` byte 6) in a tunnel with jump pressed; the take-off (4Bh, 13h) finds
+no room, so `$91:FFD9` takes the crouch 27h and skips `$91:FFE9`'s write, the old radius being
+the crouch's own: no rise and no `0B14` write, though the pose changes from 85h to 27h.
+
+**V3, jump let go on the landing's next frame.** `$90:E926` tests `0AF4` only (`BEQ`, `CMP #9`,
+`BPL`), never `8B`, so with the count 1-8 the press comes whether jump is held or not. `0AF4` is
+counted at `$90:EB42`, the draw, after the pose input, so the frame's own let-go reaches the count
+only at its end (`STZ` at `$90:EACA`). C-held-let-go is JH3 with the checked frame's pad left alone:
+the landing's row "jump pressed" names no held button, so it takes off as JH3 does.
+
+**V4, the knockback's tail.** Already narrowed on main: spec §10 "A knockback's end" and gap 33
+defer only the frame that ends it (C3 above); nothing to change.
+
+**V5, an upward motion on the ground outside a push.** Yes. Over the 44-row cache, `0B36` = 1 in
+a movement type on the ground (0, 1, 4, 5, Eh, Fh, 10h, 11h, 15h) under the normal handler
+`$A337` holds on 16 frames, beside the bomb jump's 26 (`$E032`) and 4 under handlers not hers
+(`$E725`, `$E8AA`): 15 in the transition type Fh while morphing in a rise (chain-0043-9AD9
+294-299, item-reserve-tank 101-106) or unmorphing in one (item-charge-beam 2, 3 and 5), where
+her rise goes on (`$90:A61C` moves her by it), and one in the crouch,
+item-charge-beam 7. There the unmorph's end hands over the crouch 28h in the air (instruction Dh,
+above), still rising at 2.4000; the crouch's handler `$90:A573` pulls her 2.C000 (`$90:923F`),
+finds no floor, and `$91:EFEF` keeps the speed and the direction because `0B36` = 1; 8 is the fall
+2Ah rising at 2.4000, and the rise runs under the pull to 16. So `rising` is `0B36` = 1 at the
+frame's end on the ground too, and the spec now says so (`RisingAndFalling`, `FollowingTheGround`,
+`AnimationEnds`, `WhatHerMovesMet`'s crouched row). terrain-quicksand 196 is the push's, as
+adversary 61 found. The constructed vectors C-ground-rise-kept and C-ground-rise, worked by hand:
+crouched rising at 2.4000, pulled 1.0000 (speed 0); on a floor the pull is stopped flush, the
+speed kept; in open air it moves 1.0000 and walks off into 29h, the speed kept. C-unmorph-air-end:
+the ball falling at 1.6C00 presses up (3Dh); that frame moves 1.6C00 and the pull makes 1.8800;
+the next frame `$90:A61C` moves 1.8800 and makes 1.A400, and the sequence's end hands over 27h.
+
+**The items switched on (adversary 67, finding 4).** Decided: yes. Her motion reads progress's
+own output, the items switched on, and `clean_types::Equipment` and the bridge's conversion go.
+Why: the original reads one word, `09A2`, the equipped items, which is exactly progress's items
+switched on; a second representation (`Equipment` with its `other_suit` rule) is a conversion the
+original doesn't have, and it hid an item motion reads, the morph ball. The items it reads, from
+the readers of `09A2` in banks `$90`/`$91`: hi-jump `$90:98F7`, `$90:9984` (the jump speeds); space
+jump `$90:A46E`; morph ball `$91:F7CE`; spring ball `$91:E83D`, `$91:E86A`, `$91:F80F`..`$91:F878`,
+instruction 9's mask; screw attack `$90:8445`, `$91:D9F7`, `$91:DA0B`, `$91:F459` (sprite and
+palette); varia `$91:D629`, gravity `$91:D551`, `$91:DE6A`.. (palette) and `$90:8198`, `$90:9741`,
+`$90:98C2`, `$90:9BD4`, `$90:9C24`, `$90:9C5B`, `$90:E9D9` (liquids, out of scope); speed booster
+`$90:9789`, `$90:84FF`, `$90:8558` (the booster, out of scope). Bombs, grapple and x-ray aren't
+read in her motion. The format's `items` lists them by progress's `Item` names. The morph ball's
+rule is new to the spec (`PoseFollows`): NM1 is r02:490 (record 489, crouched 28h, `8F` 0600h,
+`09A2` 0; record 490 the same pose, x and y, `0A2E` 7), and C-morph-no-ball-air is SH3 without the
+morph ball, worked by hand: its moves as SH3's, then the pose restored, so y 0094.B7FF, the rise
+ended at the frame's start.
+
+**Room content: harness cases (MODEL §1 decision 13).** Six recorded vectors carried the ROM's
+content; they leave the vector file and become harness cases for the integrator's harness,
+which loads the room through the importer and compares the frame:
+
+| Case | Row and record (N+1) | Content the importer loads | Compared | Constructed vector |
+| --- | --- | --- | --- | --- |
+| S1 | samus-input-poses 512 | the sloped floor at block (96, 192): its shape and walk factor | x, y, horizontal speed, dash | C-slope-turn-walk |
+| S2 | r01 717 | the sloped floor at block (832, 1200) | x, y, both speeds | C-slope-fall-walk |
+| SL1 | samus-mockball 92 | the sloped floors at blocks (624, 1216) and (640, 1216) | x, y, both speeds, dash | C-slope-roll-carry |
+| SL2 | samus-mockball 93 | the sloped floor at block (640, 1216) | x, y, both speeds, dash | C-slope-roll-carry-next |
+| SL3 | chain-0220-D017 44 | the sloped floors at blocks (224, 144) and (240, 144) | x, y, both speeds, dash, the pose | C-slope-run-off |
+| W15 | item-morph-ball 817 | the cells at blocks (1104, 656), the item, and (1104, 672) | x, y, vertical speed, the near-wall test's outcome, the cells reached | C-near-wall-item |
+
+Each case starts from the record as the vector did (the decode of State above; W15 with its two
+lead-in frames, 815 and 816), and its expected values are the record's at N+1, which the removed
+vectors gave. The constructed vectors keep each case's motion and invent the room: new
+positions, new surface shapes (none of them a shape of the ROM's) and other factors from the
+spec's list (0.B0, 0.D8), and, for W15, the scene moved by 256 px right and 128 px up with a
+reacting-air cell. Each was worked by hand from the spec's arithmetic (their comments give the
+rows and columns), and the current model agrees with each. The recorded vectors that stay give
+only RAM: a floor, wall or block a record shows her stopped flush against, and solid enemies'
+centres and radii from enemy RAM (`0F7A`..`0F84`).
+
+**The current model against the amended vectors.** 248 vectors (236 − 6 + 18) and 51 pose steps.
+With the vector test unchanged, the first vector with `items` (JH1) stops the run: every vector
+fails the format until the round's test reads it. With a local reading of the new keys (`items`
+to the old flags, the jump-held keys accepted and their read-back reported missing), 238 pass and
+10 fail:
+- the format only, the read-back the model has no way to give: C-held-edge, C-held-wrap,
+  C-held-landed;
+- new behaviour: C-held-built and C-held-long (no built count: no take-off, and no read-back),
+  C-ground-rise-kept and C-ground-rise (an upward speed on the ground), C-unmorph-air-end (the
+  crouch, not the fall), NM1 and C-morph-no-ball-air (the morph ball).
+
+The vectors whose input changed (JH1, JH2, SJ1, C-moonfall-jump; SH2, SH3 and C-shrink-floor,
+which now switch the morph ball on) pass under that reading, and so do C-fit-tunnel-aimed,
+C-held-let-go, the five slope vectors and C-near-wall-item.
+
+**Units.** `tools spec-units` with these notes: 209.0 → 213.0 (motion 77.0 → 79.0, pose chart
+56.0 → 58.0, pose fit and collision unchanged), so the budget is 7,092 → 7,133: motion's
+36 × 79.0 = 2,844 meets its cap, 2,813 (70% of 4,019), and the pose chart stays capped at 1,584.
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1229,7 +1342,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 209.0 units, capped at 70% of old = 7,092 (motion 2,772, pose fit 588, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 213.0 units, capped at 70% of old = 7,133 (motion 2,813 capped, pose fit 588, pose chart 1,584 capped, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

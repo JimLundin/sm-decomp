@@ -4,8 +4,11 @@
 # - Each [[vector]] is a short run of frames ending in the frame it checks: id; source ("<row>:<frame>"
 #   for the record holding the last frame's result, or "constructed"); entries (the spec's
 #   behaviours it exercises); rules (optional: speed_cap = "Wordwise", the default, or "Exact");
-#   equipment (optional: hi_jump, space_jump, default false; screw_attack, spring_ball and
-#   other_suit change only the sprite, spec §2, and no vector sets them); world; before; lead_in (optional);
+#   items (optional, default none): the items switched on (spec §1.3), named as progress names
+#   its `Item`s: "Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall",
+#   "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope" (listed
+#   alphabetically; the order means nothing); no vector switches on the items seen only in the
+#   sprite, or the speed booster; world; before; lead_in (optional);
 #   pose; next_pose (optional); pad; jump_pressed; pressed (optional); animation_ends (optional);
 #   after.
 # - A P.S quantity is "PPPP.SSSS": the pixel part and the subpixel part, both hex. A signed one
@@ -48,9 +51,12 @@
 # - before: what the player can tell about Samus at the start (spec §1): position = [x, y],
 #   speed_x, dash, speed_y, bounces; falling (optional, default false): true when, in a pose on
 #   the ground, she is falling at the start's vertical speed of 0 (spec §1.2, falling at 0 on the
-#   ground: only a push beyond this spec hands her back so). A missing quantity is 0. The start is
-#   always a moment where she remembers nothing the quantities don't show (spec §1.2), with one
-#   exception: falling, which no lead-in in scope reaches.
+#   ground: only a push beyond this spec hands her back so). jump_held (optional, default 0): jump
+#   held through's count, 0 to 65535, and landed_or_ended (optional, default false): whether the
+#   frame before she landed or a turn's or a landing's animation ended (spec §1.2, jump held
+#   through, which a caller starting mid-play gives). A missing quantity is 0. The start is
+#   always a moment where she remembers nothing the quantities don't show (spec §1.2), with two
+#   exceptions: falling, which no lead-in in scope reaches, and jump held through.
 # - lead_in: the frames before the checked one, oldest first, when the checked frame depends on
 #   something she remembers. Each gives the pose at its start (as pose below), the pad,
 #   jump_pressed, pressed and animation_ends (optional, as below). A lead-in frame's pose is the one the next frame
@@ -92,7 +98,8 @@
 #   placed: the y a placement put her at this frame, a P.S quantity, or "none" where nothing placed
 #   her (spec §1, `PoseFitAfterMoves` and `ShrinkingLowersHer`); compared only where given.
 #   rising: whether she is rising at the frame's end, true or false (spec `RisingAndFalling`'s
-#   output); compared only where given.
+#   output); compared only where given. jump_held and landed_or_ended: jump held through's two
+#   parts at the frame's end, as before gives them (spec §1.2); compared only where given.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
@@ -109,9 +116,15 @@
 #   her body, and there their
 #   next_pose and radius are the record's, the radius being the chosen pose's own (spec §1.3);
 #   W11 (a turn on the ground over air) and W20 (running on a solid enemy) change neither.
-#   AS4, SL1-SL3, MT1, MT2 and BG2 check frames the domain harness met (the integration gaps 20,
-#   24-30); BG2 starts the frame after a bomb jump handed her back, falling at 0 on the ground:
-#   SL1-SL3 meet sloped floors, given as the room's blocks.
+#   AS4, MT1, MT2 and BG2 check frames the domain harness met (the integration gaps 20, 24-30);
+#   BG2 starts the frame after a bomb jump handed her back, falling at 0 on the ground. NM1 is a
+#   morph refused without the morph ball.
+# - A vector holds what the records show of RAM and invented content only (MODEL §1 decision 13).
+#   The recorded frames that need a room's own content (S1, S2, SL1-SL3: sloped floors' shapes;
+#   W15: a cell's kind) are harness cases of the integrator's harness, and each has a
+#   constructed vector over an invented room that carries its rule (C-slope-turn-walk,
+#   C-slope-fall-walk, C-slope-roll-carry, C-slope-roll-carry-next, C-slope-run-off,
+#   C-near-wall-item).
 
 # Constructed vectors: cases no record reaches, and the Exact variant.
 
@@ -527,7 +540,7 @@ after = { position = ["0534.FFFF", "0299.27FF"], speed_x = "+0000.0000", dash = 
 id = "JH1"
 source = "samus-screw-attack:175"
 entries = ["Jumping", "PadChart", "Landing", "RisingAndFalling"]
-equipment = { hi_jump = true }
+items = ["HiJumpBoots"]
 world = { floor_top = 176 }
 before = { position = ["013A.7FFF", "0094.1BFF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0003.6400" }
 lead_in = [
@@ -545,7 +558,7 @@ after = { position = ["0136.BFFF", "009B.FFFF"], speed_x = "+0000.0000", dash = 
 id = "JH2"
 source = "samus-screw-attack:607"
 entries = ["Jumping", "PadChart", "Landing", "RisingAndFalling"]
-equipment = { hi_jump = true }
+items = ["HiJumpBoots"]
 world = { floor_top = 176 }
 before = { position = ["013A.7FFF", "0095.03FF"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0003.6400" }
 lead_in = [
@@ -634,13 +647,108 @@ pad = ["jump", "left"]
 jump_pressed = false
 after = { position = ["0732.8FFF", "009B.FFFF"], speed_y = "+0000.0000", rising = false }
 
+# C-held-let-go: JH3 with jump let go on the landing's next frame (constructed from
+# chain-0059-A293 165-175). The count is 8 there, so jump counts as just pressed for the pad chart
+# all the same, though it isn't held: she takes off exactly as in JH3.
+[[vector]]
+id = "C-held-let-go"
+source = "constructed"
+entries = ["Jumping", "PadChart", "Landing", "RisingAndFalling"]
+world = { floor_top = 176 }
+before = { position = ["0740.4FFF", "0087.FBFF"], speed_x = "-0001.0000", dash = "0000.0000", speed_y = "+0002.3000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = true },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 19] }, pad = ["jump", "left"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Jump" }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0733.8FFF", "009B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", rising = true }
+
+# Jump held through given at the start (spec §1.2), as a caller starting mid-play gives it, and
+# read back at the frame's end. Standing on a floor with jump held and not pressed:
+# - C-held-built: a count of 5 with the frame before a landing: jump counts as just pressed, so
+#   she takes off (rising at 4.E000, no vertical move that frame); the press puts the count at 0
+#   and the frame's end, jump still held, makes it 1; nothing ended this frame.
+# - C-held-long: a count of 40000, past 32776: it presses as one of 1 to 8 does.
+# - C-held-edge: a count of 32776: no press, she stands; the count goes on to 32777.
+# - C-held-wrap: a count of 65535 with nothing the frame before: the count goes round to 0.
+# - C-held-landed: PF2's landing (r02:179's numbers) with jump held at a count of 3: the landing
+#   outranks the pad and lands her as in PF2, and the frame's end reads the count 4 and the frame
+#   before `true`.
+[[vector]]
+id = "C-held-built"
+source = "constructed"
+entries = ["Jumping", "PadChart", "RisingAndFalling"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], jump_held = 5, landed_or_ended = true }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], speed_y = "-0004.E000", rising = true, jump_held = 1, landed_or_ended = false }
+
+[[vector]]
+id = "C-held-long"
+source = "constructed"
+entries = ["Jumping", "PadChart", "RisingAndFalling"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], jump_held = 40000, landed_or_ended = true }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], speed_y = "-0004.E000", rising = true, jump_held = 1, landed_or_ended = false }
+
+[[vector]]
+id = "C-held-edge"
+source = "constructed"
+entries = ["Jumping", "PadChart"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], jump_held = 32776, landed_or_ended = true }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], speed_y = "+0000.0000", rising = false, jump_held = 32777, landed_or_ended = false }
+
+[[vector]]
+id = "C-held-wrap"
+source = "constructed"
+entries = ["Jumping"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], jump_held = 65535 }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], jump_held = 0, landed_or_ended = false }
+
+[[vector]]
+id = "C-held-landed"
+source = "constructed"
+entries = ["Jumping", "Landing", "WhatHerMovesMet", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0435.0000", "00AD.A3FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.A800", jump_held = 3 }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Jump" }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", jump_held = 4, landed_or_ended = true }
+
 # SJ1: space jump's jump again, with hi-jump: falling in a spin at 2.A000 (read as 2.A0, inside
 # the window), jump pressed; she rises at 6.0000 that same frame and the pull leaves 5.E400.
 [[vector]]
 id = "SJ1"
 source = "samus-space-jump-chain:64"
 entries = ["Jumping", "RisingAndFalling", "DriftInTheAir"]
-equipment = { hi_jump = true, space_jump = true }
+items = ["HiJumpBoots", "SpaceJump"]
 world = {}
 before = { position = ["0082.BFFF", "0478.1FFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0002.A000" }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
@@ -1847,7 +1955,7 @@ after = { position = ["01A1.0000", "005C.1BFF"], speed_x = "+0001.6000", dash = 
 id = "C-moonfall-jump"
 source = "constructed"
 entries = ["Moonfall", "Jumping", "RisingAndFalling"]
-equipment = { space_jump = true }
+items = ["SpaceJump"]
 world = { solid_block = [400, 112] }
 before = { position = ["019D.8000", "005B.FFFF"] }
 lead_in = [
@@ -2423,6 +2531,22 @@ pad = ["jump"]
 jump_pressed = true
 after = { position = ["0100.0000", "0110.FFFF"], speed_y = "+0000.0000", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
 
+# C-fit-tunnel-aimed: C-fit-tunnel crouched aimed Up. The take-off finds no room, so she takes
+# crouched Still aimed Forward instead: her pose changes, but her old body is already the crouch's
+# height, so she rises 0 px and nothing places her.
+
+[[vector]]
+id = "C-fit-tunnel-aimed"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "PadChart", "Jumping"]
+world = { floor_top = 288, ceiling_bottom = 256 }
+before = { position = ["0100.0000", "0110.FFFF"] }
+pose = { body = "Crouched", action = "Still", facing = "Right", aim = "Up", radius = [5, 16] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0100.0000", "0110.FFFF"], speed_y = "+0000.0000", placed = "none", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
+
 # The ball at rest on a floor 2 px below a ceiling can't unmorph: no room on either side and a body
 # under 8 px half-height, so the change is refused and she stays the ball.
 
@@ -2507,6 +2631,57 @@ next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius
 pad = ["jump"]
 jump_pressed = true
 after = { position = ["0100.0000", "0100.8000"], speed_y = "+0000.1C00", placed = "0100.8000", rising = false }
+
+# An upward speed in a pose on the ground (spec `FollowingTheGround`, `RisingAndFalling`; from
+# item-charge-beam 5-8, where an unmorph in a rise ends in the crouch, rising at 2.4000):
+# - C-ground-rise-kept: crouched on a floor rising at 2.4000: the pull's 1 px meets the floor at
+#   once, she keeps the speed and doesn't move by it, and she is rising.
+# - C-ground-rise: the same crouch in open air: the pull's 1 px finds no floor, so she walks off,
+#   moving the whole pull (y + 1.0000), and keeps the upward speed: she is rising in the fall.
+# - C-unmorph-air-end: the ball falling in open air presses up and unmorphs (the lead-in: it
+#   moves 1.6C00, the pull makes it 1.8800, and the body grows about her centre, nothing in
+#   reach); the unmorph's animation ends on the next frame (as boss-kraid-defeated 779's, falling
+#   at 1.8800): it moves her by her vertical speed under the pull, and hands over crouched Still,
+#   in the air as on the ground.
+
+[[vector]]
+id = "C-ground-rise-kept"
+source = "constructed"
+entries = ["FollowingTheGround", "RisingAndFalling"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0110.FFFF"], speed_y = "-0002.4000" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0110.FFFF"], speed_y = "-0002.4000", rising = true }
+
+[[vector]]
+id = "C-ground-rise"
+source = "constructed"
+entries = ["FollowingTheGround", "WhatHerMovesMet", "RisingAndFalling", "AnimationEnds"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], speed_y = "-0002.4000" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+next_pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0101.0000"], speed_y = "-0002.4000", rising = true }
+
+[[vector]]
+id = "C-unmorph-air-end"
+source = "constructed"
+entries = ["AnimationEnds", "PoseFollows", "RisingAndFalling", "FollowingTheGround"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], speed_y = "+0001.6C00" }
+lead_in = [
+  { pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }, pad = ["up"], jump_pressed = false, pressed = ["up"] },
+]
+pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
+next_pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+animation_ends = true
+after = { position = ["0100.0000", "0102.F400"], speed_y = "+0001.A400", rising = false }
 
 # A spin lands in a tunnel: the landing's body grows 9 px, the looks find 8 px of room above and
 # none below, so she takes crouched Still instead and rises 4 px, her feet on the floor (the spin's
@@ -2877,31 +3052,38 @@ pressed = []
 met = "nothing"
 after = { pose = { body = "Crouched", action = "Crouching", facing = "Right", aim = "Forward" } }
 
-# Walking along a sloped floor (SlopesSlowTheWalk): two recorded frames and three constructed.
+# Walking along a sloped floor (SlopesSlowTheWalk), over invented rooms. S1 (samus-input-poses:512)
+# and S2 (r01:717) are harness cases; these carry their rules.
+# - C-slope-turn-walk (S1's rule): a ground turn moves 0.C000 into a sloped floor's block at
+#   0.B0, so 0.8400; the floor check finds her bottom edge (row 3 of the block) above the
+#   surface's top row (5) at her centre's column, so she isn't seated and the pull is 1.C000;
+#   its target is row 4, the last air row, so the stop is 1 px, her y subpixel kept.
+# - C-slope-fall-walk (S2's rule): the first frame of a fall from rest moves -1.8000 into a sloped
+#   floor's block at 0.D8, so 1.4400 leftward; her speed stays -1.8000.
 
 [[vector]]
-id = "S1"
-source = "samus-input-poses:512"
+id = "C-slope-turn-walk"
+source = "constructed"
 entries = ["SlopesSlowTheWalk", "TurningRound", "WordwiseTopSpeed", "FollowingTheGround", "SlopesCarry"]
-world = { slope_floor = { block = [96, 192], surface = [9, 10, 11, 12, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16], factor = "0.C0" } }
-before = { position = ["0062.97FF", "00B6.1FFF"] }
+world = { slope_floor = { block = [320, 400], surface = [2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9, 9, 10, 11, 11, 12], factor = "0.B0" } }
+before = { position = ["0145.4000", "017F.3FFF"] }
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
-after = { position = ["0063.27FF", "00B7.1FFF"], speed_x = "+0000.C000", dash = "0000.0000" }
+after = { position = ["0145.C400", "0180.3FFF"], speed_x = "+0000.C000", dash = "0000.0000" }
 
 [[vector]]
-id = "S2"
-source = "r01:717"
+id = "C-slope-fall-walk"
+source = "constructed"
 entries = ["SlopesSlowTheWalk", "DriftInTheAir", "WordwiseTopSpeed", "RisingAndFalling"]
-world = { slope_floor = { block = [832, 1200], surface = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], factor = "0.C0" } }
-before = { position = ["034C.BC00", "049E.4FFF"], speed_x = "-0000.C000" }
+world = { slope_floor = { block = [512, 640], surface = [16, 15, 15, 14, 13, 13, 12, 11, 11, 10, 9, 9, 8, 7, 7, 6], factor = "0.D8" } }
+before = { position = ["0215.8000", "0270.4FFF"], speed_x = "-0000.C000" }
 pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
 pad = ["run", "left"]
 jump_pressed = false
 pressed = ["run"]
-after = { position = ["034B.9C00", "049E.4FFF"], speed_x = "-0001.8000", speed_y = "+0000.1C00" }
+after = { position = ["0214.3C00", "0270.4FFF"], speed_x = "-0001.8000", speed_y = "+0000.1C00" }
 
 [[vector]]
 id = "C-slope-walk-left"
@@ -3254,6 +3436,7 @@ after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = 
 id = "SH2"
 source = "samus-bomb-jump-vertical:849"
 entries = ["ShrinkingLowersHer", "PadChart", "FollowingTheGround", "SpeedBuildsAndBrakes"]
+items = ["MorphBall"]
 world = { floor_top = 208 }
 before = { position = ["00BB.FFFF", "00C0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
@@ -3267,6 +3450,7 @@ after = { position = ["00BB.FFFF", "00C9.FFFF"], speed_x = "+0000.0000", dash = 
 id = "SH3"
 source = "r04:312"
 entries = ["ShrinkingLowersHer", "PadChart", "DriftInTheAir", "RisingAndFalling", "Dash"]
+items = ["MorphBall"]
 world = {}
 before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
 pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
@@ -3275,6 +3459,39 @@ pad = ["run", "right", "down"]
 jump_pressed = false
 pressed = ["right", "down"]
 after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", placed = "009D.B7FF" }
+
+# A morph without the morph ball is refused (spec `PoseFollows`):
+# - NM1: crouched on the floor, down and left (forward) pressed together, before the morph ball is
+#   hers: the morph row wins and is refused, so she stays crouched, no lower and not placed,
+#   though forward alone would have stood her up (she stands the next frame).
+# - C-morph-no-ball-air: SH3 without the morph ball: she stays in the straight jump aimed Down,
+#   her moves as in SH3 (the rise ends at the frame's start with jump let go), and no lowering.
+
+[[vector]]
+id = "NM1"
+source = "r02:490"
+entries = ["PoseFollows", "PadChart", "ShrinkingLowersHer", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["044D.E000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16] }
+next_pose = { body = "Ball", action = "Morphing", facing = "Left", radius = [5, 7] }
+pad = ["left", "down"]
+jump_pressed = false
+pressed = ["left", "down"]
+after = { position = ["044D.E000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", placed = "none", pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16] } }
+
+[[vector]]
+id = "C-morph-no-ball-air"
+source = "constructed"
+entries = ["PoseFollows", "PadChart", "ShrinkingLowersHer", "DriftInTheAir", "RisingAndFalling"]
+world = {}
+before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
+next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+pad = ["run", "right", "down"]
+jump_pressed = false
+pressed = ["right", "down"]
+after = { position = ["056C.DFFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", placed = "none", rising = false, pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] } }
 
 # C-shrink-floor: SH3 with a floor 2 px under her feet (her bottom pixel 157, the floor's top 160).
 # The morph's look down of 9 px at the ball's size is 8 px or more, so its 8 px look comes first;
@@ -3287,6 +3504,7 @@ after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = 
 id = "C-shrink-floor"
 source = "constructed"
 entries = ["ShrinkingLowersHer", "TouchedCells", "PadChart", "DriftInTheAir", "RisingAndFalling"]
+items = ["MorphBall"]
 world = { floor_top = 160 }
 before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
 pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
@@ -3446,17 +3664,18 @@ jump_pressed = false
 pressed = ["left"]
 after = { position = ["04AB.DFFF", "0245.F3FF"], speed_x = "+0001.B000", dash = "0000.0000", speed_y = "+0001.8800" }
 
-# W15: in a spin carried on with right held, the near-wall test looks 8 px left and reaches the
-# item's cell (column 45h), which lets it through; the game picks the item up. The jump's body is
-# 7 px taller, so pose fit then looks 7 px up (row 624) and 7 px down (row 672), one look each way
-# (under 8 px), left to right on this Even frame: four more `Look` cells, all air, and no push.
+# C-near-wall-item (W15's rule; W15, item-morph-ball:817, is a harness case): in a
+# spin carried on with right held, the near-wall test looks 8 px left and reaches a cell that
+# reacts and lets it through, as an item's does. The jump's body is 7 px taller, so pose fit then
+# looks 7 px up (row 496) and 7 px down (row 544), one look each way (under 8 px), left to right
+# on this Even frame: four more `Look` cells, all air, and no push.
 
 [[vector]]
-id = "W15"
-source = "item-morph-ball:817"
+id = "C-near-wall-item"
+source = "constructed"
 entries = ["TouchedCells", "WallJump", "TurningRound", "DriftInTheAir"]
-world = { solid_block = [1104, 672], cells = [{ block = [1104, 656], kind = "ReactingAir" }] }
-before = { position = ["0471.3FFF", "028D.0800"], speed_x = "-0001.6000", dash = "0000.A000", speed_y = "+0000.5400" }
+world = { solid_block = [1360, 544], cells = [{ block = [1360, 528], kind = "ReactingAir" }] }
+before = { position = ["0571.3FFF", "020D.0800"], speed_x = "-0001.6000", dash = "0000.A000", speed_y = "+0000.5400" }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["right"], jump_pressed = false },
@@ -3467,7 +3686,7 @@ frame = "Even"
 pad = ["right", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
-after = { position = ["046C.BFFF", "028E.5800"], speed_y = "+0000.A800", wall_test = "Neither", reached = [{ cell = [1120, 640], way = "Left" }, { cell = [1120, 656], way = "Left" }, { cell = [1104, 640], way = "Look" }, { cell = [1104, 656], way = "Look" }, { cell = [1120, 656], way = "Down" }, { cell = [1136, 656], way = "Down" }, { cell = [1120, 624], way = "Look" }, { cell = [1136, 624], way = "Look" }, { cell = [1120, 672], way = "Look" }, { cell = [1136, 672], way = "Look" }] }
+after = { position = ["056C.BFFF", "020E.5800"], speed_y = "+0000.A800", wall_test = "Neither", reached = [{ cell = [1376, 512], way = "Left" }, { cell = [1376, 528], way = "Left" }, { cell = [1360, 512], way = "Look" }, { cell = [1360, 528], way = "Look" }, { cell = [1376, 528], way = "Down" }, { cell = [1392, 528], way = "Down" }, { cell = [1376, 496], way = "Look" }, { cell = [1392, 496], way = "Look" }, { cell = [1376, 544], way = "Look" }, { cell = [1392, 544], way = "Look" }] }
 
 # W16: a take-off from a crouch with run and right held gains no dash and doesn't move; the
 # take-off's end hands over the jump.
@@ -3632,49 +3851,59 @@ pad = []
 jump_pressed = false
 after = { position = ["0055.5FFF", "048B.FFFF"], speed_x = "+0000.3000", dash = "0000.0000", speed_y = "+0000.E000" }
 
-# SL1-SL3 (gaps 20, 24 and 27): the ground pull meeting a sloped floor. Its end is found from her
-# position plus the whole pull, subpixels added; when her y subpixel and the pull's subpixel part carry
-# into a pixel, the stop leaves her 1 px above the last air row (`SlopesCarry`). SL1 and SL2: the
-# spring ball rolling down a slope (samus-mockball 91 and 92), from y subpixel FFFF with a pull
-# of 9.4000; SL1's pull also meets a rectangle-shaped sloped floor in a column her centre isn't
-# in, which doesn't stop it. SL3: a run with a dash passing over a sloped floor whose surface it
-# doesn't reach (chain-0220-D017 43), so she walks off it and falls.
+# The ground pull meeting a sloped floor (gaps 20, 24 and 27), over invented rooms. SL1, SL2
+# (samus-mockball 92, 93) and SL3 (chain-0220-D017 44) are harness cases; these
+# carry their rules. The pull's end is found from her position plus the whole pull, subpixels
+# added; when her y subpixel and the pull's subpixel part carry into a pixel, the stop leaves her
+# 1 px above the last air row (`SlopesCarry`).
+# - C-slope-roll-carry (SL1's rule): the spring ball rolls 8.4000 and is pulled 9.4000 from y
+#   subpixel FFFF. The target's bottom edge is row 8 of the block at her centre's column, whose
+#   surface's top row is 4, so she moves 9 + 4 - 1 - 8 = 4 px, her bottom edge on row 2. The pull
+#   also meets a sloped floor in a column her centre isn't in, whose surface (row 5) would stop it
+#   if it counted.
+# - C-slope-roll-carry-next (SL2's rule): the next frame, Odd: rolled 8.4000 more, her bottom
+#   edge (row 2) above the surface (row 8) at her centre's column, so no seat; the pull's target
+#   is row 12, so she moves 9 + 8 - 1 - 12 = 4 px.
+# - C-slope-run-off (SL3's rule): a run with a dash, Odd, pulled 4.D000 to row 1 of a sloped
+#   floor whose surface's top row at her centre's column is 7: row 1 is above the last air row (6),
+#   so the pull passes and she walks off; a sloped floor in her edge's column, surface row 1,
+#   would stop it if it counted.
 
 [[vector]]
-id = "SL1"
-source = "samus-mockball:92"
+id = "C-slope-roll-carry"
+source = "constructed"
 entries = ["SlopesCarry", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
-world = { slope_floor = [{ block = [624, 1216], surface = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { block = [640, 1216], surface = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], factor = "0.C0" }] }
-before = { position = ["027C.1FFF", "04B9.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+world = { slope_floor = [{ block = [368, 800], surface = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5] }, { block = [384, 800], surface = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], factor = "0.B0" }] }
+before = { position = ["017C.1FFF", "0318.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
 pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0284.5FFF", "04BD.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+after = { position = ["0184.5FFF", "031C.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
 
 [[vector]]
-id = "SL2"
-source = "samus-mockball:93"
+id = "C-slope-roll-carry-next"
+source = "constructed"
 entries = ["SlopesCarry", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
-world = { slope_floor = { block = [640, 1216], surface = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], factor = "0.C0" } }
+world = { slope_floor = { block = [384, 800], surface = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], factor = "0.B0" } }
 frame = "Odd"
-before = { position = ["0284.5FFF", "04BD.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+before = { position = ["0184.5FFF", "031C.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
 pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["028C.9FFF", "04C5.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+after = { position = ["018C.9FFF", "0320.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
 
 [[vector]]
-id = "SL3"
-source = "chain-0220-D017:44"
+id = "C-slope-run-off"
+source = "constructed"
 entries = ["SlopesCarry", "FollowingTheGround", "WhatHerMovesMet", "Dash", "SpeedBuildsAndBrakes"]
-world = { slope_floor = [{ block = [224, 144], surface = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { block = [240, 144], surface = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], factor = "0.C0" }] }
+world = { slope_floor = [{ block = [464, 320], surface = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, { block = [480, 320], surface = [5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12], factor = "0.D8" }] }
 frame = "Odd"
-before = { position = ["00EE.CC00", "0078.FFFF"], speed_x = "+0002.C000", dash = "0001.0000", speed_y = "+0000.0000" }
+before = { position = ["01E0.4C00", "0128.FFFF"], speed_x = "+0002.C000", dash = "0001.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["run", "right"]
 jump_pressed = false
-after = { position = ["00F2.9C00", "007D.CFFF"], speed_x = "+0002.C000", dash = "0001.1000", speed_y = "+0000.0000" }
+after = { position = ["01E4.1C00", "012D.CFFF"], speed_x = "+0002.C000", dash = "0001.1000", speed_y = "+0000.0000" }
 
 # C-slope-carry-kept (gap 27): SL2's carry while running with a vertical speed kept on the ground.
 # The kept +0.E000 plays no part in the pull or the stop: the pull is 3.C000 from y subpixel FFFF,
