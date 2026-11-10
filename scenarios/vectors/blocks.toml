@@ -9,7 +9,8 @@
 #   vectors: none is the game's. Each has its family; look (the whole look: a picture's index
 #   in hex, never flipped, so a reader refuses a flip; absent for a shot block that keeps its
 #   own); first_wait (frames, 1 to 32,767); its scripts, each a list of steps: { sound,
-#   queue_limit }, { show = [[dx, dy, becomes, look], ...], frames }, { regrow = true },
+#   queue_limit }, { show = [[dx, dy, becomes, look], ...], frames (1 to 32,767) },
+#   { regrow = true },
 #   { end = true }; regrow and end are always true, and a reader refuses false. A pattern cell's
 #   becomes is "Air", "Itself", "StandInAcross" or "StandInDown". The names are the vectors'
 #   own; the model reads them only as the marks that name them, and every reaction a cell or a
@@ -25,16 +26,17 @@
 #   "Inert" or "Other", for a mark that isn't a reaction; with met_as = "Bomb", "Crumble" or
 #   "Shot" for "Nothing", and met_as = "Crumble" for an "Other" a blast meets as crumble blocks) or
 #   reach (a stand-in's, in cells); inside = "HoldsPlace" for a cell whose mark holds a place
-#   when she is inside it while it is reacting air. A cell's mark is given wherever it is known,
-#   the kinds that don't read it included; the model must keep it.
+#   when she is inside it: it holds one only while the cell is reacting air, and a cell that is
+#   a block keeps the key. A cell's mark is given wherever it is known, the kinds that don't
+#   read it included; the model must keep it.
 # - places: the running reactions, each { place, reaction, script, cell, next (the index of its
 #   next step in the script, from 0), wait (the frames it still waits, 1 to 32,767), remembers
 #   (what it grows back as: "Block" or "ReactingAir"; given for every running reaction whose
 #   script has a Regrow step, before and after that step, and for no other) }, or a scroll
 #   reaction { place, scroll = [{ screen = [x, y], becomes }], cell, touched (true while a touch
 #   waits for the run) }. Places not listed are free.
-# - other_parts: places held by reactions of the domain's other parts (doors' caps, items, ...):
-#   they take places and do nothing else here.
+# - other_parts: places held by reactions of the domain's other parts (the doors' caps, ...) and
+#   by W3's items: they take places and do nothing else here.
 # - held_until_run: places held until the next run that isn't paused (a scroll cell's or a cell
 #   marked Nothing's request, BlocksMarkedNothing, TheScriptsRun).
 # - screens (optional): the room's screens, one string a row, "C" Closed, "O" Open, "S" Short, as
@@ -49,6 +51,12 @@
 #   or { other = true } (another part's). other is always true, and a reader refuses false.
 #   Each form is told by the key only it has (inside, touch, hit, other; scroll, stand_in, other;
 #   sound, show, regrow, end), so a reader refuses an unknown key.
+# - A reader refuses:
+#   - a duplicate vector id;
+#   - screens rows of unequal length;
+#   - a wait, a first_wait or a show's frames outside 1 to 32,767;
+#   - a remembers missing from a running reaction whose script has a Regrow step, or given on
+#     one whose script has none.
 # - after: the same fields at the end of the frame, and answers (one per touch, in order: "Air",
 #   "Solid", or "Other" for a cell marked Other, which its part answers), redrawn (cells in order)
 #   and sounds ({ sound, queue_limit } in order).

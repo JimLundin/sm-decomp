@@ -560,8 +560,9 @@ names; "the whole look" is that reaction's (§2).
 
 - **The other three parts of W2** (Header) and **items** (W3): their reactions take places like
   these; in this spec they hold their place and do nothing else. Which place another part's start
-  takes, and how its part frees it, are part 2's to add (the doors' caps), to this part's outputs
-  and requests; until then nothing here frees another part's place.
+  takes, and how its part frees it, are added to this part's outputs and requests by each part
+  that starts reactions: part 2 first, with the doors' caps, then parts 3 and 4, and W3's items.
+  Until then nothing here frees another part's place.
 - **Her motion:** the touches, their ways, the cells she is inside and their points; how a stand-in
   is followed to the cell it stands for; what she meets past the room's edge, since every request
   names a cell of the room.
