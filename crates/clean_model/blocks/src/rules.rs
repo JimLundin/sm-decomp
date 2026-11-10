@@ -1,14 +1,18 @@
 //! The rules (spec §5, `BlocksMarkedNothing`): for each family, and for each family a cell marked
 //! `Nothing` is met as, what her touches and the hits ask of its cells. A family's act is a start
-//! of its reaction; a `Nothing` mark's is a place held until the run. Each row is a row of the
+//! of its reaction; a `Nothing` mark's is a place held until the run; both kinds of row answer a
+//! request the same way (`Row::answer`), each with its own act. Each row is a row of the
 //! rules a caller may adjust (§2, "The rules' rows"); every row names its member, and
 //! `Rules::reference` is the game's, keyed from the tables of those rows.
 
-use clean_types::{Family, Heading, HitBy, Look, MetAs, Motion, Script, Set, Way, by_member};
+use clean_types::{
+    Family, Heading, HitBy, Look, MetAs, Motion, Picture, Script, Set, Way, by_member,
+};
 use enum_map::{Enum, EnumMap};
 
-use crate::cells::{CellKind, ReactingBody, Tile};
-use crate::reactions::{Reaction, Step};
+use crate::cells::{Answer, CellKind, ReactingBody};
+use crate::inputs::Meeting;
+use crate::reactions::Step;
 
 /// The rules the model reads.
 pub struct Rules {
@@ -74,9 +78,8 @@ pub enum Bodies {
     BlockOnly,
 }
 
-/// What a row makes of her touch.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Response<A> {
+/// What a row makes of a request of its cell.
+enum Response<A> {
     /// The row's act: a start of the cell's reaction, or a place held until the run.
     Act(A),
     /// `FullPlacesLetHerThrough` (a quirk): with every place taken, a touch of a cell whose
@@ -349,20 +352,43 @@ const NOTHING_AS_SHOT: Row<MetAs, HoldUntilRun> = Row {
 };
 
 impl<K, A: Copy> Row<K, A> {
+    /// `AnswersToHerMotion`, `FullPlacesLetHerThrough`: the row's answer to a request of one of
+    /// its cells, whose body is `body`, as she moves, with every place taken or not. A request
+    /// that asks for the row's act has it done by `act`, which answers as she meets the cell after
+    /// it; with every place taken, a touch that asks the cell to react lets her through; any other
+    /// request meets the cell by its body. Her being inside a cell asks nothing of its row.
+    pub(crate) fn answer(
+        &self,
+        meeting: Meeting,
+        moving: Set<Motion>,
+        places_full: bool,
+        body: ReactingBody,
+        act: impl FnOnce(A) -> Answer,
+    ) -> Answer {
+        let response = match meeting {
+            Meeting::Touch(way) => self.touch.respond(way, moving, places_full),
+            Meeting::Hit(by) => self.hit(by, body).map_or(Response::Ignored, Response::Act),
+            Meeting::Inside(_) => Response::Ignored,
+        };
+        match response {
+            Response::Act(done) => act(done),
+            Response::LetsHerThrough => Answer::Air,
+            Response::Ignored => CellKind::Reacting(body).answer(),
+        }
+    }
+
     /// The act of a hit by `by` on a cell of this body, if one of the row's hits acts on it.
-    #[must_use]
-    pub fn hit(&self, by: HitBy, body: ReactingBody) -> Option<A> {
+    fn hit(&self, by: HitBy, body: ReactingBody) -> Option<A> {
         self.hits
             .iter()
-            .find(|hit| hit.by.contains(&by) && hit.on.holds(body))
+            .find(|hit| hit.by.contains(&by) && hit.on.includes(body))
             .map(|hit| hit.act)
     }
 }
 
 impl<A: Copy> TouchRule<A> {
     /// What a touch this way makes of the cell, as she moves, with every place taken or not.
-    #[must_use]
-    pub fn respond(&self, way: Way, moving: Set<Motion>, places_full: bool) -> Response<A> {
+    fn respond(&self, way: Way, moving: Set<Motion>, places_full: bool) -> Response<A> {
         match self {
             Self::Reacts { .. } if places_full => Response::LetsHerThrough,
             Self::Reacts { when, act } if when.starts(way, moving) => Response::Act(*act),
@@ -384,9 +410,9 @@ impl Starter {
 }
 
 impl Bodies {
-    /// Whether a hit acts on a cell of this body.
+    /// Whether these bodies include `body`, so that a hit acts on a cell of it.
     #[must_use]
-    pub const fn holds(self, body: ReactingBody) -> bool {
+    pub const fn includes(self, body: ReactingBody) -> bool {
         matches!(
             (self, body),
             (Self::Either, _) | (Self::BlockOnly, ReactingBody::Block)
@@ -406,16 +432,22 @@ impl FirstStep {
 }
 
 impl Change {
-    /// The start's change to its cell, whose body is `body`, with its reaction's whole look if it
-    /// has one, the cell's own otherwise.
-    pub const fn apply(self, tile: &mut Tile, body: ReactingBody, reaction: &Reaction) {
-        tile.kind = match self {
+    /// The start's change to its cell's kind and look, the cell's body being `body`: it takes
+    /// its reaction's whole look if it has one, and keeps its own otherwise.
+    pub(crate) const fn apply(
+        self,
+        kind: &mut CellKind,
+        look: &mut Look,
+        body: ReactingBody,
+        whole_look: Option<Picture>,
+    ) {
+        *kind = match self {
             Self::StopsReacting => body.plain(),
             Self::BecomesAir => CellKind::Air,
             Self::LeftAsItIs => return,
         };
-        if let Some(picture) = reaction.whole_look {
-            tile.look = Look::unflipped(picture);
+        if let Some(picture) = whole_look {
+            *look = Look::unflipped(picture);
         }
     }
 }

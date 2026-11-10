@@ -9,13 +9,14 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 use clean_model_blocks::{
-    Answer, Becomes, CATALOGUE, CellKind, Frames, Grid, Inside, Mark, PatternCell, Place,
-    Placement, Places, ReactingBody, Reaction, ReactionName, Report, Request, Rules, Run, Running,
-    ScreenChange, ScrollReaction, SoundRequest, StandIn, State, Step, Tile, Touched,
+    Answer, Becomes, CATALOGUE, CellKind, Frames, Grid, Inside, Mark, Meeting, OtherMetAs,
+    PatternCell, Place, Placement, Places, ReactingBody, Reaction, ReactionName, Report, Request,
+    Rules, Run, Running, ScreenChange, ScrollReaction, SoundRequest, StandIn, State, Step, Tile,
+    Touched,
 };
 use clean_types::{
     Cell, Checked, Family, Flip, Heading, HitBy, Look, MetAs, Motion, Pair, Picture, Point,
-    ScreenKind, Script, Set, Touch, Way,
+    ScreenKind, Script, Set, Way,
 };
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer};
@@ -512,21 +513,29 @@ fn mark(reactions: &Reactions, row: &CellRow) -> Mark {
         (None, Some("Scroll"), None, None) => Mark::Scroll,
         (None, Some("Nothing"), Some(family), None) => Mark::Nothing(met_as(family)),
         (None, Some("Inert"), None, None) => Mark::Inert,
-        (None, Some("Other"), None, None) => Mark::Other(None),
-        (None, Some("Other"), Some("Crumble"), None) => Mark::Other(Some(MetAs::Crumble)),
+        (None, Some("Other"), None, None) => Mark::Other(OtherMetAs::NoFamily),
+        (None, Some("Other"), Some("Crumble"), None) => Mark::Other(OtherMetAs::Crumble),
         (None, None, None, Some(reach)) => Mark::Reach(reach),
         (None, None, None, None) => Mark::Unmarked,
         _ => panic!("a cell's mark the format doesn't give at {:?}", row.at),
     }
 }
 
+/// A cell, refusing a scroll cell whose mark holds a place when she is inside it, which the format
+/// never gives (`RoomStart`).
 fn tile(reactions: &Reactions, row: &CellRow) -> Tile {
-    Tile {
+    let tile = Tile {
         kind: kind(&row.kind),
         mark: mark(reactions, row),
         look: look(&row.look),
         inside: inside(row.inside.as_deref()),
-    }
+    };
+    assert!(
+        !(tile.mark == Mark::Scroll && tile.inside == Inside::HoldsPlace),
+        "a scroll cell holding a place when she is inside it at {:?}",
+        row.at
+    );
+    tile
 }
 
 /// A cell no vector lists: plain air.
@@ -674,20 +683,15 @@ fn after(reactions: &Reactions, vector: &Vector) -> (State, Report) {
 // The frame.
 
 fn request(row: &RequestRow) -> Request {
-    match row {
-        RequestRow::Inside(row) => Request::Inside {
-            cell: cell(row.inside),
-            point: point(&row.point),
-        },
-        RequestRow::Touch(row) => Request::Touch(Touch {
-            cell: cell(row.touch),
-            way: way(&row.way),
-        }),
-        RequestRow::Hit(row) => Request::Hit {
-            cell: cell(row.hit),
-            by: hit_by(&row.by),
-        },
-        RequestRow::Other(_) => Request::OtherPart,
+    let (at, meeting) = match row {
+        RequestRow::Inside(row) => (row.inside, Meeting::Inside(point(&row.point))),
+        RequestRow::Touch(row) => (row.touch, Meeting::Touch(way(&row.way))),
+        RequestRow::Hit(row) => (row.hit, Meeting::Hit(hit_by(&row.by))),
+        RequestRow::Other(_) => return Request::OtherPart,
+    };
+    Request::Meets {
+        cell: cell(at),
+        meeting,
     }
 }
 
@@ -725,9 +729,8 @@ fn run_frame(rules: &Rules, state: &mut State, frame: Option<&FrameRow>) -> Repo
             .step(rules, &[], Set::default(), Run::Runs)
             .expect("no request");
     };
-    let placements: Vec<Placement> = frame.placements.iter().flatten().map(placement).collect();
     state
-        .start_room(&placements)
+        .start_room(frame.placements.iter().flatten().map(placement))
         .expect("placements in the room");
     let requests: Vec<Request> = frame.requests.iter().flatten().map(request).collect();
     let run = if frame.paused.is_some() {

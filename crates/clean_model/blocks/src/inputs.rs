@@ -1,32 +1,33 @@
 //! What the frame and the room's start give the model (spec §1.3).
 
-use clean_types::{Cell, HitBy, Point, Touch};
+use clean_types::{Cell, HitBy, Point, Screen, ScreenKind, Way};
 
 use crate::cells::StandIn;
-use crate::places::ScreenChange;
 
-/// One of the frame's requests (spec §1.3). A cell is the one a stand-in stands for, already
-/// resolved, and always a cell of the room.
+/// One of the frame's requests (spec §1.3), answered in the frame's order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Request {
-    /// A cell she is inside, and the point of her that is inside it.
-    Inside {
+    /// A cell of the room, and how it is met. It is the cell a stand-in stands for, already
+    /// resolved, and always a cell of the room.
+    Meets {
         /// The cell.
         cell: Cell,
-        /// Her point inside it.
-        point: Point,
-    },
-    /// A cell her move or look reaches, and its way; answered in the report.
-    Touch(Touch),
-    /// A cell, and what reaches it.
-    Hit {
-        /// The cell.
-        cell: Cell,
-        /// What reaches it.
-        by: HitBy,
+        /// How it is met.
+        meeting: Meeting,
     },
     /// Another part's start, which takes a place its part holds.
     OtherPart,
+}
+
+/// How a request meets its cell (spec §1.3).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Meeting {
+    /// She is inside it, at this point of her.
+    Inside(Point),
+    /// Her move or look reaches it, this way; answered in the report (`AnswersToHerMotion`).
+    Touch(Way),
+    /// One of her weapons or the grapple reaches it.
+    Hit(HitBy),
 }
 
 /// Whether the run comes this frame (`TheScriptsRun`), as the room's loading and the doors say.
@@ -59,6 +60,15 @@ pub enum Placement {
     },
     /// Another part's placement, which holds its place.
     OtherPart,
+}
+
+/// A screen a scroll reaction changes, and the kind it takes (`ScrollCells`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ScreenChange {
+    /// The screen.
+    pub screen: Screen,
+    /// The kind it takes.
+    pub becomes: ScreenKind,
 }
 
 /// A request or a placement that names a cell past the room's edge, which the spec rules out.

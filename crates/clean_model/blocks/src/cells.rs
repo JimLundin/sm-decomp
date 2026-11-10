@@ -60,7 +60,9 @@ pub struct Tile {
     pub mark: Mark,
     /// The picture it shows.
     pub look: Look,
-    /// The part of its mark that says whether she holds a place when she is inside it.
+    /// Whether she holds a place when she is inside it (`BlocksMarkedNothing`), which the room
+    /// gives with its mark: it counts only while the cell is reacting air, and a placement that
+    /// marks the cell anew (`RoomStart`) makes it hold none.
     pub inside: Inside,
 }
 
@@ -109,10 +111,10 @@ pub enum Answer {
 }
 
 impl CellKind {
-    /// `AnswersToHerMotion`: how she meets a cell of this kind by its body. Her motion follows a
-    /// stand-in to the cell it stands for, so one met here stands for none, and is air.
+    /// `AnswersToHerMotion`: the answer to a touch of a cell of this kind by its body. Her motion
+    /// follows a stand-in to the cell it stands for, so one met here stands for none, and is air.
     #[must_use]
-    pub const fn body(self) -> Answer {
+    pub const fn answer(self) -> Answer {
         match self {
             Self::Solid | Self::Reacting(ReactingBody::Block) => Answer::Solid,
             Self::Air | Self::Reacting(ReactingBody::Air) | Self::StandIn(_) => Answer::Air,
@@ -146,11 +148,40 @@ pub enum Mark {
     Nothing(MetAs),
     /// A cell that reacts to nothing and takes no place (`BlocksMarkedNothing`).
     Inert,
-    /// A cell of another part, which answers it; with the family a blast meets it as, if any
-    /// (the room gives only `Crumble`, for a station's cells).
-    Other(Option<MetAs>),
+    /// A cell of another part (a door's cap, an item, a station, quicksand), which answers it;
+    /// with what a blast meets it as.
+    Other(OtherMetAs),
     /// A stand-in's reach: how many cells along its row or column the cell it stands for is.
     Reach(i16),
+}
+
+/// What a blast meets a cell marked `Other` as (`BlocksMarkedNothing`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OtherMetAs {
+    /// No family's blocks: only its part answers it.
+    NoFamily,
+    /// Crumble blocks, as a station's access cells and a save station are.
+    Crumble,
+}
+
+impl Mark {
+    /// `BlocksMarkedNothing`: the family whose row of the rules for cells marked `Nothing` a
+    /// request of this cell meets: a cell marked `Nothing`'s own, and crumble blocks' for a cell
+    /// marked `Other` met as them (whose touches its part answers before this is asked); none for
+    /// any other mark.
+    #[must_use]
+    pub const fn met_as(&self) -> Option<MetAs> {
+        match self {
+            Self::Nothing(met_as) => Some(*met_as),
+            Self::Other(OtherMetAs::Crumble) => Some(MetAs::Crumble),
+            Self::Other(OtherMetAs::NoFamily)
+            | Self::Unmarked
+            | Self::Reaction(_)
+            | Self::Scroll
+            | Self::Inert
+            | Self::Reach(_) => None,
+        }
+    }
 }
 
 /// Whether she holds a place when she is inside a cell (`BlocksMarkedNothing`).

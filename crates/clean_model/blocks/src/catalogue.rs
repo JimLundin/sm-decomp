@@ -170,7 +170,8 @@ pub const CATALOGUE: &[Behaviour] = &[
         summary: "a cell marked `Nothing` reacts to nothing, but what would ask a block of its \
                   family to react still takes a place until the run, and a touch of one passes \
                   through; a cell marked `Inert` takes none; a cell marked `Other` is its part's, \
-                  but for a blast on one met as crumble blocks.",
+                  but for the place its mark may hold when she is inside it, and for a blast on \
+                  one met as crumble blocks.",
         kind: Kind::Quirk,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,

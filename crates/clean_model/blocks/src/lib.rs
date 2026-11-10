@@ -9,7 +9,8 @@
 //!
 //! A caller holds the `State`. When a room starts it calls `State::start_room` with the room's
 //! placements; each frame it calls `State::step` with `Rules::reference()` (or adjusted rules),
-//! the requests in the frame's order, how she moves and whether the run runs or is paused, and
+//! the requests in the frame's order (each cell met as `Request::Meets`, with its `Meeting`: she
+//! inside it, her touch, or a hit), how she moves and whether the run runs or is paused, and
 //! reads the `Report` and the state's screens back.
 
 mod catalogue;
@@ -22,15 +23,16 @@ mod rules;
 mod state;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
-pub use cells::{Answer, CellKind, Grid, Inside, Mark, ReactingBody, StandIn, Tile, Tilemap};
-pub use inputs::{OutsideTheRoom, Placement, Request, Run};
-pub use places::{PLACE_COUNT, Place, Places, Running, ScreenChange, ScrollReaction, Touched};
+pub use cells::{
+    Answer, CellKind, Grid, Inside, Mark, OtherMetAs, ReactingBody, StandIn, Tile, Tilemap,
+};
+pub use inputs::{Meeting, OutsideTheRoom, Placement, Request, Run, ScreenChange};
+pub use places::{PLACE_COUNT, Place, Places, Running, ScrollReaction, Touched};
 pub use reactions::{
     Becomes, Frames, MOST_FRAMES, PatternCell, Reaction, ReactionName, SoundRequest, Step,
 };
 pub use report::Report;
 pub use rules::{
-    Bodies, Change, FirstStep, HitRule, HoldUntilRun, Response, Row, Rules, Start, Starter,
-    TouchRule,
+    Bodies, Change, FirstStep, HitRule, HoldUntilRun, Row, Rules, Start, Starter, TouchRule,
 };
 pub use state::State;

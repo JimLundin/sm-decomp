@@ -1,13 +1,15 @@
 //! What the model remembers from frame to frame (spec §1.2): the cells, the places and the
 //! screens, and the two entry points that change them: the room's start and the frame's step.
 
-use clean_types::{Cell, HitBy, Motion, Point, ScreenKind, Set, Touch};
+use std::sync::Arc;
+
+use clean_types::{Cell, Motion, Point, ScreenKind, Set};
 
 use crate::cells::{Answer, CellKind, Grid, Inside, Mark, ReactingBody, Tile, Tilemap};
-use crate::inputs::{OutsideTheRoom, Placement, Request, Run};
-use crate::places::{Place, Places, Room, ScrollReaction, Touched};
+use crate::inputs::{Meeting, OutsideTheRoom, Placement, Request, Run};
+use crate::places::{Place, Places, Running, ScrollReaction, Touched};
 use crate::report::Report;
-use crate::rules::{HoldUntilRun, Response, Rules};
+use crate::rules::{HoldUntilRun, Rules};
 
 /// The blocks' state: everything a later frame needs, and nothing else. A caller builds each part
 /// at any value the spec allows and reads each part back.
@@ -27,36 +29,46 @@ impl State {
     /// cell is left as it was. A scroll cell's reaction keeps its place, and its cell becomes
     /// reacting air marked `Scroll`, keeping its look; a stand-in's cell becomes the stand-in,
     /// marked with its reach, and its place is free again at once; another part's holds its place.
+    /// A cell marked anew holds no place when she is inside it, whatever it held before.
     ///
     /// # Errors
     /// `OutsideTheRoom`, at the first placement whose cell is past the room's edge, which the
-    /// room's loading rules out (R2): the room's start stops there, the placements before it
-    /// placed.
-    pub fn start_room(&mut self, placements: &[Placement]) -> Result<(), OutsideTheRoom> {
+    /// room's loading rules out (R2): the room's start stops there, that placement taking no
+    /// place and the placements before it placed.
+    pub fn start_room(
+        &mut self,
+        placements: impl IntoIterator<Item = Placement>,
+    ) -> Result<(), OutsideTheRoom> {
         for placement in placements {
-            let Some(place) = self.places.highest_free() else {
-                continue;
-            };
-            let (cell, kind, mark) = match placement {
+            let (cell, kind, mark, occupant) = match placement {
                 Placement::OtherPart => {
-                    *place = Place::OtherPart;
+                    self.places.take(Place::OtherPart);
                     continue;
                 }
-                Placement::Scroll { cell, changes } => {
-                    *place = Place::Scroll(ScrollReaction {
-                        cell: *cell,
-                        changes: changes.clone(),
+                Placement::Scroll { cell, changes } => (
+                    cell,
+                    CellKind::Reacting(ReactingBody::Air),
+                    Mark::Scroll,
+                    Place::Scroll(ScrollReaction {
+                        cell,
+                        changes,
                         touched: Touched::No,
-                    });
-                    (*cell, CellKind::Reacting(ReactingBody::Air), Mark::Scroll)
-                }
-                Placement::StandIn { cell, way, reach } => {
-                    (*cell, CellKind::StandIn(*way), Mark::Reach(*reach))
-                }
+                    }),
+                ),
+                // Its place is free again at once.
+                Placement::StandIn { cell, way, reach } => (
+                    cell,
+                    CellKind::StandIn(way),
+                    Mark::Reach(reach),
+                    Place::Free,
+                ),
             };
             let tile = entering(&mut self.tiles, cell)?;
-            tile.kind = kind;
-            tile.mark = mark;
+            if self.places.take(occupant) {
+                tile.kind = kind;
+                tile.mark = mark;
+                tile.inside = Inside::HoldsNoPlace;
+            }
         }
         Ok(())
     }
@@ -78,109 +90,91 @@ impl State {
         run: Run,
     ) -> Result<Report, OutsideTheRoom> {
         let mut report = Report::default();
-        for request in requests {
-            match *request {
-                Request::Inside { cell, point } => self.inside(cell, point)?,
-                Request::Touch(touch) => report.answers.push(self.touch(rules, touch, moving)?),
-                Request::Hit { cell, by } => self.hit(rules, cell, by)?,
+        for &request in requests {
+            match request {
+                Request::Meets { cell, meeting } => {
+                    let answer = self.meet(rules, cell, meeting, moving)?;
+                    if let Meeting::Touch(_) = meeting {
+                        report.answers.push(answer);
+                    }
+                }
                 Request::OtherPart => {
                     self.places.take(Place::OtherPart);
                 }
             }
         }
         if run == Run::Runs {
-            let mut room = Room {
-                tiles: &mut self.tiles,
-                report: &mut report,
-            };
-            self.places.run(&mut room, &mut self.screens);
+            self.places
+                .run(&mut self.tiles, &mut self.screens, &mut report);
         }
         Ok(report)
     }
 
-    /// `AnswersToHerMotion`: her touch of a cell, answered as the cell meets it. A cell that
-    /// doesn't react meets her by its body; a reacting cell's mark gives its row of the rules,
-    /// whose response to the touch is acted on; a cell marked `Other` is its part's to answer.
-    fn touch(
+    /// Spec §5, `AnswersToHerMotion`: a request of `cell`, met as `meeting`, as she moves; returns
+    /// how she meets the cell after it, which the report keeps for a touch. A cell that doesn't
+    /// react meets her by its body. Of a reacting cell, in this order:
+    /// - `BlocksMarkedNothing`: she inside reacting air whose mark holds a place when she is
+    ///   inside it, whatever else it says, holds one until the run at each point;
+    /// - `ScrollCells`: a scroll cell is touched by any touch and by her centre inside it;
+    /// - a touch of a cell marked `Other` is its part's to answer;
+    /// - a reaction's cell is met by its family's row, whose act starts its reaction (`Places`):
+    ///   it takes the highest free place, and then the cell changes at once; with every place
+    ///   taken it doesn't start, and the cell is left as it was;
+    /// - a cell marked `Nothing`, or one marked `Other` and met as crumble blocks, is met by the
+    ///   row for the cells marked `Nothing` of the family it is met as (`Mark::met_as`), whose act
+    ///   holds a place until the run;
+    /// - any other request meets it by its body.
+    fn meet(
         &mut self,
         rules: &Rules,
-        touch: Touch,
+        cell: Cell,
+        meeting: Meeting,
         moving: Set<Motion>,
     ) -> Result<Answer, OutsideTheRoom> {
         let Self { tiles, places, .. } = self;
-        let tile = entering(tiles, touch.cell)?;
-        let CellKind::Reacting(body) = tile.kind else {
-            return Ok(tile.kind.body());
+        let Tile {
+            kind,
+            mark,
+            look,
+            inside,
+        } = entering(tiles, cell)?;
+        let CellKind::Reacting(body) = *kind else {
+            return Ok(kind.answer());
         };
         let full = places.full();
-        Ok(match tile.mark.clone() {
-            Mark::Reaction(reaction) => {
+        Ok(match (meeting, &*mark) {
+            (Meeting::Inside(_), _)
+                if body == ReactingBody::Air && *inside == Inside::HoldsPlace =>
+            {
+                places.hold_until_run();
+                kind.answer()
+            }
+            (Meeting::Inside(Point::Centre) | Meeting::Touch(_), Mark::Scroll) => {
+                places.touch_scroll(cell);
+                kind.answer()
+            }
+            (Meeting::Touch(_), Mark::Other(_)) => Answer::Other,
+            (_, Mark::Reaction(reaction)) => {
                 let row = &rules.families[reaction.family];
-                let response = row.touch.respond(touch.way, moving, full);
-                answer(tile, response, |tile, start| {
-                    places.start(tile, touch.cell, &reaction, start, body);
-                    tile.kind.body()
+                row.answer(meeting, moving, full, body, |start| {
+                    let running = Running::started(Arc::clone(reaction), start, cell, body);
+                    if places.take(Place::Running(running)) {
+                        start.change.apply(kind, look, body, reaction.whole_look);
+                    }
+                    kind.answer()
                 })
             }
-            Mark::Nothing(met_as) => {
-                let row = &rules.marked_nothing[met_as];
-                let response = row.touch.respond(touch.way, moving, full);
-                answer(tile, response, |_, HoldUntilRun| {
-                    places.hold_until_run();
-                    Answer::Air
-                })
-            }
-            Mark::Scroll => {
-                places.touch_scroll(touch.cell);
-                tile.kind.body()
-            }
-            Mark::Other(_) => Answer::Other,
-            Mark::Inert | Mark::Unmarked | Mark::Reach(_) => tile.kind.body(),
+            (_, other) => other.met_as().map_or_else(
+                || kind.answer(),
+                |met_as| {
+                    let row = &rules.marked_nothing[met_as];
+                    row.answer(meeting, moving, full, body, |HoldUntilRun| {
+                        places.hold_until_run();
+                        Answer::Air
+                    })
+                },
+            ),
         })
-    }
-
-    /// A hit of a cell by `by`. A reacting cell's mark gives its row of the rules, and the act of
-    /// the row's hit, if one acts on the cell, is done: a start of its reaction, or a place held
-    /// until the run for a cell marked `Nothing`, or marked `Other` and met as crumble blocks.
-    fn hit(&mut self, rules: &Rules, cell: Cell, by: HitBy) -> Result<(), OutsideTheRoom> {
-        let Self { tiles, places, .. } = self;
-        let tile = entering(tiles, cell)?;
-        let CellKind::Reacting(body) = tile.kind else {
-            return Ok(());
-        };
-        match tile.mark.clone() {
-            Mark::Reaction(reaction) => {
-                if let Some(start) = rules.families[reaction.family].hit(by, body) {
-                    places.start(tile, cell, &reaction, start, body);
-                }
-            }
-            Mark::Nothing(met_as) | Mark::Other(Some(met_as)) => {
-                if rules.marked_nothing[met_as].hit(by, body).is_some() {
-                    places.hold_until_run();
-                }
-            }
-            Mark::Other(None) | Mark::Scroll | Mark::Inert | Mark::Unmarked | Mark::Reach(_) => {}
-        }
-        Ok(())
-    }
-
-    /// `ScrollCells`, `BlocksMarkedNothing`: a cell she is inside. Reacting air whose mark holds a
-    /// place when she is inside it holds one at each point; a scroll cell is touched at her centre
-    /// only; a cell marked `Other` is its part's.
-    fn inside(&mut self, cell: Cell, point: Point) -> Result<(), OutsideTheRoom> {
-        let tile = entering(&mut self.tiles, cell)?;
-        let CellKind::Reacting(body) = tile.kind else {
-            return Ok(());
-        };
-        if matches!(tile.mark, Mark::Other(_)) {
-            return Ok(());
-        }
-        if body == ReactingBody::Air && tile.inside == Inside::HoldsPlace {
-            self.places.hold_until_run();
-        } else if tile.mark == Mark::Scroll && point == Point::Centre {
-            self.places.touch_scroll(cell);
-        }
-        Ok(())
     }
 }
 
@@ -188,19 +182,4 @@ impl State {
 /// checked against the room.
 fn entering(tiles: &mut Tilemap, cell: Cell) -> Result<&mut Tile, OutsideTheRoom> {
     tiles.get_mut(cell).ok_or(OutsideTheRoom(cell))
-}
-
-/// `AnswersToHerMotion`, `FullPlacesLetHerThrough`: a row's response to her touch of `tile`,
-/// acted on. The row's act is `act`, which answers as she meets the cell after it; with every
-/// place taken she passes; a touch that asks nothing meets the cell by its body.
-fn answer<A>(
-    tile: &mut Tile,
-    response: Response<A>,
-    act: impl FnOnce(&mut Tile, A) -> Answer,
-) -> Answer {
-    match response {
-        Response::Act(done) => act(tile, done),
-        Response::LetsHerThrough => Answer::Air,
-        Response::Ignored => tile.kind.body(),
-    }
 }
