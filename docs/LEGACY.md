@@ -108,6 +108,17 @@ original's bytes as data.
   room's cells. The spec states patterns in cells, and the room's loading refuses a room whose
   reacting cells' patterns reach past its edge; no room of the game has one. Until the engine's
   room loading refuses it, the engine draws no such cell (`game::blocks_world`).
+- **Room $ADAD's scroll table runs into the next room's header** (the camera domain's scroll
+  areas, `data::level::scroll_areas`; `$82:EB28`, `$80:A575` on): the room is eight screens and its
+  scroll pointer (`$8F:ADDA`) names four bytes, so the game reads the next room's header
+  (`$8F:ADDE`, `1F 02 1D 04`) as the bottom row's scroll values and loads the room. The importer
+  refuses a value that is neither red, blue nor green, so `data::room::decode` refuses the room and
+  the engine can't load a room the game loads; a harness row in it would be a defect. Today only
+  the full-percentage walk (`verify::harness::progress::percentage`) reaches it, and reads it
+  through `data::room::populations`, without the scroll tables. The camera observer states what a
+  scroll value other than red, blue and green does; the importer then reads the bytes the game
+  reads and keeps such a value as a named variant (`Unknown(u8)`), byte-exact. The entry goes, with
+  `populations`, when `decode` reads the room and the walk uses it.
 - **The grapple on a bomb, a super missile or a power bomb block** (the blocks domain,
   `docs/behaviours/blocks.md` `BombBlocks`, `SuperMissileBlocks`, `PowerBombBlocks`; `$84:CEDA`,
   `$84:CF2E`, `$84:CF67`): these blocks decide by the weapon of the projectile last handled
